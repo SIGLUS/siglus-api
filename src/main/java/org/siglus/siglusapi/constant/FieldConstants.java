@@ -94,4 +94,8 @@ public class FieldConstants {
 
   public static final String ZONEID = "zoneId";
 
+  public static final String SINGLE_PROGRAM = "SINGLE";
+
+  public static final String ALL_PROGRAM = "ALL";
+
 }

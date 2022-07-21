@@ -168,11 +168,10 @@ public class SiglusPhysicalInventoryController {
 
   @GetMapping("/conflict")
   public PhysicalInventoryValidationDto checkPhysicalInventoryConflict(@RequestParam UUID program,
-      @RequestParam UUID facility,
-      @RequestParam(required = false) Boolean isDraft) {
+      @RequestParam UUID facility) {
     if (ALL_PRODUCTS_UUID.equals(program)) {
-      return siglusPhysicalInventoryService.checkConflictForAllProduct(facility, isDraft);
+      return siglusPhysicalInventoryService.checkConflictForAllProduct(facility);
     }
-    return siglusPhysicalInventoryService.checkConflictForOneProgram(facility, isDraft);
+    return siglusPhysicalInventoryService.checkConflictForOneProgram(facility);
   }
 }

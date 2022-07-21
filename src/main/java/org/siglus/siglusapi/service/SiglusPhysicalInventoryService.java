@@ -20,11 +20,13 @@ import static org.openlmis.stockmanagement.i18n.MessageKeys.ERROR_PROGRAM_NOT_SU
 import static org.openlmis.stockmanagement.service.PermissionService.STOCK_INVENTORIES_EDIT;
 import static org.siglus.siglusapi.constant.FacilityTypeConstants.AC;
 import static org.siglus.siglusapi.constant.FacilityTypeConstants.CENTRAL;
+import static org.siglus.siglusapi.constant.FieldConstants.ALL_PROGRAM;
 import static org.siglus.siglusapi.constant.FieldConstants.EXCLUDE_ARCHIVED;
 import static org.siglus.siglusapi.constant.FieldConstants.FACILITY_ID;
 import static org.siglus.siglusapi.constant.FieldConstants.IS_BASIC;
 import static org.siglus.siglusapi.constant.FieldConstants.PROGRAM_ID;
 import static org.siglus.siglusapi.constant.FieldConstants.RIGHT_NAME;
+import static org.siglus.siglusapi.constant.FieldConstants.SINGLE_PROGRAM;
 import static org.siglus.siglusapi.constant.FieldConstants.STOCK_CARD_ID;
 import static org.siglus.siglusapi.constant.FieldConstants.VM_STATUS;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
@@ -63,6 +65,7 @@ import org.openlmis.stockmanagement.service.PhysicalInventoryService;
 import org.openlmis.stockmanagement.web.PhysicalInventoryController;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2Dto;
 import org.siglus.common.domain.BaseEntity;
+import org.siglus.siglusapi.domain.PhysicalInventoryExtension;
 import org.siglus.siglusapi.domain.PhysicalInventoryLineItemsExtension;
 import org.siglus.siglusapi.domain.PhysicalInventorySubDraft;
 import org.siglus.siglusapi.dto.DraftListDto;
@@ -76,6 +79,7 @@ import org.siglus.siglusapi.dto.enums.PhysicalInventorySubDraftEnum;
 import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.OrderableRepository;
+import org.siglus.siglusapi.repository.PhysicalInventoryExtensionRepository;
 import org.siglus.siglusapi.repository.PhysicalInventoryLineItemsExtensionRepository;
 import org.siglus.siglusapi.repository.PhysicalInventorySubDraftRepository;
 import org.siglus.siglusapi.service.client.PhysicalInventoryStockManagementService;
@@ -134,6 +138,9 @@ public class SiglusPhysicalInventoryService {
 
   @Autowired
   private SiglusAuthenticationHelper authenticationHelper;
+
+  @Autowired
+  private PhysicalInventoryExtensionRepository physicalInventoryExtensionRespository;
 
   public List<PhysicalInventoryLineItemDto> buildInitialInventoryLineItemDtos(
           Set<UUID> supportedVirtualProgramIds, UUID facilityId) {
@@ -261,36 +268,29 @@ public class SiglusPhysicalInventoryService {
         .build();
   }
 
-  public PhysicalInventoryValidationDto checkConflictForAllProduct(UUID facility, Boolean isDraft) {
+  public PhysicalInventoryValidationDto checkConflictForAllProduct(UUID facility) {
     Set<UUID> supportedPrograms = supportedProgramsHelper.findHomeFacilitySupportedProgramIds();
     if (CollectionUtils.isEmpty(supportedPrograms)) {
       throw new PermissionMessageException(new org.openlmis.stockmanagement.util.Message(ERROR_PROGRAM_NOT_SUPPORTED));
     }
-    List<PhysicalInventoryDto> allPhysicalInventoryDto = new LinkedList<>();
-    supportedPrograms.forEach(programId -> {
-      List<PhysicalInventoryDto> physicalInventoryDtoList = getPhysicalInventoryDtos(programId, facility, isDraft);
-      if (CollectionUtils.isNotEmpty(physicalInventoryDtoList)) {
-        allPhysicalInventoryDto.addAll(physicalInventoryDtoList);
+
+    List<UUID> conflictProgramIdList = Lists.newArrayList();
+    supportedPrograms.forEach(supportedProgramId -> {
+      List<PhysicalInventory> programIsDraft = physicalInventoriesRepository
+          .findByProgramIdAndFacilityIdAndIsDraft(supportedProgramId, facility, true);
+      if (CollectionUtils.isNotEmpty(programIsDraft)) {
+        PhysicalInventoryExtension programWithDraft = physicalInventoryExtensionRespository
+            .findByPhysicalInventoryId(programIsDraft.get(0).getId());
+        if (null != programWithDraft && SINGLE_PROGRAM.equals(programWithDraft.getCategory())) {
+          conflictProgramIdList.add(programIsDraft.get(0).getProgramId());
+        }
       }
     });
 
-    if (CollectionUtils.isNotEmpty(allPhysicalInventoryDto)) {
-      List<UUID> otherProgramId = new ArrayList<>();
-      allPhysicalInventoryDto.forEach(otherProgramInventory -> {
-        otherProgramId.add(otherProgramInventory.getProgramId());
-      });
-      return PhysicalInventoryValidationDto
-          .builder()
-          .canStartInventory(false)
-          .containDraftProgramsList(otherProgramId)
-          .build();
-    } else {
-      return PhysicalInventoryValidationDto
-          .builder()
-          .canStartInventory(true)
-          .containDraftProgramsList(Lists.newArrayList())
-          .build();
+    if (CollectionUtils.isNotEmpty(conflictProgramIdList)) {
+      return buildPhysicalInventoryValidationDto(false, conflictProgramIdList);
     }
+    return buildPhysicalInventoryValidationDto(true, Lists.newArrayList());
   }
 
   private List<SubDraftDto> convertSubDraftToSubDraftDto(
@@ -337,29 +337,29 @@ public class SiglusPhysicalInventoryService {
     return DraftListDto.builder().build();
   }
 
-  public PhysicalInventoryValidationDto checkConflictForOneProgram(UUID facility, Boolean isDraft) {
+  public PhysicalInventoryValidationDto checkConflictForOneProgram(UUID facility) {
     Set<UUID> supportedPrograms = supportedProgramsHelper.findHomeFacilitySupportedProgramIds();
     if (CollectionUtils.isEmpty(supportedPrograms)) {
       throw new PermissionMessageException(new org.openlmis.stockmanagement.util.Message(ERROR_PROGRAM_NOT_SUPPORTED));
     }
-    List<PhysicalInventoryDto> otherProgramInventories = supportedPrograms.stream().map(
-        supportedVirtualProgram -> getPhysicalInventoryDtos(supportedVirtualProgram, facility,
-            isDraft)).flatMap(Collection::stream).collect(Collectors.toList());
 
-    if (CollectionUtils.isNotEmpty(otherProgramInventories)) {
-      return PhysicalInventoryValidationDto
-          .builder()
-          .canStartInventory(false)
-          .containDraftProgramsList(Lists.newArrayList(ALL_PRODUCTS_UUID))
-          .build();
-    } else {
-      return PhysicalInventoryValidationDto
-          .builder()
-          .canStartInventory(true)
-          .containDraftProgramsList(Lists.newArrayList())
-          .build();
+    List<Boolean> draftCreateByALlProduct = Lists.newArrayList();
+    supportedPrograms.forEach(supportedProgramId -> {
+      List<PhysicalInventory> programHaveDraft = physicalInventoriesRepository
+          .findByProgramIdAndFacilityIdAndIsDraft(supportedProgramId, facility, true);
+      if (CollectionUtils.isNotEmpty(programHaveDraft)) {
+        PhysicalInventoryExtension programWithDraft = physicalInventoryExtensionRespository
+            .findByPhysicalInventoryId(programHaveDraft.get(0).getId());
+        if (null != programWithDraft && ALL_PROGRAM.equals(programWithDraft.getCategory())) {
+          draftCreateByALlProduct.add(true);
+        }
+      }
+    });
+
+    if (CollectionUtils.isNotEmpty(draftCreateByALlProduct) && draftCreateByALlProduct.contains(true)) {
+      return buildPhysicalInventoryValidationDto(false, Lists.newArrayList(ALL_PRODUCTS_UUID));
     }
-
+    return buildPhysicalInventoryValidationDto(true, Lists.newArrayList());
   }
 
   private List<List<PhysicalInventoryLineItemDto>> groupByProductCode(List<PhysicalInventoryLineItemDto> lineItemDtos) {
@@ -543,6 +543,11 @@ public class SiglusPhysicalInventoryService {
       throw new ValidationMessageException(new Message(ERROR_NOT_ACCEPTABLE));
     }
     PhysicalInventoryDto physicalInventory = createNewDraft(physicalInventoryDto);
+    PhysicalInventoryExtension physicalInventoryExtension = buildPhysicalInventoryExtension(
+        physicalInventory, false);
+    log.info("physical inventory extension input for one program: {}", physicalInventoryExtension);
+    physicalInventoryExtensionRespository.save(physicalInventoryExtension);
+
     physicalInventory = getPhysicalInventoryWithLineItemForOneProgram(physicalInventory, false);
     splitPhysicalInventory(physicalInventory, splitNum);
     return physicalInventory;
@@ -774,6 +779,12 @@ public class SiglusPhysicalInventoryService {
           }
         }).collect(Collectors.toList());
     if (CollectionUtils.isNotEmpty(inventories)) {
+      inventories.forEach(eachInventory -> {
+        PhysicalInventoryExtension physicalInventoryExtension = buildPhysicalInventoryExtension(
+            eachInventory, true);
+        log.info("physical inventory extension input for all product: {}", physicalInventoryExtension);
+        physicalInventoryExtensionRespository.save(physicalInventoryExtension);
+      });
       return getResultInventoryForAllProducts(inventories, emptyList());
     }
     return null;
@@ -1014,6 +1025,24 @@ public class SiglusPhysicalInventoryService {
         .occurredDate(latest.getOccurredDate())
         .documentNumber(latest.getDocumentNumber())
         .signature(latest.getSignature())
+        .build();
+  }
+
+  private PhysicalInventoryExtension buildPhysicalInventoryExtension(
+      PhysicalInventoryDto physicalInventoryDto, boolean isForAllProduct) {
+    return PhysicalInventoryExtension
+        .builder()
+        .physicalInventoryId(physicalInventoryDto.getId())
+        .category(isForAllProduct ? ALL_PROGRAM : SINGLE_PROGRAM)
+        .build();
+  }
+
+  private PhysicalInventoryValidationDto buildPhysicalInventoryValidationDto(
+      boolean canStartInventory, List<UUID> conflictProgramIdList) {
+    return PhysicalInventoryValidationDto
+        .builder()
+        .canStartInventory(canStartInventory)
+        .containDraftProgramsList(conflictProgramIdList)
         .build();
   }
 }
