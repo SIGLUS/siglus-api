@@ -92,6 +92,9 @@ public class SiglusStockEventsService {
   @Value("${stockmanagement.kit.unpack.reasonId}")
   private UUID unpackReasonId;
 
+  @Value("${stockmanagement.kit.unpack.destination.nodeId}")
+  private UUID unpackDestinationNodeId;
+
   @Transactional
   public UUID createStockEvent(StockEventDto eventDto) {
     UUID userId = getUserId(eventDto);
@@ -349,7 +352,8 @@ public class SiglusStockEventsService {
   }
 
   private boolean isNotUnpack(StockEventDto eventDto) {
-    return !eventDto.hasReason(unpackReasonId);
+    return !(eventDto.hasLineItems() && eventDto.getLineItems().stream().anyMatch((lineItem) ->
+            unpackDestinationNodeId.equals(lineItem.getDestinationId())));
   }
 
   private String getDraftType(StockEventDto eventDto) {
