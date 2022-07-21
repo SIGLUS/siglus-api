@@ -299,12 +299,12 @@ public class SiglusStockManagementDraftService {
     StockManagementInitialDraftDto initialDraftDtoResponse = StockManagementInitialDraftDto
         .from(savedInitialDraft);
 
-    if (initialDraftDto.getDraftType().equals("issue")) {
+    if (initialDraftDto.getDraftType().equals(FieldConstants.ISSUE)) {
       String destinationName = findDestinationName(savedInitialDraft.getDestinationId(),
           savedInitialDraft.getFacilityId());
       initialDraftDtoResponse.setDestinationName(destinationName);
       return initialDraftDtoResponse;
-    } else if (initialDraftDto.getDraftType().equals("receive")) {
+    } else if (initialDraftDto.getDraftType().equals(FieldConstants.RECEIVE)) {
       String sourceName = findSourceName(savedInitialDraft.getSourceId(),
           savedInitialDraft.getFacilityId());
       initialDraftDtoResponse.setSourceName(sourceName);
@@ -425,13 +425,11 @@ public class SiglusStockManagementDraftService {
       throw new BusinessDataException(new Message(ERROR_STOCK_MANAGEMENT_SUB_DRAFT_EMPTY),
           "subDrafts empty");
     }
-    boolean ifAllSubmitted = subDrafts.stream()
+    boolean isAllSubmitted = subDrafts.stream()
         .allMatch(subDraft -> subDraft.getStatus().equals(PhysicalInventorySubDraftEnum.SUBMITTED));
-    if (ifAllSubmitted) {
+    if (isAllSubmitted) {
       List<MergedLineItemDto> mergedLineItemDtos = fillingMergedLineItemsFields(subDrafts);
-
       mergedLineItemDtos.forEach(this::fillingStockOnHandField);
-
       return mergedLineItemDtos;
     }
     throw new BusinessDataException(new Message(ERROR_STOCK_MANAGEMENT_SUB_DRAFT_NOT_ALL_SUBMITTED),

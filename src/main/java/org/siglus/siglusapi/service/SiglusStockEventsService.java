@@ -23,6 +23,8 @@ import static org.siglus.siglusapi.constant.FieldConstants.RECEIVE;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_LOT_ID_AND_CODE_SHOULD_EMPTY;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_IS_SUBMITTED;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_SUB_DRAFTS_QUANTITY_NOT_MATCH;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_SUB_DRAFT_EMPTY;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_TRADE_ITEM_IS_EMPTY;
 
 import com.google.common.collect.Maps;
@@ -53,17 +55,21 @@ import org.openlmis.stockmanagement.repository.StockEventsRepository;
 import org.openlmis.stockmanagement.service.StockEventProcessor;
 import org.siglus.common.dto.referencedata.OrderableDto;
 import org.siglus.siglusapi.domain.StockCardExtension;
+import org.siglus.siglusapi.domain.StockManagementDraft;
 import org.siglus.siglusapi.dto.LotDto;
 import org.siglus.siglusapi.dto.LotSearchParams;
 import org.siglus.siglusapi.dto.Message;
+import org.siglus.siglusapi.dto.StockEventForMultiUserDto;
 import org.siglus.siglusapi.dto.StockManagementDraftDto;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.StockCardExtensionRepository;
+import org.siglus.siglusapi.repository.StockManagementDraftRepository;
 import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
 import org.siglus.siglusapi.service.client.StockEventsStockManagementService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.util.SiglusDateHelper;
+import org.siglus.siglusapi.validator.ActiveDraftValidator;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -88,6 +94,8 @@ public class SiglusStockEventsService {
   private final SiglusDateHelper dateHelper;
   private final LotConflictService lotConflictService;
   private final SiglusAuthenticationHelper authenticationHelper;
+  private final StockManagementDraftRepository stockManagementDraftRepository;
+  private final ActiveDraftValidator draftValidator;
 
   @Value("${stockmanagement.kit.unpack.reasonId}")
   private UUID unpackReasonId;
@@ -142,7 +150,8 @@ public class SiglusStockEventsService {
 
       if (!programIdToEventId.isEmpty() && eventDto.isPhysicalInventory()) {
         siglusPhysicalInventoryService
-            .deletePhysicalInventoryForProductInOneProgramDirectly(eventDto.getFacilityId(), programId);
+            .deletePhysicalInventoryForProductInOneProgramDirectly(eventDto.getFacilityId(),
+                programId);
       }
       return programIdToEventId.get(programId);
     } else {
@@ -211,8 +220,10 @@ public class SiglusStockEventsService {
   @Transactional
   public void createAndFillLotId(StockEventDto eventDto) {
     final List<StockEventLineItemDto> lineItems = eventDto.getLineItems();
-    Set<UUID> orderableIds = lineItems.stream().map(StockEventLineItemDto::getOrderableId).collect(Collectors.toSet());
-    Map<UUID, OrderableDto> orderableDtos = orderableReferenceDataService.findByIds(orderableIds).stream()
+    Set<UUID> orderableIds = lineItems.stream().map(StockEventLineItemDto::getOrderableId)
+        .collect(Collectors.toSet());
+    Map<UUID, OrderableDto> orderableDtos = orderableReferenceDataService.findByIds(orderableIds)
+        .stream()
         .collect(Collectors.toMap(OrderableDto::getId, orderableDto -> orderableDto));
     for (StockEventLineItemDto eventLineItem : lineItems) {
       UUID orderableId = eventLineItem.getOrderableId();
@@ -242,7 +253,8 @@ public class SiglusStockEventsService {
     archiveProductService.activateProducts(eventDto.getFacilityId(), orderableIds);
   }
 
-  private void fillLotIdIfNull(UUID facilityId, OrderableDto orderable, StockEventLineItemDto eventLineItem) {
+  private void fillLotIdIfNull(UUID facilityId, OrderableDto orderable,
+      StockEventLineItemDto eventLineItem) {
     if (eventLineItem.getLotId() != null || isBlank(eventLineItem.getLotCode())) {
       // already done or nothing we can do since lot info is missing
       return;
@@ -253,7 +265,8 @@ public class SiglusStockEventsService {
   }
 
   private void validateLotMustBeNull(StockEventLineItemDto stockEventLineItem) {
-    if (StringUtils.isNotBlank(stockEventLineItem.getLotCode()) || stockEventLineItem.getLotId() != null) {
+    if (StringUtils.isNotBlank(stockEventLineItem.getLotCode())
+        || stockEventLineItem.getLotId() != null) {
       throw new ValidationMessageException(new Message(ERROR_LOT_ID_AND_CODE_SHOULD_EMPTY));
     }
   }
@@ -275,7 +288,8 @@ public class SiglusStockEventsService {
       return lotReferenceDataService.saveLot(lotDto);
     }
     lotConflictService
-        .handleLotConflict(facilityId, lotCode, existedLot.getId(), expirationDate, existedLot.getExpirationDate());
+        .handleLotConflict(facilityId, lotCode, existedLot.getId(), expirationDate,
+            existedLot.getExpirationDate());
     return existedLot;
   }
 
@@ -298,7 +312,8 @@ public class SiglusStockEventsService {
     lotSearchParams.setLotCode(lotCode);
     lotSearchParams.setTradeItemId(singletonList(UUID.fromString(tradeItemId)));
     List<LotDto> existedLots = lotReferenceDataService.getLots(lotSearchParams);
-    return existedLots.stream().filter(lotDto -> lotDto.getLotCode().equals(lotCode)).findFirst().orElse(null);
+    return existedLots.stream().filter(lotDto -> lotDto.getLotCode().equals(lotCode)).findFirst()
+        .orElse(null);
   }
 
   private void addStockCardCreateTime(StockEventDto eventDto) {
@@ -332,7 +347,8 @@ public class SiglusStockEventsService {
                 + stockEventLineItemDto.getReasonId()
                 + stockEventLineItemDto.getSourceId()
                 + stockEventLineItemDto.getDestinationId(),
-            stockEventLineItemDto -> Optional.ofNullable(stockEventLineItemDto.getDocumentationNo()).orElse(""),
+            stockEventLineItemDto -> Optional.ofNullable(stockEventLineItemDto.getDocumentationNo())
+                .orElse(""),
             (v1, v2) -> v1));
     List<StockCardLineItem> stockCardLineItems = stockCardLineItemRepository
         .findByOriginEvent(stockEventsRepository.findOne(stockEventId));
@@ -366,4 +382,24 @@ public class SiglusStockEventsService {
     }
   }
 
+  @Transactional
+  public UUID createStockEventForMultiUser(StockEventForMultiUserDto stockEventForMultiUserDto) {
+    List<UUID> subDraftIds = stockEventForMultiUserDto.getSubDrafts();
+    validatePreSubmitSubDraft(subDraftIds);
+    return createStockEvent(stockEventForMultiUserDto.getStockEvent());
+  }
+
+  private void validatePreSubmitSubDraft(List<UUID> subDraftIds) {
+    if (subDraftIds.isEmpty()) {
+      throw new ValidationMessageException(new Message(ERROR_STOCK_MANAGEMENT_SUB_DRAFT_EMPTY));
+    }
+    StockManagementDraft subDraft = stockManagementDraftRepository.findOne(subDraftIds.get(0));
+    draftValidator.validateSubDraft(subDraft);
+    int subDraftsQuantity = stockManagementDraftRepository
+        .countByInitialDraftId(subDraft.getInitialDraftId());
+    if (subDraftIds.size() != subDraftsQuantity) {
+      throw new ValidationMessageException(
+          new Message(ERROR_STOCK_MANAGEMENT_SUB_DRAFTS_QUANTITY_NOT_MATCH));
+    }
+  }
 }

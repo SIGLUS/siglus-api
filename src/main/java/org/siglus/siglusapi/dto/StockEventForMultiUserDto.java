@@ -15,41 +15,22 @@
 
 package org.siglus.siglusapi.dto;
 
-import static com.fasterxml.jackson.annotation.JsonFormat.Shape.STRING;
-
-import com.fasterxml.jackson.annotation.JsonFormat;
-import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.openlmis.stockmanagement.dto.StockEventDto;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class MergedLineItemDto {
+public class StockEventForMultiUserDto {
 
-  private UUID subDraftId;
+  private List<UUID> subDrafts;
 
-  private UUID orderableId;
+  private StockEventDto stockEvent;
 
-  private UUID lotId;
-
-  private String productCode;
-
-  private String productName;
-
-  private String lotCode;
-
-  @JsonFormat(shape = STRING)
-  private LocalDate expirationDate;
-
-  private Integer stockOnHand;
-
-  private Integer quantity;
-
-  @JsonFormat(shape = STRING)
-  private LocalDate occurredDate;
 }
