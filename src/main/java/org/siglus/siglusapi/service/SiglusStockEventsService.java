@@ -211,6 +211,7 @@ public class SiglusStockEventsService {
       } else if (isNotUnpack(eventDto)) {
         String type = getDraftType(eventDto);
         eventDto.setType(type);
+        //TODO: change delete logic
         stockManagementDraftService.deleteStockManagementDraft(eventDto);
       }
     }

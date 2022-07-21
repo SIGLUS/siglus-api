@@ -274,7 +274,7 @@ public class SiglusStockManagementDraftService {
 
     return destinationsForAllProducts
         .stream().filter(destination -> (
-            destination.getId().equals(destinationId)
+            destination.getNode().getId().equals(destinationId)
         )).findFirst()
         .orElseThrow(() -> new NotFoundException("No such destination with id: " + destinationId))
         .getName();
