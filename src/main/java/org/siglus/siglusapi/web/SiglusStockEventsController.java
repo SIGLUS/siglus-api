@@ -17,6 +17,7 @@ package org.siglus.siglusapi.web;
 
 import java.util.UUID;
 import org.openlmis.stockmanagement.dto.StockEventDto;
+import org.siglus.siglusapi.dto.StockEventForMultiUserDto;
 import org.siglus.siglusapi.service.SiglusStockEventsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,4 +39,9 @@ public class SiglusStockEventsController {
     return stockEventsService.createStockEvent(eventDto);
   }
 
+  @PostMapping("/multiUser")
+  @Transactional
+  public UUID createStockEvent(@RequestBody StockEventForMultiUserDto stockEventForMultiUserDto) {
+    return stockEventsService.createStockEventForMultiUser(stockEventForMultiUserDto);
+  }
 }

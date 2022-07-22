@@ -33,6 +33,8 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.requisition.dto.DetailedRoleAssignmentDto;
 import org.openlmis.requisition.dto.RoleDto;
 import org.siglus.siglusapi.dto.UserDto;
+import org.siglus.siglusapi.repository.FacilitySupplierLevelRepository;
+import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusUserReferenceDataService;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
@@ -46,13 +48,18 @@ public class SiglusAuthenticationHelperTest {
   private final SecurityContext securityContext = mock(SecurityContext.class);
   private final Authentication authentication = mock(OAuth2Authentication.class);
   @Mock private SiglusUserReferenceDataService referenceDataService;
+  @Mock private SiglusFacilityReferenceDataService siglusFacilityReferenceDataService;
+  @Mock private FacilitySupplierLevelRepository facilitySupplierLevelRepository;
   private SiglusAuthenticationHelper authenticationHelper;
 
   @Before
   public void setup() {
     SecurityContextHolder.setContext(securityContext);
     given(securityContext.getAuthentication()).willReturn(authentication);
-    authenticationHelper = new SiglusAuthenticationHelper(referenceDataService);
+    authenticationHelper = new SiglusAuthenticationHelper(
+        referenceDataService,
+        facilitySupplierLevelRepository,
+        siglusFacilityReferenceDataService);
   }
 
   @Test

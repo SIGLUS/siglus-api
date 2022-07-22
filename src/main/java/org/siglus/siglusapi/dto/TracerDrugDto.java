@@ -15,41 +15,42 @@
 
 package org.siglus.siglusapi.dto;
 
-import static com.fasterxml.jackson.annotation.JsonFormat.Shape.STRING;
-
-import com.fasterxml.jackson.annotation.JsonFormat;
-import java.time.LocalDate;
-import java.util.UUID;
+import javax.persistence.ColumnResult;
+import javax.persistence.ConstructorResult;
+import javax.persistence.MappedSuperclass;
+import javax.persistence.NamedNativeQuery;
+import javax.persistence.SqlResultSetMapping;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+
+@NamedNativeQuery(
+    name = "TracerDrug.findTracerDrug",
+    query = " select code as productCode,\n"
+        + "       fullproductname as productName\n"
+        + "       from referencedata.orderables where extradata @> '{\"isTracer\": true}' ",
+    resultSetMapping = "TracerDrug.TracerDrugDto")
+
+@MappedSuperclass
+@SqlResultSetMapping(
+    name = "TracerDrug.TracerDrugDto",
+    classes = @ConstructorResult(
+        targetClass = TracerDrugDto.class,
+        columns = {
+            @ColumnResult(name = "productCode", type = String.class),
+            @ColumnResult(name = "productName", type = String.class),
+        }
+    )
+)
+
 @Data
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Builder
-public class MergedLineItemDto {
-
-  private UUID subDraftId;
-
-  private UUID orderableId;
-
-  private UUID lotId;
+public class TracerDrugDto {
 
   private String productCode;
-
   private String productName;
-
-  private String lotCode;
-
-  @JsonFormat(shape = STRING)
-  private LocalDate expirationDate;
-
-  private Integer stockOnHand;
-
-  private Integer quantity;
-
-  @JsonFormat(shape = STRING)
-  private LocalDate occurredDate;
 }

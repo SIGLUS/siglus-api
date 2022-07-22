@@ -140,6 +140,7 @@ public class SiglusStockEventsServiceTest {
   private final StockEventLineItemDto lineItemDto2 = new StockEventLineItemDtoDataBuilder().buildForPhysicalInventory();
 
   private final UUID unpackReasonId = UUID.randomUUID();
+  private final UUID unpackDestinationNodeId = UUID.randomUUID();
 
   @Before
   public void prepare() {
@@ -160,6 +161,7 @@ public class SiglusStockEventsServiceTest {
     lineItemDto2.setOrderableId(orderableId2);
     lineItemDto2.setExtraData(getExtraData());
     ReflectionTestUtils.setField(siglusStockEventsService, "unpackReasonId", unpackReasonId);
+    ReflectionTestUtils.setField(siglusStockEventsService, "unpackDestinationNodeId", unpackDestinationNodeId);
   }
 
   @Test
@@ -333,7 +335,7 @@ public class SiglusStockEventsServiceTest {
   public void shouldCallStockEventApiWhenUnpackKitEvent() {
     // given
     StockEventLineItemDto lineItemDtoUnpackKit = new StockEventLineItemDtoDataBuilder().build();
-    lineItemDtoUnpackKit.setDestinationId(null);
+    lineItemDtoUnpackKit.setDestinationId(unpackDestinationNodeId);
     lineItemDtoUnpackKit.setSourceId(null);
     lineItemDtoUnpackKit.setReasonId(unpackReasonId);
     lineItemDtoUnpackKit.setOrderableId(orderableId1);

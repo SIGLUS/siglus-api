@@ -203,9 +203,13 @@ public class SiglusStockManagementDraftService {
             true,
             dto.getType());
     if (!drafts.isEmpty()) {
-      log.info("delete stockmanagement draft, programId: {}, facilityId: {}", dto.getProgramId(),
+      UUID initialDraftId = drafts.get(0).getInitialDraftId();
+      log.info("delete stock management subDrafts, programId: {}, facilityId: {}",
+          dto.getProgramId(),
           dto.getFacilityId());
       stockManagementDraftRepository.delete(drafts);
+      log.info("delete stock management initial draft with id: {}", initialDraftId);
+      stockManagementInitialDraftsRepository.delete(initialDraftId);
     }
   }
 
@@ -274,7 +278,7 @@ public class SiglusStockManagementDraftService {
 
     return destinationsForAllProducts
         .stream().filter(destination -> (
-            destination.getId().equals(destinationId)
+            destination.getNode().getId().equals(destinationId)
         )).findFirst()
         .orElseThrow(() -> new NotFoundException("No such destination with id: " + destinationId))
         .getName();
@@ -299,12 +303,12 @@ public class SiglusStockManagementDraftService {
     StockManagementInitialDraftDto initialDraftDtoResponse = StockManagementInitialDraftDto
         .from(savedInitialDraft);
 
-    if (initialDraftDto.getDraftType().equals("issue")) {
+    if (initialDraftDto.getDraftType().equals(FieldConstants.ISSUE)) {
       String destinationName = findDestinationName(savedInitialDraft.getDestinationId(),
           savedInitialDraft.getFacilityId());
       initialDraftDtoResponse.setDestinationName(destinationName);
       return initialDraftDtoResponse;
-    } else if (initialDraftDto.getDraftType().equals("receive")) {
+    } else if (initialDraftDto.getDraftType().equals(FieldConstants.RECEIVE)) {
       String sourceName = findSourceName(savedInitialDraft.getSourceId(),
           savedInitialDraft.getFacilityId());
       initialDraftDtoResponse.setSourceName(sourceName);
@@ -425,13 +429,11 @@ public class SiglusStockManagementDraftService {
       throw new BusinessDataException(new Message(ERROR_STOCK_MANAGEMENT_SUB_DRAFT_EMPTY),
           "subDrafts empty");
     }
-    boolean ifAllSubmitted = subDrafts.stream()
+    boolean isAllSubmitted = subDrafts.stream()
         .allMatch(subDraft -> subDraft.getStatus().equals(PhysicalInventorySubDraftEnum.SUBMITTED));
-    if (ifAllSubmitted) {
+    if (isAllSubmitted) {
       List<MergedLineItemDto> mergedLineItemDtos = fillingMergedLineItemsFields(subDrafts);
-
       mergedLineItemDtos.forEach(this::fillingStockOnHandField);
-
       return mergedLineItemDtos;
     }
     throw new BusinessDataException(new Message(ERROR_STOCK_MANAGEMENT_SUB_DRAFT_NOT_ALL_SUBMITTED),

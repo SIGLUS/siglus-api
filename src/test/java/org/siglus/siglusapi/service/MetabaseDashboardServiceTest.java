@@ -31,12 +31,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.requisition.dto.RoleAssignmentDto;
-import org.siglus.siglusapi.domain.FacilitySuppierLevel;
 import org.siglus.siglusapi.domain.MetaBaseConfig;
 import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.FacilityTypeDto;
 import org.siglus.siglusapi.dto.UserDto;
-import org.siglus.siglusapi.repository.FacilitySupplierLevelRepository;
 import org.siglus.siglusapi.repository.MetabaseDashboardRepository;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
@@ -57,9 +55,6 @@ public class MetabaseDashboardServiceTest {
 
   @Mock
   private SiglusFacilityReferenceDataService siglusFacilityReferenceDataService;
-
-  @Mock
-  private FacilitySupplierLevelRepository facilitySupplierLevelRepository;
 
   private final UserDto uesrDto = new UserDto();
 
@@ -102,8 +97,7 @@ public class MetabaseDashboardServiceTest {
     facilityTypeDto.setCode("DPM");
     when(siglusFacilityReferenceDataService.findOne((UUID) any())).thenReturn(FacilityDto.builder()
         .type(facilityTypeDto).code("10000").build());
-    when(facilitySupplierLevelRepository.findByFacilityTypeCode(
-        anyString())).thenReturn(Optional.of(FacilitySuppierLevel.builder().level("PROVINCE").build()));
+    when(authenticationHelper.getFacilityGeographicZoneLevel()).thenReturn("PROVINCE");
     // when
     String payload = siglusMetabaseDashboardService.getPayloadByDashboardName(anyString());
     // then
@@ -120,8 +114,7 @@ public class MetabaseDashboardServiceTest {
     facilityTypeDto.setCode("DDM");
     when(siglusFacilityReferenceDataService.findOne((UUID) any())).thenReturn(FacilityDto.builder()
         .type(facilityTypeDto).code("10000").build());
-    when(facilitySupplierLevelRepository.findByFacilityTypeCode(
-        anyString())).thenReturn(Optional.of(FacilitySuppierLevel.builder().level("DISTRICT").build()));
+    when(authenticationHelper.getFacilityGeographicZoneLevel()).thenReturn("DISTRICT");
     // when
     String payload = siglusMetabaseDashboardService.getPayloadByDashboardName(anyString());
     // then
@@ -139,8 +132,7 @@ public class MetabaseDashboardServiceTest {
     facilityTypeDto.setCode("CS");
     when(siglusFacilityReferenceDataService.findOne((UUID) any())).thenReturn(FacilityDto.builder()
         .type(facilityTypeDto).code("10000").build());
-    when(facilitySupplierLevelRepository.findByFacilityTypeCode(
-        anyString())).thenReturn(Optional.empty());
+    when(authenticationHelper.getFacilityGeographicZoneLevel()).thenReturn("SITE");
     // when
     String payload = siglusMetabaseDashboardService.getPayloadByDashboardName(anyString());
     // then

@@ -13,26 +13,36 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.task;
+package org.siglus.siglusapi.web.report;
 
-import java.time.LocalDate;
-import javax.transaction.Transactional;
-import lombok.RequiredArgsConstructor;
-import net.javacrumbs.shedlock.core.SchedulerLock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import junit.framework.TestCase;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 import org.siglus.siglusapi.service.task.report.TracerDrugReportService;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Service;
 
-@RequiredArgsConstructor
-@Service
-public class TracerDrugPersistentDataTask {
+@RunWith(MockitoJUnitRunner.class)
+public class TracerDrugReportControllerTest extends TestCase {
 
-  private final TracerDrugReportService tracerDrugReportService;
+  @InjectMocks
+  private TracerDrugReportController tracerDrugReportController;
 
-  @Scheduled(cron = "${report.tarcer.drug.cron}", zone = "${time.zoneId}")
-  @SchedulerLock(name = "tarcer_drug_report")
-  @Transactional
-  public void refreshForTracerDrugReport() {
-    tracerDrugReportService.refreshTracerDrugPersistentData(LocalDate.now().toString(), LocalDate.now().toString());
+  @Mock
+  private TracerDrugReportService tracerDrugReportService;
+
+  @Test
+  public void shouldCallServiceWhenGetTracerDrugExportDto() {
+    // given
+    when(tracerDrugReportService.getTracerDrugExportDto()).thenReturn(null);
+    // when
+    tracerDrugReportController.getTracerDrugExportDto();
+    // then
+    verify(tracerDrugReportService).getTracerDrugExportDto();
   }
+
 }

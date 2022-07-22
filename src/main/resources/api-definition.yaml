@@ -312,9 +312,9 @@ traits:
         responses:
           201:
             description: submit success
-    /task/tracerDrug:
+    /report/tracerDrug:
       displayName: run tracer drug persistent data task
-    /task/tracerDrug/refresh:
+    /report/tracerDrug/refresh:
       displayName: refresh tracer drug persistent data task
       post:
         is: [ secured ]
@@ -324,7 +324,7 @@ traits:
         responses:
           201:
             description: submit success
-    /task/tracerDrug/initialize:
+    /report/tracerDrug/initialize:
       displayName: initialize tracer drug persistent data task
       post:
         is: [ secured ]
@@ -334,6 +334,17 @@ traits:
         responses:
           201:
             description: submit success
+    /report/tracerDrug/exportFilter:
+      displayName: get tracer drug export filter info
+      get:
+        is: [ secured ]
+        body:
+          application/json:
+            schema: arrayOfStrings
+        responses:
+          200:
+            description: success
+
     /programs:
       displayName: Program
       get:
@@ -741,6 +752,30 @@ traits:
         body:
           application/json:
             schema: stockEventDto
+        responses:
+          201:
+            description: Stock event has been processed with no validatoin error or persistence error.
+            body:
+              application/json:
+                schema: uuid
+          400:
+            description: Failed to process stock event due to validation error.
+            body:
+              application/json:
+                schema: localizedMessage
+          403:
+            description: User does not have permission to create stock events for given facility and program.
+            body:
+              application/json:
+                schema: localizedMessage
+
+    /stockEvents/multiUser:
+      post:
+        is: [ secured ]
+        description: Create a new stock event with one or more orderables for multi-user.
+        body:
+          application/json:
+            schema: stockEventForMultiUserDto
         responses:
           201:
             description: Stock event has been processed with no validatoin error or persistence error.

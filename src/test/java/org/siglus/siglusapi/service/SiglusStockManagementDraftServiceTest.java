@@ -49,6 +49,7 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.openlmis.stockmanagement.domain.sourcedestination.Node;
 import org.openlmis.stockmanagement.dto.StockCardDto;
 import org.openlmis.stockmanagement.dto.StockEventDto;
 import org.openlmis.stockmanagement.dto.ValidSourceDestinationDto;
@@ -181,6 +182,8 @@ public class SiglusStockManagementDraftServiceTest {
 
   private final StockCardDto stockCardDto1 = StockCardDto.builder().stockOnHand(100).build();
   private final StockCardDto stockCardDto2 = StockCardDto.builder().stockOnHand(200).build();
+
+  private final Node node = new Node();
 
   @Before
   public void setup() {
@@ -368,9 +371,10 @@ public class SiglusStockManagementDraftServiceTest {
 
   @Test
   public void shouldFindStockManagementIssueInitialDraft() {
+    node.setId(destinationId);
     ValidSourceDestinationDto validSourceDestinationDto = new ValidSourceDestinationDto();
-    validSourceDestinationDto.setId(destinationId);
     validSourceDestinationDto.setName("issue-location");
+    validSourceDestinationDto.setNode(node);
 
     Collection<ValidSourceDestinationDto> validSourceDestinationDtos = new ArrayList<>(
         Collections.emptyList());
@@ -422,9 +426,10 @@ public class SiglusStockManagementDraftServiceTest {
 
   @Test
   public void shouldCreateInitialIssueDraft() {
+    node.setId(destinationId);
     ValidSourceDestinationDto validSourceDestinationDto = new ValidSourceDestinationDto();
-    validSourceDestinationDto.setId(destinationId);
     validSourceDestinationDto.setName("issue-location");
+    validSourceDestinationDto.setNode(node);
 
     Collection<ValidSourceDestinationDto> validSourceDestinationDtos = new ArrayList<>(
         Collections.emptyList());
