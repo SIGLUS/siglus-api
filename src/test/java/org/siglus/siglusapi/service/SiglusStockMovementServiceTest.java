@@ -82,7 +82,7 @@ public class SiglusStockMovementServiceTest {
     when(stockManagementRepository.getAllProductMovements(any(), any(), any(), any()))
         .thenReturn(period);
     List<StockMovementResDto> productMovements = stockMovementService.getProductMovements(null, null, null, null);
-    assertEquals(productMovements, productMovements);
+    assertEquals(3, productMovements.size());
   }
 
   private PeriodOfProductMovements mockPeriodOfProductMovements() {
