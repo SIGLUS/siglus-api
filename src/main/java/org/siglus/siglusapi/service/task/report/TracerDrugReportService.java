@@ -73,10 +73,8 @@ public class TracerDrugReportService {
 
 
   public TracerDrugExportDto getTracerDrugExportDto() {
-    String facilityCode = siglusFacilityReferenceDataService
-        .findOne(authenticationHelper.getCurrentUser().getHomeFacilityId()).getCode();
 
-    List<AssociatedGeographicZoneDto> associatedGeographicZones = getRequisitionGeographicZonesDtos(facilityCode);
+    List<AssociatedGeographicZoneDto> associatedGeographicZones = getRequisitionGeographicZonesDtos();
 
     List<TracerDrugDto> tracerDrugInfo = tracerDrugRepository.getTracerDrugInfo();
 
@@ -87,13 +85,16 @@ public class TracerDrugReportService {
         .build();
   }
 
-  private List<AssociatedGeographicZoneDto> getRequisitionGeographicZonesDtos(String facilityCode) {
-    String level = authenticationHelper.getFacilityGeographicZoneLevel();
+  private List<AssociatedGeographicZoneDto> getRequisitionGeographicZonesDtos() {
     List<RequisitionGeographicZonesDto> requisitionGeographicZones = tracerDrugRepository
         .getAllRequisitionGeographicZones();
     if (authenticationHelper.isTheCurrentUserAdmin()) {
       return getDistinctGeographicZones(getAssociatedGeographicZoneDto(requisitionGeographicZones));
-    } else if (Objects.equals(level, DISTRICT)) {
+    }
+    String level = authenticationHelper.getFacilityGeographicZoneLevel();
+    String facilityCode = siglusFacilityReferenceDataService
+        .findOne(authenticationHelper.getCurrentUser().getHomeFacilityId()).getCode();
+    if (Objects.equals(level, DISTRICT)) {
       requisitionGeographicZones = getAuthorizedGeographicZonesByDistrictLevel(facilityCode,
           requisitionGeographicZones);
     } else if (Objects.equals(level, PROVINCE)) {
@@ -111,11 +112,13 @@ public class TracerDrugReportService {
 
     List<AssociatedGeographicZoneDto> districtGeographicZoneDto = requisitionGeographicZones
         .stream()
+        .filter(o -> o.getDistrictCode() != null)
         .map(o -> o.getDistrictGeographicZoneDtoFrom(o))
         .collect(Collectors.toList());
 
     List<AssociatedGeographicZoneDto> provinceGeographicZoneDto = requisitionGeographicZones
         .stream()
+        .filter(o -> o.getProvinceCode() != null)
         .map(o -> o.getProvinceGeographicZoneDtoFrom(o))
         .collect(Collectors.toList());
     return ListUtils.union(districtGeographicZoneDto, provinceGeographicZoneDto);
