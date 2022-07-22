@@ -24,10 +24,8 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Base64;
 import java.util.Map;
-import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.siglus.siglusapi.domain.FacilityLevel;
-import org.siglus.siglusapi.domain.FacilitySuppierLevel;
 import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.MetabaseUrlDto;
 import org.siglus.siglusapi.repository.FacilitySupplierLevelRepository;
@@ -106,15 +104,6 @@ public class MetabaseDashboardService {
     return String.format(PAYLOAD_TEMPLATE, dashboardId, requestParam);
   }
 
-  private String getLevelByTypeCode(String typeCode) {
-    Optional<FacilitySuppierLevel> facilityTypeCodeOptional = facilitySupplierLevelRepository.findByFacilityTypeCode(
-        typeCode);
-    if (facilityTypeCodeOptional.isPresent()) {
-      return facilityTypeCodeOptional.get().getLevel();
-    }
-    return FacilityLevel.SITE.getFacilityLevelName();
-  }
-
   private Integer getDashboardIdByDashboardName(String dashboardName) {
     return metabaseDashboardRepository.findByDashboardName(dashboardName)
         .orElseThrow(() -> new IllegalArgumentException(
@@ -122,7 +111,7 @@ public class MetabaseDashboardService {
   }
 
   private String getRequestParamByFacility(FacilityDto facility) {
-    String level = getLevelByTypeCode(facility.getType().getCode());
+    String level = authenticationHelper.getFacilityGeographicZoneLevel();
     String paramKey = FacilityLevel.findMetabaseRequestParamKeyByLevel(level);
     return String.format(PARAM_TEMPLATE, paramKey, facility.getCode());
   }

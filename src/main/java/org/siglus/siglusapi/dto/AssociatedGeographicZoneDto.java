@@ -13,26 +13,18 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.task;
+package org.siglus.siglusapi.dto;
 
-import java.time.LocalDate;
-import javax.transaction.Transactional;
-import lombok.RequiredArgsConstructor;
-import net.javacrumbs.shedlock.core.SchedulerLock;
-import org.siglus.siglusapi.service.task.report.TracerDrugReportService;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Service;
+import lombok.Builder;
+import lombok.Data;
 
-@RequiredArgsConstructor
-@Service
-public class TracerDrugPersistentDataTask {
+@Builder
+@Data
+public class AssociatedGeographicZoneDto {
 
-  private final TracerDrugReportService tracerDrugReportService;
-
-  @Scheduled(cron = "${report.tarcer.drug.cron}", zone = "${time.zoneId}")
-  @SchedulerLock(name = "tarcer_drug_report")
-  @Transactional
-  public void refreshForTracerDrugReport() {
-    tracerDrugReportService.refreshTracerDrugPersistentData(LocalDate.now().toString(), LocalDate.now().toString());
-  }
+  private String name;
+  private String code;
+  private String parentCode;
+  private String level;
+  private Integer levelCode;
 }

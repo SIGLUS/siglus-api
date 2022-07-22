@@ -312,9 +312,9 @@ traits:
         responses:
           201:
             description: submit success
-    /task/tracerDrug:
+    /report/tracerDrug:
       displayName: run tracer drug persistent data task
-    /task/tracerDrug/refresh:
+    /report/tracerDrug/refresh:
       displayName: refresh tracer drug persistent data task
       post:
         is: [ secured ]
@@ -324,7 +324,7 @@ traits:
         responses:
           201:
             description: submit success
-    /task/tracerDrug/initialize:
+    /report/tracerDrug/initialize:
       displayName: initialize tracer drug persistent data task
       post:
         is: [ secured ]
@@ -334,6 +334,17 @@ traits:
         responses:
           201:
             description: submit success
+    /report/tracerDrug/exportFilter:
+      displayName: get tracer drug export filter info
+      get:
+        is: [ secured ]
+        body:
+          application/json:
+            schema: arrayOfStrings
+        responses:
+          200:
+            description: success
+
     /programs:
       displayName: Program
       get:

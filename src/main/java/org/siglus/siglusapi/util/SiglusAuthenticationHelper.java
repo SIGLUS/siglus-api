@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.util;
 
+import static org.siglus.siglusapi.constant.FieldConstants.SITE;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_USER_NOT_FOUND;
 
 import java.util.Arrays;
@@ -27,9 +28,12 @@ import lombok.RequiredArgsConstructor;
 import org.javers.common.collections.Sets;
 import org.openlmis.requisition.dto.DetailedRoleAssignmentDto;
 import org.openlmis.requisition.dto.RoleAssignmentDto;
+import org.siglus.siglusapi.domain.FacilitySuppierLevel;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.exception.AuthenticationException;
+import org.siglus.siglusapi.repository.FacilitySupplierLevelRepository;
+import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusUserReferenceDataService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -42,6 +46,8 @@ public class SiglusAuthenticationHelper {
 
   public static final String MIGRATE_DATA = "MIGRATE_DATA";
   private final SiglusUserReferenceDataService userService;
+  private final FacilitySupplierLevelRepository facilitySupplierLevelRepository;
+  private final SiglusFacilityReferenceDataService siglusFacilityReferenceDataService;
   @Value("${role.admin.id}")
   private String roleAdminId;
   @Value("${role.role2.warehouse.manager}")
@@ -101,6 +107,18 @@ public class SiglusAuthenticationHelper {
       return "";
     }
     return userService.getUserDetailDto(userId).getUsername();
+  }
+
+  public String getFacilityGeographicZoneLevel() {
+
+    String typeCode = siglusFacilityReferenceDataService
+        .findOne(getCurrentUser().getHomeFacilityId()).getType().getCode();
+    Optional<FacilitySuppierLevel> facilityTypeCodeOptional = facilitySupplierLevelRepository.findByFacilityTypeCode(
+        typeCode);
+    if (facilityTypeCodeOptional.isPresent()) {
+      return facilityTypeCodeOptional.get().getLevel();
+    }
+    return SITE;
   }
 
   public boolean isTheCurrentUserAdmin() {
