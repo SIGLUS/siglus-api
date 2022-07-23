@@ -50,6 +50,9 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
@@ -91,6 +94,8 @@ import org.siglus.siglusapi.util.SupportedProgramsHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -141,6 +146,9 @@ public class SiglusPhysicalInventoryService {
 
   @Autowired
   private PhysicalInventoryExtensionRepository physicalInventoryExtensionRespository;
+
+  @Autowired
+  private ExecutorService executor;
 
   public List<PhysicalInventoryLineItemDto> buildInitialInventoryLineItemDtos(
           Set<UUID> supportedVirtualProgramIds, UUID facilityId) {
@@ -746,9 +754,8 @@ public class SiglusPhysicalInventoryService {
             new org.openlmis.stockmanagement.util.Message(ERROR_PROGRAM_NOT_SUPPORTED,
                 ALL_PRODUCTS_PROGRAM_ID));
       }
-      List<PhysicalInventoryDto> inventories = supportedPrograms.stream().map(
-          supportedVirtualProgram -> getPhysicalInventoryDtos(supportedVirtualProgram, facilityId,
-              isDraft)).flatMap(Collection::stream).collect(Collectors.toList());
+      List<PhysicalInventoryDto> inventories = getPhysicalInventories(supportedPrograms,
+              facilityId, isDraft);
 
       if (CollectionUtils.isNotEmpty(inventories)) {
         List<UUID> updatePhysicalInventoryIds =
@@ -763,6 +770,38 @@ public class SiglusPhysicalInventoryService {
     } catch (PermissionMessageException e) {
       throw new PermissionMessageException(
           new org.openlmis.stockmanagement.util.Message(ERROR_PERMISSION_NOT_SUPPORTED), e);
+    }
+  }
+
+  @SuppressWarnings("PMD.AvoidThrowingRawExceptionTypes")
+  private List<PhysicalInventoryDto> getPhysicalInventories(Set<UUID> programIds,
+                                                            UUID facilityId,
+                                                            Boolean isDraft) {
+    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+    List<CompletableFuture<List<PhysicalInventoryDto>>> futures = programIds.stream()
+            .map(programId ->
+                    CompletableFuture.supplyAsync(() -> {
+                      SecurityContextHolder.getContext().setAuthentication(auth);
+                      return getPhysicalInventoryDtos(programId, facilityId, isDraft);
+                    }, executor))
+            .collect(Collectors.toList());
+
+    CompletableFuture<Void> allFutures = CompletableFuture.allOf(
+            futures.toArray(new CompletableFuture[futures.size()]));
+
+    try {
+      allFutures.get();
+      List<PhysicalInventoryDto> list = new ArrayList<>();
+      for (CompletableFuture<List<PhysicalInventoryDto>> future : futures) {
+        List<PhysicalInventoryDto> physicalInventoryDtos = future.get();
+        list.addAll(physicalInventoryDtos);
+      }
+      return list;
+      // TODO should handle exceptions?
+    } catch (InterruptedException e) {
+      throw new RuntimeException(e);
+    } catch (ExecutionException e) {
+      throw new RuntimeException(e);
     }
   }
 
