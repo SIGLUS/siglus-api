@@ -53,8 +53,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.ExecutorService;
-
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
@@ -64,10 +62,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.invocation.InvocationOnMock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.mockito.stubbing.Answer;
 import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.requisition.dto.OrderableDto;
 import org.openlmis.stockmanagement.domain.physicalinventory.PhysicalInventory;
@@ -172,9 +167,6 @@ public class SiglusPhysicalInventoryServiceTest {
 
   @Mock
   private SiglusAuthenticationHelper authenticationHelper;
-
-  @Mock
-  private ExecutorService executorService;
 
   private final UUID facilityId = UUID.randomUUID();
 
@@ -463,15 +455,6 @@ public class SiglusPhysicalInventoryServiceTest {
   @Test
   public void shouldCallV3MultipleTimesWhenGetPhysicalInventoryForAllProducts() {
     // given
-    Mockito.doAnswer(new Answer() {
-      @Override
-      public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
-        Object[] args = invocationOnMock.getArguments();
-        Runnable runnable = (Runnable) args[0];
-        runnable.run();
-        return null;
-      }
-    }).when(executorService).execute(Mockito.any(Runnable.class));
     when(supportedProgramsHelper.findHomeFacilitySupportedProgramIds())
         .thenReturn(Sets.newHashSet(programIdOne, programIdTwo));
     when(physicalInventoryStockManagementService.searchPhysicalInventory(programIdOne, facilityId,
@@ -544,15 +527,6 @@ public class SiglusPhysicalInventoryServiceTest {
   @Test
   public void shouldGetExtensionTextWhenGetPhysicalInventoryForAllProducts() {
     // given
-    Mockito.doAnswer(new Answer() {
-      @Override
-      public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
-        Object[] args = invocationOnMock.getArguments();
-        Runnable runnable = (Runnable) args[0];
-        runnable.run();
-        return null;
-      }
-    }).when(executorService).execute(Mockito.any(Runnable.class));
     when(supportedProgramsHelper.findHomeFacilitySupportedProgramIds())
         .thenReturn(Sets.newHashSet(programIdOne));
     PhysicalInventoryLineItemDto lineItemDtoOne = PhysicalInventoryLineItemDto.builder()
