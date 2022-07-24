@@ -83,15 +83,12 @@ import org.siglus.siglusapi.repository.PhysicalInventoryLineItemsExtensionReposi
 import org.siglus.siglusapi.repository.PhysicalInventorySubDraftRepository;
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
-import org.siglus.siglusapi.util.AsyncExecutor;
 import org.siglus.siglusapi.util.CustomListSortHelper;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.util.SupportedProgramsHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -624,7 +621,7 @@ public class SiglusPhysicalInventoryService {
     createNewDraftForAllProducts(dto);
     Set<UUID> programIds = dto.getLineItems().stream()
         .map(PhysicalInventoryLineItemDto::getProgramId).collect(Collectors.toSet());
-    List<PhysicalInventoryDto> inventories = concurrentlyFetchPhysicalInventories(programIds, dto.getFacilityId(),
+    List<PhysicalInventoryDto> inventories = fetchPhysicalInventories(programIds, dto.getFacilityId(),
         Boolean.TRUE);
     inventories.forEach(inventory -> inventory.setLineItems(
         dto.getLineItems().stream()
@@ -713,7 +710,7 @@ public class SiglusPhysicalInventoryService {
     Set<UUID> supportedPrograms = Collections.singleton(programId);
 
     List<PhysicalInventoryDto> inventories =
-        concurrentlyFetchPhysicalInventories(supportedPrograms, facilityId, isDraft);
+        fetchPhysicalInventories(supportedPrograms, facilityId, isDraft);
     if (CollectionUtils.isNotEmpty(inventories)) {
       List<UUID> updatePhysicalInventoryIds =
           inventories.stream().map(PhysicalInventoryDto::getId).collect(Collectors.toList());
@@ -738,7 +735,7 @@ public class SiglusPhysicalInventoryService {
                 ALL_PRODUCTS_PROGRAM_ID));
       }
       List<PhysicalInventoryDto> inventories =
-          concurrentlyFetchPhysicalInventories(supportedPrograms, facilityId, isDraft);
+          fetchPhysicalInventories(supportedPrograms, facilityId, isDraft);
       if (CollectionUtils.isNotEmpty(inventories)) {
         List<UUID> updatePhysicalInventoryIds =
             inventories.stream().map(PhysicalInventoryDto::getId).collect(Collectors.toList());
@@ -756,14 +753,10 @@ public class SiglusPhysicalInventoryService {
     }
   }
 
-  private List<PhysicalInventoryDto> concurrentlyFetchPhysicalInventories(
+  private List<PhysicalInventoryDto> fetchPhysicalInventories(
       Set<UUID> supportedPrograms, UUID facilityId, Boolean isDraft) {
-    SecurityContext currentContext = SecurityContextHolder.getContext();
-    return AsyncExecutor.of(supportedPrograms)
-        .map(
-            it ->
-                AsyncExecutor.supplyWithContext(
-                    currentContext, () -> getPhysicalInventoryDtos(it, facilityId, isDraft)))
+    return supportedPrograms.stream()
+        .map(it -> getPhysicalInventoryDtos(it, facilityId, isDraft))
         .flatMap(Collection::stream)
         .collect(Collectors.toList());
   }
