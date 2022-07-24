@@ -61,7 +61,6 @@ import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.repository.OrderableRepository;
 import org.siglus.siglusapi.repository.PhysicalInventoryLineItemsExtensionRepository;
 import org.siglus.siglusapi.repository.PhysicalInventorySubDraftRepository;
-import org.siglus.siglusapi.service.client.PhysicalInventoryStockManagementService;
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
@@ -82,9 +81,6 @@ public class SiglusPhysicalInventorySubDraftServiceTest {
 
   @InjectMocks
   private SiglusPhysicalInventorySubDraftService siglusPhysicalInventorySubDraftService;
-
-  @Mock
-  private PhysicalInventoryStockManagementService physicalInventoryStockManagementService;
 
   @Mock
   private SupportedProgramsHelper supportedProgramsHelper;

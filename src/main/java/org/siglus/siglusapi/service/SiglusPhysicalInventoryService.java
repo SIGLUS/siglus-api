@@ -61,7 +61,6 @@ import org.openlmis.stockmanagement.dto.PhysicalInventoryLineItemDto;
 import org.openlmis.stockmanagement.exception.PermissionMessageException;
 import org.openlmis.stockmanagement.repository.PhysicalInventoriesRepository;
 import org.openlmis.stockmanagement.repository.StockCardRepository;
-import org.openlmis.stockmanagement.service.PhysicalInventoryService;
 import org.openlmis.stockmanagement.web.PhysicalInventoryController;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2Dto;
 import org.siglus.common.domain.BaseEntity;
@@ -82,7 +81,6 @@ import org.siglus.siglusapi.repository.OrderableRepository;
 import org.siglus.siglusapi.repository.PhysicalInventoryExtensionRepository;
 import org.siglus.siglusapi.repository.PhysicalInventoryLineItemsExtensionRepository;
 import org.siglus.siglusapi.repository.PhysicalInventorySubDraftRepository;
-import org.siglus.siglusapi.service.client.PhysicalInventoryStockManagementService;
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.util.AsyncExecutor;
@@ -104,16 +102,10 @@ import org.springframework.util.MultiValueMap;
 public class SiglusPhysicalInventoryService {
 
   @Autowired
-  private PhysicalInventoryStockManagementService physicalInventoryStockManagementService;
-
-  @Autowired
   private PhysicalInventoriesRepository physicalInventoriesRepository;
 
   @Autowired
   private StockCardRepository stockCardRepository;
-
-  @Autowired
-  private PhysicalInventoryService physicalInventoryService;
 
   @Autowired
   private SupportedProgramsHelper supportedProgramsHelper;
@@ -537,7 +529,7 @@ public class SiglusPhysicalInventoryService {
     if (CollectionUtils.isNotEmpty(physicalInventory)) {
       throw new BusinessDataException(new Message(ERROR_INVENTORY_CONFLICT_DRAFT), null);
     }
-    return physicalInventoryStockManagementService.createEmptyPhysicalInventory(physicalInventoryDto);
+    return inventoryController.createEmptyPhysicalInventory(physicalInventoryDto);
   }
 
   public PhysicalInventoryDto createAndSpiltNewDraftForOneProgram(PhysicalInventoryDto physicalInventoryDto,
@@ -604,7 +596,7 @@ public class SiglusPhysicalInventoryService {
   }
 
   public PhysicalInventoryDto saveDraft(PhysicalInventoryDto dto, UUID id) {
-    physicalInventoryStockManagementService.savePhysicalInventory(id, dto);
+    inventoryController.savePhysicalInventory(id, dto);
     return dto;
   }
 
@@ -659,7 +651,7 @@ public class SiglusPhysicalInventoryService {
   }
 
   public void deletePhysicalInventory(UUID id) {
-    physicalInventoryStockManagementService.deletePhysicalInventory(id);
+    inventoryController.deletePhysicalInventory(id);
     physicalInventorySubDraftRepository.deletePhysicalInventorySubDraftsByPhysicalInventoryId(id);
   }
 
@@ -684,7 +676,7 @@ public class SiglusPhysicalInventoryService {
   }
 
   public PhysicalInventoryDto getPhysicalInventory(UUID id) {
-    return physicalInventoryStockManagementService.getPhysicalInventory(id);
+    return inventoryController.getPhysicalInventory(id);
   }
 
   public PhysicalInventoryDto getFullPhysicalInventoryDto(UUID physicalInventoryId) {
@@ -706,9 +698,7 @@ public class SiglusPhysicalInventoryService {
 
   public List<PhysicalInventoryDto> getPhysicalInventoryDtos(UUID program, UUID facility,
       Boolean isDraft) {
-    physicalInventoryService.checkPermission(program, facility);
-    return physicalInventoryStockManagementService
-        .searchPhysicalInventory(program, facility, isDraft);
+    return getPhysicalInventoryDtosDirectly(program, facility, isDraft);
   }
 
   public List<PhysicalInventoryDto> getPhysicalInventoryDtosDirectly(UUID program, UUID facility,
