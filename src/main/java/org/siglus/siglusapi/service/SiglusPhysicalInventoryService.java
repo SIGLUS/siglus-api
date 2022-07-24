@@ -50,9 +50,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
@@ -88,13 +85,14 @@ import org.siglus.siglusapi.repository.PhysicalInventorySubDraftRepository;
 import org.siglus.siglusapi.service.client.PhysicalInventoryStockManagementService;
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
+import org.siglus.siglusapi.util.AsyncExecutor;
 import org.siglus.siglusapi.util.CustomListSortHelper;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.util.SupportedProgramsHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
@@ -146,9 +144,6 @@ public class SiglusPhysicalInventoryService {
 
   @Autowired
   private PhysicalInventoryExtensionRepository physicalInventoryExtensionRespository;
-
-  @Autowired
-  private ExecutorService executor;
 
   public List<PhysicalInventoryLineItemDto> buildInitialInventoryLineItemDtos(
           Set<UUID> supportedVirtualProgramIds, UUID facilityId) {
@@ -637,9 +632,8 @@ public class SiglusPhysicalInventoryService {
     createNewDraftForAllProducts(dto);
     Set<UUID> programIds = dto.getLineItems().stream()
         .map(PhysicalInventoryLineItemDto::getProgramId).collect(Collectors.toSet());
-    List<PhysicalInventoryDto> inventories = programIds.stream()
-        .map(programId -> getPhysicalInventoryDtos(programId, dto.getFacilityId(), Boolean.TRUE))
-        .flatMap(Collection::stream).collect(Collectors.toList());
+    List<PhysicalInventoryDto> inventories = concurrentlyFetchPhysicalInventories(programIds, dto.getFacilityId(),
+        Boolean.TRUE);
     inventories.forEach(inventory -> inventory.setLineItems(
         dto.getLineItems().stream()
             .filter(lineItem -> lineItem.getProgramId().equals(inventory.getProgramId()))
@@ -726,17 +720,16 @@ public class SiglusPhysicalInventoryService {
       UUID programId,
       UUID facilityId,
       Boolean isDraft) {
-    Set<UUID> supportedProgram = Collections.singleton(programId);
+    Set<UUID> supportedPrograms = Collections.singleton(programId);
 
-    List<PhysicalInventoryDto> inventories = supportedProgram.stream().map(
-        supportedVirtualProgram -> getPhysicalInventoryDtos(supportedVirtualProgram, facilityId,
-            isDraft)).flatMap(Collection::stream).collect(Collectors.toList());
+    List<PhysicalInventoryDto> inventories =
+        concurrentlyFetchPhysicalInventories(supportedPrograms, facilityId, isDraft);
     if (CollectionUtils.isNotEmpty(inventories)) {
       List<UUID> updatePhysicalInventoryIds =
           inventories.stream().map(PhysicalInventoryDto::getId).collect(Collectors.toList());
       log.info("find physical inventory extension in one program: {}", updatePhysicalInventoryIds);
-      List<PhysicalInventoryLineItemsExtension> extensions = lineItemsExtensionRepository
-          .findByPhysicalInventoryIdIn(updatePhysicalInventoryIds);
+      List<PhysicalInventoryLineItemsExtension> extensions =
+          lineItemsExtensionRepository.findByPhysicalInventoryIdIn(updatePhysicalInventoryIds);
       PhysicalInventoryDto resultInventory = getResultInventory(inventories, extensions);
       return Collections.singletonList(resultInventory);
     }
@@ -754,16 +747,16 @@ public class SiglusPhysicalInventoryService {
             new org.openlmis.stockmanagement.util.Message(ERROR_PROGRAM_NOT_SUPPORTED,
                 ALL_PRODUCTS_PROGRAM_ID));
       }
-      List<PhysicalInventoryDto> inventories = getPhysicalInventories(supportedPrograms,
-              facilityId, isDraft);
-
+      List<PhysicalInventoryDto> inventories =
+          concurrentlyFetchPhysicalInventories(supportedPrograms, facilityId, isDraft);
       if (CollectionUtils.isNotEmpty(inventories)) {
         List<UUID> updatePhysicalInventoryIds =
             inventories.stream().map(PhysicalInventoryDto::getId).collect(Collectors.toList());
         log.info("find physical inventory extension: {}", updatePhysicalInventoryIds);
-        List<PhysicalInventoryLineItemsExtension> extensions = lineItemsExtensionRepository
-            .findByPhysicalInventoryIdIn(updatePhysicalInventoryIds);
-        PhysicalInventoryDto resultInventory = getResultInventoryForAllProducts(inventories, extensions);
+        List<PhysicalInventoryLineItemsExtension> extensions =
+            lineItemsExtensionRepository.findByPhysicalInventoryIdIn(updatePhysicalInventoryIds);
+        PhysicalInventoryDto resultInventory =
+            getResultInventoryForAllProducts(inventories, extensions);
         return Collections.singletonList(resultInventory);
       }
       return inventories;
@@ -773,36 +766,16 @@ public class SiglusPhysicalInventoryService {
     }
   }
 
-  @SuppressWarnings("PMD.AvoidThrowingRawExceptionTypes")
-  private List<PhysicalInventoryDto> getPhysicalInventories(Set<UUID> programIds,
-                                                            UUID facilityId,
-                                                            Boolean isDraft) {
-    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-    List<CompletableFuture<List<PhysicalInventoryDto>>> futures = programIds.stream()
-            .map(programId ->
-                    CompletableFuture.supplyAsync(() -> {
-                      SecurityContextHolder.getContext().setAuthentication(auth);
-                      return getPhysicalInventoryDtos(programId, facilityId, isDraft);
-                    }, executor))
-            .collect(Collectors.toList());
-
-    CompletableFuture<Void> allFutures = CompletableFuture.allOf(
-            futures.toArray(new CompletableFuture[futures.size()]));
-
-    try {
-      allFutures.get();
-      List<PhysicalInventoryDto> list = new ArrayList<>();
-      for (CompletableFuture<List<PhysicalInventoryDto>> future : futures) {
-        List<PhysicalInventoryDto> physicalInventoryDtos = future.get();
-        list.addAll(physicalInventoryDtos);
-      }
-      return list;
-      // TODO should handle exceptions?
-    } catch (InterruptedException e) {
-      throw new RuntimeException(e);
-    } catch (ExecutionException e) {
-      throw new RuntimeException(e);
-    }
+  private List<PhysicalInventoryDto> concurrentlyFetchPhysicalInventories(
+      Set<UUID> supportedPrograms, UUID facilityId, Boolean isDraft) {
+    SecurityContext currentContext = SecurityContextHolder.getContext();
+    return AsyncExecutor.of(supportedPrograms)
+        .map(
+            it ->
+                AsyncExecutor.supplyWithContext(
+                    currentContext, () -> getPhysicalInventoryDtos(it, facilityId, isDraft)))
+        .flatMap(Collection::stream)
+        .collect(Collectors.toList());
   }
 
   private PhysicalInventoryDto doCreateNewDraftForAllProducts(PhysicalInventoryDto dto, boolean directly) {
@@ -939,7 +912,7 @@ public class SiglusPhysicalInventoryService {
     if (lotId == null) {
       return orderableId.toString();
     }
-    return orderableId.toString() + "&" + lotId.toString();
+    return orderableId.toString() + "&" + lotId;
   }
 
   private PhysicalInventoryLineItemsExtension getExtension(
