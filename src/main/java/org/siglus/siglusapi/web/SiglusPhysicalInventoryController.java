@@ -97,8 +97,8 @@ public class SiglusPhysicalInventoryController {
   @DeleteMapping("/subDraft")
   @ResponseStatus(NO_CONTENT)
   public void deleteSubDrafts(
-          @RequestParam(required = false) boolean initialPhysicalInventory,
-          @RequestBody List<UUID> subDraftIds) {
+      @RequestParam(required = false) boolean initialPhysicalInventory,
+      @RequestBody List<UUID> subDraftIds) {
     siglusPhysicalInventorySubDraftService.deleteSubDrafts(subDraftIds, initialPhysicalInventory);
   }
 

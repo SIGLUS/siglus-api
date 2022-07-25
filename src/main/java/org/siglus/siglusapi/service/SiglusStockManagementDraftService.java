@@ -270,21 +270,22 @@ public class SiglusStockManagementDraftService {
     }
   }
 
-  private String findDestinationName(UUID destinationId, UUID facilityId) {
+  private String findDestinationName(UUID destinationNodeId, UUID facilityId) {
     Collection<ValidSourceDestinationDto> destinationsForAllProducts = validSourceDestinationService
         .findDestinationsForAllProducts(facilityId);
 
     return destinationsForAllProducts
         .stream().filter(destination -> (
-            destination.getNode().getId().equals(destinationId)
+            destination.getNode().getId().equals(destinationNodeId)
         )).findFirst()
-        .orElseThrow(() -> new NotFoundException("No such destination with id: " + destinationId))
+        .orElseThrow(() -> new NotFoundException("No such destination node with id: " + destinationNodeId))
         .getName();
   }
 
   @Transactional
   public StockManagementInitialDraftDto createInitialDraft(
       StockManagementInitialDraftDto initialDraftDto) {
+    checkPermission(initialDraftDto.getFacilityId());
     log.info("create stock management initial draft");
     stockManagementDraftValidator.validateInitialDraft(initialDraftDto);
 
@@ -345,16 +346,15 @@ public class SiglusStockManagementDraftService {
     return new StockManagementInitialDraftDto();
   }
 
-  private String findSourceName(UUID sourceId, UUID facilityId) {
-    //TODO: when do multi-user receive, get source name by id
+  private String findSourceName(UUID sourceNodeId, UUID facilityId) {
     Collection<ValidSourceDestinationDto> sourcesForAllProducts = validSourceDestinationService
         .findSourcesForAllProducts(facilityId);
 
     return sourcesForAllProducts
         .stream().filter(source -> (
-            source.getNode().getId().equals(sourceId)
+            source.getNode().getId().equals(sourceNodeId)
         )).findFirst()
-        .orElseThrow(() -> new NotFoundException("No such source with id: " + sourceId))
+        .orElseThrow(() -> new NotFoundException("No such source node with id: " + sourceNodeId))
         .getName();
   }
 
