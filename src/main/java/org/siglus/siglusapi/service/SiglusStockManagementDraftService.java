@@ -20,8 +20,8 @@ import static org.openlmis.stockmanagement.i18n.MessageKeys.ERROR_PROGRAM_NOT_SU
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_CARD_NOT_FOUND;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_DRAFT_EXISTS;
-import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_DRAFT_MORE_THAN_TEN;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_INITIAL_DRAFT_EXISTS;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_SUB_DRAFTS_MORE_THAN_TEN;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_SUB_DRAFT_EMPTY;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_SUB_DRAFT_NOT_ALL_SUBMITTED;
 
@@ -122,19 +122,18 @@ public class SiglusStockManagementDraftService {
   }
 
   @Transactional
-  public StockManagementDraftDto createNewIssueDraft(StockManagementDraftDto dto) {
-    log.info("create physical inventory draft");
+  public StockManagementDraftDto createNewSubDraft(StockManagementDraftDto dto) {
+    log.info("create physical inventory subDraft");
     stockManagementDraftValidator.validateEmptyDraft(dto);
     draftValidator.validateInitialDraftId(dto.getInitialDraftId());
     draftValidator.validateDraftType(dto.getDraftType());
 
     checkIfSameDraftsOversize(dto);
 
-    StockManagementDraft draft = StockManagementDraft.createEmptyIssueDraft(dto);
+    StockManagementDraft draft = StockManagementDraft.createEmptySubDraft(dto);
     UUID initialDraftId = draft.getInitialDraftId();
-    List<StockManagementDraft> subDrafts = stockManagementDraftRepository
-        .findByInitialDraftId(initialDraftId);
-    draft.setDraftNumber(subDrafts.size() + DRAFTS_INCREMENT);
+    int subDraftsQuantity = stockManagementDraftRepository.countByInitialDraftId(initialDraftId);
+    draft.setDraftNumber(subDraftsQuantity + DRAFTS_INCREMENT);
     StockManagementDraft savedDraft = stockManagementDraftRepository.save(draft);
 
     return StockManagementDraftDto.from(savedDraft);
@@ -249,7 +248,6 @@ public class SiglusStockManagementDraftService {
     supportedPrograms.forEach(i -> permissionService.canAdjustStock(i, facility));
   }
 
-  //TODO: Delete after finish multi-user stock issue feature
   private void checkIfDraftExists(StockManagementDraftDto dto) {
     List<StockManagementDraft> drafts = stockManagementDraftRepository
         .findByProgramIdAndFacilityIdAndIsDraftAndDraftType(dto.getProgramId(), dto.getFacilityId(),
@@ -267,8 +265,8 @@ public class SiglusStockManagementDraftService {
         .countByInitialDraftId(dto.getInitialDraftId());
     if (subDraftsQuantity > DRAFTS_LIMITATION - 1) {
       throw new BusinessDataException(
-          new Message(ERROR_STOCK_MANAGEMENT_DRAFT_DRAFT_MORE_THAN_TEN, dto.getProgramId(),
-              dto.getFacilityId()), "same drafts more than limitation");
+          new Message(ERROR_STOCK_MANAGEMENT_SUB_DRAFTS_MORE_THAN_TEN, dto.getProgramId(),
+              dto.getFacilityId()), "subDrafts more than limitation");
     }
   }
 

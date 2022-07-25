@@ -27,7 +27,7 @@ import static org.mockito.Mockito.when;
 import static org.openlmis.stockmanagement.i18n.MessageKeys.ERROR_PROGRAM_NOT_SUPPORTED;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_CARD_NOT_FOUND;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_DRAFT_EXISTS;
-import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_DRAFT_MORE_THAN_TEN;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_SUB_DRAFTS_MORE_THAN_TEN;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_INITIAL_DRAFT_EXISTS;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_SUB_DRAFT_EMPTY;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_SUB_DRAFT_NOT_ALL_SUBMITTED;
@@ -207,18 +207,18 @@ public class SiglusStockManagementDraftServiceTest {
         stockManagementDraftRepository.findByProgramIdAndFacilityIdAndIsDraftAndDraftType(programId,
             facilityId, true, issueDraft)).thenReturn(newArrayList(draft));
 
-    siglusStockManagementDraftService.createNewIssueDraft(draftDto);
+    siglusStockManagementDraftService.createNewSubDraft(draftDto);
   }
 
   @Test
   public void shouldIsDraftBeTrueWhenCreateIssueDraft() {
-    StockManagementDraft draft = StockManagementDraft.createEmptyIssueDraft(draftDto);
+    StockManagementDraft draft = StockManagementDraft.createEmptySubDraft(draftDto);
     when(stockManagementDraftRepository.save(any(StockManagementDraft.class))).thenReturn(draft);
     when(stockManagementDraftRepository.findByInitialDraftId(initialDraftId))
         .thenReturn(newArrayList(draft));
 
     StockManagementDraftDto newDraft = siglusStockManagementDraftService
-        .createNewIssueDraft(draftDto);
+        .createNewSubDraft(draftDto);
 
     assertTrue(newDraft.getIsDraft());
   }
@@ -344,7 +344,7 @@ public class SiglusStockManagementDraftServiceTest {
   @Test
   public void shouldThrowExceptionWhenDraftsMoreThan10() {
     exception.expect(BusinessDataException.class);
-    exception.expectMessage(containsString(ERROR_STOCK_MANAGEMENT_DRAFT_DRAFT_MORE_THAN_TEN));
+    exception.expectMessage(containsString(ERROR_STOCK_MANAGEMENT_SUB_DRAFTS_MORE_THAN_TEN));
 
     draftDto.setInitialDraftId(initialDraftId);
     when(stockManagementInitialDraftsRepository.findOne(initialDraftId))
@@ -352,7 +352,7 @@ public class SiglusStockManagementDraftServiceTest {
     when(stockManagementDraftRepository.countByInitialDraftId(initialDraftId))
         .thenReturn(10);
 
-    siglusStockManagementDraftService.createNewIssueDraft(draftDto);
+    siglusStockManagementDraftService.createNewSubDraft(draftDto);
   }
 
   @Test

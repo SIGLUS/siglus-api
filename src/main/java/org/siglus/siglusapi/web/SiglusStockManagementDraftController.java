@@ -74,7 +74,7 @@ public class SiglusStockManagementDraftController {
   @ResponseStatus(CREATED)
   public StockManagementDraftDto createEmptyStockManagementDraftForIssue(
       @RequestBody StockManagementDraftDto dto) {
-    return stockManagementDraftService.createNewIssueDraft(dto);
+    return stockManagementDraftService.createNewSubDraft(dto);
   }
 
   @DeleteMapping("/{id}")

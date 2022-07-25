@@ -75,7 +75,7 @@ public class StockManagementDraft extends BaseEntity {
     return draft;
   }
 
-  public static StockManagementDraft createEmptyIssueDraft(StockManagementDraftDto draftDto) {
+  public static StockManagementDraft createEmptySubDraft(StockManagementDraftDto draftDto) {
     StockManagementDraft draft = new StockManagementDraft();
     BeanUtils.copyProperties(draftDto, draft);
     draft.setIsDraft(true);
