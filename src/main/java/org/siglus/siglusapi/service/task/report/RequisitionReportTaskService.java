@@ -101,21 +101,6 @@ public class RequisitionReportTaskService {
     return new DataWrapper();
   }
 
-  public void update(boolean needCheckPermission) {
-    log.info("refresh. start = " + System.currentTimeMillis());
-    try {
-      doUpdate(needCheckPermission);
-    } catch (Exception e) {
-      log.error("refresh with exception. msg = " + e.getMessage(), e);
-      throw e;
-    }
-    log.info("refresh. end = " + System.currentTimeMillis());
-  }
-
-  private void doUpdate(boolean needCheckPermission) {
-    // TODO:  add implement ( 7/4/22 by kourengang)
-  }
-
   public void doRefresh(boolean needCheckPermission, DataWrapper dataWrapper) {
     for (FacilityDto facilityDto : dataWrapper.allFacilityDto) {
       RequisitionMonthlyReportFacility facilityInfo = dataWrapper.monthlyReportFacilityMap.get(facilityDto.getId());
