@@ -31,7 +31,7 @@ import org.siglus.common.domain.BaseEntity;
 @EqualsAndHashCode(callSuper = true)
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "physical_inventories_extension", schema = "stockmanagement")
+@Table(name = "physical_inventories_extension", schema = "siglusintegration")
 public class PhysicalInventoryExtension extends BaseEntity {
 
   private UUID physicalInventoryId;
