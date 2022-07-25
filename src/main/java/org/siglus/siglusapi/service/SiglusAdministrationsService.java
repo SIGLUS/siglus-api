@@ -18,6 +18,8 @@ package org.siglus.siglusapi.service;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.BooleanUtils;
+import org.openlmis.stockmanagement.exception.PermissionMessageException;
+import org.openlmis.stockmanagement.util.Message;
 import org.openlmis.stockmanagement.web.Pagination;
 import org.siglus.siglusapi.domain.AppInfo;
 import org.siglus.siglusapi.domain.FacilityExtension;
@@ -31,6 +33,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Slf4j
@@ -61,11 +64,12 @@ public class SiglusAdministrationsService {
     return Pagination.getPage(facilitySearchResultDtoList, pageable, facilityDtos.getTotalElements());
   }
 
+  @Transactional
   public void eraseDeviceInfoByFacilityId(String facilityCode) {
     AppInfo androidInfoByFacilityId = appInfoRepository.findByFacilityCode(facilityCode);
     if (null == androidInfoByFacilityId) {
       log.info("The facilityCode: {} is not exist", facilityCode);
-      throw new IllegalArgumentException("The facilityCode is not acceptable");
+      throw new PermissionMessageException(new Message("siglusapi.error.notAndroidUser"));
     }
     log.info("The Android device info has been removed with facilityCode: {}", facilityCode);
     appInfoRepository.deleteByFacilityCode(facilityCode);

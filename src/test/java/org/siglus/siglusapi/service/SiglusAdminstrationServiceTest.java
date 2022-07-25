@@ -32,6 +32,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.requisition.utils.Pagination;
+import org.openlmis.stockmanagement.exception.PermissionMessageException;
 import org.siglus.siglusapi.domain.AppInfo;
 import org.siglus.siglusapi.domain.FacilityExtension;
 import org.siglus.siglusapi.dto.FacilityDto;
@@ -116,8 +117,8 @@ public class SiglusAdminstrationServiceTest {
 
   @Test
   public void deleteAndroidInfoWithWrongFacilityId() {
-    exception.expect(IllegalArgumentException.class);
-    exception.expectMessage("The facilityCode is not acceptable");
+    exception.expect(PermissionMessageException.class);
+    exception.expectMessage("siglusapi.error.notAndroidUser");
 
     siglusAdministrationsService.eraseDeviceInfoByFacilityId(facilityCode);
   }
