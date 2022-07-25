@@ -32,7 +32,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.requisition.utils.Pagination;
-import org.openlmis.stockmanagement.exception.PermissionMessageException;
 import org.siglus.siglusapi.domain.AppInfo;
 import org.siglus.siglusapi.domain.FacilityExtension;
 import org.siglus.siglusapi.dto.FacilityDto;
@@ -73,9 +72,9 @@ public class SiglusAdminstrationServiceTest {
 
   private static final String Name = "A. Alimenticios";
 
-  private static List<FacilityDto> content = new ArrayList<>();
+  private static final List<FacilityDto> content = new ArrayList<>();
 
-  private static Pageable pageable = new PageRequest(0, 3);
+  private static final Pageable pageable = new PageRequest(0, 3);
 
   private static int isAndroid = 0;
 
@@ -116,11 +115,13 @@ public class SiglusAdminstrationServiceTest {
   }
 
   @Test
-  public void deleteAndroidInfoWithWrongFacilityId() {
-    exception.expect(PermissionMessageException.class);
-    exception.expectMessage("siglusapi.error.notAndroidUser");
+  public void deleteWhenAndroidFacilityNeverLogin() {
+    // given
+    AppInfo appInfo = mockAppInfo();
+    when(appInfoRepository.findByFacilityCode(facilityCode)).thenReturn(null);
 
-    siglusAdministrationsService.eraseDeviceInfoByFacilityId(facilityCode);
+    // when
+    siglusAdministrationsService.eraseDeviceInfoByFacilityId(appInfo.getFacilityCode());
   }
 
   private FacilitySearchParamDto mockFacilitySearchParamDto() {

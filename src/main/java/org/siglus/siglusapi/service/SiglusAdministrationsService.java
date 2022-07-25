@@ -18,8 +18,6 @@ package org.siglus.siglusapi.service;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.BooleanUtils;
-import org.openlmis.stockmanagement.exception.PermissionMessageException;
-import org.openlmis.stockmanagement.util.Message;
 import org.openlmis.stockmanagement.web.Pagination;
 import org.siglus.siglusapi.domain.AppInfo;
 import org.siglus.siglusapi.domain.FacilityExtension;
@@ -68,8 +66,7 @@ public class SiglusAdministrationsService {
   public void eraseDeviceInfoByFacilityId(String facilityCode) {
     AppInfo androidInfoByFacilityId = appInfoRepository.findByFacilityCode(facilityCode);
     if (null == androidInfoByFacilityId) {
-      log.info("The facilityCode: {} is not exist", facilityCode);
-      throw new PermissionMessageException(new Message("siglusapi.error.notAndroidUser"));
+      return;
     }
     log.info("The Android device info has been removed with facilityCode: {}", facilityCode);
     appInfoRepository.deleteByFacilityCode(facilityCode);
