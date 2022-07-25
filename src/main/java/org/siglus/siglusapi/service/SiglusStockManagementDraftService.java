@@ -352,7 +352,7 @@ public class SiglusStockManagementDraftService {
 
     return sourcesForAllProducts
         .stream().filter(source -> (
-            source.getId().equals(sourceId)
+            source.getNode().getId().equals(sourceId)
         )).findFirst()
         .orElseThrow(() -> new NotFoundException("No such source with id: " + sourceId))
         .getName();

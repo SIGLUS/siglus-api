@@ -65,6 +65,7 @@ import org.siglus.siglusapi.dto.LotDto;
 import org.siglus.siglusapi.dto.StockEventForMultiUserDto;
 import org.siglus.siglusapi.dto.StockManagementDraftDto;
 import org.siglus.siglusapi.dto.UserDto;
+import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.StockCardExtensionRepository;
 import org.siglus.siglusapi.repository.StockManagementDraftRepository;
@@ -413,7 +414,7 @@ public class SiglusStockEventsServiceTest {
 
   @Test
   public void shouldThrowExceptionWhenSubDraftIdsIsEmpty() {
-    exception.expect(ValidationMessageException.class);
+    exception.expect(BusinessDataException.class);
     exception.expectMessage(containsString(ERROR_STOCK_MANAGEMENT_SUB_DRAFT_EMPTY));
 
     stockEventForMultiUserDto.setSubDrafts(Collections.emptyList());
@@ -423,7 +424,7 @@ public class SiglusStockEventsServiceTest {
 
   @Test
   public void shouldThrowExceptionWhenSubDraftIdsNotEqualsSubDrafts() {
-    exception.expect(ValidationMessageException.class);
+    exception.expect(BusinessDataException.class);
     exception.expectMessage(containsString(ERROR_STOCK_MANAGEMENT_SUB_DRAFTS_QUANTITY_NOT_MATCH));
 
     ArrayList<UUID> subDraftIds = newArrayList(subDraftId);

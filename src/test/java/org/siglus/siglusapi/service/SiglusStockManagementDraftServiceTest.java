@@ -27,8 +27,8 @@ import static org.mockito.Mockito.when;
 import static org.openlmis.stockmanagement.i18n.MessageKeys.ERROR_PROGRAM_NOT_SUPPORTED;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_CARD_NOT_FOUND;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_DRAFT_EXISTS;
-import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_SUB_DRAFTS_MORE_THAN_TEN;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_INITIAL_DRAFT_EXISTS;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_SUB_DRAFTS_MORE_THAN_TEN;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_SUB_DRAFT_EMPTY;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_SUB_DRAFT_NOT_ALL_SUBMITTED;
 
@@ -455,9 +455,10 @@ public class SiglusStockManagementDraftServiceTest {
 
   @Test
   public void shouldCreateInitialReceiveDraft() {
+    node.setId(sourceId);
     ValidSourceDestinationDto validSourceDestinationDto = new ValidSourceDestinationDto();
-    validSourceDestinationDto.setId(sourceId);
     validSourceDestinationDto.setName("receive-location");
+    validSourceDestinationDto.setNode(node);
 
     initialDraftDto.setDraftType(receiveDraft);
     initialDraftDto.setSourceId(sourceId);

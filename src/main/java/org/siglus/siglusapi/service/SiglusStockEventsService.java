@@ -61,6 +61,7 @@ import org.siglus.siglusapi.dto.LotSearchParams;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.dto.StockEventForMultiUserDto;
 import org.siglus.siglusapi.dto.StockManagementDraftDto;
+import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.StockCardExtensionRepository;
 import org.siglus.siglusapi.repository.StockManagementDraftRepository;
@@ -207,7 +208,8 @@ public class SiglusStockEventsService {
     });
     if (!programIdToEventId.isEmpty()) {
       if (eventDto.isPhysicalInventory()) {
-        siglusPhysicalInventoryService.deletePhysicalInventoryForAllProductsDirectly(eventDto.getFacilityId());
+        siglusPhysicalInventoryService
+            .deletePhysicalInventoryForAllProductsDirectly(eventDto.getFacilityId());
       } else if (isNotUnpack(eventDto)) {
         String type = getDraftType(eventDto);
         eventDto.setType(type);
@@ -369,7 +371,7 @@ public class SiglusStockEventsService {
 
   private boolean isNotUnpack(StockEventDto eventDto) {
     return !(eventDto.hasLineItems() && eventDto.getLineItems().stream().anyMatch((lineItem) ->
-            unpackDestinationNodeId.equals(lineItem.getDestinationId())));
+        unpackDestinationNodeId.equals(lineItem.getDestinationId())));
   }
 
   private String getDraftType(StockEventDto eventDto) {
@@ -391,15 +393,17 @@ public class SiglusStockEventsService {
 
   private void validatePreSubmitSubDraft(List<UUID> subDraftIds) {
     if (subDraftIds.isEmpty()) {
-      throw new ValidationMessageException(new Message(ERROR_STOCK_MANAGEMENT_SUB_DRAFT_EMPTY));
+      throw new BusinessDataException(new Message(ERROR_STOCK_MANAGEMENT_SUB_DRAFT_EMPTY),
+          "subDrafts empty");
     }
     StockManagementDraft subDraft = stockManagementDraftRepository.findOne(subDraftIds.get(0));
     draftValidator.validateSubDraft(subDraft);
     int subDraftsQuantity = stockManagementDraftRepository
         .countByInitialDraftId(subDraft.getInitialDraftId());
     if (subDraftIds.size() != subDraftsQuantity) {
-      throw new ValidationMessageException(
-          new Message(ERROR_STOCK_MANAGEMENT_SUB_DRAFTS_QUANTITY_NOT_MATCH));
+      throw new BusinessDataException(
+          new Message(ERROR_STOCK_MANAGEMENT_SUB_DRAFTS_QUANTITY_NOT_MATCH),
+          "subDrafts quantity not match");
     }
   }
 }
