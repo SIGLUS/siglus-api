@@ -15,11 +15,12 @@
 
 package org.siglus.siglusapi.repository;
 
+import java.util.List;
 import java.util.UUID;
 import org.siglus.siglusapi.domain.PhysicalInventoryExtension;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface PhysicalInventoryExtensionRepository extends JpaRepository<PhysicalInventoryExtension, UUID> {
 
-  PhysicalInventoryExtension findByPhysicalInventoryId(UUID physicalInventoryId);
+  List<PhysicalInventoryExtension> findByPhysicalInventoryId(UUID physicalInventoryId);
 }

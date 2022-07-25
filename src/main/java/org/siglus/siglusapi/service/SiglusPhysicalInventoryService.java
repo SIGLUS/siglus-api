@@ -271,9 +271,10 @@ public class SiglusPhysicalInventoryService {
       List<PhysicalInventory> programIsDraft = physicalInventoriesRepository
           .findByProgramIdAndFacilityIdAndIsDraft(supportedProgramId, facility, true);
       if (CollectionUtils.isNotEmpty(programIsDraft)) {
-        PhysicalInventoryExtension programWithDraft = physicalInventoryExtensionRespository
+        List<PhysicalInventoryExtension> programWithDraftList = physicalInventoryExtensionRespository
             .findByPhysicalInventoryId(programIsDraft.get(0).getId());
-        if (null != programWithDraft && SINGLE_PROGRAM.equals(programWithDraft.getCategory())) {
+        if (CollectionUtils.isNotEmpty(programWithDraftList) && SINGLE_PROGRAM.equals(programWithDraftList
+            .get(0).getCategory())) {
           conflictProgramIdList.add(programIsDraft.get(0).getProgramId());
         }
       }
@@ -340,9 +341,10 @@ public class SiglusPhysicalInventoryService {
       List<PhysicalInventory> programHaveDraft = physicalInventoriesRepository
           .findByProgramIdAndFacilityIdAndIsDraft(supportedProgramId, facility, true);
       if (CollectionUtils.isNotEmpty(programHaveDraft)) {
-        PhysicalInventoryExtension programWithDraft = physicalInventoryExtensionRespository
+        List<PhysicalInventoryExtension> programWithDraftList = physicalInventoryExtensionRespository
             .findByPhysicalInventoryId(programHaveDraft.get(0).getId());
-        if (null != programWithDraft && ALL_PROGRAM.equals(programWithDraft.getCategory())) {
+        if (CollectionUtils.isNotEmpty(programWithDraftList) && ALL_PROGRAM.equals(programWithDraftList.get(0)
+                .getCategory())) {
           draftCreateByALlProduct.add(true);
         }
       }

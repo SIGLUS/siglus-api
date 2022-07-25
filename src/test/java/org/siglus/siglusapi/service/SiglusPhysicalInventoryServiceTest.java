@@ -43,6 +43,7 @@ import static org.siglus.siglusapi.constant.FieldConstants.VM_STATUS;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_PERMISSION_NOT_SUPPORTED;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -1063,7 +1064,7 @@ public class SiglusPhysicalInventoryServiceTest {
     when(physicalInventoriesRepository.findByProgramIdAndFacilityIdAndIsDraft(
         programIdOne, facilityId, true)).thenReturn(programIsDraft);
     when(physicalInventoryExtensionRepository.findByPhysicalInventoryId(physicalInventoryId))
-        .thenReturn(physicalInventoryExtension);
+        .thenReturn(Lists.newArrayList(physicalInventoryExtension));
 
     // when
     PhysicalInventoryValidationDto physicalInventoryValidationDto = siglusPhysicalInventoryService
@@ -1083,7 +1084,7 @@ public class SiglusPhysicalInventoryServiceTest {
     when(physicalInventoriesRepository.findByProgramIdAndFacilityIdAndIsDraft(
         programIdOne, facilityId, true)).thenReturn(programIsDraft);
     when(physicalInventoryExtensionRepository.findByPhysicalInventoryId(physicalInventoryId))
-        .thenReturn(physicalInventoryExtension);
+        .thenReturn(Lists.newArrayList(physicalInventoryExtension));
 
     // when
     PhysicalInventoryValidationDto physicalInventoryValidationDto = siglusPhysicalInventoryService
@@ -1105,7 +1106,7 @@ public class SiglusPhysicalInventoryServiceTest {
     when(physicalInventoriesRepository.findByProgramIdAndFacilityIdAndIsDraft(
         programIdOne, facilityId, true)).thenReturn(programIsDraft);
     when(physicalInventoryExtensionRepository.findByPhysicalInventoryId(physicalInventoryId))
-        .thenReturn(physicalInventoryExtension);
+        .thenReturn(Lists.newArrayList(physicalInventoryExtension));
 
     // when
     PhysicalInventoryValidationDto physicalInventoryValidationDto = siglusPhysicalInventoryService
@@ -1127,7 +1128,7 @@ public class SiglusPhysicalInventoryServiceTest {
     when(physicalInventoriesRepository.findByProgramIdAndFacilityIdAndIsDraft(
         programIdOne, facilityId, true)).thenReturn(programIsDraft);
     when(physicalInventoryExtensionRepository.findByPhysicalInventoryId(physicalInventoryId))
-        .thenReturn(physicalInventoryExtension);
+        .thenReturn(Lists.newArrayList(physicalInventoryExtension));
 
     // when
     PhysicalInventoryValidationDto physicalInventoryValidationDto = siglusPhysicalInventoryService
