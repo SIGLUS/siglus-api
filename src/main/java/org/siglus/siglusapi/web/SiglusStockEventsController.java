@@ -41,7 +41,7 @@ public class SiglusStockEventsController {
 
   @PostMapping("/multiUser")
   @Transactional
-  public UUID createStockEvent(@RequestBody StockEventForMultiUserDto stockEventForMultiUserDto) {
+  public UUID createStockEventForMultiUser(@RequestBody StockEventForMultiUserDto stockEventForMultiUserDto) {
     return stockEventsService.createStockEventForMultiUser(stockEventForMultiUserDto);
   }
 }

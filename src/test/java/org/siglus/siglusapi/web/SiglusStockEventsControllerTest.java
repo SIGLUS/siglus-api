@@ -25,6 +25,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.stockmanagement.dto.StockEventDto;
+import org.siglus.siglusapi.dto.StockEventForMultiUserDto;
 import org.siglus.siglusapi.service.SiglusStockEventsService;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -60,6 +61,13 @@ public class SiglusStockEventsControllerTest {
 
     // then
     verify(service).createStockEvent(dto);
+  }
+
+  @Test
+  public void shouldCallServiceWhenCreateStockEventsForMultiUser() {
+    StockEventForMultiUserDto stockEventForMultiUserDto = new StockEventForMultiUserDto();
+    controller.createStockEventForMultiUser(stockEventForMultiUserDto);
+    verify(service).createStockEventForMultiUser(stockEventForMultiUserDto);
   }
 
 }
