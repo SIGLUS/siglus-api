@@ -35,10 +35,4 @@ public class RequisitionReportTaskController {
     requisitionReportTaskService.refresh(needCheckPermission);
     return ResponseEntity.ok("ok");
   }
-
-  @PostMapping("/update")
-  public ResponseEntity<String> update(@RequestParam boolean needCheckPermission) {
-    requisitionReportTaskService.update(needCheckPermission);
-    return ResponseEntity.ok("ok");
-  }
 }

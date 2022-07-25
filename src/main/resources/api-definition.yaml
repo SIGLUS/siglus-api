@@ -302,16 +302,6 @@ traits:
         responses:
           201:
             description: submit success
-    /task/requisition/update:
-      displayName: update requisition monthly report task
-      post:
-        is: [ secured ]
-        body:
-          application/json:
-            schema: arrayOfStrings
-        responses:
-          201:
-            description: submit success
     /report/tracerDrug:
       displayName: run tracer drug persistent data task
     /report/tracerDrug/refresh:

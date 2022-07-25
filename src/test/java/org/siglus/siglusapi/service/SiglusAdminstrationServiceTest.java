@@ -72,9 +72,9 @@ public class SiglusAdminstrationServiceTest {
 
   private static final String Name = "A. Alimenticios";
 
-  private static List<FacilityDto> content = new ArrayList<>();
+  private static final List<FacilityDto> content = new ArrayList<>();
 
-  private static Pageable pageable = new PageRequest(0, 3);
+  private static final Pageable pageable = new PageRequest(0, 3);
 
   private static int isAndroid = 0;
 
@@ -115,11 +115,13 @@ public class SiglusAdminstrationServiceTest {
   }
 
   @Test
-  public void deleteAndroidInfoWithWrongFacilityId() {
-    exception.expect(IllegalArgumentException.class);
-    exception.expectMessage("The facilityCode is not acceptable");
+  public void deleteWhenAndroidFacilityNeverLogin() {
+    // given
+    AppInfo appInfo = mockAppInfo();
+    when(appInfoRepository.findByFacilityCode(facilityCode)).thenReturn(null);
 
-    siglusAdministrationsService.eraseDeviceInfoByFacilityId(facilityCode);
+    // when
+    siglusAdministrationsService.eraseDeviceInfoByFacilityId(appInfo.getFacilityCode());
   }
 
   private FacilitySearchParamDto mockFacilitySearchParamDto() {

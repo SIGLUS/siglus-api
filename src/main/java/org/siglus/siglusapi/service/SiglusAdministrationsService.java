@@ -31,6 +31,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Slf4j
@@ -61,11 +62,11 @@ public class SiglusAdministrationsService {
     return Pagination.getPage(facilitySearchResultDtoList, pageable, facilityDtos.getTotalElements());
   }
 
+  @Transactional
   public void eraseDeviceInfoByFacilityId(String facilityCode) {
     AppInfo androidInfoByFacilityId = appInfoRepository.findByFacilityCode(facilityCode);
     if (null == androidInfoByFacilityId) {
-      log.info("The facilityCode: {} is not exist", facilityCode);
-      throw new IllegalArgumentException("The facilityCode is not acceptable");
+      return;
     }
     log.info("The Android device info has been removed with facilityCode: {}", facilityCode);
     appInfoRepository.deleteByFacilityCode(facilityCode);
