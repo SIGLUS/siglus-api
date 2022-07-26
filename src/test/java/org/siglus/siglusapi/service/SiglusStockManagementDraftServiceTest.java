@@ -24,7 +24,6 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.openlmis.stockmanagement.i18n.MessageKeys.ERROR_PROGRAM_NOT_SUPPORTED;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_CARD_NOT_FOUND;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_DRAFT_EXISTS;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_INITIAL_DRAFT_EXISTS;
@@ -53,7 +52,6 @@ import org.openlmis.stockmanagement.domain.sourcedestination.Node;
 import org.openlmis.stockmanagement.dto.StockCardDto;
 import org.openlmis.stockmanagement.dto.StockEventDto;
 import org.openlmis.stockmanagement.dto.ValidSourceDestinationDto;
-import org.openlmis.stockmanagement.exception.PermissionMessageException;
 import org.openlmis.stockmanagement.exception.ResourceNotFoundException;
 import org.openlmis.stockmanagement.service.PermissionService;
 import org.siglus.siglusapi.constant.FieldConstants;
@@ -71,6 +69,7 @@ import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.StockManagementDraftRepository;
 import org.siglus.siglusapi.repository.StockManagementInitialDraftsRepository;
 import org.siglus.siglusapi.util.ConflictOrderableInSubDraftHelper;
+import org.siglus.siglusapi.util.OperatePermissionService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.util.SupportedProgramsHelper;
 import org.siglus.siglusapi.validator.ActiveDraftValidator;
@@ -116,6 +115,9 @@ public class SiglusStockManagementDraftServiceTest {
 
   @Mock
   private PermissionService permissionService;
+
+  @Mock
+  private OperatePermissionService operatePermissionService;
 
   private final UUID id = UUID.randomUUID();
 
@@ -193,8 +195,8 @@ public class SiglusStockManagementDraftServiceTest {
   }
 
   /**
-   * in order to support multi-user, the original logic has changed, this test is not applicable.
-   * should delete when everything ok
+   * in order to support multi-user, the original logic has changed, this test is not applicable. should delete when
+   * everything ok
    */
   @Ignore
   @Test
@@ -267,21 +269,6 @@ public class SiglusStockManagementDraftServiceTest {
     verify(stockManagementDraftRepository)
         .findByProgramIdAndFacilityIdAndIsDraftAndDraftType(programId,
             facilityId, isDraft, issueDraft);
-  }
-
-  @Test
-  public void shouldThrowProgramExceptionWhenDeleteNotPermission() {
-    // then
-    exception.expect(PermissionMessageException.class);
-    exception.expectMessage(containsString(ERROR_PROGRAM_NOT_SUPPORTED));
-
-    // given
-    StockManagementDraft draft = StockManagementDraft.builder().build();
-    when(stockManagementDraftRepository.findOne(id)).thenReturn(draft);
-    when(supportedProgramsHelper.findHomeFacilitySupportedProgramIds()).thenReturn(null);
-
-    // when
-    siglusStockManagementDraftService.deleteStockManagementDraft(id);
   }
 
   @Test
@@ -387,6 +374,7 @@ public class SiglusStockManagementDraftServiceTest {
     ArrayList<StockManagementInitialDraft> stockManagementInitialDrafts = newArrayList(
         foundInitialDraft);
 
+    doNothing().when(operatePermissionService).checkPermission(facilityId);
     doNothing().when(draftValidator).validateProgramId(programId);
     doNothing().when(draftValidator).validateFacilityId(facilityId);
     doNothing().when(draftValidator).validateDraftType(issueDraft);
@@ -411,6 +399,7 @@ public class SiglusStockManagementDraftServiceTest {
     doNothing().when(draftValidator).validateFacilityId(facilityId);
     doNothing().when(draftValidator).validateDraftType(issueDraft);
 
+    doNothing().when(operatePermissionService).checkPermission(facilityId);
     when(stockManagementInitialDraftsRepository
         .findByProgramIdAndFacilityIdAndDraftType(programId, facilityId, "issue"))
         .thenReturn(Collections.emptyList());
@@ -437,6 +426,8 @@ public class SiglusStockManagementDraftServiceTest {
 
     StockManagementInitialDraft initialDraft = StockManagementInitialDraft
         .createInitialDraft(initialDraftDto);
+
+    doNothing().when(operatePermissionService).checkPermission(facilityId);
 
     when(siglusValidSourceDestinationService.findDestinationsForAllProducts(facilityId))
         .thenReturn(validSourceDestinationDtos);
@@ -470,6 +461,7 @@ public class SiglusStockManagementDraftServiceTest {
     StockManagementInitialDraft initialDraft = StockManagementInitialDraft
         .createInitialDraft(initialDraftDto);
 
+    doNothing().when(operatePermissionService).checkPermission(facilityId);
     when(siglusValidSourceDestinationService.findSourcesForAllProducts(facilityId))
         .thenReturn(validSourceDestinationDtos);
 
@@ -499,6 +491,7 @@ public class SiglusStockManagementDraftServiceTest {
     when(stockManagementInitialDraftsRepository
         .findByProgramIdAndFacilityIdAndDraftType(programId, facilityId, issueDraft))
         .thenReturn(newArrayList(initialDraft));
+    doNothing().when(operatePermissionService).checkPermission(facilityId);
 
     siglusStockManagementDraftService.createInitialDraft(initialDraftDto);
   }

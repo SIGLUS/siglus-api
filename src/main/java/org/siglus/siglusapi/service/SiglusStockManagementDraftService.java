@@ -16,8 +16,6 @@
 package org.siglus.siglusapi.service;
 
 import static java.util.stream.Collectors.toList;
-import static org.openlmis.stockmanagement.i18n.MessageKeys.ERROR_PROGRAM_NOT_SUPPORTED;
-import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_CARD_NOT_FOUND;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_DRAFT_EXISTS;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_INITIAL_DRAFT_EXISTS;
@@ -30,16 +28,13 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.openlmis.stockmanagement.dto.StockCardDto;
 import org.openlmis.stockmanagement.dto.StockEventDto;
 import org.openlmis.stockmanagement.dto.ValidSourceDestinationDto;
-import org.openlmis.stockmanagement.exception.PermissionMessageException;
 import org.openlmis.stockmanagement.exception.ResourceNotFoundException;
-import org.openlmis.stockmanagement.service.PermissionService;
 import org.siglus.siglusapi.constant.FieldConstants;
 import org.siglus.siglusapi.domain.StockManagementDraft;
 import org.siglus.siglusapi.domain.StockManagementDraftLineItem;
@@ -56,8 +51,8 @@ import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.StockManagementDraftRepository;
 import org.siglus.siglusapi.repository.StockManagementInitialDraftsRepository;
 import org.siglus.siglusapi.util.ConflictOrderableInSubDraftHelper;
+import org.siglus.siglusapi.util.OperatePermissionService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
-import org.siglus.siglusapi.util.SupportedProgramsHelper;
 import org.siglus.siglusapi.validator.ActiveDraftValidator;
 import org.siglus.siglusapi.validator.StockManagementDraftValidator;
 import org.springframework.beans.BeanUtils;
@@ -83,16 +78,13 @@ public class SiglusStockManagementDraftService {
   StockManagementDraftValidator stockManagementDraftValidator;
 
   @Autowired
-  private PermissionService permissionService;
-
-  @Autowired
   private SiglusStockCardService stockCardService;
 
   @Autowired
   private SiglusValidSourceDestinationService validSourceDestinationService;
 
   @Autowired
-  private SupportedProgramsHelper supportedProgramsHelper;
+  private OperatePermissionService operatePermissionService;
 
   @Autowired
   private SiglusAuthenticationHelper authenticationHelper;
@@ -217,7 +209,7 @@ public class SiglusStockManagementDraftService {
     StockManagementDraft subDraft = stockManagementDraftRepository.findOne(id);
     draftValidator.validateSubDraft(subDraft);
     UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
-    checkPermission(facilityId);
+    operatePermissionService.checkPermission(facilityId);
     log.info("delete stockmanagement draft: {}", id);
     stockManagementDraftRepository.delete(subDraft);
     resetDraftNumber(subDraft);
@@ -235,17 +227,6 @@ public class SiglusStockManagementDraftService {
           subDraft -> subDraft.setDraftNumber(subDraft.getDraftNumber() - DRAFTS_INCREMENT));
       stockManagementDraftRepository.save(filterSubDrafts);
     }
-  }
-
-  private void checkPermission(UUID facility) {
-    Set<UUID> supportedPrograms = supportedProgramsHelper
-        .findHomeFacilitySupportedProgramIds();
-    if (CollectionUtils.isEmpty(supportedPrograms)) {
-      throw new PermissionMessageException(
-          new org.openlmis.stockmanagement.util.Message(ERROR_PROGRAM_NOT_SUPPORTED,
-              ALL_PRODUCTS_PROGRAM_ID));
-    }
-    supportedPrograms.forEach(i -> permissionService.canAdjustStock(i, facility));
   }
 
   private void checkIfDraftExists(StockManagementDraftDto dto) {
@@ -266,7 +247,7 @@ public class SiglusStockManagementDraftService {
     if (subDraftsQuantity > DRAFTS_LIMITATION - 1) {
       throw new BusinessDataException(
           new Message(ERROR_STOCK_MANAGEMENT_SUB_DRAFTS_MORE_THAN_TEN, dto.getProgramId(),
-              dto.getFacilityId()), "subDrafts more than limitation");
+              dto.getFacilityId()), "subDrafts are more than limitation");
     }
   }
 
@@ -285,7 +266,7 @@ public class SiglusStockManagementDraftService {
   @Transactional
   public StockManagementInitialDraftDto createInitialDraft(
       StockManagementInitialDraftDto initialDraftDto) {
-    checkPermission(initialDraftDto.getFacilityId());
+    operatePermissionService.checkPermission(initialDraftDto.getFacilityId());
     log.info("create stock management initial draft");
     stockManagementDraftValidator.validateInitialDraft(initialDraftDto);
 
@@ -319,6 +300,7 @@ public class SiglusStockManagementDraftService {
   public StockManagementInitialDraftDto findStockManagementInitialDraft(
       UUID programId, String draftType) {
     UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
+    operatePermissionService.checkPermission(facilityId);
     draftValidator.validateProgramId(programId);
     draftValidator.validateFacilityId(facilityId);
     draftValidator.validateDraftType(draftType);

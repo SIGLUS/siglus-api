@@ -100,10 +100,8 @@ public class SiglusStockManagementDraftController {
   @GetMapping("/initial")
   public StockManagementInitialDraftDto searchInitialDrafts(
       @RequestParam UUID programId,
-      @RequestParam String draftType
-  ) {
-    return stockManagementDraftService
-        .findStockManagementInitialDraft(programId, draftType);
+      @RequestParam String draftType) {
+    return stockManagementDraftService.findStockManagementInitialDraft(programId, draftType);
   }
 
   @DeleteMapping("/initial/{initialDraftId}")

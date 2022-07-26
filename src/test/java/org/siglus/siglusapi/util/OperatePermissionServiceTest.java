@@ -15,13 +15,17 @@
 
 package org.siglus.siglusapi.util;
 
+import static org.hamcrest.Matchers.containsString;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
+import static org.openlmis.stockmanagement.i18n.MessageKeys.ERROR_PROGRAM_NOT_SUPPORTED;
 
 import java.util.UUID;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -31,6 +35,7 @@ import org.openlmis.requisition.dto.ObjectReferenceDto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.errorhandling.ValidationResult;
 import org.openlmis.requisition.service.PermissionService;
+import org.openlmis.stockmanagement.exception.PermissionMessageException;
 import org.powermock.modules.junit4.PowerMockRunner;
 
 @RunWith(PowerMockRunner.class)
@@ -41,6 +46,12 @@ public class OperatePermissionServiceTest {
 
   @Mock
   PermissionService permissionService;
+
+  @Mock
+  private SupportedProgramsHelper supportedProgramsHelper;
+
+  @Rule
+  public ExpectedException exception = ExpectedException.none();
 
   private RequisitionV2Dto dto;
 
@@ -123,4 +134,13 @@ public class OperatePermissionServiceTest {
     assertEquals(false, operatePermissionService.canSubmit(dto));
   }
 
+  @Test
+  public void shouldThrowProgramExceptionWhenDeleteNotPermission() {
+    exception.expect(PermissionMessageException.class);
+    exception.expectMessage(containsString(ERROR_PROGRAM_NOT_SUPPORTED));
+
+    when(supportedProgramsHelper.findHomeFacilitySupportedProgramIds()).thenReturn(null);
+
+    operatePermissionService.checkPermission(UUID.randomUUID());
+  }
 }
