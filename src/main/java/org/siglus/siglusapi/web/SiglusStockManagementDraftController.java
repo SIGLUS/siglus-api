@@ -74,7 +74,7 @@ public class SiglusStockManagementDraftController {
   @ResponseStatus(CREATED)
   public StockManagementDraftDto createEmptyStockManagementDraftForIssue(
       @RequestBody StockManagementDraftDto dto) {
-    return stockManagementDraftService.createNewIssueDraft(dto);
+    return stockManagementDraftService.createNewSubDraft(dto);
   }
 
   @DeleteMapping("/{id}")
@@ -100,10 +100,14 @@ public class SiglusStockManagementDraftController {
   @GetMapping("/initial")
   public StockManagementInitialDraftDto searchInitialDrafts(
       @RequestParam UUID programId,
-      @RequestParam String draftType
-  ) {
-    return stockManagementDraftService
-        .findStockManagementInitialDraft(programId, draftType);
+      @RequestParam String draftType) {
+    return stockManagementDraftService.findStockManagementInitialDraft(programId, draftType);
+  }
+
+  @DeleteMapping("/initial/{initialDraftId}")
+  @ResponseStatus(NO_CONTENT)
+  public void deleteInitialDraft(@PathVariable UUID initialDraftId) {
+    stockManagementDraftService.deleteInitialDraft(initialDraftId);
   }
 
   @PutMapping("/update")
@@ -115,9 +119,9 @@ public class SiglusStockManagementDraftController {
 
   @PutMapping("/info")
   @ResponseStatus(OK)
-  public StockManagementDraftDto updatePartOfInfoWithDraft(
+  public StockManagementDraftDto restoreSubDraftWhenDoDelete(
       @RequestBody StockManagementDraftDto dto) {
-    return stockManagementDraftService.updatePartOfInfoWithDraft(dto);
+    return stockManagementDraftService.restoreSubDraftWhenDoDelete(dto);
   }
 
   @PutMapping("/{initialDraftId}/subDraft/{subDraftId}/submit")

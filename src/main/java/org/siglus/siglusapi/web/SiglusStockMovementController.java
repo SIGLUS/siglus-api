@@ -29,6 +29,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -40,9 +41,9 @@ public class SiglusStockMovementController {
   @Autowired
   SiglusStockCardService siglusStockCardService;
 
-  @GetMapping("/getMovement")
+  @GetMapping("/{id}")
   public ResponseEntity<List<StockMovementResDto>> getStockMovement(
-      @RequestParam UUID facilityId,
+      @PathVariable("id") UUID facilityId,
       @RequestParam(required = false) UUID orderableId,
       @RequestParam(value = "startTime", required = false)
       @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
@@ -50,11 +51,11 @@ public class SiglusStockMovementController {
       @RequestParam(value = "endTime", required = false)
       @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
       @Nullable LocalDate tillExclusive) {
-    List<StockMovementResDto> productMovements =
-        siglusStockCardService.getProductMovements(facilityId, orderableId, since, tillExclusive);
-    if (facilityId == null && orderableId == null) {
+    if (facilityId == null) {
       throw new ValidationMessageException(ERROR_INVALID_PARAMS);
     }
+    List<StockMovementResDto> productMovements =
+        siglusStockCardService.getProductMovements(facilityId, orderableId, since, tillExclusive);
     return new ResponseEntity<>(productMovements, OK);
   }
 }

@@ -246,15 +246,14 @@ traits:
 /api:
 
   /siglusapi:
-    /administration:
-      /facilities:
-        post:
-          is: [ secured ]
-          description: Search for facilities information
-          responses:
-            200:
-              description: Information display
-      /{facilityCode}/android:
+    /facilities:
+      post:
+        is: [ secured ]
+        description: Search for facilities information
+        responses:
+          200:
+            description: Information display
+      /{facilityCode}/deviceInfo:
         uriParameters:
           facilityCode:
             displayName: facilityCode
@@ -302,19 +301,9 @@ traits:
         responses:
           201:
             description: submit success
-    /task/requisition/update:
-      displayName: update requisition monthly report task
-      post:
-        is: [ secured ]
-        body:
-          application/json:
-            schema: arrayOfStrings
-        responses:
-          201:
-            description: submit success
-    /task/tracerDrug:
+    /report/tracerDrug:
       displayName: run tracer drug persistent data task
-    /task/tracerDrug/refresh:
+    /report/tracerDrug/refresh:
       displayName: refresh tracer drug persistent data task
       post:
         is: [ secured ]
@@ -324,7 +313,7 @@ traits:
         responses:
           201:
             description: submit success
-    /task/tracerDrug/initialize:
+    /report/tracerDrug/initialize:
       displayName: initialize tracer drug persistent data task
       post:
         is: [ secured ]
@@ -334,6 +323,17 @@ traits:
         responses:
           201:
             description: submit success
+    /report/tracerDrug/exportFilter:
+      displayName: get tracer drug export filter info
+      get:
+        is: [ secured ]
+        body:
+          application/json:
+            schema: arrayOfStrings
+        responses:
+          200:
+            description: success
+
     /programs:
       displayName: Program
       get:
@@ -364,18 +364,19 @@ traits:
                   schema: localizedErrorResponse
 
     /stockMovement:
-      /getMovement:
-        displayName: Get stock movement
+      displayName: StockMovement
+      /{id}:
+        uriParameters:
+          id:
+            displayName: id
+            type: string
+            required: true
+            repeat: true
         get:
           is: [ secured, paginated ]
           description: >
             Get stock movement by facility id and orderable id.
           queryParameters:
-            facilityId:
-              displayName: facility Id
-              type: string
-              required: false
-              repeat: true
             orderableId:
               displayName: orderable Id
               type: string
@@ -757,6 +758,30 @@ traits:
               application/json:
                 schema: localizedMessage
 
+    /stockEvents/multiUser:
+      post:
+        is: [ secured ]
+        description: Create a new stock event with one or more orderables for multi-user.
+        body:
+          application/json:
+            schema: stockEventForMultiUserDto
+        responses:
+          201:
+            description: Stock event has been processed with no validatoin error or persistence error.
+            body:
+              application/json:
+                schema: uuid
+          400:
+            description: Failed to process stock event due to validation error.
+            body:
+              application/json:
+                schema: localizedMessage
+          403:
+            description: User does not have permission to create stock events for given facility and program.
+            body:
+              application/json:
+                schema: localizedMessage
+
     /drafts:
       get:
         is: [ secured ]
@@ -876,6 +901,19 @@ traits:
 
           403:
             description: User does not have permission to update stock management sub-draft.
+            body:
+              application/json:
+                schema: localizedMessage
+
+    /drafts/initial/{initialDraftId}:
+      delete:
+        is: [ secured ]
+        description: Delete a initial draft and all sub-drafts.
+        responses:
+          204:
+            description: Draft deleted.
+          404:
+            description: stock management Draft not found.
             body:
               application/json:
                 schema: localizedMessage

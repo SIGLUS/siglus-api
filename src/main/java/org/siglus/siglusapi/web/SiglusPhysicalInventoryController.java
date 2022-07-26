@@ -97,8 +97,8 @@ public class SiglusPhysicalInventoryController {
   @DeleteMapping("/subDraft")
   @ResponseStatus(NO_CONTENT)
   public void deleteSubDrafts(
-          @RequestParam(required = false) boolean initialPhysicalInventory,
-          @RequestBody List<UUID> subDraftIds) {
+      @RequestParam(required = false) boolean initialPhysicalInventory,
+      @RequestBody List<UUID> subDraftIds) {
     siglusPhysicalInventorySubDraftService.deleteSubDrafts(subDraftIds, initialPhysicalInventory);
   }
 
@@ -168,11 +168,10 @@ public class SiglusPhysicalInventoryController {
 
   @GetMapping("/conflict")
   public PhysicalInventoryValidationDto checkPhysicalInventoryConflict(@RequestParam UUID program,
-      @RequestParam UUID facility,
-      @RequestParam(required = false) Boolean isDraft) {
+      @RequestParam UUID facility) {
     if (ALL_PRODUCTS_UUID.equals(program)) {
-      return siglusPhysicalInventoryService.checkConflictForAllProduct(facility, isDraft);
+      return siglusPhysicalInventoryService.checkConflictForAllProduct(facility);
     }
-    return siglusPhysicalInventoryService.checkConflictForOneProgram(facility, isDraft);
+    return siglusPhysicalInventoryService.checkConflictForOneProgram(facility);
   }
 }

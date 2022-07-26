@@ -27,6 +27,7 @@ import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_LINE_ITEMS_MISSING;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_ORDERABLE_DISABLED_VVM;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_ORDERABLE_MISSING;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_SUB_DRAFT_TYPE_MISSING;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_USER_ID_MISSING;
 
 import java.util.List;
@@ -80,6 +81,9 @@ public class StockManagementDraftValidator {
   public void validateDraft(StockManagementDraftDto draft, UUID id) {
     if (!draft.getId().equals(id)) {
       throw new ValidationMessageException(ERROR_STOCK_MANAGEMENT_DRAFT_ID_MISMATCH);
+    }
+    if (draft.getDraftType() == null) {
+      throw new ValidationMessageException(ERROR_STOCK_MANAGEMENT_SUB_DRAFT_TYPE_MISSING);
     }
     StockManagementDraft foundDraft = stockManagementDraftRepository.findOne(id);
     if (foundDraft == null) {

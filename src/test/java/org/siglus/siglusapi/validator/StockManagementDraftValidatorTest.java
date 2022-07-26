@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.validator;
 
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_ORDERABLE_DISABLED_VVM;
@@ -199,6 +200,7 @@ public class StockManagementDraftValidatorTest {
         .programId(UUID.randomUUID())
         .userId(UUID.randomUUID())
         .facilityId(UUID.randomUUID())
+        .draftType(anyString())
         .lineItems(lineItemDtos)
         .build();
     StockManagementDraft draft = StockManagementDraft.builder()

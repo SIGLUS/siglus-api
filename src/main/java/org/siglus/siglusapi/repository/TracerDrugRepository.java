@@ -15,8 +15,11 @@
 
 package org.siglus.siglusapi.repository;
 
+import java.util.List;
 import java.util.UUID;
 import org.siglus.siglusapi.domain.TracerDrugPersistentData;
+import org.siglus.siglusapi.dto.RequisitionGeographicZonesDto;
+import org.siglus.siglusapi.dto.TracerDrugDto;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -90,6 +93,13 @@ public interface TracerDrugRepository extends
           + "                                                        stockonhand = excluded.stockonhand,\n"
           + "                                                        cmm         = excluded.cmm;\n", nativeQuery = true)
   int insertDataWithinSpecifiedTime(String startDate, String endDate);
+
+
+  @Query(name = "RequisitionGeographicZone.findAllZones", nativeQuery = true)
+  List<RequisitionGeographicZonesDto> getAllRequisitionGeographicZones();
+
+  @Query(name = "TracerDrug.findTracerDrug", nativeQuery = true)
+  List<TracerDrugDto> getTracerDrugInfo();
 
 
 }

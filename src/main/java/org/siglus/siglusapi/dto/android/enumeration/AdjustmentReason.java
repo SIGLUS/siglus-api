@@ -36,8 +36,7 @@ public enum AdjustmentReason {
   LOANS_RECEIVED("Empréstimos (de todos os níveis) que dão entrada no depósito"),
   PROD_DEFECTIVE("Saída para quarentena, no caso de problemas relativos a qualidade"),
   RETURN_FROM_QUARANTINE("Retorno da quarentena, no caso de se confirmar a qualidade do produto"),
-  RETURN_TO_DDM("Devolução para o DDM"),
-  UNPACK_KIT("Unpack Kit");
+  RETURN_TO_DDM("Devolução para o DDM");
 
   private final String name;
 

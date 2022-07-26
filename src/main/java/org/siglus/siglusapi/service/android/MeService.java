@@ -18,6 +18,7 @@ package org.siglus.siglusapi.service.android;
 import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
+import static java.util.stream.Collectors.toSet;
 import static org.siglus.common.constant.ExtraDataConstants.ACTUAL_END_DATE;
 
 import java.time.Instant;
@@ -52,6 +53,7 @@ import org.openlmis.fulfillment.domain.ShipmentLineItem;
 import org.openlmis.fulfillment.web.util.OrderDto;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.dto.ApprovedProductDto;
+import org.openlmis.requisition.dto.BasicOrderableDto;
 import org.openlmis.requisition.dto.BasicProgramDto;
 import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
@@ -90,6 +92,7 @@ import org.siglus.siglusapi.dto.android.response.FacilityResponse;
 import org.siglus.siglusapi.dto.android.response.PodLotLineResponse;
 import org.siglus.siglusapi.dto.android.response.PodProductLineResponse;
 import org.siglus.siglusapi.dto.android.response.PodResponse;
+import org.siglus.siglusapi.dto.android.response.ProductMovementResponse;
 import org.siglus.siglusapi.dto.android.response.ProductResponse;
 import org.siglus.siglusapi.dto.android.response.ProductSyncResponse;
 import org.siglus.siglusapi.dto.android.response.ProgramResponse;
@@ -327,8 +330,10 @@ public class MeService {
   }
 
   @ParametersAreNullableByDefault
-  public FacilityProductMovementsResponse getProductMovements(LocalDate since, LocalDate tillExclusive) {
-    return stockCardSearchService.getProductMovementsByTime(since, tillExclusive);
+  public FacilityProductMovementsResponse getProductMovements(
+      LocalDate since, LocalDate tillExclusive) {
+    FacilityProductMovementsResponse resp = stockCardSearchService.getProductMovementsByTime(since, tillExclusive);
+    return filterOutNotApprovedProducts(resp);
   }
 
   public RequisitionResponse getRequisitionResponse(String startDate) {
@@ -656,5 +661,18 @@ public class MeService {
       podResponse.setProducts(products);
     }
     return podResponse;
+  }
+
+  private FacilityProductMovementsResponse filterOutNotApprovedProducts(
+      FacilityProductMovementsResponse resp) {
+    Set<String> approvedProductCodes = getAllApprovedProducts().stream()
+        .map(BasicOrderableDto::getProductCode)
+        .collect(toSet());
+    List<ProductMovementResponse> movementsOfApprovedProduct =
+        resp.getProductMovements().stream()
+            .filter(it -> approvedProductCodes.contains(it.getProductCode()))
+            .collect(toList());
+    resp.setProductMovements(movementsOfApprovedProduct);
+    return resp;
   }
 }

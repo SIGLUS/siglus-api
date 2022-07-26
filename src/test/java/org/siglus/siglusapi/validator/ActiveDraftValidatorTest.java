@@ -25,6 +25,7 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.siglus.siglusapi.domain.StockManagementDraft;
 import org.siglus.siglusapi.dto.UserDto;
+import org.siglus.siglusapi.dto.enums.PhysicalInventorySubDraftEnum;
 import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.StockManagementInitialDraftsRepository;
@@ -168,5 +169,12 @@ public class ActiveDraftValidatorTest {
   @Test(expected = NotFoundException.class)
   public void shouldThrowExceptionWhenSubDraftIsNull() {
     activeDraftValidator.validateSubDraft(null);
+  }
+
+  @Test(expected = ValidationMessageException.class)
+  public void shouldThrowExceptionWhenSubDraftStatusIsSubmitted() {
+    StockManagementDraft drafts = new StockManagementDraft();
+    drafts.setStatus(PhysicalInventorySubDraftEnum.SUBMITTED);
+    activeDraftValidator.validateSubDraftStatus(drafts);
   }
 }

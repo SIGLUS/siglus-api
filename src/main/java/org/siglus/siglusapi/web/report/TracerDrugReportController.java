@@ -16,29 +16,38 @@
 package org.siglus.siglusapi.web.report;
 
 import lombok.RequiredArgsConstructor;
-import org.siglus.siglusapi.service.task.report.TracerDrugTaskService;
+import org.siglus.siglusapi.dto.TracerDrugExportDto;
+import org.siglus.siglusapi.service.task.report.TracerDrugReportService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("/api/siglusapi/task/tracerDrug")
-public class TracerDrugTaskController {
+@RequestMapping("/api/siglusapi/report/tracerDrug")
+public class TracerDrugReportController {
 
-  private final TracerDrugTaskService tracerDrugTaskService;
+  private final TracerDrugReportService tracerDrugReportService;
 
   @PostMapping("/refresh")
   public ResponseEntity<String> refresh(String startDate, String endDate) {
-    tracerDrugTaskService.refreshTracerDrugPersistentData(startDate, endDate);
+    tracerDrugReportService.refreshTracerDrugPersistentData(startDate, endDate);
     return ResponseEntity.ok("refresh begin");
   }
 
   @PostMapping("/initialize")
   public ResponseEntity<String> initialize() {
-    tracerDrugTaskService.initializeTracerDrugPersistentData();
+    tracerDrugReportService.initializeTracerDrugPersistentData();
     return ResponseEntity.ok("initialize begin");
+  }
+
+
+  @GetMapping("/exportFilter")
+  public TracerDrugExportDto getTracerDrugExportDto() {
+    return tracerDrugReportService.getTracerDrugExportDto();
+
   }
 
 }

@@ -39,7 +39,7 @@ public class AndroidConstants {
 
   public static final String ANDROID_SDK_VERSION = "AndroidSDKVersion";
 
-  public static final Code SCHEDULE_CODE = code("Android-M1");
+  public static final Code SCHEDULE_CODE = code("M1");
 
   public static AndroidHeader getAndroidHeader(HttpServletRequest request) {
     return AndroidHeader.builder()

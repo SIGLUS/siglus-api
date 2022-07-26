@@ -23,6 +23,7 @@ import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_NOT_EXPECTED_DRAFT_TYP
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_NOT_EXPECTED_USER_DRAFT;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_PROGRAM_MISSING;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_NOT_FOUND;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_SUB_DRAFT_ALREADY_SUBMITTED;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_USER_ID_MISSING;
 
 import com.google.common.collect.Lists;
@@ -30,7 +31,9 @@ import java.util.List;
 import java.util.UUID;
 import org.siglus.siglusapi.domain.StockManagementDraft;
 import org.siglus.siglusapi.domain.StockManagementInitialDraft;
+import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.dto.UserDto;
+import org.siglus.siglusapi.dto.enums.PhysicalInventorySubDraftEnum;
 import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.StockManagementInitialDraftsRepository;
@@ -105,6 +108,13 @@ public class ActiveDraftValidator {
   public void validateSubDraft(StockManagementDraft subDraft) {
     if (subDraft == null) {
       throw new NotFoundException(ERROR_STOCK_MANAGEMENT_DRAFT_NOT_FOUND);
+    }
+  }
+
+  public void validateSubDraftStatus(StockManagementDraft subDraft) {
+    if (subDraft.getStatus().equals(PhysicalInventorySubDraftEnum.SUBMITTED)) {
+      throw new ValidationMessageException(
+          new Message(ERROR_STOCK_MANAGEMENT_SUB_DRAFT_ALREADY_SUBMITTED));
     }
   }
 }

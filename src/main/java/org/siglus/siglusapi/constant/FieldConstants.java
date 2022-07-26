@@ -68,6 +68,12 @@ public class FieldConstants {
 
   public static final String EXCLUDE_ARCHIVED = "excludeArchived";
 
+  public static final String SITE = "SITE";
+
+  public static final String DISTRICT = "DISTRICT";
+
+  public static final String PROVINCE = "PROVINCE";
+
   public static final String NON_EMPTY_ONLY = "nonEmptyOnly";
 
   public static final String CONSUMED = "consumed";
@@ -93,5 +99,9 @@ public class FieldConstants {
   public static final String SECTION_SERVICE_LABEL = "Services";
 
   public static final String ZONEID = "zoneId";
+
+  public static final String SINGLE_PROGRAM = "SINGLE";
+
+  public static final String ALL_PROGRAM = "ALL";
 
 }

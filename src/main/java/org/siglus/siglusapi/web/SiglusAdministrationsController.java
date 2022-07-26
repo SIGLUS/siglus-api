@@ -29,19 +29,19 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/siglusapi/administration")
+@RequestMapping("/api/siglusapi/facilities")
 public class SiglusAdministrationsController {
 
   @Autowired
   private SiglusAdministrationsService administrationsService;
 
-  @PostMapping("/facilities")
+  @PostMapping()
   public Page<FacilitySearchResultDto> showFacilitiesInfos(@RequestBody FacilitySearchParamDto facilitySearchParamDto,
       Pageable pageable) {
     return administrationsService.searchForFacilities(facilitySearchParamDto, pageable);
   }
 
-  @DeleteMapping("/{facilityCode}/android")
+  @DeleteMapping("/{facilityCode}/deviceInfo")
   public void eraseAndroidDeviceInfo(@PathVariable String facilityCode) {
     administrationsService.eraseDeviceInfoByFacilityId(facilityCode);
   }

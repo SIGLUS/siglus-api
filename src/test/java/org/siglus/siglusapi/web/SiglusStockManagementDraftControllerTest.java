@@ -67,7 +67,7 @@ public class SiglusStockManagementDraftControllerTest {
   public void shouldCallServiceWhenCreateEmptyStockManagementDraft() {
     controller.createEmptyStockManagementDraftForIssue(dto);
 
-    verify(service).createNewIssueDraft(dto);
+    verify(service).createNewSubDraft(dto);
   }
 
   @Test
@@ -111,14 +111,14 @@ public class SiglusStockManagementDraftControllerTest {
 
   @Test
   public void shouldCallupdatePartOfInfoWithDraft() {
-    controller.updatePartOfInfoWithDraft(dto);
-    verify(service).updatePartOfInfoWithDraft(dto);
+    controller.restoreSubDraftWhenDoDelete(dto);
+    verify(service).restoreSubDraftWhenDoDelete(dto);
   }
 
   @Test
   public void shouldCallCreateEmptyStockManagementDraftForIssue() {
     controller.createEmptyStockManagementDraftForIssue(dto);
-    verify(service).createNewIssueDraft(dto);
+    verify(service).createNewSubDraft(dto);
   }
 
   @Test
@@ -131,5 +131,11 @@ public class SiglusStockManagementDraftControllerTest {
   public void shouldMergeSubDrafts() {
     controller.mergeSubDrafts(initialDraftId);
     verify(service).mergeSubDrafts(initialDraftId);
+  }
+
+  @Test
+  public void shouldCallDeleteInitialDraft() {
+    controller.deleteInitialDraft(initialDraftId);
+    verify(service).deleteInitialDraft(initialDraftId);
   }
 }
