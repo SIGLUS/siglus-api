@@ -19,11 +19,13 @@ import java.io.IOException;
 import java.util.Set;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
 import org.openlmis.fulfillment.domain.ProofOfDeliveryStatus;
 import org.openlmis.fulfillment.web.ProofOfDeliveryController;
 import org.openlmis.fulfillment.web.util.ProofOfDeliveryDto;
 import org.siglus.siglusapi.service.SiglusNotificationService;
 import org.siglus.siglusapi.service.SiglusProofOfDeliveryService;
+import org.siglus.siglusapi.web.request.CreatePodSubDraftRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -32,6 +34,7 @@ import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -98,4 +101,9 @@ public class SiglusProofOfDeliveryController {
     return proofOfDeliveryController.getAllProofsOfDelivery(orderId, shipmentId, pageable);
   }
 
+  @ResponseStatus(HttpStatus.CREATED)
+  @PostMapping("/subDraft")
+  public void createSubDraft(@Valid @RequestBody CreatePodSubDraftRequest request) {
+    proofOfDeliveryService.createSubDraft(request);
+  }
 }

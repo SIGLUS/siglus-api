@@ -2409,6 +2409,68 @@ traits:
               application/json:
                 schema: localizedMessage
 
+    /proofsOfDelivery/subDraft:
+      displayName: Proof Of Delivery - Create Sub Draft
+      post:
+        is: [ secured ]
+        description: >
+          create proof of delivery sub draft
+        responses:
+          201:
+            description: issueVouchers update.
+            headers:
+              Keep-Alive:
+          400:
+            body:
+              application/json:
+                schema: badRequestResponse
+          404:
+          403:
+            body:
+              application/json:
+                schema: localizedMessage
+
+    /proofsOfDelivery/subDraftList/{id}:
+      displayName: Proof Of Delivery - search Sub Draft List
+      post:
+        is: [ secured, paginated ]
+        description: >
+          search proof of delivery sub draft list
+        responses:
+          200:
+            body:
+              application/json:
+          400:
+            body:
+              application/json:
+                schema: badRequestResponse
+          404:
+          403:
+            body:
+              application/json:
+                schema: localizedMessage
+
+    /proofsOfDelivery/subDraft/{id}:
+      displayName: Proof Of Delivery - Sub Draft Detail
+      post:
+        is: [ secured ]
+        description: >
+          get proof of delivery sub draft detail
+        responses:
+          200:
+            body:
+              application/json:
+                schema: proofOfDeliveryDto
+          400:
+            body:
+              application/json:
+                schema: badRequestResponse
+          404:
+          403:
+            body:
+              application/json:
+                schema: localizedMessage
+
     /integration:
       /stockMovements:
         displayName: Get Stock Movements

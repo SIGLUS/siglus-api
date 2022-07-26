@@ -35,6 +35,7 @@ public abstract class MessageKeys {
   protected static final String ERROR_PREFIX = join(SERVICE_PREFIX, ERROR);
   private static final String EVENT_ERROR_PREFIX = ERROR_PREFIX + ".event";
   private static final String STOCK_MANAGEMENT_ERROR_PREFIX = ERROR_PREFIX + ".stockManagement";
+  private static final String POD_ERROR_PREFIX = ERROR_PREFIX + ".proofOfDelivery";
   public static final String ERROR_PERMISSION_NOT_SUPPORTED =
       ERROR_PREFIX + ".authorization.permission.not.supported";
   public static final String ERROR_USER_NOT_FOUND = ERROR_PREFIX + ".authorization.user.notFound";
@@ -115,6 +116,9 @@ public abstract class MessageKeys {
       + ".submitEndDate.before.submitStartDate";
   public static final String ERROR_SUBMIT_START_DATE_IS_BEFORE_LAST_SUBMIT_END_DATE = ERROR_PREFIX
       + ".submitStartDate.before.last.submitEndDate";
+
+  // proof of delivery
+  public static final String ERROR_NO_POD_OR_POD_LINE_ITEM_FOUNT = POD_ERROR_PREFIX + ".no.pod.or.pod.line.item.found";
 
   public static final String SHIPMENT_ORDER_STATUS_INVALID =
       join(ERROR_PREFIX, SHIPMENT, ORDER, "status", INVALID);
