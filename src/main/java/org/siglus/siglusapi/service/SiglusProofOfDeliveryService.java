@@ -22,14 +22,13 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.Builder;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
-import org.javers.common.collections.Sets;
 import org.openlmis.fulfillment.domain.ProofOfDelivery;
 import org.openlmis.fulfillment.service.ProofOfDeliveryService;
 import org.openlmis.fulfillment.web.util.OrderObjectReferenceDto;
@@ -58,6 +57,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 public class SiglusProofOfDeliveryService {
 
@@ -146,12 +146,12 @@ public class SiglusProofOfDeliveryService {
 
   private void buildAndSavePodLineItemsExtensions(List<List<List<SimpleLineItem>>> splitGroupList,
       List<PodSubDraft> subDrafts) {
-    Map<Integer, UUID> numberSubDraftIdMap = subDrafts.stream()
+    Map<Integer, UUID> numberToSubDraftId = subDrafts.stream()
         .collect(Collectors.toMap(PodSubDraft::getNumber, PodSubDraft::getId));
     List<PodLineItemsExtension> podLineItemsExtensions = Lists.newArrayList();
     for (int i = 0; i < splitGroupList.size(); i++) {
       List<List<SimpleLineItem>> simpleLineItemList = splitGroupList.get(i);
-      UUID subDraftId = numberSubDraftIdMap.get(i);
+      UUID subDraftId = numberToSubDraftId.get(i);
       simpleLineItemList.forEach(productLineItems ->
           productLineItems.forEach(lineItem ->
               podLineItemsExtensions.add(PodLineItemsExtension.builder()
@@ -159,27 +159,29 @@ public class SiglusProofOfDeliveryService {
                   .podLineItemId(lineItem.getLineItemId())
                   .build())));
     }
+    log.info("save pod line items extensions, sub draft id: {}", numberToSubDraftId.values());
     podLineItemsExtensionRepository.save(podLineItemsExtensions);
   }
 
   private List<PodSubDraft> buildAndSavePodSubDrafts(List<List<List<SimpleLineItem>>> splitGroupList) {
     List<PodSubDraft> subDrafts = Lists.newArrayList();
+    UUID proofOfDeliveryId = splitGroupList.get(0).get(0).get(0).getProofOfDeliveryId();
     for (int i = 0; i < splitGroupList.size(); i++) {
-      List<List<SimpleLineItem>> simpleLineItemList = splitGroupList.get(i);
       subDrafts.add(PodSubDraft.builder()
           .number(i + 1)
-          .proofOfDeliveryId(simpleLineItemList.get(0).get(0).proofOfDeliveryId)
+          .proofOfDeliveryId(proofOfDeliveryId)
           .status(PodSubDraftEnum.NOT_YET_STARTED)
           .build());
     }
+    log.info("save pod sub drafts, proof of delivery id: {}", proofOfDeliveryId);
     return podSubDraftRepository.save(subDrafts);
   }
 
   private List<List<SimpleLineItem>> getGroupByProductIdLineItemList(List<SimpleLineItem> simpleLineItems) {
     List<List<SimpleLineItem>> groupByProductIdLineItems = new ArrayList<>();
-    Map<UUID, List<SimpleLineItem>> productIdToLineItemsMap = simpleLineItems.stream()
+    Map<UUID, List<SimpleLineItem>> productIdToLineItems = simpleLineItems.stream()
         .collect(Collectors.groupingBy(SimpleLineItem::getProductId));
-    productIdToLineItemsMap.forEach((productId, lineItems) -> {
+    productIdToLineItems.forEach((productId, lineItems) -> {
       groupByProductIdLineItems.add(lineItems);
     });
     groupByProductIdLineItems.sort(Comparator.comparing(o -> o.get(0).getProductCode()));

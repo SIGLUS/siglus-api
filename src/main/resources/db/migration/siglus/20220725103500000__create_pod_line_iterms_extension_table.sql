@@ -4,8 +4,7 @@
 
 CREATE TABLE siglusintegration.pod_line_items_extension
 (
-    id                  UUID    NOT NULL
-        PRIMARY KEY,
+    id            UUID NOT NULL PRIMARY KEY,
     podlineitemid UUID NOT NULL,
-    subdraftid UUID NOT NULL
+    subdraftid    UUID NOT NULL
 );

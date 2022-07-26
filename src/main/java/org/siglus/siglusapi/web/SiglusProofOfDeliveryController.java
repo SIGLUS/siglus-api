@@ -101,13 +101,14 @@ public class SiglusProofOfDeliveryController {
     return proofOfDeliveryController.getAllProofsOfDelivery(orderId, shipmentId, pageable);
   }
 
+  // TODO url modify
   @ResponseStatus(HttpStatus.CREATED)
-  @PostMapping("/subDraft")
+  @PostMapping("/subDrafts")
   public void createSubDraft(@Valid @RequestBody CreatePodSubDraftRequest request) {
     proofOfDeliveryService.createSubDraft(request);
   }
 
-  @GetMapping("/subDraftList/{id}")
+  @GetMapping("/{id}/subDrafts/summary")
   public PodSubDraftListResponse searchSubDraftList(@PathVariable("id") UUID proofOfDeliveryId) {
     return proofOfDeliveryService.searchSubDraftList(proofOfDeliveryId);
   }

@@ -36,28 +36,28 @@ public abstract class MessageKeys {
   private static final String EVENT_ERROR_PREFIX = ERROR_PREFIX + ".event";
   private static final String STOCK_MANAGEMENT_ERROR_PREFIX = ERROR_PREFIX + ".stockManagement";
   private static final String POD_ERROR_PREFIX = ERROR_PREFIX + ".proofOfDelivery";
+
+  // authorization
   public static final String ERROR_PERMISSION_NOT_SUPPORTED =
       ERROR_PREFIX + ".authorization.permission.not.supported";
   public static final String ERROR_USER_NOT_FOUND = ERROR_PREFIX + ".authorization.user.notFound";
-  public static final String ERROR_WIDGET_CODE_DUPLICATED = join(ERROR_PREFIX, WIDGET, CODE,
-      DUPLICATED);
   public static final String ERROR_ADDITIONAL_ORDERABLE_DUPLICATED =
       join(ERROR_PREFIX, ADDITIONAL_ORDERABLE, DUPLICATED);
-
   public static final String ERROR_NOT_ACCEPTABLE = ERROR_PREFIX + ".not.acceptable";
+
+  // sub order
   public static final String ERROR_SUB_ORDER_LINE_ITEM =
       ERROR_PREFIX + ".suborder.line.item.not.exist";
-  public static final String ERROR_LOT_CODE_IS_EMPTY = ERROR_PREFIX + ".lotcode.is.empty";
   public static final String ERROR_TRADE_ITEM_IS_EMPTY = ERROR_PREFIX + ".tradeItem.is.empty";
   public static final String ERROR_LOT_ID_AND_CODE_SHOULD_EMPTY =
       ERROR_PREFIX + ".lotinfo.should.empty";
+
+  // facility
   public static final String ERROR_EVENT_FACILITY_INVALID =
       EVENT_ERROR_PREFIX + ".facilityId.invalid";
   public static final String ERROR_EVENT_INITIAL_DRAFT_ID_INVALID =
       EVENT_ERROR_PREFIX + ".initial.draft.id.invalid";
   public static final String ERROR_FACILITY_ID_MISSING = ERROR_PREFIX + ".facility.id.missing";
-  public static final String ERROR_INITIAL_DRAFT_ID_MISSING =
-      ERROR_PREFIX + ".initial.draft.id.missing";
   public static final String ERROR_PROGRAM_MISSING = ERROR_PREFIX + ".program.missing";
   public static final String ERROR_PROGRAM_ID_MISSING = ERROR_PREFIX + ".program.id.missing";
   public static final String ERROR_USER_ID_MISSING = ERROR_PREFIX + ".user.id.missing";
@@ -69,6 +69,8 @@ public abstract class MessageKeys {
       ERROR_PREFIX + ".not.expected.draft.type.error";
   public static final String ERROR_NOT_EXPECTED_USER_DRAFT =
       ERROR_PREFIX + ".not.expected.user.draft";
+
+  // stock management
   public static final String ERROR_STOCK_MANAGEMENT_DRAFT_ID_NOT_FOUND =
       STOCK_MANAGEMENT_ERROR_PREFIX + ".id.notFound";
   public static final String ERROR_STOCK_MANAGEMENT_DRAFT_NOT_FOUND =
@@ -110,6 +112,7 @@ public abstract class MessageKeys {
   public static final String ERROR_INVENTORY_CONFLICT_DRAFT =
       ERROR_PREFIX + ".inventory.conflict.Draft";
 
+  // submit
   public static final String ERROR_SUBMIT_START_DATE_BEFORE_START_DATE = ERROR_PREFIX
       + ".submitStartDate.before.startDate";
   public static final String ERROR_SUBMIT_END_DATE_BEFORE_SUBMIT_START_DATE = ERROR_PREFIX
@@ -118,14 +121,16 @@ public abstract class MessageKeys {
       + ".submitStartDate.before.last.submitEndDate";
 
   // proof of delivery
-  public static final String ERROR_NO_POD_OR_POD_LINE_ITEM_FOUNT = POD_ERROR_PREFIX + ".no.pod.or.pod.line.item.found";
+  public static final String ERROR_NO_POD_OR_POD_LINE_ITEM_FOUNT = POD_ERROR_PREFIX
+      + ".no.pod.or.pod.line.item.found";
 
+  // shipment
   public static final String SHIPMENT_ORDER_STATUS_INVALID =
       join(ERROR_PREFIX, SHIPMENT, ORDER, "status", INVALID);
 
+  // common
   public static final String ERROR_SIZE_NULL = ERROR_PREFIX + ".pageable.size.null";
   public static final String ERROR_SIZE_NOT_POSITIVE = ERROR_PREFIX + ".pageable.size.notPositive";
-
   public static final String ERROR_VALIDATION_FAIL = "siglusapi.error.validationFail";
 
   public static final String SERVICE_ERROR = join(SERVICE_PREFIX, ERROR);
