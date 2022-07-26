@@ -159,22 +159,18 @@ public class SiglusProcessingPeriodService {
     Comparator<StockCardLineItem> lineItemComparator
             = Comparator.comparing(
             StockCardLineItem::getOccurredDate, (s1, s2) -> s1.compareTo(s2));
-
     StockCardLineItem first = cards.stream()
             .map(StockCard::getLineItems)
             .flatMap(Collection::stream)
             .min(lineItemComparator)
             .orElseThrow(() -> new IllegalArgumentException("no first stock movement"));
-
     return first.getOccurredDate();
   }
 
   private Collection<ProcessingPeriodDto> applyReportStartDate(Collection<ProcessingPeriodDto> periods,
                                                                UUID programId,
                                                                UUID facilityId) {
-    // how to get the firstStockMovementDate?
     LocalDate firstStockMovementDate = getFirstStockMovementDate(programId, facilityId);
-    // mock in test
     String programCode = siglusProgramService.getProgram(programId).getCode();
     Optional<ReportType> reportTypeOptional = reportTypeRepository
             .findOneByFacilityIdAndProgramCodeAndActiveIsTrue(facilityId, programCode);
@@ -187,13 +183,11 @@ public class SiglusProcessingPeriodService {
         } else {
           indexDate = firstStockMovementDate;
         }
-
         return periods.stream()
                 .filter(period -> period.getStartDate().isAfter(indexDate))
                 .collect(Collectors.toList());
       }
     }
-
     return periods;
   }
 
