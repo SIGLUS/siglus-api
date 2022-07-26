@@ -45,8 +45,12 @@ import org.siglus.siglusapi.repository.PodLineItemsExtensionRepository;
 import org.siglus.siglusapi.repository.PodSubDraftRepository;
 import org.siglus.siglusapi.service.client.SiglusProofOfDeliveryFulfillmentService;
 import org.siglus.siglusapi.util.CustomListSortHelper;
+import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.web.request.CreatePodSubDraftRequest;
+import org.siglus.siglusapi.web.response.PodSubDraftListResponse;
+import org.siglus.siglusapi.web.response.PodSubDraftListResponse.SubDraftInfo;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -79,6 +83,9 @@ public class SiglusProofOfDeliveryService {
   @Autowired
   private PodLineItemsExtensionRepository podLineItemsExtensionRepository;
 
+  @Autowired
+  private SiglusAuthenticationHelper authenticationHelper;
+
   public ProofOfDeliveryDto getProofOfDelivery(UUID id,
       Set<String> expand) {
     ProofOfDeliveryDto proofOfDeliveryDto = fulfillmentService.searchProofOfDelivery(id, expand);
@@ -104,6 +111,26 @@ public class SiglusProofOfDeliveryService {
 
     List<PodSubDraft> subDrafts = buildSavePodSubDrafts(splitGroupList);
     buildAndSavePodLineItemsExtensions(splitGroupList, subDrafts);
+  }
+
+  public PodSubDraftListResponse searchSubDraftList(UUID proofOfDeliveryId) {
+    Example<PodSubDraft> example = Example.of(PodSubDraft.builder().proofOfDeliveryId(proofOfDeliveryId).build());
+    List<PodSubDraft> podSubDrafts = podSubDraftRepository.findAll(example);
+    if (CollectionUtils.isEmpty(podSubDrafts)) {
+      throw new BusinessDataException(new Message(ERROR_NO_POD_OR_POD_LINE_ITEM_FOUNT), proofOfDeliveryId);
+    }
+    List<SubDraftInfo> subDraftInfos = podSubDrafts.stream().map(podSubDraft ->
+            SubDraftInfo.builder()
+                .subDraftId(podSubDraft.getId())
+                .groupNum(podSubDraft.getNumber())
+                .saver(authenticationHelper.getUserNameByUserId(podSubDraft.getOperatorId()))
+                .status(podSubDraft.getStatus())
+                .build())
+        .collect(Collectors.toList());
+    return PodSubDraftListResponse.builder()
+        .proofOfDeliveryId(podSubDrafts.get(0).getProofOfDeliveryId())
+        .subDrafts(subDraftInfos)
+        .build();
   }
 
   private void buildAndSavePodLineItemsExtensions(List<List<List<SimpleLineItem>>> splitGroupList,

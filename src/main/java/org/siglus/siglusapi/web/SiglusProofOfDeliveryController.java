@@ -26,6 +26,7 @@ import org.openlmis.fulfillment.web.util.ProofOfDeliveryDto;
 import org.siglus.siglusapi.service.SiglusNotificationService;
 import org.siglus.siglusapi.service.SiglusProofOfDeliveryService;
 import org.siglus.siglusapi.web.request.CreatePodSubDraftRequest;
+import org.siglus.siglusapi.web.response.PodSubDraftListResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -61,8 +62,7 @@ public class SiglusProofOfDeliveryController {
   private ProofOfDeliveryController proofOfDeliveryController;
 
   /**
-   * why we redo this api? to support #330?<br> update status of notification of pod after confirm
-   * pod
+   * why we redo this api? to support #330?<br> update status of notification of pod after confirm pod
    */
   @ResponseStatus(HttpStatus.CREATED)
   @ResponseBody
@@ -105,5 +105,10 @@ public class SiglusProofOfDeliveryController {
   @PostMapping("/subDraft")
   public void createSubDraft(@Valid @RequestBody CreatePodSubDraftRequest request) {
     proofOfDeliveryService.createSubDraft(request);
+  }
+
+  @GetMapping("/subDraftList/{id}")
+  public PodSubDraftListResponse searchSubDraftList(@PathVariable("id") UUID proofOfDeliveryId) {
+    return proofOfDeliveryService.searchSubDraftList(proofOfDeliveryId);
   }
 }

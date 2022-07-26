@@ -34,6 +34,9 @@ public class PodSubDraftListResponse {
   private boolean canSubmitDrafts;
 
   @Data
+  @Builder
+  @NoArgsConstructor
+  @AllArgsConstructor
   public static class SubDraftInfo {
     private int groupNum;
     private String saver;
