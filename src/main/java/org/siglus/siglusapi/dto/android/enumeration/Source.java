@@ -25,7 +25,8 @@ import lombok.RequiredArgsConstructor;
 public enum Source {
   DISTRICT_DDM("District(DDM)"),
   INTERMEDIATE_WAREHOUSE("Armazém Intermediário"),
-  PROVINCE_DPM("Province(DPM)");
+  PROVINCE_DPM("Province(DPM)"),
+  UNPACK_FROM_KIT("Desembalado do kit");
 
   private final String name;
 

@@ -33,7 +33,8 @@ public enum Destination {
   PNCTL("PNCTL"),
   PUB_PHARMACY("Farmácia"),
   UATS("UATS"),
-  APE("APE");
+  APE("APE"),
+  UNPACK_KIT("Desembalar Kit");
 
   private final String name;
 
