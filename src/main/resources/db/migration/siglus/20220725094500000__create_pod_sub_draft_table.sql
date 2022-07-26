@@ -9,5 +9,6 @@ CREATE TABLE siglusintegration.pod_sub_draft
     number                 INTEGER NOT NULL,
     status              INTEGER,
     operatorid          UUID,
-    proofofdeliveryid UUID
+    proofofdeliveryid UUID,
+    UNIQUE (number, proofofdeliveryid)
 );

@@ -6,6 +6,6 @@ CREATE TABLE siglusintegration.pod_line_items_extension
 (
     id                  UUID    NOT NULL
         PRIMARY KEY,
-    proofofdeliveryid UUID NOT NULL,
+    podlineitemid UUID NOT NULL,
     subdraftid UUID NOT NULL
 );

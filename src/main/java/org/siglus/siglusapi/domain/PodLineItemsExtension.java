@@ -36,7 +36,7 @@ public class PodLineItemsExtension extends BaseEntity {
 
   @Column(name = "subdraftid")
   private UUID subDraftId;
-  @Column(name = "proofofdeliveryid")
-  private UUID proofOfDeliveryId;
+  @Column(name = "podlineitemid")
+  private UUID podLineItemId;
 
 }
