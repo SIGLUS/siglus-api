@@ -102,7 +102,7 @@ public class SiglusProofOfDeliveryService {
 
   @Transactional
   public void createSubDraft(CreatePodSubDraftRequest request) {
-    // TODO 判断 order 是否已经是 received 状态 ( pod 是否已经是 summited 状态?)
+    // TODO 判断 order 是否已经是 received 状态 ( pod 是否已经是 summited 状态), permission
     ProofOfDelivery proofOfDelivery = getProofOfDeliveryByOrderId(request.getOrderId());
     List<SimpleLineItem> simpleLineItems = buildSimpleLineItems(proofOfDelivery);
     List<List<SimpleLineItem>> groupByProductIdLineItems = getGroupByProductIdLineItemList(simpleLineItems);
@@ -119,7 +119,20 @@ public class SiglusProofOfDeliveryService {
     if (CollectionUtils.isEmpty(podSubDrafts)) {
       throw new BusinessDataException(new Message(ERROR_NO_POD_OR_POD_LINE_ITEM_FOUNT), proofOfDeliveryId);
     }
-    List<SubDraftInfo> subDraftInfos = podSubDrafts.stream().map(podSubDraft ->
+    return PodSubDraftListResponse.builder()
+        .proofOfDeliveryId(podSubDrafts.get(0).getProofOfDeliveryId())
+        .subDrafts(buildSubDraftInfos(podSubDrafts))
+        .canMergeOrDeleteDrafts(authenticationHelper.isTheCurrentUserCanMergeOrDeleteSubDrafts())
+        .canSubmitDrafts(isTheAllSubDraftIsSubmitted(podSubDrafts))
+        .build();
+  }
+
+  private boolean isTheAllSubDraftIsSubmitted(List<PodSubDraft> subDraftList) {
+    return subDraftList.stream().allMatch(e -> PodSubDraftEnum.SUBMITTED == e.getStatus());
+  }
+
+  private List<SubDraftInfo> buildSubDraftInfos(List<PodSubDraft> podSubDrafts) {
+    return podSubDrafts.stream().map(podSubDraft ->
             SubDraftInfo.builder()
                 .subDraftId(podSubDraft.getId())
                 .groupNum(podSubDraft.getNumber())
@@ -127,10 +140,6 @@ public class SiglusProofOfDeliveryService {
                 .status(podSubDraft.getStatus())
                 .build())
         .collect(Collectors.toList());
-    return PodSubDraftListResponse.builder()
-        .proofOfDeliveryId(podSubDrafts.get(0).getProofOfDeliveryId())
-        .subDrafts(subDraftInfos)
-        .build();
   }
 
   private void buildAndSavePodLineItemsExtensions(List<List<List<SimpleLineItem>>> splitGroupList,
