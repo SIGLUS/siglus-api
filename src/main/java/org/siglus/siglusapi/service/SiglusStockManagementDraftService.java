@@ -50,7 +50,7 @@ import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.StockManagementDraftRepository;
 import org.siglus.siglusapi.repository.StockManagementInitialDraftsRepository;
-import org.siglus.siglusapi.util.ConflictOrderableInSubDraftHelper;
+import org.siglus.siglusapi.util.CheckConflictOrderableInSubDraftsService;
 import org.siglus.siglusapi.util.OperatePermissionService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.validator.ActiveDraftValidator;
@@ -90,7 +90,7 @@ public class SiglusStockManagementDraftService {
   private SiglusAuthenticationHelper authenticationHelper;
 
   @Autowired
-  private ConflictOrderableInSubDraftHelper conflictOrderableInSubDraftHelper;
+  private CheckConflictOrderableInSubDraftsService checkConflictOrderableInSubDraftsService;
 
   private static final Integer DRAFTS_LIMITATION = 10;
   private static final Integer DRAFTS_INCREMENT = 1;
@@ -139,7 +139,7 @@ public class SiglusStockManagementDraftService {
         || dto.getDraftType().equals(FieldConstants.RECEIVE)) {
       StockManagementDraft subDraft = stockManagementDraftRepository.findOne(id);
       draftValidator.validateSubDraftStatus(subDraft);
-      conflictOrderableInSubDraftHelper.checkConflictSubDraft(dto);
+      checkConflictOrderableInSubDraftsService.checkConflictSubDraft(dto);
       StockManagementDraft newDraft = setNewAttributesInOriginalDraft(dto, id);
       StockManagementDraft savedDraft = stockManagementDraftRepository.save(newDraft);
       return StockManagementDraftDto.from(savedDraft);
@@ -385,7 +385,7 @@ public class SiglusStockManagementDraftService {
     StockManagementDraft subDraft = stockManagementDraftRepository.findOne(draftDto.getId());
     draftValidator.validateSubDraft(subDraft);
     draftValidator.validateSubDraftStatus(subDraft);
-    conflictOrderableInSubDraftHelper.checkConflictSubDraft(draftDto);
+    checkConflictOrderableInSubDraftsService.checkConflictSubDraft(draftDto);
     subDraft.setStatus(PhysicalInventorySubDraftEnum.SUBMITTED);
     subDraft.setSignature(draftDto.getSignature());
     List<StockManagementDraftLineItemDto> lineItems = draftDto.getLineItems();
