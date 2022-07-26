@@ -22,12 +22,14 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.Builder;
 import lombok.Data;
 import org.apache.commons.collections.CollectionUtils;
+import org.javers.common.collections.Sets;
 import org.openlmis.fulfillment.domain.ProofOfDelivery;
 import org.openlmis.fulfillment.service.ProofOfDeliveryService;
 import org.openlmis.fulfillment.web.util.OrderObjectReferenceDto;
@@ -109,7 +111,7 @@ public class SiglusProofOfDeliveryService {
     List<List<List<SimpleLineItem>>> splitGroupList = CustomListSortHelper.averageAssign(groupByProductIdLineItems,
         request.getSplitNum());
 
-    List<PodSubDraft> subDrafts = buildSavePodSubDrafts(splitGroupList);
+    List<PodSubDraft> subDrafts = buildAndSavePodSubDrafts(splitGroupList);
     buildAndSavePodLineItemsExtensions(splitGroupList, subDrafts);
   }
 
@@ -160,7 +162,7 @@ public class SiglusProofOfDeliveryService {
     podLineItemsExtensionRepository.save(podLineItemsExtensions);
   }
 
-  private List<PodSubDraft> buildSavePodSubDrafts(List<List<List<SimpleLineItem>>> splitGroupList) {
+  private List<PodSubDraft> buildAndSavePodSubDrafts(List<List<List<SimpleLineItem>>> splitGroupList) {
     List<PodSubDraft> subDrafts = Lists.newArrayList();
     for (int i = 0; i < splitGroupList.size(); i++) {
       List<List<SimpleLineItem>> simpleLineItemList = splitGroupList.get(i);
@@ -170,8 +172,7 @@ public class SiglusProofOfDeliveryService {
           .status(PodSubDraftEnum.NOT_YET_STARTED)
           .build());
     }
-    podSubDraftRepository.save(subDrafts);
-    return subDrafts;
+    return podSubDraftRepository.save(subDrafts);
   }
 
   private List<List<SimpleLineItem>> getGroupByProductIdLineItemList(List<SimpleLineItem> simpleLineItems) {
