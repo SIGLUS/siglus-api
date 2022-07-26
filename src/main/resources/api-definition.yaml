@@ -246,15 +246,14 @@ traits:
 /api:
 
   /siglusapi:
-    /administration:
-      /facilities:
-        post:
-          is: [ secured ]
-          description: Search for facilities information
-          responses:
-            200:
-              description: Information display
-      /{facilityCode}/android:
+    /facilities:
+      post:
+        is: [ secured ]
+        description: Search for facilities information
+        responses:
+          200:
+            description: Information display
+      /{facilityCode}/deviceInfo:
         uriParameters:
           facilityCode:
             displayName: facilityCode
