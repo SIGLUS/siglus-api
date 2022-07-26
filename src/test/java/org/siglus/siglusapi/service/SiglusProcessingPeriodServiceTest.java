@@ -19,16 +19,20 @@ import static com.google.common.collect.Sets.newHashSet;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.google.common.collect.Lists;
+
+import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -43,6 +47,7 @@ import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.RequisitionLineItem;
 import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.dto.ProcessingPeriodDto;
+import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.dto.RequisitionPeriodDto;
 import org.openlmis.requisition.errorhandling.ValidationResult;
 import org.openlmis.requisition.repository.RequisitionRepository;
@@ -51,9 +56,14 @@ import org.openlmis.requisition.service.PermissionService;
 import org.openlmis.requisition.service.RequisitionService;
 import org.openlmis.requisition.service.referencedata.PermissionStrings;
 import org.openlmis.requisition.utils.AuthenticationHelper;
+import org.openlmis.stockmanagement.domain.card.StockCard;
+import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
+import org.openlmis.stockmanagement.repository.StockCardRepository;
 import org.openlmis.stockmanagement.util.PageImplRepresentation;
 import org.siglus.common.domain.ProcessingPeriodExtension;
 import org.siglus.common.repository.ProcessingPeriodExtensionRepository;
+import org.siglus.siglusapi.domain.ReportType;
+import org.siglus.siglusapi.repository.ReportTypeRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.service.client.SiglusProcessingPeriodReferenceDataService;
 import org.siglus.siglusapi.testutils.ProcessingPeriodDtoDataBuilder;
@@ -98,6 +108,15 @@ public class SiglusProcessingPeriodServiceTest {
 
   @Mock
   private SiglusRequisitionRepository siglusRequisitionRepository;
+
+  @Mock
+  private SiglusProgramService siglusProgramService;
+
+  @Mock
+  private ReportTypeRepository reportTypeRepository;
+
+  @Mock
+  private StockCardRepository stockCardRepository;
 
   @Rule
   public ExpectedException exception = ExpectedException.none();
@@ -203,7 +222,7 @@ public class SiglusProcessingPeriodServiceTest {
 
   @Test
   public void shouldGetProcessingPeriodsForInitiateOfRegualrRequisition() {
-
+    setupReportType();
     Collection<ProcessingPeriodDto> periods = new ArrayList<>();
     periods.add(periodDto);
     when(periodService.searchByProgramAndFacility(programId, facilityId)).thenReturn(periods);
@@ -236,6 +255,7 @@ public class SiglusProcessingPeriodServiceTest {
   @Test
   public void shouldGetProcessingPeriodsForEmergencyRequisitionWhenHaveProcessForPrePeriod() {
     //given
+    setupReportType();
     ProcessingPeriodDto prePeriodDto = builder.buildPerDto();
     when(periodService.getCurrentPeriods(programId, facilityId))
         .thenReturn(Arrays.asList(periodDto));
@@ -281,6 +301,7 @@ public class SiglusProcessingPeriodServiceTest {
   @Test
   public void shouldGetProcessingPeriodsForEmergencyRequisitionWhenEmptyForPrePeriod() {
     //given
+    setupReportType();
     ProcessingPeriodDto prePeriodDto = builder.buildPerDto();
     prePeriodDto.setId(UUID.randomUUID());
     when(periodService.getCurrentPeriods(programId, facilityId))
@@ -324,6 +345,7 @@ public class SiglusProcessingPeriodServiceTest {
   @Test
   public void shouldGetProcessingPeriodsForEmergencyRequisitionWhenOnlyHaveOnePeriods() {
     //given
+    setupReportType();
     List<ProcessingPeriodDto> periods = new ArrayList<>();
     periods.add(periodDto);
     when(periodService.getCurrentPeriods(programId, facilityId)).thenReturn(periods);
@@ -380,6 +402,22 @@ public class SiglusProcessingPeriodServiceTest {
     requisition.setEmergency(isEmergency);
     requisition.setCreatedDate(ZonedDateTime.now());
     return requisition;
+  }
+
+  private void setupReportType() {
+    String programCode = "TARV";
+    ProgramDto programDto = mock(ProgramDto.class);
+    when(programDto.getCode()).thenReturn(programCode);
+    when(siglusProgramService.getProgram(programId)).thenReturn(programDto);
+    when(reportTypeRepository.findOneByFacilityIdAndProgramCodeAndActiveIsTrue(facilityId, programCode))
+            .thenReturn(Optional.of(new ReportType()));
+
+    StockCardLineItem lineItem = new StockCardLineItem();
+    lineItem.setOccurredDate(LocalDate.now());
+    StockCard stockCard = mock(StockCard.class);
+    when(stockCard.getLineItems()).thenReturn(Arrays.asList(lineItem));
+    when(stockCardRepository.findByProgramIdAndFacilityId(programId, facilityId))
+            .thenReturn(Arrays.asList(stockCard));
   }
 }
 

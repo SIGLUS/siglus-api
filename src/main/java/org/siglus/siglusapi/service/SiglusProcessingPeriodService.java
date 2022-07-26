@@ -15,12 +15,14 @@
 
 package org.siglus.siglusapi.service;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -32,10 +34,15 @@ import org.openlmis.requisition.dto.RequisitionPeriodDto;
 import org.openlmis.requisition.repository.RequisitionRepository;
 import org.openlmis.requisition.service.PeriodService;
 import org.openlmis.requisition.service.PermissionService;
+import org.openlmis.stockmanagement.domain.card.StockCard;
+import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
+import org.openlmis.stockmanagement.repository.StockCardRepository;
 import org.siglus.common.domain.ProcessingPeriodExtension;
 import org.siglus.common.repository.ProcessingPeriodExtensionRepository;
+import org.siglus.siglusapi.domain.ReportType;
 import org.siglus.siglusapi.dto.ProcessingPeriodSearchParams;
 import org.siglus.siglusapi.exception.NotFoundException;
+import org.siglus.siglusapi.repository.ReportTypeRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.service.client.SiglusProcessingPeriodReferenceDataService;
 import org.siglus.siglusapi.validator.SiglusProcessingPeriodValidator;
@@ -69,6 +76,15 @@ public class SiglusProcessingPeriodService {
 
   @Autowired
   private SiglusRequisitionRepository siglusRequisitionRepository;
+
+  @Autowired
+  private SiglusProgramService siglusProgramService;
+
+  @Autowired
+  private ReportTypeRepository reportTypeRepository;
+
+  @Autowired
+  private StockCardRepository stockCardRepository;
 
   @Transactional
   public ProcessingPeriodDto createProcessingPeriod(ProcessingPeriodDto periodDto) {
@@ -137,17 +153,63 @@ public class SiglusProcessingPeriodService {
     return dto;
   }
 
+  private LocalDate getFirstStockMovementDate(UUID programId,
+                                              UUID facilityId) {
+    List<StockCard> cards = stockCardRepository.findByProgramIdAndFacilityId(programId, facilityId);
+    Comparator<StockCardLineItem> lineItemComparator
+            = Comparator.comparing(
+            StockCardLineItem::getOccurredDate, (s1, s2) -> s1.compareTo(s2));
+
+    StockCardLineItem first = cards.stream()
+            .map(StockCard::getLineItems)
+            .flatMap(Collection::stream)
+            .min(lineItemComparator)
+            .orElseThrow(() -> new IllegalArgumentException("no first stock movement"));
+
+    return first.getOccurredDate();
+  }
+
+  private Collection<ProcessingPeriodDto> applyReportStartDate(Collection<ProcessingPeriodDto> periods,
+                                                               UUID programId,
+                                                               UUID facilityId) {
+    // how to get the firstStockMovementDate?
+    LocalDate firstStockMovementDate = getFirstStockMovementDate(programId, facilityId);
+    // mock in test
+    String programCode = siglusProgramService.getProgram(programId).getCode();
+    Optional<ReportType> reportTypeOptional = reportTypeRepository
+            .findOneByFacilityIdAndProgramCodeAndActiveIsTrue(facilityId, programCode);
+    if (reportTypeOptional.isPresent()) {
+      ReportType reportType = reportTypeOptional.get();
+      if (reportType != null && reportType.getStartDate() != null && firstStockMovementDate != null) {
+        LocalDate indexDate;
+        if (reportType.getStartDate().isAfter(firstStockMovementDate)) {
+          indexDate = reportType.getStartDate();
+        } else {
+          indexDate = firstStockMovementDate;
+        }
+
+        return periods.stream()
+                .filter(period -> period.getStartDate().isAfter(indexDate))
+                .collect(Collectors.toList());
+      }
+    }
+
+    return periods;
+  }
+
   // get periods for initiate
   public Collection<RequisitionPeriodDto> getPeriods(UUID program,
       UUID facility, boolean emergency) {
 
     Collection<ProcessingPeriodDto> periods = fillProcessingPeriodWithExtension(
         periodService.searchByProgramAndFacility(program, facility));
+    Collection<ProcessingPeriodDto> reportPeriods = applyReportStartDate(periods, program, facility);
     List<UUID> currentPeriodIds = periodService.getCurrentPeriods(program, facility)
         .stream().map(ProcessingPeriodDto::getId).collect(Collectors.toList());
     List<RequisitionPeriodDto> requisitionPeriods = new ArrayList<>();
 
-    for (ProcessingPeriodDto period : periods) {
+    // TODO Optimization
+    for (ProcessingPeriodDto period : reportPeriods) {
 
       List<Requisition> requisitions = requisitionRepository.searchRequisitions(
           period.getId(), facility, program, emergency);
