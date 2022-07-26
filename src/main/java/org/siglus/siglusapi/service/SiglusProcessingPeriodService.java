@@ -44,6 +44,7 @@ import org.siglus.siglusapi.dto.ProcessingPeriodSearchParams;
 import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.repository.ReportTypeRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
+import org.siglus.siglusapi.repository.SiglusStockCardLineItemRepository;
 import org.siglus.siglusapi.service.client.SiglusProcessingPeriodReferenceDataService;
 import org.siglus.siglusapi.validator.SiglusProcessingPeriodValidator;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -85,6 +86,9 @@ public class SiglusProcessingPeriodService {
 
   @Autowired
   private StockCardRepository stockCardRepository;
+
+  @Autowired
+  private SiglusStockCardLineItemRepository siglusStockCardLineItemRepository;
 
   @Transactional
   public ProcessingPeriodDto createProcessingPeriod(ProcessingPeriodDto periodDto) {
@@ -159,9 +163,8 @@ public class SiglusProcessingPeriodService {
     Comparator<StockCardLineItem> lineItemComparator
             = Comparator.comparing(
             StockCardLineItem::getOccurredDate, (s1, s2) -> s1.compareTo(s2));
-    StockCardLineItem first = cards.stream()
-            .map(StockCard::getLineItems)
-            .flatMap(Collection::stream)
+    StockCardLineItem first = siglusStockCardLineItemRepository.findAllByStockCardIn(cards)
+            .stream()
             .min(lineItemComparator)
             .orElseThrow(() -> new IllegalArgumentException("no first stock movement"));
     return first.getOccurredDate();

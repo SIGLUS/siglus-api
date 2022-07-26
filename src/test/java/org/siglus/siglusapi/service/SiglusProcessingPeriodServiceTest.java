@@ -65,6 +65,7 @@ import org.siglus.common.repository.ProcessingPeriodExtensionRepository;
 import org.siglus.siglusapi.domain.ReportType;
 import org.siglus.siglusapi.repository.ReportTypeRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
+import org.siglus.siglusapi.repository.SiglusStockCardLineItemRepository;
 import org.siglus.siglusapi.service.client.SiglusProcessingPeriodReferenceDataService;
 import org.siglus.siglusapi.testutils.ProcessingPeriodDtoDataBuilder;
 import org.siglus.siglusapi.testutils.RequisitionLineItemDataBuilder;
@@ -117,6 +118,9 @@ public class SiglusProcessingPeriodServiceTest {
 
   @Mock
   private StockCardRepository stockCardRepository;
+
+  @Mock
+  private SiglusStockCardLineItemRepository siglusStockCardLineItemRepository;
 
   @Rule
   public ExpectedException exception = ExpectedException.none();
@@ -418,6 +422,9 @@ public class SiglusProcessingPeriodServiceTest {
     when(stockCard.getLineItems()).thenReturn(Arrays.asList(lineItem));
     when(stockCardRepository.findByProgramIdAndFacilityId(programId, facilityId))
             .thenReturn(Arrays.asList(stockCard));
+
+    when(siglusStockCardLineItemRepository.findAllByStockCardIn(Arrays.asList(stockCard)))
+            .thenReturn(Arrays.asList(lineItem));
   }
 }
 
