@@ -134,7 +134,7 @@ from (select a.requisitionid,
          left join referencedata.processing_periods pp on
     pp.id = r2.processingperiodid
          left join referencedata.facilities f on f.id = r2.facilityid
-         LEFT JOIN referencedata.geographic_zones gz ON gz.id = f.geographiczwneid
+         LEFT JOIN referencedata.geographic_zones gz ON gz.id = f.geographiczoneid
          LEFT JOIN referencedata.geographic_zones gz_prov ON gz_prov.id = gz.parentid
          LEFT JOIN dashboard.vw_facility_supplier vfs ON vfs.facilitycode = f.code
          LEFT JOIN referencedata.facility_types ft ON f.typeid = ft.id
