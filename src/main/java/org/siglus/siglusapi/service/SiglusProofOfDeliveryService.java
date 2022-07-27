@@ -33,6 +33,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.javers.common.collections.Sets;
 import org.openlmis.fulfillment.domain.ProofOfDelivery;
 import org.openlmis.fulfillment.domain.ProofOfDeliveryLineItem;
@@ -164,11 +165,28 @@ public class SiglusProofOfDeliveryService {
     List<ProofOfDeliveryLineItem> lineItems = podLineItemsRepository.findAll(lineItemIds);
 
     List<ProofOfDeliveryLineItem> toBeUpdatedLineItems = buildToBeUpdatedLineItems(
-        request.getProofOfDeliveryDto(), lineItems);
+        request.getProofOfDeliveryDto(), lineItems, request.getSubDraftStatus());
     log.info("update ProofOfDeliveryLineItem list, subDraftId:{}, lineItemIds:{}", subDraftId, lineItemIds);
     podLineItemsRepository.save(toBeUpdatedLineItems);
 
     updateSubDraftStatusAndOperator(podSubDraft, request.getSubDraftStatus());
+  }
+
+  @Transactional
+  public void deleteSubDraft(UUID proofOfDeliveryId, UUID subDraftId) {
+    PodSubDraft podSubDraft = getPodSubDraft(subDraftId);
+    checkIfCanOperate(podSubDraft);
+
+    Set<UUID> lineItemIds = getPodLineItemIdsBySubDraftId(subDraftId);
+    List<ProofOfDeliveryLineItem> lineItems = podLineItemsRepository.findAll(lineItemIds);
+
+    ProofOfDeliveryDto proofOfDeliveryDto = fulfillmentService.searchProofOfDelivery(proofOfDeliveryId, null);
+    List<ProofOfDeliveryLineItem> toBeUpdatedLineItems = buildToBeUpdatedLineItems(proofOfDeliveryDto, lineItems,
+        PodSubDraftEnum.NOT_YET_STARTED);
+    log.info("update ProofOfDeliveryLineItem list, subDraftId:{}, lineItemIds:{}", subDraftId, lineItemIds);
+    podLineItemsRepository.save(toBeUpdatedLineItems);
+
+    updateSubDraftStatusAndOperator(podSubDraft, PodSubDraftEnum.NOT_YET_STARTED);
   }
 
   private void checkIfCanOperate(PodSubDraft podSubDraft) {
@@ -178,22 +196,43 @@ public class SiglusProofOfDeliveryService {
   }
 
   private List<ProofOfDeliveryLineItem> buildToBeUpdatedLineItems(ProofOfDeliveryDto proofOfDeliveryDto,
-      List<ProofOfDeliveryLineItem> lineItems) {
+      List<ProofOfDeliveryLineItem> lineItems, PodSubDraftEnum subDraftStatus) {
     Map<UUID, ProofOfDeliveryLineItemDto> idToLineItemDto = convertToLineItemDtos(
         proofOfDeliveryDto.getLineItems()).stream()
         .collect(Collectors.toMap(ProofOfDeliveryLineItemDto::getId, e -> e));
     List<ProofOfDeliveryLineItem> toBeUpdatedLineItems = Lists.newArrayListWithExpectedSize(lineItems.size());
     lineItems.forEach(lineItem -> {
       ProofOfDeliveryLineItemDto lineItemDto = idToLineItemDto.get(lineItem.getId());
-      // TODO vvmStatus ?
-      ProofOfDeliveryLineItem toBeUpdatedLineItem = new ProofOfDeliveryLineItem(lineItem.getOrderable(),
-          lineItem.getLotId(), lineItemDto.getQuantityAccepted(), null,
-          lineItem.getQuantityRejected(), lineItem.getRejectionReasonId(), lineItemDto.getNotes());
-      toBeUpdatedLineItem.setId(lineItem.getId());
+      ProofOfDeliveryLineItem toBeUpdatedLineItem;
+      if (PodSubDraftEnum.NOT_YET_STARTED == subDraftStatus) {
+        toBeUpdatedLineItem = buildClearedProofOfDeliveryLineItem(lineItem);
+      } else {
+        toBeUpdatedLineItem = buildProofOfDeliveryLineItem(lineItem, lineItemDto);
+      }
       toBeUpdatedLineItems.add(toBeUpdatedLineItem);
     });
     return toBeUpdatedLineItems;
   }
+
+  private ProofOfDeliveryLineItem buildProofOfDeliveryLineItem(ProofOfDeliveryLineItem lineItem,
+      ProofOfDeliveryLineItemDto lineItemDto) {
+    // TODO vvmStatus ?
+    ProofOfDeliveryLineItem toBeUpdatedLineItem = new ProofOfDeliveryLineItem(lineItem.getOrderable(),
+        lineItem.getLotId(), lineItemDto.getQuantityAccepted(), null,
+        lineItem.getQuantityRejected(), lineItem.getRejectionReasonId(), lineItemDto.getNotes());
+    toBeUpdatedLineItem.setId(lineItem.getId());
+    return toBeUpdatedLineItem;
+  }
+
+  private ProofOfDeliveryLineItem buildClearedProofOfDeliveryLineItem(ProofOfDeliveryLineItem lineItem) {
+    // TODO vvmStatus ?
+    ProofOfDeliveryLineItem toBeUpdatedLineItem = new ProofOfDeliveryLineItem(lineItem.getOrderable(),
+        lineItem.getLotId(), null, null,
+        lineItem.getQuantityRejected(), lineItem.getRejectionReasonId(), null);
+    toBeUpdatedLineItem.setId(lineItem.getId());
+    return toBeUpdatedLineItem;
+  }
+
 
   private void updateSubDraftStatusAndOperator(PodSubDraft podSubDraft, PodSubDraftEnum status) {
     UUID currentUserId = authenticationHelper.getCurrentUserId().orElseThrow(IllegalStateException::new);
