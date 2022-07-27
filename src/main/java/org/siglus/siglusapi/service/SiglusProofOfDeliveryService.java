@@ -147,10 +147,10 @@ public class SiglusProofOfDeliveryService {
     return dto;
   }
 
-  public void updateSubDraft(UpdatePodSubDraftRequest request) {
-    PodSubDraft podSubDraft = podSubDraftRepository.findOne(request.getSubDraftId());
+  public void updateSubDraft(UUID subDraftId) {
+    PodSubDraft podSubDraft = podSubDraftRepository.findOne(subDraftId);
     if (Objects.isNull(podSubDraft)) {
-      throw new BusinessDataException(new Message(ERROR_NO_POD_SUB_DRAFT_FOUND), request.getSubDraftId());
+      throw new BusinessDataException(new Message(ERROR_NO_POD_SUB_DRAFT_FOUND), subDraftId);
     }
     UUID currentUserId = authenticationHelper.getCurrentUserId().orElseThrow(IllegalStateException::new);
     podSubDraft.setOperatorId(currentUserId);

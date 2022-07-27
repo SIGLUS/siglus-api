@@ -125,9 +125,10 @@ public class SiglusProofOfDeliveryController {
   @PutMapping("/{id}/subDrafts/{subDraftId}")
   @Transactional
   @ResponseStatus(NO_CONTENT)
-  public void updateSubDraft(@PathVariable("id") UUID proofOfDeliveryId,
-      @RequestBody UpdatePodSubDraftRequest request, OAuth2Authentication authentication) {
-    actualController.updateProofOfDelivery(proofOfDeliveryId, request.getProofOfDeliveryDto(), authentication);
-    proofOfDeliveryService.updateSubDraft(request);
+  public void updateSubDraft(@PathVariable("id") UUID proofOfDeliveryId, @PathVariable("subDraftId") UUID subDraftId,
+      @RequestBody ProofOfDeliveryDto dto,
+      OAuth2Authentication authentication) {
+    actualController.updateProofOfDelivery(proofOfDeliveryId, dto, authentication);
+    proofOfDeliveryService.updateSubDraft(subDraftId);
   }
 }
