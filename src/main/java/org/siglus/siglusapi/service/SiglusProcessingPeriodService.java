@@ -170,9 +170,9 @@ public class SiglusProcessingPeriodService {
     return first.getOccurredDate();
   }
 
-  private Collection<ProcessingPeriodDto> applyReportStartDate(Collection<ProcessingPeriodDto> periods,
-                                                               UUID programId,
-                                                               UUID facilityId) {
+  private Collection<ProcessingPeriodDto> filterPeriods(Collection<ProcessingPeriodDto> periods,
+                                                        UUID programId,
+                                                        UUID facilityId) {
     LocalDate firstStockMovementDate = getFirstStockMovementDate(programId, facilityId);
     String programCode = siglusProgramService.getProgram(programId).getCode();
     Optional<ReportType> reportTypeOptional = reportTypeRepository
@@ -188,6 +188,7 @@ public class SiglusProcessingPeriodService {
         }
         return periods.stream()
                 .filter(period -> period.getStartDate().isAfter(indexDate))
+                .filter(period -> !period.getStartDate().isAfter(LocalDate.now()))
                 .collect(Collectors.toList());
       }
     }
@@ -200,7 +201,7 @@ public class SiglusProcessingPeriodService {
 
     Collection<ProcessingPeriodDto> periods = fillProcessingPeriodWithExtension(
         periodService.searchByProgramAndFacility(program, facility));
-    Collection<ProcessingPeriodDto> reportPeriods = applyReportStartDate(periods, program, facility);
+    Collection<ProcessingPeriodDto> reportPeriods = filterPeriods(periods, program, facility);
     List<UUID> currentPeriodIds = periodService.getCurrentPeriods(program, facility)
         .stream().map(ProcessingPeriodDto::getId).collect(Collectors.toList());
     List<RequisitionPeriodDto> requisitionPeriods = new ArrayList<>();
