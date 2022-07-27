@@ -38,10 +38,10 @@ import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
 import org.openlmis.stockmanagement.repository.StockCardRepository;
 import org.siglus.common.domain.ProcessingPeriodExtension;
 import org.siglus.common.repository.ProcessingPeriodExtensionRepository;
-import org.siglus.siglusapi.domain.ReportType;
+import org.siglus.siglusapi.domain.SiglusReportType;
 import org.siglus.siglusapi.dto.ProcessingPeriodSearchParams;
 import org.siglus.siglusapi.exception.NotFoundException;
-import org.siglus.siglusapi.repository.ReportTypeRepository;
+import org.siglus.siglusapi.repository.SiglusReportTypeRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.repository.SiglusStockCardLineItemRepository;
 import org.siglus.siglusapi.service.client.SiglusProcessingPeriodReferenceDataService;
@@ -81,7 +81,7 @@ public class SiglusProcessingPeriodService {
   private SiglusProgramService siglusProgramService;
 
   @Autowired
-  private ReportTypeRepository reportTypeRepository;
+  private SiglusReportTypeRepository reportTypeRepository;
 
   @Autowired
   private StockCardRepository stockCardRepository;
@@ -174,7 +174,7 @@ public class SiglusProcessingPeriodService {
                                                         UUID facilityId) {
     LocalDate firstStockMovementDate = getFirstStockMovementDate(programId, facilityId);
     String programCode = siglusProgramService.getProgram(programId).getCode();
-    ReportType reportType = reportTypeRepository
+    SiglusReportType reportType = reportTypeRepository
             .findOneByFacilityIdAndProgramCodeAndActiveIsTrue(facilityId, programCode)
             .orElseThrow(() -> new IllegalArgumentException("no report type"));
 

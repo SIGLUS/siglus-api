@@ -62,8 +62,8 @@ import org.openlmis.stockmanagement.repository.StockCardRepository;
 import org.openlmis.stockmanagement.util.PageImplRepresentation;
 import org.siglus.common.domain.ProcessingPeriodExtension;
 import org.siglus.common.repository.ProcessingPeriodExtensionRepository;
-import org.siglus.siglusapi.domain.ReportType;
-import org.siglus.siglusapi.repository.ReportTypeRepository;
+import org.siglus.siglusapi.domain.SiglusReportType;
+import org.siglus.siglusapi.repository.SiglusReportTypeRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.repository.SiglusStockCardLineItemRepository;
 import org.siglus.siglusapi.service.client.SiglusProcessingPeriodReferenceDataService;
@@ -114,7 +114,7 @@ public class SiglusProcessingPeriodServiceTest {
   private SiglusProgramService siglusProgramService;
 
   @Mock
-  private ReportTypeRepository reportTypeRepository;
+  private SiglusReportTypeRepository reportTypeRepository;
 
   @Mock
   private StockCardRepository stockCardRepository;
@@ -411,7 +411,7 @@ public class SiglusProcessingPeriodServiceTest {
   private void setupReportType() {
     String programCode = "TARV";
     ProgramDto programDto = mock(ProgramDto.class);
-    ReportType reportType = mock(ReportType.class);
+    SiglusReportType reportType = mock(SiglusReportType.class);
     when(reportType.getStartDate()).thenReturn(LocalDate.of(2020, 1, 1));
     when(programDto.getCode()).thenReturn(programCode);
     when(siglusProgramService.getProgram(programId)).thenReturn(programDto);

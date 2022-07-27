@@ -42,17 +42,17 @@ import org.siglus.siglusapi.constant.AndroidConstants;
 import org.siglus.siglusapi.constant.PeriodConstants;
 import org.siglus.siglusapi.constant.ProgramConstants;
 import org.siglus.siglusapi.domain.ProgramRequisitionNameMapping;
-import org.siglus.siglusapi.domain.ReportType;
 import org.siglus.siglusapi.domain.RequisitionMonthlyReport;
+import org.siglus.siglusapi.domain.SiglusReportType;
 import org.siglus.siglusapi.domain.report.RequisitionMonthlyNotSubmitReport;
 import org.siglus.siglusapi.domain.report.RequisitionMonthlyReportFacility;
 import org.siglus.siglusapi.dto.ProcessingPeriodExtensionDto;
 import org.siglus.siglusapi.repository.FacilityNativeRepository;
 import org.siglus.siglusapi.repository.ProcessingPeriodRepository;
 import org.siglus.siglusapi.repository.ProgramRequisitionNameMappingRepository;
-import org.siglus.siglusapi.repository.ReportTypeRepository;
 import org.siglus.siglusapi.repository.RequisitionMonthReportRepository;
 import org.siglus.siglusapi.repository.RequisitionMonthlyNotSubmitReportRepository;
+import org.siglus.siglusapi.repository.SiglusReportTypeRepository;
 import org.siglus.siglusapi.repository.dto.FacilityProgramPeriodScheduleDto;
 import org.siglus.siglusapi.repository.dto.FacillityStockCardDateDto;
 import org.siglus.siglusapi.service.SiglusProgramAdditionalOrderableService;
@@ -78,7 +78,7 @@ public class RequisitionReportTaskService {
 
   private final SiglusProgramAdditionalOrderableService siglusProgramAdditionalOrderableService;
 
-  private final ReportTypeRepository reportTypeRepository;
+  private final SiglusReportTypeRepository reportTypeRepository;
 
   @Value("${dayOfMonthThreshold.nonRapidTest}")
   private int nonRapidTestDayOfMonthThreshold;
@@ -104,7 +104,7 @@ public class RequisitionReportTaskService {
   public void doRefresh(boolean needCheckPermission, DataWrapper dataWrapper) {
     for (FacilityDto facilityDto : dataWrapper.allFacilityDto) {
       RequisitionMonthlyReportFacility facilityInfo = dataWrapper.monthlyReportFacilityMap.get(facilityDto.getId());
-      List<ReportType> facilityReportTypeList = reportTypeRepository.findByFacilityId(facilityDto.getId());
+      List<SiglusReportType> facilityReportTypeList = reportTypeRepository.findByFacilityId(facilityDto.getId());
 
       org.siglus.siglusapi.dto.FacilityDto facilityWithSupportedPrograms =
           siglusFacilityReferenceDataService.findOne(facilityDto.getId());
@@ -118,9 +118,11 @@ public class RequisitionReportTaskService {
     }
   }
 
-  private List<RequisitionMonthlyNotSubmitReport> getFacilityNotSubmitRequisitions(boolean needCheckPermission,
-      RequisitionMonthlyReportFacility facilityInfo,
-      List<ReportType> reportTypes, DataWrapper dataWrapper) {
+  private List<RequisitionMonthlyNotSubmitReport> getFacilityNotSubmitRequisitions(
+          boolean needCheckPermission,
+          RequisitionMonthlyReportFacility facilityInfo,
+          List<SiglusReportType> reportTypes,
+          DataWrapper dataWrapper) {
     List<RequisitionMonthlyNotSubmitReport> notSubmitList = new ArrayList<>();
     for (ProgramDto programDto : dataWrapper.allProgramDto) {
       UUID programId = programDto.getId();
@@ -132,7 +134,7 @@ public class RequisitionReportTaskService {
             facilityInfo.getFacilityId()));
         continue;
       }
-      Optional<ReportType> reportType =
+      Optional<SiglusReportType> reportType =
           reportTypes.stream().filter(item -> programDto.getCode().equals(item.getProgramCode())).findFirst();
       if (needCheckPermission || (Boolean.TRUE
               .equals(facillityStockCardDateDto.getIsAndroid()) && !reportType.isPresent())) {
@@ -161,7 +163,7 @@ public class RequisitionReportTaskService {
   private List<RequisitionMonthlyNotSubmitReport> getProgramNotSubmitRequisitions(
       RequisitionMonthlyReportFacility facilityInfo, DataWrapper dataWrapper,
       ProgramDto programDto, String programCode,
-      FacillityStockCardDateDto facillityStockCardDateDto, Optional<ReportType> reportType,
+      FacillityStockCardDateDto facillityStockCardDateDto, Optional<SiglusReportType> reportType,
       FacilityProgramPeriodScheduleDto facilityProgramPeriodScheduleDto) {
     List<ProcessingPeriodExtensionDto> facilityProgramSupportedPeriods =
         dataWrapper.processingPeriodExtensionDtos.stream()
@@ -362,7 +364,7 @@ public class RequisitionReportTaskService {
   }
 
   public int findStartPeriodIndexOfFacility(List<ProcessingPeriodExtensionDto> allProcessingPeriodDto,
-                                            Optional<ReportType> reportType, LocalDate firstStockOccurDate,
+                                            Optional<SiglusReportType> reportType, LocalDate firstStockOccurDate,
                                             boolean isAndroid, boolean isRapidTest) {
     if (isAndroid) {
       if (!reportType.isPresent()) {

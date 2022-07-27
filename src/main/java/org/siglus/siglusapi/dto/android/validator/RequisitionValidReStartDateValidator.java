@@ -23,11 +23,11 @@ import javax.validation.ConstraintValidatorContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.validator.constraintvalidation.HibernateConstraintValidatorContext;
-import org.siglus.siglusapi.domain.ReportType;
+import org.siglus.siglusapi.domain.SiglusReportType;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.dto.android.constraint.RequisitionValidReStartDate;
 import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
-import org.siglus.siglusapi.repository.ReportTypeRepository;
+import org.siglus.siglusapi.repository.SiglusReportTypeRepository;
 import org.siglus.siglusapi.repository.SyncUpHashRepository;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 
@@ -37,7 +37,7 @@ public class RequisitionValidReStartDateValidator implements
     ConstraintValidator<RequisitionValidReStartDate, RequisitionCreateRequest> {
 
   private final SiglusAuthenticationHelper authHelper;
-  private final ReportTypeRepository reportTypeRepository;
+  private final SiglusReportTypeRepository reportTypeRepository;
   private final SyncUpHashRepository syncUpHashRepository;
 
   @Override
@@ -59,7 +59,7 @@ public class RequisitionValidReStartDateValidator implements
     UUID homeFacilityId = user.getHomeFacilityId();
     LocalDate reportRestartDate = reportTypeRepository
         .findOneByFacilityIdAndProgramCodeAndActiveIsTrue(homeFacilityId, programCode)
-        .map(ReportType::getStartDate)
+        .map(SiglusReportType::getStartDate)
         .orElseThrow(() -> new EntityNotFoundException("Report type not found"));
     if (reportRestartDate.isAfter(value.getActualStartDate())) {
       actualContext.addExpressionVariable("reportRestartDate", reportRestartDate);

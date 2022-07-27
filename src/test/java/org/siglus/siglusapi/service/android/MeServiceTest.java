@@ -96,9 +96,9 @@ import org.siglus.siglusapi.config.AndroidTemplateConfigProperties;
 import org.siglus.siglusapi.domain.AppInfo;
 import org.siglus.siglusapi.domain.HfCmm;
 import org.siglus.siglusapi.domain.PodRequestBackup;
-import org.siglus.siglusapi.domain.ReportType;
 import org.siglus.siglusapi.domain.RequisitionRequestBackup;
 import org.siglus.siglusapi.domain.ResyncInfo;
+import org.siglus.siglusapi.domain.SiglusReportType;
 import org.siglus.siglusapi.domain.StockCardRequestBackup;
 import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.FacilityTypeDto;
@@ -127,10 +127,10 @@ import org.siglus.siglusapi.exception.OrderNotFoundException;
 import org.siglus.siglusapi.repository.AppInfoRepository;
 import org.siglus.siglusapi.repository.FacilityCmmsRepository;
 import org.siglus.siglusapi.repository.PodRequestBackupRepository;
-import org.siglus.siglusapi.repository.ReportTypeRepository;
 import org.siglus.siglusapi.repository.RequisitionRequestBackupRepository;
 import org.siglus.siglusapi.repository.ResyncInfoRepository;
 import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
+import org.siglus.siglusapi.repository.SiglusReportTypeRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.repository.StockCardRequestBackupRepository;
 import org.siglus.siglusapi.service.SiglusArchiveProductService;
@@ -220,7 +220,7 @@ public class MeServiceTest {
   private AndroidHelper androidHelper;
 
   @Mock
-  private ReportTypeRepository reportTypeRepository;
+  private SiglusReportTypeRepository reportTypeRepository;
 
   @Mock
   private SiglusRequisitionRepository requisitionRepository;
@@ -431,7 +431,7 @@ public class MeServiceTest {
     facilityDto.setCode("facilityCode");
     facilityDto.setName("facilityName");
     facilityDto.setSupportedPrograms(getSupportedPrograms());
-    List<ReportType> reportTypes = new ArrayList<>(asList(mockReportType1(), mockReportType2()));
+    List<SiglusReportType> reportTypes = new ArrayList<>(asList(mockReportType1(), mockReportType2()));
     when(facilityReferenceDataService.findOne(facilityId)).thenReturn(facilityDto);
     when(reportTypeRepository.findByFacilityId(facilityId))
         .thenReturn(reportTypes);
@@ -1229,8 +1229,8 @@ public class MeServiceTest {
     return asList(supportedProgram1, supportedProgram2);
   }
 
-  private ReportType mockReportType1() {
-    return ReportType.builder()
+  private SiglusReportType mockReportType1() {
+    return SiglusReportType.builder()
         .name("Requisition")
         .active(true)
         .startDate(LocalDate.parse("2020-08-21"))
@@ -1239,8 +1239,8 @@ public class MeServiceTest {
         .build();
   }
 
-  private ReportType mockReportType2() {
-    return ReportType.builder()
+  private SiglusReportType mockReportType2() {
+    return SiglusReportType.builder()
         .facilityId(facilityId)
         .name("MMIA")
         .active(false)

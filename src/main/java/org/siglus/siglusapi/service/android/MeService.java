@@ -69,9 +69,9 @@ import org.siglus.siglusapi.constant.PodConstants;
 import org.siglus.siglusapi.domain.AppInfo;
 import org.siglus.siglusapi.domain.HfCmm;
 import org.siglus.siglusapi.domain.PodRequestBackup;
-import org.siglus.siglusapi.domain.ReportType;
 import org.siglus.siglusapi.domain.RequisitionRequestBackup;
 import org.siglus.siglusapi.domain.ResyncInfo;
+import org.siglus.siglusapi.domain.SiglusReportType;
 import org.siglus.siglusapi.domain.StockCardRequestBackup;
 import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.QueryOrderableSearchParams;
@@ -104,10 +104,10 @@ import org.siglus.siglusapi.repository.AppInfoRepository;
 import org.siglus.siglusapi.repository.FacilityCmmsRepository;
 import org.siglus.siglusapi.repository.LotNativeRepository;
 import org.siglus.siglusapi.repository.PodRequestBackupRepository;
-import org.siglus.siglusapi.repository.ReportTypeRepository;
 import org.siglus.siglusapi.repository.RequisitionRequestBackupRepository;
 import org.siglus.siglusapi.repository.ResyncInfoRepository;
 import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
+import org.siglus.siglusapi.repository.SiglusReportTypeRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.repository.StockCardRequestBackupRepository;
 import org.siglus.siglusapi.service.LotConflictService;
@@ -162,7 +162,7 @@ public class MeService {
   private final LotConflictService lotConflictService;
   private final SiglusValidReasonAssignmentService validReasonAssignmentService;
   private final AndroidHelper androidHelper;
-  private final ReportTypeRepository reportTypeRepository;
+  private final SiglusReportTypeRepository reportTypeRepository;
   private final SiglusRequisitionRepository requisitionRepository;
   private final RequisitionCreateService requisitionCreateService;
   private final RequisitionSearchService requisitionSearchService;
@@ -572,7 +572,7 @@ public class MeService {
         .collect(Collectors.toList());
   }
 
-  private LocalDate findLastReportDate(ReportType reportType, Map<String, Requisition> programCodeToRequisition) {
+  private LocalDate findLastReportDate(SiglusReportType reportType, Map<String, Requisition> programCodeToRequisition) {
     Requisition requisition = programCodeToRequisition.get(reportType.getProgramCode());
     if (requisition == null || requisition.getExtraData() == null) {
       return null;
