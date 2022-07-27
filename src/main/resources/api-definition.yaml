@@ -333,6 +333,16 @@ traits:
         responses:
           200:
             description: success
+    /report/tracerDrug/excel:
+      displayName: get tracer drug excel
+      get:
+        is: [ secured ]
+        body:
+          application/json:
+            schema: arrayOfStrings
+        responses:
+          200:
+            description: success
 
     /programs:
       displayName: Program

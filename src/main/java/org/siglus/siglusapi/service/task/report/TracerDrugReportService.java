@@ -15,16 +15,41 @@
 
 package org.siglus.siglusapi.service.task.report;
 
+import static org.siglus.siglusapi.constant.FieldConstants.ALL_GEOGRAPHIC_ZONE;
+import static org.siglus.siglusapi.constant.FieldConstants.CMM;
 import static org.siglus.siglusapi.constant.FieldConstants.DISTRICT;
+import static org.siglus.siglusapi.constant.FieldConstants.DISTRICT_CAMEL;
+import static org.siglus.siglusapi.constant.FieldConstants.DRUG_CODE;
+import static org.siglus.siglusapi.constant.FieldConstants.DRUG_NAME;
+import static org.siglus.siglusapi.constant.FieldConstants.EMPTY_VALUE;
+import static org.siglus.siglusapi.constant.FieldConstants.FACILITY_CAMEL;
+import static org.siglus.siglusapi.constant.FieldConstants.LEGENDA;
+import static org.siglus.siglusapi.constant.FieldConstants.LOW_STOCK;
+import static org.siglus.siglusapi.constant.FieldConstants.OVER_STOCK;
+import static org.siglus.siglusapi.constant.FieldConstants.PROGRAM_CAMEL;
 import static org.siglus.siglusapi.constant.FieldConstants.PROVINCE;
+import static org.siglus.siglusapi.constant.FieldConstants.PROVINCE_CAMEL;
+import static org.siglus.siglusapi.constant.FieldConstants.REGULAR_STOCK;
+import static org.siglus.siglusapi.constant.FieldConstants.REPORT_GENERATED_FOR;
+import static org.siglus.siglusapi.constant.FieldConstants.STOCK_OUT;
 
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.ExcelWriter;
+import com.alibaba.excel.write.metadata.WriteSheet;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.TreeSet;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import javax.servlet.http.HttpServletResponse;
 import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,9 +57,11 @@ import org.apache.commons.collections4.ListUtils;
 import org.siglus.siglusapi.dto.AssociatedGeographicZoneDto;
 import org.siglus.siglusapi.dto.RequisitionGeographicZonesDto;
 import org.siglus.siglusapi.dto.TracerDrugDto;
+import org.siglus.siglusapi.dto.TracerDrugExcelDto;
 import org.siglus.siglusapi.dto.TracerDrugExportDto;
 import org.siglus.siglusapi.repository.TracerDrugRepository;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
+import org.siglus.siglusapi.util.CustomCellWriteHandler;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
@@ -53,6 +80,9 @@ public class TracerDrugReportService {
 
   @Value("${tracer.drug.initialize.date}")
   private String tracerDrugInitializeDate;
+
+  @Value("${dateFormat}")
+  private String dateFormat;
 
   @Async
   @Transactional
@@ -85,26 +115,145 @@ public class TracerDrugReportService {
         .build();
   }
 
-  private List<AssociatedGeographicZoneDto> getRequisitionGeographicZonesDtos() {
+  public void getTracerDrugExcel(HttpServletResponse response,
+      String productCode,
+      String districtCode,
+      String provinceCode,
+      String startDate,
+      String endDate) throws IOException {
+    List<String> requisitionFacilityCodes = getRequisitionFacilityCode(districtCode, provinceCode);
+
+    List<TracerDrugExcelDto> tracerDrugExcelInfo = tracerDrugRepository.getTracerDrugExcelInfo(startDate,
+        endDate,
+        productCode, requisitionFacilityCodes);
+
+    Map<String, List<TracerDrugExcelDto>> tracerDrugMap = tracerDrugExcelInfo.stream()
+        .collect(Collectors.groupingBy(o -> getUniqueKey(o.getFacilityCode(), o.getProductCode())));
+
+    int[][] colorArrays = new int[tracerDrugMap.size()][tracerDrugMap.values().stream().findFirst().get().size()];
+    int[][] legendaColorArrays = new int[4][1];
+    for (int i = 0; i < 4; i++) {
+      legendaColorArrays[i][0] = i + 1;
+    }
+    List<List<Object>> excelRows = getDataRows(startDate, endDate, tracerDrugMap, colorArrays);
+
+    ExcelWriter excelWriter = EasyExcel.write(response.getOutputStream()).build();
+    WriteSheet writeSheet1 = EasyExcel
+        .writerSheet(0)
+        .registerWriteHandler(new CustomCellWriteHandler(colorArrays, false))
+        .head(getHeadRow(tracerDrugMap))
+        .build();
+    WriteSheet writeSheet2 = EasyExcel
+        .writerSheet(1, LEGENDA)
+        .registerWriteHandler(new CustomCellWriteHandler(legendaColorArrays, true))
+        .head(Collections.singletonList(Collections.singletonList(LEGENDA)))
+        .build();
+    excelWriter.write(excelRows, writeSheet1);
+    excelWriter.write(getLegendaRows(), writeSheet2);
+
+    excelWriter.finish();
+  }
+
+  public List<List<Object>> getDataRows(String startDate, String endDate,
+      Map<String, List<TracerDrugExcelDto>> tracerDrugMap, int[][] colorArrays) {
+    List<List<Object>> excelRows = new LinkedList<>();
+
+    AtomicInteger colorRow = new AtomicInteger();
+    AtomicInteger colorColumn = new AtomicInteger();
+    tracerDrugMap.forEach((key, tracerDrugList) -> {
+      List<Object> excelRow = new LinkedList<>();
+      TracerDrugExcelDto firstTracerDrugDto = tracerDrugList.get(0);
+      excelRow.add(firstTracerDrugDto.getProductCode());
+      excelRow.add(firstTracerDrugDto.getProgramCode());
+      excelRow.add(firstTracerDrugDto.getProductName());
+      excelRow.add(firstTracerDrugDto.getProvinceName());
+      excelRow.add(firstTracerDrugDto.getDistrictName());
+      excelRow.add(firstTracerDrugDto.getFacilityName());
+      excelRow.add(firstTracerDrugDto.getClosedCmm());
+      excelRow.add(startDate + "-" + endDate);
+      tracerDrugList.forEach(tracerDrug -> {
+        excelRow.add(tracerDrug.getStockOnHand() == null ? EMPTY_VALUE : tracerDrug.getStockOnHand());
+        colorArrays[colorRow.get()][colorColumn.getAndIncrement()] = tracerDrug.getStockStatusColorCode();
+      });
+      colorRow.getAndIncrement();
+      colorColumn.set(0);
+      excelRows.add(excelRow);
+    });
+    return excelRows;
+  }
+
+  private List<List<String>> getLegendaRows() {
+    List<List<String>> legendaRows = new LinkedList<>();
+    legendaRows.add(Collections.singletonList(STOCK_OUT));
+    legendaRows.add(Collections.singletonList(LOW_STOCK));
+    legendaRows.add(Collections.singletonList(REGULAR_STOCK));
+    legendaRows.add(Collections.singletonList(OVER_STOCK));
+    return legendaRows;
+  }
+
+  public List<List<String>> getHeadRow(Map<String, List<TracerDrugExcelDto>> collect) {
+    List<List<String>> excelHead = new LinkedList<>();
+    excelHead.add(Collections.singletonList(DRUG_CODE));
+    excelHead.add(Collections.singletonList(PROGRAM_CAMEL));
+    excelHead.add(Collections.singletonList(DRUG_NAME));
+    excelHead.add(Collections.singletonList(PROVINCE_CAMEL));
+    excelHead.add(Collections.singletonList(DISTRICT_CAMEL));
+    excelHead.add(Collections.singletonList(FACILITY_CAMEL));
+    excelHead.add(Collections.singletonList(CMM));
+    excelHead.add(Collections.singletonList(REPORT_GENERATED_FOR));
+    List<TracerDrugExcelDto> firstTracerDrug = collect.values().stream().findFirst().get();
+    SimpleDateFormat sdf = new SimpleDateFormat(dateFormat);
+    firstTracerDrug.forEach(firstTracerDrugDto -> excelHead.add(
+        Collections.singletonList(sdf.format(firstTracerDrugDto.getComputationTime()))));
+    return excelHead;
+  }
+
+
+  private String getUniqueKey(String facilityCode, String productCode) {
+    return facilityCode + "&" + productCode;
+  }
+
+  private List<RequisitionGeographicZonesDto> getAllAuthorizedFacility() {
     List<RequisitionGeographicZonesDto> requisitionGeographicZones = tracerDrugRepository
         .getAllRequisitionGeographicZones();
     if (authenticationHelper.isTheCurrentUserAdmin()) {
-      return getDistinctGeographicZones(getAssociatedGeographicZoneDto(requisitionGeographicZones));
+      return requisitionGeographicZones;
     }
     String level = authenticationHelper.getFacilityGeographicZoneLevel();
     String facilityCode = siglusFacilityReferenceDataService
         .findOne(authenticationHelper.getCurrentUser().getHomeFacilityId()).getCode();
     if (Objects.equals(level, DISTRICT)) {
-      requisitionGeographicZones = getAuthorizedGeographicZonesByDistrictLevel(facilityCode,
+      return getAuthorizedGeographicZonesByDistrictLevel(facilityCode,
           requisitionGeographicZones);
     } else if (Objects.equals(level, PROVINCE)) {
-      requisitionGeographicZones = getAuthorizedGeographicZonesByProvinceLevel(facilityCode,
+      return getAuthorizedGeographicZonesByProvinceLevel(facilityCode,
           requisitionGeographicZones);
     } else {
-      requisitionGeographicZones = getAuthorizedGeographicZonesBySiteLevel(facilityCode,
+      return getAuthorizedGeographicZonesBySiteLevel(facilityCode,
           requisitionGeographicZones);
     }
-    return getDistinctGeographicZones(getAssociatedGeographicZoneDto(requisitionGeographicZones));
+  }
+
+  public List<String> getRequisitionFacilityCode(String districtCode, String provinceCode) {
+    List<RequisitionGeographicZonesDto> allAuthorizedFacility = getAllAuthorizedFacility();
+    if (Objects.equals(provinceCode, ALL_GEOGRAPHIC_ZONE)) {
+      return
+          allAuthorizedFacility.stream().map(RequisitionGeographicZonesDto::getFacilityCode)
+              .collect(Collectors.toList());
+    } else if (Objects.equals(districtCode, ALL_GEOGRAPHIC_ZONE)) {
+      return allAuthorizedFacility.stream()
+          .filter(o -> Objects.equals(o.getProvinceCode(), provinceCode))
+          .map(RequisitionGeographicZonesDto::getFacilityCode)
+          .collect(Collectors.toList());
+    }
+    return allAuthorizedFacility.stream()
+        .filter(o -> Objects.equals(o.getDistrictCode(), districtCode))
+        .map(RequisitionGeographicZonesDto::getFacilityCode)
+        .collect(Collectors.toList());
+  }
+
+  private List<AssociatedGeographicZoneDto> getRequisitionGeographicZonesDtos() {
+    return getDistinctGeographicZones(getAssociatedGeographicZoneDto(getAllAuthorizedFacility()));
   }
 
   private List<AssociatedGeographicZoneDto> getAssociatedGeographicZoneDto(
