@@ -16,12 +16,14 @@
 package org.siglus.siglusapi.service;
 
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_NO_POD_OR_POD_LINE_ITEM_FOUNT;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_POD_ID_SUB_DRAFT_ID_NOT_MATCH;
 
 import com.google.common.collect.Lists;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -29,10 +31,13 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
+import org.javers.common.collections.Sets;
 import org.openlmis.fulfillment.domain.ProofOfDelivery;
+import org.openlmis.fulfillment.domain.ProofOfDeliveryLineItem.Importer;
 import org.openlmis.fulfillment.service.ProofOfDeliveryService;
 import org.openlmis.fulfillment.web.util.OrderObjectReferenceDto;
 import org.openlmis.fulfillment.web.util.ProofOfDeliveryDto;
+import org.openlmis.fulfillment.web.util.ProofOfDeliveryLineItemDto;
 import org.siglus.common.domain.OrderExternal;
 import org.siglus.common.domain.referencedata.Orderable;
 import org.siglus.common.repository.OrderExternalRepository;
@@ -104,6 +109,8 @@ public class SiglusProofOfDeliveryService {
 
   @Transactional
   public void createSubDraft(CreatePodSubDraftRequest request) {
+    // TODO no need order id
+    // TODO 校验 pod id 和 order id
     // TODO 判断 order 是否已经是 received 状态 ( pod 是否已经是 summited 状态), permission
     ProofOfDelivery proofOfDelivery = getProofOfDeliveryByOrderId(request.getOrderId());
     List<SimpleLineItem> simpleLineItems = buildSimpleLineItems(proofOfDelivery);
@@ -129,6 +136,43 @@ public class SiglusProofOfDeliveryService {
         .build();
   }
 
+  public ProofOfDeliveryDto getSubDraftDetail(UUID proofOfDeliveryId, UUID subDraftId) {
+    checkIfProofOfDeliveryIdAndSubDraftIdMatch(proofOfDeliveryId, subDraftId);
+
+    ProofOfDeliveryDto dto = getProofOfDelivery(proofOfDeliveryId, Sets.asSet("shipment.order"));
+    List<ProofOfDeliveryLineItemDto> currentSubDraftLineItems = getCurrentSubDraftPodLineItemDtos(subDraftId, dto);
+    dto.setLineItems(currentSubDraftLineItems);
+    return dto;
+  }
+
+  private List<ProofOfDeliveryLineItemDto> getCurrentSubDraftPodLineItemDtos(UUID subDraftId, ProofOfDeliveryDto dto) {
+    Set<UUID> lineItemIds = getCurrentSubDraftPodLineItemIds(subDraftId);
+    List<ProofOfDeliveryLineItemDto> currentSubDraftLineItems = Lists.newArrayList();
+    for (Importer lineItem : dto.getLineItems()) {
+      ProofOfDeliveryLineItemDto lineItemDto = (ProofOfDeliveryLineItemDto) lineItem;
+      if (lineItemIds.contains(lineItemDto.getId())) {
+        currentSubDraftLineItems.add(lineItemDto);
+      }
+    }
+    return currentSubDraftLineItems;
+  }
+
+  private Set<UUID> getCurrentSubDraftPodLineItemIds(UUID subDraftId) {
+    Example<PodLineItemsExtension> example = Example.of(PodLineItemsExtension.builder().subDraftId(subDraftId).build());
+    List<PodLineItemsExtension> podLineItemsExtensions = podLineItemsExtensionRepository.findAll(example);
+    return podLineItemsExtensions.stream().map(PodLineItemsExtension::getPodLineItemId).collect(Collectors.toSet());
+  }
+
+  private void checkIfProofOfDeliveryIdAndSubDraftIdMatch(UUID proofOfDeliveryId, UUID subDraftId) {
+    PodSubDraft podSubDraft = podSubDraftRepository.findOne(subDraftId);
+    if (Objects.isNull(podSubDraft)) {
+      throw new BusinessDataException(new Message(ERROR_NO_POD_OR_POD_LINE_ITEM_FOUNT), subDraftId);
+    }
+    if (!podSubDraft.getProofOfDeliveryId().equals(proofOfDeliveryId)) {
+      throw new BusinessDataException(new Message(ERROR_POD_ID_SUB_DRAFT_ID_NOT_MATCH), subDraftId);
+    }
+  }
+
   private boolean isTheAllSubDraftIsSubmitted(List<PodSubDraft> subDraftList) {
     return subDraftList.stream().allMatch(e -> PodSubDraftEnum.SUBMITTED == e.getStatus());
   }
@@ -151,7 +195,7 @@ public class SiglusProofOfDeliveryService {
     List<PodLineItemsExtension> podLineItemsExtensions = Lists.newArrayList();
     for (int i = 0; i < splitGroupList.size(); i++) {
       List<List<SimpleLineItem>> simpleLineItemList = splitGroupList.get(i);
-      UUID subDraftId = numberToSubDraftId.get(i);
+      UUID subDraftId = numberToSubDraftId.get(i + 1);
       simpleLineItemList.forEach(productLineItems ->
           productLineItems.forEach(lineItem ->
               podLineItemsExtensions.add(PodLineItemsExtension.builder()

@@ -112,4 +112,10 @@ public class SiglusProofOfDeliveryController {
   public PodSubDraftListResponse searchSubDraftList(@PathVariable("id") UUID proofOfDeliveryId) {
     return proofOfDeliveryService.searchSubDraftList(proofOfDeliveryId);
   }
+
+  @GetMapping("/{id}/subDrafts/{subDraftId}")
+  public ProofOfDeliveryDto getSubDraftDetail(@PathVariable("id") UUID proofOfDeliveryId,
+      @PathVariable("subDraftId") UUID subDraftId) {
+    return proofOfDeliveryService.getSubDraftDetail(proofOfDeliveryId, subDraftId);
+  }
 }

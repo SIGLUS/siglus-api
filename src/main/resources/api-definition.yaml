@@ -2462,9 +2462,20 @@ traits:
               application/json:
                 schema: localizedMessage
 
-    /proofsOfDelivery/subDraft/{id}:
+    /proofsOfDelivery/{id}/subDrafts/{subDraftId}:
       displayName: Proof Of Delivery - Sub Draft Detail
-      post:
+      uriParameters:
+        id:
+          displayName: proofOfDeliveryId
+          type: string
+          required: true
+          repeat: false
+        subDraftId:
+          displayName: subDraftId
+          type: string
+          required: true
+          repeat: false
+      get:
         is: [ secured ]
         description: >
           get proof of delivery sub draft detail

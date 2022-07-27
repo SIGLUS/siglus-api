@@ -123,6 +123,8 @@ public abstract class MessageKeys {
   // proof of delivery
   public static final String ERROR_NO_POD_OR_POD_LINE_ITEM_FOUNT = POD_ERROR_PREFIX
       + ".no.pod.or.pod.line.item.found";
+  public static final String ERROR_POD_ID_SUB_DRAFT_ID_NOT_MATCH = POD_ERROR_PREFIX
+      + ".pod.id.and.draft.id.not.match";
 
   // shipment
   public static final String SHIPMENT_ORDER_STATUS_INVALID =
