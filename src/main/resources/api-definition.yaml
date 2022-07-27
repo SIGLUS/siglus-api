@@ -2409,8 +2409,14 @@ traits:
               application/json:
                 schema: localizedMessage
 
-    /proofsOfDelivery/subDraft:
+    /proofsOfDelivery/{id}/subDrafts:
       displayName: Proof Of Delivery - Create Sub Draft
+      uriParameters:
+        id:
+          displayName: proofOfDeliveryId
+          type: string
+          required: true
+          repeat: false
       post:
         is: [ secured ]
         description: >
@@ -2430,8 +2436,14 @@ traits:
               application/json:
                 schema: localizedMessage
 
-    /proofsOfDelivery/subDraftList/{id}:
+    /proofsOfDelivery/{id}/subDrafts/summary:
       displayName: Proof Of Delivery - search Sub Draft List
+      uriParameters:
+        id:
+          displayName: proofOfDeliveryId
+          type: string
+          required: true
+          repeat: false
       post:
         is: [ secured, paginated ]
         description: >
