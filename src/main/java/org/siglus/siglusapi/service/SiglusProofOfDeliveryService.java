@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.service;
 
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_CANNOT_OPERATE_WHEN_SUB_DRAFT_SUBMITTED;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_NO_POD_OR_POD_LINE_ITEM_FOUND;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_NO_POD_SUB_DRAFT_FOUND;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_POD_ID_SUB_DRAFT_ID_NOT_MATCH;
@@ -155,6 +156,9 @@ public class SiglusProofOfDeliveryService {
   }
 
   public void updateSubDraft(UpdatePodSubDraftRequest request, UUID subDraftId) {
+    PodSubDraft podSubDraft = getPodSubDraft(subDraftId);
+    checkIfCanOperate(podSubDraft);
+
     Set<UUID> lineItemIds = getPodLineItemIdsBySubDraftId(subDraftId);
     List<ProofOfDeliveryLineItem> lineItems = podLineItemsRepository.findAll(lineItemIds);
 
@@ -163,7 +167,13 @@ public class SiglusProofOfDeliveryService {
     log.info("update ProofOfDeliveryLineItem list, subDraftId:{}, lineItemIds:{}", subDraftId, lineItemIds);
     podLineItemsRepository.save(toBeUpdatedLineItems);
 
-    updateSubDraftStatusAndOperator(subDraftId, PodSubDraftEnum.DRAFT);
+    updateSubDraftStatusAndOperator(podSubDraft, request.getSubDraftStatus());
+  }
+
+  private void checkIfCanOperate(PodSubDraft podSubDraft) {
+    if (PodSubDraftEnum.SUBMITTED == podSubDraft.getStatus()) {
+      throw new BusinessDataException(new Message(ERROR_CANNOT_OPERATE_WHEN_SUB_DRAFT_SUBMITTED), podSubDraft.getId());
+    }
   }
 
   private List<ProofOfDeliveryLineItem> buildToBeUpdatedLineItems(ProofOfDeliveryDto proofOfDeliveryDto,
@@ -184,8 +194,7 @@ public class SiglusProofOfDeliveryService {
     return toBeUpdatedLineItems;
   }
 
-  private void updateSubDraftStatusAndOperator(UUID subDraftId, PodSubDraftEnum status) {
-    PodSubDraft podSubDraft = getPodSubDraft(subDraftId);
+  private void updateSubDraftStatusAndOperator(PodSubDraft podSubDraft, PodSubDraftEnum status) {
     UUID currentUserId = authenticationHelper.getCurrentUserId().orElseThrow(IllegalStateException::new);
     podSubDraft.setOperatorId(PodSubDraftEnum.NOT_YET_STARTED == status ? null : currentUserId);
     podSubDraft.setStatus(status);

@@ -127,6 +127,8 @@ public abstract class MessageKeys {
       + ".pod.id.and.draft.id.not.match";
   public static final String ERROR_NO_POD_SUB_DRAFT_FOUND = POD_ERROR_PREFIX
       + ".no.pod.sub.draft.found";
+  public static final String ERROR_CANNOT_OPERATE_WHEN_SUB_DRAFT_SUBMITTED = POD_ERROR_PREFIX
+      + ".cannot.operate.when.sub.draft.submitted";
 
   // shipment
   public static final String SHIPMENT_ORDER_STATUS_INVALID =
