@@ -411,13 +411,15 @@ public class SiglusProcessingPeriodServiceTest {
   private void setupReportType() {
     String programCode = "TARV";
     ProgramDto programDto = mock(ProgramDto.class);
+    ReportType reportType = mock(ReportType.class);
+    when(reportType.getStartDate()).thenReturn(LocalDate.of(2020, 1, 1));
     when(programDto.getCode()).thenReturn(programCode);
     when(siglusProgramService.getProgram(programId)).thenReturn(programDto);
     when(reportTypeRepository.findOneByFacilityIdAndProgramCodeAndActiveIsTrue(facilityId, programCode))
-            .thenReturn(Optional.of(new ReportType()));
+            .thenReturn(Optional.of(reportType));
 
     StockCardLineItem lineItem = new StockCardLineItem();
-    lineItem.setOccurredDate(LocalDate.now());
+    lineItem.setOccurredDate(LocalDate.of(2020, 1, 1));
     StockCard stockCard = mock(StockCard.class);
     when(stockCard.getLineItems()).thenReturn(Arrays.asList(lineItem));
     when(stockCardRepository.findByProgramIdAndFacilityId(programId, facilityId))
