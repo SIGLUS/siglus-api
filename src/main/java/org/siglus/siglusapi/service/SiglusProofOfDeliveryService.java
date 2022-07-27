@@ -155,6 +155,7 @@ public class SiglusProofOfDeliveryService {
     return dto;
   }
 
+  @Transactional
   public void updateSubDraft(UpdatePodSubDraftRequest request, UUID subDraftId) {
     PodSubDraft podSubDraft = getPodSubDraft(subDraftId);
     checkIfCanOperate(podSubDraft);

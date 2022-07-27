@@ -123,7 +123,6 @@ public class SiglusProofOfDeliveryController {
   }
 
   @PutMapping("/{id}/subDrafts/{subDraftId}")
-  @Transactional
   @ResponseStatus(NO_CONTENT)
   public void updateSubDraft(@PathVariable("id") UUID proofOfDeliveryId, @PathVariable("subDraftId") UUID subDraftId,
       @RequestBody UpdatePodSubDraftRequest request) {
