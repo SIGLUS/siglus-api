@@ -34,6 +34,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.javers.common.collections.Sets;
 import org.openlmis.fulfillment.domain.ProofOfDelivery;
+import org.openlmis.fulfillment.domain.ProofOfDeliveryLineItem;
 import org.openlmis.fulfillment.domain.ProofOfDeliveryLineItem.Importer;
 import org.openlmis.fulfillment.service.ProofOfDeliveryService;
 import org.openlmis.fulfillment.web.util.OrderObjectReferenceDto;
@@ -49,6 +50,7 @@ import org.siglus.siglusapi.dto.enums.PodSubDraftEnum;
 import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.repository.OrderableRepository;
 import org.siglus.siglusapi.repository.PodLineItemsExtensionRepository;
+import org.siglus.siglusapi.repository.PodLineItemsRepository;
 import org.siglus.siglusapi.repository.PodSubDraftRepository;
 import org.siglus.siglusapi.service.client.SiglusProofOfDeliveryFulfillmentService;
 import org.siglus.siglusapi.util.CustomListSortHelper;
@@ -67,6 +69,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @Service
 public class SiglusProofOfDeliveryService {
+
+  private static final Set<String> DEFAULT_EXPAND = Sets.asSet("shipment.order");
 
   @Autowired
   private SiglusProofOfDeliveryFulfillmentService fulfillmentService;
@@ -94,6 +98,9 @@ public class SiglusProofOfDeliveryService {
 
   @Autowired
   private SiglusAuthenticationHelper authenticationHelper;
+
+  @Autowired
+  private PodLineItemsRepository podLineItemsRepository;
 
   public ProofOfDeliveryDto getProofOfDelivery(UUID id,
       Set<String> expand) {
@@ -141,36 +148,74 @@ public class SiglusProofOfDeliveryService {
   public ProofOfDeliveryDto getSubDraftDetail(UUID proofOfDeliveryId, UUID subDraftId) {
     checkIfProofOfDeliveryIdAndSubDraftIdMatch(proofOfDeliveryId, subDraftId);
 
-    ProofOfDeliveryDto dto = getProofOfDelivery(proofOfDeliveryId, Sets.asSet("shipment.order"));
+    ProofOfDeliveryDto dto = getProofOfDelivery(proofOfDeliveryId, DEFAULT_EXPAND);
     List<ProofOfDeliveryLineItemDto> currentSubDraftLineItems = getCurrentSubDraftPodLineItemDtos(subDraftId, dto);
     dto.setLineItems(currentSubDraftLineItems);
     return dto;
   }
 
-  public void updateSubDraft(UUID subDraftId) {
+  public void updateSubDraft(UpdatePodSubDraftRequest request, UUID subDraftId) {
+    Set<UUID> lineItemIds = getPodLineItemIdsBySubDraftId(subDraftId);
+    List<ProofOfDeliveryLineItem> lineItems = podLineItemsRepository.findAll(lineItemIds);
+
+    List<ProofOfDeliveryLineItem> toBeUpdatedLineItems = buildToBeUpdatedLineItems(
+        request.getProofOfDeliveryDto(), lineItems);
+    log.info("update ProofOfDeliveryLineItem list, subDraftId:{}, lineItemIds:{}", subDraftId, lineItemIds);
+    podLineItemsRepository.save(toBeUpdatedLineItems);
+
+    updateSubDraftStatusAndOperator(subDraftId, PodSubDraftEnum.DRAFT);
+  }
+
+  private List<ProofOfDeliveryLineItem> buildToBeUpdatedLineItems(ProofOfDeliveryDto proofOfDeliveryDto,
+      List<ProofOfDeliveryLineItem> lineItems) {
+    Map<UUID, ProofOfDeliveryLineItemDto> idToLineItemDto = convertToLineItemDtos(
+        proofOfDeliveryDto.getLineItems()).stream()
+        .collect(Collectors.toMap(ProofOfDeliveryLineItemDto::getId, e -> e));
+    List<ProofOfDeliveryLineItem> toBeUpdatedLineItems = Lists.newArrayListWithExpectedSize(lineItems.size());
+    lineItems.forEach(lineItem -> {
+      ProofOfDeliveryLineItemDto lineItemDto = idToLineItemDto.get(lineItem.getId());
+      // TODO vvmStatus ?
+      ProofOfDeliveryLineItem toBeUpdatedLineItem = new ProofOfDeliveryLineItem(lineItem.getOrderable(),
+          lineItem.getLotId(), lineItemDto.getQuantityAccepted(), null,
+          lineItem.getQuantityRejected(), lineItem.getRejectionReasonId(), lineItemDto.getNotes());
+      toBeUpdatedLineItem.setId(lineItem.getId());
+      toBeUpdatedLineItems.add(toBeUpdatedLineItem);
+    });
+    return toBeUpdatedLineItems;
+  }
+
+  private void updateSubDraftStatusAndOperator(UUID subDraftId, PodSubDraftEnum status) {
+    PodSubDraft podSubDraft = getPodSubDraft(subDraftId);
+    UUID currentUserId = authenticationHelper.getCurrentUserId().orElseThrow(IllegalStateException::new);
+    podSubDraft.setOperatorId(PodSubDraftEnum.NOT_YET_STARTED == status ? null : currentUserId);
+    podSubDraft.setStatus(status);
+    log.info("save pod sub draft: {}", podSubDraft);
+    podSubDraftRepository.save(podSubDraft);
+  }
+
+  private PodSubDraft getPodSubDraft(UUID subDraftId) {
     PodSubDraft podSubDraft = podSubDraftRepository.findOne(subDraftId);
     if (Objects.isNull(podSubDraft)) {
       throw new BusinessDataException(new Message(ERROR_NO_POD_SUB_DRAFT_FOUND), subDraftId);
     }
-    UUID currentUserId = authenticationHelper.getCurrentUserId().orElseThrow(IllegalStateException::new);
-    podSubDraft.setOperatorId(currentUserId);
-    podSubDraft.setStatus(PodSubDraftEnum.DRAFT);
-    podSubDraftRepository.save(podSubDraft);
+    return podSubDraft;
   }
 
   private List<ProofOfDeliveryLineItemDto> getCurrentSubDraftPodLineItemDtos(UUID subDraftId, ProofOfDeliveryDto dto) {
-    Set<UUID> lineItemIds = getCurrentSubDraftPodLineItemIds(subDraftId);
-    List<ProofOfDeliveryLineItemDto> currentSubDraftLineItems = Lists.newArrayList();
-    for (Importer lineItem : dto.getLineItems()) {
-      ProofOfDeliveryLineItemDto lineItemDto = (ProofOfDeliveryLineItemDto) lineItem;
-      if (lineItemIds.contains(lineItemDto.getId())) {
-        currentSubDraftLineItems.add(lineItemDto);
-      }
-    }
-    return currentSubDraftLineItems;
+    Set<UUID> lineItemIds = getPodLineItemIdsBySubDraftId(subDraftId);
+    return convertToLineItemDtos(dto.getLineItems()).stream()
+        .filter(lineItemDto -> lineItemIds.contains(lineItemDto.getId())).collect(Collectors.toList());
   }
 
-  private Set<UUID> getCurrentSubDraftPodLineItemIds(UUID subDraftId) {
+  private List<ProofOfDeliveryLineItemDto> convertToLineItemDtos(List<Importer> lineItems) {
+    List<ProofOfDeliveryLineItemDto> proofOfDeliveryLineItemDtos = Lists.newArrayListWithExpectedSize(lineItems.size());
+    for (Importer lineItem : lineItems) {
+      proofOfDeliveryLineItemDtos.add((ProofOfDeliveryLineItemDto) lineItem);
+    }
+    return proofOfDeliveryLineItemDtos;
+  }
+
+  private Set<UUID> getPodLineItemIdsBySubDraftId(UUID subDraftId) {
     Example<PodLineItemsExtension> example = Example.of(PodLineItemsExtension.builder().subDraftId(subDraftId).build());
     List<PodLineItemsExtension> podLineItemsExtensions = podLineItemsExtensionRepository.findAll(example);
     return podLineItemsExtensions.stream().map(PodLineItemsExtension::getPodLineItemId).collect(Collectors.toSet());

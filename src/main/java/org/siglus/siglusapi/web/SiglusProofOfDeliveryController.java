@@ -126,9 +126,7 @@ public class SiglusProofOfDeliveryController {
   @Transactional
   @ResponseStatus(NO_CONTENT)
   public void updateSubDraft(@PathVariable("id") UUID proofOfDeliveryId, @PathVariable("subDraftId") UUID subDraftId,
-      @RequestBody ProofOfDeliveryDto dto,
-      OAuth2Authentication authentication) {
-    actualController.updateProofOfDelivery(proofOfDeliveryId, dto, authentication);
-    proofOfDeliveryService.updateSubDraft(subDraftId);
+      @RequestBody UpdatePodSubDraftRequest request) {
+    proofOfDeliveryService.updateSubDraft(request, subDraftId);
   }
 }

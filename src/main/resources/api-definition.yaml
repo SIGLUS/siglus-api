@@ -2500,6 +2500,13 @@ traits:
         responses:
           204:
             description: sub draft updated.
+      delete:
+        is: [ secured ]
+        description: >
+          delete proof of delivery sub draft
+        responses:
+          204:
+            description: sub draft deleted.
 
     /integration:
       /stockMovements:
