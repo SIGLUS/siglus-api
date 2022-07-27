@@ -15,7 +15,8 @@
 
 package org.siglus.siglusapi.service;
 
-import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_NO_POD_OR_POD_LINE_ITEM_FOUNT;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_NO_POD_OR_POD_LINE_ITEM_FOUND;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_NO_POD_SUB_DRAFT_FOUND;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_POD_ID_SUB_DRAFT_ID_NOT_MATCH;
 
 import com.google.common.collect.Lists;
@@ -53,6 +54,7 @@ import org.siglus.siglusapi.service.client.SiglusProofOfDeliveryFulfillmentServi
 import org.siglus.siglusapi.util.CustomListSortHelper;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.web.request.CreatePodSubDraftRequest;
+import org.siglus.siglusapi.web.request.UpdatePodSubDraftRequest;
 import org.siglus.siglusapi.web.response.PodSubDraftListResponse;
 import org.siglus.siglusapi.web.response.PodSubDraftListResponse.SubDraftInfo;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -126,7 +128,7 @@ public class SiglusProofOfDeliveryService {
     Example<PodSubDraft> example = Example.of(PodSubDraft.builder().proofOfDeliveryId(proofOfDeliveryId).build());
     List<PodSubDraft> podSubDrafts = podSubDraftRepository.findAll(example);
     if (CollectionUtils.isEmpty(podSubDrafts)) {
-      throw new BusinessDataException(new Message(ERROR_NO_POD_OR_POD_LINE_ITEM_FOUNT), proofOfDeliveryId);
+      throw new BusinessDataException(new Message(ERROR_NO_POD_OR_POD_LINE_ITEM_FOUND), proofOfDeliveryId);
     }
     return PodSubDraftListResponse.builder()
         .proofOfDeliveryId(podSubDrafts.get(0).getProofOfDeliveryId())
@@ -143,6 +145,17 @@ public class SiglusProofOfDeliveryService {
     List<ProofOfDeliveryLineItemDto> currentSubDraftLineItems = getCurrentSubDraftPodLineItemDtos(subDraftId, dto);
     dto.setLineItems(currentSubDraftLineItems);
     return dto;
+  }
+
+  public void updateSubDraft(UpdatePodSubDraftRequest request) {
+    PodSubDraft podSubDraft = podSubDraftRepository.findOne(request.getSubDraftId());
+    if (Objects.isNull(podSubDraft)) {
+      throw new BusinessDataException(new Message(ERROR_NO_POD_SUB_DRAFT_FOUND), request.getSubDraftId());
+    }
+    UUID currentUserId = authenticationHelper.getCurrentUserId().orElseThrow(IllegalStateException::new);
+    podSubDraft.setOperatorId(currentUserId);
+    podSubDraft.setStatus(PodSubDraftEnum.DRAFT);
+    podSubDraftRepository.save(podSubDraft);
   }
 
   private List<ProofOfDeliveryLineItemDto> getCurrentSubDraftPodLineItemDtos(UUID subDraftId, ProofOfDeliveryDto dto) {
@@ -166,7 +179,7 @@ public class SiglusProofOfDeliveryService {
   private void checkIfProofOfDeliveryIdAndSubDraftIdMatch(UUID proofOfDeliveryId, UUID subDraftId) {
     PodSubDraft podSubDraft = podSubDraftRepository.findOne(subDraftId);
     if (Objects.isNull(podSubDraft)) {
-      throw new BusinessDataException(new Message(ERROR_NO_POD_OR_POD_LINE_ITEM_FOUNT), subDraftId);
+      throw new BusinessDataException(new Message(ERROR_NO_POD_SUB_DRAFT_FOUND), subDraftId);
     }
     if (!podSubDraft.getProofOfDeliveryId().equals(proofOfDeliveryId)) {
       throw new BusinessDataException(new Message(ERROR_POD_ID_SUB_DRAFT_ID_NOT_MATCH), subDraftId);
@@ -257,12 +270,12 @@ public class SiglusProofOfDeliveryService {
   private ProofOfDelivery getProofOfDeliveryByOrderId(UUID orderId) {
     Page<ProofOfDelivery> proofOfDeliveries = proofOfDeliveryService.search(null, orderId, new PageRequest(0, 1));
     if (proofOfDeliveries.getTotalElements() == 0 || proofOfDeliveries.getContent().isEmpty()) {
-      throw new BusinessDataException(new Message(ERROR_NO_POD_OR_POD_LINE_ITEM_FOUNT), orderId);
+      throw new BusinessDataException(new Message(ERROR_NO_POD_OR_POD_LINE_ITEM_FOUND), orderId);
     }
 
     ProofOfDelivery proofOfDelivery = proofOfDeliveries.getContent().get(0);
     if (proofOfDelivery.getLineItems().isEmpty()) {
-      throw new BusinessDataException(new Message(ERROR_NO_POD_OR_POD_LINE_ITEM_FOUNT), orderId);
+      throw new BusinessDataException(new Message(ERROR_NO_POD_OR_POD_LINE_ITEM_FOUND), orderId);
     }
 
     return proofOfDelivery;

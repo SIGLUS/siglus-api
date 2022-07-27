@@ -2493,6 +2493,13 @@ traits:
             body:
               application/json:
                 schema: localizedMessage
+      put:
+        is: [ secured ]
+        description: >
+          update proof of delivery sub draft
+        responses:
+          204:
+            description: sub draft updated.
 
     /integration:
       /stockMovements:

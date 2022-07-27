@@ -26,6 +26,7 @@ import org.openlmis.fulfillment.web.util.ProofOfDeliveryDto;
 import org.siglus.siglusapi.service.SiglusNotificationService;
 import org.siglus.siglusapi.service.SiglusProofOfDeliveryService;
 import org.siglus.siglusapi.web.request.CreatePodSubDraftRequest;
+import org.siglus.siglusapi.web.request.UpdatePodSubDraftRequest;
 import org.siglus.siglusapi.web.response.PodSubDraftListResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -117,5 +118,13 @@ public class SiglusProofOfDeliveryController {
   public ProofOfDeliveryDto getSubDraftDetail(@PathVariable("id") UUID proofOfDeliveryId,
       @PathVariable("subDraftId") UUID subDraftId) {
     return proofOfDeliveryService.getSubDraftDetail(proofOfDeliveryId, subDraftId);
+  }
+
+  @PutMapping("/{id}/subDrafts/{subDraftId}")
+  @Transactional
+  public void updateSubDraft(@PathVariable("id") UUID proofOfDeliveryId,
+      @RequestBody UpdatePodSubDraftRequest request, OAuth2Authentication authentication) {
+    actualController.updateProofOfDelivery(proofOfDeliveryId, request.getProofOfDeliveryDto(), authentication);
+    proofOfDeliveryService.updateSubDraft(request);
   }
 }
