@@ -190,17 +190,18 @@ public class SiglusStockManagementDraftService {
 
   public void deleteStockManagementDraft(StockEventDto dto) {
     List<StockManagementDraft> drafts = stockManagementDraftRepository
-        .findByProgramIdAndFacilityIdAndIsDraftAndDraftType(dto.getProgramId(), dto.getFacilityId(),
-            true,
+        .findByProgramIdAndFacilityIdAndIsDraftAndDraftType(dto.getProgramId(), dto.getFacilityId(), true,
             dto.getType());
     if (!drafts.isEmpty()) {
-      UUID initialDraftId = drafts.get(0).getInitialDraftId();
-      log.info("delete stock management subDrafts, programId: {}, facilityId: {}",
+      log.info("delete stock management draft(s), programId: {}, facilityId: {}",
           dto.getProgramId(),
           dto.getFacilityId());
       stockManagementDraftRepository.delete(drafts);
-      log.info("delete stock management initial draft with id: {}", initialDraftId);
-      stockManagementInitialDraftsRepository.delete(initialDraftId);
+      UUID initialDraftId = drafts.get(0).getInitialDraftId();
+      if (initialDraftId != null) {
+        log.info("delete stock management initial draft with id: {}", initialDraftId);
+        stockManagementInitialDraftsRepository.delete(initialDraftId);
+      }
     }
   }
 
