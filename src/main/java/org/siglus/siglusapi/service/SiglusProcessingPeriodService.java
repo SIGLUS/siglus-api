@@ -22,7 +22,6 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -175,24 +174,20 @@ public class SiglusProcessingPeriodService {
                                                         UUID facilityId) {
     LocalDate firstStockMovementDate = getFirstStockMovementDate(programId, facilityId);
     String programCode = siglusProgramService.getProgram(programId).getCode();
-    Optional<ReportType> reportTypeOptional = reportTypeRepository
-            .findOneByFacilityIdAndProgramCodeAndActiveIsTrue(facilityId, programCode);
-    if (reportTypeOptional.isPresent()) {
-      ReportType reportType = reportTypeOptional.get();
-      if (reportType != null && reportType.getStartDate() != null && firstStockMovementDate != null) {
-        LocalDate indexDate;
-        if (reportType.getStartDate().isAfter(firstStockMovementDate)) {
-          indexDate = reportType.getStartDate();
-        } else {
-          indexDate = firstStockMovementDate;
-        }
-        return periods.stream()
-                .filter(period -> period.getStartDate().isAfter(indexDate))
-                .filter(period -> !period.getStartDate().isAfter(LocalDate.now()))
-                .collect(Collectors.toList());
-      }
+    ReportType reportType = reportTypeRepository
+            .findOneByFacilityIdAndProgramCodeAndActiveIsTrue(facilityId, programCode)
+            .orElseThrow(() -> new IllegalArgumentException("no report type"));
+
+    LocalDate indexDate;
+    if (reportType.getStartDate().isAfter(firstStockMovementDate)) {
+      indexDate = reportType.getStartDate();
+    } else {
+      indexDate = firstStockMovementDate;
     }
-    return periods;
+    return periods.stream()
+            .filter(period -> period.getStartDate().isAfter(indexDate))
+            .filter(period -> !period.getStartDate().isAfter(LocalDate.now()))
+            .collect(Collectors.toList());
   }
 
   // get periods for initiate
