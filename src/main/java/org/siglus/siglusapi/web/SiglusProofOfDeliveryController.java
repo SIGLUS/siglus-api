@@ -15,6 +15,8 @@
 
 package org.siglus.siglusapi.web;
 
+import static org.springframework.http.HttpStatus.NO_CONTENT;
+
 import java.io.IOException;
 import java.util.Set;
 import java.util.UUID;
@@ -122,6 +124,7 @@ public class SiglusProofOfDeliveryController {
 
   @PutMapping("/{id}/subDrafts/{subDraftId}")
   @Transactional
+  @ResponseStatus(NO_CONTENT)
   public void updateSubDraft(@PathVariable("id") UUID proofOfDeliveryId,
       @RequestBody UpdatePodSubDraftRequest request, OAuth2Authentication authentication) {
     actualController.updateProofOfDelivery(proofOfDeliveryId, request.getProofOfDeliveryDto(), authentication);
