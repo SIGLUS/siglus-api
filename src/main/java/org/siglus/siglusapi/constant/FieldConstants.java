@@ -108,7 +108,7 @@ public class FieldConstants {
 
   public static final String CHARACTER_ENCODING = "utf-8";
 
-  public static final String TRACER_DRUG_INFORMATION_PORTUGUESE = "tracer_drug_information_";
+  public static final String TRACER_DRUG_INFORMATION = "tracer_drug_information_";
 
   public static final String LEGENDA = "legenda";
 

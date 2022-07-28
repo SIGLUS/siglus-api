@@ -18,7 +18,7 @@ package org.siglus.siglusapi.web.report;
 import static org.siglus.siglusapi.constant.FieldConstants.ATTACHMENT_FILENAME;
 import static org.siglus.siglusapi.constant.FieldConstants.CHARACTER_ENCODING;
 import static org.siglus.siglusapi.constant.FieldConstants.EXCEL_CONTENT_TYPE;
-import static org.siglus.siglusapi.constant.FieldConstants.TRACER_DRUG_INFORMATION_PORTUGUESE;
+import static org.siglus.siglusapi.constant.FieldConstants.TRACER_DRUG_INFORMATION;
 import static org.siglus.siglusapi.constant.FieldConstants.UTF_8;
 import static org.siglus.siglusapi.constant.FieldConstants.XLSX_SUFFIX;
 import static org.springframework.http.HttpHeaders.CONTENT_DISPOSITION;
@@ -76,7 +76,7 @@ public class TracerDrugReportController {
     response.setCharacterEncoding(CHARACTER_ENCODING);
     SimpleDateFormat simpleDateFormat = new SimpleDateFormat(dateUrlFormat);
     String fileName = URLEncoder.encode(
-        TRACER_DRUG_INFORMATION_PORTUGUESE + simpleDateFormat.format(System.currentTimeMillis()), UTF_8);
+        TRACER_DRUG_INFORMATION + simpleDateFormat.format(System.currentTimeMillis()), UTF_8);
     response.setHeader(CONTENT_DISPOSITION, ATTACHMENT_FILENAME + fileName + XLSX_SUFFIX);
     tracerDrugReportService.getTracerDrugExcel(response, productCode, districtCode, provinceCode, startDate, endDate);
   }

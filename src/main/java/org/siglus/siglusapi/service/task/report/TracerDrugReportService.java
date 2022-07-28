@@ -162,6 +162,10 @@ public class TracerDrugReportService {
     AtomicInteger colorColumn = new AtomicInteger();
     tracerDrugMap.forEach((key, tracerDrugList) -> {
       List<Object> excelRow = new LinkedList<>();
+      tracerDrugList = tracerDrugList
+          .stream()
+          .sorted(Comparator.comparing(TracerDrugExcelDto::getComputationTime))
+          .collect(Collectors.toList());
       TracerDrugExcelDto firstTracerDrugDto = tracerDrugList.get(0);
       excelRow.add(firstTracerDrugDto.getProductCode());
       excelRow.add(firstTracerDrugDto.getProgramCode());
@@ -201,7 +205,15 @@ public class TracerDrugReportService {
     excelHead.add(Collections.singletonList(FACILITY_PORTUGUESE));
     excelHead.add(Collections.singletonList(CMM));
     excelHead.add(Collections.singletonList(REPORT_GENERATED_FOR_PORTUGUESE));
-    List<TracerDrugExcelDto> firstTracerDrug = collect.values().stream().findFirst().get();
+    List<TracerDrugExcelDto> firstTracerDrug = collect
+        .values()
+        .stream()
+        .findFirst()
+        .get()
+        .stream()
+        .sorted(Comparator.comparing(
+            TracerDrugExcelDto::getComputationTime))
+        .collect(Collectors.toList());
     SimpleDateFormat sdf = new SimpleDateFormat(dateFormat);
     firstTracerDrug.forEach(firstTracerDrugDto -> excelHead.add(
         Collections.singletonList(sdf.format(firstTracerDrugDto.getComputationTime()))));
