@@ -20,6 +20,7 @@ import java.util.UUID;
 import org.siglus.siglusapi.domain.TracerDrugPersistentData;
 import org.siglus.siglusapi.dto.RequisitionGeographicZonesDto;
 import org.siglus.siglusapi.dto.TracerDrugDto;
+import org.siglus.siglusapi.dto.TracerDrugExcelDto;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -100,6 +101,10 @@ public interface TracerDrugRepository extends
 
   @Query(name = "TracerDrug.findTracerDrug", nativeQuery = true)
   List<TracerDrugDto> getTracerDrugInfo();
+
+  @Query(name = "TracerDrug.findExcelDetail", nativeQuery = true)
+  List<TracerDrugExcelDto> getTracerDrugExcelInfo(String startDate,
+      String endDate, String productCode, List<String> facilityCodes);
 
 
 }

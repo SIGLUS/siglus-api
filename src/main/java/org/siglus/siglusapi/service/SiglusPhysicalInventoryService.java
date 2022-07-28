@@ -372,7 +372,7 @@ public class SiglusPhysicalInventoryService {
   }
 
 
-  public void splitPhysicalInventory(PhysicalInventoryDto dto, Integer splitNum) {
+  private void splitPhysicalInventory(PhysicalInventoryDto dto, Integer splitNum) {
     createEmptySubDraft(splitNum, dto);
     spiltLineItem(dto, splitNum);
   }
@@ -547,7 +547,7 @@ public class SiglusPhysicalInventoryService {
     return physicalInventory;
   }
 
-  public PhysicalInventoryDto createNewDraftDirectly(PhysicalInventoryDto dto) {
+  private PhysicalInventoryDto createNewDraftDirectly(PhysicalInventoryDto dto) {
     return inventoryController.createEmptyPhysicalInventory(dto);
   }
 
@@ -594,7 +594,7 @@ public class SiglusPhysicalInventoryService {
     doCreateNewDraftForAllProducts(dto, true);
   }
 
-  public PhysicalInventoryDto saveDraft(PhysicalInventoryDto dto, UUID id) {
+  private PhysicalInventoryDto saveDraft(PhysicalInventoryDto dto, UUID id) {
     inventoryController.savePhysicalInventory(id, dto);
     return dto;
   }

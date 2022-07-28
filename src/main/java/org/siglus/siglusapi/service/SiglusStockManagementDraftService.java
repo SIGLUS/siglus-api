@@ -16,7 +16,6 @@
 package org.siglus.siglusapi.service;
 
 import static java.util.stream.Collectors.toList;
-import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_CARD_NOT_FOUND;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_DRAFT_EXISTS;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_INITIAL_DRAFT_EXISTS;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_SUB_DRAFTS_MORE_THAN_TEN;
@@ -34,7 +33,6 @@ import org.apache.commons.collections.CollectionUtils;
 import org.openlmis.stockmanagement.dto.StockCardDto;
 import org.openlmis.stockmanagement.dto.StockEventDto;
 import org.openlmis.stockmanagement.dto.ValidSourceDestinationDto;
-import org.openlmis.stockmanagement.exception.ResourceNotFoundException;
 import org.siglus.siglusapi.constant.FieldConstants;
 import org.siglus.siglusapi.domain.StockManagementDraft;
 import org.siglus.siglusapi.domain.StockManagementDraftLineItem;
@@ -50,7 +48,7 @@ import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.StockManagementDraftRepository;
 import org.siglus.siglusapi.repository.StockManagementInitialDraftsRepository;
-import org.siglus.siglusapi.util.ConflictOrderableInSubDraftHelper;
+import org.siglus.siglusapi.util.CheckConflictOrderableInSubDraftsService;
 import org.siglus.siglusapi.util.OperatePermissionService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.validator.ActiveDraftValidator;
@@ -90,7 +88,7 @@ public class SiglusStockManagementDraftService {
   private SiglusAuthenticationHelper authenticationHelper;
 
   @Autowired
-  private ConflictOrderableInSubDraftHelper conflictOrderableInSubDraftHelper;
+  private CheckConflictOrderableInSubDraftsService checkConflictOrderableInSubDraftsService;
 
   private static final Integer DRAFTS_LIMITATION = 10;
   private static final Integer DRAFTS_INCREMENT = 1;
@@ -139,7 +137,7 @@ public class SiglusStockManagementDraftService {
         || dto.getDraftType().equals(FieldConstants.RECEIVE)) {
       StockManagementDraft subDraft = stockManagementDraftRepository.findOne(id);
       draftValidator.validateSubDraftStatus(subDraft);
-      conflictOrderableInSubDraftHelper.checkConflictSubDraft(dto);
+      checkConflictOrderableInSubDraftsService.checkConflictSubDraft(dto);
       StockManagementDraft newDraft = setNewAttributesInOriginalDraft(dto, id);
       StockManagementDraft savedDraft = stockManagementDraftRepository.save(newDraft);
       return StockManagementDraftDto.from(savedDraft);
@@ -190,17 +188,18 @@ public class SiglusStockManagementDraftService {
 
   public void deleteStockManagementDraft(StockEventDto dto) {
     List<StockManagementDraft> drafts = stockManagementDraftRepository
-        .findByProgramIdAndFacilityIdAndIsDraftAndDraftType(dto.getProgramId(), dto.getFacilityId(),
-            true,
+        .findByProgramIdAndFacilityIdAndIsDraftAndDraftType(dto.getProgramId(), dto.getFacilityId(), true,
             dto.getType());
     if (!drafts.isEmpty()) {
-      UUID initialDraftId = drafts.get(0).getInitialDraftId();
-      log.info("delete stock management subDrafts, programId: {}, facilityId: {}",
+      log.info("delete stock management draft(s), programId: {}, facilityId: {}",
           dto.getProgramId(),
           dto.getFacilityId());
       stockManagementDraftRepository.delete(drafts);
-      log.info("delete stock management initial draft with id: {}", initialDraftId);
-      stockManagementInitialDraftsRepository.delete(initialDraftId);
+      UUID initialDraftId = drafts.get(0).getInitialDraftId();
+      if (initialDraftId != null) {
+        log.info("delete stock management initial draft with id: {}", initialDraftId);
+        stockManagementInitialDraftsRepository.delete(initialDraftId);
+      }
     }
   }
 
@@ -385,7 +384,7 @@ public class SiglusStockManagementDraftService {
     StockManagementDraft subDraft = stockManagementDraftRepository.findOne(draftDto.getId());
     draftValidator.validateSubDraft(subDraft);
     draftValidator.validateSubDraftStatus(subDraft);
-    conflictOrderableInSubDraftHelper.checkConflictSubDraft(draftDto);
+    checkConflictOrderableInSubDraftsService.checkConflictSubDraft(draftDto);
     subDraft.setStatus(PhysicalInventorySubDraftEnum.SUBMITTED);
     subDraft.setSignature(draftDto.getSignature());
     List<StockManagementDraftLineItemDto> lineItems = draftDto.getLineItems();
@@ -423,10 +422,7 @@ public class SiglusStockManagementDraftService {
   private void fillingStockOnHandField(MergedLineItemDto mergedLineItemDto) {
     StockCardDto stockCardByOrderable = stockCardService
         .findStockCardByOrderable(mergedLineItemDto.getOrderableId());
-    if (stockCardByOrderable == null) {
-      throw new ResourceNotFoundException(ERROR_STOCK_CARD_NOT_FOUND);
-    }
-    mergedLineItemDto.setStockOnHand(stockCardByOrderable.getStockOnHand());
+    mergedLineItemDto.setStockOnHand(stockCardByOrderable == null ? null : stockCardByOrderable.getStockOnHand());
   }
 
   private List<MergedLineItemDto> fillingMergedLineItemsFields(

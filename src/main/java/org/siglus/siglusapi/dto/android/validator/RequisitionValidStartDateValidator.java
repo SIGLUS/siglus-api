@@ -34,12 +34,12 @@ import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
 import org.siglus.common.domain.referencedata.ProcessingPeriod;
 import org.siglus.siglusapi.config.AndroidTemplateConfigProperties;
-import org.siglus.siglusapi.domain.ReportType;
+import org.siglus.siglusapi.domain.SiglusReportType;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.dto.android.constraint.RequisitionValidStartDate;
 import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
 import org.siglus.siglusapi.repository.ProcessingPeriodRepository;
-import org.siglus.siglusapi.repository.ReportTypeRepository;
+import org.siglus.siglusapi.repository.SiglusReportTypeRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.repository.SyncUpHashRepository;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
@@ -52,7 +52,7 @@ public class RequisitionValidStartDateValidator implements
   private final AndroidTemplateConfigProperties androidTemplateConfigProperties;
   private final SiglusAuthenticationHelper authHelper;
   private final ProgramReferenceDataService programDataService;
-  private final ReportTypeRepository reportTypeRepository;
+  private final SiglusReportTypeRepository reportTypeRepository;
   private final SiglusRequisitionRepository requisitionRepository;
   private final ProcessingPeriodRepository periodRepository;
   private final SyncUpHashRepository syncUpHashRepository;
@@ -82,7 +82,7 @@ public class RequisitionValidStartDateValidator implements
     String programCode = value.getProgramCode();
     LocalDate reportRestartDate = reportTypeRepository
         .findOneByFacilityIdAndProgramCodeAndActiveIsTrue(homeFacilityId, programCode)
-        .map(ReportType::getStartDate)
+        .map(SiglusReportType::getStartDate)
         .orElseThrow(() -> new EntityNotFoundException("Report type not found"));
     if (reportRestartDate.isAfter(value.getActualStartDate())) {
       return true;

@@ -17,12 +17,30 @@ package org.siglus.siglusapi.service.task.report;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.when;
+import static org.siglus.siglusapi.constant.FieldConstants.ALL_GEOGRAPHIC_ZONE;
+import static org.siglus.siglusapi.constant.FieldConstants.CMM;
 import static org.siglus.siglusapi.constant.FieldConstants.DISTRICT;
+import static org.siglus.siglusapi.constant.FieldConstants.DISTRICT_PORTUGUESE;
+import static org.siglus.siglusapi.constant.FieldConstants.DRUG_CODE_PORTUGUESE;
+import static org.siglus.siglusapi.constant.FieldConstants.DRUG_NAME_PORTUGUESE;
+import static org.siglus.siglusapi.constant.FieldConstants.EMPTY_VALUE;
+import static org.siglus.siglusapi.constant.FieldConstants.FACILITY_PORTUGUESE;
+import static org.siglus.siglusapi.constant.FieldConstants.PROGRAM_PORTUGUESE;
 import static org.siglus.siglusapi.constant.FieldConstants.PROVINCE;
+import static org.siglus.siglusapi.constant.FieldConstants.PROVINCE_PORTUGUESE;
+import static org.siglus.siglusapi.constant.FieldConstants.REPORT_GENERATED_FOR_PORTUGUESE;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -33,11 +51,13 @@ import org.siglus.siglusapi.dto.AssociatedGeographicZoneDto;
 import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.RequisitionGeographicZonesDto;
 import org.siglus.siglusapi.dto.TracerDrugDto;
+import org.siglus.siglusapi.dto.TracerDrugExcelDto;
 import org.siglus.siglusapi.dto.TracerDrugExportDto;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.repository.TracerDrugRepository;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
+import org.springframework.test.util.ReflectionTestUtils;
 
 @RunWith(MockitoJUnitRunner.class)
 public class TracerDrugReportServiceTest {
@@ -55,7 +75,9 @@ public class TracerDrugReportServiceTest {
   private SiglusAuthenticationHelper authenticationHelper;
 
   private final UUID facilityId = UUID.randomUUID();
-
+  private final String dateFormat = "yyyy-MM-dd";
+  private final String startDate = "2022-03-02";
+  private final String endDate = "2022-04-02";
   private List<RequisitionGeographicZonesDto> requisitionGeographicZonesDto;
   private RequisitionGeographicZonesDto districtZone1;
   private RequisitionGeographicZonesDto districtZone2;
@@ -64,9 +86,11 @@ public class TracerDrugReportServiceTest {
   private AssociatedGeographicZoneDto expectedAssociatedGeographicZone2;
   private AssociatedGeographicZoneDto expectedAssociatedGeographicZone3;
   private AssociatedGeographicZoneDto expectedAssociatedGeographicZone4;
+  private Map<String, List<TracerDrugExcelDto>> tracerDrugMap;
 
   @Before
-  public void prepareMockDate() {
+  public void prepareMockDate() throws ParseException {
+    ReflectionTestUtils.setField(tracerDrugReportService, "dateFormat", "dd/MM/yyyy");
     districtZone1 = RequisitionGeographicZonesDto
         .builder()
         .districtName("CIDADE DE NAMPULA")
@@ -131,6 +155,15 @@ public class TracerDrugReportServiceTest {
 
     tracerDrugDtos = Arrays.asList(drug1, drug2);
     when(tracerDrugRepository.getTracerDrugInfo()).thenReturn(tracerDrugDtos);
+
+    tracerDrugMap = new HashMap<>();
+    SimpleDateFormat sdf = new SimpleDateFormat(dateFormat);
+    tracerDrugMap.put("1", Arrays.asList(
+        TracerDrugExcelDto.builder().computationTime(sdf.parse("2022-03-04"))
+            .stockOnHand(2).stockStatusColorCode(1).build(),
+        TracerDrugExcelDto.builder().computationTime(sdf.parse("2022-04-04"))
+            .stockStatusColorCode(0).build())
+    );
 
     UserDto userDto = new UserDto();
     userDto.setHomeFacilityId(facilityId);
@@ -208,4 +241,106 @@ public class TracerDrugReportServiceTest {
     // then
     assertEquals(expectedTracerDrugExportDto, tracerDrugExportDto);
   }
+
+  @Test
+  public void shouldGetAllAuthorizedFacilityCodeWhenUserChooseAllProvince() {
+    // given
+    when(siglusFacilityReferenceDataService.findOne(facilityId)).thenReturn(FacilityDto.builder().build());
+    when(authenticationHelper.getFacilityGeographicZoneLevel()).thenReturn("");
+    when(authenticationHelper.isTheCurrentUserAdmin()).thenReturn(true);
+    List<String> expectedRequisitionFacilityCode = Stream.of(districtZone1,
+        districtZone2,
+        districtZone2).map(RequisitionGeographicZonesDto::getFacilityCode).collect(Collectors.toList());
+
+    // when
+    List<String> requisitionFacilityCode = tracerDrugReportService.getRequisitionFacilityCode(ALL_GEOGRAPHIC_ZONE,
+        ALL_GEOGRAPHIC_ZONE);
+
+    // then
+    assertEquals(expectedRequisitionFacilityCode, requisitionFacilityCode);
+  }
+
+  @Test
+  public void shouldGetPartOfAuthorizedFacilityCodeWhenUserChooseAllDistrict() {
+    // given
+    when(siglusFacilityReferenceDataService.findOne(facilityId)).thenReturn(FacilityDto.builder().build());
+    when(authenticationHelper.getFacilityGeographicZoneLevel()).thenReturn("");
+    when(authenticationHelper.isTheCurrentUserAdmin()).thenReturn(true);
+    List<String> expectedRequisitionFacilityCode = Stream.of(districtZone2,
+        districtZone2).map(RequisitionGeographicZonesDto::getFacilityCode).collect(Collectors.toList());
+
+    // when
+    List<String> requisitionFacilityCode = tracerDrugReportService.getRequisitionFacilityCode(ALL_GEOGRAPHIC_ZONE,
+        "04");
+
+    // then
+    assertEquals(expectedRequisitionFacilityCode, requisitionFacilityCode);
+  }
+
+  @Test
+  public void shouldGetPartOfAuthorizedFacilityCodeWhenUserChooseSpecifiedDistrict() {
+    // given
+    when(siglusFacilityReferenceDataService.findOne(facilityId)).thenReturn(FacilityDto.builder().build());
+    when(authenticationHelper.getFacilityGeographicZoneLevel()).thenReturn("");
+    when(authenticationHelper.isTheCurrentUserAdmin()).thenReturn(true);
+    List<String> expectedRequisitionFacilityCode = Stream.of(districtZone1)
+        .map(RequisitionGeographicZonesDto::getFacilityCode).collect(Collectors.toList());
+
+    // when
+    List<String> requisitionFacilityCode = tracerDrugReportService.getRequisitionFacilityCode("0301",
+        "03");
+
+    // then
+    assertEquals(expectedRequisitionFacilityCode, requisitionFacilityCode);
+  }
+
+  @Test
+  public void shouldConvertManyRowsToOneRowWIthManyColumnsByTracerDrugList() throws ParseException {
+    // given
+    int[][] colorArrays = new int[1][2];
+    List<Object> expectedDataRow = new LinkedList<>();
+    expectedDataRow.add(null);
+    expectedDataRow.add(null);
+    expectedDataRow.add(null);
+    expectedDataRow.add(null);
+    expectedDataRow.add(null);
+    expectedDataRow.add(null);
+    expectedDataRow.add(null);
+    expectedDataRow.add(startDate + "-" + endDate);
+    expectedDataRow.add(2);
+    expectedDataRow.add(EMPTY_VALUE);
+    List<List<Object>> expectedDataRows = Collections.singletonList(expectedDataRow);
+
+    // when
+    List<List<Object>> dataRows = tracerDrugReportService.getDataRows(startDate, endDate, tracerDrugMap, colorArrays);
+
+    // then
+    assertEquals(expectedDataRows, dataRows);
+    assertEquals(1, colorArrays[0][0]);
+    assertEquals(0, colorArrays[0][1]);
+  }
+
+  @Test
+  public void shouldGetExcelHeadColumnsByTracerDrugList() throws ParseException {
+    // given
+    List<List<String>> expectedHeadColumns = new LinkedList<>();
+    expectedHeadColumns.add(Collections.singletonList(DRUG_CODE_PORTUGUESE));
+    expectedHeadColumns.add(Collections.singletonList(PROGRAM_PORTUGUESE));
+    expectedHeadColumns.add(Collections.singletonList(DRUG_NAME_PORTUGUESE));
+    expectedHeadColumns.add(Collections.singletonList(PROVINCE_PORTUGUESE));
+    expectedHeadColumns.add(Collections.singletonList(DISTRICT_PORTUGUESE));
+    expectedHeadColumns.add(Collections.singletonList(FACILITY_PORTUGUESE));
+    expectedHeadColumns.add(Collections.singletonList(CMM));
+    expectedHeadColumns.add(Collections.singletonList(REPORT_GENERATED_FOR_PORTUGUESE));
+    expectedHeadColumns.add(Collections.singletonList("04/03/2022"));
+    expectedHeadColumns.add(Collections.singletonList("04/04/2022"));
+
+    // when
+    List<List<String>> headRow = tracerDrugReportService.getHeadRow(tracerDrugMap);
+
+    // then
+    assertEquals(expectedHeadColumns, headRow);
+  }
+
+
 }

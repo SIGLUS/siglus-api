@@ -38,13 +38,13 @@ import org.siglus.siglusapi.repository.StockManagementDraftRepository;
 import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
 
 @RunWith(MockitoJUnitRunner.class)
-public class ConflictOrderableInSubDraftHelperTest {
+public class CheckConflictOrderableInSubDraftsServiceTest {
 
   @Rule
   public ExpectedException exception = ExpectedException.none();
 
   @InjectMocks
-  private ConflictOrderableInSubDraftHelper conflictOrderableInSubDraftHelper;
+  private CheckConflictOrderableInSubDraftsService checkConflictOrderableInSubDraftsService;
 
   @Mock
   private StockManagementDraftRepository stockManagementDraftRepository;
@@ -109,7 +109,7 @@ public class ConflictOrderableInSubDraftHelperTest {
     when(siglusOrderableReferenceDataService.findByIds(newArrayList(orderableId1, orderableId2)))
         .thenReturn(newArrayList(orderableDto1, orderableDto2));
 
-    conflictOrderableInSubDraftHelper.checkConflictSubDraft(draftDto);
+    checkConflictOrderableInSubDraftsService.checkConflictSubDraft(draftDto);
   }
 
 }

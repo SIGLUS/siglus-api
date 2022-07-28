@@ -15,9 +15,22 @@
 
 package org.siglus.siglusapi.web.report;
 
+import static org.siglus.siglusapi.constant.FieldConstants.ATTACHMENT_FILENAME;
+import static org.siglus.siglusapi.constant.FieldConstants.CHARACTER_ENCODING;
+import static org.siglus.siglusapi.constant.FieldConstants.EXCEL_CONTENT_TYPE;
+import static org.siglus.siglusapi.constant.FieldConstants.TRACER_DRUG_INFORMATION;
+import static org.siglus.siglusapi.constant.FieldConstants.UTF_8;
+import static org.siglus.siglusapi.constant.FieldConstants.XLSX_SUFFIX;
+import static org.springframework.http.HttpHeaders.CONTENT_DISPOSITION;
+
+import java.io.IOException;
+import java.net.URLEncoder;
+import java.text.SimpleDateFormat;
+import javax.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.siglus.siglusapi.dto.TracerDrugExportDto;
 import org.siglus.siglusapi.service.task.report.TracerDrugReportService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -30,6 +43,9 @@ import org.springframework.web.bind.annotation.RestController;
 public class TracerDrugReportController {
 
   private final TracerDrugReportService tracerDrugReportService;
+
+  @Value("${dateTimeUrlFormat}")
+  private String dateUrlFormat;
 
   @PostMapping("/refresh")
   public ResponseEntity<String> refresh(String startDate, String endDate) {
@@ -47,7 +63,21 @@ public class TracerDrugReportController {
   @GetMapping("/exportFilter")
   public TracerDrugExportDto getTracerDrugExportDto() {
     return tracerDrugReportService.getTracerDrugExportDto();
-
   }
 
+  @GetMapping("excel")
+  public void getTracerDrugExcel(HttpServletResponse response,
+      String productCode,
+      String districtCode,
+      String provinceCode,
+      String startDate,
+      String endDate) throws IOException {
+    response.setContentType(EXCEL_CONTENT_TYPE);
+    response.setCharacterEncoding(CHARACTER_ENCODING);
+    SimpleDateFormat simpleDateFormat = new SimpleDateFormat(dateUrlFormat);
+    String fileName = URLEncoder.encode(
+        TRACER_DRUG_INFORMATION + simpleDateFormat.format(System.currentTimeMillis()), UTF_8);
+    response.setHeader(CONTENT_DISPOSITION, ATTACHMENT_FILENAME + fileName + XLSX_SUFFIX);
+    tracerDrugReportService.getTracerDrugExcel(response, productCode, districtCode, provinceCode, startDate, endDate);
+  }
 }

@@ -18,6 +18,8 @@ package org.siglus.siglusapi.repository;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+
+import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -56,4 +58,6 @@ public interface SiglusStockCardLineItemRepository extends JpaRepository<StockCa
       + "and scli.sourceid is not null", nativeQuery = true)
   List<StockCardLineItem> findByFacilityIdAndLotIdIn(@Param("facilityId") UUID facilityId,
       @Param("originOrderCode") String originOrderCode);
+
+  List<StockCardLineItem> findAllByStockCardIn(List<StockCard> stockCards);
 }

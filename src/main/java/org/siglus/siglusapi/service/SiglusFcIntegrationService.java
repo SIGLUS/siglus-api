@@ -143,7 +143,7 @@ public class SiglusFcIntegrationService {
   private UUID fcFacilityTypeId;
 
   private final Map<String, String> fcMaps = ImmutableMap.of("Farmácia Comunitária",
-      "comunitaryPharmacy", "Total Pacientes", "patientsOnTreatment");
+      "comunitaryPharmacy", "Total doentes", "patientsOnTreatment");
 
   public Page<FcRequisitionDto> searchRequisitions(LocalDate date, Pageable pageable) {
     Set<UUID> dpmSupervisoryNodeIds = supervisoryNodeRepository

@@ -946,6 +946,28 @@ public class SiglusPhysicalInventoryServiceTest {
 
   }
 
+  @Test
+  public void shouldThrowExceptionWhenUserCanNotInitialInventories() {
+    // then
+    exception.expect(ValidationMessageException.class);
+    exception.expectMessage(containsString("not.acceptable"));
+
+    // given
+    FacilityDto facilityDto = new FacilityDto();
+    FacilityTypeDto typeDto = new FacilityTypeDto();
+    typeDto.setCode("DDM");
+    facilityDto.setType(typeDto);
+    when(stockCardRepository.countByFacilityId(facilityId)).thenReturn(1);
+    when(facilityReferenceDataService.findOne(facilityId))
+        .thenReturn(facilityDto);
+    when(stockCardRepository.countByFacilityId(facilityId)).thenReturn(100);
+    PhysicalInventoryDto physicalInventoryDto = PhysicalInventoryDto.builder().facilityId(facilityId)
+        .programId(programId).build();
+
+    // when
+    siglusPhysicalInventoryService.createAndSplitNewDraftForAllProduct(physicalInventoryDto, 3, true);
+  }
+
 
   @Test
   public void shouldThrowExceptionWhenSubDraftIdsIsEmpty() {

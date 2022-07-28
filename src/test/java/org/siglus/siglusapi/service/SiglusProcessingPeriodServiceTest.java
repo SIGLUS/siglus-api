@@ -56,15 +56,16 @@ import org.openlmis.requisition.service.PermissionService;
 import org.openlmis.requisition.service.RequisitionService;
 import org.openlmis.requisition.service.referencedata.PermissionStrings;
 import org.openlmis.requisition.utils.AuthenticationHelper;
-import org.openlmis.stockmanagement.domain.card.StockCard;
-import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
 import org.openlmis.stockmanagement.repository.StockCardRepository;
 import org.openlmis.stockmanagement.util.PageImplRepresentation;
 import org.siglus.common.domain.ProcessingPeriodExtension;
 import org.siglus.common.repository.ProcessingPeriodExtensionRepository;
-import org.siglus.siglusapi.domain.ReportType;
-import org.siglus.siglusapi.repository.ReportTypeRepository;
+import org.siglus.siglusapi.domain.SiglusReportType;
+import org.siglus.siglusapi.repository.FacilityNativeRepository;
+import org.siglus.siglusapi.repository.SiglusReportTypeRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
+import org.siglus.siglusapi.repository.SiglusStockCardLineItemRepository;
+import org.siglus.siglusapi.repository.dto.FacillityStockCardDateDto;
 import org.siglus.siglusapi.service.client.SiglusProcessingPeriodReferenceDataService;
 import org.siglus.siglusapi.testutils.ProcessingPeriodDtoDataBuilder;
 import org.siglus.siglusapi.testutils.RequisitionLineItemDataBuilder;
@@ -113,10 +114,19 @@ public class SiglusProcessingPeriodServiceTest {
   private SiglusProgramService siglusProgramService;
 
   @Mock
-  private ReportTypeRepository reportTypeRepository;
+  private SiglusReportTypeRepository reportTypeRepository;
 
   @Mock
   private StockCardRepository stockCardRepository;
+
+  @Mock
+  private SiglusStockCardLineItemRepository siglusStockCardLineItemRepository;
+
+  @Mock
+  private SiglusProgramAdditionalOrderableService siglusProgramAdditionalOrderableService;
+
+  @Mock
+  private FacilityNativeRepository facilityNativeRepository;
 
   @Rule
   public ExpectedException exception = ExpectedException.none();
@@ -407,17 +417,21 @@ public class SiglusProcessingPeriodServiceTest {
   private void setupReportType() {
     String programCode = "TARV";
     ProgramDto programDto = mock(ProgramDto.class);
+    SiglusReportType reportType = mock(SiglusReportType.class);
+    when(reportType.getStartDate()).thenReturn(LocalDate.of(2020, 1, 1));
+    when(programDto.getId()).thenReturn(programId);
     when(programDto.getCode()).thenReturn(programCode);
     when(siglusProgramService.getProgram(programId)).thenReturn(programDto);
     when(reportTypeRepository.findOneByFacilityIdAndProgramCodeAndActiveIsTrue(facilityId, programCode))
-            .thenReturn(Optional.of(new ReportType()));
+            .thenReturn(Optional.of(reportType));
 
-    StockCardLineItem lineItem = new StockCardLineItem();
-    lineItem.setOccurredDate(LocalDate.now());
-    StockCard stockCard = mock(StockCard.class);
-    when(stockCard.getLineItems()).thenReturn(Arrays.asList(lineItem));
-    when(stockCardRepository.findByProgramIdAndFacilityId(programId, facilityId))
-            .thenReturn(Arrays.asList(stockCard));
+    FacillityStockCardDateDto dto = new FacillityStockCardDateDto();
+    dto.setFacilityId(facilityId);
+    dto.setProgramId(programId);
+    dto.setOccurredDate(java.sql.Date.valueOf("2020-01-01"));
+
+    when(facilityNativeRepository.findFirstStockCardGroupByFacilityIdAndProgramId(facilityId, programId))
+            .thenReturn(Arrays.asList(dto));
   }
 }
 

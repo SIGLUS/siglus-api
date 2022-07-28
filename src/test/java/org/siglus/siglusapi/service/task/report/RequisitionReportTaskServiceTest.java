@@ -40,16 +40,16 @@ import org.siglus.common.domain.referencedata.ProcessingSchedule;
 import org.siglus.common.repository.ProcessingPeriodExtensionRepository;
 import org.siglus.siglusapi.constant.PeriodConstants;
 import org.siglus.siglusapi.domain.ProgramRequisitionNameMapping;
-import org.siglus.siglusapi.domain.ReportType;
 import org.siglus.siglusapi.domain.RequisitionMonthlyReport;
+import org.siglus.siglusapi.domain.SiglusReportType;
 import org.siglus.siglusapi.domain.report.RequisitionMonthlyReportFacility;
 import org.siglus.siglusapi.dto.SupportedProgramDto;
 import org.siglus.siglusapi.repository.FacilityNativeRepository;
 import org.siglus.siglusapi.repository.ProcessingPeriodRepository;
 import org.siglus.siglusapi.repository.ProgramRequisitionNameMappingRepository;
-import org.siglus.siglusapi.repository.ReportTypeRepository;
 import org.siglus.siglusapi.repository.RequisitionMonthReportRepository;
 import org.siglus.siglusapi.repository.RequisitionMonthlyNotSubmitReportRepository;
+import org.siglus.siglusapi.repository.SiglusReportTypeRepository;
 import org.siglus.siglusapi.repository.dto.FacilityProgramPeriodScheduleDto;
 import org.siglus.siglusapi.repository.dto.FacillityStockCardDateDto;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
@@ -78,7 +78,7 @@ public class RequisitionReportTaskServiceTest {
   @InjectMocks
   private RequisitionReportTaskService requisitionReportTaskService;
   @Mock
-  private ReportTypeRepository reportTypeRepository;
+  private SiglusReportTypeRepository reportTypeRepository;
 
 
   private final UUID facilityId = UUID.randomUUID();
@@ -147,11 +147,11 @@ public class RequisitionReportTaskServiceTest {
     processingSchedule.setId(periodScheduleId);
     processingSchedule.setCode(PeriodConstants.MONTH_SCHEDULE_CODE);
 
-    ReportType reportType = new ReportType();
+    SiglusReportType reportType = new SiglusReportType();
     reportType.setFacilityId(facilityId);
     reportType.setProgramCode(programCode);
     reportType.setStartDate(LocalDate.MIN);
-    List<ReportType> facilityReportTypeList = new ArrayList<>();
+    List<SiglusReportType> facilityReportTypeList = new ArrayList<>();
     facilityReportTypeList.add(reportType);
     when(reportTypeRepository.findByFacilityId(facilityId)).thenReturn(facilityReportTypeList);
   }

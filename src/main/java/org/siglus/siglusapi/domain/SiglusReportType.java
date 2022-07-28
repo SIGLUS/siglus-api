@@ -33,7 +33,7 @@ import org.siglus.common.domain.BaseEntity;
 @AllArgsConstructor
 @NoArgsConstructor
 @Table(name = "report_types", schema = "siglusintegration")
-public class ReportType extends BaseEntity {
+public class SiglusReportType extends BaseEntity {
 
   private UUID facilityId;
 

@@ -18,12 +18,12 @@ package org.siglus.siglusapi.repository;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import org.siglus.siglusapi.domain.ReportType;
+import org.siglus.siglusapi.domain.SiglusReportType;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface ReportTypeRepository extends JpaRepository<ReportType, UUID> {
+public interface SiglusReportTypeRepository extends JpaRepository<SiglusReportType, UUID> {
 
-  List<ReportType> findByFacilityId(UUID facilityId);
+  List<SiglusReportType> findByFacilityId(UUID facilityId);
 
-  Optional<ReportType> findOneByFacilityIdAndProgramCodeAndActiveIsTrue(UUID facilityId, String programCode);
+  Optional<SiglusReportType> findOneByFacilityIdAndProgramCodeAndActiveIsTrue(UUID facilityId, String programCode);
 }
