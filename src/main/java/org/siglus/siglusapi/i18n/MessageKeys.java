@@ -129,6 +129,8 @@ public abstract class MessageKeys {
       + ".no.pod.sub.draft.found";
   public static final String ERROR_CANNOT_OPERATE_WHEN_SUB_DRAFT_SUBMITTED = POD_ERROR_PREFIX
       + ".cannot.operate.when.sub.draft.submitted";
+  public static final String ERROR_NOT_ALL_SUB_DRAFT_SUBMITTED = POD_ERROR_PREFIX
+      + ".not.all.sub.draft.submitted";
 
   // shipment
   public static final String SHIPMENT_ORDER_STATUS_INVALID =

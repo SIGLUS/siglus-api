@@ -16,6 +16,7 @@
 package org.siglus.siglusapi.service;
 
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_CANNOT_OPERATE_WHEN_SUB_DRAFT_SUBMITTED;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_NOT_ALL_SUB_DRAFT_SUBMITTED;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_NO_POD_OR_POD_LINE_ITEM_FOUND;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_NO_POD_SUB_DRAFT_FOUND;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_POD_ID_SUB_DRAFT_ID_NOT_MATCH;
@@ -37,7 +38,9 @@ import org.javers.common.collections.Sets;
 import org.openlmis.fulfillment.domain.ProofOfDelivery;
 import org.openlmis.fulfillment.domain.ProofOfDeliveryLineItem;
 import org.openlmis.fulfillment.domain.ProofOfDeliveryLineItem.Importer;
+import org.openlmis.fulfillment.domain.ProofOfDeliveryStatus;
 import org.openlmis.fulfillment.service.ProofOfDeliveryService;
+import org.openlmis.fulfillment.web.ProofOfDeliveryController;
 import org.openlmis.fulfillment.web.util.OrderObjectReferenceDto;
 import org.openlmis.fulfillment.web.util.ProofOfDeliveryDto;
 import org.openlmis.fulfillment.web.util.ProofOfDeliveryLineItemDto;
@@ -65,6 +68,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -103,6 +107,12 @@ public class SiglusProofOfDeliveryService {
 
   @Autowired
   private PodLineItemsRepository podLineItemsRepository;
+
+  @Autowired
+  private ProofOfDeliveryController proofOfDeliveryController;
+
+  @Autowired
+  private SiglusNotificationService notificationService;
 
   public ProofOfDeliveryDto getProofOfDelivery(UUID id,
       Set<String> expand) {
@@ -189,6 +199,40 @@ public class SiglusProofOfDeliveryService {
     ProofOfDeliveryDto proofOfDeliveryDto = fulfillmentService.searchProofOfDelivery(proofOfDeliveryId, null);
     Set<UUID> lineItemIds = getPodLineItemIdsBySubDraftIds(subDraftIds);
     clearAndSaveLineItems(lineItemIds, proofOfDeliveryDto);
+  }
+
+  public ProofOfDeliveryDto mergeSubDrafts(UUID proofOfDeliveryId) {
+    checkIfSubDraftsSubmitted(proofOfDeliveryId);
+    return getProofOfDelivery(proofOfDeliveryId, DEFAULT_EXPAND);
+  }
+
+  @Transactional
+  public ProofOfDeliveryDto submitSubDrafts(UUID proofOfDeliveryId,
+      ProofOfDeliveryDto dto, OAuth2Authentication authentication) {
+    checkIfSubDraftsSubmitted(proofOfDeliveryId);
+    deleteSubDraftAndLineExtension(proofOfDeliveryId);
+
+    ProofOfDeliveryDto proofOfDeliveryDto = proofOfDeliveryController
+        .updateProofOfDelivery(proofOfDeliveryId, dto, authentication);
+
+    if (proofOfDeliveryDto.getStatus() == ProofOfDeliveryStatus.CONFIRMED) {
+      notificationService.postConfirmPod(dto);
+    }
+
+    return dto;
+  }
+
+  private void checkIfSubDraftsSubmitted(UUID proofOfDeliveryId) {
+    List<PodSubDraft> subDrafts = getPodSubDraftsByProofOfDeliveryId(proofOfDeliveryId);
+    if (subDrafts.stream().anyMatch(podSubDraft -> PodSubDraftStatusEnum.SUBMITTED != podSubDraft.getStatus())) {
+      throw new BusinessDataException(new Message(ERROR_NOT_ALL_SUB_DRAFT_SUBMITTED), proofOfDeliveryId);
+    }
+  }
+
+  private void deleteSubDraftAndLineExtension(UUID proofOfDeliveryId) {
+    List<PodSubDraft> subDrafts = getPodSubDraftsByProofOfDeliveryId(proofOfDeliveryId);
+    Set<UUID> subDraftIds = subDrafts.stream().map(PodSubDraft::getId).collect(Collectors.toSet());
+    deleteSubDraftAndLineExtensionBySubDraftIds(subDraftIds);
   }
 
   private void deleteSubDraftAndLineExtensionBySubDraftIds(Set<UUID> subDraftIds) {

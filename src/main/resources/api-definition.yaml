@@ -2443,6 +2443,62 @@ traits:
           204:
             description: all sub draft deleted.
 
+    /proofsOfDelivery/{id}/subDrafts/merge:
+      displayName: Proof Of Delivery - merge all sub draft by proof of delivery
+      uriParameters:
+        id:
+          displayName: proofOfDeliveryId
+          type: string
+          required: true
+          repeat: false
+      post:
+        is: [ secured ]
+        description: >
+          merge all sub draft by proof of delivery
+        responses:
+          200:
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+          400:
+            body:
+              application/json:
+                schema: badRequestResponse
+          404:
+          403:
+            body:
+              application/json:
+                schema: localizedMessage
+
+    /proofsOfDelivery/{id}/subDrafts/submit:
+      displayName: Proof Of Delivery - submit all sub draft by proof of delivery
+      uriParameters:
+        id:
+          displayName: proofOfDeliveryId
+          type: string
+          required: true
+          repeat: false
+      post:
+        is: [ secured ]
+        description: >
+          submit all sub draft by proof of delivery
+        responses:
+          200:
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+          400:
+            body:
+              application/json:
+                schema: badRequestResponse
+          404:
+          403:
+            body:
+              application/json:
+                schema: localizedMessage
+
     /proofsOfDelivery/{id}/subDrafts/summary:
       displayName: Proof Of Delivery - search Sub Draft List
       uriParameters:

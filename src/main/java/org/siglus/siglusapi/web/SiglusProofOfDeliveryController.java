@@ -118,6 +118,19 @@ public class SiglusProofOfDeliveryController {
     proofOfDeliveryService.deleteSubDrafts(proofOfDeliveryId);
   }
 
+  @PostMapping("/{id}/subDrafts/merge")
+  public ProofOfDeliveryDto mergeSubDrafts(@PathVariable("id") UUID proofOfDeliveryId) {
+    return proofOfDeliveryService.mergeSubDrafts(proofOfDeliveryId);
+  }
+
+  @PostMapping("/{id}/subDrafts/submit")
+  @Transactional
+  public ProofOfDeliveryDto submitSubDrafts(@PathVariable("id") UUID proofOfDeliveryId,
+      @RequestBody ProofOfDeliveryDto dto,
+      OAuth2Authentication authentication) {
+    return proofOfDeliveryService.submitSubDrafts(proofOfDeliveryId, dto, authentication);
+  }
+
   @GetMapping("/{id}/subDrafts/summary")
   public PodSubDraftListResponse getSubDraftSummary(@PathVariable("id") UUID proofOfDeliveryId) {
     return proofOfDeliveryService.getSubDraftSummary(proofOfDeliveryId);
