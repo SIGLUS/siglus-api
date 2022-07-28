@@ -291,7 +291,7 @@ public class SiglusProofOfDeliveryService {
     // TODO vvmStatus ?
     ProofOfDeliveryLineItem toBeUpdatedLineItem = new ProofOfDeliveryLineItem(lineItem.getOrderable(),
         lineItem.getLotId(), lineItemDto.getQuantityAccepted(), null,
-        lineItem.getQuantityRejected(), lineItem.getRejectionReasonId(), lineItemDto.getNotes());
+        lineItemDto.getQuantityRejected(), lineItem.getRejectionReasonId(), lineItemDto.getNotes());
     toBeUpdatedLineItem.setId(lineItem.getId());
     return toBeUpdatedLineItem;
   }
@@ -299,8 +299,7 @@ public class SiglusProofOfDeliveryService {
   private ProofOfDeliveryLineItem buildClearedProofOfDeliveryLineItem(ProofOfDeliveryLineItem lineItem) {
     // TODO vvmStatus ?
     ProofOfDeliveryLineItem toBeUpdatedLineItem = new ProofOfDeliveryLineItem(lineItem.getOrderable(),
-        lineItem.getLotId(), null, null,
-        lineItem.getQuantityRejected(), lineItem.getRejectionReasonId(), null);
+        lineItem.getLotId(), null, null, null, lineItem.getRejectionReasonId(), null);
     toBeUpdatedLineItem.setId(lineItem.getId());
     return toBeUpdatedLineItem;
   }
