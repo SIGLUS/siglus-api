@@ -24,7 +24,6 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_CARD_NOT_FOUND;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_DRAFT_EXISTS;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_INITIAL_DRAFT_EXISTS;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_SUB_DRAFTS_MORE_THAN_TEN;
@@ -52,7 +51,6 @@ import org.openlmis.stockmanagement.domain.sourcedestination.Node;
 import org.openlmis.stockmanagement.dto.StockCardDto;
 import org.openlmis.stockmanagement.dto.StockEventDto;
 import org.openlmis.stockmanagement.dto.ValidSourceDestinationDto;
-import org.openlmis.stockmanagement.exception.ResourceNotFoundException;
 import org.openlmis.stockmanagement.service.PermissionService;
 import org.siglus.siglusapi.constant.FieldConstants;
 import org.siglus.siglusapi.domain.StockManagementDraft;
@@ -638,23 +636,6 @@ public class SiglusStockManagementDraftServiceTest {
     doNothing().when(draftValidator).validateInitialDraftId(initialDraftId);
     when(stockManagementDraftRepository.findByInitialDraftId(initialDraftId))
         .thenReturn(newArrayList(draft));
-
-    siglusStockManagementDraftService.mergeSubDrafts(initialDraftId);
-  }
-
-  @Test
-  public void shouldThrowExceptionWhenNotFoundStockCard() {
-    exception.expect(ResourceNotFoundException.class);
-    exception.expectMessage(containsString(ERROR_STOCK_CARD_NOT_FOUND));
-
-    draft.setInitialDraftId(initialDraftId);
-    draft.setLineItems(newArrayList(draftLineItem1));
-    draft.setStatus(PhysicalInventorySubDraftEnum.SUBMITTED);
-
-    doNothing().when(draftValidator).validateInitialDraftId(initialDraftId);
-    when(stockManagementDraftRepository.findByInitialDraftId(initialDraftId))
-        .thenReturn(newArrayList(draft));
-    when(stockCardService.findStockCardByOrderable(orderable1)).thenReturn(null);
 
     siglusStockManagementDraftService.mergeSubDrafts(initialDraftId);
   }

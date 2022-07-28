@@ -16,7 +16,6 @@
 package org.siglus.siglusapi.service;
 
 import static java.util.stream.Collectors.toList;
-import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_CARD_NOT_FOUND;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_DRAFT_EXISTS;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_INITIAL_DRAFT_EXISTS;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_SUB_DRAFTS_MORE_THAN_TEN;
@@ -34,7 +33,6 @@ import org.apache.commons.collections.CollectionUtils;
 import org.openlmis.stockmanagement.dto.StockCardDto;
 import org.openlmis.stockmanagement.dto.StockEventDto;
 import org.openlmis.stockmanagement.dto.ValidSourceDestinationDto;
-import org.openlmis.stockmanagement.exception.ResourceNotFoundException;
 import org.siglus.siglusapi.constant.FieldConstants;
 import org.siglus.siglusapi.domain.StockManagementDraft;
 import org.siglus.siglusapi.domain.StockManagementDraftLineItem;
@@ -424,10 +422,7 @@ public class SiglusStockManagementDraftService {
   private void fillingStockOnHandField(MergedLineItemDto mergedLineItemDto) {
     StockCardDto stockCardByOrderable = stockCardService
         .findStockCardByOrderable(mergedLineItemDto.getOrderableId());
-    if (stockCardByOrderable == null) {
-      throw new ResourceNotFoundException(ERROR_STOCK_CARD_NOT_FOUND);
-    }
-    mergedLineItemDto.setStockOnHand(stockCardByOrderable.getStockOnHand());
+    mergedLineItemDto.setStockOnHand(stockCardByOrderable == null ? null : stockCardByOrderable.getStockOnHand());
   }
 
   private List<MergedLineItemDto> fillingMergedLineItemsFields(
