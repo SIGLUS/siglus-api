@@ -33,7 +33,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.javers.common.collections.Sets;
 import org.openlmis.fulfillment.domain.ProofOfDelivery;
 import org.openlmis.fulfillment.domain.ProofOfDeliveryLineItem;
@@ -134,11 +133,7 @@ public class SiglusProofOfDeliveryService {
   }
 
   public PodSubDraftListResponse searchSubDraftList(UUID proofOfDeliveryId) {
-    Example<PodSubDraft> example = Example.of(PodSubDraft.builder().proofOfDeliveryId(proofOfDeliveryId).build());
-    List<PodSubDraft> podSubDrafts = podSubDraftRepository.findAll(example);
-    if (CollectionUtils.isEmpty(podSubDrafts)) {
-      throw new BusinessDataException(new Message(ERROR_NO_POD_OR_POD_LINE_ITEM_FOUND), proofOfDeliveryId);
-    }
+    List<PodSubDraft> podSubDrafts = getPodSubDraftsByProofOfDeliveryId(proofOfDeliveryId);
     return PodSubDraftListResponse.builder()
         .proofOfDeliveryId(podSubDrafts.get(0).getProofOfDeliveryId())
         .subDrafts(buildSubDraftInfos(podSubDrafts))
@@ -178,15 +173,44 @@ public class SiglusProofOfDeliveryService {
     checkIfCanOperate(podSubDraft);
 
     Set<UUID> lineItemIds = getPodLineItemIdsBySubDraftId(subDraftId);
-    List<ProofOfDeliveryLineItem> lineItems = podLineItemsRepository.findAll(lineItemIds);
-
     ProofOfDeliveryDto proofOfDeliveryDto = fulfillmentService.searchProofOfDelivery(proofOfDeliveryId, null);
-    List<ProofOfDeliveryLineItem> toBeUpdatedLineItems = buildToBeUpdatedLineItems(proofOfDeliveryDto, lineItems,
-        PodSubDraftEnum.NOT_YET_STARTED);
-    log.info("update ProofOfDeliveryLineItem list, subDraftId:{}, lineItemIds:{}", subDraftId, lineItemIds);
-    podLineItemsRepository.save(toBeUpdatedLineItems);
+    clearAndSaveLineItems(lineItemIds, proofOfDeliveryDto);
 
     updateSubDraftStatusAndOperator(podSubDraft, PodSubDraftEnum.NOT_YET_STARTED);
+  }
+
+  @Transactional
+  public void deleteAllSubDraft(UUID proofOfDeliveryId) {
+    ProofOfDeliveryDto proofOfDeliveryDto = fulfillmentService.searchProofOfDelivery(proofOfDeliveryId, null);
+    List<PodSubDraft> subDrafts = getPodSubDraftsByProofOfDeliveryId(proofOfDeliveryId);
+    Set<UUID> subDraftIds = subDrafts.stream().map(PodSubDraft::getId).collect(Collectors.toSet());
+
+    Set<UUID> lineItemIds = getPodLineItemIdsBySubDraftIds(subDraftIds);
+    clearAndSaveLineItems(lineItemIds, proofOfDeliveryDto);
+
+    log.info("delete proof of delivery line item extension, subDraftIds:{}", subDraftIds);
+    podLineItemsExtensionRepository.deleteAllBySubDraftIds(subDraftIds);
+
+    log.info("delete proof of delivery sub draft, subDraftIds:{}", subDraftIds);
+    podSubDraftRepository.deleteAllByIds(subDraftIds);
+  }
+
+  private void clearAndSaveLineItems(Set<UUID> lineItemIds, ProofOfDeliveryDto proofOfDeliveryDto) {
+    List<ProofOfDeliveryLineItem> lineItems = podLineItemsRepository.findAll(lineItemIds);
+    List<ProofOfDeliveryLineItem> toBeUpdatedLineItems = buildToBeUpdatedLineItems(proofOfDeliveryDto, lineItems,
+        PodSubDraftEnum.NOT_YET_STARTED);
+    log.info("update ProofOfDeliveryLineItem list, podIdd:{}, lineItemIds:{}", proofOfDeliveryDto.getId(),
+        lineItemIds);
+    podLineItemsRepository.save(toBeUpdatedLineItems);
+  }
+
+  private List<PodSubDraft> getPodSubDraftsByProofOfDeliveryId(UUID proofOfDeliveryId) {
+    Example<PodSubDraft> example = Example.of(PodSubDraft.builder().proofOfDeliveryId(proofOfDeliveryId).build());
+    List<PodSubDraft> podSubDrafts = podSubDraftRepository.findAll(example);
+    if (CollectionUtils.isEmpty(podSubDrafts)) {
+      throw new BusinessDataException(new Message(ERROR_NO_POD_OR_POD_LINE_ITEM_FOUND), proofOfDeliveryId);
+    }
+    return podSubDrafts;
   }
 
   private void checkIfCanOperate(PodSubDraft podSubDraft) {
@@ -267,6 +291,12 @@ public class SiglusProofOfDeliveryService {
   private Set<UUID> getPodLineItemIdsBySubDraftId(UUID subDraftId) {
     Example<PodLineItemsExtension> example = Example.of(PodLineItemsExtension.builder().subDraftId(subDraftId).build());
     List<PodLineItemsExtension> podLineItemsExtensions = podLineItemsExtensionRepository.findAll(example);
+    return podLineItemsExtensions.stream().map(PodLineItemsExtension::getPodLineItemId).collect(Collectors.toSet());
+  }
+
+  private Set<UUID> getPodLineItemIdsBySubDraftIds(Set<UUID> subDraftIds) {
+    List<PodLineItemsExtension> podLineItemsExtensions = podLineItemsExtensionRepository.findAllBySubDraftIds(
+        subDraftIds);
     return podLineItemsExtensions.stream().map(PodLineItemsExtension::getPodLineItemId).collect(Collectors.toSet());
   }
 

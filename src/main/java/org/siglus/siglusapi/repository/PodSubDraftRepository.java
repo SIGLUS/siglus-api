@@ -18,7 +18,14 @@ package org.siglus.siglusapi.repository;
 import java.util.UUID;
 import org.siglus.siglusapi.domain.PodSubDraft;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface PodSubDraftRepository extends JpaRepository<PodSubDraft, UUID> {
 
+  @Modifying
+  @Query(value = "delete from siglusintegration.pod_sub_draft where id in (:ids);",
+      nativeQuery = true)
+  void deleteAllByIds(@Param("ids") Iterable<UUID> ids);
 }

@@ -2435,6 +2435,13 @@ traits:
             body:
               application/json:
                 schema: localizedMessage
+      delete:
+        is: [ secured ]
+        description: >
+          delete all proof of delivery sub draft by id
+        responses:
+          204:
+            description: all sub draft deleted.
 
     /proofsOfDelivery/{id}/subDrafts/summary:
       displayName: Proof Of Delivery - search Sub Draft List

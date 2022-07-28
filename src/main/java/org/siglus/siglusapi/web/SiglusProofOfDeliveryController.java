@@ -112,6 +112,12 @@ public class SiglusProofOfDeliveryController {
     proofOfDeliveryService.createSubDraft(request);
   }
 
+  @DeleteMapping("/{id}/subDrafts")
+  @ResponseStatus(NO_CONTENT)
+  public void deleteAllSubDraft(@PathVariable("id") UUID proofOfDeliveryId) {
+    proofOfDeliveryService.deleteAllSubDraft(proofOfDeliveryId);
+  }
+
   @GetMapping("/{id}/subDrafts/summary")
   public PodSubDraftListResponse searchSubDraftList(@PathVariable("id") UUID proofOfDeliveryId) {
     return proofOfDeliveryService.searchSubDraftList(proofOfDeliveryId);
