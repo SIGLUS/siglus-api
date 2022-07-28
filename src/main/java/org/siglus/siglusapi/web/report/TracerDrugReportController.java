@@ -76,7 +76,7 @@ public class TracerDrugReportController {
     response.setCharacterEncoding(CHARACTER_ENCODING);
     SimpleDateFormat simpleDateFormat = new SimpleDateFormat(dateUrlFormat);
     String fileName = URLEncoder.encode(
-        TRACER_DRUG_INFORMATION_PORTUGUESE + simpleDateFormat.format(System.currentTimeMillis()), UTF_8 );
+        TRACER_DRUG_INFORMATION_PORTUGUESE + simpleDateFormat.format(System.currentTimeMillis()), UTF_8);
     response.setHeader(CONTENT_DISPOSITION, ATTACHMENT_FILENAME + fileName + XLSX_SUFFIX);
     tracerDrugReportService.getTracerDrugExcel(response, productCode, districtCode, provinceCode, startDate, endDate);
   }
