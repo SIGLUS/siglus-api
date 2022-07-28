@@ -20,15 +20,15 @@ import static org.mockito.Mockito.when;
 import static org.siglus.siglusapi.constant.FieldConstants.ALL_GEOGRAPHIC_ZONE;
 import static org.siglus.siglusapi.constant.FieldConstants.CMM;
 import static org.siglus.siglusapi.constant.FieldConstants.DISTRICT;
-import static org.siglus.siglusapi.constant.FieldConstants.DISTRICT_CAMEL;
-import static org.siglus.siglusapi.constant.FieldConstants.DRUG_CODE;
-import static org.siglus.siglusapi.constant.FieldConstants.DRUG_NAME;
+import static org.siglus.siglusapi.constant.FieldConstants.DISTRICT_PORTUGUESE;
+import static org.siglus.siglusapi.constant.FieldConstants.DRUG_CODE_PORTUGUESE;
+import static org.siglus.siglusapi.constant.FieldConstants.DRUG_NAME_PORTUGUESE;
 import static org.siglus.siglusapi.constant.FieldConstants.EMPTY_VALUE;
-import static org.siglus.siglusapi.constant.FieldConstants.FACILITY_CAMEL;
-import static org.siglus.siglusapi.constant.FieldConstants.PROGRAM_CAMEL;
+import static org.siglus.siglusapi.constant.FieldConstants.FACILITY_PORTUGUESE;
+import static org.siglus.siglusapi.constant.FieldConstants.PROGRAM_PORTUGUESE;
 import static org.siglus.siglusapi.constant.FieldConstants.PROVINCE;
-import static org.siglus.siglusapi.constant.FieldConstants.PROVINCE_CAMEL;
-import static org.siglus.siglusapi.constant.FieldConstants.REPORT_GENERATED_FOR;
+import static org.siglus.siglusapi.constant.FieldConstants.PROVINCE_PORTUGUESE;
+import static org.siglus.siglusapi.constant.FieldConstants.REPORT_GENERATED_FOR_PORTUGUESE;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -324,14 +324,14 @@ public class TracerDrugReportServiceTest {
   public void shouldGetExcelHeadColumnsByTracerDrugList() throws ParseException {
     // given
     List<List<String>> expectedHeadColumns = new LinkedList<>();
-    expectedHeadColumns.add(Collections.singletonList(DRUG_CODE));
-    expectedHeadColumns.add(Collections.singletonList(PROGRAM_CAMEL));
-    expectedHeadColumns.add(Collections.singletonList(DRUG_NAME));
-    expectedHeadColumns.add(Collections.singletonList(PROVINCE_CAMEL));
-    expectedHeadColumns.add(Collections.singletonList(DISTRICT_CAMEL));
-    expectedHeadColumns.add(Collections.singletonList(FACILITY_CAMEL));
+    expectedHeadColumns.add(Collections.singletonList(DRUG_CODE_PORTUGUESE));
+    expectedHeadColumns.add(Collections.singletonList(PROGRAM_PORTUGUESE));
+    expectedHeadColumns.add(Collections.singletonList(DRUG_NAME_PORTUGUESE));
+    expectedHeadColumns.add(Collections.singletonList(PROVINCE_PORTUGUESE));
+    expectedHeadColumns.add(Collections.singletonList(DISTRICT_PORTUGUESE));
+    expectedHeadColumns.add(Collections.singletonList(FACILITY_PORTUGUESE));
     expectedHeadColumns.add(Collections.singletonList(CMM));
-    expectedHeadColumns.add(Collections.singletonList(REPORT_GENERATED_FOR));
+    expectedHeadColumns.add(Collections.singletonList(REPORT_GENERATED_FOR_PORTUGUESE));
     expectedHeadColumns.add(Collections.singletonList("04/03/2022"));
     expectedHeadColumns.add(Collections.singletonList("04/04/2022"));
 

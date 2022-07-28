@@ -18,20 +18,20 @@ package org.siglus.siglusapi.service.task.report;
 import static org.siglus.siglusapi.constant.FieldConstants.ALL_GEOGRAPHIC_ZONE;
 import static org.siglus.siglusapi.constant.FieldConstants.CMM;
 import static org.siglus.siglusapi.constant.FieldConstants.DISTRICT;
-import static org.siglus.siglusapi.constant.FieldConstants.DISTRICT_CAMEL;
-import static org.siglus.siglusapi.constant.FieldConstants.DRUG_CODE;
-import static org.siglus.siglusapi.constant.FieldConstants.DRUG_NAME;
+import static org.siglus.siglusapi.constant.FieldConstants.DISTRICT_PORTUGUESE;
+import static org.siglus.siglusapi.constant.FieldConstants.DRUG_CODE_PORTUGUESE;
+import static org.siglus.siglusapi.constant.FieldConstants.DRUG_NAME_PORTUGUESE;
 import static org.siglus.siglusapi.constant.FieldConstants.EMPTY_VALUE;
-import static org.siglus.siglusapi.constant.FieldConstants.FACILITY_CAMEL;
+import static org.siglus.siglusapi.constant.FieldConstants.FACILITY_PORTUGUESE;
 import static org.siglus.siglusapi.constant.FieldConstants.LEGENDA;
-import static org.siglus.siglusapi.constant.FieldConstants.LOW_STOCK;
-import static org.siglus.siglusapi.constant.FieldConstants.OVER_STOCK;
-import static org.siglus.siglusapi.constant.FieldConstants.PROGRAM_CAMEL;
+import static org.siglus.siglusapi.constant.FieldConstants.LOW_STOCK_PORTUGUESE;
+import static org.siglus.siglusapi.constant.FieldConstants.OVER_STOCK_PORTUGUESE;
+import static org.siglus.siglusapi.constant.FieldConstants.PROGRAM_PORTUGUESE;
 import static org.siglus.siglusapi.constant.FieldConstants.PROVINCE;
-import static org.siglus.siglusapi.constant.FieldConstants.PROVINCE_CAMEL;
-import static org.siglus.siglusapi.constant.FieldConstants.REGULAR_STOCK;
-import static org.siglus.siglusapi.constant.FieldConstants.REPORT_GENERATED_FOR;
-import static org.siglus.siglusapi.constant.FieldConstants.STOCK_OUT;
+import static org.siglus.siglusapi.constant.FieldConstants.PROVINCE_PORTUGUESE;
+import static org.siglus.siglusapi.constant.FieldConstants.REGULAR_STOCK_PORTUGUESE;
+import static org.siglus.siglusapi.constant.FieldConstants.REPORT_GENERATED_FOR_PORTUGUESE;
+import static org.siglus.siglusapi.constant.FieldConstants.STOCK_OUT_PORTUGUESE;
 
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.ExcelWriter;
@@ -184,23 +184,23 @@ public class TracerDrugReportService {
 
   private List<List<String>> getLegendaRows() {
     List<List<String>> legendaRows = new LinkedList<>();
-    legendaRows.add(Collections.singletonList(STOCK_OUT));
-    legendaRows.add(Collections.singletonList(LOW_STOCK));
-    legendaRows.add(Collections.singletonList(REGULAR_STOCK));
-    legendaRows.add(Collections.singletonList(OVER_STOCK));
+    legendaRows.add(Collections.singletonList(STOCK_OUT_PORTUGUESE));
+    legendaRows.add(Collections.singletonList(LOW_STOCK_PORTUGUESE));
+    legendaRows.add(Collections.singletonList(REGULAR_STOCK_PORTUGUESE));
+    legendaRows.add(Collections.singletonList(OVER_STOCK_PORTUGUESE));
     return legendaRows;
   }
 
   public List<List<String>> getHeadRow(Map<String, List<TracerDrugExcelDto>> collect) {
     List<List<String>> excelHead = new LinkedList<>();
-    excelHead.add(Collections.singletonList(DRUG_CODE));
-    excelHead.add(Collections.singletonList(PROGRAM_CAMEL));
-    excelHead.add(Collections.singletonList(DRUG_NAME));
-    excelHead.add(Collections.singletonList(PROVINCE_CAMEL));
-    excelHead.add(Collections.singletonList(DISTRICT_CAMEL));
-    excelHead.add(Collections.singletonList(FACILITY_CAMEL));
+    excelHead.add(Collections.singletonList(DRUG_CODE_PORTUGUESE));
+    excelHead.add(Collections.singletonList(PROGRAM_PORTUGUESE));
+    excelHead.add(Collections.singletonList(DRUG_NAME_PORTUGUESE));
+    excelHead.add(Collections.singletonList(PROVINCE_PORTUGUESE));
+    excelHead.add(Collections.singletonList(DISTRICT_PORTUGUESE));
+    excelHead.add(Collections.singletonList(FACILITY_PORTUGUESE));
     excelHead.add(Collections.singletonList(CMM));
-    excelHead.add(Collections.singletonList(REPORT_GENERATED_FOR));
+    excelHead.add(Collections.singletonList(REPORT_GENERATED_FOR_PORTUGUESE));
     List<TracerDrugExcelDto> firstTracerDrug = collect.values().stream().findFirst().get();
     SimpleDateFormat sdf = new SimpleDateFormat(dateFormat);
     firstTracerDrug.forEach(firstTracerDrugDto -> excelHead.add(

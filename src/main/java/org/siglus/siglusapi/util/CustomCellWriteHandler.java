@@ -51,7 +51,8 @@ public class CustomCellWriteHandler implements CellWriteHandler {
     }
     if (rowIndex < 0 || columnIndex < 0 || colorArrays[rowIndex][columnIndex] == 0) {
       return;
-    } else if (colorArrays[rowIndex][columnIndex] == RED_MARK) {
+    }
+    if (colorArrays[rowIndex][columnIndex] == RED_MARK) {
       writeCellStyle.setFillForegroundColor(IndexedColors.RED.getIndex());
     } else if (colorArrays[rowIndex][columnIndex] == YELLOW_MARK) {
       writeCellStyle.setFillForegroundColor(IndexedColors.YELLOW.getIndex());

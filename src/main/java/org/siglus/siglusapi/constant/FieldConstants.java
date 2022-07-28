@@ -108,7 +108,7 @@ public class FieldConstants {
 
   public static final String CHARACTER_ENCODING = "utf-8";
 
-  public static final String TRACER_DRUG_INFORMATION = "tracer_drug_information_";
+  public static final String TRACER_DRUG_INFORMATION_PORTUGUESE = "tracer_drug_information_";
 
   public static final String LEGENDA = "legenda";
 
@@ -120,25 +120,25 @@ public class FieldConstants {
 
   public static final String UTF_8 = "UTF-8";
 
-  public static final String STOCK_OUT = "Stock Out";
+  public static final String STOCK_OUT_PORTUGUESE = "Estoque";
 
-  public static final String LOW_STOCK = "Low stock";
+  public static final String LOW_STOCK_PORTUGUESE = "Baixo estoque";
 
-  public static final String REGULAR_STOCK = "Regular stock";
+  public static final String REGULAR_STOCK_PORTUGUESE = "Estoque Regular";
 
-  public static final String OVER_STOCK = "Over stock";
+  public static final String OVER_STOCK_PORTUGUESE = "estoque excessivo";
 
-  public static final String DRUG_CODE = "Drug Code";
+  public static final String DRUG_CODE_PORTUGUESE = "Código de Medicamentos";
 
-  public static final String PROGRAM_CAMEL = "Program";
+  public static final String PROGRAM_PORTUGUESE = "Programa";
 
-  public static final String DRUG_NAME = "Drug Name";
+  public static final String DRUG_NAME_PORTUGUESE = "Nome do medicamento";
 
-  public static final String PROVINCE_CAMEL = "Province";
+  public static final String PROVINCE_PORTUGUESE = "Província";
 
-  public static final String DISTRICT_CAMEL = "District";
+  public static final String DISTRICT_PORTUGUESE = "Distrito";
 
-  public static final String FACILITY_CAMEL = "Facility";
+  public static final String FACILITY_PORTUGUESE = "Unidade Sanitária";
 
   public static final String CMM = "CMM";
 
@@ -154,7 +154,7 @@ public class FieldConstants {
 
   public static final int VIOLET_MARK = 4;
 
-  public static final String REPORT_GENERATED_FOR = "Report generated for";
+  public static final String REPORT_GENERATED_FOR_PORTUGUESE = "Relatório gerado para";
 
   public static final String ALL_GEOGRAPHIC_ZONE = "0000-0000";
 
