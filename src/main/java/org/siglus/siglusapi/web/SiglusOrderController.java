@@ -64,9 +64,9 @@ public class SiglusOrderController {
     return orderController.batchCreateOrders(orders, authentication);
   }
 
-  @GetMapping()
+  @GetMapping
   public Page<BasicOrderDto> searchOrders(OrderSearchParams params, Pageable pageable) {
-    return siglusOrderService.searchOrders(params, pageable);
+    return siglusOrderService.searchOrdersWithSubDraftStatus(params, pageable);
   }
 
   @GetMapping("/{id}/print")

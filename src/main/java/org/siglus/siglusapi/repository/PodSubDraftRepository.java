@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.repository;
 
+import java.util.List;
 import java.util.UUID;
 import org.siglus.siglusapi.domain.PodSubDraft;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -28,4 +29,13 @@ public interface PodSubDraftRepository extends JpaRepository<PodSubDraft, UUID> 
   @Query(value = "delete from siglusintegration.pod_sub_draft where id in (:ids);",
       nativeQuery = true)
   void deleteAllByIds(@Param("ids") Iterable<UUID> ids);
+
+  @Query(value =
+      "select CAST(o.id AS VARCHAR) as orderId "
+          + "from fulfillment.orders o "
+          + "inner join fulfillment.shipments s on (o.id = s.orderid) and o.id in (:orderIds) "
+          + "inner join fulfillment.proofs_of_delivery p on (s.id = p.shipmentid) "
+          + "inner join siglusintegration.pod_sub_draft psd on (p.id = psd.proofofdeliveryid)",
+      nativeQuery = true)
+  List<String> findOrderIdsWithSubDraft(@Param("orderIds") Iterable<UUID> orderIds);
 }
