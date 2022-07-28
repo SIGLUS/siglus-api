@@ -47,7 +47,7 @@ import org.siglus.common.repository.OrderExternalRepository;
 import org.siglus.siglusapi.domain.PodLineItemsExtension;
 import org.siglus.siglusapi.domain.PodSubDraft;
 import org.siglus.siglusapi.dto.Message;
-import org.siglus.siglusapi.dto.enums.PodSubDraftEnum;
+import org.siglus.siglusapi.dto.enums.PodSubDraftStatusEnum;
 import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.repository.OrderableRepository;
 import org.siglus.siglusapi.repository.PodLineItemsExtensionRepository;
@@ -57,6 +57,7 @@ import org.siglus.siglusapi.service.client.SiglusProofOfDeliveryFulfillmentServi
 import org.siglus.siglusapi.util.CustomListSortHelper;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.web.request.CreatePodSubDraftRequest;
+import org.siglus.siglusapi.web.request.OperateTypeEnum;
 import org.siglus.siglusapi.web.request.UpdatePodSubDraftRequest;
 import org.siglus.siglusapi.web.response.PodSubDraftListResponse;
 import org.siglus.siglusapi.web.response.PodSubDraftListResponse.SubDraftInfo;
@@ -118,7 +119,7 @@ public class SiglusProofOfDeliveryService {
   }
 
   @Transactional
-  public void createSubDraft(CreatePodSubDraftRequest request) {
+  public void createSubDrafts(CreatePodSubDraftRequest request) {
     // TODO no need order id
     // TODO 校验 pod id 和 order id
     // TODO 判断 order 是否已经是 received 状态 ( pod 是否已经是 summited 状态), permission
@@ -132,7 +133,7 @@ public class SiglusProofOfDeliveryService {
     buildAndSavePodLineItemsExtensions(splitGroupList, subDrafts);
   }
 
-  public PodSubDraftListResponse searchSubDraftList(UUID proofOfDeliveryId) {
+  public PodSubDraftListResponse getSubDraftSummary(UUID proofOfDeliveryId) {
     List<PodSubDraft> podSubDrafts = getPodSubDraftsByProofOfDeliveryId(proofOfDeliveryId);
     return PodSubDraftListResponse.builder()
         .proofOfDeliveryId(podSubDrafts.get(0).getProofOfDeliveryId())
@@ -160,11 +161,11 @@ public class SiglusProofOfDeliveryService {
     List<ProofOfDeliveryLineItem> lineItems = podLineItemsRepository.findAll(lineItemIds);
 
     List<ProofOfDeliveryLineItem> toBeUpdatedLineItems = buildToBeUpdatedLineItems(
-        request.getProofOfDeliveryDto(), lineItems, request.getSubDraftStatus());
+        request.getProofOfDeliveryDto(), lineItems, OperateTypeEnum.getPodSubDraftEnum(request.getOperateType()));
     log.info("update ProofOfDeliveryLineItem list, subDraftId:{}, lineItemIds:{}", subDraftId, lineItemIds);
     podLineItemsRepository.save(toBeUpdatedLineItems);
 
-    updateSubDraftStatusAndOperator(podSubDraft, request.getSubDraftStatus());
+    updateSubDraftStatusAndOperator(podSubDraft, OperateTypeEnum.getPodSubDraftEnum(request.getOperateType()));
   }
 
   @Transactional
@@ -176,18 +177,21 @@ public class SiglusProofOfDeliveryService {
     ProofOfDeliveryDto proofOfDeliveryDto = fulfillmentService.searchProofOfDelivery(proofOfDeliveryId, null);
     clearAndSaveLineItems(lineItemIds, proofOfDeliveryDto);
 
-    updateSubDraftStatusAndOperator(podSubDraft, PodSubDraftEnum.NOT_YET_STARTED);
+    updateSubDraftStatusAndOperator(podSubDraft, PodSubDraftStatusEnum.NOT_YET_STARTED);
   }
 
   @Transactional
-  public void deleteAllSubDraft(UUID proofOfDeliveryId) {
-    ProofOfDeliveryDto proofOfDeliveryDto = fulfillmentService.searchProofOfDelivery(proofOfDeliveryId, null);
+  public void deleteSubDrafts(UUID proofOfDeliveryId) {
     List<PodSubDraft> subDrafts = getPodSubDraftsByProofOfDeliveryId(proofOfDeliveryId);
     Set<UUID> subDraftIds = subDrafts.stream().map(PodSubDraft::getId).collect(Collectors.toSet());
+    deleteSubDraftAndLineExtensionBySubDraftIds(subDraftIds);
 
+    ProofOfDeliveryDto proofOfDeliveryDto = fulfillmentService.searchProofOfDelivery(proofOfDeliveryId, null);
     Set<UUID> lineItemIds = getPodLineItemIdsBySubDraftIds(subDraftIds);
     clearAndSaveLineItems(lineItemIds, proofOfDeliveryDto);
+  }
 
+  private void deleteSubDraftAndLineExtensionBySubDraftIds(Set<UUID> subDraftIds) {
     log.info("delete proof of delivery line item extension, subDraftIds:{}", subDraftIds);
     podLineItemsExtensionRepository.deleteAllBySubDraftIds(subDraftIds);
 
@@ -198,7 +202,7 @@ public class SiglusProofOfDeliveryService {
   private void clearAndSaveLineItems(Set<UUID> lineItemIds, ProofOfDeliveryDto proofOfDeliveryDto) {
     List<ProofOfDeliveryLineItem> lineItems = podLineItemsRepository.findAll(lineItemIds);
     List<ProofOfDeliveryLineItem> toBeUpdatedLineItems = buildToBeUpdatedLineItems(proofOfDeliveryDto, lineItems,
-        PodSubDraftEnum.NOT_YET_STARTED);
+        PodSubDraftStatusEnum.NOT_YET_STARTED);
     log.info("update ProofOfDeliveryLineItem list, podIdd:{}, lineItemIds:{}", proofOfDeliveryDto.getId(),
         lineItemIds);
     podLineItemsRepository.save(toBeUpdatedLineItems);
@@ -214,13 +218,13 @@ public class SiglusProofOfDeliveryService {
   }
 
   private void checkIfCanOperate(PodSubDraft podSubDraft) {
-    if (PodSubDraftEnum.SUBMITTED == podSubDraft.getStatus()) {
+    if (PodSubDraftStatusEnum.SUBMITTED == podSubDraft.getStatus()) {
       throw new BusinessDataException(new Message(ERROR_CANNOT_OPERATE_WHEN_SUB_DRAFT_SUBMITTED), podSubDraft.getId());
     }
   }
 
   private List<ProofOfDeliveryLineItem> buildToBeUpdatedLineItems(ProofOfDeliveryDto proofOfDeliveryDto,
-      List<ProofOfDeliveryLineItem> lineItems, PodSubDraftEnum subDraftStatus) {
+      List<ProofOfDeliveryLineItem> lineItems, PodSubDraftStatusEnum subDraftStatus) {
     Map<UUID, ProofOfDeliveryLineItemDto> idToLineItemDto = convertToLineItemDtos(
         proofOfDeliveryDto.getLineItems()).stream()
         .collect(Collectors.toMap(ProofOfDeliveryLineItemDto::getId, e -> e));
@@ -228,7 +232,7 @@ public class SiglusProofOfDeliveryService {
     lineItems.forEach(lineItem -> {
       ProofOfDeliveryLineItemDto lineItemDto = idToLineItemDto.get(lineItem.getId());
       ProofOfDeliveryLineItem toBeUpdatedLineItem;
-      if (PodSubDraftEnum.NOT_YET_STARTED == subDraftStatus) {
+      if (PodSubDraftStatusEnum.NOT_YET_STARTED == subDraftStatus) {
         toBeUpdatedLineItem = buildClearedProofOfDeliveryLineItem(lineItem);
       } else {
         toBeUpdatedLineItem = buildProofOfDeliveryLineItem(lineItem, lineItemDto);
@@ -258,9 +262,9 @@ public class SiglusProofOfDeliveryService {
   }
 
 
-  private void updateSubDraftStatusAndOperator(PodSubDraft podSubDraft, PodSubDraftEnum status) {
+  private void updateSubDraftStatusAndOperator(PodSubDraft podSubDraft, PodSubDraftStatusEnum status) {
     UUID currentUserId = authenticationHelper.getCurrentUserId().orElseThrow(IllegalStateException::new);
-    podSubDraft.setOperatorId(PodSubDraftEnum.NOT_YET_STARTED == status ? null : currentUserId);
+    podSubDraft.setOperatorId(PodSubDraftStatusEnum.NOT_YET_STARTED == status ? null : currentUserId);
     podSubDraft.setStatus(status);
     log.info("save pod sub draft: {}", podSubDraft);
     podSubDraftRepository.save(podSubDraft);
@@ -311,7 +315,7 @@ public class SiglusProofOfDeliveryService {
   }
 
   private boolean isTheAllSubDraftIsSubmitted(List<PodSubDraft> subDraftList) {
-    return subDraftList.stream().allMatch(e -> PodSubDraftEnum.SUBMITTED == e.getStatus());
+    return subDraftList.stream().allMatch(e -> PodSubDraftStatusEnum.SUBMITTED == e.getStatus());
   }
 
   private List<SubDraftInfo> buildSubDraftInfos(List<PodSubDraft> podSubDrafts) {
@@ -351,7 +355,7 @@ public class SiglusProofOfDeliveryService {
       subDrafts.add(PodSubDraft.builder()
           .number(i + 1)
           .proofOfDeliveryId(proofOfDeliveryId)
-          .status(PodSubDraftEnum.NOT_YET_STARTED)
+          .status(PodSubDraftStatusEnum.NOT_YET_STARTED)
           .build());
     }
     log.info("save pod sub drafts, proof of delivery id: {}", proofOfDeliveryId);

@@ -21,7 +21,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.siglus.siglusapi.dto.enums.PodSubDraftEnum;
+import org.siglus.siglusapi.dto.enums.PodSubDraftStatusEnum;
 
 @Data
 @Builder
@@ -40,7 +40,7 @@ public class PodSubDraftListResponse {
   public static class SubDraftInfo {
     private int groupNum;
     private String saver;
-    private PodSubDraftEnum status;
+    private PodSubDraftStatusEnum status;
     private UUID subDraftId;
   }
 }

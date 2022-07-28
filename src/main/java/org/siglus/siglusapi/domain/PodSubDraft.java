@@ -24,7 +24,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.siglus.common.domain.BaseEntity;
-import org.siglus.siglusapi.dto.enums.PodSubDraftEnum;
+import org.siglus.siglusapi.dto.enums.PodSubDraftStatusEnum;
 
 @Entity
 @Data
@@ -35,7 +35,7 @@ import org.siglus.siglusapi.dto.enums.PodSubDraftEnum;
 public class PodSubDraft extends BaseEntity {
 
   private Integer number;
-  private PodSubDraftEnum status;
+  private PodSubDraftStatusEnum status;
   @Column(name = "operatorid")
   private UUID operatorId;
   @Column(name = "proofofdeliveryid")

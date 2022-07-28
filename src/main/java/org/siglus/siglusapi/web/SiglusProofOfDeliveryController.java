@@ -107,20 +107,20 @@ public class SiglusProofOfDeliveryController {
 
   @ResponseStatus(HttpStatus.CREATED)
   @PostMapping("/{id}/subDrafts")
-  public void createSubDraft(@PathVariable("id") UUID proofOfDeliveryId,
+  public void createSubDrafts(@PathVariable("id") UUID proofOfDeliveryId,
       @Valid @RequestBody CreatePodSubDraftRequest request) {
-    proofOfDeliveryService.createSubDraft(request);
+    proofOfDeliveryService.createSubDrafts(request);
   }
 
   @DeleteMapping("/{id}/subDrafts")
   @ResponseStatus(NO_CONTENT)
-  public void deleteAllSubDraft(@PathVariable("id") UUID proofOfDeliveryId) {
-    proofOfDeliveryService.deleteAllSubDraft(proofOfDeliveryId);
+  public void deleteSubDrafts(@PathVariable("id") UUID proofOfDeliveryId) {
+    proofOfDeliveryService.deleteSubDrafts(proofOfDeliveryId);
   }
 
   @GetMapping("/{id}/subDrafts/summary")
-  public PodSubDraftListResponse searchSubDraftList(@PathVariable("id") UUID proofOfDeliveryId) {
-    return proofOfDeliveryService.searchSubDraftList(proofOfDeliveryId);
+  public PodSubDraftListResponse getSubDraftSummary(@PathVariable("id") UUID proofOfDeliveryId) {
+    return proofOfDeliveryService.getSubDraftSummary(proofOfDeliveryId);
   }
 
   @GetMapping("/{id}/subDrafts/{subDraftId}")
