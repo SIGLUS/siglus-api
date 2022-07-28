@@ -291,7 +291,6 @@ tasks.withType(Pmd) {
 apply from: "documentation.gradle"
 
 processResources {
-    finalizedBy npm_run_runApiHtmlConverter
     filesMatching('**/version.properties') {
         expand(project.properties)
     }
