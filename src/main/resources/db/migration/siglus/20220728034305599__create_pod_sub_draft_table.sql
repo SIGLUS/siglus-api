@@ -2,9 +2,13 @@
 -- Adding migrations out of order may cause this migration to never execute or behave in an unexpected way.
 -- Migrations should NOT BE EDITED. Add a new migration to apply changes.
 
-CREATE TABLE siglusintegration.pod_line_items_extension
+CREATE TABLE siglusintegration.pod_sub_draft
 (
-    id            UUID NOT NULL PRIMARY KEY,
-    podlineitemid UUID NOT NULL,
-    subdraftid    UUID NOT NULL
+    id                UUID    NOT NULL PRIMARY KEY,
+    number            INTEGER NOT NULL,
+    status            INTEGER,
+    operatorid        UUID,
+    proofofdeliveryid UUID
 );
+
+CREATE UNIQUE INDEX podid_num_uidx ON siglusintegration.pod_sub_draft (proofofdeliveryid, number);
