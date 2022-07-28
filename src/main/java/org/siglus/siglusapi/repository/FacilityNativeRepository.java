@@ -139,6 +139,19 @@ public class FacilityNativeRepository extends BaseNativeRepository {
     return namedJdbc.query(query, facilityStockCardDateDtoExtractor());
   }
 
+  public List<FacillityStockCardDateDto> findFirstStockCardGroupByFacilityIdAndProgramId(
+          UUID facilityId,
+          UUID programId
+  ) {
+    MapSqlParameterSource params = new MapSqlParameterSource();
+    params.addValue("facilityId", facilityId);
+    params.addValue("programId", programId);
+    String query = getQuery() + " WHERE sc.programid = :programId "
+            + " AND sc.facilityid = :facilityId";
+    log.info(query);
+    return namedJdbc.query(query, params, facilityStockCardDateDtoExtractor());
+  }
+
   private String getQuery() {
     return "SELECT DISTINCT ON (sc.facilityid, sc.programid) "
         + "            MIN(scli.occurreddate) OVER (PARTITION BY sc.facilityid, sc.programid) AS occurreddate, "
