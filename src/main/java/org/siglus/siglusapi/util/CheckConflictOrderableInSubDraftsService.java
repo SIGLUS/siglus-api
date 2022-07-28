@@ -18,13 +18,17 @@ package org.siglus.siglusapi.util;
 import static java.util.stream.Collectors.toList;
 import static org.openlmis.stockmanagement.i18n.MessageKeys.ERROR_EVENT_ORDERABLE_INVALID;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_ISSUE_CONFLICT_SUB_DRAFT;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_SUB_DRAFT_SAME_ORDERABLE_ID_WITH_LOT_CODE;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.apache.commons.collections.CollectionUtils;
 import org.openlmis.stockmanagement.exception.ResourceNotFoundException;
 import org.siglus.common.dto.referencedata.OrderableDto;
+import org.siglus.siglusapi.constant.FieldConstants;
 import org.siglus.siglusapi.domain.StockManagementDraft;
 import org.siglus.siglusapi.domain.StockManagementDraftLineItem;
 import org.siglus.siglusapi.dto.Message;
@@ -32,6 +36,7 @@ import org.siglus.siglusapi.dto.ProductSubDraftConflictDto;
 import org.siglus.siglusapi.dto.StockManagementDraftDto;
 import org.siglus.siglusapi.dto.StockManagementDraftLineItemDto;
 import org.siglus.siglusapi.exception.BusinessDataException;
+import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.StockManagementDraftRepository;
 import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,7 +51,7 @@ public class CheckConflictOrderableInSubDraftsService {
   @Autowired
   private SiglusOrderableReferenceDataService siglusOrderableReferenceDataService;
 
-  public void checkConflictSubDraft(StockManagementDraftDto dto) {
+  public void checkConflictOrderableBetweenSubDrafts(StockManagementDraftDto dto) {
     StockManagementDraft currentSubDraft = stockManagementDraftRepository.findOne(dto.getId());
     List<StockManagementDraft> subDrafts = stockManagementDraftRepository
         .findByInitialDraftId(currentSubDraft.getInitialDraftId());
@@ -79,6 +84,19 @@ public class CheckConflictOrderableInSubDraftsService {
     if (CollectionUtils.isNotEmpty(subDraftConflictDtos)) {
       throw new BusinessDataException(new Message(ERROR_ISSUE_CONFLICT_SUB_DRAFT),
           subDraftConflictDtos);
+    }
+  }
+
+  public void checkConflictOrderableAndLotInSubDraft(StockManagementDraftDto stockManagementDraftDto) {
+    if (stockManagementDraftDto.getDraftType().equals(FieldConstants.RECEIVE)) {
+      List<StockManagementDraftLineItemDto> lineItems = stockManagementDraftDto.getLineItems();
+      Map<UUID, String> orderableIdLotCodeMap = lineItems.stream().collect(Collectors
+          .toMap(StockManagementDraftLineItemDto::getOrderableId, StockManagementDraftLineItemDto::getLotCode,
+              (k1, k2) -> k1));
+      if (lineItems.size() != orderableIdLotCodeMap.size()) {
+        throw new ValidationMessageException(
+            new Message(ERROR_STOCK_MANAGEMENT_SUB_DRAFT_SAME_ORDERABLE_ID_WITH_LOT_CODE));
+      }
     }
   }
 

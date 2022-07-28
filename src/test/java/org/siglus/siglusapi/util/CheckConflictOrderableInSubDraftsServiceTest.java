@@ -19,6 +19,7 @@ import static com.google.common.collect.Lists.newArrayList;
 import static org.hamcrest.Matchers.containsString;
 import static org.mockito.Mockito.when;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_ISSUE_CONFLICT_SUB_DRAFT;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_SUB_DRAFT_SAME_ORDERABLE_ID_WITH_LOT_CODE;
 
 import java.util.UUID;
 import org.junit.Rule;
@@ -29,11 +30,13 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.siglus.common.dto.referencedata.OrderableDto;
+import org.siglus.siglusapi.constant.FieldConstants;
 import org.siglus.siglusapi.domain.StockManagementDraft;
 import org.siglus.siglusapi.domain.StockManagementDraftLineItem;
 import org.siglus.siglusapi.dto.StockManagementDraftDto;
 import org.siglus.siglusapi.dto.StockManagementDraftLineItemDto;
 import org.siglus.siglusapi.exception.BusinessDataException;
+import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.StockManagementDraftRepository;
 import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
 
@@ -109,7 +112,26 @@ public class CheckConflictOrderableInSubDraftsServiceTest {
     when(siglusOrderableReferenceDataService.findByIds(newArrayList(orderableId1, orderableId2)))
         .thenReturn(newArrayList(orderableDto1, orderableDto2));
 
-    checkConflictOrderableInSubDraftsService.checkConflictSubDraft(draftDto);
+    checkConflictOrderableInSubDraftsService.checkConflictOrderableBetweenSubDrafts(draftDto);
   }
 
+  @Test
+  public void shouldThrowExceptionWhenLineItemsHaveSameOrderableIdAndLotCode() {
+    exception.expect(ValidationMessageException.class);
+    exception.expectMessage(containsString(ERROR_STOCK_MANAGEMENT_SUB_DRAFT_SAME_ORDERABLE_ID_WITH_LOT_CODE));
+
+    StockManagementDraftDto subDraftDto = new StockManagementDraftDto();
+    StockManagementDraftLineItemDto stockManagementDraftLineItemDto1 = new StockManagementDraftLineItemDto();
+    stockManagementDraftLineItemDto1.setOrderableId(orderableId1);
+    stockManagementDraftLineItemDto1.setLotCode("LotCode-1");
+
+    StockManagementDraftLineItemDto stockManagementDraftLineItemDto2 = new StockManagementDraftLineItemDto();
+    stockManagementDraftLineItemDto2.setOrderableId(orderableId1);
+    stockManagementDraftLineItemDto2.setLotCode("LotCode-1");
+
+    subDraftDto.setDraftType(FieldConstants.RECEIVE);
+    subDraftDto.setLineItems(newArrayList(stockManagementDraftLineItemDto1, stockManagementDraftLineItemDto2));
+
+    checkConflictOrderableInSubDraftsService.checkConflictOrderableAndLotInSubDraft(subDraftDto);
+  }
 }
