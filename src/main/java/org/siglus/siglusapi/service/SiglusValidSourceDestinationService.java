@@ -40,6 +40,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class SiglusValidSourceDestinationService {
 
+  private static final String OUTROS = "Outros";
   private final ValidSourceDestinationStockManagementService validSourceDestinationStockManagementService;
   private final RequisitionGroupMembersRepository requisitionGroupMembersRepository;
   private final SupportedProgramsHelper supportedProgramsHelper;
@@ -113,7 +114,7 @@ public class SiglusValidSourceDestinationService {
   private boolean isShowCommonNode(ValidSourceDestinationDto dto, boolean isReceive) {
     boolean isCommonNode = !dto.getNode().isRefDataFacility();
     if (isReceive) {
-      return isCommonNode && androidHelper.isAndroid();
+      return isCommonNode && (androidHelper.isAndroid() || OUTROS.equals(dto.getName()));
     }
     return isCommonNode;
   }
