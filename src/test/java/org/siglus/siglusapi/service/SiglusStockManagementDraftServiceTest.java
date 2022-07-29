@@ -272,7 +272,7 @@ public class SiglusStockManagementDraftServiceTest {
   @Test
   public void shouldCallRepositoryWhenDeleteStockManagementDraftById() {
     // given
-    StockManagementDraft draft = StockManagementDraft.builder().build();
+    StockManagementDraft draft = StockManagementDraft.builder().draftType(FieldConstants.ISSUE).build();
     when(stockManagementDraftRepository.findOne(id)).thenReturn(draft);
     Set<UUID> supportedPrograms = new HashSet<>();
     supportedPrograms.add(UUID.randomUUID());
@@ -290,6 +290,7 @@ public class SiglusStockManagementDraftServiceTest {
   public void shouldResetDraftNumberWhenDeleteDraftById() {
     StockManagementDraft draft = StockManagementDraft.builder()
         .initialDraftId(initialDraftId)
+        .draftType(FieldConstants.ISSUE)
         .draftNumber(3).build();
     when(stockManagementDraftRepository.findOne(id)).thenReturn(draft);
     Set<UUID> supportedPrograms = new HashSet<>();

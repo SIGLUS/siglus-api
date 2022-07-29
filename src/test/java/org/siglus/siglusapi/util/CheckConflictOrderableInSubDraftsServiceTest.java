@@ -120,7 +120,6 @@ public class CheckConflictOrderableInSubDraftsServiceTest {
     exception.expect(ValidationMessageException.class);
     exception.expectMessage(containsString(ERROR_STOCK_MANAGEMENT_SUB_DRAFT_SAME_ORDERABLE_ID_WITH_LOT_CODE));
 
-    StockManagementDraftDto subDraftDto = new StockManagementDraftDto();
     StockManagementDraftLineItemDto stockManagementDraftLineItemDto1 = new StockManagementDraftLineItemDto();
     stockManagementDraftLineItemDto1.setOrderableId(orderableId1);
     stockManagementDraftLineItemDto1.setLotCode("LotCode-1");
@@ -129,6 +128,7 @@ public class CheckConflictOrderableInSubDraftsServiceTest {
     stockManagementDraftLineItemDto2.setOrderableId(orderableId1);
     stockManagementDraftLineItemDto2.setLotCode("LotCode-1");
 
+    StockManagementDraftDto subDraftDto = new StockManagementDraftDto();
     subDraftDto.setDraftType(FieldConstants.RECEIVE);
     subDraftDto.setLineItems(newArrayList(stockManagementDraftLineItemDto1, stockManagementDraftLineItemDto2));
 
