@@ -154,8 +154,8 @@ public class SiglusAdministrationsService {
         .getInputStream()));
     CSVParser fileParser = new CSVParser(locationInfoReader, CSVFormat.EXCEL.withFirstRecordAsHeader());
     csvValidator.validateCsvHeaders(fileParser);
-    csvValidator.validateDuplicateLocationCode(fileParser);
-    for (CSVRecord eachRow : fileParser.getRecords()) {
+    List<CSVRecord> csvRecordList = csvValidator.validateDuplicateLocationCode(fileParser);
+    for (CSVRecord eachRow : csvRecordList) {
       csvValidator.validateNullRow(eachRow);
       String locationCode = eachRow.get(LOCATION_CODE);
       String area = eachRow.get(AREA);

@@ -64,9 +64,10 @@ public class CsvValidator {
     validateEachColumn(eachRow.get(LEVEL), LEVEL, row);
   }
 
-  public void validateDuplicateLocationCode(CSVParser csvParser) throws IOException {
+  public List<CSVRecord> validateDuplicateLocationCode(CSVParser csvParser) throws IOException {
     Map<String, List<Long>> locationCodeToDuplicateRowMap = new HashMap<>();
-    csvParser.getRecords().forEach(eachRow -> {
+    List<CSVRecord> records = csvParser.getRecords();
+    records.forEach(eachRow -> {
       List<Long> duplicateRows = Lists.newArrayList();
       String locationCode = eachRow.get(LOCATION_CODE);
       long rowNumber = eachRow.getRecordNumber();
@@ -83,6 +84,8 @@ public class CsvValidator {
             locationCodeToDuplicateRowMap.get(locationCode).toString()));
       }
     }
+
+    return records;
   }
 
   private void validateNullHeaders(List<String> headers) throws ValidationMessageException {
