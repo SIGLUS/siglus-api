@@ -17,17 +17,21 @@ package org.siglus.siglusapi.web;
 
 import static org.mockito.Mockito.verify;
 
+import java.util.UUID;
+import javax.servlet.http.HttpServletResponse;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.siglus.siglusapi.dto.FacilitySearchParamDto;
+import org.siglus.siglusapi.dto.SiglusFacilityDto;
 import org.siglus.siglusapi.service.SiglusAdministrationsService;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Sort.Direction;
+import org.springframework.mock.web.MockHttpServletResponse;
 
 
 @RunWith(MockitoJUnitRunner.class)
@@ -49,28 +53,65 @@ public class SiglusAdministrationControllerTest {
 
   private static final String Name = "A. Alimenticios";
 
+  private static final UUID facilityId = UUID.randomUUID();
+
   @Test
   public void shouldDisplayFacilitiesWithIsAndroid() {
-    //when
+    // when
     FacilitySearchParamDto facilitySearchParamDto = mockFacilitySearchParamDto();
     siglusAdministrationsController.showFacilitiesInfos(facilitySearchParamDto, pageable);
 
-    //then
+    // then
     verify(siglusAdministrationsService).searchForFacilities(facilitySearchParamDto, pageable);
   }
 
   @Test
   public void eraseAndroidByFacilityId() {
-    //when
+    // when
     siglusAdministrationsController.eraseAndroidDeviceInfo(facilityCode);
 
-    //then
+    // then
     verify(siglusAdministrationsService).eraseDeviceInfoByFacilityId(facilityCode);
+  }
+
+  @Test
+  public void shouldGetFacilityInfo() {
+    // when
+    siglusAdministrationsController.getFacility(facilityId);
+
+    // then
+    verify(siglusAdministrationsService).getFacility(facilityId);
+  }
+
+  @Test
+  public void shouldSaveFacilityInfo() {
+    // when
+    siglusAdministrationsController.updateFacility(facilityId, mockSiglusFacilityDto());
+
+    // then
+    verify(siglusAdministrationsService).updateFacility(facilityId, mockSiglusFacilityDto());
+  }
+
+  @Test
+  public void shouldExportLocationManagementExcel() {
+    // when
+    HttpServletResponse httpServletResponse = new MockHttpServletResponse();
+    siglusAdministrationsController.exportLocationManagementTemplate(facilityId, httpServletResponse);
+
+    // then
+    verify(siglusAdministrationsService).exportLocationInfo(facilityId, httpServletResponse);
   }
 
   private FacilitySearchParamDto mockFacilitySearchParamDto() {
     FacilitySearchParamDto facilitySearchParamDto = new FacilitySearchParamDto();
     facilitySearchParamDto.setName(Name);
     return facilitySearchParamDto;
+  }
+
+  private SiglusFacilityDto mockSiglusFacilityDto() {
+    SiglusFacilityDto siglusFacilityDto = new SiglusFacilityDto();
+    siglusFacilityDto.setEnableLocationManagement(true);
+    siglusFacilityDto.setId(facilityId);
+    return siglusFacilityDto;
   }
 }

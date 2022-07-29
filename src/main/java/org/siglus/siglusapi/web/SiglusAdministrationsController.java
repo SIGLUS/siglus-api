@@ -15,18 +15,26 @@
 
 package org.siglus.siglusapi.web;
 
+import java.io.IOException;
+import java.util.UUID;
+import javax.servlet.http.HttpServletResponse;
 import org.siglus.siglusapi.dto.FacilitySearchParamDto;
 import org.siglus.siglusapi.dto.FacilitySearchResultDto;
+import org.siglus.siglusapi.dto.SiglusFacilityDto;
 import org.siglus.siglusapi.service.SiglusAdministrationsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/siglusapi/facilities")
@@ -44,5 +52,29 @@ public class SiglusAdministrationsController {
   @DeleteMapping("/{facilityCode}/deviceInfo")
   public void eraseAndroidDeviceInfo(@PathVariable String facilityCode) {
     administrationsService.eraseDeviceInfoByFacilityId(facilityCode);
+  }
+
+  @GetMapping("/{facilityId}")
+  public FacilitySearchResultDto getFacility(@PathVariable UUID facilityId) {
+    return administrationsService.getFacility(facilityId);
+  }
+
+  @PutMapping("/{facilityId}")
+  public FacilitySearchResultDto updateFacility(@PathVariable UUID facilityId,
+      @RequestBody SiglusFacilityDto siglusFacilityDto) {
+    return administrationsService.updateFacility(facilityId, siglusFacilityDto);
+  }
+
+  @GetMapping("/{facilityId}/locations")
+  public void exportLocationManagementTemplate(@PathVariable("facilityId") UUID facilityId,
+      HttpServletResponse response) {
+    administrationsService.exportLocationInfo(facilityId, response);
+  }
+
+  @PostMapping("{facilityId}/locations")
+  public void uploadLocationInfo(@PathVariable("facilityId") UUID facilityId,
+      @RequestParam("excelFile") MultipartFile locationManagementFile, @RequestParam("format") String format)
+      throws IOException {
+    administrationsService.uploadLocationInfo(facilityId, locationManagementFile);
   }
 }

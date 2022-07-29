@@ -266,6 +266,44 @@ traits:
           responses:
             204:
               description: Android device successfully removed
+      /{facilityId}:
+        uriParameters:
+          facilityId:
+            displayName: facilityId
+            type: string
+            required: true
+            repeat: false
+        get:
+          is: [ secured ]
+          description: Get facility information
+          responses:
+            200:
+              description: Facility information successfully load
+        put:
+          is: [ secured ]
+          description: Save facility information
+          responses:
+            200:
+              description: Facility information successfully upload
+      /{facilityId}/locations:
+        uriParameters:
+          facilityId:
+            displayName: facilityId
+            type: string
+            required: true
+            repeat: false
+        get:
+          is: [ secured ]
+          description: Download location management template
+          responses:
+            200:
+              description: Location management successfully download
+        post:
+          is: [ secured ]
+          description: Upload location management template
+          responses:
+            200:
+              description: Location management successfully upload
 
 
     /data-migration/{facilityId}:

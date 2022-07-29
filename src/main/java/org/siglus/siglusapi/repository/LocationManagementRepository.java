@@ -13,33 +13,16 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.domain;
+package org.siglus.siglusapi.repository;
 
+import java.util.List;
 import java.util.UUID;
-import javax.persistence.Entity;
-import javax.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
-import org.siglus.common.domain.BaseEntity;
+import org.siglus.siglusapi.domain.LocationManagement;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-@Entity
-@Data
-@Builder
-@EqualsAndHashCode(callSuper = true)
-@AllArgsConstructor
-@NoArgsConstructor
-@Table(name = "facility_extension", schema = "siglusintegration")
-public class FacilityExtension extends BaseEntity {
+public interface LocationManagementRepository extends JpaRepository<LocationManagement, UUID> {
 
-  private UUID facilityId;
+  List<LocationManagement> findOneByFacilityId(UUID facilityId);
 
-  private String facilityCode;
-
-  private Boolean isAndroid;
-
-  private Boolean enableLocationManagement;
-
+  void deleteByFacilityId(UUID facilityId);
 }
