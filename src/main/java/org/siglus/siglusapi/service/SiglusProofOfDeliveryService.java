@@ -185,7 +185,7 @@ public class SiglusProofOfDeliveryService {
 
     Set<UUID> lineItemIds = getPodLineItemIdsBySubDraftId(subDraftId);
     ProofOfDeliveryDto proofOfDeliveryDto = fulfillmentService.searchProofOfDelivery(proofOfDeliveryId, null);
-    clearAndSaveLineItems(lineItemIds, proofOfDeliveryDto);
+    resetLineItems(lineItemIds, proofOfDeliveryDto);
 
     updateSubDraftStatusAndOperator(podSubDraft, PodSubDraftStatusEnum.NOT_YET_STARTED);
   }
@@ -198,7 +198,7 @@ public class SiglusProofOfDeliveryService {
 
     ProofOfDeliveryDto proofOfDeliveryDto = fulfillmentService.searchProofOfDelivery(proofOfDeliveryId, null);
     Set<UUID> lineItemIds = getPodLineItemIdsBySubDraftIds(subDraftIds);
-    clearAndSaveLineItems(lineItemIds, proofOfDeliveryDto);
+    resetLineItems(lineItemIds, proofOfDeliveryDto);
   }
 
   public ProofOfDeliveryDto mergeSubDrafts(UUID proofOfDeliveryId) {
@@ -243,7 +243,7 @@ public class SiglusProofOfDeliveryService {
     podSubDraftRepository.deleteAllByIds(subDraftIds);
   }
 
-  private void clearAndSaveLineItems(Set<UUID> lineItemIds, ProofOfDeliveryDto proofOfDeliveryDto) {
+  private void resetLineItems(Set<UUID> lineItemIds, ProofOfDeliveryDto proofOfDeliveryDto) {
     List<ProofOfDeliveryLineItem> lineItems = podLineItemsRepository.findAll(lineItemIds);
     List<ProofOfDeliveryLineItem> toBeUpdatedLineItems = buildToBeUpdatedLineItems(proofOfDeliveryDto, lineItems,
         PodSubDraftStatusEnum.NOT_YET_STARTED);
@@ -277,7 +277,7 @@ public class SiglusProofOfDeliveryService {
       ProofOfDeliveryLineItemDto lineItemDto = idToLineItemDto.get(lineItem.getId());
       ProofOfDeliveryLineItem toBeUpdatedLineItem;
       if (PodSubDraftStatusEnum.NOT_YET_STARTED == subDraftStatus) {
-        toBeUpdatedLineItem = buildClearedProofOfDeliveryLineItem(lineItem);
+        toBeUpdatedLineItem = buildResetProofOfDeliveryLineItem(lineItem);
       } else {
         toBeUpdatedLineItem = buildProofOfDeliveryLineItem(lineItem, lineItemDto);
       }
@@ -288,7 +288,6 @@ public class SiglusProofOfDeliveryService {
 
   private ProofOfDeliveryLineItem buildProofOfDeliveryLineItem(ProofOfDeliveryLineItem lineItem,
       ProofOfDeliveryLineItemDto lineItemDto) {
-    // TODO vvmStatus ?
     ProofOfDeliveryLineItem toBeUpdatedLineItem = new ProofOfDeliveryLineItem(lineItem.getOrderable(),
         lineItem.getLotId(), lineItemDto.getQuantityAccepted(), null,
         lineItemDto.getQuantityRejected(), lineItem.getRejectionReasonId(), lineItemDto.getNotes());
@@ -296,14 +295,12 @@ public class SiglusProofOfDeliveryService {
     return toBeUpdatedLineItem;
   }
 
-  private ProofOfDeliveryLineItem buildClearedProofOfDeliveryLineItem(ProofOfDeliveryLineItem lineItem) {
-    // TODO vvmStatus ?
+  private ProofOfDeliveryLineItem buildResetProofOfDeliveryLineItem(ProofOfDeliveryLineItem lineItem) {
     ProofOfDeliveryLineItem toBeUpdatedLineItem = new ProofOfDeliveryLineItem(lineItem.getOrderable(),
         lineItem.getLotId(), null, null, null, lineItem.getRejectionReasonId(), null);
     toBeUpdatedLineItem.setId(lineItem.getId());
     return toBeUpdatedLineItem;
   }
-
 
   private void updateSubDraftStatusAndOperator(PodSubDraft podSubDraft, PodSubDraftStatusEnum status) {
     UUID currentUserId = authenticationHelper.getCurrentUserId().orElseThrow(IllegalStateException::new);
