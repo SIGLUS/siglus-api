@@ -123,7 +123,7 @@ public class SiglusPodService {
 
   @Transactional
   public void createSubDrafts(UUID podId, CreatePodSubDraftRequest request) {
-    checkIfSubDraftExist(podId);
+    checkIfSubDraftsExist(podId);
 
     ProofOfDeliveryDto podDto = getPodDtoByPodId(podId);
     List<SimpleLineItem> simpleLineItems = buildSimpleLineItems(podDto);
@@ -141,7 +141,7 @@ public class SiglusPodService {
         .podId(podSubDrafts.get(0).getPodId())
         .subDrafts(buildSubDraftInfos(podSubDrafts))
         .canMergeOrDeleteDrafts(authenticationHelper.isTheCurrentUserCanMergeOrDeleteSubDrafts())
-        .canSubmitDrafts(isTheAllSubDraftIsSubmitted(podSubDrafts))
+        .canSubmitDrafts(isAllSubDraftsSubmitted(podSubDrafts))
         .build();
   }
 
@@ -225,7 +225,7 @@ public class SiglusPodService {
     return podDto;
   }
 
-  private void checkIfSubDraftExist(UUID podId) {
+  private void checkIfSubDraftsExist(UUID podId) {
     Example<PodSubDraft> example = Example.of(PodSubDraft.builder().podId(podId).build());
     long subDraftsCount = podSubDraftRepository.count(example);
     if (subDraftsCount > 0) {
@@ -362,16 +362,13 @@ public class SiglusPodService {
   }
 
   private void checkIfPodIdAndSubDraftIdMatch(UUID podId, UUID subDraftId) {
-    PodSubDraft podSubDraft = podSubDraftRepository.findOne(subDraftId);
-    if (Objects.isNull(podSubDraft)) {
-      throw new NotFoundException(ERROR_NO_POD_SUB_DRAFT_FOUND);
-    }
+    PodSubDraft podSubDraft = getPodSubDraft(subDraftId);
     if (!podSubDraft.getPodId().equals(podId)) {
       throw new BusinessDataException(new Message(ERROR_POD_ID_SUB_DRAFT_ID_NOT_MATCH), subDraftId);
     }
   }
 
-  private boolean isTheAllSubDraftIsSubmitted(List<PodSubDraft> subDraftList) {
+  private boolean isAllSubDraftsSubmitted(List<PodSubDraft> subDraftList) {
     return subDraftList.stream().allMatch(e -> PodSubDraftStatusEnum.SUBMITTED == e.getStatus());
   }
 

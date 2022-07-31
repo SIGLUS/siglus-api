@@ -133,6 +133,8 @@ public abstract class MessageKeys {
       + ".not.all.sub.drafts.submitted";
   public static final String ERROR_SUB_DRAFTS_ALREADY_EXISTED = POD_ERROR_PREFIX
       + ".sub.drafts.already.existed";
+  public static final String ERROR_SPLIT_NUM_TOO_LARGE = POD_ERROR_PREFIX
+      + ".split.number.too.large";
 
   // shipment
   public static final String SHIPMENT_ORDER_STATUS_INVALID =
