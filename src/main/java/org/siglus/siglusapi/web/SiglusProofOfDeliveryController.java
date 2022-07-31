@@ -110,7 +110,7 @@ public class SiglusProofOfDeliveryController {
   @PostMapping("/{id}/subDrafts")
   public void createSubDrafts(@PathVariable("id") UUID proofOfDeliveryId,
       @Valid @RequestBody CreatePodSubDraftRequest request) {
-    proofOfDeliveryService.createSubDrafts(request);
+    proofOfDeliveryService.createSubDrafts(proofOfDeliveryId, request);
   }
 
   @DeleteMapping("/{id}/subDrafts")
