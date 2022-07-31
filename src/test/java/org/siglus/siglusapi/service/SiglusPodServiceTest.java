@@ -35,7 +35,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.fulfillment.domain.ProofOfDeliveryLineItem;
+import org.openlmis.fulfillment.domain.ProofOfDeliveryStatus;
 import org.openlmis.fulfillment.service.referencedata.OrderableDto;
+import org.openlmis.fulfillment.web.ProofOfDeliveryController;
 import org.openlmis.fulfillment.web.util.ObjectReferenceDto;
 import org.openlmis.fulfillment.web.util.OrderLineItemDto;
 import org.openlmis.fulfillment.web.util.OrderObjectReferenceDto;
@@ -49,6 +51,7 @@ import org.siglus.common.repository.OrderExternalRepository;
 import org.siglus.siglusapi.domain.PodLineItemsExtension;
 import org.siglus.siglusapi.domain.PodSubDraft;
 import org.siglus.siglusapi.dto.enums.PodSubDraftStatusEnum;
+import org.siglus.siglusapi.exception.AuthenticationException;
 import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.repository.OrderableRepository;
@@ -63,6 +66,7 @@ import org.siglus.siglusapi.web.request.UpdatePodSubDraftRequest;
 import org.siglus.siglusapi.web.response.PodSubDraftsSummaryResponse;
 import org.siglus.siglusapi.web.response.PodSubDraftsSummaryResponse.SubDraftInfo;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -97,6 +101,12 @@ public class SiglusPodServiceTest {
 
   @Mock
   private SiglusAuthenticationHelper authenticationHelper;
+
+  @Mock
+  private ProofOfDeliveryController podController;
+
+  @Mock
+  private SiglusNotificationService notificationService;
 
   private final UUID externalId = UUID.randomUUID();
   private final UUID orderableId = UUID.randomUUID();
@@ -358,6 +368,189 @@ public class SiglusPodServiceTest {
     service.updateSubDraft(request, subDraftId);
   }
 
+  @Test
+  public void shouldSuccessWhenDeleteSubDraft() {
+    // given
+    when(podSubDraftRepository.findOne(subDraftId)).thenReturn(buildMockSubDraftNotYetStarted());
+    Example<PodLineItemsExtension> example = Example.of(PodLineItemsExtension.builder().subDraftId(subDraftId).build());
+    when(podLineItemsExtensionRepository.findAll(example)).thenReturn(buildMockPodLineItemsExtensions());
+    when(fulfillmentService.searchProofOfDelivery(any(), any())).thenReturn(buildMockPodDto());
+    when(podLineItemsRepository.findAll(Lists.newArrayList(lineItemId1))).thenReturn(buildMockPodLineItems());
+    when(authenticationHelper.getCurrentUserId()).thenReturn(Optional.of(UUID.randomUUID()));
+
+    // when
+    service.deleteSubDraft(podId, subDraftId);
+
+    // then
+    verify(podLineItemsRepository, times(1)).save(any(List.class));
+    verify(podSubDraftRepository, times(1)).save(any(PodSubDraft.class));
+  }
+
+  @Test(expected = NotFoundException.class)
+  public void shouldThrowWhenDeleteSubDraftWithSubDraftIdNotExist() {
+    // given
+    when(podSubDraftRepository.findOne(subDraftId)).thenReturn(null);
+
+    // when
+    service.deleteSubDraft(podId, subDraftId);
+  }
+
+  @Test(expected = BusinessDataException.class)
+  public void shouldThrowWhenDeleteSubDraftWithSubDraftSubmitted() {
+    // given
+    when(podSubDraftRepository.findOne(subDraftId)).thenReturn(buildMockSubDraftSubmitted());
+
+    // when
+    service.deleteSubDraft(podId, subDraftId);
+  }
+
+  @Test(expected = NotFoundException.class)
+  public void shouldThrowWhenDeleteSubDraftWithPodIdNotExist() {
+    // given
+    when(podSubDraftRepository.findOne(subDraftId)).thenReturn(buildMockSubDraftNotYetStarted());
+    when(fulfillmentService.searchProofOfDelivery(any(), any())).thenReturn(null);
+
+    // when
+    service.deleteSubDraft(podId, subDraftId);
+  }
+
+  @Test
+  public void shouldSuccessWhenDeleteSubDrafts() {
+    // given
+    when(authenticationHelper.isTheCurrentUserCanMergeOrDeleteSubDrafts()).thenReturn(Boolean.TRUE);
+    Example<PodSubDraft> example = Example.of(PodSubDraft.builder().podId(podId).build());
+    when(podSubDraftRepository.findAll(example)).thenReturn(buildMockSubDraftsAllSubmitted());
+    when(fulfillmentService.searchProofOfDelivery(any(), any())).thenReturn(buildMockPodDto());
+    when(podLineItemsExtensionRepository.findAllBySubDraftIds(Lists.newArrayList(subDraftId))).thenReturn(
+        buildMockPodLineItemsExtensions());
+
+    // when
+    service.deleteSubDrafts(podId);
+
+    // then
+    verify(podLineItemsRepository, times(1)).save(any(List.class));
+    verify(podSubDraftRepository, times(1)).deleteAllByIds(any(List.class));
+    verify(podLineItemsExtensionRepository, times(1)).deleteAllBySubDraftIds(any(List.class));
+  }
+
+  @Test(expected = AuthenticationException.class)
+  public void shouldThrowWhenDeleteSubDraftsWithNoPermission() {
+    // given
+    when(authenticationHelper.isTheCurrentUserCanMergeOrDeleteSubDrafts()).thenReturn(Boolean.FALSE);
+
+    // when
+    service.deleteSubDrafts(podId);
+  }
+
+  @Test(expected = NotFoundException.class)
+  public void shouldThrowWhenDeleteSubDraftsWithSubDraftsNotExist() {
+    // given
+    when(authenticationHelper.isTheCurrentUserCanMergeOrDeleteSubDrafts()).thenReturn(Boolean.TRUE);
+    Example<PodSubDraft> example = Example.of(PodSubDraft.builder().podId(podId).build());
+    when(podSubDraftRepository.findAll(example)).thenReturn(null);
+
+    // when
+    service.deleteSubDrafts(podId);
+  }
+
+  @Test(expected = NotFoundException.class)
+  public void shouldThrowWhenDeleteSubDraftsWithPodIdNotExist() {
+    // given
+    when(authenticationHelper.isTheCurrentUserCanMergeOrDeleteSubDrafts()).thenReturn(Boolean.TRUE);
+    Example<PodSubDraft> example = Example.of(PodSubDraft.builder().podId(podId).build());
+    when(podSubDraftRepository.findAll(example)).thenReturn(buildMockSubDraftsAllSubmitted());
+    when(fulfillmentService.searchProofOfDelivery(any(), any())).thenReturn(null);
+
+    // when
+    service.deleteSubDrafts(podId);
+  }
+
+  @Test
+  public void shouldReturnWhenMergeSubDrafts() {
+    // given
+    when(authenticationHelper.isTheCurrentUserCanMergeOrDeleteSubDrafts()).thenReturn(Boolean.TRUE);
+    Example<PodSubDraft> example = Example.of(PodSubDraft.builder().podId(podId).build());
+    when(podSubDraftRepository.findAll(example)).thenReturn(buildMockSubDraftsAllSubmitted());
+    ProofOfDeliveryDto expectedResponse = buildMockPodDto();
+    when(fulfillmentService.searchProofOfDelivery(any(), any())).thenReturn(expectedResponse);
+
+    // when
+    ProofOfDeliveryDto actualResponse = service.mergeSubDrafts(podId);
+    assertEquals(expectedResponse, actualResponse);
+  }
+
+  @Test(expected = AuthenticationException.class)
+  public void shouldThrowWhenMergeSubDraftsWithNoPermission() {
+    // given
+    when(authenticationHelper.isTheCurrentUserCanMergeOrDeleteSubDrafts()).thenReturn(Boolean.FALSE);
+
+    // when
+    service.mergeSubDrafts(podId);
+  }
+
+  @Test(expected = NotFoundException.class)
+  public void shouldThrowWhenMergeSubDraftsWithSubDraftsNotExist() {
+    // given
+    when(authenticationHelper.isTheCurrentUserCanMergeOrDeleteSubDrafts()).thenReturn(Boolean.TRUE);
+    Example<PodSubDraft> example = Example.of(PodSubDraft.builder().podId(podId).build());
+    when(podSubDraftRepository.findAll(example)).thenReturn(null);
+
+    // when
+    service.mergeSubDrafts(podId);
+  }
+
+  @Test(expected = NotFoundException.class)
+  public void shouldThrowWhenMergeSubDraftsWithPodIdNotExist() {
+    // given
+    when(authenticationHelper.isTheCurrentUserCanMergeOrDeleteSubDrafts()).thenReturn(Boolean.TRUE);
+    Example<PodSubDraft> example = Example.of(PodSubDraft.builder().podId(podId).build());
+    when(podSubDraftRepository.findAll(example)).thenReturn(buildMockSubDraftsAllSubmitted());
+    when(fulfillmentService.searchProofOfDelivery(any(), any())).thenReturn(null);
+
+    // when
+    service.mergeSubDrafts(podId);
+  }
+
+  @Test
+  public void shouldReturnWhenSubmitSubDrafts() {
+    // given
+    when(authenticationHelper.isTheCurrentUserCanMergeOrDeleteSubDrafts()).thenReturn(Boolean.TRUE);
+    Example<PodSubDraft> example = Example.of(PodSubDraft.builder().podId(podId).build());
+    when(podSubDraftRepository.findAll(example)).thenReturn(buildMockSubDraftsAllSubmitted());
+    ProofOfDeliveryDto dto = buildMockPodDto();
+    when(fulfillmentService.searchProofOfDelivery(any(), any())).thenReturn(dto);
+    when(podController.updateProofOfDelivery(podId, dto, null)).thenReturn(dto);
+
+    // when
+    ProofOfDeliveryDto actualResponse = service.submitSubDrafts(podId, dto, null);
+
+    // then
+    assertEquals(dto, actualResponse);
+    verify(podController, times(1)).updateProofOfDelivery(any(), any(), any());
+    verify(podSubDraftRepository, times(1)).deleteAllByIds(any(List.class));
+    verify(podLineItemsExtensionRepository, times(1)).deleteAllBySubDraftIds(any(List.class));
+  }
+
+  @Test(expected = AuthenticationException.class)
+  public void shouldThrowWhenSubmitSubDraftsWithNoPermission() {
+    // given
+    when(authenticationHelper.isTheCurrentUserCanMergeOrDeleteSubDrafts()).thenReturn(Boolean.FALSE);
+
+    // when
+    service.submitSubDrafts(podId, buildMockPodDto(), null);
+  }
+
+  @Test(expected = NotFoundException.class)
+  public void shouldThrowWhenSubmitSubDraftsWithSubDraftsNotExist() {
+    // given
+    when(authenticationHelper.isTheCurrentUserCanMergeOrDeleteSubDrafts()).thenReturn(Boolean.TRUE);
+    Example<PodSubDraft> example = Example.of(PodSubDraft.builder().podId(podId).build());
+    when(podSubDraftRepository.findAll(example)).thenReturn(null);
+
+    // when
+    service.submitSubDrafts(podId, buildMockPodDto(), null);
+  }
+
   private List<SubDraftInfo> toSubDraftInfos(List<PodSubDraft> podSubDrafts) {
     return podSubDrafts.stream().map(podSubDraft ->
             SubDraftInfo.builder()
@@ -372,6 +565,7 @@ public class SiglusPodServiceTest {
   private ProofOfDeliveryDto buildMockPodDto() {
     ProofOfDeliveryDto podDto = new ProofOfDeliveryDto();
     podDto.setId(podId);
+    podDto.setStatus(ProofOfDeliveryStatus.CONFIRMED);
 
     List<ProofOfDeliveryLineItemDto> lineItemDtos = Lists.newArrayList();
     ProofOfDeliveryLineItemDto lineItemDto = new ProofOfDeliveryLineItemDto("serviceUrl",

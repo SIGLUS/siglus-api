@@ -195,26 +195,24 @@ public class SiglusPodService {
   }
 
   public ProofOfDeliveryDto mergeSubDrafts(UUID podId) {
-    checkIfCanMergeOrSummitSubDrafts(podId);
+    checkAuth();
+    checkIfSubDraftsSubmitted(podId);
     return getPodDtoByPodId(podId);
   }
 
   @Transactional
   public ProofOfDeliveryDto submitSubDrafts(UUID podId, ProofOfDeliveryDto requestPodDto,
       OAuth2Authentication authentication) {
-    checkIfCanMergeOrSummitSubDrafts(podId);
-    deleteSubDraftsAndLineItemsExtension(podId);
+    checkAuth();
+    List<PodSubDraft> subDrafts = checkIfSubDraftsSubmitted(podId);
+
+    deleteSubDraftAndLineExtensionBySubDraftIds(subDrafts.stream().map(PodSubDraft::getId).collect(Collectors.toSet()));
 
     ProofOfDeliveryDto podDto = podController.updateProofOfDelivery(podId, requestPodDto, authentication);
     if (podDto.getStatus() == ProofOfDeliveryStatus.CONFIRMED) {
       notificationService.postConfirmPod(requestPodDto);
     }
     return requestPodDto;
-  }
-
-  private void checkIfCanMergeOrSummitSubDrafts(UUID podId) {
-    checkAuth();
-    checkIfSubDraftsSubmitted(podId);
   }
 
   private ProofOfDeliveryDto getPodDtoByPodId(UUID podId) {
@@ -239,17 +237,13 @@ public class SiglusPodService {
     }
   }
 
-  private void checkIfSubDraftsSubmitted(UUID podId) {
+  private List<PodSubDraft> checkIfSubDraftsSubmitted(UUID podId) {
     List<PodSubDraft> subDrafts = getPodSubDraftsByPodId(podId);
     if (subDrafts.stream().anyMatch(podSubDraft -> PodSubDraftStatusEnum.SUBMITTED != podSubDraft.getStatus())) {
-      throw new BusinessDataException(new Message(ERROR_NOT_ALL_SUB_DRAFTS_SUBMITTED), podId);
+      throw new BusinessDataException(new Message(ERROR_NOT_ALL_SUB_DRAFTS_SUBMITTED),
+          subDrafts.stream().map(PodSubDraft::getId).collect(Collectors.toSet()));
     }
-  }
-
-  private void deleteSubDraftsAndLineItemsExtension(UUID podId) {
-    List<PodSubDraft> subDrafts = getPodSubDraftsByPodId(podId);
-    Set<UUID> subDraftIds = subDrafts.stream().map(PodSubDraft::getId).collect(Collectors.toSet());
-    deleteSubDraftAndLineExtensionBySubDraftIds(subDraftIds);
+    return subDrafts;
   }
 
   private void deleteSubDraftAndLineExtensionBySubDraftIds(Set<UUID> subDraftIds) {
