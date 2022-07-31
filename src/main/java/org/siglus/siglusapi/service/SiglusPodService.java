@@ -39,7 +39,6 @@ import org.apache.commons.collections.CollectionUtils;
 import org.openlmis.fulfillment.domain.ProofOfDeliveryLineItem;
 import org.openlmis.fulfillment.domain.ProofOfDeliveryLineItem.Importer;
 import org.openlmis.fulfillment.domain.ProofOfDeliveryStatus;
-import org.openlmis.fulfillment.service.ProofOfDeliveryService;
 import org.openlmis.fulfillment.web.ProofOfDeliveryController;
 import org.openlmis.fulfillment.web.util.OrderObjectReferenceDto;
 import org.openlmis.fulfillment.web.util.ProofOfDeliveryDto;
@@ -58,14 +57,14 @@ import org.siglus.siglusapi.repository.OrderableRepository;
 import org.siglus.siglusapi.repository.PodLineItemsExtensionRepository;
 import org.siglus.siglusapi.repository.PodLineItemsRepository;
 import org.siglus.siglusapi.repository.PodSubDraftRepository;
-import org.siglus.siglusapi.service.client.SiglusProofOfDeliveryFulfillmentService;
+import org.siglus.siglusapi.service.client.SiglusPodFulfillmentService;
 import org.siglus.siglusapi.util.CustomListSortHelper;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.web.request.CreatePodSubDraftRequest;
 import org.siglus.siglusapi.web.request.OperateTypeEnum;
 import org.siglus.siglusapi.web.request.UpdatePodSubDraftRequest;
-import org.siglus.siglusapi.web.response.PodSubDraftListResponse;
-import org.siglus.siglusapi.web.response.PodSubDraftListResponse.SubDraftInfo;
+import org.siglus.siglusapi.web.response.PodSubDraftsSummaryResponse;
+import org.siglus.siglusapi.web.response.PodSubDraftsSummaryResponse.SubDraftInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
@@ -74,10 +73,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
-public class SiglusProofOfDeliveryService {
+public class SiglusPodService {
 
   @Autowired
-  private SiglusProofOfDeliveryFulfillmentService fulfillmentService;
+  private SiglusPodFulfillmentService fulfillmentService;
 
   @Autowired
   private SiglusOrderService siglusOrderService;
@@ -87,9 +86,6 @@ public class SiglusProofOfDeliveryService {
 
   @Autowired
   private OrderExternalRepository orderExternalRepository;
-
-  @Autowired
-  private ProofOfDeliveryService proofOfDeliveryService;
 
   @Autowired
   private OrderableRepository orderableRepository;
@@ -107,30 +103,30 @@ public class SiglusProofOfDeliveryService {
   private PodLineItemsRepository podLineItemsRepository;
 
   @Autowired
-  private ProofOfDeliveryController proofOfDeliveryController;
+  private ProofOfDeliveryController podController;
 
   @Autowired
   private SiglusNotificationService notificationService;
 
-  public ProofOfDeliveryDto getProofOfDelivery(UUID id, Set<String> expand) {
-    ProofOfDeliveryDto proofOfDeliveryDto = fulfillmentService.searchProofOfDelivery(id, expand);
-    OrderObjectReferenceDto order = proofOfDeliveryDto.getShipment().getOrder();
+  public ProofOfDeliveryDto getPodDto(UUID id, Set<String> expand) {
+    ProofOfDeliveryDto podDto = fulfillmentService.searchProofOfDelivery(id, expand);
+    OrderObjectReferenceDto order = podDto.getShipment().getOrder();
     OrderExternal external = orderExternalRepository.findOne(order.getExternalId());
     UUID requisitionId = external == null ? order.getExternalId() : external.getRequisitionId();
     order.setRequisitionNumber(
         siglusRequisitionExtensionService.formatRequisitionNumber(requisitionId));
     if (CollectionUtils.isNotEmpty(order.getOrderLineItems())) {
-      proofOfDeliveryDto.getShipment().setOrder(siglusOrderService.getExtensionOrder(order));
+      podDto.getShipment().setOrder(siglusOrderService.getExtensionOrder(order));
     }
-    return proofOfDeliveryDto;
+    return podDto;
   }
 
   @Transactional
-  public void createSubDrafts(UUID proofOfDeliveryId, CreatePodSubDraftRequest request) {
-    checkIfSubDraftExist(proofOfDeliveryId);
+  public void createSubDrafts(UUID podId, CreatePodSubDraftRequest request) {
+    checkIfSubDraftExist(podId);
 
-    ProofOfDeliveryDto proofOfDeliveryDto = getProofOfDeliveryDtoByProofOfDeliveryId(proofOfDeliveryId);
-    List<SimpleLineItem> simpleLineItems = buildSimpleLineItems(proofOfDeliveryDto);
+    ProofOfDeliveryDto podDto = getPodDtoByPodId(podId);
+    List<SimpleLineItem> simpleLineItems = buildSimpleLineItems(podDto);
     List<List<SimpleLineItem>> groupByProductIdLineItems = getGroupByProductIdLineItemList(simpleLineItems);
     List<List<List<SimpleLineItem>>> splitGroupList = CustomListSortHelper.averageAssign(groupByProductIdLineItems,
         request.getSplitNum());
@@ -139,20 +135,20 @@ public class SiglusProofOfDeliveryService {
     buildAndSavePodLineItemsExtensions(splitGroupList, subDrafts);
   }
 
-  public PodSubDraftListResponse getSubDraftSummary(UUID proofOfDeliveryId) {
-    List<PodSubDraft> podSubDrafts = getPodSubDraftsByProofOfDeliveryId(proofOfDeliveryId);
-    return PodSubDraftListResponse.builder()
-        .proofOfDeliveryId(podSubDrafts.get(0).getProofOfDeliveryId())
+  public PodSubDraftsSummaryResponse getSubDraftSummary(UUID podId) {
+    List<PodSubDraft> podSubDrafts = getPodSubDraftsByPodId(podId);
+    return PodSubDraftsSummaryResponse.builder()
+        .podId(podSubDrafts.get(0).getPodId())
         .subDrafts(buildSubDraftInfos(podSubDrafts))
         .canMergeOrDeleteDrafts(authenticationHelper.isTheCurrentUserCanMergeOrDeleteSubDrafts())
         .canSubmitDrafts(isTheAllSubDraftIsSubmitted(podSubDrafts))
         .build();
   }
 
-  public ProofOfDeliveryDto getSubDraftDetail(UUID proofOfDeliveryId, UUID subDraftId) {
-    checkIfProofOfDeliveryIdAndSubDraftIdMatch(proofOfDeliveryId, subDraftId);
+  public ProofOfDeliveryDto getSubDraftDetail(UUID podId, UUID subDraftId) {
+    checkIfPodIdAndSubDraftIdMatch(podId, subDraftId);
 
-    ProofOfDeliveryDto dto = getProofOfDeliveryDtoByProofOfDeliveryId(proofOfDeliveryId);
+    ProofOfDeliveryDto dto = getPodDtoByPodId(podId);
     List<ProofOfDeliveryLineItemDto> currentSubDraftLineItems = getCurrentSubDraftPodLineItemDtos(subDraftId, dto);
     dto.setLineItems(currentSubDraftLineItems);
     return dto;
@@ -167,7 +163,7 @@ public class SiglusProofOfDeliveryService {
     List<ProofOfDeliveryLineItem> lineItems = podLineItemsRepository.findAll(lineItemIds);
 
     List<ProofOfDeliveryLineItem> toBeUpdatedLineItems = buildToBeUpdatedLineItems(
-        request.getProofOfDeliveryDto(), lineItems, OperateTypeEnum.getPodSubDraftEnum(request.getOperateType()));
+        request.getPodDto(), lineItems, OperateTypeEnum.getPodSubDraftEnum(request.getOperateType()));
     log.info("update ProofOfDeliveryLineItem list, subDraftId:{}, lineItemIds:{}", subDraftId, lineItemIds);
     podLineItemsRepository.save(toBeUpdatedLineItems);
 
@@ -175,67 +171,66 @@ public class SiglusProofOfDeliveryService {
   }
 
   @Transactional
-  public void deleteSubDraft(UUID proofOfDeliveryId, UUID subDraftId) {
+  public void deleteSubDraft(UUID podId, UUID subDraftId) {
     PodSubDraft podSubDraft = getPodSubDraft(subDraftId);
     checkIfCanOperate(podSubDraft);
 
     Set<UUID> lineItemIds = getPodLineItemIdsBySubDraftId(subDraftId);
-    ProofOfDeliveryDto proofOfDeliveryDto = getProofOfDeliveryDtoByProofOfDeliveryId(proofOfDeliveryId);
+    ProofOfDeliveryDto proofOfDeliveryDto = getPodDtoByPodId(podId);
     resetLineItems(lineItemIds, proofOfDeliveryDto);
 
     updateSubDraftStatusAndOperator(podSubDraft, PodSubDraftStatusEnum.NOT_YET_STARTED);
   }
 
   @Transactional
-  public void deleteSubDrafts(UUID proofOfDeliveryId) {
+  public void deleteSubDrafts(UUID podId) {
     checkIfCanDeleteOrMergeSubDrafts();
 
-    List<PodSubDraft> subDrafts = getPodSubDraftsByProofOfDeliveryId(proofOfDeliveryId);
+    List<PodSubDraft> subDrafts = getPodSubDraftsByPodId(podId);
     Set<UUID> subDraftIds = subDrafts.stream().map(PodSubDraft::getId).collect(Collectors.toSet());
     deleteSubDraftAndLineExtensionBySubDraftIds(subDraftIds);
 
-    ProofOfDeliveryDto proofOfDeliveryDto = getProofOfDeliveryDtoByProofOfDeliveryId(proofOfDeliveryId);
+    ProofOfDeliveryDto proofOfDeliveryDto = getPodDtoByPodId(podId);
     Set<UUID> lineItemIds = getPodLineItemIdsBySubDraftIds(subDraftIds);
     resetLineItems(lineItemIds, proofOfDeliveryDto);
   }
 
-  public ProofOfDeliveryDto mergeSubDrafts(UUID proofOfDeliveryId) {
+  public ProofOfDeliveryDto mergeSubDrafts(UUID podId) {
     checkIfCanDeleteOrMergeSubDrafts();
-    checkIfSubDraftsSubmitted(proofOfDeliveryId);
-    return getProofOfDeliveryDtoByProofOfDeliveryId(proofOfDeliveryId);
+    checkIfSubDraftsSubmitted(podId);
+    return getPodDtoByPodId(podId);
   }
 
   @Transactional
-  public ProofOfDeliveryDto submitSubDrafts(UUID proofOfDeliveryId,
-      ProofOfDeliveryDto dto, OAuth2Authentication authentication) {
-    checkIfSubDraftsSubmitted(proofOfDeliveryId);
-    deleteSubDraftAndLineExtension(proofOfDeliveryId);
+  public ProofOfDeliveryDto submitSubDrafts(UUID podId, ProofOfDeliveryDto requestPodDto,
+      OAuth2Authentication authentication) {
+    checkIfSubDraftsSubmitted(podId);
 
-    ProofOfDeliveryDto proofOfDeliveryDto = proofOfDeliveryController
-        .updateProofOfDelivery(proofOfDeliveryId, dto, authentication);
+    deleteSubDraftAndLineExtension(podId);
 
-    if (proofOfDeliveryDto.getStatus() == ProofOfDeliveryStatus.CONFIRMED) {
-      notificationService.postConfirmPod(dto);
+    ProofOfDeliveryDto podDto = podController.updateProofOfDelivery(podId, requestPodDto, authentication);
+    if (podDto.getStatus() == ProofOfDeliveryStatus.CONFIRMED) {
+      notificationService.postConfirmPod(requestPodDto);
     }
 
-    return dto;
+    return requestPodDto;
   }
 
-  private ProofOfDeliveryDto getProofOfDeliveryDtoByProofOfDeliveryId(UUID proofOfDeliveryId) {
-    ProofOfDeliveryDto proofOfDeliveryDto = fulfillmentService.searchProofOfDelivery(proofOfDeliveryId, null);
+  private ProofOfDeliveryDto getPodDtoByPodId(UUID podId) {
+    ProofOfDeliveryDto podDto = fulfillmentService.searchProofOfDelivery(podId, null);
 
-    if (Objects.isNull(proofOfDeliveryDto) || CollectionUtils.isEmpty(proofOfDeliveryDto.getLineItems())) {
+    if (Objects.isNull(podDto) || CollectionUtils.isEmpty(podDto.getLineItems())) {
       throw new NotFoundException(ERROR_NO_POD_OR_POD_LINE_ITEM_FOUND);
     }
 
-    return proofOfDeliveryDto;
+    return podDto;
   }
 
-  private void checkIfSubDraftExist(UUID proofOfDeliveryId) {
-    Example<PodSubDraft> example = Example.of(PodSubDraft.builder().proofOfDeliveryId(proofOfDeliveryId).build());
+  private void checkIfSubDraftExist(UUID podId) {
+    Example<PodSubDraft> example = Example.of(PodSubDraft.builder().podId(podId).build());
     long subDraftsCount = podSubDraftRepository.count(example);
     if (subDraftsCount > 0) {
-      throw new BusinessDataException(new Message(ERROR_SUB_DRAFTS_ALREADY_EXISTED), proofOfDeliveryId);
+      throw new BusinessDataException(new Message(ERROR_SUB_DRAFTS_ALREADY_EXISTED), podId);
     }
   }
 
@@ -245,15 +240,15 @@ public class SiglusProofOfDeliveryService {
     }
   }
 
-  private void checkIfSubDraftsSubmitted(UUID proofOfDeliveryId) {
-    List<PodSubDraft> subDrafts = getPodSubDraftsByProofOfDeliveryId(proofOfDeliveryId);
+  private void checkIfSubDraftsSubmitted(UUID podId) {
+    List<PodSubDraft> subDrafts = getPodSubDraftsByPodId(podId);
     if (subDrafts.stream().anyMatch(podSubDraft -> PodSubDraftStatusEnum.SUBMITTED != podSubDraft.getStatus())) {
-      throw new BusinessDataException(new Message(ERROR_NOT_ALL_SUB_DRAFTS_SUBMITTED), proofOfDeliveryId);
+      throw new BusinessDataException(new Message(ERROR_NOT_ALL_SUB_DRAFTS_SUBMITTED), podId);
     }
   }
 
-  private void deleteSubDraftAndLineExtension(UUID proofOfDeliveryId) {
-    List<PodSubDraft> subDrafts = getPodSubDraftsByProofOfDeliveryId(proofOfDeliveryId);
+  private void deleteSubDraftAndLineExtension(UUID podId) {
+    List<PodSubDraft> subDrafts = getPodSubDraftsByPodId(podId);
     Set<UUID> subDraftIds = subDrafts.stream().map(PodSubDraft::getId).collect(Collectors.toSet());
     deleteSubDraftAndLineExtensionBySubDraftIds(subDraftIds);
   }
@@ -266,20 +261,20 @@ public class SiglusProofOfDeliveryService {
     podSubDraftRepository.deleteAllByIds(subDraftIds);
   }
 
-  private void resetLineItems(Set<UUID> lineItemIds, ProofOfDeliveryDto proofOfDeliveryDto) {
+  private void resetLineItems(Set<UUID> lineItemIds, ProofOfDeliveryDto podDto) {
     List<ProofOfDeliveryLineItem> lineItems = podLineItemsRepository.findAll(lineItemIds);
-    List<ProofOfDeliveryLineItem> toBeUpdatedLineItems = buildToBeUpdatedLineItems(proofOfDeliveryDto, lineItems,
+    List<ProofOfDeliveryLineItem> toBeUpdatedLineItems = buildToBeUpdatedLineItems(podDto, lineItems,
         PodSubDraftStatusEnum.NOT_YET_STARTED);
-    log.info("update ProofOfDeliveryLineItem list, podIdd:{}, lineItemIds:{}", proofOfDeliveryDto.getId(),
+    log.info("update ProofOfDeliveryLineItem list, podIdd:{}, lineItemIds:{}", podDto.getId(),
         lineItemIds);
     podLineItemsRepository.save(toBeUpdatedLineItems);
   }
 
-  private List<PodSubDraft> getPodSubDraftsByProofOfDeliveryId(UUID proofOfDeliveryId) {
-    Example<PodSubDraft> example = Example.of(PodSubDraft.builder().proofOfDeliveryId(proofOfDeliveryId).build());
+  private List<PodSubDraft> getPodSubDraftsByPodId(UUID podId) {
+    Example<PodSubDraft> example = Example.of(PodSubDraft.builder().podId(podId).build());
     List<PodSubDraft> podSubDrafts = podSubDraftRepository.findAll(example);
     if (CollectionUtils.isEmpty(podSubDrafts)) {
-      throw new BusinessDataException(new Message(ERROR_NO_POD_OR_POD_LINE_ITEM_FOUND), proofOfDeliveryId);
+      throw new NotFoundException(ERROR_NO_POD_OR_POD_LINE_ITEM_FOUND);
     }
     return podSubDrafts;
   }
@@ -300,16 +295,16 @@ public class SiglusProofOfDeliveryService {
       ProofOfDeliveryLineItemDto lineItemDto = idToLineItemDto.get(lineItem.getId());
       ProofOfDeliveryLineItem toBeUpdatedLineItem;
       if (PodSubDraftStatusEnum.NOT_YET_STARTED == subDraftStatus) {
-        toBeUpdatedLineItem = buildResetProofOfDeliveryLineItem(lineItem);
+        toBeUpdatedLineItem = buildResetLineItem(lineItem);
       } else {
-        toBeUpdatedLineItem = buildProofOfDeliveryLineItem(lineItem, lineItemDto);
+        toBeUpdatedLineItem = buildToBeUpdatedLineItem(lineItem, lineItemDto);
       }
       toBeUpdatedLineItems.add(toBeUpdatedLineItem);
     });
     return toBeUpdatedLineItems;
   }
 
-  private ProofOfDeliveryLineItem buildProofOfDeliveryLineItem(ProofOfDeliveryLineItem lineItem,
+  private ProofOfDeliveryLineItem buildToBeUpdatedLineItem(ProofOfDeliveryLineItem lineItem,
       ProofOfDeliveryLineItemDto lineItemDto) {
     ProofOfDeliveryLineItem toBeUpdatedLineItem = new ProofOfDeliveryLineItem(lineItem.getOrderable(),
         lineItem.getLotId(), lineItemDto.getQuantityAccepted(), null,
@@ -318,7 +313,7 @@ public class SiglusProofOfDeliveryService {
     return toBeUpdatedLineItem;
   }
 
-  private ProofOfDeliveryLineItem buildResetProofOfDeliveryLineItem(ProofOfDeliveryLineItem lineItem) {
+  private ProofOfDeliveryLineItem buildResetLineItem(ProofOfDeliveryLineItem lineItem) {
     ProofOfDeliveryLineItem toBeUpdatedLineItem = new ProofOfDeliveryLineItem(lineItem.getOrderable(),
         lineItem.getLotId(), null, null, null, lineItem.getRejectionReasonId(), null);
     toBeUpdatedLineItem.setId(lineItem.getId());
@@ -336,7 +331,7 @@ public class SiglusProofOfDeliveryService {
   private PodSubDraft getPodSubDraft(UUID subDraftId) {
     PodSubDraft podSubDraft = podSubDraftRepository.findOne(subDraftId);
     if (Objects.isNull(podSubDraft)) {
-      throw new BusinessDataException(new Message(ERROR_NO_POD_SUB_DRAFT_FOUND), subDraftId);
+      throw new NotFoundException(ERROR_NO_POD_SUB_DRAFT_FOUND);
     }
     return podSubDraft;
   }
@@ -367,12 +362,12 @@ public class SiglusProofOfDeliveryService {
     return podLineItemsExtensions.stream().map(PodLineItemsExtension::getPodLineItemId).collect(Collectors.toSet());
   }
 
-  private void checkIfProofOfDeliveryIdAndSubDraftIdMatch(UUID proofOfDeliveryId, UUID subDraftId) {
+  private void checkIfPodIdAndSubDraftIdMatch(UUID podId, UUID subDraftId) {
     PodSubDraft podSubDraft = podSubDraftRepository.findOne(subDraftId);
     if (Objects.isNull(podSubDraft)) {
-      throw new BusinessDataException(new Message(ERROR_NO_POD_SUB_DRAFT_FOUND), subDraftId);
+      throw new NotFoundException(ERROR_NO_POD_SUB_DRAFT_FOUND);
     }
-    if (!podSubDraft.getProofOfDeliveryId().equals(proofOfDeliveryId)) {
+    if (!podSubDraft.getPodId().equals(podId)) {
       throw new BusinessDataException(new Message(ERROR_POD_ID_SUB_DRAFT_ID_NOT_MATCH), subDraftId);
     }
   }
@@ -413,15 +408,15 @@ public class SiglusProofOfDeliveryService {
 
   private List<PodSubDraft> buildAndSavePodSubDrafts(List<List<List<SimpleLineItem>>> splitGroupList) {
     List<PodSubDraft> subDrafts = Lists.newArrayList();
-    UUID proofOfDeliveryId = splitGroupList.get(0).get(0).get(0).getProofOfDeliveryId();
+    UUID podId = splitGroupList.get(0).get(0).get(0).getPodId();
     for (int i = 0; i < splitGroupList.size(); i++) {
       subDrafts.add(PodSubDraft.builder()
           .number(i + 1)
-          .proofOfDeliveryId(proofOfDeliveryId)
+          .podId(podId)
           .status(PodSubDraftStatusEnum.NOT_YET_STARTED)
           .build());
     }
-    log.info("save pod sub drafts, proof of delivery id: {}", proofOfDeliveryId);
+    log.info("save pod sub drafts, proof of delivery id: {}", podId);
     return podSubDraftRepository.save(subDrafts);
   }
 
@@ -440,7 +435,7 @@ public class SiglusProofOfDeliveryService {
     List<SimpleLineItem> simpleLineItems = convertToLineItemDtos(proofOfDeliveryDto.getLineItems()).stream()
         .map(lineItem -> SimpleLineItem.builder()
             .lineItemId(lineItem.getId())
-            .proofOfDeliveryId(proofOfDeliveryDto.getId())
+            .podId(proofOfDeliveryDto.getId())
             .productId(lineItem.getOrderable().getId())
             .build())
         .collect(Collectors.toList());
@@ -463,7 +458,7 @@ public class SiglusProofOfDeliveryService {
   private static class SimpleLineItem {
 
     private UUID lineItemId;
-    private UUID proofOfDeliveryId;
+    private UUID podId;
     private UUID productId;
     private String productCode;
   }

@@ -35,7 +35,7 @@ public abstract class MessageKeys {
   protected static final String ERROR_PREFIX = join(SERVICE_PREFIX, ERROR);
   private static final String EVENT_ERROR_PREFIX = ERROR_PREFIX + ".event";
   private static final String STOCK_MANAGEMENT_ERROR_PREFIX = ERROR_PREFIX + ".stockManagement";
-  private static final String POD_ERROR_PREFIX = ERROR_PREFIX + ".proofOfDelivery";
+  private static final String POD_ERROR_PREFIX = ERROR_PREFIX + ".proofOfDelivery.";
 
   // authorization
   public static final String ERROR_PERMISSION_NOT_SUPPORTED =

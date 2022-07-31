@@ -27,8 +27,8 @@ import org.siglus.siglusapi.dto.enums.PodSubDraftStatusEnum;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class PodSubDraftListResponse {
-  private UUID proofOfDeliveryId;
+public class PodSubDraftsSummaryResponse {
+  private UUID podId;
   private List<SubDraftInfo> subDrafts;
   private boolean canMergeOrDeleteDrafts;
   private boolean canSubmitDrafts;

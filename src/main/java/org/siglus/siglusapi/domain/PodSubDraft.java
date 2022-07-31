@@ -39,5 +39,5 @@ public class PodSubDraft extends BaseEntity {
   @Column(name = "operatorid")
   private UUID operatorId;
   @Column(name = "proofofdeliveryid")
-  private UUID proofOfDeliveryId;
+  private UUID podId;
 }

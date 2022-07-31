@@ -26,10 +26,10 @@ import org.openlmis.fulfillment.domain.ProofOfDeliveryStatus;
 import org.openlmis.fulfillment.web.ProofOfDeliveryController;
 import org.openlmis.fulfillment.web.util.ProofOfDeliveryDto;
 import org.siglus.siglusapi.service.SiglusNotificationService;
-import org.siglus.siglusapi.service.SiglusProofOfDeliveryService;
+import org.siglus.siglusapi.service.SiglusPodService;
 import org.siglus.siglusapi.web.request.CreatePodSubDraftRequest;
 import org.siglus.siglusapi.web.request.UpdatePodSubDraftRequest;
-import org.siglus.siglusapi.web.response.PodSubDraftListResponse;
+import org.siglus.siglusapi.web.response.PodSubDraftsSummaryResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -49,22 +49,18 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.ModelAndView;
 
-// TODO proof of delivery to pod
 @RestController
 @RequestMapping("/api/siglusapi/proofsOfDelivery")
-public class SiglusProofOfDeliveryController {
+public class SiglusPodController {
 
   @Autowired
-  private ProofOfDeliveryController actualController;
+  private ProofOfDeliveryController podController;
 
   @Autowired
   private SiglusNotificationService notificationService;
 
   @Autowired
-  private SiglusProofOfDeliveryService proofOfDeliveryService;
-
-  @Autowired
-  private ProofOfDeliveryController proofOfDeliveryController;
+  private SiglusPodService siglusPodService;
 
   /**
    * why we redo this api? to support #330?<br> update status of notification of pod after confirm pod
@@ -73,29 +69,29 @@ public class SiglusProofOfDeliveryController {
   @ResponseBody
   @PutMapping("/{id}")
   @Transactional
-  public ProofOfDeliveryDto updateProofOfDelivery(@PathVariable("id") UUID proofOfDeliveryId,
+  public ProofOfDeliveryDto updatePod(@PathVariable("id") UUID podId,
       @RequestBody ProofOfDeliveryDto dto,
       OAuth2Authentication authentication) {
-    ProofOfDeliveryDto proofOfDeliveryDto = actualController
-        .updateProofOfDelivery(proofOfDeliveryId, dto, authentication);
-    if (proofOfDeliveryDto.getStatus() == ProofOfDeliveryStatus.CONFIRMED) {
+    ProofOfDeliveryDto podDto = podController
+        .updateProofOfDelivery(podId, dto, authentication);
+    if (podDto.getStatus() == ProofOfDeliveryStatus.CONFIRMED) {
       notificationService.postConfirmPod(dto);
     }
-    return proofOfDeliveryDto;
+    return podDto;
   }
 
   @GetMapping("/{id}/print")
-  public ModelAndView printProofOfDelivery(HttpServletRequest request,
+  public ModelAndView printPod(HttpServletRequest request,
       @PathVariable("id") UUID id, OAuth2Authentication authentication) throws IOException {
-    return actualController.printProofOfDelivery(request, id, authentication);
+    return podController.printProofOfDelivery(request, id, authentication);
   }
 
   @ResponseStatus(HttpStatus.OK)
   @ResponseBody
   @GetMapping("/{id}")
-  public ProofOfDeliveryDto getProofOfDelivery(@PathVariable("id") UUID id,
+  public ProofOfDeliveryDto getProofOfDelivery(@PathVariable("id") UUID podId,
       @RequestParam(required = false) Set<String> expand) {
-    return proofOfDeliveryService.getProofOfDelivery(id, expand);
+    return siglusPodService.getPodDto(podId, expand);
   }
 
   @GetMapping
@@ -103,56 +99,56 @@ public class SiglusProofOfDeliveryController {
       @RequestParam(required = false) UUID orderId,
       @RequestParam(required = false) UUID shipmentId,
       Pageable pageable) {
-    return proofOfDeliveryController.getAllProofsOfDelivery(orderId, shipmentId, pageable);
+    return podController.getAllProofsOfDelivery(orderId, shipmentId, pageable);
   }
 
   @ResponseStatus(HttpStatus.CREATED)
   @PostMapping("/{id}/subDrafts")
-  public void createSubDrafts(@PathVariable("id") UUID proofOfDeliveryId,
+  public void createSubDrafts(@PathVariable("id") UUID podId,
       @Valid @RequestBody CreatePodSubDraftRequest request) {
-    proofOfDeliveryService.createSubDrafts(proofOfDeliveryId, request);
+    siglusPodService.createSubDrafts(podId, request);
   }
 
   @DeleteMapping("/{id}/subDrafts")
   @ResponseStatus(NO_CONTENT)
-  public void deleteSubDrafts(@PathVariable("id") UUID proofOfDeliveryId) {
-    proofOfDeliveryService.deleteSubDrafts(proofOfDeliveryId);
+  public void deleteSubDrafts(@PathVariable("id") UUID podId) {
+    siglusPodService.deleteSubDrafts(podId);
   }
 
   @PostMapping("/{id}/subDrafts/merge")
-  public ProofOfDeliveryDto mergeSubDrafts(@PathVariable("id") UUID proofOfDeliveryId) {
-    return proofOfDeliveryService.mergeSubDrafts(proofOfDeliveryId);
+  public ProofOfDeliveryDto mergeSubDrafts(@PathVariable("id") UUID podId) {
+    return siglusPodService.mergeSubDrafts(podId);
   }
 
   @PostMapping("/{id}/subDrafts/submit")
   @Transactional
-  public ProofOfDeliveryDto submitSubDrafts(@PathVariable("id") UUID proofOfDeliveryId,
-      @RequestBody ProofOfDeliveryDto dto,
+  public ProofOfDeliveryDto submitSubDrafts(@PathVariable("id") UUID podId,
+      @RequestBody ProofOfDeliveryDto podDto,
       OAuth2Authentication authentication) {
-    return proofOfDeliveryService.submitSubDrafts(proofOfDeliveryId, dto, authentication);
+    return siglusPodService.submitSubDrafts(podId, podDto, authentication);
   }
 
   @GetMapping("/{id}/subDrafts/summary")
-  public PodSubDraftListResponse getSubDraftSummary(@PathVariable("id") UUID proofOfDeliveryId) {
-    return proofOfDeliveryService.getSubDraftSummary(proofOfDeliveryId);
+  public PodSubDraftsSummaryResponse getSubDraftSummary(@PathVariable("id") UUID podId) {
+    return siglusPodService.getSubDraftSummary(podId);
   }
 
   @GetMapping("/{id}/subDrafts/{subDraftId}")
-  public ProofOfDeliveryDto getSubDraftDetail(@PathVariable("id") UUID proofOfDeliveryId,
+  public ProofOfDeliveryDto getSubDraftDetail(@PathVariable("id") UUID podId,
       @PathVariable("subDraftId") UUID subDraftId) {
-    return proofOfDeliveryService.getSubDraftDetail(proofOfDeliveryId, subDraftId);
+    return siglusPodService.getSubDraftDetail(podId, subDraftId);
   }
 
   @PutMapping("/{id}/subDrafts/{subDraftId}")
   @ResponseStatus(NO_CONTENT)
-  public void updateSubDraft(@PathVariable("id") UUID proofOfDeliveryId, @PathVariable("subDraftId") UUID subDraftId,
-      @RequestBody UpdatePodSubDraftRequest request) {
-    proofOfDeliveryService.updateSubDraft(request, subDraftId);
+  public void updateSubDraft(@PathVariable("id") UUID podId, @PathVariable("subDraftId") UUID subDraftId,
+      @Valid @RequestBody UpdatePodSubDraftRequest request) {
+    siglusPodService.updateSubDraft(request, subDraftId);
   }
 
   @DeleteMapping("/{id}/subDrafts/{subDraftId}")
   @ResponseStatus(NO_CONTENT)
-  public void deleteSubDraft(@PathVariable("id") UUID proofOfDeliveryId, @PathVariable("subDraftId") UUID subDraftId) {
-    proofOfDeliveryService.deleteSubDraft(proofOfDeliveryId, subDraftId);
+  public void deleteSubDraft(@PathVariable("id") UUID podId, @PathVariable("subDraftId") UUID subDraftId) {
+    siglusPodService.deleteSubDraft(podId, subDraftId);
   }
 }

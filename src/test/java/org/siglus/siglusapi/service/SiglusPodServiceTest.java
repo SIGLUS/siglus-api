@@ -32,16 +32,16 @@ import org.openlmis.fulfillment.web.util.OrderObjectReferenceDto;
 import org.openlmis.fulfillment.web.util.ProofOfDeliveryDto;
 import org.openlmis.fulfillment.web.util.ShipmentObjectReferenceDto;
 import org.siglus.common.repository.OrderExternalRepository;
-import org.siglus.siglusapi.service.client.SiglusProofOfDeliveryFulfillmentService;
+import org.siglus.siglusapi.service.client.SiglusPodFulfillmentService;
 
 @RunWith(MockitoJUnitRunner.class)
-public class SiglusProofOfDeliveryServiceTest {
+public class SiglusPodServiceTest {
 
   @InjectMocks
-  private SiglusProofOfDeliveryService service;
+  private SiglusPodService service;
 
   @Mock
-  private SiglusProofOfDeliveryFulfillmentService fulfillmentService;
+  private SiglusPodFulfillmentService fulfillmentService;
 
   @Mock
   private SiglusOrderService siglusOrderService;
@@ -76,7 +76,7 @@ public class SiglusProofOfDeliveryServiceTest {
 
     // when
     ProofOfDeliveryDto proofOfDeliveryDto = service
-        .getProofOfDelivery(UUID.randomUUID(), Collections.emptySet());
+        .getPodDto(UUID.randomUUID(), Collections.emptySet());
 
     //then
     OrderLineItemDto lineItem = proofOfDeliveryDto.getShipment().getOrder().getOrderLineItems()
@@ -99,7 +99,7 @@ public class SiglusProofOfDeliveryServiceTest {
         .thenReturn("requisitionNumber");
 
     // when
-    ProofOfDeliveryDto proofOfDeliveryDto = service.getProofOfDelivery(UUID.randomUUID(),
+    ProofOfDeliveryDto proofOfDeliveryDto = service.getPodDto(UUID.randomUUID(),
         Collections.emptySet());
 
     // then
