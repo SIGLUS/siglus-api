@@ -184,45 +184,44 @@ public class SiglusPodService {
 
   @Transactional
   public void deleteSubDrafts(UUID podId) {
-    checkIfCanDeleteOrMergeSubDrafts();
-
-    List<PodSubDraft> subDrafts = getPodSubDraftsByPodId(podId);
-    Set<UUID> subDraftIds = subDrafts.stream().map(PodSubDraft::getId).collect(Collectors.toSet());
-    deleteSubDraftAndLineExtensionBySubDraftIds(subDraftIds);
+    checkAuth();
+    Set<UUID> subDraftIds = getPodSubDraftsByPodId(podId).stream().map(PodSubDraft::getId).collect(Collectors.toSet());
 
     ProofOfDeliveryDto proofOfDeliveryDto = getPodDtoByPodId(podId);
     Set<UUID> lineItemIds = getPodLineItemIdsBySubDraftIds(subDraftIds);
     resetLineItems(lineItemIds, proofOfDeliveryDto);
+
+    deleteSubDraftAndLineExtensionBySubDraftIds(subDraftIds);
   }
 
   public ProofOfDeliveryDto mergeSubDrafts(UUID podId) {
-    checkIfCanDeleteOrMergeSubDrafts();
-    checkIfSubDraftsSubmitted(podId);
+    checkIfCanMergeOrSummitSubDrafts(podId);
     return getPodDtoByPodId(podId);
   }
 
   @Transactional
   public ProofOfDeliveryDto submitSubDrafts(UUID podId, ProofOfDeliveryDto requestPodDto,
       OAuth2Authentication authentication) {
-    checkIfSubDraftsSubmitted(podId);
-
-    deleteSubDraftAndLineExtension(podId);
+    checkIfCanMergeOrSummitSubDrafts(podId);
+    deleteSubDraftsAndLineItemsExtension(podId);
 
     ProofOfDeliveryDto podDto = podController.updateProofOfDelivery(podId, requestPodDto, authentication);
     if (podDto.getStatus() == ProofOfDeliveryStatus.CONFIRMED) {
       notificationService.postConfirmPod(requestPodDto);
     }
-
     return requestPodDto;
+  }
+
+  private void checkIfCanMergeOrSummitSubDrafts(UUID podId) {
+    checkAuth();
+    checkIfSubDraftsSubmitted(podId);
   }
 
   private ProofOfDeliveryDto getPodDtoByPodId(UUID podId) {
     ProofOfDeliveryDto podDto = fulfillmentService.searchProofOfDelivery(podId, null);
-
     if (Objects.isNull(podDto) || CollectionUtils.isEmpty(podDto.getLineItems())) {
       throw new NotFoundException(ERROR_NO_POD_OR_POD_LINE_ITEM_FOUND);
     }
-
     return podDto;
   }
 
@@ -234,7 +233,7 @@ public class SiglusPodService {
     }
   }
 
-  private void checkIfCanDeleteOrMergeSubDrafts() {
+  private void checkAuth() {
     if (!authenticationHelper.isTheCurrentUserCanMergeOrDeleteSubDrafts()) {
       throw new AuthenticationException(new Message(ERROR_PERMISSION_NOT_SUPPORTED));
     }
@@ -247,7 +246,7 @@ public class SiglusPodService {
     }
   }
 
-  private void deleteSubDraftAndLineExtension(UUID podId) {
+  private void deleteSubDraftsAndLineItemsExtension(UUID podId) {
     List<PodSubDraft> subDrafts = getPodSubDraftsByPodId(podId);
     Set<UUID> subDraftIds = subDrafts.stream().map(PodSubDraft::getId).collect(Collectors.toSet());
     deleteSubDraftAndLineExtensionBySubDraftIds(subDraftIds);
@@ -274,7 +273,7 @@ public class SiglusPodService {
     Example<PodSubDraft> example = Example.of(PodSubDraft.builder().podId(podId).build());
     List<PodSubDraft> podSubDrafts = podSubDraftRepository.findAll(example);
     if (CollectionUtils.isEmpty(podSubDrafts)) {
-      throw new NotFoundException(ERROR_NO_POD_OR_POD_LINE_ITEM_FOUND);
+      throw new NotFoundException(ERROR_NO_POD_SUB_DRAFT_FOUND);
     }
     return podSubDrafts;
   }
@@ -308,14 +307,14 @@ public class SiglusPodService {
       ProofOfDeliveryLineItemDto lineItemDto) {
     ProofOfDeliveryLineItem toBeUpdatedLineItem = new ProofOfDeliveryLineItem(lineItem.getOrderable(),
         lineItem.getLotId(), lineItemDto.getQuantityAccepted(), null,
-        lineItemDto.getQuantityRejected(), lineItem.getRejectionReasonId(), lineItemDto.getNotes());
+        lineItemDto.getQuantityRejected(), lineItemDto.getRejectionReasonId(), lineItemDto.getNotes());
     toBeUpdatedLineItem.setId(lineItem.getId());
     return toBeUpdatedLineItem;
   }
 
   private ProofOfDeliveryLineItem buildResetLineItem(ProofOfDeliveryLineItem lineItem) {
     ProofOfDeliveryLineItem toBeUpdatedLineItem = new ProofOfDeliveryLineItem(lineItem.getOrderable(),
-        lineItem.getLotId(), null, null, null, lineItem.getRejectionReasonId(), null);
+        lineItem.getLotId(), null, null, null, null, null);
     toBeUpdatedLineItem.setId(lineItem.getId());
     return toBeUpdatedLineItem;
   }

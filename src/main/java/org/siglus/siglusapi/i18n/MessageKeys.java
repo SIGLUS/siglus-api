@@ -35,7 +35,7 @@ public abstract class MessageKeys {
   protected static final String ERROR_PREFIX = join(SERVICE_PREFIX, ERROR);
   private static final String EVENT_ERROR_PREFIX = ERROR_PREFIX + ".event";
   private static final String STOCK_MANAGEMENT_ERROR_PREFIX = ERROR_PREFIX + ".stockManagement";
-  private static final String POD_ERROR_PREFIX = ERROR_PREFIX + ".proofOfDelivery.";
+  private static final String POD_ERROR_PREFIX = ERROR_PREFIX + ".proofOfDelivery";
 
   // authorization
   public static final String ERROR_PERMISSION_NOT_SUPPORTED =
@@ -132,7 +132,7 @@ public abstract class MessageKeys {
   public static final String ERROR_NOT_ALL_SUB_DRAFTS_SUBMITTED = POD_ERROR_PREFIX
       + ".not.all.sub.drafts.submitted";
   public static final String ERROR_SUB_DRAFTS_ALREADY_EXISTED = POD_ERROR_PREFIX
-      + "sub.drafts.already.existed";
+      + ".sub.drafts.already.existed";
 
   // shipment
   public static final String SHIPMENT_ORDER_STATUS_INVALID =
