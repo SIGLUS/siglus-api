@@ -22,9 +22,7 @@ public abstract class MessageKeys {
   private static final String DELIMITER = ".";
   private static final String SERVICE_PREFIX = "siglusapi";
   private static final String ERROR = "error";
-  private static final String WIDGET = "widget";
   private static final String ADDITIONAL_ORDERABLE = "additionalorderable";
-  private static final String CODE = "code";
   protected static final String SEARCH = "search";
   private static final String SHIPMENT = "shipment";
   private static final String ORDER = "order";

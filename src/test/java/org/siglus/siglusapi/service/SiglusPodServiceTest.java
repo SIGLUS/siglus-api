@@ -18,7 +18,6 @@ package org.siglus.siglusapi.service;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyList;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -66,7 +65,6 @@ import org.siglus.siglusapi.web.request.UpdatePodSubDraftRequest;
 import org.siglus.siglusapi.web.response.PodSubDraftsSummaryResponse;
 import org.siglus.siglusapi.web.response.PodSubDraftsSummaryResponse.SubDraftInfo;
 import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -115,6 +113,7 @@ public class SiglusPodServiceTest {
   private final UUID lineItemId1 = UUID.randomUUID();
   private final UUID lineItemId2 = UUID.randomUUID();
   private final String productCode = "product code";
+  private final String serviceUrl = "serviceUrl";
 
   @Test
   public void shouldGetPartialQualityWhenGetProofOfDelivery() {
@@ -182,8 +181,8 @@ public class SiglusPodServiceTest {
     service.createSubDrafts(podId, request);
 
     // then
-    verify(podSubDraftRepository, times(1)).save(any(List.class));
-    verify(podLineItemsExtensionRepository, times(1)).save(any(List.class));
+    verify(podSubDraftRepository).save(any(List.class));
+    verify(podLineItemsExtensionRepository).save(any(List.class));
   }
 
   @Test(expected = NotFoundException.class)
@@ -320,8 +319,8 @@ public class SiglusPodServiceTest {
     service.updateSubDraft(request, subDraftId);
 
     // then
-    verify(podLineItemsRepository, times(1)).save(any(List.class));
-    verify(podSubDraftRepository, times(1)).save(any(PodSubDraft.class));
+    verify(podLineItemsRepository).save(any(List.class));
+    verify(podSubDraftRepository).save(any(PodSubDraft.class));
   }
 
   @Test
@@ -340,8 +339,8 @@ public class SiglusPodServiceTest {
     service.updateSubDraft(request, subDraftId);
 
     // then
-    verify(podLineItemsRepository, times(1)).save(any(List.class));
-    verify(podSubDraftRepository, times(1)).save(any(PodSubDraft.class));
+    verify(podLineItemsRepository).save(any(List.class));
+    verify(podSubDraftRepository).save(any(PodSubDraft.class));
   }
 
   @Test(expected = NotFoundException.class)
@@ -382,8 +381,8 @@ public class SiglusPodServiceTest {
     service.deleteSubDraft(podId, subDraftId);
 
     // then
-    verify(podLineItemsRepository, times(1)).save(any(List.class));
-    verify(podSubDraftRepository, times(1)).save(any(PodSubDraft.class));
+    verify(podLineItemsRepository).save(any(List.class));
+    verify(podSubDraftRepository).save(any(PodSubDraft.class));
   }
 
   @Test(expected = NotFoundException.class)
@@ -428,9 +427,9 @@ public class SiglusPodServiceTest {
     service.deleteSubDrafts(podId);
 
     // then
-    verify(podLineItemsRepository, times(1)).save(any(List.class));
-    verify(podSubDraftRepository, times(1)).deleteAllByIds(any(List.class));
-    verify(podLineItemsExtensionRepository, times(1)).deleteAllBySubDraftIds(any(List.class));
+    verify(podLineItemsRepository).save(any(List.class));
+    verify(podSubDraftRepository).deleteAllByIds(any(List.class));
+    verify(podLineItemsExtensionRepository).deleteAllBySubDraftIds(any(List.class));
   }
 
   @Test(expected = AuthenticationException.class)
@@ -526,9 +525,10 @@ public class SiglusPodServiceTest {
 
     // then
     assertEquals(dto, actualResponse);
-    verify(podController, times(1)).updateProofOfDelivery(any(), any(), any());
-    verify(podSubDraftRepository, times(1)).deleteAllByIds(any(List.class));
-    verify(podLineItemsExtensionRepository, times(1)).deleteAllBySubDraftIds(any(List.class));
+    verify(podController).updateProofOfDelivery(any(), any(), any());
+    verify(podSubDraftRepository).deleteAllByIds(any(List.class));
+    verify(podLineItemsExtensionRepository).deleteAllBySubDraftIds(any(List.class));
+    verify(notificationService).postConfirmPod(dto);
   }
 
   @Test(expected = AuthenticationException.class)
@@ -567,15 +567,16 @@ public class SiglusPodServiceTest {
     podDto.setId(podId);
     podDto.setStatus(ProofOfDeliveryStatus.CONFIRMED);
 
-    List<ProofOfDeliveryLineItemDto> lineItemDtos = Lists.newArrayList();
-    ProofOfDeliveryLineItemDto lineItemDto = new ProofOfDeliveryLineItemDto("serviceUrl",
+    ProofOfDeliveryLineItemDto lineItemDto = new ProofOfDeliveryLineItemDto(serviceUrl,
         new VersionObjectReferenceDto(),
-        new ObjectReferenceDto(UUID.randomUUID(), "serviceUrl", "resourceName"), 10, Boolean.TRUE, null, 0,
+        new ObjectReferenceDto(UUID.randomUUID(), serviceUrl, "resourceName"), 10, Boolean.TRUE, null, 0,
         UUID.randomUUID(), "test notes");
     OrderableDto orderableDto = new OrderableDto();
     orderableDto.setId(orderableId);
     orderableDto.setProductCode(productCode);
     lineItemDto.setOrderable(orderableDto);
+
+    List<ProofOfDeliveryLineItemDto> lineItemDtos = Lists.newArrayList();
     lineItemDtos.add(lineItemDto);
 
     podDto.setLineItems(lineItemDtos);
@@ -587,10 +588,9 @@ public class SiglusPodServiceTest {
     ProofOfDeliveryDto podDto = new ProofOfDeliveryDto();
     podDto.setId(podId);
 
-    List<ProofOfDeliveryLineItemDto> lineItemDtos = Lists.newArrayList();
-    ProofOfDeliveryLineItemDto lineItemDto1 = new ProofOfDeliveryLineItemDto("serviceUrl",
+    ProofOfDeliveryLineItemDto lineItemDto1 = new ProofOfDeliveryLineItemDto(serviceUrl,
         new VersionObjectReferenceDto(),
-        new ObjectReferenceDto(UUID.randomUUID(), "serviceUrl", "resourceName"), 10, Boolean.TRUE, null, 0,
+        new ObjectReferenceDto(UUID.randomUUID(), serviceUrl, "resourceName"), 10, Boolean.TRUE, null, 0,
         UUID.randomUUID(), "test notes");
     OrderableDto orderableDto = new OrderableDto();
     orderableDto.setId(orderableId);
@@ -602,6 +602,7 @@ public class SiglusPodServiceTest {
     BeanUtils.copyProperties(lineItemDto1, lineItemDto2);
     lineItemDto2.setId(lineItemId2);
 
+    List<ProofOfDeliveryLineItemDto> lineItemDtos = Lists.newArrayList();
     lineItemDtos.add(lineItemDto1);
     lineItemDtos.add(lineItemDto2);
 
