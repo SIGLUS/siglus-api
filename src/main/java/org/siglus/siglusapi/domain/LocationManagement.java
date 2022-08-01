@@ -31,15 +31,21 @@ import org.siglus.common.domain.BaseEntity;
 @EqualsAndHashCode(callSuper = true)
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "facility_extension", schema = "siglusintegration")
-public class FacilityExtension extends BaseEntity {
-
+@Table(name = "location_management", schema = "siglusintegration")
+public class LocationManagement extends BaseEntity {
   private UUID facilityId;
 
-  private String facilityCode;
+  private String locationCode;
 
-  private Boolean isAndroid;
+  private String area;
 
-  private Boolean enableLocationManagement;
+  private String zone;
 
+  private String rack;
+
+  private String barcode;
+
+  private Integer bin;
+
+  private String level;
 }

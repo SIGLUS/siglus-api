@@ -15,33 +15,23 @@
 
 package org.siglus.siglusapi.dto;
 
-import java.util.ArrayList;
-import java.util.List;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import org.springframework.beans.BeanUtils;
 
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-public class FacilitySearchResultDto extends FacilityDto {
-
-  private Boolean isAndroidDevice;
+public class SiglusFacilityDto extends FacilityDto {
 
   private Boolean enableLocationManagement;
 
-  public static FacilitySearchResultDto from(FacilityDto facilityDto) {
-    FacilitySearchResultDto searchResultDto = new FacilitySearchResultDto();
-    BeanUtils.copyProperties(facilityDto, searchResultDto);
-    return searchResultDto;
-  }
-
-  public static List<FacilitySearchResultDto> from(List<FacilityDto> facilityDto) {
-    List<FacilitySearchResultDto> facilitySearchResultDtoList = new ArrayList<>();
-    facilityDto.forEach(eachFacilityDto -> {
-      FacilitySearchResultDto facilitySearchResultDto = new FacilitySearchResultDto();
-      BeanUtils.copyProperties(eachFacilityDto, facilitySearchResultDto);
-      facilitySearchResultDtoList.add(facilitySearchResultDto);
-    });
-    return facilitySearchResultDtoList;
+  public static FacilityDto from(SiglusFacilityDto siglusFacilityDto) {
+    FacilityDto facilityDto = new FacilityDto();
+    BeanUtils.copyProperties(siglusFacilityDto, facilityDto);
+    return facilityDto;
   }
 }

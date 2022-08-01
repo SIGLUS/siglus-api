@@ -15,36 +15,73 @@
 
 package org.siglus.siglusapi.service;
 
+import com.google.common.collect.Lists;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Writer;
 import java.util.List;
+import java.util.UUID;
+import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
+import org.apache.commons.csv.CSVPrinter;
+import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.lang.BooleanUtils;
 import org.openlmis.stockmanagement.web.Pagination;
 import org.siglus.siglusapi.domain.AppInfo;
 import org.siglus.siglusapi.domain.FacilityExtension;
+import org.siglus.siglusapi.domain.LocationManagement;
 import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.FacilitySearchParamDto;
 import org.siglus.siglusapi.dto.FacilitySearchResultDto;
+import org.siglus.siglusapi.dto.Message;
+import org.siglus.siglusapi.dto.SiglusFacilityDto;
+import org.siglus.siglusapi.exception.NotFoundException;
+import org.siglus.siglusapi.exception.ValidationMessageException;
+import org.siglus.siglusapi.i18n.CsvUploadMessageKeys;
 import org.siglus.siglusapi.repository.AppInfoRepository;
 import org.siglus.siglusapi.repository.FacilityExtensionRepository;
+import org.siglus.siglusapi.repository.LocationManagementRepository;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
+import org.siglus.siglusapi.util.AndroidHelper;
+import org.siglus.siglusapi.validator.CsvValidator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @Slf4j
 public class SiglusAdministrationsService {
-
   @Autowired
   private AppInfoRepository appInfoRepository;
-
   @Autowired
   private SiglusFacilityReferenceDataService siglusFacilityReferenceDataService;
-
   @Autowired
   private FacilityExtensionRepository facilityExtensionRepository;
+  @Autowired
+  private LocationManagementRepository locationManagementRepository;
+  @Autowired
+  private AndroidHelper androidHelper;
+  @Autowired
+  private CsvValidator csvValidator;
+  private static final String CSV_SUFFIX = ".csv";
+  private static final String MEDIA_TYPE = "text/csv";
+  private static final String DISPOSITION_BASE = "attachment; filename=";
+  private static final String FILE_NAME = "Location Information.csv";
+  private static final String LOCATION_CODE = "Location Code";
+  private static final String AREA = "Area";
+  private static final String ZONE = "Zone";
+  private static final String RACK = "Rack";
+  private static final String BARCODE = "Barcode";
+  private static final String BIN = "Bin";
+  private static final String LEVEL = "Level";
 
   public Page<FacilitySearchResultDto> searchForFacilities(FacilitySearchParamDto facilitySearchParamDto,
       Pageable pageable) {
@@ -62,7 +99,6 @@ public class SiglusAdministrationsService {
     return Pagination.getPage(facilitySearchResultDtoList, pageable, facilityDtos.getTotalElements());
   }
 
-  @Transactional
   public void eraseDeviceInfoByFacilityId(String facilityCode) {
     AppInfo androidInfoByFacilityId = appInfoRepository.findByFacilityCode(facilityCode);
     if (null == androidInfoByFacilityId) {
@@ -70,5 +106,115 @@ public class SiglusAdministrationsService {
     }
     log.info("The Android device info has been removed with facilityCode: {}", facilityCode);
     appInfoRepository.deleteByFacilityCode(facilityCode);
+  }
+
+  public FacilitySearchResultDto getFacility(UUID facilityId) {
+    return getFacilityInfo(facilityId);
+  }
+
+  public FacilitySearchResultDto updateFacility(UUID facilityId, SiglusFacilityDto siglusFacilityDto) {
+    FacilityDto facilityDto = SiglusFacilityDto.from(siglusFacilityDto);
+    siglusFacilityReferenceDataService.saveFacility(facilityDto);
+    FacilityExtension facilityExtension = facilityExtensionRepository.findByFacilityId(facilityId);
+    if (null == facilityExtension) {
+      facilityExtension = FacilityExtension
+          .builder()
+          .facilityId(facilityId)
+          .facilityCode(siglusFacilityDto.getCode())
+          .enableLocationManagement(siglusFacilityDto.getEnableLocationManagement())
+          .isAndroid(androidHelper.isAndroid())
+          .build();
+      log.info("The facility extension: {} info has changed", facilityExtension);
+    } else {
+      facilityExtension.setEnableLocationManagement(siglusFacilityDto.getEnableLocationManagement());
+      log.info("The facility extension: {} info has changed", facilityExtension);
+    }
+    facilityExtensionRepository.save(facilityExtension);
+    return getFacilityInfo(siglusFacilityDto.getId());
+  }
+
+  public void exportLocationInfo(UUID facilityId, HttpServletResponse response) {
+    response.setContentType(MEDIA_TYPE);
+    response.addHeader(HttpHeaders.CONTENT_DISPOSITION, DISPOSITION_BASE + "\"" + FILE_NAME + "\"");
+
+    List<LocationManagement> locationList = locationManagementRepository.findOneByFacilityId(facilityId);
+    try {
+      writeLocationInfoOnCsv(locationList, response.getWriter());
+    } catch (IOException ioException) {
+      log.error("Error: {} occurred while exporting to csv", ioException.getMessage());
+      throw new ValidationMessageException(ioException, new Message(CsvUploadMessageKeys.ERROR_IO));
+    }
+  }
+
+  @Transactional
+  public void uploadLocationInfo(UUID facilityId, MultipartFile locationManagementFile) throws IOException {
+    validateCsvFile(locationManagementFile);
+    List<LocationManagement> locationManagementList = Lists.newArrayList();
+    BufferedReader locationInfoReader = new BufferedReader(new InputStreamReader(locationManagementFile
+        .getInputStream()));
+    CSVParser fileParser = new CSVParser(locationInfoReader, CSVFormat.EXCEL.withFirstRecordAsHeader());
+    csvValidator.validateCsvHeaders(fileParser);
+    List<CSVRecord> csvRecordList = csvValidator.validateDuplicateLocationCode(fileParser);
+    for (CSVRecord eachRow : csvRecordList) {
+      csvValidator.validateNullRow(eachRow);
+      String locationCode = eachRow.get(LOCATION_CODE);
+      String area = eachRow.get(AREA);
+      String zone = eachRow.get(ZONE);
+      String rack = eachRow.get(RACK);
+      String barcode = eachRow.get(BARCODE);
+      int bin = Integer.parseInt(eachRow.get(BIN));
+      String level = eachRow.get(LEVEL);
+      LocationManagement locationManagement = new LocationManagement(facilityId, locationCode, area, zone, rack,
+          barcode, bin, level);
+      locationManagementList.add(locationManagement);
+    }
+    log.info("delete location management info with facilityId: {}", facilityId);
+    locationManagementRepository.deleteByFacilityId(facilityId);
+    log.info("Save location management info with facilityId: {}", facilityId);
+    locationManagementRepository.save(locationManagementList);
+  }
+
+  private void writeLocationInfoOnCsv(List<LocationManagement> locationList, Writer writer)
+      throws IOException {
+    CSVPrinter csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT);
+    csvPrinter.printRecord(LOCATION_CODE, AREA, ZONE, RACK, BARCODE, BIN, LEVEL);
+    if (CollectionUtils.isEmpty(locationList)) {
+      return;
+    }
+    for (LocationManagement locationManagement : locationList) {
+      csvPrinter.printRecord(
+          locationManagement.getLocationCode(),
+          locationManagement.getArea(),
+          locationManagement.getZone(),
+          locationManagement.getRack(),
+          locationManagement.getBarcode(),
+          locationManagement.getBin(),
+          locationManagement.getLevel());
+    }
+  }
+
+  private void validateCsvFile(MultipartFile csvFile) {
+    if (null == csvFile || csvFile.isEmpty()) {
+      throw new ValidationMessageException(CsvUploadMessageKeys.ERROR_FILE_IS_EMPTY);
+    } else if (!csvFile.getOriginalFilename().endsWith(CSV_SUFFIX)) {
+      throw new ValidationMessageException(CsvUploadMessageKeys.ERROR_INCORRECT_FILE_FORMAT);
+    }
+  }
+
+  private FacilitySearchResultDto getFacilityInfo(UUID facilityId) {
+    FacilityDto facilityInfo = siglusFacilityReferenceDataService.findOneFacility(facilityId);
+    if (null == facilityInfo) {
+      log.info("Facility not found; Facility id: {}", facilityId);
+      throw new NotFoundException("Resources not found");
+    }
+    FacilitySearchResultDto searchResultDto = FacilitySearchResultDto.from(facilityInfo);
+    FacilityExtension facilityExtension = facilityExtensionRepository.findByFacilityId(facilityId);
+    if (null == facilityExtension) {
+      searchResultDto.setEnableLocationManagement(false);
+      return searchResultDto;
+    }
+    searchResultDto.setIsAndroidDevice(facilityExtension.getIsAndroid());
+    searchResultDto.setEnableLocationManagement(BooleanUtils.isTrue(facilityExtension.getEnableLocationManagement()));
+    return searchResultDto;
   }
 }

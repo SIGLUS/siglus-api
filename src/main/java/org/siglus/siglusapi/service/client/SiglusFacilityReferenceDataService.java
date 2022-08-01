@@ -91,4 +91,8 @@ public class SiglusFacilityReferenceDataService extends BaseReferenceDataService
     return getPage(parameters);
   }
 
+  public FacilityDto findOneFacility(UUID facilityId) {
+    return super.findOne(facilityId);
+  }
+
 }
