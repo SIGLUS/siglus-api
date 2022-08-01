@@ -24,6 +24,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.powermock.api.mockito.PowerMockito.mock;
+import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -54,10 +55,11 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 import org.siglus.common.domain.referencedata.ProcessingPeriod;
 import org.siglus.siglusapi.config.AndroidTemplateConfigProperties;
 import org.siglus.siglusapi.domain.SiglusReportType;
@@ -75,7 +77,8 @@ import org.siglus.siglusapi.repository.SyncUpHashRepository;
 import org.siglus.siglusapi.service.android.RequisitionCreateService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 
-@RunWith(MockitoJUnitRunner.class)
+@RunWith(PowerMockRunner.class)
+@PrepareForTest(RequisitionValidStartDateValidator.class)
 @SuppressWarnings({"PMD.AvoidDuplicateLiterals", "PMD.TooManyMethods"})
 public class SiglusMeControllerCreateRequisitionValidationTest extends FileBasedTest {
 
@@ -291,6 +294,11 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
       throws Exception {
     // given
     mockFacilityId(facilityId);
+    LocalDate localDate = LocalDate.of(2021, 5, 20).plusMonths(13L);
+    YearMonth yearMonth = YearMonth.of(localDate.getYear(), localDate.getMonth());
+    mockStatic(YearMonth.class);
+    when(YearMonth.now()).thenReturn(yearMonth);
+
     Object param = parseParam("actualStartDateAfterLastActualEnd.json");
 
     // when
