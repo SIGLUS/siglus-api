@@ -28,6 +28,7 @@ sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
 repositories {
+    mavenLocal()
     mavenCentral()
     jcenter()
     maven { url "https://jaspersoft.jfrog.io/jaspersoft/third-party-ce-artifacts/" }
@@ -38,7 +39,7 @@ repositories {
 
 // NOTE: do NOT use implementation, otherwise the SpringBoot won't pack the dependencies into the fat jar
 dependencies {
-    compile 'org.openlmis:siglus-api-extension:1.1.0-20220729.062736-6'
+    compile 'org.openlmis:siglus-api-extension:1.1.1'
     compile 'org.springframework.boot:spring-boot-starter-web'
     compile 'org.springframework.boot:spring-boot-starter-data-rest'
     compile 'org.springframework.boot:spring-boot-starter-data-jpa'

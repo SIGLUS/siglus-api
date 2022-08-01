@@ -16,19 +16,22 @@
 package org.siglus.siglusapi;
 
 import com.google.gson.internal.bind.TypeAdapters;
+import java.lang.reflect.Field;
 import java.time.Clock;
 import java.time.ZoneId;
 import java.util.Locale;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import javax.annotation.PostConstruct;
 import javax.validation.Validator;
 import javax.validation.executable.ExecutableValidator;
-
+import lombok.SneakyThrows;
 import net.javacrumbs.shedlock.spring.annotation.EnableSchedulerLock;
 import org.apache.camel.CamelContext;
 import org.apache.camel.ProducerTemplate;
 import org.apache.camel.impl.DefaultCamelContext;
+import org.apache.commons.lang3.reflect.FieldUtils;
 import org.hibernate.validator.messageinterpolation.ResourceBundleMessageInterpolator;
 import org.javers.core.Javers;
 import org.javers.core.MappingStyle;
@@ -40,20 +43,31 @@ import org.javers.repository.sql.JaversSqlRepository;
 import org.javers.repository.sql.SqlRepositoryBuilder;
 import org.javers.spring.boot.sql.JaversSqlProperties;
 import org.javers.spring.jpa.TransactionalJaversBuilder;
+import org.openlmis.referencedata.validate.ProcessingPeriodValidator;
+import org.openlmis.referencedata.validate.RequisitionGroupValidator;
+import org.openlmis.referencedata.web.csv.processor.FormatCommodityType;
+import org.openlmis.referencedata.web.csv.processor.FormatProcessingPeriod;
+import org.openlmis.referencedata.web.csv.processor.ParseCommodityType;
+import org.openlmis.referencedata.web.csv.processor.ParseProcessingPeriod;
 import org.siglus.siglusapi.config.AndroidTemplateConfigProperties;
 import org.siglus.siglusapi.config.CustomBeanNameGenerator;
 import org.siglus.siglusapi.i18n.ExposedMessageSourceImpl;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.validator.SiglusMessageInterpolator;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.context.MessageSource;
+import org.springframework.context.annotation.AnnotationBeanNameGenerator;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
+import org.springframework.context.annotation.FilterType;
 import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.context.support.ReloadableResourceBundleMessageSource;
@@ -62,6 +76,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.repository.config.RepositoryBeanNameGenerator;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.retry.annotation.EnableRetry;
 import org.springframework.scheduling.annotation.EnableAsync;
@@ -76,7 +91,14 @@ import org.springframework.web.servlet.i18n.CookieLocaleResolver;
 @SpringBootApplication
 @EnableAsync
 @EnableJpaAuditing
-@ComponentScan(basePackages = {"org.siglus", "org.openlmis"}, nameGenerator = CustomBeanNameGenerator.class)
+@ComponentScan(
+    basePackages = {"org.siglus", "org.openlmis"},
+    nameGenerator = CustomBeanNameGenerator.class,
+    excludeFilters = {
+      @ComponentScan.Filter(
+          type = FilterType.ASSIGNABLE_TYPE,
+          classes = org.openlmis.referencedata.Application.class)
+    })
 @EntityScan(basePackages = {"org.siglus", "org.openlmis"})
 @EnableJpaRepositories(basePackages = {"org.siglus", "org.openlmis"})
 @PropertySource("classpath:application.properties")
@@ -133,7 +155,11 @@ public class Application {
   @Value("${android.rapidtest.templateId}")
   private UUID androidRapidtestTemplateId;
 
+  @Value("${referencedata.csv.separator}")
+  private String separator;
+
   public static void main(String[] args) {
+    CustomRepositoryBeanNameGenerator.install();
     SpringApplication.run(Application.class, args);
   }
 
@@ -256,7 +282,7 @@ public class Application {
     return () -> authenticationHelper.getCurrentUserId().orElse(null);
   }
 
-  @Bean
+  @Bean(name = "validator")
   public LocalValidatorFactoryBean getValidator() {
     LocalValidatorFactoryBean bean = new LocalValidatorFactoryBean() {
       @Override
@@ -293,6 +319,46 @@ public class Application {
     messageSource.setBasenames(MESSAGE_SOURCE_BASE_NAME);
     messageSource.setDefaultEncoding(UTF_8);
     return messageSource;
+  }
+
+  @Bean
+  public ProcessingPeriodValidator beforeCreatePeriodValidator() {
+    return new ProcessingPeriodValidator();
+  }
+
+  @Bean
+  public ProcessingPeriodValidator beforeSavePeriodValidator() {
+    return new ProcessingPeriodValidator();
+  }
+
+  @Bean
+  @Qualifier("requisitionGroupValidator")
+  public RequisitionGroupValidator requisitionGroupValidator(RequisitionGroupValidator requisitionGroupValidator) {
+    return requisitionGroupValidator;
+  }
+
+  @PostConstruct
+  public void setCsvSeparator() {
+    ParseCommodityType.SEPARATOR = separator;
+    FormatCommodityType.SEPARATOR = separator;
+    ParseProcessingPeriod.SEPARATOR = separator;
+    FormatProcessingPeriod.SEPARATOR = separator;
+  }
+
+  static class CustomRepositoryBeanNameGenerator extends AnnotationBeanNameGenerator {
+
+    @SneakyThrows
+    static void install() {
+      Field field = RepositoryBeanNameGenerator.class.getDeclaredField("DELEGATE");
+      field.setAccessible(true);
+      FieldUtils.removeFinalModifier(field);
+      field.set(null, new CustomRepositoryBeanNameGenerator());
+    }
+
+    @Override
+    public String generateBeanName(BeanDefinition definition, BeanDefinitionRegistry registry) {
+      return definition.getBeanClassName();
+    }
   }
 
 }
