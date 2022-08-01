@@ -17,8 +17,10 @@ package org.siglus.siglusapi.service;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyList;
 import static org.mockito.Matchers.anySet;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -45,6 +47,7 @@ import org.openlmis.fulfillment.web.util.ProofOfDeliveryDto;
 import org.openlmis.fulfillment.web.util.ProofOfDeliveryLineItemDto;
 import org.openlmis.fulfillment.web.util.ShipmentObjectReferenceDto;
 import org.openlmis.fulfillment.web.util.VersionObjectReferenceDto;
+import org.siglus.common.domain.OrderExternal;
 import org.siglus.common.domain.referencedata.Code;
 import org.siglus.common.domain.referencedata.Orderable;
 import org.siglus.common.repository.OrderExternalRepository;
@@ -190,6 +193,17 @@ public class SiglusPodServiceTest {
   public void shouldThrowWhenCreateSubDraftsWithPodIdNotExist() {
     // given
     when(fulfillmentService.searchProofOfDelivery(any(), any())).thenReturn(null);
+
+    // when
+    CreatePodSubDraftRequest request = new CreatePodSubDraftRequest();
+    request.setSplitNum(1);
+    service.createSubDrafts(podId, request);
+  }
+
+  @Test(expected = NotFoundException.class)
+  public void shouldThrowWhenCreateSubDraftsWithPodIdLineItemsIsEmpty() {
+    // given
+    when(fulfillmentService.searchProofOfDelivery(any(), any())).thenReturn(buildMockPodDtoWithNoLineItems());
 
     // when
     CreatePodSubDraftRequest request = new CreatePodSubDraftRequest();
@@ -543,6 +557,27 @@ public class SiglusPodServiceTest {
     verify(notificationService).postConfirmPod(dto);
   }
 
+  @Test
+  public void shouldReturnWhenSubmitSubDraftsWithPodNotConfirmed() {
+    // given
+    when(authenticationHelper.isTheCurrentUserCanMergeOrDeleteSubDrafts()).thenReturn(Boolean.TRUE);
+    Example<PodSubDraft> example = Example.of(PodSubDraft.builder().podId(podId).build());
+    when(podSubDraftRepository.findAll(example)).thenReturn(buildMockSubDraftsAllSubmitted());
+    ProofOfDeliveryDto dto = buildMockPodDtoWithTwoLineItems();
+    when(fulfillmentService.searchProofOfDelivery(any(), any())).thenReturn(dto);
+    when(podController.updateProofOfDelivery(podId, dto, null)).thenReturn(dto);
+
+    // when
+    ProofOfDeliveryDto actualResponse = service.submitSubDrafts(podId, dto, null);
+
+    // then
+    assertEquals(dto, actualResponse);
+    verify(podController).updateProofOfDelivery(any(), any(), any());
+    verify(podSubDraftRepository).deleteAllByIds(any(List.class));
+    verify(podLineItemsExtensionRepository).deleteAllBySubDraftIds(any(List.class));
+    verify(notificationService, times(0)).postConfirmPod(dto);
+  }
+
   @Test(expected = AuthenticationException.class)
   public void shouldThrowWhenSubmitSubDraftsWithNoPermission() {
     // given
@@ -593,6 +628,16 @@ public class SiglusPodServiceTest {
     lineItemDtos.add(lineItemDto);
 
     podDto.setLineItems(lineItemDtos);
+
+    return podDto;
+  }
+
+  private ProofOfDeliveryDto buildMockPodDtoWithNoLineItems() {
+    ProofOfDeliveryDto podDto = new ProofOfDeliveryDto();
+    podDto.setId(podId);
+    podDto.setStatus(ProofOfDeliveryStatus.CONFIRMED);
+
+    podDto.setLineItems(Lists.newArrayList());
 
     return podDto;
   }
