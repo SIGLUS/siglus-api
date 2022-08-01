@@ -304,7 +304,13 @@ traits:
           responses:
             200:
               description: Location management successfully upload
-
+      /initiate:
+        post:
+          is: [ secured ]
+          description: Create new facility
+          responses:
+            200:
+              description: A new facility has been created
 
     /data-migration/{facilityId}:
       /stock-cards:

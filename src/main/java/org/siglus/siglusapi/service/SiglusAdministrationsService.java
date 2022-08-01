@@ -30,6 +30,7 @@ import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.lang.BooleanUtils;
+import org.openlmis.stockmanagement.repository.StockCardRepository;
 import org.openlmis.stockmanagement.web.Pagination;
 import org.siglus.siglusapi.domain.AppInfo;
 import org.siglus.siglusapi.domain.FacilityExtension;
@@ -46,7 +47,6 @@ import org.siglus.siglusapi.repository.AppInfoRepository;
 import org.siglus.siglusapi.repository.FacilityExtensionRepository;
 import org.siglus.siglusapi.repository.LocationManagementRepository;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
-import org.siglus.siglusapi.util.AndroidHelper;
 import org.siglus.siglusapi.validator.CsvValidator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -68,7 +68,7 @@ public class SiglusAdministrationsService {
   @Autowired
   private LocationManagementRepository locationManagementRepository;
   @Autowired
-  private AndroidHelper androidHelper;
+  private StockCardRepository stockCardRepository;
   @Autowired
   private CsvValidator csvValidator;
   private static final String CSV_SUFFIX = ".csv";
@@ -99,6 +99,18 @@ public class SiglusAdministrationsService {
     return Pagination.getPage(facilitySearchResultDtoList, pageable, facilityDtos.getTotalElements());
   }
 
+  public FacilitySearchResultDto createFacility(SiglusFacilityDto siglusFacilityDto) {
+    FacilityDto createdNewFacilityDto = siglusFacilityReferenceDataService.createFacility(siglusFacilityDto);
+    FacilityExtension facilityExtension = FacilityExtension
+        .builder()
+        .facilityId(createdNewFacilityDto.getId())
+        .facilityCode(createdNewFacilityDto.getCode())
+        .isAndroid(siglusFacilityDto.getIsAndroid())
+        .build();
+    facilityExtensionRepository.save(facilityExtension);
+    return getFacilityInfo(createdNewFacilityDto.getId());
+  }
+
   public void eraseDeviceInfoByFacilityId(String facilityCode) {
     AppInfo androidInfoByFacilityId = appInfoRepository.findByFacilityCode(facilityCode);
     if (null == androidInfoByFacilityId) {
@@ -122,10 +134,11 @@ public class SiglusAdministrationsService {
           .facilityId(facilityId)
           .facilityCode(siglusFacilityDto.getCode())
           .enableLocationManagement(siglusFacilityDto.getEnableLocationManagement())
-          .isAndroid(androidHelper.isAndroid())
+          .isAndroid(siglusFacilityDto.getIsAndroid())
           .build();
       log.info("The facility extension: {} info has changed", facilityExtension);
     } else {
+      facilityExtension.setIsAndroid(siglusFacilityDto.getIsAndroid());
       facilityExtension.setEnableLocationManagement(siglusFacilityDto.getEnableLocationManagement());
       log.info("The facility extension: {} info has changed", facilityExtension);
     }
@@ -208,6 +221,7 @@ public class SiglusAdministrationsService {
       throw new NotFoundException("Resources not found");
     }
     FacilitySearchResultDto searchResultDto = FacilitySearchResultDto.from(facilityInfo);
+    searchResultDto.setIsNewFacility(emptyStockCardCount(facilityId));
     FacilityExtension facilityExtension = facilityExtensionRepository.findByFacilityId(facilityId);
     if (null == facilityExtension) {
       searchResultDto.setEnableLocationManagement(false);
@@ -216,5 +230,9 @@ public class SiglusAdministrationsService {
     searchResultDto.setIsAndroidDevice(facilityExtension.getIsAndroid());
     searchResultDto.setEnableLocationManagement(BooleanUtils.isTrue(facilityExtension.getEnableLocationManagement()));
     return searchResultDto;
+  }
+
+  private boolean emptyStockCardCount(UUID facilityId) {
+    return stockCardRepository.countByFacilityId(facilityId) == 0;
   }
 }

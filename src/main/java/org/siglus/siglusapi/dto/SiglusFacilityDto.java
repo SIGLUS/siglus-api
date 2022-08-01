@@ -29,6 +29,8 @@ public class SiglusFacilityDto extends FacilityDto {
 
   private Boolean enableLocationManagement;
 
+  private Boolean isAndroid;
+
   public static FacilityDto from(SiglusFacilityDto siglusFacilityDto) {
     FacilityDto facilityDto = new FacilityDto();
     BeanUtils.copyProperties(siglusFacilityDto, facilityDto);
