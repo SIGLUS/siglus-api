@@ -66,7 +66,7 @@ import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.StockManagementDraftRepository;
 import org.siglus.siglusapi.repository.StockManagementInitialDraftsRepository;
-import org.siglus.siglusapi.util.CheckConflictOrderableInSubDraftsService;
+import org.siglus.siglusapi.util.ConflictOrderableInSubDraftsService;
 import org.siglus.siglusapi.util.OperatePermissionService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.util.SupportedProgramsHelper;
@@ -109,7 +109,7 @@ public class SiglusStockManagementDraftServiceTest {
   private SupportedProgramsHelper supportedProgramsHelper;
 
   @Mock
-  private CheckConflictOrderableInSubDraftsService checkConflictOrderableInSubDraftsService;
+  private ConflictOrderableInSubDraftsService conflictOrderableInSubDraftsService;
 
   @Mock
   private PermissionService permissionService;
@@ -237,7 +237,7 @@ public class SiglusStockManagementDraftServiceTest {
         .setNewAttributesInOriginalDraft(draftDto, id);
     when(stockManagementDraftRepository.save(stockManagementDraft))
         .thenReturn(stockManagementDraft);
-    doNothing().when(checkConflictOrderableInSubDraftsService).checkConflictOrderableBetweenSubDrafts(draftDto);
+    doNothing().when(conflictOrderableInSubDraftsService).checkConflictOrderableBetweenSubDrafts(draftDto);
 
     StockManagementDraftDto updatedDraftDto = siglusStockManagementDraftService
         .updateDraft(draftDto, id);
@@ -581,7 +581,7 @@ public class SiglusStockManagementDraftServiceTest {
 
     when(stockManagementDraftRepository.findOne(id))
         .thenReturn(draft);
-    doNothing().when(checkConflictOrderableInSubDraftsService).checkConflictOrderableBetweenSubDrafts(draftDto);
+    doNothing().when(conflictOrderableInSubDraftsService).checkConflictOrderableBetweenSubDrafts(draftDto);
     when(stockManagementDraftRepository.save(any(StockManagementDraft.class))).thenReturn(draft);
 
     StockManagementDraftDto stockManagementDraftDto = siglusStockManagementDraftService

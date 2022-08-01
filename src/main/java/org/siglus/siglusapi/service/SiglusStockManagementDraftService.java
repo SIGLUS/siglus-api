@@ -48,7 +48,7 @@ import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.StockManagementDraftRepository;
 import org.siglus.siglusapi.repository.StockManagementInitialDraftsRepository;
-import org.siglus.siglusapi.util.CheckConflictOrderableInSubDraftsService;
+import org.siglus.siglusapi.util.ConflictOrderableInSubDraftsService;
 import org.siglus.siglusapi.util.OperatePermissionService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.validator.ActiveDraftValidator;
@@ -88,7 +88,7 @@ public class SiglusStockManagementDraftService {
   private SiglusAuthenticationHelper authenticationHelper;
 
   @Autowired
-  private CheckConflictOrderableInSubDraftsService checkConflictOrderableInSubDraftsService;
+  private ConflictOrderableInSubDraftsService conflictOrderableInSubDraftsService;
 
   private static final Integer DRAFTS_LIMITATION = 10;
   private static final Integer DRAFTS_INCREMENT = 1;
@@ -135,10 +135,10 @@ public class SiglusStockManagementDraftService {
     stockManagementDraftValidator.validateDraft(subDraftDto, id);
     if (subDraftDto.getDraftType().equals(FieldConstants.ISSUE)
         || subDraftDto.getDraftType().equals(FieldConstants.RECEIVE)) {
-      checkConflictOrderableInSubDraftsService.checkConflictOrderableAndLotInSubDraft(subDraftDto);
+      conflictOrderableInSubDraftsService.checkConflictOrderableAndLotInSubDraft(subDraftDto);
       StockManagementDraft subDraft = stockManagementDraftRepository.findOne(id);
       draftValidator.validateSubDraftStatus(subDraft);
-      checkConflictOrderableInSubDraftsService.checkConflictOrderableBetweenSubDrafts(subDraftDto);
+      conflictOrderableInSubDraftsService.checkConflictOrderableBetweenSubDrafts(subDraftDto);
       StockManagementDraft newDraft = setNewAttributesInOriginalDraft(subDraftDto, id);
       StockManagementDraft savedDraft = stockManagementDraftRepository.save(newDraft);
       return StockManagementDraftDto.from(savedDraft);
@@ -385,9 +385,9 @@ public class SiglusStockManagementDraftService {
   public StockManagementDraftDto updateStatusAfterSubmit(StockManagementDraftDto subDraftDto) {
     StockManagementDraft subDraft = stockManagementDraftRepository.findOne(subDraftDto.getId());
     draftValidator.validateSubDraft(subDraft);
-    checkConflictOrderableInSubDraftsService.checkConflictOrderableAndLotInSubDraft(subDraftDto);
+    conflictOrderableInSubDraftsService.checkConflictOrderableAndLotInSubDraft(subDraftDto);
     draftValidator.validateSubDraftStatus(subDraft);
-    checkConflictOrderableInSubDraftsService.checkConflictOrderableBetweenSubDrafts(subDraftDto);
+    conflictOrderableInSubDraftsService.checkConflictOrderableBetweenSubDrafts(subDraftDto);
     subDraft.setStatus(PhysicalInventorySubDraftEnum.SUBMITTED);
     subDraft.setSignature(subDraftDto.getSignature());
     List<StockManagementDraftLineItemDto> lineItems = subDraftDto.getLineItems();
