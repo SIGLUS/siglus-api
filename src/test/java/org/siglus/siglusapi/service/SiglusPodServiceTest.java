@@ -18,6 +18,7 @@ package org.siglus.siglusapi.service;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyList;
+import static org.mockito.Matchers.anySet;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -309,7 +310,7 @@ public class SiglusPodServiceTest {
     when(podSubDraftRepository.findOne(subDraftId)).thenReturn(buildMockSubDraftNotYetStarted());
     Example<PodLineItemsExtension> example = Example.of(PodLineItemsExtension.builder().subDraftId(subDraftId).build());
     when(podLineItemsExtensionRepository.findAll(example)).thenReturn(buildMockPodLineItemsExtensions());
-    when(podLineItemsRepository.findAll(Lists.newArrayList(lineItemId1))).thenReturn(buildMockPodLineItems());
+    when(podLineItemsRepository.findAll(anySet())).thenReturn(buildMockPodLineItems());
     when(authenticationHelper.getCurrentUserId()).thenReturn(Optional.of(UUID.randomUUID()));
 
     // when
@@ -329,12 +330,12 @@ public class SiglusPodServiceTest {
     when(podSubDraftRepository.findOne(subDraftId)).thenReturn(buildMockSubDraftNotYetStarted());
     Example<PodLineItemsExtension> example = Example.of(PodLineItemsExtension.builder().subDraftId(subDraftId).build());
     when(podLineItemsExtensionRepository.findAll(example)).thenReturn(buildMockPodLineItemsExtensions());
-    when(podLineItemsRepository.findAll(Lists.newArrayList(lineItemId1))).thenReturn(buildMockPodLineItems());
+    when(podLineItemsRepository.findAll(anySet())).thenReturn(buildMockPodLineItems());
     when(authenticationHelper.getCurrentUserId()).thenReturn(Optional.of(UUID.randomUUID()));
 
     // when
     UpdatePodSubDraftRequest request = new UpdatePodSubDraftRequest();
-    request.setPodDto(buildMockPodDto());
+    request.setPodDto(buildMockPodDtoWithTwoLineItems());
     request.setOperateType(OperateTypeEnum.SUBMIT);
     service.updateSubDraft(request, subDraftId);
 
@@ -350,7 +351,7 @@ public class SiglusPodServiceTest {
 
     // when
     UpdatePodSubDraftRequest request = new UpdatePodSubDraftRequest();
-    request.setPodDto(buildMockPodDto());
+    request.setPodDto(buildMockPodDtoWithTwoLineItems());
     request.setOperateType(OperateTypeEnum.SAVE);
     service.updateSubDraft(request, subDraftId);
   }
@@ -373,8 +374,8 @@ public class SiglusPodServiceTest {
     when(podSubDraftRepository.findOne(subDraftId)).thenReturn(buildMockSubDraftNotYetStarted());
     Example<PodLineItemsExtension> example = Example.of(PodLineItemsExtension.builder().subDraftId(subDraftId).build());
     when(podLineItemsExtensionRepository.findAll(example)).thenReturn(buildMockPodLineItemsExtensions());
-    when(fulfillmentService.searchProofOfDelivery(any(), any())).thenReturn(buildMockPodDto());
-    when(podLineItemsRepository.findAll(Lists.newArrayList(lineItemId1))).thenReturn(buildMockPodLineItems());
+    when(fulfillmentService.searchProofOfDelivery(any(), any())).thenReturn(buildMockPodDtoWithTwoLineItems());
+    when(podLineItemsRepository.findAll(anySet())).thenReturn(buildMockPodLineItems());
     when(authenticationHelper.getCurrentUserId()).thenReturn(Optional.of(UUID.randomUUID()));
 
     // when
@@ -419,7 +420,7 @@ public class SiglusPodServiceTest {
     when(authenticationHelper.isTheCurrentUserCanMergeOrDeleteSubDrafts()).thenReturn(Boolean.TRUE);
     Example<PodSubDraft> example = Example.of(PodSubDraft.builder().podId(podId).build());
     when(podSubDraftRepository.findAll(example)).thenReturn(buildMockSubDraftsAllSubmitted());
-    when(fulfillmentService.searchProofOfDelivery(any(), any())).thenReturn(buildMockPodDto());
+    when(fulfillmentService.searchProofOfDelivery(any(), any())).thenReturn(buildMockPodDtoWithTwoLineItems());
     when(podLineItemsExtensionRepository.findAllBySubDraftIds(Lists.newArrayList(subDraftId))).thenReturn(
         buildMockPodLineItemsExtensions());
 
@@ -470,7 +471,7 @@ public class SiglusPodServiceTest {
     when(authenticationHelper.isTheCurrentUserCanMergeOrDeleteSubDrafts()).thenReturn(Boolean.TRUE);
     Example<PodSubDraft> example = Example.of(PodSubDraft.builder().podId(podId).build());
     when(podSubDraftRepository.findAll(example)).thenReturn(buildMockSubDraftsAllSubmitted());
-    ProofOfDeliveryDto expectedResponse = buildMockPodDto();
+    ProofOfDeliveryDto expectedResponse = buildMockPodDtoWithTwoLineItems();
     when(fulfillmentService.searchProofOfDelivery(any(), any())).thenReturn(expectedResponse);
 
     // when
@@ -505,6 +506,17 @@ public class SiglusPodServiceTest {
     Example<PodSubDraft> example = Example.of(PodSubDraft.builder().podId(podId).build());
     when(podSubDraftRepository.findAll(example)).thenReturn(buildMockSubDraftsAllSubmitted());
     when(fulfillmentService.searchProofOfDelivery(any(), any())).thenReturn(null);
+
+    // when
+    service.mergeSubDrafts(podId);
+  }
+
+  @Test(expected = BusinessDataException.class)
+  public void shouldThrowWhenMergeSubDraftsWithNotAllPodSubDraftSubmitted() {
+    // given
+    when(authenticationHelper.isTheCurrentUserCanMergeOrDeleteSubDrafts()).thenReturn(Boolean.TRUE);
+    Example<PodSubDraft> example = Example.of(PodSubDraft.builder().podId(podId).build());
+    when(podSubDraftRepository.findAll(example)).thenReturn(buildMockSubDrafts());
 
     // when
     service.mergeSubDrafts(podId);
@@ -575,6 +587,7 @@ public class SiglusPodServiceTest {
     orderableDto.setId(orderableId);
     orderableDto.setProductCode(productCode);
     lineItemDto.setOrderable(orderableDto);
+    lineItemDto.setId(lineItemId1);
 
     List<ProofOfDeliveryLineItemDto> lineItemDtos = Lists.newArrayList();
     lineItemDtos.add(lineItemDto);
