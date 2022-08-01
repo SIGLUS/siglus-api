@@ -18,8 +18,8 @@ package org.siglus.siglusapi.util;
 import static org.siglus.siglusapi.constant.FieldConstants.BASIC_COLUMN;
 import static org.siglus.siglusapi.constant.FieldConstants.BASIC_ROW;
 import static org.siglus.siglusapi.constant.FieldConstants.GREEN_MARK;
+import static org.siglus.siglusapi.constant.FieldConstants.PURPLE_MARK;
 import static org.siglus.siglusapi.constant.FieldConstants.RED_MARK;
-import static org.siglus.siglusapi.constant.FieldConstants.VIOLET_MARK;
 import static org.siglus.siglusapi.constant.FieldConstants.YELLOW_MARK;
 
 import com.alibaba.excel.metadata.data.WriteCellData;
@@ -52,14 +52,15 @@ public class CustomCellWriteHandler implements CellWriteHandler {
     if (rowIndex < 0 || columnIndex < 0 || colorArrays[rowIndex][columnIndex] == 0) {
       return;
     }
+
     if (colorArrays[rowIndex][columnIndex] == RED_MARK) {
-      writeCellStyle.setFillForegroundColor(IndexedColors.RED.getIndex());
+      writeCellStyle.setFillForegroundColor(IndexedColors.CORAL.getIndex());
     } else if (colorArrays[rowIndex][columnIndex] == YELLOW_MARK) {
-      writeCellStyle.setFillForegroundColor(IndexedColors.YELLOW.getIndex());
+      writeCellStyle.setFillForegroundColor(IndexedColors.LIGHT_YELLOW.getIndex());
     } else if (colorArrays[rowIndex][columnIndex] == GREEN_MARK) {
-      writeCellStyle.setFillForegroundColor(IndexedColors.GREEN.getIndex());
-    } else if (colorArrays[rowIndex][columnIndex] == VIOLET_MARK) {
-      writeCellStyle.setFillForegroundColor(IndexedColors.VIOLET.getIndex());
+      writeCellStyle.setFillForegroundColor(IndexedColors.LIME.getIndex());
+    } else if (colorArrays[rowIndex][columnIndex] == PURPLE_MARK) {
+      writeCellStyle.setFillForegroundColor(IndexedColors.LAVENDER.getIndex());
     }
     writeCellStyle.setFillPatternType(FillPatternType.SOLID_FOREGROUND);
   }

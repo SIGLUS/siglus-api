@@ -16,6 +16,7 @@
 package org.siglus.siglusapi.service.task.report;
 
 import static org.siglus.siglusapi.constant.FieldConstants.ALL_GEOGRAPHIC_ZONE;
+import static org.siglus.siglusapi.constant.FieldConstants.BASIC_COLUMN;
 import static org.siglus.siglusapi.constant.FieldConstants.CMM;
 import static org.siglus.siglusapi.constant.FieldConstants.DISTRICT;
 import static org.siglus.siglusapi.constant.FieldConstants.DISTRICT_PORTUGUESE;
@@ -23,7 +24,6 @@ import static org.siglus.siglusapi.constant.FieldConstants.DRUG_CODE_PORTUGUESE;
 import static org.siglus.siglusapi.constant.FieldConstants.DRUG_NAME_PORTUGUESE;
 import static org.siglus.siglusapi.constant.FieldConstants.EMPTY_VALUE;
 import static org.siglus.siglusapi.constant.FieldConstants.FACILITY_PORTUGUESE;
-import static org.siglus.siglusapi.constant.FieldConstants.LEGENDA;
 import static org.siglus.siglusapi.constant.FieldConstants.LOW_STOCK_PORTUGUESE;
 import static org.siglus.siglusapi.constant.FieldConstants.OVER_STOCK_PORTUGUESE;
 import static org.siglus.siglusapi.constant.FieldConstants.PROGRAM_PORTUGUESE;
@@ -32,6 +32,7 @@ import static org.siglus.siglusapi.constant.FieldConstants.PROVINCE_PORTUGUESE;
 import static org.siglus.siglusapi.constant.FieldConstants.REGULAR_STOCK_PORTUGUESE;
 import static org.siglus.siglusapi.constant.FieldConstants.REPORT_GENERATED_FOR_PORTUGUESE;
 import static org.siglus.siglusapi.constant.FieldConstants.STOCK_OUT_PORTUGUESE;
+import static org.siglus.siglusapi.constant.FieldConstants.SUBTITLE;
 
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.ExcelWriter;
@@ -64,7 +65,6 @@ import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.util.CustomCellWriteHandler;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -84,7 +84,6 @@ public class TracerDrugReportService {
   @Value("${dateFormat}")
   private String dateFormat;
 
-  @Async
   @Transactional
   public void refreshTracerDrugPersistentData(String startDate, String endDate) {
     log.info("tracer drug persistentData refresh. start = " + System.currentTimeMillis());
@@ -92,8 +91,6 @@ public class TracerDrugReportService {
     log.info("tracer drug persistentData  refresh. end = " + System.currentTimeMillis());
   }
 
-
-  @Async
   @Transactional
   public void initializeTracerDrugPersistentData() {
     log.info("tracer drug persistentData initialize. start = " + System.currentTimeMillis());
@@ -144,9 +141,9 @@ public class TracerDrugReportService {
         .head(getHeadRow(tracerDrugMap))
         .build();
     WriteSheet writeSheet2 = EasyExcel
-        .writerSheet(1, LEGENDA)
+        .writerSheet(1, SUBTITLE)
         .registerWriteHandler(new CustomCellWriteHandler(legendaColorArrays, true))
-        .head(Collections.singletonList(Collections.singletonList(LEGENDA)))
+        .head(Collections.singletonList(Collections.singletonList(SUBTITLE)))
         .build();
     excelWriter.write(excelRows, writeSheet1);
     excelWriter.write(getLegendaRows(), writeSheet2);
@@ -179,20 +176,31 @@ public class TracerDrugReportService {
         excelRow.add(tracerDrug.getStockOnHand() == null ? EMPTY_VALUE : tracerDrug.getStockOnHand());
         colorArrays[colorRow.get()][colorColumn.getAndIncrement()] = tracerDrug.getStockStatusColorCode();
       });
-      colorRow.getAndIncrement();
+      if (!excelRow.stream().skip(BASIC_COLUMN).allMatch(o -> o.equals(EMPTY_VALUE))) {
+        colorRow.getAndIncrement();
+        excelRows.add(excelRow);
+      }
       colorColumn.set(0);
-      excelRows.add(excelRow);
     });
     return excelRows;
   }
 
-  private List<List<String>> getLegendaRows() {
-    List<List<String>> legendaRows = new LinkedList<>();
-    legendaRows.add(Collections.singletonList(STOCK_OUT_PORTUGUESE));
-    legendaRows.add(Collections.singletonList(LOW_STOCK_PORTUGUESE));
-    legendaRows.add(Collections.singletonList(REGULAR_STOCK_PORTUGUESE));
-    legendaRows.add(Collections.singletonList(OVER_STOCK_PORTUGUESE));
-    return legendaRows;
+  public List<String> getRequisitionFacilityCode(String districtCode, String provinceCode) {
+    List<RequisitionGeographicZonesDto> allAuthorizedFacility = getAllAuthorizedFacility();
+    if (Objects.equals(provinceCode, ALL_GEOGRAPHIC_ZONE)) {
+      return
+          allAuthorizedFacility.stream().map(RequisitionGeographicZonesDto::getFacilityCode)
+              .collect(Collectors.toList());
+    } else if (Objects.equals(districtCode, ALL_GEOGRAPHIC_ZONE)) {
+      return allAuthorizedFacility.stream()
+          .filter(o -> Objects.equals(o.getProvinceCode(), provinceCode))
+          .map(RequisitionGeographicZonesDto::getFacilityCode)
+          .collect(Collectors.toList());
+    }
+    return allAuthorizedFacility.stream()
+        .filter(o -> Objects.equals(o.getDistrictCode(), districtCode))
+        .map(RequisitionGeographicZonesDto::getFacilityCode)
+        .collect(Collectors.toList());
   }
 
   public List<List<String>> getHeadRow(Map<String, List<TracerDrugExcelDto>> collect) {
@@ -220,6 +228,14 @@ public class TracerDrugReportService {
     return excelHead;
   }
 
+  private List<List<String>> getLegendaRows() {
+    List<List<String>> legendaRows = new LinkedList<>();
+    legendaRows.add(Collections.singletonList(STOCK_OUT_PORTUGUESE));
+    legendaRows.add(Collections.singletonList(LOW_STOCK_PORTUGUESE));
+    legendaRows.add(Collections.singletonList(REGULAR_STOCK_PORTUGUESE));
+    legendaRows.add(Collections.singletonList(OVER_STOCK_PORTUGUESE));
+    return legendaRows;
+  }
 
   private String getUniqueKey(String facilityCode, String productCode) {
     return facilityCode + "&" + productCode;
@@ -244,24 +260,6 @@ public class TracerDrugReportService {
       return getAuthorizedGeographicZonesBySiteLevel(facilityCode,
           requisitionGeographicZones);
     }
-  }
-
-  public List<String> getRequisitionFacilityCode(String districtCode, String provinceCode) {
-    List<RequisitionGeographicZonesDto> allAuthorizedFacility = getAllAuthorizedFacility();
-    if (Objects.equals(provinceCode, ALL_GEOGRAPHIC_ZONE)) {
-      return
-          allAuthorizedFacility.stream().map(RequisitionGeographicZonesDto::getFacilityCode)
-              .collect(Collectors.toList());
-    } else if (Objects.equals(districtCode, ALL_GEOGRAPHIC_ZONE)) {
-      return allAuthorizedFacility.stream()
-          .filter(o -> Objects.equals(o.getProvinceCode(), provinceCode))
-          .map(RequisitionGeographicZonesDto::getFacilityCode)
-          .collect(Collectors.toList());
-    }
-    return allAuthorizedFacility.stream()
-        .filter(o -> Objects.equals(o.getDistrictCode(), districtCode))
-        .map(RequisitionGeographicZonesDto::getFacilityCode)
-        .collect(Collectors.toList());
   }
 
   private List<AssociatedGeographicZoneDto> getRequisitionGeographicZonesDtos() {
