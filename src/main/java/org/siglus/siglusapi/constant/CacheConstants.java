@@ -43,4 +43,6 @@ public class CacheConstants {
 
   public static final String SIGLUS_FACILITY = "siglus-facility";
 
+  public static final String SIGLUS_USER = "siglus-user";
+
 }
