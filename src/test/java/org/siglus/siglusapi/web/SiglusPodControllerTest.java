@@ -43,7 +43,7 @@ public class SiglusPodControllerTest {
   private SiglusPodController controller;
 
   @Mock
-  private ProofOfDeliveryController actualController;
+  private ProofOfDeliveryController podController;
 
   @Mock
   private SiglusNotificationService notificationService;
@@ -54,18 +54,15 @@ public class SiglusPodControllerTest {
   @Mock
   private SiglusPodService proofOfDeliveryService;
 
-  @Mock
-  private ProofOfDeliveryController proofOfDeliveryController;
-
   @Test
   public void shouldCallOpenlmisControllerWhenUpdateProofOfDelivery() {
     UUID id = UUID.randomUUID();
     ProofOfDeliveryDto dto = new ProofOfDeliveryDto();
-    when(actualController.updateProofOfDelivery(any(), any(), any()))
+    when(podController.updateProofOfDelivery(any(), any(), any()))
         .thenReturn(dto);
     controller.updatePod(id, dto, auth2Authentication);
 
-    verify(actualController).updateProofOfDelivery(id, dto, auth2Authentication);
+    verify(podController).updateProofOfDelivery(id, dto, auth2Authentication);
 
     verify(notificationService, never()).postConfirmPod(dto);
   }
@@ -75,11 +72,11 @@ public class SiglusPodControllerTest {
     UUID id = UUID.randomUUID();
     ProofOfDeliveryDto dto = new ProofOfDeliveryDto();
     dto.setStatus(ProofOfDeliveryStatus.CONFIRMED);
-    when(actualController.updateProofOfDelivery(any(), any(), any()))
+    when(podController.updateProofOfDelivery(any(), any(), any()))
         .thenReturn(dto);
     controller.updatePod(id, dto, auth2Authentication);
 
-    verify(actualController).updateProofOfDelivery(id, dto, auth2Authentication);
+    verify(podController).updateProofOfDelivery(id, dto, auth2Authentication);
 
     verify(notificationService).postConfirmPod(dto);
   }
@@ -105,7 +102,7 @@ public class SiglusPodControllerTest {
     controller.printPod(null, podId, null);
 
     // then
-    verify(actualController).printProofOfDelivery(null, podId, null);
+    verify(podController).printProofOfDelivery(null, podId, null);
   }
 
   @Test
@@ -119,7 +116,7 @@ public class SiglusPodControllerTest {
     controller.getAllProofsOfDelivery(orderId, shipmentId, pageable);
 
     // then
-    verify(proofOfDeliveryController).getAllProofsOfDelivery(orderId, shipmentId, pageable);
+    verify(podController).getAllProofsOfDelivery(orderId, shipmentId, pageable);
   }
 
 }
