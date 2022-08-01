@@ -114,7 +114,8 @@ public class Application {
       "classpath:/messages/messages_pt",
       "classpath:/messages/stockmanagement_messages_en",
       "classpath:/messages/requisition_messages_en",
-      "classpath:/messages/fulfillment_messages_en"
+      "classpath:/messages/fulfillment_messages_en",
+      "classpath:/messages/referencedata_messages_en"
   };
 
   private static final String UTF_8 = "UTF-8";
