@@ -102,6 +102,13 @@ public class SiglusAdministrationControllerTest {
     verify(siglusAdministrationsService).exportLocationInfo(facilityId, httpServletResponse);
   }
 
+  @Test
+  public void shouldCreateNewFacility() {
+    SiglusFacilityDto siglusFacilityDto = mockSiglusFacilityDto();
+    siglusAdministrationsController.createFacility(siglusFacilityDto);
+    verify(siglusAdministrationsService).createFacility(siglusFacilityDto);
+  }
+
   private FacilitySearchParamDto mockFacilitySearchParamDto() {
     FacilitySearchParamDto facilitySearchParamDto = new FacilitySearchParamDto();
     facilitySearchParamDto.setName(Name);

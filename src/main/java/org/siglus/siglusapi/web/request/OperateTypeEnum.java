@@ -13,27 +13,21 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.dto;
+package org.siglus.siglusapi.web.request;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
-import org.springframework.beans.BeanUtils;
+import org.siglus.siglusapi.dto.enums.PodSubDraftStatusEnum;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@EqualsAndHashCode(callSuper = true)
-public class SiglusFacilityDto extends FacilityDto {
+public enum OperateTypeEnum {
+  SAVE,
+  SUBMIT;
 
-  private Boolean enableLocationManagement;
-
-  private Boolean isAndroid;
-
-  public static FacilityDto from(SiglusFacilityDto siglusFacilityDto) {
-    FacilityDto facilityDto = new FacilityDto();
-    BeanUtils.copyProperties(siglusFacilityDto, facilityDto);
-    return facilityDto;
+  public static PodSubDraftStatusEnum getPodSubDraftEnum(OperateTypeEnum operateEnum) {
+    switch (operateEnum) {
+      case SAVE:
+        return PodSubDraftStatusEnum.DRAFT;
+      case SUBMIT:
+      default:
+        return PodSubDraftStatusEnum.SUBMITTED;
+    }
   }
 }

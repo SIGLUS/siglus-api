@@ -22,7 +22,7 @@ import org.openlmis.stockmanagement.util.RequestParameters;
 import org.springframework.stereotype.Service;
 
 @Service
-public class SiglusProofOfDeliveryFulfillmentService extends
+public class SiglusPodFulfillmentService extends
     BaseFulfillmentService<ProofOfDeliveryDto> {
 
   static final String EXPAND = "expand";

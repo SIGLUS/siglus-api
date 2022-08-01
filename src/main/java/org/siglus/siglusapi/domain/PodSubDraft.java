@@ -13,27 +13,31 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.dto;
+package org.siglus.siglusapi.domain;
 
+import java.util.UUID;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Table;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import org.springframework.beans.BeanUtils;
+import org.siglus.common.domain.BaseEntity;
+import org.siglus.siglusapi.dto.enums.PodSubDraftStatusEnum;
 
+@Entity
 @Data
-@NoArgsConstructor
+@Builder
 @AllArgsConstructor
-@EqualsAndHashCode(callSuper = true)
-public class SiglusFacilityDto extends FacilityDto {
+@NoArgsConstructor
+@Table(name = "pod_sub_draft", schema = "siglusintegration")
+public class PodSubDraft extends BaseEntity {
 
-  private Boolean enableLocationManagement;
-
-  private Boolean isAndroid;
-
-  public static FacilityDto from(SiglusFacilityDto siglusFacilityDto) {
-    FacilityDto facilityDto = new FacilityDto();
-    BeanUtils.copyProperties(siglusFacilityDto, facilityDto);
-    return facilityDto;
-  }
+  private Integer number;
+  private PodSubDraftStatusEnum status;
+  @Column(name = "operatorid")
+  private UUID operatorId;
+  @Column(name = "proofofdeliveryid")
+  private UUID podId;
 }

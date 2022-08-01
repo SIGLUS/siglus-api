@@ -304,7 +304,13 @@ traits:
           responses:
             200:
               description: Location management successfully upload
-
+      /initiate:
+        post:
+          is: [ secured ]
+          description: Create new facility
+          responses:
+            200:
+              description: A new facility has been created
 
     /data-migration/{facilityId}:
       /stock-cards:
@@ -2408,6 +2414,168 @@ traits:
             body:
               application/json:
                 schema: localizedMessage
+
+    /proofsOfDelivery/{id}/subDrafts:
+      displayName: Proof Of Delivery - Create Sub Draft
+      uriParameters:
+        id:
+          displayName: proofOfDeliveryId
+          type: string
+          required: true
+          repeat: false
+      post:
+        is: [ secured ]
+        description: >
+          create proof of delivery sub draft
+        responses:
+          201:
+            description: issueVouchers update.
+            headers:
+              Keep-Alive:
+          400:
+            body:
+              application/json:
+                schema: badRequestResponse
+          404:
+          403:
+            body:
+              application/json:
+                schema: localizedMessage
+      delete:
+        is: [ secured ]
+        description: >
+          delete all proof of delivery sub draft by id
+        responses:
+          204:
+            description: all sub draft deleted.
+
+    /proofsOfDelivery/{id}/subDrafts/merge:
+      displayName: Proof Of Delivery - merge all sub draft by proof of delivery
+      uriParameters:
+        id:
+          displayName: proofOfDeliveryId
+          type: string
+          required: true
+          repeat: false
+      post:
+        is: [ secured ]
+        description: >
+          merge all sub draft by proof of delivery
+        responses:
+          200:
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+          400:
+            body:
+              application/json:
+                schema: badRequestResponse
+          404:
+          403:
+            body:
+              application/json:
+                schema: localizedMessage
+
+    /proofsOfDelivery/{id}/subDrafts/submit:
+      displayName: Proof Of Delivery - submit all sub draft by proof of delivery
+      uriParameters:
+        id:
+          displayName: proofOfDeliveryId
+          type: string
+          required: true
+          repeat: false
+      post:
+        is: [ secured ]
+        description: >
+          submit all sub draft by proof of delivery
+        responses:
+          200:
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+          400:
+            body:
+              application/json:
+                schema: badRequestResponse
+          404:
+          403:
+            body:
+              application/json:
+                schema: localizedMessage
+
+    /proofsOfDelivery/{id}/subDrafts/summary:
+      displayName: Proof Of Delivery - search Sub Draft List
+      uriParameters:
+        id:
+          displayName: proofOfDeliveryId
+          type: string
+          required: true
+          repeat: false
+      post:
+        is: [ secured, paginated ]
+        description: >
+          search proof of delivery sub draft list
+        responses:
+          200:
+            body:
+              application/json:
+          400:
+            body:
+              application/json:
+                schema: badRequestResponse
+          404:
+          403:
+            body:
+              application/json:
+                schema: localizedMessage
+
+    /proofsOfDelivery/{id}/subDrafts/{subDraftId}:
+      displayName: Proof Of Delivery - Sub Draft Detail
+      uriParameters:
+        id:
+          displayName: proofOfDeliveryId
+          type: string
+          required: true
+          repeat: false
+        subDraftId:
+          displayName: subDraftId
+          type: string
+          required: true
+          repeat: false
+      get:
+        is: [ secured ]
+        description: >
+          get proof of delivery sub draft detail
+        responses:
+          200:
+            body:
+              application/json:
+                schema: proofOfDeliveryDto
+          400:
+            body:
+              application/json:
+                schema: badRequestResponse
+          404:
+          403:
+            body:
+              application/json:
+                schema: localizedMessage
+      put:
+        is: [ secured ]
+        description: >
+          update proof of delivery sub draft
+        responses:
+          204:
+            description: sub draft updated.
+      delete:
+        is: [ secured ]
+        description: >
+          delete proof of delivery sub draft
+        responses:
+          204:
+            description: sub draft deleted.
 
     /integration:
       /stockMovements:

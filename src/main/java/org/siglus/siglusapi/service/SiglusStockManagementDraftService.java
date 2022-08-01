@@ -130,19 +130,20 @@ public class SiglusStockManagementDraftService {
   }
 
   @Transactional
-  public StockManagementDraftDto updateDraft(StockManagementDraftDto dto, UUID id) {
+  public StockManagementDraftDto updateDraft(StockManagementDraftDto subDraftDto, UUID id) {
     log.info("update issue draft");
-    stockManagementDraftValidator.validateDraft(dto, id);
-    if (dto.getDraftType().equals(FieldConstants.ISSUE)
-        || dto.getDraftType().equals(FieldConstants.RECEIVE)) {
+    stockManagementDraftValidator.validateDraft(subDraftDto, id);
+    if (subDraftDto.getDraftType().equals(FieldConstants.ISSUE)
+        || subDraftDto.getDraftType().equals(FieldConstants.RECEIVE)) {
+      checkConflictOrderableInSubDraftsService.checkConflictOrderableAndLotInSubDraft(subDraftDto);
       StockManagementDraft subDraft = stockManagementDraftRepository.findOne(id);
       draftValidator.validateSubDraftStatus(subDraft);
-      checkConflictOrderableInSubDraftsService.checkConflictSubDraft(dto);
-      StockManagementDraft newDraft = setNewAttributesInOriginalDraft(dto, id);
+      checkConflictOrderableInSubDraftsService.checkConflictOrderableBetweenSubDrafts(subDraftDto);
+      StockManagementDraft newDraft = setNewAttributesInOriginalDraft(subDraftDto, id);
       StockManagementDraft savedDraft = stockManagementDraftRepository.save(newDraft);
       return StockManagementDraftDto.from(savedDraft);
     }
-    StockManagementDraft draft = StockManagementDraft.createStockManagementDraft(dto, true);
+    StockManagementDraft draft = StockManagementDraft.createStockManagementDraft(subDraftDto, true);
     StockManagementDraft savedDraft = stockManagementDraftRepository.save(draft);
     return StockManagementDraftDto.from(savedDraft);
   }
@@ -163,7 +164,6 @@ public class SiglusStockManagementDraftService {
     return newDraft;
   }
 
-  //TODO: Delete after finish multi-user stock issue feature
   public List<StockManagementDraftDto> findStockManagementDraft(UUID programId, String type,
       Boolean isDraft) {
     UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
@@ -211,7 +211,9 @@ public class SiglusStockManagementDraftService {
     operatePermissionService.checkPermission(facilityId);
     log.info("delete stockmanagement draft: {}", id);
     stockManagementDraftRepository.delete(subDraft);
-    resetDraftNumber(subDraft);
+    if (!subDraft.getDraftType().equals(FieldConstants.ADJUSTMENT)) {
+      resetDraftNumber(subDraft);
+    }
   }
 
   @Transactional
@@ -380,14 +382,15 @@ public class SiglusStockManagementDraftService {
   }
 
   @Transactional
-  public StockManagementDraftDto updateStatusAfterSubmit(StockManagementDraftDto draftDto) {
-    StockManagementDraft subDraft = stockManagementDraftRepository.findOne(draftDto.getId());
+  public StockManagementDraftDto updateStatusAfterSubmit(StockManagementDraftDto subDraftDto) {
+    StockManagementDraft subDraft = stockManagementDraftRepository.findOne(subDraftDto.getId());
     draftValidator.validateSubDraft(subDraft);
+    checkConflictOrderableInSubDraftsService.checkConflictOrderableAndLotInSubDraft(subDraftDto);
     draftValidator.validateSubDraftStatus(subDraft);
-    checkConflictOrderableInSubDraftsService.checkConflictSubDraft(draftDto);
+    checkConflictOrderableInSubDraftsService.checkConflictOrderableBetweenSubDrafts(subDraftDto);
     subDraft.setStatus(PhysicalInventorySubDraftEnum.SUBMITTED);
-    subDraft.setSignature(draftDto.getSignature());
-    List<StockManagementDraftLineItemDto> lineItems = draftDto.getLineItems();
+    subDraft.setSignature(subDraftDto.getSignature());
+    List<StockManagementDraftLineItemDto> lineItems = subDraftDto.getLineItems();
     List<StockManagementDraftLineItem> draftLineItems = lineItems.stream()
         .map(lineItemDto -> StockManagementDraftLineItem.from(lineItemDto, subDraft))
         .collect(toList());

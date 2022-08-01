@@ -31,19 +31,19 @@ import org.openlmis.fulfillment.domain.ProofOfDeliveryStatus;
 import org.openlmis.fulfillment.web.ProofOfDeliveryController;
 import org.openlmis.fulfillment.web.util.ProofOfDeliveryDto;
 import org.siglus.siglusapi.service.SiglusNotificationService;
-import org.siglus.siglusapi.service.SiglusProofOfDeliveryService;
+import org.siglus.siglusapi.service.SiglusPodService;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
 
 @RunWith(MockitoJUnitRunner.class)
-public class SiglusProofOfDeliveryControllerTest {
+public class SiglusPodControllerTest {
 
   @InjectMocks
-  private SiglusProofOfDeliveryController controller;
+  private SiglusPodController controller;
 
   @Mock
-  private ProofOfDeliveryController actualController;
+  private ProofOfDeliveryController podController;
 
   @Mock
   private SiglusNotificationService notificationService;
@@ -52,20 +52,17 @@ public class SiglusProofOfDeliveryControllerTest {
   private OAuth2Authentication auth2Authentication;
 
   @Mock
-  private SiglusProofOfDeliveryService proofOfDeliveryService;
-
-  @Mock
-  private ProofOfDeliveryController proofOfDeliveryController;
+  private SiglusPodService proofOfDeliveryService;
 
   @Test
   public void shouldCallOpenlmisControllerWhenUpdateProofOfDelivery() {
     UUID id = UUID.randomUUID();
     ProofOfDeliveryDto dto = new ProofOfDeliveryDto();
-    when(actualController.updateProofOfDelivery(any(), any(), any()))
+    when(podController.updateProofOfDelivery(any(), any(), any()))
         .thenReturn(dto);
-    controller.updateProofOfDelivery(id, dto, auth2Authentication);
+    controller.updatePod(id, dto, auth2Authentication);
 
-    verify(actualController).updateProofOfDelivery(id, dto, auth2Authentication);
+    verify(podController).updateProofOfDelivery(id, dto, auth2Authentication);
 
     verify(notificationService, never()).postConfirmPod(dto);
   }
@@ -75,11 +72,11 @@ public class SiglusProofOfDeliveryControllerTest {
     UUID id = UUID.randomUUID();
     ProofOfDeliveryDto dto = new ProofOfDeliveryDto();
     dto.setStatus(ProofOfDeliveryStatus.CONFIRMED);
-    when(actualController.updateProofOfDelivery(any(), any(), any()))
+    when(podController.updateProofOfDelivery(any(), any(), any()))
         .thenReturn(dto);
-    controller.updateProofOfDelivery(id, dto, auth2Authentication);
+    controller.updatePod(id, dto, auth2Authentication);
 
-    verify(actualController).updateProofOfDelivery(id, dto, auth2Authentication);
+    verify(podController).updateProofOfDelivery(id, dto, auth2Authentication);
 
     verify(notificationService).postConfirmPod(dto);
   }
@@ -93,7 +90,7 @@ public class SiglusProofOfDeliveryControllerTest {
     controller.getProofOfDelivery(podId, null);
 
     // then
-    verify(proofOfDeliveryService).getProofOfDelivery(podId, null);
+    verify(proofOfDeliveryService).getPodDto(podId, null);
   }
 
   @Test
@@ -102,10 +99,10 @@ public class SiglusProofOfDeliveryControllerTest {
     UUID podId = UUID.randomUUID();
 
     // when
-    controller.printProofOfDelivery(null, podId, null);
+    controller.printPod(null, podId, null);
 
     // then
-    verify(actualController).printProofOfDelivery(null, podId, null);
+    verify(podController).printProofOfDelivery(null, podId, null);
   }
 
   @Test
@@ -119,7 +116,7 @@ public class SiglusProofOfDeliveryControllerTest {
     controller.getAllProofsOfDelivery(orderId, shipmentId, pageable);
 
     // then
-    verify(proofOfDeliveryController).getAllProofsOfDelivery(orderId, shipmentId, pageable);
+    verify(podController).getAllProofsOfDelivery(orderId, shipmentId, pageable);
   }
 
 }

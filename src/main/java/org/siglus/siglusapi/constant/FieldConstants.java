@@ -106,11 +106,9 @@ public class FieldConstants {
 
   public static final String EXCEL_CONTENT_TYPE = "application/vnd.ms-excel";
 
-  public static final String CHARACTER_ENCODING = "utf-8";
+  public static final String TRACER_DRUG_INFORMATION = "Informações_sobre_medicamento_rastreadores_";
 
-  public static final String TRACER_DRUG_INFORMATION = "tracer_drug_information_";
-
-  public static final String LEGENDA = "legenda";
+  public static final String SUBTITLE = "legenda";
 
   public static final String EMPTY_VALUE = "N/A";
 
@@ -120,15 +118,15 @@ public class FieldConstants {
 
   public static final String UTF_8 = "UTF-8";
 
-  public static final String STOCK_OUT_PORTUGUESE = "Estoque";
+  public static final String STOCK_OUT_PORTUGUESE = "Roptura de stock";
 
-  public static final String LOW_STOCK_PORTUGUESE = "Baixo estoque";
+  public static final String LOW_STOCK_PORTUGUESE = "Eminência de roptura";
 
-  public static final String REGULAR_STOCK_PORTUGUESE = "Estoque Regular";
+  public static final String REGULAR_STOCK_PORTUGUESE = "Stock regular";
 
-  public static final String OVER_STOCK_PORTUGUESE = "estoque excessivo";
+  public static final String OVER_STOCK_PORTUGUESE = "Stock acumulado";
 
-  public static final String DRUG_CODE_PORTUGUESE = "Código de Medicamentos";
+  public static final String DRUG_CODE_PORTUGUESE = "Código do produto";
 
   public static final String PROGRAM_PORTUGUESE = "Programa";
 
@@ -138,7 +136,7 @@ public class FieldConstants {
 
   public static final String DISTRICT_PORTUGUESE = "Distrito";
 
-  public static final String FACILITY_PORTUGUESE = "Unidade Sanitária";
+  public static final String FACILITY_PORTUGUESE = "Instalação";
 
   public static final String CMM = "CMM";
 
@@ -152,7 +150,7 @@ public class FieldConstants {
 
   public static final int GREEN_MARK = 3;
 
-  public static final int VIOLET_MARK = 4;
+  public static final int PURPLE_MARK = 4;
 
   public static final String REPORT_GENERATED_FOR_PORTUGUESE = "Relatório gerado para";
 

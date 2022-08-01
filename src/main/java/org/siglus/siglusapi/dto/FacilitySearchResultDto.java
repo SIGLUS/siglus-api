@@ -29,6 +29,8 @@ public class FacilitySearchResultDto extends FacilityDto {
 
   private Boolean enableLocationManagement;
 
+  private Boolean isNewFacility;
+
   public static FacilitySearchResultDto from(FacilityDto facilityDto) {
     FacilitySearchResultDto searchResultDto = new FacilitySearchResultDto();
     BeanUtils.copyProperties(facilityDto, searchResultDto);

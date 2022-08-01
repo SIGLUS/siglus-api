@@ -288,7 +288,6 @@ public class SiglusPhysicalInventoryService {
 
   private List<SubDraftDto> convertSubDraftToSubDraftDto(
       List<PhysicalInventorySubDraft> physicalInventorySubDraftList) {
-    // todo：fill saver name from saver id
     List<SubDraftDto> subDraftDtoList = new LinkedList<>();
     Map<Integer, List<PhysicalInventorySubDraft>> groupSubDraftDtoMap = physicalInventorySubDraftList.stream()
         .collect(Collectors.groupingBy(PhysicalInventorySubDraft::getNum));

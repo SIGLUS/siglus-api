@@ -17,8 +17,13 @@ package org.siglus.siglusapi.util;
 
 import static java.util.Collections.singleton;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import static org.siglus.siglusapi.constant.FacilityTypeConstants.DDM;
+import static org.siglus.siglusapi.constant.FieldConstants.DISTRICT;
+import static org.siglus.siglusapi.constant.FieldConstants.SITE;
 
 import java.util.Collection;
 import java.util.Optional;
@@ -32,6 +37,9 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.requisition.dto.DetailedRoleAssignmentDto;
 import org.openlmis.requisition.dto.RoleDto;
+import org.siglus.siglusapi.domain.FacilitySuppierLevel;
+import org.siglus.siglusapi.dto.FacilityDto;
+import org.siglus.siglusapi.dto.FacilityTypeDto;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.repository.FacilitySupplierLevelRepository;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
@@ -160,6 +168,58 @@ public class SiglusAuthenticationHelperTest {
 
     assertThat(authenticationHelper.getCurrentUserId().get())
         .isEqualTo(authentication.getPrincipal());
+  }
+
+  @Test
+  public void shouldReturnCorrespondingLevelWhenThereIsMatchingData() {
+    // given
+    UUID userId = UUID.randomUUID();
+    UUID homeFacilityId = UUID.randomUUID();
+    given(authentication.getPrincipal()).willReturn(userId);
+    UserDto currentUser = new UserDto();
+    currentUser.setHomeFacilityId(homeFacilityId);
+    given(referenceDataService.findOne(userId)).willReturn(currentUser);
+    FacilityDto facilityDto = new FacilityDto();
+    FacilityTypeDto typeDto = new FacilityTypeDto();
+    typeDto.setCode(DDM);
+    facilityDto.setType(typeDto);
+    when(siglusFacilityReferenceDataService.findOne(homeFacilityId)).thenReturn(facilityDto);
+
+    when(facilitySupplierLevelRepository.findByFacilityTypeCode(DDM)).thenReturn(Optional.of(FacilitySuppierLevel
+        .builder()
+        .level(DISTRICT)
+        .facilityTypeCode(DDM)
+        .build()));
+
+    // when
+    String facilityGeographicZoneLevel = authenticationHelper.getFacilityGeographicZoneLevel();
+
+    // then
+    assertEquals(DISTRICT, facilityGeographicZoneLevel);
+  }
+
+  @Test
+  public void shouldReturnSiteLevelWhenThereIsNoMatchingData() {
+    // given
+    UUID userId = UUID.randomUUID();
+    UUID homeFacilityId = UUID.randomUUID();
+    given(authentication.getPrincipal()).willReturn(userId);
+    UserDto currentUser = new UserDto();
+    currentUser.setHomeFacilityId(homeFacilityId);
+    given(referenceDataService.findOne(userId)).willReturn(currentUser);
+    FacilityDto facilityDto = new FacilityDto();
+    FacilityTypeDto typeDto = new FacilityTypeDto();
+    typeDto.setCode("HF");
+    facilityDto.setType(typeDto);
+    when(siglusFacilityReferenceDataService.findOne(homeFacilityId)).thenReturn(facilityDto);
+
+    when(facilitySupplierLevelRepository.findByFacilityTypeCode("HF")).thenReturn(Optional.empty());
+
+    // when
+    String facilityGeographicZoneLevel = authenticationHelper.getFacilityGeographicZoneLevel();
+
+    // then
+    assertEquals(SITE, facilityGeographicZoneLevel);
   }
 
   private SiglusAuthenticationHelper configureCurrentUserRoleId(String roleId) {

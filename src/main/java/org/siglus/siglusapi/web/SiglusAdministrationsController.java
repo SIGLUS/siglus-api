@@ -25,6 +25,7 @@ import org.siglus.siglusapi.service.SiglusAdministrationsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -33,6 +34,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -49,9 +51,10 @@ public class SiglusAdministrationsController {
     return administrationsService.searchForFacilities(facilitySearchParamDto, pageable);
   }
 
-  @DeleteMapping("/{facilityCode}/deviceInfo")
-  public void eraseAndroidDeviceInfo(@PathVariable String facilityCode) {
-    administrationsService.eraseDeviceInfoByFacilityId(facilityCode);
+  @PostMapping("/initiate")
+  @ResponseStatus(HttpStatus.CREATED)
+  public FacilitySearchResultDto createFacility(@RequestBody SiglusFacilityDto siglusFacilityDto) {
+    return administrationsService.createFacility(siglusFacilityDto);
   }
 
   @GetMapping("/{facilityId}")
@@ -73,8 +76,13 @@ public class SiglusAdministrationsController {
 
   @PostMapping("{facilityId}/locations")
   public void uploadLocationInfo(@PathVariable("facilityId") UUID facilityId,
-      @RequestParam("excelFile") MultipartFile locationManagementFile, @RequestParam("format") String format)
+      @RequestParam("file") MultipartFile locationManagementFile, @RequestParam("format") String format)
       throws IOException {
     administrationsService.uploadLocationInfo(facilityId, locationManagementFile);
+  }
+
+  @DeleteMapping("/{facilityCode}/deviceInfo")
+  public void eraseAndroidDeviceInfo(@PathVariable String facilityCode) {
+    administrationsService.eraseDeviceInfoByFacilityId(facilityCode);
   }
 }

@@ -89,7 +89,7 @@ public class SiglusOrderControllerTest {
     controller.searchOrders(params, pageable);
 
     // then
-    verify(siglusOrderService).searchOrders(params, pageable);
+    verify(siglusOrderService).searchOrdersWithSubDraftStatus(params, pageable);
   }
 
   @Test

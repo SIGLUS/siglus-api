@@ -43,6 +43,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.requisition.utils.Pagination;
+import org.openlmis.stockmanagement.repository.StockCardRepository;
 import org.siglus.siglusapi.domain.AppInfo;
 import org.siglus.siglusapi.domain.FacilityExtension;
 import org.siglus.siglusapi.domain.LocationManagement;
@@ -80,9 +81,10 @@ public class SiglusAdminstrationServiceTest {
   private LocationManagementRepository locationManagementRepository;
   @Mock
   private AndroidHelper androidHelper;
-
   @Mock
   private CsvValidator csvValidator;
+  @Mock
+  private StockCardRepository stockCardRepository;
 
   @Rule
   public ExpectedException exception = ExpectedException.none();
@@ -124,7 +126,7 @@ public class SiglusAdminstrationServiceTest {
     // given
     FacilitySearchParamDto facilitySearchParamDto = mockFacilitySearchParamDto();
     when(siglusFacilityReferenceDataService.searchAllFacilities(facilitySearchParamDto, pageable))
-              .thenReturn(mockFacilityDto());
+              .thenReturn(mockFacilityDtoPage());
     when(facilityExtensionRepository.findByFacilityId(device1)).thenReturn(
         mockFacilityExtension(device1, true, false));
     when(facilityExtensionRepository.findByFacilityId(device2)).thenReturn(
@@ -171,7 +173,7 @@ public class SiglusAdminstrationServiceTest {
   public void shouldGetFacilityInfoWhenFacilityExistsAndFacilityExtensionIsNull() {
     // given
     when(siglusFacilityReferenceDataService.findOneFacility(facilityId))
-        .thenReturn(mockFacilityDto().getContent().get(0));
+        .thenReturn(mockFacilityDtoPage().getContent().get(0));
 
     when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(null);
 
@@ -186,7 +188,7 @@ public class SiglusAdminstrationServiceTest {
   public void shouldGetFacilityInfoWhenFacilityExistsAndFacilityExtensionIsNotNull() {
     // given
     when(siglusFacilityReferenceDataService.findOneFacility(facilityId))
-        .thenReturn(mockFacilityDto().getContent().get(0));
+        .thenReturn(mockFacilityDtoPage().getContent().get(0));
 
     when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(
         mockFacilityExtension(facilityId, false, false));
@@ -216,7 +218,7 @@ public class SiglusAdminstrationServiceTest {
     when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(null);
     when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(facilityExtension);
     when(siglusFacilityReferenceDataService.findOneFacility(facilityId))
-        .thenReturn(mockFacilityDto().getContent().get(0));
+        .thenReturn(mockFacilityDtoPage().getContent().get(0));
 
     // when
     FacilitySearchResultDto searchResultDto = siglusAdministrationsService.updateFacility(facilityId,
@@ -231,7 +233,7 @@ public class SiglusAdminstrationServiceTest {
     // given
     when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(null);
     when(siglusFacilityReferenceDataService.findOneFacility(facilityId))
-        .thenReturn(mockFacilityDto().getContent().get(0));
+        .thenReturn(mockFacilityDtoPage().getContent().get(0));
     when(androidHelper.isAndroid()).thenReturn(false);
 
     // when
@@ -296,6 +298,20 @@ public class SiglusAdminstrationServiceTest {
     siglusAdministrationsService.uploadLocationInfo(facilityId, multipartFile);
   }
 
+  @Test
+
+  public void shouldCreateNewAndroidFacility() {
+    // given
+    SiglusFacilityDto siglusFacilityDto = mockSiglusFacilityDto();
+    FacilityDto facilityDto = mockFacilityDto();
+    when(siglusFacilityReferenceDataService.createFacility(siglusFacilityDto)).thenReturn(facilityDto);
+    when(siglusFacilityReferenceDataService.findOneFacility(facilityId)).thenReturn(facilityDto);
+    when(stockCardRepository.countByFacilityId(facilityId)).thenReturn(0);
+
+    // when
+    siglusAdministrationsService.createFacility(siglusFacilityDto);
+  }
+
   private FacilitySearchParamDto mockFacilitySearchParamDto() {
     FacilitySearchParamDto facilitySearchParamDto = new FacilitySearchParamDto();
     facilitySearchParamDto.setName(Name);
@@ -309,7 +325,7 @@ public class SiglusAdminstrationServiceTest {
     return appInfo;
   }
 
-  private Page<FacilityDto> mockFacilityDto() {
+  private Page<FacilityDto> mockFacilityDtoPage() {
     FacilityDto facilityInfo1 = new FacilityDto();
     facilityInfo1.setId(device1);
     facilityInfo1.setActive(true);
@@ -340,6 +356,7 @@ public class SiglusAdminstrationServiceTest {
     SiglusFacilityDto siglusFacilityDto = new SiglusFacilityDto();
     siglusFacilityDto.setId(facilityId);
     siglusFacilityDto.setEnableLocationManagement(true);
+    siglusFacilityDto.setIsAndroid(true);
     return siglusFacilityDto;
   }
 
@@ -355,5 +372,12 @@ public class SiglusAdminstrationServiceTest {
     locationManagement.setBarcode(BARCODE);
     locationManagementList.add(locationManagement);
     return locationManagementList;
+  }
+
+  private FacilityDto mockFacilityDto() {
+    FacilityDto facilityDto = new FacilityDto();
+    facilityDto.setId(facilityId);
+    facilityDto.setCode(facilityCode);
+    return facilityDto;
   }
 }

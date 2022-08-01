@@ -20,6 +20,7 @@ import static org.siglus.common.repository.RepositoryConstants.ORDER_BY_PAGEABLE
 import static org.siglus.common.repository.RepositoryConstants.SELECT_ORDERABLE;
 import static org.siglus.common.repository.RepositoryConstants.WHERE_LATEST_ORDERABLE;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.siglus.common.domain.referencedata.Orderable;
@@ -34,7 +35,7 @@ import org.springframework.data.repository.query.Param;
  * Persistence repository for saving/finding {@link Orderable}.
  */
 public interface OrderableRepository extends JpaRepository<Orderable, VersionIdentity> {
-  
+
   @Query(value = SELECT_ORDERABLE
       + FROM_ORDERABLES_CLAUSE
       + WHERE_LATEST_ORDERABLE
@@ -56,4 +57,10 @@ public interface OrderableRepository extends JpaRepository<Orderable, VersionIde
   Optional<Orderable> findLatestById(@Param("id") UUID id);
 
 
+  @Query(value = SELECT_ORDERABLE
+      + FROM_ORDERABLES_CLAUSE
+      + WHERE_LATEST_ORDERABLE
+      + " AND o.identity.id IN :ids"
+  )
+  List<Orderable> findLatestByIds(@Param("ids") Iterable<UUID> ids);
 }

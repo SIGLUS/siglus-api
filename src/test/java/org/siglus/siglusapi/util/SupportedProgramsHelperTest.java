@@ -62,10 +62,15 @@ public class SupportedProgramsHelperTest {
     typeDto.setCode("DDM");
     facilityDto.setType(typeDto);
     SupportedProgramDto supportedProgramDto = SupportedProgramDto.builder().programActive(true).supportActive(true)
-        .supportStartDate(LocalDate.of(2022, 3, 2)).build();
+        .supportStartDate(LocalDate.of(2022, 5, 2)).build();
     SupportedProgramDto supportedProgramDto1 = SupportedProgramDto.builder().programActive(false).supportActive(true)
         .supportStartDate(LocalDate.of(2022, 5, 2)).build();
-    facilityDto.setSupportedPrograms(Arrays.asList(supportedProgramDto1, supportedProgramDto));
+    SupportedProgramDto supportedProgramDto2 = SupportedProgramDto.builder().programActive(true).supportActive(false)
+        .supportStartDate(LocalDate.of(2022, 6, 2)).build();
+    SupportedProgramDto supportedProgramDto4 = SupportedProgramDto.builder().programActive(true).supportActive(true)
+        .supportStartDate(LocalDate.of(2022, 1, 2)).build();
+    facilityDto.setSupportedPrograms(Arrays.asList(supportedProgramDto1, supportedProgramDto, supportedProgramDto2,
+        supportedProgramDto4));
 
     when(facilityReferenceDataService.findOne(facilityId)).thenReturn(facilityDto);
     when(dateHelper.getCurrentDate()).thenReturn(LocalDate.of(2022, 4, 2));
@@ -74,7 +79,22 @@ public class SupportedProgramsHelperTest {
         .findHomeFacilitySupportedPrograms();
 
     // then
-    assertEquals(Collections.singletonList(supportedProgramDto), homeFacilitySupportedPrograms);
+    assertEquals(Collections.singletonList(supportedProgramDto4), homeFacilitySupportedPrograms);
+  }
+
+  @Test
+  public void shouldReturnEmptyListWhenFacilityIdIsNull() {
+    // given
+    UserDto userDto = new UserDto();
+    userDto.setHomeFacilityId(null);
+    when(authenticationHelper.getCurrentUser()).thenReturn(userDto);
+
+    // when
+    List<SupportedProgramDto> homeFacilitySupportedPrograms = supportedProgramsHelper
+        .findHomeFacilitySupportedPrograms();
+
+    // then
+    assertEquals(Collections.emptyList(), homeFacilitySupportedPrograms);
   }
 
 }
