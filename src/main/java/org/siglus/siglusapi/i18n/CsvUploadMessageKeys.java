@@ -19,13 +19,10 @@ import static org.siglus.siglusapi.i18n.MessageKeys.SERVICE_ERROR;
 
 public class CsvUploadMessageKeys {
   private static final String ERROR_PREFIX = SERVICE_ERROR + ".upload";
-
-  public static final String ERROR_UPLOAD_RECORD_INVALID = ERROR_PREFIX + ".record.invalid";
   public static final String ERROR_FILE_IS_EMPTY = ERROR_PREFIX + ".file.empty";
   public static final String ERROR_INCORRECT_FILE_FORMAT = ERROR_PREFIX + ".file.format.incorrect";
   public static final String ERROR_UPLOAD_HEADER_MISSING = ERROR_PREFIX + ".header.missing";
-  public static final String ERROR_UPLOAD_MISSING_MANDATORY_COLUMNS = ERROR_PREFIX
-      + ".mandatory.columns.missing";
+  public static final String ERROR_UPLOAD_MISSING_ROW = ERROR_PREFIX + ".row.missing";
   public static final String ERROR_UPLOAD_HEADER_INVALID = ERROR_PREFIX + ".header.invalid";
   public static final String ERROR_DUPLICATE_LOCATION_CODE = ERROR_PREFIX + ".duplicate.locationCode";
   public static final String ERROR_IO = ERROR_PREFIX + ".io.error";
