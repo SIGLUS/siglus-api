@@ -262,8 +262,8 @@ public class PodConfirmServiceTest {
     approvedProductDto.setOrderable(orderableDto);
     when(approvedProductReferenceDataService.getApprovedProducts(facilityId, programId))
         .thenReturn(ImmutableList.of(approvedProductDto));
-    org.siglus.common.dto.referencedata.OrderableDto orderableDto1 =
-        new org.siglus.common.dto.referencedata.OrderableDto();
+    org.openlmis.referencedata.dto.OrderableDto orderableDto1 =
+        new org.openlmis.referencedata.dto.OrderableDto();
     orderableDto1.setProductCode(productCode);
     orderableDto1.setTradeItemIdentifier(tradeItemId);
     Set<UUID> programIds = new HashSet<>();

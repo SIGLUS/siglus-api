@@ -18,7 +18,7 @@ package org.siglus.siglusapi.dto;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
-import org.siglus.common.dto.referencedata.BaseDto;
+import org.openlmis.referencedata.dto.BaseDto;
 
 @Getter
 @Setter

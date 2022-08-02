@@ -17,7 +17,7 @@ package org.siglus.siglusapi.migration;
 
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singleton;
-import static org.siglus.common.domain.referencedata.Orderable.TRADE_ITEM;
+import static org.openlmis.referencedata.domain.Orderable.TRADE_ITEM;
 
 import com.google.common.collect.ImmutableMap;
 import java.util.UUID;

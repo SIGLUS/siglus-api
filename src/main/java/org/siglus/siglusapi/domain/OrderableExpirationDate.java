@@ -27,8 +27,8 @@ import javax.persistence.SqlResultSetMapping;
 import javax.persistence.SqlResultSetMappings;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
-import org.siglus.common.domain.referencedata.VersionIdentity;
-import org.siglus.common.domain.referencedata.Versionable;
+import org.openlmis.referencedata.domain.VersionIdentity;
+import org.openlmis.referencedata.domain.Versionable;
 import org.siglus.siglusapi.dto.OrderableExpirationDateDto;
 
 @Entity

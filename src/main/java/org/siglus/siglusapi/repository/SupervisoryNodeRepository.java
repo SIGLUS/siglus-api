@@ -17,7 +17,7 @@ package org.siglus.siglusapi.repository;
 
 import java.util.Set;
 import java.util.UUID;
-import org.siglus.common.domain.referencedata.SupervisoryNode;
+import org.openlmis.referencedata.domain.SupervisoryNode;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

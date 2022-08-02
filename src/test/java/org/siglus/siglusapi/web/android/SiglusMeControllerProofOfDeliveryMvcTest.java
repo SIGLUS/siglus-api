@@ -344,12 +344,12 @@ public class SiglusMeControllerProofOfDeliveryMvcTest extends FileBasedTest {
   }
 
   private void mockProducts() {
-    org.siglus.common.dto.referencedata.OrderableDto product1 =
-        mock(org.siglus.common.dto.referencedata.OrderableDto.class);
+    org.openlmis.referencedata.dto.OrderableDto product1 =
+        mock(org.openlmis.referencedata.dto.OrderableDto.class);
     when(product1.getId()).thenReturn(product1Id);
     when(product1.getProductCode()).thenReturn("22A01");
-    org.siglus.common.dto.referencedata.OrderableDto product2 =
-        mock(org.siglus.common.dto.referencedata.OrderableDto.class);
+    org.openlmis.referencedata.dto.OrderableDto product2 =
+        mock(org.openlmis.referencedata.dto.OrderableDto.class);
     when(product2.getId()).thenReturn(product2Id);
     when(product2.getProductCode()).thenReturn("22B01");
     when(orderableDataService.findByIds(any())).thenReturn(asList(product1, product2));

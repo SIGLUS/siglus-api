@@ -25,7 +25,7 @@ import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.siglus.common.dto.referencedata.OrderableDto;
+import org.openlmis.referencedata.dto.OrderableDto;
 import org.siglus.siglusapi.dto.android.db.PodLineItem;
 import org.siglus.siglusapi.dto.android.db.ShipmentLineItem;
 import org.siglus.siglusapi.dto.android.enumeration.RejectionReason;

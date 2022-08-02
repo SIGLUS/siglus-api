@@ -21,10 +21,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import org.openlmis.referencedata.dto.BaseDto;
+import org.openlmis.referencedata.dto.MetadataDto;
+import org.openlmis.referencedata.dto.OrderableDto;
 import org.openlmis.requisition.dto.ProgramDto;
-import org.siglus.common.dto.referencedata.BaseDto;
-import org.siglus.common.dto.referencedata.MetadataDto;
-import org.siglus.common.dto.referencedata.OrderableDto;
 
 @Getter
 @Setter

@@ -15,10 +15,10 @@
 
 package org.siglus.siglusapi.constant;
 
-import static org.siglus.common.domain.referencedata.Code.code;
+import static org.openlmis.referencedata.domain.Code.code;
 
 import javax.servlet.http.HttpServletRequest;
-import org.siglus.common.domain.referencedata.Code;
+import org.openlmis.referencedata.domain.Code;
 import org.siglus.siglusapi.dto.android.request.AndroidHeader;
 
 public class AndroidConstants {

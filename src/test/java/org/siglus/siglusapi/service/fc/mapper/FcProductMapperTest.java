@@ -31,7 +31,7 @@ import com.google.common.collect.ImmutableMap;
 import java.util.Collections;
 import java.util.Set;
 import org.junit.Test;
-import org.siglus.common.dto.referencedata.ProgramOrderableDto;
+import org.openlmis.referencedata.dto.ProgramOrderableDto;
 import org.siglus.siglusapi.dto.OrderableDisplayCategoryDto;
 import org.siglus.siglusapi.dto.fc.AreaDto;
 import org.siglus.siglusapi.dto.fc.ProductInfoDto;

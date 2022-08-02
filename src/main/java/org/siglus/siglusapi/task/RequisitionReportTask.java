@@ -16,7 +16,6 @@
 package org.siglus.siglusapi.task;
 
 import javax.transaction.Transactional;
-
 import lombok.RequiredArgsConstructor;
 import net.javacrumbs.shedlock.core.SchedulerLock;
 import org.siglus.siglusapi.service.task.report.RequisitionReportTaskService;

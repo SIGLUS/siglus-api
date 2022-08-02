@@ -18,7 +18,6 @@ package org.siglus.siglusapi.repository;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-
 import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
 import org.springframework.data.jpa.repository.JpaRepository;

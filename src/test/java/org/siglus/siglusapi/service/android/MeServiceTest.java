@@ -79,6 +79,9 @@ import org.openlmis.fulfillment.domain.VersionEntityReference;
 import org.openlmis.fulfillment.service.referencedata.ProcessingPeriodDto;
 import org.openlmis.fulfillment.web.util.OrderDto;
 import org.openlmis.fulfillment.web.util.OrderLineItemDto;
+import org.openlmis.referencedata.dto.ObjectReferenceDto;
+import org.openlmis.referencedata.dto.OrderableChildDto;
+import org.openlmis.referencedata.dto.ProgramOrderableDto;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.requisition.dto.OrderableDto;
@@ -89,7 +92,6 @@ import org.openlmis.stockmanagement.dto.ValidReasonAssignmentDto;
 import org.openlmis.stockmanagement.dto.referencedata.VersionObjectReferenceDto;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.CanFulfillForMeEntryDto;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2Dto;
-import org.siglus.common.dto.referencedata.ProgramOrderableDto;
 import org.siglus.common.repository.ArchivedProductRepository;
 import org.siglus.common.repository.ProgramAdditionalOrderableRepository;
 import org.siglus.siglusapi.config.AndroidTemplateConfigProperties;
@@ -1008,10 +1010,10 @@ public class MeServiceTest {
     return lotDto;
   }
 
-  private org.siglus.common.dto.referencedata.OrderableDto mockOrderable1() {
+  private org.openlmis.referencedata.dto.OrderableDto mockOrderable1() {
     String productCode = productCode1;
-    org.siglus.common.dto.referencedata.OrderableDto orderable =
-        new org.siglus.common.dto.referencedata.OrderableDto();
+    org.openlmis.referencedata.dto.OrderableDto orderable =
+        new org.openlmis.referencedata.dto.OrderableDto();
     orderable.setId(productId1);
     orderable.setArchived(true);
     orderable.setProductCode(productCode);
@@ -1044,10 +1046,10 @@ public class MeServiceTest {
     return approvedProduct;
   }
 
-  private org.siglus.common.dto.referencedata.OrderableDto mockOrderable2() {
+  private org.openlmis.referencedata.dto.OrderableDto mockOrderable2() {
     String productCode = productCode2;
-    org.siglus.common.dto.referencedata.OrderableDto orderable =
-        new org.siglus.common.dto.referencedata.OrderableDto();
+    org.openlmis.referencedata.dto.OrderableDto orderable =
+        new org.openlmis.referencedata.dto.OrderableDto();
     orderable.setId(productId2);
     orderable.setArchived(false);
     orderable.setProductCode(productCode);
@@ -1056,11 +1058,9 @@ public class MeServiceTest {
     orderable.setNetContent(2L);
     orderable.setPackRoundingThreshold(5L);
     orderable.setRoundToZero(true);
-    org.siglus.common.dto.referencedata.ObjectReferenceDto childRef =
-        new org.siglus.common.dto.referencedata.ObjectReferenceDto();
+    ObjectReferenceDto childRef = new ObjectReferenceDto();
     childRef.setId(productId1);
-    org.siglus.common.dto.referencedata.OrderableChildDto child =
-        new org.siglus.common.dto.referencedata.OrderableChildDto(childRef, 100L);
+    OrderableChildDto child = new OrderableChildDto(childRef, 100L);
     orderable.setChildren(new HashSet<>());
     orderable.getChildren().add(child);
     orderable.setExtraData(new HashMap<>());
@@ -1086,10 +1086,10 @@ public class MeServiceTest {
     return approvedProduct;
   }
 
-  private org.siglus.common.dto.referencedata.OrderableDto mockOrderable3() {
+  private org.openlmis.referencedata.dto.OrderableDto mockOrderable3() {
     String productCode = productCode3;
-    org.siglus.common.dto.referencedata.OrderableDto orderable =
-        new org.siglus.common.dto.referencedata.OrderableDto();
+    org.openlmis.referencedata.dto.OrderableDto orderable =
+        new org.openlmis.referencedata.dto.OrderableDto();
     orderable.setId(productId3);
     orderable.setArchived(false);
     orderable.setProductCode(productCode);
@@ -1407,8 +1407,8 @@ public class MeServiceTest {
   }
 
   private void mockProducts() {
-    org.siglus.common.dto.referencedata.OrderableDto product1 =
-        mock(org.siglus.common.dto.referencedata.OrderableDto.class);
+    org.openlmis.referencedata.dto.OrderableDto product1 =
+        mock(org.openlmis.referencedata.dto.OrderableDto.class);
     when(product1.getId()).thenReturn(product1Id);
     when(product1.getProductCode()).thenReturn("22A01");
     when(siglusOrderableDataService.findByIds(any())).thenReturn(Collections.singletonList(product1));

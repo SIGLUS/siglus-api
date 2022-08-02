@@ -24,7 +24,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import org.siglus.common.dto.referencedata.ProgramOrderableDto;
+import org.openlmis.referencedata.dto.ProgramOrderableDto;
 import org.siglus.siglusapi.constant.ProgramConstants;
 import org.siglus.siglusapi.domain.ProgramRealProgram;
 import org.siglus.siglusapi.dto.OrderableDisplayCategoryDto;

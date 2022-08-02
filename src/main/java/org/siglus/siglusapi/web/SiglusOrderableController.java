@@ -16,7 +16,7 @@
 package org.siglus.siglusapi.web;
 
 import java.util.UUID;
-import org.siglus.common.dto.referencedata.OrderableDto;
+import org.openlmis.referencedata.dto.OrderableDto;
 import org.siglus.siglusapi.dto.QueryOrderableSearchParams;
 import org.siglus.siglusapi.service.SiglusOrderableService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
