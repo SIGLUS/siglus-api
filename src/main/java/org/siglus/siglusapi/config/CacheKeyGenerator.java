@@ -34,7 +34,7 @@ public class CacheKeyGenerator implements KeyGenerator {
     Object param = params[0];
     StringBuilder builder = new StringBuilder();
     // className + methodName + params
-    builder.append(target.getClass().getSimpleName())
+    builder.append(target.getClass().getName())
         .append(DOT)
         .append(method.getName())
         .append(DOT);
