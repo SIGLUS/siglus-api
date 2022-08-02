@@ -28,5 +28,5 @@ import org.springframework.data.repository.query.Param;
 public interface OrdersRepository extends JpaRepository<Order, UUID> {
 
   @Query(name = "Order.findOrderDto", nativeQuery = true)
-  OrderDto findOrderDtoById(@Param("id") UUID id);
+  OrderDto findOrderDtoById(@Param("orderId") UUID orderId);
 }

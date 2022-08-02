@@ -27,12 +27,12 @@ import org.springframework.data.repository.query.Param;
  */
 public interface RequisitionsRepository extends JpaRepository<Requisition, UUID> {
 
-  @Query(value = "select count(*) from requisition.requisitions r "
+  @Query(value = "select * from requisition.requisitions r "
       + "where r.processingperiodid = :processingPeriodId "
       + "and r.emergency = :emergency "
       + "and r.status in (:status) ",
       nativeQuery = true)
-  long countByPeriodAndEmergencyAndStatus(@Param("processingPeriodId") UUID periodId,
+  List<Requisition> selectAllByPeriodAndEmergencyAndStatus(@Param("processingPeriodId") UUID periodId,
       @Param("emergency") boolean emergency,
       @Param("status") List<String> status);
 }

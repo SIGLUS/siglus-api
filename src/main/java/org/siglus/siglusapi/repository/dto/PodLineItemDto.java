@@ -31,14 +31,17 @@ import lombok.Data;
     query = "select podli.quantityaccepted, podli.orderableid, podli.lotid,\n"
         + "o.code as productcode, o.fullproductname as productname, \n"
         + "l.lotcode, l.expirationdate,\n"
-        + "oli.orderedquantity\n"
+        + "oli.orderedquantity,\n"
+        + "rli.requestedquantity \n"
         + "from fulfillment.proof_of_delivery_line_items podli\n"
         + "left join referencedata.orderables o "
-        + "on (o.id = podli.orderableid) and podli.proofofdeliveryid = :podId \n"
+        + "on (o.id = podli.orderableid) and podli.proofofdeliveryid = :podId\n"
         + "left join referencedata.lots l "
         + "on (l.id = podli.lotid)\n"
         + "left join fulfillment.order_line_items oli "
-        + "on (oli.orderableid = podli.orderableid) and oli.orderid = :orderId \n",
+        + "on (oli.orderableid = podli.orderableid) and oli.orderid = :orderId\n"
+        + "left join requisition.requisition_line_items rli "
+        + "on (rli.orderableid = podli.orderableid) and rli.requisitionid = :requisitionId",
     resultSetMapping = "PodLineItem.PodLineItemDto")
 
 @MappedSuperclass
@@ -52,6 +55,7 @@ import lombok.Data;
             @ColumnResult(name = "lotid", type = UUID.class),
             @ColumnResult(name = "lotcode", type = String.class),
             @ColumnResult(name = "expirationdate", type = LocalDate.class),
+            @ColumnResult(name = "requestedquantity", type = Long.class),
             @ColumnResult(name = "orderedquantity", type = Long.class),
             @ColumnResult(name = "quantityaccepted", type = Long.class)
         }
@@ -69,7 +73,7 @@ public class PodLineItemDto {
   private String lotCode;
   private LocalDate lotExpirationDate;
 
-  //  private Long requestedQuantity;  // TODO ?
+  private Long requestedQuantity;
   private Long orderedQuantity;
   private Long receivedQuantity;
 }

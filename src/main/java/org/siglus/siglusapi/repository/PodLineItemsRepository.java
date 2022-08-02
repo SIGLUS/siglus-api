@@ -29,5 +29,6 @@ import org.springframework.data.repository.query.Param;
 public interface PodLineItemsRepository extends JpaRepository<ProofOfDeliveryLineItem, UUID> {
 
   @Query(name = "PodLineItem.findLineItemDtos", nativeQuery = true)
-  List<PodLineItemDto> lineItemDtos(@Param("podId") UUID podId, @Param("orderId") UUID orderId);
+  List<PodLineItemDto> lineItemDtos(@Param("podId") UUID podId, @Param("orderId") UUID orderId,
+      @Param("requisitionId") UUID requisitionId);
 }

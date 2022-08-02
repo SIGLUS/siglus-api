@@ -26,7 +26,6 @@ import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_SUB_DRAFTS_ALREADY_EXI
 import com.google.common.collect.Lists;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -39,19 +38,18 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
-import org.javers.common.collections.Sets;
 import org.openlmis.fulfillment.domain.Order;
-import org.openlmis.fulfillment.domain.ProofOfDelivery;
 import org.openlmis.fulfillment.domain.ProofOfDeliveryLineItem;
 import org.openlmis.fulfillment.domain.ProofOfDeliveryLineItem.Importer;
 import org.openlmis.fulfillment.domain.ProofOfDeliveryStatus;
-import org.openlmis.fulfillment.repository.ProofOfDeliveryRepository;
 import org.openlmis.fulfillment.web.ProofOfDeliveryController;
 import org.openlmis.fulfillment.web.util.OrderObjectReferenceDto;
 import org.openlmis.fulfillment.web.util.ProofOfDeliveryDto;
 import org.openlmis.fulfillment.web.util.ProofOfDeliveryLineItemDto;
-import org.openlmis.referencedata.domain.Facility;
+import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.RequisitionStatus;
+import org.openlmis.requisition.domain.requisition.StatusChange;
+import org.openlmis.requisition.repository.StatusChangeRepository;
 import org.siglus.common.domain.OrderExternal;
 import org.siglus.common.domain.referencedata.Orderable;
 import org.siglus.common.repository.OrderExternalRepository;
@@ -64,7 +62,6 @@ import org.siglus.siglusapi.dto.enums.PodSubDraftStatusEnum;
 import org.siglus.siglusapi.exception.AuthenticationException;
 import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.NotFoundException;
-import org.siglus.siglusapi.repository.FacilitiesRepository;
 import org.siglus.siglusapi.repository.OrderableRepository;
 import org.siglus.siglusapi.repository.OrdersRepository;
 import org.siglus.siglusapi.repository.PodLineItemsExtensionRepository;
@@ -135,21 +132,15 @@ public class SiglusPodService {
   private RequisitionsRepository requisitionsRepository;
 
   @Autowired
-  private FacilitiesRepository facilitiesRepository;
-
-  @Autowired
   private SiglusFacilityReferenceDataService siglusFacilityReferenceDataService;
 
   @Autowired
-  private ProofOfDeliveryRepository podRepository;
+  private StatusChangeRepository requisitionStatusChangeRepository;
 
   private static final String FILE_NAME_PREFIX_EMERGENCY = "OF.REM.";
   private static final String FILE_NAME_PREFIX_NORMAL = "OF.RNO.";
   private static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyMM");
   private static final List<String> REQUISITION_STATUS_POST_SUBMIT = Lists.newArrayList(
-      RequisitionStatus.SUBMITTED.name(),
-      RequisitionStatus.AUTHORIZED.name(),
-      RequisitionStatus.IN_APPROVAL.name(),
       RequisitionStatus.APPROVED.name(),
       RequisitionStatus.RELEASED.name(),
       RequisitionStatus.RELEASED_WITHOUT_ORDER.name());
@@ -265,16 +256,21 @@ public class SiglusPodService {
 
   public PodPrintInfoResponse getPintInfo(UUID orderId, UUID podId) {
     PodPrintInfoResponse response = new PodPrintInfoResponse();
-    response.setFileName(getFileName(orderId));
 
-    Order order = ordersRepository.findOne(orderId);
-    Set<UUID> facilityIds = Sets.asSet(order.getSupplyingFacilityId(), order.getReceivingFacilityId());
-    Map<UUID, Facility> facilityIdToFacility = facilitiesRepository.findAll(facilityIds).stream()
-        .collect(Collectors.toMap(Facility::getId, e -> e));
-    response.setClient(facilityIdToFacility.get(order.getReceivingFacilityId()).getName());
-    response.setSupplier(facilityIdToFacility.get(order.getSupplyingFacilityId()).getName());
+    OrderDto orderDto = ordersRepository.findOrderDtoById(orderId);
+    List<Requisition> requisitions = requisitionsRepository.selectAllByPeriodAndEmergencyAndStatus(
+        orderDto.getProcessingPeriodId(),
+        orderDto.getEmergency(), REQUISITION_STATUS_POST_SUBMIT);
 
-    FacilityDto facilityDto = siglusFacilityReferenceDataService.findOneFacility(order.getSupplyingFacilityId());
+    response.setFileName(getFileName(orderDto, requisitions));
+    response.setClient(orderDto.getReceivingFacilityName());
+    response.setSupplier(orderDto.getSupplyingFacilityName());
+    response.setReceivedBy(orderDto.getPodReceivedBy());
+    response.setDeliveredBy(orderDto.getPodDeliveredBy());
+    response.setReceivedDate(orderDto.getPodReceivedDate());
+    response.setIssueVoucherDate(orderDto.getOrderFulfillDate());
+
+    FacilityDto facilityDto = siglusFacilityReferenceDataService.findOneFacility(orderDto.getSupplyingFacilityId());
     GeographicZoneDto zoneDto = facilityDto.getGeographicZone();
     if (zoneDto.getLevel().getLevelNumber().equals(DISTRICT_LEVEL_NUMBER)) {
       response.setSupplierDistrict(zoneDto.getName());
@@ -283,28 +279,22 @@ public class SiglusPodService {
       response.setSupplierProvince(zoneDto.getName());
     }
 
-    ProofOfDelivery pod = podRepository.findOne(podId);
-    response.setReceivedBy(pod.getReceivedBy());
-    response.setDeliveredBy(pod.getDeliveredBy());
-    response.setReceivedDate(pod.getReceivedDate());
+    UUID requisitionId =
+        Objects.nonNull(orderDto.getRequisitionId()) ? orderDto.getRequisitionId() : orderDto.getExternalId();
+    StatusChange requisitionStatusChange = requisitionStatusChangeRepository.findByRequisitionId(requisitionId).stream()
+        .filter(e -> RequisitionStatus.RELEASED == e.getStatus()).findFirst().orElse(null);
+    response.setRequisitionDate(
+        Objects.nonNull(requisitionStatusChange) ? requisitionStatusChange.getCreatedDate() : null);
 
-    // TODO how to find requisition by order id ?
-    response.setRequisitionDate("");
-    UpdateDetails updateDetails = new UpdateDetails();
-    BeanUtils.copyProperties(order.getUpdateDetails(), updateDetails);
-    response.setIssueVoucherDate(updateDetails.getUpdatedDate());
-
-    List<PodLineItemDto> podLineItemDtos = podLineItemsRepository.lineItemDtos(podId, orderId);
+    List<PodLineItemDto> podLineItemDtos = podLineItemsRepository.lineItemDtos(podId, orderId, requisitionId);
     response.setLineItems(toLineItemInfo(podLineItemDtos));
 
     return response;
   }
 
-  private String getFileName(UUID orderId) {
-    OrderDto orderDto = ordersRepository.findOrderDtoById(orderId);
-
+  private String getFileName(OrderDto orderDto, List<Requisition> requisitions) {
     long orderCount = getOrderCount(orderDto);
-    long requisitionCount = getRequisitionCount(orderDto);
+    long requisitionCount = requisitions.size();
 
     StringBuffer fileName = new StringBuffer()
         .append(orderDto.getEmergency() ? FILE_NAME_PREFIX_EMERGENCY : FILE_NAME_PREFIX_NORMAL)
@@ -314,11 +304,6 @@ public class SiglusPodService {
         .append(formatCount(orderCount));
 
     return fileName.toString();
-  }
-
-  private long getRequisitionCount(OrderDto orderDto) {
-    return requisitionsRepository.countByPeriodAndEmergencyAndStatus(orderDto.getProcessingPeriodId(),
-        orderDto.getEmergency(), REQUISITION_STATUS_POST_SUBMIT);
   }
 
   private long getOrderCount(OrderDto orderDto) {
@@ -583,12 +568,5 @@ public class SiglusPodService {
     private UUID podId;
     private UUID productId;
     private String productCode;
-  }
-
-  @Data
-  private static class UpdateDetails {
-
-    private UUID updaterId;
-    private ZonedDateTime updatedDate;
   }
 }

@@ -17,6 +17,7 @@ package org.siglus.siglusapi.service;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyList;
@@ -27,7 +28,7 @@ import static org.mockito.Mockito.when;
 
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
@@ -42,11 +43,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.fulfillment.domain.Order;
-import org.openlmis.fulfillment.domain.ProofOfDelivery;
 import org.openlmis.fulfillment.domain.ProofOfDeliveryLineItem;
 import org.openlmis.fulfillment.domain.ProofOfDeliveryStatus;
-import org.openlmis.fulfillment.domain.UpdateDetails;
-import org.openlmis.fulfillment.repository.ProofOfDeliveryRepository;
 import org.openlmis.fulfillment.service.referencedata.OrderableDto;
 import org.openlmis.fulfillment.web.ProofOfDeliveryController;
 import org.openlmis.fulfillment.web.util.ObjectReferenceDto;
@@ -57,6 +55,10 @@ import org.openlmis.fulfillment.web.util.ProofOfDeliveryLineItemDto;
 import org.openlmis.fulfillment.web.util.ShipmentObjectReferenceDto;
 import org.openlmis.fulfillment.web.util.VersionObjectReferenceDto;
 import org.openlmis.referencedata.domain.Facility;
+import org.openlmis.requisition.domain.requisition.Requisition;
+import org.openlmis.requisition.domain.requisition.RequisitionStatus;
+import org.openlmis.requisition.domain.requisition.StatusChange;
+import org.openlmis.requisition.repository.StatusChangeRepository;
 import org.siglus.common.domain.referencedata.Code;
 import org.siglus.common.domain.referencedata.Orderable;
 import org.siglus.common.repository.OrderExternalRepository;
@@ -142,7 +144,7 @@ public class SiglusPodServiceTest {
   private SiglusFacilityReferenceDataService siglusFacilityReferenceDataService;
 
   @Mock
-  private ProofOfDeliveryRepository podRepository;
+  private StatusChangeRepository requisitionStatusChangeRepository;
 
   private final UUID externalId = UUID.randomUUID();
   private final UUID orderableId = UUID.randomUUID();
@@ -151,6 +153,7 @@ public class SiglusPodServiceTest {
   private final UUID lineItemId1 = UUID.randomUUID();
   private final UUID lineItemId2 = UUID.randomUUID();
   private final UUID orderId = UUID.randomUUID();
+  private final UUID requisitionId = UUID.randomUUID();
   private final UUID facilityId = UUID.randomUUID();
   private final UUID processingPeriodId = UUID.randomUUID();
   private final UUID lotId = UUID.randomUUID();
@@ -650,32 +653,106 @@ public class SiglusPodServiceTest {
     orderForQueryCount.setEmergency(orderDto.getEmergency());
     Example<Order> orderExample = Example.of(orderForQueryCount);
     when(ordersRepository.count(orderExample)).thenReturn(1L);
-    when(requisitionsRepository.countByPeriodAndEmergencyAndStatus(any(), anyBoolean(), anyList())).thenReturn(1L);
-    Order order = buildMockOrder();
-    when(ordersRepository.findOne(orderId)).thenReturn(buildMockOrder());
+    when(requisitionsRepository.selectAllByPeriodAndEmergencyAndStatus(any(), anyBoolean(), anyList())).thenReturn(
+        buildMockRequisitions());
     when(facilitiesRepository.findAll(anySet())).thenReturn(buildMockFacilities());
-    when(siglusFacilityReferenceDataService.findOneFacility(order.getSupplyingFacilityId())).thenReturn(
+    when(siglusFacilityReferenceDataService.findOneFacility(orderDto.getSupplyingFacilityId())).thenReturn(
         buildMockFacilityDto());
-    when(podRepository.findOne(podId)).thenReturn(buildMockProofOfDelivery());
-    when(podLineItemsRepository.lineItemDtos(podId, orderId)).thenReturn(buildMockPodLineItemDtos());
+    when(requisitionStatusChangeRepository.findByRequisitionId(requisitionId)).thenReturn(
+        buildMockRequisitionStatusChanges());
+    when(podLineItemsRepository.lineItemDtos(podId, orderId, requisitionId)).thenReturn(buildMockPodLineItemDtos());
 
     // when
     PodPrintInfoResponse response = service.getPintInfo(orderId, podId);
 
     // then
     assertNotNull(response);
+    assertNotNull(response.getSupplierDistrict());
+  }
+
+  @Test
+  public void shouldReturnWhenGetPintInfoWithDifferentDbResult() {
+    // given
+    OrderDto orderDto = buildMockOrderDtoWithOutRequisitionId();
+    when(ordersRepository.findOrderDtoById(orderId)).thenReturn(orderDto);
+    Order orderForQueryCount = new Order();
+    orderForQueryCount.setProcessingPeriodId(orderDto.getProcessingPeriodId());
+    orderForQueryCount.setEmergency(orderDto.getEmergency());
+    Example<Order> orderExample = Example.of(orderForQueryCount);
+    when(ordersRepository.count(orderExample)).thenReturn(1L);
+    when(requisitionsRepository.selectAllByPeriodAndEmergencyAndStatus(any(), anyBoolean(), anyList())).thenReturn(
+        buildMockRequisitionsWithLargeSize());
+    when(facilitiesRepository.findAll(anySet())).thenReturn(buildMockFacilities());
+    when(siglusFacilityReferenceDataService.findOneFacility(orderDto.getSupplyingFacilityId())).thenReturn(
+        buildMockFacilityDtoWithLevelNumber3());
+    when(requisitionStatusChangeRepository.findByRequisitionId(requisitionId)).thenReturn(
+        buildMockRequisitionStatusChangesWithNoReleasedStatus());
+    when(podLineItemsRepository.lineItemDtos(podId, orderId, requisitionId)).thenReturn(buildMockPodLineItemDtos());
+
+    // when
+    PodPrintInfoResponse response = service.getPintInfo(orderId, podId);
+
+    // then
+    assertNotNull(response);
+    assertNull(response.getSupplierDistrict());
+  }
+
+  private List<StatusChange> buildMockRequisitionStatusChanges() {
+    StatusChange statusChange = new StatusChange();
+    statusChange.setStatus(RequisitionStatus.RELEASED);
+    return Lists.newArrayList(statusChange);
+  }
+
+  private List<StatusChange> buildMockRequisitionStatusChangesWithNoReleasedStatus() {
+    StatusChange statusChange = new StatusChange();
+    statusChange.setStatus(RequisitionStatus.APPROVED);
+    return Lists.newArrayList(statusChange);
+  }
+
+  private List<Requisition> buildMockRequisitions() {
+    Requisition requisition = new Requisition();
+    requisition.setId(requisitionId);
+    return Lists.newArrayList(requisition);
+  }
+
+  private List<Requisition> buildMockRequisitionsWithLargeSize() {
+    List<Requisition> requisitions = new ArrayList<>();
+    for (int i = 0; i < 100; i++) {
+      Requisition requisition = new Requisition();
+      requisition.setId(requisitionId);
+      requisitions.add(requisition);
+    }
+    return requisitions;
   }
 
   private List<PodLineItemDto> buildMockPodLineItemDtos() {
-    PodLineItemDto dto = new PodLineItemDto(productCode, productName, lotId, lotCode, LocalDate.now(), 1L, 1L);
+    PodLineItemDto dto = PodLineItemDto.builder()
+        .productCode(productCode)
+        .productName(productName)
+        .lotId(lotId)
+        .lotCode(lotCode)
+        .lotExpirationDate(LocalDate.now().minusMonths(1L))
+        .requestedQuantity(1L)
+        .orderedQuantity(1L)
+        .receivedQuantity(1L)
+        .build();
     return Lists.newArrayList(dto);
   }
 
-  private ProofOfDelivery buildMockProofOfDelivery() {
-    return new ProofOfDelivery(null, null, Collections.emptyList(), "receiver", "deliver", LocalDate.now());
+  private FacilityDto buildMockFacilityDto() {
+    GeographicZoneDto zoneDto = new GeographicZoneDto();
+    zoneDto.setName("district");
+    zoneDto.setLevel(new GeographicLevelDto(UUID.randomUUID(), "code", "name", 3));
+    GeographicZoneDto parentDto = new GeographicZoneDto();
+    parentDto.setName("province");
+    zoneDto.setParent(parentDto);
+
+    FacilityDto dto = new FacilityDto();
+    dto.setGeographicZone(zoneDto);
+    return dto;
   }
 
-  private FacilityDto buildMockFacilityDto() {
+  private FacilityDto buildMockFacilityDtoWithLevelNumber3() {
     GeographicZoneDto zoneDto = new GeographicZoneDto();
     zoneDto.setName("district");
     zoneDto.setLevel(new GeographicLevelDto(UUID.randomUUID(), "code", "name", 2));
@@ -695,23 +772,29 @@ public class SiglusPodServiceTest {
     return Lists.newArrayList(facility);
   }
 
-  private Order buildMockOrder() {
-    Order order = new Order();
-    order.setId(orderId);
-    order.setReceivingFacilityId(facilityId);
-    order.setSupplyingFacilityId(facilityId);
-    order.setUpdateDetails(new UpdateDetails(UUID.randomUUID(), ZonedDateTime.now()));
-    return order;
-  }
-
   private OrderDto buildMockOrderDto() {
     return OrderDto.builder()
         .id(orderId)
         .emergency(Boolean.FALSE)
-        .periodEndDate(Date.from(Instant.now()))
         .receivingFacilityId(facilityId)
+        .supplyingFacilityId(facilityId)
+        .receivingFacilityCode(facilityCode)
+        .requisitionId(requisitionId)
+        .processingPeriodId(processingPeriodId)
+        .periodEndDate(Date.from(Instant.now()))
+        .build();
+  }
+
+  private OrderDto buildMockOrderDtoWithOutRequisitionId() {
+    return OrderDto.builder()
+        .id(orderId)
+        .emergency(Boolean.TRUE)
+        .receivingFacilityId(facilityId)
+        .supplyingFacilityId(facilityId)
         .receivingFacilityCode(facilityCode)
         .processingPeriodId(processingPeriodId)
+        .externalId(requisitionId)
+        .periodEndDate(Date.from(Instant.now()))
         .build();
   }
 
