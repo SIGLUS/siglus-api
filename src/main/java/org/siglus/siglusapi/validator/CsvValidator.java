@@ -113,7 +113,7 @@ public class CsvValidator {
 
   private void validateEachColumn(String columnValue, String columnName, long row) throws ValidationMessageException {
     if (StringUtils.isBlank(columnValue)) {
-      throw new ValidationMessageException(new Message(CsvUploadMessageKeys.ERROR_UPLOAD_RECORD_INVALID,
+      throw new ValidationMessageException(new Message(CsvUploadMessageKeys.ERROR_UPLOAD_MISSING_ROW,
           columnName, row));
     }
   }

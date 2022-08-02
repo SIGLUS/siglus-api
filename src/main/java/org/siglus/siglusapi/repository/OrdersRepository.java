@@ -15,20 +15,18 @@
 
 package org.siglus.siglusapi.repository;
 
-import java.util.List;
 import java.util.UUID;
-import org.openlmis.fulfillment.domain.ProofOfDeliveryLineItem;
-import org.siglus.siglusapi.repository.dto.PodLineItemDto;
+import org.openlmis.fulfillment.domain.Order;
+import org.siglus.siglusapi.repository.dto.OrderDto;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 /**
- * Persistence repository for saving/finding {@link ProofOfDeliveryLineItem}.
+ * Persistence repository for saving/finding {@link Order}.
  */
-public interface PodLineItemsRepository extends JpaRepository<ProofOfDeliveryLineItem, UUID> {
+public interface OrdersRepository extends JpaRepository<Order, UUID> {
 
-  @Query(name = "PodLineItem.findLineItemDtos", nativeQuery = true)
-  List<PodLineItemDto> lineItemDtos(@Param("podId") UUID podId, @Param("orderId") UUID orderId,
-      @Param("requisitionId") UUID requisitionId);
+  @Query(name = "Order.findOrderDto", nativeQuery = true)
+  OrderDto findOrderDtoById(@Param("orderId") UUID orderId);
 }

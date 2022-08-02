@@ -24,6 +24,8 @@ import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_POD_ID_SUB_DRAFT_ID_NO
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_SUB_DRAFTS_ALREADY_EXISTED;
 
 import com.google.common.collect.Lists;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -36,6 +38,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
+import org.openlmis.fulfillment.domain.Order;
 import org.openlmis.fulfillment.domain.ProofOfDeliveryLineItem;
 import org.openlmis.fulfillment.domain.ProofOfDeliveryLineItem.Importer;
 import org.openlmis.fulfillment.domain.ProofOfDeliveryStatus;
@@ -43,28 +46,42 @@ import org.openlmis.fulfillment.web.ProofOfDeliveryController;
 import org.openlmis.fulfillment.web.util.OrderObjectReferenceDto;
 import org.openlmis.fulfillment.web.util.ProofOfDeliveryDto;
 import org.openlmis.fulfillment.web.util.ProofOfDeliveryLineItemDto;
+import org.openlmis.requisition.domain.requisition.Requisition;
+import org.openlmis.requisition.domain.requisition.RequisitionStatus;
+import org.openlmis.requisition.domain.requisition.StatusChange;
+import org.openlmis.requisition.repository.StatusChangeRepository;
 import org.siglus.common.domain.OrderExternal;
 import org.siglus.common.domain.referencedata.Orderable;
 import org.siglus.common.repository.OrderExternalRepository;
 import org.siglus.siglusapi.domain.PodLineItemsExtension;
 import org.siglus.siglusapi.domain.PodSubDraft;
+import org.siglus.siglusapi.dto.FacilityDto;
+import org.siglus.siglusapi.dto.GeographicZoneDto;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.dto.enums.PodSubDraftStatusEnum;
 import org.siglus.siglusapi.exception.AuthenticationException;
 import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.repository.OrderableRepository;
+import org.siglus.siglusapi.repository.OrdersRepository;
 import org.siglus.siglusapi.repository.PodLineItemsExtensionRepository;
 import org.siglus.siglusapi.repository.PodLineItemsRepository;
 import org.siglus.siglusapi.repository.PodSubDraftRepository;
+import org.siglus.siglusapi.repository.RequisitionsRepository;
+import org.siglus.siglusapi.repository.dto.OrderDto;
+import org.siglus.siglusapi.repository.dto.PodLineItemDto;
+import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusPodFulfillmentService;
 import org.siglus.siglusapi.util.CustomListSortHelper;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.web.request.CreatePodSubDraftRequest;
 import org.siglus.siglusapi.web.request.OperateTypeEnum;
 import org.siglus.siglusapi.web.request.UpdatePodSubDraftRequest;
+import org.siglus.siglusapi.web.response.PodPrintInfoResponse;
+import org.siglus.siglusapi.web.response.PodPrintInfoResponse.LineItemInfo;
 import org.siglus.siglusapi.web.response.PodSubDraftsSummaryResponse;
 import org.siglus.siglusapi.web.response.PodSubDraftsSummaryResponse.SubDraftInfo;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
@@ -107,6 +124,28 @@ public class SiglusPodService {
 
   @Autowired
   private SiglusNotificationService notificationService;
+
+  @Autowired
+  private OrdersRepository ordersRepository;
+
+  @Autowired
+  private RequisitionsRepository requisitionsRepository;
+
+  @Autowired
+  private SiglusFacilityReferenceDataService siglusFacilityReferenceDataService;
+
+  @Autowired
+  private StatusChangeRepository requisitionStatusChangeRepository;
+
+  private static final String FILE_NAME_PREFIX_EMERGENCY = "OF.REM.";
+  private static final String FILE_NAME_PREFIX_NORMAL = "OF.RNO.";
+  private static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyMM");
+  private static final List<String> REQUISITION_STATUS_POST_SUBMIT = Lists.newArrayList(
+      RequisitionStatus.APPROVED.name(),
+      RequisitionStatus.RELEASED.name(),
+      RequisitionStatus.RELEASED_WITHOUT_ORDER.name());
+  private static final Integer PROVINCE_LEVEL_NUMBER = 2;
+  private static final Integer DISTRICT_LEVEL_NUMBER = 3;
 
   public ProofOfDeliveryDto getPodDto(UUID id, Set<String> expand) {
     ProofOfDeliveryDto podDto = fulfillmentService.searchProofOfDelivery(id, expand);
@@ -213,6 +252,84 @@ public class SiglusPodService {
       notificationService.postConfirmPod(requestPodDto);
     }
     return requestPodDto;
+  }
+
+  public PodPrintInfoResponse getPintInfo(UUID orderId, UUID podId) {
+    PodPrintInfoResponse response = new PodPrintInfoResponse();
+
+    OrderDto orderDto = ordersRepository.findOrderDtoById(orderId);
+    List<Requisition> requisitions = requisitionsRepository.selectAllByPeriodAndEmergencyAndStatus(
+        orderDto.getProcessingPeriodId(),
+        orderDto.getEmergency(), REQUISITION_STATUS_POST_SUBMIT);
+
+    response.setFileName(getFileName(orderDto, requisitions));
+    response.setClient(orderDto.getReceivingFacilityName());
+    response.setSupplier(orderDto.getSupplyingFacilityName());
+    response.setReceivedBy(orderDto.getPodReceivedBy());
+    response.setDeliveredBy(orderDto.getPodDeliveredBy());
+    response.setReceivedDate(orderDto.getPodReceivedDate());
+    response.setIssueVoucherDate(orderDto.getOrderFulfillDate());
+
+    FacilityDto facilityDto = siglusFacilityReferenceDataService.findOneFacility(orderDto.getSupplyingFacilityId());
+    GeographicZoneDto zoneDto = facilityDto.getGeographicZone();
+    if (zoneDto.getLevel().getLevelNumber().equals(DISTRICT_LEVEL_NUMBER)) {
+      response.setSupplierDistrict(zoneDto.getName());
+      response.setSupplierProvince(zoneDto.getParent().getName());
+    } else if (zoneDto.getLevel().getLevelNumber().equals(PROVINCE_LEVEL_NUMBER)) {
+      response.setSupplierProvince(zoneDto.getName());
+    }
+
+    UUID requisitionId =
+        Objects.nonNull(orderDto.getRequisitionId()) ? orderDto.getRequisitionId() : orderDto.getExternalId();
+    StatusChange requisitionStatusChange = requisitionStatusChangeRepository.findByRequisitionId(requisitionId).stream()
+        .filter(e -> RequisitionStatus.RELEASED == e.getStatus()).findFirst().orElse(null);
+    response.setRequisitionDate(
+        Objects.nonNull(requisitionStatusChange) ? requisitionStatusChange.getCreatedDate() : null);
+
+    List<PodLineItemDto> podLineItemDtos = podLineItemsRepository.lineItemDtos(podId, orderId, requisitionId);
+    response.setLineItems(toLineItemInfo(podLineItemDtos));
+
+    return response;
+  }
+
+  private String getFileName(OrderDto orderDto, List<Requisition> requisitions) {
+    long orderCount = getOrderCount(orderDto);
+    long requisitionCount = requisitions.size();
+
+    StringBuffer fileName = new StringBuffer()
+        .append(orderDto.getEmergency() ? FILE_NAME_PREFIX_EMERGENCY : FILE_NAME_PREFIX_NORMAL)
+        .append(orderDto.getReceivingFacilityCode()).append(".")
+        .append(DATE_FORMAT.format(orderDto.getPeriodEndDate())).append(".")
+        .append(formatCount(requisitionCount)).append("/")
+        .append(formatCount(orderCount));
+
+    return fileName.toString();
+  }
+
+  private long getOrderCount(OrderDto orderDto) {
+    Order order = new Order();
+    order.setProcessingPeriodId(orderDto.getProcessingPeriodId());
+    order.setEmergency(orderDto.getEmergency());
+    Example<Order> orderExample = Example.of(order);
+    return ordersRepository.count(orderExample);
+  }
+
+  private String formatCount(long count) {
+    String formatString = String.valueOf(count);
+    if (formatString.length() >= 2) {
+      return formatString;
+    }
+    return "0" + formatString;
+  }
+
+  private List<LineItemInfo> toLineItemInfo(List<PodLineItemDto> lineItemDtos) {
+    List<LineItemInfo> lineItemInfos = Lists.newArrayListWithExpectedSize(lineItemDtos.size());
+    lineItemDtos.forEach(podLineItemDto -> {
+      LineItemInfo lineItemInfo = new LineItemInfo();
+      BeanUtils.copyProperties(podLineItemDto, lineItemInfo);
+      lineItemInfos.add(lineItemInfo);
+    });
+    return lineItemInfos;
   }
 
   private ProofOfDeliveryDto getPodDtoByPodId(UUID podId) {

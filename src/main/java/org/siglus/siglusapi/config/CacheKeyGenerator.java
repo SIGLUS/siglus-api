@@ -28,23 +28,22 @@ public class CacheKeyGenerator implements KeyGenerator {
 
   @Override
   public Object generate(Object target, Method method, Object... params) {
-    if (params.length == 0) {
-      return SimpleKey.EMPTY;
-    }
-    Object param = params[0];
     StringBuilder builder = new StringBuilder();
     // className + methodName + params
     builder.append(target.getClass().getName())
         .append(DOT)
         .append(method.getName())
         .append(DOT);
-    if (param instanceof Map) {
-      Map<String, Object> map = (Map<String, Object>) param;
-      if (map.isEmpty()) {
+    if (params.length > 0) {
+      Object param = params[0];
+      if (param instanceof Map) {
+        Map<String, Object> map = (Map<String, Object>) param;
+        if (map.isEmpty()) {
+          return builder.toString();
+        }
+        map.keySet().forEach(key -> builder.append(key).append("-").append(map.get(key)).append(DOT));
         return builder.toString();
       }
-      map.keySet().forEach(key -> builder.append(key).append("-").append(map.get(key)).append(DOT));
-      return builder.toString();
     }
     return new SimpleKey(builder.toString(), params);
   }

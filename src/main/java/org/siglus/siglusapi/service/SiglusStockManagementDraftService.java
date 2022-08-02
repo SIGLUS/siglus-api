@@ -135,7 +135,6 @@ public class SiglusStockManagementDraftService {
     stockManagementDraftValidator.validateDraft(subDraftDto, id);
     if (subDraftDto.getDraftType().equals(FieldConstants.ISSUE)
         || subDraftDto.getDraftType().equals(FieldConstants.RECEIVE)) {
-      conflictOrderableInSubDraftsService.checkConflictOrderableAndLotInSubDraft(subDraftDto);
       StockManagementDraft subDraft = stockManagementDraftRepository.findOne(id);
       draftValidator.validateSubDraftStatus(subDraft);
       conflictOrderableInSubDraftsService.checkConflictOrderableBetweenSubDrafts(subDraftDto);
