@@ -111,6 +111,7 @@ public class SiglusAdministrationsService {
     return getFacilityInfo(createdNewFacilityDto.getId());
   }
 
+  @Transactional
   public void eraseDeviceInfoByFacilityId(String facilityCode) {
     AppInfo androidInfoByFacilityId = appInfoRepository.findByFacilityCode(facilityCode);
     if (null == androidInfoByFacilityId) {

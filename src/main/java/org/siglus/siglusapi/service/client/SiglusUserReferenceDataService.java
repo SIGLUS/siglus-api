@@ -15,6 +15,9 @@
 
 package org.siglus.siglusapi.service.client;
 
+import static org.siglus.siglusapi.constant.CacheConstants.CACHE_KEY_GENERATOR;
+import static org.siglus.siglusapi.constant.CacheConstants.SIGLUS_USER;
+
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -23,11 +26,13 @@ import org.openlmis.requisition.dto.DetailedRoleAssignmentDto;
 import org.openlmis.stockmanagement.util.RequestParameters;
 import org.siglus.siglusapi.constant.PaginationConstants;
 import org.siglus.siglusapi.dto.UserDto;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
+
 
 @Service
 public class SiglusUserReferenceDataService extends BaseReferenceDataService<UserDto> {
@@ -86,6 +91,13 @@ public class SiglusUserReferenceDataService extends BaseReferenceDataService<Use
     requestBody.put(HOME_FACILITY_ID, homeFacilityId.toString());
     return getPage("search", RequestParameters.init().setPage(noPagination),
         requestBody, HttpMethod.POST, getResultClass(), false);
+  }
+
+  // TODO ClassCastException: requisition.dto.UserDto cannot be cast to stockmanagement.dto.referencedata.UserDto
+  @Override
+  @Cacheable(value = SIGLUS_USER, keyGenerator = CACHE_KEY_GENERATOR)
+  public UserDto findOne(UUID userId) {
+    return super.findOne(userId);
   }
 
 }

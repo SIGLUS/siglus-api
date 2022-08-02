@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.apache.commons.collections.CollectionUtils;
 import org.openlmis.stockmanagement.exception.ResourceNotFoundException;
@@ -43,7 +44,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
-public class CheckConflictOrderableInSubDraftsService {
+public class ConflictOrderableInSubDraftsService {
 
   @Autowired
   private StockManagementDraftRepository stockManagementDraftRepository;
@@ -89,11 +90,12 @@ public class CheckConflictOrderableInSubDraftsService {
 
   public void checkConflictOrderableAndLotInSubDraft(StockManagementDraftDto stockManagementDraftDto) {
     if (stockManagementDraftDto.getDraftType().equals(FieldConstants.RECEIVE)) {
-      List<StockManagementDraftLineItemDto> lineItems = stockManagementDraftDto.getLineItems();
-      Map<UUID, String> orderableIdLotCodeMap = lineItems.stream().collect(Collectors
-          .toMap(StockManagementDraftLineItemDto::getOrderableId, StockManagementDraftLineItemDto::getLotCode,
-              (k1, k2) -> k1));
-      if (lineItems.size() != orderableIdLotCodeMap.size()) {
+      List<StockManagementDraftLineItemDto> lineItemDtos = stockManagementDraftDto.getLineItems();
+      Map<String, StockManagementDraftLineItemDto> orderableIdLotCodeMap = lineItemDtos.stream().collect(Collectors
+          .toMap(stockManagementDraftLineItemDto -> stockManagementDraftLineItemDto.getOrderableId()
+                  + stockManagementDraftLineItemDto.getLotCode(),
+              Function.identity(), (k1, k2) -> k1));
+      if (lineItemDtos.size() != orderableIdLotCodeMap.size()) {
         throw new ValidationMessageException(
             new Message(ERROR_STOCK_MANAGEMENT_SUB_DRAFT_SAME_ORDERABLE_ID_WITH_LOT_CODE));
       }

@@ -41,13 +41,13 @@ import org.siglus.siglusapi.repository.StockManagementDraftRepository;
 import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
 
 @RunWith(MockitoJUnitRunner.class)
-public class CheckConflictOrderableInSubDraftsServiceTest {
+public class ConflictOrderableInSubDraftsServiceTest {
 
   @Rule
   public ExpectedException exception = ExpectedException.none();
 
   @InjectMocks
-  private CheckConflictOrderableInSubDraftsService checkConflictOrderableInSubDraftsService;
+  private ConflictOrderableInSubDraftsService conflictOrderableInSubDraftsService;
 
   @Mock
   private StockManagementDraftRepository stockManagementDraftRepository;
@@ -112,7 +112,7 @@ public class CheckConflictOrderableInSubDraftsServiceTest {
     when(siglusOrderableReferenceDataService.findByIds(newArrayList(orderableId1, orderableId2)))
         .thenReturn(newArrayList(orderableDto1, orderableDto2));
 
-    checkConflictOrderableInSubDraftsService.checkConflictOrderableBetweenSubDrafts(draftDto);
+    conflictOrderableInSubDraftsService.checkConflictOrderableBetweenSubDrafts(draftDto);
   }
 
   @Test
@@ -132,6 +132,6 @@ public class CheckConflictOrderableInSubDraftsServiceTest {
     subDraftDto.setDraftType(FieldConstants.RECEIVE);
     subDraftDto.setLineItems(newArrayList(stockManagementDraftLineItemDto1, stockManagementDraftLineItemDto2));
 
-    checkConflictOrderableInSubDraftsService.checkConflictOrderableAndLotInSubDraft(subDraftDto);
+    conflictOrderableInSubDraftsService.checkConflictOrderableAndLotInSubDraft(subDraftDto);
   }
 }
