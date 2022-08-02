@@ -237,7 +237,6 @@ public class SiglusStockManagementDraftServiceTest {
         .setNewAttributesInOriginalDraft(draftDto, id);
     when(stockManagementDraftRepository.save(stockManagementDraft))
         .thenReturn(stockManagementDraft);
-    doNothing().when(conflictOrderableInSubDraftsService).checkConflictOrderableBetweenSubDrafts(draftDto);
 
     StockManagementDraftDto updatedDraftDto = siglusStockManagementDraftService
         .updateDraft(draftDto, id);
