@@ -29,6 +29,7 @@ import org.siglus.siglusapi.service.SiglusNotificationService;
 import org.siglus.siglusapi.service.SiglusPodService;
 import org.siglus.siglusapi.web.request.CreatePodSubDraftRequest;
 import org.siglus.siglusapi.web.request.UpdatePodSubDraftRequest;
+import org.siglus.siglusapi.web.response.PodPrintInfoResponse;
 import org.siglus.siglusapi.web.response.PodSubDraftsSummaryResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -72,8 +73,7 @@ public class SiglusPodController {
   public ProofOfDeliveryDto updatePod(@PathVariable("id") UUID podId,
       @RequestBody ProofOfDeliveryDto dto,
       OAuth2Authentication authentication) {
-    ProofOfDeliveryDto podDto = podController
-        .updateProofOfDelivery(podId, dto, authentication);
+    ProofOfDeliveryDto podDto = podController.updateProofOfDelivery(podId, dto, authentication);
     if (podDto.getStatus() == ProofOfDeliveryStatus.CONFIRMED) {
       notificationService.postConfirmPod(dto);
     }
@@ -82,8 +82,13 @@ public class SiglusPodController {
 
   @GetMapping("/{id}/print")
   public ModelAndView printPod(HttpServletRequest request,
-      @PathVariable("id") UUID id, OAuth2Authentication authentication) throws IOException {
-    return podController.printProofOfDelivery(request, id, authentication);
+      @PathVariable("id") UUID podId, OAuth2Authentication authentication) throws IOException {
+    return podController.printProofOfDelivery(request, podId, authentication);
+  }
+
+  @GetMapping("/{id}/printInfo")
+  public PodPrintInfoResponse getPrintInfo(String orderId, @PathVariable("id") UUID podId) {
+    return siglusPodService.getPintInfo(UUID.fromString(orderId), podId);
   }
 
   @ResponseStatus(HttpStatus.OK)

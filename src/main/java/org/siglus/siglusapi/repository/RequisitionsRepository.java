@@ -17,17 +17,22 @@ package org.siglus.siglusapi.repository;
 
 import java.util.List;
 import java.util.UUID;
-import org.openlmis.fulfillment.domain.ProofOfDeliveryLineItem;
-import org.siglus.siglusapi.repository.dto.PodLineItemDto;
+import org.openlmis.requisition.domain.requisition.Requisition;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 /**
- * Persistence repository for saving/finding {@link ProofOfDeliveryLineItem}.
+ * Persistence repository for saving/finding {@link Requisition}.
  */
-public interface PodLineItemsRepository extends JpaRepository<ProofOfDeliveryLineItem, UUID> {
+public interface RequisitionsRepository extends JpaRepository<Requisition, UUID> {
 
-  @Query(name = "PodLineItem.findLineItemDtos", nativeQuery = true)
-  List<PodLineItemDto> lineItemDtos(@Param("podId") UUID podId, @Param("orderId") UUID orderId);
+  @Query(value = "select count(*) from requisition.requisitions r "
+      + "where r.processingperiodid = :processingPeriodId "
+      + "and r.emergency = :emergency "
+      + "and r.status in (:status) ",
+      nativeQuery = true)
+  long countByPeriodAndEmergencyAndStatus(@Param("processingPeriodId") UUID periodId,
+      @Param("emergency") boolean emergency,
+      @Param("status") List<String> status);
 }

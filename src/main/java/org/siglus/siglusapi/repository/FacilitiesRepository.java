@@ -15,19 +15,13 @@
 
 package org.siglus.siglusapi.repository;
 
-import java.util.List;
 import java.util.UUID;
-import org.openlmis.fulfillment.domain.ProofOfDeliveryLineItem;
-import org.siglus.siglusapi.repository.dto.PodLineItemDto;
+import org.openlmis.referencedata.domain.Facility;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 
 /**
- * Persistence repository for saving/finding {@link ProofOfDeliveryLineItem}.
+ * Persistence repository for saving/finding {@link Facility}.
  */
-public interface PodLineItemsRepository extends JpaRepository<ProofOfDeliveryLineItem, UUID> {
+public interface FacilitiesRepository extends JpaRepository<Facility, UUID> {
 
-  @Query(name = "PodLineItem.findLineItemDtos", nativeQuery = true)
-  List<PodLineItemDto> lineItemDtos(@Param("podId") UUID podId, @Param("orderId") UUID orderId);
 }

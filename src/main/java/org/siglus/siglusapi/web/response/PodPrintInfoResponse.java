@@ -13,21 +13,44 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.repository;
+package org.siglus.siglusapi.web.response;
 
+import java.time.LocalDate;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
-import org.openlmis.fulfillment.domain.ProofOfDeliveryLineItem;
-import org.siglus.siglusapi.repository.dto.PodLineItemDto;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
+import lombok.Data;
 
-/**
- * Persistence repository for saving/finding {@link ProofOfDeliveryLineItem}.
- */
-public interface PodLineItemsRepository extends JpaRepository<ProofOfDeliveryLineItem, UUID> {
+@Data
+public class PodPrintInfoResponse {
 
-  @Query(name = "PodLineItem.findLineItemDtos", nativeQuery = true)
-  List<PodLineItemDto> lineItemDtos(@Param("podId") UUID podId, @Param("orderId") UUID orderId);
+  private String fileName;
+
+  private String supplier;
+  private String client;
+  private String supplierDistrict;
+  private String supplierProvince;
+  private String requisitionId;
+  private String requisitionDate;
+  private ZonedDateTime issueVoucherDate;
+
+  private String deliveredBy;
+  private String receivedBy;
+  private LocalDate receivedDate;
+
+  private List<LineItemInfo> lineItems;
+
+  @Data
+  public static class LineItemInfo {
+
+    private UUID productCode;
+    private String productName;
+    private UUID lotId;
+    private String lotCode;
+    private String lotExpirationDate;
+
+    //  private Long requestedQuantity;  // TODO ?
+    private Long orderedQuantity;
+    private Long receivedQuantity;
+  }
 }
