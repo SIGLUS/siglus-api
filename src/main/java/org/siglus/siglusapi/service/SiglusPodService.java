@@ -258,6 +258,7 @@ public class SiglusPodService {
     PodPrintInfoResponse response = new PodPrintInfoResponse();
 
     OrderDto orderDto = ordersRepository.findOrderDtoById(orderId);
+    // TODO facility
     List<Requisition> requisitions = requisitionsRepository.selectAllByPeriodAndEmergencyAndStatus(
         orderDto.getProcessingPeriodId(),
         orderDto.getEmergency(), REQUISITION_STATUS_POST_SUBMIT);
@@ -272,15 +273,17 @@ public class SiglusPodService {
 
     FacilityDto facilityDto = siglusFacilityReferenceDataService.findOneFacility(orderDto.getSupplyingFacilityId());
     GeographicZoneDto zoneDto = facilityDto.getGeographicZone();
-    if (zoneDto.getLevel().getLevelNumber().equals(DISTRICT_LEVEL_NUMBER)) {
-      response.setSupplierDistrict(zoneDto.getName());
-      response.setSupplierProvince(zoneDto.getParent().getName());
-    } else if (zoneDto.getLevel().getLevelNumber().equals(PROVINCE_LEVEL_NUMBER)) {
-      response.setSupplierProvince(zoneDto.getName());
+    if (Objects.nonNull(zoneDto)) {
+      if (zoneDto.getLevel().getLevelNumber().equals(DISTRICT_LEVEL_NUMBER)) {
+        response.setSupplierDistrict(zoneDto.getName());
+        response.setSupplierProvince(Objects.nonNull(zoneDto.getParent()) ? zoneDto.getParent().getName() : null);
+      } else if (zoneDto.getLevel().getLevelNumber().equals(PROVINCE_LEVEL_NUMBER)) {
+        response.setSupplierProvince(zoneDto.getName());
+      }
     }
 
     UUID requisitionId =
-        Objects.nonNull(orderDto.getRequisitionId()) ? orderDto.getRequisitionId() : orderDto.getExternalId();
+        Objects.isNull(orderDto.getRequisitionId()) ? orderDto.getExternalId() : orderDto.getRequisitionId();
     StatusChange requisitionStatusChange = requisitionStatusChangeRepository.findByRequisitionId(requisitionId).stream()
         .filter(e -> RequisitionStatus.RELEASED == e.getStatus()).findFirst().orElse(null);
     response.setRequisitionDate(
@@ -296,7 +299,7 @@ public class SiglusPodService {
     long orderCount = getOrderCount(orderDto);
     long requisitionCount = requisitions.size();
 
-    StringBuffer fileName = new StringBuffer()
+    StringBuilder fileName = new StringBuilder()
         .append(orderDto.getEmergency() ? FILE_NAME_PREFIX_EMERGENCY : FILE_NAME_PREFIX_NORMAL)
         .append(orderDto.getReceivingFacilityCode()).append(".")
         .append(DATE_FORMAT.format(orderDto.getPeriodEndDate())).append(".")

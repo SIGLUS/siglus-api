@@ -66,6 +66,7 @@ public class SiglusPodController {
   /**
    * why we redo this api? to support #330?<br> update status of notification of pod after confirm pod
    */
+  @Deprecated
   @ResponseStatus(HttpStatus.CREATED)
   @ResponseBody
   @PutMapping("/{id}")
@@ -80,6 +81,7 @@ public class SiglusPodController {
     return podDto;
   }
 
+  @Deprecated
   @GetMapping("/{id}/print")
   public ModelAndView printPod(HttpServletRequest request,
       @PathVariable("id") UUID podId, OAuth2Authentication authentication) throws IOException {
