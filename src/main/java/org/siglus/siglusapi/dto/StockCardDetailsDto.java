@@ -30,7 +30,7 @@ import org.openlmis.stockmanagement.dto.ObjectReferenceDto;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class CanFulfillForMeEntryNewDto {
+public class StockCardDetailsDto {
 
   private ObjectReferenceDto stockCard;
   private OrderableDto orderable;
@@ -44,5 +44,4 @@ public class CanFulfillForMeEntryNewDto {
       shape = Shape.STRING
   )
   private ZonedDateTime processedDate;
-
 }

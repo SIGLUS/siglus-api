@@ -26,9 +26,9 @@ import org.openlmis.referencedata.dto.OrderableDto;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class AssembledOrderableAndLotDto {
+public class StockCardSummaryDto {
 
   private OrderableDto orderable;
-  private Set<CanFulfillForMeEntryNewDto> canFulfillForMe;
+  private Set<StockCardDetailsDto> stockCardDetails;
   private Integer stockOnHand;
 }

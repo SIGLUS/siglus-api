@@ -18,7 +18,7 @@ package org.siglus.siglusapi.web;
 import java.util.List;
 import java.util.UUID;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2Dto;
-import org.siglus.siglusapi.dto.CanFulfillForMeEntryNewDto;
+import org.siglus.siglusapi.dto.StockCardDetailsDto;
 import org.siglus.siglusapi.service.SiglusStockCardSummariesService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -48,12 +48,12 @@ public class SiglusStockCardSummariesController {
         .searchStockCardSummaryV2Dtos(parameters, subDraftIds, draftId, pageable);
   }
 
-  @GetMapping("/integrateOrderables")
-  public List<List<CanFulfillForMeEntryNewDto>> getOrderablesBySingleRequest(
+  @GetMapping("/integration")
+  public List<List<StockCardDetailsDto>> getOrderablesBySingleRequest(
       @RequestParam MultiValueMap<String, String> parameters,
       @RequestParam(required = false) List<UUID> subDraftIds,
       @RequestParam(required = false) UUID draftId,
       @PageableDefault(size = Integer.MAX_VALUE) Pageable pageable) {
-    return stockCardSummariesSiglusService.assembleStockCardAndOrderable(parameters, subDraftIds, draftId, pageable);
+    return stockCardSummariesSiglusService.assembleStockCardIntegrationDto(parameters, subDraftIds, draftId, pageable);
   }
 }

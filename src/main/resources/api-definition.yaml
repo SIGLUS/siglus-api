@@ -1238,7 +1238,7 @@ traits:
                 application/json:
                   schema: localizedMessage
 
-    /stockCardSummaries/integrateOrderables:
+    /stockCardSummaries/integration:
       get:
         is: [ secured, paginated ]
         description: Get integration with summaries of stock cards and orderables
