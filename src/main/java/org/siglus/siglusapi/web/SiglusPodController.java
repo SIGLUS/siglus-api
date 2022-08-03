@@ -98,7 +98,7 @@ public class SiglusPodController {
   @GetMapping("/{id}")
   public ProofOfDeliveryDto getProofOfDelivery(@PathVariable("id") UUID podId,
       @RequestParam(required = false) Set<String> expand) {
-    return siglusPodService.getPodDto(podId, expand);
+    return siglusPodService.getPodDtoByIdAndExpand(podId, expand);
   }
 
   @GetMapping
@@ -123,12 +123,12 @@ public class SiglusPodController {
   }
 
   @PostMapping("/{id}/subDrafts/merge")
-  public ProofOfDeliveryDto mergeSubDrafts(@PathVariable("id") UUID podId) {
-    return siglusPodService.mergeSubDrafts(podId);
+  public ProofOfDeliveryDto mergeSubDrafts(@PathVariable("id") UUID podId,
+      @RequestParam Set<String> expand) {
+    return siglusPodService.mergeSubDrafts(podId, expand);
   }
 
   @PostMapping("/{id}/subDrafts/submit")
-  @Transactional
   public ProofOfDeliveryDto submitSubDrafts(@PathVariable("id") UUID podId,
       @RequestBody ProofOfDeliveryDto podDto,
       OAuth2Authentication authentication) {
@@ -142,8 +142,9 @@ public class SiglusPodController {
 
   @GetMapping("/{id}/subDrafts/{subDraftId}")
   public ProofOfDeliveryDto getSubDraftDetail(@PathVariable("id") UUID podId,
-      @PathVariable("subDraftId") UUID subDraftId) {
-    return siglusPodService.getSubDraftDetail(podId, subDraftId);
+      @PathVariable("subDraftId") UUID subDraftId,
+      @RequestParam Set<String> expand) {
+    return siglusPodService.getSubDraftDetail(podId, subDraftId, expand);
   }
 
   @PutMapping("/{id}/subDrafts/{subDraftId}")

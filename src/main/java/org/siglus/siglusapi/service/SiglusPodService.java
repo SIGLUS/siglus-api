@@ -147,8 +147,11 @@ public class SiglusPodService {
   private static final Integer PROVINCE_LEVEL_NUMBER = 2;
   private static final Integer DISTRICT_LEVEL_NUMBER = 3;
 
-  public ProofOfDeliveryDto getPodDto(UUID id, Set<String> expand) {
+  public ProofOfDeliveryDto getPodDtoByIdAndExpand(UUID id, Set<String> expand) {
     ProofOfDeliveryDto podDto = fulfillmentService.searchProofOfDelivery(id, expand);
+    if (Objects.isNull(podDto)) {
+      throw new NotFoundException(ERROR_NO_POD_OR_POD_LINE_ITEM_FOUND);
+    }
     OrderObjectReferenceDto order = podDto.getShipment().getOrder();
     OrderExternal external = orderExternalRepository.findOne(order.getExternalId());
     UUID requisitionId = external == null ? order.getExternalId() : external.getRequisitionId();
@@ -184,10 +187,10 @@ public class SiglusPodService {
         .build();
   }
 
-  public ProofOfDeliveryDto getSubDraftDetail(UUID podId, UUID subDraftId) {
+  public ProofOfDeliveryDto getSubDraftDetail(UUID podId, UUID subDraftId, Set<String> expand) {
     checkIfPodIdAndSubDraftIdMatch(podId, subDraftId);
 
-    ProofOfDeliveryDto dto = getPodDtoByPodId(podId);
+    ProofOfDeliveryDto dto = getPodDtoByIdAndExpand(podId, expand);
     List<ProofOfDeliveryLineItemDto> currentSubDraftLineItems = getCurrentSubDraftPodLineItemDtos(subDraftId, dto);
     dto.setLineItems(currentSubDraftLineItems);
     return dto;
@@ -233,10 +236,10 @@ public class SiglusPodService {
     deleteSubDraftAndLineExtensionBySubDraftIds(subDraftIds);
   }
 
-  public ProofOfDeliveryDto mergeSubDrafts(UUID podId) {
+  public ProofOfDeliveryDto mergeSubDrafts(UUID podId, Set<String> expand) {
     checkAuth();
     checkIfSubDraftsSubmitted(podId);
-    return getPodDtoByPodId(podId);
+    return getPodDtoByIdAndExpand(podId, expand);
   }
 
   @Transactional

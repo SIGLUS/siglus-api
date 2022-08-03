@@ -26,6 +26,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.google.common.collect.Sets;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -34,6 +35,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.assertj.core.util.Lists;
@@ -159,6 +161,7 @@ public class SiglusPodServiceTest {
   private final String facilityCode = "facility code";
   private final String facilityName = "facility name";
   private final String lotCode = "lot code";
+  private final Set<String> defaultExpands = Sets.newHashSet("shipment.order");
 
   @Test
   public void shouldGetPartialQualityWhenGetProofOfDelivery() {
@@ -182,7 +185,7 @@ public class SiglusPodServiceTest {
 
     // when
     ProofOfDeliveryDto proofOfDeliveryDto = service
-        .getPodDto(UUID.randomUUID(), Collections.emptySet());
+        .getPodDtoByIdAndExpand(UUID.randomUUID(), Collections.emptySet());
 
     //then
     OrderLineItemDto lineItem = proofOfDeliveryDto.getShipment().getOrder().getOrderLineItems()
@@ -205,7 +208,7 @@ public class SiglusPodServiceTest {
         .thenReturn("requisitionNumber");
 
     // when
-    ProofOfDeliveryDto proofOfDeliveryDto = service.getPodDto(UUID.randomUUID(),
+    ProofOfDeliveryDto proofOfDeliveryDto = service.getPodDtoByIdAndExpand(UUID.randomUUID(),
         Collections.emptySet());
 
     // then
@@ -326,7 +329,7 @@ public class SiglusPodServiceTest {
     when(podLineItemsExtensionRepository.findAll(example)).thenReturn(buildMockPodLineItemsExtensions());
 
     // when
-    ProofOfDeliveryDto subDraftDetail = service.getSubDraftDetail(podId, subDraftId);
+    ProofOfDeliveryDto subDraftDetail = service.getSubDraftDetail(podId, subDraftId, defaultExpands);
 
     // then
     assertEquals(subDraftDetail.getLineItems().size(), 1);
@@ -338,7 +341,7 @@ public class SiglusPodServiceTest {
     when(podSubDraftRepository.findOne(subDraftId)).thenReturn(null);
 
     // when
-    service.getSubDraftDetail(podId, subDraftId);
+    service.getSubDraftDetail(podId, subDraftId, defaultExpands);
   }
 
   @Test(expected = BusinessDataException.class)
@@ -347,7 +350,7 @@ public class SiglusPodServiceTest {
     when(podSubDraftRepository.findOne(subDraftId)).thenReturn(buildMockSubDraftNotYetStarted());
 
     // when
-    service.getSubDraftDetail(UUID.randomUUID(), subDraftId);
+    service.getSubDraftDetail(UUID.randomUUID(), subDraftId, defaultExpands);
   }
 
   @Test(expected = NotFoundException.class)
@@ -356,7 +359,7 @@ public class SiglusPodServiceTest {
     when(fulfillmentService.searchProofOfDelivery(any(), any())).thenReturn(null);
 
     // when
-    service.getSubDraftDetail(podId, subDraftId);
+    service.getSubDraftDetail(podId, subDraftId, defaultExpands);
   }
 
   @Test
@@ -530,7 +533,7 @@ public class SiglusPodServiceTest {
     when(fulfillmentService.searchProofOfDelivery(any(), any())).thenReturn(expectedResponse);
 
     // when
-    ProofOfDeliveryDto actualResponse = service.mergeSubDrafts(podId);
+    ProofOfDeliveryDto actualResponse = service.mergeSubDrafts(podId, defaultExpands);
     assertEquals(expectedResponse, actualResponse);
   }
 
@@ -540,7 +543,7 @@ public class SiglusPodServiceTest {
     when(authenticationHelper.isTheCurrentUserCanMergeOrDeleteSubDrafts()).thenReturn(Boolean.FALSE);
 
     // when
-    service.mergeSubDrafts(podId);
+    service.mergeSubDrafts(podId, defaultExpands);
   }
 
   @Test(expected = NotFoundException.class)
@@ -551,7 +554,7 @@ public class SiglusPodServiceTest {
     when(podSubDraftRepository.findAll(example)).thenReturn(null);
 
     // when
-    service.mergeSubDrafts(podId);
+    service.mergeSubDrafts(podId, defaultExpands);
   }
 
   @Test(expected = NotFoundException.class)
@@ -563,7 +566,7 @@ public class SiglusPodServiceTest {
     when(fulfillmentService.searchProofOfDelivery(any(), any())).thenReturn(null);
 
     // when
-    service.mergeSubDrafts(podId);
+    service.mergeSubDrafts(podId, defaultExpands);
   }
 
   @Test(expected = BusinessDataException.class)
@@ -574,7 +577,7 @@ public class SiglusPodServiceTest {
     when(podSubDraftRepository.findAll(example)).thenReturn(buildMockSubDrafts());
 
     // when
-    service.mergeSubDrafts(podId);
+    service.mergeSubDrafts(podId, defaultExpands);
   }
 
   @Test
