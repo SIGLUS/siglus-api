@@ -29,7 +29,7 @@ public class CacheKeyGenerator implements KeyGenerator {
   @Override
   public Object generate(Object target, Method method, Object... params) {
     StringBuilder builder = new StringBuilder();
-    // className + methodName + params
+    // package + className + methodName + params
     builder.append(target.getClass().getName())
         .append(DOT)
         .append(method.getName())
