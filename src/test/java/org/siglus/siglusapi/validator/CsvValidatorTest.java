@@ -22,7 +22,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.siglus.siglusapi.exception.ValidationMessageException;
+import org.siglus.siglusapi.exception.BusinessDataException;
 
 @RunWith(MockitoJUnitRunner.class)
 @SuppressWarnings("PMD.TooManyMethods")
@@ -53,31 +53,31 @@ public class CsvValidatorTest {
           + "AA25Afgd,Armazems Principalgf,Asfgd,Agdf,AA25%vbc,253, \n";
 
   @Test
-  public void shouldNotThrowValidationMessageExceptionWhenCorrectCsvFileUpload() throws IOException {
+  public void shouldNotThrowBusinessDataExceptionWhenCorrectCsvFileUpload() throws IOException {
     CSVParser parse = CSVParser.parse(csvCorrectInput, CSVFormat.EXCEL.withFirstRecordAsHeader());
     csvValidator.validateCsvHeaders(parse);
   }
 
-  @Test(expected = ValidationMessageException.class)
-  public void shouldThrowValidationMessageExceptionWhenContainNullHeader() throws IOException {
+  @Test(expected = BusinessDataException.class)
+  public void shouldThrowBusinessDataExceptionWhenContainNullHeader() throws IOException {
     CSVParser parse = CSVParser.parse(csvNullHeaderInput, CSVFormat.EXCEL.withFirstRecordAsHeader());
     csvValidator.validateCsvHeaders(parse);
   }
 
-  @Test(expected = ValidationMessageException.class)
-  public void shouldThrowValidationMessageExceptionWhenInvalidHeader() throws IOException {
+  @Test(expected = BusinessDataException.class)
+  public void shouldThrowBusinessDataExceptionWhenInvalidHeader() throws IOException {
     CSVParser parse = CSVParser.parse(csvInvalidHeaderInput, CSVFormat.EXCEL.withFirstRecordAsHeader());
     csvValidator.validateCsvHeaders(parse);
   }
 
-  @Test(expected = ValidationMessageException.class)
-  public void shouldThrowValidationMessageExceptionWhenDuplicateLocationCode() throws IOException {
+  @Test(expected = BusinessDataException.class)
+  public void shouldThrowBusinessDataExceptionWhenDuplicateLocationCode() throws IOException {
     CSVParser parse = CSVParser.parse(csvDuplicateLocationCodeInput, CSVFormat.EXCEL.withFirstRecordAsHeader());
     csvValidator.validateDuplicateLocationCode(parse);
   }
 
-  @Test(expected = ValidationMessageException.class)
-  public void shouldThrowValidationMessageExceptionWhenLocationCodeMissing() throws IOException {
+  @Test(expected = BusinessDataException.class)
+  public void shouldThrowBusinessDataExceptionWhenLocationCodeMissing() throws IOException {
     CSVParser parse = CSVParser.parse(csvLocationCodeMissingInput, CSVFormat.EXCEL.withFirstRecordAsHeader());
     csvValidator.validateNullRow(parse.getRecords().get(0));
   }

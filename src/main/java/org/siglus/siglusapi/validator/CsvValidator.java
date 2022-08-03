@@ -28,13 +28,14 @@ import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.lang.StringUtils;
 import org.siglus.siglusapi.dto.Message;
+import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.i18n.CsvUploadMessageKeys;
 import org.springframework.stereotype.Component;
 
 @Component
 public class CsvValidator {
-
+  private static final String ERROR_BUSINESS_CODE = "upload csv failed";
   private static final String LOCATION_CODE = "Location Code";
   private static final String AREA = "Area";
   private static final String ZONE = "Zone";
@@ -80,8 +81,8 @@ public class CsvValidator {
 
     for (String locationCode : locationCodeToDuplicateRowMap.keySet()) {
       if (locationCodeToDuplicateRowMap.get(locationCode).size() > 1) {
-        throw new ValidationMessageException(new Message(CsvUploadMessageKeys.ERROR_DUPLICATE_LOCATION_CODE,
-            locationCodeToDuplicateRowMap.get(locationCode).toString()));
+        throw new BusinessDataException(new Message(CsvUploadMessageKeys.ERROR_DUPLICATE_LOCATION_CODE,
+            locationCodeToDuplicateRowMap.get(locationCode).toString()), ERROR_BUSINESS_CODE);
       }
     }
 
@@ -91,8 +92,8 @@ public class CsvValidator {
   private void validateNullHeaders(List<String> headers) throws ValidationMessageException {
     for (int i = 0; i < headers.size(); i++) {
       if (StringUtils.isEmpty(headers.get(i))) {
-        throw new ValidationMessageException(new Message(CsvUploadMessageKeys.ERROR_UPLOAD_HEADER_MISSING,
-            String.valueOf(i + 1)));
+        throw new BusinessDataException(new Message(CsvUploadMessageKeys.ERROR_UPLOAD_HEADER_MISSING,
+            String.valueOf(i + 1)), ERROR_BUSINESS_CODE);
       }
     }
   }
@@ -100,8 +101,8 @@ public class CsvValidator {
   private void validateInvalidHeaders(List<String> headers) {
     List<String> invalidHeaders = ListUtils.subtract(headers, lowerCase(mandatoryColumnNames));
     if (!invalidHeaders.isEmpty()) {
-      throw new ValidationMessageException(new Message(CsvUploadMessageKeys.ERROR_UPLOAD_HEADER_INVALID,
-          invalidHeaders.toString()));
+      throw new BusinessDataException(new Message(CsvUploadMessageKeys.ERROR_UPLOAD_HEADER_INVALID,
+          invalidHeaders.toString()), ERROR_BUSINESS_CODE);
     }
   }
 
@@ -113,8 +114,8 @@ public class CsvValidator {
 
   private void validateEachColumn(String columnValue, String columnName, long row) throws ValidationMessageException {
     if (StringUtils.isBlank(columnValue)) {
-      throw new ValidationMessageException(new Message(CsvUploadMessageKeys.ERROR_UPLOAD_MISSING_ROW,
-          columnName, row));
+      throw new BusinessDataException(new Message(CsvUploadMessageKeys.ERROR_UPLOAD_MISSING_ROW,
+          columnName, row), ERROR_BUSINESS_CODE);
     }
   }
 }
