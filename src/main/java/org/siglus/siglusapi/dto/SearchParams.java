@@ -139,7 +139,7 @@ public final class SearchParams implements Serializable {
   }
 
   public void setUuids(Set<String> ids) {
-    ids.stream().forEach(uuid -> params.add("id", uuid));
+    ids.forEach(uuid -> params.add("id", uuid));
   }
 
   public void clear() {

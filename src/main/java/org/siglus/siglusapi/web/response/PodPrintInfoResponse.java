@@ -31,7 +31,7 @@ public class PodPrintInfoResponse {
   private String client;
   private String supplierDistrict;
   private String supplierProvince;
-  private String requisitionId;
+  private UUID requisitionId;
   // Date that the HF Role3 internally approve the requisition
   private ZonedDateTime requisitionDate;
   // Date that the supplier fulfills the order
@@ -46,11 +46,11 @@ public class PodPrintInfoResponse {
   @Data
   public static class LineItemInfo {
 
-    private UUID productCode;
+    private String productCode;
     private String productName;
     private UUID lotId;
     private String lotCode;
-    private String lotExpirationDate;
+    private LocalDate lotExpirationDate;
 
     private Long requestedQuantity;
     private Long orderedQuantity;

@@ -68,6 +68,7 @@ public class SiglusOrderableService {
     return orderableDtoPage;
   }
 
+  //TODO: delete after stockCardSummary and orderable is ok
   public Page<OrderableDto> searchDeduplicatedOrderables(UUID draftId,
       QueryOrderableSearchParams searchParams,
       Pageable pageable, UUID facilityId) {
@@ -166,5 +167,4 @@ public class SiglusOrderableService {
         PaginationConstants.NO_PAGINATION);
     return orderableReferenceDataService.searchOrderables(params, pageable).getContent();
   }
-
 }
