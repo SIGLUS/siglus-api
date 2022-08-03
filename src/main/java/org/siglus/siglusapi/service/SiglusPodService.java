@@ -46,12 +46,12 @@ import org.openlmis.fulfillment.web.ProofOfDeliveryController;
 import org.openlmis.fulfillment.web.util.OrderObjectReferenceDto;
 import org.openlmis.fulfillment.web.util.ProofOfDeliveryDto;
 import org.openlmis.fulfillment.web.util.ProofOfDeliveryLineItemDto;
+import org.openlmis.referencedata.domain.Orderable;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.domain.requisition.StatusChange;
 import org.openlmis.requisition.repository.StatusChangeRepository;
 import org.siglus.common.domain.OrderExternal;
-import org.siglus.common.domain.referencedata.Orderable;
 import org.siglus.common.repository.OrderExternalRepository;
 import org.siglus.siglusapi.domain.PodLineItemsExtension;
 import org.siglus.siglusapi.domain.PodSubDraft;
@@ -147,8 +147,11 @@ public class SiglusPodService {
   private static final Integer PROVINCE_LEVEL_NUMBER = 2;
   private static final Integer DISTRICT_LEVEL_NUMBER = 3;
 
-  public ProofOfDeliveryDto getPodDto(UUID id, Set<String> expand) {
+  public ProofOfDeliveryDto getPodDtoByIdAndExpand(UUID id, Set<String> expand) {
     ProofOfDeliveryDto podDto = fulfillmentService.searchProofOfDelivery(id, expand);
+    if (Objects.isNull(podDto)) {
+      throw new NotFoundException(ERROR_NO_POD_OR_POD_LINE_ITEM_FOUND);
+    }
     OrderObjectReferenceDto order = podDto.getShipment().getOrder();
     OrderExternal external = orderExternalRepository.findOne(order.getExternalId());
     UUID requisitionId = external == null ? order.getExternalId() : external.getRequisitionId();
@@ -184,10 +187,10 @@ public class SiglusPodService {
         .build();
   }
 
-  public ProofOfDeliveryDto getSubDraftDetail(UUID podId, UUID subDraftId) {
+  public ProofOfDeliveryDto getSubDraftDetail(UUID podId, UUID subDraftId, Set<String> expand) {
     checkIfPodIdAndSubDraftIdMatch(podId, subDraftId);
 
-    ProofOfDeliveryDto dto = getPodDtoByPodId(podId);
+    ProofOfDeliveryDto dto = getPodDtoByIdAndExpand(podId, expand);
     List<ProofOfDeliveryLineItemDto> currentSubDraftLineItems = getCurrentSubDraftPodLineItemDtos(subDraftId, dto);
     dto.setLineItems(currentSubDraftLineItems);
     return dto;
@@ -233,10 +236,10 @@ public class SiglusPodService {
     deleteSubDraftAndLineExtensionBySubDraftIds(subDraftIds);
   }
 
-  public ProofOfDeliveryDto mergeSubDrafts(UUID podId) {
+  public ProofOfDeliveryDto mergeSubDrafts(UUID podId, Set<String> expand) {
     checkAuth();
     checkIfSubDraftsSubmitted(podId);
-    return getPodDtoByPodId(podId);
+    return getPodDtoByIdAndExpand(podId, expand);
   }
 
   @Transactional
@@ -258,6 +261,7 @@ public class SiglusPodService {
     PodPrintInfoResponse response = new PodPrintInfoResponse();
 
     OrderDto orderDto = ordersRepository.findOrderDtoById(orderId);
+    // TODO facility
     List<Requisition> requisitions = requisitionsRepository.selectAllByPeriodAndEmergencyAndStatus(
         orderDto.getProcessingPeriodId(),
         orderDto.getEmergency(), REQUISITION_STATUS_POST_SUBMIT);
@@ -272,15 +276,17 @@ public class SiglusPodService {
 
     FacilityDto facilityDto = siglusFacilityReferenceDataService.findOneFacility(orderDto.getSupplyingFacilityId());
     GeographicZoneDto zoneDto = facilityDto.getGeographicZone();
-    if (zoneDto.getLevel().getLevelNumber().equals(DISTRICT_LEVEL_NUMBER)) {
-      response.setSupplierDistrict(zoneDto.getName());
-      response.setSupplierProvince(zoneDto.getParent().getName());
-    } else if (zoneDto.getLevel().getLevelNumber().equals(PROVINCE_LEVEL_NUMBER)) {
-      response.setSupplierProvince(zoneDto.getName());
+    if (Objects.nonNull(zoneDto)) {
+      if (zoneDto.getLevel().getLevelNumber().equals(DISTRICT_LEVEL_NUMBER)) {
+        response.setSupplierDistrict(zoneDto.getName());
+        response.setSupplierProvince(Objects.nonNull(zoneDto.getParent()) ? zoneDto.getParent().getName() : null);
+      } else if (zoneDto.getLevel().getLevelNumber().equals(PROVINCE_LEVEL_NUMBER)) {
+        response.setSupplierProvince(zoneDto.getName());
+      }
     }
 
     UUID requisitionId =
-        Objects.nonNull(orderDto.getRequisitionId()) ? orderDto.getRequisitionId() : orderDto.getExternalId();
+        Objects.isNull(orderDto.getRequisitionId()) ? orderDto.getExternalId() : orderDto.getRequisitionId();
     StatusChange requisitionStatusChange = requisitionStatusChangeRepository.findByRequisitionId(requisitionId).stream()
         .filter(e -> RequisitionStatus.RELEASED == e.getStatus()).findFirst().orElse(null);
     response.setRequisitionDate(
@@ -296,7 +302,7 @@ public class SiglusPodService {
     long orderCount = getOrderCount(orderDto);
     long requisitionCount = requisitions.size();
 
-    StringBuffer fileName = new StringBuffer()
+    StringBuilder fileName = new StringBuilder()
         .append(orderDto.getEmergency() ? FILE_NAME_PREFIX_EMERGENCY : FILE_NAME_PREFIX_NORMAL)
         .append(orderDto.getReceivingFacilityCode()).append(".")
         .append(DATE_FORMAT.format(orderDto.getPeriodEndDate())).append(".")

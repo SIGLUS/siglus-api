@@ -16,7 +16,7 @@
 package org.siglus.siglusapi.repository;
 
 import java.util.UUID;
-import org.siglus.common.domain.referencedata.ProcessingSchedule;
+import org.openlmis.referencedata.domain.ProcessingSchedule;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface ProcessingScheduleRepository extends JpaRepository<ProcessingSchedule, UUID> {

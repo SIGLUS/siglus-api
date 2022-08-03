@@ -21,8 +21,8 @@ import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_SUBMIT_START_DATE_IS_B
 
 import java.time.LocalDate;
 import java.util.List;
+import org.openlmis.referencedata.domain.ProcessingPeriod;
 import org.openlmis.requisition.dto.ProcessingPeriodDto;
-import org.siglus.common.domain.referencedata.ProcessingPeriod;
 import org.siglus.common.repository.ProcessingPeriodExtensionRepository;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.ProcessingPeriodRepository;

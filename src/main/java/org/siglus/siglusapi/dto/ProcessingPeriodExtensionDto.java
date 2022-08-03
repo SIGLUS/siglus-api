@@ -17,9 +17,8 @@ package org.siglus.siglusapi.dto;
 
 import java.time.LocalDate;
 import java.util.UUID;
-
 import lombok.Data;
-import org.siglus.common.domain.referencedata.ProcessingSchedule;
+import org.openlmis.referencedata.domain.ProcessingSchedule;
 
 
 /**

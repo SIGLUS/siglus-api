@@ -24,7 +24,7 @@ import java.util.Set;
 import java.util.UUID;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
-import org.siglus.common.domain.referencedata.Code;
+import org.openlmis.referencedata.domain.Code;
 import org.springframework.data.domain.Pageable;
 import org.springframework.util.MultiValueMap;
 

@@ -80,6 +80,10 @@ import javax.persistence.EntityNotFoundException;
 import javax.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.openlmis.referencedata.domain.Code;
+import org.openlmis.referencedata.domain.ProcessingPeriod;
+import org.openlmis.referencedata.dto.BaseDto;
+import org.openlmis.referencedata.dto.OrderableDto;
 import org.openlmis.requisition.domain.RequisitionTemplate;
 import org.openlmis.requisition.domain.requisition.ApprovedProductReference;
 import org.openlmis.requisition.domain.requisition.Requisition;
@@ -101,13 +105,9 @@ import org.openlmis.requisition.service.RequisitionService;
 import org.openlmis.requisition.service.RequisitionTemplateService;
 import org.openlmis.requisition.service.referencedata.ApproveProductsAggregator;
 import org.openlmis.requisition.service.referencedata.SupervisoryNodeReferenceDataService;
-import org.siglus.common.domain.BaseEntity;
 import org.siglus.common.domain.RequisitionTemplateExtension;
-import org.siglus.common.domain.referencedata.Code;
 import org.siglus.common.dto.ProgramAdditionalOrderableDto;
 import org.siglus.common.dto.RequisitionTemplateExtensionDto;
-import org.siglus.common.dto.referencedata.BaseDto;
-import org.siglus.common.dto.referencedata.OrderableDto;
 import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
 import org.siglus.siglusapi.config.AndroidTemplateConfigProperties;
 import org.siglus.siglusapi.constant.ProgramConstants;
@@ -380,7 +380,7 @@ public class RequisitionCreateService {
   private UUID getPeriodId(RequisitionCreateRequest request) {
     YearMonth month = request.getActualStartDate().query(YearMonth::from);
     return processingPeriodRepository.findPeriodByCodeAndMonth(SCHEDULE_CODE, month)
-        .map(BaseEntity::getId)
+        .map(ProcessingPeriod::getId)
         .orElseThrow(EntityNotFoundException::new);
   }
 

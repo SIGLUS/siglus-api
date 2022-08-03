@@ -21,8 +21,8 @@ import org.mapstruct.Context;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Named;
-import org.siglus.common.dto.referencedata.OrderableChildDto;
-import org.siglus.common.dto.referencedata.OrderableDto;
+import org.openlmis.referencedata.dto.OrderableChildDto;
+import org.openlmis.referencedata.dto.OrderableDto;
 import org.siglus.siglusapi.dto.android.response.ProductChildResponse;
 
 @Mapper(componentModel = "spring")

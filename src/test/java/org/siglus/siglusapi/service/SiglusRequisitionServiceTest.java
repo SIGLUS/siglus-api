@@ -465,8 +465,8 @@ public class SiglusRequisitionServiceTest {
     when(siglusRequisitionRequisitionService.getPreviousEmergencyRequisition(any()))
         .thenReturn(singletonList(new RequisitionV2Dto()));
     mockSearchOrder();
-    org.siglus.common.dto.referencedata.OrderableDto orderableDto =
-        new org.siglus.common.dto.referencedata.OrderableDto();
+    org.openlmis.referencedata.dto.OrderableDto orderableDto =
+        new org.openlmis.referencedata.dto.OrderableDto();
     when(siglusOrderableService.getOrderableByCode(any())).thenReturn(orderableDto);
     when(supportedProgramsHelper.findHomeFacilitySupportedPrograms()).thenReturn(newArrayList());
   }

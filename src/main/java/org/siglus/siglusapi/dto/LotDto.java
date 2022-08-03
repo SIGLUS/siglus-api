@@ -22,7 +22,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.siglus.common.dto.referencedata.BaseDto;
+import org.openlmis.referencedata.dto.BaseDto;
 
 @NoArgsConstructor
 @AllArgsConstructor

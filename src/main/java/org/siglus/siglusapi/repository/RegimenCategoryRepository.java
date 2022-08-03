@@ -16,7 +16,7 @@
 package org.siglus.siglusapi.repository;
 
 import java.util.UUID;
-import org.siglus.common.domain.referencedata.Code;
+import org.openlmis.referencedata.domain.Code;
 import org.siglus.siglusapi.domain.RegimenCategory;
 import org.springframework.data.jpa.repository.JpaRepository;
 

@@ -15,9 +15,9 @@
 
 package org.siglus.siglusapi.constant;
 
-import static org.siglus.common.domain.referencedata.Code.code;
+import static org.openlmis.referencedata.domain.Code.code;
 
-import org.siglus.common.domain.referencedata.Code;
+import org.openlmis.referencedata.domain.Code;
 
 
 public class PeriodConstants {

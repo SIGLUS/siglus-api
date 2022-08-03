@@ -23,8 +23,8 @@ import static org.siglus.common.repository.RepositoryConstants.WHERE_LATEST_ORDE
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import org.siglus.common.domain.referencedata.Orderable;
-import org.siglus.common.domain.referencedata.VersionIdentity;
+import org.openlmis.referencedata.domain.Orderable;
+import org.openlmis.referencedata.domain.VersionIdentity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

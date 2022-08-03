@@ -17,8 +17,8 @@ package org.siglus.siglusapi.repository;
 
 import java.util.List;
 import java.util.UUID;
-import org.siglus.common.domain.referencedata.Orderable;
-import org.siglus.common.domain.referencedata.VersionIdentity;
+import org.openlmis.referencedata.domain.Orderable;
+import org.openlmis.referencedata.domain.VersionIdentity;
 import org.siglus.siglusapi.dto.OrderableExpirationDateDto;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;

@@ -27,8 +27,6 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.siglus.siglusapi.dto.android.request.HfCmmDto;
 import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
-import org.siglus.siglusapi.migration.DataMigrationController;
-import org.siglus.siglusapi.migration.DataMigrationService;
 
 @RunWith(MockitoJUnitRunner.class)
 public class DataMigrationControllerTest {
