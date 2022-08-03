@@ -38,7 +38,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
-import org.openlmis.fulfillment.domain.Order;
 import org.openlmis.fulfillment.domain.ProofOfDeliveryLineItem;
 import org.openlmis.fulfillment.domain.ProofOfDeliveryLineItem.Importer;
 import org.openlmis.fulfillment.domain.ProofOfDeliveryStatus;
@@ -47,7 +46,6 @@ import org.openlmis.fulfillment.web.util.OrderObjectReferenceDto;
 import org.openlmis.fulfillment.web.util.ProofOfDeliveryDto;
 import org.openlmis.fulfillment.web.util.ProofOfDeliveryLineItemDto;
 import org.openlmis.referencedata.domain.Orderable;
-import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.domain.requisition.StatusChange;
 import org.openlmis.requisition.repository.StatusChangeRepository;
@@ -261,18 +259,17 @@ public class SiglusPodService {
     PodPrintInfoResponse response = new PodPrintInfoResponse();
 
     OrderDto orderDto = ordersRepository.findOrderDtoById(orderId);
-    // TODO facility
-    List<Requisition> requisitions = requisitionsRepository.selectAllByPeriodAndEmergencyAndStatus(
-        orderDto.getProcessingPeriodId(),
-        orderDto.getEmergency(), REQUISITION_STATUS_POST_SUBMIT);
+    UUID realRequisitionId =
+        Objects.isNull(orderDto.getRequisitionId()) ? orderDto.getExternalId() : orderDto.getRequisitionId();
 
-    response.setFileName(getFileName(orderDto, requisitions));
+    response.setFileName(getFileName(orderDto, realRequisitionId));
     response.setClient(orderDto.getReceivingFacilityName());
     response.setSupplier(orderDto.getSupplyingFacilityName());
     response.setReceivedBy(orderDto.getPodReceivedBy());
     response.setDeliveredBy(orderDto.getPodDeliveredBy());
     response.setReceivedDate(orderDto.getPodReceivedDate());
     response.setIssueVoucherDate(orderDto.getOrderFulfillDate());
+    response.setRequisitionId(realRequisitionId);
 
     FacilityDto facilityDto = siglusFacilityReferenceDataService.findOneFacility(orderDto.getSupplyingFacilityId());
     GeographicZoneDto zoneDto = facilityDto.getGeographicZone();
@@ -285,22 +282,21 @@ public class SiglusPodService {
       }
     }
 
-    UUID requisitionId =
-        Objects.isNull(orderDto.getRequisitionId()) ? orderDto.getExternalId() : orderDto.getRequisitionId();
-    StatusChange requisitionStatusChange = requisitionStatusChangeRepository.findByRequisitionId(requisitionId).stream()
+    StatusChange requisitionStatusChange = requisitionStatusChangeRepository.findByRequisitionId(realRequisitionId)
+        .stream()
         .filter(e -> RequisitionStatus.RELEASED == e.getStatus()).findFirst().orElse(null);
     response.setRequisitionDate(
         Objects.nonNull(requisitionStatusChange) ? requisitionStatusChange.getCreatedDate() : null);
 
-    List<PodLineItemDto> podLineItemDtos = podLineItemsRepository.lineItemDtos(podId, orderId, requisitionId);
+    List<PodLineItemDto> podLineItemDtos = podLineItemsRepository.lineItemDtos(podId, orderId, realRequisitionId);
     response.setLineItems(toLineItemInfo(podLineItemDtos));
 
     return response;
   }
 
-  private String getFileName(OrderDto orderDto, List<Requisition> requisitions) {
-    long orderCount = getOrderCount(orderDto);
-    long requisitionCount = requisitions.size();
+  private String getFileName(OrderDto orderDto, UUID realRequisitionId) {
+    long orderCount = getOrderCount(orderDto, realRequisitionId);
+    long requisitionCount = getRequisitionCount(orderDto);
 
     StringBuilder fileName = new StringBuilder()
         .append(orderDto.getEmergency() ? FILE_NAME_PREFIX_EMERGENCY : FILE_NAME_PREFIX_NORMAL)
@@ -312,12 +308,20 @@ public class SiglusPodService {
     return fileName.toString();
   }
 
-  private long getOrderCount(OrderDto orderDto) {
-    Order order = new Order();
-    order.setProcessingPeriodId(orderDto.getProcessingPeriodId());
-    order.setEmergency(orderDto.getEmergency());
-    Example<Order> orderExample = Example.of(order);
-    return ordersRepository.count(orderExample);
+  private long getOrderCount(OrderDto orderDto, UUID realRequisitionId) {
+    if (Objects.isNull(orderDto.getRequisitionId())) {
+      return 1L;
+    }
+
+    OrderExternal orderExternal = new OrderExternal();
+    orderExternal.setRequisitionId(realRequisitionId);
+    Example<OrderExternal> orderExternalExample = Example.of(orderExternal);
+    return orderExternalRepository.count(orderExternalExample);
+  }
+
+  private long getRequisitionCount(OrderDto orderDto) {
+    return requisitionsRepository.countByOrderInfo(orderDto.getReceivingFacilityId(), orderDto.getProgramId(),
+        orderDto.getProcessingPeriodId(), orderDto.getEmergency(), REQUISITION_STATUS_POST_SUBMIT);
   }
 
   private String formatCount(long count) {

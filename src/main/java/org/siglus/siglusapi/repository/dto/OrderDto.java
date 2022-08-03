@@ -54,6 +54,7 @@ import lombok.Data;
         columns = {
             @ColumnResult(name = "id", type = UUID.class),
             @ColumnResult(name = "emergency", type = Boolean.class),
+            @ColumnResult(name = "programid", type = UUID.class),
             @ColumnResult(name = "receivingfacilityid", type = UUID.class),
             @ColumnResult(name = "supplyingfacilityid", type = UUID.class),
             @ColumnResult(name = "orderfulfilldate", type = Date.class),
@@ -79,6 +80,7 @@ public class OrderDto {
 
   private UUID id;
   private Boolean emergency;
+  private UUID programId;
   private UUID receivingFacilityId;
   private UUID supplyingFacilityId;
   private Date orderFulfillDate;
