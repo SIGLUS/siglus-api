@@ -25,7 +25,6 @@ import java.util.Set;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.openlmis.stockmanagement.dto.PhysicalInventoryDto;
-import org.siglus.common.cache.ThreadLocalCacheCleaned;
 import org.siglus.siglusapi.dto.DraftListDto;
 import org.siglus.siglusapi.dto.PhysicalInventorySubDraftDto;
 import org.siglus.siglusapi.dto.PhysicalInventoryValidationDto;
@@ -49,7 +48,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/siglusapi/physicalInventories")
 @SuppressWarnings("PMD.TooManyMethods")
-@ThreadLocalCacheCleaned
 public class SiglusPhysicalInventoryController {
 
   @Autowired
