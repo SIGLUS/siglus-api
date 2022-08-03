@@ -20,40 +20,26 @@ import static org.siglus.siglusapi.constant.FieldConstants.FULL_PRODUCT_NAME;
 import static org.siglus.siglusapi.constant.FieldConstants.PRODUCT_CODE;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_NOT_FOUND;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.collections4.CollectionUtils;
 import org.openlmis.referencedata.dto.OrderableDto;
-import org.openlmis.stockmanagement.dto.ObjectReferenceDto;
 import org.openlmis.stockmanagement.web.Pagination;
-import org.openlmis.stockmanagement.web.stockcardsummariesv2.CanFulfillForMeEntryDto;
-import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2Dto;
 import org.siglus.common.domain.ProgramAdditionalOrderable;
 import org.siglus.common.repository.ArchivedProductRepository;
 import org.siglus.common.repository.ProgramAdditionalOrderableRepository;
 import org.siglus.siglusapi.constant.PaginationConstants;
 import org.siglus.siglusapi.domain.StockManagementDraft;
-import org.siglus.siglusapi.dto.AssembledOrderableAndLotDto;
-import org.siglus.siglusapi.dto.CanFulfillForMeEntryNewDto;
-import org.siglus.siglusapi.dto.LotDto;
 import org.siglus.siglusapi.dto.OrderableExpirationDateDto;
 import org.siglus.siglusapi.dto.QueryOrderableSearchParams;
 import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.repository.SiglusOrderableRepository;
 import org.siglus.siglusapi.repository.StockManagementDraftRepository;
-import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
-import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -70,9 +56,6 @@ public class SiglusOrderableService {
   private final ProgramAdditionalOrderableRepository programAdditionalOrderableRepository;
   private final ArchivedProductRepository archivedProductRepository;
   private final StockManagementDraftRepository stockManagementDraftRepository;
-  private final SiglusStockCardSummariesService stockCardSummariesSiglusService;
-  private final SiglusAuthenticationHelper authenticationHelper;
-  private final SiglusLotReferenceDataService siglusLotReferenceDataService;
 
   public Page<OrderableDto> searchOrderables(QueryOrderableSearchParams searchParams,
       Pageable pageable, UUID facilityId) {
@@ -183,116 +166,5 @@ public class SiglusOrderableService {
     Pageable pageable = new PageRequest(PaginationConstants.DEFAULT_PAGE_NUMBER,
         PaginationConstants.NO_PAGINATION);
     return orderableReferenceDataService.searchOrderables(params, pageable).getContent();
-  }
-
-  public List<List<CanFulfillForMeEntryNewDto>> assembleStockCardAndOrderable(
-      MultiValueMap<String, String> parameters,
-      List<UUID> subDraftIds,
-      UUID draftId,
-      Pageable pageable) {
-    Page<StockCardSummaryV2Dto> stockCardSummaryV2DtosPage = stockCardSummariesSiglusService
-        .searchStockCardSummaryV2Dtos(parameters, subDraftIds, draftId, pageable);
-    List<StockCardSummaryV2Dto> stockCardSummaryV2Dtos = stockCardSummaryV2DtosPage.getContent();
-
-    List<String> orderableIds = new ArrayList<>();
-
-    stockCardSummaryV2Dtos
-        .forEach(stockCardSummaryV2Dto -> orderableIds.add(stockCardSummaryV2Dto.getOrderable().getId().toString()));
-
-    List<CanFulfillForMeEntryDto> canFulfillForMeEntryDtos = stockCardSummaryV2Dtos.stream()
-        .map(StockCardSummaryV2Dto::getCanFulfillForMe)
-        .flatMap(Collection::stream)
-        .collect(Collectors.toList());
-
-    canFulfillForMeEntryDtos.stream()
-        .filter(canFulfillForMeEntryDto -> Objects.nonNull(canFulfillForMeEntryDto.getOrderable()))
-        .forEach(
-            canFulfillForMeEntryDto -> orderableIds.add(canFulfillForMeEntryDto.getOrderable().getId().toString()));
-
-    UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
-    QueryOrderableSearchParams searchParams = new QueryOrderableSearchParams(new LinkedMultiValueMap());
-    Set<String> strings = new HashSet(orderableIds);
-    searchParams.setIds(strings);
-    List<OrderableDto> orderableDtos = searchOrderables(searchParams, pageable, facilityId).getContent();
-
-    List<UUID> lotIds = canFulfillForMeEntryDtos.stream()
-        .filter(canFulfillForMeEntryDto -> Objects.nonNull(canFulfillForMeEntryDto.getLot()))
-        .map(canFulfillForMeEntryDto -> canFulfillForMeEntryDto.getLot().getId()).collect(Collectors.toList());
-
-    List<LotDto> lotDtos = siglusLotReferenceDataService.findByIds(lotIds);
-
-    List<AssembledOrderableAndLotDto> assembledOrderableAndLotDtos = combineResponse(stockCardSummaryV2Dtos,
-        orderableDtos, lotDtos);
-
-    return getFulfillForMe(assembledOrderableAndLotDtos);
-  }
-
-  public List<AssembledOrderableAndLotDto> combineResponse(List<StockCardSummaryV2Dto> stockCardSummaryV2Dtos,
-      List<OrderableDto> orderableDtos, List<LotDto> lotDtos) {
-    List<AssembledOrderableAndLotDto> assembledOrderableAndLotDtos = new ArrayList<>();
-
-    stockCardSummaryV2Dtos.forEach(stockCardSummaryV2Dto -> {
-      AssembledOrderableAndLotDto assembledOrderableAndLotDto = new AssembledOrderableAndLotDto();
-
-      OrderableDto orderableDto = getOrderableFromObjectReference(orderableDtos, stockCardSummaryV2Dto.getOrderable());
-
-      assembledOrderableAndLotDto.setOrderable(orderableDto);
-
-      assembledOrderableAndLotDto.setStockOnHand(stockCardSummaryV2Dto.getStockOnHand());
-
-      Set<CanFulfillForMeEntryNewDto> canFulfillForMeEntryNewDtos = new HashSet<>();
-
-      stockCardSummaryV2Dto.getCanFulfillForMe().forEach(canFulfillForMeEntryDto -> {
-        CanFulfillForMeEntryNewDto fulfill = CanFulfillForMeEntryNewDto.builder()
-            .orderable(getOrderableFromObjectReference(orderableDtos, canFulfillForMeEntryDto.getOrderable()))
-            .lot(getLotFromObjectReference(lotDtos, canFulfillForMeEntryDto.getLot()))
-            .occurredDate(canFulfillForMeEntryDto.getOccurredDate())
-            .stockOnHand(canFulfillForMeEntryDto.getStockOnHand())
-            .processedDate(canFulfillForMeEntryDto.getProcessedDate())
-            .stockCard(canFulfillForMeEntryDto.getStockCard())
-            .build();
-        canFulfillForMeEntryNewDtos.add(fulfill);
-      });
-      assembledOrderableAndLotDto.setCanFulfillForMe(canFulfillForMeEntryNewDtos);
-      assembledOrderableAndLotDtos.add(assembledOrderableAndLotDto);
-    });
-    return assembledOrderableAndLotDtos;
-  }
-
-  private OrderableDto getOrderableFromObjectReference(List<OrderableDto> orderableDtos,
-      ObjectReferenceDto objectReferenceDto) {
-    if (Objects.nonNull(objectReferenceDto)) {
-      return orderableDtos.stream().filter(dto -> {
-        return dto.getId().equals(objectReferenceDto.getId());
-      }).findFirst().orElse(null);
-    }
-    return null;
-  }
-
-  private LotDto getLotFromObjectReference(List<LotDto> lotDtos, ObjectReferenceDto objectReferenceDto) {
-    if (Objects.nonNull(objectReferenceDto)) {
-      return lotDtos.stream().filter(dto -> {
-        return dto.getId().equals(objectReferenceDto.getId());
-      }).findFirst().orElse(null);
-    }
-    return null;
-  }
-
-  private List<List<CanFulfillForMeEntryNewDto>> getFulfillForMe(
-      List<AssembledOrderableAndLotDto> assembledOrderableAndLotDtos) {
-    Set<CanFulfillForMeEntryNewDto> canFulfillForMeEntryNewDtos = new HashSet<>();
-    assembledOrderableAndLotDtos.forEach(assembledOrderableAndLotDto -> {
-      canFulfillForMeEntryNewDtos.addAll(assembledOrderableAndLotDto.getCanFulfillForMe());
-    });
-    Map<UUID, List<CanFulfillForMeEntryNewDto>> orderableIdFulfillMap = canFulfillForMeEntryNewDtos.stream().collect(
-        Collectors.groupingBy(canFulfillForMeEntryNewDto -> canFulfillForMeEntryNewDto.getOrderable().getId()));
-
-    List<List<CanFulfillForMeEntryNewDto>> lists = new ArrayList<>();
-    Set<Entry<UUID, List<CanFulfillForMeEntryNewDto>>> entries = orderableIdFulfillMap.entrySet();
-    entries.forEach(entrie -> {
-      ArrayList<CanFulfillForMeEntryNewDto> fulfill = new ArrayList<>(entrie.getValue());
-      lists.add(fulfill);
-    });
-    return lists;
   }
 }

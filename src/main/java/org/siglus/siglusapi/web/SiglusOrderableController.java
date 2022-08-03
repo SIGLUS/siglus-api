@@ -15,17 +15,14 @@
 
 package org.siglus.siglusapi.web;
 
-import java.util.List;
 import java.util.UUID;
 import org.openlmis.referencedata.dto.OrderableDto;
-import org.siglus.siglusapi.dto.CanFulfillForMeEntryNewDto;
 import org.siglus.siglusapi.dto.QueryOrderableSearchParams;
 import org.siglus.siglusapi.service.SiglusOrderableService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -60,14 +57,5 @@ public class SiglusOrderableController {
       @RequestParam MultiValueMap<String, Object> queryParams, Pageable pageable) {
     QueryOrderableSearchParams searchParams = new QueryOrderableSearchParams(queryParams);
     return orderableService.additionalToAdd(programId, searchParams, pageable);
-  }
-
-  @GetMapping("/integrateStockCardSummary")
-  public List<List<CanFulfillForMeEntryNewDto>> getOrderablesBySingleRequest(
-      @RequestParam MultiValueMap<String, String> parameters,
-      @RequestParam(required = false) List<UUID> subDraftIds,
-      @RequestParam(required = false) UUID draftId,
-      @PageableDefault(size = Integer.MAX_VALUE) Pageable pageable) {
-    return orderableService.assembleStockCardAndOrderable(parameters, subDraftIds, draftId, pageable);
   }
 }
