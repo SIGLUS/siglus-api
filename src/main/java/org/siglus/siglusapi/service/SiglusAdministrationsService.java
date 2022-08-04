@@ -105,7 +105,7 @@ public class SiglusAdministrationsService {
         .builder()
         .facilityId(createdNewFacilityDto.getId())
         .facilityCode(createdNewFacilityDto.getCode())
-        .isAndroid(siglusFacilityDto.getIsAndroid())
+        .isAndroid(siglusFacilityDto.getIsAndroidDevice())
         .build();
     facilityExtensionRepository.save(facilityExtension);
     return getFacilityInfo(createdNewFacilityDto.getId());
@@ -135,11 +135,11 @@ public class SiglusAdministrationsService {
           .facilityId(facilityId)
           .facilityCode(siglusFacilityDto.getCode())
           .enableLocationManagement(siglusFacilityDto.getEnableLocationManagement())
-          .isAndroid(siglusFacilityDto.getIsAndroid())
+          .isAndroid(siglusFacilityDto.getIsAndroidDevice())
           .build();
       log.info("The facility extension: {} info has changed", facilityExtension);
     } else {
-      facilityExtension.setIsAndroid(siglusFacilityDto.getIsAndroid());
+      facilityExtension.setIsAndroid(siglusFacilityDto.getIsAndroidDevice());
       facilityExtension.setEnableLocationManagement(siglusFacilityDto.getEnableLocationManagement());
       log.info("The facility extension: {} info has changed", facilityExtension);
     }
@@ -226,6 +226,7 @@ public class SiglusAdministrationsService {
     FacilityExtension facilityExtension = facilityExtensionRepository.findByFacilityId(facilityId);
     if (null == facilityExtension) {
       searchResultDto.setEnableLocationManagement(false);
+      searchResultDto.setIsAndroidDevice(false);
       return searchResultDto;
     }
     searchResultDto.setIsAndroidDevice(facilityExtension.getIsAndroid());

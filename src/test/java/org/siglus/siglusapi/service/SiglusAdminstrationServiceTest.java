@@ -356,7 +356,7 @@ public class SiglusAdminstrationServiceTest {
     SiglusFacilityDto siglusFacilityDto = new SiglusFacilityDto();
     siglusFacilityDto.setId(facilityId);
     siglusFacilityDto.setEnableLocationManagement(true);
-    siglusFacilityDto.setIsAndroid(true);
+    siglusFacilityDto.setIsAndroidDevice(true);
     return siglusFacilityDto;
   }
 

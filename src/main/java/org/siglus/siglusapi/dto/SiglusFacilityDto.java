@@ -29,7 +29,7 @@ public class SiglusFacilityDto extends FacilityDto {
 
   private Boolean enableLocationManagement;
 
-  private Boolean isAndroid;
+  private Boolean isAndroidDevice;
 
   public static FacilityDto from(SiglusFacilityDto siglusFacilityDto) {
     FacilityDto facilityDto = new FacilityDto();
