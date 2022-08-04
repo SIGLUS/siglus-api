@@ -270,7 +270,7 @@ public class SiglusPodService {
     UUID realRequisitionId =
         Objects.isNull(orderDto.getRequisitionId()) ? orderDto.getExternalId() : orderDto.getRequisitionId();
 
-    response.setFileName(getFileName(orderDto, realRequisitionId));
+    response.setFileName(getFileName(orderDto));
     response.setClient(orderDto.getReceivingFacilityName());
     response.setSupplier(orderDto.getSupplyingFacilityName());
     response.setReceivedBy(orderDto.getPodReceivedBy());
@@ -303,29 +303,16 @@ public class SiglusPodService {
     return response;
   }
 
-  private String getFileName(OrderDto orderDto, UUID realRequisitionId) {
-    long orderCount = getOrderCount(orderDto, realRequisitionId);
+  private String getFileName(OrderDto orderDto) {
     long requisitionCount = getRequisitionCount(orderDto);
 
     StringBuilder fileName = new StringBuilder()
         .append(orderDto.getEmergency() ? FILE_NAME_PREFIX_EMERGENCY : FILE_NAME_PREFIX_NORMAL)
         .append(orderDto.getReceivingFacilityCode()).append(".")
         .append(DATE_FORMAT.format(orderDto.getPeriodEndDate())).append(".")
-        .append(formatCount(requisitionCount)).append("/")
-        .append(formatCount(orderCount));
+        .append(formatCount(requisitionCount)).append("/");
 
     return fileName.toString();
-  }
-
-  private long getOrderCount(OrderDto orderDto, UUID realRequisitionId) {
-    if (Objects.isNull(orderDto.getRequisitionId())) {
-      return 1L;
-    }
-
-    OrderExternal orderExternal = new OrderExternal();
-    orderExternal.setRequisitionId(realRequisitionId);
-    Example<OrderExternal> orderExternalExample = Example.of(orderExternal);
-    return orderExternalRepository.count(orderExternalExample);
   }
 
   private long getRequisitionCount(OrderDto orderDto) {
