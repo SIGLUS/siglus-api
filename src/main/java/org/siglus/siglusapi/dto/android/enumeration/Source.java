@@ -26,7 +26,7 @@ public enum Source {
   DISTRICT_DDM("District(DDM)"),
   INTERMEDIATE_WAREHOUSE("Armazém Intermediário"),
   PROVINCE_DPM("Province(DPM)"),
-  UNPACK_FROM_KIT("Desembalado do kit");
+  UNPACK_FROM_KIT("Desembalado do Kit");
 
   private final String name;
 
