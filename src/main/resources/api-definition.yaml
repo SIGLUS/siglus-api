@@ -1239,7 +1239,7 @@ traits:
                   schema: localizedMessage
 
     /stockCardSummaries/lots:
-      get:
+      post:
         is: [ secured ]
         description: Get lots by orderableIds
         queryParameters:
