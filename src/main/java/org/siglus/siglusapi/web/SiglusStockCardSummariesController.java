@@ -27,11 +27,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.util.MultiValueMap;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/siglusapi/stockCardSummaries")
@@ -69,7 +65,7 @@ public class SiglusStockCardSummariesController {
     return stockCardSummariesSiglusService.getStockCardSummaryDtos(parameters, subDraftIds, draftId, pageable);
   }
 
-  @GetMapping("/lots")
+  @PostMapping("/lots")
   public List<LotDto> getLosts(@RequestBody List<UUID> orderableIds) {
     return stockCardSummariesSiglusService.getLotsDataByOrderableIds(orderableIds);
   }
