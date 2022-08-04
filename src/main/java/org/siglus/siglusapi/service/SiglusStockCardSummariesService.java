@@ -397,8 +397,8 @@ public class SiglusStockCardSummariesService {
 
   public List<StockCardSummaryDto> getStockCardSummaryDtos(MultiValueMap<String, String> parameters,
       List<UUID> subDraftIds, UUID draftId, Pageable pageable) {
-    List<StockCardSummaryV2Dto> stockCardSummaryV2Dtos = getStockCardSummaryV2Dtos(
-        parameters, subDraftIds, draftId, pageable);
+    List<StockCardSummaryV2Dto> stockCardSummaryV2Dtos = getStockCardSummaryV2Dtos(parameters, subDraftIds, draftId,
+        pageable);
 
     List<UUID> orderableIds = new ArrayList<>();
     List<CanFulfillForMeEntryDto> canFulfillForMeEntryDtos = getCanFulfillForMeEntryDtos(
@@ -444,13 +444,10 @@ public class SiglusStockCardSummariesService {
 
   private List<StockCardSummaryV2Dto> getStockCardSummaryV2Dtos(MultiValueMap<String, String> parameters,
       List<UUID> subDraftIds, UUID draftId, Pageable pageable) {
-    Page<StockCardSummaryV2Dto> stockCardSummaryV2DtosPage = searchStockCardSummaryV2Dtos(parameters, subDraftIds,
-        draftId, pageable);
-    List<StockCardSummaryV2Dto> stockCardSummaryV2Dtos = stockCardSummaryV2DtosPage.getContent();
-    return stockCardSummaryV2Dtos;
+    return searchStockCardSummaryV2Dtos(parameters, subDraftIds, draftId, pageable).getContent();
   }
 
-  public List<StockCardSummaryDto> combineResponse(List<StockCardSummaryV2Dto> stockCardSummaryV2Dtos,
+  private List<StockCardSummaryDto> combineResponse(List<StockCardSummaryV2Dto> stockCardSummaryV2Dtos,
       List<OrderableDto> orderableDtos, List<LotDto> lotDtos) {
     List<StockCardSummaryDto> stockCardSummaryDtos = new ArrayList<>();
 

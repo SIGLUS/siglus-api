@@ -21,6 +21,7 @@ import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.dto.ObjectReferenceDto;
 import org.openlmis.stockmanagement.dto.referencedata.OrderableDto;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.CanFulfillForMeEntryDto;
+import org.siglus.siglusapi.dto.LotDto;
 
 public class CanFulfillForMeEntryDtoDataBuilder {
 
@@ -56,7 +57,7 @@ public class CanFulfillForMeEntryDtoDataBuilder {
    * @return created can fulfill for me entry
    */
   public CanFulfillForMeEntryDto buildWithStockCardAndOrderable(StockCard stockCard,
-                                                                OrderableDto orderable) {
+      OrderableDto orderable, LotDto lot) {
     return this
         .withStockOnHand(stockCard != null ? stockCard.getStockOnHand() : 0)
         .withOrderable(new ObjectReferenceDtoDataBuilder()
@@ -72,7 +73,7 @@ public class CanFulfillForMeEntryDtoDataBuilder {
         .withLot(stockCard != null
             ? new ObjectReferenceDtoDataBuilder()
             .withPath("lots")
-            .withId(stockCard.getLotId())
+            .withId(lot.getId())
             .build()
             : null)
         .withOccurredDate(stockCard != null ? stockCard.getOccurredDate() : null)
