@@ -38,89 +38,50 @@ insert into dashboard.historical_data_persistent (periodid,
                                                   approvedquantity,
                                                   requestedquantity,
                                                   facilityid)
-select gz_prov.name        as                                                   province,
-       gz.name             as                                                   district,
-       closesoh.facilityid as                                                   facilityinstockcard,
-       f.id                as                                                   facilityid,
-       f.code              as                                                   facilitycode,
-       f.name              as                                                   facilityname,
-       closesoh.periodid,
-       pp.startdate,
-       pp.enddate,
-       CONCAT(TO_CHAR(pp.startdate, 'DD'), ' ',
-              (case TO_CHAR(pp.startdate, 'MM')
-                   when '01' then 'Jan'
-                   when '02' then 'Fev'
-                   when '03' then 'Mar'
-                   when '04' then 'Abr'
-                   when '05' then 'Mai'
-                   when '06' then 'Jun'
-                   when '07' then 'Jul'
-                   when '08' then 'Ago'
-                   when '09' then 'Set'
-                   when '10' then 'Out'
-                   when '11' then 'Nov'
-                   when '12' then 'Dez' end), ' ',
-              TO_CHAR(pp.startdate, 'YYYY'), ' - ', TO_CHAR(pp.enddate, 'DD'), ' ',
-              (case TO_CHAR(pp.enddate, 'MM')
-                   when '01' then 'Jan'
-                   when '02' then 'Fev'
-                   when '03' then 'Mar'
-                   when '04' then 'Abr'
-                   when '05' then 'Mai'
-                   when '06' then 'Jun'
-                   when '07' then 'Jul'
-                   when '08' then 'Ago'
-                   when '09' then 'Set'
-                   when '10' then 'Out'
-                   when '11' then 'Nov'
-                   when '12' then 'Dez' end), ' ', TO_CHAR(pp.enddate, 'YYYY')) requisitiononperiod,
-       o.id                as                                                   orderableid,
-       o.code              as                                                   productcode,
-       o.fullproductname   as                                                   productname,
-       initialsoh.initialstock,
-       case
-           when mov.totalconsumptions is null then 0
-           else mov.totalconsumptions
-           end             as                                                   consumptions,
-       case
-           when mov.totalentries is null then 0
-           else mov.totalentries
-           end             as                                                   entries,
-       case
-           when mov.totaladjustments is null then 0
-           else mov.totaladjustments
-           end             as                                                   adjustments,
-       closesoh.closestock,
-       case
-           when expired.expiredquantity is null then 0
-           else expired.expiredquantity
-           end             as                                                   expiredquantity,
-       hc.cmm              as                                                   realcmm,
-       case
-           when hc.cmm is null
-               or hc.cmm <= 0::double precision then 0::numeric
-		else round(hc.cmm::numeric, 2)
+select
+    closesoh.periodid,
+    o.id                as                                                   orderableid,
+    initialsoh.initialstock,
+    case
+        when mov.totalconsumptions is null then 0
+        else mov.totalconsumptions
+        end             as                                                   consumptions,
+    case
+        when mov.totalentries is null then 0
+        else mov.totalentries
+        end             as                                                   entries,
+    case
+        when mov.totaladjustments is null then 0
+        else mov.totaladjustments
+        end             as                                                   adjustments,
+    closesoh.closestock,
+    case
+        when expired.expiredquantity is null then 0
+        else expired.expiredquantity
+        end             as                                                   expiredquantity,
+    hc.cmm              as                                                   realcmm,
+    case
+        when hc.cmm is null
+            or hc.cmm <= 0::double precision then 0::numeric
+			else round(hc.cmm::numeric, 2)
 end
 as cmm,
-	case
-		when hc.cmm is null
-		or hc.cmm <= 0::double precision then 0::numeric
-		else round(closesoh.closestock::numeric / round(hc.cmm::numeric, 2), 1)
+			case
+				when hc.cmm is null
+				or hc.cmm <= 0::double precision then 0::numeric
+				else round(closesoh.closestock::numeric / round(hc.cmm::numeric, 2), 1)
 end
 as mos,
-	case
-		when reqandapr.approvedquantity is null then 0
-		else reqandapr.approvedquantity
+			case
+				when reqandapr.approvedquantity is null then 0
+				else reqandapr.approvedquantity
 end
 ,
-	case
-		when reqandapr.requestedquantity is null then 0
-		else reqandapr.requestedquantity
-end
-,
-	vfs.districtfacilitycode,
-    vfs.provincefacilitycode
+			case
+				when reqandapr.requestedquantity is null then 0
+				else reqandapr.requestedquantity
+end,
+       f.id                as                                                   facilityid
 from
 	(
 select
