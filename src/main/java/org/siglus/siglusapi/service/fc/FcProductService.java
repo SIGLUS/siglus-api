@@ -42,7 +42,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.openlmis.referencedata.domain.Dispensable;
-import org.openlmis.referencedata.dto.OrderableChildDto;
 import org.openlmis.referencedata.dto.OrderableDto;
 import org.openlmis.referencedata.dto.ProgramOrderableDto;
 import org.openlmis.requisition.dto.BaseDto;
@@ -255,10 +254,6 @@ public class FcProductService implements ProcessDataService {
     newOrderable.setExtraData(extraData);
     newOrderable.setTradeItemIdentifier(createTradeItem());
     newOrderable.setPrograms(buildProgramOrderableDtos(product));
-    if (product.isKit()) {
-      Set<OrderableChildDto> children = buildOrderableChildDtos(product);
-      newOrderable.setChildren(children);
-    }
     return orderableReferenceDataService.create(newOrderable);
   }
 
@@ -283,25 +278,7 @@ public class FcProductService implements ProcessDataService {
     Map<String, Object> extraData = createOrderableExtraData(current, existed.getProductCode(), basicProductCodes);
     existed.setExtraData(extraData);
     existed.setPrograms(buildProgramOrderableDtos(current));
-    if (current.isKit()) {
-      Set<OrderableChildDto> children = buildOrderableChildDtos(current);
-      existed.setChildren(children);
-    } else {
-      existed.setChildren(newHashSet());
-    }
     return orderableReferenceDataService.update(existed);
-  }
-
-  private Set<OrderableChildDto> buildOrderableChildDtos(ProductInfoDto product) {
-    Set<OrderableChildDto> children = newHashSet();
-    product.getProductsKits().forEach(productKitDto -> {
-      OrderableChildDto childDto = new OrderableChildDto();
-      OrderableDto childOrderable = orderableService.getOrderableByCode(productKitDto.getFnm());
-      childDto.setOrderableFromDto(childOrderable);
-      childDto.setQuantity(productKitDto.getQuantity());
-      children.add(childDto);
-    });
-    return children;
   }
 
   private Set<ProgramOrderableDto> buildProgramOrderableDtos(ProductInfoDto product) {

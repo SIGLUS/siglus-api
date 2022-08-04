@@ -72,7 +72,6 @@ import org.siglus.siglusapi.dto.TradeItemDto;
 import org.siglus.siglusapi.dto.fc.AreaDto;
 import org.siglus.siglusapi.dto.fc.FcIntegrationResultDto;
 import org.siglus.siglusapi.dto.fc.ProductInfoDto;
-import org.siglus.siglusapi.dto.fc.ProductKitDto;
 import org.siglus.siglusapi.dto.fc.ResponseBaseDto;
 import org.siglus.siglusapi.repository.BasicProductCodeRepository;
 import org.siglus.siglusapi.repository.ProgramOrderablesExtensionRepository;
@@ -175,8 +174,6 @@ public class FcProductServiceTest {
 
   private final int displayOrder = 1;
 
-  private final long kitQuantity = 1000L;
-
   @Mock
   private final ConcurrentMapCache cache1 = new ConcurrentMapCache("cache1");
 
@@ -254,8 +251,6 @@ public class FcProductServiceTest {
     assertEquals(fnm, orderableToCreate.getProductCode());
     assertEquals(description, orderableToCreate.getDescription());
     assertEquals(fullDescription, orderableToCreate.getFullProductName());
-    OrderableChildDto orderableChildDto = orderableToCreate.getChildren().stream().findFirst().orElse(null);
-    assertEquals(kitQuantity, orderableChildDto == null ? 0L : orderableChildDto.getQuantity());
     assertEquals(1L, orderableToCreate.getPackRoundingThreshold().longValue());
     assertEquals(1L, orderableToCreate.getNetContent().longValue());
     assertFalse(orderableToCreate.getRoundToZero());
@@ -473,10 +468,6 @@ public class FcProductServiceTest {
         .status(STATUS_ACTIVE)
         .build();
 
-    ProductKitDto productKitDto = ProductKitDto.builder()
-        .fnm(kitFnm)
-        .quantity(kitQuantity)
-        .build();
     return ProductInfoDto.builder()
         .fnm(fnm)
         .description(description)
@@ -486,7 +477,6 @@ public class FcProductServiceTest {
         .categoryCode(categoryCode)
         .isSentinel(isTracer)
         .isKit(true)
-        .productsKits(newArrayList(productKitDto))
         .build();
   }
 }
