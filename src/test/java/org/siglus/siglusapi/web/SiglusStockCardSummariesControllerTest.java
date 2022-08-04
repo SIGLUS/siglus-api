@@ -40,16 +40,28 @@ public class SiglusStockCardSummariesControllerTest {
   private SiglusStockCardSummariesService service;
 
   private final UUID draftId = UUID.randomUUID();
+  private final MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+  private final Pageable pageable = new PageRequest(0, Integer.MAX_VALUE);
 
   @Test
   public void shouldCallServiceAndBuilderWhenSearchStockCardSummaries() {
-    MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
-    Pageable pageable = new PageRequest(0, Integer.MAX_VALUE);
-    controller
-        .searchStockCardSummaries(parameters, Collections.emptyList(), draftId, pageable);
+    controller.searchStockCardSummaries(parameters, Collections.emptyList(), draftId, pageable);
 
-    verify(service)
-        .searchStockCardSummaryV2Dtos(parameters, Collections.emptyList(), draftId, pageable);
+    verify(service).searchStockCardSummaryV2Dtos(parameters, Collections.emptyList(), draftId, pageable);
+  }
+
+  @Test
+  public void shouldCallServiceWhenGetStockCardDetailsDtoByGroup() {
+    controller.getStockCardDetailsDtoByGroup(parameters, Collections.emptyList(), draftId, pageable);
+
+    verify(service).getStockCardDetailsDtoByGroup(parameters, Collections.emptyList(), draftId, pageable);
+  }
+
+  @Test
+  public void shouldCallServiceWhenGetStockCardDetailsDtos() {
+    controller.getStockCardDetailsDtos(parameters, Collections.emptyList(), draftId, pageable);
+
+    verify(service).getStockCardDetailsDtos(parameters, Collections.emptyList(), draftId, pageable);
   }
 
 }

@@ -16,6 +16,7 @@
 package org.siglus.siglusapi.web;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2Dto;
 import org.siglus.siglusapi.dto.StockCardDetailsDto;
@@ -49,11 +50,20 @@ public class SiglusStockCardSummariesController {
   }
 
   @GetMapping("/integration")
-  public List<List<StockCardDetailsDto>> getOrderablesBySingleRequest(
+  public List<List<StockCardDetailsDto>> getStockCardDetailsDtoByGroup(
       @RequestParam MultiValueMap<String, String> parameters,
       @RequestParam(required = false) List<UUID> subDraftIds,
       @RequestParam(required = false) UUID draftId,
       @PageableDefault(size = Integer.MAX_VALUE) Pageable pageable) {
-    return stockCardSummariesSiglusService.assembleStockCardIntegrationDto(parameters, subDraftIds, draftId, pageable);
+    return stockCardSummariesSiglusService.getStockCardDetailsDtoByGroup(parameters, subDraftIds, draftId, pageable);
+  }
+
+  @GetMapping("/integration/flatten")
+  public Set<StockCardDetailsDto> getStockCardDetailsDtos(
+      @RequestParam MultiValueMap<String, String> parameters,
+      @RequestParam(required = false) List<UUID> subDraftIds,
+      @RequestParam(required = false) UUID draftId,
+      @PageableDefault(size = Integer.MAX_VALUE) Pageable pageable) {
+    return stockCardSummariesSiglusService.getStockCardDetailsDtos(parameters, subDraftIds, draftId, pageable);
   }
 }
