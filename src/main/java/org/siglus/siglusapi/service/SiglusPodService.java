@@ -137,6 +137,9 @@ public class SiglusPodService {
   @Autowired
   private StatusChangeRepository requisitionStatusChangeRepository;
 
+  @Autowired
+  private SiglusRequisitionExtensionService requisitionExtensionService;
+
   private static final String FILE_NAME_PREFIX_EMERGENCY = "OF.REM.";
   private static final String FILE_NAME_PREFIX_NORMAL = "OF.RNO.";
   private static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyMM");
@@ -275,6 +278,7 @@ public class SiglusPodService {
     response.setReceivedDate(orderDto.getPodReceivedDate());
     response.setIssueVoucherDate(orderDto.getOrderFulfillDate());
     response.setRequisitionId(realRequisitionId);
+    response.setRequisitionNum(requisitionExtensionService.formatRequisitionNumber(realRequisitionId));
 
     FacilityDto facilityDto = siglusFacilityReferenceDataService.findOneFacility(orderDto.getSupplyingFacilityId());
     GeographicZoneDto zoneDto = facilityDto.getGeographicZone();
