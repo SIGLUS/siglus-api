@@ -139,12 +139,12 @@ public class SiglusStockCardSummariesService {
 
   public List<org.openlmis.referencedata.dto.LotDto> getLotsDataByOrderableIds(List<UUID> orderableIds) {
     Page<Orderable> orderablePage = orderableRepository.findAllLatestByIds(orderableIds,
-            new PageRequest(DEFAULT_PAGE_NUMBER, NO_PAGINATION));
+        new PageRequest(DEFAULT_PAGE_NUMBER, NO_PAGINATION));
     Set<UUID> tradeItemIds = orderablePage.getContent()
-            .stream()
-            .map(Orderable::getTradeItemIdentifier)
-            .map(UUID::fromString)
-            .collect(Collectors.toSet());
+        .stream()
+        .map(Orderable::getTradeItemIdentifier)
+        .map(UUID::fromString)
+        .collect(Collectors.toSet());
     LotSearchParams requestParams = new LotSearchParams(null, new ArrayList<>(tradeItemIds), null, null);
     List<org.openlmis.referencedata.dto.LotDto> lotDtos = lotController.getLots(requestParams, null).getContent();
 
@@ -386,8 +386,8 @@ public class SiglusStockCardSummariesService {
     return FormatHelper.formatId(id, fieldName);
   }
 
-  public List<List<StockCardDetailsDto>> getStockCardDetailsDtoByGroup(
-      MultiValueMap<String, String> parameters, List<UUID> subDraftIds, UUID draftId, Pageable pageable) {
+  public List<List<StockCardDetailsDto>> getStockCardDetailsDtoByGroup(MultiValueMap<String, String> parameters,
+      List<UUID> subDraftIds, UUID draftId, Pageable pageable) {
 
     List<StockCardSummaryDto> stockCardSummaryDtos = getStockCardSummaryDtos(parameters,
         subDraftIds, draftId, pageable);
@@ -395,7 +395,7 @@ public class SiglusStockCardSummariesService {
     return getFulfillForMe(stockCardSummaryDtos);
   }
 
-  private List<StockCardSummaryDto> getStockCardSummaryDtos(MultiValueMap<String, String> parameters,
+  public List<StockCardSummaryDto> getStockCardSummaryDtos(MultiValueMap<String, String> parameters,
       List<UUID> subDraftIds, UUID draftId, Pageable pageable) {
     List<StockCardSummaryV2Dto> stockCardSummaryV2Dtos = getStockCardSummaryV2Dtos(
         parameters, subDraftIds, draftId, pageable);
@@ -498,8 +498,7 @@ public class SiglusStockCardSummariesService {
     return null;
   }
 
-  private List<List<StockCardDetailsDto>> getFulfillForMe(
-      List<StockCardSummaryDto> stockCardSummaryDtos) {
+  private List<List<StockCardDetailsDto>> getFulfillForMe(List<StockCardSummaryDto> stockCardSummaryDtos) {
     Set<StockCardDetailsDto> stockCardDetailsDtos = getStockCardDetailsDtos(stockCardSummaryDtos);
     Map<UUID, List<StockCardDetailsDto>> orderableIdFulfillMap = stockCardDetailsDtos.stream().collect(
         Collectors.groupingBy(stockCardDetailsDto -> stockCardDetailsDto.getOrderable().getId()));
@@ -519,12 +518,5 @@ public class SiglusStockCardSummariesService {
       stockCardDetailsDtos.addAll(stockCardSummaryDto.getStockCardDetails());
     });
     return stockCardDetailsDtos;
-  }
-
-  public Set<StockCardDetailsDto> getStockCardDetailsDtos(MultiValueMap<String, String> parameters,
-      List<UUID> subDraftIds, UUID draftId, Pageable pageable) {
-    List<StockCardSummaryDto> stockCardSummaryDtos = getStockCardSummaryDtos(parameters,
-        subDraftIds, draftId, pageable);
-    return getStockCardDetailsDtos(stockCardSummaryDtos);
   }
 }

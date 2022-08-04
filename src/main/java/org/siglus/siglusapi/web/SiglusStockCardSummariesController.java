@@ -16,12 +16,11 @@
 package org.siglus.siglusapi.web;
 
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
-
 import org.openlmis.referencedata.dto.LotDto;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2Dto;
 import org.siglus.siglusapi.dto.StockCardDetailsDto;
+import org.siglus.siglusapi.dto.StockCardSummaryDto;
 import org.siglus.siglusapi.service.SiglusStockCardSummariesService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -62,17 +61,16 @@ public class SiglusStockCardSummariesController {
   }
 
   @GetMapping("/integration/flatten")
-  public Set<StockCardDetailsDto> getStockCardDetailsDtos(
+  public List<StockCardSummaryDto> getStockCardDetailsDtos(
       @RequestParam MultiValueMap<String, String> parameters,
       @RequestParam(required = false) List<UUID> subDraftIds,
       @RequestParam(required = false) UUID draftId,
       @PageableDefault(size = Integer.MAX_VALUE) Pageable pageable) {
-    return stockCardSummariesSiglusService.getStockCardDetailsDtos(parameters, subDraftIds, draftId, pageable);
+    return stockCardSummariesSiglusService.getStockCardSummaryDtos(parameters, subDraftIds, draftId, pageable);
   }
 
   @GetMapping("/lots")
-  public List<LotDto> getLosts(
-          @RequestBody List<UUID> orderableIds) {
+  public List<LotDto> getLosts(@RequestBody List<UUID> orderableIds) {
     return stockCardSummariesSiglusService.getLotsDataByOrderableIds(orderableIds);
   }
 
