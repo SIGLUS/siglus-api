@@ -249,7 +249,7 @@ public class SiglusOrderableServiceTest {
         .orderableId(orderableId).build();
     draft.setInitialDraftId(initialDraftId);
     draft.setLineItems(newArrayList(lineItem));
-    searchParams.setIds(newHashSet(orderableId.toString(), targetOrderableId.toString()));
+    searchParams.setIds(newHashSet(orderableId, targetOrderableId));
 
     ProgramOrderableDto programOrderableDto = new ProgramOrderableDto();
     OrderableDto orderableDto = new OrderableDto();

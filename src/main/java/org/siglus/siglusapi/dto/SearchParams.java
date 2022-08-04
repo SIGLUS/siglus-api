@@ -128,7 +128,7 @@ public final class SearchParams implements Serializable {
         .ofNullable(get(key))
         .orElse(Collections.emptyList())
         .stream()
-        .map(value -> parse((String) value, key))
+        .map(value -> parse(value.toString(), key))
         .collect(toSet());
   }
 
@@ -138,7 +138,7 @@ public final class SearchParams implements Serializable {
             new ValidationMessageException(new Message(ERROR_INVALID_FORMAT_UUID, value, key)));
   }
 
-  public void setUuids(Set<String> ids) {
+  public void setUuids(Set<UUID> ids) {
     ids.forEach(uuid -> params.add("id", uuid));
   }
 

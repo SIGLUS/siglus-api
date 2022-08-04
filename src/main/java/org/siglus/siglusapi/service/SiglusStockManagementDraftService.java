@@ -210,7 +210,7 @@ public class SiglusStockManagementDraftService {
     operatePermissionService.checkPermission(facilityId);
     log.info("delete stockmanagement draft: {}", id);
     stockManagementDraftRepository.delete(subDraft);
-    if (!subDraft.getDraftType().equals(FieldConstants.ADJUSTMENT)) {
+    if (!FieldConstants.ADJUSTMENT.equals(subDraft.getDraftType())) {
       resetDraftNumber(subDraft);
     }
   }

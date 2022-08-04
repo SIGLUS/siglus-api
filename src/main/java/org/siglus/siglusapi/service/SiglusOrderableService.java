@@ -34,6 +34,7 @@ import org.siglus.common.repository.ArchivedProductRepository;
 import org.siglus.common.repository.ProgramAdditionalOrderableRepository;
 import org.siglus.siglusapi.constant.PaginationConstants;
 import org.siglus.siglusapi.domain.StockManagementDraft;
+import org.siglus.siglusapi.domain.StockManagementDraftLineItem;
 import org.siglus.siglusapi.dto.OrderableExpirationDateDto;
 import org.siglus.siglusapi.dto.QueryOrderableSearchParams;
 import org.siglus.siglusapi.exception.NotFoundException;
@@ -83,13 +84,12 @@ public class SiglusOrderableService {
 
     drafts.remove(foundDraft);
 
-    Set<String> existOrderableIds = drafts.stream().flatMap(
+    Set<UUID> existOrderableIds = drafts.stream().flatMap(
         draft -> draft.getLineItems().stream()
-            .map(lineItem -> lineItem.getOrderableId().toString()))
+            .map(StockManagementDraftLineItem::getOrderableId))
         .collect(Collectors.toSet());
 
-    Set<String> orderableIds = searchParams.getIds().stream().map(UUID::toString)
-        .collect(Collectors.toSet());
+    Set<UUID> orderableIds = searchParams.getIds();
 
     orderableIds.removeAll(existOrderableIds);
 
