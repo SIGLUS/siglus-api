@@ -512,6 +512,17 @@ traits:
               application/json:
                 schema: orderablePage
 
+    /orderables/price:
+      displayName: Get All Orderables' Price
+      get:
+        is: [ secured ]
+        description: >
+          Get all Orderables' price
+        responses:
+          "200":
+            body:
+              application/json:
+
     /validDestinations:
       get:
         is: [ secured ]

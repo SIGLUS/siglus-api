@@ -15,6 +15,8 @@
 
 package org.siglus.siglusapi.service;
 
+import static org.siglus.siglusapi.constant.CacheConstants.CACHE_KEY_GENERATOR;
+import static org.siglus.siglusapi.constant.CacheConstants.SIGLUS_PROGRAM_ORDERABLES;
 import static org.siglus.siglusapi.constant.FieldConstants.CODE;
 import static org.siglus.siglusapi.constant.FieldConstants.FULL_PRODUCT_NAME;
 import static org.siglus.siglusapi.constant.FieldConstants.PRODUCT_CODE;
@@ -38,9 +40,12 @@ import org.siglus.siglusapi.domain.StockManagementDraftLineItem;
 import org.siglus.siglusapi.dto.OrderableExpirationDateDto;
 import org.siglus.siglusapi.dto.QueryOrderableSearchParams;
 import org.siglus.siglusapi.exception.NotFoundException;
+import org.siglus.siglusapi.repository.ProgramOrderablesRepository;
 import org.siglus.siglusapi.repository.SiglusOrderableRepository;
 import org.siglus.siglusapi.repository.StockManagementDraftRepository;
+import org.siglus.siglusapi.repository.dto.ProgramOrderableDto;
 import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -57,6 +62,7 @@ public class SiglusOrderableService {
   private final ProgramAdditionalOrderableRepository programAdditionalOrderableRepository;
   private final ArchivedProductRepository archivedProductRepository;
   private final StockManagementDraftRepository stockManagementDraftRepository;
+  private final ProgramOrderablesRepository programOrderablesRepository;
 
   public Page<OrderableDto> searchOrderables(QueryOrderableSearchParams searchParams,
       Pageable pageable, UUID facilityId) {
@@ -166,5 +172,10 @@ public class SiglusOrderableService {
     Pageable pageable = new PageRequest(PaginationConstants.DEFAULT_PAGE_NUMBER,
         PaginationConstants.NO_PAGINATION);
     return orderableReferenceDataService.searchOrderables(params, pageable).getContent();
+  }
+
+  @Cacheable(value = SIGLUS_PROGRAM_ORDERABLES, keyGenerator = CACHE_KEY_GENERATOR)
+  public List<ProgramOrderableDto> getAllProgramOrderableDtos() {
+    return programOrderablesRepository.findAllMaxVersionProgramOrderableDtos();
   }
 }
