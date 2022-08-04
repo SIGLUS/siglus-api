@@ -18,6 +18,8 @@ package org.siglus.siglusapi.web;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+
+import org.openlmis.referencedata.dto.LotDto;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2Dto;
 import org.siglus.siglusapi.dto.StockCardDetailsDto;
 import org.siglus.siglusapi.service.SiglusStockCardSummariesService;
@@ -27,6 +29,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -66,4 +69,11 @@ public class SiglusStockCardSummariesController {
       @PageableDefault(size = Integer.MAX_VALUE) Pageable pageable) {
     return stockCardSummariesSiglusService.getStockCardDetailsDtos(parameters, subDraftIds, draftId, pageable);
   }
+
+  @GetMapping("/lots")
+  public List<LotDto> getLosts(
+          @RequestBody List<UUID> orderableIds) {
+    return stockCardSummariesSiglusService.getLotsDataByOrderableIds(orderableIds);
+  }
+
 }

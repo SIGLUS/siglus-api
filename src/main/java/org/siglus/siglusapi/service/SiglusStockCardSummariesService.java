@@ -21,6 +21,8 @@ import static org.openlmis.stockmanagement.service.PermissionService.STOCK_CARDS
 import static org.openlmis.stockmanagement.service.PermissionService.STOCK_INVENTORIES_EDIT;
 import static org.siglus.siglusapi.constant.FieldConstants.FACILITY_ID;
 import static org.siglus.siglusapi.constant.FieldConstants.RIGHT_NAME;
+import static org.siglus.siglusapi.constant.PaginationConstants.DEFAULT_PAGE_NUMBER;
+import static org.siglus.siglusapi.constant.PaginationConstants.NO_PAGINATION;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_PERMISSION_NOT_SUPPORTED;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_ID_NOT_FOUND;
@@ -41,7 +43,11 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
+import org.openlmis.referencedata.domain.Orderable;
 import org.openlmis.referencedata.dto.OrderableDto;
+import org.openlmis.referencedata.repository.OrderableRepository;
+import org.openlmis.referencedata.service.LotSearchParams;
+import org.openlmis.referencedata.web.LotController;
 import org.openlmis.requisition.service.PermissionService;
 import org.openlmis.requisition.service.referencedata.PermissionStringDto;
 import org.openlmis.requisition.utils.Pagination;
@@ -124,6 +130,26 @@ public class SiglusStockCardSummariesService {
 
   @Autowired
   private SiglusOrderableService siglusOrderableService;
+
+  @Autowired
+  private OrderableRepository orderableRepository;
+
+  @Autowired
+  private LotController lotController;
+
+  public List<org.openlmis.referencedata.dto.LotDto> getLotsDataByOrderableIds(List<UUID> orderableIds) {
+    Page<Orderable> orderablePage = orderableRepository.findAllLatestByIds(orderableIds,
+            new PageRequest(DEFAULT_PAGE_NUMBER, NO_PAGINATION));
+    Set<UUID> tradeItemIds = orderablePage.getContent()
+            .stream()
+            .map(Orderable::getTradeItemIdentifier)
+            .map(UUID::fromString)
+            .collect(Collectors.toSet());
+    LotSearchParams requestParams = new LotSearchParams(null, new ArrayList<>(tradeItemIds), null, null);
+    List<org.openlmis.referencedata.dto.LotDto> lotDtos = lotController.getLots(requestParams, null).getContent();
+
+    return lotDtos;
+  }
 
   public Page<StockCardSummaryV2Dto> findSiglusStockCard(
       MultiValueMap<String, String> parameters, List<UUID> subDraftIds, Pageable pageable) {
