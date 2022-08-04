@@ -72,6 +72,7 @@ import org.siglus.siglusapi.dto.enums.PodSubDraftStatusEnum;
 import org.siglus.siglusapi.exception.AuthenticationException;
 import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.NotFoundException;
+import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.OrderableRepository;
 import org.siglus.siglusapi.repository.OrdersRepository;
 import org.siglus.siglusapi.repository.PodLineItemsExtensionRepository;
@@ -262,6 +263,18 @@ public class SiglusPodServiceTest {
     // when
     CreatePodSubDraftRequest request = new CreatePodSubDraftRequest();
     request.setSplitNum(1);
+    service.createSubDrafts(podId, request);
+  }
+
+  @Test(expected = ValidationMessageException.class)
+  public void shouldThrowWhenCreateSubDraftsWithSplitNumTooLarge() {
+    // given
+    when(fulfillmentService.searchProofOfDelivery(any(), any())).thenReturn(buildMockPodDto());
+    when(orderableRepository.findLatestByIds(Lists.newArrayList(orderableId))).thenReturn(buildMockOrderables());
+
+    // when
+    CreatePodSubDraftRequest request = new CreatePodSubDraftRequest();
+    request.setSplitNum(10);
     service.createSubDrafts(podId, request);
   }
 

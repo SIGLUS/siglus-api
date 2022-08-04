@@ -21,6 +21,7 @@ import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_NO_POD_OR_POD_LINE_ITE
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_NO_POD_SUB_DRAFT_FOUND;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_PERMISSION_NOT_SUPPORTED;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_POD_ID_SUB_DRAFT_ID_NOT_MATCH;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_SPLIT_NUM_TOO_LARGE;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_SUB_DRAFTS_ALREADY_EXISTED;
 
 import com.google.common.collect.Lists;
@@ -60,6 +61,7 @@ import org.siglus.siglusapi.dto.enums.PodSubDraftStatusEnum;
 import org.siglus.siglusapi.exception.AuthenticationException;
 import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.NotFoundException;
+import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.OrderableRepository;
 import org.siglus.siglusapi.repository.OrdersRepository;
 import org.siglus.siglusapi.repository.PodLineItemsExtensionRepository;
@@ -168,6 +170,9 @@ public class SiglusPodService {
     ProofOfDeliveryDto podDto = getPodDtoByPodId(podId);
     List<SimpleLineItem> simpleLineItems = buildSimpleLineItems(podDto);
     List<List<SimpleLineItem>> groupByProductIdLineItems = getGroupByProductIdLineItemList(simpleLineItems);
+    if (groupByProductIdLineItems.size() < request.getSplitNum()) {
+      throw new ValidationMessageException(ERROR_SPLIT_NUM_TOO_LARGE);
+    }
     List<List<List<SimpleLineItem>>> splitGroupList = CustomListSortHelper.averageAssign(groupByProductIdLineItems,
         request.getSplitNum());
 
