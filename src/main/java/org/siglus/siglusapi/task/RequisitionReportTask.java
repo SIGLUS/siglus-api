@@ -31,7 +31,7 @@ public class RequisitionReportTask {
   @SchedulerLock(name = "requisition_not_submit_monthly_report")
   @Transactional
   public void refresh() {
-    requisitionReportTaskService.refresh(false);
+    requisitionReportTaskService.refresh();
   }
 
 }

@@ -24,20 +24,20 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.openlmis.referencedata.domain.ProcessingPeriod;
-import org.openlmis.referencedata.domain.ProcessingSchedule;
 import org.openlmis.requisition.dto.FacilityDto;
+import org.openlmis.requisition.dto.ProcessingPeriodDto;
 import org.openlmis.requisition.dto.ProgramDto;
+import org.openlmis.requisition.service.PeriodService;
 import org.openlmis.requisition.service.referencedata.FacilityReferenceDataService;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
-import org.siglus.common.domain.ProcessingPeriodExtension;
-import org.siglus.common.repository.ProcessingPeriodExtensionRepository;
+import org.siglus.common.domain.referencedata.ProcessingSchedule;
 import org.siglus.siglusapi.constant.PeriodConstants;
 import org.siglus.siglusapi.domain.ProgramRequisitionNameMapping;
 import org.siglus.siglusapi.domain.RequisitionMonthlyReport;
@@ -45,13 +45,13 @@ import org.siglus.siglusapi.domain.SiglusReportType;
 import org.siglus.siglusapi.domain.report.RequisitionMonthlyReportFacility;
 import org.siglus.siglusapi.dto.SupportedProgramDto;
 import org.siglus.siglusapi.repository.FacilityNativeRepository;
-import org.siglus.siglusapi.repository.ProcessingPeriodRepository;
 import org.siglus.siglusapi.repository.ProgramRequisitionNameMappingRepository;
 import org.siglus.siglusapi.repository.RequisitionMonthReportRepository;
 import org.siglus.siglusapi.repository.RequisitionMonthlyNotSubmitReportRepository;
 import org.siglus.siglusapi.repository.SiglusReportTypeRepository;
 import org.siglus.siglusapi.repository.dto.FacilityProgramPeriodScheduleDto;
 import org.siglus.siglusapi.repository.dto.FacillityStockCardDateDto;
+import org.siglus.siglusapi.service.SiglusProcessingPeriodService;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -71,15 +71,15 @@ public class RequisitionReportTaskServiceTest {
   private ProgramRequisitionNameMappingRepository programRequisitionNameMappingRepository;
   @Mock
   private SiglusFacilityReferenceDataService siglusFacilityReferenceDataService;
-  @Mock
-  private ProcessingPeriodExtensionRepository processingPeriodExtensionRepository;
-  @Mock
-  private ProcessingPeriodRepository processingPeriodRepository;
   @InjectMocks
   private RequisitionReportTaskService requisitionReportTaskService;
   @Mock
   private SiglusReportTypeRepository reportTypeRepository;
 
+  @Mock
+  private SiglusProcessingPeriodService siglusProcessingPeriodService;
+  @Mock
+  private PeriodService periodService;
 
   private final UUID facilityId = UUID.randomUUID();
 
@@ -159,24 +159,16 @@ public class RequisitionReportTaskServiceTest {
   @Test
   public void shouldCallSaveWhenRefreshWithEmptyRequisition() {
     // given
-
-    ProcessingPeriodExtension item = new ProcessingPeriodExtension();
+    ProcessingPeriodDto item = new ProcessingPeriodDto();
     item.setId(periodExtensionId);
-    item.setProcessingPeriodId(periodId);
+    item.setStartDate(LocalDate.of(2022, 1, 1));
+    item.setEndDate(LocalDate.of(2022, 1, 30));
     item.setSubmitStartDate(LocalDate.of(2022, 1, 20));
     item.setSubmitEndDate(LocalDate.of(2022, 1, 25));
-    List<ProcessingPeriodExtension> allProcessingPeriodExtensionDto = new ArrayList<>();
-    allProcessingPeriodExtensionDto.add(item);
-    when(processingPeriodExtensionRepository.findAll()).thenReturn(allProcessingPeriodExtensionDto);
-    ProcessingPeriod item2 = new ProcessingPeriod();
-    item2.setId(periodId);
-    item2.setStartDate(LocalDate.of(2022, 1, 1));
-    item2.setEndDate(LocalDate.of(2022, 1, 30));
-    item2.setProcessingSchedule(processingSchedule);
-    List<ProcessingPeriod> allProcessingPeriodDto = new ArrayList<>();
-    allProcessingPeriodDto.add(item2);
-    when(processingPeriodRepository.findAll()).thenReturn(allProcessingPeriodDto);
-
+    final List<ProcessingPeriodDto> coll = new ArrayList<>();
+    coll.add(item);
+    when(siglusProcessingPeriodService.fillProcessingPeriodWithExtension(coll)).thenReturn(coll);
+    when(periodService.searchByProgramAndFacility(programId, facilityId)).thenReturn(coll);
 
     when(facilityNativeRepository.findFirstStockCardGroupByFacility()).thenReturn(
         getFacillityStockCardDateDto(2021, 1, 10));
@@ -184,7 +176,7 @@ public class RequisitionReportTaskServiceTest {
     when(requisitionMonthReportRepository.findAll()).thenReturn(new ArrayList<>());
 
     // when
-    requisitionReportTaskService.refresh(false);
+    requisitionReportTaskService.refresh();
 
     // then
     verify(requisitionMonthlyNotSubmitReportRepository).save(any(List.class));
@@ -195,22 +187,16 @@ public class RequisitionReportTaskServiceTest {
   public void shouldNotCallSaveWhenRefreshWithOneSubmitRequisition() {
     // given
 
-    ProcessingPeriodExtension item = new ProcessingPeriodExtension();
+    ProcessingPeriodDto item = new ProcessingPeriodDto();
     item.setId(periodExtensionId);
-    item.setProcessingPeriodId(periodId);
+    item.setStartDate(LocalDate.of(2022, 1, 1));
+    item.setEndDate(LocalDate.of(2022, 1, 30));
     item.setSubmitStartDate(LocalDate.of(2022, 1, 20));
     item.setSubmitEndDate(LocalDate.of(2022, 1, 25));
-    List<ProcessingPeriodExtension> allProcessingPeriodExtensionDto = new ArrayList<>();
-    allProcessingPeriodExtensionDto.add(item);
-    when(processingPeriodExtensionRepository.findAll()).thenReturn(allProcessingPeriodExtensionDto);
-    ProcessingPeriod item2 = new ProcessingPeriod();
-    item2.setId(periodId);
-    item2.setStartDate(LocalDate.of(2022, 1, 1));
-    item2.setEndDate(LocalDate.of(2022, 1, 30));
-    item2.setProcessingSchedule(processingSchedule);
-    List<ProcessingPeriod> allProcessingPeriodDto = new ArrayList<>();
-    allProcessingPeriodDto.add(item2);
-    when(processingPeriodRepository.findAll()).thenReturn(allProcessingPeriodDto);
+    final List<ProcessingPeriodDto> coll = new ArrayList<>();
+    coll.add(item);
+    when(siglusProcessingPeriodService.fillProcessingPeriodWithExtension(coll)).thenReturn(coll);
+    when(periodService.searchByProgramAndFacility(programId, facilityId)).thenReturn(coll);
 
     when(facilityNativeRepository.findFirstStockCardGroupByFacility()).thenReturn(
         getFacillityStockCardDateDto(2021, 1, 10));
@@ -225,7 +211,7 @@ public class RequisitionReportTaskServiceTest {
     when(requisitionMonthReportRepository.findAll()).thenReturn(requisitionMonthlyReports);
 
     // when
-    requisitionReportTaskService.refresh(false);
+    requisitionReportTaskService.refresh();
 
     // then
     verify(requisitionMonthlyNotSubmitReportRepository).save(any(List.class));
@@ -233,96 +219,27 @@ public class RequisitionReportTaskServiceTest {
   }
 
   @Test
-  public void shouldNotCallSaveWhenRefreshWithFutureDate() {
-    // given
-    ProcessingPeriodExtension item = new ProcessingPeriodExtension();
-    item.setId(periodExtensionId);
-    item.setProcessingPeriodId(periodId);
-    item.setSubmitStartDate(LocalDate.of(2022, 1, 20));
-    item.setSubmitEndDate(LocalDate.of(2022, 1, 25));
-    List<ProcessingPeriodExtension> allProcessingPeriodExtensionDto = new ArrayList<>();
-    allProcessingPeriodExtensionDto.add(item);
-
-    ProcessingPeriodExtension item1 = new ProcessingPeriodExtension();
-    item1.setId(periodExtensionId);
-    UUID periodId2 = UUID.randomUUID();
-    item1.setProcessingPeriodId(periodId2);
-    item1.setSubmitStartDate(LocalDate.of(2022, 10, 20));
-    item1.setSubmitEndDate(LocalDate.of(2022, 10, 25));
-    allProcessingPeriodExtensionDto.add(item1);
-
-    when(processingPeriodExtensionRepository.findAll()).thenReturn(allProcessingPeriodExtensionDto);
-    ProcessingPeriod item2 = new ProcessingPeriod();
-    item2.setId(periodId);
-    item2.setStartDate(LocalDate.of(2022, 1, 1));
-    item2.setEndDate(LocalDate.of(2022, 1, 30));
-    item2.setProcessingSchedule(processingSchedule);
-    List<ProcessingPeriod> allProcessingPeriodDto = new ArrayList<>();
-    allProcessingPeriodDto.add(item2);
-    ProcessingPeriod item22 = new ProcessingPeriod();
-    item22.setId(periodId2);
-    item22.setStartDate(LocalDate.of(2022, 10, 1));
-    item22.setEndDate(LocalDate.of(2022, 10, 30));
-    item22.setProcessingSchedule(processingSchedule);
-    allProcessingPeriodDto.add(item22);
-
-    when(processingPeriodRepository.findAll()).thenReturn(allProcessingPeriodDto);
-
-    when(facilityNativeRepository.findFirstStockCardGroupByFacility()).thenReturn(
-        getFacillityStockCardDateDto(2022, 10, 10));
-
-    RequisitionMonthlyReport report = new RequisitionMonthlyReport();
-    report.setFacilityId(facilityId);
-    report.setId(reportId);
-    report.setProgramId(programId);
-    report.setProcessingPeriodId(UUID.randomUUID());
-    List<RequisitionMonthlyReport> requisitionMonthlyReports = new ArrayList<>();
-    requisitionMonthlyReports.add(report);
-    when(requisitionMonthReportRepository.findAll()).thenReturn(requisitionMonthlyReports);
-
-    // when
-    requisitionReportTaskService.refresh(false);
-
-    // then
-    verify(requisitionMonthlyNotSubmitReportRepository, times(0)).save(any(List.class));
-
-  }
-
-  @Test
   public void shouldNotCallSaveWhenRefreshWithHisDate() {
     // given
-    ProcessingPeriodExtension item = new ProcessingPeriodExtension();
+    ProcessingPeriodDto item = new ProcessingPeriodDto();
     item.setId(periodExtensionId);
-    item.setProcessingPeriodId(periodId);
+    item.setStartDate(LocalDate.of(2022, 1, 1));
+    item.setEndDate(LocalDate.of(2022, 1, 30));
     item.setSubmitStartDate(LocalDate.of(2022, 1, 20));
     item.setSubmitEndDate(LocalDate.of(2022, 1, 25));
-    List<ProcessingPeriodExtension> allProcessingPeriodExtensionDto = new ArrayList<>();
-    allProcessingPeriodExtensionDto.add(item);
 
-    ProcessingPeriodExtension item1 = new ProcessingPeriodExtension();
-    item1.setId(periodExtensionId);
-    UUID periodId2 = UUID.randomUUID();
-    item1.setProcessingPeriodId(periodId2);
-    item1.setSubmitStartDate(LocalDate.of(2022, 10, 20));
-    item1.setSubmitEndDate(LocalDate.of(2022, 10, 25));
-    allProcessingPeriodExtensionDto.add(item1);
+    ProcessingPeriodDto item2 = new ProcessingPeriodDto();
+    item2.setId(periodExtensionId);
+    item2.setStartDate(LocalDate.of(2022, 10, 1));
+    item2.setEndDate(LocalDate.of(2022, 10, 30));
+    item2.setSubmitStartDate(LocalDate.of(2022, 10, 20));
+    item2.setSubmitEndDate(LocalDate.of(2022, 10, 25));
 
-    when(processingPeriodExtensionRepository.findAll()).thenReturn(allProcessingPeriodExtensionDto);
-    ProcessingPeriod item2 = new ProcessingPeriod();
-    item2.setId(periodId);
-    item2.setStartDate(LocalDate.of(2022, 1, 1));
-    item2.setEndDate(LocalDate.of(2022, 1, 30));
-    item2.setProcessingSchedule(processingSchedule);
-    List<ProcessingPeriod> allProcessingPeriodDto = new ArrayList<>();
-    allProcessingPeriodDto.add(item2);
-    ProcessingPeriod item22 = new ProcessingPeriod();
-    item22.setId(periodId2);
-    item22.setStartDate(LocalDate.of(2022, 10, 1));
-    item22.setProcessingSchedule(processingSchedule);
-    item22.setEndDate(LocalDate.of(2022, 10, 30));
-    allProcessingPeriodDto.add(item22);
-
-    when(processingPeriodRepository.findAll()).thenReturn(allProcessingPeriodDto);
+    final List<ProcessingPeriodDto> coll = new ArrayList<>();
+    coll.add(item);
+    coll.add(item2);
+    when(siglusProcessingPeriodService.fillProcessingPeriodWithExtension(coll)).thenReturn(coll);
+    when(periodService.searchByProgramAndFacility(programId, facilityId)).thenReturn(coll);
 
     when(facilityNativeRepository.findFirstStockCardGroupByFacility()).thenReturn(
         getFacillityStockCardDateDto(2019, 10, 10));
@@ -337,241 +254,25 @@ public class RequisitionReportTaskServiceTest {
     when(requisitionMonthReportRepository.findAll()).thenReturn(requisitionMonthlyReports);
 
     // when
-    requisitionReportTaskService.refresh(false);
+    requisitionReportTaskService.refresh();
 
     // then
     verify(requisitionMonthlyNotSubmitReportRepository, times(1)).save(any(List.class));
-
-  }
-
-  @Test
-  public void shouldCallTwoSaveWhenRefreshWithHisDate() {
-    // given
-    ProcessingPeriodExtension item = new ProcessingPeriodExtension();
-    item.setId(periodExtensionId);
-    item.setProcessingPeriodId(periodId);
-    item.setSubmitStartDate(LocalDate.of(2022, 1, 20));
-    item.setSubmitEndDate(LocalDate.of(2022, 1, 25));
-    List<ProcessingPeriodExtension> allProcessingPeriodExtensionDto = new ArrayList<>();
-    allProcessingPeriodExtensionDto.add(item);
-
-    ProcessingPeriodExtension item1 = new ProcessingPeriodExtension();
-    item1.setId(periodExtensionId);
-    UUID periodId2 = UUID.randomUUID();
-    item1.setProcessingPeriodId(periodId2);
-    item1.setSubmitStartDate(LocalDate.of(2022, 2, 20));
-    item1.setSubmitEndDate(LocalDate.of(2022, 2, 25));
-    allProcessingPeriodExtensionDto.add(item1);
-
-    when(processingPeriodExtensionRepository.findAll()).thenReturn(allProcessingPeriodExtensionDto);
-    ProcessingPeriod item2 = new ProcessingPeriod();
-    item2.setId(periodId);
-    item2.setStartDate(LocalDate.of(2022, 1, 1));
-    item2.setProcessingSchedule(processingSchedule);
-    item2.setEndDate(LocalDate.of(2022, 1, 28));
-    List<ProcessingPeriod> allProcessingPeriodDto = new ArrayList<>();
-    allProcessingPeriodDto.add(item2);
-    ProcessingPeriod item22 = new ProcessingPeriod();
-    item22.setId(periodId2);
-    item22.setProcessingSchedule(processingSchedule);
-    item22.setStartDate(LocalDate.of(2022, 2, 1));
-    item22.setEndDate(LocalDate.of(2022, 2, 28));
-    allProcessingPeriodDto.add(item22);
-
-    when(processingPeriodRepository.findAll()).thenReturn(allProcessingPeriodDto);
-
-    when(facilityNativeRepository.findFirstStockCardGroupByFacility()).thenReturn(
-        getFacillityStockCardDateDto(2021, 1, 19));
-
-    RequisitionMonthlyReport report = new RequisitionMonthlyReport();
-    report.setFacilityId(facilityId);
-    report.setId(reportId);
-    report.setProgramId(programId);
-    report.setProcessingPeriodId(UUID.randomUUID());
-    List<RequisitionMonthlyReport> requisitionMonthlyReports = new ArrayList<>();
-    requisitionMonthlyReports.add(report);
-    when(requisitionMonthReportRepository.findAll()).thenReturn(requisitionMonthlyReports);
-
-    // when
-    requisitionReportTaskService.refresh(false);
-
-    // then
-    verify(requisitionMonthlyNotSubmitReportRepository, times(1)).save(any(List.class));
-
-  }
-
-  @Test
-  public void shouldCallOneSaveWhenRefreshWithHisDate() {
-    // given
-    ProcessingPeriodExtension item = new ProcessingPeriodExtension();
-    item.setId(periodExtensionId);
-    item.setProcessingPeriodId(periodId);
-    item.setSubmitStartDate(LocalDate.of(2022, 1, 20));
-    item.setSubmitEndDate(LocalDate.of(2022, 1, 25));
-    List<ProcessingPeriodExtension> allProcessingPeriodExtensionDto = new ArrayList<>();
-    allProcessingPeriodExtensionDto.add(item);
-
-    ProcessingPeriodExtension item1 = new ProcessingPeriodExtension();
-    item1.setId(periodExtensionId);
-    UUID periodId2 = UUID.randomUUID();
-    item1.setProcessingPeriodId(periodId2);
-    item1.setSubmitStartDate(LocalDate.of(2022, 2, 20));
-    item1.setSubmitEndDate(LocalDate.of(2022, 2, 25));
-    allProcessingPeriodExtensionDto.add(item1);
-
-    when(processingPeriodExtensionRepository.findAll()).thenReturn(allProcessingPeriodExtensionDto);
-    ProcessingPeriod item2 = new ProcessingPeriod();
-    item2.setId(periodId);
-    item2.setStartDate(LocalDate.of(2022, 1, 1));
-    item2.setProcessingSchedule(processingSchedule);
-    item2.setEndDate(LocalDate.of(2022, 1, 28));
-    List<ProcessingPeriod> allProcessingPeriodDto = new ArrayList<>();
-    allProcessingPeriodDto.add(item2);
-    ProcessingPeriod item22 = new ProcessingPeriod();
-    item22.setId(periodId2);
-    item22.setProcessingSchedule(processingSchedule);
-    item22.setStartDate(LocalDate.of(2022, 2, 1));
-    item22.setEndDate(LocalDate.of(2022, 2, 28));
-    allProcessingPeriodDto.add(item22);
-
-    when(processingPeriodRepository.findAll()).thenReturn(allProcessingPeriodDto);
-
-    when(facilityNativeRepository.findFirstStockCardGroupByFacility()).thenReturn(
-        getFacillityStockCardDateDto(2021, 1, 21));
-
-    RequisitionMonthlyReport report = new RequisitionMonthlyReport();
-    report.setFacilityId(facilityId);
-    report.setId(reportId);
-    report.setProgramId(programId);
-    report.setProcessingPeriodId(UUID.randomUUID());
-    List<RequisitionMonthlyReport> requisitionMonthlyReports = new ArrayList<>();
-    requisitionMonthlyReports.add(report);
-    when(requisitionMonthReportRepository.findAll()).thenReturn(requisitionMonthlyReports);
-
-    // when
-    requisitionReportTaskService.refresh(false);
-
-    // then
-    verify(requisitionMonthlyNotSubmitReportRepository, times(1)).save(any(List.class));
-
-  }
-
-  @Test
-  public void shouldCallNotSaveWhenRefreshWithHisDate() {
-    // given
-    ProcessingPeriodExtension item = new ProcessingPeriodExtension();
-    item.setId(periodExtensionId);
-    item.setProcessingPeriodId(periodId);
-    item.setSubmitStartDate(LocalDate.of(2022, 1, 20));
-    item.setSubmitEndDate(LocalDate.of(2022, 1, 25));
-    List<ProcessingPeriodExtension> allProcessingPeriodExtensionDto = new ArrayList<>();
-    allProcessingPeriodExtensionDto.add(item);
-
-    ProcessingPeriodExtension item1 = new ProcessingPeriodExtension();
-    item1.setId(periodExtensionId);
-    UUID periodId2 = UUID.randomUUID();
-    item1.setProcessingPeriodId(periodId2);
-    item1.setSubmitStartDate(LocalDate.of(2022, 2, 20));
-    item1.setSubmitEndDate(LocalDate.of(2022, 2, 25));
-    allProcessingPeriodExtensionDto.add(item1);
-
-    when(processingPeriodExtensionRepository.findAll()).thenReturn(allProcessingPeriodExtensionDto);
-    ProcessingPeriod item2 = new ProcessingPeriod();
-    item2.setId(periodId);
-    item2.setStartDate(LocalDate.of(2022, 1, 1));
-    item2.setProcessingSchedule(processingSchedule);
-    item2.setEndDate(LocalDate.of(2022, 1, 28));
-    List<ProcessingPeriod> allProcessingPeriodDto = new ArrayList<>();
-    allProcessingPeriodDto.add(item2);
-    ProcessingPeriod item22 = new ProcessingPeriod();
-    item22.setProcessingSchedule(processingSchedule);
-    item22.setId(periodId2);
-    item22.setStartDate(LocalDate.of(2022, 2, 1));
-    item22.setEndDate(LocalDate.of(2022, 2, 28));
-    allProcessingPeriodDto.add(item22);
-
-    when(processingPeriodRepository.findAll()).thenReturn(allProcessingPeriodDto);
-
-    when(facilityNativeRepository.findFirstStockCardGroupByFacility()).thenReturn(
-        getFacillityStockCardDateDto(2021, 1, 25));
-
-    RequisitionMonthlyReport report = new RequisitionMonthlyReport();
-    report.setFacilityId(facilityId);
-    report.setId(reportId);
-    report.setProgramId(programId);
-    report.setProcessingPeriodId(periodId);
-    List<RequisitionMonthlyReport> requisitionMonthlyReports = new ArrayList<>();
-    requisitionMonthlyReports.add(report);
-    RequisitionMonthlyReport report2 = new RequisitionMonthlyReport();
-    report2.setFacilityId(facilityId);
-    report2.setId(reportId);
-    report2.setProgramId(programId);
-    report2.setProcessingPeriodId(periodId2);
-    requisitionMonthlyReports.add(report2);
-    when(requisitionMonthReportRepository.findAll()).thenReturn(requisitionMonthlyReports);
-
-    // when
-    requisitionReportTaskService.refresh(false);
-
-    // then
-    verify(requisitionMonthlyNotSubmitReportRepository).save(any(List.class));
-
-  }
-
-
-  @Test
-  public void shouldCallAllMonthSaveWhenRefreshWithHisDate() {
-    // given
-    List<ProcessingPeriodExtension> allProcessingPeriodExtensionDto = new ArrayList<>();
-    List<ProcessingPeriod> allProcessingPeriodDto = new ArrayList<>();
-    for (int i = 1; i <= 12; i++) {
-      UUID periodIdUuid = UUID.randomUUID();
-
-      ProcessingPeriodExtension item1 = new ProcessingPeriodExtension();
-      item1.setId(UUID.randomUUID());
-      item1.setProcessingPeriodId(periodIdUuid);
-      item1.setSubmitStartDate(LocalDate.of(2021, i, 20));
-      item1.setSubmitEndDate(LocalDate.of(2021, i, 25));
-      allProcessingPeriodExtensionDto.add(item1);
-
-      ProcessingPeriod item22 = new ProcessingPeriod();
-      item22.setId(periodIdUuid);
-      item22.setProcessingSchedule(processingSchedule);
-      item22.setStartDate(LocalDate.of(2021, i, 1));
-      item22.setEndDate(LocalDate.of(2021, i, 28));
-      allProcessingPeriodDto.add(item22);
-    }
-    when(processingPeriodExtensionRepository.findAll()).thenReturn(allProcessingPeriodExtensionDto);
-    when(processingPeriodRepository.findAll()).thenReturn(allProcessingPeriodDto);
-
-    when(facilityNativeRepository.findFirstStockCardGroupByFacility()).thenReturn(
-        getFacillityStockCardDateDto(2021, 3, 21));
-
-    RequisitionMonthlyReport report = new RequisitionMonthlyReport();
-    report.setFacilityId(facilityId);
-    report.setId(reportId);
-    report.setProgramId(programId);
-    report.setProcessingPeriodId(UUID.randomUUID());
-    List<RequisitionMonthlyReport> requisitionMonthlyReports = new ArrayList<>();
-    requisitionMonthlyReports.add(report);
-    when(requisitionMonthReportRepository.findAll()).thenReturn(requisitionMonthlyReports);
-
-    // when
-    requisitionReportTaskService.refresh(false);
-
-    // then
-    verify(requisitionMonthlyNotSubmitReportRepository, times(1)).save(any(List.class));
-
   }
 
   private List<FacillityStockCardDateDto> getFacillityStockCardDateDto(int year, int month, int dayOfMonth) {
-    FacillityStockCardDateDto item3 = new FacillityStockCardDateDto();
-    item3.setFacilityId(facilityId);
-    item3.setProgramId(programId);
-    item3.setOccurredDate(java.sql.Date.valueOf(LocalDate.of(year, month, dayOfMonth)));
+    FacillityStockCardDateDto item1 = new FacillityStockCardDateDto();
+    item1.setFacilityId(facilityId);
+    item1.setProgramId(programId);
+    item1.setOccurredDate(java.sql.Date.valueOf(LocalDate.of(year, month, dayOfMonth)));
+
+    FacillityStockCardDateDto item2 = new FacillityStockCardDateDto();
+    item2.setFacilityId(facilityId);
+    item2.setProgramId(programId);
+    item2.setOccurredDate(java.sql.Date.valueOf(LocalDate.of(year, month, dayOfMonth)));
 
     List<FacillityStockCardDateDto> firstStockCardGroupByFacility = new ArrayList<>();
-    firstStockCardGroupByFacility.add(item3);
+    firstStockCardGroupByFacility.add(item1);
     return firstStockCardGroupByFacility;
   }
 }

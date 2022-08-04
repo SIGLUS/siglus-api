@@ -212,13 +212,13 @@ public class SiglusProcessingPeriodService {
 
     Collection<ProcessingPeriodDto> periods = fillProcessingPeriodWithExtension(
         periodService.searchByProgramAndFacility(program, facility));
-    Collection<ProcessingPeriodDto> reportPeriods = filterPeriods(periods, program, facility);
+
     List<UUID> currentPeriodIds = periodService.getCurrentPeriods(program, facility)
         .stream().map(ProcessingPeriodDto::getId).collect(Collectors.toList());
     List<RequisitionPeriodDto> requisitionPeriods = new ArrayList<>();
 
     // TODO Optimization
-    for (ProcessingPeriodDto period : reportPeriods) {
+    for (ProcessingPeriodDto period : periods) {
 
       List<Requisition> requisitions = requisitionRepository.searchRequisitions(
           period.getId(), facility, program, emergency);
@@ -283,7 +283,7 @@ public class SiglusProcessingPeriodService {
     requisitionPeriod.setRequisitionStatus(firstPreAuthorizeRequisition.getStatus());
   }
 
-  private Collection<ProcessingPeriodDto> fillProcessingPeriodWithExtension(
+  public Collection<ProcessingPeriodDto> fillProcessingPeriodWithExtension(
       Collection<ProcessingPeriodDto> periods) {
     List<ProcessingPeriodExtension> extensions = processingPeriodExtensionRepository.findAll();
 
