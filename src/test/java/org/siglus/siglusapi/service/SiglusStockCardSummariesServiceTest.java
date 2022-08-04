@@ -58,6 +58,7 @@ import org.siglus.siglusapi.domain.PhysicalInventorySubDraft;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.repository.PhysicalInventoryLineItemsExtensionRepository;
 import org.siglus.siglusapi.repository.PhysicalInventorySubDraftRepository;
+import org.siglus.siglusapi.repository.StockManagementDraftRepository;
 import org.siglus.siglusapi.service.client.SiglusStockCardStockManagementService;
 import org.siglus.siglusapi.testutils.CanFulfillForMeEntryDtoDataBuilder;
 import org.siglus.siglusapi.testutils.OrderableDtoDataBuilder;
@@ -101,6 +102,9 @@ public class SiglusStockCardSummariesServiceTest {
 
   @Mock
   private PhysicalInventoryLineItemsExtensionRepository lineItemsExtensionRepository;
+
+  @Mock
+  private StockManagementDraftRepository stockManagementDraftRepository;
 
   @InjectMocks
   private SiglusStockCardSummariesService service;
@@ -263,7 +267,7 @@ public class SiglusStockCardSummariesServiceTest {
     MultiValueMap<String, String> params = getProgramsParms();
     params.add(ORDERABLE_ID, orderableId.toString());
     when(physicalInventorySubDraftRepository.findOne(subDraftId)).thenReturn(PhysicalInventorySubDraft.builder()
-            .physicalInventoryId(physicalInventoryId).build());
+        .physicalInventoryId(physicalInventoryId).build());
 
     // when
     Page<StockCardSummaryV2Dto> resultSummaries = service.findSiglusStockCard(params,
@@ -298,6 +302,11 @@ public class SiglusStockCardSummariesServiceTest {
 
     // then
     assertEquals(1, resultSummaries.getContent().size());
+  }
+
+  @Test
+  public void shouldReturnStockCardDetailsDtosByGroup() {
+    when(stockManagementDraftRepository.findOne(subDraftId)).thenReturn(null);
   }
 
   private StockCardSummaryV2Dto createSummaryV2Dto(UUID orderableId, Integer stockOnHand) {
