@@ -310,7 +310,7 @@ public class SiglusPodService {
         .append(orderDto.getEmergency() ? FILE_NAME_PREFIX_EMERGENCY : FILE_NAME_PREFIX_NORMAL)
         .append(orderDto.getReceivingFacilityCode()).append(".")
         .append(DATE_FORMAT.format(orderDto.getPeriodEndDate())).append(".")
-        .append(formatCount(requisitionCount)).append("/");
+        .append(formatCount(requisitionCount));
 
     return fileName.toString();
   }
