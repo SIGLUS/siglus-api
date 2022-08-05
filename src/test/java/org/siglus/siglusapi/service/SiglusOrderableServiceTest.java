@@ -21,6 +21,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.siglus.siglusapi.constant.FieldConstants.FULL_PRODUCT_NAME;
@@ -29,6 +30,7 @@ import static org.siglus.siglusapi.constant.FieldConstants.PRODUCT_CODE;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import org.assertj.core.util.Lists;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -46,6 +48,7 @@ import org.siglus.common.repository.ProgramAdditionalOrderableRepository;
 import org.siglus.siglusapi.domain.StockManagementDraft;
 import org.siglus.siglusapi.domain.StockManagementDraftLineItem;
 import org.siglus.siglusapi.dto.QueryOrderableSearchParams;
+import org.siglus.siglusapi.repository.ProgramOrderablesRepository;
 import org.siglus.siglusapi.repository.SiglusOrderableRepository;
 import org.siglus.siglusapi.repository.StockManagementDraftRepository;
 import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
@@ -81,6 +84,9 @@ public class SiglusOrderableServiceTest {
 
   @Mock
   private QueryOrderableSearchParams searchParams;
+
+  @Mock
+  private ProgramOrderablesRepository programOrderablesRepository;
 
   private Pageable pageable = new PageRequest(0, Integer.MAX_VALUE);
 
@@ -270,5 +276,17 @@ public class SiglusOrderableServiceTest {
         .searchDeduplicatedOrderables(draftId, searchParams, pageable, facilityId);
 
     assertEquals(1, orderableDtos.getContent().size());
+  }
+
+  @Test
+  public void shouldGetAllProgramOrderables() {
+    // given
+    when(programOrderablesRepository.findAllMaxVersionProgramOrderableDtos()).thenReturn(Lists.emptyList());
+
+    // when
+    siglusOrderableService.getAllProgramOrderableDtos();
+
+    // then
+    verify(programOrderablesRepository, times(1)).findAllMaxVersionProgramOrderableDtos();
   }
 }

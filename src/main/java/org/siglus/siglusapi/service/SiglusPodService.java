@@ -21,6 +21,7 @@ import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_NO_POD_OR_POD_LINE_ITE
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_NO_POD_SUB_DRAFT_FOUND;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_PERMISSION_NOT_SUPPORTED;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_POD_ID_SUB_DRAFT_ID_NOT_MATCH;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_SPLIT_NUM_TOO_LARGE;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_SUB_DRAFTS_ALREADY_EXISTED;
 
 import com.google.common.collect.Lists;
@@ -60,6 +61,7 @@ import org.siglus.siglusapi.dto.enums.PodSubDraftStatusEnum;
 import org.siglus.siglusapi.exception.AuthenticationException;
 import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.NotFoundException;
+import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.OrderableRepository;
 import org.siglus.siglusapi.repository.OrdersRepository;
 import org.siglus.siglusapi.repository.PodLineItemsExtensionRepository;
@@ -135,6 +137,9 @@ public class SiglusPodService {
   @Autowired
   private StatusChangeRepository requisitionStatusChangeRepository;
 
+  @Autowired
+  private SiglusRequisitionExtensionService requisitionExtensionService;
+
   private static final String FILE_NAME_PREFIX_EMERGENCY = "OF.REM.";
   private static final String FILE_NAME_PREFIX_NORMAL = "OF.RNO.";
   private static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyMM");
@@ -168,6 +173,9 @@ public class SiglusPodService {
     ProofOfDeliveryDto podDto = getPodDtoByPodId(podId);
     List<SimpleLineItem> simpleLineItems = buildSimpleLineItems(podDto);
     List<List<SimpleLineItem>> groupByProductIdLineItems = getGroupByProductIdLineItemList(simpleLineItems);
+    if (groupByProductIdLineItems.size() < request.getSplitNum()) {
+      throw new ValidationMessageException(ERROR_SPLIT_NUM_TOO_LARGE);
+    }
     List<List<List<SimpleLineItem>>> splitGroupList = CustomListSortHelper.averageAssign(groupByProductIdLineItems,
         request.getSplitNum());
 
@@ -262,7 +270,7 @@ public class SiglusPodService {
     UUID realRequisitionId =
         Objects.isNull(orderDto.getRequisitionId()) ? orderDto.getExternalId() : orderDto.getRequisitionId();
 
-    response.setFileName(getFileName(orderDto, realRequisitionId));
+    response.setFileName(getFileName(orderDto));
     response.setClient(orderDto.getReceivingFacilityName());
     response.setSupplier(orderDto.getSupplyingFacilityName());
     response.setReceivedBy(orderDto.getPodReceivedBy());
@@ -270,6 +278,7 @@ public class SiglusPodService {
     response.setReceivedDate(orderDto.getPodReceivedDate());
     response.setIssueVoucherDate(orderDto.getOrderFulfillDate());
     response.setRequisitionId(realRequisitionId);
+    response.setRequisitionNum(requisitionExtensionService.formatRequisitionNumber(realRequisitionId));
 
     FacilityDto facilityDto = siglusFacilityReferenceDataService.findOneFacility(orderDto.getSupplyingFacilityId());
     GeographicZoneDto zoneDto = facilityDto.getGeographicZone();
@@ -294,29 +303,16 @@ public class SiglusPodService {
     return response;
   }
 
-  private String getFileName(OrderDto orderDto, UUID realRequisitionId) {
-    long orderCount = getOrderCount(orderDto, realRequisitionId);
+  private String getFileName(OrderDto orderDto) {
     long requisitionCount = getRequisitionCount(orderDto);
 
     StringBuilder fileName = new StringBuilder()
         .append(orderDto.getEmergency() ? FILE_NAME_PREFIX_EMERGENCY : FILE_NAME_PREFIX_NORMAL)
         .append(orderDto.getReceivingFacilityCode()).append(".")
         .append(DATE_FORMAT.format(orderDto.getPeriodEndDate())).append(".")
-        .append(formatCount(requisitionCount)).append("/")
-        .append(formatCount(orderCount));
+        .append(formatCount(requisitionCount));
 
     return fileName.toString();
-  }
-
-  private long getOrderCount(OrderDto orderDto, UUID realRequisitionId) {
-    if (Objects.isNull(orderDto.getRequisitionId())) {
-      return 1L;
-    }
-
-    OrderExternal orderExternal = new OrderExternal();
-    orderExternal.setRequisitionId(realRequisitionId);
-    Example<OrderExternal> orderExternalExample = Example.of(orderExternal);
-    return orderExternalRepository.count(orderExternalExample);
   }
 
   private long getRequisitionCount(OrderDto orderDto) {

@@ -91,7 +91,7 @@ import lombok.NoArgsConstructor;
         + "           tdpd.facilitycode,\n"
         + "           tdpd.computationtime,\n"
         + "           tdpd.cmm,\n"
-        + "           first_value(tdpd.cmm) over (PARTITION BY tdpd.facilitycode ORDER BY "
+        + "           first_value(tdpd.cmm) over (PARTITION BY (tdpd.facilitycode, tdpd.productcode) ORDER BY "
         + "tdpd.computationtime DESC)  as closedcmm\n"
         + "            from dashboard.tracer_drug_persistent_data tdpd) tracertdpd\n"
         + "on tracertdpd.productcode = maindata.code and tracertdpd.facilitycode = maindata.facilitycode and "

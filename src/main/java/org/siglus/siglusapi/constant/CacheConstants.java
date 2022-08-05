@@ -45,4 +45,6 @@ public class CacheConstants {
 
   public static final String SIGLUS_USER = "siglus-user";
 
+  public static final String SIGLUS_PROGRAM_ORDERABLES = "siglus-program-orderables";
+
 }

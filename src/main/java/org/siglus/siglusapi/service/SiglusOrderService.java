@@ -25,6 +25,7 @@ import static org.siglus.siglusapi.constant.FieldConstants.PROGRAM_ID;
 import static org.siglus.siglusapi.constant.FieldConstants.RIGHT_NAME;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -177,12 +178,13 @@ public class SiglusOrderService {
     Set<UUID> orderIdsWithSubDraft = podSubDraftRepository.findOrderIdsWithSubDraft(orderIds).stream()
         .map(UUID::fromString).collect(Collectors.toSet());
 
-    List<BasicOrderExtensionDto> basicOrderExtensionDtos = basicOrderDtos.stream().map(basicOrderDto -> {
+    List<BasicOrderExtensionDto> basicOrderExtensionDtos = Lists.newArrayListWithExpectedSize(basicOrderDtos.size());
+    for (BasicOrderDto basicOrderDto : basicOrderDtos) {
       BasicOrderExtensionDto basicOrderExtensionDto = new BasicOrderExtensionDto();
       BeanUtils.copyProperties(basicOrderDto, basicOrderExtensionDto);
       basicOrderExtensionDto.setHasSubDraft(orderIdsWithSubDraft.contains(basicOrderDto.getId()));
-      return basicOrderExtensionDto;
-    }).collect(Collectors.toList());
+      basicOrderExtensionDtos.add(basicOrderExtensionDto);
+    }
 
     return new PageImpl(basicOrderExtensionDtos, pageable, basicOrderDtoPage.getTotalElements());
   }

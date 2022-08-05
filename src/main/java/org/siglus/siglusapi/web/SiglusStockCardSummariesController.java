@@ -17,8 +17,10 @@ package org.siglus.siglusapi.web;
 
 import java.util.List;
 import java.util.UUID;
+import org.openlmis.referencedata.dto.LotDto;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2Dto;
 import org.siglus.siglusapi.dto.StockCardDetailsDto;
+import org.siglus.siglusapi.dto.StockCardSummaryDto;
 import org.siglus.siglusapi.service.SiglusStockCardSummariesService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -26,6 +28,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -49,11 +53,26 @@ public class SiglusStockCardSummariesController {
   }
 
   @GetMapping("/integration")
-  public List<List<StockCardDetailsDto>> getOrderablesBySingleRequest(
+  public List<List<StockCardDetailsDto>> getStockCardDetailsDtoByGroup(
       @RequestParam MultiValueMap<String, String> parameters,
       @RequestParam(required = false) List<UUID> subDraftIds,
       @RequestParam(required = false) UUID draftId,
       @PageableDefault(size = Integer.MAX_VALUE) Pageable pageable) {
-    return stockCardSummariesSiglusService.assembleStockCardIntegrationDto(parameters, subDraftIds, draftId, pageable);
+    return stockCardSummariesSiglusService.getStockCardDetailsDtoByGroup(parameters, subDraftIds, draftId, pageable);
   }
+
+  @GetMapping("/integration/flatten")
+  public List<StockCardSummaryDto> getStockCardDetailsDtos(
+      @RequestParam MultiValueMap<String, String> parameters,
+      @RequestParam(required = false) List<UUID> subDraftIds,
+      @RequestParam(required = false) UUID draftId,
+      @PageableDefault(size = Integer.MAX_VALUE) Pageable pageable) {
+    return stockCardSummariesSiglusService.getStockCardSummaryDtos(parameters, subDraftIds, draftId, pageable);
+  }
+
+  @PostMapping("/lots")
+  public List<LotDto> getLosts(@RequestBody List<UUID> orderableIds) {
+    return stockCardSummariesSiglusService.getLotsDataByOrderableIds(orderableIds);
+  }
+
 }

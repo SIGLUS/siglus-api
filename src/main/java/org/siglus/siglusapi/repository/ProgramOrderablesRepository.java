@@ -13,25 +13,17 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.task;
+package org.siglus.siglusapi.repository;
 
-import javax.transaction.Transactional;
-import lombok.RequiredArgsConstructor;
-import net.javacrumbs.shedlock.core.SchedulerLock;
-import org.siglus.siglusapi.service.task.report.RequisitionReportTaskService;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Service;
+import java.util.List;
+import java.util.UUID;
+import org.openlmis.referencedata.domain.ProgramOrderable;
+import org.siglus.siglusapi.repository.dto.ProgramOrderableDto;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
-@RequiredArgsConstructor
-@Service
-public class RequisitionReportTask {
-  private final RequisitionReportTaskService requisitionReportTaskService;
+public interface ProgramOrderablesRepository extends JpaRepository<ProgramOrderable, UUID> {
 
-  @Scheduled(cron = "${report.requisition.monthly.cron}", zone = "${time.zoneId}")
-  @SchedulerLock(name = "requisition_not_submit_monthly_report")
-  @Transactional
-  public void refresh() {
-    requisitionReportTaskService.refresh();
-  }
-
+  @Query(name = "ProgramOrderable.findProgramOrderableDto", nativeQuery = true)
+  List<ProgramOrderableDto> findAllMaxVersionProgramOrderableDtos();
 }

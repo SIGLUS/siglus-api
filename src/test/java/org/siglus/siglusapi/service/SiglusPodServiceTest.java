@@ -72,6 +72,7 @@ import org.siglus.siglusapi.dto.enums.PodSubDraftStatusEnum;
 import org.siglus.siglusapi.exception.AuthenticationException;
 import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.NotFoundException;
+import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.OrderableRepository;
 import org.siglus.siglusapi.repository.OrdersRepository;
 import org.siglus.siglusapi.repository.PodLineItemsExtensionRepository;
@@ -143,6 +144,9 @@ public class SiglusPodServiceTest {
   @Mock
   private StatusChangeRepository requisitionStatusChangeRepository;
 
+  @Mock
+  private SiglusRequisitionExtensionService requisitionExtensionService;
+
   private final UUID externalId = UUID.randomUUID();
   private final UUID orderableId = UUID.randomUUID();
   private final UUID podId = UUID.randomUUID();
@@ -160,6 +164,7 @@ public class SiglusPodServiceTest {
   private final String facilityCode = "facility code";
   private final String facilityName = "facility name";
   private final String lotCode = "lot code";
+  private final String requisitionNum = "requisitionNumber";
   private final Set<String> defaultExpands = Sets.newHashSet("shipment.order");
 
   @Test
@@ -203,16 +208,13 @@ public class SiglusPodServiceTest {
     dto.setShipment(shipmentDto);
     when(fulfillmentService.searchProofOfDelivery(any(UUID.class), any())).thenReturn(dto);
     when(orderExternalRepository.findOne(externalId)).thenReturn(null);
-    when(siglusRequisitionExtensionService.formatRequisitionNumber(externalId))
-        .thenReturn("requisitionNumber");
+    when(siglusRequisitionExtensionService.formatRequisitionNumber(externalId)).thenReturn(requisitionNum);
 
     // when
-    ProofOfDeliveryDto proofOfDeliveryDto = service.getPodDtoByIdAndExpand(UUID.randomUUID(),
-        Collections.emptySet());
+    ProofOfDeliveryDto proofOfDeliveryDto = service.getPodDtoByIdAndExpand(UUID.randomUUID(), Collections.emptySet());
 
     // then
-    assertEquals("requisitionNumber",
-        proofOfDeliveryDto.getShipment().getOrder().getRequisitionNumber());
+    assertEquals(requisitionNum, proofOfDeliveryDto.getShipment().getOrder().getRequisitionNumber());
   }
 
   @Test
@@ -262,6 +264,18 @@ public class SiglusPodServiceTest {
     // when
     CreatePodSubDraftRequest request = new CreatePodSubDraftRequest();
     request.setSplitNum(1);
+    service.createSubDrafts(podId, request);
+  }
+
+  @Test(expected = ValidationMessageException.class)
+  public void shouldThrowWhenCreateSubDraftsWithSplitNumTooLarge() {
+    // given
+    when(fulfillmentService.searchProofOfDelivery(any(), any())).thenReturn(buildMockPodDto());
+    when(orderableRepository.findLatestByIds(Lists.newArrayList(orderableId))).thenReturn(buildMockOrderables());
+
+    // when
+    CreatePodSubDraftRequest request = new CreatePodSubDraftRequest();
+    request.setSplitNum(10);
     service.createSubDrafts(podId, request);
   }
 
@@ -653,6 +667,7 @@ public class SiglusPodServiceTest {
     when(requisitionStatusChangeRepository.findByRequisitionId(requisitionId)).thenReturn(
         buildMockRequisitionStatusChanges());
     when(podLineItemsRepository.lineItemDtos(podId, orderId, requisitionId)).thenReturn(buildMockPodLineItemDtos());
+    when(requisitionExtensionService.formatRequisitionNumber(requisitionId)).thenReturn(requisitionNum);
 
     // when
     PodPrintInfoResponse response = service.getPintInfo(orderId, podId);
@@ -674,6 +689,7 @@ public class SiglusPodServiceTest {
     when(requisitionStatusChangeRepository.findByRequisitionId(requisitionId)).thenReturn(
         buildMockRequisitionStatusChangesWithNoReleasedStatus());
     when(podLineItemsRepository.lineItemDtos(podId, orderId, requisitionId)).thenReturn(buildMockPodLineItemDtos());
+    when(requisitionExtensionService.formatRequisitionNumber(requisitionId)).thenReturn(requisitionNum);
 
     // when
     PodPrintInfoResponse response = service.getPintInfo(orderId, podId);
@@ -695,6 +711,7 @@ public class SiglusPodServiceTest {
     when(requisitionStatusChangeRepository.findByRequisitionId(requisitionId)).thenReturn(
         buildMockRequisitionStatusChangesWithNoReleasedStatus());
     when(podLineItemsRepository.lineItemDtos(podId, orderId, requisitionId)).thenReturn(buildMockPodLineItemDtos());
+    when(requisitionExtensionService.formatRequisitionNumber(requisitionId)).thenReturn(requisitionNum);
 
     // when
     PodPrintInfoResponse response = service.getPintInfo(orderId, podId);
@@ -722,6 +739,7 @@ public class SiglusPodServiceTest {
     when(requisitionStatusChangeRepository.findByRequisitionId(requisitionId)).thenReturn(
         buildMockRequisitionStatusChangesWithNoReleasedStatus());
     when(podLineItemsRepository.lineItemDtos(podId, orderId, requisitionId)).thenReturn(buildMockPodLineItemDtos());
+    when(requisitionExtensionService.formatRequisitionNumber(requisitionId)).thenReturn(requisitionNum);
 
     // when
     PodPrintInfoResponse response = service.getPintInfo(orderId, podId);

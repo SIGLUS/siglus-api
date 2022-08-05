@@ -32,6 +32,7 @@ public class PodPrintInfoResponse {
   private String supplierDistrict;
   private String supplierProvince;
   private UUID requisitionId;
+  private String requisitionNum;
   // Date that the HF Role3 internally approve the requisition
   private ZonedDateTime requisitionDate;
   // Date that the supplier fulfills the order
