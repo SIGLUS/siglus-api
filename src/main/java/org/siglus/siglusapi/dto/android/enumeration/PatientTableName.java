@@ -88,6 +88,18 @@ public enum PatientTableName {
       return NewSection4.findValueByKey(key);
     }
   },
+  NEWSECTION8() {
+    @Override
+    public String findKeyByValue(String columnName) {
+      return NewSection8.findKeyByValue(columnName);
+    }
+
+    @Override
+    public String findValueByKey(String key) {
+      return NewSection8.findValueByKey(key);
+    }
+  },
+
   TABLE_ARVT_KEY() {
     @Override
     public String findKeyByValue(String columnName) {
@@ -119,6 +131,16 @@ public enum PatientTableName {
     @Override
     public String findValueByKey(String key) {
       return NewSection1.findValueByKey(key);
+    }
+  }, TABLE_TOTAL_KEY() {
+    @Override
+    public String findKeyByValue(String columnName) {
+      return NewSection8.findKeyByValue(columnName);
+    }
+
+    @Override
+    public String findValueByKey(String key) {
+      return NewSection8.findValueByKey(key);
     }
   },
   TABLE_DISPENSED_DS_KEY() {

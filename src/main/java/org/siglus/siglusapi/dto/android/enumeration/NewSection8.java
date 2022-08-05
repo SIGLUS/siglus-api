@@ -16,9 +16,9 @@
 package org.siglus.siglusapi.dto.android.enumeration;
 
 import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_COLUMN;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_COLUMN_1;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TABLE_PROPHYLAXIS_CHILD_KEY;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TABLE_PROPHYLAXIS_PPE_KEY;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_COLUMN_0;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TABLE_TOTAL_MONTH_KEY;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TABLE_TOTAL_PATIENT_KEY;
 
 import java.util.Arrays;
 import lombok.Getter;
@@ -26,9 +26,9 @@ import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 @Getter
-public enum NewSection1 {
-  PROPHYLAXIS_PPE_KEY(TABLE_PROPHYLAXIS_PPE_KEY, NEW_COLUMN),
-  PROPHYLAXIS_CHILD_KEY(TABLE_PROPHYLAXIS_CHILD_KEY, NEW_COLUMN_1);
+public enum NewSection8 {
+  TOTAL_PATIENT_KEY(TABLE_TOTAL_PATIENT_KEY, NEW_COLUMN),
+  TOTAL_MONTH_KEY(TABLE_TOTAL_MONTH_KEY, NEW_COLUMN_0);
 
   private final String key;
 
@@ -40,7 +40,7 @@ public enum NewSection1 {
     }
     return Arrays.stream(values())
         .filter(e -> e.value.equals(value))
-        .map(NewSection1::getKey)
+        .map(NewSection8::getKey)
         .findFirst().orElse(null);
   }
 
@@ -50,7 +50,7 @@ public enum NewSection1 {
     }
     return Arrays.stream(values())
         .filter(e -> e.key.equals(key))
-        .map(NewSection1::getValue)
+        .map(NewSection8::getValue)
         .findFirst().orElse(null);
   }
 }
