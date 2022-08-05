@@ -138,6 +138,9 @@ public class SiglusStockCardSummariesService {
   private LotController lotController;
 
   public List<org.openlmis.referencedata.dto.LotDto> getLotsDataByOrderableIds(List<UUID> orderableIds) {
+    if (CollectionUtils.isEmpty(orderableIds)) {
+      return Collections.emptyList();
+    }
     Page<Orderable> orderablePage = orderableRepository.findAllLatestByIds(orderableIds,
         new PageRequest(DEFAULT_PAGE_NUMBER, NO_PAGINATION));
     Set<UUID> tradeItemIds = orderablePage.getContent()
