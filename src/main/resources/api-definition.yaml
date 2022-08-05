@@ -1287,7 +1287,7 @@ traits:
               application/json:
                 schema: localizedMessage
 
-    /stockCardSummaries/integration:
+    /stockCardSummaries/integration/detail:
       get:
         is: [ secured, paginated ]
         description: Get integration with summaries of stock cards and orderables
@@ -1316,10 +1316,10 @@ traits:
               application/json:
                 schema: localizedMessage
 
-    /stockCardSummaries/integration/flatten:
+    /stockCardSummaries/integration/summary:
       get:
         is: [ secured, paginated ]
-        description: Get integration with summaries of stock cards and orderables but not group
+        description: Get integration with summaries of stock cards and orderables
         queryParameters:
           facilityId:
             required: true

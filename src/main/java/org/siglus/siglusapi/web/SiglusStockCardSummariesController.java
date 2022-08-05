@@ -52,7 +52,7 @@ public class SiglusStockCardSummariesController {
         .searchStockCardSummaryV2Dtos(parameters, subDraftIds, draftId, pageable);
   }
 
-  @GetMapping("/integration")
+  @GetMapping("/integration/detail")
   public List<List<StockCardDetailsDto>> getStockCardDetailsDtoByGroup(
       @RequestParam MultiValueMap<String, String> parameters,
       @RequestParam(required = false) List<UUID> subDraftIds,
@@ -61,8 +61,8 @@ public class SiglusStockCardSummariesController {
     return stockCardSummariesSiglusService.getStockCardDetailsDtoByGroup(parameters, subDraftIds, draftId, pageable);
   }
 
-  @GetMapping("/integration/flatten")
-  public List<StockCardSummaryDto> getStockCardDetailsDtos(
+  @GetMapping("/integration/summary")
+  public List<StockCardSummaryDto> getStockCardSummaryDtos(
       @RequestParam MultiValueMap<String, String> parameters,
       @RequestParam(required = false) List<UUID> subDraftIds,
       @RequestParam(required = false) UUID draftId,
