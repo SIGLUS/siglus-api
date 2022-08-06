@@ -29,8 +29,8 @@ public class TracerDrugPersistentDataTask {
 
   private final TracerDrugReportService tracerDrugReportService;
 
-  @Scheduled(cron = "${report.tarcer.drug.cron}", zone = "${time.zoneId}")
-  @SchedulerLock(name = "tarcer_drug_report")
+  @Scheduled(cron = "${report.tracer.drug.cron}", zone = "${time.zoneId}")
+  @SchedulerLock(name = "tracer_drug_report")
   @Transactional
   public void refreshForTracerDrugReport() {
     tracerDrugReportService.refreshTracerDrugPersistentData(LocalDate.now().toString(), LocalDate.now().toString());
