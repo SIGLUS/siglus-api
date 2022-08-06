@@ -873,9 +873,16 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     groupDtoPatientType.setName("patientType");
     groupDtoPatientType.setColumns(patientType);
 
+    Map<String, PatientColumnDto> newSection8 = new HashMap<>();
+    newSection8.put(newColumn, new PatientColumnDto());
+    newSection8.put(newColumn0, new PatientColumnDto());
+    PatientGroupDto groupDtoNewSection8 = new PatientGroupDto();
+    groupDtoNewSection8.setName("newSection8");
+    groupDtoNewSection8.setColumns(newSection8);
+
     return Arrays
         .asList(groupDtoNewSection0, groupDtoNewSection1, groupDtoNewSection2, groupDtoNewSection3, groupDtoNewSection4,
-            groupDtoNewSection5, groupDtoNewSection6, groupDtoNewSection7, groupDtoPatientType);
+            groupDtoNewSection5, groupDtoNewSection6, groupDtoNewSection7, groupDtoPatientType, groupDtoNewSection8);
   }
 
   private RequisitionCreateRequest buildMlRequisitionCreateRequest() {
