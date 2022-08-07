@@ -98,7 +98,7 @@ public class SiglusPodController {
   @GetMapping("/{id}")
   public ProofOfDeliveryDto getProofOfDelivery(@PathVariable("id") UUID podId,
       @RequestParam(required = false) Set<String> expand) {
-    return siglusPodService.getPodDtoByIdAndExpand(podId, expand);
+    return siglusPodService.getExpandedPodDtoById(podId, expand);
   }
 
   @GetMapping

@@ -28,27 +28,24 @@ import lombok.Data;
 
 @NamedNativeQuery(
     name = "PodLineItem.findLineItemDtos",
-    query = "select podli.quantityaccepted, podli.orderableid, podli.lotid,\n"
+    query = "select podli.proofofdeliveryid, podli.quantityaccepted, podli.orderableid, podli.lotid,\n"
         + "o.code as productcode, o.fullproductname as productname, \n"
         + "l.lotcode, l.expirationdate,\n"
-        + "oli.orderedquantity,\n"
+        + "oli.orderid, oli.orderedquantity,\n"
         + "rli.requestedquantity, rli.requisitionid\n"
         + "from fulfillment.proof_of_delivery_line_items podli\n"
-        + "left join (select * from (select orderables.id,\n"
-        + "orderables.code,\n"
-        + "orderables.fullproductname,\n"
-        + "orderables.versionnumber,\n"
-        + "max(orderables.versionnumber) \n"
-        + "over (partition by orderables.id) as latestversion\n"
-        + "from referencedata.orderables) o_1\n"
-        + "where o_1.versionnumber = o_1.latestversion) o\n"
-        + "on (o.id = podli.orderableid) and podli.proofofdeliveryid = :podId\n"
-        + "left join referencedata.lots l "
-        + "on (l.id = podli.lotid)\n"
-        + "left join fulfillment.order_line_items oli "
-        + "on (oli.orderableid = podli.orderableid) and oli.orderid = :orderId\n"
-        + "left join requisition.requisition_line_items rli "
-        + "on (rli.orderableid = podli.orderableid) and rli.requisitionid = :requisitionId",
+        + "left join (select *\n"
+        + "   from referencedata.orderables\n"
+        + "   where (id, versionnumber) in (\n"
+        + "       select id, MAX(versionnumber)\n"
+        + "       from referencedata.orderables\n"
+        + "       group by id)) o on (o.id = podli.orderableid)\n"
+        + "left join referencedata.lots l on (l.id = podli.lotid)\n"
+        + "left join fulfillment.order_line_items oli on (oli.orderableid = podli.orderableid)\n"
+        + "left join requisition.requisition_line_items rli on (rli.orderableid = podli.orderableid)\n"
+        + "where podli.proofofdeliveryid = :podId \n"
+        + "and oli.orderid = :orderId \n"
+        + "and rli.requisitionid = :requisitionId ",
     resultSetMapping = "PodLineItem.PodLineItemDto")
 
 @MappedSuperclass

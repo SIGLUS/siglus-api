@@ -189,7 +189,7 @@ public class SiglusPodServiceTest {
 
     // when
     ProofOfDeliveryDto proofOfDeliveryDto = service
-        .getPodDtoByIdAndExpand(UUID.randomUUID(), Collections.emptySet());
+        .getExpandedPodDtoById(UUID.randomUUID(), Collections.emptySet());
 
     //then
     OrderLineItemDto lineItem = proofOfDeliveryDto.getShipment().getOrder().getOrderLineItems()
@@ -211,7 +211,7 @@ public class SiglusPodServiceTest {
     when(siglusRequisitionExtensionService.formatRequisitionNumber(externalId)).thenReturn(requisitionNum);
 
     // when
-    ProofOfDeliveryDto proofOfDeliveryDto = service.getPodDtoByIdAndExpand(UUID.randomUUID(), Collections.emptySet());
+    ProofOfDeliveryDto proofOfDeliveryDto = service.getExpandedPodDtoById(UUID.randomUUID(), Collections.emptySet());
 
     // then
     assertEquals(requisitionNum, proofOfDeliveryDto.getShipment().getOrder().getRequisitionNumber());
