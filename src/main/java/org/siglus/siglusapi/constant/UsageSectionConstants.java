@@ -76,10 +76,12 @@ public class UsageSectionConstants {
     public static final String NEW_SECTION_5 = "newSection5";
     public static final String NEW_SECTION_6 = "newSection6";
     public static final String NEW_SECTION_7 = "newSection7";
+    public static final String NEW_SECTION_8 = "newSection8";
 
     public static final String TABLE_ARVT_KEY = "table_arvt_key";
     public static final String TABLE_PATIENTS_KEY = "table_patients_key";
     public static final String TABLE_PROPHYLAXY_KEY = "table_prophylaxy_key";
+    public static final String TABLE_TOTAL_KEY = "table_total_key";
     public static final String TABLE_DISPENSED_DS_KEY = "table_dispensed_ds_key";
     public static final String TABLE_DISPENSED_DT_KEY = "table_dispensed_dt_key";
     public static final String TABLE_DISPENSED_DM_KEY = "table_dispensed_dm_key";
@@ -99,6 +101,9 @@ public class UsageSectionConstants {
     public static final String TABLE_PROPHYLAXIS_PREP_KEY = "table_prophylaxis_prep_key";
     public static final String TABLE_PROPHYLAXIS_CHILD_KEY = "table_prophylaxis_child_key";
     public static final String TABLE_PROPHYLAXIS_TOTAL_KEY = "table_prophylaxis_total_key";
+
+    public static final String TABLE_TOTAL_PATIENT_KEY = "table_total_patient_key";
+    public static final String TABLE_TOTAL_MONTH_KEY = "table_total_month_key";
 
 
     public static final String DISPENSED_DS5 = "dispensed_ds5";

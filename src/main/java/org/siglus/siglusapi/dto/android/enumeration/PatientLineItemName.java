@@ -20,6 +20,7 @@ import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineIte
 import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_SECTION_2;
 import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_SECTION_3;
 import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_SECTION_4;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_SECTION_8;
 import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.PATIENT_TYPE;
 import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TABLE_ARVT_KEY;
 import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TABLE_DISPENSED_DM_KEY;
@@ -27,6 +28,7 @@ import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineIte
 import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TABLE_DISPENSED_DT_KEY;
 import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TABLE_PATIENTS_KEY;
 import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TABLE_PROPHYLAXY_KEY;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TABLE_TOTAL_KEY;
 
 import java.util.Arrays;
 import lombok.Getter;
@@ -40,7 +42,8 @@ public enum PatientLineItemName {
   PROPHYLAXY_KEY(TABLE_PROPHYLAXY_KEY, NEW_SECTION_1),
   DISPENSED_DS_KEY(TABLE_DISPENSED_DS_KEY, NEW_SECTION_2),
   DISPENSED_DT_KEY(TABLE_DISPENSED_DT_KEY, NEW_SECTION_3),
-  DISPENSED_DM_KEY(TABLE_DISPENSED_DM_KEY, NEW_SECTION_4);
+  DISPENSED_DM_KEY(TABLE_DISPENSED_DM_KEY, NEW_SECTION_4),
+  TOTAL_KEY(TABLE_TOTAL_KEY, NEW_SECTION_8);
 
   private final String key;
 

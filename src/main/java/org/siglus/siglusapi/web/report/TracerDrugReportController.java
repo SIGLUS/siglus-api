@@ -31,7 +31,6 @@ import org.siglus.siglusapi.dto.TracerDrugExportDto;
 import org.siglus.siglusapi.service.task.report.TracerDrugReportService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -48,14 +47,12 @@ public class TracerDrugReportController {
   private String dateUrlFormat;
 
   @PostMapping("/refresh")
-  @Async
   public ResponseEntity<String> refresh(String startDate, String endDate) {
     tracerDrugReportService.refreshTracerDrugPersistentData(startDate, endDate);
     return ResponseEntity.ok("refresh begin");
   }
 
   @PostMapping("/initialize")
-  @Async
   public ResponseEntity<String> initialize() {
     tracerDrugReportService.initializeTracerDrugPersistentData();
     return ResponseEntity.ok("initialize begin");
@@ -67,7 +64,7 @@ public class TracerDrugReportController {
     return tracerDrugReportService.getTracerDrugExportDto();
   }
 
-  @GetMapping("excel")
+  @GetMapping("/excel")
   public void getTracerDrugExcel(HttpServletResponse response,
       String productCode,
       String districtCode,
