@@ -17,6 +17,7 @@ package org.siglus.siglusapi.web;
 
 import java.math.BigDecimal;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.openlmis.referencedata.dto.OrderableDto;
@@ -65,7 +66,8 @@ public class SiglusOrderableController {
 
   @GetMapping("/price")
   public Map<UUID, BigDecimal> searchOrderablesPrice() {
-    return orderableService.getAllProgramOrderableDtos().stream().collect(
-        Collectors.toMap(ProgramOrderableDto::getOrderableId, ProgramOrderableDto::getPrice));
+    return orderableService.getAllProgramOrderableDtos().stream()
+        .filter(e -> Objects.nonNull(e.getPrice()))
+        .collect(Collectors.toMap(ProgramOrderableDto::getOrderableId, ProgramOrderableDto::getPrice));
   }
 }

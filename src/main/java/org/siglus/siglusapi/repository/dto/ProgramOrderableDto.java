@@ -29,20 +29,12 @@ import lombok.Data;
 
 @NamedNativeQuery(
     name = "ProgramOrderable.findProgramOrderableDto",
-    query = "select\n"
-        + "orderableid,\n"
-        + "programid,\n"
-        + "priceperpack\n"
-        + "from\n"
-        + "(\n"
-        + "select\n"
-        + "*,\n"
-        + "max(sub_po.orderableversionnumber)\n"
-        + "over (partition by sub_po.orderableid) as latestversion\n"
-        + "from\n"
-        + "referencedata.program_orderables sub_po) po\n"
-        + "where\n"
-        + "po.orderableversionnumber = po.latestversion",
+    query = "select * \n"
+        + "from referencedata.program_orderables\n"
+        + "where (orderableid, orderableversionnumber) in\n"
+        + "   (select orderableid, MAX(orderableversionnumber)\n"
+        + "   from referencedata.program_orderables\n"
+        + "   group by orderableid)",
     resultSetMapping = "ProgramOrderable.ProgramOrderableDto")
 
 @MappedSuperclass
