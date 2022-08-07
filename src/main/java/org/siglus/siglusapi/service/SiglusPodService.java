@@ -150,7 +150,7 @@ public class SiglusPodService {
   private static final Integer PROVINCE_LEVEL_NUMBER = 2;
   private static final Integer DISTRICT_LEVEL_NUMBER = 3;
 
-  public ProofOfDeliveryDto getPodDtoByIdAndExpand(UUID id, Set<String> expand) {
+  public ProofOfDeliveryDto getExpandedPodDtoById(UUID id, Set<String> expand) {
     ProofOfDeliveryDto podDto = fulfillmentService.searchProofOfDelivery(id, expand);
     if (Objects.isNull(podDto)) {
       throw new NotFoundException(ERROR_NO_POD_OR_POD_LINE_ITEM_FOUND);
@@ -196,7 +196,7 @@ public class SiglusPodService {
   public ProofOfDeliveryDto getSubDraftDetail(UUID podId, UUID subDraftId, Set<String> expand) {
     checkIfPodIdAndSubDraftIdMatch(podId, subDraftId);
 
-    ProofOfDeliveryDto dto = getPodDtoByIdAndExpand(podId, expand);
+    ProofOfDeliveryDto dto = getExpandedPodDtoById(podId, expand);
     List<ProofOfDeliveryLineItemDto> currentSubDraftLineItems = getCurrentSubDraftPodLineItemDtos(subDraftId, dto);
     dto.setLineItems(currentSubDraftLineItems);
     return dto;
@@ -245,7 +245,7 @@ public class SiglusPodService {
   public ProofOfDeliveryDto mergeSubDrafts(UUID podId, Set<String> expand) {
     checkAuth();
     checkIfSubDraftsSubmitted(podId);
-    return getPodDtoByIdAndExpand(podId, expand);
+    return getExpandedPodDtoById(podId, expand);
   }
 
   @Transactional

@@ -90,7 +90,7 @@ public class SiglusPodControllerTest {
     controller.getProofOfDelivery(podId, null);
 
     // then
-    verify(proofOfDeliveryService).getPodDtoByIdAndExpand(podId, null);
+    verify(proofOfDeliveryService).getExpandedPodDtoById(podId, null);
   }
 
   @Test
