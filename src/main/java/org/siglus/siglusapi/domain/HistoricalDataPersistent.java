@@ -13,26 +13,14 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.task;
+package org.siglus.siglusapi.domain;
 
-import java.time.LocalDate;
-import javax.transaction.Transactional;
-import lombok.RequiredArgsConstructor;
-import net.javacrumbs.shedlock.core.SchedulerLock;
-import org.siglus.siglusapi.service.task.report.TracerDrugReportService;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Service;
+import javax.persistence.Entity;
+import javax.persistence.Table;
+import org.siglus.common.domain.BaseEntity;
 
-@RequiredArgsConstructor
-@Service
-public class TracerDrugPersistentDataTask {
+@Entity
+@Table(name = "vw_historical_data", schema = "dashboard")
+public class HistoricalDataPersistent extends BaseEntity {
 
-  private final TracerDrugReportService tracerDrugReportService;
-
-  @Scheduled(cron = "${report.tracer.drug.cron}", zone = "${time.zoneId}")
-  @SchedulerLock(name = "tracer_drug_report")
-  @Transactional
-  public void refreshForTracerDrugReport() {
-    tracerDrugReportService.refreshTracerDrugPersistentData(LocalDate.now().toString(), LocalDate.now().toString());
-  }
 }

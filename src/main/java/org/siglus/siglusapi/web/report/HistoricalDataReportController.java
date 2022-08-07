@@ -13,26 +13,26 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.task;
+package org.siglus.siglusapi.web.report;
 
-import java.time.LocalDate;
-import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import net.javacrumbs.shedlock.core.SchedulerLock;
-import org.siglus.siglusapi.service.task.report.TracerDrugReportService;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Service;
+import org.siglus.siglusapi.service.task.report.HistoricalDataPersistentService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RequiredArgsConstructor
-@Service
-public class TracerDrugPersistentDataTask {
+@RestController
+@RequestMapping("/api/siglusapi/report/historicalData")
+public class HistoricalDataReportController {
+  @Autowired
+  private HistoricalDataPersistentService historicalDataPersistentService;
 
-  private final TracerDrugReportService tracerDrugReportService;
-
-  @Scheduled(cron = "${report.tracer.drug.cron}", zone = "${time.zoneId}")
-  @SchedulerLock(name = "tracer_drug_report")
-  @Transactional
-  public void refreshForTracerDrugReport() {
-    tracerDrugReportService.refreshTracerDrugPersistentData(LocalDate.now().toString(), LocalDate.now().toString());
+  @PostMapping("/refresh")
+  public ResponseEntity<String> refresh() {
+    historicalDataPersistentService.refreshHistoricalDataReport();
+    return ResponseEntity.ok("refresh begin");
   }
 }

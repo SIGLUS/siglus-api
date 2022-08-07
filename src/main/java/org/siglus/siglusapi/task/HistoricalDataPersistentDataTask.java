@@ -15,24 +15,25 @@
 
 package org.siglus.siglusapi.task;
 
-import java.time.LocalDate;
 import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import net.javacrumbs.shedlock.core.SchedulerLock;
-import org.siglus.siglusapi.service.task.report.TracerDrugReportService;
+import org.siglus.siglusapi.service.task.report.HistoricalDataPersistentService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 @RequiredArgsConstructor
 @Service
-public class TracerDrugPersistentDataTask {
+public class HistoricalDataPersistentDataTask {
 
-  private final TracerDrugReportService tracerDrugReportService;
+  @Autowired
+  private HistoricalDataPersistentService historicalDataPersistentService;
 
-  @Scheduled(cron = "${report.tracer.drug.cron}", zone = "${time.zoneId}")
-  @SchedulerLock(name = "tracer_drug_report")
+  @Scheduled(cron = "${report.historical.data.cron}", zone = "${time.zoneId}")
+  @SchedulerLock(name = "historical_data_refresh_monthly")
   @Transactional
-  public void refreshForTracerDrugReport() {
-    tracerDrugReportService.refreshTracerDrugPersistentData(LocalDate.now().toString(), LocalDate.now().toString());
+  public void monthlyRefreshForTracerDrugReport() {
+    historicalDataPersistentService.refreshHistoricalDataReport();
   }
 }

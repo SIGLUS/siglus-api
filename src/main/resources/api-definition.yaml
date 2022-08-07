@@ -387,7 +387,16 @@ traits:
         responses:
           200:
             description: success
-
+    /report/historicalData/refresh:
+      displayName: refresh historical data persistent data task
+      post:
+        is: [ secured ]
+        body:
+          application/json:
+            schema: arrayOfStrings
+        responses:
+          201:
+            description: submit success
     /programs:
       displayName: Program
       get:

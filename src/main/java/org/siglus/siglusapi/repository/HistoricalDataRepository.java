@@ -13,26 +13,18 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.task;
+package org.siglus.siglusapi.repository;
 
-import java.time.LocalDate;
-import javax.transaction.Transactional;
-import lombok.RequiredArgsConstructor;
-import net.javacrumbs.shedlock.core.SchedulerLock;
-import org.siglus.siglusapi.service.task.report.TracerDrugReportService;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Service;
+import java.util.UUID;
+import org.siglus.siglusapi.domain.HistoricalDataPersistent;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
 
-@RequiredArgsConstructor
-@Service
-public class TracerDrugPersistentDataTask {
+public interface HistoricalDataRepository extends
+    JpaRepository<HistoricalDataPersistent, UUID> {
 
-  private final TracerDrugReportService tracerDrugReportService;
-
-  @Scheduled(cron = "${report.tracer.drug.cron}", zone = "${time.zoneId}")
-  @SchedulerLock(name = "tracer_drug_report")
-  @Transactional
-  public void refreshForTracerDrugReport() {
-    tracerDrugReportService.refreshTracerDrugPersistentData(LocalDate.now().toString(), LocalDate.now().toString());
-  }
+  @Modifying
+  @Query(value = "refresh MATERIALIZED VIEW dashboard.vw_historical_data;", nativeQuery = true)
+  void insertDataFromLastUpdateDate();
 }

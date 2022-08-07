@@ -13,26 +13,29 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.task;
+package org.siglus.siglusapi.service.task.report;
 
-import java.time.LocalDate;
+import java.util.Date;
 import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import net.javacrumbs.shedlock.core.SchedulerLock;
-import org.siglus.siglusapi.service.task.report.TracerDrugReportService;
-import org.springframework.scheduling.annotation.Scheduled;
+import lombok.extern.slf4j.Slf4j;
+import org.siglus.siglusapi.repository.HistoricalDataRepository;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
-public class TracerDrugPersistentDataTask {
+public class HistoricalDataPersistentService {
 
-  private final TracerDrugReportService tracerDrugReportService;
+  private final HistoricalDataRepository historicalDataRepository;
 
-  @Scheduled(cron = "${report.tracer.drug.cron}", zone = "${time.zoneId}")
-  @SchedulerLock(name = "tracer_drug_report")
   @Transactional
-  public void refreshForTracerDrugReport() {
-    tracerDrugReportService.refreshTracerDrugPersistentData(LocalDate.now().toString(), LocalDate.now().toString());
+  @Async
+  public void refreshHistoricalDataReport() {
+    log.info("historical data persistentData refresh. start at {} ", new Date());
+    historicalDataRepository.insertDataFromLastUpdateDate();
+    long count = historicalDataRepository.count();
+    log.info("historical data persistentData  refresh. end at {}, data quanrity is {}", new Date(), count);
   }
 }
