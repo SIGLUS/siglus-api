@@ -388,7 +388,7 @@ traits:
           200:
             description: success
     /report/historicalData/refresh:
-      displayName: refresh tracer drug persistent data task
+      displayName: refresh historical data persistent data task
       post:
         is: [ secured ]
         body:
