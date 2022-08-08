@@ -52,6 +52,7 @@ import org.openlmis.requisition.domain.requisition.StatusChange;
 import org.openlmis.requisition.repository.StatusChangeRepository;
 import org.siglus.common.domain.OrderExternal;
 import org.siglus.common.repository.OrderExternalRepository;
+import org.siglus.siglusapi.domain.PodExtension;
 import org.siglus.siglusapi.domain.PodLineItemsExtension;
 import org.siglus.siglusapi.domain.PodSubDraft;
 import org.siglus.siglusapi.dto.FacilityDto;
@@ -64,6 +65,7 @@ import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.OrderableRepository;
 import org.siglus.siglusapi.repository.OrdersRepository;
+import org.siglus.siglusapi.repository.PodExtensionRepository;
 import org.siglus.siglusapi.repository.PodLineItemsExtensionRepository;
 import org.siglus.siglusapi.repository.PodLineItemsRepository;
 import org.siglus.siglusapi.repository.PodSubDraftRepository;
@@ -77,6 +79,7 @@ import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.web.request.CreatePodSubDraftRequest;
 import org.siglus.siglusapi.web.request.OperateTypeEnum;
 import org.siglus.siglusapi.web.request.UpdatePodSubDraftRequest;
+import org.siglus.siglusapi.web.response.PodExtensionResponse;
 import org.siglus.siglusapi.web.response.PodPrintInfoResponse;
 import org.siglus.siglusapi.web.response.PodPrintInfoResponse.LineItemInfo;
 import org.siglus.siglusapi.web.response.PodSubDraftsSummaryResponse;
@@ -140,6 +143,9 @@ public class SiglusPodService {
   @Autowired
   private SiglusRequisitionExtensionService requisitionExtensionService;
 
+  @Autowired
+  private PodExtensionRepository podExtensionRepository;
+
   private static final String FILE_NAME_PREFIX_EMERGENCY = "OF.REM.";
   private static final String FILE_NAME_PREFIX_NORMAL = "OF.RNO.";
   private static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyMM");
@@ -149,6 +155,19 @@ public class SiglusPodService {
       RequisitionStatus.RELEASED_WITHOUT_ORDER.name());
   private static final Integer PROVINCE_LEVEL_NUMBER = 2;
   private static final Integer DISTRICT_LEVEL_NUMBER = 3;
+
+  public PodExtensionResponse getPodExtensionResponse(UUID id, Set<String> expand) {
+    PodExtensionResponse response = new PodExtensionResponse();
+    ProofOfDeliveryDto podDto = getExpandedPodDtoById(id, expand);
+    response.setPodDto(podDto);
+
+    PodExtension podExtension = podExtensionRepository.findOne(podDto.getId());
+    if (Objects.nonNull(podExtension)) {
+      response.setPreparedBy(podExtension.getPreparedBy());
+      response.setConferredBy(podExtension.getConferredBy());
+    }
+    return response;
+  }
 
   public ProofOfDeliveryDto getExpandedPodDtoById(UUID id, Set<String> expand) {
     ProofOfDeliveryDto podDto = fulfillmentService.searchProofOfDelivery(id, expand);
