@@ -29,6 +29,7 @@ import static org.mockito.Mockito.when;
 import com.google.common.collect.Sets;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
@@ -58,6 +59,7 @@ import org.openlmis.fulfillment.web.util.VersionObjectReferenceDto;
 import org.openlmis.referencedata.domain.Code;
 import org.openlmis.referencedata.domain.Facility;
 import org.openlmis.referencedata.domain.Orderable;
+import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.domain.requisition.StatusChange;
 import org.openlmis.requisition.repository.StatusChangeRepository;
@@ -660,8 +662,8 @@ public class SiglusPodServiceTest {
     // given
     OrderDto orderDto = buildMockOrderDto();
     when(ordersRepository.findOrderDtoById(orderId)).thenReturn(orderDto);
-    mockOrderExternalCount();
-    when(requisitionsRepository.countByOrderInfo(any(), any(), any(), anyBoolean(), anyList())).thenReturn(1L);
+    mockForOrderExternalCount();
+    mockForRequisitionCount();
     when(siglusFacilityReferenceDataService.findOneFacility(orderDto.getSupplyingFacilityId())).thenReturn(
         buildMockFacilityDto());
     when(requisitionStatusChangeRepository.findByRequisitionId(requisitionId)).thenReturn(
@@ -682,8 +684,8 @@ public class SiglusPodServiceTest {
     // given
     OrderDto orderDto = buildMockOrderDtoWithOutRequisitionId();
     when(ordersRepository.findOrderDtoById(orderId)).thenReturn(orderDto);
-    mockOrderExternalCount();
-    when(requisitionsRepository.countByOrderInfo(any(), any(), any(), anyBoolean(), anyList())).thenReturn(1L);
+    mockForOrderExternalCount();
+    mockForRequisitionCount();
     when(siglusFacilityReferenceDataService.findOneFacility(orderDto.getSupplyingFacilityId())).thenReturn(
         buildMockFacilityDtoWithLevelNumber3());
     when(requisitionStatusChangeRepository.findByRequisitionId(requisitionId)).thenReturn(
@@ -704,8 +706,8 @@ public class SiglusPodServiceTest {
     // given
     OrderDto orderDto = buildMockOrderDtoWithOutRequisitionId();
     when(ordersRepository.findOrderDtoById(orderId)).thenReturn(orderDto);
-    mockOrderExternalCount();
-    when(requisitionsRepository.countByOrderInfo(any(), any(), any(), anyBoolean(), anyList())).thenReturn(1L);
+    mockForOrderExternalCount();
+    mockForRequisitionCount();
     when(siglusFacilityReferenceDataService.findOneFacility(orderDto.getSupplyingFacilityId())).thenReturn(
         new FacilityDto());
     when(requisitionStatusChangeRepository.findByRequisitionId(requisitionId)).thenReturn(
@@ -733,7 +735,7 @@ public class SiglusPodServiceTest {
     orderForQueryCount.setEmergency(orderDto.getEmergency());
     Example<Order> orderExample = Example.of(orderForQueryCount);
     when(ordersRepository.count(orderExample)).thenReturn(1L);
-    when(requisitionsRepository.countByOrderInfo(any(), any(), any(), anyBoolean(), anyList())).thenReturn(100L);
+    mockForRequisitionCount();
     when(siglusFacilityReferenceDataService.findOneFacility(orderDto.getSupplyingFacilityId())).thenReturn(
         buildMockFacilityDtoWithNoParent());
     when(requisitionStatusChangeRepository.findByRequisitionId(requisitionId)).thenReturn(
@@ -750,17 +752,50 @@ public class SiglusPodServiceTest {
     assertNull(response.getSupplierProvince());
   }
 
-  private void mockOrderExternalCount() {
+  private void mockForRequisitionCount() {
+    when(requisitionsRepository.findRequisitionIdsByOrderInfo(any(), any(), any(), anyBoolean(), anyList())).thenReturn(
+        buildMockRequisitions());
+    when(requisitionStatusChangeRepository.findByRequisitionIdIn(anyList())).thenReturn(
+        buildMockRequisitionSubmittedStatusChanges());
+  }
+
+  private void mockForOrderExternalCount() {
     OrderExternal orderExternal = new OrderExternal();
     orderExternal.setRequisitionId(requisitionId);
     Example<OrderExternal> orderExternalExample = Example.of(orderExternal);
     when(orderExternalRepository.count(orderExternalExample)).thenReturn(1L);
   }
 
+  private List<String> buildMockRequisitions() {
+    return Lists.newArrayList(requisitionId.toString());
+  }
+
   private List<StatusChange> buildMockRequisitionStatusChanges() {
     StatusChange statusChange = new StatusChange();
     statusChange.setStatus(RequisitionStatus.RELEASED);
     return Lists.newArrayList(statusChange);
+  }
+
+  private List<StatusChange> buildMockRequisitionSubmittedStatusChanges() {
+    List<StatusChange> statusChanges = Lists.newArrayList();
+    ZonedDateTime now = ZonedDateTime.now();
+    for (int i = 0; i < 100; i++) {
+      StatusChange statusChange = new StatusChange();
+      Requisition requisition = new Requisition();
+      requisition.setId(UUID.randomUUID());
+      statusChange.setRequisition(requisition);
+      statusChange.setCreatedDate(now.plusSeconds(i));
+      statusChange.setStatus(RequisitionStatus.SUBMITTED);
+      statusChanges.add(statusChange);
+    }
+    StatusChange statusChange = new StatusChange();
+    Requisition requisition = new Requisition();
+    requisition.setId(requisitionId);
+    statusChange.setRequisition(requisition);
+    statusChange.setCreatedDate(now.plusDays(1));
+    statusChange.setStatus(RequisitionStatus.SUBMITTED);
+    statusChanges.add(statusChange);
+    return statusChanges;
   }
 
   private List<StatusChange> buildMockRequisitionStatusChangesWithNoReleasedStatus() {
@@ -850,11 +885,6 @@ public class SiglusPodServiceTest {
         .externalId(requisitionId)
         .periodEndDate(Date.from(Instant.now()))
         .build();
-  }
-
-  private PodPrintInfoResponse buildMockPodPrintInfoResponse() {
-    PodPrintInfoResponse response = new PodPrintInfoResponse();
-    return response;
   }
 
   private List<SubDraftInfo> toSubDraftInfos(List<PodSubDraft> podSubDrafts) {
