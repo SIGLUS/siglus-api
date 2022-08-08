@@ -171,7 +171,6 @@ public class SiglusPodServiceTest {
   private final String productName = "product name";
   private final String serviceUrl = "serviceUrl";
   private final String facilityCode = "facility code";
-  private final String facilityName = "facility name";
   private final String lotCode = "lot code";
   private final String requisitionNum = "requisitionNumber";
   private final String preparedBy = "prepared by user1";
