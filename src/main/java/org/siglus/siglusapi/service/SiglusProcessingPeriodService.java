@@ -35,6 +35,7 @@ import org.openlmis.requisition.dto.RequisitionPeriodDto;
 import org.openlmis.requisition.repository.RequisitionRepository;
 import org.openlmis.requisition.service.PeriodService;
 import org.openlmis.requisition.service.PermissionService;
+import org.openlmis.requisition.service.referencedata.PeriodReferenceDataService;
 import org.siglus.common.domain.ProcessingPeriodExtension;
 import org.siglus.common.dto.ProgramAdditionalOrderableDto;
 import org.siglus.common.repository.ProcessingPeriodExtensionRepository;
@@ -90,6 +91,40 @@ public class SiglusProcessingPeriodService {
 
   @Autowired
   private SiglusProgramAdditionalOrderableService siglusProgramAdditionalOrderableService;
+
+  @Autowired
+  private PeriodReferenceDataService periodReferenceDataService;
+
+  public LocalDate getLastPeriodStartDateSinceSubmit(String programCode, UUID facilityId) {
+    ProgramDto program = siglusProgramService.getProgramByCode(programCode)
+            .orElseThrow(() -> new NotFoundException("Program code" + programCode + " Not Found"));
+
+    List<Requisition> requisitions = requisitionRepository.searchRequisitions(
+            null, facilityId, program.getId(), false);
+    if (CollectionUtils.isEmpty(requisitions)) {
+      return null;
+    }
+    Set<UUID> submittedPeriodIds = requisitions.stream()
+            .map(Requisition::getProcessingPeriodId).collect(Collectors.toSet());
+    List<ProcessingPeriodDto> sortedPeriods = periodReferenceDataService
+            .searchByProgramAndFacility(program.getId(), facilityId)
+            .stream()
+            .sorted(Comparator.comparing(ProcessingPeriodDto::getStartDate))
+            .collect(Collectors.toList());
+
+    int firstSubmittedIndex = -1;
+    for (int i = 0; i < sortedPeriods.size(); i++) {
+      if (submittedPeriodIds.contains(sortedPeriods.get(i).getId())) {
+        firstSubmittedIndex = i;
+        break;
+      }
+    }
+
+    if (firstSubmittedIndex > 0) {
+      return sortedPeriods.get(firstSubmittedIndex - 1).getStartDate();
+    }
+    return null;
+  }
 
   @Transactional
   public ProcessingPeriodDto createProcessingPeriod(ProcessingPeriodDto periodDto) {

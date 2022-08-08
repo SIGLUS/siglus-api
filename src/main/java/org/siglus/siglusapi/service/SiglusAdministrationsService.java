@@ -22,6 +22,7 @@ import java.io.InputStreamReader;
 import java.io.Writer;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
@@ -35,19 +36,23 @@ import org.openlmis.stockmanagement.web.Pagination;
 import org.siglus.siglusapi.domain.AppInfo;
 import org.siglus.siglusapi.domain.FacilityExtension;
 import org.siglus.siglusapi.domain.LocationManagement;
+import org.siglus.siglusapi.domain.SiglusReportType;
 import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.FacilitySearchParamDto;
 import org.siglus.siglusapi.dto.FacilitySearchResultDto;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.dto.SiglusFacilityDto;
+import org.siglus.siglusapi.dto.SiglusReportTypeDto;
 import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.i18n.CsvUploadMessageKeys;
 import org.siglus.siglusapi.repository.AppInfoRepository;
 import org.siglus.siglusapi.repository.FacilityExtensionRepository;
 import org.siglus.siglusapi.repository.LocationManagementRepository;
+import org.siglus.siglusapi.repository.SiglusReportTypeRepository;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.validator.CsvValidator;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -71,6 +76,13 @@ public class SiglusAdministrationsService {
   private StockCardRepository stockCardRepository;
   @Autowired
   private CsvValidator csvValidator;
+
+  @Autowired
+  private SiglusReportTypeRepository siglusReportTypeRepository;
+
+  @Autowired
+  private SiglusProcessingPeriodService siglusProcessingPeriodService;
+
   private static final String CSV_SUFFIX = ".csv";
   private static final String MEDIA_TYPE = "text/csv";
   private static final String DISPOSITION_BASE = "attachment; filename=";
@@ -215,6 +227,14 @@ public class SiglusAdministrationsService {
     }
   }
 
+  public SiglusReportTypeDto from(SiglusReportType reportType) {
+    SiglusReportTypeDto dto = new SiglusReportTypeDto();
+    BeanUtils.copyProperties(reportType, dto);
+    dto.setPreviousPeriodStartDateSinceSubmit(siglusProcessingPeriodService.getLastPeriodStartDateSinceSubmit(
+                    reportType.getProgramCode(), reportType.getFacilityId()));
+    return dto;
+  }
+
   private FacilitySearchResultDto getFacilityInfo(UUID facilityId) {
     FacilityDto facilityInfo = siglusFacilityReferenceDataService.findOneFacility(facilityId);
     if (null == facilityInfo) {
@@ -222,6 +242,9 @@ public class SiglusAdministrationsService {
       throw new NotFoundException("Resources not found");
     }
     FacilitySearchResultDto searchResultDto = FacilitySearchResultDto.from(facilityInfo);
+    List<SiglusReportTypeDto> reportTypeDtos = siglusReportTypeRepository.findByFacilityId(facilityId)
+            .stream().map(this::from).collect(Collectors.toList());
+    searchResultDto.setReportTypes(reportTypeDtos);
     searchResultDto.setIsNewFacility(emptyStockCardCount(facilityId));
     FacilityExtension facilityExtension = facilityExtensionRepository.findByFacilityId(facilityId);
     if (null == facilityExtension) {
