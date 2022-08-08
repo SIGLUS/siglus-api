@@ -28,7 +28,9 @@ import org.openlmis.fulfillment.web.util.ProofOfDeliveryDto;
 import org.siglus.siglusapi.service.SiglusNotificationService;
 import org.siglus.siglusapi.service.SiglusPodService;
 import org.siglus.siglusapi.web.request.CreatePodSubDraftRequest;
+import org.siglus.siglusapi.web.request.PodExtensionRequest;
 import org.siglus.siglusapi.web.request.UpdatePodSubDraftRequest;
+import org.siglus.siglusapi.web.response.PodExtensionResponse;
 import org.siglus.siglusapi.web.response.PodPrintInfoResponse;
 import org.siglus.siglusapi.web.response.PodSubDraftsSummaryResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -96,9 +98,9 @@ public class SiglusPodController {
   @ResponseStatus(HttpStatus.OK)
   @ResponseBody
   @GetMapping("/{id}")
-  public ProofOfDeliveryDto getProofOfDelivery(@PathVariable("id") UUID podId,
+  public PodExtensionResponse getProofOfDelivery(@PathVariable("id") UUID podId,
       @RequestParam(required = false) Set<String> expand) {
-    return siglusPodService.getExpandedPodDtoById(podId, expand);
+    return siglusPodService.getPodExtensionResponse(podId, expand);
   }
 
   @GetMapping
@@ -130,9 +132,9 @@ public class SiglusPodController {
 
   @PostMapping("/{id}/subDrafts/submit")
   public ProofOfDeliveryDto submitSubDrafts(@PathVariable("id") UUID podId,
-      @RequestBody ProofOfDeliveryDto podDto,
+      @RequestBody PodExtensionRequest request,
       OAuth2Authentication authentication) {
-    return siglusPodService.submitSubDrafts(podId, podDto, authentication);
+    return siglusPodService.submitSubDrafts(podId, request, authentication);
   }
 
   @GetMapping("/{id}/subDrafts/summary")
