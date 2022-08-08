@@ -29,9 +29,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.lang.BooleanUtils;
@@ -56,6 +58,7 @@ import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.AppInfoRepository;
 import org.siglus.siglusapi.repository.FacilityExtensionRepository;
 import org.siglus.siglusapi.repository.LocationManagementRepository;
+import org.siglus.siglusapi.repository.SiglusReportTypeRepository;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.util.AndroidHelper;
 import org.siglus.siglusapi.validator.CsvValidator;
@@ -85,6 +88,12 @@ public class SiglusAdminstrationServiceTest {
   private CsvValidator csvValidator;
   @Mock
   private StockCardRepository stockCardRepository;
+
+  @Mock
+  private SiglusReportTypeRepository siglusReportTypeRepository;
+
+  @Mock
+  private SiglusProcessingPeriodService siglusProcessingPeriodService;
 
   @Rule
   public ExpectedException exception = ExpectedException.none();
@@ -172,6 +181,10 @@ public class SiglusAdminstrationServiceTest {
   @Test
   public void shouldGetFacilityInfoWhenFacilityExistsAndFacilityExtensionIsNull() {
     // given
+    when(siglusReportTypeRepository.findByFacilityId(facilityId))
+            .thenReturn(Collections.emptyList());
+    when(siglusProcessingPeriodService.getLastPeriodStartDateSinceSubmit(null, facilityId))
+            .thenReturn(null);
     when(siglusFacilityReferenceDataService.findOneFacility(facilityId))
         .thenReturn(mockFacilityDtoPage().getContent().get(0));
 
