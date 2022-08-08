@@ -33,9 +33,8 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.LazyCollection;
 import org.siglus.common.domain.BaseEntity;
-import org.siglus.siglusapi.dto.StockManagementDraftDto;
-import org.siglus.siglusapi.dto.StockManagementDraftLineItemDto;
-import org.siglus.siglusapi.dto.enums.PhysicalInventorySubDraftEnum;
+import org.siglus.siglusapi.dto.StockMovementDraftDto;
+import org.siglus.siglusapi.dto.StockMovementDraftLineItemDto;
 import org.springframework.beans.BeanUtils;
 
 @Data
@@ -44,54 +43,38 @@ import org.springframework.beans.BeanUtils;
 @Entity
 @Builder
 @EqualsAndHashCode(callSuper = true)
-@Table(name = "stock_management_drafts", schema = "siglusintegration")
-public class StockManagementDraft extends BaseEntity {
+@Table(name = "stock_movement_drafts", schema = "siglusintegration")
+public class StockMovementDraft extends BaseEntity {
 
   @Column(nullable = false)
   private UUID facilityId;
-  @Column(nullable = false)
-  private Boolean isDraft;
+
   @Column(nullable = false)
   private UUID programId;
 
-  private LocalDate occurredDate;
+  private LocalDate createdDate;
+
   private String signature;
+
   private UUID userId;
-  private String draftType;
-  private UUID initialDraftId;
-  private String operator;
-  private PhysicalInventorySubDraftEnum status;
-  private Integer draftNumber;
 
   @LazyCollection(FALSE)
-  @OneToMany(cascade = ALL, mappedBy = "stockManagementDraft", orphanRemoval = true)
-  private List<StockManagementDraftLineItem> lineItems;
+  @OneToMany(cascade = ALL, mappedBy = "stockMovementDraft", orphanRemoval = true)
+  private List<StockMovementDraftLineItem> lineItems;
 
-
-  public static StockManagementDraft createEmptyDraft(StockManagementDraftDto draftDto) {
-    StockManagementDraft draft = new StockManagementDraft();
+  public static StockMovementDraft createEmptyStockMovementDraft(StockMovementDraftDto draftDto) {
+    StockMovementDraft draft = new StockMovementDraft();
     BeanUtils.copyProperties(draftDto, draft);
-    draft.setIsDraft(true);
     return draft;
   }
 
-  public static StockManagementDraft createEmptySubDraft(StockManagementDraftDto draftDto) {
-    StockManagementDraft draft = new StockManagementDraft();
+  public static StockMovementDraft createStockMovementDraft(StockMovementDraftDto draftDto) {
+    StockMovementDraft draft = new StockMovementDraft();
     BeanUtils.copyProperties(draftDto, draft);
-    draft.setIsDraft(true);
-    draft.setStatus(PhysicalInventorySubDraftEnum.NOT_YET_STARTED);
-    return draft;
-  }
-
-  public static StockManagementDraft createStockManagementDraft(StockManagementDraftDto draftDto,
-      boolean isDraft) {
-    StockManagementDraft draft = new StockManagementDraft();
-    BeanUtils.copyProperties(draftDto, draft);
-    draft.setIsDraft(isDraft);
-    List<StockManagementDraftLineItemDto> lineItemDtos = draftDto.getLineItems();
+    List<StockMovementDraftLineItemDto> lineItemDtos = draftDto.getLineItems();
     if (lineItemDtos != null) {
       draft.setLineItems(lineItemDtos.stream()
-          .map(lineItemDto -> StockManagementDraftLineItem.from(lineItemDto, draft))
+          .map(lineItemDto -> StockMovementDraftLineItem.from(lineItemDto, draft))
           .collect(toList()));
     }
     return draft;
