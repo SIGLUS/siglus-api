@@ -270,7 +270,7 @@ public class SiglusPodService {
     UUID realRequisitionId =
         Objects.isNull(orderDto.getRequisitionId()) ? orderDto.getExternalId() : orderDto.getRequisitionId();
 
-    response.setFileName(getFileName(orderDto));
+    response.setFileName(getFileName(orderDto, realRequisitionId));
     response.setClient(orderDto.getReceivingFacilityName());
     response.setSupplier(orderDto.getSupplyingFacilityName());
     response.setReceivedBy(orderDto.getPodReceivedBy());
@@ -303,8 +303,8 @@ public class SiglusPodService {
     return response;
   }
 
-  private String getFileName(OrderDto orderDto) {
-    long requisitionCount = getRequisitionCount(orderDto);
+  private String getFileName(OrderDto orderDto, UUID realRequisitionId) {
+    long requisitionCount = getRequisitionCount(orderDto, realRequisitionId);
 
     StringBuilder fileName = new StringBuilder()
         .append(orderDto.getEmergency() ? FILE_NAME_PREFIX_EMERGENCY : FILE_NAME_PREFIX_NORMAL)
@@ -315,9 +315,24 @@ public class SiglusPodService {
     return fileName.toString();
   }
 
-  private long getRequisitionCount(OrderDto orderDto) {
-    return requisitionsRepository.countByOrderInfo(orderDto.getReceivingFacilityId(), orderDto.getProgramId(),
+  private long getRequisitionCount(OrderDto orderDto, UUID realRequisitionId) {
+    List<String> requisitionIds = requisitionsRepository.findRequisitionIdsByOrderInfo(
+        orderDto.getReceivingFacilityId(),
+        orderDto.getProgramId(),
         orderDto.getProcessingPeriodId(), orderDto.getEmergency(), REQUISITION_STATUS_POST_SUBMIT);
+    List<StatusChange> statusChanges = requisitionStatusChangeRepository.findByRequisitionIdIn(
+            requisitionIds.stream().map(UUID::fromString).collect(
+                Collectors.toList())).stream()
+        .filter(statusChange -> RequisitionStatus.SUBMITTED == statusChange.getStatus())
+        .sorted(Comparator.comparing(StatusChange::getCreatedDate)).collect(Collectors.toList());
+
+    for (int i = 0; i < statusChanges.size(); i++) {
+      StatusChange statusChange = statusChanges.get(i);
+      if (statusChange.getRequisition().getId().equals(realRequisitionId)) {
+        return i + 1;
+      }
+    }
+    return requisitionIds.size();
   }
 
   private String formatCount(long count) {
