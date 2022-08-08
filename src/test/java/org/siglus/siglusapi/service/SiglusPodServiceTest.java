@@ -234,7 +234,7 @@ public class SiglusPodServiceTest {
     when(fulfillmentService.searchProofOfDelivery(any(UUID.class), any())).thenReturn(buildMockPodDtoWithOneLineItem());
     when(orderExternalRepository.findOne(externalId)).thenReturn(null);
     when(siglusRequisitionExtensionService.formatRequisitionNumber(externalId)).thenReturn(requisitionNum);
-    when(podExtensionRepository.findOne(podId)).thenReturn(buildMockPodExtension());
+    mockPodExtensionQuery();
 
     // when
     PodExtensionResponse podExtensionResponse = service.getPodExtensionResponse(podId, defaultExpands);
@@ -250,7 +250,7 @@ public class SiglusPodServiceTest {
     when(fulfillmentService.searchProofOfDelivery(any(UUID.class), any())).thenReturn(buildMockPodDtoWithOneLineItem());
     when(orderExternalRepository.findOne(externalId)).thenReturn(null);
     when(siglusRequisitionExtensionService.formatRequisitionNumber(externalId)).thenReturn(requisitionNum);
-    when(podExtensionRepository.findOne(podId)).thenReturn(null);
+    mockPodExtensionQueryReturnNull();
 
     // when
     PodExtensionResponse podExtensionResponse = service.getPodExtensionResponse(podId, defaultExpands);
@@ -790,6 +790,18 @@ public class SiglusPodServiceTest {
     assertNotNull(response);
     assertNotNull(response.getSupplierDistrict());
     assertNull(response.getSupplierProvince());
+  }
+
+  private void mockPodExtensionQuery() {
+    Example<ProofsOfDeliveryExtension> podExtensionExample = Example.of(
+        ProofsOfDeliveryExtension.builder().podId(podId).build());
+    when(podExtensionRepository.findOne(podExtensionExample)).thenReturn(buildMockPodExtension());
+  }
+
+  private void mockPodExtensionQueryReturnNull() {
+    Example<ProofsOfDeliveryExtension> podExtensionExample = Example.of(
+        ProofsOfDeliveryExtension.builder().podId(podId).build());
+    when(podExtensionRepository.findOne(podExtensionExample)).thenReturn(null);
   }
 
   private PodExtensionRequest buildPodExtensionRequest() {
