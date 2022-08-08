@@ -755,7 +755,8 @@ public class SiglusPodServiceTest {
   private void mockForRequisitionCount() {
     when(requisitionsRepository.findRequisitionIdsByOrderInfo(any(), any(), any(), anyBoolean(), anyList())).thenReturn(
         buildMockRequisitions());
-    when(requisitionStatusChangeRepository.findByRequisitionIdIn(anyList())).thenReturn(buildMockRequisitionSubmittedStatusChanges());
+    when(requisitionStatusChangeRepository.findByRequisitionIdIn(anyList())).thenReturn(
+        buildMockRequisitionSubmittedStatusChanges());
   }
 
   private void mockForOrderExternalCount() {
