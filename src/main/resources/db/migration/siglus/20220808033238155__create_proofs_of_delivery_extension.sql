@@ -2,6 +2,12 @@
 -- Adding migrations out of order may cause this migration to never execute or behave in an unexpected way.
 -- Migrations should NOT BE EDITED. Add a new migration to apply changes.
 
-ALTER TABLE siglusintegration.pod_extension
-    ADD COLUMN preparedby CHARACTER VARYING(255),
-    ADD COLUMN conferredby CHARACTER VARYING(255);
+CREATE TABLE siglusintegration.proofs_of_delivery_extension
+(
+    id                UUID NOT NULL PRIMARY KEY,
+    proofofdeliveryid UUID NOT NULL,
+    preparedby varchar(255) NULL,
+    conferredby varchar(255) NULL
+);
+
+CREATE UNIQUE INDEX ON siglusintegration.proofs_of_delivery_extension (proofofdeliveryid);

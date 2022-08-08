@@ -52,9 +52,9 @@ import org.openlmis.requisition.domain.requisition.StatusChange;
 import org.openlmis.requisition.repository.StatusChangeRepository;
 import org.siglus.common.domain.OrderExternal;
 import org.siglus.common.repository.OrderExternalRepository;
-import org.siglus.siglusapi.domain.PodExtension;
 import org.siglus.siglusapi.domain.PodLineItemsExtension;
 import org.siglus.siglusapi.domain.PodSubDraft;
+import org.siglus.siglusapi.domain.ProofsOfDeliveryExtension;
 import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.GeographicZoneDto;
 import org.siglus.siglusapi.dto.Message;
@@ -65,10 +65,10 @@ import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.OrderableRepository;
 import org.siglus.siglusapi.repository.OrdersRepository;
-import org.siglus.siglusapi.repository.PodExtensionRepository;
 import org.siglus.siglusapi.repository.PodLineItemsExtensionRepository;
 import org.siglus.siglusapi.repository.PodLineItemsRepository;
 import org.siglus.siglusapi.repository.PodSubDraftRepository;
+import org.siglus.siglusapi.repository.ProofsOfDeliveryExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionsRepository;
 import org.siglus.siglusapi.repository.dto.OrderDto;
 import org.siglus.siglusapi.repository.dto.PodLineItemDto;
@@ -78,6 +78,7 @@ import org.siglus.siglusapi.util.CustomListSortHelper;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.web.request.CreatePodSubDraftRequest;
 import org.siglus.siglusapi.web.request.OperateTypeEnum;
+import org.siglus.siglusapi.web.request.PodExtensionRequest;
 import org.siglus.siglusapi.web.request.UpdatePodSubDraftRequest;
 import org.siglus.siglusapi.web.response.PodExtensionResponse;
 import org.siglus.siglusapi.web.response.PodPrintInfoResponse;
@@ -144,7 +145,7 @@ public class SiglusPodService {
   private SiglusRequisitionExtensionService requisitionExtensionService;
 
   @Autowired
-  private PodExtensionRepository podExtensionRepository;
+  private ProofsOfDeliveryExtensionRepository podExtensionRepository;
 
   private static final String FILE_NAME_PREFIX_EMERGENCY = "OF.REM.";
   private static final String FILE_NAME_PREFIX_NORMAL = "OF.RNO.";
@@ -161,7 +162,7 @@ public class SiglusPodService {
     ProofOfDeliveryDto podDto = getExpandedPodDtoById(id, expand);
     response.setPodDto(podDto);
 
-    PodExtension podExtension = podExtensionRepository.findOne(podDto.getId());
+    ProofsOfDeliveryExtension podExtension = getPodExtensionByPodId(id);
     if (Objects.nonNull(podExtension)) {
       response.setPreparedBy(podExtension.getPreparedBy());
       response.setConferredBy(podExtension.getConferredBy());
@@ -268,18 +269,35 @@ public class SiglusPodService {
   }
 
   @Transactional
-  public ProofOfDeliveryDto submitSubDrafts(UUID podId, ProofOfDeliveryDto requestPodDto,
+  public ProofOfDeliveryDto submitSubDrafts(UUID podId, PodExtensionRequest request,
       OAuth2Authentication authentication) {
     checkAuth();
     List<PodSubDraft> subDrafts = checkIfSubDraftsSubmitted(podId);
 
+    savePodExtension(request);
     deleteSubDraftAndLineExtensionBySubDraftIds(subDrafts.stream().map(PodSubDraft::getId).collect(Collectors.toSet()));
 
-    ProofOfDeliveryDto podDto = podController.updateProofOfDelivery(podId, requestPodDto, authentication);
+    ProofOfDeliveryDto podDto = podController.updateProofOfDelivery(podId, request.getPodDto(), authentication);
     if (podDto.getStatus() == ProofOfDeliveryStatus.CONFIRMED) {
-      notificationService.postConfirmPod(requestPodDto);
+      notificationService.postConfirmPod(request.getPodDto());
     }
-    return requestPodDto;
+    return podDto;
+  }
+
+  private ProofsOfDeliveryExtension getPodExtensionByPodId(UUID podId) {
+    Example<ProofsOfDeliveryExtension> example = Example.of(ProofsOfDeliveryExtension.builder().podId(podId).build());
+    return podExtensionRepository.findOne(example);
+  }
+
+  private void savePodExtension(PodExtensionRequest request) {
+    ProofsOfDeliveryExtension podExtension = getPodExtensionByPodId(request.getPodDto().getId());
+    if (Objects.isNull(podExtension)) {
+      podExtension = ProofsOfDeliveryExtension.builder().podId(request.getPodDto().getId()).build();
+    }
+    podExtension.setPreparedBy(request.getPreparedBy());
+    podExtension.setConferredBy(request.getConferredBy());
+    log.info("save pod extension: {}", podExtension);
+    podExtensionRepository.save(podExtension);
   }
 
   public PodPrintInfoResponse getPintInfo(UUID orderId, UUID podId) {

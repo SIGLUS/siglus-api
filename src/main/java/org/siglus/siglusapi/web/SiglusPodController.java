@@ -28,6 +28,7 @@ import org.openlmis.fulfillment.web.util.ProofOfDeliveryDto;
 import org.siglus.siglusapi.service.SiglusNotificationService;
 import org.siglus.siglusapi.service.SiglusPodService;
 import org.siglus.siglusapi.web.request.CreatePodSubDraftRequest;
+import org.siglus.siglusapi.web.request.PodExtensionRequest;
 import org.siglus.siglusapi.web.request.UpdatePodSubDraftRequest;
 import org.siglus.siglusapi.web.response.PodExtensionResponse;
 import org.siglus.siglusapi.web.response.PodPrintInfoResponse;
@@ -131,9 +132,9 @@ public class SiglusPodController {
 
   @PostMapping("/{id}/subDrafts/submit")
   public ProofOfDeliveryDto submitSubDrafts(@PathVariable("id") UUID podId,
-      @RequestBody ProofOfDeliveryDto podDto,
+      @RequestBody PodExtensionRequest request,
       OAuth2Authentication authentication) {
-    return siglusPodService.submitSubDrafts(podId, podDto, authentication);
+    return siglusPodService.submitSubDrafts(podId, request, authentication);
   }
 
   @GetMapping("/{id}/subDrafts/summary")
