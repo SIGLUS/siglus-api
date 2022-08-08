@@ -149,6 +149,12 @@ public class SiglusProcessingPeriodServiceTest {
   private final UUID requisitionId = UUID.randomUUID();
   private final UUID requisitionId2 = UUID.randomUUID();
 
+  private static String AUTHORIZED = "AUTHORIZED";
+  private static String IN_APPROVAL = "IN_APPROVAL";
+  private static String APPROVED = "APPROVED";
+  private static String RELEASED = "RELEASED";
+  private static String RELEASED_WITHOUT_ORDER = "RELEASED_WITHOUT_ORDER";
+
   @Test
   public void shouldCreateProcessingPeriodIfPassValidation() {
 
@@ -290,13 +296,19 @@ public class SiglusProcessingPeriodServiceTest {
     List<Requisition> authorizedRequisitions = new ArrayList<>();
     authorizedRequisitions.add(createRequisition(requisitionId2, RequisitionStatus.AUTHORIZED,
         false));
-    Set<String> status = newHashSet("AUTHORIZED", "IN_APPROVAL", "APPROVED",
-        "RELEASED", "RELEASED_WITHOUT_ORDER");
+    Set<String> status = newHashSet(AUTHORIZED, IN_APPROVAL, APPROVED,
+        RELEASED, RELEASED_WITHOUT_ORDER);
     when(siglusRequisitionRepository.searchAfterAuthorizedRequisitions(facilityId, programId,
         periodDto.getId(), false, status)).thenReturn(authorizedRequisitions);
     when(siglusRequisitionRepository.searchAfterAuthorizedRequisitions(facilityId, programId,
         prePeriodDto.getId(), false, status)).thenReturn(authorizedRequisitions);
-
+    when(siglusRequisitionRepository.searchAfterAuthorizedRequisitions(facilityId, programId,
+        periodDto.getId(), false, newHashSet(AUTHORIZED, IN_APPROVAL, APPROVED,
+            RELEASED, RELEASED_WITHOUT_ORDER)))
+        .thenReturn(authorizedRequisitions);
+    ProgramDto programDto = new ProgramDto();
+    programDto.setCode("VC");
+    when(siglusProgramService.getProgram(programId)).thenReturn(programDto);
     //when
     List<RequisitionPeriodDto> response =
         siglusProcessingPeriodService.getPeriods(programId, facilityId, true)
@@ -336,11 +348,17 @@ public class SiglusProcessingPeriodServiceTest {
     List<Requisition> authorizedRequisitions = new ArrayList<>();
     authorizedRequisitions.add(createRequisition(requisitionId2, RequisitionStatus.AUTHORIZED,
         false));
-    Set<String> status = newHashSet("AUTHORIZED", "IN_APPROVAL", "APPROVED",
-        "RELEASED", "RELEASED_WITHOUT_ORDER");
+    Set<String> status = newHashSet(AUTHORIZED, IN_APPROVAL, APPROVED,
+        RELEASED, RELEASED_WITHOUT_ORDER);
     when(siglusRequisitionRepository.searchAfterAuthorizedRequisitions(facilityId, programId,
         periodDto.getId(), false, status)).thenReturn(authorizedRequisitions);
-
+    when(siglusRequisitionRepository.searchAfterAuthorizedRequisitions(facilityId, programId,
+        periodDto.getId(), false, newHashSet(AUTHORIZED, IN_APPROVAL, APPROVED,
+            RELEASED, RELEASED_WITHOUT_ORDER)))
+        .thenReturn(authorizedRequisitions);
+    ProgramDto programDto = new ProgramDto();
+    programDto.setCode("VC");
+    when(siglusProgramService.getProgram(programId)).thenReturn(programDto);
     //when
     List<RequisitionPeriodDto> response =
         siglusProcessingPeriodService.getPeriods(programId, facilityId, true)
@@ -378,10 +396,12 @@ public class SiglusProcessingPeriodServiceTest {
     authorizedRequisitions.add(createRequisition(requisitionId2, RequisitionStatus.AUTHORIZED,
         false));
     when(siglusRequisitionRepository.searchAfterAuthorizedRequisitions(facilityId, programId,
-        periodDto.getId(), false, newHashSet("AUTHORIZED", "IN_APPROVAL", "APPROVED",
-            "RELEASED", "RELEASED_WITHOUT_ORDER")))
+        periodDto.getId(), false, newHashSet(AUTHORIZED, IN_APPROVAL, APPROVED,
+            RELEASED, RELEASED_WITHOUT_ORDER)))
         .thenReturn(authorizedRequisitions);
-
+    ProgramDto programDto = new ProgramDto();
+    programDto.setCode("VC");
+    when(siglusProgramService.getProgram(programId)).thenReturn(programDto);
     RequisitionPeriodDto requisitionPeriod = RequisitionPeriodDto.newInstance(fullDto);
     requisitionPeriod.setRequisitionId(requisitionId);
     requisitionPeriod.setRequisitionStatus(RequisitionStatus.INITIATED);
@@ -422,7 +442,7 @@ public class SiglusProcessingPeriodServiceTest {
     when(programDto.getCode()).thenReturn(programCode);
     when(siglusProgramService.getProgram(programId)).thenReturn(programDto);
     when(reportTypeRepository.findOneByFacilityIdAndProgramCodeAndActiveIsTrue(facilityId, programCode))
-            .thenReturn(Optional.of(reportType));
+        .thenReturn(Optional.of(reportType));
 
     FacillityStockCardDateDto dto = new FacillityStockCardDateDto();
     dto.setFacilityId(facilityId);
@@ -430,8 +450,20 @@ public class SiglusProcessingPeriodServiceTest {
     dto.setOccurredDate(java.sql.Date.valueOf("2020-01-01"));
 
     when(facilityNativeRepository.findFirstStockCardGroupByFacilityIdAndProgramId(facilityId, programId))
-            .thenReturn(Arrays.asList(dto));
+        .thenReturn(Arrays.asList(dto));
   }
+
+  @Test
+  public void shouldReturnNullWhenProgramNotViaAndEmergency() {
+    ProgramDto programDto = new ProgramDto();
+    programDto.setCode("RT");
+    when(siglusProgramService.getProgram(programId)).thenReturn(programDto);
+    Collection<RequisitionPeriodDto> response =
+        siglusProcessingPeriodService.getPeriods(programId, facilityId, true);
+    assertEquals(null, response);
+  }
+
+  ;
 }
 
 

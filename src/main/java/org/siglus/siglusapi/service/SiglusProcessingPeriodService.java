@@ -209,7 +209,10 @@ public class SiglusProcessingPeriodService {
   // get periods for initiate
   public Collection<RequisitionPeriodDto> getPeriods(UUID program,
       UUID facility, boolean emergency) {
-
+    ProgramDto programDto = siglusProgramService.getProgram(program);
+    if (emergency && !ProgramConstants.VIA_PROGRAM_CODE.equals(programDto.getCode())) {
+      return null;
+    }
     Collection<ProcessingPeriodDto> periods = fillProcessingPeriodWithExtension(
         periodService.searchByProgramAndFacility(program, facility));
 
