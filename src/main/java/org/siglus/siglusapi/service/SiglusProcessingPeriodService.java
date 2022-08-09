@@ -95,7 +95,7 @@ public class SiglusProcessingPeriodService {
   @Autowired
   private PeriodReferenceDataService periodReferenceDataService;
 
-  public LocalDate getPreviousPeriodStartDateSinceSubmit(String programCode, UUID facilityId) {
+  public LocalDate getPreviousPeriodStartDateSinceInitiate(String programCode, UUID facilityId) {
     ProgramDto program = siglusProgramService.getProgramByCode(programCode)
             .orElseThrow(() -> new NotFoundException("Program code" + programCode + " Not Found"));
 
@@ -104,7 +104,7 @@ public class SiglusProcessingPeriodService {
     if (CollectionUtils.isEmpty(requisitions)) {
       return null;
     }
-    Set<UUID> submittedPeriodIds = requisitions.stream()
+    Set<UUID> startedPeriodIds = requisitions.stream()
             .map(Requisition::getProcessingPeriodId).collect(Collectors.toSet());
     List<ProcessingPeriodDto> sortedPeriods = periodReferenceDataService
             .searchByProgramAndFacility(program.getId(), facilityId)
@@ -112,16 +112,16 @@ public class SiglusProcessingPeriodService {
             .sorted(Comparator.comparing(ProcessingPeriodDto::getStartDate))
             .collect(Collectors.toList());
 
-    int lastSubmittedIndex = -1;
+    int lastStartedIndex = -1;
     for (int i = sortedPeriods.size() - 1; i >= 0; i--) {
-      if (submittedPeriodIds.contains(sortedPeriods.get(i).getId())) {
-        lastSubmittedIndex = i;
+      if (startedPeriodIds.contains(sortedPeriods.get(i).getId())) {
+        lastStartedIndex = i;
         break;
       }
     }
 
-    if (lastSubmittedIndex > 0) {
-      return sortedPeriods.get(lastSubmittedIndex - 1).getStartDate();
+    if (lastStartedIndex > 0) {
+      return sortedPeriods.get(lastStartedIndex - 1).getStartDate();
     }
     return null;
   }

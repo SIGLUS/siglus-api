@@ -215,7 +215,7 @@ public class SiglusAdministrationsService {
       SiglusReportType original = programCodeToReportType.get(dto.getProgramCode());
       if (null != original && dto.getStartDate().isBefore(original.getStartDate())) {
         LocalDate previousDate = siglusProcessingPeriodService
-                .getPreviousPeriodStartDateSinceSubmit(dto.getProgramCode(), facilityId);
+                .getPreviousPeriodStartDateSinceInitiate(dto.getProgramCode(), facilityId);
         if (previousDate != null && dto.getStartDate().isBefore(previousDate)) {
           throw new IllegalArgumentException("Invalid start date");
         }
@@ -260,7 +260,7 @@ public class SiglusAdministrationsService {
   public SiglusReportTypeDto from(SiglusReportType reportType) {
     SiglusReportTypeDto dto = new SiglusReportTypeDto();
     BeanUtils.copyProperties(reportType, dto);
-    dto.setPreviousPeriodStartDateSinceRecentSubmit(siglusProcessingPeriodService.getPreviousPeriodStartDateSinceSubmit(
+    dto.setPreviousPeriodStartDateSinceRecentSubmit(siglusProcessingPeriodService.getPreviousPeriodStartDateSinceInitiate(
                     reportType.getProgramCode(), reportType.getFacilityId()));
     return dto;
   }
