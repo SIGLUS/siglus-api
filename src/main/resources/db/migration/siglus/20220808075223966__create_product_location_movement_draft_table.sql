@@ -10,7 +10,7 @@ CREATE TABLE siglusintegration.product_location_movement_drafts
     signature VARCHAR(255),
     userid UUID
 );
-CREATE TABLE siglusintegration.stock_movement_draft_line_items
+CREATE TABLE siglusintegration.product_location_movement_draft_line_items
 (
     id UUID PRIMARY KEY NOT NULL,
     orderableid UUID NOT NULL,
@@ -20,6 +20,8 @@ CREATE TABLE siglusintegration.stock_movement_draft_line_items
     lotcode text,
     locationid UUID,
     locationcode text,
+    movetoid UUID,
+    movetocode text,
     createddate date,
     expirationdate DATE,
     quantity INTEGER,
