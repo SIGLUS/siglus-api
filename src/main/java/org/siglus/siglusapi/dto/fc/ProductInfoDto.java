@@ -18,6 +18,7 @@ package org.siglus.siglusapi.dto.fc;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Builder.Default;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -44,6 +45,9 @@ public class ProductInfoDto extends ResponseBaseDto {
   private String categoryCode;
 
   private boolean isKit;
+
+  @Default
+  private Boolean isSentinel = false;
 
   private List<ProductKitDto> productsKits;
 

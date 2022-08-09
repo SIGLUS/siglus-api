@@ -23,6 +23,7 @@ import org.aspectj.lang.annotation.Pointcut;
 import org.openlmis.stockmanagement.exception.PermissionMessageException;
 import org.openlmis.stockmanagement.util.Message;
 import org.siglus.siglusapi.util.AndroidHelper;
+import org.siglus.siglusapi.util.DeviceHelper;
 import org.springframework.stereotype.Component;
 
 @Aspect
@@ -32,6 +33,7 @@ import org.springframework.stereotype.Component;
 public class AndroidApiCheckAspect {
 
   private final AndroidHelper androidHelper;
+  private final DeviceHelper deviceHelper;
 
   @Pointcut("within(org.siglus.siglusapi.web.android.*)")
   public void androidApi() {
@@ -42,6 +44,8 @@ public class AndroidApiCheckAspect {
   public void before() {
     if (!androidHelper.isAndroid()) {
       throw new PermissionMessageException(new Message("siglusapi.error.notAndroidUser"));
+    } else if (!deviceHelper.isRegisteredDevice()) {
+      throw new PermissionMessageException(new Message("siglusapi.error.notRegisteredDevice"));
     }
   }
 

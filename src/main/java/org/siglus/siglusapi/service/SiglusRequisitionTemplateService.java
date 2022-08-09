@@ -70,8 +70,21 @@ public class SiglusRequisitionTemplateService {
     log.info("find requisition template usage column Section: {}", id);
     List<UsageTemplateColumnSection> usageTemplateColumns = columnSectionRepository
         .findByRequisitionTemplateId(id);
+    //check if the template has been linked to ageGroup section, if not add default ageGroup section info to result
+    //because of adding new section "ageGroup" in TO13, previous template data doesn't linked to ths section
+    List<UsageTemplateColumnSection> hasAgeGroup = usageTemplateColumns.stream()
+        .filter(usageTemplateColumnSection -> usageTemplateColumnSection.getCategory().equals(UsageCategory.AGEGROUP))
+        .collect(Collectors.toList());
+    if (hasAgeGroup.isEmpty()) {
+      List<AvailableUsageColumnSection> ageGroupUsageColumnSection =
+          availableUsageColumnSectionRepository.findByCategory(UsageCategory.AGEGROUP);
+      ageGroupUsageColumnSection.forEach(availableUsageColumnSection -> {
+        UsageTemplateColumnSection ageGroupTemplateColumnSection = UsageTemplateColumnSection.from(
+            availableUsageColumnSection, id);
+        usageTemplateColumns.add(ageGroupTemplateColumnSection);
+      });
+    }
     return setUsageTemplateDto(templateDto, usageTemplateColumns);
-
   }
 
   @Transactional
@@ -225,6 +238,7 @@ public class SiglusRequisitionTemplateService {
         requestDto.getTestConsumption());
     allUsageTemplateCategoryDto.put(UsageCategory.USAGEINFORMATION,
         requestDto.getUsageInformation());
+    allUsageTemplateCategoryDto.put(UsageCategory.AGEGROUP, requestDto.getAgeGroup());
     return allUsageTemplateCategoryDto;
   }
 
@@ -242,7 +256,7 @@ public class SiglusRequisitionTemplateService {
         getCategoryDto(categoryListMap, UsageCategory.RAPIDTESTCONSUMPTION));
     templateDto
         .setUsageInformation(getCategoryDto(categoryListMap, UsageCategory.USAGEINFORMATION));
+    templateDto.setAgeGroup(getCategoryDto(categoryListMap, UsageCategory.AGEGROUP));
     return templateDto;
   }
-
 }

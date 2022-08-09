@@ -15,7 +15,7 @@
 
 package org.siglus.siglusapi.dto.android.db;
 
-import static org.siglus.common.domain.referencedata.Orderable.TRADE_ITEM;
+import static org.openlmis.referencedata.domain.Orderable.TRADE_ITEM;
 
 import java.time.LocalDate;
 import java.util.UUID;

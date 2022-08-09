@@ -91,9 +91,9 @@ public enum MovementType {
 
   UNPACK_KIT {
     @Override
-    public UUID getAdjustmentReasonId(UUID programId, String reason) {
-      return StockCardCreateContextHolder.getContext().findReasonId(programId, "UNPACK_KIT")
-          .orElseThrow(() -> new NotFoundException(NO_SUCH_REASON + reason));
+    public UUID getDestinationId(UUID programId, String destination) {
+      return StockCardCreateContextHolder.getContext().findDestinationId(programId, "UNPACK_KIT")
+          .orElseThrow(() -> new NotFoundException("No such destination: " + destination));
     }
   };
 

@@ -154,6 +154,7 @@ import org.siglus.siglusapi.repository.FacilityExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionDraftRepository;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionLineItemExtensionRepository;
+import org.siglus.siglusapi.repository.RequisitionMonthlyNotSubmitReportRepository;
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusNotificationNotificationService;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
@@ -440,6 +441,10 @@ public class SiglusRequisitionServiceTest {
   @Mock
   private FacilityExtensionRepository facilityExtensionRepository;
 
+  @Mock
+  private RequisitionMonthlyNotSubmitReportRepository requisitionMonthlyNotSubmitReportRepository;
+
+
   @Before
   public void prepare() {
     siglusRequisitionDto = new SiglusRequisitionDto();
@@ -465,8 +470,8 @@ public class SiglusRequisitionServiceTest {
     when(siglusRequisitionRequisitionService.getPreviousEmergencyRequisition(any()))
         .thenReturn(singletonList(new RequisitionV2Dto()));
     mockSearchOrder();
-    org.siglus.common.dto.referencedata.OrderableDto orderableDto =
-        new org.siglus.common.dto.referencedata.OrderableDto();
+    org.openlmis.referencedata.dto.OrderableDto orderableDto =
+        new org.openlmis.referencedata.dto.OrderableDto();
     when(siglusOrderableService.getOrderableByCode(any())).thenReturn(orderableDto);
     when(supportedProgramsHelper.findHomeFacilitySupportedPrograms()).thenReturn(newArrayList());
   }
@@ -1826,6 +1831,7 @@ public class SiglusRequisitionServiceTest {
     extension.setEnableRegimen(true);
     extension.setEnableUsageInformation(true);
     extension.setEnableQuicklyFill(true);
+    extension.setEnableAgeGroup(true);
     return extension;
   }
 

@@ -144,6 +144,7 @@ import org.siglus.siglusapi.repository.FacilityExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionDraftRepository;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionLineItemExtensionRepository;
+import org.siglus.siglusapi.repository.RequisitionMonthlyNotSubmitReportRepository;
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusNotificationNotificationService;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
@@ -294,6 +295,9 @@ public class SiglusRequisitionService {
 
   @Autowired
   private SupportedProgramsHelper supportedProgramsHelper;
+  @Autowired
+  private RequisitionMonthlyNotSubmitReportRepository requisitionMonthlyNotSubmitReportRepository;
+
 
   @Value("${service.url}")
   private String serviceUrl;
@@ -331,6 +335,8 @@ public class SiglusRequisitionService {
     initiateSuggestedQuantity(lineItems, facilityId, siglusRequisitionDto.getProcessingPeriodId(),
         siglusRequisitionDto.getProgramId(), siglusRequisitionDto.getTemplate());
     saveLineItemExtensions(lineItems);
+    requisitionMonthlyNotSubmitReportRepository.deleteByFacilityIdAndProgramIdAndProcessingPeriodId(facilityId,
+        programId, v2Dto.getProcessingPeriodId());
     return siglusRequisitionDto;
   }
 

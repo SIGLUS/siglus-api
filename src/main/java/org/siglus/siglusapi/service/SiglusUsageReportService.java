@@ -35,6 +35,8 @@ import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
 import javax.validation.ValidatorFactory;
 import lombok.extern.slf4j.Slf4j;
+import org.openlmis.referencedata.domain.Orderable;
+import org.openlmis.referencedata.dto.OrderableDto;
 import org.openlmis.requisition.dto.ProcessingPeriodDto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.dto.VersionIdentityDto;
@@ -44,8 +46,6 @@ import org.openlmis.requisition.service.stockmanagement.StockCardRangeSummarySto
 import org.openlmis.stockmanagement.exception.ValidationMessageException;
 import org.openlmis.stockmanagement.util.Message;
 import org.siglus.common.domain.ProgramAdditionalOrderable;
-import org.siglus.common.domain.referencedata.Orderable;
-import org.siglus.common.dto.referencedata.OrderableDto;
 import org.siglus.common.repository.OrderableKitRepository;
 import org.siglus.common.repository.ProgramAdditionalOrderableRepository;
 import org.siglus.siglusapi.domain.KitUsageLineItem;
@@ -192,6 +192,7 @@ public class SiglusUsageReportService {
     templateDto.setRapidTestConsumption(templateService.getCategoryDto(categoryListMap,
         UsageCategory.RAPIDTESTCONSUMPTION));
     templateDto.setUsageInformation(templateService.getCategoryDto(categoryListMap, UsageCategory.USAGEINFORMATION));
+    templateDto.setAgeGroup(templateService.getCategoryDto(categoryListMap, UsageCategory.AGEGROUP));
     requisitionDto.setUsageTemplate(templateDto);
   }
 

@@ -68,5 +68,4 @@ public class SiglusStockCardController {
       return new ResponseEntity<>(stockCardDto, OK);
     }
   }
-
 }

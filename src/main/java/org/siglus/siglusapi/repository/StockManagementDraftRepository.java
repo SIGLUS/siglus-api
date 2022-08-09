@@ -29,5 +29,11 @@ public interface StockManagementDraftRepository
       boolean isDraft,
       String draftType);
 
+  List<StockManagementDraft> findByInitialDraftId(UUID initialDraftId);
+
   List<StockManagementDraft> findByFacilityId(UUID facilityId);
+
+  Integer countByInitialDraftId(UUID initialDraftId);
+
+  void deleteAllByInitialDraftId(UUID initialDraftId);
 }

@@ -15,9 +15,12 @@
 
 package org.siglus.siglusapi.util;
 
+import static java.util.Collections.emptyList;
 import static org.siglus.siglusapi.security.CustomUserAuthenticationConverter.REFERENCE_DATA_USER_ID;
+import static org.springframework.security.oauth2.provider.token.AccessTokenConverter.AUTHORITIES;
 
 import com.google.common.collect.ImmutableMap;
+import java.util.Collection;
 import java.util.UUID;
 import org.siglus.siglusapi.security.CustomUserAuthenticationConverter;
 import org.springframework.security.core.Authentication;
@@ -30,9 +33,13 @@ import org.springframework.stereotype.Component;
 public class SiglusSimulateUserAuthHelper {
 
   public void simulateUserAuth(UUID userId) {
+    simulateUserAuth(userId, emptyList());
+  }
+
+  public void simulateUserAuth(UUID userId, Collection<String> authorities) {
     UserAuthenticationConverter userAuthenticationConverter = new CustomUserAuthenticationConverter();
     Authentication authentication = userAuthenticationConverter.extractAuthentication(
-        ImmutableMap.of(REFERENCE_DATA_USER_ID, userId.toString()));
+        ImmutableMap.of(REFERENCE_DATA_USER_ID, userId.toString(), AUTHORITIES, authorities));
     OAuth2Authentication originAuth = (OAuth2Authentication) SecurityContextHolder.getContext().getAuthentication();
     OAuth2Authentication newAuth = new OAuth2Authentication(originAuth.getOAuth2Request(), authentication);
     SecurityContextHolder.getContext().setAuthentication(newAuth);

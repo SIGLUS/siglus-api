@@ -18,6 +18,7 @@ package org.siglus.siglusapi.service.android;
 import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
+import static java.util.stream.Collectors.toSet;
 import static org.siglus.common.constant.ExtraDataConstants.ACTUAL_END_DATE;
 
 import java.time.Instant;
@@ -50,16 +51,17 @@ import org.openlmis.fulfillment.domain.ProofOfDelivery;
 import org.openlmis.fulfillment.domain.Shipment;
 import org.openlmis.fulfillment.domain.ShipmentLineItem;
 import org.openlmis.fulfillment.web.util.OrderDto;
+import org.openlmis.referencedata.dto.MetadataDto;
+import org.openlmis.referencedata.dto.OrderableDto;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.dto.ApprovedProductDto;
+import org.openlmis.requisition.dto.BasicOrderableDto;
 import org.openlmis.requisition.dto.BasicProgramDto;
 import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
 import org.openlmis.stockmanagement.domain.reason.StockCardLineItemReason;
 import org.openlmis.stockmanagement.dto.ValidReasonAssignmentDto;
 import org.siglus.common.domain.ProgramAdditionalOrderable;
-import org.siglus.common.dto.referencedata.MetadataDto;
-import org.siglus.common.dto.referencedata.OrderableDto;
 import org.siglus.common.repository.ProgramAdditionalOrderableRepository;
 import org.siglus.siglusapi.config.AndroidTemplateConfigProperties;
 import org.siglus.siglusapi.constant.PaginationConstants;
@@ -67,9 +69,9 @@ import org.siglus.siglusapi.constant.PodConstants;
 import org.siglus.siglusapi.domain.AppInfo;
 import org.siglus.siglusapi.domain.HfCmm;
 import org.siglus.siglusapi.domain.PodRequestBackup;
-import org.siglus.siglusapi.domain.ReportType;
 import org.siglus.siglusapi.domain.RequisitionRequestBackup;
 import org.siglus.siglusapi.domain.ResyncInfo;
+import org.siglus.siglusapi.domain.SiglusReportType;
 import org.siglus.siglusapi.domain.StockCardRequestBackup;
 import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.QueryOrderableSearchParams;
@@ -90,6 +92,7 @@ import org.siglus.siglusapi.dto.android.response.FacilityResponse;
 import org.siglus.siglusapi.dto.android.response.PodLotLineResponse;
 import org.siglus.siglusapi.dto.android.response.PodProductLineResponse;
 import org.siglus.siglusapi.dto.android.response.PodResponse;
+import org.siglus.siglusapi.dto.android.response.ProductMovementResponse;
 import org.siglus.siglusapi.dto.android.response.ProductResponse;
 import org.siglus.siglusapi.dto.android.response.ProductSyncResponse;
 import org.siglus.siglusapi.dto.android.response.ProgramResponse;
@@ -101,10 +104,10 @@ import org.siglus.siglusapi.repository.AppInfoRepository;
 import org.siglus.siglusapi.repository.FacilityCmmsRepository;
 import org.siglus.siglusapi.repository.LotNativeRepository;
 import org.siglus.siglusapi.repository.PodRequestBackupRepository;
-import org.siglus.siglusapi.repository.ReportTypeRepository;
 import org.siglus.siglusapi.repository.RequisitionRequestBackupRepository;
 import org.siglus.siglusapi.repository.ResyncInfoRepository;
 import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
+import org.siglus.siglusapi.repository.SiglusReportTypeRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.repository.StockCardRequestBackupRepository;
 import org.siglus.siglusapi.service.LotConflictService;
@@ -159,7 +162,7 @@ public class MeService {
   private final LotConflictService lotConflictService;
   private final SiglusValidReasonAssignmentService validReasonAssignmentService;
   private final AndroidHelper androidHelper;
-  private final ReportTypeRepository reportTypeRepository;
+  private final SiglusReportTypeRepository reportTypeRepository;
   private final SiglusRequisitionRepository requisitionRepository;
   private final RequisitionCreateService requisitionCreateService;
   private final RequisitionSearchService requisitionSearchService;
@@ -327,8 +330,10 @@ public class MeService {
   }
 
   @ParametersAreNullableByDefault
-  public FacilityProductMovementsResponse getProductMovements(LocalDate since, LocalDate tillExclusive) {
-    return stockCardSearchService.getProductMovementsByTime(since, tillExclusive);
+  public FacilityProductMovementsResponse getProductMovements(
+      LocalDate since, LocalDate tillExclusive) {
+    FacilityProductMovementsResponse resp = stockCardSearchService.getProductMovementsByTime(since, tillExclusive);
+    return filterOutNotApprovedProducts(resp);
   }
 
   public RequisitionResponse getRequisitionResponse(String startDate) {
@@ -567,7 +572,7 @@ public class MeService {
         .collect(Collectors.toList());
   }
 
-  private LocalDate findLastReportDate(ReportType reportType, Map<String, Requisition> programCodeToRequisition) {
+  private LocalDate findLastReportDate(SiglusReportType reportType, Map<String, Requisition> programCodeToRequisition) {
     Requisition requisition = programCodeToRequisition.get(reportType.getProgramCode());
     if (requisition == null || requisition.getExtraData() == null) {
       return null;
@@ -656,5 +661,18 @@ public class MeService {
       podResponse.setProducts(products);
     }
     return podResponse;
+  }
+
+  private FacilityProductMovementsResponse filterOutNotApprovedProducts(
+      FacilityProductMovementsResponse resp) {
+    Set<String> approvedProductCodes = getAllApprovedProducts().stream()
+        .map(BasicOrderableDto::getProductCode)
+        .collect(toSet());
+    List<ProductMovementResponse> movementsOfApprovedProduct =
+        resp.getProductMovements().stream()
+            .filter(it -> approvedProductCodes.contains(it.getProductCode()))
+            .collect(toList());
+    resp.setProductMovements(movementsOfApprovedProduct);
+    return resp;
   }
 }

@@ -17,6 +17,7 @@ package org.siglus.siglusapi.repository;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.siglus.siglusapi.domain.PhysicalInventoryLineItemsExtension;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -27,7 +28,14 @@ public interface PhysicalInventoryLineItemsExtensionRepository extends
 
   List<PhysicalInventoryLineItemsExtension> findByPhysicalInventoryIdIn(Collection<UUID> ids);
 
+  List<PhysicalInventoryLineItemsExtension> findByPhysicalInventoryId(UUID id);
+
+  Optional<PhysicalInventoryLineItemsExtension> findFirstBySubDraftId(UUID subDraftId);
+
+
+
   @Transactional
   void deleteByPhysicalInventoryIdIn(Collection<UUID> ids);
 
+  List<PhysicalInventoryLineItemsExtension> findBySubDraftIdIn(List<UUID> subDraftUuids);
 }

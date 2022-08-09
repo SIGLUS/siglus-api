@@ -111,5 +111,4 @@ public class SiglusStockCardControllerTest {
     ResponseEntity<StockCardDto> responseEntity = controller.searchStockCardById(stockCardId);
     assertEquals(OK, responseEntity.getStatusCode());
   }
-
 }

@@ -38,6 +38,9 @@ import org.apache.commons.collections.CollectionUtils;
 import org.openlmis.fulfillment.domain.ProofOfDelivery;
 import org.openlmis.fulfillment.domain.ProofOfDeliveryLineItem;
 import org.openlmis.fulfillment.domain.Shipment;
+import org.openlmis.referencedata.domain.Facility;
+import org.openlmis.referencedata.domain.SupervisoryNode;
+import org.openlmis.referencedata.dto.OrderableDto;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.RequisitionLineItem;
 import org.openlmis.requisition.dto.ProcessingPeriodDto;
@@ -52,9 +55,6 @@ import org.openlmis.stockmanagement.web.Pagination;
 import org.siglus.common.constant.KitConstants;
 import org.siglus.common.domain.OrderExternal;
 import org.siglus.common.domain.RequisitionTemplateExtension;
-import org.siglus.common.domain.referencedata.Facility;
-import org.siglus.common.domain.referencedata.SupervisoryNode;
-import org.siglus.common.dto.referencedata.OrderableDto;
 import org.siglus.common.repository.OrderExternalRepository;
 import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
 import org.siglus.siglusapi.constant.FacilityTypeConstants;
@@ -143,7 +143,7 @@ public class SiglusFcIntegrationService {
   private UUID fcFacilityTypeId;
 
   private final Map<String, String> fcMaps = ImmutableMap.of("Farmácia Comunitária",
-      "comunitaryPharmacy", "Total Pacientes", "patientsOnTreatment");
+      "comunitaryPharmacy", "Total doentes", "patientsOnTreatment");
 
   public Page<FcRequisitionDto> searchRequisitions(LocalDate date, Pageable pageable) {
     Set<UUID> dpmSupervisoryNodeIds = supervisoryNodeRepository

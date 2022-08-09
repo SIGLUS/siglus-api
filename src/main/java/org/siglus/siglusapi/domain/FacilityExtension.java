@@ -36,6 +36,10 @@ public class FacilityExtension extends BaseEntity {
 
   private UUID facilityId;
 
+  private String facilityCode;
+
   private Boolean isAndroid;
+
+  private Boolean enableLocationManagement;
 
 }

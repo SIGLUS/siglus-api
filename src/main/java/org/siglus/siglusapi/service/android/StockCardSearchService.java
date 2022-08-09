@@ -59,5 +59,4 @@ public class StockCardSearchService {
     PeriodOfProductMovements period = stockManagementRepository.getAllProductMovements(facilityId, orderableIds);
     return mapper.toAndroidResponse(period);
   }
-
 }

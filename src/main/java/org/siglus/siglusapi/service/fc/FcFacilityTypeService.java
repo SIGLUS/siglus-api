@@ -34,8 +34,10 @@ import org.openlmis.stockmanagement.domain.reason.StockCardLineItemReason;
 import org.openlmis.stockmanagement.dto.ObjectReferenceDto;
 import org.openlmis.stockmanagement.dto.StockCardLineItemReasonDto;
 import org.openlmis.stockmanagement.dto.ValidReasonAssignmentDto;
+import org.siglus.siglusapi.domain.FcIntegrationChanges;
 import org.siglus.siglusapi.dto.FacilityTypeDto;
 import org.siglus.siglusapi.dto.fc.FcFacilityTypeDto;
+import org.siglus.siglusapi.dto.fc.FcIntegrationResultBuildDto;
 import org.siglus.siglusapi.dto.fc.FcIntegrationResultDto;
 import org.siglus.siglusapi.dto.fc.ResponseBaseDto;
 import org.siglus.siglusapi.service.client.SiglusFacilityTypeReferenceDataService;
@@ -64,6 +66,7 @@ public class FcFacilityTypeService implements ProcessDataService {
     boolean finalSuccess = true;
     int createCounter = 0;
     int updateCounter = 0;
+    List<FcIntegrationChanges> fcIntegrationChangesList = new ArrayList<>();
     try {
       if (CollectionUtils.isNotEmpty(facilityTypes)) {
         Map<String, FacilityTypeDto> codeToFacilityType = getCodeToFacilityType();
@@ -72,9 +75,16 @@ public class FcFacilityTypeService implements ProcessDataService {
         facilityTypes.forEach(item -> {
           FcFacilityTypeDto facilityType = (FcFacilityTypeDto) item;
           if (codeToFacilityType.containsKey(facilityType.getCode())) {
-            getUpdatedFacilityType(codeToFacilityType, updateFacilityTypes, facilityType);
+            FcIntegrationChanges updateChanges = getUpdatedFacilityType(codeToFacilityType, facilityType);
+            if (updateChanges != null) {
+              updateFacilityTypes.add(facilityType);
+              fcIntegrationChangesList.add(updateChanges);
+            }
           } else {
             createFacilityTypes.add(facilityType);
+            FcIntegrationChanges createChanges = FcUtil
+                .buildCreateFcIntegrationChanges(FACILITY_TYPE_API, facilityType.getCode(), facilityType.toString());
+            fcIntegrationChangesList.add(createChanges);
           }
         });
         createFacilityTypes(codeToFacilityType, createFacilityTypes);
@@ -86,10 +96,11 @@ public class FcFacilityTypeService implements ProcessDataService {
       log.error("[FC facilityType] sync facilityType error", e);
       finalSuccess = false;
     }
-    log.info("[FC product] process product data create: {}, update: {}, same: {}",
+    log.info("[FC facilityType] process product data create: {}, update: {}, same: {}",
         createCounter, updateCounter, facilityTypes.size() - createCounter - updateCounter);
-    return buildResult(FACILITY_TYPE_API, facilityTypes, startDate, previousLastUpdatedAt, finalSuccess, createCounter,
-        updateCounter);
+    return buildResult(
+        new FcIntegrationResultBuildDto(FACILITY_TYPE_API, facilityTypes, startDate, previousLastUpdatedAt,
+            finalSuccess, createCounter, updateCounter, null, fcIntegrationChangesList));
   }
 
   private Map<String, FacilityTypeDto> getCodeToFacilityType() {
@@ -99,13 +110,27 @@ public class FcFacilityTypeService implements ProcessDataService {
         Function.identity()));
   }
 
-  private void getUpdatedFacilityType(Map<String, FacilityTypeDto> codeToFacilityType,
-      List<FcFacilityTypeDto> needUpdatedFacilityTypes, FcFacilityTypeDto typeDto) {
+  private FcIntegrationChanges getUpdatedFacilityType(Map<String, FacilityTypeDto> codeToFacilityType,
+      FcFacilityTypeDto typeDto) {
     FacilityTypeDto facilityTypeDto = codeToFacilityType.get(typeDto.getCode());
-    if (!facilityTypeDto.getName().equals(typeDto.getDescription())
-        || !facilityTypeDto.getActive().equals(FcUtil.isActive(typeDto.getStatus()))) {
-      needUpdatedFacilityTypes.add(typeDto);
+    boolean isSame = true;
+    StringBuilder updateContent = new StringBuilder();
+    StringBuilder originContent = new StringBuilder();
+    if (!facilityTypeDto.getName().equals(typeDto.getDescription())) {
+      updateContent.append("name=").append(typeDto.getDescription()).append("; ");
+      originContent.append("name=").append(facilityTypeDto.getName()).append("; ");
+      isSame = false;
     }
+    if (!facilityTypeDto.getActive().equals(FcUtil.isActive(typeDto.getStatus()))) {
+      updateContent.append("status=").append(FcUtil.isActive(typeDto.getStatus())).append("; ");
+      originContent.append("status=").append(facilityTypeDto.getActive()).append("; ");
+      isSame = false;
+    }
+    if (isSame) {
+      return null;
+    }
+    return FcUtil.buildUpdateFcIntegrationChanges(FACILITY_TYPE_API, facilityTypeDto.getCode(),
+        updateContent.toString(), originContent.toString());
   }
 
   private void updateFacilityTypes(Map<String, FacilityTypeDto> codeToFacilityType,

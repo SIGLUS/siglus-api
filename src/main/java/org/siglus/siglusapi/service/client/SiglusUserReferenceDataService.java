@@ -15,18 +15,24 @@
 
 package org.siglus.siglusapi.service.client;
 
+import static org.siglus.siglusapi.constant.CacheConstants.CACHE_KEY_GENERATOR;
+import static org.siglus.siglusapi.constant.CacheConstants.SIGLUS_USER;
+
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import org.openlmis.requisition.dto.DetailedRoleAssignmentDto;
 import org.openlmis.stockmanagement.util.RequestParameters;
 import org.siglus.siglusapi.constant.PaginationConstants;
 import org.siglus.siglusapi.dto.UserDto;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
+
 
 @Service
 public class SiglusUserReferenceDataService extends BaseReferenceDataService<UserDto> {
@@ -58,6 +64,26 @@ public class SiglusUserReferenceDataService extends BaseReferenceDataService<Use
     return findAll(userId + "/permissionStrings", String[].class);
   }
 
+  /**
+   * Get user's right and roles (a collection of right and roles of user).
+   *
+   * @param userId id of user
+   * @return a collection of user right and roles
+   */
+  public Collection<DetailedRoleAssignmentDto> getUserRightsAndRoles(UUID userId) {
+    return findAll(userId + "/roleAssignments", DetailedRoleAssignmentDto[].class);
+  }
+
+  /**
+   * Get user's dto
+   *
+   * @param userId id of user
+   * @return a dto of user
+   */
+  public UserDto getUserDetailDto(UUID userId) {
+    return findOne(userId);
+  }
+
   public Page<UserDto> getUserInfo(UUID homeFacilityId) {
     Pageable noPagination = new PageRequest(PaginationConstants.DEFAULT_PAGE_NUMBER,
         PaginationConstants.NO_PAGINATION);
@@ -65,6 +91,13 @@ public class SiglusUserReferenceDataService extends BaseReferenceDataService<Use
     requestBody.put(HOME_FACILITY_ID, homeFacilityId.toString());
     return getPage("search", RequestParameters.init().setPage(noPagination),
         requestBody, HttpMethod.POST, getResultClass(), false);
+  }
+
+  // TODO ClassCastException: requisition.dto.UserDto cannot be cast to stockmanagement.dto.referencedata.UserDto
+  @Override
+  @Cacheable(value = SIGLUS_USER, keyGenerator = CACHE_KEY_GENERATOR)
+  public UserDto findOne(UUID userId) {
+    return super.findOne(userId);
   }
 
 }

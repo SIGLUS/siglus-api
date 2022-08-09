@@ -24,7 +24,7 @@ import java.util.UUID;
 import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.siglus.common.dto.referencedata.OrderableDto;
+import org.openlmis.referencedata.dto.OrderableDto;
 import org.siglus.siglusapi.service.SiglusOrderableService;
 
 @Slf4j

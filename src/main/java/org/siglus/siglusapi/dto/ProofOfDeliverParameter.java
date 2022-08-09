@@ -19,7 +19,7 @@ import java.util.Map;
 import java.util.UUID;
 import lombok.Builder;
 import lombok.Data;
-import org.siglus.common.dto.referencedata.OrderableDto;
+import org.openlmis.referencedata.dto.OrderableDto;
 import org.siglus.siglusapi.domain.PodExtension;
 import org.siglus.siglusapi.domain.ProgramOrderablesExtension;
 

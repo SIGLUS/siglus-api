@@ -21,14 +21,18 @@ import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRA
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_UUID;
 
 import java.util.UUID;
+import org.assertj.core.util.Lists;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.stockmanagement.dto.PhysicalInventoryDto;
+import org.siglus.siglusapi.dto.PhysicalInventorySubDraftDto;
 import org.siglus.siglusapi.dto.UserDto;
+import org.siglus.siglusapi.dto.enums.PhysicalInventorySubDraftEnum;
 import org.siglus.siglusapi.service.SiglusPhysicalInventoryService;
+import org.siglus.siglusapi.service.SiglusPhysicalInventorySubDraftService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -42,6 +46,9 @@ public class SiglusPhysicalInventoryControllerTest {
   private SiglusPhysicalInventoryService siglusPhysicalInventoryService;
 
   @Mock
+  private SiglusPhysicalInventorySubDraftService siglusPhysicalInventorySubDraftService;
+
+  @Mock
   private SiglusAuthenticationHelper authenticationHelper;
 
   private final UUID programId = UUID.randomUUID();
@@ -50,9 +57,9 @@ public class SiglusPhysicalInventoryControllerTest {
 
   private final UUID id = UUID.randomUUID();
 
-  private final Boolean isDraft = true;
+  private final UUID subDraftId = UUID.randomUUID();
 
-  private final Boolean canInitialInventory = true;
+  private final Boolean isDraft = true;
 
   private final String startDate = "startDate";
 
@@ -61,18 +68,18 @@ public class SiglusPhysicalInventoryControllerTest {
   @Test
   public void shouldCallGetForAllProductsWhenSearchIfProgramIsAllProducts() {
     siglusPhysicalInventoryController.searchPhysicalInventories(ALL_PRODUCTS_PROGRAM_ID, facilityId,
-        isDraft, canInitialInventory);
+        isDraft);
 
     verify(siglusPhysicalInventoryService).getPhysicalInventoryDtosForAllProducts(facilityId,
-        isDraft, canInitialInventory);
+        isDraft);
   }
 
   @Test
   public void shouldCallGetPhysicalInventoryDtosWhenSearchIfProgramIsNotAllProducts() {
-    siglusPhysicalInventoryController.searchPhysicalInventories(programId, facilityId, isDraft,
-        canInitialInventory);
+    siglusPhysicalInventoryController.searchPhysicalInventories(programId, facilityId, isDraft);
 
-    verify(siglusPhysicalInventoryService).getPhysicalInventoryDtos(programId, facilityId, isDraft);
+    verify(siglusPhysicalInventoryService)
+        .getPhysicalInventoryDtosForProductsInOneProgram(programId, facilityId, isDraft);
   }
 
   @Test
@@ -94,13 +101,13 @@ public class SiglusPhysicalInventoryControllerTest {
   }
 
   @Test
-  public void shouldCallCreateForAllProductsWhenCreateIfProgramIsAllProducts() {
+  public void shouldCallCreateForAllProductsWhenCreateIfProgramIsAllProducts() throws InterruptedException {
     PhysicalInventoryDto physicalInventoryDto = PhysicalInventoryDto.builder()
         .programId(ALL_PRODUCTS_PROGRAM_ID).build();
 
-    siglusPhysicalInventoryController.createEmptyPhysicalInventory(physicalInventoryDto);
+    siglusPhysicalInventoryController.createEmptyPhysicalInventory(physicalInventoryDto, 2, true);
 
-    verify(siglusPhysicalInventoryService).createNewDraftForAllProducts(physicalInventoryDto);
+    verify(siglusPhysicalInventoryService).createAndSplitNewDraftForAllProduct(physicalInventoryDto, 2, true);
   }
 
   @Test
@@ -108,9 +115,10 @@ public class SiglusPhysicalInventoryControllerTest {
     PhysicalInventoryDto physicalInventoryDto = PhysicalInventoryDto.builder().programId(programId)
         .build();
 
-    siglusPhysicalInventoryController.createEmptyPhysicalInventory(physicalInventoryDto);
+    siglusPhysicalInventoryController.createEmptyPhysicalInventory(
+        physicalInventoryDto, 2, false);
 
-    verify(siglusPhysicalInventoryService).createNewDraft(physicalInventoryDto);
+    verify(siglusPhysicalInventoryService).createAndSpiltNewDraftForOneProgram(physicalInventoryDto, 2);
   }
 
   @Test
@@ -133,7 +141,7 @@ public class SiglusPhysicalInventoryControllerTest {
 
     siglusPhysicalInventoryController.updatePhysicalInventory(id, physicalInventoryDto);
 
-    verify(siglusPhysicalInventoryService).saveDraft(physicalInventoryDto, id);
+    verify(siglusPhysicalInventoryService).saveDraftForProductsForOneProgram(physicalInventoryDto);
   }
 
   @Test
@@ -156,16 +164,79 @@ public class SiglusPhysicalInventoryControllerTest {
 
   @Test
   public void shouldCallFindPhysicalInventoryDatesWhenSearchPhysicalInventoryDates() {
-    siglusPhysicalInventoryController.searchPhysicalInventoryDates(facilityId, startDate, endDate);
+    siglusPhysicalInventoryController.searchPhysicalInventoryDates(programId, facilityId, startDate, endDate);
 
-    verify(siglusPhysicalInventoryService).findPhysicalInventoryDates(facilityId, startDate,
+    verify(siglusPhysicalInventoryService).findPhysicalInventoryDates(programId, facilityId, startDate,
         endDate);
   }
 
   @Test
   public void shouldCallFindLatestPhysicalInventoryWhenSearchLatestPhysicalInventoryOccurDate() {
-    siglusPhysicalInventoryController.searchLatestPhysicalInventoryOccurDate(facilityId);
+    siglusPhysicalInventoryController.searchLatestPhysicalInventoryOccurDate(facilityId, programId);
 
-    verify(siglusPhysicalInventoryService).findLatestPhysicalInventory(facilityId);
+    verify(siglusPhysicalInventoryService).findLatestPhysicalInventory(facilityId, programId);
+  }
+
+  @Test
+  public void shouldCallGetSubDraftListForAllProductWhenSearchAllProductSubDraftList() {
+    siglusPhysicalInventoryController.searchSubDraftList(ALL_PRODUCTS_PROGRAM_ID, facilityId, isDraft);
+
+    verify(siglusPhysicalInventoryService).getSubDraftListForAllProduct(facilityId, isDraft);
+  }
+
+  @Test
+  public void shouldCallGetSubDraftListInOneProgramWhenSearchOneProgramSubDraftList() {
+    siglusPhysicalInventoryController.searchSubDraftList(programId, facilityId, isDraft);
+
+    verify(siglusPhysicalInventoryService).getSubDraftListForOneProgram(programId, facilityId, isDraft);
+  }
+
+  @Test
+  public void shouldCallGetSubPhysicalInventoryDtoBysubDraftIdWhenSearchSubDraftDetail() {
+    siglusPhysicalInventoryController.searchSubDraftList(programId, facilityId, isDraft);
+
+    verify(siglusPhysicalInventoryService).getSubDraftListForOneProgram(programId, facilityId, isDraft);
+  }
+
+
+  @Test
+  public void shouldCallDeleteSubDraftsBySubDraftIdsWhenDeleteSubDrafts() {
+    siglusPhysicalInventoryController.deleteSubDrafts(Boolean.FALSE, Lists.newArrayList(subDraftId));
+
+    verify(siglusPhysicalInventorySubDraftService).deleteSubDrafts(Lists.newArrayList(subDraftId), Boolean.FALSE);
+  }
+
+  @Test
+  public void shouldCallUpdateSubDraftsBySubDraftIdsWhenUpdateSubDrafts() {
+    PhysicalInventorySubDraftDto physicalInventoryDto = new PhysicalInventorySubDraftDto();
+
+    siglusPhysicalInventoryController.submitSubDrafts(physicalInventoryDto);
+
+    verify(siglusPhysicalInventorySubDraftService).updateSubDrafts(null, physicalInventoryDto,
+        PhysicalInventorySubDraftEnum.SUBMITTED);
+  }
+
+  @Test
+  public void shouldCallSubmitSubDraftsBySubDraftIdsWhenSubmitSubDrafts() {
+    PhysicalInventorySubDraftDto physicalInventoryDto = new PhysicalInventorySubDraftDto();
+
+    siglusPhysicalInventoryController.updateSubDrafts(physicalInventoryDto);
+
+    verify(siglusPhysicalInventorySubDraftService).updateSubDrafts(null, physicalInventoryDto,
+        PhysicalInventorySubDraftEnum.DRAFT);
+  }
+
+  @Test
+  public void shouldConflictIfOtherProgramHaveDraft() {
+    siglusPhysicalInventoryController.checkPhysicalInventoryConflict(ALL_PRODUCTS_PROGRAM_ID, facilityId);
+
+    verify(siglusPhysicalInventoryService).checkConflictForAllProduct(facilityId);
+  }
+
+  @Test
+  public void shouldConflictWithAllProductsWhenAllProductsHaveDraft() {
+    siglusPhysicalInventoryController.checkPhysicalInventoryConflict(programId, facilityId);
+
+    verify(siglusPhysicalInventoryService).checkConflictForOneProgram(facilityId);
   }
 }

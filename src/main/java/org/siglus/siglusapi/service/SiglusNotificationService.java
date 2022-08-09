@@ -17,6 +17,7 @@ package org.siglus.siglusapi.service;
 
 import static java.util.stream.Collectors.toSet;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -24,6 +25,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
@@ -92,6 +94,14 @@ import org.springframework.transaction.annotation.Transactional;
 @SuppressWarnings({"PMD.TooManyMethods", "PMD.CyclomaticComplexity"})
 public class SiglusNotificationService {
 
+  @FunctionalInterface
+  interface PredicateEvaluator {
+
+    Predicate mapRightToPredicate(PermissionString permissionString, Root<Notification> root,
+        CriteriaBuilder cb, UUID currentUserFacilityId, Set<UUID> currentUserSupervisoryNodeIds,
+        boolean canEditShipments, List<RequisitionGroupDto> requisitionGroups);
+  }
+
   public enum ViewableStatus {
     NOT_VIEWED, VIEWED, PROCESSED
   }
@@ -155,7 +165,8 @@ public class SiglusNotificationService {
           String author = userReferenceDataService.findOne(notification.getOperatorId())
               .getUsername();
           if (notification.getStatus().isRequisitionPeriod()) {
-            RequisitionV2Dto requisition = requisitionService.searchRequisition(notification.getRefId());
+            RequisitionV2Dto requisition = requisitionService
+                .searchRequisition(notification.getRefId());
             Map<String, StatusLogEntry> statusChanges = requisition.getStatusChanges();
             submitDate = statusChanges.get(RequisitionStatus.SUBMITTED.name()).getChangeDate();
           }
@@ -393,7 +404,8 @@ public class SiglusNotificationService {
     List<RequisitionGroupDto> requisitionGroups = requisitionGroupService.findAll();
     boolean canEditShipments = permissionStrings.stream().anyMatch(
         rightAssignment ->
-            org.openlmis.fulfillment.service.PermissionService.SHIPMENTS_EDIT.equals(rightAssignment.getRightName()));
+            org.openlmis.fulfillment.service.PermissionService.SHIPMENTS_EDIT
+                .equals(rightAssignment.getRightName()));
     return (root, query, cb) -> {
       List<Predicate> predicates = permissionStrings.stream()
           .map(right -> mapRightToPredicate(right, root, cb, currentUserFacilityId,
@@ -419,7 +431,7 @@ public class SiglusNotificationService {
     };
   }
 
-  private UUID findSupervisoryNodeIdForInternalApprove(UUID currentUserFacilityId,
+  UUID findSupervisoryNodeIdForInternalApprove(UUID currentUserFacilityId,
       List<RequisitionGroupDto> requisitionGroups,
       Set<UUID> currentUserSupervisoryNodeIds, UUID programId) {
     RequisitionGroupDto requisitionGroupDto = requisitionGroups.stream()
@@ -438,117 +450,177 @@ public class SiglusNotificationService {
     return memberFacilities.stream().map(FacilityDto::getId).anyMatch(userFacilityId::equals);
   }
 
-  private Predicate mapRightToPredicate(PermissionString permissionString, Root<Notification> root,
-      CriteriaBuilder cb, UUID currentUserFacilityId, Set<UUID> currentUserSupervisoryNodeIds,
-      boolean canEditShipments, List<RequisitionGroupDto> requisitionGroups) {
-    switch (permissionString.getRightName()) {
-      case PermissionService.REQUISITION_VIEW:
-        return cb.and(
-            cb.equal(root.get(FACILITY_ID), permissionString.getFacilityId()),
-            cb.equal(root.get(PROGRAM_ID), permissionString.getProgramId()),
-            root.get(STATUS).in(NotificationStatus.APPROVED,
-                NotificationStatus.RELEASED_WITHOUT_ORDER),
-            cb.equal(root.get(FACILITY_ID), currentUserFacilityId)
-        );
-      case PermissionService.REQUISITION_CREATE:
-        return cb.and(
-            cb.equal(root.get(FACILITY_ID), permissionString.getFacilityId()),
-            cb.equal(root.get(PROGRAM_ID), permissionString.getProgramId()),
-            cb.equal(root.get(STATUS), NotificationStatus.REJECTED),
-            cb.equal(root.get(FACILITY_ID), currentUserFacilityId)
-        );
-      case PermissionService.REQUISITION_AUTHORIZE:
-        return cb.and(
-            cb.equal(root.get(FACILITY_ID), permissionString.getFacilityId()),
-            cb.equal(root.get(PROGRAM_ID), permissionString.getProgramId()),
-            cb.equal(root.get(STATUS), NotificationStatus.SUBMITTED),
-            cb.equal(root.get(FACILITY_ID), currentUserFacilityId)
-        );
-      case PermissionService.REQUISITION_APPROVE:
-        if (currentUserSupervisoryNodeIds.isEmpty()) {
-          return null;
-        }
-        Predicate internalPredicate = null;
-        Predicate externalPredicate = null;
-        // if user has internal approve for specific program, should optimize
-        // sn-1 & multiple for internal, sn-2 & multiple for external
-        UUID nodeIdForInternalApprove = findSupervisoryNodeIdForInternalApprove(
-            currentUserFacilityId, requisitionGroups,
-            currentUserSupervisoryNodeIds, permissionString.getProgramId());
-        Set<UUID> nodeIdsForExternalApprove = currentUserSupervisoryNodeIds
-            .stream()
-            .filter(id -> !id.equals(nodeIdForInternalApprove))
-            .collect(toSet());
+  Predicate mapRightToPredicate(
+      PermissionString permissionString,
+      Root<Notification> root,
+      CriteriaBuilder cb,
+      UUID currentUserFacilityId,
+      Set<UUID> currentUserSupervisoryNodeIds,
+      boolean canEditShipments,
+      List<RequisitionGroupDto> requisitionGroups) {
+    return Optional.ofNullable(permissionToPredicateEvaluator.get(permissionString.getRightName()))
+        .map(
+            evaluator ->
+                evaluator.mapRightToPredicate(
+                    permissionString,
+                    root,
+                    cb,
+                    currentUserFacilityId,
+                    currentUserSupervisoryNodeIds,
+                    canEditShipments,
+                    requisitionGroups))
+        .orElse(null);
+  }
 
-        if (nodeIdForInternalApprove != null) {
-          internalPredicate = cb.and(
-              cb.equal(root.get(FACILITY_ID), currentUserFacilityId),
-              cb.equal(root.get(PROGRAM_ID), permissionString.getProgramId()),
-              cb.equal(root.get(STATUS), NotificationStatus.AUTHORIZED)
-          );
-        }
+  private final Map<String, PredicateEvaluator> permissionToPredicateEvaluator = ImmutableMap
+      .<String, PredicateEvaluator>builder()
+      .put(PermissionService.REQUISITION_VIEW, getPredicateEvaluatorForRequisitionView())
+      .put(PermissionService.REQUISITION_CREATE, getPredicateEvaluatorForRequisitionCreate())
+      .put(PermissionService.REQUISITION_AUTHORIZE, getPredicateEvaluatorForRequisitionAuthorize())
+      .put(PermissionService.REQUISITION_APPROVE, getPredicateEvaluatorForRequisitionApprove())
+      .put(PermissionService.ORDERS_EDIT, getPredicateEvaluatorForOrdersEdit())
+      .put(org.openlmis.stockmanagement.service.PermissionService.STOCK_CARDS_VIEW,
+          getPredicateEvaluatorForStockCardsView())
+      .put(org.openlmis.fulfillment.service.PermissionService.PODS_MANAGE,
+          getPredicateEvaluatorForPodManage())
+      .put(org.openlmis.fulfillment.service.PermissionService.PODS_VIEW,
+          getPredicateEvaluatorForPodView())
+      .put(org.openlmis.fulfillment.service.PermissionService.SHIPMENTS_EDIT,
+          getPredicateEvaluatorForShipmentsEdit())
+      .build();
 
-        if (!CollectionUtils.isEmpty(nodeIdsForExternalApprove)) {
-          externalPredicate = cb.and(
-              cb.equal(root.get(FACILITY_ID), permissionString.getFacilityId()),
-              cb.equal(root.get(PROGRAM_ID), permissionString.getProgramId()),
-              root.get(STATUS)
-                  .in(NotificationStatus.AUTHORIZED, NotificationStatus.IN_APPROVAL),
-              root.get("notifySupervisoryNodeId").in(nodeIdsForExternalApprove)
-          );
-        }
+  PredicateEvaluator getPredicateEvaluatorForShipmentsEdit() {
+    return (permissionString, root, cb, currentUserFacilityId,
+        currentUserSupervisoryNodeIds, canEditShipments, requisitionGroups) -> cb.and(
+        cb.equal(root.get(FACILITY_ID), permissionString.getFacilityId()),
+        cb.equal(root.get(STATUS), NotificationStatus.RECEIVED),
+        cb.equal(root.get(FACILITY_ID), currentUserFacilityId)
+    );
+  }
 
-        if (internalPredicate != null && externalPredicate != null) {
-          return cb.or(internalPredicate, externalPredicate);
-        }
+  PredicateEvaluator getPredicateEvaluatorForPodView() {
+    return (permissionString, root, cb, currentUserFacilityId,
+        currentUserSupervisoryNodeIds, canEditShipments, requisitionGroups) -> cb.and(
+        cb.equal(root.get(FACILITY_ID), permissionString.getFacilityId()),
+        cb.equal(root.get(PROGRAM_ID), permissionString.getProgramId()),
+        cb.equal(root.get(STATUS), NotificationStatus.SHIPPED),
+        cb.equal(root.get(FACILITY_ID), currentUserFacilityId),
+        cb.equal(root.get(NOTIFICATION_TYPE), NotificationType.UPDATE)
+    );
+  }
 
-        if (internalPredicate != null) {
-          return internalPredicate;
-        }
+  PredicateEvaluator getPredicateEvaluatorForPodManage() {
+    return (permissionString, root, cb, currentUserFacilityId,
+        currentUserSupervisoryNodeIds, canEditShipments, requisitionGroups) -> cb.and(
+        cb.equal(root.get(FACILITY_ID), permissionString.getFacilityId()),
+        cb.equal(root.get(PROGRAM_ID), permissionString.getProgramId()),
+        cb.equal(root.get(STATUS), NotificationStatus.SHIPPED),
+        cb.equal(root.get(FACILITY_ID), currentUserFacilityId),
+        cb.equal(root.get(NOTIFICATION_TYPE), NotificationType.TODO)
+    );
+  }
 
-        return externalPredicate;
-
-      case PermissionService.ORDERS_EDIT:
-        return cb.and(
-            cb.equal(root.get(FACILITY_ID), permissionString.getFacilityId()),
-            cb.equal(root.get(STATUS), NotificationStatus.APPROVED),
-            cb.equal(root.get(FACILITY_ID), currentUserFacilityId)
-        );
-      case org.openlmis.stockmanagement.service.PermissionService.STOCK_CARDS_VIEW:
-        if (!canEditShipments) {
-          return null;
-        }
-        return cb.and(
-            cb.equal(root.get(FACILITY_ID), permissionString.getFacilityId()),
-            cb.equal(root.get(PROGRAM_ID), permissionString.getProgramId()),
-            cb.equal(root.get(STATUS), NotificationStatus.ORDERED),
-            cb.equal(root.get(FACILITY_ID), currentUserFacilityId)
-        );
-      case org.openlmis.fulfillment.service.PermissionService.PODS_MANAGE:
-        return cb.and(
-            cb.equal(root.get(FACILITY_ID), permissionString.getFacilityId()),
-            cb.equal(root.get(PROGRAM_ID), permissionString.getProgramId()),
-            cb.equal(root.get(STATUS), NotificationStatus.SHIPPED),
-            cb.equal(root.get(FACILITY_ID), currentUserFacilityId),
-            cb.equal(root.get(NOTIFICATION_TYPE), NotificationType.TODO)
-        );
-      case org.openlmis.fulfillment.service.PermissionService.PODS_VIEW:
-        return cb.and(
-            cb.equal(root.get(FACILITY_ID), permissionString.getFacilityId()),
-            cb.equal(root.get(PROGRAM_ID), permissionString.getProgramId()),
-            cb.equal(root.get(STATUS), NotificationStatus.SHIPPED),
-            cb.equal(root.get(FACILITY_ID), currentUserFacilityId),
-            cb.equal(root.get(NOTIFICATION_TYPE), NotificationType.UPDATE)
-        );
-      case org.openlmis.fulfillment.service.PermissionService.SHIPMENTS_EDIT:
-        return cb.and(
-            cb.equal(root.get(FACILITY_ID), permissionString.getFacilityId()),
-            cb.equal(root.get(STATUS), NotificationStatus.RECEIVED),
-            cb.equal(root.get(FACILITY_ID), currentUserFacilityId)
-        );
-      default:
+  PredicateEvaluator getPredicateEvaluatorForStockCardsView() {
+    return (permissionString, root, cb, currentUserFacilityId,
+        currentUserSupervisoryNodeIds, canEditShipments, requisitionGroups) -> {
+      if (!canEditShipments) {
         return null;
-    }
+      }
+      return cb.and(
+          cb.equal(root.get(FACILITY_ID), permissionString.getFacilityId()),
+          cb.equal(root.get(PROGRAM_ID), permissionString.getProgramId()),
+          cb.equal(root.get(STATUS), NotificationStatus.ORDERED),
+          cb.equal(root.get(FACILITY_ID), currentUserFacilityId)
+      );
+    };
+  }
+
+  PredicateEvaluator getPredicateEvaluatorForOrdersEdit() {
+    return (permissionString, root, cb, currentUserFacilityId,
+        currentUserSupervisoryNodeIds, canEditShipments, requisitionGroups) -> cb.and(
+        cb.equal(root.get(FACILITY_ID), permissionString.getFacilityId()),
+        cb.equal(root.get(STATUS), NotificationStatus.APPROVED),
+        cb.equal(root.get(FACILITY_ID), currentUserFacilityId)
+    );
+  }
+
+  PredicateEvaluator getPredicateEvaluatorForRequisitionApprove() {
+    return (permissionString, root, cb, currentUserFacilityId,
+        currentUserSupervisoryNodeIds, canEditShipments, requisitionGroups) -> {
+      if (currentUserSupervisoryNodeIds.isEmpty()) {
+        return null;
+      }
+      Predicate internalPredicate = null;
+      Predicate externalPredicate = null;
+      // if user has internal approve for specific program, should optimize
+      // sn-1 & multiple for internal, sn-2 & multiple for external
+      UUID nodeIdForInternalApprove = findSupervisoryNodeIdForInternalApprove(
+          currentUserFacilityId, requisitionGroups,
+          currentUserSupervisoryNodeIds, permissionString.getProgramId());
+      Set<UUID> nodeIdsForExternalApprove = currentUserSupervisoryNodeIds
+          .stream()
+          .filter(id -> !id.equals(nodeIdForInternalApprove))
+          .collect(toSet());
+
+      if (nodeIdForInternalApprove != null) {
+        internalPredicate = cb.and(
+            cb.equal(root.get(FACILITY_ID), currentUserFacilityId),
+            cb.equal(root.get(PROGRAM_ID), permissionString.getProgramId()),
+            cb.equal(root.get(STATUS), NotificationStatus.AUTHORIZED)
+        );
+      }
+
+      if (!CollectionUtils.isEmpty(nodeIdsForExternalApprove)) {
+        externalPredicate = cb.and(
+            cb.equal(root.get(FACILITY_ID), permissionString.getFacilityId()),
+            cb.equal(root.get(PROGRAM_ID), permissionString.getProgramId()),
+            root.get(STATUS)
+                .in(NotificationStatus.AUTHORIZED, NotificationStatus.IN_APPROVAL),
+            root.get("notifySupervisoryNodeId").in(nodeIdsForExternalApprove)
+        );
+      }
+
+      if (internalPredicate != null && externalPredicate != null) {
+        return cb.or(internalPredicate, externalPredicate);
+      }
+
+      if (internalPredicate != null) {
+        return internalPredicate;
+      }
+
+      return externalPredicate;
+    };
+  }
+
+  PredicateEvaluator getPredicateEvaluatorForRequisitionAuthorize() {
+    return (permissionString, root, cb, currentUserFacilityId,
+        currentUserSupervisoryNodeIds, canEditShipments, requisitionGroups) -> cb.and(
+        cb.equal(root.get(FACILITY_ID), permissionString.getFacilityId()),
+        cb.equal(root.get(PROGRAM_ID), permissionString.getProgramId()),
+        cb.equal(root.get(STATUS), NotificationStatus.SUBMITTED),
+        cb.equal(root.get(FACILITY_ID), currentUserFacilityId)
+    );
+  }
+
+  PredicateEvaluator getPredicateEvaluatorForRequisitionCreate() {
+    return (permissionString, root, cb, currentUserFacilityId,
+        currentUserSupervisoryNodeIds, canEditShipments, requisitionGroups) -> cb.and(
+        cb.equal(root.get(FACILITY_ID), permissionString.getFacilityId()),
+        cb.equal(root.get(PROGRAM_ID), permissionString.getProgramId()),
+        cb.equal(root.get(STATUS), NotificationStatus.REJECTED),
+        cb.equal(root.get(FACILITY_ID), currentUserFacilityId)
+    );
+  }
+
+  PredicateEvaluator getPredicateEvaluatorForRequisitionView() {
+    return (permissionString, root, cb, currentUserFacilityId,
+        currentUserSupervisoryNodeIds, canEditShipments, requisitionGroups) -> cb.and(
+        cb.equal(root.get(FACILITY_ID), permissionString.getFacilityId()),
+        cb.equal(root.get(PROGRAM_ID), permissionString.getProgramId()),
+        root.get(STATUS).in(NotificationStatus.APPROVED,
+            NotificationStatus.RELEASED_WITHOUT_ORDER),
+        cb.equal(root.get(FACILITY_ID), currentUserFacilityId)
+    );
   }
 
 }

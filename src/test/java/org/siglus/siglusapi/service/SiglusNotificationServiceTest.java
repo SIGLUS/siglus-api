@@ -41,6 +41,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import javax.persistence.criteria.Predicate;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -551,6 +552,14 @@ public class SiglusNotificationServiceTest {
     // then
     verify(repo)
         .updateLastNotificationProcessed(pod.getId(), NotificationStatus.SHIPPED);
+  }
+
+  @Test
+  public void shouldReturnNullWhenMapRightToPredicateGivenRightNameNotHaveEvaluator() {
+    PermissionString unknownPermission = new PermissionString("unknow-permission");
+    Predicate got = service.mapRightToPredicate(unknownPermission, null, null, null,
+        null, false, null);
+    assertNull(got);
   }
 
   private void mockFinalApproved() {

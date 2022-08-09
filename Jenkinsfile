@@ -50,9 +50,17 @@ pipeline {
                 }
             }
         }
-        stage('Deploy To QA') {
+        stage('Deploy To dev') {
             when {
                 branch 'master'
+            }
+            steps {
+                deploy "dev"
+            }
+        }
+        stage('Deploy To QA') {
+            when {
+                branch 'showcase'
             }
             steps {
                 deploy "qa"

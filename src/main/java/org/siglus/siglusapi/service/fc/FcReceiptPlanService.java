@@ -34,6 +34,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.openlmis.referencedata.domain.Facility;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.StatusChange;
 import org.openlmis.requisition.dto.ApprovedProductDto;
@@ -41,12 +42,12 @@ import org.openlmis.requisition.dto.OrderableDto;
 import org.openlmis.requisition.dto.RequisitionLineItemV2Dto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.repository.RequisitionRepository;
-import org.siglus.common.domain.referencedata.Facility;
 import org.siglus.siglusapi.domain.ReceiptPlan;
 import org.siglus.siglusapi.domain.RequisitionExtension;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionLineItemDto;
 import org.siglus.siglusapi.dto.UserDto;
+import org.siglus.siglusapi.dto.fc.FcIntegrationResultBuildDto;
 import org.siglus.siglusapi.dto.fc.FcIntegrationResultDto;
 import org.siglus.siglusapi.dto.fc.ProductDto;
 import org.siglus.siglusapi.dto.fc.ReceiptPlanDto;
@@ -129,10 +130,12 @@ public class FcReceiptPlanService implements ProcessDataService {
     }
     log.info("[FC receiptPlan] process data create: {}, update: {}, same: {}",
         createCounter, 0, receiptPlans.size() - createCounter);
-    String errorMessage = String.format("fc integration not exist our system count: %d and duplicated count %d",
-            ignoreCounter, duplicatedCounter);
-    return buildResult(RECEIPT_PLAN_API, receiptPlans, startDate, previousLastUpdatedAt, finalSuccess, createCounter,
-        0, errorMessage);
+    String errorMessage = String.format(
+        "fc integration not exist our system count: %d and duplicated count %d",
+        ignoreCounter, duplicatedCounter);
+    return buildResult(
+        new FcIntegrationResultBuildDto(RECEIPT_PLAN_API, receiptPlans, startDate,
+            previousLastUpdatedAt, finalSuccess, createCounter, 0, errorMessage, null));
   }
 
   private boolean isRequisitionNumberExisted(ResponseBaseDto receiptPlanDto) {

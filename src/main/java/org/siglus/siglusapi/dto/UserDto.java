@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.dto;
 
+import java.io.Serializable;
 import java.util.Set;
 import java.util.UUID;
 import lombok.Getter;
@@ -23,9 +24,11 @@ import org.openlmis.requisition.dto.RoleAssignmentDto;
 
 @Getter
 @Setter
-public class UserDto {
+public class UserDto implements Serializable {
 
   private UUID id;
+
+  private String username;
 
   private UUID homeFacilityId;
 

@@ -15,12 +15,14 @@
 
 package org.siglus.siglusapi.service;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -28,15 +30,22 @@ import org.apache.commons.collections.CollectionUtils;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.dto.ProcessingPeriodDto;
+import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.dto.RequisitionPeriodDto;
 import org.openlmis.requisition.repository.RequisitionRepository;
 import org.openlmis.requisition.service.PeriodService;
 import org.openlmis.requisition.service.PermissionService;
 import org.siglus.common.domain.ProcessingPeriodExtension;
+import org.siglus.common.dto.ProgramAdditionalOrderableDto;
 import org.siglus.common.repository.ProcessingPeriodExtensionRepository;
+import org.siglus.siglusapi.constant.ProgramConstants;
+import org.siglus.siglusapi.domain.SiglusReportType;
 import org.siglus.siglusapi.dto.ProcessingPeriodSearchParams;
 import org.siglus.siglusapi.exception.NotFoundException;
+import org.siglus.siglusapi.repository.FacilityNativeRepository;
+import org.siglus.siglusapi.repository.SiglusReportTypeRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
+import org.siglus.siglusapi.repository.dto.FacillityStockCardDateDto;
 import org.siglus.siglusapi.service.client.SiglusProcessingPeriodReferenceDataService;
 import org.siglus.siglusapi.validator.SiglusProcessingPeriodValidator;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -69,6 +78,18 @@ public class SiglusProcessingPeriodService {
 
   @Autowired
   private SiglusRequisitionRepository siglusRequisitionRepository;
+
+  @Autowired
+  private SiglusProgramService siglusProgramService;
+
+  @Autowired
+  private SiglusReportTypeRepository reportTypeRepository;
+
+  @Autowired
+  private FacilityNativeRepository facilityNativeRepository;
+
+  @Autowired
+  private SiglusProgramAdditionalOrderableService siglusProgramAdditionalOrderableService;
 
   @Transactional
   public ProcessingPeriodDto createProcessingPeriod(ProcessingPeriodDto periodDto) {
@@ -137,16 +158,66 @@ public class SiglusProcessingPeriodService {
     return dto;
   }
 
+  private LocalDate getFirstStockMovementDate(ProgramDto program,
+                                              UUID facilityId) {
+    FacillityStockCardDateDto facillityStockCardDateDto;
+    if (ProgramConstants.MALARIA_PROGRAM_CODE.equals(program.getCode())) {
+      Set<UUID> malariaAdditionalOrderableIds =
+              siglusProgramAdditionalOrderableService.searchAdditionalOrderables(program.getId())
+                      .stream().map(ProgramAdditionalOrderableDto::getAdditionalOrderableId)
+                      .collect(Collectors.toSet());
+      Optional<ProgramDto> viaProgram = siglusProgramService.getProgramByCode(ProgramConstants.VIA_PROGRAM_CODE);
+      List<FacillityStockCardDateDto> result =
+              facilityNativeRepository.findMalariaFirstStockCardGroupByFacility(malariaAdditionalOrderableIds,
+                      viaProgram.get().getId());
+      facillityStockCardDateDto = result
+              .stream()
+              .filter(dto -> facilityId.equals(dto.getFacilityId()))
+              .findFirst()
+              .orElseThrow(() -> new IllegalArgumentException("no first stock movement"));
+    } else {
+      facillityStockCardDateDto = facilityNativeRepository
+              .findFirstStockCardGroupByFacilityIdAndProgramId(facilityId, program.getId())
+              .stream()
+              .findFirst()
+              .orElseThrow(() -> new IllegalArgumentException("no first stock movement"));
+    }
+    return facillityStockCardDateDto.getOccurredDate().toLocalDate();
+  }
+
+  private Collection<ProcessingPeriodDto> filterPeriods(Collection<ProcessingPeriodDto> periods,
+                                                        UUID programId,
+                                                        UUID facilityId) {
+    ProgramDto program = siglusProgramService.getProgram(programId);
+    LocalDate firstStockMovementDate = getFirstStockMovementDate(program, facilityId);
+    SiglusReportType reportType = reportTypeRepository
+            .findOneByFacilityIdAndProgramCodeAndActiveIsTrue(facilityId, program.getCode())
+            .orElseThrow(() -> new IllegalArgumentException("no report type"));
+
+    LocalDate indexDate;
+    if (reportType.getStartDate().isAfter(firstStockMovementDate)) {
+      indexDate = reportType.getStartDate();
+    } else {
+      indexDate = firstStockMovementDate;
+    }
+    return periods.stream()
+            .filter(period -> period.getStartDate().isAfter(indexDate))
+            .filter(period -> !period.getStartDate().isAfter(LocalDate.now()))
+            .collect(Collectors.toList());
+  }
+
   // get periods for initiate
   public Collection<RequisitionPeriodDto> getPeriods(UUID program,
       UUID facility, boolean emergency) {
 
     Collection<ProcessingPeriodDto> periods = fillProcessingPeriodWithExtension(
         periodService.searchByProgramAndFacility(program, facility));
+
     List<UUID> currentPeriodIds = periodService.getCurrentPeriods(program, facility)
         .stream().map(ProcessingPeriodDto::getId).collect(Collectors.toList());
     List<RequisitionPeriodDto> requisitionPeriods = new ArrayList<>();
 
+    // TODO Optimization
     for (ProcessingPeriodDto period : periods) {
 
       List<Requisition> requisitions = requisitionRepository.searchRequisitions(
@@ -212,7 +283,7 @@ public class SiglusProcessingPeriodService {
     requisitionPeriod.setRequisitionStatus(firstPreAuthorizeRequisition.getStatus());
   }
 
-  private Collection<ProcessingPeriodDto> fillProcessingPeriodWithExtension(
+  public Collection<ProcessingPeriodDto> fillProcessingPeriodWithExtension(
       Collection<ProcessingPeriodDto> periods) {
     List<ProcessingPeriodExtension> extensions = processingPeriodExtensionRepository.findAll();
 

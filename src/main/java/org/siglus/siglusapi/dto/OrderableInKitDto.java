@@ -19,8 +19,8 @@ import java.util.Set;
 import java.util.UUID;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.siglus.common.dto.referencedata.BaseDto;
-import org.siglus.common.dto.referencedata.DispensableDto;
+import org.openlmis.referencedata.dto.BaseDto;
+import org.openlmis.referencedata.dto.DispensableDto;
 
 @Data
 @EqualsAndHashCode(callSuper = true)

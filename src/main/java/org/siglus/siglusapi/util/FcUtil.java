@@ -17,7 +17,15 @@ package org.siglus.siglusapi.util;
 
 import static org.siglus.siglusapi.constant.FcConstants.STATUS_ACTIVE;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import org.siglus.siglusapi.domain.FcIntegrationChanges;
+
 public class FcUtil {
+
+  public static final String PATTERN = "^[A-z0-9]*$";
+  public static final String CREATE = "create";
+  public static final String UPDATE = "update";
 
   private FcUtil() {
     throw new IllegalStateException("Utility class");
@@ -27,4 +35,42 @@ public class FcUtil {
     return status.equalsIgnoreCase(STATUS_ACTIVE);
   }
 
+  public static boolean isNotMatchedCode(String code) {
+    Pattern p = Pattern.compile(PATTERN);
+    Matcher m = p.matcher(code);
+    return !m.matches();
+  }
+
+  public static FcIntegrationChanges buildCreateFcIntegrationChanges(String apiCategory, String code,
+      String fcContent) {
+    return FcIntegrationChanges.builder()
+        .type(CREATE)
+        .category(apiCategory)
+        .code(code)
+        .fcContent(fcContent)
+        .build();
+  }
+
+  public static FcIntegrationChanges buildUpdateFcIntegrationChanges(String apiCategory, String code, String fcContent,
+      String originContent) {
+    return FcIntegrationChanges.builder()
+        .type(UPDATE)
+        .category(apiCategory)
+        .code(code)
+        .fcContent(fcContent)
+        .originContent(originContent)
+        .build();
+  }
+
+  public static FcIntegrationChanges buildUpdateFcIntegrationChanges(String apiCategory, String code, String fcContent,
+      String originContent, boolean isUpdateProgram) {
+    return FcIntegrationChanges.builder()
+        .type(UPDATE)
+        .category(apiCategory)
+        .code(code)
+        .fcContent(fcContent)
+        .originContent(originContent)
+        .updateProgram(isUpdateProgram)
+        .build();
+  }
 }

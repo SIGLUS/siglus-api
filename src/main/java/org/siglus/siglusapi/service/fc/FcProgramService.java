@@ -19,6 +19,7 @@ import static org.siglus.siglusapi.constant.FcConstants.PROGRAM_API;
 import static org.siglus.siglusapi.dto.fc.FcIntegrationResultDto.buildResult;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -27,7 +28,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.siglus.siglusapi.domain.FcIntegrationChanges;
 import org.siglus.siglusapi.domain.ProgramRealProgram;
+import org.siglus.siglusapi.dto.fc.FcIntegrationResultBuildDto;
 import org.siglus.siglusapi.dto.fc.FcIntegrationResultDto;
 import org.siglus.siglusapi.dto.fc.ProgramDto;
 import org.siglus.siglusapi.dto.fc.ResponseBaseDto;
@@ -53,6 +56,7 @@ public class FcProgramService implements ProcessDataService {
     AtomicInteger createCounter = new AtomicInteger();
     AtomicInteger updateCounter = new AtomicInteger();
     AtomicInteger sameCounter = new AtomicInteger();
+    List<FcIntegrationChanges> fcIntegrationChangesList = new ArrayList<>();
     try {
       Map<String, ProgramRealProgram> programCodeToProgram = programRealProgramRepository.findAll()
           .stream().collect(Collectors.toMap(ProgramRealProgram::getRealProgramCode, p -> p));
@@ -64,12 +68,19 @@ public class FcProgramService implements ProcessDataService {
           log.info("[FC program] create: {}", current);
           programsToUpdate.add(ProgramRealProgram.from(current));
           createCounter.getAndIncrement();
-        } else if (isDifferent(existed, current)) {
-          log.info("[FC program] update, existed: {}, current: {}", existed, current);
-          programsToUpdate.add(getUpdateProgram(existed, current));
-          updateCounter.getAndIncrement();
+          FcIntegrationChanges createChanges = FcUtil
+              .buildCreateFcIntegrationChanges(PROGRAM_API, current.getCode(), current.toString());
+          fcIntegrationChangesList.add(createChanges);
         } else {
-          sameCounter.getAndIncrement();
+          FcIntegrationChanges updateChanges = getUpdatedProgram(existed, current);
+          if (updateChanges != null) {
+            log.info("[FC program] update, existed: {}, current: {}", existed, current);
+            programsToUpdate.add(getUpdateProgram(existed, current));
+            updateCounter.getAndIncrement();
+            fcIntegrationChangesList.add(updateChanges);
+          } else {
+            sameCounter.getAndIncrement();
+          }
         }
       });
       programRealProgramRepository.save(programsToUpdate);
@@ -79,22 +90,34 @@ public class FcProgramService implements ProcessDataService {
     }
     log.info("[FC program] process data create: {}, update: {}, same: {}",
         createCounter.get(), updateCounter.get(), sameCounter.get());
-    return buildResult(PROGRAM_API, programs, startDate, previousLastUpdatedAt, finalSuccess, createCounter.get(),
-        updateCounter.get());
+    return buildResult(
+        new FcIntegrationResultBuildDto(PROGRAM_API, programs, startDate, previousLastUpdatedAt, finalSuccess,
+            createCounter.get(), updateCounter.get(), null, fcIntegrationChangesList));
   }
 
-  private boolean isDifferent(ProgramRealProgram existed, ProgramDto current) {
+  private FcIntegrationChanges getUpdatedProgram(ProgramRealProgram existed, ProgramDto current) {
+    boolean isSame = true;
+    StringBuilder updateContent = new StringBuilder();
+    StringBuilder originContent = new StringBuilder();
     if (!existed.getRealProgramName().equals(current.getDescription())) {
       log.info("[FC program] name different, existed: {}, current: {}", existed.getRealProgramName(),
           current.getDescription());
-      return true;
+      updateContent.append("name=").append(current.getDescription()).append("; ");
+      originContent.append("name=").append(existed.getRealProgramName()).append("; ");
+      isSame = false;
     }
     if (!existed.getActive().equals(FcUtil.isActive(current.getStatus()))) {
       existed.setActive(FcUtil.isActive(current.getStatus()));
       log.info("[FC program] status different, existed: {}, current: {}", existed.getActive(), current.getStatus());
-      return true;
+      updateContent.append("status=").append(FcUtil.isActive(current.getStatus())).append("; ");
+      originContent.append("status=").append(existed.getActive()).append("; ");
+      isSame = false;
     }
-    return false;
+    if (isSame) {
+      return null;
+    }
+    return FcUtil.buildUpdateFcIntegrationChanges(PROGRAM_API, current.getCode(), updateContent.toString(),
+        originContent.toString());
   }
 
   private ProgramRealProgram getUpdateProgram(ProgramRealProgram program, ProgramDto dto) {

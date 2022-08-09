@@ -21,7 +21,7 @@ import static java.util.Objects.requireNonNull;
 import static java.util.UUID.randomUUID;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
-import static org.siglus.common.domain.referencedata.Orderable.TRADE_ITEM;
+import static org.openlmis.referencedata.domain.Orderable.TRADE_ITEM;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
@@ -127,6 +127,13 @@ public class StockManagementRepository extends BaseNativeRepository {
     requireNonNull(facilityId);
     requireNonNull(orderableIds);
     return getAllProductMovements(facilityId, null, null, orderableIds, null, null);
+  }
+
+  public PeriodOfProductMovements getAllProductMovements(@Nonnull UUID facilityId, @Nonnull Set<UUID> orderableIds,
+      LocalDate since, LocalDate till) {
+    PeriodOfProductMovements allProductMovements = getAllProductMovements(facilityId, since, till,
+        orderableIds, null, null);
+    return allProductMovements;
   }
 
   @ParametersAreNullableByDefault

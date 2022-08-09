@@ -16,13 +16,9 @@
 package org.siglus.siglusapi.dto.android.enumeration;
 
 import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_COLUMN;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_COLUMN_0;
 import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_COLUMN_1;
 import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TABLE_PROPHYLAXIS_CHILD_KEY;
 import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TABLE_PROPHYLAXIS_PPE_KEY;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TABLE_PROPHYLAXIS_PREP_KEY;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TABLE_PROPHYLAXIS_TOTAL_KEY;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TOTAL_COLUMN;
 
 import java.util.Arrays;
 import lombok.Getter;
@@ -32,9 +28,7 @@ import lombok.RequiredArgsConstructor;
 @Getter
 public enum NewSection1 {
   PROPHYLAXIS_PPE_KEY(TABLE_PROPHYLAXIS_PPE_KEY, NEW_COLUMN),
-  PROPHYLAXIS_PREP_KEY(TABLE_PROPHYLAXIS_PREP_KEY, NEW_COLUMN_0),
-  PROPHYLAXIS_CHILD_KEY(TABLE_PROPHYLAXIS_CHILD_KEY, NEW_COLUMN_1),
-  PROPHYLAXIS_VALUE_KEY(TABLE_PROPHYLAXIS_TOTAL_KEY, TOTAL_COLUMN);
+  PROPHYLAXIS_CHILD_KEY(TABLE_PROPHYLAXIS_CHILD_KEY, NEW_COLUMN_1);
 
   private final String key;
 

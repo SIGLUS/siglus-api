@@ -65,6 +65,8 @@ public class FcSourceDestinationService {
 
   private UUID mpProgramId;
 
+  private UUID tbProgramId;
+
   private UUID rapidTestProgramId;
 
   private Map<String, UUID> facilityTypeCodeToIdMap;
@@ -101,6 +103,7 @@ public class FcSourceDestinationService {
     UUID ddmFacilityTypeId = facilityTypeCodeToIdMap.get(DDM);
     UUID dpmFacilityTypeId = facilityTypeCodeToIdMap.get(DPM);
     assignDestination(node, ddmFacilityTypeId, mpProgramId);
+    assignDestination(node, ddmFacilityTypeId, tbProgramId);
     assignDestination(node, dpmFacilityTypeId, rapidTestProgramId);
     assignDestination(node, dpmFacilityTypeId, arvProgramId);
     assignAiTypeDestinationForAllProgram(node);
@@ -116,6 +119,9 @@ public class FcSourceDestinationService {
     assignDestination(node, facilityTypeCodeToIdMap.get(DPM), mpProgramId);
     assignSource(node, facilityTypeCodeToIdMap.get(CS), mpProgramId);
     assignSource(node, facilityTypeCodeToIdMap.get(PS), mpProgramId);
+    assignDestination(node, facilityTypeCodeToIdMap.get(DPM), tbProgramId);
+    assignSource(node, facilityTypeCodeToIdMap.get(CS), tbProgramId);
+    assignSource(node, facilityTypeCodeToIdMap.get(PS), tbProgramId);
   }
 
   private void createForDpmOrAiInProvinceLevel(Node node, String code) {
@@ -129,9 +135,12 @@ public class FcSourceDestinationService {
     assignSource(node, psFacilityTypeId, arvProgramId);
     if (DPM.equalsIgnoreCase(code)) {
       assignSource(node, ddmFacilityTypeId, mpProgramId);
+      assignSource(node, ddmFacilityTypeId, tbProgramId);
     } else if (AI.equalsIgnoreCase(code)) {
       assignSource(node, csFacilityTypeId, mpProgramId);
       assignSource(node, psFacilityTypeId, mpProgramId);
+      assignSource(node, csFacilityTypeId, tbProgramId);
+      assignSource(node, psFacilityTypeId, tbProgramId);
     }
     assignHgAndHpAndHrAndHdAndOutrosAndHpsiqAndHmInCountryLevelType(node);
   }
@@ -161,6 +170,7 @@ public class FcSourceDestinationService {
 
   private void assignDestinationForAllProgram(Node node, UUID facilityTypeId) {
     assignDestination(node, facilityTypeId, mpProgramId);
+    assignDestination(node, facilityTypeId, tbProgramId);
     assignDestination(node, facilityTypeId, rapidTestProgramId);
     assignDestination(node, facilityTypeId, arvProgramId);
   }
@@ -184,6 +194,7 @@ public class FcSourceDestinationService {
 
   private void assignSourceForAllProgram(Node node, UUID facilityTypeId) {
     assignSource(node, facilityTypeId, mpProgramId);
+    assignSource(node, facilityTypeId, tbProgramId);
     assignSource(node, facilityTypeId, rapidTestProgramId);
     assignSource(node, facilityTypeId, arvProgramId);
   }
@@ -213,6 +224,7 @@ public class FcSourceDestinationService {
     Map<String, UUID> programCodeToIdMap = programReferenceDataService.findAll().stream()
         .collect(Collectors.toMap(BasicProgramDto::getCode, BaseDto::getId));
     mpProgramId = programCodeToIdMap.get(ProgramConstants.VIA_PROGRAM_CODE);
+    tbProgramId = programCodeToIdMap.get(ProgramConstants.MTB_PROGRAM_CODE);
     rapidTestProgramId = programCodeToIdMap.get(ProgramConstants.RAPIDTEST_PROGRAM_CODE);
     arvProgramId = programCodeToIdMap.get(ProgramConstants.TARV_PROGRAM_CODE);
   }

@@ -16,6 +16,8 @@
 package org.siglus.siglusapi.validator;
 
 import static org.aspectj.util.LangUtil.isEmpty;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_DRAFT_DOCUMENT_NUMBER_MISSING;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_DRAFT_TYPE_MISSING;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_FACILITY_ID_MISSING;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_PROGRAM_ID_MISSING;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_ID_MISMATCH;
@@ -25,6 +27,7 @@ import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_LINE_ITEMS_MISSING;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_ORDERABLE_DISABLED_VVM;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_ORDERABLE_MISSING;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_SUB_DRAFT_TYPE_MISSING;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_USER_ID_MISSING;
 
 import java.util.List;
@@ -34,6 +37,7 @@ import org.siglus.siglusapi.domain.StockManagementDraft;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.dto.StockManagementDraftDto;
 import org.siglus.siglusapi.dto.StockManagementDraftLineItemDto;
+import org.siglus.siglusapi.dto.StockManagementInitialDraftDto;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.StockManagementDraftRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,6 +61,17 @@ public class StockManagementDraftValidator {
     validateNotNull(inventory.getFacilityId(), ERROR_FACILITY_ID_MISSING);
   }
 
+  public void validateInitialDraft(StockManagementInitialDraftDto stockManagementInitialDraftDto) {
+    if (stockManagementInitialDraftDto.getId() != null) {
+      throw new ValidationMessageException(ERROR_STOCK_MANAGEMENT_DRAFT_ID_SHOULD_NULL);
+    }
+    validateNotNull(stockManagementInitialDraftDto.getProgramId(), ERROR_PROGRAM_ID_MISSING);
+    validateNotNull(stockManagementInitialDraftDto.getFacilityId(), ERROR_FACILITY_ID_MISSING);
+    validateNotNull(stockManagementInitialDraftDto.getDraftType(), ERROR_DRAFT_TYPE_MISSING);
+    validateNotNull(stockManagementInitialDraftDto.getDocumentNumber(),
+        ERROR_DRAFT_DOCUMENT_NUMBER_MISSING);
+  }
+
   private void validateNotNull(Object field, String errorMessage) {
     if (field == null) {
       throw new ValidationMessageException(errorMessage);
@@ -67,9 +82,13 @@ public class StockManagementDraftValidator {
     if (!draft.getId().equals(id)) {
       throw new ValidationMessageException(ERROR_STOCK_MANAGEMENT_DRAFT_ID_MISMATCH);
     }
+    if (draft.getDraftType() == null) {
+      throw new ValidationMessageException(ERROR_STOCK_MANAGEMENT_SUB_DRAFT_TYPE_MISSING);
+    }
     StockManagementDraft foundDraft = stockManagementDraftRepository.findOne(id);
     if (foundDraft == null) {
-      throw new ValidationMessageException(new Message(ERROR_STOCK_MANAGEMENT_DRAFT_ID_NOT_FOUND) + id.toString());
+      throw new ValidationMessageException(
+          new Message(ERROR_STOCK_MANAGEMENT_DRAFT_ID_NOT_FOUND) + id.toString());
     } else if (Boolean.TRUE.equals(!foundDraft.getIsDraft())) {
       throw new ValidationMessageException(ERROR_STOCK_MANAGEMENT_DRAFT_IS_SUBMITTED);
     }

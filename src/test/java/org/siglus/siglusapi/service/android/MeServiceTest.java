@@ -79,6 +79,9 @@ import org.openlmis.fulfillment.domain.VersionEntityReference;
 import org.openlmis.fulfillment.service.referencedata.ProcessingPeriodDto;
 import org.openlmis.fulfillment.web.util.OrderDto;
 import org.openlmis.fulfillment.web.util.OrderLineItemDto;
+import org.openlmis.referencedata.dto.ObjectReferenceDto;
+import org.openlmis.referencedata.dto.OrderableChildDto;
+import org.openlmis.referencedata.dto.ProgramOrderableDto;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.requisition.dto.OrderableDto;
@@ -89,16 +92,15 @@ import org.openlmis.stockmanagement.dto.ValidReasonAssignmentDto;
 import org.openlmis.stockmanagement.dto.referencedata.VersionObjectReferenceDto;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.CanFulfillForMeEntryDto;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2Dto;
-import org.siglus.common.dto.referencedata.ProgramOrderableDto;
 import org.siglus.common.repository.ArchivedProductRepository;
 import org.siglus.common.repository.ProgramAdditionalOrderableRepository;
 import org.siglus.siglusapi.config.AndroidTemplateConfigProperties;
 import org.siglus.siglusapi.domain.AppInfo;
 import org.siglus.siglusapi.domain.HfCmm;
 import org.siglus.siglusapi.domain.PodRequestBackup;
-import org.siglus.siglusapi.domain.ReportType;
 import org.siglus.siglusapi.domain.RequisitionRequestBackup;
 import org.siglus.siglusapi.domain.ResyncInfo;
+import org.siglus.siglusapi.domain.SiglusReportType;
 import org.siglus.siglusapi.domain.StockCardRequestBackup;
 import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.FacilityTypeDto;
@@ -127,10 +129,10 @@ import org.siglus.siglusapi.exception.OrderNotFoundException;
 import org.siglus.siglusapi.repository.AppInfoRepository;
 import org.siglus.siglusapi.repository.FacilityCmmsRepository;
 import org.siglus.siglusapi.repository.PodRequestBackupRepository;
-import org.siglus.siglusapi.repository.ReportTypeRepository;
 import org.siglus.siglusapi.repository.RequisitionRequestBackupRepository;
 import org.siglus.siglusapi.repository.ResyncInfoRepository;
 import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
+import org.siglus.siglusapi.repository.SiglusReportTypeRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.repository.StockCardRequestBackupRepository;
 import org.siglus.siglusapi.service.SiglusArchiveProductService;
@@ -220,7 +222,7 @@ public class MeServiceTest {
   private AndroidHelper androidHelper;
 
   @Mock
-  private ReportTypeRepository reportTypeRepository;
+  private SiglusReportTypeRepository reportTypeRepository;
 
   @Mock
   private SiglusRequisitionRepository requisitionRepository;
@@ -431,7 +433,7 @@ public class MeServiceTest {
     facilityDto.setCode("facilityCode");
     facilityDto.setName("facilityName");
     facilityDto.setSupportedPrograms(getSupportedPrograms());
-    List<ReportType> reportTypes = new ArrayList<>(asList(mockReportType1(), mockReportType2()));
+    List<SiglusReportType> reportTypes = new ArrayList<>(asList(mockReportType1(), mockReportType2()));
     when(facilityReferenceDataService.findOne(facilityId)).thenReturn(facilityDto);
     when(reportTypeRepository.findByFacilityId(facilityId))
         .thenReturn(reportTypes);
@@ -1008,10 +1010,10 @@ public class MeServiceTest {
     return lotDto;
   }
 
-  private org.siglus.common.dto.referencedata.OrderableDto mockOrderable1() {
+  private org.openlmis.referencedata.dto.OrderableDto mockOrderable1() {
     String productCode = productCode1;
-    org.siglus.common.dto.referencedata.OrderableDto orderable =
-        new org.siglus.common.dto.referencedata.OrderableDto();
+    org.openlmis.referencedata.dto.OrderableDto orderable =
+        new org.openlmis.referencedata.dto.OrderableDto();
     orderable.setId(productId1);
     orderable.setArchived(true);
     orderable.setProductCode(productCode);
@@ -1044,10 +1046,10 @@ public class MeServiceTest {
     return approvedProduct;
   }
 
-  private org.siglus.common.dto.referencedata.OrderableDto mockOrderable2() {
+  private org.openlmis.referencedata.dto.OrderableDto mockOrderable2() {
     String productCode = productCode2;
-    org.siglus.common.dto.referencedata.OrderableDto orderable =
-        new org.siglus.common.dto.referencedata.OrderableDto();
+    org.openlmis.referencedata.dto.OrderableDto orderable =
+        new org.openlmis.referencedata.dto.OrderableDto();
     orderable.setId(productId2);
     orderable.setArchived(false);
     orderable.setProductCode(productCode);
@@ -1056,11 +1058,9 @@ public class MeServiceTest {
     orderable.setNetContent(2L);
     orderable.setPackRoundingThreshold(5L);
     orderable.setRoundToZero(true);
-    org.siglus.common.dto.referencedata.ObjectReferenceDto childRef =
-        new org.siglus.common.dto.referencedata.ObjectReferenceDto();
+    ObjectReferenceDto childRef = new ObjectReferenceDto();
     childRef.setId(productId1);
-    org.siglus.common.dto.referencedata.OrderableChildDto child =
-        new org.siglus.common.dto.referencedata.OrderableChildDto(childRef, 100L);
+    OrderableChildDto child = new OrderableChildDto(childRef, 100L);
     orderable.setChildren(new HashSet<>());
     orderable.getChildren().add(child);
     orderable.setExtraData(new HashMap<>());
@@ -1086,10 +1086,10 @@ public class MeServiceTest {
     return approvedProduct;
   }
 
-  private org.siglus.common.dto.referencedata.OrderableDto mockOrderable3() {
+  private org.openlmis.referencedata.dto.OrderableDto mockOrderable3() {
     String productCode = productCode3;
-    org.siglus.common.dto.referencedata.OrderableDto orderable =
-        new org.siglus.common.dto.referencedata.OrderableDto();
+    org.openlmis.referencedata.dto.OrderableDto orderable =
+        new org.openlmis.referencedata.dto.OrderableDto();
     orderable.setId(productId3);
     orderable.setArchived(false);
     orderable.setProductCode(productCode);
@@ -1229,8 +1229,8 @@ public class MeServiceTest {
     return asList(supportedProgram1, supportedProgram2);
   }
 
-  private ReportType mockReportType1() {
-    return ReportType.builder()
+  private SiglusReportType mockReportType1() {
+    return SiglusReportType.builder()
         .name("Requisition")
         .active(true)
         .startDate(LocalDate.parse("2020-08-21"))
@@ -1239,8 +1239,8 @@ public class MeServiceTest {
         .build();
   }
 
-  private ReportType mockReportType2() {
-    return ReportType.builder()
+  private SiglusReportType mockReportType2() {
+    return SiglusReportType.builder()
         .facilityId(facilityId)
         .name("MMIA")
         .active(false)
@@ -1407,8 +1407,8 @@ public class MeServiceTest {
   }
 
   private void mockProducts() {
-    org.siglus.common.dto.referencedata.OrderableDto product1 =
-        mock(org.siglus.common.dto.referencedata.OrderableDto.class);
+    org.openlmis.referencedata.dto.OrderableDto product1 =
+        mock(org.openlmis.referencedata.dto.OrderableDto.class);
     when(product1.getId()).thenReturn(product1Id);
     when(product1.getProductCode()).thenReturn("22A01");
     when(siglusOrderableDataService.findByIds(any())).thenReturn(Collections.singletonList(product1));

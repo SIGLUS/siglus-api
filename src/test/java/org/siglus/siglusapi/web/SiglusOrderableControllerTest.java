@@ -55,9 +55,18 @@ public class SiglusOrderableControllerTest {
   public void shouldCallSiglusOrderableServiceWhenSearchOrderables() {
     when(authenticationHelper.getCurrentUser()).thenReturn(new UserDto());
 
-    siglusOrderableController.searchOrderables(queryParams, pageable);
+    siglusOrderableController.searchOrderables(queryParams, pageable, null);
 
     verify(siglusOrderableService).searchOrderables(any(), any(), any());
+  }
+
+  @Test
+  public void shouldCallSearchDeduplicatedOrderablesMethodWhenDraftIdNotNull() {
+    when(authenticationHelper.getCurrentUser()).thenReturn(new UserDto());
+
+    siglusOrderableController.searchOrderables(queryParams, pageable, UUID.randomUUID());
+
+    verify(siglusOrderableService).searchDeduplicatedOrderables(any(), any(), any(), any());
   }
 
   @Test

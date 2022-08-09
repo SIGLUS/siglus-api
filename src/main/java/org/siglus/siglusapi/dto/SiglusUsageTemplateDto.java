@@ -32,4 +32,6 @@ public class SiglusUsageTemplateDto {
 
   private List<UsageTemplateSectionDto> usageInformation;
 
+  private List<UsageTemplateSectionDto> ageGroup;
+
 }

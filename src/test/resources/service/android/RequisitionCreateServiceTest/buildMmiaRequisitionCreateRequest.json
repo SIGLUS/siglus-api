@@ -101,16 +101,21 @@
           "value": "16"
         },
         {
-          "name": "table_prophylaxis_prep_key",
-          "value": "17"
-        },
-        {
           "name": "table_prophylaxis_child_key",
           "value": "18"
+        }
+      ]
+    },
+    {
+      "name": "table_total_key",
+      "columns": [
+        {
+          "name": "table_total_patient_key",
+          "value": "16"
         },
         {
-          "name": "table_prophylaxis_total_key",
-          "value": "19"
+          "name": "table_total_month_key",
+          "value": "18"
         }
       ]
     },

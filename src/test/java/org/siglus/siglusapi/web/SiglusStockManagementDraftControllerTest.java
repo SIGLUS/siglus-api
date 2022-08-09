@@ -25,8 +25,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.siglus.siglusapi.dto.StockManagementDraftDto;
+import org.siglus.siglusapi.dto.StockManagementInitialDraftDto;
 import org.siglus.siglusapi.service.SiglusStockManagementDraftService;
 
+@SuppressWarnings("PMD.TooManyMethods")
 @RunWith(MockitoJUnitRunner.class)
 public class SiglusStockManagementDraftControllerTest {
 
@@ -35,6 +37,12 @@ public class SiglusStockManagementDraftControllerTest {
 
   @Mock
   private SiglusStockManagementDraftService service;
+
+  private final UUID draftId = UUID.randomUUID();
+
+  private final UUID initialDraftId = UUID.randomUUID();
+
+  private final StockManagementDraftDto dto = new StockManagementDraftDto();
 
   @Test
   public void shouldCallServiceWhenSearchDrafts() {
@@ -48,11 +56,18 @@ public class SiglusStockManagementDraftControllerTest {
   }
 
   @Test
-  public void shouldCallServiceWhenCreateEmptyStockManagementDraft() {
-    StockManagementDraftDto dto = new StockManagementDraftDto();
-    controller.createEmptyStockManagementDraft(dto);
+  public void shouldCallServiceWhenSearchDraftsMulti() {
+    UUID initialDraftId = UUID.randomUUID();
+    controller.searchMultiUserDrafts(initialDraftId);
 
-    verify(service).createNewDraft(dto);
+    verify(service).findStockManagementDrafts(initialDraftId);
+  }
+
+  @Test
+  public void shouldCallServiceWhenCreateEmptyStockManagementDraft() {
+    controller.createEmptyStockManagementDraftForIssue(dto);
+
+    verify(service).createNewSubDraft(dto);
   }
 
   @Test
@@ -66,10 +81,61 @@ public class SiglusStockManagementDraftControllerTest {
   @Test
   public void shouldCallServiceWhenUpdateDraft() {
     UUID id = UUID.randomUUID();
-    StockManagementDraftDto dto = new StockManagementDraftDto();
     controller.updateDraft(id, dto);
 
-    verify(service).saveDraft(dto, id);
+    verify(service).updateDraft(dto, id);
   }
 
+  @Test
+  public void shouldCallServiceWhenInitialDraft() {
+    StockManagementInitialDraftDto initialDraftDto = new StockManagementInitialDraftDto();
+    controller.initialDraft(initialDraftDto);
+
+    verify(service).createInitialDraft(initialDraftDto);
+  }
+
+  @Test
+  public void shouldCallServiceWhenSearchInitialDrafts() {
+    UUID programId = UUID.randomUUID();
+    String draftType = "draft-type";
+    controller.searchInitialDrafts(programId, draftType);
+
+    verify(service).findStockManagementInitialDraft(programId, draftType);
+  }
+
+  @Test
+  public void shouldCallSearchDraft() {
+    controller.searchDraft(draftId);
+    verify(service).searchDraft(draftId);
+  }
+
+  @Test
+  public void shouldCallupdatePartOfInfoWithDraft() {
+    controller.restoreSubDraftWhenDoDelete(dto);
+    verify(service).restoreSubDraftWhenDoDelete(dto);
+  }
+
+  @Test
+  public void shouldCallCreateEmptyStockManagementDraftForIssue() {
+    controller.createEmptyStockManagementDraftForIssue(dto);
+    verify(service).createNewSubDraft(dto);
+  }
+
+  @Test
+  public void shouldCallUpdateStatusAfterSubmit() {
+    controller.updateStatusAfterSubmit(dto);
+    verify(service).updateStatusAfterSubmit(dto);
+  }
+
+  @Test
+  public void shouldMergeSubDrafts() {
+    controller.mergeSubDrafts(initialDraftId);
+    verify(service).mergeSubDrafts(initialDraftId);
+  }
+
+  @Test
+  public void shouldCallDeleteInitialDraft() {
+    controller.deleteInitialDraft(initialDraftId);
+    verify(service).deleteInitialDraft(initialDraftId);
+  }
 }

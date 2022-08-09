@@ -60,6 +60,20 @@ public class FieldConstants {
 
   public static final String IS_BASIC = "isBasic";
 
+  public static final String IS_TRACER = "isTracer";
+
+  public static final String VM_STATUS = "vmStatus";
+
+  public static final String STOCK_CARD_ID = "stockCardId";
+
+  public static final String EXCLUDE_ARCHIVED = "excludeArchived";
+
+  public static final String SITE = "SITE";
+
+  public static final String DISTRICT = "DISTRICT";
+
+  public static final String PROVINCE = "PROVINCE";
+
   public static final String NON_EMPTY_ONLY = "nonEmptyOnly";
 
   public static final String CONSUMED = "consumed";
@@ -79,5 +93,68 @@ public class FieldConstants {
   public static final String INVENTORY = "INVENTORY";
 
   public static final String PHYSICAL_INVENTORY = "PHYSICAL_INVENTORY";
+
+  public static final String AGE_GROUP_LABEL = "Patients Age Group";
+
+  public static final String SECTION_SERVICE_LABEL = "Services";
+
+  public static final String ZONEID = "zoneId";
+
+  public static final String SINGLE_PROGRAM = "SINGLE";
+
+  public static final String ALL_PROGRAM = "ALL";
+
+  public static final String EXCEL_CONTENT_TYPE = "application/vnd.ms-excel";
+
+  public static final String TRACER_DRUG_INFORMATION = "Informações_sobre_medicamento_rastreadores_";
+
+  public static final String SUBTITLE = "legenda";
+
+  public static final String EMPTY_VALUE = "N/A";
+
+  public static final String ATTACHMENT_FILENAME = "attachment;filename=";
+
+  public static final String XLSX_SUFFIX = ".xlsx";
+
+  public static final String UTF_8 = "UTF-8";
+
+  public static final String STOCK_OUT_PORTUGUESE = "Roptura de stock";
+
+  public static final String LOW_STOCK_PORTUGUESE = "Eminência de roptura";
+
+  public static final String REGULAR_STOCK_PORTUGUESE = "Stock regular";
+
+  public static final String OVER_STOCK_PORTUGUESE = "Stock acumulado";
+
+  public static final String DRUG_CODE_PORTUGUESE = "Código do produto";
+
+  public static final String PROGRAM_PORTUGUESE = "Programa";
+
+  public static final String DRUG_NAME_PORTUGUESE = "Nome do medicamento";
+
+  public static final String PROVINCE_PORTUGUESE = "Província";
+
+  public static final String DISTRICT_PORTUGUESE = "Distrito";
+
+  public static final String FACILITY_PORTUGUESE = "Instalação";
+
+  public static final String CMM = "CMM";
+
+  public static final int BASIC_ROW = 1;
+
+  public static final int BASIC_COLUMN = 8;
+
+  public static final int RED_MARK = 1;
+
+  public static final int YELLOW_MARK = 2;
+
+  public static final int GREEN_MARK = 3;
+
+  public static final int PURPLE_MARK = 4;
+
+  public static final String REPORT_GENERATED_FOR_PORTUGUESE = "Relatório gerado para";
+
+  public static final String ALL_GEOGRAPHIC_ZONE = "0000-0000";
+
 
 }

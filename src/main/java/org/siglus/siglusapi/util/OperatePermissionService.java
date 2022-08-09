@@ -15,9 +15,16 @@
 
 package org.siglus.siglusapi.util;
 
+import static org.openlmis.stockmanagement.i18n.MessageKeys.ERROR_PROGRAM_NOT_SUPPORTED;
+import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
+
+import java.util.Set;
+import java.util.UUID;
+import org.apache.commons.collections.CollectionUtils;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.service.PermissionService;
+import org.openlmis.stockmanagement.exception.PermissionMessageException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -26,6 +33,12 @@ public class OperatePermissionService {
 
   @Autowired
   PermissionService permissionService;
+
+  @Autowired
+  org.openlmis.stockmanagement.service.PermissionService stockManagementService;
+
+  @Autowired
+  private SupportedProgramsHelper supportedProgramsHelper;
 
   public boolean isEditable(RequisitionV2Dto dto) {
     Requisition requisition = from(dto);
@@ -46,6 +59,17 @@ public class OperatePermissionService {
       return permissionService.canSubmitRequisition(requisition).isSuccess();
     }
     return false;
+  }
+
+  public void checkPermission(UUID facility) {
+    Set<UUID> supportedPrograms = supportedProgramsHelper
+        .findHomeFacilitySupportedProgramIds();
+    if (CollectionUtils.isEmpty(supportedPrograms)) {
+      throw new PermissionMessageException(
+          new org.openlmis.stockmanagement.util.Message(ERROR_PROGRAM_NOT_SUPPORTED,
+              ALL_PRODUCTS_PROGRAM_ID));
+    }
+    supportedPrograms.forEach(supportedProgram -> stockManagementService.canAdjustStock(supportedProgram, facility));
   }
 
   private boolean canAuthorize(Requisition requisition) {

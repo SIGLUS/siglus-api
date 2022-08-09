@@ -17,29 +17,41 @@ package org.siglus.siglusapi.validator;
 
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_DRAFT_TYPE_MISSING;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_EVENT_FACILITY_INVALID;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_EVENT_INITIAL_DRAFT_ID_INVALID;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_IS_DRAFT_MISSING;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_NOT_EXPECTED_DRAFT_TYPE_ERROR;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_NOT_EXPECTED_USER_DRAFT;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_PROGRAM_MISSING;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_NOT_FOUND;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_SUB_DRAFT_ALREADY_SUBMITTED;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_USER_ID_MISSING;
 
 import com.google.common.collect.Lists;
 import java.util.List;
 import java.util.UUID;
 import org.siglus.siglusapi.domain.StockManagementDraft;
+import org.siglus.siglusapi.domain.StockManagementInitialDraft;
+import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.dto.UserDto;
+import org.siglus.siglusapi.dto.enums.PhysicalInventorySubDraftEnum;
+import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
+import org.siglus.siglusapi.repository.StockManagementInitialDraftsRepository;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component("ActiveDraftValidator")
 public class ActiveDraftValidator {
+
   private static final List<String> draftTypes =
       Lists.newArrayList("adjustment", "issue", "receive");
 
   @Autowired
   private SiglusAuthenticationHelper authenticationHelper;
+
+  @Autowired
+  private StockManagementInitialDraftsRepository stockManagementInitialDraftsRepository;
 
   public void validateFacilityId(UUID facilityId) {
     if (facilityId == null || new UUID(0L, 0L).equals(facilityId)) {
@@ -85,4 +97,24 @@ public class ActiveDraftValidator {
     }
   }
 
+  public void validateInitialDraftId(UUID initialDraftId) {
+    StockManagementInitialDraft initialDraft = stockManagementInitialDraftsRepository
+        .findOne(initialDraftId);
+    if (initialDraft == null) {
+      throw new ValidationMessageException(ERROR_EVENT_INITIAL_DRAFT_ID_INVALID);
+    }
+  }
+
+  public void validateSubDraft(StockManagementDraft subDraft) {
+    if (subDraft == null) {
+      throw new NotFoundException(ERROR_STOCK_MANAGEMENT_DRAFT_NOT_FOUND);
+    }
+  }
+
+  public void validateSubDraftStatus(StockManagementDraft subDraft) {
+    if (subDraft.getStatus().equals(PhysicalInventorySubDraftEnum.SUBMITTED)) {
+      throw new ValidationMessageException(
+          new Message(ERROR_STOCK_MANAGEMENT_SUB_DRAFT_ALREADY_SUBMITTED));
+    }
+  }
 }

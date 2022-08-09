@@ -73,6 +73,7 @@ import org.siglus.siglusapi.dto.LotDto;
 import org.siglus.siglusapi.dto.LotSearchParams;
 import org.siglus.siglusapi.dto.SiglusOrderDto;
 import org.siglus.siglusapi.dto.UserDto;
+import org.siglus.siglusapi.dto.fc.FcIntegrationResultBuildDto;
 import org.siglus.siglusapi.dto.fc.FcIntegrationResultDto;
 import org.siglus.siglusapi.dto.fc.IssueVoucherDto;
 import org.siglus.siglusapi.dto.fc.ProductDto;
@@ -177,8 +178,9 @@ public class FcIssueVoucherService implements ProcessDataService {
         createCounter, 0, issueVouchers.size() - createCounter);
     String errorMessage = String.format("fc integration not exist our system count: %d and duplicated count %d",
         ignoreCounter, duplicatedCounter);
-    return buildResult(ISSUE_VOUCHER_API, issueVouchers, startDate, previousLastUpdatedAt, finalSuccess, createCounter,
-        0, errorMessage);
+    return buildResult(
+        new FcIntegrationResultBuildDto(ISSUE_VOUCHER_API, issueVouchers, startDate, previousLastUpdatedAt,
+            finalSuccess, createCounter, 0, errorMessage, null));
   }
 
   private boolean isRequisitionNumberExisted(ResponseBaseDto receiptPlanDto) {
@@ -407,7 +409,7 @@ public class FcIssueVoucherService implements ProcessDataService {
 
   private OrderLineItem getOrderLineItems(List<OrderLineItem> lineItems, UUID productId) {
     return lineItems.stream().filter(orderLineItem ->
-            orderLineItem.getOrderable().getId().equals(productId))
+        orderLineItem.getOrderable().getId().equals(productId))
         .findFirst()
         .orElse(null);
   }
@@ -554,8 +556,8 @@ public class FcIssueVoucherService implements ProcessDataService {
   private ProductDto getProductDto(ApprovedProductDto productDto, LotDto lotDto,
       List<ProductDto> products) {
     return products.stream().filter(dto ->
-            dto.getFnmCode().equals(productDto.getOrderable().getProductCode())
-                && dto.getBatch().equals(lotDto.getLotCode()))
+        dto.getFnmCode().equals(productDto.getOrderable().getProductCode())
+            && dto.getBatch().equals(lotDto.getLotCode()))
         .findFirst()
         .orElse(null);
   }
@@ -568,7 +570,7 @@ public class FcIssueVoucherService implements ProcessDataService {
     parameters.set(RIGHT_NAME, STOCK_CARDS_VIEW);
     productIds.forEach(productId -> parameters.add(ORDERABLE_ID, productId.toString()));
     Pageable page = new PageRequest(DEFAULT_PAGE_NUMBER, Integer.MAX_VALUE);
-    return stockCardSummariesService.findSiglusStockCard(parameters, page).getContent();
+    return stockCardSummariesService.findSiglusStockCard(parameters, null, page).getContent();
   }
 
   private void convertRequisitionToOrder(RequisitionV2Dto v2Dto, FacilityDto supplyFacility,

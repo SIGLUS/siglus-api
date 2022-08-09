@@ -26,11 +26,13 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.siglus.siglusapi.domain.FcIntegrationChanges;
 import org.siglus.siglusapi.dto.GeographicLevelDto;
 import org.siglus.siglusapi.dto.GeographicZoneDto;
 import org.siglus.siglusapi.dto.fc.FcGeographicZoneDistrictDto;
 import org.siglus.siglusapi.dto.fc.FcGeographicZoneNationalDto;
 import org.siglus.siglusapi.dto.fc.FcGeographicZoneProvinceDto;
+import org.siglus.siglusapi.dto.fc.FcIntegrationResultBuildDto;
 import org.siglus.siglusapi.dto.fc.FcIntegrationResultDto;
 import org.siglus.siglusapi.dto.fc.ResponseBaseDto;
 import org.siglus.siglusapi.service.client.SiglusGeographicLevelReferenceDataService;
@@ -60,6 +62,8 @@ public class FcGeographicZoneService implements ProcessDataService {
     boolean finalSuccess = true;
     int createCounter = 0;
     int updateCounter = 0;
+    int errorCounter = 0;
+    List<FcIntegrationChanges> fcIntegrationChangesList = new ArrayList<>();
     try {
       List<? extends ResponseBaseDto> activeZones = filterInactiveZones(zones);
       Map<String, GeographicLevelDto> levelDtoMap = getLevelDtoMap();
@@ -67,30 +71,67 @@ public class FcGeographicZoneService implements ProcessDataService {
       List<GeographicZoneDto> fcGeographicZones = getGeographicZones(activeZones, levelDtoMap);
       List<GeographicZoneDto> needCreateZones = new ArrayList<>();
       List<GeographicZoneDto> needUpdateZones = new ArrayList<>();
+      List<String> errorCodes = new ArrayList<>();
       fcGeographicZones.forEach(fcZone -> {
-        if (!geographicZoneMaps.containsKey(fcZone.getCode())) {
-          needCreateZones.add(fcZone);
-        } else {
+        if (geographicZoneMaps.containsKey(fcZone.getCode())) {
           GeographicZoneDto originZone = geographicZoneMaps.get(fcZone.getCode());
-          if (!fcZone.getName().equals(originZone.getName())
-              || !fcZone.getLevel().equals(originZone.getLevel())
-              || isDifferentParentZone(fcZone, originZone)) {
+          FcIntegrationChanges updateChanges = getUpdatedGeographicZone(originZone, fcZone);
+          if (updateChanges != null) {
             needUpdateZones.add(fcZone);
+            fcIntegrationChangesList.add(updateChanges);
           }
+        } else if (FcUtil.isNotMatchedCode(fcZone.getCode())) {
+          errorCodes.add(fcZone.getCode());
+        } else {
+          needCreateZones.add(fcZone);
+          FcIntegrationChanges createChanges = FcUtil
+              .buildCreateFcIntegrationChanges(GEOGRAPHIC_ZONE_API, fcZone.getCode(), fcZone.toString());
+          fcIntegrationChangesList.add(createChanges);
         }
       });
       createGeographicZones(needCreateZones, zones, startDate, previousLastUpdatedAt);
       updateGeographicZones(needUpdateZones, geographicZoneMaps);
       createCounter = needCreateZones.size();
       updateCounter = needUpdateZones.size();
+      errorCounter = errorCodes.size();
+      log.info("[FC geographicZone] process data error code: {}", errorCodes);
     } catch (Exception e) {
       log.error("[FC geographicZone] process data error", e);
       finalSuccess = false;
     }
-    log.info("[FC geographicZone] process data create: {}, update: {}, same: {}",
-        createCounter, updateCounter, zones.size() - createCounter - updateCounter);
-    return buildResult(GEOGRAPHIC_ZONE_API, zones, startDate, previousLastUpdatedAt, finalSuccess, createCounter,
-        updateCounter);
+    log.info("[FC geographicZone] process data create: {}, update: {}, error: {}, same: {}",
+        createCounter, updateCounter, errorCounter, zones.size() - createCounter - updateCounter - errorCounter);
+    return buildResult(
+        new FcIntegrationResultBuildDto(GEOGRAPHIC_ZONE_API, zones, startDate, previousLastUpdatedAt, finalSuccess,
+            createCounter, updateCounter, null, fcIntegrationChangesList));
+  }
+
+  private FcIntegrationChanges getUpdatedGeographicZone(GeographicZoneDto originZone, GeographicZoneDto currentZone) {
+    boolean isSame = true;
+    StringBuilder updateContent = new StringBuilder();
+    StringBuilder originContent = new StringBuilder();
+    if (!currentZone.getName().equals(originZone.getName())) {
+      updateContent.append("name=").append(currentZone.getName()).append("; ");
+      originContent.append("name=").append(originZone.getName()).append("; ");
+      isSame = false;
+    }
+    if (!currentZone.getLevel().equals(originZone.getLevel())) {
+      updateContent.append("level=").append(currentZone.getLevel()).append("; ");
+      originContent.append("level=").append(originZone.getLevel()).append("; ");
+      isSame = false;
+    }
+    if (isDifferentParentZone(currentZone, originZone)) {
+      updateContent.append("parentZone=")
+          .append(currentZone.getParent() == null ? "" : currentZone.getParent().getCode()).append("; ");
+      originContent.append("parentZone=")
+          .append(originZone.getParent() == null ? "" : originZone.getParent().getCode()).append("; ");
+      isSame = false;
+    }
+    if (isSame) {
+      return null;
+    }
+    return FcUtil.buildUpdateFcIntegrationChanges(GEOGRAPHIC_ZONE_API, originZone.getCode(), updateContent.toString(),
+        originContent.toString());
   }
 
   private List<? extends ResponseBaseDto> filterInactiveZones(List<? extends ResponseBaseDto> zones) {

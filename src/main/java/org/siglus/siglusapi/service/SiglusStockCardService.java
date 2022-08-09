@@ -19,10 +19,12 @@ import static org.siglus.siglusapi.dto.StockCardLineItemDtoComparators.byOccurre
 import static org.siglus.siglusapi.dto.StockCardLineItemDtoComparators.byProcessedDate;
 import static org.siglus.siglusapi.dto.StockCardLineItemDtoComparators.byReasonPriority;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -42,6 +44,7 @@ import org.openlmis.stockmanagement.dto.referencedata.OrderableDto;
 import org.openlmis.stockmanagement.repository.CalculatedStockOnHandRepository;
 import org.openlmis.stockmanagement.util.AuthenticationHelper;
 import org.siglus.siglusapi.domain.StockCardExtension;
+import org.siglus.siglusapi.dto.StockMovementResDto;
 import org.siglus.siglusapi.repository.SiglusStockCardRepository;
 import org.siglus.siglusapi.repository.StockCardExtensionRepository;
 import org.siglus.siglusapi.service.client.SiglusStockManagementService;
@@ -79,6 +82,9 @@ public class SiglusStockCardService {
 
   @Autowired
   private SiglusDateHelper dateHelper;
+
+  @Autowired
+  private StockMovementService stockMovementService;
 
   public StockCardDto findStockCardByOrderable(UUID orderableId) {
     UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
@@ -232,5 +238,16 @@ public class SiglusStockCardService {
         .stockAdjustments(new ArrayList<>())
         .reason(resonDto)
         .build();
+  }
+
+  public List<StockMovementResDto> getProductMovements(UUID facilityId, UUID orderableId,
+      LocalDate startTime, LocalDate endTime) {
+    HashSet<UUID> orderableIdsSet = new HashSet<>();
+    if (orderableId != null) {
+      orderableIdsSet.add(orderableId);
+    }
+    List<StockMovementResDto> productMovements =
+        stockMovementService.getProductMovements(orderableIdsSet, facilityId, startTime, endTime);
+    return productMovements;
   }
 }

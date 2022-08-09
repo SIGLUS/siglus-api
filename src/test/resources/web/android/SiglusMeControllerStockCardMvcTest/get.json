@@ -1,7 +1,7 @@
 {
   "productMovements": [
     {
-      "productCode": "test",
+      "productCode": "08O05",
       "stockOnHand": 27,
       "stockMovementItems": [
         {
@@ -75,8 +75,8 @@
       ]
     },
     {
-      "productCode": "26A01",
-      "stockOnHand": 10,
+      "productCode": "08O05X",
+      "stockOnHand": 0,
       "stockMovementItems": [
         {
           "movementQuantity": 10,

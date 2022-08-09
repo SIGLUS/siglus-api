@@ -25,15 +25,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.siglus.siglusapi.domain.CpDomain;
+import org.siglus.siglusapi.dto.fc.FcIntegrationResultBuildDto;
 import org.siglus.siglusapi.dto.fc.FcIntegrationResultDto;
 import org.siglus.siglusapi.dto.fc.ResponseBaseDto;
-import org.siglus.siglusapi.repository.CmmRepository;
 import org.siglus.siglusapi.repository.CpRepository;
-import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
-import org.siglus.siglusapi.repository.SupervisoryNodeRepository;
-import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
-import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
-import org.siglus.siglusapi.service.client.SiglusProcessingPeriodReferenceDataService;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -43,13 +38,7 @@ public class FcCpService implements ProcessDataService {
 
   public static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
-  private final CmmRepository cmmRepository;
   private final CpRepository cpRepository;
-  private final SiglusOrderableReferenceDataService orderableReferenceDataService;
-  private final SiglusFacilityReferenceDataService facilityReferenceDataService;
-  private final SiglusProcessingPeriodReferenceDataService processingPeriodReferenceDataService;
-  private final SupervisoryNodeRepository supervisoryNodeRepository;
-  private final SiglusRequisitionRepository siglusRequisitionRepository;
 
   @Override
   public FcIntegrationResultDto processData(List<? extends ResponseBaseDto> cps, String startDate,
@@ -79,7 +68,8 @@ public class FcCpService implements ProcessDataService {
       finalSuccess = false;
     }
     log.info("[FC cp] process data create: {}, update: {}, same: {}", createCounter.get(), updateCounter.get(), 0);
-    return buildResult(CP_API, cps, startDate, previousLastUpdatedAt, finalSuccess, createCounter.get(),
-        updateCounter.get());
+    return buildResult(new FcIntegrationResultBuildDto(CP_API, cps, startDate, previousLastUpdatedAt, finalSuccess,
+        createCounter.get(), updateCounter.get(), null, null));
+
   }
 }

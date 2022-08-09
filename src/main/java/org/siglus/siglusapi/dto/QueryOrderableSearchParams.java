@@ -24,7 +24,7 @@ import java.util.Set;
 import java.util.UUID;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
-import org.siglus.common.domain.referencedata.Code;
+import org.openlmis.referencedata.domain.Code;
 import org.springframework.data.domain.Pageable;
 import org.springframework.util.MultiValueMap;
 
@@ -97,5 +97,15 @@ public class QueryOrderableSearchParams implements Serializable {
       return Collections.emptySet();
     }
     return queryParams.getUuids(ID);
+  }
+
+  public void setIds(Set<UUID> ids) {
+    if (ids != null) {
+      queryParams.setUuids(ids);
+    }
+  }
+
+  public void clearIds() {
+    queryParams.clear();
   }
 }

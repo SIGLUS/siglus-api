@@ -15,9 +15,13 @@
 
 package org.siglus.siglusapi.web;
 
+import java.math.BigDecimal;
+import java.util.Map;
 import java.util.UUID;
-import org.siglus.common.dto.referencedata.OrderableDto;
+import java.util.stream.Collectors;
+import org.openlmis.referencedata.dto.OrderableDto;
 import org.siglus.siglusapi.dto.QueryOrderableSearchParams;
+import org.siglus.siglusapi.repository.dto.ProgramOrderableDto;
 import org.siglus.siglusapi.service.SiglusOrderableService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,9 +45,14 @@ public class SiglusOrderableController {
 
   @GetMapping
   public Page<OrderableDto> searchOrderables(
-      @RequestParam MultiValueMap<String, Object> queryParams, Pageable pageable) {
+      @RequestParam MultiValueMap<String, Object> queryParams, Pageable pageable,
+      @RequestParam(required = false) UUID draftId) {
     QueryOrderableSearchParams searchParams = new QueryOrderableSearchParams(queryParams);
     UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
+    if (draftId != null) {
+      return orderableService
+          .searchDeduplicatedOrderables(draftId, searchParams, pageable, facilityId);
+    }
     return orderableService.searchOrderables(searchParams, pageable, facilityId);
   }
 
@@ -52,5 +61,11 @@ public class SiglusOrderableController {
       @RequestParam MultiValueMap<String, Object> queryParams, Pageable pageable) {
     QueryOrderableSearchParams searchParams = new QueryOrderableSearchParams(queryParams);
     return orderableService.additionalToAdd(programId, searchParams, pageable);
+  }
+
+  @GetMapping("/price")
+  public Map<UUID, BigDecimal> searchOrderablesPrice() {
+    return orderableService.getAllProgramOrderableDtos().stream().collect(
+        Collectors.toMap(ProgramOrderableDto::getOrderableId, ProgramOrderableDto::getPrice));
   }
 }

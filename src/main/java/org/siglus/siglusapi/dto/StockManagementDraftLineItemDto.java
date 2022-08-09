@@ -50,6 +50,9 @@ public class StockManagementDraftLineItemDto implements VvmApplicable {
   private String sourceFreeText;
   private UUID reasonId;
   private String reasonFreeText;
+  private String productName;
+  private String productCode;
+  private Integer stockOnHand;
 
   private Map<String, String> extraData;
 

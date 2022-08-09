@@ -25,6 +25,7 @@ import static org.siglus.siglusapi.constant.FieldConstants.PROGRAM_ID;
 import static org.siglus.siglusapi.constant.FieldConstants.RIGHT_NAME;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -73,8 +74,10 @@ import org.siglus.siglusapi.domain.OrderLineItemExtension;
 import org.siglus.siglusapi.dto.OrderStatusDto;
 import org.siglus.siglusapi.dto.SiglusOrderDto;
 import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
+import org.siglus.siglusapi.repository.PodSubDraftRepository;
 import org.siglus.siglusapi.service.client.SiglusProcessingPeriodReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
+import org.siglus.siglusapi.web.response.BasicOrderExtensionDto;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -156,8 +159,34 @@ public class SiglusOrderService {
   @Value("${fc.facilityTypeId}")
   private UUID fcFacilityTypeId;
 
+  @Autowired
+  private PodSubDraftRepository podSubDraftRepository;
+
   public Page<BasicOrderDto> searchOrders(OrderSearchParams params, Pageable pageable) {
     return orderController.searchOrders(params, pageable);
+  }
+
+  public Page<BasicOrderDto> searchOrdersWithSubDraftStatus(OrderSearchParams params, Pageable pageable) {
+    Page<BasicOrderDto> basicOrderDtoPage = orderController.searchOrders(params, pageable);
+    if (!basicOrderDtoPage.hasContent()) {
+      return basicOrderDtoPage;
+    }
+
+    List<BasicOrderDto> basicOrderDtos = basicOrderDtoPage.getContent();
+
+    Set<UUID> orderIds = basicOrderDtos.stream().map(BasicOrderDto::getId).collect(Collectors.toSet());
+    Set<UUID> orderIdsWithSubDraft = podSubDraftRepository.findOrderIdsWithSubDraft(orderIds).stream()
+        .map(UUID::fromString).collect(Collectors.toSet());
+
+    List<BasicOrderExtensionDto> basicOrderExtensionDtos = Lists.newArrayListWithExpectedSize(basicOrderDtos.size());
+    for (BasicOrderDto basicOrderDto : basicOrderDtos) {
+      BasicOrderExtensionDto basicOrderExtensionDto = new BasicOrderExtensionDto();
+      BeanUtils.copyProperties(basicOrderDto, basicOrderExtensionDto);
+      basicOrderExtensionDto.setHasSubDraft(orderIdsWithSubDraft.contains(basicOrderDto.getId()));
+      basicOrderExtensionDtos.add(basicOrderExtensionDto);
+    }
+
+    return new PageImpl(basicOrderExtensionDtos, pageable, basicOrderDtoPage.getTotalElements());
   }
 
   public Page<BasicOrderDto> searchOrdersForFulfill(OrderSearchParams params, Pageable pageable) {
@@ -495,7 +524,7 @@ public class SiglusOrderService {
     multiValueMap.set(RIGHT_NAME, STOCK_CARDS_VIEW);
     multiValueMap.set(NON_EMPTY_ONLY, Boolean.TRUE.toString());
     Page<StockCardSummaryV2Dto> stockCardSummary = siglusStockCardSummariesService
-        .searchStockCardSummaryV2Dtos(multiValueMap, new PageRequest(0, Integer.MAX_VALUE));
+        .searchStockCardSummaryV2Dtos(multiValueMap, null, null, new PageRequest(0, Integer.MAX_VALUE));
 
     // to map stockCardSummaryV2Dto.getStockOnHand() return null cause NPE
     return stockCardSummary.getContent().stream().collect(Collectors.toMap(

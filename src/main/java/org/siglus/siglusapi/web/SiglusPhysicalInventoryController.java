@@ -23,8 +23,14 @@ import static org.springframework.http.HttpStatus.NO_CONTENT;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import lombok.extern.slf4j.Slf4j;
 import org.openlmis.stockmanagement.dto.PhysicalInventoryDto;
+import org.siglus.siglusapi.dto.DraftListDto;
+import org.siglus.siglusapi.dto.PhysicalInventorySubDraftDto;
+import org.siglus.siglusapi.dto.PhysicalInventoryValidationDto;
+import org.siglus.siglusapi.dto.enums.PhysicalInventorySubDraftEnum;
 import org.siglus.siglusapi.service.SiglusPhysicalInventoryService;
+import org.siglus.siglusapi.service.SiglusPhysicalInventorySubDraftService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -38,8 +44,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/siglusapi/physicalInventories")
+@SuppressWarnings("PMD.TooManyMethods")
 public class SiglusPhysicalInventoryController {
 
   @Autowired
@@ -47,18 +55,19 @@ public class SiglusPhysicalInventoryController {
 
   @Autowired
   private SiglusAuthenticationHelper authenticationHelper;
+  @Autowired
+  private SiglusPhysicalInventorySubDraftService siglusPhysicalInventorySubDraftService;
 
   @GetMapping
   public List<PhysicalInventoryDto> searchPhysicalInventories(
       @RequestParam UUID program,
       @RequestParam UUID facility,
-      @RequestParam(required = false) Boolean isDraft,
-      @RequestParam(required = false) boolean canInitialInventory) {
+      @RequestParam(required = false) Boolean isDraft) {
     if (ALL_PRODUCTS_PROGRAM_ID.equals(program)) {
       return siglusPhysicalInventoryService
-          .getPhysicalInventoryDtosForAllProducts(facility, isDraft, canInitialInventory);
+          .getPhysicalInventoryDtosForAllProducts(facility, isDraft);
     }
-    return siglusPhysicalInventoryService.getPhysicalInventoryDtos(program, facility, isDraft);
+    return siglusPhysicalInventoryService.getPhysicalInventoryDtosForProductsInOneProgram(program, facility, isDraft);
   }
 
   @GetMapping("/{id}")
@@ -70,14 +79,54 @@ public class SiglusPhysicalInventoryController {
     return siglusPhysicalInventoryService.getPhysicalInventory(id);
   }
 
+  @GetMapping("/draftList")
+  public DraftListDto searchSubDraftList(@RequestParam UUID program,
+      @RequestParam UUID facility,
+      @RequestParam(required = false) Boolean isDraft) {
+    if (ALL_PRODUCTS_UUID.equals(program)) {
+      return siglusPhysicalInventoryService.getSubDraftListForAllProduct(facility, isDraft);
+    }
+    return siglusPhysicalInventoryService.getSubDraftListForOneProgram(program, facility, isDraft);
+  }
+
+  @GetMapping("/subDraft")
+  public PhysicalInventoryDto searchSubDraftPhysicalInventory(@RequestParam List<UUID> subDraftIds) {
+    return siglusPhysicalInventoryService.getSubPhysicalInventoryDtoBySubDraftId(subDraftIds);
+  }
+
+  @DeleteMapping("/subDraft")
+  @ResponseStatus(NO_CONTENT)
+  public void deleteSubDrafts(
+      @RequestParam(required = false) boolean initialPhysicalInventory,
+      @RequestBody List<UUID> subDraftIds) {
+    siglusPhysicalInventorySubDraftService.deleteSubDrafts(subDraftIds, initialPhysicalInventory);
+  }
+
+  @PostMapping("/subDraftSubmit")
+  @ResponseStatus(NO_CONTENT)
+  public void submitSubDrafts(@RequestBody PhysicalInventorySubDraftDto dto) {
+    siglusPhysicalInventorySubDraftService.updateSubDrafts(dto.getSubDraftIds(), dto,
+        PhysicalInventorySubDraftEnum.SUBMITTED);
+
+  }
+
+  @PutMapping("/subDraft")
+  public void updateSubDrafts(@RequestBody PhysicalInventorySubDraftDto dto) {
+    siglusPhysicalInventorySubDraftService.updateSubDrafts(dto.getSubDraftIds(), dto,
+        PhysicalInventorySubDraftEnum.DRAFT);
+  }
+
   @PostMapping
   @ResponseStatus(CREATED)
   public PhysicalInventoryDto createEmptyPhysicalInventory(
-      @RequestBody PhysicalInventoryDto dto) {
+      @RequestBody PhysicalInventoryDto dto,
+      @RequestParam Integer splitNum,
+      @RequestParam(required = false) boolean initialPhysicalInventory) {
     if (ALL_PRODUCTS_PROGRAM_ID.equals(dto.getProgramId())) {
-      return siglusPhysicalInventoryService.createNewDraftForAllProducts(dto);
+      return siglusPhysicalInventoryService.createAndSplitNewDraftForAllProduct(dto, splitNum,
+          initialPhysicalInventory);
     }
-    return siglusPhysicalInventoryService.createNewDraft(dto);
+    return siglusPhysicalInventoryService.createAndSpiltNewDraftForOneProgram(dto, splitNum);
   }
 
   @PutMapping("/{id}")
@@ -86,7 +135,7 @@ public class SiglusPhysicalInventoryController {
       siglusPhysicalInventoryService.checkDraftIsExist(dto.getFacilityId());
       return siglusPhysicalInventoryService.saveDraftForAllProducts(dto);
     }
-    return siglusPhysicalInventoryService.saveDraft(dto, id);
+    return siglusPhysicalInventoryService.saveDraftForProductsForOneProgram(dto);
   }
 
   @DeleteMapping("/{id}")
@@ -102,17 +151,27 @@ public class SiglusPhysicalInventoryController {
 
   @GetMapping("/dates")
   public Set<String> searchPhysicalInventoryDates(
+      @RequestParam UUID programId,
       @RequestParam UUID facilityId,
       @RequestParam String startDate,
       @RequestParam String endDate) {
-    return siglusPhysicalInventoryService.findPhysicalInventoryDates(facilityId,
+    return siglusPhysicalInventoryService.findPhysicalInventoryDates(programId, facilityId,
         startDate,
         endDate);
   }
 
   @GetMapping("/latest")
   public PhysicalInventoryDto searchLatestPhysicalInventoryOccurDate(
-      @RequestParam UUID facilityId) {
-    return siglusPhysicalInventoryService.findLatestPhysicalInventory(facilityId);
+      @RequestParam UUID facilityId, @RequestParam UUID programId) {
+    return siglusPhysicalInventoryService.findLatestPhysicalInventory(facilityId, programId);
+  }
+
+  @GetMapping("/conflict")
+  public PhysicalInventoryValidationDto checkPhysicalInventoryConflict(@RequestParam UUID program,
+      @RequestParam UUID facility) {
+    if (ALL_PRODUCTS_UUID.equals(program)) {
+      return siglusPhysicalInventoryService.checkConflictForAllProduct(facility);
+    }
+    return siglusPhysicalInventoryService.checkConflictForOneProgram(facility);
   }
 }

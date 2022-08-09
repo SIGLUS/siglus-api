@@ -77,7 +77,7 @@ public class FcProgramServiceTest {
     when(programRealProgramRepository.findAll())
         .thenReturn(newArrayList(
             mockProgram(programId1, programCode1, programName1, true),
-            mockProgram(programId2, programCode2, "toUpdate", false)));
+            mockProgram(programId2, programCode2, "toUpdate", true)));
     String programStatus1 = "Activo";
     String programStatus3 = "Activo";
     String programName3 = "programName3";

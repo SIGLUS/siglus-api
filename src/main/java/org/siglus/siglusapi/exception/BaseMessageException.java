@@ -24,6 +24,10 @@ public abstract class BaseMessageException extends RuntimeException {
 
   private final Message message;
 
+  private boolean isBusinessError = false;
+
+  private Object businessErrorExtraData;
+
   protected BaseMessageException(String messageKey) {
     this(new Message(messageKey));
   }
@@ -50,4 +54,19 @@ public abstract class BaseMessageException extends RuntimeException {
     return false;
   }
 
+  public boolean isBusinessError() {
+    return isBusinessError;
+  }
+
+  protected void setBusinessError(boolean businessError) {
+    isBusinessError = businessError;
+  }
+
+  public Object getBusinessErrorExtraData() {
+    return businessErrorExtraData;
+  }
+
+  protected void setBusinessErrorExtraData(Object businessErrorExtraData) {
+    this.businessErrorExtraData = businessErrorExtraData;
+  }
 }

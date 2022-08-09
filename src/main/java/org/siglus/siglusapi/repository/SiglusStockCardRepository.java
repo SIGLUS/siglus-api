@@ -31,4 +31,5 @@ public interface SiglusStockCardRepository extends JpaRepository<StockCard, UUID
 
   void deleteStockCardsByFacilityIdAndOrderableIdIn(@Param("facilityId") UUID facilityId,
       @Param("orderableId") Set<UUID> orderableIds);
+
 }

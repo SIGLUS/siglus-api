@@ -23,6 +23,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -46,6 +47,7 @@ import org.openlmis.stockmanagement.dto.referencedata.UserDto;
 import org.openlmis.stockmanagement.repository.CalculatedStockOnHandRepository;
 import org.openlmis.stockmanagement.util.AuthenticationHelper;
 import org.siglus.siglusapi.domain.StockCardExtension;
+import org.siglus.siglusapi.dto.StockMovementResDto;
 import org.siglus.siglusapi.repository.SiglusStockCardRepository;
 import org.siglus.siglusapi.repository.StockCardExtensionRepository;
 import org.siglus.siglusapi.service.client.SiglusStockManagementService;
@@ -86,6 +88,9 @@ public class SiglusStockCardServiceTest {
   @Mock
   private AndroidHelper androidHelper;
 
+  @Mock
+  private StockMovementService stockMovementService;
+
   @InjectMocks
   private SiglusStockCardService siglusStockCardService;
 
@@ -93,11 +98,13 @@ public class SiglusStockCardServiceTest {
 
   private UUID homefacilityId;
 
+  private UUID facilityId;
+
   private static final LocalDate CURRENT_DATE = LocalDate.now();
 
   @Before
   public void prepare() {
-
+    facilityId = UUID.randomUUID();
     UserDto userDto = new UserDto();
     homefacilityId = UUID.randomUUID();
     userDto.setHomeFacilityId(homefacilityId);
@@ -265,6 +272,29 @@ public class SiglusStockCardServiceTest {
     // then
     StockCardLineItemDto lineItemDto = stockCardDto.getLineItems().get(1);
     assertEquals("CREDIT", lineItemDto.getReason().getType());
+  }
+
+  @Test
+  public void shouldReturnStockMovementWhenFindByFacilityId() {
+    StockMovementResDto stockMovementResDto1 = new StockMovementResDto();
+    StockMovementResDto stockMovementResDto2 = new StockMovementResDto();
+    StockMovementResDto stockMovementResDto3 = new StockMovementResDto();
+    HashSet<UUID> orderables = new HashSet<>();
+    orderables.add(orderableId);
+    when(stockMovementService.getProductMovements(orderables, facilityId, null, null))
+        .thenReturn(Arrays.asList(stockMovementResDto1, stockMovementResDto2, stockMovementResDto3));
+    List<StockMovementResDto> productMovements =
+        siglusStockCardService.getProductMovements(facilityId, orderableId, null, null);
+    assertEquals(3, productMovements.size());
+  }
+
+  @Test
+  public void shouldReturnNUllIfMovementNotExistWhenFindStockMovementbyfacilityId() {
+    when(stockMovementService.getProductMovements(new HashSet<UUID>(), facilityId, null, null))
+        .thenReturn(null);
+    List<StockMovementResDto> productMovements = siglusStockCardService.getProductMovements(facilityId, null, null,
+        null);
+    assertEquals(null, productMovements);
   }
 
   private StockCard createStockCardOne() {

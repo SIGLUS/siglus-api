@@ -55,6 +55,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.openlmis.referencedata.domain.ProcessingPeriod;
+import org.openlmis.referencedata.dto.OrderableDto;
 import org.openlmis.requisition.domain.RequisitionTemplate;
 import org.openlmis.requisition.domain.requisition.ApprovedProductReference;
 import org.openlmis.requisition.domain.requisition.Requisition;
@@ -75,8 +77,6 @@ import org.openlmis.requisition.service.referencedata.ApproveProductsAggregator;
 import org.openlmis.requisition.service.referencedata.SupervisoryNodeReferenceDataService;
 import org.openlmis.requisition.web.PermissionMessageException;
 import org.siglus.common.domain.RequisitionTemplateExtension;
-import org.siglus.common.domain.referencedata.ProcessingPeriod;
-import org.siglus.common.dto.referencedata.OrderableDto;
 import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
 import org.siglus.siglusapi.config.AndroidTemplateConfigProperties;
 import org.siglus.siglusapi.domain.Regimen;
@@ -653,6 +653,7 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     templateExtension.setEnableRegimen(false);
     templateExtension.setEnableUsageInformation(false);
     templateExtension.setEnableQuicklyFill(false);
+    templateExtension.setEnableAgeGroup(false);
     return templateExtension;
   }
 
@@ -872,9 +873,16 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     groupDtoPatientType.setName("patientType");
     groupDtoPatientType.setColumns(patientType);
 
+    Map<String, PatientColumnDto> newSection8 = new HashMap<>();
+    newSection8.put(newColumn, new PatientColumnDto());
+    newSection8.put(newColumn0, new PatientColumnDto());
+    PatientGroupDto groupDtoNewSection8 = new PatientGroupDto();
+    groupDtoNewSection8.setName("newSection8");
+    groupDtoNewSection8.setColumns(newSection8);
+
     return Arrays
         .asList(groupDtoNewSection0, groupDtoNewSection1, groupDtoNewSection2, groupDtoNewSection3, groupDtoNewSection4,
-            groupDtoNewSection5, groupDtoNewSection6, groupDtoNewSection7, groupDtoPatientType);
+            groupDtoNewSection5, groupDtoNewSection6, groupDtoNewSection7, groupDtoPatientType, groupDtoNewSection8);
   }
 
   private RequisitionCreateRequest buildMlRequisitionCreateRequest() {

@@ -24,6 +24,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.powermock.api.mockito.PowerMockito.mock;
+import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -54,13 +55,14 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.openlmis.referencedata.domain.ProcessingPeriod;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
-import org.siglus.common.domain.referencedata.ProcessingPeriod;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 import org.siglus.siglusapi.config.AndroidTemplateConfigProperties;
-import org.siglus.siglusapi.domain.ReportType;
+import org.siglus.siglusapi.domain.SiglusReportType;
 import org.siglus.siglusapi.domain.SyncUpHash;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
@@ -68,14 +70,15 @@ import org.siglus.siglusapi.dto.android.sequence.PerformanceSequence;
 import org.siglus.siglusapi.dto.android.validator.RequisitionValidReStartDateValidator;
 import org.siglus.siglusapi.dto.android.validator.RequisitionValidStartDateValidator;
 import org.siglus.siglusapi.repository.ProcessingPeriodRepository;
-import org.siglus.siglusapi.repository.ReportTypeRepository;
 import org.siglus.siglusapi.repository.RequisitionRequestBackupRepository;
+import org.siglus.siglusapi.repository.SiglusReportTypeRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.repository.SyncUpHashRepository;
 import org.siglus.siglusapi.service.android.RequisitionCreateService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 
-@RunWith(MockitoJUnitRunner.class)
+@RunWith(PowerMockRunner.class)
+@PrepareForTest(RequisitionValidStartDateValidator.class)
 @SuppressWarnings({"PMD.AvoidDuplicateLiterals", "PMD.TooManyMethods"})
 public class SiglusMeControllerCreateRequisitionValidationTest extends FileBasedTest {
 
@@ -88,7 +91,7 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
   @Mock
   private SiglusAuthenticationHelper authHelper;
   @Mock
-  private ReportTypeRepository reportTypeRepo;
+  private SiglusReportTypeRepository reportTypeRepo;
   @Mock
   private SiglusRequisitionRepository requisitionRepo;
   @Mock
@@ -133,7 +136,7 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
         .buildValidatorFactory().getValidator().forExecutables();
     method = RequisitionCreateService.class.getDeclaredMethod("createRequisition", RequisitionCreateRequest.class);
 
-    ReportType reportType = mock(ReportType.class);
+    SiglusReportType reportType = mock(SiglusReportType.class);
     when(reportType.getStartDate()).thenReturn(LocalDate.of(2021, 3, 1));
     when(reportTypeRepo.findOneByFacilityIdAndProgramCodeAndActiveIsTrue(any(), eq("VC")))
         .thenReturn(Optional.of(reportType));
@@ -291,6 +294,11 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
       throws Exception {
     // given
     mockFacilityId(facilityId);
+    LocalDate localDate = LocalDate.of(2021, 5, 20).plusMonths(13L);
+    YearMonth yearMonth = YearMonth.of(localDate.getYear(), localDate.getMonth());
+    mockStatic(YearMonth.class);
+    when(YearMonth.now()).thenReturn(yearMonth);
+
     Object param = parseParam("actualStartDateAfterLastActualEnd.json");
 
     // when
@@ -308,7 +316,7 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
   public void shouldReturnViolationWhenValidateCreateRequisitionGivenLastEndTooFar1()
       throws Exception {
     // given
-    ReportType reportType = mock(ReportType.class);
+    SiglusReportType reportType = mock(SiglusReportType.class);
     when(reportType.getStartDate()).thenReturn(LocalDate.of(1999, 3, 1));
     when(reportTypeRepo.findOneByFacilityIdAndProgramCodeAndActiveIsTrue(any(), eq("VC")))
         .thenReturn(Optional.of(reportType));
@@ -327,7 +335,7 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
   public void shouldReturnViolationWhenValidateCreateRequisitionGivenLastEndTooFar2()
       throws Exception {
     // given
-    ReportType reportType = mock(ReportType.class);
+    SiglusReportType reportType = mock(SiglusReportType.class);
     when(reportType.getStartDate()).thenReturn(LocalDate.of(1999, 3, 1));
     when(reportTypeRepo.findOneByFacilityIdAndProgramCodeAndActiveIsTrue(any(), eq("VC")))
         .thenReturn(Optional.of(reportType));

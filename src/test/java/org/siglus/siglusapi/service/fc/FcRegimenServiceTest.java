@@ -97,7 +97,7 @@ public class FcRegimenServiceTest {
     when(programRealProgramRepository.findAll())
         .thenReturn(newArrayList(mockProgramRealProgram1(), mockProgramRealProgram2()));
     when(programRefDataService.findAll()).thenReturn(newArrayList(
-        mockProgramDto(programId1)));
+        mockProgramDto(programId1, "ARVP"), mockProgramDto(programId3, "MP")));
     when(regimenRepository.findAll()).thenReturn(newArrayList(mockRegimen1(), mockRegimen3()));
     when(regimenCategoryRepository.findAll())
         .thenReturn(newArrayList(mockCategory(categoryId2)));
@@ -109,7 +109,7 @@ public class FcRegimenServiceTest {
     // then
     verify(regimenRepository).save(regimensArgumentCaptor.capture());
     Set<Regimen> saved = regimensArgumentCaptor.getValue();
-    assertEquals(2, saved.size());
+    assertEquals(3, saved.size());
     Regimen r1 = saved.stream()
         .filter(r -> code1.equals(r.getCode()))
         .findFirst()
@@ -148,8 +148,8 @@ public class FcRegimenServiceTest {
         .code(code2)
         .description(description2)
         .areaCode(areaCode2)
-        .categoryCode(PAEDIATRICS)
-        .categoryDescription(PAEDIATRICS)
+        .categoryCode(categoryCode1)
+        .categoryDescription(categoryCode1)
         .status(STATUS_ACTIVE)
         .build();
     build.setLastUpdatedAt(LAST_UPDATED_AT);
@@ -189,10 +189,10 @@ public class FcRegimenServiceTest {
         .build();
   }
 
-  private ProgramDto mockProgramDto(UUID id) {
+  private ProgramDto mockProgramDto(UUID id, String code) {
     ProgramDto programDto = new ProgramDto();
     programDto.setId(id);
-    programDto.setCode("ARVP");
+    programDto.setCode(code);
     return programDto;
   }
 
