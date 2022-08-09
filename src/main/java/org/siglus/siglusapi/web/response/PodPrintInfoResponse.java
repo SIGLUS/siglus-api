@@ -39,6 +39,8 @@ public class PodPrintInfoResponse {
   private Date issueVoucherDate;
 
   private String deliveredBy;
+  private String preparedBy;
+  private String conferredBy;
   private String receivedBy;
   private LocalDate receivedDate;
 
