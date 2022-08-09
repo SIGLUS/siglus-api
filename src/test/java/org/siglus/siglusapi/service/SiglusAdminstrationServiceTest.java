@@ -188,7 +188,7 @@ public class SiglusAdminstrationServiceTest {
     LocalDate date = LocalDate.of(2022, 1, 1);
     when(siglusReportTypeRepository.findByFacilityId(facilityId))
             .thenReturn(Arrays.asList(mockReportType()));
-    when(siglusProcessingPeriodService.getLastPeriodStartDateSinceSubmit(PROGRAM_CODE, facilityId))
+    when(siglusProcessingPeriodService.getPreviousPeriodStartDateSinceSubmit(PROGRAM_CODE, facilityId))
             .thenReturn(date);
     when(siglusFacilityReferenceDataService.findOneFacility(facilityId))
             .thenReturn(mockFacilityDtoPage().getContent().get(0));
@@ -207,7 +207,7 @@ public class SiglusAdminstrationServiceTest {
     // given
     when(siglusReportTypeRepository.findByFacilityId(facilityId))
             .thenReturn(Collections.emptyList());
-    when(siglusProcessingPeriodService.getLastPeriodStartDateSinceSubmit(null, facilityId))
+    when(siglusProcessingPeriodService.getPreviousPeriodStartDateSinceSubmit(null, facilityId))
             .thenReturn(null);
     when(siglusFacilityReferenceDataService.findOneFacility(facilityId))
         .thenReturn(mockFacilityDtoPage().getContent().get(0));

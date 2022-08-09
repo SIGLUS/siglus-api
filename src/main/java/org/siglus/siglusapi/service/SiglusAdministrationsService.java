@@ -20,8 +20,11 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Writer;
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -201,7 +204,27 @@ public class SiglusAdministrationsService {
     locationManagementRepository.save(locationManagementList);
   }
 
+  private void validateReportTypes(SiglusFacilityDto siglusFacilityDto) {
+    UUID facilityId = siglusFacilityDto.getId();
+    Map<String, SiglusReportType> programCodeToReportType = siglusReportTypeRepository
+            .findByFacilityId(facilityId)
+            .stream()
+            .collect(Collectors.toMap(SiglusReportType::getProgramCode, Function.identity()));
+
+    siglusFacilityDto.getReportTypes().forEach(dto -> {
+      SiglusReportType original = programCodeToReportType.get(dto.getProgramCode());
+      if (null != original && dto.getStartDate().isBefore(original.getStartDate())) {
+        LocalDate previousDate = siglusProcessingPeriodService
+                .getPreviousPeriodStartDateSinceSubmit(dto.getProgramCode(), facilityId);
+        if (previousDate != null && dto.getStartDate().isBefore(previousDate)) {
+          throw new IllegalArgumentException("Invalid start date");
+        }
+      }
+    });
+  }
+
   private void saveReportTypes(SiglusFacilityDto siglusFacilityDto) {
+    validateReportTypes(siglusFacilityDto);
     List<SiglusReportType> toSave = siglusFacilityDto.getReportTypes()
             .stream().map(SiglusReportType::from).collect(Collectors.toList());
     siglusReportTypeRepository.save(toSave);
@@ -237,7 +260,7 @@ public class SiglusAdministrationsService {
   public SiglusReportTypeDto from(SiglusReportType reportType) {
     SiglusReportTypeDto dto = new SiglusReportTypeDto();
     BeanUtils.copyProperties(reportType, dto);
-    dto.setPreviousPeriodStartDateSinceRecentSubmit(siglusProcessingPeriodService.getLastPeriodStartDateSinceSubmit(
+    dto.setPreviousPeriodStartDateSinceRecentSubmit(siglusProcessingPeriodService.getPreviousPeriodStartDateSinceSubmit(
                     reportType.getProgramCode(), reportType.getFacilityId()));
     return dto;
   }

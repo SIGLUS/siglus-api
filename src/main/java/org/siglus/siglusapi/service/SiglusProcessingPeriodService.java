@@ -95,7 +95,7 @@ public class SiglusProcessingPeriodService {
   @Autowired
   private PeriodReferenceDataService periodReferenceDataService;
 
-  public LocalDate getLastPeriodStartDateSinceSubmit(String programCode, UUID facilityId) {
+  public LocalDate getPreviousPeriodStartDateSinceSubmit(String programCode, UUID facilityId) {
     ProgramDto program = siglusProgramService.getProgramByCode(programCode)
             .orElseThrow(() -> new NotFoundException("Program code" + programCode + " Not Found"));
 
