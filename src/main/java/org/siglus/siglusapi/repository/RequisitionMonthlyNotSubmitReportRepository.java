@@ -25,4 +25,7 @@ public interface RequisitionMonthlyNotSubmitReportRepository extends
 
   @Transactional
   void deleteByFacilityId(UUID facilityId);
+
+  @Transactional
+  void deleteByFacilityIdAndProgramIdAndProcessingPeriodId(UUID facilityId, UUID programId, UUID processingPeriodId);
 }
