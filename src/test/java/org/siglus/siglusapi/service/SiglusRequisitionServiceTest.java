@@ -154,6 +154,7 @@ import org.siglus.siglusapi.repository.FacilityExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionDraftRepository;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionLineItemExtensionRepository;
+import org.siglus.siglusapi.repository.RequisitionMonthlyNotSubmitReportRepository;
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusNotificationNotificationService;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
@@ -439,6 +440,10 @@ public class SiglusRequisitionServiceTest {
 
   @Mock
   private FacilityExtensionRepository facilityExtensionRepository;
+
+  @Mock
+  private RequisitionMonthlyNotSubmitReportRepository requisitionMonthlyNotSubmitReportRepository;
+
 
   @Before
   public void prepare() {
