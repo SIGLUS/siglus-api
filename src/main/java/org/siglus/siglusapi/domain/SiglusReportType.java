@@ -25,6 +25,8 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.siglus.common.domain.BaseEntity;
+import org.siglus.siglusapi.dto.SiglusReportTypeDto;
+import org.springframework.beans.BeanUtils;
 
 @Entity
 @Data
@@ -44,4 +46,10 @@ public class SiglusReportType extends BaseEntity {
   private Boolean active;
 
   private LocalDate startDate;
+
+  public static SiglusReportType from(SiglusReportTypeDto dto) {
+    SiglusReportType domain = new SiglusReportType();
+    BeanUtils.copyProperties(dto, domain);
+    return domain;
+  }
 }

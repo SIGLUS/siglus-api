@@ -139,6 +139,7 @@ public class SiglusAdministrationsService {
 
   public FacilitySearchResultDto updateFacility(UUID facilityId, SiglusFacilityDto siglusFacilityDto) {
     FacilityDto facilityDto = SiglusFacilityDto.from(siglusFacilityDto);
+    saveReportTypes(siglusFacilityDto);
     siglusFacilityReferenceDataService.saveFacility(facilityDto);
     FacilityExtension facilityExtension = facilityExtensionRepository.findByFacilityId(facilityId);
     if (null == facilityExtension) {
@@ -198,6 +199,12 @@ public class SiglusAdministrationsService {
     locationManagementRepository.deleteByFacilityId(facilityId);
     log.info("Save location management info with facilityId: {}", facilityId);
     locationManagementRepository.save(locationManagementList);
+  }
+
+  private void saveReportTypes(SiglusFacilityDto siglusFacilityDto) {
+    List<SiglusReportType> toSave = siglusFacilityDto.getReportTypes()
+            .stream().map(SiglusReportType::from).collect(Collectors.toList());
+    siglusReportTypeRepository.save(toSave);
   }
 
   private void writeLocationInfoOnCsv(List<LocationManagement> locationList, Writer writer)
@@ -260,4 +267,5 @@ public class SiglusAdministrationsService {
   private boolean emptyStockCardCount(UUID facilityId) {
     return stockCardRepository.countByFacilityId(facilityId) == 0;
   }
+
 }

@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.dto;
 
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -30,6 +31,8 @@ public class SiglusFacilityDto extends FacilityDto {
   private Boolean enableLocationManagement;
 
   private Boolean isAndroidDevice;
+
+  private List<SiglusReportTypeDto> reportTypes;
 
   public static FacilityDto from(SiglusFacilityDto siglusFacilityDto) {
     FacilityDto facilityDto = new FacilityDto();
