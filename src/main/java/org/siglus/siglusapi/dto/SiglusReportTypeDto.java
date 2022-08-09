@@ -32,5 +32,5 @@ public class SiglusReportTypeDto {
   private String programCode;
   private Boolean active;
   private LocalDate startDate;
-  private LocalDate previousPeriodStartDateSinceSubmit;
+  private LocalDate previousPeriodStartDateSinceRecentSubmit;
 }

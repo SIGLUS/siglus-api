@@ -112,16 +112,16 @@ public class SiglusProcessingPeriodService {
             .sorted(Comparator.comparing(ProcessingPeriodDto::getStartDate))
             .collect(Collectors.toList());
 
-    int firstSubmittedIndex = -1;
-    for (int i = 0; i < sortedPeriods.size(); i++) {
+    int lastSubmittedIndex = -1;
+    for (int i = sortedPeriods.size() - 1; i >= 0; i--) {
       if (submittedPeriodIds.contains(sortedPeriods.get(i).getId())) {
-        firstSubmittedIndex = i;
+        lastSubmittedIndex = i;
         break;
       }
     }
 
-    if (firstSubmittedIndex > 0) {
-      return sortedPeriods.get(firstSubmittedIndex - 1).getStartDate();
+    if (lastSubmittedIndex > 0) {
+      return sortedPeriods.get(lastSubmittedIndex - 1).getStartDate();
     }
     return null;
   }
