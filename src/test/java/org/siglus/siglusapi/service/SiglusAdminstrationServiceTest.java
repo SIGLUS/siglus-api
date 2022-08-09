@@ -28,7 +28,9 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -49,6 +51,7 @@ import org.openlmis.stockmanagement.repository.StockCardRepository;
 import org.siglus.siglusapi.domain.AppInfo;
 import org.siglus.siglusapi.domain.FacilityExtension;
 import org.siglus.siglusapi.domain.LocationManagement;
+import org.siglus.siglusapi.domain.SiglusReportType;
 import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.FacilitySearchParamDto;
 import org.siglus.siglusapi.dto.FacilitySearchResultDto;
@@ -118,6 +121,7 @@ public class SiglusAdminstrationServiceTest {
 
   private static int isAndroid = 0;
 
+  private static final String PROGRAM_CODE = "VIA";
   private static final String LOCATION_CODE = "AA25A";
   private static final String AREA = "Armazem Principal";
   private static final String ZONE = "A";
@@ -176,6 +180,26 @@ public class SiglusAdminstrationServiceTest {
 
     // when
     siglusAdministrationsService.eraseDeviceInfoByFacilityId(appInfo.getFacilityCode());
+  }
+
+  @Test
+  public void shouldSetPreviousPeriodStartDateWhenUserHasRequisition() {
+    // given
+    LocalDate date = LocalDate.of(2022, 1, 1);
+    when(siglusReportTypeRepository.findByFacilityId(facilityId))
+            .thenReturn(Arrays.asList(mockReportType()));
+    when(siglusProcessingPeriodService.getLastPeriodStartDateSinceSubmit(PROGRAM_CODE, facilityId))
+            .thenReturn(date);
+    when(siglusFacilityReferenceDataService.findOneFacility(facilityId))
+            .thenReturn(mockFacilityDtoPage().getContent().get(0));
+
+    when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(null);
+
+    // when
+    FacilitySearchResultDto facility = siglusAdministrationsService.getFacility(facilityId);
+
+    // then
+    assertEquals(date, facility.getReportTypes().get(0).getPreviousPeriodStartDateSinceRecentSubmit());
   }
 
   @Test
@@ -370,6 +394,7 @@ public class SiglusAdminstrationServiceTest {
     siglusFacilityDto.setId(facilityId);
     siglusFacilityDto.setEnableLocationManagement(true);
     siglusFacilityDto.setIsAndroidDevice(true);
+    siglusFacilityDto.setReportTypes(Collections.emptyList());
     return siglusFacilityDto;
   }
 
@@ -392,5 +417,13 @@ public class SiglusAdminstrationServiceTest {
     facilityDto.setId(facilityId);
     facilityDto.setCode(facilityCode);
     return facilityDto;
+  }
+
+  private SiglusReportType mockReportType() {
+    return SiglusReportType
+            .builder()
+            .facilityId(facilityId)
+            .programCode(PROGRAM_CODE)
+            .build();
   }
 }

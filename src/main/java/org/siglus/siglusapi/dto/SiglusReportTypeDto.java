@@ -27,6 +27,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class SiglusReportTypeDto {
+  private UUID id;
   private UUID facilityId;
   private String name;
   private String programCode;
