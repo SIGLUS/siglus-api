@@ -328,6 +328,12 @@ public class SiglusPodService {
       }
     }
 
+    ProofsOfDeliveryExtension podExtension = getPodExtensionByPodId(podId);
+    if (Objects.nonNull(podExtension)) {
+      response.setPreparedBy(podExtension.getPreparedBy());
+      response.setConferredBy(podExtension.getConferredBy());
+    }
+
     StatusChange requisitionStatusChange = requisitionStatusChangeRepository.findByRequisitionId(realRequisitionId)
         .stream()
         .filter(e -> RequisitionStatus.RELEASED == e.getStatus()).findFirst().orElse(null);

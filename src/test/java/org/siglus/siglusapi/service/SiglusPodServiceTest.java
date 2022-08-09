@@ -21,6 +21,7 @@ import static org.junit.Assert.assertNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyList;
+import static org.mockito.Matchers.anyObject;
 import static org.mockito.Matchers.anySet;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -63,6 +64,7 @@ import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.domain.requisition.StatusChange;
 import org.openlmis.requisition.repository.StatusChangeRepository;
 import org.siglus.common.repository.OrderExternalRepository;
+import org.siglus.siglusapi.domain.PodExtension;
 import org.siglus.siglusapi.domain.PodLineItemsExtension;
 import org.siglus.siglusapi.domain.PodSubDraft;
 import org.siglus.siglusapi.domain.ProofsOfDeliveryExtension;
@@ -585,7 +587,6 @@ public class SiglusPodServiceTest {
     Example<PodSubDraft> example = Example.of(PodSubDraft.builder().podId(podId).build());
     when(podSubDraftRepository.findAll(example)).thenReturn(buildMockSubDraftsAllSubmitted());
     when(fulfillmentService.searchProofOfDelivery(any(), any())).thenReturn(buildMockPodDtoWithNoLineItems());
-    when(podExtensionRepository.findOne(podId)).thenReturn(buildMockPodExtension());
     ProofOfDeliveryDto expectedResponse = buildMockPodDtoWithNoLineItems();
 
     // when
@@ -659,6 +660,29 @@ public class SiglusPodServiceTest {
   }
 
   @Test
+  public void shouldReturnWhenSubmitSubDraftsWithPodExtensionNull() {
+    // given
+    when(authenticationHelper.isTheCurrentUserCanMergeOrDeleteSubDrafts()).thenReturn(Boolean.TRUE);
+    Example<PodSubDraft> example = Example.of(PodSubDraft.builder().podId(podId).build());
+    when(podSubDraftRepository.findAll(example)).thenReturn(buildMockSubDraftsAllSubmitted());
+    PodExtensionRequest request = buildPodExtensionRequest();
+    ProofOfDeliveryDto dto = request.getPodDto();
+    when(fulfillmentService.searchProofOfDelivery(any(), any())).thenReturn(dto);
+    when(podController.updateProofOfDelivery(podId, dto, null)).thenReturn(dto);
+    mockPodExtensionQuery();
+
+    // when
+    ProofOfDeliveryDto actualResponse = service.submitSubDrafts(podId, request, null);
+
+    // then
+    assertEquals(dto, actualResponse);
+    verify(podController).updateProofOfDelivery(any(), any(), any());
+    verify(podSubDraftRepository).deleteAllByIds(any(List.class));
+    verify(podLineItemsExtensionRepository).deleteAllBySubDraftIds(any(List.class));
+    verify(notificationService).postConfirmPod(dto);
+  }
+
+  @Test
   public void shouldReturnWhenSubmitSubDraftsWithPodNotConfirmed() {
     // given
     when(authenticationHelper.isTheCurrentUserCanMergeOrDeleteSubDrafts()).thenReturn(Boolean.TRUE);
@@ -712,6 +736,7 @@ public class SiglusPodServiceTest {
         buildMockRequisitionStatusChanges());
     when(podLineItemsRepository.lineItemDtos(podId, orderId, requisitionId)).thenReturn(buildMockPodLineItemDtos());
     when(requisitionExtensionService.formatRequisitionNumber(requisitionId)).thenReturn(requisitionNum);
+    mockPodExtensionQuery();
 
     // when
     PodPrintInfoResponse response = service.getPintInfo(orderId, podId);
@@ -769,11 +794,6 @@ public class SiglusPodServiceTest {
     // given
     OrderDto orderDto = buildMockOrderDtoWithOutRequisitionId();
     when(ordersRepository.findOrderDtoById(orderId)).thenReturn(orderDto);
-    Order orderForQueryCount = new Order();
-    orderForQueryCount.setProcessingPeriodId(orderDto.getProcessingPeriodId());
-    orderForQueryCount.setEmergency(orderDto.getEmergency());
-    Example<Order> orderExample = Example.of(orderForQueryCount);
-    when(ordersRepository.count(orderExample)).thenReturn(1L);
     mockForRequisitionCount();
     when(siglusFacilityReferenceDataService.findOneFacility(orderDto.getSupplyingFacilityId())).thenReturn(
         buildMockFacilityDtoWithLevel3AndNoParent());
