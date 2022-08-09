@@ -33,8 +33,8 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.LazyCollection;
 import org.siglus.common.domain.BaseEntity;
-import org.siglus.siglusapi.dto.StockMovementDraftDto;
-import org.siglus.siglusapi.dto.StockMovementDraftLineItemDto;
+import org.siglus.siglusapi.dto.ProductLocationMovementDraftDto;
+import org.siglus.siglusapi.dto.ProductLocationMovementDraftLineItemDto;
 import org.springframework.beans.BeanUtils;
 
 @Data
@@ -43,8 +43,8 @@ import org.springframework.beans.BeanUtils;
 @Entity
 @Builder
 @EqualsAndHashCode(callSuper = true)
-@Table(name = "stock_movement_drafts", schema = "siglusintegration")
-public class StockMovementDraft extends BaseEntity {
+@Table(name = "product_location_movement_drafts", schema = "siglusintegration")
+public class ProductLocationMovementDraft extends BaseEntity {
 
   @Column(nullable = false)
   private UUID facilityId;
@@ -59,22 +59,22 @@ public class StockMovementDraft extends BaseEntity {
   private UUID userId;
 
   @LazyCollection(FALSE)
-  @OneToMany(cascade = ALL, mappedBy = "stockMovementDraft", orphanRemoval = true)
-  private List<StockMovementDraftLineItem> lineItems;
+  @OneToMany(cascade = ALL, mappedBy = "productLocationMovementDraft", orphanRemoval = true)
+  private List<ProductLocationMovementDraftLineItem> lineItems;
 
-  public static StockMovementDraft createEmptyStockMovementDraft(StockMovementDraftDto draftDto) {
-    StockMovementDraft draft = new StockMovementDraft();
+  public static ProductLocationMovementDraft createEmptyStockMovementDraft(ProductLocationMovementDraftDto draftDto) {
+    ProductLocationMovementDraft draft = new ProductLocationMovementDraft();
     BeanUtils.copyProperties(draftDto, draft);
     return draft;
   }
 
-  public static StockMovementDraft createStockMovementDraft(StockMovementDraftDto draftDto) {
-    StockMovementDraft draft = new StockMovementDraft();
+  public static ProductLocationMovementDraft createStockMovementDraft(ProductLocationMovementDraftDto draftDto) {
+    ProductLocationMovementDraft draft = new ProductLocationMovementDraft();
     BeanUtils.copyProperties(draftDto, draft);
-    List<StockMovementDraftLineItemDto> lineItemDtos = draftDto.getLineItems();
+    List<ProductLocationMovementDraftLineItemDto> lineItemDtos = draftDto.getLineItems();
     if (lineItemDtos != null) {
       draft.setLineItems(lineItemDtos.stream()
-          .map(lineItemDto -> StockMovementDraftLineItem.from(lineItemDto, draft))
+          .map(lineItemDto -> ProductLocationMovementDraftLineItem.from(lineItemDto, draft))
           .collect(toList()));
     }
     return draft;

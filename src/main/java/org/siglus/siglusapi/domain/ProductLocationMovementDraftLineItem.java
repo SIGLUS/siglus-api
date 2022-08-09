@@ -31,7 +31,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.siglus.common.domain.BaseEntity;
-import org.siglus.siglusapi.dto.StockMovementDraftLineItemDto;
+import org.siglus.siglusapi.dto.ProductLocationMovementDraftLineItemDto;
 import org.springframework.beans.BeanUtils;
 
 @Entity
@@ -40,12 +40,12 @@ import org.springframework.beans.BeanUtils;
 @NoArgsConstructor
 @Builder
 @EqualsAndHashCode(callSuper = true)
-@Table(name = "stock_movement_draft_line_items", schema = "siglusintegration")
-public class StockMovementDraftLineItem extends BaseEntity {
+@Table(name = "product_location_movement_draft_line_items", schema = "siglusintegration")
+public class ProductLocationMovementDraftLineItem extends BaseEntity {
 
   @ManyToOne
   @JoinColumn(nullable = false)
-  private StockMovementDraft stockMovementDraft;
+  private ProductLocationMovementDraft productLocationMovementDraft;
 
   @Column(nullable = false)
   private UUID orderableId;
@@ -62,15 +62,18 @@ public class StockMovementDraftLineItem extends BaseEntity {
   @JsonFormat(shape = STRING, pattern = "yyyy-MM-dd")
   private LocalDate createdDate;
 
+  private UUID moveToId;
+  private String moveToCode;
+
   private LocalDate expirationDate;
   private Integer quantity;
   private Integer stockOnHand;
 
-  public static StockMovementDraftLineItem from(StockMovementDraftLineItemDto draftLineItemDto,
-      StockMovementDraft draft) {
-    StockMovementDraftLineItem lineItem = new StockMovementDraftLineItem();
+  public static ProductLocationMovementDraftLineItem from(ProductLocationMovementDraftLineItemDto draftLineItemDto,
+      ProductLocationMovementDraft draft) {
+    ProductLocationMovementDraftLineItem lineItem = new ProductLocationMovementDraftLineItem();
     BeanUtils.copyProperties(draftLineItemDto, lineItem);
-    lineItem.setStockMovementDraft(draft);
+    lineItem.setProductLocationMovementDraft(draft);
     return lineItem;
   }
 }

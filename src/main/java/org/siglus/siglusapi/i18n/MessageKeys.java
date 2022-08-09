@@ -33,6 +33,7 @@ public abstract class MessageKeys {
   protected static final String ERROR_PREFIX = join(SERVICE_PREFIX, ERROR);
   private static final String EVENT_ERROR_PREFIX = ERROR_PREFIX + ".event";
   private static final String STOCK_MANAGEMENT_ERROR_PREFIX = ERROR_PREFIX + ".stockManagement";
+  private static final String STOCK_MOVEMENT_ERROR_PREFIX = ERROR_PREFIX + ".stockMovement";
   private static final String POD_ERROR_PREFIX = ERROR_PREFIX + ".proofOfDelivery";
 
   // authorization
@@ -75,6 +76,8 @@ public abstract class MessageKeys {
       STOCK_MANAGEMENT_ERROR_PREFIX + ".draft.notFound";
   public static final String ERROR_STOCK_MANAGEMENT_DRAFT_DRAFT_EXISTS =
       STOCK_MANAGEMENT_ERROR_PREFIX + ".draft.exists";
+  public static final String ERROR_STOCK_MOVEMENT_DRAFT_EXISTS =
+      STOCK_MOVEMENT_ERROR_PREFIX + ".draft.exists";
   public static final String ERROR_STOCK_MANAGEMENT_SUB_DRAFT_SAME_ORDERABLE_ID_WITH_LOT_CODE =
       STOCK_MANAGEMENT_ERROR_PREFIX + ".stock.management.subDraft.same.orderable.id.with.lot.code";
   public static final String ERROR_STOCK_MANAGEMENT_SUB_DRAFT_EMPTY =

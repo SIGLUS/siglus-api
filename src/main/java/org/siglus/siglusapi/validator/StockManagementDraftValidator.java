@@ -38,6 +38,7 @@ import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.dto.StockManagementDraftDto;
 import org.siglus.siglusapi.dto.StockManagementDraftLineItemDto;
 import org.siglus.siglusapi.dto.StockManagementInitialDraftDto;
+import org.siglus.siglusapi.dto.ProductLocationMovementDraftDto;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.StockManagementDraftRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -59,6 +60,15 @@ public class StockManagementDraftValidator {
     validateNotNull(inventory.getProgramId(), ERROR_PROGRAM_ID_MISSING);
     validateNotNull(inventory.getUserId(), ERROR_USER_ID_MISSING);
     validateNotNull(inventory.getFacilityId(), ERROR_FACILITY_ID_MISSING);
+  }
+
+  public void validateEmptyStockMovementDraft(ProductLocationMovementDraftDto productLocationMovementDraftDto) {
+    if (productLocationMovementDraftDto.getId() != null) {
+      throw new ValidationMessageException(ERROR_STOCK_MANAGEMENT_DRAFT_ID_SHOULD_NULL);
+    }
+    validateNotNull(productLocationMovementDraftDto.getProgramId(), ERROR_PROGRAM_ID_MISSING);
+    validateNotNull(productLocationMovementDraftDto.getUserId(), ERROR_USER_ID_MISSING);
+    validateNotNull(productLocationMovementDraftDto.getFacilityId(), ERROR_FACILITY_ID_MISSING);
   }
 
   public void validateInitialDraft(StockManagementInitialDraftDto stockManagementInitialDraftDto) {

@@ -28,14 +28,14 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.siglus.siglusapi.domain.StockMovementDraft;
+import org.siglus.siglusapi.domain.ProductLocationMovementDraft;
 import org.springframework.beans.BeanUtils;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class StockMovementDraftDto {
+public class ProductLocationMovementDraftDto {
 
   private UUID id;
 
@@ -50,20 +50,20 @@ public class StockMovementDraftDto {
 
   private UUID userId;
 
-  private List<StockMovementDraftLineItemDto> lineItems;
+  private List<ProductLocationMovementDraftLineItemDto> lineItems;
 
-  public static List<StockMovementDraftDto> from(Collection<StockMovementDraft> drafts) {
-    List<StockMovementDraftDto> draftDtos = new ArrayList<>(drafts.size());
+  public static List<ProductLocationMovementDraftDto> from(Collection<ProductLocationMovementDraft> drafts) {
+    List<ProductLocationMovementDraftDto> draftDtos = new ArrayList<>(drafts.size());
     drafts.forEach(draft -> draftDtos.add(from(draft)));
     return draftDtos;
   }
 
-  public static StockMovementDraftDto from(StockMovementDraft draft) {
-    StockMovementDraftDto draftDto = new StockMovementDraftDto();
+  public static ProductLocationMovementDraftDto from(ProductLocationMovementDraft draft) {
+    ProductLocationMovementDraftDto draftDto = new ProductLocationMovementDraftDto();
     BeanUtils.copyProperties(draft, draftDto);
     if (draft.getLineItems() != null) {
       draftDto.setLineItems(draft.getLineItems().stream().map(
-          StockMovementDraftLineItemDto::from).collect(toList()));
+          ProductLocationMovementDraftLineItemDto::from).collect(toList()));
     }
     return draftDto;
   }

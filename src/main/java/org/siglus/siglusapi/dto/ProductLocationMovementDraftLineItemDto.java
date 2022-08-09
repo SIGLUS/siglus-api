@@ -24,14 +24,14 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.siglus.siglusapi.domain.StockMovementDraftLineItem;
+import org.siglus.siglusapi.domain.ProductLocationMovementDraftLineItem;
 import org.springframework.beans.BeanUtils;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class StockMovementDraftLineItemDto {
+public class ProductLocationMovementDraftLineItemDto {
 
   private UUID orderableId;
   private String productCode;
@@ -40,6 +40,8 @@ public class StockMovementDraftLineItemDto {
   private String lotCode;
   private UUID locationId;
   private String locationCode;
+  private UUID moveToId;
+  private String moveToCode;
   @JsonFormat(shape = STRING)
   private LocalDate createdDate;
   @JsonFormat(shape = STRING)
@@ -47,8 +49,8 @@ public class StockMovementDraftLineItemDto {
   private Integer quantity;
   private Integer stockOnHand;
 
-  public static StockMovementDraftLineItemDto from(StockMovementDraftLineItem lineItem) {
-    StockMovementDraftLineItemDto lineItemDto = new StockMovementDraftLineItemDto();
+  public static ProductLocationMovementDraftLineItemDto from(ProductLocationMovementDraftLineItem lineItem) {
+    ProductLocationMovementDraftLineItemDto lineItemDto = new ProductLocationMovementDraftLineItemDto();
     BeanUtils.copyProperties(lineItem, lineItemDto);
     return lineItemDto;
   }

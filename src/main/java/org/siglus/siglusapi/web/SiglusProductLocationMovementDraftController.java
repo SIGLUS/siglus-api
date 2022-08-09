@@ -15,16 +15,27 @@
 
 package org.siglus.siglusapi.web;
 
-import org.siglus.siglusapi.service.SiglusStockMovementDraftService;
+import static org.springframework.http.HttpStatus.CREATED;
+
+import org.siglus.siglusapi.dto.ProductLocationMovementDraftDto;
+import org.siglus.siglusapi.service.SiglusProductLocationMovementDraftService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/siglusapi/movementDrafts")
-public class SiglusStockMovementDraftController {
+public class SiglusProductLocationMovementDraftController {
 
   @Autowired
-  SiglusStockMovementDraftService stockMovementDraftService;
+  SiglusProductLocationMovementDraftService productLocationMovementDraftService;
 
+  @PostMapping
+  @ResponseStatus(CREATED)
+  public ProductLocationMovementDraftDto createEmptyStockMovementDraft(@RequestBody ProductLocationMovementDraftDto dto) {
+    return productLocationMovementDraftService.createEmptyProductLocationMovementDraft(dto);
+  }
 }
