@@ -260,8 +260,8 @@ public class SiglusAdministrationsService {
   public SiglusReportTypeDto from(SiglusReportType reportType) {
     SiglusReportTypeDto dto = new SiglusReportTypeDto();
     BeanUtils.copyProperties(reportType, dto);
-    dto.setPreviousPeriodStartDateSinceRecentSubmit(siglusProcessingPeriodService.getPreviousPeriodStartDateSinceInitiate(
-                    reportType.getProgramCode(), reportType.getFacilityId()));
+    dto.setPreviousPeriodStartDateSinceRecentSubmit(siglusProcessingPeriodService
+            .getPreviousPeriodStartDateSinceInitiate(reportType.getProgramCode(), reportType.getFacilityId()));
     return dto;
   }
 
