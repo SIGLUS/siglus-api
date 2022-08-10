@@ -17,6 +17,7 @@ package org.siglus.siglusapi.web;
 
 import static org.mockito.Mockito.verify;
 
+import java.util.UUID;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -35,12 +36,20 @@ public class SiglusProductLocationMovementDraftControllerTest {
   private SiglusProductLocationMovementDraftService service;
 
   private final ProductLocationMovementDraftDto productLocationMovementDraftDto = new ProductLocationMovementDraftDto();
+  private final UUID programId = UUID.randomUUID();
 
   @Test
   public void shouldCallCreateEmptyProductLocationMovementDraft() {
     controller.createEmptyProductLocationMovementDraft(productLocationMovementDraftDto);
 
     verify(service).createEmptyProductLocationMovementDraft(productLocationMovementDraftDto);
+  }
+
+  @Test
+  public void shouldCallSearchMovementDraft() {
+    controller.searchMovementDraft(programId);
+
+    verify(service).searchMovementDraft(programId);
   }
 
 }

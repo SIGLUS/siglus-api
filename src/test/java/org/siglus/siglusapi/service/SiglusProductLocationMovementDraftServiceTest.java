@@ -24,7 +24,9 @@ import static org.mockito.Mockito.when;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MOVEMENT_DRAFT_EXISTS;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -34,8 +36,11 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.siglus.siglusapi.domain.ProductLocationMovementDraft;
 import org.siglus.siglusapi.dto.ProductLocationMovementDraftDto;
+import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.ProductLocationMovementDraftRepository;
+import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
+import org.siglus.siglusapi.validator.ActiveDraftValidator;
 import org.siglus.siglusapi.validator.StockManagementDraftValidator;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -46,6 +51,12 @@ public class SiglusProductLocationMovementDraftServiceTest {
 
   @InjectMocks
   private SiglusProductLocationMovementDraftService service;
+
+  @Mock
+  private SiglusAuthenticationHelper authenticationHelper;
+
+  @Mock
+  private ActiveDraftValidator draftValidator;
 
   @Mock
   private ProductLocationMovementDraftRepository productLocationMovementDraftRepository;
@@ -59,6 +70,13 @@ public class SiglusProductLocationMovementDraftServiceTest {
       .builder().programId(programId).facilityId(facilityId).build();
   private final ProductLocationMovementDraft productLocationMovementDraft = ProductLocationMovementDraft
       .builder().programId(programId).facilityId(facilityId).build();
+
+  @Before
+  public void setup() {
+    UserDto userDto = new UserDto();
+    userDto.setHomeFacilityId(facilityId);
+    when(authenticationHelper.getCurrentUser()).thenReturn(userDto);
+  }
 
   @Test
   public void shouldCreateEmptyProductLocationMovementDraft() {
@@ -88,5 +106,17 @@ public class SiglusProductLocationMovementDraftServiceTest {
         .thenReturn(newArrayList(productLocationMovementDraft));
 
     service.createEmptyProductLocationMovementDraft(productLocationMovementDraftDto);
+  }
+
+  @Test
+  public void shouldSearchMovementDraft() {
+    doNothing().when(draftValidator).validateFacilityId(facilityId);
+    doNothing().when(draftValidator).validateProgramId(programId);
+    when(productLocationMovementDraftRepository.findByProgramIdAndFacilityId(programId, facilityId))
+        .thenReturn(newArrayList(productLocationMovementDraft));
+
+    List<ProductLocationMovementDraftDto> productLocationMovementDraftDtos = service.searchMovementDraft(programId);
+
+    assertThat(productLocationMovementDraftDtos.size()).isEqualTo(1);
   }
 }

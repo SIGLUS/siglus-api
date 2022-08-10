@@ -17,12 +17,16 @@ package org.siglus.siglusapi.web;
 
 import static org.springframework.http.HttpStatus.CREATED;
 
+import java.util.List;
+import java.util.UUID;
 import org.siglus.siglusapi.dto.ProductLocationMovementDraftDto;
 import org.siglus.siglusapi.service.SiglusProductLocationMovementDraftService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -38,5 +42,10 @@ public class SiglusProductLocationMovementDraftController {
   public ProductLocationMovementDraftDto createEmptyProductLocationMovementDraft(
       @RequestBody ProductLocationMovementDraftDto dto) {
     return productLocationMovementDraftService.createEmptyProductLocationMovementDraft(dto);
+  }
+
+  @GetMapping
+  public List<ProductLocationMovementDraftDto> searchMovementDraft(@RequestParam UUID programId) {
+    return productLocationMovementDraftService.searchMovementDraft(programId);
   }
 }

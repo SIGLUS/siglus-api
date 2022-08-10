@@ -18,6 +18,7 @@ package org.siglus.siglusapi.service;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MOVEMENT_DRAFT_EXISTS;
 
 import java.util.List;
+import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.siglus.siglusapi.domain.ProductLocationMovementDraft;
@@ -25,6 +26,8 @@ import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.dto.ProductLocationMovementDraftDto;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.ProductLocationMovementDraftRepository;
+import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
+import org.siglus.siglusapi.validator.ActiveDraftValidator;
 import org.siglus.siglusapi.validator.StockManagementDraftValidator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -38,6 +41,12 @@ public class SiglusProductLocationMovementDraftService {
 
   @Autowired
   StockManagementDraftValidator stockManagementDraftValidator;
+
+  @Autowired
+  private SiglusAuthenticationHelper authenticationHelper;
+
+  @Autowired
+  private ActiveDraftValidator draftValidator;
 
   public ProductLocationMovementDraftDto createEmptyProductLocationMovementDraft(
       ProductLocationMovementDraftDto productLocationMovementDraftDto) {
@@ -60,5 +69,16 @@ public class SiglusProductLocationMovementDraftService {
           new Message(ERROR_STOCK_MOVEMENT_DRAFT_EXISTS, stockManagementDraftDto.getProgramId(),
               stockManagementDraftDto.getFacilityId()));
     }
+  }
+
+  public List<ProductLocationMovementDraftDto> searchMovementDraft(UUID programId) {
+    UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
+    draftValidator.validateProgramId(programId);
+    draftValidator.validateFacilityId(facilityId);
+
+    List<ProductLocationMovementDraft> productLocationMovementDrafts = productLocationMovementDraftRepository
+        .findByProgramIdAndFacilityId(programId, facilityId);
+
+    return ProductLocationMovementDraftDto.from(productLocationMovementDrafts);
   }
 }
