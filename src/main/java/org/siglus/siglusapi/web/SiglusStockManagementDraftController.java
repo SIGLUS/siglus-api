@@ -72,7 +72,7 @@ public class SiglusStockManagementDraftController {
 
   @PostMapping("/multi")
   @ResponseStatus(CREATED)
-  public StockManagementDraftDto createEmptyStockManagementDraftForIssue(
+  public StockManagementDraftDto createEmptyStockManagementSubDraft(
       @RequestBody StockManagementDraftDto dto) {
     return stockManagementDraftService.createNewSubDraft(dto);
   }
@@ -85,8 +85,7 @@ public class SiglusStockManagementDraftController {
 
   @PutMapping("/{id}")
   @ResponseStatus(OK)
-  public StockManagementDraftDto updateDraft(@PathVariable UUID id,
-      @RequestBody StockManagementDraftDto dto) {
+  public StockManagementDraftDto updateDraft(@PathVariable UUID id, @RequestBody StockManagementDraftDto dto) {
     return stockManagementDraftService.updateDraft(dto, id);
   }
 
