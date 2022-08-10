@@ -15,28 +15,32 @@
 
 package org.siglus.siglusapi.web;
 
-import static org.springframework.http.HttpStatus.CREATED;
+import static org.mockito.Mockito.verify;
 
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 import org.siglus.siglusapi.dto.ProductLocationMovementDraftDto;
 import org.siglus.siglusapi.service.SiglusProductLocationMovementDraftService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
 
-@RestController
-@RequestMapping("/api/siglusapi/movementDrafts")
-public class SiglusProductLocationMovementDraftController {
+@RunWith(MockitoJUnitRunner.class)
+public class SiglusProductLocationMovementDraftControllerTest {
 
-  @Autowired
-  SiglusProductLocationMovementDraftService productLocationMovementDraftService;
+  @InjectMocks
+  private SiglusProductLocationMovementDraftController controller;
 
-  @PostMapping
-  @ResponseStatus(CREATED)
-  public ProductLocationMovementDraftDto createEmptyProductLocationMovementDraft(
-      @RequestBody ProductLocationMovementDraftDto dto) {
-    return productLocationMovementDraftService.createEmptyProductLocationMovementDraft(dto);
+  @Mock
+  private SiglusProductLocationMovementDraftService service;
+
+  private final ProductLocationMovementDraftDto productLocationMovementDraftDto = new ProductLocationMovementDraftDto();
+
+  @Test
+  public void shouldCallCreateEmptyProductLocationMovementDraft() {
+    controller.createEmptyProductLocationMovementDraft(productLocationMovementDraftDto);
+
+    verify(service).createEmptyProductLocationMovementDraft(productLocationMovementDraftDto);
   }
+
 }
