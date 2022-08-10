@@ -66,14 +66,6 @@ pipeline {
                 deploy "qa"
             }
         }
-        stage('Deploy To UAT') {
-            when {
-                branch 'release'
-            }
-            steps {
-                deploy "uat"
-            }
-        }
     }
 }
 
