@@ -51,17 +51,4 @@ public class SiglusShipmentControllerTest {
     verify(siglusShipmentService).createOrderAndShipment(false, shipmentDto);
     verify(notificationService).postConfirmShipment(any());
   }
-
-  @Test
-  public void shouldCreateShipmentByLocation() {
-    // given
-    ShipmentDto shipmentDto = new ShipmentDto();
-
-    // when
-    siglusShipmentController.confirmShipmentByLocation(false, shipmentDto);
-
-    // then
-    verify(siglusShipmentService).createOrderAndShipmentByLocation(false, shipmentDto);
-    verify(notificationService).postConfirmShipment(any());
-  }
 }

@@ -2276,7 +2276,66 @@ traits:
             body:
               application/json:
                 schema: localizedMessage
-
+    /shipmentDraftsWithLocation/{id}:
+      uriParameters:
+        id:
+          displayName: id
+          type: string
+          required: true
+          repeat: false
+      get:
+        is: [ secured ]
+        description: Get shipment draft.
+        responses:
+          204:
+            headers:
+              Keep_Alive:
+      put:
+        is: [ secured ]
+        description: Update shipment draft.
+        responses:
+          200:
+            description: Draft saved.
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+                schema: shipmentDraft
+          400:
+            body:
+              application/json:
+                schema: localizedMessage
+          401:
+            body:
+              application/json:
+          403:
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+                schema: localizedMessage
+      delete:
+        is: [ secured ]
+        description: Delete chosen shipment draft.
+        responses:
+          204:
+            headers:
+              Keep-Alive:
+          401:
+            body:
+              application/json:
+          403:
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+                schema: localizedMessage
+          404:
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+                schema: localizedMessage
     /shipmentDrafts:
       post:
         is: [ secured ]
@@ -2357,67 +2416,28 @@ traits:
               body:
                 application/json:
                   schema: localizedMessage
-      /{id}/byLocation:
-        uriParameters:
-          id:
-            displayName: id
-            type: string
-            required: true
-            repeat: false
-        get:
-          is: [ secured ]
-          description: Get shipment draft.
-          responses:
-            204:
-              headers:
-                Keep_Alive:
-        put:
-          is: [ secured ]
-          description: Update shipment draft.
-          responses:
-            200:
-              description: Draft saved.
-              headers:
-                Keep-Alive:
-              body:
-                application/json:
-                  schema: shipmentDraft
-            400:
-              body:
-                application/json:
-                  schema: localizedMessage
-            401:
-              body:
-                application/json:
-            403:
-              headers:
-                Keep-Alive:
-              body:
-                application/json:
-                  schema: localizedMessage
-        delete:
-          is: [ secured ]
-          description: Delete chosen shipment draft.
-          responses:
-            204:
-              headers:
-                Keep-Alive:
-            401:
-              body:
-                application/json:
-            403:
-              headers:
-                Keep-Alive:
-              body:
-                application/json:
-                  schema: localizedMessage
-            404:
-              headers:
-                Keep-Alive:
-              body:
-                application/json:
-                  schema: localizedMessage
-
+    /shipmentsWithLocation:
+      post:
+        is: [ secured ]
+        description: Confirm shipment by location.
+        responses:
+          200:
+            description: Shipment confirmed.
+            headers:
+              Keep-Alive:
+          400:
+            body:
+              application/json:
+                schema: localizedMessage
+          401:
+            body:
+              application/json:
+          403:
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+                schema: localizedMessage
     /shipments:
       post:
         is: [ secured ]
@@ -2446,29 +2466,6 @@ traits:
             body:
               application/json:
                 schema: localizedMessage
-      /byLocation:
-        post:
-          is: [ secured ]
-          description: Confirm shipment by location.
-          responses:
-            200:
-              description: Shipment confirmed.
-              headers:
-                Keep-Alive:
-            400:
-              body:
-                application/json:
-                  schema: localizedMessage
-            401:
-              body:
-                application/json:
-            403:
-              headers:
-                Keep-Alive:
-              body:
-                application/json:
-                  schema: localizedMessage
-
     /notifications:
       get:
         is: [ secured ]

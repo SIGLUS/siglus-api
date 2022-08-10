@@ -15,37 +15,40 @@
 
 package org.siglus.siglusapi.web;
 
-import org.openlmis.fulfillment.web.shipment.ShipmentDto;
-import org.siglus.siglusapi.service.SiglusNotificationService;
-import org.siglus.siglusapi.service.SiglusShipmentService;
+import java.util.UUID;
+import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftDto;
+import org.siglus.siglusapi.service.SiglusShipmentDraftService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/siglusapi/shipments")
-public class SiglusShipmentController {
-
+@RequestMapping("/api/siglusapi/shipmentDraftsWithLocation")
+public class SiglusShipmentDraftsWithLocationController {
   @Autowired
-  private SiglusShipmentService siglusShipmentService;
+  private SiglusShipmentDraftService siglusShipmentDraftService;
 
-  @Autowired
-  private SiglusNotificationService notificationService;
+  @GetMapping("/{id}")
+  public ShipmentDraftDto getShipmentDraftByLocation(@PathVariable UUID id) {
+    return siglusShipmentDraftService.getShipmentDraftByLocation(id);
+  }
 
-  @PostMapping
-  @ResponseStatus(HttpStatus.CREATED)
-  @Transactional
-  public ShipmentDto createShipment(
-      @RequestParam(name = "isSubOrder", required = false, defaultValue = "false")
-          boolean isSubOrder, @RequestBody ShipmentDto shipmentDto) {
-    ShipmentDto created = siglusShipmentService.createOrderAndShipment(isSubOrder, shipmentDto);
-    notificationService.postConfirmShipment(created);
-    return created;
+  @PutMapping("/{id}")
+  public ShipmentDraftDto updateShipmentDraftByLocation(@PathVariable UUID id,
+      @RequestBody ShipmentDraftDto draftDto) {
+    return siglusShipmentDraftService.updateShipmentDraftByLocation(id, draftDto);
+  }
+
+  @DeleteMapping("/{id}")
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  public void deleteShipmentDraftByLocation(@PathVariable UUID id) {
+    siglusShipmentDraftService.deleteShipmentDraftByLocation(id);
   }
 }

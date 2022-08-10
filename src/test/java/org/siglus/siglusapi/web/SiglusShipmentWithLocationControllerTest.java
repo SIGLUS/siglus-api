@@ -15,37 +15,40 @@
 
 package org.siglus.siglusapi.web;
 
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.verify;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.fulfillment.web.shipment.ShipmentDto;
 import org.siglus.siglusapi.service.SiglusNotificationService;
 import org.siglus.siglusapi.service.SiglusShipmentService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
 
-@RestController
-@RequestMapping("/api/siglusapi/shipments")
-public class SiglusShipmentController {
+@RunWith(MockitoJUnitRunner.class)
+public class SiglusShipmentWithLocationControllerTest {
 
-  @Autowired
+  @InjectMocks
+  private SiglusShipmentWithLocationController siglusShipmentWithLocationController;
+
+  @Mock
   private SiglusShipmentService siglusShipmentService;
 
-  @Autowired
+  @Mock
   private SiglusNotificationService notificationService;
 
-  @PostMapping
-  @ResponseStatus(HttpStatus.CREATED)
-  @Transactional
-  public ShipmentDto createShipment(
-      @RequestParam(name = "isSubOrder", required = false, defaultValue = "false")
-          boolean isSubOrder, @RequestBody ShipmentDto shipmentDto) {
-    ShipmentDto created = siglusShipmentService.createOrderAndShipment(isSubOrder, shipmentDto);
-    notificationService.postConfirmShipment(created);
-    return created;
+  @Test
+  public void shouldCreateShipmentByLocation() {
+    // given
+    ShipmentDto shipmentDto = new ShipmentDto();
+
+    // when
+    siglusShipmentWithLocationController.confirmShipmentByLocation(false, shipmentDto);
+
+    // then
+    verify(siglusShipmentService).createOrderAndShipmentByLocation(false, shipmentDto);
+    verify(notificationService).postConfirmShipment(any());
   }
 }

@@ -45,13 +45,13 @@ import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftController;
 import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftDto;
 import org.openlmis.fulfillment.web.util.OrderLineItemDto;
 import org.openlmis.fulfillment.web.util.OrderObjectReferenceDto;
-import org.siglus.siglusapi.domain.LocationManagement;
+import org.siglus.siglusapi.domain.FacilityLocations;
 import org.siglus.siglusapi.domain.OrderLineItemExtension;
-import org.siglus.siglusapi.domain.ShipmentDraftLineItemsByLocation;
-import org.siglus.siglusapi.repository.LocationManagementRepository;
+import org.siglus.siglusapi.domain.ShipmentDraftLineItemsExtension;
+import org.siglus.siglusapi.repository.FacilityLocationsRepository;
 import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.OrderLineItemRepository;
-import org.siglus.siglusapi.repository.ShipmentDraftLineItemsByLocationRepository;
+import org.siglus.siglusapi.repository.ShipmentDraftLineItemsExtensionRepository;
 import org.siglus.siglusapi.service.client.SiglusShipmentDraftFulfillmentService;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -82,10 +82,10 @@ public class SiglusShipmentDraftServiceTest {
   private OrderRepository orderRepository;
 
   @Mock
-  private ShipmentDraftLineItemsByLocationRepository shipmentDraftLineItemsByLocationRepository;
+  private ShipmentDraftLineItemsExtensionRepository shipmentDraftLineItemsByLocationRepository;
 
   @Mock
-  private LocationManagementRepository locationManagementRepository;
+  private FacilityLocationsRepository locationManagementRepository;
 
   private final UUID draftId = UUID.randomUUID();
 
@@ -241,13 +241,14 @@ public class SiglusShipmentDraftServiceTest {
     when(siglusShipmentDraftFulfillmentService.searchShipmentDraft(draftId))
         .thenReturn(draftDto);
     List<ShipmentLineItemDto> shipmentLineItemDtos = draftDto.lineItems();
-    ShipmentDraftLineItemsByLocation shipmentDraftLineItemsByLocation = new ShipmentDraftLineItemsByLocation();
+    ShipmentDraftLineItemsExtension shipmentDraftLineItemsByLocation = new ShipmentDraftLineItemsExtension();
     shipmentDraftLineItemsByLocation.setLocationId(locationId);
     shipmentDraftLineItemsByLocation.setShipmentDraftLineItemId(lineItemId);
+    shipmentDraftLineItemsByLocation.setId(lineItemId);
     List<UUID> lineItemIds = shipmentLineItemDtos.stream().map(ShipmentLineItemDto::getId).collect(Collectors.toList());
     when(shipmentDraftLineItemsByLocationRepository.findByShipmentDraftLineItemIdIn(lineItemIds))
         .thenReturn(newArrayList(shipmentDraftLineItemsByLocation));
-    LocationManagement locationManagement = new LocationManagement();
+    FacilityLocations locationManagement = new FacilityLocations();
     locationManagement.setLocationCode(locationCode);
     locationManagement.setId(locationId);
     when(locationManagementRepository.findByIdIn(newArrayList(locationId)))
@@ -287,13 +288,13 @@ public class SiglusShipmentDraftServiceTest {
         .thenReturn(newArrayList(extension));
     when(siglusOrderService.updateOrderLineItems(draftDto)).thenReturn(newHashSet(lineItemId));
     List<ShipmentLineItemDto> shipmentLineItemDtos = draftDto.lineItems();
-    ShipmentDraftLineItemsByLocation shipmentDraftLineItemsByLocation = new ShipmentDraftLineItemsByLocation();
+    ShipmentDraftLineItemsExtension shipmentDraftLineItemsByLocation = new ShipmentDraftLineItemsExtension();
     shipmentDraftLineItemsByLocation.setLocationId(locationId);
     shipmentDraftLineItemsByLocation.setShipmentDraftLineItemId(lineItemId);
     List<UUID> lineItemIds = shipmentLineItemDtos.stream().map(ShipmentLineItemDto::getId).collect(Collectors.toList());
     when(shipmentDraftLineItemsByLocationRepository.findByShipmentDraftLineItemIdIn(lineItemIds))
         .thenReturn(newArrayList(shipmentDraftLineItemsByLocation));
-    LocationManagement locationManagement = new LocationManagement();
+    FacilityLocations locationManagement = new FacilityLocations();
     locationManagement.setLocationCode(locationCode);
     locationManagement.setId(locationId);
     when(locationManagementRepository.findByIdIn(newArrayList(locationId)))

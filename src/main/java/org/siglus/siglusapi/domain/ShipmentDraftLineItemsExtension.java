@@ -34,8 +34,8 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = false)
 @EntityListeners(AuditingEntityListener.class)
-@Table(name = "shipment_draft_line_items_by_location", schema = "siglusintegration")
-public class ShipmentDraftLineItemsByLocation extends BaseEntity {
+@Table(name = "shipment_draft_line_items_extension", schema = "siglusintegration")
+public class ShipmentDraftLineItemsExtension extends BaseEntity {
   private UUID shipmentDraftLineItemId;
 
   private UUID locationId;

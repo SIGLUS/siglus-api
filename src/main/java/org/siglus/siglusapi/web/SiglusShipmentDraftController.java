@@ -21,7 +21,6 @@ import org.siglus.siglusapi.service.SiglusShipmentDraftService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -55,22 +54,5 @@ public class SiglusShipmentDraftController {
   @ResponseStatus(HttpStatus.NO_CONTENT)
   public void deleteShipmentDraft(@PathVariable UUID id) {
     siglusShipmentDraftService.deleteShipmentDraft(id);
-  }
-
-  @GetMapping("/{id}/byLocation")
-  public ShipmentDraftDto getShipmentDraftByLocation(@PathVariable UUID id) {
-    return siglusShipmentDraftService.getShipmentDraftByLocation(id);
-  }
-
-  @PutMapping("/{id}/byLocation")
-  public ShipmentDraftDto updateShipmentDraftByLocation(@PathVariable UUID id,
-      @RequestBody ShipmentDraftDto draftDto) {
-    return siglusShipmentDraftService.updateShipmentDraftByLocation(id, draftDto);
-  }
-
-  @DeleteMapping("/{id}/byLocation")
-  @ResponseStatus(HttpStatus.NO_CONTENT)
-  public void deleteShipmentDraftByLocation(@PathVariable UUID id) {
-    siglusShipmentDraftService.deleteShipmentDraftByLocation(id);
   }
 }

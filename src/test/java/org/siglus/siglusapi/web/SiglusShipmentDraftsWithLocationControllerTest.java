@@ -27,10 +27,9 @@ import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftDto;
 import org.siglus.siglusapi.service.SiglusShipmentDraftService;
 
 @RunWith(MockitoJUnitRunner.class)
-public class SiglusShipmentDraftControllerTest {
-
+public class SiglusShipmentDraftsWithLocationControllerTest {
   @InjectMocks
-  private SiglusShipmentDraftController siglusShipmentDraftController;
+  private SiglusShipmentDraftsWithLocationController siglusShipmentDraftsWithLocationController;
 
   @Mock
   private SiglusShipmentDraftService siglusShipmentDraftService;
@@ -38,33 +37,32 @@ public class SiglusShipmentDraftControllerTest {
   private final UUID draftId = UUID.randomUUID();
 
   @Test
-  public void shouldCallServiceWhenUpdateShipmentDraft() {
+  public void shouldGetShipmentDraftByLocation() {
+    // when
+    siglusShipmentDraftsWithLocationController.getShipmentDraftByLocation(draftId);
+
+    // then
+    verify(siglusShipmentDraftService).getShipmentDraftByLocation(draftId);
+  }
+
+  @Test
+  public void shouldUpdateShipmentDraftByLocation() {
     // given
     ShipmentDraftDto draftDto = new ShipmentDraftDto();
 
     // when
-    siglusShipmentDraftController.updateShipmentDraft(draftId, draftDto);
+    siglusShipmentDraftsWithLocationController.updateShipmentDraftByLocation(draftId, draftDto);
 
     // then
-    verify(siglusShipmentDraftService).updateShipmentDraft(draftId, draftDto);
+    verify(siglusShipmentDraftService).updateShipmentDraftByLocation(draftId, draftDto);
   }
 
   @Test
-  public void shouldCallServiceWhenDeleteShipmentDraft() {
+  public void shouldDeleteShipmentDraftByLocation() {
     // when
-    siglusShipmentDraftController.deleteShipmentDraft(draftId);
+    siglusShipmentDraftsWithLocationController.deleteShipmentDraftByLocation(draftId);
 
     // then
-    verify(siglusShipmentDraftService).deleteShipmentDraft(draftId);
-  }
-
-  @Test
-  public void shouldCallV3ControllerWhenCreateShipmentDraft() {
-    // when
-    ShipmentDraftDto draftDto = new ShipmentDraftDto();
-    siglusShipmentDraftController.createShipmentDraft(draftDto);
-
-    // then
-    verify(siglusShipmentDraftService).createShipmentDraft(draftDto);
+    verify(siglusShipmentDraftService).deleteShipmentDraftByLocation(draftId);
   }
 }

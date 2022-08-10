@@ -42,11 +42,11 @@ import org.openlmis.fulfillment.web.util.OrderDto;
 import org.openlmis.fulfillment.web.util.OrderLineItemDto;
 import org.openlmis.fulfillment.web.util.OrderObjectReferenceDto;
 import org.siglus.siglusapi.domain.OrderLineItemExtension;
-import org.siglus.siglusapi.domain.ShipmentLineItemsByLocation;
+import org.siglus.siglusapi.domain.ShipmentLineItemsExtension;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
-import org.siglus.siglusapi.repository.ShipmentLineItemsByLocationRepository;
+import org.siglus.siglusapi.repository.ShipmentLineItemsExtensionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -71,7 +71,7 @@ public class SiglusShipmentService {
   private OrderController orderController;
 
   @Autowired
-  private ShipmentLineItemsByLocationRepository shipmentLineItemsByLocationRepository;
+  private ShipmentLineItemsExtensionRepository shipmentLineItemsExtensionRepository;
 
   @Transactional
   public ShipmentDto createOrderAndShipment(boolean isSubOrder, ShipmentDto shipmentDto) {
@@ -81,11 +81,11 @@ public class SiglusShipmentService {
   @Transactional
   public ShipmentDto createOrderAndShipmentByLocation(boolean isSubOrder, ShipmentDto shipmentDto) {
     List<ShipmentLineItemDto> shipmentLineItemDtos = shipmentDto.lineItems();
-    List<ShipmentLineItemsByLocation> shipmentLineItemsByLocations = Lists.newArrayList();
+    List<ShipmentLineItemsExtension> shipmentLineItemsByLocations = Lists.newArrayList();
     shipmentLineItemDtos.forEach(shipmentLineItemDto -> {
       UUID lineItemId = shipmentLineItemDto.getId();
       UUID locationId = shipmentLineItemDto.getLocation().getId();
-      ShipmentLineItemsByLocation shipmentLineItemsByLocation = ShipmentLineItemsByLocation
+      ShipmentLineItemsExtension shipmentLineItemsByLocation = ShipmentLineItemsExtension
           .builder()
           .shipmentLineItemId(lineItemId)
           .locationId(locationId)
@@ -94,7 +94,7 @@ public class SiglusShipmentService {
     });
     ShipmentDto confirmedShipmentDto = createOrderAndConfirmShipment(isSubOrder, shipmentDto);
     log.info("create shipment line item by location");
-    shipmentLineItemsByLocationRepository.save(shipmentLineItemsByLocations);
+    shipmentLineItemsExtensionRepository.save(shipmentLineItemsByLocations);
     return confirmedShipmentDto;
   }
 

@@ -17,7 +17,6 @@ package org.siglus.siglusapi.domain;
 
 import java.util.UUID;
 import javax.persistence.Entity;
-import javax.persistence.EntityListeners;
 import javax.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -25,18 +24,28 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.siglus.common.domain.BaseEntity;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @Entity
 @Data
 @Builder
+@EqualsAndHashCode(callSuper = true)
 @AllArgsConstructor
 @NoArgsConstructor
-@EqualsAndHashCode(callSuper = false)
-@EntityListeners(AuditingEntityListener.class)
-@Table(name = "shipment_line_items_by_location", schema = "siglusintegration")
-public class ShipmentLineItemsByLocation extends BaseEntity {
-  private UUID shipmentLineItemId;
+@Table(name = "facility_locations", schema = "siglusintegration")
+public class FacilityLocations extends BaseEntity {
+  private UUID facilityId;
 
-  private UUID locationId;
+  private String locationCode;
+
+  private String area;
+
+  private String zone;
+
+  private String rack;
+
+  private String barcode;
+
+  private Integer bin;
+
+  private String level;
 }

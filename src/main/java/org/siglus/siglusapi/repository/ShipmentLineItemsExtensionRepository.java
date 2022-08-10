@@ -15,14 +15,10 @@
 
 package org.siglus.siglusapi.repository;
 
-import java.util.List;
 import java.util.UUID;
-import org.siglus.siglusapi.domain.ShipmentDraftLineItemsByLocation;
+import org.siglus.siglusapi.domain.ShipmentLineItemsExtension;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface ShipmentDraftLineItemsByLocationRepository extends
-    JpaRepository<ShipmentDraftLineItemsByLocation, UUID> {
-  List<ShipmentDraftLineItemsByLocation> findByShipmentDraftLineItemIdIn(List<UUID> shipmentDraftLineItemIds);
-
-  void deleteByShipmentDraftLineItemIdIn(List<UUID> shipmentDraftLineItemIds);
+public interface ShipmentLineItemsExtensionRepository extends
+    JpaRepository<ShipmentLineItemsExtension, UUID> {
 }

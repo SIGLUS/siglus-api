@@ -38,7 +38,7 @@ import org.openlmis.stockmanagement.repository.StockCardRepository;
 import org.openlmis.stockmanagement.web.Pagination;
 import org.siglus.siglusapi.domain.AppInfo;
 import org.siglus.siglusapi.domain.FacilityExtension;
-import org.siglus.siglusapi.domain.LocationManagement;
+import org.siglus.siglusapi.domain.FacilityLocations;
 import org.siglus.siglusapi.domain.SiglusReportType;
 import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.FacilitySearchParamDto;
@@ -51,7 +51,7 @@ import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.i18n.CsvUploadMessageKeys;
 import org.siglus.siglusapi.repository.AppInfoRepository;
 import org.siglus.siglusapi.repository.FacilityExtensionRepository;
-import org.siglus.siglusapi.repository.LocationManagementRepository;
+import org.siglus.siglusapi.repository.FacilityLocationsRepository;
 import org.siglus.siglusapi.repository.SiglusReportTypeRepository;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.validator.CsvValidator;
@@ -74,7 +74,7 @@ public class SiglusAdministrationsService {
   @Autowired
   private FacilityExtensionRepository facilityExtensionRepository;
   @Autowired
-  private LocationManagementRepository locationManagementRepository;
+  private FacilityLocationsRepository facilityLocationsRepository;
   @Autowired
   private StockCardRepository stockCardRepository;
   @Autowired
@@ -167,7 +167,7 @@ public class SiglusAdministrationsService {
     response.setContentType(MEDIA_TYPE);
     response.addHeader(HttpHeaders.CONTENT_DISPOSITION, DISPOSITION_BASE + "\"" + FILE_NAME + "\"");
 
-    List<LocationManagement> locationList = locationManagementRepository.findOneByFacilityId(facilityId);
+    List<FacilityLocations> locationList = facilityLocationsRepository.findOneByFacilityId(facilityId);
     try {
       writeLocationInfoOnCsv(locationList, response.getWriter());
     } catch (IOException ioException) {
@@ -179,7 +179,7 @@ public class SiglusAdministrationsService {
   @Transactional
   public void uploadLocationInfo(UUID facilityId, MultipartFile locationManagementFile) throws IOException {
     validateCsvFile(locationManagementFile);
-    List<LocationManagement> locationManagementList = Lists.newArrayList();
+    List<FacilityLocations> locationManagementList = Lists.newArrayList();
     BufferedReader locationInfoReader = new BufferedReader(new InputStreamReader(locationManagementFile
         .getInputStream()));
     CSVParser fileParser = new CSVParser(locationInfoReader, CSVFormat.EXCEL.withFirstRecordAsHeader());
@@ -194,14 +194,14 @@ public class SiglusAdministrationsService {
       String barcode = eachRow.get(BARCODE);
       int bin = Integer.parseInt(eachRow.get(BIN));
       String level = eachRow.get(LEVEL);
-      LocationManagement locationManagement = new LocationManagement(facilityId, locationCode, area, zone, rack,
+      FacilityLocations locationManagement = new FacilityLocations(facilityId, locationCode, area, zone, rack,
           barcode, bin, level);
       locationManagementList.add(locationManagement);
     }
     log.info("delete location management info with facilityId: {}", facilityId);
-    locationManagementRepository.deleteByFacilityId(facilityId);
+    facilityLocationsRepository.deleteByFacilityId(facilityId);
     log.info("Save location management info with facilityId: {}", facilityId);
-    locationManagementRepository.save(locationManagementList);
+    facilityLocationsRepository.save(locationManagementList);
   }
 
   private void validateReportTypes(SiglusFacilityDto siglusFacilityDto) {
@@ -232,14 +232,14 @@ public class SiglusAdministrationsService {
     }
   }
 
-  private void writeLocationInfoOnCsv(List<LocationManagement> locationList, Writer writer)
+  private void writeLocationInfoOnCsv(List<FacilityLocations> locationList, Writer writer)
       throws IOException {
     CSVPrinter csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT);
     csvPrinter.printRecord(LOCATION_CODE, AREA, ZONE, RACK, BARCODE, BIN, LEVEL);
     if (CollectionUtils.isEmpty(locationList)) {
       return;
     }
-    for (LocationManagement locationManagement : locationList) {
+    for (FacilityLocations locationManagement : locationList) {
       csvPrinter.printRecord(
           locationManagement.getLocationCode(),
           locationManagement.getArea(),

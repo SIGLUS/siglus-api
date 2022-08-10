@@ -50,7 +50,7 @@ import org.openlmis.requisition.utils.Pagination;
 import org.openlmis.stockmanagement.repository.StockCardRepository;
 import org.siglus.siglusapi.domain.AppInfo;
 import org.siglus.siglusapi.domain.FacilityExtension;
-import org.siglus.siglusapi.domain.LocationManagement;
+import org.siglus.siglusapi.domain.FacilityLocations;
 import org.siglus.siglusapi.domain.SiglusReportType;
 import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.FacilitySearchParamDto;
@@ -61,7 +61,7 @@ import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.AppInfoRepository;
 import org.siglus.siglusapi.repository.FacilityExtensionRepository;
-import org.siglus.siglusapi.repository.LocationManagementRepository;
+import org.siglus.siglusapi.repository.FacilityLocationsRepository;
 import org.siglus.siglusapi.repository.SiglusReportTypeRepository;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.util.AndroidHelper;
@@ -85,7 +85,7 @@ public class SiglusAdminstrationServiceTest {
   @Mock
   private FacilityExtensionRepository facilityExtensionRepository;
   @Mock
-  private LocationManagementRepository locationManagementRepository;
+  private FacilityLocationsRepository locationManagementRepository;
   @Mock
   private AndroidHelper androidHelper;
   @Mock
@@ -116,7 +116,7 @@ public class SiglusAdminstrationServiceTest {
 
   private static final List<FacilityDto> content = new ArrayList<>();
 
-  private static final List<LocationManagement> locationManagementList = new ArrayList<>();
+  private static final List<FacilityLocations> locationManagementList = new ArrayList<>();
 
   private static final Pageable pageable = new PageRequest(0, 3);
 
@@ -425,8 +425,8 @@ public class SiglusAdminstrationServiceTest {
     return siglusFacilityDto;
   }
 
-  private List<LocationManagement> mockLocationManagement() {
-    LocationManagement locationManagement = new LocationManagement();
+  private List<FacilityLocations> mockLocationManagement() {
+    FacilityLocations locationManagement = new FacilityLocations();
     locationManagement.setFacilityId(facilityId);
     locationManagement.setLocationCode(LOCATION_CODE);
     locationManagement.setArea(AREA);

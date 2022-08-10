@@ -19,6 +19,7 @@ import static com.google.common.collect.Lists.newArrayList;
 import static java.util.stream.Collectors.toMap;
 
 import com.google.common.collect.Lists;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -33,13 +34,13 @@ import org.openlmis.fulfillment.web.shipment.ShipmentLineItemDto;
 import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftController;
 import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftDto;
 import org.openlmis.fulfillment.web.util.OrderLineItemDto;
-import org.siglus.siglusapi.domain.LocationManagement;
+import org.siglus.siglusapi.domain.FacilityLocations;
 import org.siglus.siglusapi.domain.OrderLineItemExtension;
-import org.siglus.siglusapi.domain.ShipmentDraftLineItemsByLocation;
-import org.siglus.siglusapi.repository.LocationManagementRepository;
+import org.siglus.siglusapi.domain.ShipmentDraftLineItemsExtension;
+import org.siglus.siglusapi.repository.FacilityLocationsRepository;
 import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.OrderLineItemRepository;
-import org.siglus.siglusapi.repository.ShipmentDraftLineItemsByLocationRepository;
+import org.siglus.siglusapi.repository.ShipmentDraftLineItemsExtensionRepository;
 import org.siglus.siglusapi.service.client.SiglusShipmentDraftFulfillmentService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -70,10 +71,10 @@ public class SiglusShipmentDraftService {
   private SiglusOrderService siglusOrderService;
 
   @Autowired
-  private LocationManagementRepository locationManagementRepository;
+  private FacilityLocationsRepository facilityLocationsRepository;
 
   @Autowired
-  private ShipmentDraftLineItemsByLocationRepository shipmentDraftLineItemsByLocationRepository;
+  private ShipmentDraftLineItemsExtensionRepository shipmentDraftLineItemsExtensionRepository;
 
   private ShipmentDraftDto draftDto;
 
@@ -94,24 +95,24 @@ public class SiglusShipmentDraftService {
     draftController.deleteShipmentDraft(id);
   }
 
-  public ShipmentDraftDto getShipmentDraftByLocation(UUID orderId) {
-    ShipmentDraftDto shipmentDraftDto = siglusShipmentDraftFulfillmentService.searchShipmentDraft(orderId);
+  public ShipmentDraftDto getShipmentDraftByLocation(UUID shipmentDraftId) {
+    ShipmentDraftDto shipmentDraftDto = siglusShipmentDraftFulfillmentService.searchShipmentDraft(shipmentDraftId);
     return fulfillShipmentDraftByLocation(shipmentDraftDto);
   }
 
   @Transactional
-  public ShipmentDraftDto updateShipmentDraftByLocation(UUID id, ShipmentDraftDto draftDto) {
+  public ShipmentDraftDto updateShipmentDraftByLocation(UUID shipmentDraftId, ShipmentDraftDto draftDto) {
     updateOrderLineItemExtension(draftDto);
-    ShipmentDraftDto shipmentDraftDto = draftController.updateShipmentDraft(id, draftDto);
+    ShipmentDraftDto shipmentDraftDto = draftController.updateShipmentDraft(shipmentDraftId, draftDto);
     updateLineItemLocation(draftDto);
     return fulfillShipmentDraftByLocation(shipmentDraftDto);
   }
 
   @Transactional
-  public void deleteShipmentDraftByLocation(UUID draftId) {
-    deleteOrderLineItemAndInitialedExtension(getDraftOrder(draftId));
+  public void deleteShipmentDraftByLocation(UUID shipmentDraftId) {
+    deleteOrderLineItemAndInitialedExtension(getDraftOrder(shipmentDraftId));
     deleteShipmentDraftLocation(draftDto);
-    draftController.deleteShipmentDraft(draftId);
+    draftController.deleteShipmentDraft(shipmentDraftId);
   }
 
   public void deleteOrderLineItemAndInitialedExtension(Order order) {
@@ -219,31 +220,32 @@ public class SiglusShipmentDraftService {
     List<ShipmentLineItemDto> newShipmentLineItemDto = Lists.newArrayList();
     List<UUID> lineItemIds = shipmentLineItemDtos.stream().map(ShipmentLineItemDto::getId).collect(Collectors.toList());
 
-    List<ShipmentDraftLineItemsByLocation> lineItemsByLocationList = shipmentDraftLineItemsByLocationRepository
+    List<ShipmentDraftLineItemsExtension> lineItemsExtensionList = shipmentDraftLineItemsExtensionRepository
         .findByShipmentDraftLineItemIdIn(lineItemIds);
-    List<UUID> locationIds = lineItemsByLocationList.stream().map(ShipmentDraftLineItemsByLocation::getLocationId)
+    List<UUID> locationIds = lineItemsExtensionList.stream().map(ShipmentDraftLineItemsExtension::getLocationId)
         .collect(Collectors.toList());
-    List<LocationManagement> locationManagementList = locationManagementRepository.findByIdIn(locationIds);
+    List<FacilityLocations> locationManagementList = facilityLocationsRepository.findByIdIn(locationIds);
 
+    Map<UUID, UUID> lineItemIdToLocationIdMap = new HashMap<>();
+    lineItemsExtensionList.forEach(lineItemExtension -> {
+      lineItemIdToLocationIdMap.put(lineItemExtension.getShipmentDraftLineItemId(), lineItemExtension.getLocationId());
+    });
+    Map<UUID, String> locationIdToCodeMap = new HashMap<>();
+    locationManagementList.forEach(locationManagement -> {
+      locationIdToCodeMap.put(locationManagement.getId(), locationManagement.getLocationCode());
+    });
     shipmentLineItemDtos.forEach(lineItemDto -> {
-      lineItemsByLocationList.forEach(lineItemsByLocation -> {
-        if (lineItemDto.getId().equals(lineItemsByLocation.getShipmentDraftLineItemId())) {
-          LocationManagement locationManagementDto = locationManagementList.stream()
-              .filter(locationManagement -> locationManagement.getId().equals(lineItemsByLocation.getLocationId()))
-              .findFirst().orElse(null);
-          if (null != locationManagementDto) {
-            ShipmentLineItemDto shipmentLineItemDto = new ShipmentLineItemDto();
-            BeanUtils.copyProperties(lineItemDto, shipmentLineItemDto);
-            LocationDto locationDto = LocationDto
-                .builder()
-                .id(lineItemsByLocation.getLocationId())
-                .locationCode(locationManagementDto.getLocationCode())
-                .build();
-            shipmentLineItemDto.setLocation(locationDto);
-            newShipmentLineItemDto.add(shipmentLineItemDto);
-          }
-        }
-      });
+      UUID locationId = lineItemIdToLocationIdMap.get(lineItemDto.getId());
+      String locationCode = locationIdToCodeMap.get(locationId);
+      ShipmentLineItemDto shipmentLineItemDto = new ShipmentLineItemDto();
+      BeanUtils.copyProperties(lineItemDto, shipmentLineItemDto);
+      LocationDto locationDto = LocationDto
+          .builder()
+          .id(locationId)
+          .locationCode(locationCode)
+          .build();
+      shipmentLineItemDto.setLocation(locationDto);
+      newShipmentLineItemDto.add(shipmentLineItemDto);
     });
     shipmentDraftDto.setLineItems(newShipmentLineItemDto);
     return shipmentDraftDto;
@@ -258,20 +260,21 @@ public class SiglusShipmentDraftService {
     List<ShipmentLineItemDto> lineItemDtos = shipmentDraftDto.lineItems();
     List<UUID> lineItemIds = lineItemDtos.stream().map(ShipmentLineItemDto::getId).collect(Collectors.toList());
     log.info("shipment draft line items by location; delete with line item ids: {}", lineItemIds);
-    shipmentDraftLineItemsByLocationRepository.deleteByShipmentDraftLineItemIdIn(lineItemIds);
+    shipmentDraftLineItemsExtensionRepository.deleteByShipmentDraftLineItemIdIn(lineItemIds);
   }
 
   private void saveLineItemLocation(ShipmentDraftDto shipmentDraftDto) {
     List<ShipmentLineItemDto> lineItemDtos = shipmentDraftDto.lineItems();
-    List<ShipmentDraftLineItemsByLocation> shipmentDraftLineItemsByLocationList = Lists.newArrayList();
-    lineItemDtos.forEach(lineItemDto -> {
-      ShipmentDraftLineItemsByLocation shipmentDraftLineItemsByLocation = ShipmentDraftLineItemsByLocation
-          .builder()
-          .locationId(lineItemDto.getLocation().getId())
-          .shipmentDraftLineItemId(lineItemDto.getId())
-          .build();
-      shipmentDraftLineItemsByLocationList.add(shipmentDraftLineItemsByLocation);
-    });
-    shipmentDraftLineItemsByLocationRepository.save(shipmentDraftLineItemsByLocationList);
+    List<ShipmentDraftLineItemsExtension> shipmentDraftLineItemsByLocationList = lineItemDtos.stream()
+            .map(lineItemDto -> ShipmentDraftLineItemsExtension
+                .builder()
+                .locationId(lineItemDto.getLocation().getId())
+                .shipmentDraftLineItemId(lineItemDto.getId())
+                .build())
+        .collect(Collectors.toList());
+    List<UUID> id = shipmentDraftLineItemsByLocationList.stream().map(ShipmentDraftLineItemsExtension::getId)
+        .collect(Collectors.toList());
+    log.info("shipment draft line items by location; save with line item ids: {}", id);
+    shipmentDraftLineItemsExtensionRepository.save(shipmentDraftLineItemsByLocationList);
   }
 }
