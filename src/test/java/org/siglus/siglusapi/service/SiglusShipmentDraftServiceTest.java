@@ -28,6 +28,7 @@ import static org.mockito.Mockito.when;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -38,13 +39,19 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.fulfillment.domain.Order;
 import org.openlmis.fulfillment.domain.OrderLineItem;
 import org.openlmis.fulfillment.repository.OrderRepository;
+import org.openlmis.fulfillment.web.shipment.LocationDto;
+import org.openlmis.fulfillment.web.shipment.ShipmentLineItemDto;
 import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftController;
 import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftDto;
 import org.openlmis.fulfillment.web.util.OrderLineItemDto;
 import org.openlmis.fulfillment.web.util.OrderObjectReferenceDto;
+import org.siglus.siglusapi.domain.LocationManagement;
 import org.siglus.siglusapi.domain.OrderLineItemExtension;
+import org.siglus.siglusapi.domain.ShipmentDraftLineItemsByLocation;
+import org.siglus.siglusapi.repository.LocationManagementRepository;
 import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.OrderLineItemRepository;
+import org.siglus.siglusapi.repository.ShipmentDraftLineItemsByLocationRepository;
 import org.siglus.siglusapi.service.client.SiglusShipmentDraftFulfillmentService;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -74,11 +81,21 @@ public class SiglusShipmentDraftServiceTest {
   @Mock
   private OrderRepository orderRepository;
 
+  @Mock
+  private ShipmentDraftLineItemsByLocationRepository shipmentDraftLineItemsByLocationRepository;
+
+  @Mock
+  private LocationManagementRepository locationManagementRepository;
+
   private final UUID draftId = UUID.randomUUID();
 
   private final UUID orderId = UUID.randomUUID();
 
   private final UUID lineItemId = UUID.randomUUID();
+
+  private final UUID locationId = UUID.randomUUID();
+
+  private final String locationCode = "AA25A";
 
   @Test
   public void shouldUpdateLineItemExtensionWhenUpdateShipmentDraftIfExtensionExist() {
@@ -210,4 +227,111 @@ public class SiglusShipmentDraftServiceTest {
     assertEquals(false, lineItemExtensions.iterator().next().isSkipped());
   }
 
+  @Test
+  public void shouldGetShipmentDraftByLocation() {
+    // given
+    ShipmentDraftDto draftDto = new ShipmentDraftDto();
+    ShipmentLineItemDto shipmentLineItemDto = new ShipmentLineItemDto();
+    LocationDto locationDto = LocationDto.builder().id(locationId).locationCode(locationCode).build();
+    shipmentLineItemDto.setLocation(locationDto);
+    shipmentLineItemDto.setId(lineItemId);
+    draftDto.setLineItems(newArrayList(shipmentLineItemDto));
+    OrderObjectReferenceDto orderDto = new OrderObjectReferenceDto(orderId);
+    draftDto.setOrder(orderDto);
+    when(siglusShipmentDraftFulfillmentService.searchShipmentDraft(draftId))
+        .thenReturn(draftDto);
+    List<ShipmentLineItemDto> shipmentLineItemDtos = draftDto.lineItems();
+    ShipmentDraftLineItemsByLocation shipmentDraftLineItemsByLocation = new ShipmentDraftLineItemsByLocation();
+    shipmentDraftLineItemsByLocation.setLocationId(locationId);
+    shipmentDraftLineItemsByLocation.setShipmentDraftLineItemId(lineItemId);
+    List<UUID> lineItemIds = shipmentLineItemDtos.stream().map(ShipmentLineItemDto::getId).collect(Collectors.toList());
+    when(shipmentDraftLineItemsByLocationRepository.findByShipmentDraftLineItemIdIn(lineItemIds))
+        .thenReturn(newArrayList(shipmentDraftLineItemsByLocation));
+    LocationManagement locationManagement = new LocationManagement();
+    locationManagement.setLocationCode(locationCode);
+    locationManagement.setId(locationId);
+    when(locationManagementRepository.findByIdIn(newArrayList(locationId)))
+        .thenReturn(newArrayList(locationManagement));
+
+    // when
+    ShipmentDraftDto shipmentDraftByLocation = siglusShipmentDraftService.getShipmentDraftByLocation(draftId);
+
+    // then
+    assertEquals(shipmentDraftByLocation.lineItems().get(0).getLocation().getId(), locationId);
+  }
+
+  @Test
+  public void shouldUpdateShipmentDraftByLocation() {
+    // given
+    OrderLineItemDto lineItemDto = new OrderLineItemDto();
+    lineItemDto.setId(lineItemId);
+    lineItemDto.setSkipped(true);
+    OrderObjectReferenceDto order = new OrderObjectReferenceDto(orderId);
+    order.setOrderLineItems(newArrayList(lineItemDto));
+    ShipmentDraftDto draftDto = new ShipmentDraftDto();
+    draftDto.setId(draftId);
+    draftDto.setOrder(order);
+    ShipmentLineItemDto shipmentLineItemDto = new ShipmentLineItemDto();
+    LocationDto locationDto = LocationDto.builder().id(locationId).locationCode(locationCode).build();
+    shipmentLineItemDto.setLocation(locationDto);
+    shipmentLineItemDto.setId(lineItemId);
+    shipmentLineItemDto.setQuantityShipped(10L);
+    draftDto.setLineItems(newArrayList(shipmentLineItemDto));
+    when(draftController.updateShipmentDraft(draftId, draftDto))
+        .thenReturn(draftDto);
+    OrderLineItemExtension extension = OrderLineItemExtension.builder()
+        .orderLineItemId(lineItemId)
+        .skipped(false)
+        .build();
+    when(lineItemExtensionRepository.findByOrderLineItemIdIn(newHashSet(lineItemId)))
+        .thenReturn(newArrayList(extension));
+    when(siglusOrderService.updateOrderLineItems(draftDto)).thenReturn(newHashSet(lineItemId));
+    List<ShipmentLineItemDto> shipmentLineItemDtos = draftDto.lineItems();
+    ShipmentDraftLineItemsByLocation shipmentDraftLineItemsByLocation = new ShipmentDraftLineItemsByLocation();
+    shipmentDraftLineItemsByLocation.setLocationId(locationId);
+    shipmentDraftLineItemsByLocation.setShipmentDraftLineItemId(lineItemId);
+    List<UUID> lineItemIds = shipmentLineItemDtos.stream().map(ShipmentLineItemDto::getId).collect(Collectors.toList());
+    when(shipmentDraftLineItemsByLocationRepository.findByShipmentDraftLineItemIdIn(lineItemIds))
+        .thenReturn(newArrayList(shipmentDraftLineItemsByLocation));
+    LocationManagement locationManagement = new LocationManagement();
+    locationManagement.setLocationCode(locationCode);
+    locationManagement.setId(locationId);
+    when(locationManagementRepository.findByIdIn(newArrayList(locationId)))
+        .thenReturn(newArrayList(locationManagement));
+
+    // when
+    ShipmentDraftDto shipmentDraftDto = siglusShipmentDraftService.updateShipmentDraftByLocation(draftId, draftDto);
+
+    // then
+    assertEquals(shipmentDraftDto.getId(), draftId);
+  }
+
+  @Test
+  public void shouldDeleteLocationWhenDeleteShipmentDraft() {
+    // given
+    OrderObjectReferenceDto orderDto = new OrderObjectReferenceDto(orderId);
+    ShipmentDraftDto draftDto = new ShipmentDraftDto();
+    ShipmentLineItemDto shipmentLineItemDto = new ShipmentLineItemDto();
+    shipmentLineItemDto.setId(lineItemId);
+    draftDto.setLineItems(newArrayList(shipmentLineItemDto));
+    draftDto.setOrder(orderDto);
+    when(siglusShipmentDraftFulfillmentService.searchShipmentDraft(draftId))
+        .thenReturn(draftDto);
+    OrderLineItem lineItem = new OrderLineItem();
+    lineItem.setId(lineItemId);
+    Order order = new Order();
+    order.setId(orderId);
+    order.setOrderLineItems(newArrayList(lineItem));
+    when(orderRepository.findOne(orderId)).thenReturn(order);
+    OrderLineItemExtension extension = OrderLineItemExtension.builder()
+        .orderLineItemId(lineItemId)
+        .skipped(true)
+        .added(true)
+        .build();
+    when(lineItemExtensionRepository.findByOrderId(orderId))
+        .thenReturn(newArrayList(extension));
+
+    // when
+    siglusShipmentDraftService.deleteShipmentDraftByLocation(draftId);
+  }
 }

@@ -19,6 +19,7 @@ import static java.util.stream.Collectors.toSet;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_SUB_ORDER_LINE_ITEM;
 import static org.siglus.siglusapi.i18n.MessageKeys.SHIPMENT_ORDER_STATUS_INVALID;
 
+import com.google.common.collect.Lists;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -36,13 +37,16 @@ import org.openlmis.fulfillment.repository.OrderRepository;
 import org.openlmis.fulfillment.web.OrderController;
 import org.openlmis.fulfillment.web.shipment.ShipmentController;
 import org.openlmis.fulfillment.web.shipment.ShipmentDto;
+import org.openlmis.fulfillment.web.shipment.ShipmentLineItemDto;
 import org.openlmis.fulfillment.web.util.OrderDto;
 import org.openlmis.fulfillment.web.util.OrderLineItemDto;
 import org.openlmis.fulfillment.web.util.OrderObjectReferenceDto;
 import org.siglus.siglusapi.domain.OrderLineItemExtension;
+import org.siglus.siglusapi.domain.ShipmentLineItemsByLocation;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
+import org.siglus.siglusapi.repository.ShipmentLineItemsByLocationRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -66,19 +70,32 @@ public class SiglusShipmentService {
   @Autowired
   private OrderController orderController;
 
+  @Autowired
+  private ShipmentLineItemsByLocationRepository shipmentLineItemsByLocationRepository;
+
   @Transactional
   public ShipmentDto createOrderAndShipment(boolean isSubOrder, ShipmentDto shipmentDto) {
-    OrderDto orderDto = orderController.getOrder(shipmentDto.getOrder().getId(), null);
-    validateOrderStatus(orderDto);
-    if (siglusOrderService.needCloseOrder(orderDto)) {
-      if (siglusOrderService.isSuborder(orderDto.getExternalId())) {
-        throw new ValidationMessageException(SHIPMENT_ORDER_STATUS_INVALID);
-      }
-      isSubOrder = false;
-    }
-    // save order lineitems
-    updateOrderLineItems(shipmentDto.getOrder());
-    return createSubOrderAndShipment(isSubOrder, shipmentDto);
+    return createOrderAndConfirmShipment(isSubOrder, shipmentDto);
+  }
+
+  @Transactional
+  public ShipmentDto createOrderAndShipmentByLocation(boolean isSubOrder, ShipmentDto shipmentDto) {
+    List<ShipmentLineItemDto> shipmentLineItemDtos = shipmentDto.lineItems();
+    List<ShipmentLineItemsByLocation> shipmentLineItemsByLocations = Lists.newArrayList();
+    shipmentLineItemDtos.forEach(shipmentLineItemDto -> {
+      UUID lineItemId = shipmentLineItemDto.getId();
+      UUID locationId = shipmentLineItemDto.getLocation().getId();
+      ShipmentLineItemsByLocation shipmentLineItemsByLocation = ShipmentLineItemsByLocation
+          .builder()
+          .shipmentLineItemId(lineItemId)
+          .locationId(locationId)
+          .build();
+      shipmentLineItemsByLocations.add(shipmentLineItemsByLocation);
+    });
+    ShipmentDto confirmedShipmentDto = createOrderAndConfirmShipment(isSubOrder, shipmentDto);
+    log.info("create shipment line item by location");
+    shipmentLineItemsByLocationRepository.save(shipmentLineItemsByLocations);
+    return confirmedShipmentDto;
   }
 
   @Transactional
@@ -92,6 +109,19 @@ public class SiglusShipmentService {
       createSubOrder(shipmentDto, true);
     }
     return createShipment(shipmentDto);
+  }
+
+  private ShipmentDto createOrderAndConfirmShipment(boolean isSubOrder, ShipmentDto shipmentDto) {
+    OrderDto orderDto = orderController.getOrder(shipmentDto.getOrder().getId(), null);
+    validateOrderStatus(orderDto);
+    if (siglusOrderService.needCloseOrder(orderDto)) {
+      if (siglusOrderService.isSuborder(orderDto.getExternalId())) {
+        throw new ValidationMessageException(SHIPMENT_ORDER_STATUS_INVALID);
+      }
+      isSubOrder = false;
+    }
+    updateOrderLineItems(shipmentDto.getOrder());
+    return createSubOrderAndShipment(isSubOrder, shipmentDto);
   }
 
   private void validateOrderStatus(OrderDto orderDto) {

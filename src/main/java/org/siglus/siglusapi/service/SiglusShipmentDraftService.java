@@ -18,6 +18,7 @@ package org.siglus.siglusapi.service;
 import static com.google.common.collect.Lists.newArrayList;
 import static java.util.stream.Collectors.toMap;
 
+import com.google.common.collect.Lists;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -27,13 +28,20 @@ import lombok.extern.slf4j.Slf4j;
 import org.openlmis.fulfillment.domain.Order;
 import org.openlmis.fulfillment.domain.OrderLineItem;
 import org.openlmis.fulfillment.repository.OrderRepository;
+import org.openlmis.fulfillment.web.shipment.LocationDto;
+import org.openlmis.fulfillment.web.shipment.ShipmentLineItemDto;
 import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftController;
 import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftDto;
 import org.openlmis.fulfillment.web.util.OrderLineItemDto;
+import org.siglus.siglusapi.domain.LocationManagement;
 import org.siglus.siglusapi.domain.OrderLineItemExtension;
+import org.siglus.siglusapi.domain.ShipmentDraftLineItemsByLocation;
+import org.siglus.siglusapi.repository.LocationManagementRepository;
 import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.OrderLineItemRepository;
+import org.siglus.siglusapi.repository.ShipmentDraftLineItemsByLocationRepository;
 import org.siglus.siglusapi.service.client.SiglusShipmentDraftFulfillmentService;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -61,6 +69,14 @@ public class SiglusShipmentDraftService {
   @Autowired
   private SiglusOrderService siglusOrderService;
 
+  @Autowired
+  private LocationManagementRepository locationManagementRepository;
+
+  @Autowired
+  private ShipmentDraftLineItemsByLocationRepository shipmentDraftLineItemsByLocationRepository;
+
+  private ShipmentDraftDto draftDto;
+
   @Transactional
   public ShipmentDraftDto createShipmentDraft(ShipmentDraftDto draftDto) {
     return draftController.createShipmentDraft(draftDto);
@@ -78,6 +94,26 @@ public class SiglusShipmentDraftService {
     draftController.deleteShipmentDraft(id);
   }
 
+  public ShipmentDraftDto getShipmentDraftByLocation(UUID orderId) {
+    ShipmentDraftDto shipmentDraftDto = siglusShipmentDraftFulfillmentService.searchShipmentDraft(orderId);
+    return fulfillShipmentDraftByLocation(shipmentDraftDto);
+  }
+
+  @Transactional
+  public ShipmentDraftDto updateShipmentDraftByLocation(UUID id, ShipmentDraftDto draftDto) {
+    updateOrderLineItemExtension(draftDto);
+    ShipmentDraftDto shipmentDraftDto = draftController.updateShipmentDraft(id, draftDto);
+    updateLineItemLocation(draftDto);
+    return fulfillShipmentDraftByLocation(shipmentDraftDto);
+  }
+
+  @Transactional
+  public void deleteShipmentDraftByLocation(UUID draftId) {
+    deleteOrderLineItemAndInitialedExtension(getDraftOrder(draftId));
+    deleteShipmentDraftLocation(draftDto);
+    draftController.deleteShipmentDraft(draftId);
+  }
+
   public void deleteOrderLineItemAndInitialedExtension(Order order) {
     List<OrderLineItemExtension> extensions = lineItemExtensionRepository
         .findByOrderId(order.getId());
@@ -88,7 +124,7 @@ public class SiglusShipmentDraftService {
   }
 
   private Order getDraftOrder(UUID draftId) {
-    ShipmentDraftDto draftDto = siglusShipmentDraftFulfillmentService
+    draftDto = siglusShipmentDraftFulfillmentService
         .searchShipmentDraft(draftId);
     return orderRepository.findOne(draftDto.getOrder().getId());
   }
@@ -178,4 +214,64 @@ public class SiglusShipmentDraftService {
     return addedExtension;
   }
 
+  private ShipmentDraftDto fulfillShipmentDraftByLocation(ShipmentDraftDto shipmentDraftDto) {
+    List<ShipmentLineItemDto> shipmentLineItemDtos = shipmentDraftDto.lineItems();
+    List<ShipmentLineItemDto> newShipmentLineItemDto = Lists.newArrayList();
+    List<UUID> lineItemIds = shipmentLineItemDtos.stream().map(ShipmentLineItemDto::getId).collect(Collectors.toList());
+
+    List<ShipmentDraftLineItemsByLocation> lineItemsByLocationList = shipmentDraftLineItemsByLocationRepository
+        .findByShipmentDraftLineItemIdIn(lineItemIds);
+    List<UUID> locationIds = lineItemsByLocationList.stream().map(ShipmentDraftLineItemsByLocation::getLocationId)
+        .collect(Collectors.toList());
+    List<LocationManagement> locationManagementList = locationManagementRepository.findByIdIn(locationIds);
+
+    shipmentLineItemDtos.forEach(lineItemDto -> {
+      lineItemsByLocationList.forEach(lineItemsByLocation -> {
+        if (lineItemDto.getId().equals(lineItemsByLocation.getShipmentDraftLineItemId())) {
+          LocationManagement locationManagementDto = locationManagementList.stream()
+              .filter(locationManagement -> locationManagement.getId().equals(lineItemsByLocation.getLocationId()))
+              .findFirst().orElse(null);
+          if (null != locationManagementDto) {
+            ShipmentLineItemDto shipmentLineItemDto = new ShipmentLineItemDto();
+            BeanUtils.copyProperties(lineItemDto, shipmentLineItemDto);
+            LocationDto locationDto = LocationDto
+                .builder()
+                .id(lineItemsByLocation.getLocationId())
+                .locationCode(locationManagementDto.getLocationCode())
+                .build();
+            shipmentLineItemDto.setLocation(locationDto);
+            newShipmentLineItemDto.add(shipmentLineItemDto);
+          }
+        }
+      });
+    });
+    shipmentDraftDto.setLineItems(newShipmentLineItemDto);
+    return shipmentDraftDto;
+  }
+
+  private void updateLineItemLocation(ShipmentDraftDto shipmentDraftDto) {
+    deleteShipmentDraftLocation(shipmentDraftDto);
+    saveLineItemLocation(shipmentDraftDto);
+  }
+
+  private void deleteShipmentDraftLocation(ShipmentDraftDto shipmentDraftDto) {
+    List<ShipmentLineItemDto> lineItemDtos = shipmentDraftDto.lineItems();
+    List<UUID> lineItemIds = lineItemDtos.stream().map(ShipmentLineItemDto::getId).collect(Collectors.toList());
+    log.info("shipment draft line items by location; delete with line item ids: {}", lineItemIds);
+    shipmentDraftLineItemsByLocationRepository.deleteByShipmentDraftLineItemIdIn(lineItemIds);
+  }
+
+  private void saveLineItemLocation(ShipmentDraftDto shipmentDraftDto) {
+    List<ShipmentLineItemDto> lineItemDtos = shipmentDraftDto.lineItems();
+    List<ShipmentDraftLineItemsByLocation> shipmentDraftLineItemsByLocationList = Lists.newArrayList();
+    lineItemDtos.forEach(lineItemDto -> {
+      ShipmentDraftLineItemsByLocation shipmentDraftLineItemsByLocation = ShipmentDraftLineItemsByLocation
+          .builder()
+          .locationId(lineItemDto.getLocation().getId())
+          .shipmentDraftLineItemId(lineItemDto.getId())
+          .build();
+      shipmentDraftLineItemsByLocationList.add(shipmentDraftLineItemsByLocation);
+    });
+    shipmentDraftLineItemsByLocationRepository.save(shipmentDraftLineItemsByLocationList);
+  }
 }

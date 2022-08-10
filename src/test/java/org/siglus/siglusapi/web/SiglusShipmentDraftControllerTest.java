@@ -68,4 +68,34 @@ public class SiglusShipmentDraftControllerTest {
     verify(siglusShipmentDraftService).createShipmentDraft(draftDto);
   }
 
+  @Test
+  public void shouldGetShipmentDraftByLocation() {
+    // when
+    siglusShipmentDraftController.getShipmentDraftByLocation(draftId);
+
+    // then
+    verify(siglusShipmentDraftService).getShipmentDraftByLocation(draftId);
+  }
+
+  @Test
+  public void shouldUpdateShipmentDraftByLocation() {
+    // given
+    ShipmentDraftDto draftDto = new ShipmentDraftDto();
+
+    // when
+    siglusShipmentDraftController.updateShipmentDraftByLocation(draftId, draftDto);
+
+    // then
+    verify(siglusShipmentDraftService).updateShipmentDraftByLocation(draftId, draftDto);
+  }
+
+  @Test
+  public void shouldDeleteShipmentDraftByLocation() {
+    // when
+    siglusShipmentDraftController.deleteShipmentDraftByLocation(draftId);
+
+    // then
+    verify(siglusShipmentDraftService).deleteShipmentDraftByLocation(draftId);
+  }
+
 }

@@ -17,14 +17,10 @@ package org.siglus.siglusapi.repository;
 
 import java.util.List;
 import java.util.UUID;
-import org.siglus.siglusapi.domain.LocationManagement;
+import org.openlmis.fulfillment.domain.ShipmentDraftLineItem;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface LocationManagementRepository extends JpaRepository<LocationManagement, UUID> {
+public interface ShipmentDraftLineItemsRepository extends JpaRepository<ShipmentDraftLineItem, UUID> {
 
-  List<LocationManagement> findOneByFacilityId(UUID facilityId);
-
-  void deleteByFacilityId(UUID facilityId);
-
-  List<LocationManagement> findByIdIn(List<UUID> ids);
+  List<ShipmentDraftLineItem> findByOrderableIdIn(List<UUID> orderableId);
 }

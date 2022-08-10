@@ -49,4 +49,12 @@ public class SiglusShipmentController {
     return created;
   }
 
+  @PostMapping("/byLocation")
+  @ResponseStatus(HttpStatus.CREATED)
+  public void confirmShipmentByLocation(
+      @RequestParam(name = "isSubOrder", required = false, defaultValue = "false")
+      boolean isSubOrder, @RequestBody ShipmentDto shipmentDto) {
+    ShipmentDto shipmentByLocation = siglusShipmentService.createOrderAndShipmentByLocation(isSubOrder, shipmentDto);
+    notificationService.postConfirmShipment(shipmentByLocation);
+  }
 }

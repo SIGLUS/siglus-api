@@ -13,18 +13,30 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.repository;
+package org.siglus.siglusapi.domain;
 
-import java.util.List;
 import java.util.UUID;
-import org.siglus.siglusapi.domain.LocationManagement;
-import org.springframework.data.jpa.repository.JpaRepository;
+import javax.persistence.Entity;
+import javax.persistence.EntityListeners;
+import javax.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import org.siglus.common.domain.BaseEntity;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-public interface LocationManagementRepository extends JpaRepository<LocationManagement, UUID> {
+@Entity
+@Data
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
+@EqualsAndHashCode(callSuper = false)
+@EntityListeners(AuditingEntityListener.class)
+@Table(name = "shipment_draft_line_items_by_location", schema = "siglusintegration")
+public class ShipmentDraftLineItemsByLocation extends BaseEntity {
+  private UUID shipmentDraftLineItemId;
 
-  List<LocationManagement> findOneByFacilityId(UUID facilityId);
-
-  void deleteByFacilityId(UUID facilityId);
-
-  List<LocationManagement> findByIdIn(List<UUID> ids);
+  private UUID locationId;
 }
