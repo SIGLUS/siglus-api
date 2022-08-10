@@ -224,10 +224,12 @@ public class SiglusAdministrationsService {
   }
 
   private void saveReportTypes(SiglusFacilityDto siglusFacilityDto) {
-    validateReportTypes(siglusFacilityDto);
-    List<SiglusReportType> toSave = siglusFacilityDto.getReportTypes()
-            .stream().map(SiglusReportType::from).collect(Collectors.toList());
-    siglusReportTypeRepository.save(toSave);
+    if (CollectionUtils.isNotEmpty(siglusFacilityDto.getReportTypes())) {
+      validateReportTypes(siglusFacilityDto);
+      List<SiglusReportType> toSave = siglusFacilityDto.getReportTypes()
+              .stream().map(SiglusReportType::from).collect(Collectors.toList());
+      siglusReportTypeRepository.save(toSave);
+    }
   }
 
   private void writeLocationInfoOnCsv(List<LocationManagement> locationList, Writer writer)
