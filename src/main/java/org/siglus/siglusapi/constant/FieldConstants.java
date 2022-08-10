@@ -156,5 +156,8 @@ public class FieldConstants {
 
   public static final String ALL_GEOGRAPHIC_ZONE = "0000-0000";
 
+  public static final String PRODUCT = "product";
+
+  public static final String LOCATION = "location";
 
 }

@@ -13,40 +13,14 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.domain;
+package org.siglus.siglusapi.dto;
 
-import java.util.UUID;
-import javax.persistence.Entity;
-import javax.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
-import org.siglus.common.domain.BaseEntity;
+import org.openlmis.stockmanagement.dto.PhysicalInventoryDto;
 
-@Entity
 @Data
-@Builder
 @EqualsAndHashCode(callSuper = true)
-@AllArgsConstructor
-@NoArgsConstructor
-@Table(name = "physical_inventory_line_items_extension", schema = "siglusintegration")
-public class PhysicalInventoryLineItemsExtension extends BaseEntity {
-
-  private UUID orderableId;
-
-  private UUID lotId;
-
-  private UUID physicalInventoryId;
-
-  private String reasonFreeText;
-
-  private Boolean initial;
-
-  private UUID subDraftId;
-
-  private String area;
-
-  private String locationCode;
+public class SiglusPhysicalInventoryDto extends PhysicalInventoryDto {
+  private String locationOption;
 }

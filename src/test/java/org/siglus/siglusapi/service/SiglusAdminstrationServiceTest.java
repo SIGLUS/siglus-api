@@ -56,6 +56,7 @@ import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.FacilitySearchParamDto;
 import org.siglus.siglusapi.dto.FacilitySearchResultDto;
 import org.siglus.siglusapi.dto.SiglusFacilityDto;
+import org.siglus.siglusapi.dto.SiglusReportTypeDto;
 import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.AppInfoRepository;
@@ -246,6 +247,32 @@ public class SiglusAdminstrationServiceTest {
 
     // when
     siglusAdministrationsService.getFacility(facilityId);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void shouldThrowExceptionWhenFacilityReportTypeStartDateInvalid() {
+    // given
+    String programCode = "Via";
+    FacilityExtension facilityExtension = mockFacilityExtension(facilityId, false, true);
+    when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(null);
+    when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(facilityExtension);
+    when(siglusFacilityReferenceDataService.findOneFacility(facilityId))
+            .thenReturn(mockFacilityDtoPage().getContent().get(0));
+    SiglusReportTypeDto reportTypeDto = SiglusReportTypeDto.builder()
+            .facilityId(facilityId)
+            .programCode(programCode)
+            .startDate(LocalDate.now())
+            .build();
+    SiglusFacilityDto mock = mockSiglusFacilityDto();
+    mock.setReportTypes(Arrays.asList(reportTypeDto));
+    SiglusReportType reportType = SiglusReportType.from(reportTypeDto);
+    reportType.setStartDate(reportTypeDto.getStartDate().plusDays(1L));
+    when(siglusReportTypeRepository.findByFacilityId(facilityId)).thenReturn(Arrays.asList(reportType));
+    when(siglusProcessingPeriodService.getPreviousPeriodStartDateSinceInitiate(programCode, facilityId))
+            .thenReturn(LocalDate.now().plusDays(2L));
+
+    // when
+    siglusAdministrationsService.updateFacility(facilityId, mock);
   }
 
   @Test

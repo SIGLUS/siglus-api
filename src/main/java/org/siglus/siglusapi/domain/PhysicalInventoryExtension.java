@@ -17,6 +17,8 @@ package org.siglus.siglusapi.domain;
 
 import java.util.UUID;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -24,6 +26,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.siglus.common.domain.BaseEntity;
+import org.siglus.siglusapi.dto.enums.LocationManagementOption;
 
 @Entity
 @Data
@@ -38,4 +41,6 @@ public class PhysicalInventoryExtension extends BaseEntity {
 
   private String category;
 
+  @Enumerated(EnumType.STRING)
+  private LocationManagementOption locationOption;
 }

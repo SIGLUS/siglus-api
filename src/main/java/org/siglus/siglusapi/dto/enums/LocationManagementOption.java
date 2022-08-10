@@ -13,40 +13,34 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.domain;
+package org.siglus.siglusapi.dto.enums;
 
-import java.util.UUID;
-import javax.persistence.Entity;
-import javax.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
-import org.siglus.common.domain.BaseEntity;
+import static org.siglus.siglusapi.constant.FieldConstants.LOCATION;
+import static org.siglus.siglusapi.constant.FieldConstants.PRODUCT;
 
-@Entity
-@Data
-@Builder
-@EqualsAndHashCode(callSuper = true)
-@AllArgsConstructor
-@NoArgsConstructor
-@Table(name = "physical_inventory_line_items_extension", schema = "siglusintegration")
-public class PhysicalInventoryLineItemsExtension extends BaseEntity {
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
-  private UUID orderableId;
 
-  private UUID lotId;
+@RequiredArgsConstructor
+@Getter
+public enum LocationManagementOption {
+  BY_PRODUCT(PRODUCT),
+  BY_LOCATION(LOCATION);
 
-  private UUID physicalInventoryId;
+  private final String value;
 
-  private String reasonFreeText;
+  @Override
+  public String toString() {
+    return value;
+  }
 
-  private Boolean initial;
-
-  private UUID subDraftId;
-
-  private String area;
-
-  private String locationCode;
+  public static LocationManagementOption fromString(String text) {
+    for (LocationManagementOption b : LocationManagementOption.values()) {
+      if (b.value.equalsIgnoreCase(text)) {
+        return b;
+      }
+    }
+    throw new IllegalArgumentException("no location management option with value " + text + " found");
+  }
 }

@@ -101,13 +101,25 @@ public class SiglusPhysicalInventoryControllerTest {
   }
 
   @Test
+  public void shouldCallCreateWithLocationOptionForAllProductsWhenCreateIfProgramIsAllProducts()
+          throws InterruptedException {
+    PhysicalInventoryDto physicalInventoryDto = PhysicalInventoryDto.builder()
+            .programId(ALL_PRODUCTS_PROGRAM_ID).build();
+
+    siglusPhysicalInventoryController.createEmptyPhysicalInventory(physicalInventoryDto, 2, true, "product");
+
+    verify(siglusPhysicalInventoryService).createAndSplitNewDraftForAllProduct(
+            physicalInventoryDto, 2, true, "product");
+  }
+
+  @Test
   public void shouldCallCreateForAllProductsWhenCreateIfProgramIsAllProducts() throws InterruptedException {
     PhysicalInventoryDto physicalInventoryDto = PhysicalInventoryDto.builder()
         .programId(ALL_PRODUCTS_PROGRAM_ID).build();
 
-    siglusPhysicalInventoryController.createEmptyPhysicalInventory(physicalInventoryDto, 2, true);
+    siglusPhysicalInventoryController.createEmptyPhysicalInventory(physicalInventoryDto, 2, true, null);
 
-    verify(siglusPhysicalInventoryService).createAndSplitNewDraftForAllProduct(physicalInventoryDto, 2, true);
+    verify(siglusPhysicalInventoryService).createAndSplitNewDraftForAllProduct(physicalInventoryDto, 2, true, null);
   }
 
   @Test
@@ -116,9 +128,9 @@ public class SiglusPhysicalInventoryControllerTest {
         .build();
 
     siglusPhysicalInventoryController.createEmptyPhysicalInventory(
-        physicalInventoryDto, 2, false);
+        physicalInventoryDto, 2, false, null);
 
-    verify(siglusPhysicalInventoryService).createAndSpiltNewDraftForOneProgram(physicalInventoryDto, 2);
+    verify(siglusPhysicalInventoryService).createAndSpiltNewDraftForOneProgram(physicalInventoryDto, 2, null);
   }
 
   @Test

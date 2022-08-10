@@ -121,12 +121,14 @@ public class SiglusPhysicalInventoryController {
   public PhysicalInventoryDto createEmptyPhysicalInventory(
       @RequestBody PhysicalInventoryDto dto,
       @RequestParam Integer splitNum,
-      @RequestParam(required = false) boolean initialPhysicalInventory) {
+      @RequestParam(required = false) boolean initialPhysicalInventory,
+      @RequestParam(name = "locationManagementOption", required = false) String optionString) {
     if (ALL_PRODUCTS_PROGRAM_ID.equals(dto.getProgramId())) {
       return siglusPhysicalInventoryService.createAndSplitNewDraftForAllProduct(dto, splitNum,
-          initialPhysicalInventory);
+          initialPhysicalInventory, optionString);
     }
-    return siglusPhysicalInventoryService.createAndSpiltNewDraftForOneProgram(dto, splitNum);
+    return siglusPhysicalInventoryService.createAndSpiltNewDraftForOneProgram(dto, splitNum,
+            optionString);
   }
 
   @PutMapping("/{id}")
