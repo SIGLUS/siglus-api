@@ -35,7 +35,8 @@ public class SiglusProductLocationMovementDraftController {
 
   @PostMapping
   @ResponseStatus(CREATED)
-  public ProductLocationMovementDraftDto createEmptyStockMovementDraft(@RequestBody ProductLocationMovementDraftDto dto) {
+  public ProductLocationMovementDraftDto createEmptyStockMovementDraft(
+      @RequestBody ProductLocationMovementDraftDto dto) {
     return productLocationMovementDraftService.createEmptyProductLocationMovementDraft(dto);
   }
 }

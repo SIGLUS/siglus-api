@@ -24,7 +24,7 @@ import org.siglus.siglusapi.domain.ProductLocationMovementDraft;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.dto.ProductLocationMovementDraftDto;
 import org.siglus.siglusapi.exception.ValidationMessageException;
-import org.siglus.siglusapi.repository.StockMovementDraftRepository;
+import org.siglus.siglusapi.repository.ProductLocationMovementDraftRepository;
 import org.siglus.siglusapi.validator.StockManagementDraftValidator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -34,7 +34,7 @@ import org.springframework.stereotype.Service;
 public class SiglusProductLocationMovementDraftService {
 
   @Autowired
-  private StockMovementDraftRepository stockMovementDraftRepository;
+  private ProductLocationMovementDraftRepository productLocationMovementDraftRepository;
 
   @Autowired
   StockManagementDraftValidator stockManagementDraftValidator;
@@ -47,16 +47,18 @@ public class SiglusProductLocationMovementDraftService {
     checkIfMovementDraftExists(productLocationMovementDraftDto);
     ProductLocationMovementDraft emptyProductLocationMovementDraft = ProductLocationMovementDraft
         .createEmptyStockMovementDraft(productLocationMovementDraftDto);
-    ProductLocationMovementDraft savedDraft = stockMovementDraftRepository.save(emptyProductLocationMovementDraft);
+    ProductLocationMovementDraft savedDraft = productLocationMovementDraftRepository
+        .save(emptyProductLocationMovementDraft);
     return ProductLocationMovementDraftDto.from(savedDraft);
   }
 
   private void checkIfMovementDraftExists(ProductLocationMovementDraftDto stockManagementDraftDto) {
-    List<ProductLocationMovementDraft> drafts = stockMovementDraftRepository
+    List<ProductLocationMovementDraft> drafts = productLocationMovementDraftRepository
         .findByProgramIdAndFacilityId(stockManagementDraftDto.getProgramId(), stockManagementDraftDto.getFacilityId());
     if (CollectionUtils.isNotEmpty(drafts)) {
       throw new ValidationMessageException(
-          new Message(ERROR_STOCK_MOVEMENT_DRAFT_EXISTS, stockManagementDraftDto.getProgramId(), stockManagementDraftDto.getFacilityId()));
+          new Message(ERROR_STOCK_MOVEMENT_DRAFT_EXISTS, stockManagementDraftDto.getProgramId(),
+              stockManagementDraftDto.getFacilityId()));
     }
   }
 }
