@@ -211,7 +211,7 @@ public class SiglusPhysicalInventoryService {
     BeanUtils.copyProperties(physicalInventoryDto, dto);
     List<PhysicalInventoryExtension> extensions = physicalInventoryExtensionRepository
             .findByPhysicalInventoryId(physicalInventoryDto.getId());
-    if (CollectionUtils.isNotEmpty(extensions)) {
+    if (CollectionUtils.isNotEmpty(extensions) && null != extensions.get(0).getLocationOption()) {
       dto.setLocationOption(extensions.get(0).getLocationOption().getValue());
     }
     return dto;
