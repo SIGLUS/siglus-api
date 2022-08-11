@@ -286,6 +286,8 @@ public class SiglusAdministrationsService {
     }
     searchResultDto.setIsAndroidDevice(facilityExtension.getIsAndroid());
     searchResultDto.setEnableLocationManagement(BooleanUtils.isTrue(facilityExtension.getEnableLocationManagement()));
+    searchResultDto.setHasSuccessUploadLocations(
+        !CollectionUtils.isEmpty(facilityLocationsRepository.findByFacilityId(facilityId)));
     return searchResultDto;
   }
 

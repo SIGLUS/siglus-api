@@ -33,6 +33,8 @@ public class FacilitySearchResultDto extends FacilityDto {
 
   private List<SiglusReportTypeDto> reportTypes;
 
+  private Boolean hasSuccessUploadLocations;
+
   public static FacilitySearchResultDto from(FacilityDto facilityDto) {
     FacilitySearchResultDto searchResultDto = new FacilitySearchResultDto();
     BeanUtils.copyProperties(facilityDto, searchResultDto);
