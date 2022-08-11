@@ -267,11 +267,12 @@ public class SiglusShipmentDraftService {
   private void saveLineItemLocation(ShipmentDraftDto shipmentDraftDto) {
     List<ShipmentLineItemDto> lineItemDtos = shipmentDraftDto.lineItems();
     List<ShipmentDraftLineItemsExtension> shipmentDraftLineItemsByLocationList = lineItemDtos.stream()
-            .map(lineItemDto -> ShipmentDraftLineItemsExtension
-                .builder()
-                .locationId(lineItemDto.getLocation().getId())
-                .shipmentDraftLineItemId(lineItemDto.getId())
-                .build())
+        .filter(lineItemDto -> null != lineItemDto.getLocation())
+        .map(lineItemDto -> ShipmentDraftLineItemsExtension
+            .builder()
+            .locationId(lineItemDto.getLocation().getId())
+            .shipmentDraftLineItemId(lineItemDto.getId())
+            .build())
         .collect(Collectors.toList());
     List<UUID> id = shipmentDraftLineItemsByLocationList.stream().map(ShipmentDraftLineItemsExtension::getId)
         .collect(Collectors.toList());

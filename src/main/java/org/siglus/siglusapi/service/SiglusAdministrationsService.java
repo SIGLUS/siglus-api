@@ -278,6 +278,8 @@ public class SiglusAdministrationsService {
             .stream().map(this::from).collect(Collectors.toList());
     searchResultDto.setReportTypes(reportTypeDtos);
     searchResultDto.setIsNewFacility(emptyStockCardCount(facilityId));
+    searchResultDto.setHasSuccessUploadLocations(
+        !CollectionUtils.isEmpty(facilityLocationsRepository.findByFacilityId(facilityId)));
     FacilityExtension facilityExtension = facilityExtensionRepository.findByFacilityId(facilityId);
     if (null == facilityExtension) {
       searchResultDto.setEnableLocationManagement(false);
@@ -286,8 +288,6 @@ public class SiglusAdministrationsService {
     }
     searchResultDto.setIsAndroidDevice(facilityExtension.getIsAndroid());
     searchResultDto.setEnableLocationManagement(BooleanUtils.isTrue(facilityExtension.getEnableLocationManagement()));
-    searchResultDto.setHasSuccessUploadLocations(
-        !CollectionUtils.isEmpty(facilityLocationsRepository.findByFacilityId(facilityId)));
     return searchResultDto;
   }
 
