@@ -131,10 +131,10 @@ public class SiglusStockManagementDraftService {
 
   @Transactional
   public StockManagementDraftDto updateDraft(StockManagementDraftDto subDraftDto, UUID id) {
-    log.info("update issue draft");
     stockManagementDraftValidator.validateDraft(subDraftDto, id);
     if (subDraftDto.getDraftType().equals(FieldConstants.ISSUE)
         || subDraftDto.getDraftType().equals(FieldConstants.RECEIVE)) {
+      log.info("update subDraft");
       StockManagementDraft subDraft = stockManagementDraftRepository.findOne(id);
       draftValidator.validateSubDraftStatus(subDraft);
       conflictOrderableInSubDraftsService.checkConflictOrderableBetweenSubDrafts(subDraftDto);
@@ -142,6 +142,7 @@ public class SiglusStockManagementDraftService {
       StockManagementDraft savedDraft = stockManagementDraftRepository.save(newDraft);
       return StockManagementDraftDto.from(savedDraft);
     }
+    log.info("update adjustment draft");
     StockManagementDraft draft = StockManagementDraft.createStockManagementDraft(subDraftDto, true);
     StockManagementDraft savedDraft = stockManagementDraftRepository.save(draft);
     return StockManagementDraftDto.from(savedDraft);
@@ -185,6 +186,7 @@ public class SiglusStockManagementDraftService {
     return StockManagementDraftDto.from(sortedDrafts);
   }
 
+  @Transactional
   public void deleteStockManagementDraft(StockEventDto dto) {
     List<StockManagementDraft> drafts = stockManagementDraftRepository
         .findByProgramIdAndFacilityIdAndIsDraftAndDraftType(dto.getProgramId(), dto.getFacilityId(), true,

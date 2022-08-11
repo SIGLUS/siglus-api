@@ -37,12 +37,20 @@ public class SiglusProductLocationMovementDraftControllerTest {
 
   private final ProductLocationMovementDraftDto productLocationMovementDraftDto = new ProductLocationMovementDraftDto();
   private final UUID programId = UUID.randomUUID();
+  private final UUID movementDraftId = UUID.randomUUID();
 
   @Test
   public void shouldCallCreateEmptyProductLocationMovementDraft() {
     controller.createEmptyProductLocationMovementDraft(productLocationMovementDraftDto);
 
-    verify(service).createEmptyProductLocationMovementDraft(productLocationMovementDraftDto);
+    verify(service).createEmptyMovementDraft(productLocationMovementDraftDto);
+  }
+
+  @Test
+  public void shouldCallSearchMovementDrafts() {
+    controller.searchMovementDrafts(programId);
+
+    verify(service).searchMovementDrafts(programId);
   }
 
   @Test
@@ -50,6 +58,20 @@ public class SiglusProductLocationMovementDraftControllerTest {
     controller.searchMovementDraft(programId);
 
     verify(service).searchMovementDraft(programId);
+  }
+
+  @Test
+  public void shouldCallUpdateDraft() {
+    controller.updateDraft(movementDraftId, productLocationMovementDraftDto);
+
+    verify(service).updateMovementDraft(productLocationMovementDraftDto, movementDraftId);
+  }
+
+  @Test
+  public void shouldCallDeleteDraft() {
+    controller.deleteDraft(movementDraftId);
+
+    verify(service).deleteMovementDraft(movementDraftId);
   }
 
 }

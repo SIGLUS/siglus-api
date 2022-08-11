@@ -16,14 +16,19 @@
 package org.siglus.siglusapi.web;
 
 import static org.springframework.http.HttpStatus.CREATED;
+import static org.springframework.http.HttpStatus.NO_CONTENT;
+import static org.springframework.http.HttpStatus.OK;
 
 import java.util.List;
 import java.util.UUID;
 import org.siglus.siglusapi.dto.ProductLocationMovementDraftDto;
 import org.siglus.siglusapi.service.SiglusProductLocationMovementDraftService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -41,11 +46,29 @@ public class SiglusProductLocationMovementDraftController {
   @ResponseStatus(CREATED)
   public ProductLocationMovementDraftDto createEmptyProductLocationMovementDraft(
       @RequestBody ProductLocationMovementDraftDto dto) {
-    return productLocationMovementDraftService.createEmptyProductLocationMovementDraft(dto);
+    return productLocationMovementDraftService.createEmptyMovementDraft(dto);
   }
 
   @GetMapping
-  public List<ProductLocationMovementDraftDto> searchMovementDraft(@RequestParam UUID programId) {
-    return productLocationMovementDraftService.searchMovementDraft(programId);
+  public List<ProductLocationMovementDraftDto> searchMovementDrafts(@RequestParam UUID programId) {
+    return productLocationMovementDraftService.searchMovementDrafts(programId);
+  }
+
+  @GetMapping("/{id}")
+  public ProductLocationMovementDraftDto searchMovementDraft(@PathVariable UUID id) {
+    return productLocationMovementDraftService.searchMovementDraft(id);
+  }
+
+  @PutMapping("/{id}")
+  @ResponseStatus(OK)
+  public ProductLocationMovementDraftDto updateDraft(@PathVariable UUID id,
+      @RequestBody ProductLocationMovementDraftDto dto) {
+    return productLocationMovementDraftService.updateMovementDraft(dto, id);
+  }
+
+  @DeleteMapping("/{id}")
+  @ResponseStatus(NO_CONTENT)
+  public void deleteDraft(@PathVariable UUID id) {
+    productLocationMovementDraftService.deleteMovementDraft(id);
   }
 }
