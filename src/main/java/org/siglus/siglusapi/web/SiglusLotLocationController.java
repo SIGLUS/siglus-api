@@ -13,18 +13,29 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.repository;
+package org.siglus.siglusapi.web;
 
 import java.util.List;
 import java.util.UUID;
-import org.siglus.siglusapi.domain.FacilityLocations;
-import org.springframework.data.jpa.repository.JpaRepository;
+import org.siglus.siglusapi.dto.LotLocationDto;
+import org.siglus.siglusapi.service.SiglusLotLocationService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
-public interface FacilityLocationsRepository extends JpaRepository<FacilityLocations, UUID> {
+@RestController
+@RequestMapping("/api/siglusapi/locations")
+public class SiglusLotLocationController {
 
-  List<FacilityLocations> findByFacilityId(UUID facilityId);
+  @Autowired
+  private SiglusLotLocationService lotLocationService;
 
-  void deleteByFacilityId(UUID facilityId);
+  @GetMapping
+  public List<LotLocationDto> searchLotLocaionDto(
+      @RequestParam(required = false) List<UUID> orderablesId, @RequestParam(required = false) boolean extraData) {
+    return lotLocationService.searchLotLocaiton(orderablesId, extraData);
 
-  List<FacilityLocations> findByIdIn(List<UUID> ids);
+  }
 }

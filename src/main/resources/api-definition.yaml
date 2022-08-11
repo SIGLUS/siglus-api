@@ -345,6 +345,18 @@ traits:
         responses:
           201:
             description: submit success
+
+    /locations:
+      displayName: get location and lot Association relationship
+      get:
+        is: [ secured ]
+        body:
+          application/json:
+            schema: arrayOfStrings
+        responses:
+          200:
+            description: GET success
+
     /report/tracerDrug:
       displayName: run tracer drug persistent data task
     /report/tracerDrug/refresh:

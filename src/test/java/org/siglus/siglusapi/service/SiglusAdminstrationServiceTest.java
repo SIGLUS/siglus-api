@@ -312,7 +312,7 @@ public class SiglusAdminstrationServiceTest {
   public void shouldExportEmptyLocationManagementTemplate() {
     // given
     HttpServletResponse httpServletResponse = new MockHttpServletResponse();
-    when(locationManagementRepository.findOneByFacilityId(facilityId)).thenReturn(null);
+    when(locationManagementRepository.findByFacilityId(facilityId)).thenReturn(null);
 
     // when
     siglusAdministrationsService.exportLocationInfo(facilityId, httpServletResponse);
@@ -322,7 +322,7 @@ public class SiglusAdminstrationServiceTest {
   public void shouldExportLocationManagementWhenHasRecords() {
     // given
     HttpServletResponse httpServletResponse = new MockHttpServletResponse();
-    when(locationManagementRepository.findOneByFacilityId(facilityId)).thenReturn(mockLocationManagement());
+    when(locationManagementRepository.findByFacilityId(facilityId)).thenReturn(mockLocationManagement());
 
     // when
     siglusAdministrationsService.exportLocationInfo(facilityId, httpServletResponse);

@@ -16,15 +16,14 @@
 package org.siglus.siglusapi.repository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
-import org.siglus.siglusapi.domain.FacilityLocations;
+import org.siglus.siglusapi.domain.StockCardLineItemExtension;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface FacilityLocationsRepository extends JpaRepository<FacilityLocations, UUID> {
+public interface StockCardLineItemExtensionRepository extends JpaRepository<StockCardLineItemExtension, UUID> {
 
-  List<FacilityLocations> findByFacilityId(UUID facilityId);
+  public Optional<StockCardLineItemExtension> findByStockCardLineItemId(UUID stockCardLineItemId);
 
-  void deleteByFacilityId(UUID facilityId);
-
-  List<FacilityLocations> findByIdIn(List<UUID> ids);
+  public List<StockCardLineItemExtension> findAllByStockCardLineItemIdIn(List<UUID> stockCardLineItemId);
 }

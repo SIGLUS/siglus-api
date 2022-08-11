@@ -13,18 +13,29 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.repository;
+package org.siglus.siglusapi.domain;
 
-import java.util.List;
 import java.util.UUID;
-import org.siglus.siglusapi.domain.FacilityLocations;
-import org.springframework.data.jpa.repository.JpaRepository;
+import javax.persistence.Entity;
+import javax.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import org.siglus.common.domain.BaseEntity;
 
-public interface FacilityLocationsRepository extends JpaRepository<FacilityLocations, UUID> {
+@Entity
+@Getter
+@Setter
+@EqualsAndHashCode(callSuper = true)
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+@Table(name = "stock_card_line_item_extension", schema = "siglusintegration")
+public class StockCardLineItemExtension extends BaseEntity {
 
-  List<FacilityLocations> findByFacilityId(UUID facilityId);
-
-  void deleteByFacilityId(UUID facilityId);
-
-  List<FacilityLocations> findByIdIn(List<UUID> ids);
+  private UUID locationId;
+  private UUID stockCardLineItemId;
 }

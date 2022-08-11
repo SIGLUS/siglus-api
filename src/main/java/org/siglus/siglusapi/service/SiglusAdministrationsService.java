@@ -167,7 +167,7 @@ public class SiglusAdministrationsService {
     response.setContentType(MEDIA_TYPE);
     response.addHeader(HttpHeaders.CONTENT_DISPOSITION, DISPOSITION_BASE + "\"" + FILE_NAME + "\"");
 
-    List<FacilityLocations> locationList = facilityLocationsRepository.findOneByFacilityId(facilityId);
+    List<FacilityLocations> locationList = facilityLocationsRepository.findByFacilityId(facilityId);
     try {
       writeLocationInfoOnCsv(locationList, response.getWriter());
     } catch (IOException ioException) {
