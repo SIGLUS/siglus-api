@@ -88,6 +88,10 @@ public class FieldConstants {
 
   public static final String ISSUE = "issue";
 
+  public static final String CAPITAL_RECEIVE = "RECEIVE";
+
+  public static final String CAPITAL_ISSUE = "ISSUE";
+
   public static final String ADJUSTMENT = "adjustment";
 
   public static final String INVENTORY = "INVENTORY";

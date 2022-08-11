@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.UUID;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import org.siglus.siglusapi.constant.FieldConstants;
 import org.siglus.siglusapi.dto.android.EventTime;
 import org.siglus.siglusapi.dto.android.enumeration.MovementType;
 import org.siglus.siglusapi.dto.android.request.StockCardAdjustment;
@@ -53,6 +54,11 @@ public class LineItemDetail {
     UUID sourceId = type.getSourceId(programId, reason);
     UUID destinationId = type.getDestinationId(programId, reason);
     UUID reasonId = type.getAdjustmentReasonId(programId, reason);
+    if (type == MovementType.RECEIVE) {
+      reasonId = MovementType.ADJUSTMENT.getAdjustmentReasonId(programId, FieldConstants.CAPITAL_RECEIVE);
+    } else if (type == MovementType.ISSUE) {
+      reasonId = MovementType.ADJUSTMENT.getAdjustmentReasonId(programId, FieldConstants.CAPITAL_ISSUE);
+    }
     String documentationNo = request.getDocumentationNo();
     return new LineItemDetail(stockEvent, stockCard, request.getEventTime(), quantity, sourceId, destinationId,
         reasonId, documentationNo, isInit);
