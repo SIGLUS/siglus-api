@@ -53,6 +53,7 @@ import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.OrderLineItemRepository;
 import org.siglus.siglusapi.repository.ShipmentDraftLineItemsExtensionRepository;
 import org.siglus.siglusapi.service.client.SiglusShipmentDraftFulfillmentService;
+import org.springframework.data.domain.PageImpl;
 
 @RunWith(MockitoJUnitRunner.class)
 public class SiglusShipmentDraftServiceTest {
@@ -253,9 +254,11 @@ public class SiglusShipmentDraftServiceTest {
     locationManagement.setId(locationId);
     when(locationManagementRepository.findByIdIn(newArrayList(locationId)))
         .thenReturn(newArrayList(locationManagement));
+    when(siglusShipmentDraftFulfillmentService.getShipmentDraftByOrderId(orderId))
+        .thenReturn(new PageImpl<>(newArrayList(draftDto)));
 
     // when
-    ShipmentDraftDto shipmentDraftByLocation = siglusShipmentDraftService.getShipmentDraftByLocation(draftId);
+    ShipmentDraftDto shipmentDraftByLocation = siglusShipmentDraftService.getShipmentDraftByLocation(orderId);
 
     // then
     assertEquals(shipmentDraftByLocation.lineItems().get(0).getLocation().getId(), locationId);

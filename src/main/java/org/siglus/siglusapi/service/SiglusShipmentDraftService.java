@@ -44,6 +44,7 @@ import org.siglus.siglusapi.repository.ShipmentDraftLineItemsExtensionRepository
 import org.siglus.siglusapi.service.client.SiglusShipmentDraftFulfillmentService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -95,9 +96,9 @@ public class SiglusShipmentDraftService {
     draftController.deleteShipmentDraft(id);
   }
 
-  public ShipmentDraftDto getShipmentDraftByLocation(UUID shipmentDraftId) {
-    ShipmentDraftDto shipmentDraftDto = siglusShipmentDraftFulfillmentService.searchShipmentDraft(shipmentDraftId);
-    return fulfillShipmentDraftByLocation(shipmentDraftDto);
+  public ShipmentDraftDto getShipmentDraftByLocation(UUID orderId) {
+    Page<ShipmentDraftDto> shipmentDraftDto = siglusShipmentDraftFulfillmentService.getShipmentDraftByOrderId(orderId);
+    return fulfillShipmentDraftByLocation(shipmentDraftDto.getContent().get(0));
   }
 
   @Transactional

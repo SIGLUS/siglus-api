@@ -25,6 +25,8 @@ import java.util.TreeSet;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import org.openlmis.referencedata.domain.Lot;
+import org.openlmis.referencedata.repository.LotRepository;
 import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
 import org.openlmis.stockmanagement.repository.StockCardLineItemRepository;
@@ -58,6 +60,9 @@ public class SiglusLotLocationService {
 
   @Autowired
   private StockCardLineItemExtensionRepository stockCardLineItemExtensionRepository;
+
+  @Autowired
+  private LotRepository lotRepository;
 
   public List<LotLocationDto> searchLotLocaiton(List<UUID> orderbalesId, boolean extraData) {
     UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
@@ -113,10 +118,20 @@ public class SiglusLotLocationService {
         List<LotsDto> lotDtoList = new LinkedList<>();
 
         lotIds.forEach(lotId -> {
-          lotDtoList.add(LotsDto.builder().lotId(lotId).orderablesId(orderableId).stockOnHand(10000).build());
+          Lot lot = lotRepository.findOne(lotId);
+          lotDtoList.add(LotsDto
+              .builder()
+              .lotId(lotId).orderablesId(orderableId).lotCode(lot.getLotCode()).stockOnHand(10000)
+              .expirationDate(lot.getExpirationDate())
+              .build());
         });
-
-        lotLocationDtos.add(LotLocationDto.builder().locationId(locationId).lots(lotDtoList).build());
+        FacilityLocations facilityLocations = facilityLocationsRepository.findOne(locationId);
+        lotLocationDtos.add(LotLocationDto
+            .builder()
+            .locationId(locationId)
+            .locationCode(facilityLocations.getLocationCode())
+            .lots(lotDtoList)
+            .build());
       });
 
     });

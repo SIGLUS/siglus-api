@@ -18,6 +18,8 @@ package org.siglus.siglusapi.service.client;
 import java.util.UUID;
 import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftDto;
 import org.openlmis.stockmanagement.util.RequestParameters;
+import org.siglus.siglusapi.constant.FieldConstants;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -41,5 +43,10 @@ public class SiglusShipmentDraftFulfillmentService extends
 
   public ShipmentDraftDto searchShipmentDraft(UUID id) {
     return findOne(id.toString(), RequestParameters.init(), true);
+  }
+
+  public Page<ShipmentDraftDto> getShipmentDraftByOrderId(UUID orderId) {
+    RequestParameters parameters = RequestParameters.init().set(FieldConstants.ORDER_ID, orderId);
+    return getPage(parameters);
   }
 }

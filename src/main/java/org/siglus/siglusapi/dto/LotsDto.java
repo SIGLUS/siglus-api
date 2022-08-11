@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.dto;
 
+import java.time.LocalDate;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -30,4 +31,6 @@ public class LotsDto {
   private UUID orderablesId;
   private UUID lotId;
   private Integer stockOnHand;
+  private String lotCode;
+  private LocalDate expirationDate;
 }

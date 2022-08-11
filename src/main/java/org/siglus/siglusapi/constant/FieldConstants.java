@@ -160,4 +160,6 @@ public class FieldConstants {
 
   public static final String LOCATION = "location";
 
+  public static final String ORDER_ID = "orderId";
+
 }
