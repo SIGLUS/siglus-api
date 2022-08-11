@@ -37,7 +37,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -71,38 +70,58 @@ import org.siglus.siglusapi.service.client.StockEventsStockManagementService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.util.SiglusDateHelper;
 import org.siglus.siglusapi.validator.ActiveDraftValidator;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Slf4j
-@RequiredArgsConstructor
+//@RequiredArgsConstructor
 @SuppressWarnings({"PMD.TooManyMethods"})
 public class SiglusStockEventsService {
 
-  private final StockEventsStockManagementService stockEventsStockManagementService;
-  private final SiglusOrderableReferenceDataService orderableReferenceDataService;
-  private final SiglusLotReferenceDataService lotReferenceDataService;
-  private final SiglusPhysicalInventoryService siglusPhysicalInventoryService;
-  private final SiglusStockManagementDraftService stockManagementDraftService;
-  private final StockCardRepository stockCardRepository;
-  private final StockCardExtensionRepository stockCardExtensionRepository;
-  private final StockCardLineItemRepository stockCardLineItemRepository;
-  private final StockEventsRepository stockEventsRepository;
-  private final StockEventProcessor stockEventProcessor;
-  private final SiglusArchiveProductService archiveProductService;
-  private final SiglusDateHelper dateHelper;
-  private final LotConflictService lotConflictService;
-  private final SiglusAuthenticationHelper authenticationHelper;
-  private final StockManagementDraftRepository stockManagementDraftRepository;
-  private final ActiveDraftValidator draftValidator;
+  @Autowired
+  private StockEventsStockManagementService stockEventsStockManagementService;
+  @Autowired
+  private SiglusOrderableReferenceDataService orderableReferenceDataService;
+  @Autowired
+  private SiglusLotReferenceDataService lotReferenceDataService;
+  @Autowired
+  private SiglusPhysicalInventoryService siglusPhysicalInventoryService;
+  @Autowired
+  private SiglusStockManagementDraftService stockManagementDraftService;
+  @Autowired
+  private StockCardRepository stockCardRepository;
+  @Autowired
+  private StockCardExtensionRepository stockCardExtensionRepository;
+  @Autowired
+  private StockCardLineItemRepository stockCardLineItemRepository;
+  @Autowired
+  private StockEventsRepository stockEventsRepository;
+  @Autowired
+  private StockEventProcessor stockEventProcessor;
+  @Autowired
+  private SiglusArchiveProductService archiveProductService;
+  @Autowired
+  private SiglusDateHelper dateHelper;
+  @Autowired
+  private LotConflictService lotConflictService;
+  @Autowired
+  private SiglusAuthenticationHelper authenticationHelper;
+  @Autowired
+  private StockManagementDraftRepository stockManagementDraftRepository;
+  @Autowired
+  private ActiveDraftValidator draftValidator;
 
   @Value("${stockmanagement.kit.unpack.reasonId}")
   private UUID unpackReasonId;
 
   @Value("${stockmanagement.kit.unpack.destination.nodeId}")
   private UUID unpackDestinationNodeId;
+  @Autowired
+  private SiglusStockEventsService siglusStockEventsService;
 
   @Transactional
   public UUID createStockEvent(StockEventDto eventDto) {
@@ -121,7 +140,7 @@ public class SiglusStockEventsService {
   @Transactional
   public UUID createStockEventForOneProgram(StockEventDto eventDto, UUID userId) {
     eventDto.setUserId(userId);
-    createAndFillLotId(eventDto);
+    siglusStockEventsService.createAndFillLotId(eventDto);
     if (eventDto.isPhysicalInventory()) {
       UUID programId = eventDto.getProgramId();
       List<StockEventDto> stockEventDtos;
@@ -164,7 +183,7 @@ public class SiglusStockEventsService {
 
   private Map<UUID, UUID> createStockEventForPrograms(StockEventDto eventDto, UUID userId) {
     eventDto.setUserId(userId);
-    createAndFillLotId(eventDto);
+    siglusStockEventsService.createAndFillLotId(eventDto);
     Set<UUID> programIds = eventDto.getLineItems().stream()
         .map(StockEventLineItemDto::getProgramId)
         .collect(Collectors.toSet());
@@ -219,7 +238,7 @@ public class SiglusStockEventsService {
     return programIdToEventId;
   }
 
-  @Transactional
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
   public void createAndFillLotId(StockEventDto eventDto) {
     final List<StockEventLineItemDto> lineItems = eventDto.getLineItems();
     Set<UUID> orderableIds = lineItems.stream().map(StockEventLineItemDto::getOrderableId)

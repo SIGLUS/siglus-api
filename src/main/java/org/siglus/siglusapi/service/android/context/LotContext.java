@@ -27,11 +27,14 @@ import java.util.UUID;
 import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.siglus.siglusapi.dto.LotDto;
 import org.siglus.siglusapi.dto.android.Lot;
 import org.siglus.siglusapi.dto.android.ProductLotCode;
 import org.siglus.siglusapi.dto.android.db.ProductLot;
 import org.siglus.siglusapi.repository.LotNativeRepository;
 import org.siglus.siglusapi.service.LotConflictService;
+import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
+import org.siglus.siglusapi.util.SiglusDateHelper;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -40,13 +43,17 @@ public class LotContext implements Context {
   private final UUID facilityId;
   private final LotNativeRepository repo;
   private final LotConflictService lotConflictService;
+  private final SiglusLotReferenceDataService siglusLotReferenceDataService;
+  private final SiglusDateHelper dateHelper;
+
   private final Map<ProductLotCode, ProductLot> existed = new HashMap<>();
   private final Map<ProductLotCode, ProductLot> newCreated = new HashMap<>();
   private final Map<String, UUID> productCodeToTradeItemId = new HashMap<>();
   private final Map<String, Set<Lot>> productCodeToLots = new HashMap<>();
 
-  public static LotContext init(UUID facilityId, LotNativeRepository repo, LotConflictService lotConflictService) {
-    return new LotContext(facilityId, repo, lotConflictService);
+  public static LotContext init(UUID facilityId, LotNativeRepository repo, LotConflictService lotConflictService,
+      SiglusLotReferenceDataService siglusLotReferenceDataService, SiglusDateHelper dateHelper) {
+    return new LotContext(facilityId, repo, lotConflictService, siglusLotReferenceDataService, dateHelper);
   }
 
   public <T> void preload(Collection<? extends T> collection, Function<T, String> productCodeGetter,
@@ -136,7 +143,7 @@ public class LotContext implements Context {
         })
         .filter(productLot -> !existed.containsKey(productLot.toProductLotCode()))
         .forEach(productLot -> newCreated.put(productLot.toProductLotCode(), productLot));
-    repo.batchCreateLots(newCreated.values());
+    siglusLotReferenceDataService.batchSaveLot(LotDto.convertList(newCreated.values()));
   }
 
 }

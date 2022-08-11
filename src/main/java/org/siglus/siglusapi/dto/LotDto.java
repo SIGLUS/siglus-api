@@ -16,18 +16,27 @@
 package org.siglus.siglusapi.dto;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
+
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.apache.commons.collections.CollectionUtils;
 import org.openlmis.referencedata.dto.BaseDto;
+import org.siglus.siglusapi.dto.android.db.ProductLot;
 
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
 @Setter
+@Builder
 @EqualsAndHashCode(callSuper = true)
 public class LotDto extends BaseDto {
 
@@ -37,4 +46,20 @@ public class LotDto extends BaseDto {
   private LocalDate expirationDate;
   private LocalDate manufactureDate;
 
+  public static LotDto convert(ProductLot productLot) {
+    return LotDto.builder()
+        .lotCode(productLot.getLot().getCode())
+        .expirationDate(productLot.getLot().getExpirationDate())
+        .tradeItemId(productLot.getTradeItemId())
+        .manufactureDate(productLot.getLot().getExpirationDate())
+        .active(true)
+        .build();
+  }
+
+  public static List<LotDto> convertList(Collection<ProductLot> productLots) {
+    if (CollectionUtils.isEmpty(productLots)) {
+      return new ArrayList<>();
+    }
+    return productLots.stream().map(LotDto::convert).collect(Collectors.toList());
+  }
 }

@@ -94,6 +94,9 @@ public class SiglusStockEventsServiceTest {
   private SiglusStockEventsService siglusStockEventsService;
 
   @Mock
+  private SiglusStockEventsService siglusStockEventsService2;
+
+  @Mock
   private StockEventsStockManagementService stockEventsStockManagementService;
 
   @Mock
@@ -185,6 +188,7 @@ public class SiglusStockEventsServiceTest {
     lineItemDto2.setOrderableId(orderableId2);
     lineItemDto2.setExtraData(getExtraData());
     ReflectionTestUtils.setField(siglusStockEventsService, "unpackReasonId", unpackReasonId);
+    ReflectionTestUtils.setField(siglusStockEventsService, "siglusStockEventsService", siglusStockEventsService2);
     ReflectionTestUtils
         .setField(siglusStockEventsService, "unpackDestinationNodeId", unpackDestinationNodeId);
   }

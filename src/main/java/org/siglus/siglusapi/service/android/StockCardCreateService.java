@@ -44,6 +44,7 @@ import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.requisition.dto.OrderableDto;
 import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
+import org.siglus.siglusapi.dto.LotDto;
 import org.siglus.siglusapi.dto.android.EventTime;
 import org.siglus.siglusapi.dto.android.EventTimeContainer;
 import org.siglus.siglusapi.dto.android.InventoryDetail;
@@ -78,6 +79,7 @@ import org.siglus.siglusapi.dto.android.sequence.PerformanceSequence;
 import org.siglus.siglusapi.repository.StockManagementRepository;
 import org.siglus.siglusapi.service.LotConflictService;
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
+import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.util.SupportedProgramsHelper;
 import org.slf4j.profiler.Profiler;
@@ -97,6 +99,7 @@ public class StockCardCreateService {
   private final StockManagementRepository repo;
   private final SiglusApprovedProductReferenceDataService approvedProductDataService;
   private final LotConflictService lotConflictService;
+  private final SiglusLotReferenceDataService siglusLotReferenceDataService;
 
   @Transactional
   @Validated(PerformanceSequence.class)
@@ -363,7 +366,7 @@ public class StockCardCreateService {
   private void insertData(StockCardNativeCreateContext context, Profiler profiler) {
     profiler.setLogger(log);
     profiler.start("insert lots: " + context.lots.size());
-    repo.batchCreateLots(context.lots);
+    siglusLotReferenceDataService.batchSaveLot(LotDto.convertList(context.lots));
     profiler.start("insert stockEvents: " + context.stockEvents.size());
     repo.batchCreateEvents(context.stockEvents);
     profiler.start("insert stockCards: " + context.stockCards.size());

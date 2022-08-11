@@ -96,7 +96,9 @@ import org.siglus.siglusapi.service.android.context.LotContext;
 import org.siglus.siglusapi.service.android.context.ProductContext;
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
+import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
+import org.siglus.siglusapi.util.SiglusDateHelper;
 import org.siglus.siglusapi.util.SupportedProgramsHelper;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -272,7 +274,8 @@ public class PodConfirmServiceTest {
     when(orderableService.getAllProducts()).thenReturn(singletonList(orderableDto1));
     ContextHolder.attachContext(ProductContext.init(orderableService));
     when(lotNativeRepository.findOne(productCode, tradeItemId, lotCode)).thenReturn(buildLot());
-    LotContext lotContext = LotContext.init(facilityId, lotNativeRepository, mock(LotConflictService.class));
+    LotContext lotContext = LotContext.init(facilityId, lotNativeRepository, mock(LotConflictService.class),
+        mock(SiglusLotReferenceDataService.class), mock(SiglusDateHelper.class));
     ContextHolder.attachContext(lotContext);
     when(stockCardLineItemRepository.findByFacilityIdAndLotIdIn(facilityId, originNumber)).thenReturn(
         stockCardLineItems);

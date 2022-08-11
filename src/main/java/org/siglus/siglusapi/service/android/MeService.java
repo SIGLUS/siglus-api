@@ -125,9 +125,11 @@ import org.siglus.siglusapi.service.android.mapper.PodMapper;
 import org.siglus.siglusapi.service.android.mapper.ProductMapper;
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
+import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
 import org.siglus.siglusapi.util.AndroidHelper;
 import org.siglus.siglusapi.util.HashEncoder;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
+import org.siglus.siglusapi.util.SiglusDateHelper;
 import org.siglus.siglusapi.util.SupportedProgramsHelper;
 import org.siglus.siglusapi.validator.android.StockCardCreateRequestValidator;
 import org.slf4j.profiler.Profiler;
@@ -160,6 +162,8 @@ public class MeService {
   private final FacilityCmmsRepository facilityCmmsRepository;
   private final LotNativeRepository lotNativeRepository;
   private final LotConflictService lotConflictService;
+  private final SiglusLotReferenceDataService siglusLotReferenceDataService;
+  private final SiglusDateHelper dateHelper;
   private final SiglusValidReasonAssignmentService validReasonAssignmentService;
   private final AndroidHelper androidHelper;
   private final SiglusReportTypeRepository reportTypeRepository;
@@ -367,7 +371,8 @@ public class MeService {
       ContextHolder.attachContext(currentUserContext);
       ContextHolder.attachContext(ProductContext.init(orderableService));
       ContextHolder.attachContext(
-          LotContext.init(currentUserContext.getHomeFacility().getId(), lotNativeRepository, lotConflictService));
+          LotContext.init(currentUserContext.getHomeFacility().getId(), lotNativeRepository, lotConflictService,
+              siglusLotReferenceDataService, dateHelper));
       List<PodResponse> podResponses = getProofsOfDelivery(since, shippedOnly, null);
       return podResponses.stream().map(this::filterNoLotPod).collect(Collectors.toList());
     } finally {
@@ -415,7 +420,8 @@ public class MeService {
       ContextHolder.attachContext(ProductContext.init(orderableService));
       UserDto user = currentUserContext.getCurrentUser();
       UUID homeFacilityId = user.getHomeFacilityId();
-      ContextHolder.attachContext(LotContext.init(homeFacilityId, lotNativeRepository, lotConflictService));
+      ContextHolder.attachContext(LotContext.init(homeFacilityId, lotNativeRepository, lotConflictService,
+          siglusLotReferenceDataService, dateHelper));
       profiler.start("get current user");
       profiler.start("get initiated pod");
       ProofOfDelivery toUpdate = podRepository.findInitiatedPodByOrderCode(podRequest.getOrderCode());

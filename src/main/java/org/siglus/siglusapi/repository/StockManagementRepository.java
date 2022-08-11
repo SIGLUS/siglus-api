@@ -167,6 +167,7 @@ public class StockManagementRepository extends BaseNativeRepository {
     return new StocksOnHand(findAllLotStocks(facilityId, at, orderableIds));
   }
 
+  @Deprecated
   public void batchCreateLots(List<ProductLot> lots) {
     String sql = "INSERT INTO referencedata.lots(id, lotcode, expirationdate, manufacturedate, tradeitemid, active) "
         + "VALUES (:id, :lotCode, :expirationDate, :expirationDate, :tradeItemId, true)";

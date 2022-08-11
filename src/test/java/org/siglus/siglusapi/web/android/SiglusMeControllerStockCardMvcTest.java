@@ -70,6 +70,7 @@ import org.openlmis.stockmanagement.dto.ValidReasonAssignmentDto;
 import org.openlmis.stockmanagement.dto.ValidSourceDestinationDto;
 import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.FacilityTypeDto;
+import org.siglus.siglusapi.dto.LotDto;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.dto.android.EventTime;
 import org.siglus.siglusapi.dto.android.Lot;
@@ -105,6 +106,7 @@ import org.siglus.siglusapi.service.android.mapper.ProductMovementMapper;
 import org.siglus.siglusapi.service.android.mapper.ProductMovementMapperImpl;
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
+import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
 import org.siglus.siglusapi.util.AndroidHelper;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.util.SupportedProgramsHelper;
@@ -167,6 +169,8 @@ public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
   @Mock
   @SuppressWarnings("unused")
   private StockEventProductRequestedRepository requestQuantityRepository;
+  @Mock
+  private SiglusLotReferenceDataService siglusLotReferenceDataService;
 
   @InjectMocks
   private StockCardCreateContextHolder holder;
@@ -211,6 +215,7 @@ public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
     stockCardCreateRequestListType = mapper.getTypeFactory()
         .constructCollectionType(List.class, StockCardCreateRequest.class);
     when(androidHelper.isAndroid()).thenReturn(false);
+    when(siglusLotReferenceDataService.saveLot(any())).thenReturn(LotDto.builder().build());
   }
 
   @Test
@@ -253,8 +258,6 @@ public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
     resultActions.andExpect(status().isCreated());
     // TODO a little further?
     ArgumentCaptor<List> listParamCaptor = ArgumentCaptor.forClass(List.class);
-    verify(stockManagementRepository).batchCreateLots(listParamCaptor.capture());
-    assertEquals(3, listParamCaptor.getValue().size());
     verify(stockManagementRepository).batchCreateEvents(listParamCaptor.capture());
     assertEquals(9, listParamCaptor.getValue().size());
     verify(stockManagementRepository).batchCreateStockCards(listParamCaptor.capture());
@@ -299,8 +302,6 @@ public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
     resultActions.andExpect(status().isCreated());
     // TODO a little further?
     ArgumentCaptor<List> listParamCaptor = ArgumentCaptor.forClass(List.class);
-    verify(stockManagementRepository).batchCreateLots(listParamCaptor.capture());
-    assertEquals(1, listParamCaptor.getValue().size());
     verify(stockManagementRepository).batchCreateEvents(listParamCaptor.capture());
     assertEquals(1, listParamCaptor.getValue().size());
     verify(stockManagementRepository).batchCreateStockCards(listParamCaptor.capture());

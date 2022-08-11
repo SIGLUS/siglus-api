@@ -129,8 +129,8 @@ public class RequisitionReportTaskService {
     List<RequisitionMonthlyNotSubmitReport> notSubmitList = new ArrayList<>();
     for (ProgramDto programDto : dataWrapper.allProgramDto) {
       UUID programId = programDto.getId();
-      String programCode = dataWrapper.requisitionNameMappingMap.get(programId).getRequisitionName();
-      FacillityStockCardDateDto facillityStockCardDateDto = dataWrapper.facilityStockInventoryDateMap.get(
+      String programCode = dataWrapper.programIdToRequisitionNameMapping.get(programId).getRequisitionName();
+      FacillityStockCardDateDto facillityStockCardDateDto = dataWrapper.facilityProgramToStockCardDate.get(
           dataWrapper.getUniqueKey(facilityInfo.getFacilityId(), programId));
       if (facillityStockCardDateDto == null) {
         log.info(String.format("has no Stock in this program , programCode=%s, facilityId=%s", programCode,
@@ -161,7 +161,7 @@ public class RequisitionReportTaskService {
         periods.stream().sorted(Comparator.comparing(ProcessingPeriodDto::getStartDate)).collect(Collectors.toList());
     List<RequisitionMonthlyNotSubmitReport> notSubmitPeriodList = new ArrayList<>();
     for (ProcessingPeriodDto processingPeriodDto : sortedPeriods) {
-      RequisitionMonthlyReport requisitionMonthlyReport = dataWrapper.requisitionMonthlyReportMap.get(
+      RequisitionMonthlyReport requisitionMonthlyReport = dataWrapper.requisitionMonthlyReportKeyToReport.get(
           dataWrapper.getUniqueKey(facilityInfo.getFacilityId(), processingPeriodDto.getId(),
               programDto.getId()));
       if (requisitionMonthlyReport != null) {
@@ -169,7 +169,7 @@ public class RequisitionReportTaskService {
         continue;
       }
       RequisitionMonthlyNotSubmitReport notSubmit = getRequisitionMonthlyNotSubmitReport(
-          dataWrapper.requisitionNameMappingMap, facilityInfo.getFacilityId(), facilityInfo, programDto.getId(),
+          dataWrapper.programIdToRequisitionNameMapping, facilityInfo.getFacilityId(), facilityInfo, programDto.getId(),
           processingPeriodDto);
       notSubmitPeriodList.add(notSubmit);
     }
@@ -263,9 +263,9 @@ public class RequisitionReportTaskService {
     protected List<FacilityDto> allFacilityDto;
     protected Map<UUID, RequisitionMonthlyReportFacility> monthlyReportFacilityMap;
     protected List<ProgramDto> allProgramDto;
-    protected Map<UUID, ProgramRequisitionNameMapping> requisitionNameMappingMap;
-    protected Map<String, FacillityStockCardDateDto> facilityStockInventoryDateMap;
-    protected Map<String, RequisitionMonthlyReport> requisitionMonthlyReportMap;
+    protected Map<UUID, ProgramRequisitionNameMapping> programIdToRequisitionNameMapping;
+    protected Map<String, FacillityStockCardDateDto> facilityProgramToStockCardDate;
+    protected Map<String, RequisitionMonthlyReport> requisitionMonthlyReportKeyToReport;
 
     public DataWrapper() {
       allFacilityDto = facilityReferenceDataService.findAll();
@@ -281,14 +281,14 @@ public class RequisitionReportTaskService {
       log.info("allProgramDto.size = " + allProgramDto.size());
 
       List<ProgramRequisitionNameMapping> requisitionNameMapping = programRequisitionNameMappingRepository.findAll();
-      requisitionNameMappingMap = requisitionNameMapping.stream()
+      programIdToRequisitionNameMapping = requisitionNameMapping.stream()
           .collect(Collectors.toMap(ProgramRequisitionNameMapping::getProgramId, Function.identity()));
 
 
       List<FacillityStockCardDateDto> firstStockCardGroupByFacility =
           getAllFacilityStockCardDateDtos(allProgramDto);
 
-      facilityStockInventoryDateMap = firstStockCardGroupByFacility.stream()
+      facilityProgramToStockCardDate = firstStockCardGroupByFacility.stream()
           .collect(Collectors.toMap(
               item -> getUniqueKey(item.getFacilityId(),
                   item.getProgramId()), Function.identity()));
@@ -296,7 +296,7 @@ public class RequisitionReportTaskService {
       List<RequisitionMonthlyReport> requisitionMonthlyReports = requisitionMonthReportRepository.findAll();
       requisitionMonthlyReports = requisitionMonthlyReports.stream()
           .filter(item -> item.getRequisitionCreatedDate() != null).collect(Collectors.toList());
-      requisitionMonthlyReportMap = requisitionMonthlyReports.stream()
+      requisitionMonthlyReportKeyToReport = requisitionMonthlyReports.stream()
           .collect(Collectors.toMap(this::getUniqueKey, Function.identity(), (e1, e2) -> e1));
       log.info("requisitionMonthlyReports.size = " + requisitionMonthlyReports.size());
 

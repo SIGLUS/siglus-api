@@ -49,6 +49,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.openlmis.fulfillment.domain.Order;
 import org.openlmis.fulfillment.domain.OrderStatus;
 import org.openlmis.fulfillment.domain.ProofOfDelivery;
@@ -89,8 +90,10 @@ import org.siglus.siglusapi.service.android.mapper.PodOrderMapperImpl;
 import org.siglus.siglusapi.service.android.mapper.PodProductLineMapperImpl;
 import org.siglus.siglusapi.service.android.mapper.PodRequisitionMapperImpl;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
+import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
+import org.siglus.siglusapi.util.SiglusDateHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
@@ -366,7 +369,8 @@ public class SiglusMeControllerProofOfDeliveryMvcTest extends FileBasedTest {
         product2Lot1Id, "22B01", randomUUID(), Lot.of("SME-LOTE-22B01-062023", LocalDate.of(2023, 6, 30))
     );
     when(lotNativeRepository.findById(product2Lot1Id)).thenReturn(product2Lot1);
-    ContextHolder.attachContext(LotContext.init(homeFacilityId, lotNativeRepository, mock(LotConflictService.class)));
+    ContextHolder.attachContext(LotContext.init(homeFacilityId, lotNativeRepository, mock(LotConflictService.class),
+        Mockito.mock(SiglusLotReferenceDataService.class), Mockito.mock(SiglusDateHelper.class)));
   }
 
   private void mockReasons() {

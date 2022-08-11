@@ -15,19 +15,30 @@
 
 package org.siglus.siglusapi.service.client;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import lombok.RequiredArgsConstructor;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.openlmis.referencedata.web.LotController;
 import org.openlmis.stockmanagement.util.RequestParameters;
 import org.siglus.siglusapi.constant.FieldConstants;
 import org.siglus.siglusapi.dto.LotDto;
 import org.siglus.siglusapi.dto.LotSearchParams;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.MapBindingResult;
 
 @Service
+@RequiredArgsConstructor
 public class SiglusLotReferenceDataService extends BaseReferenceDataService<LotDto> {
+
+  private final LotController lotController;
 
   @Override
   protected String getUrl() {
@@ -63,7 +74,32 @@ public class SiglusLotReferenceDataService extends BaseReferenceDataService<LotD
   }
 
   public LotDto saveLot(LotDto lotDto) {
-    return postResult("/", lotDto, getResultClass());
+    ObjectMapper objectMapper = new ObjectMapper();
+
+    BindingResult bindingResult = new MapBindingResult(objectMapper.convertValue(lotDto, Map.class), "lotDto");
+
+    final org.openlmis.referencedata.dto.LotDto lotDtoRequest = new org.openlmis.referencedata.dto.LotDto();
+    BeanUtils.copyProperties(lotDto, lotDtoRequest);
+
+    org.openlmis.referencedata.dto.LotDto lotDtoResponse = lotController.createLot(lotDtoRequest, bindingResult);
+    LotDto result = new LotDto();
+    BeanUtils.copyProperties(lotDtoResponse, result);
+
+    return result;
+  }
+
+  public void batchSaveLot(List<LotDto> lotDtos) {
+    if (org.apache.commons.collections.CollectionUtils.isEmpty(lotDtos)) {
+      return;
+    }
+    final List<org.openlmis.referencedata.dto.LotDto> lotDtoRequests = new ArrayList<>();
+    lotDtos.forEach(lotDto -> {
+      final org.openlmis.referencedata.dto.LotDto lotDtoRequestItem = new org.openlmis.referencedata.dto.LotDto();
+      BeanUtils.copyProperties(lotDto, lotDtoRequestItem);
+
+      lotDtoRequests.add(lotDtoRequestItem);
+    });
+    lotController.batchCreateNewLot(lotDtoRequests);
   }
 
   public List<LotDto> findByIds(Collection<UUID> ids) {
