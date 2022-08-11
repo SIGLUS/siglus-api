@@ -55,7 +55,7 @@ public class ProductLocationMovementDraftValidatorTest {
         .id(null)
         .build();
 
-    productLocationMovementDraftValidator.validateEmptyStockMovementDraft(draftDto);
+    productLocationMovementDraftValidator.validateEmptyMovementDraft(draftDto);
   }
 
   @Test(expected = ValidationMessageException.class)
@@ -65,7 +65,7 @@ public class ProductLocationMovementDraftValidatorTest {
         .programId(null)
         .build();
 
-    productLocationMovementDraftValidator.validateEmptyStockMovementDraft(draftDto);
+    productLocationMovementDraftValidator.validateEmptyMovementDraft(draftDto);
   }
 
   @Test(expected = ValidationMessageException.class)
@@ -75,7 +75,7 @@ public class ProductLocationMovementDraftValidatorTest {
         .userId(null)
         .build();
 
-    productLocationMovementDraftValidator.validateEmptyStockMovementDraft(draftDto);
+    productLocationMovementDraftValidator.validateEmptyMovementDraft(draftDto);
   }
 
   @Test(expected = ValidationMessageException.class)
@@ -85,7 +85,7 @@ public class ProductLocationMovementDraftValidatorTest {
         .facilityId(null)
         .build();
 
-    productLocationMovementDraftValidator.validateEmptyStockMovementDraft(draftDto);
+    productLocationMovementDraftValidator.validateEmptyMovementDraft(draftDto);
   }
 
   @Test(expected = NotFoundException.class)

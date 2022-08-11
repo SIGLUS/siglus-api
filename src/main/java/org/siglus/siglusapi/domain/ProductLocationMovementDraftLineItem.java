@@ -55,24 +55,24 @@ public class ProductLocationMovementDraftLineItem extends BaseEntity {
   private UUID lotId;
   private String lotCode;
 
-  private UUID locationId;
-  private String locationCode;
+  private UUID srcLocationId;
+  private String srcLocationCode;
 
   @Column(nullable = false)
   @JsonFormat(shape = STRING, pattern = "yyyy-MM-dd")
   private LocalDate createdDate;
 
-  private UUID moveToId;
-  private String moveToCode;
+  private UUID destLocationId;
+  private String destLocationCode;
 
   private LocalDate expirationDate;
   private Integer quantity;
   private Integer stockOnHand;
 
-  public static ProductLocationMovementDraftLineItem from(ProductLocationMovementDraftLineItemDto draftLineItemDto,
+  public static ProductLocationMovementDraftLineItem from(ProductLocationMovementDraftLineItemDto lineItemDto,
       ProductLocationMovementDraft draft) {
     ProductLocationMovementDraftLineItem lineItem = new ProductLocationMovementDraftLineItem();
-    BeanUtils.copyProperties(draftLineItemDto, lineItem);
+    BeanUtils.copyProperties(lineItemDto, lineItem);
     lineItem.setProductLocationMovementDraft(draft);
     return lineItem;
   }

@@ -28,7 +28,6 @@ import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_USER_ID_MISSING;
 import java.util.List;
 import java.util.UUID;
 import org.siglus.siglusapi.domain.ProductLocationMovementDraft;
-import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.dto.ProductLocationMovementDraftDto;
 import org.siglus.siglusapi.dto.ProductLocationMovementDraftLineItemDto;
 import org.siglus.siglusapi.exception.NotFoundException;
@@ -43,7 +42,7 @@ public class ProductLocationMovementDraftValidator {
   @Autowired
   private ProductLocationMovementDraftRepository productLocationMovementDraftRepository;
 
-  public void validateEmptyStockMovementDraft(ProductLocationMovementDraftDto productLocationMovementDraftDto) {
+  public void validateEmptyMovementDraft(ProductLocationMovementDraftDto productLocationMovementDraftDto) {
     if (productLocationMovementDraftDto.getId() != null) {
       throw new ValidationMessageException(ERROR_MOVEMENT_DRAFT_ID_SHOULD_NULL);
     }

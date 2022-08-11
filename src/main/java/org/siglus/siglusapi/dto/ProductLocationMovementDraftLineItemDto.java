@@ -38,10 +38,10 @@ public class ProductLocationMovementDraftLineItemDto {
   private String productName;
   private UUID lotId;
   private String lotCode;
-  private UUID locationId;
-  private String locationCode;
-  private UUID moveToId;
-  private String moveToCode;
+  private UUID srcLocationId;
+  private String srcLocationCode;
+  private UUID destLocationId;
+  private String destLocationCode;
   @JsonFormat(shape = STRING)
   private LocalDate createdDate;
   @JsonFormat(shape = STRING)

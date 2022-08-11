@@ -15,7 +15,7 @@
 
 package org.siglus.siglusapi.service;
 
-import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MOVEMENT_DRAFT_EXISTS;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_MOVEMENT_DRAFT_EXISTS;
 
 import java.util.List;
 import java.util.UUID;
@@ -28,9 +28,10 @@ import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.ProductLocationMovementDraftRepository;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.validator.ActiveDraftValidator;
-import org.siglus.siglusapi.validator.StockManagementDraftValidator;
+import org.siglus.siglusapi.validator.ProductLocationMovementDraftValidator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Slf4j
@@ -40,7 +41,7 @@ public class SiglusProductLocationMovementDraftService {
   private ProductLocationMovementDraftRepository productLocationMovementDraftRepository;
 
   @Autowired
-  StockManagementDraftValidator stockManagementDraftValidator;
+  ProductLocationMovementDraftValidator productLocationMovementDraftValidator;
 
   @Autowired
   private SiglusAuthenticationHelper authenticationHelper;
@@ -48,12 +49,12 @@ public class SiglusProductLocationMovementDraftService {
   @Autowired
   private ActiveDraftValidator draftValidator;
 
-  public ProductLocationMovementDraftDto createEmptyProductLocationMovementDraft(
+  @Transactional
+  public ProductLocationMovementDraftDto createEmptyMovementDraft(
       ProductLocationMovementDraftDto productLocationMovementDraftDto) {
-    log.info("create stock movement draft");
-    stockManagementDraftValidator.validateEmptyStockMovementDraft(productLocationMovementDraftDto);
-
+    productLocationMovementDraftValidator.validateEmptyMovementDraft(productLocationMovementDraftDto);
     checkIfMovementDraftExists(productLocationMovementDraftDto);
+    log.info("create stock movement draft");
     ProductLocationMovementDraft emptyProductLocationMovementDraft = ProductLocationMovementDraft
         .createEmptyStockMovementDraft(productLocationMovementDraftDto);
     ProductLocationMovementDraft savedDraft = productLocationMovementDraftRepository
@@ -66,12 +67,12 @@ public class SiglusProductLocationMovementDraftService {
         .findByProgramIdAndFacilityId(stockManagementDraftDto.getProgramId(), stockManagementDraftDto.getFacilityId());
     if (CollectionUtils.isNotEmpty(drafts)) {
       throw new ValidationMessageException(
-          new Message(ERROR_STOCK_MOVEMENT_DRAFT_EXISTS, stockManagementDraftDto.getProgramId(),
+          new Message(ERROR_MOVEMENT_DRAFT_EXISTS, stockManagementDraftDto.getProgramId(),
               stockManagementDraftDto.getFacilityId()));
     }
   }
 
-  public List<ProductLocationMovementDraftDto> searchMovementDraft(UUID programId) {
+  public List<ProductLocationMovementDraftDto> searchMovementDrafts(UUID programId) {
     UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
     draftValidator.validateProgramId(programId);
     draftValidator.validateFacilityId(facilityId);
@@ -80,5 +81,30 @@ public class SiglusProductLocationMovementDraftService {
         .findByProgramIdAndFacilityId(programId, facilityId);
 
     return ProductLocationMovementDraftDto.from(productLocationMovementDrafts);
+  }
+
+  public ProductLocationMovementDraftDto searchMovementDraft(UUID id) {
+    ProductLocationMovementDraft movementDraft = productLocationMovementDraftRepository.findOne(id);
+    productLocationMovementDraftValidator.validateMovementDraft(movementDraft);
+    return ProductLocationMovementDraftDto.from(movementDraft);
+  }
+
+  @Transactional
+  public ProductLocationMovementDraftDto updateMovementDraft(ProductLocationMovementDraftDto movementDraftDto,
+      UUID movementDraftId) {
+    productLocationMovementDraftValidator.validateMovementDraftAndLineItems(movementDraftDto, movementDraftId);
+    ProductLocationMovementDraft stockMovementDraft = ProductLocationMovementDraft
+        .createMovementDraft(movementDraftDto);
+    log.info("update movement draft with id: {}", movementDraftId);
+    ProductLocationMovementDraft savedMovementDraft = productLocationMovementDraftRepository.save(stockMovementDraft);
+    return ProductLocationMovementDraftDto.from(savedMovementDraft);
+  }
+
+  @Transactional
+  public void deleteMovementDraft(UUID movementDraftId) {
+    ProductLocationMovementDraft movementDraft = productLocationMovementDraftRepository.findOne(movementDraftId);
+    productLocationMovementDraftValidator.validateMovementDraft(movementDraft);
+    log.info("delete movement draft with id: {}", movementDraftId);
+    productLocationMovementDraftRepository.delete(movementDraft);
   }
 }

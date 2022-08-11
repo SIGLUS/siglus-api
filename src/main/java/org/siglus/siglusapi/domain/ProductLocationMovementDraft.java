@@ -62,21 +62,22 @@ public class ProductLocationMovementDraft extends BaseEntity {
   @OneToMany(cascade = ALL, mappedBy = "productLocationMovementDraft", orphanRemoval = true)
   private List<ProductLocationMovementDraftLineItem> lineItems;
 
-  public static ProductLocationMovementDraft createEmptyStockMovementDraft(ProductLocationMovementDraftDto draftDto) {
-    ProductLocationMovementDraft draft = new ProductLocationMovementDraft();
-    BeanUtils.copyProperties(draftDto, draft);
-    return draft;
+  public static ProductLocationMovementDraft createEmptyStockMovementDraft(
+      ProductLocationMovementDraftDto movementDraftDto) {
+    ProductLocationMovementDraft movementDraft = new ProductLocationMovementDraft();
+    BeanUtils.copyProperties(movementDraftDto, movementDraft);
+    return movementDraft;
   }
 
-  public static ProductLocationMovementDraft createStockMovementDraft(ProductLocationMovementDraftDto draftDto) {
-    ProductLocationMovementDraft draft = new ProductLocationMovementDraft();
-    BeanUtils.copyProperties(draftDto, draft);
-    List<ProductLocationMovementDraftLineItemDto> lineItemDtos = draftDto.getLineItems();
+  public static ProductLocationMovementDraft createMovementDraft(ProductLocationMovementDraftDto movementDraftDto) {
+    ProductLocationMovementDraft movementDraft = new ProductLocationMovementDraft();
+    BeanUtils.copyProperties(movementDraftDto, movementDraft);
+    List<ProductLocationMovementDraftLineItemDto> lineItemDtos = movementDraftDto.getLineItems();
     if (lineItemDtos != null) {
-      draft.setLineItems(lineItemDtos.stream()
-          .map(lineItemDto -> ProductLocationMovementDraftLineItem.from(lineItemDto, draft))
+      movementDraft.setLineItems(lineItemDtos.stream()
+          .map(lineItemDto -> ProductLocationMovementDraftLineItem.from(lineItemDto, movementDraft))
           .collect(toList()));
     }
-    return draft;
+    return movementDraft;
   }
 }

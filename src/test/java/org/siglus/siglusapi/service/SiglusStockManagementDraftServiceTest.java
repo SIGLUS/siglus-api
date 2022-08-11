@@ -264,8 +264,7 @@ public class SiglusStockManagementDraftServiceTest {
 
     verify(draftValidator).validateIsDraft(isDraft);
     verify(stockManagementDraftRepository)
-        .findByProgramIdAndFacilityIdAndIsDraftAndDraftType(programId,
-            facilityId, isDraft, issueDraft);
+        .findByProgramIdAndFacilityIdAndIsDraftAndDraftType(programId, facilityId, isDraft, issueDraft);
   }
 
   @Test
@@ -314,9 +313,9 @@ public class SiglusStockManagementDraftServiceTest {
   public void shouldCallRepositoryWhenDeleteStockManagementDraftByStockEventDto() {
     StockManagementDraft draft = StockManagementDraft.builder().build();
     final ArrayList<StockManagementDraft> drafts = newArrayList(draft);
-    when(
-        stockManagementDraftRepository.findByProgramIdAndFacilityIdAndIsDraftAndDraftType(programId,
-            facilityId, true, issueDraft)).thenReturn(drafts);
+    when(stockManagementDraftRepository
+        .findByProgramIdAndFacilityIdAndIsDraftAndDraftType(programId, facilityId, true, issueDraft))
+        .thenReturn(drafts);
     StockEventDto stockEventDto = StockEventDto.builder().programId(programId)
         .facilityId(facilityId)
         .type(issueDraft).build();
