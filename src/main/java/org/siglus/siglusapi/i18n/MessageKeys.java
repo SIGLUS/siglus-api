@@ -72,10 +72,12 @@ public abstract class MessageKeys {
   // stock management
   public static final String ERROR_STOCK_MANAGEMENT_DRAFT_ID_NOT_FOUND = STOCK_MANAGEMENT_ERROR_PREFIX + ".id.notFound";
   public static final String ERROR_STOCK_MANAGEMENT_DRAFT_NOT_FOUND = STOCK_MANAGEMENT_ERROR_PREFIX + ".draft.notFound";
-  public static final String ERROR_MOVEMENT_DRAFT_NOT_FOUND = PRODUCT_LOCATION_MOVEMENT_ERROR_PREFIX + ".movement.draft.notFound";
+  public static final String ERROR_MOVEMENT_DRAFT_NOT_FOUND =
+      PRODUCT_LOCATION_MOVEMENT_ERROR_PREFIX + ".movement.draft.notFound";
   public static final String ERROR_STOCK_MANAGEMENT_DRAFT_DRAFT_EXISTS =
       STOCK_MANAGEMENT_ERROR_PREFIX + ".draft.exists";
-  public static final String ERROR_MOVEMENT_DRAFT_EXISTS = PRODUCT_LOCATION_MOVEMENT_ERROR_PREFIX + ".movement.draft.exists";
+  public static final String ERROR_MOVEMENT_DRAFT_EXISTS =
+      PRODUCT_LOCATION_MOVEMENT_ERROR_PREFIX + ".movement.draft.exists";
   public static final String ERROR_STOCK_MANAGEMENT_SUB_DRAFT_SAME_ORDERABLE_ID_WITH_LOT_CODE =
       STOCK_MANAGEMENT_ERROR_PREFIX + ".stock.management.subDraft.same.orderable.id.with.lot.code";
   public static final String ERROR_STOCK_MANAGEMENT_SUB_DRAFT_EMPTY =
