@@ -32,6 +32,7 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -47,6 +48,7 @@ import org.openlmis.fulfillment.domain.OrderStatus;
 import org.openlmis.fulfillment.repository.OrderRepository;
 import org.openlmis.fulfillment.service.OrderSearchParams;
 import org.openlmis.fulfillment.service.OrderService;
+import org.openlmis.fulfillment.service.referencedata.OrderableDto;
 import org.openlmis.fulfillment.service.referencedata.ProcessingPeriodDto;
 import org.openlmis.fulfillment.util.AuthenticationHelper;
 import org.openlmis.fulfillment.web.OrderController;
@@ -57,6 +59,7 @@ import org.openlmis.fulfillment.web.util.OrderDto;
 import org.openlmis.fulfillment.web.util.OrderDtoBuilder;
 import org.openlmis.fulfillment.web.util.OrderLineItemDto;
 import org.openlmis.fulfillment.web.util.OrderObjectReferenceDto;
+import org.openlmis.referencedata.domain.Orderable;
 import org.openlmis.requisition.domain.requisition.ApprovedProductReference;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.VersionEntityReference;
@@ -74,6 +77,7 @@ import org.siglus.siglusapi.domain.OrderLineItemExtension;
 import org.siglus.siglusapi.dto.OrderStatusDto;
 import org.siglus.siglusapi.dto.SiglusOrderDto;
 import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
+import org.siglus.siglusapi.repository.OrderableRepository;
 import org.siglus.siglusapi.repository.PodSubDraftRepository;
 import org.siglus.siglusapi.service.client.SiglusProcessingPeriodReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
@@ -161,6 +165,9 @@ public class SiglusOrderService {
 
   @Autowired
   private PodSubDraftRepository podSubDraftRepository;
+
+  @Autowired
+  private OrderableRepository orderableRepository;
 
   public Page<BasicOrderDto> searchOrders(OrderSearchParams params, Pageable pageable) {
     return orderController.searchOrders(params, pageable);
@@ -350,7 +357,22 @@ public class SiglusOrderService {
     if (withAvailableProducts) {
       order.setAvailableProducts(getAllUserAvailableProductAggregator(orderDto));
     }
+    setIfIsKit(order);
     return order;
+  }
+
+  private void setIfIsKit(SiglusOrderDto siglusOrderDto) {
+    List<UUID> orderableIds = siglusOrderDto.getOrder().orderLineItems().stream()
+        .map(orderableDto -> orderableDto.getOrderable().getId()).collect(Collectors.toList());
+    List<Orderable> orderables = orderableRepository.findLatestByIds(orderableIds);
+    Map<UUID, Boolean> orderableToIsKitMap = new HashMap<>();
+    orderables.forEach(orderable -> {
+      orderableToIsKitMap.put(orderable.getId(), CollectionUtils.isNotEmpty(orderable.getChildren()));
+    });
+    siglusOrderDto.getOrder().orderLineItems().forEach(orderLineItemDto -> {
+      OrderableDto orderable = orderLineItemDto.getOrderable();
+      orderable.setIsKit(orderableToIsKitMap.get(orderable.getId()));
+    });
   }
 
   private boolean currentDateIsAfterNextPeriodEndDate(OrderDto orderDto) {
