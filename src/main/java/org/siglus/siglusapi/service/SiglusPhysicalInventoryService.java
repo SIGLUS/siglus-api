@@ -204,6 +204,7 @@ public class SiglusPhysicalInventoryService {
     physicalInventory.setProgramId(programId);
     return physicalInventory;
   }
+
   public SiglusPhysicalInventoryDto getSubLocationPhysicalInventoryDtoBySubDraftId(
           List<UUID> subDraftIds) {
     if (CollectionUtils.isEmpty(subDraftIds)) {
