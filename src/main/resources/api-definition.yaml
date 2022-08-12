@@ -246,6 +246,50 @@ traits:
 /api:
 
   /siglusapi:
+    /location/physicalInventories:
+      post:
+        is: [ secured ]
+        description: Create empty draft physical inventory and assign multiple drafts for multiuser. Only one draft is allowed at the same time for one facility&program.
+        body:
+          application/json:
+            schema: physicalInventory
+        queryParameters:
+          splitNum:
+            required: true
+            description: splitNum entered by the user
+            repeat: false
+            type: integer
+        responses:
+          201:
+            description: Draft saved.
+            body:
+              application/json:
+                schema: physicalInventory
+          400:
+            body:
+              application/json:
+                schema: localizedMessage
+            description: An error occured during request processing.
+          403:
+            description: User does not have permission to save draft physical inventory.
+            body:
+              application/json:
+                schema: localizedMessage
+      /subDraft:
+        get:
+          is: [ secured ]
+          description: Get subDraft detail.
+          queryParameters:
+            subDraftIds:
+              required: true
+              description: subDraftId List
+              repeat: false
+              type: string
+          responses:
+            200:
+              body:
+                application/json:
+                  schema: physicalInventory
     /facilities:
       post:
         is: [ secured ]

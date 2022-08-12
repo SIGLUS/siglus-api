@@ -1044,7 +1044,7 @@ public class SiglusPhysicalInventoryServiceTest {
             .thenReturn(Arrays.asList(extension));
     // when
     SiglusPhysicalInventoryDto actualPhysicalInventoryDto = siglusPhysicalInventoryService
-        .getSubPhysicalInventoryDtoBySubDraftId(subDraftIds);
+        .getSubLocationPhysicalInventoryDtoBySubDraftId(subDraftIds);
 
     // then
     assertEquals(siglusPhysicalInventoryDto, actualPhysicalInventoryDto);

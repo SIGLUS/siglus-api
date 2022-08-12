@@ -180,7 +180,32 @@ public class SiglusPhysicalInventoryService {
     return allSubPhysicalInventoryLineItemDtoList;
   }
 
-  public SiglusPhysicalInventoryDto getSubPhysicalInventoryDtoBySubDraftId(List<UUID> subDraftIds) {
+  public PhysicalInventoryDto getSubPhysicalInventoryDtoBySubDraftId(List<UUID> subDraftIds) {
+    if (CollectionUtils.isEmpty(subDraftIds)) {
+      throw new IllegalArgumentException("empty subDraftIds");
+    }
+    List<PhysicalInventoryLineItemDto> subPhysicalInventoryLineItemDtoList =
+            getSubPhysicalInventoryLineItemListBySubDraftIds(subDraftIds);
+    List<PhysicalInventoryLineItemDto> sortedSubPhysicalInventoryLineItemList = subPhysicalInventoryLineItemDtoList
+            .stream().sorted(Comparator.comparing(o -> String.valueOf(
+                            orderableRepository.findLatestById(o.getOrderableId())
+                                    .orElseThrow(IllegalArgumentException::new)
+                                    .getProductCode()))).collect(Collectors.toList());
+    PhysicalInventoryDto physicalInventory = getPhysicalInventoryBySubDraftId(subDraftIds.get(0));
+
+    UUID programId = subDraftIds.size() > 1
+            ? ALL_PRODUCTS_PROGRAM_ID
+            : physicalInventory.getProgramId();
+    UUID physicalInventoryId = subDraftIds.size() > 1
+            ? ALL_PRODUCTS_UUID
+            : physicalInventory.getId();
+    physicalInventory.setId(physicalInventoryId);
+    physicalInventory.setLineItems(sortedSubPhysicalInventoryLineItemList);
+    physicalInventory.setProgramId(programId);
+    return physicalInventory;
+  }
+  public SiglusPhysicalInventoryDto getSubLocationPhysicalInventoryDtoBySubDraftId(
+          List<UUID> subDraftIds) {
     if (CollectionUtils.isEmpty(subDraftIds)) {
       throw new IllegalArgumentException("empty subDraftIds");
     }
