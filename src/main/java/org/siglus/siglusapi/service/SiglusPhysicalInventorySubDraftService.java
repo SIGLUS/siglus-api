@@ -277,7 +277,6 @@ public class SiglusPhysicalInventorySubDraftService {
     return result;
   }
 
-  @Retryable(exclude = BaseMessageException.class, backoff = @Backoff(delay = 1000, random = true, multiplier = 2))
   private void checkConflictSubDraft(List<UUID> physicalInventoryIds, PhysicalInventoryDto physicalInventoryDto,
       List<UUID> subDraftIds) {
     List<PhysicalInventoryLineItemsExtension> physicalInventoryLineItemsExtensions

@@ -56,14 +56,6 @@ public class LotNativeRepository extends BaseNativeRepository {
     return namedJdbc.query(lotQuery, params, productLotExtractor(code));
   }
 
-  @Deprecated
-  public Collection<ProductLot> batchCreateLots(Collection<ProductLot> lots) {
-    String sql = "INSERT INTO referencedata.lots(id, lotcode, expirationdate, manufacturedate, tradeitemid, active) "
-        + "VALUES (:id, :lotCode, :expirationDate, :expirationDate, :tradeItemId, true)";
-    namedJdbc.batchUpdate(sql, toParams(lots));
-    return lots;
-  }
-
   @SneakyThrows
   private Lot readLot(ResultSet rs) {
     return Lot.fromDatabase(readAsString(rs, "lotcode"), readAsDate(rs, "expirationdate"));

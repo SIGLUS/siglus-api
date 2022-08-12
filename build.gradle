@@ -226,6 +226,18 @@ jacoco {
     toolVersion = "0.8.6"
 }
 
+def jacocoTestExclusion = [
+        'org/siglus/siglusapi/*.class',
+        'org/siglus/siglusapi/constant',
+        'org/siglus/siglusapi/i18n',
+        'org/siglus/siglusapi/service/client',
+        'org/siglus/siglusapi/domain',
+        'org/siglus/siglusapi/repository',
+        'org/siglus/siglusapi/exception',
+        'org/siglus/siglusapi/dto',
+        'org/siglus/siglusapi/config'
+]
+
 jacocoTestReport {
     group = "reporting"
     description = "Generate Jacoco coverage reports after running tests."
@@ -237,17 +249,7 @@ jacocoTestReport {
     additionalSourceDirs = files(sourceSets.main.allJava.srcDirs)
     afterEvaluate {
         classDirectories = files(classDirectories.files.collect {
-            fileTree(dir: it, exclude: [
-                    'org/siglus/siglusapi/*.class',
-                    'org/siglus/siglusapi/constant',
-                    'org/siglus/siglusapi/i18n',
-                    'org/siglus/siglusapi/service/client',
-                    'org/siglus/siglusapi/domain',
-                    'org/siglus/siglusapi/repository',
-                    'org/siglus/siglusapi/exception',
-                    'org/siglus/siglusapi/dto',
-                    'org/siglus/siglusapi/config'
-            ])
+            fileTree(dir: it, exclude: jacocoTestExclusion)
         })
     }
 }
@@ -255,17 +257,7 @@ jacocoTestReport {
 jacocoTestCoverageVerification {
     afterEvaluate {
         classDirectories = files(classDirectories.files.collect {
-            fileTree(dir: it, exclude: [
-                    'org/siglus/siglusapi/*.class',
-                    'org/siglus/siglusapi/constant',
-                    'org/siglus/siglusapi/i18n',
-                    'org/siglus/siglusapi/service/client',
-                    'org/siglus/siglusapi/domain',
-                    'org/siglus/siglusapi/repository',
-                    'org/siglus/siglusapi/exception',
-                    'org/siglus/siglusapi/dto',
-                    'org/siglus/siglusapi/config'
-            ])
+            fileTree(dir: it, exclude: jacocoTestExclusion)
         })
     }
     violationRules {
