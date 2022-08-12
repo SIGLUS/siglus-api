@@ -149,13 +149,14 @@ public class SiglusPodService {
 
   private static final String FILE_NAME_PREFIX_EMERGENCY = "OF.REM.";
   private static final String FILE_NAME_PREFIX_NORMAL = "OF.RNO.";
-  private static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyMM");
   private static final List<String> REQUISITION_STATUS_POST_SUBMIT = Lists.newArrayList(
       RequisitionStatus.APPROVED.name(),
       RequisitionStatus.RELEASED.name(),
       RequisitionStatus.RELEASED_WITHOUT_ORDER.name());
   private static final Integer PROVINCE_LEVEL_NUMBER = 2;
   private static final Integer DISTRICT_LEVEL_NUMBER = 3;
+
+  private final DateFormat dateFormat = new SimpleDateFormat("yyMM");
 
   public PodExtensionResponse getPodExtensionResponse(UUID id, Set<String> expand) {
     PodExtensionResponse response = new PodExtensionResponse();
@@ -347,25 +348,24 @@ public class SiglusPodService {
   }
 
   private String getFileName(OrderDto orderDto, UUID realRequisitionId) {
-    long requisitionCount = getRequisitionCount(orderDto, realRequisitionId);
+    int requisitionCount = getRequisitionCount(orderDto, realRequisitionId);
 
     StringBuilder fileName = new StringBuilder()
         .append(orderDto.getEmergency() ? FILE_NAME_PREFIX_EMERGENCY : FILE_NAME_PREFIX_NORMAL)
         .append(orderDto.getReceivingFacilityCode()).append(".")
-        .append(DATE_FORMAT.format(orderDto.getPeriodEndDate())).append(".")
+        .append(dateFormat.format(orderDto.getPeriodEndDate())).append(".")
         .append(formatCount(requisitionCount));
 
     return fileName.toString();
   }
 
-  private long getRequisitionCount(OrderDto orderDto, UUID realRequisitionId) {
+  private int getRequisitionCount(OrderDto orderDto, UUID realRequisitionId) {
     List<String> requisitionIds = requisitionsRepository.findRequisitionIdsByOrderInfo(
         orderDto.getReceivingFacilityId(),
         orderDto.getProgramId(),
         orderDto.getProcessingPeriodId(), orderDto.getEmergency(), REQUISITION_STATUS_POST_SUBMIT);
     List<StatusChange> statusChanges = requisitionStatusChangeRepository.findByRequisitionIdIn(
-            requisitionIds.stream().map(UUID::fromString).collect(
-                Collectors.toList())).stream()
+            requisitionIds.stream().map(UUID::fromString).collect(Collectors.toList())).stream()
         .filter(statusChange -> RequisitionStatus.SUBMITTED == statusChange.getStatus())
         .sorted(Comparator.comparing(StatusChange::getCreatedDate)).collect(Collectors.toList());
 
@@ -378,7 +378,7 @@ public class SiglusPodService {
     return requisitionIds.size();
   }
 
-  private String formatCount(long count) {
+  private String formatCount(int count) {
     String formatString = String.valueOf(count);
     if (formatString.length() >= 2) {
       return formatString;
