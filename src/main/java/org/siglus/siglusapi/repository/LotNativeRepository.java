@@ -16,7 +16,6 @@
 package org.siglus.siglusapi.repository;
 
 import java.sql.ResultSet;
-import java.util.Collection;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;

@@ -238,13 +238,13 @@ public class SiglusStockEventsService {
     return programIdToEventId;
   }
 
-   /**
+  /**
    * reason for create a new transaction:
-   * <p>Running this method in the super transaction will cause 'stockmanagement.error.event.lot.not.exist' execption.
-   * <p>detail steps：
-   * <p>1. method createStockEventForOneProgram do something
-   * <p>2. method createAndFillLotId insert a new lot, with new uuid(This method)
-   * <p>3. method createStockEventForOneProgram call siglusCreateStockEvent and in stockEventProcessor.process build
+   * Running this method in the super transaction will cause 'stockmanagement.error.event.lot.not.exist' execption.
+   * detail steps：
+   * 1. method createStockEventForOneProgram do something
+   * 2. method createAndFillLotId insert a new lot, with new uuid(This method)
+   * 3. method createStockEventForOneProgram call siglusCreateStockEvent and in stockEventProcessor.process build
    * context. When building context, it start a http request /api/lots/ to getLotsByIds(which beyond the super
    * transaction scope, so the http must see the change in step 2)
    */
