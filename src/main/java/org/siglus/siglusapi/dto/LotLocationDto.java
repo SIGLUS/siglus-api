@@ -32,6 +32,7 @@ public class LotLocationDto {
 
   private UUID locationId;
   private String locationCode;
+  private String area;
   private List<LotsDto> lots;
 
 }
