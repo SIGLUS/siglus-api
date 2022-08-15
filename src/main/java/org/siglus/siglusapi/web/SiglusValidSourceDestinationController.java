@@ -38,18 +38,18 @@ public class SiglusValidSourceDestinationController {
   public Collection<ValidSourceDestinationDto> searchValidDestinations(@RequestParam UUID programId,
       @RequestParam UUID facilityId) {
     if (ALL_PRODUCTS_PROGRAM_ID.equals(programId)) {
-      return validSourceDestinationService.findDestinationsForAllProducts(facilityId);
+      return validSourceDestinationService.findDestinationsForAllPrograms(facilityId);
     }
-    return validSourceDestinationService.findDestinations(programId, facilityId);
+    return validSourceDestinationService.findDestinationsForOneProgram(programId, facilityId);
   }
 
   @GetMapping("/validSources")
   public Collection<ValidSourceDestinationDto> searchValidSources(@RequestParam UUID programId,
       @RequestParam UUID facilityId) {
     if (ALL_PRODUCTS_PROGRAM_ID.equals(programId)) {
-      return validSourceDestinationService.findSourcesForAllProducts(facilityId);
+      return validSourceDestinationService.findSourcesForAllPrograms(facilityId);
     }
-    return validSourceDestinationService.findSources(programId, facilityId);
+    return validSourceDestinationService.findSourcesForOneProgram(programId, facilityId);
   }
 
 }

@@ -15,17 +15,16 @@
 
 package org.siglus.siglusapi.service;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyList;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.google.common.collect.Sets;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -38,8 +37,11 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.openlmis.referencedata.domain.Facility;
+import org.openlmis.referencedata.repository.FacilityRepository;
 import org.openlmis.stockmanagement.domain.sourcedestination.Node;
 import org.openlmis.stockmanagement.dto.ValidSourceDestinationDto;
+import org.openlmis.stockmanagement.repository.NodeRepository;
 import org.siglus.siglusapi.constant.FacilityTypeConstants;
 import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.FacilityTypeDto;
@@ -47,7 +49,6 @@ import org.siglus.siglusapi.dto.RequisitionGroupMembersDto;
 import org.siglus.siglusapi.repository.RequisitionGroupMembersRepository;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.service.client.ValidSourceDestinationStockManagementService;
-import org.siglus.siglusapi.util.AndroidHelper;
 import org.siglus.siglusapi.util.SupportedProgramsHelper;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -69,7 +70,10 @@ public class SiglusValidSourceDestinationServiceTest {
   private SiglusFacilityReferenceDataService facilityReferenceDataService;
 
   @Mock
-  private AndroidHelper androidHelper;
+  private NodeRepository nodeRepository;
+
+  @Mock
+  private FacilityRepository facilityRepository;
 
   private final UUID programId = UUID.randomUUID();
 
@@ -104,7 +108,7 @@ public class SiglusValidSourceDestinationServiceTest {
 
   @Test
   public void shouldCallGetValidDestinationsWhenFindDestinations() {
-    siglusValidSourceDestinationService.findDestinations(programId, facilityId);
+    siglusValidSourceDestinationService.findDestinationsForOneProgram(programId, facilityId);
 
     verify(validSourceDestinationStockManagementService).getValidDestinations(programId, facilityId);
   }
@@ -114,14 +118,14 @@ public class SiglusValidSourceDestinationServiceTest {
     when(supportedProgramsHelper.findHomeFacilitySupportedProgramIds())
         .thenReturn(Sets.newHashSet(UUID.randomUUID(), UUID.randomUUID()));
 
-    siglusValidSourceDestinationService.findDestinationsForAllProducts(facilityId);
+    siglusValidSourceDestinationService.findDestinationsForAllPrograms(facilityId);
 
     verify(validSourceDestinationStockManagementService, times(2)).getValidDestinations(any(), any());
   }
 
   @Test
   public void shouldCallGetValidSourcesWhenFindSources() {
-    siglusValidSourceDestinationService.findSources(programId, facilityId);
+    siglusValidSourceDestinationService.findSourcesForOneProgram(programId, facilityId);
 
     verify(validSourceDestinationStockManagementService).getValidSources(programId, facilityId);
   }
@@ -131,7 +135,7 @@ public class SiglusValidSourceDestinationServiceTest {
     when(supportedProgramsHelper.findHomeFacilitySupportedProgramIds())
         .thenReturn(Sets.newHashSet(UUID.randomUUID(), UUID.randomUUID()));
 
-    siglusValidSourceDestinationService.findSourcesForAllProducts(facilityId);
+    siglusValidSourceDestinationService.findSourcesForAllPrograms(facilityId);
 
     verify(validSourceDestinationStockManagementService, times(2))
         .getValidSources(any(), any());
@@ -140,15 +144,15 @@ public class SiglusValidSourceDestinationServiceTest {
   @Test
   public void shouldGetDestinationWhenFacilityInRequisitionGroup() {
     // when
-    List<String> destinationNameList = siglusValidSourceDestinationService.findDestinationsForAllProducts(facilityId)
+    List<String> destinationNameList = siglusValidSourceDestinationService.findDestinationsForAllPrograms(facilityId)
         .stream()
         .map(ValidSourceDestinationDto::getName)
         .collect(Collectors.toList());
 
     // then
     assertTrue(destinationNameList.contains(destinationName));
-    assertTrue(destinationNameList.contains(destinationName2));
-    assertTrue(destinationNameList.contains(destinationName3));
+    assertFalse(destinationNameList.contains(destinationName2));
+    assertFalse(destinationNameList.contains(destinationName3));
     assertTrue(destinationNameList.contains(destinationNameFalseNotContain));
     assertFalse(destinationNameList.contains(destinationNameTrueNotContain));
   }
@@ -160,28 +164,13 @@ public class SiglusValidSourceDestinationServiceTest {
         .thenReturn(buildFacilityDtoByFacilityIdAndTypeCode(facilityId, FacilityTypeConstants.DPM));
 
     // when
-    List<String> destinationNameList = siglusValidSourceDestinationService.findDestinationsForAllProducts(facilityId)
+    List<String> destinationNameList = siglusValidSourceDestinationService.findDestinationsForAllPrograms(facilityId)
         .stream()
         .map(ValidSourceDestinationDto::getName)
         .collect(Collectors.toList());
 
     // then
     assertTrue(destinationNameList.contains(destinationName));
-  }
-
-  @Test
-  public void shouldShowCommonNodeOthersForWebFacilityWhenGetSource() {
-    // given
-    when(androidHelper.isAndroid()).thenReturn(false);
-
-    // when
-    Collection<ValidSourceDestinationDto> sources = siglusValidSourceDestinationService.findSourcesForAllProducts(
-        facilityId);
-
-    // then
-    assertEquals(OUTROS, sources.stream().findFirst().get().getName());
-    verify(validSourceDestinationStockManagementService, times(2))
-        .getValidSources(any(), any());
   }
 
   private void createDestinationData() {
@@ -213,10 +202,10 @@ public class SiglusValidSourceDestinationServiceTest {
     desProgramNodeFalseContain.setName(destinationName);
 
     ValidSourceDestinationDto desProgramNodeFalseNotContain = new ValidSourceDestinationDto();
-    Node nodefalseNotContain = new Node();
-    nodefalseNotContain.setReferenceId(facilityIdFalseNotContain);
-    nodefalseNotContain.setRefDataFacility(false);
-    desProgramNodeFalseNotContain.setNode(nodefalseNotContain);
+    Node nodeFalseNotContain = new Node();
+    nodeFalseNotContain.setReferenceId(facilityIdFalseNotContain);
+    nodeFalseNotContain.setRefDataFacility(false);
+    desProgramNodeFalseNotContain.setNode(nodeFalseNotContain);
     desProgramNodeFalseNotContain.setProgramId(programId);
     desProgramNodeFalseNotContain.setName(destinationNameFalseNotContain);
 
@@ -261,6 +250,11 @@ public class SiglusValidSourceDestinationServiceTest {
         .thenReturn(Collections.singletonList(issueNodeOthers));
     when(validSourceDestinationStockManagementService.getValidSources(programId2, facilityId))
         .thenReturn(Collections.singletonList(issueNodeOthers));
+    Facility facility = new Facility();
+    facility.setId(facilityId);
+    when(facilityRepository.findByIdIn(anyList())).thenReturn(Collections.singletonList(facility));
+    when(nodeRepository.findByReferenceIdIn(anyList())).thenReturn(Collections.singletonList(node));
+
   }
 
   private FacilityDto buildFacilityDtoByFacilityIdAndTypeCode(UUID facilityId, String facilityTypeCode) {

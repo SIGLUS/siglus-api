@@ -76,8 +76,8 @@ public class StockCardCreateContextHolder {
         .getAllProductMovements(facility.getId(), earliest);
     UUID facilityTypeId = facility.getType().getId();
     Collection<ValidReasonAssignmentDto> reasons = reasonService.getAllReasons(facilityTypeId);
-    Collection<ValidSourceDestinationDto> destinations = nodeService.findDestinationsForAllProducts(facility.getId());
-    Collection<ValidSourceDestinationDto> sources = nodeService.findSourcesForAllProducts(facility.getId());
+    Collection<ValidSourceDestinationDto> destinations = nodeService.findDestinationsForAllPrograms(facility.getId());
+    Collection<ValidSourceDestinationDto> sources = nodeService.findSourcesForAllPrograms(facility.getId());
 
     List<OrderableDto> products = programsHelper.findHomeFacilitySupportedProgramIds().stream()
         .map(programDataService::findOne)

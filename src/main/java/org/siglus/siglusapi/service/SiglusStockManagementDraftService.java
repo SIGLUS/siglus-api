@@ -278,7 +278,7 @@ public class SiglusStockManagementDraftService {
 
   private String findDestinationName(UUID destinationNodeId, UUID facilityId) {
     Collection<ValidSourceDestinationDto> destinationsForAllProducts = validSourceDestinationService
-        .findDestinationsForAllProducts(facilityId);
+        .findDestinationsForAllPrograms(facilityId);
 
     return destinationsForAllProducts
         .stream().filter(destination -> (destination.getNode().getId().equals(destinationNodeId)))
@@ -354,7 +354,7 @@ public class SiglusStockManagementDraftService {
 
   private String findSourceName(UUID sourceNodeId, UUID facilityId) {
     Collection<ValidSourceDestinationDto> sourcesForAllProducts = validSourceDestinationService
-        .findSourcesForAllProducts(facilityId);
+        .findSourcesForAllPrograms(facilityId);
 
     return sourcesForAllProducts
         .stream().filter(source -> (
