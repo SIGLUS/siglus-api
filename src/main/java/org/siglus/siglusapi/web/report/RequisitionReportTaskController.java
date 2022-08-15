@@ -16,6 +16,7 @@
 package org.siglus.siglusapi.web.report;
 
 import lombok.RequiredArgsConstructor;
+import org.siglus.siglusapi.interceptor.OperationGuardAspect.Guarded;
 import org.siglus.siglusapi.service.task.report.RequisitionReportTaskService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -30,6 +31,7 @@ public class RequisitionReportTaskController {
   private final RequisitionReportTaskService requisitionReportTaskService;
 
   @PostMapping("/refresh")
+  @Guarded
   public ResponseEntity<String> refresh() {
     requisitionReportTaskService.refresh();
     return ResponseEntity.ok("ok");

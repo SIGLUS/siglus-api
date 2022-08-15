@@ -16,6 +16,7 @@
 package org.siglus.siglusapi.web.report;
 
 import lombok.RequiredArgsConstructor;
+import org.siglus.siglusapi.interceptor.OperationGuardAspect.Guarded;
 import org.siglus.siglusapi.service.task.report.HistoricalDataPersistentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -31,6 +32,7 @@ public class HistoricalDataReportController {
   private HistoricalDataPersistentService historicalDataPersistentService;
 
   @PostMapping("/refresh")
+  @Guarded
   public ResponseEntity<String> refresh() {
     historicalDataPersistentService.refreshHistoricalDataReport();
     return ResponseEntity.ok("refresh begin");
