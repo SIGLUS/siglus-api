@@ -20,6 +20,7 @@ import static java.util.stream.Collectors.toMap;
 
 import com.google.common.collect.Lists;
 import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -227,7 +228,7 @@ public class SiglusShipmentDraftService {
         .collect(Collectors.toList());
     List<FacilityLocations> locationManagementList = facilityLocationsRepository.findByIdIn(locationIds);
 
-    Map<UUID, UUID> lineItemIdToLocationIdMap = new HashMap<>();
+    Map<UUID, UUID> lineItemIdToLocationIdMap = new IdentityHashMap<>();
     lineItemsExtensionList.forEach(lineItemExtension -> {
       lineItemIdToLocationIdMap.put(lineItemExtension.getShipmentDraftLineItemId(), lineItemExtension.getLocationId());
     });
@@ -235,8 +236,10 @@ public class SiglusShipmentDraftService {
     locationManagementList.forEach(locationManagement -> {
       locationIdToCodeMap.put(locationManagement.getId(), locationManagement.getLocationCode());
     });
-    shipmentLineItemDtos.forEach(lineItemDto -> {
-      UUID locationId = lineItemIdToLocationIdMap.get(lineItemDto.getId());
+
+    lineItemIdToLocationIdMap.forEach((draftLineItemId, locationId) -> {
+      ShipmentLineItemDto lineItemDto = shipmentLineItemDtos.stream().filter(shipmentLineItemDto ->
+              draftLineItemId.equals(shipmentLineItemDto.getId())).findFirst().orElse(new ShipmentLineItemDto());
       String locationCode = locationIdToCodeMap.get(locationId);
       ShipmentLineItemDto shipmentLineItemDto = new ShipmentLineItemDto();
       BeanUtils.copyProperties(lineItemDto, shipmentLineItemDto);
