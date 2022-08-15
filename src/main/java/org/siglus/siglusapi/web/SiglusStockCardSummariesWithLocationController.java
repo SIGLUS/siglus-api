@@ -13,27 +13,13 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.web.report;
+package org.siglus.siglusapi.web;
 
-import lombok.RequiredArgsConstructor;
-import org.siglus.siglusapi.interceptor.OperationGuardAspect.Guarded;
-import org.siglus.siglusapi.service.task.report.RequisitionReportTaskService;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-@RequiredArgsConstructor
 @RestController
-@RequestMapping("/api/siglusapi/task/requisition")
-public class RequisitionReportTaskController {
+@RequestMapping("/api/siglusapi/stockCardSummaries")
+public class SiglusStockCardSummariesWithLocationController {
 
-  private final RequisitionReportTaskService requisitionReportTaskService;
-
-  @PostMapping("/refresh")
-  @Guarded
-  public ResponseEntity<String> refresh() {
-    requisitionReportTaskService.refresh();
-    return ResponseEntity.ok("ok");
-  }
 }

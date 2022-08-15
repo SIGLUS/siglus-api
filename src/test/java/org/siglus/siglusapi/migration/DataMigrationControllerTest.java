@@ -31,18 +31,14 @@ import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
 @RunWith(MockitoJUnitRunner.class)
 public class DataMigrationControllerTest {
 
-  @Mock
-  private DataMigrationService dataMigrationService;
-  @Mock
-  @SuppressWarnings("unused")
-  private DataMigrationGuard guard;
-  @InjectMocks
-  private DataMigrationController dataMigrationController;
+  @Mock private DataMigrationService dataMigrationService;
+
+  @InjectMocks private DataMigrationController dataMigrationController;
 
   @Test
   public void shouldCallMigrationServiceWhenCreateStockCards() {
     // when
-    dataMigrationController.createStockCards("secret", "facility-id", emptyList());
+    dataMigrationController.createStockCards("facility-id", emptyList());
 
     // then
     verify(dataMigrationService)
@@ -52,10 +48,9 @@ public class DataMigrationControllerTest {
   @Test
   public void shouldCallMigrationServiceWhenCreateCmms() {
     // when
-    dataMigrationController.createOrUpdateCmms("secret", "facility-id", emptyList());
+    dataMigrationController.createOrUpdateCmms("facility-id", emptyList());
 
     // then
-    verify(dataMigrationService)
-        .createOrUpdateCmms(anyString(), anyListOf(HfCmmDto.class));
+    verify(dataMigrationService).createOrUpdateCmms(anyString(), anyListOf(HfCmmDto.class));
   }
 }

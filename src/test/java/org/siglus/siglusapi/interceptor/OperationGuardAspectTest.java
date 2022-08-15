@@ -13,29 +13,27 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.migration;
+package org.siglus.siglusapi.interceptor;
 
-import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_PERMISSION_NOT_SUPPORTED;
-
-import java.util.Optional;
-import org.siglus.siglusapi.dto.Message;
+import org.junit.Test;
 import org.siglus.siglusapi.exception.AuthenticationException;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.stereotype.Component;
+import org.springframework.test.util.ReflectionTestUtils;
 
-@Component
-public class DataMigrationGuard {
-  private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+public class OperationGuardAspectTest {
+  public static final String SECRET = "secret";
 
-  @Value("${datamigration.secret}")
-  private String encodedSecret;
+  @Test(expected = AuthenticationException.class)
+  public void shouldThrowWhenAssertAuthorizedGivenSecretNotMatch() {
+    new OperationGuardAspect().assertAuthorized(SECRET);
+  }
 
-  public void assertAuthorized(String secret) {
-    secret = Optional.ofNullable(secret).orElse("");
-    if (encoder.matches(secret, encodedSecret)) {
-      return;
-    }
-    throw new AuthenticationException(new Message(ERROR_PERMISSION_NOT_SUPPORTED));
+  @Test
+  public void shouldNotThrowWhenAssertAuthorizedGivenSecretDoesMatch() {
+    BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+    OperationGuardAspect operationGuardAspect = new OperationGuardAspect();
+    ReflectionTestUtils.setField(operationGuardAspect, "encodedSecret", encoder.encode(SECRET));
+
+    operationGuardAspect.assertAuthorized(SECRET);
   }
 }

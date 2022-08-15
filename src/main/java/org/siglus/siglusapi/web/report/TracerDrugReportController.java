@@ -28,6 +28,7 @@ import java.text.SimpleDateFormat;
 import javax.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.siglus.siglusapi.dto.TracerDrugExportDto;
+import org.siglus.siglusapi.interceptor.OperationGuardAspect.Guarded;
 import org.siglus.siglusapi.service.task.report.TracerDrugReportService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
@@ -47,12 +48,14 @@ public class TracerDrugReportController {
   private String dateUrlFormat;
 
   @PostMapping("/refresh")
+  @Guarded
   public ResponseEntity<String> refresh(String startDate, String endDate) {
     tracerDrugReportService.refreshTracerDrugPersistentData(startDate, endDate);
     return ResponseEntity.ok("refresh begin");
   }
 
   @PostMapping("/initialize")
+  @Guarded
   public ResponseEntity<String> initialize() {
     tracerDrugReportService.initializeTracerDrugPersistentData();
     return ResponseEntity.ok("initialize begin");

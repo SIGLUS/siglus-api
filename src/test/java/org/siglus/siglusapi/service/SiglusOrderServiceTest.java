@@ -87,6 +87,7 @@ import org.siglus.common.repository.ProcessingPeriodExtensionRepository;
 import org.siglus.siglusapi.domain.OrderLineItemExtension;
 import org.siglus.siglusapi.dto.SiglusOrderDto;
 import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
+import org.siglus.siglusapi.repository.OrderableRepository;
 import org.siglus.siglusapi.service.client.SiglusProcessingPeriodReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
 import org.siglus.siglusapi.web.SiglusStockCardSummariesController;
@@ -169,6 +170,9 @@ public class SiglusOrderServiceTest {
   @InjectMocks
   private SiglusOrderService siglusOrderService;
 
+  @Mock
+  private OrderableRepository orderableRepository;
+
   private final UUID requisitionFacilityId = UUID.randomUUID();
   private final UUID approverFacilityId = UUID.randomUUID();
   private final UUID orderId = UUID.randomUUID();
@@ -218,6 +222,8 @@ public class SiglusOrderServiceTest {
         .thenReturn(newArrayList(extension));
     when(siglusRequisitionExtensionService.formatRequisitionNumber(requisitionId))
         .thenReturn("requisitionNumber-1");
+    List<UUID> orderableIds = newArrayList(orderableId1);
+    when(orderableRepository.findLatestByIds(orderableIds)).thenReturn(Collections.emptyList());
 
     // when
     SiglusOrderDto response = siglusOrderService.searchOrderById(orderId);
@@ -265,6 +271,8 @@ public class SiglusOrderServiceTest {
         .thenReturn(Collections.singletonList(new RequisitionV2Dto()));
     when(filterAddProductForEmergencyService.getInProgressProducts(anyList()))
         .thenReturn(Sets.newHashSet(orderableId2));
+    List<UUID> orderableIds = newArrayList(orderableId1);
+    when(orderableRepository.findLatestByIds(orderableIds)).thenReturn(Collections.emptyList());
 
     // when
     SiglusOrderDto response = siglusOrderService.searchOrderById(orderId);
@@ -315,6 +323,8 @@ public class SiglusOrderServiceTest {
         .thenReturn(Sets.newHashSet(orderableId2));
     when(filterAddProductForEmergencyService.getNotFullyShippedProducts(anyList()))
         .thenReturn(Sets.newHashSet(orderableId1));
+    List<UUID> orderableIds = newArrayList(orderableId1);
+    when(orderableRepository.findLatestByIds(orderableIds)).thenReturn(Collections.emptyList());
 
     // when
     SiglusOrderDto response = siglusOrderService.searchOrderById(orderId);

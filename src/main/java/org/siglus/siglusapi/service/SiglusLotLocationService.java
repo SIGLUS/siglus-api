@@ -75,6 +75,7 @@ public class SiglusLotLocationService {
             .builder()
             .locationId(location.getId())
             .locationCode(location.getLocationCode())
+            .area(location.getArea())
             .build());
       });
       return lotLocationDtos;
@@ -130,6 +131,7 @@ public class SiglusLotLocationService {
             .builder()
             .locationId(locationId)
             .locationCode(facilityLocations.getLocationCode())
+            .area(facilityLocations.getArea())
             .lots(lotDtoList)
             .build());
       });

@@ -56,7 +56,7 @@ public class LineItemDetail {
     UUID reasonId = type.getAdjustmentReasonId(programId, reason);
     if (type == MovementType.RECEIVE) {
       reasonId = MovementType.ADJUSTMENT.getAdjustmentReasonId(programId, FieldConstants.CAPITAL_RECEIVE);
-    } else if (type == MovementType.ISSUE) {
+    } else if (type == MovementType.ISSUE || type == MovementType.UNPACK_KIT) {
       reasonId = MovementType.ADJUSTMENT.getAdjustmentReasonId(programId, FieldConstants.CAPITAL_ISSUE);
     }
     String documentationNo = request.getDocumentationNo();

@@ -355,6 +355,7 @@ public class SiglusStockManagementDraftService {
   public StockManagementDraftDto updateOperatorAndStatus(StockManagementDraftDto draftDto) {
     StockManagementDraft subDraft = stockManagementDraftRepository.findOne(draftDto.getId());
     draftValidator.validateSubDraft(subDraft);
+    draftValidator.validateSubDraftStatus(subDraft);
     subDraft.setStatus(PhysicalInventorySubDraftEnum.DRAFT);
     subDraft.setOperator(draftDto.getOperator());
     StockManagementDraft savedDraft = stockManagementDraftRepository.save(subDraft);

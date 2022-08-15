@@ -167,13 +167,6 @@ public class StockManagementRepository extends BaseNativeRepository {
     return new StocksOnHand(findAllLotStocks(facilityId, at, orderableIds));
   }
 
-  @Deprecated
-  public void batchCreateLots(List<ProductLot> lots) {
-    String sql = "INSERT INTO referencedata.lots(id, lotcode, expirationdate, manufacturedate, tradeitemid, active) "
-        + "VALUES (:id, :lotCode, :expirationDate, :expirationDate, :tradeItemId, true)";
-    namedJdbc.batchUpdate(sql, toParams(lots));
-  }
-
   public void batchCreateEvents(List<StockEvent> stockEvents) {
     String sql = "INSERT INTO stockmanagement.stock_events"
         + "(id, facilityid, programid, processeddate, signature, userid) "

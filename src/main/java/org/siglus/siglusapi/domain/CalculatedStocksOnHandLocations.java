@@ -13,26 +13,43 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.dto;
+package org.siglus.siglusapi.domain;
 
-import java.util.List;
+import java.util.Date;
 import java.util.UUID;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.Table;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
+import org.siglus.common.domain.BaseEntity;
 
-@NoArgsConstructor
+@Entity
+@Data
+@EqualsAndHashCode(callSuper = true)
 @AllArgsConstructor
-@Getter
-@Setter
-@Builder
-public class LotLocationDto {
+@NoArgsConstructor
+@Table(name = "calculated_stocks_on_hand_locations", schema = "siglusintegration")
+public class CalculatedStocksOnHandLocations extends BaseEntity {
 
+  @Id
+  private UUID id;
+
+  @Column(name = "stockcardid")
+  private UUID stockCardId;
+
+  @Column(name = "locationid")
   private UUID locationId;
-  private String locationCode;
-  private String area;
-  private List<LotsDto> lots;
 
+  @Column(name = "occurreddate")
+  private Date occurreddate;
+
+  @Column(name = "stockonhand")
+  private Integer stockOnHand;
+
+  @Column(name = "calculatedstocksonhandid")
+  private UUID calculatedStocksOnHandLocation;
 }

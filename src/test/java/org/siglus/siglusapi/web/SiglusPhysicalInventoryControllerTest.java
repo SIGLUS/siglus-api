@@ -106,10 +106,10 @@ public class SiglusPhysicalInventoryControllerTest {
     PhysicalInventoryDto physicalInventoryDto = PhysicalInventoryDto.builder()
             .programId(ALL_PRODUCTS_PROGRAM_ID).build();
 
-    siglusPhysicalInventoryController.createEmptyPhysicalInventory(physicalInventoryDto, 2, true, "product");
+    siglusPhysicalInventoryController.createEmptyPhysicalInventory(physicalInventoryDto, 2, true);
 
     verify(siglusPhysicalInventoryService).createAndSplitNewDraftForAllProduct(
-            physicalInventoryDto, 2, true, "product");
+            physicalInventoryDto, 2, true, null);
   }
 
   @Test
@@ -117,7 +117,7 @@ public class SiglusPhysicalInventoryControllerTest {
     PhysicalInventoryDto physicalInventoryDto = PhysicalInventoryDto.builder()
         .programId(ALL_PRODUCTS_PROGRAM_ID).build();
 
-    siglusPhysicalInventoryController.createEmptyPhysicalInventory(physicalInventoryDto, 2, true, null);
+    siglusPhysicalInventoryController.createEmptyPhysicalInventory(physicalInventoryDto, 2, true);
 
     verify(siglusPhysicalInventoryService).createAndSplitNewDraftForAllProduct(physicalInventoryDto, 2, true, null);
   }
@@ -128,7 +128,7 @@ public class SiglusPhysicalInventoryControllerTest {
         .build();
 
     siglusPhysicalInventoryController.createEmptyPhysicalInventory(
-        physicalInventoryDto, 2, false, null);
+        physicalInventoryDto, 2, false);
 
     verify(siglusPhysicalInventoryService).createAndSpiltNewDraftForOneProgram(physicalInventoryDto, 2, null);
   }

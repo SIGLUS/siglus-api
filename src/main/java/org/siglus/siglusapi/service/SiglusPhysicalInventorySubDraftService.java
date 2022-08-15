@@ -43,15 +43,12 @@ import org.siglus.siglusapi.dto.PhysicalInventoryLineItemExtensionDto;
 import org.siglus.siglusapi.dto.PhysicalInventorySubDraftLineItemsExtensionDto;
 import org.siglus.siglusapi.dto.ProductSubDraftConflictDto;
 import org.siglus.siglusapi.dto.enums.PhysicalInventorySubDraftEnum;
-import org.siglus.siglusapi.exception.BaseMessageException;
 import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.repository.PhysicalInventoryLineItemsExtensionRepository;
 import org.siglus.siglusapi.repository.PhysicalInventorySubDraftRepository;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.retry.annotation.Backoff;
-import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -147,8 +144,8 @@ public class SiglusPhysicalInventorySubDraftService {
         canFulfillForMeEntryDtos.addAll(stockCardSummaryV2Dto.getCanFulfillForMe());
       }
     }
-    Map<String, CanFulfillForMeEntryDto> canFulfillForMeEntryDtoMap = canFulfillForMeEntryDtos.stream()
-        .collect(Collectors.toMap(this::getUniqueKey, Function.identity()));
+    //    Map<String, CanFulfillForMeEntryDto> canFulfillForMeEntryDtoMap = canFulfillForMeEntryDtos.stream()
+    //        .collect(Collectors.toMap(this::getUniqueKey, Function.identity()));
 
     for (UUID physicalInventoryId : physicalInventoryIdToSubDraftIdMap.keySet()) {
       if (initialPhysicalInventory) {
@@ -185,12 +182,12 @@ public class SiglusPhysicalInventorySubDraftService {
       while (iterator.hasNext()) {
         PhysicalInventoryLineItemDto physicalInventoryLineItemDto = iterator.next();
         if (needResetOrderableIds.contains(physicalInventoryLineItemDto.getOrderableId())) {
-          CanFulfillForMeEntryDto canFulfillForMeEntryDto = canFulfillForMeEntryDtoMap.get(
-              getUniqueKey(physicalInventoryLineItemDto));
-          if (canFulfillForMeEntryDto != null) {
-            physicalInventoryLineItemDto.setQuantity(null);
-            physicalInventoryLineItemDto.setReasonFreeText(null);
-          }
+          //          CanFulfillForMeEntryDto canFulfillForMeEntryDto = canFulfillForMeEntryDtoMap.get(
+          //              getUniqueKey(physicalInventoryLineItemDto));
+          //          if (canFulfillForMeEntryDto != null) {
+          physicalInventoryLineItemDto.setQuantity(null);
+          physicalInventoryLineItemDto.setReasonFreeText(null);
+        //          }
         } else if (needDeleteOrderableIds.contains(physicalInventoryLineItemDto.getOrderableId())) {
           iterator.remove();
         }
@@ -272,12 +269,13 @@ public class SiglusPhysicalInventorySubDraftService {
         .subDraftId(subDraftId)
         .lotId(item.getLotId())
         .orderableId(item.getOrderableId())
+        .locationCode(item.getLocationCode())
+        .area(item.getArea())
         .physicalInventoryId(physicalInventoryId)
         .build()));
     return result;
   }
 
-  @Retryable(exclude = BaseMessageException.class, backoff = @Backoff(delay = 1000, random = true, multiplier = 2))
   private void checkConflictSubDraft(List<UUID> physicalInventoryIds, PhysicalInventoryDto physicalInventoryDto,
       List<UUID> subDraftIds) {
     List<PhysicalInventoryLineItemsExtension> physicalInventoryLineItemsExtensions
@@ -334,25 +332,30 @@ public class SiglusPhysicalInventorySubDraftService {
     }
   }
 
+  private String getString(Object o) {
+    return o == null ? "" : o.toString();
+  }
+
   private String getUniqueKey(PhysicalInventoryLineItemDto item) {
-    if (item.getLotId() == null) {
-      return item.getOrderableId().toString();
-    }
-    return item.getOrderableId().toString() + "&" + item.getLotId().toString();
+    return getString(item.getOrderableId())
+            + "&"
+            + getString(item.getLotId())
+            + "&"
+            + getString(item.getLocationCode());
   }
 
   private String getUniqueKey(PhysicalInventoryLineItemsExtension item) {
-    if (item.getLotId() == null) {
-      return item.getOrderableId().toString();
-    }
-    return item.getOrderableId().toString() + "&" + item.getLotId().toString();
+    return getString(item.getOrderableId())
+            + "&"
+            + getString(item.getLotId())
+            + "&"
+            + getString(item.getLocationCode());
   }
 
-  private String getUniqueKey(CanFulfillForMeEntryDto item) {
-    if (item.getLot() == null || item.getLot().getId() == null) {
-      return item.getOrderable().getId().toString();
-    }
-    return item.getOrderable().getId().toString() + "&" + item.getLot().getId().toString();
-  }
+  //  private String getUniqueKey(CanFulfillForMeEntryDto item) {
+  //    return getString(item.getOrderable().getId())
+  //            + "&"
+  //            + getString(item.getLot().getId());
+  //  }
 
 }

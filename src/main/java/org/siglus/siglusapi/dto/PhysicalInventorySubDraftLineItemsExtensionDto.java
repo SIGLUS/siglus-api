@@ -27,6 +27,10 @@ public class PhysicalInventorySubDraftLineItemsExtensionDto {
 
   private UUID lotId;
 
+  private String locationCode;
+
+  private String area;
+
   private UUID physicalInventoryId;
 
   private UUID subDraftId;

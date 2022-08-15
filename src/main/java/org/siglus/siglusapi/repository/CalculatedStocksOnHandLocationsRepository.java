@@ -13,27 +13,19 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.web.report;
+package org.siglus.siglusapi.repository;
 
-import lombok.RequiredArgsConstructor;
-import org.siglus.siglusapi.interceptor.OperationGuardAspect.Guarded;
-import org.siglus.siglusapi.service.task.report.RequisitionReportTaskService;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import java.util.List;
+import java.util.UUID;
+import org.siglus.siglusapi.domain.CalculatedStocksOnHandLocations;
+import org.siglus.siglusapi.dto.LotLocationSohDto;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
-@RequiredArgsConstructor
-@RestController
-@RequestMapping("/api/siglusapi/task/requisition")
-public class RequisitionReportTaskController {
+public interface CalculatedStocksOnHandLocationsRepository extends
+    JpaRepository<CalculatedStocksOnHandLocations, UUID> {
+  @Query(name = "LotLocationSoh.findLocationSoh", nativeQuery = true)
+  List<LotLocationSohDto> getLocationSoh(@Param("lotIds")Iterable<UUID> lotIds);
 
-  private final RequisitionReportTaskService requisitionReportTaskService;
-
-  @PostMapping("/refresh")
-  @Guarded
-  public ResponseEntity<String> refresh() {
-    requisitionReportTaskService.refresh();
-    return ResponseEntity.ok("ok");
-  }
 }

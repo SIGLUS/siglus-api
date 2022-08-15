@@ -121,11 +121,25 @@ public class SiglusPhysicalInventoryController {
   public PhysicalInventoryDto createEmptyPhysicalInventory(
       @RequestBody PhysicalInventoryDto dto,
       @RequestParam Integer splitNum,
-      @RequestParam(required = false) boolean initialPhysicalInventory,
-      @RequestParam(name = "locationManagementOption", required = false) String optionString) {
+      @RequestParam(required = false) boolean initialPhysicalInventory) {
     if (ALL_PRODUCTS_PROGRAM_ID.equals(dto.getProgramId())) {
       return siglusPhysicalInventoryService.createAndSplitNewDraftForAllProduct(dto, splitNum,
-          initialPhysicalInventory, optionString);
+          initialPhysicalInventory, null);
+    }
+    return siglusPhysicalInventoryService.createAndSpiltNewDraftForOneProgram(dto, splitNum,
+            null);
+  }
+
+  @PostMapping("/withLocation")
+  @ResponseStatus(CREATED)
+  public PhysicalInventoryDto createEmptyPhysicalInventoryWithLocationOption(
+          @RequestBody PhysicalInventoryDto dto,
+          @RequestParam Integer splitNum,
+          @RequestParam(required = false) boolean initialPhysicalInventory,
+          @RequestParam(name = "locationManagementOption") String optionString) {
+    if (ALL_PRODUCTS_PROGRAM_ID.equals(dto.getProgramId())) {
+      return siglusPhysicalInventoryService.createAndSplitNewDraftForAllProduct(dto, splitNum,
+              initialPhysicalInventory, optionString);
     }
     return siglusPhysicalInventoryService.createAndSpiltNewDraftForOneProgram(dto, splitNum,
             optionString);

@@ -24,11 +24,11 @@ import org.hibernate.validator.constraints.NotEmpty;
 import org.siglus.siglusapi.dto.android.request.HfCmmDto;
 import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
 import org.siglus.siglusapi.dto.android.response.CreateStockCardResponse;
+import org.siglus.siglusapi.interceptor.OperationGuardAspect.Guarded;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
@@ -40,25 +40,21 @@ import org.springframework.web.bind.annotation.RestController;
 public class DataMigrationController {
 
   private final DataMigrationService dataMigrationService;
-  private final DataMigrationGuard guard;
 
   @PostMapping("/{facilityId}/stock-cards")
   @ResponseStatus(CREATED)
+  @Guarded
   public CreateStockCardResponse createStockCards(
-      @RequestHeader("x-dm-secret") String secret,
       @PathVariable String facilityId,
       @RequestBody @Valid @NotEmpty List<StockCardCreateRequest> requests) {
-    guard.assertAuthorized(secret);
     return dataMigrationService.createStockCards(facilityId, requests);
   }
 
   @PostMapping("/{facilityId}/cmms")
   @ResponseStatus(CREATED)
+  @Guarded
   public void createOrUpdateCmms(
-      @RequestHeader("x-dm-secret") String secret,
-      @PathVariable String facilityId,
-      @RequestBody @Valid List<HfCmmDto> hfCmmDtos) {
-    guard.assertAuthorized(secret);
+      @PathVariable String facilityId, @RequestBody @Valid List<HfCmmDto> hfCmmDtos) {
     dataMigrationService.createOrUpdateCmms(facilityId, hfCmmDtos);
   }
 }

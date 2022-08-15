@@ -16,7 +16,6 @@
 package org.siglus.siglusapi.repository;
 
 import java.sql.ResultSet;
-import java.util.Collection;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -54,14 +53,6 @@ public class LotNativeRepository extends BaseNativeRepository {
     params.addValue("lotCode", lotCode);
     params.addValue("tradeItemId", tradeItemId);
     return namedJdbc.query(lotQuery, params, productLotExtractor(code));
-  }
-
-  @Deprecated
-  public Collection<ProductLot> batchCreateLots(Collection<ProductLot> lots) {
-    String sql = "INSERT INTO referencedata.lots(id, lotcode, expirationdate, manufacturedate, tradeitemid, active) "
-        + "VALUES (:id, :lotCode, :expirationDate, :expirationDate, :tradeItemId, true)";
-    namedJdbc.batchUpdate(sql, toParams(lots));
-    return lots;
   }
 
   @SneakyThrows

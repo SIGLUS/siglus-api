@@ -180,7 +180,33 @@ public class SiglusPhysicalInventoryService {
     return allSubPhysicalInventoryLineItemDtoList;
   }
 
-  public SiglusPhysicalInventoryDto getSubPhysicalInventoryDtoBySubDraftId(List<UUID> subDraftIds) {
+  public PhysicalInventoryDto getSubPhysicalInventoryDtoBySubDraftId(List<UUID> subDraftIds) {
+    if (CollectionUtils.isEmpty(subDraftIds)) {
+      throw new IllegalArgumentException("empty subDraftIds");
+    }
+    List<PhysicalInventoryLineItemDto> subPhysicalInventoryLineItemDtoList =
+            getSubPhysicalInventoryLineItemListBySubDraftIds(subDraftIds);
+    List<PhysicalInventoryLineItemDto> sortedSubPhysicalInventoryLineItemList = subPhysicalInventoryLineItemDtoList
+            .stream().sorted(Comparator.comparing(o -> String.valueOf(
+                            orderableRepository.findLatestById(o.getOrderableId())
+                                    .orElseThrow(IllegalArgumentException::new)
+                                    .getProductCode()))).collect(Collectors.toList());
+    PhysicalInventoryDto physicalInventory = getPhysicalInventoryBySubDraftId(subDraftIds.get(0));
+
+    UUID programId = subDraftIds.size() > 1
+            ? ALL_PRODUCTS_PROGRAM_ID
+            : physicalInventory.getProgramId();
+    UUID physicalInventoryId = subDraftIds.size() > 1
+            ? ALL_PRODUCTS_UUID
+            : physicalInventory.getId();
+    physicalInventory.setId(physicalInventoryId);
+    physicalInventory.setLineItems(sortedSubPhysicalInventoryLineItemList);
+    physicalInventory.setProgramId(programId);
+    return physicalInventory;
+  }
+
+  public SiglusPhysicalInventoryDto getSubLocationPhysicalInventoryDtoBySubDraftId(
+          List<UUID> subDraftIds) {
     if (CollectionUtils.isEmpty(subDraftIds)) {
       throw new IllegalArgumentException("empty subDraftIds");
     }
@@ -869,7 +895,12 @@ public class SiglusPhysicalInventoryService {
               .physicalInventoryId(dto.getId())
               .build();
         }
-        extension.setReasonFreeText(getFreeTextByInput(inventoryDto, lineItem));
+        PhysicalInventoryLineItemDto matched = getMatchedLineItem(inventoryDto, lineItem);
+        if (matched != null) {
+          extension.setReasonFreeText(matched.getReasonFreeText());
+          extension.setLocationCode(matched.getLocationCode());
+          extension.setArea(matched.getArea());
+        }
         updateExtensions.add(extension);
       });
     });
@@ -883,7 +914,7 @@ public class SiglusPhysicalInventoryService {
       List<PhysicalInventoryDto> updatedDto) {
     List<PhysicalInventorySubDraftLineItemsExtensionDto> lineItemsExtensions = inventoryDto.getLineItemsExtensions();
     Map<String, UUID> lineItemsExtensionMap = lineItemsExtensions.stream()
-        .collect(Collectors.toMap(item -> getUniqueKey(item.getOrderableId(), item.getLotId()),
+        .collect(Collectors.toMap(item -> getUniqueKey(item.getOrderableId(), item.getLotId(), item.getLocationCode()),
             PhysicalInventorySubDraftLineItemsExtensionDto::getSubDraftId, (item1, item2) -> item1));
 
     List<UUID> updatePhysicalInventoryIds =
@@ -899,10 +930,11 @@ public class SiglusPhysicalInventoryService {
         return;
       }
       dto.getLineItems().forEach(lineItem -> {
-        uniqueKeys.add(getUniqueKey(lineItem.getOrderableId(), lineItem.getLotId()));
+        uniqueKeys.add(getUniqueKey(lineItem.getOrderableId(), lineItem.getLotId(), lineItem.getLocationCode()));
         PhysicalInventoryLineItemsExtension extension = getExtension(extensions, lineItem);
         if (extension == null) {
-          UUID subDraftId = lineItemsExtensionMap.get(getUniqueKey(lineItem.getOrderableId(), lineItem.getLotId()));
+          UUID subDraftId = lineItemsExtensionMap.get(getUniqueKey(lineItem.getOrderableId(),
+                          lineItem.getLotId(), lineItem.getLocationCode()));
           extension = PhysicalInventoryLineItemsExtension.builder()
               .orderableId(lineItem.getOrderableId())
               .lotId(lineItem.getLotId())
@@ -911,12 +943,18 @@ public class SiglusPhysicalInventoryService {
               .subDraftId(subDraftId)
               .build();
         }
-        extension.setReasonFreeText(getFreeTextByInput(inventoryDto, lineItem));
+        PhysicalInventoryLineItemDto matched = getMatchedLineItem(inventoryDto, lineItem);
+        if (matched != null) {
+          extension.setReasonFreeText(matched.getReasonFreeText());
+          extension.setLocationCode(matched.getLocationCode());
+          extension.setArea(matched.getArea());
+        }
         updateExtensions.add(extension);
       });
     });
     List<PhysicalInventoryLineItemsExtension> needDeleteLineItemsExtensions = extensions.stream()
-        .filter(item -> !uniqueKeys.contains(getUniqueKey(item.getOrderableId(), item.getLotId())))
+        .filter(item -> !uniqueKeys.contains(getUniqueKey(item.getOrderableId(),
+                item.getLotId(), item.getLocationCode())))
         .collect(Collectors.toList());
     if (CollectionUtils.isNotEmpty(needDeleteLineItemsExtensions)) {
       lineItemsExtensionRepository.deleteInBatch(needDeleteLineItemsExtensions);
@@ -926,24 +964,38 @@ public class SiglusPhysicalInventoryService {
     return lineItemsExtensionRepository.save(updateExtensions);
   }
 
-  private String getUniqueKey(UUID orderableId, UUID lotId) {
-    if (lotId == null) {
-      return orderableId.toString();
-    }
-    return orderableId.toString() + "&" + lotId;
+  private String getString(Object o) {
+    return o == null ? "" : o.toString();
   }
 
+  // TODO find match by orderableId, lotId, locationCode
+  private String getUniqueKey(UUID orderableId, UUID lotId, String locationCode) {
+    return getString(orderableId) + "&" + getString(lotId) + "&" + getString(locationCode);
+  }
+
+  // TODO find match by orderableId, lotId, locationCode
   private PhysicalInventoryLineItemsExtension getExtension(
       List<PhysicalInventoryLineItemsExtension> extensions, PhysicalInventoryLineItemDto lineItem) {
     return extensions.stream()
-        .filter(extension -> compareTwoId(extension.getLotId(), lineItem.getLotId())
-            && compareTwoId(extension.getOrderableId(), lineItem.getOrderableId()))
+        .filter(extension -> Objects.equals(extension.getOrderableId(), lineItem.getOrderableId())
+                                && Objects.equals(extension.getLotId(), lineItem.getLotId())
+                                && Objects.equals(extension.getLocationCode(), lineItem.getLocationCode()))
         .findFirst()
         .orElse(null);
   }
 
   private boolean compareTwoId(UUID oneId, UUID secondId) {
     return oneId == null ? oneId == secondId : oneId.equals(secondId);
+  }
+
+  private PhysicalInventoryLineItemDto getMatchedLineItem(PhysicalInventoryDto inventoryDto,
+                                                          PhysicalInventoryLineItemDto lineItem) {
+    return inventoryDto.getLineItems().stream()
+            .filter(itemDto -> Objects.equals(itemDto.getLotId(), lineItem.getLotId())
+                    && Objects.equals(itemDto.getOrderableId(), lineItem.getOrderableId())
+                    && Objects.equals(itemDto.getLocationCode(), lineItem.getLocationCode()))
+            .findFirst()
+            .orElse(null);
   }
 
   private String getFreeTextByInput(PhysicalInventoryDto inventoryDto,
@@ -992,8 +1044,13 @@ public class SiglusPhysicalInventoryService {
                   .ifPresent(physicalInventoryLineItemDtos -> physicalInventoryLineItemDtos.forEach(
                       physicalInventoryLineItemDto -> {
                         physicalInventoryLineItemDto.setProgramId(inventory.getProgramId());
-                        physicalInventoryLineItemDto.setReasonFreeText(
-                            getFreeTextByExtension(extensions, physicalInventoryLineItemDto));
+                        PhysicalInventoryLineItemsExtension extension = getExtension(extensions,
+                                physicalInventoryLineItemDto);
+                        if (extension != null) {
+                          physicalInventoryLineItemDto.setReasonFreeText(extension.getReasonFreeText());
+                          physicalInventoryLineItemDto.setArea(extension.getArea());
+                          physicalInventoryLineItemDto.setLocationCode(extension.getLocationCode());
+                        }
                       }));
               return optionalList.orElse(new ArrayList<>());
             })
