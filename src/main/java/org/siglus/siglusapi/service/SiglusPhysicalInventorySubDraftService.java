@@ -269,6 +269,8 @@ public class SiglusPhysicalInventorySubDraftService {
         .subDraftId(subDraftId)
         .lotId(item.getLotId())
         .orderableId(item.getOrderableId())
+        .locationCode(item.getLocationCode())
+        .area(item.getArea())
         .physicalInventoryId(physicalInventoryId)
         .build()));
     return result;
@@ -330,25 +332,30 @@ public class SiglusPhysicalInventorySubDraftService {
     }
   }
 
+  private String getString(Object o) {
+    return o == null ? "" : o.toString();
+  }
+
   private String getUniqueKey(PhysicalInventoryLineItemDto item) {
-    if (item.getLotId() == null) {
-      return item.getOrderableId().toString();
-    }
-    return item.getOrderableId().toString() + "&" + item.getLotId().toString();
+    return getString(item.getOrderableId())
+            + "&"
+            + getString(item.getLotId())
+            + "&"
+            + getString(item.getLocationCode());
   }
 
   private String getUniqueKey(PhysicalInventoryLineItemsExtension item) {
-    if (item.getLotId() == null) {
-      return item.getOrderableId().toString();
-    }
-    return item.getOrderableId().toString() + "&" + item.getLotId().toString();
+    return getString(item.getOrderableId())
+            + "&"
+            + getString(item.getLotId())
+            + "&"
+            + getString(item.getLocationCode());
   }
 
   private String getUniqueKey(CanFulfillForMeEntryDto item) {
-    if (item.getLot() == null || item.getLot().getId() == null) {
-      return item.getOrderable().getId().toString();
-    }
-    return item.getOrderable().getId().toString() + "&" + item.getLot().getId().toString();
+    return getString(item.getOrderable().getId())
+            + "&"
+            + getString(item.getLot().getId());
   }
 
 }
