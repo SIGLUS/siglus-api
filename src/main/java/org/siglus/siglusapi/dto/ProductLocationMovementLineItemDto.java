@@ -15,43 +15,30 @@
 
 package org.siglus.siglusapi.dto;
 
-import static com.fasterxml.jackson.annotation.JsonFormat.Shape.STRING;
-
-import com.fasterxml.jackson.annotation.JsonFormat;
-import java.time.LocalDate;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.siglus.siglusapi.domain.ProductLocationMovementDraftLineItem;
-import org.springframework.beans.BeanUtils;
 
 @Data
-@NoArgsConstructor
 @AllArgsConstructor
+@NoArgsConstructor
 @Builder
-public class ProductLocationMovementDraftLineItemDto {
+public class ProductLocationMovementLineItemDto {
 
   private UUID orderableId;
-  private String productCode;
-  private String productName;
-  private UUID lotId;
-  private String lotCode;
-  private String srcArea;
-  private String srcLocationCode;
-  private String destArea;
-  private String destLocationCode;
-  @JsonFormat(shape = STRING)
-  private LocalDate createdDate;
-  @JsonFormat(shape = STRING)
-  private LocalDate expirationDate;
-  private Integer quantity;
-  private Integer stockOnHand;
 
-  public static ProductLocationMovementDraftLineItemDto from(ProductLocationMovementDraftLineItem lineItem) {
-    ProductLocationMovementDraftLineItemDto lineItemDto = new ProductLocationMovementDraftLineItemDto();
-    BeanUtils.copyProperties(lineItem, lineItemDto);
-    return lineItemDto;
-  }
+  private UUID lotId;
+
+  private String srcArea;
+
+  private String srcLocationCode;
+
+  private String destArea;
+
+  private String destLocationCode;
+
+  private Integer quantity;
+
 }

@@ -13,29 +13,36 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.repository;
+package org.siglus.siglusapi.dto;
 
+import static com.fasterxml.jackson.annotation.JsonFormat.Shape.STRING;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+import java.time.LocalDate;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
-import org.openlmis.stockmanagement.domain.card.StockCard;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.repository.query.Param;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-@SuppressWarnings("PMD.AvoidDuplicateLiterals")
-public interface SiglusStockCardRepository extends JpaRepository<StockCard, UUID> {
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+public class ProductLocationMovementDto {
 
-  List<StockCard> findByFacilityIdAndOrderableId(
-      @Param("facilityId") UUID facilityId,
-      @Param("orderableId") UUID orderableId);
+  private UUID facilityId;
 
-  List<StockCard> findByFacilityIdAndProgramIdAndOrderableIdAndLotId(
-      @Param("facilityId") UUID facilityId,
-      @Param("programId") UUID programId,
-      @Param("orderableId") UUID orderableId,
-      @Param("lotId") UUID lotId);
+  private UUID programId;
 
-  void deleteStockCardsByFacilityIdAndOrderableIdIn(@Param("facilityId") UUID facilityId,
-      @Param("orderableId") Set<UUID> orderableIds);
+  private UUID useId;
+
+  @JsonFormat(shape = STRING)
+  private LocalDate createdDate;
+
+  private String signature;
+
+  private List<ProductLocationMovementLineItemDto> movementLineItems;
 
 }

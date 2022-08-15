@@ -232,8 +232,7 @@ public class SiglusStockEventsService {
     });
     if (!programIdToEventId.isEmpty()) {
       if (eventDto.isPhysicalInventory()) {
-        siglusPhysicalInventoryService
-            .deletePhysicalInventoryForAllProductsDirectly(eventDto.getFacilityId());
+        siglusPhysicalInventoryService.deletePhysicalInventoryForAllProductsDirectly(eventDto.getFacilityId());
       } else if (isNotUnpack(eventDto)) {
         String type = getDraftType(eventDto);
         eventDto.setType(type);
@@ -332,8 +331,7 @@ public class SiglusStockEventsService {
       return lotReferenceDataService.saveLot(lotDto);
     }
     lotConflictService
-        .handleLotConflict(facilityId, lotCode, existedLot.getId(), expirationDate,
-            existedLot.getExpirationDate());
+        .handleLotConflict(facilityId, lotCode, existedLot.getId(), expirationDate, existedLot.getExpirationDate());
     return existedLot;
   }
 

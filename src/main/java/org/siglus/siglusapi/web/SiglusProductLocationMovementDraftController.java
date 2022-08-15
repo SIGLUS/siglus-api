@@ -36,11 +36,11 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/siglusapi/movementDrafts")
+@RequestMapping("/api/siglusapi/locationMovementDrafts")
 public class SiglusProductLocationMovementDraftController {
 
   @Autowired
-  SiglusProductLocationMovementDraftService productLocationMovementDraftService;
+ private SiglusProductLocationMovementDraftService productLocationMovementDraftService;
 
   @PostMapping
   @ResponseStatus(CREATED)

@@ -16,26 +16,12 @@
 package org.siglus.siglusapi.repository;
 
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
-import org.openlmis.stockmanagement.domain.card.StockCard;
+import org.siglus.siglusapi.domain.ProductLocationMovementLineItem;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.repository.query.Param;
 
-@SuppressWarnings("PMD.AvoidDuplicateLiterals")
-public interface SiglusStockCardRepository extends JpaRepository<StockCard, UUID> {
+public interface ProductLocationMovementLineItemRepository extends
+    JpaRepository<ProductLocationMovementLineItem, UUID> {
 
-  List<StockCard> findByFacilityIdAndOrderableId(
-      @Param("facilityId") UUID facilityId,
-      @Param("orderableId") UUID orderableId);
-
-  List<StockCard> findByFacilityIdAndProgramIdAndOrderableIdAndLotId(
-      @Param("facilityId") UUID facilityId,
-      @Param("programId") UUID programId,
-      @Param("orderableId") UUID orderableId,
-      @Param("lotId") UUID lotId);
-
-  void deleteStockCardsByFacilityIdAndOrderableIdIn(@Param("facilityId") UUID facilityId,
-      @Param("orderableId") Set<UUID> orderableIds);
-
+  List<ProductLocationMovementLineItem> findByStockCardId(UUID stockCardId);
 }

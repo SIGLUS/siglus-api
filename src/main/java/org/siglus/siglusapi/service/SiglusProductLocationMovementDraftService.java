@@ -26,6 +26,7 @@ import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.dto.ProductLocationMovementDraftDto;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.ProductLocationMovementDraftRepository;
+import org.siglus.siglusapi.util.OperatePermissionService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.validator.ActiveDraftValidator;
 import org.siglus.siglusapi.validator.ProductLocationMovementDraftValidator;
@@ -48,6 +49,9 @@ public class SiglusProductLocationMovementDraftService {
 
   @Autowired
   private ActiveDraftValidator draftValidator;
+
+  @Autowired
+  private OperatePermissionService operatePermissionService;
 
   @Transactional
   public ProductLocationMovementDraftDto createEmptyMovementDraft(
@@ -74,6 +78,7 @@ public class SiglusProductLocationMovementDraftService {
 
   public List<ProductLocationMovementDraftDto> searchMovementDrafts(UUID programId) {
     UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
+    operatePermissionService.checkPermission(facilityId);
     draftValidator.validateProgramId(programId);
     draftValidator.validateFacilityId(facilityId);
 

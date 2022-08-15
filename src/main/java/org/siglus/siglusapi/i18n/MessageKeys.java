@@ -35,6 +35,7 @@ public abstract class MessageKeys {
   private static final String STOCK_MANAGEMENT_ERROR_PREFIX = ERROR_PREFIX + ".stockManagement";
   private static final String PRODUCT_LOCATION_MOVEMENT_ERROR_PREFIX = ERROR_PREFIX + ".stockMovement";
   private static final String POD_ERROR_PREFIX = ERROR_PREFIX + ".proofOfDelivery";
+  private static final String STOCK_CARD_ERROR_PREFIX = ERROR_PREFIX + ".stockCard";
 
   // authorization
   public static final String ERROR_PERMISSION_NOT_SUPPORTED =
@@ -74,6 +75,8 @@ public abstract class MessageKeys {
   public static final String ERROR_STOCK_MANAGEMENT_DRAFT_NOT_FOUND = STOCK_MANAGEMENT_ERROR_PREFIX + ".draft.notFound";
   public static final String ERROR_MOVEMENT_DRAFT_NOT_FOUND =
       PRODUCT_LOCATION_MOVEMENT_ERROR_PREFIX + ".movement.draft.notFound";
+  public static final String ERROR_STOCK_CARD_NOT_FOUND =
+      STOCK_CARD_ERROR_PREFIX + ".stock.card.notFound";
   public static final String ERROR_STOCK_MANAGEMENT_DRAFT_DRAFT_EXISTS =
       STOCK_MANAGEMENT_ERROR_PREFIX + ".draft.exists";
   public static final String ERROR_MOVEMENT_DRAFT_EXISTS =
