@@ -144,8 +144,8 @@ public class SiglusPhysicalInventorySubDraftService {
         canFulfillForMeEntryDtos.addAll(stockCardSummaryV2Dto.getCanFulfillForMe());
       }
     }
-//    Map<String, CanFulfillForMeEntryDto> canFulfillForMeEntryDtoMap = canFulfillForMeEntryDtos.stream()
-//        .collect(Collectors.toMap(this::getUniqueKey, Function.identity()));
+    //    Map<String, CanFulfillForMeEntryDto> canFulfillForMeEntryDtoMap = canFulfillForMeEntryDtos.stream()
+    //        .collect(Collectors.toMap(this::getUniqueKey, Function.identity()));
 
     for (UUID physicalInventoryId : physicalInventoryIdToSubDraftIdMap.keySet()) {
       if (initialPhysicalInventory) {
@@ -182,12 +182,12 @@ public class SiglusPhysicalInventorySubDraftService {
       while (iterator.hasNext()) {
         PhysicalInventoryLineItemDto physicalInventoryLineItemDto = iterator.next();
         if (needResetOrderableIds.contains(physicalInventoryLineItemDto.getOrderableId())) {
-//          CanFulfillForMeEntryDto canFulfillForMeEntryDto = canFulfillForMeEntryDtoMap.get(
-//              getUniqueKey(physicalInventoryLineItemDto));
-//          if (canFulfillForMeEntryDto != null) {
-            physicalInventoryLineItemDto.setQuantity(null);
-            physicalInventoryLineItemDto.setReasonFreeText(null);
-//          }
+          //          CanFulfillForMeEntryDto canFulfillForMeEntryDto = canFulfillForMeEntryDtoMap.get(
+          //              getUniqueKey(physicalInventoryLineItemDto));
+          //          if (canFulfillForMeEntryDto != null) {
+          physicalInventoryLineItemDto.setQuantity(null);
+          physicalInventoryLineItemDto.setReasonFreeText(null);
+        //          }
         } else if (needDeleteOrderableIds.contains(physicalInventoryLineItemDto.getOrderableId())) {
           iterator.remove();
         }
@@ -352,10 +352,10 @@ public class SiglusPhysicalInventorySubDraftService {
             + getString(item.getLocationCode());
   }
 
-//  private String getUniqueKey(CanFulfillForMeEntryDto item) {
-//    return getString(item.getOrderable().getId())
-//            + "&"
-//            + getString(item.getLot().getId());
-//  }
+  //  private String getUniqueKey(CanFulfillForMeEntryDto item) {
+  //    return getString(item.getOrderable().getId())
+  //            + "&"
+  //            + getString(item.getLot().getId());
+  //  }
 
 }
