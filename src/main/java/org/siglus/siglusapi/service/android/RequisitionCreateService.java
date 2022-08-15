@@ -149,6 +149,8 @@ import org.siglus.siglusapi.exception.InvalidProgramCodeException;
 import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.exception.UnsupportedProductsException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
+import org.siglus.siglusapi.localmachine.LocalMachine;
+import org.siglus.siglusapi.localmachine.android.AndroidRequisitionSynced;
 import org.siglus.siglusapi.repository.ProcessingPeriodRepository;
 import org.siglus.siglusapi.repository.RegimenRepository;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
@@ -163,6 +165,7 @@ import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataSer
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.util.SupportedProgramsHelper;
 import org.slf4j.profiler.Profiler;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
@@ -194,6 +197,7 @@ public class RequisitionCreateService {
   private final SupportedProgramsHelper supportedProgramsHelper;
   private final SiglusApprovedProductReferenceDataService approvedProductDataService;
   private final SiglusProgramAdditionalOrderableService additionalOrderableService;
+  private final LocalMachine localMachine;
 
   @Transactional
   @Validated(PerformanceSequence.class)
@@ -216,6 +220,7 @@ public class RequisitionCreateService {
         .referenceId(requisition.getId())
         .build();
     syncUpHashRepository.save(syncUpHashDomain);
+    localMachine.sendOutgoingEvent(new AndroidRequisitionSynced(user.getHomeFacilityId(), user.getId(), request));
   }
 
   private Requisition initiateRequisition(RequisitionCreateRequest request, UserDto user) {

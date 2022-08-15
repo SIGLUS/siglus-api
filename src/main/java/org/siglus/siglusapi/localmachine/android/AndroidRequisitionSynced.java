@@ -1,0 +1,38 @@
+/*
+ * This program is part of the OpenLMIS logistics management information system platform software.
+ * Copyright © 2017 VillageReach
+ *
+ * This program is free software: you can redistribute it and/or modify it under the terms
+ * of the GNU Affero General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU Affero General Public License for more details. You should have received a copy of
+ * the GNU Affero General Public License along with this program. If not, see
+ * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
+ */
+
+package org.siglus.siglusapi.localmachine.android;
+
+import java.util.UUID;
+import lombok.Builder;
+import lombok.Getter;
+import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
+import org.siglus.siglusapi.localmachine.PeeringEvent;
+
+@Builder
+@Getter
+public class AndroidRequisitionSynced extends PeeringEvent {
+  private final UUID facilityId;
+  private final UUID userId;
+  private final RequisitionCreateRequest request;
+
+  public AndroidRequisitionSynced(UUID facilityId, UUID userId, RequisitionCreateRequest request) {
+    // FIXME: 2022/8/13 inject the peering facility id
+    super("todo");
+    this.facilityId = facilityId;
+    this.userId = userId;
+    this.request = request;
+  }
+}
