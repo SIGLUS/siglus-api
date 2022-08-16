@@ -1,3 +1,18 @@
+/*
+ * This program is part of the OpenLMIS logistics management information system platform software.
+ * Copyright © 2017 VillageReach
+ *
+ * This program is free software: you can redistribute it and/or modify it under the terms
+ * of the GNU Affero General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU Affero General Public License for more details. You should have received a copy of
+ * the GNU Affero General Public License along with this program. If not, see
+ * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
+ */
+
 package org.siglus.siglusapi.service.task.report;
 
 import com.google.common.collect.Lists;
@@ -14,10 +29,8 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.openlmis.referencedata.domain.Code;
-import org.openlmis.referencedata.domain.Facility;
 import org.openlmis.referencedata.domain.Orderable;
 import org.openlmis.referencedata.domain.ProcessingPeriod;
-import org.openlmis.referencedata.repository.FacilityRepository;
 import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.repository.StockCardRepository;
 import org.siglus.siglusapi.domain.FacilityExtension;
@@ -38,7 +51,6 @@ import org.springframework.util.CollectionUtils;
 @Service
 public class CalculateWebCmmService {
 
-  private final FacilityRepository facilityRepository;
   private final FacilityExtensionRepository facilityExtensionRepository;
   private final StockCardRepository stockCardRepository;
   private final ProcessingPeriodRepository processingPeriodRepository;
@@ -58,14 +70,18 @@ public class CalculateWebCmmService {
     log.info("calculate start....");
     long startTime = System.currentTimeMillis();
 
-    Set<UUID> webFacilityIds = getWebFacilityIds();
+    List<FacilityExtension> webFacilityExtensions = getWebFacilityExtensions();
+    Set<UUID> webFacilityIds = webFacilityExtensions.stream().map(FacilityExtension::getFacilityId)
+        .collect(Collectors.toSet());
+    Map<UUID, String> facilityIdToCode = webFacilityExtensions.stream()
+        .collect(Collectors.toMap(FacilityExtension::getFacilityId, FacilityExtension::getFacilityCode));
+
     List<StockCard> allStockCards = stockCardRepository.findAll();
     Map<UUID, List<StockCard>> facilityIdToStockCars = allStockCards.stream()
         .collect(Collectors.groupingBy(StockCard::getFacilityId));
 
     Map<UUID, Code> orderableIdToCode = getOrderableIdToCode(
         allStockCards.stream().map(StockCard::getOrderableId).collect(Collectors.toSet()));
-    Map<UUID, String> facilityIdToCode = getFacilityIdToCode(webFacilityIds);
     List<ProcessingPeriod> processingPeriods = getPeriods();
 
     facilityIdToStockCars.forEach((facilityId, stockCards) -> {
@@ -103,11 +119,6 @@ public class CalculateWebCmmService {
         LocalDate firstMovementPeriodStart = queryFirstMovementPeriodStart(productMovements, processingPeriods);
         if (Objects.isNull(firstMovementPeriodStart)) {
           log.warn("product movement do not match any period, do not calculate cmm, stockCardId={}", stockCard.getId());
-          break;
-        }
-        if (LocalDate.now().isBefore(firstMovementPeriodStart)) {
-          log.warn("first period start date is later than now, do not calculate cmm, stockCardId={}",
-              stockCard.getId());
           break;
         }
 
@@ -194,6 +205,7 @@ public class CalculateWebCmmService {
       }
       if (periodHasStockOut(productMovements, period)) {
         periodStartDateToIssue.put(period.getStartDate(), -1L);
+        continue;
       }
       periodStartDateToIssue.put(period.getStartDate(), calculateTotalIssueInPeriod(productMovements, period));
     }
@@ -204,30 +216,19 @@ public class CalculateWebCmmService {
     // TODO: 是否可以根据 M1 去重?
     return processingPeriodRepository.findAll().stream()
         .filter(e -> e.getProcessingSchedule().getCode().toString().equals("M1"))
-        .filter(e -> e.getStartDate().isBefore(LocalDate.now()))
+        .filter(e -> !e.getStartDate().isAfter(LocalDate.now()))
         .sorted(Comparator.comparing(ProcessingPeriod::getStartDate))
         .collect(Collectors.toList());
   }
 
-  private Map<UUID, String> getFacilityIdToCode(Set<UUID> webFacilityIds) {
-    return facilityRepository.findAll(webFacilityIds).stream()
-        .collect(Collectors.toMap(Facility::getId, Facility::getCode));
-  }
-
   private Map<UUID, Code> getOrderableIdToCode(Set<UUID> orderableIds) {
-    Map<UUID, Code> orderableIdToCode = orderableRepository.findLatestByIds(orderableIds).stream()
+    return orderableRepository.findLatestByIds(orderableIds).stream()
         .collect(Collectors.toMap(Orderable::getId, Orderable::getProductCode));
-    return orderableIdToCode;
   }
 
-  private Set<UUID> getWebFacilityIds() {
+  private List<FacilityExtension> getWebFacilityExtensions() {
     Example<FacilityExtension> example = Example.of(FacilityExtension.builder().isAndroid(Boolean.FALSE).build());
-    List<FacilityExtension> webFacilityExtensions = facilityExtensionRepository.findAll(example);
-    if (CollectionUtils.isEmpty(webFacilityExtensions)) {
-      log.warn("no web facility extension found");
-      return Sets.newHashSet();
-    }
-    return webFacilityExtensions.stream().map(FacilityExtension::getFacilityId).collect(Collectors.toSet());
+    return facilityExtensionRepository.findAll(example);
   }
 
   private Long calculateTotalIssueInPeriod(List<StockMovementResDto> productMovements, ProcessingPeriod period) {
@@ -267,6 +268,6 @@ public class CalculateWebCmmService {
   }
 
   private boolean isDateInPeriod(ProcessingPeriod period, LocalDate localDate) {
-    return period.getStartDate().isBefore(localDate) && period.getEndDate().isAfter(localDate);
+    return !period.getStartDate().isAfter(localDate) && !period.getEndDate().isBefore(localDate);
   }
 }
