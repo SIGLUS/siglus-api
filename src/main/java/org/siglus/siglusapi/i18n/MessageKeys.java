@@ -123,6 +123,8 @@ public abstract class MessageKeys {
       ERROR_PREFIX + ".issue.conflict.subDraft";
   public static final String ERROR_INVENTORY_CONFLICT_DRAFT =
       ERROR_PREFIX + ".inventory.conflict.Draft";
+  public static final String ERROR_MOVEMENT_QUANTITY_MORE_THAN_STOCK_ON_HAND =
+      PRODUCT_LOCATION_MOVEMENT_ERROR_PREFIX + ".movement.quantity.more.than.stock.on.hand";
 
   // submit
   public static final String ERROR_SUBMIT_START_DATE_BEFORE_START_DATE = ERROR_PREFIX
