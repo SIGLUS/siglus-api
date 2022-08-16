@@ -61,6 +61,7 @@ import org.siglus.siglusapi.dto.LotSearchParams;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.dto.StockEventForMultiUserDto;
 import org.siglus.siglusapi.dto.StockManagementDraftDto;
+import org.siglus.siglusapi.dto.android.Lot;
 import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.StockCardExtensionRepository;
@@ -319,6 +320,7 @@ public class SiglusStockEventsService {
     LotDto existedLot = findExistedLot(lotCode, tradeItemId);
     if (existedLot == null) {
       LotDto lotDto = new LotDto();
+      lotDto.setId(Lot.of(lotCode, expirationDate).getUUid());
       lotDto.setTradeItemId(UUID.fromString(tradeItemId));
       lotDto.setManufactureDate(dateHelper.getCurrentDate());
       lotDto.setExpirationDate(expirationDate);

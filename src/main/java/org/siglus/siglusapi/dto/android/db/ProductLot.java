@@ -45,11 +45,11 @@ public class ProductLot {
 
   public static ProductLot of(OrderableDto product, Lot lot) {
     String tradeItemId = product.getIdentifiers().get(TRADE_ITEM);
-    return new ProductLot(UUID.randomUUID(), product.getProductCode(), UUID.fromString(tradeItemId), lot);
+    return new ProductLot(lot.getUUid(), product.getProductCode(), UUID.fromString(tradeItemId), lot);
   }
 
   public static ProductLot of(String productCode, UUID tradeItemId, Lot lot) {
-    return new ProductLot(UUID.randomUUID(), productCode, tradeItemId, lot);
+    return new ProductLot(lot.getUUid(), productCode, tradeItemId, lot);
   }
 
   @Nullable
