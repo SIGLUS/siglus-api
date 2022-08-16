@@ -21,6 +21,7 @@ import static org.siglus.siglusapi.dto.StockCardLineItemDtoComparators.byReasonP
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -44,7 +45,9 @@ import org.openlmis.stockmanagement.dto.referencedata.OrderableDto;
 import org.openlmis.stockmanagement.repository.CalculatedStockOnHandRepository;
 import org.openlmis.stockmanagement.util.AuthenticationHelper;
 import org.siglus.siglusapi.domain.StockCardExtension;
+import org.siglus.siglusapi.dto.LotLocationSohDto;
 import org.siglus.siglusapi.dto.StockMovementResDto;
+import org.siglus.siglusapi.repository.CalculatedStocksOnHandLocationsRepository;
 import org.siglus.siglusapi.repository.SiglusStockCardRepository;
 import org.siglus.siglusapi.repository.StockCardExtensionRepository;
 import org.siglus.siglusapi.service.client.SiglusStockManagementService;
@@ -86,6 +89,11 @@ public class SiglusStockCardService {
   @Autowired
   private StockMovementService stockMovementService;
 
+  @Autowired
+  private CalculatedStocksOnHandLocationsRepository calculatedStocksOnHandLocationsRepository;
+
+  private static String LOCATION_KEY = "locationCode";
+
   public StockCardDto findStockCardByOrderable(UUID orderableId) {
     UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
     List<StockCard> stockCards = stockCardRepository
@@ -103,6 +111,22 @@ public class SiglusStockCardService {
       return null;
     }
     return findAggregateStockCards(Collections.singletonList(stockCard), true);
+  }
+
+  public StockCardDto findStockCardWithLocationById(UUID stockCardId) {
+    StockCard stockCard = stockCardRepository.findOne(stockCardId);
+    if (null == stockCard) {
+      return null;
+    }
+    StockCardDto aggregateStockCards = findAggregateStockCards(Collections.singletonList(stockCard), true);
+    List<LotLocationSohDto> locationSoh = calculatedStocksOnHandLocationsRepository.getLocationSoh(
+        Arrays.asList(stockCard.getLotId()));
+    String locationCodes =
+        locationSoh.stream().map(LotLocationSohDto::getLocationCode).collect(Collectors.joining(","));
+    HashMap<String, String> locationMap = new HashMap<>();
+    locationMap.put(LOCATION_KEY, locationCodes);
+    aggregateStockCards.setExtraData(locationMap);
+    return aggregateStockCards;
   }
 
   private StockCardDto findAggregateStockCards(List<StockCard> stockCards, boolean byLot) {

@@ -37,7 +37,7 @@ import lombok.Data;
             + "  (\n"
             + "  select\n"
             + "    *,\n"
-            + "  row_number() over (partition by locationid\n"
+            + "    row_number() over (partition by locationcode,area,stockcardid\n"
             + "  order by\n"
             + "    occurreddate desc)\n"
             + "  from\n"
@@ -45,9 +45,11 @@ import lombok.Data;
             + "left join stockmanagement.stock_cards sc on\n"
             + "  sc.id = csohl.stockcardid\n"
             + "left join siglusintegration.facility_locations fl on\n"
-            + "  fl.id = csohl.locationid\n"
+            + "  csohl.locationcode = fl.locationcode  and csohl.area = fl.area and sc.facilityid = fl.facilityid \n"
             + "where\n"
-            + "  csohl.row_number = 1 and sc.lotid in :lotIds",
+            + "  csohl.row_number = 1\n"
+            + "  and csohl.stockonhand>0"
+            + "  and sc.lotid in :lotIds",
         resultSetMapping = "LotLocationSoh.LotLocationSohDto")
 })
 @MappedSuperclass

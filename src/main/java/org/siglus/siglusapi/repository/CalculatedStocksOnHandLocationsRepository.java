@@ -27,5 +27,4 @@ public interface CalculatedStocksOnHandLocationsRepository extends
     JpaRepository<CalculatedStocksOnHandLocations, UUID> {
   @Query(name = "LotLocationSoh.findLocationSoh", nativeQuery = true)
   List<LotLocationSohDto> getLocationSoh(@Param("lotIds")Iterable<UUID> lotIds);
-
 }

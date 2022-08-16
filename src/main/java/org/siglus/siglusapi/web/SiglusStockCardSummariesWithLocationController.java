@@ -15,11 +15,50 @@
 
 package org.siglus.siglusapi.web;
 
+import static org.springframework.http.HttpStatus.OK;
+
+import java.util.List;
+import java.util.UUID;
+import org.openlmis.stockmanagement.dto.StockCardDto;
+import org.siglus.siglusapi.dto.StockCardSummaryWithLocationDto;
+import org.siglus.siglusapi.service.SiglusStockCardService;
+import org.siglus.siglusapi.service.SiglusStockCardSummariesService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.http.ResponseEntity;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/siglusapi/stockCardSummaries")
+@RequestMapping("/api/siglusapi/stockCardSummariesWithLocation")
 public class SiglusStockCardSummariesWithLocationController {
 
+  @Autowired
+  private SiglusStockCardSummariesService siglusStockCardSummariesService;
+
+  @Autowired
+  private SiglusStockCardService siglusStockCardService;
+
+  @GetMapping("/integration/summary")
+  public List<StockCardSummaryWithLocationDto> getStockCardSummaryDtos(
+      @RequestParam MultiValueMap<String, String> parameters,
+      @RequestParam(required = false) List<UUID> subDraftIds,
+      @RequestParam(required = false) UUID draftId,
+      @PageableDefault(size = Integer.MAX_VALUE) Pageable pageable) {
+    return siglusStockCardSummariesService
+        .getStockCardSummaryWithLocationDtos(parameters, subDraftIds, draftId, pageable);
+  }
+
+  @GetMapping("/stockCard/{stockCardId}")
+  public ResponseEntity<StockCardDto> searchStockCardById(
+      @PathVariable("stockCardId") UUID stockCardId) {
+    StockCardDto stockCardWithLocationById = siglusStockCardService.findStockCardWithLocationById(
+        stockCardId);
+    return new ResponseEntity<>(stockCardWithLocationById, OK);
+  }
 }

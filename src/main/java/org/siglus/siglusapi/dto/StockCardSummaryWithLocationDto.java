@@ -15,33 +15,20 @@
 
 package org.siglus.siglusapi.dto;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonFormat.Shape;
-import java.time.LocalDate;
-import java.time.ZonedDateTime;
+import java.util.Set;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.experimental.SuperBuilder;
 import org.openlmis.referencedata.dto.OrderableDto;
-import org.openlmis.stockmanagement.dto.ObjectReferenceDto;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@SuperBuilder
-public class StockCardDetailsDto {
+@Builder
+public class StockCardSummaryWithLocationDto {
 
-  private ObjectReferenceDto stockCard;
   private OrderableDto orderable;
-  private LotDto lot;
+  private Set<StockCardDetailsWithLocationDto> stockCardDetails;
   private Integer stockOnHand;
-  @JsonFormat(
-      shape = Shape.STRING
-  )
-  private LocalDate occurredDate;
-  @JsonFormat(
-      shape = Shape.STRING
-  )
-  private ZonedDateTime processedDate;
 }
