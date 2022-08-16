@@ -35,6 +35,8 @@ import org.hibernate.annotations.LazyCollection;
 import org.siglus.common.domain.BaseEntity;
 import org.siglus.siglusapi.dto.StockManagementDraftDto;
 import org.siglus.siglusapi.dto.StockManagementDraftLineItemDto;
+import org.siglus.siglusapi.dto.StockManagementDraftLineItemWithLocationDto;
+import org.siglus.siglusapi.dto.StockManagementDraftWithLocationDto;
 import org.siglus.siglusapi.dto.enums.PhysicalInventorySubDraftEnum;
 import org.springframework.beans.BeanUtils;
 
@@ -89,6 +91,21 @@ public class StockManagementDraft extends BaseEntity {
     BeanUtils.copyProperties(draftDto, draft);
     draft.setIsDraft(isDraft);
     List<StockManagementDraftLineItemDto> lineItemDtos = draftDto.getLineItems();
+    if (lineItemDtos != null) {
+      draft.setLineItems(lineItemDtos.stream()
+          .map(lineItemDto -> StockManagementDraftLineItem.from(lineItemDto, draft))
+          .collect(toList()));
+    }
+    return draft;
+  }
+
+  public static StockManagementDraft createStockManagementDraftWithLocation(
+      StockManagementDraftWithLocationDto draftDto,
+      boolean isDraft) {
+    StockManagementDraft draft = new StockManagementDraft();
+    BeanUtils.copyProperties(draftDto, draft);
+    draft.setIsDraft(isDraft);
+    List<StockManagementDraftLineItemWithLocationDto> lineItemDtos = draftDto.getLineItems();
     if (lineItemDtos != null) {
       draft.setLineItems(lineItemDtos.stream()
           .map(lineItemDto -> StockManagementDraftLineItem.from(lineItemDto, draft))

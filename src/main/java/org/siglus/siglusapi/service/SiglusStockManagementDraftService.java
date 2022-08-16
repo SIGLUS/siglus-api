@@ -41,6 +41,7 @@ import org.siglus.siglusapi.dto.MergedLineItemDto;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.dto.StockManagementDraftDto;
 import org.siglus.siglusapi.dto.StockManagementDraftLineItemDto;
+import org.siglus.siglusapi.dto.StockManagementDraftWithLocationDto;
 import org.siglus.siglusapi.dto.StockManagementInitialDraftDto;
 import org.siglus.siglusapi.dto.enums.PhysicalInventorySubDraftEnum;
 import org.siglus.siglusapi.exception.BusinessDataException;
@@ -130,6 +131,16 @@ public class SiglusStockManagementDraftService {
   }
 
   @Transactional
+  public StockManagementDraftWithLocationDto updateDraftWithLocation(StockManagementDraftWithLocationDto subDraftDto,
+      UUID id) {
+    log.info("update issue draft");
+    // todo : add issue and receive logic for location
+    StockManagementDraft draft = StockManagementDraft.createStockManagementDraftWithLocation(subDraftDto, true);
+    StockManagementDraft savedDraft = stockManagementDraftRepository.save(draft);
+    return StockManagementDraftWithLocationDto.from(savedDraft);
+  }
+
+  @Transactional
   public StockManagementDraftDto updateDraft(StockManagementDraftDto subDraftDto, UUID id) {
     stockManagementDraftValidator.validateDraft(subDraftDto, id);
     if (subDraftDto.getDraftType().equals(FieldConstants.ISSUE)
@@ -162,6 +173,18 @@ public class SiglusStockManagementDraftService {
           .collect(toList()));
     }
     return newDraft;
+  }
+
+  public List<StockManagementDraftWithLocationDto> findStockManagementDraftWithLocation(UUID programId, String type,
+      Boolean isDraft) {
+    UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
+    draftValidator.validateProgramId(programId);
+    draftValidator.validateFacilityId(facilityId);
+    draftValidator.validateDraftType(type);
+    draftValidator.validateIsDraft(isDraft);
+    List<StockManagementDraft> drafts = stockManagementDraftRepository
+        .findByProgramIdAndFacilityIdAndIsDraftAndDraftType(programId, facilityId, isDraft, type);
+    return StockManagementDraftWithLocationDto.from(drafts);
   }
 
   public List<StockManagementDraftDto> findStockManagementDraft(UUID programId, String type,

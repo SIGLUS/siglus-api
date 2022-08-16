@@ -35,6 +35,7 @@ import lombok.NoArgsConstructor;
 import org.openlmis.stockmanagement.domain.ExtraDataConverter;
 import org.siglus.common.domain.BaseEntity;
 import org.siglus.siglusapi.dto.StockManagementDraftLineItemDto;
+import org.siglus.siglusapi.dto.StockManagementDraftLineItemWithLocationDto;
 import org.springframework.beans.BeanUtils;
 
 @Entity
@@ -71,12 +72,22 @@ public class StockManagementDraftLineItem extends BaseEntity {
   private String productName;
   private String productCode;
   private Integer stockOnHand;
+  private String locationCode;
+  private String area;
 
   @Column(name = "extradata", columnDefinition = "jsonb")
   @Convert(converter = ExtraDataConverter.class)
   private Map<String, String> extraData;
 
   public static StockManagementDraftLineItem from(StockManagementDraftLineItemDto draftLineItemDto,
+      StockManagementDraft draft) {
+    StockManagementDraftLineItem lineItem = new StockManagementDraftLineItem();
+    BeanUtils.copyProperties(draftLineItemDto, lineItem);
+    lineItem.setStockManagementDraft(draft);
+    return lineItem;
+  }
+
+  public static StockManagementDraftLineItem from(StockManagementDraftLineItemWithLocationDto draftLineItemDto,
       StockManagementDraft draft) {
     StockManagementDraftLineItem lineItem = new StockManagementDraftLineItem();
     BeanUtils.copyProperties(draftLineItemDto, lineItem);

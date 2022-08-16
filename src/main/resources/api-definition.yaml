@@ -401,6 +401,39 @@ traits:
           200:
             description: GET success
 
+
+    /draftsWithLocation:
+      displayName: stock management draft with location
+      get:
+        is: [ secured ]
+        body:
+          application/json:
+            schema: arrayOfStrings
+        responses:
+          200:
+            description: success
+
+    /draftsWithLocation/{id}:
+      put:
+        is: [ secured ]
+        description: save a stock management draft with location
+        body:
+          application/json:
+            schema: stockManagementDraft
+
+        responses:
+          200:
+            description: Draft saved.
+            body:
+              application/json:
+                schema: stockManagementDraft
+      delete:
+        is: [ secured ]
+        description: Delete a draft physical inventory.
+
+        responses:
+          204:
+            description: Draft deleted.
     /report/tracerDrug:
       displayName: run tracer drug persistent data task
     /report/tracerDrug/refresh:
