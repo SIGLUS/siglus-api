@@ -2,7 +2,7 @@
 -- Adding migrations out of order may cause this migration to never execute or behave in an unexpected way.
 -- Migrations should NOT BE EDITED. Add a new migration to apply changes.
 
-ALTER TABLE siglusintegration.product_location_movement_draft_line_items DELETE COLUMN srclocationid;
-ALTER TABLE siglusintegration.product_location_movement_draft_line_items DELETE COLUMN destlocationid;
+ALTER TABLE siglusintegration.product_location_movement_draft_line_items DROP COLUMN srclocationid;
+ALTER TABLE siglusintegration.product_location_movement_draft_line_items DROP COLUMN destlocationid;
 ALTER TABLE siglusintegration.product_location_movement_draft_line_items ADD COLUMN srcarea VARCHAR(255) NOT NULL;
 ALTER TABLE siglusintegration.product_location_movement_draft_line_items ADD COLUMN destarea VARCHAR(255) NOT NULL;
