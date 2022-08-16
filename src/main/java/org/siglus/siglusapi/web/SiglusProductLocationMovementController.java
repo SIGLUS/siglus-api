@@ -17,18 +17,18 @@ package org.siglus.siglusapi.web;
 
 import static org.springframework.http.HttpStatus.CREATED;
 
-import java.util.UUID;
 import org.siglus.siglusapi.dto.ProductLocationMovementDto;
 import org.siglus.siglusapi.service.SiglusProductLocationMovementService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/siglusapi/locationMovements")
-public class SiglusProductLocationMovementRecordController {
+public class SiglusProductLocationMovementController {
 
   @Autowired
   private SiglusProductLocationMovementService movementService;

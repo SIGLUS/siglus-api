@@ -38,7 +38,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class SiglusProductLocationMovementService {
 
   @Autowired
-  private ProductLocationMovementLineItemRepository movementRecordRepository;
+  private ProductLocationMovementLineItemRepository movementLineItemRepository;
 
   @Autowired
   private ProductLocationMovementDraftRepository movementDraftRepository;
@@ -49,7 +49,7 @@ public class SiglusProductLocationMovementService {
   @Transactional
   public void createMovementLineItems(ProductLocationMovementDto movementDto) {
     List<ProductLocationMovementLineItem> movementLineItems = convertMovementDtoToMovementItems(movementDto);
-    movementRecordRepository.save(movementLineItems);
+    movementLineItemRepository.save(movementLineItems);
     deleteMovementDraft(movementDto);
   }
 

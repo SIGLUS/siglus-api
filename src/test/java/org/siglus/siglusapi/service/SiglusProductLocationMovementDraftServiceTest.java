@@ -40,6 +40,7 @@ import org.siglus.siglusapi.dto.ProductLocationMovementDraftDto;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.ProductLocationMovementDraftRepository;
+import org.siglus.siglusapi.util.OperatePermissionService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.validator.ActiveDraftValidator;
 import org.siglus.siglusapi.validator.ProductLocationMovementDraftValidator;
@@ -52,6 +53,9 @@ public class SiglusProductLocationMovementDraftServiceTest {
 
   @InjectMocks
   private SiglusProductLocationMovementDraftService service;
+
+  @Mock
+  private OperatePermissionService operatePermissionService;
 
   @Mock
   private SiglusAuthenticationHelper authenticationHelper;
@@ -116,6 +120,7 @@ public class SiglusProductLocationMovementDraftServiceTest {
     doNothing().when(draftValidator).validateProgramId(programId);
     when(productLocationMovementDraftRepository.findByProgramIdAndFacilityId(programId, facilityId))
         .thenReturn(newArrayList(movementDraft));
+    doNothing().when(operatePermissionService).checkPermission(facilityId);
 
     List<ProductLocationMovementDraftDto> productLocationMovementDraftDtos = service.searchMovementDrafts(programId);
 
