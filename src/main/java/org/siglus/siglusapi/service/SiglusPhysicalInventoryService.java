@@ -26,6 +26,7 @@ import static org.siglus.siglusapi.constant.FieldConstants.FACILITY_ID;
 import static org.siglus.siglusapi.constant.FieldConstants.IS_BASIC;
 import static org.siglus.siglusapi.constant.FieldConstants.PROGRAM_ID;
 import static org.siglus.siglusapi.constant.FieldConstants.RIGHT_NAME;
+import static org.siglus.siglusapi.constant.FieldConstants.SEPARATOR;
 import static org.siglus.siglusapi.constant.FieldConstants.SINGLE_PROGRAM;
 import static org.siglus.siglusapi.constant.FieldConstants.STOCK_CARD_ID;
 import static org.siglus.siglusapi.constant.FieldConstants.VM_STATUS;
@@ -968,12 +969,10 @@ public class SiglusPhysicalInventoryService {
     return o == null ? "" : o.toString();
   }
 
-  // TODO find match by orderableId, lotId, locationCode
   private String getUniqueKey(UUID orderableId, UUID lotId, String locationCode) {
-    return getString(orderableId) + "&" + getString(lotId) + "&" + getString(locationCode);
+    return getString(orderableId) + SEPARATOR + getString(lotId) + SEPARATOR + getString(locationCode);
   }
 
-  // TODO find match by orderableId, lotId, locationCode
   private PhysicalInventoryLineItemsExtension getExtension(
       List<PhysicalInventoryLineItemsExtension> extensions, PhysicalInventoryLineItemDto lineItem) {
     return extensions.stream()

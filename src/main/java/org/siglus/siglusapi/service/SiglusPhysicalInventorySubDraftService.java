@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.service;
 
+import static org.siglus.siglusapi.constant.FieldConstants.SEPARATOR;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_INVENTORY_CONFLICT_SUB_DRAFT;
 
 import com.google.common.collect.Lists;
@@ -56,7 +57,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @SuppressWarnings({"PMD"})
 public class SiglusPhysicalInventorySubDraftService {
-
+  
   public static final String DRAFT = "Draft ";
   @Autowired
   private SiglusStockCardSummariesService siglusStockCardSummariesService;
@@ -338,17 +339,17 @@ public class SiglusPhysicalInventorySubDraftService {
 
   private String getUniqueKey(PhysicalInventoryLineItemDto item) {
     return getString(item.getOrderableId())
-            + "&"
+            + SEPARATOR
             + getString(item.getLotId())
-            + "&"
+            + SEPARATOR
             + getString(item.getLocationCode());
   }
 
   private String getUniqueKey(PhysicalInventoryLineItemsExtension item) {
     return getString(item.getOrderableId())
-            + "&"
+            + SEPARATOR
             + getString(item.getLotId())
-            + "&"
+            + SEPARATOR
             + getString(item.getLocationCode());
   }
 
