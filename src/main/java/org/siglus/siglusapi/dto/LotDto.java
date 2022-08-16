@@ -47,13 +47,15 @@ public class LotDto extends BaseDto {
   private LocalDate manufactureDate;
 
   public static LotDto convert(ProductLot productLot) {
-    return LotDto.builder()
+    LotDto lotDto = LotDto.builder()
         .lotCode(productLot.getLot().getCode())
         .expirationDate(productLot.getLot().getExpirationDate())
         .tradeItemId(productLot.getTradeItemId())
         .manufactureDate(productLot.getLot().getExpirationDate())
         .active(true)
         .build();
+    lotDto.setId(productLot.getId());
+    return lotDto;
   }
 
   public static List<LotDto> convertList(Collection<ProductLot> productLots) {
