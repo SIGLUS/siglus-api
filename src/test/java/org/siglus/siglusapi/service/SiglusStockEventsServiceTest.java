@@ -68,6 +68,7 @@ import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.StockCardExtensionRepository;
+import org.siglus.siglusapi.repository.StockCardLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.StockManagementDraftRepository;
 import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
@@ -128,6 +129,9 @@ public class SiglusStockEventsServiceTest {
 
   @Mock
   private ActiveDraftValidator draftValidator;
+
+  @Mock
+  private StockCardLineItemExtensionRepository stockCardLineItemExtensionRepository;
 
   @Mock
   private SiglusArchiveProductService archiveProductService;

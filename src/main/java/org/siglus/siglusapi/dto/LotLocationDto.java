@@ -16,7 +16,6 @@
 package org.siglus.siglusapi.dto;
 
 import java.util.List;
-import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -30,7 +29,6 @@ import lombok.Setter;
 @Builder
 public class LotLocationDto {
 
-  private UUID locationId;
   private String locationCode;
   private String area;
   private List<LotsDto> lots;

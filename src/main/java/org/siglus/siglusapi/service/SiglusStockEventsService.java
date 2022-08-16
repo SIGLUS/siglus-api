@@ -270,12 +270,16 @@ public class SiglusStockEventsService {
 
   private UUID siglusCreateStockEvent(StockEventDto eventDto) {
     // do the creation
+    List<StockEventLineItemDto> lineItems = eventDto.getLineItems();
+    lineItems.forEach(lineItem -> lineItem.setId(UUID.randomUUID()));
+    eventDto.setLineItems(lineItems);
     UUID stockEventId = stockEventProcessor.process(eventDto);
     enhanceStockCard(eventDto, stockEventId);
     return stockEventId;
   }
 
   private void enhanceStockCard(StockEventDto eventDto, UUID stockEventId) {
+    addStockCardLineItemLocation(eventDto);
     addStockCardCreateTime(eventDto);
     addStockCardLineItemDocumentNumber(eventDto, stockEventId);
     Set<UUID> orderableIds = eventDto.getLineItems().stream()
@@ -345,6 +349,20 @@ public class SiglusStockEventsService {
     List<LotDto> existedLots = lotReferenceDataService.getLots(lotSearchParams);
     return existedLots.stream().filter(lotDto -> lotDto.getLotCode().equals(lotCode)).findFirst()
         .orElse(null);
+  }
+
+  private void addStockCardLineItemLocation(StockEventDto eventDto) {
+    List<StockEventLineItemDto> lineItems = eventDto.getLineItems();
+    lineItems.stream().filter(lineItem -> lineItem.getLocationCode() != null && lineItem.getArea() != null)
+        .forEach(lineItem -> {
+          StockCardLineItemExtension stockCardLineItemExtension = StockCardLineItemExtension
+              .builder()
+              .locationCode(lineItem.getLocationCode())
+              .area(lineItem.getArea())
+              .stockCardLineItemId(lineItem.getId())
+              .build();
+          stockCardLineItemExtensionRepository.save(stockCardLineItemExtension);
+        });
   }
 
   private void addStockCardCreateTime(StockEventDto eventDto) {

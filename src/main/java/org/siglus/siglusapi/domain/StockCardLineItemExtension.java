@@ -36,6 +36,7 @@ import org.siglus.common.domain.BaseEntity;
 @Table(name = "stock_card_line_item_extension", schema = "siglusintegration")
 public class StockCardLineItemExtension extends BaseEntity {
 
-  private UUID locationId;
+  private String locationCode;
+  private String area;
   private UUID stockCardLineItemId;
 }

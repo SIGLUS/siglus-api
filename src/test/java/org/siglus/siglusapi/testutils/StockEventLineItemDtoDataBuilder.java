@@ -44,6 +44,9 @@ public class StockEventLineItemDtoDataBuilder {
   // [change reason]: StockEventLineItems can have different documentationNo and programId.
   private String documentationNo = RandomStringUtils.random(5);
   private UUID programId = UUID.randomUUID();
+  private String locationCode = "AA25A";
+  private String area = "Armazem Principal";
+  private UUID id = UUID.randomUUID();
   // [SIGLUS change end]
 
   /**
@@ -65,7 +68,7 @@ public class StockEventLineItemDtoDataBuilder {
     // [change reason]: StockEventLineItems can have different documentationNo and programId.
     return new StockEventLineItemDto(orderableId, lotId, quantity, extraData, occurredDate, reasonId,
         reasonFreeText, sourceId, sourceFreeText, destinationId, destinationFreeText,
-        stockAdjustments, documentationNo, programId);
+        stockAdjustments, documentationNo, programId, locationCode, area, id);
     // [SIGLUS change end]
   }
 
@@ -77,7 +80,7 @@ public class StockEventLineItemDtoDataBuilder {
     // [change reason]: StockEventLineItems can have different documentationNo and programId.
     return new StockEventLineItemDto(orderableId, lotId, quantity, extraData, occurredDate, reasonId,
         reasonFreeText, sourceId, sourceFreeText, destinationId, destinationFreeText,
-        stockAdjustments, documentationNo, programId);
+        stockAdjustments, documentationNo, programId, locationCode, area, id);
     // [SIGLUS change end]
   }
 

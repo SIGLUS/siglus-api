@@ -15,29 +15,24 @@
 
 package org.siglus.siglusapi.service;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeSet;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.openlmis.referencedata.domain.Lot;
 import org.openlmis.referencedata.repository.LotRepository;
 import org.openlmis.stockmanagement.domain.card.StockCard;
-import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
-import org.openlmis.stockmanagement.repository.StockCardLineItemRepository;
 import org.openlmis.stockmanagement.repository.StockCardRepository;
+import org.siglus.siglusapi.domain.CalculatedStocksOnHandLocations;
 import org.siglus.siglusapi.domain.FacilityLocations;
-import org.siglus.siglusapi.domain.StockCardLineItemExtension;
 import org.siglus.siglusapi.dto.LotLocationDto;
 import org.siglus.siglusapi.dto.LotLocationPair;
 import org.siglus.siglusapi.dto.LotsDto;
 import org.siglus.siglusapi.repository.FacilityLocationsRepository;
-import org.siglus.siglusapi.repository.StockCardLineItemExtensionRepository;
+import org.siglus.siglusapi.repository.SiglusCalculatedStocksOnHandLocationsRepository;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -53,16 +48,13 @@ public class SiglusLotLocationService {
   private StockCardRepository stockCardRepository;
 
   @Autowired
-  private StockCardLineItemRepository stockCardLineItemRepository;
-
-  @Autowired
   private FacilityLocationsRepository facilityLocationsRepository;
 
   @Autowired
-  private StockCardLineItemExtensionRepository stockCardLineItemExtensionRepository;
+  private LotRepository lotRepository;
 
   @Autowired
-  private LotRepository lotRepository;
+  private SiglusCalculatedStocksOnHandLocationsRepository calculatedStocksOnHandLocationsRepository;
 
   public List<LotLocationDto> searchLotLocaiton(List<UUID> orderbalesId, boolean extraData) {
     UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
@@ -73,9 +65,7 @@ public class SiglusLotLocationService {
       locations.forEach(location -> {
         lotLocationDtos.add(LotLocationDto
             .builder()
-            .locationId(location.getId())
             .locationCode(location.getLocationCode())
-            .area(location.getArea())
             .build());
       });
       return lotLocationDtos;
@@ -86,52 +76,44 @@ public class SiglusLotLocationService {
       List<StockCard> stockCardList = stockCardRepository.findByFacilityIdAndOrderableId(facilityId,
           orderableId);
 
-      Map<UUID, List<UUID>> lotIdToLocationIdMap = new HashMap<>();
+      Map<UUID, List<CalculatedStocksOnHandLocations>> lotIdToLocationIdMap = new HashMap<>();
       stockCardList.forEach(stockCard -> {
-        List<UUID> stockCardLineItemIds = stockCardLineItemRepository.findAllByStockCardIn(
-                Collections.singletonList(stockCard))
-            .stream().map(StockCardLineItem::getId)
-            .collect(Collectors.toList());
-
-        List<UUID> locationIds = stockCardLineItemExtensionRepository.findAllByStockCardLineItemIdIn(
-            stockCardLineItemIds).stream().map(StockCardLineItemExtension::getLocationId).collect(Collectors.toList());
-        locationIds = locationIds.stream().collect(
-            Collectors.collectingAndThen(
-                Collectors.toCollection(TreeSet::new), ArrayList::new));
-        lotIdToLocationIdMap.put(stockCard.getLotId(), locationIds);
+        List<CalculatedStocksOnHandLocations> locationStockOnHandList = calculatedStocksOnHandLocationsRepository
+            .findByStockCardId(stockCard.getId());
+        lotIdToLocationIdMap.put(stockCard.getLotId(), locationStockOnHandList);
       });
 
       List<LotLocationPair> lotLocationPairs = new LinkedList<>();
 
-      lotIdToLocationIdMap.forEach((lotId, locationIds) -> {
-        locationIds.forEach(locationId -> {
-          lotLocationPairs.add(LotLocationPair.builder().lotId(lotId).locationId(locationId).build());
+      lotIdToLocationIdMap.forEach((lotId, locationStockOnHandList) -> {
+        locationStockOnHandList.forEach(locationsStockOnHand -> {
+          lotLocationPairs.add(LotLocationPair.builder().lotId(lotId)
+              .calculatedStocksOnHandLocations(locationsStockOnHand)
+              .build());
         });
       });
 
-      Map<UUID, List<LotLocationPair>> locationIdToPairs = lotLocationPairs.stream()
-          .collect(Collectors.groupingBy(LotLocationPair::getLocationId));
+      Map<String, List<LotLocationPair>> locationCodeToPairs = lotLocationPairs.stream()
+          .collect(Collectors.groupingBy(e -> e.getCalculatedStocksOnHandLocations().getLocationCode()));
 
-      locationIdToPairs.forEach((locationId, locationPairs) -> {
-
-        List<UUID> lotIds = locationPairs.stream().map(LotLocationPair::getLotId).collect(Collectors.toList());
-
+      locationCodeToPairs.forEach((locationCode, locationPairs) -> {
         List<LotsDto> lotDtoList = new LinkedList<>();
 
-        lotIds.forEach(lotId -> {
+        locationPairs.forEach(locationPair -> {
+          UUID lotId = locationPair.getLotId();
           Lot lot = lotRepository.findOne(lotId);
           lotDtoList.add(LotsDto
               .builder()
-              .lotId(lotId).orderablesId(orderableId).lotCode(lot.getLotCode()).stockOnHand(10000)
+              .lotId(lotId).orderablesId(orderableId).lotCode(lot.getLotCode())
+              .stockOnHand(locationPair
+                  .getCalculatedStocksOnHandLocations()
+                  .getStockonhand())
               .expirationDate(lot.getExpirationDate())
               .build());
         });
-        FacilityLocations facilityLocations = facilityLocationsRepository.findOne(locationId);
         lotLocationDtos.add(LotLocationDto
             .builder()
-            .locationId(locationId)
-            .locationCode(facilityLocations.getLocationCode())
-            .area(facilityLocations.getArea())
+            .locationCode(locationCode)
             .lots(lotDtoList)
             .build());
       });

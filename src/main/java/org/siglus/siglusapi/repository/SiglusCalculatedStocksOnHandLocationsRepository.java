@@ -13,22 +13,16 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.dto;
+package org.siglus.siglusapi.repository;
 
+import java.util.List;
 import java.util.UUID;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 import org.siglus.siglusapi.domain.CalculatedStocksOnHandLocations;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-@Builder
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-public class LotLocationPair {
+public interface SiglusCalculatedStocksOnHandLocationsRepository extends JpaRepository<CalculatedStocksOnHandLocations,
+    UUID> {
 
-  private UUID lotId;
-  private CalculatedStocksOnHandLocations calculatedStocksOnHandLocations;
+  public List<CalculatedStocksOnHandLocations> findByStockCardId(UUID stockCardId);
 
 }
