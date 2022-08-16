@@ -43,7 +43,7 @@ public class OperationGuardAspect {
   @Value("${guard.secret}")
   private String encodedSecret;
 
-  @Around("@annotation(Guarded)")
+  @Around("@annotation(OperationGuardAspect.Guarded)")
   public Object execute(ProceedingJoinPoint joinPoint) throws Throwable {
     authorized();
     return joinPoint.proceed();
