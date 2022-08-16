@@ -219,7 +219,9 @@ function RegistrationService(host, port) {
       } else {
         self.registrator.deregisterResources(service, resources);
       }
-
+    }).catch(function (err) {
+      console.log("register raml fail, err:", err);
+    }).finally(function (){
       completed = true;
     });
 
