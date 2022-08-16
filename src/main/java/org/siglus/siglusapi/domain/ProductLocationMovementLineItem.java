@@ -40,7 +40,7 @@ import org.siglus.common.domain.BaseEntity;
 public class ProductLocationMovementLineItem extends BaseEntity {
 
   @Column(nullable = false)
-  private UUID stcokCardId;
+  private UUID stockCardId;
 
   @Column(nullable = false)
   @JsonFormat(shape = STRING, pattern = "yyyy-MM-dd")

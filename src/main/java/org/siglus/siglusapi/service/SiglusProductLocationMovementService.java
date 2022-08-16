@@ -67,20 +67,20 @@ public class SiglusProductLocationMovementService {
     List<ProductLocationMovementLineItem> movementLineItems = new ArrayList<>();
     movementDto.getMovementLineItems().forEach(lineItemDto -> {
       List<StockCard> stockCards = stockCardRepository
-          .findByFacilityIdAndProgramIdAndOrderableIdAndLotId(movementDto.getFacilityId(), movementDto.getProgramId(),
+          .findByFacilityIdAndProgramIdAndOrderableIdAndLotId(movementDto.getFacilityId(), lineItemDto.getProgramId(),
               lineItemDto.getOrderableId(), lineItemDto.getLotId());
       if (stockCards.isEmpty()) {
         throw new NotFoundException(ERROR_STOCK_CARD_NOT_FOUND);
       }
       ProductLocationMovementLineItem movementLineItem = ProductLocationMovementLineItem.builder()
-          .stcokCardId(stockCards.get(0).getId())
+          .stockCardId(stockCards.get(0).getId())
           .srcArea(lineItemDto.getSrcArea())
           .srcLocationCode(lineItemDto.getSrcLocationCode())
           .destArea(lineItemDto.getDestArea())
           .destLocationCode(lineItemDto.getDestLocationCode())
           .quantity(lineItemDto.getQuantity())
           .createdDate(movementDto.getCreatedDate())
-          .userId(movementDto.getUseId())
+          .userId(movementDto.getUserId())
           .signature(movementDto.getSignature())
           .build();
       movementLineItems.add(movementLineItem);

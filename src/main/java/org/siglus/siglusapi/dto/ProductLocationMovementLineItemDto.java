@@ -27,6 +27,8 @@ import lombok.NoArgsConstructor;
 @Builder
 public class ProductLocationMovementLineItemDto {
 
+  private UUID programId;
+
   private UUID orderableId;
 
   private UUID lotId;

@@ -60,6 +60,7 @@ public class SiglusProductLocationMovementServiceTest {
   @Mock
   private ProductLocationMovementDraftRepository movementDraftRepository;
 
+  private final UUID allProgramId = UUID.randomUUID();
   private final UUID programId = UUID.randomUUID();
   private final UUID facilityId = UUID.randomUUID();
   private final UUID userId = UUID.randomUUID();
@@ -72,7 +73,7 @@ public class SiglusProductLocationMovementServiceTest {
   private final StockCard stockCard = new StockCard();
   private final ProductLocationMovementDraft movementDraft = new ProductLocationMovementDraft();
   private final ProductLocationMovementLineItem lineItem = ProductLocationMovementLineItem.builder()
-      .stcokCardId(stockCardId)
+      .stockCardId(stockCardId)
       .srcArea("A")
       .srcLocationCode("AA20B")
       .destArea("B")
@@ -83,6 +84,7 @@ public class SiglusProductLocationMovementServiceTest {
       .quantity(10)
       .build();
   private final ProductLocationMovementLineItemDto movementLineItemDto = ProductLocationMovementLineItemDto.builder()
+      .programId(programId)
       .orderableId(orderableId)
       .lotId(lotId)
       .srcArea("A")
@@ -92,11 +94,11 @@ public class SiglusProductLocationMovementServiceTest {
       .quantity(10)
       .build();
   private final ProductLocationMovementDto movementDto = ProductLocationMovementDto.builder()
-      .programId(programId)
+      .programId(allProgramId)
       .facilityId(facilityId)
       .createdDate(localDate)
       .signature("Jimmy")
-      .useId(userId)
+      .userId(userId)
       .movementLineItems(newArrayList(movementLineItemDto))
       .build();
 

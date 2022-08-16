@@ -36,7 +36,7 @@ public class ProductLocationMovementDto {
 
   private UUID programId;
 
-  private UUID useId;
+  private UUID userId;
 
   @JsonFormat(shape = STRING)
   private LocalDate createdDate;
