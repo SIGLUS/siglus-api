@@ -54,6 +54,7 @@ import org.openlmis.stockmanagement.repository.StockCardRepository;
 import org.openlmis.stockmanagement.repository.StockEventsRepository;
 import org.openlmis.stockmanagement.service.StockEventProcessor;
 import org.siglus.siglusapi.domain.StockCardExtension;
+import org.siglus.siglusapi.domain.StockCardLineItemExtension;
 import org.siglus.siglusapi.domain.StockManagementDraft;
 import org.siglus.siglusapi.dto.LotDto;
 import org.siglus.siglusapi.dto.LotSearchParams;
@@ -63,6 +64,7 @@ import org.siglus.siglusapi.dto.StockManagementDraftDto;
 import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.StockCardExtensionRepository;
+import org.siglus.siglusapi.repository.StockCardLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.StockManagementDraftRepository;
 import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
@@ -114,6 +116,8 @@ public class SiglusStockEventsService {
   private StockManagementDraftRepository stockManagementDraftRepository;
   @Autowired
   private ActiveDraftValidator draftValidator;
+  @Autowired
+  private StockCardLineItemExtensionRepository stockCardLineItemExtensionRepository;
 
   @Value("${stockmanagement.kit.unpack.reasonId}")
   private UUID unpackReasonId;

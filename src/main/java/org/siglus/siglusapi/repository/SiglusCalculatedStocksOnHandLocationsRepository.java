@@ -23,6 +23,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface SiglusCalculatedStocksOnHandLocationsRepository extends JpaRepository<CalculatedStocksOnHandLocations,
     UUID> {
 
-  public List<CalculatedStocksOnHandLocations> findByStockCardId(UUID stockCardId);
-
+  List<CalculatedStocksOnHandLocations> findByStockCardId(UUID stockCardId);
 }
