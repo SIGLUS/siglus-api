@@ -56,7 +56,7 @@ public class SiglusLotLocationService {
   @Autowired
   private SiglusCalculatedStocksOnHandLocationsRepository calculatedStocksOnHandLocationsRepository;
 
-  public List<LotLocationDto> searchLotLocaiton(List<UUID> orderbalesId, boolean extraData) {
+  public List<LotLocationDto> searchLotLocaiton(List<UUID> orderableIds, boolean extraData) {
     UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
 
     if (!extraData) {
@@ -66,13 +66,14 @@ public class SiglusLotLocationService {
         lotLocationDtos.add(LotLocationDto
             .builder()
             .locationCode(location.getLocationCode())
+            .area(location.getArea())
             .build());
       });
       return lotLocationDtos;
     }
 
     List<LotLocationDto> lotLocationDtos = new LinkedList<>();
-    orderbalesId.forEach(orderableId -> {
+    orderableIds.forEach(orderableId -> {
       List<StockCard> stockCardList = stockCardRepository.findByFacilityIdAndOrderableId(facilityId,
           orderableId);
 
@@ -114,6 +115,7 @@ public class SiglusLotLocationService {
         lotLocationDtos.add(LotLocationDto
             .builder()
             .locationCode(locationCode)
+            .area(locationPairs.get(0).getCalculatedStocksOnHandLocations().getArea())
             .lots(lotDtoList)
             .build());
       });
