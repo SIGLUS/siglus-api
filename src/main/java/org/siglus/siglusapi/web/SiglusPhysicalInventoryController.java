@@ -145,9 +145,9 @@ public class SiglusPhysicalInventoryController {
   public void deletePhysicalInventory(@PathVariable UUID id) {
     if (ALL_PRODUCTS_UUID.equals(id)) {
       UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
-      siglusPhysicalInventoryService.deletePhysicalInventoryForAllProducts(facilityId);
+      siglusPhysicalInventoryService.deletePhysicalInventoryDraftForAllProgramsWithSubDraft(facilityId);
     } else {
-      siglusPhysicalInventoryService.deletePhysicalInventory(id);
+      siglusPhysicalInventoryService.deletePhysicalInventoryDraftWithSubDrafts(id);
     }
   }
 

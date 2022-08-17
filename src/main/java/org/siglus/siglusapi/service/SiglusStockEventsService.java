@@ -25,7 +25,6 @@ import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_SUB_D
 
 import com.google.common.collect.Maps;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -88,98 +87,86 @@ public class SiglusStockEventsService {
   private UUID unpackDestinationNodeId;
 
   @Transactional
-  public UUID createStockEventForMultiUser(StockEventForMultiUserDto stockEventForMultiUserDto) {
+  public void processStockEventForMultiUser(StockEventForMultiUserDto stockEventForMultiUserDto) {
     List<UUID> subDraftIds = stockEventForMultiUserDto.getSubDrafts();
     validatePreSubmitSubDraft(subDraftIds);
-    return createStockEvent(stockEventForMultiUserDto.getStockEvent());
+    processStockEvent(stockEventForMultiUserDto.getStockEvent());
   }
 
   @Transactional
-  public UUID createStockEvent(StockEventDto eventDto) {
-    UUID userId = getUserId(eventDto);
-    if (ALL_PRODUCTS_PROGRAM_ID.equals(eventDto.getProgramId())) {
-      Map<UUID, UUID> programIdToEventId = createStockEventForAllPrograms(eventDto, userId);
-      if (!programIdToEventId.isEmpty()) {
-        return programIdToEventId.values().stream().findFirst().orElse(null);
-      }
-      return null;
-    }
-    return createStockEventForOneProgram(eventDto, userId);
-
-  }
-
-  @Transactional
-  public UUID createStockEventForOneProgram(StockEventDto eventDto, UUID userId) {
-    eventDto.setUserId(userId);
+  public void processStockEvent(StockEventDto eventDto) {
+    setUserId(eventDto);
     siglusLotService.createAndFillLotId(eventDto);
-    if (eventDto.isPhysicalInventory()) {
-      UUID programId = eventDto.getProgramId();
-      List<StockEventDto> stockEventDtos;
-      List<PhysicalInventoryDto> inventories = siglusPhysicalInventoryService
-          .getPhysicalInventoryDtosDirectly(programId, eventDto.getFacilityId(), Boolean.TRUE);
-      if (CollectionUtils.isEmpty(inventories)) {
-        throw new ValidationMessageException("stockmanagement.error.physicalInventory.isSubmitted");
-      }
-      stockEventDtos = inventories.stream()
-          .map(StockEventDto::fromPhysicalInventoryDto)
-          .collect(Collectors.toList());
-      Map<UUID, UUID> programIdToEventId = getProgramIdToEventId(eventDto, stockEventDtos);
-      if (!programIdToEventId.isEmpty() && eventDto.isPhysicalInventory()) {
-        siglusPhysicalInventoryService.deletePhysicalInventoryForProductInOneProgramDirectly(eventDto.getFacilityId(),
-            programId);
-      }
-      return programIdToEventId.get(programId);
-    } else {
-      return siglusCreateStockEvent(eventDto);
-    }
-  }
-
-  private Map<UUID, UUID> createStockEventForAllPrograms(StockEventDto eventDto, UUID userId) {
-    eventDto.setUserId(userId);
-    siglusLotService.createAndFillLotId(eventDto);
-    Set<UUID> programIds = eventDto.getLineItems().stream()
-        .map(StockEventLineItemDto::getProgramId)
-        .collect(Collectors.toSet());
+    Set<UUID> programIds = getProgramIds(eventDto);
     List<StockEventDto> stockEventDtos;
     if (eventDto.isPhysicalInventory()) {
-      List<PhysicalInventoryDto> inventories = programIds.stream()
-          .map(programId -> siglusPhysicalInventoryService
-              .getPhysicalInventoryDtosDirectly(programId, eventDto.getFacilityId(), Boolean.TRUE))
-          .flatMap(Collection::stream)
-          .collect(Collectors.toList());
-      if (CollectionUtils.isEmpty(inventories)) {
-        throw new ValidationMessageException("stockmanagement.error.physicalInventory.isSubmitted");
-      }
-      stockEventDtos = inventories.stream()
-          .map(StockEventDto::fromPhysicalInventoryDto)
-          .collect(Collectors.toList());
+      stockEventDtos = getStockEventsWhenDoPhysicalInventory(eventDto, programIds);
     } else {
-      if (isNotUnpack(eventDto)) {
-        List<StockManagementDraftDto> stockManagementDraftDtos = stockManagementDraftService
-            .findStockManagementDraft(ALL_PRODUCTS_PROGRAM_ID, getDraftType(eventDto), true);
-        if (CollectionUtils.isEmpty(stockManagementDraftDtos)) {
-          throw new ValidationMessageException(ERROR_STOCK_MANAGEMENT_DRAFT_IS_SUBMITTED);
-        }
-      }
-      stockEventDtos = programIds.stream()
-          .map(StockEventDto::fromProgramId)
-          .collect(Collectors.toList());
+      stockEventDtos = getStockEventsWhenDoStockMovements(eventDto, programIds);
     }
-    Map<UUID, UUID> programIdToEventId = getProgramIdToEventId(eventDto, stockEventDtos);
-    if (!programIdToEventId.isEmpty()) {
-      if (eventDto.isPhysicalInventory()) {
-        siglusPhysicalInventoryService.deletePhysicalInventoryForAllProductsDirectly(eventDto.getFacilityId());
-      } else if (isNotUnpack(eventDto)) {
-        String type = getDraftType(eventDto);
-        eventDto.setType(type);
-        stockManagementDraftService.deleteStockManagementDraft(eventDto);
-      }
-    }
-    return programIdToEventId;
+    createStockEvent(eventDto, stockEventDtos);
+    deleteDraft(eventDto);
   }
 
-  private Map<UUID, UUID> getProgramIdToEventId(StockEventDto eventDto, List<StockEventDto> stockEventDtos) {
-    Map<UUID, UUID> programIdToEventId = new HashMap<>();
+  private Set<UUID> getProgramIds(StockEventDto eventDto) {
+    if (!isAllPrograms(eventDto)) {
+      eventDto.getLineItems().forEach(item -> item.setProgramId(eventDto.getProgramId()));
+    }
+    return eventDto.getLineItems().stream()
+        .map(StockEventLineItemDto::getProgramId)
+        .collect(Collectors.toSet());
+  }
+
+  private void deleteDraft(StockEventDto eventDto) {
+    if (eventDto.isPhysicalInventory()) {
+      if (isAllPrograms(eventDto)) {
+        siglusPhysicalInventoryService.deletePhysicalInventoryDraftForAllPrograms(eventDto.getFacilityId());
+      } else {
+        siglusPhysicalInventoryService.deletePhysicalInventoryDraftForOneProgram(eventDto.getFacilityId(),
+            eventDto.getProgramId());
+      }
+    } else if (isNotUnpack(eventDto)) {
+      eventDto.setType(getDraftType(eventDto));
+      stockManagementDraftService.deleteStockManagementDraft(eventDto);
+    }
+  }
+
+  private List<StockEventDto> getStockEventsWhenDoPhysicalInventory(StockEventDto eventDto, Set<UUID> programIds) {
+    List<StockEventDto> stockEventDtos;
+    List<PhysicalInventoryDto> inventories = programIds.stream()
+        .map(programId -> siglusPhysicalInventoryService
+            .getPhysicalInventoryDtosDirectly(programId, eventDto.getFacilityId(), Boolean.TRUE))
+        .flatMap(Collection::stream)
+        .collect(Collectors.toList());
+    if (CollectionUtils.isEmpty(inventories)) {
+      throw new ValidationMessageException("stockmanagement.error.physicalInventory.isSubmitted");
+    }
+    stockEventDtos = inventories.stream()
+        .map(StockEventDto::fromPhysicalInventoryDto)
+        .collect(Collectors.toList());
+    return stockEventDtos;
+  }
+
+  private List<StockEventDto> getStockEventsWhenDoStockMovements(StockEventDto eventDto, Set<UUID> programIds) {
+    List<StockEventDto> stockEventDtos;
+    if (isNotUnpack(eventDto) && isAllPrograms(eventDto)) {
+      List<StockManagementDraftDto> stockManagementDraftDtos = stockManagementDraftService
+          .findStockManagementDraft(ALL_PRODUCTS_PROGRAM_ID, getDraftType(eventDto), true);
+      if (CollectionUtils.isEmpty(stockManagementDraftDtos)) {
+        throw new ValidationMessageException(ERROR_STOCK_MANAGEMENT_DRAFT_IS_SUBMITTED);
+      }
+    }
+    stockEventDtos = programIds.stream()
+        .map(StockEventDto::fromProgramId)
+        .collect(Collectors.toList());
+    return stockEventDtos;
+  }
+
+  private boolean isAllPrograms(StockEventDto eventDto) {
+    return ALL_PRODUCTS_PROGRAM_ID.equals(eventDto.getProgramId());
+  }
+
+  private void createStockEvent(StockEventDto eventDto, List<StockEventDto> stockEventDtos) {
     stockEventDtos.forEach(stockEventDto -> {
       stockEventDto.setFacilityId(eventDto.getFacilityId());
       stockEventDto.setSignature(eventDto.getSignature());
@@ -190,18 +177,16 @@ public class SiglusStockEventsService {
           .filter(lineItem -> lineItem.getProgramId() != null)
           .filter(lineItem -> lineItem.getProgramId().equals(stockEventDto.getProgramId()))
           .collect(Collectors.toList()));
-      programIdToEventId.put(stockEventDto.getProgramId(), siglusCreateStockEvent(stockEventDto));
+      siglusCreateStockEvent(stockEventDto);
     });
-    return programIdToEventId;
   }
 
-  private UUID siglusCreateStockEvent(StockEventDto eventDto) {
+  private void siglusCreateStockEvent(StockEventDto eventDto) {
     List<StockEventLineItemDto> lineItems = eventDto.getLineItems();
     lineItems.forEach(lineItem -> lineItem.setId(UUID.randomUUID()));
     eventDto.setLineItems(lineItems);
     UUID stockEventId = stockEventProcessor.process(eventDto);
     enhanceStockCard(eventDto, stockEventId);
-    return stockEventId;
   }
 
   private void enhanceStockCard(StockEventDto eventDto, UUID stockEventId) {
@@ -214,16 +199,15 @@ public class SiglusStockEventsService {
     archiveProductService.activateProducts(eventDto.getFacilityId(), orderableIds);
   }
 
-  private UUID getUserId(StockEventDto eventDto) {
-    if (eventDto.getUserId() != null) {
-      return eventDto.getUserId();
+  private void setUserId(StockEventDto eventDto) {
+    if (eventDto.getUserId() == null) {
+      eventDto.setUserId(authenticationHelper.getCurrentUser().getId());
     }
-    return authenticationHelper.getCurrentUser().getId();
   }
 
   private void addStockCardLineItemLocation(StockEventDto eventDto) {
     List<StockEventLineItemDto> lineItems = eventDto.getLineItems();
-    lineItems.stream().filter(lineItem -> lineItem.getLocationCode() != null && lineItem.getArea() != null)
+    lineItems.stream().filter(lineItem -> lineItem.getLocationCode() != null)
         .forEach(lineItem -> {
           StockCardLineItemExtension stockCardLineItemExtension = StockCardLineItemExtension
               .builder()

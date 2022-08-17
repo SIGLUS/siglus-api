@@ -673,7 +673,7 @@ public class SiglusPhysicalInventoryService {
   }
 
   public PhysicalInventoryDto saveDraftForAllProducts(PhysicalInventoryDto dto) {
-    deletePhysicalInventoryForAllProducts(dto.getFacilityId());
+    deletePhysicalInventoryDraftForAllProgramsWithSubDraft(dto.getFacilityId());
     createNewDraftForAllProducts(dto, null);
     Set<UUID> programIds = dto.getLineItems().stream()
         .map(PhysicalInventoryLineItemDto::getProgramId).collect(Collectors.toSet());
@@ -703,29 +703,29 @@ public class SiglusPhysicalInventoryService {
     }
   }
 
-  public void deletePhysicalInventory(UUID id) {
-    inventoryController.deletePhysicalInventory(id);
+  public void deletePhysicalInventoryDraftWithSubDrafts(UUID id) {
+    deletePhysicalInventoryDraftById(id);
     physicalInventorySubDraftRepository.deletePhysicalInventorySubDraftsByPhysicalInventoryId(id);
   }
 
-  public void deletePhysicalInventoryDirectly(UUID id) {
+  public void deletePhysicalInventoryDraftById(UUID id) {
     inventoryController.deletePhysicalInventory(id);
   }
 
-  public void deletePhysicalInventoryForProductInOneProgram(UUID facilityId, UUID programId) {
-    doDeletePhysicalInventoryForProductInOneProgram(facilityId, programId, false);
-  }
-
-  public void deletePhysicalInventoryForProductInOneProgramDirectly(UUID facilityId, UUID programId) {
+  public void deletePhysicalInventoryDraftForOneProgramWithSubDraft(UUID facilityId, UUID programId) {
     doDeletePhysicalInventoryForProductInOneProgram(facilityId, programId, true);
   }
 
-  public void deletePhysicalInventoryForAllProducts(UUID facilityId) {
-    doDeletePhysicalInventoryForAllProducts(facilityId, false);
+  public void deletePhysicalInventoryDraftForOneProgram(UUID facilityId, UUID programId) {
+    doDeletePhysicalInventoryForProductInOneProgram(facilityId, programId, false);
   }
 
-  public void deletePhysicalInventoryForAllProductsDirectly(UUID facilityId) {
+  public void deletePhysicalInventoryDraftForAllProgramsWithSubDraft(UUID facilityId) {
     doDeletePhysicalInventoryForAllProducts(facilityId, true);
+  }
+
+  public void deletePhysicalInventoryDraftForAllPrograms(UUID facilityId) {
+    doDeletePhysicalInventoryForAllProducts(facilityId, false);
   }
 
   public PhysicalInventoryDto getPhysicalInventory(UUID id) {
@@ -847,11 +847,11 @@ public class SiglusPhysicalInventoryService {
     return null;
   }
 
-  private void doDeletePhysicalInventoryForProductInOneProgram(UUID facilityId, UUID programId, boolean directly) {
-    doDeletePhysicalInventoryCore(facilityId, programId, directly);
+  private void doDeletePhysicalInventoryForProductInOneProgram(UUID facilityId, UUID programId, boolean hasSubDraft) {
+    doDeletePhysicalInventoryCore(facilityId, programId, hasSubDraft);
   }
 
-  private void doDeletePhysicalInventoryCore(UUID facilityId, UUID programId, boolean directly) {
+  private void doDeletePhysicalInventoryCore(UUID facilityId, UUID programId, boolean hasSubDraft) {
     String physicalInventoryId = physicalInventoriesRepository.findIdByProgramIdAndFacilityIdAndIsDraft(
         programId, facilityId, Boolean.TRUE);
     if (physicalInventoryId == null) {
@@ -860,17 +860,17 @@ public class SiglusPhysicalInventoryService {
     List<UUID> physicalInventoryIdList = new ArrayList<>(
         Collections.singleton(UUID.fromString(physicalInventoryId)))
         .stream().filter(Objects::nonNull).collect(Collectors.toList());
-    if (directly) {
-      physicalInventoryIdList.forEach(this::deletePhysicalInventoryDirectly);
+    if (hasSubDraft) {
+      physicalInventoryIdList.forEach(this::deletePhysicalInventoryDraftWithSubDrafts);
     } else {
-      physicalInventoryIdList.forEach(this::deletePhysicalInventory);
+      physicalInventoryIdList.forEach(this::deletePhysicalInventoryDraftById);
     }
     lineItemsExtensionRepository.deleteByPhysicalInventoryIdIn(physicalInventoryIdList);
   }
 
-  private void doDeletePhysicalInventoryForAllProducts(UUID facilityId, boolean directly) {
+  private void doDeletePhysicalInventoryForAllProducts(UUID facilityId, boolean hasSubDraft) {
     Set<UUID> supportedPrograms = supportedProgramsHelper.findHomeFacilitySupportedProgramIds();
-    supportedPrograms.forEach(programId -> doDeletePhysicalInventoryCore(facilityId, programId, directly));
+    supportedPrograms.forEach(programId -> doDeletePhysicalInventoryCore(facilityId, programId, hasSubDraft));
   }
 
   private List<PhysicalInventoryLineItemsExtension> updateExtension(

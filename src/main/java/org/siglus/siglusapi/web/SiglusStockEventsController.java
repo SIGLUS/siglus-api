@@ -15,33 +15,37 @@
 
 package org.siglus.siglusapi.web;
 
-import java.util.UUID;
+import static org.springframework.http.HttpStatus.CREATED;
+
+import lombok.RequiredArgsConstructor;
 import org.openlmis.stockmanagement.dto.StockEventDto;
 import org.siglus.siglusapi.dto.StockEventForMultiUserDto;
 import org.siglus.siglusapi.service.SiglusStockEventsService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/siglusapi/stockEvents")
+@RequiredArgsConstructor
 public class SiglusStockEventsController {
 
-  @Autowired
-  private SiglusStockEventsService stockEventsService;
+  private final SiglusStockEventsService stockEventsService;
 
   @PostMapping
   @Transactional
-  public UUID createStockEvent(@RequestBody StockEventDto eventDto) {
-    return stockEventsService.createStockEvent(eventDto);
+  @ResponseStatus(CREATED)
+  public void createStockEvent(@RequestBody StockEventDto eventDto) {
+    stockEventsService.processStockEvent(eventDto);
   }
 
   @PostMapping("/multiUser")
   @Transactional
-  public UUID createStockEventForMultiUser(@RequestBody StockEventForMultiUserDto stockEventForMultiUserDto) {
-    return stockEventsService.createStockEventForMultiUser(stockEventForMultiUserDto);
+  @ResponseStatus(CREATED)
+  public void createStockEventForMultiUser(@RequestBody StockEventForMultiUserDto stockEventForMultiUserDto) {
+    stockEventsService.processStockEventForMultiUser(stockEventForMultiUserDto);
   }
 }

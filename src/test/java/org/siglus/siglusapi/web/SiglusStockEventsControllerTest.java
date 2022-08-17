@@ -47,7 +47,7 @@ public class SiglusStockEventsControllerTest {
     controller.createStockEvent(dto);
 
     // then
-    verify(service).createStockEvent(dto);
+    verify(service).processStockEvent(dto);
   }
 
   @Test
@@ -60,14 +60,14 @@ public class SiglusStockEventsControllerTest {
     controller.createStockEvent(dto);
 
     // then
-    verify(service).createStockEvent(dto);
+    verify(service).processStockEvent(dto);
   }
 
   @Test
   public void shouldCallServiceWhenCreateStockEventsForMultiUser() {
     StockEventForMultiUserDto stockEventForMultiUserDto = new StockEventForMultiUserDto();
     controller.createStockEventForMultiUser(stockEventForMultiUserDto);
-    verify(service).createStockEventForMultiUser(stockEventForMultiUserDto);
+    verify(service).processStockEventForMultiUser(stockEventForMultiUserDto);
   }
 
 }

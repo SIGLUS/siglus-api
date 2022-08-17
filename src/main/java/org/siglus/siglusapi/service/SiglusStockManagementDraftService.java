@@ -28,6 +28,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.openlmis.stockmanagement.dto.StockCardDto;
@@ -55,41 +56,24 @@ import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.validator.ActiveDraftValidator;
 import org.siglus.siglusapi.validator.StockManagementDraftValidator;
 import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 @SuppressWarnings("PMD.TooManyMethods")
 public class SiglusStockManagementDraftService {
 
-  @Autowired
-  private ActiveDraftValidator draftValidator;
-
-  @Autowired
-  private StockManagementDraftRepository stockManagementDraftRepository;
-
-  @Autowired
-  private StockManagementInitialDraftsRepository stockManagementInitialDraftsRepository;
-
-  @Autowired
-  StockManagementDraftValidator stockManagementDraftValidator;
-
-  @Autowired
-  private SiglusStockCardService stockCardService;
-
-  @Autowired
-  private SiglusValidSourceDestinationService validSourceDestinationService;
-
-  @Autowired
-  private OperatePermissionService operatePermissionService;
-
-  @Autowired
-  private SiglusAuthenticationHelper authenticationHelper;
-
-  @Autowired
-  private ConflictOrderableInSubDraftsService conflictOrderableInSubDraftsService;
+  private final ActiveDraftValidator draftValidator;
+  private final StockManagementDraftRepository stockManagementDraftRepository;
+  private final StockManagementInitialDraftsRepository stockManagementInitialDraftsRepository;
+  private final StockManagementDraftValidator stockManagementDraftValidator;
+  private final SiglusStockCardService stockCardService;
+  private final SiglusValidSourceDestinationService validSourceDestinationService;
+  private final OperatePermissionService operatePermissionService;
+  private final SiglusAuthenticationHelper authenticationHelper;
+  private final ConflictOrderableInSubDraftsService conflictOrderableInSubDraftsService;
 
   private static final Integer DRAFTS_LIMITATION = 10;
   private static final Integer DRAFTS_INCREMENT = 1;
@@ -187,8 +171,7 @@ public class SiglusStockManagementDraftService {
     return StockManagementDraftWithLocationDto.from(drafts);
   }
 
-  public List<StockManagementDraftDto> findStockManagementDraft(UUID programId, String type,
-      Boolean isDraft) {
+  public List<StockManagementDraftDto> findStockManagementDraft(UUID programId, String type, Boolean isDraft) {
     UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
     draftValidator.validateProgramId(programId);
     draftValidator.validateFacilityId(facilityId);
@@ -214,16 +197,17 @@ public class SiglusStockManagementDraftService {
     List<StockManagementDraft> drafts = stockManagementDraftRepository
         .findByProgramIdAndFacilityIdAndIsDraftAndDraftType(dto.getProgramId(), dto.getFacilityId(), true,
             dto.getType());
-    if (!drafts.isEmpty()) {
-      log.info("delete stock management draft(s), programId: {}, facilityId: {}",
-          dto.getProgramId(),
-          dto.getFacilityId());
-      stockManagementDraftRepository.delete(drafts);
-      UUID initialDraftId = drafts.get(0).getInitialDraftId();
-      if (initialDraftId != null) {
-        log.info("delete stock management initial draft with id: {}", initialDraftId);
-        stockManagementInitialDraftsRepository.delete(initialDraftId);
-      }
+    if (drafts.isEmpty()) {
+      return;
+    }
+    log.info("delete stock management draft(s), programId: {}, facilityId: {}",
+        dto.getProgramId(),
+        dto.getFacilityId());
+    stockManagementDraftRepository.delete(drafts);
+    UUID initialDraftId = drafts.get(0).getInitialDraftId();
+    if (initialDraftId != null) {
+      log.info("delete stock management initial draft with id: {}", initialDraftId);
+      stockManagementInitialDraftsRepository.delete(initialDraftId);
     }
   }
 

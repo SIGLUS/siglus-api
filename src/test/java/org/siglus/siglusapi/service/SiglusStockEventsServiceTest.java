@@ -198,7 +198,7 @@ public class SiglusStockEventsServiceTest {
         Collections.singletonList(new StockManagementDraftDto()));
 
     // when
-    siglusStockEventsService.createStockEvent(eventDto);
+    siglusStockEventsService.processStockEvent(eventDto);
 
     // then
     verify(stockEventProcessor, times(2)).process(any());
@@ -221,7 +221,7 @@ public class SiglusStockEventsServiceTest {
         Collections.singletonList(new StockManagementDraftDto()));
 
     // when
-    siglusStockEventsService.createStockEvent(eventDto);
+    siglusStockEventsService.processStockEvent(eventDto);
 
     // then
     verify(stockCardExtensionRepository).save(stockCardExtensionArgumentCaptor.capture());
@@ -244,7 +244,7 @@ public class SiglusStockEventsServiceTest {
         .thenReturn(Collections.emptyList());
 
     // when
-    siglusStockEventsService.createStockEvent(eventDto);
+    siglusStockEventsService.processStockEvent(eventDto);
   }
 
   @Test
@@ -267,7 +267,7 @@ public class SiglusStockEventsServiceTest {
         .thenReturn(Collections.emptyList());
 
     // when
-    siglusStockEventsService.createStockEvent(eventDto);
+    siglusStockEventsService.processStockEvent(eventDto);
   }
 
   @Test
@@ -288,7 +288,7 @@ public class SiglusStockEventsServiceTest {
         .thenReturn(Collections.emptyList());
 
     // when
-    siglusStockEventsService.createStockEvent(eventDto);
+    siglusStockEventsService.processStockEvent(eventDto);
   }
 
   @Test
@@ -305,7 +305,7 @@ public class SiglusStockEventsServiceTest {
         .programId(ALL_PRODUCTS_PROGRAM_ID).build();
 
     // when
-    siglusStockEventsService.createStockEvent(eventDto);
+    siglusStockEventsService.processStockEvent(eventDto);
     // then
     verify(stockManagementDraftService, times(0)).findStockManagementDraft(any(), any(), any());
   }
@@ -317,7 +317,7 @@ public class SiglusStockEventsServiceTest {
 
     stockEventForMultiUserDto.setSubDrafts(Collections.emptyList());
 
-    siglusStockEventsService.createStockEventForMultiUser(stockEventForMultiUserDto);
+    siglusStockEventsService.processStockEventForMultiUser(stockEventForMultiUserDto);
   }
 
   @Test
@@ -334,7 +334,7 @@ public class SiglusStockEventsServiceTest {
     when(stockManagementDraftRepository.findOne(subDraftId)).thenReturn(subDraft);
     when(stockManagementDraftRepository.countByInitialDraftId(initialDraftId)).thenReturn(2);
 
-    siglusStockEventsService.createStockEventForMultiUser(stockEventForMultiUserDto);
+    siglusStockEventsService.processStockEventForMultiUser(stockEventForMultiUserDto);
   }
 
   private OrderableDto createOrderable(UUID orderableId, UUID tradeItemId) {
