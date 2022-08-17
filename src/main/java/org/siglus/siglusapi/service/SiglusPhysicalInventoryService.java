@@ -869,8 +869,7 @@ public class SiglusPhysicalInventoryService {
   }
 
   private void doDeletePhysicalInventoryForAllProducts(UUID facilityId, boolean directly) {
-    Set<UUID> supportedPrograms = supportedProgramsHelper
-        .findHomeFacilitySupportedProgramIds();
+    Set<UUID> supportedPrograms = supportedProgramsHelper.findHomeFacilitySupportedProgramIds();
     supportedPrograms.forEach(programId -> doDeletePhysicalInventoryCore(facilityId, programId, directly));
   }
 

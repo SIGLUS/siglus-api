@@ -15,20 +15,15 @@
 
 package org.siglus.siglusapi.service;
 
-import static java.util.Collections.singletonList;
-import static org.apache.commons.lang.StringUtils.isBlank;
 import static org.siglus.siglusapi.constant.FieldConstants.ADJUSTMENT;
 import static org.siglus.siglusapi.constant.FieldConstants.ISSUE;
 import static org.siglus.siglusapi.constant.FieldConstants.RECEIVE;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
-import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_LOT_ID_AND_CODE_SHOULD_EMPTY;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_IS_SUBMITTED;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_SUB_DRAFTS_QUANTITY_NOT_MATCH;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_SUB_DRAFT_EMPTY;
-import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_TRADE_ITEM_IS_EMPTY;
 
 import com.google.common.collect.Maps;
-import java.time.LocalDate;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -37,10 +32,9 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.openlmis.referencedata.dto.OrderableDto;
 import org.openlmis.stockmanagement.domain.BaseEntity;
 import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
@@ -56,77 +50,49 @@ import org.openlmis.stockmanagement.service.StockEventProcessor;
 import org.siglus.siglusapi.domain.StockCardExtension;
 import org.siglus.siglusapi.domain.StockCardLineItemExtension;
 import org.siglus.siglusapi.domain.StockManagementDraft;
-import org.siglus.siglusapi.dto.LotDto;
-import org.siglus.siglusapi.dto.LotSearchParams;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.dto.StockEventForMultiUserDto;
 import org.siglus.siglusapi.dto.StockManagementDraftDto;
-import org.siglus.siglusapi.dto.android.Lot;
 import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.StockCardExtensionRepository;
 import org.siglus.siglusapi.repository.StockCardLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.StockManagementDraftRepository;
-import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
-import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
-import org.siglus.siglusapi.service.client.StockEventsStockManagementService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
-import org.siglus.siglusapi.util.SiglusDateHelper;
 import org.siglus.siglusapi.validator.ActiveDraftValidator;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Slf4j
-//@RequiredArgsConstructor
+@RequiredArgsConstructor
 @SuppressWarnings({"PMD.TooManyMethods"})
 public class SiglusStockEventsService {
 
-  @Autowired
-  private StockEventsStockManagementService stockEventsStockManagementService;
-  @Autowired
-  private SiglusOrderableReferenceDataService orderableReferenceDataService;
-  @Autowired
-  private SiglusLotReferenceDataService lotReferenceDataService;
-  @Autowired
-  private SiglusPhysicalInventoryService siglusPhysicalInventoryService;
-  @Autowired
-  private SiglusStockManagementDraftService stockManagementDraftService;
-  @Autowired
-  private StockCardRepository stockCardRepository;
-  @Autowired
-  private StockCardExtensionRepository stockCardExtensionRepository;
-  @Autowired
-  private StockCardLineItemRepository stockCardLineItemRepository;
-  @Autowired
-  private StockEventsRepository stockEventsRepository;
-  @Autowired
-  private StockEventProcessor stockEventProcessor;
-  @Autowired
-  private SiglusArchiveProductService archiveProductService;
-  @Autowired
-  private SiglusDateHelper dateHelper;
-  @Autowired
-  private LotConflictService lotConflictService;
-  @Autowired
-  private SiglusAuthenticationHelper authenticationHelper;
-  @Autowired
-  private StockManagementDraftRepository stockManagementDraftRepository;
-  @Autowired
-  private ActiveDraftValidator draftValidator;
-  @Autowired
-  private StockCardLineItemExtensionRepository stockCardLineItemExtensionRepository;
-
-  @Value("${stockmanagement.kit.unpack.reasonId}")
-  private UUID unpackReasonId;
+  private final SiglusPhysicalInventoryService siglusPhysicalInventoryService;
+  private final SiglusStockManagementDraftService stockManagementDraftService;
+  private final StockCardRepository stockCardRepository;
+  private final StockCardExtensionRepository stockCardExtensionRepository;
+  private final StockCardLineItemRepository stockCardLineItemRepository;
+  private final StockEventsRepository stockEventsRepository;
+  private final StockEventProcessor stockEventProcessor;
+  private final SiglusArchiveProductService archiveProductService;
+  private final SiglusAuthenticationHelper authenticationHelper;
+  private final StockManagementDraftRepository stockManagementDraftRepository;
+  private final ActiveDraftValidator draftValidator;
+  private final StockCardLineItemExtensionRepository stockCardLineItemExtensionRepository;
+  private final SiglusLotService siglusLotService;
 
   @Value("${stockmanagement.kit.unpack.destination.nodeId}")
   private UUID unpackDestinationNodeId;
-  @Autowired
-  private SiglusStockEventsService siglusStockEventsService;
+
+  @Transactional
+  public UUID createStockEventForMultiUser(StockEventForMultiUserDto stockEventForMultiUserDto) {
+    List<UUID> subDraftIds = stockEventForMultiUserDto.getSubDrafts();
+    validatePreSubmitSubDraft(subDraftIds);
+    return createStockEvent(stockEventForMultiUserDto.getStockEvent());
+  }
 
   @Transactional
   public UUID createStockEvent(StockEventDto eventDto) {
@@ -145,16 +111,16 @@ public class SiglusStockEventsService {
   @Transactional
   public UUID createStockEventForOneProgram(StockEventDto eventDto, UUID userId) {
     eventDto.setUserId(userId);
-    siglusStockEventsService.createAndFillLotId(eventDto);
+    siglusLotService.createAndFillLotId(eventDto);
     if (eventDto.isPhysicalInventory()) {
       UUID programId = eventDto.getProgramId();
       List<StockEventDto> stockEventDtos;
-      List<PhysicalInventoryDto> physicalInventoryDtoList = siglusPhysicalInventoryService
+      List<PhysicalInventoryDto> inventories = siglusPhysicalInventoryService
           .getPhysicalInventoryDtosDirectly(programId, eventDto.getFacilityId(), Boolean.TRUE);
-      if (CollectionUtils.isEmpty(physicalInventoryDtoList)) {
+      if (CollectionUtils.isEmpty(inventories)) {
         throw new ValidationMessageException("stockmanagement.error.physicalInventory.isSubmitted");
       }
-      stockEventDtos = physicalInventoryDtoList.stream()
+      stockEventDtos = inventories.stream()
           .map(StockEventDto::fromPhysicalInventoryDto)
           .collect(Collectors.toList());
       Map<UUID, UUID> programIdToEventId = getProgramIdToEventId(eventDto, stockEventDtos);
@@ -170,7 +136,7 @@ public class SiglusStockEventsService {
 
   private Map<UUID, UUID> createStockEventForAllPrograms(StockEventDto eventDto, UUID userId) {
     eventDto.setUserId(userId);
-    siglusStockEventsService.createAndFillLotId(eventDto);
+    siglusLotService.createAndFillLotId(eventDto);
     Set<UUID> programIds = eventDto.getLineItems().stream()
         .map(StockEventLineItemDto::getProgramId)
         .collect(Collectors.toSet());
@@ -229,36 +195,6 @@ public class SiglusStockEventsService {
     return programIdToEventId;
   }
 
-  /**
-   * reason for create a new transaction:
-   * Running this method in the super transaction will cause 'stockmanagement.error.event.lot.not.exist' execption.
-   * detail steps：
-   * 1. method createStockEventForOneProgram do something
-   * 2. method createAndFillLotId insert a new lot, with new uuid(This method)
-   * 3. method createStockEventForOneProgram call siglusCreateStockEvent and in stockEventProcessor.process build
-   * context. When building context, it start a http request /api/lots/ to getLotsByIds(which beyond the super
-   * transaction scope, so the http must see the change in step 2)
-   */
-  @Transactional(propagation = Propagation.REQUIRES_NEW)
-  public void createAndFillLotId(StockEventDto eventDto) {
-    final List<StockEventLineItemDto> lineItems = eventDto.getLineItems();
-    Set<UUID> orderableIds = lineItems.stream().map(StockEventLineItemDto::getOrderableId)
-        .collect(Collectors.toSet());
-    Map<UUID, OrderableDto> orderableDtos = orderableReferenceDataService.findByIds(orderableIds)
-        .stream()
-        .collect(Collectors.toMap(OrderableDto::getId, orderableDto -> orderableDto));
-    for (StockEventLineItemDto eventLineItem : lineItems) {
-      UUID orderableId = eventLineItem.getOrderableId();
-      OrderableDto orderable = orderableDtos.get(orderableId);
-      if (orderable.getIsKit()) {
-        validateLotMustBeNull(eventLineItem);
-        continue;
-      }
-      UUID facilityId = getFacilityId(eventDto);
-      fillLotIdIfNull(facilityId, orderable, eventLineItem);
-    }
-  }
-
   private UUID siglusCreateStockEvent(StockEventDto eventDto) {
     List<StockEventLineItemDto> lineItems = eventDto.getLineItems();
     lineItems.forEach(lineItem -> lineItem.setId(UUID.randomUUID()));
@@ -278,68 +214,11 @@ public class SiglusStockEventsService {
     archiveProductService.activateProducts(eventDto.getFacilityId(), orderableIds);
   }
 
-  private void fillLotIdIfNull(UUID facilityId, OrderableDto orderable,
-      StockEventLineItemDto eventLineItem) {
-    if (eventLineItem.getLotId() != null || isBlank(eventLineItem.getLotCode())) {
-      // already done or nothing we can do since lot info is missing
-      return;
-    }
-    UUID lotId = createNewLotOrReturnExisted(facilityId, orderable, eventLineItem.getLotCode(),
-        eventLineItem.getExpirationDate()).getId();
-    eventLineItem.setLotId(lotId);
-  }
-
-  private void validateLotMustBeNull(StockEventLineItemDto stockEventLineItem) {
-    if (StringUtils.isNotBlank(stockEventLineItem.getLotCode())
-        || stockEventLineItem.getLotId() != null) {
-      throw new ValidationMessageException(new Message(ERROR_LOT_ID_AND_CODE_SHOULD_EMPTY));
-    }
-  }
-
-  public LotDto createNewLotOrReturnExisted(UUID facilityId, OrderableDto orderable, String lotCode,
-      LocalDate expirationDate) {
-    String tradeItemId = orderable.getTradeItemIdentifier();
-    if (null == tradeItemId) {
-      throw new ValidationMessageException(new Message(ERROR_TRADE_ITEM_IS_EMPTY));
-    }
-    LotDto existedLot = findExistedLot(lotCode, tradeItemId);
-    if (existedLot == null) {
-      LotDto lotDto = new LotDto();
-      lotDto.setId(Lot.of(lotCode, expirationDate).getUUid());
-      lotDto.setTradeItemId(UUID.fromString(tradeItemId));
-      lotDto.setManufactureDate(dateHelper.getCurrentDate());
-      lotDto.setExpirationDate(expirationDate);
-      lotDto.setActive(true);
-      lotDto.setLotCode(lotCode);
-      return lotReferenceDataService.saveLot(lotDto);
-    }
-    lotConflictService
-        .handleLotConflict(facilityId, lotCode, existedLot.getId(), expirationDate,
-            existedLot.getExpirationDate());
-    return existedLot;
-  }
-
   private UUID getUserId(StockEventDto eventDto) {
     if (eventDto.getUserId() != null) {
       return eventDto.getUserId();
     }
     return authenticationHelper.getCurrentUser().getId();
-  }
-
-  private UUID getFacilityId(StockEventDto eventDto) {
-    if (eventDto.getFacilityId() != null) {
-      return eventDto.getFacilityId();
-    }
-    return authenticationHelper.getCurrentUser().getHomeFacilityId();
-  }
-
-  private LotDto findExistedLot(String lotCode, String tradeItemId) {
-    LotSearchParams lotSearchParams = new LotSearchParams();
-    lotSearchParams.setLotCode(lotCode);
-    lotSearchParams.setTradeItemId(singletonList(UUID.fromString(tradeItemId)));
-    List<LotDto> existedLots = lotReferenceDataService.getLots(lotSearchParams);
-    return existedLots.stream().filter(lotDto -> lotDto.getLotCode().equals(lotCode)).findFirst()
-        .orElse(null);
   }
 
   private void addStockCardLineItemLocation(StockEventDto eventDto) {
@@ -387,8 +266,7 @@ public class SiglusStockEventsService {
                 + stockEventLineItemDto.getReasonId()
                 + stockEventLineItemDto.getSourceId()
                 + stockEventLineItemDto.getDestinationId(),
-            stockEventLineItemDto -> Optional.ofNullable(stockEventLineItemDto.getDocumentationNo())
-                .orElse(""),
+            stockEventLineItemDto -> Optional.ofNullable(stockEventLineItemDto.getDocumentationNo()).orElse(""),
             (v1, v2) -> v1));
     List<StockCardLineItem> stockCardLineItems = stockCardLineItemRepository
         .findByOriginEvent(stockEventsRepository.findOne(stockEventId));
@@ -422,25 +300,15 @@ public class SiglusStockEventsService {
     }
   }
 
-  @Transactional
-  public UUID createStockEventForMultiUser(StockEventForMultiUserDto stockEventForMultiUserDto) {
-    List<UUID> subDraftIds = stockEventForMultiUserDto.getSubDrafts();
-    validatePreSubmitSubDraft(subDraftIds);
-    return createStockEvent(stockEventForMultiUserDto.getStockEvent());
-  }
-
   private void validatePreSubmitSubDraft(List<UUID> subDraftIds) {
     if (subDraftIds.isEmpty()) {
-      throw new BusinessDataException(new Message(ERROR_STOCK_MANAGEMENT_SUB_DRAFT_EMPTY),
-          "subDrafts empty");
+      throw new BusinessDataException(new Message(ERROR_STOCK_MANAGEMENT_SUB_DRAFT_EMPTY), "subDrafts empty");
     }
     StockManagementDraft subDraft = stockManagementDraftRepository.findOne(subDraftIds.get(0));
     draftValidator.validateSubDraft(subDraft);
-    int subDraftsQuantity = stockManagementDraftRepository
-        .countByInitialDraftId(subDraft.getInitialDraftId());
+    int subDraftsQuantity = stockManagementDraftRepository.countByInitialDraftId(subDraft.getInitialDraftId());
     if (subDraftIds.size() != subDraftsQuantity) {
-      throw new BusinessDataException(
-          new Message(ERROR_STOCK_MANAGEMENT_SUB_DRAFTS_QUANTITY_NOT_MATCH),
+      throw new BusinessDataException(new Message(ERROR_STOCK_MANAGEMENT_SUB_DRAFTS_QUANTITY_NOT_MATCH),
           "subDrafts quantity not match");
     }
   }

@@ -26,13 +26,11 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
-import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_LOT_ID_AND_CODE_SHOULD_EMPTY;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_IS_SUBMITTED;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_SUB_DRAFTS_QUANTITY_NOT_MATCH;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_SUB_DRAFT_EMPTY;
 
 import com.google.common.collect.ImmutableMap;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Map;
@@ -47,7 +45,6 @@ import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.openlmis.referencedata.dto.OrderableChildDto;
 import org.openlmis.referencedata.dto.OrderableDto;
 import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
@@ -77,7 +74,6 @@ import org.siglus.siglusapi.testutils.StockCardDataBuilder;
 import org.siglus.siglusapi.testutils.StockCardLineItemDataBuilder;
 import org.siglus.siglusapi.testutils.StockEventLineItemDtoDataBuilder;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
-import org.siglus.siglusapi.util.SiglusDateHelper;
 import org.siglus.siglusapi.validator.ActiveDraftValidator;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -93,9 +89,6 @@ public class SiglusStockEventsServiceTest {
 
   @InjectMocks
   private SiglusStockEventsService siglusStockEventsService;
-
-  @Mock
-  private SiglusStockEventsService siglusStockEventsService2;
 
   @Mock
   private StockEventsStockManagementService stockEventsStockManagementService;
@@ -131,18 +124,19 @@ public class SiglusStockEventsServiceTest {
   private ActiveDraftValidator draftValidator;
 
   @Mock
-  private StockCardLineItemExtensionRepository stockCardLineItemExtensionRepository;
+  private SiglusArchiveProductService archiveProductService;
 
   @Mock
-  private SiglusArchiveProductService archiveProductService;
+  private StockCardLineItemExtensionRepository stockCardLineItemExtensionRepository;
 
   @Mock
   private StockCardLineItemRepository stockCardLineItemRepository;
 
   @Mock
   private StockEventsRepository stockEventsRepository;
+
   @Mock
-  private SiglusDateHelper dateHelper;
+  private SiglusLotService siglusLotService;
 
   private final UUID orderableId1 = UUID.randomUUID();
 
@@ -158,14 +152,8 @@ public class SiglusStockEventsServiceTest {
 
   private final UUID initialDraftId = UUID.randomUUID();
 
-  private static final LocalDate CURRENT_DATE = LocalDate.now();
-
-  private UserDto userDto;
-
-  private final StockEventLineItemDto lineItemDto1 = new StockEventLineItemDtoDataBuilder()
-      .buildForPhysicalInventory();
-  private final StockEventLineItemDto lineItemDto2 = new StockEventLineItemDtoDataBuilder()
-      .buildForPhysicalInventory();
+  private final StockEventLineItemDto lineItemDto1 = new StockEventLineItemDtoDataBuilder().buildForPhysicalInventory();
+  private final StockEventLineItemDto lineItemDto2 = new StockEventLineItemDtoDataBuilder().buildForPhysicalInventory();
 
   private final UUID unpackReasonId = UUID.randomUUID();
   private final UUID unpackDestinationNodeId = UUID.randomUUID();
@@ -174,15 +162,14 @@ public class SiglusStockEventsServiceTest {
 
   @Before
   public void prepare() {
-    userDto = new UserDto();
+    UserDto userDto = new UserDto();
     userDto.setId(UUID.randomUUID());
     userDto.setHomeFacilityId(UUID.randomUUID());
     when(authenticationHelper.getCurrentUser()).thenReturn(userDto);
 
     OrderableDto orderableDto = createOrderable(orderableId1, tradeItemId1);
     OrderableDto orderableDto2 = createOrderable(orderableId2, tradeItemId2);
-    when(orderableReferenceDataService.findByIds(any()))
-        .thenReturn(newArrayList(orderableDto, orderableDto2));
+    when(orderableReferenceDataService.findByIds(any())).thenReturn(newArrayList(orderableDto, orderableDto2));
     LotDto lotDto = new LotDto();
     lotDto.setId(lotId);
     when(lotReferenceDataService.saveLot(any())).thenReturn(lotDto);
@@ -191,10 +178,8 @@ public class SiglusStockEventsServiceTest {
     lineItemDto1.setExtraData(getExtraData());
     lineItemDto2.setOrderableId(orderableId2);
     lineItemDto2.setExtraData(getExtraData());
-    ReflectionTestUtils.setField(siglusStockEventsService, "unpackReasonId", unpackReasonId);
-    ReflectionTestUtils.setField(siglusStockEventsService, "siglusStockEventsService", siglusStockEventsService2);
-    ReflectionTestUtils
-        .setField(siglusStockEventsService, "unpackDestinationNodeId", unpackDestinationNodeId);
+    ReflectionTestUtils.setField(siglusStockEventsService, "unpackDestinationNodeId", unpackDestinationNodeId);
+    doNothing().when(siglusLotService).createAndFillLotId(any());
   }
 
   @Test
@@ -243,75 +228,6 @@ public class SiglusStockEventsServiceTest {
     StockCardExtension stockCardExtension = stockCardExtensionArgumentCaptor.getValue();
     assertEquals(stockCard.getId(), stockCardExtension.getStockCardId());
     assertEquals(stockCardLineItem.getOccurredDate(), stockCardExtension.getCreateDate());
-  }
-
-  @Test
-  public void shouldCreateAndFillLotIdWhenLotIdIsNull() {
-    // given
-    OrderableDto orderableDto = createOrderable(orderableId1, tradeItemId1);
-    when(orderableReferenceDataService.findByIds(any())).thenReturn(newArrayList(orderableDto));
-    LotDto lotDto = new LotDto();
-    lotDto.setId(lotId);
-    when(lotReferenceDataService.saveLot(any())).thenReturn(lotDto);
-    StockEventLineItemDto lineItemDto = new StockEventLineItemDtoDataBuilder()
-        .withOrderableId(orderableId1).build();
-    lineItemDto.setLotId(null);
-    Map<String, String> extraData = newHashMap();
-    extraData.put(FieldConstants.LOT_CODE, "lotCode");
-    extraData.put(FieldConstants.EXPIRATION_DATE, "2020-06-16");
-    lineItemDto.setExtraData(extraData);
-    StockEventDto eventDto = StockEventDto.builder().lineItems(newArrayList(lineItemDto)).build();
-    when(dateHelper.getCurrentDate()).thenReturn(CURRENT_DATE);
-
-    // when
-    siglusStockEventsService.createAndFillLotId(eventDto);
-
-    // then
-    assertEquals(lotId, lineItemDto.getLotId());
-  }
-
-  @Test
-  public void shouldReturnExistedLotAndFillLotIdWhenLotIdIsNullAndLotExisted() {
-    // given
-    OrderableDto orderableDto = new OrderableDto();
-    orderableDto.setId(orderableId1);
-    orderableDto.setChildren(newHashSet());
-    Map<String, String> identifiers = newHashMap();
-    identifiers.put(FieldConstants.TRADE_ITEM, tradeItemId1.toString());
-    orderableDto.setIdentifiers(identifiers);
-    StockEventLineItemDto lineItemDto = new StockEventLineItemDtoDataBuilder()
-        .withOrderableId(orderableId1).build();
-    lineItemDto.setLotId(null);
-    Map<String, String> extraData = newHashMap();
-    extraData.put(FieldConstants.LOT_CODE, "lotCode");
-    extraData.put(FieldConstants.EXPIRATION_DATE, "2020-06-16");
-    lineItemDto.setExtraData(extraData);
-    StockEventDto eventDto = StockEventDto.builder().lineItems(newArrayList(lineItemDto)).build();
-
-    // when
-    siglusStockEventsService.createAndFillLotId(eventDto);
-
-    // then
-    assertEquals(lotId, lineItemDto.getLotId());
-  }
-
-  @Test
-  public void shouldThrowExceptionWhenKitOrderableContainLotInfo() {
-    // then
-    exception.expect(ValidationMessageException.class);
-    exception.expectMessage(containsString(ERROR_LOT_ID_AND_CODE_SHOULD_EMPTY));
-
-    // given
-    OrderableDto orderableDto = new OrderableDto();
-    orderableDto.setId(orderableId1);
-    orderableDto.setChildren(newHashSet(new OrderableChildDto()));
-    when(orderableReferenceDataService.findByIds(any())).thenReturn(newArrayList(orderableDto));
-    StockEventLineItemDto lineItemDto = new StockEventLineItemDtoDataBuilder().build();
-    lineItemDto.setOrderableId(orderableId1);
-    StockEventDto eventDto = StockEventDto.builder().lineItems(newArrayList(lineItemDto)).build();
-
-    // when
-    siglusStockEventsService.createAndFillLotId(eventDto);
   }
 
   @Test
@@ -392,32 +308,6 @@ public class SiglusStockEventsServiceTest {
     siglusStockEventsService.createStockEvent(eventDto);
     // then
     verify(stockManagementDraftService, times(0)).findStockManagementDraft(any(), any(), any());
-  }
-
-
-  @Test
-  public void shouldReturnExistedLotAndFillLotIdWhenFillLotId() {
-    // given
-    OrderableDto orderableDto = new OrderableDto();
-    orderableDto.setId(orderableId1);
-    orderableDto.setChildren(newHashSet());
-    Map<String, String> identifiers = newHashMap();
-    identifiers.put(FieldConstants.TRADE_ITEM, tradeItemId1.toString());
-    orderableDto.setIdentifiers(identifiers);
-    StockEventLineItemDto lineItemDto = new StockEventLineItemDtoDataBuilder()
-        .withOrderableId(orderableId1).build();
-    lineItemDto.setLotId(null);
-    Map<String, String> extraData = newHashMap();
-    extraData.put(FieldConstants.LOT_CODE, "lotCode");
-    extraData.put(FieldConstants.EXPIRATION_DATE, "2020-06-16");
-    lineItemDto.setExtraData(extraData);
-    StockEventDto eventDto = StockEventDto.builder().lineItems(newArrayList(lineItemDto)).build();
-
-    // when
-    siglusStockEventsService.createAndFillLotId(eventDto);
-
-    // then
-    assertEquals(lotId, lineItemDto.getLotId());
   }
 
   @Test
