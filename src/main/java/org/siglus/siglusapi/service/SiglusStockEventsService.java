@@ -132,7 +132,7 @@ public class SiglusStockEventsService {
   public UUID createStockEvent(StockEventDto eventDto) {
     UUID userId = getUserId(eventDto);
     if (ALL_PRODUCTS_PROGRAM_ID.equals(eventDto.getProgramId())) {
-      Map<UUID, UUID> programIdToEventId = createStockEventForPrograms(eventDto, userId);
+      Map<UUID, UUID> programIdToEventId = createStockEventForAllPrograms(eventDto, userId);
       if (!programIdToEventId.isEmpty()) {
         return programIdToEventId.values().stream().findFirst().orElse(null);
       }
@@ -151,42 +151,24 @@ public class SiglusStockEventsService {
       List<StockEventDto> stockEventDtos;
       List<PhysicalInventoryDto> physicalInventoryDtoList = siglusPhysicalInventoryService
           .getPhysicalInventoryDtosDirectly(programId, eventDto.getFacilityId(), Boolean.TRUE);
-
       if (CollectionUtils.isEmpty(physicalInventoryDtoList)) {
         throw new ValidationMessageException("stockmanagement.error.physicalInventory.isSubmitted");
       }
       stockEventDtos = physicalInventoryDtoList.stream()
           .map(StockEventDto::fromPhysicalInventoryDto)
           .collect(Collectors.toList());
-
-      Map<UUID, UUID> programIdToEventId = new HashMap<>();
-      stockEventDtos.forEach(stockEventDto -> {
-        stockEventDto.setFacilityId(eventDto.getFacilityId());
-        stockEventDto.setSignature(eventDto.getSignature());
-        stockEventDto.setDocumentNumber(eventDto.getDocumentNumber());
-        stockEventDto.setUserId(eventDto.getUserId());
-        stockEventDto.setType(eventDto.getType());
-        stockEventDto.setLineItems(eventDto.getLineItems().stream()
-            .filter(lineItem -> lineItem.getProgramId() != null)
-            .filter(lineItem -> lineItem.getProgramId().equals(stockEventDto.getProgramId()))
-            .collect(Collectors.toList()));
-        programIdToEventId.put(stockEventDto.getProgramId(), siglusCreateStockEvent(stockEventDto));
-      });
-
+      Map<UUID, UUID> programIdToEventId = getProgramIdToEventId(eventDto, stockEventDtos);
       if (!programIdToEventId.isEmpty() && eventDto.isPhysicalInventory()) {
-        siglusPhysicalInventoryService
-            .deletePhysicalInventoryForProductInOneProgramDirectly(eventDto.getFacilityId(),
-                programId);
+        siglusPhysicalInventoryService.deletePhysicalInventoryForProductInOneProgramDirectly(eventDto.getFacilityId(),
+            programId);
       }
       return programIdToEventId.get(programId);
     } else {
-      UUID stockEventId = stockEventsStockManagementService.createStockEvent(eventDto);
-      enhanceStockCard(eventDto, stockEventId);
-      return stockEventId;
+      return siglusCreateStockEvent(eventDto);
     }
   }
 
-  private Map<UUID, UUID> createStockEventForPrograms(StockEventDto eventDto, UUID userId) {
+  private Map<UUID, UUID> createStockEventForAllPrograms(StockEventDto eventDto, UUID userId) {
     eventDto.setUserId(userId);
     siglusStockEventsService.createAndFillLotId(eventDto);
     Set<UUID> programIds = eventDto.getLineItems().stream()
@@ -217,6 +199,20 @@ public class SiglusStockEventsService {
           .map(StockEventDto::fromProgramId)
           .collect(Collectors.toList());
     }
+    Map<UUID, UUID> programIdToEventId = getProgramIdToEventId(eventDto, stockEventDtos);
+    if (!programIdToEventId.isEmpty()) {
+      if (eventDto.isPhysicalInventory()) {
+        siglusPhysicalInventoryService.deletePhysicalInventoryForAllProductsDirectly(eventDto.getFacilityId());
+      } else if (isNotUnpack(eventDto)) {
+        String type = getDraftType(eventDto);
+        eventDto.setType(type);
+        stockManagementDraftService.deleteStockManagementDraft(eventDto);
+      }
+    }
+    return programIdToEventId;
+  }
+
+  private Map<UUID, UUID> getProgramIdToEventId(StockEventDto eventDto, List<StockEventDto> stockEventDtos) {
     Map<UUID, UUID> programIdToEventId = new HashMap<>();
     stockEventDtos.forEach(stockEventDto -> {
       stockEventDto.setFacilityId(eventDto.getFacilityId());
@@ -230,15 +226,6 @@ public class SiglusStockEventsService {
           .collect(Collectors.toList()));
       programIdToEventId.put(stockEventDto.getProgramId(), siglusCreateStockEvent(stockEventDto));
     });
-    if (!programIdToEventId.isEmpty()) {
-      if (eventDto.isPhysicalInventory()) {
-        siglusPhysicalInventoryService.deletePhysicalInventoryForAllProductsDirectly(eventDto.getFacilityId());
-      } else if (isNotUnpack(eventDto)) {
-        String type = getDraftType(eventDto);
-        eventDto.setType(type);
-        stockManagementDraftService.deleteStockManagementDraft(eventDto);
-      }
-    }
     return programIdToEventId;
   }
 
@@ -273,11 +260,9 @@ public class SiglusStockEventsService {
   }
 
   private UUID siglusCreateStockEvent(StockEventDto eventDto) {
-    // do the creation
     List<StockEventLineItemDto> lineItems = eventDto.getLineItems();
     lineItems.forEach(lineItem -> lineItem.setId(UUID.randomUUID()));
     eventDto.setLineItems(lineItems);
-
     UUID stockEventId = stockEventProcessor.process(eventDto);
     enhanceStockCard(eventDto, stockEventId);
     return stockEventId;
@@ -329,7 +314,8 @@ public class SiglusStockEventsService {
       return lotReferenceDataService.saveLot(lotDto);
     }
     lotConflictService
-        .handleLotConflict(facilityId, lotCode, existedLot.getId(), expirationDate, existedLot.getExpirationDate());
+        .handleLotConflict(facilityId, lotCode, existedLot.getId(), expirationDate,
+            existedLot.getExpirationDate());
     return existedLot;
   }
 
@@ -358,7 +344,7 @@ public class SiglusStockEventsService {
 
   private void addStockCardLineItemLocation(StockEventDto eventDto) {
     List<StockEventLineItemDto> lineItems = eventDto.getLineItems();
-    lineItems.stream().filter(lineItem -> lineItem.getLocationCode() != null)
+    lineItems.stream().filter(lineItem -> lineItem.getLocationCode() != null && lineItem.getArea() != null)
         .forEach(lineItem -> {
           StockCardLineItemExtension stockCardLineItemExtension = StockCardLineItemExtension
               .builder()
