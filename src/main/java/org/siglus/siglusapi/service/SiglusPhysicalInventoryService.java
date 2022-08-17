@@ -973,12 +973,12 @@ public class SiglusPhysicalInventoryService {
     return getString(orderableId) + SEPARATOR + getString(lotId) + SEPARATOR + getString(locationCode);
   }
 
+  // TODO lineItem form PhysicalInventoryDto, locationCode is always null, how to find if match multiple extensions
   private PhysicalInventoryLineItemsExtension getExtension(
       List<PhysicalInventoryLineItemsExtension> extensions, PhysicalInventoryLineItemDto lineItem) {
     return extensions.stream()
         .filter(extension -> Objects.equals(extension.getOrderableId(), lineItem.getOrderableId())
-                                && Objects.equals(extension.getLotId(), lineItem.getLotId())
-                                && Objects.equals(extension.getLocationCode(), lineItem.getLocationCode()))
+                                && Objects.equals(extension.getLotId(), lineItem.getLotId()))
         .findFirst()
         .orElse(null);
   }
