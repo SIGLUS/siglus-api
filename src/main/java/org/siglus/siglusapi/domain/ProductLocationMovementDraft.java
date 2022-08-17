@@ -28,21 +28,21 @@ import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.hibernate.annotations.LazyCollection;
 import org.siglus.common.domain.BaseEntity;
 import org.siglus.siglusapi.dto.ProductLocationMovementDraftDto;
 import org.siglus.siglusapi.dto.ProductLocationMovementDraftLineItemDto;
 import org.springframework.beans.BeanUtils;
 
-@Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
 @Builder
-@EqualsAndHashCode(callSuper = true)
+@Getter
+@Setter
 @Table(name = "product_location_movement_drafts", schema = "siglusintegration")
 public class ProductLocationMovementDraft extends BaseEntity {
 

@@ -16,15 +16,22 @@
 package org.siglus.siglusapi.service;
 
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_MOVEMENT_DRAFT_NOT_FOUND;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_MOVEMENT_QUANTITY_MORE_THAN_STOCK_ON_HAND;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_CARD_NOT_FOUND;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.siglus.siglusapi.domain.ProductLocationMovementDraft;
 import org.siglus.siglusapi.domain.ProductLocationMovementLineItem;
+import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.dto.ProductLocationMovementDto;
+import org.siglus.siglusapi.dto.ProductLocationMovementLineItemDto;
+import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.repository.ProductLocationMovementDraftRepository;
 import org.siglus.siglusapi.repository.ProductLocationMovementLineItemRepository;
@@ -48,6 +55,7 @@ public class SiglusProductLocationMovementService {
 
   @Transactional
   public void createMovementLineItems(ProductLocationMovementDto movementDto) {
+    checkStockOnHand(movementDto);
     List<ProductLocationMovementLineItem> movementLineItems = convertMovementDtoToMovementItems(movementDto);
     movementLineItemRepository.save(movementLineItems);
     deleteMovementDraft(movementDto);
@@ -86,5 +94,28 @@ public class SiglusProductLocationMovementService {
       movementLineItems.add(movementLineItem);
     });
     return movementLineItems;
+  }
+
+  private void checkStockOnHand(ProductLocationMovementDto movementDto) {
+    List<ProductLocationMovementLineItemDto> lineItems = movementDto.getMovementLineItems();
+    Set<Entry<String, List<ProductLocationMovementLineItemDto>>> groupByOrderableIdLotIdSrcAreaAndSrcLocationCode =
+        lineItems.stream().collect(Collectors.groupingBy(this::fetchGroupKey)).entrySet();
+    groupByOrderableIdLotIdSrcAreaAndSrcLocationCode.forEach(entry -> {
+      int totalMovementQuantity = entry.getValue()
+          .stream()
+          .mapToInt(ProductLocationMovementLineItemDto::getQuantity)
+          .sum();
+      if (totalMovementQuantity > entry.getValue().get(0).getStockOnHand()) {
+        throw new BusinessDataException(new Message(ERROR_MOVEMENT_QUANTITY_MORE_THAN_STOCK_ON_HAND),
+            "movement quantity more than stock on hand");
+      }
+    });
+  }
+
+  private String fetchGroupKey(ProductLocationMovementLineItemDto movementLineItemDto) {
+    return movementLineItemDto.getOrderableId().toString()
+        + movementLineItemDto.getLotId().toString()
+        + movementLineItemDto.getSrcArea()
+        + movementLineItemDto.getSrcLocationCode();
   }
 }

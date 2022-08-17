@@ -20,6 +20,7 @@ import static org.hamcrest.Matchers.containsString;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_MOVEMENT_DRAFT_NOT_FOUND;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_MOVEMENT_QUANTITY_MORE_THAN_STOCK_ON_HAND;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_CARD_NOT_FOUND;
 
 import java.time.LocalDate;
@@ -37,6 +38,7 @@ import org.siglus.siglusapi.domain.ProductLocationMovementDraft;
 import org.siglus.siglusapi.domain.ProductLocationMovementLineItem;
 import org.siglus.siglusapi.dto.ProductLocationMovementDto;
 import org.siglus.siglusapi.dto.ProductLocationMovementLineItemDto;
+import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.repository.ProductLocationMovementDraftRepository;
 import org.siglus.siglusapi.repository.ProductLocationMovementLineItemRepository;
@@ -83,7 +85,7 @@ public class SiglusProductLocationMovementServiceTest {
       .createdDate(localDate)
       .quantity(10)
       .build();
-  private final ProductLocationMovementLineItemDto movementLineItemDto = ProductLocationMovementLineItemDto.builder()
+  private final ProductLocationMovementLineItemDto movementLineItemDto1 = ProductLocationMovementLineItemDto.builder()
       .programId(programId)
       .orderableId(orderableId)
       .lotId(lotId)
@@ -92,14 +94,34 @@ public class SiglusProductLocationMovementServiceTest {
       .destArea("B")
       .destLocationCode("BB30F")
       .quantity(10)
+      .stockOnHand(20)
       .build();
-  private final ProductLocationMovementDto movementDto = ProductLocationMovementDto.builder()
+  private final ProductLocationMovementLineItemDto movementLineItemDto2 = ProductLocationMovementLineItemDto.builder()
+      .programId(programId)
+      .orderableId(orderableId)
+      .lotId(lotId)
+      .srcArea("A")
+      .srcLocationCode("AA20B")
+      .destArea("B")
+      .destLocationCode("BB30F")
+      .quantity(30)
+      .stockOnHand(20)
+      .build();
+  private final ProductLocationMovementDto movementDto1 = ProductLocationMovementDto.builder()
       .programId(allProgramId)
       .facilityId(facilityId)
       .createdDate(localDate)
       .signature("Jimmy")
       .userId(userId)
-      .movementLineItems(newArrayList(movementLineItemDto))
+      .movementLineItems(newArrayList(movementLineItemDto1))
+      .build();
+  private final ProductLocationMovementDto movementDto2 = ProductLocationMovementDto.builder()
+      .programId(allProgramId)
+      .facilityId(facilityId)
+      .createdDate(localDate)
+      .signature("Jimmy")
+      .userId(userId)
+      .movementLineItems(newArrayList(movementLineItemDto2))
       .build();
 
   @Test
@@ -111,12 +133,20 @@ public class SiglusProductLocationMovementServiceTest {
         .findByFacilityIdAndProgramIdAndOrderableIdAndLotId(facilityId, programId, orderableId, lotId))
         .thenReturn(newArrayList(stockCard));
     when(movementLineItemRepository.save(newArrayList(lineItem))).thenReturn(newArrayList(lineItem));
-    when(movementDraftRepository.findByProgramIdAndFacilityId(programId, facilityId))
+    when(movementDraftRepository.findByProgramIdAndFacilityId(allProgramId, facilityId))
         .thenReturn(newArrayList(movementDraft));
 
-    service.createMovementLineItems(movementDto);
+    service.createMovementLineItems(movementDto1);
 
     verify(movementDraftRepository).delete(movementDraft);
+  }
+
+  @Test
+  public void shouldThrowExceptionWhenQuantityMoreThanStockOnHand() {
+    exception.expect(BusinessDataException.class);
+    exception.expectMessage(containsString(ERROR_MOVEMENT_QUANTITY_MORE_THAN_STOCK_ON_HAND));
+
+    service.createMovementLineItems(movementDto2);
   }
 
   @Test
@@ -128,7 +158,7 @@ public class SiglusProductLocationMovementServiceTest {
         .findByFacilityIdAndProgramIdAndOrderableIdAndLotId(facilityId, programId, orderableId, lotId))
         .thenReturn(Collections.emptyList());
 
-    service.createMovementLineItems(movementDto);
+    service.createMovementLineItems(movementDto1);
   }
 
   @Test
@@ -143,6 +173,6 @@ public class SiglusProductLocationMovementServiceTest {
     when(movementDraftRepository.findByProgramIdAndFacilityId(programId, facilityId))
         .thenReturn(Collections.emptyList());
 
-    service.createMovementLineItems(movementDto);
+    service.createMovementLineItems(movementDto1);
   }
 }

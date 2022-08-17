@@ -43,4 +43,6 @@ public class ProductLocationMovementLineItemDto {
 
   private Integer quantity;
 
+  private Integer stockOnHand;
+
 }

@@ -23,6 +23,7 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_MOVEMENT_DRAFT_EXISTS;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_MOVEMENT_QUANTITY_MORE_THAN_STOCK_ON_HAND;
 
 import java.util.Collections;
 import java.util.List;
@@ -37,7 +38,9 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.siglus.siglusapi.domain.ProductLocationMovementDraft;
 import org.siglus.siglusapi.dto.ProductLocationMovementDraftDto;
+import org.siglus.siglusapi.dto.ProductLocationMovementDraftLineItemDto;
 import org.siglus.siglusapi.dto.UserDto;
+import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.ProductLocationMovementDraftRepository;
 import org.siglus.siglusapi.util.OperatePermissionService;
@@ -72,6 +75,8 @@ public class SiglusProductLocationMovementDraftServiceTest {
   private final UUID programId = UUID.randomUUID();
   private final UUID facilityId = UUID.randomUUID();
   private final UUID movementDraftId = UUID.randomUUID();
+  private final UUID orderableId = UUID.randomUUID();
+  private final UUID lotId = UUID.randomUUID();
   private final ProductLocationMovementDraftDto movementDraftDto = ProductLocationMovementDraftDto
       .builder().programId(programId).facilityId(facilityId).build();
   private final ProductLocationMovementDraft movementDraft = ProductLocationMovementDraft
@@ -138,6 +143,15 @@ public class SiglusProductLocationMovementDraftServiceTest {
 
   @Test
   public void shouldUpdateMovementDraft() {
+    ProductLocationMovementDraftLineItemDto lineItemDto = ProductLocationMovementDraftLineItemDto.builder()
+        .orderableId(orderableId)
+        .lotId(lotId)
+        .srcArea("A")
+        .srcLocationCode("AA25E")
+        .quantity(20)
+        .stockOnHand(30)
+        .build();
+    movementDraftDto.setLineItems(newArrayList(lineItemDto));
     ProductLocationMovementDraft movementDraft = ProductLocationMovementDraft
         .createMovementDraft(movementDraftDto);
     doNothing().when(productLocationMovementDraftValidator)
@@ -158,5 +172,26 @@ public class SiglusProductLocationMovementDraftServiceTest {
 
     service.deleteMovementDraft(movementDraftId);
     verify(productLocationMovementDraftRepository).delete(movementDraft);
+  }
+
+  @Test
+  public void shouldThrowExceptionWhenQuantityMoreThanStockOnHand() {
+    exception.expect(BusinessDataException.class);
+    exception.expectMessage(containsString(ERROR_MOVEMENT_QUANTITY_MORE_THAN_STOCK_ON_HAND));
+
+    ProductLocationMovementDraftLineItemDto lineItemDto = ProductLocationMovementDraftLineItemDto.builder()
+        .orderableId(orderableId)
+        .lotId(lotId)
+        .srcArea("A")
+        .srcLocationCode("AA25E")
+        .quantity(40)
+        .stockOnHand(30)
+        .build();
+    movementDraftDto.setLineItems(newArrayList(lineItemDto));
+
+    doNothing().when(productLocationMovementDraftValidator)
+        .validateMovementDraftAndLineItems(movementDraftDto, movementDraftId);
+
+    service.updateMovementDraft(movementDraftDto, movementDraftId);
   }
 }
