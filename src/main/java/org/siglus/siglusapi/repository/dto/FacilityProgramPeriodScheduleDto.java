@@ -30,6 +30,8 @@ public class FacilityProgramPeriodScheduleDto {
 
   private UUID programId;
 
+  private String schedulesCode;
+
   public FacilityProgramPeriodScheduleDto() {
   }
 }

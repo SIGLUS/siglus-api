@@ -17,11 +17,12 @@ package org.siglus.siglusapi.repository;
 
 import java.util.List;
 import java.util.UUID;
-import org.siglus.siglusapi.domain.CalculatedStocksOnHandLocations;
+import org.siglus.siglusapi.domain.CalculatedStocksOnHand;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface SiglusCalculatedStocksOnHandLocationsRepository extends JpaRepository<CalculatedStocksOnHandLocations,
-    UUID> {
+public interface CalculatedStocksOnHandRepository extends
+    JpaRepository<CalculatedStocksOnHand, UUID> {
 
-  List<CalculatedStocksOnHandLocations> findByStockCardId(UUID stockCardId);
+  List<CalculatedStocksOnHand> findByStockCardId(UUID stockCardId);
+
 }

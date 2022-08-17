@@ -401,6 +401,17 @@ traits:
           200:
             description: GET success
 
+    /locations/displayedLots:
+      displayName: get displayed lot
+      get:
+        is: [ secured ]
+        body:
+          application/json:
+            schema: arrayOfStrings
+        responses:
+          200:
+            description: GET success
+
 
     /draftsWithLocation:
       displayName: stock management draft with location

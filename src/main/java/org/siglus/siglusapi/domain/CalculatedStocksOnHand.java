@@ -13,21 +13,36 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.repository;
+package org.siglus.siglusapi.domain;
 
-import java.util.List;
+import java.util.Date;
 import java.util.UUID;
-import org.siglus.siglusapi.domain.CalculatedStocksOnHandLocations;
-import org.siglus.siglusapi.dto.LotLocationSohDto;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import org.siglus.common.domain.BaseEntity;
 
-public interface CalculatedStocksOnHandLocationsRepository extends
-    JpaRepository<CalculatedStocksOnHandLocations, UUID> {
-  @Query(name = "LotLocationSoh.findLocationSoh", nativeQuery = true)
-  List<LotLocationSohDto> getLocationSoh(@Param("lotIds")Iterable<UUID> lotIds);
+@Entity
+@Data
+@EqualsAndHashCode(callSuper = true)
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+@Table(name = "calculated_stocks_on_hand", schema = "stockmanagement")
+public class CalculatedStocksOnHand extends BaseEntity {
 
-  List<CalculatedStocksOnHandLocations> findByStockCardId(UUID stockCardId);
+  @Column(name = "stockcardid")
+  private UUID stockCardId;
+  @Column(name = "occurreddate")
+  private Date occurreddate;
+  @Column(name = "stockonhand")
+  private Integer stockonhand;
+  @Column(name = "processeddate")
+  private Date processedDate;
 
 }

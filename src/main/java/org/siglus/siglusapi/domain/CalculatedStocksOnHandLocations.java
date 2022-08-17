@@ -17,19 +17,18 @@ package org.siglus.siglusapi.domain;
 
 import java.util.Date;
 import java.util.UUID;
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 import org.siglus.common.domain.BaseEntity;
 
 @Entity
-@Getter
-@Setter
+@Data
 @EqualsAndHashCode(callSuper = true)
 @AllArgsConstructor
 @NoArgsConstructor
@@ -37,11 +36,17 @@ import org.siglus.common.domain.BaseEntity;
 @Table(name = "calculated_stocks_on_hand_locations", schema = "siglusintegration")
 public class CalculatedStocksOnHandLocations extends BaseEntity {
 
+  @Column(name = "stockcardid")
   private UUID stockCardId;
+  @Column(name = "occurreddate")
   private Date occurreddate;
+  @Column(name = "stockonhand")
   private Integer stockonhand;
+  @Column(name = "calculatedstocksonhandid")
   private UUID calculatedStocksOnHandId;
+  @Column(name = "locationcode")
   private String locationCode;
+  @Column(name = "area")
   private String area;
 
 }

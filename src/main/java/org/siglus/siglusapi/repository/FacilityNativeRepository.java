@@ -185,19 +185,37 @@ public class FacilityNativeRepository extends BaseNativeRepository {
             readAsBoolean(rs, "isandroid"));
   }
 
+  public List<FacilityProgramPeriodScheduleDto> findFacilityProgramPeriodScheduleByFacilityId(UUID facilityId) {
+    MapSqlParameterSource params = new MapSqlParameterSource();
+    params.addValue("facilityId", facilityId);
+    String query = getFacilityProgramPeriodScheduleQuery() + " WHERE rgm.facilityid = :facilityId";
+    log.info(query);
+    return namedJdbc.query(query, params, facilityProgramPeriodScheduleDtoExtractor());
+  }
+
+
+
   public List<FacilityProgramPeriodScheduleDto> findFacilityProgramPeriodSchedule() {
-    String query = "select rgps.processingscheduleid, rgm.facilityid, rgps.programid "
+
+    return namedJdbc.query(getFacilityProgramPeriodScheduleQuery(), facilityProgramPeriodScheduleDtoExtractor());
+  }
+
+  private String getFacilityProgramPeriodScheduleQuery() {
+    return "select rgps.processingscheduleid, rgm.facilityid, rgps.programid, pc.code "
         + "from referencedata.requisition_group_members rgm "
         + "left join referencedata.requisition_group_program_schedules rgps "
-        + "on rgm.requisitiongroupid = rgps.requisitiongroupid";
-    return namedJdbc.query(query, facilityProgramPeriodScheduleDtoExtractor());
+        + "on rgm.requisitiongroupid = rgps.requisitiongroupid "
+        + "left join referencedata.processing_schedules pc "
+        + "on pc.id = rgps.processingscheduleid "
+        ;
   }
 
   private RowMapper<FacilityProgramPeriodScheduleDto> facilityProgramPeriodScheduleDtoExtractor() {
     return (rs, i) ->
         new FacilityProgramPeriodScheduleDto(readUuid(rs, "processingscheduleid"),
             readUuid(rs, "facilityid"),
-            readUuid(rs, "programid"));
+            readUuid(rs, "programid"),
+            readAsString(rs, "code"));
   }
 
 }

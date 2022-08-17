@@ -168,4 +168,12 @@ public class FieldConstants {
 
   public static final String ORDER_ID = "orderId";
 
+  public static final String MONTHLY = "M1";
+
+  public static final String MONTHLY_REPORT_ONLY = "M2";
+
+  public static final String QUARTERLY = "Q1";
+
+  public static final String QUARTERLY_REPORT_ONLY = "Q2";
+
 }

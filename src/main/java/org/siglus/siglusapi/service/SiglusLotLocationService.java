@@ -15,10 +15,21 @@
 
 package org.siglus.siglusapi.service;
 
+import static org.siglus.siglusapi.constant.FieldConstants.MONTHLY;
+import static org.siglus.siglusapi.constant.FieldConstants.MONTHLY_REPORT_ONLY;
+import static org.siglus.siglusapi.constant.FieldConstants.QUARTERLY;
+import static org.siglus.siglusapi.constant.FieldConstants.QUARTERLY_REPORT_ONLY;
+
+import com.google.common.collect.Maps;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.Comparator;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
@@ -26,13 +37,18 @@ import org.openlmis.referencedata.domain.Lot;
 import org.openlmis.referencedata.repository.LotRepository;
 import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.repository.StockCardRepository;
+import org.siglus.siglusapi.domain.CalculatedStocksOnHand;
 import org.siglus.siglusapi.domain.CalculatedStocksOnHandLocations;
 import org.siglus.siglusapi.domain.FacilityLocations;
+import org.siglus.siglusapi.dto.DisplayedLotDto;
 import org.siglus.siglusapi.dto.LotLocationDto;
 import org.siglus.siglusapi.dto.LotLocationPair;
 import org.siglus.siglusapi.dto.LotsDto;
+import org.siglus.siglusapi.repository.CalculatedStocksOnHandLocationsRepository;
+import org.siglus.siglusapi.repository.CalculatedStocksOnHandRepository;
 import org.siglus.siglusapi.repository.FacilityLocationsRepository;
-import org.siglus.siglusapi.repository.SiglusCalculatedStocksOnHandLocationsRepository;
+import org.siglus.siglusapi.repository.FacilityNativeRepository;
+import org.siglus.siglusapi.repository.dto.FacilityProgramPeriodScheduleDto;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -54,7 +70,13 @@ public class SiglusLotLocationService {
   private LotRepository lotRepository;
 
   @Autowired
-  private SiglusCalculatedStocksOnHandLocationsRepository calculatedStocksOnHandLocationsRepository;
+  private CalculatedStocksOnHandLocationsRepository calculatedStocksOnHandLocationsRepository;
+
+  @Autowired
+  private FacilityNativeRepository facilityNativeRepository;
+
+  @Autowired
+  private CalculatedStocksOnHandRepository calculatedStocksOnHandRepository;
 
   public List<LotLocationDto> searchLotLocaiton(List<UUID> orderableIds, boolean extraData) {
     UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
@@ -124,4 +146,56 @@ public class SiglusLotLocationService {
 
     return lotLocationDtos;
   }
+
+  public List<DisplayedLotDto> searchDisplayedLots(List<UUID> orderableIds) {
+
+    UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
+
+    Map<UUID, FacilityProgramPeriodScheduleDto> programIdToSchedulesCode = Maps.uniqueIndex(
+        facilityNativeRepository.findFacilityProgramPeriodScheduleByFacilityId(
+            facilityId), FacilityProgramPeriodScheduleDto::getProgramId);
+
+    List<DisplayedLotDto> displayedLotDtos = new LinkedList<>();
+    orderableIds.forEach(orderableId -> {
+      List<UUID> lotIds = new LinkedList<>();
+      List<StockCard> stockCardList = stockCardRepository.findByFacilityIdAndOrderableId(facilityId, orderableId);
+      stockCardList.forEach(stockCard -> {
+        String schedulesCode = programIdToSchedulesCode.get(stockCard.getProgramId()).getSchedulesCode();
+        List<CalculatedStocksOnHand> calculatedStocksOnHands = calculatedStocksOnHandRepository.findByStockCardId(
+            stockCard.getId());
+
+        Optional<CalculatedStocksOnHand> max = calculatedStocksOnHands.stream()
+            .max(Comparator.comparing(CalculatedStocksOnHand::getOccurreddate));
+        if (!max.isPresent()) {
+          return;
+        }
+        Integer stockonhand = max.get().getStockonhand();
+        if (stockonhand > 0) {
+          lotIds.add(stockCard.getLotId());
+        } else {
+          if ((schedulesCode.equals(MONTHLY) || schedulesCode.equals(MONTHLY_REPORT_ONLY))
+              && hasSohInMouthRange(calculatedStocksOnHands, 3)) {
+            lotIds.add(stockCard.getLotId());
+          }
+          if ((schedulesCode.equals(QUARTERLY) || schedulesCode.equals(QUARTERLY_REPORT_ONLY))
+              && hasSohInMouthRange(calculatedStocksOnHands, 6)) {
+            lotIds.add(stockCard.getLotId());
+          }
+        }
+
+      });
+      displayedLotDtos.add(
+          DisplayedLotDto.builder().orderableId(orderableId).lotIds(lotIds).build()
+      );
+    });
+
+    return displayedLotDtos;
+  }
+
+  private boolean hasSohInMouthRange(List<CalculatedStocksOnHand> calculatedStocksOnHands, int monthRange) {
+    return calculatedStocksOnHands.stream().filter(o -> o.getOccurreddate().after(
+            Date.from(LocalDate.now().minusMonths(monthRange).atStartOfDay(ZoneId.systemDefault()).toInstant())))
+        .anyMatch(o -> o.getStockonhand() != 0);
+  }
+
 }

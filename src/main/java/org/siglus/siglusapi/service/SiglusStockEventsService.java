@@ -277,7 +277,10 @@ public class SiglusStockEventsService {
     // do the creation
     List<StockEventLineItemDto> lineItems = eventDto.getLineItems();
     lineItems.forEach(lineItem -> lineItem.setId(UUID.randomUUID()));
+    lineItems.forEach(lineItem -> lineItem.setLocationCode("UUID.randomUUID()"));
+    lineItems.forEach(lineItem -> lineItem.setArea("UUID.randomUUID()"));
     eventDto.setLineItems(lineItems);
+
     UUID stockEventId = stockEventProcessor.process(eventDto);
     enhanceStockCard(eventDto, stockEventId);
     return stockEventId;
