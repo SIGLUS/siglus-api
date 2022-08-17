@@ -82,7 +82,7 @@ import org.siglus.siglusapi.repository.OrderableRepository;
 import org.siglus.siglusapi.repository.PodSubDraftRepository;
 import org.siglus.siglusapi.service.client.SiglusProcessingPeriodReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
-import org.siglus.siglusapi.web.response.BasicOrderExtensionDto;
+import org.siglus.siglusapi.web.response.BasicOrderExtensionResponse;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -186,15 +186,15 @@ public class SiglusOrderService {
     Set<UUID> orderIdsWithSubDraft = podSubDraftRepository.findOrderIdsWithSubDraft(orderIds).stream()
         .map(UUID::fromString).collect(Collectors.toSet());
 
-    List<BasicOrderExtensionDto> basicOrderExtensionDtos = Lists.newArrayListWithExpectedSize(basicOrderDtos.size());
+    List<BasicOrderExtensionResponse> basicOrderExtensionResponseList = Lists.newArrayListWithExpectedSize(basicOrderDtos.size());
     for (BasicOrderDto basicOrderDto : basicOrderDtos) {
-      BasicOrderExtensionDto basicOrderExtensionDto = new BasicOrderExtensionDto();
-      BeanUtils.copyProperties(basicOrderDto, basicOrderExtensionDto);
-      basicOrderExtensionDto.setHasSubDraft(orderIdsWithSubDraft.contains(basicOrderDto.getId()));
-      basicOrderExtensionDtos.add(basicOrderExtensionDto);
+      BasicOrderExtensionResponse basicOrderExtensionResponse = new BasicOrderExtensionResponse();
+      BeanUtils.copyProperties(basicOrderDto, basicOrderExtensionResponse);
+      basicOrderExtensionResponse.setHasSubDraft(orderIdsWithSubDraft.contains(basicOrderDto.getId()));
+      basicOrderExtensionResponseList.add(basicOrderExtensionResponse);
     }
 
-    return new PageImpl(basicOrderExtensionDtos, pageable, basicOrderDtoPage.getTotalElements());
+    return new PageImpl(basicOrderExtensionResponseList, pageable, basicOrderDtoPage.getTotalElements());
   }
 
   public Page<BasicOrderDto> searchOrdersForFulfill(OrderSearchParams params, Pageable pageable) {

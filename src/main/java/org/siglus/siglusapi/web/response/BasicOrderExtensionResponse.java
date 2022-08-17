@@ -19,7 +19,7 @@ import lombok.Data;
 import org.openlmis.fulfillment.web.util.BasicOrderDto;
 
 @Data
-public class BasicOrderExtensionDto extends BasicOrderDto {
+public class BasicOrderExtensionResponse extends BasicOrderDto {
 
   private boolean hasSubDraft;
 }
