@@ -13,26 +13,19 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.localmachine.webapi;
+package org.siglus.siglusapi.localmachine;
 
-import lombok.RequiredArgsConstructor;
-import org.siglus.siglusapi.localmachine.EventImporter;
-import org.springframework.http.HttpStatus;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.stereotype.Component;
 
-@RestController
-@RequiredArgsConstructor
-@RequestMapping("/api/siglusapi/localmachine")
-public class OnlineWebController {
-  private final EventImporter importer;
+@Component
+public class OnlineWebEventImporter extends EventImporter {
 
-  @PostMapping("/events")
-  @ResponseStatus(HttpStatus.CREATED)
-  public void syncEvents(@Validated SyncRequest request) {
-    importer.importEvents(request.getEvents());
+  public OnlineWebEventImporter(EventQueue localEventQueue, EventReplayer replayer) {
+    super(localEventQueue, replayer);
+  }
+
+  @Override
+  protected boolean accept(Event it) {
+    return !it.isOnlineWebConfirmed();
   }
 }

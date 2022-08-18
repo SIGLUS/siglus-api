@@ -46,6 +46,7 @@ public class EventRecord extends BaseEntity {
   private boolean onlineWebConfirmed;
   private boolean receiverConfirmed;
   private String payloadClassName;
+  private boolean localReplayed;
 
   public static EventRecord from(Event event, byte[] payload) {
     EventRecord eventRecord =

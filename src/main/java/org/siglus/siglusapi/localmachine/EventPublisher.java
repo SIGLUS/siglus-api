@@ -17,6 +17,9 @@ package org.siglus.siglusapi.localmachine;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
+import javax.transaction.Transactional;
+import javax.transaction.Transactional.TxType;
 import lombok.RequiredArgsConstructor;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.exception.NotFoundException;
@@ -27,39 +30,52 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class LocalMachine {
-  private static final int protocolVersion = 1;
+public class EventPublisher {
+  public static final int protocolVersion = 1;
   private final EventQueue eventQueue;
   private final ApplicationEventPublisher eventPublisher;
   private final SiglusAuthenticationHelper siglusAuthenticationHelper;
+  private final Machine machine;
 
   public List<String> getKnownFacilityIds() {
     // FIXME: 2022/8/14 owner id + peering facility ids
     return null;
   }
 
-  public void emitGroupEvent(String groupId, String receiverId, Object payload) {
+  public void emitGroupEvent(String groupId, UUID receiverId, Object payload) {
     Event.EventBuilder eventBuilder = baseEventBuilder(groupId, receiverId, payload);
     eventBuilder.groupSequenceNumber(eventQueue.nextGroupSequenceNumber(groupId));
     eventQueue.put(eventBuilder.build());
   }
 
-  private Event.EventBuilder baseEventBuilder(String peeringId, String receiverId, Object payload) {
+  private Event.EventBuilder baseEventBuilder(String groupId, UUID receiverId, Object payload) {
     UserDto currentUser =
         Optional.ofNullable(siglusAuthenticationHelper.getCurrentUser())
             .orElseThrow(() -> new NotFoundException(MessageKeys.ERROR_USER_NOT_FOUND));
     return Event.builder()
         .protocolVersion(protocolVersion)
         .timestamp(System.currentTimeMillis())
-        .senderId(currentUser.getId().toString())
+        .senderId(currentUser.getId())
         .receiverId(receiverId)
-        .groupId(peeringId)
+        .groupId(groupId)
         .groupSequenceNumber(0L)
         .payload(payload);
   }
 
+  // publish event should be in an isolated transaction to make the replay process is transactional
+  @Transactional(TxType.REQUIRES_NEW)
   public void publishEvent(Event event) {
+    if ((machine.isOnlineWeb() && event.isOnlineWebReplayed())
+        || (!machine.isOnlineWeb() && event.isReceiverReplayed())) {
+      // TODO: 2022/8/18 check local facility id should be event receiver
+      throw new IllegalStateException("Not allow to publish replayed event");
+    }
     eventPublisher.publishEvent(event);
-    // FIXME: 2022/8/14 update watermark of sender post payload published
+    if (machine.isOnlineWeb()) {
+      event.setOnlineWebReplayed(true);
+    } else {
+      event.setReceiverReplayed(true);
+    }
+    eventQueue.save(event);
   }
 }

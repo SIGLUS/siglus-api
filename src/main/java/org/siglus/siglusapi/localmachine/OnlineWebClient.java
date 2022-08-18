@@ -18,14 +18,11 @@ package org.siglus.siglusapi.localmachine;
 import java.util.List;
 import org.siglus.siglusapi.localmachine.webapi.SyncResponse;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestTemplate;
 
 @Component
 public class OnlineWebClient {
-
-  public boolean sendHeartbeat() {
-    // FIXME: 2022/8/14
-    return false;
-  }
+  private final RestTemplate restTemplate = new RestTemplate();
 
   public SyncResponse sync(List<Event> events) {
     // FIXME: 2022/8/14

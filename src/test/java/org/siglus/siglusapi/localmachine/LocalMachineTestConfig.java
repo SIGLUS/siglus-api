@@ -22,7 +22,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 @Configuration
 @ComponentScan(
-    basePackageClasses = {LocalMachine.class},
+    basePackageClasses = {EventPublisher.class},
     excludeFilters = {
       @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = JpaRepository.class)
     })

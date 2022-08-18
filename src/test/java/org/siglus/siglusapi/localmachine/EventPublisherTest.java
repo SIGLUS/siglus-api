@@ -30,8 +30,8 @@ import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.localmachine.eventstore.EventRecord;
 import org.springframework.beans.factory.annotation.Autowired;
 
-public class LocalMachineTest extends LocalMachineBaseTest {
-  @Autowired private LocalMachine localMachine;
+public class EventPublisherTest extends EventPublisherBaseTest {
+  @Autowired private EventPublisher eventPublisher;
 
   @Test
   public void canEmitEventSuccessfully() {
@@ -41,13 +41,13 @@ public class LocalMachineTest extends LocalMachineBaseTest {
     TestEventPayload payload = TestEventPayload.builder().id("id").build();
     ArgumentCaptor<EventRecord> recordArgumentCaptor = ArgumentCaptor.forClass(EventRecord.class);
     String peeringId = "peeringId";
-    String receiverId = "receiverId";
+    UUID receiverId = UUID.randomUUID();
 
-    localMachine.emitGroupEvent(peeringId, receiverId, payload);
+    eventPublisher.emitGroupEvent(peeringId, receiverId, payload);
 
     verify(eventRecordRepository).save(recordArgumentCaptor.capture());
     EventRecord eventRecord = recordArgumentCaptor.getValue();
-    assertThat(eventRecord.getSenderId()).isEqualTo(mockedCurrentUser.getId().toString());
+    assertThat(eventRecord.getSenderId()).isEqualTo(mockedCurrentUser.getId());
     assertThat(eventRecord.getGroupId()).isEqualTo(peeringId);
     assertThat(eventRecord.getReceiverId()).isEqualTo(receiverId);
   }

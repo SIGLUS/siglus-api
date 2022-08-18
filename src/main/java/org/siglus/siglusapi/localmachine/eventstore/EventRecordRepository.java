@@ -31,6 +31,8 @@ public interface EventRecordRepository extends JpaRepository<EventRecord, UUID> 
 
   List<EventRecord> findEventRecordByOnlineWebConfirmedFalse();
 
+  List<EventRecord> findEventRecordByGroupId(String groupId);
+
   @Query(
       value = "update localmachine.events set onlinewebconfirmed=true where id in :ids",
       nativeQuery = true)

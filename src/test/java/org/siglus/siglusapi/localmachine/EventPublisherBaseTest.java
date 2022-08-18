@@ -24,7 +24,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {LocalMachineTestConfig.class})
-public class LocalMachineBaseTest {
+public class EventPublisherBaseTest {
   @MockBean protected EventRecordRepository eventRecordRepository;
   @MockBean protected SiglusAuthenticationHelper authenticationHelper;
 }

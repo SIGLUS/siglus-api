@@ -33,4 +33,6 @@ public class Event {
   private Object payload;
   private boolean onlineWebConfirmed;
   private boolean receiverConfirmed;
+  private boolean onlineWebReplayed;
+  private boolean receiverReplayed;
 }

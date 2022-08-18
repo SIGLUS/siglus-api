@@ -15,27 +15,66 @@
 
 package org.siglus.siglusapi.localmachine;
 
+import static ca.uhn.fhir.util.ElementUtil.isEmpty;
+import static java.time.temporal.ChronoUnit.MINUTES;
+import static java.util.stream.Collectors.toList;
+
+import java.time.Instant;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import net.javacrumbs.shedlock.core.LockConfiguration;
+import net.javacrumbs.shedlock.core.LockProvider;
+import net.javacrumbs.shedlock.core.SimpleLock;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class EventReplayer {
+  private final EventPublisher eventPublisher;
   private final EventQueue eventQueue;
+  private final LockProvider lockProvider;
 
-  @Transactional
-  public void play(List<Event> events) {
-    // replay event one by one in order. if the event is a group event (e.g. event2 below), should
-    // check dependency first
-    // |-------|
-    // |event 1|
-    // |event 2|--->[group event M, group event M-1,..., group event 0] (dependent events are ready)
-    // |event 3|
-    // |event 4|--->[group event M, group event M-1] (dependent events are not ready)
-    // |.......|
-    // |event N|
+  public void playGroupEvents(String groupId) {
+    // TODO: 2022/8/18 implement heartbeat of lock
+    Optional<SimpleLock> optionalLock =
+        lockProvider.lock(new LockConfiguration(groupId, Instant.now().plus(6, MINUTES)));
+    if (!optionalLock.isPresent()) {
+      log.warn("fail to get lock");
+      return;
+    }
+    SimpleLock lock = optionalLock.get();
+    try {
+      List<Event> events = eventQueue.loadSortedGroupEvents(groupId);
+      for (int i = 0; i < events.size(); i++) {
+        Event currentEvent = events.get(i);
+        if (i != currentEvent.getGroupSequenceNumber()) {
+          return;
+        }
+        if (currentEvent.isOnlineWebReplayed()) {
+          continue;
+        }
+        eventPublisher.publishEvent(currentEvent);
+      }
+    } finally {
+      lock.unlock();
+    }
+  }
 
+  public void playDefaultGroupEvents(List<Event> events) {
+    if (isEmpty(events)) {
+      return;
+    }
+    events = sortEvents(events);
+    events.forEach(eventPublisher::publishEvent);
+  }
+
+  private List<Event> sortEvents(List<Event> events) {
+    return events.stream()
+        .sorted(Comparator.comparingLong(Event::getGroupSequenceNumber))
+        .collect(toList());
   }
 }

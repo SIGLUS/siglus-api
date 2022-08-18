@@ -34,28 +34,27 @@ import org.springframework.stereotype.Component;
 @Profile({"localmachine"})
 public class Synchronizer {
   private final EventQueue localEventQueue;
-  private final LocalMachine localMachine;
+  private final EventPublisher eventPublisher;
   private final OnlineWebClient webClient;
 
-  // TODO: 2022/8/17 dynamic rate based on last sync status, also check if having new data to sync
   @Scheduled(fixedRate = 30 * 1000, initialDelay = 60 * 1000)
   @SchedulerLock(name = "localmachine_synchronizer")
   @Transactional
   public void scheduledSync() {
+    // TODO: 2022/8/17 dynamic rate based on last sync status, also check if having new data to sync
     this.sync();
   }
 
   @Transactional
   public void sync() {
-    // TODO: 2022/8/16 segregate transaction in concurrency mode
     push();
     pull();
   }
 
   @Transactional
   public void pull() {
-    List<Event> events = webClient.fetchEvents(localMachine.getKnownFacilityIds());
-    List<SyncResponse> acks = webClient.fetchAcks(localMachine.getKnownFacilityIds());
+    List<Event> events = webClient.fetchEvents(eventPublisher.getKnownFacilityIds());
+    List<SyncResponse> acks = webClient.fetchAcks(eventPublisher.getKnownFacilityIds());
     // FIXME: 2022/8/14 relay events, send ack to web
   }
 

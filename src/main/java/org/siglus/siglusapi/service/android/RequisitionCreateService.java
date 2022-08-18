@@ -149,7 +149,7 @@ import org.siglus.siglusapi.exception.InvalidProgramCodeException;
 import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.exception.UnsupportedProductsException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
-import org.siglus.siglusapi.localmachine.LocalMachine;
+import org.siglus.siglusapi.localmachine.EventPublisher;
 import org.siglus.siglusapi.localmachine.android.AndroidRequisitionSynced;
 import org.siglus.siglusapi.repository.ProcessingPeriodRepository;
 import org.siglus.siglusapi.repository.RegimenRepository;
@@ -196,7 +196,7 @@ public class RequisitionCreateService {
   private final SupportedProgramsHelper supportedProgramsHelper;
   private final SiglusApprovedProductReferenceDataService approvedProductDataService;
   private final SiglusProgramAdditionalOrderableService additionalOrderableService;
-  private final LocalMachine localMachine;
+  private final EventPublisher eventPublisher;
 
   @Transactional
   @Validated(PerformanceSequence.class)
@@ -220,7 +220,7 @@ public class RequisitionCreateService {
         .build();
     syncUpHashRepository.save(syncUpHashDomain);
     // fixme: evaluate the superiorId (the higher facility id for this requisition)
-    localMachine.emitGroupEvent(
+    eventPublisher.emitGroupEvent(
         requisition.getId().toString(),
         null,
         new AndroidRequisitionSynced(user.getHomeFacilityId(), user.getId(), request));

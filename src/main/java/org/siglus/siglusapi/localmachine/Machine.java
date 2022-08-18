@@ -15,21 +15,11 @@
 
 package org.siglus.siglusapi.localmachine;
 
-import java.util.List;
-import java.util.stream.Collectors;
-import lombok.RequiredArgsConstructor;
+import lombok.Getter;
 import org.springframework.stereotype.Component;
 
 @Component
-@RequiredArgsConstructor
-public class OnlineWebImporter {
-  private final EventQueue localEventQueue;
-  private final EventReplayer replayer;
-
-  public void importEvents(List<Event> events) {
-    List<Event> unConfirmedEvents =
-        events.stream().filter(it -> !it.isOnlineWebConfirmed()).collect(Collectors.toList());
-    List<Event> newAdded = localEventQueue.putAllGetNewAdded(unConfirmedEvents);
-    replayer.play(newAdded);
-  }
+@Getter
+public class Machine {
+  private boolean isOnlineWeb;
 }

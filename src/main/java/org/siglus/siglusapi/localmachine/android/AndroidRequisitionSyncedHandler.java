@@ -25,9 +25,7 @@ public class AndroidRequisitionSyncedHandler {
 
   @EventListener(value = {AndroidRequisitionSynced.class})
   public void onAndroidRequisitionSynced(AndroidRequisitionSynced event) {
-    // FIXME: 2022/8/13 assume current user to the actual requestor
-    // FIXME: 2022/8/13 transaction control should be implemented at event multicaster
-    // TODO: 2022/8/13 add retry strategy
+    // FIXME: 2022/8/13 assume current user to the actual requestor, add retry strategy
     meService.createRequisition(event.getRequest());
   }
 }
