@@ -23,6 +23,7 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.siglus.siglusapi.constant.FieldConstants;
 import org.siglus.siglusapi.domain.StockManagementDraft;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.dto.enums.PhysicalInventorySubDraftEnum;
@@ -174,6 +175,7 @@ public class ActiveDraftValidatorTest {
   @Test(expected = ValidationMessageException.class)
   public void shouldThrowExceptionWhenSubDraftStatusIsSubmitted() {
     StockManagementDraft drafts = new StockManagementDraft();
+    drafts.setDraftType(FieldConstants.ISSUE);
     drafts.setStatus(PhysicalInventorySubDraftEnum.SUBMITTED);
     activeDraftValidator.validateSubDraftStatus(drafts);
   }
