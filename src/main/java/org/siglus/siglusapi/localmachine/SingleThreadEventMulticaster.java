@@ -21,47 +21,15 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.event.ApplicationEventMulticaster;
-import org.springframework.context.event.EventListener;
 import org.springframework.context.event.SimpleApplicationEventMulticaster;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class EventMulticaster extends SimpleApplicationEventMulticaster {
-  private final ShadowFacilityRepository shadowFacilityRepository;
-
+public class SingleThreadEventMulticaster extends SimpleApplicationEventMulticaster {
   @Bean(APPLICATION_EVENT_MULTICASTER_BEAN_NAME)
   public ApplicationEventMulticaster applicationEventMulticaster() {
     return this;
-  }
-
-  public void importEventsFromOfflineChanel() {
-    // FIXME: 2022/8/12 import event queues&ack from usb
-  }
-
-  public void exportEventsToOfflineChanel() {
-    // FIXME: 2022/8/12 export event queues&ack for usb transfer
-  }
-
-  public void pullEventFromOnlineWeb() {
-    // FIXME: 2022/8/13
-  }
-
-  public void sendEventToOnlineWeb() {
-    // FIXME: 2022/8/12 send events(sender=shadowFacility,receiver=*) to web and get ack to update
-    // watermark of my
-    //  own queue
-  }
-
-  public void routeEventsToOnlineWeb() {
-    // FIXME: 2022/8/12 send routing events(sender!=shadowFacility,receiver=*) to web and get ack
-  }
-
-  @EventListener(OutgoingEvent.class)
-  public void handleOutgoingEvent(OutgoingEvent outgoingEvent) {
-    ShadowFacility currentShadowFacility = shadowFacilityRepository.getCurrentShadowFacility();
-    currentShadowFacility.sendEvent(outgoingEvent.getRawEvent());
-    shadowFacilityRepository.save(currentShadowFacility);
   }
 }

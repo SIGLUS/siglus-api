@@ -18,9 +18,7 @@ package org.siglus.siglusapi.localmachine.android;
 import lombok.RequiredArgsConstructor;
 import org.siglus.siglusapi.service.android.MeService;
 import org.springframework.context.event.EventListener;
-import org.springframework.stereotype.Component;
 
-@Component
 @RequiredArgsConstructor
 public class AndroidRequisitionSyncedHandler {
   private final MeService meService;

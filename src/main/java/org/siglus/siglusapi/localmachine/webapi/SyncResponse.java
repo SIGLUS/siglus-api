@@ -13,16 +13,21 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.localmachine;
+package org.siglus.siglusapi.localmachine.webapi;
 
-import org.springframework.stereotype.Repository;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Builder.Default;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-@Repository
-public class EventRepository {
-
-  public void save(Event event) {}
-
-  public Event poll() {
-    return null;
-  }
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class SyncResponse {
+  @Default private Map<UUID, String> eventIdToError = new HashMap<>();
 }

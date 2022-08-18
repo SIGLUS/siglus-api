@@ -16,7 +16,7 @@
 package org.siglus.siglusapi.localmachine.webapi;
 
 import lombok.RequiredArgsConstructor;
-import org.siglus.siglusapi.localmachine.EventReplayer;
+import org.siglus.siglusapi.localmachine.OnlineWebImporter;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -26,12 +26,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 @RequestMapping("/api/siglusapi/localmachine")
 public class OnlineWebController {
-  private final EventReplayer eventReplayer;
+  private final OnlineWebImporter importer;
 
   @PostMapping("/events")
-  public UploadEventsResponse uploadEvents(@Validated UploadEventsRequest request) {
-    return UploadEventsResponse.builder()
-        .facilityIdToWatermark(eventReplayer.play(request.getFacilityIdToEvents()))
-        .build();
+  public SyncResponse uploadEvents(@Validated SyncRequest request) {
+    importer.importEvents(request.getEvents());
+    return new SyncResponse();
   }
 }

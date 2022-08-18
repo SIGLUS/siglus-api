@@ -4,6 +4,15 @@
 
 CREATE SEQUENCE localmachine.event_seq;
 CREATE TABLE localmachine.events (
-    sequence_number BIGINT NOT NULL DEFAULT nextval('localmachine.event_seq') PRIMARY KEY
+    localsequencenumber BIGINT NOT NULL DEFAULT nextval('localmachine.event_seq') PRIMARY KEY,
+    protocolversion INT NOT NULL,
+    timestamp TIMESTAMP DEFAULT now(),
+    senderid VARCHAR(255) NOT NULL,
+    receiverid VARCHAR(255) NULL,
+    groupid VARCHAR(255) NULL,
+    groupsequencenumber BIGINT NULL,
+    payload TEXT NULL,
+    onlinewebconfirmed BOOL NOT NULL DEFAULT FALSE,
+    receiverconfirmed BOOL NOT NULL DEFAULT FALSE
 );
-ALTER SEQUENCE localmachine.event_seq OWNED BY localmachine.events.sequence_number;
+ALTER SEQUENCE localmachine.event_seq OWNED BY localmachine.events.localsequencenumber;

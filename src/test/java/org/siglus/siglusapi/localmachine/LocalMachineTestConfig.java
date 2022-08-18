@@ -13,17 +13,17 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.localmachine.webapi;
+package org.siglus.siglusapi.localmachine;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
-import lombok.Builder;
-import lombok.Builder.Default;
-import lombok.Data;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.FilterType;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-@Data
-@Builder
-public class UploadEventsResponse {
-  @Default private Map<UUID, Long> facilityIdToWatermark = new HashMap<>();
-}
+@Configuration
+@ComponentScan(
+    basePackageClasses = {LocalMachine.class},
+    excludeFilters = {
+      @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = JpaRepository.class)
+    })
+public class LocalMachineTestConfig {}

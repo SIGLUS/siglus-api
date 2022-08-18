@@ -16,39 +16,50 @@
 package org.siglus.siglusapi.localmachine;
 
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import org.siglus.siglusapi.dto.UserDto;
+import org.siglus.siglusapi.exception.NotFoundException;
+import org.siglus.siglusapi.i18n.MessageKeys;
+import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
 public class LocalMachine {
+  private static final int protocolVersion = 1;
+  private final EventQueue eventQueue;
   private final ApplicationEventPublisher eventPublisher;
-
-  public boolean isWebServer() {
-    // FIXME: 2022/8/14
-    return false;
-  }
+  private final SiglusAuthenticationHelper siglusAuthenticationHelper;
 
   public List<String> getKnownFacilityIds() {
     // FIXME: 2022/8/14 owner id + peering facility ids
     return null;
   }
 
-  public Map<UUID, Long> getWatermarks(Set<UUID> facilityIds) {
-    // FIXME: 2022/8/14
-    return null;
+  public void emitGroupEvent(String groupId, String receiverId, Object payload) {
+    Event.EventBuilder eventBuilder = baseEventBuilder(groupId, receiverId, payload);
+    eventBuilder.groupSequenceNumber(eventQueue.nextGroupSequenceNumber(groupId));
+    eventQueue.put(eventBuilder.build());
   }
 
-  public void sendOutgoingEvent(Event event) {
-    eventPublisher.publishEvent(new OutgoingEvent(event));
+  private Event.EventBuilder baseEventBuilder(String peeringId, String receiverId, Object payload) {
+    UserDto currentUser =
+        Optional.ofNullable(siglusAuthenticationHelper.getCurrentUser())
+            .orElseThrow(() -> new NotFoundException(MessageKeys.ERROR_USER_NOT_FOUND));
+    return Event.builder()
+        .protocolVersion(protocolVersion)
+        .timestamp(System.currentTimeMillis())
+        .senderId(currentUser.getId().toString())
+        .receiverId(receiverId)
+        .groupId(peeringId)
+        .groupSequenceNumber(0L)
+        .payload(payload);
   }
 
   public void publishEvent(Event event) {
     eventPublisher.publishEvent(event);
-    // FIXME: 2022/8/14 update watermark of sender post event published
+    // FIXME: 2022/8/14 update watermark of sender post payload published
   }
 }

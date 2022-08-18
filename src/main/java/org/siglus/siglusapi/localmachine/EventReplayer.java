@@ -15,11 +15,7 @@
 
 package org.siglus.siglusapi.localmachine;
 
-import java.util.Collection;
-import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,28 +23,19 @@ import org.springframework.transaction.annotation.Transactional;
 @Component
 @RequiredArgsConstructor
 public class EventReplayer {
-  private final LocalMachine localMachine;
+  private final EventQueue eventQueue;
 
   @Transactional
-  public Map<UUID, Long> play(Map<UUID, List<Event>> facilityIdToEvents) {
-    handleEvents(facilityIdToEvents);
-    return localMachine.getWatermarks(facilityIdToEvents.keySet());
-  }
+  public void play(List<Event> events) {
+    // replay event one by one in order. if the event is a group event (e.g. event2 below), should
+    // check dependency first
+    // |-------|
+    // |event 1|
+    // |event 2|--->[group event M, group event M-1,..., group event 0] (dependent events are ready)
+    // |event 3|
+    // |event 4|--->[group event M, group event M-1] (dependent events are not ready)
+    // |.......|
+    // |event N|
 
-  private void handleEvents(Map<UUID, List<Event>> facilityIdToEvents) {
-    // fixme: confirm order is asc by sequence number
-    // fixme: concurrency conflict, use distributed lock to replay events from replay queue. e.g. select for update?
-    Map<UUID, Long> watermarks = localMachine.getWatermarks(facilityIdToEvents.keySet());
-    facilityIdToEvents.values().stream()
-        .flatMap(Collection::stream)
-        .sorted(Comparator.comparing(Event::getSequenceNumber))
-        .forEach(
-            it -> {
-              boolean isAboveWatermark =
-                  it.getSequenceNumber() > watermarks.getOrDefault(it.getSenderId(), 0L);
-              if (isAboveWatermark) {
-                localMachine.publishEvent(it);
-              }
-            });
   }
 }

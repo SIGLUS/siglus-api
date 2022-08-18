@@ -13,12 +13,17 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.localmachine;
+package org.siglus.siglusapi.localmachine.webapi;
 
+import java.util.LinkedList;
+import java.util.List;
+import lombok.Builder;
+import lombok.Builder.Default;
 import lombok.Data;
+import org.siglus.siglusapi.localmachine.Event;
 
+@Builder
 @Data
-public class Acknowledge {
-  private long watermark;
-  private long timestamp;
+public class SyncRequest {
+  @Default private List<Event> events = new LinkedList<>();
 }

@@ -20,29 +20,40 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 @Aspect
 @Component
-@Profile("local")
+// @Profile("local")
 @Slf4j
 public class ServiceLogAspect {
 
-  @Pointcut("execution(* org.siglus.siglusapi.service..*(..)))")
+  // @Pointcut("execution(* org.siglus.siglusapi.service..*(..)))")
+  @Pointcut("within(org.siglus.siglusapi.service.*)")
   public void allServiceMethods() {
     // pointcut
   }
 
-  @Around("allServiceMethods()")
+  @Pointcut("within(org.openlmis.stockmanagement.service.*)")
+  public void allOpenlmisServiceMethods() {
+    // pointcut
+  }
+
+  @Around("execution(* org.openlmis..*(..)) || execution(* org.siglus.siglusapi.service..*(..)))")
   public Object logExecutionTime(ProceedingJoinPoint joinPoint) throws Throwable {
     long start = System.currentTimeMillis();
 
     Object proceed = joinPoint.proceed();
 
     long executionTime = System.currentTimeMillis() - start;
-    if (executionTime > 100) {
-      log.warn("Bad performance: {} takes {} ms", joinPoint.getSignature(), executionTime);
+    if (executionTime > 200) {
+      log.warn(
+          "Bad performance: {} takes {} ms, args:{}",
+          joinPoint.getSignature(),
+          executionTime,
+          joinPoint.getArgs());
+    } else {
+      log.info("performance: {} takes {} ms", joinPoint.getSignature(), executionTime);
     }
     return proceed;
   }

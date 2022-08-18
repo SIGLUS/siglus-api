@@ -13,17 +13,18 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.localmachine.webapi;
+package org.siglus.siglusapi.localmachine;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import lombok.Builder.Default;
-import lombok.Data;
-import org.siglus.siglusapi.localmachine.Event;
+import org.junit.runner.RunWith;
+import org.siglus.siglusapi.localmachine.eventstore.EventRecordRepository;
+import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.junit4.SpringRunner;
 
-@Data
-public class UploadEventsRequest {
-  @Default private Map<UUID, List<Event>> facilityIdToEvents = new HashMap<>();
+@RunWith(SpringRunner.class)
+@SpringBootTest(classes = {LocalMachineTestConfig.class})
+public class LocalMachineBaseTest {
+  @MockBean protected EventRecordRepository eventRecordRepository;
+  @MockBean protected SiglusAuthenticationHelper authenticationHelper;
 }

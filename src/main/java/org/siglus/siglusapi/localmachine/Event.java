@@ -16,16 +16,21 @@
 package org.siglus.siglusapi.localmachine;
 
 import java.util.UUID;
+import lombok.Builder;
 import lombok.Data;
 
+@Builder
 @Data
 public class Event {
-
-  private final long timestamp;
+  private UUID id;
+  private int protocolVersion;
+  private long localSequenceNumber;
+  private long timestamp;
   private UUID senderId;
-  private long sequenceNumber;
-
-  public Event() {
-    this.timestamp = System.currentTimeMillis();
-  }
+  private UUID receiverId;
+  private String groupId;
+  private long groupSequenceNumber;
+  private Object payload;
+  private boolean onlineWebConfirmed;
+  private boolean receiverConfirmed;
 }

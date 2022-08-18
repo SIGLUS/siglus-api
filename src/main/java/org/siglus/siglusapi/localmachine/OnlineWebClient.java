@@ -16,6 +16,7 @@
 package org.siglus.siglusapi.localmachine;
 
 import java.util.List;
+import org.siglus.siglusapi.localmachine.webapi.SyncResponse;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -26,7 +27,7 @@ public class OnlineWebClient {
     return false;
   }
 
-  public Acknowledge sync(List<Event> events) {
+  public SyncResponse sync(List<Event> events) {
     // FIXME: 2022/8/14
     return null;
   }
@@ -36,7 +37,7 @@ public class OnlineWebClient {
     return null;
   }
 
-  public List<Acknowledge> fetchAcks(List<String> knownFacilityIds) {
+  public List<SyncResponse> fetchAcks(List<String> knownFacilityIds) {
     // FIXME: 2022/8/14
     return null;
   }

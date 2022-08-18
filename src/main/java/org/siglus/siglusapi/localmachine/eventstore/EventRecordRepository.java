@@ -13,15 +13,26 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.localmachine;
+package org.siglus.siglusapi.localmachine.eventstore;
 
-import lombok.Getter;
+import java.util.List;
+import java.util.UUID;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
-@Getter
-public class PeeringEvent extends Event {
-  private final String receiverId;
+public interface EventRecordRepository extends JpaRepository<EventRecord, UUID> {
 
-  public PeeringEvent(String receiverId) {
-    this.receiverId = receiverId;
-  }
+  @Query(
+      value =
+          "select groupsequencenumber + 1 from localmachine.events where groupid=:groupId order by "
+              + "groupsequencenumber desc limit 1",
+      nativeQuery = true)
+  Long getNextGroupSequenceNumber(String groupId);
+
+  List<EventRecord> findEventRecordByOnlineWebConfirmedFalse();
+
+  @Query(
+      value = "update localmachine.events set onlinewebconfirmed=true where id in :ids",
+      nativeQuery = true)
+  void updateWebConfirmedToTrueByIds(List<UUID> ids);
 }

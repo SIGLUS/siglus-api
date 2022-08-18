@@ -19,18 +19,15 @@ import java.util.UUID;
 import lombok.Builder;
 import lombok.Getter;
 import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
-import org.siglus.siglusapi.localmachine.PeeringEvent;
 
 @Builder
 @Getter
-public class AndroidRequisitionSynced extends PeeringEvent {
+public class AndroidRequisitionSynced {
   private final UUID facilityId;
   private final UUID userId;
   private final RequisitionCreateRequest request;
 
   public AndroidRequisitionSynced(UUID facilityId, UUID userId, RequisitionCreateRequest request) {
-    // FIXME: 2022/8/13 inject the peering facility id
-    super("todo");
     this.facilityId = facilityId;
     this.userId = userId;
     this.request = request;

@@ -13,24 +13,31 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.localmachine;
+package org.siglus.siglusapi.localmachine.eventstore;
 
-import java.util.Map;
-import org.apache.commons.lang3.NotImplementedException;
+import static org.assertj.core.api.Assertions.assertThat;
 
-public class ShadowFacility {
-  private String id;
-  private EventQueue self;
-  private Map<String, EventQueue> facilityIdToPeeringEventQueue;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.junit.Test;
 
-  public void sendEvent(Event event) {
-    event.setSenderId(id);
-    // TODO: 2022/8/13 ensure event_seq is greater than the maxium of peerings's
-    // CREATE SEQUENCE event_seq;
-    // SELECT setval('event_seq', greatest(nextval('event_seq'), 99), false);
-    // fixme
-    // get max seq + 1 as the seq of event
-    // save the event to this facility owned queue
-    throw new NotImplementedException("todo");
+public class PayloadSerializerTest {
+  @Test
+  public void canLoadPayloadSuccessfullyGivenDumpedBytes() {
+    TestPayload payload = new TestPayload("id");
+    PayloadSerializer payloadSerializer = new PayloadSerializer();
+    byte[] payloadBytes = payloadSerializer.dump(payload);
+
+    Object payloadLoaded = payloadSerializer.load(payloadBytes);
+
+    assertThat(payloadLoaded).isEqualTo(payload);
+  }
+
+  @Data
+  @NoArgsConstructor
+  @AllArgsConstructor
+  static class TestPayload {
+    private String id;
   }
 }
