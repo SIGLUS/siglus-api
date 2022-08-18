@@ -132,6 +132,7 @@ public class SiglusStockManagementDraftService {
       log.info("update subDraft");
       StockManagementDraft subDraft = stockManagementDraftRepository.findOne(id);
       draftValidator.validateSubDraftStatus(subDraft);
+      conflictOrderableInSubDraftsService.checkConflictOrderableBetweenSubDrafts(subDraftDto);
       StockManagementDraft newDraft = setNewAttributesInOriginalDraft(subDraftDto, id);
       StockManagementDraft savedDraft = stockManagementDraftRepository.save(newDraft);
       return StockManagementDraftDto.from(savedDraft);
