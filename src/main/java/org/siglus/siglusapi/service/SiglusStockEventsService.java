@@ -18,15 +18,20 @@ package org.siglus.siglusapi.service;
 import static org.siglus.siglusapi.constant.FieldConstants.ADJUSTMENT;
 import static org.siglus.siglusapi.constant.FieldConstants.ISSUE;
 import static org.siglus.siglusapi.constant.FieldConstants.RECEIVE;
+import static org.siglus.siglusapi.constant.FieldConstants.SEPARATOR;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_ADJUSTMENT_LOCATION_IS_LIMMITED;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_MOVEMENT_QUANTITY_MORE_THAN_STOCK_ON_HAND;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_IS_SUBMITTED;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_SUB_DRAFTS_QUANTITY_NOT_MATCH;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_SUB_DRAFT_EMPTY;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -37,15 +42,18 @@ import org.apache.commons.collections.CollectionUtils;
 import org.openlmis.stockmanagement.domain.BaseEntity;
 import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
+import org.openlmis.stockmanagement.domain.reason.ReasonType;
 import org.openlmis.stockmanagement.domain.reason.StockCardLineItemReason;
 import org.openlmis.stockmanagement.domain.sourcedestination.Node;
 import org.openlmis.stockmanagement.dto.PhysicalInventoryDto;
 import org.openlmis.stockmanagement.dto.StockEventDto;
 import org.openlmis.stockmanagement.dto.StockEventLineItemDto;
+import org.openlmis.stockmanagement.repository.StockCardLineItemReasonRepository;
 import org.openlmis.stockmanagement.repository.StockCardLineItemRepository;
 import org.openlmis.stockmanagement.repository.StockCardRepository;
 import org.openlmis.stockmanagement.repository.StockEventsRepository;
 import org.openlmis.stockmanagement.service.StockEventProcessor;
+import org.siglus.siglusapi.domain.FacilityLocations;
 import org.siglus.siglusapi.domain.StockCardExtension;
 import org.siglus.siglusapi.domain.StockCardLineItemExtension;
 import org.siglus.siglusapi.domain.StockManagementDraft;
@@ -54,6 +62,8 @@ import org.siglus.siglusapi.dto.StockEventForMultiUserDto;
 import org.siglus.siglusapi.dto.StockManagementDraftDto;
 import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
+import org.siglus.siglusapi.repository.CalculatedStocksOnHandLocationsRepository;
+import org.siglus.siglusapi.repository.FacilityLocationsRepository;
 import org.siglus.siglusapi.repository.StockCardExtensionRepository;
 import org.siglus.siglusapi.repository.StockCardLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.StockManagementDraftRepository;
@@ -82,7 +92,9 @@ public class SiglusStockEventsService {
   private final ActiveDraftValidator draftValidator;
   private final StockCardLineItemExtensionRepository stockCardLineItemExtensionRepository;
   private final SiglusLotService siglusLotService;
-
+  private final FacilityLocationsRepository facilityLocationsRepository;
+  private final StockCardLineItemReasonRepository stockCardLineItemReasonRepository;
+  private final CalculatedStocksOnHandLocationsRepository calculatedStocksOnHandLocationsRepository;
   @Value("${stockmanagement.kit.unpack.destination.nodeId}")
   private UUID unpackDestinationNodeId;
 
@@ -90,11 +102,11 @@ public class SiglusStockEventsService {
   public void processStockEventForMultiUser(StockEventForMultiUserDto stockEventForMultiUserDto) {
     List<UUID> subDraftIds = stockEventForMultiUserDto.getSubDrafts();
     validatePreSubmitSubDraft(subDraftIds);
-    processStockEvent(stockEventForMultiUserDto.getStockEvent());
+    processStockEvent(stockEventForMultiUserDto.getStockEvent(), false);
   }
-
+  
   @Transactional
-  public void processStockEvent(StockEventDto eventDto) {
+  public void processStockEvent(StockEventDto eventDto, boolean location) {
     setUserId(eventDto);
     siglusLotService.createAndFillLotId(eventDto);
     Set<UUID> programIds = getProgramIds(eventDto);
@@ -104,7 +116,10 @@ public class SiglusStockEventsService {
     } else {
       stockEventDtos = getStockEventsWhenDoStockMovements(eventDto, programIds);
     }
-    createStockEvent(eventDto, stockEventDtos);
+    if (eventDto.isAdjustment() && location) {
+      validateAdjustmentLocationAndQuantity(eventDto);
+    }
+    createStockEvent(eventDto, stockEventDtos, location);
     deleteDraft(eventDto);
   }
 
@@ -166,7 +181,7 @@ public class SiglusStockEventsService {
     return ALL_PRODUCTS_PROGRAM_ID.equals(eventDto.getProgramId());
   }
 
-  private void createStockEvent(StockEventDto eventDto, List<StockEventDto> stockEventDtos) {
+  private void createStockEvent(StockEventDto eventDto, List<StockEventDto> stockEventDtos, boolean location) {
     stockEventDtos.forEach(stockEventDto -> {
       stockEventDto.setFacilityId(eventDto.getFacilityId());
       stockEventDto.setSignature(eventDto.getSignature());
@@ -177,20 +192,22 @@ public class SiglusStockEventsService {
           .filter(lineItem -> lineItem.getProgramId() != null)
           .filter(lineItem -> lineItem.getProgramId().equals(stockEventDto.getProgramId()))
           .collect(Collectors.toList()));
-      siglusCreateStockEvent(stockEventDto);
+      siglusCreateStockEvent(stockEventDto, location);
     });
   }
 
-  private void siglusCreateStockEvent(StockEventDto eventDto) {
+  private void siglusCreateStockEvent(StockEventDto eventDto, boolean location) {
     List<StockEventLineItemDto> lineItems = eventDto.getLineItems();
     lineItems.forEach(lineItem -> lineItem.setId(UUID.randomUUID()));
     eventDto.setLineItems(lineItems);
     UUID stockEventId = stockEventProcessor.process(eventDto);
-    enhanceStockCard(eventDto, stockEventId);
+    enhanceStockCard(eventDto, stockEventId, location);
   }
 
-  private void enhanceStockCard(StockEventDto eventDto, UUID stockEventId) {
-    addStockCardLineItemLocation(eventDto);
+  private void enhanceStockCard(StockEventDto eventDto, UUID stockEventId, boolean location) {
+    if (location) {
+      addStockCardLineItemLocation(eventDto);
+    }
     addStockCardCreateTime(eventDto);
     addStockCardLineItemDocumentNumber(eventDto, stockEventId);
     Set<UUID> orderableIds = eventDto.getLineItems().stream()
@@ -296,4 +313,69 @@ public class SiglusStockEventsService {
           "subDrafts quantity not match");
     }
   }
+
+  private void validateAdjustmentLocationAndQuantity(StockEventDto eventDto) {
+
+    validatePositiveAdjustmentLocationLimited(eventDto, eventDto.getLineItems());
+    validateNegativeAdjustmentQuantity(eventDto, eventDto.getLineItems());
+  }
+
+  private void validateNegativeAdjustmentQuantity(StockEventDto eventDto, List<StockEventLineItemDto> lineItems) {
+    Map<String, List<StockEventLineItemDto>> lotLocationToStockEventLineItemDtoList = lineItems.stream()
+        .collect(Collectors.groupingBy(e -> getUniqueKey(e.getLotId(), e.getLocationCode())));
+
+    lotLocationToStockEventLineItemDtoList.forEach((lotLocation, stockEventLineItemDtoList) -> {
+      StockEventLineItemDto stockEventLineItemDto = stockEventLineItemDtoList.get(0);
+      StockCard stockCard = stockCardRepository.findByProgramIdAndFacilityIdAndOrderableIdAndLotId(
+          stockEventLineItemDto.getProgramId(),
+          eventDto.getFacilityId(),
+          stockEventLineItemDto.getOrderableId(),
+          stockEventLineItemDto.getLotId()
+      );
+      int soh = 0;
+      if (null != stockCard) {
+        soh = calculatedStocksOnHandLocationsRepository
+            .findRecentlySohByStockCardIdAndLocationCode(
+                stockCard.getId(),
+                stockEventLineItemDto.getLocationCode()).orElse(0);
+      }
+      int adjustmentSubValue = getAdjustmentSubValue(stockEventLineItemDtoList);
+      if (adjustmentSubValue > soh) {
+        throw new BusinessDataException(new Message(ERROR_MOVEMENT_QUANTITY_MORE_THAN_STOCK_ON_HAND), null);
+      }
+    });
+  }
+
+  private void validatePositiveAdjustmentLocationLimited(StockEventDto eventDto,
+      List<StockEventLineItemDto> lineItems) {
+    List<FacilityLocations> locations = facilityLocationsRepository.findByFacilityId(eventDto.getFacilityId());
+    lineItems.forEach(e -> {
+      if (isPositiveAdjustment(e.getReasonId())
+          && locations.stream()
+          .noneMatch(location -> Objects.equals(location.getLocationCode(), e.getLocationCode()))) {
+        throw new BusinessDataException(new Message(ERROR_ADJUSTMENT_LOCATION_IS_LIMMITED), null);
+      }
+    });
+  }
+
+  private boolean isPositiveAdjustment(UUID reasonId) {
+    ImmutableMap<UUID, StockCardLineItemReason> reasonIdToStockCardLineItemReason = Maps.uniqueIndex(
+        stockCardLineItemReasonRepository.findAll(), StockCardLineItemReason::getId);
+    return !reasonIdToStockCardLineItemReason.get(reasonId).getReasonType().equals(ReasonType.DEBIT);
+  }
+
+  private Integer getAdjustmentSubValue(List<StockEventLineItemDto> lineItemDtos) {
+    Integer subValue = 0;
+    for (StockEventLineItemDto lineItem : lineItemDtos) {
+      if (!isPositiveAdjustment(lineItem.getReasonId())) {
+        subValue += lineItem.getQuantity();
+      }
+    }
+    return subValue;
+  }
+
+  private String getUniqueKey(UUID lotId, String locationCode) {
+    return lotId.toString() + SEPARATOR + locationCode;
+  }
+
 }

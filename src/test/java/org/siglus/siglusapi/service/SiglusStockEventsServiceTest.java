@@ -198,7 +198,7 @@ public class SiglusStockEventsServiceTest {
         Collections.singletonList(new StockManagementDraftDto()));
 
     // when
-    siglusStockEventsService.processStockEvent(eventDto);
+    siglusStockEventsService.processStockEvent(eventDto, false);
 
     // then
     verify(stockEventProcessor, times(2)).process(any());
@@ -221,7 +221,7 @@ public class SiglusStockEventsServiceTest {
         Collections.singletonList(new StockManagementDraftDto()));
 
     // when
-    siglusStockEventsService.processStockEvent(eventDto);
+    siglusStockEventsService.processStockEvent(eventDto, false);
 
     // then
     verify(stockCardExtensionRepository).save(stockCardExtensionArgumentCaptor.capture());
@@ -244,7 +244,7 @@ public class SiglusStockEventsServiceTest {
         .thenReturn(Collections.emptyList());
 
     // when
-    siglusStockEventsService.processStockEvent(eventDto);
+    siglusStockEventsService.processStockEvent(eventDto, false);
   }
 
   @Test
@@ -267,7 +267,7 @@ public class SiglusStockEventsServiceTest {
         .thenReturn(Collections.emptyList());
 
     // when
-    siglusStockEventsService.processStockEvent(eventDto);
+    siglusStockEventsService.processStockEvent(eventDto, false);
   }
 
   @Test
@@ -288,7 +288,7 @@ public class SiglusStockEventsServiceTest {
         .thenReturn(Collections.emptyList());
 
     // when
-    siglusStockEventsService.processStockEvent(eventDto);
+    siglusStockEventsService.processStockEvent(eventDto, false);
   }
 
   @Test
@@ -305,7 +305,7 @@ public class SiglusStockEventsServiceTest {
         .programId(ALL_PRODUCTS_PROGRAM_ID).build();
 
     // when
-    siglusStockEventsService.processStockEvent(eventDto);
+    siglusStockEventsService.processStockEvent(eventDto, false);
     // then
     verify(stockManagementDraftService, times(0)).findStockManagementDraft(any(), any(), any());
   }

@@ -16,6 +16,7 @@
 package org.siglus.siglusapi.repository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.siglus.siglusapi.domain.CalculatedStocksOnHandLocations;
 import org.siglus.siglusapi.dto.LotLocationSohDto;
@@ -29,5 +30,12 @@ public interface CalculatedStocksOnHandLocationsRepository extends
   List<LotLocationSohDto> getLocationSoh(@Param("lotIds")Iterable<UUID> lotIds);
 
   List<CalculatedStocksOnHandLocations> findByStockCardId(UUID stockCardId);
+
+  @Query(value = " select DISTINCT ON (stockcardid,locationcode) first_value(stockonhand)\n"
+      + "                                              OVER (PARTITION BY stockcardid ORDER BY occurreddate DESC )\n"
+      + "from siglusintegration.calculated_stocks_on_hand_locations\n"
+      + "where stockcardid = ?1 \n"
+      + "and locationcode = ?2 ", nativeQuery = true)
+  Optional<Integer> findRecentlySohByStockCardIdAndLocationCode(UUID stockCardId, String locationCode);
 
 }

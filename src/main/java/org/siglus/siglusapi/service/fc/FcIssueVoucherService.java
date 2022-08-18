@@ -303,7 +303,7 @@ public class FcIssueVoucherService implements ProcessDataService {
           .documentNumber(FC_INTEGRATION)
           .facilityId(useDto.getHomeFacilityId())
           .build();
-      stockEventsService.processStockEvent(eventDto);
+      stockEventsService.processStockEvent(eventDto, false);
     }
   }
 

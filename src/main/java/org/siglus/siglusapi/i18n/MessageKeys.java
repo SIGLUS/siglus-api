@@ -132,6 +132,8 @@ public abstract class MessageKeys {
   public static final String ERROR_LOCATIONS_BY_FACILITY_NOT_FOUND =
       ERROR_PREFIX + ".locations.by.facility.not.found";
 
+  public static final String ERROR_ADJUSTMENT_LOCATION_IS_LIMMITED =
+      PRODUCT_LOCATION_MOVEMENT_ERROR_PREFIX + ".positive.adjustment.has.limited.location";
   // submit
   public static final String ERROR_SUBMIT_START_DATE_BEFORE_START_DATE = ERROR_PREFIX
       + ".submitStartDate.before.startDate";

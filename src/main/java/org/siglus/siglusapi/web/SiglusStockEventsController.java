@@ -38,8 +38,8 @@ public class SiglusStockEventsController {
   @PostMapping
   @Transactional
   @ResponseStatus(CREATED)
-  public void createStockEvent(@RequestBody StockEventDto eventDto) {
-    stockEventsService.processStockEvent(eventDto);
+  public void createStockEvent(@RequestBody StockEventDto eventDto, boolean location) {
+    stockEventsService.processStockEvent(eventDto, location);
   }
 
   @PostMapping("/multiUser")
