@@ -37,7 +37,7 @@ public class SiglusLotLocationController {
   @GetMapping
   public List<LotLocationDto> searchLotLocaionDto(
       @RequestParam(required = false) List<UUID> orderablesId, @RequestParam(required = false) boolean extraData) {
-    return lotLocationService.searchLotLocaiton(orderablesId, extraData);
+    return lotLocationService.searchLotLocationDtos(orderablesId, extraData);
 
   }
 

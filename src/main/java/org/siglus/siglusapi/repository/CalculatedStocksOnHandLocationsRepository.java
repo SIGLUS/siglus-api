@@ -38,4 +38,17 @@ public interface CalculatedStocksOnHandLocationsRepository extends
       + "and locationcode = ?2 ", nativeQuery = true)
   Optional<Integer> findRecentlySohByStockCardIdAndLocationCode(UUID stockCardId, String locationCode);
 
+  @Query(value = "select distinct on (stockcardid, locationcode) id,\n"
+      + "                                               stockcardid,\n"
+      + "                                               occurreddate,\n"
+      + "                                               calculatedstockonhandid,\n"
+      + "                                               locationcode,\n"
+      + "                                               area,\n"
+      + "                                               first_value(stockonhand)\n"
+      + "                 over (partition by (stockcardid, locationcode) order by occurreddate DESC ) as stockonhand\n"
+      + "from siglusintegration.calculated_stocks_on_hand_locations\n"
+      + "where stockcardid = ?1 ", nativeQuery = true)
+  List<CalculatedStocksOnHandLocations> findRecentlyLocationSohByStockCardId(UUID stockCardId);
+
+
 }

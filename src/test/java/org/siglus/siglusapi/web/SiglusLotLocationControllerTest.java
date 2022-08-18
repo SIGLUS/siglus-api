@@ -41,7 +41,7 @@ public class SiglusLotLocationControllerTest extends TestCase {
   @Test
   public void shouldCallSearchLotLocaionDto() {
     controller.searchLotLocaionDto(newArrayList(orderableId), true);
-    verify(service).searchLotLocaiton(newArrayList(orderableId), true);
+    verify(service).searchLotLocationDtos(newArrayList(orderableId), true);
   }
 
   @Test

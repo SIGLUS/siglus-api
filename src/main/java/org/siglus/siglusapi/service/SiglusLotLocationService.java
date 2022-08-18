@@ -81,73 +81,12 @@ public class SiglusLotLocationService {
   @Autowired
   private CalculatedStocksOnHandRepository calculatedStocksOnHandRepository;
 
-  public List<LotLocationDto> searchLotLocaiton(List<UUID> orderableIds, boolean extraData) {
+  public List<LotLocationDto> searchLotLocationDtos(List<UUID> orderableIds, boolean extraData) {
     UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
-
     if (!extraData) {
-      List<LotLocationDto> lotLocationDtos = new LinkedList<>();
-      List<FacilityLocations> locations = facilityLocationsRepository.findByFacilityId(facilityId);
-      locations.forEach(location -> {
-        lotLocationDtos.add(LotLocationDto
-            .builder()
-            .locationCode(location.getLocationCode())
-            .area(location.getArea())
-            .build());
-      });
-      return lotLocationDtos;
+      return getLocationsByFacilityId(facilityId);
     }
-
-    List<LotLocationDto> lotLocationDtos = new LinkedList<>();
-    orderableIds.forEach(orderableId -> {
-      List<StockCard> stockCardList = stockCardRepository.findByFacilityIdAndOrderableId(facilityId,
-          orderableId);
-
-      Map<UUID, List<CalculatedStocksOnHandLocations>> lotIdToLocationIdMap = new HashMap<>();
-      stockCardList.forEach(stockCard -> {
-        List<CalculatedStocksOnHandLocations> locationStockOnHandList = calculatedStocksOnHandLocationsRepository
-            .findByStockCardId(stockCard.getId());
-        lotIdToLocationIdMap.put(stockCard.getLotId(), locationStockOnHandList);
-      });
-
-      List<LotLocationPair> lotLocationPairs = new LinkedList<>();
-
-      lotIdToLocationIdMap.forEach((lotId, locationStockOnHandList) -> {
-        locationStockOnHandList.forEach(locationsStockOnHand -> {
-          lotLocationPairs.add(LotLocationPair.builder().lotId(lotId)
-              .calculatedStocksOnHandLocations(locationsStockOnHand)
-              .build());
-        });
-      });
-
-      Map<String, List<LotLocationPair>> locationCodeToPairs = lotLocationPairs.stream()
-          .collect(Collectors.groupingBy(e -> e.getCalculatedStocksOnHandLocations().getLocationCode()));
-
-      locationCodeToPairs.forEach((locationCode, locationPairs) -> {
-        List<LotsDto> lotDtoList = new LinkedList<>();
-
-        locationPairs.forEach(locationPair -> {
-          UUID lotId = locationPair.getLotId();
-          Lot lot = lotRepository.findOne(lotId);
-          lotDtoList.add(LotsDto
-              .builder()
-              .lotId(lotId).orderablesId(orderableId).lotCode(lot.getLotCode())
-              .stockOnHand(locationPair
-                  .getCalculatedStocksOnHandLocations()
-                  .getStockonhand())
-              .expirationDate(lot.getExpirationDate())
-              .build());
-        });
-        lotLocationDtos.add(LotLocationDto
-            .builder()
-            .locationCode(locationCode)
-            .area(locationPairs.get(0).getCalculatedStocksOnHandLocations().getArea())
-            .lots(lotDtoList)
-            .build());
-      });
-
-    });
-
-    return lotLocationDtos;
+    return getLotLocationDtos(orderableIds, facilityId);
   }
 
   public List<DisplayedLotDto> searchDisplayedLots(List<UUID> orderableIds) {
@@ -195,9 +134,98 @@ public class SiglusLotLocationService {
     return displayedLotDtos;
   }
 
+  private List<LotLocationDto> getLocationsByFacilityId(UUID facilityId) {
+    List<LotLocationDto> lotLocationDtos = new LinkedList<>();
+    List<FacilityLocations> locations = facilityLocationsRepository.findByFacilityId(facilityId);
+    locations.forEach(location -> {
+      lotLocationDtos.add(LotLocationDto
+          .builder()
+          .locationCode(location.getLocationCode())
+          .area(location.getArea())
+          .build());
+    });
+    return lotLocationDtos;
+  }
+
+  private List<LotLocationDto> getLotLocationDtos(List<UUID> orderableIds, UUID facilityId) {
+    List<LotLocationDto> lotLocationDtos = new LinkedList<>();
+    orderableIds.forEach(orderableId -> {
+
+      Map<String, List<LotLocationPair>> locationCodeToLotLocationPairs = getLocationCodeToLotLocationPairListMap(
+          facilityId, orderableId);
+
+      locationCodeToLotLocationPairs.forEach((locationCode, locationPairs) -> {
+        List<LotsDto> lotDtoList = getLotsDtos(orderableId, locationPairs);
+        lotLocationDtos.add(LotLocationDto
+            .builder()
+            .locationCode(locationCode)
+            .area(locationPairs.get(0).getCalculatedStocksOnHandLocations().getArea())
+            .lots(lotDtoList)
+            .build());
+      });
+
+    });
+    return lotLocationDtos;
+  }
+
+
+  private Map<String, List<LotLocationPair>> getLocationCodeToLotLocationPairListMap(UUID facilityId,
+      UUID orderableId) {
+    List<StockCard> stockCardList = stockCardRepository.findByFacilityIdAndOrderableId(facilityId,
+        orderableId);
+
+    Map<UUID, List<CalculatedStocksOnHandLocations>> lotIdToLocationSohListMap = new HashMap<>();
+    stockCardList.forEach(stockCard -> {
+      List<CalculatedStocksOnHandLocations> recentlyLocationSohList =
+          calculatedStocksOnHandLocationsRepository.findRecentlyLocationSohByStockCardId(stockCard.getId());
+      if (!recentlyLocationSohList.isEmpty()) {
+        lotIdToLocationSohListMap.put(stockCard.getLotId(), recentlyLocationSohList);
+      }
+    });
+
+    Map<String, List<LotLocationPair>> locationCodeToLotLocationPairs = reverseMappingRelationship(
+        lotIdToLocationSohListMap);
+    return locationCodeToLotLocationPairs;
+  }
+
+  private Map<String, List<LotLocationPair>> reverseMappingRelationship(
+      Map<UUID, List<CalculatedStocksOnHandLocations>> lotIdToLocationIdMap) {
+    List<LotLocationPair> lotLocationPairs = new LinkedList<>();
+
+    lotIdToLocationIdMap.forEach((lotId, locationStockOnHandList) -> {
+      locationStockOnHandList.forEach(locationsStockOnHand -> {
+        lotLocationPairs.add(LotLocationPair.builder().lotId(lotId)
+            .calculatedStocksOnHandLocations(locationsStockOnHand)
+            .build());
+      });
+    });
+
+    return lotLocationPairs.stream()
+        .collect(Collectors.groupingBy(e -> e.getCalculatedStocksOnHandLocations().getLocationCode()));
+  }
+
+  private List<LotsDto> getLotsDtos(UUID orderableId, List<LotLocationPair> locationPairs) {
+    List<LotsDto> lotDtoList = new LinkedList<>();
+
+    locationPairs.forEach(locationPair -> {
+      UUID lotId = locationPair.getLotId();
+      Lot lot = lotRepository.findOne(lotId);
+      lotDtoList.add(LotsDto
+          .builder()
+          .lotId(lotId).orderablesId(orderableId).lotCode(lot.getLotCode())
+          .stockOnHand(locationPair
+              .getCalculatedStocksOnHandLocations()
+              .getStockonhand())
+          .expirationDate(lot.getExpirationDate())
+          .build());
+    });
+    return lotDtoList;
+  }
+
+
   private boolean hasSohInMouthRange(List<CalculatedStocksOnHand> calculatedStocksOnHands, int monthRange) {
     return calculatedStocksOnHands.stream().filter(o -> o.getOccurreddate().after(
-        Date.from(LocalDate.now().minusMonths(monthRange).atStartOfDay(ZoneId.systemDefault()).toInstant())))
+            Date.from(LocalDate.now().minusMonths(monthRange).atStartOfDay(ZoneId.systemDefault()).toInstant())))
         .anyMatch(o -> o.getStockonhand() != 0);
   }
 
