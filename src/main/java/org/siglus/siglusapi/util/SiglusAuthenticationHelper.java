@@ -50,6 +50,8 @@ public class SiglusAuthenticationHelper {
   private final SiglusFacilityReferenceDataService siglusFacilityReferenceDataService;
   @Value("${role.admin.id}")
   private String roleAdminId;
+  @Value("${role.report.viewer.id}")
+  private String roleReportViewerId;
   @Value("${role.role2.warehouse.manager}")
   private String role2WareHouseManager;
   @Value("${role.role2.warehouse.manager.ddmdpmonly}")
@@ -125,6 +127,12 @@ public class SiglusAuthenticationHelper {
     Set<UUID> roleAssignmentIds = getCurrentUser().getRoleAssignments().stream()
         .map(RoleAssignmentDto::getRoleId).collect(Collectors.toSet());
     return roleAssignmentIds.contains(UUID.fromString(roleAdminId));
+  }
+
+  public boolean isTheCurrentUserCanViewAllReports() {
+    Set<UUID> roleAssignmentIds = getCurrentUser().getRoleAssignments().stream()
+        .map(RoleAssignmentDto::getRoleId).collect(Collectors.toSet());
+    return roleAssignmentIds.contains(UUID.fromString(roleReportViewerId));
   }
 
   public Collection<PermissionString> getCurrentUserPermissionStrings() {
