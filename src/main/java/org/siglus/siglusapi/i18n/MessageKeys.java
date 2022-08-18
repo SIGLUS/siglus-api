@@ -71,6 +71,8 @@ public abstract class MessageKeys {
       ERROR_PREFIX + ".not.expected.user.draft";
 
   // stock management
+  public static final String ERROR_VALIDATE_STOCK_MOVEMENT_DATE =
+      STOCK_MANAGEMENT_ERROR_PREFIX + ".movement.date.invalid";
   public static final String ERROR_STOCK_MANAGEMENT_DRAFT_ID_NOT_FOUND = STOCK_MANAGEMENT_ERROR_PREFIX + ".id.notFound";
   public static final String ERROR_STOCK_MANAGEMENT_DRAFT_NOT_FOUND = STOCK_MANAGEMENT_ERROR_PREFIX + ".draft.notFound";
   public static final String ERROR_STOCK_MANAGEMENT_DRAFT_DRAFT_EXISTS =

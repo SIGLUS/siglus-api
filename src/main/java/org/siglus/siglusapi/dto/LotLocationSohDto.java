@@ -48,7 +48,7 @@ import lombok.Data;
             + "  csohl.locationcode = fl.locationcode  and csohl.area = fl.area and sc.facilityid = fl.facilityid \n"
             + "where\n"
             + "  csohl.row_number = 1\n"
-            + "  and csohl.stockonhand>0"
+            + "  and csohl.stockonhand > 0\n"
             + "  and sc.lotid in :lotIds",
         resultSetMapping = "LotLocationSoh.LotLocationSohDto")
 })
@@ -80,5 +80,5 @@ public class LotLocationSohDto {
 
   private String locationCode;
 
-  private Integer stockonhand;
+  private Integer stockOnHand;
 }

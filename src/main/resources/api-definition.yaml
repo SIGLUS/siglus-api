@@ -964,6 +964,17 @@ traits:
               application/json:
                 schema: localizedMessage
 
+    /movementDateLimit/startdate:
+      get:
+        is: [ secured ]
+        description: get limit movement date startdate
+        responses:
+          201:
+            description: return startdate successfully
+            body:
+              application/json:
+                schema: date
+
     /drafts:
       get:
         is: [ secured ]

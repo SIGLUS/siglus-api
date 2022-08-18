@@ -21,7 +21,6 @@ import static org.siglus.siglusapi.dto.StockCardLineItemDtoComparators.byReasonP
 
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -120,9 +119,14 @@ public class SiglusStockCardService {
     }
     StockCardDto aggregateStockCards = findAggregateStockCards(Collections.singletonList(stockCard), true);
     List<LotLocationSohDto> locationSoh = calculatedStocksOnHandLocationsRepository.getLocationSoh(
-        Arrays.asList(stockCard.getLotId()));
+        Collections.singletonList(stockCard.getLotId()));
     String locationCodes =
         locationSoh.stream().map(LotLocationSohDto::getLocationCode).collect(Collectors.joining(","));
+    if (aggregateStockCards.getExtraData() != null) {
+      Map<String, String> extraData = aggregateStockCards.getExtraData();
+      extraData.put(LOCATION_KEY, locationCodes);
+      return aggregateStockCards;
+    }
     HashMap<String, String> locationMap = new HashMap<>();
     locationMap.put(LOCATION_KEY, locationCodes);
     aggregateStockCards.setExtraData(locationMap);

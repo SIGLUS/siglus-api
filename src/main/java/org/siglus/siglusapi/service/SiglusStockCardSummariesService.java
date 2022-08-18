@@ -448,7 +448,7 @@ public class SiglusStockCardSummariesService {
 
   private List<OrderableDto> getOrderableDtos(Pageable pageable, List<UUID> orderableIds, UUID facilityId) {
     QueryOrderableSearchParams searchParams = new QueryOrderableSearchParams(new LinkedMultiValueMap());
-    Set<UUID> orderableIdSet = new HashSet(orderableIds);
+    HashSet orderableIdSet = new HashSet(orderableIds);
     searchParams.setIds(orderableIdSet);
     return siglusOrderableService.searchOrderables(searchParams, pageable, facilityId).getContent();
   }
