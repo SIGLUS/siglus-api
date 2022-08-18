@@ -176,4 +176,8 @@ public class FieldConstants {
 
   public static final String QUARTERLY_REPORT_ONLY = "Q2";
 
+  public static final int MONTHLY_SUBMIT_PRODUCT_ZERO_INVENTORY_MONTH_RANGE = 3;
+
+  public static final int QUARTERLY_SUBMIT_PRODUCT_ZERO_INVENTORY_MONTH_RANGE = 6;
+
 }
