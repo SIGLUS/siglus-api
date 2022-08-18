@@ -19,6 +19,7 @@ import static org.siglus.siglusapi.constant.FieldConstants.MONTHLY;
 import static org.siglus.siglusapi.constant.FieldConstants.MONTHLY_REPORT_ONLY;
 import static org.siglus.siglusapi.constant.FieldConstants.QUARTERLY;
 import static org.siglus.siglusapi.constant.FieldConstants.QUARTERLY_REPORT_ONLY;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_LOCATIONS_BY_FACILITY_NOT_FOUND;
 
 import com.google.common.collect.Maps;
 import java.time.LocalDate;
@@ -41,9 +42,11 @@ import org.siglus.siglusapi.domain.CalculatedStocksOnHand;
 import org.siglus.siglusapi.domain.CalculatedStocksOnHandLocations;
 import org.siglus.siglusapi.domain.FacilityLocations;
 import org.siglus.siglusapi.dto.DisplayedLotDto;
+import org.siglus.siglusapi.dto.FacilityLocationsDto;
 import org.siglus.siglusapi.dto.LotLocationDto;
 import org.siglus.siglusapi.dto.LotLocationPair;
 import org.siglus.siglusapi.dto.LotsDto;
+import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.repository.CalculatedStocksOnHandLocationsRepository;
 import org.siglus.siglusapi.repository.CalculatedStocksOnHandRepository;
 import org.siglus.siglusapi.repository.FacilityLocationsRepository;
@@ -194,8 +197,26 @@ public class SiglusLotLocationService {
 
   private boolean hasSohInMouthRange(List<CalculatedStocksOnHand> calculatedStocksOnHands, int monthRange) {
     return calculatedStocksOnHands.stream().filter(o -> o.getOccurreddate().after(
-            Date.from(LocalDate.now().minusMonths(monthRange).atStartOfDay(ZoneId.systemDefault()).toInstant())))
+        Date.from(LocalDate.now().minusMonths(monthRange).atStartOfDay(ZoneId.systemDefault()).toInstant())))
         .anyMatch(o -> o.getStockonhand() != 0);
   }
 
+  public List<FacilityLocationsDto> searchLocationsByFacility() {
+    UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
+    List<FacilityLocations> locations = facilityLocationsRepository.findByFacilityId(facilityId);
+    if (locations.isEmpty()) {
+      throw new NotFoundException(ERROR_LOCATIONS_BY_FACILITY_NOT_FOUND);
+    }
+    return convertToDto(locations);
+  }
+
+  private List<FacilityLocationsDto> convertToDto(List<FacilityLocations> locations) {
+    return locations.stream().map(location -> {
+      return FacilityLocationsDto.builder()
+          .facilityId(location.getFacilityId())
+          .area(location.getArea())
+          .locationCode(location.getLocationCode())
+          .build();
+    }).collect(Collectors.toList());
+  }
 }

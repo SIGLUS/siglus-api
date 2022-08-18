@@ -73,14 +73,8 @@ public abstract class MessageKeys {
   // stock management
   public static final String ERROR_STOCK_MANAGEMENT_DRAFT_ID_NOT_FOUND = STOCK_MANAGEMENT_ERROR_PREFIX + ".id.notFound";
   public static final String ERROR_STOCK_MANAGEMENT_DRAFT_NOT_FOUND = STOCK_MANAGEMENT_ERROR_PREFIX + ".draft.notFound";
-  public static final String ERROR_MOVEMENT_DRAFT_NOT_FOUND =
-      PRODUCT_LOCATION_MOVEMENT_ERROR_PREFIX + ".movement.draft.notFound";
-  public static final String ERROR_STOCK_CARD_NOT_FOUND =
-      STOCK_CARD_ERROR_PREFIX + ".stock.card.notFound";
   public static final String ERROR_STOCK_MANAGEMENT_DRAFT_DRAFT_EXISTS =
       STOCK_MANAGEMENT_ERROR_PREFIX + ".draft.exists";
-  public static final String ERROR_MOVEMENT_DRAFT_EXISTS =
-      PRODUCT_LOCATION_MOVEMENT_ERROR_PREFIX + ".movement.draft.exists";
   public static final String ERROR_STOCK_MANAGEMENT_SUB_DRAFT_SAME_ORDERABLE_ID_WITH_LOT_CODE =
       STOCK_MANAGEMENT_ERROR_PREFIX + ".stock.management.subDraft.same.orderable.id.with.lot.code";
   public static final String ERROR_STOCK_MANAGEMENT_SUB_DRAFT_EMPTY =
@@ -97,8 +91,6 @@ public abstract class MessageKeys {
       STOCK_MANAGEMENT_ERROR_PREFIX + ".drafts.more.than.ten";
   public static final String ERROR_STOCK_MANAGEMENT_DRAFT_ID_MISMATCH =
       STOCK_MANAGEMENT_ERROR_PREFIX + ".id.mismatch";
-  public static final String ERROR_MOVEMENT_DRAFT_ID_MISMATCH =
-      PRODUCT_LOCATION_MOVEMENT_ERROR_PREFIX + ".movement.id.mismatch";
   public static final String ERROR_STOCK_MANAGEMENT_SUB_DRAFT_TYPE_MISSING =
       STOCK_MANAGEMENT_ERROR_PREFIX + ".draft.type.missing";
   public static final String ERROR_STOCK_MANAGEMENT_DRAFT_IS_SUBMITTED =
@@ -107,24 +99,38 @@ public abstract class MessageKeys {
       STOCK_MANAGEMENT_ERROR_PREFIX + ".orderable.disabled.vvm";
   public static final String ERROR_STOCK_MANAGEMENT_DRAFT_LINE_ITEMS_MISSING =
       STOCK_MANAGEMENT_ERROR_PREFIX + ".lineItems.missing";
-  public static final String ERROR_MOVEMENT_DRAFT_LINE_ITEMS_MISSING =
-      PRODUCT_LOCATION_MOVEMENT_ERROR_PREFIX + ".movement.lineItems.missing";
   public static final String ERROR_STOCK_MANAGEMENT_DRAFT_ORDERABLE_MISSING =
       STOCK_MANAGEMENT_ERROR_PREFIX + ".orderable.missing";
-  public static final String ERROR_MOVEMENT_DRAFT_ORDERABLE_MISSING =
-      PRODUCT_LOCATION_MOVEMENT_ERROR_PREFIX + ".movement.orderable.missing";
   public static final String ERROR_STOCK_MANAGEMENT_DRAFT_ID_SHOULD_NULL =
       STOCK_MANAGEMENT_ERROR_PREFIX + ".draft.id.should.null";
-  public static final String ERROR_MOVEMENT_DRAFT_ID_SHOULD_NULL =
-      PRODUCT_LOCATION_MOVEMENT_ERROR_PREFIX + ".movement.draft.id.should.null";
   public static final String ERROR_INVENTORY_CONFLICT_SUB_DRAFT =
       ERROR_PREFIX + ".inventory.conflict.subDraft";
   public static final String ERROR_ISSUE_CONFLICT_SUB_DRAFT =
       ERROR_PREFIX + ".issue.conflict.subDraft";
   public static final String ERROR_INVENTORY_CONFLICT_DRAFT =
       ERROR_PREFIX + ".inventory.conflict.Draft";
+
+  //product location movement
+  public static final String ERROR_STOCK_CARD_NOT_FOUND =
+      STOCK_CARD_ERROR_PREFIX + ".stock.card.notFound";
+  public static final String ERROR_MOVEMENT_DRAFT_NOT_FOUND =
+      PRODUCT_LOCATION_MOVEMENT_ERROR_PREFIX + ".movement.draft.notFound";
+  public static final String ERROR_MOVEMENT_DRAFT_EXISTS =
+      PRODUCT_LOCATION_MOVEMENT_ERROR_PREFIX + ".movement.draft.exists";
+  public static final String ERROR_MOVEMENT_DRAFT_ID_MISMATCH =
+      PRODUCT_LOCATION_MOVEMENT_ERROR_PREFIX + ".movement.id.mismatch";
+  public static final String ERROR_MOVEMENT_DRAFT_LINE_ITEMS_MISSING =
+      PRODUCT_LOCATION_MOVEMENT_ERROR_PREFIX + ".movement.lineItems.missing";
+  public static final String ERROR_MOVEMENT_DRAFT_ORDERABLE_MISSING =
+      PRODUCT_LOCATION_MOVEMENT_ERROR_PREFIX + ".movement.orderable.missing";
+  public static final String ERROR_MOVEMENT_DRAFT_ID_SHOULD_NULL =
+      PRODUCT_LOCATION_MOVEMENT_ERROR_PREFIX + ".movement.draft.id.should.null";
   public static final String ERROR_MOVEMENT_QUANTITY_MORE_THAN_STOCK_ON_HAND =
       PRODUCT_LOCATION_MOVEMENT_ERROR_PREFIX + ".movement.quantity.more.than.stock.on.hand";
+
+  //location
+  public static final String ERROR_LOCATIONS_BY_FACILITY_NOT_FOUND =
+      ERROR_PREFIX + ".locations.by.facility.not.found";
 
   // submit
   public static final String ERROR_SUBMIT_START_DATE_BEFORE_START_DATE = ERROR_PREFIX

@@ -18,6 +18,7 @@ package org.siglus.siglusapi.web;
 import java.util.List;
 import java.util.UUID;
 import org.siglus.siglusapi.dto.DisplayedLotDto;
+import org.siglus.siglusapi.dto.FacilityLocationsDto;
 import org.siglus.siglusapi.dto.LotLocationDto;
 import org.siglus.siglusapi.service.SiglusLotLocationService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,5 +44,10 @@ public class SiglusLotLocationController {
   @GetMapping("/displayedLots")
   public List<DisplayedLotDto> searchDisplayedLotsDtoByOrderableId(@RequestParam List<UUID> orderableIds) {
     return lotLocationService.searchDisplayedLots(orderableIds);
+  }
+
+  @GetMapping("/facility")
+  public List<FacilityLocationsDto> searchLocationsByFacility() {
+    return lotLocationService.searchLocationsByFacility();
   }
 }

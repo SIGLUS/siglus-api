@@ -400,6 +400,15 @@ traits:
         responses:
           200:
             description: GET success
+      /facility:
+        get:
+          is: [ secured ]
+          body:
+            application/json:
+              schema: arrayOfStrings
+          responses:
+            200:
+              description: GET success
 
     /locations/displayedLots:
       displayName: get displayed lot
