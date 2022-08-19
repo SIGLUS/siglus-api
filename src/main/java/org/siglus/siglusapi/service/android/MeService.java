@@ -542,7 +542,7 @@ public class MeService {
   }
 
   private void saveAndUpdateCmm(HfCmm toBeUpdatedHfCmm) {
-    if (!toBeUpdatedHfCmm.getPeriodBegin().isAfter(LocalDate.now())) {
+    if (!toBeUpdatedHfCmm.getPeriodBegin().isBefore(LocalDate.now())) {
       log.warn("period begin is future date, do not save or update cmm, toBeUpdatedHfCmm:{}", toBeUpdatedHfCmm);
       return;
     }
