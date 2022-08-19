@@ -17,6 +17,7 @@ package org.siglus.siglusapi.service;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyList;
 import static org.mockito.Mockito.times;
@@ -49,6 +50,7 @@ import org.siglus.siglusapi.dto.RequisitionGroupMembersDto;
 import org.siglus.siglusapi.repository.RequisitionGroupMembersRepository;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.service.client.ValidSourceDestinationStockManagementService;
+import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.util.SupportedProgramsHelper;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -56,6 +58,9 @@ public class SiglusValidSourceDestinationServiceTest {
 
   @InjectMocks
   private SiglusValidSourceDestinationService siglusValidSourceDestinationService;
+
+  @Mock
+  private SiglusAuthenticationHelper siglusAuthenticationHelper;
 
   @Mock
   private ValidSourceDestinationStockManagementService validSourceDestinationStockManagementService;
@@ -254,7 +259,7 @@ public class SiglusValidSourceDestinationServiceTest {
     facility.setId(facilityId);
     when(facilityRepository.findByIdIn(anyList())).thenReturn(Collections.singletonList(facility));
     when(nodeRepository.findByReferenceIdIn(anyList())).thenReturn(Collections.singletonList(node));
-
+    given(siglusAuthenticationHelper.isTheDataMigrationUser()).willReturn(false);
   }
 
   private FacilityDto buildFacilityDtoByFacilityIdAndTypeCode(UUID facilityId, String facilityTypeCode) {

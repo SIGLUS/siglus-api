@@ -39,6 +39,7 @@ import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.repository.RequisitionGroupMembersRepository;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.service.client.ValidSourceDestinationStockManagementService;
+import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.util.SupportedProgramsHelper;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -54,6 +55,7 @@ public class SiglusValidSourceDestinationService {
   private final SiglusFacilityReferenceDataService facilityReferenceDataService;
   private final NodeRepository nodeRepository;
   private final FacilityRepository facilityRepository;
+  private final SiglusAuthenticationHelper authenticationHelper;
 
   public Collection<ValidSourceDestinationDto> findSourcesForOneProgram(UUID programId, UUID facilityId) {
     Set<UUID> programIds = new HashSet<>();
@@ -93,10 +95,12 @@ public class SiglusValidSourceDestinationService {
     if (programIdToSupervisoryFacilities.size() > 0) {
       facilitySources = getSourceDestinationsByFacilityIds(programIdToSupervisoryFacilities.get(programId), programId);
     }
+    boolean isDataMigrationContext = authenticationHelper.isTheDataMigrationUser();
     Collection<ValidSourceDestinationDto> commonSources = validSourceDestinationStockManagementService.getValidSources(
             programId, facilityId).stream()
         .filter(i -> !i.getNode().isRefDataFacility())
-        .filter(i -> Arrays.stream(Source.values()).noneMatch(e -> e.getName().equals(i.getName())))
+        .filter(i -> isDataMigrationContext
+            || Arrays.stream(Source.values()).noneMatch(e -> e.getName().equals(i.getName())))
         .collect(Collectors.toList());
     Collection<ValidSourceDestinationDto> allSources = new ArrayList<>();
     allSources.addAll(facilitySources);
@@ -110,10 +114,11 @@ public class SiglusValidSourceDestinationService {
     if (programIdToMemberFacilities.size() > 0) {
       facilityDestinations = getSourceDestinationsByFacilityIds(programIdToMemberFacilities.get(programId), programId);
     }
+    boolean isDataMigrationContext = authenticationHelper.isTheDataMigrationUser();
     Collection<ValidSourceDestinationDto> commonDestinations =
         validSourceDestinationStockManagementService.getValidDestinations(programId, facilityId).stream()
             .filter(i -> !i.getNode().isRefDataFacility())
-            .filter(i -> !Destination.UNPACK_KIT.getName().equals(i.getName()))
+            .filter(i -> isDataMigrationContext || !Destination.UNPACK_KIT.getName().equals(i.getName()))
             .collect(Collectors.toList());
     Collection<ValidSourceDestinationDto> allDestinations = new ArrayList<>();
     allDestinations.addAll(facilityDestinations);
