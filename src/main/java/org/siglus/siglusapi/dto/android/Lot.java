@@ -45,12 +45,11 @@ public class Lot {
     return new Lot(code, expirationDate == null ? null : expirationDate.toLocalDate());
   }
 
-  public String getLotUniqueKey() {
-    return this.getCode() + this.getExpirationDate();
+  public UUID getUUid(UUID tradeItemId) {
+    return Uuid5Generator.fromUtf8(getLotUniqueKey(tradeItemId));
   }
 
-  public UUID getUUid() {
-    return Uuid5Generator.fromUtf8(getLotUniqueKey());
+  private String getLotUniqueKey(UUID tradeItemId) {
+    return this.getCode() + tradeItemId.toString();
   }
-
 }

@@ -67,7 +67,6 @@ import org.springframework.context.annotation.AnnotationBeanNameGenerator;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
-import org.springframework.context.annotation.FilterType;
 import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.context.support.ReloadableResourceBundleMessageSource;
@@ -91,14 +90,7 @@ import org.springframework.web.servlet.i18n.CookieLocaleResolver;
 @SpringBootApplication
 @EnableAsync
 @EnableJpaAuditing
-@ComponentScan(
-    basePackages = {"org.siglus", "org.openlmis"},
-    nameGenerator = CustomBeanNameGenerator.class,
-    excludeFilters = {
-      @ComponentScan.Filter(
-          type = FilterType.ASSIGNABLE_TYPE,
-          classes = org.openlmis.referencedata.Application.class)
-    })
+@ComponentScan(basePackages = {"org.siglus", "org.openlmis"}, nameGenerator = CustomBeanNameGenerator.class)
 @EntityScan(basePackages = {"org.siglus", "org.openlmis"})
 @EnableJpaRepositories(basePackages = {"org.siglus", "org.openlmis"})
 @PropertySource("classpath:application.properties")

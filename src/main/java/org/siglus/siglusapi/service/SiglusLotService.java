@@ -120,7 +120,7 @@ public class SiglusLotService {
     LotDto existedLot = findExistedLot(lotCode, tradeItemId);
     if (existedLot == null) {
       LotDto lotDto = new LotDto();
-      lotDto.setId(Lot.of(lotCode, expirationDate).getUUid());
+      lotDto.setId(Lot.of(lotCode, expirationDate).getUUid(UUID.fromString(tradeItemId)));
       lotDto.setTradeItemId(UUID.fromString(tradeItemId));
       lotDto.setManufactureDate(dateHelper.getCurrentDate());
       lotDto.setExpirationDate(expirationDate);
