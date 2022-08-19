@@ -16,8 +16,10 @@
 package org.siglus.siglusapi.web;
 
 import org.siglus.siglusapi.service.task.report.CalculateWebCmmService;
+import org.siglus.siglusapi.web.request.CalculateCmmRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -28,13 +30,8 @@ public class SiglusCalculateWebCmmController {
   @Autowired
   private CalculateWebCmmService calculateWebCmmService;
 
-  @PostMapping("/period/all")
-  public void calculateAllPeriod() {
-    calculateWebCmmService.calculateAllPeriod();
-  }
-
-  @PostMapping("/period/current")
-  public void calculateCurrentPeriod() {
-    calculateWebCmmService.calculateCurrentPeriod();
+  @PostMapping("/calculate")
+  public void calculateCurrentPeriod(@RequestBody CalculateCmmRequest calculateCmmRequest) {
+    calculateWebCmmService.calculateCmms(calculateCmmRequest.getPeriodLocalDate());
   }
 }

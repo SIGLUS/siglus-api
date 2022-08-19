@@ -15,11 +15,14 @@
 
 package org.siglus.siglusapi.repository;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import org.openlmis.stockmanagement.domain.card.StockCard;
+import org.siglus.siglusapi.repository.dto.StockOnHandDto;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 @SuppressWarnings("PMD.AvoidDuplicateLiterals")
@@ -38,4 +41,7 @@ public interface SiglusStockCardRepository extends JpaRepository<StockCard, UUID
   void deleteStockCardsByFacilityIdAndOrderableIdIn(@Param("facilityId") UUID facilityId,
       @Param("orderableId") Set<UUID> orderableIds);
 
+  @Query(name = "StockCard.findStockOnHandDto", nativeQuery = true)
+  List<StockOnHandDto> findStockCardDtos(@Param("facilityId") UUID facilityId, @Param("startDate") LocalDate startDate,
+      @Param("endDate") LocalDate endDate);
 }

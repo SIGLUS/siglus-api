@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.task;
 
+import java.time.LocalDate;
 import lombok.RequiredArgsConstructor;
 import net.javacrumbs.shedlock.core.SchedulerLock;
 import org.siglus.siglusapi.service.task.report.CalculateWebCmmService;
@@ -30,6 +31,6 @@ public class CalculateWebCmmTask {
   @Scheduled(cron = "${cmm.calculate.cron}", zone = "${time.zoneId}")
   @SchedulerLock(name = "calculate_cmm_task")
   public void calculate() {
-    calculateWebCmmService.calculateCurrentPeriod();
+    calculateWebCmmService.calculateCmms(LocalDate.now());
   }
 }

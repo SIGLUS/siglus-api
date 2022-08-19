@@ -28,22 +28,20 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.openlmis.referencedata.domain.Code;
-import org.openlmis.referencedata.domain.Orderable;
+import org.openlmis.referencedata.domain.Facility;
 import org.openlmis.referencedata.domain.ProcessingPeriod;
-import org.openlmis.stockmanagement.domain.card.StockCard;
-import org.openlmis.stockmanagement.repository.StockCardRepository;
-import org.siglus.siglusapi.domain.FacilityExtension;
+import org.openlmis.referencedata.dto.OrderableDto;
 import org.siglus.siglusapi.domain.HfCmm;
-import org.siglus.siglusapi.dto.StockMovementResDto;
-import org.siglus.siglusapi.dto.android.enumeration.MovementType;
 import org.siglus.siglusapi.repository.FacilityCmmsRepository;
-import org.siglus.siglusapi.repository.FacilityExtensionRepository;
-import org.siglus.siglusapi.repository.OrderableRepository;
 import org.siglus.siglusapi.repository.ProcessingPeriodRepository;
-import org.siglus.siglusapi.service.SiglusStockCardService;
-import org.springframework.data.domain.Example;
+import org.siglus.siglusapi.repository.SiglusFacilityRepository;
+import org.siglus.siglusapi.repository.SiglusStockCardLineItemRepository;
+import org.siglus.siglusapi.repository.SiglusStockCardRepository;
+import org.siglus.siglusapi.repository.dto.StockCardLineItemDto;
+import org.siglus.siglusapi.repository.dto.StockOnHandDto;
+import org.siglus.siglusapi.service.SiglusOrderableService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 @Slf4j
@@ -51,223 +49,283 @@ import org.springframework.util.CollectionUtils;
 @Service
 public class CalculateWebCmmService {
 
-  private final FacilityExtensionRepository facilityExtensionRepository;
-  private final StockCardRepository stockCardRepository;
+  private final SiglusFacilityRepository siglusFacilityRepository;
   private final ProcessingPeriodRepository processingPeriodRepository;
   private final FacilityCmmsRepository facilityCmmsRepository;
-  private final OrderableRepository orderableRepository;
-  private final SiglusStockCardService siglusStockCardService;
+  private final SiglusStockCardRepository siglusStockCardRepository;
+  private final SiglusStockCardLineItemRepository siglusStockCardLineItemRepository;
+  private final SiglusOrderableService siglusOrderableService;
 
-  public void calculateAllPeriod() {
-    calculate(Boolean.TRUE);
-  }
+  private static final Long SKIP_ISSUE_QUANTITY = -1L;
+  private static final Long STOCK_OUT_QUANTITY = 0L;
+  private static final double INIT_CMM = -1d;
+  private static final String MONTHLY_SCHEDULE_CODE = "M1";
+  private static final int MAX_PERIOD_ISSUE_COUNT = 3;
 
-  public void calculateCurrentPeriod() {
-    calculate(Boolean.FALSE);
-  }
-
-  private void calculate(boolean isFirstTime) {
-    log.info("calculate start....");
+  @Transactional
+  public void calculateCmms(LocalDate periodLocalDateRequest) {
+    log.info("calculate cmm start");
     long startTime = System.currentTimeMillis();
+    LocalDate endDate = Objects.isNull(periodLocalDateRequest) ? LocalDate.now() : periodLocalDateRequest;
 
-    List<FacilityExtension> webFacilityExtensions = getWebFacilityExtensions();
-    Set<UUID> webFacilityIds = webFacilityExtensions.stream().map(FacilityExtension::getFacilityId)
-        .collect(Collectors.toSet());
-    Map<UUID, String> facilityIdToCode = webFacilityExtensions.stream()
-        .collect(Collectors.toMap(FacilityExtension::getFacilityId, FacilityExtension::getFacilityCode));
+    List<Facility> webFacilities = siglusFacilityRepository.findAllWebFacility();
+    Set<UUID> webFacilityIds = webFacilities.stream().map(Facility::getId).collect(Collectors.toSet());
+    Map<UUID, String> facilityIdToCode = webFacilities.stream()
+        .collect(Collectors.toMap(Facility::getId, Facility::getCode));
+    Map<UUID, String> orderableIdToCode = getOrderableIdToCode();
+    List<ProcessingPeriod> upToNowAllPeriods = getUpToNowAllPeriods();
 
-    List<StockCard> allStockCards = stockCardRepository.findAll();
-    Map<UUID, List<StockCard>> facilityIdToStockCars = allStockCards.stream()
-        .collect(Collectors.groupingBy(StockCard::getFacilityId));
+    ProcessingPeriod startPeriod = getStartProcessingPeriod(upToNowAllPeriods, endDate);
+    ProcessingPeriod endPeriod = getEndProcessingPeriod(upToNowAllPeriods, endDate);
 
-    Map<UUID, Code> orderableIdToCode = getOrderableIdToCode(
-        allStockCards.stream().map(StockCard::getOrderableId).collect(Collectors.toSet()));
-    List<ProcessingPeriod> processingPeriods = getPeriods();
-
-    facilityIdToStockCars.forEach((facilityId, stockCards) -> {
+    webFacilityIds.forEach(facilityId -> {
       if (!webFacilityIds.contains(facilityId)) {
         return;
       }
-      calculateAndSaveCmms(orderableIdToCode, facilityIdToCode, processingPeriods, facilityId, stockCards, isFirstTime);
+      calculateAndSavaCmms(periodLocalDateRequest, facilityIdToCode, orderableIdToCode, upToNowAllPeriods, startPeriod,
+          endPeriod, facilityId);
     });
 
     long endTime = System.currentTimeMillis();
-    log.info("....calculate end, cost={}", endTime - startTime);
+    log.info("calculate cmm end, cost:{}s", (endTime - startTime) / 1000);
   }
 
-  private void calculateAndSaveCmms(Map<UUID, Code> orderableIdToCode, Map<UUID, String> facilityIdToCode,
-      List<ProcessingPeriod> processingPeriods, UUID facilityId, List<StockCard> stockCards, boolean isFirstTime) {
-    Set<UUID> alreadyCalculatedOrderableIds = Sets.newHashSet();
-    for (StockCard stockCard : stockCards) {
-      if (alreadyCalculatedOrderableIds.contains(stockCard.getOrderableId())) {
-        log.info(
-            "duplicate facility and orderable, facilityCode:{}, orderableCode:{}",
-            facilityIdToCode.get(facilityId), orderableIdToCode.get(stockCard.getOrderableId()));
-        continue;
-      }
-      alreadyCalculatedOrderableIds.add(stockCard.getOrderableId());
+  private void calculateAndSavaCmms(LocalDate periodLocalDateRequest, Map<UUID, String> facilityIdToCode,
+      Map<UUID, String> orderableIdToCode, List<ProcessingPeriod> upToNowAllPeriods, ProcessingPeriod startPeriod,
+      ProcessingPeriod endPeriod, UUID facilityId) {
 
-      try {
-        List<StockMovementResDto> productMovements = siglusStockCardService.getProductMovements(
-            stockCard.getFacilityId(),
-            stockCard.getOrderableId(), null, LocalDate.now());
-        if (CollectionUtils.isEmpty(productMovements)) {
-          log.warn("no product movement, do not calculate cmm, stockCard:{}", stockCard);
-          break;
-        }
+    Map<UUID, List<StockOnHandDto>> orderableIdToStockCardDtos = getOrderableIdToStockCardDtos(startPeriod, endPeriod,
+        facilityId);
+    Map<UUID, List<StockCardLineItemDto>> orderableIdToStockCardLineItemDtos = getOrderableIdToStockCardLineItemDtos(
+        startPeriod, endPeriod, facilityId);
 
-        LocalDate firstMovementPeriodStart = queryFirstMovementPeriodStart(productMovements, processingPeriods);
-        if (Objects.isNull(firstMovementPeriodStart)) {
-          log.warn("product movement do not match any period, do not calculate cmm, stockCardId={}", stockCard.getId());
-          break;
-        }
-
-        Map<LocalDate, Long> periodStartDateToIssue = calculatePeriodStartDateToIssue(processingPeriods,
-            productMovements, firstMovementPeriodStart);
-        List<ProcessingPeriod> toBeCalculatedPeriods = getToBeCalculatedPeriods(isFirstTime, processingPeriods,
-            firstMovementPeriodStart);
-
-        List<HfCmm> hfCmms = buildHfCmms(orderableIdToCode, facilityIdToCode,
-            toBeCalculatedPeriods, facilityId, stockCard, firstMovementPeriodStart, periodStartDateToIssue);
-        log.info("save hf cmms, size={}", hfCmms.size());
-        facilityCmmsRepository.save(hfCmms);
-      } catch (Exception e) {
-        log.error("calculate and save failed, ", e);
-      }
+    List<HfCmm> hfCmms = buildHfCmms(periodLocalDateRequest, facilityIdToCode,
+        orderableIdToCode, upToNowAllPeriods, endPeriod, facilityId, orderableIdToStockCardDtos,
+        orderableIdToStockCardLineItemDtos);
+    if (!CollectionUtils.isEmpty(hfCmms)) {
+      log.info("save hf cmms, size={}, facilityId:{}", hfCmms.size(), facilityId);
+      facilityCmmsRepository.save(hfCmms);
     }
   }
 
-  private List<ProcessingPeriod> getToBeCalculatedPeriods(boolean isFirstTime, List<ProcessingPeriod> allPeriods,
-      LocalDate firstMovementPeriodStart) {
-    if (isFirstTime) {
-      return allPeriods.stream().filter(period -> !period.getStartDate().isBefore(firstMovementPeriodStart)).collect(
-          Collectors.toList());
-    } else {
-      return Lists.newArrayList(getTodayProcessingPeriod(allPeriods));
-    }
-  }
+  private List<HfCmm> buildHfCmms(LocalDate periodLocalDateRequest, Map<UUID, String> facilityIdToCode,
+      Map<UUID, String> orderableIdToCode, List<ProcessingPeriod> upToNowAllPeriods, ProcessingPeriod endPeriod,
+      UUID facilityId, Map<UUID, List<StockOnHandDto>> orderableIdToStockCardDtos,
+      Map<UUID, List<StockCardLineItemDto>> orderableIdToStockCardLineItemDtos) {
 
-  private ProcessingPeriod getTodayProcessingPeriod(List<ProcessingPeriod> processingPeriods) {
-    return processingPeriods.stream()
-        .filter(period -> isDateInPeriod(period, LocalDate.now())).findFirst().orElse(null);
-  }
-
-  private List<HfCmm> buildHfCmms(Map<UUID, Code> orderableIdToCode, Map<UUID, String> facilityIdToCode,
-      List<ProcessingPeriod> processingPeriods, UUID facilityId, StockCard stockCard,
-      LocalDate firstMovementPeriodStart, Map<LocalDate, Long> periodStartDateToIssue) {
     List<HfCmm> hfCmms = Lists.newArrayList();
-    for (ProcessingPeriod period : processingPeriods) {
-      if (period.getStartDate().isBefore(firstMovementPeriodStart)) {
-        continue;
+
+    orderableIdToStockCardDtos.forEach((orderableId, stockOnHandDtos) -> {
+      LocalDate firstMovementPeriodStart = getFirstMovementPeriodStart(stockOnHandDtos, upToNowAllPeriods);
+      if (Objects.isNull(firstMovementPeriodStart)) {
+        log.warn("first movement period is null, do not calculate cmm, facilityId:{}, orderableId:{}", facilityId,
+            orderableId);
+        return;
       }
 
-      if (period.getStartDate().isEqual(firstMovementPeriodStart)) {
-        hfCmms.add(buildHfCmm(-1d, orderableIdToCode.get(stockCard.getOrderableId()),
-            facilityIdToCode.get(facilityId), period));
-        continue;
-      }
+      Set<LocalDate> hasStockOutPeriodStarDate = getHasStockOutPeriodStartDates(upToNowAllPeriods, stockOnHandDtos);
+      Map<LocalDate, Long> periodStartDateToIssueQuantity = getPeriodStartDateToIssueQuantity(upToNowAllPeriods,
+          orderableIdToStockCardLineItemDtos.get(orderableId));
 
-      // calculate cmm
-      LocalDate pointPeriodStartDate = period.getStartDate().minusMonths(1);
-      int usedPeriodIssue = 0;
-      long totalIssue = 0;
-      while (!pointPeriodStartDate.isBefore(firstMovementPeriodStart) && usedPeriodIssue < 3) {
-        Long issue = periodStartDateToIssue.get(pointPeriodStartDate);
-        if (issue != null && issue != -1) {
-          totalIssue += issue;
-          usedPeriodIssue++;
-        }
-        pointPeriodStartDate = pointPeriodStartDate.minusMonths(1);
-      }
-      hfCmms.add(buildHfCmm(totalIssue * 1d / usedPeriodIssue, orderableIdToCode.get(stockCard.getOrderableId()),
-          facilityIdToCode.get(facilityId), period));
-    }
+      List<ProcessingPeriod> toBeCalculatedPeriods = getToBeCalculatedPeriods(periodLocalDateRequest,
+          upToNowAllPeriods, firstMovementPeriodStart, endPeriod);
+
+      toBeCalculatedPeriods.forEach(period -> {
+        double cmm = calculateCmm(firstMovementPeriodStart, periodStartDateToIssueQuantity,
+            hasStockOutPeriodStarDate, period);
+        hfCmms.add(buildHfCmm(cmm, orderableIdToCode.get(orderableId), facilityIdToCode.get(facilityId), period));
+      });
+    });
     return hfCmms;
   }
 
-  private HfCmm buildHfCmm(Double cmm, Code orderableCode, String facilityCode, ProcessingPeriod period) {
+  private Map<LocalDate, Long> getPeriodStartDateToIssueQuantity(List<ProcessingPeriod> upToNowAllPeriods,
+      List<StockCardLineItemDto> lineItemDtos) {
+    if (CollectionUtils.isEmpty(lineItemDtos)) {
+      return Maps.newHashMap();
+    }
+    Map<LocalDate, Long> periodStartDateToIssueQuantity = Maps.newHashMap();
+    lineItemDtos.forEach(lineItemDto -> {
+      ProcessingPeriod period = getDateInPeriod(upToNowAllPeriods, lineItemDto.getOccurredDate());
+      Long issueQuantity = periodStartDateToIssueQuantity.get(period.getStartDate());
+      if (Objects.isNull(issueQuantity)) {
+        periodStartDateToIssueQuantity.put(period.getStartDate(), lineItemDto.getIssueQuantity());
+      } else {
+        periodStartDateToIssueQuantity.put(period.getStartDate(), lineItemDto.getIssueQuantity() + issueQuantity);
+      }
+    });
+    return periodStartDateToIssueQuantity;
+  }
+
+  private Map<UUID, List<StockCardLineItemDto>> getOrderableIdToStockCardLineItemDtos(ProcessingPeriod startPeriod,
+      ProcessingPeriod endPeriod, UUID facilityId) {
+    List<StockCardLineItemDto> stockCardLineItemDtos = siglusStockCardLineItemRepository.findStockCardLineItemDtos(
+        facilityId, startPeriod.getStartDate(), endPeriod.getEndDate());
+    return stockCardLineItemDtos.stream().collect(Collectors.groupingBy(StockCardLineItemDto::getOrderableId));
+  }
+
+  private Map<UUID, List<StockOnHandDto>> getOrderableIdToStockCardDtos(ProcessingPeriod startPeriod,
+      ProcessingPeriod endPeriod, UUID facilityId) {
+    List<StockOnHandDto> facilityStockOnHandDtos = siglusStockCardRepository.findStockCardDtos(facilityId,
+        startPeriod.getStartDate(), endPeriod.getEndDate());
+    return facilityStockOnHandDtos.stream().collect(Collectors.groupingBy(StockOnHandDto::getOrderableId));
+  }
+
+  private Set<LocalDate> getHasStockOutPeriodStartDates(List<ProcessingPeriod> upToNowAllPeriods,
+      List<StockOnHandDto> stockOnHandDtos) {
+    Map<LocalDate, List<StockOnHandDto>> periodStartDateToStockOnHandDtos = Maps.newHashMap();
+    stockOnHandDtos.forEach(stockOnHandDto -> {
+      ProcessingPeriod period = getDateInPeriod(upToNowAllPeriods, stockOnHandDto.getOccurredDate());
+      if (Objects.isNull(periodStartDateToStockOnHandDtos.get(period.getStartDate()))) {
+        periodStartDateToStockOnHandDtos.put(period.getStartDate(), Lists.newArrayList(stockOnHandDto));
+        return;
+      }
+      periodStartDateToStockOnHandDtos.get(period.getStartDate()).add(stockOnHandDto);
+    });
+
+    Long soh = 0L;
+    Set<LocalDate> hasStockOutPeriodStarDate = Sets.newHashSet();
+    for (ProcessingPeriod period : upToNowAllPeriods) {
+      List<StockOnHandDto> curPeriodStockOnHandDtos = periodStartDateToStockOnHandDtos.get(period.getStartDate());
+      if (CollectionUtils.isEmpty(curPeriodStockOnHandDtos) && soh.equals(STOCK_OUT_QUANTITY)) {
+        hasStockOutPeriodStarDate.add(period.getStartDate());
+      } else if (isStockOutExisted(curPeriodStockOnHandDtos)) {
+        hasStockOutPeriodStarDate.add(period.getStartDate());
+      }
+      soh = CollectionUtils.isEmpty(curPeriodStockOnHandDtos) ? soh : getLastStockOnHand(curPeriodStockOnHandDtos);
+    }
+    return hasStockOutPeriodStarDate;
+  }
+
+  private boolean isStockOutExisted(List<StockOnHandDto> stockOnHandDtos) {
+    if (CollectionUtils.isEmpty(stockOnHandDtos)) {
+      return false;
+    }
+    return stockOnHandDtos.stream()
+        .anyMatch(stockOnHandDto -> stockOnHandDto.getStockOnHand().equals(STOCK_OUT_QUANTITY));
+  }
+
+  private Long getLastStockOnHand(List<StockOnHandDto> stockOnHandDtos) {
+    return stockOnHandDtos.get(stockOnHandDtos.size() - 1).getStockOnHand();
+  }
+
+  private Double calculateCmm(LocalDate firstMovementPeriodStart, Map<LocalDate, Long> periodStartDateToIssueQuantity,
+      Set<LocalDate> hasStockOutPeriodStarDate, ProcessingPeriod period) {
+    if (period.getStartDate().isEqual(firstMovementPeriodStart)) {
+      return INIT_CMM;
+    }
+    LocalDate pointPeriodStartDate = period.getStartDate().minusMonths(1);
+    int usedPeriodIssueCount = 0;
+    long totalIssueQuantity = 0;
+    while (!pointPeriodStartDate.isBefore(firstMovementPeriodStart) && usedPeriodIssueCount < MAX_PERIOD_ISSUE_COUNT) {
+      Long issueQuantity = getIssueQuantity(periodStartDateToIssueQuantity, pointPeriodStartDate,
+          hasStockOutPeriodStarDate);
+      if (!SKIP_ISSUE_QUANTITY.equals(issueQuantity)) {
+        totalIssueQuantity += issueQuantity;
+        usedPeriodIssueCount++;
+      }
+      pointPeriodStartDate = pointPeriodStartDate.minusMonths(1);
+    }
+    return totalIssueQuantity * 1d / usedPeriodIssueCount;
+  }
+
+  private Long getIssueQuantity(Map<LocalDate, Long> periodStartDateToIssueQuantity, LocalDate periodStartDate,
+      Set<LocalDate> hasStockOutPeriodStarDate) {
+    if (hasStockOutPeriodStarDate.contains(periodStartDate)) {
+      return SKIP_ISSUE_QUANTITY;
+    }
+    Long issueQuantity = periodStartDateToIssueQuantity.get(periodStartDate);
+    if (Objects.nonNull(issueQuantity)) {
+      return issueQuantity;
+    }
+    return 0L;
+  }
+
+  private List<ProcessingPeriod> getToBeCalculatedPeriods(LocalDate periodLocalDateRequest,
+      List<ProcessingPeriod> allPeriods, LocalDate firstMovementPeriodStart, ProcessingPeriod endPeriod) {
+    if (Objects.isNull(periodLocalDateRequest)) {
+      return allPeriods.stream()
+          .filter(period -> !period.getStartDate().isBefore(firstMovementPeriodStart)
+              && !period.getStartDate().isAfter(endPeriod.getStartDate()))
+          .collect(Collectors.toList());
+    }
+    ProcessingPeriod period = getDateInPeriod(allPeriods, periodLocalDateRequest);
+    if (Objects.isNull(period)) {
+      log.warn("no period match, request date:{}", periodLocalDateRequest);
+      return Lists.newArrayList();
+    }
+    if (firstMovementPeriodStart.isAfter(period.getStartDate())) {
+      log.warn(
+          "request period start date is before first movement period start date, request:{}, first movement:{}",
+          period.getStartDate(), firstMovementPeriodStart);
+      return Lists.newArrayList();
+    }
+    return Lists.newArrayList(period);
+  }
+
+  private ProcessingPeriod getStartProcessingPeriod(List<ProcessingPeriod> processingPeriods,
+      LocalDate endDate) {
+    ProcessingPeriod relativelyOneYearAgoPeriod = processingPeriods.stream()
+        .filter(period -> isDateInPeriod(period, endDate.minusMonths(11))).findFirst().orElse(null);
+    if (Objects.isNull(relativelyOneYearAgoPeriod)) {
+      return processingPeriods.get(0);
+    }
+    return relativelyOneYearAgoPeriod;
+  }
+
+  private ProcessingPeriod getEndProcessingPeriod(List<ProcessingPeriod> processingPeriods, LocalDate endDate) {
+    ProcessingPeriod oneYearAgoPeriod = processingPeriods.stream()
+        .filter(period -> isDateInPeriod(period, endDate)).findFirst().orElse(null);
+    if (Objects.isNull(oneYearAgoPeriod)) {
+      return processingPeriods.get(processingPeriods.size() - 1);
+    }
+    return oneYearAgoPeriod;
+  }
+
+  private HfCmm buildHfCmm(double cmm, String orderableCode, String facilityCode, ProcessingPeriod period) {
     return HfCmm.builder()
         .cmm(cmm)
         .periodBegin(period.getStartDate())
         .periodEnd(period.getEndDate())
-        .productCode(orderableCode.toString())
+        .productCode(orderableCode)
         .facilityCode(facilityCode)
         .build();
   }
 
-  private Map<LocalDate, Long> calculatePeriodStartDateToIssue(List<ProcessingPeriod> processingPeriods,
-      List<StockMovementResDto> productMovements, LocalDate firstMovementPeriodStart) {
-    Map<LocalDate, Long> periodStartDateToIssue = Maps.newHashMap();
-    // calculate total issue of every period which is after or equals to first stock movement period
-    for (ProcessingPeriod period : processingPeriods) {
-      if (period.getStartDate().isBefore(firstMovementPeriodStart)) {
-        continue;
-      }
-      if (periodHasStockOut(productMovements, period)) {
-        periodStartDateToIssue.put(period.getStartDate(), -1L);
-        continue;
-      }
-      periodStartDateToIssue.put(period.getStartDate(), calculateTotalIssueInPeriod(productMovements, period));
-    }
-    return periodStartDateToIssue;
-  }
-
-  private List<ProcessingPeriod> getPeriods() {
-    // TODO: 是否可以根据 M1 去重?
+  private List<ProcessingPeriod> getUpToNowAllPeriods() {
     return processingPeriodRepository.findAll().stream()
-        .filter(e -> e.getProcessingSchedule().getCode().toString().equals("M1"))
+        .filter(e -> e.getProcessingSchedule().getCode().toString().equals(MONTHLY_SCHEDULE_CODE))
         .filter(e -> !e.getStartDate().isAfter(LocalDate.now()))
         .sorted(Comparator.comparing(ProcessingPeriod::getStartDate))
         .collect(Collectors.toList());
   }
 
-  private Map<UUID, Code> getOrderableIdToCode(Set<UUID> orderableIds) {
-    return orderableRepository.findLatestByIds(orderableIds).stream()
-        .collect(Collectors.toMap(Orderable::getId, Orderable::getProductCode));
+  private Map<UUID, String> getOrderableIdToCode() {
+    return siglusOrderableService.getAllProducts().stream()
+        .collect(Collectors.toMap(OrderableDto::getId, OrderableDto::getProductCode, (a, b) -> a));
   }
 
-  private List<FacilityExtension> getWebFacilityExtensions() {
-    Example<FacilityExtension> example = Example.of(FacilityExtension.builder().isAndroid(Boolean.FALSE).build());
-    return facilityExtensionRepository.findAll(example);
-  }
-
-  private Long calculateTotalIssueInPeriod(List<StockMovementResDto> productMovements, ProcessingPeriod period) {
-    long totalIssued = 0;
-    for (StockMovementResDto productMovement : productMovements) {
-      if (isDateInPeriodAndMovementTypeIsIssue(productMovement, period)) {
-        totalIssued += productMovement.getMovementQuantity();
-      }
-    }
-    return Math.abs(totalIssued);
-  }
-
-  private boolean periodHasStockOut(List<StockMovementResDto> productMovements, ProcessingPeriod period) {
-    for (StockMovementResDto productMovement : productMovements) {
-      if (isDateInPeriod(period, productMovement.getDateOfMovement()) && productMovement.getProductSoh() == 0) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  private boolean isDateInPeriodAndMovementTypeIsIssue(StockMovementResDto productMovement, ProcessingPeriod period) {
-    return isDateInPeriod(period, productMovement.getDateOfMovement()) && MovementType.ISSUE.name()
-        .equals(productMovement.getType());
-  }
-
-  private LocalDate queryFirstMovementPeriodStart(List<StockMovementResDto> productMovements,
+  private LocalDate getFirstMovementPeriodStart(List<StockOnHandDto> stockOnHandDtos,
       List<ProcessingPeriod> processingPeriods) {
-    productMovements.sort(Comparator.comparing(StockMovementResDto::getDateOfMovement));
-    LocalDate firstMovementDate = productMovements.get(0).getDateOfMovement();
-    ProcessingPeriod firstMovementPeriod = processingPeriods.stream()
-        .filter(period -> isDateInPeriod(period, firstMovementDate)).findFirst().orElse(null);
-    if (Objects.isNull(firstMovementPeriod)) {
+    // first movement date is by product(any movement type)
+    stockOnHandDtos.sort(Comparator.comparing(StockOnHandDto::getOccurredDate));
+    LocalDate firstMovementDate = stockOnHandDtos.get(0).getOccurredDate();
+    return getPeriodStartDate(firstMovementDate, processingPeriods);
+  }
+
+  private LocalDate getPeriodStartDate(LocalDate localDate, List<ProcessingPeriod> processingPeriods) {
+    ProcessingPeriod dateInPeriod = getDateInPeriod(processingPeriods, localDate);
+    if (Objects.isNull(dateInPeriod)) {
       return null;
     }
-    return firstMovementPeriod.getStartDate();
+    return dateInPeriod.getStartDate();
+  }
+
+  private ProcessingPeriod getDateInPeriod(List<ProcessingPeriod> processingPeriods, LocalDate localDate) {
+    return processingPeriods.stream().filter(period -> isDateInPeriod(period, localDate)).findFirst().orElse(null);
   }
 
   private boolean isDateInPeriod(ProcessingPeriod period, LocalDate localDate) {
-    return !period.getStartDate().isAfter(localDate) && !period.getEndDate().isBefore(localDate);
+    return !localDate.isBefore(period.getStartDate()) && !localDate.isAfter(period.getEndDate());
   }
 }

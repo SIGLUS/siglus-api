@@ -21,6 +21,7 @@ import java.util.Set;
 import java.util.UUID;
 import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
+import org.siglus.siglusapi.repository.dto.StockCardLineItemDto;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -58,4 +59,8 @@ public interface SiglusStockCardLineItemRepository extends JpaRepository<StockCa
       + "where sc.facilityid = :facilityId\n"
       + "order by scli.occurreddate desc limit 1", nativeQuery = true)
   LocalDate findFacilityLastMovementDate(@Param("facilityId") UUID facilityId);
+
+  @Query(name = "StockCard.findStockCardLineItemDto", nativeQuery = true)
+  List<StockCardLineItemDto> findStockCardLineItemDtos(@Param("facilityId") UUID facilityId,
+      @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
 }
