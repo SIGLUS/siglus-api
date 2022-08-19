@@ -186,7 +186,8 @@ public class SiglusOrderService {
     Set<UUID> orderIdsWithSubDraft = podSubDraftRepository.findOrderIdsWithSubDraft(orderIds).stream()
         .map(UUID::fromString).collect(Collectors.toSet());
 
-    List<BasicOrderExtensionResponse> basicOrderExtensionResponseList = Lists.newArrayListWithExpectedSize(basicOrderDtos.size());
+    List<BasicOrderExtensionResponse> basicOrderExtensionResponseList = Lists.newArrayListWithExpectedSize(
+        basicOrderDtos.size());
     for (BasicOrderDto basicOrderDto : basicOrderDtos) {
       BasicOrderExtensionResponse basicOrderExtensionResponse = new BasicOrderExtensionResponse();
       BeanUtils.copyProperties(basicOrderDto, basicOrderExtensionResponse);
