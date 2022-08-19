@@ -68,6 +68,8 @@ public class CalculateWebCmmServiceTest {
   private final UUID facilityId = UUID.randomUUID();
   private final String orderableCode = "orderable code";
   private final String facilityCode = "facility Code";
+  private final LocalDate now = LocalDate.of(2022, 8, 18);
+  private final LocalDate oneYearAgo = LocalDate.now().minusMonths(11);
 
   @Test
   public void shouldSuccessWhenCalculateAllPeriod() {
@@ -95,7 +97,7 @@ public class CalculateWebCmmServiceTest {
     when(siglusStockCardLineItemRepository.findStockCardLineItemDtos(any(), any(), any())).thenReturn(
         buildMockStockCardLineItemDtos());
 
-    calculateWebCmmService.calculateCmms(LocalDate.of(2021, 10, 21));
+    calculateWebCmmService.calculateCmms(LocalDate.of(oneYearAgo.getDayOfYear(), 10, 21));
 
     verify(facilityCmmsRepository).save(anyList());
   }
@@ -109,7 +111,7 @@ public class CalculateWebCmmServiceTest {
     when(siglusStockCardLineItemRepository.findStockCardLineItemDtos(any(), any(), any())).thenReturn(
         buildMockStockCardLineItemDtos());
 
-    calculateWebCmmService.calculateCmms(LocalDate.of(2021, 8, 21));
+    calculateWebCmmService.calculateCmms(LocalDate.of(oneYearAgo.getDayOfYear(), 8, 21));
 
     verify(facilityCmmsRepository, times(0)).save(anyList());
   }
@@ -128,23 +130,23 @@ public class CalculateWebCmmServiceTest {
   private List<StockCardLineItemDto> buildMockStockCardLineItemDtos() {
     StockCardLineItemDto lineItem1 = StockCardLineItemDto.builder()
         .orderableId(orderableId)
-        .occurredDate(LocalDate.of(2021, 9, 21))
+        .occurredDate(LocalDate.of(oneYearAgo.getDayOfYear(), 9, 21))
         .issueQuantity(30L)
         .build();
     StockCardLineItemDto lineItem2 = StockCardLineItemDto.builder()
         .orderableId(orderableId)
-        .occurredDate(LocalDate.of(2021, 9, 22))
+        .occurredDate(LocalDate.of(oneYearAgo.getDayOfYear(), 9, 22))
         .issueQuantity(30L)
         .build();
 
     StockCardLineItemDto lineItem3 = StockCardLineItemDto.builder()
         .orderableId(orderableId)
-        .occurredDate(LocalDate.of(2021, 10, 21))
+        .occurredDate(LocalDate.of(oneYearAgo.getDayOfYear(), 10, 21))
         .issueQuantity(30L)
         .build();
     StockCardLineItemDto lineItem4 = StockCardLineItemDto.builder()
         .orderableId(orderableId)
-        .occurredDate(LocalDate.of(2021, 11, 20))
+        .occurredDate(LocalDate.of(oneYearAgo.getDayOfYear(), 11, 20))
         .issueQuantity(30L)
         .build();
     return Lists.newArrayList(lineItem1, lineItem2, lineItem3, lineItem4);
@@ -153,39 +155,39 @@ public class CalculateWebCmmServiceTest {
   private List<StockOnHandDto> buildMockStockOhHandDtos() {
     StockOnHandDto soh1 = StockOnHandDto.builder()
         .orderableId(orderableId)
-        .occurredDate(LocalDate.of(2021, 9, 21))
+        .occurredDate(LocalDate.of(oneYearAgo.getDayOfYear(), 9, 21))
         .stockOnHand(110L)
         .build();
     StockOnHandDto soh2 = StockOnHandDto.builder()
         .orderableId(orderableId)
-        .occurredDate(LocalDate.of(2021, 9, 22))
+        .occurredDate(LocalDate.of(oneYearAgo.getDayOfYear(), 9, 22))
         .stockOnHand(110L)
         .build();
 
     StockOnHandDto soh3 = StockOnHandDto.builder()
         .orderableId(orderableId)
-        .occurredDate(LocalDate.of(2021, 10, 21))
+        .occurredDate(LocalDate.of(oneYearAgo.getDayOfYear(), 10, 21))
         .stockOnHand(110L)
         .build();
     StockOnHandDto soh4 = StockOnHandDto.builder()
         .orderableId(orderableId)
-        .occurredDate(LocalDate.of(2021, 11, 19))
+        .occurredDate(LocalDate.of(oneYearAgo.getDayOfYear(), 11, 19))
         .stockOnHand(0L)
         .build();
     StockOnHandDto soh5 = StockOnHandDto.builder()
         .orderableId(orderableId)
-        .occurredDate(LocalDate.of(2021, 11, 20))
+        .occurredDate(LocalDate.of(oneYearAgo.getDayOfYear(), 11, 20))
         .stockOnHand(100L)
         .build();
 
     StockOnHandDto soh6 = StockOnHandDto.builder()
         .orderableId(orderableId)
-        .occurredDate(LocalDate.of(2021, 12, 21))
+        .occurredDate(LocalDate.of(oneYearAgo.getDayOfYear(), 12, 21))
         .stockOnHand(110L)
         .build();
     StockOnHandDto soh7 = StockOnHandDto.builder()
         .orderableId(orderableId)
-        .occurredDate(LocalDate.of(2021, 12, 22))
+        .occurredDate(LocalDate.of(oneYearAgo.getDayOfYear(), 12, 22))
         .stockOnHand(110L)
         .build();
 
@@ -199,13 +201,13 @@ public class CalculateWebCmmServiceTest {
     m2Schedule.setCode(Code.code("M2"));
     List<ProcessingPeriod> periods = Lists.newArrayList();
     for (int i = 1; i <= 12; i++) {
-      LocalDate startDate = LocalDate.of(2021, i, 21);
+      LocalDate startDate = LocalDate.of(oneYearAgo.getDayOfYear(), i, 21);
       ProcessingPeriod m1ProcessingPeriod = ProcessingPeriod.newPeriod(i + "-2021", m1Schedule,
           startDate, startDate.plusMonths(1).minusDays(1));
       periods.add(m1ProcessingPeriod);
     }
     for (int i = 1; i <= 12; i++) {
-      LocalDate startDate = LocalDate.of(2022, i, 21);
+      LocalDate startDate = LocalDate.of(now.getDayOfYear(), i, 21);
       ProcessingPeriod m1ProcessingPeriod = ProcessingPeriod.newPeriod(i + "-2022", m1Schedule,
           startDate, startDate.plusMonths(1).minusDays(1));
       periods.add(m1ProcessingPeriod);
@@ -213,12 +215,6 @@ public class CalculateWebCmmServiceTest {
       ProcessingPeriod m2ProcessingPeriod = ProcessingPeriod.newPeriod(i + "-2022", m2Schedule,
           startDate, startDate.plusMonths(1).minusDays(1));
       periods.add(m2ProcessingPeriod);
-    }
-    for (int i = 1; i <= 12; i++) {
-      LocalDate startDate = LocalDate.of(2023, i, 21);
-      ProcessingPeriod m1ProcessingPeriod = ProcessingPeriod.newPeriod(i + "-2023", m1Schedule,
-          startDate, startDate.plusMonths(1).minusDays(1));
-      periods.add(m1ProcessingPeriod);
     }
     return periods;
   }
