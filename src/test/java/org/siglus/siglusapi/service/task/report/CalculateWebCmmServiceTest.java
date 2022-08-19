@@ -21,7 +21,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.powermock.api.mockito.PowerMockito.when;
 
-import com.google.common.collect.Sets;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
@@ -32,20 +31,19 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.referencedata.domain.Code;
-import org.openlmis.referencedata.domain.Orderable;
+import org.openlmis.referencedata.domain.Facility;
 import org.openlmis.referencedata.domain.ProcessingPeriod;
 import org.openlmis.referencedata.domain.ProcessingSchedule;
-import org.openlmis.stockmanagement.domain.card.StockCard;
-import org.openlmis.stockmanagement.repository.StockCardRepository;
-import org.siglus.siglusapi.domain.FacilityExtension;
-import org.siglus.siglusapi.dto.StockMovementResDto;
-import org.siglus.siglusapi.dto.android.enumeration.MovementType;
+import org.openlmis.referencedata.dto.OrderableDto;
 import org.siglus.siglusapi.repository.FacilityCmmsRepository;
-import org.siglus.siglusapi.repository.FacilityExtensionRepository;
-import org.siglus.siglusapi.repository.OrderableRepository;
 import org.siglus.siglusapi.repository.ProcessingPeriodRepository;
-import org.siglus.siglusapi.service.SiglusStockCardService;
-import org.springframework.data.domain.Example;
+import org.siglus.siglusapi.repository.SiglusFacilityRepository;
+import org.siglus.siglusapi.repository.SiglusStockCardLineItemRepository;
+import org.siglus.siglusapi.repository.SiglusStockCardRepository;
+import org.siglus.siglusapi.repository.dto.StockCardLineItemDto;
+import org.siglus.siglusapi.repository.dto.StockOnHandDto;
+import org.siglus.siglusapi.service.SiglusOrderableService;
+
 
 @RunWith(MockitoJUnitRunner.class)
 public class CalculateWebCmmServiceTest {
@@ -54,181 +52,144 @@ public class CalculateWebCmmServiceTest {
   private CalculateWebCmmService calculateWebCmmService;
 
   @Mock
-  private FacilityExtensionRepository facilityExtensionRepository;
-  @Mock
-  private StockCardRepository stockCardRepository;
+  private SiglusFacilityRepository siglusFacilityRepository;
   @Mock
   private ProcessingPeriodRepository processingPeriodRepository;
   @Mock
   private FacilityCmmsRepository facilityCmmsRepository;
   @Mock
-  private OrderableRepository orderableRepository;
+  private SiglusStockCardRepository siglusStockCardRepository;
   @Mock
-  private SiglusStockCardService siglusStockCardService;
+  private SiglusOrderableService siglusOrderableService;
+  @Mock
+  private SiglusStockCardLineItemRepository siglusStockCardLineItemRepository;
 
   private final UUID orderableId = UUID.randomUUID();
   private final UUID facilityId = UUID.randomUUID();
-  private final UUID stockCardId = UUID.randomUUID();
   private final String orderableCode = "orderable code";
+  private final String facilityCode = "facility Code";
 
   @Test
   public void shouldSuccessWhenCalculateAllPeriod() {
-    mockFacilityExtension();
-    when(stockCardRepository.findAll()).thenReturn(buildMockStockCards());
-    when(orderableRepository.findLatestByIds(Sets.newHashSet(orderableId))).thenReturn(buildMockOrderables());
+    // given
+    mockFacility();
+    when(siglusOrderableService.getAllProducts()).thenReturn(buildMockOrderableDtos());
     when(processingPeriodRepository.findAll()).thenReturn(buildMockPeriods());
-    when(siglusStockCardService.getProductMovements(any(), any(), any(), any())).thenReturn(
-        buildStockMovementResDtos());
+    when(siglusStockCardRepository.findStockCardDtos(any(), any(), any())).thenReturn(buildMockStockOhHandDtos());
+    when(siglusStockCardLineItemRepository.findStockCardLineItemDtos(any(), any(), any())).thenReturn(
+        buildMockStockCardLineItemDtos());
 
-    calculateWebCmmService.calculateAllPeriod();
+    // when
+    calculateWebCmmService.calculateCmms(null);
+
+    // then
+    verify(facilityCmmsRepository).save(anyList());
+  }
+
+  @Test
+  public void shouldSuccessWhenCalculateSpecifiedPeriod() {
+    mockFacility();
+    when(siglusOrderableService.getAllProducts()).thenReturn(buildMockOrderableDtos());
+    when(processingPeriodRepository.findAll()).thenReturn(buildMockPeriods());
+    when(siglusStockCardRepository.findStockCardDtos(any(), any(), any())).thenReturn(buildMockStockOhHandDtos());
+    when(siglusStockCardLineItemRepository.findStockCardLineItemDtos(any(), any(), any())).thenReturn(
+        buildMockStockCardLineItemDtos());
+
+    calculateWebCmmService.calculateCmms(LocalDate.of(2021, 10, 21));
 
     verify(facilityCmmsRepository).save(anyList());
   }
 
   @Test
-  public void shouldNotSaveWhenCalculateAllPeriodWithNoProductMovement() {
-    mockFacilityExtension();
-    when(stockCardRepository.findAll()).thenReturn(buildMockStockCards());
-    when(orderableRepository.findLatestByIds(Sets.newHashSet(orderableId))).thenReturn(buildMockOrderables());
+  public void shouldNotSaveWhenSpecifiedPeriodBeforeFirstMovement() {
+    mockFacility();
+    when(siglusOrderableService.getAllProducts()).thenReturn(buildMockOrderableDtos());
     when(processingPeriodRepository.findAll()).thenReturn(buildMockPeriods());
-    when(siglusStockCardService.getProductMovements(any(), any(), any(), any())).thenReturn(null);
+    when(siglusStockCardRepository.findStockCardDtos(any(), any(), any())).thenReturn(buildMockStockOhHandDtos());
+    when(siglusStockCardLineItemRepository.findStockCardLineItemDtos(any(), any(), any())).thenReturn(
+        buildMockStockCardLineItemDtos());
 
-    calculateWebCmmService.calculateAllPeriod();
+    calculateWebCmmService.calculateCmms(LocalDate.of(2021, 8, 21));
 
     verify(facilityCmmsRepository, times(0)).save(anyList());
   }
 
-  @Test
-  public void shouldNotSaveWhenCalculateAllPeriodWithNoPeriod() {
-    mockFacilityExtension();
-    when(stockCardRepository.findAll()).thenReturn(buildMockStockCards());
-    when(orderableRepository.findLatestByIds(Sets.newHashSet(orderableId))).thenReturn(buildMockOrderables());
-    when(processingPeriodRepository.findAll()).thenReturn(Lists.newArrayList());
-    when(siglusStockCardService.getProductMovements(any(), any(), any(), any())).thenReturn(null);
-
-    calculateWebCmmService.calculateAllPeriod();
-
-    verify(facilityCmmsRepository, times(0)).save(anyList());
+  private void mockFacility() {
+    when(siglusFacilityRepository.findAllWebFacility()).thenReturn(buildMockFacilitys());
   }
 
-  @Test
-  public void shouldNotSaveWhenCalculateAllPeriodWithNoWebFacility() {
-    mockNoneFacilityExtension();
-    when(stockCardRepository.findAll()).thenReturn(buildMockStockCards());
-    when(orderableRepository.findLatestByIds(Sets.newHashSet(orderableId))).thenReturn(buildMockOrderables());
-    when(processingPeriodRepository.findAll()).thenReturn(buildMockPeriods());
-    when(siglusStockCardService.getProductMovements(any(), any(), any(), any())).thenReturn(null);
-
-    calculateWebCmmService.calculateAllPeriod();
-
-    verify(facilityCmmsRepository, times(0)).save(anyList());
+  private List<OrderableDto> buildMockOrderableDtos() {
+    OrderableDto orderableDto = new OrderableDto();
+    orderableDto.setId(orderableId);
+    orderableDto.setProductCode(orderableCode);
+    return Lists.newArrayList(orderableDto);
   }
 
-  @Test
-  public void shouldSuccessWhenCalculateCurrentPeriod() {
-    mockFacilityExtension();
-    when(stockCardRepository.findAll()).thenReturn(buildMockStockCards());
-    when(orderableRepository.findLatestByIds(Sets.newHashSet(orderableId))).thenReturn(buildMockOrderables());
-    when(processingPeriodRepository.findAll()).thenReturn(buildMockPeriods());
-    when(siglusStockCardService.getProductMovements(any(), any(), any(), any())).thenReturn(
-        buildStockMovementResDtos());
+  private List<StockCardLineItemDto> buildMockStockCardLineItemDtos() {
+    StockCardLineItemDto lineItem1 = StockCardLineItemDto.builder()
+        .orderableId(orderableId)
+        .occurredDate(LocalDate.of(2021, 9, 21))
+        .issueQuantity(30L)
+        .build();
+    StockCardLineItemDto lineItem2 = StockCardLineItemDto.builder()
+        .orderableId(orderableId)
+        .occurredDate(LocalDate.of(2021, 9, 22))
+        .issueQuantity(30L)
+        .build();
 
-    calculateWebCmmService.calculateCurrentPeriod();
-
-    verify(facilityCmmsRepository).save(anyList());
+    StockCardLineItemDto lineItem3 = StockCardLineItemDto.builder()
+        .orderableId(orderableId)
+        .occurredDate(LocalDate.of(2021, 10, 21))
+        .issueQuantity(30L)
+        .build();
+    StockCardLineItemDto lineItem4 = StockCardLineItemDto.builder()
+        .orderableId(orderableId)
+        .occurredDate(LocalDate.of(2021, 11, 20))
+        .issueQuantity(30L)
+        .build();
+    return Lists.newArrayList(lineItem1, lineItem2, lineItem3, lineItem4);
   }
 
-  private void mockFacilityExtension() {
-    Example<FacilityExtension> example = Example.of(FacilityExtension.builder().isAndroid(Boolean.FALSE).build());
-    when(facilityExtensionRepository.findAll(example)).thenReturn(buildMockFacilityExtensions());
-  }
-
-  private void mockNoneFacilityExtension() {
-    Example<FacilityExtension> example = Example.of(FacilityExtension.builder().isAndroid(Boolean.FALSE).build());
-    when(facilityExtensionRepository.findAll(example)).thenReturn(Lists.newArrayList());
-  }
-
-  private List<StockMovementResDto> buildStockMovementResDtos() {
-    StockMovementResDto firstStockMovementPeriod202109 = StockMovementResDto.builder()
-        .dateOfMovement(LocalDate.of(2021, 9, 21))
-        .productCode(orderableCode)
-        .movementQuantity(-1)
-        .type(MovementType.ISSUE.name())
-        .productSoh(110)
+  private List<StockOnHandDto> buildMockStockOhHandDtos() {
+    StockOnHandDto soh1 = StockOnHandDto.builder()
+        .orderableId(orderableId)
+        .occurredDate(LocalDate.of(2021, 9, 21))
+        .stockOnHand(110L)
+        .build();
+    StockOnHandDto soh2 = StockOnHandDto.builder()
+        .orderableId(orderableId)
+        .occurredDate(LocalDate.of(2021, 9, 22))
+        .stockOnHand(110L)
         .build();
 
-    StockMovementResDto stockMovementPeriod202110One = StockMovementResDto.builder()
-        .dateOfMovement(LocalDate.of(2021, 10, 21))
-        .productCode(orderableCode)
-        .movementQuantity(-10)
-        .type(MovementType.ISSUE.name())
-        .productSoh(100)
+    StockOnHandDto soh3 = StockOnHandDto.builder()
+        .orderableId(orderableId)
+        .occurredDate(LocalDate.of(2021, 10, 21))
+        .stockOnHand(110L)
         .build();
-    StockMovementResDto stockMovementPeriod202110Two = StockMovementResDto.builder()
-        .dateOfMovement(LocalDate.of(2021, 10, 22))
-        .productCode(orderableCode)
-        .movementQuantity(-20)
-        .type(MovementType.ISSUE.name())
-        .productSoh(80)
+    StockOnHandDto soh4 = StockOnHandDto.builder()
+        .orderableId(orderableId)
+        .occurredDate(LocalDate.of(2021, 11, 19))
+        .stockOnHand(0L)
         .build();
-    StockMovementResDto stockMovementPeriod202110Three = StockMovementResDto.builder()
-        .dateOfMovement(LocalDate.of(2021, 10, 23))
-        .productCode(orderableCode)
-        .movementQuantity(-30)
-        .type(MovementType.ISSUE.name())
-        .productSoh(50)
-        .build();
-    StockMovementResDto stockMovementPeriod202110FourNonIssue = StockMovementResDto.builder()
-        .dateOfMovement(LocalDate.of(2021, 10, 23))
-        .productCode(orderableCode)
-        .movementQuantity(30)
-        .type(MovementType.RECEIVE.name())
-        .productSoh(50)
+    StockOnHandDto soh5 = StockOnHandDto.builder()
+        .orderableId(orderableId)
+        .occurredDate(LocalDate.of(2021, 11, 20))
+        .stockOnHand(100L)
         .build();
 
-    StockMovementResDto stockMovementPeriod202111One = StockMovementResDto.builder()
-        .dateOfMovement(LocalDate.of(2021, 11, 21))
-        .productCode(orderableCode)
-        .movementQuantity(-30)
-        .type(MovementType.ISSUE.name())
-        .productSoh(10)
+    StockOnHandDto soh6 = StockOnHandDto.builder()
+        .orderableId(orderableId)
+        .occurredDate(LocalDate.of(2021, 12, 21))
+        .stockOnHand(110L)
         .build();
-    StockMovementResDto stockMovementPeriod202111Two = StockMovementResDto.builder()
-        .dateOfMovement(LocalDate.of(2021, 11, 22))
-        .productCode(orderableCode)
-        .movementQuantity(-30)
-        .type(MovementType.ISSUE.name())
-        .productSoh(0)
+    StockOnHandDto soh7 = StockOnHandDto.builder()
+        .orderableId(orderableId)
+        .occurredDate(LocalDate.of(2021, 12, 22))
+        .stockOnHand(110L)
         .build();
 
-    StockMovementResDto stockMovementPeriod202201One = StockMovementResDto.builder()
-        .dateOfMovement(LocalDate.of(2022, 1, 21))
-        .productCode(orderableCode)
-        .movementQuantity(-30)
-        .type(MovementType.ISSUE.name())
-        .productSoh(10)
-        .build();
-    StockMovementResDto stockMovementPeriod202201Two = StockMovementResDto.builder()
-        .dateOfMovement(LocalDate.of(2022, 1, 22))
-        .productCode(orderableCode)
-        .movementQuantity(-30)
-        .type(MovementType.ISSUE.name())
-        .productSoh(10)
-        .build();
-
-    StockMovementResDto stockMovementPeriodToday = StockMovementResDto.builder()
-        .dateOfMovement(LocalDate.now().minusMonths(1))
-        .productCode(orderableCode)
-        .movementQuantity(-30)
-        .type(MovementType.ISSUE.name())
-        .productSoh(10)
-        .build();
-
-    return Lists.newArrayList(firstStockMovementPeriod202109,
-        stockMovementPeriod202110One, stockMovementPeriod202110Two, stockMovementPeriod202110Three,
-        stockMovementPeriod202110FourNonIssue,
-        stockMovementPeriod202111One, stockMovementPeriod202111Two,
-        stockMovementPeriod202201One, stockMovementPeriod202201Two, stockMovementPeriodToday);
+    return Lists.newArrayList(soh1, soh2, soh3, soh4, soh5, soh6, soh7);
   }
 
   private List<ProcessingPeriod> buildMockPeriods() {
@@ -237,48 +198,37 @@ public class CalculateWebCmmServiceTest {
     ProcessingSchedule m2Schedule = new ProcessingSchedule();
     m2Schedule.setCode(Code.code("M2"));
     List<ProcessingPeriod> periods = Lists.newArrayList();
-    for (int i = 1; i < 12; i++) {
+    for (int i = 1; i <= 12; i++) {
+      LocalDate startDate = LocalDate.of(2021, i, 21);
       ProcessingPeriod m1ProcessingPeriod = ProcessingPeriod.newPeriod(i + "-2021", m1Schedule,
-          LocalDate.of(2021, i, 21), LocalDate.of(2021, i + 1, 20));
+          startDate, startDate.plusMonths(1).minusDays(1));
       periods.add(m1ProcessingPeriod);
     }
-    for (int i = 1; i < 12; i++) {
+    for (int i = 1; i <= 12; i++) {
+      LocalDate startDate = LocalDate.of(2022, i, 21);
       ProcessingPeriod m1ProcessingPeriod = ProcessingPeriod.newPeriod(i + "-2022", m1Schedule,
-          LocalDate.of(2022, i, 21), LocalDate.of(2022, i + 1, 20));
+          startDate, startDate.plusMonths(1).minusDays(1));
       periods.add(m1ProcessingPeriod);
 
       ProcessingPeriod m2ProcessingPeriod = ProcessingPeriod.newPeriod(i + "-2022", m2Schedule,
-          LocalDate.of(2022, i, 21), LocalDate.of(2022, i + 1, 20));
+          startDate, startDate.plusMonths(1).minusDays(1));
       periods.add(m2ProcessingPeriod);
+    }
+    for (int i = 1; i <= 12; i++) {
+      LocalDate startDate = LocalDate.of(2023, i, 21);
+      ProcessingPeriod m1ProcessingPeriod = ProcessingPeriod.newPeriod(i + "-2023", m1Schedule,
+          startDate, startDate.plusMonths(1).minusDays(1));
+      periods.add(m1ProcessingPeriod);
     }
     return periods;
   }
 
-  private List<Orderable> buildMockOrderables() {
-    Orderable orderable = new Orderable(Code.code(orderableCode), null, 0, 0, Boolean.FALSE, orderableId, 0L);
-    return Lists.newArrayList(orderable);
-  }
-
-  private List<StockCard> buildMockStockCards() {
-    StockCard stockCard = StockCard.builder()
-        .facilityId(facilityId)
-        .orderableId(orderableId)
-        .build();
-    stockCard.setId(stockCardId);
-
-    StockCard stockCardSameOrderable = StockCard.builder()
-        .facilityId(facilityId)
-        .orderableId(orderableId)
-        .build();
-    stockCard.setId(UUID.randomUUID());
-    return Lists.newArrayList(stockCard, stockCardSameOrderable);
-  }
-
-  private List<FacilityExtension> buildMockFacilityExtensions() {
-    FacilityExtension facilityExtension = FacilityExtension.builder()
-        .facilityId(facilityId)
-        .facilityCode("facility Code")
-        .build();
-    return Lists.newArrayList(facilityExtension);
+  private List<Facility> buildMockFacilitys() {
+    Facility facility = new Facility();
+    facility.setId(facilityId);
+    facility.setCode(facilityCode);
+    facility.setActive(Boolean.TRUE);
+    facility.setEnabled(Boolean.TRUE);
+    return Lists.newArrayList(facility);
   }
 }
