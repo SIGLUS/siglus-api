@@ -41,7 +41,7 @@ import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.domain.event.CalculatedStockOnHand;
 import org.openlmis.stockmanagement.repository.CalculatedStockOnHandRepository;
 import org.openlmis.stockmanagement.repository.StockCardRepository;
-import org.siglus.siglusapi.domain.CalculatedStocksOnHandLocations;
+import org.siglus.siglusapi.domain.CalculatedStockOnHandByLocation;
 import org.siglus.siglusapi.domain.FacilityLocations;
 import org.siglus.siglusapi.dto.DisplayedLotDto;
 import org.siglus.siglusapi.dto.FacilityLocationsDto;
@@ -49,7 +49,7 @@ import org.siglus.siglusapi.dto.LotLocationDto;
 import org.siglus.siglusapi.dto.LotLocationPair;
 import org.siglus.siglusapi.dto.LotsDto;
 import org.siglus.siglusapi.exception.NotFoundException;
-import org.siglus.siglusapi.repository.CalculatedStocksOnHandLocationsRepository;
+import org.siglus.siglusapi.repository.CalculatedStockOnHandByLocationRepository;
 import org.siglus.siglusapi.repository.FacilityLocationsRepository;
 import org.siglus.siglusapi.repository.FacilityNativeRepository;
 import org.siglus.siglusapi.repository.dto.FacilityProgramPeriodScheduleDto;
@@ -74,7 +74,7 @@ public class SiglusLotLocationService {
   private LotRepository lotRepository;
 
   @Autowired
-  private CalculatedStocksOnHandLocationsRepository calculatedStocksOnHandLocationsRepository;
+  private CalculatedStockOnHandByLocationRepository calculatedStockOnHandByLocationRepository;
 
   @Autowired
   private FacilityNativeRepository facilityNativeRepository;
@@ -171,7 +171,7 @@ public class SiglusLotLocationService {
         lotLocationDtos.add(LotLocationDto
             .builder()
             .locationCode(locationCode)
-            .area(locationPairs.get(0).getCalculatedStocksOnHandLocations().getArea())
+            .area(locationPairs.get(0).getCalculatedStockOnHandByLocation().getArea())
             .lots(lotDtoList)
             .build());
       });
@@ -186,10 +186,10 @@ public class SiglusLotLocationService {
     List<StockCard> stockCardList = stockCardRepository.findByFacilityIdAndOrderableId(facilityId,
         orderableId);
 
-    Map<UUID, List<CalculatedStocksOnHandLocations>> lotIdToLocationSohListMap = new HashMap<>();
+    Map<UUID, List<CalculatedStockOnHandByLocation>> lotIdToLocationSohListMap = new HashMap<>();
     stockCardList.forEach(stockCard -> {
-      List<CalculatedStocksOnHandLocations> recentlyLocationSohList =
-          calculatedStocksOnHandLocationsRepository.findRecentlyLocationSohByStockCardId(stockCard.getId());
+      List<CalculatedStockOnHandByLocation> recentlyLocationSohList =
+          calculatedStockOnHandByLocationRepository.findRecentlyLocationSohByStockCardId(stockCard.getId());
       if (!recentlyLocationSohList.isEmpty()) {
         lotIdToLocationSohListMap.put(stockCard.getLotId(), recentlyLocationSohList);
       }
@@ -201,19 +201,19 @@ public class SiglusLotLocationService {
   }
 
   private Map<String, List<LotLocationPair>> reverseMappingRelationship(
-      Map<UUID, List<CalculatedStocksOnHandLocations>> lotIdToLocationIdMap) {
+      Map<UUID, List<CalculatedStockOnHandByLocation>> lotIdToLocationIdMap) {
     List<LotLocationPair> lotLocationPairs = new LinkedList<>();
 
     lotIdToLocationIdMap.forEach((lotId, locationStockOnHandList) -> {
       locationStockOnHandList.forEach(locationsStockOnHand -> {
         lotLocationPairs.add(LotLocationPair.builder().lotId(lotId)
-            .calculatedStocksOnHandLocations(locationsStockOnHand)
+            .calculatedStockOnHandByLocation(locationsStockOnHand)
             .build());
       });
     });
 
     return lotLocationPairs.stream()
-        .collect(Collectors.groupingBy(e -> e.getCalculatedStocksOnHandLocations().getLocationCode()));
+        .collect(Collectors.groupingBy(e -> e.getCalculatedStockOnHandByLocation().getLocationCode()));
   }
 
   private List<LotsDto> getLotsDtos(UUID orderableId, List<LotLocationPair> locationPairs) {
@@ -226,7 +226,7 @@ public class SiglusLotLocationService {
           .builder()
           .lotId(lotId).orderablesId(orderableId).lotCode(lot.getLotCode())
           .stockOnHand(locationPair
-              .getCalculatedStocksOnHandLocations()
+              .getCalculatedStockOnHandByLocation()
               .getStockonhand())
           .expirationDate(lot.getExpirationDate())
           .build());

@@ -16,17 +16,22 @@
 package org.siglus.siglusapi.repository;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import javax.persistence.criteria.Predicate;
+
 import org.openlmis.stockmanagement.domain.card.StockCard;
+import org.openlmis.stockmanagement.dto.StockEventLineItemDto;
 import org.siglus.siglusapi.repository.dto.StockOnHandDto;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 @SuppressWarnings("PMD.AvoidDuplicateLiterals")
-public interface SiglusStockCardRepository extends JpaRepository<StockCard, UUID> {
+public interface SiglusStockCardRepository extends JpaRepository<StockCard, UUID>, JpaSpecificationExecutor<StockCard> {
 
   List<StockCard> findByFacilityIdAndOrderableId(
       @Param("facilityId") UUID facilityId,
@@ -40,6 +45,19 @@ public interface SiglusStockCardRepository extends JpaRepository<StockCard, UUID
 
   void deleteStockCardsByFacilityIdAndOrderableIdIn(@Param("facilityId") UUID facilityId,
       @Param("orderableId") Set<UUID> orderableIds);
+
+  default List<StockCard> findByFacilityIdAndLineItems(UUID facilityId, List<StockEventLineItemDto> lineItems) {
+    return findAll((root, query, cb) -> {
+      Predicate byFacility = cb.equal(root.get("facilityId"), facilityId);
+      List<Predicate> predicates = new ArrayList<>();
+      lineItems.forEach(lineItem -> {
+        predicates.add(cb.and(cb.equal(root.get("orderableId"), lineItem.getOrderableId()),
+                cb.equal(root.get("lotId"), lineItem.getLotId())));
+      });
+      Predicate byOrderableIdAndLotId = predicates.stream().reduce(cb.conjunction(), cb::or);
+      return cb.and(byFacility, byOrderableIdAndLotId);
+    });
+  }
 
   @Query(name = "StockCard.findStockOnHandDto", nativeQuery = true)
   List<StockOnHandDto> findStockCardDtos(@Param("facilityId") UUID facilityId, @Param("startDate") LocalDate startDate,

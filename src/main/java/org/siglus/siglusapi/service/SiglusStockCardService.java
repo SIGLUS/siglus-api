@@ -46,7 +46,7 @@ import org.openlmis.stockmanagement.util.AuthenticationHelper;
 import org.siglus.siglusapi.domain.StockCardExtension;
 import org.siglus.siglusapi.dto.LotLocationSohDto;
 import org.siglus.siglusapi.dto.StockMovementResDto;
-import org.siglus.siglusapi.repository.CalculatedStocksOnHandLocationsRepository;
+import org.siglus.siglusapi.repository.CalculatedStockOnHandByLocationRepository;
 import org.siglus.siglusapi.repository.SiglusStockCardRepository;
 import org.siglus.siglusapi.repository.StockCardExtensionRepository;
 import org.siglus.siglusapi.service.client.SiglusStockManagementService;
@@ -89,7 +89,7 @@ public class SiglusStockCardService {
   private StockMovementService stockMovementService;
 
   @Autowired
-  private CalculatedStocksOnHandLocationsRepository calculatedStocksOnHandLocationsRepository;
+  private CalculatedStockOnHandByLocationRepository calculatedStockOnHandByLocationRepository;
 
   private static String LOCATION_KEY = "locationCode";
 
@@ -118,7 +118,7 @@ public class SiglusStockCardService {
       return null;
     }
     StockCardDto aggregateStockCards = findAggregateStockCards(Collections.singletonList(stockCard), true);
-    List<LotLocationSohDto> locationSoh = calculatedStocksOnHandLocationsRepository.getLocationSoh(
+    List<LotLocationSohDto> locationSoh = calculatedStockOnHandByLocationRepository.getLocationSoh(
         Collections.singletonList(stockCard.getLotId()));
     String locationCodes =
         locationSoh.stream().map(LotLocationSohDto::getLocationCode).collect(Collectors.joining(","));

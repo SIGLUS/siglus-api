@@ -20,7 +20,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.siglus.siglusapi.domain.CalculatedStocksOnHandLocations;
+import org.siglus.siglusapi.domain.CalculatedStockOnHandByLocation;
 
 @Builder
 @Data
@@ -29,6 +29,6 @@ import org.siglus.siglusapi.domain.CalculatedStocksOnHandLocations;
 public class LotLocationPair {
 
   private UUID lotId;
-  private CalculatedStocksOnHandLocations calculatedStocksOnHandLocations;
+  private CalculatedStockOnHandByLocation calculatedStockOnHandByLocation;
 
 }

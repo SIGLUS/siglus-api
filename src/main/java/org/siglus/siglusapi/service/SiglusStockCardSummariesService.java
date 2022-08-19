@@ -73,7 +73,7 @@ import org.siglus.siglusapi.dto.StockCardDetailsDto;
 import org.siglus.siglusapi.dto.StockCardDetailsWithLocationDto;
 import org.siglus.siglusapi.dto.StockCardSummaryDto;
 import org.siglus.siglusapi.dto.StockCardSummaryWithLocationDto;
-import org.siglus.siglusapi.repository.CalculatedStocksOnHandLocationsRepository;
+import org.siglus.siglusapi.repository.CalculatedStockOnHandByLocationRepository;
 import org.siglus.siglusapi.repository.PhysicalInventoryLineItemsExtensionRepository;
 import org.siglus.siglusapi.repository.PhysicalInventorySubDraftRepository;
 import org.siglus.siglusapi.repository.StockManagementDraftRepository;
@@ -142,7 +142,7 @@ public class SiglusStockCardSummariesService {
   private LotController lotController;
 
   @Autowired
-  private CalculatedStocksOnHandLocationsRepository calculatedStocksOnHandLocationsRepository;
+  private CalculatedStockOnHandByLocationRepository calculatedStockOnHandByLocationRepository;
 
   public List<org.openlmis.referencedata.dto.LotDto> getLotsDataByOrderableIds(List<UUID> orderableIds) {
     if (CollectionUtils.isEmpty(orderableIds)) {
@@ -434,7 +434,7 @@ public class SiglusStockCardSummariesService {
     List<OrderableDto> orderableDtos = getOrderableDtos(pageable, orderableIds, facilityId);
     List<LotDto> lotDtos = getLotDtos(canFulfillForMeEntryDtos);
     List<UUID> lotIds = lotDtos.stream().map(LotDto::getId).collect(Collectors.toList());
-    List<LotLocationSohDto> locationSoh = calculatedStocksOnHandLocationsRepository.getLocationSoh(lotIds);
+    List<LotLocationSohDto> locationSoh = calculatedStockOnHandByLocationRepository.getLocationSoh(lotIds);
     return combineResponse(stockCardSummaryV2Dtos, orderableDtos, lotDtos, locationSoh);
   }
 

@@ -50,7 +50,7 @@ import org.openlmis.stockmanagement.util.AuthenticationHelper;
 import org.siglus.siglusapi.domain.StockCardExtension;
 import org.siglus.siglusapi.dto.LotLocationSohDto;
 import org.siglus.siglusapi.dto.StockMovementResDto;
-import org.siglus.siglusapi.repository.CalculatedStocksOnHandLocationsRepository;
+import org.siglus.siglusapi.repository.CalculatedStockOnHandByLocationRepository;
 import org.siglus.siglusapi.repository.SiglusStockCardRepository;
 import org.siglus.siglusapi.repository.StockCardExtensionRepository;
 import org.siglus.siglusapi.service.client.SiglusStockManagementService;
@@ -95,7 +95,7 @@ public class SiglusStockCardServiceTest {
   private StockMovementService stockMovementService;
 
   @Mock
-  private CalculatedStocksOnHandLocationsRepository calculatedStocksOnHandLocationsRepository;
+  private CalculatedStockOnHandByLocationRepository calculatedStockOnHandByLocationRepository;
 
   @InjectMocks
   private SiglusStockCardService siglusStockCardService;
@@ -160,7 +160,7 @@ public class SiglusStockCardServiceTest {
         .thenReturn(getFromStockCard(stockCardOne));
     LotLocationSohDto locationSohDto =
         LotLocationSohDto.builder().lotId(stockCardOne.getLotId()).locationCode("AA031").stockOnHand(1).build();
-    when(calculatedStocksOnHandLocationsRepository.getLocationSoh(any())).thenReturn(newArrayList(locationSohDto));
+    when(calculatedStockOnHandByLocationRepository.getLocationSoh(any())).thenReturn(newArrayList(locationSohDto));
     // when
     StockCardDto stockCardDto = siglusStockCardService.findStockCardWithLocationById(stockCardOne.getId());
     assertEquals(stockCardDto.getExtraData().get("locationCode").isEmpty(), false);

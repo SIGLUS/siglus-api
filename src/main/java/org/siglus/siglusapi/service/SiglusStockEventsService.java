@@ -62,7 +62,7 @@ import org.siglus.siglusapi.dto.StockEventForMultiUserDto;
 import org.siglus.siglusapi.dto.StockManagementDraftDto;
 import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
-import org.siglus.siglusapi.repository.CalculatedStocksOnHandLocationsRepository;
+import org.siglus.siglusapi.repository.CalculatedStockOnHandByLocationRepository;
 import org.siglus.siglusapi.repository.FacilityLocationsRepository;
 import org.siglus.siglusapi.repository.StockCardExtensionRepository;
 import org.siglus.siglusapi.repository.StockCardLineItemExtensionRepository;
@@ -94,7 +94,7 @@ public class SiglusStockEventsService {
   private final SiglusLotService siglusLotService;
   private final FacilityLocationsRepository facilityLocationsRepository;
   private final StockCardLineItemReasonRepository stockCardLineItemReasonRepository;
-  private final CalculatedStocksOnHandLocationsRepository calculatedStocksOnHandLocationsRepository;
+  private final CalculatedStockOnHandByLocationRepository calculatedStockOnHandByLocationRepository;
   @Value("${stockmanagement.kit.unpack.destination.nodeId}")
   private UUID unpackDestinationNodeId;
 
@@ -334,7 +334,7 @@ public class SiglusStockEventsService {
       );
       int soh = 0;
       if (null != stockCard) {
-        soh = calculatedStocksOnHandLocationsRepository
+        soh = calculatedStockOnHandByLocationRepository
             .findRecentlySohByStockCardIdAndLocationCode(
                 stockCard.getId(),
                 stockEventLineItemDto.getLocationCode()).orElse(0);

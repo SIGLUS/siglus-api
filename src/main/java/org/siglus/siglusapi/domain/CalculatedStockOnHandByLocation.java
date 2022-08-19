@@ -33,19 +33,24 @@ import org.siglus.common.domain.BaseEntity;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-@Table(name = "calculated_stocks_on_hand_locations", schema = "siglusintegration")
-public class CalculatedStocksOnHandLocations extends BaseEntity {
+@Table(name = "calculated_stocks_on_hand_by_location", schema = "siglusintegration")
+public class CalculatedStockOnHandByLocation extends BaseEntity {
 
   @Column(name = "stockcardid")
   private UUID stockCardId;
+
   @Column(name = "occurreddate")
   private Date occurreddate;
+
   @Column(name = "stockonhand")
   private Integer stockonhand;
-  @Column(name = "calculatedstocksonhandid")
+
+  @Column(name = "calculatedstockonhandid")
   private UUID calculatedStocksOnHandId;
+
   @Column(name = "locationcode")
   private String locationCode;
+
   @Column(name = "area")
   private String area;
 

@@ -64,7 +64,7 @@ import org.siglus.siglusapi.dto.QueryOrderableSearchParams;
 import org.siglus.siglusapi.dto.StockCardDetailsDto;
 import org.siglus.siglusapi.dto.StockCardSummaryWithLocationDto;
 import org.siglus.siglusapi.dto.UserDto;
-import org.siglus.siglusapi.repository.CalculatedStocksOnHandLocationsRepository;
+import org.siglus.siglusapi.repository.CalculatedStockOnHandByLocationRepository;
 import org.siglus.siglusapi.repository.PhysicalInventoryLineItemsExtensionRepository;
 import org.siglus.siglusapi.repository.PhysicalInventorySubDraftRepository;
 import org.siglus.siglusapi.repository.StockManagementDraftRepository;
@@ -123,7 +123,7 @@ public class SiglusStockCardSummariesServiceTest {
   private SiglusOrderableService siglusOrderableService;
 
   @Mock
-  private CalculatedStocksOnHandLocationsRepository calculatedStocksOnHandLocationsRepository;
+  private CalculatedStockOnHandByLocationRepository calculatedStockOnHandByLocationRepository;
 
   @InjectMocks
   private SiglusStockCardSummariesService service;
@@ -394,7 +394,7 @@ public class SiglusStockCardSummariesServiceTest {
         .thenReturn(page);
     LotLocationSohDto locationSohDto =
         LotLocationSohDto.builder().lotId(lotId).locationCode(null).stockOnHand(1).build();
-    when(calculatedStocksOnHandLocationsRepository.getLocationSoh(any())).thenReturn(newArrayList(locationSohDto));
+    when(calculatedStockOnHandByLocationRepository.getLocationSoh(any())).thenReturn(newArrayList(locationSohDto));
     List<StockCardSummaryWithLocationDto> stockCardSummaryWithLocationDtos =
         service.getStockCardSummaryWithLocationDtos(getProgramsParms(), null, subDraftId, pageable);
     assertEquals(stockCardSummaryWithLocationDtos.size(), 1);
