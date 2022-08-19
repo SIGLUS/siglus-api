@@ -37,9 +37,8 @@ import org.siglus.siglusapi.dto.android.enumeration.Destination;
 import org.siglus.siglusapi.dto.android.enumeration.Source;
 import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.repository.RequisitionGroupMembersRepository;
-import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.service.client.ValidSourceDestinationStockManagementService;
-import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
+import org.siglus.siglusapi.util.AndroidHelper;
 import org.siglus.siglusapi.util.SupportedProgramsHelper;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -48,14 +47,12 @@ import org.springframework.util.CollectionUtils;
 @RequiredArgsConstructor
 public class SiglusValidSourceDestinationService {
 
-  private static final String OUTROS = "Outros";
   private final ValidSourceDestinationStockManagementService validSourceDestinationStockManagementService;
   private final RequisitionGroupMembersRepository requisitionGroupMembersRepository;
   private final SupportedProgramsHelper supportedProgramsHelper;
-  private final SiglusFacilityReferenceDataService facilityReferenceDataService;
   private final NodeRepository nodeRepository;
   private final FacilityRepository facilityRepository;
-  private final SiglusAuthenticationHelper authenticationHelper;
+  private final AndroidHelper androidHelper;
 
   public Collection<ValidSourceDestinationDto> findSourcesForOneProgram(UUID programId, UUID facilityId) {
     Set<UUID> programIds = new HashSet<>();
@@ -95,11 +92,11 @@ public class SiglusValidSourceDestinationService {
     if (programIdToSupervisoryFacilities.size() > 0) {
       facilitySources = getSourceDestinationsByFacilityIds(programIdToSupervisoryFacilities.get(programId), programId);
     }
-    boolean isDataMigrationContext = authenticationHelper.isTheDataMigrationUser();
+    boolean isAndroidContext = androidHelper.isAndroid();
     Collection<ValidSourceDestinationDto> commonSources = validSourceDestinationStockManagementService.getValidSources(
             programId, facilityId).stream()
         .filter(i -> !i.getNode().isRefDataFacility())
-        .filter(i -> isDataMigrationContext
+        .filter(i -> isAndroidContext
             || Arrays.stream(Source.values()).noneMatch(e -> e.getName().equals(i.getName())))
         .collect(Collectors.toList());
     Collection<ValidSourceDestinationDto> allSources = new ArrayList<>();
@@ -114,11 +111,11 @@ public class SiglusValidSourceDestinationService {
     if (programIdToMemberFacilities.size() > 0) {
       facilityDestinations = getSourceDestinationsByFacilityIds(programIdToMemberFacilities.get(programId), programId);
     }
-    boolean isDataMigrationContext = authenticationHelper.isTheDataMigrationUser();
+    boolean isAndroidContext = androidHelper.isAndroid();
     Collection<ValidSourceDestinationDto> commonDestinations =
         validSourceDestinationStockManagementService.getValidDestinations(programId, facilityId).stream()
             .filter(i -> !i.getNode().isRefDataFacility())
-            .filter(i -> isDataMigrationContext || !Destination.UNPACK_KIT.getName().equals(i.getName()))
+            .filter(i -> isAndroidContext || !Destination.UNPACK_KIT.getName().equals(i.getName()))
             .collect(Collectors.toList());
     Collection<ValidSourceDestinationDto> allDestinations = new ArrayList<>();
     allDestinations.addAll(facilityDestinations);

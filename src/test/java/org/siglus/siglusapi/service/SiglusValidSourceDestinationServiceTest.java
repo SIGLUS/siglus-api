@@ -50,7 +50,7 @@ import org.siglus.siglusapi.dto.RequisitionGroupMembersDto;
 import org.siglus.siglusapi.repository.RequisitionGroupMembersRepository;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.service.client.ValidSourceDestinationStockManagementService;
-import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
+import org.siglus.siglusapi.util.AndroidHelper;
 import org.siglus.siglusapi.util.SupportedProgramsHelper;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -60,7 +60,7 @@ public class SiglusValidSourceDestinationServiceTest {
   private SiglusValidSourceDestinationService siglusValidSourceDestinationService;
 
   @Mock
-  private SiglusAuthenticationHelper siglusAuthenticationHelper;
+  private AndroidHelper androidHelper;
 
   @Mock
   private ValidSourceDestinationStockManagementService validSourceDestinationStockManagementService;
@@ -259,7 +259,7 @@ public class SiglusValidSourceDestinationServiceTest {
     facility.setId(facilityId);
     when(facilityRepository.findByIdIn(anyList())).thenReturn(Collections.singletonList(facility));
     when(nodeRepository.findByReferenceIdIn(anyList())).thenReturn(Collections.singletonList(node));
-    given(siglusAuthenticationHelper.isTheDataMigrationUser()).willReturn(false);
+    given(androidHelper.isAndroid()).willReturn(false);
   }
 
   private FacilityDto buildFacilityDtoByFacilityIdAndTypeCode(UUID facilityId, String facilityTypeCode) {
