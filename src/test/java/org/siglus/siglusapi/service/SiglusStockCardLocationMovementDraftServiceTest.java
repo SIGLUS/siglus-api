@@ -36,26 +36,26 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.siglus.siglusapi.domain.ProductLocationMovementDraft;
-import org.siglus.siglusapi.dto.ProductLocationMovementDraftDto;
-import org.siglus.siglusapi.dto.ProductLocationMovementDraftLineItemDto;
+import org.siglus.siglusapi.domain.StockCardLocationMovementDraft;
+import org.siglus.siglusapi.dto.StockCardLocationMovementDraftDto;
+import org.siglus.siglusapi.dto.StockCardLocationMovementDraftLineItemDto;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
-import org.siglus.siglusapi.repository.ProductLocationMovementDraftRepository;
+import org.siglus.siglusapi.repository.StockCardLocationMovementDraftRepository;
 import org.siglus.siglusapi.util.OperatePermissionService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.validator.ActiveDraftValidator;
-import org.siglus.siglusapi.validator.ProductLocationMovementDraftValidator;
+import org.siglus.siglusapi.validator.StockCardLocationMovementDraftValidator;
 
 @RunWith(MockitoJUnitRunner.class)
-public class SiglusProductLocationMovementDraftServiceTest {
+public class SiglusStockCardLocationMovementDraftServiceTest {
 
   @Rule
   public ExpectedException exception = ExpectedException.none();
 
   @InjectMocks
-  private SiglusProductLocationMovementDraftService service;
+  private SiglusStockCardLocationMovementDraftService service;
 
   @Mock
   private OperatePermissionService operatePermissionService;
@@ -67,19 +67,19 @@ public class SiglusProductLocationMovementDraftServiceTest {
   private ActiveDraftValidator draftValidator;
 
   @Mock
-  private ProductLocationMovementDraftRepository productLocationMovementDraftRepository;
+  private StockCardLocationMovementDraftRepository stockCardLocationMovementDraftRepository;
 
   @Mock
-  private ProductLocationMovementDraftValidator productLocationMovementDraftValidator;
+  private StockCardLocationMovementDraftValidator stockCardLocationMovementDraftValidator;
 
   private final UUID programId = UUID.randomUUID();
   private final UUID facilityId = UUID.randomUUID();
   private final UUID movementDraftId = UUID.randomUUID();
   private final UUID orderableId = UUID.randomUUID();
   private final UUID lotId = UUID.randomUUID();
-  private final ProductLocationMovementDraftDto movementDraftDto = ProductLocationMovementDraftDto
+  private final StockCardLocationMovementDraftDto movementDraftDto = StockCardLocationMovementDraftDto
       .builder().programId(programId).facilityId(facilityId).build();
-  private final ProductLocationMovementDraft movementDraft = ProductLocationMovementDraft
+  private final StockCardLocationMovementDraft movementDraft = StockCardLocationMovementDraft
       .builder().programId(programId).facilityId(facilityId).build();
 
   @Before
@@ -92,14 +92,14 @@ public class SiglusProductLocationMovementDraftServiceTest {
   @Test
   public void shouldCreateEmptyProductLocationMovementDraft() {
 
-    doNothing().when(productLocationMovementDraftValidator)
+    doNothing().when(stockCardLocationMovementDraftValidator)
         .validateEmptyMovementDraft(movementDraftDto);
-    when(productLocationMovementDraftRepository.findByProgramIdAndFacilityId(programId, facilityId)).thenReturn(
+    when(stockCardLocationMovementDraftRepository.findByProgramIdAndFacilityId(programId, facilityId)).thenReturn(
         Collections.emptyList());
-    when(productLocationMovementDraftRepository.save(any(ProductLocationMovementDraft.class)))
+    when(stockCardLocationMovementDraftRepository.save(any(StockCardLocationMovementDraft.class)))
         .thenReturn(movementDraft);
 
-    ProductLocationMovementDraftDto emptyProductLocationMovementDraft = service
+    StockCardLocationMovementDraftDto emptyProductLocationMovementDraft = service
         .createEmptyMovementDraft(movementDraftDto);
 
     assertThat(emptyProductLocationMovementDraft.getProgramId()).isEqualTo(programId);
@@ -111,9 +111,9 @@ public class SiglusProductLocationMovementDraftServiceTest {
     exception.expect(ValidationMessageException.class);
     exception.expectMessage(containsString(ERROR_MOVEMENT_DRAFT_EXISTS));
 
-    doNothing().when(productLocationMovementDraftValidator)
+    doNothing().when(stockCardLocationMovementDraftValidator)
         .validateEmptyMovementDraft(movementDraftDto);
-    when(productLocationMovementDraftRepository.findByProgramIdAndFacilityId(programId, facilityId))
+    when(stockCardLocationMovementDraftRepository.findByProgramIdAndFacilityId(programId, facilityId))
         .thenReturn(newArrayList(movementDraft));
 
     service.createEmptyMovementDraft(movementDraftDto);
@@ -123,27 +123,28 @@ public class SiglusProductLocationMovementDraftServiceTest {
   public void shouldSearchMovementDrafts() {
     doNothing().when(draftValidator).validateFacilityId(facilityId);
     doNothing().when(draftValidator).validateProgramId(programId);
-    when(productLocationMovementDraftRepository.findByProgramIdAndFacilityId(programId, facilityId))
+    when(stockCardLocationMovementDraftRepository.findByProgramIdAndFacilityId(programId, facilityId))
         .thenReturn(newArrayList(movementDraft));
     doNothing().when(operatePermissionService).checkPermission(facilityId);
 
-    List<ProductLocationMovementDraftDto> productLocationMovementDraftDtos = service.searchMovementDrafts(programId);
+    List<StockCardLocationMovementDraftDto> stockCardLocationMovementDraftDtos =
+        service.searchMovementDrafts(programId);
 
-    assertThat(productLocationMovementDraftDtos.size()).isEqualTo(1);
+    assertThat(stockCardLocationMovementDraftDtos.size()).isEqualTo(1);
   }
 
   @Test
   public void shouldSearchMovementDraft() {
-    when(productLocationMovementDraftRepository.findOne(movementDraftId)).thenReturn(movementDraft);
-    ProductLocationMovementDraftDto productLocationMovementDraftDto = service.searchMovementDraft(movementDraftId);
+    when(stockCardLocationMovementDraftRepository.findOne(movementDraftId)).thenReturn(movementDraft);
+    StockCardLocationMovementDraftDto stockCardLocationMovementDraftDto = service.searchMovementDraft(movementDraftId);
 
-    assertThat(productLocationMovementDraftDto.getFacilityId()).isEqualTo(facilityId);
-    assertThat(productLocationMovementDraftDto.getProgramId()).isEqualTo(programId);
+    assertThat(stockCardLocationMovementDraftDto.getFacilityId()).isEqualTo(facilityId);
+    assertThat(stockCardLocationMovementDraftDto.getProgramId()).isEqualTo(programId);
   }
 
   @Test
   public void shouldUpdateMovementDraft() {
-    ProductLocationMovementDraftLineItemDto lineItemDto = ProductLocationMovementDraftLineItemDto.builder()
+    StockCardLocationMovementDraftLineItemDto lineItemDto = StockCardLocationMovementDraftLineItemDto.builder()
         .orderableId(orderableId)
         .lotId(lotId)
         .srcArea("A")
@@ -152,26 +153,26 @@ public class SiglusProductLocationMovementDraftServiceTest {
         .stockOnHand(30)
         .build();
     movementDraftDto.setLineItems(newArrayList(lineItemDto));
-    ProductLocationMovementDraft movementDraft = ProductLocationMovementDraft
+    StockCardLocationMovementDraft movementDraft = StockCardLocationMovementDraft
         .createMovementDraft(movementDraftDto);
-    doNothing().when(productLocationMovementDraftValidator)
+    doNothing().when(stockCardLocationMovementDraftValidator)
         .validateMovementDraftAndLineItems(movementDraftDto, movementDraftId);
-    when(productLocationMovementDraftRepository.save(movementDraft)).thenReturn(movementDraft);
+    when(stockCardLocationMovementDraftRepository.save(movementDraft)).thenReturn(movementDraft);
 
-    ProductLocationMovementDraftDto productLocationMovementDraftDto = service
+    StockCardLocationMovementDraftDto stockCardLocationMovementDraftDto = service
         .updateMovementDraft(movementDraftDto, movementDraftId);
 
-    assertThat(productLocationMovementDraftDto.getProgramId()).isEqualTo(programId);
-    assertThat(productLocationMovementDraftDto.getFacilityId()).isEqualTo(facilityId);
+    assertThat(stockCardLocationMovementDraftDto.getProgramId()).isEqualTo(programId);
+    assertThat(stockCardLocationMovementDraftDto.getFacilityId()).isEqualTo(facilityId);
   }
 
   @Test
   public void shouldDeleteMovementDraftById() {
-    when(productLocationMovementDraftRepository.findOne(movementDraftId)).thenReturn(movementDraft);
-    doNothing().when(productLocationMovementDraftValidator).validateMovementDraft(movementDraft);
+    when(stockCardLocationMovementDraftRepository.findOne(movementDraftId)).thenReturn(movementDraft);
+    doNothing().when(stockCardLocationMovementDraftValidator).validateMovementDraft(movementDraft);
 
     service.deleteMovementDraft(movementDraftId);
-    verify(productLocationMovementDraftRepository).delete(movementDraft);
+    verify(stockCardLocationMovementDraftRepository).delete(movementDraft);
   }
 
   @Test
@@ -179,7 +180,7 @@ public class SiglusProductLocationMovementDraftServiceTest {
     exception.expect(BusinessDataException.class);
     exception.expectMessage(containsString(ERROR_MOVEMENT_QUANTITY_MORE_THAN_STOCK_ON_HAND));
 
-    ProductLocationMovementDraftLineItemDto lineItemDto = ProductLocationMovementDraftLineItemDto.builder()
+    StockCardLocationMovementDraftLineItemDto lineItemDto = StockCardLocationMovementDraftLineItemDto.builder()
         .orderableId(orderableId)
         .lotId(lotId)
         .srcArea("A")
@@ -189,7 +190,7 @@ public class SiglusProductLocationMovementDraftServiceTest {
         .build();
     movementDraftDto.setLineItems(newArrayList(lineItemDto));
 
-    doNothing().when(productLocationMovementDraftValidator)
+    doNothing().when(stockCardLocationMovementDraftValidator)
         .validateMovementDraftAndLineItems(movementDraftDto, movementDraftId);
 
     service.updateMovementDraft(movementDraftDto, movementDraftId);

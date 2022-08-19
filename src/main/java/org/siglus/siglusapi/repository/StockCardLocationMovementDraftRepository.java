@@ -17,11 +17,11 @@ package org.siglus.siglusapi.repository;
 
 import java.util.List;
 import java.util.UUID;
-import org.siglus.siglusapi.domain.ProductLocationMovementDraft;
+import org.siglus.siglusapi.domain.StockCardLocationMovementDraft;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface ProductLocationMovementDraftRepository extends JpaRepository<ProductLocationMovementDraft, UUID> {
+public interface StockCardLocationMovementDraftRepository extends JpaRepository<StockCardLocationMovementDraft, UUID> {
 
-  List<ProductLocationMovementDraft> findByProgramIdAndFacilityId(UUID programId, UUID facilityId);
+  List<StockCardLocationMovementDraft> findByProgramIdAndFacilityId(UUID programId, UUID facilityId);
 
 }

@@ -25,7 +25,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class ProductLocationMovementLineItemDto {
+public class StockCardLocationMovementLineItemDto {
 
   private UUID programId;
 

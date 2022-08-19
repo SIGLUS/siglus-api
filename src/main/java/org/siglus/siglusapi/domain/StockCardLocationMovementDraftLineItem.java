@@ -22,6 +22,8 @@ import java.time.LocalDate;
 import java.util.UUID;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -29,41 +31,49 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.siglus.common.domain.BaseEntity;
+import org.siglus.siglusapi.dto.StockCardLocationMovementDraftLineItemDto;
+import org.springframework.beans.BeanUtils;
 
+@Entity
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Entity
 @Builder
 @EqualsAndHashCode(callSuper = true)
-@Table(name = "product_location_movement_line_items", schema = "siglusintegration")
-public class ProductLocationMovementLineItem extends BaseEntity {
+@Table(name = "stock_card_location_movement_draft_line_items", schema = "siglusintegration")
+public class StockCardLocationMovementDraftLineItem extends BaseEntity {
+
+  @ManyToOne
+  @JoinColumn(nullable = false)
+  private StockCardLocationMovementDraft stockCardLocationMovementDraft;
 
   @Column(nullable = false)
-  private UUID stockCardId;
+  private UUID orderableId;
+  private String productCode;
+  private String productName;
 
-  @Column(nullable = false)
-  @JsonFormat(shape = STRING, pattern = "yyyy-MM-dd")
-  private LocalDate createdDate;
+  private UUID lotId;
+  private String lotCode;
 
-  @Column(nullable = false)
-  private String signature;
-
-  @Column(nullable = false)
-  private UUID userId;
-
-  @Column(nullable = false)
   private String srcArea;
-
-  @Column(nullable = false)
   private String srcLocationCode;
 
   @Column(nullable = false)
-  private String destArea;
+  @JsonFormat(shape = STRING, pattern = "yyyy-MM-dd")
+  private LocalDate occurredDate;
 
-  @Column(nullable = false)
+  private String destArea;
   private String destLocationCode;
 
-  @Column(nullable = false)
+  private LocalDate expirationDate;
   private Integer quantity;
+  private Integer stockOnHand;
+
+  public static StockCardLocationMovementDraftLineItem from(StockCardLocationMovementDraftLineItemDto lineItemDto,
+      StockCardLocationMovementDraft draft) {
+    StockCardLocationMovementDraftLineItem lineItem = new StockCardLocationMovementDraftLineItem();
+    BeanUtils.copyProperties(lineItemDto, lineItem);
+    lineItem.setStockCardLocationMovementDraft(draft);
+    return lineItem;
+  }
 }

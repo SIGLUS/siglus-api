@@ -22,8 +22,8 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.siglus.siglusapi.dto.ProductLocationMovementDto;
-import org.siglus.siglusapi.service.SiglusProductLocationMovementService;
+import org.siglus.siglusapi.dto.StockCardLocationMovementDto;
+import org.siglus.siglusapi.service.SiglusStockCardLocationMovementService;
 
 @RunWith(MockitoJUnitRunner.class)
 public class SiglusProductLocationMovementControllerTest {
@@ -32,14 +32,14 @@ public class SiglusProductLocationMovementControllerTest {
   private SiglusProductLocationMovementController controller;
 
   @Mock
-  private SiglusProductLocationMovementService service;
+  private SiglusStockCardLocationMovementService service;
 
-  private final ProductLocationMovementDto productLocationMovementDto = new ProductLocationMovementDto();
+  private final StockCardLocationMovementDto stockCardLocationMovementDto = new StockCardLocationMovementDto();
 
   @Test
   public void shouldCallCreateEmptyProductLocationMovementDraft() {
-    controller.createMovementLineItems(productLocationMovementDto);
+    controller.createMovementLineItems(stockCardLocationMovementDto);
 
-    verify(service).createMovementLineItems(productLocationMovementDto);
+    verify(service).createMovementLineItems(stockCardLocationMovementDto);
   }
 }

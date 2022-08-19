@@ -15,22 +15,26 @@
 
 package org.siglus.siglusapi.dto;
 
-import static com.fasterxml.jackson.annotation.JsonFormat.Shape.STRING;
+import static java.util.stream.Collectors.toList;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.siglus.siglusapi.domain.StockCardLocationMovementDraft;
+import org.springframework.beans.BeanUtils;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class ProductLocationMovementDto {
+public class StockCardLocationMovementDraftDto {
+
+  private UUID id;
 
   private UUID facilityId;
 
@@ -38,11 +42,21 @@ public class ProductLocationMovementDto {
 
   private UUID userId;
 
-  @JsonFormat(shape = STRING)
-  private LocalDate createdDate;
+  private List<StockCardLocationMovementDraftLineItemDto> lineItems;
 
-  private String signature;
+  public static List<StockCardLocationMovementDraftDto> from(Collection<StockCardLocationMovementDraft> drafts) {
+    List<StockCardLocationMovementDraftDto> draftDtos = new ArrayList<>(drafts.size());
+    drafts.forEach(draft -> draftDtos.add(from(draft)));
+    return draftDtos;
+  }
 
-  private List<ProductLocationMovementLineItemDto> movementLineItems;
-
+  public static StockCardLocationMovementDraftDto from(StockCardLocationMovementDraft draft) {
+    StockCardLocationMovementDraftDto draftDto = new StockCardLocationMovementDraftDto();
+    BeanUtils.copyProperties(draft, draftDto);
+    if (draft.getLineItems() != null) {
+      draftDto.setLineItems(draft.getLineItems().stream().map(
+          StockCardLocationMovementDraftLineItemDto::from).collect(toList()));
+    }
+    return draftDto;
+  }
 }

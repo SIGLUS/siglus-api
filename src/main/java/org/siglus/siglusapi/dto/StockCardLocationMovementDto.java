@@ -13,15 +13,36 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.repository;
+package org.siglus.siglusapi.dto;
 
+import static com.fasterxml.jackson.annotation.JsonFormat.Shape.STRING;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
-import org.siglus.siglusapi.domain.ProductLocationMovementLineItem;
-import org.springframework.data.jpa.repository.JpaRepository;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-public interface ProductLocationMovementLineItemRepository extends
-    JpaRepository<ProductLocationMovementLineItem, UUID> {
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+public class StockCardLocationMovementDto {
 
-  List<ProductLocationMovementLineItem> findByStockCardId(UUID stockCardId);
+  private UUID facilityId;
+
+  private UUID programId;
+
+  private UUID userId;
+
+  @JsonFormat(shape = STRING)
+  private LocalDate occurredDate;
+
+  private String signature;
+
+  private List<StockCardLocationMovementLineItemDto> movementLineItems;
+
 }

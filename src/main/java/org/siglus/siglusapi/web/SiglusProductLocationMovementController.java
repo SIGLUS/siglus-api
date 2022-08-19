@@ -17,8 +17,8 @@ package org.siglus.siglusapi.web;
 
 import static org.springframework.http.HttpStatus.CREATED;
 
-import org.siglus.siglusapi.dto.ProductLocationMovementDto;
-import org.siglus.siglusapi.service.SiglusProductLocationMovementService;
+import org.siglus.siglusapi.dto.StockCardLocationMovementDto;
+import org.siglus.siglusapi.service.SiglusStockCardLocationMovementService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -31,11 +31,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class SiglusProductLocationMovementController {
 
   @Autowired
-  private SiglusProductLocationMovementService movementService;
+  private SiglusStockCardLocationMovementService movementService;
 
   @PostMapping
   @ResponseStatus(CREATED)
-  public void createMovementLineItems(@RequestBody ProductLocationMovementDto movementDto) {
+  public void createMovementLineItems(@RequestBody StockCardLocationMovementDto movementDto) {
     movementService.createMovementLineItems(movementDto);
   }
 

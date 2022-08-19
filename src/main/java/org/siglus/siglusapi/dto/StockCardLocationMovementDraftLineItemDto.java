@@ -16,55 +16,42 @@
 package org.siglus.siglusapi.dto;
 
 import static com.fasterxml.jackson.annotation.JsonFormat.Shape.STRING;
-import static java.util.stream.Collectors.toList;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.siglus.siglusapi.domain.ProductLocationMovementDraft;
+import org.siglus.siglusapi.domain.StockCardLocationMovementDraftLineItem;
 import org.springframework.beans.BeanUtils;
 
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor
 @Builder
-public class ProductLocationMovementDraftDto {
+public class StockCardLocationMovementDraftLineItemDto {
 
-  private UUID id;
-
-  private UUID facilityId;
-
-  private UUID programId;
-
+  private UUID orderableId;
+  private String productCode;
+  private String productName;
+  private UUID lotId;
+  private String lotCode;
+  private String srcArea;
+  private String srcLocationCode;
+  private String destArea;
+  private String destLocationCode;
   @JsonFormat(shape = STRING)
-  private LocalDate createdDate;
+  private LocalDate occurredDate;
+  @JsonFormat(shape = STRING)
+  private LocalDate expirationDate;
+  private Integer quantity;
+  private Integer stockOnHand;
 
-  private String signature;
-
-  private UUID userId;
-
-  private List<ProductLocationMovementDraftLineItemDto> lineItems;
-
-  public static List<ProductLocationMovementDraftDto> from(Collection<ProductLocationMovementDraft> drafts) {
-    List<ProductLocationMovementDraftDto> draftDtos = new ArrayList<>(drafts.size());
-    drafts.forEach(draft -> draftDtos.add(from(draft)));
-    return draftDtos;
-  }
-
-  public static ProductLocationMovementDraftDto from(ProductLocationMovementDraft draft) {
-    ProductLocationMovementDraftDto draftDto = new ProductLocationMovementDraftDto();
-    BeanUtils.copyProperties(draft, draftDto);
-    if (draft.getLineItems() != null) {
-      draftDto.setLineItems(draft.getLineItems().stream().map(
-          ProductLocationMovementDraftLineItemDto::from).collect(toList()));
-    }
-    return draftDto;
+  public static StockCardLocationMovementDraftLineItemDto from(StockCardLocationMovementDraftLineItem lineItem) {
+    StockCardLocationMovementDraftLineItemDto lineItemDto = new StockCardLocationMovementDraftLineItemDto();
+    BeanUtils.copyProperties(lineItem, lineItemDto);
+    return lineItemDto;
   }
 }

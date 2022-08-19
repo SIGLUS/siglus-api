@@ -26,43 +26,43 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.openlmis.stockmanagement.domain.card.StockCard;
-import org.siglus.siglusapi.domain.ProductLocationMovementDraft;
-import org.siglus.siglusapi.domain.ProductLocationMovementLineItem;
+import org.siglus.siglusapi.domain.StockCardLocationMovementDraft;
+import org.siglus.siglusapi.domain.StockCardLocationMovementLineItem;
 import org.siglus.siglusapi.dto.Message;
-import org.siglus.siglusapi.dto.ProductLocationMovementDto;
-import org.siglus.siglusapi.dto.ProductLocationMovementLineItemDto;
+import org.siglus.siglusapi.dto.StockCardLocationMovementDto;
+import org.siglus.siglusapi.dto.StockCardLocationMovementLineItemDto;
 import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.NotFoundException;
-import org.siglus.siglusapi.repository.ProductLocationMovementDraftRepository;
-import org.siglus.siglusapi.repository.ProductLocationMovementLineItemRepository;
 import org.siglus.siglusapi.repository.SiglusStockCardRepository;
+import org.siglus.siglusapi.repository.StockCardLocationMovementDraftRepository;
+import org.siglus.siglusapi.repository.StockCardLocationMovementLineItemRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Slf4j
-public class SiglusProductLocationMovementService {
+public class SiglusStockCardLocationMovementService {
 
   @Autowired
-  private ProductLocationMovementLineItemRepository movementLineItemRepository;
+  private StockCardLocationMovementLineItemRepository movementLineItemRepository;
 
   @Autowired
-  private ProductLocationMovementDraftRepository movementDraftRepository;
+  private StockCardLocationMovementDraftRepository movementDraftRepository;
 
   @Autowired
   private SiglusStockCardRepository stockCardRepository;
 
   @Transactional
-  public void createMovementLineItems(ProductLocationMovementDto movementDto) {
+  public void createMovementLineItems(StockCardLocationMovementDto movementDto) {
     checkStockOnHand(movementDto);
-    List<ProductLocationMovementLineItem> movementLineItems = convertMovementDtoToMovementItems(movementDto);
+    List<StockCardLocationMovementLineItem> movementLineItems = convertMovementDtoToMovementItems(movementDto);
     movementLineItemRepository.save(movementLineItems);
     deleteMovementDraft(movementDto);
   }
 
-  private void deleteMovementDraft(ProductLocationMovementDto movementDto) {
-    List<ProductLocationMovementDraft> movementDrafts = movementDraftRepository
+  private void deleteMovementDraft(StockCardLocationMovementDto movementDto) {
+    List<StockCardLocationMovementDraft> movementDrafts = movementDraftRepository
         .findByProgramIdAndFacilityId(movementDto.getProgramId(), movementDto.getFacilityId());
     if (movementDrafts.isEmpty()) {
       throw new NotFoundException(ERROR_MOVEMENT_DRAFT_NOT_FOUND);
@@ -70,9 +70,9 @@ public class SiglusProductLocationMovementService {
     movementDraftRepository.delete(movementDrafts.get(0));
   }
 
-  private List<ProductLocationMovementLineItem> convertMovementDtoToMovementItems(
-      ProductLocationMovementDto movementDto) {
-    List<ProductLocationMovementLineItem> movementLineItems = new ArrayList<>();
+  private List<StockCardLocationMovementLineItem> convertMovementDtoToMovementItems(
+      StockCardLocationMovementDto movementDto) {
+    List<StockCardLocationMovementLineItem> movementLineItems = new ArrayList<>();
     movementDto.getMovementLineItems().forEach(lineItemDto -> {
       List<StockCard> stockCards = stockCardRepository
           .findByFacilityIdAndProgramIdAndOrderableIdAndLotId(movementDto.getFacilityId(), lineItemDto.getProgramId(),
@@ -80,14 +80,14 @@ public class SiglusProductLocationMovementService {
       if (stockCards.isEmpty()) {
         throw new NotFoundException(ERROR_STOCK_CARD_NOT_FOUND);
       }
-      ProductLocationMovementLineItem movementLineItem = ProductLocationMovementLineItem.builder()
+      StockCardLocationMovementLineItem movementLineItem = StockCardLocationMovementLineItem.builder()
           .stockCardId(stockCards.get(0).getId())
           .srcArea(lineItemDto.getSrcArea())
           .srcLocationCode(lineItemDto.getSrcLocationCode())
           .destArea(lineItemDto.getDestArea())
           .destLocationCode(lineItemDto.getDestLocationCode())
           .quantity(lineItemDto.getQuantity())
-          .createdDate(movementDto.getCreatedDate())
+          .occurredDate(movementDto.getOccurredDate())
           .userId(movementDto.getUserId())
           .signature(movementDto.getSignature())
           .build();
@@ -96,14 +96,14 @@ public class SiglusProductLocationMovementService {
     return movementLineItems;
   }
 
-  private void checkStockOnHand(ProductLocationMovementDto movementDto) {
-    List<ProductLocationMovementLineItemDto> lineItems = movementDto.getMovementLineItems();
-    Set<Entry<String, List<ProductLocationMovementLineItemDto>>> groupByOrderableIdLotIdSrcAreaAndSrcLocationCode =
+  private void checkStockOnHand(StockCardLocationMovementDto movementDto) {
+    List<StockCardLocationMovementLineItemDto> lineItems = movementDto.getMovementLineItems();
+    Set<Entry<String, List<StockCardLocationMovementLineItemDto>>> groupByOrderableIdLotIdSrcAreaAndSrcLocationCode =
         lineItems.stream().collect(Collectors.groupingBy(this::fetchGroupKey)).entrySet();
     groupByOrderableIdLotIdSrcAreaAndSrcLocationCode.forEach(entry -> {
       int totalMovementQuantity = entry.getValue()
           .stream()
-          .mapToInt(ProductLocationMovementLineItemDto::getQuantity)
+          .mapToInt(StockCardLocationMovementLineItemDto::getQuantity)
           .sum();
       if (totalMovementQuantity > entry.getValue().get(0).getStockOnHand()) {
         throw new BusinessDataException(new Message(ERROR_MOVEMENT_QUANTITY_MORE_THAN_STOCK_ON_HAND),
@@ -112,7 +112,7 @@ public class SiglusProductLocationMovementService {
     });
   }
 
-  private String fetchGroupKey(ProductLocationMovementLineItemDto movementLineItemDto) {
+  private String fetchGroupKey(StockCardLocationMovementLineItemDto movementLineItemDto) {
     return movementLineItemDto.getOrderableId().toString()
         + movementLineItemDto.getLotId().toString()
         + movementLineItemDto.getSrcArea()

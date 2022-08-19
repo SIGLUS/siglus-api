@@ -34,33 +34,33 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.stockmanagement.domain.card.StockCard;
-import org.siglus.siglusapi.domain.ProductLocationMovementDraft;
-import org.siglus.siglusapi.domain.ProductLocationMovementLineItem;
-import org.siglus.siglusapi.dto.ProductLocationMovementDto;
-import org.siglus.siglusapi.dto.ProductLocationMovementLineItemDto;
+import org.siglus.siglusapi.domain.StockCardLocationMovementDraft;
+import org.siglus.siglusapi.domain.StockCardLocationMovementLineItem;
+import org.siglus.siglusapi.dto.StockCardLocationMovementDto;
+import org.siglus.siglusapi.dto.StockCardLocationMovementLineItemDto;
 import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.NotFoundException;
-import org.siglus.siglusapi.repository.ProductLocationMovementDraftRepository;
-import org.siglus.siglusapi.repository.ProductLocationMovementLineItemRepository;
 import org.siglus.siglusapi.repository.SiglusStockCardRepository;
+import org.siglus.siglusapi.repository.StockCardLocationMovementDraftRepository;
+import org.siglus.siglusapi.repository.StockCardLocationMovementLineItemRepository;
 
 @RunWith(MockitoJUnitRunner.class)
-public class SiglusProductLocationMovementServiceTest {
+public class SiglusStockCardLocationMovementServiceTest {
 
   @Rule
   public ExpectedException exception = ExpectedException.none();
 
   @InjectMocks
-  private SiglusProductLocationMovementService service;
+  private SiglusStockCardLocationMovementService service;
 
   @Mock
   private SiglusStockCardRepository stockCardRepository;
 
   @Mock
-  private ProductLocationMovementLineItemRepository movementLineItemRepository;
+  private StockCardLocationMovementLineItemRepository movementLineItemRepository;
 
   @Mock
-  private ProductLocationMovementDraftRepository movementDraftRepository;
+  private StockCardLocationMovementDraftRepository movementDraftRepository;
 
   private final UUID allProgramId = UUID.randomUUID();
   private final UUID programId = UUID.randomUUID();
@@ -73,8 +73,8 @@ public class SiglusProductLocationMovementServiceTest {
   private final LocalDate localDate = LocalDate.now();
 
   private final StockCard stockCard = new StockCard();
-  private final ProductLocationMovementDraft movementDraft = new ProductLocationMovementDraft();
-  private final ProductLocationMovementLineItem lineItem = ProductLocationMovementLineItem.builder()
+  private final StockCardLocationMovementDraft movementDraft = new StockCardLocationMovementDraft();
+  private final StockCardLocationMovementLineItem lineItem = StockCardLocationMovementLineItem.builder()
       .stockCardId(stockCardId)
       .srcArea("A")
       .srcLocationCode("AA20B")
@@ -82,10 +82,11 @@ public class SiglusProductLocationMovementServiceTest {
       .destLocationCode("BB30F")
       .userId(userId)
       .signature("Jimmy")
-      .createdDate(localDate)
+      .occurredDate(localDate)
       .quantity(10)
       .build();
-  private final ProductLocationMovementLineItemDto movementLineItemDto1 = ProductLocationMovementLineItemDto.builder()
+  private final StockCardLocationMovementLineItemDto movementLineItemDto1 = StockCardLocationMovementLineItemDto
+      .builder()
       .programId(programId)
       .orderableId(orderableId)
       .lotId(lotId)
@@ -96,7 +97,8 @@ public class SiglusProductLocationMovementServiceTest {
       .quantity(10)
       .stockOnHand(20)
       .build();
-  private final ProductLocationMovementLineItemDto movementLineItemDto2 = ProductLocationMovementLineItemDto.builder()
+  private final StockCardLocationMovementLineItemDto movementLineItemDto2 = StockCardLocationMovementLineItemDto
+      .builder()
       .programId(programId)
       .orderableId(orderableId)
       .lotId(lotId)
@@ -107,18 +109,18 @@ public class SiglusProductLocationMovementServiceTest {
       .quantity(30)
       .stockOnHand(20)
       .build();
-  private final ProductLocationMovementDto movementDto1 = ProductLocationMovementDto.builder()
+  private final StockCardLocationMovementDto movementDto1 = StockCardLocationMovementDto.builder()
       .programId(allProgramId)
       .facilityId(facilityId)
-      .createdDate(localDate)
+      .occurredDate(localDate)
       .signature("Jimmy")
       .userId(userId)
       .movementLineItems(newArrayList(movementLineItemDto1))
       .build();
-  private final ProductLocationMovementDto movementDto2 = ProductLocationMovementDto.builder()
+  private final StockCardLocationMovementDto movementDto2 = StockCardLocationMovementDto.builder()
       .programId(allProgramId)
       .facilityId(facilityId)
-      .createdDate(localDate)
+      .occurredDate(localDate)
       .signature("Jimmy")
       .userId(userId)
       .movementLineItems(newArrayList(movementLineItemDto2))
