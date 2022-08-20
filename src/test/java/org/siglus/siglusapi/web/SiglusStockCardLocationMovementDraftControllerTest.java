@@ -23,27 +23,28 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.siglus.siglusapi.dto.ProductLocationMovementDraftDto;
-import org.siglus.siglusapi.service.SiglusProductLocationMovementDraftService;
+import org.siglus.siglusapi.dto.StockCardLocationMovementDraftDto;
+import org.siglus.siglusapi.service.SiglusStockCardLocationMovementDraftService;
 
 @RunWith(MockitoJUnitRunner.class)
-public class SiglusProductLocationMovementDraftControllerTest {
+public class SiglusStockCardLocationMovementDraftControllerTest {
 
   @InjectMocks
   private SiglusProductLocationMovementDraftController controller;
 
   @Mock
-  private SiglusProductLocationMovementDraftService service;
+  private SiglusStockCardLocationMovementDraftService service;
 
-  private final ProductLocationMovementDraftDto productLocationMovementDraftDto = new ProductLocationMovementDraftDto();
+  private final StockCardLocationMovementDraftDto stockCardLocationMovementDraftDto =
+      new StockCardLocationMovementDraftDto();
   private final UUID programId = UUID.randomUUID();
   private final UUID movementDraftId = UUID.randomUUID();
 
   @Test
   public void shouldCallCreateEmptyProductLocationMovementDraft() {
-    controller.createEmptyProductLocationMovementDraft(productLocationMovementDraftDto);
+    controller.createEmptyProductLocationMovementDraft(stockCardLocationMovementDraftDto);
 
-    verify(service).createEmptyMovementDraft(productLocationMovementDraftDto);
+    verify(service).createEmptyMovementDraft(stockCardLocationMovementDraftDto);
   }
 
   @Test
@@ -62,9 +63,9 @@ public class SiglusProductLocationMovementDraftControllerTest {
 
   @Test
   public void shouldCallUpdateDraft() {
-    controller.updateDraft(movementDraftId, productLocationMovementDraftDto);
+    controller.updateDraft(movementDraftId, stockCardLocationMovementDraftDto);
 
-    verify(service).updateMovementDraft(productLocationMovementDraftDto, movementDraftId);
+    verify(service).updateMovementDraft(stockCardLocationMovementDraftDto, movementDraftId);
   }
 
   @Test

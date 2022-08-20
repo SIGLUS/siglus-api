@@ -542,6 +542,10 @@ public class MeService {
   }
 
   private void saveAndUpdateCmm(HfCmm toBeUpdatedHfCmm) {
+    if (!toBeUpdatedHfCmm.getPeriodBegin().isBefore(LocalDate.now())) {
+      log.warn("period begin is future date, do not save or update cmm, toBeUpdatedHfCmm:{}", toBeUpdatedHfCmm);
+      return;
+    }
     HfCmm hfCmm = facilityCmmsRepository.findByFacilityCodeAndProductCodeAndPeriodBeginAndPeriodEnd(
         toBeUpdatedHfCmm.getFacilityCode(), toBeUpdatedHfCmm.getProductCode(),
         toBeUpdatedHfCmm.getPeriodBegin(), toBeUpdatedHfCmm.getPeriodEnd());

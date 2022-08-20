@@ -44,10 +44,10 @@ public class SiglusStockEventsControllerTest {
     dto.setProgramId(ALL_PRODUCTS_PROGRAM_ID);
 
     // when
-    controller.createStockEvent(dto);
+    controller.createStockEvent(dto, false);
 
     // then
-    verify(service).createStockEvent(dto);
+    verify(service).processStockEvent(dto, false);
   }
 
   @Test
@@ -57,17 +57,17 @@ public class SiglusStockEventsControllerTest {
     dto.setProgramId(UUID.randomUUID());
 
     // when
-    controller.createStockEvent(dto);
+    controller.createStockEvent(dto, false);
 
     // then
-    verify(service).createStockEvent(dto);
+    verify(service).processStockEvent(dto, false);
   }
 
   @Test
   public void shouldCallServiceWhenCreateStockEventsForMultiUser() {
     StockEventForMultiUserDto stockEventForMultiUserDto = new StockEventForMultiUserDto();
     controller.createStockEventForMultiUser(stockEventForMultiUserDto);
-    verify(service).createStockEventForMultiUser(stockEventForMultiUserDto);
+    verify(service).processStockEventForMultiUser(stockEventForMultiUserDto);
   }
 
 }

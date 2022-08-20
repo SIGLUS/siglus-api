@@ -15,13 +15,20 @@
 
 package org.siglus.siglusapi.repository;
 
+import java.util.List;
 import java.util.UUID;
 import org.openlmis.referencedata.domain.Facility;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Query;
 
 public interface SiglusFacilityRepository extends JpaRepository<Facility, UUID>, JpaSpecificationExecutor<Facility> {
 
   Facility findFirstByTypeId(UUID typeId);
 
+  @Query(value = "select f.*\n"
+      + "from referencedata.facilities f\n"
+      + "left join siglusintegration.facility_extension fe on f.id = fe.facilityid\n"
+      + "where fe.isandroid = false and f.active = true and f.enabled = true or fe.id is null;", nativeQuery = true)
+  List<Facility> findAllWebFacility();
 }

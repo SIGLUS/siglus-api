@@ -15,28 +15,19 @@
 
 package org.siglus.siglusapi.repository;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
+import org.siglus.siglusapi.repository.dto.StockCardLineItemDto;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+@SuppressWarnings("PMD.AvoidDuplicateLiterals")
 public interface SiglusStockCardLineItemRepository extends JpaRepository<StockCardLineItem, UUID> {
-
-  @Query(value = "select i.* from stockmanagement.stock_card_line_items i "
-      + "inner join stockmanagement.stock_cards c  "
-      + "on c.id = i.stockcardid "
-      + "where "
-      + "c.facilityid = :facilityId "
-      + "and i.occurreddate > :startTime "
-      + "and i.occurreddate <= :endTime", nativeQuery = true)
-  List<StockCardLineItem> findByFacilityIdAndIdStartTimeEndTime(
-      @Param("facilityId") UUID facilityId,
-      @Param("startTime") String startTime,
-      @Param("endTime") String endTime);
 
   @Query(value = "select scli.* from stockmanagement.stock_card_line_items scli "
       + "inner join stockmanagement.stock_cards sc  "
@@ -59,4 +50,18 @@ public interface SiglusStockCardLineItemRepository extends JpaRepository<StockCa
       @Param("originOrderCode") String originOrderCode);
 
   List<StockCardLineItem> findAllByStockCardIn(List<StockCard> stockCards);
+
+  @Query(value = "select\n"
+      + "  scli.occurreddate \n"
+      + "from\n"
+      + "  stockmanagement.stock_cards sc\n"
+      + "left join stockmanagement.stock_card_line_items scli on\n"
+      + "  sc.id = scli.stockcardid\n"
+      + "where sc.facilityid = :facilityId\n"
+      + "order by scli.occurreddate desc limit 1", nativeQuery = true)
+  LocalDate findFacilityLastMovementDate(@Param("facilityId") UUID facilityId);
+
+  @Query(name = "StockCard.findStockCardLineItemDto", nativeQuery = true)
+  List<StockCardLineItemDto> findStockCardLineItemDtos(@Param("facilityId") UUID facilityId,
+      @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
 }

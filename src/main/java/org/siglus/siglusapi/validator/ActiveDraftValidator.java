@@ -29,6 +29,7 @@ import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_USER_ID_MISSING;
 import com.google.common.collect.Lists;
 import java.util.List;
 import java.util.UUID;
+import org.siglus.siglusapi.constant.FieldConstants;
 import org.siglus.siglusapi.domain.StockManagementDraft;
 import org.siglus.siglusapi.domain.StockManagementInitialDraft;
 import org.siglus.siglusapi.dto.Message;
@@ -112,7 +113,8 @@ public class ActiveDraftValidator {
   }
 
   public void validateSubDraftStatus(StockManagementDraft subDraft) {
-    if (subDraft.getStatus().equals(PhysicalInventorySubDraftEnum.SUBMITTED)) {
+    if (!subDraft.getDraftType().equals(FieldConstants.ADJUSTMENT) && subDraft.getStatus()
+        .equals(PhysicalInventorySubDraftEnum.SUBMITTED)) {
       throw new ValidationMessageException(
           new Message(ERROR_STOCK_MANAGEMENT_SUB_DRAFT_ALREADY_SUBMITTED));
     }

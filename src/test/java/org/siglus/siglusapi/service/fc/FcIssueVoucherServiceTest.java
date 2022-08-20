@@ -20,6 +20,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -184,7 +186,7 @@ public class FcIssueVoucherServiceTest {
   public void prepare() {
     when(requisitionService.convertToOrder(any(), any())).thenReturn(Collections.emptyList());
     ReflectionTestUtils.setField(service, "receiveReason", "44814bc4-df64-11e9-9e7e-4c32759554d9");
-    when(stockEventsService.createStockEventForOneProgram(any(), any())).thenReturn(UUID.randomUUID());
+    doNothing().when(stockEventsService).processStockEvent(any(), eq(false));
     FacilityDto facilityDto = new FacilityDto();
     facilityDto.setId(UUID.randomUUID());
     when(siglusFacilityReferenceDataService.getFacilityByCode(getIssueVoucherDto().getWarehouseCode()))

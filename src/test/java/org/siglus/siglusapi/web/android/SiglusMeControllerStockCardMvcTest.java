@@ -382,14 +382,14 @@ public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
         .map(this::mockValidSourceDestination)
         .flatMap(Collection::stream)
         .collect(toList());
-    when(siglusValidSourceDestinationService.findSourcesForAllProducts(eq(facilityId)))
+    when(siglusValidSourceDestinationService.findSourcesForAllPrograms(eq(facilityId)))
         .thenReturn(sources);
     List<ValidSourceDestinationDto> destinations = Stream.of(Destination.values())
         .map(Destination::getName)
         .map(this::mockValidSourceDestination)
         .flatMap(Collection::stream)
         .collect(toList());
-    when(siglusValidSourceDestinationService.findDestinationsForAllProducts(eq(facilityId)))
+    when(siglusValidSourceDestinationService.findDestinationsForAllPrograms(eq(facilityId)))
         .thenReturn(destinations);
   }
 

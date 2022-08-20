@@ -24,94 +24,94 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.siglus.siglusapi.domain.ProductLocationMovementDraft;
-import org.siglus.siglusapi.dto.ProductLocationMovementDraftDto;
-import org.siglus.siglusapi.dto.ProductLocationMovementDraftLineItemDto;
+import org.siglus.siglusapi.domain.StockCardLocationMovementDraft;
+import org.siglus.siglusapi.dto.StockCardLocationMovementDraftDto;
+import org.siglus.siglusapi.dto.StockCardLocationMovementDraftLineItemDto;
 import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
-import org.siglus.siglusapi.repository.ProductLocationMovementDraftRepository;
+import org.siglus.siglusapi.repository.StockCardLocationMovementDraftRepository;
 
 @RunWith(MockitoJUnitRunner.class)
-public class ProductLocationMovementDraftValidatorTest {
+public class StockCardLocationMovementDraftValidatorTest {
 
   @InjectMocks
-  ProductLocationMovementDraftValidator productLocationMovementDraftValidator;
+  StockCardLocationMovementDraftValidator stockCardLocationMovementDraftValidator;
 
   @Mock
-  ProductLocationMovementDraftRepository productLocationMovementDraftRepository;
+  StockCardLocationMovementDraftRepository stockCardLocationMovementDraftRepository;
 
   private final UUID movementDraftId = UUID.randomUUID();
   private final UUID id = UUID.randomUUID();
-  private final ProductLocationMovementDraftDto movementDraftDto = ProductLocationMovementDraftDto
+  private final StockCardLocationMovementDraftDto movementDraftDto = StockCardLocationMovementDraftDto
       .builder()
       .id(movementDraftId)
       .build();
-  private final ProductLocationMovementDraft movementDraft = ProductLocationMovementDraft.builder().build();
+  private final StockCardLocationMovementDraft movementDraft = StockCardLocationMovementDraft.builder().build();
 
 
   @Test(expected = ValidationMessageException.class)
   public void shouldThrowExceptionWhenValidateEmptyMovementDraftIfDraftIdIsNull() {
-    ProductLocationMovementDraftDto draftDto = ProductLocationMovementDraftDto.builder()
+    StockCardLocationMovementDraftDto draftDto = StockCardLocationMovementDraftDto.builder()
         .id(null)
         .build();
 
-    productLocationMovementDraftValidator.validateEmptyMovementDraft(draftDto);
+    stockCardLocationMovementDraftValidator.validateEmptyMovementDraft(draftDto);
   }
 
   @Test(expected = ValidationMessageException.class)
   public void shouldThrowExceptionWhenValidateEmptyMovementDraftIfProgramIdIsNull() {
-    ProductLocationMovementDraftDto draftDto = ProductLocationMovementDraftDto.builder()
+    StockCardLocationMovementDraftDto draftDto = StockCardLocationMovementDraftDto.builder()
         .id(movementDraftId)
         .programId(null)
         .build();
 
-    productLocationMovementDraftValidator.validateEmptyMovementDraft(draftDto);
+    stockCardLocationMovementDraftValidator.validateEmptyMovementDraft(draftDto);
   }
 
   @Test(expected = ValidationMessageException.class)
   public void shouldThrowExceptionWhenValidateEmptyMovementDraftIfUserIdIsNull() {
-    ProductLocationMovementDraftDto draftDto = ProductLocationMovementDraftDto.builder()
+    StockCardLocationMovementDraftDto draftDto = StockCardLocationMovementDraftDto.builder()
         .id(movementDraftId)
         .userId(null)
         .build();
 
-    productLocationMovementDraftValidator.validateEmptyMovementDraft(draftDto);
+    stockCardLocationMovementDraftValidator.validateEmptyMovementDraft(draftDto);
   }
 
   @Test(expected = ValidationMessageException.class)
   public void shouldThrowExceptionWhenValidateEmptyMovementDraftIfFacilityIdIsNull() {
-    ProductLocationMovementDraftDto draftDto = ProductLocationMovementDraftDto.builder()
+    StockCardLocationMovementDraftDto draftDto = StockCardLocationMovementDraftDto.builder()
         .id(movementDraftId)
         .facilityId(null)
         .build();
 
-    productLocationMovementDraftValidator.validateEmptyMovementDraft(draftDto);
+    stockCardLocationMovementDraftValidator.validateEmptyMovementDraft(draftDto);
   }
 
   @Test(expected = NotFoundException.class)
   public void shouldThrowExceptionWhenMovementDraftNotFound() {
-    productLocationMovementDraftValidator.validateMovementDraft(null);
+    stockCardLocationMovementDraftValidator.validateMovementDraft(null);
   }
 
   @Test(expected = ValidationMessageException.class)
   public void shouldThrowExceptionWhenMovementDraftDtoIdNotEqualsId() {
-    productLocationMovementDraftValidator.validateMovementDraftAndLineItems(movementDraftDto, id);
+    stockCardLocationMovementDraftValidator.validateMovementDraftAndLineItems(movementDraftDto, id);
   }
 
   @Test(expected = ValidationMessageException.class)
   public void shouldThrowExceptionWhenMovementDraftLineItemsIsEmpty() {
-    when(productLocationMovementDraftRepository.findOne(movementDraftId)).thenReturn(movementDraft);
-    productLocationMovementDraftValidator.validateMovementDraftAndLineItems(movementDraftDto, movementDraftId);
+    when(stockCardLocationMovementDraftRepository.findOne(movementDraftId)).thenReturn(movementDraft);
+    stockCardLocationMovementDraftValidator.validateMovementDraftAndLineItems(movementDraftDto, movementDraftId);
   }
 
   @Test(expected = ValidationMessageException.class)
   public void shouldThrowExceptionWhenMovementDraftLineItemsOrderablesIdHasNull() {
-    ProductLocationMovementDraftLineItemDto lineItemDto = ProductLocationMovementDraftLineItemDto
+    StockCardLocationMovementDraftLineItemDto lineItemDto = StockCardLocationMovementDraftLineItemDto
         .builder()
         .orderableId(null)
         .build();
     movementDraftDto.setLineItems(newArrayList(lineItemDto));
-    when(productLocationMovementDraftRepository.findOne(movementDraftId)).thenReturn(movementDraft);
-    productLocationMovementDraftValidator.validateMovementDraftAndLineItems(movementDraftDto, movementDraftId);
+    when(stockCardLocationMovementDraftRepository.findOne(movementDraftId)).thenReturn(movementDraft);
+    stockCardLocationMovementDraftValidator.validateMovementDraftAndLineItems(movementDraftDto, movementDraftId);
   }
 }

@@ -21,8 +21,8 @@ import static org.springframework.http.HttpStatus.OK;
 
 import java.util.List;
 import java.util.UUID;
-import org.siglus.siglusapi.dto.ProductLocationMovementDraftDto;
-import org.siglus.siglusapi.service.SiglusProductLocationMovementDraftService;
+import org.siglus.siglusapi.dto.StockCardLocationMovementDraftDto;
+import org.siglus.siglusapi.service.SiglusStockCardLocationMovementDraftService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -36,33 +36,33 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/siglusapi/movementDrafts")
+@RequestMapping("/api/siglusapi/locationMovementDrafts")
 public class SiglusProductLocationMovementDraftController {
 
   @Autowired
-  SiglusProductLocationMovementDraftService productLocationMovementDraftService;
+ private SiglusStockCardLocationMovementDraftService productLocationMovementDraftService;
 
   @PostMapping
   @ResponseStatus(CREATED)
-  public ProductLocationMovementDraftDto createEmptyProductLocationMovementDraft(
-      @RequestBody ProductLocationMovementDraftDto dto) {
+  public StockCardLocationMovementDraftDto createEmptyProductLocationMovementDraft(
+      @RequestBody StockCardLocationMovementDraftDto dto) {
     return productLocationMovementDraftService.createEmptyMovementDraft(dto);
   }
 
   @GetMapping
-  public List<ProductLocationMovementDraftDto> searchMovementDrafts(@RequestParam UUID programId) {
+  public List<StockCardLocationMovementDraftDto> searchMovementDrafts(@RequestParam UUID programId) {
     return productLocationMovementDraftService.searchMovementDrafts(programId);
   }
 
   @GetMapping("/{id}")
-  public ProductLocationMovementDraftDto searchMovementDraft(@PathVariable UUID id) {
+  public StockCardLocationMovementDraftDto searchMovementDraft(@PathVariable UUID id) {
     return productLocationMovementDraftService.searchMovementDraft(id);
   }
 
   @PutMapping("/{id}")
   @ResponseStatus(OK)
-  public ProductLocationMovementDraftDto updateDraft(@PathVariable UUID id,
-      @RequestBody ProductLocationMovementDraftDto dto) {
+  public StockCardLocationMovementDraftDto updateDraft(@PathVariable UUID id,
+      @RequestBody StockCardLocationMovementDraftDto dto) {
     return productLocationMovementDraftService.updateMovementDraft(dto, id);
   }
 

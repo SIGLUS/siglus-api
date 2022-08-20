@@ -13,15 +13,22 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.repository;
+package org.siglus.siglusapi.dto;
 
 import java.util.List;
 import java.util.UUID;
-import org.siglus.siglusapi.domain.ProductLocationMovementDraft;
-import org.springframework.data.jpa.repository.JpaRepository;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-public interface ProductLocationMovementDraftRepository extends JpaRepository<ProductLocationMovementDraft, UUID> {
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class DisplayedLotDto {
 
-  List<ProductLocationMovementDraft> findByProgramIdAndFacilityId(UUID programId, UUID facilityId);
+  private UUID orderableId;
+  private List<UUID> lotIds;
 
 }

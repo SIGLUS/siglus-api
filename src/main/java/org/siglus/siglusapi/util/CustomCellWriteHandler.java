@@ -26,6 +26,8 @@ import com.alibaba.excel.metadata.data.WriteCellData;
 import com.alibaba.excel.write.handler.CellWriteHandler;
 import com.alibaba.excel.write.handler.context.CellWriteHandlerContext;
 import com.alibaba.excel.write.metadata.style.WriteCellStyle;
+import java.util.HashMap;
+import java.util.Map;
 import lombok.AllArgsConstructor;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.FillPatternType;
@@ -40,9 +42,7 @@ public class CustomCellWriteHandler implements CellWriteHandler {
 
   @Override
   public void afterCellDispose(CellWriteHandlerContext context) {
-    WriteCellData<?> cellData = context.getFirstCellData();
     Cell cell = context.getCell();
-    WriteCellStyle writeCellStyle = cellData.getOrCreateStyle();
     int columnIndex = cell.getColumnIndex();
     int rowIndex = cell.getRowIndex();
     rowIndex = rowIndex - BASIC_ROW;
@@ -53,15 +53,16 @@ public class CustomCellWriteHandler implements CellWriteHandler {
       return;
     }
 
-    if (colorArrays[rowIndex][columnIndex] == RED_MARK) {
-      writeCellStyle.setFillForegroundColor(IndexedColors.CORAL.getIndex());
-    } else if (colorArrays[rowIndex][columnIndex] == YELLOW_MARK) {
-      writeCellStyle.setFillForegroundColor(IndexedColors.LIGHT_YELLOW.getIndex());
-    } else if (colorArrays[rowIndex][columnIndex] == GREEN_MARK) {
-      writeCellStyle.setFillForegroundColor(IndexedColors.LIME.getIndex());
-    } else if (colorArrays[rowIndex][columnIndex] == PURPLE_MARK) {
-      writeCellStyle.setFillForegroundColor(IndexedColors.LAVENDER.getIndex());
-    }
+    WriteCellData<?> cellData = context.getFirstCellData();
+
+    Map<Integer, Short> colorMarkToColorMap = new HashMap<>();
+    colorMarkToColorMap.put(RED_MARK, IndexedColors.CORAL.getIndex());
+    colorMarkToColorMap.put(YELLOW_MARK, IndexedColors.LIGHT_YELLOW.getIndex());
+    colorMarkToColorMap.put(GREEN_MARK, IndexedColors.LIME.getIndex());
+    colorMarkToColorMap.put(PURPLE_MARK, IndexedColors.LAVENDER.getIndex());
+    WriteCellStyle writeCellStyle = cellData.getOrCreateStyle();
+
+    writeCellStyle.setFillForegroundColor(colorMarkToColorMap.get(colorArrays[rowIndex][columnIndex]));
     writeCellStyle.setFillPatternType(FillPatternType.SOLID_FOREGROUND);
   }
 }

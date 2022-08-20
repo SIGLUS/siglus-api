@@ -27,47 +27,47 @@ import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_USER_ID_MISSING;
 
 import java.util.List;
 import java.util.UUID;
-import org.siglus.siglusapi.domain.ProductLocationMovementDraft;
-import org.siglus.siglusapi.dto.ProductLocationMovementDraftDto;
-import org.siglus.siglusapi.dto.ProductLocationMovementDraftLineItemDto;
+import org.siglus.siglusapi.domain.StockCardLocationMovementDraft;
+import org.siglus.siglusapi.dto.StockCardLocationMovementDraftDto;
+import org.siglus.siglusapi.dto.StockCardLocationMovementDraftLineItemDto;
 import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
-import org.siglus.siglusapi.repository.ProductLocationMovementDraftRepository;
+import org.siglus.siglusapi.repository.StockCardLocationMovementDraftRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-@Component("ProductLocationMovementDraftValidator")
-public class ProductLocationMovementDraftValidator {
+@Component("StockCardLocationMovementDraftValidator")
+public class StockCardLocationMovementDraftValidator {
 
   @Autowired
-  private ProductLocationMovementDraftRepository productLocationMovementDraftRepository;
+  private StockCardLocationMovementDraftRepository stockCardLocationMovementDraftRepository;
 
-  public void validateEmptyMovementDraft(ProductLocationMovementDraftDto productLocationMovementDraftDto) {
-    if (productLocationMovementDraftDto.getId() != null) {
+  public void validateEmptyMovementDraft(StockCardLocationMovementDraftDto stockCardLocationMovementDraftDto) {
+    if (stockCardLocationMovementDraftDto.getId() != null) {
       throw new ValidationMessageException(ERROR_MOVEMENT_DRAFT_ID_SHOULD_NULL);
     }
-    validateNotNull(productLocationMovementDraftDto.getProgramId(), ERROR_PROGRAM_ID_MISSING);
-    validateNotNull(productLocationMovementDraftDto.getUserId(), ERROR_USER_ID_MISSING);
-    validateNotNull(productLocationMovementDraftDto.getFacilityId(), ERROR_FACILITY_ID_MISSING);
+    validateNotNull(stockCardLocationMovementDraftDto.getProgramId(), ERROR_PROGRAM_ID_MISSING);
+    validateNotNull(stockCardLocationMovementDraftDto.getUserId(), ERROR_USER_ID_MISSING);
+    validateNotNull(stockCardLocationMovementDraftDto.getFacilityId(), ERROR_FACILITY_ID_MISSING);
   }
 
-  public void validateMovementDraft(ProductLocationMovementDraft movementDraft) {
+  public void validateMovementDraft(StockCardLocationMovementDraft movementDraft) {
     if (movementDraft == null) {
       throw new NotFoundException(ERROR_MOVEMENT_DRAFT_NOT_FOUND);
     }
   }
 
-  public void validateMovementDraftAndLineItems(ProductLocationMovementDraftDto movementDraftDto, UUID id) {
+  public void validateMovementDraftAndLineItems(StockCardLocationMovementDraftDto movementDraftDto, UUID id) {
     if (!movementDraftDto.getId().equals(id)) {
       throw new ValidationMessageException(ERROR_MOVEMENT_DRAFT_ID_MISMATCH);
     }
-    ProductLocationMovementDraft movementDraft = productLocationMovementDraftRepository.findOne(id);
+    StockCardLocationMovementDraft movementDraft = stockCardLocationMovementDraftRepository.findOne(id);
     validateMovementDraft(movementDraft);
-    List<ProductLocationMovementDraftLineItemDto> lineItems = movementDraftDto.getLineItems();
+    List<StockCardLocationMovementDraftLineItemDto> lineItems = movementDraftDto.getLineItems();
     validateLineItems(lineItems);
   }
 
-  private void validateLineItems(List<ProductLocationMovementDraftLineItemDto> lineItems) {
+  private void validateLineItems(List<StockCardLocationMovementDraftLineItemDto> lineItems) {
     if (isEmpty(lineItems)) {
       throw new ValidationMessageException(ERROR_MOVEMENT_DRAFT_LINE_ITEMS_MISSING);
     }

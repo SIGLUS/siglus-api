@@ -16,11 +16,13 @@
 package org.siglus.siglusapi.dto.android;
 
 import java.time.LocalDate;
+import java.util.UUID;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import lombok.AccessLevel;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import org.siglus.common.util.Uuid5Generator;
 
 @Data
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
@@ -43,4 +45,11 @@ public class Lot {
     return new Lot(code, expirationDate == null ? null : expirationDate.toLocalDate());
   }
 
+  public UUID getUUid(UUID tradeItemId) {
+    return Uuid5Generator.fromUtf8(getLotUniqueKey(tradeItemId));
+  }
+
+  private String getLotUniqueKey(UUID tradeItemId) {
+    return this.getCode() + tradeItemId.toString();
+  }
 }

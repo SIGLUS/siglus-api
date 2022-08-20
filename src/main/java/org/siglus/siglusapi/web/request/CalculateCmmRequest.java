@@ -13,19 +13,13 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.repository;
+package org.siglus.siglusapi.web.request;
 
-import java.util.List;
-import java.util.UUID;
-import org.siglus.siglusapi.domain.CalculatedStocksOnHandLocations;
-import org.siglus.siglusapi.dto.LotLocationSohDto;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
+import java.time.LocalDate;
+import lombok.Data;
 
-public interface CalculatedStocksOnHandLocationsRepository extends
-    JpaRepository<CalculatedStocksOnHandLocations, UUID> {
-  @Query(name = "LotLocationSoh.findLocationSoh", nativeQuery = true)
-  List<LotLocationSohDto> getLocationSoh(@Param("lotIds")Iterable<UUID> lotIds);
+@Data
+public class CalculateCmmRequest {
 
+  private LocalDate periodLocalDate;
 }

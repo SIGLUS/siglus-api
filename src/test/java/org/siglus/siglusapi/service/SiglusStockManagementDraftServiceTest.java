@@ -380,7 +380,7 @@ public class SiglusStockManagementDraftServiceTest {
         .findByProgramIdAndFacilityIdAndDraftType(programId, facilityId, issueDraft))
         .thenReturn(stockManagementInitialDrafts);
 
-    when(siglusValidSourceDestinationService.findDestinationsForAllProducts(facilityId))
+    when(siglusValidSourceDestinationService.findDestinationsForAllPrograms(facilityId))
         .thenReturn(validSourceDestinationDtos);
 
     StockManagementInitialDraftDto stockManagementInitialDraft = siglusStockManagementDraftService
@@ -426,7 +426,7 @@ public class SiglusStockManagementDraftServiceTest {
 
     doNothing().when(operatePermissionService).checkPermission(facilityId);
 
-    when(siglusValidSourceDestinationService.findDestinationsForAllProducts(facilityId))
+    when(siglusValidSourceDestinationService.findDestinationsForAllPrograms(facilityId))
         .thenReturn(validSourceDestinationDtos);
 
     when(stockManagementInitialDraftsRepository.save(initialDraft)).thenReturn(initialDraft);
@@ -459,7 +459,7 @@ public class SiglusStockManagementDraftServiceTest {
         .createInitialDraft(initialDraftDto);
 
     doNothing().when(operatePermissionService).checkPermission(facilityId);
-    when(siglusValidSourceDestinationService.findSourcesForAllProducts(facilityId))
+    when(siglusValidSourceDestinationService.findSourcesForAllPrograms(facilityId))
         .thenReturn(validSourceDestinationDtos);
 
     when(stockManagementInitialDraftsRepository.save(initialDraft)).thenReturn(initialDraft);

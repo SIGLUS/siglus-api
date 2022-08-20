@@ -44,27 +44,27 @@ public class SiglusValidSourceDestinationControllerTest {
     siglusValidSourceDestinationController
         .searchValidDestinations(ALL_PRODUCTS_PROGRAM_ID, facilityId);
 
-    verify(validSourceDestinationService).findDestinationsForAllProducts(facilityId);
+    verify(validSourceDestinationService).findDestinationsForAllPrograms(facilityId);
   }
 
   @Test
   public void shouldCallFindDestinationsWhenSearchValidDestinationsIfProgramIsNotAllProducts() {
     siglusValidSourceDestinationController.searchValidDestinations(programId, facilityId);
 
-    verify(validSourceDestinationService).findDestinations(programId, facilityId);
+    verify(validSourceDestinationService).findDestinationsForOneProgram(programId, facilityId);
   }
 
   @Test
   public void shouldCallFindSourcesForAllProductsWhenSearchValidSourcesIfProgramIsAllProducts() {
     siglusValidSourceDestinationController.searchValidSources(ALL_PRODUCTS_PROGRAM_ID, facilityId);
 
-    verify(validSourceDestinationService).findSourcesForAllProducts(facilityId);
+    verify(validSourceDestinationService).findSourcesForAllPrograms(facilityId);
   }
 
   @Test
   public void shouldCallFindSourcesWhenSearchValidSourcesIfProgramIsNotAllProducts() {
     siglusValidSourceDestinationController.searchValidSources(programId, facilityId);
 
-    verify(validSourceDestinationService).findSources(programId, facilityId);
+    verify(validSourceDestinationService).findSourcesForOneProgram(programId, facilityId);
   }
 }

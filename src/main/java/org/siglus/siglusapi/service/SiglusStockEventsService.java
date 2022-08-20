@@ -15,204 +15,173 @@
 
 package org.siglus.siglusapi.service;
 
-import static java.util.Collections.singletonList;
-import static org.apache.commons.lang.StringUtils.isBlank;
 import static org.siglus.siglusapi.constant.FieldConstants.ADJUSTMENT;
 import static org.siglus.siglusapi.constant.FieldConstants.ISSUE;
 import static org.siglus.siglusapi.constant.FieldConstants.RECEIVE;
+import static org.siglus.siglusapi.constant.FieldConstants.SEPARATOR;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
-import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_LOT_ID_AND_CODE_SHOULD_EMPTY;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_ADJUSTMENT_LOCATION_IS_LIMMITED;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_MOVEMENT_QUANTITY_MORE_THAN_STOCK_ON_HAND;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_IS_SUBMITTED;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_SUB_DRAFTS_QUANTITY_NOT_MATCH;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_SUB_DRAFT_EMPTY;
-import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_TRADE_ITEM_IS_EMPTY;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
-import java.time.LocalDate;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.openlmis.referencedata.dto.OrderableDto;
 import org.openlmis.stockmanagement.domain.BaseEntity;
 import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
+import org.openlmis.stockmanagement.domain.reason.ReasonType;
 import org.openlmis.stockmanagement.domain.reason.StockCardLineItemReason;
 import org.openlmis.stockmanagement.domain.sourcedestination.Node;
 import org.openlmis.stockmanagement.dto.PhysicalInventoryDto;
 import org.openlmis.stockmanagement.dto.StockEventDto;
 import org.openlmis.stockmanagement.dto.StockEventLineItemDto;
+import org.openlmis.stockmanagement.repository.StockCardLineItemReasonRepository;
 import org.openlmis.stockmanagement.repository.StockCardLineItemRepository;
 import org.openlmis.stockmanagement.repository.StockCardRepository;
 import org.openlmis.stockmanagement.repository.StockEventsRepository;
 import org.openlmis.stockmanagement.service.StockEventProcessor;
+import org.siglus.siglusapi.domain.FacilityLocations;
 import org.siglus.siglusapi.domain.StockCardExtension;
+import org.siglus.siglusapi.domain.StockCardLineItemExtension;
 import org.siglus.siglusapi.domain.StockManagementDraft;
-import org.siglus.siglusapi.dto.LotDto;
-import org.siglus.siglusapi.dto.LotSearchParams;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.dto.StockEventForMultiUserDto;
 import org.siglus.siglusapi.dto.StockManagementDraftDto;
 import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
+import org.siglus.siglusapi.repository.CalculatedStockOnHandByLocationRepository;
+import org.siglus.siglusapi.repository.FacilityLocationsRepository;
 import org.siglus.siglusapi.repository.StockCardExtensionRepository;
+import org.siglus.siglusapi.repository.StockCardLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.StockManagementDraftRepository;
-import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
-import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
-import org.siglus.siglusapi.service.client.StockEventsStockManagementService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
-import org.siglus.siglusapi.util.SiglusDateHelper;
 import org.siglus.siglusapi.validator.ActiveDraftValidator;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Slf4j
-//@RequiredArgsConstructor
+@RequiredArgsConstructor
 @SuppressWarnings({"PMD.TooManyMethods"})
 public class SiglusStockEventsService {
 
-  @Autowired
-  private StockEventsStockManagementService stockEventsStockManagementService;
-  @Autowired
-  private SiglusOrderableReferenceDataService orderableReferenceDataService;
-  @Autowired
-  private SiglusLotReferenceDataService lotReferenceDataService;
-  @Autowired
-  private SiglusPhysicalInventoryService siglusPhysicalInventoryService;
-  @Autowired
-  private SiglusStockManagementDraftService stockManagementDraftService;
-  @Autowired
-  private StockCardRepository stockCardRepository;
-  @Autowired
-  private StockCardExtensionRepository stockCardExtensionRepository;
-  @Autowired
-  private StockCardLineItemRepository stockCardLineItemRepository;
-  @Autowired
-  private StockEventsRepository stockEventsRepository;
-  @Autowired
-  private StockEventProcessor stockEventProcessor;
-  @Autowired
-  private SiglusArchiveProductService archiveProductService;
-  @Autowired
-  private SiglusDateHelper dateHelper;
-  @Autowired
-  private LotConflictService lotConflictService;
-  @Autowired
-  private SiglusAuthenticationHelper authenticationHelper;
-  @Autowired
-  private StockManagementDraftRepository stockManagementDraftRepository;
-  @Autowired
-  private ActiveDraftValidator draftValidator;
-
-  @Value("${stockmanagement.kit.unpack.reasonId}")
-  private UUID unpackReasonId;
-
+  private final SiglusPhysicalInventoryService siglusPhysicalInventoryService;
+  private final SiglusStockManagementDraftService stockManagementDraftService;
+  private final StockCardRepository stockCardRepository;
+  private final StockCardExtensionRepository stockCardExtensionRepository;
+  private final StockCardLineItemRepository stockCardLineItemRepository;
+  private final StockEventsRepository stockEventsRepository;
+  private final StockEventProcessor stockEventProcessor;
+  private final SiglusArchiveProductService archiveProductService;
+  private final SiglusAuthenticationHelper authenticationHelper;
+  private final StockManagementDraftRepository stockManagementDraftRepository;
+  private final ActiveDraftValidator draftValidator;
+  private final StockCardLineItemExtensionRepository stockCardLineItemExtensionRepository;
+  private final SiglusLotService siglusLotService;
+  private final FacilityLocationsRepository facilityLocationsRepository;
+  private final StockCardLineItemReasonRepository stockCardLineItemReasonRepository;
+  private final CalculatedStockOnHandByLocationRepository calculatedStockOnHandByLocationRepository;
   @Value("${stockmanagement.kit.unpack.destination.nodeId}")
   private UUID unpackDestinationNodeId;
-  @Autowired
-  private SiglusStockEventsService siglusStockEventsService;
 
   @Transactional
-  public UUID createStockEvent(StockEventDto eventDto) {
-    UUID userId = getUserId(eventDto);
-    if (ALL_PRODUCTS_PROGRAM_ID.equals(eventDto.getProgramId())) {
-      Map<UUID, UUID> programIdToEventId = createStockEventForPrograms(eventDto, userId);
-      if (!programIdToEventId.isEmpty()) {
-        return programIdToEventId.values().stream().findFirst().orElse(null);
-      }
-      return null;
-    }
-    return createStockEventForOneProgram(eventDto, userId);
-
+  public void processStockEventForMultiUser(StockEventForMultiUserDto stockEventForMultiUserDto) {
+    List<UUID> subDraftIds = stockEventForMultiUserDto.getSubDrafts();
+    validatePreSubmitSubDraft(subDraftIds);
+    processStockEvent(stockEventForMultiUserDto.getStockEvent(), false);
   }
-
+  
   @Transactional
-  public UUID createStockEventForOneProgram(StockEventDto eventDto, UUID userId) {
-    eventDto.setUserId(userId);
-    siglusStockEventsService.createAndFillLotId(eventDto);
-    if (eventDto.isPhysicalInventory()) {
-      UUID programId = eventDto.getProgramId();
-      List<StockEventDto> stockEventDtos;
-      List<PhysicalInventoryDto> physicalInventoryDtoList = siglusPhysicalInventoryService
-          .getPhysicalInventoryDtosDirectly(programId, eventDto.getFacilityId(), Boolean.TRUE);
-
-      if (CollectionUtils.isEmpty(physicalInventoryDtoList)) {
-        throw new ValidationMessageException("stockmanagement.error.physicalInventory.isSubmitted");
-      }
-      stockEventDtos = physicalInventoryDtoList.stream()
-          .map(StockEventDto::fromPhysicalInventoryDto)
-          .collect(Collectors.toList());
-
-      Map<UUID, UUID> programIdToEventId = new HashMap<>();
-      stockEventDtos.forEach(stockEventDto -> {
-        stockEventDto.setFacilityId(eventDto.getFacilityId());
-        stockEventDto.setSignature(eventDto.getSignature());
-        stockEventDto.setDocumentNumber(eventDto.getDocumentNumber());
-        stockEventDto.setUserId(eventDto.getUserId());
-        stockEventDto.setType(eventDto.getType());
-        stockEventDto.setLineItems(eventDto.getLineItems().stream()
-            .filter(lineItem -> lineItem.getProgramId() != null)
-            .filter(lineItem -> lineItem.getProgramId().equals(stockEventDto.getProgramId()))
-            .collect(Collectors.toList()));
-        programIdToEventId.put(stockEventDto.getProgramId(), siglusCreateStockEvent(stockEventDto));
-      });
-
-      if (!programIdToEventId.isEmpty() && eventDto.isPhysicalInventory()) {
-        siglusPhysicalInventoryService
-            .deletePhysicalInventoryForProductInOneProgramDirectly(eventDto.getFacilityId(),
-                programId);
-      }
-      return programIdToEventId.get(programId);
-    } else {
-      UUID stockEventId = stockEventsStockManagementService.createStockEvent(eventDto);
-      enhanceStockCard(eventDto, stockEventId);
-      return stockEventId;
-    }
-  }
-
-  private Map<UUID, UUID> createStockEventForPrograms(StockEventDto eventDto, UUID userId) {
-    eventDto.setUserId(userId);
-    siglusStockEventsService.createAndFillLotId(eventDto);
-    Set<UUID> programIds = eventDto.getLineItems().stream()
-        .map(StockEventLineItemDto::getProgramId)
-        .collect(Collectors.toSet());
+  public void processStockEvent(StockEventDto eventDto, boolean location) {
+    setUserId(eventDto);
+    siglusLotService.createAndFillLotId(eventDto);
+    Set<UUID> programIds = getProgramIds(eventDto);
     List<StockEventDto> stockEventDtos;
     if (eventDto.isPhysicalInventory()) {
-      List<PhysicalInventoryDto> inventories = programIds.stream()
-          .map(programId -> siglusPhysicalInventoryService
-              .getPhysicalInventoryDtosDirectly(programId, eventDto.getFacilityId(), Boolean.TRUE))
-          .flatMap(Collection::stream)
-          .collect(Collectors.toList());
-      if (CollectionUtils.isEmpty(inventories)) {
-        throw new ValidationMessageException("stockmanagement.error.physicalInventory.isSubmitted");
-      }
-      stockEventDtos = inventories.stream()
-          .map(StockEventDto::fromPhysicalInventoryDto)
-          .collect(Collectors.toList());
+      stockEventDtos = getStockEventsWhenDoPhysicalInventory(eventDto, programIds);
     } else {
-      if (isNotUnpack(eventDto)) {
-        List<StockManagementDraftDto> stockManagementDraftDtos = stockManagementDraftService
-            .findStockManagementDraft(ALL_PRODUCTS_PROGRAM_ID, getDraftType(eventDto), true);
-        if (CollectionUtils.isEmpty(stockManagementDraftDtos)) {
-          throw new ValidationMessageException(ERROR_STOCK_MANAGEMENT_DRAFT_IS_SUBMITTED);
-        }
-      }
-      stockEventDtos = programIds.stream()
-          .map(StockEventDto::fromProgramId)
-          .collect(Collectors.toList());
+      stockEventDtos = getStockEventsWhenDoStockMovements(eventDto, programIds);
     }
-    Map<UUID, UUID> programIdToEventId = new HashMap<>();
+    if (eventDto.isAdjustment() && location) {
+      validateAdjustmentLocationAndQuantity(eventDto);
+    }
+    createStockEvent(eventDto, stockEventDtos, location);
+    deleteDraft(eventDto);
+  }
+
+  private Set<UUID> getProgramIds(StockEventDto eventDto) {
+    if (!isAllPrograms(eventDto)) {
+      eventDto.getLineItems().forEach(item -> item.setProgramId(eventDto.getProgramId()));
+    }
+    return eventDto.getLineItems().stream()
+        .map(StockEventLineItemDto::getProgramId)
+        .collect(Collectors.toSet());
+  }
+
+  private void deleteDraft(StockEventDto eventDto) {
+    if (eventDto.isPhysicalInventory()) {
+      if (isAllPrograms(eventDto)) {
+        siglusPhysicalInventoryService.deletePhysicalInventoryDraftForAllPrograms(eventDto.getFacilityId());
+      } else {
+        siglusPhysicalInventoryService.deletePhysicalInventoryDraftForOneProgram(eventDto.getFacilityId(),
+            eventDto.getProgramId());
+      }
+    } else if (isNotUnpack(eventDto)) {
+      eventDto.setType(getDraftType(eventDto));
+      stockManagementDraftService.deleteStockManagementDraft(eventDto);
+    }
+  }
+
+  private List<StockEventDto> getStockEventsWhenDoPhysicalInventory(StockEventDto eventDto, Set<UUID> programIds) {
+    List<StockEventDto> stockEventDtos;
+    List<PhysicalInventoryDto> inventories = programIds.stream()
+        .map(programId -> siglusPhysicalInventoryService
+            .getPhysicalInventoryDtosDirectly(programId, eventDto.getFacilityId(), Boolean.TRUE))
+        .flatMap(Collection::stream)
+        .collect(Collectors.toList());
+    if (CollectionUtils.isEmpty(inventories)) {
+      throw new ValidationMessageException("stockmanagement.error.physicalInventory.isSubmitted");
+    }
+    stockEventDtos = inventories.stream()
+        .map(StockEventDto::fromPhysicalInventoryDto)
+        .collect(Collectors.toList());
+    return stockEventDtos;
+  }
+
+  private List<StockEventDto> getStockEventsWhenDoStockMovements(StockEventDto eventDto, Set<UUID> programIds) {
+    List<StockEventDto> stockEventDtos;
+    if (isNotUnpack(eventDto) && isAllPrograms(eventDto)) {
+      List<StockManagementDraftDto> stockManagementDraftDtos = stockManagementDraftService
+          .findStockManagementDraft(ALL_PRODUCTS_PROGRAM_ID, getDraftType(eventDto), true);
+      if (CollectionUtils.isEmpty(stockManagementDraftDtos)) {
+        throw new ValidationMessageException(ERROR_STOCK_MANAGEMENT_DRAFT_IS_SUBMITTED);
+      }
+    }
+    stockEventDtos = programIds.stream()
+        .map(StockEventDto::fromProgramId)
+        .collect(Collectors.toList());
+    return stockEventDtos;
+  }
+
+  private boolean isAllPrograms(StockEventDto eventDto) {
+    return ALL_PRODUCTS_PROGRAM_ID.equals(eventDto.getProgramId());
+  }
+
+  private void createStockEvent(StockEventDto eventDto, List<StockEventDto> stockEventDtos, boolean location) {
     stockEventDtos.forEach(stockEventDto -> {
       stockEventDto.setFacilityId(eventDto.getFacilityId());
       stockEventDto.setSignature(eventDto.getSignature());
@@ -223,59 +192,22 @@ public class SiglusStockEventsService {
           .filter(lineItem -> lineItem.getProgramId() != null)
           .filter(lineItem -> lineItem.getProgramId().equals(stockEventDto.getProgramId()))
           .collect(Collectors.toList()));
-      programIdToEventId.put(stockEventDto.getProgramId(), siglusCreateStockEvent(stockEventDto));
+      siglusCreateStockEvent(stockEventDto, location);
     });
-    if (!programIdToEventId.isEmpty()) {
-      if (eventDto.isPhysicalInventory()) {
-        siglusPhysicalInventoryService
-            .deletePhysicalInventoryForAllProductsDirectly(eventDto.getFacilityId());
-      } else if (isNotUnpack(eventDto)) {
-        String type = getDraftType(eventDto);
-        eventDto.setType(type);
-        stockManagementDraftService.deleteStockManagementDraft(eventDto);
-      }
-    }
-    return programIdToEventId;
   }
 
-  /**
-   * reason for create a new transaction:
-   * Running this method in the super transaction will cause 'stockmanagement.error.event.lot.not.exist' execption.
-   * detail steps：
-   * 1. method createStockEventForOneProgram do something
-   * 2. method createAndFillLotId insert a new lot, with new uuid(This method)
-   * 3. method createStockEventForOneProgram call siglusCreateStockEvent and in stockEventProcessor.process build
-   * context. When building context, it start a http request /api/lots/ to getLotsByIds(which beyond the super
-   * transaction scope, so the http must see the change in step 2)
-   */
-  @Transactional(propagation = Propagation.REQUIRES_NEW)
-  public void createAndFillLotId(StockEventDto eventDto) {
-    final List<StockEventLineItemDto> lineItems = eventDto.getLineItems();
-    Set<UUID> orderableIds = lineItems.stream().map(StockEventLineItemDto::getOrderableId)
-        .collect(Collectors.toSet());
-    Map<UUID, OrderableDto> orderableDtos = orderableReferenceDataService.findByIds(orderableIds)
-        .stream()
-        .collect(Collectors.toMap(OrderableDto::getId, orderableDto -> orderableDto));
-    for (StockEventLineItemDto eventLineItem : lineItems) {
-      UUID orderableId = eventLineItem.getOrderableId();
-      OrderableDto orderable = orderableDtos.get(orderableId);
-      if (orderable.getIsKit()) {
-        validateLotMustBeNull(eventLineItem);
-        continue;
-      }
-      UUID facilityId = getFacilityId(eventDto);
-      fillLotIdIfNull(facilityId, orderable, eventLineItem);
-    }
-  }
-
-  private UUID siglusCreateStockEvent(StockEventDto eventDto) {
-    // do the creation
+  private void siglusCreateStockEvent(StockEventDto eventDto, boolean location) {
+    List<StockEventLineItemDto> lineItems = eventDto.getLineItems();
+    lineItems.forEach(lineItem -> lineItem.setId(UUID.randomUUID()));
+    eventDto.setLineItems(lineItems);
     UUID stockEventId = stockEventProcessor.process(eventDto);
-    enhanceStockCard(eventDto, stockEventId);
-    return stockEventId;
+    enhanceStockCard(eventDto, stockEventId, location);
   }
 
-  private void enhanceStockCard(StockEventDto eventDto, UUID stockEventId) {
+  private void enhanceStockCard(StockEventDto eventDto, UUID stockEventId, boolean location) {
+    if (location) {
+      addStockCardLineItemLocation(eventDto);
+    }
     addStockCardCreateTime(eventDto);
     addStockCardLineItemDocumentNumber(eventDto, stockEventId);
     Set<UUID> orderableIds = eventDto.getLineItems().stream()
@@ -284,67 +216,24 @@ public class SiglusStockEventsService {
     archiveProductService.activateProducts(eventDto.getFacilityId(), orderableIds);
   }
 
-  private void fillLotIdIfNull(UUID facilityId, OrderableDto orderable,
-      StockEventLineItemDto eventLineItem) {
-    if (eventLineItem.getLotId() != null || isBlank(eventLineItem.getLotCode())) {
-      // already done or nothing we can do since lot info is missing
-      return;
-    }
-    UUID lotId = createNewLotOrReturnExisted(facilityId, orderable, eventLineItem.getLotCode(),
-        eventLineItem.getExpirationDate()).getId();
-    eventLineItem.setLotId(lotId);
-  }
-
-  private void validateLotMustBeNull(StockEventLineItemDto stockEventLineItem) {
-    if (StringUtils.isNotBlank(stockEventLineItem.getLotCode())
-        || stockEventLineItem.getLotId() != null) {
-      throw new ValidationMessageException(new Message(ERROR_LOT_ID_AND_CODE_SHOULD_EMPTY));
+  private void setUserId(StockEventDto eventDto) {
+    if (eventDto.getUserId() == null) {
+      eventDto.setUserId(authenticationHelper.getCurrentUser().getId());
     }
   }
 
-  public LotDto createNewLotOrReturnExisted(UUID facilityId, OrderableDto orderable, String lotCode,
-      LocalDate expirationDate) {
-    String tradeItemId = orderable.getTradeItemIdentifier();
-    if (null == tradeItemId) {
-      throw new ValidationMessageException(new Message(ERROR_TRADE_ITEM_IS_EMPTY));
-    }
-    LotDto existedLot = findExistedLot(lotCode, tradeItemId);
-    if (existedLot == null) {
-      LotDto lotDto = new LotDto();
-      lotDto.setTradeItemId(UUID.fromString(tradeItemId));
-      lotDto.setManufactureDate(dateHelper.getCurrentDate());
-      lotDto.setExpirationDate(expirationDate);
-      lotDto.setActive(true);
-      lotDto.setLotCode(lotCode);
-      return lotReferenceDataService.saveLot(lotDto);
-    }
-    lotConflictService
-        .handleLotConflict(facilityId, lotCode, existedLot.getId(), expirationDate,
-            existedLot.getExpirationDate());
-    return existedLot;
-  }
-
-  private UUID getUserId(StockEventDto eventDto) {
-    if (eventDto.getUserId() != null) {
-      return eventDto.getUserId();
-    }
-    return authenticationHelper.getCurrentUser().getId();
-  }
-
-  private UUID getFacilityId(StockEventDto eventDto) {
-    if (eventDto.getFacilityId() != null) {
-      return eventDto.getFacilityId();
-    }
-    return authenticationHelper.getCurrentUser().getHomeFacilityId();
-  }
-
-  private LotDto findExistedLot(String lotCode, String tradeItemId) {
-    LotSearchParams lotSearchParams = new LotSearchParams();
-    lotSearchParams.setLotCode(lotCode);
-    lotSearchParams.setTradeItemId(singletonList(UUID.fromString(tradeItemId)));
-    List<LotDto> existedLots = lotReferenceDataService.getLots(lotSearchParams);
-    return existedLots.stream().filter(lotDto -> lotDto.getLotCode().equals(lotCode)).findFirst()
-        .orElse(null);
+  private void addStockCardLineItemLocation(StockEventDto eventDto) {
+    List<StockEventLineItemDto> lineItems = eventDto.getLineItems();
+    lineItems.stream().filter(lineItem -> lineItem.getLocationCode() != null)
+        .forEach(lineItem -> {
+          StockCardLineItemExtension stockCardLineItemExtension = StockCardLineItemExtension
+              .builder()
+              .locationCode(lineItem.getLocationCode())
+              .area(lineItem.getArea())
+              .stockCardLineItemId(lineItem.getId())
+              .build();
+          stockCardLineItemExtensionRepository.save(stockCardLineItemExtension);
+        });
   }
 
   private void addStockCardCreateTime(StockEventDto eventDto) {
@@ -378,8 +267,7 @@ public class SiglusStockEventsService {
                 + stockEventLineItemDto.getReasonId()
                 + stockEventLineItemDto.getSourceId()
                 + stockEventLineItemDto.getDestinationId(),
-            stockEventLineItemDto -> Optional.ofNullable(stockEventLineItemDto.getDocumentationNo())
-                .orElse(""),
+            stockEventLineItemDto -> Optional.ofNullable(stockEventLineItemDto.getDocumentationNo()).orElse(""),
             (v1, v2) -> v1));
     List<StockCardLineItem> stockCardLineItems = stockCardLineItemRepository
         .findByOriginEvent(stockEventsRepository.findOne(stockEventId));
@@ -413,26 +301,81 @@ public class SiglusStockEventsService {
     }
   }
 
-  @Transactional
-  public UUID createStockEventForMultiUser(StockEventForMultiUserDto stockEventForMultiUserDto) {
-    List<UUID> subDraftIds = stockEventForMultiUserDto.getSubDrafts();
-    validatePreSubmitSubDraft(subDraftIds);
-    return createStockEvent(stockEventForMultiUserDto.getStockEvent());
-  }
-
   private void validatePreSubmitSubDraft(List<UUID> subDraftIds) {
     if (subDraftIds.isEmpty()) {
-      throw new BusinessDataException(new Message(ERROR_STOCK_MANAGEMENT_SUB_DRAFT_EMPTY),
-          "subDrafts empty");
+      throw new BusinessDataException(new Message(ERROR_STOCK_MANAGEMENT_SUB_DRAFT_EMPTY), "subDrafts empty");
     }
     StockManagementDraft subDraft = stockManagementDraftRepository.findOne(subDraftIds.get(0));
     draftValidator.validateSubDraft(subDraft);
-    int subDraftsQuantity = stockManagementDraftRepository
-        .countByInitialDraftId(subDraft.getInitialDraftId());
+    int subDraftsQuantity = stockManagementDraftRepository.countByInitialDraftId(subDraft.getInitialDraftId());
     if (subDraftIds.size() != subDraftsQuantity) {
-      throw new BusinessDataException(
-          new Message(ERROR_STOCK_MANAGEMENT_SUB_DRAFTS_QUANTITY_NOT_MATCH),
+      throw new BusinessDataException(new Message(ERROR_STOCK_MANAGEMENT_SUB_DRAFTS_QUANTITY_NOT_MATCH),
           "subDrafts quantity not match");
     }
   }
+
+  private void validateAdjustmentLocationAndQuantity(StockEventDto eventDto) {
+
+    validatePositiveAdjustmentLocationLimited(eventDto, eventDto.getLineItems());
+    validateNegativeAdjustmentQuantity(eventDto, eventDto.getLineItems());
+  }
+
+  private void validateNegativeAdjustmentQuantity(StockEventDto eventDto, List<StockEventLineItemDto> lineItems) {
+    Map<String, List<StockEventLineItemDto>> lotLocationToStockEventLineItemDtoList = lineItems.stream()
+        .collect(Collectors.groupingBy(e -> getUniqueKey(e.getLotId(), e.getLocationCode())));
+
+    lotLocationToStockEventLineItemDtoList.forEach((lotLocation, stockEventLineItemDtoList) -> {
+      StockEventLineItemDto stockEventLineItemDto = stockEventLineItemDtoList.get(0);
+      StockCard stockCard = stockCardRepository.findByProgramIdAndFacilityIdAndOrderableIdAndLotId(
+          stockEventLineItemDto.getProgramId(),
+          eventDto.getFacilityId(),
+          stockEventLineItemDto.getOrderableId(),
+          stockEventLineItemDto.getLotId()
+      );
+      int soh = 0;
+      if (null != stockCard) {
+        soh = calculatedStockOnHandByLocationRepository
+            .findRecentlySohByStockCardIdAndLocationCode(
+                stockCard.getId(),
+                stockEventLineItemDto.getLocationCode()).orElse(0);
+      }
+      int adjustmentSubValue = getAdjustmentSubValue(stockEventLineItemDtoList);
+      if (adjustmentSubValue > soh) {
+        throw new BusinessDataException(new Message(ERROR_MOVEMENT_QUANTITY_MORE_THAN_STOCK_ON_HAND), null);
+      }
+    });
+  }
+
+  private void validatePositiveAdjustmentLocationLimited(StockEventDto eventDto,
+      List<StockEventLineItemDto> lineItems) {
+    List<FacilityLocations> locations = facilityLocationsRepository.findByFacilityId(eventDto.getFacilityId());
+    lineItems.forEach(e -> {
+      if (isPositiveAdjustment(e.getReasonId())
+          && locations.stream()
+          .noneMatch(location -> Objects.equals(location.getLocationCode(), e.getLocationCode()))) {
+        throw new BusinessDataException(new Message(ERROR_ADJUSTMENT_LOCATION_IS_LIMMITED), null);
+      }
+    });
+  }
+
+  private boolean isPositiveAdjustment(UUID reasonId) {
+    ImmutableMap<UUID, StockCardLineItemReason> reasonIdToStockCardLineItemReason = Maps.uniqueIndex(
+        stockCardLineItemReasonRepository.findAll(), StockCardLineItemReason::getId);
+    return !reasonIdToStockCardLineItemReason.get(reasonId).getReasonType().equals(ReasonType.DEBIT);
+  }
+
+  private Integer getAdjustmentSubValue(List<StockEventLineItemDto> lineItemDtos) {
+    Integer subValue = 0;
+    for (StockEventLineItemDto lineItem : lineItemDtos) {
+      if (!isPositiveAdjustment(lineItem.getReasonId())) {
+        subValue += lineItem.getQuantity();
+      }
+    }
+    return subValue;
+  }
+
+  private String getUniqueKey(UUID lotId, String locationCode) {
+    return lotId.toString() + SEPARATOR + locationCode;
+  }
+
 }

@@ -28,42 +28,55 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.siglus.siglusapi.domain.ProductLocationMovementDraft;
+import org.siglus.siglusapi.domain.StockManagementDraft;
+import org.siglus.siglusapi.dto.enums.PhysicalInventorySubDraftEnum;
 import org.springframework.beans.BeanUtils;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class ProductLocationMovementDraftDto {
+public class StockManagementDraftWithLocationDto {
 
   private UUID id;
 
   private UUID facilityId;
 
+  private Boolean isDraft;
+
   private UUID programId;
 
   @JsonFormat(shape = STRING)
-  private LocalDate createdDate;
+  private LocalDate occurredDate;
 
   private String signature;
 
   private UUID userId;
 
-  private List<ProductLocationMovementDraftLineItemDto> lineItems;
+  private String draftType;
 
-  public static List<ProductLocationMovementDraftDto> from(Collection<ProductLocationMovementDraft> drafts) {
-    List<ProductLocationMovementDraftDto> draftDtos = new ArrayList<>(drafts.size());
-    drafts.forEach(draft -> draftDtos.add(from(draft)));
+  private UUID initialDraftId;
+
+  private String operator;
+
+  private PhysicalInventorySubDraftEnum status;
+
+  private Integer draftNumber;
+
+  private List<StockManagementDraftLineItemWithLocationDto> lineItems;
+
+  public static List<StockManagementDraftWithLocationDto> from(Collection<StockManagementDraft> drafts) {
+    List<StockManagementDraftWithLocationDto> draftDtos = new ArrayList<>(drafts.size());
+    drafts.forEach(i -> draftDtos.add(from(i)));
     return draftDtos;
   }
 
-  public static ProductLocationMovementDraftDto from(ProductLocationMovementDraft draft) {
-    ProductLocationMovementDraftDto draftDto = new ProductLocationMovementDraftDto();
+  public static StockManagementDraftWithLocationDto from(StockManagementDraft draft) {
+    StockManagementDraftWithLocationDto draftDto = new StockManagementDraftWithLocationDto();
     BeanUtils.copyProperties(draft, draftDto);
     if (draft.getLineItems() != null) {
       draftDto.setLineItems(draft.getLineItems().stream().map(
-          ProductLocationMovementDraftLineItemDto::from).collect(toList()));
+          StockManagementDraftLineItemWithLocationDto::from).collect(toList()));
     }
     return draftDto;
   }

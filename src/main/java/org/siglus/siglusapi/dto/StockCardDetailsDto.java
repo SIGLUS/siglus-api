@@ -20,16 +20,16 @@ import com.fasterxml.jackson.annotation.JsonFormat.Shape;
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 import org.openlmis.referencedata.dto.OrderableDto;
 import org.openlmis.stockmanagement.dto.ObjectReferenceDto;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Builder
+@SuperBuilder
 public class StockCardDetailsDto {
 
   private ObjectReferenceDto stockCard;

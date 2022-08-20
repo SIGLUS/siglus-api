@@ -19,7 +19,6 @@ import static java.util.stream.Collectors.toList;
 import static javax.persistence.CascadeType.ALL;
 import static org.hibernate.annotations.LazyCollectionOption.FALSE;
 
-import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 import javax.persistence.Column;
@@ -28,23 +27,23 @@ import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.hibernate.annotations.LazyCollection;
 import org.siglus.common.domain.BaseEntity;
-import org.siglus.siglusapi.dto.ProductLocationMovementDraftDto;
-import org.siglus.siglusapi.dto.ProductLocationMovementDraftLineItemDto;
+import org.siglus.siglusapi.dto.StockCardLocationMovementDraftDto;
+import org.siglus.siglusapi.dto.StockCardLocationMovementDraftLineItemDto;
 import org.springframework.beans.BeanUtils;
 
-@Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
 @Builder
-@EqualsAndHashCode(callSuper = true)
-@Table(name = "product_location_movement_drafts", schema = "siglusintegration")
-public class ProductLocationMovementDraft extends BaseEntity {
+@Getter
+@Setter
+@Table(name = "stock_card_location_movement_drafts", schema = "siglusintegration")
+public class StockCardLocationMovementDraft extends BaseEntity {
 
   @Column(nullable = false)
   private UUID facilityId;
@@ -52,30 +51,26 @@ public class ProductLocationMovementDraft extends BaseEntity {
   @Column(nullable = false)
   private UUID programId;
 
-  private LocalDate createdDate;
-
-  private String signature;
-
   private UUID userId;
 
   @LazyCollection(FALSE)
-  @OneToMany(cascade = ALL, mappedBy = "productLocationMovementDraft", orphanRemoval = true)
-  private List<ProductLocationMovementDraftLineItem> lineItems;
+  @OneToMany(cascade = ALL, mappedBy = "stockCardLocationMovementDraft", orphanRemoval = true)
+  private List<StockCardLocationMovementDraftLineItem> lineItems;
 
-  public static ProductLocationMovementDraft createEmptyStockMovementDraft(
-      ProductLocationMovementDraftDto movementDraftDto) {
-    ProductLocationMovementDraft movementDraft = new ProductLocationMovementDraft();
+  public static StockCardLocationMovementDraft createEmptyStockMovementDraft(
+      StockCardLocationMovementDraftDto movementDraftDto) {
+    StockCardLocationMovementDraft movementDraft = new StockCardLocationMovementDraft();
     BeanUtils.copyProperties(movementDraftDto, movementDraft);
     return movementDraft;
   }
 
-  public static ProductLocationMovementDraft createMovementDraft(ProductLocationMovementDraftDto movementDraftDto) {
-    ProductLocationMovementDraft movementDraft = new ProductLocationMovementDraft();
+  public static StockCardLocationMovementDraft createMovementDraft(StockCardLocationMovementDraftDto movementDraftDto) {
+    StockCardLocationMovementDraft movementDraft = new StockCardLocationMovementDraft();
     BeanUtils.copyProperties(movementDraftDto, movementDraft);
-    List<ProductLocationMovementDraftLineItemDto> lineItemDtos = movementDraftDto.getLineItems();
+    List<StockCardLocationMovementDraftLineItemDto> lineItemDtos = movementDraftDto.getLineItems();
     if (lineItemDtos != null) {
       movementDraft.setLineItems(lineItemDtos.stream()
-          .map(lineItemDto -> ProductLocationMovementDraftLineItem.from(lineItemDto, movementDraft))
+          .map(lineItemDto -> StockCardLocationMovementDraftLineItem.from(lineItemDto, movementDraft))
           .collect(toList()));
     }
     return movementDraft;

@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.service;
 
+import static com.google.common.collect.Lists.newArrayList;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.powermock.api.mockito.PowerMockito.when;
@@ -47,7 +48,9 @@ import org.openlmis.stockmanagement.dto.referencedata.UserDto;
 import org.openlmis.stockmanagement.repository.CalculatedStockOnHandRepository;
 import org.openlmis.stockmanagement.util.AuthenticationHelper;
 import org.siglus.siglusapi.domain.StockCardExtension;
+import org.siglus.siglusapi.dto.LotLocationSohDto;
 import org.siglus.siglusapi.dto.StockMovementResDto;
+import org.siglus.siglusapi.repository.CalculatedStockOnHandByLocationRepository;
 import org.siglus.siglusapi.repository.SiglusStockCardRepository;
 import org.siglus.siglusapi.repository.StockCardExtensionRepository;
 import org.siglus.siglusapi.service.client.SiglusStockManagementService;
@@ -90,6 +93,9 @@ public class SiglusStockCardServiceTest {
 
   @Mock
   private StockMovementService stockMovementService;
+
+  @Mock
+  private CalculatedStockOnHandByLocationRepository calculatedStockOnHandByLocationRepository;
 
   @InjectMocks
   private SiglusStockCardService siglusStockCardService;
@@ -136,6 +142,36 @@ public class SiglusStockCardServiceTest {
     when(stockCardRepository.findOne(stockCardId))
         .thenReturn(null);
     StockCardDto stockCardDto = siglusStockCardService.findStockCardById(stockCardId);
+    assertEquals(null, stockCardDto);
+  }
+
+  @Test
+  public void shouldGetLocationInfoWhenFindByStockCardId() {
+    // given
+    StockCard stockCardOne = createStockCardOne();
+    when(stockCardRepository.findOne(stockCardOne.getId())).thenReturn(stockCardOne);
+    StockCardExtension stockCardExtensionOne = StockCardExtension.builder()
+        .stockCardId(stockCardOne.getId())
+        .createDate(stockCardOne.getLineItems().get(0).getOccurredDate())
+        .build();
+    when(stockCardExtensionRepository.findByStockCardId(stockCardOne.getId()))
+        .thenReturn(stockCardExtensionOne);
+    when(stockCardStockManagementService.getStockCard(stockCardOne.getId()))
+        .thenReturn(getFromStockCard(stockCardOne));
+    LotLocationSohDto locationSohDto =
+        LotLocationSohDto.builder().lotId(stockCardOne.getLotId()).locationCode("AA031").stockOnHand(1).build();
+    when(calculatedStockOnHandByLocationRepository.getLocationSoh(any())).thenReturn(newArrayList(locationSohDto));
+    // when
+    StockCardDto stockCardDto = siglusStockCardService.findStockCardWithLocationById(stockCardOne.getId());
+    assertEquals(stockCardDto.getExtraData().get("locationCode").isEmpty(), false);
+  }
+
+  @Test
+  public void shouldReturnNUllIfStockNotExistWhenFindStockCardWithLocationByStockCard() {
+    UUID stockCardId = UUID.randomUUID();
+    when(stockCardRepository.findOne(stockCardId))
+        .thenReturn(null);
+    StockCardDto stockCardDto = siglusStockCardService.findStockCardWithLocationById(stockCardId);
     assertEquals(null, stockCardDto);
   }
 

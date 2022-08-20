@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.repository;
 
+import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.List;
 import java.util.Optional;
@@ -25,6 +26,8 @@ import org.openlmis.referencedata.domain.ProcessingSchedule;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface ProcessingPeriodRepository extends JpaRepository<ProcessingPeriod, UUID>,
     JpaSpecificationExecutor<ProcessingPeriod> {
@@ -38,5 +41,14 @@ public interface ProcessingPeriodRepository extends JpaRepository<ProcessingPeri
     );
     return Optional.ofNullable(findOne(spec));
   }
+
+  @Query(value = "select\n"
+      + "  startdate\n"
+      + "from\n"
+      + "  referencedata.processing_periods pp\n"
+      + "left join referencedata.processing_schedules ps on\n"
+      + "  pp.processingscheduleid = ps.id\n"
+      + "where ps.code ='M1' and :currentDate >= pp.startdate and :currentDate <= pp.enddate ", nativeQuery = true)
+  LocalDate getCurrentPeriodStartDate(@Param("currentDate") LocalDate currentDate);
 
 }

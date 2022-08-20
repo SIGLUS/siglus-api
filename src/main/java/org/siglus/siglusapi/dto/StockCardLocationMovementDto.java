@@ -19,39 +19,30 @@ import static com.fasterxml.jackson.annotation.JsonFormat.Shape.STRING;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.siglus.siglusapi.domain.ProductLocationMovementDraftLineItem;
-import org.springframework.beans.BeanUtils;
 
 @Data
-@NoArgsConstructor
 @AllArgsConstructor
+@NoArgsConstructor
 @Builder
-public class ProductLocationMovementDraftLineItemDto {
+public class StockCardLocationMovementDto {
 
-  private UUID orderableId;
-  private String productCode;
-  private String productName;
-  private UUID lotId;
-  private String lotCode;
-  private UUID srcLocationId;
-  private String srcLocationCode;
-  private UUID destLocationId;
-  private String destLocationCode;
-  @JsonFormat(shape = STRING)
-  private LocalDate createdDate;
-  @JsonFormat(shape = STRING)
-  private LocalDate expirationDate;
-  private Integer quantity;
-  private Integer stockOnHand;
+  private UUID facilityId;
 
-  public static ProductLocationMovementDraftLineItemDto from(ProductLocationMovementDraftLineItem lineItem) {
-    ProductLocationMovementDraftLineItemDto lineItemDto = new ProductLocationMovementDraftLineItemDto();
-    BeanUtils.copyProperties(lineItem, lineItemDto);
-    return lineItemDto;
-  }
+  private UUID programId;
+
+  private UUID userId;
+
+  @JsonFormat(shape = STRING)
+  private LocalDate occurredDate;
+
+  private String signature;
+
+  private List<StockCardLocationMovementLineItemDto> movementLineItems;
+
 }

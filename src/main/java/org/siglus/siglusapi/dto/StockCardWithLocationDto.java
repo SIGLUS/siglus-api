@@ -13,13 +13,19 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.web.response;
+package org.siglus.siglusapi.dto;
 
+import java.util.List;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
-import org.openlmis.fulfillment.web.util.BasicOrderDto;
+import org.openlmis.stockmanagement.dto.StockCardDto;
 
 @Data
-public class BasicOrderExtensionDto extends BasicOrderDto {
+@Builder
+@AllArgsConstructor
+public class StockCardWithLocationDto {
 
-  private boolean hasSubDraft;
+  private StockCardDto stockCardDto;
+  private List<String> locationCodes;
 }

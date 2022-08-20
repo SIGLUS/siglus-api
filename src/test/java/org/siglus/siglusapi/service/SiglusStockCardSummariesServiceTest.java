@@ -59,9 +59,12 @@ import org.siglus.siglusapi.domain.PhysicalInventorySubDraft;
 import org.siglus.siglusapi.domain.StockManagementDraft;
 import org.siglus.siglusapi.domain.StockManagementDraftLineItem;
 import org.siglus.siglusapi.dto.LotDto;
+import org.siglus.siglusapi.dto.LotLocationSohDto;
 import org.siglus.siglusapi.dto.QueryOrderableSearchParams;
 import org.siglus.siglusapi.dto.StockCardDetailsDto;
+import org.siglus.siglusapi.dto.StockCardSummaryWithLocationDto;
 import org.siglus.siglusapi.dto.UserDto;
+import org.siglus.siglusapi.repository.CalculatedStockOnHandByLocationRepository;
 import org.siglus.siglusapi.repository.PhysicalInventoryLineItemsExtensionRepository;
 import org.siglus.siglusapi.repository.PhysicalInventorySubDraftRepository;
 import org.siglus.siglusapi.repository.StockManagementDraftRepository;
@@ -119,6 +122,9 @@ public class SiglusStockCardSummariesServiceTest {
   @Mock
   private SiglusOrderableService siglusOrderableService;
 
+  @Mock
+  private CalculatedStockOnHandByLocationRepository calculatedStockOnHandByLocationRepository;
+
   @InjectMocks
   private SiglusStockCardSummariesService service;
 
@@ -133,6 +139,9 @@ public class SiglusStockCardSummariesServiceTest {
   private final UUID lotId = UUID.randomUUID();
   private final LotDto lotDto = new LotDto();
 
+  private final UUID draftId = UUID.randomUUID();
+
+  private final MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
   private final Pageable pageable = new PageRequest(DEFAULT_PAGE_NUMBER, Integer.MAX_VALUE);
 
   @Before
@@ -355,6 +364,41 @@ public class SiglusStockCardSummariesServiceTest {
     assertEquals(orderableId, stockCardDetailsDtoByGroup.get(0).get(0).getOrderable().getId());
     assertEquals(lotId, stockCardDetailsDtoByGroup.get(0).get(0).getLot().getId());
     assertEquals(10, stockCardDetailsDtoByGroup.get(0).get(0).getStockOnHand().intValue());
+  }
+
+  @Test
+  public void shouldReturnStockCardSummaryWithLocation() {
+    StockCardSummaries summaries = new StockCardSummaries(newArrayList(), newArrayList(),
+        newHashMap(), null, null);
+    when(programOrderableRepository.countByProgramId(any())).thenReturn(1L);
+    when(stockCardSummariesService.findStockCards(any())).thenReturn(summaries);
+    when(stockCardSummariesV2DtoBuilder
+        .build(any(List.class), any(List.class), any(Map.class), any(boolean.class)))
+        .thenReturn(newArrayList(createSummaryV2Dto(orderableId, 10)));
+
+    StockManagementDraftLineItem lineItem = StockManagementDraftLineItem.builder().orderableId(orderableId).build();
+    StockManagementDraft stockManagementDraft = StockManagementDraft.builder()
+        .lineItems(newArrayList(lineItem))
+        .initialDraftId(initialDraftId)
+        .build();
+    when(stockManagementDraftRepository.findOne(subDraftId)).thenReturn(stockManagementDraft);
+    when(stockManagementDraftRepository.findByInitialDraftId(initialDraftId))
+        .thenReturn(newArrayList(stockManagementDraft));
+    when(siglusLotReferenceDataService.findByIds(newArrayList(lotId))).thenReturn(newArrayList(lotDto));
+    QueryOrderableSearchParams searchParams = new QueryOrderableSearchParams(new LinkedMultiValueMap());
+    searchParams.setIds(newHashSet(newArrayList(orderableId, orderableId)));
+    org.openlmis.referencedata.dto.OrderableDto orderableDto = new org.openlmis.referencedata.dto.OrderableDto();
+    orderableDto.setId(orderableId);
+    Page<org.openlmis.referencedata.dto.OrderableDto> page = Pagination.getPage(newArrayList(orderableDto));
+    when(siglusOrderableService.searchOrderables(searchParams, pageable, facilityId))
+        .thenReturn(page);
+    LotLocationSohDto locationSohDto =
+        LotLocationSohDto.builder().lotId(lotId).locationCode(null).stockOnHand(1).build();
+    when(calculatedStockOnHandByLocationRepository.getLocationSoh(any())).thenReturn(newArrayList(locationSohDto));
+    List<StockCardSummaryWithLocationDto> stockCardSummaryWithLocationDtos =
+        service.getStockCardSummaryWithLocationDtos(getProgramsParms(), null, subDraftId, pageable);
+    assertEquals(stockCardSummaryWithLocationDtos.size(), 1);
+    assertEquals(stockCardSummaryWithLocationDtos.get(0).getStockCardDetails().size(), 1);
   }
 
   private StockCardSummaryV2Dto createSummaryV2Dto(UUID orderableId, Integer stockOnHand) {
