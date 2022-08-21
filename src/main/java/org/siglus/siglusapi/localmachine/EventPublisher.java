@@ -15,67 +15,65 @@
 
 package org.siglus.siglusapi.localmachine;
 
-import java.util.List;
+import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.UUID;
 import javax.transaction.Transactional;
 import javax.transaction.Transactional.TxType;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.i18n.MessageKeys;
+import org.siglus.siglusapi.localmachine.eventstore.EventStore;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class EventPublisher {
   public static final int protocolVersion = 1;
-  private final EventQueue eventQueue;
+  private final EventStore eventStore;
   private final ApplicationEventPublisher eventPublisher;
   private final SiglusAuthenticationHelper siglusAuthenticationHelper;
-  private final Machine machine;
-
-  public List<String> getKnownFacilityIds() {
-    // FIXME: 2022/8/14 owner id + peering facility ids
-    return null;
-  }
 
   public void emitGroupEvent(String groupId, UUID receiverId, Object payload) {
     Event.EventBuilder eventBuilder = baseEventBuilder(groupId, receiverId, payload);
-    eventBuilder.groupSequenceNumber(eventQueue.nextGroupSequenceNumber(groupId));
-    eventQueue.put(eventBuilder.build());
+    eventBuilder.groupSequenceNumber(eventStore.nextGroupSequenceNumber(groupId));
+    eventStore.emit(eventBuilder.build());
   }
 
-  private Event.EventBuilder baseEventBuilder(String groupId, UUID receiverId, Object payload) {
-    UserDto currentUser =
-        Optional.ofNullable(siglusAuthenticationHelper.getCurrentUser())
-            .orElseThrow(() -> new NotFoundException(MessageKeys.ERROR_USER_NOT_FOUND));
-    return Event.builder()
-        .protocolVersion(protocolVersion)
-        .timestamp(System.currentTimeMillis())
-        .senderId(currentUser.getId())
-        .receiverId(receiverId)
-        .groupId(groupId)
-        .groupSequenceNumber(0L)
-        .payload(payload);
+  public void emitNonGroupEvent(Object payload) {
+    // the only receiver is online web so don't need to set receiver id
+    Event.EventBuilder eventBuilder = baseEventBuilder(null, null, payload);
+    eventStore.emit(eventBuilder.build());
   }
 
   // publish event should be in an isolated transaction to make the replay process is transactional
   @Transactional(TxType.REQUIRES_NEW)
   public void publishEvent(Event event) {
-    if ((machine.isOnlineWeb() && event.isOnlineWebReplayed())
-        || (!machine.isOnlineWeb() && event.isReceiverReplayed())) {
-      // TODO: 2022/8/18 check local facility id should be event receiver
-      throw new IllegalStateException("Not allow to publish replayed event");
+    if (event.isLocalReplayed()) {
+      log.info("event {} is relayed already locally, skip", event.getId());
+      return;
     }
-    eventPublisher.publishEvent(event);
-    if (machine.isOnlineWeb()) {
-      event.setOnlineWebReplayed(true);
-    } else {
-      event.setReceiverReplayed(true);
-    }
-    eventQueue.save(event);
+    eventPublisher.publishEvent(event.getPayload());
+    event.setLocalReplayed(true);
+    eventStore.confirmReplayed(event);
+  }
+
+  Event.EventBuilder baseEventBuilder(String groupId, UUID receiverId, Object payload) {
+    UserDto currentUser =
+        Optional.ofNullable(siglusAuthenticationHelper.getCurrentUser())
+            .orElseThrow(() -> new NotFoundException(MessageKeys.ERROR_USER_NOT_FOUND));
+    return Event.builder()
+        .id(UUID.randomUUID())
+        .protocolVersion(protocolVersion)
+        .occurredTime(ZonedDateTime.now())
+        .senderId(currentUser.getHomeFacilityId())
+        .receiverId(receiverId)
+        .groupId(groupId)
+        .payload(payload);
   }
 }

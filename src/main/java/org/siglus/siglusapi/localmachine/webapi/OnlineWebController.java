@@ -15,13 +15,15 @@
 
 package org.siglus.siglusapi.localmachine.webapi;
 
+import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.siglus.siglusapi.localmachine.Event;
 import org.siglus.siglusapi.localmachine.EventImporter;
-import org.springframework.http.HttpStatus;
+import org.siglus.siglusapi.localmachine.eventstore.EventStore;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -29,10 +31,21 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/siglusapi/localmachine")
 public class OnlineWebController {
   private final EventImporter importer;
+  private final EventStore eventStore;
 
   @PostMapping("/events")
-  @ResponseStatus(HttpStatus.CREATED)
   public void syncEvents(@Validated SyncRequest request) {
     importer.importEvents(request.getEvents());
+  }
+
+  @GetMapping("/peeringEvents")
+  public List<Event> exportPeeringEvents() {
+    // FIXME: 2022/8/21 export events from peering facilities
+    return null;
+  }
+
+  @PostMapping("/ack")
+  public void confirmReceived(@Validated AckRequest request) {
+    eventStore.confirmReceived(request.getAckClaimerId(), request.getEventIds());
   }
 }

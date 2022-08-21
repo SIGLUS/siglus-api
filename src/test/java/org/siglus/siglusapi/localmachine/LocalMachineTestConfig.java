@@ -17,13 +17,7 @@ package org.siglus.siglusapi.localmachine;
 
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.FilterType;
-import org.springframework.data.jpa.repository.JpaRepository;
 
 @Configuration
-@ComponentScan(
-    basePackageClasses = {EventPublisher.class},
-    excludeFilters = {
-      @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = JpaRepository.class)
-    })
+@ComponentScan(basePackageClasses = {EventPublisher.class})
 public class LocalMachineTestConfig {}

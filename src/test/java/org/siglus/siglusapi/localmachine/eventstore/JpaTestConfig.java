@@ -13,21 +13,13 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.localmachine.webapi;
+package org.siglus.siglusapi.localmachine.eventstore;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Builder.Default;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import org.springframework.boot.SpringBootConfiguration;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.context.annotation.ComponentScan;
 
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class SyncResponse {
-  @Default private Map<UUID, String> eventIdToError = new HashMap<>();
-}
+@SpringBootConfiguration
+@EnableAutoConfiguration
+@ComponentScan(basePackageClasses = {EventRecordRepository.class})
+public class JpaTestConfig {}

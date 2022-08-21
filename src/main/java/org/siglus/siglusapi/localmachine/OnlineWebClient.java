@@ -16,26 +16,21 @@
 package org.siglus.siglusapi.localmachine;
 
 import java.util.List;
-import org.siglus.siglusapi.localmachine.webapi.SyncResponse;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestTemplate;
 
 @Component
 public class OnlineWebClient {
-  private final RestTemplate restTemplate = new RestTemplate();
 
-  public SyncResponse sync(List<Event> events) {
+  public void sync(List<Event> events) {
+    // FIXME: 2022/8/14
+  }
+
+  public List<Event> exportPeeringEvents(String facilityCode) {
     // FIXME: 2022/8/14
     return null;
   }
 
-  public List<Event> fetchEvents(List<String> knownFacilityIds) {
-    // FIXME: 2022/8/14
-    return null;
-  }
-
-  public List<SyncResponse> fetchAcks(List<String> knownFacilityIds) {
-    // FIXME: 2022/8/14
-    return null;
+  public void confirmReceived(String localFacilityId, List<Event> events) {
+    // FIXME: 2022/8/21
   }
 }

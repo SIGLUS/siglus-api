@@ -13,18 +13,21 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.localmachine;
+package org.siglus.siglusapi.localmachine.eventstore;
 
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.transaction.Transactional;
 import javax.transaction.Transactional.TxType;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.siglus.siglusapi.localmachine.Event;
 import org.siglus.siglusapi.localmachine.eventstore.EventRecord;
 import org.siglus.siglusapi.localmachine.eventstore.EventRecordRepository;
 import org.siglus.siglusapi.localmachine.eventstore.PayloadSerializer;
@@ -34,38 +37,43 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class EventQueue {
+public class EventStore {
   private final EventRecordRepository repository;
   private final PayloadSerializer payloadSerializer;
 
   @SneakyThrows
-  public void put(Event event) {
+  public void emit(Event event) {
     EventRecord eventRecord = EventRecord.from(event, payloadSerializer.dump(event.getPayload()));
-    repository.save(eventRecord);
+    log.info("insert event emitted event:{}", event.getId());
+    repository.insertAndAllocateLocalSequenceNumber(eventRecord);
   }
 
-  public long nextGroupSequenceNumber(String peeringId) {
-    return Optional.ofNullable(repository.getNextGroupSequenceNumber(peeringId)).orElse(0L);
+  public long nextGroupSequenceNumber(String groupId) {
+    return Optional.ofNullable(repository.getNextGroupSequenceNumber(groupId)).orElse(0L);
   }
 
   public List<Event> getEventsForOnlineWeb() {
-    return repository.findEventRecordByOnlineWebConfirmedFalse().stream()
+    return repository.findEventRecordByOnlineWebSyncedIsFalse().stream()
         .map(it -> it.toEvent(payloadSerializer::load))
         .collect(Collectors.toList());
   }
 
   public void confirmEventsByWeb(List<Event> confirmedEvents) {
-    repository.updateWebConfirmedToTrueByIds(
+    log.info(
+        "mark as online web confirmed, events:{}",
+        confirmedEvents.stream().map(Event::getId).collect(Collectors.toList()));
+    repository.updateOnlineWebSyncedToTrueByIds(
         confirmedEvents.stream().map(Event::getId).collect(Collectors.toList()));
   }
 
   @Transactional(TxType.REQUIRES_NEW)
-  public List<Event> putAllGetNewAdded(List<Event> events) {
+  public List<Event> importAllGetNewAdded(List<Event> events) {
     List<Event> newAdded = new LinkedList<>();
     events.forEach(
         it -> {
           try {
-            repository.saveAndFlush(EventRecord.from(it, payloadSerializer.dump(it.getPayload())));
+            log.info("insert event:{}", it.getId());
+            repository.insert(EventRecord.from(it, payloadSerializer.dump(it.getPayload())));
             newAdded.add(it);
           } catch (DataIntegrityViolationException e) {
             log.info("event {} exists, skip", it.getId());
@@ -81,8 +89,12 @@ public class EventQueue {
         .collect(Collectors.toList());
   }
 
-  public void save(Event event) {
-    EventRecord eventRecord = EventRecord.from(event, payloadSerializer.dump(event.getPayload()));
-    repository.save(eventRecord);
+  public void confirmReplayed(Event event) {
+    log.info("mark event replayed:{}", event.getId());
+    repository.markAsReplayed(event.getId());
+  }
+
+  public void confirmReceived(UUID ackClaimerId, Set<UUID> eventIds) {
+    repository.markAsReceived(ackClaimerId, eventIds);
   }
 }

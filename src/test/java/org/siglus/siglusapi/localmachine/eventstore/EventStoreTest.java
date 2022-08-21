@@ -13,22 +13,29 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.localmachine;
+package org.siglus.siglusapi.localmachine.eventstore;
 
-import javax.transaction.Transactional;
-import net.javacrumbs.shedlock.core.LockProvider;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Matchers.anyString;
+
+import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 import org.siglus.siglusapi.localmachine.eventstore.EventRecordRepository;
-import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.siglus.siglusapi.localmachine.eventstore.EventStore;
 
-@RunWith(SpringRunner.class)
-@SpringBootTest(classes = {LocalMachineTestConfig.class})
-@Transactional
-public abstract class EventPublisherBaseTest {
-  @MockBean protected EventRecordRepository eventRecordRepository;
-  @MockBean protected SiglusAuthenticationHelper authenticationHelper;
-  @MockBean protected LockProvider lockProvider;
+@RunWith(MockitoJUnitRunner.class)
+public class EventStoreTest {
+  @InjectMocks private EventStore eventStore;
+  @Mock private EventRecordRepository repository;
+
+  @Test
+  public void shouldReturn0WhenGetNextGroupSeqGivenGroupNotExists() {
+    given(repository.getNextGroupSequenceNumber(anyString())).willReturn(null);
+    long nextGroupSeq = eventStore.nextGroupSequenceNumber("groupId");
+    assertThat(nextGroupSeq).isEqualTo(0L);
+  }
 }

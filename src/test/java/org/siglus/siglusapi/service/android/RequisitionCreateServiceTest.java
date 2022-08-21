@@ -20,6 +20,7 @@ import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.openlmis.requisition.i18n.MessageKeys.ERROR_NO_FOLLOWING_PERMISSION;
@@ -102,6 +103,7 @@ import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
 import org.siglus.siglusapi.dto.android.request.RequisitionLineItemRequest;
 import org.siglus.siglusapi.dto.android.request.RequisitionSignatureRequest;
 import org.siglus.siglusapi.dto.android.request.UsageInformationLineItemRequest;
+import org.siglus.siglusapi.localmachine.EventPublisher;
 import org.siglus.siglusapi.repository.ProcessingPeriodRepository;
 import org.siglus.siglusapi.repository.RegimenRepository;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
@@ -184,6 +186,9 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
 
   @Mock
   private SiglusProgramAdditionalOrderableService additionalOrderableService;
+
+  @Mock
+  private EventPublisher eventPublisher;
 
   @Captor
   private ArgumentCaptor<Requisition> requisitionArgumentCaptor;
@@ -311,6 +316,8 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     ProgramDto rapidTestProgram = Mockito.mock(ProgramDto.class);
     when(rapidTestProgram.getId()).thenReturn(rapidTestProgramId);
     when(siglusProgramService.getProgramByCode("TR")).thenReturn(Optional.of(rapidTestProgram));
+
+    doNothing().when(eventPublisher).emitGroupEvent(anyString(), any(UUID.class), any());
   }
 
   @Test(expected = PermissionMessageException.class)

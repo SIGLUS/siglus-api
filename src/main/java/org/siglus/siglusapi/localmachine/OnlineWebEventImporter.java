@@ -15,17 +15,18 @@
 
 package org.siglus.siglusapi.localmachine;
 
+import org.siglus.siglusapi.localmachine.eventstore.EventStore;
 import org.springframework.stereotype.Component;
 
 @Component
 public class OnlineWebEventImporter extends EventImporter {
 
-  public OnlineWebEventImporter(EventQueue localEventQueue, EventReplayer replayer) {
-    super(localEventQueue, replayer);
+  public OnlineWebEventImporter(EventStore localEventStore, EventReplayer replayer) {
+    super(localEventStore, replayer);
   }
 
   @Override
   protected boolean accept(Event it) {
-    return !it.isOnlineWebConfirmed();
+    return !it.isOnlineWebSynced();
   }
 }

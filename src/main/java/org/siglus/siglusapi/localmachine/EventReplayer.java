@@ -28,6 +28,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.javacrumbs.shedlock.core.LockConfiguration;
 import net.javacrumbs.shedlock.core.LockProvider;
 import net.javacrumbs.shedlock.core.SimpleLock;
+import org.siglus.siglusapi.localmachine.eventstore.EventStore;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -35,27 +36,25 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class EventReplayer {
   private final EventPublisher eventPublisher;
-  private final EventQueue eventQueue;
+  private final EventStore eventStore;
   private final LockProvider lockProvider;
 
   public void playGroupEvents(String groupId) {
     // TODO: 2022/8/18 implement heartbeat of lock
+    Instant lockAtMostUntil = Instant.now().plus(6, MINUTES);
     Optional<SimpleLock> optionalLock =
-        lockProvider.lock(new LockConfiguration(groupId, Instant.now().plus(6, MINUTES)));
+        lockProvider.lock(new LockConfiguration(groupId, lockAtMostUntil));
     if (!optionalLock.isPresent()) {
       log.warn("fail to get lock");
       return;
     }
     SimpleLock lock = optionalLock.get();
     try {
-      List<Event> events = eventQueue.loadSortedGroupEvents(groupId);
+      List<Event> events = eventStore.loadSortedGroupEvents(groupId);
       for (int i = 0; i < events.size(); i++) {
         Event currentEvent = events.get(i);
         if (i != currentEvent.getGroupSequenceNumber()) {
           return;
-        }
-        if (currentEvent.isOnlineWebReplayed()) {
-          continue;
         }
         eventPublisher.publishEvent(currentEvent);
       }

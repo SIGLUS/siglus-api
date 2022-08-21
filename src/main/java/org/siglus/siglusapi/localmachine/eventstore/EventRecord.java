@@ -15,16 +15,16 @@
 
 package org.siglus.siglusapi.localmachine.eventstore;
 
+import java.time.ZonedDateTime;
 import java.util.UUID;
 import java.util.function.Function;
 import javax.persistence.Entity;
+import javax.persistence.Id;
 import javax.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import org.siglus.common.domain.BaseEntity;
 import org.siglus.siglusapi.localmachine.Event;
 
 @Entity
@@ -33,33 +33,32 @@ import org.siglus.siglusapi.localmachine.Event;
 @AllArgsConstructor
 @NoArgsConstructor
 @Table(name = "events", schema = "localmachine")
-@EqualsAndHashCode(callSuper = true)
-public class EventRecord extends BaseEntity {
+public class EventRecord {
+  @Id private UUID id;
   private int protocolVersion;
   private Long localSequenceNumber;
-  private long timestamp;
+  private ZonedDateTime occurredTime;
   private UUID senderId;
   private UUID receiverId;
   private String groupId;
   private long groupSequenceNumber;
   private byte[] payload;
-  private boolean onlineWebConfirmed;
-  private boolean receiverConfirmed;
-  private String payloadClassName;
+  private boolean onlineWebSynced;
+  private boolean receiverSynced;
   private boolean localReplayed;
 
   public static EventRecord from(Event event, byte[] payload) {
     EventRecord eventRecord =
         EventRecord.builder()
+            .id(event.getId())
             .protocolVersion(event.getProtocolVersion())
             .localSequenceNumber(null)
-            .timestamp(event.getTimestamp())
+            .occurredTime(event.getOccurredTime())
             .senderId(event.getSenderId())
             .receiverId(event.getReceiverId())
             .groupId(event.getGroupId())
             .groupSequenceNumber(event.getGroupSequenceNumber())
             .payload(payload)
-            .payloadClassName(event.getPayload().getClass().getName())
             .build();
     eventRecord.setId(event.getId());
     return eventRecord;
@@ -70,14 +69,14 @@ public class EventRecord extends BaseEntity {
         .id(id)
         .protocolVersion(protocolVersion)
         .localSequenceNumber(localSequenceNumber)
-        .timestamp(timestamp)
+        .occurredTime(occurredTime)
         .senderId(senderId)
         .receiverId(receiverId)
         .groupId(groupId)
         .groupSequenceNumber(groupSequenceNumber)
         .payload(payloadMapper.apply(payload))
-        .onlineWebConfirmed(onlineWebConfirmed)
-        .receiverConfirmed(receiverConfirmed)
+        .onlineWebSynced(onlineWebSynced)
+        .receiverSynced(receiverSynced)
         .build();
   }
 }

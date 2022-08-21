@@ -15,15 +15,15 @@
 
 package org.siglus.siglusapi.localmachine;
 
+import static org.springframework.util.ObjectUtils.isEmpty;
+
 import java.util.List;
-import java.util.Map;
-import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.javacrumbs.shedlock.core.SchedulerLock;
-import org.siglus.siglusapi.localmachine.webapi.SyncResponse;
+import org.siglus.siglusapi.localmachine.eventstore.EventStore;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -33,15 +33,15 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Profile({"localmachine"})
 public class Synchronizer {
-  private final EventQueue localEventQueue;
-  private final EventPublisher eventPublisher;
+  private final EventStore localEventStore;
   private final OnlineWebClient webClient;
+  private final Machine machine;
+  private final EventImporter eventImporter;
 
-  @Scheduled(fixedRate = 30 * 1000, initialDelay = 60 * 1000)
+  @Scheduled(fixedRate = 60 * 1000, initialDelay = 60 * 1000)
   @SchedulerLock(name = "localmachine_synchronizer")
   @Transactional
   public void scheduledSync() {
-    // TODO: 2022/8/17 dynamic rate based on last sync status, also check if having new data to sync
     this.sync();
   }
 
@@ -53,29 +53,20 @@ public class Synchronizer {
 
   @Transactional
   public void pull() {
-    List<Event> events = webClient.fetchEvents(eventPublisher.getKnownFacilityIds());
-    List<SyncResponse> acks = webClient.fetchAcks(eventPublisher.getKnownFacilityIds());
-    // FIXME: 2022/8/14 relay events, send ack to web
+    List<Event> events = webClient.exportPeeringEvents(machine.getLocalFacilityId());
+    eventImporter.importEvents(events);
+    webClient.confirmReceived(machine.getLocalFacilityId(), events);
   }
 
   @Transactional
   public void push() {
-    List<Event> events = localEventQueue.getEventsForOnlineWeb();
-    SyncResponse response = webClient.sync(events);
-    List<Event> confirmedEvents =
-        events.stream()
-            .filter(it -> !response.getEventIdToError().containsKey(it.getId()))
-            .peek(it -> it.setOnlineWebConfirmed(true))
-            .collect(Collectors.toList());
-    localEventQueue.confirmEventsByWeb(confirmedEvents);
-    if (!response.getEventIdToError().isEmpty()) {
-      this.handleError(response.getEventIdToError());
+    List<Event> events = localEventStore.getEventsForOnlineWeb();
+    if (isEmpty(events)) {
+      return;
     }
-  }
-
-  private void handleError(Map<UUID, String> eventIdToError) {
-    // TODO: 2022/8/17 handle error, maybe throw and show error messages when it's manual sync.
-    // Anyway, should not
-    //  cancel transaction.
+    webClient.sync(events);
+    List<Event> confirmedEvents =
+        events.stream().peek(it -> it.setOnlineWebSynced(true)).collect(Collectors.toList());
+    localEventStore.confirmEventsByWeb(confirmedEvents);
   }
 }

@@ -23,27 +23,28 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import org.siglus.siglusapi.localmachine.eventstore.EventStore;
 
-public class EventImporter {
-  private final EventQueue localEventQueue;
+public abstract class EventImporter {
+  private final EventStore eventStore;
   private final EventReplayer replayer;
 
-  public EventImporter(EventQueue localEventQueue, EventReplayer replayer) {
-    this.localEventQueue = localEventQueue;
+  public EventImporter(EventStore eventStore, EventReplayer replayer) {
+    this.eventStore = eventStore;
     this.replayer = replayer;
   }
 
   public void importEvents(List<Event> events) {
-    // TODO: drop local attributes (replay flag), define a external event dto for external events
-    List<Event> acceptedEvents = events.stream().filter(this::accept).collect(Collectors.toList());
-    List<Event> newAdded = localEventQueue.putAllGetNewAdded(acceptedEvents);
+    List<Event> acceptedEvents =
+        events.stream()
+            .peek(it -> it.setLocalReplayed(false))
+            .filter(this::accept)
+            .collect(Collectors.toList());
+    List<Event> newAdded = eventStore.importAllGetNewAdded(acceptedEvents);
     replay(newAdded);
   }
 
-  protected boolean accept(Event it) {
-    // fixme: 2022/8/18 check event should receiver should be local facility
-    return true;
-  }
+  protected abstract boolean accept(Event it);
 
   protected void replay(List<Event> events) {
     if (isEmpty(events)) {

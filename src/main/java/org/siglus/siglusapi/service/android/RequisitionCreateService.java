@@ -219,7 +219,8 @@ public class RequisitionCreateService {
         .referenceId(requisition.getId())
         .build();
     syncUpHashRepository.save(syncUpHashDomain);
-    // fixme: evaluate the superiorId (the higher facility id for this requisition)
+    // FIXME: 1) evaluate the superiorId (the higher facility id for this requisition), 2) no event
+    // when replaying
     eventPublisher.emitGroupEvent(
         requisition.getId().toString(),
         null,

@@ -15,19 +15,30 @@
 
 package org.siglus.siglusapi.localmachine;
 
-import lombok.Getter;
-import org.springframework.beans.factory.annotation.Value;
+import java.util.Optional;
+import org.siglus.siglusapi.localmachine.eventstore.EventStore;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
+@Profile({"localmachine"})
 @Component
-public class Machine {
-  private static final String ONLINE_WEB_FACILITY_CODE = "00000000-0000-0000-0000-000000000000";
+public class LocalEventImporter extends EventImporter {
+  private final Machine machine;
 
-  @Value("${machine.facility.id:00000000-0000-0000-0000-000000000000}")
-  @Getter
-  private String localFacilityId;
+  public LocalEventImporter(EventStore localEventStore, EventReplayer replayer, Machine machine) {
+    super(localEventStore, replayer);
+    this.machine = machine;
+  }
 
-  public boolean isOnlineWeb() {
-    return ONLINE_WEB_FACILITY_CODE.equals(localFacilityId);
+  @Override
+  protected boolean accept(Event it) {
+    return isTheReceiverAndEventNotBeConfirmedYet(it);
+  }
+
+  private boolean isTheReceiverAndEventNotBeConfirmedYet(Event it) {
+    return Optional.ofNullable(it.getReceiverId())
+            .map(receiverId -> receiverId.toString().equals(machine.getLocalFacilityId()))
+            .orElse(Boolean.FALSE)
+        && !it.isReceiverSynced();
   }
 }

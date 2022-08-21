@@ -15,10 +15,13 @@
 
 package org.siglus.siglusapi.localmachine.eventstore;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface EventRecordRepository extends JpaRepository<EventRecord, UUID> {
 
@@ -27,14 +30,83 @@ public interface EventRecordRepository extends JpaRepository<EventRecord, UUID> 
           "select groupsequencenumber + 1 from localmachine.events where groupid=:groupId order by "
               + "groupsequencenumber desc limit 1",
       nativeQuery = true)
-  Long getNextGroupSequenceNumber(String groupId);
+  Long getNextGroupSequenceNumber(@Param("groupId") String groupId);
 
-  List<EventRecord> findEventRecordByOnlineWebConfirmedFalse();
+  List<EventRecord> findEventRecordByOnlineWebSyncedIsFalse();
 
   List<EventRecord> findEventRecordByGroupId(String groupId);
 
+  @Modifying
   @Query(
-      value = "update localmachine.events set onlinewebconfirmed=true where id in :ids",
+      value = "update localmachine.events set onlinewebsynced=true where id in :ids",
       nativeQuery = true)
-  void updateWebConfirmedToTrueByIds(List<UUID> ids);
+  void updateOnlineWebSyncedToTrueByIds(@Param("ids") List<UUID> ids);
+
+  @Modifying
+  @Query(
+      value = "update localmachine.events set localreplayed=true where id =:id",
+      nativeQuery = true)
+  void markAsReplayed(@Param("id") UUID id);
+
+  @Modifying
+  @Query(
+      value =
+          "INSERT INTO localmachine.events("
+              + "id,"
+              + "protocolversion,"
+              + "occurredtime,"
+              + "senderid,"
+              + "receiverid,"
+              + "groupid,"
+              + "groupsequencenumber,"
+              + "payload,"
+              + "onlinewebsynced,"
+              + "receiversynced) VALUES ("
+              + ":#{#r.id},"
+              + ":#{#r.protocolVersion},"
+              + ":#{#r.occurredTime},"
+              + ":#{#r.senderId},"
+              + ":#{#r.receiverId},"
+              + ":#{#r.groupId},"
+              + ":#{#r.groupSequenceNumber},"
+              + ":#{#r.payload},"
+              + ":#{#r.onlineWebSynced},"
+              + ":#{#r.receiverSynced})",
+      nativeQuery = true)
+  void insertAndAllocateLocalSequenceNumber(@Param("r") EventRecord eventRecord);
+
+  @Modifying
+  @Query(
+      value =
+          "INSERT INTO localmachine.events("
+              + "id,"
+              + "protocolversion,"
+              + "occurredtime,"
+              + "senderid,"
+              + "localsequencenumber,"
+              + "receiverid,"
+              + "groupid,"
+              + "groupsequencenumber,"
+              + "payload,"
+              + "onlinewebsynced,"
+              + "receiversynced) VALUES ("
+              + ":#{#r.id},"
+              + ":#{#r.protocolVersion},"
+              + ":#{#r.occurredTime},"
+              + ":#{#r.senderId},"
+              + ":#{#r.localSequenceNumber},"
+              + ":#{#r.receiverId},"
+              + ":#{#r.groupId},"
+              + ":#{#r.groupSequenceNumber},"
+              + ":#{#r.payload},"
+              + ":#{#r.onlineWebSynced},"
+              + ":#{#r.receiverSynced})",
+      nativeQuery = true)
+  void insert(@Param("r") EventRecord eventRecord);
+
+  @Modifying
+  @Query(
+      value = "update localmachine.events set receiversynced=true where receiverid=:receiverId and id in :ids",
+      nativeQuery = true)
+  void markAsReceived(@Param("receiverId") UUID receiverId, @Param("ids") Collection<UUID> ids);
 }

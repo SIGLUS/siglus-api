@@ -137,6 +137,7 @@ dependencies {
     testCompile 'guru.nidi.raml:raml-tester:0.8.9'
     testCompile 'nl.jqno.equalsverifier:equalsverifier:2.4'
     testCompile 'be.joengenduvel.java.verifiers:to-string:1.0.2'
+    testRuntimeOnly 'com.h2database:h2:2.1.214'
 }
 
 /*

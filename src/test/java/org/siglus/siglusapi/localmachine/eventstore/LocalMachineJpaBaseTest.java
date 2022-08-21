@@ -13,21 +13,20 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.localmachine;
+package org.siglus.siglusapi.localmachine.eventstore;
 
-import lombok.Getter;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
+import org.junit.runner.RunWith;
+import org.springframework.boot.autoconfigure.jdbc.EmbeddedDatabaseConnection;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase.Replace;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.test.context.junit4.SpringRunner;
 
-@Component
-public class Machine {
-  private static final String ONLINE_WEB_FACILITY_CODE = "00000000-0000-0000-0000-000000000000";
-
-  @Value("${machine.facility.id:00000000-0000-0000-0000-000000000000}")
-  @Getter
-  private String localFacilityId;
-
-  public boolean isOnlineWeb() {
-    return ONLINE_WEB_FACILITY_CODE.equals(localFacilityId);
-  }
-}
+@RunWith(SpringRunner.class)
+@DataJpaTest
+@AutoConfigureTestDatabase(
+    replace = Replace.AUTO_CONFIGURED,
+    connection = EmbeddedDatabaseConnection.H2)
+@Import(JpaTestConfig.class)
+public abstract class LocalMachineJpaBaseTest {}

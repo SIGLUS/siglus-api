@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.localmachine;
 
+import java.time.ZonedDateTime;
 import java.util.UUID;
 import lombok.Builder;
 import lombok.Data;
@@ -25,14 +26,13 @@ public class Event {
   private UUID id;
   private int protocolVersion;
   private long localSequenceNumber;
-  private long timestamp;
+  private ZonedDateTime occurredTime;
   private UUID senderId;
   private UUID receiverId;
   private String groupId;
   private long groupSequenceNumber;
   private Object payload;
-  private boolean onlineWebConfirmed;
-  private boolean receiverConfirmed;
-  private boolean onlineWebReplayed;
-  private boolean receiverReplayed;
+  private boolean onlineWebSynced;
+  private boolean receiverSynced;
+  private boolean localReplayed;
 }

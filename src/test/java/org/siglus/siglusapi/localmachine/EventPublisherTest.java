@@ -34,22 +34,49 @@ public class EventPublisherTest extends EventPublisherBaseTest {
   @Autowired private EventPublisher eventPublisher;
 
   @Test
-  public void canEmitEventSuccessfully() {
-    UserDto mockedCurrentUser = new UserDto();
-    mockedCurrentUser.setId(UUID.randomUUID());
-    given(authenticationHelper.getCurrentUser()).willReturn(mockedCurrentUser);
+  public void canEmitNonGroupEventSuccessfully() {
+    // given
     TestEventPayload payload = TestEventPayload.builder().id("id").build();
     ArgumentCaptor<EventRecord> recordArgumentCaptor = ArgumentCaptor.forClass(EventRecord.class);
-    String peeringId = "peeringId";
-    UUID receiverId = UUID.randomUUID();
-
-    eventPublisher.emitGroupEvent(peeringId, receiverId, payload);
-
-    verify(eventRecordRepository).save(recordArgumentCaptor.capture());
+    UserDto mockedCurrentUser = getMockedCurrentUser();
+    // when
+    eventPublisher.emitNonGroupEvent(payload);
+    // then
+    verify(eventRecordRepository)
+        .insertAndAllocateLocalSequenceNumber(recordArgumentCaptor.capture());
     EventRecord eventRecord = recordArgumentCaptor.getValue();
-    assertThat(eventRecord.getSenderId()).isEqualTo(mockedCurrentUser.getId());
-    assertThat(eventRecord.getGroupId()).isEqualTo(peeringId);
+    assertThat(eventRecord.getSenderId()).isEqualTo(mockedCurrentUser.getHomeFacilityId());
+    assertThat(eventRecord.getId()).isNotNull();
+    assertThat(eventRecord.getGroupId()).isNull();
+    assertThat(eventRecord.getReceiverId()).isNull();
+  }
+
+  @Test
+  public void canEmitGroupEventSuccessfully() {
+    // given
+    TestEventPayload payload = TestEventPayload.builder().id("id").build();
+    ArgumentCaptor<EventRecord> recordArgumentCaptor = ArgumentCaptor.forClass(EventRecord.class);
+    String groupId = "groupId";
+    UUID receiverId = UUID.randomUUID();
+    UserDto mockedCurrentUser = getMockedCurrentUser();
+    // when
+    eventPublisher.emitGroupEvent(groupId, receiverId, payload);
+    // then
+    verify(eventRecordRepository)
+        .insertAndAllocateLocalSequenceNumber(recordArgumentCaptor.capture());
+    EventRecord eventRecord = recordArgumentCaptor.getValue();
+    assertThat(eventRecord.getSenderId()).isEqualTo(mockedCurrentUser.getHomeFacilityId());
+    assertThat(eventRecord.getId()).isNotNull();
+    assertThat(eventRecord.getGroupId()).isEqualTo(groupId);
     assertThat(eventRecord.getReceiverId()).isEqualTo(receiverId);
+  }
+
+  private UserDto getMockedCurrentUser() {
+    UserDto mockedCurrentUser = new UserDto();
+    mockedCurrentUser.setId(UUID.randomUUID());
+    mockedCurrentUser.setHomeFacilityId(UUID.randomUUID());
+    given(authenticationHelper.getCurrentUser()).willReturn(mockedCurrentUser);
+    return mockedCurrentUser;
   }
 
   @Data

@@ -13,21 +13,18 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.localmachine;
+package org.siglus.siglusapi.localmachine.webapi;
 
-import lombok.Getter;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
+import lombok.Builder;
+import lombok.Builder.Default;
+import lombok.Data;
 
-@Component
-public class Machine {
-  private static final String ONLINE_WEB_FACILITY_CODE = "00000000-0000-0000-0000-000000000000";
-
-  @Value("${machine.facility.id:00000000-0000-0000-0000-000000000000}")
-  @Getter
-  private String localFacilityId;
-
-  public boolean isOnlineWeb() {
-    return ONLINE_WEB_FACILITY_CODE.equals(localFacilityId);
-  }
+@Builder
+@Data
+public class AckRequest {
+  private UUID ackClaimerId;
+  @Default private Set<UUID> eventIds = new HashSet<>();
 }
