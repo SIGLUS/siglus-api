@@ -156,15 +156,15 @@ public class SiglusPhysicalInventorySubDraftService {
       }
       List<PhysicalInventoryLineItemsExtension> oldLineItemsExtension
           = lineItemsExtensionRepository.findByPhysicalInventoryId(physicalInventoryId);
-
-      List<UUID> needResetOrderableIds = new ArrayList<>();
-      List<UUID> needDeleteOrderableIds = new ArrayList<>();
+      // TODO orderable is not enough for delete or reset, use unique key instead
+      Set<String> needResetUniqueKeys = new HashSet<>();
+      Set<String> needDeleteUniqueKeys = new HashSet<>();
       for (PhysicalInventoryLineItemsExtension item : oldLineItemsExtension) {
         if (subDraftIds.contains(item.getSubDraftId())) {
           if (Boolean.TRUE.equals(item.getInitial())) {
-            needResetOrderableIds.add(item.getOrderableId());
+            needResetUniqueKeys.add(getUniqueKey(item));
           } else {
-            needDeleteOrderableIds.add(item.getOrderableId());
+            needDeleteUniqueKeys.add(getUniqueKey(item));
           }
         }
       }
@@ -182,14 +182,14 @@ public class SiglusPhysicalInventorySubDraftService {
       Iterator<PhysicalInventoryLineItemDto> iterator = lineItems.iterator();
       while (iterator.hasNext()) {
         PhysicalInventoryLineItemDto physicalInventoryLineItemDto = iterator.next();
-        if (needResetOrderableIds.contains(physicalInventoryLineItemDto.getOrderableId())) {
+        if (needResetUniqueKeys.contains(getUniqueKey(physicalInventoryLineItemDto))) {
           //          CanFulfillForMeEntryDto canFulfillForMeEntryDto = canFulfillForMeEntryDtoMap.get(
           //              getUniqueKey(physicalInventoryLineItemDto));
           //          if (canFulfillForMeEntryDto != null) {
           physicalInventoryLineItemDto.setQuantity(null);
           physicalInventoryLineItemDto.setReasonFreeText(null);
         //          }
-        } else if (needDeleteOrderableIds.contains(physicalInventoryLineItemDto.getOrderableId())) {
+        } else if (needDeleteUniqueKeys.contains(getUniqueKey(physicalInventoryLineItemDto))) {
           iterator.remove();
         }
       }

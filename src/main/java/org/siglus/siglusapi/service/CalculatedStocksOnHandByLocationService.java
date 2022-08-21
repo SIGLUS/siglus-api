@@ -23,18 +23,17 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import javax.transaction.Transactional;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -61,11 +60,13 @@ import org.siglus.siglusapi.repository.SiglusStockCardRepository;
 import org.siglus.siglusapi.repository.StockCardLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.StockCardLocationMovementLineItemRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class CalculatedStocksOnHandLocationsService {
+public class CalculatedStocksOnHandByLocationService {
   private final CalculatedStockOnHandByLocationRepository calculatedStockOnHandByLocationRepository;
   private final CalculatedStockOnHandRepository calculatedStocksOnHandRepository;
   private final SiglusStockCardRepository siglusStockCardRepository;
@@ -74,14 +75,9 @@ public class CalculatedStocksOnHandLocationsService {
   private final OrderableReferenceDataService orderableService;
   private final StockCardLineItemRepository stockCardLineItemRepository;
 
-  public void calculateStockOnHandByLocation(StockEventDto eventDto) {
-    if (eventDto.isPhysicalInventory()) {
-      calculateLocationStockOnHandForPhysicalInventory(eventDto);
-    }
-  }
 
-  @Transactional
-  public void calculateLocationStockOnHandForPhysicalInventory(StockEventDto eventDto) {
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
+  public void calculateStockOnHandByLocation(StockEventDto eventDto) {
     UUID facilityId = eventDto.getFacilityId();
     List<StockEventLineItemDto> lineItemDtos = eventDto.getLineItems();
     List<StockCard> stockCards = siglusStockCardRepository
@@ -102,14 +98,16 @@ public class CalculatedStocksOnHandLocationsService {
     Map<String, Integer> stockCardIdAndLocationCodeToPreviousStockOnHandMap =
             this.getPreviousStockOnHandMap(stockCardIds, occurredDate);
 
-    deleteFollowingStockOnHands(allLineItems, lineItemIdToExtension, occurredDate);
+    List<StockCardLineItem> allStockEventLineItems = stockCardToLineItems.values()
+            .stream().flatMap(Collection::stream).collect(Collectors.toList());
+    deleteFollowingStockOnHands(allStockEventLineItems, lineItemIdToExtension, occurredDate);
 
     List<CalculatedStockOnHandByLocation> toSaveList = new ArrayList<>();
     stockCardToLineItems.forEach((key, value) -> {
       value.sort(StockCard.getLineItemsComparator());
       value.stream().findFirst()
-          .ifPresent(item -> recalculateLocationStockOnHand(toSaveList, lineItemIdToExtension, item,
-              stockCardIdAndLocationCodeToPreviousStockOnHandMap
+          .ifPresent(item -> recalculateLocationStockOnHand(toSaveList, stockCardIdToLineItems,
+                  lineItemIdToExtension, item, stockCardIdAndLocationCodeToPreviousStockOnHandMap
           ));
     });
 
@@ -126,8 +124,8 @@ public class CalculatedStocksOnHandLocationsService {
             .map(CalculatedStockOnHandByLocation::getStockCardId).collect(Collectors.toList());
     Map<UUID, UUID> stockCardIdToId = calculatedStocksOnHandRepository
             .findByOccurredDateAndStockCardIdIn(date, stockCardIds)
-            // TODO soh.getStockCard().getId()
-            .stream().collect(Collectors.toMap(soh -> soh.getStockCard().getId(), CalculatedStockOnHand::getId));
+            .stream()
+            .collect(Collectors.toMap(soh -> soh.getStockCardId(), CalculatedStockOnHand::getId, (c1, c2) -> c1));
     toSaveList.forEach(location ->
             location.setCalculatedStocksOnHandId(stockCardIdToId.get(location.getStockCardId())));
     log.info(String.format("save CalculatedStocksOnHandLocations %s", toSaveList.size()));
@@ -154,6 +152,7 @@ public class CalculatedStocksOnHandLocationsService {
   }
 
   public void recalculateLocationStockOnHand(List<CalculatedStockOnHandByLocation> toSaveList,
+                        Map<UUID, List<StockCardLineItem>> stockCardIdToLineItems,
                         Map<UUID, StockCardLineItemExtension> lineItemIdToExtension,
                         StockCardLineItem lineItem,
                         Map<String, Integer> stockCardIdAndLocationCodeToPreviousStockOnHandMap) {
@@ -165,7 +164,8 @@ public class CalculatedStocksOnHandLocationsService {
             + extension.getLocationCode());
     previousSoh = previousSoh == null ? 0 : previousSoh;
 
-    List<StockCardLineItem> followingLineItems = getFollowingLineItems(lineItemIdToExtension, stockCard, lineItem);
+    List<StockCardLineItem> followingLineItems = getFollowingLineItems(stockCardIdToLineItems,
+            lineItemIdToExtension, stockCard, lineItem);
 
     int lineItemsAtTheSameDay = countLineItemsBefore(followingLineItems, lineItem);
     followingLineItems.add(lineItemsAtTheSameDay, lineItem);
@@ -179,7 +179,7 @@ public class CalculatedStocksOnHandLocationsService {
               .collect(Collectors.toList());
       followingLineItems.addAll(followingMovementLineItems);
       followingLineItems = followingLineItems.stream()
-              .sorted(Comparator.comparing(StockCardLineItem::getOccurredDate)).collect(Collectors.toList());
+              .sorted(StockCard.getLineItemsComparator()).collect(Collectors.toList());
     }
 
     LocalDate previousOccurredDate = lineItem.getOccurredDate();
@@ -188,13 +188,15 @@ public class CalculatedStocksOnHandLocationsService {
       Integer calculatedStockOnHand = calculateStockOnHand(item, previousSoh);
       LocalDate itemOccurredDate = item.getOccurredDate();
       if (!itemOccurredDate.equals(previousOccurredDate)) {
-        toSaveForThisLocation.add(buildSoh(lineItemIdToExtension, previousItem, previousSoh, stockCard));
+        toSaveForThisLocation.add(buildSoh(lineItemIdToExtension, previousItem, previousSoh, stockCard,
+                extension.getLocationCode(), extension.getArea()));
       }
       previousSoh = calculatedStockOnHand;
       previousItem = item;
       previousOccurredDate = itemOccurredDate;
     }
-    toSaveForThisLocation.add(buildSoh(lineItemIdToExtension, previousItem, previousSoh, stockCard));
+    toSaveForThisLocation.add(buildSoh(lineItemIdToExtension, previousItem, previousSoh, stockCard,
+            extension.getLocationCode(), extension.getArea()));
 
     toSaveList.addAll(toSaveForThisLocation);
   }
@@ -204,10 +206,11 @@ public class CalculatedStocksOnHandLocationsService {
     StockCardLineItem lineItem = new StockCardLineItem();
     lineItem.setQuantity(movement.getQuantity());
     lineItem.setOccurredDate(movement.getOccurredDate());
+    lineItem.setProcessedDate(movement.getOccurredDate().atStartOfDay(ZoneId.systemDefault()));
     if (locationCode.equals(movement.getSrcLocationCode())) {
-      // credit means positive
       lineItem.setReason(StockCardLineItemReason.physicalDebit());
     } else {
+      // credit means positive
       lineItem.setReason(StockCardLineItemReason.physicalCredit());
     }
     return lineItem;
@@ -228,7 +231,9 @@ public class CalculatedStocksOnHandLocationsService {
       Map<UUID, StockCardLineItemExtension> lineItemIdToExtension,
       StockCardLineItem lineItem,
       Integer stockOnHand,
-      StockCard stockCard) {
+      StockCard stockCard,
+      String locationCode,
+      String area) {
     // Extension should find all for this stockCard, otherwise not found
     StockCardLineItemExtension extension = lineItemIdToExtension.get(lineItem.getId());
     ZoneId zoneId = ZoneId.systemDefault();
@@ -236,8 +241,8 @@ public class CalculatedStocksOnHandLocationsService {
         .stockCardId(stockCard.getId())
         .occurreddate(Date.from(lineItem.getOccurredDate().atStartOfDay(zoneId).toInstant()))
         .stockonhand(stockOnHand)
-        .locationCode(extension.getLocationCode())
-        .area(extension.getArea())
+        .locationCode(extension == null ? locationCode : extension.getLocationCode())
+        .area(extension == null ? area : extension.getArea())
         .build();
   }
 
@@ -261,24 +266,24 @@ public class CalculatedStocksOnHandLocationsService {
   }
 
   private List<StockCardLineItem> getFollowingLineItems(
+          Map<UUID, List<StockCardLineItem>> stockCardIdToLineItems,
           Map<UUID, StockCardLineItemExtension> lineItemIdToExtension,
           StockCard stockCard,
           StockCardLineItem lineItem) {
     StockCardLineItemExtension extension = lineItemIdToExtension.get(lineItem.getId());
-    return stockCard.getLineItems()
+    return stockCardIdToLineItems.get(stockCard.getId())
             .stream()
             .filter(item -> !item.getOccurredDate().isBefore(lineItem.getOccurredDate())
                     && item.getId() != lineItem.getId())
-            // TODO item locationCode has to get one by one
-            .filter(item -> Objects.equals(getLocationCode(item), extension.getLocationCode()))
+            .filter(item -> {
+              StockCardLineItemExtension extensionForFollowingLine = lineItemIdToExtension.get(lineItem.getId());
+              if (extensionForFollowingLine == null) {
+                return false;
+              }
+              return Objects.equals(extensionForFollowingLine.getLocationCode(), extension.getLocationCode());
+            })
             .sorted(StockCard.getLineItemsComparator())
             .collect(Collectors.toList());
-  }
-
-  private String getLocationCode(StockCardLineItem lineItem) {
-    Optional<StockCardLineItemExtension> extension = stockCardLineItemExtensionRepository
-            .findByStockCardLineItemId(lineItem.getId());
-    return extension.map(StockCardLineItemExtension::getLocationCode).orElse(null);
   }
 
   private Map<String, Integer> getPreviousStockOnHandMap(Set<UUID> stockCardIds,
@@ -294,6 +299,7 @@ public class CalculatedStocksOnHandLocationsService {
       Map<String, StockCard> uniKeyToStockCard,
       List<StockEventLineItemDto> lineItemDtos,
       Map<UUID, List<StockCardLineItem>> stockCardIdToLineItems) {
+    // run after stock event save, always exist!
     Map<StockCard, List<StockCardLineItem>> stockCardToLineItems = new HashMap<>();
     lineItemDtos.forEach(lineItemDto -> {
       StockCard stockCard = uniKeyToStockCard.get(getUniqueKey(lineItemDto));

@@ -44,6 +44,7 @@ import org.openlmis.stockmanagement.repository.CalculatedStockOnHandRepository;
 import org.openlmis.stockmanagement.service.referencedata.OrderableReferenceDataService;
 import org.siglus.siglusapi.domain.CalculatedStockOnHandByLocation;
 import org.siglus.siglusapi.domain.StockCardLineItemExtension;
+import org.siglus.siglusapi.domain.StockCardLocationMovementLineItem;
 import org.siglus.siglusapi.repository.CalculatedStockOnHandByLocationRepository;
 import org.siglus.siglusapi.repository.SiglusStockCardRepository;
 import org.siglus.siglusapi.repository.StockCardLineItemExtensionRepository;
@@ -54,7 +55,7 @@ import org.siglus.siglusapi.repository.StockCardLocationMovementLineItemReposito
 public class CalculatedStockOnHandByLocationServiceTest {
 
   @InjectMocks
-  private CalculatedStocksOnHandLocationsService calculatedStocksOnHandLocationsService;
+  private CalculatedStocksOnHandByLocationService calculatedStocksOnHandByLocationService;
   @Mock
   private CalculatedStockOnHandByLocationRepository calculatedStockOnHandByLocationRepository;
   @Mock
@@ -76,13 +77,14 @@ public class CalculatedStockOnHandByLocationServiceTest {
   private final String locationCode = "test-location";
   private final Integer previousSoh = 100;
 
+  // test case, physical inventory 100, issue 30, receive 10
   @Test
-  public void shouldAllCalculatedStockOnHandByLocationIfNoMovement() {
+  public void shouldCalculateSohByLocationWhenPhysicalInventoryIfNoMovement() {
     // given
     StockCardLineItem target = StockCardLineItem.builder().build();
     target.setId(lineItemId1);
     target.setQuantity(previousSoh);
-    target.setOccurredDate(LocalDate.now().minusDays(3L));
+    target.setOccurredDate(LocalDate.now().minusDays(5L));
     StockCard stockCard = buildStockCard(target);
     target.setStockCard(stockCard);
 
@@ -90,20 +92,74 @@ public class CalculatedStockOnHandByLocationServiceTest {
     when(stockCardLineItemExtensionRepository.findByStockCardLineItemId(any()))
             .thenReturn(Optional.of(buildExtension()));
 
+    Map<UUID, List<StockCardLineItem>> stockCardIdToLineItems = new HashMap<>();
+    stockCardIdToLineItems.put(stockCardId, stockCard.getLineItems());
     List<CalculatedStockOnHandByLocation> toSaveList = new ArrayList<>();
     // when
-    calculatedStocksOnHandLocationsService.recalculateLocationStockOnHand(
-            toSaveList, buildExtensionMap(), target, buildStockCardIdAndLocationCodeToPreviousStockOnHandMap());
+    calculatedStocksOnHandByLocationService.recalculateLocationStockOnHand(toSaveList, stockCardIdToLineItems,
+            buildExtensionMap(), target, buildStockCardIdAndLocationCodeToPreviousStockOnHandMap());
 
     // then
-    // test case, physical inventory 100, issue 30, receive 10
     assertEquals(3, toSaveList.size());
     assertEquals(100, (int) toSaveList.get(0).getStockonhand());
-    assertEquals(LocalDate.now().minusDays(3L), toDate(toSaveList.get(0).getOccurreddate()));
+    assertEquals(LocalDate.now().minusDays(5L), toDate(toSaveList.get(0).getOccurreddate()));
     assertEquals(70, (int) toSaveList.get(1).getStockonhand());
-    assertEquals(LocalDate.now().minusDays(2L), toDate(toSaveList.get(1).getOccurreddate()));
+    assertEquals(LocalDate.now().minusDays(3L), toDate(toSaveList.get(1).getOccurreddate()));
     assertEquals(80, (int) toSaveList.get(2).getStockonhand());
     assertEquals(LocalDate.now().minusDays(1L), toDate(toSaveList.get(2).getOccurreddate()));
+  }
+
+  // test case, physical inventory 100, move in 40, issue 30, move out 20, receive 10
+  @Test
+  public void shouldCalculateSohByLocationWhenPhysicalInventoryIfLocationMovementExist() {
+    // given
+    StockCardLineItem target = StockCardLineItem.builder().build();
+    target.setId(lineItemId1);
+    target.setQuantity(previousSoh);
+    target.setOccurredDate(LocalDate.now().minusDays(5L));
+    StockCard stockCard = buildStockCard(target);
+    target.setStockCard(stockCard);
+
+    when(locationMovementRepository.findByStockCardId(stockCardId)).thenReturn(buildMovement());
+    when(stockCardLineItemExtensionRepository.findByStockCardLineItemId(any()))
+            .thenReturn(Optional.of(buildExtension()));
+
+    Map<UUID, List<StockCardLineItem>> stockCardIdToLineItems = new HashMap<>();
+    stockCardIdToLineItems.put(stockCardId, stockCard.getLineItems());
+    List<CalculatedStockOnHandByLocation> toSaveList = new ArrayList<>();
+    // when
+    calculatedStocksOnHandByLocationService.recalculateLocationStockOnHand(toSaveList, stockCardIdToLineItems,
+            buildExtensionMap(), target, buildStockCardIdAndLocationCodeToPreviousStockOnHandMap());
+
+    // then
+    assertEquals(5, toSaveList.size());
+    assertEquals(100, (int) toSaveList.get(0).getStockonhand());
+    assertEquals(LocalDate.now().minusDays(5L), toDate(toSaveList.get(0).getOccurreddate()));
+    assertEquals(140, (int) toSaveList.get(1).getStockonhand());
+    assertEquals(LocalDate.now().minusDays(4L), toDate(toSaveList.get(1).getOccurreddate()));
+    assertEquals(110, (int) toSaveList.get(2).getStockonhand());
+    assertEquals(LocalDate.now().minusDays(3L), toDate(toSaveList.get(2).getOccurreddate()));
+    assertEquals(90, (int) toSaveList.get(3).getStockonhand());
+    assertEquals(LocalDate.now().minusDays(2L), toDate(toSaveList.get(3).getOccurreddate()));
+    assertEquals(100, (int) toSaveList.get(4).getStockonhand());
+    assertEquals(LocalDate.now().minusDays(1L), toDate(toSaveList.get(4).getOccurreddate()));
+  }
+
+  private List<StockCardLocationMovementLineItem> buildMovement() {
+    StockCardLocationMovementLineItem movement1 = StockCardLocationMovementLineItem.builder()
+            .stockCardId(stockCardId)
+            .destLocationCode(locationCode)
+            .quantity(40)
+            .occurredDate(LocalDate.now().minusDays(4L))
+            .build();
+
+    StockCardLocationMovementLineItem movement2 = StockCardLocationMovementLineItem.builder()
+            .stockCardId(stockCardId)
+            .srcLocationCode(locationCode)
+            .quantity(20)
+            .occurredDate(LocalDate.now().minusDays(2L))
+            .build();
+    return Arrays.asList(movement1, movement2);
   }
 
   private StockCard buildStockCard(StockCardLineItem target) {
@@ -113,7 +169,7 @@ public class CalculatedStockOnHandByLocationServiceTest {
     line2.setId(lineItemId2);
     line2.setQuantity(30);
     line2.setReason(buildIssueReason());
-    line2.setOccurredDate(LocalDate.now().minusDays(2L));
+    line2.setOccurredDate(LocalDate.now().minusDays(3L));
     StockCardLineItem line3 = new StockCardLineItem();
     line3.setId(lineItemId3);
     line3.setQuantity(10);

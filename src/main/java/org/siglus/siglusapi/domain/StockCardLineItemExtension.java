@@ -33,7 +33,7 @@ import org.siglus.common.domain.BaseEntity;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-@Table(name = "stock_card_line_item_extension", schema = "siglusintegration")
+@Table(name = "stock_card_line_items_by_location", schema = "siglusintegration")
 public class StockCardLineItemExtension extends BaseEntity {
 
   private String locationCode;

@@ -62,10 +62,10 @@ public interface CalculatedStockOnHandByLocationRepository extends JpaRepository
 
 
   // TODO performance
-  @Query(value = "select * from siglusintegration.calculated_stocks_on_hand_locations "
+  @Query(value = "select * from siglusintegration.calculated_stocks_on_hand_by_location "
           + "where (stockcardid, occurreddate) in ("
           + "select stockcardid, max(occurreddate) "
-          + "from siglusintegration.calculated_stocks_on_hand_locations c "
+          + "from siglusintegration.calculated_stocks_on_hand_by_location c "
           + "where c.stockcardid in :stockCardIds "
           + "and c.occurreddate < :occurredDate "
           + "group by c.stockcardid, c.locationcode)", nativeQuery = true)
