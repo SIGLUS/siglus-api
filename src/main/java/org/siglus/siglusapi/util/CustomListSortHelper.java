@@ -21,7 +21,7 @@ import java.util.List;
 public class CustomListSortHelper {
 
   public static <T> List<List<T>> averageAssign(List<T> source, int n) {
-    List<List<T>> result = new ArrayList<List<T>>();
+    List<List<T>> result = new ArrayList<>();
     int remaider = source.size() % n;
     int number = source.size() / n;
     int offset = 0;

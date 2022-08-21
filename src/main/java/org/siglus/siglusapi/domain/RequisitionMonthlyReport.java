@@ -34,8 +34,6 @@ import org.siglus.common.domain.BaseEntity;
 @Table(name = "vw_requisition_monthly_report", schema = "dashboard")
 public class RequisitionMonthlyReport extends BaseEntity {
 
-  @Column(name = "id")
-  private UUID id;
   @Column(name = "inventorydate")
   private String inventoryDate;
   @Column(name = "statusdetail")

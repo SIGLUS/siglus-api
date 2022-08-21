@@ -50,10 +50,8 @@ public interface SiglusStockCardRepository extends JpaRepository<StockCard, UUID
     return findAll((root, query, cb) -> {
       Predicate byFacility = cb.equal(root.get("facilityId"), facilityId);
       List<Predicate> predicates = new ArrayList<>();
-      lineItems.forEach(lineItem -> {
-        predicates.add(cb.and(cb.equal(root.get("orderableId"), lineItem.getOrderableId()),
-                cb.equal(root.get("lotId"), lineItem.getLotId())));
-      });
+      lineItems.forEach(lineItem -> predicates.add(cb.and(cb.equal(root.get("orderableId"), lineItem.getOrderableId()),
+              cb.equal(root.get("lotId"), lineItem.getLotId()))));
       Predicate byOrderableIdAndLotId = predicates.stream().reduce(cb.conjunction(), cb::or);
       return cb.and(byFacility, byOrderableIdAndLotId);
     });

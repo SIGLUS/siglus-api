@@ -595,9 +595,7 @@ public class SiglusPodService {
     List<List<SimpleLineItem>> groupByProductIdLineItems = new ArrayList<>();
     Map<UUID, List<SimpleLineItem>> productIdToLineItems = simpleLineItems.stream()
         .collect(Collectors.groupingBy(SimpleLineItem::getProductId));
-    productIdToLineItems.forEach((productId, lineItems) -> {
-      groupByProductIdLineItems.add(lineItems);
-    });
+    productIdToLineItems.forEach((productId, lineItems) -> groupByProductIdLineItems.add(lineItems));
     groupByProductIdLineItems.sort(Comparator.comparing(o -> o.get(0).getProductCode()));
     return groupByProductIdLineItems;
   }

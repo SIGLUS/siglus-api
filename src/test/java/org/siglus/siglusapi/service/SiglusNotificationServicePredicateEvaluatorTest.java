@@ -68,8 +68,8 @@ public class SiglusNotificationServicePredicateEvaluatorTest {
             currentUserSupervisoryNodeIds, true, null);
 
     // then
-    assertThat(predicate.toString())
-        .isEqualTo(
+    assertThat(predicate)
+        .hasToString(
             "cb.and(\n"
                 + "    cb.equal(null, null);,\n"
                 + "    cb.equal(null, RECEIVED);,\n"
@@ -89,8 +89,8 @@ public class SiglusNotificationServicePredicateEvaluatorTest {
             currentUserSupervisoryNodeIds, true, null);
 
     // then
-    assertThat(predicate.toString())
-        .isEqualTo(
+    assertThat(predicate)
+        .hasToString(
             "cb.and(\n"
                 + "    cb.equal(null, null);,\n"
                 + "    cb.equal(null, null);,\n"
@@ -112,8 +112,8 @@ public class SiglusNotificationServicePredicateEvaluatorTest {
             currentUserSupervisoryNodeIds, true, null);
 
     // then
-    assertThat(predicate.toString())
-        .isEqualTo(
+    assertThat(predicate)
+        .hasToString(
             "cb.and(\n"
                 + "    cb.equal(null, null);,\n"
                 + "    cb.equal(null, null);,\n"
@@ -135,8 +135,8 @@ public class SiglusNotificationServicePredicateEvaluatorTest {
             currentUserSupervisoryNodeIds, true, null);
 
     // then
-    assertThat(predicate.toString())
-        .isEqualTo(
+    assertThat(predicate)
+        .hasToString(
             "cb.and(\n"
                 + "    cb.equal(null, null);,\n"
                 + "    cb.equal(null, null);,\n"
@@ -157,8 +157,8 @@ public class SiglusNotificationServicePredicateEvaluatorTest {
             currentUserSupervisoryNodeIds, false, null);
 
     // then
-    assertThat(predicate.toString())
-        .isEqualTo(
+    assertThat(predicate)
+        .hasToString(
             "cb.and(\n"
                 + "    cb.equal(null, null);,\n"
                 + "    cb.equal(null, APPROVED);,\n"
@@ -180,8 +180,8 @@ public class SiglusNotificationServicePredicateEvaluatorTest {
             currentUserSupervisoryNodeIds, false, null);
 
     // then
-    assertThat(predicate.toString())
-        .isEqualTo(
+    assertThat(predicate)
+        .hasToString(
             "cb.and(\n"
                 + "    cb.equal(null, null);,\n"
                 + "    cb.equal(null, null);,\n"
@@ -202,8 +202,8 @@ public class SiglusNotificationServicePredicateEvaluatorTest {
             currentUserSupervisoryNodeIds, false, null);
 
     // then
-    assertThat(predicate.toString())
-        .isEqualTo(
+    assertThat(predicate)
+        .hasToString(
             "cb.and(\n"
                 + "    cb.equal(null, null);,\n"
                 + "    cb.equal(null, null);,\n"
@@ -224,8 +224,8 @@ public class SiglusNotificationServicePredicateEvaluatorTest {
             currentUserSupervisoryNodeIds, false, null);
 
     // then
-    assertThat(predicate.toString())
-        .isEqualTo(
+    assertThat(predicate)
+        .hasToString(
             "cb.and(\n"
                 + "    cb.equal(null, null);,\n"
                 + "    cb.equal(null, null);,\n"
@@ -263,8 +263,8 @@ public class SiglusNotificationServicePredicateEvaluatorTest {
             currentUserSupervisoryNodeIds, false, null);
 
     // then
-    assertThat(predicate.toString())
-        .isEqualTo(
+    assertThat(predicate)
+        .hasToString(
             "cb.and(\n"
                 + "    cb.equal(null, null);,\n"
                 + "    cb.equal(null, null);,\n"

@@ -442,18 +442,16 @@ public class SiglusStockManagementDraftService {
     List<MergedLineItemDto> mergedLineItemDtos = new ArrayList<>();
     subDrafts.forEach(subDraft -> {
       List<MergedLineItemDto> subDraftLineItemDto = subDraft.getLineItems().stream()
-          .map(lineItem -> {
-            return MergedLineItemDto.builder().subDraftId(subDraft.getId())
-                .productName(lineItem.getProductName())
-                .productCode(lineItem.getProductCode())
-                .expirationDate(lineItem.getExpirationDate())
-                .lotId(lineItem.getLotId())
-                .orderableId(lineItem.getOrderableId())
-                .occurredDate(lineItem.getOccurredDate())
-                .quantity(lineItem.getQuantity())
-                .lotCode(lineItem.getLotCode())
-                .build();
-          }).collect(toList());
+          .map(lineItem -> MergedLineItemDto.builder().subDraftId(subDraft.getId())
+              .productName(lineItem.getProductName())
+              .productCode(lineItem.getProductCode())
+              .expirationDate(lineItem.getExpirationDate())
+              .lotId(lineItem.getLotId())
+              .orderableId(lineItem.getOrderableId())
+              .occurredDate(lineItem.getOccurredDate())
+              .quantity(lineItem.getQuantity())
+              .lotCode(lineItem.getLotCode())
+              .build()).collect(toList());
       mergedLineItemDtos.addAll(subDraftLineItemDto);
     });
     return mergedLineItemDtos;

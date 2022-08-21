@@ -81,12 +81,10 @@ public interface CalculatedStockOnHandByLocationRepository extends JpaRepository
     return findAll((root, query, cb) -> {
       Predicate byFutureDate = cb.greaterThanOrEqualTo(root.get("occurreddate"), occurredDate);
       List<Predicate> predicates = new ArrayList<>();
-      lineItems.forEach(lineItem -> {
-        predicates.add(cb.and(
-                cb.equal(root.get("stockCardId"), lineItem.getStockCard().getId()),
-                cb.equal(root.get("locationCode"), lineItemIdToExtension.get(lineItem.getId()).getLocationCode())
-        ));
-      });
+      lineItems.forEach(lineItem -> predicates.add(cb.and(
+              cb.equal(root.get("stockCardId"), lineItem.getStockCard().getId()),
+              cb.equal(root.get("locationCode"), lineItemIdToExtension.get(lineItem.getId()).getLocationCode())
+      )));
       Predicate byStockCardIdAndLocationCode = predicates.stream().reduce(cb.conjunction(), cb::or);
       return cb.and(byFutureDate, byStockCardIdAndLocationCode);
     });

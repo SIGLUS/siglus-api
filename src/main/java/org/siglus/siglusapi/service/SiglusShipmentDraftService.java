@@ -229,13 +229,12 @@ public class SiglusShipmentDraftService {
     List<FacilityLocations> locationManagementList = facilityLocationsRepository.findByIdIn(locationIds);
 
     Map<UUID, UUID> lineItemIdToLocationIdMap = new IdentityHashMap<>();
-    lineItemsExtensionList.forEach(lineItemExtension -> {
-      lineItemIdToLocationIdMap.put(lineItemExtension.getShipmentDraftLineItemId(), lineItemExtension.getLocationId());
-    });
+    lineItemsExtensionList.forEach(lineItemExtension ->
+        lineItemIdToLocationIdMap.put(
+            lineItemExtension.getShipmentDraftLineItemId(), lineItemExtension.getLocationId()));
     Map<UUID, String> locationIdToCodeMap = new HashMap<>();
-    locationManagementList.forEach(locationManagement -> {
-      locationIdToCodeMap.put(locationManagement.getId(), locationManagement.getLocationCode());
-    });
+    locationManagementList.forEach(locationManagement ->
+        locationIdToCodeMap.put(locationManagement.getId(), locationManagement.getLocationCode()));
 
     lineItemIdToLocationIdMap.forEach((draftLineItemId, locationId) -> {
       ShipmentLineItemDto lineItemDto = shipmentLineItemDtos.stream().filter(shipmentLineItemDto ->

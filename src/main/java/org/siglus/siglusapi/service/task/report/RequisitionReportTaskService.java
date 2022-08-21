@@ -67,15 +67,11 @@ public class RequisitionReportTaskService {
   private final FacilityNativeRepository facilityNativeRepository;
   private final ProgramRequisitionNameMappingRepository programRequisitionNameMappingRepository;
   private final SiglusFacilityReferenceDataService siglusFacilityReferenceDataService;
-
   private final SiglusProgramAdditionalOrderableService siglusProgramAdditionalOrderableService;
-
   private final SiglusReportTypeRepository reportTypeRepository;
-
   private final SiglusProcessingPeriodService siglusProcessingPeriodService;
   private final PeriodService periodService;
-
-  public static final Map<Integer, String> MONTH_NAME_MAP = new HashMap<>();
+  private static final Map<Integer, String> MONTH_NAME_MAP = new HashMap<>();
 
   static {
     MONTH_NAME_MAP.put(1, "Jan");
@@ -176,12 +172,7 @@ public class RequisitionReportTaskService {
     return notSubmitPeriodList;
   }
 
-  private List<FacillityStockCardDateDto> getAllFacilityStockCardDateDtos(List<ProgramDto> allProgramDto) {
-    List<FacillityStockCardDateDto> firstStockCardGroupByFacility
-        = facilityNativeRepository.findFirstStockCardGroupByFacility();
-    firstStockCardGroupByFacility.addAll(findMalariaFacilityStockCardDate(allProgramDto));
-    return firstStockCardGroupByFacility;
-  }
+
 
   private List<FacillityStockCardDateDto> findMalariaFacilityStockCardDate(List<ProgramDto> allProgramDto) {
     Optional<ProgramDto> malariaProgram =
@@ -320,6 +311,13 @@ public class RequisitionReportTaskService {
 
     private String getUniqueKey(UUID facilityId, UUID programId) {
       return facilityId + "&" + programId;
+    }
+
+    private List<FacillityStockCardDateDto> getAllFacilityStockCardDateDtos(List<ProgramDto> allProgramDto) {
+      List<FacillityStockCardDateDto> firstStockCardGroupByFacility
+          = facilityNativeRepository.findFirstStockCardGroupByFacility();
+      firstStockCardGroupByFacility.addAll(findMalariaFacilityStockCardDate(allProgramDto));
+      return firstStockCardGroupByFacility;
     }
   }
 }

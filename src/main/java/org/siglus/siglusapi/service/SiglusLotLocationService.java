@@ -149,13 +149,11 @@ public class SiglusLotLocationService {
   private List<LotLocationDto> getLocationsByFacilityId(UUID facilityId) {
     List<LotLocationDto> lotLocationDtos = new LinkedList<>();
     List<FacilityLocations> locations = facilityLocationsRepository.findByFacilityId(facilityId);
-    locations.forEach(location -> {
-      lotLocationDtos.add(LotLocationDto
-          .builder()
-          .locationCode(location.getLocationCode())
-          .area(location.getArea())
-          .build());
-    });
+    locations.forEach(location -> lotLocationDtos.add(LotLocationDto
+        .builder()
+        .locationCode(location.getLocationCode())
+        .area(location.getArea())
+        .build()));
     return lotLocationDtos;
   }
 
@@ -195,22 +193,18 @@ public class SiglusLotLocationService {
       }
     });
 
-    Map<String, List<LotLocationPair>> locationCodeToLotLocationPairs = reverseMappingRelationship(
-        lotIdToLocationSohListMap);
-    return locationCodeToLotLocationPairs;
+    return reverseMappingRelationship(lotIdToLocationSohListMap);
   }
 
   private Map<String, List<LotLocationPair>> reverseMappingRelationship(
       Map<UUID, List<CalculatedStockOnHandByLocation>> lotIdToLocationIdMap) {
     List<LotLocationPair> lotLocationPairs = new LinkedList<>();
 
-    lotIdToLocationIdMap.forEach((lotId, locationStockOnHandList) -> {
-      locationStockOnHandList.forEach(locationsStockOnHand -> {
-        lotLocationPairs.add(LotLocationPair.builder().lotId(lotId)
+    lotIdToLocationIdMap.forEach((lotId, locationStockOnHandList)
+        -> locationStockOnHandList.forEach(
+          locationsStockOnHand -> lotLocationPairs.add(LotLocationPair.builder().lotId(lotId)
             .calculatedStockOnHandByLocation(locationsStockOnHand)
-            .build());
-      });
-    });
+            .build())));
 
     return lotLocationPairs.stream()
         .collect(Collectors.groupingBy(e -> e.getCalculatedStockOnHandByLocation().getLocationCode()));
@@ -252,12 +246,10 @@ public class SiglusLotLocationService {
   }
 
   private List<FacilityLocationsDto> convertToDto(List<FacilityLocations> locations) {
-    return locations.stream().map(location -> {
-      return FacilityLocationsDto.builder()
-          .facilityId(location.getFacilityId())
-          .area(location.getArea())
-          .locationCode(location.getLocationCode())
-          .build();
-    }).collect(Collectors.toList());
+    return locations.stream().map(location -> FacilityLocationsDto.builder()
+        .facilityId(location.getFacilityId())
+        .area(location.getArea())
+        .locationCode(location.getLocationCode())
+        .build()).collect(Collectors.toList());
   }
 }

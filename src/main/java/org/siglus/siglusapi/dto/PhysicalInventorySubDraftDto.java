@@ -17,20 +17,19 @@ package org.siglus.siglusapi.dto;
 
 import java.util.List;
 import java.util.UUID;
+
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
 import org.openlmis.stockmanagement.dto.PhysicalInventoryDto;
 
 /**
  * @author kourengang
  * @date 6/28/22
  */
+@Getter
+@Setter
+@EqualsAndHashCode(callSuper = true)
 public class PhysicalInventorySubDraftDto extends PhysicalInventoryDto {
   private List<UUID> subDraftIds;
-
-  public List<UUID> getSubDraftIds() {
-    return subDraftIds;
-  }
-
-  public void setSubDraftIds(List<UUID> subDraftIds) {
-    this.subDraftIds = subDraftIds;
-  }
 }

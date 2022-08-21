@@ -131,9 +131,7 @@ public class StockManagementRepository extends BaseNativeRepository {
 
   public PeriodOfProductMovements getAllProductMovements(@Nonnull UUID facilityId, @Nonnull Set<UUID> orderableIds,
       LocalDate since, LocalDate till) {
-    PeriodOfProductMovements allProductMovements = getAllProductMovements(facilityId, since, till,
-        orderableIds, null, null);
-    return allProductMovements;
+    return getAllProductMovements(facilityId, since, till, orderableIds, null, null);
   }
 
   @ParametersAreNullableByDefault

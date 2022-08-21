@@ -368,10 +368,9 @@ public class SiglusOrderService {
         .map(orderableDto -> orderableDto.getOrderable().getId()).collect(Collectors.toList());
     List<Orderable> orderables = orderableRepository.findLatestByIds(orderableIds);
     Map<UUID, Boolean> orderableToIsKitMap = new HashMap<>();
-    orderables.forEach(orderable -> {
-      orderableToIsKitMap.put(orderable.getId(), CollectionUtils.isNotEmpty(orderable.getChildren())
-          || APE_KITS.contains(orderable.getProductCode().toString()));
-    });
+    orderables.forEach(orderable ->
+        orderableToIsKitMap.put(orderable.getId(), CollectionUtils.isNotEmpty(orderable.getChildren())
+        || APE_KITS.contains(orderable.getProductCode().toString())));
     siglusOrderDto.getOrder().orderLineItems().forEach(orderLineItemDto -> {
       OrderableDto orderable = orderLineItemDto.getOrderable();
       orderable.setIsKit(orderableToIsKitMap.get(orderable.getId()));

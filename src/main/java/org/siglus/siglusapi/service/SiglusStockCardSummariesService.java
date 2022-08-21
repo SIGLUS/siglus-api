@@ -156,9 +156,8 @@ public class SiglusStockCardSummariesService {
         .map(UUID::fromString)
         .collect(Collectors.toSet());
     LotSearchParams requestParams = new LotSearchParams(null, new ArrayList<>(tradeItemIds), null, null);
-    List<org.openlmis.referencedata.dto.LotDto> lotDtos = lotController.getLots(requestParams, null).getContent();
 
-    return lotDtos;
+    return lotController.getLots(requestParams, null).getContent();
   }
 
   public Page<StockCardSummaryV2Dto> findSiglusStockCard(
@@ -539,18 +538,16 @@ public class SiglusStockCardSummariesService {
   private OrderableDto getOrderableFromObjectReference(List<OrderableDto> orderableDtos,
       ObjectReferenceDto objectReferenceDto) {
     if (Objects.nonNull(objectReferenceDto)) {
-      return orderableDtos.stream().filter(dto -> {
-        return dto.getId().equals(objectReferenceDto.getId());
-      }).findFirst().orElse(null);
+      return orderableDtos.stream().filter(dto ->
+          dto.getId().equals(objectReferenceDto.getId())).findFirst().orElse(null);
     }
     return null;
   }
 
   private LotDto getLotFromObjectReference(List<LotDto> lotDtos, ObjectReferenceDto objectReferenceDto) {
     if (Objects.nonNull(objectReferenceDto)) {
-      return lotDtos.stream().filter(dto -> {
-        return dto.getId().equals(objectReferenceDto.getId());
-      }).findFirst().orElse(null);
+      return lotDtos.stream().filter(dto ->
+          dto.getId().equals(objectReferenceDto.getId())).findFirst().orElse(null);
     }
     return null;
   }
@@ -571,9 +568,8 @@ public class SiglusStockCardSummariesService {
 
   private Set<StockCardDetailsDto> getStockCardDetailsDtos(List<StockCardSummaryDto> stockCardSummaryDtos) {
     Set<StockCardDetailsDto> stockCardDetailsDtos = new HashSet<>();
-    stockCardSummaryDtos.forEach(stockCardSummaryDto -> {
-      stockCardDetailsDtos.addAll(stockCardSummaryDto.getStockCardDetails());
-    });
+    stockCardSummaryDtos.forEach(stockCardSummaryDto ->
+        stockCardDetailsDtos.addAll(stockCardSummaryDto.getStockCardDetails()));
     return stockCardDetailsDtos;
   }
 }

@@ -335,16 +335,13 @@ public class SiglusPhysicalInventoryService {
     List<SubDraftDto> subDraftDtoList = new LinkedList<>();
     Map<Integer, List<PhysicalInventorySubDraft>> groupSubDraftDtoMap = physicalInventorySubDraftList.stream()
         .collect(Collectors.groupingBy(PhysicalInventorySubDraft::getNum));
-    groupSubDraftDtoMap.forEach((groupNum, subDraftList) -> {
-      subDraftDtoList.add(
-          SubDraftDto
-              .builder()
-              .groupNum(groupNum)
-              .status(subDraftList.get(0).getStatus())
-              .subDraftId(subDraftList.stream().map(BaseEntity::getId).collect(Collectors.toList()))
-              .saver(authenticationHelper.getUserNameByUserId(subDraftList.get(0).getOperatorId()))
-              .build());
-    });
+    groupSubDraftDtoMap.forEach((groupNum, subDraftList) -> subDraftDtoList.add(
+        SubDraftDto.builder()
+            .groupNum(groupNum)
+            .status(subDraftList.get(0).getStatus())
+            .subDraftId(subDraftList.stream().map(BaseEntity::getId).collect(Collectors.toList()))
+            .saver(authenticationHelper.getUserNameByUserId(subDraftList.get(0).getOperatorId()))
+            .build()));
     return subDraftDtoList;
   }
 
@@ -404,9 +401,7 @@ public class SiglusPhysicalInventoryService {
     List<List<PhysicalInventoryLineItemDto>> list = new LinkedList<>();
     Map<UUID, List<PhysicalInventoryLineItemDto>> orderableIdToLineItemsMap = lineItemDtos.stream()
         .collect(Collectors.groupingBy(PhysicalInventoryLineItemDto::getOrderableId));
-    orderableIdToLineItemsMap.forEach((orderablesId, lineItems) -> {
-      list.add(lineItems);
-    });
+    orderableIdToLineItemsMap.forEach((orderablesId, lineItems) -> list.add(lineItems));
 
     list.sort(Comparator.comparing(o -> String.valueOf(
         orderableRepository.findLatestById(o.get(0).getOrderableId()).orElseThrow(IllegalArgumentException::new)
@@ -457,28 +452,26 @@ public class SiglusPhysicalInventoryService {
     List<PhysicalInventoryLineItemsExtension> updateExtensions = new LinkedList<>();
     groupList.forEach(productList -> {
       groupNum.getAndIncrement();
-      productList.forEach(lineItemList -> {
-        lineItemList.forEach(lineItem -> {
-          PhysicalInventoryLineItemsExtension extension = getExtension(extensions, lineItem);
-          if (extension == null) {
-            extension = PhysicalInventoryLineItemsExtension
-                .builder()
-                .orderableId(lineItem.getOrderableId())
-                .lotId(lineItem.getLotId())
-                .physicalInventoryId(UUID.fromString(
-                    physicalInventoriesRepository.findIdByProgramIdAndFacilityIdAndIsDraft(lineItem.getProgramId(),
-                        facilityId, true)))
-                .build();
-          }
-          extension.setInitial(true);
-          PhysicalInventoryLineItemsExtension copyedExtension = extension;
-          extension.setSubDraftId(
-              subDraftList.stream().filter(subDraft -> subDraft.getNum() == groupNum.get()
-                      && subDraft.getPhysicalInventoryId().equals(copyedExtension.getPhysicalInventoryId()))
-                  .findFirst().orElseThrow(NullPointerException::new).getId());
-          updateExtensions.add(extension);
-        });
-      });
+      productList.forEach(lineItemList -> lineItemList.forEach(lineItem -> {
+        PhysicalInventoryLineItemsExtension extension = getExtension(extensions, lineItem);
+        if (extension == null) {
+          extension = PhysicalInventoryLineItemsExtension
+              .builder()
+              .orderableId(lineItem.getOrderableId())
+              .lotId(lineItem.getLotId())
+              .physicalInventoryId(UUID.fromString(
+                  physicalInventoriesRepository.findIdByProgramIdAndFacilityIdAndIsDraft(lineItem.getProgramId(),
+                      facilityId, true)))
+              .build();
+        }
+        extension.setInitial(true);
+        PhysicalInventoryLineItemsExtension copyedExtension = extension;
+        extension.setSubDraftId(
+            subDraftList.stream().filter(subDraft -> subDraft.getNum() == groupNum.get()
+                    && subDraft.getPhysicalInventoryId().equals(copyedExtension.getPhysicalInventoryId()))
+                .findFirst().orElseThrow(NullPointerException::new).getId());
+        updateExtensions.add(extension);
+      }));
     });
     return updateExtensions;
   }
@@ -612,7 +605,7 @@ public class SiglusPhysicalInventoryService {
       PhysicalInventoryDto savedPhysicalInventoryDto = getPhysicalInventoryWithLineItemForOneProgram(
           physicalInventoryDtos.get(0), initialPhysicalInventory);
       List<PhysicalInventoryLineItemDto> lineItems = savedPhysicalInventoryDto.getLineItems();
-      if (lineItems != null && lineItems.size() > 0) {
+      if (CollectionUtils.isNotEmpty(lineItems)) {
         allProductLineItemDtoList.addAll(lineItems);
       }
     }

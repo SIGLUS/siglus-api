@@ -125,7 +125,8 @@ public class CalculatedStocksOnHandByLocationService {
     Map<UUID, UUID> stockCardIdToId = calculatedStocksOnHandRepository
             .findByOccurredDateAndStockCardIdIn(date, stockCardIds)
             .stream()
-            .collect(Collectors.toMap(soh -> soh.getStockCardId(), CalculatedStockOnHand::getId, (c1, c2) -> c1));
+            .collect(Collectors.toMap(
+                CalculatedStockOnHand::getStockCardId, CalculatedStockOnHand::getId, (c1, c2) -> c1));
     toSaveList.forEach(location ->
             location.setCalculatedStocksOnHandId(stockCardIdToId.get(location.getStockCardId())));
     log.info(String.format("save CalculatedStocksOnHandLocations %s", toSaveList.size()));

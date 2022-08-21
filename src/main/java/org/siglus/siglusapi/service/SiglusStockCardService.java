@@ -91,7 +91,7 @@ public class SiglusStockCardService {
   @Autowired
   private CalculatedStockOnHandByLocationRepository calculatedStockOnHandByLocationRepository;
 
-  private static String LOCATION_KEY = "locationCode";
+  private static final String LOCATION_KEY = "locationCode";
 
   public StockCardDto findStockCardByOrderable(UUID orderableId) {
     UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
@@ -274,8 +274,6 @@ public class SiglusStockCardService {
     if (orderableId != null) {
       orderableIdsSet.add(orderableId);
     }
-    List<StockMovementResDto> productMovements =
-        stockMovementService.getProductMovements(orderableIdsSet, facilityId, startTime, endTime);
-    return productMovements;
+    return stockMovementService.getProductMovements(orderableIdsSet, facilityId, startTime, endTime);
   }
 }

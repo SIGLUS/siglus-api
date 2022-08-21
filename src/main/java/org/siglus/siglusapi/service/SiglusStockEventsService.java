@@ -104,7 +104,7 @@ public class SiglusStockEventsService {
     validatePreSubmitSubDraft(subDraftIds);
     processStockEvent(stockEventForMultiUserDto.getStockEvent(), false);
   }
-  
+
   @Transactional
   public void processStockEvent(StockEventDto eventDto, boolean location) {
     setUserId(eventDto);
@@ -287,7 +287,7 @@ public class SiglusStockEventsService {
   }
 
   private boolean isNotUnpack(StockEventDto eventDto) {
-    return !(eventDto.hasLineItems() && eventDto.getLineItems().stream().anyMatch((lineItem) ->
+    return !(eventDto.hasLineItems() && eventDto.getLineItems().stream().anyMatch(lineItem ->
         unpackDestinationNodeId.equals(lineItem.getDestinationId())));
   }
 

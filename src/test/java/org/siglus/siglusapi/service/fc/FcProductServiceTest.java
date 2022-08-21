@@ -402,7 +402,7 @@ public class FcProductServiceTest {
     ProductInfoDto productInfo = ProductInfoDto.builder().status("Inactivo").build();
     Map<String, Object> extraData =
         fcProductService.createOrderableExtraData(productInfo, "product-inactive", emptySet());
-    assertThat(extraData.get(ACTIVE)).isEqualTo(false);
+    assertThat(extraData).containsEntry(ACTIVE, false);
   }
 
   @Test
@@ -438,7 +438,7 @@ public class FcProductServiceTest {
     // when
     Map<String, Object> updatedExtraData = fcProductService.createOrderableExtraData(current, fnm, newHashSet(fnm));
     // then
-    assertThat(updatedExtraData.get(ACTIVE)).isEqualTo(false);
+    assertThat(updatedExtraData).containsEntry(ACTIVE, false);
   }
 
   @Test
