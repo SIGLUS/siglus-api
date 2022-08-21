@@ -107,8 +107,7 @@ public class CalculatedStocksOnHandByLocationService {
       value.sort(StockCard.getLineItemsComparator());
       value.stream().findFirst()
           .ifPresent(item -> recalculateLocationStockOnHand(toSaveList, stockCardIdToLineItems,
-                  lineItemIdToExtension, item, stockCardIdAndLocationCodeToPreviousStockOnHandMap,
-                  eventDto.isPhysicalInventory()
+                  lineItemIdToExtension, item, stockCardIdAndLocationCodeToPreviousStockOnHandMap
           ));
     });
 
@@ -156,8 +155,7 @@ public class CalculatedStocksOnHandByLocationService {
                         Map<UUID, List<StockCardLineItem>> stockCardIdToLineItems,
                         Map<UUID, StockCardLineItemExtension> lineItemIdToExtension,
                         StockCardLineItem lineItem,
-                        Map<String, Integer> stockCardIdAndLocationCodeToPreviousStockOnHandMap,
-                        boolean isPhysicalInventory) {
+                        Map<String, Integer> stockCardIdAndLocationCodeToPreviousStockOnHandMap) {
     List<CalculatedStockOnHandByLocation> toSaveForThisLocation = new ArrayList<>();
 
     StockCardLineItemExtension extension = lineItemIdToExtension.get(lineItem.getId());
@@ -184,31 +182,21 @@ public class CalculatedStocksOnHandByLocationService {
               .sorted(StockCard.getLineItemsComparator()).collect(Collectors.toList());
     }
 
-    if (isPhysicalInventory) {
-      LocalDate previousOccurredDate = lineItem.getOccurredDate();
-      StockCardLineItem previousItem = null;
-      for (StockCardLineItem item : followingLineItems) {
-        Integer calculatedStockOnHand = calculateStockOnHand(item, previousSoh);
-        LocalDate itemOccurredDate = item.getOccurredDate();
-        if (!itemOccurredDate.equals(previousOccurredDate)) {
-          toSaveForThisLocation.add(buildSoh(lineItemIdToExtension, previousItem, previousSoh, stockCard,
-                  extension.getLocationCode(), extension.getArea()));
-        }
-        previousSoh = calculatedStockOnHand;
-        previousItem = item;
-        previousOccurredDate = itemOccurredDate;
-      }
-      toSaveForThisLocation.add(buildSoh(lineItemIdToExtension, previousItem, previousSoh, stockCard,
-              extension.getLocationCode(), extension.getArea()));
-    } else {
-      // TODO ask shangwei this way will create multiple records for the same day
-      for (StockCardLineItem item : followingLineItems) {
-        Integer calculatedStockOnHand = calculateStockOnHand(item, previousSoh);
-        toSaveForThisLocation.add(buildSoh(lineItemIdToExtension, item, previousSoh, stockCard,
+    LocalDate previousOccurredDate = lineItem.getOccurredDate();
+    StockCardLineItem previousItem = null;
+    for (StockCardLineItem item : followingLineItems) {
+      Integer calculatedStockOnHand = calculateStockOnHand(item, previousSoh);
+      LocalDate itemOccurredDate = item.getOccurredDate();
+      if (!itemOccurredDate.equals(previousOccurredDate)) {
+        toSaveForThisLocation.add(buildSoh(lineItemIdToExtension, previousItem, previousSoh, stockCard,
                 extension.getLocationCode(), extension.getArea()));
-        previousSoh = calculatedStockOnHand;
       }
+      previousSoh = calculatedStockOnHand;
+      previousItem = item;
+      previousOccurredDate = itemOccurredDate;
     }
+    toSaveForThisLocation.add(buildSoh(lineItemIdToExtension, previousItem, previousSoh, stockCard,
+            extension.getLocationCode(), extension.getArea()));
 
     toSaveList.addAll(toSaveForThisLocation);
   }

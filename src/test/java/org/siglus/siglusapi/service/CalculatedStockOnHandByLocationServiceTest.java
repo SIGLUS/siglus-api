@@ -97,7 +97,7 @@ public class CalculatedStockOnHandByLocationServiceTest {
     List<CalculatedStockOnHandByLocation> toSaveList = new ArrayList<>();
     // when
     calculatedStocksOnHandByLocationService.recalculateLocationStockOnHand(toSaveList, stockCardIdToLineItems,
-            buildExtensionMap(), target, buildStockCardIdAndLocationCodeToPreviousStockOnHandMap(), true);
+            buildExtensionMap(), target, buildStockCardIdAndLocationCodeToPreviousStockOnHandMap());
 
     // then
     assertEquals(3, toSaveList.size());
@@ -129,7 +129,7 @@ public class CalculatedStockOnHandByLocationServiceTest {
     List<CalculatedStockOnHandByLocation> toSaveList = new ArrayList<>();
     // when
     calculatedStocksOnHandByLocationService.recalculateLocationStockOnHand(toSaveList, stockCardIdToLineItems,
-            buildExtensionMap(), target, buildStockCardIdAndLocationCodeToPreviousStockOnHandMap(), true);
+            buildExtensionMap(), target, buildStockCardIdAndLocationCodeToPreviousStockOnHandMap());
 
     // then
     assertEquals(5, toSaveList.size());
