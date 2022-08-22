@@ -6,9 +6,6 @@ alter table siglusintegration.stock_card_location_movement_draft_line_items
     add column iskit boolean;
 
 alter table siglusintegration.stock_card_location_movement_draft_line_items
-    add column iskit boolean;
-
-alter table siglusintegration.stock_card_location_movement_draft_line_items
     drop column occurredDate;
 
 alter table siglusintegration.stock_card_location_movement_draft_line_items
