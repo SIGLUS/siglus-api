@@ -34,7 +34,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 @Slf4j
 public class EventPublisher {
-  public static final int protocolVersion = 1;
+  public static final int PROTOCOL_VERSION = 1;
   private final EventStore eventStore;
   private final ApplicationEventPublisher eventPublisher;
   private final SiglusAuthenticationHelper siglusAuthenticationHelper;
@@ -69,7 +69,7 @@ public class EventPublisher {
             .orElseThrow(() -> new NotFoundException(MessageKeys.ERROR_USER_NOT_FOUND));
     return Event.builder()
         .id(UUID.randomUUID())
-        .protocolVersion(protocolVersion)
+        .protocolVersion(PROTOCOL_VERSION)
         .occurredTime(ZonedDateTime.now())
         .senderId(currentUser.getHomeFacilityId())
         .receiverId(receiverId)

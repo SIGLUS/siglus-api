@@ -39,7 +39,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -190,24 +189,6 @@ public class SiglusStockManagementDraftServiceTest {
     UserDto userDto = new UserDto();
     userDto.setHomeFacilityId(facilityId);
     when(authenticationHelper.getCurrentUser()).thenReturn(userDto);
-  }
-
-  /**
-   * in order to support multi-user, the original logic has changed, this test is not applicable. should delete when
-   * everything ok
-   */
-  @Ignore
-  @Test
-  public void shouldThrowExceptionWhenCreateNewDraftIfDraftExists() {
-    exception.expect(ValidationMessageException.class);
-    exception.expectMessage(containsString(ERROR_STOCK_MANAGEMENT_DRAFT_DRAFT_EXISTS));
-
-    StockManagementDraft draft = StockManagementDraft.builder().build();
-    when(
-        stockManagementDraftRepository.findByProgramIdAndFacilityIdAndIsDraftAndDraftType(programId,
-            facilityId, true, issueDraft)).thenReturn(newArrayList(draft));
-
-    siglusStockManagementDraftService.createNewSubDraft(draftDto);
   }
 
   @Test

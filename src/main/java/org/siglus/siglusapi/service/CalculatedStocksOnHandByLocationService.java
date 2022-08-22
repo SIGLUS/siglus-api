@@ -322,12 +322,6 @@ public class CalculatedStocksOnHandByLocationService {
     return o == null ? "" : o.toString();
   }
 
-  private String getLocationKey(CalculatedStockOnHandByLocation locations) {
-    return getString(locations.getStockCardId())
-        + SEPARATOR
-        + getString(locations.getLocationCode());
-  }
-
   private String getUniqueKey(StockCard stockCard) {
     return getString(stockCard.getOrderableId())
         + SEPARATOR
@@ -338,18 +332,6 @@ public class CalculatedStocksOnHandByLocationService {
     return getString(lineItem.getOrderableId())
         + SEPARATOR
         + getString(lineItem.getLotId());
-  }
-
-  private String getUniqueKey(CalculatedStockOnHand calculatedStockOnHand) {
-    return getString(calculatedStockOnHand.getStockCard().getId())
-        + SEPARATOR
-        + getString(calculatedStockOnHand.getOccurredDate());
-  }
-
-  private String getUniqueKey(CalculatedStockOnHandByLocation calculatedStocksOnHandLocation) {
-    return getString(calculatedStocksOnHandLocation.getStockCardId())
-        + SEPARATOR
-        + getString(calculatedStocksOnHandLocation.getOccurreddate());
   }
 
   private void throwQuantityExceedException(StockCardLineItem item, int prevSoH) {

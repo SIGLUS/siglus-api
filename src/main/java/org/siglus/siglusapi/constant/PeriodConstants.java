@@ -17,9 +17,12 @@ package org.siglus.siglusapi.constant;
 
 import static org.openlmis.referencedata.domain.Code.code;
 
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
 import org.openlmis.referencedata.domain.Code;
 
 
+@RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 public class PeriodConstants {
 
   public static final Code MONTH_SCHEDULE_CODE = code("M1");

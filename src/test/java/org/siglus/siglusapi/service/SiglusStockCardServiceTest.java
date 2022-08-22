@@ -163,7 +163,7 @@ public class SiglusStockCardServiceTest {
     when(calculatedStockOnHandByLocationRepository.getLocationSoh(any())).thenReturn(newArrayList(locationSohDto));
     // when
     StockCardDto stockCardDto = siglusStockCardService.findStockCardWithLocationById(stockCardOne.getId());
-    assertEquals(stockCardDto.getExtraData().get("locationCode").isEmpty(), false);
+    assertEquals(false, stockCardDto.getExtraData().get("locationCode").isEmpty());
   }
 
   @Test

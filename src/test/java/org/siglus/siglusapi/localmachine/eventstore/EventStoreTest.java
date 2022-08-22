@@ -36,6 +36,6 @@ public class EventStoreTest {
   public void shouldReturn0WhenGetNextGroupSeqGivenGroupNotExists() {
     given(repository.getNextGroupSequenceNumber(anyString())).willReturn(null);
     long nextGroupSeq = eventStore.nextGroupSequenceNumber("groupId");
-    assertThat(nextGroupSeq).isEqualTo(0L);
+    assertThat(nextGroupSeq).isZero();
   }
 }

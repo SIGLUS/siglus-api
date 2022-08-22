@@ -29,7 +29,7 @@ public abstract class EventImporter {
   private final EventStore eventStore;
   private final EventReplayer replayer;
 
-  public EventImporter(EventStore eventStore, EventReplayer replayer) {
+  protected EventImporter(EventStore eventStore, EventReplayer replayer) {
     this.eventStore = eventStore;
     this.replayer = replayer;
   }

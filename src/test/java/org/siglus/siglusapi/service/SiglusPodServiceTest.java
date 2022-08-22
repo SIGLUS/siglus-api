@@ -386,7 +386,7 @@ public class SiglusPodServiceTest {
     ProofOfDeliveryDto subDraftDetail = service.getSubDraftDetail(podId, subDraftId, defaultExpands);
 
     // then
-    assertEquals(subDraftDetail.getLineItems().size(), 1);
+    assertEquals(1, subDraftDetail.getLineItems().size());
   }
 
   @Test(expected = NotFoundException.class)

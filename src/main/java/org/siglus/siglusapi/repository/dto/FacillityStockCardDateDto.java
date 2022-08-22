@@ -19,9 +19,11 @@ import java.sql.Date;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @AllArgsConstructor
+@NoArgsConstructor
 public class FacillityStockCardDateDto {
 
   private Date occurredDate;
@@ -31,7 +33,4 @@ public class FacillityStockCardDateDto {
   private UUID programId;
 
   private Boolean isAndroid;
-
-  public FacillityStockCardDateDto() {
-  }
 }

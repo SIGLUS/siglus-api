@@ -174,25 +174,6 @@ public class RequisitionReportTaskService {
 
 
 
-  private List<FacillityStockCardDateDto> findMalariaFacilityStockCardDate(List<ProgramDto> allProgramDto) {
-    Optional<ProgramDto> malariaProgram =
-        allProgramDto.stream().filter(item -> ProgramConstants.MALARIA_PROGRAM_CODE.equals(item.getCode())).findFirst();
-    Optional<ProgramDto> viaProgram =
-        allProgramDto.stream().filter(item -> ProgramConstants.VIA_PROGRAM_CODE.equals(item.getCode())).findFirst();
-    if (!malariaProgram.isPresent() || !viaProgram.isPresent()) {
-      return new ArrayList<>();
-    }
-    Set<UUID> malariaAdditionalOrderableIds =
-        siglusProgramAdditionalOrderableService.searchAdditionalOrderables(malariaProgram.get().getId())
-            .stream().map(ProgramAdditionalOrderableDto::getAdditionalOrderableId).collect(Collectors.toSet());
-
-    List<FacillityStockCardDateDto> result =
-        facilityNativeRepository.findMalariaFirstStockCardGroupByFacility(malariaAdditionalOrderableIds,
-            viaProgram.get().getId());
-    result.forEach(facilityStockCardDateDto -> facilityStockCardDateDto.setProgramId(malariaProgram.get().getId()));
-    return result;
-  }
-
   public void updateBatch(UUID facilityId, List<RequisitionMonthlyNotSubmitReport> notSubmitList) {
     requisitionMonthlyNotSubmitReportRepository.deleteByFacilityId(facilityId);
     if (CollectionUtils.isEmpty(notSubmitList)) {
@@ -318,6 +299,26 @@ public class RequisitionReportTaskService {
           = facilityNativeRepository.findFirstStockCardGroupByFacility();
       firstStockCardGroupByFacility.addAll(findMalariaFacilityStockCardDate(allProgramDto));
       return firstStockCardGroupByFacility;
+    }
+
+    private List<FacillityStockCardDateDto> findMalariaFacilityStockCardDate(List<ProgramDto> allProgramDto) {
+      Optional<ProgramDto> malariaProgram =
+          allProgramDto.stream()
+              .filter(item -> ProgramConstants.MALARIA_PROGRAM_CODE.equals(item.getCode())).findFirst();
+      Optional<ProgramDto> viaProgram =
+          allProgramDto.stream().filter(item -> ProgramConstants.VIA_PROGRAM_CODE.equals(item.getCode())).findFirst();
+      if (!malariaProgram.isPresent() || !viaProgram.isPresent()) {
+        return new ArrayList<>();
+      }
+      Set<UUID> malariaAdditionalOrderableIds =
+          siglusProgramAdditionalOrderableService.searchAdditionalOrderables(malariaProgram.get().getId())
+              .stream().map(ProgramAdditionalOrderableDto::getAdditionalOrderableId).collect(Collectors.toSet());
+
+      List<FacillityStockCardDateDto> result =
+          facilityNativeRepository.findMalariaFirstStockCardGroupByFacility(malariaAdditionalOrderableIds,
+              viaProgram.get().getId());
+      result.forEach(facilityStockCardDateDto -> facilityStockCardDateDto.setProgramId(malariaProgram.get().getId()));
+      return result;
     }
   }
 }

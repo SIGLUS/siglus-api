@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.dto;
 
+import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
@@ -26,7 +27,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class SiglusReportTypeDto {
+public class SiglusReportTypeDto implements Serializable {
   private UUID id;
   private UUID facilityId;
   private String name;

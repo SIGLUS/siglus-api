@@ -48,13 +48,13 @@ public enum MovementType {
     @Override
     public String getReason(String sourceName, Integer adjustment) {
       return Source.findByName(sourceName).map(Enum::name)
-          .orElseThrow(() -> new NotFoundException("No such source: " + sourceName));
+          .orElseThrow(() -> new NotFoundException(NO_SUCH_SOURCE + sourceName));
     }
 
     @Override
     public UUID getSourceId(UUID programId, String source) {
       return StockCardCreateContextHolder.getContext().findSourceId(programId, source)
-          .orElseThrow(() -> new NotFoundException("No such source: " + source));
+          .orElseThrow(() -> new NotFoundException(NO_SUCH_SOURCE + source));
     }
 
   },
@@ -63,7 +63,7 @@ public enum MovementType {
     @Override
     public String getReason(String destinationName, Integer adjustment) {
       return Destination.findByName(destinationName).map(Enum::name)
-          .orElseThrow(() -> new NotFoundException("No such destination: " + destinationName));
+          .orElseThrow(() -> new NotFoundException(NO_SUCH_DESTINATION + destinationName));
     }
 
     @Override
@@ -93,15 +93,17 @@ public enum MovementType {
     @Override
     public UUID getDestinationId(UUID programId, String destination) {
       return StockCardCreateContextHolder.getContext().findDestinationId(programId, "UNPACK_KIT")
-          .orElseThrow(() -> new NotFoundException("No such destination: " + destination));
+          .orElseThrow(() -> new NotFoundException(NO_SUCH_DESTINATION + destination));
     }
   };
 
+  public static final String NO_SUCH_SOURCE = "No such source: ";
+  public static final String NO_SUCH_DESTINATION = "No such destination: ";
   private static final String INVENTORY_NEGATIVE = "INVENTORY_NEGATIVE";
   private static final String INVENTORY_POSITIVE = "INVENTORY_POSITIVE";
   private static final String INVENTORY = "INVENTORY";
   private static final String NO_SUCH_REASON = "No such reason: ";
-  
+
   @SuppressWarnings("unused")
   public String getReason(String reasonName, Integer adjustment) {
     return null;

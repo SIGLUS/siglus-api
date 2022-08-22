@@ -55,7 +55,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -595,47 +594,6 @@ public class SiglusPhysicalInventoryServiceTest {
 
     // when
     siglusPhysicalInventoryService.getPhysicalInventoryDtosForAllProducts(facilityId, true);
-  }
-
-  @Test
-  @Ignore
-  public void shouldCreateInitialInventoryDraftForAllProductsWhenInitialInventory() {
-    // given
-    when(supportedProgramsHelper.findHomeFacilitySupportedProgramIds())
-        .thenReturn(Sets.newHashSet(programIdOne));
-    Map<String, String> extraData = newHashMap();
-    extraData.put(IS_BASIC, "true");
-    OrderableDto orderableDto = new OrderableDto();
-    orderableDto.setId(orderableId);
-    orderableDto.setExtraData(extraData);
-    ApprovedProductDto approvedProductDto = new ApprovedProductDto();
-    approvedProductDto.setOrderable(orderableDto);
-    FacilityDto facilityDto = new FacilityDto();
-    FacilityTypeDto typeDto = new FacilityTypeDto();
-    typeDto.setCode("DDM");
-    facilityDto.setType(typeDto);
-    when(facilityReferenceDataService.findOne(facilityId))
-        .thenReturn(facilityDto);
-    when(approvedProductReferenceDataService
-        .getApprovedProducts(facilityId, programIdOne, emptyList()))
-        .thenReturn(Collections.singletonList(approvedProductDto));
-    when(inventoryController.createEmptyPhysicalInventory(any()))
-        .thenReturn(PhysicalInventoryDto.builder().build());
-    UserDto userDto = new UserDto();
-    userDto.setHomeFacilityId(facilityId);
-    when(authenticationHelper.getCurrentUser()).thenReturn(userDto);
-    when(physicalInventoriesRepository.findByProgramIdAndFacilityIdAndIsDraft(any(), eq(facilityId), eq(true)))
-        .thenReturn(Collections.emptyList());
-
-    // when
-    siglusPhysicalInventoryService.getPhysicalInventoryDtosForAllProducts(facilityId, true);
-
-    // then
-    verify(inventoryController).createEmptyPhysicalInventory(
-        physicalInventoryDtoArgumentCaptor.capture());
-    PhysicalInventoryDto physicalInventoryDto = physicalInventoryDtoArgumentCaptor.getValue();
-    assertEquals(1, physicalInventoryDto.getLineItems().size());
-    assertEquals(orderableId, physicalInventoryDto.getLineItems().get(0).getOrderableId());
   }
 
   @Test
