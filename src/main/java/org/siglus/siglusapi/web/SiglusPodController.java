@@ -17,28 +17,25 @@ package org.siglus.siglusapi.web;
 
 import static org.springframework.http.HttpStatus.NO_CONTENT;
 
-import java.io.IOException;
 import java.util.Set;
 import java.util.UUID;
-import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
-import org.openlmis.fulfillment.domain.ProofOfDeliveryStatus;
+import lombok.AllArgsConstructor;
 import org.openlmis.fulfillment.web.ProofOfDeliveryController;
 import org.openlmis.fulfillment.web.util.ProofOfDeliveryDto;
 import org.siglus.siglusapi.service.SiglusNotificationService;
 import org.siglus.siglusapi.service.SiglusPodService;
+import org.siglus.siglusapi.util.MovementDateValidator;
 import org.siglus.siglusapi.web.request.CreatePodSubDraftRequest;
 import org.siglus.siglusapi.web.request.PodExtensionRequest;
 import org.siglus.siglusapi.web.request.UpdatePodSubDraftRequest;
 import org.siglus.siglusapi.web.response.PodExtensionResponse;
 import org.siglus.siglusapi.web.response.PodPrintInfoResponse;
 import org.siglus.siglusapi.web.response.PodSubDraftsSummaryResponse;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -50,45 +47,16 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.servlet.ModelAndView;
 
 @RestController
 @RequestMapping("/api/siglusapi/proofsOfDelivery")
+@AllArgsConstructor
 public class SiglusPodController {
 
-  @Autowired
-  private ProofOfDeliveryController podController;
-
-  @Autowired
-  private SiglusNotificationService notificationService;
-
-  @Autowired
-  private SiglusPodService siglusPodService;
-
-  /**
-   * why we redo this api? to support #330?<br> update status of notification of pod after confirm pod
-   */
-  @Deprecated
-  @ResponseStatus(HttpStatus.CREATED)
-  @ResponseBody
-  @PutMapping("/{id}")
-  @Transactional
-  public ProofOfDeliveryDto updatePod(@PathVariable("id") UUID podId,
-      @RequestBody ProofOfDeliveryDto dto,
-      OAuth2Authentication authentication) {
-    ProofOfDeliveryDto podDto = podController.updateProofOfDelivery(podId, dto, authentication);
-    if (podDto.getStatus() == ProofOfDeliveryStatus.CONFIRMED) {
-      notificationService.postConfirmPod(dto);
-    }
-    return podDto;
-  }
-
-  @Deprecated
-  @GetMapping("/{id}/print")
-  public ModelAndView printPod(HttpServletRequest request,
-      @PathVariable("id") UUID podId, OAuth2Authentication authentication) throws IOException {
-    return podController.printProofOfDelivery(request, podId, authentication);
-  }
+  private final ProofOfDeliveryController podController;
+  private final SiglusNotificationService notificationService;
+  private final SiglusPodService siglusPodService;
+  private final MovementDateValidator movementDateValidator;
 
   @GetMapping("/{id}/printInfo")
   public PodPrintInfoResponse getPrintInfo(String orderId, @PathVariable("id") UUID podId) {
@@ -134,6 +102,8 @@ public class SiglusPodController {
   public ProofOfDeliveryDto submitSubDrafts(@PathVariable("id") UUID podId,
       @RequestBody PodExtensionRequest request,
       OAuth2Authentication authentication) {
+    movementDateValidator.validateMovementDate(request.getPodDto().getReceivedDate(),
+        request.getPodDto().getShipment().getOrder().getReceivingFacility().getId());
     return siglusPodService.submitSubDrafts(podId, request, authentication);
   }
 
