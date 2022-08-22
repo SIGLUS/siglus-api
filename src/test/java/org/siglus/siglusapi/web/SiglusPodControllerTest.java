@@ -15,21 +15,15 @@
 
 package org.siglus.siglusapi.web;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
-import java.io.IOException;
 import java.util.UUID;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.openlmis.fulfillment.domain.ProofOfDeliveryStatus;
 import org.openlmis.fulfillment.web.ProofOfDeliveryController;
-import org.openlmis.fulfillment.web.util.ProofOfDeliveryDto;
 import org.siglus.siglusapi.service.SiglusNotificationService;
 import org.siglus.siglusapi.service.SiglusPodService;
 import org.springframework.data.domain.PageRequest;
@@ -55,33 +49,6 @@ public class SiglusPodControllerTest {
   private SiglusPodService proofOfDeliveryService;
 
   @Test
-  public void shouldCallOpenlmisControllerWhenUpdateProofOfDelivery() {
-    UUID id = UUID.randomUUID();
-    ProofOfDeliveryDto dto = new ProofOfDeliveryDto();
-    when(podController.updateProofOfDelivery(any(), any(), any()))
-        .thenReturn(dto);
-    controller.updatePod(id, dto, auth2Authentication);
-
-    verify(podController).updateProofOfDelivery(id, dto, auth2Authentication);
-
-    verify(notificationService, never()).postConfirmPod(dto);
-  }
-
-  @Test
-  public void shouldCallOpenlmisControllerAndNotificationServiceWhenConfirmProofOfDelivery() {
-    UUID id = UUID.randomUUID();
-    ProofOfDeliveryDto dto = new ProofOfDeliveryDto();
-    dto.setStatus(ProofOfDeliveryStatus.CONFIRMED);
-    when(podController.updateProofOfDelivery(any(), any(), any()))
-        .thenReturn(dto);
-    controller.updatePod(id, dto, auth2Authentication);
-
-    verify(podController).updateProofOfDelivery(id, dto, auth2Authentication);
-
-    verify(notificationService).postConfirmPod(dto);
-  }
-
-  @Test
   public void shouldCallSiglusServiceWhenGetProofOfDelivery() {
     // given
     UUID podId = UUID.randomUUID();
@@ -91,18 +58,6 @@ public class SiglusPodControllerTest {
 
     // then
     verify(proofOfDeliveryService).getPodExtensionResponse(podId, null);
-  }
-
-  @Test
-  public void shouldCallActualControllerWhenPrintProofOfDelivery() throws IOException {
-    // given
-    UUID podId = UUID.randomUUID();
-
-    // when
-    controller.printPod(null, podId, null);
-
-    // then
-    verify(podController).printProofOfDelivery(null, podId, null);
   }
 
   @Test
