@@ -39,9 +39,9 @@ public class SiglusLotLocationControllerTest extends TestCase {
   private final UUID orderableId = UUID.randomUUID();
 
   @Test
-  public void shouldCallSearchLotLocaionDto() {
-    controller.searchLotLocaionDto(newArrayList(orderableId), true);
-    verify(service).searchLotLocationDtos(newArrayList(orderableId), true);
+  public void shouldCallSearchLotLocationDto() {
+    controller.searchLotLocationDto(newArrayList(orderableId), true, false);
+    verify(service).searchLotLocationDtos(newArrayList(orderableId), true, false);
   }
 
   @Test
