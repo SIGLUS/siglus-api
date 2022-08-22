@@ -67,13 +67,13 @@ public class EventReplayer {
     if (isEmpty(events)) {
       return;
     }
-    events = sortEvents(events);
+    events = sortEventsByLocalSequence(events);
     events.forEach(eventPublisher::publishEvent);
   }
 
-  private List<Event> sortEvents(List<Event> events) {
+  private List<Event> sortEventsByLocalSequence(List<Event> events) {
     return events.stream()
-        .sorted(Comparator.comparingLong(Event::getGroupSequenceNumber))
+        .sorted(Comparator.comparingLong(Event::getLocalSequenceNumber))
         .collect(toList());
   }
 }
