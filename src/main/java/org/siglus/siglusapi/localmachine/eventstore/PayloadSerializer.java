@@ -15,7 +15,10 @@
 
 package org.siglus.siglusapi.localmachine.eventstore;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.util.HashMap;
 import java.util.Map;
 import lombok.AllArgsConstructor;
@@ -29,7 +32,14 @@ public class PayloadSerializer {
   // TODO: 2022/8/17 scan siglus package to build the class name mapping below
   private static Map<String, Class<?>> payloadNameToClass = new HashMap<>();
   private static Map<Class<?>, String> payloadClassToName = new HashMap<>();
-  private final ObjectMapper objectMapper = new ObjectMapper();
+  private final ObjectMapper objectMapper;
+
+  public PayloadSerializer() {
+    objectMapper = new ObjectMapper();
+    objectMapper.registerModule(new JavaTimeModule());
+    objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+    objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+  }
 
   @SneakyThrows
   public byte[] dump(Object payload) {
