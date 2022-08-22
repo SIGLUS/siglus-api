@@ -649,6 +649,8 @@ public class SiglusPhysicalInventoryService {
 
   public PhysicalInventoryDto saveDraftForProductsForOneProgram(PhysicalInventoryDto dto) {
     saveDraft(dto, dto.getId());
+    // get dto that lineitem has id
+    dto = this.getPhysicalInventory(dto.getId());
     List<PhysicalInventoryDto> physicalInventoryDtos = Collections.singletonList(dto);
     if (CollectionUtils.isNotEmpty(physicalInventoryDtos)) {
       return getResultInventory(physicalInventoryDtos, updateExtension(dto, physicalInventoryDtos));
