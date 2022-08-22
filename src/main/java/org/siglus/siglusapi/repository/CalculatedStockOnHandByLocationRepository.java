@@ -43,7 +43,7 @@ public interface CalculatedStockOnHandByLocationRepository extends JpaRepository
 
   @Query(value = " select DISTINCT ON (stockcardid,locationcode) first_value(stockonhand)\n"
       + "                                              OVER (PARTITION BY stockcardid ORDER BY occurreddate DESC )\n"
-      + "from siglusintegration.calculated_stocks_on_hand_locations\n"
+      + "from siglusintegration.calculated_stocks_on_hand_by_location\n"
       + "where stockcardid = ?1 \n"
       + "and locationcode = ?2 ", nativeQuery = true)
   Optional<Integer> findRecentlySohByStockCardIdAndLocationCode(UUID stockCardId, String locationCode);
@@ -56,7 +56,7 @@ public interface CalculatedStockOnHandByLocationRepository extends JpaRepository
       + "                                               area,\n"
       + "                                               first_value(stockonhand)\n"
       + "                 over (partition by (stockcardid, locationcode) order by occurreddate DESC ) as stockonhand\n"
-      + "from siglusintegration.calculated_stocks_on_hand_locations\n"
+      + "from siglusintegration.calculated_stocks_on_hand_by_location\n"
       + "where stockcardid = ?1 ", nativeQuery = true)
   List<CalculatedStockOnHandByLocation> findRecentlyLocationSohByStockCardId(UUID stockCardId);
 
