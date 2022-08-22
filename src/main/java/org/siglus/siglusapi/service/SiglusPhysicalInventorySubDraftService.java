@@ -267,6 +267,7 @@ public class SiglusPhysicalInventorySubDraftService {
         .locationCode(item.getLocationCode())
         .area(item.getArea())
         .physicalInventoryId(physicalInventoryId)
+        .physicalInventoryLineItemId(item.getId())
         .build()));
     return result;
   }

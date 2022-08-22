@@ -34,4 +34,6 @@ public class PhysicalInventorySubDraftLineItemsExtensionDto {
   private UUID physicalInventoryId;
 
   private UUID subDraftId;
+
+  private UUID physicalInventoryLineItemId;
 }

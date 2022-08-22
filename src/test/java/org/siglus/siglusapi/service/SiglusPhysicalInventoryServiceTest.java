@@ -285,12 +285,16 @@ public class SiglusPhysicalInventoryServiceTest {
 
   @Test
   public void shouldSplicingDataWhenSaveDraftForProductsInOneProgram() {
+    UUID lineItemId1 = UUID.randomUUID();
+    UUID lineItemId2 = UUID.randomUUID();
     PhysicalInventoryLineItemDto lineItemDtoOne = PhysicalInventoryLineItemDto.builder()
+        .id(lineItemId1)
         .orderableId(orderableId)
         .programId(programIdOne)
         .build();
     UUID orderableIdTwo = UUID.randomUUID();
     PhysicalInventoryLineItemDto lineItemDtoTwo = PhysicalInventoryLineItemDto.builder()
+        .id(lineItemId2)
         .orderableId(orderableIdTwo)
         .programId(programIdOne)
         .reasonFreeText("freeText")
@@ -327,21 +331,27 @@ public class SiglusPhysicalInventoryServiceTest {
 
   @Test
   public void shouldSplicingDataWithExtensionWhenSaveDraftForProductsInOneProgram() {
+    UUID lineItemId1 = UUID.randomUUID();
+    UUID lineItemId2 = UUID.randomUUID();
     PhysicalInventoryLineItemDto lineItemDtoOne = PhysicalInventoryLineItemDto.builder()
+        .id(lineItemId1)
         .orderableId(orderableId)
         .programId(programIdOne)
         .build();
     UUID orderableIdTwo = UUID.randomUUID();
     PhysicalInventoryLineItemDto lineItemDtoTwo = PhysicalInventoryLineItemDto.builder()
+        .id(lineItemId2)
         .orderableId(orderableIdTwo)
         .programId(programIdOne)
         .reasonFreeText("freeText")
         .build();
     PhysicalInventoryDto physicalInventoryDto = PhysicalInventoryDto.builder()
+        .id(physicalInventoryId)
         .programId(programIdOne)
         .facilityId(facilityId)
         .lineItems(newArrayList(lineItemDtoOne, lineItemDtoTwo))
         .build();
+    when(inventoryController.getPhysicalInventory(physicalInventoryId)).thenReturn(physicalInventoryDto);
     when(inventoryController.searchPhysicalInventory(programIdOne, facilityId,
         true))
         .thenReturn(makeResponseEntity(newArrayList(PhysicalInventoryDto.builder()
@@ -837,7 +847,7 @@ public class SiglusPhysicalInventoryServiceTest {
 
     doNothing().when(physicalInventoryService).checkPermission(programId, facilityId);
     when(inventoryController
-        .searchPhysicalInventory(programId, facilityId, true)).thenReturn(makeResponseEntity(Collections.emptyList()));
+        .searchPhysicalInventory(programId, facilityId, true)).thenReturn(makeResponseEntity(emptyList()));
 
     ObjectReferenceDto orderableReferenceDto = new ObjectReferenceDto();
     orderableReferenceDto.setId(orderableId);
@@ -861,7 +871,7 @@ public class SiglusPhysicalInventoryServiceTest {
     parameters.set(EXCLUDE_ARCHIVED, Boolean.TRUE.toString());
     Pageable pageable = new PageRequest(0, Integer.MAX_VALUE);
     when(siglusStockCardSummariesService.findSiglusStockCard(
-        parameters, Collections.emptyList(), pageable)).thenReturn(
+        parameters, emptyList(), pageable)).thenReturn(
         (new PageImpl<>(Collections.singletonList(stockCardSummaryV2Dto), new PageRequest(0, Integer.MAX_VALUE), 0)));
 
     PhysicalInventoryDto createdPhysicalInventoryDto = PhysicalInventoryDto.builder().id(physicalInventoryId)
@@ -869,7 +879,7 @@ public class SiglusPhysicalInventoryServiceTest {
     when(inventoryController.createEmptyPhysicalInventory(physicalInventoryDto))
         .thenReturn(createdPhysicalInventoryDto);
     when(physicalInventorySubDraftRepository.findByPhysicalInventoryId(physicalInventoryId)).thenReturn(
-        Collections.emptyList());
+        emptyList());
 
     PhysicalInventorySubDraft physicalInventorySubDraft = PhysicalInventorySubDraft
         .builder().physicalInventoryId(physicalInventoryId).build();
@@ -894,14 +904,16 @@ public class SiglusPhysicalInventoryServiceTest {
     Map<String, String> expectedExtraData = newHashMap();
     expectedExtraData.put(VM_STATUS, null);
     expectedExtraData.put(STOCK_CARD_ID, String.valueOf(stockCardId));
+    UUID lineItemId = UUID.randomUUID();
     PhysicalInventoryLineItemDto expectedPhysicalInventoryLineItem = PhysicalInventoryLineItemDto
         .builder()
         .programId(programId)
         .orderableId(orderableId)
         .lotId(lotId)
         .extraData(expectedExtraData)
-        .stockAdjustments(Collections.emptyList())
+        .stockAdjustments(emptyList())
         .build();
+    expectedPhysicalInventoryLineItem.setId(lineItemId);
     PhysicalInventoryDto expectedPhysicalInventoryDto = PhysicalInventoryDto.builder()
         .programId(programId)
         .id(physicalInventoryId)
