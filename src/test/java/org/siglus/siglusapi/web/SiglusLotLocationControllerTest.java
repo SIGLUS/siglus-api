@@ -45,12 +45,6 @@ public class SiglusLotLocationControllerTest extends TestCase {
   }
 
   @Test
-  public void shouldCallSearchDisplayedLotsDtoByOrderableId() {
-    controller.searchDisplayedLotsDtoByOrderableId(newArrayList(orderableId));
-    verify(service).searchDisplayedLots(newArrayList(orderableId));
-  }
-
-  @Test
   public void shouldCallSearchLocationsByFacility() {
     controller.searchLocationsByFacility();
     verify(service).searchLocationsByFacility();

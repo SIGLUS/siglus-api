@@ -410,18 +410,6 @@ traits:
             200:
               description: GET success
 
-    /locations/displayedLots:
-      displayName: get displayed lot
-      get:
-        is: [ secured ]
-        body:
-          application/json:
-            schema: arrayOfStrings
-        responses:
-          200:
-            description: GET success
-
-
     /draftsWithLocation:
       displayName: stock management draft with location
       get:
@@ -601,6 +589,16 @@ traits:
               application/json:
                 schema: localizedErrorResponse
 
+    /orderables/adjustmentDisplayedLots:
+      displayName: get adjustment displayed lot which limited by stock on hand
+      get:
+        is: [ secured ]
+        body:
+          application/json:
+            schema: arrayOfStrings
+        responses:
+          200:
+            description: GET success
     /orderables/additionaltoadd:
       displayName: Additional Orderable Product To Add
       get:

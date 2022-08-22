@@ -321,7 +321,9 @@ public class SiglusStockEventsService {
   }
 
   private void validateNegativeAdjustmentQuantity(StockEventDto eventDto, List<StockEventLineItemDto> lineItems) {
-    Map<String, List<StockEventLineItemDto>> lotLocationToStockEventLineItemDtoList = lineItems.stream()
+    Map<String, List<StockEventLineItemDto>> lotLocationToStockEventLineItemDtoList = lineItems
+        .stream()
+        .filter(lineItem -> !isPositiveAdjustment(lineItem.getReasonId()))
         .collect(Collectors.groupingBy(e -> getUniqueKey(e.getLotId(), e.getLocationCode())));
 
     lotLocationToStockEventLineItemDtoList.forEach((lotLocation, stockEventLineItemDtoList) -> {

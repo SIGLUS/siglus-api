@@ -16,16 +16,18 @@
 package org.siglus.siglusapi.web;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
 import org.openlmis.referencedata.dto.OrderableDto;
+import org.siglus.siglusapi.dto.DisplayedLotDto;
 import org.siglus.siglusapi.dto.QueryOrderableSearchParams;
 import org.siglus.siglusapi.repository.dto.ProgramOrderableDto;
 import org.siglus.siglusapi.service.SiglusOrderableService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.util.MultiValueMap;
@@ -36,13 +38,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/siglusapi/orderables")
+@RequiredArgsConstructor
 public class SiglusOrderableController {
 
-  @Autowired
-  private SiglusOrderableService orderableService;
-
-  @Autowired
-  private SiglusAuthenticationHelper authenticationHelper;
+  private final SiglusOrderableService orderableService;
+  private final SiglusAuthenticationHelper authenticationHelper;
 
   @GetMapping
   public Page<OrderableDto> searchOrderables(
@@ -70,4 +70,10 @@ public class SiglusOrderableController {
         .filter(e -> Objects.nonNull(e.getPrice()))
         .collect(Collectors.toMap(ProgramOrderableDto::getOrderableId, ProgramOrderableDto::getPrice));
   }
+
+  @GetMapping("/adjustmentDisplayedLots")
+  public List<DisplayedLotDto> searchDisplayedLotsDtoByOrderableIds(@RequestParam List<UUID> orderableIds) {
+    return orderableService.searchDisplayedLots(orderableIds);
+  }
+
 }

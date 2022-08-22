@@ -17,33 +17,26 @@ package org.siglus.siglusapi.web;
 
 import java.util.List;
 import java.util.UUID;
-import org.siglus.siglusapi.dto.DisplayedLotDto;
+import lombok.RequiredArgsConstructor;
 import org.siglus.siglusapi.dto.FacilityLocationsDto;
 import org.siglus.siglusapi.dto.LotLocationDto;
 import org.siglus.siglusapi.service.SiglusLotLocationService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+@RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/siglusapi/locations")
 public class SiglusLotLocationController {
 
-  @Autowired
-  private SiglusLotLocationService lotLocationService;
+  private final SiglusLotLocationService lotLocationService;
 
   @GetMapping
   public List<LotLocationDto> searchLotLocaionDto(
-      @RequestParam(required = false) List<UUID> orderablesId, @RequestParam(required = false) boolean extraData) {
-    return lotLocationService.searchLotLocationDtos(orderablesId, extraData);
-
-  }
-
-  @GetMapping("/displayedLots")
-  public List<DisplayedLotDto> searchDisplayedLotsDtoByOrderableId(@RequestParam List<UUID> orderableIds) {
-    return lotLocationService.searchDisplayedLots(orderableIds);
+      @RequestParam(required = false) List<UUID> orderableIds, @RequestParam(required = false) boolean extraData) {
+    return lotLocationService.searchLotLocationDtos(orderableIds, extraData);
   }
 
   @GetMapping("/facility")
