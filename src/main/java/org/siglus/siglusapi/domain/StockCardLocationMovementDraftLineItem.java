@@ -52,7 +52,7 @@ public class StockCardLocationMovementDraftLineItem extends BaseEntity {
   private UUID lotId;
   private String lotCode;
 
-  private boolean isKit;
+  private Boolean isKit;
 
   private String srcArea;
   private String srcLocationCode;
