@@ -49,4 +49,6 @@ public class PhysicalInventoryLineItemsExtension extends BaseEntity {
   private String area;
 
   private String locationCode;
+
+  private UUID physicalInventoryLineItemId;
 }

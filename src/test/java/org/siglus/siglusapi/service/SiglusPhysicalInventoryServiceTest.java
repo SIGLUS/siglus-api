@@ -527,13 +527,17 @@ public class SiglusPhysicalInventoryServiceTest {
     // given
     when(supportedProgramsHelper.findHomeFacilitySupportedProgramIds())
         .thenReturn(Sets.newHashSet(programIdOne));
+    UUID lineItemId1 = UUID.randomUUID();
     PhysicalInventoryLineItemDto lineItemDtoOne = PhysicalInventoryLineItemDto.builder()
+        .id(lineItemId1)
         .lotId(null)
         .orderableId(orderableId)
         .programId(programIdOne)
         .build();
+    UUID lineItemId2 = UUID.randomUUID();
     UUID orderableIdTwo = UUID.randomUUID();
     PhysicalInventoryLineItemDto lineItemDtoTwo = PhysicalInventoryLineItemDto.builder()
+        .id(lineItemId2)
         .lotId(null)
         .orderableId(orderableIdTwo)
         .programId(programIdOne)
@@ -548,6 +552,7 @@ public class SiglusPhysicalInventoryServiceTest {
             .build()
         )));
     PhysicalInventoryLineItemsExtension extensionOne = PhysicalInventoryLineItemsExtension.builder()
+        .physicalInventoryLineItemId(lineItemId1)
         .lotId(null)
         .orderableId(orderableId)
         .reasonFreeText("extension")

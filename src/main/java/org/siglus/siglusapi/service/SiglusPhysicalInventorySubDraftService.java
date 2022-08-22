@@ -157,14 +157,14 @@ public class SiglusPhysicalInventorySubDraftService {
       List<PhysicalInventoryLineItemsExtension> oldLineItemsExtension
           = lineItemsExtensionRepository.findByPhysicalInventoryId(physicalInventoryId);
       // TODO orderable is not enough for delete or reset, use unique key instead
-      Set<String> needResetUniqueKeys = new HashSet<>();
-      Set<String> needDeleteUniqueKeys = new HashSet<>();
+      Set<UUID> needResetLineItemIds = new HashSet<>();
+      Set<UUID> needDeleteLineItemIds = new HashSet<>();
       for (PhysicalInventoryLineItemsExtension item : oldLineItemsExtension) {
         if (subDraftIds.contains(item.getSubDraftId())) {
           if (Boolean.TRUE.equals(item.getInitial())) {
-            needResetUniqueKeys.add(getUniqueKey(item));
+            needResetLineItemIds.add(item.getPhysicalInventoryLineItemId());
           } else {
-            needDeleteUniqueKeys.add(getUniqueKey(item));
+            needDeleteLineItemIds.add(item.getPhysicalInventoryLineItemId());
           }
         }
       }
@@ -182,14 +182,14 @@ public class SiglusPhysicalInventorySubDraftService {
       Iterator<PhysicalInventoryLineItemDto> iterator = lineItems.iterator();
       while (iterator.hasNext()) {
         PhysicalInventoryLineItemDto physicalInventoryLineItemDto = iterator.next();
-        if (needResetUniqueKeys.contains(getUniqueKey(physicalInventoryLineItemDto))) {
+        if (needResetLineItemIds.contains(physicalInventoryLineItemDto.getId())) {
           //          CanFulfillForMeEntryDto canFulfillForMeEntryDto = canFulfillForMeEntryDtoMap.get(
           //              getUniqueKey(physicalInventoryLineItemDto));
           //          if (canFulfillForMeEntryDto != null) {
           physicalInventoryLineItemDto.setQuantity(null);
           physicalInventoryLineItemDto.setReasonFreeText(null);
         //          }
-        } else if (needDeleteUniqueKeys.contains(getUniqueKey(physicalInventoryLineItemDto))) {
+        } else if (needDeleteLineItemIds.contains(physicalInventoryLineItemDto.getId())) {
           iterator.remove();
         }
       }
@@ -230,8 +230,10 @@ public class SiglusPhysicalInventorySubDraftService {
       List<PhysicalInventoryLineItemsExtension> subDraftLineItemsExtensions
           = lineItemsExtensionRepository.findBySubDraftIdIn(Lists.newArrayList(subDraftId));
 
-      List<String> oldUniqueKeyList = subDraftLineItemsExtensions
-          .stream().map(this::getUniqueKey).collect(Collectors.toList());
+      List<UUID> oldLineItemIds = subDraftLineItemsExtensions
+          .stream()
+          .map(PhysicalInventoryLineItemsExtension::getPhysicalInventoryLineItemId)
+          .collect(Collectors.toList());
 
       UUID programId = physicalInventoryDto.getProgramId();
 
@@ -240,7 +242,7 @@ public class SiglusPhysicalInventorySubDraftService {
       List<PhysicalInventoryLineItemDto> oldLineItems = physicalInventoryDto.getLineItems();
 
       List<PhysicalInventoryLineItemDto> notChangedLineItems = oldLineItems.stream()
-          .filter(item -> !oldUniqueKeyList.contains(getUniqueKey(item)))
+          .filter(item -> !oldLineItemIds.contains(item.getId()))
           .collect(Collectors.toList());
 
       List<PhysicalInventoryLineItemDto> newLineItems = Lists.newArrayList(notChangedLineItems);

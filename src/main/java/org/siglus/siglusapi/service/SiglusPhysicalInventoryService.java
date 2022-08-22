@@ -457,6 +457,7 @@ public class SiglusPhysicalInventoryService {
         if (extension == null) {
           extension = PhysicalInventoryLineItemsExtension
               .builder()
+              .physicalInventoryLineItemId(lineItem.getId())
               .orderableId(lineItem.getOrderableId())
               .lotId(lineItem.getLotId())
               .physicalInventoryId(UUID.fromString(
@@ -883,6 +884,7 @@ public class SiglusPhysicalInventoryService {
         PhysicalInventoryLineItemsExtension extension = getExtension(extensions, lineItem);
         if (extension == null) {
           extension = PhysicalInventoryLineItemsExtension.builder()
+              .physicalInventoryLineItemId(lineItem.getId())
               .orderableId(lineItem.getOrderableId())
               .lotId(lineItem.getLotId())
               .physicalInventoryId(dto.getId())
@@ -917,7 +919,6 @@ public class SiglusPhysicalInventoryService {
         .findByPhysicalInventoryIdIn(updatePhysicalInventoryIds);
     List<PhysicalInventoryLineItemsExtension> updateExtensions = new ArrayList<>();
 
-    Set<UUID> usedExtensionIds = new HashSet<>();
     Set<String> uniqueKeys = new HashSet<>();
     updatedDto.forEach(dto -> {
       if (dto.getLineItems() == null || dto.getLineItems().isEmpty()) {
@@ -925,19 +926,18 @@ public class SiglusPhysicalInventoryService {
       }
       dto.getLineItems().forEach(lineItem -> {
         uniqueKeys.add(getUniqueKey(lineItem.getOrderableId(), lineItem.getLotId(), lineItem.getLocationCode()));
-        PhysicalInventoryLineItemsExtension extension = getUnusedExtension(extensions, lineItem, usedExtensionIds);
+        PhysicalInventoryLineItemsExtension extension = getExtension(extensions, lineItem);
         if (extension == null) {
           UUID subDraftId = lineItemsExtensionMap.get(getUniqueKey(lineItem.getOrderableId(),
                           lineItem.getLotId(), lineItem.getLocationCode()));
           extension = PhysicalInventoryLineItemsExtension.builder()
+              .physicalInventoryLineItemId(lineItem.getId())
               .orderableId(lineItem.getOrderableId())
               .lotId(lineItem.getLotId())
               .physicalInventoryId(dto.getId())
               .initial(false)
               .subDraftId(subDraftId)
               .build();
-        } else {
-          usedExtensionIds.add(extension.getId());
         }
         PhysicalInventoryLineItemDto matched = getMatchedLineItem(inventoryDto, lineItem);
         if (matched != null) {
@@ -968,38 +968,10 @@ public class SiglusPhysicalInventoryService {
     return getString(orderableId) + SEPARATOR + getString(lotId) + SEPARATOR + getString(locationCode);
   }
 
-  // TODO lineItem form PhysicalInventoryDto, locationCode is always null, then match multiple extensions
-  // Then how to identify which quantity match which one???
-  private PhysicalInventoryLineItemsExtension getUnusedExtensionIgnoreLocationCode(
-          List<PhysicalInventoryLineItemsExtension> extensions,
-          PhysicalInventoryLineItemDto lineItem,
-          Set<UUID> usedIds) {
-    return extensions.stream()
-            .filter(extension -> Objects.equals(extension.getOrderableId(), lineItem.getOrderableId())
-                    && Objects.equals(extension.getLotId(), lineItem.getLotId()))
-            .filter(extension -> !usedIds.contains(extension.getId()))
-            .findFirst()
-            .orElse(null);
-  }
-
-  private PhysicalInventoryLineItemsExtension getUnusedExtension(
-          List<PhysicalInventoryLineItemsExtension> extensions,
-          PhysicalInventoryLineItemDto lineItem,
-          Set<UUID> usedIds) {
-    return extensions.stream()
-            .filter(extension -> Objects.equals(extension.getOrderableId(), lineItem.getOrderableId())
-                    && Objects.equals(extension.getLotId(), lineItem.getLotId())
-                    && Objects.equals(extension.getLocationCode(), lineItem.getLocationCode()))
-            .filter(extension -> !usedIds.contains(extension.getId()))
-            .findFirst()
-            .orElse(null);
-  }
-
   private PhysicalInventoryLineItemsExtension getExtension(
       List<PhysicalInventoryLineItemsExtension> extensions, PhysicalInventoryLineItemDto lineItem) {
     return extensions.stream()
-        .filter(extension -> Objects.equals(extension.getOrderableId(), lineItem.getOrderableId())
-                                && Objects.equals(extension.getLotId(), lineItem.getLotId()))
+        .filter(extension -> Objects.equals(extension.getPhysicalInventoryLineItemId(), lineItem.getId()))
         .findFirst()
         .orElse(null);
   }
@@ -1011,9 +983,7 @@ public class SiglusPhysicalInventoryService {
   private PhysicalInventoryLineItemDto getMatchedLineItem(PhysicalInventoryDto inventoryDto,
                                                           PhysicalInventoryLineItemDto lineItem) {
     return inventoryDto.getLineItems().stream()
-            .filter(itemDto -> Objects.equals(itemDto.getLotId(), lineItem.getLotId())
-                    && Objects.equals(itemDto.getOrderableId(), lineItem.getOrderableId())
-                    && Objects.equals(itemDto.getLocationCode(), lineItem.getLocationCode()))
+            .filter(itemDto -> Objects.equals(itemDto.getId(), lineItem.getId()))
             .findFirst()
             .orElse(null);
   }
@@ -1062,8 +1032,6 @@ public class SiglusPhysicalInventoryService {
 
   private List<PhysicalInventoryLineItemDto> getLineItems(List<PhysicalInventoryDto> inventories,
                                                           List<PhysicalInventoryLineItemsExtension> extensions) {
-    // avoid one extension match on multiple lines, no locationCode in inventories.lineItem
-    Set<UUID> usedExtensionIds = new HashSet<>();
     return inventories.stream()
             .map(inventory -> {
               Optional<List<PhysicalInventoryLineItemDto>> optionalList = Optional
@@ -1072,13 +1040,12 @@ public class SiglusPhysicalInventoryService {
                     .ifPresent(physicalInventoryLineItemDtos -> physicalInventoryLineItemDtos.forEach(
                         physicalInventoryLineItemDto -> {
                           physicalInventoryLineItemDto.setProgramId(inventory.getProgramId());
-                          PhysicalInventoryLineItemsExtension extension = getUnusedExtensionIgnoreLocationCode(
-                                  extensions, physicalInventoryLineItemDto, usedExtensionIds);
+                          PhysicalInventoryLineItemsExtension extension = getExtension(
+                                  extensions, physicalInventoryLineItemDto);
                           if (extension != null) {
                             physicalInventoryLineItemDto.setReasonFreeText(extension.getReasonFreeText());
                             physicalInventoryLineItemDto.setArea(extension.getArea());
                             physicalInventoryLineItemDto.setLocationCode(extension.getLocationCode());
-                            usedExtensionIds.add(extension.getId());
                           }
                         }));
               return optionalList.orElse(new ArrayList<>());
