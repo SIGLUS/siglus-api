@@ -24,11 +24,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.fulfillment.web.ProofOfDeliveryController;
-import org.siglus.siglusapi.service.SiglusNotificationService;
 import org.siglus.siglusapi.service.SiglusPodService;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.oauth2.provider.OAuth2Authentication;
 
 @RunWith(MockitoJUnitRunner.class)
 public class SiglusPodControllerTest {
@@ -38,12 +36,6 @@ public class SiglusPodControllerTest {
 
   @Mock
   private ProofOfDeliveryController podController;
-
-  @Mock
-  private SiglusNotificationService notificationService;
-
-  @Mock
-  private OAuth2Authentication auth2Authentication;
 
   @Mock
   private SiglusPodService proofOfDeliveryService;
