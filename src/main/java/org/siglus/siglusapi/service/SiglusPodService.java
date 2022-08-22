@@ -69,7 +69,7 @@ import org.siglus.siglusapi.repository.PodLineItemsExtensionRepository;
 import org.siglus.siglusapi.repository.PodLineItemsRepository;
 import org.siglus.siglusapi.repository.PodSubDraftRepository;
 import org.siglus.siglusapi.repository.ProofsOfDeliveryExtensionRepository;
-import org.siglus.siglusapi.repository.RequisitionsRepository;
+import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.repository.dto.OrderDto;
 import org.siglus.siglusapi.repository.dto.PodLineItemDto;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
@@ -133,7 +133,7 @@ public class SiglusPodService {
   private OrdersRepository ordersRepository;
 
   @Autowired
-  private RequisitionsRepository requisitionsRepository;
+  private SiglusRequisitionRepository siglusRequisitionRepository;
 
   @Autowired
   private SiglusFacilityReferenceDataService siglusFacilityReferenceDataService;
@@ -360,7 +360,7 @@ public class SiglusPodService {
   }
 
   private int getRequisitionCount(OrderDto orderDto, UUID realRequisitionId) {
-    List<String> requisitionIds = requisitionsRepository.findRequisitionIdsByOrderInfo(
+    List<String> requisitionIds = siglusRequisitionRepository.findRequisitionIdsByOrderInfo(
         orderDto.getReceivingFacilityId(),
         orderDto.getProgramId(),
         orderDto.getProcessingPeriodId(), orderDto.getEmergency(), REQUISITION_STATUS_POST_SUBMIT);

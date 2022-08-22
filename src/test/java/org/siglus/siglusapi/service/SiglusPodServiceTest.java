@@ -79,7 +79,7 @@ import org.siglus.siglusapi.repository.PodLineItemsExtensionRepository;
 import org.siglus.siglusapi.repository.PodLineItemsRepository;
 import org.siglus.siglusapi.repository.PodSubDraftRepository;
 import org.siglus.siglusapi.repository.ProofsOfDeliveryExtensionRepository;
-import org.siglus.siglusapi.repository.RequisitionsRepository;
+import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.repository.dto.OrderDto;
 import org.siglus.siglusapi.repository.dto.PodLineItemDto;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
@@ -139,7 +139,7 @@ public class SiglusPodServiceTest {
   private OrdersRepository ordersRepository;
 
   @Mock
-  private RequisitionsRepository requisitionsRepository;
+  private SiglusRequisitionRepository siglusRequisitionRepository;
 
   @Mock
   private SiglusFacilityReferenceDataService siglusFacilityReferenceDataService;
@@ -844,8 +844,8 @@ public class SiglusPodServiceTest {
   }
 
   private void mockForRequisitionCount() {
-    when(requisitionsRepository.findRequisitionIdsByOrderInfo(any(), any(), any(), anyBoolean(), anyList())).thenReturn(
-        buildMockRequisitions());
+    when(siglusRequisitionRepository.findRequisitionIdsByOrderInfo(any(), any(), any(), anyBoolean(), anyList()))
+        .thenReturn(buildMockRequisitions());
     when(requisitionStatusChangeRepository.findByRequisitionIdIn(anyList())).thenReturn(
         buildMockRequisitionSubmittedStatusChanges());
   }
