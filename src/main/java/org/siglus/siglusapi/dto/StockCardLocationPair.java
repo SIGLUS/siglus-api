@@ -26,9 +26,9 @@ import org.siglus.siglusapi.domain.CalculatedStockOnHandByLocation;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class LotLocationPair {
+public class StockCardLocationPair {
 
-  private UUID lotId;
+  private UUID stockCardId;
   private CalculatedStockOnHandByLocation calculatedStockOnHandByLocation;
 
 }

@@ -97,6 +97,10 @@ public class SiglusLotLocationServiceTest extends TestCase {
 
   private final String locationCode2 = "AA25F";
 
+  private final UUID stockCardId1 = UUID.randomUUID();
+
+  private final UUID stockCardId2 = UUID.randomUUID();
+
   private final UUID programId1 = UUID.randomUUID();
 
   private final UUID lotId1 = UUID.randomUUID();
@@ -161,6 +165,7 @@ public class SiglusLotLocationServiceTest extends TestCase {
   public void shouldReturnLotLocationDtosByOrderableIds() {
     // given
     StockCard stockCard = StockCard.builder().lotId(lotId1).build();
+    stockCard.setId(stockCardId1);
     when(stockCardRepository.findByFacilityIdAndOrderableId(facilityId,
         orderableId)).thenReturn(Collections.singletonList(stockCard));
     CalculatedStockOnHandByLocation sohLocation1 = CalculatedStockOnHandByLocation.builder().stockOnHand(100)
@@ -175,10 +180,10 @@ public class SiglusLotLocationServiceTest extends TestCase {
     when(lotRepository.findOne(lotId1)).thenReturn(lot);
 
     LotsDto lot1 = LotsDto.builder().lotCode(lotCode).lotId(lotId1).expirationDate(lot.getExpirationDate())
-        .orderablesId(orderableId)
+        .orderableId(orderableId)
         .stockOnHand(100).build();
     LotsDto lot2 = LotsDto.builder().lotCode(lotCode).lotId(lotId1).expirationDate(lot.getExpirationDate())
-        .orderablesId(orderableId)
+        .orderableId(orderableId)
         .stockOnHand(200).build();
     LotLocationDto lotLocation1 = LotLocationDto.builder().locationCode(locationCode1).area(area1)
         .lots(Collections.singletonList(lot1)).build();
@@ -198,7 +203,9 @@ public class SiglusLotLocationServiceTest extends TestCase {
   public void shouldReturnRestrictedLotLocationDtosByOrderableIds() {
     // given
     StockCard stockCard1 = StockCard.builder().lotId(lotId1).programId(programId1).build();
+    stockCard1.setId(stockCardId1);
     StockCard stockCard2 = StockCard.builder().lotId(lotId2).programId(programId2).build();
+    stockCard2.setId(stockCardId2);
     when(stockCardRepository.findByFacilityIdAndOrderableId(facilityId,
         orderableId)).thenReturn(Arrays.asList(stockCard1, stockCard2));
     CalculatedStockOnHandByLocation sohLocation1 = CalculatedStockOnHandByLocation.builder().stockOnHand(0)
@@ -238,7 +245,7 @@ public class SiglusLotLocationServiceTest extends TestCase {
         .lotCode(lotCode)
         .lotId(lotId2)
         .expirationDate(lot.getExpirationDate())
-        .orderablesId(orderableId)
+        .orderableId(orderableId)
         .stockOnHand(0).build();
     LotLocationDto lotLocation2 = LotLocationDto.builder().locationCode(locationCode1).area(area1)
         .lots(Collections.singletonList(lot2)).build();

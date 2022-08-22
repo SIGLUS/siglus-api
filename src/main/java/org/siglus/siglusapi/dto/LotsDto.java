@@ -28,7 +28,7 @@ import lombok.NoArgsConstructor;
 @Builder
 public class LotsDto {
 
-  private UUID orderablesId;
+  private UUID orderableId;
   private UUID lotId;
   private Integer stockOnHand;
   private String lotCode;
