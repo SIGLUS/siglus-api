@@ -15,9 +15,6 @@
 
 package org.siglus.siglusapi.domain;
 
-import static com.fasterxml.jackson.annotation.JsonFormat.Shape.STRING;
-
-import com.fasterxml.jackson.annotation.JsonFormat;
 import java.time.LocalDate;
 import java.util.UUID;
 import javax.persistence.Column;
@@ -55,12 +52,10 @@ public class StockCardLocationMovementDraftLineItem extends BaseEntity {
   private UUID lotId;
   private String lotCode;
 
+  private boolean isKit;
+
   private String srcArea;
   private String srcLocationCode;
-
-  @Column(nullable = false)
-  @JsonFormat(shape = STRING, pattern = "yyyy-MM-dd")
-  private LocalDate occurredDate;
 
   private String destArea;
   private String destLocationCode;

@@ -38,12 +38,11 @@ public class StockCardLocationMovementDraftLineItemDto {
   private String productName;
   private UUID lotId;
   private String lotCode;
+  private boolean isKit;
   private String srcArea;
   private String srcLocationCode;
   private String destArea;
   private String destLocationCode;
-  @JsonFormat(shape = STRING)
-  private LocalDate occurredDate;
   @JsonFormat(shape = STRING)
   private LocalDate expirationDate;
   private Integer quantity;
