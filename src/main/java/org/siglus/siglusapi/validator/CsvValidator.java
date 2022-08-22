@@ -27,6 +27,7 @@ import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.lang.StringUtils;
+import org.siglus.siglusapi.constant.LocationConstants;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
@@ -36,15 +37,9 @@ import org.springframework.stereotype.Component;
 @Component
 public class CsvValidator {
   private static final String ERROR_BUSINESS_CODE = "upload csv failed";
-  private static final String LOCATION_CODE = "Location Code";
-  private static final String AREA = "Area";
-  private static final String ZONE = "Zone";
-  private static final String RACK = "Rack";
-  private static final String BARCODE = "Barcode";
-  private static final String BIN = "Bin";
-  private static final String LEVEL = "Level";
-  private static final List<String> mandatoryColumnNames = Arrays.asList(LOCATION_CODE, AREA, ZONE, RACK,
-      BARCODE, BIN, LEVEL);
+  private static final List<String> mandatoryColumnNames = Arrays.asList(LocationConstants.LOCATION_CODE,
+      LocationConstants.AREA, LocationConstants.ZONE, LocationConstants.RACK,
+      LocationConstants.BARCODE, LocationConstants.BIN, LocationConstants.LEVEL);
 
   public void validateCsvHeaders(CSVParser csvParser) {
     Map<String, Integer> csvHeaderToColumnMap = csvParser.getHeaderMap();
@@ -56,13 +51,13 @@ public class CsvValidator {
 
   public void validateNullRow(CSVRecord eachRow) {
     long row = eachRow.getRecordNumber();
-    validateEachColumn(eachRow.get(LOCATION_CODE), LOCATION_CODE, row);
-    validateEachColumn(eachRow.get(AREA), AREA, row);
-    validateEachColumn(eachRow.get(ZONE), ZONE, row);
-    validateEachColumn(eachRow.get(RACK), RACK, row);
-    validateEachColumn(eachRow.get(BARCODE), BARCODE, row);
-    validateEachColumn(eachRow.get(BIN), BIN, row);
-    validateEachColumn(eachRow.get(LEVEL), LEVEL, row);
+    validateEachColumn(eachRow.get(LocationConstants.LOCATION_CODE), LocationConstants.LOCATION_CODE, row);
+    validateEachColumn(eachRow.get(LocationConstants.AREA), LocationConstants.AREA, row);
+    validateEachColumn(eachRow.get(LocationConstants.ZONE), LocationConstants.ZONE, row);
+    validateEachColumn(eachRow.get(LocationConstants.RACK), LocationConstants.RACK, row);
+    validateEachColumn(eachRow.get(LocationConstants.BARCODE), LocationConstants.BARCODE, row);
+    validateEachColumn(eachRow.get(LocationConstants.BIN), LocationConstants.BIN, row);
+    validateEachColumn(eachRow.get(LocationConstants.LEVEL), LocationConstants.LEVEL, row);
   }
 
   public List<CSVRecord> validateDuplicateLocationCode(CSVParser csvParser) throws IOException {
@@ -70,7 +65,7 @@ public class CsvValidator {
     List<CSVRecord> records = csvParser.getRecords();
     records.forEach(eachRow -> {
       List<Long> duplicateRows = Lists.newArrayList();
-      String locationCode = eachRow.get(LOCATION_CODE);
+      String locationCode = eachRow.get(LocationConstants.LOCATION_CODE);
       long rowNumber = eachRow.getRecordNumber();
       if (locationCodeToDuplicateRowMap.containsKey(locationCode)) {
         duplicateRows = locationCodeToDuplicateRowMap.get(locationCode);
@@ -90,6 +85,10 @@ public class CsvValidator {
   }
 
   private void validateNullHeaders(List<String> headers) throws ValidationMessageException {
+    if (headers.size() == 6) {
+      throw new BusinessDataException(new Message(CsvUploadMessageKeys.ERROR_UPLOAD_HEADER_MISSING,
+          String.valueOf(1)), ERROR_BUSINESS_CODE);
+    }
     for (int i = 0; i < headers.size(); i++) {
       if (StringUtils.isEmpty(headers.get(i))) {
         throw new BusinessDataException(new Message(CsvUploadMessageKeys.ERROR_UPLOAD_HEADER_MISSING,

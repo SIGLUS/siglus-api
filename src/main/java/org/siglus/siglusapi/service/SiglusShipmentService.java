@@ -84,11 +84,13 @@ public class SiglusShipmentService {
     List<ShipmentLineItemsExtension> shipmentLineItemsByLocations = Lists.newArrayList();
     shipmentLineItemDtos.forEach(shipmentLineItemDto -> {
       UUID lineItemId = shipmentLineItemDto.getId();
-      UUID locationId = shipmentLineItemDto.getLocation().getId();
+      String locationCode = shipmentLineItemDto.getLocation().getLocationCode();
+      String area = shipmentLineItemDto.getLocation().getArea();
       ShipmentLineItemsExtension shipmentLineItemsByLocation = ShipmentLineItemsExtension
           .builder()
           .shipmentLineItemId(lineItemId)
-          .locationId(locationId)
+          .locationCode(locationCode)
+          .area(area)
           .build();
       shipmentLineItemsByLocations.add(shipmentLineItemsByLocation);
     });

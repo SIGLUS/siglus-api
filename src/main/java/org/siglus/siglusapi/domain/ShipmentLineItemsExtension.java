@@ -38,5 +38,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 public class ShipmentLineItemsExtension extends BaseEntity {
   private UUID shipmentLineItemId;
 
-  private UUID locationId;
+  private String locationCode;
+
+  private String area;
 }

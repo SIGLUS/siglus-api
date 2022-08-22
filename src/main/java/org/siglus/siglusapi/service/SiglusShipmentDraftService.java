@@ -19,8 +19,6 @@ import static com.google.common.collect.Lists.newArrayList;
 import static java.util.stream.Collectors.toMap;
 
 import com.google.common.collect.Lists;
-import java.util.HashMap;
-import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -35,10 +33,8 @@ import org.openlmis.fulfillment.web.shipment.ShipmentLineItemDto;
 import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftController;
 import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftDto;
 import org.openlmis.fulfillment.web.util.OrderLineItemDto;
-import org.siglus.siglusapi.domain.FacilityLocations;
 import org.siglus.siglusapi.domain.OrderLineItemExtension;
 import org.siglus.siglusapi.domain.ShipmentDraftLineItemsExtension;
-import org.siglus.siglusapi.repository.FacilityLocationsRepository;
 import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.OrderLineItemRepository;
 import org.siglus.siglusapi.repository.ShipmentDraftLineItemsExtensionRepository;
@@ -71,9 +67,6 @@ public class SiglusShipmentDraftService {
 
   @Autowired
   private SiglusOrderService siglusOrderService;
-
-  @Autowired
-  private FacilityLocationsRepository facilityLocationsRepository;
 
   @Autowired
   private ShipmentDraftLineItemsExtensionRepository shipmentDraftLineItemsExtensionRepository;
@@ -224,28 +217,17 @@ public class SiglusShipmentDraftService {
 
     List<ShipmentDraftLineItemsExtension> lineItemsExtensionList = shipmentDraftLineItemsExtensionRepository
         .findByShipmentDraftLineItemIdIn(lineItemIds);
-    List<UUID> locationIds = lineItemsExtensionList.stream().map(ShipmentDraftLineItemsExtension::getLocationId)
-        .collect(Collectors.toList());
-    List<FacilityLocations> locationManagementList = facilityLocationsRepository.findByIdIn(locationIds);
 
-    Map<UUID, UUID> lineItemIdToLocationIdMap = new IdentityHashMap<>();
-    lineItemsExtensionList.forEach(lineItemExtension ->
-        lineItemIdToLocationIdMap.put(
-            lineItemExtension.getShipmentDraftLineItemId(), lineItemExtension.getLocationId()));
-    Map<UUID, String> locationIdToCodeMap = new HashMap<>();
-    locationManagementList.forEach(locationManagement ->
-        locationIdToCodeMap.put(locationManagement.getId(), locationManagement.getLocationCode()));
-
-    lineItemIdToLocationIdMap.forEach((draftLineItemId, locationId) -> {
+    lineItemsExtensionList.forEach(lineItemsExtension -> {
       ShipmentLineItemDto lineItemDto = shipmentLineItemDtos.stream().filter(shipmentLineItemDto ->
-              draftLineItemId.equals(shipmentLineItemDto.getId())).findFirst().orElse(new ShipmentLineItemDto());
-      String locationCode = locationIdToCodeMap.get(locationId);
+              lineItemsExtension.getShipmentDraftLineItemId().equals(shipmentLineItemDto.getId()))
+          .findFirst().orElse(new ShipmentLineItemDto());
       ShipmentLineItemDto shipmentLineItemDto = new ShipmentLineItemDto();
       BeanUtils.copyProperties(lineItemDto, shipmentLineItemDto);
       LocationDto locationDto = LocationDto
           .builder()
-          .id(locationId)
-          .locationCode(locationCode)
+          .locationCode(lineItemsExtension.getLocationCode())
+          .area(lineItemsExtension.getArea())
           .build();
       shipmentLineItemDto.setLocation(locationDto);
       newShipmentLineItemDto.add(shipmentLineItemDto);
@@ -272,7 +254,8 @@ public class SiglusShipmentDraftService {
         .filter(lineItemDto -> null != lineItemDto.getLocation())
         .map(lineItemDto -> ShipmentDraftLineItemsExtension
             .builder()
-            .locationId(lineItemDto.getLocation().getId())
+            .locationCode(lineItemDto.getLocation().getLocationCode())
+            .area(lineItemDto.getLocation().getArea())
             .shipmentDraftLineItemId(lineItemDto.getId())
             .build())
         .collect(Collectors.toList());

@@ -15,13 +15,26 @@
 
 package org.siglus.siglusapi.repository;
 
+import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 import org.siglus.siglusapi.domain.StockCardLocationMovementLineItem;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface StockCardLocationMovementLineItemRepository extends
     JpaRepository<StockCardLocationMovementLineItem, UUID> {
 
   List<StockCardLocationMovementLineItem> findByStockCardId(UUID stockCardId);
+
+  @Query(value = "select * from siglusintegration.stock_card_location_movement_line_items "
+      + "         where (stockcardid, occurreddate) in ( "
+      + "         select stockcardid, max(occurreddate) "
+      + "         from siglusintegration.stock_card_location_movement_line_items c "
+      + "         where c.stockcardid in :stockCardIds "
+      + "           and c.occurreddate <= :occurredDate group by c.stockcardid)", nativeQuery = true)
+  List<StockCardLocationMovementLineItem> findPreviousRecordByStockCardId(
+      @Param("stockCardIds") Collection<UUID> stockCardIds, @Param("occurredDate") LocalDate occurredDate);
 }

@@ -97,6 +97,7 @@ public class SiglusShipmentDraftServiceTest {
   private final UUID locationId = UUID.randomUUID();
 
   private final String locationCode = "AA25A";
+  private final String area = "Armazem Principal";
 
   @Test
   public void shouldUpdateLineItemExtensionWhenUpdateShipmentDraftIfExtensionExist() {
@@ -233,7 +234,7 @@ public class SiglusShipmentDraftServiceTest {
     // given
     ShipmentDraftDto draftDto = new ShipmentDraftDto();
     ShipmentLineItemDto shipmentLineItemDto = new ShipmentLineItemDto();
-    LocationDto locationDto = LocationDto.builder().id(locationId).locationCode(locationCode).build();
+    LocationDto locationDto = LocationDto.builder().area(area).locationCode(locationCode).build();
     shipmentLineItemDto.setLocation(locationDto);
     shipmentLineItemDto.setId(lineItemId);
     draftDto.setLineItems(newArrayList(shipmentLineItemDto));
@@ -243,7 +244,8 @@ public class SiglusShipmentDraftServiceTest {
         .thenReturn(draftDto);
     List<ShipmentLineItemDto> shipmentLineItemDtos = draftDto.lineItems();
     ShipmentDraftLineItemsExtension shipmentDraftLineItemsByLocation = new ShipmentDraftLineItemsExtension();
-    shipmentDraftLineItemsByLocation.setLocationId(locationId);
+    shipmentDraftLineItemsByLocation.setLocationCode(locationCode);
+    shipmentDraftLineItemsByLocation.setArea(area);
     shipmentDraftLineItemsByLocation.setShipmentDraftLineItemId(lineItemId);
     shipmentDraftLineItemsByLocation.setId(lineItemId);
     List<UUID> lineItemIds = shipmentLineItemDtos.stream().map(ShipmentLineItemDto::getId).collect(Collectors.toList());
@@ -261,7 +263,7 @@ public class SiglusShipmentDraftServiceTest {
     ShipmentDraftDto shipmentDraftByLocation = siglusShipmentDraftService.getShipmentDraftByLocation(orderId);
 
     // then
-    assertEquals(shipmentDraftByLocation.lineItems().get(0).getLocation().getId(), locationId);
+    assertEquals(shipmentDraftByLocation.lineItems().get(0).getLocation().getLocationCode(), locationCode);
   }
 
   @Test
@@ -276,7 +278,7 @@ public class SiglusShipmentDraftServiceTest {
     draftDto.setId(draftId);
     draftDto.setOrder(order);
     ShipmentLineItemDto shipmentLineItemDto = new ShipmentLineItemDto();
-    LocationDto locationDto = LocationDto.builder().id(locationId).locationCode(locationCode).build();
+    LocationDto locationDto = LocationDto.builder().area(area).locationCode(locationCode).build();
     shipmentLineItemDto.setLocation(locationDto);
     shipmentLineItemDto.setId(lineItemId);
     shipmentLineItemDto.setQuantityShipped(10L);
@@ -292,7 +294,8 @@ public class SiglusShipmentDraftServiceTest {
     when(siglusOrderService.updateOrderLineItems(draftDto)).thenReturn(newHashSet(lineItemId));
     List<ShipmentLineItemDto> shipmentLineItemDtos = draftDto.lineItems();
     ShipmentDraftLineItemsExtension shipmentDraftLineItemsByLocation = new ShipmentDraftLineItemsExtension();
-    shipmentDraftLineItemsByLocation.setLocationId(locationId);
+    shipmentDraftLineItemsByLocation.setLocationCode(locationCode);
+    shipmentDraftLineItemsByLocation.setArea(area);
     shipmentDraftLineItemsByLocation.setShipmentDraftLineItemId(lineItemId);
     List<UUID> lineItemIds = shipmentLineItemDtos.stream().map(ShipmentLineItemDto::getId).collect(Collectors.toList());
     when(shipmentDraftLineItemsByLocationRepository.findByShipmentDraftLineItemIdIn(lineItemIds))

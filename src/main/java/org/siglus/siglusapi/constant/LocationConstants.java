@@ -13,32 +13,18 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.domain;
+package org.siglus.siglusapi.constant;
 
-import java.util.UUID;
-import javax.persistence.Entity;
-import javax.persistence.EntityListeners;
-import javax.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
-import org.siglus.common.domain.BaseEntity;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+public class LocationConstants {
+  public static final String VIRTUAL_LOCATION_CODE = "00000";
 
-@Entity
-@Data
-@Builder
-@AllArgsConstructor
-@NoArgsConstructor
-@EqualsAndHashCode(callSuper = false)
-@EntityListeners(AuditingEntityListener.class)
-@Table(name = "shipment_draft_line_items_extension", schema = "siglusintegration")
-public class ShipmentDraftLineItemsExtension extends BaseEntity {
-  private UUID shipmentDraftLineItemId;
+  public static final String VIRTUAL_LOCATION_AREA = "virtual location";
 
-  private String locationCode;
-
-  private String area;
+  public static final String LOCATION_CODE = "Location Code";
+  public static final String AREA = "Area";
+  public static final String ZONE = "Zone";
+  public static final String RACK = "Rack";
+  public static final String BARCODE = "Barcode";
+  public static final String BIN = "Bin";
+  public static final String LEVEL = "Level";
 }
