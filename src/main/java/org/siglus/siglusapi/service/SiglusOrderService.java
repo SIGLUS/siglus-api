@@ -174,10 +174,10 @@ public class SiglusOrderService {
     return orderController.searchOrders(params, pageable);
   }
 
-  public Page<BasicOrderDto> searchOrdersWithSubDraftStatus(OrderSearchParams params, Pageable pageable) {
+  public Page<BasicOrderExtensionResponse> searchOrdersWithSubDraftStatus(OrderSearchParams params, Pageable pageable) {
     Page<BasicOrderDto> basicOrderDtoPage = orderController.searchOrders(params, pageable);
     if (!basicOrderDtoPage.hasContent()) {
-      return basicOrderDtoPage;
+      return new PageImpl<>(Lists.newArrayList(), pageable, basicOrderDtoPage.getTotalElements());
     }
 
     List<BasicOrderDto> basicOrderDtos = basicOrderDtoPage.getContent();
@@ -195,7 +195,7 @@ public class SiglusOrderService {
       basicOrderExtensionResponseList.add(basicOrderExtensionResponse);
     }
 
-    return new PageImpl(basicOrderExtensionResponseList, pageable, basicOrderDtoPage.getTotalElements());
+    return new PageImpl<>(basicOrderExtensionResponseList, pageable, basicOrderDtoPage.getTotalElements());
   }
 
   public Page<BasicOrderDto> searchOrdersForFulfill(OrderSearchParams params, Pageable pageable) {
