@@ -41,7 +41,7 @@ import lombok.Data;
             + "  order by\n"
             + "    occurreddate desc)\n"
             + "  from\n"
-            + "    siglusintegration.calculated_stocks_on_hand_locations) csohl\n"
+            + "    siglusintegration.calculated_stocks_on_hand_by_location) csohl\n"
             + "left join stockmanagement.stock_cards sc on\n"
             + "  sc.id = csohl.stockcardid\n"
             + "left join siglusintegration.facility_locations fl on\n"
