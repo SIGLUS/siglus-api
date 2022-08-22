@@ -26,4 +26,9 @@ public class BusinessDataException extends BaseMessageException {
     super.setBusinessError(true);
     super.setBusinessErrorExtraData(businessErrorExtraData);
   }
+
+  public BusinessDataException(Message message) {
+    super(message);
+    super.setBusinessError(true);
+  }
 }

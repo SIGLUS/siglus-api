@@ -26,14 +26,18 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_ADJUSTMENT_LOCATION_IS_RESTRICTED;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_MOVEMENT_QUANTITY_MORE_THAN_STOCK_ON_HAND;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_IS_SUBMITTED;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_SUB_DRAFTS_QUANTITY_NOT_MATCH;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_SUB_DRAFT_EMPTY;
 
 import com.google.common.collect.ImmutableMap;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import org.junit.Before;
 import org.junit.Rule;
@@ -49,13 +53,17 @@ import org.openlmis.referencedata.dto.OrderableDto;
 import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
 import org.openlmis.stockmanagement.domain.event.StockEvent;
+import org.openlmis.stockmanagement.domain.reason.ReasonType;
+import org.openlmis.stockmanagement.domain.reason.StockCardLineItemReason;
 import org.openlmis.stockmanagement.dto.StockEventDto;
 import org.openlmis.stockmanagement.dto.StockEventLineItemDto;
+import org.openlmis.stockmanagement.repository.StockCardLineItemReasonRepository;
 import org.openlmis.stockmanagement.repository.StockCardLineItemRepository;
 import org.openlmis.stockmanagement.repository.StockCardRepository;
 import org.openlmis.stockmanagement.repository.StockEventsRepository;
 import org.openlmis.stockmanagement.service.StockEventProcessor;
 import org.siglus.siglusapi.constant.FieldConstants;
+import org.siglus.siglusapi.domain.FacilityLocations;
 import org.siglus.siglusapi.domain.StockCardExtension;
 import org.siglus.siglusapi.domain.StockManagementDraft;
 import org.siglus.siglusapi.dto.LotDto;
@@ -64,6 +72,8 @@ import org.siglus.siglusapi.dto.StockManagementDraftDto;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
+import org.siglus.siglusapi.repository.CalculatedStockOnHandByLocationRepository;
+import org.siglus.siglusapi.repository.FacilityLocationsRepository;
 import org.siglus.siglusapi.repository.StockCardExtensionRepository;
 import org.siglus.siglusapi.repository.StockCardLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.StockManagementDraftRepository;
@@ -138,6 +148,15 @@ public class SiglusStockEventsServiceTest {
   @Mock
   private SiglusLotService siglusLotService;
 
+  @Mock
+  private FacilityLocationsRepository facilityLocationsRepository;
+
+  @Mock
+  private StockCardLineItemReasonRepository stockCardLineItemReasonRepository;
+
+  @Mock
+  private CalculatedStockOnHandByLocationRepository calculatedStockOnHandByLocationRepository;
+
   private final UUID orderableId1 = UUID.randomUUID();
 
   private final UUID tradeItemId1 = UUID.randomUUID();
@@ -152,6 +171,18 @@ public class SiglusStockEventsServiceTest {
 
   private final UUID initialDraftId = UUID.randomUUID();
 
+  private final String locationCode = "33A33";
+
+  private final String area = "Frios";
+
+  private final UUID positiveReasonId = UUID.randomUUID();
+
+  private final UUID negativeReasonId = UUID.randomUUID();
+
+  private final UUID facilityId = UUID.randomUUID();
+
+  private final UUID stockCardId = UUID.randomUUID();
+
   private final StockEventLineItemDto lineItemDto1 = new StockEventLineItemDtoDataBuilder().buildForPhysicalInventory();
   private final StockEventLineItemDto lineItemDto2 = new StockEventLineItemDtoDataBuilder().buildForPhysicalInventory();
 
@@ -164,7 +195,7 @@ public class SiglusStockEventsServiceTest {
   public void prepare() {
     UserDto userDto = new UserDto();
     userDto.setId(UUID.randomUUID());
-    userDto.setHomeFacilityId(UUID.randomUUID());
+    userDto.setHomeFacilityId(facilityId);
     when(authenticationHelper.getCurrentUser()).thenReturn(userDto);
 
     OrderableDto orderableDto = createOrderable(orderableId1, tradeItemId1);
@@ -180,6 +211,17 @@ public class SiglusStockEventsServiceTest {
     lineItemDto2.setExtraData(getExtraData());
     ReflectionTestUtils.setField(siglusStockEventsService, "unpackDestinationNodeId", unpackDestinationNodeId);
     doNothing().when(siglusLotService).createAndFillLotId(any());
+    StockCardLineItemReason positiveReason = StockCardLineItemReason
+        .builder()
+        .reasonType(ReasonType.CREDIT)
+        .build();
+    positiveReason.setId(positiveReasonId);
+    StockCardLineItemReason negativeReason = StockCardLineItemReason
+        .builder()
+        .reasonType(ReasonType.DEBIT)
+        .build();
+    negativeReason.setId(negativeReasonId);
+    when(stockCardLineItemReasonRepository.findAll()).thenReturn(Arrays.asList(positiveReason, negativeReason));
   }
 
   @Test
@@ -337,6 +379,67 @@ public class SiglusStockEventsServiceTest {
     siglusStockEventsService.processStockEventForMultiUser(stockEventForMultiUserDto);
   }
 
+  @Test
+  public void shouldThrowBusinessExceptionWhenPositiveAdjustmentLocationCodeIsRestricted() {
+    //then
+    exception.expect(BusinessDataException.class);
+    exception.expectMessage(containsString(ERROR_ADJUSTMENT_LOCATION_IS_RESTRICTED));
+
+    // given
+    StockEventLineItemDto stockEventLineItemDto = new StockEventLineItemDtoDataBuilder().buildForAdjustment();
+    stockEventLineItemDto.setLocationCode(locationCode);
+    stockEventLineItemDto.setArea(area);
+    stockEventLineItemDto.setReasonId(positiveReasonId);
+    StockEventDto eventDto = StockEventDto
+        .builder().lineItems(Collections.singletonList(stockEventLineItemDto))
+        .programId(ALL_PRODUCTS_PROGRAM_ID).build();
+    when(facilityLocationsRepository.findByFacilityId(any())).thenReturn(
+        Collections.singletonList(FacilityLocations.builder()
+            .locationCode("44A44").area("Armazem Principal").build())
+    );
+    when(stockManagementDraftService.findStockManagementDraft(any(), any(), any())).thenReturn(
+        Collections.singletonList(new StockManagementDraftDto()));
+
+    // when
+    siglusStockEventsService.processStockEvent(eventDto, true);
+  }
+
+
+  @Test
+  public void shouldThrowBusinessExceptionWhenNegativeAdjustmentQuantityIsOverload() {
+    //then
+    exception.expect(BusinessDataException.class);
+    exception.expectMessage(containsString(ERROR_MOVEMENT_QUANTITY_MORE_THAN_STOCK_ON_HAND));
+
+    // given
+    when(stockManagementDraftService.findStockManagementDraft(any(), any(), any())).thenReturn(
+        Collections.singletonList(new StockManagementDraftDto()));
+    StockCard stockCard = StockCard.builder().build();
+    stockCard.setId(stockCardId);
+    when(stockCardRepository.findByProgramIdAndFacilityIdAndOrderableIdAndLotId(
+        ALL_PRODUCTS_PROGRAM_ID,
+        facilityId,
+        orderableId1,
+        lotId)).thenReturn(stockCard);
+    when(calculatedStockOnHandByLocationRepository
+        .findRecentlySohByStockCardIdAndLocationCode(
+            stockCardId,
+            locationCode)).thenReturn(Optional.of(20));
+    StockEventLineItemDto stockEventLineItemDto = new StockEventLineItemDtoDataBuilder().buildForAdjustment();
+    stockEventLineItemDto.setLocationCode(locationCode);
+    stockEventLineItemDto.setArea(area);
+    stockEventLineItemDto.setReasonId(negativeReasonId);
+    stockEventLineItemDto.setOrderableId(orderableId1);
+    stockEventLineItemDto.setLotId(lotId);
+    stockEventLineItemDto.setQuantity(30);
+    StockEventDto eventDto = StockEventDto
+        .builder().lineItems(Collections.singletonList(stockEventLineItemDto))
+        .programId(ALL_PRODUCTS_PROGRAM_ID).build();
+
+    // when
+    siglusStockEventsService.processStockEvent(eventDto, true);
+  }
+
   private OrderableDto createOrderable(UUID orderableId, UUID tradeItemId) {
     OrderableDto orderableDto = new OrderableDto();
     orderableDto.setId(orderableId);
@@ -351,4 +454,7 @@ public class SiglusStockEventsServiceTest {
     return ImmutableMap
         .of(FieldConstants.LOT_CODE, "lotCode", FieldConstants.EXPIRATION_DATE, "2020-06-16");
   }
+
+
+
 }

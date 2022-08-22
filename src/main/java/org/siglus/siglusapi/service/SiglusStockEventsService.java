@@ -20,13 +20,12 @@ import static org.siglus.siglusapi.constant.FieldConstants.ISSUE;
 import static org.siglus.siglusapi.constant.FieldConstants.RECEIVE;
 import static org.siglus.siglusapi.constant.FieldConstants.SEPARATOR;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
-import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_ADJUSTMENT_LOCATION_IS_LIMMITED;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_ADJUSTMENT_LOCATION_IS_RESTRICTED;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_MOVEMENT_QUANTITY_MORE_THAN_STOCK_ON_HAND;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_IS_SUBMITTED;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_SUB_DRAFTS_QUANTITY_NOT_MATCH;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_SUB_DRAFT_EMPTY;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import java.util.Collection;
 import java.util.List;
@@ -315,22 +314,30 @@ public class SiglusStockEventsService {
   }
 
   private void validateAdjustmentLocationAndQuantity(StockEventDto eventDto) {
+    Map<UUID, StockCardLineItemReason> reasonIdToStockCardLineItemReason = Maps.uniqueIndex(
+        stockCardLineItemReasonRepository.findAll(), StockCardLineItemReason::getId);
 
-    validatePositiveAdjustmentLocationLimited(eventDto, eventDto.getLineItems());
-    validateNegativeAdjustmentQuantity(eventDto, eventDto.getLineItems());
+    List<StockEventLineItemDto> positiveAdjustmentLineItem = eventDto.getLineItems().stream()
+        .filter(lineItem -> isPositiveAdjustment(reasonIdToStockCardLineItemReason, lineItem.getReasonId()))
+        .collect(Collectors.toList());
+
+    List<StockEventLineItemDto> negativeAdjustmentLineItem = eventDto.getLineItems().stream()
+        .filter(lineItem -> !isPositiveAdjustment(reasonIdToStockCardLineItemReason, lineItem.getReasonId()))
+        .collect(Collectors.toList());
+
+    validatePositiveAdjustmentLocationLimited(eventDto.getFacilityId(), positiveAdjustmentLineItem);
+    validateNegativeAdjustmentQuantity(eventDto.getFacilityId(), negativeAdjustmentLineItem);
   }
 
-  private void validateNegativeAdjustmentQuantity(StockEventDto eventDto, List<StockEventLineItemDto> lineItems) {
-    Map<String, List<StockEventLineItemDto>> lotLocationToStockEventLineItemDtoList = lineItems
-        .stream()
-        .filter(lineItem -> !isPositiveAdjustment(lineItem.getReasonId()))
+  private void validateNegativeAdjustmentQuantity(UUID facilityId, List<StockEventLineItemDto> lineItems) {
+    Map<String, List<StockEventLineItemDto>> lotLocationToStockEventLineItemDtoList = lineItems.stream()
         .collect(Collectors.groupingBy(e -> getUniqueKey(e.getLotId(), e.getLocationCode())));
 
     lotLocationToStockEventLineItemDtoList.forEach((lotLocation, stockEventLineItemDtoList) -> {
       StockEventLineItemDto stockEventLineItemDto = stockEventLineItemDtoList.get(0);
       StockCard stockCard = stockCardRepository.findByProgramIdAndFacilityIdAndOrderableIdAndLotId(
           stockEventLineItemDto.getProgramId(),
-          eventDto.getFacilityId(),
+          facilityId,
           stockEventLineItemDto.getOrderableId(),
           stockEventLineItemDto.getLotId()
       );
@@ -341,39 +348,27 @@ public class SiglusStockEventsService {
                 stockCard.getId(),
                 stockEventLineItemDto.getLocationCode()).orElse(0);
       }
-      int adjustmentSubValue = getAdjustmentSubValue(stockEventLineItemDtoList);
+      int adjustmentSubValue = stockEventLineItemDtoList.stream().mapToInt(StockEventLineItemDto::getQuantity).sum();
       if (adjustmentSubValue > soh) {
-        throw new BusinessDataException(new Message(ERROR_MOVEMENT_QUANTITY_MORE_THAN_STOCK_ON_HAND), null);
+        throw new BusinessDataException(new Message(ERROR_MOVEMENT_QUANTITY_MORE_THAN_STOCK_ON_HAND));
       }
     });
   }
 
-  private void validatePositiveAdjustmentLocationLimited(StockEventDto eventDto,
+  private void validatePositiveAdjustmentLocationLimited(UUID facilityId,
       List<StockEventLineItemDto> lineItems) {
-    List<FacilityLocations> locations = facilityLocationsRepository.findByFacilityId(eventDto.getFacilityId());
+    List<FacilityLocations> locations = facilityLocationsRepository.findByFacilityId(facilityId);
     lineItems.forEach(e -> {
-      if (isPositiveAdjustment(e.getReasonId())
-          && locations.stream()
+      if (locations.stream()
           .noneMatch(location -> Objects.equals(location.getLocationCode(), e.getLocationCode()))) {
-        throw new BusinessDataException(new Message(ERROR_ADJUSTMENT_LOCATION_IS_LIMMITED), null);
+        throw new BusinessDataException(new Message(ERROR_ADJUSTMENT_LOCATION_IS_RESTRICTED));
       }
     });
   }
 
-  private boolean isPositiveAdjustment(UUID reasonId) {
-    ImmutableMap<UUID, StockCardLineItemReason> reasonIdToStockCardLineItemReason = Maps.uniqueIndex(
-        stockCardLineItemReasonRepository.findAll(), StockCardLineItemReason::getId);
+  private boolean isPositiveAdjustment(Map<UUID, StockCardLineItemReason> reasonIdToStockCardLineItemReason,
+      UUID reasonId) {
     return !reasonIdToStockCardLineItemReason.get(reasonId).getReasonType().equals(ReasonType.DEBIT);
-  }
-
-  private Integer getAdjustmentSubValue(List<StockEventLineItemDto> lineItemDtos) {
-    Integer subValue = 0;
-    for (StockEventLineItemDto lineItem : lineItemDtos) {
-      if (!isPositiveAdjustment(lineItem.getReasonId())) {
-        subValue += lineItem.getQuantity();
-      }
-    }
-    return subValue;
   }
 
   private String getUniqueKey(UUID lotId, String locationCode) {
