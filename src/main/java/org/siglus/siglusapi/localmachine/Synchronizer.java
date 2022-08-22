@@ -18,7 +18,6 @@ package org.siglus.siglusapi.localmachine;
 import static org.springframework.util.ObjectUtils.isEmpty;
 
 import java.util.List;
-import java.util.stream.Collectors;
 import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -65,8 +64,6 @@ public class Synchronizer {
       return;
     }
     webClient.sync(events);
-    List<Event> confirmedEvents =
-        events.stream().peek(it -> it.setOnlineWebSynced(true)).collect(Collectors.toList());
-    localEventStore.confirmEventsByWeb(confirmedEvents);
+    localEventStore.confirmEventsByWeb(events);
   }
 }
