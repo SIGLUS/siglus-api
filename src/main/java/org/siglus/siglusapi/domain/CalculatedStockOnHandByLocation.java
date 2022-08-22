@@ -40,10 +40,10 @@ public class CalculatedStockOnHandByLocation extends BaseEntity {
   private UUID stockCardId;
 
   @Column(name = "occurreddate")
-  private Date occurreddate;
+  private Date occurredDate;
 
   @Column(name = "stockonhand")
-  private Integer stockonhand;
+  private Integer stockOnHand;
 
   @Column(name = "calculatedstockonhandid")
   private UUID calculatedStocksOnHandId;

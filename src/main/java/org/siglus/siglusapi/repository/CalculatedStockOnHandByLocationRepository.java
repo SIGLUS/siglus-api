@@ -23,7 +23,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-
 import javax.persistence.criteria.Predicate;
 import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
 import org.siglus.siglusapi.domain.CalculatedStockOnHandByLocation;

@@ -364,7 +364,7 @@ public class SiglusAdministrationsService {
           .stockCardId(calculatedStocksOnHandLocation.getStockCardId())
           .occurredDate(LocalDate.now())
           .userId(userId)
-          .quantity(calculatedStocksOnHandLocation.getStockonhand())
+          .quantity(calculatedStocksOnHandLocation.getStockOnHand())
           .srcLocationCode(calculatedStocksOnHandLocation.getLocationCode())
           .srcArea(calculatedStocksOnHandLocation.getArea())
           .destLocationCode(LocationConstants.VIRTUAL_LOCATION_CODE)

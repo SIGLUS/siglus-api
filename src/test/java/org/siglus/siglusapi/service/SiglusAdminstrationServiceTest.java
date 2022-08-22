@@ -36,7 +36,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import javax.servlet.http.HttpServletResponse;
-
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.lang.BooleanUtils;
@@ -523,7 +522,7 @@ public class SiglusAdminstrationServiceTest {
     calculatedStocksOnHandLocations.setStockCardId(stockCardId);
     calculatedStocksOnHandLocations.setLocationCode(LOCATION_CODE);
     calculatedStocksOnHandLocations.setArea(AREA);
-    calculatedStocksOnHandLocations.setStockonhand(100);
+    calculatedStocksOnHandLocations.setStockOnHand(100);
     return calculatedStocksOnHandLocations;
   }
 

@@ -211,7 +211,7 @@ public class SiglusLotLocationService {
           .lotId(lotId).orderablesId(orderableId).lotCode(lot.getLotCode())
           .stockOnHand(locationPair
               .getCalculatedStockOnHandByLocation()
-              .getStockonhand())
+              .getStockOnHand())
           .expirationDate(lot.getExpirationDate())
           .build());
     });

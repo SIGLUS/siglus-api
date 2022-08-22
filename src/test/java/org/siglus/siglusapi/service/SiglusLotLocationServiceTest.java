@@ -163,9 +163,9 @@ public class SiglusLotLocationServiceTest extends TestCase {
     StockCard stockCard = StockCard.builder().lotId(lotId1).build();
     when(stockCardRepository.findByFacilityIdAndOrderableId(facilityId,
         orderableId)).thenReturn(Collections.singletonList(stockCard));
-    CalculatedStockOnHandByLocation sohLocation1 = CalculatedStockOnHandByLocation.builder().stockonhand(100)
+    CalculatedStockOnHandByLocation sohLocation1 = CalculatedStockOnHandByLocation.builder().stockOnHand(100)
         .locationCode(locationCode1).area(area1).build();
-    CalculatedStockOnHandByLocation sohLocation2 = CalculatedStockOnHandByLocation.builder().stockonhand(200)
+    CalculatedStockOnHandByLocation sohLocation2 = CalculatedStockOnHandByLocation.builder().stockOnHand(200)
         .locationCode(locationCode2).area(area2).build();
     when(calculatedStockOnHandByLocationRepository.findRecentlyLocationSohByStockCardId(stockCard.getId())).thenReturn(
         Arrays.asList(sohLocation1, sohLocation2));
@@ -201,7 +201,7 @@ public class SiglusLotLocationServiceTest extends TestCase {
     StockCard stockCard2 = StockCard.builder().lotId(lotId2).programId(programId2).build();
     when(stockCardRepository.findByFacilityIdAndOrderableId(facilityId,
         orderableId)).thenReturn(Arrays.asList(stockCard1, stockCard2));
-    CalculatedStockOnHandByLocation sohLocation1 = CalculatedStockOnHandByLocation.builder().stockonhand(0)
+    CalculatedStockOnHandByLocation sohLocation1 = CalculatedStockOnHandByLocation.builder().stockOnHand(0)
         .locationCode(locationCode1).area(area1).build();
     when(calculatedStockOnHandByLocationRepository.findRecentlyLocationSohByStockCardId(stockCard1.getId())).thenReturn(
         Collections.singletonList(sohLocation1));

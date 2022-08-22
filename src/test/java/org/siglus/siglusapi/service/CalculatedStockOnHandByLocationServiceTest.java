@@ -30,7 +30,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -101,12 +100,12 @@ public class CalculatedStockOnHandByLocationServiceTest {
 
     // then
     assertEquals(3, toSaveList.size());
-    assertEquals(100, (int) toSaveList.get(0).getStockonhand());
-    assertEquals(LocalDate.now().minusDays(5L), toDate(toSaveList.get(0).getOccurreddate()));
-    assertEquals(70, (int) toSaveList.get(1).getStockonhand());
-    assertEquals(LocalDate.now().minusDays(3L), toDate(toSaveList.get(1).getOccurreddate()));
-    assertEquals(80, (int) toSaveList.get(2).getStockonhand());
-    assertEquals(LocalDate.now().minusDays(1L), toDate(toSaveList.get(2).getOccurreddate()));
+    assertEquals(100, (int) toSaveList.get(0).getStockOnHand());
+    assertEquals(LocalDate.now().minusDays(5L), toDate(toSaveList.get(0).getOccurredDate()));
+    assertEquals(70, (int) toSaveList.get(1).getStockOnHand());
+    assertEquals(LocalDate.now().minusDays(3L), toDate(toSaveList.get(1).getOccurredDate()));
+    assertEquals(80, (int) toSaveList.get(2).getStockOnHand());
+    assertEquals(LocalDate.now().minusDays(1L), toDate(toSaveList.get(2).getOccurredDate()));
   }
 
   // test case, physical inventory 100, move in 40, issue 30, move out 20, receive 10
@@ -133,16 +132,16 @@ public class CalculatedStockOnHandByLocationServiceTest {
 
     // then
     assertEquals(5, toSaveList.size());
-    assertEquals(100, (int) toSaveList.get(0).getStockonhand());
-    assertEquals(LocalDate.now().minusDays(5L), toDate(toSaveList.get(0).getOccurreddate()));
-    assertEquals(140, (int) toSaveList.get(1).getStockonhand());
-    assertEquals(LocalDate.now().minusDays(4L), toDate(toSaveList.get(1).getOccurreddate()));
-    assertEquals(110, (int) toSaveList.get(2).getStockonhand());
-    assertEquals(LocalDate.now().minusDays(3L), toDate(toSaveList.get(2).getOccurreddate()));
-    assertEquals(90, (int) toSaveList.get(3).getStockonhand());
-    assertEquals(LocalDate.now().minusDays(2L), toDate(toSaveList.get(3).getOccurreddate()));
-    assertEquals(100, (int) toSaveList.get(4).getStockonhand());
-    assertEquals(LocalDate.now().minusDays(1L), toDate(toSaveList.get(4).getOccurreddate()));
+    assertEquals(100, (int) toSaveList.get(0).getStockOnHand());
+    assertEquals(LocalDate.now().minusDays(5L), toDate(toSaveList.get(0).getOccurredDate()));
+    assertEquals(140, (int) toSaveList.get(1).getStockOnHand());
+    assertEquals(LocalDate.now().minusDays(4L), toDate(toSaveList.get(1).getOccurredDate()));
+    assertEquals(110, (int) toSaveList.get(2).getStockOnHand());
+    assertEquals(LocalDate.now().minusDays(3L), toDate(toSaveList.get(2).getOccurredDate()));
+    assertEquals(90, (int) toSaveList.get(3).getStockOnHand());
+    assertEquals(LocalDate.now().minusDays(2L), toDate(toSaveList.get(3).getOccurredDate()));
+    assertEquals(100, (int) toSaveList.get(4).getStockOnHand());
+    assertEquals(LocalDate.now().minusDays(1L), toDate(toSaveList.get(4).getOccurredDate()));
   }
 
   private List<StockCardLocationMovementLineItem> buildMovement() {

@@ -34,7 +34,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
@@ -51,7 +50,6 @@ import org.openlmis.stockmanagement.repository.CalculatedStockOnHandRepository;
 import org.openlmis.stockmanagement.repository.StockCardLineItemRepository;
 import org.openlmis.stockmanagement.service.referencedata.OrderableReferenceDataService;
 import org.openlmis.stockmanagement.util.Message;
-
 import org.siglus.siglusapi.domain.CalculatedStockOnHandByLocation;
 import org.siglus.siglusapi.domain.StockCardLineItemExtension;
 import org.siglus.siglusapi.domain.StockCardLocationMovementLineItem;
@@ -119,7 +117,7 @@ public class CalculatedStocksOnHandByLocationService {
       return;
     }
     // must have same OccurredDate
-    LocalDate date = toSaveList.get(0).getOccurreddate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+    LocalDate date = toSaveList.get(0).getOccurredDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
     List<UUID> stockCardIds = toSaveList.stream()
             .map(CalculatedStockOnHandByLocation::getStockCardId).collect(Collectors.toList());
     Map<UUID, UUID> stockCardIdToId = calculatedStocksOnHandRepository
@@ -240,8 +238,8 @@ public class CalculatedStocksOnHandByLocationService {
     ZoneId zoneId = ZoneId.systemDefault();
     return CalculatedStockOnHandByLocation.builder()
         .stockCardId(stockCard.getId())
-        .occurreddate(Date.from(lineItem.getOccurredDate().atStartOfDay(zoneId).toInstant()))
-        .stockonhand(stockOnHand)
+        .occurredDate(Date.from(lineItem.getOccurredDate().atStartOfDay(zoneId).toInstant()))
+        .stockOnHand(stockOnHand)
         .locationCode(extension == null ? locationCode : extension.getLocationCode())
         .area(extension == null ? area : extension.getArea())
         .build();
@@ -293,7 +291,7 @@ public class CalculatedStocksOnHandByLocationService {
         .findPreviousLocationStockOnHands(stockCardIds, occurredDate).stream()
         .collect(toMap(calculatedStockOnHand ->
                         calculatedStockOnHand.getStockCardId().toString() + calculatedStockOnHand.getLocationCode(),
-            CalculatedStockOnHandByLocation::getStockonhand, (stockOnHand1, stockOnHand2) -> stockOnHand1));
+            CalculatedStockOnHandByLocation::getStockOnHand, (stockOnHand1, stockOnHand2) -> stockOnHand1));
   }
 
   private Map<StockCard, List<StockCardLineItem>> mapStockCardsWithLineItems(
