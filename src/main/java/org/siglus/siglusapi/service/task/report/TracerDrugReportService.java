@@ -127,7 +127,8 @@ public class TracerDrugReportService {
     Map<String, List<TracerDrugExcelDto>> tracerDrugMap = tracerDrugExcelInfo.stream()
         .collect(Collectors.groupingBy(o -> getUniqueKey(o.getFacilityCode(), o.getProductCode())));
 
-    int[][] colorArrays = new int[tracerDrugMap.size()][tracerDrugMap.values().stream().findFirst().get().size()];
+    int[][] colorArrays = new int[tracerDrugMap.size()][tracerDrugMap.values().stream()
+        .findFirst().orElseThrow(IllegalStateException::new).size()];
     int[][] legendaColorArrays = new int[4][1];
     for (int i = 0; i < 4; i++) {
       legendaColorArrays[i][0] = i + 1;
@@ -217,7 +218,7 @@ public class TracerDrugReportService {
         .values()
         .stream()
         .findFirst()
-        .get()
+        .orElseThrow(IllegalStateException::new)
         .stream()
         .sorted(Comparator.comparing(
             TracerDrugExcelDto::getComputationTime))

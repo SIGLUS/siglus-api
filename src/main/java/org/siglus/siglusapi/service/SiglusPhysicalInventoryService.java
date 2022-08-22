@@ -626,8 +626,7 @@ public class SiglusPhysicalInventoryService {
       option = LocationManagementOption.fromString(optionString);
     }
     PhysicalInventoryDto allProductPhysicalInventoryDto = createNewDraftForAllProducts(physicalInventoryDto, option);
-    allProductPhysicalInventoryDto = getPhysicalInventoryWithLineItemForAllProduct(allProductPhysicalInventoryDto,
-        initialPhysicalInventory);
+    getPhysicalInventoryWithLineItemForAllProduct(allProductPhysicalInventoryDto, initialPhysicalInventory);
     splitPhysicalInventory(allProductPhysicalInventoryDto, splitNum);
     return allProductPhysicalInventoryDto;
   }
@@ -978,35 +977,12 @@ public class SiglusPhysicalInventoryService {
         .orElse(null);
   }
 
-  private boolean compareTwoId(UUID oneId, UUID secondId) {
-    return oneId == null ? oneId == secondId : oneId.equals(secondId);
-  }
-
   private PhysicalInventoryLineItemDto getMatchedLineItem(PhysicalInventoryDto inventoryDto,
                                                           PhysicalInventoryLineItemDto lineItem) {
     return inventoryDto.getLineItems().stream()
             .filter(itemDto -> Objects.equals(itemDto.getId(), lineItem.getId()))
             .findFirst()
             .orElse(null);
-  }
-
-  private String getFreeTextByInput(PhysicalInventoryDto inventoryDto,
-      PhysicalInventoryLineItemDto lineItem) {
-    PhysicalInventoryLineItemDto lineItemDto = inventoryDto.getLineItems().stream()
-        .filter(itemDto -> itemDto.getLotId() == lineItem.getLotId()
-            && itemDto.getOrderableId() == lineItem.getOrderableId())
-        .findFirst()
-        .orElse(null);
-    return lineItemDto == null ? null : lineItemDto.getReasonFreeText();
-  }
-
-  private String getFreeTextByExtension(List<PhysicalInventoryLineItemsExtension> extensions,
-      PhysicalInventoryLineItemDto lineItem) {
-    if (extensions.isEmpty()) {
-      return null;
-    }
-    PhysicalInventoryLineItemsExtension extension = getExtension(extensions, lineItem);
-    return extension == null ? null : extension.getReasonFreeText();
   }
 
   private PhysicalInventoryDto getResultInventory(List<PhysicalInventoryDto> inventories,

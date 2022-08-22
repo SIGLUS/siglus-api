@@ -17,7 +17,10 @@ package org.siglus.siglusapi.util;
 
 import java.util.ArrayList;
 import java.util.List;
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
 
+@RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 public class CustomListSortHelper {
 
   public static <T> List<List<T>> averageAssign(List<T> source, int n) {

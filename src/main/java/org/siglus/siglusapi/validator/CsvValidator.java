@@ -73,11 +73,10 @@ public class CsvValidator {
       duplicateRows.add(rowNumber);
       locationCodeToDuplicateRowMap.put(locationCode, duplicateRows);
     });
-
-    for (String locationCode : locationCodeToDuplicateRowMap.keySet()) {
-      if (locationCodeToDuplicateRowMap.get(locationCode).size() > 1) {
+    for (final Map.Entry<String, List<Long>> rowEntry : locationCodeToDuplicateRowMap.entrySet()) {
+      if (rowEntry.getValue().size() > 1) {
         throw new BusinessDataException(new Message(CsvUploadMessageKeys.ERROR_DUPLICATE_LOCATION_CODE,
-            locationCodeToDuplicateRowMap.get(locationCode).toString()), ERROR_BUSINESS_CODE);
+            locationCodeToDuplicateRowMap.get(rowEntry.getKey()).toString()), ERROR_BUSINESS_CODE);
       }
     }
 
