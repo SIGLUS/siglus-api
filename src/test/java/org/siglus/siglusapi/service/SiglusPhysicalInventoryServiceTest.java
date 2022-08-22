@@ -296,17 +296,15 @@ public class SiglusPhysicalInventoryServiceTest {
         .reasonFreeText("freeText")
         .build();
     PhysicalInventoryDto physicalInventoryDto = PhysicalInventoryDto.builder()
+        .id(inventoryOne)
         .programId(programIdOne)
         .facilityId(facilityId)
         .lineItems(newArrayList(lineItemDtoOne, lineItemDtoTwo))
         .build();
     when(inventoryController.searchPhysicalInventory(programIdOne, facilityId,
         true))
-        .thenReturn(makeResponseEntity(newArrayList(PhysicalInventoryDto.builder()
-            .programId(programIdOne)
-            .facilityId(facilityId)
-            .build()
-        )));
+        .thenReturn(makeResponseEntity(newArrayList(physicalInventoryDto)));
+    when(inventoryController.getPhysicalInventory(inventoryOne)).thenReturn(physicalInventoryDto);
     PhysicalInventoryLineItemsExtension extensionOne = PhysicalInventoryLineItemsExtension.builder()
         .orderableId(orderableId)
         .build();
@@ -542,15 +540,16 @@ public class SiglusPhysicalInventoryServiceTest {
         .orderableId(orderableIdTwo)
         .programId(programIdOne)
         .build();
-    when(inventoryController.searchPhysicalInventory(programIdOne, facilityId,
-        true))
-        .thenReturn(makeResponseEntity(newArrayList(PhysicalInventoryDto.builder()
+    PhysicalInventoryDto physicalInventoryDto = PhysicalInventoryDto.builder()
             .id(inventoryOne)
             .programId(programIdOne)
             .lineItems(newArrayList(lineItemDtoOne, lineItemDtoTwo))
             .facilityId(facilityId)
-            .build()
-        )));
+            .build();
+    when(inventoryController.searchPhysicalInventory(programIdOne, facilityId,
+        true))
+        .thenReturn(makeResponseEntity(newArrayList(physicalInventoryDto)));
+    when(siglusPhysicalInventoryService.getPhysicalInventory(inventoryOne)).thenReturn(physicalInventoryDto);
     PhysicalInventoryLineItemsExtension extensionOne = PhysicalInventoryLineItemsExtension.builder()
         .physicalInventoryLineItemId(lineItemId1)
         .lotId(null)
@@ -853,7 +852,8 @@ public class SiglusPhysicalInventoryServiceTest {
     StockCardSummaryV2Dto stockCardSummaryV2Dto = new StockCardSummaryV2Dto();
     stockCardSummaryV2Dto.setCanFulfillForMe(Collections.singleton(canFulfillForMeEntryDtos));
     MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
-    PhysicalInventoryDto physicalInventoryDto = PhysicalInventoryDto.builder().facilityId(facilityId)
+    PhysicalInventoryDto physicalInventoryDto = PhysicalInventoryDto.builder()
+        .facilityId(facilityId)
         .programId(programId).build();
     parameters.set(FACILITY_ID, String.valueOf(physicalInventoryDto.getFacilityId()));
     parameters.set(PROGRAM_ID, String.valueOf(physicalInventoryDto.getProgramId()));
@@ -908,7 +908,7 @@ public class SiglusPhysicalInventoryServiceTest {
         .facilityId(facilityId)
         .lineItems(Collections.singletonList(expectedPhysicalInventoryLineItem))
         .build();
-
+    when(inventoryController.getPhysicalInventory(physicalInventoryId)).thenReturn(expectedPhysicalInventoryDto);
     // when
     PhysicalInventoryDto returnedPhysicalInventoryDto = siglusPhysicalInventoryService
         .createAndSpiltNewDraftForOneProgram(physicalInventoryDto, 1, null);
