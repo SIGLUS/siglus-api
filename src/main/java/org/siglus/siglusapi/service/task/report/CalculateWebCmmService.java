@@ -187,14 +187,17 @@ public class CalculateWebCmmService {
     Set<LocalDate> hasStockOutPeriodStarDate = Sets.newHashSet();
     for (ProcessingPeriod period : upToNowAllPeriods) {
       List<StockOnHandDto> curPeriodStockOnHandDtos = periodStartDateToStockOnHandDtos.get(period.getStartDate());
-      if (CollectionUtils.isEmpty(curPeriodStockOnHandDtos) && soh.equals(STOCK_OUT_QUANTITY)) {
-        hasStockOutPeriodStarDate.add(period.getStartDate());
-      } else if (isStockOutExisted(curPeriodStockOnHandDtos)) {
+      if (currentPeriodNoStockOnHandAndLastIsZero(soh, curPeriodStockOnHandDtos)
+          || isStockOutExisted(curPeriodStockOnHandDtos)) {
         hasStockOutPeriodStarDate.add(period.getStartDate());
       }
       soh = CollectionUtils.isEmpty(curPeriodStockOnHandDtos) ? soh : getLastStockOnHand(curPeriodStockOnHandDtos);
     }
     return hasStockOutPeriodStarDate;
+  }
+
+  private boolean currentPeriodNoStockOnHandAndLastIsZero(Long soh, List<StockOnHandDto> curPeriodStockOnHandDtos) {
+    return CollectionUtils.isEmpty(curPeriodStockOnHandDtos) && soh.equals(STOCK_OUT_QUANTITY);
   }
 
   private boolean isStockOutExisted(List<StockOnHandDto> stockOnHandDtos) {
@@ -226,7 +229,7 @@ public class CalculateWebCmmService {
       }
       pointPeriodStartDate = pointPeriodStartDate.minusMonths(1);
     }
-    return totalIssueQuantity * 1d / usedPeriodIssueCount;
+    return usedPeriodIssueCount == 0 ? 0d : totalIssueQuantity * 1d / usedPeriodIssueCount;
   }
 
   private Long getIssueQuantity(Map<LocalDate, Long> periodStartDateToIssueQuantity, LocalDate periodStartDate,

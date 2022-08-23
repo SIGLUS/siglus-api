@@ -16,6 +16,7 @@
 package org.siglus.siglusapi.service;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
@@ -44,7 +45,7 @@ public class StockMovementService {
     PeriodOfProductMovements productMovements =
         stockManagementRepository.getAllProductMovements(facilityId, orderableIds, since, till);
     if (productMovements == null) {
-      return null;
+      return new ArrayList<>();
     }
     return simplifyStockMovementResponse(productMovements);
   }

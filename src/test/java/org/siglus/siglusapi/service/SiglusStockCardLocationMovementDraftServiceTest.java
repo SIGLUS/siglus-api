@@ -23,7 +23,6 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_MOVEMENT_DRAFT_EXISTS;
-import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_MOVEMENT_QUANTITY_MORE_THAN_STOCK_ON_HAND;
 
 import java.util.Collections;
 import java.util.List;
@@ -40,7 +39,6 @@ import org.siglus.siglusapi.domain.StockCardLocationMovementDraft;
 import org.siglus.siglusapi.dto.StockCardLocationMovementDraftDto;
 import org.siglus.siglusapi.dto.StockCardLocationMovementDraftLineItemDto;
 import org.siglus.siglusapi.dto.UserDto;
-import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.StockCardLocationMovementDraftRepository;
 import org.siglus.siglusapi.util.OperatePermissionService;
@@ -173,26 +171,5 @@ public class SiglusStockCardLocationMovementDraftServiceTest {
 
     service.deleteMovementDraft(movementDraftId);
     verify(stockCardLocationMovementDraftRepository).delete(movementDraft);
-  }
-
-  @Test
-  public void shouldThrowExceptionWhenQuantityMoreThanStockOnHand() {
-    exception.expect(BusinessDataException.class);
-    exception.expectMessage(containsString(ERROR_MOVEMENT_QUANTITY_MORE_THAN_STOCK_ON_HAND));
-
-    StockCardLocationMovementDraftLineItemDto lineItemDto = StockCardLocationMovementDraftLineItemDto.builder()
-        .orderableId(orderableId)
-        .lotId(lotId)
-        .srcArea("A")
-        .srcLocationCode("AA25E")
-        .quantity(40)
-        .stockOnHand(30)
-        .build();
-    movementDraftDto.setLineItems(newArrayList(lineItemDto));
-
-    doNothing().when(stockCardLocationMovementDraftValidator)
-        .validateMovementDraftAndLineItems(movementDraftDto, movementDraftId);
-
-    service.updateMovementDraft(movementDraftDto, movementDraftId);
   }
 }

@@ -28,9 +28,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.siglus.siglusapi.localmachine.Event;
-import org.siglus.siglusapi.localmachine.eventstore.EventRecord;
-import org.siglus.siglusapi.localmachine.eventstore.EventRecordRepository;
-import org.siglus.siglusapi.localmachine.eventstore.PayloadSerializer;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
 
@@ -59,11 +56,10 @@ public class EventStore {
   }
 
   public void confirmEventsByWeb(List<Event> confirmedEvents) {
-    log.info(
-        "mark as online web confirmed, events:{}",
-        confirmedEvents.stream().map(Event::getId).collect(Collectors.toList()));
-    repository.updateOnlineWebSyncedToTrueByIds(
-        confirmedEvents.stream().map(Event::getId).collect(Collectors.toList()));
+    confirmedEvents.forEach(it -> it.setOnlineWebSynced(true));
+    List<UUID> eventIds = confirmedEvents.stream().map(Event::getId).collect(Collectors.toList());
+    log.info("mark as online web confirmed, events:{}", eventIds);
+    repository.updateOnlineWebSyncedToTrueByIds(eventIds);
   }
 
   @Transactional(TxType.REQUIRES_NEW)

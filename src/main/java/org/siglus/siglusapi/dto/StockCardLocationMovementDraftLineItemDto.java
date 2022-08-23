@@ -38,7 +38,7 @@ public class StockCardLocationMovementDraftLineItemDto {
   private String productName;
   private UUID lotId;
   private String lotCode;
-  private boolean isKit;
+  private Boolean isKit;
   private String srcArea;
   private String srcLocationCode;
   private String destArea;

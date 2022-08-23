@@ -36,6 +36,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.lang.BooleanUtils;
@@ -132,12 +133,11 @@ public class SiglusAdminstrationServiceTest {
   private static final String ZONE = "A";
   private static final String RACK = "A";
   private static final String BARCODE = "AA25%";
-  private static final int BIN = 25;
+  private static final String BIN = "25";
   private static final String LEVEL = "A";
   private static final String csvInput =
-      "Location Code,Area,Zone,Rack,Barcode,Bin,Level\n"
+      "Código de localização,Área,Zona,Prateleira,Código de barras,Caixa,Nível\n"
           + "AA25A,Armazem Principal,A,A,AA25%,25,A\n";
-  private static final String LOCATION_MANAGEMENT_TAB = "locationManagement";
 
   @Test
   public void searchForFacilitiesWithIsAndroid() {
@@ -263,12 +263,12 @@ public class SiglusAdminstrationServiceTest {
     when(siglusFacilityReferenceDataService.findOneFacility(facilityId))
             .thenReturn(mockFacilityDtoPage().getContent().get(0));
     SiglusReportTypeDto reportTypeDto = SiglusReportTypeDto.builder()
-            .facilityId(facilityId)
-            .programCode(programCode)
-            .startDate(LocalDate.now())
-            .build();
-    SiglusFacilityDto mock = mockSiglusFacilityDto(false);
-    mock.setReportTypes(Arrays.asList(reportTypeDto));
+        .facilityId(facilityId)
+        .programCode(programCode)
+        .startDate(LocalDate.now())
+        .build();
+    SiglusFacilityDto mock = mockSiglusFacilityDto(false, null);
+    mock.setReportTypes(Collections.singletonList(reportTypeDto));
     SiglusReportType reportType = SiglusReportType.from(reportTypeDto);
     reportType.setStartDate(reportTypeDto.getStartDate().plusDays(1L));
     when(siglusReportTypeRepository.findByFacilityId(facilityId)).thenReturn(Arrays.asList(reportType));
@@ -276,7 +276,7 @@ public class SiglusAdminstrationServiceTest {
             .thenReturn(LocalDate.now().plusDays(2L));
 
     // when
-    siglusAdministrationsService.updateFacility(facilityId, mock, null);
+    siglusAdministrationsService.updateFacility(facilityId, mock);
   }
 
   @Test
@@ -290,7 +290,7 @@ public class SiglusAdminstrationServiceTest {
 
     // when
     FacilitySearchResultDto searchResultDto = siglusAdministrationsService.updateFacility(facilityId,
-        mockSiglusFacilityDto(true), null);
+        mockSiglusFacilityDto(true, null));
 
     // then
     assertTrue(searchResultDto.getEnableLocationManagement());
@@ -306,7 +306,7 @@ public class SiglusAdminstrationServiceTest {
 
     // when
     FacilitySearchResultDto searchResultDto = siglusAdministrationsService.updateFacility(facilityId,
-        mockSiglusFacilityDto(false), null);
+        mockSiglusFacilityDto(false, null));
 
     // then
     assertFalse(searchResultDto.getEnableLocationManagement());
@@ -369,7 +369,7 @@ public class SiglusAdminstrationServiceTest {
   @Test
   public void shouldCreateNewAndroidFacility() {
     // given
-    SiglusFacilityDto siglusFacilityDto = mockSiglusFacilityDto(false);
+    SiglusFacilityDto siglusFacilityDto = mockSiglusFacilityDto(false, null);
     FacilityDto facilityDto = mockFacilityDto();
     when(siglusFacilityReferenceDataService.createFacility(siglusFacilityDto)).thenReturn(facilityDto);
     when(siglusFacilityReferenceDataService.findOneFacility(facilityId)).thenReturn(facilityDto);
@@ -389,10 +389,10 @@ public class SiglusAdminstrationServiceTest {
     when(calculatedStockOnHandRepository.findPreviousStockOnHands(Lists.newArrayList(stockCardId), LocalDate.now()))
         .thenReturn(Lists.newArrayList(mockCalculatedStockOnHand()));
     when(authenticationHelper.getCurrentUser()).thenReturn(mockUserDto());
-    SiglusFacilityDto siglusFacilityDto = mockSiglusFacilityDto(true);
+    SiglusFacilityDto siglusFacilityDto = mockSiglusFacilityDto(true, "locationManagement");
 
     // when
-    siglusAdministrationsService.updateFacility(facilityId, siglusFacilityDto, LOCATION_MANAGEMENT_TAB);
+    siglusAdministrationsService.updateFacility(facilityId, siglusFacilityDto);
 
     // then
     verify(stockCardLocationMovementLineItemRepository, times(0))
@@ -409,12 +409,12 @@ public class SiglusAdminstrationServiceTest {
     when(calculatedStockOnHandRepository.findPreviousStockOnHands(Lists.newArrayList(stockCardId), LocalDate.now()))
         .thenReturn(Lists.newArrayList(mockCalculatedStockOnHand()));
     when(authenticationHelper.getCurrentUser()).thenReturn(mockUserDto());
-    SiglusFacilityDto siglusFacilityDto = mockSiglusFacilityDto(false);
+    SiglusFacilityDto siglusFacilityDto = mockSiglusFacilityDto(false, "locationManagement");
     when(calculatedStocksOnHandLocationsRepository.findLatestLocationSohByStockCardIds(
         Lists.newArrayList(stockCardId))).thenReturn(Lists.newArrayList(mockCalculatedStocksOnHandLocations()));
 
     // when
-    siglusAdministrationsService.updateFacility(facilityId, siglusFacilityDto, LOCATION_MANAGEMENT_TAB);
+    siglusAdministrationsService.updateFacility(facilityId, siglusFacilityDto);
 
     // then
     verify(stockCardLocationMovementLineItemRepository, times(0))
@@ -427,11 +427,11 @@ public class SiglusAdminstrationServiceTest {
     when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(null);
     when(stockCardRepository.countByFacilityId(facilityId)).thenReturn(0);
     when(siglusFacilityReferenceDataService.findOneFacility(facilityId)).thenReturn(mockFacilityDto());
-    SiglusFacilityDto siglusFacilityDto = mockSiglusFacilityDto(true);
+    SiglusFacilityDto siglusFacilityDto = mockSiglusFacilityDto(true, "locationManagement");
     when(authenticationHelper.getCurrentUser()).thenReturn(mockUserDto());
 
     // when
-    siglusAdministrationsService.updateFacility(facilityId, siglusFacilityDto, LOCATION_MANAGEMENT_TAB);
+    siglusAdministrationsService.updateFacility(facilityId, siglusFacilityDto);
 
     // then
     verify(stockCardLocationMovementLineItemRepository, times(0))
@@ -478,13 +478,14 @@ public class SiglusAdminstrationServiceTest {
     return facilityExtension;
   }
 
-  private SiglusFacilityDto mockSiglusFacilityDto(boolean enableLocationManagement) {
+  private SiglusFacilityDto mockSiglusFacilityDto(boolean enableLocationManagement, String tab) {
     SiglusFacilityDto siglusFacilityDto = new SiglusFacilityDto();
     siglusFacilityDto.setId(facilityId);
     siglusFacilityDto.setEnableLocationManagement(true);
     siglusFacilityDto.setIsAndroidDevice(true);
     siglusFacilityDto.setReportTypes(Collections.emptyList());
     siglusFacilityDto.setEnableLocationManagement(enableLocationManagement);
+    siglusFacilityDto.setTab(tab);
     return siglusFacilityDto;
   }
 

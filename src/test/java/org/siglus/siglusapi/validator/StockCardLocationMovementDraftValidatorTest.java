@@ -15,18 +15,13 @@
 
 package org.siglus.siglusapi.validator;
 
-import static com.google.common.collect.Lists.newArrayList;
-import static org.mockito.Mockito.when;
-
 import java.util.UUID;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.siglus.siglusapi.domain.StockCardLocationMovementDraft;
 import org.siglus.siglusapi.dto.StockCardLocationMovementDraftDto;
-import org.siglus.siglusapi.dto.StockCardLocationMovementDraftLineItemDto;
 import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.StockCardLocationMovementDraftRepository;
@@ -46,8 +41,6 @@ public class StockCardLocationMovementDraftValidatorTest {
       .builder()
       .id(movementDraftId)
       .build();
-  private final StockCardLocationMovementDraft movementDraft = StockCardLocationMovementDraft.builder().build();
-
 
   @Test(expected = ValidationMessageException.class)
   public void shouldThrowExceptionWhenValidateEmptyMovementDraftIfDraftIdIsNull() {
@@ -96,22 +89,5 @@ public class StockCardLocationMovementDraftValidatorTest {
   @Test(expected = ValidationMessageException.class)
   public void shouldThrowExceptionWhenMovementDraftDtoIdNotEqualsId() {
     stockCardLocationMovementDraftValidator.validateMovementDraftAndLineItems(movementDraftDto, id);
-  }
-
-  @Test(expected = ValidationMessageException.class)
-  public void shouldThrowExceptionWhenMovementDraftLineItemsIsEmpty() {
-    when(stockCardLocationMovementDraftRepository.findOne(movementDraftId)).thenReturn(movementDraft);
-    stockCardLocationMovementDraftValidator.validateMovementDraftAndLineItems(movementDraftDto, movementDraftId);
-  }
-
-  @Test(expected = ValidationMessageException.class)
-  public void shouldThrowExceptionWhenMovementDraftLineItemsOrderablesIdHasNull() {
-    StockCardLocationMovementDraftLineItemDto lineItemDto = StockCardLocationMovementDraftLineItemDto
-        .builder()
-        .orderableId(null)
-        .build();
-    movementDraftDto.setLineItems(newArrayList(lineItemDto));
-    when(stockCardLocationMovementDraftRepository.findOne(movementDraftId)).thenReturn(movementDraft);
-    stockCardLocationMovementDraftValidator.validateMovementDraftAndLineItems(movementDraftDto, movementDraftId);
   }
 }

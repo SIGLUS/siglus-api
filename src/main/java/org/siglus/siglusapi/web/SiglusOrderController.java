@@ -27,6 +27,7 @@ import org.openlmis.fulfillment.web.util.OrderDto;
 import org.siglus.siglusapi.dto.OrderStatusDto;
 import org.siglus.siglusapi.dto.SiglusOrderDto;
 import org.siglus.siglusapi.service.SiglusOrderService;
+import org.siglus.siglusapi.web.response.BasicOrderExtensionResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -65,7 +66,7 @@ public class SiglusOrderController {
   }
 
   @GetMapping
-  public Page<BasicOrderDto> searchOrders(OrderSearchParams params, Pageable pageable) {
+  public Page<BasicOrderExtensionResponse> searchOrders(OrderSearchParams params, Pageable pageable) {
     return siglusOrderService.searchOrdersWithSubDraftStatus(params, pageable);
   }
 

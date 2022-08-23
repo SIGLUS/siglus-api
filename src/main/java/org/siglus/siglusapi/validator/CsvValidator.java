@@ -37,9 +37,9 @@ import org.springframework.stereotype.Component;
 @Component
 public class CsvValidator {
   private static final String ERROR_BUSINESS_CODE = "upload csv failed";
-  private static final List<String> mandatoryColumnNames = Arrays.asList(LocationConstants.LOCATION_CODE,
-      LocationConstants.AREA, LocationConstants.ZONE, LocationConstants.RACK,
-      LocationConstants.BARCODE, LocationConstants.BIN, LocationConstants.LEVEL);
+  private static final List<String> mandatoryColumnNames = Arrays.asList(LocationConstants.PORTUGUESE_LOCATION_CODE,
+      LocationConstants.PORTUGUESE_AREA, LocationConstants.PORTUGUESE_ZONE, LocationConstants.PORTUGUESE_RACK,
+      LocationConstants.PORTUGUESE_BARCODE, LocationConstants.PORTUGUESE_BIN, LocationConstants.PORTUGUESE_LEVEL);
 
   public void validateCsvHeaders(CSVParser csvParser) {
     Map<String, Integer> csvHeaderToColumnMap = csvParser.getHeaderMap();
@@ -51,13 +51,14 @@ public class CsvValidator {
 
   public void validateNullRow(CSVRecord eachRow) {
     long row = eachRow.getRecordNumber();
-    validateEachColumn(eachRow.get(LocationConstants.LOCATION_CODE), LocationConstants.LOCATION_CODE, row);
-    validateEachColumn(eachRow.get(LocationConstants.AREA), LocationConstants.AREA, row);
-    validateEachColumn(eachRow.get(LocationConstants.ZONE), LocationConstants.ZONE, row);
-    validateEachColumn(eachRow.get(LocationConstants.RACK), LocationConstants.RACK, row);
-    validateEachColumn(eachRow.get(LocationConstants.BARCODE), LocationConstants.BARCODE, row);
-    validateEachColumn(eachRow.get(LocationConstants.BIN), LocationConstants.BIN, row);
-    validateEachColumn(eachRow.get(LocationConstants.LEVEL), LocationConstants.LEVEL, row);
+    validateEachColumn(eachRow
+        .get(LocationConstants.PORTUGUESE_LOCATION_CODE), LocationConstants.PORTUGUESE_LOCATION_CODE, row);
+    validateEachColumn(eachRow.get(LocationConstants.PORTUGUESE_AREA), LocationConstants.PORTUGUESE_AREA, row);
+    validateEachColumn(eachRow.get(LocationConstants.PORTUGUESE_ZONE), LocationConstants.PORTUGUESE_ZONE, row);
+    validateEachColumn(eachRow.get(LocationConstants.PORTUGUESE_RACK), LocationConstants.PORTUGUESE_RACK, row);
+    validateEachColumn(eachRow.get(LocationConstants.PORTUGUESE_BARCODE), LocationConstants.PORTUGUESE_BARCODE, row);
+    validateEachColumn(eachRow.get(LocationConstants.PORTUGUESE_BIN), LocationConstants.PORTUGUESE_BIN, row);
+    validateEachColumn(eachRow.get(LocationConstants.PORTUGUESE_LEVEL), LocationConstants.PORTUGUESE_LEVEL, row);
   }
 
   public List<CSVRecord> validateDuplicateLocationCode(CSVParser csvParser) throws IOException {
@@ -65,7 +66,7 @@ public class CsvValidator {
     List<CSVRecord> records = csvParser.getRecords();
     records.forEach(eachRow -> {
       List<Long> duplicateRows = Lists.newArrayList();
-      String locationCode = eachRow.get(LocationConstants.LOCATION_CODE);
+      String locationCode = eachRow.get(LocationConstants.PORTUGUESE_LOCATION_CODE);
       long rowNumber = eachRow.getRecordNumber();
       if (locationCodeToDuplicateRowMap.containsKey(locationCode)) {
         duplicateRows = locationCodeToDuplicateRowMap.get(locationCode);

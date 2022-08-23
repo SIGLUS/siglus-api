@@ -460,7 +460,7 @@ public class SiglusProcessingPeriodServiceTest {
     when(siglusProgramService.getProgram(programId)).thenReturn(programDto);
     Collection<RequisitionPeriodDto> response =
         siglusProcessingPeriodService.getPeriods(programId, facilityId, true);
-    assertEquals(null, response);
+    assertEquals(new ArrayList<>(), response);
   }
 
   ;

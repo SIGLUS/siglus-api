@@ -351,7 +351,7 @@ public class SiglusPodService {
     int requisitionCount = getRequisitionCount(orderDto, realRequisitionId);
 
     StringBuilder fileName = new StringBuilder()
-        .append(orderDto.getEmergency() ? FILE_NAME_PREFIX_EMERGENCY : FILE_NAME_PREFIX_NORMAL)
+        .append(Boolean.TRUE.equals(orderDto.getEmergency()) ? FILE_NAME_PREFIX_EMERGENCY : FILE_NAME_PREFIX_NORMAL)
         .append(orderDto.getReceivingFacilityCode()).append(".")
         .append(dateFormat.format(orderDto.getPeriodEndDate())).append(".")
         .append(formatCount(requisitionCount));

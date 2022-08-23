@@ -148,7 +148,6 @@ public class FacilityNativeRepository extends BaseNativeRepository {
     params.addValue("programId", programId);
     String query = getQuery() + " WHERE sc.programid = :programId "
             + " AND sc.facilityid = :facilityId";
-    log.info(query);
     return namedJdbc.query(query, params, facilityStockCardDateDtoExtractor());
   }
 
@@ -170,7 +169,6 @@ public class FacilityNativeRepository extends BaseNativeRepository {
     }
     String query = getQuery() + " WHERE sc.programid = :programId "
         + " AND sc.orderableid in (:orderableIds)";
-    log.info(query);
     MapSqlParameterSource params = new MapSqlParameterSource();
     params.addValue("programId", viaProgramId);
     params.addValue("orderableIds", malariaAdditionalOrderableIds);
@@ -189,7 +187,6 @@ public class FacilityNativeRepository extends BaseNativeRepository {
     MapSqlParameterSource params = new MapSqlParameterSource();
     params.addValue("facilityId", facilityId);
     String query = getFacilityProgramPeriodScheduleQuery() + " WHERE rgm.facilityid = :facilityId";
-    log.info(query);
     return namedJdbc.query(query, params, facilityProgramPeriodScheduleDtoExtractor());
   }
 

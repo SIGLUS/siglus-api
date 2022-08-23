@@ -203,8 +203,8 @@ public class SiglusStockEventsService {
     enhanceStockCard(eventDto, stockEventId, location);
   }
 
-  private void enhanceStockCard(StockEventDto eventDto, UUID stockEventId, boolean location) {
-    if (location) {
+  private void enhanceStockCard(StockEventDto eventDto, UUID stockEventId, boolean isByLocation) {
+    if (isByLocation) {
       addStockCardLineItemLocation(eventDto);
     }
     addStockCardCreateTime(eventDto);

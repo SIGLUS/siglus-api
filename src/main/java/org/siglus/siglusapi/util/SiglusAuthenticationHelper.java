@@ -18,6 +18,7 @@ package org.siglus.siglusapi.util;
 import static org.siglus.siglusapi.constant.FieldConstants.SITE;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_USER_NOT_FOUND;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Optional;
@@ -83,7 +84,7 @@ public class SiglusAuthenticationHelper {
   public Collection<DetailedRoleAssignmentDto> getUserRightsAndRoles() {
     Optional<UUID> currentUserId = getCurrentUserId();
     if (Optional.empty().equals(currentUserId)) {
-      return null;
+      return new ArrayList<>();
     }
     return userService.getUserRightsAndRoles(getCurrentUserId().orElseThrow(() -> authenticateFail(null)));
   }

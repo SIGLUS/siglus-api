@@ -86,10 +86,10 @@ public class SiglusAdministrationControllerTest {
   @Test
   public void shouldSaveFacilityInfo() {
     // when
-    siglusAdministrationsController.updateFacility(facilityId, mockSiglusFacilityDto(), null);
+    siglusAdministrationsController.updateFacility(facilityId, mockSiglusFacilityDto());
 
     // then
-    verify(siglusAdministrationsService).updateFacility(facilityId, mockSiglusFacilityDto(), null);
+    verify(siglusAdministrationsService).updateFacility(facilityId, mockSiglusFacilityDto());
   }
 
   @Test

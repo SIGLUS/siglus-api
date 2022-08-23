@@ -28,4 +28,9 @@ public class PeriodConstants {
   public static final Code MONTH_SCHEDULE_CODE = code("M1");
 
   public static final Code REPORT_MONTH_SCHEDULE_CODE = code("M2");
+
+  public static final Code QUARTERLY_SCHEDULE_CODE = code("Q1");
+
+  public static final Code REPORT_QUARTERLY_SCHEDULE_CODE = code("Q2");
+
 }

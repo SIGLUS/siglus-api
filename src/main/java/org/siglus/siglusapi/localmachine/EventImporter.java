@@ -35,11 +35,8 @@ public abstract class EventImporter {
   }
 
   public void importEvents(List<Event> events) {
-    List<Event> acceptedEvents =
-        events.stream()
-            .peek(it -> it.setLocalReplayed(false))
-            .filter(this::accept)
-            .collect(Collectors.toList());
+    List<Event> acceptedEvents = events.stream().filter(this::accept).collect(Collectors.toList());
+    acceptedEvents.forEach(it -> it.setLocalReplayed(false));
     List<Event> newAdded = eventStore.importAllGetNewAdded(acceptedEvents);
     replay(newAdded);
   }
