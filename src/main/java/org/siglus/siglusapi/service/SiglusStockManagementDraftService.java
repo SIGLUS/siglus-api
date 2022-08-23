@@ -98,7 +98,6 @@ public class SiglusStockManagementDraftService {
     return StockManagementDraftDto.from(savedDraft);
   }
 
-  @Transactional
   public StockManagementDraftDto createNewSubDraft(StockManagementDraftDto dto) {
     log.info("create physical inventory subDraft");
     stockManagementDraftValidator.validateEmptyDraft(dto);
@@ -553,5 +552,12 @@ public class SiglusStockManagementDraftService {
     stockManagementDraftRepository.deleteAllByInitialDraftId(initialDraftId);
     log.info("delete initial draft with id: {}", initialDraftId);
     stockManagementInitialDraftsRepository.delete(initialDraftId);
+  }
+
+  public StockManagementDraftWithLocationDto createEmptyStockManagementDraftWithLocation(
+      StockManagementDraftWithLocationDto dto) {
+    StockManagementDraftDto draftDto = StockManagementDraftDto.from(dto);
+    StockManagementDraftDto subDraftDto = createNewSubDraft(draftDto);
+    return StockManagementDraftWithLocationDto.from(subDraftDto);
   }
 }

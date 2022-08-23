@@ -94,5 +94,12 @@ public class SiglusStockManagementDraftWithLocationController {
       @RequestBody StockManagementInitialDraftDto dto) {
     return stockManagementDraftService.createInitialDraft(dto);
   }
+
+  @PostMapping
+  @ResponseStatus(CREATED)
+  public StockManagementDraftWithLocationDto createEmptyStockManagementDraftWithLocation(
+      @RequestBody StockManagementDraftWithLocationDto dto) {
+    return stockManagementDraftService.createEmptyStockManagementDraftWithLocation(dto);
+  }
 }
 

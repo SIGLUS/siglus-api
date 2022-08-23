@@ -52,4 +52,10 @@ public class StockManagementDraftWithLocationDto extends StockManagementDraftBas
     }
     return draftDto;
   }
+
+  public static StockManagementDraftWithLocationDto from(StockManagementDraftDto subDraftDto) {
+    StockManagementDraftWithLocationDto draftWithLocationDto = new StockManagementDraftWithLocationDto();
+    BeanUtils.copyProperties(subDraftDto, draftWithLocationDto);
+    return draftWithLocationDto;
+  }
 }

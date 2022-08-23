@@ -420,6 +420,11 @@ traits:
         responses:
           200:
             description: success
+      post:
+        is: [ secured ]
+        responses:
+          201:
+            description: create empty subDraft with location
 
       /initial:
         get:
