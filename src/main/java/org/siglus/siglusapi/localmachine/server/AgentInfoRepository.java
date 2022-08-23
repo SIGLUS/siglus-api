@@ -13,19 +13,14 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.localmachine.android;
+package org.siglus.siglusapi.localmachine.server;
 
-import lombok.RequiredArgsConstructor;
-import org.siglus.siglusapi.service.android.MeService;
-import org.springframework.context.event.EventListener;
+import java.util.UUID;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
-@RequiredArgsConstructor
-public class AndroidRequisitionSyncedHandler {
-  private final MeService meService;
+@Repository
+public interface AgentInfoRepository extends JpaRepository<AgentInfo, UUID> {
 
-  @EventListener(value = {AndroidRequisitionSynced.class})
-  public void onAndroidRequisitionSynced(AndroidRequisitionSynced event) {
-    // FIXME: 2022/8/13 assume current user to the actual requestor, add retry strategy
-    meService.createRequisition(event.getRequest());
-  }
+  AgentInfo findOneByAgentIdAndFacilityId(UUID agentId, UUID facilityId);
 }

@@ -13,23 +13,31 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.localmachine.android;
+package org.siglus.siglusapi.localmachine.agent;
 
+import java.time.ZonedDateTime;
 import java.util.UUID;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.Table;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Getter;
-import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
+@Entity
+@Data
 @Builder
-@Getter
-public class AndroidRequisitionSynced {
-  private final UUID facilityId;
-  private final UUID userId;
-  private final RequisitionCreateRequest request;
-
-  public AndroidRequisitionSynced(UUID facilityId, UUID userId, RequisitionCreateRequest request) {
-    this.facilityId = facilityId;
-    this.userId = userId;
-    this.request = request;
-  }
+@AllArgsConstructor
+@NoArgsConstructor
+@Table(name = "registrations", schema = "localmachine")
+public class Registration {
+  @Id private UUID id;
+  private UUID agentId;
+  private UUID facilityId;
+  private String facilityCode;
+  private byte[] privateKey;
+  private byte[] publicKey;
+  private String activationCode;
+  private ZonedDateTime activatedAt;
 }

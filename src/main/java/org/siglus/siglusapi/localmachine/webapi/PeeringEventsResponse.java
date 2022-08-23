@@ -13,27 +13,19 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.localmachine.eventstore;
+package org.siglus.siglusapi.localmachine.webapi;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Matchers.anyString;
+import java.util.LinkedList;
+import java.util.List;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Builder.Default;
+import lombok.Data;
+import org.siglus.siglusapi.localmachine.Event;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
-
-@RunWith(MockitoJUnitRunner.class)
-public class EventStoreTest {
-  @InjectMocks private EventStore eventStore;
-  @Mock private EventRecordRepository repository;
-
-  @Test
-  public void shouldReturn0WhenGetNextGroupSeqGivenGroupNotExists() {
-    given(repository.getNextGroupSequenceNumber(anyString())).willReturn(null);
-    long nextGroupSeq = eventStore.nextGroupSequenceNumber("groupId");
-    assertThat(nextGroupSeq).isZero();
-  }
+@Builder
+@Data
+@AllArgsConstructor
+public class PeeringEventsResponse {
+  @Default private List<Event> events = new LinkedList<>();
 }

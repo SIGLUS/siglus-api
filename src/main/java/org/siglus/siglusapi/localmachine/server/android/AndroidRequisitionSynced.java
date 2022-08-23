@@ -13,22 +13,23 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.localmachine;
+package org.siglus.siglusapi.localmachine.server.android;
 
-import javax.transaction.Transactional;
-import net.javacrumbs.shedlock.core.LockProvider;
-import org.junit.runner.RunWith;
-import org.siglus.siglusapi.localmachine.eventstore.EventRecordRepository;
-import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.test.context.junit4.SpringRunner;
+import java.util.UUID;
+import lombok.Builder;
+import lombok.Getter;
+import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
 
-@RunWith(SpringRunner.class)
-@SpringBootTest(classes = {LocalMachineTestConfig.class})
-@Transactional
-public abstract class EventPublisherBaseTest {
-  @MockBean protected EventRecordRepository eventRecordRepository;
-  @MockBean protected SiglusAuthenticationHelper authenticationHelper;
-  @MockBean protected LockProvider lockProvider;
+@Builder
+@Getter
+public class AndroidRequisitionSynced {
+  private final UUID facilityId;
+  private final UUID userId;
+  private final RequisitionCreateRequest request;
+
+  public AndroidRequisitionSynced(UUID facilityId, UUID userId, RequisitionCreateRequest request) {
+    this.facilityId = facilityId;
+    this.userId = userId;
+    this.request = request;
+  }
 }

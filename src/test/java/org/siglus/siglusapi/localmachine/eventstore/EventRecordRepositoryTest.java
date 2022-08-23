@@ -21,11 +21,12 @@ import java.time.ZonedDateTime;
 import java.util.UUID;
 import javax.transaction.Transactional;
 import org.junit.Test;
+import org.siglus.siglusapi.localmachine.LocalMachineIntegrationTest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 
 @Transactional
-public class EventRecordRepositoryTest extends LocalMachineJpaBaseTest {
+public class EventRecordRepositoryTest extends LocalMachineIntegrationTest {
   @Autowired private EventRecordRepository eventRecordRepository;
 
   @Test

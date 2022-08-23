@@ -13,24 +13,19 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.localmachine;
+package org.siglus.siglusapi.localmachine.server.android;
 
-import java.util.List;
-import org.springframework.stereotype.Component;
+import lombok.RequiredArgsConstructor;
+import org.siglus.siglusapi.service.android.MeService;
+import org.springframework.context.event.EventListener;
 
-@Component
-public class OnlineWebClient {
+@RequiredArgsConstructor
+public class AndroidRequisitionSyncedHandler {
+  private final MeService meService;
 
-  public void sync(List<Event> events) {
-    // FIXME: 2022/8/14
-  }
-
-  public List<Event> exportPeeringEvents(String facilityCode) {
-    // FIXME: 2022/8/14
-    return null;
-  }
-
-  public void confirmReceived(String localFacilityId, List<Event> events) {
-    // FIXME: 2022/8/21
+  @EventListener(value = {AndroidRequisitionSynced.class})
+  public void onAndroidRequisitionSynced(AndroidRequisitionSynced event) {
+    // FIXME: 2022/8/13 assume current user to the actual requestor, add retry strategy
+    meService.createRequisition(event.getRequest());
   }
 }

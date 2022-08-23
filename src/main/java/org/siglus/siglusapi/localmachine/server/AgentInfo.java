@@ -13,27 +13,30 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.localmachine.eventstore;
+package org.siglus.siglusapi.localmachine.server;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Matchers.anyString;
+import java.time.ZonedDateTime;
+import java.util.UUID;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
-
-@RunWith(MockitoJUnitRunner.class)
-public class EventStoreTest {
-  @InjectMocks private EventStore eventStore;
-  @Mock private EventRecordRepository repository;
-
-  @Test
-  public void shouldReturn0WhenGetNextGroupSeqGivenGroupNotExists() {
-    given(repository.getNextGroupSequenceNumber(anyString())).willReturn(null);
-    long nextGroupSeq = eventStore.nextGroupSequenceNumber("groupId");
-    assertThat(nextGroupSeq).isZero();
-  }
+@Entity
+@Data
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
+@Table(name = "agents", schema = "localmachine")
+public class AgentInfo {
+  @Id private UUID id;
+  private UUID agentId;
+  private UUID facilityId;
+  private String facilityCode;
+  private byte[] publicKey;
+  private String activationCode;
+  private ZonedDateTime activatedAt;
 }
