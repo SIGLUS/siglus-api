@@ -15,21 +15,16 @@
 
 package org.siglus.siglusapi.validator;
 
-import static org.aspectj.util.LangUtil.isEmpty;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_FACILITY_ID_MISSING;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_MOVEMENT_DRAFT_ID_MISMATCH;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_MOVEMENT_DRAFT_ID_SHOULD_NULL;
-import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_MOVEMENT_DRAFT_LINE_ITEMS_MISSING;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_MOVEMENT_DRAFT_NOT_FOUND;
-import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_MOVEMENT_DRAFT_ORDERABLE_MISSING;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_PROGRAM_ID_MISSING;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_USER_ID_MISSING;
 
-import java.util.List;
 import java.util.UUID;
 import org.siglus.siglusapi.domain.StockCardLocationMovementDraft;
 import org.siglus.siglusapi.dto.StockCardLocationMovementDraftDto;
-import org.siglus.siglusapi.dto.StockCardLocationMovementDraftLineItemDto;
 import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.StockCardLocationMovementDraftRepository;
@@ -63,19 +58,6 @@ public class StockCardLocationMovementDraftValidator {
     }
     StockCardLocationMovementDraft movementDraft = stockCardLocationMovementDraftRepository.findOne(id);
     validateMovementDraft(movementDraft);
-    List<StockCardLocationMovementDraftLineItemDto> lineItems = movementDraftDto.getLineItems();
-    validateLineItems(lineItems);
-  }
-
-  private void validateLineItems(List<StockCardLocationMovementDraftLineItemDto> lineItems) {
-    if (isEmpty(lineItems)) {
-      throw new ValidationMessageException(ERROR_MOVEMENT_DRAFT_LINE_ITEMS_MISSING);
-    }
-
-    boolean orderableMissing = lineItems.stream().anyMatch(lineItem -> lineItem.getOrderableId() == null);
-    if (orderableMissing) {
-      throw new ValidationMessageException(ERROR_MOVEMENT_DRAFT_ORDERABLE_MISSING);
-    }
   }
 
   private void validateNotNull(Object field, String errorMessage) {

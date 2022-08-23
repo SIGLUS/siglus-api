@@ -17,7 +17,6 @@ package org.siglus.siglusapi.domain;
 
 import java.time.LocalDate;
 import java.util.UUID;
-import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
@@ -44,7 +43,6 @@ public class StockCardLocationMovementDraftLineItem extends BaseEntity {
   @JoinColumn(nullable = false)
   private StockCardLocationMovementDraft stockCardLocationMovementDraft;
 
-  @Column(nullable = false)
   private UUID orderableId;
   private String productCode;
   private String productName;
