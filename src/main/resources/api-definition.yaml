@@ -421,6 +421,18 @@ traits:
           200:
             description: success
 
+      /initial:
+        get:
+          is: [ secured ]
+          responses:
+            200:
+              description: GET initial draft with location
+        post:
+          is: [ secured ]
+          responses:
+            201:
+              description: create initial draft with location
+
     /draftsWithLocation/{id}:
       put:
         is: [ secured ]

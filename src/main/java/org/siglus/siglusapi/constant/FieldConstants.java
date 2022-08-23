@@ -86,7 +86,11 @@ public class FieldConstants {
 
   public static final String RECEIVE = "receive";
 
+  public static final String RECEIVE_WITH_LOCATION = "receiveWithLocation";
+
   public static final String ISSUE = "issue";
+
+  public static final String ISSUE_WITH_LOCATION = "issueWithLocation";
 
   public static final String CAPITAL_RECEIVE = "RECEIVE";
 
