@@ -25,6 +25,7 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -326,13 +327,13 @@ public class SiglusAdministrationsService {
   }
 
   private void assignToVirtualLocation(SiglusFacilityDto siglusFacilityDto) {
-    UUID userId = authenticationHelper.getCurrentUser().getId();
-    List<StockCard> stockCards = stockCardRepository.findByFacilityIdIn(siglusFacilityDto.getId());
-    List<UUID> stockCardIds = stockCards.stream().map(StockCard::getId).collect(Collectors.toList());
     if (!emptyStockCardCount(siglusFacilityDto.getId())) {
+      UUID userId = authenticationHelper.getCurrentUser().getId();
+      List<StockCard> stockCards = stockCardRepository.findByFacilityIdIn(siglusFacilityDto.getId());
+      List<UUID> stockCardIds = stockCards.stream().map(StockCard::getId).collect(Collectors.toList());
       if (BooleanUtils.isTrue(siglusFacilityDto.getEnableLocationManagement())) {
-        Map<UUID, Integer> stockCardIdToStockOnHandMap = findStockCardIdsHasStockOnHandOnLot(stockCardIds);
-        assignNewVirtualLocations(stockCardIdToStockOnHandMap, userId);
+        List<CalculatedStockOnHand> calculatedStockOnHandList = findStockCardIdsHasStockOnHandOnLot(stockCardIds);
+        assignNewVirtualLocations(calculatedStockOnHandList, userId);
       } else {
         List<CalculatedStockOnHandByLocation> stockCardIdsHasStockOnHandOnLocation =
             findStockCardIdsHasStockOnHandOnLocation(stockCardIds);
@@ -345,46 +346,62 @@ public class SiglusAdministrationsService {
     return calculatedStocksOnHandLocationsRepository.findLatestLocationSohByStockCardIds(stockCardIds);
   }
 
-  private Map<UUID, Integer> findStockCardIdsHasStockOnHandOnLot(List<UUID> stockCardIds) {
-    List<CalculatedStockOnHand> calculatedStockOnHandsList = calculatedStockOnHandRepository
-        .findPreviousStockOnHands(stockCardIds, LocalDate.now());
-    return calculatedStockOnHandsList.stream().collect(Collectors.toMap(calculatedStockOnHand ->
-        calculatedStockOnHand.getStockCard().getId(), CalculatedStockOnHand::getStockOnHand));
+  private List<CalculatedStockOnHand> findStockCardIdsHasStockOnHandOnLot(List<UUID> stockCardIds) {
+    return calculatedStockOnHandRepository.findPreviousStockOnHands(stockCardIds, LocalDate.now());
   }
 
-  private void assignNewVirtualLocations(Map<UUID, Integer> stockCardIdToStockOnHandMap, UUID userId) {
+  private void assignNewVirtualLocations(List<CalculatedStockOnHand> calculatedStockOnHandList, UUID userId) {
     List<StockCardLocationMovementLineItem> lineItemsWithVirtualLocation = Lists.newArrayList();
-    Set<UUID> stockCardIds = stockCardIdToStockOnHandMap.keySet();
+    List<CalculatedStockOnHandByLocation> calculatedStockOnHandByLocationList = Lists.newArrayList();
+    Set<UUID> stockCardIds = calculatedStockOnHandList.stream()
+        .map(CalculatedStockOnHand::getStockCardId).collect(Collectors.toSet());
     List<StockCardLocationMovementLineItem> latestMovementList = stockCardLocationMovementLineItemRepository
         .findPreviousRecordByStockCardId(stockCardIds, LocalDate.now());
     latestMovementList.forEach(latestMovement -> {
       if (LocationConstants.VIRTUAL_LOCATION_CODE.equals(latestMovement.getDestLocationCode())
           && LocationConstants.VIRTUAL_LOCATION_CODE.equals(latestMovement.getSrcLocationCode())) {
-        stockCardIdToStockOnHandMap.remove(latestMovement.getStockCardId());
+        calculatedStockOnHandList.removeIf(calculatedStockOnHand -> calculatedStockOnHand.getStockCard().getId()
+            .equals(latestMovement.getStockCardId()));
       }
     });
 
-    stockCardIdToStockOnHandMap.forEach((stockCardId, stockOnHand) -> {
+    calculatedStockOnHandList.forEach(calculatedStockOnHand -> {
       StockCardLocationMovementLineItem stockCardLocationMovementLineItem = StockCardLocationMovementLineItem
           .builder()
-          .stockCardId(stockCardId)
+          .stockCardId(calculatedStockOnHand.getStockCardId())
           .occurredDate(LocalDate.now())
           .userId(userId)
-          .quantity(stockOnHand)
+          .quantity(calculatedStockOnHand.getStockOnHand())
           .srcLocationCode(LocationConstants.VIRTUAL_LOCATION_CODE)
           .srcArea(LocationConstants.VIRTUAL_LOCATION_AREA)
           .destLocationCode(LocationConstants.VIRTUAL_LOCATION_CODE)
           .destArea(LocationConstants.VIRTUAL_LOCATION_AREA)
           .build();
       lineItemsWithVirtualLocation.add(stockCardLocationMovementLineItem);
+
+      CalculatedStockOnHandByLocation calculatedStockOnHandByLocation = CalculatedStockOnHandByLocation
+          .builder()
+          .stockCardId(calculatedStockOnHand.getStockCardId())
+          .occurredDate(new Date())
+          .stockOnHand(calculatedStockOnHand.getStockOnHand())
+          .calculatedStocksOnHandId(calculatedStockOnHand.getId())
+          .locationCode(LocationConstants.VIRTUAL_LOCATION_CODE)
+          .area(LocationConstants.VIRTUAL_LOCATION_AREA)
+          .build();
+      calculatedStockOnHandByLocationList.add(calculatedStockOnHandByLocation);
     });
-    log.info("assign virtual location when enable location; size: {}", stockCardIdToStockOnHandMap.size());
+    log.info("assign virtual location when enable location; stockCardLocationMovementLineItemRepository size: {}",
+        lineItemsWithVirtualLocation.size());
     stockCardLocationMovementLineItemRepository.save(lineItemsWithVirtualLocation);
+    log.info("assign virtual location when enable location; calculatedStocksOnHandLocationsRepository size: {}",
+        calculatedStockOnHandByLocationList.size());
+    calculatedStocksOnHandLocationsRepository.save(calculatedStockOnHandByLocationList);
   }
 
   private void assignExistLotToVirtualLocations(List<CalculatedStockOnHandByLocation> calculatedStocksOnHandLocations,
       UUID userId) {
     List<StockCardLocationMovementLineItem> lineItemsWithVirtualLocation = Lists.newArrayList();
+    List<CalculatedStockOnHandByLocation> calculatedStockOnHandByLocationList = Lists.newArrayList();
     calculatedStocksOnHandLocations.forEach(calculatedStocksOnHandLocation -> {
       StockCardLocationMovementLineItem productLocationMovementLineItem = StockCardLocationMovementLineItem
           .builder()
@@ -398,8 +415,23 @@ public class SiglusAdministrationsService {
           .destArea(LocationConstants.VIRTUAL_LOCATION_AREA)
           .build();
       lineItemsWithVirtualLocation.add(productLocationMovementLineItem);
+
+      CalculatedStockOnHandByLocation calculatedStockOnHandByLocation = CalculatedStockOnHandByLocation
+          .builder()
+          .stockCardId(calculatedStocksOnHandLocation.getStockCardId())
+          .occurredDate(new Date())
+          .stockOnHand(calculatedStocksOnHandLocation.getStockOnHand())
+          .calculatedStocksOnHandId(calculatedStocksOnHandLocation.getCalculatedStocksOnHandId())
+          .locationCode(LocationConstants.VIRTUAL_LOCATION_CODE)
+          .area(LocationConstants.VIRTUAL_LOCATION_AREA)
+          .build();
+      calculatedStockOnHandByLocationList.add(calculatedStockOnHandByLocation);
     });
-    log.info("assign virtual location when disable location; size: {}", calculatedStocksOnHandLocations.size());
+    log.info("assign virtual location when disable location; stockCardLocationMovementLineItem size: {}",
+        lineItemsWithVirtualLocation.size());
     stockCardLocationMovementLineItemRepository.save(lineItemsWithVirtualLocation);
+    log.info("assign virtual location when disable location; calculatedStocksOnHandLocations size: {}",
+        calculatedStockOnHandByLocationList.size());
+    calculatedStocksOnHandLocationsRepository.save(calculatedStockOnHandByLocationList);
   }
 }
