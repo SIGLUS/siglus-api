@@ -15,9 +15,12 @@
 
 package org.siglus.siglusapi.web;
 
+import static com.google.common.collect.Lists.newArrayList;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
 
+import java.time.LocalDate;
 import java.util.UUID;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -25,8 +28,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.stockmanagement.dto.StockEventDto;
+import org.openlmis.stockmanagement.dto.StockEventLineItemDto;
 import org.siglus.siglusapi.dto.StockEventForMultiUserDto;
 import org.siglus.siglusapi.service.SiglusStockEventsService;
+import org.siglus.siglusapi.util.MovementDateValidator;
 
 @RunWith(MockitoJUnitRunner.class)
 public class SiglusStockEventsControllerTest {
@@ -36,6 +41,12 @@ public class SiglusStockEventsControllerTest {
 
   @Mock
   private SiglusStockEventsService service;
+
+  @Mock
+  private MovementDateValidator movementDateValidator;
+
+  private final UUID facilityId = UUID.randomUUID();
+  private final LocalDate occurredDate = LocalDate.now();
 
   @Test
   public void shouldCallServiceWhenCreateStockEventGivenAllProductsProgramId() {
@@ -66,7 +77,17 @@ public class SiglusStockEventsControllerTest {
   @Test
   public void shouldCallServiceWhenCreateStockEventsForMultiUser() {
     StockEventForMultiUserDto stockEventForMultiUserDto = new StockEventForMultiUserDto();
+    StockEventLineItemDto stockEventLineItemDto = new StockEventLineItemDto();
+    stockEventLineItemDto.setOccurredDate(occurredDate);
+    StockEventDto stockEventDto = StockEventDto.builder()
+        .facilityId(facilityId)
+        .lineItems(newArrayList(stockEventLineItemDto))
+        .build();
+    stockEventForMultiUserDto.setStockEvent(stockEventDto);
+    doNothing().when(movementDateValidator).validateMovementDate(occurredDate, facilityId);
+
     controller.createStockEventForMultiUser(stockEventForMultiUserDto);
+
     verify(service).processStockEventForMultiUser(stockEventForMultiUserDto);
   }
 

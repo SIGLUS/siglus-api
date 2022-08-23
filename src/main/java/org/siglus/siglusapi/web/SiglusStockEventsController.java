@@ -21,6 +21,7 @@ import lombok.RequiredArgsConstructor;
 import org.openlmis.stockmanagement.dto.StockEventDto;
 import org.siglus.siglusapi.dto.StockEventForMultiUserDto;
 import org.siglus.siglusapi.service.SiglusStockEventsService;
+import org.siglus.siglusapi.util.MovementDateValidator;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -34,6 +35,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class SiglusStockEventsController {
 
   private final SiglusStockEventsService stockEventsService;
+  private final MovementDateValidator movementDateValidator;
 
   @PostMapping
   @Transactional
@@ -53,6 +55,9 @@ public class SiglusStockEventsController {
   @Transactional
   @ResponseStatus(CREATED)
   public void createStockEventForMultiUser(@RequestBody StockEventForMultiUserDto stockEventForMultiUserDto) {
+    movementDateValidator
+        .validateMovementDate(stockEventForMultiUserDto.getStockEvent().getLineItems().get(0).getOccurredDate(),
+            stockEventForMultiUserDto.getStockEvent().getFacilityId());
     stockEventsService.processStockEventForMultiUser(stockEventForMultiUserDto);
   }
 }
