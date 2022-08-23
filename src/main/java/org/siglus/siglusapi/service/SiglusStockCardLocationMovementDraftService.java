@@ -16,20 +16,14 @@
 package org.siglus.siglusapi.service;
 
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_MOVEMENT_DRAFT_EXISTS;
-import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_MOVEMENT_QUANTITY_MORE_THAN_STOCK_ON_HAND;
 
 import java.util.List;
-import java.util.Map.Entry;
-import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.siglus.siglusapi.domain.StockCardLocationMovementDraft;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.dto.StockCardLocationMovementDraftDto;
-import org.siglus.siglusapi.dto.StockCardLocationMovementDraftLineItemDto;
-import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.StockCardLocationMovementDraftRepository;
 import org.siglus.siglusapi.util.OperatePermissionService;
@@ -104,7 +98,6 @@ public class SiglusStockCardLocationMovementDraftService {
   public StockCardLocationMovementDraftDto updateMovementDraft(StockCardLocationMovementDraftDto movementDraftDto,
       UUID movementDraftId) {
     stockCardLocationMovementDraftValidator.validateMovementDraftAndLineItems(movementDraftDto, movementDraftId);
-    checkStockOnHand(movementDraftDto);
     StockCardLocationMovementDraft stockMovementDraft = StockCardLocationMovementDraft
         .createMovementDraft(movementDraftDto);
     log.info("update movement draft with id: {}", movementDraftId);
@@ -119,30 +112,5 @@ public class SiglusStockCardLocationMovementDraftService {
     stockCardLocationMovementDraftValidator.validateMovementDraft(movementDraft);
     log.info("delete movement draft with id: {}", movementDraftId);
     stockCardLocationMovementDraftRepository.delete(movementDraft);
-  }
-
-  private void checkStockOnHand(StockCardLocationMovementDraftDto movementDraftDto) {
-    List<StockCardLocationMovementDraftLineItemDto> lineItems = movementDraftDto.getLineItems();
-    Set<Entry<String, List<StockCardLocationMovementDraftLineItemDto>>> groupByOrderableIdLotIdSrcAreaAndSrcLocationCode
-        = lineItems.stream().collect(Collectors.groupingBy(this::fetchGroupKey)).entrySet();
-    groupByOrderableIdLotIdSrcAreaAndSrcLocationCode.forEach(entry -> {
-      int totalMoveQuantity = entry.getValue()
-          .stream()
-          .mapToInt(StockCardLocationMovementDraftLineItemDto::getQuantity)
-          .sum();
-      if (totalMoveQuantity > entry.getValue().get(0).getStockOnHand()) {
-        throw new BusinessDataException(new Message(ERROR_MOVEMENT_QUANTITY_MORE_THAN_STOCK_ON_HAND),
-            "movement quantity more than stock on hand");
-      }
-    });
-  }
-
-  private String fetchGroupKey(StockCardLocationMovementDraftLineItemDto lineItemDto) {
-    return Boolean.TRUE.equals(lineItemDto.getIsKit()) ? lineItemDto.getOrderableId().toString()
-        + lineItemDto.getSrcArea()
-        + lineItemDto.getSrcLocationCode() : lineItemDto.getOrderableId().toString()
-        + lineItemDto.getLotId().toString()
-        + lineItemDto.getSrcArea()
-        + lineItemDto.getSrcLocationCode();
   }
 }

@@ -174,25 +174,4 @@ public class SiglusStockCardLocationMovementDraftServiceTest {
     service.deleteMovementDraft(movementDraftId);
     verify(stockCardLocationMovementDraftRepository).delete(movementDraft);
   }
-
-  @Test
-  public void shouldThrowExceptionWhenQuantityMoreThanStockOnHand() {
-    exception.expect(BusinessDataException.class);
-    exception.expectMessage(containsString(ERROR_MOVEMENT_QUANTITY_MORE_THAN_STOCK_ON_HAND));
-
-    StockCardLocationMovementDraftLineItemDto lineItemDto = StockCardLocationMovementDraftLineItemDto.builder()
-        .orderableId(orderableId)
-        .lotId(lotId)
-        .srcArea("A")
-        .srcLocationCode("AA25E")
-        .quantity(40)
-        .stockOnHand(30)
-        .build();
-    movementDraftDto.setLineItems(newArrayList(lineItemDto));
-
-    doNothing().when(stockCardLocationMovementDraftValidator)
-        .validateMovementDraftAndLineItems(movementDraftDto, movementDraftId);
-
-    service.updateMovementDraft(movementDraftDto, movementDraftId);
-  }
 }

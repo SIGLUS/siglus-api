@@ -117,11 +117,13 @@ public class SiglusStockCardLocationMovementService {
     });
   }
 
-  private String fetchGroupKey(StockCardLocationMovementLineItemDto movementLineItemDto) {
-    return movementLineItemDto.getOrderableId().toString()
-        + movementLineItemDto.getLotId().toString()
-        + movementLineItemDto.getSrcArea()
-        + movementLineItemDto.getSrcLocationCode();
+  private String fetchGroupKey(StockCardLocationMovementLineItemDto lineItemDto) {
+    return Boolean.TRUE.equals(lineItemDto.getIsKit()) ? lineItemDto.getOrderableId().toString()
+        + lineItemDto.getSrcArea()
+        + lineItemDto.getSrcLocationCode() : lineItemDto.getOrderableId().toString()
+        + lineItemDto.getLotId().toString()
+        + lineItemDto.getSrcArea()
+        + lineItemDto.getSrcLocationCode();
   }
 
   private void validateMovementLineItems(StockCardLocationMovementDto movementDto) {
