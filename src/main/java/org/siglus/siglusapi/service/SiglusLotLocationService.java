@@ -30,7 +30,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import javafx.util.Pair;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.openlmis.referencedata.domain.Code;
@@ -52,6 +51,7 @@ import org.siglus.siglusapi.repository.FacilityLocationsRepository;
 import org.siglus.siglusapi.repository.FacilityNativeRepository;
 import org.siglus.siglusapi.repository.dto.FacilityProgramPeriodScheduleDto;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
+import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -114,7 +114,7 @@ public class SiglusLotLocationService {
         lotLocationDtos.add(LotLocationDto
             .builder()
             .locationCode(locationCode)
-            .area(locationPairs.get(0).getValue().getArea())
+            .area(locationPairs.get(0).getSecond().getArea())
             .lots(lotDtoList)
             .build());
       });
@@ -143,7 +143,7 @@ public class SiglusLotLocationService {
         orderableId);
 
     Map<UUID, FacilityProgramPeriodScheduleDto> programIdToSchedulesCode = Maps.uniqueIndex(facilityNativeRepository
-            .findFacilityProgramPeriodScheduleByFacilityId(facilityId), FacilityProgramPeriodScheduleDto::getProgramId);
+        .findFacilityProgramPeriodScheduleByFacilityId(facilityId), FacilityProgramPeriodScheduleDto::getProgramId);
 
     List<StockCard> stockCards = new LinkedList<>();
     stockCardList.forEach(stockCard -> {
@@ -188,17 +188,17 @@ public class SiglusLotLocationService {
 
     List<Pair<UUID, CalculatedStockOnHandByLocation>> stockCardLocationPairs = new LinkedList<>();
     stockCardIdToLocationIdMap.forEach((stockCardId, locationStockOnHandList)
-        -> locationStockOnHandList.forEach(locationsStockOnHand -> stockCardLocationPairs.add(new Pair<>(
-            stockCardId, locationsStockOnHand))));
+        -> locationStockOnHandList.forEach(locationsStockOnHand -> stockCardLocationPairs.add(Pair.of(
+        stockCardId, locationsStockOnHand))));
 
-    return stockCardLocationPairs.stream().collect(Collectors.groupingBy(e -> e.getValue().getLocationCode()));
+    return stockCardLocationPairs.stream().collect(Collectors.groupingBy(e -> e.getSecond().getLocationCode()));
   }
 
   private List<LotsDto> getLotsDtos(UUID orderableId, List<Pair<UUID, CalculatedStockOnHandByLocation>> locationPairs,
       Map<UUID, StockCard> stockCardIdToStockCard) {
     List<LotsDto> lotDtoList = new LinkedList<>();
     locationPairs.forEach(locationPair -> {
-      UUID lotId = stockCardIdToStockCard.get(locationPair.getKey()).getLotId();
+      UUID lotId = stockCardIdToStockCard.get(locationPair.getFirst()).getLotId();
       Lot lot = null;
       if (null != lotId) {
         lot = lotRepository.findOne(lotId);
@@ -206,7 +206,7 @@ public class SiglusLotLocationService {
       lotDtoList.add(LotsDto
           .builder()
           .lotId(lotId).orderableId(orderableId).lotCode(lot == null ? null : lot.getLotCode())
-          .stockOnHand(locationPair.getValue().getStockOnHand())
+          .stockOnHand(locationPair.getSecond().getStockOnHand())
           .expirationDate(lot == null ? null : lot.getExpirationDate())
           .build());
     });
