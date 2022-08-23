@@ -64,9 +64,8 @@ public class SiglusAdministrationsController {
 
   @PutMapping("/{facilityId}")
   public FacilitySearchResultDto updateFacility(@PathVariable UUID facilityId,
-      @RequestBody SiglusFacilityDto siglusFacilityDto,
-      @RequestParam(value = "tab", required = false) String tab) {
-    return administrationsService.updateFacility(facilityId, siglusFacilityDto, tab);
+      @RequestBody SiglusFacilityDto siglusFacilityDto) {
+    return administrationsService.updateFacility(facilityId, siglusFacilityDto);
   }
 
   @GetMapping("/{facilityId}/locations")

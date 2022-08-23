@@ -45,7 +45,7 @@ public class FacilityLocations extends BaseEntity {
 
   private String barcode;
 
-  private Integer bin;
+  private String bin;
 
   private String level;
 }
