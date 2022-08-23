@@ -39,6 +39,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
+import org.apache.commons.io.input.BOMInputStream;
 import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.StringUtils;
 import org.openlmis.stockmanagement.domain.card.StockCard;
@@ -198,8 +199,8 @@ public class SiglusAdministrationsService {
   public void uploadLocationInfo(UUID facilityId, MultipartFile locationManagementFile) throws IOException {
     validateCsvFile(locationManagementFile);
     List<FacilityLocations> locationManagementList = Lists.newArrayList();
-    BufferedReader locationInfoReader = new BufferedReader(new InputStreamReader(locationManagementFile
-        .getInputStream(), StandardCharsets.ISO_8859_1));
+    BufferedReader locationInfoReader = new BufferedReader(new InputStreamReader(
+        new BOMInputStream(locationManagementFile.getInputStream()), StandardCharsets.UTF_8));
     CSVParser fileParser = new CSVParser(locationInfoReader, CSVFormat.EXCEL.withFirstRecordAsHeader());
     csvValidator.validateCsvHeaders(fileParser);
     List<CSVRecord> csvRecordList = csvValidator.validateDuplicateLocationCode(fileParser);

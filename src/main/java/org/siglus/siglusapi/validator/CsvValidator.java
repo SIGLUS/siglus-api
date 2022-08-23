@@ -17,9 +17,9 @@ package org.siglus.siglusapi.validator;
 
 import com.google.common.collect.Lists;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -37,13 +37,26 @@ import org.springframework.stereotype.Component;
 @Component
 public class CsvValidator {
   private static final String ERROR_BUSINESS_CODE = "upload csv failed";
-  private static final List<String> mandatoryColumnNames = Arrays.asList(LocationConstants.PORTUGUESE_LOCATION_CODE,
-      LocationConstants.PORTUGUESE_AREA, LocationConstants.PORTUGUESE_ZONE, LocationConstants.PORTUGUESE_RACK,
-      LocationConstants.PORTUGUESE_BARCODE, LocationConstants.PORTUGUESE_BIN, LocationConstants.PORTUGUESE_LEVEL);
+  private static final List<String> mandatoryColumnNames = Arrays.asList(LocationConstants.LOCATION_CODE,
+      LocationConstants.AREA, LocationConstants.ZONE, LocationConstants.RACK,
+      LocationConstants.BARCODE, LocationConstants.BIN, LocationConstants.LEVEL);
+
+  private static final Map<String, String> portugueseToEnglishMap = new LinkedHashMap<>();
+
+  static {
+    portugueseToEnglishMap.put(LocationConstants.PORTUGUESE_LOCATION_CODE, LocationConstants.LOCATION_CODE);
+    portugueseToEnglishMap.put(LocationConstants.PORTUGUESE_AREA, LocationConstants.AREA);
+    portugueseToEnglishMap.put(LocationConstants.PORTUGUESE_ZONE, LocationConstants.ZONE);
+    portugueseToEnglishMap.put(LocationConstants.PORTUGUESE_RACK, LocationConstants.RACK);
+    portugueseToEnglishMap.put(LocationConstants.PORTUGUESE_BARCODE, LocationConstants.BARCODE);
+    portugueseToEnglishMap.put(LocationConstants.PORTUGUESE_BIN, LocationConstants.BIN);
+    portugueseToEnglishMap.put(LocationConstants.PORTUGUESE_LEVEL, LocationConstants.LEVEL);
+  }
 
   public void validateCsvHeaders(CSVParser csvParser) {
     Map<String, Integer> csvHeaderToColumnMap = csvParser.getHeaderMap();
-    List<String> headers = new ArrayList<>(csvHeaderToColumnMap.keySet());
+    List<String> headers = csvHeaderToColumnMap.keySet().stream().map(portugueseToEnglishMap::get)
+        .collect(Collectors.toList());
     validateNullHeaders(headers);
     List<String> lowerCaseHeaders = lowerCase(headers);
     validateInvalidHeaders(lowerCaseHeaders);
