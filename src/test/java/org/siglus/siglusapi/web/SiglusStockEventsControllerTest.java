@@ -44,7 +44,7 @@ public class SiglusStockEventsControllerTest {
     dto.setProgramId(ALL_PRODUCTS_PROGRAM_ID);
 
     // when
-    controller.createStockEvent(dto, false);
+    controller.createStockEvent(dto);
 
     // then
     verify(service).processStockEvent(dto, false);
@@ -57,7 +57,7 @@ public class SiglusStockEventsControllerTest {
     dto.setProgramId(UUID.randomUUID());
 
     // when
-    controller.createStockEvent(dto, false);
+    controller.createStockEvent(dto);
 
     // then
     verify(service).processStockEvent(dto, false);

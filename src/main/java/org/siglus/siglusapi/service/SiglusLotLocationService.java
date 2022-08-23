@@ -15,11 +15,7 @@
 
 package org.siglus.siglusapi.service;
 
-import static org.siglus.siglusapi.constant.FieldConstants.MONTHLY;
-import static org.siglus.siglusapi.constant.FieldConstants.MONTHLY_REPORT_ONLY;
 import static org.siglus.siglusapi.constant.FieldConstants.MONTHLY_SUBMIT_PRODUCT_ZERO_INVENTORY_MONTH_RANGE;
-import static org.siglus.siglusapi.constant.FieldConstants.QUARTERLY;
-import static org.siglus.siglusapi.constant.FieldConstants.QUARTERLY_REPORT_ONLY;
 import static org.siglus.siglusapi.constant.FieldConstants.QUARTERLY_SUBMIT_PRODUCT_ZERO_INVENTORY_MONTH_RANGE;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_LOCATIONS_BY_FACILITY_NOT_FOUND;
 
@@ -34,20 +30,22 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import javafx.util.Pair;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.openlmis.referencedata.domain.Code;
 import org.openlmis.referencedata.domain.Lot;
 import org.openlmis.referencedata.repository.LotRepository;
 import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.domain.event.CalculatedStockOnHand;
 import org.openlmis.stockmanagement.repository.CalculatedStockOnHandRepository;
 import org.openlmis.stockmanagement.repository.StockCardRepository;
+import org.siglus.siglusapi.constant.PeriodConstants;
 import org.siglus.siglusapi.domain.CalculatedStockOnHandByLocation;
 import org.siglus.siglusapi.domain.FacilityLocations;
 import org.siglus.siglusapi.dto.FacilityLocationsDto;
 import org.siglus.siglusapi.dto.LotLocationDto;
 import org.siglus.siglusapi.dto.LotsDto;
-import org.siglus.siglusapi.dto.StockCardLocationPair;
 import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.repository.CalculatedStockOnHandByLocationRepository;
 import org.siglus.siglusapi.repository.FacilityLocationsRepository;
@@ -100,17 +98,15 @@ public class SiglusLotLocationService {
   private List<LotLocationDto> getLotLocationDtos(List<UUID> orderableIds, UUID facilityId, boolean isAdjustment) {
     List<LotLocationDto> lotLocationDtos = new LinkedList<>();
     orderableIds.forEach(orderableId -> {
-
       List<StockCard> stockCardList;
       if (isAdjustment) {
         stockCardList = getUnrestrictedAdjustmentStockCards(facilityId, orderableId);
       } else {
-        stockCardList = stockCardRepository.findByFacilityIdAndOrderableId(facilityId,
-            orderableId);
+        stockCardList = stockCardRepository.findByFacilityIdAndOrderableId(facilityId, orderableId);
       }
 
-      Map<String, List<StockCardLocationPair>> locationCodeToLotLocationPairs = getLocationCodeToLotLocationPairListMap(
-          stockCardList);
+      Map<String, List<Pair<UUID, CalculatedStockOnHandByLocation>>> locationCodeToLotLocationPairs =
+          getLocationCodeToLotLocationPairListMap(stockCardList);
 
       Map<UUID, StockCard> stockCardIdToStockCard = Maps.uniqueIndex(stockCardList, StockCard::getId);
       locationCodeToLotLocationPairs.forEach((locationCode, locationPairs) -> {
@@ -118,7 +114,7 @@ public class SiglusLotLocationService {
         lotLocationDtos.add(LotLocationDto
             .builder()
             .locationCode(locationCode)
-            .area(locationPairs.get(0).getCalculatedStockOnHandByLocation().getArea())
+            .area(locationPairs.get(0).getValue().getArea())
             .lots(lotDtoList)
             .build());
       });
@@ -128,7 +124,7 @@ public class SiglusLotLocationService {
   }
 
 
-  private Map<String, List<StockCardLocationPair>> getLocationCodeToLotLocationPairListMap(
+  private Map<String, List<Pair<UUID, CalculatedStockOnHandByLocation>>> getLocationCodeToLotLocationPairListMap(
       List<StockCard> stockCardList) {
     Map<UUID, List<CalculatedStockOnHandByLocation>> stockCardIdToLocationSohListMap = new HashMap<>();
     stockCardList.forEach(stockCard -> {
@@ -146,13 +142,12 @@ public class SiglusLotLocationService {
     List<StockCard> stockCardList = stockCardRepository.findByFacilityIdAndOrderableId(facilityId,
         orderableId);
 
-    Map<UUID, FacilityProgramPeriodScheduleDto> programIdToSchedulesCode = Maps.uniqueIndex(
-        facilityNativeRepository.findFacilityProgramPeriodScheduleByFacilityId(
-            facilityId), FacilityProgramPeriodScheduleDto::getProgramId);
+    Map<UUID, FacilityProgramPeriodScheduleDto> programIdToSchedulesCode = Maps.uniqueIndex(facilityNativeRepository
+            .findFacilityProgramPeriodScheduleByFacilityId(facilityId), FacilityProgramPeriodScheduleDto::getProgramId);
 
     List<StockCard> stockCards = new LinkedList<>();
     stockCardList.forEach(stockCard -> {
-      String schedulesCode = programIdToSchedulesCode.get(stockCard.getProgramId()).getSchedulesCode();
+      Code schedulesCode = Code.code(programIdToSchedulesCode.get(stockCard.getProgramId()).getSchedulesCode());
       List<CalculatedStockOnHand> calculatedStockOnHands = calculatedStockOnHandRepository
           .findByStockCardIdInAndOccurredDateLessThanEqual(
               Collections.singletonList(stockCard.getId()), LocalDate.now());
@@ -162,16 +157,18 @@ public class SiglusLotLocationService {
       if (!recentlyCalculatedStockOnHand.isPresent()) {
         return;
       }
-      Integer stockonhand = recentlyCalculatedStockOnHand.get().getStockOnHand();
-      if (stockonhand > 0) {
+      Integer stockOnHand = recentlyCalculatedStockOnHand.get().getStockOnHand();
+      if (stockOnHand > 0) {
         stockCards.add(stockCard);
       } else {
-        if ((schedulesCode.equals(MONTHLY) || schedulesCode.equals(MONTHLY_REPORT_ONLY))
-            && hasSohInMouthRange(calculatedStockOnHands, MONTHLY_SUBMIT_PRODUCT_ZERO_INVENTORY_MONTH_RANGE)) {
+        if ((schedulesCode.equals(PeriodConstants.MONTH_SCHEDULE_CODE)
+            || schedulesCode.equals(PeriodConstants.REPORT_MONTH_SCHEDULE_CODE))
+            && hasSohInMonthRange(calculatedStockOnHands, MONTHLY_SUBMIT_PRODUCT_ZERO_INVENTORY_MONTH_RANGE)) {
           stockCards.add(stockCard);
         }
-        if ((schedulesCode.equals(QUARTERLY) || schedulesCode.equals(QUARTERLY_REPORT_ONLY))
-            && hasSohInMouthRange(calculatedStockOnHands, QUARTERLY_SUBMIT_PRODUCT_ZERO_INVENTORY_MONTH_RANGE)) {
+        if ((schedulesCode.equals(PeriodConstants.QUARTERLY_SCHEDULE_CODE)
+            || schedulesCode.equals(PeriodConstants.REPORT_QUARTERLY_SCHEDULE_CODE))
+            && hasSohInMonthRange(calculatedStockOnHands, QUARTERLY_SUBMIT_PRODUCT_ZERO_INVENTORY_MONTH_RANGE)) {
           stockCards.add(stockCard);
         }
       }
@@ -180,45 +177,36 @@ public class SiglusLotLocationService {
     return stockCards;
   }
 
-  private boolean hasSohInMouthRange(List<CalculatedStockOnHand> calculatedStockOnHandList, int monthRange) {
-    return calculatedStockOnHandList
-        .stream().filter(o -> o.getOccurredDate()
-            .isAfter(LocalDate.now().minusMonths(monthRange)))
+  private boolean hasSohInMonthRange(List<CalculatedStockOnHand> calculatedStockOnHandList, int monthRange) {
+    return calculatedStockOnHandList.stream()
+        .filter(o -> o.getOccurredDate().isAfter(LocalDate.now().minusMonths(monthRange)))
         .anyMatch(o -> o.getStockOnHand() != 0);
   }
 
-  private Map<String, List<StockCardLocationPair>> reverseMappingRelationship(
+  private Map<String, List<Pair<UUID, CalculatedStockOnHandByLocation>>> reverseMappingRelationship(
       Map<UUID, List<CalculatedStockOnHandByLocation>> stockCardIdToLocationIdMap) {
-    List<StockCardLocationPair> stockCardLocationPairs = new LinkedList<>();
 
+    List<Pair<UUID, CalculatedStockOnHandByLocation>> stockCardLocationPairs = new LinkedList<>();
     stockCardIdToLocationIdMap.forEach((stockCardId, locationStockOnHandList)
-        -> locationStockOnHandList.forEach(locationsStockOnHand -> stockCardLocationPairs.add(StockCardLocationPair
-        .builder()
-        .stockCardId(stockCardId)
-        .calculatedStockOnHandByLocation(locationsStockOnHand)
-        .build())));
+        -> locationStockOnHandList.forEach(locationsStockOnHand -> stockCardLocationPairs.add(new Pair<>(
+            stockCardId, locationsStockOnHand))));
 
-    return stockCardLocationPairs.stream()
-        .collect(Collectors.groupingBy(e -> e.getCalculatedStockOnHandByLocation().getLocationCode()));
+    return stockCardLocationPairs.stream().collect(Collectors.groupingBy(e -> e.getValue().getLocationCode()));
   }
 
-  private List<LotsDto> getLotsDtos(UUID orderableId, List<StockCardLocationPair> locationPairs, Map<UUID,
-      StockCard> stockCardIdToStockCard) {
+  private List<LotsDto> getLotsDtos(UUID orderableId, List<Pair<UUID, CalculatedStockOnHandByLocation>> locationPairs,
+      Map<UUID, StockCard> stockCardIdToStockCard) {
     List<LotsDto> lotDtoList = new LinkedList<>();
-
     locationPairs.forEach(locationPair -> {
-      UUID lotId = stockCardIdToStockCard.get(locationPair.getStockCardId()).getLotId();
+      UUID lotId = stockCardIdToStockCard.get(locationPair.getKey()).getLotId();
       Lot lot = null;
       if (null != lotId) {
         lot = lotRepository.findOne(lotId);
       }
-
       lotDtoList.add(LotsDto
           .builder()
           .lotId(lotId).orderableId(orderableId).lotCode(lot == null ? null : lot.getLotCode())
-          .stockOnHand(locationPair
-              .getCalculatedStockOnHandByLocation()
-              .getStockOnHand())
+          .stockOnHand(locationPair.getValue().getStockOnHand())
           .expirationDate(lot == null ? null : lot.getExpirationDate())
           .build());
     });

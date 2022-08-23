@@ -18,8 +18,6 @@ package org.siglus.siglusapi.service;
 import static com.google.common.collect.Lists.newArrayList;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
-import static org.siglus.siglusapi.constant.FieldConstants.MONTHLY;
-import static org.siglus.siglusapi.constant.FieldConstants.QUARTERLY;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_LOCATIONS_BY_FACILITY_NOT_FOUND;
 
 import java.time.LocalDate;
@@ -42,6 +40,7 @@ import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.domain.event.CalculatedStockOnHand;
 import org.openlmis.stockmanagement.repository.CalculatedStockOnHandRepository;
 import org.openlmis.stockmanagement.repository.StockCardRepository;
+import org.siglus.siglusapi.constant.PeriodConstants;
 import org.siglus.siglusapi.domain.CalculatedStockOnHandByLocation;
 import org.siglus.siglusapi.domain.FacilityLocations;
 import org.siglus.siglusapi.dto.FacilityLocationsDto;
@@ -224,11 +223,11 @@ public class SiglusLotLocationServiceTest extends TestCase {
             FacilityProgramPeriodScheduleDto
                 .builder()
                 .programId(programId1)
-                .schedulesCode(MONTHLY)
+                .schedulesCode(PeriodConstants.MONTH_SCHEDULE_CODE.toString())
                 .build(), FacilityProgramPeriodScheduleDto
                 .builder()
                 .programId(programId2)
-                .schedulesCode(QUARTERLY)
+                .schedulesCode(PeriodConstants.QUARTERLY_SCHEDULE_CODE.toString())
                 .build())
     );
     CalculatedStockOnHand calculatedStockOnHand1 = new CalculatedStockOnHand();
