@@ -648,9 +648,7 @@ public class SiglusPhysicalInventoryService {
 
   public PhysicalInventoryDto saveDraftForProductsForOneProgram(PhysicalInventoryDto dto) {
     saveDraft(dto, dto.getId());
-    // fill lineitem id
-    PhysicalInventoryDto afterSavedDto = getPhysicalInventory(dto.getId());
-    fillLineItemId(dto, afterSavedDto);
+
     List<PhysicalInventoryDto> physicalInventoryDtos = Collections.singletonList(dto);
     if (CollectionUtils.isNotEmpty(physicalInventoryDtos)) {
       return getResultInventory(physicalInventoryDtos, updateExtension(dto, physicalInventoryDtos));
@@ -659,19 +657,31 @@ public class SiglusPhysicalInventoryService {
   }
 
   // fill the beforeSavedDto.lineItem id where id = null, before has locationCode, after doesn't
-  private void fillLineItemId(PhysicalInventoryDto beforeSavedDto, PhysicalInventoryDto afterSavedDto) {
+  private void fillLineItemId(PhysicalInventoryLineItemExtensionDto beforeSavedDto,
+                              PhysicalInventoryDto afterSavedDto) {
     Set<UUID> previousLineItemIds = beforeSavedDto.getLineItems().stream()
             .map(PhysicalInventoryLineItemDto::getId).filter(Objects::nonNull).collect(Collectors.toSet());
-    Map<String, UUID> newSavedUniqueKeyToId = afterSavedDto.getLineItems().stream()
-            .filter(lineItem -> !previousLineItemIds.contains(lineItem.getId()))
-            .collect(Collectors.toMap(lineItem -> getUniqueKey(lineItem), PhysicalInventoryLineItemDto::getId));
+    // no locationCode in new saved lineitem, uniqueKey can be duplicate
+    List<PhysicalInventoryLineItemDto> newSavedLineItems = afterSavedDto.getLineItems().stream()
+            .filter(lineItem -> !previousLineItemIds.contains(lineItem.getId())).collect(Collectors.toList());
 
     Set<UUID> usedIds = new HashSet<>();
     beforeSavedDto.getLineItems().stream()
             .filter(lineItemDto -> lineItemDto.getId() == null)
             .forEach(lineItemDto -> {
-              UUID id = newSavedUniqueKeyToId.get(getUniqueKey(lineItemDto));
+              UUID id = newSavedLineItems.stream()
+                      .filter(saved -> getUniqueKey(saved).equals(getUniqueKey(lineItemDto)))
+                      .filter(saved -> !usedIds.contains(saved.getId()))
+                      .findFirst().orElseThrow(() -> new IllegalArgumentException("can't find saved line item"))
+                      .getId();
               lineItemDto.setId(id);
+              Optional<PhysicalInventorySubDraftLineItemsExtensionDto> lineItemsExtension =
+                      beforeSavedDto.getLineItemsExtensions().stream()
+                      .filter(lineItemsExtensionDto -> lineItemsExtensionDto.getPhysicalInventoryLineItemId() == null)
+                      .filter(lineItemsExtensionDto -> getUniqueKeyWithLocation(lineItemDto)
+                              .equals(getUniqueKeyWithLocation(lineItemsExtensionDto)))
+                      .findFirst();
+              lineItemsExtension.ifPresent(dto -> dto.setPhysicalInventoryLineItemId(id));
               usedIds.add(id);
             });
   }
@@ -679,7 +689,7 @@ public class SiglusPhysicalInventoryService {
   public PhysicalInventoryDto saveDraftForProductsForOneProgramWithExtension(
       PhysicalInventoryLineItemExtensionDto dto) {
     saveDraft(dto, dto.getId());
-    // fill lineitem id
+
     PhysicalInventoryDto afterSavedDto = getPhysicalInventory(dto.getId());
     fillLineItemId(dto, afterSavedDto);
     List<PhysicalInventoryDto> physicalInventoryDtos = Collections.singletonList(dto);
@@ -986,8 +996,17 @@ public class SiglusPhysicalInventoryService {
   }
 
   private String getUniqueKey(PhysicalInventoryLineItemDto lineItemDto) {
+    return getString(lineItemDto.getOrderableId()) + SEPARATOR + getString(lineItemDto.getLotId());
+  }
+
+  private String getUniqueKeyWithLocation(PhysicalInventoryLineItemDto lineItemDto) {
     return getString(lineItemDto.getOrderableId()) + SEPARATOR + getString(lineItemDto.getLotId())
             + SEPARATOR + getString(lineItemDto.getLocationCode());
+  }
+
+  private String getUniqueKeyWithLocation(PhysicalInventorySubDraftLineItemsExtensionDto lineItemsExtensionDto) {
+    return getString(lineItemsExtensionDto.getOrderableId()) + SEPARATOR + getString(lineItemsExtensionDto.getLotId())
+            + SEPARATOR + getString(lineItemsExtensionDto.getLocationCode());
   }
 
   private PhysicalInventoryLineItemsExtension getExtension(

@@ -904,7 +904,6 @@ public class SiglusPhysicalInventoryServiceTest {
     Map<String, String> expectedExtraData = newHashMap();
     expectedExtraData.put(VM_STATUS, null);
     expectedExtraData.put(STOCK_CARD_ID, String.valueOf(stockCardId));
-    UUID lineItemId = UUID.randomUUID();
     PhysicalInventoryLineItemDto expectedPhysicalInventoryLineItem = PhysicalInventoryLineItemDto
         .builder()
         .programId(programId)
@@ -913,7 +912,6 @@ public class SiglusPhysicalInventoryServiceTest {
         .extraData(expectedExtraData)
         .stockAdjustments(emptyList())
         .build();
-    expectedPhysicalInventoryLineItem.setId(lineItemId);
     PhysicalInventoryDto expectedPhysicalInventoryDto = PhysicalInventoryDto.builder()
         .programId(programId)
         .id(physicalInventoryId)
