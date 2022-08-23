@@ -150,7 +150,6 @@ import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.exception.UnsupportedProductsException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.localmachine.EventPublisher;
-import org.siglus.siglusapi.localmachine.android.AndroidRequisitionSynced;
 import org.siglus.siglusapi.repository.ProcessingPeriodRepository;
 import org.siglus.siglusapi.repository.RegimenRepository;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
@@ -219,12 +218,6 @@ public class RequisitionCreateService {
         .referenceId(requisition.getId())
         .build();
     syncUpHashRepository.save(syncUpHashDomain);
-    // FIXME: 1) evaluate the superiorId (the higher facility id for this requisition), 2) no event
-    // when replaying
-    eventPublisher.emitGroupEvent(
-        requisition.getId().toString(),
-        null,
-        new AndroidRequisitionSynced(user.getHomeFacilityId(), user.getId(), request));
   }
 
   private Requisition initiateRequisition(RequisitionCreateRequest request, UserDto user) {
