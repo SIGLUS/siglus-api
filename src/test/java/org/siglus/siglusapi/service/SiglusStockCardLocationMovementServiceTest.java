@@ -90,6 +90,7 @@ public class SiglusStockCardLocationMovementServiceTest {
       .programId(programId)
       .orderableId(orderableId)
       .lotId(lotId)
+      .isKit(false)
       .srcArea("A")
       .srcLocationCode("AA20B")
       .destArea("B")
@@ -102,6 +103,7 @@ public class SiglusStockCardLocationMovementServiceTest {
       .programId(programId)
       .orderableId(orderableId)
       .lotId(lotId)
+      .isKit(true)
       .srcArea("A")
       .srcLocationCode("AA20B")
       .destArea("B")
@@ -133,6 +135,8 @@ public class SiglusStockCardLocationMovementServiceTest {
 
     when(stockCardRepository
         .findByFacilityIdAndProgramIdAndOrderableIdAndLotId(facilityId, programId, orderableId, lotId))
+        .thenReturn(newArrayList(stockCard));
+    when(stockCardRepository.findByFacilityIdAndOrderableId(facilityId, orderableId))
         .thenReturn(newArrayList(stockCard));
     when(movementLineItemRepository.save(newArrayList(lineItem))).thenReturn(newArrayList(lineItem));
     when(movementDraftRepository.findByProgramIdAndFacilityId(allProgramId, facilityId))

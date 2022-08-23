@@ -78,9 +78,10 @@ public class SiglusStockCardLocationMovementService {
       StockCardLocationMovementDto movementDto) {
     List<StockCardLocationMovementLineItem> movementLineItems = new ArrayList<>();
     movementDto.getMovementLineItems().forEach(lineItemDto -> {
-      List<StockCard> stockCards = stockCardRepository
-          .findByFacilityIdAndProgramIdAndOrderableIdAndLotId(movementDto.getFacilityId(), lineItemDto.getProgramId(),
-              lineItemDto.getOrderableId(), lineItemDto.getLotId());
+      List<StockCard> stockCards = Boolean.TRUE.equals(lineItemDto.getIsKit()) ? stockCardRepository
+          .findByFacilityIdAndOrderableId(movementDto.getFacilityId(), lineItemDto.getOrderableId())
+          : stockCardRepository.findByFacilityIdAndProgramIdAndOrderableIdAndLotId(movementDto.getFacilityId(),
+              lineItemDto.getProgramId(), lineItemDto.getOrderableId(), lineItemDto.getLotId());
       if (stockCards.isEmpty()) {
         throw new NotFoundException(ERROR_STOCK_CARD_NOT_FOUND);
       }
