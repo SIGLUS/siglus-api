@@ -42,6 +42,7 @@ import org.siglus.siglusapi.dto.MergedLineItemDto;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.dto.StockManagementDraftDto;
 import org.siglus.siglusapi.dto.StockManagementDraftLineItemDto;
+import org.siglus.siglusapi.dto.StockManagementDraftLineItemWithLocationDto;
 import org.siglus.siglusapi.dto.StockManagementDraftWithLocationDto;
 import org.siglus.siglusapi.dto.StockManagementInitialDraftDto;
 import org.siglus.siglusapi.dto.enums.PhysicalInventorySubDraftEnum;
@@ -117,9 +118,21 @@ public class SiglusStockManagementDraftService {
   @Transactional
   public StockManagementDraftWithLocationDto updateDraftWithLocation(StockManagementDraftWithLocationDto subDraftDto,
       UUID id) {
-    log.info("update issue draft");
-    // todo : add issue and receive logic for location
+
+    stockManagementDraftValidator.validateDraft(StockManagementDraftDto.from(subDraftDto), id);
+    if (subDraftDto.getDraftType().equals(FieldConstants.ISSUE)
+        || subDraftDto.getDraftType().equals(FieldConstants.RECEIVE)) {
+      StockManagementDraft subDraft = stockManagementDraftRepository.findOne(id);
+      draftValidator.validateSubDraftStatus(subDraft);
+      conflictOrderableInSubDraftsService.checkConflictOrderableBetweenSubDrafts(StockManagementDraftDto
+          .from(subDraftDto));
+      StockManagementDraft newDraft = setNewAttributesInOriginalDraftWithLocation(subDraftDto, id);
+      log.info("save issue or receive stockManagementDraft with location, id : {}", newDraft.getId());
+      StockManagementDraft savedDraft = stockManagementDraftRepository.save(newDraft);
+      return StockManagementDraftWithLocationDto.from(savedDraft);
+    }
     StockManagementDraft draft = StockManagementDraft.createStockManagementDraftWithLocation(subDraftDto, true);
+    log.info("save other stockManagementDraft with location, id : {}", draft.getId());
     StockManagementDraft savedDraft = stockManagementDraftRepository.save(draft);
     return StockManagementDraftWithLocationDto.from(savedDraft);
   }
@@ -129,28 +142,35 @@ public class SiglusStockManagementDraftService {
     stockManagementDraftValidator.validateDraft(subDraftDto, id);
     if (subDraftDto.getDraftType().equals(FieldConstants.ISSUE)
         || subDraftDto.getDraftType().equals(FieldConstants.RECEIVE)) {
-      log.info("update subDraft");
       StockManagementDraft subDraft = stockManagementDraftRepository.findOne(id);
       draftValidator.validateSubDraftStatus(subDraft);
       conflictOrderableInSubDraftsService.checkConflictOrderableBetweenSubDrafts(subDraftDto);
       StockManagementDraft newDraft = setNewAttributesInOriginalDraft(subDraftDto, id);
+      log.info("save issue or receive stockManagementDraft, id : {}", newDraft.getId());
       StockManagementDraft savedDraft = stockManagementDraftRepository.save(newDraft);
       return StockManagementDraftDto.from(savedDraft);
     }
-    log.info("update adjustment draft");
     StockManagementDraft draft = StockManagementDraft.createStockManagementDraft(subDraftDto, true);
+    log.info("save other stockManagementDraft with location, id : {}", draft.getId());
     StockManagementDraft savedDraft = stockManagementDraftRepository.save(draft);
     return StockManagementDraftDto.from(savedDraft);
   }
 
   public StockManagementDraft setNewAttributesInOriginalDraft(StockManagementDraftDto dto, UUID id) {
-    StockManagementDraft originalDraft = stockManagementDraftRepository.findOne(id);
-    StockManagementDraft newDraft = new StockManagementDraft();
-    BeanUtils.copyProperties(originalDraft, newDraft);
-    newDraft.setSignature(dto.getSignature());
-    newDraft.setStatus(PhysicalInventorySubDraftEnum.DRAFT);
-    newDraft.setOperator(authenticationHelper.getCurrentUser().getUsername());
+    StockManagementDraft newDraft = copyAndUpdateStockManagementDraft(id, dto.getSignature());
     List<StockManagementDraftLineItemDto> lineItemDtos = dto.getLineItems();
+    if (lineItemDtos != null) {
+      newDraft.setLineItems(lineItemDtos.stream()
+          .map(lineItemDto -> StockManagementDraftLineItem.from(lineItemDto, newDraft))
+          .collect(toList()));
+    }
+    return newDraft;
+  }
+
+  public StockManagementDraft setNewAttributesInOriginalDraftWithLocation(StockManagementDraftWithLocationDto dto,
+      UUID id) {
+    StockManagementDraft newDraft = copyAndUpdateStockManagementDraft(id, dto.getSignature());
+    List<StockManagementDraftLineItemWithLocationDto> lineItemDtos = dto.getLineItems();
     if (lineItemDtos != null) {
       newDraft.setLineItems(lineItemDtos.stream()
           .map(lineItemDto -> StockManagementDraftLineItem.from(lineItemDto, newDraft))
@@ -161,24 +181,12 @@ public class SiglusStockManagementDraftService {
 
   public List<StockManagementDraftWithLocationDto> findStockManagementDraftWithLocation(UUID programId, String type,
       Boolean isDraft) {
-    UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
-    draftValidator.validateProgramId(programId);
-    draftValidator.validateFacilityId(facilityId);
-    draftValidator.validateDraftType(type);
-    draftValidator.validateIsDraft(isDraft);
-    List<StockManagementDraft> drafts = stockManagementDraftRepository
-        .findByProgramIdAndFacilityIdAndIsDraftAndDraftType(programId, facilityId, isDraft, type);
+    List<StockManagementDraft> drafts = getStockManagementDrafts(programId, type, isDraft);
     return StockManagementDraftWithLocationDto.from(drafts);
   }
 
   public List<StockManagementDraftDto> findStockManagementDraft(UUID programId, String type, Boolean isDraft) {
-    UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
-    draftValidator.validateProgramId(programId);
-    draftValidator.validateFacilityId(facilityId);
-    draftValidator.validateDraftType(type);
-    draftValidator.validateIsDraft(isDraft);
-    List<StockManagementDraft> drafts = stockManagementDraftRepository
-        .findByProgramIdAndFacilityIdAndIsDraftAndDraftType(programId, facilityId, isDraft, type);
+    List<StockManagementDraft> drafts = getStockManagementDrafts(programId, type, isDraft);
     return StockManagementDraftDto.from(drafts);
   }
 
@@ -237,6 +245,26 @@ public class SiglusStockManagementDraftService {
           subDraft -> subDraft.setDraftNumber(subDraft.getDraftNumber() - DRAFTS_INCREMENT));
       stockManagementDraftRepository.save(filterSubDrafts);
     }
+  }
+
+  private List<StockManagementDraft> getStockManagementDrafts(UUID programId, String type, Boolean isDraft) {
+    UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
+    draftValidator.validateProgramId(programId);
+    draftValidator.validateFacilityId(facilityId);
+    draftValidator.validateDraftType(type);
+    draftValidator.validateIsDraft(isDraft);
+    return stockManagementDraftRepository
+        .findByProgramIdAndFacilityIdAndIsDraftAndDraftType(programId, facilityId, isDraft, type);
+  }
+
+  private StockManagementDraft copyAndUpdateStockManagementDraft(UUID id, String signature) {
+    StockManagementDraft originalDraft = stockManagementDraftRepository.findOne(id);
+    StockManagementDraft newDraft = new StockManagementDraft();
+    BeanUtils.copyProperties(originalDraft, newDraft);
+    newDraft.setSignature(signature);
+    newDraft.setStatus(PhysicalInventorySubDraftEnum.DRAFT);
+    newDraft.setOperator(authenticationHelper.getCurrentUser().getUsername());
+    return newDraft;
   }
 
   private void checkIfDraftExists(StockManagementDraftDto dto) {

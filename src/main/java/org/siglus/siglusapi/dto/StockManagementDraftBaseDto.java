@@ -15,27 +15,45 @@
 
 package org.siglus.siglusapi.dto;
 
+import static com.fasterxml.jackson.annotation.JsonFormat.Shape.STRING;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+import java.time.LocalDate;
+import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-import org.siglus.siglusapi.domain.StockManagementDraftLineItem;
-import org.springframework.beans.BeanUtils;
+import org.siglus.siglusapi.dto.enums.PhysicalInventorySubDraftEnum;
 
-@EqualsAndHashCode(callSuper = true)
 @Data
 @NoArgsConstructor
 @SuperBuilder
 @AllArgsConstructor
-public class StockManagementDraftLineItemWithLocationDto extends StockManagementDraftLineItemDto {
+public class StockManagementDraftBaseDto {
 
-  private String locationCode;
-  private String area;
+  private UUID id;
 
-  public static StockManagementDraftLineItemWithLocationDto from(StockManagementDraftLineItem lineItem) {
-    StockManagementDraftLineItemWithLocationDto lineItemDto = new StockManagementDraftLineItemWithLocationDto();
-    BeanUtils.copyProperties(lineItem, lineItemDto);
-    return lineItemDto;
-  }
+  private UUID facilityId;
+
+  private Boolean isDraft;
+
+  private UUID programId;
+
+  @JsonFormat(shape = STRING)
+  private LocalDate occurredDate;
+
+  private String signature;
+
+  private UUID userId;
+
+  private String draftType;
+
+  private UUID initialDraftId;
+
+  private String operator;
+
+  private PhysicalInventorySubDraftEnum status;
+
+  private Integer draftNumber;
 }
