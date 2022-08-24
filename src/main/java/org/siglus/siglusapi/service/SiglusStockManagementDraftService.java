@@ -191,13 +191,17 @@ public class SiglusStockManagementDraftService {
   }
 
   public List<StockManagementDraftDto> findStockManagementDrafts(UUID initialDraftId) {
+    List<StockManagementDraft> sortedDrafts = getStockManagementDrafts(initialDraftId);
+    return StockManagementDraftDto.from(sortedDrafts);
+  }
+
+  private List<StockManagementDraft> getStockManagementDrafts(UUID initialDraftId) {
     draftValidator.validateInitialDraftId(initialDraftId);
     List<StockManagementDraft> drafts = stockManagementDraftRepository
         .findByInitialDraftId(initialDraftId);
-    List<StockManagementDraft> sortedDrafts = drafts.stream()
+    return drafts.stream()
         .sorted(Comparator.comparingInt(StockManagementDraft::getDraftNumber))
         .collect(toList());
-    return StockManagementDraftDto.from(sortedDrafts);
   }
 
   @Transactional
@@ -559,5 +563,10 @@ public class SiglusStockManagementDraftService {
     StockManagementDraftDto draftDto = StockManagementDraftDto.from(dto);
     StockManagementDraftDto subDraftDto = createNewSubDraft(draftDto);
     return StockManagementDraftWithLocationDto.from(subDraftDto);
+  }
+
+  public List<StockManagementDraftWithLocationDto> findSubDraftsWithLocation(UUID initialDraftId) {
+    List<StockManagementDraft> sortedDrafts = getStockManagementDrafts(initialDraftId);
+    return StockManagementDraftWithLocationDto.from(sortedDrafts);
   }
 }

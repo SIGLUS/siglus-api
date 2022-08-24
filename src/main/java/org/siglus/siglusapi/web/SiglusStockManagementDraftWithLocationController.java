@@ -81,18 +81,23 @@ public class SiglusStockManagementDraftWithLocationController {
     return stockManagementDraftService.mergeSubDraftsWithLocation(initialDraftId);
   }
 
-  @GetMapping("/initial")
+  @GetMapping("/initialDraft")
   public StockManagementInitialDraftDto searchInitialDrafts(
       @RequestParam UUID programId,
       @RequestParam String draftType) {
     return stockManagementDraftService.findStockManagementInitialDraft(programId, draftType);
   }
 
-  @PostMapping("/initial")
+  @PostMapping("/initialDraft")
   @ResponseStatus(CREATED)
   public StockManagementInitialDraftDto initialDraft(
       @RequestBody StockManagementInitialDraftDto dto) {
     return stockManagementDraftService.createInitialDraft(dto);
+  }
+
+  @GetMapping("/subDrafts")
+  public List<StockManagementDraftWithLocationDto> searchSubDrafts(@RequestParam UUID initialDraftId) {
+    return stockManagementDraftService.findSubDraftsWithLocation(initialDraftId);
   }
 
   @PostMapping

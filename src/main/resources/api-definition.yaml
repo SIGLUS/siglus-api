@@ -426,7 +426,7 @@ traits:
           201:
             description: create empty subDraft with location
 
-      /initial:
+      /initialDraft:
         get:
           is: [ secured ]
           responses:
@@ -437,6 +437,13 @@ traits:
           responses:
             201:
               description: create initial draft with location
+
+      /subDrafts:
+        get:
+          is: [ secured ]
+          responses:
+            200:
+              description: GET subDrafts with location
 
     /draftsWithLocation/{id}:
       put:

@@ -41,6 +41,7 @@ public class SiglusStockManagementDraftWithLocationControllerTest extends TestCa
   private final UUID programId = UUID.randomUUID();
   private final UUID userId = UUID.randomUUID();
   private final UUID draftId = UUID.randomUUID();
+  private final UUID initialDraftId = UUID.randomUUID();
   private final String draftType = FieldConstants.ISSUE_WITH_LOCATION;
   private final StockManagementDraftWithLocationDto draftWithLocationDto = StockManagementDraftWithLocationDto.builder()
       .build();
@@ -86,5 +87,12 @@ public class SiglusStockManagementDraftWithLocationControllerTest extends TestCa
     controller.deleteDraft(draftId);
 
     verify(service).deleteStockManagementDraft(draftId);
+  }
+
+  @Test
+  public void shouldCallSearchSubDrafts() {
+    controller.searchSubDrafts(initialDraftId);
+
+    verify(service).findSubDraftsWithLocation(initialDraftId);
   }
 }
