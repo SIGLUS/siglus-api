@@ -41,6 +41,7 @@ import org.siglus.siglusapi.repository.SiglusStockCardRepository;
 import org.siglus.siglusapi.repository.dto.StockCardLineItemDto;
 import org.siglus.siglusapi.repository.dto.StockOnHandDto;
 import org.siglus.siglusapi.service.SiglusOrderableService;
+import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -100,8 +101,8 @@ public class CalculateWebCmmService {
     Map<UUID, List<StockCardLineItemDto>> orderableIdToStockCardLineItemDtos = getOrderableIdToStockCardLineItemDtos(
         startPeriod, endPeriod, facilityId);
 
-    List<HfCmm> hfCmms = buildHfCmms(periodLocalDateRequest, facilityIdToCode,
-        orderableIdToCode, upToNowAllPeriods, endPeriod, facilityId, orderableIdToStockCardDtos,
+    List<HfCmm> hfCmms = buildHfCmms(periodLocalDateRequest, Pair.of(facilityId, facilityIdToCode.get(facilityId)),
+        orderableIdToCode, upToNowAllPeriods, endPeriod, orderableIdToStockCardDtos,
         orderableIdToStockCardLineItemDtos);
     if (!CollectionUtils.isEmpty(hfCmms)) {
       log.info("save hf cmms, size={}, facilityId:{}", hfCmms.size(), facilityId);
@@ -109,9 +110,9 @@ public class CalculateWebCmmService {
     }
   }
 
-  private List<HfCmm> buildHfCmms(LocalDate periodLocalDateRequest, Map<UUID, String> facilityIdToCode,
+  private List<HfCmm> buildHfCmms(LocalDate periodLocalDateRequest, Pair<UUID, String> facilityIdCodePair,
       Map<UUID, String> orderableIdToCode, List<ProcessingPeriod> upToNowAllPeriods, ProcessingPeriod endPeriod,
-      UUID facilityId, Map<UUID, List<StockOnHandDto>> orderableIdToStockCardDtos,
+      Map<UUID, List<StockOnHandDto>> orderableIdToStockCardDtos,
       Map<UUID, List<StockCardLineItemDto>> orderableIdToStockCardLineItemDtos) {
 
     List<HfCmm> hfCmms = Lists.newArrayList();
@@ -119,8 +120,8 @@ public class CalculateWebCmmService {
     orderableIdToStockCardDtos.forEach((orderableId, stockOnHandDtos) -> {
       LocalDate firstMovementPeriodStart = getFirstMovementPeriodStart(stockOnHandDtos, upToNowAllPeriods);
       if (Objects.isNull(firstMovementPeriodStart)) {
-        log.warn("first movement period is null, do not calculate cmm, facilityId:{}, orderableId:{}", facilityId,
-            orderableId);
+        log.warn("first movement period is null, do not calculate cmm, facilityId:{}, orderableId:{}",
+            facilityIdCodePair.getFirst(), orderableId);
         return;
       }
 
@@ -134,7 +135,7 @@ public class CalculateWebCmmService {
       toBeCalculatedPeriods.forEach(period -> {
         double cmm = calculateCmm(firstMovementPeriodStart, periodStartDateToIssueQuantity,
             hasStockOutPeriodStarDate, period);
-        hfCmms.add(buildHfCmm(cmm, orderableIdToCode.get(orderableId), facilityIdToCode.get(facilityId), period));
+        hfCmms.add(buildHfCmm(cmm, orderableIdToCode.get(orderableId), facilityIdCodePair.getSecond(), period));
       });
     });
     return hfCmms;

@@ -15,6 +15,10 @@
 
 package org.siglus.siglusapi.localmachine;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
+
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class CommonConstants {
   public static final String VERSION = "x-local-version";
   public static final String ACCESS_TOKEN = "x-local-token";

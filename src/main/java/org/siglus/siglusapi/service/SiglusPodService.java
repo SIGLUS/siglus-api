@@ -29,6 +29,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -422,7 +423,7 @@ public class SiglusPodService {
     List<PodSubDraft> subDrafts = getPodSubDraftsByPodId(podId);
     if (subDrafts.stream().anyMatch(podSubDraft -> PodSubDraftStatusEnum.SUBMITTED != podSubDraft.getStatus())) {
       throw new BusinessDataException(new Message(ERROR_NOT_ALL_SUB_DRAFTS_SUBMITTED),
-          subDrafts.stream().map(PodSubDraft::getId).collect(Collectors.toSet()));
+          subDrafts.stream().map(PodSubDraft::getId).collect(Collectors.toCollection(HashSet::new)));
     }
     return subDrafts;
   }
