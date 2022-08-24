@@ -87,6 +87,7 @@ public class StockMovementService {
           .productCode(productMovement.getProductCode())
           .reason(productMovement.getMovementDetail().getReason())
           .documentNumber(productMovement.getDocumentNumber())
+          .reasonFreeText(productMovement.getReasonFreeText())
           .build();
       stockMovementResDtos.add(stockMovementResDto);
     }

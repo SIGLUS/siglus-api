@@ -500,7 +500,8 @@ public class StockManagementRepository extends BaseNativeRepository {
         + "root.processeddate, "
         + "l.expirationdate, "
         + "srcfac.name AS srcfacname, "
-        + "destfac.name AS destfacname ";
+        + "destfac.name AS destfacname, "
+        + "root.sourcefreetext ";
     String root = "stockmanagement.stock_card_line_items root";
     String eventRoot = "stockmanagement.stock_events se";
     String srcNodeRoot = "stockmanagement.nodes srcnode";
@@ -627,6 +628,8 @@ public class StockManagementRepository extends BaseNativeRepository {
 
     @Nullable
     private final String documentNumber;
+
+    private final String reasonFreeText;
 
     public ProductMovementKey getProductMovementKey() {
       return ProductMovementKey.of(code.getProductCode(), eventTime);

@@ -44,4 +44,6 @@ public class StockMovementResDto {
   private String signature;
 
   private String documentNumber;
+
+  private String reasonFreeText;
 }

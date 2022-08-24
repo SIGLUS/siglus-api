@@ -71,4 +71,10 @@ public class SiglusStockCardSummariesWithLocationController {
   public ProductMovementDto getProductMovement(@PathVariable UUID orderableId, @RequestParam UUID facilityId) {
     return siglusStockCardService.getMovementByProduct(facilityId, orderableId);
   }
+
+  @GetMapping("/byLocation")
+  public void getLocationMovement(@RequestParam UUID facilityId,
+      @RequestParam String locationCode){
+
+  }
 }

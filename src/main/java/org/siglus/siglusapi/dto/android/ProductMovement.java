@@ -41,6 +41,7 @@ public class ProductMovement implements EventTimeContainer {
   private final Integer stockQuantity;
   private final String signature;
   private final String documentNumber;
+  private final String reasonFreeText;
   @Nullable
   private final Instant processedAt;
   @Default
