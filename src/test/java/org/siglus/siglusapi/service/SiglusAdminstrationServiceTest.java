@@ -185,6 +185,9 @@ public class SiglusAdminstrationServiceTest {
 
     // when
     siglusAdministrationsService.eraseDeviceInfoByFacilityId(appInfo.getFacilityCode());
+
+    // then
+    verify(appInfoRepository, times(0)).deleteByFacilityCode(facilityCode);
   }
 
   @Test
@@ -320,6 +323,9 @@ public class SiglusAdminstrationServiceTest {
 
     // when
     siglusAdministrationsService.exportLocationInfo(facilityId, httpServletResponse);
+
+    // then
+    verify(locationManagementRepository, times(1)).findByFacilityId(facilityId);
   }
 
   @Test
@@ -330,6 +336,9 @@ public class SiglusAdminstrationServiceTest {
 
     // when
     siglusAdministrationsService.exportLocationInfo(facilityId, httpServletResponse);
+
+    // then
+    verify(locationManagementRepository, times(1)).findByFacilityId(facilityId);
   }
 
   @Test
@@ -377,6 +386,10 @@ public class SiglusAdminstrationServiceTest {
 
     // when
     siglusAdministrationsService.createFacility(siglusFacilityDto);
+
+    // then
+    verify(facilityExtensionRepository, times(1))
+        .save(mockFacilityExtension(facilityId, true, null));
   }
 
   @Test
@@ -475,6 +488,7 @@ public class SiglusAdminstrationServiceTest {
     facilityExtension.setFacilityId(facilityId);
     facilityExtension.setIsAndroid(isAndroid);
     facilityExtension.setEnableLocationManagement(enableLocation);
+    facilityExtension.setFacilityCode(facilityCode);
     return facilityExtension;
   }
 

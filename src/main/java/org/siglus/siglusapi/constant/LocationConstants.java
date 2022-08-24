@@ -15,6 +15,10 @@
 
 package org.siglus.siglusapi.constant;
 
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+
+@RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 public class LocationConstants {
   public static final String VIRTUAL_LOCATION_CODE = "00000";
   public static final String VIRTUAL_LOCATION_AREA = "virtual location";
