@@ -437,11 +437,88 @@ traits:
                 schema: stockManagementDraft
       delete:
         is: [ secured ]
-        description: Delete a draft physical inventory.
+        description: Delete a stock management draft with Location.
 
         responses:
           204:
             description: Draft deleted.
+      get:
+        is: [ secured ]
+        description: Get a stock management draft with Location.
+
+        responses:
+          200:
+            description: success.
+
+    /draftsWithLocation/{initialDraftId}/subDraft/{subDraftId}/submit:
+      put:
+        is: [ secured ]
+        description: Update a stock management sub-draft. Only one sub-draft is allowed at the same time for one specific initial draft with Location.
+        body:
+          application/json:
+            schema: stockManagementDraft
+
+        responses:
+          200:
+            description: Draft updated.
+            body:
+              application/json:
+                schema: stockManagementDraft
+          400:
+            body:
+              application/json:
+                schema: localizedMessage
+            description: An error occured during request processing.
+
+          403:
+            description: User does not have permission to update stock management sub-draft with Location.
+            body:
+              application/json:
+                schema: localizedMessage
+
+    /draftsWithLocation/{initialDraftId}/subDraft/merge:
+      get:
+        is: [ secured ]
+        description: merge all sub-drafts line items and return with Location.
+        responses:
+          200:
+            description: return all line items of sub-drafts with Location.
+
+          400:
+            body:
+              application/json:
+                schema: localizedMessage
+            description: An error occured during request processing.
+
+          403:
+            description: User does not have permission to update stock management sub-draft with Location.
+            body:
+              application/json:
+                schema: localizedMessage
+
+    /stockEvents/multiUserWithLocation:
+      post:
+        is: [ secured ]
+        description: Create a new stock event with one or more orderables for multi-user with location.
+        body:
+          application/json:
+        responses:
+          201:
+            description: Stock event has been processed with no validatoin error or persistence error .
+            body:
+              application/json:
+                schema: uuid
+          400:
+            description: Failed to process stock event due to validation error.
+            body:
+              application/json:
+                schema: localizedMessage
+          403:
+            description: User does not have permission to create stock events for given facility and program.
+            body:
+              application/json:
+                schema: localizedMessage
+
     /report/tracerDrug:
       displayName: run tracer drug persistent data task
     /report/tracerDrug/refresh:
