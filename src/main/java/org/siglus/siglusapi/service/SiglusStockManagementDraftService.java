@@ -204,6 +204,16 @@ public class SiglusStockManagementDraftService {
         .collect(toList());
   }
 
+  private List<StockManagementDraft> getStockManagementDrafts(UUID programId, String type, Boolean isDraft) {
+    UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
+    draftValidator.validateProgramId(programId);
+    draftValidator.validateFacilityId(facilityId);
+    draftValidator.validateDraftType(type);
+    draftValidator.validateIsDraft(isDraft);
+    return stockManagementDraftRepository
+        .findByProgramIdAndFacilityIdAndIsDraftAndDraftType(programId, facilityId, isDraft, type);
+  }
+
   @Transactional
   public void deleteStockManagementDraft(StockEventDto dto) {
     List<StockManagementDraft> drafts = stockManagementDraftRepository
@@ -248,16 +258,6 @@ public class SiglusStockManagementDraftService {
           subDraft -> subDraft.setDraftNumber(subDraft.getDraftNumber() - DRAFTS_INCREMENT));
       stockManagementDraftRepository.save(filterSubDrafts);
     }
-  }
-
-  private List<StockManagementDraft> getStockManagementDrafts(UUID programId, String type, Boolean isDraft) {
-    UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
-    draftValidator.validateProgramId(programId);
-    draftValidator.validateFacilityId(facilityId);
-    draftValidator.validateDraftType(type);
-    draftValidator.validateIsDraft(isDraft);
-    return stockManagementDraftRepository
-        .findByProgramIdAndFacilityIdAndIsDraftAndDraftType(programId, facilityId, isDraft, type);
   }
 
   private StockManagementDraft copyAndUpdateStockManagementDraft(UUID id, String signature) {
