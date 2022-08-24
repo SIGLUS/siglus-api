@@ -71,7 +71,6 @@ public class CalculatedStocksOnHandByLocationService {
   private final OrderableReferenceDataService orderableService;
   private final StockCardLineItemRepository stockCardLineItemRepository;
 
-
   public void calculateStockOnHandByLocation(StockEventDto eventDto) {
     UUID facilityId = eventDto.getFacilityId();
     List<StockEventLineItemDto> lineItemDtos = eventDto.getLineItems();
@@ -185,7 +184,7 @@ public class CalculatedStocksOnHandByLocationService {
     for (StockCardLineItem item : followingLineItems) {
       Integer calculatedStockOnHand = calculateStockOnHand(item, previousSoh);
       LocalDate itemOccurredDate = item.getOccurredDate();
-      if (!itemOccurredDate.equals(previousOccurredDate)) {
+      if ((!itemOccurredDate.equals(previousOccurredDate)) && (previousItem != null)) {
         toSaveForThisLocation.add(buildSoh(lineItemIdToExtension, previousItem, previousSoh, stockCard,
                 extension.getLocationCode(), extension.getArea()));
       }

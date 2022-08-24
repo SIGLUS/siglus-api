@@ -33,6 +33,8 @@ import org.springframework.data.repository.query.Param;
 @SuppressWarnings("PMD.AvoidDuplicateLiterals")
 public interface SiglusStockCardRepository extends JpaRepository<StockCard, UUID>, JpaSpecificationExecutor<StockCard> {
 
+  List<StockCard> findByFacilityIdAndProgramId(UUID facilityId, UUID programId);
+
   List<StockCard> findByFacilityIdAndOrderableId(
       @Param("facilityId") UUID facilityId,
       @Param("orderableId") UUID orderableId);
