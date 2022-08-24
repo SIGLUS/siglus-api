@@ -192,8 +192,10 @@ public class CalculatedStocksOnHandByLocationService {
       previousItem = item;
       previousOccurredDate = itemOccurredDate;
     }
-    toSaveForThisLocation.add(buildSoh(lineItemIdToExtension, previousItem, previousSoh, stockCard,
-            extension.getLocationCode(), extension.getArea()));
+    if (previousItem != null) {
+      toSaveForThisLocation.add(buildSoh(lineItemIdToExtension, previousItem, previousSoh, stockCard,
+              extension.getLocationCode(), extension.getArea()));
+    }
 
     toSaveList.addAll(toSaveForThisLocation);
   }
