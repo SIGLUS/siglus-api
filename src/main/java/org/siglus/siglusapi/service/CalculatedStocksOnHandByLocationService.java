@@ -24,6 +24,7 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
@@ -97,13 +98,18 @@ public class CalculatedStocksOnHandByLocationService {
             .stream().flatMap(Collection::stream).collect(Collectors.toList());
     deleteFollowingStockOnHands(allStockEventLineItems, lineItemIdToExtension, occurredDate);
 
+    List<StockCardLocationMovementLineItem> allMovements = locationMovementRepository
+            .findAllByStockCardIdIn(stockCardIds);
+    Map<UUID, List<StockCardLocationMovementLineItem>> stockCardIdToMovements = allMovements.stream()
+            .collect(Collectors.groupingBy(StockCardLocationMovementLineItem::getStockCardId));
+
     List<CalculatedStockOnHandByLocation> toSaveList = new ArrayList<>();
     stockCardToLineItems.forEach((key, value) -> {
       value.sort(StockCard.getLineItemsComparator());
       value.stream().findFirst()
           .ifPresent(item -> recalculateLocationStockOnHand(toSaveList, stockCardIdToLineItems,
-                  lineItemIdToExtension, item, stockCardIdAndLocationCodeToPreviousStockOnHandMap
-          ));
+                  lineItemIdToExtension, item, stockCardIdAndLocationCodeToPreviousStockOnHandMap,
+                  stockCardIdToMovements));
     });
 
     saveAll(toSaveList);
@@ -152,7 +158,8 @@ public class CalculatedStocksOnHandByLocationService {
                         Map<UUID, List<StockCardLineItem>> stockCardIdToLineItems,
                         Map<UUID, StockCardLineItemExtension> lineItemIdToExtension,
                         StockCardLineItem lineItem,
-                        Map<String, Integer> stockCardIdAndLocationCodeToPreviousStockOnHandMap) {
+                        Map<String, Integer> stockCardIdAndLocationCodeToPreviousStockOnHandMap,
+                        Map<UUID, List<StockCardLocationMovementLineItem>> stockCardIdToMovements) {
     List<CalculatedStockOnHandByLocation> toSaveForThisLocation = new ArrayList<>();
 
     StockCardLineItemExtension extension = lineItemIdToExtension.get(lineItem.getId());
@@ -168,7 +175,7 @@ public class CalculatedStocksOnHandByLocationService {
     followingLineItems.add(lineItemsAtTheSameDay, lineItem);
 
     // handle location movement
-    List<StockCardLocationMovementLineItem> movements = getFollowingLocationMovements(
+    List<StockCardLocationMovementLineItem> movements = getFollowingLocationMovements(stockCardIdToMovements,
             stockCard.getId(), extension.getLocationCode(), lineItem.getOccurredDate());
     if (CollectionUtils.isNotEmpty(movements)) {
       List<StockCardLineItem> followingMovementLineItems = movements.stream()
@@ -217,8 +224,10 @@ public class CalculatedStocksOnHandByLocationService {
 
   // get movement src/des location match after occurredDate
   private List<StockCardLocationMovementLineItem> getFollowingLocationMovements(
+          Map<UUID, List<StockCardLocationMovementLineItem>> stockCardIdToMovements,
           UUID stockCardId, String locationCode, LocalDate occurredDate) {
-    return locationMovementRepository.findByStockCardId(stockCardId).stream()
+    return stockCardIdToMovements.getOrDefault(stockCardId, Collections.emptyList())
+            .stream()
             .filter(movement -> !occurredDate.isAfter(movement.getOccurredDate()))
             .filter(movement -> locationCode.equals(movement.getSrcLocationCode())
                     || locationCode.equals(movement.getDestLocationCode()))
