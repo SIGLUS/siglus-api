@@ -26,6 +26,7 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
 import org.junit.Before;
@@ -64,10 +65,13 @@ public class SiglusStockMovementServiceTest {
   private StockMovementService stockMovementService;
   private UUID facilityId;
 
+  private UUID orderableId;
+
   @Before
   public void prepare() {
     MockitoAnnotations.initMocks(this);
     facilityId = UUID.randomUUID();
+    orderableId = UUID.randomUUID();
   }
 
   @Test
@@ -86,12 +90,24 @@ public class SiglusStockMovementServiceTest {
     assertEquals(3, productMovements.size());
   }
 
+  @Test
+  public void shouldReturnStockMovementByProductWhenGetStockMovementByServiceWhenGivenFacilityIdAndOrderableiId() {
+    PeriodOfProductMovements periodOfProductMovements = mockPeriodOfProductMovements();
+    HashSet<UUID> orderableIds = new HashSet<>();
+    orderableIds.add(orderableId);
+    when(stockManagementRepository.getAllProductMovements(facilityId, orderableIds)).thenReturn(
+        periodOfProductMovements);
+    List<StockMovementResDto> movementsByProduct = stockMovementService.getMovementsByProduct(facilityId, orderableId);
+    assertEquals(movementsByProduct.size(), 3);
+  }
+
   private PeriodOfProductMovements mockPeriodOfProductMovements() {
     List<ProductMovement> productMovementList = mockProductMovements();
     StocksOnHand stocksOnHand = mockStocksOnHand();
     PeriodOfProductMovements periodOfProductMovements = new PeriodOfProductMovements(productMovementList, stocksOnHand);
     return periodOfProductMovements;
   }
+
 
   private StocksOnHand mockStocksOnHand() {
     ProductLotStock lot1 = ProductLotStock.builder()
@@ -136,7 +152,7 @@ public class SiglusStockMovementServiceTest {
         .stockQuantity(10)
         .eventTime(
             EventTime.fromDatabase(java.sql.Date.valueOf("2021-10-01"), "2021-09-15T01:23:45Z", serverProccessAt))
-        .movementDetail(new MovementDetail(10, MovementType.UNPACK_KIT, "MATERNITY"))
+        .movementDetail(new MovementDetail(10, MovementType.ISSUE, "MATERNITY"))
         .lotMovements(singletonList(movement1Lot1))
         .processedAt(serverProccessAt.toInstant())
         .build();

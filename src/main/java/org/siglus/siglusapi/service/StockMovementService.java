@@ -17,6 +17,7 @@ package org.siglus.siglusapi.service;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
@@ -24,6 +25,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.siglus.siglusapi.dto.StockMovementResDto;
 import org.siglus.siglusapi.dto.android.PeriodOfProductMovements;
+import org.siglus.siglusapi.dto.android.ProductMovement;
 import org.siglus.siglusapi.repository.StockManagementRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -48,6 +50,47 @@ public class StockMovementService {
       return new ArrayList<>();
     }
     return simplifyStockMovementResponse(productMovements);
+  }
+
+  public List<StockMovementResDto> getMovementsByProduct(UUID facilityId, UUID orderableId) {
+    HashSet<UUID> orderableIdsSet = new HashSet<>();
+    if (orderableId != null) {
+      orderableIdsSet.add(orderableId);
+    }
+    PeriodOfProductMovements allProductMovements = stockManagementRepository.getAllProductMovements(facilityId,
+        orderableIdsSet);
+    List<ProductMovement> productMovements = allProductMovements.getProductMovements();
+    LinkedList<StockMovementResDto> stockMovementResDtos = new LinkedList<>();
+    for (ProductMovement productMovement : productMovements) {
+      int soh = 0;
+      int count = 0;
+      switch (productMovement.getMovementDetail().getType()) {
+        case ISSUE:
+          count -= productMovement.getMovementDetail().getAdjustment();
+          soh += productMovement.getStockQuantity();
+          break;
+        case RECEIVE:
+        case UNPACK_KIT:
+        case PHYSICAL_INVENTORY:
+        case ADJUSTMENT:
+          count += productMovement.getMovementDetail().getAdjustment();
+          soh += productMovement.getStockQuantity();
+          break;
+        default:
+          break;
+      }
+      StockMovementResDto stockMovementResDto = StockMovementResDto.builder()
+          .movementQuantity(count)
+          .productSoh(soh)
+          .dateOfMovement(productMovement.getEventTime().getOccurredDate())
+          .type(productMovement.getMovementDetail().getType().toString())
+          .productCode(productMovement.getProductCode())
+          .reason(productMovement.getMovementDetail().getReason())
+          .documentNumber(productMovement.getDocumentNumber())
+          .build();
+      stockMovementResDtos.add(stockMovementResDto);
+    }
+    return stockMovementResDtos;
   }
 
   private List<StockMovementResDto> simplifyStockMovementResponse(

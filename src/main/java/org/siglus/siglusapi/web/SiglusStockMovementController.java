@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.UUID;
 import javax.annotation.Nullable;
 import org.openlmis.requisition.exception.ValidationMessageException;
+import org.siglus.siglusapi.dto.ProductMovementDto;
 import org.siglus.siglusapi.dto.StockMovementResDto;
 import org.siglus.siglusapi.service.SiglusStockCardService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,5 +58,11 @@ public class SiglusStockMovementController {
     List<StockMovementResDto> productMovements =
         siglusStockCardService.getProductMovements(facilityId, orderableId, since, tillExclusive);
     return new ResponseEntity<>(productMovements, OK);
+  }
+
+  @GetMapping("/byProduct/{orderableId}")
+  public ProductMovementDto getMovementByProduct(@PathVariable("orderableId") UUID orderableId,
+      @RequestParam UUID facilityId) {
+    return siglusStockCardService.getMovementByProduct(facilityId, orderableId);
   }
 }
