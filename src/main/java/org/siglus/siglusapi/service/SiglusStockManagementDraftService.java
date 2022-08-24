@@ -221,8 +221,7 @@ public class SiglusStockManagementDraftService {
 
   @Transactional
   public void deleteStockManagementDraft(UUID id) {
-    StockManagementDraft subDraft = stockManagementDraftRepository.findOne(id);
-    draftValidator.validateSubDraft(subDraft);
+    StockManagementDraft subDraft = getAndValidateStockManagementDraft(id);
     draftValidator.validateSubDraftStatus(subDraft);
     UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
     operatePermissionService.checkPermission(facilityId);
@@ -388,8 +387,7 @@ public class SiglusStockManagementDraftService {
 
   @Transactional
   public StockManagementDraftDto updateOperatorAndStatus(StockManagementDraftDto draftDto) {
-    StockManagementDraft subDraft = stockManagementDraftRepository.findOne(draftDto.getId());
-    draftValidator.validateSubDraft(subDraft);
+    StockManagementDraft subDraft = getAndValidateStockManagementDraft(draftDto.getId());
     draftValidator.validateSubDraftStatus(subDraft);
     subDraft.setStatus(PhysicalInventorySubDraftEnum.DRAFT);
     subDraft.setOperator(draftDto.getOperator());
@@ -398,15 +396,18 @@ public class SiglusStockManagementDraftService {
   }
 
   public StockManagementDraftDto searchDraft(UUID id) {
-    StockManagementDraft subDraft = stockManagementDraftRepository.findOne(id);
-    draftValidator.validateSubDraft(subDraft);
+    StockManagementDraft subDraft = getAndValidateStockManagementDraft(id);
     return StockManagementDraftDto.from(subDraft);
+  }
+
+  public StockManagementDraftWithLocationDto searchDraftWithLocation(UUID id) {
+    StockManagementDraft subDraft = getAndValidateStockManagementDraft(id);
+    return StockManagementDraftWithLocationDto.from(subDraft);
   }
 
   @Transactional
   public StockManagementDraftDto restoreSubDraftWhenDoDelete(StockManagementDraftDto dto) {
-    StockManagementDraft subDraft = stockManagementDraftRepository.findOne(dto.getId());
-    draftValidator.validateSubDraft(subDraft);
+    StockManagementDraft subDraft = getAndValidateStockManagementDraft(dto.getId());
     draftValidator.validateSubDraftStatus(subDraft);
     StockManagementDraft currentDraft = new StockManagementDraft();
     BeanUtils.copyProperties(subDraft, currentDraft);
@@ -419,8 +420,7 @@ public class SiglusStockManagementDraftService {
 
   @Transactional
   public StockManagementDraftDto updateStatusAfterSubmit(StockManagementDraftDto subDraftDto) {
-    StockManagementDraft subDraft = stockManagementDraftRepository.findOne(subDraftDto.getId());
-    draftValidator.validateSubDraft(subDraft);
+    StockManagementDraft subDraft = getAndValidateStockManagementDraft(subDraftDto.getId());
     conflictOrderableInSubDraftsService.checkConflictOrderableAndLotInSubDraft(subDraftDto);
     draftValidator.validateSubDraftStatus(subDraft);
     conflictOrderableInSubDraftsService.checkConflictOrderableBetweenSubDrafts(subDraftDto);
@@ -457,6 +457,12 @@ public class SiglusStockManagementDraftService {
     }
     throw new BusinessDataException(new Message(ERROR_STOCK_MANAGEMENT_SUB_DRAFT_NOT_ALL_SUBMITTED),
         "subDrafts not all submitted");
+  }
+
+  private StockManagementDraft getAndValidateStockManagementDraft(UUID id) {
+    StockManagementDraft subDraft = stockManagementDraftRepository.findOne(id);
+    draftValidator.validateSubDraft(subDraft);
+    return subDraft;
   }
 
   private void fillingStockOnHandField(MergedLineItemDto mergedLineItemDto) {
