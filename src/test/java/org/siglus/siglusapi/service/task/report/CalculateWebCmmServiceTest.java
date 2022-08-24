@@ -35,7 +35,7 @@ import org.openlmis.referencedata.domain.Facility;
 import org.openlmis.referencedata.domain.ProcessingPeriod;
 import org.openlmis.referencedata.domain.ProcessingSchedule;
 import org.openlmis.referencedata.dto.OrderableDto;
-import org.siglus.siglusapi.repository.FacilityCmmsRepository;
+import org.siglus.siglusapi.repository.FacilityCmmNativeRepository;
 import org.siglus.siglusapi.repository.ProcessingPeriodRepository;
 import org.siglus.siglusapi.repository.SiglusFacilityRepository;
 import org.siglus.siglusapi.repository.SiglusStockCardLineItemRepository;
@@ -56,7 +56,7 @@ public class CalculateWebCmmServiceTest {
   @Mock
   private ProcessingPeriodRepository processingPeriodRepository;
   @Mock
-  private FacilityCmmsRepository facilityCmmsRepository;
+  private FacilityCmmNativeRepository facilityCmmNativeRepository;
   @Mock
   private SiglusStockCardRepository siglusStockCardRepository;
   @Mock
@@ -85,7 +85,7 @@ public class CalculateWebCmmServiceTest {
     calculateWebCmmService.calculateCmms(null);
 
     // then
-    verify(facilityCmmsRepository).save(anyList());
+    verify(facilityCmmNativeRepository).batchCreateHfCmms(anyList());
   }
 
   @Test
@@ -99,7 +99,7 @@ public class CalculateWebCmmServiceTest {
 
     calculateWebCmmService.calculateCmms(LocalDate.of(oneYearAgo.getDayOfYear(), 10, 21));
 
-    verify(facilityCmmsRepository).save(anyList());
+    verify(facilityCmmNativeRepository).batchCreateHfCmms(anyList());
   }
 
   @Test
@@ -113,7 +113,7 @@ public class CalculateWebCmmServiceTest {
 
     calculateWebCmmService.calculateCmms(LocalDate.of(oneYearAgo.getDayOfYear(), 8, 21));
 
-    verify(facilityCmmsRepository, times(0)).save(anyList());
+    verify(facilityCmmNativeRepository, times(0)).batchCreateHfCmms(anyList());
   }
 
   private void mockFacility() {

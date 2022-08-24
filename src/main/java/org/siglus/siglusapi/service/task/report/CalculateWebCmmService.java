@@ -19,6 +19,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -32,7 +33,7 @@ import org.openlmis.referencedata.domain.Facility;
 import org.openlmis.referencedata.domain.ProcessingPeriod;
 import org.openlmis.referencedata.dto.OrderableDto;
 import org.siglus.siglusapi.domain.HfCmm;
-import org.siglus.siglusapi.repository.FacilityCmmsRepository;
+import org.siglus.siglusapi.repository.FacilityCmmNativeRepository;
 import org.siglus.siglusapi.repository.ProcessingPeriodRepository;
 import org.siglus.siglusapi.repository.SiglusFacilityRepository;
 import org.siglus.siglusapi.repository.SiglusStockCardLineItemRepository;
@@ -51,7 +52,7 @@ public class CalculateWebCmmService {
 
   private final SiglusFacilityRepository siglusFacilityRepository;
   private final ProcessingPeriodRepository processingPeriodRepository;
-  private final FacilityCmmsRepository facilityCmmsRepository;
+  private final FacilityCmmNativeRepository facilityCmmNativeRepository;
   private final SiglusStockCardRepository siglusStockCardRepository;
   private final SiglusStockCardLineItemRepository siglusStockCardLineItemRepository;
   private final SiglusOrderableService siglusOrderableService;
@@ -104,7 +105,7 @@ public class CalculateWebCmmService {
         orderableIdToStockCardLineItemDtos);
     if (!CollectionUtils.isEmpty(hfCmms)) {
       log.info("save hf cmms, size={}, facilityId:{}", hfCmms.size(), facilityId);
-      facilityCmmsRepository.save(hfCmms);
+      facilityCmmNativeRepository.batchCreateHfCmms(hfCmms);
     }
   }
 
@@ -286,13 +287,16 @@ public class CalculateWebCmmService {
   }
 
   private HfCmm buildHfCmm(double cmm, String orderableCode, String facilityCode, ProcessingPeriod period) {
-    return HfCmm.builder()
+    HfCmm hfCmm = HfCmm.builder()
         .cmm(cmm)
         .periodBegin(period.getStartDate())
         .periodEnd(period.getEndDate())
         .productCode(orderableCode)
         .facilityCode(facilityCode)
+        .lastUpdated(OffsetDateTime.now())
         .build();
+    hfCmm.setId(UUID.randomUUID());
+    return hfCmm;
   }
 
   private List<ProcessingPeriod> getUpToNowAllPeriods() {
