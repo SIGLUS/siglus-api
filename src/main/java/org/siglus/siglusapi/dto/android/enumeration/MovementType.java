@@ -69,7 +69,7 @@ public enum MovementType {
     @Override
     public UUID getDestinationId(UUID programId, String destination) {
       return StockCardCreateContextHolder.getContext().findDestinationId(programId, destination)
-          .orElseThrow(() -> new NotFoundException("No such destination: " + destination));
+          .orElseThrow(() -> new NotFoundException(NO_SUCH_DESTINATION + destination));
     }
 
   },

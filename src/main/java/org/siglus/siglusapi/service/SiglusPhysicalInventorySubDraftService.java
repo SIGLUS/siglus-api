@@ -279,7 +279,7 @@ public class SiglusPhysicalInventorySubDraftService {
     List<PhysicalInventoryLineItemsExtension> physicalInventoryLineItemsExtensions
         = lineItemsExtensionRepository.findByPhysicalInventoryIdIn(physicalInventoryIds);
 
-    List<ProductSubDraftConflictDto> conflictDtoList = new ArrayList<>();
+    ArrayList<ProductSubDraftConflictDto> conflictDtoList = new ArrayList<>();
     Set<UUID> conflictOrderableIds = new HashSet<>();
     for (PhysicalInventoryLineItemDto lineItem : physicalInventoryDto.getLineItems()) {
       if (conflictOrderableIds.contains(lineItem.getOrderableId())) {

@@ -152,14 +152,14 @@ public class SiglusAuthenticationHelperTest {
 
   @Test
   public void shouldReturnEmptyWhenGetCurrentUserIdGivenPrincipalIsNull() {
-    assertThat(authenticationHelper.getCurrentUserId().isPresent()).isFalse();
+    assertThat(authenticationHelper.getCurrentUserId()).isNotPresent();
   }
 
   @Test
   public void shouldReturnEmptyWhenGetCurrentUserIdGivenPrincipalIsTrustedClient() {
     given(authentication.getPrincipal()).willReturn("trusted-client");
 
-    assertThat(authenticationHelper.getCurrentUserId().isPresent()).isFalse();
+    assertThat(authenticationHelper.getCurrentUserId()).isNotPresent();
   }
 
   @Test

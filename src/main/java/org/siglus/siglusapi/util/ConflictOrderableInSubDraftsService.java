@@ -64,7 +64,7 @@ public class ConflictOrderableInSubDraftsService {
 
     subDrafts.remove(currentSubDraft);
 
-    List<ProductSubDraftConflictDto> subDraftConflictDtos = new ArrayList<>();
+    ArrayList<ProductSubDraftConflictDto> subDraftConflictDtos = new ArrayList<>();
     subDrafts.forEach(subDraft -> {
       List<UUID> conflictOrderableIds = subDraft.getLineItems().stream()
           .map(StockManagementDraftLineItem::getOrderableId)
@@ -84,8 +84,7 @@ public class ConflictOrderableInSubDraftsService {
     fillConflictDtos(subDraftConflictDtos);
 
     if (CollectionUtils.isNotEmpty(subDraftConflictDtos)) {
-      throw new BusinessDataException(new Message(ERROR_ISSUE_CONFLICT_SUB_DRAFT),
-          subDraftConflictDtos);
+      throw new BusinessDataException(new Message(ERROR_ISSUE_CONFLICT_SUB_DRAFT), subDraftConflictDtos);
     }
   }
 

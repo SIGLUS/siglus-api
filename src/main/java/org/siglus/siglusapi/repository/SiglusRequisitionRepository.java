@@ -81,4 +81,15 @@ public interface SiglusRequisitionRepository extends JpaRepository<Requisition, 
       + "order by t.programid,t.createddate desc ", nativeQuery = true)
   List<Requisition> findLatestRequisitionsByFacilityIdAndAndroidTemplateId(@Param("facilityId") UUID facilityId,
       @Param("androidTemplateIds") Set<UUID> androidTemplateIds);
+
+  @Query(value = "select CAST(id AS varchar) from requisition.requisitions r "
+      + "where r.facilityid = :facilityId "
+      + "and r.programid = :programId "
+      + "and r.processingperiodid = :processingPeriodId "
+      + "and r.emergency = :emergency "
+      + "and r.status in (:status) ",
+      nativeQuery = true)
+  List<String> findRequisitionIdsByOrderInfo(@Param("facilityId") UUID facilityId, @Param("programId") UUID programId,
+      @Param("processingPeriodId") UUID periodId, @Param("emergency") boolean emergency,
+      @Param("status") List<String> status);
 }
