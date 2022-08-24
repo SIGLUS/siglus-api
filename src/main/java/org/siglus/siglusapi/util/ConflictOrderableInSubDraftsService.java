@@ -36,6 +36,7 @@ import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.dto.ProductSubDraftConflictDto;
 import org.siglus.siglusapi.dto.StockManagementDraftDto;
 import org.siglus.siglusapi.dto.StockManagementDraftLineItemDto;
+import org.siglus.siglusapi.dto.StockManagementDraftWithLocationDto;
 import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.StockManagementDraftRepository;
@@ -88,6 +89,10 @@ public class ConflictOrderableInSubDraftsService {
     }
   }
 
+  public void checkConflictOrderableBetweenSubDrafts(StockManagementDraftWithLocationDto dto) {
+    checkConflictOrderableBetweenSubDrafts(StockManagementDraftDto.from(dto));
+  }
+
   public void checkConflictOrderableAndLotInSubDraft(StockManagementDraftDto stockManagementDraftDto) {
     if (stockManagementDraftDto.getDraftType().equals(FieldConstants.RECEIVE)) {
       List<StockManagementDraftLineItemDto> lineItemDtos = stockManagementDraftDto.getLineItems();
@@ -100,6 +105,11 @@ public class ConflictOrderableInSubDraftsService {
             new Message(ERROR_STOCK_MANAGEMENT_SUB_DRAFT_SAME_ORDERABLE_ID_WITH_LOT_CODE));
       }
     }
+  }
+
+  public void checkConflictOrderableAndLotInSubDraft(StockManagementDraftWithLocationDto
+      stockManagementDraftWithLocationDto) {
+    checkConflictOrderableAndLotInSubDraft(StockManagementDraftDto.from(stockManagementDraftWithLocationDto));
   }
 
   private void fillConflictDtos(List<ProductSubDraftConflictDto> subDraftConflictDtos) {

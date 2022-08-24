@@ -39,6 +39,7 @@ import org.siglus.siglusapi.domain.StockManagementDraft;
 import org.siglus.siglusapi.domain.StockManagementDraftLineItem;
 import org.siglus.siglusapi.domain.StockManagementInitialDraft;
 import org.siglus.siglusapi.dto.MergedLineItemDto;
+import org.siglus.siglusapi.dto.MergedLineItemWithLocationDto;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.dto.StockManagementDraftDto;
 import org.siglus.siglusapi.dto.StockManagementDraftLineItemDto;
@@ -419,6 +420,27 @@ public class SiglusStockManagementDraftService {
   }
 
   @Transactional
+  public StockManagementDraftWithLocationDto updateStatusAfterSubmitWithLocation(
+      StockManagementDraftWithLocationDto subDraftDto) {
+    StockManagementDraft subDraft = getAndValidateStockManagementDraft(subDraftDto.getId());
+    conflictOrderableInSubDraftsService.checkConflictOrderableAndLotInSubDraft(subDraftDto);
+    draftValidator.validateSubDraftStatus(subDraft);
+    conflictOrderableInSubDraftsService.checkConflictOrderableBetweenSubDrafts(subDraftDto);
+    subDraft.setStatus(PhysicalInventorySubDraftEnum.SUBMITTED);
+    subDraft.setOperator(authenticationHelper.getCurrentUser().getUsername());
+    subDraft.setSignature(subDraftDto.getSignature());
+    List<StockManagementDraftLineItem> draftLineItems = subDraftDto.getLineItems().stream()
+        .map(lineItemDto -> StockManagementDraftLineItem.from(lineItemDto, subDraft))
+        .collect(toList());
+    StockManagementDraft submitDraft = new StockManagementDraft();
+    BeanUtils.copyProperties(subDraft, submitDraft);
+    submitDraft.setLineItems(draftLineItems);
+
+    StockManagementDraft updatedDraft = stockManagementDraftRepository.save(submitDraft);
+    return StockManagementDraftWithLocationDto.from(updatedDraft);
+  }
+
+  @Transactional
   public StockManagementDraftDto updateStatusAfterSubmit(StockManagementDraftDto subDraftDto) {
     StockManagementDraft subDraft = getAndValidateStockManagementDraft(subDraftDto.getId());
     conflictOrderableInSubDraftsService.checkConflictOrderableAndLotInSubDraft(subDraftDto);
@@ -459,6 +481,27 @@ public class SiglusStockManagementDraftService {
         "subDrafts not all submitted");
   }
 
+  public List<MergedLineItemWithLocationDto> mergeSubDraftsWithLocation(UUID initialDraftId) {
+    draftValidator.validateInitialDraftId(initialDraftId);
+    List<StockManagementDraft> subDrafts = stockManagementDraftRepository
+        .findByInitialDraftId(initialDraftId);
+
+    if (subDrafts.isEmpty()) {
+      throw new BusinessDataException(new Message(ERROR_STOCK_MANAGEMENT_SUB_DRAFT_EMPTY),
+          "subDrafts empty");
+    }
+    boolean isAllSubmitted = subDrafts.stream()
+        .allMatch(subDraft -> subDraft.getStatus().equals(PhysicalInventorySubDraftEnum.SUBMITTED));
+    if (isAllSubmitted) {
+      List<MergedLineItemWithLocationDto> mergedLineItemWithLocationDtos =
+          fillingMergedLineItemsFieldsWithLocation(subDrafts);
+      mergedLineItemWithLocationDtos.forEach(this::fillingStockOnHandField);
+      return mergedLineItemWithLocationDtos;
+    }
+    throw new BusinessDataException(new Message(ERROR_STOCK_MANAGEMENT_SUB_DRAFT_NOT_ALL_SUBMITTED),
+        "subDrafts not all submitted");
+  }
+
   private StockManagementDraft getAndValidateStockManagementDraft(UUID id) {
     StockManagementDraft subDraft = stockManagementDraftRepository.findOne(id);
     draftValidator.validateSubDraft(subDraft);
@@ -489,6 +532,28 @@ public class SiglusStockManagementDraftService {
       mergedLineItemDtos.addAll(subDraftLineItemDto);
     });
     return mergedLineItemDtos;
+  }
+
+  private List<MergedLineItemWithLocationDto> fillingMergedLineItemsFieldsWithLocation(
+      List<StockManagementDraft> subDrafts) {
+    List<MergedLineItemWithLocationDto> mergedLineItemWithLocationDtos = new ArrayList<>();
+    subDrafts.forEach(subDraft -> {
+      List<MergedLineItemWithLocationDto> subDraftLineItemDto = subDraft.getLineItems().stream()
+          .map(lineItem -> MergedLineItemWithLocationDto.builder().subDraftId(subDraft.getId())
+              .productName(lineItem.getProductName())
+              .productCode(lineItem.getProductCode())
+              .expirationDate(lineItem.getExpirationDate())
+              .lotId(lineItem.getLotId())
+              .orderableId(lineItem.getOrderableId())
+              .occurredDate(lineItem.getOccurredDate())
+              .quantity(lineItem.getQuantity())
+              .lotCode(lineItem.getLotCode())
+              .locationCode(lineItem.getLocationCode())
+              .area(lineItem.getArea())
+              .build()).collect(toList());
+      mergedLineItemWithLocationDtos.addAll(subDraftLineItemDto);
+    });
+    return mergedLineItemWithLocationDtos;
   }
 
   @Transactional

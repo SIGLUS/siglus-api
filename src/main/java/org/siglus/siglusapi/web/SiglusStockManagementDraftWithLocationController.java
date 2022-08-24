@@ -20,6 +20,7 @@ import static org.springframework.http.HttpStatus.OK;
 
 import java.util.List;
 import java.util.UUID;
+import org.siglus.siglusapi.dto.MergedLineItemWithLocationDto;
 import org.siglus.siglusapi.dto.StockManagementDraftWithLocationDto;
 import org.siglus.siglusapi.service.SiglusStockManagementDraftService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -63,6 +64,18 @@ public class SiglusStockManagementDraftWithLocationController {
   public StockManagementDraftWithLocationDto updateDraft(@PathVariable UUID id,
       @RequestBody StockManagementDraftWithLocationDto dto) {
     return stockManagementDraftService.updateDraftWithLocation(dto, id);
+  }
+
+  @PutMapping("/{initialDraftId}/subDraft/{subDraftId}/submit")
+  @ResponseStatus(OK)
+  public StockManagementDraftWithLocationDto updateStatusAfterSubmitWithLocation(
+      @RequestBody StockManagementDraftWithLocationDto draftDto) {
+    return stockManagementDraftService.updateStatusAfterSubmitWithLocation(draftDto);
+  }
+
+  @GetMapping("/{initialDraftId}/subDraft/merge")
+  public List<MergedLineItemWithLocationDto> mergeSubDraftsWithLocation(@PathVariable UUID initialDraftId) {
+    return stockManagementDraftService.mergeSubDraftsWithLocation(initialDraftId);
   }
 
 }

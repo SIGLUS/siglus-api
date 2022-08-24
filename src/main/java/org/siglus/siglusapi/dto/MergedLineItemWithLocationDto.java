@@ -15,41 +15,19 @@
 
 package org.siglus.siglusapi.dto;
 
-import static com.fasterxml.jackson.annotation.JsonFormat.Shape.STRING;
-
-import com.fasterxml.jackson.annotation.JsonFormat;
-import java.time.LocalDate;
-import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @SuperBuilder
-public class MergedLineItemDto {
+public class MergedLineItemWithLocationDto extends MergedLineItemDto {
 
-  private UUID subDraftId;
-
-  private UUID orderableId;
-
-  private UUID lotId;
-
-  private String productCode;
-
-  private String productName;
-
-  private String lotCode;
-
-  @JsonFormat(shape = STRING)
-  private LocalDate expirationDate;
-
-  private Integer stockOnHand;
-
-  private Integer quantity;
-
-  @JsonFormat(shape = STRING)
-  private LocalDate occurredDate;
+  private String locationCode;
+  private String area;
 }
