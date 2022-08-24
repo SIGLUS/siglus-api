@@ -21,12 +21,10 @@ import javax.servlet.http.HttpServletResponse;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.i18n.MessageKeys;
-import org.springframework.stereotype.Component;
 import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.Errors;
 import org.springframework.web.servlet.handler.HandlerInterceptorAdapter;
 
-@Component
 public class MvcInterceptor extends HandlerInterceptorAdapter {
 
   private static final String SIZE_PARAM = "size";

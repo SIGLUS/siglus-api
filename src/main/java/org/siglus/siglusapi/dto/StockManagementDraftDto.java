@@ -15,53 +15,25 @@
 
 package org.siglus.siglusapi.dto;
 
-import static com.fasterxml.jackson.annotation.JsonFormat.Shape.STRING;
 import static java.util.stream.Collectors.toList;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.UUID;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 import org.siglus.siglusapi.domain.StockManagementDraft;
-import org.siglus.siglusapi.dto.enums.PhysicalInventorySubDraftEnum;
 import org.springframework.beans.BeanUtils;
 
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
-@Builder
-public class StockManagementDraftDto {
-
-  private UUID id;
-
-  private UUID facilityId;
-
-  private Boolean isDraft;
-
-  private UUID programId;
-
-  @JsonFormat(shape = STRING)
-  private LocalDate occurredDate;
-
-  private String signature;
-
-  private UUID userId;
-
-  private String draftType;
-
-  private UUID initialDraftId;
-
-  private String operator;
-
-  private PhysicalInventorySubDraftEnum status;
-
-  private Integer draftNumber;
+@SuperBuilder
+@AllArgsConstructor
+@EqualsAndHashCode(callSuper = true)
+public class StockManagementDraftDto extends StockManagementDraftBaseDto {
 
   private List<StockManagementDraftLineItemDto> lineItems;
 
@@ -72,6 +44,16 @@ public class StockManagementDraftDto {
   }
 
   public static StockManagementDraftDto from(StockManagementDraft draft) {
+    StockManagementDraftDto draftDto = new StockManagementDraftDto();
+    BeanUtils.copyProperties(draft, draftDto);
+    if (draft.getLineItems() != null) {
+      draftDto.setLineItems(draft.getLineItems().stream().map(
+          StockManagementDraftLineItemDto::from).collect(toList()));
+    }
+    return draftDto;
+  }
+
+  public static StockManagementDraftDto from(StockManagementDraftWithLocationDto draft) {
     StockManagementDraftDto draftDto = new StockManagementDraftDto();
     BeanUtils.copyProperties(draft, draftDto);
     if (draft.getLineItems() != null) {

@@ -34,6 +34,8 @@ public class SiglusFacilityDto extends FacilityDto {
 
   private List<SiglusReportTypeDto> reportTypes;
 
+  private String tab;
+
   public static FacilityDto from(SiglusFacilityDto siglusFacilityDto) {
     FacilityDto facilityDto = new FacilityDto();
     BeanUtils.copyProperties(siglusFacilityDto, facilityDto);

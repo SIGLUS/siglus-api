@@ -15,48 +15,23 @@
 
 package org.siglus.siglusapi.dto;
 
-import static com.fasterxml.jackson.annotation.JsonFormat.Shape.STRING;
-
-import com.fasterxml.jackson.annotation.JsonFormat;
-import java.time.LocalDate;
-import java.util.Map;
-import java.util.UUID;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import org.openlmis.stockmanagement.domain.common.VvmApplicable;
+import lombok.experimental.SuperBuilder;
 import org.siglus.siglusapi.domain.StockManagementDraftLineItem;
 import org.springframework.beans.BeanUtils;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
 @NoArgsConstructor
+@SuperBuilder
 @AllArgsConstructor
-@Builder
-public class StockManagementDraftLineItemWithLocationDto implements VvmApplicable {
+public class StockManagementDraftLineItemWithLocationDto extends StockManagementDraftLineItemDto {
 
-  private UUID orderableId;
-  private UUID lotId;
-  private String lotCode;
-  @JsonFormat(shape = STRING)
-  private LocalDate occurredDate;
-  @JsonFormat(shape = STRING)
-  private LocalDate expirationDate;
-  private String documentNumber;
-  private Integer quantity;
-  private UUID destinationId;
-  private String destinationFreeText;
-  private UUID sourceId;
-  private String sourceFreeText;
-  private UUID reasonId;
-  private String reasonFreeText;
-  private String productName;
-  private String productCode;
-  private Integer stockOnHand;
   private String locationCode;
   private String area;
-
-  private Map<String, String> extraData;
 
   public static StockManagementDraftLineItemWithLocationDto from(StockManagementDraftLineItem lineItem) {
     StockManagementDraftLineItemWithLocationDto lineItemDto = new StockManagementDraftLineItemWithLocationDto();

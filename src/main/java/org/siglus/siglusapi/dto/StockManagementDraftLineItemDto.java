@@ -22,9 +22,9 @@ import java.time.LocalDate;
 import java.util.Map;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 import org.openlmis.stockmanagement.domain.common.VvmApplicable;
 import org.siglus.siglusapi.domain.StockManagementDraftLineItem;
 import org.springframework.beans.BeanUtils;
@@ -32,7 +32,7 @@ import org.springframework.beans.BeanUtils;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
+@SuperBuilder
 public class StockManagementDraftLineItemDto implements VvmApplicable {
 
   private UUID orderableId;
@@ -57,6 +57,12 @@ public class StockManagementDraftLineItemDto implements VvmApplicable {
   private Map<String, String> extraData;
 
   public static StockManagementDraftLineItemDto from(StockManagementDraftLineItem lineItem) {
+    StockManagementDraftLineItemDto lineItemDto = new StockManagementDraftLineItemDto();
+    BeanUtils.copyProperties(lineItem, lineItemDto);
+    return lineItemDto;
+  }
+
+  public static StockManagementDraftLineItemDto from(StockManagementDraftLineItemWithLocationDto lineItem) {
     StockManagementDraftLineItemDto lineItemDto = new StockManagementDraftLineItemDto();
     BeanUtils.copyProperties(lineItem, lineItemDto);
     return lineItemDto;

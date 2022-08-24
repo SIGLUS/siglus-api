@@ -35,7 +35,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/siglusapi/draftsWithLocation")
-@SuppressWarnings("PMD.TooManyMethods")
 public class SiglusStockManagementDraftWithLocationController {
 
   @Autowired
@@ -46,6 +45,11 @@ public class SiglusStockManagementDraftWithLocationController {
       @RequestParam UUID userId, @RequestParam String draftType,
       @RequestParam(required = false) Boolean isDraft) {
     return stockManagementDraftService.findStockManagementDraftWithLocation(program, draftType, isDraft);
+  }
+
+  @GetMapping("/{id}")
+  public StockManagementDraftWithLocationDto searchDraftWithLocation(@PathVariable UUID id) {
+    return stockManagementDraftService.searchDraftWithLocation(id);
   }
 
   @DeleteMapping("/{id}")

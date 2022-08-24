@@ -15,7 +15,6 @@
 
 package org.siglus.siglusapi.service;
 
-import static org.siglus.siglusapi.constant.FieldConstants.SEPARATOR;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_INVENTORY_CONFLICT_SUB_DRAFT;
 
 import com.google.common.collect.Lists;
@@ -57,7 +56,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @SuppressWarnings({"PMD"})
 public class SiglusPhysicalInventorySubDraftService {
-  
+
   public static final String DRAFT = "Draft ";
   @Autowired
   private SiglusStockCardSummariesService siglusStockCardSummariesService;
@@ -145,13 +144,10 @@ public class SiglusPhysicalInventorySubDraftService {
         canFulfillForMeEntryDtos.addAll(stockCardSummaryV2Dto.getCanFulfillForMe());
       }
     }
-    //    Map<String, CanFulfillForMeEntryDto> canFulfillForMeEntryDtoMap = canFulfillForMeEntryDtos.stream()
-    //        .collect(Collectors.toMap(this::getUniqueKey, Function.identity()));
-
-    for (UUID physicalInventoryId : physicalInventoryIdToSubDraftIdMap.keySet()) {
+    for (final Map.Entry<UUID, UUID> physicalInventoryIdToSubDraftId : physicalInventoryIdToSubDraftIdMap.entrySet()) {
+      UUID physicalInventoryId = physicalInventoryIdToSubDraftId.getKey();
       if (initialPhysicalInventory) {
-        resetInitialLineItems(physicalInventoryId,
-                physicalInventoryIdToSubDraftIdMap.get(physicalInventoryId));
+        resetInitialLineItems(physicalInventoryId, physicalInventoryIdToSubDraftId.getValue());
         continue;
       }
       List<PhysicalInventoryLineItemsExtension> oldLineItemsExtension
@@ -183,12 +179,10 @@ public class SiglusPhysicalInventorySubDraftService {
       while (iterator.hasNext()) {
         PhysicalInventoryLineItemDto physicalInventoryLineItemDto = iterator.next();
         if (needResetLineItemIds.contains(physicalInventoryLineItemDto.getId())) {
-          //          CanFulfillForMeEntryDto canFulfillForMeEntryDto = canFulfillForMeEntryDtoMap.get(
-          //              getUniqueKey(physicalInventoryLineItemDto));
-          //          if (canFulfillForMeEntryDto != null) {
           physicalInventoryLineItemDto.setQuantity(null);
           physicalInventoryLineItemDto.setReasonFreeText(null);
-        //          }
+          physicalInventoryLineItemDto.setLocationCode(null);
+          physicalInventoryLineItemDto.setArea(null);
         } else if (needDeleteLineItemIds.contains(physicalInventoryLineItemDto.getId())) {
           iterator.remove();
         }
@@ -275,6 +269,7 @@ public class SiglusPhysicalInventorySubDraftService {
         .locationCode(item.getLocationCode())
         .area(item.getArea())
         .physicalInventoryId(physicalInventoryId)
+        .physicalInventoryLineItemId(item.getId())
         .build()));
     return result;
   }
@@ -334,31 +329,4 @@ public class SiglusPhysicalInventorySubDraftService {
       }
     }
   }
-
-  private String getString(Object o) {
-    return o == null ? "" : o.toString();
-  }
-
-  private String getUniqueKey(PhysicalInventoryLineItemDto item) {
-    return getString(item.getOrderableId())
-            + SEPARATOR
-            + getString(item.getLotId())
-            + SEPARATOR
-            + getString(item.getLocationCode());
-  }
-
-  private String getUniqueKey(PhysicalInventoryLineItemsExtension item) {
-    return getString(item.getOrderableId())
-            + SEPARATOR
-            + getString(item.getLotId())
-            + SEPARATOR
-            + getString(item.getLocationCode());
-  }
-
-  //  private String getUniqueKey(CanFulfillForMeEntryDto item) {
-  //    return getString(item.getOrderable().getId())
-  //            + "&"
-  //            + getString(item.getLot().getId());
-  //  }
-
 }

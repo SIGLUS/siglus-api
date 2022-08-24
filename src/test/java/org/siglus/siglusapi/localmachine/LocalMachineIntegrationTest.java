@@ -13,20 +13,32 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.localmachine.eventstore;
+package org.siglus.siglusapi.localmachine;
 
+import javax.transaction.Transactional;
+import net.javacrumbs.shedlock.core.LockProvider;
 import org.junit.runner.RunWith;
+import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.jdbc.EmbeddedDatabaseConnection;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase.Replace;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.context.annotation.Import;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.test.context.junit4.SpringRunner;
 
 @RunWith(SpringRunner.class)
+@SpringBootTest(classes = {LocalMachineTestConfig.class})
+@ComponentScan(basePackageClasses = {LocalMachineTestConfig.class})
 @DataJpaTest
 @AutoConfigureTestDatabase(
     replace = Replace.AUTO_CONFIGURED,
     connection = EmbeddedDatabaseConnection.H2)
-@Import(JpaTestConfig.class)
-public abstract class LocalMachineJpaBaseTest {}
+@EnableAutoConfiguration
+@Transactional
+public abstract class LocalMachineIntegrationTest {
+  @MockBean protected SiglusAuthenticationHelper authenticationHelper;
+  @MockBean protected LockProvider lockProvider;
+}

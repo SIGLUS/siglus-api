@@ -94,6 +94,7 @@ public class SiglusStockEventsService {
   private final FacilityLocationsRepository facilityLocationsRepository;
   private final StockCardLineItemReasonRepository stockCardLineItemReasonRepository;
   private final CalculatedStockOnHandByLocationRepository calculatedStockOnHandByLocationRepository;
+  private final CalculatedStocksOnHandByLocationService calculatedStocksOnHandByLocationService;
   @Value("${stockmanagement.kit.unpack.destination.nodeId}")
   private UUID unpackDestinationNodeId;
 
@@ -120,6 +121,10 @@ public class SiglusStockEventsService {
     }
     createStockEvent(eventDto, stockEventDtos, location);
     deleteDraft(eventDto);
+
+    if (location) {
+      calculatedStocksOnHandByLocationService.calculateStockOnHandByLocation(eventDto);
+    }
   }
 
   private Set<UUID> getProgramIds(StockEventDto eventDto) {
@@ -203,8 +208,8 @@ public class SiglusStockEventsService {
     enhanceStockCard(eventDto, stockEventId, location);
   }
 
-  private void enhanceStockCard(StockEventDto eventDto, UUID stockEventId, boolean location) {
-    if (location) {
+  private void enhanceStockCard(StockEventDto eventDto, UUID stockEventId, boolean isByLocation) {
+    if (isByLocation) {
       addStockCardLineItemLocation(eventDto);
     }
     addStockCardCreateTime(eventDto);

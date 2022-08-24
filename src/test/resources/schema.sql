@@ -17,5 +17,5 @@ CREATE TABLE IF NOT EXISTS localmachine.events (
     receiversynced BOOL NOT NULL DEFAULT FALSE,
     localreplayed BOOL NOT NULL DEFAULT FALSE
 );
-CREATE UNIQUE INDEX localmachine_sender_localsequencenumber on localmachine.events(senderid, localsequencenumber);
-CREATE UNIQUE INDEX localmachine_group_seq on localmachine.events(groupid, groupsequencenumber);
+CREATE UNIQUE INDEX IF NOT EXISTS localmachine_sender_localsequencenumber on localmachine.events(senderid, localsequencenumber);
+CREATE UNIQUE INDEX IF NOT EXISTS localmachine_group_seq on localmachine.events(groupid, groupsequencenumber);

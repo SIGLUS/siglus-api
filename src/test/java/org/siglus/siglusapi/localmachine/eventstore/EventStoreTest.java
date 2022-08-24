@@ -24,8 +24,6 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.siglus.siglusapi.localmachine.eventstore.EventRecordRepository;
-import org.siglus.siglusapi.localmachine.eventstore.EventStore;
 
 @RunWith(MockitoJUnitRunner.class)
 public class EventStoreTest {

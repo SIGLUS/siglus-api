@@ -15,7 +15,9 @@
 
 package org.siglus.siglusapi.service;
 
+import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_MOVEMENT_DRAFT_NOT_FOUND;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_MOVEMENT_LINE_ITEMS_MISSING;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_MOVEMENT_QUANTITY_MORE_THAN_STOCK_ON_HAND;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_CARD_NOT_FOUND;
 
@@ -33,6 +35,7 @@ import org.siglus.siglusapi.dto.StockCardLocationMovementDto;
 import org.siglus.siglusapi.dto.StockCardLocationMovementLineItemDto;
 import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.NotFoundException;
+import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.SiglusStockCardRepository;
 import org.siglus.siglusapi.repository.StockCardLocationMovementDraftRepository;
 import org.siglus.siglusapi.repository.StockCardLocationMovementLineItemRepository;
@@ -55,6 +58,7 @@ public class SiglusStockCardLocationMovementService {
 
   @Transactional
   public void createMovementLineItems(StockCardLocationMovementDto movementDto) {
+    validateMovementLineItems(movementDto);
     checkStockOnHand(movementDto);
     List<StockCardLocationMovementLineItem> movementLineItems = convertMovementDtoToMovementItems(movementDto);
     movementLineItemRepository.save(movementLineItems);
@@ -74,9 +78,10 @@ public class SiglusStockCardLocationMovementService {
       StockCardLocationMovementDto movementDto) {
     List<StockCardLocationMovementLineItem> movementLineItems = new ArrayList<>();
     movementDto.getMovementLineItems().forEach(lineItemDto -> {
-      List<StockCard> stockCards = stockCardRepository
-          .findByFacilityIdAndProgramIdAndOrderableIdAndLotId(movementDto.getFacilityId(), lineItemDto.getProgramId(),
-              lineItemDto.getOrderableId(), lineItemDto.getLotId());
+      List<StockCard> stockCards = Boolean.TRUE.equals(lineItemDto.getIsKit()) ? stockCardRepository
+          .findByFacilityIdAndOrderableId(movementDto.getFacilityId(), lineItemDto.getOrderableId())
+          : stockCardRepository.findByFacilityIdAndProgramIdAndOrderableIdAndLotId(movementDto.getFacilityId(),
+              lineItemDto.getProgramId(), lineItemDto.getOrderableId(), lineItemDto.getLotId());
       if (stockCards.isEmpty()) {
         throw new NotFoundException(ERROR_STOCK_CARD_NOT_FOUND);
       }
@@ -112,10 +117,23 @@ public class SiglusStockCardLocationMovementService {
     });
   }
 
-  private String fetchGroupKey(StockCardLocationMovementLineItemDto movementLineItemDto) {
-    return movementLineItemDto.getOrderableId().toString()
-        + movementLineItemDto.getLotId().toString()
-        + movementLineItemDto.getSrcArea()
-        + movementLineItemDto.getSrcLocationCode();
+  private String fetchGroupKey(StockCardLocationMovementLineItemDto lineItemDto) {
+    return Boolean.TRUE.equals(lineItemDto.getIsKit()) ? lineItemDto.getOrderableId().toString()
+        + lineItemDto.getSrcArea()
+        + lineItemDto.getSrcLocationCode() : lineItemDto.getOrderableId().toString()
+        + lineItemDto.getLotId().toString()
+        + lineItemDto.getSrcArea()
+        + lineItemDto.getSrcLocationCode();
+  }
+
+  private void validateMovementLineItems(StockCardLocationMovementDto movementDto) {
+    List<StockCardLocationMovementLineItemDto> movementLineItems = movementDto.getMovementLineItems();
+    validateLineItems(movementLineItems);
+  }
+
+  private void validateLineItems(List<StockCardLocationMovementLineItemDto> lineItems) {
+    if (isEmpty(lineItems)) {
+      throw new ValidationMessageException(ERROR_MOVEMENT_LINE_ITEMS_MISSING);
+    }
   }
 }

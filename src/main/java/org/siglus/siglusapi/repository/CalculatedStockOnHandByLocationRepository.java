@@ -78,7 +78,7 @@ public interface CalculatedStockOnHandByLocationRepository extends JpaRepository
           Map<UUID, StockCardLineItemExtension> lineItemIdToExtension,
           Date occurredDate) {
     return findAll((root, query, cb) -> {
-      Predicate byFutureDate = cb.greaterThanOrEqualTo(root.get("occurreddate"), occurredDate);
+      Predicate byFutureDate = cb.greaterThanOrEqualTo(root.get("occurredDate"), occurredDate);
       List<Predicate> predicates = new ArrayList<>();
       lineItems.forEach(lineItem -> predicates.add(cb.and(
               cb.equal(root.get("stockCardId"), lineItem.getStockCard().getId()),

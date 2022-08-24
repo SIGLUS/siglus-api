@@ -144,8 +144,12 @@ public class SiglusStockManagementDraftServiceTest {
 
   private final String adjustmentDraft = FieldConstants.ADJUSTMENT;
 
-  private final StockManagementDraftDto draftDto = StockManagementDraftDto.builder()
-      .programId(programId).facilityId(facilityId).draftType(issueDraft).build();
+  private final StockManagementDraftDto draftDto = StockManagementDraftDto
+      .builder()
+      .programId(programId)
+      .facilityId(facilityId)
+      .draftType(issueDraft)
+      .build();
 
   private final StockManagementDraft draft = StockManagementDraft.builder()
       .status(PhysicalInventorySubDraftEnum.DRAFT).build();

@@ -548,6 +548,29 @@ traits:
                 application/json:
                   schema: stockmovementList
 
+      /byProduct/{orderableId}:
+        uriParameters:
+          orderableId:
+            displayName: id
+            type: string
+            required: true
+            repeat: true
+        get:
+          is: [ secured, paginated ]
+          description: >
+            Get stock movement by facility id and orderable id.
+          queryParameters:
+            orderableId:
+              displayName: orderable Id
+              type: string
+              required: false
+              repeat: true
+          responses:
+            "200":
+              body:
+                application/json:
+                  schema: stockmovementList
+
 
     /orderables:
       displayName: Orderable Product
@@ -952,13 +975,13 @@ traits:
               application/json:
                 schema: localizedMessage
 
-    /movementDateLimit/startdate:
+    /movementDateLimit/startDate:
       get:
         is: [ secured ]
-        description: get limit movement date startdate
+        description: get limit movement date startDate
         responses:
           201:
-            description: return startdate successfully
+            description: return startDate successfully
             body:
               application/json:
                 schema: date
@@ -1568,17 +1591,22 @@ traits:
     /stockCardSummariesWithLocation/stockCard/{id}:
       get:
         is: [ secured ]
-        description: Get full details of one stock card with location.
+        description: get stock movement by stock card
         responses:
           200:
             body:
               application/json:
                 schema: StockCardWithLocationDto
-          403:
-            description: User does not have permission to view stock card.
+
+    /stockCardSummariesWithLocation/byProduct/{orderableId}:
+      get:
+        is: [ secured ]
+        description: get stock movement by product
+        responses:
+          200:
             body:
               application/json:
-                schema: localizedMessage
+                schema: StockCardWithLocationDto
 
     /physicalInventories/latest:
       get:

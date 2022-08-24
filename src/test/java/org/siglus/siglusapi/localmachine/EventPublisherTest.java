@@ -28,9 +28,12 @@ import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.localmachine.eventstore.EventRecord;
+import org.siglus.siglusapi.localmachine.eventstore.EventRecordRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.MockBean;
 
-public class EventPublisherTest extends EventPublisherBaseTest {
+public class EventPublisherTest extends LocalMachineIntegrationTest {
+  @MockBean protected EventRecordRepository eventRecordRepository;
   @Autowired private EventPublisher eventPublisher;
 
   @Test

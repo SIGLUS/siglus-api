@@ -25,6 +25,7 @@ import java.sql.Date;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import org.junit.Before;
@@ -73,7 +74,7 @@ public class SiglusStockMovementServiceTest {
   public void shouldReturnNullWhenNoMovements() {
     List<StockMovementResDto> productMovements = stockMovementService.getProductMovements(null, facilityId, null,
         null);
-    assertEquals(null, productMovements);
+    assertEquals(new ArrayList<>(), productMovements);
   }
 
   @Test

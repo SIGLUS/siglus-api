@@ -13,13 +13,9 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.localmachine.eventstore;
+package org.siglus.siglusapi.localmachine;
 
-import org.springframework.boot.SpringBootConfiguration;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.context.annotation.ComponentScan;
-
-@SpringBootConfiguration
-@EnableAutoConfiguration
-@ComponentScan(basePackageClasses = {EventRecordRepository.class})
-public class JpaTestConfig {}
+public class CommonConstants {
+  public static final String VERSION = "x-local-version";
+  public static final String ACCESS_TOKEN = "x-local-token";
+}

@@ -20,7 +20,8 @@ import static org.siglus.siglusapi.constant.PaginationConstants.NO_PAGINATION;
 
 import java.util.List;
 import org.siglus.siglusapi.interceptor.MvcInterceptor;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.siglus.siglusapi.localmachine.auth.AuthInterceptor;
+import org.siglus.siglusapi.localmachine.auth.AuthenticationArgumentResolver;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.domain.PageRequest;
@@ -34,11 +35,13 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter
 @Configuration
 public class CustomWebMvcConfigurerAdapter extends WebMvcConfigurerAdapter {
 
+  private final AuthInterceptor authInterceptor;
   @Value("${service.url}")
   private String serviceUrl;
 
-  @Autowired
-  private MvcInterceptor mvcInterceptor;
+  public CustomWebMvcConfigurerAdapter(AuthInterceptor authInterceptor) {
+    this.authInterceptor = authInterceptor;
+  }
 
   @Override
   public void addViewControllers(ViewControllerRegistry registry) {
@@ -60,15 +63,16 @@ public class CustomWebMvcConfigurerAdapter extends WebMvcConfigurerAdapter {
   public void addArgumentResolvers(List<HandlerMethodArgumentResolver> argumentResolvers) {
     PageableHandlerMethodArgumentResolver resolver = new PageableHandlerMethodArgumentResolver();
     resolver.setMaxPageSize(Integer.MAX_VALUE);
-    resolver.setFallbackPageable(
-        new PageRequest(DEFAULT_PAGE_NUMBER, NO_PAGINATION));
+    resolver.setFallbackPageable(new PageRequest(DEFAULT_PAGE_NUMBER, NO_PAGINATION));
 
     argumentResolvers.add(resolver);
+    argumentResolvers.add(new AuthenticationArgumentResolver());
     super.addArgumentResolvers(argumentResolvers);
   }
 
   @Override
   public void addInterceptors(InterceptorRegistry registry) {
-    registry.addInterceptor(mvcInterceptor);
+    registry.addInterceptor(new MvcInterceptor());
+    registry.addInterceptor(authInterceptor);
   }
 }

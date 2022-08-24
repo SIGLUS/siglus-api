@@ -109,7 +109,7 @@ public class SiglusAuthenticationHelperTest {
     Collection<DetailedRoleAssignmentDto> userRightsAndRoles =
         authenticationHelper.getUserRightsAndRoles();
 
-    assertThat(userRightsAndRoles).isNull();
+    assertThat(userRightsAndRoles).isEmpty();
   }
 
   @Test

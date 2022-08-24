@@ -13,22 +13,24 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.localmachine;
+package org.siglus.siglusapi.dto;
 
-import javax.transaction.Transactional;
-import net.javacrumbs.shedlock.core.LockProvider;
-import org.junit.runner.RunWith;
-import org.siglus.siglusapi.localmachine.eventstore.EventRecordRepository;
-import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.test.context.junit4.SpringRunner;
+import java.util.List;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-@RunWith(SpringRunner.class)
-@SpringBootTest(classes = {LocalMachineTestConfig.class})
-@Transactional
-public abstract class EventPublisherBaseTest {
-  @MockBean protected EventRecordRepository eventRecordRepository;
-  @MockBean protected SiglusAuthenticationHelper authenticationHelper;
-  @MockBean protected LockProvider lockProvider;
+
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+@Data
+public class ProductMovementDto {
+  private String facilityName;
+  private String productCode;
+  private String productName;
+  private String program;
+  private List<StockMovementResDto> lineItems;
+  private Integer stockOnHand;
 }

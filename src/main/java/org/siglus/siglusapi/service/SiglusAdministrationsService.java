@@ -15,26 +15,32 @@
 
 package org.siglus.siglusapi.service;
 
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.support.ExcelTypeEnum;
+
 import com.google.common.collect.Lists;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
+import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
-import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.csv.CSVRecord;
+import org.apache.commons.io.input.BOMInputStream;
 import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.StringUtils;
 import org.openlmis.stockmanagement.domain.card.StockCard;
@@ -93,9 +99,9 @@ public class SiglusAdministrationsService {
   private final SiglusAuthenticationHelper authenticationHelper;
   private static final String LOCATION_MANAGEMENT_TAB = "locationManagement";
   private static final String CSV_SUFFIX = ".csv";
-  private static final String MEDIA_TYPE = "text/csv";
+  private static final String CONTENT_TYPE = "application/force-download";
   private static final String DISPOSITION_BASE = "attachment; filename=";
-  private static final String FILE_NAME = "Location Information.csv";
+  private static final String FILE_NAME = "Informações de localização.csv";
 
   public Page<FacilitySearchResultDto> searchForFacilities(FacilitySearchParamDto facilitySearchParamDto,
       Pageable pageable) {
@@ -140,7 +146,7 @@ public class SiglusAdministrationsService {
   }
 
   @Transactional
-  public FacilitySearchResultDto updateFacility(UUID facilityId, SiglusFacilityDto siglusFacilityDto, String tab) {
+  public FacilitySearchResultDto updateFacility(UUID facilityId, SiglusFacilityDto siglusFacilityDto) {
     FacilityDto facilityDto = SiglusFacilityDto.from(siglusFacilityDto);
     saveReportTypes(siglusFacilityDto);
     siglusFacilityReferenceDataService.saveFacility(facilityDto);
@@ -159,19 +165,31 @@ public class SiglusAdministrationsService {
     }
     log.info("The facility extension info has changed; facilityId: {}", facilityId);
     facilityExtensionRepository.save(facilityExtension);
-    if (StringUtils.equals(tab, LOCATION_MANAGEMENT_TAB)) {
+    if (StringUtils.equals(siglusFacilityDto.getTab(), LOCATION_MANAGEMENT_TAB)) {
       assignToVirtualLocation(siglusFacilityDto);
     }
     return getFacilityInfo(siglusFacilityDto.getId());
   }
 
   public void exportLocationInfo(UUID facilityId, HttpServletResponse response) {
-    response.setContentType(MEDIA_TYPE);
-    response.addHeader(HttpHeaders.CONTENT_DISPOSITION, DISPOSITION_BASE + "\"" + FILE_NAME + "\"");
-
+    response.setContentType(CONTENT_TYPE);
+    response.setCharacterEncoding(StandardCharsets.UTF_8.name());
+    response.setHeader(HttpHeaders.CONTENT_DISPOSITION, DISPOSITION_BASE + "\"" + FILE_NAME + "\"");
     List<FacilityLocations> locationList = facilityLocationsRepository.findByFacilityId(facilityId);
     try {
-      writeLocationInfoOnCsv(locationList, response.getWriter());
+      ServletOutputStream outputStream = response.getOutputStream();
+      outputStream.write(0xef);
+      outputStream.write(0xbb);
+      outputStream.write(0xbf);
+      outputStream.flush();
+      EasyExcel
+          .write(response.getOutputStream())
+          .head(getHeadRow())
+          .autoCloseStream(true)
+          .excelType(ExcelTypeEnum.CSV)
+          .sheet(0)
+          .doWrite(CollectionUtils.isEmpty(locationList) ? Lists.newArrayList() : getDataRows(locationList));
+
     } catch (IOException ioException) {
       log.error("Error: {} occurred while exporting to csv", ioException.getMessage());
       throw new ValidationMessageException(ioException, new Message(CsvUploadMessageKeys.ERROR_IO));
@@ -182,20 +200,20 @@ public class SiglusAdministrationsService {
   public void uploadLocationInfo(UUID facilityId, MultipartFile locationManagementFile) throws IOException {
     validateCsvFile(locationManagementFile);
     List<FacilityLocations> locationManagementList = Lists.newArrayList();
-    BufferedReader locationInfoReader = new BufferedReader(new InputStreamReader(locationManagementFile
-        .getInputStream()));
+    BufferedReader locationInfoReader = new BufferedReader(new InputStreamReader(
+        new BOMInputStream(locationManagementFile.getInputStream()), StandardCharsets.UTF_8));
     CSVParser fileParser = new CSVParser(locationInfoReader, CSVFormat.EXCEL.withFirstRecordAsHeader());
     csvValidator.validateCsvHeaders(fileParser);
     List<CSVRecord> csvRecordList = csvValidator.validateDuplicateLocationCode(fileParser);
     for (CSVRecord eachRow : csvRecordList) {
       csvValidator.validateNullRow(eachRow);
-      String locationCode = eachRow.get(LocationConstants.LOCATION_CODE);
-      String area = eachRow.get(LocationConstants.AREA);
-      String zone = eachRow.get(LocationConstants.ZONE);
-      String rack = eachRow.get(LocationConstants.RACK);
-      String barcode = eachRow.get(LocationConstants.BARCODE);
-      int bin = Integer.parseInt(eachRow.get(LocationConstants.BIN));
-      String level = eachRow.get(LocationConstants.LEVEL);
+      String locationCode = eachRow.get(LocationConstants.PORTUGUESE_LOCATION_CODE);
+      String area = eachRow.get(LocationConstants.PORTUGUESE_AREA);
+      String zone = eachRow.get(LocationConstants.PORTUGUESE_ZONE);
+      String rack = eachRow.get(LocationConstants.PORTUGUESE_RACK);
+      String barcode = eachRow.get(LocationConstants.PORTUGUESE_BARCODE);
+      String bin = eachRow.get(LocationConstants.PORTUGUESE_BIN);
+      String level = eachRow.get(LocationConstants.PORTUGUESE_LEVEL);
       FacilityLocations locationManagement = new FacilityLocations(facilityId, locationCode, area, zone, rack,
           barcode, bin, level);
       locationManagementList.add(locationManagement);
@@ -234,24 +252,34 @@ public class SiglusAdministrationsService {
     }
   }
 
-  private void writeLocationInfoOnCsv(List<FacilityLocations> locationList, Writer writer)
-      throws IOException {
-    CSVPrinter csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT);
-    csvPrinter.printRecord(LocationConstants.LOCATION_CODE, LocationConstants.AREA, LocationConstants.ZONE,
-        LocationConstants.RACK, LocationConstants.BARCODE, LocationConstants.BIN, LocationConstants.LEVEL);
-    if (CollectionUtils.isEmpty(locationList)) {
-      return;
-    }
+  private List<List<String>> getHeadRow() {
+    List<List<String>> header = Lists.newArrayList();
+    header.add(Collections.singletonList(LocationConstants.PORTUGUESE_LOCATION_CODE));
+    header.add(Collections.singletonList(LocationConstants.PORTUGUESE_AREA));
+    header.add(Collections.singletonList(LocationConstants.PORTUGUESE_ZONE));
+    header.add(Collections.singletonList(LocationConstants.PORTUGUESE_RACK));
+    header.add(Collections.singletonList(LocationConstants.PORTUGUESE_BARCODE));
+    header.add(Collections.singletonList(LocationConstants.PORTUGUESE_BIN));
+    header.add(Collections.singletonList(LocationConstants.PORTUGUESE_LEVEL));
+    return header;
+  }
+
+  private List<List<String>> getDataRows(List<FacilityLocations> locationList) {
+    List<List<String>> dataRows = Lists.newArrayList();
     for (FacilityLocations locationManagement : locationList) {
-      csvPrinter.printRecord(
-          locationManagement.getLocationCode(),
-          locationManagement.getArea(),
-          locationManagement.getZone(),
-          locationManagement.getRack(),
-          locationManagement.getBarcode(),
-          locationManagement.getBin(),
-          locationManagement.getLevel());
+      List<String> eachRow = Lists.newArrayList();
+      eachRow.add(locationManagement.getLocationCode());
+      eachRow.add(locationManagement.getArea());
+      eachRow.add(locationManagement.getZone());
+      eachRow.add(locationManagement.getRack());
+      eachRow.add(locationManagement.getBarcode());
+      eachRow.add(locationManagement.getBin());
+      eachRow.add(locationManagement.getLevel());
+
+      dataRows.add(eachRow);
     }
+
+    return dataRows;
   }
 
   private void validateCsvFile(MultipartFile csvFile) {
@@ -299,13 +327,13 @@ public class SiglusAdministrationsService {
   }
 
   private void assignToVirtualLocation(SiglusFacilityDto siglusFacilityDto) {
-    UUID userId = authenticationHelper.getCurrentUser().getId();
-    List<StockCard> stockCards = stockCardRepository.findByFacilityIdIn(siglusFacilityDto.getId());
-    List<UUID> stockCardIds = stockCards.stream().map(StockCard::getId).collect(Collectors.toList());
     if (!emptyStockCardCount(siglusFacilityDto.getId())) {
+      UUID userId = authenticationHelper.getCurrentUser().getId();
+      List<StockCard> stockCards = stockCardRepository.findByFacilityIdIn(siglusFacilityDto.getId());
+      List<UUID> stockCardIds = stockCards.stream().map(StockCard::getId).collect(Collectors.toList());
       if (BooleanUtils.isTrue(siglusFacilityDto.getEnableLocationManagement())) {
-        Map<UUID, Integer> stockCardIdToStockOnHandMap = findStockCardIdsHasStockOnHandOnLot(stockCardIds);
-        assignNewVirtualLocations(stockCardIdToStockOnHandMap, userId);
+        List<CalculatedStockOnHand> calculatedStockOnHandList = findStockCardIdsHasStockOnHandOnLot(stockCardIds);
+        assignNewVirtualLocations(calculatedStockOnHandList, userId);
       } else {
         List<CalculatedStockOnHandByLocation> stockCardIdsHasStockOnHandOnLocation =
             findStockCardIdsHasStockOnHandOnLocation(stockCardIds);
@@ -318,46 +346,62 @@ public class SiglusAdministrationsService {
     return calculatedStocksOnHandLocationsRepository.findLatestLocationSohByStockCardIds(stockCardIds);
   }
 
-  private Map<UUID, Integer> findStockCardIdsHasStockOnHandOnLot(List<UUID> stockCardIds) {
-    List<CalculatedStockOnHand> calculatedStockOnHandsList = calculatedStockOnHandRepository
-        .findPreviousStockOnHands(stockCardIds, LocalDate.now());
-    return calculatedStockOnHandsList.stream().collect(Collectors.toMap(calculatedStockOnHand ->
-        calculatedStockOnHand.getStockCard().getId(), CalculatedStockOnHand::getStockOnHand));
+  private List<CalculatedStockOnHand> findStockCardIdsHasStockOnHandOnLot(List<UUID> stockCardIds) {
+    return calculatedStockOnHandRepository.findPreviousStockOnHands(stockCardIds, LocalDate.now());
   }
 
-  private void assignNewVirtualLocations(Map<UUID, Integer> stockCardIdToStockOnHandMap, UUID userId) {
+  private void assignNewVirtualLocations(List<CalculatedStockOnHand> calculatedStockOnHandList, UUID userId) {
     List<StockCardLocationMovementLineItem> lineItemsWithVirtualLocation = Lists.newArrayList();
-    Set<UUID> stockCardIds = stockCardIdToStockOnHandMap.keySet();
+    List<CalculatedStockOnHandByLocation> calculatedStockOnHandByLocationList = Lists.newArrayList();
+    Set<UUID> stockCardIds = calculatedStockOnHandList.stream()
+        .map(CalculatedStockOnHand::getStockCardId).collect(Collectors.toSet());
     List<StockCardLocationMovementLineItem> latestMovementList = stockCardLocationMovementLineItemRepository
         .findPreviousRecordByStockCardId(stockCardIds, LocalDate.now());
     latestMovementList.forEach(latestMovement -> {
       if (LocationConstants.VIRTUAL_LOCATION_CODE.equals(latestMovement.getDestLocationCode())
           && LocationConstants.VIRTUAL_LOCATION_CODE.equals(latestMovement.getSrcLocationCode())) {
-        stockCardIdToStockOnHandMap.remove(latestMovement.getStockCardId());
+        calculatedStockOnHandList.removeIf(calculatedStockOnHand -> calculatedStockOnHand.getStockCard().getId()
+            .equals(latestMovement.getStockCardId()));
       }
     });
 
-    stockCardIdToStockOnHandMap.forEach((stockCardId, stockOnHand) -> {
+    calculatedStockOnHandList.forEach(calculatedStockOnHand -> {
       StockCardLocationMovementLineItem stockCardLocationMovementLineItem = StockCardLocationMovementLineItem
           .builder()
-          .stockCardId(stockCardId)
+          .stockCardId(calculatedStockOnHand.getStockCardId())
           .occurredDate(LocalDate.now())
           .userId(userId)
-          .quantity(stockOnHand)
+          .quantity(calculatedStockOnHand.getStockOnHand())
           .srcLocationCode(LocationConstants.VIRTUAL_LOCATION_CODE)
           .srcArea(LocationConstants.VIRTUAL_LOCATION_AREA)
           .destLocationCode(LocationConstants.VIRTUAL_LOCATION_CODE)
           .destArea(LocationConstants.VIRTUAL_LOCATION_AREA)
           .build();
       lineItemsWithVirtualLocation.add(stockCardLocationMovementLineItem);
+
+      CalculatedStockOnHandByLocation calculatedStockOnHandByLocation = CalculatedStockOnHandByLocation
+          .builder()
+          .stockCardId(calculatedStockOnHand.getStockCardId())
+          .occurredDate(new Date())
+          .stockOnHand(calculatedStockOnHand.getStockOnHand())
+          .calculatedStocksOnHandId(calculatedStockOnHand.getId())
+          .locationCode(LocationConstants.VIRTUAL_LOCATION_CODE)
+          .area(LocationConstants.VIRTUAL_LOCATION_AREA)
+          .build();
+      calculatedStockOnHandByLocationList.add(calculatedStockOnHandByLocation);
     });
-    log.info("assign virtual location when enable location; size: {}", stockCardIdToStockOnHandMap.size());
+    log.info("assign virtual location when enable location; stockCardLocationMovementLineItemRepository size: {}",
+        lineItemsWithVirtualLocation.size());
     stockCardLocationMovementLineItemRepository.save(lineItemsWithVirtualLocation);
+    log.info("assign virtual location when enable location; calculatedStocksOnHandLocationsRepository size: {}",
+        calculatedStockOnHandByLocationList.size());
+    calculatedStocksOnHandLocationsRepository.save(calculatedStockOnHandByLocationList);
   }
 
   private void assignExistLotToVirtualLocations(List<CalculatedStockOnHandByLocation> calculatedStocksOnHandLocations,
       UUID userId) {
     List<StockCardLocationMovementLineItem> lineItemsWithVirtualLocation = Lists.newArrayList();
+    List<CalculatedStockOnHandByLocation> calculatedStockOnHandByLocationList = Lists.newArrayList();
     calculatedStocksOnHandLocations.forEach(calculatedStocksOnHandLocation -> {
       StockCardLocationMovementLineItem productLocationMovementLineItem = StockCardLocationMovementLineItem
           .builder()
@@ -371,8 +415,23 @@ public class SiglusAdministrationsService {
           .destArea(LocationConstants.VIRTUAL_LOCATION_AREA)
           .build();
       lineItemsWithVirtualLocation.add(productLocationMovementLineItem);
+
+      CalculatedStockOnHandByLocation calculatedStockOnHandByLocation = CalculatedStockOnHandByLocation
+          .builder()
+          .stockCardId(calculatedStocksOnHandLocation.getStockCardId())
+          .occurredDate(new Date())
+          .stockOnHand(calculatedStocksOnHandLocation.getStockOnHand())
+          .calculatedStocksOnHandId(calculatedStocksOnHandLocation.getCalculatedStocksOnHandId())
+          .locationCode(LocationConstants.VIRTUAL_LOCATION_CODE)
+          .area(LocationConstants.VIRTUAL_LOCATION_AREA)
+          .build();
+      calculatedStockOnHandByLocationList.add(calculatedStockOnHandByLocation);
     });
-    log.info("assign virtual location when disable location; size: {}", calculatedStocksOnHandLocations.size());
+    log.info("assign virtual location when disable location; stockCardLocationMovementLineItem size: {}",
+        lineItemsWithVirtualLocation.size());
     stockCardLocationMovementLineItemRepository.save(lineItemsWithVirtualLocation);
+    log.info("assign virtual location when disable location; calculatedStocksOnHandLocations size: {}",
+        calculatedStockOnHandByLocationList.size());
+    calculatedStocksOnHandLocationsRepository.save(calculatedStockOnHandByLocationList);
   }
 }

@@ -22,7 +22,6 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -40,11 +39,9 @@ import org.siglus.common.domain.ProcessingPeriodExtension;
 import org.siglus.common.dto.ProgramAdditionalOrderableDto;
 import org.siglus.common.repository.ProcessingPeriodExtensionRepository;
 import org.siglus.siglusapi.constant.ProgramConstants;
-import org.siglus.siglusapi.domain.SiglusReportType;
 import org.siglus.siglusapi.dto.ProcessingPeriodSearchParams;
 import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.repository.FacilityNativeRepository;
-import org.siglus.siglusapi.repository.SiglusReportTypeRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.repository.dto.FacillityStockCardDateDto;
 import org.siglus.siglusapi.service.client.SiglusProcessingPeriodReferenceDataService;
@@ -82,9 +79,6 @@ public class SiglusProcessingPeriodService {
 
   @Autowired
   private SiglusProgramService siglusProgramService;
-
-  @Autowired
-  private SiglusReportTypeRepository reportTypeRepository;
 
   @Autowired
   private FacilityNativeRepository facilityNativeRepository;
@@ -201,10 +195,12 @@ public class SiglusProcessingPeriodService {
               siglusProgramAdditionalOrderableService.searchAdditionalOrderables(program.getId())
                       .stream().map(ProgramAdditionalOrderableDto::getAdditionalOrderableId)
                       .collect(Collectors.toSet());
-      Optional<ProgramDto> viaProgram = siglusProgramService.getProgramByCode(ProgramConstants.VIA_PROGRAM_CODE);
+      ProgramDto viaProgram = siglusProgramService.getProgramByCode(ProgramConstants.VIA_PROGRAM_CODE)
+          .orElseThrow(() -> new IllegalArgumentException("no via program found"));
+
       List<FacillityStockCardDateDto> result =
-              facilityNativeRepository.findMalariaFirstStockCardGroupByFacility(malariaAdditionalOrderableIds,
-                      viaProgram.get().getId());
+          facilityNativeRepository.findMalariaFirstStockCardGroupByFacility(malariaAdditionalOrderableIds,
+              viaProgram.getId());
       facillityStockCardDateDto = result
               .stream()
               .filter(dto -> facilityId.equals(dto.getFacilityId()))
@@ -220,33 +216,12 @@ public class SiglusProcessingPeriodService {
     return facillityStockCardDateDto.getOccurredDate().toLocalDate();
   }
 
-  private Collection<ProcessingPeriodDto> filterPeriods(Collection<ProcessingPeriodDto> periods,
-                                                        UUID programId,
-                                                        UUID facilityId) {
-    ProgramDto program = siglusProgramService.getProgram(programId);
-    LocalDate firstStockMovementDate = getFirstStockMovementDate(program, facilityId);
-    SiglusReportType reportType = reportTypeRepository
-            .findOneByFacilityIdAndProgramCodeAndActiveIsTrue(facilityId, program.getCode())
-            .orElseThrow(() -> new IllegalArgumentException("no report type"));
-
-    LocalDate indexDate;
-    if (reportType.getStartDate().isAfter(firstStockMovementDate)) {
-      indexDate = reportType.getStartDate();
-    } else {
-      indexDate = firstStockMovementDate;
-    }
-    return periods.stream()
-            .filter(period -> period.getStartDate().isAfter(indexDate))
-            .filter(period -> !period.getStartDate().isAfter(LocalDate.now()))
-            .collect(Collectors.toList());
-  }
-
   // get periods for initiate
   public Collection<RequisitionPeriodDto> getPeriods(UUID program,
       UUID facility, boolean emergency) {
     ProgramDto programDto = siglusProgramService.getProgram(program);
     if (emergency && !ProgramConstants.VIA_PROGRAM_CODE.equals(programDto.getCode())) {
-      return null;
+      return new ArrayList<>();
     }
     Collection<ProcessingPeriodDto> periods = fillProcessingPeriodWithExtension(
         periodService.searchByProgramAndFacility(program, facility));

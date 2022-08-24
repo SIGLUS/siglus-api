@@ -13,16 +13,17 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.localmachine;
+package org.siglus.siglusapi.localmachine.agent;
 
 import static org.springframework.util.ObjectUtils.isEmpty;
 
 import java.util.List;
-import java.util.stream.Collectors;
 import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.javacrumbs.shedlock.core.SchedulerLock;
+import org.siglus.siglusapi.localmachine.Event;
+import org.siglus.siglusapi.localmachine.EventImporter;
 import org.siglus.siglusapi.localmachine.eventstore.EventStore;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -35,7 +36,6 @@ import org.springframework.stereotype.Component;
 public class Synchronizer {
   private final EventStore localEventStore;
   private final OnlineWebClient webClient;
-  private final Machine machine;
   private final EventImporter eventImporter;
 
   @Scheduled(fixedRate = 60 * 1000, initialDelay = 60 * 1000)
@@ -53,9 +53,9 @@ public class Synchronizer {
 
   @Transactional
   public void pull() {
-    List<Event> events = webClient.exportPeeringEvents(machine.getLocalFacilityId());
+    List<Event> events = webClient.exportPeeringEvents();
     eventImporter.importEvents(events);
-    webClient.confirmReceived(machine.getLocalFacilityId(), events);
+    webClient.confirmReceived(events);
   }
 
   @Transactional
@@ -65,8 +65,6 @@ public class Synchronizer {
       return;
     }
     webClient.sync(events);
-    List<Event> confirmedEvents =
-        events.stream().peek(it -> it.setOnlineWebSynced(true)).collect(Collectors.toList());
-    localEventStore.confirmEventsByWeb(confirmedEvents);
+    localEventStore.confirmEventsByWeb(events);
   }
 }

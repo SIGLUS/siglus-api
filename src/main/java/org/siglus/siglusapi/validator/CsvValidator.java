@@ -17,9 +17,9 @@ package org.siglus.siglusapi.validator;
 
 import com.google.common.collect.Lists;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -41,9 +41,22 @@ public class CsvValidator {
       LocationConstants.AREA, LocationConstants.ZONE, LocationConstants.RACK,
       LocationConstants.BARCODE, LocationConstants.BIN, LocationConstants.LEVEL);
 
+  private static final Map<String, String> portugueseToEnglishMap = new LinkedHashMap<>();
+
+  static {
+    portugueseToEnglishMap.put(LocationConstants.PORTUGUESE_LOCATION_CODE, LocationConstants.LOCATION_CODE);
+    portugueseToEnglishMap.put(LocationConstants.PORTUGUESE_AREA, LocationConstants.AREA);
+    portugueseToEnglishMap.put(LocationConstants.PORTUGUESE_ZONE, LocationConstants.ZONE);
+    portugueseToEnglishMap.put(LocationConstants.PORTUGUESE_RACK, LocationConstants.RACK);
+    portugueseToEnglishMap.put(LocationConstants.PORTUGUESE_BARCODE, LocationConstants.BARCODE);
+    portugueseToEnglishMap.put(LocationConstants.PORTUGUESE_BIN, LocationConstants.BIN);
+    portugueseToEnglishMap.put(LocationConstants.PORTUGUESE_LEVEL, LocationConstants.LEVEL);
+  }
+
   public void validateCsvHeaders(CSVParser csvParser) {
     Map<String, Integer> csvHeaderToColumnMap = csvParser.getHeaderMap();
-    List<String> headers = new ArrayList<>(csvHeaderToColumnMap.keySet());
+    List<String> headers = csvHeaderToColumnMap.keySet().stream().map(portugueseToEnglishMap::get)
+        .collect(Collectors.toList());
     validateNullHeaders(headers);
     List<String> lowerCaseHeaders = lowerCase(headers);
     validateInvalidHeaders(lowerCaseHeaders);
@@ -51,13 +64,14 @@ public class CsvValidator {
 
   public void validateNullRow(CSVRecord eachRow) {
     long row = eachRow.getRecordNumber();
-    validateEachColumn(eachRow.get(LocationConstants.LOCATION_CODE), LocationConstants.LOCATION_CODE, row);
-    validateEachColumn(eachRow.get(LocationConstants.AREA), LocationConstants.AREA, row);
-    validateEachColumn(eachRow.get(LocationConstants.ZONE), LocationConstants.ZONE, row);
-    validateEachColumn(eachRow.get(LocationConstants.RACK), LocationConstants.RACK, row);
-    validateEachColumn(eachRow.get(LocationConstants.BARCODE), LocationConstants.BARCODE, row);
-    validateEachColumn(eachRow.get(LocationConstants.BIN), LocationConstants.BIN, row);
-    validateEachColumn(eachRow.get(LocationConstants.LEVEL), LocationConstants.LEVEL, row);
+    validateEachColumn(eachRow
+        .get(LocationConstants.PORTUGUESE_LOCATION_CODE), LocationConstants.PORTUGUESE_LOCATION_CODE, row);
+    validateEachColumn(eachRow.get(LocationConstants.PORTUGUESE_AREA), LocationConstants.PORTUGUESE_AREA, row);
+    validateEachColumn(eachRow.get(LocationConstants.PORTUGUESE_ZONE), LocationConstants.PORTUGUESE_ZONE, row);
+    validateEachColumn(eachRow.get(LocationConstants.PORTUGUESE_RACK), LocationConstants.PORTUGUESE_RACK, row);
+    validateEachColumn(eachRow.get(LocationConstants.PORTUGUESE_BARCODE), LocationConstants.PORTUGUESE_BARCODE, row);
+    validateEachColumn(eachRow.get(LocationConstants.PORTUGUESE_BIN), LocationConstants.PORTUGUESE_BIN, row);
+    validateEachColumn(eachRow.get(LocationConstants.PORTUGUESE_LEVEL), LocationConstants.PORTUGUESE_LEVEL, row);
   }
 
   public List<CSVRecord> validateDuplicateLocationCode(CSVParser csvParser) throws IOException {
@@ -65,7 +79,7 @@ public class CsvValidator {
     List<CSVRecord> records = csvParser.getRecords();
     records.forEach(eachRow -> {
       List<Long> duplicateRows = Lists.newArrayList();
-      String locationCode = eachRow.get(LocationConstants.LOCATION_CODE);
+      String locationCode = eachRow.get(LocationConstants.PORTUGUESE_LOCATION_CODE);
       long rowNumber = eachRow.getRecordNumber();
       if (locationCodeToDuplicateRowMap.containsKey(locationCode)) {
         duplicateRows = locationCodeToDuplicateRowMap.get(locationCode);

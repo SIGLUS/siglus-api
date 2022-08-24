@@ -58,8 +58,6 @@ import org.siglus.siglusapi.repository.SiglusStockCardRepository;
 import org.siglus.siglusapi.repository.StockCardLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.StockCardLocationMovementLineItemRepository;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Slf4j
@@ -74,7 +72,6 @@ public class CalculatedStocksOnHandByLocationService {
   private final StockCardLineItemRepository stockCardLineItemRepository;
 
 
-  @Transactional(propagation = Propagation.REQUIRES_NEW)
   public void calculateStockOnHandByLocation(StockEventDto eventDto) {
     UUID facilityId = eventDto.getFacilityId();
     List<StockEventLineItemDto> lineItemDtos = eventDto.getLineItems();
@@ -86,7 +83,8 @@ public class CalculatedStocksOnHandByLocationService {
 
     List<StockCardLineItem> allLineItems = stockCardLineItemRepository.findAllByStockCardIn(stockCards);
     Map<UUID, List<StockCardLineItem>> stockCardIdToLineItems = allLineItems.stream()
-            .collect(Collectors.groupingBy(StockCardLineItem::getStockCardId));
+            .collect(Collectors.groupingBy(lineItem -> lineItem.getStockCardId() == null
+                    ? lineItem.getStockCard().getId() : lineItem.getStockCardId()));
     Map<StockCard, List<StockCardLineItem>> stockCardToLineItems =
         mapStockCardsWithLineItems(uniKeyToStockCard, lineItemDtos, stockCardIdToLineItems);
     Map<UUID, StockCardLineItemExtension> lineItemIdToExtension = buildExtensionMap(allLineItems);
@@ -123,8 +121,9 @@ public class CalculatedStocksOnHandByLocationService {
     Map<UUID, UUID> stockCardIdToId = calculatedStocksOnHandRepository
             .findByOccurredDateAndStockCardIdIn(date, stockCardIds)
             .stream()
-            .collect(Collectors.toMap(
-                CalculatedStockOnHand::getStockCardId, CalculatedStockOnHand::getId, (c1, c2) -> c1));
+            .collect(Collectors.toMap(soh -> soh.getStockCardId() == null
+                            ? soh.getStockCard().getId() : soh.getStockCardId(),
+                    CalculatedStockOnHand::getId, (c1, c2) -> c1));
     toSaveList.forEach(location ->
             location.setCalculatedStocksOnHandId(stockCardIdToId.get(location.getStockCardId())));
     log.info(String.format("save CalculatedStocksOnHandLocations %s", toSaveList.size()));

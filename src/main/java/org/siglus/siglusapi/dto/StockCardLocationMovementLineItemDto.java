@@ -33,6 +33,8 @@ public class StockCardLocationMovementLineItemDto {
 
   private UUID lotId;
 
+  private Boolean isKit;
+
   private String srcArea;
 
   private String srcLocationCode;

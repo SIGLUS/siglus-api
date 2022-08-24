@@ -34,7 +34,7 @@ public class SiglusMovementDateLimitController {
     this.movementDateValidator = movementDateValidator;
   }
 
-  @GetMapping("/startdate")
+  @GetMapping("/startDate")
   public LocalDate getMovementStartDate(
       @DateTimeFormat(pattern = "yyyy-MM-dd")
       @RequestParam("currentDate") LocalDate currentDate,

@@ -18,8 +18,6 @@ package org.siglus.siglusapi.service;
 import static com.google.common.collect.Lists.newArrayList;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
-import static org.siglus.siglusapi.constant.FieldConstants.MONTHLY;
-import static org.siglus.siglusapi.constant.FieldConstants.QUARTERLY;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_LOCATIONS_BY_FACILITY_NOT_FOUND;
 
 import java.time.LocalDate;
@@ -42,6 +40,7 @@ import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.domain.event.CalculatedStockOnHand;
 import org.openlmis.stockmanagement.repository.CalculatedStockOnHandRepository;
 import org.openlmis.stockmanagement.repository.StockCardRepository;
+import org.siglus.siglusapi.constant.PeriodConstants;
 import org.siglus.siglusapi.domain.CalculatedStockOnHandByLocation;
 import org.siglus.siglusapi.domain.FacilityLocations;
 import org.siglus.siglusapi.dto.FacilityLocationsDto;
@@ -96,6 +95,10 @@ public class SiglusLotLocationServiceTest extends TestCase {
   private final String locationCode1 = "BA01C";
 
   private final String locationCode2 = "AA25F";
+
+  private final UUID stockCardId1 = UUID.randomUUID();
+
+  private final UUID stockCardId2 = UUID.randomUUID();
 
   private final UUID programId1 = UUID.randomUUID();
 
@@ -161,6 +164,7 @@ public class SiglusLotLocationServiceTest extends TestCase {
   public void shouldReturnLotLocationDtosByOrderableIds() {
     // given
     StockCard stockCard = StockCard.builder().lotId(lotId1).build();
+    stockCard.setId(stockCardId1);
     when(stockCardRepository.findByFacilityIdAndOrderableId(facilityId,
         orderableId)).thenReturn(Collections.singletonList(stockCard));
     CalculatedStockOnHandByLocation sohLocation1 = CalculatedStockOnHandByLocation.builder().stockOnHand(100)
@@ -175,10 +179,10 @@ public class SiglusLotLocationServiceTest extends TestCase {
     when(lotRepository.findOne(lotId1)).thenReturn(lot);
 
     LotsDto lot1 = LotsDto.builder().lotCode(lotCode).lotId(lotId1).expirationDate(lot.getExpirationDate())
-        .orderablesId(orderableId)
+        .orderableId(orderableId)
         .stockOnHand(100).build();
     LotsDto lot2 = LotsDto.builder().lotCode(lotCode).lotId(lotId1).expirationDate(lot.getExpirationDate())
-        .orderablesId(orderableId)
+        .orderableId(orderableId)
         .stockOnHand(200).build();
     LotLocationDto lotLocation1 = LotLocationDto.builder().locationCode(locationCode1).area(area1)
         .lots(Collections.singletonList(lot1)).build();
@@ -198,7 +202,9 @@ public class SiglusLotLocationServiceTest extends TestCase {
   public void shouldReturnRestrictedLotLocationDtosByOrderableIds() {
     // given
     StockCard stockCard1 = StockCard.builder().lotId(lotId1).programId(programId1).build();
+    stockCard1.setId(stockCardId1);
     StockCard stockCard2 = StockCard.builder().lotId(lotId2).programId(programId2).build();
+    stockCard2.setId(stockCardId2);
     when(stockCardRepository.findByFacilityIdAndOrderableId(facilityId,
         orderableId)).thenReturn(Arrays.asList(stockCard1, stockCard2));
     CalculatedStockOnHandByLocation sohLocation1 = CalculatedStockOnHandByLocation.builder().stockOnHand(0)
@@ -217,11 +223,11 @@ public class SiglusLotLocationServiceTest extends TestCase {
             FacilityProgramPeriodScheduleDto
                 .builder()
                 .programId(programId1)
-                .schedulesCode(MONTHLY)
+                .schedulesCode(PeriodConstants.MONTH_SCHEDULE_CODE.toString())
                 .build(), FacilityProgramPeriodScheduleDto
                 .builder()
                 .programId(programId2)
-                .schedulesCode(QUARTERLY)
+                .schedulesCode(PeriodConstants.QUARTERLY_SCHEDULE_CODE.toString())
                 .build())
     );
     CalculatedStockOnHand calculatedStockOnHand1 = new CalculatedStockOnHand();
@@ -238,7 +244,7 @@ public class SiglusLotLocationServiceTest extends TestCase {
         .lotCode(lotCode)
         .lotId(lotId2)
         .expirationDate(lot.getExpirationDate())
-        .orderablesId(orderableId)
+        .orderableId(orderableId)
         .stockOnHand(0).build();
     LotLocationDto lotLocation2 = LotLocationDto.builder().locationCode(locationCode1).area(area1)
         .lots(Collections.singletonList(lot2)).build();

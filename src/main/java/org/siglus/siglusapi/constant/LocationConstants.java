@@ -17,9 +17,7 @@ package org.siglus.siglusapi.constant;
 
 public class LocationConstants {
   public static final String VIRTUAL_LOCATION_CODE = "00000";
-
   public static final String VIRTUAL_LOCATION_AREA = "virtual location";
-
   public static final String LOCATION_CODE = "Location Code";
   public static final String AREA = "Area";
   public static final String ZONE = "Zone";
@@ -27,4 +25,11 @@ public class LocationConstants {
   public static final String BARCODE = "Barcode";
   public static final String BIN = "Bin";
   public static final String LEVEL = "Level";
+  public static final String PORTUGUESE_LOCATION_CODE = "Código de localização";
+  public static final String PORTUGUESE_AREA = "Área";
+  public static final String PORTUGUESE_ZONE = "Zona";
+  public static final String PORTUGUESE_RACK = "Prateleira";
+  public static final String PORTUGUESE_BARCODE = "Código de barras";
+  public static final String PORTUGUESE_BIN = "Caixa";
+  public static final String PORTUGUESE_LEVEL = "Nível";
 }

@@ -121,7 +121,7 @@ public abstract class MessageKeys {
       PRODUCT_LOCATION_MOVEMENT_ERROR_PREFIX + ".movement.draft.exists";
   public static final String ERROR_MOVEMENT_DRAFT_ID_MISMATCH =
       PRODUCT_LOCATION_MOVEMENT_ERROR_PREFIX + ".movement.id.mismatch";
-  public static final String ERROR_MOVEMENT_DRAFT_LINE_ITEMS_MISSING =
+  public static final String ERROR_MOVEMENT_LINE_ITEMS_MISSING =
       PRODUCT_LOCATION_MOVEMENT_ERROR_PREFIX + ".movement.lineItems.missing";
   public static final String ERROR_MOVEMENT_DRAFT_ORDERABLE_MISSING =
       PRODUCT_LOCATION_MOVEMENT_ERROR_PREFIX + ".movement.orderable.missing";
