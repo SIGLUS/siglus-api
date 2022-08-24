@@ -28,8 +28,8 @@ public class LocationConstants {
   public static final String PORTUGUESE_LOCATION_CODE = "Código de localização";
   public static final String PORTUGUESE_AREA = "Área";
   public static final String PORTUGUESE_ZONE = "Zona";
-  public static final String PORTUGUESE_RACK = "Prateleira";
+  public static final String PORTUGUESE_RACK = "Estante";
   public static final String PORTUGUESE_BARCODE = "Código de barras";
-  public static final String PORTUGUESE_BIN = "Caixa";
+  public static final String PORTUGUESE_BIN = "Prateleira";
   public static final String PORTUGUESE_LEVEL = "Nível";
 }
