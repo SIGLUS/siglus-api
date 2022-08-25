@@ -34,7 +34,7 @@ import static org.siglus.siglusapi.constant.FieldConstants.REPORT_GENERATED_FOR_
 import static org.siglus.siglusapi.constant.FieldConstants.STOCK_OUT_PORTUGUESE;
 import static org.siglus.siglusapi.constant.FieldConstants.SUBTITLE;
 
-import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.EasyExcelFactory;
 import com.alibaba.excel.ExcelWriter;
 import com.alibaba.excel.write.metadata.WriteSheet;
 import java.io.IOException;
@@ -135,13 +135,13 @@ public class TracerDrugReportService {
     }
     List<List<Object>> excelRows = getDataRows(startDate, endDate, tracerDrugMap, colorArrays);
 
-    ExcelWriter excelWriter = EasyExcel.write(response.getOutputStream()).build();
-    WriteSheet writeSheet1 = EasyExcel
+    ExcelWriter excelWriter = EasyExcelFactory.write(response.getOutputStream()).build();
+    WriteSheet writeSheet1 = EasyExcelFactory
         .writerSheet(0)
         .registerWriteHandler(new CustomCellWriteHandler(colorArrays, false))
         .head(getHeadRow(tracerDrugMap))
         .build();
-    WriteSheet writeSheet2 = EasyExcel
+    WriteSheet writeSheet2 = EasyExcelFactory
         .writerSheet(1, SUBTITLE)
         .registerWriteHandler(new CustomCellWriteHandler(legendaColorArrays, true))
         .head(Collections.singletonList(Collections.singletonList(SUBTITLE)))

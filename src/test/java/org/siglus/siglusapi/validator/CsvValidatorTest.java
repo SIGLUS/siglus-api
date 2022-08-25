@@ -32,24 +32,24 @@ public class CsvValidatorTest {
   CsvValidator csvValidator;
 
   private static final String csvCorrectInput =
-      "Código de localização,Área,Zona,Prateleira,Código de barras,Caixa,Nível\n"
+      "Código de localização,Área,Zona,Estante,Código de barras,Prateleira,Nível\n"
           + "AA25Aq,Armazems Principals,Ad,Aw,AA25%q,253,Aa\n";
 
   private static final String csvNullHeaderInput =
-      "Código de localização,,Zona,Prateleira,Código de barras,Caixa,Nível\n"
+      "Código de localização,,Zona,Estante,Código de barras,Prateleira,Nível\n"
           + "AA25Ac,Armazema Principals,Aq,Ar,AA25%t,257,Ap\n";
 
   private static final String csvInvalidHeaderInput =
-      "Código de localização,Áreasss,Zona,Prateleira,Código de barras,Caixa,Nível\n"
+      "Código de localização,Áreasss,Zona,Estante,Código de barras,Prateleira,Nível\n"
           + "AA25Ab,Armazemf Principald,Aw,Aq,wAA25%,25,Ab\n";
 
   private static final String csvDuplicateLocationCodeInput =
-      "Código de localização,Área,Zona,Prateleira,Código de barras,Caixa,Nível,dsada\n"
+      "Código de localização,Área,Zona,Estante,Código de barras,Prateleira,Nível,dsada\n"
           + "AA25Af,Armazeme Principalew,Agg,Ae,AA25%rt,250,Ater\n"
           + "AA25Af,Armazemg Principalrwe,Arr,Ar,gAA25%,251,Aert\n";
 
   private static final String csvLocationCodeMissingInput =
-      "Código de localização,Área,Zona,Prateleira,Código de barras,Caixa,Nível\n"
+      "Código de localização,Área,Zona,Estante,Código de barras,Prateleira,Nível\n"
           + "AA25Afgd,Armazems Principalgf,Asfgd,Agdf,AA25%vbc,253, \n";
 
   @Test

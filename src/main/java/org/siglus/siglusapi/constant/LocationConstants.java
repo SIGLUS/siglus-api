@@ -15,6 +15,10 @@
 
 package org.siglus.siglusapi.constant;
 
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+
+@RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 public class LocationConstants {
   public static final String VIRTUAL_LOCATION_CODE = "00000";
   public static final String VIRTUAL_LOCATION_AREA = "virtual location";
@@ -28,8 +32,8 @@ public class LocationConstants {
   public static final String PORTUGUESE_LOCATION_CODE = "Código de localização";
   public static final String PORTUGUESE_AREA = "Área";
   public static final String PORTUGUESE_ZONE = "Zona";
-  public static final String PORTUGUESE_RACK = "Prateleira";
+  public static final String PORTUGUESE_RACK = "Estante";
   public static final String PORTUGUESE_BARCODE = "Código de barras";
-  public static final String PORTUGUESE_BIN = "Caixa";
+  public static final String PORTUGUESE_BIN = "Prateleira";
   public static final String PORTUGUESE_LEVEL = "Nível";
 }

@@ -29,6 +29,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -69,7 +70,7 @@ import org.siglus.siglusapi.repository.PodLineItemsExtensionRepository;
 import org.siglus.siglusapi.repository.PodLineItemsRepository;
 import org.siglus.siglusapi.repository.PodSubDraftRepository;
 import org.siglus.siglusapi.repository.ProofsOfDeliveryExtensionRepository;
-import org.siglus.siglusapi.repository.RequisitionsRepository;
+import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.repository.dto.OrderDto;
 import org.siglus.siglusapi.repository.dto.PodLineItemDto;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
@@ -133,7 +134,7 @@ public class SiglusPodService {
   private OrdersRepository ordersRepository;
 
   @Autowired
-  private RequisitionsRepository requisitionsRepository;
+  private SiglusRequisitionRepository siglusRequisitionRepository;
 
   @Autowired
   private SiglusFacilityReferenceDataService siglusFacilityReferenceDataService;
@@ -360,7 +361,7 @@ public class SiglusPodService {
   }
 
   private int getRequisitionCount(OrderDto orderDto, UUID realRequisitionId) {
-    List<String> requisitionIds = requisitionsRepository.findRequisitionIdsByOrderInfo(
+    List<String> requisitionIds = siglusRequisitionRepository.findRequisitionIdsByOrderInfo(
         orderDto.getReceivingFacilityId(),
         orderDto.getProgramId(),
         orderDto.getProcessingPeriodId(), orderDto.getEmergency(), REQUISITION_STATUS_POST_SUBMIT);
@@ -422,7 +423,7 @@ public class SiglusPodService {
     List<PodSubDraft> subDrafts = getPodSubDraftsByPodId(podId);
     if (subDrafts.stream().anyMatch(podSubDraft -> PodSubDraftStatusEnum.SUBMITTED != podSubDraft.getStatus())) {
       throw new BusinessDataException(new Message(ERROR_NOT_ALL_SUB_DRAFTS_SUBMITTED),
-          subDrafts.stream().map(PodSubDraft::getId).collect(Collectors.toSet()));
+          subDrafts.stream().map(PodSubDraft::getId).collect(Collectors.toCollection(HashSet::new)));
     }
     return subDrafts;
   }

@@ -38,7 +38,14 @@ public interface CalculatedStockOnHandByLocationRepository extends JpaRepository
   @Query(name = "LotLocationSoh.findLocationSoh", nativeQuery = true)
   List<LotLocationSohDto> getLocationSoh(@Param("lotIds")Iterable<UUID> lotIds);
 
-  List<CalculatedStockOnHandByLocation> findByStockCardId(UUID stockCardId);
+  @Query(value = "select * from siglusintegration.calculated_stocks_on_hand_by_location "
+          + "where (stockcardid, occurreddate) in ("
+          + "select stockcardid, max(occurreddate) "
+          + "from siglusintegration.calculated_stocks_on_hand_by_location c "
+          + "where c.stockcardid in (:stockCardIds) "
+          + "group by c.stockcardid, c.locationcode)", nativeQuery = true)
+  List<CalculatedStockOnHandByLocation> findByStockCardIdIn(
+          @Param("stockCardIds") Collection<UUID> stockCardIds);
 
   @Query(value = " select DISTINCT ON (stockcardid,locationcode) first_value(stockonhand)\n"
       + "                                              OVER (PARTITION BY stockcardid ORDER BY occurreddate DESC )\n"

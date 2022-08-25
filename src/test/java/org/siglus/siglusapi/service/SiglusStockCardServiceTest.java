@@ -17,15 +17,18 @@ package org.siglus.siglusapi.service;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.mockito.Matchers.any;
 import static org.powermock.api.mockito.PowerMockito.when;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.junit.Before;
@@ -35,6 +38,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.openlmis.referencedata.dto.DispensableDto;
+import org.openlmis.referencedata.dto.ProgramOrderableDto;
+import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
 import org.openlmis.stockmanagement.domain.event.CalculatedStockOnHand;
@@ -49,10 +55,13 @@ import org.openlmis.stockmanagement.repository.CalculatedStockOnHandRepository;
 import org.openlmis.stockmanagement.util.AuthenticationHelper;
 import org.siglus.siglusapi.domain.StockCardExtension;
 import org.siglus.siglusapi.dto.LotLocationSohDto;
+import org.siglus.siglusapi.dto.ProductMovementDto;
 import org.siglus.siglusapi.dto.StockMovementResDto;
 import org.siglus.siglusapi.repository.CalculatedStockOnHandByLocationRepository;
 import org.siglus.siglusapi.repository.SiglusStockCardRepository;
 import org.siglus.siglusapi.repository.StockCardExtensionRepository;
+import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
+import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusStockManagementService;
 import org.siglus.siglusapi.testutils.CalculatedStockOnHandDataBuilder;
 import org.siglus.siglusapi.testutils.StockCardLineItemDataBuilder;
@@ -100,11 +109,22 @@ public class SiglusStockCardServiceTest {
   @InjectMocks
   private SiglusStockCardService siglusStockCardService;
 
+  @Mock
+  SiglusOrderableReferenceDataService siglusOrderableReferenceDataService;
+
+  @Mock
+  SiglusFacilityReferenceDataService siglusFacilityReferenceDataService;
+
+  @Mock
+  SiglusProgramService siglusProgramService;
+
   private UUID orderableId;
 
   private UUID homefacilityId;
 
   private UUID facilityId;
+
+  private UUID programId;
 
   private static final LocalDate CURRENT_DATE = LocalDate.now();
 
@@ -113,6 +133,7 @@ public class SiglusStockCardServiceTest {
     facilityId = UUID.randomUUID();
     UserDto userDto = new UserDto();
     homefacilityId = UUID.randomUUID();
+    programId = UUID.randomUUID();
     userDto.setHomeFacilityId(homefacilityId);
     when(authenticationHelper.getCurrentUser()).thenReturn(userDto);
     orderableId = UUID.randomUUID();
@@ -124,7 +145,7 @@ public class SiglusStockCardServiceTest {
     calculatedStockOnHand.setStockOnHand(10);
     when(calculatedStockOnHandRepository
         .findFirstByStockCardIdAndOccurredDateLessThanEqualOrderByOccurredDateDesc(any(UUID.class),
-            any(LocalDate.class))).thenReturn(Optional.ofNullable(calculatedStockOnHand));
+            any(LocalDate.class))).thenReturn(Optional.of(calculatedStockOnHand));
     Mockito.when(dateHelper.getCurrentDate()).thenReturn(CURRENT_DATE);
   }
 
@@ -133,7 +154,7 @@ public class SiglusStockCardServiceTest {
     when(stockCardRepository.findByFacilityIdAndOrderableId(homefacilityId, orderableId))
         .thenReturn(new ArrayList<>());
     StockCardDto stockCardDto = siglusStockCardService.findStockCardByOrderable(orderableId);
-    assertEquals(null, stockCardDto);
+    assertNull(stockCardDto);
   }
 
   @Test
@@ -142,7 +163,7 @@ public class SiglusStockCardServiceTest {
     when(stockCardRepository.findOne(stockCardId))
         .thenReturn(null);
     StockCardDto stockCardDto = siglusStockCardService.findStockCardById(stockCardId);
-    assertEquals(null, stockCardDto);
+    assertNull(stockCardDto);
   }
 
   @Test
@@ -171,8 +192,7 @@ public class SiglusStockCardServiceTest {
     UUID stockCardId = UUID.randomUUID();
     when(stockCardRepository.findOne(stockCardId))
         .thenReturn(null);
-    StockCardDto stockCardDto = siglusStockCardService.findStockCardWithLocationById(stockCardId);
-    assertEquals(null, stockCardDto);
+    assertNull(siglusStockCardService.findStockCardWithLocationById(stockCardId));
   }
 
   @Test
@@ -198,7 +218,7 @@ public class SiglusStockCardServiceTest {
   public void shouldEqualStockCardLineItemNumberAddFistInventoryLineItemIfOnlyOneStockCard() {
     StockCard stockCard = createStockCardOne();
     when(stockCardRepository.findByFacilityIdAndOrderableId(homefacilityId, orderableId))
-        .thenReturn(Arrays.asList(stockCard));
+        .thenReturn(Collections.singletonList(stockCard));
 
     StockCardExtension stockCardExtension = StockCardExtension.builder()
         .stockCardId(stockCard.getId())
@@ -218,11 +238,12 @@ public class SiglusStockCardServiceTest {
   public void shouldEqualStockCardLineItemNumberIfOnlyOneStockCardAndNoMatchExtension() {
     StockCard stockCard = createStockCardOne();
     when(stockCardRepository.findByFacilityIdAndOrderableId(homefacilityId, orderableId))
-        .thenReturn(Arrays.asList(stockCard));
+        .thenReturn(Collections.singletonList(stockCard));
 
     StockCardExtension stockCardExtension = StockCardExtension.builder()
         .createDate(stockCard.getLineItems().get(0).getOccurredDate())
         .build();
+
     when(stockCardExtensionRepository.findByStockCardId(stockCard.getId()))
         .thenReturn(stockCardExtension);
 
@@ -284,8 +305,7 @@ public class SiglusStockCardServiceTest {
     StockCardDto stockCardDto = siglusStockCardService.findStockCardById(stockCardOne.getId());
 
     // then
-    StockCardLineItemDto lineItemDto = stockCardDto.getLineItems().get(1);
-    assertEquals(null, lineItemDto.getReason());
+    assertNull(stockCardDto.getLineItems().get(1).getReason());
   }
 
   @Test
@@ -326,11 +346,33 @@ public class SiglusStockCardServiceTest {
 
   @Test
   public void shouldReturnNUllIfMovementNotExistWhenFindStockMovementbyfacilityId() {
-    when(stockMovementService.getProductMovements(new HashSet<UUID>(), facilityId, null, null))
+    when(stockMovementService.getProductMovements(new HashSet<>(), facilityId, null, null))
         .thenReturn(null);
-    List<StockMovementResDto> productMovements = siglusStockCardService.getProductMovements(facilityId, null, null,
-        null);
-    assertEquals(null, productMovements);
+    assertNull(siglusStockCardService.getProductMovements(facilityId, null, null, null));
+  }
+
+  @Test
+  public void shouldReturnStockMovementByProductWhenCallGetMovementByProductByServiceGivenFacilityIdAndOrderableId() {
+    ProgramOrderableDto programOrderableDto = new ProgramOrderableDto();
+    programOrderableDto.setProgramId(programId);
+    Set<ProgramOrderableDto> programOrderableDtos = new HashSet<>();
+    programOrderableDtos.add(programOrderableDto);
+    DispensableDto dispensableDto = new DispensableDto();
+    dispensableDto.setToString("111");
+    org.openlmis.referencedata.dto.OrderableDto orderableDto = new org.openlmis.referencedata.dto.OrderableDto("00a11",
+        dispensableDto, "product1", null, null, null, null, null, null, null, null, null, null, null, null, null, null);
+    orderableDto.setPrograms(programOrderableDtos);
+
+    StockMovementResDto stockMovementResDto = new StockMovementResDto();
+    List<StockMovementResDto> stockMovementResDtoList = Collections.singletonList(stockMovementResDto);
+    when(stockMovementService.getMovementsByProduct(facilityId, orderableId)).thenReturn(stockMovementResDtoList);
+    org.siglus.siglusapi.dto.FacilityDto facilityDto = org.siglus.siglusapi.dto.FacilityDto.builder().name("facility")
+        .build();
+    when(siglusFacilityReferenceDataService.findOne(facilityId)).thenReturn(facilityDto);
+    when(siglusOrderableReferenceDataService.findOne(orderableId)).thenReturn(orderableDto);
+    when(siglusProgramService.getProgram(programId)).thenReturn(new ProgramDto());
+    ProductMovementDto movementByProduct = siglusStockCardService.getMovementByProduct(facilityId, orderableId);
+    assertEquals(movementByProduct.getLineItems().size(), 1);
   }
 
   private StockCard createStockCardOne() {
@@ -396,5 +438,4 @@ public class SiglusStockCardServiceTest {
     }).collect(Collectors.toList()));
     return dto;
   }
-
 }

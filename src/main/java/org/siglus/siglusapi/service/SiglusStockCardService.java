@@ -31,6 +31,8 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.apache.commons.collections4.CollectionUtils;
+import org.openlmis.referencedata.dto.ProgramOrderableDto;
+import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
 import org.openlmis.stockmanagement.domain.event.CalculatedStockOnHand;
@@ -44,54 +46,77 @@ import org.openlmis.stockmanagement.dto.referencedata.OrderableDto;
 import org.openlmis.stockmanagement.repository.CalculatedStockOnHandRepository;
 import org.openlmis.stockmanagement.util.AuthenticationHelper;
 import org.siglus.siglusapi.domain.StockCardExtension;
+import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.LotLocationSohDto;
+import org.siglus.siglusapi.dto.ProductMovementDto;
 import org.siglus.siglusapi.dto.StockMovementResDto;
 import org.siglus.siglusapi.repository.CalculatedStockOnHandByLocationRepository;
 import org.siglus.siglusapi.repository.SiglusStockCardRepository;
 import org.siglus.siglusapi.repository.StockCardExtensionRepository;
+import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
+import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusStockManagementService;
 import org.siglus.siglusapi.util.AndroidHelper;
 import org.siglus.siglusapi.util.SiglusDateHelper;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
 public class SiglusStockCardService {
 
-  @Autowired
-  SiglusStockCardRepository stockCardRepository;
+  private final SiglusStockCardRepository stockCardRepository;
 
-  @Autowired
-  SiglusStockManagementService stockCardStockManagementService;
+  private final SiglusStockManagementService stockCardStockManagementService;
 
-  @Autowired
-  private AuthenticationHelper authenticationHelper;
+  private final AuthenticationHelper authenticationHelper;
 
-  @Autowired
-  private StockCardExtensionRepository stockCardExtensionRepository;
+  private final StockCardExtensionRepository stockCardExtensionRepository;
 
-  @Autowired
-  private SiglusUnpackService unpackService;
+  private final SiglusUnpackService unpackService;
 
-  @Autowired
-  private SiglusArchiveProductService archiveProductService;
+  private final SiglusArchiveProductService archiveProductService;
 
-  @Autowired
-  private CalculatedStockOnHandRepository calculatedStockOnHandRepository;
+  private final CalculatedStockOnHandRepository calculatedStockOnHandRepository;
 
-  @Autowired
-  private AndroidHelper androidHelper;
+  private final AndroidHelper androidHelper;
 
-  @Autowired
-  private SiglusDateHelper dateHelper;
+  private final SiglusDateHelper dateHelper;
 
-  @Autowired
-  private StockMovementService stockMovementService;
+  private final StockMovementService stockMovementService;
 
-  @Autowired
-  private CalculatedStockOnHandByLocationRepository calculatedStockOnHandByLocationRepository;
+  private final CalculatedStockOnHandByLocationRepository calculatedStockOnHandByLocationRepository;
 
+  private final SiglusFacilityReferenceDataService siglusFacilityReferenceDataService;
+
+  private final SiglusOrderableReferenceDataService siglusOrderableReferenceDataService;
+
+  private final SiglusProgramService siglusProgramService;
   private static final String LOCATION_KEY = "locationCode";
+
+  public SiglusStockCardService(SiglusStockCardRepository stockCardRepository,
+      SiglusStockManagementService stockCardStockManagementService, AuthenticationHelper authenticationHelper,
+      StockCardExtensionRepository stockCardExtensionRepository, SiglusUnpackService unpackService,
+      SiglusArchiveProductService archiveProductService,
+      CalculatedStockOnHandRepository calculatedStockOnHandRepository, AndroidHelper androidHelper,
+      SiglusDateHelper dateHelper, StockMovementService stockMovementService,
+      CalculatedStockOnHandByLocationRepository calculatedStockOnHandByLocationRepository,
+      SiglusFacilityReferenceDataService siglusFacilityReferenceDataService,
+      SiglusOrderableReferenceDataService siglusOrderableReferenceDataService,
+      SiglusProgramService siglusProgramService) {
+    this.stockCardRepository = stockCardRepository;
+    this.stockCardStockManagementService = stockCardStockManagementService;
+    this.authenticationHelper = authenticationHelper;
+    this.stockCardExtensionRepository = stockCardExtensionRepository;
+    this.unpackService = unpackService;
+    this.archiveProductService = archiveProductService;
+    this.calculatedStockOnHandRepository = calculatedStockOnHandRepository;
+    this.androidHelper = androidHelper;
+    this.dateHelper = dateHelper;
+    this.stockMovementService = stockMovementService;
+    this.calculatedStockOnHandByLocationRepository = calculatedStockOnHandByLocationRepository;
+    this.siglusFacilityReferenceDataService = siglusFacilityReferenceDataService;
+    this.siglusOrderableReferenceDataService = siglusOrderableReferenceDataService;
+    this.siglusProgramService = siglusProgramService;
+  }
 
   public StockCardDto findStockCardByOrderable(UUID orderableId) {
     UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
@@ -275,5 +300,24 @@ public class SiglusStockCardService {
       orderableIdsSet.add(orderableId);
     }
     return stockMovementService.getProductMovements(orderableIdsSet, facilityId, startTime, endTime);
+  }
+
+  public ProductMovementDto getMovementByProduct(UUID facilityId, UUID orderableId) {
+
+    List<StockMovementResDto> productMovements =
+        stockMovementService.getMovementsByProduct(facilityId, orderableId);
+    org.openlmis.referencedata.dto.OrderableDto orderableDto = siglusOrderableReferenceDataService.findOne(orderableId);
+    FacilityDto facilityDto = siglusFacilityReferenceDataService.findOne(facilityId);
+    List<ProgramOrderableDto> programOrderableDtoList = new ArrayList<>(orderableDto.getPrograms());
+    ProgramDto programDto = siglusProgramService.getProgram(programOrderableDtoList.get(0).getProgramId());
+    return ProductMovementDto.builder()
+        .facilityName(facilityDto.getName())
+        .productName(orderableDto.getFullProductName())
+        .productCode(orderableDto.getProductCode())
+        .program(programDto.getName())
+        .stockOnHand(productMovements.get(productMovements.size() - 1).getProductSoh())
+        .lineItems(productMovements)
+        .displayUnit(orderableDto.getDispensable().getDisplayUnit())
+        .build();
   }
 }

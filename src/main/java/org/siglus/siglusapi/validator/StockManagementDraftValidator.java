@@ -78,8 +78,7 @@ public class StockManagementDraftValidator {
     validateNotNull(stockManagementInitialDraftDto.getProgramId(), ERROR_PROGRAM_ID_MISSING);
     validateNotNull(stockManagementInitialDraftDto.getFacilityId(), ERROR_FACILITY_ID_MISSING);
     validateNotNull(stockManagementInitialDraftDto.getDraftType(), ERROR_DRAFT_TYPE_MISSING);
-    validateNotNull(stockManagementInitialDraftDto.getDocumentNumber(),
-        ERROR_DRAFT_DOCUMENT_NUMBER_MISSING);
+    validateNotNull(stockManagementInitialDraftDto.getDocumentNumber(), ERROR_DRAFT_DOCUMENT_NUMBER_MISSING);
   }
 
   private void validateNotNull(Object field, String errorMessage) {

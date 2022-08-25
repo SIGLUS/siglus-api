@@ -16,6 +16,7 @@
 package org.siglus.siglusapi.web;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.http.HttpStatus.OK;
 
@@ -49,16 +50,19 @@ public class SiglusStockMovementControllerTest {
   private SiglusStockMovementController controller;
   private UUID facilityId;
 
+  private UUID orderableId;
+
   @Before
   public void prepare() {
     MockitoAnnotations.initMocks(this);
     facilityId = UUID.randomUUID();
+    orderableId = UUID.randomUUID();
   }
 
   @Test
   public void shouldGetStockMovementByFacilityId() {
     when(service.getProductMovements(facilityId, null, null, null))
-        .thenReturn(new LinkedList());
+        .thenReturn(new LinkedList<>());
     ResponseEntity<List<StockMovementResDto>> responseEntity =
         controller.getStockMovement(facilityId, null, null, null);
     assertEquals(OK, responseEntity.getStatusCode());
@@ -66,6 +70,12 @@ public class SiglusStockMovementControllerTest {
 
   @Test(expected = ValidationMessageException.class)
   public void shouldThrowExceptionWhenOrderableIdAndFacilityIdAreNull() throws ValidationMessageException {
-    assertEquals(ValidationMessageException.class, controller.getStockMovement(null, null, null, null).getClass());
+    controller.getStockMovement(null, null, null, null);
+  }
+
+  @Test
+  public void shouldCallGetProductMovementByServiceGivenFacilityIdAndOrderableId() {
+    controller.getMovementByProduct(orderableId, facilityId);
+    verify(service).getMovementByProduct(facilityId, orderableId);
   }
 }

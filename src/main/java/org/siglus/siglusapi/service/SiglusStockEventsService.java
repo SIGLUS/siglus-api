@@ -99,14 +99,14 @@ public class SiglusStockEventsService {
   private UUID unpackDestinationNodeId;
 
   @Transactional
-  public void processStockEventForMultiUser(StockEventForMultiUserDto stockEventForMultiUserDto) {
+  public void processStockEventForMultiUser(StockEventForMultiUserDto stockEventForMultiUserDto, boolean isByLocation) {
     List<UUID> subDraftIds = stockEventForMultiUserDto.getSubDrafts();
     validatePreSubmitSubDraft(subDraftIds);
-    processStockEvent(stockEventForMultiUserDto.getStockEvent(), false);
+    processStockEvent(stockEventForMultiUserDto.getStockEvent(), isByLocation);
   }
 
   @Transactional
-  public void processStockEvent(StockEventDto eventDto, boolean location) {
+  public void processStockEvent(StockEventDto eventDto, boolean isByLocation) {
     setUserId(eventDto);
     siglusLotService.createAndFillLotId(eventDto);
     Set<UUID> programIds = getProgramIds(eventDto);
@@ -116,13 +116,13 @@ public class SiglusStockEventsService {
     } else {
       stockEventDtos = getStockEventsWhenDoStockMovements(eventDto, programIds);
     }
-    if (eventDto.isAdjustment() && location) {
+    if (eventDto.isAdjustment() && isByLocation) {
       validateAdjustmentLocationAndQuantity(eventDto);
     }
-    createStockEvent(eventDto, stockEventDtos, location);
+    createStockEvent(eventDto, stockEventDtos, isByLocation);
     deleteDraft(eventDto);
 
-    if (location) {
+    if (isByLocation) {
       calculatedStocksOnHandByLocationService.calculateStockOnHandByLocation(eventDto);
     }
   }
@@ -185,7 +185,7 @@ public class SiglusStockEventsService {
     return ALL_PRODUCTS_PROGRAM_ID.equals(eventDto.getProgramId());
   }
 
-  private void createStockEvent(StockEventDto eventDto, List<StockEventDto> stockEventDtos, boolean location) {
+  private void createStockEvent(StockEventDto eventDto, List<StockEventDto> stockEventDtos, boolean isByLocation) {
     stockEventDtos.forEach(stockEventDto -> {
       stockEventDto.setFacilityId(eventDto.getFacilityId());
       stockEventDto.setSignature(eventDto.getSignature());
@@ -196,16 +196,16 @@ public class SiglusStockEventsService {
           .filter(lineItem -> lineItem.getProgramId() != null)
           .filter(lineItem -> lineItem.getProgramId().equals(stockEventDto.getProgramId()))
           .collect(Collectors.toList()));
-      siglusCreateStockEvent(stockEventDto, location);
+      siglusCreateStockEvent(stockEventDto, isByLocation);
     });
   }
 
-  private void siglusCreateStockEvent(StockEventDto eventDto, boolean location) {
+  private void siglusCreateStockEvent(StockEventDto eventDto, boolean isByLocation) {
     List<StockEventLineItemDto> lineItems = eventDto.getLineItems();
     lineItems.forEach(lineItem -> lineItem.setId(UUID.randomUUID()));
     eventDto.setLineItems(lineItems);
     UUID stockEventId = stockEventProcessor.process(eventDto);
-    enhanceStockCard(eventDto, stockEventId, location);
+    enhanceStockCard(eventDto, stockEventId, isByLocation);
   }
 
   private void enhanceStockCard(StockEventDto eventDto, UUID stockEventId, boolean isByLocation) {

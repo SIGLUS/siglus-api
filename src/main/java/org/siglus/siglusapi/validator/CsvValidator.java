@@ -88,10 +88,10 @@ public class CsvValidator {
       locationCodeToDuplicateRowMap.put(locationCode, duplicateRows);
     });
 
-    for (String locationCode : locationCodeToDuplicateRowMap.keySet()) {
-      if (locationCodeToDuplicateRowMap.get(locationCode).size() > 1) {
+    for (Map.Entry<String, List<Long>> locationCodeMapEntry : locationCodeToDuplicateRowMap.entrySet()) {
+      if (locationCodeToDuplicateRowMap.get(locationCodeMapEntry.getKey()).size() > 1) {
         throw new BusinessDataException(new Message(CsvUploadMessageKeys.ERROR_DUPLICATE_LOCATION_CODE,
-            locationCodeToDuplicateRowMap.get(locationCode).toString()), ERROR_BUSINESS_CODE);
+            locationCodeToDuplicateRowMap.get(locationCodeMapEntry.getKey()).toString()), ERROR_BUSINESS_CODE);
       }
     }
 

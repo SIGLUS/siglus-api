@@ -58,6 +58,17 @@ public class SiglusStockEventsController {
     movementDateValidator
         .validateMovementDate(stockEventForMultiUserDto.getStockEvent().getLineItems().get(0).getOccurredDate(),
             stockEventForMultiUserDto.getStockEvent().getFacilityId());
-    stockEventsService.processStockEventForMultiUser(stockEventForMultiUserDto);
+    stockEventsService.processStockEventForMultiUser(stockEventForMultiUserDto, false);
+  }
+
+  @PostMapping("/multiUserWithLocation")
+  @Transactional
+  @ResponseStatus(CREATED)
+  public void createStockEventForMultiUserWithLocation(
+      @RequestBody StockEventForMultiUserDto stockEventForMultiUserDto) {
+    movementDateValidator
+        .validateMovementDate(stockEventForMultiUserDto.getStockEvent().getLineItems().get(0).getOccurredDate(),
+            stockEventForMultiUserDto.getStockEvent().getFacilityId());
+    stockEventsService.processStockEventForMultiUser(stockEventForMultiUserDto, true);
   }
 }

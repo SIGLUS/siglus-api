@@ -364,6 +364,8 @@ public class StockManagementRepository extends BaseNativeRepository {
         .documentNumber(readAsString(rs, "documentnumber"))
         .lot(readLot(rs))
         .processedAt(rs.getTimestamp("processeddate").toInstant())
+        .sourceFreeText(rs.getString("sourcefreetext"))
+        .destinationFreeText(rs.getString("destinationfreetext"))
         .build();
   }
 
@@ -500,7 +502,9 @@ public class StockManagementRepository extends BaseNativeRepository {
         + "root.processeddate, "
         + "l.expirationdate, "
         + "srcfac.name AS srcfacname, "
-        + "destfac.name AS destfacname ";
+        + "destfac.name AS destfacname, "
+        + "root.sourcefreetext ,"
+        + "root.destinationfreetext ";
     String root = "stockmanagement.stock_card_line_items root";
     String eventRoot = "stockmanagement.stock_events se";
     String srcNodeRoot = "stockmanagement.nodes srcnode";
@@ -578,6 +582,8 @@ public class StockManagementRepository extends BaseNativeRepository {
     movementBuilder.requestedQuantity(anyLot.getRequestedQuantity());
     movementBuilder.processedAt(anyLot.getProcessedAt());
     movementBuilder.signature(anyLot.getSignature());
+    movementBuilder.sourcefreetext(anyLot.sourceFreeText);
+    movementBuilder.destinationfreetext(anyLot.destinationFreeText);
     return movementBuilder.build();
   }
 
@@ -627,6 +633,10 @@ public class StockManagementRepository extends BaseNativeRepository {
 
     @Nullable
     private final String documentNumber;
+
+    private final String sourceFreeText;
+
+    private final String destinationFreeText;
 
     public ProductMovementKey getProductMovementKey() {
       return ProductMovementKey.of(code.getProductCode(), eventTime);

@@ -44,4 +44,12 @@ public class StockMovementResDto {
   private String signature;
 
   private String documentNumber;
+
+  private String destinationName;
+
+  private String destinationFreeText;
+
+  private String sourceName;
+
+  private String sourceFreeText;
 }

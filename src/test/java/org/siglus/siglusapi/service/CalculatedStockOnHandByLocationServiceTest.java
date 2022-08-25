@@ -96,7 +96,7 @@ public class CalculatedStockOnHandByLocationServiceTest {
     List<CalculatedStockOnHandByLocation> toSaveList = new ArrayList<>();
     // when
     calculatedStocksOnHandByLocationService.recalculateLocationStockOnHand(toSaveList, stockCardIdToLineItems,
-            buildExtensionMap(), target, buildStockCardIdAndLocationCodeToPreviousStockOnHandMap());
+            buildExtensionMap(), target, buildStockCardIdAndLocationCodeToPreviousStockOnHandMap(), new HashMap<>());
 
     // then
     assertEquals(3, toSaveList.size());
@@ -119,7 +119,6 @@ public class CalculatedStockOnHandByLocationServiceTest {
     StockCard stockCard = buildStockCard(target);
     target.setStockCard(stockCard);
 
-    when(locationMovementRepository.findByStockCardId(stockCardId)).thenReturn(buildMovement());
     when(stockCardLineItemExtensionRepository.findByStockCardLineItemId(any()))
             .thenReturn(Optional.of(buildExtension()));
 
@@ -128,7 +127,7 @@ public class CalculatedStockOnHandByLocationServiceTest {
     List<CalculatedStockOnHandByLocation> toSaveList = new ArrayList<>();
     // when
     calculatedStocksOnHandByLocationService.recalculateLocationStockOnHand(toSaveList, stockCardIdToLineItems,
-            buildExtensionMap(), target, buildStockCardIdAndLocationCodeToPreviousStockOnHandMap());
+            buildExtensionMap(), target, buildStockCardIdAndLocationCodeToPreviousStockOnHandMap(), buildMovementMap());
 
     // then
     assertEquals(5, toSaveList.size());
@@ -144,7 +143,7 @@ public class CalculatedStockOnHandByLocationServiceTest {
     assertEquals(LocalDate.now().minusDays(1L), toDate(toSaveList.get(4).getOccurredDate()));
   }
 
-  private List<StockCardLocationMovementLineItem> buildMovement() {
+  private Map<UUID, List<StockCardLocationMovementLineItem>> buildMovementMap() {
     StockCardLocationMovementLineItem movement1 = StockCardLocationMovementLineItem.builder()
             .stockCardId(stockCardId)
             .destLocationCode(locationCode)
@@ -158,7 +157,9 @@ public class CalculatedStockOnHandByLocationServiceTest {
             .quantity(20)
             .occurredDate(LocalDate.now().minusDays(2L))
             .build();
-    return Arrays.asList(movement1, movement2);
+    Map<UUID, List<StockCardLocationMovementLineItem>> stockCardIdToMovements = new HashMap<>();
+    stockCardIdToMovements.put(stockCardId, Arrays.asList(movement2, movement1));
+    return stockCardIdToMovements;
   }
 
   private StockCard buildStockCard(StockCardLineItem target) {

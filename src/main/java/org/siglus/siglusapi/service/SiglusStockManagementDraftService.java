@@ -39,6 +39,7 @@ import org.siglus.siglusapi.domain.StockManagementDraft;
 import org.siglus.siglusapi.domain.StockManagementDraftLineItem;
 import org.siglus.siglusapi.domain.StockManagementInitialDraft;
 import org.siglus.siglusapi.dto.MergedLineItemDto;
+import org.siglus.siglusapi.dto.MergedLineItemWithLocationDto;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.dto.StockManagementDraftDto;
 import org.siglus.siglusapi.dto.StockManagementDraftLineItemDto;
@@ -97,7 +98,6 @@ public class SiglusStockManagementDraftService {
     return StockManagementDraftDto.from(savedDraft);
   }
 
-  @Transactional
   public StockManagementDraftDto createNewSubDraft(StockManagementDraftDto dto) {
     log.info("create physical inventory subDraft");
     stockManagementDraftValidator.validateEmptyDraft(dto);
@@ -191,13 +191,27 @@ public class SiglusStockManagementDraftService {
   }
 
   public List<StockManagementDraftDto> findStockManagementDrafts(UUID initialDraftId) {
+    List<StockManagementDraft> sortedDrafts = getStockManagementDrafts(initialDraftId);
+    return StockManagementDraftDto.from(sortedDrafts);
+  }
+
+  private List<StockManagementDraft> getStockManagementDrafts(UUID initialDraftId) {
     draftValidator.validateInitialDraftId(initialDraftId);
     List<StockManagementDraft> drafts = stockManagementDraftRepository
         .findByInitialDraftId(initialDraftId);
-    List<StockManagementDraft> sortedDrafts = drafts.stream()
+    return drafts.stream()
         .sorted(Comparator.comparingInt(StockManagementDraft::getDraftNumber))
         .collect(toList());
-    return StockManagementDraftDto.from(sortedDrafts);
+  }
+
+  private List<StockManagementDraft> getStockManagementDrafts(UUID programId, String type, Boolean isDraft) {
+    UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
+    draftValidator.validateProgramId(programId);
+    draftValidator.validateFacilityId(facilityId);
+    draftValidator.validateDraftType(type);
+    draftValidator.validateIsDraft(isDraft);
+    return stockManagementDraftRepository
+        .findByProgramIdAndFacilityIdAndIsDraftAndDraftType(programId, facilityId, isDraft, type);
   }
 
   @Transactional
@@ -246,16 +260,6 @@ public class SiglusStockManagementDraftService {
     }
   }
 
-  private List<StockManagementDraft> getStockManagementDrafts(UUID programId, String type, Boolean isDraft) {
-    UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
-    draftValidator.validateProgramId(programId);
-    draftValidator.validateFacilityId(facilityId);
-    draftValidator.validateDraftType(type);
-    draftValidator.validateIsDraft(isDraft);
-    return stockManagementDraftRepository
-        .findByProgramIdAndFacilityIdAndIsDraftAndDraftType(programId, facilityId, isDraft, type);
-  }
-
   private StockManagementDraft copyAndUpdateStockManagementDraft(UUID id, String signature) {
     StockManagementDraft originalDraft = stockManagementDraftRepository.findOne(id);
     StockManagementDraft newDraft = new StockManagementDraft();
@@ -299,33 +303,28 @@ public class SiglusStockManagementDraftService {
   }
 
   @Transactional
-  public StockManagementInitialDraftDto createInitialDraft(
-      StockManagementInitialDraftDto initialDraftDto) {
+  public StockManagementInitialDraftDto createInitialDraft(StockManagementInitialDraftDto initialDraftDto) {
     operatePermissionService.checkPermission(initialDraftDto.getFacilityId());
-    log.info("create stock management initial draft");
     stockManagementDraftValidator.validateInitialDraft(initialDraftDto);
 
-    checkIfInitialDraftExists(
-        initialDraftDto.getProgramId(),
-        initialDraftDto.getFacilityId(),
+    checkIfInitialDraftExists(initialDraftDto.getProgramId(), initialDraftDto.getFacilityId(),
         initialDraftDto.getDraftType());
 
     StockManagementInitialDraft initialDraft = StockManagementInitialDraft
         .createInitialDraft(initialDraftDto);
 
-    StockManagementInitialDraft savedInitialDraft = stockManagementInitialDraftsRepository
-        .save(initialDraft);
-    StockManagementInitialDraftDto initialDraftDtoResponse = StockManagementInitialDraftDto
-        .from(savedInitialDraft);
-
-    if (initialDraftDto.getDraftType().equals(FieldConstants.ISSUE)) {
+    log.info("create stock management initial draft with facility id: {} and program id: {}",
+        initialDraft.getFacilityId(), initialDraft.getProgramId());
+    StockManagementInitialDraft savedInitialDraft = stockManagementInitialDraftsRepository.save(initialDraft);
+    StockManagementInitialDraftDto initialDraftDtoResponse = StockManagementInitialDraftDto.from(savedInitialDraft);
+    String draftType = initialDraftDto.getDraftType();
+    if (FieldConstants.ISSUE.equals(draftType) || FieldConstants.ISSUE_WITH_LOCATION.equals(draftType)) {
       String destinationName = findDestinationName(savedInitialDraft.getDestinationId(),
           savedInitialDraft.getFacilityId());
       initialDraftDtoResponse.setDestinationName(destinationName);
       return initialDraftDtoResponse;
-    } else if (initialDraftDto.getDraftType().equals(FieldConstants.RECEIVE)) {
-      String sourceName = findSourceName(savedInitialDraft.getSourceId(),
-          savedInitialDraft.getFacilityId());
+    } else if (FieldConstants.RECEIVE.equals(draftType) || FieldConstants.RECEIVE_WITH_LOCATION.equals(draftType)) {
+      String sourceName = findSourceName(savedInitialDraft.getSourceId(), savedInitialDraft.getFacilityId());
       initialDraftDtoResponse.setSourceName(sourceName);
       return initialDraftDtoResponse;
     }
@@ -339,26 +338,21 @@ public class SiglusStockManagementDraftService {
     draftValidator.validateProgramId(programId);
     draftValidator.validateFacilityId(facilityId);
     draftValidator.validateDraftType(draftType);
-    boolean canMergeOrDeleteSubDrafts = authenticationHelper
-        .isTheCurrentUserCanMergeOrDeleteSubDrafts();
+    boolean canMergeOrDeleteSubDrafts = authenticationHelper.isTheCurrentUserCanMergeOrDeleteSubDrafts();
     List<StockManagementInitialDraft> initialDrafts = stockManagementInitialDraftsRepository
         .findByProgramIdAndFacilityIdAndDraftType(programId, facilityId, draftType);
     StockManagementInitialDraft initialDraft = initialDrafts.stream().findFirst().orElse(null);
     if (initialDraft != null) {
-      StockManagementInitialDraftDto stockManagementInitialDraftDto = StockManagementInitialDraftDto
-          .from(initialDraft);
-      if (draftType.equals(FieldConstants.ISSUE)) {
+      StockManagementInitialDraftDto stockManagementInitialDraftDto = StockManagementInitialDraftDto.from(initialDraft);
+      if (draftType.equals(FieldConstants.ISSUE) || draftType.equals(FieldConstants.ISSUE_WITH_LOCATION)) {
         String destinationName = findDestinationName(initialDraft.getDestinationId(), facilityId);
         stockManagementInitialDraftDto.setDestinationName(destinationName);
-        stockManagementInitialDraftDto.setCanMergeOrDeleteSubDrafts(canMergeOrDeleteSubDrafts);
-        return stockManagementInitialDraftDto;
-      } else if (draftType.equals(FieldConstants.RECEIVE)) {
-        String sourceName = findSourceName(initialDraft.getSourceId(),
-            initialDraft.getFacilityId());
+      } else if (draftType.equals(FieldConstants.RECEIVE) || draftType.equals(FieldConstants.RECEIVE_WITH_LOCATION)) {
+        String sourceName = findSourceName(initialDraft.getSourceId(), initialDraft.getFacilityId());
         stockManagementInitialDraftDto.setSourceName(sourceName);
-        stockManagementInitialDraftDto.setCanMergeOrDeleteSubDrafts(canMergeOrDeleteSubDrafts);
-        return stockManagementInitialDraftDto;
       }
+      stockManagementInitialDraftDto.setCanMergeOrDeleteSubDrafts(canMergeOrDeleteSubDrafts);
+      return stockManagementInitialDraftDto;
     }
     return new StockManagementInitialDraftDto();
   }
@@ -380,8 +374,8 @@ public class SiglusStockManagementDraftService {
         .findByProgramIdAndFacilityIdAndDraftType(programId, facilityId, draftType);
     if (!initialDrafts.isEmpty()) {
       throw new BusinessDataException(
-          new Message(ERROR_STOCK_MANAGEMENT_INITIAL_DRAFT_EXISTS, programId, facilityId,
-              draftType), "same initial draft exists");
+          new Message(ERROR_STOCK_MANAGEMENT_INITIAL_DRAFT_EXISTS, programId, facilityId, draftType),
+          "same initial draft exists");
     }
   }
 
@@ -416,6 +410,27 @@ public class SiglusStockManagementDraftService {
     currentDraft.setLineItems(Collections.emptyList());
     StockManagementDraft savedDraft = stockManagementDraftRepository.save(currentDraft);
     return StockManagementDraftDto.from(savedDraft);
+  }
+
+  @Transactional
+  public StockManagementDraftWithLocationDto updateStatusAfterSubmitWithLocation(
+      StockManagementDraftWithLocationDto subDraftDto) {
+    StockManagementDraft subDraft = getAndValidateStockManagementDraft(subDraftDto.getId());
+    conflictOrderableInSubDraftsService.checkConflictOrderableAndLotInSubDraft(subDraftDto);
+    draftValidator.validateSubDraftStatus(subDraft);
+    conflictOrderableInSubDraftsService.checkConflictOrderableBetweenSubDrafts(subDraftDto);
+    subDraft.setStatus(PhysicalInventorySubDraftEnum.SUBMITTED);
+    subDraft.setOperator(authenticationHelper.getCurrentUser().getUsername());
+    subDraft.setSignature(subDraftDto.getSignature());
+    List<StockManagementDraftLineItem> draftLineItems = subDraftDto.getLineItems().stream()
+        .map(lineItemDto -> StockManagementDraftLineItem.from(lineItemDto, subDraft))
+        .collect(toList());
+    StockManagementDraft submitDraft = new StockManagementDraft();
+    BeanUtils.copyProperties(subDraft, submitDraft);
+    submitDraft.setLineItems(draftLineItems);
+
+    StockManagementDraft updatedDraft = stockManagementDraftRepository.save(submitDraft);
+    return StockManagementDraftWithLocationDto.from(updatedDraft);
   }
 
   @Transactional
@@ -459,6 +474,27 @@ public class SiglusStockManagementDraftService {
         "subDrafts not all submitted");
   }
 
+  public List<MergedLineItemWithLocationDto> mergeSubDraftsWithLocation(UUID initialDraftId) {
+    draftValidator.validateInitialDraftId(initialDraftId);
+    List<StockManagementDraft> subDrafts = stockManagementDraftRepository
+        .findByInitialDraftId(initialDraftId);
+
+    if (subDrafts.isEmpty()) {
+      throw new BusinessDataException(new Message(ERROR_STOCK_MANAGEMENT_SUB_DRAFT_EMPTY),
+          "subDrafts empty");
+    }
+    boolean isAllSubmitted = subDrafts.stream()
+        .allMatch(subDraft -> subDraft.getStatus().equals(PhysicalInventorySubDraftEnum.SUBMITTED));
+    if (isAllSubmitted) {
+      List<MergedLineItemWithLocationDto> mergedLineItemWithLocationDtos =
+          fillingMergedLineItemsFieldsWithLocation(subDrafts);
+      mergedLineItemWithLocationDtos.forEach(this::fillingStockOnHandField);
+      return mergedLineItemWithLocationDtos;
+    }
+    throw new BusinessDataException(new Message(ERROR_STOCK_MANAGEMENT_SUB_DRAFT_NOT_ALL_SUBMITTED),
+        "subDrafts not all submitted");
+  }
+
   private StockManagementDraft getAndValidateStockManagementDraft(UUID id) {
     StockManagementDraft subDraft = stockManagementDraftRepository.findOne(id);
     draftValidator.validateSubDraft(subDraft);
@@ -491,6 +527,28 @@ public class SiglusStockManagementDraftService {
     return mergedLineItemDtos;
   }
 
+  private List<MergedLineItemWithLocationDto> fillingMergedLineItemsFieldsWithLocation(
+      List<StockManagementDraft> subDrafts) {
+    List<MergedLineItemWithLocationDto> mergedLineItemWithLocationDtos = new ArrayList<>();
+    subDrafts.forEach(subDraft -> {
+      List<MergedLineItemWithLocationDto> subDraftLineItemDto = subDraft.getLineItems().stream()
+          .map(lineItem -> MergedLineItemWithLocationDto.builder().subDraftId(subDraft.getId())
+              .productName(lineItem.getProductName())
+              .productCode(lineItem.getProductCode())
+              .expirationDate(lineItem.getExpirationDate())
+              .lotId(lineItem.getLotId())
+              .orderableId(lineItem.getOrderableId())
+              .occurredDate(lineItem.getOccurredDate())
+              .quantity(lineItem.getQuantity())
+              .lotCode(lineItem.getLotCode())
+              .locationCode(lineItem.getLocationCode())
+              .area(lineItem.getArea())
+              .build()).collect(toList());
+      mergedLineItemWithLocationDtos.addAll(subDraftLineItemDto);
+    });
+    return mergedLineItemWithLocationDtos;
+  }
+
   @Transactional
   public void deleteInitialDraft(UUID initialDraftId) {
     draftValidator.validateInitialDraftId(initialDraftId);
@@ -498,5 +556,17 @@ public class SiglusStockManagementDraftService {
     stockManagementDraftRepository.deleteAllByInitialDraftId(initialDraftId);
     log.info("delete initial draft with id: {}", initialDraftId);
     stockManagementInitialDraftsRepository.delete(initialDraftId);
+  }
+
+  public StockManagementDraftWithLocationDto createEmptyStockManagementDraftWithLocation(
+      StockManagementDraftWithLocationDto dto) {
+    StockManagementDraftDto draftDto = StockManagementDraftDto.from(dto);
+    StockManagementDraftDto subDraftDto = createNewSubDraft(draftDto);
+    return StockManagementDraftWithLocationDto.from(subDraftDto);
+  }
+
+  public List<StockManagementDraftWithLocationDto> findSubDraftsWithLocation(UUID initialDraftId) {
+    List<StockManagementDraft> sortedDrafts = getStockManagementDrafts(initialDraftId);
+    return StockManagementDraftWithLocationDto.from(sortedDrafts);
   }
 }

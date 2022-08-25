@@ -15,20 +15,18 @@
 
 package org.siglus.siglusapi.exception;
 
+import java.io.Serializable;
 import org.siglus.siglusapi.dto.Message;
 
 public class BusinessDataException extends BaseMessageException {
 
   private static final long serialVersionUID = 6658021639152388506L;
 
-  public BusinessDataException(Message message, Object businessErrorExtraData) {
-    super(message);
-    super.setBusinessError(true);
-    super.setBusinessErrorExtraData(businessErrorExtraData);
+  public BusinessDataException(Message message, Serializable businessErrorExtraData) {
+    super(message, true, businessErrorExtraData);
   }
 
   public BusinessDataException(Message message) {
-    super(message);
-    super.setBusinessError(true);
+    super(message, true);
   }
 }

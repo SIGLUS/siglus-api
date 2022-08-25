@@ -359,7 +359,7 @@ public class SiglusStockEventsServiceTest {
 
     stockEventForMultiUserDto.setSubDrafts(Collections.emptyList());
 
-    siglusStockEventsService.processStockEventForMultiUser(stockEventForMultiUserDto);
+    siglusStockEventsService.processStockEventForMultiUser(stockEventForMultiUserDto, false);
   }
 
   @Test
@@ -376,7 +376,7 @@ public class SiglusStockEventsServiceTest {
     when(stockManagementDraftRepository.findOne(subDraftId)).thenReturn(subDraft);
     when(stockManagementDraftRepository.countByInitialDraftId(initialDraftId)).thenReturn(2);
 
-    siglusStockEventsService.processStockEventForMultiUser(stockEventForMultiUserDto);
+    siglusStockEventsService.processStockEventForMultiUser(stockEventForMultiUserDto, false);
   }
 
   @Test

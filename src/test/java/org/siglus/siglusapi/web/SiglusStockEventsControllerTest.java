@@ -88,7 +88,7 @@ public class SiglusStockEventsControllerTest {
 
     controller.createStockEventForMultiUser(stockEventForMultiUserDto);
 
-    verify(service).processStockEventForMultiUser(stockEventForMultiUserDto);
+    verify(service).processStockEventForMultiUser(stockEventForMultiUserDto, false);
   }
 
 }

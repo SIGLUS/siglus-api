@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.exception;
 
+import java.io.Serializable;
 import org.siglus.siglusapi.dto.Message;
 
 /**
@@ -24,9 +25,9 @@ public abstract class BaseMessageException extends RuntimeException {
 
   private final Message message;
 
-  private boolean isBusinessError = false;
+  private final boolean isBusinessError;
 
-  private Object businessErrorExtraData;
+  private final Serializable businessErrorExtraData;
 
   protected BaseMessageException(String messageKey) {
     this(new Message(messageKey));
@@ -34,11 +35,27 @@ public abstract class BaseMessageException extends RuntimeException {
 
   protected BaseMessageException(Message message) {
     this.message = message;
+    this.isBusinessError = false;
+    this.businessErrorExtraData = null;
   }
 
   protected BaseMessageException(Message message, Throwable cause) {
     super(cause);
     this.message = message;
+    this.isBusinessError = false;
+    this.businessErrorExtraData = null;
+  }
+
+  protected BaseMessageException(Message message, boolean isBusinessError, Serializable businessErrorExtraData) {
+    this.message = message;
+    this.isBusinessError = isBusinessError;
+    this.businessErrorExtraData = businessErrorExtraData;
+  }
+
+  protected BaseMessageException(Message message, boolean isBusinessError) {
+    this.message = message;
+    this.isBusinessError = isBusinessError;
+    this.businessErrorExtraData = null;
   }
 
   public Message asMessage() {
@@ -58,15 +75,7 @@ public abstract class BaseMessageException extends RuntimeException {
     return isBusinessError;
   }
 
-  protected void setBusinessError(boolean businessError) {
-    isBusinessError = businessError;
-  }
-
   public Object getBusinessErrorExtraData() {
     return businessErrorExtraData;
-  }
-
-  protected void setBusinessErrorExtraData(Object businessErrorExtraData) {
-    this.businessErrorExtraData = businessErrorExtraData;
   }
 }

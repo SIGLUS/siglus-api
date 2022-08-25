@@ -20,10 +20,10 @@ import static org.springframework.http.HttpStatus.OK;
 import java.util.List;
 import java.util.UUID;
 import org.openlmis.stockmanagement.dto.StockCardDto;
+import org.siglus.siglusapi.dto.ProductMovementDto;
 import org.siglus.siglusapi.dto.StockCardSummaryWithLocationDto;
 import org.siglus.siglusapi.service.SiglusStockCardService;
 import org.siglus.siglusapi.service.SiglusStockCardSummariesService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
@@ -38,11 +38,16 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/siglusapi/stockCardSummariesWithLocation")
 public class SiglusStockCardSummariesWithLocationController {
 
-  @Autowired
-  private SiglusStockCardSummariesService siglusStockCardSummariesService;
+  private final SiglusStockCardSummariesService siglusStockCardSummariesService;
 
-  @Autowired
-  private SiglusStockCardService siglusStockCardService;
+  private final SiglusStockCardService siglusStockCardService;
+
+
+  public SiglusStockCardSummariesWithLocationController(SiglusStockCardSummariesService siglusStockCardSummariesService,
+      SiglusStockCardService siglusStockCardService) {
+    this.siglusStockCardSummariesService = siglusStockCardSummariesService;
+    this.siglusStockCardService = siglusStockCardService;
+  }
 
   @GetMapping("/integration/summary")
   public List<StockCardSummaryWithLocationDto> getStockCardSummaryDtos(
@@ -60,5 +65,16 @@ public class SiglusStockCardSummariesWithLocationController {
     StockCardDto stockCardWithLocationById = siglusStockCardService.findStockCardWithLocationById(
         stockCardId);
     return new ResponseEntity<>(stockCardWithLocationById, OK);
+  }
+
+  @GetMapping("/byProduct/{orderableId}")
+  public ProductMovementDto getProductMovement(@PathVariable UUID orderableId, @RequestParam UUID facilityId) {
+    return siglusStockCardService.getMovementByProduct(facilityId, orderableId);
+  }
+
+  @GetMapping("/byLocation")
+  public void getLocationMovement(@RequestParam UUID facilityId,
+      @RequestParam String locationCode){
+
   }
 }

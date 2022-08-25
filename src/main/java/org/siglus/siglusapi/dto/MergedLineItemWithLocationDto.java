@@ -15,23 +15,19 @@
 
 package org.siglus.siglusapi.dto;
 
-import java.util.List;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
-
+@EqualsAndHashCode(callSuper = true)
+@Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Builder
-@Data
-public class ProductMovementDto {
-  private String facilityName;
-  private String productCode;
-  private String productName;
-  private String program;
-  private List<StockMovementResDto> lineItems;
-  private Integer stockOnHand;
-  private String displayUnit;
+@SuperBuilder
+public class MergedLineItemWithLocationDto extends MergedLineItemDto {
+
+  private String locationCode;
+  private String area;
 }

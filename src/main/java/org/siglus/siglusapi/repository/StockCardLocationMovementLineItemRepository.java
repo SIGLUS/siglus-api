@@ -18,6 +18,7 @@ package org.siglus.siglusapi.repository;
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import org.siglus.siglusapi.domain.StockCardLocationMovementLineItem;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -28,6 +29,8 @@ public interface StockCardLocationMovementLineItemRepository extends
     JpaRepository<StockCardLocationMovementLineItem, UUID> {
 
   List<StockCardLocationMovementLineItem> findByStockCardId(UUID stockCardId);
+
+  List<StockCardLocationMovementLineItem> findAllByStockCardIdIn(Set<UUID> stockCardIds);
 
   @Query(value = "select * from siglusintegration.stock_card_location_movement_line_items "
       + "         where (stockcardid, occurreddate) in ( "

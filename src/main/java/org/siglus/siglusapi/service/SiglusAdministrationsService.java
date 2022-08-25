@@ -15,7 +15,7 @@
 
 package org.siglus.siglusapi.service;
 
-import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.EasyExcelFactory;
 import com.alibaba.excel.support.ExcelTypeEnum;
 
 import com.google.common.collect.Lists;
@@ -182,14 +182,13 @@ public class SiglusAdministrationsService {
       outputStream.write(0xbb);
       outputStream.write(0xbf);
       outputStream.flush();
-      EasyExcel
+      EasyExcelFactory
           .write(response.getOutputStream())
           .head(getHeadRow())
           .autoCloseStream(true)
           .excelType(ExcelTypeEnum.CSV)
           .sheet(0)
           .doWrite(CollectionUtils.isEmpty(locationList) ? Lists.newArrayList() : getDataRows(locationList));
-
     } catch (IOException ioException) {
       log.error("Error: {} occurred while exporting to csv", ioException.getMessage());
       throw new ValidationMessageException(ioException, new Message(CsvUploadMessageKeys.ERROR_IO));
@@ -343,11 +342,16 @@ public class SiglusAdministrationsService {
   }
 
   private List<CalculatedStockOnHandByLocation> findStockCardIdsHasStockOnHandOnLocation(List<UUID> stockCardIds) {
-    return calculatedStocksOnHandLocationsRepository.findLatestLocationSohByStockCardIds(stockCardIds);
+    return calculatedStocksOnHandLocationsRepository.findLatestLocationSohByStockCardIds(stockCardIds)
+        .stream().filter(calculatedByLocation -> calculatedByLocation.getStockOnHand() > 0
+            && !LocationConstants.VIRTUAL_LOCATION_CODE.equals(calculatedByLocation.getLocationCode()))
+        .collect(Collectors.toList());
   }
 
   private List<CalculatedStockOnHand> findStockCardIdsHasStockOnHandOnLot(List<UUID> stockCardIds) {
-    return calculatedStockOnHandRepository.findPreviousStockOnHands(stockCardIds, LocalDate.now());
+    return calculatedStockOnHandRepository.findPreviousStockOnHands(stockCardIds, LocalDate.now())
+        .stream().filter(calculatedStockOnHand -> calculatedStockOnHand.getStockOnHand() > 0)
+        .collect(Collectors.toList());
   }
 
   private void assignNewVirtualLocations(List<CalculatedStockOnHand> calculatedStockOnHandList, UUID userId) {
