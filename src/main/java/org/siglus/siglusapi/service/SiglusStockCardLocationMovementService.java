@@ -56,6 +56,9 @@ public class SiglusStockCardLocationMovementService {
   @Autowired
   private SiglusStockCardRepository stockCardRepository;
 
+  @Autowired
+  private CalculatedStocksOnHandByLocationService calculatedStocksOnHandByLocationService;
+
   @Transactional
   public void createMovementLineItems(StockCardLocationMovementDto movementDto) {
     validateMovementLineItems(movementDto);
@@ -63,6 +66,7 @@ public class SiglusStockCardLocationMovementService {
     List<StockCardLocationMovementLineItem> movementLineItems = convertMovementDtoToMovementItems(movementDto);
     movementLineItemRepository.save(movementLineItems);
     deleteMovementDraft(movementDto);
+    calculatedStocksOnHandByLocationService.calculateStockOnHandByLocationForMovement(movementLineItems);
   }
 
   private void deleteMovementDraft(StockCardLocationMovementDto movementDto) {

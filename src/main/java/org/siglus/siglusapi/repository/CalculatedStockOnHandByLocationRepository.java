@@ -27,6 +27,7 @@ import javax.persistence.criteria.Predicate;
 import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
 import org.siglus.siglusapi.domain.CalculatedStockOnHandByLocation;
 import org.siglus.siglusapi.domain.StockCardLineItemExtension;
+import org.siglus.siglusapi.domain.StockCardLocationMovementLineItem;
 import org.siglus.siglusapi.dto.LotLocationSohDto;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -90,6 +91,22 @@ public interface CalculatedStockOnHandByLocationRepository extends JpaRepository
       lineItems.forEach(lineItem -> predicates.add(cb.and(
               cb.equal(root.get("stockCardId"), lineItem.getStockCard().getId()),
               cb.equal(root.get("locationCode"), lineItemIdToExtension.get(lineItem.getId()).getLocationCode())
+      )));
+      Predicate byStockCardIdAndLocationCode = predicates.stream().reduce(cb.conjunction(), cb::or);
+      return cb.and(byFutureDate, byStockCardIdAndLocationCode);
+    });
+  }
+
+  default List<CalculatedStockOnHandByLocation> getFollowingStockOnHands(
+          List<StockCardLocationMovementLineItem> movements,
+          Date occurredDate) {
+    return findAll((root, query, cb) -> {
+      Predicate byFutureDate = cb.greaterThanOrEqualTo(root.get("occurredDate"), occurredDate);
+      List<Predicate> predicates = new ArrayList<>();
+      movements.forEach(movement -> predicates.add(cb.and(
+              cb.equal(root.get("stockCardId"), movement.getStockCardId()),
+              cb.or(cb.equal(root.get("locationCode"), movement.getSrcLocationCode()),
+                    cb.equal(root.get("locationCode"), movement.getDestLocationCode()))
       )));
       Predicate byStockCardIdAndLocationCode = predicates.stream().reduce(cb.conjunction(), cb::or);
       return cb.and(byFutureDate, byStockCardIdAndLocationCode);

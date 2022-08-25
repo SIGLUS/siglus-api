@@ -16,9 +16,12 @@
 package org.siglus.siglusapi.service;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.google.common.collect.ImmutableSet;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
@@ -30,8 +33,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
@@ -68,6 +74,9 @@ public class CalculatedStockOnHandByLocationServiceTest {
   @Mock
   private OrderableReferenceDataService orderableService;
 
+  @Captor
+  private ArgumentCaptor<List<CalculatedStockOnHandByLocation>> sohByLocationArgumentCaptor;
+
   private final UUID stockCardId = UUID.randomUUID();
   private final UUID lineItemId1 = UUID.randomUUID();
   private final UUID lineItemId2 = UUID.randomUUID();
@@ -75,6 +84,12 @@ public class CalculatedStockOnHandByLocationServiceTest {
   private final UUID lineItemId4 = UUID.randomUUID();
   private final String locationCode = "test-location";
   private final Integer previousSoh = 100;
+
+  private final String locationCode1 = "test-location1";
+
+  private final String locationCode2 = "test-location2";
+
+  private final String locationCode3 = "test-location3";
 
   // test case, physical inventory 100, issue 30, receive 10
   @Test
@@ -143,9 +158,80 @@ public class CalculatedStockOnHandByLocationServiceTest {
     assertEquals(LocalDate.now().minusDays(1L), toDate(toSaveList.get(4).getOccurredDate()));
   }
 
+  // test case, location1 -> location2 30, location2 -> location3 10
+  @Test
+  public void shouldCalculateSohByLocationWhenSubmitLocationMovement() {
+    // given
+    when(calculatedStockOnHandByLocationRepository.findLatestLocationSohByStockCardIds(ImmutableSet.of(stockCardId)))
+            .thenReturn(buildPreviousSohByLocation());
+
+    // when
+    calculatedStocksOnHandByLocationService.calculateStockOnHandByLocationForMovement(buildMovementList());
+
+    // then
+    verify(calculatedStockOnHandByLocationRepository).save(sohByLocationArgumentCaptor.capture());
+    List<CalculatedStockOnHandByLocation> sohToSave = sohByLocationArgumentCaptor.getValue();
+    assertEquals(3, sohToSave.size());
+
+    CalculatedStockOnHandByLocation sohLocation1 = sohToSave.stream()
+            .filter(s -> locationCode1.equals(s.getLocationCode())).findFirst().orElse(null);
+    assertNotNull(sohLocation1);
+    assertEquals(70, (int) sohLocation1.getStockOnHand());
+
+    CalculatedStockOnHandByLocation sohLocation2 = sohToSave.stream()
+            .filter(s -> locationCode2.equals(s.getLocationCode())).findFirst().orElse(null);
+    assertNotNull(sohLocation2);
+    assertEquals(120, (int) sohLocation2.getStockOnHand());
+
+    CalculatedStockOnHandByLocation sohLocation3 = sohToSave.stream()
+            .filter(s -> locationCode3.equals(s.getLocationCode())).findFirst().orElse(null);
+    assertNotNull(sohLocation3);
+    assertEquals(110, (int) sohLocation3.getStockOnHand());
+  }
+
+  private List<CalculatedStockOnHandByLocation> buildPreviousSohByLocation() {
+    CalculatedStockOnHandByLocation soh1 = CalculatedStockOnHandByLocation.builder()
+            .stockCardId(stockCardId)
+            .locationCode(locationCode1)
+            .stockOnHand(previousSoh)
+            .build();
+    CalculatedStockOnHandByLocation soh2 = CalculatedStockOnHandByLocation.builder()
+            .stockCardId(stockCardId)
+            .locationCode(locationCode2)
+            .stockOnHand(previousSoh)
+            .build();
+    CalculatedStockOnHandByLocation soh3 = CalculatedStockOnHandByLocation.builder()
+            .stockCardId(stockCardId)
+            .locationCode(locationCode3)
+            .stockOnHand(previousSoh)
+            .build();
+
+    return Arrays.asList(soh1, soh2, soh3);
+  }
+
+  private List<StockCardLocationMovementLineItem> buildMovementList() {
+    StockCardLocationMovementLineItem movement1 = StockCardLocationMovementLineItem.builder()
+            .stockCardId(stockCardId)
+            .srcLocationCode(locationCode1)
+            .destLocationCode(locationCode2)
+            .quantity(30)
+            .occurredDate(LocalDate.now())
+            .build();
+    StockCardLocationMovementLineItem movement2 = StockCardLocationMovementLineItem.builder()
+            .stockCardId(stockCardId)
+            .srcLocationCode(locationCode2)
+            .destLocationCode(locationCode3)
+            .quantity(10)
+            .occurredDate(LocalDate.now())
+            .build();
+
+    return Arrays.asList(movement2, movement1);
+  }
+
   private Map<UUID, List<StockCardLocationMovementLineItem>> buildMovementMap() {
     StockCardLocationMovementLineItem movement1 = StockCardLocationMovementLineItem.builder()
             .stockCardId(stockCardId)
+            .srcLocationCode("")
             .destLocationCode(locationCode)
             .quantity(40)
             .occurredDate(LocalDate.now().minusDays(4L))
@@ -154,6 +240,7 @@ public class CalculatedStockOnHandByLocationServiceTest {
     StockCardLocationMovementLineItem movement2 = StockCardLocationMovementLineItem.builder()
             .stockCardId(stockCardId)
             .srcLocationCode(locationCode)
+            .destLocationCode("")
             .quantity(20)
             .occurredDate(LocalDate.now().minusDays(2L))
             .build();
