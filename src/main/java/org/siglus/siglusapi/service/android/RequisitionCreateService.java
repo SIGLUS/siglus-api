@@ -100,16 +100,15 @@ import org.openlmis.requisition.dto.SupervisoryNodeDto;
 import org.openlmis.requisition.dto.VersionObjectReferenceDto;
 import org.openlmis.requisition.errorhandling.ValidationResult;
 import org.openlmis.requisition.repository.RequisitionRepository;
+import org.openlmis.requisition.repository.RequisitionTemplateRepository;
 import org.openlmis.requisition.service.PermissionService;
 import org.openlmis.requisition.service.RequisitionService;
-import org.openlmis.requisition.service.RequisitionTemplateService;
 import org.openlmis.requisition.service.referencedata.ApproveProductsAggregator;
 import org.openlmis.requisition.service.referencedata.SupervisoryNodeReferenceDataService;
 import org.siglus.common.domain.RequisitionTemplateExtension;
 import org.siglus.common.dto.ProgramAdditionalOrderableDto;
 import org.siglus.common.dto.RequisitionTemplateExtensionDto;
 import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
-import org.siglus.siglusapi.config.AndroidTemplateConfigProperties;
 import org.siglus.siglusapi.constant.ProgramConstants;
 import org.siglus.siglusapi.constant.UsageSectionConstants.UsageInformationLineItems;
 import org.siglus.siglusapi.domain.RegimenLineItem;
@@ -149,7 +148,6 @@ import org.siglus.siglusapi.exception.InvalidProgramCodeException;
 import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.exception.UnsupportedProductsException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
-import org.siglus.siglusapi.localmachine.EventPublisher;
 import org.siglus.siglusapi.repository.ProcessingPeriodRepository;
 import org.siglus.siglusapi.repository.RegimenRepository;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
@@ -161,6 +159,7 @@ import org.siglus.siglusapi.service.SiglusProgramService;
 import org.siglus.siglusapi.service.SiglusRequisitionExtensionService;
 import org.siglus.siglusapi.service.SiglusUsageReportService;
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
+import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.util.SupportedProgramsHelper;
 import org.slf4j.profiler.Profiler;
@@ -175,10 +174,8 @@ import org.springframework.validation.annotation.Validated;
 @SuppressWarnings("PMD.TooManyMethods")
 public class RequisitionCreateService {
 
-  private final AndroidTemplateConfigProperties androidTemplateConfigProperties;
   private final SiglusAuthenticationHelper authHelper;
   private final RequisitionService requisitionService;
-  private final RequisitionTemplateService requisitionTemplateService;
   private final SiglusProgramService siglusProgramService;
   private final SiglusOrderableService siglusOrderableService;
   private final SiglusRequisitionExtensionService siglusRequisitionExtensionService;
@@ -195,7 +192,8 @@ public class RequisitionCreateService {
   private final SupportedProgramsHelper supportedProgramsHelper;
   private final SiglusApprovedProductReferenceDataService approvedProductDataService;
   private final SiglusProgramAdditionalOrderableService additionalOrderableService;
-  private final EventPublisher eventPublisher;
+  private final SiglusFacilityReferenceDataService siglusFacilityReferenceDataService;
+  private final RequisitionTemplateRepository requisitionTemplateRepository;
 
   @Transactional
   @Validated(PerformanceSequence.class)
@@ -238,7 +236,7 @@ public class RequisitionCreateService {
     newReqProfiler.start("build req");
     Requisition newRequisition = RequisitionBuilder.newRequisition(homeFacilityId, programId, request.getEmergency());
     newReqProfiler.start("get template");
-    newRequisition.setTemplate(getRequisitionTemplate(programCode));
+    newRequisition.setTemplate(getRequisitionTemplate(programId, homeFacilityId));
     newRequisition.setStatus(RequisitionStatus.INITIATED);
     newReqProfiler.start("get period");
     newRequisition.setProcessingPeriodId(getPeriodId(request));
@@ -386,13 +384,13 @@ public class RequisitionCreateService {
         .orElseThrow(EntityNotFoundException::new);
   }
 
-  private RequisitionTemplate getRequisitionTemplate(String programCode) {
-    RequisitionTemplate requisitionTemplate = requisitionTemplateService
-        .findTemplateById(androidTemplateConfigProperties.findAndroidTemplateId(programCode));
+  private RequisitionTemplate getRequisitionTemplate(UUID programId, UUID facilityId) {
+    UUID facilityTypeId = siglusFacilityReferenceDataService.findOne(facilityId).getType().getId();
+    RequisitionTemplate template = requisitionTemplateRepository.findTemplate(programId, facilityTypeId);
     RequisitionTemplateExtension templateExtension = requisitionTemplateExtensionRepository
-        .findByRequisitionTemplateId(requisitionTemplate.getId());
-    requisitionTemplate.setTemplateExtension(templateExtension);
-    return requisitionTemplate;
+        .findByRequisitionTemplateId(template.getId());
+    template.setTemplateExtension(templateExtension);
+    return template;
   }
 
   private void buildRequisitionExtension(Requisition requisition, RequisitionCreateRequest request, Profiler profiler) {

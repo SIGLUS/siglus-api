@@ -17,7 +17,6 @@ package org.siglus.siglusapi.dto;
 
 import java.util.List;
 import java.util.UUID;
-
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;

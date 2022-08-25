@@ -46,7 +46,6 @@ import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.dto.RequisitionLineItemV2Dto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.dto.VersionObjectReferenceDto;
-import org.siglus.siglusapi.config.AndroidTemplateConfigProperties;
 import org.siglus.siglusapi.constant.UsageSectionConstants.TestConsumptionLineItems;
 import org.siglus.siglusapi.domain.ConsultationNumberLineItem;
 import org.siglus.siglusapi.domain.PatientLineItem;
@@ -128,9 +127,6 @@ public class RequisitionSearchServiceTest {
   @Mock
   private PatientLineItemMapper patientLineItemMapper;
 
-  @Mock
-  private AndroidTemplateConfigProperties androidTemplateConfigProperties;
-
   private final UUID programId = UUID.randomUUID();
   private final UUID programIdMmia = UUID.randomUUID();
   private final UUID programIdMalaria = UUID.randomUUID();
@@ -160,13 +156,6 @@ public class RequisitionSearchServiceTest {
   public void prepare() {
     ConsultationNumberLineItemMapper consultationNumberLineItemMapper = new ConsultationNumberLineItemMapper();
     ReflectionTestUtils.setField(service, "consultationNumberLineItemMapper", consultationNumberLineItemMapper);
-    Set<UUID> androidTemplateIds = new HashSet<>();
-    androidTemplateIds.add(templateId);
-    androidTemplateIds.add(mmiaTemplateId);
-    androidTemplateIds.add(malariaTemplateId);
-    androidTemplateIds.add(rapidtestTemplateId);
-    when(androidTemplateConfigProperties.getAndroidTemplateIds()).thenReturn(androidTemplateIds);
-    when(androidTemplateConfigProperties.findAndroidTemplateId(any())).thenReturn(templateId);
     createGetRequisitionData();
     createGetMmiaRequisitionData();
     createGetMalariaRequisitionData();

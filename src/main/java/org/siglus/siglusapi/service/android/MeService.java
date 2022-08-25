@@ -63,7 +63,6 @@ import org.openlmis.stockmanagement.domain.reason.StockCardLineItemReason;
 import org.openlmis.stockmanagement.dto.ValidReasonAssignmentDto;
 import org.siglus.common.domain.ProgramAdditionalOrderable;
 import org.siglus.common.repository.ProgramAdditionalOrderableRepository;
-import org.siglus.siglusapi.config.AndroidTemplateConfigProperties;
 import org.siglus.siglusapi.constant.PaginationConstants;
 import org.siglus.siglusapi.constant.PodConstants;
 import org.siglus.siglusapi.domain.AppInfo;
@@ -170,7 +169,6 @@ public class MeService {
   private final SiglusRequisitionRepository requisitionRepository;
   private final RequisitionCreateService requisitionCreateService;
   private final RequisitionSearchService requisitionSearchService;
-  private final AndroidTemplateConfigProperties androidTemplateConfigProperties;
   private final SiglusProofOfDeliveryRepository podRepo;
   private final SiglusOrderService orderService;
   private final PodMapper podMapper;
@@ -564,9 +562,7 @@ public class MeService {
   }
 
   private List<ReportTypeResponse> findSupportReportTypes(UUID facilityId, List<SupportedProgramDto> programs) {
-    List<Requisition> requisitions = requisitionRepository
-        .findLatestRequisitionsByFacilityIdAndAndroidTemplateId(facilityId,
-            androidTemplateConfigProperties.getAndroidTemplateIds());
+    List<Requisition> requisitions = requisitionRepository.findLatestRequisitionsByFacilityId(facilityId);
     Map<UUID, String> programIdToCode = programs.stream()
         .collect(toMap(SupportedProgramDto::getId, SupportedProgramDto::getCode));
     Map<String, Requisition> programCodeToRequisition = requisitions.stream()

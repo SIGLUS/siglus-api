@@ -76,11 +76,9 @@ public interface SiglusRequisitionRepository extends JpaRepository<Requisition, 
 
   @Query(value = "select DISTINCT ON(t.programid) t.* from requisition.requisitions t "
       + "where t.facilityid = :facilityId "
-      + "and t.templateid in :androidTemplateIds "
       + "and t.emergency = false "
       + "order by t.programid,t.createddate desc ", nativeQuery = true)
-  List<Requisition> findLatestRequisitionsByFacilityIdAndAndroidTemplateId(@Param("facilityId") UUID facilityId,
-      @Param("androidTemplateIds") Set<UUID> androidTemplateIds);
+  List<Requisition> findLatestRequisitionsByFacilityId(@Param("facilityId") UUID facilityId);
 
   @Query(value = "select CAST(id AS varchar) from requisition.requisitions r "
       + "where r.facilityid = :facilityId "

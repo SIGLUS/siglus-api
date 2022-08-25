@@ -34,11 +34,9 @@ import java.io.IOException;
 import java.lang.reflect.Method;
 import java.time.LocalDate;
 import java.time.YearMonth;
-import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 import javax.persistence.EntityNotFoundException;
 import javax.validation.ConstraintValidator;
@@ -61,7 +59,6 @@ import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
-import org.siglus.siglusapi.config.AndroidTemplateConfigProperties;
 import org.siglus.siglusapi.domain.SiglusReportType;
 import org.siglus.siglusapi.domain.SyncUpHash;
 import org.siglus.siglusapi.dto.UserDto;
@@ -98,8 +95,6 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
   private ProcessingPeriodRepository periodRepo;
   @Mock
   private ProgramReferenceDataService programDataService;
-  @Mock
-  private AndroidTemplateConfigProperties androidTemplateConfigProperties;
   @Mock
   private SyncUpHashRepository syncUpHashRepository;
   @Mock
@@ -177,27 +172,14 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
     when(req1.getProgramId()).thenReturn(program1Id);
     when(req1.getProcessingPeriodId()).thenReturn(period1Id);
     when(req1.getActualEndDate()).thenReturn(LocalDate.of(2021, 6, 20));
-    Set<UUID> androidTemplateIds = new HashSet<>();
-    androidTemplateIds.add(UUID.fromString("610a52a5-2217-4fb7-9e8e-90bba3051d4d"));
-    androidTemplateIds.add(UUID.fromString("873c25d6-e53b-11eb-8494-acde48001122"));
-    androidTemplateIds.add(UUID.fromString("3f2245ce-ee9f-11eb-ba79-acde48001122"));
-    androidTemplateIds.add(UUID.fromString("2c10856e-eead-11eb-9718-acde48001122"));
-    when(androidTemplateConfigProperties.getAndroidTemplateIds()).thenReturn(androidTemplateIds);
     // interfering item
     Requisition req2 = mock(Requisition.class);
-    when(requisitionRepo
-        .findLatestRequisitionsByFacilityIdAndAndroidTemplateId(facilityId,
-            androidTemplateConfigProperties.getAndroidTemplateIds()))
-        .thenReturn(asList(req1, req2));
-    when(requisitionRepo
-        .findLatestRequisitionsByFacilityIdAndAndroidTemplateId(newFacilityId,
-            androidTemplateConfigProperties.getAndroidTemplateIds()))
-        .thenReturn(emptyList());
+    when(requisitionRepo.findLatestRequisitionsByFacilityId(facilityId)).thenReturn(asList(req1, req2));
+    when(requisitionRepo.findLatestRequisitionsByFacilityId(newFacilityId)).thenReturn(emptyList());
     Requisition req3 = mock(Requisition.class);
     when(req3.getProgramId()).thenReturn(program1Id);
     when(req3.getActualEndDate()).thenReturn(LocalDate.of(2020, 8, 20));
-    when(requisitionRepo.findLatestRequisitionsByFacilityIdAndAndroidTemplateId(restartedFacilityId,
-        androidTemplateConfigProperties.getAndroidTemplateIds())).thenReturn(singletonList(req3));
+    when(requisitionRepo.findLatestRequisitionsByFacilityId(restartedFacilityId)).thenReturn(singletonList(req3));
     when(syncUpHashRepository.findOne(anyString())).thenReturn(null);
     when(requisitionRequestBackupRepository.findOneByHash(anyString())).thenReturn(null);
   }
@@ -578,7 +560,7 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
     @SuppressWarnings("unchecked")
     public <T extends ConstraintValidator<?, ?>> T getInstance(Class<T> key) {
       if (key == RequisitionValidStartDateValidator.class) {
-        return (T) new RequisitionValidStartDateValidator(androidTemplateConfigProperties, authHelper,
+        return (T) new RequisitionValidStartDateValidator(authHelper,
             programDataService, reportTypeRepo, requisitionRepo, periodRepo, syncUpHashRepository);
       } else if (key == RequisitionValidReStartDateValidator.class) {
         return (T) new RequisitionValidReStartDateValidator(authHelper, reportTypeRepo, syncUpHashRepository);

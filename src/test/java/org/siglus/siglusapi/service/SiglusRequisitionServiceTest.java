@@ -245,8 +245,7 @@ public class SiglusRequisitionServiceTest {
   private IdealStockAmountReferenceDataService idealStockAmountReferenceDataService;
 
   @Mock
-  private FacilityTypeApprovedProductReferenceDataService
-      facilityTypeApprovedProductReferenceDataService;
+  private FacilityTypeApprovedProductReferenceDataService facilityTypeApprovedProductReferenceDataService;
 
   @InjectMocks
   private SiglusRequisitionService siglusRequisitionService;

@@ -33,7 +33,6 @@ import org.openlmis.referencedata.domain.ProcessingPeriod;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
-import org.siglus.siglusapi.config.AndroidTemplateConfigProperties;
 import org.siglus.siglusapi.domain.SiglusReportType;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.dto.android.constraint.RequisitionValidStartDate;
@@ -49,7 +48,6 @@ import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 public class RequisitionValidStartDateValidator implements
     ConstraintValidator<RequisitionValidStartDate, RequisitionCreateRequest> {
 
-  private final AndroidTemplateConfigProperties androidTemplateConfigProperties;
   private final SiglusAuthenticationHelper authHelper;
   private final ProgramReferenceDataService programDataService;
   private final SiglusReportTypeRepository reportTypeRepository;
@@ -93,8 +91,7 @@ public class RequisitionValidStartDateValidator implements
       return false;
     }
     Requisition lastRequisition = requisitionRepository
-        .findLatestRequisitionsByFacilityIdAndAndroidTemplateId(homeFacilityId,
-            androidTemplateConfigProperties.getAndroidTemplateIds())
+        .findLatestRequisitionsByFacilityId(homeFacilityId)
         .stream()
         .filter(req -> programCode.equals(programDataService.findOne(req.getProgramId()).getCode()))
         .findFirst()

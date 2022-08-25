@@ -49,7 +49,6 @@ import org.openlmis.referencedata.web.csv.processor.FormatCommodityType;
 import org.openlmis.referencedata.web.csv.processor.FormatProcessingPeriod;
 import org.openlmis.referencedata.web.csv.processor.ParseCommodityType;
 import org.openlmis.referencedata.web.csv.processor.ParseProcessingPeriod;
-import org.siglus.siglusapi.config.AndroidTemplateConfigProperties;
 import org.siglus.siglusapi.config.CustomBeanNameGenerator;
 import org.siglus.siglusapi.i18n.ExposedMessageSourceImpl;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
@@ -135,18 +134,6 @@ public class Application {
 
   @Value("${redis.password}")
   private String redisPassword;
-
-  @Value("${android.via.templateId}")
-  private UUID androidViaTemplateId;
-
-  @Value("${android.mmia.templateId}")
-  private UUID androidMmiaTemplateId;
-
-  @Value("${android.malaria.templateId}")
-  private UUID androidMalariaTemplateId;
-
-  @Value("${android.rapidtest.templateId}")
-  private UUID androidRapidtestTemplateId;
 
   @Value("${referencedata.csv.separator}")
   private String separator;
@@ -296,12 +283,6 @@ public class Application {
     requestFactory.setConnectTimeout(60000);
     requestFactory.setReadTimeout(60000);
     return new RestTemplate(requestFactory);
-  }
-
-  @Bean
-  public AndroidTemplateConfigProperties androidTemplateConfig() {
-    return new AndroidTemplateConfigProperties(androidViaTemplateId, androidMmiaTemplateId, androidMalariaTemplateId,
-        androidRapidtestTemplateId);
   }
 
   // diff from messageSource() is in this method, the useCodeAsDefaultMessage is disabled
