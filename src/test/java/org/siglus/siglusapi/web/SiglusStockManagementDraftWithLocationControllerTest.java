@@ -83,10 +83,17 @@ public class SiglusStockManagementDraftWithLocationControllerTest extends TestCa
   }
 
   @Test
-  public void shouldCallDeleteDraft() {
+  public void shouldCallDeleteInitialDraft() {
     controller.deleteDraft(draftId);
 
     verify(service).deleteStockManagementDraft(draftId);
+  }
+
+  @Test
+  public void shouldCallDeleteDraft() {
+    controller.deleteInitialDraft(initialDraftId);
+
+    verify(service).deleteInitialDraft(initialDraftId);
   }
 
   @Test

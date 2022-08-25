@@ -81,6 +81,12 @@ public class SiglusStockManagementDraftWithLocationController {
     return stockManagementDraftService.mergeSubDraftsWithLocation(initialDraftId);
   }
 
+  @DeleteMapping("/{initialDraftId}")
+  @ResponseStatus(NO_CONTENT)
+  public void deleteInitialDraft(@PathVariable UUID initialDraftId) {
+    stockManagementDraftService.deleteInitialDraft(initialDraftId);
+  }
+
   @GetMapping("/initialDraft")
   public StockManagementInitialDraftDto searchInitialDrafts(
       @RequestParam UUID programId,
