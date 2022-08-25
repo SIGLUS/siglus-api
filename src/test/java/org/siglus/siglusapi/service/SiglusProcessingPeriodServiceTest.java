@@ -212,7 +212,7 @@ public class SiglusProcessingPeriodServiceTest {
     when(processingPeriodExtensionRepository
         .findByProcessingPeriodId(periodId)).thenReturn(extension);
 
-    ProcessingPeriodDto response = siglusProcessingPeriodService.getProcessingPeriod(periodId);
+    ProcessingPeriodDto response = siglusProcessingPeriodService.getProcessingPeriodDto(periodId);
 
     verify(siglusProcessingPeriodReferenceDataService).findOne(periodId);
     verify(processingPeriodExtensionRepository).findByProcessingPeriodId(periodId);
@@ -227,7 +227,7 @@ public class SiglusProcessingPeriodServiceTest {
     when(processingPeriodExtensionRepository
         .findByProcessingPeriodId(periodId)).thenReturn(null);
 
-    ProcessingPeriodDto response = siglusProcessingPeriodService.getProcessingPeriod(periodId);
+    ProcessingPeriodDto response = siglusProcessingPeriodService.getProcessingPeriodDto(periodId);
 
     verify(siglusProcessingPeriodReferenceDataService).findOne(periodId);
     verify(processingPeriodExtensionRepository).findByProcessingPeriodId(periodId);

@@ -20,8 +20,7 @@ import java.util.UUID;
 import org.openlmis.fulfillment.domain.OrderLineItem;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface OrderLineItemRepository extends
-    JpaRepository<OrderLineItem, UUID> {
+public interface OrderLineItemRepository extends JpaRepository<OrderLineItem, UUID> {
 
   List<OrderLineItem> findByOrderId(UUID orderId);
 }

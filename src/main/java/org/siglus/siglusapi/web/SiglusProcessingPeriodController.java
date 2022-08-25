@@ -55,6 +55,6 @@ public class SiglusProcessingPeriodController {
   @GetMapping("/{id}")
   public ProcessingPeriodDto searchProcessingPeriod(@PathVariable("id") UUID periodId) {
 
-    return siglusProcessingPeriodService.getProcessingPeriod(periodId);
+    return siglusProcessingPeriodService.getProcessingPeriodDto(periodId);
   }
 }

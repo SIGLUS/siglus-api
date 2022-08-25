@@ -21,6 +21,7 @@ import org.openlmis.referencedata.domain.Facility;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface SiglusFacilityRepository extends JpaRepository<Facility, UUID>, JpaSpecificationExecutor<Facility> {
 
@@ -31,4 +32,15 @@ public interface SiglusFacilityRepository extends JpaRepository<Facility, UUID>,
       + "left join siglusintegration.facility_extension fe on f.id = fe.facilityid\n"
       + "where fe.isandroid = false and f.active = true and f.enabled = true or fe.id is null;", nativeQuery = true)
   List<Facility> findAllWebFacility();
+
+  @Query(value = "select rgm.facilityid\n"
+      + "from referencedata.requisition_group_members rgm \n"
+      + "left join referencedata.requisition_groups rg on rg.id = rgm.requisitiongroupid \n"
+      + "left join referencedata.requisition_group_program_schedules rgps on rgps.requisitiongroupid = rg.id \n"
+      + "left join referencedata.programs p on p.id = rgps.programid \n"
+      + "left join referencedata.supervisory_nodes sn on sn.id = rg.supervisorynodeid \n"
+      + "where sn.parentid is not null \n"
+      + "and sn.facilityid = :facilityId \n"
+      + "and rgps.programid = :programId ;", nativeQuery = true)
+  List<UUID> findAllClientFacilityIds(@Param("facilityId") UUID facilityId, @Param("programId") UUID programId);
 }

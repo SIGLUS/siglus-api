@@ -61,7 +61,7 @@ public class SiglusProcessingPeriodControllerTest {
     UUID periodId = UUID.randomUUID();
     controller.searchProcessingPeriod(periodId);
 
-    verify(service).getProcessingPeriod(periodId);
+    verify(service).getProcessingPeriodDto(periodId);
   }
 
 }

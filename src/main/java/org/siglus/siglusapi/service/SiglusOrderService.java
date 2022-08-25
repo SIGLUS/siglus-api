@@ -27,7 +27,9 @@ import static org.siglus.siglusapi.constant.FieldConstants.RIGHT_NAME;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
@@ -37,6 +39,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -61,14 +65,17 @@ import org.openlmis.fulfillment.web.util.OrderDtoBuilder;
 import org.openlmis.fulfillment.web.util.OrderLineItemDto;
 import org.openlmis.fulfillment.web.util.OrderObjectReferenceDto;
 import org.openlmis.referencedata.domain.Orderable;
+import org.openlmis.referencedata.domain.ProcessingPeriod;
 import org.openlmis.requisition.domain.requisition.ApprovedProductReference;
 import org.openlmis.requisition.domain.requisition.Requisition;
+import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.domain.requisition.VersionEntityReference;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.dto.VersionObjectReferenceDto;
 import org.openlmis.requisition.service.RequisitionService;
 import org.openlmis.requisition.service.referencedata.ApproveProductsAggregator;
 import org.openlmis.requisition.web.RequisitionController;
+import org.openlmis.stockmanagement.repository.StockCardRepository;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2Dto;
 import org.siglus.common.domain.OrderExternal;
 import org.siglus.common.domain.ProcessingPeriodExtension;
@@ -77,9 +84,17 @@ import org.siglus.common.repository.ProcessingPeriodExtensionRepository;
 import org.siglus.siglusapi.domain.OrderLineItemExtension;
 import org.siglus.siglusapi.dto.OrderStatusDto;
 import org.siglus.siglusapi.dto.SiglusOrderDto;
+import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
+import org.siglus.siglusapi.repository.OrderLineItemRepository;
 import org.siglus.siglusapi.repository.OrderableRepository;
 import org.siglus.siglusapi.repository.PodSubDraftRepository;
+import org.siglus.siglusapi.repository.RequisitionLineItemRepository;
+import org.siglus.siglusapi.repository.SiglusFacilityRepository;
+import org.siglus.siglusapi.repository.SiglusLotRepository;
+import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
+import org.siglus.siglusapi.repository.SiglusStockCardRepository;
+import org.siglus.siglusapi.repository.StockManagementRepository;
 import org.siglus.siglusapi.service.client.SiglusProcessingPeriodReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
 import org.siglus.siglusapi.web.response.BasicOrderExtensionResponse;
@@ -169,6 +184,37 @@ public class SiglusOrderService {
 
   @Autowired
   private OrderableRepository orderableRepository;
+
+  @Autowired
+  private SiglusProcessingPeriodService siglusProcessingPeriodService;
+
+  @Autowired
+  private SiglusFacilityRepository siglusFacilityRepository;
+
+  @Autowired
+  private OrderLineItemRepository orderLineItemRepository;
+
+  @Autowired
+  private SiglusRequisitionRepository siglusRequisitionRepository;
+
+  @Autowired
+  private RequisitionLineItemRepository requisitionLineItemRepository;
+
+  @Autowired
+  private StockCardRepository stockCardRepository;
+
+  @Autowired
+  private SiglusStockCardRepository siglusStockCardRepository;
+
+  @Autowired
+  private SiglusLotRepository siglusLotRepository;
+
+  @Autowired
+  private StockManagementRepository stockManagementRepository;
+
+  private static final List<String> STATUS_AFTER_FINAL_APPROVED = Lists.newArrayList(RequisitionStatus.APPROVED.name(),
+      RequisitionStatus.RELEASED.name(),
+      RequisitionStatus.RELEASED_WITHOUT_ORDER.name());
 
   public Page<BasicOrderDto> searchOrders(OrderSearchParams params, Pageable pageable) {
     return orderController.searchOrders(params, pageable);
@@ -340,6 +386,220 @@ public class SiglusOrderService {
     return requisitionController.findRequisition(requisitionId, requisitionController.getProfiler("GET_ORDER"));
   }
 
+  public Map<UUID, BigDecimal> getOrderableIdToSuggestedQuantity(UUID orderId) {
+    Order order = orderRepository.findOne(orderId);
+    List<ProcessingPeriod> periods = getAllMonthlyPeriods();
+
+    if (shouldNotCalculateSuggestedQuantity(order, periods)) {
+      return Maps.newHashMap();
+    }
+
+    // TODO if has started, use the order_line_item_extension data
+    // TODO if is sub order, do not calculate
+
+    List<UUID> clientFacilityIds = getAllClientFacilityIds(order.getSupplyingFacilityId(), order.getProgramId());
+    List<Requisition> currentPeriodApprovedRequisitions = getCurrentPeriodApprovedRequisitions(order, periods,
+        clientFacilityIds);
+    List<Requisition> historyPeriodApprovedRequisitions = getPreviousThreePeriodAfterApprovedRequisitions(order,
+        periods, currentPeriodApprovedRequisitions, clientFacilityIds);
+
+    Set<UUID> orderableIds = getOrderableIds(order);
+
+    Map<UUID, Integer> orderableIdToCurrentPeriodSumApprovedQuantity = getOrderableIdToCurrentPeriodSumApprovedQuantity(
+        currentPeriodApprovedRequisitions);
+    Map<UUID, Integer> orderableIdToHistoryPeriodSumApprovedQuantity = getOrderableIdToHistoryPeriodSumApprovedQuantity(
+        historyPeriodApprovedRequisitions, orderableIds);
+    Map<UUID, Integer> orderableIdToSoh = getOrderableIdToSoh(orderableIds, order.getProgramId(),
+        order.getSupplyingFacilityId());
+
+    Map<UUID, BigDecimal> orderableIdToSuggestedQuantity = calculateOrderableToSuggestedQuantityMap(order,
+        currentPeriodApprovedRequisitions, orderableIdToCurrentPeriodSumApprovedQuantity,
+        orderableIdToHistoryPeriodSumApprovedQuantity, orderableIds, orderableIdToSoh);
+
+    // TODO save to order_line_item_extension
+
+    return orderableIdToSuggestedQuantity;
+  }
+
+  private Set<UUID> getOrderableIds(Order order) {
+    return order.getOrderLineItems().stream().map(lineItem -> lineItem.getOrderable().getId())
+        .collect(Collectors.toSet());
+  }
+
+  private Map<UUID, BigDecimal> calculateOrderableToSuggestedQuantityMap(Order order,
+      List<Requisition> currentPeriodApprovedRequisitions,
+      Map<UUID, Integer> orderableIdToCurrentPeriodSumApprovedQuantity,
+      Map<UUID, Integer> orderableIdToHistoryPeriodSumApprovedQuantity,
+      Set<UUID> orderableIds,
+      Map<UUID, Integer> orderableIdToSoh) {
+
+    Map<UUID, Integer> currentRequisitionOrderableToApprovedQuantity =
+        getCurrentRequisitionOrderableToFinalApprovedQuantity(order, currentPeriodApprovedRequisitions);
+
+    Map<UUID, BigDecimal> orderableIdToSuggestedQuantity = Maps.newHashMapWithExpectedSize(orderableIds.size());
+    orderableIds.forEach(orderableId -> {
+      Integer sumApprovedQuantity = getNoneNullDefaultZero(
+          orderableIdToCurrentPeriodSumApprovedQuantity.get(orderableId));
+      Integer sumHistoryApprovedQuantity = getNoneNullDefaultZero(
+          orderableIdToHistoryPeriodSumApprovedQuantity.get(orderableId));
+      Integer soh = getNoneNullDefaultZero(orderableIdToSoh.get(orderableId));
+
+      BigDecimal suggestedQuantity = calculateSuggestedQuantity(sumApprovedQuantity, sumHistoryApprovedQuantity, soh,
+          currentRequisitionOrderableToApprovedQuantity.get(orderableId));
+      orderableIdToSuggestedQuantity.put(orderableId, suggestedQuantity);
+    });
+    return orderableIdToSuggestedQuantity;
+  }
+
+  private BigDecimal calculateSuggestedQuantity(Integer sumApprovedQuantity, Integer sumHistoryApprovedQuantity,
+      Integer soh, Integer currentRequisitionApprovedQuantity) {
+    if (sumApprovedQuantity + sumHistoryApprovedQuantity <= soh) {
+      return BigDecimal.valueOf(currentRequisitionApprovedQuantity);
+    } else {
+      return BigDecimal.valueOf(
+          soh * 1d / (sumApprovedQuantity + sumHistoryApprovedQuantity) * currentRequisitionApprovedQuantity);
+    }
+  }
+
+  private Map<UUID, Map<UUID, Integer>> getFacilityIdToOrderableIdToMaxApprovedQuantity(
+      List<Requisition> historyPeriodApprovedRequisitions) {
+
+    Map<UUID, List<Requisition>> facilityIdToRequisitions = historyPeriodApprovedRequisitions.stream()
+        .collect(Collectors.groupingBy(Requisition::getFacilityId));
+
+    Map<UUID, Map<UUID, Integer>> facilityIdToOrderableIdToMaxApprovedQuantity = Maps.newHashMap();
+    facilityIdToRequisitions.forEach((facilityId, requisitions) -> {
+      Map<UUID, Integer> orderableIdToMaxApprovedQuantity = Maps.newHashMap();
+      requisitions.forEach(requisition ->
+          requisition.getRequisitionLineItems().forEach(requisitionLineItem -> {
+            UUID orderableId = requisitionLineItem.getOrderable().getId();
+            Integer maxApprovedQuantity = getNoneNullDefaultZero(orderableIdToMaxApprovedQuantity.get(orderableId));
+            orderableIdToMaxApprovedQuantity.put(orderableId,
+                Math.max(maxApprovedQuantity, requisitionLineItem.getApprovedQuantity()));
+          })
+      );
+      facilityIdToOrderableIdToMaxApprovedQuantity.put(facilityId, orderableIdToMaxApprovedQuantity);
+    });
+    return facilityIdToOrderableIdToMaxApprovedQuantity;
+  }
+
+  private Map<UUID, Integer> getOrderableIdToCurrentPeriodSumApprovedQuantity(
+      List<Requisition> currentPeriodApprovedRequisitions) {
+    Map<UUID, Integer> orderableIdToCurrentPeriodSumApprovedQuantity = Maps.newHashMap();
+    currentPeriodApprovedRequisitions.forEach(requisition ->
+        requisition.getRequisitionLineItems().forEach(lineItem -> {
+          UUID orderableId = lineItem.getOrderable().getId();
+          Integer sumApprovedQuantity = getNoneNullDefaultZero(
+              orderableIdToCurrentPeriodSumApprovedQuantity.get(orderableId));
+          orderableIdToCurrentPeriodSumApprovedQuantity.put(orderableId,
+              sumApprovedQuantity + lineItem.getApprovedQuantity());
+        })
+    );
+    return orderableIdToCurrentPeriodSumApprovedQuantity;
+  }
+
+  private Map<UUID, Integer> getOrderableIdToHistoryPeriodSumApprovedQuantity(
+      List<Requisition> historyPeriodApprovedRequisitions, Set<UUID> orderableIds) {
+
+    Map<UUID, Map<UUID, Integer>> facilityIdToOrderableIdToMaxApprovedQuantity =
+        getFacilityIdToOrderableIdToMaxApprovedQuantity(historyPeriodApprovedRequisitions);
+
+    Map<UUID, Integer> orderableToSumApprovedQuantity = Maps.newHashMap();
+    orderableIds.forEach(orderableId -> {
+      Integer sumHistoryApprovedQuantity = 0;
+      for (Entry<UUID, Map<UUID, Integer>> entry : facilityIdToOrderableIdToMaxApprovedQuantity.entrySet()) {
+        sumHistoryApprovedQuantity += getNoneNullDefaultZero(entry.getValue().get(orderableId));
+      }
+      orderableToSumApprovedQuantity.put(orderableId, sumHistoryApprovedQuantity);
+    });
+    return orderableToSumApprovedQuantity;
+  }
+
+  private Map<UUID, Integer> getCurrentRequisitionOrderableToFinalApprovedQuantity(Order order,
+      List<Requisition> currentPeriodRequisitions) {
+    UUID requisitionId = getRequisitionId(order.getExternalId());
+    Requisition currentRequisition = getCurrentRequisition(requisitionId, currentPeriodRequisitions);
+
+    Map<UUID, Integer> orderableToFinalApprovedQuantity = Maps.newHashMap();
+    currentRequisition.getRequisitionLineItems().forEach(
+        lineItem -> orderableToFinalApprovedQuantity.put(lineItem.getOrderable().getId(),
+            lineItem.getApprovedQuantity()));
+    return orderableToFinalApprovedQuantity;
+  }
+
+  private Requisition getCurrentRequisition(UUID requisitionId, List<Requisition> currentPeriodRequisitions) {
+    return currentPeriodRequisitions.stream()
+        .filter(requisition -> requisition.getId().equals(requisitionId)).findFirst()
+        .orElseThrow(() -> new NotFoundException("requisition not found"));
+  }
+
+  private List<Requisition> getCurrentPeriodApprovedRequisitions(Order order, List<ProcessingPeriod> periods,
+      List<UUID> clientFacilityIds) {
+    return siglusRequisitionRepository.findRequisitionsByOrderInfoAndSupplyingFacilityId(
+        clientFacilityIds,
+        order.getProgramId(),
+        Lists.newArrayList(getPeriodIdDateIn(periods, LocalDate.now())),
+        order.getEmergency(),
+        Lists.newArrayList(RequisitionStatus.APPROVED.name()),
+        order.getSupplyingFacilityId());
+  }
+
+  private List<Requisition> getPreviousThreePeriodAfterApprovedRequisitions(Order order, List<ProcessingPeriod> periods,
+      List<Requisition> currentPeriodApprovedRequisitions, List<UUID> clientFacilityIds) {
+    Set<UUID> hasApprovedRequisitionFacilityIds = currentPeriodApprovedRequisitions.stream()
+        .map(Requisition::getFacilityId).collect(Collectors.toSet());
+    List<UUID> noApprovedRequisitionFacilityIds = clientFacilityIds.stream()
+        .filter(e -> !hasApprovedRequisitionFacilityIds.contains(e)).collect(Collectors.toList());
+
+    return siglusRequisitionRepository.findRequisitionsByOrderInfoAndSupplyingFacilityId(
+        noApprovedRequisitionFacilityIds,
+        order.getProgramId(),
+        getPreviousThreePeriodIds(periods),
+        order.getEmergency(),
+        STATUS_AFTER_FINAL_APPROVED,
+        order.getSupplyingFacilityId());
+  }
+
+  private UUID getRequisitionId(UUID externalId) {
+    OrderExternal orderExternal = orderExternalRepository.findOne(externalId);
+    return Objects.isNull(orderExternal) ? externalId : orderExternal.getRequisitionId();
+  }
+
+  private Map<UUID, Integer> getOrderableIdToSoh(Set<UUID> orderableIds, UUID programId, UUID facilityId) {
+    return stockManagementRepository.getStockOnHandByProduct(facilityId, programId, orderableIds, LocalDate.now());
+  }
+
+  private Integer getNoneNullDefaultZero(Integer quantity) {
+    return Objects.isNull(quantity) ? 0 : quantity;
+  }
+
+  private List<UUID> getPreviousThreePeriodIds(List<ProcessingPeriod> periods) {
+    List<UUID> previousThreePeriodIds = Lists.newArrayList();
+    LocalDate localDate = LocalDate.now();
+    for (int i = 1; i < 4; i++) {
+      previousThreePeriodIds.add(getPeriodIdDateIn(periods, localDate.minusMonths(i)));
+    }
+    return previousThreePeriodIds;
+  }
+
+  private List<UUID> getAllClientFacilityIds(UUID facilityId, UUID programId) {
+    return siglusFacilityRepository.findAllClientFacilityIds(facilityId, programId);
+  }
+
+  private List<ProcessingPeriod> getAllMonthlyPeriods() {
+    return siglusProcessingPeriodService.getUpToNowMonthlyPeriods();
+  }
+
+  private boolean shouldNotCalculateSuggestedQuantity(Order order, List<ProcessingPeriod> periods) {
+    return Objects.isNull(order) || Boolean.TRUE.equals(order.getEmergency())
+        || !order.getProcessingPeriodId().equals(getPeriodIdDateIn(periods, LocalDate.now()));
+  }
+
+  private UUID getPeriodIdDateIn(List<ProcessingPeriod> periods, LocalDate localDate) {
+    ProcessingPeriod currentPeriod = siglusProcessingPeriodService.getPeriodDateIn(periods, localDate);
+    return currentPeriod.getId();
+  }
+
   private SiglusOrderDto extendOrderDto(OrderDto orderDto) {
     return doExtendOrderDto(orderDto, true);
   }
@@ -370,7 +630,7 @@ public class SiglusOrderService {
     Map<UUID, Boolean> orderableToIsKitMap = new HashMap<>();
     orderables.forEach(orderable ->
         orderableToIsKitMap.put(orderable.getId(), CollectionUtils.isNotEmpty(orderable.getChildren())
-        || APE_KITS.contains(orderable.getProductCode().toString())));
+            || APE_KITS.contains(orderable.getProductCode().toString())));
     siglusOrderDto.getOrder().orderLineItems().forEach(orderLineItemDto -> {
       OrderableDto orderable = orderLineItemDto.getOrderable();
       orderable.setIsKit(orderableToIsKitMap.get(orderable.getId()));
