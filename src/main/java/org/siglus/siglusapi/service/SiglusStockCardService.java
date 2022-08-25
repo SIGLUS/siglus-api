@@ -317,6 +317,7 @@ public class SiglusStockCardService {
         .program(programDto.getName())
         .stockOnHand(productMovements.get(productMovements.size() - 1).getProductSoh())
         .lineItems(productMovements)
+        .displayUnit(orderableDto.getDispensable().getDisplayUnit())
         .build();
   }
 }

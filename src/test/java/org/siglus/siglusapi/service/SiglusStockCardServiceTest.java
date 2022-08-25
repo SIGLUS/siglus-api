@@ -38,6 +38,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.openlmis.referencedata.dto.DispensableDto;
 import org.openlmis.referencedata.dto.ProgramOrderableDto;
 import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.stockmanagement.domain.card.StockCard;
@@ -353,14 +354,15 @@ public class SiglusStockCardServiceTest {
   @Test
   public void shouldReturnStockMovementByProductWhenCallGetMovementByProductByServiceGivenFacilityIdAndOrderableId() {
     ProgramOrderableDto programOrderableDto = new ProgramOrderableDto();
-
     programOrderableDto.setProgramId(programId);
     Set<ProgramOrderableDto> programOrderableDtos = new HashSet<>();
     programOrderableDtos.add(programOrderableDto);
-    org.openlmis.referencedata.dto.OrderableDto orderableDto = new org.openlmis.referencedata.dto.OrderableDto();
-    orderableDto.setFullProductName("product1");
-    orderableDto.setProductCode("00a11");
+    DispensableDto dispensableDto = new DispensableDto();
+    dispensableDto.setToString("111");
+    org.openlmis.referencedata.dto.OrderableDto orderableDto = new org.openlmis.referencedata.dto.OrderableDto("00a11",
+        dispensableDto, "product1", null, null, null, null, null, null, null, null, null, null, null, null, null, null);
     orderableDto.setPrograms(programOrderableDtos);
+
     StockMovementResDto stockMovementResDto = new StockMovementResDto();
     List<StockMovementResDto> stockMovementResDtoList = Collections.singletonList(stockMovementResDto);
     when(stockMovementService.getMovementsByProduct(facilityId, orderableId)).thenReturn(stockMovementResDtoList);

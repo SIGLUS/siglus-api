@@ -33,4 +33,5 @@ public class ProductMovementDto {
   private String program;
   private List<StockMovementResDto> lineItems;
   private Integer stockOnHand;
+  private String displayUnit;
 }

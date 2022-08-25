@@ -45,5 +45,11 @@ public class StockMovementResDto {
 
   private String documentNumber;
 
-  private String reasonFreeText;
+  private String destinationName;
+
+  private String destinationFreeText;
+
+  private String sourceName;
+
+  private String sourceFreeText;
 }

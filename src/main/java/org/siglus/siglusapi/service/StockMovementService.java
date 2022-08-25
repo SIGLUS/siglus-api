@@ -39,6 +39,7 @@ public class StockMovementService {
   private static final String UNPACK_KIT_REASON = "Unpack Kit";
   private static final String ISSUE_TYPE = "ISSUE";
 
+  private static final String OUTROS = "Outros";
   @Autowired
   private StockManagementRepository stockManagementRepository;
 
@@ -61,6 +62,11 @@ public class StockMovementService {
         orderableIdsSet);
     List<ProductMovement> productMovements = allProductMovements.getProductMovements();
     LinkedList<StockMovementResDto> stockMovementResDtos = new LinkedList<>();
+    StringBuilder destinationName = new StringBuilder();
+    StringBuilder destinationFreeText = new StringBuilder();
+    StringBuilder sourceName = new StringBuilder();
+    StringBuilder sourceFreeText = new StringBuilder();
+
     for (ProductMovement productMovement : productMovements) {
       int soh = 0;
       int count = 0;
@@ -68,8 +74,19 @@ public class StockMovementService {
         case ISSUE:
           count -= productMovement.getMovementDetail().getAdjustment();
           soh += productMovement.getStockQuantity();
+          if (OUTROS.equals(productMovement.getMovementDetail().getReason())) {
+            destinationName.append(OUTROS);
+            destinationFreeText.append(productMovement.getSourcefreetext());
+          }
           break;
         case RECEIVE:
+          count += productMovement.getMovementDetail().getAdjustment();
+          soh += productMovement.getStockQuantity();
+          if (OUTROS.equals(productMovement.getMovementDetail().getReason())) {
+            sourceName.append(OUTROS);
+            sourceFreeText.append(productMovement.getSourcefreetext());
+          }
+          break;
         case UNPACK_KIT:
         case PHYSICAL_INVENTORY:
         case ADJUSTMENT:
@@ -87,7 +104,10 @@ public class StockMovementService {
           .productCode(productMovement.getProductCode())
           .reason(productMovement.getMovementDetail().getReason())
           .documentNumber(productMovement.getDocumentNumber())
-          .reasonFreeText(productMovement.getReasonFreeText())
+          .sourceName(sourceName.toString())
+          .destinationName(destinationName.toString())
+          .sourceFreeText(sourceFreeText.toString())
+          .destinationFreeText(destinationFreeText.toString())
           .build();
       stockMovementResDtos.add(stockMovementResDto);
     }
