@@ -80,14 +80,14 @@ public class CalculatedStocksOnHandByLocationService {
     if (CollectionUtils.isEmpty(movements)) {
       return;
     }
-    deleteFollowingStockOnHands(movements);
     Set<UUID> stockCardIds = movements.stream()
             .map(StockCardLocationMovementLineItem::getStockCardId).collect(Collectors.toSet());
     LocalDate occurredDate = movements.get(0).getOccurredDate();
     Map<String, Integer> stockCardIdAndLocationCodeToPreviousStockOnHandMap =
             this.getPreviousStockOnHandMapTillNow(stockCardIds);
-    List<CalculatedStockOnHandByLocation> toSaveList = new ArrayList<>();
+    deleteFollowingStockOnHands(movements);
 
+    List<CalculatedStockOnHandByLocation> toSaveList = new ArrayList<>();
     Set<String> allUniqueKeys = movements.stream()
             .flatMap(movement -> getUniqueKeysFromMovement(movement).stream())
             .collect(Collectors.toSet());
