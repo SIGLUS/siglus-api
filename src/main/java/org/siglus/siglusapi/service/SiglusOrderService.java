@@ -75,7 +75,6 @@ import org.openlmis.requisition.dto.VersionObjectReferenceDto;
 import org.openlmis.requisition.service.RequisitionService;
 import org.openlmis.requisition.service.referencedata.ApproveProductsAggregator;
 import org.openlmis.requisition.web.RequisitionController;
-import org.openlmis.stockmanagement.repository.StockCardRepository;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2Dto;
 import org.siglus.common.domain.OrderExternal;
 import org.siglus.common.domain.ProcessingPeriodExtension;
@@ -86,14 +85,10 @@ import org.siglus.siglusapi.dto.OrderStatusDto;
 import org.siglus.siglusapi.dto.SiglusOrderDto;
 import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
-import org.siglus.siglusapi.repository.OrderLineItemRepository;
 import org.siglus.siglusapi.repository.OrderableRepository;
 import org.siglus.siglusapi.repository.PodSubDraftRepository;
-import org.siglus.siglusapi.repository.RequisitionLineItemRepository;
 import org.siglus.siglusapi.repository.SiglusFacilityRepository;
-import org.siglus.siglusapi.repository.SiglusLotRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
-import org.siglus.siglusapi.repository.SiglusStockCardRepository;
 import org.siglus.siglusapi.repository.StockManagementRepository;
 import org.siglus.siglusapi.service.client.SiglusProcessingPeriodReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
@@ -192,22 +187,7 @@ public class SiglusOrderService {
   private SiglusFacilityRepository siglusFacilityRepository;
 
   @Autowired
-  private OrderLineItemRepository orderLineItemRepository;
-
-  @Autowired
   private SiglusRequisitionRepository siglusRequisitionRepository;
-
-  @Autowired
-  private RequisitionLineItemRepository requisitionLineItemRepository;
-
-  @Autowired
-  private StockCardRepository stockCardRepository;
-
-  @Autowired
-  private SiglusStockCardRepository siglusStockCardRepository;
-
-  @Autowired
-  private SiglusLotRepository siglusLotRepository;
 
   @Autowired
   private StockManagementRepository stockManagementRepository;
