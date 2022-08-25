@@ -522,26 +522,29 @@ public class SiglusPhysicalInventoryService {
   private List<PhysicalInventoryLineItemDto> convertSummaryV2DtosToLineItems(List<StockCardSummaryV2Dto> summaryV2Dtos,
       UUID programId) {
     List<PhysicalInventoryLineItemDto> physicalInventoryLineItems = new LinkedList<>();
-    if (CollectionUtils.isNotEmpty(summaryV2Dtos)) {
-      summaryV2Dtos.forEach(orderableDto -> {
-        if (CollectionUtils.isNotEmpty(orderableDto.getCanFulfillForMe())) {
-          orderableDto.getCanFulfillForMe().forEach(dto -> {
-            Map<String, String> extraData = new HashMap<>();
-            if (dto.getStockCard() != null && dto.getOrderable() != null) {
-              extraData.put(VM_STATUS, null);
-              extraData.put(STOCK_CARD_ID, String.valueOf(dto.getStockCard().getId()));
-              physicalInventoryLineItems.add(
-                  PhysicalInventoryLineItemDto.builder()
-                      .orderableId(dto.getOrderable().getId())
-                      .lotId(dto.getLot() != null ? dto.getLot().getId() : null)
-                      .extraData(extraData)
-                      .stockAdjustments(Collections.emptyList())
-                      .programId(programId).build());
-            }
-          });
-        }
-      });
-    }
+
+    summaryV2Dtos
+        .stream()
+        .map(StockCardSummaryV2Dto::getCanFulfillForMe)
+        .filter(CollectionUtils::isNotEmpty)
+        .collect(Collectors.toList())
+        .forEach(set -> {
+          set.stream()
+              .filter(c -> c.getStockCard() != null && c.getOrderable() != null).collect(Collectors.toList())
+              .forEach(dto -> {
+                Map<String, String> extraData = new HashMap<>();
+                extraData.put(VM_STATUS, null);
+                extraData.put(STOCK_CARD_ID, String.valueOf(dto.getStockCard().getId()));
+                physicalInventoryLineItems.add(
+                    PhysicalInventoryLineItemDto.builder()
+                        .orderableId(dto.getOrderable().getId())
+                        .lotId(dto.getLot() != null ? dto.getLot().getId() : null)
+                        .extraData(extraData)
+                        .stockAdjustments(Collections.emptyList())
+                        .programId(programId).build());
+              });
+        });
+
     return physicalInventoryLineItems;
   }
 
