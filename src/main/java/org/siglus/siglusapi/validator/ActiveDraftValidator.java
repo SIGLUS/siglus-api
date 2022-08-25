@@ -46,7 +46,8 @@ import org.springframework.stereotype.Component;
 public class ActiveDraftValidator {
 
   private static final List<String> draftTypes =
-      Lists.newArrayList("adjustment", "issue", "receive", "issueWithLocation", "receiveWithLocation");
+      Lists.newArrayList(FieldConstants.ADJUSTMENT, FieldConstants.ISSUE, FieldConstants.RECEIVE,
+          FieldConstants.ISSUE_WITH_LOCATION, FieldConstants.RECEIVE_WITH_LOCATION);
 
   @Autowired
   private SiglusAuthenticationHelper authenticationHelper;
