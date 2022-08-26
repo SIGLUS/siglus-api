@@ -230,7 +230,10 @@ public class SiglusStockEventsService {
   }
 
   private StockEventDto mergeEventDtoForLocation(StockEventDto eventDto) {
-    List<StockEventLineItemDto> lineItems = eventDto.getLineItems();
+    StockEventDto copiedEvent = new StockEventDto();
+    BeanUtils.copyProperties(eventDto, copiedEvent, "lineItems");
+
+    List<StockEventLineItemDto> lineItems = new ArrayList<>(eventDto.getLineItems());
     Map<String, List<StockEventLineItemDto>> uniqueKeyToLineItems = lineItems.stream()
             .collect(Collectors.groupingBy(this::getUniqueKey));
 
@@ -244,8 +247,6 @@ public class SiglusStockEventsService {
       afterMerge.add(copy);
     });
 
-    StockEventDto copiedEvent = new StockEventDto();
-    BeanUtils.copyProperties(eventDto, copiedEvent);
     copiedEvent.setLineItems(afterMerge);
     return copiedEvent;
   }
