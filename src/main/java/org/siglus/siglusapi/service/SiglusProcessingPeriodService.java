@@ -186,16 +186,16 @@ public class SiglusProcessingPeriodService {
         .orElseThrow(() -> new BusinessDataException(new Message(ERROR_NO_PERIOD_MATCH)));
   }
 
+  public List<ProcessingPeriod> getUpToNowMonthlyPeriods() {
+    return processingPeriodRepository.getUpToNowMonthlyPeriods(LocalDate.now());
+  }
+
   public boolean isDateInPeriod(ProcessingPeriod period, LocalDate localDate) {
     return !isDateNotInPeriod(period, localDate);
   }
 
   private boolean isDateNotInPeriod(ProcessingPeriod period, LocalDate localDate) {
     return localDate.isBefore(period.getStartDate()) || localDate.isAfter(period.getEndDate());
-  }
-
-  public List<ProcessingPeriod> getUpToNowMonthlyPeriods() {
-    return processingPeriodRepository.getUpToNowMonthlyPeriods(LocalDate.now());
   }
 
   public ProcessingPeriodDto getProcessingPeriodbyOpenLmisPeroid(ProcessingPeriodDto dto) {
