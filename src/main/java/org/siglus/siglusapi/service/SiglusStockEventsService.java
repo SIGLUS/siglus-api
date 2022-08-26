@@ -40,6 +40,7 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.SerializationUtils;
 import org.openlmis.stockmanagement.domain.BaseEntity;
 import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
@@ -114,6 +115,7 @@ public class SiglusStockEventsService {
     siglusLotService.createAndFillLotId(eventDto);
     Set<UUID> programIds = getProgramIds(eventDto);
     List<StockEventDto> stockEventDtos;
+    StockEventDto deepCopy = (StockEventDto) SerializationUtils.clone(eventDto);
     if (eventDto.isPhysicalInventory()) {
       stockEventDtos = getStockEventsWhenDoPhysicalInventory(eventDto, programIds);
     } else {
@@ -126,7 +128,7 @@ public class SiglusStockEventsService {
     deleteDraft(eventDto);
 
     if (isByLocation) {
-      calculatedStocksOnHandByLocationService.calculateStockOnHandByLocation(eventDto);
+      calculatedStocksOnHandByLocationService.calculateStockOnHandByLocation(deepCopy);
     }
   }
 
@@ -230,10 +232,7 @@ public class SiglusStockEventsService {
   }
 
   private StockEventDto mergeEventDtoForLocation(StockEventDto eventDto) {
-    StockEventDto copiedEvent = new StockEventDto();
-    BeanUtils.copyProperties(eventDto, copiedEvent, "lineItems");
-
-    List<StockEventLineItemDto> lineItems = new ArrayList<>(eventDto.getLineItems());
+    List<StockEventLineItemDto> lineItems = eventDto.getLineItems();
     Map<String, List<StockEventLineItemDto>> uniqueKeyToLineItems = lineItems.stream()
             .collect(Collectors.groupingBy(this::getUniqueKey));
 
@@ -247,6 +246,8 @@ public class SiglusStockEventsService {
       afterMerge.add(copy);
     });
 
+    StockEventDto copiedEvent = new StockEventDto();
+    BeanUtils.copyProperties(eventDto, copiedEvent);
     copiedEvent.setLineItems(afterMerge);
     return copiedEvent;
   }
