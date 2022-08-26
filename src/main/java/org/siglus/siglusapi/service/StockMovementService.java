@@ -23,9 +23,11 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.siglus.siglusapi.constant.FieldConstants;
 import org.siglus.siglusapi.dto.StockMovementResDto;
 import org.siglus.siglusapi.dto.android.PeriodOfProductMovements;
 import org.siglus.siglusapi.dto.android.ProductMovement;
+import org.siglus.siglusapi.dto.android.enumeration.MovementType;
 import org.siglus.siglusapi.repository.StockManagementRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -40,6 +42,14 @@ public class StockMovementService {
   private static final String ISSUE_TYPE = "ISSUE";
 
   private static final String OUTROS = "Outros";
+
+  private static final String ADJUSTMENT_KEY="stockConstants.adjustment";
+
+  private static final String PHYSICAL_INVENTORY_KEY="stockCard.physicalInventory";
+
+  private static final String INITIAL_INVENTORY_KEY="stockCard.inventory";
+
+
   @Autowired
   private StockManagementRepository stockManagementRepository;
 
@@ -62,12 +72,13 @@ public class StockMovementService {
         orderableIdsSet);
     List<ProductMovement> productMovements = allProductMovements.getProductMovements();
     LinkedList<StockMovementResDto> stockMovementResDtos = new LinkedList<>();
+    boolean initialFlag = true;
     for (ProductMovement productMovement : productMovements) {
-      String destinationName = "";
-      String destinationFreeText = "";
-      String sourceName = "";
-      String sourceFreeText = "";
-      String reason = null;
+      String destinationName = new String();
+      String destinationFreeText = new String();
+      String sourceName = new String();
+      String sourceFreeText = new String();
+      String reason = new String();
       int soh = 0;
       int count = 0;
       switch (productMovement.getMovementDetail().getType()) {
@@ -90,14 +101,22 @@ public class StockMovementService {
           }
           break;
         case UNPACK_KIT:
+          count +=productMovement.getMovementDetail().getAdjustment();
+          soh += productMovement.getStockQuantity();
+          reason = productMovement.getMovementDetail().getReason();
+          break;
         case PHYSICAL_INVENTORY:
+          count += productMovement.getMovementDetail().getAdjustment();
+          soh += productMovement.getStockQuantity();
+          if (initialFlag) {
+            reason = INITIAL_INVENTORY_KEY;
+            initialFlag = false;
+          }else reason = PHYSICAL_INVENTORY_KEY;
+          break;
         case ADJUSTMENT:
           count += productMovement.getMovementDetail().getAdjustment();
           soh += productMovement.getStockQuantity();
-          reason = productMovement.getMovementDetail().getType().toString();
-          if (productMovement.getMovementDetail().getType().toString().equals("UNPACK_KIT")) {
-            reason = productMovement.getMovementDetail().getReason();
-          }
+          reason = ADJUSTMENT_KEY;
           break;
         default:
           break;
