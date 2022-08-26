@@ -109,7 +109,7 @@ public interface CalculatedStockOnHandByLocationRepository extends JpaRepository
   @Modifying
   @Query(value = "delete from siglusintegration.calculated_stocks_on_hand_by_location csohbl "
           + "where csohbl.stockcardid = :stockCardId and csohbl.occurreddate >= :occurredDate "
-          + "and csohbl.locationcode = :locationCode;",
+          + "and csohbl.locationcode = :locationCode",
           nativeQuery = true)
   void deleteAllByStockCardIdAndOccurredDateAndLocationCodes(@Param("stockCardId") UUID stockCardId,
                                                              @Param("occurredDate") Date occurredDate,
