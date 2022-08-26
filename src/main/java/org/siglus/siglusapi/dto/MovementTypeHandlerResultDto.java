@@ -24,12 +24,11 @@ import lombok.Data;
 @Data
 public class MovementTypeHandlerResultDto {
 
-  // TODO: 2022/8/26  private  
-  int count;
-  int soh;
-  String destinationName;
-  String destinationFreeText;
-  String sourceName;
-  String sourceFreeText;
-  String reason;
+  private int count;
+  private int soh;
+  private String destinationName;
+  private String destinationFreeText;
+  private String sourceName;
+  private String sourceFreeText;
+  private String reason;
 }
