@@ -15,6 +15,8 @@
 
 package org.siglus.siglusapi.service;
 
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_NO_PERIOD_MATCH;
+
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -40,8 +42,11 @@ import org.siglus.common.domain.ProcessingPeriodExtension;
 import org.siglus.common.dto.ProgramAdditionalOrderableDto;
 import org.siglus.common.repository.ProcessingPeriodExtensionRepository;
 import org.siglus.siglusapi.constant.ProgramConstants;
+import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.dto.ProcessingPeriodSearchParams;
+import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.NotFoundException;
+import org.siglus.siglusapi.i18n.MessageKeys;
 import org.siglus.siglusapi.repository.FacilityNativeRepository;
 import org.siglus.siglusapi.repository.ProcessingPeriodRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
@@ -177,7 +182,8 @@ public class SiglusProcessingPeriodService {
   }
 
   public ProcessingPeriod getPeriodDateIn(List<ProcessingPeriod> processingPeriods, LocalDate localDate) {
-    return processingPeriods.stream().filter(period -> isDateInPeriod(period, localDate)).findFirst().orElse(null);
+    return processingPeriods.stream().filter(period -> isDateInPeriod(period, localDate)).findFirst()
+        .orElseThrow(() -> new BusinessDataException(new Message(ERROR_NO_PERIOD_MATCH)));
   }
 
   public boolean isDateInPeriod(ProcessingPeriod period, LocalDate localDate) {

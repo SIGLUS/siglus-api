@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.domain;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 import javax.persistence.Entity;
 import javax.persistence.Table;
@@ -43,4 +44,6 @@ public class OrderLineItemExtension extends BaseEntity {
   private boolean added;
 
   private Long partialFulfilledQuantity;
+
+  private BigDecimal suggestedQuantity;
 }

@@ -56,6 +56,6 @@ public interface ProcessingPeriodRepository extends JpaRepository<ProcessingPeri
       + "left join referencedata.processing_schedules ps \n"
       + "on pp.processingscheduleid = ps.id \n"
       + "where ps.code ='M1' \n"
-      + "and pp.enddate >= :currentDate ", nativeQuery = true)
+      + "and pp.startdate <= :currentDate ", nativeQuery = true)
   List<ProcessingPeriod> getUpToNowMonthlyPeriods(@Param("currentDate") LocalDate currentDate);
 }

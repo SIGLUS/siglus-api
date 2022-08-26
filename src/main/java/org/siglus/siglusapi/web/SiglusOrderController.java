@@ -28,6 +28,7 @@ import org.siglus.siglusapi.dto.OrderStatusDto;
 import org.siglus.siglusapi.dto.SiglusOrderDto;
 import org.siglus.siglusapi.service.SiglusOrderService;
 import org.siglus.siglusapi.web.response.BasicOrderExtensionResponse;
+import org.siglus.siglusapi.web.response.OrderSuggestedQuantityResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -97,5 +98,10 @@ public class SiglusOrderController {
   @GetMapping("/{id}")
   public SiglusOrderDto getOrder(@PathVariable("id") UUID orderId) {
     return siglusOrderService.searchOrderById(orderId);
+  }
+
+  @GetMapping("/{id}/suggestedQuantity")
+  public OrderSuggestedQuantityResponse getOrderableIdToSuggestedQuantity(@PathVariable("id") UUID orderId) {
+    return siglusOrderService.getOrderSuggestedQuantityResponse(orderId);
   }
 }

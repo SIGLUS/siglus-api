@@ -13,22 +13,22 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.repository;
+package org.siglus.siglusapi.web.response;
 
-import java.util.Collection;
-import java.util.List;
+import java.math.BigDecimal;
+import java.util.Map;
 import java.util.UUID;
-import org.siglus.siglusapi.domain.OrderLineItemExtension;
-import org.siglus.siglusapi.repository.dto.OrderSuggestedQuantityDto;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-public interface OrderLineItemExtensionRepository extends JpaRepository<OrderLineItemExtension, UUID> {
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class OrderSuggestedQuantityResponse {
 
-  List<OrderLineItemExtension> findByOrderId(UUID orderId);
-
-  List<OrderLineItemExtension> findByOrderLineItemIdIn(Collection<UUID> orderLineItemIds);
-
-  @Query(name = "Order.findOrderSuggestedQuantityDto", nativeQuery = true)
-  List<OrderSuggestedQuantityDto> findOrderSuggestedQuantityDtoByOrderLineItemIdIn(Collection<UUID> orderLineItemIds);
+  private boolean showSuggestedQuantity;
+  private Map<UUID, BigDecimal> orderableIdToSuggestedQuantity;
 }
