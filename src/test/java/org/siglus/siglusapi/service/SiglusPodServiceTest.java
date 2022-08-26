@@ -727,7 +727,7 @@ public class SiglusPodServiceTest {
     OrderDto orderDto = buildMockOrderDto();
     when(ordersRepository.findOrderDtoById(orderId)).thenReturn(orderDto);
     mockForRequisitionCount();
-    when(siglusFacilityReferenceDataService.findOneFacility(orderDto.getSupplyingFacilityId())).thenReturn(
+    when(siglusFacilityReferenceDataService.findOneWithoutCache(orderDto.getSupplyingFacilityId())).thenReturn(
         buildMockFacilityDtoWithLevel3());
     when(requisitionStatusChangeRepository.findByRequisitionId(requisitionId)).thenReturn(
         buildMockRequisitionStatusChanges());
@@ -749,7 +749,7 @@ public class SiglusPodServiceTest {
     OrderDto orderDto = buildMockOrderDtoWithOutRequisitionId();
     when(ordersRepository.findOrderDtoById(orderId)).thenReturn(orderDto);
     mockForRequisitionCount();
-    when(siglusFacilityReferenceDataService.findOneFacility(orderDto.getSupplyingFacilityId())).thenReturn(
+    when(siglusFacilityReferenceDataService.findOneWithoutCache(orderDto.getSupplyingFacilityId())).thenReturn(
         buildMockFacilityDtoWithLevel2());
     when(requisitionStatusChangeRepository.findByRequisitionId(requisitionId)).thenReturn(
         buildMockRequisitionStatusChangesWithNoReleasedStatus());
@@ -770,7 +770,7 @@ public class SiglusPodServiceTest {
     OrderDto orderDto = buildMockOrderDtoWithOutRequisitionId();
     when(ordersRepository.findOrderDtoById(orderId)).thenReturn(orderDto);
     mockForRequisitionCount();
-    when(siglusFacilityReferenceDataService.findOneFacility(orderDto.getSupplyingFacilityId())).thenReturn(
+    when(siglusFacilityReferenceDataService.findOneWithoutCache(orderDto.getSupplyingFacilityId())).thenReturn(
         new FacilityDto());
     when(requisitionStatusChangeRepository.findByRequisitionId(requisitionId)).thenReturn(
         buildMockRequisitionStatusChangesWithNoReleasedStatus());
@@ -792,7 +792,7 @@ public class SiglusPodServiceTest {
     OrderDto orderDto = buildMockOrderDtoWithOutRequisitionId();
     when(ordersRepository.findOrderDtoById(orderId)).thenReturn(orderDto);
     mockForRequisitionCount();
-    when(siglusFacilityReferenceDataService.findOneFacility(orderDto.getSupplyingFacilityId())).thenReturn(
+    when(siglusFacilityReferenceDataService.findOneWithoutCache(orderDto.getSupplyingFacilityId())).thenReturn(
         buildMockFacilityDtoWithLevel3AndNoParent());
     when(requisitionStatusChangeRepository.findByRequisitionId(requisitionId)).thenReturn(
         buildMockRequisitionStatusChangesWithNoReleasedStatus());

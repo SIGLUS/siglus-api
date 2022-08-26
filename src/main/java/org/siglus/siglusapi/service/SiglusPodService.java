@@ -319,7 +319,7 @@ public class SiglusPodService {
     response.setRequisitionId(realRequisitionId);
     response.setRequisitionNum(requisitionExtensionService.formatRequisitionNumber(realRequisitionId));
 
-    FacilityDto facilityDto = siglusFacilityReferenceDataService.findOneFacility(orderDto.getSupplyingFacilityId());
+    FacilityDto facilityDto = siglusFacilityReferenceDataService.findOneWithoutCache(orderDto.getSupplyingFacilityId());
     GeographicZoneDto zoneDto = facilityDto.getGeographicZone();
     if (Objects.nonNull(zoneDto)) {
       if (zoneDto.getLevel().getLevelNumber().equals(DISTRICT_LEVEL_NUMBER)) {

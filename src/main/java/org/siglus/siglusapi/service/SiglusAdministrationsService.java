@@ -274,10 +274,8 @@ public class SiglusAdministrationsService {
       eachRow.add(locationManagement.getBarcode());
       eachRow.add(locationManagement.getBin());
       eachRow.add(locationManagement.getLevel());
-
       dataRows.add(eachRow);
     }
-
     return dataRows;
   }
 
@@ -298,7 +296,7 @@ public class SiglusAdministrationsService {
   }
 
   private FacilitySearchResultDto getFacilityInfo(UUID facilityId) {
-    FacilityDto facilityInfo = siglusFacilityReferenceDataService.findOneFacility(facilityId);
+    FacilityDto facilityInfo = siglusFacilityReferenceDataService.findOneWithoutCache(facilityId);
     if (null == facilityInfo) {
       log.info("Facility not found; Facility id: {}", facilityId);
       throw new NotFoundException("Resources not found");
