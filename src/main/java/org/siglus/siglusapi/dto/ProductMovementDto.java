@@ -16,6 +16,7 @@
 package org.siglus.siglusapi.dto;
 
 import java.util.List;
+import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -27,6 +28,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @Data
 public class ProductMovementDto {
+  private UUID orderableId;
   private String facilityName;
   private String productCode;
   private String productName;

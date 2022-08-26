@@ -62,29 +62,31 @@ public class StockMovementService {
         orderableIdsSet);
     List<ProductMovement> productMovements = allProductMovements.getProductMovements();
     LinkedList<StockMovementResDto> stockMovementResDtos = new LinkedList<>();
-    StringBuilder destinationName = new StringBuilder();
-    StringBuilder destinationFreeText = new StringBuilder();
-    StringBuilder sourceName = new StringBuilder();
-    StringBuilder sourceFreeText = new StringBuilder();
-
     for (ProductMovement productMovement : productMovements) {
+      String destinationName = "";
+      String destinationFreeText = "";
+      String sourceName = "";
+      String sourceFreeText = "";
+      String reason = null;
       int soh = 0;
       int count = 0;
       switch (productMovement.getMovementDetail().getType()) {
         case ISSUE:
           count -= productMovement.getMovementDetail().getAdjustment();
           soh += productMovement.getStockQuantity();
+          destinationName = productMovement.getMovementDetail().getReason();
           if (OUTROS.equals(productMovement.getMovementDetail().getReason())) {
-            destinationName.append(OUTROS);
-            destinationFreeText.append(productMovement.getSourcefreetext());
+            destinationName = OUTROS;
+            destinationFreeText = productMovement.getDestinationfreetext();
           }
           break;
         case RECEIVE:
           count += productMovement.getMovementDetail().getAdjustment();
           soh += productMovement.getStockQuantity();
+          sourceName = productMovement.getMovementDetail().getReason();
           if (OUTROS.equals(productMovement.getMovementDetail().getReason())) {
-            sourceName.append(OUTROS);
-            sourceFreeText.append(productMovement.getSourcefreetext());
+            sourceName = OUTROS;
+            sourceFreeText = productMovement.getSourcefreetext();
           }
           break;
         case UNPACK_KIT:
@@ -92,6 +94,10 @@ public class StockMovementService {
         case ADJUSTMENT:
           count += productMovement.getMovementDetail().getAdjustment();
           soh += productMovement.getStockQuantity();
+          reason = productMovement.getMovementDetail().getType().toString();
+          if (productMovement.getMovementDetail().getType().toString().equals("UNPACK_KIT")) {
+            reason = productMovement.getMovementDetail().getReason();
+          }
           break;
         default:
           break;
@@ -102,12 +108,13 @@ public class StockMovementService {
           .dateOfMovement(productMovement.getEventTime().getOccurredDate())
           .type(productMovement.getMovementDetail().getType().toString())
           .productCode(productMovement.getProductCode())
-          .reason(productMovement.getMovementDetail().getReason())
+          .reason(reason)
           .documentNumber(productMovement.getDocumentNumber())
-          .sourceName(sourceName.toString())
-          .destinationName(destinationName.toString())
-          .sourceFreeText(sourceFreeText.toString())
-          .destinationFreeText(destinationFreeText.toString())
+          .sourceName(sourceName)
+          .destinationName(destinationName)
+          .sourceFreeText(sourceFreeText)
+          .destinationFreeText(destinationFreeText)
+          .signature(productMovement.getSignature())
           .build();
       stockMovementResDtos.add(stockMovementResDto);
     }
