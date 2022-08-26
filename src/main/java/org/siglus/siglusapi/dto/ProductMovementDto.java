@@ -22,7 +22,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
@@ -32,8 +31,10 @@ public class ProductMovementDto {
   private String facilityName;
   private String productCode;
   private String productName;
+  private UUID programId;
   private String program;
   private List<StockMovementResDto> lineItems;
   private Integer stockOnHand;
   private String displayUnit;
+  private boolean inKit;
 }

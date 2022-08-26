@@ -518,17 +518,19 @@ public class SiglusStockCardSummariesService {
       Map<UUID, List<LotLocationSohDto>> lotLocationMaps = lotLocationSohDtoList.stream()
           .collect(Collectors.groupingBy(LotLocationSohDto::getLotId));
       stockCardSummaryV2Dto.getCanFulfillForMe().forEach(canFulfillForMeEntryDto -> {
-        StockCardDetailsWithLocationDto fulfill = StockCardDetailsWithLocationDto.builder()
-            .lotLocationSohDtoList(lotLocationMaps.isEmpty() || canFulfillForMeEntryDto.getLot() == null ? null
-                : lotLocationMaps.get(canFulfillForMeEntryDto.getLot().getId()))
-            .orderable(getOrderableFromObjectReference(orderableDtos, canFulfillForMeEntryDto.getOrderable()))
-            .lot(getLotFromObjectReference(lotDtos, canFulfillForMeEntryDto.getLot()))
-            .occurredDate(canFulfillForMeEntryDto.getOccurredDate())
-            .stockOnHand(canFulfillForMeEntryDto.getStockOnHand())
-            .processedDate(canFulfillForMeEntryDto.getProcessedDate())
-            .stockCard(canFulfillForMeEntryDto.getStockCard())
-            .build();
-        stockCardDetailsDtos.add(fulfill);
+        if (canFulfillForMeEntryDto.getStockOnHand() != 0) {
+          StockCardDetailsWithLocationDto fulfill = StockCardDetailsWithLocationDto.builder()
+              .lotLocationSohDtoList(lotLocationMaps.isEmpty() || canFulfillForMeEntryDto.getLot() == null ? null
+                  : lotLocationMaps.get(canFulfillForMeEntryDto.getLot().getId()))
+              .orderable(getOrderableFromObjectReference(orderableDtos, canFulfillForMeEntryDto.getOrderable()))
+              .lot(getLotFromObjectReference(lotDtos, canFulfillForMeEntryDto.getLot()))
+              .occurredDate(canFulfillForMeEntryDto.getOccurredDate())
+              .stockOnHand(canFulfillForMeEntryDto.getStockOnHand())
+              .processedDate(canFulfillForMeEntryDto.getProcessedDate())
+              .stockCard(canFulfillForMeEntryDto.getStockCard())
+              .build();
+          stockCardDetailsDtos.add(fulfill);
+        }
       });
       stockCardSummaryDto.setStockCardDetails(stockCardDetailsDtos);
       stockCardSummaryDtos.add(stockCardSummaryDto);

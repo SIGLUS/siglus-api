@@ -87,7 +87,7 @@ public class SiglusStockMovementServiceTest {
     when(stockManagementRepository.getAllProductMovements(any(), any(), any(), any()))
         .thenReturn(period);
     List<StockMovementResDto> productMovements = stockMovementService.getProductMovements(null, null, null, null);
-    assertEquals(7, productMovements.size());
+    assertEquals(8, productMovements.size());
   }
 
   @Test
@@ -98,7 +98,7 @@ public class SiglusStockMovementServiceTest {
     when(stockManagementRepository.getAllProductMovements(facilityId, orderableIds)).thenReturn(
         periodOfProductMovements);
     List<StockMovementResDto> movementsByProduct = stockMovementService.getMovementsByProduct(facilityId, orderableId);
-    assertEquals(movementsByProduct.size(), 7);
+    assertEquals(movementsByProduct.size(), 8);
   }
 
   private PeriodOfProductMovements mockPeriodOfProductMovements() {
@@ -151,11 +151,11 @@ public class SiglusStockMovementServiceTest {
         .productCode("test1")
         .stockQuantity(10)
         .eventTime(
-            EventTime.fromDatabase(java.sql.Date.valueOf("2021-10-02"), "2021-09-15T01:23:45Z", serverProccessAt))
+            EventTime.fromDatabase(java.sql.Date.valueOf("2021-10-02"), "2021-09-15T01:23:41Z", serverProccessAt))
         .movementDetail(new MovementDetail(10, MovementType.ISSUE, "Outros"))
         .lotMovements(singletonList(movement1Lot1))
         .processedAt(serverProccessAt.toInstant())
-        .sourcefreetext("123")
+        .sourcefreetext("121243")
         .build();
     LotMovement movement2Lot1 = LotMovement.builder()
         .stockQuantity(10)
@@ -166,7 +166,7 @@ public class SiglusStockMovementServiceTest {
         .productCode("test")
         .stockQuantity(10)
         .eventTime(
-            EventTime.fromDatabase(java.sql.Date.valueOf("2021-10-01"), "2021-10-01T01:23:45Z", serverProccessAt))
+            EventTime.fromDatabase(java.sql.Date.valueOf("2021-10-02"), "2021-10-01T01:23:25Z", serverProccessAt))
         .movementDetail(new MovementDetail(10, MovementType.RECEIVE, "Outros"))
         .lotMovements(singletonList(movement2Lot1))
         .processedAt(serverProccessAt.toInstant())
@@ -212,6 +212,16 @@ public class SiglusStockMovementServiceTest {
         .processedAt(serverProccessAt.toInstant())
         .sourcefreetext("123")
         .build();
-    return asList(movement1, movement2, movement3, movement4, movement5, movement6, movement7);
+    ProductMovement movement8 = ProductMovement.builder()
+        .productCode("test12")
+        .stockQuantity(10)
+        .eventTime(
+            EventTime.fromDatabase(java.sql.Date.valueOf("2021-10-01"), "2021-09-15T01:23:45Z", serverProccessAt))
+        .movementDetail(new MovementDetail(10, MovementType.UNPACK_KIT, "5251"))
+        .lotMovements(singletonList(movement1Lot1))
+        .processedAt(serverProccessAt.toInstant())
+        .sourcefreetext("123")
+        .build();
+    return asList(movement1, movement2, movement3, movement4, movement5, movement6, movement7, movement8);
   }
 }
