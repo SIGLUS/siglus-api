@@ -386,7 +386,7 @@ public class CalculatedStocksOnHandByLocationService {
       if (stockCardToLineItems.containsKey(stockCard)) {
         stockCardToLineItems.get(stockCard).add(lineItem);
       } else {
-        stockCardToLineItems.put(stockCard, Arrays.asList(lineItem));
+        stockCardToLineItems.put(stockCard, new ArrayList<StockCardLineItem>(Arrays.asList(lineItem)));
       }
     });
     return stockCardToLineItems;
