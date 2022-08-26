@@ -17,17 +17,17 @@ package org.siglus.siglusapi.service;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
-import org.siglus.siglusapi.constant.FieldConstants;
+import org.siglus.siglusapi.dto.MovementTypeHandlerResultDto;
 import org.siglus.siglusapi.dto.StockMovementResDto;
 import org.siglus.siglusapi.dto.android.PeriodOfProductMovements;
 import org.siglus.siglusapi.dto.android.ProductMovement;
-import org.siglus.siglusapi.dto.android.enumeration.MovementType;
 import org.siglus.siglusapi.repository.StockManagementRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -43,11 +43,11 @@ public class StockMovementService {
 
   private static final String OUTROS = "Outros";
 
-  private static final String ADJUSTMENT_KEY="stockConstants.adjustment";
+  private static final String ADJUSTMENT_KEY = "stockConstants.adjustment";
 
-  private static final String PHYSICAL_INVENTORY_KEY="stockCard.physicalInventory";
+  private static final String PHYSICAL_INVENTORY_KEY = "stockCard.physicalInventory";
 
-  private static final String INITIAL_INVENTORY_KEY="stockCard.inventory";
+  private static final String INITIAL_INVENTORY_KEY = "stockCard.inventory";
 
 
   @Autowired
@@ -74,70 +74,79 @@ public class StockMovementService {
     LinkedList<StockMovementResDto> stockMovementResDtos = new LinkedList<>();
     boolean initialFlag = true;
     for (ProductMovement productMovement : productMovements) {
-      String destinationName = new String();
-      String destinationFreeText = new String();
-      String sourceName = new String();
-      String sourceFreeText = new String();
-      String reason = new String();
-      int soh = 0;
-      int count = 0;
-      switch (productMovement.getMovementDetail().getType()) {
-        case ISSUE:
-          count -= productMovement.getMovementDetail().getAdjustment();
-          soh += productMovement.getStockQuantity();
-          destinationName = productMovement.getMovementDetail().getReason();
-          if (OUTROS.equals(productMovement.getMovementDetail().getReason())) {
-            destinationName = OUTROS;
-            destinationFreeText = productMovement.getDestinationfreetext();
-          }
-          break;
-        case RECEIVE:
-          count += productMovement.getMovementDetail().getAdjustment();
-          soh += productMovement.getStockQuantity();
-          sourceName = productMovement.getMovementDetail().getReason();
-          if (OUTROS.equals(productMovement.getMovementDetail().getReason())) {
-            sourceName = OUTROS;
-            sourceFreeText = productMovement.getSourcefreetext();
-          }
-          break;
-        case UNPACK_KIT:
-          count +=productMovement.getMovementDetail().getAdjustment();
-          soh += productMovement.getStockQuantity();
-          reason = productMovement.getMovementDetail().getReason();
-          break;
-        case PHYSICAL_INVENTORY:
-          count += productMovement.getMovementDetail().getAdjustment();
-          soh += productMovement.getStockQuantity();
-          if (initialFlag) {
-            reason = INITIAL_INVENTORY_KEY;
-            initialFlag = false;
-          }else reason = PHYSICAL_INVENTORY_KEY;
-          break;
-        case ADJUSTMENT:
-          count += productMovement.getMovementDetail().getAdjustment();
-          soh += productMovement.getStockQuantity();
-          reason = ADJUSTMENT_KEY;
-          break;
-        default:
-          break;
+      MovementTypeHandlerResultDto movementTypeHandlerResultDto = movementTypeHandler(productMovement, initialFlag);
+      if (INITIAL_INVENTORY_KEY.equals(movementTypeHandlerResultDto.getReason())) {
+        initialFlag = false;
       }
       StockMovementResDto stockMovementResDto = StockMovementResDto.builder()
-          .movementQuantity(count)
-          .productSoh(soh)
+          .movementQuantity(movementTypeHandlerResultDto.getCount())
+          .productSoh(movementTypeHandlerResultDto.getSoh())
           .dateOfMovement(productMovement.getEventTime().getOccurredDate())
           .type(productMovement.getMovementDetail().getType().toString())
           .productCode(productMovement.getProductCode())
-          .reason(reason)
+          .reason(movementTypeHandlerResultDto.getReason())
           .documentNumber(productMovement.getDocumentNumber())
-          .sourceName(sourceName)
-          .destinationName(destinationName)
-          .sourceFreeText(sourceFreeText)
-          .destinationFreeText(destinationFreeText)
+          .sourceName(movementTypeHandlerResultDto.getSourceName())
+          .destinationName(movementTypeHandlerResultDto.getDestinationName())
+          .sourceFreeText(movementTypeHandlerResultDto.getSourceFreeText())
+          .destinationFreeText(movementTypeHandlerResultDto.getDestinationFreeText())
           .signature(productMovement.getSignature())
           .build();
       stockMovementResDtos.add(stockMovementResDto);
     }
+    Collections.reverse(stockMovementResDtos);
     return stockMovementResDtos;
+  }
+
+  MovementTypeHandlerResultDto movementTypeHandler(ProductMovement productMovement, boolean initialFlag) {
+    String destinationName = "";
+    String destinationFreeText = "";
+    String sourceName = "";
+    String sourceFreeText = "";
+    String reason = "";
+    int soh = 0;
+    int count = 0;
+    switch (productMovement.getMovementDetail().getType()) {
+      case ISSUE:
+        count -= productMovement.getMovementDetail().getAdjustment();
+        soh += productMovement.getStockQuantity();
+        destinationName = OUTROS.equals(productMovement.getMovementDetail().getReason()) ? OUTROS
+            : productMovement.getMovementDetail().getReason();
+        destinationFreeText = productMovement.getDestinationfreetext();
+        break;
+      case RECEIVE:
+        count += productMovement.getMovementDetail().getAdjustment();
+        soh += productMovement.getStockQuantity();
+        sourceName = OUTROS.equals(productMovement.getMovementDetail().getReason()) ? OUTROS
+            : productMovement.getMovementDetail().getReason();
+        sourceFreeText = productMovement.getSourcefreetext();
+        break;
+      case UNPACK_KIT:
+        count += productMovement.getMovementDetail().getAdjustment();
+        soh += productMovement.getStockQuantity();
+        reason = productMovement.getMovementDetail().getReason();
+        break;
+      case PHYSICAL_INVENTORY:
+        count += productMovement.getMovementDetail().getAdjustment();
+        soh += productMovement.getStockQuantity();
+        reason = initialFlag ? INITIAL_INVENTORY_KEY : PHYSICAL_INVENTORY_KEY;
+        break;
+      case ADJUSTMENT:
+        count += productMovement.getMovementDetail().getAdjustment();
+        soh += productMovement.getStockQuantity();
+        reason = ADJUSTMENT_KEY;
+        break;
+      default:
+    }
+    return MovementTypeHandlerResultDto.builder()
+        .count(count)
+        .soh(soh)
+        .sourceName(sourceName)
+        .sourceFreeText(sourceFreeText)
+        .destinationName(destinationName)
+        .destinationFreeText(destinationFreeText)
+        .reason(reason)
+        .build();
   }
 
   private List<StockMovementResDto> simplifyStockMovementResponse(

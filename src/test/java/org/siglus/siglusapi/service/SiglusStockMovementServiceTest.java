@@ -87,7 +87,7 @@ public class SiglusStockMovementServiceTest {
     when(stockManagementRepository.getAllProductMovements(any(), any(), any(), any()))
         .thenReturn(period);
     List<StockMovementResDto> productMovements = stockMovementService.getProductMovements(null, null, null, null);
-    assertEquals(3, productMovements.size());
+    assertEquals(7, productMovements.size());
   }
 
   @Test
@@ -98,7 +98,7 @@ public class SiglusStockMovementServiceTest {
     when(stockManagementRepository.getAllProductMovements(facilityId, orderableIds)).thenReturn(
         periodOfProductMovements);
     List<StockMovementResDto> movementsByProduct = stockMovementService.getMovementsByProduct(facilityId, orderableId);
-    assertEquals(movementsByProduct.size(), 3);
+    assertEquals(movementsByProduct.size(), 7);
   }
 
   private PeriodOfProductMovements mockPeriodOfProductMovements() {
@@ -132,7 +132,7 @@ public class SiglusStockMovementServiceTest {
         .expirationDate(java.sql.Date.valueOf(LocalDate.of(2023, 12, 31)))
         .build();
     ProductLotStock kitLot = ProductLotStock.builder()
-        .code(ProductLotCode.of("26A01", null))
+        .code(ProductLotCode.of("26A03", null))
         .productName("Some kit")
         .stockQuantity(10)
         .eventTime(EventTime.fromRequest(LocalDate.of(2021, 10, 31), Instant.now()))
@@ -148,10 +148,10 @@ public class SiglusStockMovementServiceTest {
         .build();
     Timestamp serverProccessAt = Timestamp.valueOf("2021-11-01 01:23:45");
     ProductMovement movement1 = ProductMovement.builder()
-        .productCode("test")
+        .productCode("test1")
         .stockQuantity(10)
         .eventTime(
-            EventTime.fromDatabase(java.sql.Date.valueOf("2021-10-01"), "2021-09-15T01:23:45Z", serverProccessAt))
+            EventTime.fromDatabase(java.sql.Date.valueOf("2021-10-02"), "2021-09-15T01:23:45Z", serverProccessAt))
         .movementDetail(new MovementDetail(10, MovementType.ISSUE, "Outros"))
         .lotMovements(singletonList(movement1Lot1))
         .processedAt(serverProccessAt.toInstant())
@@ -178,6 +178,40 @@ public class SiglusStockMovementServiceTest {
         .movementDetail(new MovementDetail(10, MovementType.ADJUSTMENT, "DISTRICT_DDM"))
         .processedAt(serverProccessAt.toInstant())
         .build();
-    return asList(movement1, movement2, movement3);
+    ProductMovement movement4 = ProductMovement.builder()
+        .productCode("26A01")
+        .stockQuantity(10)
+        .eventTime(EventTime.fromDatabase(Date.valueOf("2021-10-31"), "2021-11-01T01:23:45Z", serverProccessAt))
+        .movementDetail(new MovementDetail(10, MovementType.PHYSICAL_INVENTORY, "PHYSICAL_INVENTORY"))
+        .processedAt(serverProccessAt.toInstant())
+        .build();
+    ProductMovement movement5 = ProductMovement.builder()
+        .productCode("26A01")
+        .stockQuantity(10)
+        .eventTime(EventTime.fromDatabase(Date.valueOf("2021-10-31"), "2021-11-01T01:23:45Z", serverProccessAt))
+        .movementDetail(new MovementDetail(10, MovementType.PHYSICAL_INVENTORY, "INVENTORY"))
+        .processedAt(serverProccessAt.toInstant())
+        .build();
+    ProductMovement movement6 = ProductMovement.builder()
+        .productCode("test")
+        .stockQuantity(10)
+        .eventTime(
+            EventTime.fromDatabase(java.sql.Date.valueOf("2021-10-01"), "2021-09-15T01:23:45Z", serverProccessAt))
+        .movementDetail(new MovementDetail(10, MovementType.ISSUE, "lasdfjwe"))
+        .lotMovements(singletonList(movement1Lot1))
+        .processedAt(serverProccessAt.toInstant())
+        .sourcefreetext("123")
+        .build();
+    ProductMovement movement7 = ProductMovement.builder()
+        .productCode("test")
+        .stockQuantity(10)
+        .eventTime(
+            EventTime.fromDatabase(java.sql.Date.valueOf("2021-10-01"), "2021-09-15T01:23:45Z", serverProccessAt))
+        .movementDetail(new MovementDetail(10, MovementType.RECEIVE, "asdgw3erhewrh"))
+        .lotMovements(singletonList(movement1Lot1))
+        .processedAt(serverProccessAt.toInstant())
+        .sourcefreetext("123")
+        .build();
+    return asList(movement1, movement2, movement3, movement4, movement5, movement6, movement7);
   }
 }
