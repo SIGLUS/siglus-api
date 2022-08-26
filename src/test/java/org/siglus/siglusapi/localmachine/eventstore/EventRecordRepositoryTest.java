@@ -19,11 +19,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
 import java.util.UUID;
-import javax.transaction.Transactional;
 import org.junit.Test;
 import org.siglus.siglusapi.localmachine.LocalMachineIntegrationTest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.transaction.annotation.Transactional;
 
 @Transactional
 public class EventRecordRepositoryTest extends LocalMachineIntegrationTest {

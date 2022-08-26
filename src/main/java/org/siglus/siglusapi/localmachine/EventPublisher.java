@@ -18,8 +18,6 @@ package org.siglus.siglusapi.localmachine;
 import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.UUID;
-import javax.transaction.Transactional;
-import javax.transaction.Transactional.TxType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.siglus.siglusapi.dto.UserDto;
@@ -29,6 +27,8 @@ import org.siglus.siglusapi.localmachine.eventstore.EventStore;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 @Component
 @RequiredArgsConstructor
@@ -38,6 +38,9 @@ public class EventPublisher {
   private final EventStore eventStore;
   private final ApplicationEventPublisher eventPublisher;
   private final SiglusAuthenticationHelper siglusAuthenticationHelper;
+  // andriod -> web -(xxxsynced) -> local machine
+  // localmachine -> web \
+  //               -> x -> local machine
 
   public void emitGroupEvent(String groupId, UUID receiverId, Object payload) {
     Event.EventBuilder eventBuilder = baseEventBuilder(groupId, receiverId, payload);
@@ -51,8 +54,7 @@ public class EventPublisher {
     eventStore.emit(eventBuilder.build());
   }
 
-  // publish event should be in an isolated transaction to make the replay process is transactional
-  @Transactional(TxType.REQUIRES_NEW)
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
   public void publishEvent(Event event) {
     if (event.isLocalReplayed()) {
       log.info("event {} is relayed already locally, skip", event.getId());

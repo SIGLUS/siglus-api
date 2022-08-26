@@ -22,14 +22,14 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import javax.transaction.Transactional;
-import javax.transaction.Transactional.TxType;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.siglus.siglusapi.localmachine.Event;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 @Component
 @RequiredArgsConstructor
@@ -62,7 +62,7 @@ public class EventStore {
     repository.updateOnlineWebSyncedToTrueByIds(eventIds);
   }
 
-  @Transactional(TxType.REQUIRES_NEW)
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
   public List<Event> importAllGetNewAdded(List<Event> events) {
     List<Event> newAdded = new LinkedList<>();
     events.forEach(

@@ -18,7 +18,6 @@ package org.siglus.siglusapi.localmachine.agent;
 import static org.springframework.util.ObjectUtils.isEmpty;
 
 import java.util.List;
-import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.javacrumbs.shedlock.core.SchedulerLock;
@@ -28,6 +27,7 @@ import org.siglus.siglusapi.localmachine.eventstore.EventStore;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 @Component
 @RequiredArgsConstructor
@@ -49,6 +49,7 @@ public class Synchronizer {
   public void sync() {
     push();
     pull();
+    // TODO: 2022/8/26 report local replay info to web for Ops
   }
 
   @Transactional

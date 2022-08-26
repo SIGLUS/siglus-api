@@ -16,12 +16,12 @@
 package org.siglus.siglusapi.task;
 
 import java.time.LocalDate;
-import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import net.javacrumbs.shedlock.core.SchedulerLock;
 import org.siglus.siglusapi.service.task.report.TracerDrugReportService;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @RequiredArgsConstructor
 @Service

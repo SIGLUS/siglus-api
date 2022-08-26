@@ -56,18 +56,10 @@ public abstract class EventImporter {
     // |event 4|--->[group event M, group event M-1] (dependent events are not ready)
     // |.......|
     // |event N|
-    checkAllEventsBelongToOneSender(events);
     Map<String, List<Event>> eventGroups =
         events.stream().collect(groupingBy(Event::getGroupId, LinkedHashMap::new, toList()));
     List<Event> defaultGroup = eventGroups.remove(null);
     replayer.playDefaultGroupEvents(defaultGroup);
     eventGroups.forEach((groupId, value) -> replayer.playGroupEvents(groupId));
-  }
-
-  private void checkAllEventsBelongToOneSender(List<Event> events) {
-    long senderCount = events.stream().map(Event::getSenderId).distinct().count();
-    if (senderCount > 1) {
-      throw new IllegalStateException("events are raised by different senders");
-    }
   }
 }

@@ -15,13 +15,13 @@
 
 package org.siglus.siglusapi.task;
 
-import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import net.javacrumbs.shedlock.core.SchedulerLock;
 import org.siglus.siglusapi.service.task.report.HistoricalDataPersistentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @RequiredArgsConstructor
 @Service
