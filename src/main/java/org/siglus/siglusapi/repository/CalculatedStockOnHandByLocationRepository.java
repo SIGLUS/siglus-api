@@ -27,10 +27,10 @@ import javax.persistence.criteria.Predicate;
 import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
 import org.siglus.siglusapi.domain.CalculatedStockOnHandByLocation;
 import org.siglus.siglusapi.domain.StockCardLineItemExtension;
-import org.siglus.siglusapi.domain.StockCardLocationMovementLineItem;
 import org.siglus.siglusapi.dto.LotLocationSohDto;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -97,22 +97,6 @@ public interface CalculatedStockOnHandByLocationRepository extends JpaRepository
     });
   }
 
-  default List<CalculatedStockOnHandByLocation> getFollowingStockOnHands(
-          List<StockCardLocationMovementLineItem> movements,
-          Date occurredDate) {
-    return findAll((root, query, cb) -> {
-      Predicate byFutureDate = cb.greaterThanOrEqualTo(root.get("occurredDate"), occurredDate);
-      List<Predicate> predicates = new ArrayList<>();
-      movements.forEach(movement -> predicates.add(cb.and(
-              cb.equal(root.get("stockCardId"), movement.getStockCardId()),
-              cb.or(cb.equal(root.get("locationCode"), movement.getSrcLocationCode()),
-                    cb.equal(root.get("locationCode"), movement.getDestLocationCode()))
-      )));
-      Predicate byStockCardIdAndLocationCode = predicates.stream().reduce(cb.conjunction(), cb::or);
-      return cb.and(byFutureDate, byStockCardIdAndLocationCode);
-    });
-  }
-
   @Query(value = "select distinct on (stockcardid, locationcode) \n"
       + "    id, stockcardid, occurreddate, calculatedstockonhandid, locationcode, area, first_value(stockonhand)\n"
       + "    over (partition by (stockcardid, locationcode) order by occurreddate DESC ) as stockonhand \n"
@@ -120,4 +104,14 @@ public interface CalculatedStockOnHandByLocationRepository extends JpaRepository
       + "where stockcardid in :stockCardIds", nativeQuery = true)
   List<CalculatedStockOnHandByLocation> findLatestLocationSohByStockCardIds(
       @Param("stockCardIds") Collection<UUID> stockCardIds);
+
+
+  @Modifying
+  @Query(value = "delete from siglusintegration.calculated_stocks_on_hand_by_location csohbl "
+          + "where csohbl.stockcardid = :stockCardId and csohbl.occurreddate >= :occurredDate "
+          + "and csohbl.locationcode = :locationCode;",
+          nativeQuery = true)
+  void deleteAllByStockCardIdAndOccurredDateAndLocationCodes(@Param("stockCardId") UUID stockCardId,
+                                                             @Param("occurredDate") Date occurredDate,
+                                                             @Param("locationCode") String locationCode);
 }

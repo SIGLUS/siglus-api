@@ -85,7 +85,6 @@ public class CalculatedStocksOnHandByLocationService {
     LocalDate occurredDate = movements.get(0).getOccurredDate();
     Map<String, Integer> stockCardIdAndLocationCodeToPreviousStockOnHandMap =
             this.getPreviousStockOnHandMapTillNow(stockCardIds);
-    deleteFollowingStockOnHands(movements);
 
     List<CalculatedStockOnHandByLocation> toSaveList = new ArrayList<>();
     Set<String> allUniqueKeys = movements.stream()
@@ -97,6 +96,9 @@ public class CalculatedStocksOnHandByLocationService {
       String locationCode = key.split(SEPARATOR)[1];
       Integer previousSoh = stockCardIdAndLocationCodeToPreviousStockOnHandMap.get(key);
       previousSoh = previousSoh == null ? 0 : previousSoh;
+
+      calculatedStockOnHandByLocationRepository.deleteAllByStockCardIdAndOccurredDateAndLocationCodes(
+              stockCardId, Date.from(occurredDate.atStartOfDay(ZoneId.systemDefault()).toInstant()), locationCode);
 
       String area = null;
       for (StockCardLocationMovementLineItem movement: movements) {
@@ -207,15 +209,6 @@ public class CalculatedStocksOnHandByLocationService {
     Date date = Date.from(occurredDate.atStartOfDay(zoneId).toInstant());
     List<CalculatedStockOnHandByLocation> toDelete = calculatedStockOnHandByLocationRepository
             .getFollowingStockOnHands(allLineItems, lineItemIdToExtension, date);
-    calculatedStockOnHandByLocationRepository.delete(toDelete);
-  }
-
-  private void deleteFollowingStockOnHands(List<StockCardLocationMovementLineItem> movements) {
-    LocalDate occurredDate = movements.get(0).getOccurredDate();
-    ZoneId zoneId = ZoneId.systemDefault();
-    Date date = Date.from(occurredDate.atStartOfDay(zoneId).toInstant());
-    List<CalculatedStockOnHandByLocation> toDelete = calculatedStockOnHandByLocationRepository
-            .getFollowingStockOnHands(movements, date);
     calculatedStockOnHandByLocationRepository.delete(toDelete);
   }
 
@@ -393,7 +386,7 @@ public class CalculatedStocksOnHandByLocationService {
       if (stockCardToLineItems.containsKey(stockCard)) {
         stockCardToLineItems.get(stockCard).add(lineItem);
       } else {
-        stockCardToLineItems.put(stockCard, Arrays.asList(lineItem));
+        stockCardToLineItems.put(stockCard, new ArrayList<StockCardLineItem>(Arrays.asList(lineItem)));
       }
     });
     return stockCardToLineItems;
