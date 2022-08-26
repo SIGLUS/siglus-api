@@ -176,4 +176,17 @@ public class FieldConstants {
 
   public static final int QUARTERLY_SUBMIT_PRODUCT_ZERO_INVENTORY_MONTH_RANGE = 6;
 
+  public static final String METABASE_PARAM_TEMPLATE = "\"%s\": \"%s\"";
+
+  public static final String METABASE_PAYLOAD_TEMPLATE = "{\"resource\": {\"dashboard\": %d},\"params\": {%s}}";
+
+  public static final String METABASE_PART_URL = "/embed/dashboard/";
+
+  public static final String METABASE_EXTENSION_URL =
+      "#bordered=false&titled=true&hide_parameters=facility_code,district_facility_code,province_facility_code";
+
+  public static final String JWT_TOKEN_HEADER_PARAM_NAME = "typ";
+
+  public static final String JWT_TOKEN_HEADER_PARAM_VALUE = "JWT";
+
 }

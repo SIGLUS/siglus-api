@@ -1076,6 +1076,31 @@ traits:
               application/json:
                 schema: localizedMessage
 
+
+    /stockEvents/location:
+      post:
+        is: [ secured ]
+        description: Create a new stock event with one or more orderables.
+        body:
+          application/json:
+            schema: stockEventDto
+        responses:
+          201:
+            description: Stock event has been processed with no validatoin error or persistence error.
+            body:
+              application/json:
+                schema: uuid
+          400:
+            description: Failed to process stock event due to validation error.
+            body:
+              application/json:
+                schema: localizedMessage
+          403:
+            description: User does not have permission to create stock events for given facility and program.
+            body:
+              application/json:
+                schema: localizedMessage
+
     /movementDateLimit/startDate:
       get:
         is: [ secured ]

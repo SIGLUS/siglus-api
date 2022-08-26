@@ -44,6 +44,7 @@ import org.siglus.siglusapi.repository.SiglusStockCardRepository;
 import org.siglus.siglusapi.repository.StockCardLocationMovementDraftRepository;
 import org.siglus.siglusapi.repository.StockCardLocationMovementLineItemRepository;
 
+@SuppressWarnings({"PMD.UnusedPrivateField"})
 @RunWith(MockitoJUnitRunner.class)
 public class SiglusStockCardLocationMovementServiceTest {
 
@@ -61,6 +62,9 @@ public class SiglusStockCardLocationMovementServiceTest {
 
   @Mock
   private StockCardLocationMovementDraftRepository movementDraftRepository;
+
+  @Mock
+  private CalculatedStocksOnHandByLocationService calculatedStocksOnHandByLocationService;
 
   private final UUID allProgramId = UUID.randomUUID();
   private final UUID programId = UUID.randomUUID();
