@@ -40,7 +40,6 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang3.SerializationUtils;
 import org.openlmis.stockmanagement.domain.BaseEntity;
 import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
@@ -115,7 +114,6 @@ public class SiglusStockEventsService {
     siglusLotService.createAndFillLotId(eventDto);
     Set<UUID> programIds = getProgramIds(eventDto);
     List<StockEventDto> stockEventDtos;
-    StockEventDto deepCopy = (StockEventDto) SerializationUtils.clone(eventDto);
     if (eventDto.isPhysicalInventory()) {
       stockEventDtos = getStockEventsWhenDoPhysicalInventory(eventDto, programIds);
     } else {
@@ -128,7 +126,7 @@ public class SiglusStockEventsService {
     deleteDraft(eventDto);
 
     if (isByLocation) {
-      calculatedStocksOnHandByLocationService.calculateStockOnHandByLocation(deepCopy);
+      calculatedStocksOnHandByLocationService.calculateStockOnHandByLocation(eventDto);
     }
   }
 
@@ -210,12 +208,7 @@ public class SiglusStockEventsService {
     lineItems.forEach(lineItem -> lineItem.setId(UUID.randomUUID()));
     eventDto.setLineItems(lineItems);
     UUID stockEventId;
-    if (isByLocation && eventDto.isPhysicalInventory()) {
-      // convert the eventDto, merge the duplicate orderableId & lotId lineItems
-      stockEventId = stockEventProcessor.process(mergeEventDtoForLocation(eventDto));
-    } else {
-      stockEventId = stockEventProcessor.process(eventDto);
-    }
+    stockEventId = stockEventProcessor.process(eventDto);
     enhanceStockCard(eventDto, stockEventId, isByLocation);
   }
 

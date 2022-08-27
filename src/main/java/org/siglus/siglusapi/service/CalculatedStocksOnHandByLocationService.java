@@ -28,6 +28,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -164,8 +165,7 @@ public class CalculatedStocksOnHandByLocationService {
     List<CalculatedStockOnHandByLocation> toSaveList = new ArrayList<>();
     stockCardToLineItems.forEach((key, value) -> {
       value.sort(StockCard.getLineItemsComparator());
-      value.stream().findFirst()
-          .ifPresent(item -> recalculateLocationStockOnHand(toSaveList, stockCardIdToLineItems,
+      value.stream().forEach(item -> recalculateLocationStockOnHand(toSaveList, stockCardIdToLineItems,
                   lineItemIdToExtension, item, stockCardIdAndLocationCodeToPreviousStockOnHandMap,
                   stockCardIdToMovements));
     });
@@ -374,15 +374,19 @@ public class CalculatedStocksOnHandByLocationService {
       Map<String, StockCard> uniKeyToStockCard,
       List<StockEventLineItemDto> lineItemDtos,
       Map<UUID, List<StockCardLineItem>> stockCardIdToLineItems) {
+
+    Set<UUID> usedIds = new HashSet<>();
     // run after stock event save, always exist!
     Map<StockCard, List<StockCardLineItem>> stockCardToLineItems = new HashMap<>();
     lineItemDtos.forEach(lineItemDto -> {
       StockCard stockCard = uniKeyToStockCard.get(getUniqueKey(lineItemDto));
       StockCardLineItem lineItem = stockCardIdToLineItems.get(stockCard.getId()).stream()
           .filter(item -> item.getOccurredDate().equals(lineItemDto.getOccurredDate()))
+          .filter(item -> !usedIds.contains(item.getId()))
           .sorted(Comparator.comparing(StockCardLineItem::getProcessedDate).reversed())
           .findFirst()
           .orElseThrow(() -> new IllegalArgumentException("can't find target stock card line item"));
+      usedIds.add(lineItem.getId());
       if (stockCardToLineItems.containsKey(stockCard)) {
         stockCardToLineItems.get(stockCard).add(lineItem);
       } else {
