@@ -162,7 +162,8 @@ public class CalculatedStockOnHandByLocationServiceTest {
   @Test
   public void shouldCalculateSohByLocationWhenSubmitLocationMovement() {
     // given
-    when(calculatedStockOnHandByLocationRepository.findLatestLocationSohByStockCardIds(ImmutableSet.of(stockCardId)))
+    when(calculatedStockOnHandByLocationRepository.findPreviousLocationStockOnHandsTillNow(
+            ImmutableSet.of(stockCardId), LocalDate.now()))
             .thenReturn(buildPreviousSohByLocation());
 
     // when

@@ -34,6 +34,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+@SuppressWarnings("PMD.AvoidDuplicateLiterals")
 public interface CalculatedStockOnHandByLocationRepository extends JpaRepository<CalculatedStockOnHandByLocation, UUID>,
         JpaSpecificationExecutor<CalculatedStockOnHandByLocation> {
   @Query(name = "LotLocationSoh.findLocationSoh", nativeQuery = true)
@@ -77,6 +78,17 @@ public interface CalculatedStockOnHandByLocationRepository extends JpaRepository
           + "and c.occurreddate < :occurredDate "
           + "group by c.stockcardid, c.locationcode)", nativeQuery = true)
   List<CalculatedStockOnHandByLocation> findPreviousLocationStockOnHands(
+          @Param("stockCardIds") Collection<UUID> stockCardIds,
+          @Param("occurredDate") LocalDate occurredDate);
+
+  @Query(value = "select * from siglusintegration.calculated_stocks_on_hand_by_location "
+          + "where (stockcardid, occurreddate) in ("
+          + "select stockcardid, max(occurreddate) "
+          + "from siglusintegration.calculated_stocks_on_hand_by_location c "
+          + "where c.stockcardid in :stockCardIds "
+          + "and c.occurreddate <= :occurredDate "
+          + "group by c.stockcardid, c.locationcode)", nativeQuery = true)
+  List<CalculatedStockOnHandByLocation> findPreviousLocationStockOnHandsTillNow(
           @Param("stockCardIds") Collection<UUID> stockCardIds,
           @Param("occurredDate") LocalDate occurredDate);
 

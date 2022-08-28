@@ -85,7 +85,7 @@ public class CalculatedStocksOnHandByLocationService {
             .map(StockCardLocationMovementLineItem::getStockCardId).collect(Collectors.toSet());
     LocalDate occurredDate = movements.get(0).getOccurredDate();
     Map<String, Integer> stockCardIdAndLocationCodeToPreviousStockOnHandMap =
-            this.getPreviousStockOnHandMapTillNow(stockCardIds);
+            this.getPreviousStockOnHandMapTillNow(stockCardIds, occurredDate);
 
     List<CalculatedStockOnHandByLocation> toSaveList = new ArrayList<>();
     Set<String> allUniqueKeys = movements.stream()
@@ -362,9 +362,9 @@ public class CalculatedStocksOnHandByLocationService {
             CalculatedStockOnHandByLocation::getStockOnHand, (stockOnHand1, stockOnHand2) -> stockOnHand1));
   }
 
-  private Map<String, Integer> getPreviousStockOnHandMapTillNow(Set<UUID> stockCardIds) {
+  private Map<String, Integer> getPreviousStockOnHandMapTillNow(Set<UUID> stockCardIds, LocalDate occurredDate) {
     return calculatedStockOnHandByLocationRepository
-            .findLatestLocationSohByStockCardIds(stockCardIds).stream()
+            .findPreviousLocationStockOnHandsTillNow(stockCardIds, occurredDate).stream()
             .collect(toMap(calculatedStockOnHand -> calculatedStockOnHand.getStockCardId().toString()
                             + SEPARATOR + calculatedStockOnHand.getLocationCode(),
                     CalculatedStockOnHandByLocation::getStockOnHand, (stockOnHand1, stockOnHand2) -> stockOnHand1));
