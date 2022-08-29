@@ -374,8 +374,7 @@ public class SiglusAdministrationsService {
     List<StockCardLocationMovementLineItem> latestMovementList = stockCardLocationMovementLineItemRepository
         .findPreviousRecordByStockCardId(stockCardIds, LocalDate.now());
     latestMovementList.forEach(latestMovement -> {
-      if (LocationConstants.VIRTUAL_LOCATION_CODE.equals(latestMovement.getDestLocationCode())
-          && LocationConstants.VIRTUAL_LOCATION_CODE.equals(latestMovement.getSrcLocationCode())) {
+      if (LocationConstants.VIRTUAL_LOCATION_CODE.equals(latestMovement.getDestLocationCode())) {
         calculatedStockOnHandList.removeIf(calculatedStockOnHand -> calculatedStockOnHand.getStockCard().getId()
             .equals(latestMovement.getStockCardId()));
       }

@@ -109,10 +109,12 @@ public interface CalculatedStockOnHandByLocationRepository extends JpaRepository
     });
   }
 
-  @Query(value = "select * from siglusintegration.calculated_stocks_on_hand_by_location \n"
-      + "         where stockcardid in :stockCardIds \n"
-      + "         order by id \n"
-      + "         desc LIMIT 1;", nativeQuery = true)
+  @Query(value = "select * from siglusintegration.calculated_stocks_on_hand_by_location\n"
+      + "where (stockcardid, processeddate) in\n"
+      + "      (select stockcardid, max(processeddate)\n"
+      + "       from siglusintegration.calculated_stocks_on_hand_by_location c\n"
+      + "       where c.stockcardid in :stockCardIds\n"
+      + "       group by c.stockcardid);", nativeQuery = true)
   List<CalculatedStockOnHandByLocation> findLatestLocationSohByStockCardIds(
       @Param("stockCardIds") Collection<UUID> stockCardIds);
 
