@@ -357,10 +357,12 @@ public class SiglusAdministrationsService {
 
   private List<CalculatedStockOnHandByLocation> findLatestCalculatedSohByLocationVirtualLocationRecordByStockCardId(
       List<UUID> stockCardIds) {
-    return calculatedStocksOnHandLocationsRepository.findLatestLocationSohByStockCardIds(stockCardIds)
-        .stream().filter(calculatedByLocation -> calculatedByLocation.getStockOnHand() > 0
-            && LocationConstants.VIRTUAL_LOCATION_CODE.equals(calculatedByLocation.getLocationCode()))
-        .collect(Collectors.toList());
+    return !stockCardIds.isEmpty()
+        ? calculatedStocksOnHandLocationsRepository.findLatestLocationSohByStockCardIds(stockCardIds)
+            .stream().filter(calculatedByLocation -> calculatedByLocation.getStockOnHand() > 0
+                && LocationConstants.VIRTUAL_LOCATION_CODE.equals(calculatedByLocation.getLocationCode()))
+            .collect(Collectors.toList())
+        : Collections.emptyList();
   }
 
   private List<CalculatedStockOnHand> findStockCardIdsHasStockOnHandOnLot(List<UUID> stockCardIds) {
