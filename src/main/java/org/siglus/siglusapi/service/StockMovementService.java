@@ -15,6 +15,8 @@
 
 package org.siglus.siglusapi.service;
 
+import static org.siglus.siglusapi.constant.FieldConstants.PHYSICAL_INVENTORY;
+
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -75,9 +77,7 @@ public class StockMovementService {
     boolean initialFlag = true;
     for (ProductMovement productMovement : productMovements) {
       MovementTypeHandlerResultDto movementTypeHandlerResultDto = movementTypeHandler(productMovement, initialFlag);
-      if (INITIAL_INVENTORY_KEY.equals(movementTypeHandlerResultDto.getReason())) {
-        initialFlag = false;
-      }
+      initialFlag = false;
       StockMovementResDto stockMovementResDto = StockMovementResDto.builder()
           .movementQuantity(movementTypeHandlerResultDto.getCount())
           .productSoh(movementTypeHandlerResultDto.getSoh())
@@ -95,6 +95,12 @@ public class StockMovementService {
       stockMovementResDtos.add(stockMovementResDto);
     }
     Collections.reverse(stockMovementResDtos);
+    StockMovementResDto first = stockMovementResDtos.get(stockMovementResDtos.size() - 1);
+    if (!first.getType().equals(PHYSICAL_INVENTORY)) {
+      StockMovementResDto initial = StockMovementResDto.builder().reason(INITIAL_INVENTORY_KEY)
+          .dateOfMovement(first.getDateOfMovement()).productSoh(0).build();
+      stockMovementResDtos.add(initial);
+    }
     return stockMovementResDtos;
   }
 
