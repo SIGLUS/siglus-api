@@ -339,7 +339,9 @@ public class SiglusAdministrationsService {
       List<UUID> stockCardIds = stockCards.stream().map(StockCard::getId).collect(Collectors.toList());
       if (BooleanUtils.isTrue(siglusFacilityDto.getEnableLocationManagement())) {
         List<CalculatedStockOnHand> calculatedStockOnHandList = findStockCardIdsHasStockOnHandOnLot(stockCardIds);
-        assignNewVirtualLocations(calculatedStockOnHandList, userId);
+        if (CollectionUtils.isNotEmpty(calculatedStockOnHandList)) {
+          assignNewVirtualLocations(calculatedStockOnHandList, userId);
+        }
       } else {
         List<CalculatedStockOnHandByLocation> stockCardIdsHasStockOnHandOnLocation =
             findStockCardIdsHasStockOnHandOnLocation(stockCardIds);
