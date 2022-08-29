@@ -527,6 +527,9 @@ public class SiglusOrderService {
 
   private BigDecimal calculateSuggestedQuantity(Integer sumApprovedQuantity, Integer sumHistoryApprovedQuantity,
       Integer soh, Integer currentRequisitionApprovedQuantity) {
+    if (currentRequisitionApprovedQuantity == 0) {
+      return BigDecimal.valueOf(0).setScale(2, RoundingMode.DOWN);
+    }
     if (sumApprovedQuantity + sumHistoryApprovedQuantity <= soh) {
       return BigDecimal.valueOf(currentRequisitionApprovedQuantity).setScale(2, RoundingMode.DOWN);
     } else {

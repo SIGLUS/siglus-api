@@ -921,7 +921,8 @@ public class SiglusOrderServiceTest {
   @Test
   public void shouldCalculateAndSaveSuggestedQuantityWhenStartFulfillOrderWithSohIsEnough() {
     // given
-    mockCalcualteSuggestedQuantityCommonConditions(buildMockOrderWithCurrentPeriodIdAndStatusNotFulfilling());
+    mockCalcualteSuggestedQuantityCommonConditions(buildMockOrderWithCurrentPeriodIdAndStatusNotFulfilling(),
+        buildCurrentPeriodRequisitions());
 
     Map<UUID, Integer> orderableIdToSoh = Maps.newHashMap();
     orderableIdToSoh.put(orderableId1, 100);
@@ -953,7 +954,8 @@ public class SiglusOrderServiceTest {
   @Test
   public void shouldCalculateAndSaveSuggestedQuantityWhenStartFulfillOrderWithSohIsNotEnough() {
     // given
-    mockCalcualteSuggestedQuantityCommonConditions(buildMockOrderWithCurrentPeriodIdAndStatusNotFulfilling());
+    mockCalcualteSuggestedQuantityCommonConditions(buildMockOrderWithCurrentPeriodIdAndStatusNotFulfilling(),
+        buildCurrentPeriodRequisitions());
 
     Map<UUID, Integer> orderableIdToSoh = Maps.newHashMap();
     orderableIdToSoh.put(orderableId1, 10);
@@ -982,9 +984,42 @@ public class SiglusOrderServiceTest {
   }
 
   @Test
+  public void shouldCalculateAndSaveSuggestedQuantityWhenStartFulfillOrderWithSohIsNotEnoughAndApprovedQuantity0() {
+    // given
+    mockCalcualteSuggestedQuantityCommonConditions(buildMockOrderWithCurrentPeriodIdAndStatusNotFulfilling(),
+        buildCurrentPeriodRequisitionsWithCurrentRequisitionApproveQuantity0());
+
+    Map<UUID, Integer> orderableIdToSoh = Maps.newHashMap();
+    orderableIdToSoh.put(orderableId1, 10);
+    orderableIdToSoh.put(orderableId2, 20);
+
+    when(stockManagementRepository.getStockOnHandByProduct(any(), any(), anyList(), anyObject())).thenReturn(
+        orderableIdToSoh);
+
+    // when
+    OrderSuggestedQuantityResponse actualResponse = siglusOrderService.getOrderSuggestedQuantityResponse(orderId);
+
+    // then
+    // 6 facility,
+    // orderable1: approved quantity is 0, so suggested quantity is 0
+    // orderable2: 20 / (20 + 20 + 0 + 0 + 0 + 40 + 0) * 20 = 5
+    Map<UUID, BigDecimal> orderbaleIdToSuggestedQuantity = Maps.newHashMap();
+    orderbaleIdToSuggestedQuantity.put(orderableId1, BigDecimal.valueOf(0).setScale(2, RoundingMode.DOWN));
+    orderbaleIdToSuggestedQuantity.put(orderableId2, BigDecimal.valueOf(5).setScale(2, RoundingMode.DOWN));
+
+    OrderSuggestedQuantityResponse expectResponse = OrderSuggestedQuantityResponse.builder()
+        .showSuggestedQuantity(Boolean.TRUE)
+        .orderableIdToSuggestedQuantity(orderbaleIdToSuggestedQuantity)
+        .build();
+    assertEquals(expectResponse, actualResponse);
+    verify(lineItemExtensionRepository).save(anyList());
+  }
+
+  @Test
   public void shouldQuerySuggestedQuantityFromDbWhenContinueFulfillOrder() {
     // given
-    mockCalcualteSuggestedQuantityCommonConditions(buildMockOrderWithCurrentPeriodIdAndStatusFulfilling());
+    mockCalcualteSuggestedQuantityCommonConditions(buildMockOrderWithCurrentPeriodIdAndStatusNotFulfilling(),
+        buildCurrentPeriodRequisitions());
     when(lineItemExtensionRepository.findOrderSuggestedQuantityDtoByOrderLineItemIdIn(
         anyList())).thenReturn(buildMockOrderSuggestedQuantityDtos());
 
@@ -1018,14 +1053,14 @@ public class SiglusOrderServiceTest {
     return Lists.newArrayList(dto1, dto2);
   }
 
-  private void mockCalcualteSuggestedQuantityCommonConditions(Order order) {
+  private void mockCalcualteSuggestedQuantityCommonConditions(Order order,
+      List<Requisition> currentPeriodRequisitions) {
     when(orderRepository.findOne(orderId)).thenReturn(order);
     when(siglusProcessingPeriodService.getUpToNowMonthlyPeriods()).thenReturn(buildMockPeriods());
     when(siglusProcessingPeriodService.getPeriodDateIn(anyList(), any())).thenReturn(buildMockCurrentPeriod());
     when(siglusFacilityRepository.findAllClientFacilityIds(supplyingFacilityId, programId)).thenReturn(
         clientFacilityIds);
 
-    List<Requisition> currentPeriodRequisitions = buildCurrentPeriodRequisitions();
     when(siglusRequisitionRepository.findRequisitionsByOrderInfoAndSupplyingFacilityId(anyList(), any(), anyList(),
         anyBoolean(), anyList(), any()))
         .thenReturn(currentPeriodRequisitions)
@@ -1106,6 +1141,42 @@ public class SiglusOrderServiceTest {
     return Lists.newArrayList(requisition0, requisition1, requisition2, requisition3);
   }
 
+  private List<Requisition> buildCurrentPeriodRequisitionsWithCurrentRequisitionApproveQuantity0() {
+    List<UUID> clientFacilityIds = getClientFacilityIds();
+
+    // final approved requisition
+    Requisition requisition0 = new Requisition();
+    requisition0.setId(requisitionIds.get(0));
+    requisition0.setFacilityId(clientFacilityIds.get(0));
+    requisition0.setStatus(RequisitionStatus.APPROVED);
+    requisition0.setRequisitionLineItems(
+        Lists.newArrayList(buildMockLineItemWithOrderableId1ApprovedQuantity0(),
+            buildMockLineItemWithOrderableId2ApprovedQuantity20()));
+
+    // convert to order(released) and not start fulfill
+    Requisition requisition1 = new Requisition();
+    requisition1.setId(requisitionIds.get(1));
+    requisition1.setFacilityId(clientFacilityIds.get(1));
+    requisition1.setStatus(RequisitionStatus.RELEASED);
+    requisition1.setRequisitionLineItems(
+        Lists.newArrayList(buildMockLineItemWithOrderableId1ApprovedQuantity10(),
+            buildMockLineItemWithOrderableId2ApprovedQuantity20()));
+
+    // convert to order(released) and finished fulfillment
+    Requisition requisition2 = new Requisition();
+    requisition2.setId(requisitionIds.get(2));
+    requisition2.setFacilityId(clientFacilityIds.get(2));
+    requisition2.setStatus(RequisitionStatus.RELEASED);
+
+    // released without order
+    Requisition requisition3 = new Requisition();
+    requisition3.setId(requisitionIds.get(3));
+    requisition3.setFacilityId(clientFacilityIds.get(3));
+    requisition3.setStatus(RequisitionStatus.RELEASED_WITHOUT_ORDER);
+
+    return Lists.newArrayList(requisition0, requisition1, requisition2, requisition3);
+  }
+
   private List<Requisition> buildPreviousPeriodRequisitions() {
     List<UUID> clientFacilityIds = getClientFacilityIds();
 
@@ -1151,6 +1222,13 @@ public class SiglusOrderServiceTest {
     RequisitionLineItem lineItemOrderableId1 = new RequisitionLineItem();
     lineItemOrderableId1.setOrderable(mockRequisitionOrderable(orderableId1));
     lineItemOrderableId1.setApprovedQuantity(30);
+    return lineItemOrderableId1;
+  }
+
+  private RequisitionLineItem buildMockLineItemWithOrderableId1ApprovedQuantity0() {
+    RequisitionLineItem lineItemOrderableId1 = new RequisitionLineItem();
+    lineItemOrderableId1.setOrderable(mockRequisitionOrderable(orderableId1));
+    lineItemOrderableId1.setApprovedQuantity(0);
     return lineItemOrderableId1;
   }
 
