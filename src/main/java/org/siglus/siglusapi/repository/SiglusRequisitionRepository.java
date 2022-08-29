@@ -27,6 +27,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+@SuppressWarnings("PMD.AvoidDuplicateLiterals")
 public interface SiglusRequisitionRepository extends JpaRepository<Requisition, UUID> {
 
   @Query(value = "select * from requisition.requisitions r where "

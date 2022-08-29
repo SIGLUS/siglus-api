@@ -31,6 +31,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
@@ -197,9 +198,6 @@ public class SiglusOrderService {
   @Autowired
   private StockManagementRepository stockManagementRepository;
 
-  @Autowired
-  private OrderLineItemExtensionRepository orderLineItemExtensionRepository;
-
   private static final List<String> REQUISITION_STATUS_AFTER_FINAL_APPROVED = Lists.newArrayList(
       RequisitionStatus.APPROVED.name(),
       RequisitionStatus.RELEASED.name(),
@@ -208,6 +206,12 @@ public class SiglusOrderService {
   private static final List<String> ORDER_STATUS_NOT_FINISHED = Lists.newArrayList(
       OrderStatus.ORDERED.name(),
       OrderStatus.FULFILLING.name());
+
+  private static final List<OrderStatus> ORDER_STATUS_AFTER_START_FULFILL = Lists.newArrayList(
+      OrderStatus.FULFILLING,
+      OrderStatus.SHIPPED,
+      OrderStatus.RECEIVED
+      );
 
   public Page<BasicOrderDto> searchOrders(OrderSearchParams params, Pageable pageable) {
     return orderController.searchOrders(params, pageable);
@@ -398,13 +402,14 @@ public class SiglusOrderService {
   }
 
   private Map<UUID, BigDecimal> getOrderableIdToSuggestedQuantity(Order order, List<ProcessingPeriod> periods) {
-    return OrderStatus.FULFILLING == order.getStatus() ?
-        getOrderableIdToSuggestedQuantityFromDb(order) : calculateAndSaveOrderableIdToSuggestedQuantity(order, periods);
+    return ORDER_STATUS_AFTER_START_FULFILL.contains(order.getStatus())
+        ? getOrderableIdToSuggestedQuantityFromDb(order)
+        : calculateAndSaveOrderableIdToSuggestedQuantity(order, periods);
   }
 
   private Map<UUID, BigDecimal> getOrderableIdToSuggestedQuantityFromDb(Order order) {
     Set<UUID> lineItemIds = getLineItemIds(order);
-    List<OrderSuggestedQuantityDto> dtos = orderLineItemExtensionRepository.findOrderSuggestedQuantityDtoByOrderLineItemIdIn(
+    List<OrderSuggestedQuantityDto> dtos = lineItemExtensionRepository.findOrderSuggestedQuantityDtoByOrderLineItemIdIn(
         lineItemIds);
     return dtos.stream().collect(
         Collectors.toMap(OrderSuggestedQuantityDto::getOrderableId, OrderSuggestedQuantityDto::getSuggestedQuantity));
@@ -426,7 +431,7 @@ public class SiglusOrderService {
     return order;
   }
 
-  public Map<UUID, BigDecimal> calculateAndSaveOrderableIdToSuggestedQuantity(Order order,
+  private Map<UUID, BigDecimal> calculateAndSaveOrderableIdToSuggestedQuantity(Order order,
       List<ProcessingPeriod> periods) {
     List<UUID> clientFacilityIds = getAllClientFacilityIds(order.getSupplyingFacilityId(), order.getProgramId());
     List<Requisition> currentPeriodAfterApprovedRequisitions = getCurrentPeriodAfterApprovedRequisitions(order, periods,
@@ -436,7 +441,7 @@ public class SiglusOrderService {
     List<Requisition> historyPeriodApprovedRequisitions = getPreviousThreePeriodAfterApprovedRequisitions(order,
         periods, currentPeriodAfterApprovedRequisitions, clientFacilityIds);
 
-    Set<UUID> orderableIds = getOrderableIds(order);
+    Set<UUID> orderableIds = getOrderOrderableIds(order);
 
     Map<UUID, Integer> orderableIdToCurrentPeriodSumApprovedQuantity = getOrderableIdToCurrentPeriodSumApprovedQuantity(
         currentPeriodNotFinishedRequisitions);
@@ -444,9 +449,11 @@ public class SiglusOrderService {
         historyPeriodApprovedRequisitions, orderableIds);
     Map<UUID, Integer> orderableIdToSoh = getOrderableIdToSoh(orderableIds, order.getProgramId(),
         order.getSupplyingFacilityId());
+    Map<UUID, Integer> currentRequisitionOrderableToApprovedQuantity =
+        getCurrentRequisitionOrderableToFinalApprovedQuantity(order, currentPeriodNotFinishedRequisitions);
 
-    Map<UUID, BigDecimal> orderableIdToSuggestedQuantity = calculateOrderableToSuggestedQuantityMap(order,
-        currentPeriodNotFinishedRequisitions, orderableIdToCurrentPeriodSumApprovedQuantity,
+    Map<UUID, BigDecimal> orderableIdToSuggestedQuantity = calculateOrderableToSuggestedQuantityMap(
+        currentRequisitionOrderableToApprovedQuantity, orderableIdToCurrentPeriodSumApprovedQuantity,
         orderableIdToHistoryPeriodSumApprovedQuantity, orderableIds, orderableIdToSoh);
 
     saveSuggestedQuantity(order, orderableIdToSuggestedQuantity);
@@ -455,20 +462,27 @@ public class SiglusOrderService {
   }
 
   private List<Requisition> getCurrentPeriodNotFinishedRequisitions(
-      List<Requisition> currentPeriodApprovedRequisitions) {
-    List<Requisition> requisitions = currentPeriodApprovedRequisitions.stream()
-        .filter(requisition -> RequisitionStatus.RELEASED_WITHOUT_ORDER != requisition.getStatus())
+      List<Requisition> currentPeriodAfterApprovedRequisitions) {
+    List<Requisition> releasedRequisitions = currentPeriodAfterApprovedRequisitions.stream()
+        .filter(requisition -> RequisitionStatus.RELEASED == requisition.getStatus())
         .collect(toList());
 
     // released requisition maybe already fulfilled
-    Set<UUID> requisitionIds = requisitions.stream().map(Requisition::getId).collect(Collectors.toSet());
+    Set<UUID> requisitionIds = releasedRequisitions.stream().map(Requisition::getId)
+        .collect(Collectors.toSet());
     Map<UUID, OrderStatus> requisitionIdToOrderStatus =
         siglusRequisitionRepository.findRequisitionOrderDtoByRequisitionIds(requisitionIds).stream()
             .collect(toMap(RequisitionOrderDto::getRequisitionId, RequisitionOrderDto::getOrderStatus));
 
-    return requisitions.stream()
-        .filter(requisition -> ORDER_STATUS_NOT_FINISHED.contains(requisitionIdToOrderStatus.get(requisition.getId())))
+    // not finished = not convert to order + convert to order but not finish fulfill
+    List<Requisition> notFinishedRequisitions = currentPeriodAfterApprovedRequisitions.stream()
+        .filter(requisition -> RequisitionStatus.APPROVED == requisition.getStatus())
         .collect(toList());
+    notFinishedRequisitions.addAll(releasedRequisitions.stream()
+        .filter(requisition -> ORDER_STATUS_NOT_FINISHED.contains(
+            requisitionIdToOrderStatus.get(requisition.getId()).name()))
+        .collect(toList()));
+    return notFinishedRequisitions;
   }
 
   private void saveSuggestedQuantity(Order order, Map<UUID, BigDecimal> orderableIdToSuggestedQuantity) {
@@ -484,20 +498,17 @@ public class SiglusOrderService {
     lineItemExtensionRepository.save(lineItemExtensions);
   }
 
-  private Set<UUID> getOrderableIds(Order order) {
+  private Set<UUID> getOrderOrderableIds(Order order) {
     return order.getOrderLineItems().stream().map(lineItem -> lineItem.getOrderable().getId())
         .collect(Collectors.toSet());
   }
 
-  private Map<UUID, BigDecimal> calculateOrderableToSuggestedQuantityMap(Order order,
-      List<Requisition> currentPeriodApprovedRequisitions,
+  private Map<UUID, BigDecimal> calculateOrderableToSuggestedQuantityMap(
+      Map<UUID, Integer> currentRequisitionOrderableToApprovedQuantity,
       Map<UUID, Integer> orderableIdToCurrentPeriodSumApprovedQuantity,
       Map<UUID, Integer> orderableIdToHistoryPeriodSumApprovedQuantity,
       Set<UUID> orderableIds,
       Map<UUID, Integer> orderableIdToSoh) {
-
-    Map<UUID, Integer> currentRequisitionOrderableToApprovedQuantity =
-        getCurrentRequisitionOrderableToFinalApprovedQuantity(order, currentPeriodApprovedRequisitions);
 
     Map<UUID, BigDecimal> orderableIdToSuggestedQuantity = Maps.newHashMapWithExpectedSize(orderableIds.size());
     orderableIds.forEach(orderableId -> {
@@ -517,11 +528,11 @@ public class SiglusOrderService {
   private BigDecimal calculateSuggestedQuantity(Integer sumApprovedQuantity, Integer sumHistoryApprovedQuantity,
       Integer soh, Integer currentRequisitionApprovedQuantity) {
     if (sumApprovedQuantity + sumHistoryApprovedQuantity <= soh) {
-      return BigDecimal.valueOf(currentRequisitionApprovedQuantity);
+      return BigDecimal.valueOf(currentRequisitionApprovedQuantity).setScale(2, RoundingMode.DOWN);
     } else {
-      // TODO 保留两位小数
       return BigDecimal.valueOf(
-          soh * 1d / (sumApprovedQuantity + sumHistoryApprovedQuantity) * currentRequisitionApprovedQuantity);
+              soh * 1d / (sumApprovedQuantity + sumHistoryApprovedQuantity) * currentRequisitionApprovedQuantity)
+          .setScale(2, RoundingMode.DOWN);
     }
   }
 

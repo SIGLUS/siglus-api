@@ -32,7 +32,7 @@ import lombok.Data;
         + "from fulfillment.order_line_items oli \n"
         + "left join siglusintegration.order_line_item_extension olie \n"
         + "on (oli.id = olie.orderlineitemid)\n"
-        + "where oli.id in (:lineItemIds);",
+        + "where oli.id in (:orderLineItemIds);",
     resultSetMapping = "Order.OrderSuggestedQuantityDto")
 
 @MappedSuperclass

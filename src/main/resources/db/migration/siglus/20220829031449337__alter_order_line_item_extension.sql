@@ -3,4 +3,4 @@
 -- Migrations should NOT BE EDITED. Add a new migration to apply changes.
 
 ALTER TABLE siglusintegration.order_line_item_extension
-    ADD suggestedquantity double precision default 0;
+    ADD suggestedquantity double precision;

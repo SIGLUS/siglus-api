@@ -136,6 +136,23 @@ public class StockManagementRepository extends BaseNativeRepository {
     return getAllProductMovements(facilityId, since, till, orderableIds, null, null);
   }
 
+  @ParametersAreNullableByDefault
+  private PeriodOfProductMovements getAllProductMovements(@Nonnull UUID facilityId, LocalDate since, LocalDate till,
+      @Nonnull Set<UUID> orderableIds, Instant syncSince, Instant syncTill) {
+    List<ProductLotMovement> allLotMovements = findAllLotMovements(facilityId, since, till, orderableIds, syncSince,
+        syncTill);
+    StocksOnHand stocksOnHand = getStockOnHand(facilityId, till, orderableIds);
+    Map<String, Integer> productInventories = stocksOnHand.getProductInventories();
+    Map<ProductLotCode, Integer> lotInventories = stocksOnHand.getLotInventories();
+    List<ProductMovement> productMovements = allLotMovements.stream()
+        .collect(groupingBy(ProductLotMovement::getProductMovementKey))
+        .entrySet().stream()
+        .sorted(Entry.comparingByKey(EventTimeContainer.DESCENDING))
+        .map(e -> toProductMovement(e.getKey(), e.getValue(), productInventories, lotInventories, facilityId))
+        .sorted(EventTimeContainer.ASCENDING)
+        .collect(toList());
+    return new PeriodOfProductMovements(productMovements, stocksOnHand);
+  }
 
   public Map<UUID, Integer> getStockOnHandByProduct(UUID facilityId, UUID programId, Iterable<UUID> orderableIds,
       LocalDate asOfDate) {
@@ -161,24 +178,6 @@ public class StockManagementRepository extends BaseNativeRepository {
     );
     return result.stream()
         .collect(groupingBy(StockOnHandByLotDto::getOrderableId, summingInt(StockOnHandByLotDto::getStockOnHand)));
-  }
-
-  @ParametersAreNullableByDefault
-  private PeriodOfProductMovements getAllProductMovements(@Nonnull UUID facilityId, LocalDate since, LocalDate till,
-      @Nonnull Set<UUID> orderableIds, Instant syncSince, Instant syncTill) {
-    List<ProductLotMovement> allLotMovements = findAllLotMovements(facilityId, since, till, orderableIds, syncSince,
-        syncTill);
-    StocksOnHand stocksOnHand = getStockOnHand(facilityId, till, orderableIds);
-    Map<String, Integer> productInventories = stocksOnHand.getProductInventories();
-    Map<ProductLotCode, Integer> lotInventories = stocksOnHand.getLotInventories();
-    List<ProductMovement> productMovements = allLotMovements.stream()
-        .collect(groupingBy(ProductLotMovement::getProductMovementKey))
-        .entrySet().stream()
-        .sorted(Entry.comparingByKey(EventTimeContainer.DESCENDING))
-        .map(e -> toProductMovement(e.getKey(), e.getValue(), productInventories, lotInventories, facilityId))
-        .sorted(EventTimeContainer.ASCENDING)
-        .collect(toList());
-    return new PeriodOfProductMovements(productMovements, stocksOnHand);
   }
 
   public StocksOnHand getStockOnHand(@Nonnull UUID facilityId) {
