@@ -34,6 +34,7 @@ import java.util.stream.Collectors;
 import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
 import javax.validation.ValidatorFactory;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.openlmis.referencedata.domain.Orderable;
 import org.openlmis.referencedata.dto.OrderableDto;
@@ -61,11 +62,11 @@ import org.siglus.siglusapi.dto.UsageTemplateSectionDto;
 import org.siglus.siglusapi.repository.KitUsageLineItemRepository;
 import org.siglus.siglusapi.repository.UsageTemplateColumnSectionRepository;
 import org.slf4j.profiler.Profiler;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 @SuppressWarnings("PMD.TooManyMethods")
 public class SiglusUsageReportService {
 
@@ -74,29 +75,14 @@ public class SiglusUsageReportService {
   static final String SERVICE_HF = "HF";
   static final String CALCULATE_FROM_STOCK_CARD = "STOCK_CARDS";
 
-  @Autowired
-  UsageTemplateColumnSectionRepository columnSectionRepository;
-
-  @Autowired
-  OrderableKitRepository orderableKitRepository;
-
-  @Autowired
-  StockCardRangeSummaryStockManagementService stockCardRangeSummaryStockManagementService;
-
-  @Autowired
-  KitUsageLineItemRepository kitUsageRepository;
-
-  @Autowired
-  private List<UsageReportDataProcessor> usageReportDataProcessors;
-
-  @Autowired
-  private ValidatorFactory validatorFactory;
-
-  @Autowired
-  private ProgramAdditionalOrderableRepository programAdditionalOrderableRepository;
-
-  @Autowired
-  private PeriodService periodService;
+  private final UsageTemplateColumnSectionRepository columnSectionRepository;
+  private final OrderableKitRepository orderableKitRepository;
+  private final StockCardRangeSummaryStockManagementService stockCardRangeSummaryStockManagementService;
+  private final KitUsageLineItemRepository kitUsageRepository;
+  private final List<UsageReportDataProcessor> usageReportDataProcessors;
+  private final ValidatorFactory validatorFactory;
+  private final ProgramAdditionalOrderableRepository programAdditionalOrderableRepository;
+  private final PeriodService periodService;
 
   public SiglusRequisitionDto searchUsageReport(RequisitionV2Dto requisitionV2Dto) {
     SiglusRequisitionDto siglusRequisitionDto = SiglusRequisitionDto.from(requisitionV2Dto);
@@ -271,12 +257,10 @@ public class SiglusUsageReportService {
           .collect(Collectors.groupingBy(kitProduct -> {
             OrderableDto kitProductDto = new OrderableDto();
             kitProduct.export(kitProductDto);
-            return kitProductDto.getPrograms().stream().findFirst().get()
-                .getProgramId();
+            return kitProductDto.getPrograms().stream().findFirst().get().getProgramId();
           }));
       for (Map.Entry<UUID, List<Orderable>> groupKit : groupKitProducts.entrySet()) {
-        updateSupportProgramStockCardRange(requisitionV2Dto, summaryDtos,
-            groupKit);
+        updateSupportProgramStockCardRange(requisitionV2Dto, summaryDtos, groupKit);
       }
     }
     return summaryDtos;

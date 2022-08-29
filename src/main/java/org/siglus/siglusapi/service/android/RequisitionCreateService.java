@@ -18,6 +18,7 @@ package org.siglus.siglusapi.service.android;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
+import static org.openlmis.requisition.web.ResourceNames.FACILITIES;
 import static org.openlmis.requisition.web.ResourceNames.ORDERABLES;
 import static org.openlmis.requisition.web.ResourceNames.PROCESSING_PERIODS;
 import static org.openlmis.requisition.web.ResourceNames.PROGRAMS;
@@ -511,6 +512,7 @@ public class RequisitionCreateService {
     BasicRequisitionTemplateDto templateDto = BasicRequisitionTemplateDto.newInstance(requisition.getTemplate());
     templateDto.setExtension(RequisitionTemplateExtensionDto.from(requisition.getTemplate().getTemplateExtension()));
     dto.setTemplate(templateDto);
+    dto.setFacility(new ObjectReferenceDto(requisition.getFacilityId(), "", FACILITIES));
     dto.setProcessingPeriod(new ObjectReferenceDto(requisition.getProcessingPeriodId(), "", PROCESSING_PERIODS));
     dto.setProgram(new ObjectReferenceDto(requisition.getProgramId(), "", PROGRAMS));
     buildAvailableProducts(dto, requisition);
