@@ -129,6 +129,8 @@ public abstract class MessageKeys {
       PRODUCT_LOCATION_MOVEMENT_ERROR_PREFIX + ".movement.draft.id.should.null";
   public static final String ERROR_MOVEMENT_QUANTITY_MORE_THAN_STOCK_ON_HAND =
       PRODUCT_LOCATION_MOVEMENT_ERROR_PREFIX + ".movement.quantity.more.than.stock.on.hand";
+  public static final String ERROR_MOVEMENT_QUANTITY_LESS_THAN_STOCK_ON_HAND =
+      PRODUCT_LOCATION_MOVEMENT_ERROR_PREFIX + ".movement.quantity.less.than.stock.on.hand";
 
   //location
   public static final String ERROR_LOCATIONS_BY_FACILITY_NOT_FOUND =

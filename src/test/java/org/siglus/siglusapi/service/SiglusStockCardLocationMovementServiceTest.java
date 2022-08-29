@@ -26,6 +26,7 @@ import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_CARD_NOT_FOUND;
 import java.time.LocalDate;
 import java.util.Collections;
 import java.util.UUID;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -38,11 +39,13 @@ import org.siglus.siglusapi.domain.StockCardLocationMovementDraft;
 import org.siglus.siglusapi.domain.StockCardLocationMovementLineItem;
 import org.siglus.siglusapi.dto.StockCardLocationMovementDto;
 import org.siglus.siglusapi.dto.StockCardLocationMovementLineItemDto;
+import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.repository.SiglusStockCardRepository;
 import org.siglus.siglusapi.repository.StockCardLocationMovementDraftRepository;
 import org.siglus.siglusapi.repository.StockCardLocationMovementLineItemRepository;
+import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 
 @SuppressWarnings({"PMD.UnusedPrivateField"})
 @RunWith(MockitoJUnitRunner.class)
@@ -65,6 +68,12 @@ public class SiglusStockCardLocationMovementServiceTest {
 
   @Mock
   private CalculatedStocksOnHandByLocationService calculatedStocksOnHandByLocationService;
+
+  @Mock
+  private SiglusAdministrationsService administrationsService;
+
+  @Mock
+  private SiglusAuthenticationHelper authenticationHelper;
 
   private final UUID allProgramId = UUID.randomUUID();
   private final UUID programId = UUID.randomUUID();
@@ -132,11 +141,18 @@ public class SiglusStockCardLocationMovementServiceTest {
       .movementLineItems(newArrayList(movementLineItemDto2))
       .build();
 
+  @Before
+  public void setup() {
+    UserDto userDto = new UserDto();
+    userDto.setHomeFacilityId(facilityId);
+    when(authenticationHelper.getCurrentUser()).thenReturn(userDto);
+    when((administrationsService.canInitialMoveProduct(facilityId))).thenReturn(Boolean.FALSE);
+  }
+
   @Test
   public void shouldCreateMovementLineItems() {
     stockCard.setId(stockCardId);
     movementDraft.setId(movementDraftId);
-
     when(stockCardRepository
         .findByFacilityIdAndProgramIdAndOrderableIdAndLotId(facilityId, programId, orderableId, lotId))
         .thenReturn(newArrayList(stockCard));

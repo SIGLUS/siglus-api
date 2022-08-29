@@ -27,6 +27,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
@@ -315,7 +316,21 @@ public class SiglusAdministrationsService {
     }
     searchResultDto.setIsAndroidDevice(facilityExtension.getIsAndroid());
     searchResultDto.setEnableLocationManagement(BooleanUtils.isTrue(facilityExtension.getEnableLocationManagement()));
+    searchResultDto.setCanInitialMoveProduct((canInitialMoveProduct(facilityId)));
     return searchResultDto;
+  }
+
+  public Boolean canInitialMoveProduct(UUID facilityId) {
+    List<UUID> stockCardIds = stockCardRepository.findByFacilityIdIn(facilityId)
+        .stream().map(StockCard::getId).collect(Collectors.toList());
+    List<CalculatedStockOnHandByLocation> calculatedStockOnHandByLocationList =
+        findStockCardIdsHasStockOnHandOnLocation(stockCardIds);
+
+    return calculatedStockOnHandByLocationList.isEmpty()
+        || calculatedStockOnHandByLocationList.stream().allMatch(e ->
+        (!Objects.equals(LocationConstants.VIRTUAL_LOCATION_CODE, e.getLocationCode())
+            && !Objects.equals(LocationConstants.VIRTUAL_LOCATION_CODE, e.getArea()))
+    );
   }
 
   private boolean emptyStockCardCount(UUID facilityId) {
@@ -338,7 +353,7 @@ public class SiglusAdministrationsService {
     }
   }
 
-  private List<CalculatedStockOnHandByLocation> findStockCardIdsHasStockOnHandOnLocation(List<UUID> stockCardIds) {
+  private List<CalculatedStockOnHandByLocation>  findStockCardIdsHasStockOnHandOnLocation(List<UUID> stockCardIds) {
     return calculatedStocksOnHandLocationsRepository.findLatestLocationSohByStockCardIds(stockCardIds)
         .stream().filter(calculatedByLocation -> calculatedByLocation.getStockOnHand() > 0
             && !LocationConstants.VIRTUAL_LOCATION_CODE.equals(calculatedByLocation.getLocationCode()))
