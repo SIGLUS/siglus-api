@@ -3,7 +3,7 @@
 -- Migrations should NOT BE EDITED. Add a new migration to apply changes.
 
 drop view if exists dashboard.vw_system_version;
-create view vw_system_version
+create view dashboard.vw_system_version
             (number, provincecode, provincename, districtcode, districtname, facilitytype, facilitymergetype,
              districtfacilitycode, provincefacilitycode, facilitycode, facilityname, versioncode, username, devicetype, deviceinfo)
 as
