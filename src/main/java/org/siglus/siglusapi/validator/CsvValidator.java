@@ -58,20 +58,19 @@ public class CsvValidator {
     List<String> headers = csvHeaderToColumnMap.keySet().stream().map(portugueseToEnglishMap::get)
         .collect(Collectors.toList());
     validateNullHeaders(headers);
-    List<String> lowerCaseHeaders = lowerCase(headers);
-    validateInvalidHeaders(lowerCaseHeaders);
+    headers = headersWithoutNull(headers);
+    validateInvalidHeaders(headers);
   }
 
   public void validateNullRow(CSVRecord eachRow) {
     long row = eachRow.getRecordNumber();
-    validateEachColumn(eachRow
-        .get(LocationConstants.PORTUGUESE_LOCATION_CODE), LocationConstants.PORTUGUESE_LOCATION_CODE, row);
-    validateEachColumn(eachRow.get(LocationConstants.PORTUGUESE_AREA), LocationConstants.PORTUGUESE_AREA, row);
-    validateEachColumn(eachRow.get(LocationConstants.PORTUGUESE_ZONE), LocationConstants.PORTUGUESE_ZONE, row);
-    validateEachColumn(eachRow.get(LocationConstants.PORTUGUESE_RACK), LocationConstants.PORTUGUESE_RACK, row);
-    validateEachColumn(eachRow.get(LocationConstants.PORTUGUESE_BARCODE), LocationConstants.PORTUGUESE_BARCODE, row);
-    validateEachColumn(eachRow.get(LocationConstants.PORTUGUESE_BIN), LocationConstants.PORTUGUESE_BIN, row);
-    validateEachColumn(eachRow.get(LocationConstants.PORTUGUESE_LEVEL), LocationConstants.PORTUGUESE_LEVEL, row);
+    validateEachColumn(eachRow.get(LocationConstants.PORTUGUESE_LOCATION_CODE), LocationConstants.LOCATION_CODE, row);
+    validateEachColumn(eachRow.get(LocationConstants.PORTUGUESE_AREA), LocationConstants.AREA, row);
+    validateEachColumn(eachRow.get(LocationConstants.PORTUGUESE_ZONE), LocationConstants.ZONE, row);
+    validateEachColumn(eachRow.get(LocationConstants.PORTUGUESE_RACK), LocationConstants.RACK, row);
+    validateEachColumn(eachRow.get(LocationConstants.PORTUGUESE_BARCODE), LocationConstants.BARCODE, row);
+    validateEachColumn(eachRow.get(LocationConstants.PORTUGUESE_BIN), LocationConstants.BIN, row);
+    validateEachColumn(eachRow.get(LocationConstants.PORTUGUESE_LEVEL), LocationConstants.LEVEL, row);
   }
 
   public List<CSVRecord> validateDuplicateLocationCode(CSVParser csvParser) throws IOException {
@@ -99,10 +98,6 @@ public class CsvValidator {
   }
 
   private void validateNullHeaders(List<String> headers) throws ValidationMessageException {
-    if (headers.size() == 6) {
-      throw new BusinessDataException(new Message(CsvUploadMessageKeys.ERROR_UPLOAD_HEADER_MISSING,
-          String.valueOf(1)), ERROR_BUSINESS_CODE);
-    }
     for (int i = 0; i < headers.size(); i++) {
       if (StringUtils.isEmpty(headers.get(i))) {
         throw new BusinessDataException(new Message(CsvUploadMessageKeys.ERROR_UPLOAD_HEADER_MISSING,
@@ -112,17 +107,15 @@ public class CsvValidator {
   }
 
   private void validateInvalidHeaders(List<String> headers) {
-    List<String> invalidHeaders = ListUtils.subtract(headers, lowerCase(mandatoryColumnNames));
+    List<String> invalidHeaders = ListUtils.subtract(headers, mandatoryColumnNames);
     if (!invalidHeaders.isEmpty()) {
       throw new BusinessDataException(new Message(CsvUploadMessageKeys.ERROR_UPLOAD_HEADER_INVALID,
-          invalidHeaders.toString()), ERROR_BUSINESS_CODE);
+          headers.toString()), ERROR_BUSINESS_CODE);
     }
-  }
-
-  private List<String> lowerCase(List<String> strings) {
-    return strings.stream()
-        .map(String::toLowerCase)
-        .collect(Collectors.toList());
+    if (headers.size() == 6) {
+      throw new BusinessDataException(new Message(CsvUploadMessageKeys.ERROR_UPLOAD_HEADER_INVALID,
+          headers.toString()), ERROR_BUSINESS_CODE);
+    }
   }
 
   private void validateEachColumn(String columnValue, String columnName, long row) throws ValidationMessageException {
@@ -130,5 +123,15 @@ public class CsvValidator {
       throw new BusinessDataException(new Message(CsvUploadMessageKeys.ERROR_UPLOAD_MISSING_ROW,
           columnName, row), ERROR_BUSINESS_CODE);
     }
+  }
+
+  private List<String> headersWithoutNull(List<String> headers) {
+    List<String> notNullHeader = Lists.newArrayList();
+    for (String header : headers) {
+      if (null != header) {
+        notNullHeader.add(header);
+      }
+    }
+    return notNullHeader;
   }
 }

@@ -18,6 +18,7 @@ package org.siglus.siglusapi.service;
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_MOVEMENT_DRAFT_NOT_FOUND;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_MOVEMENT_LINE_ITEMS_MISSING;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_MOVEMENT_QUANTITY_LESS_THAN_STOCK_ON_HAND;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_MOVEMENT_QUANTITY_MORE_THAN_STOCK_ON_HAND;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_CARD_NOT_FOUND;
 
@@ -26,6 +27,7 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.siglus.siglusapi.domain.StockCardLocationMovementDraft;
@@ -39,22 +41,20 @@ import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.SiglusStockCardRepository;
 import org.siglus.siglusapi.repository.StockCardLocationMovementDraftRepository;
 import org.siglus.siglusapi.repository.StockCardLocationMovementLineItemRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class SiglusStockCardLocationMovementService {
-
-  @Autowired
-  private StockCardLocationMovementLineItemRepository movementLineItemRepository;
-
-  @Autowired
-  private StockCardLocationMovementDraftRepository movementDraftRepository;
-
-  @Autowired
-  private SiglusStockCardRepository stockCardRepository;
+  private final StockCardLocationMovementLineItemRepository movementLineItemRepository;
+  private final StockCardLocationMovementDraftRepository movementDraftRepository;
+  private final SiglusStockCardRepository stockCardRepository;
+  private final CalculatedStocksOnHandByLocationService calculatedStocksOnHandByLocationService;
+  private final SiglusAdministrationsService administrationsService;
+  private final SiglusAuthenticationHelper authenticationHelper;
 
   @Transactional
   public void createMovementLineItems(StockCardLocationMovementDto movementDto) {
@@ -63,6 +63,7 @@ public class SiglusStockCardLocationMovementService {
     List<StockCardLocationMovementLineItem> movementLineItems = convertMovementDtoToMovementItems(movementDto);
     movementLineItemRepository.save(movementLineItems);
     deleteMovementDraft(movementDto);
+    calculatedStocksOnHandByLocationService.calculateStockOnHandByLocationForMovement(movementLineItems);
   }
 
   private void deleteMovementDraft(StockCardLocationMovementDto movementDto) {
@@ -103,6 +104,8 @@ public class SiglusStockCardLocationMovementService {
 
   private void checkStockOnHand(StockCardLocationMovementDto movementDto) {
     List<StockCardLocationMovementLineItemDto> lineItems = movementDto.getMovementLineItems();
+    Boolean isInitialMoveProduct = administrationsService.canInitialMoveProduct(
+        authenticationHelper.getCurrentUser().getHomeFacilityId());
     Set<Entry<String, List<StockCardLocationMovementLineItemDto>>> groupByOrderableIdLotIdSrcAreaAndSrcLocationCode =
         lineItems.stream().collect(Collectors.groupingBy(this::fetchGroupKey)).entrySet();
     groupByOrderableIdLotIdSrcAreaAndSrcLocationCode.forEach(entry -> {
@@ -110,9 +113,13 @@ public class SiglusStockCardLocationMovementService {
           .stream()
           .mapToInt(StockCardLocationMovementLineItemDto::getQuantity)
           .sum();
-      if (totalMovementQuantity > entry.getValue().get(0).getStockOnHand()) {
+      Integer stockOnHand = entry.getValue().get(0).getStockOnHand();
+      if (totalMovementQuantity > stockOnHand) {
         throw new BusinessDataException(new Message(ERROR_MOVEMENT_QUANTITY_MORE_THAN_STOCK_ON_HAND),
             "movement quantity more than stock on hand");
+      }
+      if (isInitialMoveProduct && totalMovementQuantity < stockOnHand) {
+        throw new BusinessDataException(new Message(ERROR_MOVEMENT_QUANTITY_LESS_THAN_STOCK_ON_HAND));
       }
     });
   }

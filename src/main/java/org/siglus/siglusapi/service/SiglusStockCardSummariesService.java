@@ -360,8 +360,8 @@ public class SiglusStockCardSummariesService {
 
         drafts.remove(foundDraft);
 
-        Set<UUID> existOrderableIds = drafts.stream().flatMap(
-            draft -> draft.getLineItems().stream().map(StockManagementDraftLineItem::getOrderableId))
+        Set<UUID> existOrderableIds = drafts.stream()
+            .flatMap(draft -> draft.getLineItems().stream().map(StockManagementDraftLineItem::getOrderableId))
             .collect(Collectors.toSet());
 
         return Pagination.getPage(stockCards.getContent().stream()
@@ -397,7 +397,7 @@ public class SiglusStockCardSummariesService {
   public List<List<StockCardDetailsDto>> getStockCardDetailsDtoByGroup(MultiValueMap<String, String> parameters,
       List<UUID> subDraftIds, UUID draftId, Pageable pageable) {
 
-    List<StockCardSummaryDto> stockCardSummaryDtos =  getStockCardSummaryDtos(parameters,
+    List<StockCardSummaryDto> stockCardSummaryDtos = getStockCardSummaryDtos(parameters,
         subDraftIds, draftId, pageable);
 
     return getFulfillForMe(stockCardSummaryDtos);
@@ -486,15 +486,17 @@ public class SiglusStockCardSummariesService {
       Set<StockCardDetailsDto> stockCardDetailsDtos = new HashSet<>();
 
       stockCardSummaryV2Dto.getCanFulfillForMe().forEach(canFulfillForMeEntryDto -> {
-        StockCardDetailsDto fulfill = StockCardDetailsDto.builder()
-            .orderable(getOrderableFromObjectReference(orderableDtos, canFulfillForMeEntryDto.getOrderable()))
-            .lot(getLotFromObjectReference(lotDtos, canFulfillForMeEntryDto.getLot()))
-            .occurredDate(canFulfillForMeEntryDto.getOccurredDate())
-            .stockOnHand(canFulfillForMeEntryDto.getStockOnHand())
-            .processedDate(canFulfillForMeEntryDto.getProcessedDate())
-            .stockCard(canFulfillForMeEntryDto.getStockCard())
-            .build();
-        stockCardDetailsDtos.add(fulfill);
+        if (canFulfillForMeEntryDto.getStockOnHand() != 0) {
+          StockCardDetailsDto fulfill = StockCardDetailsDto.builder()
+              .orderable(getOrderableFromObjectReference(orderableDtos, canFulfillForMeEntryDto.getOrderable()))
+              .lot(getLotFromObjectReference(lotDtos, canFulfillForMeEntryDto.getLot()))
+              .occurredDate(canFulfillForMeEntryDto.getOccurredDate())
+              .stockOnHand(canFulfillForMeEntryDto.getStockOnHand())
+              .processedDate(canFulfillForMeEntryDto.getProcessedDate())
+              .stockCard(canFulfillForMeEntryDto.getStockCard())
+              .build();
+          stockCardDetailsDtos.add(fulfill);
+        }
       });
       stockCardSummaryDto.setStockCardDetails(stockCardDetailsDtos);
       stockCardSummaryDtos.add(stockCardSummaryDto);
@@ -516,17 +518,19 @@ public class SiglusStockCardSummariesService {
       Map<UUID, List<LotLocationSohDto>> lotLocationMaps = lotLocationSohDtoList.stream()
           .collect(Collectors.groupingBy(LotLocationSohDto::getLotId));
       stockCardSummaryV2Dto.getCanFulfillForMe().forEach(canFulfillForMeEntryDto -> {
-        StockCardDetailsWithLocationDto fulfill = StockCardDetailsWithLocationDto.builder()
-            .lotLocationSohDtoList(lotLocationMaps.isEmpty() || canFulfillForMeEntryDto.getLot() == null ? null
-                : lotLocationMaps.get(canFulfillForMeEntryDto.getLot().getId()))
-            .orderable(getOrderableFromObjectReference(orderableDtos, canFulfillForMeEntryDto.getOrderable()))
-            .lot(getLotFromObjectReference(lotDtos, canFulfillForMeEntryDto.getLot()))
-            .occurredDate(canFulfillForMeEntryDto.getOccurredDate())
-            .stockOnHand(canFulfillForMeEntryDto.getStockOnHand())
-            .processedDate(canFulfillForMeEntryDto.getProcessedDate())
-            .stockCard(canFulfillForMeEntryDto.getStockCard())
-            .build();
-        stockCardDetailsDtos.add(fulfill);
+        if (canFulfillForMeEntryDto.getStockOnHand() != 0) {
+          StockCardDetailsWithLocationDto fulfill = StockCardDetailsWithLocationDto.builder()
+              .lotLocationSohDtoList(lotLocationMaps.isEmpty() || canFulfillForMeEntryDto.getLot() == null ? null
+                  : lotLocationMaps.get(canFulfillForMeEntryDto.getLot().getId()))
+              .orderable(getOrderableFromObjectReference(orderableDtos, canFulfillForMeEntryDto.getOrderable()))
+              .lot(getLotFromObjectReference(lotDtos, canFulfillForMeEntryDto.getLot()))
+              .occurredDate(canFulfillForMeEntryDto.getOccurredDate())
+              .stockOnHand(canFulfillForMeEntryDto.getStockOnHand())
+              .processedDate(canFulfillForMeEntryDto.getProcessedDate())
+              .stockCard(canFulfillForMeEntryDto.getStockCard())
+              .build();
+          stockCardDetailsDtos.add(fulfill);
+        }
       });
       stockCardSummaryDto.setStockCardDetails(stockCardDetailsDtos);
       stockCardSummaryDtos.add(stockCardSummaryDto);

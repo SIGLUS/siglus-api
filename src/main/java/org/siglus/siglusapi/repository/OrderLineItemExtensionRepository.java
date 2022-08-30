@@ -19,13 +19,18 @@ import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 import org.siglus.siglusapi.domain.OrderLineItemExtension;
+import org.siglus.siglusapi.repository.dto.OrderSuggestedQuantityDto;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
-public interface OrderLineItemExtensionRepository extends
-    JpaRepository<OrderLineItemExtension, UUID> {
+public interface OrderLineItemExtensionRepository extends JpaRepository<OrderLineItemExtension, UUID> {
 
   List<OrderLineItemExtension> findByOrderId(UUID orderId);
 
-  List<OrderLineItemExtension> findByOrderLineItemIdIn(
-      Collection<UUID> orderLineItemIds);
+  List<OrderLineItemExtension> findByOrderLineItemIdIn(Collection<UUID> orderLineItemIds);
+
+  @Query(name = "Order.findOrderSuggestedQuantityDto", nativeQuery = true)
+  List<OrderSuggestedQuantityDto> findOrderSuggestedQuantityDtoByOrderLineItemIdIn(
+      @Param("orderLineItemIds") Collection<UUID> orderLineItemIds);
 }

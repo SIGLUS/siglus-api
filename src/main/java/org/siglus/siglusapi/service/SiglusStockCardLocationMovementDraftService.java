@@ -17,41 +17,58 @@ package org.siglus.siglusapi.service;
 
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_MOVEMENT_DRAFT_EXISTS;
 
+import com.google.common.collect.Maps;
+import java.time.LocalDate;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
+import org.openlmis.referencedata.dto.OrderableDto;
+import org.openlmis.stockmanagement.domain.card.StockCard;
+import org.openlmis.stockmanagement.repository.StockCardRepository;
+import org.siglus.siglusapi.constant.LocationConstants;
 import org.siglus.siglusapi.domain.StockCardLocationMovementDraft;
+import org.siglus.siglusapi.domain.StockCardLocationMovementLineItem;
+import org.siglus.siglusapi.dto.LotDto;
 import org.siglus.siglusapi.dto.Message;
+import org.siglus.siglusapi.dto.QueryOrderableSearchParams;
 import org.siglus.siglusapi.dto.StockCardLocationMovementDraftDto;
+import org.siglus.siglusapi.dto.StockCardLocationMovementDraftLineItemDto;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.StockCardLocationMovementDraftRepository;
+import org.siglus.siglusapi.repository.StockCardLocationMovementLineItemRepository;
+import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
 import org.siglus.siglusapi.util.OperatePermissionService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.validator.ActiveDraftValidator;
 import org.siglus.siglusapi.validator.StockCardLocationMovementDraftValidator;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class SiglusStockCardLocationMovementDraftService {
 
-  @Autowired
-  private StockCardLocationMovementDraftRepository stockCardLocationMovementDraftRepository;
-
-  @Autowired
-  StockCardLocationMovementDraftValidator stockCardLocationMovementDraftValidator;
-
-  @Autowired
-  private SiglusAuthenticationHelper authenticationHelper;
-
-  @Autowired
-  private ActiveDraftValidator draftValidator;
-
-  @Autowired
-  private OperatePermissionService operatePermissionService;
+  private final StockCardLocationMovementDraftRepository stockCardLocationMovementDraftRepository;
+  private final StockCardLocationMovementDraftValidator stockCardLocationMovementDraftValidator;
+  private final SiglusAuthenticationHelper authenticationHelper;
+  private final ActiveDraftValidator draftValidator;
+  private final OperatePermissionService operatePermissionService;
+  private final StockCardRepository stockCardRepository;
+  private final StockCardLocationMovementLineItemRepository stockCardLocationMovementLineItemRepository;
+  private final SiglusOrderableService siglusOrderableService;
+  private final SiglusLotReferenceDataService siglusLotReferenceDataService;
 
   @Transactional
   public StockCardLocationMovementDraftDto createEmptyMovementDraft(
@@ -86,6 +103,81 @@ public class SiglusStockCardLocationMovementDraftService {
         .findByProgramIdAndFacilityId(programId, facilityId);
 
     return StockCardLocationMovementDraftDto.from(stockCardLocationMovementDrafts);
+  }
+
+  public StockCardLocationMovementDraftDto searchVirtualLocationMovementDraft() {
+    UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
+    operatePermissionService.checkPermission(facilityId);
+    draftValidator.validateFacilityId(facilityId);
+
+    List<UUID> stockCardIds = stockCardRepository.findByFacilityIdIn(facilityId)
+        .stream().map(StockCard::getId).collect(Collectors.toList());
+    List<StockCardLocationMovementLineItem> previousStockCardLocaitonMovementLineItemList =
+        stockCardLocationMovementLineItemRepository.findPreviousRecordByStockCardId(stockCardIds, LocalDate.now());
+
+    List<StockCardLocationMovementLineItem> virtualLocationMovementLineItem =
+        previousStockCardLocaitonMovementLineItemList.stream()
+            .filter(e -> Objects.equals(LocationConstants.VIRTUAL_LOCATION_CODE, e.getSrcLocationCode())
+            && Objects.equals(LocationConstants.VIRTUAL_LOCATION_CODE, e.getDestLocationCode()))
+            .collect(Collectors.toList());
+
+    List<StockCardLocationMovementDraftLineItemDto> stockCardLocationMovementDraftlineItemDtoList =
+        getStockCardLocationMovementDraftLineItemDtos(facilityId, virtualLocationMovementLineItem);
+
+    return StockCardLocationMovementDraftDto.builder()
+        .lineItems(stockCardLocationMovementDraftlineItemDtoList)
+        .build();
+  }
+
+  private List<StockCardLocationMovementDraftLineItemDto> getStockCardLocationMovementDraftLineItemDtos(UUID facilityId,
+      List<StockCardLocationMovementLineItem> virtualLocationMovementLineItem) {
+    List<StockCardLocationMovementDraftLineItemDto> stockCardLocationMovementDraftlineItemDtoList = new LinkedList<>();
+
+    List<UUID> virtualLocationMovementStockCardIds = virtualLocationMovementLineItem.stream().map(
+            StockCardLocationMovementLineItem::getStockCardId)
+        .collect(Collectors.toList());
+    Pageable pageable = new PageRequest(0, Integer.MAX_VALUE);
+    List<StockCard> virtualLocationMovementStockCardList = stockCardRepository
+        .findByIdIn(virtualLocationMovementStockCardIds, pageable).getContent();
+    Map<UUID, StockCard> stockCardIdToStockCardMap = Maps.uniqueIndex(
+        virtualLocationMovementStockCardList, StockCard::getId);
+
+    Set<UUID> orderableIds = virtualLocationMovementStockCardList.stream()
+        .map(StockCard::getOrderableId)
+        .collect(Collectors.toSet());
+    MultiValueMap<String, Object> queryParams = new LinkedMultiValueMap<>();
+    QueryOrderableSearchParams queryOrderableSearchParams = new QueryOrderableSearchParams(queryParams);
+    queryOrderableSearchParams.setIds(orderableIds);
+    Map<UUID, OrderableDto> orderableIdToOrderableDtoMap = Maps.uniqueIndex(
+        siglusOrderableService.searchOrderables(queryOrderableSearchParams, pageable, facilityId)
+            .getContent(), OrderableDto::getId);
+
+    List<UUID> lotIds = virtualLocationMovementStockCardList.stream()
+        .map(StockCard::getLotId)
+        .collect(Collectors.toList());
+    Map<UUID, LotDto> lotIdToLotDtoMap = Maps.uniqueIndex(siglusLotReferenceDataService.findByIds(lotIds),
+        LotDto::getId);
+
+    virtualLocationMovementLineItem.forEach(e -> {
+      StockCard stockCard = stockCardIdToStockCardMap.get(e.getStockCardId());
+      UUID orderableId = stockCard.getOrderableId();
+      UUID lotId = stockCard.getLotId();
+      OrderableDto orderable = orderableIdToOrderableDtoMap.get(orderableId);
+      LotDto lotDto = lotIdToLotDtoMap.get(lotId);
+      stockCardLocationMovementDraftlineItemDtoList.add(StockCardLocationMovementDraftLineItemDto.builder()
+          .orderableId(orderableId)
+          .productCode(orderable.getProductCode())
+          .productName(orderable.getFullProductName())
+          .lotId(lotId)
+          .lotCode(Objects.isNull(lotDto) ? null : lotDto.getLotCode())
+          .srcArea(e.getSrcArea())
+          .srcLocationCode(e.getSrcLocationCode())
+          .expirationDate(Objects.isNull(lotDto) ? null : lotDto.getExpirationDate())
+          .quantity(e.getQuantity())
+          .stockOnHand(e.getQuantity())
+          .build());
+    });
+    return stockCardLocationMovementDraftlineItemDtoList;
   }
 
   public StockCardLocationMovementDraftDto searchMovementDraft(UUID id) {

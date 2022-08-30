@@ -42,6 +42,7 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.openlmis.referencedata.domain.ProcessingPeriod;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.RequisitionLineItem;
 import org.openlmis.requisition.domain.requisition.RequisitionStatus;
@@ -61,6 +62,7 @@ import org.siglus.common.domain.ProcessingPeriodExtension;
 import org.siglus.common.repository.ProcessingPeriodExtensionRepository;
 import org.siglus.siglusapi.domain.SiglusReportType;
 import org.siglus.siglusapi.repository.FacilityNativeRepository;
+import org.siglus.siglusapi.repository.ProcessingPeriodRepository;
 import org.siglus.siglusapi.repository.SiglusReportTypeRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.repository.SiglusStockCardLineItemRepository;
@@ -126,6 +128,9 @@ public class SiglusProcessingPeriodServiceTest {
 
   @Mock
   private FacilityNativeRepository facilityNativeRepository;
+
+  @Mock
+  private ProcessingPeriodRepository processingPeriodRepository;
 
   @Rule
   public ExpectedException exception = ExpectedException.none();
@@ -212,7 +217,7 @@ public class SiglusProcessingPeriodServiceTest {
     when(processingPeriodExtensionRepository
         .findByProcessingPeriodId(periodId)).thenReturn(extension);
 
-    ProcessingPeriodDto response = siglusProcessingPeriodService.getProcessingPeriod(periodId);
+    ProcessingPeriodDto response = siglusProcessingPeriodService.getProcessingPeriodDto(periodId);
 
     verify(siglusProcessingPeriodReferenceDataService).findOne(periodId);
     verify(processingPeriodExtensionRepository).findByProcessingPeriodId(periodId);
@@ -227,7 +232,7 @@ public class SiglusProcessingPeriodServiceTest {
     when(processingPeriodExtensionRepository
         .findByProcessingPeriodId(periodId)).thenReturn(null);
 
-    ProcessingPeriodDto response = siglusProcessingPeriodService.getProcessingPeriod(periodId);
+    ProcessingPeriodDto response = siglusProcessingPeriodService.getProcessingPeriodDto(periodId);
 
     verify(siglusProcessingPeriodReferenceDataService).findOne(periodId);
     verify(processingPeriodExtensionRepository).findByProcessingPeriodId(periodId);
@@ -463,7 +468,44 @@ public class SiglusProcessingPeriodServiceTest {
     assertEquals(new ArrayList<>(), response);
   }
 
-  ;
+  @Test
+  public void shouldReturnWhenGetUpToNowMonthlyPeriods() {
+    // when
+    siglusProcessingPeriodService.getUpToNowMonthlyPeriods();
+
+    // then
+    verify(processingPeriodRepository).getUpToNowMonthlyPeriods(any(LocalDate.class));
+  }
+
+  @Test
+  public void shouldReturnTrueWhenDateInPeriod() {
+    // given
+    LocalDate now = LocalDate.now();
+    ProcessingPeriod period = new ProcessingPeriod();
+    period.setStartDate(now);
+    period.setEndDate(now.plusDays(1));
+
+    // when
+    boolean actualResponse = siglusProcessingPeriodService.isDateInPeriod(period, now);
+
+    // then
+    assertEquals(Boolean.TRUE, actualResponse);
+  }
+
+  @Test
+  public void shouldReturnFalseWhenDateNotInPeriod() {
+    // given
+    LocalDate now = LocalDate.now();
+    ProcessingPeriod period = new ProcessingPeriod();
+    period.setStartDate(now.plusDays(1));
+    period.setEndDate(now.plusDays(2));
+
+    // when
+    boolean actualResponse = siglusProcessingPeriodService.isDateInPeriod(period, now);
+
+    // then
+    assertEquals(Boolean.FALSE, actualResponse);
+  }
 }
 
 

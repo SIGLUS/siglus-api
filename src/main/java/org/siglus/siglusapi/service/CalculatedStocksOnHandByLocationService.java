@@ -28,6 +28,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -38,6 +39,7 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
+import org.javers.common.collections.Sets;
 import org.openlmis.stockmanagement.domain.BaseEntity;
 import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
@@ -71,6 +73,63 @@ public class CalculatedStocksOnHandByLocationService {
   private final StockCardLocationMovementLineItemRepository locationMovementRepository;
   private final OrderableReferenceDataService orderableService;
   private final StockCardLineItemRepository stockCardLineItemRepository;
+
+  public void calculateStockOnHandByLocationForMovement(List<StockCardLocationMovementLineItem> movementLineItems) {
+    List<StockCardLocationMovementLineItem> movements = movementLineItems.stream()
+            .filter(movement -> !movement.getSrcLocationCode().equals(movement.getDestLocationCode()))
+            .collect(Collectors.toList());
+    if (CollectionUtils.isEmpty(movements)) {
+      return;
+    }
+    Set<UUID> stockCardIds = movements.stream()
+            .map(StockCardLocationMovementLineItem::getStockCardId).collect(Collectors.toSet());
+    LocalDate occurredDate = movements.get(0).getOccurredDate();
+    Map<String, Integer> stockCardIdAndLocationCodeToPreviousStockOnHandMap =
+            this.getPreviousStockOnHandMapTillNow(stockCardIds, occurredDate);
+
+    List<CalculatedStockOnHandByLocation> toSaveList = new ArrayList<>();
+    Set<String> allUniqueKeys = movements.stream()
+            .flatMap(movement -> getUniqueKeysFromMovement(movement).stream())
+            .collect(Collectors.toSet());
+
+    allUniqueKeys.stream().forEach(key -> {
+      UUID stockCardId = UUID.fromString(key.split(SEPARATOR)[0]);
+      String locationCode = key.split(SEPARATOR)[1];
+      Integer previousSoh = stockCardIdAndLocationCodeToPreviousStockOnHandMap.get(key);
+      previousSoh = previousSoh == null ? 0 : previousSoh;
+
+      calculatedStockOnHandByLocationRepository.deleteAllByStockCardIdAndOccurredDateAndLocationCodes(
+              stockCardId, Date.from(occurredDate.atStartOfDay(ZoneId.systemDefault()).toInstant()), locationCode);
+
+      String area = null;
+      for (StockCardLocationMovementLineItem movement: movements) {
+        if (locationCode.equals(movement.getSrcLocationCode())) {
+          previousSoh = previousSoh - movement.getQuantity();
+          area = movement.getSrcArea();
+        } else if (locationCode.equals(movement.getDestLocationCode())) {
+          previousSoh = previousSoh + movement.getQuantity();
+          area = movement.getDestArea();
+        }
+      }
+
+      CalculatedStockOnHandByLocation soh = CalculatedStockOnHandByLocation.builder()
+              .stockCardId(stockCardId)
+              .occurredDate(Date.from(occurredDate.atStartOfDay(ZoneId.systemDefault()).toInstant()))
+              .stockOnHand(previousSoh)
+              .locationCode(locationCode)
+              .area(area)
+              .build();
+      toSaveList.add(soh);
+    });
+
+    saveAll(toSaveList);
+  }
+
+  private Set<String> getUniqueKeysFromMovement(StockCardLocationMovementLineItem movement) {
+    String key1 = movement.getStockCardId() + SEPARATOR + movement.getSrcLocationCode();
+    String key2 = movement.getStockCardId() + SEPARATOR + movement.getDestLocationCode();
+    return Sets.asSet(key1, key2);
+  }
 
   public void calculateStockOnHandByLocation(StockEventDto eventDto) {
     UUID facilityId = eventDto.getFacilityId();
@@ -106,8 +165,7 @@ public class CalculatedStocksOnHandByLocationService {
     List<CalculatedStockOnHandByLocation> toSaveList = new ArrayList<>();
     stockCardToLineItems.forEach((key, value) -> {
       value.sort(StockCard.getLineItemsComparator());
-      value.stream().findFirst()
-          .ifPresent(item -> recalculateLocationStockOnHand(toSaveList, stockCardIdToLineItems,
+      value.stream().forEach(item -> recalculateLocationStockOnHand(toSaveList, stockCardIdToLineItems,
                   lineItemIdToExtension, item, stockCardIdAndLocationCodeToPreviousStockOnHandMap,
                   stockCardIdToMovements));
     });
@@ -179,6 +237,7 @@ public class CalculatedStocksOnHandByLocationService {
             stockCard.getId(), extension.getLocationCode(), lineItem.getOccurredDate());
     if (CollectionUtils.isNotEmpty(movements)) {
       List<StockCardLineItem> followingMovementLineItems = movements.stream()
+              .filter(movement -> !movement.getSrcLocationCode().equals(movement.getDestLocationCode()))
               .map(movement -> convertMovementToStockCardLineItem(movement, extension.getLocationCode()))
               .collect(Collectors.toList());
       followingLineItems.addAll(followingMovementLineItems);
@@ -303,23 +362,35 @@ public class CalculatedStocksOnHandByLocationService {
             CalculatedStockOnHandByLocation::getStockOnHand, (stockOnHand1, stockOnHand2) -> stockOnHand1));
   }
 
+  private Map<String, Integer> getPreviousStockOnHandMapTillNow(Set<UUID> stockCardIds, LocalDate occurredDate) {
+    return calculatedStockOnHandByLocationRepository
+            .findPreviousLocationStockOnHandsTillNow(stockCardIds, occurredDate).stream()
+            .collect(toMap(calculatedStockOnHand -> calculatedStockOnHand.getStockCardId().toString()
+                            + SEPARATOR + calculatedStockOnHand.getLocationCode(),
+                    CalculatedStockOnHandByLocation::getStockOnHand, (stockOnHand1, stockOnHand2) -> stockOnHand1));
+  }
+
   private Map<StockCard, List<StockCardLineItem>> mapStockCardsWithLineItems(
       Map<String, StockCard> uniKeyToStockCard,
       List<StockEventLineItemDto> lineItemDtos,
       Map<UUID, List<StockCardLineItem>> stockCardIdToLineItems) {
+
+    Set<UUID> usedIds = new HashSet<>();
     // run after stock event save, always exist!
     Map<StockCard, List<StockCardLineItem>> stockCardToLineItems = new HashMap<>();
     lineItemDtos.forEach(lineItemDto -> {
       StockCard stockCard = uniKeyToStockCard.get(getUniqueKey(lineItemDto));
       StockCardLineItem lineItem = stockCardIdToLineItems.get(stockCard.getId()).stream()
           .filter(item -> item.getOccurredDate().equals(lineItemDto.getOccurredDate()))
+          .filter(item -> !usedIds.contains(item.getId()))
           .sorted(Comparator.comparing(StockCardLineItem::getProcessedDate).reversed())
           .findFirst()
           .orElseThrow(() -> new IllegalArgumentException("can't find target stock card line item"));
+      usedIds.add(lineItem.getId());
       if (stockCardToLineItems.containsKey(stockCard)) {
         stockCardToLineItems.get(stockCard).add(lineItem);
       } else {
-        stockCardToLineItems.put(stockCard, Arrays.asList(lineItem));
+        stockCardToLineItems.put(stockCard, new ArrayList<StockCardLineItem>(Arrays.asList(lineItem)));
       }
     });
     return stockCardToLineItems;

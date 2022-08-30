@@ -57,7 +57,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 import javax.persistence.EntityManager;
 import javax.validation.ConstraintViolationException;
@@ -94,7 +93,6 @@ import org.openlmis.stockmanagement.web.stockcardsummariesv2.CanFulfillForMeEntr
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2Dto;
 import org.siglus.common.repository.ArchivedProductRepository;
 import org.siglus.common.repository.ProgramAdditionalOrderableRepository;
-import org.siglus.siglusapi.config.AndroidTemplateConfigProperties;
 import org.siglus.siglusapi.domain.AppInfo;
 import org.siglus.siglusapi.domain.HfCmm;
 import org.siglus.siglusapi.domain.PodRequestBackup;
@@ -234,9 +232,6 @@ public class MeServiceTest {
   private RequisitionSearchService requisitionSearchService;
 
   @Mock
-  private AndroidTemplateConfigProperties androidTemplateConfigProperties;
-
-  @Mock
   private RequisitionRequestBackupRepository requisitionRequestBackupRepository;
 
   @Mock
@@ -331,11 +326,6 @@ public class MeServiceTest {
   private final String productCode2 = "product 2";
   private final String productCode3 = "product 3";
 
-  private final UUID templateId = UUID.fromString("610a52a5-2217-4fb7-9e8e-90bba3051d4d");
-  private final UUID mmiaTemplateId = UUID.fromString("873c25d6-e53b-11eb-8494-acde48001122");
-  private final UUID malariaTemplateId = UUID.fromString("3f2245ce-ee9f-11eb-ba79-acde48001122");
-  private final UUID rapidtestTemplateId = UUID.fromString("2c10856e-eead-11eb-9718-acde48001122");
-
   private final String nameStockCardSearchService = "stockCardSearchService";
   private final String nameStockCardCreateService = "stockCardCreateService";
 
@@ -396,14 +386,6 @@ public class MeServiceTest {
         .thenReturn(singletonList(mockApprovedProduct3()));
     when(archivedProductRepo.findArchivedProductsByFacilityId(facilityId)).thenReturn(singleton(productId1.toString()));
     when(androidHelper.isAndroid()).thenReturn(true);
-    Set<UUID> androidTemplateIds = new HashSet<>();
-    androidTemplateIds.add(templateId);
-    androidTemplateIds.add(mmiaTemplateId);
-    androidTemplateIds.add(malariaTemplateId);
-    androidTemplateIds.add(rapidtestTemplateId);
-    when(androidTemplateConfigProperties.getAndroidTemplateIds()).thenReturn(androidTemplateIds);
-    when(androidTemplateConfigProperties.findAndroidTemplateId(any())).thenReturn(templateId);
-    ReflectionTestUtils.setField(service, "androidTemplateConfigProperties", androidTemplateConfigProperties);
     when(requisitionRequestBackupRepository.findOneByHash(anyString())).thenReturn(null);
   }
 
@@ -438,10 +420,7 @@ public class MeServiceTest {
     when(reportTypeRepository.findByFacilityId(facilityId))
         .thenReturn(reportTypes);
     List<Requisition> requisitions = mockProgramRnr().map(Collections::singletonList).orElse(emptyList());
-    when(requisitionRepository
-        .findLatestRequisitionsByFacilityIdAndAndroidTemplateId(facilityId,
-            androidTemplateConfigProperties.getAndroidTemplateIds()))
-        .thenReturn(requisitions);
+    when(requisitionRepository.findLatestRequisitionsByFacilityId(facilityId)).thenReturn(requisitions);
 
     // when
     FacilityResponse response = service.getCurrentFacility();

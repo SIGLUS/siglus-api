@@ -36,39 +36,36 @@ public abstract class MessageKeys {
   private static final String PRODUCT_LOCATION_MOVEMENT_ERROR_PREFIX = ERROR_PREFIX + ".stockMovement";
   private static final String POD_ERROR_PREFIX = ERROR_PREFIX + ".proofOfDelivery";
   private static final String STOCK_CARD_ERROR_PREFIX = ERROR_PREFIX + ".stockCard";
+  private static final String PERIOD_ERROR_PREFIX = ERROR_PREFIX + ".processingperiod";
 
   // authorization
-  public static final String ERROR_PERMISSION_NOT_SUPPORTED =
-      ERROR_PREFIX + ".authorization.permission.not.supported";
+  public static final String ERROR_PERMISSION_NOT_SUPPORTED = ERROR_PREFIX + ".authorization.permission.not.supported";
   public static final String ERROR_USER_NOT_FOUND = ERROR_PREFIX + ".authorization.user.notFound";
-  public static final String ERROR_ADDITIONAL_ORDERABLE_DUPLICATED =
-      join(ERROR_PREFIX, ADDITIONAL_ORDERABLE, DUPLICATED);
+  public static final String ERROR_ADDITIONAL_ORDERABLE_DUPLICATED = join(ERROR_PREFIX, ADDITIONAL_ORDERABLE,
+      DUPLICATED);
   public static final String ERROR_NOT_ACCEPTABLE = ERROR_PREFIX + ".not.acceptable";
 
-  // sub order
-  public static final String ERROR_SUB_ORDER_LINE_ITEM =
-      ERROR_PREFIX + ".suborder.line.item.not.exist";
+  // order
+  public static final String ERROR_ORDER_NOT_EXIST = ERROR_PREFIX + ".order.not.exist";
+  public static final String ERROR_SUB_ORDER_LINE_ITEM = ERROR_PREFIX + ".suborder.line.item.not.exist";
   public static final String ERROR_TRADE_ITEM_IS_EMPTY = ERROR_PREFIX + ".tradeItem.is.empty";
-  public static final String ERROR_LOT_ID_AND_CODE_SHOULD_EMPTY =
-      ERROR_PREFIX + ".lotinfo.should.empty";
+  public static final String ERROR_LOT_ID_AND_CODE_SHOULD_EMPTY = ERROR_PREFIX + ".lotinfo.should.empty";
+
+  // shipment
+  public static final String SHIPMENT_ORDER_STATUS_INVALID = join(ERROR_PREFIX, SHIPMENT, ORDER, "status", INVALID);
 
   // facility
-  public static final String ERROR_EVENT_FACILITY_INVALID =
-      EVENT_ERROR_PREFIX + ".facilityId.invalid";
-  public static final String ERROR_EVENT_INITIAL_DRAFT_ID_INVALID =
-      EVENT_ERROR_PREFIX + ".initial.draft.id.invalid";
+  public static final String ERROR_EVENT_FACILITY_INVALID = EVENT_ERROR_PREFIX + ".facilityId.invalid";
+  public static final String ERROR_EVENT_INITIAL_DRAFT_ID_INVALID = EVENT_ERROR_PREFIX + ".initial.draft.id.invalid";
   public static final String ERROR_FACILITY_ID_MISSING = ERROR_PREFIX + ".facility.id.missing";
   public static final String ERROR_PROGRAM_MISSING = ERROR_PREFIX + ".program.missing";
   public static final String ERROR_PROGRAM_ID_MISSING = ERROR_PREFIX + ".program.id.missing";
   public static final String ERROR_USER_ID_MISSING = ERROR_PREFIX + ".user.id.missing";
   public static final String ERROR_IS_DRAFT_MISSING = ERROR_PREFIX + ".is.draft.missing";
   public static final String ERROR_DRAFT_TYPE_MISSING = ERROR_PREFIX + ".draft.type.missing";
-  public static final String ERROR_DRAFT_DOCUMENT_NUMBER_MISSING =
-      ERROR_PREFIX + ".draft.document.number.missing";
-  public static final String ERROR_NOT_EXPECTED_DRAFT_TYPE_ERROR =
-      ERROR_PREFIX + ".not.expected.draft.type.error";
-  public static final String ERROR_NOT_EXPECTED_USER_DRAFT =
-      ERROR_PREFIX + ".not.expected.user.draft";
+  public static final String ERROR_DRAFT_DOCUMENT_NUMBER_MISSING = ERROR_PREFIX + ".draft.document.number.missing";
+  public static final String ERROR_NOT_EXPECTED_DRAFT_TYPE_ERROR = ERROR_PREFIX + ".not.expected.draft.type.error";
+  public static final String ERROR_NOT_EXPECTED_USER_DRAFT = ERROR_PREFIX + ".not.expected.user.draft";
 
   // stock management
   public static final String ERROR_VALIDATE_STOCK_MOVEMENT_DATE =
@@ -129,6 +126,8 @@ public abstract class MessageKeys {
       PRODUCT_LOCATION_MOVEMENT_ERROR_PREFIX + ".movement.draft.id.should.null";
   public static final String ERROR_MOVEMENT_QUANTITY_MORE_THAN_STOCK_ON_HAND =
       PRODUCT_LOCATION_MOVEMENT_ERROR_PREFIX + ".movement.quantity.more.than.stock.on.hand";
+  public static final String ERROR_MOVEMENT_QUANTITY_LESS_THAN_STOCK_ON_HAND =
+      PRODUCT_LOCATION_MOVEMENT_ERROR_PREFIX + ".movement.quantity.less.than.stock.on.hand";
 
   //location
   public static final String ERROR_LOCATIONS_BY_FACILITY_NOT_FOUND =
@@ -160,9 +159,8 @@ public abstract class MessageKeys {
   public static final String ERROR_SPLIT_NUM_TOO_LARGE = POD_ERROR_PREFIX
       + ".split.num.too.large";
 
-  // shipment
-  public static final String SHIPMENT_ORDER_STATUS_INVALID =
-      join(ERROR_PREFIX, SHIPMENT, ORDER, "status", INVALID);
+  // period
+  public static final String ERROR_NO_PERIOD_MATCH = PERIOD_ERROR_PREFIX + ".no.period.match";
 
   // common
   public static final String ERROR_SIZE_NULL = ERROR_PREFIX + ".pageable.size.null";

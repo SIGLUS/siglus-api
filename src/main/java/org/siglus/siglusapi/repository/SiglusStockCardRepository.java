@@ -21,7 +21,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import javax.persistence.criteria.Predicate;
-
 import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.dto.StockEventLineItemDto;
 import org.siglus.siglusapi.repository.dto.StockOnHandDto;

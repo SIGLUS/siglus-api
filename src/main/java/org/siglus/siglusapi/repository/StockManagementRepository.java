@@ -20,6 +20,7 @@ import static java.util.Comparator.comparing;
 import static java.util.Objects.requireNonNull;
 import static java.util.UUID.randomUUID;
 import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.summingInt;
 import static java.util.stream.Collectors.toList;
 import static org.openlmis.referencedata.domain.Orderable.TRADE_ITEM;
 
@@ -54,6 +55,7 @@ import org.hibernate.jpa.TypedParameterValue;
 import org.hibernate.type.StandardBasicTypes;
 import org.openlmis.requisition.dto.OrderableDto;
 import org.siglus.common.constant.KitConstants;
+import org.siglus.common.dto.StockOnHandByLotDto;
 import org.siglus.siglusapi.dto.android.EventTime;
 import org.siglus.siglusapi.dto.android.EventTimeContainer;
 import org.siglus.siglusapi.dto.android.InventoryDetail;
@@ -150,6 +152,32 @@ public class StockManagementRepository extends BaseNativeRepository {
         .sorted(EventTimeContainer.ASCENDING)
         .collect(toList());
     return new PeriodOfProductMovements(productMovements, stocksOnHand);
+  }
+
+  public Map<UUID, Integer> getStockOnHandByProduct(UUID facilityId, UUID programId, Iterable<UUID> orderableIds,
+      LocalDate asOfDate) {
+    String sql = "SELECT DISTINCT ON (csoh.stockcardid) sc.orderableid, csoh.stockonhand \n"
+        + "    FROM stockmanagement.calculated_stocks_on_hand csoh \n"
+        + "    LEFT JOIN stockmanagement.stock_cards sc ON csoh.stockcardid = sc.id \n"
+        + "    WHERE sc.facilityid = :facilityId \n"
+        + "    AND sc.programid = :programId\n"
+        + "    AND sc.orderableid in :orderableIds\n"
+        + "    AND csoh.occurreddate <= :asOfDate \n"
+        + "    ORDER BY csoh.stockcardid, csoh.occurreddate DESC";
+    MapSqlParameterSource parameters = new MapSqlParameterSource();
+    parameters.addValue("facilityId", facilityId);
+    parameters.addValue("programId", programId);
+    parameters.addValue("orderableIds", orderableIds);
+    parameters.addValue("asOfDate", asOfDate);
+    List<StockOnHandByLotDto> result = executeQuery(sql, parameters,
+        ((rs, rowNum) -> StockOnHandByLotDto.builder()
+            .orderableId(readUuid(rs, "orderableid"))
+            .stockOnHand(readAsInt(rs, "stockonhand"))
+            .build()
+        )
+    );
+    return result.stream()
+        .collect(groupingBy(StockOnHandByLotDto::getOrderableId, summingInt(StockOnHandByLotDto::getStockOnHand)));
   }
 
   public StocksOnHand getStockOnHand(@Nonnull UUID facilityId) {

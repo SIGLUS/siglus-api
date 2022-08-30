@@ -18,7 +18,6 @@ package org.siglus.siglusapi.service;
 import static com.google.common.collect.Lists.newArrayList;
 import static java.util.stream.Collectors.toMap;
 
-import com.google.common.collect.Lists;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -39,7 +38,6 @@ import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.OrderLineItemRepository;
 import org.siglus.siglusapi.repository.ShipmentDraftLineItemsExtensionRepository;
 import org.siglus.siglusapi.service.client.SiglusShipmentDraftFulfillmentService;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
@@ -212,7 +210,6 @@ public class SiglusShipmentDraftService {
 
   private ShipmentDraftDto fulfillShipmentDraftByLocation(ShipmentDraftDto shipmentDraftDto) {
     List<ShipmentLineItemDto> shipmentLineItemDtos = shipmentDraftDto.lineItems();
-    List<ShipmentLineItemDto> newShipmentLineItemDto = Lists.newArrayList();
     List<UUID> lineItemIds = shipmentLineItemDtos.stream().map(ShipmentLineItemDto::getId).collect(Collectors.toList());
 
     List<ShipmentDraftLineItemsExtension> lineItemsExtensionList = shipmentDraftLineItemsExtensionRepository
@@ -222,17 +219,13 @@ public class SiglusShipmentDraftService {
       ShipmentLineItemDto lineItemDto = shipmentLineItemDtos.stream().filter(shipmentLineItemDto ->
               lineItemsExtension.getShipmentDraftLineItemId().equals(shipmentLineItemDto.getId()))
           .findFirst().orElse(new ShipmentLineItemDto());
-      ShipmentLineItemDto shipmentLineItemDto = new ShipmentLineItemDto();
-      BeanUtils.copyProperties(lineItemDto, shipmentLineItemDto);
       LocationDto locationDto = LocationDto
           .builder()
           .locationCode(lineItemsExtension.getLocationCode())
           .area(lineItemsExtension.getArea())
           .build();
-      shipmentLineItemDto.setLocation(locationDto);
-      newShipmentLineItemDto.add(shipmentLineItemDto);
+      lineItemDto.setLocation(locationDto);
     });
-    shipmentDraftDto.setLineItems(newShipmentLineItemDto);
     return shipmentDraftDto;
   }
 

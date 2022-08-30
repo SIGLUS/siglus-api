@@ -1299,6 +1299,19 @@ traits:
               description: An error occured during request processing.
 
 
+    /locationMovementDrafts/virtualLocationDrafts:
+      get:
+        is: [ secured ]
+        description: Get location movement drafts which is included in virtual location by facility.
+        responses:
+          200:
+            description: Return location movement drafts which is included in virtual location by facility.
+          403:
+            description: User does not have permission to view location movement draft.
+            body:
+              application/json:
+                schema: localizedMessage
+
     /drafts/{initialDraftId}/subDraft/merge:
       get:
         is: [ secured ]
@@ -2570,6 +2583,35 @@ traits:
             body:
               application/json:
                 schema: orderDto
+          404:
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+                schema: localizedMessage
+    /orders/{id}/suggestedQuantity:
+      uriParameters:
+        id:
+          displayName: id
+          type: string
+          required: true
+          repeat: false
+      get:
+        is: [ secured ]
+        description: get order by id
+        responses:
+          200:
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+                schema: orderDto
+          403:
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+                schema: localizedMessage
           404:
             headers:
               Keep-Alive:

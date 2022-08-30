@@ -17,7 +17,6 @@ package org.siglus.siglusapi.service;
 
 import com.alibaba.excel.EasyExcelFactory;
 import com.alibaba.excel.support.ExcelTypeEnum;
-
 import com.google.common.collect.Lists;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -274,10 +273,8 @@ public class SiglusAdministrationsService {
       eachRow.add(locationManagement.getBarcode());
       eachRow.add(locationManagement.getBin());
       eachRow.add(locationManagement.getLevel());
-
       dataRows.add(eachRow);
     }
-
     return dataRows;
   }
 
@@ -298,7 +295,7 @@ public class SiglusAdministrationsService {
   }
 
   private FacilitySearchResultDto getFacilityInfo(UUID facilityId) {
-    FacilityDto facilityInfo = siglusFacilityReferenceDataService.findOneFacility(facilityId);
+    FacilityDto facilityInfo = siglusFacilityReferenceDataService.findOneWithoutCache(facilityId);
     if (null == facilityInfo) {
       log.info("Facility not found; Facility id: {}", facilityId);
       throw new NotFoundException("Resources not found");
@@ -318,7 +315,17 @@ public class SiglusAdministrationsService {
     }
     searchResultDto.setIsAndroidDevice(facilityExtension.getIsAndroid());
     searchResultDto.setEnableLocationManagement(BooleanUtils.isTrue(facilityExtension.getEnableLocationManagement()));
+    searchResultDto.setCanInitialMoveProduct((canInitialMoveProduct(facilityId)));
     return searchResultDto;
+  }
+
+  public Boolean canInitialMoveProduct(UUID facilityId) {
+    List<UUID> stockCardIds = stockCardRepository.findByFacilityIdIn(facilityId)
+        .stream().map(StockCard::getId).collect(Collectors.toList());
+    List<CalculatedStockOnHandByLocation> calculatedStockOnHandByLocationList =
+        findLatestCalculatedSohByLocationVirtualLocationRecordByStockCardId(stockCardIds);
+
+    return !calculatedStockOnHandByLocationList.isEmpty();
   }
 
   private boolean emptyStockCardCount(UUID facilityId) {
@@ -332,7 +339,9 @@ public class SiglusAdministrationsService {
       List<UUID> stockCardIds = stockCards.stream().map(StockCard::getId).collect(Collectors.toList());
       if (BooleanUtils.isTrue(siglusFacilityDto.getEnableLocationManagement())) {
         List<CalculatedStockOnHand> calculatedStockOnHandList = findStockCardIdsHasStockOnHandOnLot(stockCardIds);
-        assignNewVirtualLocations(calculatedStockOnHandList, userId);
+        if (CollectionUtils.isNotEmpty(calculatedStockOnHandList)) {
+          assignNewVirtualLocations(calculatedStockOnHandList, userId);
+        }
       } else {
         List<CalculatedStockOnHandByLocation> stockCardIdsHasStockOnHandOnLocation =
             findStockCardIdsHasStockOnHandOnLocation(stockCardIds);
@@ -341,11 +350,21 @@ public class SiglusAdministrationsService {
     }
   }
 
-  private List<CalculatedStockOnHandByLocation> findStockCardIdsHasStockOnHandOnLocation(List<UUID> stockCardIds) {
+  private List<CalculatedStockOnHandByLocation>  findStockCardIdsHasStockOnHandOnLocation(List<UUID> stockCardIds) {
     return calculatedStocksOnHandLocationsRepository.findLatestLocationSohByStockCardIds(stockCardIds)
         .stream().filter(calculatedByLocation -> calculatedByLocation.getStockOnHand() > 0
             && !LocationConstants.VIRTUAL_LOCATION_CODE.equals(calculatedByLocation.getLocationCode()))
         .collect(Collectors.toList());
+  }
+
+  private List<CalculatedStockOnHandByLocation> findLatestCalculatedSohByLocationVirtualLocationRecordByStockCardId(
+      List<UUID> stockCardIds) {
+    return !stockCardIds.isEmpty()
+        ? calculatedStocksOnHandLocationsRepository.findLatestLocationSohByStockCardIds(stockCardIds)
+            .stream().filter(calculatedByLocation -> calculatedByLocation.getStockOnHand() > 0
+                && LocationConstants.VIRTUAL_LOCATION_CODE.equals(calculatedByLocation.getLocationCode()))
+            .collect(Collectors.toList())
+        : Collections.emptyList();
   }
 
   private List<CalculatedStockOnHand> findStockCardIdsHasStockOnHandOnLot(List<UUID> stockCardIds) {
@@ -362,8 +381,7 @@ public class SiglusAdministrationsService {
     List<StockCardLocationMovementLineItem> latestMovementList = stockCardLocationMovementLineItemRepository
         .findPreviousRecordByStockCardId(stockCardIds, LocalDate.now());
     latestMovementList.forEach(latestMovement -> {
-      if (LocationConstants.VIRTUAL_LOCATION_CODE.equals(latestMovement.getDestLocationCode())
-          && LocationConstants.VIRTUAL_LOCATION_CODE.equals(latestMovement.getSrcLocationCode())) {
+      if (LocationConstants.VIRTUAL_LOCATION_CODE.equals(latestMovement.getDestLocationCode())) {
         calculatedStockOnHandList.removeIf(calculatedStockOnHand -> calculatedStockOnHand.getStockCard().getId()
             .equals(latestMovement.getStockCardId()));
       }

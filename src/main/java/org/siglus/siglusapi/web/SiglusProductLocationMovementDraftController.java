@@ -71,4 +71,10 @@ public class SiglusProductLocationMovementDraftController {
   public void deleteDraft(@PathVariable UUID id) {
     productLocationMovementDraftService.deleteMovementDraft(id);
   }
+
+  @GetMapping("/virtualLocationDrafts")
+  public StockCardLocationMovementDraftDto searchVirtualLocationMovementDraft() {
+    return productLocationMovementDraftService.searchVirtualLocationMovementDraft();
+  }
+
 }

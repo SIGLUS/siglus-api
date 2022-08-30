@@ -16,22 +16,25 @@
 package org.siglus.siglusapi.dto;
 
 import java.util.List;
+import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
 
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
 @Data
 public class ProductMovementDto {
+  private UUID orderableId;
   private String facilityName;
   private String productCode;
   private String productName;
+  private UUID programId;
   private String program;
   private List<StockMovementResDto> lineItems;
   private Integer stockOnHand;
   private String displayUnit;
+  private boolean inKit;
 }

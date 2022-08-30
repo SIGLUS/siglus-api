@@ -30,9 +30,11 @@ import org.siglus.siglusapi.domain.StockCardLineItemExtension;
 import org.siglus.siglusapi.dto.LotLocationSohDto;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+@SuppressWarnings("PMD.AvoidDuplicateLiterals")
 public interface CalculatedStockOnHandByLocationRepository extends JpaRepository<CalculatedStockOnHandByLocation, UUID>,
         JpaSpecificationExecutor<CalculatedStockOnHandByLocation> {
   @Query(name = "LotLocationSoh.findLocationSoh", nativeQuery = true)
@@ -69,13 +71,24 @@ public interface CalculatedStockOnHandByLocationRepository extends JpaRepository
 
   // TODO performance
   @Query(value = "select * from siglusintegration.calculated_stocks_on_hand_by_location "
-          + "where (stockcardid, occurreddate) in ("
-          + "select stockcardid, max(occurreddate) "
+          + "where (stockcardid, locationcode, occurreddate) in ("
+          + "select stockcardid, locationcode, max(occurreddate) "
           + "from siglusintegration.calculated_stocks_on_hand_by_location c "
           + "where c.stockcardid in :stockCardIds "
           + "and c.occurreddate < :occurredDate "
           + "group by c.stockcardid, c.locationcode)", nativeQuery = true)
   List<CalculatedStockOnHandByLocation> findPreviousLocationStockOnHands(
+          @Param("stockCardIds") Collection<UUID> stockCardIds,
+          @Param("occurredDate") LocalDate occurredDate);
+
+  @Query(value = "select * from siglusintegration.calculated_stocks_on_hand_by_location "
+          + "where (stockcardid, locationcode, occurreddate) in ("
+          + "select stockcardid, locationcode, max(occurreddate) "
+          + "from siglusintegration.calculated_stocks_on_hand_by_location c "
+          + "where c.stockcardid in :stockCardIds "
+          + "and c.occurreddate <= :occurredDate "
+          + "group by c.stockcardid, c.locationcode)", nativeQuery = true)
+  List<CalculatedStockOnHandByLocation> findPreviousLocationStockOnHandsTillNow(
           @Param("stockCardIds") Collection<UUID> stockCardIds,
           @Param("occurredDate") LocalDate occurredDate);
 
@@ -96,11 +109,22 @@ public interface CalculatedStockOnHandByLocationRepository extends JpaRepository
     });
   }
 
-  @Query(value = "select distinct on (stockcardid, locationcode) \n"
-      + "    id, stockcardid, occurreddate, calculatedstockonhandid, locationcode, area, first_value(stockonhand)\n"
-      + "    over (partition by (stockcardid, locationcode) order by occurreddate DESC ) as stockonhand \n"
-      + "from siglusintegration.calculated_stocks_on_hand_by_location \n"
-      + "where stockcardid in :stockCardIds", nativeQuery = true)
+  @Query(value = "select * from siglusintegration.calculated_stocks_on_hand_by_location\n"
+      + "where (stockcardid, processeddate) in\n"
+      + "      (select stockcardid, max(processeddate)\n"
+      + "       from siglusintegration.calculated_stocks_on_hand_by_location c\n"
+      + "       where c.stockcardid in :stockCardIds\n"
+      + "       group by c.stockcardid);", nativeQuery = true)
   List<CalculatedStockOnHandByLocation> findLatestLocationSohByStockCardIds(
       @Param("stockCardIds") Collection<UUID> stockCardIds);
+
+
+  @Modifying
+  @Query(value = "delete from siglusintegration.calculated_stocks_on_hand_by_location csohbl "
+          + "where csohbl.stockcardid = :stockCardId and csohbl.occurreddate >= :occurredDate "
+          + "and csohbl.locationcode = :locationCode",
+          nativeQuery = true)
+  void deleteAllByStockCardIdAndOccurredDateAndLocationCodes(@Param("stockCardId") UUID stockCardId,
+                                                             @Param("occurredDate") Date occurredDate,
+                                                             @Param("locationCode") String locationCode);
 }

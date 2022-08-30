@@ -53,6 +53,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.openlmis.requisition.domain.BaseEntity;
@@ -153,7 +154,6 @@ import org.siglus.siglusapi.util.OperatePermissionService;
 import org.siglus.siglusapi.util.SupportedProgramsHelper;
 import org.slf4j.profiler.Profiler;
 import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -164,139 +164,55 @@ import org.springframework.util.MultiValueMap;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 @SuppressWarnings("PMD.TooManyMethods")
 public class SiglusRequisitionService {
 
   public static final String SIMAM = "simam";
 
-  @Autowired
-  private RequisitionV2Controller requisitionV2Controller;
-
-  @Autowired
-  private RequisitionController requisitionController;
-
-  @Autowired
-  private RequisitionService requisitionService;
-
-  @Autowired
-  private PermissionService permissionService;
-
-  @Autowired
-  private SiglusOrderableService siglusOrderableService;
-
-  @Autowired
-  private PeriodService periodService;
-
-  @Autowired
-  private StockCardRangeSummaryStockManagementService stockCardRangeSummaryStockManagementService;
-
-  @Autowired
-  private StockOnHandRetrieverBuilderFactory stockOnHandRetrieverBuilderFactory;
-
-  @Autowired
-  private ProofOfDeliveryService proofOfDeliveryService;
-
-  @Autowired
-  private IdealStockAmountReferenceDataService idealStockAmountReferenceDataService;
-
-  @Autowired
-  private SiglusRequisitionRequisitionService siglusRequisitionRequisitionService;
-
-  @Autowired
-  private SupervisoryNodeReferenceDataService supervisoryNodeService;
-
-  @Autowired
-  private SiglusArchiveProductService archiveProductService;
-
-  @Autowired
-  private RequisitionTemplateExtensionRepository requisitionTemplateExtensionRepository;
-
-  @Autowired
-  private RequisitionLineItemExtensionRepository lineItemExtensionRepository;
-
-  @Autowired
-  private FacilityTypeApprovedProductReferenceDataService
-      facilityTypeApprovedProductReferenceDataService;
-
-  @Autowired
-  private RequisitionRepository requisitionRepository;
-
-  @Autowired
-  AuthenticationHelper authenticationHelper;
-
-  @Autowired
-  ApprovedProductReferenceDataService approvedProductReferenceDataService;
-
-  @Autowired
-  private SimulateAuthenticationHelper simulateAuthenticationHelper;
-
-  @Autowired
-  private SiglusUsageReportService siglusUsageReportService;
-
-  @Autowired
-  private RequisitionDraftRepository draftRepository;
-
-  @Autowired
-  private OperatePermissionService operatePermissionService;
-
-  @Autowired
-  private RightReferenceDataService rightReferenceDataService;
-
-  @Autowired
-  private RoleReferenceDataService roleReferenceDataService;
-
-  @Autowired
-  private SupervisoryNodeReferenceDataService supervisoryNodeReferenceDataService;
-
-  @Autowired
-  private SupervisingUsersReferenceDataService supervisingUsersReferenceDataService;
-
-  @Autowired
-  private ProgramReferenceDataService programReferenceDataService;
-
-  @Autowired
-  private RequisitionSimamEmailService requisitionSimamEmailService;
-
-  @Autowired
-  private MessageService messageService;
-
-  @Autowired
-  private SiglusNotificationNotificationService siglusNotificationNotificationService;
-
-  @Autowired
-  private RequisitionGroupReferenceDataService requisitionGroupReferenceDataService;
-
-  @Autowired
-  private SiglusNotificationService notificationService;
-
-  @Autowired
-  private FacilityReferenceDataService facilityReferenceDataService;
-
-  @Autowired
-  private SiglusRequisitionExtensionService siglusRequisitionExtensionService;
-
-  @Autowired
-  private RegimenDataProcessor regimenDataProcessor;
-
-  @Autowired
-  private SiglusApprovedProductReferenceDataService siglusApprovedReferenceDataService;
-
-  @Autowired
-  private RequisitionExtensionRepository requisitionExtensionRepository;
-
-  @Autowired
-  private FacilityExtensionRepository facilityExtensionRepository;
-
-  @Autowired
-  private FcCmmCpService fcCmmCpService;
-
-  @Autowired
-  private SiglusFilterAddProductForEmergencyService filterProductService;
-
-  @Autowired
-  private SupportedProgramsHelper supportedProgramsHelper;
-  @Autowired
-  private RequisitionMonthlyNotSubmitReportRepository requisitionMonthlyNotSubmitReportRepository;
+  private final RequisitionV2Controller requisitionV2Controller;
+  private final RequisitionController requisitionController;
+  private final RequisitionService requisitionService;
+  private final PermissionService permissionService;
+  private final SiglusOrderableService siglusOrderableService;
+  private final PeriodService periodService;
+  private final StockCardRangeSummaryStockManagementService stockCardRangeSummaryStockManagementService;
+  private final StockOnHandRetrieverBuilderFactory stockOnHandRetrieverBuilderFactory;
+  private final ProofOfDeliveryService proofOfDeliveryService;
+  private final IdealStockAmountReferenceDataService idealStockAmountReferenceDataService;
+  private final SiglusRequisitionRequisitionService siglusRequisitionRequisitionService;
+  private final SiglusArchiveProductService archiveProductService;
+  private final RequisitionTemplateExtensionRepository requisitionTemplateExtensionRepository;
+  private final RequisitionLineItemExtensionRepository lineItemExtensionRepository;
+  private final FacilityTypeApprovedProductReferenceDataService facilityTypeApprovedProductReferenceDataService;
+  private final RequisitionRepository requisitionRepository;
+  private final AuthenticationHelper authenticationHelper;
+  private final ApprovedProductReferenceDataService approvedProductReferenceDataService;
+  private final SimulateAuthenticationHelper simulateAuthenticationHelper;
+  private final SiglusUsageReportService siglusUsageReportService;
+  private final RequisitionDraftRepository draftRepository;
+  private final OperatePermissionService operatePermissionService;
+  private final RightReferenceDataService rightReferenceDataService;
+  private final RoleReferenceDataService roleReferenceDataService;
+  private final SupervisoryNodeReferenceDataService supervisoryNodeReferenceDataService;
+  private final SupervisingUsersReferenceDataService supervisingUsersReferenceDataService;
+  private final ProgramReferenceDataService programReferenceDataService;
+  private final RequisitionSimamEmailService requisitionSimamEmailService;
+  private final MessageService messageService;
+  private final SiglusNotificationNotificationService siglusNotificationNotificationService;
+  private final RequisitionGroupReferenceDataService requisitionGroupReferenceDataService;
+  private final SiglusNotificationService notificationService;
+  private final FacilityReferenceDataService facilityReferenceDataService;
+  private final SiglusRequisitionExtensionService siglusRequisitionExtensionService;
+  private final RegimenDataProcessor regimenDataProcessor;
+  private final SiglusApprovedProductReferenceDataService siglusApprovedReferenceDataService;
+  private final RequisitionExtensionRepository requisitionExtensionRepository;
+  private final FacilityExtensionRepository facilityExtensionRepository;
+  private final FcCmmCpService fcCmmCpService;
+  private final SiglusFilterAddProductForEmergencyService filterProductService;
+  private final SupportedProgramsHelper supportedProgramsHelper;
+  private final RequisitionMonthlyNotSubmitReportRepository requisitionMonthlyNotSubmitReportRepository;
+  private final HttpServletResponse response;
 
 
   @Value("${service.url}")
@@ -305,11 +221,9 @@ public class SiglusRequisitionService {
   public static final String SUGGESTED_QUANTITY_COLUMN = "suggestedQuantity";
 
   @Transactional
-  public SiglusRequisitionDto updateRequisition(UUID requisitionId,
-      SiglusRequisitionDto requisitionDto, HttpServletRequest request,
-      HttpServletResponse response) {
-    if (null != requisitionDto.getId()
-        && !Objects.equals(requisitionDto.getId(), requisitionId)) {
+  public SiglusRequisitionDto updateRequisition(UUID requisitionId, SiglusRequisitionDto requisitionDto,
+      HttpServletRequest request, HttpServletResponse response) {
+    if (null != requisitionDto.getId() && !Objects.equals(requisitionDto.getId(), requisitionId)) {
       throw new ValidationMessageException(ERROR_ID_MISMATCH);
     }
     if (operatePermissionService.canSubmit(requisitionDto)) {
@@ -320,13 +234,9 @@ public class SiglusRequisitionService {
   }
 
   @Transactional
-  public SiglusRequisitionDto initiate(UUID programId, UUID facilityId,
-      UUID suggestedPeriod,
-      boolean emergency,
-      String physicalInventoryDateStr,
-      HttpServletRequest request, HttpServletResponse response) {
-    RequisitionV2Dto v2Dto = requisitionV2Controller
-        .initiate(programId, facilityId, suggestedPeriod, emergency,
+  public SiglusRequisitionDto initiate(UUID programId, UUID facilityId, UUID suggestedPeriod, boolean emergency,
+      String physicalInventoryDateStr, HttpServletRequest request, HttpServletResponse response) {
+    RequisitionV2Dto v2Dto = requisitionV2Controller.initiate(programId, facilityId, suggestedPeriod, emergency,
             physicalInventoryDateStr, request, response);
     SiglusRequisitionDto siglusRequisitionDto = siglusUsageReportService.initiateUsageReport(v2Dto);
     initiateRequisitionNumber(siglusRequisitionDto);
@@ -375,10 +285,7 @@ public class SiglusRequisitionService {
   }
 
   public SiglusRequisitionDto searchRequisition(UUID requisitionId) {
-    // call origin OpenLMIS API
-    // reason: 1. set template extension
-    //         1. 2. set line item authorized quality extension
-    RequisitionV2Dto requisitionDto = siglusRequisitionRequisitionService.searchRequisition(requisitionId);
+    RequisitionV2Dto requisitionDto = requisitionV2Controller.getRequisition(requisitionId, response);
     setLineItemExtension(requisitionDto);
     RequisitionTemplateExtension extension = setTemplateExtension(requisitionDto);
     filterKits(requisitionDto);
@@ -1225,7 +1132,7 @@ public class SiglusRequisitionService {
   private SiglusRequisitionDto setIsFinalApproval(SiglusRequisitionDto siglusRequisitionDto) {
     if (siglusRequisitionDto.getStatus().duringApproval()) {
       UUID nodeId = siglusRequisitionDto.getSupervisoryNode();
-      SupervisoryNodeDto supervisoryNodeDto = supervisoryNodeService.findOne(nodeId);
+      SupervisoryNodeDto supervisoryNodeDto = supervisoryNodeReferenceDataService.findOne(nodeId);
       if (supervisoryNodeDto != null && supervisoryNodeDto.getParentNode() == null) {
         siglusRequisitionDto.setIsFinalApproval(Boolean.TRUE);
         return siglusRequisitionDto;

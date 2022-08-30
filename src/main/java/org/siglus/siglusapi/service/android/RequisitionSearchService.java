@@ -50,7 +50,6 @@ import org.openlmis.requisition.domain.requisition.RequisitionLineItem;
 import org.openlmis.requisition.domain.requisition.RequisitionLineItem.Importer;
 import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
-import org.siglus.siglusapi.config.AndroidTemplateConfigProperties;
 import org.siglus.siglusapi.constant.FieldConstants;
 import org.siglus.siglusapi.constant.UsageSectionConstants.UsageInformationLineItems;
 import org.siglus.siglusapi.domain.ConsultationNumberLineItem;
@@ -111,7 +110,6 @@ public class RequisitionSearchService {
   private final SiglusRequisitionRequisitionService siglusRequisitionRequisitionService;
   private final RequisitionLineItemExtensionRepository requisitionLineItemExtensionRepository;
   private final RequisitionExtensionRepository requisitionExtensionRepository;
-  private final AndroidTemplateConfigProperties androidTemplateConfigProperties;
   private final RegimenLineItemRepository regimenLineItemRepository;
   private final RegimenSummaryLineItemRepository regimenSummaryLineItemRepository;
   private final RegimenRepository regimenRepository;
@@ -145,8 +143,7 @@ public class RequisitionSearchService {
         extension -> {
           RequisitionV2Dto requisitionV2Dto = siglusRequisitionRequisitionService
               .searchRequisition(extension.getRequisitionId());
-          if (!isAndroidTemplate(requisitionV2Dto.getTemplate().getId())
-              || !requisitionV2Dto.getStatus().isAuthorized()) {
+          if (!requisitionV2Dto.getStatus().isAuthorized()) {
             return;
           }
           RequisitionCreateRequest requisitionCreateRequest = RequisitionCreateRequest.builder()
@@ -174,11 +171,6 @@ public class RequisitionSearchService {
       return Collections.emptyList();
     }
     return requisitionIdToLineItemRequests.get(requisitionId);
-  }
-
-  private boolean isAndroidTemplate(UUID programTemplatedId) {
-    Set<UUID> androidTemplateSet = androidTemplateConfigProperties.getAndroidTemplateIds();
-    return androidTemplateSet.contains(programTemplatedId);
   }
 
   private Map<UUID, List<RegimenLineItemRequest>> buildIdToRegimenLineRequestsMap(Set<UUID> requisitionIds) {

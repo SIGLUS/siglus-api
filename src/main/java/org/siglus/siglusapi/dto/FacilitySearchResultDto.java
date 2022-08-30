@@ -35,6 +35,8 @@ public class FacilitySearchResultDto extends FacilityDto {
 
   private Boolean hasSuccessUploadLocations;
 
+  private Boolean canInitialMoveProduct;
+
   public static FacilitySearchResultDto from(FacilityDto facilityDto) {
     FacilitySearchResultDto searchResultDto = new FacilitySearchResultDto();
     BeanUtils.copyProperties(facilityDto, searchResultDto);

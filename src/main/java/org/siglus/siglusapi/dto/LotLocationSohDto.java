@@ -32,6 +32,7 @@ import lombok.Data;
         query = "select\n"
             + "  sc.lotid ,\n"
             + "  fl.locationcode ,\n"
+            + "  fl.area, \n"
             + "  csohl.stockonhand\n"
             + "from\n"
             + "  (\n"
@@ -65,7 +66,10 @@ import lombok.Data;
                     @ColumnResult(name = "locationcode",
                         type = String.class),
                     @ColumnResult(name = "stockonhand",
-                        type = Integer.class)
+                        type = Integer.class),
+                    @ColumnResult(name = "area",
+                        type = String.class)
+
                 }
             )
         }
@@ -79,6 +83,8 @@ public class LotLocationSohDto {
   private UUID lotId;
 
   private String locationCode;
+
+  private String area;
 
   private Integer stockOnHand;
 }

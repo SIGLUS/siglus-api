@@ -13,22 +13,22 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.dto;
+package org.siglus.siglusapi.web.response;
 
-import java.util.List;
+import java.math.BigDecimal;
+import java.util.Map;
 import java.util.UUID;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.Setter;
-import org.openlmis.stockmanagement.dto.PhysicalInventoryDto;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-/**
- * @author kourengang
- * @date 6/28/22
- */
-@Getter
-@Setter
-@EqualsAndHashCode(callSuper = true)
-public class PhysicalInventorySubDraftDto extends PhysicalInventoryDto {
-  private List<UUID> subDraftIds;
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class OrderSuggestedQuantityResponse {
+
+  private boolean showSuggestedQuantity;
+  private Map<UUID, BigDecimal> orderableIdToSuggestedQuantity;
 }

@@ -308,6 +308,7 @@ public class SiglusStockCardService {
         stockMovementService.getMovementsByProduct(facilityId, orderableId);
     org.openlmis.referencedata.dto.OrderableDto orderableDto = siglusOrderableReferenceDataService.findOne(orderableId);
     FacilityDto facilityDto = siglusFacilityReferenceDataService.findOne(facilityId);
+    boolean inKit = unpackService.orderablesInKit().contains(orderableId);
     List<ProgramOrderableDto> programOrderableDtoList = new ArrayList<>(orderableDto.getPrograms());
     ProgramDto programDto = siglusProgramService.getProgram(programOrderableDtoList.get(0).getProgramId());
     return ProductMovementDto.builder()
@@ -315,9 +316,12 @@ public class SiglusStockCardService {
         .productName(orderableDto.getFullProductName())
         .productCode(orderableDto.getProductCode())
         .program(programDto.getName())
-        .stockOnHand(productMovements.get(productMovements.size() - 1).getProductSoh())
+        .stockOnHand(productMovements.get(0).getProductSoh())
         .lineItems(productMovements)
         .displayUnit(orderableDto.getDispensable().getDisplayUnit())
+        .orderableId(orderableId)
+        .inKit(inKit)
+        .programId(programDto.getId())
         .build();
   }
 }

@@ -15,6 +15,8 @@
 
 package org.siglus.siglusapi.service;
 
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_NO_PERIOD_MATCH;
+
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -26,6 +28,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.apache.commons.collections.CollectionUtils;
+import org.openlmis.referencedata.domain.ProcessingPeriod;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.dto.ProcessingPeriodDto;
@@ -39,9 +42,12 @@ import org.siglus.common.domain.ProcessingPeriodExtension;
 import org.siglus.common.dto.ProgramAdditionalOrderableDto;
 import org.siglus.common.repository.ProcessingPeriodExtensionRepository;
 import org.siglus.siglusapi.constant.ProgramConstants;
+import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.dto.ProcessingPeriodSearchParams;
+import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.repository.FacilityNativeRepository;
+import org.siglus.siglusapi.repository.ProcessingPeriodRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.repository.dto.FacillityStockCardDateDto;
 import org.siglus.siglusapi.service.client.SiglusProcessingPeriodReferenceDataService;
@@ -88,6 +94,9 @@ public class SiglusProcessingPeriodService {
 
   @Autowired
   private PeriodReferenceDataService periodReferenceDataService;
+
+  @Autowired
+  private ProcessingPeriodRepository processingPeriodRepository;
 
   public LocalDate getPreviousPeriodStartDateSinceInitiate(String programCode, UUID facilityId) {
     ProgramDto program = siglusProgramService.getProgramByCode(programCode)
@@ -165,10 +174,27 @@ public class SiglusProcessingPeriodService {
     return page;
   }
 
-  public ProcessingPeriodDto getProcessingPeriod(UUID periodId) {
+  public ProcessingPeriodDto getProcessingPeriodDto(UUID periodId) {
 
     ProcessingPeriodDto dto = siglusProcessingPeriodReferenceDataService.findOne(periodId);
     return getProcessingPeriodbyOpenLmisPeroid(dto);
+  }
+
+  public ProcessingPeriod getPeriodDateIn(List<ProcessingPeriod> processingPeriods, LocalDate localDate) {
+    return processingPeriods.stream().filter(period -> isDateInPeriod(period, localDate)).findFirst()
+        .orElseThrow(() -> new BusinessDataException(new Message(ERROR_NO_PERIOD_MATCH)));
+  }
+
+  public List<ProcessingPeriod> getUpToNowMonthlyPeriods() {
+    return processingPeriodRepository.getUpToNowMonthlyPeriods(LocalDate.now());
+  }
+
+  public boolean isDateInPeriod(ProcessingPeriod period, LocalDate localDate) {
+    return !isDateNotInPeriod(period, localDate);
+  }
+
+  private boolean isDateNotInPeriod(ProcessingPeriod period, LocalDate localDate) {
+    return localDate.isBefore(period.getStartDate()) || localDate.isAfter(period.getEndDate());
   }
 
   public ProcessingPeriodDto getProcessingPeriodbyOpenLmisPeroid(ProcessingPeriodDto dto) {

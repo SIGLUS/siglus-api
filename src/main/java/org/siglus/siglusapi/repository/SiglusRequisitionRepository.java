@@ -20,12 +20,14 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import org.openlmis.requisition.domain.requisition.Requisition;
+import org.siglus.siglusapi.repository.dto.RequisitionOrderDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+@SuppressWarnings("PMD.AvoidDuplicateLiterals")
 public interface SiglusRequisitionRepository extends JpaRepository<Requisition, UUID> {
 
   @Query(value = "select * from requisition.requisitions r where "
@@ -76,11 +78,9 @@ public interface SiglusRequisitionRepository extends JpaRepository<Requisition, 
 
   @Query(value = "select DISTINCT ON(t.programid) t.* from requisition.requisitions t "
       + "where t.facilityid = :facilityId "
-      + "and t.templateid in :androidTemplateIds "
       + "and t.emergency = false "
       + "order by t.programid,t.createddate desc ", nativeQuery = true)
-  List<Requisition> findLatestRequisitionsByFacilityIdAndAndroidTemplateId(@Param("facilityId") UUID facilityId,
-      @Param("androidTemplateIds") Set<UUID> androidTemplateIds);
+  List<Requisition> findLatestRequisitionsByFacilityId(@Param("facilityId") UUID facilityId);
 
   @Query(value = "select CAST(id AS varchar) from requisition.requisitions r "
       + "where r.facilityid = :facilityId "
@@ -92,4 +92,21 @@ public interface SiglusRequisitionRepository extends JpaRepository<Requisition, 
   List<String> findRequisitionIdsByOrderInfo(@Param("facilityId") UUID facilityId, @Param("programId") UUID programId,
       @Param("processingPeriodId") UUID periodId, @Param("emergency") boolean emergency,
       @Param("status") List<String> status);
+
+  @Query(value = "select r.* from requisition.requisitions r "
+      + "where r.programid = :programId "
+      + "and r.facilityid in :facilityIds "
+      + "and r.processingperiodid in :processingPeriodIds "
+      + "and r.supplyingfacilityid = :supplyingFacilityId "
+      + "and r.emergency = :emergency "
+      + "and r.status in (:status) ",
+      nativeQuery = true)
+  List<Requisition> findRequisitionsByOrderInfoAndSupplyingFacilityId(@Param("facilityIds") List<UUID> facilityIds,
+      @Param("programId") UUID programId, @Param("processingPeriodIds") List<UUID> periodIds,
+      @Param("emergency") boolean emergency, @Param("status") List<String> status,
+      @Param("supplyingFacilityId") UUID supplyingFacilityId);
+
+  @Query(name = "Order.findRequisitionOrderDtos", nativeQuery = true)
+  List<RequisitionOrderDto> findRequisitionOrderDtoByRequisitionIds(
+      @Param("requisitionIds") Iterable<UUID> requisitionIds);
 }

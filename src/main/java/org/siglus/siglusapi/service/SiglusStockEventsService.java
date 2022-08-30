@@ -27,6 +27,8 @@ import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_SUB_D
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_SUB_DRAFT_EMPTY;
 
 import com.google.common.collect.Maps;
+
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -68,6 +70,7 @@ import org.siglus.siglusapi.repository.StockCardLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.StockManagementDraftRepository;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.validator.ActiveDraftValidator;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -204,7 +207,8 @@ public class SiglusStockEventsService {
     List<StockEventLineItemDto> lineItems = eventDto.getLineItems();
     lineItems.forEach(lineItem -> lineItem.setId(UUID.randomUUID()));
     eventDto.setLineItems(lineItems);
-    UUID stockEventId = stockEventProcessor.process(eventDto);
+    UUID stockEventId;
+    stockEventId = stockEventProcessor.process(eventDto);
     enhanceStockCard(eventDto, stockEventId, isByLocation);
   }
 
@@ -218,6 +222,27 @@ public class SiglusStockEventsService {
         .map(StockEventLineItemDto::getOrderableId)
         .collect(Collectors.toSet());
     archiveProductService.activateProducts(eventDto.getFacilityId(), orderableIds);
+  }
+
+  private StockEventDto mergeEventDtoForLocation(StockEventDto eventDto) {
+    List<StockEventLineItemDto> lineItems = eventDto.getLineItems();
+    Map<String, List<StockEventLineItemDto>> uniqueKeyToLineItems = lineItems.stream()
+            .collect(Collectors.groupingBy(this::getUniqueKey));
+
+    List<StockEventLineItemDto> afterMerge = new ArrayList<>();
+    uniqueKeyToLineItems.keySet().forEach(key -> {
+      Integer sum = uniqueKeyToLineItems.get(key).stream()
+              .map(StockEventLineItemDto::getQuantity).reduce(0, Integer::sum);
+      StockEventLineItemDto copy = new StockEventLineItemDto();
+      BeanUtils.copyProperties(uniqueKeyToLineItems.get(key).get(0), copy);
+      copy.setQuantity(sum);
+      afterMerge.add(copy);
+    });
+
+    StockEventDto copiedEvent = new StockEventDto();
+    BeanUtils.copyProperties(eventDto, copiedEvent);
+    copiedEvent.setLineItems(afterMerge);
+    return copiedEvent;
   }
 
   private void setUserId(StockEventDto eventDto) {
@@ -378,6 +403,10 @@ public class SiglusStockEventsService {
 
   private String getUniqueKey(UUID lotId, String locationCode) {
     return lotId.toString() + SEPARATOR + locationCode;
+  }
+
+  private String getUniqueKey(StockEventLineItemDto eventLine) {
+    return eventLine.getOrderableId() + SEPARATOR + eventLine.getLotId();
   }
 
 }

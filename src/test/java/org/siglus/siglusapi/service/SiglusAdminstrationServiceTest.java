@@ -36,7 +36,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import javax.servlet.http.HttpServletResponse;
-
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.lang.BooleanUtils;
@@ -198,7 +197,7 @@ public class SiglusAdminstrationServiceTest {
             .thenReturn(Arrays.asList(mockReportType()));
     when(siglusProcessingPeriodService.getPreviousPeriodStartDateSinceInitiate(PROGRAM_CODE, facilityId))
             .thenReturn(date);
-    when(siglusFacilityReferenceDataService.findOneFacility(facilityId))
+    when(siglusFacilityReferenceDataService.findOneWithoutCache(facilityId))
             .thenReturn(mockFacilityDtoPage().getContent().get(0));
 
     when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(null);
@@ -217,7 +216,7 @@ public class SiglusAdminstrationServiceTest {
             .thenReturn(Collections.emptyList());
     when(siglusProcessingPeriodService.getPreviousPeriodStartDateSinceInitiate(null, facilityId))
             .thenReturn(null);
-    when(siglusFacilityReferenceDataService.findOneFacility(facilityId))
+    when(siglusFacilityReferenceDataService.findOneWithoutCache(facilityId))
         .thenReturn(mockFacilityDtoPage().getContent().get(0));
 
     when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(null);
@@ -232,7 +231,7 @@ public class SiglusAdminstrationServiceTest {
   @Test
   public void shouldGetFacilityInfoWhenFacilityExistsAndFacilityExtensionIsNotNull() {
     // given
-    when(siglusFacilityReferenceDataService.findOneFacility(facilityId))
+    when(siglusFacilityReferenceDataService.findOneWithoutCache(facilityId))
         .thenReturn(mockFacilityDtoPage().getContent().get(0));
 
     when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(
@@ -250,7 +249,7 @@ public class SiglusAdminstrationServiceTest {
     // given
     exception.expect(NotFoundException.class);
     exception.expectMessage("Resources not found");
-    when(siglusFacilityReferenceDataService.findOneFacility(facilityId)).thenReturn(null);
+    when(siglusFacilityReferenceDataService.findOneWithoutCache(facilityId)).thenReturn(null);
 
     // when
     siglusAdministrationsService.getFacility(facilityId);
@@ -263,7 +262,7 @@ public class SiglusAdminstrationServiceTest {
     FacilityExtension facilityExtension = mockFacilityExtension(facilityId, false, true);
     when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(null);
     when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(facilityExtension);
-    when(siglusFacilityReferenceDataService.findOneFacility(facilityId))
+    when(siglusFacilityReferenceDataService.findOneWithoutCache(facilityId))
             .thenReturn(mockFacilityDtoPage().getContent().get(0));
     SiglusReportTypeDto reportTypeDto = SiglusReportTypeDto.builder()
         .facilityId(facilityId)
@@ -288,7 +287,7 @@ public class SiglusAdminstrationServiceTest {
     FacilityExtension facilityExtension = mockFacilityExtension(facilityId, false, true);
     when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(null);
     when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(facilityExtension);
-    when(siglusFacilityReferenceDataService.findOneFacility(facilityId))
+    when(siglusFacilityReferenceDataService.findOneWithoutCache(facilityId))
         .thenReturn(mockFacilityDtoPage().getContent().get(0));
 
     // when
@@ -303,7 +302,7 @@ public class SiglusAdminstrationServiceTest {
   public void shouldUnableLocationManagementWhenFacilityExtensionIsNull() {
     // given
     when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(null);
-    when(siglusFacilityReferenceDataService.findOneFacility(facilityId))
+    when(siglusFacilityReferenceDataService.findOneWithoutCache(facilityId))
         .thenReturn(mockFacilityDtoPage().getContent().get(0));
     when(androidHelper.isAndroid()).thenReturn(false);
 
@@ -381,7 +380,7 @@ public class SiglusAdminstrationServiceTest {
     SiglusFacilityDto siglusFacilityDto = mockSiglusFacilityDto(false, null);
     FacilityDto facilityDto = mockFacilityDto();
     when(siglusFacilityReferenceDataService.createFacility(siglusFacilityDto)).thenReturn(facilityDto);
-    when(siglusFacilityReferenceDataService.findOneFacility(facilityId)).thenReturn(facilityDto);
+    when(siglusFacilityReferenceDataService.findOneWithoutCache(facilityId)).thenReturn(facilityDto);
     when(stockCardRepository.countByFacilityId(facilityId)).thenReturn(0);
 
     // when
@@ -396,7 +395,7 @@ public class SiglusAdminstrationServiceTest {
   public void shouldAssignVirtualLocationsWhenEnableLocationManagementWhileInitialInventoryFinished() {
     // given
     when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(null);
-    when(siglusFacilityReferenceDataService.findOneFacility(facilityId)).thenReturn(mockFacilityDto());
+    when(siglusFacilityReferenceDataService.findOneWithoutCache(facilityId)).thenReturn(mockFacilityDto());
     when(stockCardRepository.countByFacilityId(facilityId)).thenReturn(100);
     when(stockCardRepository.findByFacilityIdIn(facilityId)).thenReturn(Lists.newArrayList(mockStockCard()));
     when(calculatedStockOnHandRepository.findPreviousStockOnHands(Lists.newArrayList(stockCardId), LocalDate.now()))
@@ -416,7 +415,7 @@ public class SiglusAdminstrationServiceTest {
   public void shouldAssignVirtualLocationsWhenDisableLocationManagementWhileInitialInventoryFinished() {
     // given
     when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(null);
-    when(siglusFacilityReferenceDataService.findOneFacility(facilityId)).thenReturn(mockFacilityDto());
+    when(siglusFacilityReferenceDataService.findOneWithoutCache(facilityId)).thenReturn(mockFacilityDto());
     when(stockCardRepository.countByFacilityId(facilityId)).thenReturn(100);
     when(stockCardRepository.findByFacilityIdIn(facilityId)).thenReturn(Lists.newArrayList(mockStockCard()));
     when(calculatedStockOnHandRepository.findPreviousStockOnHands(Lists.newArrayList(stockCardId), LocalDate.now()))
@@ -439,7 +438,7 @@ public class SiglusAdminstrationServiceTest {
     // given
     when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(null);
     when(stockCardRepository.countByFacilityId(facilityId)).thenReturn(0);
-    when(siglusFacilityReferenceDataService.findOneFacility(facilityId)).thenReturn(mockFacilityDto());
+    when(siglusFacilityReferenceDataService.findOneWithoutCache(facilityId)).thenReturn(mockFacilityDto());
     SiglusFacilityDto siglusFacilityDto = mockSiglusFacilityDto(true, "locationManagement");
     when(authenticationHelper.getCurrentUser()).thenReturn(mockUserDto());
 

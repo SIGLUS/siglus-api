@@ -317,6 +317,8 @@ public class SiglusStockManagementDraftService {
         initialDraft.getFacilityId(), initialDraft.getProgramId());
     StockManagementInitialDraft savedInitialDraft = stockManagementInitialDraftsRepository.save(initialDraft);
     StockManagementInitialDraftDto initialDraftDtoResponse = StockManagementInitialDraftDto.from(savedInitialDraft);
+    boolean canMergeOrDeleteSubDrafts = authenticationHelper.isTheCurrentUserCanMergeOrDeleteSubDrafts();
+    initialDraftDtoResponse.setCanMergeOrDeleteSubDrafts(canMergeOrDeleteSubDrafts);
     String draftType = initialDraftDto.getDraftType();
     if (FieldConstants.ISSUE.equals(draftType) || FieldConstants.ISSUE_WITH_LOCATION.equals(draftType)) {
       String destinationName = findDestinationName(savedInitialDraft.getDestinationId(),

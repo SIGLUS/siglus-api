@@ -15,52 +15,48 @@
 
 package org.siglus.siglusapi.service;
 
+import static org.siglus.siglusapi.constant.FieldConstants.JWT_TOKEN_HEADER_PARAM_NAME;
+import static org.siglus.siglusapi.constant.FieldConstants.JWT_TOKEN_HEADER_PARAM_VALUE;
+import static org.siglus.siglusapi.constant.FieldConstants.METABASE_EXTENSION_URL;
+import static org.siglus.siglusapi.constant.FieldConstants.METABASE_PARAM_TEMPLATE;
+import static org.siglus.siglusapi.constant.FieldConstants.METABASE_PART_URL;
+import static org.siglus.siglusapi.constant.FieldConstants.METABASE_PAYLOAD_TEMPLATE;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.security.Keys;
 import java.io.IOException;
 import java.sql.Date;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.Base64;
 import java.util.Map;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.siglus.siglusapi.domain.FacilityLevel;
 import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.MetabaseUrlDto;
-import org.siglus.siglusapi.repository.FacilitySupplierLevelRepository;
 import org.siglus.siglusapi.repository.MetabaseDashboardRepository;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class MetabaseDashboardService {
 
-  @Autowired
-  FacilitySupplierLevelRepository facilitySupplierLevelRepository;
-  @Autowired
-  private SiglusAuthenticationHelper authenticationHelper;
-  @Autowired
-  SiglusFacilityReferenceDataService siglusFacilityReferenceDataService;
-  @Autowired
-  MetabaseDashboardRepository metabaseDashboardRepository;
+  private final SiglusAuthenticationHelper authenticationHelper;
+  private final SiglusFacilityReferenceDataService siglusFacilityReferenceDataService;
+  private final MetabaseDashboardRepository metabaseDashboardRepository;
 
   @Value("${metabase.secret.key}")
   private String metabaseSecretKey;
-
   @Value("${metabase.site.url}")
   private String masterSiteUrl;
-
   @Value("${metabase.token.expired.time}")
   private Integer metabaseTokenExpiredTime;
-
-  public static final String PARAM_TEMPLATE = "\"%s\": \"%s\"";
-
-  public static final String PAYLOAD_TEMPLATE = "{\"resource\": {\"dashboard\": %d},\"params\": {%s}}";
 
   public MetabaseUrlDto getMetabaseDashboardAddressByDashboardName(String dashboardName) {
 
@@ -76,18 +72,15 @@ public class MetabaseDashboardService {
       log.error("there is IO Wrong occured in read metabase payload");
     }
     String jwtToken = Jwts.builder()
-        .setHeaderParam("typ", "JWT")
+        .setHeaderParam(JWT_TOKEN_HEADER_PARAM_NAME, JWT_TOKEN_HEADER_PARAM_VALUE)
         .setClaims(payloadMap)
-        .signWith(SignatureAlgorithm.HS256, Base64.getEncoder()
-            .encodeToString(metabaseSecretKey.getBytes()))
+        .signWith(Keys.hmacShaKeyFor(metabaseSecretKey.getBytes()), SignatureAlgorithm.HS256)
         .setExpiration(
             new Date(LocalDateTime.now().plusHours(metabaseTokenExpiredTime).atZone(ZoneId.systemDefault()).toInstant()
                 .toEpochMilli()))
         .compact();
     return new MetabaseUrlDto(
-        masterSiteUrl + "/embed/dashboard/" + jwtToken
-            + "#bordered=false&titled=true"
-            + "&hide_parameters=facility_code,district_facility_code,province_facility_code");
+        masterSiteUrl + METABASE_PART_URL + jwtToken + METABASE_EXTENSION_URL);
   }
 
   public String getPayloadByDashboardName(String dashboardName) {
@@ -95,14 +88,14 @@ public class MetabaseDashboardService {
     Integer dashboardId = getDashboardIdByDashboardName(dashboardName);
     if (authenticationHelper.isTheCurrentUserAdmin()
         || authenticationHelper.isTheCurrentUserCanViewAllReports()) {
-      return String.format(PAYLOAD_TEMPLATE, dashboardId, "");
+      return String.format(METABASE_PAYLOAD_TEMPLATE, dashboardId, "");
     }
     FacilityDto facility = siglusFacilityReferenceDataService
         .findOne(authenticationHelper.getCurrentUser().getHomeFacilityId());
 
     String requestParam = getRequestParamByFacility(facility);
 
-    return String.format(PAYLOAD_TEMPLATE, dashboardId, requestParam);
+    return String.format(METABASE_PAYLOAD_TEMPLATE, dashboardId, requestParam);
   }
 
   private Integer getDashboardIdByDashboardName(String dashboardName) {
@@ -114,7 +107,7 @@ public class MetabaseDashboardService {
   private String getRequestParamByFacility(FacilityDto facility) {
     String level = authenticationHelper.getFacilityGeographicZoneLevel();
     String paramKey = FacilityLevel.findMetabaseRequestParamKeyByLevel(level);
-    return String.format(PARAM_TEMPLATE, paramKey, facility.getCode());
+    return String.format(METABASE_PARAM_TEMPLATE, paramKey, facility.getCode());
   }
 
 

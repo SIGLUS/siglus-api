@@ -15,20 +15,20 @@
 
 package org.siglus.siglusapi.dto;
 
-import java.util.List;
-import java.util.UUID;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.Setter;
-import org.openlmis.stockmanagement.dto.PhysicalInventoryDto;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
 
-/**
- * @author kourengang
- * @date 6/28/22
- */
-@Getter
-@Setter
-@EqualsAndHashCode(callSuper = true)
-public class PhysicalInventorySubDraftDto extends PhysicalInventoryDto {
-  private List<UUID> subDraftIds;
+@AllArgsConstructor
+@Builder
+@Data
+public class MovementTypeHandlerResultDto {
+
+  private int count;
+  private int soh;
+  private String destinationName;
+  private String destinationFreeText;
+  private String sourceName;
+  private String sourceFreeText;
+  private String reason;
 }

@@ -20,7 +20,6 @@ import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.openlmis.requisition.i18n.MessageKeys.ERROR_NO_FOLLOWING_PERMISSION;
@@ -71,6 +70,7 @@ import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.dto.SupervisoryNodeDto;
 import org.openlmis.requisition.errorhandling.ValidationResult;
 import org.openlmis.requisition.repository.RequisitionRepository;
+import org.openlmis.requisition.repository.RequisitionTemplateRepository;
 import org.openlmis.requisition.service.PermissionService;
 import org.openlmis.requisition.service.RequisitionService;
 import org.openlmis.requisition.service.RequisitionTemplateService;
@@ -79,13 +79,14 @@ import org.openlmis.requisition.service.referencedata.SupervisoryNodeReferenceDa
 import org.openlmis.requisition.web.PermissionMessageException;
 import org.siglus.common.domain.RequisitionTemplateExtension;
 import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
-import org.siglus.siglusapi.config.AndroidTemplateConfigProperties;
 import org.siglus.siglusapi.domain.Regimen;
 import org.siglus.siglusapi.domain.RequisitionExtension;
 import org.siglus.siglusapi.domain.RequisitionLineItemExtension;
 import org.siglus.siglusapi.domain.SyncUpHash;
 import org.siglus.siglusapi.dto.ConsultationNumberColumnDto;
 import org.siglus.siglusapi.dto.ConsultationNumberGroupDto;
+import org.siglus.siglusapi.dto.FacilityDto;
+import org.siglus.siglusapi.dto.FacilityTypeDto;
 import org.siglus.siglusapi.dto.PatientColumnDto;
 import org.siglus.siglusapi.dto.PatientGroupDto;
 import org.siglus.siglusapi.dto.RegimenColumnDto;
@@ -103,7 +104,6 @@ import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
 import org.siglus.siglusapi.dto.android.request.RequisitionLineItemRequest;
 import org.siglus.siglusapi.dto.android.request.RequisitionSignatureRequest;
 import org.siglus.siglusapi.dto.android.request.UsageInformationLineItemRequest;
-import org.siglus.siglusapi.localmachine.EventPublisher;
 import org.siglus.siglusapi.repository.ProcessingPeriodRepository;
 import org.siglus.siglusapi.repository.RegimenRepository;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
@@ -115,6 +115,7 @@ import org.siglus.siglusapi.service.SiglusProgramService;
 import org.siglus.siglusapi.service.SiglusRequisitionExtensionService;
 import org.siglus.siglusapi.service.SiglusUsageReportService;
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
+import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.util.SupportedProgramsHelper;
 import org.siglus.siglusapi.web.android.FileBasedTest;
@@ -173,9 +174,6 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
   private RegimenRepository regimenRepository;
 
   @Mock
-  private AndroidTemplateConfigProperties androidTemplateConfigProperties;
-
-  @Mock
   private SyncUpHashRepository syncUpHashRepository;
 
   @Mock
@@ -188,7 +186,10 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
   private SiglusProgramAdditionalOrderableService additionalOrderableService;
 
   @Mock
-  private EventPublisher eventPublisher;
+  private SiglusFacilityReferenceDataService siglusFacilityReferenceDataService;
+
+  @Mock
+  private RequisitionTemplateRepository requisitionTemplateRepository;
 
   @Captor
   private ArgumentCaptor<Requisition> requisitionArgumentCaptor;
@@ -250,6 +251,7 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
   private final String unjustified = "unjustified";
   private final String vcProductCode = "02A01";
   private final String mlProductCode = "08O05";
+  private final UUID facilityTypeId = UUID.randomUUID();
 
   @Before
   public void prepare() {
@@ -257,14 +259,6 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     objectMapper.registerModule(new JavaTimeModule());
     objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     objectMapper.configure(DeserializationFeature.READ_DATE_TIMESTAMPS_AS_NANOSECONDS, false);
-
-    Set<UUID> androidTemplateIds = new HashSet<>();
-    androidTemplateIds.add(templateId);
-    androidTemplateIds.add(mmiaTemplateId);
-    androidTemplateIds.add(malariaTemplateId);
-    androidTemplateIds.add(rapidtestTemplateId);
-    when(androidTemplateConfigProperties.getAndroidTemplateIds()).thenReturn(androidTemplateIds);
-    when(androidTemplateConfigProperties.findAndroidTemplateId(any())).thenReturn(templateId);
     UserDto user = mock(UserDto.class);
     when(user.getHomeFacilityId()).thenReturn(facilityId);
     when(authHelper.getCurrentUser()).thenReturn(user);
@@ -316,8 +310,17 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     ProgramDto rapidTestProgram = Mockito.mock(ProgramDto.class);
     when(rapidTestProgram.getId()).thenReturn(rapidTestProgramId);
     when(siglusProgramService.getProgramByCode("TR")).thenReturn(Optional.of(rapidTestProgram));
-
-    doNothing().when(eventPublisher).emitGroupEvent(anyString(), any(UUID.class), any());
+    FacilityTypeDto facilityTypeDto = new FacilityTypeDto();
+    facilityTypeDto.setId(facilityTypeId);
+    FacilityDto facilityDto = FacilityDto.builder().type(facilityTypeDto).build();
+    when(siglusFacilityReferenceDataService.findOne(facilityId)).thenReturn(facilityDto);
+    RequisitionTemplate requisitionTemplate = new RequisitionTemplate();
+    requisitionTemplate.setId(templateId);
+    when(requisitionTemplateRepository.findTemplate(programId, facilityTypeId)).thenReturn(requisitionTemplate);
+    when(requisitionTemplateRepository.findTemplate(malariaProgramId, facilityTypeId)).thenReturn(requisitionTemplate);
+    when(requisitionTemplateRepository.findTemplate(mmiaProgramId, facilityTypeId)).thenReturn(requisitionTemplate);
+    when(requisitionTemplateRepository.findTemplate(rapidTestProgramId, facilityTypeId))
+        .thenReturn(requisitionTemplate);
   }
 
   @Test(expected = PermissionMessageException.class)
@@ -430,7 +433,6 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     when(permissionService.canAuthorizeRequisition(any(Requisition.class))).thenReturn(success);
     when(permissionService.canApproveRequisition(any(Requisition.class))).thenReturn(success);
 
-    when(androidTemplateConfigProperties.findAndroidTemplateId("ML")).thenReturn(malariaTemplateId);
     RequisitionTemplate mlTemplate = new RequisitionTemplate();
     mlTemplate.setId(malariaTemplateId);
     ApprovedProductDto productDto = createApprovedProductDto(mlOrderableId);
@@ -464,7 +466,6 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     when(permissionService.canSubmitRequisition(any(Requisition.class))).thenReturn(success);
     when(permissionService.canAuthorizeRequisition(any(Requisition.class))).thenReturn(success);
     when(permissionService.canApproveRequisition(any(Requisition.class))).thenReturn(success);
-    when(androidTemplateConfigProperties.findAndroidTemplateId("T")).thenReturn(mmiaTemplateId);
     RequisitionTemplate mmiaTemplate = new RequisitionTemplate();
     mmiaTemplate.setId(mmiaTemplateId);
     ApprovedProductDto productDto = createApprovedProductDto(mmiaOrderableId);
@@ -519,7 +520,6 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     when(permissionService.canSubmitRequisition(any(Requisition.class))).thenReturn(success);
     when(permissionService.canAuthorizeRequisition(any(Requisition.class))).thenReturn(success);
     when(permissionService.canApproveRequisition(any(Requisition.class))).thenReturn(success);
-    when(androidTemplateConfigProperties.findAndroidTemplateId("TR")).thenReturn(rapidtestTemplateId);
     RequisitionTemplate trTemplate = new RequisitionTemplate();
     trTemplate.setId(rapidtestTemplateId);
     ApprovedProductDto productDto = createApprovedProductDto(rapidTestOrderableId);

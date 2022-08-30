@@ -35,6 +35,7 @@ import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_UUID;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_INVENTORY_CONFLICT_DRAFT;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_NOT_ACCEPTABLE;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_PERMISSION_NOT_SUPPORTED;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_SPLIT_NUM_TOO_LARGE;
 
 import com.google.common.collect.Lists;
 import java.util.ArrayList;
@@ -100,6 +101,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
@@ -443,6 +445,9 @@ public class SiglusPhysicalInventoryService {
 
     // Aggregate by product and sort by product
     List<List<PhysicalInventoryLineItemDto>> lists = groupByProductCode(physicalInventory.getLineItems());
+    if (lists.size() < splitNum) {
+      throw new ValidationMessageException(ERROR_SPLIT_NUM_TOO_LARGE);
+    }
     // Grouping
     List<List<List<PhysicalInventoryLineItemDto>>> groupList = CustomListSortHelper.averageAssign(lists, splitNum);
 
@@ -522,12 +527,17 @@ public class SiglusPhysicalInventoryService {
   private List<PhysicalInventoryLineItemDto> convertSummaryV2DtosToLineItems(List<StockCardSummaryV2Dto> summaryV2Dtos,
       UUID programId) {
     List<PhysicalInventoryLineItemDto> physicalInventoryLineItems = new LinkedList<>();
-    if (CollectionUtils.isNotEmpty(summaryV2Dtos)) {
-      summaryV2Dtos.forEach(orderableDto -> {
-        if (CollectionUtils.isNotEmpty(orderableDto.getCanFulfillForMe())) {
-          orderableDto.getCanFulfillForMe().forEach(dto -> {
-            Map<String, String> extraData = new HashMap<>();
-            if (dto.getStockCard() != null && dto.getOrderable() != null) {
+
+    summaryV2Dtos
+        .stream()
+        .map(StockCardSummaryV2Dto::getCanFulfillForMe)
+        .filter(CollectionUtils::isNotEmpty)
+        .collect(Collectors.toList())
+        .forEach(set -> set
+            .stream()
+            .filter(c -> c.getStockCard() != null && c.getOrderable() != null).collect(Collectors.toList())
+            .forEach(dto -> {
+              Map<String, String> extraData = new HashMap<>();
               extraData.put(VM_STATUS, null);
               extraData.put(STOCK_CARD_ID, String.valueOf(dto.getStockCard().getId()));
               physicalInventoryLineItems.add(
@@ -537,11 +547,7 @@ public class SiglusPhysicalInventoryService {
                       .extraData(extraData)
                       .stockAdjustments(Collections.emptyList())
                       .programId(programId).build());
-            }
-          });
-        }
-      });
-    }
+            }));
     return physicalInventoryLineItems;
   }
 
@@ -625,6 +631,7 @@ public class SiglusPhysicalInventoryService {
     return inventoryController.createEmptyPhysicalInventory(physicalInventoryDto);
   }
 
+  @Transactional
   public PhysicalInventoryDto createAndSpiltNewDraftForOneProgram(PhysicalInventoryDto physicalInventoryDto,
       Integer splitNum, String optionString) {
     LocationManagementOption option = null;
@@ -673,6 +680,7 @@ public class SiglusPhysicalInventoryService {
     return allProductPhysicalInventoryDto;
   }
 
+  @Transactional
   public PhysicalInventoryDto createAndSplitNewDraftForAllProduct(PhysicalInventoryDto physicalInventoryDto,
                                                                         Integer splitNum,
                                                                         boolean initialPhysicalInventory,
