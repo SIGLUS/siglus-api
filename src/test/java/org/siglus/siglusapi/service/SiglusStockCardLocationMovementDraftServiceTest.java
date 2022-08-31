@@ -18,12 +18,15 @@ package org.siglus.siglusapi.service;
 import static com.google.common.collect.Lists.newArrayList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_MOVEMENT_DRAFT_EXISTS;
 
+import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -35,16 +38,28 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.openlmis.referencedata.dto.OrderableDto;
+import org.openlmis.stockmanagement.domain.card.StockCard;
+import org.openlmis.stockmanagement.repository.StockCardRepository;
+import org.siglus.siglusapi.constant.LocationConstants;
 import org.siglus.siglusapi.domain.StockCardLocationMovementDraft;
+import org.siglus.siglusapi.domain.StockCardLocationMovementLineItem;
+import org.siglus.siglusapi.dto.LotDto;
 import org.siglus.siglusapi.dto.StockCardLocationMovementDraftDto;
 import org.siglus.siglusapi.dto.StockCardLocationMovementDraftLineItemDto;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.StockCardLocationMovementDraftRepository;
+import org.siglus.siglusapi.repository.StockCardLocationMovementLineItemRepository;
+import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
 import org.siglus.siglusapi.util.OperatePermissionService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.validator.ActiveDraftValidator;
 import org.siglus.siglusapi.validator.StockCardLocationMovementDraftValidator;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 @RunWith(MockitoJUnitRunner.class)
 public class SiglusStockCardLocationMovementDraftServiceTest {
@@ -70,11 +85,25 @@ public class SiglusStockCardLocationMovementDraftServiceTest {
   @Mock
   private StockCardLocationMovementDraftValidator stockCardLocationMovementDraftValidator;
 
+  @Mock
+  private StockCardRepository stockCardRepository;
+
+  @Mock
+  private StockCardLocationMovementLineItemRepository stockCardLocationMovementLineItemRepository;
+
+  @Mock
+  private SiglusOrderableService siglusOrderableService;
+
+  @Mock
+  private SiglusLotReferenceDataService siglusLotReferenceDataService;
   private final UUID programId = UUID.randomUUID();
   private final UUID facilityId = UUID.randomUUID();
   private final UUID movementDraftId = UUID.randomUUID();
   private final UUID orderableId = UUID.randomUUID();
   private final UUID lotId = UUID.randomUUID();
+  private final UUID stockCardId1 = UUID.randomUUID();
+  private final UUID stockCardId2 = UUID.randomUUID();
+
   private final StockCardLocationMovementDraftDto movementDraftDto = StockCardLocationMovementDraftDto
       .builder().programId(programId).facilityId(facilityId).build();
   private final StockCardLocationMovementDraft movementDraft = StockCardLocationMovementDraft
@@ -172,4 +201,85 @@ public class SiglusStockCardLocationMovementDraftServiceTest {
     service.deleteMovementDraft(movementDraftId);
     verify(stockCardLocationMovementDraftRepository).delete(movementDraft);
   }
+
+  @Test
+  public void shouldGetVirtualLocationMovementDraftWhenThereIsVirtualLocationDataInFacility() {
+
+    // given
+    doNothing().when(draftValidator).validateFacilityId(facilityId);
+    doNothing().when(draftValidator).validateProgramId(programId);
+    doNothing().when(operatePermissionService).checkPermission(facilityId);
+
+    StockCard stockCard1 = StockCard.builder().orderableId(orderableId).lotId(lotId).build();
+    stockCard1.setId(stockCardId1);
+    StockCard stockCard2 = new StockCard();
+    stockCard2.setId(stockCardId2);
+    when(stockCardRepository.findByFacilityIdIn(facilityId)).thenReturn(Arrays.asList(stockCard1, stockCard2));
+
+    int quantity = 100;
+    StockCardLocationMovementLineItem movementLineItem1 = StockCardLocationMovementLineItem
+        .builder()
+        .stockCardId(stockCardId1)
+        .srcArea(LocationConstants.VIRTUAL_LOCATION_AREA)
+        .srcLocationCode(LocationConstants.VIRTUAL_LOCATION_CODE)
+        .destArea(LocationConstants.VIRTUAL_LOCATION_AREA)
+        .destLocationCode(LocationConstants.VIRTUAL_LOCATION_CODE)
+        .quantity(quantity)
+        .build();
+    StockCardLocationMovementLineItem movementLineItem2 = StockCardLocationMovementLineItem
+        .builder()
+        .stockCardId(stockCardId2)
+        .srcLocationCode("22A05")
+        .destLocationCode("22A06")
+        .build();
+
+    when(stockCardLocationMovementLineItemRepository.findPreviousRecordByStockCardId(any(), any()))
+        .thenReturn(Arrays.asList(movementLineItem1, movementLineItem2));
+
+    Pageable pageable = new PageRequest(0, Integer.MAX_VALUE);
+    PageImpl<StockCard> stockCards = new PageImpl<>(Collections.singletonList(stockCard1), pageable, Integer.MAX_VALUE);
+    when(stockCardRepository.findByIdIn(any(), any())).thenReturn(stockCards);
+
+    OrderableDto orderableDto = new OrderableDto();
+    orderableDto.setId(orderableId);
+    String productName = "productName";
+    orderableDto.setFullProductName(productName);
+    String productCode = "99999";
+    orderableDto.setProductCode(productCode);
+    Page<OrderableDto> orderableDtoPage = new PageImpl<>((Collections.singletonList(orderableDto)));
+    when(siglusOrderableService.searchOrderables(any(), any(), any())).thenReturn(orderableDtoPage);
+
+    String lotCode = "SEM-LOTE-08L11-062025-25/06/2025";
+    LotDto lotDto
+        = LotDto.builder().lotCode(lotCode).expirationDate(LocalDate.now()).build();
+    lotDto.setId(lotId);
+    when(siglusLotReferenceDataService.findByIds(Collections.singletonList(lotId)))
+        .thenReturn(Collections.singletonList(lotDto));
+
+    StockCardLocationMovementDraftLineItemDto stockCardLocationMovementDraftLineItemDto =
+        StockCardLocationMovementDraftLineItemDto
+            .builder()
+            .orderableId(orderableId)
+            .productName(productName)
+            .productCode(productCode)
+            .lotId(lotId)
+            .lotCode(lotCode)
+            .expirationDate(LocalDate.now())
+            .srcLocationCode(LocationConstants.VIRTUAL_LOCATION_CODE)
+            .srcArea(LocationConstants.VIRTUAL_LOCATION_AREA)
+            .quantity(quantity)
+            .stockOnHand(quantity)
+            .build();
+    StockCardLocationMovementDraftDto expectedStockCardLocationMovementDraftDto = StockCardLocationMovementDraftDto
+        .builder()
+        .lineItems(Collections.singletonList(stockCardLocationMovementDraftLineItemDto))
+        .build();
+
+    // when
+    StockCardLocationMovementDraftDto stockCardLocationMovementDraftDto = service.searchVirtualLocationMovementDraft();
+
+    // then
+    assertEquals(expectedStockCardLocationMovementDraftDto, stockCardLocationMovementDraftDto);
+  }
+
 }

@@ -20,6 +20,7 @@ import static org.hamcrest.Matchers.containsString;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_MOVEMENT_DRAFT_NOT_FOUND;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_MOVEMENT_QUANTITY_LESS_THAN_STOCK_ON_HAND;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_MOVEMENT_QUANTITY_MORE_THAN_STOCK_ON_HAND;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_CARD_NOT_FOUND;
 
@@ -173,6 +174,19 @@ public class SiglusStockCardLocationMovementServiceTest {
     exception.expectMessage(containsString(ERROR_MOVEMENT_QUANTITY_MORE_THAN_STOCK_ON_HAND));
 
     service.createMovementLineItems(movementDto2);
+  }
+
+  @Test
+  public void shouldThrowExceptionWhenQuantityLessThanStockOnHandInLocationManagement() {
+    // then
+    exception.expect(BusinessDataException.class);
+    exception.expectMessage(containsString(ERROR_MOVEMENT_QUANTITY_LESS_THAN_STOCK_ON_HAND));
+
+    // given
+    when(administrationsService.canInitialMoveProduct(facilityId)).thenReturn(Boolean.TRUE);
+
+    // when
+    service.createMovementLineItems(movementDto1);
   }
 
   @Test
