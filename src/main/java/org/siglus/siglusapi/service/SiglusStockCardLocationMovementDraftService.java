@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.service;
 
+import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_MOVEMENT_DRAFT_EXISTS;
 
 import com.google.common.collect.Maps;
@@ -34,12 +35,14 @@ import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.repository.StockCardRepository;
 import org.siglus.siglusapi.constant.LocationConstants;
 import org.siglus.siglusapi.domain.StockCardLocationMovementDraft;
+import org.siglus.siglusapi.domain.StockCardLocationMovementDraftLineItem;
 import org.siglus.siglusapi.domain.StockCardLocationMovementLineItem;
 import org.siglus.siglusapi.dto.LotDto;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.dto.QueryOrderableSearchParams;
 import org.siglus.siglusapi.dto.StockCardLocationMovementDraftDto;
 import org.siglus.siglusapi.dto.StockCardLocationMovementDraftLineItemDto;
+import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.StockCardLocationMovementDraftRepository;
 import org.siglus.siglusapi.repository.StockCardLocationMovementLineItemRepository;
@@ -106,7 +109,9 @@ public class SiglusStockCardLocationMovementDraftService {
   }
 
   public StockCardLocationMovementDraftDto searchVirtualLocationMovementDraft() {
-    UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
+    UserDto currentUser = authenticationHelper.getCurrentUser();
+    UUID facilityId = currentUser.getHomeFacilityId();
+    UUID userId = currentUser.getId();
     operatePermissionService.checkPermission(facilityId);
     draftValidator.validateFacilityId(facilityId);
 
@@ -124,9 +129,24 @@ public class SiglusStockCardLocationMovementDraftService {
     List<StockCardLocationMovementDraftLineItemDto> stockCardLocationMovementDraftlineItemDtoList =
         getStockCardLocationMovementDraftLineItemDtos(facilityId, virtualLocationMovementLineItem);
 
-    return StockCardLocationMovementDraftDto.builder()
-        .lineItems(stockCardLocationMovementDraftlineItemDtoList)
-        .build();
+    StockCardLocationMovementDraft savedDraft = saveStockCardVirtualLocationMovementDraft(facilityId,
+        userId, stockCardLocationMovementDraftlineItemDtoList);
+    return StockCardLocationMovementDraftDto.from(savedDraft);
+  }
+
+  private StockCardLocationMovementDraft saveStockCardVirtualLocationMovementDraft(UUID facilityId, UUID userId,
+      List<StockCardLocationMovementDraftLineItemDto> stockCardLocationMovementDraftlineItemDtoList) {
+    StockCardLocationMovementDraft stockMovementDraft = StockCardLocationMovementDraft
+        .createEmptyStockMovementDraft(StockCardLocationMovementDraftDto.builder()
+            .programId(ALL_PRODUCTS_PROGRAM_ID)
+            .userId(userId).facilityId(facilityId).build());
+    List<StockCardLocationMovementDraftLineItem> stockCardLocationMovementDraftLineItems =
+        stockCardLocationMovementDraftlineItemDtoList.stream().map(e -> StockCardLocationMovementDraftLineItem.from(
+            e, stockMovementDraft)).collect(Collectors.toList());
+    stockMovementDraft.setLineItems(stockCardLocationMovementDraftLineItems);
+    log.info("save virtual location movement draft with id: {}", stockMovementDraft.getId());
+    stockCardLocationMovementDraftRepository.save(stockMovementDraft);
+    return stockMovementDraft;
   }
 
   private List<StockCardLocationMovementDraftLineItemDto> getStockCardLocationMovementDraftLineItemDtos(UUID facilityId,

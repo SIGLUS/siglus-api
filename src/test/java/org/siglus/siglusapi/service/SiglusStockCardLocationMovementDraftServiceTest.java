@@ -23,6 +23,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_MOVEMENT_DRAFT_EXISTS;
 
 import java.time.LocalDate;
@@ -101,6 +102,7 @@ public class SiglusStockCardLocationMovementDraftServiceTest {
   private final UUID movementDraftId = UUID.randomUUID();
   private final UUID orderableId = UUID.randomUUID();
   private final UUID lotId = UUID.randomUUID();
+  private final UUID userId = UUID.randomUUID();
   private final UUID stockCardId1 = UUID.randomUUID();
   private final UUID stockCardId2 = UUID.randomUUID();
 
@@ -113,6 +115,7 @@ public class SiglusStockCardLocationMovementDraftServiceTest {
   public void setup() {
     UserDto userDto = new UserDto();
     userDto.setHomeFacilityId(facilityId);
+    userDto.setId(userId);
     when(authenticationHelper.getCurrentUser()).thenReturn(userDto);
   }
 
@@ -272,6 +275,9 @@ public class SiglusStockCardLocationMovementDraftServiceTest {
             .build();
     StockCardLocationMovementDraftDto expectedStockCardLocationMovementDraftDto = StockCardLocationMovementDraftDto
         .builder()
+        .userId(userId)
+        .facilityId(facilityId)
+        .programId(ALL_PRODUCTS_PROGRAM_ID)
         .lineItems(Collections.singletonList(stockCardLocationMovementDraftLineItemDto))
         .build();
 

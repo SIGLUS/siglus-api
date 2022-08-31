@@ -103,7 +103,7 @@ public class CalculatedStocksOnHandByLocationService {
 
       String area = null;
       for (StockCardLocationMovementLineItem movement: movements) {
-        if (stockCardId.equals(movement.getStockCardId())){
+        if (stockCardId.equals(movement.getStockCardId())) {
           if (locationCode.equals(movement.getSrcLocationCode())) {
             previousSoh = previousSoh - movement.getQuantity();
           } else if (locationCode.equals(movement.getDestLocationCode())) {
