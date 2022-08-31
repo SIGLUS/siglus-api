@@ -76,6 +76,7 @@ public class SiglusStockManagementDraftService {
   private final OperatePermissionService operatePermissionService;
   private final SiglusAuthenticationHelper authenticationHelper;
   private final ConflictOrderableInSubDraftsService conflictOrderableInSubDraftsService;
+  private final SiglusLotLocationService lotLocationService;
 
   private static final Integer DRAFTS_LIMITATION = 10;
   private static final Integer DRAFTS_INCREMENT = 1;
@@ -488,10 +489,7 @@ public class SiglusStockManagementDraftService {
     boolean isAllSubmitted = subDrafts.stream()
         .allMatch(subDraft -> subDraft.getStatus().equals(PhysicalInventorySubDraftEnum.SUBMITTED));
     if (isAllSubmitted) {
-      List<MergedLineItemWithLocationDto> mergedLineItemWithLocationDtos =
-          fillingMergedLineItemsFieldsWithLocation(subDrafts);
-      mergedLineItemWithLocationDtos.forEach(this::fillingStockOnHandField);
-      return mergedLineItemWithLocationDtos;
+      return fillingMergedLineItemsFieldsWithLocation(subDrafts);
     }
     throw new BusinessDataException(new Message(ERROR_STOCK_MANAGEMENT_SUB_DRAFT_NOT_ALL_SUBMITTED),
         "subDrafts not all submitted");
@@ -543,6 +541,7 @@ public class SiglusStockManagementDraftService {
               .occurredDate(lineItem.getOccurredDate())
               .quantity(lineItem.getQuantity())
               .lotCode(lineItem.getLotCode())
+              .stockOnHand(lineItem.getStockOnHand())
               .locationCode(lineItem.getLocationCode())
               .area(lineItem.getArea())
               .build()).collect(toList());
