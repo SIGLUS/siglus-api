@@ -315,7 +315,7 @@ public class SiglusAdministrationsService {
     }
     searchResultDto.setIsAndroidDevice(facilityExtension.getIsAndroid());
     searchResultDto.setEnableLocationManagement(BooleanUtils.isTrue(facilityExtension.getEnableLocationManagement()));
-    searchResultDto.setCanInitialMoveProduct((canInitialMoveProduct(facilityId)));
+    searchResultDto.setNeedInitiallyMoveProduct((canInitialMoveProduct(facilityId)));
     return searchResultDto;
   }
 
