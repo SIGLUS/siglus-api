@@ -20,16 +20,20 @@ import java.util.List;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.openlmis.requisition.dto.BasicRequisitionDto;
 import org.openlmis.requisition.dto.FacilityDto;
 import org.openlmis.requisition.dto.RequisitionPeriodDto;
+import org.openlmis.requisition.utils.AuthenticationHelper;
 import org.openlmis.requisition.web.RequisitionController;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionLineItemDto;
+import org.siglus.siglusapi.localmachine.event.requisition.RequisitionInternalApproveEmitter;
 import org.siglus.siglusapi.service.SiglusNotificationService;
 import org.siglus.siglusapi.service.SiglusProcessingPeriodService;
 import org.siglus.siglusapi.service.SiglusRequisitionService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -47,21 +51,18 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
+@Slf4j
 @RequestMapping("/api/siglusapi/requisitions")
+@RequiredArgsConstructor
 @SuppressWarnings("PMD.TooManyMethods")
 public class SiglusRequisitionController {
 
-  @Autowired
-  private RequisitionController requisitionController;
-
-  @Autowired
-  private SiglusRequisitionService siglusRequisitionService;
-
-  @Autowired
-  private SiglusProcessingPeriodService siglusProcessingPeriodService;
-
-  @Autowired
-  private SiglusNotificationService notificationService;
+  private final RequisitionController requisitionController;
+  private final SiglusRequisitionService siglusRequisitionService;
+  private final SiglusProcessingPeriodService siglusProcessingPeriodService;
+  private final SiglusNotificationService notificationService;
+  private final AuthenticationHelper authenticationHelper;
+  private final RequisitionInternalApproveEmitter requisitionInternalApproveEmitter;
 
   @PostMapping("/initiate")
   @ResponseStatus(HttpStatus.CREATED)
@@ -125,6 +126,9 @@ public class SiglusRequisitionController {
     BasicRequisitionDto basicRequisitionDto =
         siglusRequisitionService.approveRequisition(requisitionId, request, response);
     notificationService.postApprove(basicRequisitionDto);
+    if (basicRequisitionDto.getFacility().getId().equals(authenticationHelper.getCurrentUser().getHomeFacilityId())) {
+      requisitionInternalApproveEmitter.emit(requisitionId);
+    }
     return basicRequisitionDto;
   }
 

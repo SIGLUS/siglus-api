@@ -26,12 +26,11 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.test.context.junit4.SpringRunner;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {LocalMachineTestConfig.class})
-@ComponentScan(basePackageClasses = {LocalMachineTestConfig.class})
+//@ComponentScan(basePackageClasses = {LocalMachineTestConfig.class})
 @DataJpaTest
 @AutoConfigureTestDatabase(
     replace = Replace.AUTO_CONFIGURED,
