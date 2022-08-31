@@ -19,19 +19,24 @@ import static java.util.Collections.emptySet;
 import static java.util.Collections.singleton;
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 
+import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.openlmis.referencedata.dto.ProgramOrderableDto;
 import org.siglus.siglusapi.constant.ProgramConstants;
 import org.siglus.siglusapi.domain.ProgramRealProgram;
 import org.siglus.siglusapi.dto.OrderableDisplayCategoryDto;
+import org.siglus.siglusapi.dto.fc.AreaDto;
 import org.siglus.siglusapi.dto.fc.ProductInfoDto;
 import org.siglus.siglusapi.util.FcUtil;
 
 public class FcProductMapper {
+
   private final Map<String, ProgramRealProgram> realProgramCodeToEntityMap;
 
   private final Map<String, UUID> programCodeToIdMap;
@@ -72,7 +77,7 @@ public class FcProductMapper {
   }
 
   public Set<ProgramOrderableDto> getProgramOrderablesFrom(ProductInfoDto product) {
-    if (product.getAreas() == null) {
+    if (product.getAreas() == null || product.getAreas().isEmpty() || !FcUtil.isActive(product.getStatus())) {
       return emptySet();
     }
     Set<String> programCodes = getProgramCodes(product);
@@ -99,10 +104,20 @@ public class FcProductMapper {
   }
 
   Set<String> getProgramCodes(ProductInfoDto product) {
-    return product.getAreas().stream()
+    List<AreaDto> areaDtos = product.getAreas();
+    areaDtos.sort(Comparator.comparing(AreaDto::getLastUpdatedAt));
+    Map<String, AreaDto> timeMapAreaDto = areaDtos.stream()
+        .collect(Collectors.toMap(AreaDto::getAreaCode, Function.identity(),
+            (value1, value2) -> shouldNotUpdate(value1, value2) ? value1 : value2));
+    return timeMapAreaDto.values().stream()
         .filter(areaDto -> FcUtil.isActive(areaDto.getStatus()))
         .filter(areaDto -> Objects.nonNull(realProgramCodeToEntityMap.get(areaDto.getAreaCode())))
         .map(areaDto -> realProgramCodeToEntityMap.get(areaDto.getAreaCode()).getProgramCode())
         .collect(Collectors.toSet());
+  }
+
+  private boolean shouldNotUpdate(AreaDto value1, AreaDto value2) {
+    return value1.getLastUpdatedAt().equals(value2.getLastUpdatedAt()) && FcUtil.isActive(value1.getStatus())
+        && !FcUtil.isActive(value2.getStatus());
   }
 }

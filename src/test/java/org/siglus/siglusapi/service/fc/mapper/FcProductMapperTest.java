@@ -67,14 +67,14 @@ public class FcProductMapperTest {
   @Test
   public void shouldReturnProgramCodeAsMappingWhenGetProgramCode() {
     ImmutableMap.of(
-            "TR",
-            RAPIDTEST_PROGRAM_CODE,
-            "T",
-            TARV_PROGRAM_CODE,
-            "TB",
-            MTB_PROGRAM_CODE,
-            "any-others",
-            VIA_PROGRAM_CODE)
+        "TR",
+        RAPIDTEST_PROGRAM_CODE,
+        "T",
+        TARV_PROGRAM_CODE,
+        "TB",
+        MTB_PROGRAM_CODE,
+        "any-others",
+        VIA_PROGRAM_CODE)
         .forEach(
             (key, value) -> {
               String code = FcProductMapper.getProgramCode(singleton(key));
@@ -94,8 +94,20 @@ public class FcProductMapperTest {
   }
 
   @Test
+  public void shouldReturnEmptyWhenGetProductInfoIsInactive() {
+    ProductInfoDto productInfo = ProductInfoDto.builder().areas(emptyList()).status("inActivo").build();
+
+    Set<ProgramOrderableDto> programOrderableDtos =
+        new FcProductMapper(null, null,
+            null).getProgramOrderablesFrom(productInfo);
+
+    assertThat(programOrderableDtos).isEmpty();
+  }
+
+  @Test
   public void shouldReturnEmptyWhenGetProgramOrderablesGivenEmptyProgramCodes() {
-    ProductInfoDto productInfo = ProductInfoDto.builder().areas(singletonList(mock(AreaDto.class))).build();
+    ProductInfoDto productInfo = ProductInfoDto.builder().areas(singletonList(mock(AreaDto.class))).status("Activo")
+        .build();
     FcProductMapper fcProductMapper = mock(FcProductMapper.class);
     given(fcProductMapper.getProgramCodes(productInfo)).willReturn(emptySet());
     given(fcProductMapper.getProgramOrderablesFrom(productInfo)).willCallRealMethod();
