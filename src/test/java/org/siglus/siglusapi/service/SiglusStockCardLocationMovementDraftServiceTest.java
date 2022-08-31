@@ -103,6 +103,7 @@ public class SiglusStockCardLocationMovementDraftServiceTest {
   private final UUID orderableId = UUID.randomUUID();
   private final UUID lotId = UUID.randomUUID();
   private final UUID userId = UUID.randomUUID();
+  private final UUID stockCardLocationMovementDraftId = UUID.randomUUID();
   private final UUID stockCardId1 = UUID.randomUUID();
   private final UUID stockCardId2 = UUID.randomUUID();
 
@@ -206,7 +207,7 @@ public class SiglusStockCardLocationMovementDraftServiceTest {
   }
 
   @Test
-  public void shouldGetVirtualLocationMovementDraftWhenThereIsVirtualLocationDataInFacility() {
+  public void shouldSaveAndReturnVirtualLocationMovementDraftWhenThereIsVirtualLocationDataInFacility() {
 
     // given
     doNothing().when(draftValidator).validateFacilityId(facilityId);
@@ -259,6 +260,14 @@ public class SiglusStockCardLocationMovementDraftServiceTest {
     when(siglusLotReferenceDataService.findByIds(Collections.singletonList(lotId)))
         .thenReturn(Collections.singletonList(lotDto));
 
+    StockCardLocationMovementDraftDto stockCardLocationMovementDraftDtoInputParam = StockCardLocationMovementDraftDto
+        .builder()
+        .userId(userId)
+        .facilityId(facilityId)
+        .programId(ALL_PRODUCTS_PROGRAM_ID)
+        .id(stockCardLocationMovementDraftId)
+        .build();
+
     StockCardLocationMovementDraftLineItemDto stockCardLocationMovementDraftLineItemDto =
         StockCardLocationMovementDraftLineItemDto
             .builder()
@@ -275,6 +284,7 @@ public class SiglusStockCardLocationMovementDraftServiceTest {
             .build();
     StockCardLocationMovementDraftDto expectedStockCardLocationMovementDraftDto = StockCardLocationMovementDraftDto
         .builder()
+        .id(stockCardLocationMovementDraftId)
         .userId(userId)
         .facilityId(facilityId)
         .programId(ALL_PRODUCTS_PROGRAM_ID)
@@ -282,7 +292,8 @@ public class SiglusStockCardLocationMovementDraftServiceTest {
         .build();
 
     // when
-    StockCardLocationMovementDraftDto stockCardLocationMovementDraftDto = service.searchVirtualLocationMovementDraft();
+    StockCardLocationMovementDraftDto stockCardLocationMovementDraftDto = service.updateVirtualLocationMovementDraft(
+        stockCardLocationMovementDraftDtoInputParam, stockCardLocationMovementDraftId);
 
     // then
     assertEquals(expectedStockCardLocationMovementDraftDto, stockCardLocationMovementDraftDto);

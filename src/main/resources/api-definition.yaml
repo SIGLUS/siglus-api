@@ -1299,10 +1299,10 @@ traits:
               description: An error occured during request processing.
 
 
-    /locationMovementDrafts/virtualLocationDrafts:
-      get:
+    locationMovementDrafts/{id}/virtualLocationDrafts:
+      put:
         is: [ secured ]
-        description: Get location movement drafts which is included in virtual location by facility.
+        description: virtual location movement draft lineitems has been successfully saved.
         responses:
           200:
             description: Return location movement drafts which is included in virtual location by facility.
