@@ -1747,6 +1747,27 @@ traits:
               application/json:
                 schema: StockCardWithLocationDto
 
+    /stockCardSummariesWithLocation/byLocation:
+      get:
+        is: [ secured ]
+        description: get stock movement by product
+        queryParameters:
+          stockCardId:
+            required: true
+            description: Facility id, indicates the facility that the queried stock card summaries should belong to.
+            repeat: false
+            type: string
+          locationCode:
+            required: false
+            description: Program id, indicates the program that the queries stock card summaries is under.
+            repeat: false
+            type: string
+        responses:
+          200:
+            body:
+              application/json:
+                schema: StockCardWithLocationDto
+
     /physicalInventories/latest:
       get:
         is: [ secured ]

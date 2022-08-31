@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.collections.CollectionUtils;
 import org.siglus.siglusapi.dto.MovementTypeHandlerResultDto;
 import org.siglus.siglusapi.dto.StockMovementResDto;
 import org.siglus.siglusapi.dto.android.PeriodOfProductMovements;
@@ -73,6 +74,9 @@ public class StockMovementService {
     PeriodOfProductMovements allProductMovements = stockManagementRepository.getAllProductMovements(facilityId,
         orderableIdsSet);
     List<ProductMovement> productMovements = allProductMovements.getProductMovements();
+    if (CollectionUtils.isEmpty(productMovements)) {
+      return new ArrayList<>();
+    }
     LinkedList<StockMovementResDto> stockMovementResDtos = new LinkedList<>();
     boolean initialFlag = true;
     for (ProductMovement productMovement : productMovements) {

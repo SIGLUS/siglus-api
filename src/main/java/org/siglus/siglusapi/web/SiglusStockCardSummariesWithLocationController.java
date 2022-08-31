@@ -20,8 +20,10 @@ import static org.springframework.http.HttpStatus.OK;
 import java.util.List;
 import java.util.UUID;
 import org.openlmis.stockmanagement.dto.StockCardDto;
+import org.siglus.siglusapi.dto.LocationMovementDto;
 import org.siglus.siglusapi.dto.ProductMovementDto;
 import org.siglus.siglusapi.dto.StockCardSummaryWithLocationDto;
+import org.siglus.siglusapi.service.SiglusStockCardLocationMovementService;
 import org.siglus.siglusapi.service.SiglusStockCardService;
 import org.siglus.siglusapi.service.SiglusStockCardSummariesService;
 import org.springframework.data.domain.Pageable;
@@ -42,11 +44,15 @@ public class SiglusStockCardSummariesWithLocationController {
 
   private final SiglusStockCardService siglusStockCardService;
 
+  private final SiglusStockCardLocationMovementService siglusStockCardLocationMovementService;
+
 
   public SiglusStockCardSummariesWithLocationController(SiglusStockCardSummariesService siglusStockCardSummariesService,
-      SiglusStockCardService siglusStockCardService) {
+      SiglusStockCardService siglusStockCardService,
+      SiglusStockCardLocationMovementService siglusStockCardLocationMovementService) {
     this.siglusStockCardSummariesService = siglusStockCardSummariesService;
     this.siglusStockCardService = siglusStockCardService;
+    this.siglusStockCardLocationMovementService = siglusStockCardLocationMovementService;
   }
 
   @GetMapping("/integration/summary")
@@ -73,8 +79,8 @@ public class SiglusStockCardSummariesWithLocationController {
   }
 
   @GetMapping("/byLocation")
-  public void getLocationMovement(@RequestParam UUID facilityId,
-      @RequestParam String locationCode){
-
+  public LocationMovementDto getLocationMovement(@RequestParam UUID stockCardId,
+      @RequestParam String locationCode) {
+    return siglusStockCardLocationMovementService.getLocationMovementDto(stockCardId, locationCode);
   }
 }

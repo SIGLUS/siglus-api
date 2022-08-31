@@ -101,10 +101,27 @@ public class SiglusStockMovementServiceTest {
     assertEquals(movementsByProduct.size(), 9);
   }
 
+  @Test
+  public void shouldReturnNullWhenNoMovementsWhenGivenFacilityIdAndOrderableiId() {
+    PeriodOfProductMovements periodOfProductMovements = mockNoMovement();
+    HashSet<UUID> orderableIds = new HashSet<>();
+    orderableIds.add(orderableId);
+    when(stockManagementRepository.getAllProductMovements(facilityId, orderableIds)).thenReturn(
+        periodOfProductMovements);
+    List<StockMovementResDto> movementsByProduct = stockMovementService.getMovementsByProduct(facilityId, orderableId);
+    assertEquals(movementsByProduct.size(), 0);
+  }
+
   private PeriodOfProductMovements mockPeriodOfProductMovements() {
     List<ProductMovement> productMovementList = mockProductMovements();
     StocksOnHand stocksOnHand = mockStocksOnHand();
     PeriodOfProductMovements periodOfProductMovements = new PeriodOfProductMovements(productMovementList, stocksOnHand);
+    return periodOfProductMovements;
+  }
+
+  private PeriodOfProductMovements mockNoMovement() {
+    StocksOnHand stocksOnHand = mockStocksOnHand();
+    PeriodOfProductMovements periodOfProductMovements = new PeriodOfProductMovements(new ArrayList<>(), stocksOnHand);
     return periodOfProductMovements;
   }
 

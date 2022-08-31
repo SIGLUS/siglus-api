@@ -23,21 +23,33 @@ import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_MOVEMENT_QUANTITY_MORE
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_CARD_NOT_FOUND;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
+import org.openlmis.requisition.dto.ReasonType;
 import org.openlmis.stockmanagement.domain.card.StockCard;
+import org.openlmis.stockmanagement.dto.StockCardDto;
+import org.openlmis.stockmanagement.dto.referencedata.FacilityDto;
+import org.openlmis.stockmanagement.dto.referencedata.LotDto;
+import org.openlmis.stockmanagement.dto.referencedata.OrderableDto;
+import org.openlmis.stockmanagement.dto.referencedata.ProgramDto;
 import org.siglus.siglusapi.domain.StockCardLocationMovementDraft;
 import org.siglus.siglusapi.domain.StockCardLocationMovementLineItem;
+import org.siglus.siglusapi.dto.LocationMovementDto;
+import org.siglus.siglusapi.dto.LocationMovementLineItemDto;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.dto.StockCardLocationMovementDto;
 import org.siglus.siglusapi.dto.StockCardLocationMovementLineItemDto;
 import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
+import org.siglus.siglusapi.repository.CalculatedStockOnHandByLocationRepository;
 import org.siglus.siglusapi.repository.SiglusStockCardRepository;
 import org.siglus.siglusapi.repository.StockCardLocationMovementDraftRepository;
 import org.siglus.siglusapi.repository.StockCardLocationMovementLineItemRepository;
@@ -49,12 +61,15 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @RequiredArgsConstructor
 public class SiglusStockCardLocationMovementService {
+
   private final StockCardLocationMovementLineItemRepository movementLineItemRepository;
   private final StockCardLocationMovementDraftRepository movementDraftRepository;
   private final SiglusStockCardRepository stockCardRepository;
   private final CalculatedStocksOnHandByLocationService calculatedStocksOnHandByLocationService;
   private final SiglusAdministrationsService administrationsService;
   private final SiglusAuthenticationHelper authenticationHelper;
+  private final CalculatedStockOnHandByLocationRepository calculatedStockOnHandByLocationRepository;
+  private final SiglusStockCardService siglusStockCardService;
 
   @Transactional
   public void createMovementLineItems(StockCardLocationMovementDto movementDto) {
@@ -73,6 +88,72 @@ public class SiglusStockCardLocationMovementService {
       throw new NotFoundException(ERROR_MOVEMENT_DRAFT_NOT_FOUND);
     }
     movementDraftRepository.delete(movementDrafts.get(0));
+  }
+
+  public LocationMovementDto getLocationMovementDto(UUID stockCardId, String locationCode) {
+    List<LocationMovementLineItemDto> productLocationMovement =
+        calculatedStockOnHandByLocationRepository.getProductLocationMovement(stockCardId, locationCode);
+    List<LocationMovementLineItemDto> stockMovementWithLocation =
+        calculatedStockOnHandByLocationRepository.getStockMovementWithLocation(stockCardId, locationCode);
+    if (CollectionUtils.isNotEmpty(stockMovementWithLocation)) {
+      productLocationMovement.addAll(stockMovementWithLocation);
+    }
+    List<LocationMovementLineItemDto> locationMovementLineItemDtos = productLocationMovement.stream()
+        .sorted(Comparator.comparing(LocationMovementLineItemDto::getProcessedDate).reversed()).collect(
+            Collectors.toList());
+    Integer latestSoh = calculatedStockOnHandByLocationRepository.findRecentlySohByStockCardIdAndLocationCode(
+        stockCardId,
+        locationCode).get();
+    Integer soh = latestSoh;
+    for (LocationMovementLineItemDto locationMovementLineItemDto : locationMovementLineItemDtos) {
+      Integer quantity = locationMovementLineItemDto.getQuantity();
+      switch (locationMovementLineItemDto.getReasonCategory()) {
+        case "INVENTORY":
+          soh = quantity;
+          break;
+        case "ISSUE":
+          soh -= quantity;
+          break;
+        case "RECEIVE":
+          soh += quantity;
+          break;
+        case "ADJUSTMENT":
+          if (locationMovementLineItemDto.getReasonType().equals(ReasonType.DEBIT.name())) {
+            soh -= quantity;
+          }
+          if (locationMovementLineItemDto.getReasonType().equals(ReasonType.CREDIT.name())) {
+            soh += quantity;
+          }
+          break;
+        default:
+          break;
+      }
+      locationMovementLineItemDto.setSoh(soh);
+    }
+    return createLocationMovmentDto(locationMovementLineItemDtos, stockCardId, latestSoh, locationCode);
+  }
+
+  private LocationMovementDto createLocationMovmentDto(List<LocationMovementLineItemDto> locationMovementLineItemDtos,
+      UUID stockCardId, int soh, String locationCode) {
+    StockCardDto stockCardDto = siglusStockCardService.findStockCardById(stockCardId);
+    FacilityDto facility = stockCardDto.getFacility();
+    OrderableDto orderable = stockCardDto.getOrderable();
+    ProgramDto program = stockCardDto.getProgram();
+    LotDto lot = stockCardDto.getLot();
+    return LocationMovementDto.builder()
+        .facilityName(facility.getName())
+        .productName(orderable.getFullProductName())
+        .orderableId(orderable.getId())
+        .productCode(orderable.getProductCode())
+        .displayUnit(orderable.getDispensable().getDisplayUnit())
+        .lotCode(lot.getLotCode())
+        .program(program.getName())
+        .programId(program.getId())
+        .locationCode(locationCode)
+        .lineItems(locationMovementLineItemDtos)
+        .stockOnHand(soh)
+        .expiryDate(lot.getExpirationDate())
+        .build();
   }
 
   private List<StockCardLocationMovementLineItem> convertMovementDtoToMovementItems(

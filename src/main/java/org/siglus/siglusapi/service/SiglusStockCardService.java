@@ -303,7 +303,6 @@ public class SiglusStockCardService {
   }
 
   public ProductMovementDto getMovementByProduct(UUID facilityId, UUID orderableId) {
-
     List<StockMovementResDto> productMovements =
         stockMovementService.getMovementsByProduct(facilityId, orderableId);
     org.openlmis.referencedata.dto.OrderableDto orderableDto = siglusOrderableReferenceDataService.findOne(orderableId);
