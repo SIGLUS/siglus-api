@@ -190,5 +190,4 @@ public class FieldConstants {
   public static final String JWT_TOKEN_HEADER_PARAM_NAME = "typ";
 
   public static final String JWT_TOKEN_HEADER_PARAM_VALUE = "JWT";
-
 }
