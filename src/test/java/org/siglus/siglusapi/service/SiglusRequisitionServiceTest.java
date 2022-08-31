@@ -156,7 +156,6 @@ import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionMonthlyNotSubmitReportRepository;
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
-import org.siglus.siglusapi.service.client.SiglusNotificationNotificationService;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
 import org.siglus.siglusapi.service.fc.FcCmmCpService;
 import org.siglus.siglusapi.testutils.IdealStockAmountDtoDataBuilder;
@@ -298,13 +297,7 @@ public class SiglusRequisitionServiceTest {
   private ProgramReferenceDataService programReferenceDataService;
 
   @Mock
-  private RequisitionSimamEmailService requisitionSimamEmailService;
-
-  @Mock
   private MessageService messageService;
-
-  @Mock
-  private SiglusNotificationNotificationService siglusNotificationNotificationService;
 
   @Mock
   private RegimenDataProcessor regimenDataProcessor;
@@ -979,7 +972,6 @@ public class SiglusRequisitionServiceTest {
     verify(siglusUsageReportService).saveUsageReportWithValidation(any(), any());
     verify(archiveProductService).activateProducts(any(), any());
     verify(notificationService).postAuthorize(requisitionDto);
-    verify(requisitionSimamEmailService).prepareEmailAttachmentsForSimam(any(), any());
   }
 
   @Test
@@ -1070,7 +1062,6 @@ public class SiglusRequisitionServiceTest {
     verify(requisitionController).approveRequisition(requisitionId, request, response);
     verify(siglusUsageReportService).saveUsageReportWithValidation(any(), any());
     verify(archiveProductService).activateProducts(any(), any());
-    verify(requisitionSimamEmailService).prepareEmailAttachmentsForSimam(any(), any());
   }
 
   @Test
@@ -1111,7 +1102,6 @@ public class SiglusRequisitionServiceTest {
     verify(draftRepository).delete(any(UUID.class));
     verify(requisitionController).approveRequisition(requisitionId, request, response);
     verify(archiveProductService).activateProducts(any(), any());
-    verify(requisitionSimamEmailService).prepareEmailAttachmentsForSimam(any(), any());
   }
 
   @Test
