@@ -1046,12 +1046,12 @@ public class SiglusOrderServiceTest {
   private List<OrderSuggestedQuantityDto> buildMockOrderSuggestedQuantityDtos() {
     OrderSuggestedQuantityDto dto1 = OrderSuggestedQuantityDto.builder()
         .orderableId(orderableId1)
-        .suggestedQuantity(BigDecimal.valueOf(2).setScale(2, RoundingMode.DOWN))
+        .suggestedQuantity(2)
         .build();
 
     OrderSuggestedQuantityDto dto2 = OrderSuggestedQuantityDto.builder()
         .orderableId(orderableId2)
-        .suggestedQuantity(BigDecimal.valueOf(5).setScale(2, RoundingMode.DOWN))
+        .suggestedQuantity(5)
         .build();
 
     return Lists.newArrayList(dto1, dto2);
@@ -1101,13 +1101,13 @@ public class SiglusOrderServiceTest {
     // convert to order(released) and not start fulfill
     RequisitionOrderDto dto1 = RequisitionOrderDto.builder()
         .requisitionId(requisitionIds.get(1))
-        .orderStatus(OrderStatus.ORDERED)
+        .orderStatus(OrderStatus.ORDERED.name())
         .build();
 
     // convert to order(released) and finished fulfillment
     RequisitionOrderDto dto2 = RequisitionOrderDto.builder()
         .requisitionId(requisitionIds.get(2))
-        .orderStatus(OrderStatus.SHIPPED)
+        .orderStatus(OrderStatus.SHIPPED.name())
         .build();
     return Lists.newArrayList(dto1, dto2);
   }
