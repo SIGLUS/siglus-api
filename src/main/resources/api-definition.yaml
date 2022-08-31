@@ -1299,7 +1299,7 @@ traits:
               description: An error occured during request processing.
 
 
-    locationMovementDrafts/{id}/virtualLocationDrafts:
+    /locationMovementDrafts/{id}/virtualLocationDrafts:
       put:
         is: [ secured ]
         description: virtual location movement draft lineitems has been successfully saved.
