@@ -19,9 +19,11 @@ import static com.fasterxml.jackson.annotation.JsonFormat.Shape.STRING;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.UUID;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EntityListeners;
 import javax.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -29,12 +31,15 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.siglus.common.domain.BaseEntity;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
 @Builder
+@EntityListeners(AuditingEntityListener.class)
 @EqualsAndHashCode(callSuper = true)
 @Table(name = "stock_card_location_movement_line_items", schema = "siglusintegration")
 public class StockCardLocationMovementLineItem extends BaseEntity {
@@ -65,4 +70,8 @@ public class StockCardLocationMovementLineItem extends BaseEntity {
 
   @Column(nullable = false)
   private Integer quantity;
+
+  @CreatedDate
+  @Column(updatable = false)
+  private LocalDateTime processedDate;
 }
