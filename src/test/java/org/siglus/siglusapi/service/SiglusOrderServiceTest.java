@@ -28,6 +28,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.powermock.api.mockito.PowerMockito.mockStatic;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -51,7 +52,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.fulfillment.domain.Order;
 import org.openlmis.fulfillment.domain.OrderLineItem;
 import org.openlmis.fulfillment.domain.OrderStatus;
@@ -95,6 +95,9 @@ import org.openlmis.stockmanagement.dto.ObjectReferenceDto;
 import org.openlmis.stockmanagement.util.PageImplRepresentation;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.CanFulfillForMeEntryDto;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2Dto;
+import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 import org.siglus.common.domain.OrderExternal;
 import org.siglus.common.domain.ProcessingPeriodExtension;
 import org.siglus.common.repository.OrderExternalRepository;
@@ -118,7 +121,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.test.util.ReflectionTestUtils;
 
-@RunWith(MockitoJUnitRunner.class)
+@RunWith(PowerMockRunner.class)
+@PrepareForTest(SiglusOrderService.class)
 @SuppressWarnings({"PMD.TooManyMethods", "PMD.UnusedPrivateField"})
 public class SiglusOrderServiceTest {
 
@@ -223,7 +227,7 @@ public class SiglusOrderServiceTest {
   private final UUID facilityTypeId = UUID.randomUUID();
   private final UUID orderExternalId = UUID.randomUUID();
   private final UUID supplyingFacilityId = UUID.randomUUID();
-  private final LocalDate now = LocalDate.now();
+  private final LocalDate fulfillDate = LocalDate.of(2022, 8, 26);
 
   private final List<UUID> periodIds = Lists.newArrayList(
       UUID.randomUUID(),
@@ -1018,7 +1022,7 @@ public class SiglusOrderServiceTest {
   @Test
   public void shouldQuerySuggestedQuantityFromDbWhenContinueFulfillOrder() {
     // given
-    mockCalcualteSuggestedQuantityCommonConditions(buildMockOrderWithCurrentPeriodIdAndStatusNotFulfilling(),
+    mockCalcualteSuggestedQuantityCommonConditions(buildMockOrderWithCurrentPeriodIdAndStatusFulfilling(),
         buildCurrentPeriodRequisitions());
     when(lineItemExtensionRepository.findOrderSuggestedQuantityDtoByOrderLineItemIdIn(
         anyList())).thenReturn(buildMockOrderSuggestedQuantityDtos());
@@ -1055,6 +1059,9 @@ public class SiglusOrderServiceTest {
 
   private void mockCalcualteSuggestedQuantityCommonConditions(Order order,
       List<Requisition> currentPeriodRequisitions) {
+    mockStatic(LocalDate.class);
+    PowerMockito.when(LocalDate.now()).thenReturn(fulfillDate);
+
     when(orderRepository.findOne(orderId)).thenReturn(order);
     when(siglusProcessingPeriodService.getUpToNowMonthlyPeriods()).thenReturn(buildMockPeriods());
     when(siglusProcessingPeriodService.getPeriodDateIn(anyList(), any())).thenReturn(buildMockCurrentPeriod());
@@ -1381,28 +1388,8 @@ public class SiglusOrderServiceTest {
     return buildMockPeriods().get(0);
   }
 
-  private List<UUID> buildMockPreviousThreePeriodIds() {
-    return buildMockPeriods().subList(1, 4).stream().map(ProcessingPeriod::getId).collect(toList());
-  }
-
-  private List<ProcessingPeriod> buildMockPreviousThreePeriod() {
-    return buildMockPeriods().subList(1, 4);
-  }
-
-  private ProcessingPeriod buildMockPreviousPeriod() {
-    ProcessingPeriod period = ProcessingPeriod.newPeriod("number_" + 2, null,
-        getCurrentPeriodStartDate().minusMonths(1), getCurrentPeriodStartDate().minusDays(1));
-    period.setId(periodIds.get(2));
-    return period;
-  }
-
   private LocalDate getCurrentPeriodStartDate() {
-    int day = now.getDayOfMonth();
-    if (day >= 21) {
-      return LocalDate.of(now.getYear(), now.getMonth(), 21);
-    }
-    LocalDate oneMothAgo = now.minusMonths(1);
-    return LocalDate.of(oneMothAgo.getYear(), oneMothAgo.getMonth(), 21);
+    return fulfillDate.minusMonths(1).minusDays(5);
   }
 
   private ShipmentDraftDto createShipmentDraftDto() {

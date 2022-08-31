@@ -15,7 +15,6 @@
 
 package org.siglus.siglusapi.repository.dto;
 
-import java.math.BigDecimal;
 import java.util.UUID;
 import javax.persistence.ColumnResult;
 import javax.persistence.ConstructorResult;
@@ -42,7 +41,7 @@ import lombok.Data;
         targetClass = OrderSuggestedQuantityDto.class,
         columns = {
             @ColumnResult(name = "orderableId", type = UUID.class),
-            @ColumnResult(name = "suggestedQuantity", type = BigDecimal.class),
+            @ColumnResult(name = "suggestedQuantity", type = double.class),
         }
     )
 )
@@ -53,5 +52,5 @@ import lombok.Data;
 public class OrderSuggestedQuantityDto {
 
   private UUID orderableId;
-  private BigDecimal suggestedQuantity;
+  private double suggestedQuantity;
 }

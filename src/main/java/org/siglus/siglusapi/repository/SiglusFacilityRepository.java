@@ -33,7 +33,7 @@ public interface SiglusFacilityRepository extends JpaRepository<Facility, UUID>,
       + "where fe.isandroid = false and f.active = true and f.enabled = true or fe.id is null;", nativeQuery = true)
   List<Facility> findAllWebFacility();
 
-  @Query(value = "select cast(rgm.facilityid as varchar) \n"
+  @Query(value = "select distinct(cast(rgm.facilityid as varchar)) \n"
       + "from referencedata.requisition_group_members rgm \n"
       + "left join referencedata.requisition_groups rg on rg.id = rgm.requisitiongroupid \n"
       + "left join referencedata.requisition_group_program_schedules rgps on rgps.requisitiongroupid = rg.id \n"
