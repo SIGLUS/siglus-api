@@ -28,6 +28,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.siglus.siglusapi.util.SiglusDateHelper.DATE_MONTH_YEAR;
+import static org.siglus.siglusapi.util.SiglusDateHelper.getFormatDate;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -73,6 +75,7 @@ import org.openlmis.fulfillment.web.util.OrderDtoBuilder;
 import org.openlmis.fulfillment.web.util.OrderLineItemDto;
 import org.openlmis.fulfillment.web.util.OrderObjectReferenceDto;
 import org.openlmis.referencedata.domain.Code;
+import org.openlmis.referencedata.domain.Facility;
 import org.openlmis.referencedata.domain.ProcessingPeriod;
 import org.openlmis.referencedata.domain.ProcessingSchedule;
 import org.openlmis.requisition.domain.requisition.ApprovedProductReference;
@@ -111,6 +114,7 @@ import org.siglus.siglusapi.repository.dto.RequisitionOrderDto;
 import org.siglus.siglusapi.service.client.SiglusProcessingPeriodReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
 import org.siglus.siglusapi.web.SiglusStockCardSummariesController;
+import org.siglus.siglusapi.web.response.OrderPickPackResponse;
 import org.siglus.siglusapi.web.response.OrderSuggestedQuantityResponse;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.Page;
@@ -122,6 +126,8 @@ import org.springframework.test.util.ReflectionTestUtils;
 @SuppressWarnings({"PMD.TooManyMethods", "PMD.UnusedPrivateField"})
 public class SiglusOrderServiceTest {
 
+  private final String receivingFacilityName = "receiving facility name";
+  private final String supplyingFacilityName = "supplying facility name";
   @Mock
   private OrderController orderController;
 
@@ -223,7 +229,9 @@ public class SiglusOrderServiceTest {
   private final UUID facilityTypeId = UUID.randomUUID();
   private final UUID orderExternalId = UUID.randomUUID();
   private final UUID supplyingFacilityId = UUID.randomUUID();
+  private final UUID receivingFacilityId = UUID.randomUUID();
   private final LocalDate now = LocalDate.now();
+  private final String orderCode = "ORDER-CODE";
 
   private final List<UUID> periodIds = Lists.newArrayList(
       UUID.randomUUID(),
@@ -1039,6 +1047,38 @@ public class SiglusOrderServiceTest {
     verify(lineItemExtensionRepository).findOrderSuggestedQuantityDtoByOrderLineItemIdIn(anyList());
   }
 
+  @Test
+  public void shuildReturnOrderPickPackResponseWhenGetOrderPickPackResponse() {
+    // given
+    when(orderRepository.findOne(orderId)).thenReturn(buildMockOrderWithCurrentPeriodIdAndStatusFulfilling());
+    when(siglusFacilityRepository.findAll(Lists.newArrayList(receivingFacilityId, supplyingFacilityId))).thenReturn(
+        buildMockFacilities());
+
+    // when
+    OrderPickPackResponse actualResponse = siglusOrderService.getOrderPickPackResponse(orderId);
+
+    // then
+    OrderPickPackResponse expectResponse = OrderPickPackResponse.builder()
+        .generatedDate(getFormatDate(LocalDate.now(), DATE_MONTH_YEAR))
+        .orderCode(orderCode)
+        .clientFacility(receivingFacilityName)
+        .supplierFacility(supplyingFacilityName)
+        .build();
+    assertEquals(expectResponse, actualResponse);
+  }
+
+  private List<Facility> buildMockFacilities() {
+    Facility receivingFacility = new Facility();
+    receivingFacility.setId(receivingFacilityId);
+    receivingFacility.setName(receivingFacilityName);
+
+    Facility supplyingFacility = new Facility();
+    supplyingFacility.setId(supplyingFacilityId);
+    supplyingFacility.setName(supplyingFacilityName);
+
+    return Lists.newArrayList(receivingFacility, supplyingFacility);
+  }
+
   private List<OrderSuggestedQuantityDto> buildMockOrderSuggestedQuantityDtos() {
     OrderSuggestedQuantityDto dto1 = OrderSuggestedQuantityDto.builder()
         .orderableId(orderableId1)
@@ -1302,9 +1342,12 @@ public class SiglusOrderServiceTest {
     order.setEmergency(Boolean.FALSE);
     order.setExternalId(requisitionIds.get(0));
 
+    order.setReceivingFacilityId(receivingFacilityId);
     order.setSupplyingFacilityId(supplyingFacilityId);
     order.setProgramId(programId);
     order.setStatus(OrderStatus.FULFILLING);
+
+    order.setOrderCode(orderCode);
 
     return order;
   }
