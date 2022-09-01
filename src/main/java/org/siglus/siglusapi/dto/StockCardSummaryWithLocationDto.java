@@ -15,7 +15,7 @@
 
 package org.siglus.siglusapi.dto;
 
-import java.util.Set;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -29,6 +29,6 @@ import org.openlmis.referencedata.dto.OrderableDto;
 public class StockCardSummaryWithLocationDto {
 
   private OrderableDto orderable;
-  private Set<StockCardDetailsWithLocationDto> stockCardDetails;
+  private List<StockCardDetailsWithLocationDto> stockCardDetails;
   private Integer stockOnHand;
 }

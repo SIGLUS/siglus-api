@@ -512,8 +512,7 @@ public class SiglusStockCardSummariesService {
       OrderableDto orderableDto = getOrderableFromObjectReference(orderableDtos, stockCardSummaryV2Dto.getOrderable());
       stockCardSummaryDto.setOrderable(orderableDto);
       stockCardSummaryDto.setStockOnHand(stockCardSummaryV2Dto.getStockOnHand());
-
-      Set<StockCardDetailsWithLocationDto> stockCardDetailsDtos = new HashSet<>();
+      List<StockCardDetailsWithLocationDto> stockCardDetailsDtos = new ArrayList<>();
       Map<UUID, List<LotLocationSohDto>> lotLocationMaps = lotLocationSohDtoList.stream()
           .collect(Collectors.groupingBy(LotLocationSohDto::getLotId));
       stockCardSummaryV2Dto.getCanFulfillForMe().forEach(canFulfillForMeEntryDto -> {
