@@ -27,6 +27,8 @@ import static org.siglus.siglusapi.constant.FieldConstants.PROGRAM_ID;
 import static org.siglus.siglusapi.constant.FieldConstants.RIGHT_NAME;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_NO_PERIOD_MATCH;
+import static org.siglus.siglusapi.util.SiglusDateHelper.DATE_MONTH_YEAR;
+import static org.siglus.siglusapi.util.SiglusDateHelper.getFormatDate;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -68,6 +70,7 @@ import org.openlmis.fulfillment.web.util.OrderDto;
 import org.openlmis.fulfillment.web.util.OrderDtoBuilder;
 import org.openlmis.fulfillment.web.util.OrderLineItemDto;
 import org.openlmis.fulfillment.web.util.OrderObjectReferenceDto;
+import org.openlmis.referencedata.domain.Facility;
 import org.openlmis.referencedata.domain.Orderable;
 import org.openlmis.referencedata.domain.ProcessingPeriod;
 import org.openlmis.requisition.domain.requisition.ApprovedProductReference;
@@ -102,6 +105,7 @@ import org.siglus.siglusapi.repository.dto.RequisitionOrderDto;
 import org.siglus.siglusapi.service.client.SiglusProcessingPeriodReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
 import org.siglus.siglusapi.web.response.BasicOrderExtensionResponse;
+import org.siglus.siglusapi.web.response.OrderPickPackResponse;
 import org.siglus.siglusapi.web.response.OrderSuggestedQuantityResponse;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -402,6 +406,22 @@ public class SiglusOrderService {
     return OrderSuggestedQuantityResponse.builder()
         .showSuggestedQuantity(Boolean.TRUE)
         .orderableIdToSuggestedQuantity(getOrderableIdToSuggestedQuantity(order, periods))
+        .build();
+  }
+
+  public OrderPickPackResponse getOrderPickPackResponse(UUID orderId) {
+    Order order = getOrder(orderId);
+
+    List<Facility> facilities = siglusFacilityRepository.findAll(
+        Lists.newArrayList(order.getReceivingFacilityId(), order.getSupplyingFacilityId()));
+    Map<UUID, String> facilityIdToName = facilities.stream()
+        .collect(Collectors.toMap(Facility::getId, Facility::getName));
+
+    return OrderPickPackResponse.builder()
+        .generatedDate(getFormatDate(LocalDate.now(), DATE_MONTH_YEAR))
+        .orderCode(order.getOrderCode())
+        .clientFacility(facilityIdToName.get(order.getReceivingFacilityId()))
+        .supplierFacility(facilityIdToName.get(order.getSupplyingFacilityId()))
         .build();
   }
 

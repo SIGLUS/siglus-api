@@ -28,6 +28,7 @@ import org.siglus.siglusapi.dto.OrderStatusDto;
 import org.siglus.siglusapi.dto.SiglusOrderDto;
 import org.siglus.siglusapi.service.SiglusOrderService;
 import org.siglus.siglusapi.web.response.BasicOrderExtensionResponse;
+import org.siglus.siglusapi.web.response.OrderPickPackResponse;
 import org.siglus.siglusapi.web.response.OrderSuggestedQuantityResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -76,6 +77,11 @@ public class SiglusOrderController {
       @PathVariable("id") UUID orderId,
       @RequestParam("format") String format) throws IOException {
     return orderController.printOrder(request, orderId, format);
+  }
+
+  @GetMapping("/{id}/pickPackInfo")
+  public OrderPickPackResponse getOrderPickPackResponse(@PathVariable("id") UUID orderId) {
+    return siglusOrderService.getOrderPickPackResponse(orderId);
   }
 
   @GetMapping("/{id}/export")
