@@ -149,12 +149,9 @@ public class SiglusShipmentService {
 
   private ShipmentDto createShipment(ShipmentDto shipmentDto) {
     Set<UUID> skippedOrderLineItemIds = getSkippedOrderLineItemIds(shipmentDto);
-    removeSkippedOrderLineItemsAndExtensions(skippedOrderLineItemIds,
-        shipmentDto.getOrder().getId());
+    removeSkippedOrderLineItemsAndExtensions(skippedOrderLineItemIds, shipmentDto.getOrder().getId());
     Set<UUID> skippedOrderableIds = getSkippedOrderableIds(shipmentDto);
-    shipmentDto.lineItems()
-        .removeIf(lineItem -> skippedOrderableIds.contains(lineItem.getOrderable().getId()));
-
+    shipmentDto.lineItems().removeIf(lineItem -> skippedOrderableIds.contains(lineItem.getOrderable().getId()));
     return shipmentController.createShipment(shipmentDto);
   }
 
