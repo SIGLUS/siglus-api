@@ -45,7 +45,7 @@ public class SiglusAdministrationsController {
   @Autowired
   private SiglusAdministrationsService administrationsService;
 
-  @PostMapping()
+  @PostMapping
   public Page<FacilitySearchResultDto> showFacilitiesInfos(@RequestBody FacilitySearchParamDto facilitySearchParamDto,
       Pageable pageable) {
     return administrationsService.searchForFacilities(facilitySearchParamDto, pageable);
@@ -67,6 +67,12 @@ public class SiglusAdministrationsController {
       @RequestBody SiglusFacilityDto siglusFacilityDto) {
     return administrationsService.updateFacility(facilityId, siglusFacilityDto);
   }
+
+  @GetMapping("/{facilityId}/upgradeToWeb")
+  public void upgradeAndroidFacilityToWeb(@PathVariable UUID facilityId) {
+    administrationsService.upgradeAndroidFacilityToWeb(facilityId);
+  }
+
 
   @GetMapping("/{facilityId}/locations")
   public void exportLocationManagementTemplate(@PathVariable("facilityId") UUID facilityId,

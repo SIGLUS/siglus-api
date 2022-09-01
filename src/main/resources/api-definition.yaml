@@ -329,6 +329,19 @@ traits:
           responses:
             200:
               description: Facility information successfully upload
+      /{facilityId}/upgradeToWeb:
+        uriParameters:
+          facilityId:
+            displayName: facilityId
+            type: string
+            required: true
+            repeat: false
+        get:
+          is: [ secured ]
+          description: Upgrade android facility to web facility
+          responses:
+            200:
+              description: Upgrade success
       /{facilityId}/locations:
         uriParameters:
           facilityId:

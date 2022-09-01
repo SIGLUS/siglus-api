@@ -104,9 +104,23 @@ public class SiglusAdministrationControllerTest {
 
   @Test
   public void shouldCreateNewFacility() {
+    // given
     SiglusFacilityDto siglusFacilityDto = mockSiglusFacilityDto();
+
+    // when
     siglusAdministrationsController.createFacility(siglusFacilityDto);
+
+    // then
     verify(siglusAdministrationsService).createFacility(siglusFacilityDto);
+  }
+
+  @Test
+  public void shouldUpgradeAndroidFacilityToWeb() {
+    // when
+    siglusAdministrationsController.upgradeAndroidFacilityToWeb(facilityId);
+
+    // then
+    verify(siglusAdministrationsService).upgradeAndroidFacilityToWeb(facilityId);
   }
 
   private FacilitySearchParamDto mockFacilitySearchParamDto() {

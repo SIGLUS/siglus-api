@@ -73,6 +73,9 @@ public class SiglusShipmentService {
   @Autowired
   private ShipmentLineItemsExtensionRepository shipmentLineItemsExtensionRepository;
 
+  @Autowired
+  private CalculatedStocksOnHandByLocationService calculatedStocksOnHandByLocationService;
+
   @Transactional
   public ShipmentDto createOrderAndShipment(boolean isSubOrder, ShipmentDto shipmentDto) {
     return createOrderAndConfirmShipment(isSubOrder, shipmentDto);
@@ -94,9 +97,11 @@ public class SiglusShipmentService {
           .build();
       shipmentLineItemsByLocations.add(shipmentLineItemsByLocation);
     });
-    ShipmentDto confirmedShipmentDto = createOrderAndConfirmShipment(isSubOrder, shipmentDto);
     log.info("create shipment line item by location");
     shipmentLineItemsExtensionRepository.save(shipmentLineItemsByLocations);
+    ShipmentDto confirmedShipmentDto = createOrderAndConfirmShipment(isSubOrder, shipmentDto);
+    calculatedStocksOnHandByLocationService.calculateStockOnHandByLocationForShipment(confirmedShipmentDto.lineItems(),
+        confirmedShipmentDto.getOrder().getFacility().getId());
     return confirmedShipmentDto;
   }
 
