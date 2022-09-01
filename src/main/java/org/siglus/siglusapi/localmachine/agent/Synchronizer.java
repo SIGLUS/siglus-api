@@ -42,6 +42,7 @@ public class Synchronizer {
   @SchedulerLock(name = "localmachine_synchronizer")
   @Transactional
   public void scheduledSync() {
+    log.info("start scheduled synchronization with online web");
     this.sync();
   }
 

@@ -16,8 +16,10 @@
 package org.siglus.siglusapi.localmachine;
 
 import org.siglus.siglusapi.localmachine.eventstore.EventStore;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
+@Profile({"!localmachine"})
 @Component
 public class OnlineWebEventImporter extends EventImporter {
 
