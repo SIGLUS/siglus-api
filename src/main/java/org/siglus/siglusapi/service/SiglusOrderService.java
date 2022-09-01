@@ -437,7 +437,7 @@ public class SiglusOrderService {
         lineItemIds);
     Map<UUID, BigDecimal> orderableIdToSuggestedQuantity = Maps.newHashMapWithExpectedSize(dtos.size());
     dtos.forEach(dto -> orderableIdToSuggestedQuantity.put(dto.getOrderableId(),
-        toBigDecimalRoundDown(dto.getSuggestedQuantity())));
+        Objects.isNull(dto.getSuggestedQuantity()) ? null : toBigDecimalRoundDown(dto.getSuggestedQuantity())));
     return orderableIdToSuggestedQuantity;
   }
 

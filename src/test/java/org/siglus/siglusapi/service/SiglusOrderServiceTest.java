@@ -1082,12 +1082,12 @@ public class SiglusOrderServiceTest {
   private List<OrderSuggestedQuantityDto> buildMockOrderSuggestedQuantityDtos() {
     OrderSuggestedQuantityDto dto1 = OrderSuggestedQuantityDto.builder()
         .orderableId(orderableId1)
-        .suggestedQuantity(2)
+        .suggestedQuantity(2d)
         .build();
 
     OrderSuggestedQuantityDto dto2 = OrderSuggestedQuantityDto.builder()
         .orderableId(orderableId2)
-        .suggestedQuantity(5)
+        .suggestedQuantity(5d)
         .build();
 
     return Lists.newArrayList(dto1, dto2);
