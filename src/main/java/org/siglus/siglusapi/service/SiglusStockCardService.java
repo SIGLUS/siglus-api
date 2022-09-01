@@ -177,11 +177,10 @@ public class SiglusStockCardService {
     if (!androidHelper.isAndroid()) {
       addCreateInventory(calculateNewLineItemDtos, stockCards);
     }
-    List<StockCardLineItemDto> reasonFilter = calculateNewLineItemDtos.stream().map(dto -> {
+    List<StockCardLineItemDto> reasonFilter = calculateNewLineItemDtos.stream().peek(dto -> {
       if (dto.getSource() != null || dto.getDestination() != null) {
         dto.setReason(null);
       }
-      return dto;
     }).collect(Collectors.toList());
 
     return createStockCardDto(stockCardDtos, reasonFilter, byLot);

@@ -102,8 +102,7 @@ public class SiglusStockCardLocationMovementService {
         .sorted(Comparator.comparing(LocationMovementLineItemDto::getProcessedDate).reversed()).collect(
             Collectors.toList());
     Integer latestSoh = calculatedStockOnHandByLocationRepository.findRecentlySohByStockCardIdAndLocationCode(
-        stockCardId,
-        locationCode).get();
+        stockCardId, locationCode).get();
     Integer soh = latestSoh;
     for (LocationMovementLineItemDto locationMovementLineItemDto : locationMovementLineItemDtos) {
       Integer quantity = locationMovementLineItemDto.getQuantity();
