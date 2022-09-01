@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.dto;
 
+import java.time.LocalDate;
 import java.util.UUID;
 import javax.persistence.ColumnResult;
 import javax.persistence.ConstructorResult;
@@ -33,7 +34,8 @@ import lombok.Data;
             + "  sc.lotid ,\n"
             + "  fl.locationcode ,\n"
             + "  fl.area, \n"
-            + "  csohl.stockonhand\n"
+            + "  csohl.stockonhand, \n"
+            + "  csohl.occurreddate as lastupdate\n"
             + "from\n"
             + "  (\n"
             + "  select\n"
@@ -45,7 +47,7 @@ import lombok.Data;
             + "    siglusintegration.calculated_stocks_on_hand_by_location) csohl\n"
             + "left join stockmanagement.stock_cards sc on\n"
             + "  sc.id = csohl.stockcardid\n"
-            + "left join siglusintegration.facility_locations fl on\n"
+            + "join siglusintegration.facility_locations fl on\n"
             + "  csohl.locationcode = fl.locationcode  and csohl.area = fl.area and sc.facilityid = fl.facilityid \n"
             + "where\n"
             + "  csohl.row_number = 1\n"
@@ -65,10 +67,13 @@ import lombok.Data;
                         type = UUID.class),
                     @ColumnResult(name = "locationcode",
                         type = String.class),
+                    @ColumnResult(name = "area",
+                        type = String.class),
                     @ColumnResult(name = "stockonhand",
                         type = Integer.class),
-                    @ColumnResult(name = "area",
-                        type = String.class)
+                    @ColumnResult(name = "lastUpdate",
+                        type = LocalDate.class)
+
 
                 }
             )
@@ -87,4 +92,6 @@ public class LotLocationSohDto {
   private String area;
 
   private Integer stockOnHand;
+
+  private LocalDate lastUpdate;
 }

@@ -90,7 +90,8 @@ public class CsvValidator {
     for (Map.Entry<String, List<Long>> locationCodeMapEntry : locationCodeToDuplicateRowMap.entrySet()) {
       if (locationCodeToDuplicateRowMap.get(locationCodeMapEntry.getKey()).size() > 1) {
         throw new BusinessDataException(new Message(CsvUploadMessageKeys.ERROR_DUPLICATE_LOCATION_CODE,
-            locationCodeToDuplicateRowMap.get(locationCodeMapEntry.getKey()).toString()), ERROR_BUSINESS_CODE);
+            locationCodeToDuplicateRowMap.get(locationCodeMapEntry.getKey()).toString()),
+            locationCodeToDuplicateRowMap.get(locationCodeMapEntry.getKey()).toString());
       }
     }
 
@@ -101,7 +102,7 @@ public class CsvValidator {
     for (int i = 0; i < headers.size(); i++) {
       if (StringUtils.isEmpty(headers.get(i))) {
         throw new BusinessDataException(new Message(CsvUploadMessageKeys.ERROR_UPLOAD_HEADER_MISSING,
-            String.valueOf(i + 1)), ERROR_BUSINESS_CODE);
+            String.valueOf(i + 1)), String.valueOf(i + 1));
       }
     }
   }
@@ -121,7 +122,7 @@ public class CsvValidator {
   private void validateEachColumn(String columnValue, String columnName, long row) throws ValidationMessageException {
     if (StringUtils.isBlank(columnValue)) {
       throw new BusinessDataException(new Message(CsvUploadMessageKeys.ERROR_UPLOAD_MISSING_ROW,
-          columnName, row), ERROR_BUSINESS_CODE);
+          columnName, row), columnName + " " + row);
     }
   }
 

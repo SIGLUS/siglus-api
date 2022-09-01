@@ -92,7 +92,7 @@ public class CalculatedStocksOnHandByLocationService {
             .flatMap(movement -> getUniqueKeysFromMovement(movement).stream())
             .collect(Collectors.toSet());
 
-    allUniqueKeys.stream().forEach(key -> {
+    allUniqueKeys.forEach(key -> {
       UUID stockCardId = UUID.fromString(key.split(SEPARATOR)[0]);
       String locationCode = key.split(SEPARATOR)[1];
       Integer previousSoh = stockCardIdAndLocationCodeToPreviousStockOnHandMap.get(key);
@@ -103,11 +103,12 @@ public class CalculatedStocksOnHandByLocationService {
 
       String area = null;
       for (StockCardLocationMovementLineItem movement: movements) {
-        if (locationCode.equals(movement.getSrcLocationCode())) {
-          previousSoh = previousSoh - movement.getQuantity();
-          area = movement.getSrcArea();
-        } else if (locationCode.equals(movement.getDestLocationCode())) {
-          previousSoh = previousSoh + movement.getQuantity();
+        if (stockCardId.equals(movement.getStockCardId())) {
+          if (locationCode.equals(movement.getSrcLocationCode())) {
+            previousSoh = previousSoh - movement.getQuantity();
+          } else if (locationCode.equals(movement.getDestLocationCode())) {
+            previousSoh = previousSoh + movement.getQuantity();
+          }
           area = movement.getDestArea();
         }
       }
@@ -123,12 +124,6 @@ public class CalculatedStocksOnHandByLocationService {
     });
 
     saveAll(toSaveList);
-  }
-
-  private Set<String> getUniqueKeysFromMovement(StockCardLocationMovementLineItem movement) {
-    String key1 = movement.getStockCardId() + SEPARATOR + movement.getSrcLocationCode();
-    String key2 = movement.getStockCardId() + SEPARATOR + movement.getDestLocationCode();
-    return Sets.asSet(key1, key2);
   }
 
   public void calculateStockOnHandByLocation(StockEventDto eventDto) {
@@ -410,6 +405,12 @@ public class CalculatedStocksOnHandByLocationService {
     return getString(lineItem.getOrderableId())
         + SEPARATOR
         + getString(lineItem.getLotId());
+  }
+
+  private Set<String> getUniqueKeysFromMovement(StockCardLocationMovementLineItem movement) {
+    String key1 = movement.getStockCardId() + SEPARATOR + movement.getSrcLocationCode();
+    String key2 = movement.getStockCardId() + SEPARATOR + movement.getDestLocationCode();
+    return Sets.asSet(key1, key2);
   }
 
   private void throwQuantityExceedException(StockCardLineItem item, int prevSoH) {

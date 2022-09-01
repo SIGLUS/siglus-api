@@ -33,8 +33,11 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.requisition.dto.BasicRequisitionDto;
 import org.openlmis.requisition.dto.MinimalFacilityDto;
+import org.openlmis.requisition.dto.UserDto;
+import org.openlmis.requisition.utils.AuthenticationHelper;
 import org.openlmis.requisition.web.RequisitionController;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
+import org.siglus.siglusapi.localmachine.event.requisition.RequisitionInternalApproveEmitter;
 import org.siglus.siglusapi.service.SiglusNotificationService;
 import org.siglus.siglusapi.service.SiglusProcessingPeriodService;
 import org.siglus.siglusapi.service.SiglusRequisitionService;
@@ -43,7 +46,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
 @RunWith(MockitoJUnitRunner.class)
-@SuppressWarnings("PMD.TooManyMethods")
+@SuppressWarnings({"PMD.TooManyMethods", "PMD.UnusedPrivateField"})
 public class SiglusRequisitionControllerTest {
 
   @InjectMocks
@@ -60,6 +63,11 @@ public class SiglusRequisitionControllerTest {
 
   @Mock
   private SiglusNotificationService notificationService;
+
+  @Mock
+  private RequisitionInternalApproveEmitter requisitionInternalApproveEmitter;
+  @Mock
+  private AuthenticationHelper authenticationHelper;
 
   @Mock
   private HttpServletResponse response;
@@ -85,6 +93,10 @@ public class SiglusRequisitionControllerTest {
     MinimalFacilityDto minimalFacilityDto = new MinimalFacilityDto();
     minimalFacilityDto.setId(UUID.randomUUID());
     basicRequisitionDto.setFacility(minimalFacilityDto);
+    UserDto user = new UserDto();
+    user.setId(UUID.randomUUID());
+    user.setHomeFacilityId(facilityId);
+    when(authenticationHelper.getCurrentUser()).thenReturn(user);
   }
 
   @Test
@@ -142,6 +154,12 @@ public class SiglusRequisitionControllerTest {
     mockBasicRequisitionDto.setFacility(mockFacility);
     when(requisitionController.approveRequisition(requisitionId, request, response))
         .thenReturn(mockBasicRequisitionDto);
+
+    BasicRequisitionDto basicRequisitionDto = new BasicRequisitionDto();
+    final MinimalFacilityDto facility = new MinimalFacilityDto();
+    facility.setId(facilityId);
+    basicRequisitionDto.setFacility(facility);
+    when(siglusRequisitionService.approveRequisition(requisitionId, request, response)).thenReturn(basicRequisitionDto);
 
     // when
     siglusRequisitionController.approveRequisition(requisitionId, request, response);

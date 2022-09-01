@@ -18,6 +18,7 @@ package org.siglus.siglusapi.localmachine.eventstore;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.util.HashMap;
 import java.util.Map;
@@ -25,6 +26,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
+import org.joda.money.Money;
+import org.siglus.siglusapi.localmachine.utils.MoneyDeserializer;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -39,6 +42,9 @@ public class PayloadSerializer {
     objectMapper.registerModule(new JavaTimeModule());
     objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
     objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    SimpleModule module = new SimpleModule();
+    module.addDeserializer(Money.class, new MoneyDeserializer());
+    objectMapper.registerModule(module);
   }
 
   @SneakyThrows

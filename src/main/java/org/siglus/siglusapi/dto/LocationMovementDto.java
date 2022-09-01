@@ -13,32 +13,30 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.service.client;
+package org.siglus.siglusapi.dto;
 
-import org.siglus.siglusapi.dto.simam.NotificationSimamDto;
-import org.springframework.stereotype.Service;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.UUID;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
 
-@Service
-public class SiglusNotificationNotificationService extends
-    BaseNotificationService<NotificationSimamDto> {
+@Data
+@AllArgsConstructor
+@Builder
+public class LocationMovementDto {
 
-  @Override
-  protected String getUrl() {
-    return "/api/notifications/";
-  }
-
-  @Override
-  protected Class<NotificationSimamDto> getResultClass() {
-    return NotificationSimamDto.class;
-  }
-
-  @Override
-  protected Class<NotificationSimamDto[]> getArrayResultClass() {
-    return NotificationSimamDto[].class;
-  }
-
-  public void sendNotification(NotificationSimamDto notificationSimamDto) {
-    postResult("", notificationSimamDto, Void.class);
-  }
-
+  private UUID orderableId;
+  private String facilityName;
+  private String productCode;
+  private String productName;
+  private UUID programId;
+  private String program;
+  private List<LocationMovementLineItemDto> lineItems;
+  private Integer stockOnHand;
+  private String displayUnit;
+  private String lotCode;
+  private String locationCode;
+  private LocalDate expiryDate;
 }

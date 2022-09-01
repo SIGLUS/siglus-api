@@ -35,7 +35,7 @@ public class FacilitySearchResultDto extends FacilityDto {
 
   private Boolean hasSuccessUploadLocations;
 
-  private Boolean canInitialMoveProduct;
+  private Boolean needInitiallyMoveProduct;
 
   public static FacilitySearchResultDto from(FacilityDto facilityDto) {
     FacilitySearchResultDto searchResultDto = new FacilitySearchResultDto();

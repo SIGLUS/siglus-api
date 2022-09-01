@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.dto;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -47,4 +48,5 @@ public class StockCardLocationMovementLineItemDto {
 
   private Integer stockOnHand;
 
+  private LocalDateTime processedDate;
 }

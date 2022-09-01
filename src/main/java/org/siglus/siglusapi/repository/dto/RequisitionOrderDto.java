@@ -24,7 +24,6 @@ import javax.persistence.SqlResultSetMapping;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import org.openlmis.fulfillment.domain.OrderStatus;
 
 @NamedNativeQuery(
     name = "Order.findRequisitionOrderDtos",
@@ -32,7 +31,7 @@ import org.openlmis.fulfillment.domain.OrderStatus;
         + "from requisition.requisitions r \n"
         + "left join fulfillment.orders o \n"
         + "on (o.externalid = r.id) \n"
-        + "where r.id in (:requisitionIds) ;",
+        + "where r.id in (:requisitionIds)",
     resultSetMapping = "Order.RequisitionOrderDto")
 
 @MappedSuperclass
@@ -43,7 +42,7 @@ import org.openlmis.fulfillment.domain.OrderStatus;
         columns = {
             @ColumnResult(name = "requisitionId", type = UUID.class),
             @ColumnResult(name = "orderId", type = UUID.class),
-            @ColumnResult(name = "orderStatus", type = OrderStatus.class)
+            @ColumnResult(name = "orderStatus", type = String.class)
         }
     )
 )
@@ -55,5 +54,5 @@ public class RequisitionOrderDto {
 
   private UUID requisitionId;
   private UUID orderId;
-  private OrderStatus orderStatus;
+  private String orderStatus;
 }

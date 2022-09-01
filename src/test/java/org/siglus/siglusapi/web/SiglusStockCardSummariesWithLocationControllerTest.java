@@ -24,6 +24,7 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.siglus.siglusapi.service.SiglusStockCardLocationMovementService;
 import org.siglus.siglusapi.service.SiglusStockCardService;
 import org.siglus.siglusapi.service.SiglusStockCardSummariesService;
 import org.springframework.data.domain.PageRequest;
@@ -43,12 +44,17 @@ public class SiglusStockCardSummariesWithLocationControllerTest {
   @Mock
   private SiglusStockCardService siglusStockCardService;
 
+  @Mock
+  private SiglusStockCardLocationMovementService siglusStockCardLocationMovementService;
+
   private final UUID draftId = UUID.randomUUID();
   private final MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
   private final Pageable pageable = new PageRequest(0, Integer.MAX_VALUE);
   private final UUID stockCardId = UUID.randomUUID();
   private final UUID facilityId = UUID.randomUUID();
   private final UUID orderableId = UUID.randomUUID();
+
+  private final String locationCode = "AAA";
 
   @Test
   public void shouldCallServiceAndBuilderWhenSearchStockCardSummaries() {
@@ -70,5 +76,12 @@ public class SiglusStockCardSummariesWithLocationControllerTest {
     controller.getProductMovement(orderableId, facilityId);
 
     verify(siglusStockCardService).getMovementByProduct(facilityId, orderableId);
+  }
+
+  @Test
+  public void shouldCallServiceWhenGetLocationMovement() {
+    controller.getLocationMovement(stockCardId, locationCode);
+
+    verify(siglusStockCardLocationMovementService).getLocationMovementDto(stockCardId, locationCode);
   }
 }

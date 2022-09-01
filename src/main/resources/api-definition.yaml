@@ -1299,10 +1299,10 @@ traits:
               description: An error occured during request processing.
 
 
-    /locationMovementDrafts/virtualLocationDrafts:
-      get:
+    /locationMovementDrafts/{id}/virtualLocationDrafts:
+      put:
         is: [ secured ]
-        description: Get location movement drafts which is included in virtual location by facility.
+        description: virtual location movement draft lineitems has been successfully saved.
         responses:
           200:
             description: Return location movement drafts which is included in virtual location by facility.
@@ -1741,6 +1741,27 @@ traits:
       get:
         is: [ secured ]
         description: get stock movement by product
+        responses:
+          200:
+            body:
+              application/json:
+                schema: StockCardWithLocationDto
+
+    /stockCardSummariesWithLocation/byLocation:
+      get:
+        is: [ secured ]
+        description: get stock movement by product
+        queryParameters:
+          stockCardId:
+            required: true
+            description: Facility id, indicates the facility that the queried stock card summaries should belong to.
+            repeat: false
+            type: string
+          locationCode:
+            required: false
+            description: Program id, indicates the program that the queries stock card summaries is under.
+            repeat: false
+            type: string
         responses:
           200:
             body:

@@ -26,6 +26,7 @@ import static org.siglus.siglusapi.constant.FieldConstants.NON_EMPTY_ONLY;
 import static org.siglus.siglusapi.constant.FieldConstants.PROGRAM_ID;
 import static org.siglus.siglusapi.constant.FieldConstants.RIGHT_NAME;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_NO_PERIOD_MATCH;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -37,6 +38,7 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -83,8 +85,10 @@ import org.siglus.common.domain.ProcessingPeriodExtension;
 import org.siglus.common.repository.OrderExternalRepository;
 import org.siglus.common.repository.ProcessingPeriodExtensionRepository;
 import org.siglus.siglusapi.domain.OrderLineItemExtension;
+import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.dto.OrderStatusDto;
 import org.siglus.siglusapi.dto.SiglusOrderDto;
+import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.i18n.MessageKeys;
 import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
@@ -211,7 +215,7 @@ public class SiglusOrderService {
       OrderStatus.FULFILLING,
       OrderStatus.SHIPPED,
       OrderStatus.RECEIVED
-      );
+  );
 
   public Page<BasicOrderDto> searchOrders(OrderSearchParams params, Pageable pageable) {
     return orderController.searchOrders(params, pageable);
@@ -411,8 +415,10 @@ public class SiglusOrderService {
     Set<UUID> lineItemIds = getLineItemIds(order);
     List<OrderSuggestedQuantityDto> dtos = lineItemExtensionRepository.findOrderSuggestedQuantityDtoByOrderLineItemIdIn(
         lineItemIds);
-    return dtos.stream().collect(
-        Collectors.toMap(OrderSuggestedQuantityDto::getOrderableId, OrderSuggestedQuantityDto::getSuggestedQuantity));
+    Map<UUID, BigDecimal> orderableIdToSuggestedQuantity = Maps.newHashMapWithExpectedSize(dtos.size());
+    dtos.forEach(dto -> orderableIdToSuggestedQuantity.put(dto.getOrderableId(),
+        toBigDecimalRoundDown(dto.getSuggestedQuantity())));
+    return orderableIdToSuggestedQuantity;
   }
 
   private Set<UUID> getLineItemIds(Order order) {
@@ -420,7 +426,7 @@ public class SiglusOrderService {
   }
 
   private boolean isCurrentProcessingPeriod(Order order, List<ProcessingPeriod> periods) {
-    return order.getProcessingPeriodId().equals(getPeriodIdDateIn(periods, LocalDate.now()));
+    return order.getProcessingPeriodId().equals(getCurrentPeriodIdByFulfillDate(periods, LocalDate.now()));
   }
 
   private Order getOrder(UUID orderId) {
@@ -470,9 +476,12 @@ public class SiglusOrderService {
     // released requisition maybe already fulfilled
     Set<UUID> requisitionIds = releasedRequisitions.stream().map(Requisition::getId)
         .collect(Collectors.toSet());
-    Map<UUID, OrderStatus> requisitionIdToOrderStatus =
-        siglusRequisitionRepository.findRequisitionOrderDtoByRequisitionIds(requisitionIds).stream()
-            .collect(toMap(RequisitionOrderDto::getRequisitionId, RequisitionOrderDto::getOrderStatus));
+    Map<UUID, String> requisitionIdToOrderStatus = Maps.newHashMapWithExpectedSize(requisitionIds.size());
+    if (CollectionUtils.isNotEmpty(requisitionIds)) {
+      List<RequisitionOrderDto> requisitionOrderDtos = siglusRequisitionRepository
+          .findRequisitionOrderDtoByRequisitionIds(requisitionIds);
+      requisitionOrderDtos.forEach(dto -> requisitionIdToOrderStatus.put(dto.getRequisitionId(), dto.getOrderStatus()));
+    }
 
     // not finished = not convert to order + convert to order but not finish fulfill
     List<Requisition> notFinishedRequisitions = currentPeriodAfterApprovedRequisitions.stream()
@@ -480,7 +489,7 @@ public class SiglusOrderService {
         .collect(toList());
     notFinishedRequisitions.addAll(releasedRequisitions.stream()
         .filter(requisition -> ORDER_STATUS_NOT_FINISHED.contains(
-            requisitionIdToOrderStatus.get(requisition.getId()).name()))
+            requisitionIdToOrderStatus.get(requisition.getId())))
         .collect(toList()));
     return notFinishedRequisitions;
   }
@@ -527,13 +536,19 @@ public class SiglusOrderService {
 
   private BigDecimal calculateSuggestedQuantity(Integer sumApprovedQuantity, Integer sumHistoryApprovedQuantity,
       Integer soh, Integer currentRequisitionApprovedQuantity) {
-    if (sumApprovedQuantity + sumHistoryApprovedQuantity <= soh) {
-      return BigDecimal.valueOf(currentRequisitionApprovedQuantity).setScale(2, RoundingMode.DOWN);
-    } else {
-      return BigDecimal.valueOf(
-              soh * 1d / (sumApprovedQuantity + sumHistoryApprovedQuantity) * currentRequisitionApprovedQuantity)
-          .setScale(2, RoundingMode.DOWN);
+    if (currentRequisitionApprovedQuantity == 0) {
+      return toBigDecimalRoundDown(0);
     }
+    if (sumApprovedQuantity + sumHistoryApprovedQuantity <= soh) {
+      return toBigDecimalRoundDown(currentRequisitionApprovedQuantity);
+    } else {
+      return toBigDecimalRoundDown(
+          soh * 1d / (sumApprovedQuantity + sumHistoryApprovedQuantity) * currentRequisitionApprovedQuantity);
+    }
+  }
+
+  private BigDecimal toBigDecimalRoundDown(double value) {
+    return BigDecimal.valueOf(value).setScale(2, RoundingMode.DOWN);
   }
 
   private Map<UUID, Map<UUID, Integer>> getFacilityIdToOrderableIdToMaxApprovedQuantity(
@@ -613,7 +628,7 @@ public class SiglusOrderService {
     return siglusRequisitionRepository.findRequisitionsByOrderInfoAndSupplyingFacilityId(
         clientFacilityIds,
         order.getProgramId(),
-        Lists.newArrayList(getPeriodIdDateIn(periods, LocalDate.now())),
+        Lists.newArrayList(getCurrentPeriodIdByFulfillDate(periods, LocalDate.now())),
         order.getEmergency(),
         REQUISITION_STATUS_AFTER_FINAL_APPROVED,
         order.getSupplyingFacilityId());
@@ -650,9 +665,9 @@ public class SiglusOrderService {
 
   private List<UUID> getPreviousThreePeriodIds(List<ProcessingPeriod> periods) {
     List<UUID> previousThreePeriodIds = Lists.newArrayList();
-    LocalDate localDate = LocalDate.now();
+    ProcessingPeriod currentPeriod = getCurrentPeriodByFulfillDate(periods, LocalDate.now());
     for (int i = 1; i < 4; i++) {
-      previousThreePeriodIds.add(getPeriodIdDateIn(periods, localDate.minusMonths(i)));
+      previousThreePeriodIds.add(getPeriodIdDateIn(periods, currentPeriod.getStartDate().minusMonths(i)));
     }
     return previousThreePeriodIds;
   }
@@ -663,11 +678,36 @@ public class SiglusOrderService {
   }
 
   private List<ProcessingPeriod> getUpToNowMonthlyPeriods() {
-    return siglusProcessingPeriodService.getUpToNowMonthlyPeriods();
+    List<ProcessingPeriod> upToNowMonthlyPeriods = siglusProcessingPeriodService.getUpToNowMonthlyPeriods();
+    upToNowMonthlyPeriods.sort(Comparator.comparing(ProcessingPeriod::getStartDate));
+    return upToNowMonthlyPeriods;
   }
 
   private boolean shouldNotCalculateSuggestedQuantity(Order order) {
     return Boolean.TRUE.equals(order.getEmergency()) || isSuborder(order.getExternalId());
+  }
+
+  private UUID getCurrentPeriodIdByFulfillDate(List<ProcessingPeriod> periods, LocalDate date) {
+    return getCurrentPeriodByFulfillDate(periods, date).getId();
+  }
+
+  private ProcessingPeriod getCurrentPeriodByFulfillDate(List<ProcessingPeriod> periods, LocalDate date) {
+    return periods.stream().filter(period -> isFulfillDateMatchProcessingPeriod(period, date)).findFirst()
+        .orElseThrow(() -> new BusinessDataException(new Message(ERROR_NO_PERIOD_MATCH)));
+  }
+
+  private boolean isFulfillDateMatchProcessingPeriod(ProcessingPeriod period, LocalDate date) {
+    LocalDate fulfillStartDate = period.getEndDate().plusDays(6);
+    LocalDate fulfillEndDate = period.getEndDate().plusMonths(1).plusDays(5);
+    return isDateIn(fulfillStartDate, fulfillEndDate, date);
+  }
+
+  private boolean isDateIn(LocalDate startDate, LocalDate endDate, LocalDate date) {
+    return !isDateNotIn(startDate, endDate, date);
+  }
+
+  private boolean isDateNotIn(LocalDate startDate, LocalDate endDate, LocalDate date) {
+    return date.isBefore(startDate) || date.isAfter(endDate);
   }
 
   private UUID getPeriodIdDateIn(List<ProcessingPeriod> periods, LocalDate localDate) {

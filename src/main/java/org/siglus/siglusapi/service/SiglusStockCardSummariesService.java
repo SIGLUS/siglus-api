@@ -424,7 +424,6 @@ public class SiglusStockCardSummariesService {
       List<UUID> subDraftIds, UUID draftId, Pageable pageable) {
     List<StockCardSummaryV2Dto> stockCardSummaryV2Dtos = getStockCardSummaryV2Dtos(parameters, subDraftIds, draftId,
         pageable);
-
     List<UUID> orderableIds = new ArrayList<>();
     List<CanFulfillForMeEntryDto> canFulfillForMeEntryDtos = getCanFulfillForMeEntryDtos(
         stockCardSummaryV2Dtos, orderableIds);
