@@ -16,6 +16,10 @@
 package org.siglus.siglusapi.service;
 
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
+import static org.siglus.siglusapi.constant.FieldConstants.CAPITAL_ADJUSTMENT;
+import static org.siglus.siglusapi.constant.FieldConstants.CAPITAL_ISSUE;
+import static org.siglus.siglusapi.constant.FieldConstants.CAPITAL_RECEIVE;
+import static org.siglus.siglusapi.constant.FieldConstants.INVENTORY;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_MOVEMENT_DRAFT_NOT_FOUND;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_MOVEMENT_LINE_ITEMS_MISSING;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_MOVEMENT_QUANTITY_LESS_THAN_STOCK_ON_HAND;
@@ -102,21 +106,21 @@ public class SiglusStockCardLocationMovementService {
         .sorted(Comparator.comparing(LocationMovementLineItemDto::getProcessedDate).reversed()).collect(
             Collectors.toList());
     Integer latestSoh = calculatedStockOnHandByLocationRepository.findRecentlySohByStockCardIdAndLocationCode(
-        stockCardId, locationCode).get();
+        stockCardId, locationCode).orElse(0);
     Integer soh = latestSoh;
     for (LocationMovementLineItemDto locationMovementLineItemDto : locationMovementLineItemDtos) {
       Integer quantity = locationMovementLineItemDto.getQuantity();
       switch (locationMovementLineItemDto.getReasonCategory()) {
-        case "INVENTORY":
+        case INVENTORY:
           soh = quantity;
           break;
-        case "ISSUE":
+        case CAPITAL_ISSUE:
           soh -= quantity;
           break;
-        case "RECEIVE":
+        case CAPITAL_RECEIVE:
           soh += quantity;
           break;
-        case "ADJUSTMENT":
+        case CAPITAL_ADJUSTMENT:
           if (locationMovementLineItemDto.getReasonType().equals(ReasonType.DEBIT.name())) {
             soh -= quantity;
           }

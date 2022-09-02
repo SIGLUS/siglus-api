@@ -279,7 +279,7 @@ public class SiglusStockCardService {
   private StockCardLineItemDto createFirstInventoryByDate(
       StockCardExtension stockCard) {
     StockCardLineItemReason reason = StockCardLineItemReason.builder()
-        .name("inventário")
+        .name("Inventário")
         .reasonType(ReasonType.BALANCE_ADJUSTMENT)
         .reasonCategory(ReasonCategory.ADJUSTMENT)
         .build();
