@@ -15,28 +15,50 @@
 
 package org.siglus.siglusapi.domain;
 
+import java.time.ZonedDateTime;
 import java.util.UUID;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EntityListeners;
 import javax.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.siglus.common.domain.BaseEntity;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @Entity
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "orders_extension", schema = "siglusintegration")
-public class OrdersExtension extends BaseEntity {
+@EntityListeners(AuditingEntityListener.class)
+@Table(name = "local_receipt_voucher", schema = "siglusintegration")
+public class LocalReceiptVoucher extends BaseEntity {
 
-  @Column(name = "orderid")
-  private UUID orderId;
+  @Column(nullable = false)
+  private String orderCode;
 
-  @Column(name = "islocal")
-  private Boolean isLocal;
+  @Column(nullable = false)
+  private String status;
+
+  private UUID processingPeriodId;
+
+  @Column(nullable = false)
+  private UUID programId;
+
+  @Column(nullable = false)
+  private UUID requestingFacilityId;
+
+  @Column(nullable = false)
+  private UUID supplyingFacilityId;
+
+  private UUID createdById;
+
+  @CreatedDate
+  @Column(updatable = false)
+  private ZonedDateTime createdDate;
 
 }

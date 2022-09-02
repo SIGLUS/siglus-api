@@ -13,17 +13,12 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.web.response;
+package org.siglus.siglusapi.repository;
 
-import lombok.Data;
-import org.openlmis.fulfillment.web.util.BasicOrderDto;
+import java.util.UUID;
+import org.siglus.siglusapi.domain.LocalReceiptVoucher;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-@Data
-public class BasicOrderExtensionResponse extends BasicOrderDto {
+public interface SiglusLocalReceiptVoucherRepository extends JpaRepository<LocalReceiptVoucher, UUID> {
 
-  private boolean isLocal;
-
-  private boolean canCreateLIV;
-
-  private boolean hasSubDraft;
 }
