@@ -35,29 +35,33 @@ public class PayloadSerializer {
   // TODO: 2022/8/17 scan siglus package to build the class name mapping below
   private static Map<String, Class<?>> payloadNameToClass = new HashMap<>();
   private static Map<Class<?>, String> payloadClassToName = new HashMap<>();
-  private final ObjectMapper objectMapper;
+  public static final ObjectMapper LOCALMACHINE_EVENT_OBJECT_MAPPER;
 
-  public PayloadSerializer() {
-    objectMapper = new ObjectMapper();
-    objectMapper.registerModule(new JavaTimeModule());
-    objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-    objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+  static {
+    LOCALMACHINE_EVENT_OBJECT_MAPPER = new ObjectMapper();
+    LOCALMACHINE_EVENT_OBJECT_MAPPER.registerModule(new JavaTimeModule());
+    LOCALMACHINE_EVENT_OBJECT_MAPPER.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+    LOCALMACHINE_EVENT_OBJECT_MAPPER.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     SimpleModule module = new SimpleModule();
     module.addDeserializer(Money.class, new MoneyDeserializer());
-    objectMapper.registerModule(module);
+    LOCALMACHINE_EVENT_OBJECT_MAPPER.registerModule(module);
+  }
+
+  public PayloadSerializer() {
+
   }
 
   @SneakyThrows
   public byte[] dump(Object payload) {
-    byte[] payloadBytes = objectMapper.writeValueAsBytes(payload);
+    byte[] payloadBytes = LOCALMACHINE_EVENT_OBJECT_MAPPER.writeValueAsBytes(payload);
     PayloadWrapper payloadWrapper = new PayloadWrapper(getName(payload), payloadBytes);
-    return objectMapper.writeValueAsBytes(payloadWrapper);
+    return LOCALMACHINE_EVENT_OBJECT_MAPPER.writeValueAsBytes(payloadWrapper);
   }
 
   @SneakyThrows
   public Object load(byte[] payload) {
-    PayloadWrapper payloadWrapper = objectMapper.readValue(payload, PayloadWrapper.class);
-    return objectMapper.readValue(payloadWrapper.getPayload(), getPayloadClass(payloadWrapper));
+    PayloadWrapper payloadWrapper = LOCALMACHINE_EVENT_OBJECT_MAPPER.readValue(payload, PayloadWrapper.class);
+    return LOCALMACHINE_EVENT_OBJECT_MAPPER.readValue(payloadWrapper.getPayload(), getPayloadClass(payloadWrapper));
   }
 
   private Class<?> getPayloadClass(PayloadWrapper payloadWrapper) throws ClassNotFoundException {

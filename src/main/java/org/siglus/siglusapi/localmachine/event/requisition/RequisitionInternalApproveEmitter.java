@@ -72,17 +72,22 @@ public class RequisitionInternalApproveEmitter {
         new RequisitionInternalApproveApplicationEvent();
     log.info("get event of requisition internal approve, id = " + requisitionId);
     Requisition requisition = requisitionRepository.findOne(requisitionId);
+    if (requisition == null) {
+      throw new IllegalStateException("no requisition found, id = " + requisitionId);
+    }
     event.setRequisition(requisition);
 
     RequisitionExtension requisitionExtension = requisitionExtensionRepository.findByRequisitionId(requisitionId);
     event.setRequisitionExtension(requisitionExtension);
 
-    List<UUID> lineItemIds =
-        requisition.getRequisitionLineItems().stream().map(RequisitionLineItem::getId).collect(Collectors.toList());
+    if (CollectionUtils.isNotEmpty(requisition.getRequisitionLineItems())) {
+      List<UUID> lineItemIds =
+          requisition.getRequisitionLineItems().stream().map(RequisitionLineItem::getId).collect(Collectors.toList());
 
-    List<RequisitionLineItemExtension> lineItemExtensions =
-        requisitionLineItemExtensionRepository.findLineItems(lineItemIds);
-    event.setLineItemExtensions(lineItemExtensions);
+      List<RequisitionLineItemExtension> lineItemExtensions =
+          requisitionLineItemExtensionRepository.findLineItems(lineItemIds);
+      event.setLineItemExtensions(lineItemExtensions);
+    }
 
     buildRequisitionUsage(requisitionId, event);
 

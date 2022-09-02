@@ -18,6 +18,7 @@ package org.siglus.siglusapi.web.android;
 import static org.springframework.http.HttpStatus.CREATED;
 import static org.springframework.http.HttpStatus.NO_CONTENT;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
@@ -25,6 +26,7 @@ import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.hibernate.validator.constraints.NotEmpty;
 import org.siglus.siglusapi.constant.AndroidConstants;
 import org.siglus.siglusapi.domain.AppInfo;
@@ -40,6 +42,7 @@ import org.siglus.siglusapi.dto.android.response.FacilityResponse;
 import org.siglus.siglusapi.dto.android.response.PodResponse;
 import org.siglus.siglusapi.dto.android.response.ProductSyncResponse;
 import org.siglus.siglusapi.dto.android.response.RequisitionResponse;
+import org.siglus.siglusapi.localmachine.eventstore.PayloadSerializer;
 import org.siglus.siglusapi.service.android.MeService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -56,6 +59,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 @Validated
+@Slf4j
 @RestController
 @RequestMapping("/api/siglusapi/android/me")
 @RequiredArgsConstructor
@@ -113,6 +117,11 @@ public class SiglusMeController {
   @PostMapping("/facility/requisitions")
   @ResponseStatus(CREATED)
   public void createRequisition(@RequestBody @Valid RequisitionCreateRequest request) {
+    try {
+      log.info(PayloadSerializer.LOCALMACHINE_EVENT_OBJECT_MAPPER.writeValueAsString(request));
+    } catch (JsonProcessingException e) {
+      log.error("request serial failed, msg = " + e.getMessage());
+    }
     service.createRequisition(request);
   }
 
