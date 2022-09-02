@@ -483,9 +483,8 @@ public class SiglusStockCardSummariesService {
       stockCardSummaryDto.setStockOnHand(stockCardSummaryV2Dto.getStockOnHand());
 
       Set<StockCardDetailsDto> stockCardDetailsDtos = new HashSet<>();
-
       stockCardSummaryV2Dto.getCanFulfillForMe().forEach(canFulfillForMeEntryDto -> {
-        if (canFulfillForMeEntryDto.getStockOnHand() != 0) {
+        if (canFulfillForMeEntryDto.getLot() != null && canFulfillForMeEntryDto.getStockOnHand() != 0) {
           StockCardDetailsDto fulfill = StockCardDetailsDto.builder()
               .orderable(getOrderableFromObjectReference(orderableDtos, canFulfillForMeEntryDto.getOrderable()))
               .lot(getLotFromObjectReference(lotDtos, canFulfillForMeEntryDto.getLot()))
