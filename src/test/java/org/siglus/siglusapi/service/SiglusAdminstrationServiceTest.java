@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -413,7 +414,7 @@ public class SiglusAdminstrationServiceTest {
     when(siglusFacilityReferenceDataService.findOneWithoutCache(facilityId)).thenReturn(mockFacilityDto());
     when(stockCardRepository.countByFacilityId(facilityId)).thenReturn(100);
     when(stockCardRepository.findByFacilityIdIn(facilityId)).thenReturn(Lists.newArrayList(mockStockCard()));
-    when(calculatedStockOnHandRepository.findPreviousStockOnHands(Lists.newArrayList(stockCardId), LocalDate.now()))
+    when(calculatedStockOnHandRepository.findLatestStockOnHands(Lists.newArrayList(stockCardId), ZonedDateTime.now()))
         .thenReturn(Lists.newArrayList(mockCalculatedStockOnHand()));
     when(authenticationHelper.getCurrentUser()).thenReturn(mockUserDto());
     SiglusFacilityDto siglusFacilityDto = mockSiglusFacilityDto(true, "locationManagement");
@@ -433,7 +434,7 @@ public class SiglusAdminstrationServiceTest {
     when(siglusFacilityReferenceDataService.findOneWithoutCache(facilityId)).thenReturn(mockFacilityDto());
     when(stockCardRepository.countByFacilityId(facilityId)).thenReturn(100);
     when(stockCardRepository.findByFacilityIdIn(facilityId)).thenReturn(Lists.newArrayList(mockStockCard()));
-    when(calculatedStockOnHandRepository.findPreviousStockOnHands(Lists.newArrayList(stockCardId), LocalDate.now()))
+    when(calculatedStockOnHandRepository.findLatestStockOnHands(Lists.newArrayList(stockCardId), ZonedDateTime.now()))
         .thenReturn(Lists.newArrayList(mockCalculatedStockOnHand()));
     when(authenticationHelper.getCurrentUser()).thenReturn(mockUserDto());
     SiglusFacilityDto siglusFacilityDto = mockSiglusFacilityDto(false, "locationManagement");

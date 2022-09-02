@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
+import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -414,7 +415,7 @@ public class SiglusAdministrationsService {
   }
 
   private List<CalculatedStockOnHand> findStockCardIdsHasStockOnHandOnLot(List<UUID> stockCardIds) {
-    return calculatedStockOnHandRepository.findPreviousStockOnHands(stockCardIds, LocalDate.now())
+    return calculatedStockOnHandRepository.findLatestStockOnHands(stockCardIds, ZonedDateTime.now())
         .stream().filter(calculatedStockOnHand -> calculatedStockOnHand.getStockOnHand() > 0)
         .collect(Collectors.toList());
   }
