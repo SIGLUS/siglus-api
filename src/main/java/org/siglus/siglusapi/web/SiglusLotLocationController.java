@@ -22,6 +22,8 @@ import org.siglus.siglusapi.dto.FacilityLocationsDto;
 import org.siglus.siglusapi.dto.LotLocationDto;
 import org.siglus.siglusapi.service.SiglusLotLocationService;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -33,9 +35,9 @@ public class SiglusLotLocationController {
 
   private final SiglusLotLocationService lotLocationService;
 
-  @GetMapping
+  @PostMapping
   public List<LotLocationDto> searchLotLocationDto(
-      @RequestParam(required = false) List<UUID> orderableIds, @RequestParam(required = false) boolean extraData,
+      @RequestBody(required = false) List<UUID> orderableIds, @RequestParam(required = false) boolean extraData,
       @RequestParam(required = false) boolean isAdjustment) {
     return lotLocationService.searchLotLocationDtos(orderableIds, extraData, isAdjustment);
   }

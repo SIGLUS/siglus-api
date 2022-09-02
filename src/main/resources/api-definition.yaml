@@ -405,14 +405,14 @@ traits:
 
     /locations:
       displayName: get location and lot Association relationship
-      get:
+      post:
         is: [ secured ]
         body:
           application/json:
-            schema: arrayOfStrings
+            schema: arrayOfString
         responses:
           200:
-            description: GET success
+            description: GET location and lot Association relationship success
       /facility:
         get:
           is: [ secured ]
