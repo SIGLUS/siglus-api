@@ -156,17 +156,14 @@ public class SiglusNotificationService {
     return repo
         .findViewable(pageable, type, getFilterByRights())
         .map(notification -> {
-          ProcessingPeriodDto processingPeriod = periodService
-              .findOne(notification.getProcessingPeriodId());
+          ProcessingPeriodDto processingPeriod = periodService.findOne(notification.getProcessingPeriodId());
           org.siglus.siglusapi.dto.FacilityDto facility =
               facilityReferenceDataService.findOne(notification.getRequestingFacilityId());
           ProgramDto program = programRefDataService.findOne(notification.getProgramId());
           ZonedDateTime submitDate = null;
-          String author = userReferenceDataService.findOne(notification.getOperatorId())
-              .getUsername();
+          String author = userReferenceDataService.findOne(notification.getOperatorId()).getUsername();
           if (notification.getStatus().isRequisitionPeriod()) {
-            RequisitionV2Dto requisition = requisitionService
-                .searchRequisition(notification.getRefId());
+            RequisitionV2Dto requisition = requisitionService.searchRequisition(notification.getRefId());
             Map<String, StatusLogEntry> statusChanges = requisition.getStatusChanges();
             submitDate = statusChanges.get(RequisitionStatus.SUBMITTED.name()).getChangeDate();
           }
@@ -205,7 +202,6 @@ public class SiglusNotificationService {
   public void postAuthorize(BasicRequisitionDto requisition) {
     repo.updateLastNotificationProcessed(requisition.getId(), NotificationStatus.SUBMITTED,
         NotificationStatus.REJECTED);
-
     saveNotificationFromRequisition(requisition, notification -> {
       notification.setStatus(NotificationStatus.AUTHORIZED);
       notification.setNotifySupervisoryNodeId(findSupervisorNodeId(requisition));
@@ -216,29 +212,27 @@ public class SiglusNotificationService {
   public void postApprove(BasicRequisitionDto requisition) {
     repo.updateLastNotificationProcessed(requisition.getId(), NotificationStatus.AUTHORIZED,
         NotificationStatus.IN_APPROVAL);
-
     RequisitionStatus status = requisition.getStatus();
-    if (!RequisitionStatus.getPostApproveStatus().contains(status)) {
-      return;
-    }
-    if (status != RequisitionStatus.RELEASED_WITHOUT_ORDER) {
+    if (status == RequisitionStatus.IN_APPROVAL) {
       saveNotificationFromRequisition(requisition, notification -> {
         notification.setType(NotificationType.TODO);
-        if (status == RequisitionStatus.IN_APPROVAL) {
-          notification.setStatus(NotificationStatus.IN_APPROVAL);
-          notification.setNotifySupervisoryNodeId(findSupervisorNodeId(requisition));
-        } else {
-          notification.setStatus(NotificationStatus.APPROVED);
-          notification.setFacilityId(findCurrentUserFacilityId());
-        }
+        notification.setStatus(NotificationStatus.IN_APPROVAL);
+        notification.setNotifySupervisoryNodeId(findSupervisorNodeId(requisition));
       });
-    }
-
-    if (status != RequisitionStatus.IN_APPROVAL) {
+    } else if (status == RequisitionStatus.APPROVED) {
+      saveNotificationFromRequisition(requisition, notification -> {
+        notification.setType(NotificationType.TODO);
+        notification.setStatus(NotificationStatus.APPROVED);
+        notification.setFacilityId(findCurrentUserFacilityId());
+      });
       saveNotificationFromRequisition(requisition, notification -> {
         notification.setType(NotificationType.UPDATE);
-        notification.setStatus(status == RequisitionStatus.APPROVED ? NotificationStatus.APPROVED :
-            NotificationStatus.RELEASED_WITHOUT_ORDER);
+        notification.setStatus(NotificationStatus.APPROVED);
+      });
+    } else if (status == RequisitionStatus.RELEASED_WITHOUT_ORDER) {
+      saveNotificationFromRequisition(requisition, notification -> {
+        notification.setType(NotificationType.UPDATE);
+        notification.setStatus(NotificationStatus.RELEASED_WITHOUT_ORDER);
       });
     }
   }
@@ -246,7 +240,6 @@ public class SiglusNotificationService {
   public void postReject(BasicRequisitionDto requisition) {
     repo.updateLastNotificationProcessed(requisition.getId(), NotificationStatus.AUTHORIZED,
         NotificationStatus.IN_APPROVAL);
-
     saveNotificationFromRequisition(requisition, notification -> {
       notification.setStatus(NotificationStatus.REJECTED);
       notification.setType(NotificationType.TODO);
@@ -374,10 +367,8 @@ public class SiglusNotificationService {
 
   private UUID findSupervisorNodeId(BasicRequisitionDto requisitionDto) {
     UUID requisitionId = requisitionDto.getId();
-    Profiler profiler = requisitionController
-        .getProfiler("GET_REQUISITION", requisitionId);
-    return requisitionController.findRequisition(requisitionId, profiler)
-        .getSupervisoryNodeId();
+    Profiler profiler = requisitionController.getProfiler("GET_REQUISITION", requisitionId);
+    return requisitionController.findRequisition(requisitionId, profiler).getSupervisoryNodeId();
   }
 
   private List<BasicOrderDto> searchOrders(ApproveRequisitionDto approveRequisitionDto) {

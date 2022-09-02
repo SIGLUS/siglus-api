@@ -20,6 +20,7 @@ import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.openlmis.requisition.i18n.MessageKeys.ERROR_NO_FOLLOWING_PERMISSION;
@@ -109,6 +110,7 @@ import org.siglus.siglusapi.repository.RegimenRepository;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.SyncUpHashRepository;
+import org.siglus.siglusapi.service.SiglusNotificationService;
 import org.siglus.siglusapi.service.SiglusOrderableService;
 import org.siglus.siglusapi.service.SiglusProgramAdditionalOrderableService;
 import org.siglus.siglusapi.service.SiglusProgramService;
@@ -190,6 +192,9 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
 
   @Mock
   private RequisitionTemplateRepository requisitionTemplateRepository;
+
+  @Mock
+  private SiglusNotificationService siglusNotificationService;
 
   @Captor
   private ArgumentCaptor<Requisition> requisitionArgumentCaptor;
@@ -321,6 +326,7 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     when(requisitionTemplateRepository.findTemplate(mmiaProgramId, facilityTypeId)).thenReturn(requisitionTemplate);
     when(requisitionTemplateRepository.findTemplate(rapidTestProgramId, facilityTypeId))
         .thenReturn(requisitionTemplate);
+    doNothing().when(siglusNotificationService).postApprove(any());
   }
 
   @Test(expected = PermissionMessageException.class)
