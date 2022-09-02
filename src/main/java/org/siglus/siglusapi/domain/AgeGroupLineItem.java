@@ -38,8 +38,6 @@ import org.siglus.siglusapi.dto.AgeGroupServiceDto;
 @Table(name = "age_group_line_items", schema = "siglusintegration")
 public class AgeGroupLineItem extends BaseEntity {
 
-  private UUID id;
-
   private UUID requisitionId;
 
   @Column(name = "groupname")
@@ -51,21 +49,24 @@ public class AgeGroupLineItem extends BaseEntity {
   private Integer value;
 
   public static List<AgeGroupLineItem> from(List<AgeGroupServiceDto> ageGroupServiceDtos,
-                                            UUID requisitionId) {
+      UUID requisitionId) {
     LinkedList<AgeGroupLineItem> ageGroupLineItems = new LinkedList<>();
     ageGroupServiceDtos.forEach(serviceDto -> {
       String service = serviceDto.getService();
       serviceDto.getColumns().forEach((groupKey, lineItemDto) -> {
-        AgeGroupLineItem lineItem = AgeGroupLineItem.builder()
-                .id(lineItemDto.getAgeGroupLineItemId())
-                .requisitionId(requisitionId)
-                .service(service)
-                .group(groupKey)
-                .value(lineItemDto.getValue())
-                .build();
+        AgeGroupLineItem lineItem = new AgeGroupLineItem(requisitionId, service, groupKey,
+            lineItemDto.getValue(), lineItemDto.getAgeGroupLineItemId());
         ageGroupLineItems.add(lineItem);
       });
     });
     return ageGroupLineItems;
+  }
+
+  public AgeGroupLineItem(UUID requisitionId, String service, String group, Integer value, UUID id) {
+    this.requisitionId = requisitionId;
+    this.service = service;
+    this.group = group;
+    this.value = value;
+    super.id = id;
   }
 }
