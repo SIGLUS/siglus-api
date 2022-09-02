@@ -25,6 +25,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.google.common.collect.Lists;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -340,5 +341,9 @@ public class SiglusShipmentDraftServiceTest {
 
     // when
     siglusShipmentDraftService.deleteShipmentDraftByLocation(draftId);
+
+    // then
+    verify(shipmentDraftLineItemsByLocationRepository, times(1))
+        .deleteByShipmentDraftLineItemIdIn(Lists.newArrayList(shipmentLineItemDto.getId()));
   }
 }

@@ -25,7 +25,7 @@ import org.springframework.web.method.support.ModelAndViewContainer;
 
 public class AuthenticationArgumentResolver implements HandlerMethodArgumentResolver {
 
-  public static final String LOCAL_MACHINE_token = "machineToken";
+  public static final String LOCAL_MACHINE_TOKEN = "machineToken";
 
   @Override
   public boolean supportsParameter(MethodParameter parameter) {
@@ -39,7 +39,7 @@ public class AuthenticationArgumentResolver implements HandlerMethodArgumentReso
       NativeWebRequest webRequest,
       WebDataBinderFactory binderFactory) {
     return Optional.ofNullable(
-            webRequest.getAttribute(LOCAL_MACHINE_token, RequestAttributes.SCOPE_REQUEST))
+            webRequest.getAttribute(LOCAL_MACHINE_TOKEN, RequestAttributes.SCOPE_REQUEST))
         .orElseThrow(() -> new IllegalStateException("authentication not be resolved"));
   }
 }

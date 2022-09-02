@@ -15,7 +15,7 @@
 
 package org.siglus.siglusapi.localmachine.auth;
 
-import static org.siglus.siglusapi.localmachine.auth.AuthenticationArgumentResolver.LOCAL_MACHINE_token;
+import static org.siglus.siglusapi.localmachine.auth.AuthenticationArgumentResolver.LOCAL_MACHINE_TOKEN;
 import static org.springframework.util.StringUtils.isEmpty;
 
 import java.util.Optional;
@@ -81,6 +81,6 @@ public class AuthInterceptor extends HandlerInterceptorAdapter {
   }
 
   private void bindRequestAttribute(HttpServletRequest request, MachineToken machineToken) {
-    request.setAttribute(LOCAL_MACHINE_token, machineToken);
+    request.setAttribute(LOCAL_MACHINE_TOKEN, machineToken);
   }
 }

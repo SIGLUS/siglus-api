@@ -63,6 +63,9 @@ public class LotConflictServiceTest extends TestCase {
     // when
     LocalDate localDate = LocalDate.now();
     lotConflictService.handleLotConflict(facilityId, lotCode, lotId, localDate, localDate);
+    // then
+    verify(repo, times(0))
+        .findOneByFacilityIdAndLotIdAndLotCodeAndExpirationDate(facilityId, lotId, lotCode, localDate);
   }
 
   @Test

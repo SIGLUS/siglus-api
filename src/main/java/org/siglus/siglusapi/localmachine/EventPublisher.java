@@ -36,7 +36,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class EventPublisher {
   public static final int PROTOCOL_VERSION = 1;
   private final EventStore eventStore;
-  private final ApplicationEventPublisher eventPublisher;
+  private final ApplicationEventPublisher applicationEventPublisher;
   private final SiglusAuthenticationHelper siglusAuthenticationHelper;
   // andriod -> web -(xxxsynced) -> local machine
   // localmachine -> web \
@@ -60,7 +60,7 @@ public class EventPublisher {
       log.info("event {} is relayed already locally, skip", event.getId());
       return;
     }
-    eventPublisher.publishEvent(event.getPayload());
+    applicationEventPublisher.publishEvent(event.getPayload());
     event.setLocalReplayed(true);
     eventStore.confirmReplayed(event);
   }

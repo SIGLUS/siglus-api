@@ -39,17 +39,14 @@ import org.openlmis.requisition.service.PeriodService;
 import org.openlmis.requisition.service.PermissionService;
 import org.openlmis.requisition.service.referencedata.PeriodReferenceDataService;
 import org.siglus.common.domain.ProcessingPeriodExtension;
-import org.siglus.common.dto.ProgramAdditionalOrderableDto;
 import org.siglus.common.repository.ProcessingPeriodExtensionRepository;
 import org.siglus.siglusapi.constant.ProgramConstants;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.dto.ProcessingPeriodSearchParams;
 import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.NotFoundException;
-import org.siglus.siglusapi.repository.FacilityNativeRepository;
 import org.siglus.siglusapi.repository.ProcessingPeriodRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
-import org.siglus.siglusapi.repository.dto.FacillityStockCardDateDto;
 import org.siglus.siglusapi.service.client.SiglusProcessingPeriodReferenceDataService;
 import org.siglus.siglusapi.validator.SiglusProcessingPeriodValidator;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -85,12 +82,6 @@ public class SiglusProcessingPeriodService {
 
   @Autowired
   private SiglusProgramService siglusProgramService;
-
-  @Autowired
-  private FacilityNativeRepository facilityNativeRepository;
-
-  @Autowired
-  private SiglusProgramAdditionalOrderableService siglusProgramAdditionalOrderableService;
 
   @Autowired
   private PeriodReferenceDataService periodReferenceDataService;
@@ -211,35 +202,6 @@ public class SiglusProcessingPeriodService {
       dto.setSubmitEndDate(extension.getSubmitEndDate());
     }
     return dto;
-  }
-
-  private LocalDate getFirstStockMovementDate(ProgramDto program,
-                                              UUID facilityId) {
-    FacillityStockCardDateDto facillityStockCardDateDto;
-    if (ProgramConstants.MALARIA_PROGRAM_CODE.equals(program.getCode())) {
-      Set<UUID> malariaAdditionalOrderableIds =
-              siglusProgramAdditionalOrderableService.searchAdditionalOrderables(program.getId())
-                      .stream().map(ProgramAdditionalOrderableDto::getAdditionalOrderableId)
-                      .collect(Collectors.toSet());
-      ProgramDto viaProgram = siglusProgramService.getProgramByCode(ProgramConstants.VIA_PROGRAM_CODE)
-          .orElseThrow(() -> new IllegalArgumentException("no via program found"));
-
-      List<FacillityStockCardDateDto> result =
-          facilityNativeRepository.findMalariaFirstStockCardGroupByFacility(malariaAdditionalOrderableIds,
-              viaProgram.getId());
-      facillityStockCardDateDto = result
-              .stream()
-              .filter(dto -> facilityId.equals(dto.getFacilityId()))
-              .findFirst()
-              .orElseThrow(() -> new IllegalArgumentException("no first stock movement"));
-    } else {
-      facillityStockCardDateDto = facilityNativeRepository
-              .findFirstStockCardGroupByFacilityIdAndProgramId(facilityId, program.getId())
-              .stream()
-              .findFirst()
-              .orElseThrow(() -> new IllegalArgumentException("no first stock movement"));
-    }
-    return facillityStockCardDateDto.getOccurredDate().toLocalDate();
   }
 
   // get periods for initiate

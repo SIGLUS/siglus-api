@@ -188,7 +188,7 @@ public class SiglusStockCardLocationMovementService {
 
   private void checkStockOnHand(StockCardLocationMovementDto movementDto) {
     List<StockCardLocationMovementLineItemDto> lineItems = movementDto.getMovementLineItems();
-    Boolean isInitialMoveProduct = administrationsService.canInitialMoveProduct(
+    boolean isInitialMoveProduct = administrationsService.canInitialMoveProduct(
         authenticationHelper.getCurrentUser().getHomeFacilityId());
     Set<Entry<String, List<StockCardLocationMovementLineItemDto>>> groupByOrderableIdLotIdSrcAreaAndSrcLocationCode =
         lineItems.stream().collect(Collectors.groupingBy(this::fetchGroupKey)).entrySet();
