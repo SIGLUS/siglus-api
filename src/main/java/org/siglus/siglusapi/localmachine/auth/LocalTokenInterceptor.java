@@ -21,8 +21,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.localmachine.CommonConstants;
-import org.siglus.siglusapi.localmachine.agent.Registration;
-import org.siglus.siglusapi.localmachine.agent.RegistrationRepository;
+import org.siglus.siglusapi.localmachine.server.AgentInfo;
+import org.siglus.siglusapi.localmachine.server.AgentInfoRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpRequest;
@@ -35,7 +35,7 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class LocalTokenInterceptor implements ClientHttpRequestInterceptor {
-  private final RegistrationRepository registrationRepository;
+  private final AgentInfoRepository agentInfoRepository;
 
   @Value("${machine.version}")
   private String localMachineVersion;
@@ -49,17 +49,17 @@ public class LocalTokenInterceptor implements ClientHttpRequestInterceptor {
   }
 
   private void attachHeaders(HttpHeaders headers) {
-    Registration registration =
-        Optional.ofNullable(registrationRepository.getCurrentFacility())
+    AgentInfo agentInfo =
+        Optional.ofNullable(agentInfoRepository.getFirstAgentInfo())
             .orElseThrow(() -> new NotFoundException("registration info not found"));
-    String accessToken = buildAccessToken(registration);
+    String accessToken = buildAccessToken(agentInfo);
     headers.add(CommonConstants.VERSION, localMachineVersion);
     headers.add(CommonConstants.ACCESS_TOKEN, accessToken);
   }
 
-  private String buildAccessToken(Registration registration) {
+  private String buildAccessToken(AgentInfo agentInfo) {
     return MachineToken.sign(
-            registration.getAgentId(), registration.getFacilityId(), registration.getPrivateKey())
+            agentInfo.getMachineId(), agentInfo.getFacilityId(), agentInfo.getPrivateKey())
         .getPayload();
   }
 }

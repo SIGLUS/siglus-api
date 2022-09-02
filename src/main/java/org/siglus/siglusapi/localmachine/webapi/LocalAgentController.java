@@ -16,37 +16,23 @@
 package org.siglus.siglusapi.localmachine.webapi;
 
 import lombok.RequiredArgsConstructor;
-import org.siglus.siglusapi.localmachine.EventImporter;
-import org.siglus.siglusapi.localmachine.auth.MachineToken;
-import org.siglus.siglusapi.localmachine.eventstore.EventStore;
+import org.siglus.siglusapi.localmachine.agent.LocalActivationService;
+import org.springframework.context.annotation.Profile;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+@Profile("localmachine")
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/siglusapi/localmachine/server")
-public class OnlineWebController {
-  private final EventImporter importer;
-  private final EventStore eventStore;
+@RequestMapping("/api/siglusapi/localmachine/agent")
+public class LocalAgentController {
+  private final LocalActivationService localActivationService;
 
-  @PostMapping("/events")
-  public void syncEvents(@Validated SyncRequest request) {
-    importer.importEvents(request.getEvents());
-  }
-
-  @GetMapping("/peeringEvents")
-  public PeeringEventsResponse exportPeeringEvents() {
-    // TODO: 2022/8/21 export events from peering facilities
-    return null;
-  }
-
-  @PostMapping("/ack")
-  public void confirmReceived(
-      @RequestBody @Validated AckRequest request, MachineToken authentication) {
-    eventStore.confirmReceived(authentication.getFacilityId(), request.getEventIds());
+  @PutMapping
+  public void activate(@RequestBody @Validated LocalActivationRequest request) {
+    localActivationService.activate(request);
   }
 }

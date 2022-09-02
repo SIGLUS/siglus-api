@@ -13,16 +13,18 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.localmachine.agent;
+package org.siglus.siglusapi.localmachine.webapi;
 
 import java.util.UUID;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.stereotype.Repository;
+import javax.validation.Valid;
+import lombok.Builder;
+import lombok.Data;
 
-@Repository
-public interface RegistrationRepository extends JpaRepository<Registration, UUID> {
-
-  @Query(value = "select * from localmachine.registration limit 1", nativeQuery = true)
-  Registration getCurrentFacility();
+@Builder
+@Data
+public class RemoteActivationRequest {
+  @Valid private LocalActivationRequest localActivationRequest;
+  private String base64EncodedPublicKey;
+  private String base64EncodedPrivateKey;
+  private UUID machineId;
 }

@@ -33,6 +33,7 @@ public class ComponentScanCustomFilter implements TypeFilter {
         || className.contains("Repository")
         || className.contains("Controller")
         || className.equals("RequisitionInternalApproveEmitter")
-        || className.equals("RequisitionInternalApproveReplayer");
+        || className.equals("RequisitionInternalApproveReplayer")
+        || className.equals(Machine.class.getSimpleName());
   }
 }

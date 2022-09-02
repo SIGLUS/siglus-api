@@ -15,12 +15,37 @@
 
 package org.siglus.siglusapi.localmachine.server;
 
+import java.util.List;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 @Repository
 public interface AgentInfoRepository extends JpaRepository<AgentInfo, UUID> {
 
-  AgentInfo findOneByAgentIdAndFacilityId(UUID agentId, UUID facilityId);
+  AgentInfo findOneByMachineIdAndFacilityId(UUID agentId, UUID facilityId);
+
+  AgentInfo findFirstByFacilityCode(String facilityCode);
+
+  @Query(value = "select * from localmachine.agents limit 1", nativeQuery = true)
+  AgentInfo getFirstAgentInfo();
+
+  @Query(value = "select id from localmachine.machine limit 1", nativeQuery = true)
+  UUID getMachineId();
+
+  @Query(
+      value =
+          "select ag.facilityid from localmachine.machine m INNER JOIN localmachine.agents ag on m.id=ag.machineid",
+      nativeQuery = true)
+  List<UUID> findRegisteredFacilityIds();
+
+  @Transactional
+  @Modifying
+  @Query(
+      value = "insert into localmachine.machine(id) values (?1) ON CONFLICT DO NOTHING",
+      nativeQuery = true)
+  void touchMachineId(UUID machineId);
 }

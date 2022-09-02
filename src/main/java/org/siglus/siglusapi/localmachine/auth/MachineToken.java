@@ -36,7 +36,7 @@ import lombok.Data;
 @AllArgsConstructor
 public class MachineToken {
   private static final String ALG_HEADER = "alg";
-  private UUID agentId;
+  private UUID machineId;
   private UUID facilityId;
   private String payload;
 

@@ -30,8 +30,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.siglus.siglusapi.localmachine.CommonConstants;
-import org.siglus.siglusapi.localmachine.agent.Registration;
-import org.siglus.siglusapi.localmachine.agent.RegistrationRepository;
+import org.siglus.siglusapi.localmachine.server.AgentInfo;
+import org.siglus.siglusapi.localmachine.server.AgentInfoRepository;
 import org.springframework.http.client.ClientHttpRequestExecution;
 import org.springframework.mock.http.client.MockClientHttpRequest;
 
@@ -39,16 +39,16 @@ import org.springframework.mock.http.client.MockClientHttpRequest;
 public class LocalTokenInterceptorTest {
   private static final KeyPair keyPair = Keys.keyPairFor(SignatureAlgorithm.RS256);
   @InjectMocks private LocalTokenInterceptor interceptor;
-  @Mock private RegistrationRepository registrationRepository;
+  @Mock private AgentInfoRepository agentInfoRepository;
 
   @Test
   public void shouldAddHeadersWhenIntercept() throws IOException {
     // given
-    given(registrationRepository.getCurrentFacility())
+    given(agentInfoRepository.getFirstAgentInfo())
         .willReturn(
-            Registration.builder()
+            AgentInfo.builder()
                 .facilityId(UUID.randomUUID())
-                .agentId(UUID.randomUUID())
+                .machineId(UUID.randomUUID())
                 .privateKey(keyPair.getPrivate().getEncoded())
                 .build());
     MockClientHttpRequest request = new MockClientHttpRequest();

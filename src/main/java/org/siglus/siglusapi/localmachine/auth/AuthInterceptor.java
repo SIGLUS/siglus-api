@@ -71,13 +71,13 @@ public class AuthInterceptor extends HandlerInterceptorAdapter {
   }
 
   private AgentInfo mustGetAgentInfo(MachineToken machineToken) throws IllegalAccessException {
-    UUID agentId = machineToken.getAgentId();
+    UUID machineId = machineToken.getMachineId();
     UUID facilityId = machineToken.getFacilityId();
-    log.info(String.format("auth check, agentId = %s, facilityId=%s", agentId, facilityId));
+    log.info(String.format("auth check, machineId = %s, facilityId=%s", machineId, facilityId));
     return Optional.ofNullable(
-            agentInfoRepository.findOneByAgentIdAndFacilityId(agentId, facilityId))
+            agentInfoRepository.findOneByMachineIdAndFacilityId(machineId, facilityId))
         .orElseThrow(
-            () -> new IllegalAccessException("agentInfo not exists. agentId = " + agentId));
+            () -> new IllegalAccessException("agentInfo not exists. machineId = " + machineId));
   }
 
   private void bindRequestAttribute(HttpServletRequest request, MachineToken machineToken) {

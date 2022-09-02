@@ -37,7 +37,7 @@ public class AuthInterceptorTest {
 
   @Before
   public void setup() {
-    given(agentInfoRepository.findOneByAgentIdAndFacilityId(any(), any())).willReturn(null);
+    given(agentInfoRepository.findOneByMachineIdAndFacilityId(any(), any())).willReturn(null);
   }
 
   @Test

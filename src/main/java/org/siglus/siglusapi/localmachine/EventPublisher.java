@@ -38,9 +38,6 @@ public class EventPublisher {
   private final EventStore eventStore;
   private final ApplicationEventPublisher applicationEventPublisher;
   private final SiglusAuthenticationHelper siglusAuthenticationHelper;
-  // andriod -> web -(xxxsynced) -> local machine
-  // localmachine -> web \
-  //               -> x -> local machine
 
   public void emitGroupEvent(String groupId, UUID receiverId, Object payload) {
     Event.EventBuilder eventBuilder = baseEventBuilder(groupId, receiverId, payload);

@@ -13,31 +13,17 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.localmachine.agent;
+package org.siglus.siglusapi.localmachine.webapi;
 
-import java.time.ZonedDateTime;
-import java.util.UUID;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.validator.constraints.NotBlank;
 
-@Entity
 @Data
-@Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "registrations", schema = "localmachine")
-public class Registration {
-  @Id private UUID id;
-  private UUID agentId;
-  private UUID facilityId;
-  private String facilityCode;
-  private byte[] privateKey;
-  private byte[] publicKey;
-  private String activationCode;
-  private ZonedDateTime activatedAt;
+public class LocalActivationRequest {
+  @NotBlank private String activationCode;
+  @NotBlank private String facilityCode;
 }

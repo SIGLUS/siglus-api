@@ -17,6 +17,7 @@ package org.siglus.siglusapi.localmachine;
 
 import net.javacrumbs.shedlock.core.LockProvider;
 import org.junit.runner.RunWith;
+import org.openlmis.referencedata.repository.FacilityRepository;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.jdbc.EmbeddedDatabaseConnection;
@@ -40,4 +41,6 @@ import org.springframework.transaction.annotation.Transactional;
 public abstract class LocalMachineIntegrationTest {
   @MockBean protected SiglusAuthenticationHelper authenticationHelper;
   @MockBean protected LockProvider lockProvider;
+  @MockBean protected FacilityRepository facilityRepository;
+  @MockBean protected Machine machine;
 }

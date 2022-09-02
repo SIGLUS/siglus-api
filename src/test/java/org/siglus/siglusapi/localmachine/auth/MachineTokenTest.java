@@ -35,7 +35,7 @@ public class MachineTokenTest {
     // when
     MachineToken parsedToken = MachineToken.parse(token.getPayload());
     // then
-    assertThat(parsedToken.getAgentId()).isEqualTo(token.getAgentId());
+    assertThat(parsedToken.getMachineId()).isEqualTo(token.getMachineId());
     assertThat(parsedToken.getFacilityId()).isEqualTo(token.getFacilityId());
   }
 
