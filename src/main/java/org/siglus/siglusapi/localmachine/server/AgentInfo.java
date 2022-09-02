@@ -32,8 +32,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Table(name = "agents", schema = "localmachine")
 public class AgentInfo {
-  @Id private UUID id;
-  private UUID machineId;
+  @Id private UUID machineId;
   private UUID facilityId;
   private String facilityCode;
   private byte[] publicKey;

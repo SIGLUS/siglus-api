@@ -19,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import org.siglus.siglusapi.localmachine.EventImporter;
 import org.siglus.siglusapi.localmachine.auth.MachineToken;
 import org.siglus.siglusapi.localmachine.eventstore.EventStore;
+import org.siglus.siglusapi.localmachine.server.ActivationService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -32,6 +33,12 @@ import org.springframework.web.bind.annotation.RestController;
 public class OnlineWebController {
   private final EventImporter importer;
   private final EventStore eventStore;
+  private final ActivationService activationService;
+
+  @PostMapping("/agents")
+  public void activateAgent(RemoteActivationRequest request) {
+    activationService.activate(request);
+  }
 
   @PostMapping("/events")
   public void syncEvents(@Validated SyncRequest request) {

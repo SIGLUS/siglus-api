@@ -22,7 +22,6 @@ import java.time.ZonedDateTime;
 import java.util.Base64;
 import java.util.Base64.Encoder;
 import java.util.Objects;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.openlmis.referencedata.domain.Facility;
@@ -92,7 +91,6 @@ public class LocalActivationService {
       byte[] encodedPublicKey) {
     return AgentInfo.builder()
         .machineId(machine.getMachineId())
-        .id(UUID.randomUUID())
         .facilityId(facility.getId())
         .facilityCode(facility.getCode())
         .activationCode(request.getActivationCode())
