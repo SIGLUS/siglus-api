@@ -133,6 +133,10 @@ public abstract class MessageKeys {
   public static final String ERROR_LOCATIONS_BY_FACILITY_NOT_FOUND =
       ERROR_PREFIX + ".locations.by.facility.not.found";
 
+  //local receive voucher
+  public static final String ERROR_ORDER_CODE_EXISTS =
+      ERROR_PREFIX + ".order.code.exists";
+
   public static final String ERROR_ADJUSTMENT_LOCATION_IS_RESTRICTED =
       PRODUCT_LOCATION_MOVEMENT_ERROR_PREFIX + ".positive.adjustment.has.restricted.location";
   // submit

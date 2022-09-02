@@ -26,10 +26,10 @@ import org.siglus.siglusapi.dto.StockCardLocationMovementDto;
 import org.siglus.siglusapi.service.SiglusStockCardLocationMovementService;
 
 @RunWith(MockitoJUnitRunner.class)
-public class SiglusProductLocationMovementControllerTest {
+public class SiglusStockCardLocationMovementControllerTest {
 
   @InjectMocks
-  private SiglusProductLocationMovementController controller;
+  private SiglusStockCardLocationMovementController controller;
 
   @Mock
   private SiglusStockCardLocationMovementService service;

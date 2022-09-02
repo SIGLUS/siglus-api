@@ -30,7 +30,7 @@ import org.siglus.siglusapi.service.SiglusStockCardLocationMovementDraftService;
 public class SiglusStockCardLocationMovementDraftControllerTest {
 
   @InjectMocks
-  private SiglusProductLocationMovementDraftController controller;
+  private SiglusStockCardLocationMovementDraftController controller;
 
   @Mock
   private SiglusStockCardLocationMovementDraftService service;
@@ -42,7 +42,7 @@ public class SiglusStockCardLocationMovementDraftControllerTest {
 
   @Test
   public void shouldCallCreateEmptyProductLocationMovementDraft() {
-    controller.createEmptyProductLocationMovementDraft(stockCardLocationMovementDraftDto);
+    controller.createEmptyStockCardLocationMovementDraft(stockCardLocationMovementDraftDto);
 
     verify(service).createEmptyMovementDraft(stockCardLocationMovementDraftDto);
   }

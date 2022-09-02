@@ -13,15 +13,28 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.repository;
+package org.siglus.siglusapi.web;
 
-import java.util.List;
-import java.util.UUID;
-import org.siglus.siglusapi.domain.LocalReceiptVoucher;
-import org.springframework.data.jpa.repository.JpaRepository;
+import lombok.AllArgsConstructor;
+import org.siglus.siglusapi.dto.LocalReceiptVoucherDto;
+import org.siglus.siglusapi.service.SiglusLocalReceiptVoucherService;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-public interface SiglusLocalReceiptVoucherRepository extends JpaRepository<LocalReceiptVoucher, UUID> {
+@RestController
+@AllArgsConstructor
+@RequestMapping("/api/siglusapi/localReceiptVoucher")
+public class SiglusLocalReceiptVoucherController {
 
-  List<LocalReceiptVoucher> findByOrderCodeAndProgramIdAndRequestingFacilityIdAndSupplyingFacilityId(
-      String orderCode, UUID programId, UUID requestingFacilityId, UUID supplyingFacilityId);
+  private final SiglusLocalReceiptVoucherService localReceiptVoucherService;
+
+  @PostMapping()
+  public LocalReceiptVoucherDto createLocalReceiptVoucher(@RequestBody LocalReceiptVoucherDto dto) {
+
+    return localReceiptVoucherService.createLocalReceiptVoucher(dto);
+
+  }
+
 }

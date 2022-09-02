@@ -33,7 +33,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/siglusapi/locationMovements")
-public class SiglusProductLocationMovementController {
+public class SiglusStockCardLocationMovementController {
 
   private final SiglusStockCardLocationMovementService movementService;
 

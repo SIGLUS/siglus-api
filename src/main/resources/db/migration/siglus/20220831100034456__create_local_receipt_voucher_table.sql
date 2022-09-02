@@ -14,5 +14,5 @@ create table siglusintegration.local_receipt_voucher
     supplyingfacilityid  uuid         not null,
     createdbyid          uuid,
     createddate          timestamp with time zone,
-    emergency            boolean,
+    emergency            boolean
 );
