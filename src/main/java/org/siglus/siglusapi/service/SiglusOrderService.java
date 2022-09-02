@@ -516,15 +516,20 @@ public class SiglusOrderService {
 
   private void saveSuggestedQuantity(Order order, Map<UUID, BigDecimal> orderableIdToSuggestedQuantity) {
     Set<UUID> lineItemIds = getLineItemIds(order);
-    List<OrderLineItemExtension> lineItemExtensions = lineItemExtensionRepository.findByOrderLineItemIdIn(lineItemIds);
     Map<UUID, UUID> lineItemIdToOrderableId = order.getOrderLineItems().stream()
         .collect(Collectors.toMap(OrderLineItem::getId, e -> e.getOrderable().getId()));
-    lineItemExtensions.forEach(lineItemExtension ->
-        lineItemExtension.setSuggestedQuantity(
-            orderableIdToSuggestedQuantity.get(lineItemIdToOrderableId.get(lineItemExtension.getOrderLineItemId())))
-    );
-    log.info("save lineItemExtensions, size={}", lineItemExtensions.size());
-    lineItemExtensionRepository.save(lineItemExtensions);
+    List<OrderLineItemExtension> extensions = Lists.newArrayListWithExpectedSize(lineItemIds.size());
+    lineItemIds.forEach(lineItemId -> {
+      OrderLineItemExtension extension = OrderLineItemExtension.builder()
+          .orderId(order.getId())
+          .orderLineItemId(lineItemId)
+          .partialFulfilledQuantity(0L)
+          .suggestedQuantity(orderableIdToSuggestedQuantity.get(lineItemIdToOrderableId.get(lineItemId)))
+          .build();
+      extensions.add(extension);
+    });
+    log.info("save OrderLineItemExtensions, size={}", extensions.size());
+    lineItemExtensionRepository.save(extensions);
   }
 
   private Set<UUID> getOrderOrderableIds(Order order) {
@@ -842,8 +847,12 @@ public class SiglusOrderService {
                 orderLineItemDto -> orderLineItemDto));
 
     List<OrderLineItemExtension> extensions = new ArrayList<>();
+    Map<UUID, OrderLineItemExtension> existedLineItemIdToExtension = lineItemExtensionRepository.findByOrderId(
+        orderDto.getId()).stream().collect(Collectors.toMap(OrderLineItemExtension::getOrderLineItemId, e -> e));
     for (OrderLineItem.Importer importer : orderDto.getOrderLineItems()) {
-      OrderLineItemExtension extension = new OrderLineItemExtension();
+      OrderLineItemExtension extension = Objects.isNull(existedLineItemIdToExtension.get(importer.getId()))
+          ? new OrderLineItemExtension()
+          : existedLineItemIdToExtension.get(importer.getId());
       extension.setOrderId(orderDto.getId());
       extension.setOrderLineItemId(importer.getId());
       extension.setPartialFulfilledQuantity(
