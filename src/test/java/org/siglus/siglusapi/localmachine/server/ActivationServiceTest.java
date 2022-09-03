@@ -50,7 +50,7 @@ public class ActivationServiceTest {
     given(facilityRepository.findByCode(facilityCode)).willReturn(Optional.of(facility));
     given(agentInfoRepository.findFirstByFacilityCode(facilityCode)).willReturn(null);
     ActivationCode activationCode =
-        ActivationCode.builder().id(UUID.randomUUID()).used(Boolean.FALSE).build();
+        ActivationCode.builder().id(UUID.randomUUID()).isUsed(Boolean.FALSE).build();
     given(activationCodeRepository.findFirstByFacilityCodeAndActivationCode(any(), any()))
         .willReturn(Optional.of(activationCode));
     Encoder encoder = Base64.getEncoder();
@@ -76,7 +76,7 @@ public class ActivationServiceTest {
   public void shouldThrowWhenDoActivationGivenUsedActivationCode() {
     // given
     ActivationCode activationCode =
-        ActivationCode.builder().id(UUID.randomUUID()).used(Boolean.TRUE).build();
+        ActivationCode.builder().id(UUID.randomUUID()).isUsed(Boolean.TRUE).build();
     given(activationCodeRepository.findFirstByFacilityCodeAndActivationCode(any(), any()))
         .willReturn(Optional.of(activationCode));
     // when

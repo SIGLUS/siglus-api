@@ -55,11 +55,11 @@ public class ActivationService {
                 localActivationRequest.getFacilityCode(),
                 localActivationRequest.getActivationCode())
             .orElseThrow(() -> new NotFoundException("activation code not found"));
-    if (activationCode.getUsed()) {
+    if (activationCode.isUsed()) {
       throw new IllegalStateException("activation code has been used");
     }
-    activationCode.setUsed(Boolean.TRUE);
-    activationCode.setUsedAt(ZonedDateTime.now());
+    activationCode.isUsed(Boolean.TRUE);
+    activationCode.isUsedAt(ZonedDateTime.now());
     log.info("mark activation code as used, id:{}", activationCode.getId());
     activationCodeRepository.save(activationCode);
   }
