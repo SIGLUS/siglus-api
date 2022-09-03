@@ -23,6 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.javacrumbs.shedlock.core.SchedulerLock;
 import org.siglus.siglusapi.localmachine.Event;
 import org.siglus.siglusapi.localmachine.EventImporter;
+import org.siglus.siglusapi.localmachine.Machine;
 import org.siglus.siglusapi.localmachine.eventstore.EventStore;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -37,12 +38,17 @@ public class Synchronizer {
   private final EventStore localEventStore;
   private final OnlineWebClient webClient;
   private final EventImporter eventImporter;
+  private final Machine machine;
 
   @Scheduled(fixedRate = 60 * 1000, initialDelay = 60 * 1000)
   @SchedulerLock(name = "localmachine_synchronizer")
   @Transactional
   public void scheduledSync() {
     log.info("start scheduled synchronization with online web");
+    if (machine.fetchSupportedFacilityIds().isEmpty()) {
+      log.info("no need to sync");
+      return;
+    }
     this.sync();
   }
 

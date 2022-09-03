@@ -33,12 +33,15 @@ public interface AgentInfoRepository extends JpaRepository<AgentInfo, UUID> {
   @Query(value = "select * from localmachine.agents limit 1", nativeQuery = true)
   AgentInfo getFirstAgentInfo();
 
-  @Query(value = "select id from localmachine.machine limit 1", nativeQuery = true)
+  @Query(
+      value = "select cast(id as varchar) as id from localmachine.machine limit 1",
+      nativeQuery = true)
   UUID getMachineId();
 
   @Query(
       value =
-          "select ag.facilityid from localmachine.machine m INNER JOIN localmachine.agents ag on m.id=ag.machineid",
+          "select cast(ag.facilityid as varchar) as id from localmachine.machine m "
+              + "INNER JOIN localmachine.agents ag on m.id=ag.machineid",
       nativeQuery = true)
   List<UUID> findRegisteredFacilityIds();
 
