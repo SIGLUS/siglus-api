@@ -98,11 +98,13 @@ public class ResourceServerSecurityConfiguration implements ResourceServerConfig
             "/webjars/**",
             "/siglusapi/webjars/**",
             "/siglusapi/docs/**",
+            "/api/siglusapi/localmachine/agent",
+            "/api/siglusapi/localmachine/server/agents",
             "/health")
         .permitAll()
         .requestMatchers(
             new AndRequestMatcher(
-                new AntPathRequestMatcher("/siglusapi/localmachine/**"),
+                new AntPathRequestMatcher("/api/siglusapi/localmachine/**"),
                 machineTokenMatcher))
         .permitAll()
         .antMatchers("/**")

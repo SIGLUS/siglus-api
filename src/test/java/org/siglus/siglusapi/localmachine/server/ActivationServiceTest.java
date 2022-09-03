@@ -17,6 +17,7 @@ package org.siglus.siglusapi.localmachine.server;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.verify;
 
 import java.util.Base64;
@@ -38,6 +39,7 @@ import org.siglus.siglusapi.localmachine.webapi.RemoteActivationRequest;
 public class ActivationServiceTest {
   @Mock FacilityRepository facilityRepository;
   @Mock AgentInfoRepository agentInfoRepository;
+  @Mock ActivationCodeRepository activationCodeRepository;
   @InjectMocks private ActivationService activationService;
 
   @Test
@@ -47,6 +49,10 @@ public class ActivationServiceTest {
     Facility facility = new Facility(UUID.randomUUID());
     given(facilityRepository.findByCode(facilityCode)).willReturn(Optional.of(facility));
     given(agentInfoRepository.findFirstByFacilityCode(facilityCode)).willReturn(null);
+    ActivationCode activationCode =
+        ActivationCode.builder().id(UUID.randomUUID()).used(Boolean.FALSE).build();
+    given(activationCodeRepository.findFirstByFacilityCodeAndActivationCode(any(), any()))
+        .willReturn(Optional.of(activationCode));
     Encoder encoder = Base64.getEncoder();
     RemoteActivationRequest request =
         RemoteActivationRequest.builder()
@@ -64,5 +70,32 @@ public class ActivationServiceTest {
     assertThat(agentInfo.getMachineId()).isEqualTo(request.getMachineId());
     assertThat(agentInfo.getPublicKey()).isEqualTo("publickey".getBytes());
     assertThat(agentInfo.getPrivateKey()).isEqualTo("privatekey".getBytes());
+  }
+
+  @Test(expected = IllegalStateException.class)
+  public void shouldThrowWhenDoActivationGivenUsedActivationCode() {
+    // given
+    ActivationCode activationCode =
+        ActivationCode.builder().id(UUID.randomUUID()).used(Boolean.TRUE).build();
+    given(activationCodeRepository.findFirstByFacilityCodeAndActivationCode(any(), any()))
+        .willReturn(Optional.of(activationCode));
+    // when
+    activationService.doActivation(new LocalActivationRequest());
+  }
+
+  @Test(expected = IllegalStateException.class)
+  public void shouldThrowWhenValidateRequestGivenAgentAlreadyActivated() {
+    // given
+    String facilityCode = "facility code";
+    LocalActivationRequest localActivationRequest =
+        new LocalActivationRequest("activation code", facilityCode);
+    RemoteActivationRequest request =
+        RemoteActivationRequest.builder()
+            .machineId(UUID.randomUUID())
+            .localActivationRequest(localActivationRequest)
+            .build();
+    given(agentInfoRepository.findFirstByFacilityCode(facilityCode)).willReturn(new AgentInfo());
+    // when
+    activationService.validateRequest(request);
   }
 }

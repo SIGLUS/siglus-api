@@ -3,8 +3,7 @@
 -- Migrations should NOT BE EDITED. Add a new migration to apply changes.
 
 CREATE TABLE IF NOT EXISTS localmachine.agents (
-    id UUID NOT NULL PRIMARY KEY,
-    machineid UUID NOT NULL,
+    machineid UUID NOT NULL PRIMARY KEY,
     facilityid UUID NOT NULL,
     facilitycode VARCHAR(255) NULL,
     privatekey TEXT NULL,
@@ -18,3 +17,12 @@ CREATE TABLE IF NOT EXISTS localmachine.machine (
     id UUID NOT NULL PRIMARY KEY
     constraint chk_touched_flag CHECK (touched = true)
 );
+
+CREATE TABLE IF NOT EXISTS localmachine.activation_codes (
+    id UUID NOT NULL PRIMARY KEY,
+    facilitycode VARCHAR(255) NULL,
+    activationcode TEXT NULL,
+    used BOOL NOT NULL DEFAULT FALSE,
+    usedat TIMESTAMP WITH TIME ZONE
+);
+CREATE INDEX ON localmachine.activation_codes(used, facilitycode);

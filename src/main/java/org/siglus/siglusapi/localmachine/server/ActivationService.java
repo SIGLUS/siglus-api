@@ -27,6 +27,7 @@ import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.localmachine.webapi.LocalActivationRequest;
 import org.siglus.siglusapi.localmachine.webapi.RemoteActivationRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -34,14 +35,45 @@ import org.springframework.stereotype.Service;
 public class ActivationService {
   private final AgentInfoRepository agentInfoRepository;
   private final FacilityRepository facilityRepository;
+  private final ActivationCodeRepository activationCodeRepository;
 
+  @Transactional
   public void activate(RemoteActivationRequest request) {
     validateRequest(request);
     LocalActivationRequest localActivationRequest = request.getLocalActivationRequest();
     Facility facility = mustGetFacility(localActivationRequest.getFacilityCode());
+    doActivation(localActivationRequest);
     AgentInfo agentInfo = buildAgentInfo(request, facility);
     log.info("add agent {} for facility {}", request.getMachineId(), facility.getCode());
     agentInfoRepository.save(agentInfo);
+  }
+
+  void doActivation(LocalActivationRequest localActivationRequest) {
+    ActivationCode activationCode =
+        activationCodeRepository
+            .findFirstByFacilityCodeAndActivationCode(
+                localActivationRequest.getFacilityCode(),
+                localActivationRequest.getActivationCode())
+            .orElseThrow(() -> new NotFoundException("activation code not found"));
+    if (activationCode.getUsed()) {
+      throw new IllegalStateException("activation code has been used");
+    }
+    activationCode.setUsed(Boolean.TRUE);
+    activationCode.setUsedAt(ZonedDateTime.now());
+    log.info("mark activation code as used, id:{}", activationCode.getId());
+    activationCodeRepository.save(activationCode);
+  }
+
+  void validateRequest(RemoteActivationRequest request) {
+    LocalActivationRequest localActivationRequest = request.getLocalActivationRequest();
+    String facilityCode = localActivationRequest.getFacilityCode();
+    AgentInfo agentInfo = agentInfoRepository.findFirstByFacilityCode(facilityCode);
+    if (Objects.nonNull(agentInfo)) {
+      throw new IllegalStateException(
+          String.format(
+              "facility %s has been activated with machine %s before",
+              facilityCode, request.getMachineId()));
+    }
   }
 
   private Facility mustGetFacility(String facilityCode) {
@@ -49,18 +81,6 @@ public class ActivationService {
         .findByCode(facilityCode)
         .orElseThrow(
             () -> new NotFoundException(String.format("facility %s not found", facilityCode)));
-  }
-
-  private void validateRequest(RemoteActivationRequest request) {
-    LocalActivationRequest localActivationRequest = request.getLocalActivationRequest();
-    AgentInfo agentInfo =
-        agentInfoRepository.findFirstByFacilityCode(localActivationRequest.getFacilityCode());
-    if (Objects.nonNull(agentInfo)) {
-      throw new IllegalStateException(
-          String.format(
-              "facility %s has been activated with machine %s before",
-              localActivationRequest.getFacilityCode(), request.getMachineId()));
-    }
   }
 
   private AgentInfo buildAgentInfo(RemoteActivationRequest request, Facility facility) {

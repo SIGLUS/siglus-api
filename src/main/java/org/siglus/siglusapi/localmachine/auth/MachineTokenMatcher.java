@@ -51,7 +51,7 @@ public class MachineTokenMatcher implements RequestMatcher {
   private String mustGetTokenValue(HttpServletRequest request) throws IllegalAccessException {
     String tokenValue = request.getHeader(CommonConstants.ACCESS_TOKEN);
     if (isEmpty(tokenValue)) {
-      throw new IllegalAccessException("access token is required");
+      throw new IllegalAccessException("machine access token is required");
     }
     return tokenValue;
   }
@@ -60,7 +60,7 @@ public class MachineTokenMatcher implements RequestMatcher {
     MachineToken machineToken = MachineToken.parse(tokenValue);
     AgentInfo agentInfo = mustGetAgentInfo(machineToken);
     if (!machineToken.verify(agentInfo.getPublicKey())) {
-      throw new IllegalAccessException("invalid token");
+      throw new IllegalAccessException("invalid machine token");
     }
     return machineToken;
   }

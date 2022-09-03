@@ -21,7 +21,6 @@ CREATE UNIQUE INDEX IF NOT EXISTS localmachine_sender_localsequencenumber on loc
 CREATE UNIQUE INDEX IF NOT EXISTS localmachine_group_seq on localmachine.events(groupid, groupsequencenumber);
 
 CREATE TABLE IF NOT EXISTS localmachine.agents (
-    id UUID NOT NULL PRIMARY KEY,
     machineid UUID NOT NULL,
     facilityid UUID NOT NULL,
     facilitycode VARCHAR(255) NULL,

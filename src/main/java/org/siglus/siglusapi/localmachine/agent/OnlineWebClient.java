@@ -32,6 +32,8 @@ import org.springframework.web.client.RestTemplate;
 
 @Component
 public class OnlineWebClient {
+
+  private static final String PATH_ACTIVATE_AGENT = "/server/agents";
   private final RestTemplate restTemplate;
 
   @Value("${machine.web.url}")
@@ -39,6 +41,7 @@ public class OnlineWebClient {
 
   public OnlineWebClient(LocalTokenInterceptor localTokenInterceptor) {
     this.restTemplate = new RestTemplate();
+    configureLocalTokenInterceptor(localTokenInterceptor);
     restTemplate.setInterceptors(singletonList(localTokenInterceptor));
   }
 
@@ -59,7 +62,12 @@ public class OnlineWebClient {
   }
 
   public void activate(RemoteActivationRequest remoteActivationRequest) {
-    URI url = URI.create(webBaseUrl + "/server/agents");
+    URI url = URI.create(webBaseUrl + PATH_ACTIVATE_AGENT);
     restTemplate.postForEntity(url, remoteActivationRequest, Void.class);
+  }
+
+  private void configureLocalTokenInterceptor(LocalTokenInterceptor localTokenInterceptor) {
+    localTokenInterceptor.setAcceptFunc(
+        httpRequest -> !httpRequest.getURI().getRawPath().contains(PATH_ACTIVATE_AGENT));
   }
 }

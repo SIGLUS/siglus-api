@@ -17,7 +17,9 @@ package org.siglus.siglusapi.localmachine.auth;
 
 import java.io.IOException;
 import java.util.Optional;
+import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.localmachine.CommonConstants;
@@ -40,11 +42,15 @@ public class LocalTokenInterceptor implements ClientHttpRequestInterceptor {
   @Value("${machine.version}")
   private String localMachineVersion;
 
+  @Setter private Function<HttpRequest, Boolean> acceptFunc = (httpRequest -> true);
+
   @Override
   public ClientHttpResponse intercept(
       HttpRequest request, byte[] body, ClientHttpRequestExecution execution) throws IOException {
-    HttpHeaders headers = request.getHeaders();
-    attachHeaders(headers);
+    if (acceptFunc.apply(request)) {
+      HttpHeaders headers = request.getHeaders();
+      attachHeaders(headers);
+    }
     return execution.execute(request, body);
   }
 
