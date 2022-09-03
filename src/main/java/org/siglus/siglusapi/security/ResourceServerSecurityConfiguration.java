@@ -21,6 +21,7 @@ import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import org.siglus.siglusapi.localmachine.auth.MachineTokenMatcher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -38,6 +39,8 @@ import org.springframework.security.oauth2.provider.token.AccessTokenConverter;
 import org.springframework.security.oauth2.provider.token.DefaultAccessTokenConverter;
 import org.springframework.security.oauth2.provider.token.RemoteTokenServices;
 import org.springframework.security.web.authentication.preauth.AbstractPreAuthenticatedProcessingFilter;
+import org.springframework.security.web.util.matcher.AndRequestMatcher;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -50,6 +53,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 public class ResourceServerSecurityConfiguration implements ResourceServerConfigurer {
 
   private final TokenExtractor tokenExtractor = new BearerTokenExtractor();
+  private final MachineTokenMatcher machineTokenMatcher;
 
   @Value("${auth.resourceId}")
   private String resourceId;
@@ -59,6 +63,10 @@ public class ResourceServerSecurityConfiguration implements ResourceServerConfig
 
   @Value("${cors.allowedMethods}")
   private String[] allowedMethods;
+
+  public ResourceServerSecurityConfiguration(MachineTokenMatcher machineTokenMatcher) {
+    this.machineTokenMatcher = machineTokenMatcher;
+  }
 
 
   @Override
@@ -82,17 +90,23 @@ public class ResourceServerSecurityConfiguration implements ResourceServerConfig
     }, AbstractPreAuthenticatedProcessingFilter.class);
     http.csrf().disable();
 
-    http
-        .cors().and()
+    http.cors()
+        .and()
         .authorizeRequests()
         .antMatchers(
             "/siglusapi",
             "/webjars/**",
             "/siglusapi/webjars/**",
             "/siglusapi/docs/**",
-            "/health"
-        ).permitAll()
-        .antMatchers("/**").fullyAuthenticated();
+            "/health")
+        .permitAll()
+        .requestMatchers(
+            new AndRequestMatcher(
+                new AntPathRequestMatcher("/siglusapi/localmachine/**"),
+                machineTokenMatcher))
+        .permitAll()
+        .antMatchers("/**")
+        .fullyAuthenticated();
   }
 
   /**

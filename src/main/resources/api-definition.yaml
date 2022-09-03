@@ -246,6 +246,23 @@ traits:
 /api:
 
   /siglusapi:
+    /localmachine:
+      /server:
+        /agents:
+          post:
+            description: activate a localmachine agent on onlineweb
+        /events:
+          post:
+            description: upload events to onlineweb
+        /peeringEvents:
+          get:
+            description: pull peering events from onlineweb
+        /ack:
+          post:
+            description: confirm events synced by the local agent
+      /agent:
+        put:
+          description: local api for localmachine control plane to activate the machine
     /location/physicalInventories:
       post:
         is: [ secured ]
