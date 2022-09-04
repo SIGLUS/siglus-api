@@ -36,7 +36,7 @@ public abstract class EventImporter {
 
   public void importEvents(List<Event> events) {
     List<Event> acceptedEvents = events.stream().filter(this::accept).collect(Collectors.toList());
-    acceptedEvents.forEach(it -> it.setLocalReplayed(false));
+    resetStatus(acceptedEvents);
     List<Event> newAdded = eventStore.importAllGetNewAdded(acceptedEvents);
     replay(newAdded);
   }
@@ -61,5 +61,10 @@ public abstract class EventImporter {
     List<Event> defaultGroup = eventGroups.remove(null);
     replayer.playDefaultGroupEvents(defaultGroup);
     eventGroups.forEach((groupId, value) -> replayer.playGroupEvents(groupId));
+  }
+
+  private void resetStatus(List<Event> acceptedEvents) {
+    // The local replayed flag is private, don't trust external ones, so reset it here.
+    acceptedEvents.forEach(it -> it.setLocalReplayed(false));
   }
 }

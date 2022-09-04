@@ -62,7 +62,7 @@ public class EventPublisher {
     eventStore.confirmReplayed(event);
   }
 
-  Event.EventBuilder baseEventBuilder(String groupId, UUID receiverId, Object payload) {
+  private Event.EventBuilder baseEventBuilder(String groupId, UUID receiverId, Object payload) {
     UserDto currentUser =
         Optional.ofNullable(siglusAuthenticationHelper.getCurrentUser())
             .orElseThrow(() -> new NotFoundException(MessageKeys.ERROR_USER_NOT_FOUND));
@@ -73,6 +73,7 @@ public class EventPublisher {
         .senderId(currentUser.getHomeFacilityId())
         .receiverId(receiverId)
         .groupId(groupId)
-        .payload(payload);
+        .payload(payload)
+        .localReplayed(true); // marked as replayed at sender side
   }
 }
