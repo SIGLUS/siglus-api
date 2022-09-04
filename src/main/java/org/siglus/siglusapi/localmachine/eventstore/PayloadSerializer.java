@@ -22,34 +22,42 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+import javax.annotation.PostConstruct;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.joda.money.Money;
+import org.siglus.siglusapi.localmachine.EventPayload;
 import org.siglus.siglusapi.localmachine.utils.MoneyDeserializer;
+import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
+import org.springframework.core.type.filter.AnnotationTypeFilter;
 import org.springframework.stereotype.Component;
 
 @Component
+@Slf4j
 public class PayloadSerializer {
-  // TODO: 2022/8/17 scan siglus package to build the class name mapping below
-  private static Map<String, Class<?>> payloadNameToClass = new HashMap<>();
-  private static Map<Class<?>, String> payloadClassToName = new HashMap<>();
   public static final ObjectMapper LOCALMACHINE_EVENT_OBJECT_MAPPER;
+  // in case the event class may be moved to other packages causing class name not match the one of
+  // event in db. here to maintain the class name mapping.
+  private static final Map<String, Class<?>> payloadNameToClass = new HashMap<>();
+  private static final Map<Class<?>, String> payloadClassToName = new HashMap<>();
 
   static {
     LOCALMACHINE_EVENT_OBJECT_MAPPER = new ObjectMapper();
     LOCALMACHINE_EVENT_OBJECT_MAPPER.registerModule(new JavaTimeModule());
     LOCALMACHINE_EVENT_OBJECT_MAPPER.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-    LOCALMACHINE_EVENT_OBJECT_MAPPER.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    LOCALMACHINE_EVENT_OBJECT_MAPPER.configure(
+        DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     SimpleModule module = new SimpleModule();
     module.addDeserializer(Money.class, new MoneyDeserializer());
     LOCALMACHINE_EVENT_OBJECT_MAPPER.registerModule(module);
   }
 
-  public PayloadSerializer() {
-
-  }
+  public PayloadSerializer() {}
 
   @SneakyThrows
   public byte[] dump(Object payload) {
@@ -60,8 +68,31 @@ public class PayloadSerializer {
 
   @SneakyThrows
   public Object load(byte[] payload) {
-    PayloadWrapper payloadWrapper = LOCALMACHINE_EVENT_OBJECT_MAPPER.readValue(payload, PayloadWrapper.class);
-    return LOCALMACHINE_EVENT_OBJECT_MAPPER.readValue(payloadWrapper.getPayload(), getPayloadClass(payloadWrapper));
+    PayloadWrapper payloadWrapper =
+        LOCALMACHINE_EVENT_OBJECT_MAPPER.readValue(payload, PayloadWrapper.class);
+    return LOCALMACHINE_EVENT_OBJECT_MAPPER.readValue(
+        payloadWrapper.getPayload(), getPayloadClass(payloadWrapper));
+  }
+
+  @PostConstruct
+  public void scanPayloadClasses() {
+    ClassPathScanningCandidateComponentProvider provider =
+        new ClassPathScanningCandidateComponentProvider(false);
+    provider.addIncludeFilter(new AnnotationTypeFilter(EventPayload.class));
+    Set<BeanDefinition> payloadClasses = provider.findCandidateComponents("org.siglus.siglusapi");
+    payloadClasses.forEach(
+        it -> {
+          try {
+            Class<?> payloadClass = Class.forName(it.getBeanClassName());
+            String payloadClassSimpleName = payloadClass.getSimpleName();
+            payloadNameToClass.put(payloadClassSimpleName, payloadClass);
+            payloadClassToName.put(payloadClass, payloadClassSimpleName);
+          } catch (ClassNotFoundException e) {
+            log.error("class {} not found", it.getBeanClassName());
+            throw new IllegalStateException(e);
+          }
+        });
+    log.info("find event payload classes:{}", payloadNameToClass);
   }
 
   private Class<?> getPayloadClass(PayloadWrapper payloadWrapper) throws ClassNotFoundException {

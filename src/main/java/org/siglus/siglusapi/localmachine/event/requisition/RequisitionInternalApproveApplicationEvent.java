@@ -29,7 +29,9 @@ import org.siglus.siglusapi.domain.RequisitionExtension;
 import org.siglus.siglusapi.domain.RequisitionLineItemExtension;
 import org.siglus.siglusapi.domain.TestConsumptionLineItem;
 import org.siglus.siglusapi.domain.UsageInformationLineItem;
+import org.siglus.siglusapi.localmachine.EventPayload;
 
+@EventPayload
 @Data
 public class RequisitionInternalApproveApplicationEvent {
 
