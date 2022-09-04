@@ -17,7 +17,7 @@ package org.siglus.siglusapi.task;
 
 import java.time.LocalDate;
 import lombok.RequiredArgsConstructor;
-import net.javacrumbs.shedlock.core.SchedulerLock;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.siglus.siglusapi.service.task.report.CalculateWebCmmService;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;

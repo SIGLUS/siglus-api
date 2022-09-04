@@ -91,8 +91,8 @@ dependencies {
     compile 'io.jsonwebtoken:jjwt-api:0.11.5'
     compile 'io.jsonwebtoken:jjwt-impl:0.11.5'
     compile 'io.jsonwebtoken:jjwt-jackson:0.11.5'
-    compile 'net.javacrumbs.shedlock:shedlock-provider-jdbc-template:2.1.0'
-    compile 'net.javacrumbs.shedlock:shedlock-spring:2.2.0'
+    compile 'net.javacrumbs.shedlock:shedlock-provider-jdbc-template:4.41.0'
+    compile 'net.javacrumbs.shedlock:shedlock-spring:4.41.0'
     compile 'ma.glasnost.orika:orika-core:1.5.4'
 
     // for referencedata

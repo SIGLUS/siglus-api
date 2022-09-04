@@ -15,6 +15,8 @@
 
 package org.siglus.siglusapi;
 
+import static net.javacrumbs.shedlock.spring.annotation.EnableSchedulerLock.InterceptMode.PROXY_SCHEDULER;
+
 import com.google.gson.internal.bind.TypeAdapters;
 import java.lang.reflect.Field;
 import java.time.Clock;
@@ -97,7 +99,8 @@ import org.springframework.web.servlet.i18n.CookieLocaleResolver;
 @EnableScheduling
 @EnableRetry
 @SuppressWarnings({"PMD.TooManyMethods"})
-@EnableSchedulerLock(defaultLockAtMostFor = "PT30M")
+// Don't change the interceptMode, since it's not compatible with current version of spring-aop
+@EnableSchedulerLock(defaultLockAtMostFor = "PT5M", interceptMode = PROXY_SCHEDULER)
 public class Application {
 
   private static final String[] MESSAGE_SOURCE_BASE_NAME = new String[]{

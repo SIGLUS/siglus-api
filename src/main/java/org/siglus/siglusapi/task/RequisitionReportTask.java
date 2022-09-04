@@ -16,7 +16,7 @@
 package org.siglus.siglusapi.task;
 
 import lombok.RequiredArgsConstructor;
-import net.javacrumbs.shedlock.core.SchedulerLock;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.siglus.siglusapi.service.task.report.RequisitionReportTaskService;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -33,5 +33,4 @@ public class RequisitionReportTask {
   public void refresh() {
     requisitionReportTaskService.refresh();
   }
-
 }

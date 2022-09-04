@@ -16,9 +16,9 @@
 package org.siglus.siglusapi.localmachine;
 
 import static ca.uhn.fhir.util.ElementUtil.isEmpty;
-import static java.time.temporal.ChronoUnit.MINUTES;
 import static java.util.stream.Collectors.toList;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
@@ -40,12 +40,9 @@ public class EventReplayer {
   private final LockProvider lockProvider;
 
   public void playGroupEvents(String groupId) {
-    // TODO: 2022/8/18 implement heartbeat of lock
-    Instant lockAtMostUntil = Instant.now().plus(6, MINUTES);
-    Optional<SimpleLock> optionalLock =
-        lockProvider.lock(new LockConfiguration(groupId, lockAtMostUntil));
+    Optional<SimpleLock> optionalLock = getLock(groupId);
     if (!optionalLock.isPresent()) {
-      log.warn("fail to get lock");
+      log.warn("fail to get lock, cancel this round of replay");
       return;
     }
     SimpleLock lock = optionalLock.get();
@@ -75,5 +72,15 @@ public class EventReplayer {
     return events.stream()
         .sorted(Comparator.comparingLong(Event::getLocalSequenceNumber))
         .collect(toList());
+  }
+
+  private Optional<SimpleLock> getLock(String groupId) {
+    // the lock will be extended after 1/2 minutes until task done.
+    Duration lockAtMost10Minutes = Duration.ofMinutes(1);
+    Duration lockAtLeast100MilliSeconds = Duration.ofMillis(100);
+    LockConfiguration lockConfiguration =
+        new LockConfiguration(
+            Instant.now(), groupId, lockAtMost10Minutes, lockAtLeast100MilliSeconds);
+    return lockProvider.lock(lockConfiguration);
   }
 }

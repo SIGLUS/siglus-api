@@ -15,12 +15,13 @@
 
 package org.siglus.siglusapi.config;
 
+import java.util.concurrent.Executors;
 import javax.sql.DataSource;
 import net.javacrumbs.shedlock.core.LockProvider;
 import net.javacrumbs.shedlock.provider.jdbctemplate.JdbcTemplateLockProvider;
+import net.javacrumbs.shedlock.support.KeepAliveLockProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
 
 @Configuration
 public class SchedulerConfiguration {
@@ -29,6 +30,9 @@ public class SchedulerConfiguration {
 
   @Bean
   public LockProvider lockProvider(DataSource dataSource) {
-    return new JdbcTemplateLockProvider(dataSource, SHEDLOCK_TABLE_NAME);
+    JdbcTemplateLockProvider jdbcLockProvider =
+        new JdbcTemplateLockProvider(dataSource, SHEDLOCK_TABLE_NAME);
+    return new KeepAliveLockProvider(
+        jdbcLockProvider, Executors.newSingleThreadScheduledExecutor());
   }
 }
