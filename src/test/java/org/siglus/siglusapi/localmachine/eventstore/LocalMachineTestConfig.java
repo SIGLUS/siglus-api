@@ -13,36 +13,11 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.localmachine.server;
+package org.siglus.siglusapi.localmachine.eventstore;
 
-import java.time.ZonedDateTime;
-import java.util.UUID;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.experimental.Accessors;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
 
-@Entity
-@Data
-@Builder
-@AllArgsConstructor
-@NoArgsConstructor
-@Table(name = "activation_codes", schema = "localmachine")
-public class ActivationCode {
-  @Id private UUID id;
-  private String facilityCode;
-  private String activationCode;
-
-  @Column(name = "used")
-  @Accessors(fluent = true)
-  private Boolean isUsed;
-
-  @Column(name = "usedat")
-  @Accessors(fluent = true)
-  private ZonedDateTime isUsedAt;
-}
+@Configuration
+@ComponentScan(basePackageClasses = {EventStore.class})
+public class LocalMachineTestConfig {}

@@ -32,8 +32,8 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.referencedata.domain.Facility;
 import org.openlmis.referencedata.repository.FacilityRepository;
 import org.siglus.siglusapi.localmachine.Machine;
-import org.siglus.siglusapi.localmachine.server.AgentInfo;
-import org.siglus.siglusapi.localmachine.server.AgentInfoRepository;
+import org.siglus.siglusapi.localmachine.domain.AgentInfo;
+import org.siglus.siglusapi.localmachine.repository.AgentInfoRepository;
 import org.siglus.siglusapi.localmachine.webapi.LocalActivationRequest;
 
 @RunWith(MockitoJUnitRunner.class)

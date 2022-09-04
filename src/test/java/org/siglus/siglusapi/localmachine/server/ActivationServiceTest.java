@@ -32,14 +32,20 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.referencedata.domain.Facility;
 import org.openlmis.referencedata.repository.FacilityRepository;
+import org.siglus.siglusapi.localmachine.domain.ActivationCode;
+import org.siglus.siglusapi.localmachine.domain.AgentInfo;
+import org.siglus.siglusapi.localmachine.repository.ActivationCodeRepository;
+import org.siglus.siglusapi.localmachine.repository.AgentInfoRepository;
 import org.siglus.siglusapi.localmachine.webapi.LocalActivationRequest;
 import org.siglus.siglusapi.localmachine.webapi.RemoteActivationRequest;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ActivationServiceTest {
   @Mock FacilityRepository facilityRepository;
-  @Mock AgentInfoRepository agentInfoRepository;
-  @Mock ActivationCodeRepository activationCodeRepository;
+  @Mock
+  AgentInfoRepository agentInfoRepository;
+  @Mock
+  ActivationCodeRepository activationCodeRepository;
   @InjectMocks private ActivationService activationService;
 
   @Test

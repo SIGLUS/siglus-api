@@ -13,19 +13,30 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.localmachine.server.android;
+package org.siglus.siglusapi.localmachine.domain;
 
-import lombok.RequiredArgsConstructor;
-import org.siglus.siglusapi.service.android.MeService;
-import org.springframework.context.event.EventListener;
+import java.time.ZonedDateTime;
+import java.util.UUID;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-@RequiredArgsConstructor
-public class AndroidRequisitionSyncedHandler {
-  private final MeService meService;
-
-  @EventListener(value = {AndroidRequisitionSynced.class})
-  public void onAndroidRequisitionSynced(AndroidRequisitionSynced event) {
-    // FIXME: 2022/8/13 assume current user to the actual requestor, add retry strategy
-    meService.createRequisition(event.getRequest());
-  }
+@Entity
+@Data
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
+@Table(name = "agents", schema = "localmachine")
+public class AgentInfo {
+  @Id private UUID machineId;
+  private UUID facilityId;
+  private String facilityCode;
+  private byte[] publicKey;
+  private byte[] privateKey;
+  private String activationCode;
+  private ZonedDateTime activatedAt;
 }

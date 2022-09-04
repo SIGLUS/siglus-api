@@ -24,8 +24,8 @@ import javax.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.siglus.siglusapi.localmachine.CommonConstants;
-import org.siglus.siglusapi.localmachine.server.AgentInfo;
-import org.siglus.siglusapi.localmachine.server.AgentInfoRepository;
+import org.siglus.siglusapi.localmachine.domain.AgentInfo;
+import org.siglus.siglusapi.localmachine.repository.AgentInfoRepository;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.stereotype.Component;
 

@@ -13,10 +13,11 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.localmachine.server;
+package org.siglus.siglusapi.localmachine.repository;
 
 import java.util.List;
 import java.util.UUID;
+import org.siglus.siglusapi.localmachine.domain.AgentInfo;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;

@@ -13,11 +13,12 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.localmachine;
+package org.siglus.siglusapi.localmachine.eventstore;
 
 import net.javacrumbs.shedlock.core.LockProvider;
 import org.junit.runner.RunWith;
 import org.openlmis.referencedata.repository.FacilityRepository;
+import org.siglus.siglusapi.localmachine.Machine;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.jdbc.EmbeddedDatabaseConnection;
@@ -31,7 +32,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {LocalMachineTestConfig.class})
-//@ComponentScan(basePackageClasses = {LocalMachineTestConfig.class})
 @DataJpaTest
 @AutoConfigureTestDatabase(
     replace = Replace.AUTO_CONFIGURED,
