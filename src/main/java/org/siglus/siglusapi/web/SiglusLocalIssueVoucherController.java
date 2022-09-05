@@ -37,11 +37,9 @@ public class SiglusLocalIssueVoucherController {
 
   private final SiglusLocalIssueVoucherService localIssueVoucherService;
 
-  @PostMapping()
+  @PostMapping
   public LocalIssueVoucherDto createLocalIssueVoucher(@Validated @RequestBody LocalIssueVoucherDto dto) {
-
     return localIssueVoucherService.createLocalIssueVoucher(dto);
-
   }
 
   @DeleteMapping("/{id}")

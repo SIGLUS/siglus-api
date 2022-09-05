@@ -133,10 +133,6 @@ public abstract class MessageKeys {
   public static final String ERROR_LOCATIONS_BY_FACILITY_NOT_FOUND =
       ERROR_PREFIX + ".locations.by.facility.not.found";
 
-  //local receive voucher
-  public static final String ERROR_ORDER_CODE_EXISTS =
-      ERROR_PREFIX + ".order.code.exists";
-
   public static final String ERROR_ADJUSTMENT_LOCATION_IS_RESTRICTED =
       PRODUCT_LOCATION_MOVEMENT_ERROR_PREFIX + ".positive.adjustment.has.restricted.location";
   // submit
@@ -146,6 +142,12 @@ public abstract class MessageKeys {
       + ".submitEndDate.before.submitStartDate";
   public static final String ERROR_SUBMIT_START_DATE_IS_BEFORE_LAST_SUBMIT_END_DATE = ERROR_PREFIX
       + ".submitStartDate.before.last.submitEndDate";
+
+  //local receive voucher
+  public static final String ERROR_ORDER_CODE_EXISTS =
+      ERROR_PREFIX + ".order.code.exists";
+  public static final String ERROR_LOCAL_ISSUE_VOUCHER_ID_INVALID =
+      EVENT_ERROR_PREFIX + ".local.issue.voucher.id.invalid";
 
   // proof of delivery
   public static final String ERROR_NO_POD_OR_POD_LINE_ITEM_FOUND = POD_ERROR_PREFIX

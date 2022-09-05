@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.service;
 
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_LOCAL_ISSUE_VOUCHER_ID_INVALID;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_ORDER_CODE_EXISTS;
 
 import java.util.Arrays;
@@ -33,6 +34,8 @@ import org.siglus.siglusapi.domain.LocalIssueVoucher;
 import org.siglus.siglusapi.dto.LocalIssueVoucherDto;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.exception.BusinessDataException;
+import org.siglus.siglusapi.exception.ValidationMessageException;
+import org.siglus.siglusapi.repository.PodSubDraftRepository;
 import org.siglus.siglusapi.repository.SiglusLocalIssueVoucherRepository;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.springframework.data.domain.PageRequest;
@@ -48,6 +51,8 @@ public class SiglusLocalIssueVoucherService {
   private final SiglusAuthenticationHelper authenticationHelper;
 
   private final SiglusLocalIssueVoucherRepository localReceiptVoucherRepository;
+
+  private final PodSubDraftRepository podSubDraftRepository;
 
   public LocalIssueVoucherDto createLocalIssueVoucher(LocalIssueVoucherDto dto) {
     checkOrderCodeExists(dto);
@@ -81,6 +86,17 @@ public class SiglusLocalIssueVoucherService {
   }
 
   public void deleteLocalIssueVoucher(UUID id) {
+    validateInitialDraftId(id);
+    log.info("delete proof subDrafts with proof of delivery id: {}", id);
+    podSubDraftRepository.deleteAllByProofOfDeliveryId(id);
+    log.info("delete local issue voucher with id: {}", id);
+    localReceiptVoucherRepository.delete(id);
+  }
 
+  private void validateInitialDraftId(UUID id) {
+    LocalIssueVoucher localIssueVoucher = localReceiptVoucherRepository.findOne(id);
+    if (localIssueVoucher == null) {
+      throw new ValidationMessageException(ERROR_LOCAL_ISSUE_VOUCHER_ID_INVALID);
+    }
   }
 }
