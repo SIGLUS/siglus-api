@@ -13,46 +13,30 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.localmachine.utils;
+package org.siglus.siglusapi.localmachine;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.io.IOException;
 import java.math.BigDecimal;
 import lombok.extern.slf4j.Slf4j;
 import org.javers.core.Javers;
 import org.javers.core.JaversBuilder;
 import org.javers.core.diff.Diff;
-import org.joda.money.Money;
+import org.siglus.siglusapi.localmachine.eventstore.PayloadSerializer;
 
 @Slf4j
 public class EventPayloadCheckUtils {
 
   public static int checkEventSerializeChanges(Object event, Class clazz) {
-    // TODO: use same objectMapper in PayloadSerializer
-    ObjectMapper objectMapper = new ObjectMapper();
-    objectMapper.registerModule(new JavaTimeModule());
-    objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-    objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-    SimpleModule module = new SimpleModule();
-    module.addDeserializer(Money.class, new MoneyDeserializer());
-    objectMapper.registerModule(module);
-
+    ObjectMapper objectMapper = PayloadSerializer.LOCALMACHINE_EVENT_OBJECT_MAPPER;
     String json = null;
     try {
       json = objectMapper.writeValueAsString(event);
-
       Object eventRead = objectMapper.readValue(json, clazz);
-
       Javers javers = JaversBuilder.javers()
           .registerValue(BigDecimal.class, (a, b) -> a.compareTo(b) == 0)
           .build();
-
       Diff compare = javers.compare(event, eventRead);
-
       log.info("hasChanges = " + compare.hasChanges());
       log.info(compare.toString());
       return compare.getChanges().size();

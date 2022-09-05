@@ -118,7 +118,9 @@ public class SiglusMeController {
   @ResponseStatus(CREATED)
   public void createRequisition(@RequestBody @Valid RequisitionCreateRequest request) {
     try {
-      log.info(PayloadSerializer.LOCALMACHINE_EVENT_OBJECT_MAPPER.writeValueAsString(request));
+      // TODO: need delete add implement ( 2022/9/2 by kourengang)
+      log.info("createRequisitionJson: "
+          + PayloadSerializer.LOCALMACHINE_EVENT_OBJECT_MAPPER.writeValueAsString(request));
     } catch (JsonProcessingException e) {
       log.error("request serial failed, msg = " + e.getMessage());
     }

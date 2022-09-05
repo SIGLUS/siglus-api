@@ -19,19 +19,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import java.io.IOException;
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import org.javers.core.Javers;
-import org.javers.core.JaversBuilder;
-import org.javers.core.diff.Diff;
 import org.joda.money.CurrencyUnit;
 import org.joda.money.Money;
 import org.junit.Before;
@@ -46,8 +36,8 @@ import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.repository.RequisitionRepository;
 import org.siglus.siglusapi.domain.RequisitionExtension;
 import org.siglus.siglusapi.dto.RequisitionGroupMembersDto;
+import org.siglus.siglusapi.localmachine.EventPayloadCheckUtils;
 import org.siglus.siglusapi.localmachine.EventPublisher;
-import org.siglus.siglusapi.localmachine.utils.MoneyDeserializer;
 import org.siglus.siglusapi.repository.AgeGroupLineItemRepository;
 import org.siglus.siglusapi.repository.ConsultationNumberLineItemRepository;
 import org.siglus.siglusapi.repository.KitUsageLineItemRepository;
@@ -131,34 +121,13 @@ public class RequisitionInternalApproveEmitterTest {
   }
 
   @Test
-  public void shouldSerializeSuccessWhenEmit() throws IOException {
+  public void shouldSerializeSuccessWhenEmit() {
     // when
-    ObjectMapper objectMapper;
-    objectMapper = new ObjectMapper();
-    objectMapper.registerModule(new JavaTimeModule());
-    objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-    objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-    SimpleModule module = new SimpleModule();
-    // add money deserializer
-    module.addDeserializer(Money.class, new MoneyDeserializer());
-    objectMapper.registerModule(module);
-
     RequisitionInternalApproveApplicationEvent emitted = requisitionInternalApproveEmitter.emit(requisitionId);
-    String json = objectMapper.writeValueAsString(emitted);
-
-    RequisitionInternalApproveApplicationEvent emitNew =
-        objectMapper.readValue(json, RequisitionInternalApproveApplicationEvent.class);
-
+    int count = EventPayloadCheckUtils.checkEventSerializeChanges(emitted,
+        RequisitionInternalApproveApplicationEvent.class);
     // then
-    assertThat(emitNew).isNotNull();
-
-    Javers javers = JaversBuilder.javers()
-        .registerValue(BigDecimal.class, (a, b) -> a.compareTo(b) == 0)
-        .build();
-
-    Diff compare = javers.compare(emitted, emitNew);
-
-    assertThat(compare.hasChanges()).isFalse();
+    assertThat(count).isZero();
   }
 
   public void shouldGetNonNullEvent() {
