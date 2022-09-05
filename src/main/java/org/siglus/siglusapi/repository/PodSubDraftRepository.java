@@ -39,5 +39,5 @@ public interface PodSubDraftRepository extends JpaRepository<PodSubDraft, UUID> 
       nativeQuery = true)
   List<String> findOrderIdsWithSubDraft(@Param("orderIds") Iterable<UUID> orderIds);
 
-  void deleteAllByProofOfDeliveryId(UUID id);
+  void deleteAllByPodId(UUID id);
 }

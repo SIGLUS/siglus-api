@@ -88,7 +88,7 @@ public class SiglusLocalIssueVoucherService {
   public void deleteLocalIssueVoucher(UUID id) {
     validateInitialDraftId(id);
     log.info("delete proof subDrafts with proof of delivery id: {}", id);
-    podSubDraftRepository.deleteAllByProofOfDeliveryId(id);
+    podSubDraftRepository.deleteAllByPodId(id);
     log.info("delete local issue voucher with id: {}", id);
     localReceiptVoucherRepository.delete(id);
   }
