@@ -97,7 +97,7 @@ public class SiglusShipmentDraftService {
   public ShipmentDraftDto updateShipmentDraftByLocation(UUID shipmentDraftId, ShipmentDraftDto draftDto) {
     updateOrderLineItemExtension(draftDto);
     ShipmentDraftDto shipmentDraftDto = draftController.updateShipmentDraft(shipmentDraftId, draftDto);
-    updateLineItemLocation(draftDto);
+    updateLineItemLocation(shipmentDraftDto);
     return fulfillShipmentDraftByLocation(shipmentDraftDto);
   }
 
