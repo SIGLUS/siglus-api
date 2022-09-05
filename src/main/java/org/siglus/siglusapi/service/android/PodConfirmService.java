@@ -42,6 +42,7 @@ import org.openlmis.fulfillment.repository.OrderRepository;
 import org.openlmis.fulfillment.service.PermissionService;
 import org.openlmis.fulfillment.util.DateHelper;
 import org.openlmis.fulfillment.web.MissingPermissionException;
+import org.openlmis.fulfillment.web.util.ProofOfDeliveryDto;
 import org.openlmis.referencedata.dto.OrderableDto;
 import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
 import org.openlmis.stockmanagement.domain.reason.StockCardLineItemReason;
@@ -68,6 +69,7 @@ import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
 import org.siglus.siglusapi.repository.SiglusShipmentLineItemRepository;
 import org.siglus.siglusapi.repository.SiglusStockCardLineItemRepository;
 import org.siglus.siglusapi.repository.SyncUpHashRepository;
+import org.siglus.siglusapi.service.SiglusNotificationService;
 import org.siglus.siglusapi.service.SiglusValidReasonAssignmentService;
 import org.siglus.siglusapi.service.android.context.ContextHolder;
 import org.siglus.siglusapi.service.android.context.CurrentUserContext;
@@ -101,6 +103,7 @@ public class PodConfirmService {
   private final SiglusStockCardLineItemRepository stockCardLineItemRepository;
   private final SiglusApprovedProductReferenceDataService approvedProductDataService;
   private final PodConfirmBackupRepository podConfirmBackupRepository;
+  private final SiglusNotificationService siglusNotificationService;
 
   @Transactional
   @SuppressWarnings("PMD.PreserveStackTrace")
@@ -131,6 +134,8 @@ public class PodConfirmService {
     profiler.start("do update pod");
     updatePod(toUpdate, podRequest, user, podResponse);
     profiler.stop().log();
+    log.info("generate notification for confirm pod: {}", podRequest.getOrderCode());
+    siglusNotificationService.postConfirmPod(buildProofOfDeliveryDto(toUpdate));
   }
 
   private void updatePod(ProofOfDelivery toUpdatePod, PodRequest podRequest, UserDto user, PodResponse existedPod) {
@@ -334,5 +339,12 @@ public class PodConfirmService {
           return productCode + lotCode + l.getShippedQuantity();
         })
         .collect(toSet());
+  }
+
+  private ProofOfDeliveryDto buildProofOfDeliveryDto(ProofOfDelivery pod) {
+    ProofOfDeliveryDto dto = new ProofOfDeliveryDto();
+    dto.setId(pod.getId());
+    dto.setShipment(pod.getShipment());
+    return dto;
   }
 }
