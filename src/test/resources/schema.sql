@@ -13,9 +13,9 @@ CREATE TABLE IF NOT EXISTS localmachine.events (
     groupid VARCHAR(255) NULL,
     groupsequencenumber BIGINT NULL,
     payload TEXT NULL,
-    onlinewebsynced BOOL NOT NULL DEFAULT FALSE,
-    receiversynced BOOL NOT NULL DEFAULT FALSE,
-    localreplayed BOOL NOT NULL DEFAULT FALSE
+    onlinewebsynced INT NOT NULL DEFAULT 0,
+    receiversynced INT NOT NULL DEFAULT 0,
+    localreplayed INT NOT NULL DEFAULT 0
 );
 CREATE UNIQUE INDEX IF NOT EXISTS localmachine_sender_localsequencenumber on localmachine.events(senderid, localsequencenumber);
 CREATE UNIQUE INDEX IF NOT EXISTS localmachine_group_seq on localmachine.events(groupid, groupsequencenumber);
@@ -30,6 +30,6 @@ CREATE TABLE IF NOT EXISTS localmachine.agents (
     activatedat TIMESTAMP WITH TIME ZONE
 );
 CREATE TABLE IF NOT EXISTS localmachine.machine (
-    touched  BOOL NOT NULL DEFAULT TRUE,
+    touched  INT NOT NULL DEFAULT 1,
     id UUID NOT NULL PRIMARY KEY
 );

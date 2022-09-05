@@ -22,6 +22,7 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import javax.annotation.PostConstruct;
 import lombok.AllArgsConstructor;
@@ -97,7 +98,11 @@ public class PayloadSerializer {
 
   private Class<?> getPayloadClass(PayloadWrapper payloadWrapper) throws ClassNotFoundException {
     String name = payloadWrapper.getName();
-    return payloadNameToClass.getOrDefault(name, Class.forName(name));
+    Class<?> payloadClass = payloadNameToClass.get(name);
+    if (Objects.isNull(payloadClass)) {
+      return Class.forName(name);
+    }
+    return payloadClass;
   }
 
   private String getName(Object payload) {
