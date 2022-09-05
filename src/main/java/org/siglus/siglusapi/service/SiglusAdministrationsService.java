@@ -272,15 +272,15 @@ public class SiglusAdministrationsService {
   private void validateReportTypes(SiglusFacilityDto siglusFacilityDto) {
     UUID facilityId = siglusFacilityDto.getId();
     Map<String, SiglusReportType> programCodeToReportType = siglusReportTypeRepository
-            .findByFacilityId(facilityId)
-            .stream()
-            .collect(Collectors.toMap(SiglusReportType::getProgramCode, Function.identity()));
+        .findByFacilityId(facilityId)
+        .stream()
+        .collect(Collectors.toMap(SiglusReportType::getProgramCode, Function.identity()));
 
     siglusFacilityDto.getReportTypes().forEach(dto -> {
       SiglusReportType original = programCodeToReportType.get(dto.getProgramCode());
       if (null != original && dto.getStartDate().isBefore(original.getStartDate())) {
         LocalDate previousDate = siglusProcessingPeriodService
-                .getPreviousPeriodStartDateSinceInitiate(dto.getProgramCode(), facilityId);
+            .getPreviousPeriodStartDateSinceInitiate(dto.getProgramCode(), facilityId);
         if (previousDate != null && dto.getStartDate().isBefore(previousDate)) {
           throw new IllegalArgumentException("Invalid start date");
         }
@@ -292,7 +292,7 @@ public class SiglusAdministrationsService {
     if (CollectionUtils.isNotEmpty(siglusFacilityDto.getReportTypes())) {
       validateReportTypes(siglusFacilityDto);
       List<SiglusReportType> toSave = siglusFacilityDto.getReportTypes()
-              .stream().map(SiglusReportType::from).collect(Collectors.toList());
+          .stream().map(SiglusReportType::from).collect(Collectors.toList());
       siglusReportTypeRepository.save(toSave);
     }
   }
@@ -337,7 +337,7 @@ public class SiglusAdministrationsService {
     SiglusReportTypeDto dto = new SiglusReportTypeDto();
     BeanUtils.copyProperties(reportType, dto);
     dto.setPreviousPeriodStartDateSinceRecentSubmit(siglusProcessingPeriodService
-            .getPreviousPeriodStartDateSinceInitiate(reportType.getProgramCode(), reportType.getFacilityId()));
+        .getPreviousPeriodStartDateSinceInitiate(reportType.getProgramCode(), reportType.getFacilityId()));
     return dto;
   }
 
@@ -349,7 +349,7 @@ public class SiglusAdministrationsService {
     }
     FacilitySearchResultDto searchResultDto = FacilitySearchResultDto.from(facilityInfo);
     List<SiglusReportTypeDto> reportTypeDtos = siglusReportTypeRepository.findByFacilityId(facilityId)
-            .stream().map(this::from).collect(Collectors.toList());
+        .stream().map(this::from).collect(Collectors.toList());
     searchResultDto.setReportTypes(reportTypeDtos);
     searchResultDto.setIsNewFacility(emptyStockCardCount(facilityId));
     searchResultDto.setHasSuccessUploadLocations(
@@ -362,17 +362,7 @@ public class SiglusAdministrationsService {
     }
     searchResultDto.setIsAndroidDevice(facilityExtension.getIsAndroid());
     searchResultDto.setEnableLocationManagement(BooleanUtils.isTrue(facilityExtension.getEnableLocationManagement()));
-    searchResultDto.setNeedInitiallyMoveProduct((canInitialMoveProduct(facilityId)));
     return searchResultDto;
-  }
-
-  public Boolean canInitialMoveProduct(UUID facilityId) {
-    List<UUID> stockCardIds = stockCardRepository.findByFacilityIdIn(facilityId)
-        .stream().map(StockCard::getId).collect(Collectors.toList());
-    List<CalculatedStockOnHandByLocation> calculatedStockOnHandByLocationList =
-        findLatestCalculatedSohByLocationVirtualLocationRecordByStockCardId(stockCardIds);
-
-    return !calculatedStockOnHandByLocationList.isEmpty();
   }
 
   private boolean emptyStockCardCount(UUID facilityId) {
@@ -397,21 +387,11 @@ public class SiglusAdministrationsService {
     }
   }
 
-  private List<CalculatedStockOnHandByLocation>  findStockCardIdsHasStockOnHandOnLocation(List<UUID> stockCardIds) {
+  private List<CalculatedStockOnHandByLocation> findStockCardIdsHasStockOnHandOnLocation(List<UUID> stockCardIds) {
     return calculatedStocksOnHandLocationsRepository.findLatestLocationSohByStockCardIds(stockCardIds)
         .stream().filter(calculatedByLocation -> calculatedByLocation.getStockOnHand() > 0
             && !LocationConstants.VIRTUAL_LOCATION_CODE.equals(calculatedByLocation.getLocationCode()))
         .collect(Collectors.toList());
-  }
-
-  private List<CalculatedStockOnHandByLocation> findLatestCalculatedSohByLocationVirtualLocationRecordByStockCardId(
-      List<UUID> stockCardIds) {
-    return !stockCardIds.isEmpty()
-        ? calculatedStocksOnHandLocationsRepository.findLatestLocationSohByStockCardIds(stockCardIds)
-            .stream().filter(calculatedByLocation -> calculatedByLocation.getStockOnHand() > 0
-                && LocationConstants.VIRTUAL_LOCATION_CODE.equals(calculatedByLocation.getLocationCode()))
-            .collect(Collectors.toList())
-        : Collections.emptyList();
   }
 
   private List<CalculatedStockOnHand> findStockCardIdsHasStockOnHandOnLot(List<UUID> stockCardIds) {

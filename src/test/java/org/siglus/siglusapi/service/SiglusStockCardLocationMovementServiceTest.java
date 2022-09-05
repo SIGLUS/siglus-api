@@ -47,6 +47,9 @@ import org.openlmis.stockmanagement.dto.referencedata.FacilityDto;
 import org.openlmis.stockmanagement.dto.referencedata.LotDto;
 import org.openlmis.stockmanagement.dto.referencedata.OrderableDto;
 import org.openlmis.stockmanagement.dto.referencedata.ProgramDto;
+import org.openlmis.stockmanagement.repository.StockCardRepository;
+import org.siglus.siglusapi.constant.LocationConstants;
+import org.siglus.siglusapi.domain.CalculatedStockOnHandByLocation;
 import org.siglus.siglusapi.domain.StockCardLocationMovementDraft;
 import org.siglus.siglusapi.domain.StockCardLocationMovementLineItem;
 import org.siglus.siglusapi.dto.LocationMovementDto;
@@ -73,7 +76,10 @@ public class SiglusStockCardLocationMovementServiceTest {
   private SiglusStockCardLocationMovementService service;
 
   @Mock
-  private SiglusStockCardRepository stockCardRepository;
+  private SiglusStockCardRepository siglusStockCardRepository;
+
+  @Mock
+  private StockCardRepository stockCardRepository;
 
   @Mock
   private StockCardLocationMovementLineItemRepository movementLineItemRepository;
@@ -166,17 +172,16 @@ public class SiglusStockCardLocationMovementServiceTest {
     UserDto userDto = new UserDto();
     userDto.setHomeFacilityId(facilityId);
     when(authenticationHelper.getCurrentUser()).thenReturn(userDto);
-    when((administrationsService.canInitialMoveProduct(facilityId))).thenReturn(Boolean.FALSE);
   }
 
   @Test
   public void shouldCreateMovementLineItems() {
     stockCard.setId(stockCardId);
     movementDraft.setId(movementDraftId);
-    when(stockCardRepository
+    when(siglusStockCardRepository
         .findByFacilityIdAndProgramIdAndOrderableIdAndLotId(facilityId, programId, orderableId, lotId))
         .thenReturn(newArrayList(stockCard));
-    when(stockCardRepository.findByFacilityIdAndOrderableId(facilityId, orderableId))
+    when(siglusStockCardRepository.findByFacilityIdAndOrderableId(facilityId, orderableId))
         .thenReturn(newArrayList(stockCard));
     when(movementLineItemRepository.save(newArrayList(lineItem))).thenReturn(newArrayList(lineItem));
     when(movementDraftRepository.findByProgramIdAndFacilityId(allProgramId, facilityId))
@@ -189,9 +194,14 @@ public class SiglusStockCardLocationMovementServiceTest {
 
   @Test
   public void shouldThrowExceptionWhenQuantityMoreThanStockOnHand() {
+    // then
     exception.expect(BusinessDataException.class);
     exception.expectMessage(containsString(ERROR_MOVEMENT_QUANTITY_MORE_THAN_STOCK_ON_HAND));
 
+    // given
+    when(stockCardRepository.findByFacilityIdIn(facilityId)).thenReturn(Collections.emptyList());
+
+    // when
     service.createMovementLineItems(movementDto2);
   }
 
@@ -202,7 +212,17 @@ public class SiglusStockCardLocationMovementServiceTest {
     exception.expectMessage(containsString(ERROR_MOVEMENT_QUANTITY_LESS_THAN_STOCK_ON_HAND));
 
     // given
-    when(administrationsService.canInitialMoveProduct(facilityId)).thenReturn(Boolean.TRUE);
+    StockCard stockCard = new StockCard();
+    stockCard.setId(stockCardId);
+    when(stockCardRepository.findByFacilityIdIn(facilityId)).thenReturn(Collections.singletonList(stockCard));
+    CalculatedStockOnHandByLocation calculatedStockOnHandByLocation = CalculatedStockOnHandByLocation
+        .builder()
+        .locationCode(LocationConstants.VIRTUAL_LOCATION_CODE)
+        .stockOnHand(10)
+        .build();
+    when(calculatedStockOnHandByLocationRepository.findLatestLocationSohByStockCardIds(
+        Collections.singletonList(stockCardId)))
+        .thenReturn(Collections.singletonList(calculatedStockOnHandByLocation));
 
     // when
     service.createMovementLineItems(movementDto1);
@@ -213,7 +233,7 @@ public class SiglusStockCardLocationMovementServiceTest {
     exception.expect(NotFoundException.class);
     exception.expectMessage(containsString(ERROR_STOCK_CARD_NOT_FOUND));
 
-    when(stockCardRepository
+    when(siglusStockCardRepository
         .findByFacilityIdAndProgramIdAndOrderableIdAndLotId(facilityId, programId, orderableId, lotId))
         .thenReturn(Collections.emptyList());
 
@@ -225,7 +245,7 @@ public class SiglusStockCardLocationMovementServiceTest {
     exception.expect(NotFoundException.class);
     exception.expectMessage(containsString(ERROR_MOVEMENT_DRAFT_NOT_FOUND));
 
-    when(stockCardRepository
+    when(siglusStockCardRepository
         .findByFacilityIdAndProgramIdAndOrderableIdAndLotId(facilityId, programId, orderableId, lotId))
         .thenReturn(newArrayList(stockCard));
     when(movementLineItemRepository.save(newArrayList(lineItem))).thenReturn(newArrayList(lineItem));

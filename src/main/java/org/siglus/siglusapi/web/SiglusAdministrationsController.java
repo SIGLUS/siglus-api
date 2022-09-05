@@ -18,11 +18,11 @@ package org.siglus.siglusapi.web;
 import java.io.IOException;
 import java.util.UUID;
 import javax.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 import org.siglus.siglusapi.dto.FacilitySearchParamDto;
 import org.siglus.siglusapi.dto.FacilitySearchResultDto;
 import org.siglus.siglusapi.dto.SiglusFacilityDto;
 import org.siglus.siglusapi.service.SiglusAdministrationsService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -39,11 +39,11 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/siglusapi/facilities")
 public class SiglusAdministrationsController {
 
-  @Autowired
-  private SiglusAdministrationsService administrationsService;
+  private final SiglusAdministrationsService administrationsService;
 
   @PostMapping
   public Page<FacilitySearchResultDto> showFacilitiesInfos(@RequestBody FacilitySearchParamDto facilitySearchParamDto,
