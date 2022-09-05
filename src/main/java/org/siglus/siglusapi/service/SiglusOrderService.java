@@ -519,17 +519,26 @@ public class SiglusOrderService {
     Map<UUID, UUID> lineItemIdToOrderableId = order.getOrderLineItems().stream()
         .collect(Collectors.toMap(OrderLineItem::getId, e -> e.getOrderable().getId()));
     List<OrderLineItemExtension> extensions = Lists.newArrayListWithExpectedSize(lineItemIds.size());
+    Map<UUID, OrderLineItemExtension> existedLineItemExtensionIdToExtension = lineItemExtensionRepository
+        .findByOrderLineItemIdIn(lineItemIds).stream().collect(Collectors.toMap(OrderLineItemExtension::getId, e -> e));
     lineItemIds.forEach(lineItemId -> {
-      OrderLineItemExtension extension = OrderLineItemExtension.builder()
-          .orderId(order.getId())
-          .orderLineItemId(lineItemId)
-          .partialFulfilledQuantity(0L)
-          .suggestedQuantity(orderableIdToSuggestedQuantity.get(lineItemIdToOrderableId.get(lineItemId)))
-          .build();
+      OrderLineItemExtension existedExtension = existedLineItemExtensionIdToExtension.get(lineItemId);
+      OrderLineItemExtension extension = Objects.isNull(existedExtension)
+          ? createInitialExtension(order.getId(), lineItemId)
+          : existedExtension;
+      extension.setSuggestedQuantity(orderableIdToSuggestedQuantity.get(lineItemIdToOrderableId.get(lineItemId)));
       extensions.add(extension);
     });
-    log.info("save OrderLineItemExtensions, size={}", extensions.size());
+    log.info("save OrderLineItemExtensions, orderId:{}, size:{}", order.getId(), extensions.size());
     lineItemExtensionRepository.save(extensions);
+  }
+
+  private OrderLineItemExtension createInitialExtension(UUID orderId, UUID lineItemId) {
+    return OrderLineItemExtension.builder()
+        .orderId(orderId)
+        .orderLineItemId(lineItemId)
+        .partialFulfilledQuantity(0L)
+        .build();
   }
 
   private Set<UUID> getOrderOrderableIds(Order order) {
@@ -860,7 +869,7 @@ public class SiglusOrderService {
               .getPartialFulfilledQuantity());
       extensions.add(extension);
     }
-    log.info("save requisition line item extension: {}", extensions);
+    log.info("save order line item extension, orderId:{}, size:{}", orderDto.getId(), extensions);
     lineItemExtensionRepository.save(extensions);
   }
 
