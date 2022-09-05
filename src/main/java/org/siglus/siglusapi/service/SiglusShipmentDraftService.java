@@ -236,7 +236,8 @@ public class SiglusShipmentDraftService {
 
   private void deleteShipmentDraftLocation(ShipmentDraftDto shipmentDraftDto) {
     List<ShipmentLineItemDto> lineItemDtos = shipmentDraftDto.lineItems();
-    List<UUID> lineItemIds = lineItemDtos.stream().map(ShipmentLineItemDto::getId).collect(Collectors.toList());
+    List<UUID> lineItemIds = lineItemDtos.stream().filter(lineItemDto -> null != lineItemDto.getLocation())
+        .map(ShipmentLineItemDto::getId).collect(Collectors.toList());
     log.info("shipment draft line items by location; delete with line item ids: {}", lineItemIds);
     shipmentDraftLineItemsExtensionRepository.deleteByShipmentDraftLineItemIdIn(lineItemIds);
   }
