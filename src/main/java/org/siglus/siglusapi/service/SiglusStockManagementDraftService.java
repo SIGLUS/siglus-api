@@ -364,12 +364,8 @@ public class SiglusStockManagementDraftService {
     Collection<ValidSourceDestinationDto> sourcesForAllProducts = validSourceDestinationService
         .findSourcesForAllPrograms(facilityId);
 
-    return sourcesForAllProducts
-        .stream().filter(source -> (
-            source.getNode().getId().equals(sourceNodeId)
-        )).findFirst()
-        .orElseThrow(() -> new NotFoundException("No such source node with id: " + sourceNodeId))
-        .getName();
+    return sourcesForAllProducts.stream().filter(source -> (source.getNode().getId().equals(sourceNodeId))).findFirst()
+        .orElseThrow(() -> new NotFoundException("No such source node with id: " + sourceNodeId)).getName();
   }
 
   private void checkIfInitialDraftExists(UUID programId, UUID facilityId, String draftType) {

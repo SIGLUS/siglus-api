@@ -337,7 +337,7 @@ public class SiglusStockCardSummariesService {
       return summaries;
     }
     return summaries.stream().filter(summaryV2Dto ->
-            orderableIds.contains(summaryV2Dto.getOrderable().getId()))
+        orderableIds.contains(summaryV2Dto.getOrderable().getId()))
         .collect(Collectors.toList());
   }
 
@@ -484,17 +484,15 @@ public class SiglusStockCardSummariesService {
 
       Set<StockCardDetailsDto> stockCardDetailsDtos = new HashSet<>();
       stockCardSummaryV2Dto.getCanFulfillForMe().forEach(canFulfillForMeEntryDto -> {
-        if (canFulfillForMeEntryDto.getLot() != null && canFulfillForMeEntryDto.getStockOnHand() != 0) {
-          StockCardDetailsDto fulfill = StockCardDetailsDto.builder()
-              .orderable(getOrderableFromObjectReference(orderableDtos, canFulfillForMeEntryDto.getOrderable()))
-              .lot(getLotFromObjectReference(lotDtos, canFulfillForMeEntryDto.getLot()))
-              .occurredDate(canFulfillForMeEntryDto.getOccurredDate())
-              .stockOnHand(canFulfillForMeEntryDto.getStockOnHand())
-              .processedDate(canFulfillForMeEntryDto.getProcessedDate())
-              .stockCard(canFulfillForMeEntryDto.getStockCard())
-              .build();
-          stockCardDetailsDtos.add(fulfill);
-        }
+        StockCardDetailsDto fulfill = StockCardDetailsDto.builder()
+            .orderable(getOrderableFromObjectReference(orderableDtos, canFulfillForMeEntryDto.getOrderable()))
+            .lot(getLotFromObjectReference(lotDtos, canFulfillForMeEntryDto.getLot()))
+            .occurredDate(canFulfillForMeEntryDto.getOccurredDate())
+            .stockOnHand(canFulfillForMeEntryDto.getStockOnHand())
+            .processedDate(canFulfillForMeEntryDto.getProcessedDate())
+            .stockCard(canFulfillForMeEntryDto.getStockCard())
+            .build();
+        stockCardDetailsDtos.add(fulfill);
       });
       stockCardSummaryDto.setStockCardDetails(stockCardDetailsDtos);
       stockCardSummaryDtos.add(stockCardSummaryDto);
