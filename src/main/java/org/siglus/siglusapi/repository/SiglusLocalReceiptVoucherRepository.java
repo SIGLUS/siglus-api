@@ -24,4 +24,6 @@ public interface SiglusLocalReceiptVoucherRepository extends JpaRepository<Local
 
   List<LocalReceiptVoucher> findByOrderCodeAndProgramIdAndRequestingFacilityIdAndSupplyingFacilityId(
       String orderCode, UUID programId, UUID requestingFacilityId, UUID supplyingFacilityId);
+
+  List<LocalReceiptVoucher> findByProgramIdAndRequestingFacilityId(UUID programId, UUID requestingFacilityId);
 }

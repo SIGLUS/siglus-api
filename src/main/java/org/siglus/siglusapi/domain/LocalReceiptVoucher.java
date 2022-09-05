@@ -25,7 +25,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.openlmis.requisition.dto.OrderStatus;
+import org.openlmis.fulfillment.domain.OrderStatus;
 import org.siglus.common.domain.BaseEntity;
 import org.siglus.siglusapi.dto.LocalReceiptVoucherDto;
 import org.springframework.beans.BeanUtils;

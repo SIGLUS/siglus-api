@@ -51,6 +51,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.openlmis.fulfillment.domain.Order;
@@ -59,6 +60,7 @@ import org.openlmis.fulfillment.domain.OrderStatus;
 import org.openlmis.fulfillment.repository.OrderRepository;
 import org.openlmis.fulfillment.service.OrderSearchParams;
 import org.openlmis.fulfillment.service.OrderService;
+import org.openlmis.fulfillment.service.referencedata.FacilityDto;
 import org.openlmis.fulfillment.service.referencedata.OrderableDto;
 import org.openlmis.fulfillment.service.referencedata.ProcessingPeriodDto;
 import org.openlmis.fulfillment.util.AuthenticationHelper;
@@ -77,6 +79,7 @@ import org.openlmis.requisition.domain.requisition.ApprovedProductReference;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.domain.requisition.VersionEntityReference;
+import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.dto.VersionObjectReferenceDto;
 import org.openlmis.requisition.service.RequisitionService;
@@ -87,6 +90,7 @@ import org.siglus.common.domain.OrderExternal;
 import org.siglus.common.domain.ProcessingPeriodExtension;
 import org.siglus.common.repository.OrderExternalRepository;
 import org.siglus.common.repository.ProcessingPeriodExtensionRepository;
+import org.siglus.siglusapi.domain.LocalReceiptVoucher;
 import org.siglus.siglusapi.domain.OrderLineItemExtension;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.dto.OrderStatusDto;
@@ -98,10 +102,12 @@ import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.OrderableRepository;
 import org.siglus.siglusapi.repository.PodSubDraftRepository;
 import org.siglus.siglusapi.repository.SiglusFacilityRepository;
+import org.siglus.siglusapi.repository.SiglusLocalReceiptVoucherRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.repository.StockManagementRepository;
 import org.siglus.siglusapi.repository.dto.OrderSuggestedQuantityDto;
 import org.siglus.siglusapi.repository.dto.RequisitionOrderDto;
+import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusProcessingPeriodReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
 import org.siglus.siglusapi.web.response.BasicOrderExtensionResponse;
@@ -114,6 +120,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.stereotype.Service;
@@ -165,6 +172,9 @@ public class SiglusOrderService {
   private SiglusShipmentDraftService draftService;
 
   @Autowired
+  private SiglusProgramService programService;
+
+  @Autowired
   private ProcessingPeriodExtensionRepository processingPeriodExtensionRepository;
 
   @Autowired
@@ -198,7 +208,13 @@ public class SiglusOrderService {
   private SiglusProcessingPeriodService siglusProcessingPeriodService;
 
   @Autowired
+  private SiglusFacilityReferenceDataService facilityReferenceDataService;
+
+  @Autowired
   private SiglusFacilityRepository siglusFacilityRepository;
+
+  @Autowired
+  private SiglusLocalReceiptVoucherRepository localReceiptVoucherRepository;
 
   @Autowired
   private SiglusRequisitionRepository siglusRequisitionRepository;
@@ -227,28 +243,78 @@ public class SiglusOrderService {
 
   public Page<BasicOrderExtensionResponse> searchOrdersWithSubDraftStatus(OrderSearchParams params, Pageable pageable) {
     Page<BasicOrderDto> basicOrderDtoPage = orderController.searchOrders(params, pageable);
-    if (!basicOrderDtoPage.hasContent()) {
+    List<LocalReceiptVoucher> localReceiptVouchers = localReceiptVoucherRepository
+        .findByProgramIdAndRequestingFacilityId(params.getProgramId(), params.getRequestingFacilityId());
+    if (!basicOrderDtoPage.hasContent() && localReceiptVouchers.isEmpty()) {
       return new PageImpl<>(Lists.newArrayList(), pageable, basicOrderDtoPage.getTotalElements());
     }
 
-    List<BasicOrderDto> basicOrderDtos = basicOrderDtoPage.getContent();
+    List<BasicOrderExtensionResponse> localBasicOrderExtensionResponses = getLocalBasicOrderExtensionResponses(
+        localReceiptVouchers);
 
-    Set<UUID> orderIds = basicOrderDtos.stream().map(BasicOrderDto::getId).collect(Collectors.toSet());
+    List<BasicOrderDto> basicOrderDtos = basicOrderDtoPage.getContent();
+    List<BasicOrderExtensionResponse> electronicBasicOrderExtensionResponses = getElectronicBasicOrderExtensionResponses(
+        basicOrderDtos);
+
+    List<BasicOrderExtensionResponse> basicOrderExtensionResponses = Stream
+        .concat(localBasicOrderExtensionResponses.stream(), electronicBasicOrderExtensionResponses.stream())
+        .collect(toList());
+
+    Set<UUID> orderIds = basicOrderExtensionResponses.stream().map(BasicOrderExtensionResponse::getId)
+        .collect(Collectors.toSet());
     Set<UUID> orderIdsWithSubDraft = podSubDraftRepository.findOrderIdsWithSubDraft(orderIds).stream()
         .map(UUID::fromString).collect(Collectors.toSet());
 
-    boolean isConsistent = params.getRequestingFacilityId().equals(basicOrderDtos.get(0).getFacility().getId());
-    List<BasicOrderExtensionResponse> basicOrderExtensionResponseList = Lists.newArrayListWithExpectedSize(
-        basicOrderDtos.size());
-    for (BasicOrderDto basicOrderDto : basicOrderDtos) {
-      BasicOrderExtensionResponse basicOrderExtensionResponse = new BasicOrderExtensionResponse();
-      BeanUtils.copyProperties(basicOrderDto, basicOrderExtensionResponse);
-      basicOrderExtensionResponse.setHasSubDraft(orderIdsWithSubDraft.contains(basicOrderDto.getId()));
-      basicOrderExtensionResponse.setCanCreateLiv(isConsistent);
-      basicOrderExtensionResponseList.add(basicOrderExtensionResponse);
-    }
+    boolean isConsistent = params.getRequestingFacilityId()
+        .equals(basicOrderExtensionResponses.get(0).getRequestingFacility().getId());
 
-    return new PageImpl<>(basicOrderExtensionResponseList, pageable, basicOrderDtoPage.getTotalElements());
+    for (BasicOrderExtensionResponse response : basicOrderExtensionResponses) {
+      response.setHasSubDraft(orderIdsWithSubDraft.contains(response.getId()));
+      response.setCanCreateLiv(isConsistent);
+    }
+    Sort orders = new Sort("local", "status", "createdDate");
+    PageRequest pageRequest = new PageRequest(pageable.getPageNumber(), pageable.getPageSize(), orders);
+    return new PageImpl<>(basicOrderExtensionResponses, pageRequest, basicOrderExtensionResponses.size());
+  }
+
+  private List<BasicOrderExtensionResponse> getElectronicBasicOrderExtensionResponses(
+      List<BasicOrderDto> basicOrderDtos) {
+    return basicOrderDtos.stream()
+        .map(basicOrderDto -> {
+          BasicOrderExtensionResponse basicOrderExtensionResponse = new BasicOrderExtensionResponse();
+          BeanUtils.copyProperties(basicOrderDto, basicOrderExtensionResponse);
+          basicOrderExtensionResponse.setLocal(false);
+          return basicOrderExtensionResponse;
+        }).collect(toList());
+  }
+
+  private List<BasicOrderExtensionResponse> getLocalBasicOrderExtensionResponses(
+      List<LocalReceiptVoucher> localReceiptVouchers) {
+    return localReceiptVouchers.stream()
+        .map(localReceiptVoucher -> {
+          BasicOrderExtensionResponse response = new BasicOrderExtensionResponse();
+          response.setLocal(true);
+          response.setOrderCode(localReceiptVoucher.getOrderCode());
+          response.setStatus(localReceiptVoucher.getStatus());
+          response.setId(localReceiptVoucher.getId());
+          response.setCreatedBy(authenticationHelper.getCurrentUser());
+          FacilityDto requestingFacilityDto = new FacilityDto();
+          org.siglus.siglusapi.dto.FacilityDto siglusRequestingFacilityDto = facilityReferenceDataService
+              .findOne(localReceiptVoucher.getRequestingFacilityId());
+          BeanUtils.copyProperties(siglusRequestingFacilityDto, requestingFacilityDto);
+          response.setRequestingFacility(requestingFacilityDto);
+          FacilityDto supplyingFacilityDto = new FacilityDto();
+          org.siglus.siglusapi.dto.FacilityDto siglusSupplyingFacilityDto = facilityReferenceDataService
+              .findOne(localReceiptVoucher.getSupplyingFacilityId());
+          BeanUtils.copyProperties(siglusSupplyingFacilityDto, supplyingFacilityDto);
+          response.setSupplyingFacility(supplyingFacilityDto);
+          ProgramDto requisitionProgramDto = programService.getProgram(localReceiptVoucher.getProgramId());
+          org.openlmis.fulfillment.service.referencedata.ProgramDto fulfillmentProgramDto =
+              new org.openlmis.fulfillment.service.referencedata.ProgramDto();
+          BeanUtils.copyProperties(requisitionProgramDto, fulfillmentProgramDto);
+          response.setProgram(fulfillmentProgramDto);
+          return response;
+        }).collect(toList());
   }
 
   public Page<BasicOrderDto> searchOrdersForFulfill(OrderSearchParams params, Pageable pageable) {
@@ -435,8 +501,9 @@ public class SiglusOrderService {
 
   private Map<UUID, BigDecimal> getOrderableIdToSuggestedQuantityFromDb(Order order) {
     Set<UUID> lineItemIds = getLineItemIds(order);
-    List<OrderSuggestedQuantityDto> dtos = lineItemExtensionRepository.findOrderSuggestedQuantityDtoByOrderLineItemIdIn(
-        lineItemIds);
+    List<OrderSuggestedQuantityDto> dtos = lineItemExtensionRepository
+        .findOrderSuggestedQuantityDtoByOrderLineItemIdIn(
+            lineItemIds);
     Map<UUID, BigDecimal> orderableIdToSuggestedQuantity = Maps.newHashMapWithExpectedSize(dtos.size());
     dtos.forEach(dto -> orderableIdToSuggestedQuantity.put(dto.getOrderableId(),
         Objects.isNull(dto.getSuggestedQuantity()) ? null : toBigDecimalRoundDown(dto.getSuggestedQuantity())));
