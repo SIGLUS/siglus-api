@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
 import org.apache.commons.collections4.CollectionUtils;
 import org.openlmis.referencedata.dto.ProgramOrderableDto;
 import org.openlmis.requisition.dto.ProgramDto;
@@ -61,6 +62,7 @@ import org.siglus.siglusapi.util.SiglusDateHelper;
 import org.springframework.stereotype.Service;
 
 @Service
+@RequiredArgsConstructor
 public class SiglusStockCardService {
 
   private final SiglusStockCardRepository stockCardRepository;
@@ -91,32 +93,6 @@ public class SiglusStockCardService {
 
   private final SiglusProgramService siglusProgramService;
   private static final String LOCATION_KEY = "locationCode";
-
-  public SiglusStockCardService(SiglusStockCardRepository stockCardRepository,
-      SiglusStockManagementService stockCardStockManagementService, AuthenticationHelper authenticationHelper,
-      StockCardExtensionRepository stockCardExtensionRepository, SiglusUnpackService unpackService,
-      SiglusArchiveProductService archiveProductService,
-      CalculatedStockOnHandRepository calculatedStockOnHandRepository, AndroidHelper androidHelper,
-      SiglusDateHelper dateHelper, StockMovementService stockMovementService,
-      CalculatedStockOnHandByLocationRepository calculatedStockOnHandByLocationRepository,
-      SiglusFacilityReferenceDataService siglusFacilityReferenceDataService,
-      SiglusOrderableReferenceDataService siglusOrderableReferenceDataService,
-      SiglusProgramService siglusProgramService) {
-    this.stockCardRepository = stockCardRepository;
-    this.stockCardStockManagementService = stockCardStockManagementService;
-    this.authenticationHelper = authenticationHelper;
-    this.stockCardExtensionRepository = stockCardExtensionRepository;
-    this.unpackService = unpackService;
-    this.archiveProductService = archiveProductService;
-    this.calculatedStockOnHandRepository = calculatedStockOnHandRepository;
-    this.androidHelper = androidHelper;
-    this.dateHelper = dateHelper;
-    this.stockMovementService = stockMovementService;
-    this.calculatedStockOnHandByLocationRepository = calculatedStockOnHandByLocationRepository;
-    this.siglusFacilityReferenceDataService = siglusFacilityReferenceDataService;
-    this.siglusOrderableReferenceDataService = siglusOrderableReferenceDataService;
-    this.siglusProgramService = siglusProgramService;
-  }
 
   public StockCardDto findStockCardByOrderable(UUID orderableId) {
     UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
