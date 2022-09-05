@@ -23,7 +23,7 @@ public class BasicOrderExtensionResponse extends BasicOrderDto {
 
   private boolean isLocal;
 
-  private boolean canCreateLIV;
+  private boolean canCreateLiv;
 
   private boolean hasSubDraft;
 }

@@ -98,7 +98,6 @@ import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.OrderableRepository;
 import org.siglus.siglusapi.repository.PodSubDraftRepository;
 import org.siglus.siglusapi.repository.SiglusFacilityRepository;
-import org.siglus.siglusapi.repository.SiglusLocalReceiptVoucherRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.repository.StockManagementRepository;
 import org.siglus.siglusapi.repository.dto.OrderSuggestedQuantityDto;
@@ -207,9 +206,6 @@ public class SiglusOrderService {
   @Autowired
   private StockManagementRepository stockManagementRepository;
 
-  @Autowired
-  private SiglusLocalReceiptVoucherRepository localReceiptVoucherRepository;
-
   private static final List<String> REQUISITION_STATUS_AFTER_FINAL_APPROVED = Lists.newArrayList(
       RequisitionStatus.APPROVED.name(),
       RequisitionStatus.RELEASED.name(),
@@ -248,7 +244,7 @@ public class SiglusOrderService {
       BasicOrderExtensionResponse basicOrderExtensionResponse = new BasicOrderExtensionResponse();
       BeanUtils.copyProperties(basicOrderDto, basicOrderExtensionResponse);
       basicOrderExtensionResponse.setHasSubDraft(orderIdsWithSubDraft.contains(basicOrderDto.getId()));
-      basicOrderExtensionResponse.setCanCreateLIV(isConsistent);
+      basicOrderExtensionResponse.setCanCreateLiv(isConsistent);
       basicOrderExtensionResponseList.add(basicOrderExtensionResponse);
     }
 
