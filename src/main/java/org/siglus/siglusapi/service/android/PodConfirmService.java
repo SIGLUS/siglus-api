@@ -42,7 +42,6 @@ import org.openlmis.fulfillment.repository.OrderRepository;
 import org.openlmis.fulfillment.service.PermissionService;
 import org.openlmis.fulfillment.util.DateHelper;
 import org.openlmis.fulfillment.web.MissingPermissionException;
-import org.openlmis.fulfillment.web.util.ProofOfDeliveryDto;
 import org.openlmis.referencedata.dto.OrderableDto;
 import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
 import org.openlmis.stockmanagement.domain.reason.StockCardLineItemReason;
@@ -76,7 +75,6 @@ import org.siglus.siglusapi.service.android.context.CurrentUserContext;
 import org.siglus.siglusapi.service.android.context.LotContext;
 import org.siglus.siglusapi.service.android.context.ProductContext;
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
-import org.slf4j.profiler.Profiler;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -108,52 +106,36 @@ public class PodConfirmService {
   @Transactional
   @SuppressWarnings("PMD.PreserveStackTrace")
   public void confirmPod(PodRequest podRequest, ProofOfDelivery toUpdate, PodResponse podResponse) {
-    Profiler profiler = new Profiler("confirm pod");
-    profiler.setLogger(log);
-    profiler.start("check hash");
     UserDto user = ContextHolder.getContext(CurrentUserContext.class).getCurrentUser();
     String syncUpHash = podRequest.getSyncUpHash(user);
     if (syncUpHashRepository.findOne(syncUpHash) != null) {
       log.info("skip confirm pod as syncUpHash: {} existed", syncUpHash);
       return;
     }
-    profiler.start("check updated");
     if (toUpdate.isConfirmed()) {
       log.warn("pod orderCode: {} has been confirmed:", podRequest.getOrderCode());
       return;
     }
-    profiler.start("check permission");
     try {
       fulfillmentPermissionService.canManagePod(toUpdate);
     } catch (MissingPermissionException e) {
       log.warn("forbidden!", e);
       throw NoPermissionException.general();
     }
-    profiler.start("check supported products");
     checkSupportedProducts(user.getHomeFacilityId(), podRequest);
-    profiler.start("do update pod");
-    updatePod(toUpdate, podRequest, user, podResponse);
-    profiler.stop().log();
+    Order order = updatePod(toUpdate, podRequest, user, podResponse);
     log.info("generate notification for confirm pod: {}", podRequest.getOrderCode());
-    siglusNotificationService.postConfirmPod(buildProofOfDeliveryDto(toUpdate));
+    siglusNotificationService.postConfirmPod(toUpdate.getId(), order);
   }
 
-  private void updatePod(ProofOfDelivery toUpdatePod, PodRequest podRequest, UserDto user, PodResponse existedPod) {
-    Profiler profiler = new Profiler("update pod");
-    profiler.setLogger(log);
-    profiler.start("backUp");
+  private Order updatePod(ProofOfDelivery toUpdatePod, PodRequest podRequest, UserDto user, PodResponse existedPod) {
     backUpIfNotMatchedExistedPod(user.getHomeFacilityId(), podRequest, existedPod);
     log.info("confirm android pod: {}", toUpdatePod);
-    profiler.start("update pod");
     podRepository.updatePodById(podRequest.getDeliveredBy(), podRequest.getReceivedBy(), podRequest.getReceivedDate(),
         ProofOfDeliveryStatus.CONFIRMED.toString(), toUpdatePod.getId());
-    profiler.start("delete pod lines");
     deletePodLineItems(toUpdatePod.getLineItems());
-    profiler.start("delete shipment lines");
     deleteShipmentLineItems(toUpdatePod.getShipment().getLineItems());
-    profiler.start("load products");
     ProductContext productContext = ContextHolder.getContext(ProductContext.class);
-    profiler.start("load lots");
     LotContext lotContext = ContextHolder.getContext(LotContext.class);
     lotContext.preload(podRequest.getProducts(), PodProductLineRequest::getCode,
         p -> UUID.fromString(productContext.getProduct(p.getCode()).getTradeItemIdentifier()),
@@ -161,32 +143,25 @@ public class PodConfirmService {
             .filter(l -> l.getLot() != null)
             .map(this::convertLotFromRequest)
             .collect(toList()));
-    profiler.start("update stock lines");
-    List<OrderableDto> requestOrderables = podRequest.getProducts()
-        .stream().map(o -> productContext.getProduct(o.getCode())).collect(toList());
     updateStockCardLineItems(user.getHomeFacilityId(), podRequest);
-    profiler.start("update order");
-    updateOrder(toUpdatePod, user, podRequest, requestOrderables);
-    profiler.start("get home facility");
-    profiler.start("load reasons");
     FacilityDto homeFacility = ContextHolder.getContext(CurrentUserContext.class).getHomeFacility();
     Map<String, UUID> reasonNameToId = validReasonAssignmentService.getAllReasons(homeFacility.getType().getId())
         .stream()
         .map(ValidReasonAssignmentDto::getReason)
         .distinct()
         .collect(toMap(StockCardLineItemReason::getName, StockCardLineItemReason::getId));
-    profiler.start("insert lines");
     podNativeSqlRepository.insertPodAndShipmentLineItems(toUpdatePod.getId(), toUpdatePod.getShipment().getId(),
         podRequest.getProducts(), reasonNameToId);
     log.info("save pod syncUpHash: {}", podRequest.getSyncUpHash(user));
-    profiler.start("save hash");
     SyncUpHash syncUpHashDomain = SyncUpHash.builder()
         .hash(podRequest.getSyncUpHash(user))
         .type("POD")
         .referenceId(toUpdatePod.getId())
         .build();
     syncUpHashRepository.save(syncUpHashDomain);
-    profiler.stop().log();
+    List<OrderableDto> requestOrderables = podRequest.getProducts()
+        .stream().map(o -> productContext.getProduct(o.getCode())).collect(toList());
+    return updateOrder(toUpdatePod, user, podRequest, requestOrderables);
   }
 
   private Lot convertLotFromRequest(PodLotLineRequest lotLine) {
@@ -264,7 +239,7 @@ public class PodConfirmService {
     }
   }
 
-  private void updateOrder(ProofOfDelivery toUpdatePod, UserDto user, PodRequest podRequest,
+  private Order updateOrder(ProofOfDelivery toUpdatePod, UserDto user, PodRequest podRequest,
       List<OrderableDto> requestOrderables) {
     Order order = toUpdatePod.getShipment().getOrder();
     order.updateStatus(OrderStatus.RECEIVED, new UpdateDetails(user.getId(),
@@ -275,7 +250,7 @@ public class PodConfirmService {
       log.info("update order lineItems, orderCode: {}", order.getOrderCode());
       orderLineItemRepository.save(orderLineItems);
     }
-    orderRepository.save(order);
+    return orderRepository.save(order);
   }
 
   private void deletePodLineItems(List<ProofOfDeliveryLineItem> podLineItems) {
@@ -339,12 +314,5 @@ public class PodConfirmService {
           return productCode + lotCode + l.getShippedQuantity();
         })
         .collect(toSet());
-  }
-
-  private ProofOfDeliveryDto buildProofOfDeliveryDto(ProofOfDelivery pod) {
-    ProofOfDeliveryDto dto = new ProofOfDeliveryDto();
-    dto.setId(pod.getId());
-    dto.setShipment(pod.getShipment());
-    return dto;
   }
 }

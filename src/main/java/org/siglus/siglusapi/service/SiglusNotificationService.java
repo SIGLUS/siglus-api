@@ -41,6 +41,7 @@ import javax.persistence.criteria.Root;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
+import org.openlmis.fulfillment.domain.Order;
 import org.openlmis.fulfillment.service.OrderSearchParams;
 import org.openlmis.fulfillment.service.ProofOfDeliveryService;
 import org.openlmis.fulfillment.service.referencedata.PeriodReferenceDataService;
@@ -308,11 +309,26 @@ public class SiglusNotificationService {
     Notification notification = new Notification();
     notification.setRefId(pod.getId());
     OrderObjectReferenceDto order = pod.getShipment().getOrder();
-    notification.setFacilityId(order.getSupplyingFacility().getId());
     notification.setProgramId(order.getProgram().getId());
     notification.setEmergency(order.getEmergency());
     notification.setProcessingPeriodId(order.getProcessingPeriod().getId());
+    notification.setFacilityId(order.getSupplyingFacility().getId());
     notification.setRequestingFacilityId(order.getRequestingFacility().getId());
+    notification.setStatus(NotificationStatus.RECEIVED);
+    notification.setType(NotificationType.UPDATE);
+    log.info("confirm pod notification: {}", notification);
+    repo.save(notification);
+  }
+
+  public void postConfirmPod(UUID podId, Order order) {
+    repo.updateLastNotificationProcessed(podId, NotificationStatus.SHIPPED);
+    Notification notification = new Notification();
+    notification.setRefId(podId);
+    notification.setProgramId(order.getProgramId());
+    notification.setEmergency(order.getEmergency());
+    notification.setProcessingPeriodId(order.getProcessingPeriodId());
+    notification.setFacilityId(order.getSupplyingFacilityId());
+    notification.setRequestingFacilityId(order.getRequestingFacilityId());
     notification.setStatus(NotificationStatus.RECEIVED);
     notification.setType(NotificationType.UPDATE);
     log.info("confirm pod notification: {}", notification);

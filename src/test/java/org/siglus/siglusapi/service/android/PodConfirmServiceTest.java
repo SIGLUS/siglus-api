@@ -215,7 +215,7 @@ public class PodConfirmServiceTest {
     ProgramDto program = mock(ProgramDto.class);
     when(program.getId()).thenReturn(programId);
     when(siglusProgramService.getProgramByCode(programCode)).thenReturn(Optional.of(program));
-    doNothing().when(siglusNotificationService).postConfirmPod(any());
+    doNothing().when(siglusNotificationService).postConfirmPod(any(), any());
   }
 
   @After
