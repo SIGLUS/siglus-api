@@ -52,5 +52,5 @@ import lombok.Data;
 public class OrderSuggestedQuantityDto {
 
   private UUID orderableId;
-  private double suggestedQuantity;
+  private Double suggestedQuantity;
 }

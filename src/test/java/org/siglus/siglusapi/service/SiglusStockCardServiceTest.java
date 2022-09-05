@@ -372,7 +372,7 @@ public class SiglusStockCardServiceTest {
     when(siglusOrderableReferenceDataService.findOne(orderableId)).thenReturn(orderableDto);
     when(siglusProgramService.getProgram(programId)).thenReturn(new ProgramDto());
     ProductMovementDto movementByProduct = siglusStockCardService.getMovementByProduct(facilityId, orderableId);
-    assertEquals(movementByProduct.getLineItems().size(), 1);
+    assertEquals(1, movementByProduct.getLineItems().size());
   }
 
   private StockCard createStockCardOne() {

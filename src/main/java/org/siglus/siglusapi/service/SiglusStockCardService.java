@@ -177,11 +177,10 @@ public class SiglusStockCardService {
     if (!androidHelper.isAndroid()) {
       addCreateInventory(calculateNewLineItemDtos, stockCards);
     }
-    List<StockCardLineItemDto> reasonFilter = calculateNewLineItemDtos.stream().map(dto -> {
+    List<StockCardLineItemDto> reasonFilter = calculateNewLineItemDtos.stream().peek(dto -> {
       if (dto.getSource() != null || dto.getDestination() != null) {
         dto.setReason(null);
       }
-      return dto;
     }).collect(Collectors.toList());
 
     return createStockCardDto(stockCardDtos, reasonFilter, byLot);
@@ -280,7 +279,7 @@ public class SiglusStockCardService {
   private StockCardLineItemDto createFirstInventoryByDate(
       StockCardExtension stockCard) {
     StockCardLineItemReason reason = StockCardLineItemReason.builder()
-        .name("inventário")
+        .name("Inventário")
         .reasonType(ReasonType.BALANCE_ADJUSTMENT)
         .reasonCategory(ReasonCategory.ADJUSTMENT)
         .build();

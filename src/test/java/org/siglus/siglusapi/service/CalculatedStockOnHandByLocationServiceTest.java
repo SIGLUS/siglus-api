@@ -41,11 +41,15 @@ import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.openlmis.fulfillment.web.shipment.LocationDto;
+import org.openlmis.fulfillment.web.shipment.ShipmentLineItemDto;
+import org.openlmis.fulfillment.web.util.VersionObjectReferenceDto;
 import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
 import org.openlmis.stockmanagement.domain.reason.ReasonType;
 import org.openlmis.stockmanagement.domain.reason.StockCardLineItemReason;
 import org.openlmis.stockmanagement.repository.CalculatedStockOnHandRepository;
+import org.openlmis.stockmanagement.repository.StockCardRepository;
 import org.openlmis.stockmanagement.service.referencedata.OrderableReferenceDataService;
 import org.siglus.siglusapi.domain.CalculatedStockOnHandByLocation;
 import org.siglus.siglusapi.domain.StockCardLineItemExtension;
@@ -68,6 +72,8 @@ public class CalculatedStockOnHandByLocationServiceTest {
   @Mock
   private SiglusStockCardRepository siglusStockCardRepository;
   @Mock
+  private StockCardRepository stockCardRepository;
+  @Mock
   private StockCardLineItemExtensionRepository stockCardLineItemExtensionRepository;
   @Mock
   private StockCardLocationMovementLineItemRepository locationMovementRepository;
@@ -78,6 +84,10 @@ public class CalculatedStockOnHandByLocationServiceTest {
   private ArgumentCaptor<List<CalculatedStockOnHandByLocation>> sohByLocationArgumentCaptor;
 
   private final UUID stockCardId = UUID.randomUUID();
+  private final UUID facilityId = UUID.randomUUID();
+  private final UUID lotId = UUID.randomUUID();
+  private final UUID orderableId = UUID.randomUUID();
+  private final UUID shipmentLineItemId = UUID.randomUUID();
   private final UUID lineItemId1 = UUID.randomUUID();
   private final UUID lineItemId2 = UUID.randomUUID();
   private final UUID lineItemId3 = UUID.randomUUID();
@@ -190,6 +200,28 @@ public class CalculatedStockOnHandByLocationServiceTest {
     assertEquals(110, (int) sohLocation3.getStockOnHand());
   }
 
+  @Test
+  public void shouldCalculateSohByLocationWhenConfirmShipment() {
+    // given
+    when(calculatedStockOnHandByLocationRepository.findPreviousLocationStockOnHandsTillNow(
+        ImmutableSet.of(stockCardId), LocalDate.now())).thenReturn(buildPreviousSohByLocation());
+    when(stockCardRepository.findByFacilityIdAndOrderableIdAndLotId(facilityId, orderableId, lotId))
+        .thenReturn(createStockCard());
+
+    // when
+    calculatedStocksOnHandByLocationService
+        .calculateStockOnHandByLocationForShipment(buildShipmentLineItemList(), facilityId);
+
+    // then
+    verify(calculatedStockOnHandByLocationRepository).save(sohByLocationArgumentCaptor.capture());
+    List<CalculatedStockOnHandByLocation> sohToSave = sohByLocationArgumentCaptor.getValue();
+    assertEquals(1, sohToSave.size());
+    CalculatedStockOnHandByLocation sohLocation1 = sohToSave.stream()
+        .filter(s -> locationCode1.equals(s.getLocationCode())).findFirst().orElse(null);
+    assertNotNull(sohLocation1);
+    assertEquals(90, (int) sohLocation1.getStockOnHand());
+  }
+
   private List<CalculatedStockOnHandByLocation> buildPreviousSohByLocation() {
     CalculatedStockOnHandByLocation soh1 = CalculatedStockOnHandByLocation.builder()
             .stockCardId(stockCardId)
@@ -227,6 +259,30 @@ public class CalculatedStockOnHandByLocationServiceTest {
             .build();
 
     return Arrays.asList(movement2, movement1);
+  }
+
+  private List<ShipmentLineItemDto> buildShipmentLineItemList() {
+    ShipmentLineItemDto shipmentLineItemDto = new ShipmentLineItemDto();
+    shipmentLineItemDto.setId(shipmentLineItemId);
+    LocationDto locationDto = new LocationDto();
+    locationDto.setLocationCode(locationCode1);
+    shipmentLineItemDto.setLocation(locationDto);
+    shipmentLineItemDto.setLotId(lotId);
+    VersionObjectReferenceDto orderReferenceDto = new VersionObjectReferenceDto(orderableId,
+        "", "", 1L);
+    shipmentLineItemDto.setOrderable(orderReferenceDto);
+    shipmentLineItemDto.setQuantityShipped(10L);
+
+    return Collections.singletonList(shipmentLineItemDto);
+  }
+
+  private StockCard createStockCard() {
+    StockCard stockCard = new StockCard();
+    stockCard.setId(stockCardId);
+    stockCard.setOrderableId(orderableId);
+    stockCard.setFacilityId(facilityId);
+    stockCard.setLotId(lotId);
+    return stockCard;
   }
 
   private Map<UUID, List<StockCardLocationMovementLineItem>> buildMovementMap() {

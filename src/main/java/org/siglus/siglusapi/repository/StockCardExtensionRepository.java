@@ -39,4 +39,5 @@ public interface StockCardExtensionRepository extends JpaRepository<StockCardExt
   void deleteStockCardExtensionByFacilityIdAndOrderableIds(@Param("facilityId") UUID facilityId,
       @Param("orderableIds") Iterable<UUID> orderableIds);
 
+  void deleteByStockCardIdIn(Collection<UUID> stockCardIds);
 }

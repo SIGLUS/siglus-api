@@ -13,14 +13,30 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.localmachine.server;
+package org.siglus.siglusapi.localmachine.domain;
 
+import java.time.ZonedDateTime;
 import java.util.UUID;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-@Repository
-public interface AgentInfoRepository extends JpaRepository<AgentInfo, UUID> {
-
-  AgentInfo findOneByAgentIdAndFacilityId(UUID agentId, UUID facilityId);
+@Entity
+@Data
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
+@Table(name = "agents", schema = "localmachine")
+public class AgentInfo {
+  @Id private UUID machineId;
+  private UUID facilityId;
+  private String facilityCode;
+  private byte[] publicKey;
+  private byte[] privateKey;
+  private String activationCode;
+  private ZonedDateTime activatedAt;
 }

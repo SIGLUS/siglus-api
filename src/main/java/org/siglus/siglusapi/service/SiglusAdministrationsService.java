@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
+import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -42,11 +43,15 @@ import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.io.input.BOMInputStream;
 import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.StringUtils;
+import org.openlmis.referencedata.domain.Orderable;
 import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.domain.event.CalculatedStockOnHand;
+import org.openlmis.stockmanagement.exception.PermissionMessageException;
 import org.openlmis.stockmanagement.repository.CalculatedStockOnHandRepository;
+import org.openlmis.stockmanagement.repository.StockCardLineItemRepository;
 import org.openlmis.stockmanagement.repository.StockCardRepository;
 import org.openlmis.stockmanagement.web.Pagination;
+import org.siglus.common.constant.KitConstants;
 import org.siglus.siglusapi.constant.LocationConstants;
 import org.siglus.siglusapi.domain.AppInfo;
 import org.siglus.siglusapi.domain.CalculatedStockOnHandByLocation;
@@ -67,7 +72,9 @@ import org.siglus.siglusapi.repository.AppInfoRepository;
 import org.siglus.siglusapi.repository.CalculatedStockOnHandByLocationRepository;
 import org.siglus.siglusapi.repository.FacilityExtensionRepository;
 import org.siglus.siglusapi.repository.FacilityLocationsRepository;
+import org.siglus.siglusapi.repository.OrderableRepository;
 import org.siglus.siglusapi.repository.SiglusReportTypeRepository;
+import org.siglus.siglusapi.repository.StockCardExtensionRepository;
 import org.siglus.siglusapi.repository.StockCardLocationMovementLineItemRepository;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
@@ -95,6 +102,9 @@ public class SiglusAdministrationsService {
   private final SiglusProcessingPeriodService siglusProcessingPeriodService;
   private final CalculatedStockOnHandRepository calculatedStockOnHandRepository;
   private final CalculatedStockOnHandByLocationRepository calculatedStocksOnHandLocationsRepository;
+  private final OrderableRepository orderableRepository;
+  private final StockCardLineItemRepository stockCardLineItemRepository;
+  private final StockCardExtensionRepository stockCardExtensionRepository;
   private final SiglusAuthenticationHelper authenticationHelper;
   private static final String LOCATION_MANAGEMENT_TAB = "locationManagement";
   private static final String CSV_SUFFIX = ".csv";
@@ -220,6 +230,43 @@ public class SiglusAdministrationsService {
     facilityLocationsRepository.deleteByFacilityId(facilityId);
     log.info("Save location management info with facilityId: {}", facilityId);
     facilityLocationsRepository.save(locationManagementList);
+  }
+
+  @Transactional
+  public void upgradeAndroidFacilityToWeb(UUID facilityId) {
+    FacilityExtension facilityExtension = facilityExtensionRepository.findByFacilityId(facilityId);
+    if (null == facilityExtension || !facilityExtension.getIsAndroid()) {
+      throw new PermissionMessageException(
+          new org.openlmis.stockmanagement.util.Message("siglusapi.error.notAndroidFacility"));
+    }
+    facilityExtension.setIsAndroid(false);
+    facilityExtensionRepository.save(facilityExtension);
+    if (emptyStockCardCount(facilityId)) {
+      return;
+    }
+    List<StockCard> stockCardList = stockCardRepository.findByFacilityIdIn(facilityId);
+    List<StockCard> stockCardsWithEmptyLotId = stockCardList.stream().filter(stockCard -> null == stockCard.getLotId())
+        .collect(Collectors.toList());
+    List<UUID> orderableIdsWithEmptyLotId = stockCardsWithEmptyLotId.stream().map(StockCard::getOrderableId)
+        .collect(Collectors.toList());
+
+    List<Orderable> orderables = orderableRepository.findLatestByIds(orderableIdsWithEmptyLotId);
+    List<UUID> orderableIdsNoKit = orderables.stream()
+        .filter(orderable -> !KitConstants.isKit(orderable.getProductCode().toString()))
+        .map(Orderable::getId).collect(Collectors.toList());
+
+    List<StockCard> stockCards = stockCardsWithEmptyLotId.stream()
+        .filter(stockCard -> orderableIdsNoKit.contains(stockCard.getOrderableId())).collect(Collectors.toList());
+    List<UUID> stockCardIds = stockCards.stream().map(StockCard::getId).collect(Collectors.toList());
+    log.info("delete on stockCardLineItem when upgrade to web, stockCardId: {}", stockCardIds);
+    stockCardLineItemRepository.deleteByStockCardIdIn(stockCardIds);
+    log.info("delete on calculatedStockOnHand when upgrade to web, facilityId: {}", facilityId);
+    Set<UUID> orderableIds = stockCards.stream().map(StockCard::getOrderableId).collect(Collectors.toSet());
+    calculatedStockOnHandRepository.deleteByFacilityIdAndOrderableIds(facilityId, orderableIds);
+    log.info("delete on stockCardExtension when upgrade to web, stockCardId: {}", stockCardIds);
+    stockCardExtensionRepository.deleteByStockCardIdIn(stockCardIds);
+    log.info("delete on stockCard when upgrade to web, stockCardId: {}", stockCardIds);
+    stockCardRepository.deleteByIdIn(stockCardIds);
   }
 
   private void validateReportTypes(SiglusFacilityDto siglusFacilityDto) {
@@ -368,7 +415,7 @@ public class SiglusAdministrationsService {
   }
 
   private List<CalculatedStockOnHand> findStockCardIdsHasStockOnHandOnLot(List<UUID> stockCardIds) {
-    return calculatedStockOnHandRepository.findPreviousStockOnHands(stockCardIds, LocalDate.now())
+    return calculatedStockOnHandRepository.findLatestStockOnHands(stockCardIds, ZonedDateTime.now())
         .stream().filter(calculatedStockOnHand -> calculatedStockOnHand.getStockOnHand() > 0)
         .collect(Collectors.toList());
   }

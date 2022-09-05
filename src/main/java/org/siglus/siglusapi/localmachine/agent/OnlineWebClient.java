@@ -24,6 +24,7 @@ import org.siglus.siglusapi.localmachine.Event;
 import org.siglus.siglusapi.localmachine.auth.LocalTokenInterceptor;
 import org.siglus.siglusapi.localmachine.webapi.AckRequest;
 import org.siglus.siglusapi.localmachine.webapi.PeeringEventsResponse;
+import org.siglus.siglusapi.localmachine.webapi.RemoteActivationRequest;
 import org.siglus.siglusapi.localmachine.webapi.SyncRequest;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -31,6 +32,8 @@ import org.springframework.web.client.RestTemplate;
 
 @Component
 public class OnlineWebClient {
+
+  private static final String PATH_ACTIVATE_AGENT = "/server/agents";
   private final RestTemplate restTemplate;
 
   @Value("${machine.web.url}")
@@ -38,22 +41,33 @@ public class OnlineWebClient {
 
   public OnlineWebClient(LocalTokenInterceptor localTokenInterceptor) {
     this.restTemplate = new RestTemplate();
+    configureLocalTokenInterceptor(localTokenInterceptor);
     restTemplate.setInterceptors(singletonList(localTokenInterceptor));
   }
 
   public void sync(List<Event> events) {
-    URI url = URI.create(webBaseUrl + "/events");
+    URI url = URI.create(webBaseUrl + "/server/events");
     restTemplate.postForEntity(url, new SyncRequest(events), Void.class);
   }
 
   public List<Event> exportPeeringEvents() {
-    URI url = URI.create(webBaseUrl + "/peeringEvents");
+    URI url = URI.create(webBaseUrl + "/server/peeringEvents");
     return restTemplate.getForObject(url, PeeringEventsResponse.class).getEvents();
   }
 
   public void confirmReceived(List<Event> events) {
-    URI url = URI.create(webBaseUrl + "/ack");
+    URI url = URI.create(webBaseUrl + "/server/ack");
     AckRequest ackRequest = new AckRequest(events.stream().map(Event::getId).collect(toSet()));
     restTemplate.postForEntity(url, ackRequest, Void.class);
+  }
+
+  public void activate(RemoteActivationRequest remoteActivationRequest) {
+    URI url = URI.create(webBaseUrl + PATH_ACTIVATE_AGENT);
+    restTemplate.postForEntity(url, remoteActivationRequest, Void.class);
+  }
+
+  private void configureLocalTokenInterceptor(LocalTokenInterceptor localTokenInterceptor) {
+    localTokenInterceptor.setAcceptFunc(
+        httpRequest -> !httpRequest.getURI().getRawPath().contains(PATH_ACTIVATE_AGENT));
   }
 }

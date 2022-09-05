@@ -20,7 +20,6 @@ import static org.siglus.siglusapi.constant.PaginationConstants.NO_PAGINATION;
 
 import java.util.List;
 import org.siglus.siglusapi.interceptor.MvcInterceptor;
-import org.siglus.siglusapi.localmachine.auth.AuthInterceptor;
 import org.siglus.siglusapi.localmachine.auth.AuthenticationArgumentResolver;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
@@ -35,13 +34,8 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter
 @Configuration
 public class CustomWebMvcConfigurerAdapter extends WebMvcConfigurerAdapter {
 
-  private final AuthInterceptor authInterceptor;
   @Value("${service.url}")
   private String serviceUrl;
-
-  public CustomWebMvcConfigurerAdapter(AuthInterceptor authInterceptor) {
-    this.authInterceptor = authInterceptor;
-  }
 
   @Override
   public void addViewControllers(ViewControllerRegistry registry) {
@@ -73,6 +67,5 @@ public class CustomWebMvcConfigurerAdapter extends WebMvcConfigurerAdapter {
   @Override
   public void addInterceptors(InterceptorRegistry registry) {
     registry.addInterceptor(new MvcInterceptor());
-    registry.addInterceptor(authInterceptor);
   }
 }

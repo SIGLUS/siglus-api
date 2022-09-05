@@ -26,38 +26,27 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.siglus.siglusapi.localmachine.CommonConstants;
-import org.siglus.siglusapi.localmachine.server.AgentInfoRepository;
+import org.siglus.siglusapi.localmachine.repository.AgentInfoRepository;
 import org.springframework.mock.web.MockHttpServletRequest;
-import org.springframework.mock.web.MockHttpServletResponse;
 
 @RunWith(MockitoJUnitRunner.class)
-public class AuthInterceptorTest {
-  @InjectMocks private AuthInterceptor interceptor;
+public class MachineTokenMatcherTest {
+  @InjectMocks private MachineTokenMatcher machineTokenMatcher;
   @Mock private AgentInfoRepository agentInfoRepository;
 
   @Before
   public void setup() {
-    given(agentInfoRepository.findOneByAgentIdAndFacilityId(any(), any())).willReturn(null);
+    given(agentInfoRepository.findOneByMachineIdAndFacilityId(any(), any())).willReturn(null);
   }
 
   @Test
-  public void shouldPassToNextWhenPreHandleGivenLocalMachineVersionHeaderNotExists()
-      throws Exception {
-    // given
-    MockHttpServletRequest request = new MockHttpServletRequest();
-    // when
-    boolean next = interceptor.preHandle(request, new MockHttpServletResponse(), null);
-    // then
-    assertThat(next).isTrue();
-  }
-
-  @Test(expected = IllegalAccessException.class)
-  public void shouldThrowGivenTokenHeaderIsEmpty() throws Exception {
+  public void shouldReturnFalseGivenTokenHeaderIsEmpty() {
     // given
     MockHttpServletRequest request = new MockHttpServletRequest();
     request.addHeader(CommonConstants.VERSION, "1.0");
     request.removeHeader(CommonConstants.ACCESS_TOKEN);
     // when
-    interceptor.preHandle(request, new MockHttpServletResponse(), null);
+    boolean matched = machineTokenMatcher.matches(request);
+    assertThat(matched).isFalse();
   }
 }

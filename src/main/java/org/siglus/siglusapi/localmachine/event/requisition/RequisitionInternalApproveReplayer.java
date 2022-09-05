@@ -81,61 +81,59 @@ public class RequisitionInternalApproveReplayer {
   private final RequisitionService requisitionService;
 
   @EventListener(classes = {RequisitionInternalApproveApplicationEvent.class})
-  public void replay(RequisitionInternalApproveApplicationEvent emited) {
+  public void replay(RequisitionInternalApproveApplicationEvent event) {
     try {
-      log.info("start test replay requisitionId = " + emited.getRequisition().getId());
-      doReplay(emited);
-      log.info("end test replay requisitionId = " + emited.getRequisition().getId());
+      log.info("start test replay requisitionId = " + event.getRequisition().getId());
+      doReplay(event);
+      log.info("end test replay requisitionId = " + event.getRequisition().getId());
     } catch (Exception e) {
       log.error("fail to save requisition internal approve event, msg = " + e.getMessage(), e);
       throw (IllegalStateException) (new IllegalStateException().initCause(e));
     }
   }
 
-  public void doReplay(RequisitionInternalApproveApplicationEvent emited) {
-    Requisition newRequisition = RequisitionBuilder.newRequisition(emited.getRequisition().getFacilityId(),
-        emited.getRequisition().getProgramId(), emited.getRequisition().getEmergency());
+  public void doReplay(RequisitionInternalApproveApplicationEvent event) {
+    Requisition newRequisition = RequisitionBuilder.newRequisition(event.getRequisition().getFacilityId(),
+        event.getRequisition().getProgramId(), event.getRequisition().getEmergency());
 
-    newRequisition.setTemplate(emited.getRequisition().getTemplate());
-    newRequisition.setStatus(emited.getRequisition().getStatus());
+    newRequisition.setTemplate(event.getRequisition().getTemplate());
+    newRequisition.setStatus(event.getRequisition().getStatus());
 
-    newRequisition.setProcessingPeriodId(emited.getRequisition().getProcessingPeriodId());
-    newRequisition.setNumberOfMonthsInPeriod(emited.getRequisition().getNumberOfMonthsInPeriod());
-    newRequisition.setDraftStatusMessage(emited.getRequisition().getDraftStatusMessage());
-    newRequisition.setReportOnly(emited.getRequisition().getReportOnly());
-    newRequisition.setCreatedDate(emited.getRequisition().getCreatedDate());
-    newRequisition.setModifiedDate(emited.getRequisition().getModifiedDate());
-    newRequisition.setVersion(emited.getRequisition().getVersion());
-    newRequisition.setSupervisoryNodeId(emited.getRequisition().getSupervisoryNodeId());
+    newRequisition.setProcessingPeriodId(event.getRequisition().getProcessingPeriodId());
+    newRequisition.setNumberOfMonthsInPeriod(event.getRequisition().getNumberOfMonthsInPeriod());
+    newRequisition.setDraftStatusMessage(event.getRequisition().getDraftStatusMessage());
+    newRequisition.setReportOnly(event.getRequisition().getReportOnly());
+    newRequisition.setCreatedDate(event.getRequisition().getCreatedDate());
+    newRequisition.setModifiedDate(event.getRequisition().getModifiedDate());
+    newRequisition.setVersion(event.getRequisition().getVersion());
+    newRequisition.setSupervisoryNodeId(event.getRequisition().getSupervisoryNodeId());
     newRequisition.setStatusChanges(new ArrayList<>());
-    buildStatusChanges(newRequisition, emited.getRequisition().getStatusChanges().stream()
+    buildStatusChanges(newRequisition, event.getRequisition().getStatusChanges().stream()
         .filter(item -> item.getStatus() == RequisitionStatus.INITIATED).findFirst());
-    buildStatusChanges(newRequisition, emited.getRequisition().getStatusChanges().stream()
+    buildStatusChanges(newRequisition, event.getRequisition().getStatusChanges().stream()
         .filter(item -> item.getStatus() == RequisitionStatus.SUBMITTED).findFirst());
-    buildStatusChanges(newRequisition, emited.getRequisition().getStatusChanges().stream()
+    buildStatusChanges(newRequisition, event.getRequisition().getStatusChanges().stream()
         .filter(item -> item.getStatus() == RequisitionStatus.AUTHORIZED).findFirst());
-    buildStatusChanges(newRequisition, emited.getRequisition().getStatusChanges().stream()
+    buildStatusChanges(newRequisition, event.getRequisition().getStatusChanges().stream()
         .filter(item -> item.getStatus() == RequisitionStatus.IN_APPROVAL).findFirst());
 
-    buildRequisitionApprovedProduct(newRequisition, emited.getRequisition().getFacilityId(),
-        emited.getRequisition().getProgramId());
-    newRequisition.setExtraData(emited.getRequisition().getExtraData());
-
-    buildRequisitionLineItems(newRequisition, emited.getRequisition());
-
+    buildRequisitionApprovedProduct(newRequisition, event.getRequisition().getFacilityId(),
+        event.getRequisition().getProgramId());
+    newRequisition.setExtraData(event.getRequisition().getExtraData());
+    buildRequisitionLineItems(newRequisition, event.getRequisition());
     Requisition requisition = requisitionRepository.saveAndFlush(newRequisition);
-    log.info("new requisition =" + requisition.getId());
+    log.info(String.format("replay requisition internal approve event, new requisition id: %s, event requisition id: "
+        + "%s", requisition.getId(), event.getRequisition().getId()));
 
-    buildRequisitionExtension(emited, requisition);
+    buildRequisitionExtension(event, requisition);
 
-    Map<UUID, UUID> lineItemIdToOrderableId = emited.getRequisition().getRequisitionLineItems().stream()
+    Map<UUID, UUID> lineItemIdToOrderableId = event.getRequisition().getRequisitionLineItems().stream()
         .collect(toMap(RequisitionLineItem::getId, item -> item.getOrderable().getId()));
-
-    Map<UUID, RequisitionLineItemExtension> orderableIdToLineItemExtension = emited.getLineItemExtensions().stream()
+    Map<UUID, RequisitionLineItemExtension> orderableIdToLineItemExtension = event.getLineItemExtensions().stream()
         .collect(toMap(item -> lineItemIdToOrderableId.get(item.getRequisitionLineItemId()), identity()));
     buildRequisitionLineItemsExtension(requisition, orderableIdToLineItemExtension);
 
-    buildRequisitionUsageSections(requisition, emited);
+    buildRequisitionUsageSections(requisition, event);
   }
 
   private void buildRequisitionApprovedProduct(Requisition requisition, UUID homeFacilityId, UUID programId) {
@@ -273,30 +271,30 @@ public class RequisitionInternalApproveReplayer {
     ageGroupLineItemRepository.save(list);
   }
 
-  private void buildRequisitionExtension(RequisitionInternalApproveApplicationEvent emited, Requisition requisition) {
+  private void buildRequisitionExtension(RequisitionInternalApproveApplicationEvent event, Requisition requisition) {
     RequisitionExtension requisitionExtension = new RequisitionExtension();
     requisitionExtension.setRequisitionId(requisition.getId());
-    requisitionExtension.setRequisitionNumber(emited.getRequisitionExtension().getRequisitionNumber());
-    requisitionExtension.setIsApprovedByInternal(emited.getRequisitionExtension().getIsApprovedByInternal());
-    requisitionExtension.setFacilityId(emited.getRequisitionExtension().getFacilityId());
-    requisitionExtension.setActualStartDate(emited.getRequisitionExtension().getActualStartDate());
-    requisitionExtension.setRequisitionNumberPrefix(emited.getRequisitionExtension().getRequisitionNumberPrefix());
+    requisitionExtension.setRequisitionNumber(event.getRequisitionExtension().getRequisitionNumber());
+    requisitionExtension.setIsApprovedByInternal(event.getRequisitionExtension().getIsApprovedByInternal());
+    requisitionExtension.setFacilityId(event.getRequisitionExtension().getFacilityId());
+    requisitionExtension.setActualStartDate(event.getRequisitionExtension().getActualStartDate());
+    requisitionExtension.setRequisitionNumberPrefix(event.getRequisitionExtension().getRequisitionNumberPrefix());
 
     requisitionExtensionRepository.save(requisitionExtension);
   }
 
-  private void buildStatusChanges(Requisition requisition, Optional<StatusChange> statusChangeOld) {
-    if (!statusChangeOld.isPresent()) {
+  private void buildStatusChanges(Requisition requisition, Optional<StatusChange> eventStatusChange) {
+    if (!eventStatusChange.isPresent()) {
       return;
     }
     StatusChange statusChange = new StatusChange();
-    statusChange.setStatus(statusChangeOld.get().getStatus());
+    statusChange.setStatus(eventStatusChange.get().getStatus());
     statusChange.setRequisition(requisition);
-    statusChange.setAuthorId(statusChangeOld.get().getAuthorId());
-    statusChange.setSupervisoryNodeId(statusChangeOld.get().getSupervisoryNodeId());
-    statusChange.setStatusMessage(statusChangeOld.get().getStatusMessage());
-    statusChange.setCreatedDate(statusChangeOld.get().getCreatedDate());
-    statusChange.setModifiedDate(statusChangeOld.get().getModifiedDate());
+    statusChange.setAuthorId(eventStatusChange.get().getAuthorId());
+    statusChange.setSupervisoryNodeId(eventStatusChange.get().getSupervisoryNodeId());
+    statusChange.setStatusMessage(eventStatusChange.get().getStatusMessage());
+    statusChange.setCreatedDate(eventStatusChange.get().getCreatedDate());
+    statusChange.setModifiedDate(eventStatusChange.get().getModifiedDate());
     requisition.getStatusChanges().add(statusChange);
   }
 
@@ -306,45 +304,47 @@ public class RequisitionInternalApproveReplayer {
       return;
     }
     log.info("requisition line size: {}", requisition.getRequisitionLineItems().size());
+    List<RequisitionLineItemExtension> extensions = new ArrayList<>();
 
     requisition.getRequisitionLineItems().forEach(requisitionLineItem -> {
-      RequisitionLineItemExtension requisitionLineItemExtensionOld =
+      RequisitionLineItemExtension requisitionLineItemExtension =
           requisitionLineItemExtensionMap.getOrDefault(requisitionLineItem.getOrderable().getId(),
               new RequisitionLineItemExtension());
 
-      RequisitionLineItemExtension extension = new RequisitionLineItemExtension();
-      extension.setRequisitionLineItemId(requisitionLineItem.getId());
-      extension.setAuthorizedQuantity(requisitionLineItemExtensionOld.getAuthorizedQuantity());
-      extension.setExpirationDate(requisitionLineItemExtensionOld.getExpirationDate());
-      requisitionLineItemExtensionRepository.save(extension);
+      RequisitionLineItemExtension newExtension = new RequisitionLineItemExtension();
+      newExtension.setRequisitionLineItemId(requisitionLineItem.getId());
+      newExtension.setAuthorizedQuantity(requisitionLineItemExtension.getAuthorizedQuantity());
+      newExtension.setExpirationDate(requisitionLineItemExtension.getExpirationDate());
+      extensions.add(newExtension);
     });
+    requisitionLineItemExtensionRepository.save(extensions);
     requisitionLineItemExtensionRepository.flush();
   }
 
-  private void buildRequisitionLineItems(Requisition requisition, Requisition requisitionOld) {
-    if (isEmpty(requisitionOld.getRequisitionLineItems())) {
+  private void buildRequisitionLineItems(Requisition newRequisition, Requisition eventRequisition) {
+    if (isEmpty(eventRequisition.getRequisitionLineItems())) {
       return;
     }
-    Map<UUID, VersionEntityReference> productIdToApproveds = requisition.getAvailableProducts().stream().collect(
+    Map<UUID, VersionEntityReference> productIdToApproveds = newRequisition.getAvailableProducts().stream().collect(
         toMap(product -> product.getOrderable().getId(), ApprovedProductReference::getFacilityTypeApprovedProduct)
     );
     List<RequisitionLineItem> requisitionLineItems = new ArrayList<>();
-    for (RequisitionLineItem oldLineItem : requisitionOld.getRequisitionLineItems()) {
+    for (RequisitionLineItem eventLineItem : eventRequisition.getRequisitionLineItems()) {
       RequisitionLineItem lineItem = new RequisitionLineItem();
-      lineItem.setRequisition(requisition);
-      lineItem.setOrderable(new VersionEntityReference(oldLineItem.getOrderable().getId(),
-          oldLineItem.getOrderable().getVersionNumber()));
-      lineItem.setBeginningBalance(oldLineItem.getBeginningBalance());
-      lineItem.setTotalLossesAndAdjustments(oldLineItem.getTotalLossesAndAdjustments());
-      lineItem.setTotalReceivedQuantity(oldLineItem.getTotalReceivedQuantity());
-      lineItem.setTotalConsumedQuantity(oldLineItem.getTotalConsumedQuantity());
-      lineItem.setStockOnHand(oldLineItem.getStockOnHand());
-      lineItem.setRequestedQuantity(oldLineItem.getRequestedQuantity());
+      lineItem.setRequisition(newRequisition);
+      lineItem.setOrderable(new VersionEntityReference(eventLineItem.getOrderable().getId(),
+          eventLineItem.getOrderable().getVersionNumber()));
+      lineItem.setBeginningBalance(eventLineItem.getBeginningBalance());
+      lineItem.setTotalLossesAndAdjustments(eventLineItem.getTotalLossesAndAdjustments());
+      lineItem.setTotalReceivedQuantity(eventLineItem.getTotalReceivedQuantity());
+      lineItem.setTotalConsumedQuantity(eventLineItem.getTotalConsumedQuantity());
+      lineItem.setStockOnHand(eventLineItem.getStockOnHand());
+      lineItem.setRequestedQuantity(eventLineItem.getRequestedQuantity());
       VersionEntityReference approvedProduct = productIdToApproveds.get(lineItem.getOrderable().getId());
       lineItem.setFacilityTypeApprovedProduct(approvedProduct);
-      lineItem.setSkipped(oldLineItem.getSkipped());
+      lineItem.setSkipped(eventLineItem.getSkipped());
       requisitionLineItems.add(lineItem);
     }
-    requisition.setRequisitionLineItems(requisitionLineItems);
+    newRequisition.setRequisitionLineItems(requisitionLineItems);
   }
 }

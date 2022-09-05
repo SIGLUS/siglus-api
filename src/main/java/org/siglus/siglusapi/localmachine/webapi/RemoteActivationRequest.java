@@ -13,22 +13,18 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.dto;
+package org.siglus.siglusapi.localmachine.webapi;
 
-import java.util.List;
-import lombok.AllArgsConstructor;
+import java.util.UUID;
+import javax.validation.Valid;
 import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.openlmis.referencedata.dto.OrderableDto;
 
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
 @Builder
-public class StockCardSummaryWithLocationDto {
-
-  private OrderableDto orderable;
-  private List<StockCardDetailsWithLocationDto> stockCardDetails;
-  private Integer stockOnHand;
+@Data
+public class RemoteActivationRequest {
+  @Valid private LocalActivationRequest localActivationRequest;
+  private String base64EncodedPublicKey;
+  private String base64EncodedPrivateKey;
+  private UUID machineId;
 }

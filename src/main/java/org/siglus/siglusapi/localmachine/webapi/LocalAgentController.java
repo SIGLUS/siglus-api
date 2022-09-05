@@ -13,22 +13,26 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.localmachine;
+package org.siglus.siglusapi.localmachine.webapi;
 
-import org.siglus.siglusapi.localmachine.eventstore.EventStore;
+import lombok.RequiredArgsConstructor;
+import org.siglus.siglusapi.localmachine.agent.LocalActivationService;
 import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Component;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-@Profile({"!localmachine"})
-@Component
-public class OnlineWebEventImporter extends EventImporter {
+@Profile("localmachine")
+@RestController
+@RequiredArgsConstructor
+@RequestMapping("/api/siglusapi/localmachine/agent")
+public class LocalAgentController {
+  private final LocalActivationService localActivationService;
 
-  public OnlineWebEventImporter(EventStore localEventStore, EventReplayer replayer) {
-    super(localEventStore, replayer);
-  }
-
-  @Override
-  protected boolean accept(Event it) {
-    return !it.isOnlineWebSynced();
+  @PutMapping
+  public void activate(@RequestBody @Validated LocalActivationRequest request) {
+    localActivationService.activate(request);
   }
 }

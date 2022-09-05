@@ -13,16 +13,16 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.localmachine.agent;
+package org.siglus.siglusapi.localmachine;
 
-import java.util.UUID;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.stereotype.Repository;
+import static java.lang.annotation.ElementType.TYPE;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
-@Repository
-public interface RegistrationRepository extends JpaRepository<Registration, UUID> {
+import java.lang.annotation.Documented;
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
 
-  @Query(value = "select * from localmachine.registration limit 1", nativeQuery = true)
-  Registration getCurrentFacility();
-}
+@Target(TYPE)
+@Retention(RUNTIME)
+@Documented
+public @interface EventPayload {}

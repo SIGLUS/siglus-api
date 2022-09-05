@@ -18,8 +18,6 @@ package org.siglus.siglusapi.localmachine;
 import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.UUID;
-import javax.transaction.Transactional;
-import javax.transaction.Transactional.TxType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.siglus.siglusapi.dto.UserDto;
@@ -29,6 +27,8 @@ import org.siglus.siglusapi.localmachine.eventstore.EventStore;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 @Component
 @RequiredArgsConstructor
@@ -36,7 +36,7 @@ import org.springframework.stereotype.Component;
 public class EventPublisher {
   public static final int PROTOCOL_VERSION = 1;
   private final EventStore eventStore;
-  private final ApplicationEventPublisher eventPublisher;
+  private final ApplicationEventPublisher applicationEventPublisher;
   private final SiglusAuthenticationHelper siglusAuthenticationHelper;
 
   public void emitGroupEvent(String groupId, UUID receiverId, Object payload) {
@@ -51,19 +51,18 @@ public class EventPublisher {
     eventStore.emit(eventBuilder.build());
   }
 
-  // publish event should be in an isolated transaction to make the replay process is transactional
-  @Transactional(TxType.REQUIRES_NEW)
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
   public void publishEvent(Event event) {
     if (event.isLocalReplayed()) {
       log.info("event {} is relayed already locally, skip", event.getId());
       return;
     }
-    eventPublisher.publishEvent(event.getPayload());
+    applicationEventPublisher.publishEvent(event.getPayload());
     event.setLocalReplayed(true);
     eventStore.confirmReplayed(event);
   }
 
-  Event.EventBuilder baseEventBuilder(String groupId, UUID receiverId, Object payload) {
+  private Event.EventBuilder baseEventBuilder(String groupId, UUID receiverId, Object payload) {
     UserDto currentUser =
         Optional.ofNullable(siglusAuthenticationHelper.getCurrentUser())
             .orElseThrow(() -> new NotFoundException(MessageKeys.ERROR_USER_NOT_FOUND));
@@ -74,6 +73,7 @@ public class EventPublisher {
         .senderId(currentUser.getHomeFacilityId())
         .receiverId(receiverId)
         .groupId(groupId)
-        .payload(payload);
+        .payload(payload)
+        .localReplayed(true); // marked as replayed at sender side
   }
 }

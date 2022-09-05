@@ -32,6 +32,8 @@ public class SiglusDateHelper {
 
   public static final String YEAR_MONTH_DATE = "yyyyMMdd";
 
+  public static final String DATE_MONTH_YEAR = "dd/MM/yyyy";
+
   @Autowired
   private Clock clock;
 
@@ -59,5 +61,10 @@ public class SiglusDateHelper {
     LocalDate now = LocalDate.now(clock);
     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM-yyyy");
     return now.format(formatter);
+  }
+
+  public static String getFormatDate(LocalDate date, String formatPattern) {
+    DateTimeFormatter formatter = DateTimeFormatter.ofPattern(formatPattern);
+    return date.format(formatter);
   }
 }

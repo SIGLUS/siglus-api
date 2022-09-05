@@ -15,20 +15,19 @@
 
 package org.siglus.siglusapi.task;
 
-import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import net.javacrumbs.shedlock.core.SchedulerLock;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.siglus.siglusapi.service.task.report.HistoricalDataPersistentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @RequiredArgsConstructor
 @Service
 public class HistoricalDataPersistentDataTask {
 
-  @Autowired
-  private HistoricalDataPersistentService historicalDataPersistentService;
+  @Autowired private HistoricalDataPersistentService historicalDataPersistentService;
 
   @Scheduled(cron = "${report.historical.data.cron}", zone = "${time.zoneId}")
   @SchedulerLock(name = "historical_data_refresh_monthly")

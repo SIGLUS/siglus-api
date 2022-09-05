@@ -18,16 +18,17 @@ package org.siglus.siglusapi.localmachine.agent;
 import static org.springframework.util.ObjectUtils.isEmpty;
 
 import java.util.List;
-import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.javacrumbs.shedlock.core.SchedulerLock;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.siglus.siglusapi.localmachine.Event;
 import org.siglus.siglusapi.localmachine.EventImporter;
+import org.siglus.siglusapi.localmachine.Machine;
 import org.siglus.siglusapi.localmachine.eventstore.EventStore;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 @Component
 @RequiredArgsConstructor
@@ -37,11 +38,17 @@ public class Synchronizer {
   private final EventStore localEventStore;
   private final OnlineWebClient webClient;
   private final EventImporter eventImporter;
+  private final Machine machine;
 
   @Scheduled(fixedRate = 60 * 1000, initialDelay = 60 * 1000)
   @SchedulerLock(name = "localmachine_synchronizer")
   @Transactional
   public void scheduledSync() {
+    log.info("start scheduled synchronization with online web");
+    if (machine.fetchSupportedFacilityIds().isEmpty()) {
+      log.info("no need to sync");
+      return;
+    }
     this.sync();
   }
 
@@ -49,6 +56,7 @@ public class Synchronizer {
   public void sync() {
     push();
     pull();
+    // TODO: 2022/8/26 report local replay info to web for Ops
   }
 
   @Transactional

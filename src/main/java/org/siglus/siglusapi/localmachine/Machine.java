@@ -15,19 +15,38 @@
 
 package org.siglus.siglusapi.localmachine;
 
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
+import java.util.UUID;
+import javax.annotation.PostConstruct;
 import lombok.Getter;
-import org.springframework.beans.factory.annotation.Value;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.siglus.siglusapi.localmachine.repository.AgentInfoRepository;
 import org.springframework.stereotype.Component;
 
 @Component
+@RequiredArgsConstructor
+@Slf4j
 public class Machine {
-  private static final String ONLINE_WEB_FACILITY_CODE = "00000000-0000-0000-0000-000000000000";
+  private final AgentInfoRepository agentInfoRepository;
 
-  @Value("${machine.facility.id:00000000-0000-0000-0000-000000000000}")
-  @Getter
-  private String localFacilityId;
+  @Getter private UUID machineId;
 
-  public boolean isOnlineWeb() {
-    return ONLINE_WEB_FACILITY_CODE.equals(localFacilityId);
+  public Set<UUID> fetchSupportedFacilityIds() {
+    return new HashSet<>(agentInfoRepository.findRegisteredFacilityIds());
+  }
+
+  @PostConstruct
+  public void ensureMachineInfoExists() {
+    machineId = agentInfoRepository.getMachineId();
+    if (Objects.nonNull(machineId)) {
+      return;
+    }
+    UUID tempMachineId = UUID.randomUUID();
+    log.info("touch machine id:{}", tempMachineId);
+    agentInfoRepository.touchMachineId(tempMachineId);
+    machineId = tempMachineId;
   }
 }

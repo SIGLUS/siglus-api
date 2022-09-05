@@ -96,6 +96,8 @@ public class FieldConstants {
 
   public static final String CAPITAL_ISSUE = "ISSUE";
 
+  public static final String CAPITAL_ADJUSTMENT = "ADJUSTMENT";
+
   public static final String ADJUSTMENT = "adjustment";
 
   public static final String INVENTORY = "INVENTORY";

@@ -16,12 +16,12 @@
 package org.siglus.siglusapi.task;
 
 import java.time.LocalDate;
-import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import net.javacrumbs.shedlock.core.SchedulerLock;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.siglus.siglusapi.service.task.report.TracerDrugReportService;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @RequiredArgsConstructor
 @Service
@@ -33,6 +33,7 @@ public class TracerDrugPersistentDataTask {
   @SchedulerLock(name = "tracer_drug_report")
   @Transactional
   public void refreshForTracerDrugReport() {
-    tracerDrugReportService.refreshTracerDrugPersistentData(LocalDate.now().toString(), LocalDate.now().toString());
+    tracerDrugReportService.refreshTracerDrugPersistentData(
+        LocalDate.now().toString(), LocalDate.now().toString());
   }
 }

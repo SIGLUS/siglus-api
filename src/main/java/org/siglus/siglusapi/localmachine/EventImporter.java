@@ -36,7 +36,7 @@ public abstract class EventImporter {
 
   public void importEvents(List<Event> events) {
     List<Event> acceptedEvents = events.stream().filter(this::accept).collect(Collectors.toList());
-    acceptedEvents.forEach(it -> it.setLocalReplayed(false));
+    resetStatus(acceptedEvents);
     List<Event> newAdded = eventStore.importAllGetNewAdded(acceptedEvents);
     replay(newAdded);
   }
@@ -56,7 +56,6 @@ public abstract class EventImporter {
     // |event 4|--->[group event M, group event M-1] (dependent events are not ready)
     // |.......|
     // |event N|
-    checkAllEventsBelongToOneSender(events);
     Map<String, List<Event>> eventGroups =
         events.stream().collect(groupingBy(Event::getGroupId, LinkedHashMap::new, toList()));
     List<Event> defaultGroup = eventGroups.remove(null);
@@ -64,10 +63,8 @@ public abstract class EventImporter {
     eventGroups.forEach((groupId, value) -> replayer.playGroupEvents(groupId));
   }
 
-  private void checkAllEventsBelongToOneSender(List<Event> events) {
-    long senderCount = events.stream().map(Event::getSenderId).distinct().count();
-    if (senderCount > 1) {
-      throw new IllegalStateException("events are raised by different senders");
-    }
+  private void resetStatus(List<Event> acceptedEvents) {
+    // The local replayed flag is private, don't trust external ones, so reset it here.
+    acceptedEvents.forEach(it -> it.setLocalReplayed(false));
   }
 }

@@ -13,17 +13,13 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.localmachine;
+package org.siglus.siglusapi.localmachine.repository;
 
-import org.siglus.siglusapi.Application;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.FilterType;
+import java.util.Optional;
+import java.util.UUID;
+import org.siglus.siglusapi.localmachine.domain.ActivationCode;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-@Configuration
-@ComponentScan(basePackageClasses = {EventPublisher.class},
-    excludeFilters = {@ComponentScan.Filter(type = FilterType.CUSTOM, classes = ComponentScanCustomFilter.class),
-        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = Application.class)}
-)
-public class LocalMachineTestConfig {
+public interface ActivationCodeRepository extends JpaRepository<ActivationCode, UUID> {
+  Optional<ActivationCode> findFirstByFacilityCodeAndActivationCode(String facilityCode, String activationCode);
 }

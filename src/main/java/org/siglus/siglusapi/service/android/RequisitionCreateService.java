@@ -94,7 +94,11 @@ import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.domain.requisition.StatusChange;
 import org.openlmis.requisition.domain.requisition.VersionEntityReference;
 import org.openlmis.requisition.dto.ApprovedProductDto;
+import org.openlmis.requisition.dto.BasicProcessingPeriodDto;
+import org.openlmis.requisition.dto.BasicProgramDto;
+import org.openlmis.requisition.dto.BasicRequisitionDto;
 import org.openlmis.requisition.dto.BasicRequisitionTemplateDto;
+import org.openlmis.requisition.dto.MinimalFacilityDto;
 import org.openlmis.requisition.dto.ObjectReferenceDto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.dto.SupervisoryNodeDto;
@@ -154,6 +158,7 @@ import org.siglus.siglusapi.repository.RegimenRepository;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.SyncUpHashRepository;
+import org.siglus.siglusapi.service.SiglusNotificationService;
 import org.siglus.siglusapi.service.SiglusOrderableService;
 import org.siglus.siglusapi.service.SiglusProgramAdditionalOrderableService;
 import org.siglus.siglusapi.service.SiglusProgramService;
@@ -195,6 +200,7 @@ public class RequisitionCreateService {
   private final SiglusProgramAdditionalOrderableService additionalOrderableService;
   private final SiglusFacilityReferenceDataService siglusFacilityReferenceDataService;
   private final RequisitionTemplateRepository requisitionTemplateRepository;
+  private final SiglusNotificationService siglusNotificationService;
 
   @Transactional
   @Validated(PerformanceSequence.class)
@@ -217,6 +223,8 @@ public class RequisitionCreateService {
         .referenceId(requisition.getId())
         .build();
     syncUpHashRepository.save(syncUpHashDomain);
+    log.info("generate notification for requisition: {}", requisition.getId());
+    siglusNotificationService.postApprove(buildBaseRequisitionDto(requisition));
   }
 
   private Requisition initiateRequisition(RequisitionCreateRequest request, UserDto user) {
@@ -868,6 +876,23 @@ public class RequisitionCreateService {
           availableProducts.add(reference);
         });
     dto.setAvailableProducts(availableProducts);
+  }
+
+  private BasicRequisitionDto buildBaseRequisitionDto(Requisition requisition) {
+    BasicRequisitionDto basicRequisitionDto = new BasicRequisitionDto();
+    basicRequisitionDto.setId(requisition.getId());
+    basicRequisitionDto.setStatus(requisition.getStatus());
+    MinimalFacilityDto facility = new MinimalFacilityDto();
+    facility.setId(requisition.getFacilityId());
+    basicRequisitionDto.setFacility(facility);
+    BasicProgramDto program = new BasicProgramDto();
+    program.setId(requisition.getProgramId());
+    basicRequisitionDto.setProgram(program);
+    basicRequisitionDto.setEmergency(requisition.getEmergency());
+    BasicProcessingPeriodDto processingPeriod = new BasicProcessingPeriodDto();
+    processingPeriod.setId(requisition.getProcessingPeriodId());
+    basicRequisitionDto.setProcessingPeriod(processingPeriod);
+    return basicRequisitionDto;
   }
 }
 

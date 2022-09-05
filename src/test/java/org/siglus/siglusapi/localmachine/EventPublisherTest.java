@@ -25,14 +25,28 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.localmachine.eventstore.EventRecord;
 import org.siglus.siglusapi.localmachine.eventstore.EventRecordRepository;
+import org.siglus.siglusapi.localmachine.eventstore.EventStore;
+import org.siglus.siglusapi.localmachine.eventstore.PayloadSerializer;
+import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.junit4.SpringRunner;
 
-public class EventPublisherTest extends LocalMachineIntegrationTest {
+@SpringBootTest(
+    classes = {
+      EventPublisher.class,
+      EventStore.class,
+      PayloadSerializer.class,
+    })
+@RunWith(SpringRunner.class)
+public class EventPublisherTest {
+  @MockBean protected SiglusAuthenticationHelper authenticationHelper;
   @MockBean protected EventRecordRepository eventRecordRepository;
   @Autowired private EventPublisher eventPublisher;
 

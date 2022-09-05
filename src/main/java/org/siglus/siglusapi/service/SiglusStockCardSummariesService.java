@@ -483,9 +483,8 @@ public class SiglusStockCardSummariesService {
       stockCardSummaryDto.setStockOnHand(stockCardSummaryV2Dto.getStockOnHand());
 
       Set<StockCardDetailsDto> stockCardDetailsDtos = new HashSet<>();
-
       stockCardSummaryV2Dto.getCanFulfillForMe().forEach(canFulfillForMeEntryDto -> {
-        if (canFulfillForMeEntryDto.getStockOnHand() != 0) {
+        if (canFulfillForMeEntryDto.getLot() != null && canFulfillForMeEntryDto.getStockOnHand() != 0) {
           StockCardDetailsDto fulfill = StockCardDetailsDto.builder()
               .orderable(getOrderableFromObjectReference(orderableDtos, canFulfillForMeEntryDto.getOrderable()))
               .lot(getLotFromObjectReference(lotDtos, canFulfillForMeEntryDto.getLot()))
@@ -512,8 +511,7 @@ public class SiglusStockCardSummariesService {
       OrderableDto orderableDto = getOrderableFromObjectReference(orderableDtos, stockCardSummaryV2Dto.getOrderable());
       stockCardSummaryDto.setOrderable(orderableDto);
       stockCardSummaryDto.setStockOnHand(stockCardSummaryV2Dto.getStockOnHand());
-
-      Set<StockCardDetailsWithLocationDto> stockCardDetailsDtos = new HashSet<>();
+      List<StockCardDetailsWithLocationDto> stockCardDetailsDtos = new ArrayList<>();
       Map<UUID, List<LotLocationSohDto>> lotLocationMaps = lotLocationSohDtoList.stream()
           .collect(Collectors.groupingBy(LotLocationSohDto::getLotId));
       stockCardSummaryV2Dto.getCanFulfillForMe().forEach(canFulfillForMeEntryDto -> {

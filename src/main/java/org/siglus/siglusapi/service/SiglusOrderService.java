@@ -27,6 +27,8 @@ import static org.siglus.siglusapi.constant.FieldConstants.PROGRAM_ID;
 import static org.siglus.siglusapi.constant.FieldConstants.RIGHT_NAME;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_NO_PERIOD_MATCH;
+import static org.siglus.siglusapi.util.SiglusDateHelper.DATE_MONTH_YEAR;
+import static org.siglus.siglusapi.util.SiglusDateHelper.getFormatDate;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -68,6 +70,7 @@ import org.openlmis.fulfillment.web.util.OrderDto;
 import org.openlmis.fulfillment.web.util.OrderDtoBuilder;
 import org.openlmis.fulfillment.web.util.OrderLineItemDto;
 import org.openlmis.fulfillment.web.util.OrderObjectReferenceDto;
+import org.openlmis.referencedata.domain.Facility;
 import org.openlmis.referencedata.domain.Orderable;
 import org.openlmis.referencedata.domain.ProcessingPeriod;
 import org.openlmis.requisition.domain.requisition.ApprovedProductReference;
@@ -102,6 +105,7 @@ import org.siglus.siglusapi.repository.dto.RequisitionOrderDto;
 import org.siglus.siglusapi.service.client.SiglusProcessingPeriodReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
 import org.siglus.siglusapi.web.response.BasicOrderExtensionResponse;
+import org.siglus.siglusapi.web.response.OrderPickPackResponse;
 import org.siglus.siglusapi.web.response.OrderSuggestedQuantityResponse;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -405,6 +409,22 @@ public class SiglusOrderService {
         .build();
   }
 
+  public OrderPickPackResponse getOrderPickPackResponse(UUID orderId) {
+    Order order = getOrder(orderId);
+
+    List<Facility> facilities = siglusFacilityRepository.findAll(
+        Lists.newArrayList(order.getReceivingFacilityId(), order.getSupplyingFacilityId()));
+    Map<UUID, String> facilityIdToName = facilities.stream()
+        .collect(Collectors.toMap(Facility::getId, Facility::getName));
+
+    return OrderPickPackResponse.builder()
+        .generatedDate(getFormatDate(LocalDate.now(), DATE_MONTH_YEAR))
+        .orderCode(order.getOrderCode())
+        .clientFacility(facilityIdToName.get(order.getReceivingFacilityId()))
+        .supplierFacility(facilityIdToName.get(order.getSupplyingFacilityId()))
+        .build();
+  }
+
   private Map<UUID, BigDecimal> getOrderableIdToSuggestedQuantity(Order order, List<ProcessingPeriod> periods) {
     return ORDER_STATUS_AFTER_START_FULFILL.contains(order.getStatus())
         ? getOrderableIdToSuggestedQuantityFromDb(order)
@@ -417,7 +437,7 @@ public class SiglusOrderService {
         lineItemIds);
     Map<UUID, BigDecimal> orderableIdToSuggestedQuantity = Maps.newHashMapWithExpectedSize(dtos.size());
     dtos.forEach(dto -> orderableIdToSuggestedQuantity.put(dto.getOrderableId(),
-        toBigDecimalRoundDown(dto.getSuggestedQuantity())));
+        Objects.isNull(dto.getSuggestedQuantity()) ? null : toBigDecimalRoundDown(dto.getSuggestedQuantity())));
     return orderableIdToSuggestedQuantity;
   }
 
@@ -496,15 +516,20 @@ public class SiglusOrderService {
 
   private void saveSuggestedQuantity(Order order, Map<UUID, BigDecimal> orderableIdToSuggestedQuantity) {
     Set<UUID> lineItemIds = getLineItemIds(order);
-    List<OrderLineItemExtension> lineItemExtensions = lineItemExtensionRepository.findByOrderLineItemIdIn(lineItemIds);
     Map<UUID, UUID> lineItemIdToOrderableId = order.getOrderLineItems().stream()
         .collect(Collectors.toMap(OrderLineItem::getId, e -> e.getOrderable().getId()));
-    lineItemExtensions.forEach(lineItemExtension ->
-        lineItemExtension.setSuggestedQuantity(
-            orderableIdToSuggestedQuantity.get(lineItemIdToOrderableId.get(lineItemExtension.getOrderLineItemId())))
-    );
-    log.info("save lineItemExtensions, size={}", lineItemExtensions.size());
-    lineItemExtensionRepository.save(lineItemExtensions);
+    List<OrderLineItemExtension> extensions = Lists.newArrayListWithExpectedSize(lineItemIds.size());
+    lineItemIds.forEach(lineItemId -> {
+      OrderLineItemExtension extension = OrderLineItemExtension.builder()
+          .orderId(order.getId())
+          .orderLineItemId(lineItemId)
+          .partialFulfilledQuantity(0L)
+          .suggestedQuantity(orderableIdToSuggestedQuantity.get(lineItemIdToOrderableId.get(lineItemId)))
+          .build();
+      extensions.add(extension);
+    });
+    log.info("save OrderLineItemExtensions, size={}", extensions.size());
+    lineItemExtensionRepository.save(extensions);
   }
 
   private Set<UUID> getOrderOrderableIds(Order order) {
@@ -822,8 +847,12 @@ public class SiglusOrderService {
                 orderLineItemDto -> orderLineItemDto));
 
     List<OrderLineItemExtension> extensions = new ArrayList<>();
+    Map<UUID, OrderLineItemExtension> existedLineItemIdToExtension = lineItemExtensionRepository.findByOrderId(
+        orderDto.getId()).stream().collect(Collectors.toMap(OrderLineItemExtension::getOrderLineItemId, e -> e));
     for (OrderLineItem.Importer importer : orderDto.getOrderLineItems()) {
-      OrderLineItemExtension extension = new OrderLineItemExtension();
+      OrderLineItemExtension extension = Objects.isNull(existedLineItemIdToExtension.get(importer.getId()))
+          ? new OrderLineItemExtension()
+          : existedLineItemIdToExtension.get(importer.getId());
       extension.setOrderId(orderDto.getId());
       extension.setOrderLineItemId(importer.getId());
       extension.setPartialFulfilledQuantity(

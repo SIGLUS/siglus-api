@@ -246,6 +246,23 @@ traits:
 /api:
 
   /siglusapi:
+    /localmachine:
+      /server:
+        /agents:
+          post:
+            description: activate a localmachine agent on onlineweb
+        /events:
+          post:
+            description: upload events to onlineweb
+        /peeringEvents:
+          get:
+            description: pull peering events from onlineweb
+        /ack:
+          post:
+            description: confirm events synced by the local agent
+      /agent:
+        put:
+          description: local api for localmachine control plane to activate the machine
     /location/physicalInventories:
       post:
         is: [ secured ]
@@ -329,6 +346,19 @@ traits:
           responses:
             200:
               description: Facility information successfully upload
+      /{facilityId}/upgradeToWeb:
+        uriParameters:
+          facilityId:
+            displayName: facilityId
+            type: string
+            required: true
+            repeat: false
+        get:
+          is: [ secured ]
+          description: Upgrade android facility to web facility
+          responses:
+            200:
+              description: Upgrade success
       /{facilityId}/locations:
         uriParameters:
           facilityId:
@@ -392,14 +422,14 @@ traits:
 
     /locations:
       displayName: get location and lot Association relationship
-      get:
+      post:
         is: [ secured ]
         body:
           application/json:
-            schema: arrayOfStrings
+            schema: arrayOfString
         responses:
           200:
-            description: GET success
+            description: GET location and lot Association relationship success
       /facility:
         get:
           is: [ secured ]
@@ -2639,6 +2669,35 @@ traits:
             body:
               application/json:
                 schema: localizedMessage
+    /orders/{id}/pickPackInfo:
+      uriParameters:
+        id:
+          displayName: id
+          type: string
+          required: true
+          repeat: false
+      get:
+        is: [ secured ]
+        description: get order by id
+        responses:
+          200:
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+                schema: orderDto
+          403:
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+                schema: localizedMessage
+          404:
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+                schema: localizedMessagepickPackInfo
       /print:
         get:
           is: [ secured ]

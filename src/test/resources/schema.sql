@@ -19,3 +19,17 @@ CREATE TABLE IF NOT EXISTS localmachine.events (
 );
 CREATE UNIQUE INDEX IF NOT EXISTS localmachine_sender_localsequencenumber on localmachine.events(senderid, localsequencenumber);
 CREATE UNIQUE INDEX IF NOT EXISTS localmachine_group_seq on localmachine.events(groupid, groupsequencenumber);
+
+CREATE TABLE IF NOT EXISTS localmachine.agents (
+    machineid UUID NOT NULL,
+    facilityid UUID NOT NULL,
+    facilitycode VARCHAR(255) NULL,
+    privatekey TEXT NULL,
+    publickey TEXT NULL,
+    activationcode TEXT NULL,
+    activatedat TIMESTAMP WITH TIME ZONE
+);
+CREATE TABLE IF NOT EXISTS localmachine.machine (
+    touched  BOOL NOT NULL DEFAULT TRUE,
+    id UUID NOT NULL PRIMARY KEY
+);

@@ -19,18 +19,26 @@ import lombok.RequiredArgsConstructor;
 import org.siglus.siglusapi.localmachine.EventImporter;
 import org.siglus.siglusapi.localmachine.auth.MachineToken;
 import org.siglus.siglusapi.localmachine.eventstore.EventStore;
+import org.siglus.siglusapi.localmachine.server.ActivationService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/siglusapi/localmachine")
+@RequestMapping("/api/siglusapi/localmachine/server")
 public class OnlineWebController {
   private final EventImporter importer;
   private final EventStore eventStore;
+  private final ActivationService activationService;
+
+  @PostMapping("/agents")
+  public void activateAgent(RemoteActivationRequest request) {
+    activationService.activate(request);
+  }
 
   @PostMapping("/events")
   public void syncEvents(@Validated SyncRequest request) {
@@ -44,7 +52,8 @@ public class OnlineWebController {
   }
 
   @PostMapping("/ack")
-  public void confirmReceived(@Validated AckRequest request, MachineToken authentication) {
+  public void confirmReceived(
+      @RequestBody @Validated AckRequest request, MachineToken authentication) {
     eventStore.confirmReceived(authentication.getFacilityId(), request.getEventIds());
   }
 }

@@ -13,23 +13,17 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.localmachine.server.android;
+package org.siglus.siglusapi.localmachine.webapi;
 
-import java.util.UUID;
-import lombok.Builder;
-import lombok.Getter;
-import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.hibernate.validator.constraints.NotBlank;
 
-@Builder
-@Getter
-public class AndroidRequisitionSynced {
-  private final UUID facilityId;
-  private final UUID userId;
-  private final RequisitionCreateRequest request;
-
-  public AndroidRequisitionSynced(UUID facilityId, UUID userId, RequisitionCreateRequest request) {
-    this.facilityId = facilityId;
-    this.userId = userId;
-    this.request = request;
-  }
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class LocalActivationRequest {
+  @NotBlank private String activationCode;
+  @NotBlank private String facilityCode;
 }

@@ -15,48 +15,43 @@
 
 package org.siglus.siglusapi.localmachine.auth;
 
-import static org.siglus.siglusapi.localmachine.auth.AuthenticationArgumentResolver.LOCAL_MACHINE_token;
+import static org.siglus.siglusapi.localmachine.auth.AuthenticationArgumentResolver.LOCAL_MACHINE_TOKEN;
 import static org.springframework.util.StringUtils.isEmpty;
 
 import java.util.Optional;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.siglus.siglusapi.localmachine.CommonConstants;
-import org.siglus.siglusapi.localmachine.server.AgentInfo;
-import org.siglus.siglusapi.localmachine.server.AgentInfoRepository;
+import org.siglus.siglusapi.localmachine.domain.AgentInfo;
+import org.siglus.siglusapi.localmachine.repository.AgentInfoRepository;
+import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.stereotype.Component;
-import org.springframework.web.servlet.handler.HandlerInterceptorAdapter;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class AuthInterceptor extends HandlerInterceptorAdapter {
+public class MachineTokenMatcher implements RequestMatcher {
   private final AgentInfoRepository agentInfoRepository;
 
   @Override
-  public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
-      throws Exception {
-    if (!supported(request)) {
-      return true;
+  public boolean matches(HttpServletRequest request) {
+    try {
+      String tokenValue = mustGetTokenValue(request);
+      MachineToken machineToken = authenticate(tokenValue);
+      bindRequestAttribute(request, machineToken);
+    } catch (IllegalAccessException e) {
+      log.error("illegal access", e);
+      return false;
     }
-    String tokenValue = mustGetTokenValue(request);
-    MachineToken machineToken = authenticate(tokenValue);
-    bindRequestAttribute(request, machineToken);
     return true;
-  }
-
-  private boolean supported(HttpServletRequest request) {
-    String version = request.getHeader(CommonConstants.VERSION);
-    return !isEmpty(version);
   }
 
   private String mustGetTokenValue(HttpServletRequest request) throws IllegalAccessException {
     String tokenValue = request.getHeader(CommonConstants.ACCESS_TOKEN);
     if (isEmpty(tokenValue)) {
-      throw new IllegalAccessException("access token is required");
+      throw new IllegalAccessException("machine access token is required");
     }
     return tokenValue;
   }
@@ -65,22 +60,22 @@ public class AuthInterceptor extends HandlerInterceptorAdapter {
     MachineToken machineToken = MachineToken.parse(tokenValue);
     AgentInfo agentInfo = mustGetAgentInfo(machineToken);
     if (!machineToken.verify(agentInfo.getPublicKey())) {
-      throw new IllegalAccessException("invalid token");
+      throw new IllegalAccessException("invalid machine token");
     }
     return machineToken;
   }
 
   private AgentInfo mustGetAgentInfo(MachineToken machineToken) throws IllegalAccessException {
-    UUID agentId = machineToken.getAgentId();
+    UUID machineId = machineToken.getMachineId();
     UUID facilityId = machineToken.getFacilityId();
-    log.info(String.format("auth check, agentId = %s, facilityId=%s", agentId, facilityId));
+    log.info(String.format("auth check, machineId = %s, facilityId=%s", machineId, facilityId));
     return Optional.ofNullable(
-            agentInfoRepository.findOneByAgentIdAndFacilityId(agentId, facilityId))
+            agentInfoRepository.findOneByMachineIdAndFacilityId(machineId, facilityId))
         .orElseThrow(
-            () -> new IllegalAccessException("agentInfo not exists. agentId = " + agentId));
+            () -> new IllegalAccessException("agentInfo not exists. machineId = " + machineId));
   }
 
   private void bindRequestAttribute(HttpServletRequest request, MachineToken machineToken) {
-    request.setAttribute(LOCAL_MACHINE_token, machineToken);
+    request.setAttribute(LOCAL_MACHINE_TOKEN, machineToken);
   }
 }
