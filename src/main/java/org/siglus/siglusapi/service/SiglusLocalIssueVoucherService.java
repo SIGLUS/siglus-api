@@ -20,8 +20,8 @@ import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_ORDER_CODE_EXISTS;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,12 +29,11 @@ import org.openlmis.fulfillment.domain.OrderStatus;
 import org.openlmis.fulfillment.service.OrderSearchParams;
 import org.openlmis.fulfillment.web.OrderController;
 import org.openlmis.fulfillment.web.util.BasicOrderDto;
-import org.siglus.siglusapi.domain.LocalReceiptVoucher;
-import org.siglus.siglusapi.dto.LocalReceiptVoucherDto;
+import org.siglus.siglusapi.domain.LocalIssueVoucher;
+import org.siglus.siglusapi.dto.LocalIssueVoucherDto;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.exception.BusinessDataException;
-import org.siglus.siglusapi.exception.ValidationMessageException;
-import org.siglus.siglusapi.repository.SiglusLocalReceiptVoucherRepository;
+import org.siglus.siglusapi.repository.SiglusLocalIssueVoucherRepository;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -42,24 +41,23 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class SiglusLocalReceiptVoucherService {
+public class SiglusLocalIssueVoucherService {
 
   private final OrderController orderController;
 
   private final SiglusAuthenticationHelper authenticationHelper;
 
-  private final SiglusLocalReceiptVoucherRepository localReceiptVoucherRepository;
+  private final SiglusLocalIssueVoucherRepository localReceiptVoucherRepository;
 
-  public LocalReceiptVoucherDto createLocalReceiptVoucher(LocalReceiptVoucherDto dto) {
-    validateLocalReceiptVoucher(dto);
+  public LocalIssueVoucherDto createLocalIssueVoucher(LocalIssueVoucherDto dto) {
     checkOrderCodeExists(dto);
-    LocalReceiptVoucher localReceiptVoucher = LocalReceiptVoucher.createLocalReceiptVoucher(dto);
-    log.info("save local receipt voucher");
-    LocalReceiptVoucher savedLocalReceiptVoucher = localReceiptVoucherRepository.save(localReceiptVoucher);
-    return LocalReceiptVoucherDto.from(savedLocalReceiptVoucher);
+    LocalIssueVoucher localIssueVoucher = LocalIssueVoucher.createLocalReceiptVoucher(dto);
+    log.info("save local receipt voucher with requestingFacilityId {}", dto.getRequestingFacilityId());
+    LocalIssueVoucher savedLocalIssueVoucher = localReceiptVoucherRepository.save(localIssueVoucher);
+    return LocalIssueVoucherDto.from(savedLocalIssueVoucher);
   }
 
-  private void checkOrderCodeExists(LocalReceiptVoucherDto dto) {
+  private void checkOrderCodeExists(LocalIssueVoucherDto dto) {
     Set<String> status = new HashSet(
         Arrays.asList(OrderStatus.TRANSFER_FAILED.toString(), OrderStatus.SHIPPED.toString(),
             OrderStatus.RECEIVED.toString(), OrderStatus.IN_ROUTE.toString(),
@@ -74,18 +72,15 @@ public class SiglusLocalReceiptVoucherService {
     Set<String> orderCode = orderController.searchOrders(params, pageRequest).getContent().stream()
         .map(BasicOrderDto::getOrderCode).collect(
             Collectors.toSet());
-    List<LocalReceiptVoucher> localReceiptVouchers = localReceiptVoucherRepository
+    List<LocalIssueVoucher> localIssueVouchers = localReceiptVoucherRepository
         .findByOrderCodeAndProgramIdAndRequestingFacilityIdAndSupplyingFacilityId(
             dto.getOrderCode(), dto.getProgramId(), dto.getRequestingFacilityId(), dto.getSupplyingFacilityId());
-    if (orderCode.contains(dto.getOrderCode()) || !localReceiptVouchers.isEmpty()) {
+    if (orderCode.contains(dto.getOrderCode()) || !localIssueVouchers.isEmpty()) {
       throw new BusinessDataException(new Message(ERROR_ORDER_CODE_EXISTS), "order code already exists");
     }
   }
 
-  private void validateLocalReceiptVoucher(LocalReceiptVoucherDto dto) {
-    if (Objects.isNull(dto.getOrderCode()) || Objects.isNull(dto.getStatus()) || Objects.isNull(dto.getProgramId())
-        || Objects.isNull(dto.getRequestingFacilityId()) || Objects.isNull(dto.getSupplyingFacilityId())) {
-      throw new ValidationMessageException("Validation failed");
-    }
+  public void deleteLocalIssueVoucher(UUID id) {
+
   }
 }

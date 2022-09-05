@@ -15,26 +15,38 @@
 
 package org.siglus.siglusapi.web;
 
+import static org.springframework.http.HttpStatus.NO_CONTENT;
+
+import java.util.UUID;
 import lombok.AllArgsConstructor;
-import org.siglus.siglusapi.dto.LocalReceiptVoucherDto;
-import org.siglus.siglusapi.service.SiglusLocalReceiptVoucherService;
+import org.siglus.siglusapi.dto.LocalIssueVoucherDto;
+import org.siglus.siglusapi.service.SiglusLocalIssueVoucherService;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @AllArgsConstructor
-@RequestMapping("/api/siglusapi/localReceiptVoucher")
-public class SiglusLocalReceiptVoucherController {
+@RequestMapping("/api/siglusapi/localIssueVouchers")
+public class SiglusLocalIssueVoucherController {
 
-  private final SiglusLocalReceiptVoucherService localReceiptVoucherService;
+  private final SiglusLocalIssueVoucherService localIssueVoucherService;
 
   @PostMapping()
-  public LocalReceiptVoucherDto createLocalReceiptVoucher(@RequestBody LocalReceiptVoucherDto dto) {
+  public LocalIssueVoucherDto createLocalIssueVoucher(@Validated @RequestBody LocalIssueVoucherDto dto) {
 
-    return localReceiptVoucherService.createLocalReceiptVoucher(dto);
+    return localIssueVoucherService.createLocalIssueVoucher(dto);
 
   }
 
+  @DeleteMapping("/{id}")
+  @ResponseStatus(NO_CONTENT)
+  public void deleteLocalIssueVoucher(@PathVariable UUID id) {
+    localIssueVoucherService.deleteLocalIssueVoucher(id);
+  }
 }

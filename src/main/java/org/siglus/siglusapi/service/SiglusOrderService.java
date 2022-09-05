@@ -90,7 +90,7 @@ import org.siglus.common.domain.OrderExternal;
 import org.siglus.common.domain.ProcessingPeriodExtension;
 import org.siglus.common.repository.OrderExternalRepository;
 import org.siglus.common.repository.ProcessingPeriodExtensionRepository;
-import org.siglus.siglusapi.domain.LocalReceiptVoucher;
+import org.siglus.siglusapi.domain.LocalIssueVoucher;
 import org.siglus.siglusapi.domain.OrderLineItemExtension;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.dto.OrderStatusDto;
@@ -102,7 +102,7 @@ import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.OrderableRepository;
 import org.siglus.siglusapi.repository.PodSubDraftRepository;
 import org.siglus.siglusapi.repository.SiglusFacilityRepository;
-import org.siglus.siglusapi.repository.SiglusLocalReceiptVoucherRepository;
+import org.siglus.siglusapi.repository.SiglusLocalIssueVoucherRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.repository.StockManagementRepository;
 import org.siglus.siglusapi.repository.dto.OrderSuggestedQuantityDto;
@@ -110,6 +110,7 @@ import org.siglus.siglusapi.repository.dto.RequisitionOrderDto;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusProcessingPeriodReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
+import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.web.response.BasicOrderExtensionResponse;
 import org.siglus.siglusapi.web.response.OrderPickPackResponse;
 import org.siglus.siglusapi.web.response.OrderSuggestedQuantityResponse;
@@ -140,6 +141,10 @@ public class SiglusOrderService {
 
   @Autowired
   private AuthenticationHelper authenticationHelper;
+
+  @Autowired
+  private SiglusAuthenticationHelper siglusAuthenticationHelper;
+
 
   @Autowired
   private SiglusArchiveProductService siglusArchiveProductService;
@@ -214,7 +219,7 @@ public class SiglusOrderService {
   private SiglusFacilityRepository siglusFacilityRepository;
 
   @Autowired
-  private SiglusLocalReceiptVoucherRepository localReceiptVoucherRepository;
+  private SiglusLocalIssueVoucherRepository localReceiptVoucherRepository;
 
   @Autowired
   private SiglusRequisitionRepository siglusRequisitionRepository;
@@ -243,18 +248,18 @@ public class SiglusOrderService {
 
   public Page<BasicOrderExtensionResponse> searchOrdersWithSubDraftStatus(OrderSearchParams params, Pageable pageable) {
     Page<BasicOrderDto> basicOrderDtoPage = orderController.searchOrders(params, pageable);
-    List<LocalReceiptVoucher> localReceiptVouchers = localReceiptVoucherRepository
+    List<LocalIssueVoucher> localIssueVouchers = localReceiptVoucherRepository
         .findByProgramIdAndRequestingFacilityId(params.getProgramId(), params.getRequestingFacilityId());
-    if (!basicOrderDtoPage.hasContent() && localReceiptVouchers.isEmpty()) {
+    if (!basicOrderDtoPage.hasContent() && localIssueVouchers.isEmpty()) {
       return new PageImpl<>(Lists.newArrayList(), pageable, basicOrderDtoPage.getTotalElements());
     }
 
     List<BasicOrderExtensionResponse> localBasicOrderExtensionResponses = getLocalBasicOrderExtensionResponses(
-        localReceiptVouchers);
+        localIssueVouchers);
 
     List<BasicOrderDto> basicOrderDtos = basicOrderDtoPage.getContent();
-    List<BasicOrderExtensionResponse> electronicBasicOrderExtensionResponses = getElectronicBasicOrderExtensionResponses(
-        basicOrderDtos);
+    List<BasicOrderExtensionResponse> electronicBasicOrderExtensionResponses =
+        getElectronicBasicOrderExtensionResponses(basicOrderDtos);
 
     List<BasicOrderExtensionResponse> basicOrderExtensionResponses = Stream
         .concat(localBasicOrderExtensionResponses.stream(), electronicBasicOrderExtensionResponses.stream())
@@ -268,9 +273,12 @@ public class SiglusOrderService {
     boolean isConsistent = params.getRequestingFacilityId()
         .equals(basicOrderExtensionResponses.get(0).getRequestingFacility().getId());
 
+    boolean canDeleteLocalIssueVoucher = siglusAuthenticationHelper.isTheCurrentUserCanMergeOrDeleteSubDrafts();
+
     for (BasicOrderExtensionResponse response : basicOrderExtensionResponses) {
       response.setHasSubDraft(orderIdsWithSubDraft.contains(response.getId()));
-      response.setCanCreateLiv(isConsistent);
+      response.setCanCreateLocalIssueVoucher(isConsistent);
+      response.setCanDeleteLocalIssueVoucher(canDeleteLocalIssueVoucher);
     }
     Sort orders = new Sort("local", "status", "createdDate");
     PageRequest pageRequest = new PageRequest(pageable.getPageNumber(), pageable.getPageSize(), orders);
@@ -289,8 +297,8 @@ public class SiglusOrderService {
   }
 
   private List<BasicOrderExtensionResponse> getLocalBasicOrderExtensionResponses(
-      List<LocalReceiptVoucher> localReceiptVouchers) {
-    return localReceiptVouchers.stream()
+      List<LocalIssueVoucher> localIssueVouchers) {
+    return localIssueVouchers.stream()
         .map(localReceiptVoucher -> {
           BasicOrderExtensionResponse response = new BasicOrderExtensionResponse();
           response.setLocal(true);

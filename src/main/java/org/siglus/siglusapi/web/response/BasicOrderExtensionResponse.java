@@ -23,7 +23,9 @@ public class BasicOrderExtensionResponse extends BasicOrderDto {
 
   private boolean isLocal;
 
-  private boolean canCreateLiv;
+  private boolean canCreateLocalIssueVoucher;
+
+  private boolean canDeleteLocalIssueVoucher;
 
   private boolean hasSubDraft;
 }

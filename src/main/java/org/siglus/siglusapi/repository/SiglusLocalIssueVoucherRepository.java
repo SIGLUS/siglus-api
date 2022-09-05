@@ -17,13 +17,13 @@ package org.siglus.siglusapi.repository;
 
 import java.util.List;
 import java.util.UUID;
-import org.siglus.siglusapi.domain.LocalReceiptVoucher;
+import org.siglus.siglusapi.domain.LocalIssueVoucher;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface SiglusLocalReceiptVoucherRepository extends JpaRepository<LocalReceiptVoucher, UUID> {
+public interface SiglusLocalIssueVoucherRepository extends JpaRepository<LocalIssueVoucher, UUID> {
 
-  List<LocalReceiptVoucher> findByOrderCodeAndProgramIdAndRequestingFacilityIdAndSupplyingFacilityId(
+  List<LocalIssueVoucher> findByOrderCodeAndProgramIdAndRequestingFacilityIdAndSupplyingFacilityId(
       String orderCode, UUID programId, UUID requestingFacilityId, UUID supplyingFacilityId);
 
-  List<LocalReceiptVoucher> findByProgramIdAndRequestingFacilityId(UUID programId, UUID requestingFacilityId);
+  List<LocalIssueVoucher> findByProgramIdAndRequestingFacilityId(UUID programId, UUID requestingFacilityId);
 }

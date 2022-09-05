@@ -13,45 +13,60 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.dto;
+package org.siglus.siglusapi.domain;
 
 import java.time.ZonedDateTime;
 import java.util.UUID;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.EntityListeners;
+import javax.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.openlmis.fulfillment.domain.OrderStatus;
-import org.siglus.siglusapi.domain.LocalReceiptVoucher;
+import org.siglus.common.domain.BaseEntity;
+import org.siglus.siglusapi.dto.LocalIssueVoucherDto;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+@Entity
+@Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Data
-public class LocalReceiptVoucherDto {
+@EntityListeners(AuditingEntityListener.class)
+@Table(name = "local_issue_voucher", schema = "siglusintegration")
+public class LocalIssueVoucher extends BaseEntity {
 
-  private UUID id;
-
+  @Column(nullable = false)
   private String orderCode;
 
+  @Column(nullable = false)
   private OrderStatus status;
 
   private UUID processingPeriodId;
 
+  @Column(nullable = false)
   private UUID programId;
 
+  @Column(nullable = false)
   private UUID requestingFacilityId;
 
+  @Column(nullable = false)
   private UUID supplyingFacilityId;
 
   private UUID createdById;
 
+  @CreatedDate
+  @Column(updatable = false)
   private ZonedDateTime createdDate;
 
-  public static LocalReceiptVoucherDto from(LocalReceiptVoucher localReceiptVoucher) {
-    LocalReceiptVoucherDto localReceiptVoucherDto = new LocalReceiptVoucherDto();
-    BeanUtils.copyProperties(localReceiptVoucher, localReceiptVoucherDto);
-    return localReceiptVoucherDto;
+  public static LocalIssueVoucher createLocalReceiptVoucher(LocalIssueVoucherDto localIssueVoucherDto) {
+    LocalIssueVoucher localIssueVoucher = new LocalIssueVoucher();
+    BeanUtils.copyProperties(localIssueVoucherDto, localIssueVoucher);
+    return localIssueVoucher;
   }
 }
