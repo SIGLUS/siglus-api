@@ -522,7 +522,8 @@ public class SiglusOrderService {
         .collect(Collectors.toMap(OrderLineItem::getId, e -> e.getOrderable().getId()));
     List<OrderLineItemExtension> extensions = Lists.newArrayListWithExpectedSize(lineItemIds.size());
     Map<UUID, OrderLineItemExtension> existedLineItemExtensionIdToExtension = lineItemExtensionRepository
-        .findByOrderLineItemIdIn(lineItemIds).stream().collect(Collectors.toMap(OrderLineItemExtension::getId, e -> e));
+        .findByOrderLineItemIdIn(lineItemIds).stream()
+        .collect(Collectors.toMap(OrderLineItemExtension::getOrderLineItemId, e -> e));
     lineItemIds.forEach(lineItemId -> {
       OrderLineItemExtension existedExtension = existedLineItemExtensionIdToExtension.get(lineItemId);
       OrderLineItemExtension extension = Objects.isNull(existedExtension)
