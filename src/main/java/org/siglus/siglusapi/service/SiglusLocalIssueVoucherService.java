@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.service;
 
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_ADDITIONAL_ORDERABLE_DUPLICATED;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_LOCAL_ISSUE_VOUCHER_ID_INVALID;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_ORDER_CODE_EXISTS;
 
@@ -26,18 +27,23 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.CollectionUtils;
 import org.openlmis.fulfillment.domain.OrderStatus;
+import org.openlmis.fulfillment.domain.ProofOfDeliveryLineItem;
 import org.openlmis.fulfillment.service.OrderSearchParams;
 import org.openlmis.fulfillment.web.OrderController;
 import org.openlmis.fulfillment.web.util.BasicOrderDto;
+import org.openlmis.fulfillment.web.util.ProofOfDeliveryDto;
 import org.siglus.siglusapi.domain.LocalIssueVoucher;
 import org.siglus.siglusapi.dto.LocalIssueVoucherDto;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
+import org.siglus.siglusapi.repository.PodLineItemsRepository;
 import org.siglus.siglusapi.repository.PodSubDraftRepository;
 import org.siglus.siglusapi.repository.SiglusLocalIssueVoucherRepository;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
+import org.siglus.siglusapi.web.request.UpdatePodSubDraftRequest;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
@@ -53,6 +59,10 @@ public class SiglusLocalIssueVoucherService {
   private final SiglusLocalIssueVoucherRepository localReceiptVoucherRepository;
 
   private final PodSubDraftRepository podSubDraftRepository;
+
+  private final SiglusPodService siglusPodService;
+
+  private final PodLineItemsRepository podLineItemsRepository;
 
   public LocalIssueVoucherDto createLocalIssueVoucher(LocalIssueVoucherDto dto) {
     checkOrderCodeExists(dto);
@@ -93,10 +103,38 @@ public class SiglusLocalIssueVoucherService {
     localReceiptVoucherRepository.delete(id);
   }
 
+  public ProofOfDeliveryDto getSubDraftDetail(UUID podId, UUID subDraftId, Set<String> expand) {
+    return siglusPodService.getSubDraftDetail(podId, subDraftId, expand);
+  }
+
+  public void updateSubDraft(UpdatePodSubDraftRequest request, UUID subDraftId) {
+    validateOrderableDuplicated(request, subDraftId);
+    siglusPodService.updateSubDraft(request, subDraftId);
+  }
+
+  public void deleteSubDraft(UUID podId, UUID subDraftId) {
+    siglusPodService.deleteSubDraft(podId, subDraftId);
+  }
+
   private void validateInitialDraftId(UUID id) {
     LocalIssueVoucher localIssueVoucher = localReceiptVoucherRepository.findOne(id);
     if (localIssueVoucher == null) {
       throw new ValidationMessageException(ERROR_LOCAL_ISSUE_VOUCHER_ID_INVALID);
+    }
+  }
+
+  private void validateOrderableDuplicated(UpdatePodSubDraftRequest request, UUID subDraftId) {
+    List<UUID> orderableIds = request
+        .getPodDto()
+        .getLineItems()
+        .stream()
+        .map(proofOfDeliveryLineItemDto -> proofOfDeliveryLineItemDto.getOrderableIdentity().getId())
+        .collect(Collectors.toList());
+    UUID podId = request.getPodDto().getId();
+    List<ProofOfDeliveryLineItem> duplicatedOrderableLineItem = podLineItemsRepository.findDuplicatedOrderableLineItem(
+        orderableIds, podId, subDraftId);
+    if (CollectionUtils.isNotEmpty(duplicatedOrderableLineItem)) {
+      throw new ValidationMessageException(ERROR_ADDITIONAL_ORDERABLE_DUPLICATED);
     }
   }
 }

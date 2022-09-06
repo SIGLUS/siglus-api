@@ -17,16 +17,23 @@ package org.siglus.siglusapi.web;
 
 import static org.springframework.http.HttpStatus.NO_CONTENT;
 
+import java.util.Set;
 import java.util.UUID;
+import javax.validation.Valid;
 import lombok.AllArgsConstructor;
+import org.openlmis.fulfillment.web.util.ProofOfDeliveryDto;
 import org.siglus.siglusapi.dto.LocalIssueVoucherDto;
 import org.siglus.siglusapi.service.SiglusLocalIssueVoucherService;
+import org.siglus.siglusapi.web.request.UpdatePodSubDraftRequest;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -46,5 +53,25 @@ public class SiglusLocalIssueVoucherController {
   @ResponseStatus(NO_CONTENT)
   public void deleteLocalIssueVoucher(@PathVariable UUID id) {
     localIssueVoucherService.deleteLocalIssueVoucher(id);
+  }
+
+  @GetMapping("/{id}/subDrafts/{subDraftId}")
+  public ProofOfDeliveryDto getSubDraftDetail(@PathVariable("id") UUID podId,
+      @PathVariable("subDraftId") UUID subDraftId,
+      @RequestParam Set<String> expand) {
+    return localIssueVoucherService.getSubDraftDetail(podId, subDraftId, expand);
+  }
+
+  @PutMapping("/{id}/subDrafts/{subDraftId}")
+  @ResponseStatus(NO_CONTENT)
+  public void updateSubDraft(@PathVariable("subDraftId") UUID subDraftId,
+      @Valid @RequestBody UpdatePodSubDraftRequest request) {
+    localIssueVoucherService.updateSubDraft(request, subDraftId);
+  }
+
+  @DeleteMapping("/{id}/subDrafts/{subDraftId}")
+  @ResponseStatus(NO_CONTENT)
+  public void deleteSubDraft(@PathVariable("id") UUID podId, @PathVariable("subDraftId") UUID subDraftId) {
+    localIssueVoucherService.deleteSubDraft(podId, subDraftId);
   }
 }
