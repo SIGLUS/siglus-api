@@ -19,8 +19,7 @@ import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_ADDITIONAL_ORDERABLE_D
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_LOCAL_ISSUE_VOUCHER_ID_INVALID;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_ORDER_CODE_EXISTS;
 
-import java.util.Arrays;
-import java.util.HashSet;
+import com.google.common.collect.Sets;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -73,10 +72,8 @@ public class SiglusLocalIssueVoucherService {
   }
 
   private void checkOrderCodeExists(LocalIssueVoucherDto dto) {
-    Set<String> status = new HashSet(
-        Arrays.asList(OrderStatus.TRANSFER_FAILED.toString(), OrderStatus.SHIPPED.toString(),
-            OrderStatus.RECEIVED.toString(), OrderStatus.IN_ROUTE.toString(),
-            OrderStatus.READY_TO_PACK.toString()));
+    Set<String> status = Sets.newHashSet(OrderStatus.TRANSFER_FAILED.toString(), OrderStatus.SHIPPED.toString(),
+        OrderStatus.RECEIVED.toString(), OrderStatus.IN_ROUTE.toString(), OrderStatus.READY_TO_PACK.toString());
     OrderSearchParams params = OrderSearchParams
         .builder()
         .programId(dto.getProgramId())

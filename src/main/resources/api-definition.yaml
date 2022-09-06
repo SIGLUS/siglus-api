@@ -420,6 +420,27 @@ traits:
           201:
             description: submit success
 
+    /facility:
+      /{id}/requisitionGroup:
+        get:
+          is: [ secured ]
+          responses:
+            200:
+              description: GET specific facility's requisition group
+
+    /localIssueVouchers:
+      post:
+        is: [ secured ]
+        responses:
+          201:
+            description: create local issue voucher
+      /{id}:
+        delete:
+          is: [ secured ]
+          responses:
+            204:
+              description: Delete specific local issue voucher
+
     /locations:
       displayName: get location and lot Association relationship
       post:
