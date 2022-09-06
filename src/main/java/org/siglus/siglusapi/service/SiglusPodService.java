@@ -70,6 +70,7 @@ import org.siglus.siglusapi.repository.PodLineItemsExtensionRepository;
 import org.siglus.siglusapi.repository.PodLineItemsRepository;
 import org.siglus.siglusapi.repository.PodSubDraftRepository;
 import org.siglus.siglusapi.repository.ProofsOfDeliveryExtensionRepository;
+import org.siglus.siglusapi.repository.SiglusLocalIssueVoucherRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.repository.dto.OrderDto;
 import org.siglus.siglusapi.repository.dto.PodLineItemDto;
@@ -147,6 +148,9 @@ public class SiglusPodService {
 
   @Autowired
   private ProofsOfDeliveryExtensionRepository podExtensionRepository;
+
+  @Autowired
+  private SiglusLocalIssueVoucherRepository localIssueVoucherRepository;
 
   private static final String FILE_NAME_PREFIX_EMERGENCY = "OF.REM.";
   private static final String FILE_NAME_PREFIX_NORMAL = "OF.RNO.";
@@ -366,7 +370,7 @@ public class SiglusPodService {
         orderDto.getProgramId(),
         orderDto.getProcessingPeriodId(), orderDto.getEmergency(), REQUISITION_STATUS_POST_SUBMIT);
     List<StatusChange> statusChanges = requisitionStatusChangeRepository.findByRequisitionIdIn(
-            requisitionIds.stream().map(UUID::fromString).collect(Collectors.toList())).stream()
+        requisitionIds.stream().map(UUID::fromString).collect(Collectors.toList())).stream()
         .filter(statusChange -> RequisitionStatus.SUBMITTED == statusChange.getStatus())
         .sorted(Comparator.comparing(StatusChange::getCreatedDate)).collect(Collectors.toList());
 
@@ -550,12 +554,12 @@ public class SiglusPodService {
 
   private List<SubDraftInfo> buildSubDraftInfos(List<PodSubDraft> podSubDrafts) {
     return podSubDrafts.stream().map(podSubDraft ->
-            SubDraftInfo.builder()
-                .subDraftId(podSubDraft.getId())
-                .groupNum(podSubDraft.getNumber())
-                .saver(authenticationHelper.getUserNameByUserId(podSubDraft.getOperatorId()))
-                .status(podSubDraft.getStatus())
-                .build())
+        SubDraftInfo.builder()
+            .subDraftId(podSubDraft.getId())
+            .groupNum(podSubDraft.getNumber())
+            .saver(authenticationHelper.getUserNameByUserId(podSubDraft.getOperatorId()))
+            .status(podSubDraft.getStatus())
+            .build())
         .collect(Collectors.toList());
   }
 

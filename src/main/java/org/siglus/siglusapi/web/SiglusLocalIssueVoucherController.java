@@ -25,6 +25,9 @@ import org.openlmis.fulfillment.web.util.ProofOfDeliveryDto;
 import org.siglus.siglusapi.dto.LocalIssueVoucherDto;
 import org.siglus.siglusapi.service.SiglusLocalIssueVoucherService;
 import org.siglus.siglusapi.web.request.UpdatePodSubDraftRequest;
+import org.siglus.siglusapi.web.response.PodSubDraftsSummaryResponse;
+import org.siglus.siglusapi.web.response.PodSubDraftsSummaryResponse.SubDraftInfo;
+import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -47,6 +50,17 @@ public class SiglusLocalIssueVoucherController {
   @PostMapping
   public LocalIssueVoucherDto createLocalIssueVoucher(@Validated @RequestBody LocalIssueVoucherDto dto) {
     return localIssueVoucherService.createLocalIssueVoucher(dto);
+  }
+
+  @ResponseStatus(HttpStatus.CREATED)
+  @PostMapping("/{id}/subDrafts")
+  public SubDraftInfo createLocalIssueVoucherSubDraft(@PathVariable("id") UUID localIssueVoucherId) {
+    return localIssueVoucherService.createLocalIssueVoucherSubDraft(localIssueVoucherId);
+  }
+
+  @GetMapping("/{id}/subDrafts")
+  public PodSubDraftsSummaryResponse searchLocalIssueVoucherSubDrafts(@PathVariable("id") UUID localIssueVoucherId) {
+    return localIssueVoucherService.searchLocalIssueVoucherSubDrafts(localIssueVoucherId);
   }
 
   @DeleteMapping("/{id}")

@@ -35,6 +35,7 @@ public abstract class MessageKeys {
   private static final String STOCK_MANAGEMENT_ERROR_PREFIX = ERROR_PREFIX + ".stockManagement";
   private static final String PRODUCT_LOCATION_MOVEMENT_ERROR_PREFIX = ERROR_PREFIX + ".stockMovement";
   private static final String POD_ERROR_PREFIX = ERROR_PREFIX + ".proofOfDelivery";
+  private static final String LOCAL_ISSUE_VOUCHER_PREFIX = ERROR_PREFIX + ".localIssueVoucher";
   private static final String STOCK_CARD_ERROR_PREFIX = ERROR_PREFIX + ".stockCard";
   private static final String PERIOD_ERROR_PREFIX = ERROR_PREFIX + ".processingperiod";
 
@@ -145,9 +146,11 @@ public abstract class MessageKeys {
 
   //local receive voucher
   public static final String ERROR_ORDER_CODE_EXISTS =
-      ERROR_PREFIX + ".order.code.exists";
+      LOCAL_ISSUE_VOUCHER_PREFIX + ".order.code.exists";
   public static final String ERROR_LOCAL_ISSUE_VOUCHER_ID_INVALID =
-      EVENT_ERROR_PREFIX + ".local.issue.voucher.id.invalid";
+      LOCAL_ISSUE_VOUCHER_PREFIX + ".local.issue.voucher.id.invalid";
+  public static final String ERROR_LOCAL_ISSUE_VOUCHER_SUB_DRAFTS_MORE_THAN_TEN =
+      LOCAL_ISSUE_VOUCHER_PREFIX + ".drafts.more.than.ten";
 
   // proof of delivery
   public static final String ERROR_NO_POD_OR_POD_LINE_ITEM_FOUND = POD_ERROR_PREFIX

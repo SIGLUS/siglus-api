@@ -17,6 +17,7 @@ package org.siglus.siglusapi.service;
 
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_ADDITIONAL_ORDERABLE_DUPLICATED;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_LOCAL_ISSUE_VOUCHER_ID_INVALID;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_LOCAL_ISSUE_VOUCHER_SUB_DRAFTS_MORE_THAN_TEN;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_ORDER_CODE_EXISTS;
 
 import com.google.common.collect.Sets;
@@ -34,8 +35,10 @@ import org.openlmis.fulfillment.web.OrderController;
 import org.openlmis.fulfillment.web.util.BasicOrderDto;
 import org.openlmis.fulfillment.web.util.ProofOfDeliveryDto;
 import org.siglus.siglusapi.domain.LocalIssueVoucher;
+import org.siglus.siglusapi.domain.PodSubDraft;
 import org.siglus.siglusapi.dto.LocalIssueVoucherDto;
 import org.siglus.siglusapi.dto.Message;
+import org.siglus.siglusapi.dto.enums.PodSubDraftStatusEnum;
 import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.PodLineItemsRepository;
@@ -43,8 +46,11 @@ import org.siglus.siglusapi.repository.PodSubDraftRepository;
 import org.siglus.siglusapi.repository.SiglusLocalIssueVoucherRepository;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.web.request.UpdatePodSubDraftRequest;
+import org.siglus.siglusapi.web.response.PodSubDraftsSummaryResponse;
+import org.siglus.siglusapi.web.response.PodSubDraftsSummaryResponse.SubDraftInfo;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
@@ -55,7 +61,7 @@ public class SiglusLocalIssueVoucherService {
 
   private final SiglusAuthenticationHelper authenticationHelper;
 
-  private final SiglusLocalIssueVoucherRepository localReceiptVoucherRepository;
+  private final SiglusLocalIssueVoucherRepository localIssueVoucherRepository;
 
   private final PodSubDraftRepository podSubDraftRepository;
 
@@ -63,11 +69,14 @@ public class SiglusLocalIssueVoucherService {
 
   private final PodLineItemsRepository podLineItemsRepository;
 
+  private static final Integer SUB_DRAFTS_LIMITATION = 10;
+  private static final Integer SUB_DRAFTS_INCREMENT = 1;
+
   public LocalIssueVoucherDto createLocalIssueVoucher(LocalIssueVoucherDto dto) {
     checkOrderCodeExists(dto);
     LocalIssueVoucher localIssueVoucher = LocalIssueVoucher.createLocalReceiptVoucher(dto);
     log.info("save local receipt voucher with requestingFacilityId {}", dto.getRequestingFacilityId());
-    LocalIssueVoucher savedLocalIssueVoucher = localReceiptVoucherRepository.save(localIssueVoucher);
+    LocalIssueVoucher savedLocalIssueVoucher = localIssueVoucherRepository.save(localIssueVoucher);
     return LocalIssueVoucherDto.from(savedLocalIssueVoucher);
   }
 
@@ -84,7 +93,7 @@ public class SiglusLocalIssueVoucherService {
     Set<String> orderCode = orderController.searchOrders(params, pageRequest).getContent().stream()
         .map(BasicOrderDto::getOrderCode).collect(
             Collectors.toSet());
-    List<LocalIssueVoucher> localIssueVouchers = localReceiptVoucherRepository
+    List<LocalIssueVoucher> localIssueVouchers = localIssueVoucherRepository
         .findByOrderCodeAndProgramIdAndRequestingFacilityIdAndSupplyingFacilityId(
             dto.getOrderCode(), dto.getProgramId(), dto.getRequestingFacilityId(), dto.getSupplyingFacilityId());
     if (orderCode.contains(dto.getOrderCode()) || !localIssueVouchers.isEmpty()) {
@@ -92,12 +101,60 @@ public class SiglusLocalIssueVoucherService {
     }
   }
 
+  @Transactional
   public void deleteLocalIssueVoucher(UUID id) {
     validateInitialDraftId(id);
     log.info("delete proof subDrafts with proof of delivery id: {}", id);
     podSubDraftRepository.deleteAllByPodId(id);
     log.info("delete local issue voucher with id: {}", id);
-    localReceiptVoucherRepository.delete(id);
+    localIssueVoucherRepository.delete(id);
+  }
+
+  public SubDraftInfo createLocalIssueVoucherSubDraft(UUID localIssueVoucherId) {
+    validateLocalIssueVoucherId(localIssueVoucherId);
+    checkIfSubDraftsOversize(localIssueVoucherId);
+    int subDraftsQuantity = podSubDraftRepository.countAllByPodId(localIssueVoucherId);
+    PodSubDraft subDraft = getPodSubDraft(localIssueVoucherId, subDraftsQuantity);
+    log.info("save local issue voucher with id: {}", localIssueVoucherId);
+    PodSubDraft localIssueVoucherSubDraft = podSubDraftRepository.save(subDraft);
+    return buildSubDraftInfo(localIssueVoucherSubDraft);
+  }
+
+  private SubDraftInfo buildSubDraftInfo(PodSubDraft localIssueVoucherSubDraft) {
+    return SubDraftInfo.builder()
+        .subDraftId(localIssueVoucherSubDraft.getId())
+        .groupNum(localIssueVoucherSubDraft.getNumber())
+        .saver(authenticationHelper.getUserNameByUserId(localIssueVoucherSubDraft.getOperatorId()))
+        .status(localIssueVoucherSubDraft.getStatus())
+        .build();
+  }
+
+  private PodSubDraft getPodSubDraft(UUID localIssueVoucherId, int subDraftsQuantity) {
+    return PodSubDraft.builder()
+        .number(subDraftsQuantity + SUB_DRAFTS_INCREMENT)
+        .podId(localIssueVoucherId)
+        .status(PodSubDraftStatusEnum.NOT_YET_STARTED)
+        .build();
+  }
+
+  public void validateLocalIssueVoucherId(UUID localIssueVoucherId) {
+    LocalIssueVoucher localIssueVoucher = localIssueVoucherRepository.findOne(localIssueVoucherId);
+    if (localIssueVoucher == null) {
+      throw new ValidationMessageException(ERROR_LOCAL_ISSUE_VOUCHER_ID_INVALID);
+    }
+  }
+
+  private void checkIfSubDraftsOversize(UUID localIssueVoucherId) {
+    int subDraftsQuantity = podSubDraftRepository.countAllByPodId(localIssueVoucherId);
+    if (subDraftsQuantity > SUB_DRAFTS_LIMITATION - 1) {
+      throw new BusinessDataException(
+          new Message(ERROR_LOCAL_ISSUE_VOUCHER_SUB_DRAFTS_MORE_THAN_TEN, localIssueVoucherId),
+          "subDrafts are more than limitation");
+    }
+  }
+
+  public PodSubDraftsSummaryResponse searchLocalIssueVoucherSubDrafts(UUID localIssueVoucherId) {
+    return siglusPodService.getSubDraftSummary(localIssueVoucherId);
   }
 
   public ProofOfDeliveryDto getSubDraftDetail(UUID podId, UUID subDraftId, Set<String> expand) {
@@ -114,7 +171,7 @@ public class SiglusLocalIssueVoucherService {
   }
 
   private void validateInitialDraftId(UUID id) {
-    LocalIssueVoucher localIssueVoucher = localReceiptVoucherRepository.findOne(id);
+    LocalIssueVoucher localIssueVoucher = localIssueVoucherRepository.findOne(id);
     if (localIssueVoucher == null) {
       throw new ValidationMessageException(ERROR_LOCAL_ISSUE_VOUCHER_ID_INVALID);
     }

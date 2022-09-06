@@ -255,8 +255,7 @@ public class SiglusStockManagementDraftService {
         .filter(subDraft -> subDraft.getDraftNumber() > draft.getDraftNumber())
         .collect(toList());
     if (!filterSubDrafts.isEmpty()) {
-      filterSubDrafts.forEach(
-          subDraft -> subDraft.setDraftNumber(subDraft.getDraftNumber() - DRAFTS_INCREMENT));
+      filterSubDrafts.forEach(subDraft -> subDraft.setDraftNumber(subDraft.getDraftNumber() - DRAFTS_INCREMENT));
       stockManagementDraftRepository.save(filterSubDrafts);
     }
   }
@@ -273,22 +272,19 @@ public class SiglusStockManagementDraftService {
 
   private void checkIfDraftExists(StockManagementDraftDto dto) {
     List<StockManagementDraft> drafts = stockManagementDraftRepository
-        .findByProgramIdAndFacilityIdAndIsDraftAndDraftType(dto.getProgramId(), dto.getFacilityId(),
-            true, dto.getDraftType());
+        .findByProgramIdAndFacilityIdAndIsDraftAndDraftType(dto.getProgramId(), dto.getFacilityId(), true,
+            dto.getDraftType());
     if (CollectionUtils.isNotEmpty(drafts)) {
-      throw new ValidationMessageException(
-          new Message(ERROR_STOCK_MANAGEMENT_DRAFT_DRAFT_EXISTS, dto.getProgramId(),
-              dto.getFacilityId()));
+      throw new ValidationMessageException(new Message(ERROR_STOCK_MANAGEMENT_DRAFT_DRAFT_EXISTS, dto.getProgramId(),
+          dto.getFacilityId()));
     }
   }
 
   private void checkIfSameDraftsOversize(StockManagementDraftDto dto) {
-    Integer subDraftsQuantity = stockManagementDraftRepository
-        .countByInitialDraftId(dto.getInitialDraftId());
+    int subDraftsQuantity = stockManagementDraftRepository.countByInitialDraftId(dto.getInitialDraftId());
     if (subDraftsQuantity > DRAFTS_LIMITATION - 1) {
-      throw new BusinessDataException(
-          new Message(ERROR_STOCK_MANAGEMENT_SUB_DRAFTS_MORE_THAN_TEN, dto.getProgramId(),
-              dto.getFacilityId()), "subDrafts are more than limitation");
+      throw new BusinessDataException(new Message(ERROR_STOCK_MANAGEMENT_SUB_DRAFTS_MORE_THAN_TEN, dto.getProgramId(),
+          dto.getFacilityId()), "subDrafts are more than limitation");
     }
   }
 

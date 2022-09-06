@@ -440,6 +440,19 @@ traits:
           responses:
             204:
               description: Delete specific local issue voucher
+        /subDrafts:
+          get:
+            is: [ secured ]
+            responses:
+              200:
+                description: GET all local issue voucher sub draft by specific local isuue voucher id
+          post:
+            is: [ secured ]
+            description: create local issue voucher sub draft
+            responses:
+              201:
+                description: issueVouchers update.
+
 
     /locations:
       displayName: get location and lot Association relationship
@@ -3333,7 +3346,6 @@ traits:
         responses:
           204:
             description: sub draft deleted.
-
     /integration:
       /stockMovements:
         displayName: Get Stock Movements
