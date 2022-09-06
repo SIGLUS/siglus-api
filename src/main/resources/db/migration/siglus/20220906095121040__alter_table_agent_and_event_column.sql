@@ -3,4 +3,8 @@
 -- Migrations should NOT BE EDITED. Add a new migration to apply changes.
 
 ALTER TABLE localmachine.events
-    ALTER COLUMN payload TYPE text USING payload::bytea;
+    ALTER COLUMN payload TYPE bytea USING payload::TEXT::bytea;
+ALTER TABLE localmachine.agents
+    ALTER COLUMN publickey TYPE bytea USING publickey::TEXT::bytea;
+ALTER TABLE localmachine.agents
+    ALTER COLUMN privatekey TYPE bytea USING privatekey::TEXT::bytea;
