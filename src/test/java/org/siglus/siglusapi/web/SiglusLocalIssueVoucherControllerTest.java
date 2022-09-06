@@ -23,6 +23,8 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.openlmis.fulfillment.domain.OrderStatus;
+import org.siglus.siglusapi.dto.LocalIssueVoucherDto;
 import org.siglus.siglusapi.service.SiglusLocalIssueVoucherService;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -37,6 +39,22 @@ public class SiglusLocalIssueVoucherControllerTest {
   private static final UUID podId = UUID.randomUUID();
 
   private static final UUID subDraftId = UUID.randomUUID();
+
+  private static final UUID programId = UUID.randomUUID();
+
+  private static final UUID localIssueVoucherId = UUID.randomUUID();
+
+  private static final UUID requestingFacilityId = UUID.randomUUID();
+
+  private static final UUID supplyingFacilityId = UUID.randomUUID();
+
+  private final LocalIssueVoucherDto localIssueVoucherDto = LocalIssueVoucherDto.builder()
+      .orderCode("code-1")
+      .status(OrderStatus.SHIPPED)
+      .programId(programId)
+      .requestingFacilityId(requestingFacilityId)
+      .supplyingFacilityId(supplyingFacilityId)
+      .build();
 
   @Test
   public void shouleDeleteWhenCallByService() {
@@ -57,5 +75,33 @@ public class SiglusLocalIssueVoucherControllerTest {
     controller.getSubDraftDetail(podId, subDraftId, null);
 
     verify(siglusLocalIssueVoucherService).getSubDraftDetail(podId, subDraftId, null);
+  }
+
+  @Test
+  public void shouldCreateLocalIssueVoucher() {
+    controller.createLocalIssueVoucher(localIssueVoucherDto);
+
+    verify(siglusLocalIssueVoucherService).createLocalIssueVoucher(localIssueVoucherDto);
+  }
+
+  @Test
+  public void shouldCreateLocalIssueVoucherSubDraft() {
+    controller.createLocalIssueVoucherSubDraft(localIssueVoucherId);
+
+    verify(siglusLocalIssueVoucherService).createLocalIssueVoucherSubDraft(localIssueVoucherId);
+  }
+
+  @Test
+  public void shouldSearchLocalIssueVoucherSubDrafts() {
+    controller.searchLocalIssueVoucherSubDrafts(localIssueVoucherId);
+
+    verify(siglusLocalIssueVoucherService).searchLocalIssueVoucherSubDrafts(localIssueVoucherId);
+  }
+
+  @Test
+  public void shouldDeleteLocalIssueVoucher() {
+    controller.deleteLocalIssueVoucher(localIssueVoucherId);
+
+    verify(siglusLocalIssueVoucherService).deleteLocalIssueVoucher(localIssueVoucherId);
   }
 }

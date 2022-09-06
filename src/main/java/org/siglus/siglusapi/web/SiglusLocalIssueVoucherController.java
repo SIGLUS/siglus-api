@@ -65,8 +65,8 @@ public class SiglusLocalIssueVoucherController {
 
   @DeleteMapping("/{id}")
   @ResponseStatus(NO_CONTENT)
-  public void deleteLocalIssueVoucher(@PathVariable UUID id) {
-    localIssueVoucherService.deleteLocalIssueVoucher(id);
+  public void deleteLocalIssueVoucher(@PathVariable("id") UUID localIssueVoucherId) {
+    localIssueVoucherService.deleteLocalIssueVoucher(localIssueVoucherId);
   }
 
   @GetMapping("/{id}/subDrafts/{subDraftId}")

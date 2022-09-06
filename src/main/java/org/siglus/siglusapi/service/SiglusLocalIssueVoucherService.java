@@ -102,12 +102,12 @@ public class SiglusLocalIssueVoucherService {
   }
 
   @Transactional
-  public void deleteLocalIssueVoucher(UUID id) {
-    validateInitialDraftId(id);
-    log.info("delete proof subDrafts with proof of delivery id: {}", id);
-    podSubDraftRepository.deleteAllByPodId(id);
-    log.info("delete local issue voucher with id: {}", id);
-    localIssueVoucherRepository.delete(id);
+  public void deleteLocalIssueVoucher(UUID localIssueVoucherId) {
+    validateInitialDraftId(localIssueVoucherId);
+    log.info("delete subDrafts with proof of delivery id: {}", localIssueVoucherId);
+    podSubDraftRepository.deleteAllByPodId(localIssueVoucherId);
+    log.info("delete local issue voucher with id: {}", localIssueVoucherId);
+    localIssueVoucherRepository.delete(localIssueVoucherId);
   }
 
   public SubDraftInfo createLocalIssueVoucherSubDraft(UUID localIssueVoucherId) {
@@ -115,7 +115,7 @@ public class SiglusLocalIssueVoucherService {
     checkIfSubDraftsOversize(localIssueVoucherId);
     int subDraftsQuantity = podSubDraftRepository.countAllByPodId(localIssueVoucherId);
     PodSubDraft subDraft = getPodSubDraft(localIssueVoucherId, subDraftsQuantity);
-    log.info("save local issue voucher with id: {}", localIssueVoucherId);
+    log.info("save local issue voucher with localIssueVoucherId: {}", localIssueVoucherId);
     PodSubDraft localIssueVoucherSubDraft = podSubDraftRepository.save(subDraft);
     return buildSubDraftInfo(localIssueVoucherSubDraft);
   }
