@@ -149,9 +149,6 @@ public class SiglusPodService {
   @Autowired
   private ProofsOfDeliveryExtensionRepository podExtensionRepository;
 
-  @Autowired
-  private SiglusLocalIssueVoucherRepository localIssueVoucherRepository;
-
   private static final String FILE_NAME_PREFIX_EMERGENCY = "OF.REM.";
   private static final String FILE_NAME_PREFIX_NORMAL = "OF.RNO.";
   private static final List<String> REQUISITION_STATUS_POST_SUBMIT = Lists.newArrayList(
