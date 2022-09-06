@@ -70,7 +70,6 @@ import org.siglus.siglusapi.repository.PodLineItemsExtensionRepository;
 import org.siglus.siglusapi.repository.PodLineItemsRepository;
 import org.siglus.siglusapi.repository.PodSubDraftRepository;
 import org.siglus.siglusapi.repository.ProofsOfDeliveryExtensionRepository;
-import org.siglus.siglusapi.repository.SiglusLocalIssueVoucherRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.repository.dto.OrderDto;
 import org.siglus.siglusapi.repository.dto.PodLineItemDto;
