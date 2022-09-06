@@ -27,6 +27,7 @@ import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_MOVEMENT_QUANTITY_MORE
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_CARD_NOT_FOUND;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map.Entry;
@@ -43,8 +44,12 @@ import org.openlmis.stockmanagement.dto.referencedata.FacilityDto;
 import org.openlmis.stockmanagement.dto.referencedata.LotDto;
 import org.openlmis.stockmanagement.dto.referencedata.OrderableDto;
 import org.openlmis.stockmanagement.dto.referencedata.ProgramDto;
+import org.openlmis.stockmanagement.repository.StockCardRepository;
+import org.siglus.siglusapi.constant.LocationConstants;
+import org.siglus.siglusapi.domain.CalculatedStockOnHandByLocation;
 import org.siglus.siglusapi.domain.StockCardLocationMovementDraft;
 import org.siglus.siglusapi.domain.StockCardLocationMovementLineItem;
+import org.siglus.siglusapi.dto.InitialMoveProductFieldDto;
 import org.siglus.siglusapi.dto.LocationMovementDto;
 import org.siglus.siglusapi.dto.LocationMovementLineItemDto;
 import org.siglus.siglusapi.dto.Message;
@@ -68,12 +73,21 @@ public class SiglusStockCardLocationMovementService {
 
   private final StockCardLocationMovementLineItemRepository movementLineItemRepository;
   private final StockCardLocationMovementDraftRepository movementDraftRepository;
-  private final SiglusStockCardRepository stockCardRepository;
+  private final SiglusStockCardRepository siglusStockCardRepository;
+  private final StockCardRepository stockCardRepository;
   private final CalculatedStocksOnHandByLocationService calculatedStocksOnHandByLocationService;
-  private final SiglusAdministrationsService administrationsService;
   private final SiglusAuthenticationHelper authenticationHelper;
   private final CalculatedStockOnHandByLocationRepository calculatedStockOnHandByLocationRepository;
   private final SiglusStockCardService siglusStockCardService;
+
+  public InitialMoveProductFieldDto canInitialMoveProduct(UUID facilityId) {
+    List<UUID> stockCardIds = stockCardRepository.findByFacilityIdIn(facilityId)
+        .stream().map(StockCard::getId).collect(Collectors.toList());
+    List<CalculatedStockOnHandByLocation> calculatedStockOnHandByLocationList =
+        findLatestCalculatedSohByLocationVirtualLocationRecordByStockCardId(stockCardIds);
+
+    return new InitialMoveProductFieldDto(!calculatedStockOnHandByLocationList.isEmpty());
+  }
 
   @Transactional
   public void createMovementLineItems(StockCardLocationMovementDto movementDto) {
@@ -136,6 +150,16 @@ public class SiglusStockCardLocationMovementService {
     return createLocationMovmentDto(locationMovementLineItemDtos, stockCardId, latestSoh, locationCode);
   }
 
+  private List<CalculatedStockOnHandByLocation> findLatestCalculatedSohByLocationVirtualLocationRecordByStockCardId(
+      List<UUID> stockCardIds) {
+    return !stockCardIds.isEmpty()
+        ? calculatedStockOnHandByLocationRepository.findLatestLocationSohByStockCardIds(stockCardIds)
+        .stream().filter(calculatedByLocation -> calculatedByLocation.getStockOnHand() > 0
+            && LocationConstants.VIRTUAL_LOCATION_CODE.equals(calculatedByLocation.getLocationCode()))
+        .collect(Collectors.toList())
+        : Collections.emptyList();
+  }
+
   private LocationMovementDto createLocationMovmentDto(List<LocationMovementLineItemDto> locationMovementLineItemDtos,
       UUID stockCardId, int soh, String locationCode) {
     StockCardDto stockCardDto = siglusStockCardService.findStockCardById(stockCardId);
@@ -163,9 +187,9 @@ public class SiglusStockCardLocationMovementService {
       StockCardLocationMovementDto movementDto) {
     List<StockCardLocationMovementLineItem> movementLineItems = new ArrayList<>();
     movementDto.getMovementLineItems().forEach(lineItemDto -> {
-      List<StockCard> stockCards = Boolean.TRUE.equals(lineItemDto.getIsKit()) ? stockCardRepository
+      List<StockCard> stockCards = Boolean.TRUE.equals(lineItemDto.getIsKit()) ? siglusStockCardRepository
           .findByFacilityIdAndOrderableId(movementDto.getFacilityId(), lineItemDto.getOrderableId())
-          : stockCardRepository.findByFacilityIdAndProgramIdAndOrderableIdAndLotId(movementDto.getFacilityId(),
+          : siglusStockCardRepository.findByFacilityIdAndProgramIdAndOrderableIdAndLotId(movementDto.getFacilityId(),
               lineItemDto.getProgramId(), lineItemDto.getOrderableId(), lineItemDto.getLotId());
       if (stockCards.isEmpty()) {
         throw new NotFoundException(ERROR_STOCK_CARD_NOT_FOUND);
@@ -188,8 +212,8 @@ public class SiglusStockCardLocationMovementService {
 
   private void checkStockOnHand(StockCardLocationMovementDto movementDto) {
     List<StockCardLocationMovementLineItemDto> lineItems = movementDto.getMovementLineItems();
-    boolean isInitialMoveProduct = administrationsService.canInitialMoveProduct(
-        authenticationHelper.getCurrentUser().getHomeFacilityId());
+    boolean isInitialMoveProduct = canInitialMoveProduct(
+        authenticationHelper.getCurrentUser().getHomeFacilityId()).isNeedInitiallyMoveProduct();
     Set<Entry<String, List<StockCardLocationMovementLineItemDto>>> groupByOrderableIdLotIdSrcAreaAndSrcLocationCode =
         lineItems.stream().collect(Collectors.groupingBy(this::fetchGroupKey)).entrySet();
     groupByOrderableIdLotIdSrcAreaAndSrcLocationCode.forEach(entry -> {

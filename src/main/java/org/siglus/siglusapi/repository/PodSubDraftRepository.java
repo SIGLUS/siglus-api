@@ -38,4 +38,8 @@ public interface PodSubDraftRepository extends JpaRepository<PodSubDraft, UUID> 
           + "inner join siglusintegration.pod_sub_draft psd on (p.id = psd.proofofdeliveryid)",
       nativeQuery = true)
   List<String> findOrderIdsWithSubDraft(@Param("orderIds") Iterable<UUID> orderIds);
+
+  void deleteAllByPodId(UUID id);
+
+  int countAllByPodId(UUID localIssueVoucherId);
 }

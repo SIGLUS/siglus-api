@@ -31,9 +31,11 @@ import java.util.Map;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @AllArgsConstructor
+@NoArgsConstructor
 public class MachineToken {
   private static final String ALG_HEADER = "alg";
   private UUID machineId;

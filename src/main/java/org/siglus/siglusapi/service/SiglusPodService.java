@@ -302,7 +302,7 @@ public class SiglusPodService {
     podExtensionRepository.save(podExtension);
   }
 
-  public PodPrintInfoResponse getPintInfo(UUID orderId, UUID podId) {
+  public PodPrintInfoResponse getPrintInfo(UUID orderId, UUID podId) {
     PodPrintInfoResponse response = new PodPrintInfoResponse();
 
     OrderDto orderDto = ordersRepository.findOrderDtoById(orderId);
@@ -366,7 +366,7 @@ public class SiglusPodService {
         orderDto.getProgramId(),
         orderDto.getProcessingPeriodId(), orderDto.getEmergency(), REQUISITION_STATUS_POST_SUBMIT);
     List<StatusChange> statusChanges = requisitionStatusChangeRepository.findByRequisitionIdIn(
-            requisitionIds.stream().map(UUID::fromString).collect(Collectors.toList())).stream()
+        requisitionIds.stream().map(UUID::fromString).collect(Collectors.toList())).stream()
         .filter(statusChange -> RequisitionStatus.SUBMITTED == statusChange.getStatus())
         .sorted(Comparator.comparing(StatusChange::getCreatedDate)).collect(Collectors.toList());
 
@@ -550,12 +550,12 @@ public class SiglusPodService {
 
   private List<SubDraftInfo> buildSubDraftInfos(List<PodSubDraft> podSubDrafts) {
     return podSubDrafts.stream().map(podSubDraft ->
-            SubDraftInfo.builder()
-                .subDraftId(podSubDraft.getId())
-                .groupNum(podSubDraft.getNumber())
-                .saver(authenticationHelper.getUserNameByUserId(podSubDraft.getOperatorId()))
-                .status(podSubDraft.getStatus())
-                .build())
+        SubDraftInfo.builder()
+            .subDraftId(podSubDraft.getId())
+            .groupNum(podSubDraft.getNumber())
+            .saver(authenticationHelper.getUserNameByUserId(podSubDraft.getOperatorId()))
+            .status(podSubDraft.getStatus())
+            .build())
         .collect(Collectors.toList());
   }
 

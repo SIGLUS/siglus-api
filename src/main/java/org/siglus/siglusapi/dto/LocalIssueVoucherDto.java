@@ -13,23 +13,51 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.localmachine.webapi;
+package org.siglus.siglusapi.dto;
 
+import java.time.ZonedDateTime;
 import java.util.UUID;
-import javax.validation.Valid;
-
+import javax.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.openlmis.fulfillment.domain.OrderStatus;
+import org.siglus.siglusapi.domain.LocalIssueVoucher;
+import org.springframework.beans.BeanUtils;
 
 @Builder
-@NoArgsConstructor
 @AllArgsConstructor
+@NoArgsConstructor
 @Data
-public class RemoteActivationRequest {
-  @Valid private LocalActivationRequest localActivationRequest;
-  private String base64EncodedPublicKey;
-  private String base64EncodedPrivateKey;
-  private UUID machineId;
+public class LocalIssueVoucherDto {
+
+  private UUID id;
+
+  @NotNull
+  private String orderCode;
+
+  @NotNull
+  private OrderStatus status;
+
+  private UUID processingPeriodId;
+
+  @NotNull
+  private UUID programId;
+
+  @NotNull
+  private UUID requestingFacilityId;
+
+  @NotNull
+  private UUID supplyingFacilityId;
+
+  private UUID createdById;
+
+  private ZonedDateTime createdDate;
+
+  public static LocalIssueVoucherDto from(LocalIssueVoucher localIssueVoucher) {
+    LocalIssueVoucherDto localIssueVoucherDto = new LocalIssueVoucherDto();
+    BeanUtils.copyProperties(localIssueVoucher, localIssueVoucherDto);
+    return localIssueVoucherDto;
+  }
 }

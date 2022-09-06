@@ -109,4 +109,6 @@ public interface EventRecordRepository extends JpaRepository<EventRecord, UUID> 
       value = "update localmachine.events set receiversynced=true where receiverid=:receiverId and id in :ids",
       nativeQuery = true)
   void markAsReceived(@Param("receiverId") UUID receiverId, @Param("ids") Collection<UUID> ids);
+
+  List<EventRecord> findByReceiverId(UUID receiverId);
 }

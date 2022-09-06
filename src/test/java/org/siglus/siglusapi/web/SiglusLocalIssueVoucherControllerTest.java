@@ -17,29 +17,45 @@ package org.siglus.siglusapi.web;
 
 import static org.mockito.Mockito.verify;
 
+import java.util.UUID;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.siglus.siglusapi.dto.StockCardLocationMovementDto;
-import org.siglus.siglusapi.service.SiglusStockCardLocationMovementService;
+import org.siglus.siglusapi.service.SiglusLocalIssueVoucherService;
 
 @RunWith(MockitoJUnitRunner.class)
-public class SiglusProductLocationMovementControllerTest {
+public class SiglusLocalIssueVoucherControllerTest {
 
   @InjectMocks
-  private SiglusProductLocationMovementController controller;
+  private SiglusLocalIssueVoucherController controller;
 
   @Mock
-  private SiglusStockCardLocationMovementService service;
+  private SiglusLocalIssueVoucherService siglusLocalIssueVoucherService;
 
-  private final StockCardLocationMovementDto stockCardLocationMovementDto = new StockCardLocationMovementDto();
+  private static final UUID podId = UUID.randomUUID();
+
+  private static final UUID subDraftId = UUID.randomUUID();
 
   @Test
-  public void shouldCallCreateEmptyProductLocationMovementDraft() {
-    controller.createMovementLineItems(stockCardLocationMovementDto);
+  public void shouleDeleteWhenCallByService() {
+    controller.deleteSubDraft(podId, subDraftId);
 
-    verify(service).createMovementLineItems(stockCardLocationMovementDto);
+    verify(siglusLocalIssueVoucherService).deleteSubDraft(podId, subDraftId);
+  }
+
+  @Test
+  public void shouldUpdateWhenCallByService() {
+    controller.updateSubDraft(subDraftId, null);
+
+    verify(siglusLocalIssueVoucherService).updateSubDraft(null, subDraftId);
+  }
+
+  @Test
+  public void shouldGetWhenCallByService() {
+    controller.getSubDraftDetail(podId, subDraftId, null);
+
+    verify(siglusLocalIssueVoucherService).getSubDraftDetail(podId, subDraftId, null);
   }
 }

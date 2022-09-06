@@ -15,28 +15,28 @@
 
 package org.siglus.siglusapi.web;
 
-import static org.springframework.http.HttpStatus.CREATED;
-
-import org.siglus.siglusapi.dto.StockCardLocationMovementDto;
-import org.siglus.siglusapi.service.SiglusStockCardLocationMovementService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+import lombok.RequiredArgsConstructor;
+import org.siglus.siglusapi.dto.RequisitionGroupMembersDto;
+import org.siglus.siglusapi.service.SiglusFacilityService;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+@RequiredArgsConstructor
 @RestController
-@RequestMapping("/api/siglusapi/locationMovements")
-public class SiglusProductLocationMovementController {
+@RequestMapping("/api/siglusapi/facility")
+public class SiglusFacilityController {
 
-  @Autowired
-  private SiglusStockCardLocationMovementService movementService;
+  private final SiglusFacilityService siglusFacilityService;
 
-  @PostMapping
-  @ResponseStatus(CREATED)
-  public void createMovementLineItems(@RequestBody StockCardLocationMovementDto movementDto) {
-    movementService.createMovementLineItems(movementDto);
+  @GetMapping("/{id}/requisitionGroup")
+  public List<RequisitionGroupMembersDto> searchFacilityRequisitionGroup(@PathVariable UUID id,
+      @RequestParam Set<UUID> programIds) {
+    return siglusFacilityService.searchFacilityRequisitionGroup(id, programIds);
   }
-
 }

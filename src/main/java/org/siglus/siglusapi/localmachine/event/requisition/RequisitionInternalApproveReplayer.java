@@ -83,12 +83,12 @@ public class RequisitionInternalApproveReplayer {
   @EventListener(classes = {RequisitionInternalApproveApplicationEvent.class})
   public void replay(RequisitionInternalApproveApplicationEvent event) {
     try {
-      log.info("start test replay requisitionId = " + event.getRequisition().getId());
+      log.info("start replay requisitionId = " + event.getRequisition().getId());
       doReplay(event);
-      log.info("end test replay requisitionId = " + event.getRequisition().getId());
+      log.info("end replay requisitionId = " + event.getRequisition().getId());
     } catch (Exception e) {
       log.error("fail to save requisition internal approve event, msg = " + e.getMessage(), e);
-      throw (IllegalStateException) (new IllegalStateException().initCause(e));
+      throw e;
     }
   }
 

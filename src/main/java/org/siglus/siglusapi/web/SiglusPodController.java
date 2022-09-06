@@ -60,7 +60,7 @@ public class SiglusPodController {
 
   @GetMapping("/{id}/printInfo")
   public PodPrintInfoResponse getPrintInfo(String orderId, @PathVariable("id") UUID podId) {
-    return siglusPodService.getPintInfo(UUID.fromString(orderId), podId);
+    return siglusPodService.getPrintInfo(UUID.fromString(orderId), podId);
   }
 
   @ResponseStatus(HttpStatus.OK)

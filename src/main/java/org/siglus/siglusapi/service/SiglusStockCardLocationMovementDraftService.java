@@ -114,23 +114,23 @@ public class SiglusStockCardLocationMovementDraftService {
 
     List<UUID> stockCardIds = stockCardRepository.findByFacilityIdIn(facilityId)
         .stream().map(StockCard::getId).collect(Collectors.toList());
-    List<StockCardLocationMovementLineItem> previousStockCardLocaitonMovementLineItemList =
+    List<StockCardLocationMovementLineItem> previousStockCardLocationMovementLineItemList =
         stockCardLocationMovementLineItemRepository.findPreviousRecordByStockCardId(stockCardIds, LocalDate.now());
 
     List<StockCardLocationMovementLineItem> virtualLocationMovementLineItem =
-        previousStockCardLocaitonMovementLineItemList.stream()
+        previousStockCardLocationMovementLineItemList.stream()
             .filter(e -> Objects.equals(LocationConstants.VIRTUAL_LOCATION_CODE, e.getSrcLocationCode())
             && Objects.equals(LocationConstants.VIRTUAL_LOCATION_CODE, e.getDestLocationCode()))
             .collect(Collectors.toList());
 
-    List<StockCardLocationMovementDraftLineItem> stockCardLocationMovementDraftlineItemList =
+    List<StockCardLocationMovementDraftLineItem> stockCardLocationMovementDraftLineItemList =
         getStockCardLocationMovementDraftLineItem(facilityId, virtualLocationMovementLineItem);
 
     StockCardLocationMovementDraft stockMovementDraft = StockCardLocationMovementDraft
         .createMovementDraft(movementDraftDto);
 
-    stockCardLocationMovementDraftlineItemList.forEach(e -> e.setStockCardLocationMovementDraft(stockMovementDraft));
-    stockMovementDraft.setLineItems(stockCardLocationMovementDraftlineItemList);
+    stockCardLocationMovementDraftLineItemList.forEach(e -> e.setStockCardLocationMovementDraft(stockMovementDraft));
+    stockMovementDraft.setLineItems(stockCardLocationMovementDraftLineItemList);
     log.info("save virtual location movement draft with id: {}", stockMovementDraft.getId());
     stockCardLocationMovementDraftRepository.save(stockMovementDraft);
     return StockCardLocationMovementDraftDto.from(stockMovementDraft);

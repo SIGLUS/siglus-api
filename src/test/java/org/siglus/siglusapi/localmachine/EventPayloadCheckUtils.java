@@ -42,7 +42,7 @@ public class EventPayloadCheckUtils {
       return compare.getChanges().size();
     } catch (IOException e) {
       log.error("fail to parse the event", e);
-      throw (IllegalStateException) (new IllegalStateException().initCause(e));
+      return -1;
     }
   }
 

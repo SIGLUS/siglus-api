@@ -13,23 +13,25 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.localmachine.webapi;
+package org.siglus.siglusapi.service;
 
+import java.util.List;
+import java.util.Set;
 import java.util.UUID;
-import javax.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.siglus.siglusapi.dto.RequisitionGroupMembersDto;
+import org.siglus.siglusapi.repository.RequisitionGroupMembersRepository;
+import org.springframework.stereotype.Service;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class SiglusFacilityService {
 
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-@Data
-public class RemoteActivationRequest {
-  @Valid private LocalActivationRequest localActivationRequest;
-  private String base64EncodedPublicKey;
-  private String base64EncodedPrivateKey;
-  private UUID machineId;
+  private final RequisitionGroupMembersRepository requisitionGroupMembersRepository;
+
+  public List<RequisitionGroupMembersDto> searchFacilityRequisitionGroup(UUID id, Set<UUID> programIds) {
+    return requisitionGroupMembersRepository.findParentFacilityByRequisitionGroup(id, programIds);
+  }
 }

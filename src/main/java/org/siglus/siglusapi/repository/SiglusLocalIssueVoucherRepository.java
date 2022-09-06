@@ -13,23 +13,17 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.localmachine.webapi;
+package org.siglus.siglusapi.repository;
 
+import java.util.List;
 import java.util.UUID;
-import javax.validation.Valid;
+import org.siglus.siglusapi.domain.LocalIssueVoucher;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+public interface SiglusLocalIssueVoucherRepository extends JpaRepository<LocalIssueVoucher, UUID> {
 
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-@Data
-public class RemoteActivationRequest {
-  @Valid private LocalActivationRequest localActivationRequest;
-  private String base64EncodedPublicKey;
-  private String base64EncodedPrivateKey;
-  private UUID machineId;
+  List<LocalIssueVoucher> findByOrderCodeAndProgramIdAndRequestingFacilityIdAndSupplyingFacilityId(
+      String orderCode, UUID programId, UUID requestingFacilityId, UUID supplyingFacilityId);
+
+  List<LocalIssueVoucher> findByProgramIdAndRequestingFacilityId(UUID programId, UUID requestingFacilityId);
 }

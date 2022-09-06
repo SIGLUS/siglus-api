@@ -13,23 +13,14 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.localmachine.webapi;
-
-import java.util.UUID;
-import javax.validation.Valid;
+package org.siglus.siglusapi.dto;
 
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
 @Data
-public class RemoteActivationRequest {
-  @Valid private LocalActivationRequest localActivationRequest;
-  private String base64EncodedPublicKey;
-  private String base64EncodedPrivateKey;
-  private UUID machineId;
+@AllArgsConstructor
+public class InitialMoveProductFieldDto {
+
+  private boolean needInitiallyMoveProduct;
 }

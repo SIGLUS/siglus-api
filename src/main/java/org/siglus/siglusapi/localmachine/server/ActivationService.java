@@ -94,6 +94,7 @@ public class ActivationService {
         AgentInfo.builder()
             .machineId(request.getMachineId())
             .activatedAt(ZonedDateTime.now())
+            .facilityCode(facility.getCode())
             .privateKey(decoder.decode(request.getBase64EncodedPrivateKey()))
             .publicKey(decoder.decode(request.getBase64EncodedPublicKey()))
             .activationCode(request.getLocalActivationRequest().getActivationCode())

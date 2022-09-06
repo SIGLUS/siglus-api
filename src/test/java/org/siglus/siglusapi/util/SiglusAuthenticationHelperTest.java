@@ -166,8 +166,7 @@ public class SiglusAuthenticationHelperTest {
   public void shouldReturnUserIdWhenGetCurrentUserIdGivenPrincipalNormalUserId() {
     given(authentication.getPrincipal()).willReturn(UUID.randomUUID());
 
-    assertThat(authenticationHelper.getCurrentUserId().get())
-        .isEqualTo(authentication.getPrincipal());
+    assertEquals(authenticationHelper.getCurrentUserId().orElse(null), authentication.getPrincipal());
   }
 
   @Test

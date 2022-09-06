@@ -15,7 +15,9 @@
 
 package org.siglus.siglusapi.localmachine.webapi;
 
+import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.siglus.siglusapi.localmachine.Event;
 import org.siglus.siglusapi.localmachine.EventImporter;
 import org.siglus.siglusapi.localmachine.auth.MachineToken;
 import org.siglus.siglusapi.localmachine.eventstore.EventStore;
@@ -36,19 +38,21 @@ public class OnlineWebController {
   private final ActivationService activationService;
 
   @PostMapping("/agents")
-  public void activateAgent(RemoteActivationRequest request) {
+  public void activateAgent(@RequestBody @Validated RemoteActivationRequest request) {
     activationService.activate(request);
   }
 
   @PostMapping("/events")
-  public void syncEvents(@Validated SyncRequest request) {
+  public void syncEvents(@RequestBody @Validated SyncRequest request) {
     importer.importEvents(request.getEvents());
   }
 
   @GetMapping("/peeringEvents")
-  public PeeringEventsResponse exportPeeringEvents() {
-    // TODO: 2022/8/21 export events from peering facilities
-    return null;
+  public PeeringEventsResponse exportPeeringEvents(MachineToken machineToken) {
+    List<Event> eventForReceiver = eventStore.getEventsForReceiver(machineToken.getFacilityId());
+    return PeeringEventsResponse.builder()
+        .events(eventForReceiver)
+        .build();
   }
 
   @PostMapping("/ack")

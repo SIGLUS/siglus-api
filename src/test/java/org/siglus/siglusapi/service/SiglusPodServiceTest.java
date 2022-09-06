@@ -736,7 +736,7 @@ public class SiglusPodServiceTest {
     mockPodExtensionQuery();
 
     // when
-    PodPrintInfoResponse response = service.getPintInfo(orderId, podId);
+    PodPrintInfoResponse response = service.getPrintInfo(orderId, podId);
 
     // then
     assertNotNull(response);
@@ -757,7 +757,7 @@ public class SiglusPodServiceTest {
     when(requisitionExtensionService.formatRequisitionNumber(requisitionId)).thenReturn(requisitionNum);
 
     // when
-    PodPrintInfoResponse response = service.getPintInfo(orderId, podId);
+    PodPrintInfoResponse response = service.getPrintInfo(orderId, podId);
 
     // then
     assertNotNull(response);
@@ -778,7 +778,7 @@ public class SiglusPodServiceTest {
     when(requisitionExtensionService.formatRequisitionNumber(requisitionId)).thenReturn(requisitionNum);
 
     // when
-    PodPrintInfoResponse response = service.getPintInfo(orderId, podId);
+    PodPrintInfoResponse response = service.getPrintInfo(orderId, podId);
 
     // then
     assertNotNull(response);
@@ -800,7 +800,7 @@ public class SiglusPodServiceTest {
     when(requisitionExtensionService.formatRequisitionNumber(requisitionId)).thenReturn(requisitionNum);
 
     // when
-    PodPrintInfoResponse response = service.getPintInfo(orderId, podId);
+    PodPrintInfoResponse response = service.getPrintInfo(orderId, podId);
 
     // then
     assertNotNull(response);

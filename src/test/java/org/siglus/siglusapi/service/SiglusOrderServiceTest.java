@@ -929,7 +929,7 @@ public class SiglusOrderServiceTest {
   @Test
   public void shouldCalculateAndSaveSuggestedQuantityWhenStartFulfillOrderWithSohIsEnough() {
     // given
-    mockCalcualteSuggestedQuantityCommonConditions(buildMockOrderWithCurrentPeriodIdAndStatusNotFulfilling(),
+    mockCalculateSuggestedQuantityCommonConditions(buildMockOrderWithCurrentPeriodIdAndStatusNotFulfilling(),
         buildCurrentPeriodRequisitions());
 
     Map<UUID, Integer> orderableIdToSoh = Maps.newHashMap();
@@ -962,7 +962,7 @@ public class SiglusOrderServiceTest {
   @Test
   public void shouldCalculateAndSaveSuggestedQuantityWhenStartFulfillOrderWithSohIsNotEnough() {
     // given
-    mockCalcualteSuggestedQuantityCommonConditions(buildMockOrderWithCurrentPeriodIdAndStatusNotFulfilling(),
+    mockCalculateSuggestedQuantityCommonConditions(buildMockOrderWithCurrentPeriodIdAndStatusNotFulfilling(),
         buildCurrentPeriodRequisitions());
 
     Map<UUID, Integer> orderableIdToSoh = Maps.newHashMap();
@@ -994,7 +994,7 @@ public class SiglusOrderServiceTest {
   @Test
   public void shouldCalculateAndSaveSuggestedQuantityWhenStartFulfillOrderWithSohIsNotEnoughAndApprovedQuantity0() {
     // given
-    mockCalcualteSuggestedQuantityCommonConditions(buildMockOrderWithCurrentPeriodIdAndStatusNotFulfilling(),
+    mockCalculateSuggestedQuantityCommonConditions(buildMockOrderWithCurrentPeriodIdAndStatusNotFulfilling(),
         buildCurrentPeriodRequisitionsWithCurrentRequisitionApproveQuantity0());
 
     Map<UUID, Integer> orderableIdToSoh = Maps.newHashMap();
@@ -1026,7 +1026,7 @@ public class SiglusOrderServiceTest {
   @Test
   public void shouldQuerySuggestedQuantityFromDbWhenContinueFulfillOrder() {
     // given
-    mockCalcualteSuggestedQuantityCommonConditions(buildMockOrderWithCurrentPeriodIdAndStatusFulfilling(),
+    mockCalculateSuggestedQuantityCommonConditions(buildMockOrderWithCurrentPeriodIdAndStatusFulfilling(),
         buildCurrentPeriodRequisitions());
     when(lineItemExtensionRepository.findOrderSuggestedQuantityDtoByOrderLineItemIdIn(
         anyList())).thenReturn(buildMockOrderSuggestedQuantityDtos());
@@ -1093,7 +1093,7 @@ public class SiglusOrderServiceTest {
     return Lists.newArrayList(dto1, dto2);
   }
 
-  private void mockCalcualteSuggestedQuantityCommonConditions(Order order,
+  private void mockCalculateSuggestedQuantityCommonConditions(Order order,
       List<Requisition> currentPeriodRequisitions) {
 
     when(orderRepository.findOne(orderId)).thenReturn(order);

@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.repository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 import org.openlmis.fulfillment.domain.ProofOfDeliveryLineItem;
@@ -31,4 +32,16 @@ public interface PodLineItemsRepository extends JpaRepository<ProofOfDeliveryLin
   @Query(name = "PodLineItem.findLineItemDtos", nativeQuery = true)
   List<PodLineItemDto> lineItemDtos(@Param("podId") UUID podId, @Param("orderId") UUID orderId,
       @Param("requisitionId") UUID requisitionId);
+
+  @Query(value = "select\n"
+      + "  *\n"
+      + "from\n"
+      + "  fulfillment.proof_of_delivery_line_items podli\n"
+      + "join siglusintegration.pod_line_items_extension plie on plie.podlineitemid = podli.id \n"
+      + "where\n"
+      + "  podli.orderableid in :orderableIds\n"
+      + "  and podli.proofofdeliveryid = :podId\n"
+      + "  and plie.subdraftid <> :subDraftId", nativeQuery = true)
+  List<ProofOfDeliveryLineItem> findDuplicatedOrderableLineItem(@Param("orderableIds") Collection<UUID> orderableIds,
+      @Param("podId") UUID podId, @Param("subDraftId") UUID subDraftId);
 }

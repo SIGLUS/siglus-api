@@ -18,6 +18,7 @@ package org.siglus.siglusapi.service.android;
 import static java.util.Collections.singletonList;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyListOf;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -87,6 +88,7 @@ import org.siglus.siglusapi.repository.SiglusShipmentLineItemRepository;
 import org.siglus.siglusapi.repository.SiglusStockCardLineItemRepository;
 import org.siglus.siglusapi.repository.SyncUpHashRepository;
 import org.siglus.siglusapi.service.LotConflictService;
+import org.siglus.siglusapi.service.SiglusNotificationService;
 import org.siglus.siglusapi.service.SiglusOrderableService;
 import org.siglus.siglusapi.service.SiglusProgramService;
 import org.siglus.siglusapi.service.SiglusValidReasonAssignmentService;
@@ -187,6 +189,9 @@ public class PodConfirmServiceTest {
   @Mock
   private SupportedProgramsHelper supportedProgramsHelper;
 
+  @Mock
+  private SiglusNotificationService siglusNotificationService;
+
   private final String programCode = "anyCode";
 
   @Before
@@ -210,6 +215,7 @@ public class PodConfirmServiceTest {
     ProgramDto program = mock(ProgramDto.class);
     when(program.getId()).thenReturn(programId);
     when(siglusProgramService.getProgramByCode(programCode)).thenReturn(Optional.of(program));
+    doNothing().when(siglusNotificationService).postConfirmPod(any(), any());
   }
 
   @After

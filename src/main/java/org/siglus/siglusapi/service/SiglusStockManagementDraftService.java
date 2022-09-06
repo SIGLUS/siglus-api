@@ -76,6 +76,7 @@ public class SiglusStockManagementDraftService {
   private final OperatePermissionService operatePermissionService;
   private final SiglusAuthenticationHelper authenticationHelper;
   private final ConflictOrderableInSubDraftsService conflictOrderableInSubDraftsService;
+  private final SiglusLotLocationService lotLocationService;
 
   private static final Integer DRAFTS_LIMITATION = 10;
   private static final Integer DRAFTS_INCREMENT = 1;
@@ -254,8 +255,7 @@ public class SiglusStockManagementDraftService {
         .filter(subDraft -> subDraft.getDraftNumber() > draft.getDraftNumber())
         .collect(toList());
     if (!filterSubDrafts.isEmpty()) {
-      filterSubDrafts.forEach(
-          subDraft -> subDraft.setDraftNumber(subDraft.getDraftNumber() - DRAFTS_INCREMENT));
+      filterSubDrafts.forEach(subDraft -> subDraft.setDraftNumber(subDraft.getDraftNumber() - DRAFTS_INCREMENT));
       stockManagementDraftRepository.save(filterSubDrafts);
     }
   }
@@ -272,22 +272,19 @@ public class SiglusStockManagementDraftService {
 
   private void checkIfDraftExists(StockManagementDraftDto dto) {
     List<StockManagementDraft> drafts = stockManagementDraftRepository
-        .findByProgramIdAndFacilityIdAndIsDraftAndDraftType(dto.getProgramId(), dto.getFacilityId(),
-            true, dto.getDraftType());
+        .findByProgramIdAndFacilityIdAndIsDraftAndDraftType(dto.getProgramId(), dto.getFacilityId(), true,
+            dto.getDraftType());
     if (CollectionUtils.isNotEmpty(drafts)) {
-      throw new ValidationMessageException(
-          new Message(ERROR_STOCK_MANAGEMENT_DRAFT_DRAFT_EXISTS, dto.getProgramId(),
-              dto.getFacilityId()));
+      throw new ValidationMessageException(new Message(ERROR_STOCK_MANAGEMENT_DRAFT_DRAFT_EXISTS, dto.getProgramId(),
+          dto.getFacilityId()));
     }
   }
 
   private void checkIfSameDraftsOversize(StockManagementDraftDto dto) {
-    Integer subDraftsQuantity = stockManagementDraftRepository
-        .countByInitialDraftId(dto.getInitialDraftId());
+    int subDraftsQuantity = stockManagementDraftRepository.countByInitialDraftId(dto.getInitialDraftId());
     if (subDraftsQuantity > DRAFTS_LIMITATION - 1) {
-      throw new BusinessDataException(
-          new Message(ERROR_STOCK_MANAGEMENT_SUB_DRAFTS_MORE_THAN_TEN, dto.getProgramId(),
-              dto.getFacilityId()), "subDrafts are more than limitation");
+      throw new BusinessDataException(new Message(ERROR_STOCK_MANAGEMENT_SUB_DRAFTS_MORE_THAN_TEN, dto.getProgramId(),
+          dto.getFacilityId()), "subDrafts are more than limitation");
     }
   }
 
@@ -363,12 +360,8 @@ public class SiglusStockManagementDraftService {
     Collection<ValidSourceDestinationDto> sourcesForAllProducts = validSourceDestinationService
         .findSourcesForAllPrograms(facilityId);
 
-    return sourcesForAllProducts
-        .stream().filter(source -> (
-            source.getNode().getId().equals(sourceNodeId)
-        )).findFirst()
-        .orElseThrow(() -> new NotFoundException("No such source node with id: " + sourceNodeId))
-        .getName();
+    return sourcesForAllProducts.stream().filter(source -> (source.getNode().getId().equals(sourceNodeId))).findFirst()
+        .orElseThrow(() -> new NotFoundException("No such source node with id: " + sourceNodeId)).getName();
   }
 
   private void checkIfInitialDraftExists(UUID programId, UUID facilityId, String draftType) {
@@ -488,10 +481,7 @@ public class SiglusStockManagementDraftService {
     boolean isAllSubmitted = subDrafts.stream()
         .allMatch(subDraft -> subDraft.getStatus().equals(PhysicalInventorySubDraftEnum.SUBMITTED));
     if (isAllSubmitted) {
-      List<MergedLineItemWithLocationDto> mergedLineItemWithLocationDtos =
-          fillingMergedLineItemsFieldsWithLocation(subDrafts);
-      mergedLineItemWithLocationDtos.forEach(this::fillingStockOnHandField);
-      return mergedLineItemWithLocationDtos;
+      return fillingMergedLineItemsFieldsWithLocation(subDrafts);
     }
     throw new BusinessDataException(new Message(ERROR_STOCK_MANAGEMENT_SUB_DRAFT_NOT_ALL_SUBMITTED),
         "subDrafts not all submitted");
@@ -543,6 +533,7 @@ public class SiglusStockManagementDraftService {
               .occurredDate(lineItem.getOccurredDate())
               .quantity(lineItem.getQuantity())
               .lotCode(lineItem.getLotCode())
+              .stockOnHand(lineItem.getStockOnHand())
               .locationCode(lineItem.getLocationCode())
               .area(lineItem.getArea())
               .build()).collect(toList());

@@ -33,7 +33,7 @@ public interface StockManagementDraftRepository
 
   List<StockManagementDraft> findByFacilityId(UUID facilityId);
 
-  Integer countByInitialDraftId(UUID initialDraftId);
+  int countByInitialDraftId(UUID initialDraftId);
 
   void deleteAllByInitialDraftId(UUID initialDraftId);
 }

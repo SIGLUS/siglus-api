@@ -21,5 +21,11 @@ import org.openlmis.fulfillment.web.util.BasicOrderDto;
 @Data
 public class BasicOrderExtensionResponse extends BasicOrderDto {
 
+  private boolean isLocal;
+
+  private boolean canCreateLocalIssueVoucher;
+
+  private boolean canDeleteLocalIssueVoucher;
+
   private boolean hasSubDraft;
 }

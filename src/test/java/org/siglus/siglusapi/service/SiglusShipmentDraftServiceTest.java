@@ -317,11 +317,12 @@ public class SiglusShipmentDraftServiceTest {
   @Test
   public void shouldDeleteLocationWhenDeleteShipmentDraft() {
     // given
-    OrderObjectReferenceDto orderDto = new OrderObjectReferenceDto(orderId);
     ShipmentDraftDto draftDto = new ShipmentDraftDto();
     ShipmentLineItemDto shipmentLineItemDto = new ShipmentLineItemDto();
     shipmentLineItemDto.setId(lineItemId);
+    shipmentLineItemDto.setLocation(new LocationDto("das", "dasf"));
     draftDto.setLineItems(newArrayList(shipmentLineItemDto));
+    OrderObjectReferenceDto orderDto = new OrderObjectReferenceDto(orderId);
     draftDto.setOrder(orderDto);
     when(siglusShipmentDraftFulfillmentService.searchShipmentDraft(draftId))
         .thenReturn(draftDto);

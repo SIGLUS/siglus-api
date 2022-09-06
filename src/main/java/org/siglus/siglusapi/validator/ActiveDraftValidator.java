@@ -100,8 +100,7 @@ public class ActiveDraftValidator {
   }
 
   public void validateInitialDraftId(UUID initialDraftId) {
-    StockManagementInitialDraft initialDraft = stockManagementInitialDraftsRepository
-        .findOne(initialDraftId);
+    StockManagementInitialDraft initialDraft = stockManagementInitialDraftsRepository.findOne(initialDraftId);
     if (initialDraft == null) {
       throw new ValidationMessageException(ERROR_EVENT_INITIAL_DRAFT_ID_INVALID);
     }
