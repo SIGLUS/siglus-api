@@ -302,7 +302,7 @@ public class SiglusPodService {
     podExtensionRepository.save(podExtension);
   }
 
-  public PodPrintInfoResponse getPintInfo(UUID orderId, UUID podId) {
+  public PodPrintInfoResponse getPrintInfo(UUID orderId, UUID podId) {
     PodPrintInfoResponse response = new PodPrintInfoResponse();
 
     OrderDto orderDto = ordersRepository.findOrderDtoById(orderId);
