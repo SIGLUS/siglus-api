@@ -55,6 +55,12 @@ public class EventStore {
         .collect(Collectors.toList());
   }
 
+  public List<Event> getEventsForReceiver(UUID receiverId) {
+    return repository.findByReceiverId(receiverId).stream()
+        .map(it -> it.toEvent(payloadSerializer::load))
+        .collect(Collectors.toList());
+  }
+
   public void confirmEventsByWeb(List<Event> confirmedEvents) {
     confirmedEvents.forEach(it -> it.setOnlineWebSynced(true));
     List<UUID> eventIds = confirmedEvents.stream().map(Event::getId).collect(Collectors.toList());

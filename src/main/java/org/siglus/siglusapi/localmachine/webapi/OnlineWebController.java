@@ -15,7 +15,9 @@
 
 package org.siglus.siglusapi.localmachine.webapi;
 
+import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.siglus.siglusapi.localmachine.Event;
 import org.siglus.siglusapi.localmachine.EventImporter;
 import org.siglus.siglusapi.localmachine.auth.MachineToken;
 import org.siglus.siglusapi.localmachine.eventstore.EventStore;
@@ -46,9 +48,11 @@ public class OnlineWebController {
   }
 
   @GetMapping("/peeringEvents")
-  public PeeringEventsResponse exportPeeringEvents() {
-    // TODO: 2022/8/21 export events from peering facilities
-    return null;
+  public PeeringEventsResponse exportPeeringEvents(MachineToken machineToken) {
+    List<Event> eventForReceiver = eventStore.getEventsForReceiver(machineToken.getFacilityId());
+    return PeeringEventsResponse.builder()
+        .events(eventForReceiver)
+        .build();
   }
 
   @PostMapping("/ack")
