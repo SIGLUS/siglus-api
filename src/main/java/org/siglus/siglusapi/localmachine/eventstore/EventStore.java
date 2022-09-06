@@ -61,6 +61,7 @@ public class EventStore {
         .collect(Collectors.toList());
   }
 
+  @Transactional
   public void confirmEventsByWeb(List<Event> confirmedEvents) {
     confirmedEvents.forEach(it -> it.setOnlineWebSynced(true));
     List<UUID> eventIds = confirmedEvents.stream().map(Event::getId).collect(Collectors.toList());
@@ -96,6 +97,7 @@ public class EventStore {
     repository.markAsReplayed(event.getId());
   }
 
+  @Transactional
   public void confirmReceived(UUID ackClaimerId, Set<UUID> eventIds) {
     repository.markAsReceived(ackClaimerId, eventIds);
   }
