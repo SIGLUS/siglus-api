@@ -43,7 +43,7 @@ public class OnlineWebController {
   }
 
   @PostMapping("/events")
-  public void syncEvents(@Validated SyncRequest request) {
+  public void syncEvents(@RequestBody @Validated SyncRequest request) {
     importer.importEvents(request.getEvents());
   }
 

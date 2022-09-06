@@ -17,10 +17,15 @@ package org.siglus.siglusapi.localmachine.webapi;
 
 import java.util.UUID;
 import javax.validation.Valid;
+
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @Data
 public class RemoteActivationRequest {
   @Valid private LocalActivationRequest localActivationRequest;

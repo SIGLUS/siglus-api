@@ -21,11 +21,13 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Builder.Default;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.siglus.siglusapi.localmachine.Event;
 
 @Builder
 @Data
 @AllArgsConstructor
+@NoArgsConstructor
 public class SyncRequest {
   @Default private List<Event> events = new LinkedList<>();
 }
