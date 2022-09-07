@@ -33,11 +33,16 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.RequisitionLineItem;
 import org.openlmis.requisition.domain.requisition.RequisitionStatus;
+import org.openlmis.requisition.domain.requisition.StatusChange;
+import org.openlmis.requisition.domain.requisition.StatusMessage;
 import org.openlmis.requisition.repository.RequisitionRepository;
 import org.siglus.siglusapi.domain.RequisitionExtension;
 import org.siglus.siglusapi.dto.RequisitionGroupMembersDto;
 import org.siglus.siglusapi.localmachine.EventPayloadCheckUtils;
 import org.siglus.siglusapi.localmachine.EventPublisher;
+import org.siglus.siglusapi.localmachine.event.BaseEventCommonService;
+import org.siglus.siglusapi.localmachine.event.requisition.web.RequisitionInternalApproveEmitter;
+import org.siglus.siglusapi.localmachine.event.requisition.web.RequisitionInternalApprovedEvent;
 import org.siglus.siglusapi.repository.AgeGroupLineItemRepository;
 import org.siglus.siglusapi.repository.ConsultationNumberLineItemRepository;
 import org.siglus.siglusapi.repository.KitUsageLineItemRepository;
@@ -83,6 +88,8 @@ public class RequisitionInternalApproveEmitterTest {
   private EventPublisher eventPublisher;
   @Mock
   private RequisitionGroupMembersRepository requisitionGroupMembersRepository;
+  @Mock
+  private BaseEventCommonService baseEventCommonService;
 
   private final UUID requisitionId = UUID.randomUUID();
 
@@ -103,6 +110,16 @@ public class RequisitionInternalApproveEmitterTest {
     requisition.setOriginalRequisitionId(null);
     requisition.setRequisitionLineItems(lineItems);
     requisition.setStatus(RequisitionStatus.IN_APPROVAL);
+    final List<StatusChange> list = new ArrayList<>();
+    final StatusChange sc = new StatusChange();
+    sc.setRequisition(requisition);
+    sc.setId(UUID.randomUUID());
+    sc.setStatus(RequisitionStatus.IN_APPROVAL);
+    StatusMessage statusMessage = StatusMessage.newStatusMessage(requisition, sc, UUID.randomUUID(), "", "", "");
+    statusMessage.setId(UUID.randomUUID());
+    sc.setStatusMessage(statusMessage);
+    list.add(sc);
+    requisition.setStatusChanges(list);
 
     when(requisitionRepository.findOne(requisitionId)).thenReturn(requisition);
     final RequisitionExtension requisitionExtension = new RequisitionExtension();
@@ -123,16 +140,16 @@ public class RequisitionInternalApproveEmitterTest {
   @Test
   public void shouldSerializeSuccessWhenEmit() {
     // when
-    RequisitionInternalApproveApplicationEvent emitted = requisitionInternalApproveEmitter.emit(requisitionId);
+    RequisitionInternalApprovedEvent emitted = requisitionInternalApproveEmitter.emit(requisitionId);
     int count = EventPayloadCheckUtils.checkEventSerializeChanges(emitted,
-        RequisitionInternalApproveApplicationEvent.class);
+        RequisitionInternalApprovedEvent.class);
     // then
     assertThat(count).isZero();
   }
 
   public void shouldGetNonNullEvent() {
     // when
-    RequisitionInternalApproveApplicationEvent event = requisitionInternalApproveEmitter.getEvent(requisitionId);
+    RequisitionInternalApprovedEvent event = requisitionInternalApproveEmitter.getEvent(requisitionId);
     // then
     assertThat(event).isNotNull();
   }

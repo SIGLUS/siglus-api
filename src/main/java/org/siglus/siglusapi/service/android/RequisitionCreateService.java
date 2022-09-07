@@ -204,12 +204,12 @@ public class RequisitionCreateService {
 
   @Transactional
   @Validated(PerformanceSequence.class)
-  public void createRequisition(@Valid RequisitionCreateRequest request) {
+  public UUID createRequisition(@Valid RequisitionCreateRequest request) {
     UserDto user = authHelper.getCurrentUser();
     String syncUpHash = request.getSyncUpHash(user);
     if (syncUpHashRepository.findOne(syncUpHash) != null) {
       log.info("skip create requisition as syncUpHash: {} existed", syncUpHash);
-      return;
+      return null;
     }
     UUID authorId = user.getId();
     Requisition requisition = initiateRequisition(request, user);
@@ -225,6 +225,7 @@ public class RequisitionCreateService {
     syncUpHashRepository.save(syncUpHashDomain);
     log.info("generate notification for requisition: {}", requisition.getId());
     siglusNotificationService.postApprove(buildBaseRequisitionDto(requisition));
+    return requisition.getId();
   }
 
   private Requisition initiateRequisition(RequisitionCreateRequest request, UserDto user) {

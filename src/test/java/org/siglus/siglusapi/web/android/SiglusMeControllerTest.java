@@ -44,10 +44,11 @@ import org.siglus.siglusapi.dto.android.response.FacilityProductMovementsRespons
 import org.siglus.siglusapi.dto.android.response.FacilityResponse;
 import org.siglus.siglusapi.dto.android.response.ProductSyncResponse;
 import org.siglus.siglusapi.dto.android.response.RequisitionResponse;
+import org.siglus.siglusapi.localmachine.event.requisition.andriod.AndroidRequisitionSyncedEmitter;
 import org.siglus.siglusapi.service.android.MeService;
 import org.springframework.mock.web.MockHttpServletRequest;
 
-@SuppressWarnings("PMD.TooManyMethods")
+@SuppressWarnings({"PMD.TooManyMethods", "PMD.AvoidDuplicateLiterals", "PMD.UnusedPrivateField"})
 @RunWith(MockitoJUnitRunner.class)
 public class SiglusMeControllerTest {
 
@@ -56,6 +57,8 @@ public class SiglusMeControllerTest {
 
   @Mock
   private MeService service;
+  @Mock
+  private AndroidRequisitionSyncedEmitter androidRequisitionSyncedEmitter;
 
   @Mock
   private ProductSyncResponse syncResponse;

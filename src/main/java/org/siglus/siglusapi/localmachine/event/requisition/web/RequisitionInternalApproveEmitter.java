@@ -13,23 +13,22 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.localmachine.event.requisition;
+package org.siglus.siglusapi.localmachine.event.requisition.web;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections4.CollectionUtils;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.RequisitionLineItem;
 import org.openlmis.requisition.repository.RequisitionRepository;
 import org.siglus.siglusapi.domain.RequisitionExtension;
 import org.siglus.siglusapi.domain.RequisitionLineItemExtension;
-import org.siglus.siglusapi.dto.RequisitionGroupMembersDto;
 import org.siglus.siglusapi.localmachine.EventPublisher;
+import org.siglus.siglusapi.localmachine.event.BaseEventCommonService;
 import org.siglus.siglusapi.repository.AgeGroupLineItemRepository;
 import org.siglus.siglusapi.repository.ConsultationNumberLineItemRepository;
 import org.siglus.siglusapi.repository.KitUsageLineItemRepository;
@@ -37,7 +36,6 @@ import org.siglus.siglusapi.repository.PatientLineItemRepository;
 import org.siglus.siglusapi.repository.RegimenLineItemRepository;
 import org.siglus.siglusapi.repository.RegimenSummaryLineItemRepository;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
-import org.siglus.siglusapi.repository.RequisitionGroupMembersRepository;
 import org.siglus.siglusapi.repository.RequisitionLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.TestConsumptionLineItemRepository;
 import org.siglus.siglusapi.repository.UsageInformationLineItemRepository;
@@ -59,17 +57,19 @@ public class RequisitionInternalApproveEmitter {
   private final RegimenSummaryLineItemRepository regimenSummaryLineItemRepository;
   private final KitUsageLineItemRepository kitUsageRepository;
   private final EventPublisher eventPublisher;
-  private final RequisitionGroupMembersRepository requisitionGroupMembersRepository;
+  private final BaseEventCommonService baseEventCommonService;
 
-  public RequisitionInternalApproveApplicationEvent emit(UUID requisitionId) {
-    RequisitionInternalApproveApplicationEvent event = getEvent(requisitionId);
-    eventPublisher.emitGroupEvent(getGroupId(event), getReceiverId(event), event);
+  public RequisitionInternalApprovedEvent emit(UUID requisitionId) {
+    RequisitionInternalApprovedEvent event = getEvent(requisitionId);
+    eventPublisher.emitGroupEvent(getGroupId(event),
+        baseEventCommonService.getReceiverId(event.getRequisition().getFacilityId(),
+            event.getRequisition().getProgramId()), event);
     return event;
   }
 
-  public RequisitionInternalApproveApplicationEvent getEvent(UUID requisitionId) {
-    RequisitionInternalApproveApplicationEvent event =
-        new RequisitionInternalApproveApplicationEvent();
+  public RequisitionInternalApprovedEvent getEvent(UUID requisitionId) {
+    RequisitionInternalApprovedEvent event =
+        new RequisitionInternalApprovedEvent();
     log.info("get event of requisition internal approve, id = " + requisitionId);
     Requisition requisition = requisitionRepository.findOne(requisitionId);
     if (requisition == null) {
@@ -94,24 +94,12 @@ public class RequisitionInternalApproveEmitter {
     return event;
   }
 
-  private String getGroupId(RequisitionInternalApproveApplicationEvent event) {
+  private String getGroupId(RequisitionInternalApprovedEvent event) {
     RequisitionExtension requisitionExtension = event.getRequisitionExtension();
     return requisitionExtension.getRequisitionNumberPrefix() + requisitionExtension.getRequisitionNumber();
   }
 
-  private UUID getReceiverId(RequisitionInternalApproveApplicationEvent event) {
-    List<RequisitionGroupMembersDto> parentFacility =
-        requisitionGroupMembersRepository.findParentFacilityByRequisitionGroup(
-            event.getRequisitionExtension().getFacilityId(),
-            Collections.singleton(event.getRequisition().getProgramId()));
-    if (CollectionUtils.isEmpty(parentFacility)) {
-      throw new IllegalStateException(String.format("can't find event's reciver id, facilityId = %s, programId=%s",
-          event.getRequisitionExtension().getFacilityId(), event.getRequisition().getProgramId()));
-    }
-    return parentFacility.get(0).getFacilityId();
-  }
-
-  private void buildRequisitionUsage(UUID id, RequisitionInternalApproveApplicationEvent event) {
+  private void buildRequisitionUsage(UUID id, RequisitionInternalApprovedEvent event) {
     event.setAgeGroupLineItemRequisitionUsage(ageGroupLineItemRepository.findByRequisitionId(id));
     event.setConsultationNumberLineItemRequisitionUsage(consultationNumberLineItemRepository.findByRequisitionId(id));
     event.setPatientLineItemRequisitionUsage(patientLineItemRepository.findByRequisitionId(id));

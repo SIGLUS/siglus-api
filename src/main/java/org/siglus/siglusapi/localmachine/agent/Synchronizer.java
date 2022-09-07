@@ -21,6 +21,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
+import org.apache.commons.collections.CollectionUtils;
 import org.siglus.siglusapi.localmachine.Event;
 import org.siglus.siglusapi.localmachine.EventImporter;
 import org.siglus.siglusapi.localmachine.Machine;
@@ -62,6 +63,9 @@ public class Synchronizer {
   @Transactional
   public void pull() {
     List<Event> events = webClient.exportPeeringEvents();
+    if (CollectionUtils.isEmpty(events)) {
+      return;
+    }
     eventImporter.importEvents(events);
     webClient.confirmReceived(events);
   }

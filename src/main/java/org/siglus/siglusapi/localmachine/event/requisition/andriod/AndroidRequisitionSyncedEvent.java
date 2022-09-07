@@ -13,38 +13,29 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.localmachine.domain;
+package org.siglus.siglusapi.localmachine.event.requisition.andriod;
 
-import java.time.ZonedDateTime;
 import java.util.UUID;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.Getter;
+import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
 
-@Entity
-@Data
+@Getter
 @Builder
-@AllArgsConstructor
-@NoArgsConstructor
-@Table(name = "agents", schema = "localmachine")
-public class AgentInfo {
-  @Column(name = "machineid")
-  @Id private UUID machineId;
-  @Column(name = "facilityid")
+public class AndroidRequisitionSyncedEvent {
   private UUID facilityId;
-  @Column(name = "facilitycode")
-  private String facilityCode;
-  @Column(name = "publickey")
-  private byte[] publicKey;
-  @Column(name = "privatekey")
-  private byte[] privateKey;
-  @Column(name = "activationcode")
-  private String activationCode;
-  @Column(name = "activatedat")
-  private ZonedDateTime activatedAt;
+  private UUID userId;
+  private UUID requisitionId;
+  private RequisitionCreateRequest request;
+
+  public AndroidRequisitionSyncedEvent(UUID facilityId, UUID userId, UUID requisitionId,
+      RequisitionCreateRequest request) {
+    this.facilityId = facilityId;
+    this.userId = userId;
+    this.requisitionId = requisitionId;
+    this.request = request;
+  }
+
+  public AndroidRequisitionSyncedEvent() {
+  }
 }

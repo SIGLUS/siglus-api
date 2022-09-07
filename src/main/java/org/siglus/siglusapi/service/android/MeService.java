@@ -346,9 +346,9 @@ public class MeService {
   }
 
   @SuppressWarnings("PMD.PreserveStackTrace")
-  public void createRequisition(RequisitionCreateRequest request) {
+  public UUID createRequisition(RequisitionCreateRequest request) {
     try {
-      requisitionCreateService.createRequisition(request);
+      return requisitionCreateService.createRequisition(request);
     } catch (Exception e) {
       try {
         backupRequisitionRequest(request, e);

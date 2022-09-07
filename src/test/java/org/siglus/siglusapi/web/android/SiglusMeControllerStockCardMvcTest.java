@@ -93,6 +93,7 @@ import org.siglus.siglusapi.dto.android.enumeration.Destination;
 import org.siglus.siglusapi.dto.android.enumeration.MovementType;
 import org.siglus.siglusapi.dto.android.enumeration.Source;
 import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
+import org.siglus.siglusapi.localmachine.event.requisition.andriod.AndroidRequisitionSyncedEmitter;
 import org.siglus.siglusapi.repository.StockCardRequestBackupRepository;
 import org.siglus.siglusapi.repository.StockEventProductRequestedRepository;
 import org.siglus.siglusapi.repository.StockManagementRepository;
@@ -123,7 +124,7 @@ import org.springframework.test.web.servlet.RequestBuilder;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-@SuppressWarnings({"PMD.TooManyMethods", "PMD.AvoidDuplicateLiterals"})
+@SuppressWarnings({"PMD.TooManyMethods", "PMD.AvoidDuplicateLiterals", "PMD.UnusedPrivateField"})
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {MappingJackson2HttpMessageConverter.class, PageableHandlerMethodArgumentResolver.class,
     ObjectMapper.class, ProductMovementMapperImpl.class})
@@ -140,6 +141,8 @@ public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
 
   @InjectMocks
   private MeService service;
+  @Mock
+  private AndroidRequisitionSyncedEmitter androidRequisitionSyncedEmitter;
   @InjectMocks
   private StockCardSearchService stockCardSearchService;
 
@@ -204,7 +207,7 @@ public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
     objectMapper.configure(SerializationFeature.WRITE_DATE_TIMESTAMPS_AS_NANOSECONDS, false);
     objectMapper.registerModule(new JavaTimeModule());
     jackson2HttpMessageConverter.setObjectMapper(objectMapper);
-    SiglusMeController controller = new SiglusMeController(service);
+    SiglusMeController controller = new SiglusMeController(service, androidRequisitionSyncedEmitter);
     this.mockMvc = MockMvcBuilders
         .standaloneSetup(controller)
         .setMessageConverters(jackson2HttpMessageConverter)
