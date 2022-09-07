@@ -18,6 +18,7 @@ package org.siglus.siglusapi.localmachine.webapi;
 import java.util.UUID;
 import lombok.Builder;
 import lombok.Data;
+import org.siglus.siglusapi.localmachine.auth.MachineToken;
 import org.siglus.siglusapi.localmachine.domain.AgentInfo;
 
 @Builder
@@ -26,12 +27,17 @@ public class AgentInfoResponse {
   private UUID machineId;
   private String facilityCode;
   private UUID facilityId;
+  private String sampleMachineToken;
 
   public static AgentInfoResponse from(AgentInfo agentInfo) {
+    MachineToken machineToken =
+        MachineToken.sign(
+            agentInfo.getMachineId(), agentInfo.getFacilityId(), agentInfo.getPrivateKey());
     return AgentInfoResponse.builder()
         .machineId(agentInfo.getMachineId())
         .facilityCode(agentInfo.getFacilityCode())
         .facilityId(agentInfo.getFacilityId())
+        .sampleMachineToken(machineToken.getPayload())
         .build();
   }
 }
