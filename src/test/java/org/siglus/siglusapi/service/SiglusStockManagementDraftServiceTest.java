@@ -56,8 +56,10 @@ import org.siglus.siglusapi.domain.StockManagementDraft;
 import org.siglus.siglusapi.domain.StockManagementDraftLineItem;
 import org.siglus.siglusapi.domain.StockManagementInitialDraft;
 import org.siglus.siglusapi.dto.MergedLineItemDto;
+import org.siglus.siglusapi.dto.MergedLineItemWithLocationDto;
 import org.siglus.siglusapi.dto.StockManagementDraftDto;
 import org.siglus.siglusapi.dto.StockManagementDraftLineItemDto;
+import org.siglus.siglusapi.dto.StockManagementDraftWithLocationDto;
 import org.siglus.siglusapi.dto.StockManagementInitialDraftDto;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.dto.enums.PhysicalInventorySubDraftEnum;
@@ -151,6 +153,13 @@ public class SiglusStockManagementDraftServiceTest {
       .draftType(issueDraft)
       .build();
 
+  private final StockManagementDraftWithLocationDto draftWithLocationDto = StockManagementDraftWithLocationDto
+      .builder()
+      .programId(programId)
+      .facilityId(facilityId)
+      .draftType(issueDraft)
+      .build();
+
   private final StockManagementDraft draft = StockManagementDraft.builder()
       .status(PhysicalInventorySubDraftEnum.DRAFT).build();
 
@@ -182,6 +191,12 @@ public class SiglusStockManagementDraftServiceTest {
       .expirationDate(LocalDate.of(2024, 7, 30))
       .orderableId(orderable2).lotCode("lot-2").occurredDate(LocalDate.of(2022, 7, 20))
       .productName("product-2").productCode("code-2").quantity(20).build();
+
+  private final StockManagementDraftLineItem draftLineItemWithLocation = StockManagementDraftLineItem
+      .builder().stockManagementDraft(draft1)
+      .expirationDate(LocalDate.of(2024, 7, 30))
+      .orderableId(orderable2).lotCode("lot-2").occurredDate(LocalDate.of(2022, 7, 20))
+      .productName("product-2").productCode("code-2").quantity(20).locationCode("22A05").area("beijing").build();
 
   private final StockCardDto stockCardDto1 = StockCardDto.builder().stockOnHand(100).build();
   private final StockCardDto stockCardDto2 = StockCardDto.builder().stockOnHand(200).build();
@@ -623,4 +638,91 @@ public class SiglusStockManagementDraftServiceTest {
 
     siglusStockManagementDraftService.mergeSubDrafts(initialDraftId);
   }
+
+  @Test
+  public void shouldUpdateSubDraftStatusWithLocationWhenSaveDraft() {
+    StockManagementDraft foundDraft = StockManagementDraft.builder()
+        .initialDraftId(initialDraftId)
+        .operator("operator-1")
+        .status(PhysicalInventorySubDraftEnum.NOT_YET_STARTED)
+        .build();
+
+    when(stockManagementDraftRepository.findOne(id)).thenReturn(foundDraft);
+
+    StockManagementDraft stockManagementDraft = siglusStockManagementDraftService
+        .setNewAttributesInOriginalDraft(StockManagementDraftDto.from(draftWithLocationDto), id);
+    when(stockManagementDraftRepository.save(stockManagementDraft))
+        .thenReturn(stockManagementDraft);
+
+    StockManagementDraftWithLocationDto updatedDraftDto = siglusStockManagementDraftService
+        .updateDraftWithLocation(draftWithLocationDto, id);
+
+    assertThat(updatedDraftDto.getStatus())
+        .isEqualTo(PhysicalInventorySubDraftEnum.DRAFT);
+    assertThat(updatedDraftDto.getInitialDraftId()).isEqualTo(initialDraftId);
+  }
+
+  @Test
+  public void shouldUpdateAdjustmentDraftWithLocationWhenSaveDraft() {
+    draftWithLocationDto.setDraftType(adjustmentDraft);
+    StockManagementDraft draft = StockManagementDraft.createStockManagementDraft(
+        StockManagementDraftDto.from(draftWithLocationDto), true);
+    when(stockManagementDraftRepository.save(draft)).thenReturn(draft);
+
+    StockManagementDraftWithLocationDto stockManagementDraftWithLocationDto = siglusStockManagementDraftService
+        .updateDraftWithLocation(draftWithLocationDto, id);
+
+    assertTrue(stockManagementDraftWithLocationDto.getIsDraft());
+  }
+
+  @Test
+  public void shouldThrowExceptionWhenSubDraftsWithLocationAreEmpty() {
+    exception.expect(BusinessDataException.class);
+    exception.expectMessage(containsString(ERROR_STOCK_MANAGEMENT_SUB_DRAFT_EMPTY));
+
+    doNothing().when(draftValidator).validateInitialDraftId(initialDraftId);
+    when(stockManagementDraftRepository.findByInitialDraftId(initialDraftId))
+        .thenReturn(Collections.emptyList());
+
+    siglusStockManagementDraftService.mergeSubDraftsWithLocation(initialDraftId);
+  }
+
+  @Test
+  public void shouldReturnMergedLineItemWithLocationDtos() {
+    draft.setInitialDraftId(initialDraftId);
+    draft.setLineItems(newArrayList(draftLineItem1));
+    draft.setStatus(PhysicalInventorySubDraftEnum.SUBMITTED);
+
+    draft1.setInitialDraftId(initialDraftId);
+    draft1.setLineItems(newArrayList(draftLineItem2));
+    draft1.setStatus(PhysicalInventorySubDraftEnum.SUBMITTED);
+
+    doNothing().when(draftValidator).validateInitialDraftId(initialDraftId);
+    when(stockManagementDraftRepository.findByInitialDraftId(initialDraftId))
+        .thenReturn(newArrayList(draft, draft1));
+    when(stockCardService.findStockCardByOrderable(orderable1)).thenReturn(stockCardDto1);
+    when(stockCardService.findStockCardByOrderable(orderable2)).thenReturn(stockCardDto2);
+
+    List<MergedLineItemWithLocationDto> mergedLineItemWithLocationDtos = siglusStockManagementDraftService
+        .mergeSubDraftsWithLocation(initialDraftId);
+
+    assertThat(mergedLineItemWithLocationDtos.size()).isEqualTo(2);
+  }
+
+  @Test
+  public void shouldThrowExceptionWhenSubDraftsWithLocationNotSubmitted() {
+    exception.expect(BusinessDataException.class);
+    exception.expectMessage(containsString(ERROR_STOCK_MANAGEMENT_SUB_DRAFT_NOT_ALL_SUBMITTED));
+
+    draft.setInitialDraftId(initialDraftId);
+    draft.setLineItems(newArrayList(draftLineItem1));
+
+    doNothing().when(draftValidator).validateInitialDraftId(initialDraftId);
+    when(stockManagementDraftRepository.findByInitialDraftId(initialDraftId))
+        .thenReturn(newArrayList(draft));
+
+    siglusStockManagementDraftService.mergeSubDraftsWithLocation(initialDraftId);
+  }
+
+  ;
 }
