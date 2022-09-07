@@ -102,20 +102,20 @@ public class SiglusLocalIssueVoucherService {
   }
 
   @Transactional
-  public void deleteLocalIssueVoucher(UUID id) {
-    validateInitialDraftId(id);
-    log.info("delete proof subDrafts with proof of delivery id: {}", id);
-    podSubDraftRepository.deleteAllByPodId(id);
-    log.info("delete local issue voucher with id: {}", id);
-    localIssueVoucherRepository.delete(id);
+  public void deleteLocalIssueVoucher(UUID localIssueVoucherId) {
+    validateLocalIssueVoucherId(localIssueVoucherId);
+    log.info("delete subDrafts with proof of delivery id: {}", localIssueVoucherId);
+    podSubDraftRepository.deleteAllByPodId(localIssueVoucherId);
+    log.info("delete local issue voucher with id: {}", localIssueVoucherId);
+    localIssueVoucherRepository.delete(localIssueVoucherId);
   }
 
   public SubDraftInfo createLocalIssueVoucherSubDraft(UUID localIssueVoucherId) {
     validateLocalIssueVoucherId(localIssueVoucherId);
-    checkIfSubDraftsOversize(localIssueVoucherId);
     int subDraftsQuantity = podSubDraftRepository.countAllByPodId(localIssueVoucherId);
+    checkIfSubDraftsOversize(subDraftsQuantity);
     PodSubDraft subDraft = getPodSubDraft(localIssueVoucherId, subDraftsQuantity);
-    log.info("save local issue voucher with id: {}", localIssueVoucherId);
+    log.info("save local issue voucher with localIssueVoucherId: {}", localIssueVoucherId);
     PodSubDraft localIssueVoucherSubDraft = podSubDraftRepository.save(subDraft);
     return buildSubDraftInfo(localIssueVoucherSubDraft);
   }
@@ -144,11 +144,9 @@ public class SiglusLocalIssueVoucherService {
     }
   }
 
-  private void checkIfSubDraftsOversize(UUID localIssueVoucherId) {
-    int subDraftsQuantity = podSubDraftRepository.countAllByPodId(localIssueVoucherId);
+  private void checkIfSubDraftsOversize(int subDraftsQuantity) {
     if (subDraftsQuantity > SUB_DRAFTS_LIMITATION - 1) {
-      throw new BusinessDataException(
-          new Message(ERROR_LOCAL_ISSUE_VOUCHER_SUB_DRAFTS_MORE_THAN_TEN, localIssueVoucherId),
+      throw new BusinessDataException(new Message(ERROR_LOCAL_ISSUE_VOUCHER_SUB_DRAFTS_MORE_THAN_TEN),
           "subDrafts are more than limitation");
     }
   }
@@ -168,13 +166,6 @@ public class SiglusLocalIssueVoucherService {
 
   public void deleteSubDraft(UUID podId, UUID subDraftId) {
     siglusPodService.deleteSubDraft(podId, subDraftId);
-  }
-
-  private void validateInitialDraftId(UUID id) {
-    LocalIssueVoucher localIssueVoucher = localIssueVoucherRepository.findOne(id);
-    if (localIssueVoucher == null) {
-      throw new ValidationMessageException(ERROR_LOCAL_ISSUE_VOUCHER_ID_INVALID);
-    }
   }
 
   private void validateOrderableDuplicated(UpdatePodSubDraftRequest request, UUID subDraftId) {

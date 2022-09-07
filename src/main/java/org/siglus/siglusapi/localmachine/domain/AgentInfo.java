@@ -17,6 +17,7 @@ package org.siglus.siglusapi.localmachine.domain;
 
 import java.time.ZonedDateTime;
 import java.util.UUID;
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
@@ -32,11 +33,18 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Table(name = "agents", schema = "localmachine")
 public class AgentInfo {
+  @Column(name = "machineid")
   @Id private UUID machineId;
+  @Column(name = "facilityid")
   private UUID facilityId;
+  @Column(name = "facilitycode")
   private String facilityCode;
+  @Column(name = "publickey")
   private byte[] publicKey;
+  @Column(name = "privatekey")
   private byte[] privateKey;
+  @Column(name = "activationcode")
   private String activationCode;
+  @Column(name = "activatedat")
   private ZonedDateTime activatedAt;
 }

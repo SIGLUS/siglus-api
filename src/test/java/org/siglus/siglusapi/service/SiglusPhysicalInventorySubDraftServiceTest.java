@@ -171,7 +171,7 @@ public class SiglusPhysicalInventorySubDraftServiceTest {
 
     // when
     siglusPhysicalInventorySubDraftService.updateSubDrafts(subDraftIds, physicalInventoryDto,
-        PhysicalInventorySubDraftEnum.DRAFT);
+        PhysicalInventorySubDraftEnum.DRAFT, false);
     verify(physicalInventorySubDraftRepository, times(2)).findAll(any(List.class));
   }
 
@@ -213,7 +213,7 @@ public class SiglusPhysicalInventorySubDraftServiceTest {
 
     // when
     siglusPhysicalInventorySubDraftService.updateSubDrafts(subDraftIds, physicalInventoryDto,
-        PhysicalInventorySubDraftEnum.DRAFT);
+        PhysicalInventorySubDraftEnum.DRAFT, false);
     // then
     verify(siglusPhysicalInventoryService, times(2)).getFullPhysicalInventoryDto(any());
   }
@@ -280,7 +280,7 @@ public class SiglusPhysicalInventorySubDraftServiceTest {
 
     // when
     siglusPhysicalInventorySubDraftService.updateSubDrafts(subDraftIds, physicalInventoryDto,
-        PhysicalInventorySubDraftEnum.DRAFT);
+        PhysicalInventorySubDraftEnum.DRAFT, false);
     // then
     verify(siglusPhysicalInventoryService, times(2)).getFullPhysicalInventoryDto(any());
 
@@ -354,7 +354,7 @@ public class SiglusPhysicalInventorySubDraftServiceTest {
     when(siglusStockCardSummariesService.findAllProgramStockSummaries()).thenReturn(stockSummaries);
 
     // when
-    siglusPhysicalInventorySubDraftService.deleteSubDrafts(subDraftIds, Boolean.TRUE);
+    siglusPhysicalInventorySubDraftService.deleteSubDrafts(subDraftIds, Boolean.TRUE, false);
     // then
     verify(lineItemsExtensionRepository).deleteByPhysicalInventoryIdIn(Collections.singleton(physicalInventoryId1));
     verify(lineItemsExtensionRepository).deleteByPhysicalInventoryIdIn(Collections.singleton(physicalInventoryId2));
@@ -427,7 +427,7 @@ public class SiglusPhysicalInventorySubDraftServiceTest {
     when(siglusStockCardSummariesService.findAllProgramStockSummaries()).thenReturn(stockSummaries);
 
     // when
-    siglusPhysicalInventorySubDraftService.deleteSubDrafts(subDraftIds, Boolean.FALSE);
+    siglusPhysicalInventorySubDraftService.deleteSubDrafts(subDraftIds, Boolean.FALSE, false);
     // then
     verify(physicalInventorySubDraftRepository).save(any(List.class));
 
@@ -444,7 +444,7 @@ public class SiglusPhysicalInventorySubDraftServiceTest {
     when(physicalInventorySubDraftRepository.findAll(subDraftIds)).thenReturn(new ArrayList<>());
 
     // when
-    siglusPhysicalInventorySubDraftService.deleteSubDrafts(subDraftIds, Boolean.FALSE);
+    siglusPhysicalInventorySubDraftService.deleteSubDrafts(subDraftIds, Boolean.FALSE, false);
     verify(physicalInventorySubDraftRepository).findAll(any(List.class));
 
   }
@@ -498,8 +498,7 @@ public class SiglusPhysicalInventorySubDraftServiceTest {
         .build();
     // when
     siglusPhysicalInventorySubDraftService.updateSubDrafts(subDraftIds, physicalInventoryDto,
-        PhysicalInventorySubDraftEnum.DRAFT);
+        PhysicalInventorySubDraftEnum.DRAFT, false);
     verify(physicalInventorySubDraftRepository, times(2)).findAll(any(List.class));
   }
-
 }

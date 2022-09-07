@@ -16,17 +16,25 @@
 package org.siglus.siglusapi.web;
 
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
+import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_UUID;
 import static org.springframework.http.HttpStatus.CREATED;
+import static org.springframework.http.HttpStatus.NO_CONTENT;
 
 import java.util.List;
 import java.util.UUID;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.openlmis.stockmanagement.dto.PhysicalInventoryDto;
+import org.siglus.siglusapi.dto.DraftListDto;
+import org.siglus.siglusapi.dto.PhysicalInventorySubDraftDto;
 import org.siglus.siglusapi.dto.SiglusPhysicalInventoryDto;
+import org.siglus.siglusapi.dto.enums.PhysicalInventorySubDraftEnum;
 import org.siglus.siglusapi.service.SiglusPhysicalInventoryService;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.siglus.siglusapi.service.SiglusPhysicalInventorySubDraftService;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -35,11 +43,13 @@ import org.springframework.web.bind.annotation.RestController;
 
 @Slf4j
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/siglusapi/location/physicalInventories")
 public class SiglusPhysicalInventoryLocationController {
 
-  @Autowired
-  private SiglusPhysicalInventoryService siglusPhysicalInventoryService;
+  private final SiglusPhysicalInventoryService siglusPhysicalInventoryService;
+  private final SiglusPhysicalInventorySubDraftService siglusPhysicalInventorySubDraftService;
+
 
   @PostMapping()
   @ResponseStatus(CREATED)
@@ -47,18 +57,71 @@ public class SiglusPhysicalInventoryLocationController {
       @RequestBody PhysicalInventoryDto dto,
       @RequestParam Integer splitNum,
       @RequestParam(required = false) boolean initialPhysicalInventory,
-      @RequestParam(name = "locationManagementOption") String optionString) {
+      @RequestParam(name = "locationManagementOption") String optionString,
+      @RequestParam(required = false) boolean isByLocation) {
     if (ALL_PRODUCTS_PROGRAM_ID.equals(dto.getProgramId())) {
       return siglusPhysicalInventoryService.createAndSplitNewDraftForAllProduct(dto, splitNum,
-          initialPhysicalInventory, optionString);
+          initialPhysicalInventory, optionString, isByLocation);
     }
     return siglusPhysicalInventoryService.createAndSpiltNewDraftForOneProgram(dto, splitNum,
-        optionString);
+        optionString, isByLocation);
+  }
+
+  @GetMapping
+  public List<PhysicalInventoryDto> searchPhysicalInventories(
+      @RequestParam UUID program,
+      @RequestParam UUID facility,
+      @RequestParam(required = false) Boolean isDraft,
+      @RequestParam(required = false) boolean isByLocation) {
+    if (ALL_PRODUCTS_PROGRAM_ID.equals(program)) {
+      return siglusPhysicalInventoryService
+          .getPhysicalInventoryDtosForAllProducts(facility, isDraft, isByLocation);
+    }
+    return siglusPhysicalInventoryService.getPhysicalInventoryDtosForProductsInOneProgram(program, facility, isDraft,
+        isByLocation);
   }
 
   @GetMapping("/subDraft")
-  public SiglusPhysicalInventoryDto searchSubDraftPhysicalInventory(@RequestParam List<UUID> subDraftIds) {
-    return siglusPhysicalInventoryService.getSubLocationPhysicalInventoryDtoBySubDraftId(subDraftIds);
+  public SiglusPhysicalInventoryDto searchSubDraftPhysicalInventory(@RequestParam List<UUID> subDraftIds,
+      @RequestParam(required = false) boolean isByLocation) {
+    return siglusPhysicalInventoryService.getSubLocationPhysicalInventoryDtoBySubDraftId(subDraftIds, isByLocation);
   }
+
+
+  @PutMapping("/subDraft")
+  public void updateSubDrafts(@RequestBody PhysicalInventorySubDraftDto dto,
+      @RequestParam(required = false) boolean isByLocation) {
+    siglusPhysicalInventorySubDraftService.updateSubDrafts(dto.getSubDraftIds(), dto,
+        PhysicalInventorySubDraftEnum.DRAFT, isByLocation);
+  }
+
+  @DeleteMapping("/subDraft")
+  @ResponseStatus(NO_CONTENT)
+  public void deleteSubDrafts(
+      @RequestParam(required = false) boolean initialPhysicalInventory,
+      @RequestBody List<UUID> subDraftIds,
+      @RequestParam(required = false) boolean isByLocation) {
+    siglusPhysicalInventorySubDraftService.deleteSubDrafts(subDraftIds, initialPhysicalInventory, isByLocation);
+  }
+
+  @PostMapping("/subDraftSubmit")
+  @ResponseStatus(NO_CONTENT)
+  public void submitSubDrafts(@RequestBody PhysicalInventorySubDraftDto dto,
+      @RequestParam(required = false) boolean isByLocation) {
+    siglusPhysicalInventorySubDraftService.updateSubDrafts(dto.getSubDraftIds(), dto,
+        PhysicalInventorySubDraftEnum.SUBMITTED, isByLocation);
+
+  }
+
+  @GetMapping("/draftList")
+  public DraftListDto searchSubDraftList(@RequestParam UUID program,
+      @RequestParam UUID facility,
+      @RequestParam(required = false) Boolean isDraft) {
+    if (ALL_PRODUCTS_UUID.equals(program)) {
+      return siglusPhysicalInventoryService.getSubDraftListForAllProduct(facility, isDraft);
+    }
+    return siglusPhysicalInventoryService.getSubDraftListForOneProgram(program, facility, isDraft);
+  }
+
 }
 

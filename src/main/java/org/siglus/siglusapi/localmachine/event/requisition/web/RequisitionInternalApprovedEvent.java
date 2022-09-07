@@ -13,7 +13,7 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.localmachine.event.requisition;
+package org.siglus.siglusapi.localmachine.event.requisition.web;
 
 import java.util.List;
 
@@ -33,7 +33,7 @@ import org.siglus.siglusapi.localmachine.EventPayload;
 
 @EventPayload
 @Data
-public class RequisitionInternalApproveApplicationEvent {
+public class RequisitionInternalApprovedEvent {
 
   private Requisition requisition;
 

@@ -65,9 +65,10 @@ public class SiglusPhysicalInventoryController {
       @RequestParam(required = false) Boolean isDraft) {
     if (ALL_PRODUCTS_PROGRAM_ID.equals(program)) {
       return siglusPhysicalInventoryService
-          .getPhysicalInventoryDtosForAllProducts(facility, isDraft);
+          .getPhysicalInventoryDtosForAllProducts(facility, isDraft, false);
     }
-    return siglusPhysicalInventoryService.getPhysicalInventoryDtosForProductsInOneProgram(program, facility, isDraft);
+    return siglusPhysicalInventoryService.getPhysicalInventoryDtosForProductsInOneProgram(program, facility, isDraft,
+        false);
   }
 
   @GetMapping("/{id}")
@@ -99,21 +100,21 @@ public class SiglusPhysicalInventoryController {
   public void deleteSubDrafts(
       @RequestParam(required = false) boolean initialPhysicalInventory,
       @RequestBody List<UUID> subDraftIds) {
-    siglusPhysicalInventorySubDraftService.deleteSubDrafts(subDraftIds, initialPhysicalInventory);
+    siglusPhysicalInventorySubDraftService.deleteSubDrafts(subDraftIds, initialPhysicalInventory, false);
   }
 
   @PostMapping("/subDraftSubmit")
   @ResponseStatus(NO_CONTENT)
   public void submitSubDrafts(@RequestBody PhysicalInventorySubDraftDto dto) {
     siglusPhysicalInventorySubDraftService.updateSubDrafts(dto.getSubDraftIds(), dto,
-        PhysicalInventorySubDraftEnum.SUBMITTED);
+        PhysicalInventorySubDraftEnum.SUBMITTED, false);
 
   }
 
   @PutMapping("/subDraft")
   public void updateSubDrafts(@RequestBody PhysicalInventorySubDraftDto dto) {
     siglusPhysicalInventorySubDraftService.updateSubDrafts(dto.getSubDraftIds(), dto,
-        PhysicalInventorySubDraftEnum.DRAFT);
+        PhysicalInventorySubDraftEnum.DRAFT, false);
   }
 
   @PostMapping
@@ -125,10 +126,10 @@ public class SiglusPhysicalInventoryController {
     if (ALL_PRODUCTS_PROGRAM_ID.equals(dto.getProgramId())) {
       // TODO refactor the last "null" param by override method
       return siglusPhysicalInventoryService.createAndSplitNewDraftForAllProduct(dto, splitNum,
-          initialPhysicalInventory, null);
+          initialPhysicalInventory, null, false);
     }
     return siglusPhysicalInventoryService.createAndSpiltNewDraftForOneProgram(dto, splitNum,
-            null);
+        null, false);
   }
 
   @PutMapping("/{id}")

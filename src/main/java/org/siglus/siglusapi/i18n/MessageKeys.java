@@ -150,7 +150,7 @@ public abstract class MessageKeys {
   public static final String ERROR_LOCAL_ISSUE_VOUCHER_ID_INVALID =
       LOCAL_ISSUE_VOUCHER_PREFIX + ".local.issue.voucher.id.invalid";
   public static final String ERROR_LOCAL_ISSUE_VOUCHER_SUB_DRAFTS_MORE_THAN_TEN =
-      LOCAL_ISSUE_VOUCHER_PREFIX + ".drafts.more.than.ten";
+      LOCAL_ISSUE_VOUCHER_PREFIX + ".subDrafts.more.than.ten";
 
   // proof of delivery
   public static final String ERROR_NO_POD_OR_POD_LINE_ITEM_FOUND = POD_ERROR_PREFIX

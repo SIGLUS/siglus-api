@@ -13,21 +13,29 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.localmachine.webapi;
+package org.siglus.siglusapi.localmachine.event.requisition.andriod;
 
-import java.util.LinkedList;
-import java.util.List;
-import lombok.AllArgsConstructor;
+import java.util.UUID;
 import lombok.Builder;
-import lombok.Builder.Default;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.siglus.siglusapi.localmachine.Event;
+import lombok.Getter;
+import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
 
+@Getter
 @Builder
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-public class PeeringEventsResponse {
-  @Default private List<Event> events = new LinkedList<>();
+public class AndroidRequisitionSyncedEvent {
+  private UUID facilityId;
+  private UUID userId;
+  private UUID requisitionId;
+  private RequisitionCreateRequest request;
+
+  public AndroidRequisitionSyncedEvent(UUID facilityId, UUID userId, UUID requisitionId,
+      RequisitionCreateRequest request) {
+    this.facilityId = facilityId;
+    this.userId = userId;
+    this.requisitionId = requisitionId;
+    this.request = request;
+  }
+
+  public AndroidRequisitionSyncedEvent() {
+  }
 }

@@ -30,7 +30,7 @@ import org.openlmis.requisition.utils.AuthenticationHelper;
 import org.openlmis.requisition.web.RequisitionController;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionLineItemDto;
-import org.siglus.siglusapi.localmachine.event.requisition.RequisitionInternalApproveEmitter;
+import org.siglus.siglusapi.localmachine.event.requisition.web.RequisitionInternalApproveEmitter;
 import org.siglus.siglusapi.service.SiglusNotificationService;
 import org.siglus.siglusapi.service.SiglusProcessingPeriodService;
 import org.siglus.siglusapi.service.SiglusRequisitionService;

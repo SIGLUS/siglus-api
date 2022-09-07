@@ -71,7 +71,7 @@ public class SiglusPhysicalInventoryControllerTest {
         isDraft);
 
     verify(siglusPhysicalInventoryService).getPhysicalInventoryDtosForAllProducts(facilityId,
-        isDraft);
+        isDraft, false);
   }
 
   @Test
@@ -79,7 +79,7 @@ public class SiglusPhysicalInventoryControllerTest {
     siglusPhysicalInventoryController.searchPhysicalInventories(programId, facilityId, isDraft);
 
     verify(siglusPhysicalInventoryService)
-        .getPhysicalInventoryDtosForProductsInOneProgram(programId, facilityId, isDraft);
+        .getPhysicalInventoryDtosForProductsInOneProgram(programId, facilityId, isDraft, false);
   }
 
   @Test
@@ -109,7 +109,7 @@ public class SiglusPhysicalInventoryControllerTest {
     siglusPhysicalInventoryController.createEmptyPhysicalInventory(physicalInventoryDto, 2, true);
 
     verify(siglusPhysicalInventoryService).createAndSplitNewDraftForAllProduct(
-            physicalInventoryDto, 2, true, null);
+            physicalInventoryDto, 2, true, null, false);
   }
 
   @Test
@@ -119,7 +119,8 @@ public class SiglusPhysicalInventoryControllerTest {
 
     siglusPhysicalInventoryController.createEmptyPhysicalInventory(physicalInventoryDto, 2, true);
 
-    verify(siglusPhysicalInventoryService).createAndSplitNewDraftForAllProduct(physicalInventoryDto, 2, true, null);
+    verify(siglusPhysicalInventoryService).createAndSplitNewDraftForAllProduct(
+        physicalInventoryDto, 2, true, null, false);
   }
 
   @Test
@@ -130,7 +131,7 @@ public class SiglusPhysicalInventoryControllerTest {
     siglusPhysicalInventoryController.createEmptyPhysicalInventory(
         physicalInventoryDto, 2, false);
 
-    verify(siglusPhysicalInventoryService).createAndSpiltNewDraftForOneProgram(physicalInventoryDto, 2, null);
+    verify(siglusPhysicalInventoryService).createAndSpiltNewDraftForOneProgram(physicalInventoryDto, 2, null, false);
   }
 
   @Test
@@ -215,7 +216,8 @@ public class SiglusPhysicalInventoryControllerTest {
   public void shouldCallDeleteSubDraftsBySubDraftIdsWhenDeleteSubDrafts() {
     siglusPhysicalInventoryController.deleteSubDrafts(Boolean.FALSE, Lists.newArrayList(subDraftId));
 
-    verify(siglusPhysicalInventorySubDraftService).deleteSubDrafts(Lists.newArrayList(subDraftId), Boolean.FALSE);
+    verify(siglusPhysicalInventorySubDraftService).deleteSubDrafts(
+        Lists.newArrayList(subDraftId), Boolean.FALSE, false);
   }
 
   @Test
@@ -225,7 +227,7 @@ public class SiglusPhysicalInventoryControllerTest {
     siglusPhysicalInventoryController.submitSubDrafts(physicalInventoryDto);
 
     verify(siglusPhysicalInventorySubDraftService).updateSubDrafts(null, physicalInventoryDto,
-        PhysicalInventorySubDraftEnum.SUBMITTED);
+        PhysicalInventorySubDraftEnum.SUBMITTED, false);
   }
 
   @Test
@@ -235,7 +237,7 @@ public class SiglusPhysicalInventoryControllerTest {
     siglusPhysicalInventoryController.updateSubDrafts(physicalInventoryDto);
 
     verify(siglusPhysicalInventorySubDraftService).updateSubDrafts(null, physicalInventoryDto,
-        PhysicalInventorySubDraftEnum.DRAFT);
+        PhysicalInventorySubDraftEnum.DRAFT, false);
   }
 
   @Test

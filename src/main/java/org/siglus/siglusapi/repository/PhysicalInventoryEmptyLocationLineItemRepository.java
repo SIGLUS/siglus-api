@@ -13,21 +13,15 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.localmachine.webapi;
+package org.siglus.siglusapi.repository;
 
-import java.util.LinkedList;
 import java.util.List;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Builder.Default;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.siglus.siglusapi.localmachine.Event;
+import java.util.UUID;
+import org.siglus.siglusapi.domain.PhysicalInventoryEmptyLocationLineItem;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-@Builder
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-public class PeeringEventsResponse {
-  @Default private List<Event> events = new LinkedList<>();
+public interface PhysicalInventoryEmptyLocationLineItemRepository extends
+    JpaRepository<PhysicalInventoryEmptyLocationLineItem, UUID> {
+
+  List<PhysicalInventoryEmptyLocationLineItem> findBySubDraftIdIn(List<UUID> subDraftIds);
 }

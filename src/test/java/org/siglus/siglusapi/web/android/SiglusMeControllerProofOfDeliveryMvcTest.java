@@ -71,6 +71,7 @@ import org.siglus.siglusapi.dto.SiglusOrderDto;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.dto.android.Lot;
 import org.siglus.siglusapi.dto.android.db.ProductLot;
+import org.siglus.siglusapi.localmachine.event.requisition.andriod.AndroidRequisitionSyncedEmitter;
 import org.siglus.siglusapi.repository.LotNativeRepository;
 import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
 import org.siglus.siglusapi.service.LotConflictService;
@@ -105,7 +106,7 @@ import org.springframework.test.web.servlet.RequestBuilder;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-@SuppressWarnings({"PMD.TooManyMethods", "PMD.AvoidDuplicateLiterals"})
+@SuppressWarnings({"PMD.TooManyMethods", "PMD.AvoidDuplicateLiterals", "PMD.UnusedPrivateField"})
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {MappingJackson2HttpMessageConverter.class, PodMapperImpl.class,
     ObjectMapper.class, PodOrderMapperImpl.class, PodRequisitionMapperImpl.class, PodProductLineMapperImpl.class,
@@ -125,6 +126,9 @@ public class SiglusMeControllerProofOfDeliveryMvcTest extends FileBasedTest {
 
   @InjectMocks
   private MeService service;
+
+  @Mock
+  private AndroidRequisitionSyncedEmitter androidRequisitionSyncedEmitter;
   @Mock
   private SiglusProofOfDeliveryRepository podRepo;
   @Mock
@@ -173,7 +177,7 @@ public class SiglusMeControllerProofOfDeliveryMvcTest extends FileBasedTest {
     objectMapper.configure(SerializationFeature.WRITE_DATE_TIMESTAMPS_AS_NANOSECONDS, false);
     objectMapper.registerModule(new JavaTimeModule());
     jackson2HttpMessageConverter.setObjectMapper(objectMapper);
-    SiglusMeController controller = new SiglusMeController(service);
+    SiglusMeController controller = new SiglusMeController(service, androidRequisitionSyncedEmitter);
     this.mockMvc = MockMvcBuilders
         .standaloneSetup(controller)
         .setMessageConverters(jackson2HttpMessageConverter)

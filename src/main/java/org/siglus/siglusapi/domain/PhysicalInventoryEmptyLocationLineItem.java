@@ -13,21 +13,37 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.localmachine.webapi;
+package org.siglus.siglusapi.domain;
 
-import java.util.LinkedList;
-import java.util.List;
+import java.util.UUID;
+import javax.persistence.Entity;
+import javax.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Builder.Default;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import org.siglus.siglusapi.localmachine.Event;
+import org.siglus.common.domain.BaseEntity;
 
-@Builder
+@Entity
 @Data
+@Builder
+@EqualsAndHashCode(callSuper = true)
 @AllArgsConstructor
 @NoArgsConstructor
-public class PeeringEventsResponse {
-  @Default private List<Event> events = new LinkedList<>();
+@Table(name = "physical_inventory_empty_location_line_items", schema = "siglusintegration")
+public class PhysicalInventoryEmptyLocationLineItem extends BaseEntity {
+
+  private UUID physicalInventoryId;
+
+  private UUID subDraftId;
+
+  private String area;
+
+  private String locationCode;
+
+  private boolean skipped;
+
+  private boolean visualize;
+
 }

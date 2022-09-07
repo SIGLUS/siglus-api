@@ -170,8 +170,7 @@ public class SiglusStockCardSummariesService {
       archivedProducts = archiveProductService
           .searchArchivedProductsByFacilityId(UUID.fromString(parameters.getFirst(FACILITY_ID)));
     }
-    StockCardSummariesV2SearchParams v2SearchParams = new StockCardSummariesV2SearchParams(
-        parameters);
+    StockCardSummariesV2SearchParams v2SearchParams = new StockCardSummariesV2SearchParams(parameters);
     List<UUID> orderableIds = v2SearchParams.getOrderableIds();
     UUID inputProgramId = getId(PROGRAM_ID, parameters);
     Set<UUID> programIds = getProgramIds(inputProgramId, userId, parameters.getFirst(RIGHT_NAME),
@@ -181,8 +180,7 @@ public class SiglusStockCardSummariesService {
       v2SearchParams.setProgramId(programId);
       if (archiveEmptyForArchiveOnly(parameters, archivedProducts)) {
         return Pagination.getPage(Collections.emptyList(), pageable);
-      } else if (needFilterOrSearchAllProgram(orderableIds, parameters, archivedProducts,
-          programIds)) {
+      } else if (needFilterOrSearchAllProgram(orderableIds, parameters, archivedProducts, programIds)) {
         // revert below code after V3 upgraded
         getSummaries(parameters, archivedProducts, v2SearchParams, orderableIds, summaryV2Dtos);
       } else {
@@ -288,8 +286,7 @@ public class SiglusStockCardSummariesService {
     // revert below code after V3 upgraded
     List<StockCardSummaryV2Dto> summaries = newArrayList();
     if (programOrderableRepository.countByProgramId(v2SearchParams.getProgramId()) > 0) {
-      StockCardSummaries stockCardSummaries = stockCardSummariesService
-          .findStockCards(v2SearchParams);
+      StockCardSummaries stockCardSummaries = stockCardSummariesService.findStockCards(v2SearchParams);
       summaries = stockCardSummariesV2DtoBuilder.build(
           stockCardSummaries.getPageOfApprovedProducts(),
           stockCardSummaries.getStockCardsForFulfillOrderables(),
@@ -342,12 +339,10 @@ public class SiglusStockCardSummariesService {
   }
 
   public Page<StockCardSummaryV2Dto> searchStockCardSummaryV2Dtos(
-      MultiValueMap<String, String> parameters, List<UUID> subDraftIds, UUID draftId,
-      Pageable pageable) {
+      MultiValueMap<String, String> parameters, List<UUID> subDraftIds, UUID draftId, Pageable pageable) {
     try {
       if (draftId != null) {
-        Page<StockCardSummaryV2Dto> stockCards = findSiglusStockCard(parameters, subDraftIds,
-            pageable);
+        Page<StockCardSummaryV2Dto> stockCards = findSiglusStockCard(parameters, subDraftIds, pageable);
         StockManagementDraft foundDraft = stockManagementDraftRepository.findOne(draftId);
         if (foundDraft == null) {
           throw new ResourceNotFoundException(
