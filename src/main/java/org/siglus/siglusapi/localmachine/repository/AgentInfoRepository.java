@@ -44,7 +44,7 @@ public interface AgentInfoRepository extends JpaRepository<AgentInfo, UUID> {
           "select cast(ag.facilityid as varchar) as id from localmachine.machine m "
               + "INNER JOIN localmachine.agents ag on m.id=ag.machineid",
       nativeQuery = true)
-  List<UUID> findRegisteredFacilityIds();
+  List<String> findRegisteredFacilityIds();
 
   @Transactional
   @Modifying

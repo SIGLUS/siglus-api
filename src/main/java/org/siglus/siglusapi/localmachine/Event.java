@@ -17,11 +17,16 @@ package org.siglus.siglusapi.localmachine;
 
 import java.time.ZonedDateTime;
 import java.util.UUID;
+
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Builder
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class Event {
   private UUID id;
   private int protocolVersion;

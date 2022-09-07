@@ -34,7 +34,7 @@ public class Machine {
 
   @Getter private UUID machineId;
 
-  public Set<UUID> fetchSupportedFacilityIds() {
+  public Set<String> fetchSupportedFacilityIds() {
     return new HashSet<>(agentInfoRepository.findRegisteredFacilityIds());
   }
 
