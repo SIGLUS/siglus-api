@@ -39,6 +39,7 @@ import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.domain.event.CalculatedStockOnHand;
 import org.openlmis.stockmanagement.repository.CalculatedStockOnHandRepository;
 import org.openlmis.stockmanagement.repository.StockCardRepository;
+import org.siglus.siglusapi.constant.LocationConstants;
 import org.siglus.siglusapi.constant.PeriodConstants;
 import org.siglus.siglusapi.domain.CalculatedStockOnHandByLocation;
 import org.siglus.siglusapi.domain.FacilityLocations;
@@ -110,6 +111,9 @@ public class SiglusLotLocationService {
 
       Map<UUID, StockCard> stockCardIdToStockCard = Maps.uniqueIndex(stockCardList, StockCard::getId);
       locationCodeToLotLocationPairs.forEach((locationCode, locationPairs) -> {
+        if (locationCode.equals(LocationConstants.VIRTUAL_LOCATION_CODE)) {
+          return;
+        }
         List<LotsDto> lotDtoList = getLotsDtos(orderableId, locationPairs, stockCardIdToStockCard);
         lotLocationDtos.add(LotLocationDto
             .builder()
