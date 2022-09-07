@@ -15,9 +15,10 @@
 
 package org.siglus.siglusapi.localmachine;
 
+import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
-
 import org.apache.commons.collections.CollectionUtils;
 import org.siglus.siglusapi.localmachine.eventstore.EventStore;
 import org.springframework.context.annotation.Profile;
@@ -38,9 +39,22 @@ public class LocalEventImporter extends EventImporter {
     return isTheReceiverAndEventNotBeConfirmedYet(it);
   }
 
+  @Override
+  protected void resetStatus(List<Event> acceptedEvents) {
+    super.resetStatus(acceptedEvents);
+    Set<String> supportedFacilityIds = machine.fetchSupportedFacilityIds();
+    acceptedEvents.forEach(
+        it -> {
+          String facilityId =
+              Optional.ofNullable(it.getReceiverId()).map(UUID::toString).orElse("");
+          if (supportedFacilityIds.contains(facilityId)) {
+            it.setReceiverSynced(true);
+          }
+        });
+  }
+
   private boolean isTheReceiverAndEventNotBeConfirmedYet(Event it) {
-    return supportedFacility(it.getReceiverId())
-        && !it.isReceiverSynced();
+    return supportedFacility(it.getReceiverId()) && !it.isReceiverSynced();
   }
 
   public boolean supportedFacility(UUID receiverFacilityId) {

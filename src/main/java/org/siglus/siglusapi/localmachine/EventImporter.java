@@ -20,11 +20,15 @@ import static java.util.stream.Collectors.toList;
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 import org.siglus.siglusapi.localmachine.eventstore.EventStore;
+import org.springframework.dao.DataIntegrityViolationException;
 
+@Slf4j
 public abstract class EventImporter {
   private final EventStore eventStore;
   private final EventReplayer replayer;
@@ -37,7 +41,8 @@ public abstract class EventImporter {
   public void importEvents(List<Event> events) {
     List<Event> acceptedEvents = events.stream().filter(this::accept).collect(Collectors.toList());
     resetStatus(acceptedEvents);
-    List<Event> newAdded = eventStore.importAllGetNewAdded(acceptedEvents);
+    List<Event> nonExistentEvents = eventStore.excludeExisted(acceptedEvents);
+    List<Event> newAdded = importGetNewAdded(nonExistentEvents);
     replay(newAdded);
   }
 
@@ -63,8 +68,22 @@ public abstract class EventImporter {
     eventGroups.forEach((groupId, value) -> replayer.playGroupEvents(groupId));
   }
 
-  private void resetStatus(List<Event> acceptedEvents) {
+  protected void resetStatus(List<Event> acceptedEvents) {
     // The local replayed flag is private, don't trust external ones, so reset it here.
     acceptedEvents.forEach(it -> it.setLocalReplayed(false));
+  }
+
+  private List<Event> importGetNewAdded(List<Event> acceptedEvents) {
+    List<Event> newAdded = new LinkedList<>();
+    acceptedEvents.forEach(
+        it -> {
+          try {
+            eventStore.importQuietly(it);
+            newAdded.add(it);
+          } catch (DataIntegrityViolationException e) {
+            log.info("event exists, skip it");
+          }
+        });
+    return newAdded;
   }
 }

@@ -40,7 +40,7 @@ public class Machine {
 
   @PostConstruct
   public void ensureMachineInfoExists() {
-    machineId = agentInfoRepository.getMachineId();
+    machineId = agentInfoRepository.getMachineId().map(UUID::fromString).orElse(null);
     if (Objects.nonNull(machineId)) {
       return;
     }

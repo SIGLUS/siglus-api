@@ -52,13 +52,15 @@ public class EventRecord {
         EventRecord.builder()
             .id(event.getId())
             .protocolVersion(event.getProtocolVersion())
-            .localSequenceNumber(null)
+            .localSequenceNumber(event.getLocalSequenceNumber())
             .occurredTime(event.getOccurredTime())
             .senderId(event.getSenderId())
             .receiverId(event.getReceiverId())
             .groupId(event.getGroupId())
             .groupSequenceNumber(event.getGroupSequenceNumber())
             .payload(payload)
+            .receiverSynced(event.isReceiverSynced())
+            .onlineWebSynced(event.isOnlineWebSynced())
             .build();
     eventRecord.setId(event.getId());
     return eventRecord;

@@ -42,7 +42,7 @@ public class Synchronizer {
   private final Machine machine;
 
   @Scheduled(fixedRate = 60 * 1000, initialDelay = 60 * 1000)
-  @SchedulerLock(name = "localmachine_synchronizer")
+  @SchedulerLock(name = "localmachine_synchronizer", lockAtMostFor = "PT1M")
   @Transactional
   public void scheduledSync() {
     log.info("start scheduled synchronization with online web");
@@ -55,8 +55,9 @@ public class Synchronizer {
 
   @Transactional
   public void sync() {
-    push();
+    // TODO: 2022/9/7 segregate push and pull
     pull();
+    push();
     // TODO: 2022/8/26 report local replay info to web for Ops
   }
 
@@ -64,19 +65,26 @@ public class Synchronizer {
   public void pull() {
     List<Event> events = webClient.exportPeeringEvents();
     if (CollectionUtils.isEmpty(events)) {
-      return;
+      log.info("pull events got empty");
     }
+    events.forEach(
+        it -> {
+          it.setOnlineWebSynced(true);
+        });
     eventImporter.importEvents(events);
     webClient.confirmReceived(events);
   }
 
-  @Transactional
   public void push() {
-    List<Event> events = localEventStore.getEventsForOnlineWeb();
-    if (isEmpty(events)) {
-      return;
+    try {
+      List<Event> events = localEventStore.getEventsForOnlineWeb();
+      if (isEmpty(events)) {
+        return;
+      }
+      webClient.sync(events);
+      localEventStore.confirmEventsByWeb(events);
+    } catch (Throwable e) {
+      log.error("push event failed", e);
     }
-    webClient.sync(events);
-    localEventStore.confirmEventsByWeb(events);
   }
 }

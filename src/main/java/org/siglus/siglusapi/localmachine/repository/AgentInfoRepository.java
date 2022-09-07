@@ -16,6 +16,7 @@
 package org.siglus.siglusapi.localmachine.repository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.siglus.siglusapi.localmachine.domain.AgentInfo;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -37,7 +38,7 @@ public interface AgentInfoRepository extends JpaRepository<AgentInfo, UUID> {
   @Query(
       value = "select cast(id as varchar) as id from localmachine.machine limit 1",
       nativeQuery = true)
-  UUID getMachineId();
+  Optional<String> getMachineId();
 
   @Query(
       value =

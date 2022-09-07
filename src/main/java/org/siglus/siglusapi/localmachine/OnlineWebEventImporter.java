@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.localmachine;
 
+import java.util.List;
 import org.siglus.siglusapi.localmachine.eventstore.EventStore;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
@@ -30,5 +31,14 @@ public class OnlineWebEventImporter extends EventImporter {
   @Override
   protected boolean accept(Event it) {
     return !it.isOnlineWebSynced();
+  }
+
+  @Override
+  protected void resetStatus(List<Event> acceptedEvents) {
+    super.resetStatus(acceptedEvents);
+    acceptedEvents.forEach(
+        it -> {
+          it.setOnlineWebSynced(true);
+        });
   }
 }
