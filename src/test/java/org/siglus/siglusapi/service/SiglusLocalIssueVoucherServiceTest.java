@@ -93,7 +93,6 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 
 @RunWith(MockitoJUnitRunner.class)
-@SuppressWarnings({"unused"})
 public class SiglusLocalIssueVoucherServiceTest {
 
   @InjectMocks
@@ -168,27 +167,25 @@ public class SiglusLocalIssueVoucherServiceTest {
       .requestingFacilityId(requestingFacilityId)
       .supplyingFacilityId(supplyingFacilityId)
       .build();
-  private final PodSubDraft localIssueVoucherSubDraft = PodSubDraft.builder()
-      .podId(localIssueVoucherId)
-      .number(6)
-      .status(PodSubDraftStatusEnum.NOT_YET_STARTED)
-      .operatorId(operatorId)
-      .build();
   private final BasicOrderDto basicOrderDto = new BasicOrderDto();
 
   @Test
   public void shouleUpdateWhenCallByService() {
-    // when
+    // given
     UpdatePodSubDraftRequest request = new UpdatePodSubDraftRequest();
     request.setPodDto(buildMockPodDtoWithOneLineItem());
     request.setOperateType(OperateTypeEnum.SAVE);
+
+    //when
     service.updateSubDraft(request, subDraftId);
 
+    //then
     verify(siglusPodService).updateSubDraft(request, subDraftId);
   }
 
   @Test(expected = ValidationMessageException.class)
   public void shouldThrowExceptionWhenOrderableDuplicated() {
+    //given
     UpdatePodSubDraftRequest request = new UpdatePodSubDraftRequest();
     request.setPodDto(buildMockPodDtoWithOneLineItem());
     request.setOperateType(OperateTypeEnum.SAVE);
@@ -199,28 +196,39 @@ public class SiglusLocalIssueVoucherServiceTest {
         .map(proofOfDeliveryLineItemDto -> proofOfDeliveryLineItemDto.getOrderableIdentity().getId())
         .collect(Collectors.toList());
     UUID podId = request.getPodDto().getId();
+
+    //when
     when(podLineItemsRepository.findDuplicatedOrderableLineItem(orderableIds, podId, subDraftId))
         .thenReturn(buildMockPodLineItems());
+
+    //then
     service.updateSubDraft(request, subDraftId);
   }
 
   @Test
   public void shouldDeleteWhenCallByService() {
+    //when
     service.deleteSubDraft(podId, subDraftId);
 
+    //then
     verify(siglusPodService).deleteSubDraft(podId, subDraftId);
   }
 
   @Test
   public void shouldGetLineItemWhenCallByService() {
+    //when
     service.getSubDraftDetail(podId, subDraftId, defaultExpands);
 
+    //then
     verify(siglusPodService).getSubDraftDetail(podId, subDraftId, defaultExpands);
   }
 
   @Test
   public void shouldCreateLocalIssueVoucher() {
+    //when
     localIssueVoucher.setId(localIssueVoucherId);
+
+    //when
     when(orderController.searchOrders(any(OrderSearchParams.class), any(PageRequest.class)))
         .thenReturn(new PageImpl(Collections.emptyList()));
     when(localIssueVoucherRepository
@@ -230,6 +238,7 @@ public class SiglusLocalIssueVoucherServiceTest {
 
     LocalIssueVoucherDto localIssueVoucher = service.createLocalIssueVoucher(localIssueVoucherDto);
 
+    //then
     assertEquals(localIssueVoucher.getId(), localIssueVoucherId);
     assertEquals(localIssueVoucher.getProgramId(), programId);
     assertEquals(localIssueVoucher.getOrderCode(), orderCode);
@@ -239,11 +248,15 @@ public class SiglusLocalIssueVoucherServiceTest {
 
   @Test
   public void shouldThrowExceptionWhenHasSameOrderCodeInBasicOrderDto() {
+    //then
     exception.expect(BusinessDataException.class);
     exception.expectMessage(containsString(ERROR_ORDER_CODE_EXISTS));
 
+    //given
     basicOrderDto.setOrderCode(orderCode);
     ArrayList<BasicOrderDto> basicOrderDtos = Lists.newArrayList(basicOrderDto);
+
+    //when
     when(orderController.searchOrders(any(OrderSearchParams.class), any(PageRequest.class)))
         .thenReturn(new PageImpl(basicOrderDtos));
     when(localIssueVoucherRepository
@@ -255,9 +268,11 @@ public class SiglusLocalIssueVoucherServiceTest {
 
   @Test
   public void shouldThrowExceptionWhenHasSameCodeInLocalIssueVoucherList() {
+    //then
     exception.expect(BusinessDataException.class);
     exception.expectMessage(containsString(ERROR_ORDER_CODE_EXISTS));
 
+    //when
     when(orderController.searchOrders(any(OrderSearchParams.class), any(PageRequest.class)))
         .thenReturn(new PageImpl(Collections.emptyList()));
     when(localIssueVoucherRepository
@@ -269,19 +284,23 @@ public class SiglusLocalIssueVoucherServiceTest {
 
   @Test
   public void shouldDeleteLocalIssueVoucher() {
+    //when
     when(localIssueVoucherRepository.findOne(localIssueVoucherId)).thenReturn(localIssueVoucher);
 
     service.deleteLocalIssueVoucher(localIssueVoucherId);
 
+    //then
     verify(podSubDraftRepository).deleteAllByPodId(localIssueVoucherId);
     verify(localIssueVoucherRepository).delete(localIssueVoucherId);
   }
 
   @Test
   public void shouldThrowExceptionWhenDeleteLocalIssueVoucher() {
+    //then
     exception.expect(ValidationMessageException.class);
     exception.expectMessage(containsString(ERROR_LOCAL_ISSUE_VOUCHER_ID_INVALID));
 
+    //when
     when(localIssueVoucherRepository.findOne(localIssueVoucherId)).thenReturn(null);
 
     service.deleteLocalIssueVoucher(localIssueVoucherId);
@@ -289,23 +308,35 @@ public class SiglusLocalIssueVoucherServiceTest {
 
   @Test
   public void shouldCreateLocalIssueVoucherSubDraft() {
+    //given
+    PodSubDraft localIssueVoucherSubDraft = PodSubDraft.builder()
+        .podId(localIssueVoucherId)
+        .number(6)
+        .status(PodSubDraftStatusEnum.NOT_YET_STARTED)
+        .operatorId(operatorId)
+        .build();
+
+    //when
     when(localIssueVoucherRepository.findOne(localIssueVoucherId)).thenReturn(localIssueVoucher);
     when(podSubDraftRepository.countAllByPodId(localIssueVoucherId)).thenReturn(5);
     when(authenticationHelper.getUserNameByUserId(operatorId)).thenReturn(operator);
     when(podSubDraftRepository.save(any(PodSubDraft.class))).thenReturn(localIssueVoucherSubDraft);
 
-    SubDraftInfo localIssueVoucherSubDraft = service.createLocalIssueVoucherSubDraft(localIssueVoucherId);
+    SubDraftInfo savedLocalIssueVoucherSubDraft = service.createLocalIssueVoucherSubDraft(localIssueVoucherId);
 
-    assertEquals(PodSubDraftStatusEnum.NOT_YET_STARTED, localIssueVoucherSubDraft.getStatus());
-    assertEquals(6, localIssueVoucherSubDraft.getGroupNum());
-    assertEquals(operator, localIssueVoucherSubDraft.getSaver());
+    //then
+    assertEquals(PodSubDraftStatusEnum.NOT_YET_STARTED, savedLocalIssueVoucherSubDraft.getStatus());
+    assertEquals(6, savedLocalIssueVoucherSubDraft.getGroupNum());
+    assertEquals(operator, savedLocalIssueVoucherSubDraft.getSaver());
   }
 
   @Test
   public void shouldThrowExceptionWhenSubDraftQuantityMoreThanTen() {
+    //then
     exception.expect(BusinessDataException.class);
     exception.expectMessage(containsString(ERROR_LOCAL_ISSUE_VOUCHER_SUB_DRAFTS_MORE_THAN_TEN));
 
+    //when
     when(localIssueVoucherRepository.findOne(localIssueVoucherId)).thenReturn(localIssueVoucher);
     when(podSubDraftRepository.countAllByPodId(localIssueVoucherId)).thenReturn(10);
 
