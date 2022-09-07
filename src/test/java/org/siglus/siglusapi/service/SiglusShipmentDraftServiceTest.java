@@ -46,6 +46,7 @@ import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftController;
 import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftDto;
 import org.openlmis.fulfillment.web.util.OrderLineItemDto;
 import org.openlmis.fulfillment.web.util.OrderObjectReferenceDto;
+import org.openlmis.fulfillment.web.util.VersionObjectReferenceDto;
 import org.siglus.siglusapi.domain.FacilityLocations;
 import org.siglus.siglusapi.domain.OrderLineItemExtension;
 import org.siglus.siglusapi.domain.ShipmentDraftLineItemsExtension;
@@ -96,6 +97,8 @@ public class SiglusShipmentDraftServiceTest {
   private final UUID lineItemId = UUID.randomUUID();
 
   private final UUID locationId = UUID.randomUUID();
+
+  private final UUID orderableId = UUID.randomUUID();
 
   private final String locationCode = "AA25A";
   private final String area = "Armazem Principal";
@@ -283,6 +286,9 @@ public class SiglusShipmentDraftServiceTest {
     shipmentLineItemDto.setLocation(locationDto);
     shipmentLineItemDto.setId(lineItemId);
     shipmentLineItemDto.setQuantityShipped(10L);
+    VersionObjectReferenceDto orderable = new VersionObjectReferenceDto(orderableId, null, null,
+        1L);
+    shipmentLineItemDto.setOrderable(orderable);
     draftDto.setLineItems(newArrayList(shipmentLineItemDto));
     when(draftController.updateShipmentDraft(draftId, draftDto))
         .thenReturn(draftDto);

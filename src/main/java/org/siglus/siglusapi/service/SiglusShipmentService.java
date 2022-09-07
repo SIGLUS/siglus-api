@@ -19,7 +19,9 @@ import static java.util.stream.Collectors.toSet;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_SUB_ORDER_LINE_ITEM;
 import static org.siglus.siglusapi.i18n.MessageKeys.SHIPMENT_ORDER_STATUS_INVALID;
 
+import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Multimap;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -47,6 +49,7 @@ import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.ShipmentLineItemsExtensionRepository;
+import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -76,6 +79,9 @@ public class SiglusShipmentService {
   @Autowired
   private CalculatedStocksOnHandByLocationService calculatedStocksOnHandByLocationService;
 
+  @Autowired
+  private SiglusAuthenticationHelper authenticationHelper;
+
   @Transactional
   public ShipmentDto createOrderAndShipment(boolean isSubOrder, ShipmentDto shipmentDto) {
     return createOrderAndConfirmShipment(isSubOrder, shipmentDto);
@@ -97,12 +103,38 @@ public class SiglusShipmentService {
           .build();
       shipmentLineItemsByLocations.add(shipmentLineItemsByLocation);
     });
-    log.info("create shipment line item by location");
+    log.info("create shipment line item by location, size: {}", shipmentLineItemsByLocations.size());
     shipmentLineItemsExtensionRepository.save(shipmentLineItemsByLocations);
+    Multimap<String, ShipmentLineItemDto> uniqueKeyMap = ArrayListMultimap.create();
+    shipmentLineItemDtos.forEach(shipmentLineItemDto -> {
+      String uniqueKey = buildForUniqueKey(shipmentLineItemDto);
+      uniqueKeyMap.put(uniqueKey, shipmentLineItemDto);
+    });
     ShipmentDto confirmedShipmentDto = createOrderAndConfirmShipment(isSubOrder, shipmentDto);
+    fulfillLocationInfo(uniqueKeyMap, confirmedShipmentDto);
+    UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
     calculatedStocksOnHandByLocationService.calculateStockOnHandByLocationForShipment(confirmedShipmentDto.lineItems(),
-        confirmedShipmentDto.getOrder().getFacility().getId());
+        facilityId);
     return confirmedShipmentDto;
+  }
+
+  private void fulfillLocationInfo(Multimap<String, ShipmentLineItemDto> uniqueKeyMap, ShipmentDto shipmentDto) {
+    for (ShipmentLineItemDto lineItemDto : shipmentDto.lineItems()) {
+      String newKey = buildForUniqueKey(lineItemDto);
+      List<ShipmentLineItemDto> lineItemDtos = (List<ShipmentLineItemDto>) uniqueKeyMap.get(newKey);
+      if (null != lineItemDtos.get(0).getLocation()) {
+        lineItemDto.setLocation(lineItemDtos.get(0).getLocation());
+        uniqueKeyMap.remove(newKey, lineItemDtos.get(0));
+      }
+    }
+  }
+
+  private String buildForUniqueKey(ShipmentLineItemDto shipmentLineItemDto) {
+    if (null == shipmentLineItemDto.getLot()) {
+      return shipmentLineItemDto.getOrderable().getId() + "&" + shipmentLineItemDto.getQuantityShipped();
+    }
+    return shipmentLineItemDto.getLot().getId() + "&" + shipmentLineItemDto.getOrderable().getId()
+        + "&" + shipmentLineItemDto.getQuantityShipped();
   }
 
   @Transactional
