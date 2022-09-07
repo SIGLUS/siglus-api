@@ -594,7 +594,7 @@ public class SiglusPhysicalInventoryServiceTest {
 
     // when
     List<PhysicalInventoryDto> resultInventory = siglusPhysicalInventoryService
-        .getPhysicalInventoryDtosForProductsInOneProgram(programId, facilityId, true);
+        .getPhysicalInventoryDtosForProductsInOneProgram(programId, facilityId, true, false);
 
     // then
     assertEquals("hello world", resultInventory.get(0).getLineItems().get(0).getReasonFreeText());
@@ -607,7 +607,7 @@ public class SiglusPhysicalInventoryServiceTest {
     exception.expectMessage(containsString(ERROR_PERMISSION_NOT_SUPPORTED));
 
     // when
-    siglusPhysicalInventoryService.getPhysicalInventoryDtosForAllProducts(facilityId, true);
+    siglusPhysicalInventoryService.getPhysicalInventoryDtosForAllProducts(facilityId, true, false);
   }
 
   @Test
@@ -786,7 +786,7 @@ public class SiglusPhysicalInventoryServiceTest {
     when(facilityReferenceDataService.findOne(facilityId)).thenReturn(facilityDto);
 
     // when
-    siglusPhysicalInventoryService.createAndSpiltNewDraftForOneProgram(physicalInventoryDto, 3, null);
+    siglusPhysicalInventoryService.createAndSpiltNewDraftForOneProgram(physicalInventoryDto, 3, null, false);
   }
 
   @Test
@@ -820,7 +820,7 @@ public class SiglusPhysicalInventoryServiceTest {
 
     // when
     siglusPhysicalInventoryService.createAndSplitNewDraftForAllProduct(
-        physicalInventoryDto, 3, false, null);
+        physicalInventoryDto, 3, false, null, false);
   }
 
   @Test
@@ -921,7 +921,7 @@ public class SiglusPhysicalInventoryServiceTest {
     when(inventoryController.getPhysicalInventory(physicalInventoryId)).thenReturn(expectedPhysicalInventoryDto);
     // when
     PhysicalInventoryDto returnedPhysicalInventoryDto = siglusPhysicalInventoryService
-        .createAndSpiltNewDraftForOneProgram(physicalInventoryDto, 1, null);
+        .createAndSpiltNewDraftForOneProgram(physicalInventoryDto, 1, null, false);
 
     // then
     assertEquals(expectedPhysicalInventoryDto, returnedPhysicalInventoryDto);
@@ -947,7 +947,7 @@ public class SiglusPhysicalInventoryServiceTest {
         .programId(programId).build();
 
     // when
-    siglusPhysicalInventoryService.createAndSplitNewDraftForAllProduct(physicalInventoryDto, 3, true, null);
+    siglusPhysicalInventoryService.createAndSplitNewDraftForAllProduct(physicalInventoryDto, 3, true, null, false);
   }
 
 
@@ -965,7 +965,7 @@ public class SiglusPhysicalInventoryServiceTest {
   }
 
   @Test
-  public void shouldGetCorrespondingSubPhysicalInventoryDtoWithLegalSubDraftIds() {
+  public void shouldGetCorrespondingSubLocationPhysicalInventoryDtoWithLegalSubDraftIds() {
     // given
     PhysicalInventorySubDraft physicalInventorySubDraft = PhysicalInventorySubDraft
         .builder()
@@ -1017,13 +1017,63 @@ public class SiglusPhysicalInventoryServiceTest {
             .thenReturn(Arrays.asList(extension));
     // when
     SiglusPhysicalInventoryDto actualPhysicalInventoryDto = siglusPhysicalInventoryService
-        .getSubLocationPhysicalInventoryDtoBySubDraftId(subDraftIds);
+        .getSubLocationPhysicalInventoryDtoBySubDraftId(subDraftIds, false);
 
     // then
     assertEquals(siglusPhysicalInventoryDto, actualPhysicalInventoryDto);
 
   }
 
+  @Test
+  public void shouldGetCorrespondingSubPhysicalInventoryDtoWithLegalSubDraftIds() {
+    // given
+    PhysicalInventorySubDraft physicalInventorySubDraft = PhysicalInventorySubDraft
+        .builder()
+        .physicalInventoryId(physicalInventoryId)
+        .num(1)
+        .build();
+
+    List<PhysicalInventoryLineItemDto> physicalInventoryLineItemDtos = Collections.singletonList(
+        PhysicalInventoryLineItemDto
+            .builder()
+            .orderableId(orderableId)
+            .lotId(lotId)
+            .build());
+
+    PhysicalInventoryDto physicalInventoryDto = PhysicalInventoryDto.builder()
+        .id(physicalInventoryId)
+        .programId(programId)
+        .facilityId(facilityId)
+        .isDraft(true)
+        .lineItems(physicalInventoryLineItemDtos)
+        .build();
+    PhysicalInventoryLineItemsExtension physicalInventoryLineItemsExtension = PhysicalInventoryLineItemsExtension
+        .builder()
+        .subDraftId(subDraftIdOne)
+        .lotId(lotId)
+        .orderableId(orderableId)
+        .build();
+    when(physicalInventorySubDraftRepository.findFirstById(subDraftIdOne)).thenReturn(physicalInventorySubDraft);
+    when(inventoryController.getPhysicalInventory(physicalInventoryId))
+        .thenReturn(physicalInventoryDto);
+    doNothing().when(physicalInventoryService).checkPermission(programId, facilityId);
+    when(inventoryController
+        .searchPhysicalInventory(programId, facilityId, true)).thenReturn(makeResponseEntity(Collections.singletonList(
+        physicalInventoryDto
+    )));
+    when(lineItemsExtensionRepository.findByPhysicalInventoryIdIn(Collections.singletonList(physicalInventoryId)))
+        .thenReturn(Collections.singletonList(physicalInventoryLineItemsExtension));
+    when(lineItemsExtensionRepository.findByPhysicalInventoryId(physicalInventoryId))
+        .thenReturn(Collections.singletonList(physicalInventoryLineItemsExtension));
+    when(orderableRepository.findLatestById(orderableId)).thenReturn(Optional.of(new Orderable()));
+    List<UUID> subDraftIds = Collections.singletonList(subDraftIdOne);
+    // when
+    PhysicalInventoryDto actualPhysicalInventoryDto = siglusPhysicalInventoryService
+        .getSubPhysicalInventoryDtoBySubDraftId(subDraftIds);
+
+    // then
+    assertEquals(physicalInventoryDto, actualPhysicalInventoryDto);
+  }
 
   @Test
   public void shouldThrowExceptionWhenThereIsNoSubDraftListForAnyProgram() {

@@ -22,13 +22,16 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.openlmis.referencedata.dto.OrderableDto;
@@ -36,6 +39,7 @@ import org.openlmis.stockmanagement.dto.PhysicalInventoryDto;
 import org.openlmis.stockmanagement.dto.PhysicalInventoryLineItemDto;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.CanFulfillForMeEntryDto;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2Dto;
+import org.siglus.siglusapi.domain.PhysicalInventoryEmptyLocationLineItem;
 import org.siglus.siglusapi.domain.PhysicalInventoryLineItemsExtension;
 import org.siglus.siglusapi.domain.PhysicalInventorySubDraft;
 import org.siglus.siglusapi.dto.Message;
@@ -44,45 +48,45 @@ import org.siglus.siglusapi.dto.PhysicalInventorySubDraftLineItemsExtensionDto;
 import org.siglus.siglusapi.dto.ProductSubDraftConflictDto;
 import org.siglus.siglusapi.dto.enums.PhysicalInventorySubDraftEnum;
 import org.siglus.siglusapi.exception.BusinessDataException;
+import org.siglus.siglusapi.repository.PhysicalInventoryEmptyLocationLineItemRepository;
 import org.siglus.siglusapi.repository.PhysicalInventoryLineItemsExtensionRepository;
 import org.siglus.siglusapi.repository.PhysicalInventorySubDraftRepository;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@RequiredArgsConstructor
 @Slf4j
 @SuppressWarnings({"PMD"})
 public class SiglusPhysicalInventorySubDraftService {
 
+  private final SiglusStockCardSummariesService siglusStockCardSummariesService;
+  private final SiglusOrderableService siglusOrderableService;
+  private final PhysicalInventorySubDraftRepository physicalInventorySubDraftRepository;
+  private final SiglusPhysicalInventoryService siglusPhysicalInventoryService;
+  private final PhysicalInventoryLineItemsExtensionRepository lineItemsExtensionRepository;
+  private final SiglusAuthenticationHelper authenticationHelper;
+  private final PhysicalInventoryEmptyLocationLineItemRepository physicalInventoryEmptyLocationLineItemRepository;
   public static final String DRAFT = "Draft ";
-  @Autowired
-  private SiglusStockCardSummariesService siglusStockCardSummariesService;
-  @Autowired
-  private SiglusOrderableService siglusOrderableService;
-
-  @Autowired
-  private PhysicalInventorySubDraftRepository physicalInventorySubDraftRepository;
-
-  @Autowired
-  private SiglusPhysicalInventoryService siglusPhysicalInventoryService;
-
-  @Autowired
-  private PhysicalInventoryLineItemsExtensionRepository lineItemsExtensionRepository;
-
-  @Autowired
-  private SiglusAuthenticationHelper authenticationHelper;
 
   @Transactional
-  public void deleteSubDrafts(List<UUID> subDraftIds, boolean initialPhysicalInventory) {
+  public void deleteSubDrafts(List<UUID> subDraftIds, boolean initialPhysicalInventory, boolean isByLocation) {
     log.info("deleteSubDrafts, subDraftIds=" + subDraftIds);
     try {
       List<PhysicalInventorySubDraft> physicalInventorySubDrafts = updateSubDraftsStatus(subDraftIds,
           PhysicalInventorySubDraftEnum.NOT_YET_STARTED, true);
-
       doDelete(physicalInventorySubDrafts, subDraftIds, initialPhysicalInventory);
+      if (isByLocation) {
+        List<PhysicalInventoryEmptyLocationLineItem> emptyLocationLineItems
+            = physicalInventoryEmptyLocationLineItemRepository.findBySubDraftIdIn(subDraftIds);
+        emptyLocationLineItems.forEach(e -> {
+          e.setVisualize(true);
+          e.setSkipped(false);
+        });
+        physicalInventoryEmptyLocationLineItemRepository.save(emptyLocationLineItems);
+      }
     } catch (Exception e) {
       log.error(e.getMessage(), e);
       throw e;
@@ -114,16 +118,16 @@ public class SiglusPhysicalInventorySubDraftService {
   private void resetInitialLineItems(UUID physicalInventoryId, UUID subDraftId) {
     lineItemsExtensionRepository.deleteByPhysicalInventoryIdIn(Collections.singleton(physicalInventoryId));
     PhysicalInventoryDto physicalInventoryDto = siglusPhysicalInventoryService.getFullPhysicalInventoryDto(
-            physicalInventoryId);
+        physicalInventoryId);
     List<PhysicalInventoryLineItemDto> originalInitialInventoryLineItems = siglusPhysicalInventoryService
-            .buildInitialInventoryLineItemDtos(Collections.singleton(physicalInventoryDto.getProgramId()),
-                    physicalInventoryDto.getFacilityId());
+        .buildInitialInventoryLineItemDtos(Collections.singleton(physicalInventoryDto.getProgramId()),
+            physicalInventoryDto.getFacilityId());
     if (CollectionUtils.isNotEmpty(originalInitialInventoryLineItems)) {
       physicalInventoryDto.setLineItems(originalInitialInventoryLineItems);
       List<PhysicalInventorySubDraftLineItemsExtensionDto> newLineItemsExtension = convertToLineItemsExtension(
-              originalInitialInventoryLineItems,
-              subDraftId,
-              physicalInventoryDto.getId());
+          originalInitialInventoryLineItems,
+          subDraftId,
+          physicalInventoryDto.getId());
       PhysicalInventoryLineItemExtensionDto physicalInventoryExtendDto = new PhysicalInventoryLineItemExtensionDto();
       BeanUtils.copyProperties(physicalInventoryDto, physicalInventoryExtendDto);
       physicalInventoryExtendDto.setLineItemsExtensions(newLineItemsExtension);
@@ -133,8 +137,8 @@ public class SiglusPhysicalInventorySubDraftService {
   }
 
   private void doDelete(List<PhysicalInventorySubDraft> subDrafts,
-                        List<UUID> subDraftIds,
-                        boolean initialPhysicalInventory) {
+      List<UUID> subDraftIds,
+      boolean initialPhysicalInventory) {
     Map<UUID, UUID> physicalInventoryIdToSubDraftIdMap = subDrafts.stream()
         .collect(Collectors.toMap(PhysicalInventorySubDraft::getPhysicalInventoryId, PhysicalInventorySubDraft::getId));
     List<StockCardSummaryV2Dto> stockSummaries = siglusStockCardSummariesService.findAllProgramStockSummaries();
@@ -193,7 +197,12 @@ public class SiglusPhysicalInventorySubDraftService {
 
   @Transactional
   public void updateSubDrafts(List<UUID> subDraftIds, PhysicalInventoryDto physicalInventoryDto,
-      PhysicalInventorySubDraftEnum status) {
+      PhysicalInventorySubDraftEnum status, boolean isByLocation) {
+    if (isByLocation) {
+      updateEmptyLocationLineItem(subDraftIds, physicalInventoryDto);
+    }
+    physicalInventoryDto.getLineItems().removeIf(e -> Objects.isNull(e.getOrderableId()));
+
     List<PhysicalInventorySubDraft> subDrafts = physicalInventorySubDraftRepository.findAll(subDraftIds);
 
     List<UUID> physicalInventoryIds = subDrafts.stream().map(PhysicalInventorySubDraft::getPhysicalInventoryId)
@@ -204,6 +213,32 @@ public class SiglusPhysicalInventorySubDraftService {
     updateSubDraftsStatus(subDraftIds, status, false);
 
     saveSubDraftsLineItems(physicalInventoryDto, physicalInventoryIds, subDrafts);
+  }
+
+  private void updateEmptyLocationLineItem(List<UUID> subDraftIds, PhysicalInventoryDto physicalInventoryDto) {
+    List<PhysicalInventoryEmptyLocationLineItem> emptyLocations =
+        physicalInventoryEmptyLocationLineItemRepository.findBySubDraftIdIn(subDraftIds);
+    List<PhysicalInventoryLineItemDto> emptyLocationLineItemList = physicalInventoryDto.getLineItems().stream().filter(
+        lineItem -> emptyLocations
+            .stream()
+            .anyMatch(location -> location.getLocationCode().equals(lineItem.getLocationCode())))
+        .collect(Collectors.toList());
+    List<PhysicalInventoryEmptyLocationLineItem> needToUpdateInEmptyLocations = new LinkedList<>();
+    emptyLocationLineItemList.forEach(lineItem -> {
+      PhysicalInventoryEmptyLocationLineItem emptyLocationLineItem = emptyLocations.stream()
+          .filter(location -> location.getLocationCode().equals(lineItem.getLocationCode())).findFirst()
+          .orElseThrow(NullPointerException::new);
+      if (Objects.isNull(lineItem.getOrderableId())) {
+        emptyLocationLineItem.setSkipped(lineItem.isSkipped());
+        emptyLocationLineItem.setVisualize(true);
+      } else {
+        emptyLocationLineItem.setSkipped(false);
+        emptyLocationLineItem.setVisualize(false);
+      }
+      needToUpdateInEmptyLocations.add(emptyLocationLineItem);
+    });
+    log.info("save physical inventory empty location lineItem, size: {}", needToUpdateInEmptyLocations.size());
+    physicalInventoryEmptyLocationLineItemRepository.save(needToUpdateInEmptyLocations);
   }
 
   private void saveSubDraftsLineItems(PhysicalInventoryDto dto, List<UUID> physicalInventoryIds,

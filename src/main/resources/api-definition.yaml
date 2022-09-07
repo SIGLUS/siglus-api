@@ -264,6 +264,32 @@ traits:
         put:
           description: local api for localmachine control plane to activate the machine
     /location/physicalInventories:
+      get:
+        is: [ secured ]
+        description: Get a list of saved physical inventory With Location. If inventories do not exist, will return empty list.
+        queryParameters:
+          facility:
+            required: true
+          program:
+            required: true
+          isDraft:
+            required: false
+        responses:
+          200:
+            description: list of physical inventories.
+            body:
+              application/json:
+                schema: physicalInventories
+          403:
+            description: User does not have permission to view draft physical inventory.
+            body:
+              application/json:
+                schema: localizedMessage
+          406:
+            description: initial inventory has been created.
+            body:
+              application/json:
+                schema: localizedMessage
       post:
         is: [ secured ]
         description: Create empty draft physical inventory and assign multiple drafts for multiuser. Only one draft is allowed at the same time for one facility&program.
@@ -307,6 +333,18 @@ traits:
               body:
                 application/json:
                   schema: physicalInventory
+        put:
+          is: [ secured ]
+          description: Save subdraft With Location
+          responses:
+            200:
+              description: saved successfully
+        delete:
+          is: [ secured ]
+          description: Remove subDraft With Location
+          responses:
+            204:
+              description: subDraft successfully deleted
     /facilities:
       post:
         is: [ secured ]
