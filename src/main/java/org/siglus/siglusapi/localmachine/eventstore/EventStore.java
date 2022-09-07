@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.CollectionUtils;
 import org.siglus.siglusapi.localmachine.Event;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
@@ -39,6 +40,7 @@ public class EventStore {
   private final PayloadSerializer payloadSerializer;
 
   @SneakyThrows
+  @Transactional
   public void emit(Event event) {
     EventRecord eventRecord = EventRecord.from(event, payloadSerializer.dump(event.getPayload()));
     log.info("insert event emitted event:{}", event.getId());
@@ -92,6 +94,7 @@ public class EventStore {
         .collect(Collectors.toList());
   }
 
+  @Transactional
   public void confirmReplayed(Event event) {
     log.info("mark event replayed:{}", event.getId());
     repository.markAsReplayed(event.getId());
@@ -99,6 +102,9 @@ public class EventStore {
 
   @Transactional
   public void confirmReceived(UUID ackClaimerId, Set<UUID> eventIds) {
+    if (CollectionUtils.isEmpty(eventIds)) {
+      return;
+    }
     repository.markAsReceived(ackClaimerId, eventIds);
   }
 }
