@@ -62,8 +62,13 @@ public class PayloadSerializer {
 
   @SneakyThrows
   public byte[] dump(Object payload) {
-    byte[] payloadBytes = LOCALMACHINE_EVENT_OBJECT_MAPPER.writeValueAsBytes(payload);
-    PayloadWrapper payloadWrapper = new PayloadWrapper(getName(payload), payloadBytes);
+    PayloadWrapper payloadWrapper;
+    if (PayloadWrapper.class.isAssignableFrom(payload.getClass())) {
+      payloadWrapper = (PayloadWrapper) payload;
+    } else {
+      byte[] payloadBytes = LOCALMACHINE_EVENT_OBJECT_MAPPER.writeValueAsBytes(payload);
+      payloadWrapper = new PayloadWrapper(getName(payload), payloadBytes);
+    }
     return LOCALMACHINE_EVENT_OBJECT_MAPPER.writeValueAsBytes(payloadWrapper);
   }
 

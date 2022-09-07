@@ -16,9 +16,11 @@
 package org.siglus.siglusapi.localmachine.webapi;
 
 import java.util.List;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.siglus.siglusapi.localmachine.Event;
 import org.siglus.siglusapi.localmachine.EventImporter;
+import org.siglus.siglusapi.localmachine.EventSerializer;
 import org.siglus.siglusapi.localmachine.auth.MachineToken;
 import org.siglus.siglusapi.localmachine.eventstore.EventStore;
 import org.siglus.siglusapi.localmachine.server.ActivationService;
@@ -36,6 +38,7 @@ public class OnlineWebController {
   private final EventImporter importer;
   private final EventStore eventStore;
   private final ActivationService activationService;
+  private final EventSerializer eventSerializer;
 
   @PostMapping("/agents")
   public void activateAgent(@RequestBody @Validated RemoteActivationRequest request) {
@@ -49,10 +52,11 @@ public class OnlineWebController {
 
   @GetMapping("/peeringEvents")
   public PeeringEventsResponse exportPeeringEvents(MachineToken machineToken) {
-    List<Event> eventForReceiver = eventStore.getEventsForReceiver(machineToken.getFacilityId());
-    return PeeringEventsResponse.builder()
-        .events(eventForReceiver)
-        .build();
+    List<Event> eventForReceiver =
+        eventStore.getEventsForReceiver(machineToken.getFacilityId()).stream()
+            .map(eventSerializer::dump)
+            .collect(Collectors.toList());
+    return PeeringEventsResponse.builder().events(eventForReceiver).build();
   }
 
   @PostMapping("/ack")
