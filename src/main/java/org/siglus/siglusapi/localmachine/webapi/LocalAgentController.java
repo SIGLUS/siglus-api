@@ -16,9 +16,12 @@
 package org.siglus.siglusapi.localmachine.webapi;
 
 import lombok.RequiredArgsConstructor;
+import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.localmachine.agent.LocalActivationService;
+import org.siglus.siglusapi.localmachine.domain.AgentInfo;
 import org.springframework.context.annotation.Profile;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -34,5 +37,14 @@ public class LocalAgentController {
   @PutMapping
   public void activate(@RequestBody @Validated LocalActivationRequest request) {
     localActivationService.activate(request);
+  }
+
+  @GetMapping
+  public AgentInfoResponse getCurrentAgentInfo() {
+    AgentInfo agentInfo =
+        localActivationService
+            .getCurrentAgentInfo()
+            .orElseThrow(() -> new NotFoundException("agent info not exists"));
+    return AgentInfoResponse.from(agentInfo);
   }
 }

@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.localmachine.agent;
 
+import com.google.common.annotations.VisibleForTesting;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import java.security.KeyPair;
@@ -22,6 +23,7 @@ import java.time.ZonedDateTime;
 import java.util.Base64;
 import java.util.Base64.Encoder;
 import java.util.Objects;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.openlmis.referencedata.domain.Facility;
@@ -46,19 +48,24 @@ public class LocalActivationService {
 
   @Transactional
   public void activate(LocalActivationRequest request) {
-    AgentInfo agentInfo = agentInfoRepository.findFirstByFacilityCode(request.getFacilityCode());
-    if (Objects.nonNull(agentInfo)) {
-      log.info("Facility {} has been activated before", request.getFacilityCode());
-      return;
+    if (checkForActivation(request)) {
+      Facility facility = mustGetFacility(request);
+      activateWithOnlineWeb(request, facility);
     }
-    Facility facility =
-        facilityRepository
-            .findByCode(request.getFacilityCode())
-            .orElseThrow(
-                () ->
-                    new NotFoundException(
-                        (String.format("Facility %s not exists", request.getFacilityCode()))));
-    activateWithOnlineWeb(request, facility);
+  }
+
+  @VisibleForTesting
+  boolean checkForActivation(LocalActivationRequest request) {
+    AgentInfo agentInfo = agentInfoRepository.findFirstByFacilityCode(request.getFacilityCode());
+    // first time of activation
+    if (Objects.isNull(agentInfo)) {
+      return true;
+    }
+    // reactivation
+    if (!agentInfo.getFacilityCode().equals(request.getFacilityCode())) {
+      throw new IllegalStateException("facility code should not be changed for reactivation");
+    }
+    return !agentInfo.getActivationCode().equals(request.getActivationCode());
   }
 
   private void activateWithOnlineWeb(LocalActivationRequest request, Facility facility) {
@@ -98,5 +105,18 @@ public class LocalActivationService {
         .privateKey(encodedPrivateKey)
         .publicKey(encodedPublicKey)
         .build();
+  }
+
+  private Facility mustGetFacility(LocalActivationRequest request) {
+    return facilityRepository
+        .findByCode(request.getFacilityCode())
+        .orElseThrow(
+            () ->
+                new NotFoundException(
+                    (String.format("Facility %s not exists", request.getFacilityCode()))));
+  }
+
+  public Optional<AgentInfo> getCurrentAgentInfo() {
+    return Optional.ofNullable(agentInfoRepository.getFirstAgentInfo());
   }
 }

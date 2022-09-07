@@ -38,6 +38,9 @@ import org.siglus.siglusapi.localmachine.webapi.LocalActivationRequest;
 
 @RunWith(MockitoJUnitRunner.class)
 public class LocalActivationServiceTest {
+
+  private static final String FACILITY_CODE = "facility-code";
+  private static final String ACTIVATION_CODE = "activation code";
   @InjectMocks private LocalActivationService localActivationService;
   @Mock private FacilityRepository facilityRepository;
   @Mock private AgentInfoRepository agentInfoRepository;
@@ -47,15 +50,14 @@ public class LocalActivationServiceTest {
   @Test
   public void shouldActivateSuccessfully() {
     // given
-    String facilityCode = "facility-code";
     UUID machineId = UUID.randomUUID();
-    Facility facility = new Facility(facilityCode);
+    Facility facility = new Facility(FACILITY_CODE);
     facility.setId(UUID.randomUUID());
     doNothing().when(onlineWebClient).activate(any());
     given(machine.getMachineId()).willReturn(machineId);
-    given(agentInfoRepository.getFirstAgentInfo()).willReturn(null);
+    given(agentInfoRepository.findFirstByFacilityCode(FACILITY_CODE)).willReturn(null);
     LocalActivationRequest localActivationRequest =
-        new LocalActivationRequest("activation code", facilityCode);
+        new LocalActivationRequest(ACTIVATION_CODE, FACILITY_CODE);
     given(facilityRepository.findByCode(localActivationRequest.getFacilityCode()))
         .willReturn(Optional.of(facility));
     ArgumentCaptor<AgentInfo> agentInfoCapture = ArgumentCaptor.forClass(AgentInfo.class);
@@ -69,5 +71,67 @@ public class LocalActivationServiceTest {
     assertThat(agentInfoCapture.getValue().getPrivateKey()).isNotNull();
     assertThat(agentInfoCapture.getValue().getPublicKey()).isNotNull();
     assertThat(agentInfoCapture.getValue().getMachineId()).isNotNull();
+  }
+
+  @Test
+  public void shouldReturnTrueWhenCheckIfNeedToActivateGivenNotActivatedYet() {
+    // given
+    LocalActivationRequest localActivationRequest =
+        new LocalActivationRequest(ACTIVATION_CODE, FACILITY_CODE);
+    given(agentInfoRepository.findFirstByFacilityCode(FACILITY_CODE)).willReturn(null);
+    // when
+    boolean needToActivate = localActivationService.checkForActivation(localActivationRequest);
+    // then
+    assertThat(needToActivate).isTrue();
+  }
+
+  @Test
+  public void shouldReturnTrueWhenCheckIfNeedToActivateGivenActivationCodeChanged() {
+    // given
+    LocalActivationRequest localActivationRequest =
+        new LocalActivationRequest(ACTIVATION_CODE, FACILITY_CODE);
+    given(agentInfoRepository.findFirstByFacilityCode(FACILITY_CODE))
+        .willReturn(
+            AgentInfo.builder()
+                .activationCode("another activation code")
+                .facilityCode(FACILITY_CODE)
+                .build());
+    // when
+    boolean needToActivate = localActivationService.checkForActivation(localActivationRequest);
+    // then
+    assertThat(needToActivate).isTrue();
+  }
+
+  @Test(expected = IllegalStateException.class)
+  public void shouldReturnTrueWhenCheckIfNeedToActivateGivenFacilityChanged() {
+    // given
+    String facilityCode = "facility-code";
+    LocalActivationRequest localActivationRequest =
+        new LocalActivationRequest(ACTIVATION_CODE, facilityCode);
+    given(agentInfoRepository.findFirstByFacilityCode(facilityCode))
+        .willReturn(
+            AgentInfo.builder()
+                .activationCode(localActivationRequest.getActivationCode())
+                .facilityCode("another facility code")
+                .build());
+    // when
+    localActivationService.checkForActivation(localActivationRequest);
+  }
+
+  @Test
+  public void shouldReturnFalseWhenCheckIfNeedToActivateGivenActivatedInfoNotChanged() {
+    // given
+    LocalActivationRequest localActivationRequest =
+        new LocalActivationRequest(ACTIVATION_CODE, FACILITY_CODE);
+    given(agentInfoRepository.findFirstByFacilityCode(FACILITY_CODE))
+        .willReturn(
+            AgentInfo.builder()
+                .activationCode(localActivationRequest.getActivationCode())
+                .facilityCode(FACILITY_CODE)
+                .build());
+    // when
+    boolean needToActivate = localActivationService.checkForActivation(localActivationRequest);
+    // then
+    assertThat(needToActivate).isFalse();
   }
 }

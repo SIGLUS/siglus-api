@@ -42,10 +42,8 @@ import org.siglus.siglusapi.localmachine.webapi.RemoteActivationRequest;
 @RunWith(MockitoJUnitRunner.class)
 public class ActivationServiceTest {
   @Mock FacilityRepository facilityRepository;
-  @Mock
-  AgentInfoRepository agentInfoRepository;
-  @Mock
-  ActivationCodeRepository activationCodeRepository;
+  @Mock AgentInfoRepository agentInfoRepository;
+  @Mock ActivationCodeRepository activationCodeRepository;
   @InjectMocks private ActivationService activationService;
 
   @Test
@@ -87,21 +85,5 @@ public class ActivationServiceTest {
         .willReturn(Optional.of(activationCode));
     // when
     activationService.doActivation(new LocalActivationRequest());
-  }
-
-  @Test(expected = IllegalStateException.class)
-  public void shouldThrowWhenValidateRequestGivenAgentAlreadyActivated() {
-    // given
-    String facilityCode = "facility code";
-    LocalActivationRequest localActivationRequest =
-        new LocalActivationRequest("activation code", facilityCode);
-    RemoteActivationRequest request =
-        RemoteActivationRequest.builder()
-            .machineId(UUID.randomUUID())
-            .localActivationRequest(localActivationRequest)
-            .build();
-    given(agentInfoRepository.findFirstByFacilityCode(facilityCode)).willReturn(new AgentInfo());
-    // when
-    activationService.validateRequest(request);
   }
 }
