@@ -24,6 +24,7 @@ import static org.mockito.Matchers.anyList;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_LOCAL_ISSUE_VOUCHER_ID_INVALID;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_LOCAL_ISSUE_VOUCHER_SUB_DRAFTS_MORE_THAN_TEN;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_ORDER_CODE_EXISTS;
 
 import com.google.common.collect.Sets;
@@ -92,6 +93,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 
 @RunWith(MockitoJUnitRunner.class)
+@SuppressWarnings({"unused"})
 public class SiglusLocalIssueVoucherServiceTest {
 
   @InjectMocks
@@ -111,7 +113,6 @@ public class SiglusLocalIssueVoucherServiceTest {
 
   @Mock
   private PodSubDraftRepository podSubDraftRepository;
-
 
   @Mock
   private SiglusAuthenticationHelper authenticationHelper;
@@ -146,8 +147,10 @@ public class SiglusLocalIssueVoucherServiceTest {
   private final String preparedBy = "prepared by user1";
   private final String conferredBy = "conferred by user2";
   private final String orderCode = "code-1";
+  private final String operator = "Jimmy";
   private final Set<String> defaultExpands = Sets.newHashSet("shipment.order");
   private final UUID programId = UUID.randomUUID();
+  private final UUID operatorId = UUID.randomUUID();
   private final UUID requestingFacilityId = UUID.randomUUID();
   private final UUID supplyingFacilityId = UUID.randomUUID();
   private final UUID localIssueVoucherId = UUID.randomUUID();
@@ -164,6 +167,12 @@ public class SiglusLocalIssueVoucherServiceTest {
       .programId(programId)
       .requestingFacilityId(requestingFacilityId)
       .supplyingFacilityId(supplyingFacilityId)
+      .build();
+  private final PodSubDraft localIssueVoucherSubDraft = PodSubDraft.builder()
+      .podId(localIssueVoucherId)
+      .number(6)
+      .status(PodSubDraftStatusEnum.NOT_YET_STARTED)
+      .operatorId(operatorId)
       .build();
   private final BasicOrderDto basicOrderDto = new BasicOrderDto();
 
@@ -276,6 +285,31 @@ public class SiglusLocalIssueVoucherServiceTest {
     when(localIssueVoucherRepository.findOne(localIssueVoucherId)).thenReturn(null);
 
     service.deleteLocalIssueVoucher(localIssueVoucherId);
+  }
+
+  @Test
+  public void shouldCreateLocalIssueVoucherSubDraft() {
+    when(localIssueVoucherRepository.findOne(localIssueVoucherId)).thenReturn(localIssueVoucher);
+    when(podSubDraftRepository.countAllByPodId(localIssueVoucherId)).thenReturn(5);
+    when(authenticationHelper.getUserNameByUserId(operatorId)).thenReturn(operator);
+    when(podSubDraftRepository.save(any(PodSubDraft.class))).thenReturn(localIssueVoucherSubDraft);
+
+    SubDraftInfo localIssueVoucherSubDraft = service.createLocalIssueVoucherSubDraft(localIssueVoucherId);
+
+    assertEquals(PodSubDraftStatusEnum.NOT_YET_STARTED, localIssueVoucherSubDraft.getStatus());
+    assertEquals(6, localIssueVoucherSubDraft.getGroupNum());
+    assertEquals(operator, localIssueVoucherSubDraft.getSaver());
+  }
+
+  @Test
+  public void shouldThrowExceptionWhenSubDraftQuantityMoreThanTen() {
+    exception.expect(BusinessDataException.class);
+    exception.expectMessage(containsString(ERROR_LOCAL_ISSUE_VOUCHER_SUB_DRAFTS_MORE_THAN_TEN));
+
+    when(localIssueVoucherRepository.findOne(localIssueVoucherId)).thenReturn(localIssueVoucher);
+    when(podSubDraftRepository.countAllByPodId(localIssueVoucherId)).thenReturn(10);
+
+    service.createLocalIssueVoucherSubDraft(localIssueVoucherId);
   }
 
   private PodExtensionRequest buildPodExtensionRequest() {
