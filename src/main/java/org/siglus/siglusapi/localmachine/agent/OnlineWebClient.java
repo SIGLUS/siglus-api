@@ -51,6 +51,7 @@ public class OnlineWebClient {
   }
 
   public void sync(List<Event> events) {
+    events = dumpEventForSync(events);
     URI url = URI.create(webBaseUrl + "/server/events");
     restTemplate.postForEntity(url, new SyncRequest(events), Void.class);
   }
@@ -63,6 +64,7 @@ public class OnlineWebClient {
   }
 
   public void confirmReceived(List<Event> events) {
+    events = dumpEventForSync(events);
     URI url = URI.create(webBaseUrl + "/server/ack");
     AckRequest ackRequest = new AckRequest(events.stream().map(Event::getId).collect(toSet()));
     restTemplate.postForEntity(url, ackRequest, Void.class);
@@ -76,5 +78,9 @@ public class OnlineWebClient {
   private void configureLocalTokenInterceptor(LocalTokenInterceptor localTokenInterceptor) {
     localTokenInterceptor.setAcceptFunc(
         httpRequest -> !httpRequest.getURI().getRawPath().contains(PATH_ACTIVATE_AGENT));
+  }
+
+  private List<Event> dumpEventForSync(List<Event> events) {
+    return events.stream().map(eventSerializer::dump).collect(Collectors.toList());
   }
 }
