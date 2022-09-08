@@ -56,7 +56,7 @@ public class LocalTokenInterceptor implements ClientHttpRequestInterceptor {
 
   private void attachHeaders(HttpHeaders headers) {
     AgentInfo agentInfo =
-        Optional.ofNullable(agentInfoRepository.getFirstAgentInfo())
+        Optional.ofNullable(agentInfoRepository.getLocalAgent())
             .orElseThrow(() -> new NotFoundException("registration info not found"));
     String accessToken = buildAccessToken(agentInfo);
     headers.add(CommonConstants.VERSION, localMachineVersion);

@@ -44,7 +44,7 @@ public class LocalTokenInterceptorTest {
   @Test
   public void shouldAddHeadersWhenIntercept() throws IOException {
     // given
-    given(agentInfoRepository.getFirstAgentInfo())
+    given(agentInfoRepository.getLocalAgent())
         .willReturn(
             AgentInfo.builder()
                 .facilityId(UUID.randomUUID())

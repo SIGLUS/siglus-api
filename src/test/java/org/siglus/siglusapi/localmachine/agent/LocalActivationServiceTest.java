@@ -55,7 +55,7 @@ public class LocalActivationServiceTest {
     facility.setId(UUID.randomUUID());
     doNothing().when(onlineWebClient).activate(any());
     given(machine.getMachineId()).willReturn(machineId);
-    given(agentInfoRepository.findFirstByFacilityCode(FACILITY_CODE)).willReturn(null);
+    given(agentInfoRepository.getLocalAgent()).willReturn(null);
     LocalActivationRequest localActivationRequest =
         new LocalActivationRequest(ACTIVATION_CODE, FACILITY_CODE);
     given(facilityRepository.findByCode(localActivationRequest.getFacilityCode()))
@@ -78,7 +78,7 @@ public class LocalActivationServiceTest {
     // given
     LocalActivationRequest localActivationRequest =
         new LocalActivationRequest(ACTIVATION_CODE, FACILITY_CODE);
-    given(agentInfoRepository.findFirstByFacilityCode(FACILITY_CODE)).willReturn(null);
+    given(agentInfoRepository.getLocalAgent()).willReturn(null);
     // when
     boolean needToActivate = localActivationService.checkForActivation(localActivationRequest);
     // then
@@ -90,7 +90,7 @@ public class LocalActivationServiceTest {
     // given
     LocalActivationRequest localActivationRequest =
         new LocalActivationRequest(ACTIVATION_CODE, FACILITY_CODE);
-    given(agentInfoRepository.findFirstByFacilityCode(FACILITY_CODE))
+    given(agentInfoRepository.getLocalAgent())
         .willReturn(
             AgentInfo.builder()
                 .activationCode("another activation code")
@@ -108,7 +108,7 @@ public class LocalActivationServiceTest {
     String facilityCode = "facility-code";
     LocalActivationRequest localActivationRequest =
         new LocalActivationRequest(ACTIVATION_CODE, facilityCode);
-    given(agentInfoRepository.findFirstByFacilityCode(facilityCode))
+    given(agentInfoRepository.getLocalAgent())
         .willReturn(
             AgentInfo.builder()
                 .activationCode(localActivationRequest.getActivationCode())
@@ -123,7 +123,7 @@ public class LocalActivationServiceTest {
     // given
     LocalActivationRequest localActivationRequest =
         new LocalActivationRequest(ACTIVATION_CODE, FACILITY_CODE);
-    given(agentInfoRepository.findFirstByFacilityCode(FACILITY_CODE))
+    given(agentInfoRepository.getLocalAgent())
         .willReturn(
             AgentInfo.builder()
                 .activationCode(localActivationRequest.getActivationCode())

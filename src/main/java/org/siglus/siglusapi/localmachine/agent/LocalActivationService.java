@@ -56,7 +56,7 @@ public class LocalActivationService {
 
   @VisibleForTesting
   boolean checkForActivation(LocalActivationRequest request) {
-    AgentInfo agentInfo = agentInfoRepository.findFirstByFacilityCode(request.getFacilityCode());
+    AgentInfo agentInfo = agentInfoRepository.getLocalAgent();
     // first time of activation
     if (Objects.isNull(agentInfo)) {
       return true;
@@ -117,6 +117,6 @@ public class LocalActivationService {
   }
 
   public Optional<AgentInfo> getCurrentAgentInfo() {
-    return Optional.ofNullable(agentInfoRepository.getFirstAgentInfo());
+    return Optional.ofNullable(agentInfoRepository.getLocalAgent());
   }
 }

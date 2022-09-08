@@ -32,8 +32,11 @@ public interface AgentInfoRepository extends JpaRepository<AgentInfo, UUID> {
 
   AgentInfo findFirstByFacilityCode(String facilityCode);
 
-  @Query(value = "select * from localmachine.agents limit 1", nativeQuery = true)
-  AgentInfo getFirstAgentInfo();
+  @Query(
+      value =
+          "select a.* from localmachine.machine m left join localmachine.agents a on m.id=a.machineid limit 1",
+      nativeQuery = true)
+  AgentInfo getLocalAgent();
 
   @Query(
       value = "select cast(id as varchar) as id from localmachine.machine limit 1",
