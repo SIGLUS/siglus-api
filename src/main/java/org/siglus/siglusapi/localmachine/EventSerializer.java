@@ -15,30 +15,29 @@
 
 package org.siglus.siglusapi.localmachine;
 
-import java.util.List;
-import org.siglus.siglusapi.localmachine.eventstore.EventStore;
-import org.springframework.context.annotation.Profile;
+import java.nio.charset.StandardCharsets;
+import lombok.RequiredArgsConstructor;
+import org.siglus.siglusapi.localmachine.eventstore.PayloadSerializer;
+import org.springframework.security.crypto.codec.Base64;
 import org.springframework.stereotype.Component;
 
-@Profile({"!localmachine"})
 @Component
-public class OnlineWebEventImporter extends EventImporter {
+@RequiredArgsConstructor
+public class EventSerializer {
+  private final PayloadSerializer payloadSerializer;
 
-  public OnlineWebEventImporter(EventStore localEventStore, EventReplayer replayer) {
-    super(localEventStore, replayer);
+  public Event dump(Event event) {
+    event.setPayload(payloadSerializer.dump(event.getPayload()));
+    return event;
   }
 
-  @Override
-  protected boolean accept(Event it) {
-    return !it.isOnlineWebSynced();
-  }
-
-  @Override
-  protected void resetStatus(List<Event> acceptedEvents) {
-    super.resetStatus(acceptedEvents);
-    acceptedEvents.forEach(
-        it -> {
-          it.setOnlineWebSynced(true);
-        });
+  public Event load(Event it) {
+    if (String.class.equals(it.getPayload().getClass())) {
+      Object payload =
+          payloadSerializer.load(
+              Base64.decode(((String) it.getPayload()).getBytes(StandardCharsets.UTF_8)));
+      it.setPayload(payload);
+    }
+    return it;
   }
 }

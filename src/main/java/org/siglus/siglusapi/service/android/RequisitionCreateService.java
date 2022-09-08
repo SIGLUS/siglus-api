@@ -216,6 +216,8 @@ public class RequisitionCreateService {
     requisition = submitRequisition(requisition, authorId);
     requisition = authorizeRequisition(requisition, authorId);
     internalApproveRequisition(requisition, authorId);
+    log.info("generate notification for requisition: {}", requisition.getId());
+    siglusNotificationService.postApprove(buildBaseRequisitionDto(requisition));
     log.info("save requisition syncUpHash: {}", syncUpHash);
     SyncUpHash syncUpHashDomain = SyncUpHash.builder()
         .hash(syncUpHash)
@@ -223,8 +225,6 @@ public class RequisitionCreateService {
         .referenceId(requisition.getId())
         .build();
     syncUpHashRepository.save(syncUpHashDomain);
-    log.info("generate notification for requisition: {}", requisition.getId());
-    siglusNotificationService.postApprove(buildBaseRequisitionDto(requisition));
     return requisition.getId();
   }
 

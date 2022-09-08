@@ -34,13 +34,13 @@ public class Machine {
 
   @Getter private UUID machineId;
 
-  public Set<UUID> fetchSupportedFacilityIds() {
+  public Set<String> fetchSupportedFacilityIds() {
     return new HashSet<>(agentInfoRepository.findRegisteredFacilityIds());
   }
 
   @PostConstruct
   public void ensureMachineInfoExists() {
-    machineId = agentInfoRepository.getMachineId();
+    machineId = agentInfoRepository.getMachineId().map(UUID::fromString).orElse(null);
     if (Objects.nonNull(machineId)) {
       return;
     }

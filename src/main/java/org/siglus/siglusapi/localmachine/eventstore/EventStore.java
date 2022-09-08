@@ -16,7 +16,6 @@
 package org.siglus.siglusapi.localmachine.eventstore;
 
 import java.util.Comparator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -27,7 +26,6 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.siglus.siglusapi.localmachine.Event;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -58,7 +56,7 @@ public class EventStore {
   }
 
   public List<Event> getEventsForReceiver(UUID receiverId) {
-    return repository.findByReceiverId(receiverId).stream()
+    return repository.findByReceiverIdAndReceiverSynced(receiverId, false).stream()
         .map(it -> it.toEvent(payloadSerializer::load))
         .collect(Collectors.toList());
   }
@@ -72,19 +70,9 @@ public class EventStore {
   }
 
   @Transactional(propagation = Propagation.REQUIRES_NEW)
-  public List<Event> importAllGetNewAdded(List<Event> events) {
-    List<Event> newAdded = new LinkedList<>();
-    events.forEach(
-        it -> {
-          try {
-            log.info("insert event:{}", it.getId());
-            repository.insert(EventRecord.from(it, payloadSerializer.dump(it.getPayload())));
-            newAdded.add(it);
-          } catch (DataIntegrityViolationException e) {
-            log.info("event {} exists, skip", it.getId());
-          }
-        });
-    return newAdded;
+  public void importQuietly(Event event) {
+    log.info("insert event:{}", event.getId());
+    repository.insert(EventRecord.from(event, payloadSerializer.dump(event.getPayload())));
   }
 
   public List<Event> loadSortedGroupEvents(String groupId) {
@@ -106,5 +94,19 @@ public class EventStore {
       return;
     }
     repository.markAsReceived(ackClaimerId, eventIds);
+  }
+
+  public List<Event> excludeExisted(List<Event> events) {
+    if (events.isEmpty()) {
+      return events;
+    }
+    Set<UUID> eventIds = events.stream().map(Event::getId).collect(Collectors.toSet());
+    Set<UUID> existingIds =
+        repository.filterExistsEventIds(eventIds).stream()
+            .map(UUID::fromString)
+            .collect(Collectors.toSet());
+    return events.stream()
+        .filter(it -> !existingIds.contains(it.getId()))
+        .collect(Collectors.toList());
   }
 }

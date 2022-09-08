@@ -48,7 +48,7 @@ import lombok.Data;
             + "left join stockmanagement.stock_cards sc on\n"
             + "  sc.id = csohl.stockcardid\n"
             + "join siglusintegration.facility_locations fl on\n"
-            + "  csohl.locationcode = fl.locationcode  and csohl.area = fl.area and sc.facilityid = fl.facilityid \n"
+            + "  csohl.locationcode = fl.locationcode and sc.facilityid = fl.facilityid \n"
             + "where\n"
             + "  csohl.row_number = 1\n"
             + "  and csohl.stockonhand > 0\n"

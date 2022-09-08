@@ -13,31 +13,31 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.localmachine;
+package org.siglus.siglusapi.localmachine.webapi;
 
-import java.time.ZonedDateTime;
 import java.util.UUID;
-
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
+import org.siglus.siglusapi.localmachine.auth.MachineToken;
+import org.siglus.siglusapi.localmachine.domain.AgentInfo;
 
 @Builder
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class Event {
-  private UUID id;
-  private int protocolVersion;
-  private long localSequenceNumber;
-  private ZonedDateTime occurredTime;
-  private UUID senderId;
-  private UUID receiverId;
-  private String groupId;
-  private long groupSequenceNumber;
-  private Object payload;
-  private boolean onlineWebSynced;
-  private boolean receiverSynced;
-  private boolean localReplayed;
+public class AgentInfoResponse {
+  private UUID machineId;
+  private String facilityCode;
+  private UUID facilityId;
+  private String sampleMachineToken;
+
+  public static AgentInfoResponse from(AgentInfo agentInfo) {
+    MachineToken machineToken =
+        MachineToken.sign(
+            agentInfo.getMachineId(), agentInfo.getFacilityId(), agentInfo.getPrivateKey());
+    return AgentInfoResponse.builder()
+        .machineId(agentInfo.getMachineId())
+        .facilityCode(agentInfo.getFacilityCode())
+        .facilityId(agentInfo.getFacilityId())
+        .sampleMachineToken(machineToken.getPayload())
+        .build();
+  }
 }

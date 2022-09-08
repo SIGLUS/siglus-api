@@ -63,9 +63,11 @@ import org.openlmis.fulfillment.web.util.OrderLineItemDto;
 import org.openlmis.fulfillment.web.util.OrderObjectReferenceDto;
 import org.openlmis.fulfillment.web.util.VersionObjectReferenceDto;
 import org.siglus.siglusapi.domain.OrderLineItemExtension;
+import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.ShipmentLineItemsExtensionRepository;
+import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 
 @SuppressWarnings("PMD.TooManyMethods")
 @RunWith(MockitoJUnitRunner.class)
@@ -112,6 +114,9 @@ public class SiglusShipmentServiceTest {
 
   @Mock
   private CalculatedStocksOnHandByLocationService calculatedStocksOnHandByLocationService;
+
+  @Mock
+  private SiglusAuthenticationHelper authenticationHelper;
 
   private final UUID orderId = UUID.randomUUID();
 
@@ -357,20 +362,31 @@ public class SiglusShipmentServiceTest {
   @Test
   public void shouldConfirmShipmentWithLocation() {
     // given
+    ShipmentLineItemDto shipmentLineItem = new ShipmentLineItemDto();
+    OrderableDto orderableDto = new OrderableDto();
+    orderableDto.setId(orderableId);
+    shipmentLineItem.setOrderable(orderableDto);
+    shipmentLineItem.setQuantityShipped(5L);
+    shipmentLineItem.setLotId(lotId);
+    LocationDto locationDto = new LocationDto();
+    locationDto.setLocationCode("ABC");
+    locationDto.setArea("QAZ");
+    shipmentLineItem.setLocation(locationDto);
     ShipmentDto shipmentDto = createShipmentDto();
-    shipmentDto.setLineItems(new ArrayList<>());
+    shipmentDto.setLineItems(Lists.newArrayList(shipmentLineItem));
     Order order = new Order();
     OrderLineItem lineItem = new OrderLineItem();
     lineItem.setId(lineItemId);
     order.setOrderLineItems(newArrayList(lineItem));
     when(orderRepository.findOne(shipmentDto.getOrder().getId())).thenReturn(order);
     when(shipmentController.createShipment(shipmentDto)).thenReturn(createShipmentDtoWithLocation());
+    when(authenticationHelper.getCurrentUser()).thenReturn(buildUserDto());
 
     // when
     siglusShipmentService.createOrderAndShipmentByLocation(false, shipmentDto);
 
     // then
-    verify(shipmentLineItemsExtensionRepository, times(1)).save(Lists.newArrayList());
+    verify(shipmentLineItemsExtensionRepository, times(0)).save(Lists.newArrayList());
     verify(calculatedStocksOnHandByLocationService, times(0))
         .calculateStockOnHandByLocationForShipment(Lists.newArrayList(), facilityId);
   }
@@ -441,5 +457,11 @@ public class SiglusShipmentServiceTest {
     order.setId(orderId);
     order.setOrderLineItems(newArrayList());
     return order;
+  }
+
+  private UserDto buildUserDto() {
+    UserDto userDto = new UserDto();
+    userDto.setHomeFacilityId(facilityId);
+    return userDto;
   }
 }

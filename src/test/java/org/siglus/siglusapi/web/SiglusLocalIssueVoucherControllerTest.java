@@ -104,4 +104,11 @@ public class SiglusLocalIssueVoucherControllerTest {
 
     verify(siglusLocalIssueVoucherService).deleteLocalIssueVoucher(localIssueVoucherId);
   }
+
+  @Test
+  public void shouldGetAvailableProductWhenCallByService() {
+    controller.availableProduct(podId);
+
+    verify(siglusLocalIssueVoucherService).getAvailableOrderables(podId);
+  }
 }

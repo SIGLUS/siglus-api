@@ -34,6 +34,7 @@ import org.openlmis.fulfillment.service.OrderSearchParams;
 import org.openlmis.fulfillment.web.OrderController;
 import org.openlmis.fulfillment.web.util.BasicOrderDto;
 import org.openlmis.fulfillment.web.util.ProofOfDeliveryDto;
+import org.openlmis.referencedata.dto.OrderableDto;
 import org.siglus.siglusapi.domain.LocalIssueVoucher;
 import org.siglus.siglusapi.domain.PodSubDraft;
 import org.siglus.siglusapi.dto.LocalIssueVoucherDto;
@@ -69,6 +70,7 @@ public class SiglusLocalIssueVoucherService {
 
   private final PodLineItemsRepository podLineItemsRepository;
 
+  private final SiglusOrderableService siglusOrderableService;
   private static final Integer SUB_DRAFTS_LIMITATION = 10;
   private static final Integer SUB_DRAFTS_INCREMENT = 1;
 
@@ -181,5 +183,16 @@ public class SiglusLocalIssueVoucherService {
     if (CollectionUtils.isNotEmpty(duplicatedOrderableLineItem)) {
       throw new ValidationMessageException(ERROR_ADDITIONAL_ORDERABLE_DUPLICATED);
     }
+  }
+
+  public List<OrderableDto> getAvailableOrderables(UUID podId) {
+    List<UUID> usedOrderableByPodId = podLineItemsRepository.findUsedOrderableByPodId(podId);
+    List<OrderableDto> allProducts = siglusOrderableService.getAllProducts();
+    if (CollectionUtils.isNotEmpty(usedOrderableByPodId)) {
+      allProducts = allProducts.stream()
+          .filter(orderableDto -> usedOrderableByPodId.contains(orderableDto.getId())).collect(
+              Collectors.toList());
+    }
+    return allProducts;
   }
 }

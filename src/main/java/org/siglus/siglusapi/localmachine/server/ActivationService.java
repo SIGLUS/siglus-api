@@ -18,7 +18,6 @@ package org.siglus.siglusapi.localmachine.server;
 import java.time.ZonedDateTime;
 import java.util.Base64;
 import java.util.Base64.Decoder;
-import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.openlmis.referencedata.domain.Facility;
@@ -43,7 +42,6 @@ public class ActivationService {
 
   @Transactional
   public void activate(RemoteActivationRequest request) {
-    validateRequest(request);
     LocalActivationRequest localActivationRequest = request.getLocalActivationRequest();
     Facility facility = mustGetFacility(localActivationRequest.getFacilityCode());
     doActivation(localActivationRequest);
@@ -66,18 +64,6 @@ public class ActivationService {
     activationCode.isUsedAt(ZonedDateTime.now());
     log.info("mark activation code as used, id:{}", activationCode.getId());
     activationCodeRepository.save(activationCode);
-  }
-
-  void validateRequest(RemoteActivationRequest request) {
-    LocalActivationRequest localActivationRequest = request.getLocalActivationRequest();
-    String facilityCode = localActivationRequest.getFacilityCode();
-    AgentInfo agentInfo = agentInfoRepository.findFirstByFacilityCode(facilityCode);
-    if (Objects.nonNull(agentInfo)) {
-      throw new IllegalStateException(
-          String.format(
-              "facility %s has been activated with machine %s before",
-              facilityCode, request.getMachineId()));
-    }
   }
 
   private Facility mustGetFacility(String facilityCode) {

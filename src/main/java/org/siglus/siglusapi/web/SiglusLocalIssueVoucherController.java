@@ -17,11 +17,13 @@ package org.siglus.siglusapi.web;
 
 import static org.springframework.http.HttpStatus.NO_CONTENT;
 
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import javax.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.openlmis.fulfillment.web.util.ProofOfDeliveryDto;
+import org.openlmis.referencedata.dto.OrderableDto;
 import org.siglus.siglusapi.dto.LocalIssueVoucherDto;
 import org.siglus.siglusapi.service.SiglusLocalIssueVoucherService;
 import org.siglus.siglusapi.web.request.UpdatePodSubDraftRequest;
@@ -87,5 +89,10 @@ public class SiglusLocalIssueVoucherController {
   @ResponseStatus(NO_CONTENT)
   public void deleteSubDraft(@PathVariable("id") UUID podId, @PathVariable("subDraftId") UUID subDraftId) {
     localIssueVoucherService.deleteSubDraft(podId, subDraftId);
+  }
+
+  @GetMapping("/availableProduct")
+  public List<OrderableDto> availableProduct(@RequestParam("podId") UUID podId) {
+    return localIssueVoucherService.getAvailableOrderables(podId);
   }
 }

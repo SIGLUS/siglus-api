@@ -18,6 +18,8 @@ package org.siglus.siglusapi.service;
 import static com.google.common.collect.Lists.newArrayList;
 import static java.util.stream.Collectors.toMap;
 
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -95,10 +97,32 @@ public class SiglusShipmentDraftService {
 
   @Transactional
   public ShipmentDraftDto updateShipmentDraftByLocation(UUID shipmentDraftId, ShipmentDraftDto draftDto) {
+    Multimap<String, ShipmentLineItemDto> uniqueKeyMap = ArrayListMultimap.create();
+    draftDto.lineItems().forEach(shipmentLineItemDto -> {
+      String uniqueKey = buildUniqueKey(shipmentLineItemDto);
+      uniqueKeyMap.put(uniqueKey, shipmentLineItemDto);
+    });
     updateOrderLineItemExtension(draftDto);
     ShipmentDraftDto shipmentDraftDto = draftController.updateShipmentDraft(shipmentDraftId, draftDto);
-    updateLineItemLocation(draftDto);
-    return fulfillShipmentDraftByLocation(shipmentDraftDto);
+    shipmentDraftDto.lineItems().forEach(lineItemDto -> {
+      String newKey = buildUniqueKey(lineItemDto);
+      List<ShipmentLineItemDto> shipmentLineItemDtos = (List<ShipmentLineItemDto>) uniqueKeyMap.get(newKey);
+      if (null != shipmentLineItemDtos.get(0).getLocation()) {
+        lineItemDto.setLocation(shipmentLineItemDtos.get(0).getLocation());
+        uniqueKeyMap.remove(newKey, shipmentLineItemDtos.get(0));
+      }
+    });
+    deleteShipmentDraftLocation(shipmentDraftDto);
+    saveLineItemLocation(shipmentDraftDto);
+    return shipmentDraftDto;
+  }
+
+  private String buildUniqueKey(ShipmentLineItemDto shipmentLineItemDto) {
+    if (null == shipmentLineItemDto.getLot()) {
+      return shipmentLineItemDto.getOrderable().getId() + "&" + shipmentLineItemDto.getQuantityShipped();
+    }
+    return shipmentLineItemDto.getLot().getId() + "&" + shipmentLineItemDto.getOrderable().getId()
+        + "&" + shipmentLineItemDto.getQuantityShipped();
   }
 
   @Transactional
@@ -227,11 +251,6 @@ public class SiglusShipmentDraftService {
       lineItemDto.setLocation(locationDto);
     });
     return shipmentDraftDto;
-  }
-
-  private void updateLineItemLocation(ShipmentDraftDto shipmentDraftDto) {
-    deleteShipmentDraftLocation(shipmentDraftDto);
-    saveLineItemLocation(shipmentDraftDto);
   }
 
   private void deleteShipmentDraftLocation(ShipmentDraftDto shipmentDraftDto) {

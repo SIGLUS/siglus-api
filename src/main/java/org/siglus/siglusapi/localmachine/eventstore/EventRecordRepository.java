@@ -17,6 +17,7 @@ package org.siglus.siglusapi.localmachine.eventstore;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -106,9 +107,15 @@ public interface EventRecordRepository extends JpaRepository<EventRecord, UUID> 
 
   @Modifying
   @Query(
-      value = "update localmachine.events set receiversynced=true where receiverid=:receiverId and id in :ids",
+      value =
+          "update localmachine.events set receiversynced=true where receiverid=:receiverId and id in :ids",
       nativeQuery = true)
   void markAsReceived(@Param("receiverId") UUID receiverId, @Param("ids") Collection<UUID> ids);
 
   List<EventRecord> findByReceiverId(UUID receiverId);
+
+  @Query(value = "select cast(id as varchar) as id from localmachine.events where id in :ids", nativeQuery = true)
+  Set<String> filterExistsEventIds(@Param("ids") Set<UUID> ids);
+
+  List<EventRecord> findByReceiverIdAndReceiverSynced(UUID receiverId, Boolean receiverSynced);
 }

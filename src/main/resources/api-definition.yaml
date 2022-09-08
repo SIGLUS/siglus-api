@@ -490,6 +490,26 @@ traits:
             responses:
               201:
                 description: issueVouchers update.
+          /{subDraftId}:
+            get:
+              is: [secured]
+              responses:
+                201:
+                  description: get subdraft filling page detail
+            put:
+              is: [ secured ]
+              body:
+                application/json:
+                  schema: UpdatePodSubDraftRequest
+              responses:
+                200:
+                  description: save subdraft filling page detail
+            delete:
+              is: [ secured ]
+              description: delete local issue voucher draft
+              responses:
+                204:
+                  description: sub draft deleted.
 
 
     /locations:

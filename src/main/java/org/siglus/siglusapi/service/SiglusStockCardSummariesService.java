@@ -498,15 +498,14 @@ public class SiglusStockCardSummariesService {
   private List<StockCardSummaryWithLocationDto> combineResponse(List<StockCardSummaryV2Dto> stockCardSummaryV2Dtos,
       List<OrderableDto> orderableDtos, List<LotDto> lotDtos, List<LotLocationSohDto> lotLocationSohDtoList) {
     List<StockCardSummaryWithLocationDto> stockCardSummaryDtos = new ArrayList<>();
-
+    Map<UUID, List<LotLocationSohDto>> lotLocationMaps = lotLocationSohDtoList.stream()
+        .collect(Collectors.groupingBy(LotLocationSohDto::getLotId));
     stockCardSummaryV2Dtos.forEach(stockCardSummaryV2Dto -> {
       StockCardSummaryWithLocationDto stockCardSummaryDto = new StockCardSummaryWithLocationDto();
       OrderableDto orderableDto = getOrderableFromObjectReference(orderableDtos, stockCardSummaryV2Dto.getOrderable());
       stockCardSummaryDto.setOrderable(orderableDto);
       stockCardSummaryDto.setStockOnHand(stockCardSummaryV2Dto.getStockOnHand());
       List<StockCardDetailsWithLocationDto> stockCardDetailsDtos = new ArrayList<>();
-      Map<UUID, List<LotLocationSohDto>> lotLocationMaps = lotLocationSohDtoList.stream()
-          .collect(Collectors.groupingBy(LotLocationSohDto::getLotId));
       stockCardSummaryV2Dto.getCanFulfillForMe().forEach(canFulfillForMeEntryDto -> {
         if (canFulfillForMeEntryDto.getStockOnHand() != 0) {
           StockCardDetailsWithLocationDto fulfill = StockCardDetailsWithLocationDto.builder()

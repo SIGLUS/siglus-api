@@ -125,8 +125,12 @@ public class SiglusLocalIssueVoucherServiceTest {
   @Mock
   private SiglusLocalIssueVoucherRepository localIssueVoucherRepository;
 
+  @Mock
+  private SiglusOrderableService siglusOrderableService;
+
   private final UUID externalId = UUID.randomUUID();
   private final UUID orderableId = UUID.randomUUID();
+  private final UUID orderableId2 = UUID.randomUUID();
   private final UUID podId = UUID.randomUUID();
   private final UUID subDraftId = UUID.randomUUID();
   private final UUID lineItemId1 = UUID.randomUUID();
@@ -343,6 +347,28 @@ public class SiglusLocalIssueVoucherServiceTest {
     service.createLocalIssueVoucherSubDraft(localIssueVoucherId);
   }
 
+  @Test
+  public void shouldReturnAvailableOrderablesWhenCallByService() {
+    org.openlmis.referencedata.dto.OrderableDto orderableDto1 = new org.openlmis.referencedata.dto.OrderableDto();
+    org.openlmis.referencedata.dto.OrderableDto orderableDto2 = new org.openlmis.referencedata.dto.OrderableDto();
+    orderableDto1.setId(orderableId);
+    orderableDto2.setId(orderableId2);
+    when(podLineItemsRepository.findUsedOrderableByPodId(podId)).thenReturn(Collections.singletonList(orderableId));
+    when(siglusOrderableService.getAllProducts()).thenReturn(Lists.newArrayList(orderableDto1, orderableDto2));
+    assertEquals(1, service.getAvailableOrderables(podId).size());
+  }
+
+  @Test
+  public void shouldReturnAvailableOrderablesWhenCallByServiceAndNoUsedOrderables() {
+    org.openlmis.referencedata.dto.OrderableDto orderableDto1 = new org.openlmis.referencedata.dto.OrderableDto();
+    org.openlmis.referencedata.dto.OrderableDto orderableDto2 = new org.openlmis.referencedata.dto.OrderableDto();
+    orderableDto1.setId(orderableId);
+    orderableDto2.setId(orderableId2);
+    when(podLineItemsRepository.findUsedOrderableByPodId(podId)).thenReturn(null);
+    when(siglusOrderableService.getAllProducts()).thenReturn(Lists.newArrayList(orderableDto1, orderableDto2));
+    assertEquals(2, service.getAvailableOrderables(podId).size());
+  }
+
   private PodExtensionRequest buildPodExtensionRequest() {
     PodExtensionRequest request = new PodExtensionRequest();
     request.setPodDto(buildMockPodDtoWithOneLineItem());
@@ -489,12 +515,12 @@ public class SiglusLocalIssueVoucherServiceTest {
 
   private List<SubDraftInfo> toSubDraftInfos(List<PodSubDraft> podSubDrafts) {
     return podSubDrafts.stream().map(podSubDraft ->
-        SubDraftInfo.builder()
-            .subDraftId(podSubDraft.getId())
-            .groupNum(podSubDraft.getNumber())
-            .saver(authenticationHelper.getUserNameByUserId(podSubDraft.getOperatorId()))
-            .status(podSubDraft.getStatus())
-            .build())
+            SubDraftInfo.builder()
+                .subDraftId(podSubDraft.getId())
+                .groupNum(podSubDraft.getNumber())
+                .saver(authenticationHelper.getUserNameByUserId(podSubDraft.getOperatorId()))
+                .status(podSubDraft.getStatus())
+                .build())
         .collect(Collectors.toList());
   }
 

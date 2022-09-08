@@ -16,35 +16,35 @@
 package org.siglus.siglusapi.localmachine.webapi;
 
 import lombok.RequiredArgsConstructor;
-import org.siglus.siglusapi.exception.NotFoundException;
+import org.siglus.siglusapi.interceptor.OperationGuardAspect.Guarded;
 import org.siglus.siglusapi.localmachine.agent.LocalActivationService;
-import org.siglus.siglusapi.localmachine.domain.AgentInfo;
+import org.siglus.siglusapi.localmachine.eventstore.EventRecordRepository;
+import org.siglus.siglusapi.localmachine.repository.AgentInfoRepository;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Profile;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+@ConditionalOnProperty(value = "machine.debug", havingValue = "on")
 @Profile("localmachine")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/siglusapi/localmachine/agent")
-public class LocalAgentController {
+public class DebugController {
   private final LocalActivationService localActivationService;
+  private final AgentInfoRepository agentInfoRepository;
+  private final EventRecordRepository eventRecordRepository;
 
-  @PutMapping
-  public void activate(@RequestBody @Validated LocalActivationRequest request) {
+  @Guarded
+  @PutMapping("/activationInfo")
+  @Transactional
+  public void resetActivationInfo(@RequestBody @Validated LocalActivationRequest request) {
+    agentInfoRepository.deleteAll();
+    eventRecordRepository.deleteAll();
     localActivationService.activate(request);
-  }
-
-  @GetMapping
-  public AgentInfoResponse getCurrentAgentInfo() {
-    AgentInfo agentInfo =
-        localActivationService
-            .getCurrentAgentInfo()
-            .orElseThrow(() -> new NotFoundException("agent info not exists"));
-    return AgentInfoResponse.from(agentInfo);
   }
 }

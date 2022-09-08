@@ -44,4 +44,16 @@ public class SiglusSimulateUserAuthHelper {
     OAuth2Authentication newAuth = new OAuth2Authentication(originAuth.getOAuth2Request(), authentication);
     SecurityContextHolder.getContext().setAuthentication(newAuth);
   }
+
+  public void simulateNewUserAuth(UUID userId) {
+    simulateNewUserAuth(userId, emptyList());
+  }
+
+  public void simulateNewUserAuth(UUID userId, Collection<String> authorities) {
+    UserAuthenticationConverter userAuthenticationConverter = new CustomUserAuthenticationConverter();
+    Authentication authentication = userAuthenticationConverter.extractAuthentication(
+        ImmutableMap.of(REFERENCE_DATA_USER_ID, userId.toString(), AUTHORITIES, authorities));
+    OAuth2Authentication newAuth = new OAuth2Authentication(null, authentication);
+    SecurityContextHolder.getContext().setAuthentication(newAuth);
+  }
 }
