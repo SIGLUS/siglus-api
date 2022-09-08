@@ -186,7 +186,6 @@ public class CalculatedStocksOnHandByLocationService {
     Set<UUID> stockCardIds = stockCardToLineItems.keySet().stream().map(BaseEntity::getId).collect(Collectors.toSet());
     Map<String, Integer> stockCardIdAndLocationCodeToPreviousStockOnHandMap =
             this.getPreviousStockOnHandMap(stockCardIds, occurredDate);
-
     List<StockCardLineItem> allStockEventLineItems = stockCardToLineItems.values()
             .stream().flatMap(Collection::stream).collect(Collectors.toList());
     deleteFollowingStockOnHands(allStockEventLineItems, lineItemIdToExtension, occurredDate);
@@ -237,13 +236,22 @@ public class CalculatedStocksOnHandByLocationService {
 
 
   private void deleteFollowingStockOnHands(List<StockCardLineItem> allLineItems,
-                       Map<UUID, StockCardLineItemExtension> lineItemIdToExtension,
-                       LocalDate occurredDate) {
+      Map<UUID, StockCardLineItemExtension> lineItemIdToExtension,
+      LocalDate occurredDate) {
     ZoneId zoneId = ZoneId.systemDefault();
     Date date = Date.from(occurredDate.atStartOfDay(zoneId).toInstant());
-    List<CalculatedStockOnHandByLocation> toDelete = calculatedStockOnHandByLocationRepository
-            .getFollowingStockOnHands(allLineItems, lineItemIdToExtension, date);
-    calculatedStockOnHandByLocationRepository.delete(toDelete);
+    allLineItems.forEach(lineItem -> {
+      if (lineItem.getStockCard() == null || lineItem.getStockCard().getId() == null) {
+        return;
+      }
+      StockCardLineItemExtension stockCardLineItemExtension = lineItemIdToExtension.get(lineItem.getId());
+      if (!Objects.isNull(stockCardLineItemExtension)) {
+        UUID stockCardId = lineItem.getStockCard().getId();
+        String locationCode = stockCardLineItemExtension.getLocationCode();
+        calculatedStockOnHandByLocationRepository.deleteAllByStockCardIdAndEqualOccurredDateAndLocationCodes(
+            stockCardId, date, locationCode);
+      }
+    });
   }
 
   public void recalculateLocationStockOnHand(List<CalculatedStockOnHandByLocation> toSaveList,
