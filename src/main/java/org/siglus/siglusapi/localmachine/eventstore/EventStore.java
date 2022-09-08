@@ -56,7 +56,7 @@ public class EventStore {
   }
 
   public List<Event> getEventsForReceiver(UUID receiverId) {
-    return repository.findByReceiverId(receiverId).stream()
+    return repository.findByReceiverIdAndReceiverSynced(receiverId, false).stream()
         .map(it -> it.toEvent(payloadSerializer::load))
         .collect(Collectors.toList());
   }

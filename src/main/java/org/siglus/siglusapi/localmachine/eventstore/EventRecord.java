@@ -18,6 +18,7 @@ package org.siglus.siglusapi.localmachine.eventstore;
 import java.time.ZonedDateTime;
 import java.util.UUID;
 import java.util.function.Function;
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
@@ -35,16 +36,27 @@ import org.siglus.siglusapi.localmachine.Event;
 @Table(name = "events", schema = "localmachine")
 public class EventRecord {
   @Id private UUID id;
+  @Column(name = "protocolversion")
   private int protocolVersion;
+  @Column(name = "localsequencenumber")
   private Long localSequenceNumber;
+  @Column(name = "occurredtime")
   private ZonedDateTime occurredTime;
+  @Column(name = "senderid")
   private UUID senderId;
+  @Column(name = "receiverid")
   private UUID receiverId;
+  @Column(name = "groupid")
   private String groupId;
+  @Column(name = "groupsequencenumber")
   private long groupSequenceNumber;
+  @Column(name = "payload")
   private byte[] payload;
+  @Column(name = "onlinewebsynced")
   private boolean onlineWebSynced;
+  @Column(name = "receiversynced")
   private boolean receiverSynced;
+  @Column(name = "localreplayed")
   private boolean localReplayed;
 
   public static EventRecord from(Event event, byte[] payload) {

@@ -32,7 +32,7 @@ public class AndroidRequisitionSyncedReplayer {
   @EventListener(value = {AndroidRequisitionSyncedEvent.class})
   public void replay(AndroidRequisitionSyncedEvent event) {
     try {
-      simulateUserAuthHelper.simulateUserAuth(event.getUserId());
+      simulateUserAuthHelper.simulateNewUserAuth(event.getUserId());
       meService.createRequisition(event.getRequest());
     } catch (Exception e) {
       log.error(e.getMessage(), e);
