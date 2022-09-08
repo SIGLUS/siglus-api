@@ -79,8 +79,13 @@ public class SiglusStockCardLocationMovementService {
   private final SiglusAuthenticationHelper authenticationHelper;
   private final CalculatedStockOnHandByLocationRepository calculatedStockOnHandByLocationRepository;
   private final SiglusStockCardService siglusStockCardService;
+  private final SiglusAdministrationsService administrationsService;
 
   public InitialMoveProductFieldDto canInitialMoveProduct(UUID facilityId) {
+
+    if (!administrationsService.getFacility(facilityId).getEnableLocationManagement()) {
+      return new InitialMoveProductFieldDto(false);
+    }
     List<UUID> stockCardIds = stockCardRepository.findByFacilityIdIn(facilityId)
         .stream().map(StockCard::getId).collect(Collectors.toList());
     List<CalculatedStockOnHandByLocation> calculatedStockOnHandByLocationList =

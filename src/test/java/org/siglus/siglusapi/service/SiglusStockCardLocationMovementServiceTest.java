@@ -52,6 +52,7 @@ import org.siglus.siglusapi.constant.LocationConstants;
 import org.siglus.siglusapi.domain.CalculatedStockOnHandByLocation;
 import org.siglus.siglusapi.domain.StockCardLocationMovementDraft;
 import org.siglus.siglusapi.domain.StockCardLocationMovementLineItem;
+import org.siglus.siglusapi.dto.FacilitySearchResultDto;
 import org.siglus.siglusapi.dto.LocationMovementDto;
 import org.siglus.siglusapi.dto.LocationMovementLineItemDto;
 import org.siglus.siglusapi.dto.StockCardLocationMovementDto;
@@ -172,6 +173,10 @@ public class SiglusStockCardLocationMovementServiceTest {
     UserDto userDto = new UserDto();
     userDto.setHomeFacilityId(facilityId);
     when(authenticationHelper.getCurrentUser()).thenReturn(userDto);
+
+    FacilitySearchResultDto facilityDto = new FacilitySearchResultDto();
+    facilityDto.setEnableLocationManagement(true);
+    when(administrationsService.getFacility(facilityId)).thenReturn(facilityDto);
   }
 
   @Test
