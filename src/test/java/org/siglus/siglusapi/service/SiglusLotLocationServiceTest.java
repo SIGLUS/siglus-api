@@ -44,6 +44,7 @@ import org.siglus.siglusapi.constant.PeriodConstants;
 import org.siglus.siglusapi.domain.CalculatedStockOnHandByLocation;
 import org.siglus.siglusapi.domain.FacilityLocations;
 import org.siglus.siglusapi.dto.FacilityLocationsDto;
+import org.siglus.siglusapi.dto.InitialMoveProductFieldDto;
 import org.siglus.siglusapi.dto.LotLocationDto;
 import org.siglus.siglusapi.dto.LotsDto;
 import org.siglus.siglusapi.dto.UserDto;
@@ -83,6 +84,9 @@ public class SiglusLotLocationServiceTest extends TestCase {
 
   @Mock
   private FacilityNativeRepository facilityNativeRepository;
+
+  @Mock
+  private SiglusStockCardLocationMovementService stockCardLocationMovementService;
 
   private final UUID facilityId = UUID.randomUUID();
 
@@ -173,6 +177,8 @@ public class SiglusLotLocationServiceTest extends TestCase {
         .locationCode(locationCode2).area(area2).build();
     when(calculatedStockOnHandByLocationRepository.findRecentlyLocationSohByStockCardId(stockCard.getId())).thenReturn(
         Arrays.asList(sohLocation1, sohLocation2));
+    when(stockCardLocationMovementService.canInitialMoveProduct(facilityId)).thenReturn(
+        new InitialMoveProductFieldDto(false));
     Lot lot = new Lot();
     lot.setExpirationDate(LocalDate.of(2022, 3, 22));
     lot.setLotCode(lotCode);
@@ -213,6 +219,8 @@ public class SiglusLotLocationServiceTest extends TestCase {
         Collections.singletonList(sohLocation1));
     when(calculatedStockOnHandByLocationRepository.findRecentlyLocationSohByStockCardId(stockCard2.getId())).thenReturn(
         Collections.singletonList(sohLocation1));
+    when(stockCardLocationMovementService.canInitialMoveProduct(facilityId)).thenReturn(
+        new InitialMoveProductFieldDto(false));
     Lot lot = new Lot();
     lot.setExpirationDate(LocalDate.of(2022, 3, 22));
     lot.setLotCode(lotCode);

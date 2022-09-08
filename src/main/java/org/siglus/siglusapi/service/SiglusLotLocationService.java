@@ -67,6 +67,7 @@ public class SiglusLotLocationService {
   private final CalculatedStockOnHandByLocationRepository calculatedStockOnHandByLocationRepository;
   private final FacilityNativeRepository facilityNativeRepository;
   private final CalculatedStockOnHandRepository calculatedStockOnHandRepository;
+  private final SiglusStockCardLocationMovementService stockCardLocationMovementService;
 
   public List<LotLocationDto> searchLotLocationDtos(List<UUID> orderableIds, boolean extraData, boolean isAdjustment) {
     UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
@@ -108,10 +109,11 @@ public class SiglusLotLocationService {
 
       Map<String, List<Pair<UUID, CalculatedStockOnHandByLocation>>> locationCodeToLotLocationPairs =
           getLocationCodeToLotLocationPairListMap(stockCardList);
-
+      boolean needInitiallyMoveProduct = stockCardLocationMovementService.canInitialMoveProduct(facilityId)
+          .isNeedInitiallyMoveProduct();
       Map<UUID, StockCard> stockCardIdToStockCard = Maps.uniqueIndex(stockCardList, StockCard::getId);
       locationCodeToLotLocationPairs.forEach((locationCode, locationPairs) -> {
-        if (locationCode.equals(LocationConstants.VIRTUAL_LOCATION_CODE)) {
+        if (locationCode.equals(LocationConstants.VIRTUAL_LOCATION_CODE) && !needInitiallyMoveProduct) {
           return;
         }
         List<LotsDto> lotDtoList = getLotsDtos(orderableId, locationPairs, stockCardIdToStockCard);
