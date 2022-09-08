@@ -15,8 +15,11 @@
 
 package org.siglus.siglusapi.localmachine.webapi;
 
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_NOT_ACTIVATED_YET;
+
 import lombok.RequiredArgsConstructor;
-import org.siglus.siglusapi.exception.NotFoundException;
+import org.siglus.siglusapi.dto.Message;
+import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.localmachine.agent.LocalActivationService;
 import org.siglus.siglusapi.localmachine.domain.AgentInfo;
 import org.springframework.context.annotation.Profile;
@@ -44,7 +47,7 @@ public class LocalAgentController {
     AgentInfo agentInfo =
         localActivationService
             .getCurrentAgentInfo()
-            .orElseThrow(() -> new NotFoundException("agent info not exists"));
+            .orElseThrow(() -> new BusinessDataException(new Message(ERROR_NOT_ACTIVATED_YET)));
     return AgentInfoResponse.from(agentInfo);
   }
 }

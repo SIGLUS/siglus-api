@@ -15,6 +15,10 @@
 
 package org.siglus.siglusapi.localmachine.server;
 
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_ACTIVATION_CODE_USED_ALREADY;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_FACILITY_NOT_FOUND;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_INVALID_ACTIVATION_CODE;
+
 import java.time.ZonedDateTime;
 import java.util.Base64;
 import java.util.Base64.Decoder;
@@ -22,7 +26,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.openlmis.referencedata.domain.Facility;
 import org.openlmis.referencedata.repository.FacilityRepository;
-import org.siglus.siglusapi.exception.NotFoundException;
+import org.siglus.siglusapi.dto.Message;
+import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.localmachine.domain.ActivationCode;
 import org.siglus.siglusapi.localmachine.domain.AgentInfo;
 import org.siglus.siglusapi.localmachine.repository.ActivationCodeRepository;
@@ -56,9 +61,10 @@ public class ActivationService {
             .findFirstByFacilityCodeAndActivationCode(
                 localActivationRequest.getFacilityCode(),
                 localActivationRequest.getActivationCode())
-            .orElseThrow(() -> new NotFoundException("activation code not found"));
+            .orElseThrow(
+                () -> new BusinessDataException(new Message(ERROR_INVALID_ACTIVATION_CODE)));
     if (activationCode.isUsed()) {
-      throw new IllegalStateException("activation code has been used");
+      throw new BusinessDataException(new Message(ERROR_ACTIVATION_CODE_USED_ALREADY));
     }
     activationCode.isUsed(Boolean.TRUE);
     activationCode.isUsedAt(ZonedDateTime.now());
@@ -69,8 +75,7 @@ public class ActivationService {
   private Facility mustGetFacility(String facilityCode) {
     return facilityRepository
         .findByCode(facilityCode)
-        .orElseThrow(
-            () -> new NotFoundException(String.format("facility %s not found", facilityCode)));
+        .orElseThrow(() -> new BusinessDataException(new Message(ERROR_FACILITY_NOT_FOUND)));
   }
 
   private AgentInfo buildAgentInfo(RemoteActivationRequest request, Facility facility) {

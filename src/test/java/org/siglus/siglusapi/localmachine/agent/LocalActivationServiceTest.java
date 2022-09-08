@@ -31,6 +31,7 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.referencedata.domain.Facility;
 import org.openlmis.referencedata.repository.FacilityRepository;
+import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.localmachine.Machine;
 import org.siglus.siglusapi.localmachine.domain.AgentInfo;
 import org.siglus.siglusapi.localmachine.repository.AgentInfoRepository;
@@ -102,7 +103,7 @@ public class LocalActivationServiceTest {
     assertThat(needToActivate).isTrue();
   }
 
-  @Test(expected = IllegalStateException.class)
+  @Test(expected = BusinessDataException.class)
   public void shouldReturnTrueWhenCheckIfNeedToActivateGivenFacilityChanged() {
     // given
     String facilityCode = "facility-code";
