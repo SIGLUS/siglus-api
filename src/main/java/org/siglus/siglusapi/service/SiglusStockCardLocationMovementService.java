@@ -129,28 +129,28 @@ public class SiglusStockCardLocationMovementService {
     Integer soh = latestSoh;
     for (LocationMovementLineItemDto locationMovementLineItemDto : locationMovementLineItemDtos) {
       Integer quantity = locationMovementLineItemDto.getQuantity();
+      locationMovementLineItemDto.setSoh(soh);
       switch (locationMovementLineItemDto.getReasonCategory()) {
         case INVENTORY:
           soh = quantity;
           break;
         case CAPITAL_ISSUE:
-          soh -= quantity;
+          soh += quantity;
           break;
         case CAPITAL_RECEIVE:
-          soh += quantity;
+          soh -= quantity;
           break;
         case CAPITAL_ADJUSTMENT:
           if (locationMovementLineItemDto.getReasonType().equals(ReasonType.DEBIT.name())) {
-            soh -= quantity;
+            soh += quantity;
           }
           if (locationMovementLineItemDto.getReasonType().equals(ReasonType.CREDIT.name())) {
-            soh += quantity;
+            soh -= quantity;
           }
           break;
         default:
           break;
       }
-      locationMovementLineItemDto.setSoh(soh);
     }
     return createLocationMovmentDto(locationMovementLineItemDtos, stockCardId, latestSoh, locationCode);
   }

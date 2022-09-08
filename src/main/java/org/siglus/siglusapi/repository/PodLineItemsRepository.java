@@ -44,4 +44,14 @@ public interface PodLineItemsRepository extends JpaRepository<ProofOfDeliveryLin
       + "  and plie.subdraftid <> :subDraftId", nativeQuery = true)
   List<ProofOfDeliveryLineItem> findDuplicatedOrderableLineItem(@Param("orderableIds") Collection<UUID> orderableIds,
       @Param("podId") UUID podId, @Param("subDraftId") UUID subDraftId);
+
+  @Query(value = "select\n"
+      + "\torderableid\n"
+      + "from\n"
+      + "\tfulfillment.proof_of_delivery_line_items\n"
+      + "where\n"
+      + "\tproofofdeliveryid =:podId\n"
+      + "group by\n"
+      + "\torderableid", nativeQuery = true)
+  List<UUID> findUsedOrderableByPodId(@Param("podId") UUID podId);
 }
