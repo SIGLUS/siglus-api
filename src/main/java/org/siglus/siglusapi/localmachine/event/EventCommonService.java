@@ -26,7 +26,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-public class BaseEventCommonService {
+public class EventCommonService {
   private final RequisitionGroupMembersRepository requisitionGroupMembersRepository;
 
   public UUID getReceiverId(UUID facilityId, UUID programId) {

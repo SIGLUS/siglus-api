@@ -36,7 +36,7 @@ import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
 import org.siglus.siglusapi.localmachine.EventPayloadCheckUtils;
 import org.siglus.siglusapi.localmachine.EventPublisher;
-import org.siglus.siglusapi.localmachine.event.BaseEventCommonService;
+import org.siglus.siglusapi.localmachine.event.EventCommonService;
 import org.siglus.siglusapi.localmachine.event.requisition.andriod.AndroidRequisitionSyncedEmitter;
 import org.siglus.siglusapi.localmachine.event.requisition.andriod.AndroidRequisitionSyncedEvent;
 import org.siglus.siglusapi.localmachine.eventstore.PayloadSerializer;
@@ -58,7 +58,7 @@ public class AndroidRequisitionSyncedEmitterTest extends FileBasedTest {
   @Mock
   private SiglusProgramService siglusProgramService;
   @Mock
-  private BaseEventCommonService baseEventCommonService;
+  private EventCommonService baseEventCommonService;
   @Mock
   private SiglusRequisitionExtensionService siglusRequisitionExtensionService;
   private final UUID requisitionId = UUID.randomUUID();

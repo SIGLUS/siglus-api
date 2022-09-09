@@ -28,7 +28,7 @@ import org.openlmis.requisition.repository.RequisitionRepository;
 import org.siglus.siglusapi.domain.RequisitionExtension;
 import org.siglus.siglusapi.domain.RequisitionLineItemExtension;
 import org.siglus.siglusapi.localmachine.EventPublisher;
-import org.siglus.siglusapi.localmachine.event.BaseEventCommonService;
+import org.siglus.siglusapi.localmachine.event.EventCommonService;
 import org.siglus.siglusapi.repository.AgeGroupLineItemRepository;
 import org.siglus.siglusapi.repository.ConsultationNumberLineItemRepository;
 import org.siglus.siglusapi.repository.KitUsageLineItemRepository;
@@ -57,7 +57,7 @@ public class RequisitionInternalApproveEmitter {
   private final RegimenSummaryLineItemRepository regimenSummaryLineItemRepository;
   private final KitUsageLineItemRepository kitUsageRepository;
   private final EventPublisher eventPublisher;
-  private final BaseEventCommonService baseEventCommonService;
+  private final EventCommonService baseEventCommonService;
 
   public RequisitionInternalApprovedEvent emit(UUID requisitionId) {
     RequisitionInternalApprovedEvent event = getEvent(requisitionId);

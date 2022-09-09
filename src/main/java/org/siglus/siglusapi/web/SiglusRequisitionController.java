@@ -23,6 +23,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.dto.BasicRequisitionDto;
 import org.openlmis.requisition.dto.FacilityDto;
 import org.openlmis.requisition.dto.RequisitionPeriodDto;
@@ -126,7 +127,7 @@ public class SiglusRequisitionController {
     BasicRequisitionDto basicRequisitionDto =
         siglusRequisitionService.approveRequisition(requisitionId, request, response);
     notificationService.postApprove(basicRequisitionDto);
-    if (basicRequisitionDto.getFacility().getId().equals(authenticationHelper.getCurrentUser().getHomeFacilityId())) {
+    if (basicRequisitionDto.getStatus() == RequisitionStatus.IN_APPROVAL) {
       requisitionInternalApproveEmitter.emit(requisitionId);
     }
     return basicRequisitionDto;

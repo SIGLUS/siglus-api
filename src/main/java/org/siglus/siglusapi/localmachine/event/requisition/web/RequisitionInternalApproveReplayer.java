@@ -35,6 +35,10 @@ import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.domain.requisition.StatusChange;
 import org.openlmis.requisition.domain.requisition.VersionEntityReference;
 import org.openlmis.requisition.dto.ApprovedProductDto;
+import org.openlmis.requisition.dto.BasicProcessingPeriodDto;
+import org.openlmis.requisition.dto.BasicProgramDto;
+import org.openlmis.requisition.dto.BasicRequisitionDto;
+import org.openlmis.requisition.dto.MinimalFacilityDto;
 import org.openlmis.requisition.repository.RequisitionRepository;
 import org.openlmis.requisition.service.RequisitionService;
 import org.openlmis.requisition.service.referencedata.ApproveProductsAggregator;
@@ -58,6 +62,7 @@ import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.TestConsumptionLineItemRepository;
 import org.siglus.siglusapi.repository.UsageInformationLineItemRepository;
+import org.siglus.siglusapi.service.SiglusNotificationService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
@@ -79,6 +84,7 @@ public class RequisitionInternalApproveReplayer {
   private final RegimenSummaryLineItemRepository regimenSummaryLineItemRepository;
   private final KitUsageLineItemRepository kitUsageRepository;
   private final RequisitionService requisitionService;
+  private final SiglusNotificationService siglusNotificationService;
 
   @EventListener(classes = {RequisitionInternalApprovedEvent.class})
   public void replay(RequisitionInternalApprovedEvent event) {
@@ -95,10 +101,8 @@ public class RequisitionInternalApproveReplayer {
   public void doReplay(RequisitionInternalApprovedEvent event) {
     Requisition newRequisition = RequisitionBuilder.newRequisition(event.getRequisition().getFacilityId(),
         event.getRequisition().getProgramId(), event.getRequisition().getEmergency());
-
     newRequisition.setTemplate(event.getRequisition().getTemplate());
     newRequisition.setStatus(event.getRequisition().getStatus());
-
     newRequisition.setProcessingPeriodId(event.getRequisition().getProcessingPeriodId());
     newRequisition.setNumberOfMonthsInPeriod(event.getRequisition().getNumberOfMonthsInPeriod());
     newRequisition.setDraftStatusMessage(event.getRequisition().getDraftStatusMessage());
@@ -134,6 +138,8 @@ public class RequisitionInternalApproveReplayer {
     buildRequisitionLineItemsExtension(requisition, orderableIdToLineItemExtension);
 
     buildRequisitionUsageSections(requisition, event);
+
+    siglusNotificationService.postApprove(buildBaseRequisitionDto(requisition));
   }
 
   private void buildRequisitionApprovedProduct(Requisition requisition, UUID homeFacilityId, UUID programId) {
@@ -346,5 +352,22 @@ public class RequisitionInternalApproveReplayer {
       requisitionLineItems.add(lineItem);
     }
     newRequisition.setRequisitionLineItems(requisitionLineItems);
+  }
+
+  private BasicRequisitionDto buildBaseRequisitionDto(Requisition requisition) {
+    BasicRequisitionDto basicRequisitionDto = new BasicRequisitionDto();
+    basicRequisitionDto.setId(requisition.getId());
+    basicRequisitionDto.setStatus(requisition.getStatus());
+    MinimalFacilityDto facility = new MinimalFacilityDto();
+    facility.setId(requisition.getFacilityId());
+    basicRequisitionDto.setFacility(facility);
+    BasicProgramDto program = new BasicProgramDto();
+    program.setId(requisition.getProgramId());
+    basicRequisitionDto.setProgram(program);
+    basicRequisitionDto.setEmergency(requisition.getEmergency());
+    BasicProcessingPeriodDto processingPeriod = new BasicProcessingPeriodDto();
+    processingPeriod.setId(requisition.getProcessingPeriodId());
+    basicRequisitionDto.setProcessingPeriod(processingPeriod);
+    return basicRequisitionDto;
   }
 }

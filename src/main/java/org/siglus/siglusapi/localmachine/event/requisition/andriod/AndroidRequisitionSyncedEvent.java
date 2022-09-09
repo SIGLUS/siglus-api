@@ -19,9 +19,11 @@ import java.util.UUID;
 import lombok.Builder;
 import lombok.Getter;
 import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
+import org.siglus.siglusapi.localmachine.EventPayload;
 
 @Getter
 @Builder
+@EventPayload
 public class AndroidRequisitionSyncedEvent {
   private UUID facilityId;
   private UUID userId;
