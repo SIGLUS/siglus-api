@@ -270,9 +270,11 @@ public class SiglusOrderService {
     Set<UUID> orderIdsWithSubDraft = podSubDraftRepository.findOrderIdsWithSubDraft(orderIds).stream()
         .map(UUID::fromString).collect(Collectors.toSet());
 
-    boolean isConsistent = params.getRequestingFacilityId()
-        .equals(basicOrderExtensionResponses.get(0).getRequestingFacility().getId());
-
+    boolean isConsistent = false;
+    if (params.getRequestingFacilityId() != null) {
+      isConsistent = params.getRequestingFacilityId()
+          .equals(basicOrderExtensionResponses.get(0).getRequestingFacility().getId());
+    }
     boolean canDeleteLocalIssueVoucher = siglusAuthenticationHelper.isTheCurrentUserCanMergeOrDeleteSubDrafts();
 
     for (BasicOrderExtensionResponse response : basicOrderExtensionResponses) {
