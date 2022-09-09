@@ -17,6 +17,7 @@ package org.siglus.siglusapi.web;
 
 import java.time.LocalDate;
 import java.util.UUID;
+import org.siglus.siglusapi.dto.MovementStartDateDto;
 import org.siglus.siglusapi.util.MovementDateValidator;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -35,7 +36,7 @@ public class SiglusMovementDateLimitController {
   }
 
   @GetMapping("/startDate")
-  public LocalDate getMovementStartDate(
+  public MovementStartDateDto getMovementStartDate(
       @DateTimeFormat(pattern = "yyyy-MM-dd")
       @RequestParam("currentDate") LocalDate currentDate,
       @RequestParam("facilityId") UUID facilityId) {

@@ -77,8 +77,8 @@ import lombok.Data;
     @NamedNativeQuery(name = "LocationMovement.getProductLocationMovement",
         query = "select \n"
             + "case\n"
-            + "  when sclmli.srclocationcode = :locationCode then 'Move to ' || sclmli.destlocationcode\n"
-            + "  when sclmli.destlocationcode = :locationCode then 'Move from ' || sclmli.srclocationcode\n"
+            + "  when sclmli.srclocationcode = :locationCode then 'mover para ' || sclmli.destlocationcode\n"
+            + "  when sclmli.destlocationcode = :locationCode then 'mover a partir de ' || sclmli.srclocationcode\n"
             + "end as adjustment,\n"
             + "null as source,\n"
             + "null as destination,\n"

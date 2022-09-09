@@ -334,7 +334,7 @@ public class SiglusStockCardSummariesService {
       return summaries;
     }
     return summaries.stream().filter(summaryV2Dto ->
-        orderableIds.contains(summaryV2Dto.getOrderable().getId()))
+            orderableIds.contains(summaryV2Dto.getOrderable().getId()))
         .collect(Collectors.toList());
   }
 
@@ -427,7 +427,10 @@ public class SiglusStockCardSummariesService {
     List<OrderableDto> orderableDtos = getOrderableDtos(pageable, orderableIds, facilityId);
     List<LotDto> lotDtos = getLotDtos(canFulfillForMeEntryDtos);
     List<UUID> lotIds = lotDtos.stream().map(LotDto::getId).collect(Collectors.toList());
-    List<LotLocationSohDto> locationSoh = calculatedStockOnHandByLocationRepository.getLocationSoh(lotIds);
+    List<LotLocationSohDto> locationSoh = new ArrayList<>();
+    if (CollectionUtils.isNotEmpty(lotIds)) {
+      locationSoh = calculatedStockOnHandByLocationRepository.getLocationSoh(lotIds);
+    }
     return combineResponse(stockCardSummaryV2Dtos, orderableDtos, lotDtos, locationSoh);
   }
 
