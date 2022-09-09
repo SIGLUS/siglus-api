@@ -29,4 +29,5 @@ public class FacilityLocationsDto {
   private UUID facilityId;
   private String area;
   private String locationCode;
+  private Boolean isEmpty;
 }

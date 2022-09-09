@@ -43,7 +43,7 @@ public class SiglusLotLocationController {
   }
 
   @GetMapping("/facility")
-  public List<FacilityLocationsDto> searchLocationsByFacility() {
-    return lotLocationService.searchLocationsByFacility();
+  public List<FacilityLocationsDto> searchLocationsByFacility(@RequestParam(required = false) Boolean isEmpty) {
+    return lotLocationService.searchLocationsByFacility(isEmpty);
   }
 }

@@ -131,7 +131,7 @@ public class SiglusLotLocationServiceTest extends TestCase {
   public void shouldSearchLocationsByFacility() {
     when(facilityLocationsRepository.findByFacilityId(facilityId)).thenReturn(newArrayList(facilityLocations));
 
-    List<FacilityLocationsDto> facilityLocationsDtos = service.searchLocationsByFacility();
+    List<FacilityLocationsDto> facilityLocationsDtos = service.searchLocationsByFacility(false);
 
     assertEquals(facilityId, facilityLocationsDtos.get(0).getFacilityId());
     assertEquals(area1, facilityLocationsDtos.get(0).getArea());
@@ -145,7 +145,7 @@ public class SiglusLotLocationServiceTest extends TestCase {
 
     when(facilityLocationsRepository.findByFacilityId(facilityId)).thenReturn(Collections.emptyList());
 
-    service.searchLocationsByFacility();
+    service.searchLocationsByFacility(false);
   }
 
   @Test
