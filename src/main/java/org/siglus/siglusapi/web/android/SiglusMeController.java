@@ -18,8 +18,6 @@ package org.siglus.siglusapi.web.android;
 import static org.springframework.http.HttpStatus.CREATED;
 import static org.springframework.http.HttpStatus.NO_CONTENT;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;

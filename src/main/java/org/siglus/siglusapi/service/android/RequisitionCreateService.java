@@ -497,8 +497,8 @@ public class RequisitionCreateService {
       lineItem.setRequestedQuantity(product.getRequestedQuantity());
       VersionEntityReference approvedProduct = productIdToApproveds.get(lineItem.getOrderable().getId());
       if (approvedProduct == null) {
-        throw new IllegalStateException("requisition line item can't find approvedProduct by orderable id, orderable " +
-            "id:" + lineItem.getOrderable().getId());
+        throw new IllegalStateException("requisition line item can't find approvedProduct by orderable id, orderable "
+            + "id:" + lineItem.getOrderable().getId());
       }
       lineItem.setFacilityTypeApprovedProduct(approvedProduct);
       boolean isKit = ALL_KITS.contains(product.getProductCode());
