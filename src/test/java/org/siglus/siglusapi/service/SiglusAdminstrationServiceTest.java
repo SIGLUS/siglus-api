@@ -18,6 +18,7 @@ package org.siglus.siglusapi.service;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -410,14 +411,19 @@ public class SiglusAdminstrationServiceTest {
   @Test
   public void shouldAssignVirtualLocationsWhenEnableLocationManagementWhileInitialInventoryFinished() {
     // given
+    StockCard stockCard = mockStockCard();
     when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(null);
     when(siglusFacilityReferenceDataService.findOneWithoutCache(facilityId)).thenReturn(mockFacilityDto());
     when(stockCardRepository.countByFacilityId(facilityId)).thenReturn(100);
-    when(stockCardRepository.findByFacilityIdIn(facilityId)).thenReturn(Lists.newArrayList(mockStockCard()));
-    when(calculatedStockOnHandRepository.findLatestStockOnHands(Lists.newArrayList(stockCardId), ZonedDateTime.now()))
+    when(stockCardRepository.findByFacilityIdIn(facilityId)).thenReturn(Lists.newArrayList(stockCard));
+    when(calculatedStockOnHandRepository.findLatestStockOnHands(any(), any()))
         .thenReturn(Lists.newArrayList(mockCalculatedStockOnHand()));
     when(authenticationHelper.getCurrentUser()).thenReturn(mockUserDto());
     SiglusFacilityDto siglusFacilityDto = mockSiglusFacilityDto(true, "locationManagement");
+    when(calculatedStocksOnHandLocationsRepository
+        .findLatestLocationSohByStockCardIds(any()))
+        .thenReturn(Lists.newArrayList(mockCalculatedStocksOnHandLocations()));
+    when(stockCardRepository.countByFacilityId(facilityId)).thenReturn(1);
 
     // when
     siglusAdministrationsService.updateFacility(facilityId, siglusFacilityDto);
@@ -620,6 +626,7 @@ public class SiglusAdminstrationServiceTest {
     CalculatedStockOnHand calculatedStockOnHand = new CalculatedStockOnHand();
     calculatedStockOnHand.setStockOnHand(100);
     calculatedStockOnHand.setStockCard(mockStockCard());
+    calculatedStockOnHand.setStockCardId(stockCardId);
     return calculatedStockOnHand;
   }
 
