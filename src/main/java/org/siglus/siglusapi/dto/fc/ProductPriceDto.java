@@ -15,41 +15,20 @@
 
 package org.siglus.siglusapi.dto.fc;
 
-import java.util.List;
+import java.math.BigDecimal;
+import java.time.ZonedDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Builder.Default;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import lombok.ToString;
 
-@EqualsAndHashCode(callSuper = true)
-@ToString(callSuper = true)
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class ProductInfoDto extends ResponseBaseDto {
+public class ProductPriceDto {
 
-  private String fnm;
+  private BigDecimal productPrice;
 
-  private String description;
-
-  private String fullDescription;
-
-  private String status;
-
-  private List<AreaDto> areas;
-
-  private String categoryCode;
-
-  private boolean isKit;
-
-  @Default
-  private Boolean isSentinel = false;
-
-  private List<ProductKitDto> productsKits;
-
-  private List<ProductPriceDto> price;
+  private ZonedDateTime priceDate;
 }
