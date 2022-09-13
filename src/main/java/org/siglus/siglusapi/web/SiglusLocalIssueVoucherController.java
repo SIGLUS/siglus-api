@@ -71,23 +71,23 @@ public class SiglusLocalIssueVoucherController {
     localIssueVoucherService.deleteLocalIssueVoucher(localIssueVoucherId);
   }
 
-  @GetMapping("/{id}/subDrafts/{subDraftId}")
+  @GetMapping("/{id}/subDraft/{subDraftId}")
   public ProofOfDeliveryDto getSubDraftDetail(@PathVariable("id") UUID podId,
       @PathVariable("subDraftId") UUID subDraftId,
       @RequestParam Set<String> expand) {
     return localIssueVoucherService.getSubDraftDetail(podId, subDraftId, expand);
   }
 
-  @PutMapping("/{id}/subDrafts/{subDraftId}")
+  @PutMapping("/{id}/subDraft/{subDraftId}")
   @ResponseStatus(NO_CONTENT)
   public void updateSubDraft(@PathVariable("subDraftId") UUID subDraftId,
       @Valid @RequestBody UpdatePodSubDraftRequest request) {
     localIssueVoucherService.updateSubDraft(request, subDraftId);
   }
 
-  @DeleteMapping("/{id}/subDrafts/{subDraftId}")
+  @PostMapping("/{id}/clearSubDraftFillingPage/{subDraftId}")
   @ResponseStatus(NO_CONTENT)
-  public void deleteSubDraft(@PathVariable("id") UUID podId, @PathVariable("subDraftId") UUID subDraftId) {
+  public void clearFillingPage(@PathVariable("id") UUID podId, @PathVariable("subDraftId") UUID subDraftId) {
     localIssueVoucherService.deleteSubDraft(podId, subDraftId);
   }
 
