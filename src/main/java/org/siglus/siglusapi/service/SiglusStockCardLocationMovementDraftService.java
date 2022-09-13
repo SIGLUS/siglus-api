@@ -120,7 +120,8 @@ public class SiglusStockCardLocationMovementDraftService {
     List<StockCardLocationMovementLineItem> virtualLocationMovementLineItem =
         previousStockCardLocationMovementLineItemList.stream()
             .filter(e -> Objects.equals(LocationConstants.VIRTUAL_LOCATION_CODE, e.getSrcLocationCode())
-            && Objects.equals(LocationConstants.VIRTUAL_LOCATION_CODE, e.getDestLocationCode()))
+                && Objects.equals(LocationConstants.VIRTUAL_LOCATION_CODE, e.getDestLocationCode())
+                && e.getQuantity() != 0)
             .collect(Collectors.toList());
 
     List<StockCardLocationMovementDraftLineItem> stockCardLocationMovementDraftLineItemList =
