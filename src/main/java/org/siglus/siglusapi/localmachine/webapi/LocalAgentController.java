@@ -44,10 +44,8 @@ public class LocalAgentController {
 
   @GetMapping
   public AgentInfoResponse getCurrentAgentInfo() {
-    AgentInfo agentInfo =
-        localActivationService
-            .getCurrentAgentInfo()
-            .orElseThrow(() -> new BusinessDataException(new Message(ERROR_NOT_ACTIVATED_YET)));
+    AgentInfo agentInfo = localActivationService.getCurrentAgentInfo()
+        .orElseThrow(() -> new BusinessDataException(new Message(ERROR_NOT_ACTIVATED_YET)));
     return AgentInfoResponse.from(agentInfo);
   }
 }
