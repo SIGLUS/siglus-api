@@ -429,7 +429,7 @@ public class SiglusAdminstrationServiceTest {
     siglusAdministrationsService.updateFacility(facilityId, siglusFacilityDto);
 
     // then
-    verify(stockCardLocationMovementLineItemRepository, times(1))
+    verify(stockCardLocationMovementLineItemRepository, times(0))
         .save(Lists.newArrayList());
   }
 
