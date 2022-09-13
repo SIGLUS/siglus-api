@@ -15,7 +15,14 @@
 
 package org.siglus.siglusapi.service;
 
+import static org.siglus.siglusapi.constant.FacilityTypeConstants.OUTROS;
+import static org.siglus.siglusapi.constant.FieldConstants.ADJUSTMENT_KEY;
+import static org.siglus.siglusapi.constant.FieldConstants.INITIAL_INVENTORY_KEY;
+import static org.siglus.siglusapi.constant.FieldConstants.ISSUE_TYPE;
 import static org.siglus.siglusapi.constant.FieldConstants.PHYSICAL_INVENTORY;
+import static org.siglus.siglusapi.constant.FieldConstants.PHYSICAL_INVENTORY_KEY;
+import static org.siglus.siglusapi.constant.FieldConstants.UNPACK_KIT_REASON;
+import static org.siglus.siglusapi.constant.FieldConstants.UNPACK_KIT_TYPE;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -38,20 +45,6 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class StockMovementService {
-
-  private static final String UNPACK_KIT_TYPE = "UNPACK_KIT";
-
-  private static final String UNPACK_KIT_REASON = "Unpack Kit";
-  private static final String ISSUE_TYPE = "ISSUE";
-
-  private static final String OUTROS = "Outros";
-
-  private static final String ADJUSTMENT_KEY = "stockConstants.adjustment";
-
-  private static final String PHYSICAL_INVENTORY_KEY = "stockCard.physicalInventory";
-
-  private static final String INITIAL_INVENTORY_KEY = "stockCard.inventory";
-
 
   @Autowired
   private StockManagementRepository stockManagementRepository;

@@ -31,16 +31,20 @@ import lombok.Data;
 @NamedNativeQueries({
     @NamedNativeQuery(name = "LotLocationSoh.findLocationSoh",
         query = "select\n"
+            + "  concat(sc.orderableid,sc.lotid) as identify,\n"
+            + "  sc.orderableid ,\n"
             + "  sc.lotid ,\n"
             + "  fl.locationcode ,\n"
-            + "  fl.area, \n"
-            + "  csohl.stockonhand, \n"
+            + "  fl.area,\n"
+            + "  csohl.stockonhand,\n"
             + "  csohl.occurreddate as lastupdate\n"
             + "from\n"
             + "  (\n"
             + "  select\n"
             + "    *,\n"
-            + "    row_number() over (partition by locationcode,area,stockcardid\n"
+            + "    row_number() over (partition by locationcode,\n"
+            + "    area,\n"
+            + "    stockcardid\n"
             + "  order by\n"
             + "    occurreddate desc)\n"
             + "  from\n"
@@ -48,11 +52,21 @@ import lombok.Data;
             + "left join stockmanagement.stock_cards sc on\n"
             + "  sc.id = csohl.stockcardid\n"
             + "join siglusintegration.facility_locations fl on\n"
-            + "  csohl.locationcode = fl.locationcode and sc.facilityid = fl.facilityid \n"
+            + "  csohl.locationcode = fl.locationcode\n"
+            + "  and sc.facilityid = fl.facilityid\n"
             + "where\n"
             + "  csohl.row_number = 1\n"
             + "  and csohl.stockonhand > 0\n"
-            + "  and sc.lotid in :lotIds",
+            + "  and (sc.lotid in :lotIds\n"
+            + "    or sc.orderableId in (\n"
+            + "    select\n"
+            + "      id\n"
+            + "    from\n"
+            + "      referencedata.orderables o\n"
+            + "    where\n"
+            + "      code in ('26A01', '26B01', '26A02', '26B02')\n"
+            + "    group by\n"
+            + "      id))",
         resultSetMapping = "LotLocationSoh.LotLocationSohDto")
 })
 @MappedSuperclass
@@ -63,16 +77,13 @@ import lombok.Data;
             @ConstructorResult(
                 targetClass = LotLocationSohDto.class,
                 columns = {
-                    @ColumnResult(name = "lotid",
-                        type = UUID.class),
-                    @ColumnResult(name = "locationcode",
-                        type = String.class),
-                    @ColumnResult(name = "area",
-                        type = String.class),
-                    @ColumnResult(name = "stockonhand",
-                        type = Integer.class),
-                    @ColumnResult(name = "lastUpdate",
-                        type = LocalDate.class)
+                    @ColumnResult(name = "identify", type = String.class),
+                    @ColumnResult(name = "orderableId", type = UUID.class),
+                    @ColumnResult(name = "lotid", type = UUID.class),
+                    @ColumnResult(name = "locationcode", type = String.class),
+                    @ColumnResult(name = "area", type = String.class),
+                    @ColumnResult(name = "stockonhand", type = Integer.class),
+                    @ColumnResult(name = "lastUpdate", type = LocalDate.class)
 
 
                 }
@@ -84,6 +95,9 @@ import lombok.Data;
 @Builder
 @AllArgsConstructor
 public class LotLocationSohDto {
+  private String identify;
+
+  private UUID orderableId;
 
   private UUID lotId;
 

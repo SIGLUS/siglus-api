@@ -88,6 +88,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.util.ObjectUtils;
 
 @Service
 @Slf4j
@@ -501,8 +502,8 @@ public class SiglusStockCardSummariesService {
   private List<StockCardSummaryWithLocationDto> combineResponse(List<StockCardSummaryV2Dto> stockCardSummaryV2Dtos,
       List<OrderableDto> orderableDtos, List<LotDto> lotDtos, List<LotLocationSohDto> lotLocationSohDtoList) {
     List<StockCardSummaryWithLocationDto> stockCardSummaryDtos = new ArrayList<>();
-    Map<UUID, List<LotLocationSohDto>> lotLocationMaps = lotLocationSohDtoList.stream()
-        .collect(Collectors.groupingBy(LotLocationSohDto::getLotId));
+    Map<String, List<LotLocationSohDto>> lotLocationMaps = lotLocationSohDtoList.stream()
+        .collect(Collectors.groupingBy(LotLocationSohDto::getIdentify));
     stockCardSummaryV2Dtos.forEach(stockCardSummaryV2Dto -> {
       StockCardSummaryWithLocationDto stockCardSummaryDto = new StockCardSummaryWithLocationDto();
       OrderableDto orderableDto = getOrderableFromObjectReference(orderableDtos, stockCardSummaryV2Dto.getOrderable());
@@ -513,7 +514,9 @@ public class SiglusStockCardSummariesService {
         if (canFulfillForMeEntryDto.getStockOnHand() != 0) {
           StockCardDetailsWithLocationDto fulfill = StockCardDetailsWithLocationDto.builder()
               .lotLocationSohDtoList(lotLocationMaps.isEmpty() || canFulfillForMeEntryDto.getLot() == null ? null
-                  : lotLocationMaps.get(canFulfillForMeEntryDto.getLot().getId()))
+                  : lotLocationMaps.get(
+                      canFulfillForMeEntryDto.getOrderable().getId().toString() + canFulfillForMeEntryDto.getLot()
+                          .getId().toString()))
               .orderable(getOrderableFromObjectReference(orderableDtos, canFulfillForMeEntryDto.getOrderable()))
               .lot(getLotFromObjectReference(lotDtos, canFulfillForMeEntryDto.getLot()))
               .occurredDate(canFulfillForMeEntryDto.getOccurredDate())
@@ -521,6 +524,9 @@ public class SiglusStockCardSummariesService {
               .processedDate(canFulfillForMeEntryDto.getProcessedDate())
               .stockCard(canFulfillForMeEntryDto.getStockCard())
               .build();
+          if (ObjectUtils.isEmpty(fulfill.getLot())) {
+            fulfill.setLotLocationSohDtoList(lotLocationMaps.get(fulfill.getOrderable().getId().toString()));
+          }
           stockCardDetailsDtos.add(fulfill);
         }
       });

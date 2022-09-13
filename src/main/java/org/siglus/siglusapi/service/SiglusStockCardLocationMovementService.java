@@ -167,6 +167,14 @@ public class SiglusStockCardLocationMovementService {
 
   private LocationMovementDto createLocationMovmentDto(List<LocationMovementLineItemDto> locationMovementLineItemDtos,
       UUID stockCardId, int soh, String locationCode) {
+    LocationMovementLineItemDto firstLineItem = locationMovementLineItemDtos.get(0);
+    if (!firstLineItem.getReasonCategory().equals(INVENTORY)) {
+      LocationMovementLineItemDto initialLineItemDto = new LocationMovementLineItemDto();
+      initialLineItemDto.setSoh(0);
+      initialLineItemDto.setAdjustment("Inventário");
+      initialLineItemDto.setOccurredDate(firstLineItem.getOccurredDate());
+      locationMovementLineItemDtos.add(0, initialLineItemDto);
+    }
     StockCardDto stockCardDto = siglusStockCardService.findStockCardById(stockCardId);
     FacilityDto facility = stockCardDto.getFacility();
     OrderableDto orderable = stockCardDto.getOrderable();

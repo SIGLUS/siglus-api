@@ -17,7 +17,7 @@ package org.siglus.siglusapi.constant;
 
 public class FieldConstants {
 
-  private FieldConstants() {
+  public FieldConstants() {
   }
 
   public static final String PROGRAM = "program";
@@ -190,4 +190,17 @@ public class FieldConstants {
   public static final String JWT_TOKEN_HEADER_PARAM_NAME = "typ";
 
   public static final String JWT_TOKEN_HEADER_PARAM_VALUE = "JWT";
+
+  public static final String UNPACK_KIT_TYPE = "UNPACK_KIT";
+
+  public static final String UNPACK_KIT_REASON = "Unpack Kit";
+  public static final String ISSUE_TYPE = "ISSUE";
+
+  public static final String OUTROS = "Outros";
+
+  public static final String ADJUSTMENT_KEY = "stockConstants.adjustment";
+
+  public static final String PHYSICAL_INVENTORY_KEY = "stockCard.physicalInventory";
+
+  public static final String INITIAL_INVENTORY_KEY = "stockCard.inventory";
 }
