@@ -165,8 +165,6 @@ public abstract class MessageKeys {
       + ".not.all.sub.drafts.submitted";
   public static final String ERROR_SUB_DRAFTS_ALREADY_EXISTED = POD_ERROR_PREFIX
       + ".sub.drafts.already.existed";
-  public static final String ERROR_SPLIT_NUM_TOO_LARGE = POD_ERROR_PREFIX
-      + ".split.num.too.large";
 
   // period
   public static final String ERROR_NO_PERIOD_MATCH = PERIOD_ERROR_PREFIX + ".no.period.match";
@@ -175,6 +173,7 @@ public abstract class MessageKeys {
   public static final String ERROR_SIZE_NULL = ERROR_PREFIX + ".pageable.size.null";
   public static final String ERROR_SIZE_NOT_POSITIVE = ERROR_PREFIX + ".pageable.size.notPositive";
   public static final String ERROR_VALIDATION_FAIL = "siglusapi.error.validationFail";
+  public static final String ERROR_SPLIT_NUM_TOO_LARGE = ERROR_PREFIX + ".draft.number.greater.than.preset.products";
 
   public static final String SERVICE_ERROR = join(SERVICE_PREFIX, ERROR);
   public static final String FORMAT = "format";

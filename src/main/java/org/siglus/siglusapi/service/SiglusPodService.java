@@ -63,7 +63,6 @@ import org.siglus.siglusapi.dto.enums.PodSubDraftStatusEnum;
 import org.siglus.siglusapi.exception.AuthenticationException;
 import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.NotFoundException;
-import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.OrderableRepository;
 import org.siglus.siglusapi.repository.OrdersRepository;
 import org.siglus.siglusapi.repository.PodLineItemsExtensionRepository;
@@ -196,7 +195,7 @@ public class SiglusPodService {
     List<SimpleLineItem> simpleLineItems = buildSimpleLineItems(podDto);
     List<List<SimpleLineItem>> groupByProductIdLineItems = getGroupByProductIdLineItemList(simpleLineItems);
     if (groupByProductIdLineItems.size() < request.getSplitNum()) {
-      throw new ValidationMessageException(ERROR_SPLIT_NUM_TOO_LARGE);
+      throw new BusinessDataException(new Message(ERROR_SPLIT_NUM_TOO_LARGE));
     }
     List<List<List<SimpleLineItem>>> splitGroupList = CustomListSortHelper.averageAssign(groupByProductIdLineItems,
         request.getSplitNum());

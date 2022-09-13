@@ -477,7 +477,7 @@ public class SiglusPhysicalInventoryService {
         : groupByProductCode(lineItems);
 
     if (lists.size() < splitNum) {
-      throw new ValidationMessageException(ERROR_SPLIT_NUM_TOO_LARGE);
+      throw new BusinessDataException(new Message(ERROR_SPLIT_NUM_TOO_LARGE));
     }
     // Grouping
     List<List<List<PhysicalInventoryLineItemDto>>> groupList = CustomListSortHelper.averageAssign(lists, splitNum);
