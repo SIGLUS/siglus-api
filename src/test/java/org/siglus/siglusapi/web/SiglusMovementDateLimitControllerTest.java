@@ -25,6 +25,7 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.siglus.siglusapi.dto.MovementStartDateDto;
 import org.siglus.siglusapi.util.MovementDateValidator;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -39,7 +40,7 @@ public class SiglusMovementDateLimitControllerTest {
   @Test
   public void shouldCallServiceWhenGetMovementStartDate() {
     // given
-    when(service.getMovementStartDate(any(), any())).thenReturn(LocalDate.now());
+    when(service.getMovementStartDate(any(), any())).thenReturn(new MovementStartDateDto(LocalDate.now()));
     // when
     controller.getMovementStartDate(any(), any());
     // then

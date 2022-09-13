@@ -34,8 +34,6 @@ import org.siglus.common.domain.BaseEntity;
 @Table(name = "physical_inventory_empty_location_line_items", schema = "siglusintegration")
 public class PhysicalInventoryEmptyLocationLineItem extends BaseEntity {
 
-  private UUID physicalInventoryId;
-
   private UUID subDraftId;
 
   private String area;
@@ -44,6 +42,6 @@ public class PhysicalInventoryEmptyLocationLineItem extends BaseEntity {
 
   private boolean skipped;
 
-  private boolean visualize;
+  private boolean hasProduct;
 
 }

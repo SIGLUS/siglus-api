@@ -18,8 +18,6 @@ package org.siglus.siglusapi.web.android;
 import static org.springframework.http.HttpStatus.CREATED;
 import static org.springframework.http.HttpStatus.NO_CONTENT;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
@@ -46,11 +44,11 @@ import org.siglus.siglusapi.dto.android.response.PodResponse;
 import org.siglus.siglusapi.dto.android.response.ProductSyncResponse;
 import org.siglus.siglusapi.dto.android.response.RequisitionResponse;
 import org.siglus.siglusapi.localmachine.event.requisition.andriod.AndroidRequisitionSyncedEmitter;
-import org.siglus.siglusapi.localmachine.eventstore.PayloadSerializer;
 import org.siglus.siglusapi.service.android.MeService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.format.annotation.DateTimeFormat.ISO;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -121,14 +119,8 @@ public class SiglusMeController {
 
   @PostMapping("/facility/requisitions")
   @ResponseStatus(CREATED)
+  @Transactional
   public void createRequisition(@RequestBody @Valid RequisitionCreateRequest request) {
-    try {
-      // TODO: need delete add implement ( 2022/9/2 by kourengang)
-      log.info("createRequisitionJson: "
-          + PayloadSerializer.LOCALMACHINE_EVENT_OBJECT_MAPPER.writeValueAsString(request));
-    } catch (JsonProcessingException e) {
-      log.error("request serial failed, msg = " + e.getMessage());
-    }
     UUID requisitionId = service.createRequisition(request);
     androidRequisitionSyncedEmitter.emit(request, requisitionId);
   }

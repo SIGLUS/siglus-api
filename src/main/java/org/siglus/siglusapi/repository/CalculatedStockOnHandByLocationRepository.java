@@ -94,6 +94,18 @@ public interface CalculatedStockOnHandByLocationRepository extends JpaRepository
       @Param("stockCardIds") Collection<UUID> stockCardIds,
       @Param("occurredDate") LocalDate occurredDate);
 
+  @Query(value = "select * from siglusintegration.calculated_stocks_on_hand_by_location "
+          + "where (stockcardid, locationcode, occurreddate) in ("
+          + "select stockcardid, locationcode, max(occurreddate) "
+          + "from siglusintegration.calculated_stocks_on_hand_by_location c "
+          + "where c.stockcardid in :stockCardIds "
+          + "and c.stockonhand > 0 "
+          + "and c.occurreddate <= :occurredDate "
+          + "group by c.stockcardid, c.locationcode)", nativeQuery = true)
+  List<CalculatedStockOnHandByLocation> findPreviousLocationStockOnHandsGreaterThan0(
+          @Param("stockCardIds") Collection<UUID> stockCardIds,
+          @Param("occurredDate") LocalDate occurredDate);
+
 
   default List<CalculatedStockOnHandByLocation> getFollowingStockOnHands(
       List<StockCardLineItem> lineItems,

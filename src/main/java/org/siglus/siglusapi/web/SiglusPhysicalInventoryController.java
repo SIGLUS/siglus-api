@@ -67,7 +67,7 @@ public class SiglusPhysicalInventoryController {
       return siglusPhysicalInventoryService
           .getPhysicalInventoryDtosForAllProducts(facility, isDraft, false);
     }
-    return siglusPhysicalInventoryService.getPhysicalInventoryDtosForProductsInOneProgram(program, facility, isDraft,
+    return siglusPhysicalInventoryService.getPhysicalInventoryDtosForProductsForOneProgram(program, facility, isDraft,
         false);
   }
 

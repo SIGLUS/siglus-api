@@ -46,7 +46,7 @@ public class SiglusLotLocationControllerTest extends TestCase {
 
   @Test
   public void shouldCallSearchLocationsByFacility() {
-    controller.searchLocationsByFacility();
-    verify(service).searchLocationsByFacility();
+    controller.searchLocationsByFacility(false);
+    verify(service).searchLocationsByFacility(false);
   }
 }

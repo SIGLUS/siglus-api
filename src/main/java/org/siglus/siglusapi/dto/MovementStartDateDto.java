@@ -13,31 +13,15 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.localmachine.event.requisition.andriod;
+package org.siglus.siglusapi.dto;
 
-import java.util.UUID;
-import lombok.Builder;
-import lombok.Getter;
-import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
-import org.siglus.siglusapi.localmachine.EventPayload;
+import java.time.LocalDate;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 
-@Getter
-@Builder
-@EventPayload
-public class AndroidRequisitionSyncedEvent {
-  private UUID facilityId;
-  private UUID userId;
-  private UUID requisitionId;
-  private RequisitionCreateRequest request;
+@Data
+@AllArgsConstructor
+public class MovementStartDateDto {
 
-  public AndroidRequisitionSyncedEvent(UUID facilityId, UUID userId, UUID requisitionId,
-      RequisitionCreateRequest request) {
-    this.facilityId = facilityId;
-    this.userId = userId;
-    this.requisitionId = requisitionId;
-    this.request = request;
-  }
-
-  public AndroidRequisitionSyncedEvent() {
-  }
+  private LocalDate lastMovementDate;
 }

@@ -40,7 +40,7 @@ import org.siglus.siglusapi.domain.RequisitionExtension;
 import org.siglus.siglusapi.dto.RequisitionGroupMembersDto;
 import org.siglus.siglusapi.localmachine.EventPayloadCheckUtils;
 import org.siglus.siglusapi.localmachine.EventPublisher;
-import org.siglus.siglusapi.localmachine.event.BaseEventCommonService;
+import org.siglus.siglusapi.localmachine.event.EventCommonService;
 import org.siglus.siglusapi.localmachine.event.requisition.web.RequisitionInternalApproveEmitter;
 import org.siglus.siglusapi.localmachine.event.requisition.web.RequisitionInternalApprovedEvent;
 import org.siglus.siglusapi.repository.AgeGroupLineItemRepository;
@@ -89,7 +89,7 @@ public class RequisitionInternalApproveEmitterTest {
   @Mock
   private RequisitionGroupMembersRepository requisitionGroupMembersRepository;
   @Mock
-  private BaseEventCommonService baseEventCommonService;
+  private EventCommonService baseEventCommonService;
 
   private final UUID requisitionId = UUID.randomUUID();
 

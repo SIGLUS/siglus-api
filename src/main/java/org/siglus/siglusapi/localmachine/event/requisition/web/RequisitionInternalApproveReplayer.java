@@ -95,10 +95,8 @@ public class RequisitionInternalApproveReplayer {
   public void doReplay(RequisitionInternalApprovedEvent event) {
     Requisition newRequisition = RequisitionBuilder.newRequisition(event.getRequisition().getFacilityId(),
         event.getRequisition().getProgramId(), event.getRequisition().getEmergency());
-
     newRequisition.setTemplate(event.getRequisition().getTemplate());
     newRequisition.setStatus(event.getRequisition().getStatus());
-
     newRequisition.setProcessingPeriodId(event.getRequisition().getProcessingPeriodId());
     newRequisition.setNumberOfMonthsInPeriod(event.getRequisition().getNumberOfMonthsInPeriod());
     newRequisition.setDraftStatusMessage(event.getRequisition().getDraftStatusMessage());

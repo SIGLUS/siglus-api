@@ -90,8 +90,15 @@ public class SiglusShipmentService {
   @Transactional
   public ShipmentDto createOrderAndShipmentByLocation(boolean isSubOrder, ShipmentDto shipmentDto) {
     List<ShipmentLineItemDto> shipmentLineItemDtos = shipmentDto.lineItems();
-    List<ShipmentLineItemsExtension> shipmentLineItemsByLocations = Lists.newArrayList();
+    Multimap<String, ShipmentLineItemDto> uniqueKeyMap = ArrayListMultimap.create();
     shipmentLineItemDtos.forEach(shipmentLineItemDto -> {
+      String uniqueKey = buildForUniqueKey(shipmentLineItemDto);
+      uniqueKeyMap.put(uniqueKey, shipmentLineItemDto);
+    });
+    ShipmentDto confirmedShipmentDto = createOrderAndConfirmShipment(isSubOrder, shipmentDto);
+    List<ShipmentLineItemsExtension> shipmentLineItemsByLocations = Lists.newArrayList();
+    fulfillLocationInfo(uniqueKeyMap, confirmedShipmentDto);
+    confirmedShipmentDto.lineItems().forEach(shipmentLineItemDto -> {
       UUID lineItemId = shipmentLineItemDto.getId();
       String locationCode = shipmentLineItemDto.getLocation().getLocationCode();
       String area = shipmentLineItemDto.getLocation().getArea();
@@ -105,13 +112,6 @@ public class SiglusShipmentService {
     });
     log.info("create shipment line item by location, size: {}", shipmentLineItemsByLocations.size());
     shipmentLineItemsExtensionRepository.save(shipmentLineItemsByLocations);
-    Multimap<String, ShipmentLineItemDto> uniqueKeyMap = ArrayListMultimap.create();
-    shipmentLineItemDtos.forEach(shipmentLineItemDto -> {
-      String uniqueKey = buildForUniqueKey(shipmentLineItemDto);
-      uniqueKeyMap.put(uniqueKey, shipmentLineItemDto);
-    });
-    ShipmentDto confirmedShipmentDto = createOrderAndConfirmShipment(isSubOrder, shipmentDto);
-    fulfillLocationInfo(uniqueKeyMap, confirmedShipmentDto);
     UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
     calculatedStocksOnHandByLocationService.calculateStockOnHandByLocationForShipment(confirmedShipmentDto.lineItems(),
         facilityId);

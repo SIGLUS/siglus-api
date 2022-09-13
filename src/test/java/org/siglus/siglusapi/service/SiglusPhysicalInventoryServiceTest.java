@@ -594,7 +594,7 @@ public class SiglusPhysicalInventoryServiceTest {
 
     // when
     List<PhysicalInventoryDto> resultInventory = siglusPhysicalInventoryService
-        .getPhysicalInventoryDtosForProductsInOneProgram(programId, facilityId, true, false);
+        .getPhysicalInventoryDtosForProductsForOneProgram(programId, facilityId, true, false);
 
     // then
     assertEquals("hello world", resultInventory.get(0).getLineItems().get(0).getReasonFreeText());

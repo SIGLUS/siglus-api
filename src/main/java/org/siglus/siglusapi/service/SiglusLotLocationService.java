@@ -17,6 +17,7 @@ package org.siglus.siglusapi.service;
 
 import static org.siglus.siglusapi.constant.FieldConstants.MONTHLY_SUBMIT_PRODUCT_ZERO_INVENTORY_MONTH_RANGE;
 import static org.siglus.siglusapi.constant.FieldConstants.QUARTERLY_SUBMIT_PRODUCT_ZERO_INVENTORY_MONTH_RANGE;
+import static org.siglus.siglusapi.constant.FieldConstants.SEPARATOR;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_LOCATIONS_BY_FACILITY_NOT_FOUND;
 
 import com.google.common.collect.Maps;
@@ -28,6 +29,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -77,13 +79,36 @@ public class SiglusLotLocationService {
     return getLotLocationDtos(orderableIds, facilityId, isAdjustment);
   }
 
-  public List<FacilityLocationsDto> searchLocationsByFacility() {
+  public List<FacilityLocationsDto> searchLocationsByFacility(Boolean isEmpty) {
     UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
     List<FacilityLocations> locations = facilityLocationsRepository.findByFacilityId(facilityId);
     if (locations.isEmpty()) {
       throw new NotFoundException(ERROR_LOCATIONS_BY_FACILITY_NOT_FOUND);
     }
-    return convertToDto(locations);
+    List<FacilityLocationsDto> dtos = convertToDto(locations);
+    if (Boolean.TRUE.equals(isEmpty)) {
+      List<StockCard> stockCards = stockCardRepository.findByFacilityIdIn(facilityId);
+      List<UUID> stockCardIds = stockCards.stream().map(StockCard::getId).collect(Collectors.toList());
+      List<CalculatedStockOnHandByLocation> sohByLocations = calculatedStockOnHandByLocationRepository
+              .findPreviousLocationStockOnHandsGreaterThan0(stockCardIds, LocalDate.now());
+      Set<String> noEmptyLocationKeys = sohByLocations.stream().map(this::getLocationKey).collect(Collectors.toSet());
+      dtos.forEach(dto -> {
+        if (noEmptyLocationKeys.contains(getLocationKey(dto))) {
+          dto.setIsEmpty(false);
+        } else {
+          dto.setIsEmpty(true);
+        }
+      });
+    }
+    return dtos;
+  }
+
+  private String getLocationKey(CalculatedStockOnHandByLocation stockOnHandByLocation) {
+    return stockOnHandByLocation.getArea() + SEPARATOR + stockOnHandByLocation.getLocationCode();
+  }
+
+  private String getLocationKey(FacilityLocationsDto facilityLocationsDto) {
+    return facilityLocationsDto.getArea() + SEPARATOR + facilityLocationsDto.getLocationCode();
   }
 
   private List<LotLocationDto> getLocationsByFacilityId(UUID facilityId) {

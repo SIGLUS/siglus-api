@@ -54,7 +54,8 @@ public class MovementDataValidatorTest {
     when(processingPeriodRepository.getCurrentPeriodStartDate(any())).thenReturn(periodStartDate);
     when(siglusStockCardLineItemRepository.findFacilityLastMovementDate(facilityId)).thenReturn(lastMovementDate);
     //then
-    LocalDate movementStartDate = movementDateValidator.getMovementStartDate(currentDate, facilityId);
+    LocalDate movementStartDate = movementDateValidator.getMovementStartDate(currentDate, facilityId)
+        .getLastMovementDate();
     assertEquals(movementStartDate, periodStartDate);
   }
 
@@ -69,7 +70,8 @@ public class MovementDataValidatorTest {
     when(processingPeriodRepository.getCurrentPeriodStartDate(any())).thenReturn(periodStartDate);
     when(siglusStockCardLineItemRepository.findFacilityLastMovementDate(facilityId)).thenReturn(lastMovementDate);
     //then
-    LocalDate movementStartDate = movementDateValidator.getMovementStartDate(currentDate, facilityId);
+    LocalDate movementStartDate = movementDateValidator.getMovementStartDate(currentDate, facilityId)
+        .getLastMovementDate();
     assertEquals(movementStartDate, lastMovementDate);
   }
 
@@ -83,7 +85,8 @@ public class MovementDataValidatorTest {
     when(processingPeriodRepository.getCurrentPeriodStartDate(any())).thenReturn(periodStartDate);
     when(siglusStockCardLineItemRepository.findFacilityLastMovementDate(facilityId)).thenReturn(null);
     //then
-    LocalDate movementStartDate = movementDateValidator.getMovementStartDate(currentDate, facilityId);
+    LocalDate movementStartDate = movementDateValidator.getMovementStartDate(currentDate, facilityId)
+        .getLastMovementDate();
     assertEquals(movementStartDate, periodStartDate);
   }
 

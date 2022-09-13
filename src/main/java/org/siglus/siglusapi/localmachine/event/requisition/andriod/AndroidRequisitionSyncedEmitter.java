@@ -23,7 +23,7 @@ import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
 import org.siglus.siglusapi.exception.InvalidProgramCodeException;
 import org.siglus.siglusapi.localmachine.EventPublisher;
-import org.siglus.siglusapi.localmachine.event.BaseEventCommonService;
+import org.siglus.siglusapi.localmachine.event.EventCommonService;
 import org.siglus.siglusapi.service.SiglusProgramService;
 import org.siglus.siglusapi.service.SiglusRequisitionExtensionService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
@@ -35,7 +35,7 @@ public class AndroidRequisitionSyncedEmitter {
   private final EventPublisher eventPublisher;
   private final SiglusAuthenticationHelper authHelper;
   private final SiglusProgramService siglusProgramService;
-  private final BaseEventCommonService baseEventCommonService;
+  private final EventCommonService baseEventCommonService;
   private final SiglusRequisitionExtensionService siglusRequisitionExtensionService;
 
   public AndroidRequisitionSyncedEvent emit(RequisitionCreateRequest request, UUID requisitionId) {

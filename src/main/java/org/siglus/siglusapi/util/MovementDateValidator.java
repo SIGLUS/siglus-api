@@ -19,6 +19,7 @@ import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_VALIDATE_STOCK_MOVEMEN
 
 import java.time.LocalDate;
 import java.util.UUID;
+import org.siglus.siglusapi.dto.MovementStartDateDto;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.ProcessingPeriodRepository;
 import org.siglus.siglusapi.repository.SiglusStockCardLineItemRepository;
@@ -38,17 +39,17 @@ public class MovementDateValidator {
   }
 
 
-  public LocalDate getMovementStartDate(LocalDate input, UUID facilityId) {
+  public MovementStartDateDto getMovementStartDate(LocalDate input, UUID facilityId) {
     LocalDate currentPeriodStartDate = processingPeriodRepository.getCurrentPeriodStartDate(input);
     LocalDate facilityLastMovementDate = siglusStockCardLineItemRepository.findFacilityLastMovementDate(facilityId);
     if (facilityLastMovementDate == null || currentPeriodStartDate.isAfter(facilityLastMovementDate)) {
-      return currentPeriodStartDate;
+      return new MovementStartDateDto(currentPeriodStartDate);
     }
-    return facilityLastMovementDate;
+    return new MovementStartDateDto(facilityLastMovementDate);
   }
 
   public void validateMovementDate(LocalDate input, UUID facilityId) {
-    LocalDate startDate = getMovementStartDate(input, facilityId);
+    LocalDate startDate = getMovementStartDate(input, facilityId).getLastMovementDate();
     if (input.isBefore(startDate)) {
       throw new ValidationMessageException(ERROR_VALIDATE_STOCK_MOVEMENT_DATE);
     }
