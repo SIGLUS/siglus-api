@@ -37,6 +37,7 @@ import javax.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections.MapUtils;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
@@ -498,19 +499,22 @@ public class SiglusAdministrationsService {
       Map<UUID, Integer> stockCardIdToSohMap = updateCalculateSohList.stream()
           .collect(Collectors.toMap(CalculatedStockOnHandByLocation::getStockCardId,
               CalculatedStockOnHandByLocation::getStockOnHand));
-      List<StockCardLocationMovementLineItem> lineItemByLocation = stockCardLocationMovementLineItemRepository
-          .findPreviousRecordByStockCardId(stockCardIdToSohMap.keySet(), LocalDate.now());
-      List<StockCardLocationMovementLineItem> previousVirtualLocationLineItems = lineItemByLocation.stream()
-          .filter(lineItem ->
-              LocationConstants.VIRTUAL_LOCATION_CODE.equals(lineItem.getSrcLocationCode())
-                  && LocationConstants.VIRTUAL_LOCATION_CODE.equals(lineItem.getDestLocationCode()))
-          .collect(Collectors.toList());
-      previousVirtualLocationLineItems.forEach(lineItem -> {
-        lineItem.setQuantity(stockCardIdToSohMap.get(lineItem.getStockCardId()));
-      });
-      log.info("assign virtual location when enable location; soh update on stockCardLocationMovementLineItem size: {}",
-          updateCalculateSohList.size());
-      stockCardLocationMovementLineItemRepository.save(previousVirtualLocationLineItems);
+      if (MapUtils.isNotEmpty(stockCardIdToSohMap)) {
+        List<StockCardLocationMovementLineItem> lineItemByLocation = stockCardLocationMovementLineItemRepository
+            .findPreviousRecordByStockCardId(stockCardIdToSohMap.keySet(), LocalDate.now());
+        List<StockCardLocationMovementLineItem> previousVirtualLocationLineItems = lineItemByLocation.stream()
+            .filter(lineItem ->
+                LocationConstants.VIRTUAL_LOCATION_CODE.equals(lineItem.getSrcLocationCode())
+                    && LocationConstants.VIRTUAL_LOCATION_CODE.equals(lineItem.getDestLocationCode()))
+            .collect(Collectors.toList());
+        previousVirtualLocationLineItems.forEach(lineItem -> {
+          lineItem.setQuantity(stockCardIdToSohMap.get(lineItem.getStockCardId()));
+        });
+        log.info(
+            "assign virtual location when enable location; soh update on stockCardLocationMovementLineItem size: {}",
+            updateCalculateSohList.size());
+        stockCardLocationMovementLineItemRepository.save(previousVirtualLocationLineItems);
+      }
     }
   }
 }
