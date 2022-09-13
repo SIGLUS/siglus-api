@@ -18,7 +18,6 @@ package org.siglus.siglusapi.service;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_MOVEMENT_DRAFT_EXISTS;
 
 import com.google.common.collect.Maps;
-import java.time.LocalDate;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -115,7 +114,7 @@ public class SiglusStockCardLocationMovementDraftService {
     List<UUID> stockCardIds = stockCardRepository.findByFacilityIdIn(facilityId)
         .stream().map(StockCard::getId).collect(Collectors.toList());
     List<StockCardLocationMovementLineItem> previousStockCardLocationMovementLineItemList =
-        stockCardLocationMovementLineItemRepository.findPreviousRecordByStockCardId(stockCardIds, LocalDate.now());
+        stockCardLocationMovementLineItemRepository.findPreviousRecordByStockCardId(stockCardIds);
 
     List<StockCardLocationMovementLineItem> virtualLocationMovementLineItem =
         previousStockCardLocationMovementLineItemList.stream()

@@ -487,8 +487,11 @@ public class SiglusAdministrationsService {
               && !calculatedStockOnHand.getStockOnHand().equals(calculatedStockOnHandByLocation.getStockOnHand())) {
             calculatedStockOnHandByLocation.setStockOnHand(calculatedStockOnHand.getStockOnHand());
             updateCalculateSohList.add(calculatedStockOnHandByLocation);
+            removeDuplicateList.add(calculatedStockOnHand);
           }
-          removeDuplicateList.add(calculatedStockOnHand);
+          if (calculatedStockOnHand.getStockCardId().equals(calculatedStockOnHandByLocation.getStockCardId())) {
+            removeDuplicateList.add(calculatedStockOnHand);
+          }
         }
       }
       calculatedStockOnHandList.removeAll(removeDuplicateList);
@@ -501,11 +504,10 @@ public class SiglusAdministrationsService {
               CalculatedStockOnHandByLocation::getStockOnHand));
       if (MapUtils.isNotEmpty(stockCardIdToSohMap)) {
         List<StockCardLocationMovementLineItem> lineItemByLocation = stockCardLocationMovementLineItemRepository
-            .findPreviousRecordByStockCardId(stockCardIdToSohMap.keySet(), LocalDate.now());
+            .findPreviousRecordByStockCardId(stockCardIdToSohMap.keySet());
         List<StockCardLocationMovementLineItem> previousVirtualLocationLineItems = lineItemByLocation.stream()
             .filter(lineItem ->
-                LocationConstants.VIRTUAL_LOCATION_CODE.equals(lineItem.getSrcLocationCode())
-                    && LocationConstants.VIRTUAL_LOCATION_CODE.equals(lineItem.getDestLocationCode()))
+                LocationConstants.VIRTUAL_LOCATION_CODE.equals(lineItem.getDestLocationCode()))
             .collect(Collectors.toList());
         previousVirtualLocationLineItems.forEach(lineItem -> {
           lineItem.setQuantity(stockCardIdToSohMap.get(lineItem.getStockCardId()));

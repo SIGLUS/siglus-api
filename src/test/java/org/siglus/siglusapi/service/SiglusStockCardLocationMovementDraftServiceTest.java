@@ -237,7 +237,7 @@ public class SiglusStockCardLocationMovementDraftServiceTest {
         .destLocationCode("22A06")
         .build();
 
-    when(stockCardLocationMovementLineItemRepository.findPreviousRecordByStockCardId(any(), any()))
+    when(stockCardLocationMovementLineItemRepository.findPreviousRecordByStockCardId(any()))
         .thenReturn(Arrays.asList(movementLineItem1, movementLineItem2));
 
     Pageable pageable = new PageRequest(0, Integer.MAX_VALUE);

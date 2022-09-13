@@ -15,7 +15,6 @@
 
 package org.siglus.siglusapi.repository;
 
-import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -33,11 +32,11 @@ public interface StockCardLocationMovementLineItemRepository extends
   List<StockCardLocationMovementLineItem> findAllByStockCardIdIn(Set<UUID> stockCardIds);
 
   @Query(value = "select * from siglusintegration.stock_card_location_movement_line_items "
-      + "         where (stockcardid, occurreddate) in ( "
-      + "         select stockcardid, max(occurreddate) "
+      + "         where (stockcardid, processeddate) in ( "
+      + "         select stockcardid, max(processeddate) "
       + "         from siglusintegration.stock_card_location_movement_line_items c "
       + "         where c.stockcardid in :stockCardIds "
-      + "           and c.occurreddate <= :occurredDate group by c.stockcardid)", nativeQuery = true)
+      + "         group by c.stockcardid)", nativeQuery = true)
   List<StockCardLocationMovementLineItem> findPreviousRecordByStockCardId(
-      @Param("stockCardIds") Collection<UUID> stockCardIds, @Param("occurredDate") LocalDate occurredDate);
+      @Param("stockCardIds") Collection<UUID> stockCardIds);
 }
