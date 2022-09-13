@@ -390,8 +390,8 @@ public class SiglusAdministrationsService {
 
   private List<CalculatedStockOnHandByLocation> findStockCardIdsHasStockOnHandOnLocation(List<UUID> stockCardIds) {
     return calculatedStocksOnHandLocationsRepository.findLatestLocationSohByStockCardIds(stockCardIds)
-        .stream().filter(calculatedByLocation -> calculatedByLocation.getStockOnHand() > 0
-            && !LocationConstants.VIRTUAL_LOCATION_CODE.equals(calculatedByLocation.getLocationCode()))
+        .stream().filter(calculatedByLocation ->
+            !LocationConstants.VIRTUAL_LOCATION_CODE.equals(calculatedByLocation.getLocationCode()))
         .collect(Collectors.toList());
   }
 
@@ -487,8 +487,8 @@ public class SiglusAdministrationsService {
               && !calculatedStockOnHand.getStockOnHand().equals(calculatedStockOnHandByLocation.getStockOnHand())) {
             calculatedStockOnHandByLocation.setStockOnHand(calculatedStockOnHand.getStockOnHand());
             updateCalculateSohList.add(calculatedStockOnHandByLocation);
-            removeDuplicateList.add(calculatedStockOnHand);
           }
+          removeDuplicateList.add(calculatedStockOnHand);
         }
       }
       calculatedStockOnHandList.removeAll(removeDuplicateList);
