@@ -73,7 +73,7 @@ public class SiglusPhysicalInventoryLocationControllerTest {
     controller.searchPhysicalInventories(programId, facilityId, isDraft, isByLocation);
     // then
     verify(siglusPhysicalInventoryService)
-        .getPhysicalInventoryDtosForProductsInOneProgram(programId, facilityId, isDraft, isByLocation);
+        .getPhysicalInventoryDtosForProductsForOneProgram(programId, facilityId, isDraft, isByLocation);
   }
 
 
