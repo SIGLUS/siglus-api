@@ -504,7 +504,7 @@ public class SiglusAdministrationsService {
               CalculatedStockOnHandByLocation::getStockOnHand));
       if (MapUtils.isNotEmpty(stockCardIdToSohMap)) {
         List<StockCardLocationMovementLineItem> lineItemByLocation = stockCardLocationMovementLineItemRepository
-            .findPreviousRecordByStockCardId(stockCardIdToSohMap.keySet());
+            .findLatestByStockCardId(stockCardIdToSohMap.keySet());
         List<StockCardLocationMovementLineItem> previousVirtualLocationLineItems = lineItemByLocation.stream()
             .filter(lineItem ->
                 LocationConstants.VIRTUAL_LOCATION_CODE.equals(lineItem.getDestLocationCode()))
