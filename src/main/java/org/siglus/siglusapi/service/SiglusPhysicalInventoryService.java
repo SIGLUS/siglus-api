@@ -242,7 +242,7 @@ public class SiglusPhysicalInventoryService {
     List<PhysicalInventoryEmptyLocationLineItem> physicalInventoryEmptyLocationLineItem =
         physicalInventoryEmptyLocationLineItemRepository.findBySubDraftIdIn(subDraftIds);
     List<PhysicalInventoryEmptyLocationLineItem> visualEmptyLocations = physicalInventoryEmptyLocationLineItem.stream()
-        .filter(PhysicalInventoryEmptyLocationLineItem::isVisualize).collect(Collectors.toList());
+        .filter(lineItem -> !lineItem.isHasProduct()).collect(Collectors.toList());
     return convertEmptyLocationToPhysicalInventoryLineItemDto(visualEmptyLocations);
   }
 
@@ -517,7 +517,7 @@ public class SiglusPhysicalInventoryService {
         if (locationList.stream().anyMatch(lineItem -> Objects.isNull(lineItem.getOrderableId()))) {
           PhysicalInventoryEmptyLocationLineItem emptyLocationLineItem = PhysicalInventoryEmptyLocationLineItem
               .builder()
-              .visualize(true)
+              .hasProduct(false)
               .locationCode(locationList.get(0).getLocationCode())
               .area(locationList.get(0).getArea())
               .skipped(false)
@@ -1011,7 +1011,7 @@ public class SiglusPhysicalInventoryService {
     List<PhysicalInventoryEmptyLocationLineItem> emptyLocations
         = physicalInventoryEmptyLocationLineItemRepository.findBySubDraftIdIn(subDraftIds);
     List<PhysicalInventoryEmptyLocationLineItem> visualEmptyLocations = emptyLocations.stream()
-        .filter(PhysicalInventoryEmptyLocationLineItem::isVisualize).collect(Collectors.toList());
+        .filter(lineItem -> !lineItem.isHasProduct()).collect(Collectors.toList());
     return convertEmptyLocationToPhysicalInventoryLineItemDto(visualEmptyLocations);
   }
 

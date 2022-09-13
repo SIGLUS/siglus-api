@@ -82,7 +82,7 @@ public class SiglusPhysicalInventorySubDraftService {
         List<PhysicalInventoryEmptyLocationLineItem> emptyLocationLineItems
             = physicalInventoryEmptyLocationLineItemRepository.findBySubDraftIdIn(subDraftIds);
         emptyLocationLineItems.forEach(e -> {
-          e.setVisualize(true);
+          e.setHasProduct(false);
           e.setSkipped(false);
         });
         physicalInventoryEmptyLocationLineItemRepository.save(emptyLocationLineItems);
@@ -230,10 +230,10 @@ public class SiglusPhysicalInventorySubDraftService {
           .orElseThrow(NullPointerException::new);
       if (Objects.isNull(lineItem.getOrderableId())) {
         emptyLocationLineItem.setSkipped(lineItem.isSkipped());
-        emptyLocationLineItem.setVisualize(true);
+        emptyLocationLineItem.setHasProduct(false);
       } else {
         emptyLocationLineItem.setSkipped(false);
-        emptyLocationLineItem.setVisualize(false);
+        emptyLocationLineItem.setHasProduct(true);
       }
       needToUpdateInEmptyLocations.add(emptyLocationLineItem);
     });
