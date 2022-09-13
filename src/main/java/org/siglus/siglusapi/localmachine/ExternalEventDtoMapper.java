@@ -15,29 +15,30 @@
 
 package org.siglus.siglusapi.localmachine;
 
-import java.nio.charset.StandardCharsets;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import org.siglus.siglusapi.localmachine.eventstore.PayloadSerializer;
-import org.springframework.security.crypto.codec.Base64;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class EventSerializer {
+public class ExternalEventDtoMapper {
   private final PayloadSerializer payloadSerializer;
 
-  public Event dump(Event event) {
-    event.setPayload(payloadSerializer.dump(event.getPayload()));
-    return event;
+  public ExternalEventDto map(Event event) {
+    return ExternalEventDto.builder()
+        .event(event)
+        .payloadClassName(payloadSerializer.getPayloadName(event.getPayload()))
+        .build();
   }
 
-  public Event load(Event it) {
-    if (String.class.equals(it.getPayload().getClass())) {
-      Object payload =
-          payloadSerializer.load(
-              Base64.decode(((String) it.getPayload()).getBytes(StandardCharsets.UTF_8)));
-      it.setPayload(payload);
-    }
-    return it;
+  @SneakyThrows
+  public Event map(ExternalEventDto externalEventDto) {
+    Event event = externalEventDto.getEvent();
+    Object payload = event.getPayload();
+    Class<?> payloadClass = payloadSerializer.getPayloadClass(externalEventDto.getPayloadClassName());
+    Object originPayload = PayloadSerializer.LOCALMACHINE_EVENT_OBJECT_MAPPER.convertValue(payload, payloadClass);
+    event.setPayload(originPayload);
+    return event;
   }
 }

@@ -22,7 +22,8 @@ import java.net.URI;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.siglus.siglusapi.localmachine.Event;
-import org.siglus.siglusapi.localmachine.EventSerializer;
+import org.siglus.siglusapi.localmachine.ExternalEventDto;
+import org.siglus.siglusapi.localmachine.ExternalEventDtoMapper;
 import org.siglus.siglusapi.localmachine.auth.LocalTokenInterceptor;
 import org.siglus.siglusapi.localmachine.webapi.AckRequest;
 import org.siglus.siglusapi.localmachine.webapi.PeeringEventsResponse;
@@ -37,34 +38,33 @@ public class OnlineWebClient {
 
   private static final String PATH_ACTIVATE_AGENT = "/server/agents";
   private final RestTemplate restTemplate;
-  private final EventSerializer eventSerializer;
+  private final ExternalEventDtoMapper externalEventDtoMapper;
 
   @Value("${machine.web.url}")
   private String webBaseUrl;
 
   public OnlineWebClient(
-      LocalTokenInterceptor localTokenInterceptor, EventSerializer eventSerializer) {
-    this.eventSerializer = eventSerializer;
+      LocalTokenInterceptor localTokenInterceptor, ExternalEventDtoMapper externalEventDtoMapper) {
+    this.externalEventDtoMapper = externalEventDtoMapper;
     this.restTemplate = new RestTemplate();
     configureLocalTokenInterceptor(localTokenInterceptor);
     restTemplate.setInterceptors(singletonList(localTokenInterceptor));
   }
 
   public void sync(List<Event> events) {
-    events = dumpEventForSync(events);
+    List<ExternalEventDto> externalEventDtos = dumpEventForSync(events);
     URI url = URI.create(webBaseUrl + "/server/events");
-    restTemplate.postForEntity(url, new SyncRequest(events), Void.class);
+    restTemplate.postForEntity(url, new SyncRequest(externalEventDtos), Void.class);
   }
 
   public List<Event> exportPeeringEvents() {
     URI url = URI.create(webBaseUrl + "/server/peeringEvents");
     return restTemplate.getForObject(url, PeeringEventsResponse.class).getEvents().stream()
-        .map(eventSerializer::load)
+        .map(externalEventDtoMapper::map)
         .collect(Collectors.toList());
   }
 
   public void confirmReceived(List<Event> events) {
-    events = dumpEventForSync(events);
     URI url = URI.create(webBaseUrl + "/server/ack");
     AckRequest ackRequest = new AckRequest(events.stream().map(Event::getId).collect(toSet()));
     restTemplate.postForEntity(url, ackRequest, Void.class);
@@ -80,7 +80,7 @@ public class OnlineWebClient {
         httpRequest -> !httpRequest.getURI().getRawPath().contains(PATH_ACTIVATE_AGENT));
   }
 
-  private List<Event> dumpEventForSync(List<Event> events) {
-    return events.stream().map(eventSerializer::dump).collect(Collectors.toList());
+  private List<ExternalEventDto> dumpEventForSync(List<Event> events) {
+    return events.stream().map(externalEventDtoMapper::map).collect(Collectors.toList());
   }
 }

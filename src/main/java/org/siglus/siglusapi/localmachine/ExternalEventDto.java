@@ -13,21 +13,19 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.localmachine.webapi;
+package org.siglus.siglusapi.localmachine;
 
-import java.util.LinkedList;
-import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Builder.Default;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.siglus.siglusapi.localmachine.ExternalEventDto;
 
 @Builder
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
-public class PeeringEventsResponse {
-  @Default private List<ExternalEventDto> events = new LinkedList<>();
+@AllArgsConstructor
+public class ExternalEventDto {
+  Event event;
+  String payloadClassName;
 }
+
