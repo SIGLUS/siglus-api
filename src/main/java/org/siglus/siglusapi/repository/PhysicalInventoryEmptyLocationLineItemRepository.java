@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.repository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 import org.siglus.siglusapi.domain.PhysicalInventoryEmptyLocationLineItem;
@@ -24,4 +25,7 @@ public interface PhysicalInventoryEmptyLocationLineItemRepository extends
     JpaRepository<PhysicalInventoryEmptyLocationLineItem, UUID> {
 
   List<PhysicalInventoryEmptyLocationLineItem> findBySubDraftIdIn(List<UUID> subDraftIds);
+
+  void deletePhysicalInventoryEmptyLocationLineItemsBySubDraftIdIn(Collection<UUID> subDraftIds);
+
 }
