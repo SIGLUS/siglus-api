@@ -60,7 +60,7 @@ public class SiglusLocalIssueVoucherControllerTest {
   public void shouleDeleteWhenCallByService() {
     controller.clearFillingPage(podId, subDraftId);
 
-    verify(siglusLocalIssueVoucherService).deleteSubDraft(podId, subDraftId);
+    verify(siglusLocalIssueVoucherService).clearFillingPage(podId, subDraftId);
   }
 
   @Test

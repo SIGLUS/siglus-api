@@ -43,8 +43,7 @@ public class SiglusPodFulfillmentService extends
   }
 
   public ProofOfDeliveryDto searchProofOfDelivery(UUID id, Set<String> expand) {
-    RequestParameters queryParams = RequestParameters.init()
-        .set(EXPAND, expand);
+    RequestParameters queryParams = RequestParameters.init().set(EXPAND, expand);
     return findOne(id.toString(), queryParams, true);
   }
 
