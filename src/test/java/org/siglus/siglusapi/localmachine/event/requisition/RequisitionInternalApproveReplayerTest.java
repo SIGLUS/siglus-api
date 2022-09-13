@@ -50,7 +50,6 @@ import org.siglus.siglusapi.repository.RequisitionGroupMembersRepository;
 import org.siglus.siglusapi.repository.RequisitionLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.TestConsumptionLineItemRepository;
 import org.siglus.siglusapi.repository.UsageInformationLineItemRepository;
-import org.siglus.siglusapi.service.SiglusNotificationService;
 
 @RunWith(MockitoJUnitRunner.class)
 @SuppressWarnings({"PMD.UnusedPrivateField"})
@@ -83,8 +82,6 @@ public class RequisitionInternalApproveReplayerTest {
   private EventPublisher eventPublisher;
   @Mock
   private RequisitionGroupMembersRepository requisitionGroupMembersRepository;
-  @Mock
-  private SiglusNotificationService siglusNotificationService;
 
   @Mock
   private RequisitionService requisitionService;
