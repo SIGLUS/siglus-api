@@ -99,7 +99,7 @@ public class SiglusLocalIssueVoucherService {
         .findByOrderCodeAndProgramIdAndRequestingFacilityIdAndSupplyingFacilityId(
             dto.getOrderCode(), dto.getProgramId(), dto.getRequestingFacilityId(), dto.getSupplyingFacilityId());
     if (orderCode.contains(dto.getOrderCode()) || !localIssueVouchers.isEmpty()) {
-      throw new BusinessDataException(new Message(ERROR_ORDER_CODE_EXISTS), "order code already exists");
+      throw new BusinessDataException(new Message(ERROR_ORDER_CODE_EXISTS));
     }
   }
 
@@ -148,8 +148,7 @@ public class SiglusLocalIssueVoucherService {
 
   private void checkIfSubDraftsOversize(int subDraftsQuantity) {
     if (subDraftsQuantity > SUB_DRAFTS_LIMITATION - 1) {
-      throw new BusinessDataException(new Message(ERROR_LOCAL_ISSUE_VOUCHER_SUB_DRAFTS_MORE_THAN_TEN),
-          "subDrafts are more than limitation");
+      throw new BusinessDataException(new Message(ERROR_LOCAL_ISSUE_VOUCHER_SUB_DRAFTS_MORE_THAN_TEN));
     }
   }
 

@@ -144,9 +144,9 @@ public abstract class MessageKeys {
   public static final String ERROR_SUBMIT_START_DATE_IS_BEFORE_LAST_SUBMIT_END_DATE = ERROR_PREFIX
       + ".submitStartDate.before.last.submitEndDate";
 
-  //local receive voucher
+  //local issue voucher
   public static final String ERROR_ORDER_CODE_EXISTS =
-      LOCAL_ISSUE_VOUCHER_PREFIX + ".order.code.exists";
+      LOCAL_ISSUE_VOUCHER_PREFIX + ".order.code.already.exists";
   public static final String ERROR_LOCAL_ISSUE_VOUCHER_ID_INVALID =
       LOCAL_ISSUE_VOUCHER_PREFIX + ".local.issue.voucher.id.invalid";
   public static final String ERROR_LOCAL_ISSUE_VOUCHER_SUB_DRAFTS_MORE_THAN_TEN =
