@@ -476,7 +476,7 @@ public class SiglusAdministrationsServiceTest {
     siglusAdministrationsService.updateFacility(facilityId, siglusFacilityDto);
 
     // then
-    verify(stockCardLocationMovementLineItemRepository, times(1))
+    verify(stockCardLocationMovementLineItemRepository, times(2))
         .save(Lists.newArrayList());
   }
 
@@ -670,7 +670,7 @@ public class SiglusAdministrationsServiceTest {
 
   private CalculatedStockOnHand mockCalculatedStockOnHand() {
     CalculatedStockOnHand calculatedStockOnHand = new CalculatedStockOnHand();
-    calculatedStockOnHand.setStockOnHand(100);
+    calculatedStockOnHand.setStockOnHand(10);
     calculatedStockOnHand.setStockCard(mockStockCard());
     calculatedStockOnHand.setStockCardId(stockCardId);
     return calculatedStockOnHand;
