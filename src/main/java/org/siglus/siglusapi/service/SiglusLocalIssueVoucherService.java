@@ -17,12 +17,15 @@ package org.siglus.siglusapi.service;
 
 import static java.util.stream.Collectors.toList;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_ADDITIONAL_ORDERABLE_DUPLICATED;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_CANNOT_OPERATE_WHEN_SUB_DRAFT_SUBMITTED;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_LOCAL_ISSUE_VOUCHER_ID_INVALID;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_LOCAL_ISSUE_VOUCHER_SUB_DRAFTS_MORE_THAN_TEN;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_NO_POD_SUB_DRAFT_FOUND;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_ORDER_CODE_EXISTS;
 
 import com.google.common.collect.Sets;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -42,9 +45,11 @@ import org.siglus.siglusapi.dto.LocalIssueVoucherDto;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.dto.enums.PodSubDraftStatusEnum;
 import org.siglus.siglusapi.exception.BusinessDataException;
+import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.PodLineItemsExtensionRepository;
 import org.siglus.siglusapi.repository.PodLineItemsRepository;
+import org.siglus.siglusapi.repository.PodSubDraftLineItemsRepository;
 import org.siglus.siglusapi.repository.PodSubDraftRepository;
 import org.siglus.siglusapi.repository.SiglusLocalIssueVoucherRepository;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
@@ -67,6 +72,8 @@ public class SiglusLocalIssueVoucherService {
   private final SiglusLocalIssueVoucherRepository localIssueVoucherRepository;
 
   private final PodSubDraftRepository podSubDraftRepository;
+
+  private final PodSubDraftLineItemsRepository podSubDraftLineItemsRepository;
 
   private final PodLineItemsExtensionRepository podLineItemsExtensionRepository;
 
@@ -201,13 +208,27 @@ public class SiglusLocalIssueVoucherService {
 
   @Transactional
   public void deleteSubDraft(UUID podId, UUID subDraftId) {
-    siglusPodService.deleteSubDraft(podId, subDraftId);
-    log.info("delete record from podLineItemsExtension with subDraft id: {}", subDraftId);
-    podLineItemsExtensionRepository.deleteAllBySubDraftId(subDraftId);
+    PodSubDraft podSubDraft = getPodSubDraft(subDraftId);
+    checkIfCanOperate(podSubDraft);
+    log.info("delete pod subDraft line items with subDraft id: {}", subDraftId);
+    podSubDraftLineItemsRepository.deleteByPodSubDraftId(subDraftId);
     log.info("delete subDraft with id: {}", subDraftId);
     podSubDraftRepository.delete(subDraftId);
-    PodSubDraft podSubDraft = podSubDraftRepository.findOne(subDraftId);
     resetSubDraftNumber(podId, podSubDraft);
+  }
+
+  private PodSubDraft getPodSubDraft(UUID subDraftId) {
+    PodSubDraft podSubDraft = podSubDraftRepository.findOne(subDraftId);
+    if (Objects.isNull(podSubDraft)) {
+      throw new NotFoundException(ERROR_NO_POD_SUB_DRAFT_FOUND);
+    }
+    return podSubDraft;
+  }
+
+  private void checkIfCanOperate(PodSubDraft podSubDraft) {
+    if (PodSubDraftStatusEnum.SUBMITTED == podSubDraft.getStatus()) {
+      throw new BusinessDataException(new Message(ERROR_CANNOT_OPERATE_WHEN_SUB_DRAFT_SUBMITTED), podSubDraft.getId());
+    }
   }
 
   @Transactional
