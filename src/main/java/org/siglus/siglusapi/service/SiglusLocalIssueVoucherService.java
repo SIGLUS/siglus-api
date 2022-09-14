@@ -127,7 +127,7 @@ public class SiglusLocalIssueVoucherService {
     validateLocalIssueVoucherId(localIssueVoucherId);
     int subDraftsQuantity = podSubDraftRepository.countAllByPodId(localIssueVoucherId);
     checkIfSubDraftsOversize(subDraftsQuantity);
-    PodSubDraft subDraft = getPodSubDraft(localIssueVoucherId, subDraftsQuantity);
+    PodSubDraft subDraft = createPodSubDraft(localIssueVoucherId, subDraftsQuantity);
     log.info("save local issue voucher with localIssueVoucherId: {}", localIssueVoucherId);
     PodSubDraft localIssueVoucherSubDraft = podSubDraftRepository.save(subDraft);
     return buildSubDraftInfo(localIssueVoucherSubDraft);
@@ -142,7 +142,7 @@ public class SiglusLocalIssueVoucherService {
         .build();
   }
 
-  private PodSubDraft getPodSubDraft(UUID localIssueVoucherId, int subDraftsQuantity) {
+  private PodSubDraft createPodSubDraft(UUID localIssueVoucherId, int subDraftsQuantity) {
     return PodSubDraft.builder()
         .number(subDraftsQuantity + SUB_DRAFTS_INCREMENT)
         .podId(localIssueVoucherId)
