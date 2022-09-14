@@ -15,7 +15,7 @@
 
 package org.siglus.siglusapi.repository;
 
-import com.google.common.collect.Sets;
+import com.google.common.collect.Lists;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -48,8 +48,8 @@ public class LocationDraftRepository extends BaseNativeRepository {
 
   @Transactional
   public void deleteLocationRelatedDrafts(UUID facilityId) {
-    Sets.newHashSet(SQL_1, SQL_2, SQL_3, SQL_4, SQL_5, SQL_6, SQL_7, SQL_8, SQL_9, SQL_10, SQL_11, SQL_12, SQL_13,
-            SQL_14, SQL_15, SQL_16)
+    Lists.newArrayList(SQL_1, SQL_2, SQL_3, SQL_4, SQL_5, SQL_6, SQL_7, SQL_8, SQL_9, SQL_10, SQL_11, SQL_12, SQL_13,
+        SQL_14, SQL_15, SQL_16)
         .forEach(sql -> {
           jdbc.update(sql, facilityId);
         });

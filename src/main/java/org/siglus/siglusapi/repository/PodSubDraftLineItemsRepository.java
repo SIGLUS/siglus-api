@@ -21,5 +21,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface PodSubDraftLineItemsRepository extends JpaRepository<PodSubDraftLineItem, UUID> {
 
-    void deleteByPodSubDraftId(UUID podSubDraftId);
+  void deleteByPodSubDraftId(UUID podSubDraftId);
 }
