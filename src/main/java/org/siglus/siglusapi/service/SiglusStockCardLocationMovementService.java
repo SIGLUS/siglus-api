@@ -31,6 +31,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -38,6 +39,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.openlmis.requisition.dto.ReasonType;
+import org.openlmis.stockmanagement.domain.BaseEntity;
 import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.dto.StockCardDto;
 import org.openlmis.stockmanagement.dto.referencedata.FacilityDto;
@@ -102,6 +104,22 @@ public class SiglusStockCardLocationMovementService {
     movementLineItemRepository.save(movementLineItems);
     deleteMovementDraft(movementDto);
     calculatedStocksOnHandByLocationService.calculateStockOnHandByLocationForMovement(movementLineItems);
+    deleteEmptySohVirtualLocaton(movementDto.getFacilityId());
+  }
+
+  private void deleteEmptySohVirtualLocaton(UUID facilityId) {
+    List<UUID> stockCardIds = stockCardRepository.findByFacilityIdIn(facilityId).stream()
+        .map(BaseEntity::getId).collect(Collectors.toList());
+    List<UUID> toBeDeletedStockCardIds = calculatedStockOnHandByLocationRepository.findByStockCardIdIn(stockCardIds)
+        .stream().filter(
+            e -> e.getStockOnHand() == 0 && Objects.equals(e.getLocationCode(),
+                LocationConstants.VIRTUAL_LOCATION_CODE))
+        .map(CalculatedStockOnHandByLocation::getStockCardId).collect(Collectors.toList());
+    if (!toBeDeletedStockCardIds.isEmpty()) {
+      calculatedStockOnHandByLocationRepository.deleteByStockCardIdIn(toBeDeletedStockCardIds);
+      log.info("virtual location calculation has been deleted  size : {} ", toBeDeletedStockCardIds.size());
+    }
+
   }
 
   private void deleteMovementDraft(StockCardLocationMovementDto movementDto) {
