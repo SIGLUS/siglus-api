@@ -18,7 +18,6 @@ package org.siglus.siglusapi.service;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_MOVEMENT_DRAFT_EXISTS;
 
 import com.google.common.collect.Maps;
-import java.time.LocalDate;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -32,7 +31,6 @@ import org.apache.commons.collections.CollectionUtils;
 import org.openlmis.referencedata.dto.OrderableDto;
 import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.repository.StockCardRepository;
-import org.siglus.siglusapi.constant.LocationConstants;
 import org.siglus.siglusapi.domain.StockCardLocationMovementDraft;
 import org.siglus.siglusapi.domain.StockCardLocationMovementDraftLineItem;
 import org.siglus.siglusapi.domain.StockCardLocationMovementLineItem;
@@ -115,13 +113,11 @@ public class SiglusStockCardLocationMovementDraftService {
     List<UUID> stockCardIds = stockCardRepository.findByFacilityIdIn(facilityId)
         .stream().map(StockCard::getId).collect(Collectors.toList());
     List<StockCardLocationMovementLineItem> previousStockCardLocationMovementLineItemList =
-        stockCardLocationMovementLineItemRepository.findPreviousRecordByStockCardId(stockCardIds, LocalDate.now());
+        stockCardLocationMovementLineItemRepository.findLatestByStockCardId(stockCardIds);
 
     List<StockCardLocationMovementLineItem> virtualLocationMovementLineItem =
         previousStockCardLocationMovementLineItemList.stream()
-            .filter(e -> Objects.equals(LocationConstants.VIRTUAL_LOCATION_CODE, e.getSrcLocationCode())
-                && Objects.equals(LocationConstants.VIRTUAL_LOCATION_CODE, e.getDestLocationCode())
-                && e.getQuantity() != 0)
+            .filter(e -> e.getQuantity() != 0)
             .collect(Collectors.toList());
 
     List<StockCardLocationMovementDraftLineItem> stockCardLocationMovementDraftLineItemList =
