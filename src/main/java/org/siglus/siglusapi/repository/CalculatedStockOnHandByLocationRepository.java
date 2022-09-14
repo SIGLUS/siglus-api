@@ -158,4 +158,6 @@ public interface CalculatedStockOnHandByLocationRepository extends JpaRepository
   @Query(name = "LocationMovement.getProductLocationMovement", nativeQuery = true)
   List<LocationMovementLineItemDto> getProductLocationMovement(@Param("stockCardId") UUID stockCardId,
       @Param("locationCode") String locationCode);
+
+  void deleteByStockCardIdIn(@Param("stockCardId") Collection<UUID> stockCardId);
 }

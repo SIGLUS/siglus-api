@@ -49,4 +49,6 @@ public interface StockCardLocationMovementLineItemRepository extends
       + "           and c.occurreddate <= :occurredDate group by c.stockcardid)", nativeQuery = true)
   List<StockCardLocationMovementLineItem> findPreviousRecordByStockCardId(
       @Param("stockCardIds") Collection<UUID> stockCardIds, @Param("occurredDate") LocalDate occurredDate);
+
+  void deleteByStockCardIdIn(@Param("stockCardId") Collection<UUID> stockCardId);
 }
