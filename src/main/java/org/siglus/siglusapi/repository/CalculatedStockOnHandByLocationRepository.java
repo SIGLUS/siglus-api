@@ -67,8 +67,9 @@ public interface CalculatedStockOnHandByLocationRepository extends JpaRepository
       + "                                               first_value(stockonhand)\n"
       + "                 over (partition by (stockcardid, locationcode) order by occurreddate DESC ) as stockonhand\n"
       + "from siglusintegration.calculated_stocks_on_hand_by_location\n"
-      + "where stockcardid = ?1 ", nativeQuery = true)
-  List<CalculatedStockOnHandByLocation> findRecentlyLocationSohByStockCardId(UUID stockCardId);
+      + "where stockcardid in (:stockCardIds) ", nativeQuery = true)
+  List<CalculatedStockOnHandByLocation> findRecentlyLocationSohByStockCardIds(
+          @Param("stockCardIds") Collection<UUID> stockCardIds);
 
 
   // TODO performance
