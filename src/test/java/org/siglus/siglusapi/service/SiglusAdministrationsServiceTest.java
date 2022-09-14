@@ -343,8 +343,7 @@ public class SiglusAdministrationsServiceTest {
         .thenReturn(mockFacilityDtoPage().getContent().get(0));
 
     // when
-    FacilitySearchResultDto searchResultDto = siglusAdministrationsService.updateFacility(facilityId,
-        mockSiglusFacilityDto(true, null));
+    siglusAdministrationsService.updateFacility(facilityId, mockSiglusFacilityDto(true, null));
 
     // then
     verify(locationDraftRepository).deleteLocationRelatedDrafts(facilityId);
@@ -358,8 +357,7 @@ public class SiglusAdministrationsServiceTest {
         .thenReturn(mockFacilityDtoPage().getContent().get(0));
 
     // when
-    FacilitySearchResultDto searchResultDto = siglusAdministrationsService.updateFacility(facilityId,
-        mockSiglusFacilityDto(true, null));
+    siglusAdministrationsService.updateFacility(facilityId, mockSiglusFacilityDto(true, null));
 
     // then
     verify(locationDraftRepository).deleteLocationRelatedDrafts(facilityId);
@@ -374,8 +372,7 @@ public class SiglusAdministrationsServiceTest {
         .thenReturn(mockFacilityDtoPage().getContent().get(0));
 
     // when
-    FacilitySearchResultDto searchResultDto = siglusAdministrationsService.updateFacility(facilityId,
-        mockSiglusFacilityDto(false, null));
+    siglusAdministrationsService.updateFacility(facilityId, mockSiglusFacilityDto(false, null));
 
     // then
     verify(locationDraftRepository).deleteLocationRelatedDrafts(facilityId);

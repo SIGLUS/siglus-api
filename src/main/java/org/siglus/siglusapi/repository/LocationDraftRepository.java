@@ -25,6 +25,10 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class LocationDraftRepository extends BaseNativeRepository {
 
+  private static final String WHERE_IS_DRAFT = "WHERE facilityid = ? AND isdraft is TRUE";
+  private static final String WHERE_INVENTORY_IS_DRAFT =
+      "IN (SELECT id FROM stockmanagement.physical_inventories " + WHERE_IS_DRAFT + ")";
+
   private final JdbcTemplate jdbc;
 
   @Transactional
@@ -39,21 +43,21 @@ public class LocationDraftRepository extends BaseNativeRepository {
     jdbc.update("DELETE FROM stockmanagement.physical_inventory_line_item_adjustments "
             + "WHERE physicalinventorylineitemid IN (SELECT id FROM stockmanagement.physical_inventory_line_items "
             + "WHERE physicalinventoryid IN (SELECT id FROM stockmanagement.physical_inventories "
-            + "WHERE facilityid = ? AND isdraft is TRUE))",
+            + WHERE_IS_DRAFT + "))",
         facilityId);
     jdbc.update("DELETE FROM stockmanagement.physical_inventory_line_items WHERE physicalinventoryid "
-            + "IN (SELECT id FROM stockmanagement.physical_inventories WHERE facilityid = ? AND isdraft is TRUE)",
+            + WHERE_INVENTORY_IS_DRAFT,
         facilityId);
     jdbc.update("DELETE FROM siglusintegration.physical_inventory_line_items_extension WHERE physicalinventoryid "
-            + "IN (SELECT id FROM stockmanagement.physical_inventories WHERE facilityid = ? AND isdraft is TRUE)",
+            + WHERE_INVENTORY_IS_DRAFT,
         facilityId);
     jdbc.update("DELETE FROM siglusintegration.physical_inventories_extension WHERE physicalinventoryid "
-            + "IN (SELECT id FROM stockmanagement.physical_inventories WHERE facilityid = ? AND isdraft is TRUE)",
+            + WHERE_INVENTORY_IS_DRAFT,
         facilityId);
     jdbc.update("DELETE FROM siglusintegration.physical_inventory_sub_draft WHERE physicalinventoryid "
-            + "IN (SELECT id FROM stockmanagement.physical_inventories WHERE facilityid = ? AND isdraft is TRUE)",
+            + WHERE_INVENTORY_IS_DRAFT,
         facilityId);
-    jdbc.update("DELETE FROM stockmanagement.physical_inventories WHERE facilityid = ? AND isdraft is TRUE",
+    jdbc.update("DELETE FROM stockmanagement.physical_inventories " + WHERE_IS_DRAFT,
         facilityId);
     jdbc.update("DELETE FROM siglusintegration.stock_card_location_movement_draft_line_items "
             + "WHERE stockcardlocationmovementdraftid IN (SELECT id FROM "
