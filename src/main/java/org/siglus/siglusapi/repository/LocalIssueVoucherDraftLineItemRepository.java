@@ -15,20 +15,36 @@
 
 package org.siglus.siglusapi.repository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 import org.openlmis.fulfillment.domain.ProofOfDeliveryLineItem;
-import org.siglus.siglusapi.repository.dto.PodLineItemDto;
+import org.siglus.siglusapi.domain.LocalIssueVoucherDraftLineItem;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-/**
- * Persistence repository for saving/finding {@link ProofOfDeliveryLineItem}.
- */
-public interface PodLineItemsRepository extends JpaRepository<ProofOfDeliveryLineItem, UUID> {
+public interface LocalIssueVoucherDraftLineItemRepository extends JpaRepository<LocalIssueVoucherDraftLineItem, UUID> {
+  @Query(value = "select\n"
+      + "  *\n"
+      + "from\n"
+      + "  siglusintegration.local_issue_voucher_draft_line_items livdli \n"
+      + "where\n"
+      + "  orderableid in :orderableIds\n"
+      + "  and localissuevoucherid  = :podId\n"
+      + "  and localissuevouchersubdraftid  <> :subDraftId", nativeQuery = true)
+  List<ProofOfDeliveryLineItem> findDuplicatedOrderableLineItem(@Param("orderableIds") Collection<UUID> orderableIds,
+      @Param("podId") UUID podId, @Param("subDraftId") UUID subDraftId);
 
-  @Query(name = "PodLineItem.findLineItemDtos", nativeQuery = true)
-  List<PodLineItemDto> lineItemDtos(@Param("podId") UUID podId, @Param("orderId") UUID orderId,
-      @Param("requisitionId") UUID requisitionId);
+  @Query(value = "select\n"
+      + "  orderableid\n"
+      + "from\n"
+      + "  siglusintegration.local_issue_voucher_draft_line_items livdli\n"
+      + "where\n"
+      + "  localissuevoucherid =:podId\n"
+      + "group by\n"
+      + "  orderableid", nativeQuery = true)
+  List<UUID> findUsedOrderableByPodId(@Param("podId") UUID podId);
+
+  void deleteByLocalIssueVoucherSubDraftId(UUID subDraftId);
 }

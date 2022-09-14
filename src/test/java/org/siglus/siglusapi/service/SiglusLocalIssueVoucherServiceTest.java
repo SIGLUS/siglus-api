@@ -76,7 +76,7 @@ import org.siglus.siglusapi.dto.LocalIssueVoucherDto;
 import org.siglus.siglusapi.dto.enums.PodSubDraftStatusEnum;
 import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
-import org.siglus.siglusapi.repository.PodLineItemsRepository;
+import org.siglus.siglusapi.repository.LocalIssueVoucherDraftLineItemRepository;
 import org.siglus.siglusapi.repository.PodSubDraftRepository;
 import org.siglus.siglusapi.repository.SiglusLocalIssueVoucherRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
@@ -102,7 +102,7 @@ public class SiglusLocalIssueVoucherServiceTest {
   public ExpectedException exception = ExpectedException.none();
 
   @Mock
-  private PodLineItemsRepository podLineItemsRepository;
+  private LocalIssueVoucherDraftLineItemRepository localIssueVoucherDraftLineItemRepository;
 
   @Mock
   private OrderController orderController;
@@ -202,7 +202,7 @@ public class SiglusLocalIssueVoucherServiceTest {
     UUID podId = request.getPodDto().getId();
 
     //when
-    when(podLineItemsRepository.findDuplicatedOrderableLineItem(orderableIds, podId, subDraftId))
+    when(localIssueVoucherDraftLineItemRepository.findDuplicatedOrderableLineItem(orderableIds, podId, subDraftId))
         .thenReturn(buildMockPodLineItems());
 
     //then
@@ -353,7 +353,8 @@ public class SiglusLocalIssueVoucherServiceTest {
     org.openlmis.referencedata.dto.OrderableDto orderableDto2 = new org.openlmis.referencedata.dto.OrderableDto();
     orderableDto1.setId(orderableId);
     orderableDto2.setId(orderableId2);
-    when(podLineItemsRepository.findUsedOrderableByPodId(podId)).thenReturn(Collections.singletonList(orderableId));
+    when(localIssueVoucherDraftLineItemRepository.findUsedOrderableByPodId(podId)).thenReturn(
+        Collections.singletonList(orderableId));
     when(siglusOrderableService.getAllProducts()).thenReturn(Lists.newArrayList(orderableDto1, orderableDto2));
     assertEquals(1, service.getAvailableOrderables(podId).size());
   }
@@ -364,7 +365,7 @@ public class SiglusLocalIssueVoucherServiceTest {
     org.openlmis.referencedata.dto.OrderableDto orderableDto2 = new org.openlmis.referencedata.dto.OrderableDto();
     orderableDto1.setId(orderableId);
     orderableDto2.setId(orderableId2);
-    when(podLineItemsRepository.findUsedOrderableByPodId(podId)).thenReturn(null);
+    when(localIssueVoucherDraftLineItemRepository.findUsedOrderableByPodId(podId)).thenReturn(null);
     when(siglusOrderableService.getAllProducts()).thenReturn(Lists.newArrayList(orderableDto1, orderableDto2));
     assertEquals(2, service.getAvailableOrderables(podId).size());
   }

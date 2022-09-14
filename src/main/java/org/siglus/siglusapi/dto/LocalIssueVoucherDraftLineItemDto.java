@@ -13,13 +13,29 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.repository;
+package org.siglus.siglusapi.dto;
 
 import java.util.UUID;
-import org.siglus.siglusapi.domain.PodSubDraftLineItem;
-import org.springframework.data.jpa.repository.JpaRepository;
+import lombok.Data;
+import org.openlmis.fulfillment.web.util.ObjectReferenceDto;
+import org.openlmis.fulfillment.web.util.VersionObjectReferenceDto;
 
-public interface PodSubDraftLineItemsRepository extends JpaRepository<PodSubDraftLineItem, UUID> {
+@Data
+public class LocalIssueVoucherDraftLineItemDto {
 
-  void deleteByPodSubDraftId(UUID podSubDraftId);
+  private UUID localIssueVoucherSubDraftId;
+
+  private UUID localIssueVoucherId;
+
+  private Integer quantityAccepted;
+
+  private Integer quantityrejected;
+
+  private VersionObjectReferenceDto orderable;
+
+  private ObjectReferenceDto lot;
+
+  private UUID rejectionReasonId;
+
+  private String notes;
 }

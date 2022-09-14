@@ -47,9 +47,7 @@ import org.siglus.siglusapi.dto.enums.PodSubDraftStatusEnum;
 import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
-import org.siglus.siglusapi.repository.PodLineItemsExtensionRepository;
-import org.siglus.siglusapi.repository.PodLineItemsRepository;
-import org.siglus.siglusapi.repository.PodSubDraftLineItemsRepository;
+import org.siglus.siglusapi.repository.LocalIssueVoucherDraftLineItemRepository;
 import org.siglus.siglusapi.repository.PodSubDraftRepository;
 import org.siglus.siglusapi.repository.SiglusLocalIssueVoucherRepository;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
@@ -73,13 +71,9 @@ public class SiglusLocalIssueVoucherService {
 
   private final PodSubDraftRepository podSubDraftRepository;
 
-  private final PodSubDraftLineItemsRepository podSubDraftLineItemsRepository;
-
-  private final PodLineItemsExtensionRepository podLineItemsExtensionRepository;
-
   private final SiglusPodService siglusPodService;
 
-  private final PodLineItemsRepository podLineItemsRepository;
+  private final LocalIssueVoucherDraftLineItemRepository localIssueVoucherDraftLineItemRepository;
 
   private final SiglusOrderableService siglusOrderableService;
   private static final Integer SUB_DRAFTS_LIMITATION = 10;
@@ -188,15 +182,15 @@ public class SiglusLocalIssueVoucherService {
         .map(proofOfDeliveryLineItemDto -> proofOfDeliveryLineItemDto.getOrderableIdentity().getId())
         .collect(Collectors.toList());
     UUID podId = request.getPodDto().getId();
-    List<ProofOfDeliveryLineItem> duplicatedOrderableLineItem = podLineItemsRepository.findDuplicatedOrderableLineItem(
-        orderableIds, podId, subDraftId);
+    List<ProofOfDeliveryLineItem> duplicatedOrderableLineItem =
+        localIssueVoucherDraftLineItemRepository.findDuplicatedOrderableLineItem(orderableIds, podId, subDraftId);
     if (CollectionUtils.isNotEmpty(duplicatedOrderableLineItem)) {
       throw new ValidationMessageException(ERROR_ADDITIONAL_ORDERABLE_DUPLICATED);
     }
   }
 
   public List<OrderableDto> getAvailableOrderables(UUID podId) {
-    List<UUID> usedOrderableByPodId = podLineItemsRepository.findUsedOrderableByPodId(podId);
+    List<UUID> usedOrderableByPodId = localIssueVoucherDraftLineItemRepository.findUsedOrderableByPodId(podId);
     List<OrderableDto> allProducts = siglusOrderableService.getAllProducts();
     if (CollectionUtils.isNotEmpty(usedOrderableByPodId)) {
       allProducts = allProducts.stream()
@@ -211,7 +205,7 @@ public class SiglusLocalIssueVoucherService {
     PodSubDraft podSubDraft = getPodSubDraft(subDraftId);
     checkIfCanOperate(podSubDraft);
     log.info("delete pod subDraft line items with subDraft id: {}", subDraftId);
-    podSubDraftLineItemsRepository.deleteByPodSubDraftId(subDraftId);
+    localIssueVoucherDraftLineItemRepository.deleteByLocalIssueVoucherSubDraftId(subDraftId);
     log.info("delete subDraft with id: {}", subDraftId);
     podSubDraftRepository.delete(subDraftId);
     resetSubDraftNumber(podId, podSubDraft);
