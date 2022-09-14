@@ -668,7 +668,7 @@ traits:
     /report/tracerDrug:
       displayName: run tracer drug persistent data task
     /report/tracerDrug/refresh:
-      displayName: refresh tracer drug persistent data task
+      displayName: refresh tracer drug persistent data task Asynchronously
       post:
         is: [ secured ]
         body:
@@ -678,7 +678,17 @@ traits:
           201:
             description: submit success
     /report/tracerDrug/initialize:
-      displayName: initialize tracer drug persistent data task
+      displayName: initialize tracer drug persistent data task Asynchronously
+      post:
+        is: [ secured ]
+        body:
+          application/json:
+            schema: arrayOfStrings
+        responses:
+          201:
+            description: submit success
+    /report/tracerDrug/refreshByFacility:
+      displayName: refresh part of facility tracer drug persistent data task Asynchronously
       post:
         is: [ secured ]
         body:

@@ -48,10 +48,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.TreeSet;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.ListUtils;
 import org.siglus.siglusapi.dto.AssociatedGeographicZoneDto;
@@ -64,8 +66,8 @@ import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.util.CustomCellWriteHandler;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -84,14 +86,24 @@ public class TracerDrugReportService {
   @Value("${dateFormat}")
   private String dateFormat;
 
-  @Transactional
+  @SneakyThrows
+  @Async
   public void refreshTracerDrugPersistentData(String startDate, String endDate) {
     log.info("tracer drug persistentData refresh. start = " + System.currentTimeMillis());
     tracerDrugRepository.insertDataWithinSpecifiedTime(startDate, endDate);
     log.info("tracer drug persistentData  refresh. end = " + System.currentTimeMillis());
   }
 
-  @Transactional
+  @SneakyThrows
+  @Async
+  public void refreshTracerDrugPersistentDataByFacility(List<UUID> facilityIds, String startDate, String endDate) {
+    log.info("tracer drug persistentData refresh. start = " + System.currentTimeMillis());
+    tracerDrugRepository.insertDataWithinSpecifiedTimeByFacilityIds(startDate, endDate, facilityIds);
+    log.info("tracer drug persistentData  refresh. end = " + System.currentTimeMillis());
+  }
+
+  @SneakyThrows
+  @Async
   public void initializeTracerDrugPersistentData() {
     log.info("tracer drug persistentData initialize. start = " + System.currentTimeMillis());
     refreshTracerDrugPersistentData(tracerDrugInitializeDate, LocalDate.now().toString());
