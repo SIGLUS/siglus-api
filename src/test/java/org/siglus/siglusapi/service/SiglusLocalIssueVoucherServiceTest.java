@@ -212,7 +212,7 @@ public class SiglusLocalIssueVoucherServiceTest {
   @Test
   public void shouldDeleteWhenCallByService() {
     //when
-    service.deleteSubDraft(podId, subDraftId);
+    service.clearFillingPage(podId, subDraftId);
 
     //then
     verify(siglusPodService).deleteSubDraft(podId, subDraftId);

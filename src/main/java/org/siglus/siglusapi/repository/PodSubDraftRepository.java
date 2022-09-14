@@ -42,4 +42,6 @@ public interface PodSubDraftRepository extends JpaRepository<PodSubDraft, UUID> 
   void deleteAllByPodId(UUID id);
 
   int countAllByPodId(UUID localIssueVoucherId);
+
+  List<PodSubDraft> findAllByPodId(UUID podId);
 }

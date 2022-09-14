@@ -33,6 +33,15 @@ public interface StockCardLocationMovementLineItemRepository extends
   List<StockCardLocationMovementLineItem> findAllByStockCardIdIn(Set<UUID> stockCardIds);
 
   @Query(value = "select * from siglusintegration.stock_card_location_movement_line_items "
+      + "         where (stockcardid, processeddate) in ( "
+      + "         select stockcardid, max(processeddate) "
+      + "         from siglusintegration.stock_card_location_movement_line_items c "
+      + "         where c.stockcardid in :stockCardIds "
+      + "         group by c.stockcardid)", nativeQuery = true)
+  List<StockCardLocationMovementLineItem> findLatestByStockCardId(
+      @Param("stockCardIds") Collection<UUID> stockCardIds);
+
+  @Query(value = "select * from siglusintegration.stock_card_location_movement_line_items "
       + "         where (stockcardid, occurreddate) in ( "
       + "         select stockcardid, max(occurreddate) "
       + "         from siglusintegration.stock_card_location_movement_line_items c "
@@ -40,4 +49,6 @@ public interface StockCardLocationMovementLineItemRepository extends
       + "           and c.occurreddate <= :occurredDate group by c.stockcardid)", nativeQuery = true)
   List<StockCardLocationMovementLineItem> findPreviousRecordByStockCardId(
       @Param("stockCardIds") Collection<UUID> stockCardIds, @Param("occurredDate") LocalDate occurredDate);
+
+  void deleteByStockCardIdIn(@Param("stockCardId") Collection<UUID> stockCardId);
 }

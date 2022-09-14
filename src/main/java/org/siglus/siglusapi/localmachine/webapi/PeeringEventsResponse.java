@@ -22,12 +22,12 @@ import lombok.Builder;
 import lombok.Builder.Default;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.siglus.siglusapi.localmachine.Event;
+import org.siglus.siglusapi.localmachine.ExternalEventDto;
 
 @Builder
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class PeeringEventsResponse {
-  @Default private List<Event> events = new LinkedList<>();
+  @Default private List<ExternalEventDto> events = new LinkedList<>();
 }

@@ -15,13 +15,16 @@
 
 package org.siglus.siglusapi.localmachine.auth;
 
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_NOT_ACTIVATED_YET;
+
 import java.io.IOException;
 import java.util.Optional;
 import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.siglus.siglusapi.exception.NotFoundException;
+import org.siglus.siglusapi.dto.Message;
+import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.localmachine.CommonConstants;
 import org.siglus.siglusapi.localmachine.domain.AgentInfo;
 import org.siglus.siglusapi.localmachine.repository.AgentInfoRepository;
@@ -56,8 +59,8 @@ public class LocalTokenInterceptor implements ClientHttpRequestInterceptor {
 
   private void attachHeaders(HttpHeaders headers) {
     AgentInfo agentInfo =
-        Optional.ofNullable(agentInfoRepository.getFirstAgentInfo())
-            .orElseThrow(() -> new NotFoundException("registration info not found"));
+        Optional.ofNullable(agentInfoRepository.getLocalAgent())
+            .orElseThrow(() -> new BusinessDataException(new Message(ERROR_NOT_ACTIVATED_YET)));
     String accessToken = buildAccessToken(agentInfo);
     headers.add(CommonConstants.VERSION, localMachineVersion);
     headers.add(CommonConstants.ACCESS_TOKEN, accessToken);

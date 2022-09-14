@@ -33,6 +33,7 @@ import org.siglus.siglusapi.domain.ProgramRealProgram;
 import org.siglus.siglusapi.dto.OrderableDisplayCategoryDto;
 import org.siglus.siglusapi.dto.fc.AreaDto;
 import org.siglus.siglusapi.dto.fc.ProductInfoDto;
+import org.siglus.siglusapi.service.fc.FcProductService;
 import org.siglus.siglusapi.util.FcUtil;
 
 public class FcProductMapper {
@@ -77,7 +78,8 @@ public class FcProductMapper {
   }
 
   public Set<ProgramOrderableDto> getProgramOrderablesFrom(ProductInfoDto product) {
-    if (product.getAreas() == null || product.getAreas().isEmpty() || !FcUtil.isActive(product.getStatus())) {
+    if (product.getAreas() == null || product.getAreas().isEmpty() || !FcUtil.isActive(
+        product.getStatus())) {
       return emptySet();
     }
     Set<String> programCodes = getProgramCodes(product);
@@ -100,6 +102,7 @@ public class FcProductMapper {
     programOrderableDto.setOrderableDisplayCategoryId(categoryDto.getId());
     programOrderableDto.setOrderableCategoryDisplayName(categoryDto.getDisplayName());
     programOrderableDto.setOrderableCategoryDisplayOrder(categoryDto.getDisplayOrder());
+    programOrderableDto.setPricePerPack(FcProductService.getCurrentProductPrice(product.getPrice()));
     return programOrderableDto;
   }
 
@@ -117,7 +120,8 @@ public class FcProductMapper {
   }
 
   private boolean shouldNotUpdate(AreaDto value1, AreaDto value2) {
-    return value1.getLastUpdatedAt().equals(value2.getLastUpdatedAt()) && FcUtil.isActive(value1.getStatus())
+    return value1.getLastUpdatedAt().equals(value2.getLastUpdatedAt()) && FcUtil.isActive(
+        value1.getStatus())
         && !FcUtil.isActive(value2.getStatus());
   }
 }

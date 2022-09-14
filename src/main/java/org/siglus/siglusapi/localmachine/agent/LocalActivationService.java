@@ -15,6 +15,9 @@
 
 package org.siglus.siglusapi.localmachine.agent;
 
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_FACILITY_CHANGED;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_FACILITY_NOT_FOUND;
+
 import com.google.common.annotations.VisibleForTesting;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
@@ -28,7 +31,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.openlmis.referencedata.domain.Facility;
 import org.openlmis.referencedata.repository.FacilityRepository;
-import org.siglus.siglusapi.exception.NotFoundException;
+import org.siglus.siglusapi.dto.Message;
+import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.localmachine.Machine;
 import org.siglus.siglusapi.localmachine.domain.AgentInfo;
 import org.siglus.siglusapi.localmachine.repository.AgentInfoRepository;
@@ -56,14 +60,14 @@ public class LocalActivationService {
 
   @VisibleForTesting
   boolean checkForActivation(LocalActivationRequest request) {
-    AgentInfo agentInfo = agentInfoRepository.findFirstByFacilityCode(request.getFacilityCode());
+    AgentInfo agentInfo = agentInfoRepository.getLocalAgent();
     // first time of activation
     if (Objects.isNull(agentInfo)) {
       return true;
     }
     // reactivation
     if (!agentInfo.getFacilityCode().equals(request.getFacilityCode())) {
-      throw new IllegalStateException("facility code should not be changed for reactivation");
+      throw new BusinessDataException(new Message(ERROR_FACILITY_CHANGED));
     }
     return !agentInfo.getActivationCode().equals(request.getActivationCode());
   }
@@ -110,13 +114,10 @@ public class LocalActivationService {
   private Facility mustGetFacility(LocalActivationRequest request) {
     return facilityRepository
         .findByCode(request.getFacilityCode())
-        .orElseThrow(
-            () ->
-                new NotFoundException(
-                    (String.format("Facility %s not exists", request.getFacilityCode()))));
+        .orElseThrow(() -> new BusinessDataException(new Message(ERROR_FACILITY_NOT_FOUND)));
   }
 
   public Optional<AgentInfo> getCurrentAgentInfo() {
-    return Optional.ofNullable(agentInfoRepository.getFirstAgentInfo());
+    return Optional.ofNullable(agentInfoRepository.getLocalAgent());
   }
 }

@@ -393,7 +393,13 @@ public class SiglusStockCardSummariesServiceTest {
     when(siglusOrderableService.searchOrderables(searchParams, pageable, facilityId))
         .thenReturn(page);
     LotLocationSohDto locationSohDto =
-        LotLocationSohDto.builder().lotId(lotId).locationCode(null).stockOnHand(1).build();
+        LotLocationSohDto.builder()
+            .identify(orderableId.toString())
+            .orderableId(orderableId)
+            .lotId(lotId)
+            .locationCode(null)
+            .stockOnHand(1)
+            .build();
     when(calculatedStockOnHandByLocationRepository.getLocationSoh(any())).thenReturn(newArrayList(locationSohDto));
     List<StockCardSummaryWithLocationDto> stockCardSummaryWithLocationDtos =
         service.getStockCardSummaryWithLocationDtos(getProgramsParms(), null, subDraftId, pageable);

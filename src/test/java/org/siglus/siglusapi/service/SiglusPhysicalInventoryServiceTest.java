@@ -95,6 +95,7 @@ import org.siglus.siglusapi.dto.enums.LocationManagementOption;
 import org.siglus.siglusapi.dto.enums.PhysicalInventorySubDraftEnum;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.OrderableRepository;
+import org.siglus.siglusapi.repository.PhysicalInventoryEmptyLocationLineItemRepository;
 import org.siglus.siglusapi.repository.PhysicalInventoryExtensionRepository;
 import org.siglus.siglusapi.repository.PhysicalInventoryLineItemsExtensionRepository;
 import org.siglus.siglusapi.repository.PhysicalInventorySubDraftRepository;
@@ -166,6 +167,9 @@ public class SiglusPhysicalInventoryServiceTest {
 
   @Mock
   private SiglusAuthenticationHelper authenticationHelper;
+
+  @Mock
+  private  PhysicalInventoryEmptyLocationLineItemRepository physicalInventoryEmptyLocationLineItemRepository;
 
   private final UUID facilityId = UUID.randomUUID();
 
@@ -427,6 +431,12 @@ public class SiglusPhysicalInventoryServiceTest {
     when(physicalInventoriesRepository.findIdByProgramIdAndFacilityIdAndIsDraft(programIdTwo,
         facilityId, true))
         .thenReturn(inventoryTwo.toString());
+    PhysicalInventorySubDraft physicalInventorySubDraftOne = new PhysicalInventorySubDraft();
+    when(physicalInventorySubDraftRepository.findByPhysicalInventoryId(inventoryOne))
+        .thenReturn(Collections.singletonList(physicalInventorySubDraftOne));
+    PhysicalInventorySubDraft physicalInventorySubDraftTwo = new PhysicalInventorySubDraft();
+    when(physicalInventorySubDraftRepository.findByPhysicalInventoryId(inventoryTwo))
+        .thenReturn(Collections.singletonList(physicalInventorySubDraftTwo));
 
     // when
     siglusPhysicalInventoryService.deletePhysicalInventoryDraftForAllProgramsWithSubDraft(facilityId);
@@ -434,6 +444,8 @@ public class SiglusPhysicalInventoryServiceTest {
     // then
     verify(inventoryController, times(2)).deletePhysicalInventory(any());
     verify(lineItemsExtensionRepository, times(2)).deleteByPhysicalInventoryIdIn(any());
+    verify(physicalInventoryEmptyLocationLineItemRepository, times(2))
+        .deletePhysicalInventoryEmptyLocationLineItemsBySubDraftIdIn(any());
   }
 
   @Test

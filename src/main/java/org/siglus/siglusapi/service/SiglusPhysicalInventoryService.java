@@ -904,6 +904,10 @@ public class SiglusPhysicalInventoryService {
   public void deletePhysicalInventoryDraftWithSubDrafts(UUID id) {
     deletePhysicalInventoryDraftById(id);
     physicalInventorySubDraftRepository.deletePhysicalInventorySubDraftsByPhysicalInventoryId(id);
+    List<UUID> subDraftIds = physicalInventorySubDraftRepository.findByPhysicalInventoryId(
+        id).stream().map(BaseEntity::getId).collect(Collectors.toList());
+    physicalInventoryEmptyLocationLineItemRepository
+        .deletePhysicalInventoryEmptyLocationLineItemsBySubDraftIdIn(subDraftIds);
   }
 
   public void deletePhysicalInventoryDraftById(UUID id) {

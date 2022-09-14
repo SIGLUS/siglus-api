@@ -67,7 +67,7 @@ public class PayloadSerializer {
       payloadWrapper = (PayloadWrapper) payload;
     } else {
       byte[] payloadBytes = LOCALMACHINE_EVENT_OBJECT_MAPPER.writeValueAsBytes(payload);
-      payloadWrapper = new PayloadWrapper(getName(payload), payloadBytes);
+      payloadWrapper = new PayloadWrapper(getPayloadName(payload), payloadBytes);
     }
     return LOCALMACHINE_EVENT_OBJECT_MAPPER.writeValueAsBytes(payloadWrapper);
   }
@@ -101,8 +101,7 @@ public class PayloadSerializer {
     log.info("find event payload classes:{}", payloadNameToClass);
   }
 
-  private Class<?> getPayloadClass(PayloadWrapper payloadWrapper) throws ClassNotFoundException {
-    String name = payloadWrapper.getName();
+  public Class<?> getPayloadClass(String name) throws ClassNotFoundException {
     Class<?> payloadClass = payloadNameToClass.get(name);
     if (Objects.isNull(payloadClass)) {
       return Class.forName(name);
@@ -110,7 +109,12 @@ public class PayloadSerializer {
     return payloadClass;
   }
 
-  private String getName(Object payload) {
+  private Class<?> getPayloadClass(PayloadWrapper payloadWrapper) throws ClassNotFoundException {
+    String name = payloadWrapper.getName();
+    return getPayloadClass(name);
+  }
+
+  public String getPayloadName(Object payload) {
     return payloadClassToName.getOrDefault(payload.getClass(), payload.getClass().getName());
   }
 

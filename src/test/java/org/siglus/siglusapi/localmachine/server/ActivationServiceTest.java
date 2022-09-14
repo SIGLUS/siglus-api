@@ -32,6 +32,7 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.referencedata.domain.Facility;
 import org.openlmis.referencedata.repository.FacilityRepository;
+import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.localmachine.domain.ActivationCode;
 import org.siglus.siglusapi.localmachine.domain.AgentInfo;
 import org.siglus.siglusapi.localmachine.repository.ActivationCodeRepository;
@@ -76,7 +77,7 @@ public class ActivationServiceTest {
     assertThat(agentInfo.getPrivateKey()).isEqualTo("privatekey".getBytes());
   }
 
-  @Test(expected = IllegalStateException.class)
+  @Test(expected = BusinessDataException.class)
   public void shouldThrowWhenDoActivationGivenUsedActivationCode() {
     // given
     ActivationCode activationCode =

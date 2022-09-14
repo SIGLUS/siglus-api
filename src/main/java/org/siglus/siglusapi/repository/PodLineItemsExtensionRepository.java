@@ -33,4 +33,6 @@ public interface PodLineItemsExtensionRepository extends JpaRepository<PodLineIt
   @Query(value = "select * from siglusintegration.pod_line_items_extension where subdraftid in (:subDraftIds);",
       nativeQuery = true)
   List<PodLineItemsExtension> findAllBySubDraftIds(@Param("subDraftIds") Iterable<UUID> subDraftIds);
+
+  void deleteAllBySubDraftId(UUID subDraftId);
 }

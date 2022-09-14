@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.service;
 
+import static java.util.stream.Collectors.toList;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_ADDITIONAL_ORDERABLE_DUPLICATED;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_LOCAL_ISSUE_VOUCHER_ID_INVALID;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_LOCAL_ISSUE_VOUCHER_SUB_DRAFTS_MORE_THAN_TEN;
@@ -42,6 +43,7 @@ import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.dto.enums.PodSubDraftStatusEnum;
 import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
+import org.siglus.siglusapi.repository.PodLineItemsExtensionRepository;
 import org.siglus.siglusapi.repository.PodLineItemsRepository;
 import org.siglus.siglusapi.repository.PodSubDraftRepository;
 import org.siglus.siglusapi.repository.SiglusLocalIssueVoucherRepository;
@@ -65,6 +67,8 @@ public class SiglusLocalIssueVoucherService {
   private final SiglusLocalIssueVoucherRepository localIssueVoucherRepository;
 
   private final PodSubDraftRepository podSubDraftRepository;
+
+  private final PodLineItemsExtensionRepository podLineItemsExtensionRepository;
 
   private final SiglusPodService siglusPodService;
 
@@ -99,7 +103,7 @@ public class SiglusLocalIssueVoucherService {
         .findByOrderCodeAndProgramIdAndRequestingFacilityIdAndSupplyingFacilityId(
             dto.getOrderCode(), dto.getProgramId(), dto.getRequestingFacilityId(), dto.getSupplyingFacilityId());
     if (orderCode.contains(dto.getOrderCode()) || !localIssueVouchers.isEmpty()) {
-      throw new BusinessDataException(new Message(ERROR_ORDER_CODE_EXISTS), "order code already exists");
+      throw new BusinessDataException(new Message(ERROR_ORDER_CODE_EXISTS));
     }
   }
 
@@ -148,8 +152,7 @@ public class SiglusLocalIssueVoucherService {
 
   private void checkIfSubDraftsOversize(int subDraftsQuantity) {
     if (subDraftsQuantity > SUB_DRAFTS_LIMITATION - 1) {
-      throw new BusinessDataException(new Message(ERROR_LOCAL_ISSUE_VOUCHER_SUB_DRAFTS_MORE_THAN_TEN),
-          "subDrafts are more than limitation");
+      throw new BusinessDataException(new Message(ERROR_LOCAL_ISSUE_VOUCHER_SUB_DRAFTS_MORE_THAN_TEN));
     }
   }
 
@@ -166,7 +169,7 @@ public class SiglusLocalIssueVoucherService {
     siglusPodService.updateSubDraft(request, subDraftId);
   }
 
-  public void deleteSubDraft(UUID podId, UUID subDraftId) {
+  public void clearFillingPage(UUID podId, UUID subDraftId) {
     siglusPodService.deleteSubDraft(podId, subDraftId);
   }
 
@@ -194,5 +197,28 @@ public class SiglusLocalIssueVoucherService {
               Collectors.toList());
     }
     return allProducts;
+  }
+
+  @Transactional
+  public void deleteSubDraft(UUID podId, UUID subDraftId) {
+    siglusPodService.deleteSubDraft(podId, subDraftId);
+    log.info("delete record from podLineItemsExtension with subDraft id: {}", subDraftId);
+    podLineItemsExtensionRepository.deleteAllBySubDraftId(subDraftId);
+    log.info("delete subDraft with id: {}", subDraftId);
+    podSubDraftRepository.delete(subDraftId);
+    PodSubDraft podSubDraft = podSubDraftRepository.findOne(subDraftId);
+    resetSubDraftNumber(podId, podSubDraft);
+  }
+
+  @Transactional
+  public void resetSubDraftNumber(UUID podId, PodSubDraft podSubDraft) {
+    List<PodSubDraft> podSubDrafts = podSubDraftRepository.findAllByPodId(podId);
+    List<PodSubDraft> filterSubDrafts = podSubDrafts.stream()
+        .filter(subDraft -> subDraft.getNumber() > podSubDraft.getNumber())
+        .collect(toList());
+    if (!filterSubDrafts.isEmpty()) {
+      filterSubDrafts.forEach(subDraft -> subDraft.setNumber(subDraft.getNumber() - SUB_DRAFTS_INCREMENT));
+      podSubDraftRepository.save(filterSubDrafts);
+    }
   }
 }

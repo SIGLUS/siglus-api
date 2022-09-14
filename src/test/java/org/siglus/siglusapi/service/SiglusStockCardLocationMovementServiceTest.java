@@ -272,7 +272,7 @@ public class SiglusStockCardLocationMovementServiceTest {
         locationCode)).thenReturn(
         Optional.of(200));
     LocationMovementDto locationMovementDto = service.getLocationMovementDto(stockCardId, locationCode);
-    assertThat(locationMovementDto.getLineItems().size()).isEqualTo(10);
+    assertThat(locationMovementDto.getLineItems().size()).isEqualTo(11);
   }
 
   private List<LocationMovementLineItemDto> createLocationMovementLineItemDtos() {

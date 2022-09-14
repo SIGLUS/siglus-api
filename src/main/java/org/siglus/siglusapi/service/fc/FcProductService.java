@@ -28,11 +28,14 @@ import static org.siglus.siglusapi.constant.FieldConstants.IS_TRACER;
 import static org.siglus.siglusapi.constant.FieldConstants.ORDERABLE_ID;
 import static org.siglus.siglusapi.dto.fc.FcIntegrationResultDto.buildResult;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -41,6 +44,8 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.joda.money.CurrencyUnit;
+import org.joda.money.Money;
 import org.openlmis.referencedata.domain.Dispensable;
 import org.openlmis.referencedata.dto.OrderableDto;
 import org.openlmis.referencedata.dto.ProgramOrderableDto;
@@ -60,6 +65,7 @@ import org.siglus.siglusapi.dto.TradeItemDto;
 import org.siglus.siglusapi.dto.fc.FcIntegrationResultBuildDto;
 import org.siglus.siglusapi.dto.fc.FcIntegrationResultDto;
 import org.siglus.siglusapi.dto.fc.ProductInfoDto;
+import org.siglus.siglusapi.dto.fc.ProductPriceDto;
 import org.siglus.siglusapi.dto.fc.ResponseBaseDto;
 import org.siglus.siglusapi.repository.BasicProductCodeRepository;
 import org.siglus.siglusapi.repository.ProgramOrderablesExtensionRepository;
@@ -75,6 +81,7 @@ import org.siglus.siglusapi.util.FcUtil;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
 @Service
 @Slf4j
@@ -107,7 +114,8 @@ public class FcProductService implements ProcessDataService {
   private Set<String> basicProductCodes;
 
   @Override
-  public FcIntegrationResultDto processData(List<? extends ResponseBaseDto> products, String startDate,
+  public FcIntegrationResultDto processData(List<? extends ResponseBaseDto> products,
+      String startDate,
       ZonedDateTime previousLastUpdatedAt) {
     log.info("[FC product] synced count: {}", products.size());
     if (products.isEmpty()) {
@@ -154,7 +162,8 @@ public class FcProductService implements ProcessDataService {
           createProgramOrderablesExtension(current, orderableDto.getId());
           createCounter.getAndIncrement();
           FcIntegrationChanges createChanges = FcUtil
-              .buildCreateFcIntegrationChanges(PRODUCT_API, orderableDto.getProductCode(), orderableDto.toString());
+              .buildCreateFcIntegrationChanges(PRODUCT_API, orderableDto.getProductCode(),
+                  orderableDto.toString());
           fcIntegrationChangesList.add(createChanges);
         }
       });
@@ -167,11 +176,13 @@ public class FcProductService implements ProcessDataService {
     log.info("[FC product] process data create: {}, update: {}, error: {}, same: {}",
         createCounter.get(), updateCounter.get(), errorCounter.get(), sameCounter.get());
     return buildResult(
-        new FcIntegrationResultBuildDto(PRODUCT_API, products, startDate, previousLastUpdatedAt, finalSuccess,
+        new FcIntegrationResultBuildDto(PRODUCT_API, products, startDate, previousLastUpdatedAt,
+            finalSuccess,
             createCounter.get(), updateCounter.get(), null, fcIntegrationChangesList));
   }
 
-  private void addProductCodeToProductMap(Map<String, ProductInfoDto> productCodeToProduct, ProductInfoDto product) {
+  private void addProductCodeToProductMap(Map<String, ProductInfoDto> productCodeToProduct,
+      ProductInfoDto product) {
     ProductInfoDto productInMap = productCodeToProduct.get(product.getFnm());
     if (null == productInMap || FcUtil.isActive(product.getStatus())) {
       productCodeToProduct.put(product.getFnm(), product);
@@ -197,7 +208,8 @@ public class FcProductService implements ProcessDataService {
   private void createProgramOrderablesExtension(ProductInfoDto product, UUID orderableId) {
     programOrderablesExtensionRepository.deleteByOrderableId(orderableId);
     Set<ProgramOrderablesExtension> extensions =
-        getProgramOrderablesExtensionsForOneProduct(product, orderableId, realProgramCodeToEntityMap);
+        getProgramOrderablesExtensionsForOneProduct(product, orderableId,
+            realProgramCodeToEntityMap);
     programOrderablesExtensionRepository.save(extensions);
   }
 
@@ -250,7 +262,8 @@ public class FcProductService implements ProcessDataService {
     newOrderable.setNetContent(1L);
     newOrderable.setRoundToZero(false);
     newOrderable.setDispensable(Dispensable.createNew("each"));
-    Map<String, Object> extraData = createOrderableExtraData(product, newOrderable.getProductCode(), basicProductCodes);
+    Map<String, Object> extraData = createOrderableExtraData(product, newOrderable.getProductCode(),
+        basicProductCodes);
     newOrderable.setExtraData(extraData);
     newOrderable.setTradeItemIdentifier(createTradeItem());
     newOrderable.setPrograms(buildProgramOrderableDtos(product));
@@ -275,7 +288,8 @@ public class FcProductService implements ProcessDataService {
   OrderableDto updateOrderable(OrderableDto existed, ProductInfoDto current) {
     existed.setDescription(current.getDescription());
     existed.setFullProductName(current.getFullDescription());
-    Map<String, Object> extraData = createOrderableExtraData(current, existed.getProductCode(), basicProductCodes);
+    Map<String, Object> extraData = createOrderableExtraData(current, existed.getProductCode(),
+        basicProductCodes);
     existed.setExtraData(extraData);
     existed.setPrograms(buildProgramOrderableDtos(current));
     return orderableReferenceDataService.update(existed);
@@ -292,29 +306,34 @@ public class FcProductService implements ProcessDataService {
     StringBuilder updateContent = new StringBuilder();
     StringBuilder originContent = new StringBuilder();
     if (!StringUtils.equals(existed.getDescription(), current.getDescription())) {
-      log.info("[FC product] description different, existed: {}, current: {}", existed.getDescription(),
+      log.info("[FC product] description different, existed: {}, current: {}",
+          existed.getDescription(),
           current.getDescription());
       updateContent.append("description=").append(current.getDescription()).append("; ");
       originContent.append("description=").append(existed.getDescription()).append("; ");
       isSame = false;
     }
     if (!StringUtils.equals(existed.getFullProductName(), current.getFullDescription())) {
-      log.info("[FC product] name different, existed: {}, current: {}", existed.getFullProductName(),
+      log.info("[FC product] name different, existed: {}, current: {}",
+          existed.getFullProductName(),
           current.getFullDescription());
       updateContent.append("productName=").append(current.getFullDescription()).append("; ");
       originContent.append("productName=").append(existed.getFullProductName()).append("; ");
       isSame = false;
     }
     if (isDifferentProductStatus(existed, current)) {
-      log.info("[FC product] status different, existed: {}, current: {}", existed.getExtraData().get(ACTIVE),
+      log.info("[FC product] status different, existed: {}, current: {}",
+          existed.getExtraData().get(ACTIVE),
           current.getStatus());
       updateContent.append("status=").append(current.getStatus()).append("; ");
       originContent.append("status=").append(existed.getExtraData().get(ACTIVE)).append("; ");
       isSame = false;
     }
     if (isDifferentProductTracer(existed, current)) {
-      Object existedIsTracer = existed.getExtraData() == null ? null : existed.getExtraData().get(IS_TRACER);
-      log.info("[FC product] isTracer different, existed: {}, current: {}", existedIsTracer, current.getIsSentinel());
+      Object existedIsTracer =
+          existed.getExtraData() == null ? null : existed.getExtraData().get(IS_TRACER);
+      log.info("[FC product] isTracer different, existed: {}, current: {}", existedIsTracer,
+          current.getIsSentinel());
       updateContent.append("isTracer=").append(current.getIsSentinel()).append("; ");
       originContent.append("isTracer=").append(existedIsTracer).append("; ");
       isSame = false;
@@ -328,11 +347,47 @@ public class FcProductService implements ProcessDataService {
       isSame = false;
       isUpdateProgram = true;
     }
+    if (isDifferentProductPrice(existed, current)) {
+      log.info("[FC product] productPrice different, existed: {}, current: {}",
+          getOriginProductPrice(existed.getPrograms()), getCurrentProductPrice(current.getPrice()));
+      updateContent.append("productPrice=")
+          .append(getCurrentProductPrice(current.getPrice())).append("; ");
+      originContent.append("productPrice=").append(getOriginProductPrice(existed.getPrograms()))
+          .append("; ");
+      isSame = false;
+    }
+
     if (isSame) {
       return null;
     }
-    return FcUtil.buildUpdateFcIntegrationChanges(PRODUCT_API, existed.getProductCode(), updateContent.toString(),
+    return FcUtil.buildUpdateFcIntegrationChanges(PRODUCT_API, existed.getProductCode(),
+        updateContent.toString(),
         originContent.toString(), isUpdateProgram);
+  }
+
+  private boolean isDifferentProductPrice(OrderableDto existed, ProductInfoDto current) {
+    Money currentProductPrice = getCurrentProductPrice(current.getPrice());
+    Money originProductPrice = getOriginProductPrice(existed.getPrograms());
+    Optional<Money> currentMoney = Optional.ofNullable(currentProductPrice);
+    Optional<Money> originMoney = Optional.ofNullable(originProductPrice);
+    return !originMoney.orElse(Money.of(CurrencyUnit.USD, BigDecimal.valueOf(Double.MAX_VALUE)))
+        .isEqual(currentMoney.orElse(Money.of(CurrencyUnit.USD, BigDecimal.valueOf(Double.MAX_VALUE))));
+  }
+
+  private Money getOriginProductPrice(Set<ProgramOrderableDto> programs) {
+    ProgramOrderableDto programOrderableDto = programs.stream().findFirst().orElse(null);
+    return null == programOrderableDto ? null : programOrderableDto.getPricePerPack();
+  }
+
+  public static Money getCurrentProductPrice(List<ProductPriceDto> productPrices) {
+    if (CollectionUtils.isEmpty(productPrices)) {
+      return null;
+    }
+    ProductPriceDto productPriceDto = productPrices.stream()
+        .sorted((p1, p2) -> -p1.getPriceDate().compareTo(p2.getPriceDate()))
+        .findFirst()
+        .orElse(null);
+    return Money.of(CurrencyUnit.USD, productPriceDto.getProductPrice(), RoundingMode.HALF_UP);
   }
 
   private boolean isDifferentProductStatus(OrderableDto existed, ProductInfoDto current) {
@@ -342,12 +397,14 @@ public class FcProductService implements ProcessDataService {
     if (null == existingOrderableStatus && !productActiveStatus) {
       return true;
     }
-    return null != existingOrderableStatus && (boolean) existingOrderableStatus != productActiveStatus;
+    return null != existingOrderableStatus
+        && (boolean) existingOrderableStatus != productActiveStatus;
   }
 
   private boolean isDifferentProductTracer(OrderableDto existed, ProductInfoDto current) {
     Map<String, Object> existedExtraData = existed.getExtraData();
-    boolean tracerData = existedExtraData.get(IS_TRACER) != null && (boolean) existedExtraData.get(IS_TRACER);
+    boolean tracerData =
+        existedExtraData.get(IS_TRACER) != null && (boolean) existedExtraData.get(IS_TRACER);
     return tracerData != current.getIsSentinel();
   }
 
@@ -361,7 +418,8 @@ public class FcProductService implements ProcessDataService {
     if (productPrograms.size() != existingOrderablePrograms.size()) {
       return true;
     }
-    Set<UUID> productProgramIds = productPrograms.stream().map(ProgramOrderableDto::getProgramId).collect(toSet());
+    Set<UUID> productProgramIds = productPrograms.stream().map(ProgramOrderableDto::getProgramId)
+        .collect(toSet());
     Set<UUID> existingOrderableProgramIds = existingOrderablePrograms.stream()
         .map(ProgramOrderableDto::getProgramId)
         .collect(toSet());
@@ -379,7 +437,8 @@ public class FcProductService implements ProcessDataService {
 
   private void createFtap(OrderableDto orderableDto) {
     RequestParameters parameters = RequestParameters.init().set(ACTIVE, true);
-    List<FacilityTypeDto> facilityTypes = facilityTypeReferenceDataService.getPage(parameters).getContent();
+    List<FacilityTypeDto> facilityTypes = facilityTypeReferenceDataService.getPage(parameters)
+        .getContent();
     facilityTypes.forEach(facilityTypeDto -> {
       ApprovedProductDto approvedProductDto = new ApprovedProductDto();
       approvedProductDto.setActive(true);
@@ -397,7 +456,8 @@ public class FcProductService implements ProcessDataService {
 
   private void updateFtap(OrderableDto orderableDto) {
     RequestParameters parameters = RequestParameters.init().set(ORDERABLE_ID, orderableDto.getId());
-    List<ApprovedProductDto> approvedProductDtos = ftapReferenceDataService.getPage(parameters).getContent();
+    List<ApprovedProductDto> approvedProductDtos = ftapReferenceDataService.getPage(parameters)
+        .getContent();
     approvedProductDtos
         .forEach(approvedProductDto -> {
           RequestParameters parametersDelete = RequestParameters.init()

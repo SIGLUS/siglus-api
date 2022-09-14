@@ -13,43 +13,30 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.dto.fc;
+package org.siglus.siglusapi.domain;
 
-import java.util.List;
+import java.util.UUID;
+import javax.persistence.Entity;
+import javax.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Builder.Default;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import lombok.ToString;
+import org.siglus.common.domain.BaseEntity;
 
-@EqualsAndHashCode(callSuper = true)
-@ToString(callSuper = true)
+@Entity
 @Data
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Builder
-public class ProductInfoDto extends ResponseBaseDto {
+@Table(name = "pod_sub_draft_line_items", schema = "siglusintegration")
+public class PodSubDraftLineItem extends BaseEntity {
 
-  private String fnm;
+  private UUID podSubDraftId;
 
-  private String description;
+  private Integer quantityAccepted;
 
-  private String fullDescription;
+  private UUID orderableId;
 
-  private String status;
-
-  private List<AreaDto> areas;
-
-  private String categoryCode;
-
-  private boolean isKit;
-
-  @Default
-  private Boolean isSentinel = false;
-
-  private List<ProductKitDto> productsKits;
-
-  private List<ProductPriceDto> price;
+  private UUID lotId;
 }

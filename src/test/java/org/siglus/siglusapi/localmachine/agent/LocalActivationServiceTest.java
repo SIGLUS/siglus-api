@@ -31,6 +31,7 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.referencedata.domain.Facility;
 import org.openlmis.referencedata.repository.FacilityRepository;
+import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.localmachine.Machine;
 import org.siglus.siglusapi.localmachine.domain.AgentInfo;
 import org.siglus.siglusapi.localmachine.repository.AgentInfoRepository;
@@ -55,7 +56,7 @@ public class LocalActivationServiceTest {
     facility.setId(UUID.randomUUID());
     doNothing().when(onlineWebClient).activate(any());
     given(machine.getMachineId()).willReturn(machineId);
-    given(agentInfoRepository.findFirstByFacilityCode(FACILITY_CODE)).willReturn(null);
+    given(agentInfoRepository.getLocalAgent()).willReturn(null);
     LocalActivationRequest localActivationRequest =
         new LocalActivationRequest(ACTIVATION_CODE, FACILITY_CODE);
     given(facilityRepository.findByCode(localActivationRequest.getFacilityCode()))
@@ -78,7 +79,7 @@ public class LocalActivationServiceTest {
     // given
     LocalActivationRequest localActivationRequest =
         new LocalActivationRequest(ACTIVATION_CODE, FACILITY_CODE);
-    given(agentInfoRepository.findFirstByFacilityCode(FACILITY_CODE)).willReturn(null);
+    given(agentInfoRepository.getLocalAgent()).willReturn(null);
     // when
     boolean needToActivate = localActivationService.checkForActivation(localActivationRequest);
     // then
@@ -90,7 +91,7 @@ public class LocalActivationServiceTest {
     // given
     LocalActivationRequest localActivationRequest =
         new LocalActivationRequest(ACTIVATION_CODE, FACILITY_CODE);
-    given(agentInfoRepository.findFirstByFacilityCode(FACILITY_CODE))
+    given(agentInfoRepository.getLocalAgent())
         .willReturn(
             AgentInfo.builder()
                 .activationCode("another activation code")
@@ -102,13 +103,13 @@ public class LocalActivationServiceTest {
     assertThat(needToActivate).isTrue();
   }
 
-  @Test(expected = IllegalStateException.class)
+  @Test(expected = BusinessDataException.class)
   public void shouldReturnTrueWhenCheckIfNeedToActivateGivenFacilityChanged() {
     // given
     String facilityCode = "facility-code";
     LocalActivationRequest localActivationRequest =
         new LocalActivationRequest(ACTIVATION_CODE, facilityCode);
-    given(agentInfoRepository.findFirstByFacilityCode(facilityCode))
+    given(agentInfoRepository.getLocalAgent())
         .willReturn(
             AgentInfo.builder()
                 .activationCode(localActivationRequest.getActivationCode())
@@ -123,7 +124,7 @@ public class LocalActivationServiceTest {
     // given
     LocalActivationRequest localActivationRequest =
         new LocalActivationRequest(ACTIVATION_CODE, FACILITY_CODE);
-    given(agentInfoRepository.findFirstByFacilityCode(FACILITY_CODE))
+    given(agentInfoRepository.getLocalAgent())
         .willReturn(
             AgentInfo.builder()
                 .activationCode(localActivationRequest.getActivationCode())

@@ -13,43 +13,19 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.dto.fc;
+package org.siglus.siglusapi.localmachine;
 
-import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Builder.Default;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import lombok.ToString;
 
-@EqualsAndHashCode(callSuper = true)
-@ToString(callSuper = true)
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
 @Builder
-public class ProductInfoDto extends ResponseBaseDto {
-
-  private String fnm;
-
-  private String description;
-
-  private String fullDescription;
-
-  private String status;
-
-  private List<AreaDto> areas;
-
-  private String categoryCode;
-
-  private boolean isKit;
-
-  @Default
-  private Boolean isSentinel = false;
-
-  private List<ProductKitDto> productsKits;
-
-  private List<ProductPriceDto> price;
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class ExternalEventDto {
+  Event event;
+  String payloadClassName;
 }
+

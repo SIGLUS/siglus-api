@@ -144,13 +144,20 @@ public abstract class MessageKeys {
   public static final String ERROR_SUBMIT_START_DATE_IS_BEFORE_LAST_SUBMIT_END_DATE = ERROR_PREFIX
       + ".submitStartDate.before.last.submitEndDate";
 
-  //local receive voucher
+  //local issue voucher
   public static final String ERROR_ORDER_CODE_EXISTS =
-      LOCAL_ISSUE_VOUCHER_PREFIX + ".order.code.exists";
+      LOCAL_ISSUE_VOUCHER_PREFIX + ".order.code.already.exists";
   public static final String ERROR_LOCAL_ISSUE_VOUCHER_ID_INVALID =
       LOCAL_ISSUE_VOUCHER_PREFIX + ".local.issue.voucher.id.invalid";
   public static final String ERROR_LOCAL_ISSUE_VOUCHER_SUB_DRAFTS_MORE_THAN_TEN =
       LOCAL_ISSUE_VOUCHER_PREFIX + ".subDrafts.more.than.ten";
+
+  // localmachine
+  public static final String ERROR_INVALID_ACTIVATION_CODE = "localmachine.activationCode.invalid";
+  public static final String ERROR_ACTIVATION_CODE_USED_ALREADY = "localmachine.activationCode.usedAlready";
+  public static final String ERROR_FACILITY_NOT_FOUND = "localmachine.facility.notFound";
+  public static final String ERROR_NOT_ACTIVATED_YET = "localmachine.notActivated";
+  public static final String ERROR_FACILITY_CHANGED = "localmachine.facilityChanged";
 
   // proof of delivery
   public static final String ERROR_NO_POD_OR_POD_LINE_ITEM_FOUND = POD_ERROR_PREFIX

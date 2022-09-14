@@ -93,14 +93,16 @@ public class FcScheduleService {
   @Transactional
   public void syncCmmsScheduler() {
     String redisKey = "syncCmms";
-    processTask(redisKey, () -> syncCmms(LocalDate.now().format(DateTimeFormatter.ofPattern(DATE_FORMAT))));
+    processTask(redisKey,
+        () -> syncCmms(LocalDate.now().format(DateTimeFormatter.ofPattern(DATE_FORMAT))));
   }
 
   @Scheduled(cron = "${fc.cp.cron}", zone = TIME_ZONE_ID)
   @Transactional
   public void syncCpsScheduler() {
     String redisKey = "syncCps";
-    processTask(redisKey, () -> syncCps(LocalDate.now().format(DateTimeFormatter.ofPattern(DATE_FORMAT))));
+    processTask(redisKey,
+        () -> syncCps(LocalDate.now().format(DateTimeFormatter.ofPattern(DATE_FORMAT))));
   }
 
   @Scheduled(cron = "${fc.receiptplan.cron}", zone = TIME_ZONE_ID)
@@ -109,7 +111,8 @@ public class FcScheduleService {
     String redisKey = "syncReceiptPlans";
     processTask(redisKey, () -> {
       ZonedDateTime lastUpdatedAt = fcIntegrationResultService.getLastUpdatedAt(RECEIPT_PLAN_API);
-      siglusReceiptPlanService.processingReceiptPlans(lastUpdatedAt.format(getFormatter(RECEIPT_PLAN_API)));
+      siglusReceiptPlanService.processingReceiptPlans(
+          lastUpdatedAt.format(getFormatter(RECEIPT_PLAN_API)));
     });
   }
 
@@ -216,7 +219,8 @@ public class FcScheduleService {
   }
 
   private DateTimeFormatter getFormatter(String api) {
-    return DateTimeFormatter.ofPattern(getCmmAndCpApis().contains(api) ? MONTH_FORMAT : DATE_FORMAT);
+    return DateTimeFormatter.ofPattern(
+        getCmmAndCpApis().contains(api) ? MONTH_FORMAT : DATE_FORMAT);
   }
 
   private void processAndRecordResult(String api, String date, ZonedDateTime lastUpdatedAt) {
@@ -258,7 +262,8 @@ public class FcScheduleService {
       return;
     }
     FcIntegrationResultDto resultDto = processDataService.processData(result, date, lastUpdatedAt);
-    FcIntegrationResult fcIntegrationResult = fcIntegrationResultService.recordFcIntegrationResult(resultDto);
+    FcIntegrationResult fcIntegrationResult = fcIntegrationResultService.recordFcIntegrationResult(
+        resultDto);
     recordFcIntegrationChanges(fcIntegrationResult, resultDto.getFcIntegrationChanges());
   }
 

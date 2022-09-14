@@ -13,31 +13,22 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.localmachine;
+package org.siglus.siglusapi.dto.fc;
 
-import java.nio.charset.StandardCharsets;
-import lombok.RequiredArgsConstructor;
-import org.siglus.siglusapi.localmachine.eventstore.PayloadSerializer;
-import org.springframework.security.crypto.codec.Base64;
-import org.springframework.stereotype.Component;
+import java.math.BigDecimal;
+import java.time.ZonedDateTime;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-@Component
-@RequiredArgsConstructor
-public class EventSerializer {
-  private final PayloadSerializer payloadSerializer;
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+public class ProductPriceDto {
 
-  public Event dump(Event event) {
-    event.setPayload(payloadSerializer.dump(event.getPayload()));
-    return event;
-  }
+  private BigDecimal productPrice;
 
-  public Event load(Event it) {
-    if (String.class.equals(it.getPayload().getClass())) {
-      Object payload =
-          payloadSerializer.load(
-              Base64.decode(((String) it.getPayload()).getBytes(StandardCharsets.UTF_8)));
-      it.setPayload(payload);
-    }
-    return it;
-  }
+  private ZonedDateTime priceDate;
 }

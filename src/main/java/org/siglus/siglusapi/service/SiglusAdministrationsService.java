@@ -37,6 +37,7 @@ import javax.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections.MapUtils;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
@@ -72,6 +73,7 @@ import org.siglus.siglusapi.repository.AppInfoRepository;
 import org.siglus.siglusapi.repository.CalculatedStockOnHandByLocationRepository;
 import org.siglus.siglusapi.repository.FacilityExtensionRepository;
 import org.siglus.siglusapi.repository.FacilityLocationsRepository;
+import org.siglus.siglusapi.repository.LocationDraftRepository;
 import org.siglus.siglusapi.repository.OrderableRepository;
 import org.siglus.siglusapi.repository.SiglusReportTypeRepository;
 import org.siglus.siglusapi.repository.StockCardExtensionRepository;
@@ -106,6 +108,8 @@ public class SiglusAdministrationsService {
   private final StockCardLineItemRepository stockCardLineItemRepository;
   private final StockCardExtensionRepository stockCardExtensionRepository;
   private final SiglusAuthenticationHelper authenticationHelper;
+  private final LocationDraftRepository locationDraftRepository;
+
   private static final String LOCATION_MANAGEMENT_TAB = "locationManagement";
   private static final String CSV_SUFFIX = ".csv";
   private static final String CONTENT_TYPE = "application/force-download";
@@ -160,6 +164,7 @@ public class SiglusAdministrationsService {
     saveReportTypes(siglusFacilityDto);
     siglusFacilityReferenceDataService.saveFacility(facilityDto);
     FacilityExtension facilityExtension = facilityExtensionRepository.findByFacilityId(facilityId);
+    deleteDraftsWhenToggleLocationManagement(siglusFacilityDto, facilityExtension);
     if (null == facilityExtension) {
       facilityExtension = FacilityExtension
           .builder()
@@ -382,16 +387,14 @@ public class SiglusAdministrationsService {
       } else {
         List<CalculatedStockOnHandByLocation> stockCardIdsHasStockOnHandOnLocation =
             findStockCardIdsHasStockOnHandOnLocation(stockCardIds);
+        deletePreviousSohWithLocation(stockCardIds);
         assignExistLotToVirtualLocations(stockCardIdsHasStockOnHandOnLocation, userId);
       }
     }
   }
 
   private List<CalculatedStockOnHandByLocation> findStockCardIdsHasStockOnHandOnLocation(List<UUID> stockCardIds) {
-    return calculatedStocksOnHandLocationsRepository.findLatestLocationSohByStockCardIds(stockCardIds)
-        .stream().filter(calculatedByLocation -> calculatedByLocation.getStockOnHand() > 0
-            && !LocationConstants.VIRTUAL_LOCATION_CODE.equals(calculatedByLocation.getLocationCode()))
-        .collect(Collectors.toList());
+    return calculatedStocksOnHandLocationsRepository.findLatestLocationSohByStockCardIds(stockCardIds);
   }
 
   private List<CalculatedStockOnHand> findStockCardIdsHasStockOnHandOnLot(List<UUID> stockCardIds) {
@@ -440,19 +443,33 @@ public class SiglusAdministrationsService {
       UUID userId) {
     List<StockCardLocationMovementLineItem> lineItemsWithVirtualLocation = Lists.newArrayList();
     List<CalculatedStockOnHandByLocation> calculatedStockOnHandByLocationList = Lists.newArrayList();
+
+    Set<UUID> stockCardIds = calculatedStocksOnHandLocations.stream()
+        .map(CalculatedStockOnHandByLocation::getStockCardId).collect(Collectors.toSet());
+    List<StockCardLocationMovementLineItem> lineItems = stockCardLocationMovementLineItemRepository
+        .findLatestByStockCardId(stockCardIds);
+    List<UUID> virtualLocationStockcardIds = lineItems.stream()
+        .filter(m -> LocationConstants.VIRTUAL_LOCATION_CODE.equals(m.getSrcLocationCode())
+            && LocationConstants.VIRTUAL_LOCATION_AREA.equals(m.getSrcArea())
+            && LocationConstants.VIRTUAL_LOCATION_CODE.equals(m.getDestLocationCode())
+            && LocationConstants.VIRTUAL_LOCATION_AREA.equals(m.getDestArea()))
+        .map(StockCardLocationMovementLineItem::getStockCardId).collect(Collectors.toList());
+
     calculatedStocksOnHandLocations.forEach(calculatedStocksOnHandLocation -> {
-      StockCardLocationMovementLineItem productLocationMovementLineItem = StockCardLocationMovementLineItem
-          .builder()
-          .stockCardId(calculatedStocksOnHandLocation.getStockCardId())
-          .occurredDate(LocalDate.now())
-          .userId(userId)
-          .quantity(calculatedStocksOnHandLocation.getStockOnHand())
-          .srcLocationCode(calculatedStocksOnHandLocation.getLocationCode())
-          .srcArea(calculatedStocksOnHandLocation.getArea())
-          .destLocationCode(LocationConstants.VIRTUAL_LOCATION_CODE)
-          .destArea(LocationConstants.VIRTUAL_LOCATION_AREA)
-          .build();
-      lineItemsWithVirtualLocation.add(productLocationMovementLineItem);
+      if (!virtualLocationStockcardIds.contains(calculatedStocksOnHandLocation.getStockCardId())) {
+        StockCardLocationMovementLineItem productLocationMovementLineItem = StockCardLocationMovementLineItem
+            .builder()
+            .stockCardId(calculatedStocksOnHandLocation.getStockCardId())
+            .occurredDate(LocalDate.now())
+            .userId(userId)
+            .quantity(calculatedStocksOnHandLocation.getStockOnHand())
+            .srcLocationCode(calculatedStocksOnHandLocation.getLocationCode())
+            .srcArea(calculatedStocksOnHandLocation.getArea())
+            .destLocationCode(LocationConstants.VIRTUAL_LOCATION_CODE)
+            .destArea(LocationConstants.VIRTUAL_LOCATION_AREA)
+            .build();
+        lineItemsWithVirtualLocation.add(productLocationMovementLineItem);
+      }
       CalculatedStockOnHandByLocation calculatedStockOnHandByLocation = CalculatedStockOnHandByLocation
           .builder()
           .stockCardId(calculatedStocksOnHandLocation.getStockCardId())
@@ -488,6 +505,9 @@ public class SiglusAdministrationsService {
             updateCalculateSohList.add(calculatedStockOnHandByLocation);
             removeDuplicateList.add(calculatedStockOnHand);
           }
+          if (calculatedStockOnHand.getStockCardId().equals(calculatedStockOnHandByLocation.getStockCardId())) {
+            removeDuplicateList.add(calculatedStockOnHand);
+          }
         }
       }
       calculatedStockOnHandList.removeAll(removeDuplicateList);
@@ -498,19 +518,39 @@ public class SiglusAdministrationsService {
       Map<UUID, Integer> stockCardIdToSohMap = updateCalculateSohList.stream()
           .collect(Collectors.toMap(CalculatedStockOnHandByLocation::getStockCardId,
               CalculatedStockOnHandByLocation::getStockOnHand));
-      List<StockCardLocationMovementLineItem> lineItemByLocation = stockCardLocationMovementLineItemRepository
-          .findPreviousRecordByStockCardId(stockCardIdToSohMap.keySet(), LocalDate.now());
-      List<StockCardLocationMovementLineItem> previousVirtualLocationLineItems = lineItemByLocation.stream()
-          .filter(lineItem ->
-              LocationConstants.VIRTUAL_LOCATION_CODE.equals(lineItem.getSrcLocationCode())
-                  && LocationConstants.VIRTUAL_LOCATION_CODE.equals(lineItem.getDestLocationCode()))
-          .collect(Collectors.toList());
-      previousVirtualLocationLineItems.forEach(lineItem -> {
-        lineItem.setQuantity(stockCardIdToSohMap.get(lineItem.getStockCardId()));
-      });
-      log.info("assign virtual location when enable location; soh update on stockCardLocationMovementLineItem size: {}",
-          updateCalculateSohList.size());
-      stockCardLocationMovementLineItemRepository.save(previousVirtualLocationLineItems);
+      if (MapUtils.isNotEmpty(stockCardIdToSohMap)) {
+        List<StockCardLocationMovementLineItem> lineItemByLocation = stockCardLocationMovementLineItemRepository
+            .findLatestByStockCardId(stockCardIdToSohMap.keySet());
+        List<StockCardLocationMovementLineItem> previousVirtualLocationLineItems = lineItemByLocation.stream()
+            .filter(lineItem ->
+                LocationConstants.VIRTUAL_LOCATION_CODE.equals(lineItem.getDestLocationCode()))
+            .collect(Collectors.toList());
+        previousVirtualLocationLineItems.forEach(lineItem -> {
+          lineItem.setQuantity(stockCardIdToSohMap.get(lineItem.getStockCardId()));
+        });
+        log.info(
+            "assign virtual location when enable location; soh update on stockCardLocationMovementLineItem size: {}",
+            updateCalculateSohList.size());
+        stockCardLocationMovementLineItemRepository.save(previousVirtualLocationLineItems);
+      }
+    }
+  }
+
+  private void deletePreviousSohWithLocation(List<UUID> stockCardIds) {
+    log.info("assignExistLotToVirtualLocations, delete previous calculated soh records, ids: {}", stockCardIds);
+    calculatedStocksOnHandLocationsRepository.deleteByStockCardIdIn(stockCardIds);
+  }
+
+  private void deleteDraftsWhenToggleLocationManagement(SiglusFacilityDto siglusFacilityDto,
+      FacilityExtension facilityExtension) {
+    if (facilityExtension == null || facilityExtension.getEnableLocationManagement() == null) {
+      if (siglusFacilityDto.getEnableLocationManagement()) {
+        log.info("delete location related drafts, facilityId: {}", siglusFacilityDto.getId());
+        locationDraftRepository.deleteLocationRelatedDrafts(siglusFacilityDto.getId());
+      }
+    } else if (facilityExtension.getEnableLocationManagement() != siglusFacilityDto.getEnableLocationManagement()) {
+      log.info("delete location related drafts, facilityId: {}", siglusFacilityDto.getId());
+      locationDraftRepository.deleteLocationRelatedDrafts(siglusFacilityDto.getId());
     }
   }
 }

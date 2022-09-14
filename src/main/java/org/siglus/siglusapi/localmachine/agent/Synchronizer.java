@@ -67,10 +67,7 @@ public class Synchronizer {
     if (CollectionUtils.isEmpty(events)) {
       log.info("pull events got empty");
     }
-    events.forEach(
-        it -> {
-          it.setOnlineWebSynced(true);
-        });
+    events.forEach(it -> it.setOnlineWebSynced(true));
     eventImporter.importEvents(events);
     webClient.confirmReceived(events);
   }
