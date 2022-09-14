@@ -47,4 +47,6 @@ public interface LocalIssueVoucherDraftLineItemRepository extends JpaRepository<
   List<UUID> findUsedOrderableByPodId(@Param("podId") UUID podId);
 
   void deleteByLocalIssueVoucherSubDraftId(UUID subDraftId);
+
+  List<LocalIssueVoucherDraftLineItem> findByLocalIssueVoucherSubDraftId(UUID subDraftId);
 }

@@ -18,45 +18,28 @@ package org.siglus.siglusapi.domain;
 import java.util.UUID;
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.EntityListeners;
 import javax.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.siglus.common.domain.BaseEntity;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import org.siglus.siglusapi.dto.enums.PodSubDraftStatusEnum;
 
 @Entity
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@EntityListeners(AuditingEntityListener.class)
-@Table(name = "local_issue_voucher_draft_line_item", schema = "siglusintegration")
-public class LocalIssueVoucherDraftLineItem extends BaseEntity {
-
-  @Column(nullable = false)
-  private UUID localIssueVoucherSubDraftId;
-
-  @Column(nullable = false)
-  private UUID localIssueVoucherId;
+@Table(name = "local_issue_voucher_sub_draft", schema = "siglusintegration")
+public class LocalIssueVoucherSubDraft extends BaseEntity {
 
   @Column
-  private Integer quantityAccepted;
-
+  private Integer number;
   @Column
-  private Integer quantityrejected;
-
-  @Column(nullable = false)
-  private UUID orderableId;
-
-  @Column
-  private UUID lotId;
-
-  @Column
-  private UUID rejectionReasonId;
-
-  @Column
-  private String notes;
+  private PodSubDraftStatusEnum status;
+  @Column(name = "operatorid")
+  private UUID operatorId;
+  @Column(name = "proofofdeliveryid")
+  private UUID podId;
 }
