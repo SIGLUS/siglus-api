@@ -17,7 +17,6 @@ package org.siglus.siglusapi.service;
 
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_NO_PERIOD_MATCH;
 
-import com.google.common.collect.Lists;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -92,20 +91,20 @@ public class SiglusProcessingPeriodService {
 
   public LocalDate getPreviousPeriodStartDateSinceInitiate(String programCode, UUID facilityId) {
     ProgramDto program = siglusProgramService.getProgramByCode(programCode)
-        .orElseThrow(() -> new NotFoundException("Program code" + programCode + " Not Found"));
+            .orElseThrow(() -> new NotFoundException("Program code" + programCode + " Not Found"));
 
     List<Requisition> requisitions = requisitionRepository.searchRequisitions(
-        null, facilityId, program.getId(), false);
+            null, facilityId, program.getId(), false);
     if (CollectionUtils.isEmpty(requisitions)) {
       return null;
     }
     Set<UUID> startedPeriodIds = requisitions.stream()
-        .map(Requisition::getProcessingPeriodId).collect(Collectors.toSet());
+            .map(Requisition::getProcessingPeriodId).collect(Collectors.toSet());
     List<ProcessingPeriodDto> sortedPeriods = periodReferenceDataService
-        .searchByProgramAndFacility(program.getId(), facilityId)
-        .stream()
-        .sorted(Comparator.comparing(ProcessingPeriodDto::getStartDate))
-        .collect(Collectors.toList());
+            .searchByProgramAndFacility(program.getId(), facilityId)
+            .stream()
+            .sorted(Comparator.comparing(ProcessingPeriodDto::getStartDate))
+            .collect(Collectors.toList());
 
     int lastStartedIndex = -1;
     for (int i = sortedPeriods.size() - 1; i >= 0; i--) {
@@ -247,75 +246,8 @@ public class SiglusProcessingPeriodService {
         }
       }
     }
-    return limitFirstPeriodToOneYear(requisitionPeriods);
-  }
 
-  private List<RequisitionPeriodDto> limitFirstPeriodToOneYear(List<RequisitionPeriodDto> requisitionPeriods) {
-    List<LocalDate> limitPeriodDate = getLimitPeriodDate();
-    LocalDate limitPeriodStartDate = limitPeriodDate.get(0);
-    LocalDate limitPeriodEndDate = limitPeriodDate.get(1);
-    return requisitionPeriods.stream().filter(
-        requisitionPeriod -> !requisitionPeriod.getStartDate().isBefore(limitPeriodStartDate)
-            || !requisitionPeriod.getEndDate().isBefore(limitPeriodEndDate)).collect(Collectors.toList());
-  }
-
-  private List<LocalDate> getLimitPeriodDate() {
-    LocalDate now = LocalDate.now();
-    int nowYear = now.getYear();
-    int nowMonth = now.getMonth().getValue();
-    int nowDayOfMonth = now.getDayOfMonth();
-
-    int nowPeriodStartDateYear;
-    int nowPeriodStartDateMonth;
-    int nowPeriodStartDateDay = 21;
-
-    int nowPeriodEndDateYear;
-    int nowPeriodEndDateMonth;
-    int nowPeriodEndDateDay = 20;
-
-    if (nowDayOfMonth >= 21) {
-      nowPeriodStartDateMonth = nowMonth;
-      nowPeriodEndDateMonth = nowMonth + 1;
-      if (nowPeriodEndDateMonth > 12) {
-        nowPeriodEndDateMonth = 1;
-        nowPeriodEndDateYear = nowYear + 1;
-      } else {
-        nowPeriodEndDateYear = nowYear;
-      }
-      nowPeriodStartDateYear = nowYear;
-    } else {
-      nowPeriodStartDateMonth = nowMonth - 1;
-      nowPeriodEndDateMonth = nowMonth;
-      if (nowPeriodStartDateMonth < 1) {
-        nowPeriodStartDateMonth = 12;
-        nowPeriodStartDateYear = nowYear - 1;
-      } else {
-        nowPeriodStartDateYear = nowYear;
-      }
-      nowPeriodEndDateYear = nowYear;
-    }
-
-    int limitPeriodStartDateYear = nowPeriodStartDateYear - 1;
-    int limitPeriodStartDateMonth = nowPeriodStartDateMonth - 1;
-    int limitPeriodStartDateDay = 21;
-
-    int limitPeriodEndDateYear = nowPeriodEndDateYear - 1;
-    int limitPeriodEndDateMonth = nowPeriodEndDateMonth - 1;
-    int limitPeriodEndDateDay = 20;
-
-    if (limitPeriodStartDateMonth == 0) {
-      limitPeriodStartDateMonth = 12;
-      limitPeriodStartDateYear--;
-    }
-    if (limitPeriodEndDateMonth == 0) {
-      limitPeriodEndDateMonth = 12;
-      limitPeriodEndDateYear--;
-    }
-
-    LocalDate limitPeriodStartDate = LocalDate.of(limitPeriodStartDateYear, limitPeriodStartDateMonth,
-        limitPeriodStartDateDay);
-    LocalDate limitPeriodEndDate = LocalDate.of(limitPeriodEndDateYear, limitPeriodEndDateMonth, limitPeriodEndDateDay);
-    return Lists.newArrayList(limitPeriodStartDate, limitPeriodEndDate);
+    return requisitionPeriods;
   }
 
   private void processingEmergencyRequisitionPeriod(
@@ -347,7 +279,7 @@ public class SiglusProcessingPeriodService {
       RequisitionPeriodDto requisitionPeriod) {
     Requisition firstPreAuthorizeRequisition = preAuthorizeRequisitions.stream().min(
         Comparator.comparing(Requisition::getCreatedDate)).orElseThrow(
-        () -> new NotFoundException("first Requisition Not Found"));
+            () -> new NotFoundException("first Requisition Not Found"));
     requisitionPeriod.setRequisitionId(firstPreAuthorizeRequisition.getId());
     requisitionPeriod.setRequisitionStatus(firstPreAuthorizeRequisition.getStatus());
   }
