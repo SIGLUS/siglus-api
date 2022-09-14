@@ -73,6 +73,7 @@ import org.siglus.siglusapi.repository.AppInfoRepository;
 import org.siglus.siglusapi.repository.CalculatedStockOnHandByLocationRepository;
 import org.siglus.siglusapi.repository.FacilityExtensionRepository;
 import org.siglus.siglusapi.repository.FacilityLocationsRepository;
+import org.siglus.siglusapi.repository.LocationDraftRepository;
 import org.siglus.siglusapi.repository.OrderableRepository;
 import org.siglus.siglusapi.repository.SiglusReportTypeRepository;
 import org.siglus.siglusapi.repository.StockCardExtensionRepository;
@@ -107,6 +108,8 @@ public class SiglusAdministrationsService {
   private final StockCardLineItemRepository stockCardLineItemRepository;
   private final StockCardExtensionRepository stockCardExtensionRepository;
   private final SiglusAuthenticationHelper authenticationHelper;
+  private final LocationDraftRepository locationDraftRepository;
+
   private static final String LOCATION_MANAGEMENT_TAB = "locationManagement";
   private static final String CSV_SUFFIX = ".csv";
   private static final String CONTENT_TYPE = "application/force-download";
@@ -161,6 +164,7 @@ public class SiglusAdministrationsService {
     saveReportTypes(siglusFacilityDto);
     siglusFacilityReferenceDataService.saveFacility(facilityDto);
     FacilityExtension facilityExtension = facilityExtensionRepository.findByFacilityId(facilityId);
+    deleteDraftsWhenToggleLocationManagement(siglusFacilityDto, facilityExtension);
     if (null == facilityExtension) {
       facilityExtension = FacilityExtension
           .builder()
@@ -535,5 +539,18 @@ public class SiglusAdministrationsService {
   private void deletePreviousSohWithLocation(List<UUID> stockCardIds) {
     log.info("assignExistLotToVirtualLocations, delete previous calculated soh records, ids: {}", stockCardIds);
     calculatedStocksOnHandLocationsRepository.deleteByStockCardIdIn(stockCardIds);
+  }
+
+  private void deleteDraftsWhenToggleLocationManagement(SiglusFacilityDto siglusFacilityDto,
+      FacilityExtension facilityExtension) {
+    if (facilityExtension == null || facilityExtension.getEnableLocationManagement() == null) {
+      if (siglusFacilityDto.getEnableLocationManagement()) {
+        log.info("delete location related drafts, facilityId: {}", siglusFacilityDto.getId());
+        locationDraftRepository.deleteLocationRelatedDrafts(siglusFacilityDto.getId());
+      }
+    } else if (facilityExtension.getEnableLocationManagement() != siglusFacilityDto.getEnableLocationManagement()) {
+      log.info("delete location related drafts, facilityId: {}", siglusFacilityDto.getId());
+      locationDraftRepository.deleteLocationRelatedDrafts(siglusFacilityDto.getId());
+    }
   }
 }
