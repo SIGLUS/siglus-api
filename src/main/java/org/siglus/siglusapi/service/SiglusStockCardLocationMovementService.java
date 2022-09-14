@@ -187,13 +187,13 @@ public class SiglusStockCardLocationMovementService {
         .orderableId(orderable.getId())
         .productCode(orderable.getProductCode())
         .displayUnit(orderable.getDispensable().getDisplayUnit())
-        .lotCode(lot.getLotCode())
+        .lotCode(lot == null ? null : lot.getLotCode())
         .program(program.getName())
         .programId(program.getId())
         .locationCode(locationCode)
         .lineItems(locationMovementLineItemDtos)
         .stockOnHand(soh)
-        .expiryDate(lot.getExpirationDate())
+        .expiryDate(lot == null ? null : lot.getExpirationDate())
         .build();
   }
 

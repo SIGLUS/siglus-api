@@ -57,6 +57,7 @@ import lombok.Data;
             + "where\n"
             + "  csohl.row_number = 1\n"
             + "  and csohl.stockonhand > 0\n"
+            + "  and sc.facilityid = :facilityId"
             + "  and (sc.lotid in :lotIds\n"
             + "    or sc.orderableId in (\n"
             + "    select\n"

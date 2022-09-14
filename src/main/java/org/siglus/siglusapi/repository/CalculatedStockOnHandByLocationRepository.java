@@ -40,7 +40,7 @@ public interface CalculatedStockOnHandByLocationRepository extends JpaRepository
     JpaSpecificationExecutor<CalculatedStockOnHandByLocation> {
 
   @Query(name = "LotLocationSoh.findLocationSoh", nativeQuery = true)
-  List<LotLocationSohDto> getLocationSoh(@Param("lotIds") Iterable<UUID> lotIds);
+  List<LotLocationSohDto> getLocationSoh(@Param("lotIds") Iterable<UUID> lotIds, @Param("facilityId") UUID facilityId);
 
   @Query(value = "select * from siglusintegration.calculated_stocks_on_hand_by_location "
       + "where (stockcardid, locationcode, occurreddate) in ("
