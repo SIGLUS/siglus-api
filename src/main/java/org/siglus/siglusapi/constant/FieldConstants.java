@@ -17,7 +17,7 @@ package org.siglus.siglusapi.constant;
 
 public class FieldConstants {
 
-  public FieldConstants() {
+  private FieldConstants() {
   }
 
   public static final String PROGRAM = "program";
