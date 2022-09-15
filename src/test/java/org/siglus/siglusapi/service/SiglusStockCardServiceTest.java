@@ -124,6 +124,8 @@ public class SiglusStockCardServiceTest {
 
   private UUID facilityId;
 
+  private UUID lotId;
+
   private UUID programId;
 
   private static final LocalDate CURRENT_DATE = LocalDate.now();
@@ -181,7 +183,8 @@ public class SiglusStockCardServiceTest {
         .thenReturn(getFromStockCard(stockCardOne));
     LotLocationSohDto locationSohDto =
         LotLocationSohDto.builder().lotId(stockCardOne.getLotId()).locationCode("AA031").stockOnHand(1).build();
-    when(calculatedStockOnHandByLocationRepository.getLocationSoh(any())).thenReturn(newArrayList(locationSohDto));
+    when(calculatedStockOnHandByLocationRepository.getLocationSohByStockCard(stockCardOne.getId())).thenReturn(
+        newArrayList(locationSohDto));
     // when
     StockCardDto stockCardDto = siglusStockCardService.findStockCardWithLocationById(stockCardOne.getId());
     assertEquals(false, stockCardDto.getExtraData().get("locationCode").isEmpty());
@@ -390,6 +393,8 @@ public class SiglusStockCardServiceTest {
         .withCreditReason()
         .build();
     StockCard stockCard = new StockCard();
+    stockCard.setFacilityId(facilityId);
+    stockCard.setLotId(lotId);
     stockCard.setLineItems(Arrays.asList(lineItem1, lineItem2));
     stockCard.setId(UUID.randomUUID());
     lineItem1.setStockCard(stockCard);

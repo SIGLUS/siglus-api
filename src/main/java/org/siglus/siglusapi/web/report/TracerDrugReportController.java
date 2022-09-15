@@ -25,6 +25,8 @@ import static org.springframework.http.HttpHeaders.CONTENT_DISPOSITION;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.text.SimpleDateFormat;
+import java.util.List;
+import java.util.UUID;
 import javax.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.siglus.siglusapi.dto.TracerDrugExportDto;
@@ -34,7 +36,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RequiredArgsConstructor
@@ -51,16 +55,24 @@ public class TracerDrugReportController {
   @Guarded
   public ResponseEntity<String> refresh(String startDate, String endDate) {
     tracerDrugReportService.refreshTracerDrugPersistentData(startDate, endDate);
-    return ResponseEntity.ok("refresh begin");
+    return ResponseEntity.ok("refresh start!");
   }
 
   @PostMapping("/initialize")
   @Guarded
   public ResponseEntity<String> initialize() {
     tracerDrugReportService.initializeTracerDrugPersistentData();
-    return ResponseEntity.ok("initialize begin");
+    return ResponseEntity.ok("initialize start!");
   }
 
+  @PostMapping("/refreshByFacility")
+  @Guarded
+  public ResponseEntity<String> refreshByFacility(@RequestBody List<UUID> facilityIds,
+      @RequestParam String startDate,
+      @RequestParam String endDate) {
+    tracerDrugReportService.refreshTracerDrugPersistentDataByFacility(facilityIds, startDate, endDate);
+    return ResponseEntity.ok("refresh by facility start");
+  }
 
   @GetMapping("/exportFilter")
   public TracerDrugExportDto getTracerDrugExportDto() {

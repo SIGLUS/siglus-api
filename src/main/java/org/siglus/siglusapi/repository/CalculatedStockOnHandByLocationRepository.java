@@ -40,7 +40,10 @@ public interface CalculatedStockOnHandByLocationRepository extends JpaRepository
     JpaSpecificationExecutor<CalculatedStockOnHandByLocation> {
 
   @Query(name = "LotLocationSoh.findLocationSoh", nativeQuery = true)
-  List<LotLocationSohDto> getLocationSoh(@Param("lotIds") Iterable<UUID> lotIds);
+  List<LotLocationSohDto> getLocationSoh(@Param("lotIds") Iterable<UUID> lotIds, @Param("facilityId") UUID facilityId);
+
+  @Query(name = "LotLocationSoh.findLocationSohByStockCard", nativeQuery = true)
+  List<LotLocationSohDto> getLocationSohByStockCard(@Param("stockCardId") UUID stockCardId);
 
   @Query(value = "select * from siglusintegration.calculated_stocks_on_hand_by_location "
       + "where (stockcardid, locationcode, occurreddate) in ("
@@ -67,8 +70,9 @@ public interface CalculatedStockOnHandByLocationRepository extends JpaRepository
       + "                                               first_value(stockonhand)\n"
       + "                 over (partition by (stockcardid, locationcode) order by occurreddate DESC ) as stockonhand\n"
       + "from siglusintegration.calculated_stocks_on_hand_by_location\n"
-      + "where stockcardid = ?1 ", nativeQuery = true)
-  List<CalculatedStockOnHandByLocation> findRecentlyLocationSohByStockCardId(UUID stockCardId);
+      + "where stockcardid in (:stockCardIds) ", nativeQuery = true)
+  List<CalculatedStockOnHandByLocation> findRecentlyLocationSohByStockCardIds(
+          @Param("stockCardIds") Collection<UUID> stockCardIds);
 
 
   // TODO performance
@@ -160,4 +164,7 @@ public interface CalculatedStockOnHandByLocationRepository extends JpaRepository
       @Param("locationCode") String locationCode);
 
   void deleteByStockCardIdIn(@Param("stockCardId") Collection<UUID> stockCardId);
+
+  void deleteAllByIdIn(Collection<UUID> ids);
+
 }

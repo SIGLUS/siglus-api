@@ -187,6 +187,9 @@ public class SiglusPhysicalInventorySubDraftService {
           physicalInventoryLineItemDto.setReasonFreeText(null);
           physicalInventoryLineItemDto.setLocationCode(null);
           physicalInventoryLineItemDto.setArea(null);
+          if (CollectionUtils.isNotEmpty(physicalInventoryLineItemDto.getStockAdjustments())) {
+            physicalInventoryLineItemDto.getStockAdjustments().clear();
+          }
         } else if (needDeleteLineItemIds.contains(physicalInventoryLineItemDto.getId())) {
           iterator.remove();
         }

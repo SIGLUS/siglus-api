@@ -13,22 +13,25 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.repository;
+package org.siglus.siglusapi.dto;
 
 import java.util.List;
 import java.util.UUID;
-import org.openlmis.fulfillment.domain.ProofOfDeliveryLineItem;
-import org.siglus.siglusapi.repository.dto.PodLineItemDto;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.siglus.siglusapi.domain.LocalIssueVoucherDraftLineItem;
+import org.siglus.siglusapi.web.request.OperateTypeEnum;
 
-/**
- * Persistence repository for saving/finding {@link ProofOfDeliveryLineItem}.
- */
-public interface PodLineItemsRepository extends JpaRepository<ProofOfDeliveryLineItem, UUID> {
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+@Data
+public class LocalIssueVoucherSubDraftDto {
 
-  @Query(name = "PodLineItem.findLineItemDtos", nativeQuery = true)
-  List<PodLineItemDto> lineItemDtos(@Param("podId") UUID podId, @Param("orderId") UUID orderId,
-      @Param("requisitionId") UUID requisitionId);
+  private UUID localIssueVoucherId;
+  private UUID localissuevouchersubdriftid;
+  private List<LocalIssueVoucherDraftLineItem> lineItems;
+  private OperateTypeEnum operateType;
 }

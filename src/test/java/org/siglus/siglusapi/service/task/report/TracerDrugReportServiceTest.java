@@ -16,6 +16,7 @@
 package org.siglus.siglusapi.service.task.report;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.siglus.siglusapi.constant.FieldConstants.ALL_GEOGRAPHIC_ZONE;
 import static org.siglus.siglusapi.constant.FieldConstants.CMM;
@@ -32,6 +33,7 @@ import static org.siglus.siglusapi.constant.FieldConstants.REPORT_GENERATED_FOR_
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -73,6 +75,8 @@ public class TracerDrugReportServiceTest {
 
   @Mock
   private SiglusAuthenticationHelper authenticationHelper;
+
+
 
   private final UUID facilityId = UUID.randomUUID();
   private final String dateFormat = "yyyy-MM-dd";
@@ -342,5 +346,37 @@ public class TracerDrugReportServiceTest {
     assertEquals(expectedHeadColumns, headRow);
   }
 
+  @Test
+  public void shouldCallInsertDataWithinSpecifiedTime() {
+    // given
+    when(tracerDrugRepository.insertDataWithinSpecifiedTime(startDate, endDate)).thenReturn(1);
+    // when
+    tracerDrugReportService.refreshTracerDrugPersistentData(startDate, endDate);
+    // then
+    verify(tracerDrugRepository).insertDataWithinSpecifiedTime(startDate, endDate);
+  }
+
+  @Test
+  public void shouldCallInsertDataWithinSpecifiedTimeWithConfiguredStartDate() {
+    // given
+    when(tracerDrugRepository.insertDataWithinSpecifiedTime(startDate, endDate)).thenReturn(1);
+    ReflectionTestUtils.setField(tracerDrugReportService, "tracerDrugInitializeDate", "2021-08-01");
+    // when
+    tracerDrugReportService.initializeTracerDrugPersistentData();
+    // then
+    verify(tracerDrugRepository).insertDataWithinSpecifiedTime("2021-08-01", LocalDate.now().toString());
+  }
+
+  @Test
+  public void shouldCallInsertDataWithinSpecifiedTimeByFacilityIds() {
+    // given
+    List<UUID> facilityIds = Collections.singletonList(facilityId);
+    when(tracerDrugRepository.insertDataWithinSpecifiedTimeByFacilityIds(startDate, endDate, facilityIds))
+        .thenReturn(1);
+    // when
+    tracerDrugReportService.refreshTracerDrugPersistentDataByFacility(facilityIds, startDate, endDate);
+    // then
+    verify(tracerDrugRepository).insertDataWithinSpecifiedTimeByFacilityIds(startDate, endDate, facilityIds);
+  }
 
 }

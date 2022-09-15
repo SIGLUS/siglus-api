@@ -290,6 +290,11 @@ public class FcProductServiceTest {
   @Test
   public void shouldUpdateOrderable() {
     // given
+    //    UUID uuid = UUID.fromString("59aea383-1ff1-4d65-901d-5fbe37e8ecfd");
+    //    Money originProductPrice = getOriginProductPrice(uuid);
+    //    ProductInfoDto product2 = buildProductInfoDto();
+    //    Money currentProductPrice = getCurrentProductPrice(product2.getProductPrices());
+
     OrderableDto orderableDto = new OrderableDto();
     orderableDto.setId(orderableId);
     Map<String, Object> orderableExtraData = newHashMap();
@@ -339,6 +344,15 @@ public class FcProductServiceTest {
     assertEquals(programName, extension.getProgramName());
     assertEquals(realProgramCode, extension.getRealProgramCode());
     assertEquals(realProgramName, extension.getRealProgramName());
+
+    // given
+
+    // when
+
+    // then
+    //    assertNull(getCurrentProductPrice(product.getProductPrices()));
+    //    assertNotEquals(currentProductPrice, originProductPrice);
+
   }
 
   @Test
@@ -426,7 +440,8 @@ public class FcProductServiceTest {
     // given
     ProductInfoDto current = ProductInfoDto.builder().status(STATUS_ACTIVE).build();
     // when
-    Map<String, Object> updatedExtraData = fcProductService.createOrderableExtraData(current, fnm, newHashSet(fnm));
+    Map<String, Object> updatedExtraData = fcProductService.createOrderableExtraData(current, fnm,
+        newHashSet(fnm));
     // then
     assertThat(updatedExtraData.get(ACTIVE)).isNull();
   }
@@ -436,7 +451,8 @@ public class FcProductServiceTest {
     // given
     ProductInfoDto current = ProductInfoDto.builder().status("inactivo").build();
     // when
-    Map<String, Object> updatedExtraData = fcProductService.createOrderableExtraData(current, fnm, newHashSet(fnm));
+    Map<String, Object> updatedExtraData = fcProductService.createOrderableExtraData(current, fnm,
+        newHashSet(fnm));
     // then
     assertThat(updatedExtraData).containsEntry(ACTIVE, false);
   }

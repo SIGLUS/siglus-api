@@ -25,7 +25,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -385,7 +384,7 @@ public class CalculatedStocksOnHandByLocationService {
             .filter(item -> !item.getOccurredDate().isBefore(lineItem.getOccurredDate())
                     && item.getId() != lineItem.getId())
             .filter(item -> {
-              StockCardLineItemExtension extensionForFollowingLine = lineItemIdToExtension.get(lineItem.getId());
+              StockCardLineItemExtension extensionForFollowingLine = lineItemIdToExtension.get(item.getId());
               if (extensionForFollowingLine == null) {
                 return false;
               }
@@ -417,18 +416,15 @@ public class CalculatedStocksOnHandByLocationService {
       List<StockEventLineItemDto> lineItemDtos,
       Map<UUID, List<StockCardLineItem>> stockCardIdToLineItems) {
 
-    Set<UUID> usedIds = new HashSet<>();
-    // run after stock event save, always exist!
     Map<StockCard, List<StockCardLineItem>> stockCardToLineItems = new HashMap<>();
     lineItemDtos.forEach(lineItemDto -> {
       StockCard stockCard = uniKeyToStockCard.get(getUniqueKey(lineItemDto));
       StockCardLineItem lineItem = stockCardIdToLineItems.get(stockCard.getId()).stream()
-          .filter(item -> item.getOccurredDate().equals(lineItemDto.getOccurredDate()))
-          .filter(item -> !usedIds.contains(item.getId()))
-          .sorted(Comparator.comparing(StockCardLineItem::getProcessedDate).reversed())
+          .filter(item -> item.getId().equals(lineItemDto.getId()))
           .findFirst()
-          .orElseThrow(() -> new IllegalArgumentException("can't find target stock card line item"));
-      usedIds.add(lineItem.getId());
+          .orElseThrow(() -> new IllegalArgumentException("can't find target stock card line item "
+                  + lineItemDto.getId()));
+
       if (stockCardToLineItems.containsKey(stockCard)) {
         stockCardToLineItems.get(stockCard).add(lineItem);
       } else {

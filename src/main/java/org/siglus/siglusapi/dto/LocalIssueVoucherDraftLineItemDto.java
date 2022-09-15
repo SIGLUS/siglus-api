@@ -13,22 +13,29 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.repository;
+package org.siglus.siglusapi.dto;
 
-import java.util.List;
 import java.util.UUID;
-import org.openlmis.fulfillment.domain.ProofOfDeliveryLineItem;
-import org.siglus.siglusapi.repository.dto.PodLineItemDto;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
+import lombok.Data;
+import org.openlmis.fulfillment.web.util.ObjectReferenceDto;
+import org.openlmis.fulfillment.web.util.VersionObjectReferenceDto;
 
-/**
- * Persistence repository for saving/finding {@link ProofOfDeliveryLineItem}.
- */
-public interface PodLineItemsRepository extends JpaRepository<ProofOfDeliveryLineItem, UUID> {
+@Data
+public class LocalIssueVoucherDraftLineItemDto {
 
-  @Query(name = "PodLineItem.findLineItemDtos", nativeQuery = true)
-  List<PodLineItemDto> lineItemDtos(@Param("podId") UUID podId, @Param("orderId") UUID orderId,
-      @Param("requisitionId") UUID requisitionId);
+  private UUID localIssueVoucherSubDraftId;
+
+  private UUID localIssueVoucherId;
+
+  private Integer quantityAccepted;
+
+  private Integer quantityrejected;
+
+  private VersionObjectReferenceDto orderable;
+
+  private ObjectReferenceDto lot;
+
+  private UUID rejectionReasonId;
+
+  private String notes;
 }

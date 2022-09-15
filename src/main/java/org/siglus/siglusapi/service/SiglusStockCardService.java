@@ -119,8 +119,8 @@ public class SiglusStockCardService {
       return null;
     }
     StockCardDto aggregateStockCards = findAggregateStockCards(Collections.singletonList(stockCard), true);
-    List<LotLocationSohDto> locationSoh = calculatedStockOnHandByLocationRepository.getLocationSoh(
-        Collections.singletonList(stockCard.getLotId()));
+    List<LotLocationSohDto> locationSoh =
+        calculatedStockOnHandByLocationRepository.getLocationSohByStockCard(stockCardId);
     String locationCodes =
         locationSoh.stream().map(LotLocationSohDto::getLocationCode).collect(Collectors.joining(","));
     if (aggregateStockCards.getExtraData() != null) {

@@ -31,6 +31,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -38,6 +39,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.openlmis.requisition.dto.ReasonType;
+import org.openlmis.stockmanagement.domain.BaseEntity;
 import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.dto.StockCardDto;
 import org.openlmis.stockmanagement.dto.referencedata.FacilityDto;
@@ -102,6 +104,24 @@ public class SiglusStockCardLocationMovementService {
     movementLineItemRepository.save(movementLineItems);
     deleteMovementDraft(movementDto);
     calculatedStocksOnHandByLocationService.calculateStockOnHandByLocationForMovement(movementLineItems);
+    deleteEmptySohVirtualLocaton(movementDto.getFacilityId());
+  }
+
+  private void deleteEmptySohVirtualLocaton(UUID facilityId) {
+    List<UUID> stockCardIds = stockCardRepository.findByFacilityIdIn(facilityId).stream()
+        .map(BaseEntity::getId).collect(Collectors.toList());
+    List<UUID> toBeDeletedCalculatedSohByLocationIds =
+        calculatedStockOnHandByLocationRepository.findByStockCardIdIn(stockCardIds).stream()
+            .filter(
+                e -> e.getStockOnHand() == 0
+                    && Objects.equals(e.getLocationCode(), LocationConstants.VIRTUAL_LOCATION_CODE))
+            .map(org.siglus.common.domain.BaseEntity::getId).collect(Collectors.toList());
+    if (!toBeDeletedCalculatedSohByLocationIds.isEmpty()) {
+      calculatedStockOnHandByLocationRepository.deleteAllByIdIn(toBeDeletedCalculatedSohByLocationIds);
+      log.info("virtual location calculation has been deleted  size : {} ",
+          toBeDeletedCalculatedSohByLocationIds.size());
+    }
+
   }
 
   private void deleteMovementDraft(StockCardLocationMovementDto movementDto) {
@@ -187,13 +207,13 @@ public class SiglusStockCardLocationMovementService {
         .orderableId(orderable.getId())
         .productCode(orderable.getProductCode())
         .displayUnit(orderable.getDispensable().getDisplayUnit())
-        .lotCode(lot.getLotCode())
+        .lotCode(lot == null ? null : lot.getLotCode())
         .program(program.getName())
         .programId(program.getId())
         .locationCode(locationCode)
         .lineItems(locationMovementLineItemDtos)
         .stockOnHand(soh)
-        .expiryDate(lot.getExpirationDate())
+        .expiryDate(lot == null ? null : lot.getExpirationDate())
         .build();
   }
 

@@ -18,15 +18,13 @@ package org.siglus.siglusapi.web;
 import static org.springframework.http.HttpStatus.NO_CONTENT;
 
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 import javax.validation.Valid;
 import lombok.AllArgsConstructor;
-import org.openlmis.fulfillment.web.util.ProofOfDeliveryDto;
 import org.openlmis.referencedata.dto.OrderableDto;
 import org.siglus.siglusapi.dto.LocalIssueVoucherDto;
+import org.siglus.siglusapi.dto.LocalIssueVoucherSubDraftDto;
 import org.siglus.siglusapi.service.SiglusLocalIssueVoucherService;
-import org.siglus.siglusapi.web.request.UpdatePodSubDraftRequest;
 import org.siglus.siglusapi.web.response.PodSubDraftsSummaryResponse;
 import org.siglus.siglusapi.web.response.PodSubDraftsSummaryResponse.SubDraftInfo;
 import org.springframework.http.HttpStatus;
@@ -74,10 +72,8 @@ public class SiglusLocalIssueVoucherController {
   }
 
   @GetMapping("/{id}/subDraft/{subDraftId}")
-  public ProofOfDeliveryDto getSubDraftDetail(@PathVariable("id") UUID podId,
-      @PathVariable(SUB_DRAFT_ID) UUID subDraftId,
-      @RequestParam Set<String> expand) {
-    return localIssueVoucherService.getSubDraftDetail(podId, subDraftId, expand);
+  public LocalIssueVoucherSubDraftDto getSubDraftDetail(@PathVariable(SUB_DRAFT_ID) UUID subDraftId) {
+    return localIssueVoucherService.getSubDraftDetail(subDraftId);
   }
 
   @DeleteMapping("/{id}/subDrafts/{subDraftId}")
@@ -89,14 +85,14 @@ public class SiglusLocalIssueVoucherController {
   @PutMapping("/{id}/subDraft/{subDraftId}")
   @ResponseStatus(NO_CONTENT)
   public void updateSubDraft(@PathVariable(SUB_DRAFT_ID) UUID subDraftId,
-      @Valid @RequestBody UpdatePodSubDraftRequest request) {
+      @Valid @RequestBody LocalIssueVoucherSubDraftDto request) {
     localIssueVoucherService.updateSubDraft(request, subDraftId);
   }
 
   @PostMapping("/{id}/clearSubDraftFillingPage/{subDraftId}")
   @ResponseStatus(NO_CONTENT)
   public void clearFillingPage(@PathVariable("id") UUID podId, @PathVariable(SUB_DRAFT_ID) UUID subDraftId) {
-    localIssueVoucherService.clearFillingPage(podId, subDraftId);
+    localIssueVoucherService.clearFillingPage(subDraftId);
   }
 
   @GetMapping("/availableProduct")

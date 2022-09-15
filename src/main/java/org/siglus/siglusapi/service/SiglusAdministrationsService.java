@@ -446,7 +446,8 @@ public class SiglusAdministrationsService {
 
     Set<UUID> stockCardIds = calculatedStocksOnHandLocations.stream()
         .map(CalculatedStockOnHandByLocation::getStockCardId).collect(Collectors.toSet());
-    List<StockCardLocationMovementLineItem> lineItems = stockCardLocationMovementLineItemRepository
+    List<StockCardLocationMovementLineItem> lineItems;
+    lineItems = stockCardIds.isEmpty() ? Collections.emptyList() : stockCardLocationMovementLineItemRepository
         .findLatestByStockCardId(stockCardIds);
     List<UUID> virtualLocationStockcardIds = lineItems.stream()
         .filter(m -> LocationConstants.VIRTUAL_LOCATION_CODE.equals(m.getSrcLocationCode())
@@ -519,6 +520,7 @@ public class SiglusAdministrationsService {
           .collect(Collectors.toMap(CalculatedStockOnHandByLocation::getStockCardId,
               CalculatedStockOnHandByLocation::getStockOnHand));
       if (MapUtils.isNotEmpty(stockCardIdToSohMap)) {
+        List<StockCardLocationMovementLineItem> updateLineItems = Lists.newArrayList();
         List<StockCardLocationMovementLineItem> lineItemByLocation = stockCardLocationMovementLineItemRepository
             .findLatestByStockCardId(stockCardIdToSohMap.keySet());
         List<StockCardLocationMovementLineItem> previousVirtualLocationLineItems = lineItemByLocation.stream()
@@ -526,12 +528,23 @@ public class SiglusAdministrationsService {
                 LocationConstants.VIRTUAL_LOCATION_CODE.equals(lineItem.getDestLocationCode()))
             .collect(Collectors.toList());
         previousVirtualLocationLineItems.forEach(lineItem -> {
-          lineItem.setQuantity(stockCardIdToSohMap.get(lineItem.getStockCardId()));
+          StockCardLocationMovementLineItem updateLineItem = StockCardLocationMovementLineItem
+              .builder()
+              .stockCardId(lineItem.getStockCardId())
+              .occurredDate(LocalDate.now())
+              .userId(lineItem.getUserId())
+              .quantity(stockCardIdToSohMap.get(lineItem.getStockCardId()))
+              .srcLocationCode(LocationConstants.VIRTUAL_LOCATION_CODE)
+              .srcArea(LocationConstants.VIRTUAL_LOCATION_AREA)
+              .destLocationCode(LocationConstants.VIRTUAL_LOCATION_CODE)
+              .destArea(LocationConstants.VIRTUAL_LOCATION_AREA)
+              .build();
+          updateLineItems.add(updateLineItem);
         });
         log.info(
             "assign virtual location when enable location; soh update on stockCardLocationMovementLineItem size: {}",
             updateCalculateSohList.size());
-        stockCardLocationMovementLineItemRepository.save(previousVirtualLocationLineItems);
+        stockCardLocationMovementLineItemRepository.save(updateLineItems);
       }
     }
   }
