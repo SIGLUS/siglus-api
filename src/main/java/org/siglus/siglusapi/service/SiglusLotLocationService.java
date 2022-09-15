@@ -129,6 +129,9 @@ public class SiglusLotLocationService {
     } else {
       stockCardList = stockCardRepository.findByOrderableIdInAndFacilityId(orderableIds, facilityId);
     }
+    if (stockCardList.isEmpty()) {
+      return Collections.emptyList();
+    }
     Map<UUID, StockCard> stockCardIdToStockCard = Maps.uniqueIndex(stockCardList, StockCard::getId);
     boolean needInitiallyMoveProduct = stockCardLocationMovementService.canInitialMoveProduct(facilityId)
             .isNeedInitiallyMoveProduct();
