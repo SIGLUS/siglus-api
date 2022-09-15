@@ -161,4 +161,7 @@ public interface CalculatedStockOnHandByLocationRepository extends JpaRepository
       @Param("locationCode") String locationCode);
 
   void deleteByStockCardIdIn(@Param("stockCardId") Collection<UUID> stockCardId);
+
+  void deleteAllByIdIn(Collection<UUID> ids);
+
 }

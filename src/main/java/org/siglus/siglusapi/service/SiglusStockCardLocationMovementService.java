@@ -110,14 +110,16 @@ public class SiglusStockCardLocationMovementService {
   private void deleteEmptySohVirtualLocaton(UUID facilityId) {
     List<UUID> stockCardIds = stockCardRepository.findByFacilityIdIn(facilityId).stream()
         .map(BaseEntity::getId).collect(Collectors.toList());
-    List<UUID> toBeDeletedStockCardIds = calculatedStockOnHandByLocationRepository.findByStockCardIdIn(stockCardIds)
-        .stream().filter(
-            e -> e.getStockOnHand() == 0 && Objects.equals(e.getLocationCode(),
-                LocationConstants.VIRTUAL_LOCATION_CODE))
-        .map(CalculatedStockOnHandByLocation::getStockCardId).collect(Collectors.toList());
-    if (!toBeDeletedStockCardIds.isEmpty()) {
-      calculatedStockOnHandByLocationRepository.deleteByStockCardIdIn(toBeDeletedStockCardIds);
-      log.info("virtual location calculation has been deleted  size : {} ", toBeDeletedStockCardIds.size());
+    List<UUID> toBeDeletedCalculatedSohByLocationIds =
+        calculatedStockOnHandByLocationRepository.findByStockCardIdIn(stockCardIds).stream()
+            .filter(
+                e -> e.getStockOnHand() == 0
+                    && Objects.equals(e.getLocationCode(), LocationConstants.VIRTUAL_LOCATION_CODE))
+            .map(org.siglus.common.domain.BaseEntity::getId).collect(Collectors.toList());
+    if (!toBeDeletedCalculatedSohByLocationIds.isEmpty()) {
+      calculatedStockOnHandByLocationRepository.deleteAllByIdIn(toBeDeletedCalculatedSohByLocationIds);
+      log.info("virtual location calculation has been deleted  size : {} ",
+          toBeDeletedCalculatedSohByLocationIds.size());
     }
 
   }
