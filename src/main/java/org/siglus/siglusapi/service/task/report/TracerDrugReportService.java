@@ -52,6 +52,7 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletResponse;
+import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -86,6 +87,7 @@ public class TracerDrugReportService {
   @Value("${dateFormat}")
   private String dateFormat;
 
+  @Transactional
   @SneakyThrows
   @Async
   public void refreshTracerDrugPersistentData(String startDate, String endDate) {
@@ -94,6 +96,7 @@ public class TracerDrugReportService {
     log.info("tracer drug persistentData  refresh. end = " + System.currentTimeMillis());
   }
 
+  @Transactional
   @SneakyThrows
   @Async
   public void refreshTracerDrugPersistentDataByFacility(List<UUID> facilityIds, String startDate, String endDate) {
@@ -102,6 +105,7 @@ public class TracerDrugReportService {
     log.info("tracer drug persistentData  refresh. end = " + System.currentTimeMillis());
   }
 
+  @Transactional
   @SneakyThrows
   @Async
   public void initializeTracerDrugPersistentData() {
