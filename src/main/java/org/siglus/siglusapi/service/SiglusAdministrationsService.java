@@ -446,7 +446,8 @@ public class SiglusAdministrationsService {
 
     Set<UUID> stockCardIds = calculatedStocksOnHandLocations.stream()
         .map(CalculatedStockOnHandByLocation::getStockCardId).collect(Collectors.toSet());
-    List<StockCardLocationMovementLineItem> lineItems = stockCardLocationMovementLineItemRepository
+    List<StockCardLocationMovementLineItem> lineItems;
+    lineItems = stockCardIds.isEmpty() ? Collections.emptyList() : stockCardLocationMovementLineItemRepository
         .findLatestByStockCardId(stockCardIds);
     List<UUID> virtualLocationStockcardIds = lineItems.stream()
         .filter(m -> LocationConstants.VIRTUAL_LOCATION_CODE.equals(m.getSrcLocationCode())
