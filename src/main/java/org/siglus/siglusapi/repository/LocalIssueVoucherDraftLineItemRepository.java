@@ -31,10 +31,10 @@ public interface LocalIssueVoucherDraftLineItemRepository extends JpaRepository<
       + "  siglusintegration.local_issue_voucher_draft_line_items livdli \n"
       + "where\n"
       + "  orderableid in :orderableIds\n"
-      + "  and localissuevoucherid  = :podId\n"
+      + "  and localissuevoucherid  = :localIssueVoucherId\n"
       + "  and localissuevouchersubdraftid  <> :subDraftId", nativeQuery = true)
   List<ProofOfDeliveryLineItem> findDuplicatedOrderableLineItem(@Param("orderableIds") Collection<UUID> orderableIds,
-      @Param("podId") UUID podId, @Param("subDraftId") UUID subDraftId);
+      @Param("localIssueVoucherId") UUID localIssueVoucherId, @Param("subDraftId") UUID subDraftId);
 
   @Query(value = "select\n"
       + "  orderableid\n"

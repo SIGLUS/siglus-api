@@ -37,21 +37,24 @@ import org.openlmis.fulfillment.domain.ProofOfDeliveryLineItem;
 import org.openlmis.fulfillment.service.OrderSearchParams;
 import org.openlmis.fulfillment.web.OrderController;
 import org.openlmis.fulfillment.web.util.BasicOrderDto;
-import org.openlmis.fulfillment.web.util.ProofOfDeliveryDto;
 import org.openlmis.referencedata.dto.OrderableDto;
 import org.siglus.siglusapi.domain.LocalIssueVoucher;
+import org.siglus.siglusapi.domain.LocalIssueVoucherDraftLineItem;
+import org.siglus.siglusapi.domain.LocalIssueVoucherSubDraft;
 import org.siglus.siglusapi.domain.PodSubDraft;
 import org.siglus.siglusapi.dto.LocalIssueVoucherDto;
+import org.siglus.siglusapi.dto.LocalIssueVoucherSubDraftDto;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.dto.enums.PodSubDraftStatusEnum;
 import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.LocalIssueVoucherDraftLineItemRepository;
+import org.siglus.siglusapi.repository.LocalIssueVoucherSubDraftRepository;
 import org.siglus.siglusapi.repository.PodSubDraftRepository;
 import org.siglus.siglusapi.repository.SiglusLocalIssueVoucherRepository;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
-import org.siglus.siglusapi.web.request.UpdatePodSubDraftRequest;
+import org.siglus.siglusapi.web.request.OperateTypeEnum;
 import org.siglus.siglusapi.web.response.PodSubDraftsSummaryResponse;
 import org.siglus.siglusapi.web.response.PodSubDraftsSummaryResponse.SubDraftInfo;
 import org.springframework.data.domain.PageRequest;
@@ -74,6 +77,8 @@ public class SiglusLocalIssueVoucherService {
   private final SiglusPodService siglusPodService;
 
   private final LocalIssueVoucherDraftLineItemRepository localIssueVoucherDraftLineItemRepository;
+
+  private final LocalIssueVoucherSubDraftRepository localIssueVoucherSubDraftRepository;
 
   private final SiglusOrderableService siglusOrderableService;
   private static final Integer SUB_DRAFTS_LIMITATION = 10;
@@ -161,29 +166,51 @@ public class SiglusLocalIssueVoucherService {
     return siglusPodService.getSubDraftSummary(localIssueVoucherId);
   }
 
-  public ProofOfDeliveryDto getSubDraftDetail(UUID podId, UUID subDraftId, Set<String> expand) {
-    return siglusPodService.getSubDraftDetail(podId, subDraftId, expand);
+  public LocalIssueVoucherSubDraftDto getSubDraftDetail(UUID subDraftId) {
+    List<LocalIssueVoucherDraftLineItem> localIssueVoucherDraftLineItems =
+        localIssueVoucherDraftLineItemRepository.findByLocalIssueVoucherSubDraftId(
+            subDraftId);
+    return LocalIssueVoucherSubDraftDto
+        .builder()
+        .lineItems(localIssueVoucherDraftLineItems)
+        .build();
   }
 
-  public void updateSubDraft(UpdatePodSubDraftRequest request, UUID subDraftId) {
-    validateOrderableDuplicated(request, subDraftId);
-    siglusPodService.updateSubDraft(request, subDraftId);
+  @Transactional
+  public void updateSubDraft(LocalIssueVoucherSubDraftDto subDraftDto, UUID subDraftId) {
+    LocalIssueVoucherSubDraft subDraft = localIssueVoucherSubDraftRepository.findOne(subDraftId);
+    checkIfCanOperate(subDraft);
+    validateOrderableDuplicated(subDraftDto, subDraftId);
+    localIssueVoucherDraftLineItemRepository.save(subDraftDto.getLineItems());
+    if (subDraftDto.getOperateType().equals(OperateTypeEnum.SUBMIT)) {
+      subDraft.setStatus(PodSubDraftStatusEnum.SUBMITTED);
+      localIssueVoucherSubDraftRepository.save(subDraft);
+    }
+    if (subDraft.getStatus().equals(PodSubDraftStatusEnum.NOT_YET_STARTED)) {
+      subDraft.setStatus(PodSubDraftStatusEnum.DRAFT);
+      localIssueVoucherSubDraftRepository.save(subDraft);
+    }
   }
 
-  public void clearFillingPage(UUID podId, UUID subDraftId) {
-    siglusPodService.deleteSubDraft(podId, subDraftId);
+  @Transactional
+  public void clearFillingPage(UUID subDraftId) {
+    LocalIssueVoucherSubDraft subDraft = localIssueVoucherSubDraftRepository.findOne(subDraftId);
+    checkIfCanOperate(subDraft);
+    localIssueVoucherDraftLineItemRepository.deleteByLocalIssueVoucherSubDraftId(subDraftId);
+    subDraft.setStatus(PodSubDraftStatusEnum.NOT_YET_STARTED);
+    localIssueVoucherSubDraftRepository.save(subDraft);
   }
 
-  private void validateOrderableDuplicated(UpdatePodSubDraftRequest request, UUID subDraftId) {
-    List<UUID> orderableIds = request
-        .getPodDto()
+  private void validateOrderableDuplicated(LocalIssueVoucherSubDraftDto subDraftDto, UUID subDraftId) {
+    List<UUID> orderableIds = subDraftDto
         .getLineItems()
         .stream()
-        .map(proofOfDeliveryLineItemDto -> proofOfDeliveryLineItemDto.getOrderableIdentity().getId())
+        .map(LocalIssueVoucherDraftLineItem::getOrderableId)
         .collect(Collectors.toList());
-    UUID podId = request.getPodDto().getId();
+    UUID localIssueVoucherId = subDraftDto.getLocalIssueVoucherId();
     List<ProofOfDeliveryLineItem> duplicatedOrderableLineItem =
-        localIssueVoucherDraftLineItemRepository.findDuplicatedOrderableLineItem(orderableIds, podId, subDraftId);
+        localIssueVoucherDraftLineItemRepository
+            .findDuplicatedOrderableLineItem(orderableIds, localIssueVoucherId, subDraftId);
     if (CollectionUtils.isNotEmpty(duplicatedOrderableLineItem)) {
       throw new ValidationMessageException(ERROR_ADDITIONAL_ORDERABLE_DUPLICATED);
     }
@@ -222,6 +249,12 @@ public class SiglusLocalIssueVoucherService {
   private void checkIfCanOperate(PodSubDraft podSubDraft) {
     if (PodSubDraftStatusEnum.SUBMITTED == podSubDraft.getStatus()) {
       throw new BusinessDataException(new Message(ERROR_CANNOT_OPERATE_WHEN_SUB_DRAFT_SUBMITTED), podSubDraft.getId());
+    }
+  }
+
+  public void checkIfCanOperate(LocalIssueVoucherSubDraft subDraft) {
+    if (subDraft.getStatus().equals(PodSubDraftStatusEnum.SUBMITTED)) {
+      throw new BusinessDataException(new Message(ERROR_CANNOT_OPERATE_WHEN_SUB_DRAFT_SUBMITTED), subDraft.getId());
     }
   }
 

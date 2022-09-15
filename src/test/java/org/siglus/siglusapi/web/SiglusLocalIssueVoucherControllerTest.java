@@ -60,7 +60,7 @@ public class SiglusLocalIssueVoucherControllerTest {
   public void shouleDeleteWhenCallByService() {
     controller.clearFillingPage(podId, subDraftId);
 
-    verify(siglusLocalIssueVoucherService).clearFillingPage(podId, subDraftId);
+    verify(siglusLocalIssueVoucherService).clearFillingPage(subDraftId);
   }
 
   @Test
@@ -72,9 +72,9 @@ public class SiglusLocalIssueVoucherControllerTest {
 
   @Test
   public void shouldGetWhenCallByService() {
-    controller.getSubDraftDetail(podId, subDraftId, null);
+    controller.getSubDraftDetail(subDraftId);
 
-    verify(siglusLocalIssueVoucherService).getSubDraftDetail(podId, subDraftId, null);
+    verify(siglusLocalIssueVoucherService).getSubDraftDetail(subDraftId);
   }
 
   @Test
