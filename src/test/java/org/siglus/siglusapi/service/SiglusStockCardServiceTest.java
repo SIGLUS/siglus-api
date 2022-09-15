@@ -183,7 +183,7 @@ public class SiglusStockCardServiceTest {
         .thenReturn(getFromStockCard(stockCardOne));
     LotLocationSohDto locationSohDto =
         LotLocationSohDto.builder().lotId(stockCardOne.getLotId()).locationCode("AA031").stockOnHand(1).build();
-    when(calculatedStockOnHandByLocationRepository.getLocationSoh(newArrayList(lotId), facilityId)).thenReturn(
+    when(calculatedStockOnHandByLocationRepository.getLocationSohByStockCard(stockCardOne.getId())).thenReturn(
         newArrayList(locationSohDto));
     // when
     StockCardDto stockCardDto = siglusStockCardService.findStockCardWithLocationById(stockCardOne.getId());
