@@ -13,5 +13,4 @@ CREATE TABLE siglusintegration.local_issue_voucher_sub_draft
 
 -- Indices -------------------------------------------------------
 
-CREATE UNIQUE INDEX local_issue_voucher_sub_draft_pkey ON siglusintegration.local_issue_voucher_sub_draft (id uuid_ops);
 CREATE UNIQUE INDEX local_issue_voucher_sub_draft_localissuevoucherid_number_idx ON siglusintegration.local_issue_voucher_sub_draft (localissuevoucherid uuid_ops, number int4_ops);
