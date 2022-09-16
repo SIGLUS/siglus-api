@@ -151,6 +151,8 @@ public abstract class MessageKeys {
       LOCAL_ISSUE_VOUCHER_PREFIX + ".local.issue.voucher.id.invalid";
   public static final String ERROR_LOCAL_ISSUE_VOUCHER_SUB_DRAFTS_MORE_THAN_TEN =
       LOCAL_ISSUE_VOUCHER_PREFIX + ".subDrafts.more.than.ten";
+  public static final String ERROR_ID_NOT_MATCH_SUB_DRAFT_ID =
+      LOCAL_ISSUE_VOUCHER_PREFIX + ".local.issue.voucher.id.not.match.subdraft.id";
 
   // localmachine
   public static final String ERROR_INVALID_ACTIVATION_CODE = "localmachine.activationCode.invalid";

@@ -18,12 +18,14 @@ package org.siglus.siglusapi.service;
 import static java.util.stream.Collectors.toList;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_ADDITIONAL_ORDERABLE_DUPLICATED;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_CANNOT_OPERATE_WHEN_SUB_DRAFT_SUBMITTED;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_ID_NOT_MATCH_SUB_DRAFT_ID;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_LOCAL_ISSUE_VOUCHER_ID_INVALID;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_LOCAL_ISSUE_VOUCHER_SUB_DRAFTS_MORE_THAN_TEN;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_NO_POD_SUB_DRAFT_FOUND;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_ORDER_CODE_EXISTS;
 
 import com.google.common.collect.Sets;
+import java.util.InputMismatchException;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -177,27 +179,33 @@ public class SiglusLocalIssueVoucherService {
   }
 
   @Transactional
-  public void updateSubDraft(LocalIssueVoucherSubDraftDto subDraftDto, UUID subDraftId) {
+  public void updateSubDraft(UUID localIssueVoucherId, LocalIssueVoucherSubDraftDto subDraftDto, UUID subDraftId) {
     LocalIssueVoucherSubDraft subDraft = localIssueVoucherSubDraftRepository.findOne(subDraftId);
+    if (!subDraft.getLocalIssueVoucherId().equals(localIssueVoucherId)) {
+      throw new InputMismatchException(ERROR_ID_NOT_MATCH_SUB_DRAFT_ID);
+    }
     checkIfCanOperate(subDraft);
     validateOrderableDuplicated(subDraftDto, subDraftId);
+    log.info("save local issue voucher line items of subdraft {} ,size ",
+        subDraftId, subDraftDto.getLineItems().size());
     localIssueVoucherDraftLineItemRepository.save(subDraftDto.getLineItems());
     if (subDraftDto.getOperateType().equals(OperateTypeEnum.SUBMIT)) {
       subDraft.setStatus(PodSubDraftStatusEnum.SUBMITTED);
-      localIssueVoucherSubDraftRepository.save(subDraft);
-    }
-    if (subDraft.getStatus().equals(PodSubDraftStatusEnum.NOT_YET_STARTED)) {
+    } else {
       subDraft.setStatus(PodSubDraftStatusEnum.DRAFT);
-      localIssueVoucherSubDraftRepository.save(subDraft);
     }
+    log.info("update local issue voucher subdraft {} status as {}", subDraftId, subDraft.getStatus());
+    localIssueVoucherSubDraftRepository.save(subDraft);
   }
 
   @Transactional
   public void clearFillingPage(UUID subDraftId) {
     LocalIssueVoucherSubDraft subDraft = localIssueVoucherSubDraftRepository.findOne(subDraftId);
     checkIfCanOperate(subDraft);
+    log.info("clear local issue voucher subDraft {} all line items", subDraftId);
     localIssueVoucherDraftLineItemRepository.deleteByLocalIssueVoucherSubDraftId(subDraftId);
     subDraft.setStatus(PodSubDraftStatusEnum.NOT_YET_STARTED);
+    log.info("update local issue voucher subdraft {} status as {}", subDraftId, subDraft.getStatus());
     localIssueVoucherSubDraftRepository.save(subDraft);
   }
 

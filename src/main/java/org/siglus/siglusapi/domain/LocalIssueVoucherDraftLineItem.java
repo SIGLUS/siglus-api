@@ -36,16 +36,16 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @Table(name = "local_issue_voucher_draft_line_item", schema = "siglusintegration")
 public class LocalIssueVoucherDraftLineItem extends BaseEntity {
 
-  @Column(nullable = false)
+  @Column(name = "localissuevouchersubdraftid", nullable = false)
   private UUID localIssueVoucherSubDraftId;
 
-  @Column(nullable = false)
+  @Column(name = "localissuevoucherid", nullable = false)
   private UUID localIssueVoucherId;
 
-  @Column
+  @Column(name = "quantityaccepted")
   private Integer quantityAccepted;
 
-  @Column
+  @Column(name = "quantityrejected")
   private Integer quantityrejected;
 
   @Column(nullable = false)
@@ -54,9 +54,18 @@ public class LocalIssueVoucherDraftLineItem extends BaseEntity {
   @Column
   private UUID lotId;
 
-  @Column
+  @Column(name = "rejectionreasonid")
   private UUID rejectionReasonId;
 
   @Column
   private String notes;
+
+  @Column(name = "quantityordered")
+  private Integer quantityOrdered;
+
+  @Column(name = "partialfulfilled")
+  private Integer partialFulfilled;
+
+  @Column(name = "quantityreturned")
+  private Integer quantityReturned;
 }

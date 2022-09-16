@@ -40,6 +40,6 @@ public class LocalIssueVoucherSubDraft extends BaseEntity {
   private PodSubDraftStatusEnum status;
   @Column(name = "operatorid")
   private UUID operatorId;
-  @Column(name = "proofofdeliveryid")
-  private UUID podId;
+  @Column(name = "localissuevoucherid")
+  private UUID localIssueVoucherId;
 }
