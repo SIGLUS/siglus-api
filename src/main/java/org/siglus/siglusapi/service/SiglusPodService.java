@@ -29,6 +29,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -38,33 +39,39 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.Builder;
 import lombok.Data;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.openlmis.fulfillment.domain.ProofOfDeliveryLineItem;
 import org.openlmis.fulfillment.domain.ProofOfDeliveryLineItem.Importer;
 import org.openlmis.fulfillment.domain.ProofOfDeliveryStatus;
 import org.openlmis.fulfillment.web.ProofOfDeliveryController;
+import org.openlmis.fulfillment.web.shipment.ShipmentLineItemDto;
 import org.openlmis.fulfillment.web.util.OrderObjectReferenceDto;
 import org.openlmis.fulfillment.web.util.ProofOfDeliveryDto;
 import org.openlmis.fulfillment.web.util.ProofOfDeliveryLineItemDto;
+import org.openlmis.fulfillment.web.util.ShipmentObjectReferenceDto;
 import org.openlmis.referencedata.domain.Orderable;
 import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.domain.requisition.StatusChange;
 import org.openlmis.requisition.repository.StatusChangeRepository;
 import org.siglus.common.domain.OrderExternal;
 import org.siglus.common.repository.OrderExternalRepository;
+import org.siglus.siglusapi.domain.PodLineItemsByLocation;
 import org.siglus.siglusapi.domain.PodLineItemsExtension;
 import org.siglus.siglusapi.domain.PodSubDraft;
 import org.siglus.siglusapi.domain.ProofsOfDeliveryExtension;
 import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.GeographicZoneDto;
 import org.siglus.siglusapi.dto.Message;
+import org.siglus.siglusapi.dto.PodLineItemWithLocationDto;
 import org.siglus.siglusapi.dto.enums.PodSubDraftStatusEnum;
 import org.siglus.siglusapi.exception.AuthenticationException;
 import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.repository.OrderableRepository;
 import org.siglus.siglusapi.repository.OrdersRepository;
+import org.siglus.siglusapi.repository.PodLineItemsByLocationRepository;
 import org.siglus.siglusapi.repository.PodLineItemsExtensionRepository;
 import org.siglus.siglusapi.repository.PodLineItemsRepository;
 import org.siglus.siglusapi.repository.PodSubDraftRepository;
@@ -80,13 +87,14 @@ import org.siglus.siglusapi.web.request.CreatePodSubDraftRequest;
 import org.siglus.siglusapi.web.request.OperateTypeEnum;
 import org.siglus.siglusapi.web.request.PodExtensionRequest;
 import org.siglus.siglusapi.web.request.UpdatePodSubDraftRequest;
+import org.siglus.siglusapi.web.request.UpdatePodSubDraftWithLocationRequest;
 import org.siglus.siglusapi.web.response.PodExtensionResponse;
 import org.siglus.siglusapi.web.response.PodPrintInfoResponse;
 import org.siglus.siglusapi.web.response.PodPrintInfoResponse.LineItemInfo;
 import org.siglus.siglusapi.web.response.PodSubDraftsSummaryResponse;
 import org.siglus.siglusapi.web.response.PodSubDraftsSummaryResponse.SubDraftInfo;
+import org.siglus.siglusapi.web.response.ProofOfDeliveryWithLocationResponse;
 import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.stereotype.Service;
@@ -94,58 +102,44 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class SiglusPodService {
 
-  @Autowired
-  private SiglusPodFulfillmentService fulfillmentService;
+  private final SiglusPodFulfillmentService fulfillmentService;
 
-  @Autowired
-  private SiglusOrderService siglusOrderService;
+  private final SiglusOrderService siglusOrderService;
 
-  @Autowired
-  private SiglusRequisitionExtensionService siglusRequisitionExtensionService;
+  private final SiglusRequisitionExtensionService siglusRequisitionExtensionService;
 
-  @Autowired
-  private OrderExternalRepository orderExternalRepository;
+  private final OrderExternalRepository orderExternalRepository;
 
-  @Autowired
-  private OrderableRepository orderableRepository;
+  private final OrderableRepository orderableRepository;
 
-  @Autowired
-  private PodSubDraftRepository podSubDraftRepository;
+  private final PodSubDraftRepository podSubDraftRepository;
 
-  @Autowired
-  private PodLineItemsExtensionRepository podLineItemsExtensionRepository;
+  private final PodLineItemsExtensionRepository podLineItemsExtensionRepository;
 
-  @Autowired
-  private SiglusAuthenticationHelper authenticationHelper;
+  private final SiglusAuthenticationHelper authenticationHelper;
 
-  @Autowired
-  private PodLineItemsRepository podLineItemsRepository;
+  private final PodLineItemsRepository podLineItemsRepository;
 
-  @Autowired
-  private ProofOfDeliveryController podController;
+  private final ProofOfDeliveryController podController;
 
-  @Autowired
-  private SiglusNotificationService notificationService;
+  private final SiglusNotificationService notificationService;
 
-  @Autowired
-  private OrdersRepository ordersRepository;
+  private final OrdersRepository ordersRepository;
 
-  @Autowired
-  private SiglusRequisitionRepository siglusRequisitionRepository;
+  private final SiglusRequisitionRepository siglusRequisitionRepository;
 
-  @Autowired
-  private SiglusFacilityReferenceDataService siglusFacilityReferenceDataService;
+  private final SiglusFacilityReferenceDataService siglusFacilityReferenceDataService;
 
-  @Autowired
-  private StatusChangeRepository requisitionStatusChangeRepository;
+  private final StatusChangeRepository requisitionStatusChangeRepository;
 
-  @Autowired
-  private SiglusRequisitionExtensionService requisitionExtensionService;
+  private final SiglusRequisitionExtensionService requisitionExtensionService;
 
-  @Autowired
-  private ProofsOfDeliveryExtensionRepository podExtensionRepository;
+  private final ProofsOfDeliveryExtensionRepository podExtensionRepository;
+
+  private final PodLineItemsByLocationRepository podLineItemsByLocationRepository;
 
   private static final String FILE_NAME_PREFIX_EMERGENCY = "OF.REM.";
   private static final String FILE_NAME_PREFIX_NORMAL = "OF.RNO.";
@@ -171,6 +165,33 @@ public class SiglusPodService {
     return response;
   }
 
+  public ProofOfDeliveryWithLocationResponse getPodWithLocation(UUID id, Set<String> expand) {
+    ProofOfDeliveryWithLocationResponse podWithLocationDto = new ProofOfDeliveryWithLocationResponse();
+    PodExtensionResponse podExtensionResponse = getPodExtensionResponse(id, expand);
+    podWithLocationDto.setPodExtension(podExtensionResponse);
+
+    List<PodLineItemWithLocationDto> podLineItemWithLocationDtos = Lists.newArrayList();
+    ProofOfDeliveryDto podDto = podExtensionResponse.getPodDto();
+    List<Importer> podLineItems = podDto.getLineItems();
+    List<UUID> podLineItemIds = podLineItems.stream().map(Importer::getId).collect(Collectors.toList());
+
+    List<PodLineItemsByLocation> podLineItemsByLocations = podLineItemsByLocationRepository.findByPodLineItemIdIn(
+        podLineItemIds);
+    podLineItemsByLocations.forEach(podByLocation -> {
+      PodLineItemWithLocationDto podLineItemWithLocationDto = new PodLineItemWithLocationDto();
+      podLineItemWithLocationDto.setPodLineItemId(podByLocation.getPodLineItemId());
+      podLineItemWithLocationDto.setLocationCode(podByLocation.getLocationCode());
+      podLineItemWithLocationDto.setArea(podByLocation.getArea());
+      podLineItemWithLocationDto.setQuantityAccepted(podByLocation.getQuantityAccepted());
+      podLineItemWithLocationDtos.add(podLineItemWithLocationDto);
+    });
+
+    if (CollectionUtils.isNotEmpty(podLineItemWithLocationDtos)) {
+      podWithLocationDto.setPodLineItemLocation(podLineItemWithLocationDtos);
+    }
+    return podWithLocationDto;
+  }
+
   public ProofOfDeliveryDto getExpandedPodDtoById(UUID id, Set<String> expand) {
     ProofOfDeliveryDto podDto = fulfillmentService.searchProofOfDelivery(id, expand);
     if (Objects.isNull(podDto)) {
@@ -179,8 +200,7 @@ public class SiglusPodService {
     OrderObjectReferenceDto order = podDto.getShipment().getOrder();
     OrderExternal external = orderExternalRepository.findOne(order.getExternalId());
     UUID requisitionId = external == null ? order.getExternalId() : external.getRequisitionId();
-    order.setRequisitionNumber(
-        siglusRequisitionExtensionService.formatRequisitionNumber(requisitionId));
+    order.setRequisitionNumber(siglusRequisitionExtensionService.formatRequisitionNumber(requisitionId));
     if (CollectionUtils.isNotEmpty(order.getOrderLineItems())) {
       podDto.getShipment().setOrder(siglusOrderService.getExtensionOrder(order));
     }
@@ -225,30 +245,28 @@ public class SiglusPodService {
 
   @Transactional
   public void updateSubDraft(UpdatePodSubDraftRequest request, UUID subDraftId) {
-    PodSubDraft podSubDraft = getPodSubDraft(subDraftId);
-    checkIfCanOperate(podSubDraft);
+    updatePodSubDraft(subDraftId, request.getPodDto(), request.getOperateType());
+  }
 
-    Set<UUID> lineItemIds = getPodLineItemIdsBySubDraftId(subDraftId);
-    List<ProofOfDeliveryLineItem> lineItems = podLineItemsRepository.findAll(lineItemIds);
-
-    List<ProofOfDeliveryLineItem> toBeUpdatedLineItems = buildToBeUpdatedLineItems(
-        request.getPodDto(), lineItems, OperateTypeEnum.getPodSubDraftEnum(request.getOperateType()));
-    log.info("update ProofOfDeliveryLineItem list, subDraftId:{}, lineItemIds:{}", subDraftId, lineItemIds);
-    podLineItemsRepository.save(toBeUpdatedLineItems);
-
-    updateSubDraftStatusAndOperator(podSubDraft, OperateTypeEnum.getPodSubDraftEnum(request.getOperateType()));
+  @Transactional
+  public void updateSubDraftWithLocation(UpdatePodSubDraftWithLocationRequest request, UUID subDraftId) {
+    validateQuantity(request.getPodDto(), request.getOperateType());
+    updatePodSubDraft(subDraftId, request.getPodDto(), request.getOperateType());
+    updatePodSubDraftLocation(request.getPodLineItemLocation());
   }
 
   @Transactional
   public void deleteSubDraft(UUID podId, UUID subDraftId) {
-    PodSubDraft podSubDraft = getPodSubDraft(subDraftId);
-    checkIfCanOperate(podSubDraft);
+    deletePodSubDraft(podId, subDraftId);
+  }
 
+  @Transactional
+  public void deleteSubDraftWithLocation(UUID podId, UUID subDraftId) {
+    deletePodSubDraft(podId, subDraftId);
     Set<UUID> lineItemIds = getPodLineItemIdsBySubDraftId(subDraftId);
-    ProofOfDeliveryDto proofOfDeliveryDto = getPodDtoByPodId(podId);
-    resetLineItems(lineItemIds, proofOfDeliveryDto);
 
-    updateSubDraftStatusAndOperator(podSubDraft, PodSubDraftStatusEnum.NOT_YET_STARTED);
+    log.info("delete pod subdraft by location, podLineItemId: {}", lineItemIds);
+    podLineItemsByLocationRepository.deleteByPodLineItemIdIn(lineItemIds);
   }
 
   @Transactional
@@ -620,6 +638,86 @@ public class SiglusPodService {
         .collect(Collectors.toMap(Orderable::getId, e -> e, (a, b) -> a));
     simpleLineItems.forEach(simpleLineItem -> simpleLineItem.setProductCode(
         productIdToProduct.get(simpleLineItem.getProductId()).getProductCode().toString()));
+  }
+
+  private void updatePodSubDraftLocation(List<PodLineItemWithLocationDto> podLineItemLocationList) {
+    List<UUID> podLineItemIds = podLineItemLocationList.stream().map(PodLineItemWithLocationDto::getPodLineItemId)
+        .filter(Objects::nonNull).collect(Collectors.toList());
+    log.info("delete pod subdraft by location, podLineItemId: {}", podLineItemIds);
+    podLineItemsByLocationRepository.deleteByPodLineItemIdIn(podLineItemIds);
+
+    List<PodLineItemsByLocation> podLineItemsByLocations = Lists.newArrayList();
+    podLineItemLocationList.forEach(podLineItemLocation -> {
+      PodLineItemsByLocation podLineItemsByLocation = PodLineItemsByLocation
+          .builder()
+          .podLineItemId(podLineItemLocation.getPodLineItemId())
+          .locationCode(podLineItemLocation.getLocationCode())
+          .area(podLineItemLocation.getArea())
+          .quantityAccepted(podLineItemLocation.getQuantityAccepted())
+          .build();
+      podLineItemsByLocations.add(podLineItemsByLocation);
+    });
+    log.info("update ProofOfDeliveryLineItem list, save by location, size: {}", podLineItemLocationList.size());
+    podLineItemsByLocationRepository.save(podLineItemsByLocations);
+  }
+
+  private void updatePodSubDraft(UUID subDraftId, ProofOfDeliveryDto podDto, OperateTypeEnum operateType) {
+    PodSubDraft podSubDraft = getPodSubDraft(subDraftId);
+    checkIfCanOperate(podSubDraft);
+    Set<UUID> lineItemIds = getPodLineItemIdsBySubDraftId(subDraftId);
+    List<ProofOfDeliveryLineItem> lineItems = podLineItemsRepository.findAll(lineItemIds);
+
+    List<ProofOfDeliveryLineItem> toBeUpdatedLineItems = buildToBeUpdatedLineItems(
+        podDto, lineItems, OperateTypeEnum.getPodSubDraftEnum(operateType));
+    log.info("update ProofOfDeliveryLineItem list, subDraftId:{}, lineItemIds:{}", subDraftId, lineItemIds);
+    podLineItemsRepository.save(toBeUpdatedLineItems);
+
+    updateSubDraftStatusAndOperator(podSubDraft, OperateTypeEnum.getPodSubDraftEnum(operateType));
+  }
+
+  private void deletePodSubDraft(UUID podId, UUID subDraftId) {
+    PodSubDraft podSubDraft = getPodSubDraft(subDraftId);
+    checkIfCanOperate(podSubDraft);
+
+    Set<UUID> lineItemIds = getPodLineItemIdsBySubDraftId(subDraftId);
+    ProofOfDeliveryDto proofOfDeliveryDto = getPodDtoByPodId(podId);
+    resetLineItems(lineItemIds, proofOfDeliveryDto);
+
+    updateSubDraftStatusAndOperator(podSubDraft, PodSubDraftStatusEnum.NOT_YET_STARTED);
+  }
+
+  private void validateQuantity(ProofOfDeliveryDto podDto, OperateTypeEnum operateType) {
+    if (OperateTypeEnum.SAVE.equals(operateType)) {
+      return;
+    }
+    ShipmentObjectReferenceDto shipment = podDto.getShipment();
+    List<ShipmentLineItemDto> shipmentLineItems = shipment.getLineItems();
+    Map<String, Integer> uniqueKeyToShippedQuantity = new HashMap<>();
+    shipmentLineItems.forEach(shipmentLineItem -> {
+      String key = buildForQuantityShippedKey(shipmentLineItem.getOrderable().getId(), shipmentLineItem.getLotId());
+      uniqueKeyToShippedQuantity.put(key, shipmentLineItem.getQuantityShipped().intValue());
+    });
+
+    Map<String, Integer> uniqueKeyToAcceptedQuantity = new HashMap<>();
+    List<Importer> lineItems = podDto.getLineItems();
+    lineItems.forEach(lineItem -> {
+      String key = buildForQuantityShippedKey(lineItem.getOrderableIdentity().getId(), lineItem.getLotId());
+      if (uniqueKeyToAcceptedQuantity.containsKey(key)) {
+        uniqueKeyToAcceptedQuantity.put(key, uniqueKeyToAcceptedQuantity.get(key) + lineItem.getQuantityAccepted());
+      } else {
+        uniqueKeyToAcceptedQuantity.put(key, lineItem.getQuantityAccepted());
+      }
+    });
+
+    uniqueKeyToAcceptedQuantity.forEach((key, acceptedQuantity) -> {
+      if (acceptedQuantity > uniqueKeyToShippedQuantity.get(key)) {
+        throw new BusinessDataException(new Message(ERROR_PERMISSION_NOT_SUPPORTED), podDto.getId());
+      }
+    });
+  }
+
+  private String buildForQuantityShippedKey(UUID orderableId, UUID lotId) {
+    return orderableId + "&" + lotId;
   }
 
   @Data
