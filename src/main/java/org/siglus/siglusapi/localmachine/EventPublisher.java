@@ -38,17 +38,20 @@ public class EventPublisher {
   private final EventStore eventStore;
   private final ApplicationEventPublisher applicationEventPublisher;
   private final SiglusAuthenticationHelper siglusAuthenticationHelper;
+  private static final ThreadLocal<Boolean> isReplaying = ThreadLocal.withInitial(() -> Boolean.FALSE);
 
   public void emitGroupEvent(String groupId, UUID receiverId, Object payload) {
     Event.EventBuilder eventBuilder = baseEventBuilder(groupId, receiverId, payload);
     eventBuilder.groupSequenceNumber(eventStore.nextGroupSequenceNumber(groupId));
-    eventStore.emit(eventBuilder.build());
+    Event event = eventBuilder.build();
+    doEmit(event);
   }
 
   public void emitNonGroupEvent(Object payload) {
     // the only receiver is online web so don't need to set receiver id
     Event.EventBuilder eventBuilder = baseEventBuilder(null, null, payload);
-    eventStore.emit(eventBuilder.build());
+    Event event = eventBuilder.build();
+    doEmit(event);
   }
 
   @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -57,9 +60,21 @@ public class EventPublisher {
       log.info("event {} is relayed already locally, skip", event.getId());
       return;
     }
-    applicationEventPublisher.publishEvent(event.getPayload());
+    isReplaying.set(Boolean.TRUE);
+    try {
+      applicationEventPublisher.publishEvent(event.getPayload());
+    } finally {
+      isReplaying.remove();
+    }
     event.setLocalReplayed(true);
     eventStore.confirmReplayed(event);
+  }
+
+  private void doEmit(Event event) {
+    if (isReplaying.get()) {
+      throw new IllegalStateException("emit event when replaying is not allowed");
+    }
+    eventStore.emit(event);
   }
 
   private Event.EventBuilder baseEventBuilder(String groupId, UUID receiverId, Object payload) {
