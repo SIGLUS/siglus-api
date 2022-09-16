@@ -19,11 +19,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import lombok.Data;
-import org.siglus.siglusapi.domain.LocalIssueVoucherDraftLineItem;
+import org.siglus.siglusapi.domain.LocalIssueVoucherSubDraftLineItem;
 import org.springframework.beans.BeanUtils;
 
 @Data
-public class LocalIssueVoucherDraftLineItemDto {
+public class LocalIssueVoucherSubDraftLineItemDto {
 
   private UUID id;
 
@@ -49,25 +49,25 @@ public class LocalIssueVoucherDraftLineItemDto {
 
   private Integer quantityReturned;
 
-  public static List<LocalIssueVoucherDraftLineItem> to(
-      List<LocalIssueVoucherDraftLineItemDto> localIssueVoucherSubDraftDtos) {
-    List<LocalIssueVoucherDraftLineItem> localIssueVoucherDraftLineItems = new ArrayList<>();
-    localIssueVoucherSubDraftDtos.forEach(localIssueVoucherDraftLineItemDto -> {
-      LocalIssueVoucherDraftLineItem localIssueVoucherDraftLineItem = new LocalIssueVoucherDraftLineItem();
-      BeanUtils.copyProperties(localIssueVoucherDraftLineItemDto, localIssueVoucherDraftLineItem);
+  public static List<LocalIssueVoucherSubDraftLineItem> to(
+      List<LocalIssueVoucherSubDraftLineItemDto> localIssueVoucherSubDraftDtos) {
+    List<LocalIssueVoucherSubDraftLineItem> localIssueVoucherDraftLineItems = new ArrayList<>();
+    localIssueVoucherSubDraftDtos.forEach(localIssueVoucherSubDraftLineItemDto -> {
+      LocalIssueVoucherSubDraftLineItem localIssueVoucherDraftLineItem = new LocalIssueVoucherSubDraftLineItem();
+      BeanUtils.copyProperties(localIssueVoucherSubDraftLineItemDto, localIssueVoucherDraftLineItem);
       localIssueVoucherDraftLineItems.add(localIssueVoucherDraftLineItem);
     });
     return localIssueVoucherDraftLineItems;
   }
 
-  public static List<LocalIssueVoucherDraftLineItemDto> from(
-      List<LocalIssueVoucherDraftLineItem> localIssueVoucherDraftLineItems) {
-    List<LocalIssueVoucherDraftLineItemDto> localIssueVoucherDraftLineItemDtos = new ArrayList<>();
+  public static List<LocalIssueVoucherSubDraftLineItemDto> from(
+      List<LocalIssueVoucherSubDraftLineItem> localIssueVoucherDraftLineItems) {
+    List<LocalIssueVoucherSubDraftLineItemDto> localIssueVoucherSubDraftLineItemDtos = new ArrayList<>();
     localIssueVoucherDraftLineItems.forEach(localIssueVoucherDraftLineItem -> {
-      LocalIssueVoucherDraftLineItemDto localIssueVoucherDraftLineItemDto = new LocalIssueVoucherDraftLineItemDto();
+      LocalIssueVoucherSubDraftLineItemDto localIssueVoucherSubDraftLineItemDto = new LocalIssueVoucherSubDraftLineItemDto();
       BeanUtils.copyProperties(localIssueVoucherDraftLineItem, localIssueVoucherDraftLineItem);
-      localIssueVoucherDraftLineItemDtos.add(localIssueVoucherDraftLineItemDto);
+      localIssueVoucherSubDraftLineItemDtos.add(localIssueVoucherSubDraftLineItemDto);
     });
-    return localIssueVoucherDraftLineItemDtos;
+    return localIssueVoucherSubDraftLineItemDtos;
   }
 }

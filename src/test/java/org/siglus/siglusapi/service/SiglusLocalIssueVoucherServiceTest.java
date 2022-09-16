@@ -44,10 +44,10 @@ import org.openlmis.fulfillment.service.OrderSearchParams;
 import org.openlmis.fulfillment.web.OrderController;
 import org.openlmis.fulfillment.web.util.BasicOrderDto;
 import org.siglus.siglusapi.domain.LocalIssueVoucher;
-import org.siglus.siglusapi.domain.LocalIssueVoucherDraftLineItem;
+import org.siglus.siglusapi.domain.LocalIssueVoucherSubDraftLineItem;
 import org.siglus.siglusapi.domain.LocalIssueVoucherSubDraft;
 import org.siglus.siglusapi.domain.PodSubDraft;
-import org.siglus.siglusapi.dto.LocalIssueVoucherDraftLineItemDto;
+import org.siglus.siglusapi.dto.LocalIssueVoucherSubDraftLineItemDto;
 import org.siglus.siglusapi.dto.LocalIssueVoucherDto;
 import org.siglus.siglusapi.dto.LocalIssueVoucherSubDraftDto;
 import org.siglus.siglusapi.dto.enums.PodSubDraftStatusEnum;
@@ -130,14 +130,14 @@ public class SiglusLocalIssueVoucherServiceTest {
     LocalIssueVoucherSubDraftDto subDraftDto = new LocalIssueVoucherSubDraftDto();
     subDraftDto.setOperateType(OperateTypeEnum.SAVE);
     subDraftDto.setLocalIssueVoucherId(localIssueVoucherId);
-    subDraftDto.setLocalissuevouchersubdriftid(localIssueVoucherSubDraftId);
-    LocalIssueVoucherDraftLineItemDto localIssueVoucherDraftLineItem = new LocalIssueVoucherDraftLineItemDto();
-    localIssueVoucherDraftLineItem.setOrderableId(orderableId);
-    subDraftDto.setLineItems(newArrayList(localIssueVoucherDraftLineItem));
+    subDraftDto.setLocalIssueVoucherSubDraftId(localIssueVoucherSubDraftId);
+    LocalIssueVoucherSubDraftLineItemDto localIssueVoucherSubDraftLineItem = new LocalIssueVoucherSubDraftLineItemDto();
+    localIssueVoucherSubDraftLineItem.setOrderableId(orderableId);
+    subDraftDto.setLineItems(newArrayList(localIssueVoucherSubDraftLineItem));
     //when
     when(localIssueVoucherSubDraftRepository.findOne(subDraftId)).thenReturn(subDraft);
     when(localIssueVoucherDraftLineItemRepository.save(
-        LocalIssueVoucherDraftLineItemDto.to(subDraftDto.getLineItems()))).thenReturn(null);
+        LocalIssueVoucherSubDraftLineItemDto.to(subDraftDto.getLineItems()))).thenReturn(null);
     when(localIssueVoucherDraftLineItemRepository.findDuplicatedOrderableLineItem(newArrayList(orderableId),
         localIssueVoucherId, localIssueVoucherSubDraftId)).thenReturn(null);
     service.updateSubDraft(localIssueVoucherId, subDraftDto, subDraftId);
@@ -155,14 +155,14 @@ public class SiglusLocalIssueVoucherServiceTest {
     LocalIssueVoucherSubDraftDto subDraftDto = new LocalIssueVoucherSubDraftDto();
     subDraftDto.setOperateType(OperateTypeEnum.SUBMIT);
     subDraftDto.setLocalIssueVoucherId(localIssueVoucherId);
-    subDraftDto.setLocalissuevouchersubdriftid(localIssueVoucherSubDraftId);
-    LocalIssueVoucherDraftLineItemDto localIssueVoucherDraftLineItemDto = new LocalIssueVoucherDraftLineItemDto();
-    localIssueVoucherDraftLineItemDto.setOrderableId(orderableId);
-    subDraftDto.setLineItems(newArrayList(localIssueVoucherDraftLineItemDto));
+    subDraftDto.setLocalIssueVoucherSubDraftId(localIssueVoucherSubDraftId);
+    LocalIssueVoucherSubDraftLineItemDto localIssueVoucherSubDraftLineItemDto = new LocalIssueVoucherSubDraftLineItemDto();
+    localIssueVoucherSubDraftLineItemDto.setOrderableId(orderableId);
+    subDraftDto.setLineItems(newArrayList(localIssueVoucherSubDraftLineItemDto));
     //when
     when(localIssueVoucherSubDraftRepository.findOne(subDraftId)).thenReturn(subDraft);
     when(localIssueVoucherDraftLineItemRepository.save(
-        LocalIssueVoucherDraftLineItemDto.to(subDraftDto.getLineItems()))).thenReturn(null);
+        LocalIssueVoucherSubDraftLineItemDto.to(subDraftDto.getLineItems()))).thenReturn(null);
     when(localIssueVoucherDraftLineItemRepository.findDuplicatedOrderableLineItem(newArrayList(orderableId),
         localIssueVoucherId, localIssueVoucherSubDraftId)).thenReturn(null);
     service.updateSubDraft(localIssueVoucherId, subDraftDto, subDraftId);
@@ -180,15 +180,15 @@ public class SiglusLocalIssueVoucherServiceTest {
     LocalIssueVoucherSubDraftDto subDraftDto = new LocalIssueVoucherSubDraftDto();
     subDraftDto.setOperateType(OperateTypeEnum.SUBMIT);
     subDraftDto.setLocalIssueVoucherId(localIssueVoucherId);
-    subDraftDto.setLocalissuevouchersubdriftid(localIssueVoucherSubDraftId);
-    LocalIssueVoucherDraftLineItemDto localIssueVoucherDraftLineItemDto = new LocalIssueVoucherDraftLineItemDto();
-    localIssueVoucherDraftLineItemDto.setOrderableId(orderableId);
-    subDraftDto.setLineItems(newArrayList(localIssueVoucherDraftLineItemDto));
+    subDraftDto.setLocalIssueVoucherSubDraftId(localIssueVoucherSubDraftId);
+    LocalIssueVoucherSubDraftLineItemDto localIssueVoucherSubDraftLineItemDto = new LocalIssueVoucherSubDraftLineItemDto();
+    localIssueVoucherSubDraftLineItemDto.setOrderableId(orderableId);
+    subDraftDto.setLineItems(newArrayList(localIssueVoucherSubDraftLineItemDto));
     List<ProofOfDeliveryLineItem> proofOfDeliveryLineItems = buildMockPodLineItems();
     //when
     when(localIssueVoucherSubDraftRepository.findOne(subDraftId)).thenReturn(subDraft);
     when(localIssueVoucherDraftLineItemRepository.save(
-        LocalIssueVoucherDraftLineItemDto.to(subDraftDto.getLineItems()))).thenReturn(null);
+        LocalIssueVoucherSubDraftLineItemDto.to(subDraftDto.getLineItems()))).thenReturn(null);
     when(localIssueVoucherDraftLineItemRepository.findDuplicatedOrderableLineItem(newArrayList(orderableId),
         localIssueVoucherId, subDraftId)).thenReturn(proofOfDeliveryLineItems);
     service.updateSubDraft(localIssueVoucherId, subDraftDto, subDraftId);
@@ -205,15 +205,15 @@ public class SiglusLocalIssueVoucherServiceTest {
     LocalIssueVoucherSubDraftDto subDraftDto = new LocalIssueVoucherSubDraftDto();
     subDraftDto.setOperateType(OperateTypeEnum.SUBMIT);
     subDraftDto.setLocalIssueVoucherId(localIssueVoucherId);
-    subDraftDto.setLocalissuevouchersubdriftid(localIssueVoucherSubDraftId);
-    LocalIssueVoucherDraftLineItemDto localIssueVoucherDraftLineItemDto = new LocalIssueVoucherDraftLineItemDto();
-    localIssueVoucherDraftLineItemDto.setOrderableId(orderableId);
-    subDraftDto.setLineItems(newArrayList(localIssueVoucherDraftLineItemDto));
+    subDraftDto.setLocalIssueVoucherSubDraftId(localIssueVoucherSubDraftId);
+    LocalIssueVoucherSubDraftLineItemDto localIssueVoucherSubDraftLineItemDto = new LocalIssueVoucherSubDraftLineItemDto();
+    localIssueVoucherSubDraftLineItemDto.setOrderableId(orderableId);
+    subDraftDto.setLineItems(newArrayList(localIssueVoucherSubDraftLineItemDto));
     List<ProofOfDeliveryLineItem> proofOfDeliveryLineItems = buildMockPodLineItems();
     //when
     when(localIssueVoucherSubDraftRepository.findOne(subDraftId)).thenReturn(subDraft);
     when(localIssueVoucherDraftLineItemRepository.save(
-        LocalIssueVoucherDraftLineItemDto.to(subDraftDto.getLineItems()))).thenReturn(null);
+        LocalIssueVoucherSubDraftLineItemDto.to(subDraftDto.getLineItems()))).thenReturn(null);
     when(localIssueVoucherDraftLineItemRepository.findDuplicatedOrderableLineItem(newArrayList(orderableId),
         localIssueVoucherId, localIssueVoucherSubDraftId)).thenReturn(proofOfDeliveryLineItems);
     service.updateSubDraft(localIssueVoucherId, subDraftDto, subDraftId);
@@ -231,15 +231,15 @@ public class SiglusLocalIssueVoucherServiceTest {
     LocalIssueVoucherSubDraftDto subDraftDto = new LocalIssueVoucherSubDraftDto();
     subDraftDto.setOperateType(OperateTypeEnum.SUBMIT);
     subDraftDto.setLocalIssueVoucherId(localIssueVoucherId);
-    subDraftDto.setLocalissuevouchersubdriftid(localIssueVoucherSubDraftId);
-    LocalIssueVoucherDraftLineItemDto localIssueVoucherDraftLineItemDto = new LocalIssueVoucherDraftLineItemDto();
-    localIssueVoucherDraftLineItemDto.setOrderableId(orderableId);
-    subDraftDto.setLineItems(newArrayList(localIssueVoucherDraftLineItemDto));
+    subDraftDto.setLocalIssueVoucherSubDraftId(localIssueVoucherSubDraftId);
+    LocalIssueVoucherSubDraftLineItemDto localIssueVoucherSubDraftLineItemDto = new LocalIssueVoucherSubDraftLineItemDto();
+    localIssueVoucherSubDraftLineItemDto.setOrderableId(orderableId);
+    subDraftDto.setLineItems(newArrayList(localIssueVoucherSubDraftLineItemDto));
     List<ProofOfDeliveryLineItem> proofOfDeliveryLineItems = buildMockPodLineItems();
     //when
     when(localIssueVoucherSubDraftRepository.findOne(subDraftId)).thenReturn(subDraft);
     when(localIssueVoucherDraftLineItemRepository.save(
-        LocalIssueVoucherDraftLineItemDto.to(subDraftDto.getLineItems()))).thenReturn(null);
+        LocalIssueVoucherSubDraftLineItemDto.to(subDraftDto.getLineItems()))).thenReturn(null);
     when(localIssueVoucherDraftLineItemRepository.findDuplicatedOrderableLineItem(newArrayList(orderableId),
         localIssueVoucherId, localIssueVoucherSubDraftId)).thenReturn(proofOfDeliveryLineItems);
     service.updateSubDraft(UUID.randomUUID(), subDraftDto, subDraftId);
@@ -258,13 +258,13 @@ public class SiglusLocalIssueVoucherServiceTest {
 
   @Test
   public void shouldGetLineItemWhenCallByService() {
-    LocalIssueVoucherDraftLineItem localIssueVoucherDraftLineItemDto1 = new LocalIssueVoucherDraftLineItem();
-    LocalIssueVoucherDraftLineItem localIssueVoucherDraftLineItemDto2 = new LocalIssueVoucherDraftLineItem();
-    ArrayList<LocalIssueVoucherDraftLineItem> localIssueVoucherDraftLineItemDtos = newArrayList(
-        localIssueVoucherDraftLineItemDto1, localIssueVoucherDraftLineItemDto2);
+    LocalIssueVoucherSubDraftLineItem localIssueVoucherSubDraftLineItemDto1 = new LocalIssueVoucherSubDraftLineItem();
+    LocalIssueVoucherSubDraftLineItem localIssueVoucherSubDraftLineItemDto2 = new LocalIssueVoucherSubDraftLineItem();
+    ArrayList<LocalIssueVoucherSubDraftLineItem> localIssueVoucherSubDraftLineItemDtos = newArrayList(
+        localIssueVoucherSubDraftLineItemDto1, localIssueVoucherSubDraftLineItemDto2);
     //when
     when(localIssueVoucherDraftLineItemRepository.findByLocalIssueVoucherSubDraftId(subDraftId)).thenReturn(
-        localIssueVoucherDraftLineItemDtos);
+        localIssueVoucherSubDraftLineItemDtos);
     LocalIssueVoucherSubDraftDto subDraftDetail = service.getSubDraftDetail(subDraftId);
     //then
     assertEquals(2, subDraftDetail.getLineItems().size());

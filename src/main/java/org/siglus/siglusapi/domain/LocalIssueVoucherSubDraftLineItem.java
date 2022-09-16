@@ -32,8 +32,8 @@ import org.siglus.common.domain.BaseEntity;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "local_issue_voucher_draft_line_item", schema = "siglusintegration")
-public class LocalIssueVoucherDraftLineItem extends BaseEntity {
+@Table(name = "local_issue_voucher_sub_draft_line_items", schema = "siglusintegration")
+public class LocalIssueVoucherSubDraftLineItem extends BaseEntity {
 
   @ManyToOne
   @JoinColumn(nullable = false)

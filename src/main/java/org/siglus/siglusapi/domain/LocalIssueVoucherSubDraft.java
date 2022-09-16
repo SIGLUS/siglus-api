@@ -49,5 +49,5 @@ public class LocalIssueVoucherSubDraft extends BaseEntity {
 
   @LazyCollection(FALSE)
   @OneToMany(cascade = ALL, mappedBy = "localIssueVoucherSubDraft", orphanRemoval = true)
-  private List<LocalIssueVoucherDraftLineItem> lineItems;
+  private List<LocalIssueVoucherSubDraftLineItem> lineItems;
 }

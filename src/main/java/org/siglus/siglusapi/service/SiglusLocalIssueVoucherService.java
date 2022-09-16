@@ -42,9 +42,9 @@ import org.openlmis.fulfillment.web.OrderController;
 import org.openlmis.fulfillment.web.util.BasicOrderDto;
 import org.openlmis.referencedata.dto.OrderableDto;
 import org.siglus.siglusapi.domain.LocalIssueVoucher;
-import org.siglus.siglusapi.domain.LocalIssueVoucherDraftLineItem;
+import org.siglus.siglusapi.domain.LocalIssueVoucherSubDraftLineItem;
 import org.siglus.siglusapi.domain.LocalIssueVoucherSubDraft;
-import org.siglus.siglusapi.dto.LocalIssueVoucherDraftLineItemDto;
+import org.siglus.siglusapi.dto.LocalIssueVoucherSubDraftLineItemDto;
 import org.siglus.siglusapi.dto.LocalIssueVoucherDto;
 import org.siglus.siglusapi.dto.LocalIssueVoucherSubDraftDto;
 import org.siglus.siglusapi.dto.Message;
@@ -205,11 +205,15 @@ public class SiglusLocalIssueVoucherService {
   }
 
   public LocalIssueVoucherSubDraftDto getSubDraftDetail(UUID subDraftId) {
-    List<LocalIssueVoucherDraftLineItem> localIssueVoucherDraftLineItems =
+    List<LocalIssueVoucherSubDraftLineItem> localIssueVoucherSubDraftLineItems =
         localIssueVoucherDraftLineItemRepository.findByLocalIssueVoucherSubDraftId(subDraftId);
     return LocalIssueVoucherSubDraftDto
         .builder()
-        .lineItems(LocalIssueVoucherDraftLineItemDto.from(localIssueVoucherDraftLineItems))
+<<<<<<< HEAD
+        .lineItems(LocalIssueVoucherSubDraftLineItemDto.from(localIssueVoucherDraftLineItems))
+=======
+        .lineItems(localIssueVoucherSubDraftLineItems)
+>>>>>>> ffa19789 ([zhong.zhong] #338 create local issue voucher subDraft line items table)
         .build();
   }
 
@@ -224,7 +228,7 @@ public class SiglusLocalIssueVoucherService {
     log.info("save local issue voucher line items of subdraft {} ,size {}",
         subDraftId, subDraftDto.getLineItems().size());
 
-    localIssueVoucherDraftLineItemRepository.save(LocalIssueVoucherDraftLineItemDto.to(subDraftDto.getLineItems()));
+    localIssueVoucherDraftLineItemRepository.save(LocalIssueVoucherSubDraftLineItemDto.to(subDraftDto.getLineItems()));
     if (subDraftDto.getOperateType().equals(OperateTypeEnum.SUBMIT)) {
       subDraft.setStatus(PodSubDraftStatusEnum.SUBMITTED);
     } else {
@@ -249,7 +253,11 @@ public class SiglusLocalIssueVoucherService {
     List<UUID> orderableIds = subDraftDto
         .getLineItems()
         .stream()
-        .map(LocalIssueVoucherDraftLineItemDto::getOrderableId)
+<<<<<<< HEAD
+        .map(LocalIssueVoucherSubDraftLineItemDto::getOrderableId)
+=======
+        .map(LocalIssueVoucherSubDraftLineItem::getOrderableId)
+>>>>>>> ffa19789 ([zhong.zhong] #338 create local issue voucher subDraft line items table)
         .collect(Collectors.toList());
     UUID localIssueVoucherId = subDraftDto.getLocalIssueVoucherId();
     List<ProofOfDeliveryLineItem> duplicatedOrderableLineItem =
@@ -272,14 +280,12 @@ public class SiglusLocalIssueVoucherService {
   }
 
   @Transactional
-  public void deleteSubDraft(UUID podId, UUID subDraftId) {
+  public void deleteSubDraft(UUID localIssueVoucherId, UUID subDraftId) {
     LocalIssueVoucherSubDraft localIssueVoucherSubDraft = getLocalIssueVoucherSubDraft(subDraftId);
     checkIfCanOperate(localIssueVoucherSubDraft);
-    log.info("delete local issue voucher subDraft line items with subDraft id: {}", subDraftId);
-    localIssueVoucherDraftLineItemRepository.deleteByLocalIssueVoucherSubDraftId(subDraftId);
     log.info("delete subDraft with id: {}", subDraftId);
     localIssueVoucherSubDraftRepository.delete(subDraftId);
-    resetSubDraftNumber(podId, localIssueVoucherSubDraft);
+    resetSubDraftNumber(localIssueVoucherId, localIssueVoucherSubDraft);
   }
 
   private LocalIssueVoucherSubDraft getLocalIssueVoucherSubDraft(UUID subDraftId) {
@@ -312,8 +318,6 @@ public class SiglusLocalIssueVoucherService {
   @Transactional
   public void deleteAllSubDrafts(UUID localIssueVoucherId) {
     validateLocalIssueVoucherId(localIssueVoucherId);
-    log.info("delete all pod subDraft line items with local issue voucher id: {}", localIssueVoucherId);
-    localIssueVoucherDraftLineItemRepository.deleteAllByLocalIssueVoucherId(localIssueVoucherId);
     log.info("delete subDraft with local issue voucher id: {}", localIssueVoucherId);
     localIssueVoucherSubDraftRepository.deleteAllByLocalIssueVoucherId(localIssueVoucherId);
   }

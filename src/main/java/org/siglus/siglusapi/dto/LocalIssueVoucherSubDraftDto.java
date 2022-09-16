@@ -30,7 +30,7 @@ import org.siglus.siglusapi.web.request.OperateTypeEnum;
 public class LocalIssueVoucherSubDraftDto {
 
   private UUID localIssueVoucherId;
-  private UUID localissuevouchersubdriftid;
-  private List<LocalIssueVoucherDraftLineItemDto> lineItems;
+  private UUID localIssueVoucherSubDraftId;
+  private List<LocalIssueVoucherSubDraftLineItemDto> lineItems;
   private OperateTypeEnum operateType;
 }
