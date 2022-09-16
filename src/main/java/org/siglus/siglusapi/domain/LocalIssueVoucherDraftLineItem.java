@@ -18,26 +18,26 @@ package org.siglus.siglusapi.domain;
 import java.util.UUID;
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.EntityListeners;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.siglus.common.domain.BaseEntity;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @Entity
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@EntityListeners(AuditingEntityListener.class)
 @Table(name = "local_issue_voucher_draft_line_item", schema = "siglusintegration")
 public class LocalIssueVoucherDraftLineItem extends BaseEntity {
 
-  @Column(name = "localissuevouchersubdraftid", nullable = false)
-  private UUID localIssueVoucherSubDraftId;
+  @ManyToOne
+  @JoinColumn(nullable = false)
+  private LocalIssueVoucherSubDraft localIssueVoucherSubDraft;
 
   @Column(name = "localissuevoucherid", nullable = false)
   private UUID localIssueVoucherId;

@@ -71,6 +71,12 @@ public class SiglusLocalIssueVoucherController {
     localIssueVoucherService.deleteLocalIssueVoucher(localIssueVoucherId);
   }
 
+
+  @GetMapping("/{id}/subDrafts/merge")
+  public void mergeLocalIssueDrafts(@PathVariable("id") UUID localIssueVoucherId) {
+    localIssueVoucherService.mergeLocalIssueDrafts(localIssueVoucherId);
+  }
+
   @GetMapping("/{id}/subDrafts/{subDraftId}")
   public LocalIssueVoucherSubDraftDto getSubDraftDetail(@PathVariable(SUB_DRAFT_ID) UUID subDraftId) {
     return localIssueVoucherService.getSubDraftDetail(subDraftId);
@@ -81,6 +87,12 @@ public class SiglusLocalIssueVoucherController {
   public void deleteSubDraft(@PathVariable("id") UUID localIssueVoucherId,
       @PathVariable(SUB_DRAFT_ID) UUID subDraftId) {
     localIssueVoucherService.deleteSubDraft(localIssueVoucherId, subDraftId);
+  }
+
+
+  @DeleteMapping("/{id}/subDrafts")
+  public void deleteAllSubDrafts(@PathVariable("id") UUID localIssueVoucherId) {
+    localIssueVoucherService.deleteAllSubDrafts(localIssueVoucherId);
   }
 
   @PutMapping("/{id}/subDrafts/{subDraftId}")
