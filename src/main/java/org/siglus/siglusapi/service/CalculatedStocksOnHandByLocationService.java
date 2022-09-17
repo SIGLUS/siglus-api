@@ -31,6 +31,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
@@ -167,9 +168,14 @@ public class CalculatedStocksOnHandByLocationService {
   public void calculateStockOnHandByLocation(StockEventDto eventDto) {
     UUID facilityId = eventDto.getFacilityId();
     List<StockEventLineItemDto> lineItemDtos = eventDto.getLineItems();
-    List<StockCard> stockCards = siglusStockCardRepository
-            .findByFacilityIdAndLineItems(facilityId, lineItemDtos);
-
+    Set<String> orderableLotIdPairs = lineItemDtos.stream()
+        .map(this::getOrderableLotIdPair)
+        .collect(Collectors.toSet());
+    if (orderableLotIdPairs.isEmpty()) {
+      return;
+    }
+    List<StockCard> stockCards = siglusStockCardRepository.findByFacilityIdAndOrderableLotIdPairs(
+            facilityId, orderableLotIdPairs);
     Map<String, StockCard> uniKeyToStockCard = stockCards.stream()
         .collect(Collectors.toMap(this::getUniqueKey, Function.identity()));
 
@@ -203,6 +209,11 @@ public class CalculatedStocksOnHandByLocationService {
     });
 
     saveAll(toSaveList);
+  }
+
+  private String getOrderableLotIdPair(StockEventLineItemDto eventLineItemDto) {
+    return eventLineItemDto.getOrderableId().toString()
+        + Optional.ofNullable(eventLineItemDto.getLotId()).map(UUID::toString).orElse("");
   }
 
   private void saveAll(List<CalculatedStockOnHandByLocation> toSaveList) {
