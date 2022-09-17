@@ -73,6 +73,7 @@ import org.siglus.siglusapi.dto.StockCardDetailsDto;
 import org.siglus.siglusapi.dto.StockCardDetailsWithLocationDto;
 import org.siglus.siglusapi.dto.StockCardSummaryDto;
 import org.siglus.siglusapi.dto.StockCardSummaryWithLocationDto;
+import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.repository.CalculatedStockOnHandByLocationRepository;
 import org.siglus.siglusapi.repository.PhysicalInventoryLineItemsExtensionRepository;
 import org.siglus.siglusapi.repository.PhysicalInventorySubDraftRepository;
@@ -164,18 +165,20 @@ public class SiglusStockCardSummariesService {
   public Page<StockCardSummaryV2Dto> findSiglusStockCard(
       MultiValueMap<String, String> parameters, List<UUID> subDraftIds, Pageable pageable) {
     log.info("findSiglusStockCard subDraftIds=" + Optional.ofNullable(subDraftIds));
-    UUID userId = authenticationHelper.getCurrentUser().getId();
+    UserDto currentUser = authenticationHelper.getCurrentUser();
+    UUID facilityId = currentUser.getHomeFacilityId();
+    parameters.set(FACILITY_ID, facilityId.toString());
+    UUID userId = currentUser.getId();
     Set<String> archivedProducts = null;
     if (Boolean.parseBoolean(parameters.getFirst(EXCLUDE_ARCHIVED)) || Boolean
         .parseBoolean(parameters.getFirst(ARCHIVED_ONLY))) {
-      archivedProducts = archiveProductService
-          .searchArchivedProductsByFacilityId(UUID.fromString(parameters.getFirst(FACILITY_ID)));
+      archivedProducts = archiveProductService.searchArchivedProductsByFacilityId(facilityId);
     }
     StockCardSummariesV2SearchParams v2SearchParams = new StockCardSummariesV2SearchParams(parameters);
     List<UUID> orderableIds = v2SearchParams.getOrderableIds();
     UUID inputProgramId = getId(PROGRAM_ID, parameters);
     Set<UUID> programIds = getProgramIds(inputProgramId, userId, parameters.getFirst(RIGHT_NAME),
-        parameters.getFirst(FACILITY_ID));
+        facilityId.toString());
     List<StockCardSummaryV2Dto> summaryV2Dtos = new ArrayList<>();
     for (UUID programId : programIds) {
       v2SearchParams.setProgramId(programId);
