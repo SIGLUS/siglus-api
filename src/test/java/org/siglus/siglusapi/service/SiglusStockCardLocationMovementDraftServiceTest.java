@@ -41,6 +41,8 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.referencedata.dto.OrderableDto;
 import org.openlmis.stockmanagement.domain.card.StockCard;
+import org.openlmis.stockmanagement.domain.event.CalculatedStockOnHand;
+import org.openlmis.stockmanagement.repository.CalculatedStockOnHandRepository;
 import org.openlmis.stockmanagement.repository.StockCardRepository;
 import org.siglus.siglusapi.constant.LocationConstants;
 import org.siglus.siglusapi.domain.StockCardLocationMovementDraft;
@@ -94,6 +96,9 @@ public class SiglusStockCardLocationMovementDraftServiceTest {
 
   @Mock
   private SiglusOrderableService siglusOrderableService;
+
+  @Mock
+  private CalculatedStockOnHandRepository calculatedStockOnHandRepository;
 
   @Mock
   private SiglusLotReferenceDataService siglusLotReferenceDataService;
@@ -240,6 +245,13 @@ public class SiglusStockCardLocationMovementDraftServiceTest {
 
     when(stockCardLocationMovementLineItemRepository.findLatestByStockCardId(any()))
         .thenReturn(Arrays.asList(movementLineItem1, movementLineItem2));
+    CalculatedStockOnHand calculatedStockOnHand1 = new CalculatedStockOnHand();
+    CalculatedStockOnHand calculatedStockOnHand2 = new CalculatedStockOnHand();
+    calculatedStockOnHand1.setStockOnHand(quantity);
+    calculatedStockOnHand2.setStockOnHand(0);
+    when(calculatedStockOnHandRepository.findLatestStockOnHands(any(), any())).thenReturn(
+        Arrays.asList(calculatedStockOnHand1, calculatedStockOnHand2)
+    );
 
     Pageable pageable = new PageRequest(0, Integer.MAX_VALUE);
     PageImpl<StockCard> stockCards = new PageImpl<>(Collections.singletonList(stockCard1), pageable, Integer.MAX_VALUE);
