@@ -18,6 +18,7 @@ package org.siglus.siglusapi.service;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_MOVEMENT_DRAFT_EXISTS;
 
 import com.google.common.collect.Maps;
+import java.time.ZonedDateTime;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -30,6 +31,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.openlmis.referencedata.dto.OrderableDto;
 import org.openlmis.stockmanagement.domain.card.StockCard;
+import org.openlmis.stockmanagement.domain.event.CalculatedStockOnHand;
+import org.openlmis.stockmanagement.repository.CalculatedStockOnHandRepository;
 import org.openlmis.stockmanagement.repository.StockCardRepository;
 import org.siglus.siglusapi.domain.StockCardLocationMovementDraft;
 import org.siglus.siglusapi.domain.StockCardLocationMovementDraftLineItem;
@@ -67,6 +70,7 @@ public class SiglusStockCardLocationMovementDraftService {
   private final StockCardLocationMovementLineItemRepository stockCardLocationMovementLineItemRepository;
   private final SiglusOrderableService siglusOrderableService;
   private final SiglusLotReferenceDataService siglusLotReferenceDataService;
+  private final CalculatedStockOnHandRepository calculatedStockOnHandRepository;
 
   @Transactional
   public StockCardLocationMovementDraftDto createEmptyMovementDraft(
@@ -112,8 +116,12 @@ public class SiglusStockCardLocationMovementDraftService {
 
     List<UUID> stockCardIds = stockCardRepository.findByFacilityIdIn(facilityId)
         .stream().map(StockCard::getId).collect(Collectors.toList());
+    List<UUID> hasSohStockCardIds = calculatedStockOnHandRepository.findLatestStockOnHands(
+            stockCardIds, ZonedDateTime.now()).stream().filter(e -> e.getStockOnHand() != 0)
+        .map(CalculatedStockOnHand::getStockCardId).collect(Collectors.toList());
+
     List<StockCardLocationMovementLineItem> previousStockCardLocationMovementLineItemList =
-        stockCardLocationMovementLineItemRepository.findLatestByStockCardId(stockCardIds);
+        stockCardLocationMovementLineItemRepository.findLatestByStockCardId(hasSohStockCardIds);
 
     List<StockCardLocationMovementLineItem> virtualLocationMovementLineItem =
         previousStockCardLocationMovementLineItemList.stream()
