@@ -15,13 +15,17 @@
 
 package org.siglus.siglusapi.dto;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import lombok.Data;
-import org.openlmis.fulfillment.web.util.ObjectReferenceDto;
-import org.openlmis.fulfillment.web.util.VersionObjectReferenceDto;
+import org.siglus.siglusapi.domain.LocalIssueVoucherDraftLineItem;
+import org.springframework.beans.BeanUtils;
 
 @Data
 public class LocalIssueVoucherDraftLineItemDto {
+
+  private UUID id;
 
   private UUID localIssueVoucherSubDraftId;
 
@@ -31,11 +35,39 @@ public class LocalIssueVoucherDraftLineItemDto {
 
   private Integer quantityrejected;
 
-  private VersionObjectReferenceDto orderable;
+  private UUID orderableId;
 
-  private ObjectReferenceDto lot;
+  private UUID lotId;
 
   private UUID rejectionReasonId;
 
   private String notes;
+
+  private Integer quantityOrdered;
+
+  private Integer partialFulfilled;
+
+  private Integer quantityReturned;
+
+  public static List<LocalIssueVoucherDraftLineItem> to(
+      List<LocalIssueVoucherDraftLineItemDto> localIssueVoucherSubDraftDtos) {
+    List<LocalIssueVoucherDraftLineItem> localIssueVoucherDraftLineItems = new ArrayList<>();
+    localIssueVoucherSubDraftDtos.forEach(localIssueVoucherDraftLineItemDto -> {
+      LocalIssueVoucherDraftLineItem localIssueVoucherDraftLineItem = new LocalIssueVoucherDraftLineItem();
+      BeanUtils.copyProperties(localIssueVoucherDraftLineItemDto, localIssueVoucherDraftLineItem);
+      localIssueVoucherDraftLineItems.add(localIssueVoucherDraftLineItem);
+    });
+    return localIssueVoucherDraftLineItems;
+  }
+
+  public static List<LocalIssueVoucherDraftLineItemDto> from(
+      List<LocalIssueVoucherDraftLineItem> localIssueVoucherDraftLineItems) {
+    List<LocalIssueVoucherDraftLineItemDto> localIssueVoucherDraftLineItemDtos = new ArrayList<>();
+    localIssueVoucherDraftLineItems.forEach(localIssueVoucherDraftLineItem -> {
+      LocalIssueVoucherDraftLineItemDto localIssueVoucherDraftLineItemDto = new LocalIssueVoucherDraftLineItemDto();
+      BeanUtils.copyProperties(localIssueVoucherDraftLineItem, localIssueVoucherDraftLineItem);
+      localIssueVoucherDraftLineItemDtos.add(localIssueVoucherDraftLineItemDto);
+    });
+    return localIssueVoucherDraftLineItemDtos;
+  }
 }
