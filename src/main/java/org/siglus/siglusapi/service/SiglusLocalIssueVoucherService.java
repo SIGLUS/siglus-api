@@ -153,6 +153,7 @@ public class SiglusLocalIssueVoucherService {
         .number(subDraftsQuantity + SUB_DRAFTS_INCREMENT)
         .localIssueVoucherId(localIssueVoucherId)
         .status(PodSubDraftStatusEnum.NOT_YET_STARTED)
+        .isDraft(true)
         .lineItems(Collections.emptyList())
         .build();
   }

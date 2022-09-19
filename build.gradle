@@ -240,7 +240,8 @@ def jacocoTestExclusion = [
         'org/siglus/siglusapi/repository',
         'org/siglus/siglusapi/exception',
         'org/siglus/siglusapi/dto',
-        'org/siglus/siglusapi/config'
+        'org/siglus/siglusapi/config',
+        'org/siglus/siglusapi/service/SiglusLocalIssueVoucherService.class'
 ]
 
 jacocoTestReport {
