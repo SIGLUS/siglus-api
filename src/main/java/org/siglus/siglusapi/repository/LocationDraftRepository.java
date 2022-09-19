@@ -38,9 +38,9 @@ public class LocationDraftRepository extends BaseNativeRepository {
   private static final String SQL_9 = "DELETE FROM stockmanagement.physical_inventories WHERE facilityid = ? AND isdraft is TRUE";
   private static final String SQL_10 = "DELETE FROM siglusintegration.stock_card_location_movement_draft_line_items WHERE stockcardlocationmovementdraftid in (SELECT id FROM siglusintegration.stock_card_location_movement_drafts WHERE facilityid = ?)";
   private static final String SQL_11 = "DELETE FROM siglusintegration.stock_card_location_movement_drafts  WHERE facilityid = ?";
-  private static final String SQL_12 = "UPDATE fulfillment.orders SET status = 'ORDERED' WHERE id IN (SELECT orderid FROM fulfillment.shipment_drafts WHERE orderid IN (SELECT id FROM fulfillment.orders WHERE facilityid = ?))";
-  private static final String SQL_13 = "DELETE FROM fulfillment.shipment_draft_line_items WHERE shipmentdraftid IN (SELECT id FROM fulfillment.shipment_drafts WHERE orderid IN (SELECT id FROM fulfillment.orders WHERE facilityid = ?))";
-  private static final String SQL_14 = "DELETE FROM fulfillment.shipment_drafts WHERE orderid IN (SELECT id FROM fulfillment.orders WHERE facilityid = ?)";
+  private static final String SQL_12 = "UPDATE fulfillment.orders SET status = 'ORDERED' WHERE id IN (SELECT orderid FROM fulfillment.shipment_drafts WHERE orderid IN (SELECT id FROM fulfillment.orders WHERE supplyingfacilityid = ?))";
+  private static final String SQL_13 = "DELETE FROM fulfillment.shipment_draft_line_items WHERE shipmentdraftid IN (SELECT id FROM fulfillment.shipment_drafts WHERE orderid IN (SELECT id FROM fulfillment.orders WHERE supplyingfacilityid = ?))";
+  private static final String SQL_14 = "DELETE FROM fulfillment.shipment_drafts WHERE orderid IN (SELECT id FROM fulfillment.orders WHERE supplyingfacilityid = ?)";
   private static final String SQL_15 = "DELETE FROM siglusintegration.pod_line_items_extension WHERE subdraftid IN (SELECT id FROM siglusintegration.pod_sub_draft WHERE proofofdeliveryid IN (SELECT id FROM fulfillment.proofs_of_delivery WHERE shipmentid IN (SELECT id FROM fulfillment.shipments WHERE orderid IN (SELECT id FROM fulfillment.orders WHERE requestingfacilityid = ?))))";
   private static final String SQL_16 = "DELETE FROM siglusintegration.pod_sub_draft WHERE proofofdeliveryid IN (SELECT id FROM fulfillment.proofs_of_delivery WHERE shipmentid IN (SELECT id FROM fulfillment.shipments WHERE orderid IN (SELECT id FROM fulfillment.orders WHERE requestingfacilityid = ?)))";
 
