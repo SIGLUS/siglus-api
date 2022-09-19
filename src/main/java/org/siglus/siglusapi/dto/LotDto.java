@@ -30,6 +30,7 @@ import lombok.Setter;
 import org.apache.commons.collections.CollectionUtils;
 import org.openlmis.referencedata.dto.BaseDto;
 import org.siglus.siglusapi.dto.android.db.ProductLot;
+import org.springframework.beans.BeanUtils;
 
 @NoArgsConstructor
 @AllArgsConstructor
@@ -62,5 +63,11 @@ public class LotDto extends BaseDto {
       return new ArrayList<>();
     }
     return productLots.stream().map(LotDto::convert).collect(Collectors.toList());
+  }
+
+  public static LotDto from(org.openlmis.referencedata.dto.LotDto referenceDateLotDto) {
+    LotDto lotDto = new LotDto();
+    BeanUtils.copyProperties(referenceDateLotDto, lotDto);
+    return lotDto;
   }
 }
