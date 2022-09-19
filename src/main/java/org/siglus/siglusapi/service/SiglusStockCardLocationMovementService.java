@@ -150,9 +150,10 @@ public class SiglusStockCardLocationMovementService {
     for (LocationMovementLineItemDto locationMovementLineItemDto : locationMovementLineItemDtos) {
       Integer quantity = locationMovementLineItemDto.getQuantity();
       locationMovementLineItemDto.setSoh(soh);
+      locationMovementLineItemDto.setQuantity(Math.abs(locationMovementLineItemDto.getQuantity()));
       switch (locationMovementLineItemDto.getReasonCategory()) {
         case INVENTORY:
-          soh = quantity;
+          soh -= quantity;
           break;
         case CAPITAL_ISSUE:
           soh += quantity;
@@ -189,13 +190,13 @@ public class SiglusStockCardLocationMovementService {
       UUID stockCardId, int soh, String locationCode) {
     LocationMovementLineItemDto firstLineItem =
         locationMovementLineItemDtos.get(locationMovementLineItemDtos.size() - 1);
-    if (!firstLineItem.getReasonCategory().equals(INVENTORY)) {
-      LocationMovementLineItemDto initialLineItemDto = new LocationMovementLineItemDto();
-      initialLineItemDto.setSoh(0);
-      initialLineItemDto.setAdjustment("Inventário");
-      initialLineItemDto.setOccurredDate(firstLineItem.getOccurredDate());
-      locationMovementLineItemDtos.add(initialLineItemDto);
-    }
+
+    LocationMovementLineItemDto initialLineItemDto = new LocationMovementLineItemDto();
+    initialLineItemDto.setSoh(0);
+    initialLineItemDto.setAdjustment("Inventário");
+    initialLineItemDto.setOccurredDate(firstLineItem.getOccurredDate());
+    locationMovementLineItemDtos.add(initialLineItemDto);
+
     StockCardDto stockCardDto = siglusStockCardService.findStockCardById(stockCardId);
     FacilityDto facility = stockCardDto.getFacility();
     OrderableDto orderable = stockCardDto.getOrderable();
