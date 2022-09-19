@@ -21,12 +21,14 @@ import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_CANNOT_OPERATE_WHEN_SU
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_ID_NOT_MATCH_SUB_DRAFT_ID;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_LOCAL_ISSUE_VOUCHER_ID_INVALID;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_LOCAL_ISSUE_VOUCHER_SUB_DRAFTS_MORE_THAN_TEN;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_LOCAL_ISSUE_VOUCHER_SUB_DRAFT_EMPTY;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_LOCAL_ISSUE_VOUCHER_SUB_DRAFT_NOT_ALL_SUBMITTED;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_NO_LOCAL_ISSUE_VOUCHER_SUB_DRAFT_FOUND;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_ORDER_CODE_EXISTS;
 
 import com.google.common.collect.Sets;
-import java.util.InputMismatchException;
 import java.util.Collections;
+import java.util.InputMismatchException;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -42,11 +44,12 @@ import org.openlmis.fulfillment.web.OrderController;
 import org.openlmis.fulfillment.web.util.BasicOrderDto;
 import org.openlmis.referencedata.dto.OrderableDto;
 import org.siglus.siglusapi.domain.LocalIssueVoucher;
-import org.siglus.siglusapi.domain.LocalIssueVoucherSubDraftLineItem;
 import org.siglus.siglusapi.domain.LocalIssueVoucherSubDraft;
 import org.siglus.siglusapi.dto.LocalIssueVoucherSubDraftLineItemDto;
+import org.siglus.siglusapi.domain.LocalIssueVoucherSubDraftLineItem;
 import org.siglus.siglusapi.dto.LocalIssueVoucherDto;
 import org.siglus.siglusapi.dto.LocalIssueVoucherSubDraftDto;
+import org.siglus.siglusapi.dto.LocalIssueVoucherSubmitRequestDto;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.dto.enums.PodSubDraftStatusEnum;
 import org.siglus.siglusapi.exception.BusinessDataException;
@@ -209,11 +212,7 @@ public class SiglusLocalIssueVoucherService {
         localIssueVoucherDraftLineItemRepository.findByLocalIssueVoucherSubDraftId(subDraftId);
     return LocalIssueVoucherSubDraftDto
         .builder()
-<<<<<<< HEAD
-        .lineItems(LocalIssueVoucherSubDraftLineItemDto.from(localIssueVoucherDraftLineItems))
-=======
-        .lineItems(localIssueVoucherSubDraftLineItems)
->>>>>>> ffa19789 ([zhong.zhong] #338 create local issue voucher subDraft line items table)
+        .lineItems(LocalIssueVoucherSubDraftLineItemDto.from(localIssueVoucherSubDraftLineItems))
         .build();
   }
 
@@ -253,11 +252,7 @@ public class SiglusLocalIssueVoucherService {
     List<UUID> orderableIds = subDraftDto
         .getLineItems()
         .stream()
-<<<<<<< HEAD
         .map(LocalIssueVoucherSubDraftLineItemDto::getOrderableId)
-=======
-        .map(LocalIssueVoucherSubDraftLineItem::getOrderableId)
->>>>>>> ffa19789 ([zhong.zhong] #338 create local issue voucher subDraft line items table)
         .collect(Collectors.toList());
     UUID localIssueVoucherId = subDraftDto.getLocalIssueVoucherId();
     List<ProofOfDeliveryLineItem> duplicatedOrderableLineItem =
@@ -322,7 +317,25 @@ public class SiglusLocalIssueVoucherService {
     localIssueVoucherSubDraftRepository.deleteAllByLocalIssueVoucherId(localIssueVoucherId);
   }
 
-  public void mergeLocalIssueDrafts(UUID localIssueVoucherId) {
-    //
+  public List<LocalIssueVoucherSubDraftLineItem> mergeLocalIssueDrafts(UUID localIssueVoucherId) {
+    validateLocalIssueVoucherId(localIssueVoucherId);
+    List<LocalIssueVoucherSubDraft> subDrafts = localIssueVoucherSubDraftRepository
+        .findByLocalIssueVoucherId(localIssueVoucherId);
+    if (subDrafts.isEmpty()) {
+      throw new BusinessDataException(new Message(ERROR_LOCAL_ISSUE_VOUCHER_SUB_DRAFT_EMPTY));
+    }
+    boolean isAllSubmitted = subDrafts.stream()
+        .allMatch(subDraft -> subDraft.getStatus().equals(PodSubDraftStatusEnum.SUBMITTED));
+
+    if (isAllSubmitted) {
+      //todo: flatMap all line items
+      return Collections.emptyList();
+    }
+    throw new BusinessDataException(new Message(ERROR_LOCAL_ISSUE_VOUCHER_SUB_DRAFT_NOT_ALL_SUBMITTED));
+  }
+
+
+  public void submitLocalIssueVoucherDrafts(LocalIssueVoucherSubmitRequestDto submitRequestDto) {
+    //todo: logic implementation
   }
 }

@@ -16,6 +16,7 @@
 package org.siglus.siglusapi.web;
 
 import static org.springframework.http.HttpStatus.NO_CONTENT;
+import static org.springframework.http.HttpStatus.OK;
 
 import java.util.List;
 import java.util.UUID;
@@ -24,6 +25,7 @@ import lombok.AllArgsConstructor;
 import org.openlmis.referencedata.dto.OrderableDto;
 import org.siglus.siglusapi.dto.LocalIssueVoucherDto;
 import org.siglus.siglusapi.dto.LocalIssueVoucherSubDraftDto;
+import org.siglus.siglusapi.dto.LocalIssueVoucherSubmitRequestDto;
 import org.siglus.siglusapi.service.SiglusLocalIssueVoucherService;
 import org.siglus.siglusapi.web.response.PodSubDraftsSummaryResponse;
 import org.siglus.siglusapi.web.response.PodSubDraftsSummaryResponse.SubDraftInfo;
@@ -75,6 +77,13 @@ public class SiglusLocalIssueVoucherController {
   @GetMapping("/{id}/subDrafts/merge")
   public void mergeLocalIssueDrafts(@PathVariable("id") UUID localIssueVoucherId) {
     localIssueVoucherService.mergeLocalIssueDrafts(localIssueVoucherId);
+  }
+
+  @PutMapping("/{id}/subDraft/submit")
+  @ResponseStatus(OK)
+  public void updateStatusAfterSubmit(
+      @RequestBody LocalIssueVoucherSubmitRequestDto submitRequestDto) {
+    localIssueVoucherService.submitLocalIssueVoucherDrafts(submitRequestDto);
   }
 
   @GetMapping("/{id}/subDrafts/{subDraftId}")
