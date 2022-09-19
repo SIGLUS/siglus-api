@@ -15,19 +15,19 @@
 
 package org.siglus.siglusapi.service;
 
-import static org.siglus.siglusapi.constant.FieldConstants.MONTHLY_SUBMIT_PRODUCT_ZERO_INVENTORY_MONTH_RANGE;
-import static org.siglus.siglusapi.constant.FieldConstants.QUARTERLY_SUBMIT_PRODUCT_ZERO_INVENTORY_MONTH_RANGE;
+import static org.siglus.siglusapi.constant.FieldConstants.MONTHLY_SUBMIT_PRODUCT_ZERO_INVENTORY_DAY_RANGE;
+import static org.siglus.siglusapi.constant.FieldConstants.QUARTERLY_SUBMIT_PRODUCT_ZERO_INVENTORY_DAY_RANGE;
 import static org.siglus.siglusapi.constant.FieldConstants.SEPARATOR;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_LOCATIONS_BY_FACILITY_NOT_FOUND;
 
 import com.google.common.collect.Maps;
 import java.time.LocalDate;
+import java.time.ZonedDateTime;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
@@ -36,10 +36,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.openlmis.referencedata.domain.Code;
 import org.openlmis.referencedata.dto.LotDto;
-import org.openlmis.referencedata.repository.LotRepository;
 import org.openlmis.referencedata.service.LotSearchParams;
 import org.openlmis.referencedata.web.LotController;
+import org.openlmis.stockmanagement.domain.BaseEntity;
 import org.openlmis.stockmanagement.domain.card.StockCard;
+import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
 import org.openlmis.stockmanagement.domain.event.CalculatedStockOnHand;
 import org.openlmis.stockmanagement.repository.CalculatedStockOnHandRepository;
 import org.openlmis.stockmanagement.repository.StockCardRepository;
@@ -54,6 +55,7 @@ import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.repository.CalculatedStockOnHandByLocationRepository;
 import org.siglus.siglusapi.repository.FacilityLocationsRepository;
 import org.siglus.siglusapi.repository.FacilityNativeRepository;
+import org.siglus.siglusapi.repository.SiglusStockCardLineItemRepository;
 import org.siglus.siglusapi.repository.dto.FacilityProgramPeriodScheduleDto;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.springframework.data.util.Pair;
@@ -67,12 +69,12 @@ public class SiglusLotLocationService {
   private final SiglusAuthenticationHelper authenticationHelper;
   private final StockCardRepository stockCardRepository;
   private final FacilityLocationsRepository facilityLocationsRepository;
-  private final LotRepository lotRepository;
   private final CalculatedStockOnHandByLocationRepository calculatedStockOnHandByLocationRepository;
   private final FacilityNativeRepository facilityNativeRepository;
   private final CalculatedStockOnHandRepository calculatedStockOnHandRepository;
   private final SiglusStockCardLocationMovementService stockCardLocationMovementService;
   private final LotController lotController;
+  private final SiglusStockCardLineItemRepository siglusStockCardLineItemRepository;
 
   public List<LotLocationDto> searchLotLocationDtos(List<UUID> orderableIds, boolean extraData, boolean isAdjustment) {
     UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
@@ -93,7 +95,7 @@ public class SiglusLotLocationService {
       List<StockCard> stockCards = stockCardRepository.findByFacilityIdIn(facilityId);
       List<UUID> stockCardIds = stockCards.stream().map(StockCard::getId).collect(Collectors.toList());
       List<CalculatedStockOnHandByLocation> sohByLocations = calculatedStockOnHandByLocationRepository
-              .findPreviousLocationStockOnHandsGreaterThan0(stockCardIds, LocalDate.now());
+          .findPreviousLocationStockOnHandsGreaterThan0(stockCardIds, LocalDate.now());
       Set<String> noEmptyLocationKeys = sohByLocations.stream().map(this::getLocationKey).collect(Collectors.toSet());
       dtos.forEach(dto -> {
         dto.setIsEmpty(!noEmptyLocationKeys.contains(getLocationKey(dto)));
@@ -134,9 +136,9 @@ public class SiglusLotLocationService {
     }
     Map<UUID, StockCard> stockCardIdToStockCard = Maps.uniqueIndex(stockCardList, StockCard::getId);
     boolean needInitiallyMoveProduct = stockCardLocationMovementService.canInitialMoveProduct(facilityId)
-            .isNeedInitiallyMoveProduct();
+        .isNeedInitiallyMoveProduct();
     Map<String, List<Pair<UUID, CalculatedStockOnHandByLocation>>> locationCodeToLotLocationPairs =
-            getLocationCodeToLotLocationPairListMap(stockCardList);
+        getLocationCodeToLotLocationPairListMap(stockCardList);
 
     locationCodeToLotLocationPairs.forEach((locationCode, locationPairs) -> {
       if (locationCode.equals(LocationConstants.VIRTUAL_LOCATION_CODE) && !needInitiallyMoveProduct) {
@@ -144,11 +146,11 @@ public class SiglusLotLocationService {
       }
       List<LotsDto> lotDtoList = getLotsDtos(locationPairs, stockCardIdToStockCard);
       lotLocationDtos.add(LotLocationDto
-              .builder()
-              .locationCode(locationCode)
-              .area(locationPairs.get(0).getSecond().getArea())
-              .lots(lotDtoList)
-              .build());
+          .builder()
+          .locationCode(locationCode)
+          .area(locationPairs.get(0).getSecond().getArea())
+          .lots(lotDtoList)
+          .build());
     });
     return lotLocationDtos;
   }
@@ -158,10 +160,10 @@ public class SiglusLotLocationService {
       List<StockCard> stockCardList) {
     Set<UUID> stockCardIds = stockCardList.stream().map(StockCard::getId).collect(Collectors.toSet());
     List<CalculatedStockOnHandByLocation> recentlyLocationSohLists = calculatedStockOnHandByLocationRepository
-            .findRecentlyLocationSohByStockCardIds(stockCardIds);
+        .findRecentlyLocationSohByStockCardIds(stockCardIds);
     Map<UUID, List<CalculatedStockOnHandByLocation>> stockCardIdToLocationSohListMap = recentlyLocationSohLists
-            .stream()
-            .collect(Collectors.groupingBy(CalculatedStockOnHandByLocation::getStockCardId));
+        .stream()
+        .collect(Collectors.groupingBy(CalculatedStockOnHandByLocation::getStockCardId));
 
     return reverseMappingRelationship(stockCardIdToLocationSohListMap);
   }
@@ -172,42 +174,69 @@ public class SiglusLotLocationService {
     Map<UUID, FacilityProgramPeriodScheduleDto> programIdToSchedulesCode = Maps.uniqueIndex(facilityNativeRepository
         .findFacilityProgramPeriodScheduleByFacilityId(facilityId), FacilityProgramPeriodScheduleDto::getProgramId);
 
+    Map<UUID, List<StockCardLineItem>> stockCardIdToStockCardLineItemsMap = siglusStockCardLineItemRepository
+        .findAllByStockCardIn(stockCardList)
+        .stream()
+        .collect(Collectors.groupingBy(e -> e.getStockCard().getId()));
+
+    List<UUID> stockCardIds = stockCardList.stream().map(BaseEntity::getId).collect(Collectors.toList());
+    Map<UUID, List<CalculatedStockOnHand>> stockCardIdToLatestSohMap =
+        calculatedStockOnHandRepository.findLatestStockOnHands(stockCardIds, ZonedDateTime.now()).stream()
+            .collect(Collectors.groupingBy(CalculatedStockOnHand::getStockCardId));
+
     List<StockCard> stockCards = new LinkedList<>();
     stockCardList.forEach(stockCard -> {
-      Code schedulesCode = Code.code(programIdToSchedulesCode.get(stockCard.getProgramId()).getSchedulesCode());
-      List<CalculatedStockOnHand> calculatedStockOnHands = calculatedStockOnHandRepository
-          .findByStockCardIdInAndOccurredDateLessThanEqual(
-              Collections.singletonList(stockCard.getId()), LocalDate.now());
+      Code schedulesCode = getShedulesCode(programIdToSchedulesCode, stockCard);
 
-      Optional<CalculatedStockOnHand> recentlyCalculatedStockOnHand = calculatedStockOnHands.stream()
-          .max(Comparator.comparing(CalculatedStockOnHand::getOccurredDate));
-      if (!recentlyCalculatedStockOnHand.isPresent()) {
+      List<CalculatedStockOnHand> latestStockOnHands = stockCardIdToLatestSohMap.get(stockCard.getId());
+      if (Objects.isNull(latestStockOnHands) || latestStockOnHands.isEmpty()) {
         return;
       }
-      Integer stockOnHand = recentlyCalculatedStockOnHand.get().getStockOnHand();
+      Integer stockOnHand = latestStockOnHands.get(0).getStockOnHand();
+
       if (stockOnHand > 0) {
         stockCards.add(stockCard);
       } else {
-        if ((schedulesCode.equals(PeriodConstants.MONTH_SCHEDULE_CODE)
-            || schedulesCode.equals(PeriodConstants.REPORT_MONTH_SCHEDULE_CODE))
-            && hasSohInMonthRange(calculatedStockOnHands, MONTHLY_SUBMIT_PRODUCT_ZERO_INVENTORY_MONTH_RANGE)) {
+        List<StockCardLineItem> stockCardLineItems = stockCardIdToStockCardLineItemsMap.get(stockCard.getId());
+        if (hasSohChangeWithMonthlyReport(schedulesCode, stockCardLineItems)) {
           stockCards.add(stockCard);
         }
-        if ((schedulesCode.equals(PeriodConstants.QUARTERLY_SCHEDULE_CODE)
-            || schedulesCode.equals(PeriodConstants.REPORT_QUARTERLY_SCHEDULE_CODE))
-            && hasSohInMonthRange(calculatedStockOnHands, QUARTERLY_SUBMIT_PRODUCT_ZERO_INVENTORY_MONTH_RANGE)) {
+        if (hasSohChangeWithQuarterlyReport(schedulesCode, stockCardLineItems)) {
           stockCards.add(stockCard);
         }
       }
-
     });
     return stockCards;
   }
 
-  private boolean hasSohInMonthRange(List<CalculatedStockOnHand> calculatedStockOnHandList, int monthRange) {
-    return calculatedStockOnHandList.stream()
-        .filter(o -> o.getOccurredDate().isAfter(LocalDate.now().minusMonths(monthRange)))
-        .anyMatch(o -> o.getStockOnHand() != 0);
+  private boolean hasSohChangeWithQuarterlyReport(Code schedulesCode, List<StockCardLineItem> stockCardLineItems) {
+    return (PeriodConstants.QUARTERLY_SCHEDULE_CODE.equals(schedulesCode)
+        || PeriodConstants.REPORT_QUARTERLY_SCHEDULE_CODE.equals(schedulesCode))
+        && hasActualSohChangesInTimeRange(stockCardLineItems, QUARTERLY_SUBMIT_PRODUCT_ZERO_INVENTORY_DAY_RANGE);
+  }
+
+  private boolean hasSohChangeWithMonthlyReport(Code schedulesCode, List<StockCardLineItem> stockCardLineItems) {
+    return Objects.isNull(schedulesCode)
+        || (PeriodConstants.MONTH_SCHEDULE_CODE.equals(schedulesCode)
+        || PeriodConstants.REPORT_MONTH_SCHEDULE_CODE.equals(schedulesCode))
+        && hasActualSohChangesInTimeRange(stockCardLineItems, MONTHLY_SUBMIT_PRODUCT_ZERO_INVENTORY_DAY_RANGE);
+  }
+
+  private Code getShedulesCode(Map<UUID, FacilityProgramPeriodScheduleDto> programIdToSchedulesCode,
+      StockCard stockCard) {
+    FacilityProgramPeriodScheduleDto facilityProgramPeriodScheduleDto = programIdToSchedulesCode.get(
+        stockCard.getProgramId());
+    return Objects.isNull(facilityProgramPeriodScheduleDto)
+        ? null
+        : Code.code(facilityProgramPeriodScheduleDto.getSchedulesCode());
+  }
+
+  private boolean hasActualSohChangesInTimeRange(List<StockCardLineItem> stockCardLineItems, int days) {
+    return
+        !Objects.isNull(stockCardLineItems)
+            && stockCardLineItems.stream()
+            .filter(o -> o.getOccurredDate().isAfter(LocalDate.now().minusDays(days + 1)))
+            .anyMatch(o -> o.getQuantity() != 0);
   }
 
   private Map<String, List<Pair<UUID, CalculatedStockOnHandByLocation>>> reverseMappingRelationship(
@@ -224,10 +253,10 @@ public class SiglusLotLocationService {
   private List<LotsDto> getLotsDtos(List<Pair<UUID, CalculatedStockOnHandByLocation>> locationPairs,
       Map<UUID, StockCard> stockCardIdToStockCard) {
     List<UUID> lotIds = locationPairs.stream()
-            .map(Pair::getFirst)
-            .map(stockCardIdToStockCard::get)
-            .map(StockCard::getLotId)
-            .collect(Collectors.toList());
+        .map(Pair::getFirst)
+        .map(stockCardIdToStockCard::get)
+        .map(StockCard::getLotId)
+        .collect(Collectors.toList());
     LotSearchParams requestParams = new LotSearchParams(null, null, null, lotIds);
     List<LotDto> lots = lotController.getLots(requestParams, null).getContent();
     Map<UUID, LotDto> idToLot = lots.stream().collect(Collectors.toMap(LotDto::getId, Function.identity()));

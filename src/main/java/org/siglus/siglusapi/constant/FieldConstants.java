@@ -174,9 +174,9 @@ public class FieldConstants {
 
   public static final String ORDER_ID = "orderId";
 
-  public static final int MONTHLY_SUBMIT_PRODUCT_ZERO_INVENTORY_MONTH_RANGE = 3;
+  public static final int MONTHLY_SUBMIT_PRODUCT_ZERO_INVENTORY_DAY_RANGE = 90;
 
-  public static final int QUARTERLY_SUBMIT_PRODUCT_ZERO_INVENTORY_MONTH_RANGE = 6;
+  public static final int QUARTERLY_SUBMIT_PRODUCT_ZERO_INVENTORY_DAY_RANGE = 180;
 
   public static final String METABASE_PARAM_TEMPLATE = "\"%s\": \"%s\"";
 

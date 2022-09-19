@@ -39,6 +39,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.referencedata.dto.LotDto;
 import org.openlmis.referencedata.web.LotController;
 import org.openlmis.stockmanagement.domain.card.StockCard;
+import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
 import org.openlmis.stockmanagement.domain.event.CalculatedStockOnHand;
 import org.openlmis.stockmanagement.repository.CalculatedStockOnHandRepository;
 import org.openlmis.stockmanagement.repository.StockCardRepository;
@@ -54,6 +55,7 @@ import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.repository.CalculatedStockOnHandByLocationRepository;
 import org.siglus.siglusapi.repository.FacilityLocationsRepository;
 import org.siglus.siglusapi.repository.FacilityNativeRepository;
+import org.siglus.siglusapi.repository.SiglusStockCardLineItemRepository;
 import org.siglus.siglusapi.repository.dto.FacilityProgramPeriodScheduleDto;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.springframework.data.domain.PageImpl;
@@ -80,7 +82,7 @@ public class SiglusLotLocationServiceTest extends TestCase {
   private StockCardRepository stockCardRepository;
 
   @Mock
-  private CalculatedStockOnHandRepository calculatedStocksOnHandRepository;
+  private CalculatedStockOnHandRepository calculatedStockOnHandRepository;
 
   @Mock
   private FacilityNativeRepository facilityNativeRepository;
@@ -90,6 +92,9 @@ public class SiglusLotLocationServiceTest extends TestCase {
 
   @Mock
   private LotController lotController;
+
+  @Mock
+  private SiglusStockCardLineItemRepository siglusStockCardLineItemRepository;
 
   private final UUID facilityId = UUID.randomUUID();
 
@@ -219,7 +224,7 @@ public class SiglusLotLocationServiceTest extends TestCase {
     StockCard stockCard2 = StockCard.builder().orderableId(orderableId).lotId(lotId2)
         .programId(programId2).build();
     stockCard2.setId(stockCardId2);
-    when(stockCardRepository.findByOrderableIdInAndFacilityId(Arrays.asList(orderableId),
+    when(stockCardRepository.findByOrderableIdInAndFacilityId(Collections.singletonList(orderableId),
             facilityId)).thenReturn(Arrays.asList(stockCard1, stockCard2));
     CalculatedStockOnHandByLocation sohLocation1 = CalculatedStockOnHandByLocation.builder().stockOnHand(0)
         .stockCardId(stockCardId2).locationCode(locationCode1).area(area1).build();
@@ -233,7 +238,7 @@ public class SiglusLotLocationServiceTest extends TestCase {
     lot.setId(lotId2);
     lot.setExpirationDate(LocalDate.of(2022, 3, 22));
     lot.setLotCode(lotCode);
-    when(lotController.getLots(any(), any())).thenReturn(new PageImpl<>(asList(lot)));
+    when(lotController.getLots(any(), any())).thenReturn(new PageImpl<>(Collections.singletonList(lot)));
 
     when(facilityNativeRepository.findFacilityProgramPeriodScheduleByFacilityId(facilityId)).thenReturn(
         Arrays.asList(
@@ -247,15 +252,36 @@ public class SiglusLotLocationServiceTest extends TestCase {
                 .schedulesCode(PeriodConstants.QUARTERLY_SCHEDULE_CODE.toString())
                 .build())
     );
+
+    LocalDate outTimeRangeDate = LocalDate.now().minusMonths(12);
     CalculatedStockOnHand calculatedStockOnHand1 = new CalculatedStockOnHand();
     calculatedStockOnHand1.setStockOnHand(0);
-    calculatedStockOnHand1.setOccurredDate(LocalDate.of(2022, 7, 22));
+    calculatedStockOnHand1.setOccurredDate(outTimeRangeDate);
+    calculatedStockOnHand1.setStockCardId(stockCardId1);
+    LocalDate inTimeRangeDate = LocalDate.now().minusMonths(2);
     CalculatedStockOnHand calculatedStockOnHand2 = new CalculatedStockOnHand();
-    calculatedStockOnHand2.setStockOnHand(100);
-    calculatedStockOnHand2.setOccurredDate(LocalDate.of(2022, 4, 22));
-    when(calculatedStocksOnHandRepository
-        .findByStockCardIdInAndOccurredDateLessThanEqual(any(), any()))
-        .thenReturn(Arrays.asList(calculatedStockOnHand1, calculatedStockOnHand2));
+    calculatedStockOnHand2.setStockOnHand(120);
+    calculatedStockOnHand2.setOccurredDate(inTimeRangeDate);
+    calculatedStockOnHand2.setStockCardId(stockCardId2);
+
+    StockCardLineItem stockCardLineItem1 =
+        StockCardLineItem.builder().stockCard(stockCard1).occurredDate(outTimeRangeDate)
+            .quantity(100).build();
+    StockCardLineItem stockCardLineItem2 =
+        StockCardLineItem.builder().stockCard(stockCard1).occurredDate(outTimeRangeDate)
+            .quantity(100).build();
+    StockCardLineItem stockCardLineItem3 =
+        StockCardLineItem.builder().stockCard(stockCard2).occurredDate(inTimeRangeDate)
+            .quantity(120).build();
+
+    when(siglusStockCardLineItemRepository
+        .findAllByStockCardIn(Arrays.asList(stockCard1, stockCard2))).thenReturn(
+        Arrays.asList(stockCardLineItem1, stockCardLineItem2, stockCardLineItem3));
+
+    when(calculatedStockOnHandRepository.findLatestStockOnHands(any(), any())).thenReturn(Arrays.asList(
+        calculatedStockOnHand1, calculatedStockOnHand2
+    ));
+
     LotsDto lot2 = LotsDto
         .builder()
         .lotCode(lotCode)
