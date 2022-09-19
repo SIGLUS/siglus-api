@@ -46,6 +46,7 @@ public class LocalIssueVoucherSubDraft extends BaseEntity {
   private PodSubDraftStatusEnum status;
   private UUID operatorId;
   private UUID localIssueVoucherId;
+  private boolean isDraft;
 
   @LazyCollection(FALSE)
   @OneToMany(cascade = ALL, mappedBy = "localIssueVoucherSubDraft", orphanRemoval = true)

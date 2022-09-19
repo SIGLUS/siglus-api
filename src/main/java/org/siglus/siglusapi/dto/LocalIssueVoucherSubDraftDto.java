@@ -33,4 +33,5 @@ public class LocalIssueVoucherSubDraftDto {
   private UUID localIssueVoucherSubDraftId;
   private List<LocalIssueVoucherSubDraftLineItemDto> lineItems;
   private OperateTypeEnum operateType;
+  private boolean isDraft;
 }

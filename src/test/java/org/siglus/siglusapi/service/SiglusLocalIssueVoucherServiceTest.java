@@ -46,7 +46,6 @@ import org.openlmis.fulfillment.web.util.BasicOrderDto;
 import org.siglus.siglusapi.domain.LocalIssueVoucher;
 import org.siglus.siglusapi.domain.LocalIssueVoucherSubDraftLineItem;
 import org.siglus.siglusapi.domain.LocalIssueVoucherSubDraft;
-import org.siglus.siglusapi.domain.PodSubDraft;
 import org.siglus.siglusapi.dto.LocalIssueVoucherSubDraftLineItemDto;
 import org.siglus.siglusapi.dto.LocalIssueVoucherDto;
 import org.siglus.siglusapi.dto.LocalIssueVoucherSubDraftDto;
@@ -337,7 +336,8 @@ public class SiglusLocalIssueVoucherServiceTest {
     service.deleteLocalIssueVoucher(localIssueVoucherId);
 
     //then
-    verify(podSubDraftRepository).deleteAllByPodId(localIssueVoucherId);
+    verify(localIssueVoucherDraftLineItemRepository).deleteAllByLocalIssueVoucherId(localIssueVoucherId);
+    verify(localIssueVoucherSubDraftRepository).deleteAllByLocalIssueVoucherId(localIssueVoucherId);
     verify(localIssueVoucherRepository).delete(localIssueVoucherId);
   }
 
@@ -356,8 +356,8 @@ public class SiglusLocalIssueVoucherServiceTest {
   @Test
   public void shouldCreateLocalIssueVoucherSubDraft() {
     //given
-    PodSubDraft localIssueVoucherSubDraft = PodSubDraft.builder()
-        .podId(localIssueVoucherId)
+    LocalIssueVoucherSubDraft localIssueVoucherSubDraft = LocalIssueVoucherSubDraft.builder()
+        .localIssueVoucherId(localIssueVoucherId)
         .number(6)
         .status(PodSubDraftStatusEnum.NOT_YET_STARTED)
         .operatorId(operatorId)
@@ -365,10 +365,10 @@ public class SiglusLocalIssueVoucherServiceTest {
 
     //when
     when(localIssueVoucherRepository.findOne(localIssueVoucherId)).thenReturn(localIssueVoucher);
-    when(podSubDraftRepository.countAllByPodId(localIssueVoucherId)).thenReturn(5);
+    when(localIssueVoucherSubDraftRepository.countAllByLocalIssueVoucherId(localIssueVoucherId)).thenReturn(5);
     String operator = "Jimmy";
     when(authenticationHelper.getUserNameByUserId(operatorId)).thenReturn(operator);
-    when(podSubDraftRepository.save(any(PodSubDraft.class))).thenReturn(localIssueVoucherSubDraft);
+    when(localIssueVoucherSubDraftRepository.save(any(LocalIssueVoucherSubDraft.class))).thenReturn(localIssueVoucherSubDraft);
 
     SubDraftInfo savedLocalIssueVoucherSubDraft = service.createLocalIssueVoucherSubDraft(localIssueVoucherId);
 
@@ -386,7 +386,7 @@ public class SiglusLocalIssueVoucherServiceTest {
 
     //when
     when(localIssueVoucherRepository.findOne(localIssueVoucherId)).thenReturn(localIssueVoucher);
-    when(podSubDraftRepository.countAllByPodId(localIssueVoucherId)).thenReturn(10);
+    when(localIssueVoucherSubDraftRepository.countAllByLocalIssueVoucherId(localIssueVoucherId)).thenReturn(10);
 
     service.createLocalIssueVoucherSubDraft(localIssueVoucherId);
   }

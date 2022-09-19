@@ -45,10 +45,10 @@ import org.openlmis.fulfillment.web.util.BasicOrderDto;
 import org.openlmis.referencedata.dto.OrderableDto;
 import org.siglus.siglusapi.domain.LocalIssueVoucher;
 import org.siglus.siglusapi.domain.LocalIssueVoucherSubDraft;
-import org.siglus.siglusapi.dto.LocalIssueVoucherSubDraftLineItemDto;
 import org.siglus.siglusapi.domain.LocalIssueVoucherSubDraftLineItem;
 import org.siglus.siglusapi.dto.LocalIssueVoucherDto;
 import org.siglus.siglusapi.dto.LocalIssueVoucherSubDraftDto;
+import org.siglus.siglusapi.dto.LocalIssueVoucherSubDraftLineItemDto;
 import org.siglus.siglusapi.dto.LocalIssueVoucherSubmitRequestDto;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.dto.enums.PodSubDraftStatusEnum;
@@ -122,6 +122,7 @@ public class SiglusLocalIssueVoucherService {
 
   @Transactional
   public void deleteLocalIssueVoucher(UUID localIssueVoucherId) {
+    //todo: refactor code use findByLocalIssueVoucherId, then localIssueVoucherSubDraftRepository delete sub draft;
     validateLocalIssueVoucherId(localIssueVoucherId);
     log.info("delete all pod subDraft line items with local issue voucher id: {}", localIssueVoucherId);
     localIssueVoucherDraftLineItemRepository.deleteAllByLocalIssueVoucherId(localIssueVoucherId);
@@ -135,7 +136,7 @@ public class SiglusLocalIssueVoucherService {
     validateLocalIssueVoucherId(localIssueVoucherId);
     int subDraftsQuantity = localIssueVoucherSubDraftRepository.countAllByLocalIssueVoucherId(localIssueVoucherId);
     checkIfSubDraftsOversize(subDraftsQuantity);
-    LocalIssueVoucherSubDraft localIssueVoucherSubDraft = createLocalIssueVoucherSubDraft(localIssueVoucherId,
+    LocalIssueVoucherSubDraft localIssueVoucherSubDraft = buildLocalIssueVoucherSubDraft(localIssueVoucherId,
         subDraftsQuantity);
     log.info("save local issue voucher with localIssueVoucherId: {}", localIssueVoucherId);
     LocalIssueVoucherSubDraft savedLocalIssueVoucherSubDraft = localIssueVoucherSubDraftRepository
@@ -152,7 +153,7 @@ public class SiglusLocalIssueVoucherService {
         .build();
   }
 
-  private LocalIssueVoucherSubDraft createLocalIssueVoucherSubDraft(UUID localIssueVoucherId, int subDraftsQuantity) {
+  private LocalIssueVoucherSubDraft buildLocalIssueVoucherSubDraft(UUID localIssueVoucherId, int subDraftsQuantity) {
     return LocalIssueVoucherSubDraft.builder()
         .number(subDraftsQuantity + SUB_DRAFTS_INCREMENT)
         .localIssueVoucherId(localIssueVoucherId)
@@ -276,6 +277,7 @@ public class SiglusLocalIssueVoucherService {
 
   @Transactional
   public void deleteSubDraft(UUID localIssueVoucherId, UUID subDraftId) {
+    validateLocalIssueVoucherId(localIssueVoucherId);
     LocalIssueVoucherSubDraft localIssueVoucherSubDraft = getLocalIssueVoucherSubDraft(subDraftId);
     checkIfCanOperate(localIssueVoucherSubDraft);
     log.info("delete subDraft with id: {}", subDraftId);
@@ -317,7 +319,7 @@ public class SiglusLocalIssueVoucherService {
     localIssueVoucherSubDraftRepository.deleteAllByLocalIssueVoucherId(localIssueVoucherId);
   }
 
-  public List<LocalIssueVoucherSubDraftLineItem> mergeLocalIssueDrafts(UUID localIssueVoucherId) {
+  public List<LocalIssueVoucherSubDraftLineItemDto> mergeLocalIssueDrafts(UUID localIssueVoucherId) {
     validateLocalIssueVoucherId(localIssueVoucherId);
     List<LocalIssueVoucherSubDraft> subDrafts = localIssueVoucherSubDraftRepository
         .findByLocalIssueVoucherId(localIssueVoucherId);
@@ -326,10 +328,9 @@ public class SiglusLocalIssueVoucherService {
     }
     boolean isAllSubmitted = subDrafts.stream()
         .allMatch(subDraft -> subDraft.getStatus().equals(PodSubDraftStatusEnum.SUBMITTED));
-
     if (isAllSubmitted) {
-      //todo: flatMap all line items
-      return Collections.emptyList();
+      return LocalIssueVoucherSubDraftLineItemDto
+          .from(localIssueVoucherDraftLineItemRepository.findByLocalIssueVoucherId(localIssueVoucherId));
     }
     throw new BusinessDataException(new Message(ERROR_LOCAL_ISSUE_VOUCHER_SUB_DRAFT_NOT_ALL_SUBMITTED));
   }

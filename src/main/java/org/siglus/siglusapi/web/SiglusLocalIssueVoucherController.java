@@ -25,6 +25,7 @@ import lombok.AllArgsConstructor;
 import org.openlmis.referencedata.dto.OrderableDto;
 import org.siglus.siglusapi.dto.LocalIssueVoucherDto;
 import org.siglus.siglusapi.dto.LocalIssueVoucherSubDraftDto;
+import org.siglus.siglusapi.dto.LocalIssueVoucherSubDraftLineItemDto;
 import org.siglus.siglusapi.dto.LocalIssueVoucherSubmitRequestDto;
 import org.siglus.siglusapi.service.SiglusLocalIssueVoucherService;
 import org.siglus.siglusapi.web.response.PodSubDraftsSummaryResponse;
@@ -75,14 +76,14 @@ public class SiglusLocalIssueVoucherController {
 
 
   @GetMapping("/{id}/subDrafts/merge")
-  public void mergeLocalIssueDrafts(@PathVariable("id") UUID localIssueVoucherId) {
-    localIssueVoucherService.mergeLocalIssueDrafts(localIssueVoucherId);
+  public List<LocalIssueVoucherSubDraftLineItemDto> mergeLocalIssueDrafts(
+      @PathVariable("id") UUID localIssueVoucherId) {
+    return localIssueVoucherService.mergeLocalIssueDrafts(localIssueVoucherId);
   }
 
   @PutMapping("/{id}/subDraft/submit")
   @ResponseStatus(OK)
-  public void updateStatusAfterSubmit(
-      @RequestBody LocalIssueVoucherSubmitRequestDto submitRequestDto) {
+  public void submitLocalIssueVoucherdrafts(@RequestBody LocalIssueVoucherSubmitRequestDto submitRequestDto) {
     localIssueVoucherService.submitLocalIssueVoucherDrafts(submitRequestDto);
   }
 

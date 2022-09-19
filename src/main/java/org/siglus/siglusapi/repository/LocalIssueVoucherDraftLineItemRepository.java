@@ -24,7 +24,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-public interface LocalIssueVoucherDraftLineItemRepository extends JpaRepository<LocalIssueVoucherSubDraftLineItem, UUID> {
+public interface LocalIssueVoucherDraftLineItemRepository extends
+    JpaRepository<LocalIssueVoucherSubDraftLineItem, UUID> {
 
   @Query(value = "select\n"
       + "  *\n"
@@ -50,6 +51,8 @@ public interface LocalIssueVoucherDraftLineItemRepository extends JpaRepository<
   void deleteByLocalIssueVoucherSubDraftId(UUID subDraftId);
 
   List<LocalIssueVoucherSubDraftLineItem> findByLocalIssueVoucherSubDraftId(UUID subDraftId);
+
+  List<LocalIssueVoucherSubDraftLineItem> findByLocalIssueVoucherId(UUID localIssueVoucherId);
 
   void deleteAllByLocalIssueVoucherId(UUID localIssueVoucherId);
 }

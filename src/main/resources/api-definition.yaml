@@ -492,10 +492,10 @@ traits:
                 description: issueVouchers update.
           delete:
             is: [ secured ]
-              description: delete all local issue voucher subDrafts
-              responses:
-                204:
-                  description: all subDrafts deleted.
+            description: delete all local issue voucher subDrafts
+            responses:
+              204:
+                description: all subDrafts deleted.
           /{subDraftId}:
             get:
               is: [secured]
