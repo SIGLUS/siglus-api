@@ -19,24 +19,17 @@ import static com.google.common.collect.Lists.newArrayList;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Matchers.anyList;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_LOCAL_ISSUE_VOUCHER_ID_INVALID;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_LOCAL_ISSUE_VOUCHER_SUB_DRAFTS_MORE_THAN_TEN;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_ORDER_CODE_EXISTS;
 
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.InputMismatchException;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import org.assertj.core.util.Lists;
 import org.junit.Rule;
 import org.junit.Test;
@@ -47,32 +40,14 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.fulfillment.domain.OrderStatus;
 import org.openlmis.fulfillment.domain.ProofOfDeliveryLineItem;
-import org.openlmis.fulfillment.domain.ProofOfDeliveryStatus;
 import org.openlmis.fulfillment.service.OrderSearchParams;
-import org.openlmis.fulfillment.service.referencedata.OrderableDto;
 import org.openlmis.fulfillment.web.OrderController;
 import org.openlmis.fulfillment.web.util.BasicOrderDto;
-import org.openlmis.fulfillment.web.util.ObjectReferenceDto;
-import org.openlmis.fulfillment.web.util.OrderObjectReferenceDto;
-import org.openlmis.fulfillment.web.util.ProofOfDeliveryDto;
-import org.openlmis.fulfillment.web.util.ProofOfDeliveryLineItemDto;
-import org.openlmis.fulfillment.web.util.ShipmentObjectReferenceDto;
-import org.openlmis.fulfillment.web.util.VersionObjectReferenceDto;
-import org.openlmis.referencedata.domain.Code;
-import org.openlmis.referencedata.domain.Orderable;
-import org.openlmis.requisition.domain.requisition.Requisition;
-import org.openlmis.requisition.domain.requisition.RequisitionStatus;
-import org.openlmis.requisition.domain.requisition.StatusChange;
-import org.openlmis.requisition.repository.StatusChangeRepository;
 import org.siglus.siglusapi.domain.LocalIssueVoucher;
 import org.siglus.siglusapi.domain.LocalIssueVoucherDraftLineItem;
 import org.siglus.siglusapi.domain.LocalIssueVoucherSubDraft;
-import org.siglus.siglusapi.domain.PodLineItemsExtension;
 import org.siglus.siglusapi.domain.PodSubDraft;
-import org.siglus.siglusapi.domain.ProofsOfDeliveryExtension;
-import org.siglus.siglusapi.dto.FacilityDto;
-import org.siglus.siglusapi.dto.GeographicLevelDto;
-import org.siglus.siglusapi.dto.GeographicZoneDto;
+import org.siglus.siglusapi.dto.LocalIssueVoucherDraftLineItemDto;
 import org.siglus.siglusapi.dto.LocalIssueVoucherDto;
 import org.siglus.siglusapi.dto.LocalIssueVoucherSubDraftDto;
 import org.siglus.siglusapi.dto.enums.PodSubDraftStatusEnum;
@@ -82,15 +57,9 @@ import org.siglus.siglusapi.repository.LocalIssueVoucherDraftLineItemRepository;
 import org.siglus.siglusapi.repository.LocalIssueVoucherSubDraftRepository;
 import org.siglus.siglusapi.repository.PodSubDraftRepository;
 import org.siglus.siglusapi.repository.SiglusLocalIssueVoucherRepository;
-import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
-import org.siglus.siglusapi.repository.dto.OrderDto;
-import org.siglus.siglusapi.repository.dto.PodLineItemDto;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.web.request.OperateTypeEnum;
-import org.siglus.siglusapi.web.request.PodExtensionRequest;
-import org.siglus.siglusapi.web.response.PodExtensionResponse;
 import org.siglus.siglusapi.web.response.PodSubDraftsSummaryResponse.SubDraftInfo;
-import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 
@@ -116,12 +85,6 @@ public class SiglusLocalIssueVoucherServiceTest {
   private SiglusAuthenticationHelper authenticationHelper;
 
   @Mock
-  private SiglusRequisitionRepository siglusRequisitionRepository;
-
-  @Mock
-  private StatusChangeRepository requisitionStatusChangeRepository;
-
-  @Mock
   private SiglusLocalIssueVoucherRepository localIssueVoucherRepository;
 
   @Mock
@@ -130,29 +93,12 @@ public class SiglusLocalIssueVoucherServiceTest {
   @Mock
   private LocalIssueVoucherSubDraftRepository localIssueVoucherSubDraftRepository;
 
-  private final UUID externalId = UUID.randomUUID();
   private final UUID orderableId = UUID.randomUUID();
   private final UUID orderableId2 = UUID.randomUUID();
   private final UUID podId = UUID.randomUUID();
   private final UUID subDraftId = UUID.randomUUID();
   private final UUID lineItemId1 = UUID.randomUUID();
-  private final UUID lineItemId2 = UUID.randomUUID();
-  private final UUID orderId = UUID.randomUUID();
-  private final UUID requisitionId = UUID.randomUUID();
-  private final UUID facilityId = UUID.randomUUID();
-  private final UUID processingPeriodId = UUID.randomUUID();
-  private final UUID lotId = UUID.randomUUID();
-  private final UUID orderDtoId = UUID.randomUUID();
-  private final UUID shipmentDtoId = UUID.randomUUID();
-  private final String productCode = "product code";
-  private final String productName = "product name";
-  private final String serviceUrl = "serviceUrl";
-  private final String facilityCode = "facility code";
-  private final String lotCode = "lot code";
-  private final String preparedBy = "prepared by user1";
-  private final String conferredBy = "conferred by user2";
   private final String orderCode = "code-1";
-  private final String operator = "Jimmy";
   private final UUID programId = UUID.randomUUID();
   private final UUID operatorId = UUID.randomUUID();
   private final UUID requestingFacilityId = UUID.randomUUID();
@@ -185,12 +131,13 @@ public class SiglusLocalIssueVoucherServiceTest {
     subDraftDto.setOperateType(OperateTypeEnum.SAVE);
     subDraftDto.setLocalIssueVoucherId(localIssueVoucherId);
     subDraftDto.setLocalissuevouchersubdriftid(localIssueVoucherSubDraftId);
-    LocalIssueVoucherDraftLineItem localIssueVoucherDraftLineItem = new LocalIssueVoucherDraftLineItem();
+    LocalIssueVoucherDraftLineItemDto localIssueVoucherDraftLineItem = new LocalIssueVoucherDraftLineItemDto();
     localIssueVoucherDraftLineItem.setOrderableId(orderableId);
     subDraftDto.setLineItems(newArrayList(localIssueVoucherDraftLineItem));
     //when
     when(localIssueVoucherSubDraftRepository.findOne(subDraftId)).thenReturn(subDraft);
-    when(localIssueVoucherDraftLineItemRepository.save(subDraftDto.getLineItems())).thenReturn(null);
+    when(localIssueVoucherDraftLineItemRepository.save(
+        LocalIssueVoucherDraftLineItemDto.to(subDraftDto.getLineItems()))).thenReturn(null);
     when(localIssueVoucherDraftLineItemRepository.findDuplicatedOrderableLineItem(newArrayList(orderableId),
         localIssueVoucherId, localIssueVoucherSubDraftId)).thenReturn(null);
     service.updateSubDraft(localIssueVoucherId, subDraftDto, subDraftId);
@@ -209,12 +156,13 @@ public class SiglusLocalIssueVoucherServiceTest {
     subDraftDto.setOperateType(OperateTypeEnum.SUBMIT);
     subDraftDto.setLocalIssueVoucherId(localIssueVoucherId);
     subDraftDto.setLocalissuevouchersubdriftid(localIssueVoucherSubDraftId);
-    LocalIssueVoucherDraftLineItem localIssueVoucherDraftLineItem = new LocalIssueVoucherDraftLineItem();
-    localIssueVoucherDraftLineItem.setOrderableId(orderableId);
-    subDraftDto.setLineItems(newArrayList(localIssueVoucherDraftLineItem));
+    LocalIssueVoucherDraftLineItemDto localIssueVoucherDraftLineItemDto = new LocalIssueVoucherDraftLineItemDto();
+    localIssueVoucherDraftLineItemDto.setOrderableId(orderableId);
+    subDraftDto.setLineItems(newArrayList(localIssueVoucherDraftLineItemDto));
     //when
     when(localIssueVoucherSubDraftRepository.findOne(subDraftId)).thenReturn(subDraft);
-    when(localIssueVoucherDraftLineItemRepository.save(subDraftDto.getLineItems())).thenReturn(null);
+    when(localIssueVoucherDraftLineItemRepository.save(
+        LocalIssueVoucherDraftLineItemDto.to(subDraftDto.getLineItems()))).thenReturn(null);
     when(localIssueVoucherDraftLineItemRepository.findDuplicatedOrderableLineItem(newArrayList(orderableId),
         localIssueVoucherId, localIssueVoucherSubDraftId)).thenReturn(null);
     service.updateSubDraft(localIssueVoucherId, subDraftDto, subDraftId);
@@ -233,13 +181,14 @@ public class SiglusLocalIssueVoucherServiceTest {
     subDraftDto.setOperateType(OperateTypeEnum.SUBMIT);
     subDraftDto.setLocalIssueVoucherId(localIssueVoucherId);
     subDraftDto.setLocalissuevouchersubdriftid(localIssueVoucherSubDraftId);
-    LocalIssueVoucherDraftLineItem localIssueVoucherDraftLineItem = new LocalIssueVoucherDraftLineItem();
-    localIssueVoucherDraftLineItem.setOrderableId(orderableId);
-    subDraftDto.setLineItems(newArrayList(localIssueVoucherDraftLineItem));
+    LocalIssueVoucherDraftLineItemDto localIssueVoucherDraftLineItemDto = new LocalIssueVoucherDraftLineItemDto();
+    localIssueVoucherDraftLineItemDto.setOrderableId(orderableId);
+    subDraftDto.setLineItems(newArrayList(localIssueVoucherDraftLineItemDto));
     List<ProofOfDeliveryLineItem> proofOfDeliveryLineItems = buildMockPodLineItems();
     //when
     when(localIssueVoucherSubDraftRepository.findOne(subDraftId)).thenReturn(subDraft);
-    when(localIssueVoucherDraftLineItemRepository.save(subDraftDto.getLineItems())).thenReturn(null);
+    when(localIssueVoucherDraftLineItemRepository.save(
+        LocalIssueVoucherDraftLineItemDto.to(subDraftDto.getLineItems()))).thenReturn(null);
     when(localIssueVoucherDraftLineItemRepository.findDuplicatedOrderableLineItem(newArrayList(orderableId),
         localIssueVoucherId, subDraftId)).thenReturn(proofOfDeliveryLineItems);
     service.updateSubDraft(localIssueVoucherId, subDraftDto, subDraftId);
@@ -257,13 +206,14 @@ public class SiglusLocalIssueVoucherServiceTest {
     subDraftDto.setOperateType(OperateTypeEnum.SUBMIT);
     subDraftDto.setLocalIssueVoucherId(localIssueVoucherId);
     subDraftDto.setLocalissuevouchersubdriftid(localIssueVoucherSubDraftId);
-    LocalIssueVoucherDraftLineItem localIssueVoucherDraftLineItem = new LocalIssueVoucherDraftLineItem();
-    localIssueVoucherDraftLineItem.setOrderableId(orderableId);
-    subDraftDto.setLineItems(newArrayList(localIssueVoucherDraftLineItem));
+    LocalIssueVoucherDraftLineItemDto localIssueVoucherDraftLineItemDto = new LocalIssueVoucherDraftLineItemDto();
+    localIssueVoucherDraftLineItemDto.setOrderableId(orderableId);
+    subDraftDto.setLineItems(newArrayList(localIssueVoucherDraftLineItemDto));
     List<ProofOfDeliveryLineItem> proofOfDeliveryLineItems = buildMockPodLineItems();
     //when
     when(localIssueVoucherSubDraftRepository.findOne(subDraftId)).thenReturn(subDraft);
-    when(localIssueVoucherDraftLineItemRepository.save(subDraftDto.getLineItems())).thenReturn(null);
+    when(localIssueVoucherDraftLineItemRepository.save(
+        LocalIssueVoucherDraftLineItemDto.to(subDraftDto.getLineItems()))).thenReturn(null);
     when(localIssueVoucherDraftLineItemRepository.findDuplicatedOrderableLineItem(newArrayList(orderableId),
         localIssueVoucherId, localIssueVoucherSubDraftId)).thenReturn(proofOfDeliveryLineItems);
     service.updateSubDraft(localIssueVoucherId, subDraftDto, subDraftId);
@@ -282,13 +232,14 @@ public class SiglusLocalIssueVoucherServiceTest {
     subDraftDto.setOperateType(OperateTypeEnum.SUBMIT);
     subDraftDto.setLocalIssueVoucherId(localIssueVoucherId);
     subDraftDto.setLocalissuevouchersubdriftid(localIssueVoucherSubDraftId);
-    LocalIssueVoucherDraftLineItem localIssueVoucherDraftLineItem = new LocalIssueVoucherDraftLineItem();
-    localIssueVoucherDraftLineItem.setOrderableId(orderableId);
-    subDraftDto.setLineItems(newArrayList(localIssueVoucherDraftLineItem));
+    LocalIssueVoucherDraftLineItemDto localIssueVoucherDraftLineItemDto = new LocalIssueVoucherDraftLineItemDto();
+    localIssueVoucherDraftLineItemDto.setOrderableId(orderableId);
+    subDraftDto.setLineItems(newArrayList(localIssueVoucherDraftLineItemDto));
     List<ProofOfDeliveryLineItem> proofOfDeliveryLineItems = buildMockPodLineItems();
     //when
     when(localIssueVoucherSubDraftRepository.findOne(subDraftId)).thenReturn(subDraft);
-    when(localIssueVoucherDraftLineItemRepository.save(subDraftDto.getLineItems())).thenReturn(null);
+    when(localIssueVoucherDraftLineItemRepository.save(
+        LocalIssueVoucherDraftLineItemDto.to(subDraftDto.getLineItems()))).thenReturn(null);
     when(localIssueVoucherDraftLineItemRepository.findDuplicatedOrderableLineItem(newArrayList(orderableId),
         localIssueVoucherId, localIssueVoucherSubDraftId)).thenReturn(proofOfDeliveryLineItems);
     service.updateSubDraft(UUID.randomUUID(), subDraftDto, subDraftId);
@@ -415,6 +366,7 @@ public class SiglusLocalIssueVoucherServiceTest {
     //when
     when(localIssueVoucherRepository.findOne(localIssueVoucherId)).thenReturn(localIssueVoucher);
     when(podSubDraftRepository.countAllByPodId(localIssueVoucherId)).thenReturn(5);
+    String operator = "Jimmy";
     when(authenticationHelper.getUserNameByUserId(operatorId)).thenReturn(operator);
     when(podSubDraftRepository.save(any(PodSubDraft.class))).thenReturn(localIssueVoucherSubDraft);
 
@@ -460,279 +412,6 @@ public class SiglusLocalIssueVoucherServiceTest {
     when(localIssueVoucherDraftLineItemRepository.findUsedOrderableByPodId(podId)).thenReturn(null);
     when(siglusOrderableService.getAllProducts()).thenReturn(Lists.newArrayList(orderableDto1, orderableDto2));
     assertEquals(2, service.getAvailableOrderables(podId).size());
-  }
-
-  private PodExtensionRequest buildPodExtensionRequest() {
-    PodExtensionRequest request = new PodExtensionRequest();
-    request.setPodDto(buildMockPodDtoWithOneLineItem());
-    request.setPreparedBy(preparedBy);
-    request.setConferredBy(conferredBy);
-    return request;
-  }
-
-  private PodExtensionRequest buildPodExtensionRequestWithPodTwoLineItems() {
-    PodExtensionRequest request = new PodExtensionRequest();
-    request.setPodDto(buildMockPodDtoWithTwoLineItems());
-    request.setPreparedBy(preparedBy);
-    request.setConferredBy(conferredBy);
-    return request;
-  }
-
-  private ProofsOfDeliveryExtension buildMockPodExtension() {
-    return ProofsOfDeliveryExtension.builder()
-        .preparedBy(preparedBy)
-        .conferredBy(conferredBy)
-        .build();
-  }
-
-  private void mockForRequisitionCount() {
-    when(siglusRequisitionRepository.findRequisitionIdsByOrderInfo(any(), any(), any(), anyBoolean(), anyList()))
-        .thenReturn(buildMockRequisitions());
-    when(requisitionStatusChangeRepository.findByRequisitionIdIn(anyList())).thenReturn(
-        buildMockRequisitionSubmittedStatusChanges());
-  }
-
-  private List<String> buildMockRequisitions() {
-    return Lists.newArrayList(requisitionId.toString());
-  }
-
-  private List<StatusChange> buildMockRequisitionStatusChanges() {
-    StatusChange statusChange = new StatusChange();
-    statusChange.setStatus(RequisitionStatus.RELEASED);
-    return Lists.newArrayList(statusChange);
-  }
-
-  private List<StatusChange> buildMockRequisitionSubmittedStatusChanges() {
-    List<StatusChange> statusChanges = Lists.newArrayList();
-    ZonedDateTime now = ZonedDateTime.now();
-    for (int i = 0; i < 100; i++) {
-      StatusChange statusChange = new StatusChange();
-      Requisition requisition = new Requisition();
-      requisition.setId(UUID.randomUUID());
-      statusChange.setRequisition(requisition);
-      statusChange.setCreatedDate(now.plusSeconds(i));
-      statusChange.setStatus(RequisitionStatus.SUBMITTED);
-      statusChanges.add(statusChange);
-    }
-    StatusChange statusChange = new StatusChange();
-    Requisition requisition = new Requisition();
-    requisition.setId(requisitionId);
-    statusChange.setRequisition(requisition);
-    statusChange.setCreatedDate(now.plusDays(1));
-    statusChange.setStatus(RequisitionStatus.SUBMITTED);
-    statusChanges.add(statusChange);
-    return statusChanges;
-  }
-
-  private List<StatusChange> buildMockRequisitionStatusChangesWithNoReleasedStatus() {
-    StatusChange statusChange = new StatusChange();
-    statusChange.setStatus(RequisitionStatus.APPROVED);
-    return Lists.newArrayList(statusChange);
-  }
-
-  private List<PodLineItemDto> buildMockPodLineItemDtos() {
-    PodLineItemDto dto = PodLineItemDto.builder()
-        .productCode(productCode)
-        .productName(productName)
-        .lotId(lotId)
-        .lotCode(lotCode)
-        .lotExpirationDate(LocalDate.now().minusMonths(1L))
-        .requestedQuantity(1L)
-        .orderedQuantity(1L)
-        .receivedQuantity(1L)
-        .build();
-    return Lists.newArrayList(dto);
-  }
-
-  private FacilityDto buildMockFacilityDtoWithLevel3() {
-    GeographicZoneDto zoneDto = new GeographicZoneDto();
-    zoneDto.setName("district");
-    zoneDto.setLevel(new GeographicLevelDto(UUID.randomUUID(), "code", "name", 3));
-    GeographicZoneDto parentDto = new GeographicZoneDto();
-    parentDto.setName("province");
-    zoneDto.setParent(parentDto);
-
-    FacilityDto dto = new FacilityDto();
-    dto.setGeographicZone(zoneDto);
-    return dto;
-  }
-
-  private FacilityDto buildMockFacilityDtoWithLevel2() {
-    GeographicZoneDto zoneDto = new GeographicZoneDto();
-    zoneDto.setName("district");
-    zoneDto.setLevel(new GeographicLevelDto(UUID.randomUUID(), "code", "name", 2));
-    GeographicZoneDto parentDto = new GeographicZoneDto();
-    parentDto.setName("province");
-    zoneDto.setParent(parentDto);
-
-    FacilityDto dto = new FacilityDto();
-    dto.setGeographicZone(zoneDto);
-    return dto;
-  }
-
-  private FacilityDto buildMockFacilityDtoWithLevel3AndNoParent() {
-    GeographicZoneDto zoneDto = new GeographicZoneDto();
-    zoneDto.setName("district");
-    zoneDto.setLevel(new GeographicLevelDto(UUID.randomUUID(), "code", "name", 3));
-
-    FacilityDto dto = new FacilityDto();
-    dto.setGeographicZone(zoneDto);
-    return dto;
-  }
-
-  private OrderDto buildMockOrderDto() {
-    return OrderDto.builder()
-        .id(orderId)
-        .emergency(Boolean.FALSE)
-        .receivingFacilityId(facilityId)
-        .supplyingFacilityId(facilityId)
-        .receivingFacilityCode(facilityCode)
-        .requisitionId(requisitionId)
-        .processingPeriodId(processingPeriodId)
-        .periodEndDate(Date.from(Instant.now()))
-        .build();
-  }
-
-  private OrderDto buildMockOrderDtoWithOutRequisitionId() {
-    return OrderDto.builder()
-        .id(orderId)
-        .emergency(Boolean.TRUE)
-        .receivingFacilityId(facilityId)
-        .supplyingFacilityId(facilityId)
-        .receivingFacilityCode(facilityCode)
-        .processingPeriodId(processingPeriodId)
-        .externalId(requisitionId)
-        .periodEndDate(Date.from(Instant.now()))
-        .build();
-  }
-
-  private List<SubDraftInfo> toSubDraftInfos(List<PodSubDraft> podSubDrafts) {
-    return podSubDrafts.stream().map(podSubDraft ->
-            SubDraftInfo.builder()
-                .subDraftId(podSubDraft.getId())
-                .groupNum(podSubDraft.getNumber())
-                .saver(authenticationHelper.getUserNameByUserId(podSubDraft.getOperatorId()))
-                .status(podSubDraft.getStatus())
-                .build())
-        .collect(Collectors.toList());
-  }
-
-  private PodExtensionResponse buildMockPodExtensionResponse() {
-    PodExtensionResponse response = new PodExtensionResponse();
-    response.setPodDto(buildMockPodDtoWithNoLineItems());
-    response.setPreparedBy(preparedBy);
-    response.setConferredBy(conferredBy);
-    return response;
-  }
-
-  private ProofOfDeliveryDto buildMockPodDtoWithNoLineItems() {
-    ProofOfDeliveryDto podDto = new ProofOfDeliveryDto();
-    podDto.setId(podId);
-    podDto.setStatus(ProofOfDeliveryStatus.CONFIRMED);
-    podDto.setShipment(buildMockShipmentDto());
-    podDto.setLineItems(Lists.newArrayList());
-    return podDto;
-  }
-
-  private ProofOfDeliveryDto buildMockPodDtoWithOneLineItem() {
-    ProofOfDeliveryDto podDto = new ProofOfDeliveryDto();
-    podDto.setId(podId);
-    podDto.setStatus(ProofOfDeliveryStatus.CONFIRMED);
-    podDto.setShipment(buildMockShipmentDto());
-
-    ProofOfDeliveryLineItemDto lineItemDto = new ProofOfDeliveryLineItemDto(serviceUrl,
-        new VersionObjectReferenceDto(),
-        new ObjectReferenceDto(UUID.randomUUID(), serviceUrl, "resourceName"), 10, Boolean.TRUE, null, 0,
-        UUID.randomUUID(), "test notes");
-    OrderableDto orderableDto = new OrderableDto();
-    orderableDto.setId(orderableId);
-    orderableDto.setProductCode(productCode);
-    lineItemDto.setOrderable(orderableDto);
-    lineItemDto.setId(lineItemId1);
-
-    List<ProofOfDeliveryLineItemDto> lineItemDtos = Lists.newArrayList();
-    lineItemDtos.add(lineItemDto);
-
-    podDto.setLineItems(lineItemDtos);
-
-    return podDto;
-  }
-
-  private ProofOfDeliveryDto buildMockPodDtoWithTwoLineItems() {
-    ProofOfDeliveryDto podDto = new ProofOfDeliveryDto();
-    podDto.setId(podId);
-    podDto.setShipment(buildMockShipmentDto());
-
-    ProofOfDeliveryLineItemDto lineItemDto1 = new ProofOfDeliveryLineItemDto(serviceUrl,
-        new VersionObjectReferenceDto(),
-        new ObjectReferenceDto(UUID.randomUUID(), serviceUrl, "resourceName"), 10, Boolean.TRUE, null, 0,
-        UUID.randomUUID(), "test notes");
-    OrderableDto orderableDto = new OrderableDto();
-    orderableDto.setId(orderableId);
-    orderableDto.setProductCode(productCode);
-    lineItemDto1.setOrderable(orderableDto);
-    lineItemDto1.setId(lineItemId1);
-
-    ProofOfDeliveryLineItemDto lineItemDto2 = new ProofOfDeliveryLineItemDto();
-    BeanUtils.copyProperties(lineItemDto1, lineItemDto2);
-    lineItemDto2.setId(lineItemId2);
-
-    List<ProofOfDeliveryLineItemDto> lineItemDtos = Lists.newArrayList();
-    lineItemDtos.add(lineItemDto1);
-    lineItemDtos.add(lineItemDto2);
-
-    podDto.setLineItems(lineItemDtos);
-
-    return podDto;
-  }
-
-  private ShipmentObjectReferenceDto buildMockShipmentDto() {
-    OrderObjectReferenceDto orderDto = new OrderObjectReferenceDto(orderDtoId);
-    orderDto.setExternalId(externalId);
-    ShipmentObjectReferenceDto shipmentDto = new ShipmentObjectReferenceDto(shipmentDtoId);
-    shipmentDto.setOrder(orderDto);
-    return shipmentDto;
-  }
-
-  private List<PodSubDraft> buildMockSubDrafts() {
-    return Lists.newArrayList(buildMockSubDraftNotYetStarted());
-  }
-
-  private List<PodSubDraft> buildMockSubDraftsAllSubmitted() {
-    return Lists.newArrayList(buildMockSubDraftSubmitted());
-  }
-
-  private PodSubDraft buildMockSubDraftSubmitted() {
-    PodSubDraft podSubDraft = PodSubDraft.builder()
-        .podId(podId)
-        .number(1)
-        .status(PodSubDraftStatusEnum.SUBMITTED)
-        .build();
-    podSubDraft.setId(podId);
-    return podSubDraft;
-  }
-
-  private PodSubDraft buildMockSubDraftNotYetStarted() {
-    PodSubDraft podSubDraft = PodSubDraft.builder()
-        .podId(podId)
-        .number(1)
-        .status(PodSubDraftStatusEnum.NOT_YET_STARTED)
-        .build();
-    podSubDraft.setId(podId);
-    return podSubDraft;
-  }
-
-  private List<Orderable> buildMockOrderables() {
-    Orderable orderable = new Orderable(Code.code(productCode), null, 0, 0, Boolean.FALSE, orderableId, 0L);
-    return Lists.newArrayList(orderable);
-  }
-
-  private List<PodLineItemsExtension> buildMockPodLineItemsExtensions() {
-    PodLineItemsExtension lineItemsExtension1 = PodLineItemsExtension.builder()
-        .subDraftId(subDraftId)
-        .podLineItemId(lineItemId1)
-        .build();
-    return Lists.newArrayList(lineItemsExtension1);
   }
 
   private List<ProofOfDeliveryLineItem> buildMockPodLineItems() {

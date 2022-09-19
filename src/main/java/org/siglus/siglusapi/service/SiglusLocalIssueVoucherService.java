@@ -44,6 +44,7 @@ import org.siglus.siglusapi.domain.LocalIssueVoucher;
 import org.siglus.siglusapi.domain.LocalIssueVoucherDraftLineItem;
 import org.siglus.siglusapi.domain.LocalIssueVoucherSubDraft;
 import org.siglus.siglusapi.domain.PodSubDraft;
+import org.siglus.siglusapi.dto.LocalIssueVoucherDraftLineItemDto;
 import org.siglus.siglusapi.dto.LocalIssueVoucherDto;
 import org.siglus.siglusapi.dto.LocalIssueVoucherSubDraftDto;
 import org.siglus.siglusapi.dto.Message;
@@ -55,6 +56,7 @@ import org.siglus.siglusapi.repository.LocalIssueVoucherDraftLineItemRepository;
 import org.siglus.siglusapi.repository.LocalIssueVoucherSubDraftRepository;
 import org.siglus.siglusapi.repository.PodSubDraftRepository;
 import org.siglus.siglusapi.repository.SiglusLocalIssueVoucherRepository;
+import org.siglus.siglusapi.util.AndroidHelper;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.web.request.OperateTypeEnum;
 import org.siglus.siglusapi.web.response.PodSubDraftsSummaryResponse;
@@ -83,6 +85,7 @@ public class SiglusLocalIssueVoucherService {
   private final LocalIssueVoucherSubDraftRepository localIssueVoucherSubDraftRepository;
 
   private final SiglusOrderableService siglusOrderableService;
+
   private static final Integer SUB_DRAFTS_LIMITATION = 10;
   private static final Integer SUB_DRAFTS_INCREMENT = 1;
 
@@ -174,7 +177,7 @@ public class SiglusLocalIssueVoucherService {
             subDraftId);
     return LocalIssueVoucherSubDraftDto
         .builder()
-        .lineItems(localIssueVoucherDraftLineItems)
+        .lineItems(LocalIssueVoucherDraftLineItemDto.from(localIssueVoucherDraftLineItems))
         .build();
   }
 
@@ -186,9 +189,10 @@ public class SiglusLocalIssueVoucherService {
     }
     checkIfCanOperate(subDraft);
     validateOrderableDuplicated(subDraftDto, subDraftId);
-    log.info("save local issue voucher line items of subdraft {} ,size ",
+    log.info("save local issue voucher line items of subdraft {} ,size {}",
         subDraftId, subDraftDto.getLineItems().size());
-    localIssueVoucherDraftLineItemRepository.save(subDraftDto.getLineItems());
+
+    localIssueVoucherDraftLineItemRepository.save(LocalIssueVoucherDraftLineItemDto.to(subDraftDto.getLineItems()));
     if (subDraftDto.getOperateType().equals(OperateTypeEnum.SUBMIT)) {
       subDraft.setStatus(PodSubDraftStatusEnum.SUBMITTED);
     } else {
@@ -213,7 +217,7 @@ public class SiglusLocalIssueVoucherService {
     List<UUID> orderableIds = subDraftDto
         .getLineItems()
         .stream()
-        .map(LocalIssueVoucherDraftLineItem::getOrderableId)
+        .map(LocalIssueVoucherDraftLineItemDto::getOrderableId)
         .collect(Collectors.toList());
     UUID localIssueVoucherId = subDraftDto.getLocalIssueVoucherId();
     List<ProofOfDeliveryLineItem> duplicatedOrderableLineItem =
