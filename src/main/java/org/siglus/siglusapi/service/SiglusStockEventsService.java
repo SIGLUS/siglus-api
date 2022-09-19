@@ -326,7 +326,8 @@ public class SiglusStockEventsService {
 
   private void validateNegativeAdjustmentQuantity(UUID facilityId, List<StockEventLineItemDto> lineItems) {
     Map<String, List<StockEventLineItemDto>> lotLocationToStockEventLineItemDtoList = lineItems.stream()
-        .collect(Collectors.groupingBy(e -> getUniqueKey(e.getLotId(), e.getLocationCode())));
+        .collect(Collectors.groupingBy(e -> getUniqueKey(e.getOrderableId(), e.getLotId(), e.getLocationCode())));
+
     lotLocationToStockEventLineItemDtoList.forEach((lotLocation, stockEventLineItemDtoList) -> {
       StockEventLineItemDto stockEventLineItemDto = stockEventLineItemDtoList.get(0);
       StockCard stockCard = stockCardRepository.findByProgramIdAndFacilityIdAndOrderableIdAndLotId(
@@ -364,8 +365,11 @@ public class SiglusStockEventsService {
     return !reasonIdToStockCardLineItemReason.get(reasonId).getReasonType().equals(ReasonType.DEBIT);
   }
 
-  private String getUniqueKey(UUID lotId, String locationCode) {
-    return lotId.toString() + SEPARATOR + locationCode;
+  private String getUniqueKey(UUID orderableId, UUID lotId, String locationCode) {
+    if (lotId == null) {
+      return orderableId.toString() + SEPARATOR + locationCode;
+    }
+    return orderableId.toString() + lotId + SEPARATOR + locationCode;
   }
 
 }
