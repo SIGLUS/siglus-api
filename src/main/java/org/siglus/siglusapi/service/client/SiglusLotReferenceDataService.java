@@ -21,6 +21,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.openlmis.referencedata.web.LotController;
@@ -29,7 +30,11 @@ import org.siglus.siglusapi.constant.FieldConstants;
 import org.siglus.siglusapi.dto.LotDto;
 import org.siglus.siglusapi.dto.LotSearchParams;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.MapBindingResult;
@@ -65,14 +70,17 @@ public class SiglusLotReferenceDataService extends BaseReferenceDataService<LotD
   }
 
   public List<LotDto> getLots(LotSearchParams lotSearchParams) {
-    RequestParameters requestParameters = RequestParameters.init()
-        .set(FieldConstants.EXPIRATION_DATE, lotSearchParams.getExpirationDate())
-        .set(FieldConstants.TRADE_ITEM_ID, lotSearchParams.getTradeItemId())
-        .set(FieldConstants.LOT_CODE, lotSearchParams.getLotCode())
-        .set(FieldConstants.ID, lotSearchParams.getId());
-    return getPage("/", requestParameters).getContent();
+    org.openlmis.referencedata.service.LotSearchParams requestParams =
+        new org.openlmis.referencedata.service.LotSearchParams(lotSearchParams.getExpirationDate(),
+            lotSearchParams.getTradeItemId(),
+            lotSearchParams.getLotCode(),
+            lotSearchParams.getId());
+    Pageable pageable = new PageRequest(0, Integer.MAX_VALUE);
+    return lotController.getLots(requestParams, pageable).getContent().stream().map(LotDto::from)
+        .collect(Collectors.toList());
   }
 
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
   public LotDto saveLot(LotDto lotDto) {
     ObjectMapper objectMapper = new ObjectMapper();
 
