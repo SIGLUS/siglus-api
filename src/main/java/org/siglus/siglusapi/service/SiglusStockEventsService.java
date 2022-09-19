@@ -125,6 +125,9 @@ public class SiglusStockEventsService {
 
     if (isByLocation) {
       calculatedStocksOnHandByLocationService.calculateStockOnHandByLocation(eventDto);
+      if (eventDto.isPhysicalInventory()) {
+        calculatedStocksOnHandByLocationService.recalculateStockOnHandForPhysicalInventory(eventDto);
+      }
     }
   }
 
