@@ -166,16 +166,8 @@ public class CalculatedStocksOnHandByLocationService {
   }
 
   public void calculateStockOnHandByLocation(StockEventDto eventDto) {
-    UUID facilityId = eventDto.getFacilityId();
     List<StockEventLineItemDto> lineItemDtos = eventDto.getLineItems();
-    Set<String> orderableLotIdPairs = lineItemDtos.stream()
-        .map(this::getOrderableLotIdPair)
-        .collect(Collectors.toSet());
-    if (orderableLotIdPairs.isEmpty()) {
-      return;
-    }
-    List<StockCard> stockCards = siglusStockCardRepository.findByFacilityIdAndOrderableLotIdPairs(
-            facilityId, orderableLotIdPairs);
+    List<StockCard> stockCards = getStockCardsFromStockEvent(eventDto);
     Map<String, StockCard> uniKeyToStockCard = stockCards.stream()
         .collect(Collectors.toMap(this::getUniqueKey, Function.identity()));
 
@@ -209,6 +201,45 @@ public class CalculatedStocksOnHandByLocationService {
     });
 
     saveAll(toSaveList);
+  }
+
+  public void recalculateStockOnHandForPhysicalInventory(StockEventDto eventDto) {
+    List<StockCard> stockCards = getStockCardsFromStockEvent(eventDto);
+    LocalDate occurredDate = eventDto.getLineItems().get(0).getOccurredDate();
+    List<UUID> stockCardIds = stockCards.stream()
+            .map(StockCard::getId).collect(Collectors.toList());
+
+    List<CalculatedStockOnHand> calculatedStockOnHands = calculatedStocksOnHandRepository
+            .findByOccurredDateAndStockCardIdIn(occurredDate, stockCardIds);
+
+    Map<UUID, List<CalculatedStockOnHandByLocation>> stockCardIdToSohByLocationList =
+            calculatedStockOnHandByLocationRepository
+            .findPreviousLocationStockOnHandsTillNow(stockCardIds, occurredDate)
+            .stream()
+            .collect(Collectors.groupingBy(CalculatedStockOnHandByLocation::getStockCardId));
+    calculatedStockOnHands.forEach(calculatedStockOnHand -> {
+      Integer sum = stockCardIdToSohByLocationList.get(calculatedStockOnHand.getStockCardId())
+              .stream()
+              .map(CalculatedStockOnHandByLocation::getStockOnHand)
+              .mapToInt(Integer::intValue)
+              .sum();
+      log.info("calculatedStockOnHandId: {}, sumOfLocationSoh: {}", calculatedStockOnHand.getId(), sum);
+      calculatedStockOnHand.setStockOnHand(sum);
+    });
+    calculatedStocksOnHandRepository.save(calculatedStockOnHands);
+  }
+
+  private List<StockCard> getStockCardsFromStockEvent(StockEventDto eventDto) {
+    UUID facilityId = eventDto.getFacilityId();
+    List<StockEventLineItemDto> lineItemDtos = eventDto.getLineItems();
+    Set<String> orderableLotIdPairs = lineItemDtos.stream()
+            .map(this::getOrderableLotIdPair)
+            .collect(Collectors.toSet());
+    if (orderableLotIdPairs.isEmpty()) {
+      return Collections.emptyList();
+    }
+    return siglusStockCardRepository.findByFacilityIdAndOrderableLotIdPairs(
+            facilityId, orderableLotIdPairs);
   }
 
   private String getOrderableLotIdPair(StockEventLineItemDto eventLineItemDto) {
