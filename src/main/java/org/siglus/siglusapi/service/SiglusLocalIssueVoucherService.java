@@ -57,7 +57,6 @@ import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.LocalIssueVoucherDraftLineItemRepository;
 import org.siglus.siglusapi.repository.LocalIssueVoucherSubDraftRepository;
-import org.siglus.siglusapi.repository.PodSubDraftRepository;
 import org.siglus.siglusapi.repository.SiglusLocalIssueVoucherRepository;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.web.request.OperateTypeEnum;
@@ -77,10 +76,6 @@ public class SiglusLocalIssueVoucherService {
   private final SiglusAuthenticationHelper authenticationHelper;
 
   private final SiglusLocalIssueVoucherRepository localIssueVoucherRepository;
-
-  private final PodSubDraftRepository podSubDraftRepository;
-
-  private final SiglusPodService siglusPodService;
 
   private final LocalIssueVoucherDraftLineItemRepository localIssueVoucherDraftLineItemRepository;
 

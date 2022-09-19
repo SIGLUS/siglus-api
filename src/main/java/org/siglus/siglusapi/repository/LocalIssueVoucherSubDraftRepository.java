@@ -19,7 +19,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import org.siglus.siglusapi.domain.LocalIssueVoucherSubDraft;
-import org.siglus.siglusapi.domain.PodSubDraft;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface LocalIssueVoucherSubDraftRepository extends JpaRepository<LocalIssueVoucherSubDraft, UUID> {

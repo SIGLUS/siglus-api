@@ -44,17 +44,16 @@ import org.openlmis.fulfillment.service.OrderSearchParams;
 import org.openlmis.fulfillment.web.OrderController;
 import org.openlmis.fulfillment.web.util.BasicOrderDto;
 import org.siglus.siglusapi.domain.LocalIssueVoucher;
-import org.siglus.siglusapi.domain.LocalIssueVoucherSubDraftLineItem;
 import org.siglus.siglusapi.domain.LocalIssueVoucherSubDraft;
-import org.siglus.siglusapi.dto.LocalIssueVoucherSubDraftLineItemDto;
+import org.siglus.siglusapi.domain.LocalIssueVoucherSubDraftLineItem;
 import org.siglus.siglusapi.dto.LocalIssueVoucherDto;
 import org.siglus.siglusapi.dto.LocalIssueVoucherSubDraftDto;
+import org.siglus.siglusapi.dto.LocalIssueVoucherSubDraftLineItemDto;
 import org.siglus.siglusapi.dto.enums.PodSubDraftStatusEnum;
 import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.LocalIssueVoucherDraftLineItemRepository;
 import org.siglus.siglusapi.repository.LocalIssueVoucherSubDraftRepository;
-import org.siglus.siglusapi.repository.PodSubDraftRepository;
 import org.siglus.siglusapi.repository.SiglusLocalIssueVoucherRepository;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.web.request.OperateTypeEnum;
@@ -76,9 +75,6 @@ public class SiglusLocalIssueVoucherServiceTest {
 
   @Mock
   private OrderController orderController;
-
-  @Mock
-  private PodSubDraftRepository podSubDraftRepository;
 
   @Mock
   private SiglusAuthenticationHelper authenticationHelper;
@@ -155,7 +151,8 @@ public class SiglusLocalIssueVoucherServiceTest {
     subDraftDto.setOperateType(OperateTypeEnum.SUBMIT);
     subDraftDto.setLocalIssueVoucherId(localIssueVoucherId);
     subDraftDto.setLocalIssueVoucherSubDraftId(localIssueVoucherSubDraftId);
-    LocalIssueVoucherSubDraftLineItemDto localIssueVoucherSubDraftLineItemDto = new LocalIssueVoucherSubDraftLineItemDto();
+    LocalIssueVoucherSubDraftLineItemDto localIssueVoucherSubDraftLineItemDto =
+        new LocalIssueVoucherSubDraftLineItemDto();
     localIssueVoucherSubDraftLineItemDto.setOrderableId(orderableId);
     subDraftDto.setLineItems(newArrayList(localIssueVoucherSubDraftLineItemDto));
     //when
@@ -180,7 +177,8 @@ public class SiglusLocalIssueVoucherServiceTest {
     subDraftDto.setOperateType(OperateTypeEnum.SUBMIT);
     subDraftDto.setLocalIssueVoucherId(localIssueVoucherId);
     subDraftDto.setLocalIssueVoucherSubDraftId(localIssueVoucherSubDraftId);
-    LocalIssueVoucherSubDraftLineItemDto localIssueVoucherSubDraftLineItemDto = new LocalIssueVoucherSubDraftLineItemDto();
+    LocalIssueVoucherSubDraftLineItemDto localIssueVoucherSubDraftLineItemDto =
+        new LocalIssueVoucherSubDraftLineItemDto();
     localIssueVoucherSubDraftLineItemDto.setOrderableId(orderableId);
     subDraftDto.setLineItems(newArrayList(localIssueVoucherSubDraftLineItemDto));
     List<ProofOfDeliveryLineItem> proofOfDeliveryLineItems = buildMockPodLineItems();
@@ -205,7 +203,8 @@ public class SiglusLocalIssueVoucherServiceTest {
     subDraftDto.setOperateType(OperateTypeEnum.SUBMIT);
     subDraftDto.setLocalIssueVoucherId(localIssueVoucherId);
     subDraftDto.setLocalIssueVoucherSubDraftId(localIssueVoucherSubDraftId);
-    LocalIssueVoucherSubDraftLineItemDto localIssueVoucherSubDraftLineItemDto = new LocalIssueVoucherSubDraftLineItemDto();
+    LocalIssueVoucherSubDraftLineItemDto localIssueVoucherSubDraftLineItemDto =
+        new LocalIssueVoucherSubDraftLineItemDto();
     localIssueVoucherSubDraftLineItemDto.setOrderableId(orderableId);
     subDraftDto.setLineItems(newArrayList(localIssueVoucherSubDraftLineItemDto));
     List<ProofOfDeliveryLineItem> proofOfDeliveryLineItems = buildMockPodLineItems();
@@ -231,7 +230,8 @@ public class SiglusLocalIssueVoucherServiceTest {
     subDraftDto.setOperateType(OperateTypeEnum.SUBMIT);
     subDraftDto.setLocalIssueVoucherId(localIssueVoucherId);
     subDraftDto.setLocalIssueVoucherSubDraftId(localIssueVoucherSubDraftId);
-    LocalIssueVoucherSubDraftLineItemDto localIssueVoucherSubDraftLineItemDto = new LocalIssueVoucherSubDraftLineItemDto();
+    LocalIssueVoucherSubDraftLineItemDto localIssueVoucherSubDraftLineItemDto =
+        new LocalIssueVoucherSubDraftLineItemDto();
     localIssueVoucherSubDraftLineItemDto.setOrderableId(orderableId);
     subDraftDto.setLineItems(newArrayList(localIssueVoucherSubDraftLineItemDto));
     List<ProofOfDeliveryLineItem> proofOfDeliveryLineItems = buildMockPodLineItems();
@@ -368,7 +368,8 @@ public class SiglusLocalIssueVoucherServiceTest {
     when(localIssueVoucherSubDraftRepository.countAllByLocalIssueVoucherId(localIssueVoucherId)).thenReturn(5);
     String operator = "Jimmy";
     when(authenticationHelper.getUserNameByUserId(operatorId)).thenReturn(operator);
-    when(localIssueVoucherSubDraftRepository.save(any(LocalIssueVoucherSubDraft.class))).thenReturn(localIssueVoucherSubDraft);
+    when(localIssueVoucherSubDraftRepository.save(any(LocalIssueVoucherSubDraft.class)))
+        .thenReturn(localIssueVoucherSubDraft);
 
     SubDraftInfo savedLocalIssueVoucherSubDraft = service.createLocalIssueVoucherSubDraft(localIssueVoucherId);
 

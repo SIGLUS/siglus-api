@@ -64,7 +64,8 @@ public class LocalIssueVoucherSubDraftLineItemDto {
       List<LocalIssueVoucherSubDraftLineItem> localIssueVoucherSubDraftLineItems) {
     List<LocalIssueVoucherSubDraftLineItemDto> localIssueVoucherSubDraftLineItemDtos = new ArrayList<>();
     localIssueVoucherSubDraftLineItems.forEach(localIssueVoucherSubDraftLineItem -> {
-      LocalIssueVoucherSubDraftLineItemDto localIssueVoucherSubDraftLineItemDto = new LocalIssueVoucherSubDraftLineItemDto();
+      LocalIssueVoucherSubDraftLineItemDto localIssueVoucherSubDraftLineItemDto =
+          new LocalIssueVoucherSubDraftLineItemDto();
       BeanUtils.copyProperties(localIssueVoucherSubDraftLineItem, localIssueVoucherSubDraftLineItemDto);
       localIssueVoucherSubDraftLineItemDtos.add(localIssueVoucherSubDraftLineItemDto);
     });
