@@ -1000,6 +1000,9 @@ public class SiglusPhysicalInventoryService {
       UUID facilityId, Boolean isDraft, boolean isByLocation) {
     List<PhysicalInventoryDto> physicalInventoryDtosForAllProducts = getPhysicalInventoryDtosForAllProducts(facilityId,
         isDraft, isByLocation);
+    if (physicalInventoryDtosForAllProducts.isEmpty()) {
+      return Collections.emptyList();
+    }
     PhysicalInventoryDto physicalInventoryDto = physicalInventoryDtosForAllProducts.get(0);
     return Collections.singletonList(fillLocationOption(physicalInventoryDto));
 
