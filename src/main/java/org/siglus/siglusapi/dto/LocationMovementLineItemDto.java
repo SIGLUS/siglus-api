@@ -35,7 +35,7 @@ import lombok.Data;
             + "    and scli.reasonid is not null then concat((case\n"
             + "      when sclir.reasontype = 'DEBIT' then '[Ajustes Negativos] '\n"
             + "      when sclir.reasontype = 'CREDIT' then '[Ajustes Positivos] '\n"
-            + "    end), sclir.name)\n"
+            + "    end), sclir.name, (case when scli.reasonfreetext is not null then ': ' end), scli.reasonfreetext)\n"
             + "    when sclir2.name is not null\n"
             + "    then concat((case\n"
             + "       when pili.quantity-pili.previousstockonhandwhensubmitted<0 then '[Ajustes Negativos] '\n"
