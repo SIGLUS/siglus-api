@@ -170,7 +170,9 @@ public class SiglusLotLocationService {
 
   private List<StockCard> getUnrestrictedAdjustmentStockCards(UUID facilityId, List<UUID> orderableIds) {
     List<StockCard> stockCardList = stockCardRepository.findByOrderableIdInAndFacilityId(orderableIds, facilityId);
-
+    if (stockCardList.isEmpty()) {
+      return Collections.emptyList();
+    }
     Map<UUID, FacilityProgramPeriodScheduleDto> programIdToSchedulesCode = Maps.uniqueIndex(facilityNativeRepository
         .findFacilityProgramPeriodScheduleByFacilityId(facilityId), FacilityProgramPeriodScheduleDto::getProgramId);
 
