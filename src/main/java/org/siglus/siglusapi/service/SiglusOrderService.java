@@ -770,7 +770,8 @@ public class SiglusOrderService {
   }
 
   private Map<UUID, Integer> getOrderableIdToSoh(Set<UUID> orderableIds, UUID programId, UUID facilityId) {
-    return stockManagementRepository.getAvailableStockOnHandByProduct(facilityId, programId, orderableIds, LocalDate.now());
+    return stockManagementRepository.getAvailableStockOnHandByProduct(facilityId, programId, orderableIds,
+        LocalDate.now());
   }
 
   private Integer getNoneNullDefaultZero(Integer quantity) {
