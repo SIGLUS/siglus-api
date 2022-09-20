@@ -272,6 +272,7 @@ public class CalculatedStocksOnHandByLocationService {
                   .findFirst()
                   .orElseThrow(() -> new EntityNotFoundException(
                           "CalculatedStockOnHand not found with stockCardId " + stockCardId));
+          log.info("calculatedStockOnHandId: {}, sumOfLocationSoh: {}", found.getId(), sum);
           found.setStockOnHand(sum);
           calculatedStocksOnHandRepository.save(found);
         }
