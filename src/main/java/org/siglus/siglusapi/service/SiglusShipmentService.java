@@ -87,7 +87,7 @@ public class SiglusShipmentService {
   @Transactional
   public ShipmentDto createOrderAndShipment(boolean isSubOrder, ShipmentExtensionRequest shipmentExtensionRequest) {
     ShipmentDto shipmentDto = createOrderAndConfirmShipment(isSubOrder,
-        shipmentExtensionRequest.getShipmentDto());
+        shipmentExtensionRequest.getShipment());
     savePodExtension(shipmentDto.getId(), shipmentExtensionRequest);
     return shipmentDto;
   }
@@ -95,14 +95,14 @@ public class SiglusShipmentService {
   @Transactional
   public ShipmentDto createOrderAndShipmentByLocation(boolean isSubOrder,
       ShipmentExtensionRequest shipmentExtensionRequest) {
-    List<ShipmentLineItemDto> shipmentLineItemDtos = shipmentExtensionRequest.getShipmentDto().lineItems();
+    List<ShipmentLineItemDto> shipmentLineItemDtos = shipmentExtensionRequest.getShipment().lineItems();
     Multimap<String, ShipmentLineItemDto> uniqueKeyMap = ArrayListMultimap.create();
     shipmentLineItemDtos.forEach(shipmentLineItemDto -> {
       String uniqueKey = buildForUniqueKey(shipmentLineItemDto);
       uniqueKeyMap.put(uniqueKey, shipmentLineItemDto);
     });
     ShipmentDto confirmedShipmentDto = createOrderAndConfirmShipment(isSubOrder,
-        shipmentExtensionRequest.getShipmentDto());
+        shipmentExtensionRequest.getShipment());
     List<ShipmentLineItemsExtension> shipmentLineItemsByLocations = Lists.newArrayList();
     fulfillLocationInfo(uniqueKeyMap, confirmedShipmentDto);
     confirmedShipmentDto.lineItems().forEach(shipmentLineItemDto -> {

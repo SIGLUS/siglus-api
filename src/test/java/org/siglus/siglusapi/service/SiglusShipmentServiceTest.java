@@ -170,7 +170,7 @@ public class SiglusShipmentServiceTest {
     OrderObjectReferenceDto orderDto = new OrderObjectReferenceDto(orderId);
     shipmentDto.setOrder(orderDto);
     ShipmentExtensionRequest shipmentExtensionRequest = new ShipmentExtensionRequest();
-    shipmentExtensionRequest.setShipmentDto(shipmentDto);
+    shipmentExtensionRequest.setShipment(shipmentDto);
     shipmentExtensionRequest.setConferredBy(conferredBy);
     shipmentExtensionRequest.setPreparedBy(preparedBy);
 
@@ -194,7 +194,7 @@ public class SiglusShipmentServiceTest {
     OrderObjectReferenceDto orderReferenceDto = new OrderObjectReferenceDto(orderId);
     shipmentDto.setOrder(orderReferenceDto);
     ShipmentExtensionRequest shipmentExtensionRequest = new ShipmentExtensionRequest();
-    shipmentExtensionRequest.setShipmentDto(shipmentDto);
+    shipmentExtensionRequest.setShipment(shipmentDto);
     shipmentExtensionRequest.setConferredBy(conferredBy);
     shipmentExtensionRequest.setPreparedBy(preparedBy);
     org.openlmis.requisition.dto.ProcessingPeriodDto dto =
@@ -231,7 +231,7 @@ public class SiglusShipmentServiceTest {
     shipmentDto.setOrder(orderDto);
     shipmentDto.setLineItems(newArrayList(shipmentLineItemDto));
     ShipmentExtensionRequest shipmentExtensionRequest = new ShipmentExtensionRequest();
-    shipmentExtensionRequest.setShipmentDto(shipmentDto);
+    shipmentExtensionRequest.setShipment(shipmentDto);
     shipmentExtensionRequest.setConferredBy(conferredBy);
     shipmentExtensionRequest.setPreparedBy(preparedBy);
     OrderLineItem lineItem = new OrderLineItem();
@@ -280,7 +280,7 @@ public class SiglusShipmentServiceTest {
     shipmentDto.setOrder(orderDto);
     shipmentDto.setLineItems(newArrayList(shipmentLineItemDto));
     ShipmentExtensionRequest shipmentExtensionRequest = new ShipmentExtensionRequest();
-    shipmentExtensionRequest.setShipmentDto(shipmentDto);
+    shipmentExtensionRequest.setShipment(shipmentDto);
     shipmentExtensionRequest.setConferredBy(conferredBy);
     shipmentExtensionRequest.setPreparedBy(preparedBy);
     OrderLineItem lineItem = new OrderLineItem();
@@ -316,7 +316,7 @@ public class SiglusShipmentServiceTest {
     // given
     ShipmentDto shipmentDto = createShipmentDto();
     ShipmentExtensionRequest shipmentExtensionRequest = new ShipmentExtensionRequest();
-    shipmentExtensionRequest.setShipmentDto(shipmentDto);
+    shipmentExtensionRequest.setShipment(shipmentDto);
     shipmentExtensionRequest.setConferredBy(conferredBy);
     shipmentExtensionRequest.setPreparedBy(preparedBy);
     Order order = new Order();
@@ -351,7 +351,7 @@ public class SiglusShipmentServiceTest {
     shipmentLineItem1.setQuantityShipped(50L);
     shipmentDto.setLineItems(Collections.singletonList(shipmentLineItem1));
     ShipmentExtensionRequest shipmentExtensionRequest = new ShipmentExtensionRequest();
-    shipmentExtensionRequest.setShipmentDto(shipmentDto);
+    shipmentExtensionRequest.setShipment(shipmentDto);
     shipmentExtensionRequest.setConferredBy(conferredBy);
     shipmentExtensionRequest.setPreparedBy(preparedBy);
     when(orderRepository.findOne(any())).thenReturn(mockOrder());
@@ -377,7 +377,7 @@ public class SiglusShipmentServiceTest {
     shipmentDto.setOrder(order);
     shipmentDto.setLineItems(new ArrayList<>());
     ShipmentExtensionRequest shipmentExtensionRequest = new ShipmentExtensionRequest();
-    shipmentExtensionRequest.setShipmentDto(shipmentDto);
+    shipmentExtensionRequest.setShipment(shipmentDto);
     shipmentExtensionRequest.setConferredBy(conferredBy);
     shipmentExtensionRequest.setPreparedBy(preparedBy);
     when(orderRepository.findOne(any())).thenReturn(mockOrder());
@@ -396,7 +396,7 @@ public class SiglusShipmentServiceTest {
     ShipmentDto shipmentDto = createShipmentDto();
     shipmentDto.setLineItems(new ArrayList<>());
     ShipmentExtensionRequest shipmentExtensionRequest = new ShipmentExtensionRequest();
-    shipmentExtensionRequest.setShipmentDto(shipmentDto);
+    shipmentExtensionRequest.setShipment(shipmentDto);
     shipmentExtensionRequest.setConferredBy(conferredBy);
     shipmentExtensionRequest.setPreparedBy(preparedBy);
     Order order = new Order();
@@ -441,7 +441,7 @@ public class SiglusShipmentServiceTest {
     lineItem.setId(lineItemId);
     order.setOrderLineItems(newArrayList(lineItem));
     ShipmentExtensionRequest shipmentExtensionRequest = new ShipmentExtensionRequest();
-    shipmentExtensionRequest.setShipmentDto(shipmentDto);
+    shipmentExtensionRequest.setShipment(shipmentDto);
     shipmentExtensionRequest.setConferredBy(conferredBy);
     shipmentExtensionRequest.setPreparedBy(preparedBy);
     when(orderRepository.findOne(shipmentDto.getOrder().getId())).thenReturn(order);

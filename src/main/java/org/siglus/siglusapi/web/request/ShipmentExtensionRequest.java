@@ -23,7 +23,7 @@ import org.openlmis.fulfillment.web.shipment.ShipmentDto;
 @Data
 public class ShipmentExtensionRequest {
   @NotNull
-  private ShipmentDto shipmentDto;
+  private ShipmentDto shipment;
   @NotEmpty
   private String preparedBy;
   @NotEmpty
