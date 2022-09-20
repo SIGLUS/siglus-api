@@ -40,17 +40,19 @@ public class LocationDraftRepository extends BaseNativeRepository {
   private static final String SQL_11 = "DELETE FROM siglusintegration.stock_card_location_movement_draft_line_items WHERE stockcardlocationmovementdraftid in (SELECT id FROM siglusintegration.stock_card_location_movement_drafts WHERE facilityid = ?)";
   private static final String SQL_12 = "DELETE FROM siglusintegration.stock_card_location_movement_drafts  WHERE facilityid = ?";
   private static final String SQL_13 = "UPDATE fulfillment.orders SET status = 'ORDERED' WHERE id IN (SELECT orderid FROM fulfillment.shipment_drafts WHERE orderid IN (SELECT id FROM fulfillment.orders WHERE supplyingfacilityid = ?))";
-  private static final String SQL_14 = "DELETE FROM fulfillment.shipment_draft_line_items WHERE shipmentdraftid IN (SELECT id FROM fulfillment.shipment_drafts WHERE orderid IN (SELECT id FROM fulfillment.orders WHERE supplyingfacilityid = ?))";
-  private static final String SQL_15 = "DELETE FROM fulfillment.shipment_drafts WHERE orderid IN (SELECT id FROM fulfillment.orders WHERE supplyingfacilityid = ?)";
-  private static final String SQL_16 = "DELETE FROM siglusintegration.pod_line_items_extension WHERE subdraftid IN (SELECT id FROM siglusintegration.pod_sub_draft WHERE proofofdeliveryid IN (SELECT id FROM fulfillment.proofs_of_delivery WHERE shipmentid IN (SELECT id FROM fulfillment.shipments WHERE orderid IN (SELECT id FROM fulfillment.orders WHERE requestingfacilityid = ?))))";
-  private static final String SQL_17 = "DELETE FROM siglusintegration.pod_sub_draft WHERE proofofdeliveryid IN (SELECT id FROM fulfillment.proofs_of_delivery WHERE shipmentid IN (SELECT id FROM fulfillment.shipments WHERE orderid IN (SELECT id FROM fulfillment.orders WHERE requestingfacilityid = ?)))";
+  private static final String SQL_14 = "DELETE FROM siglusintegration.shipment_draft_line_items_extension WHERE shipmentdraftlineitemid IN (SELECT id FROM fulfillment.shipment_draft_line_items WHERE shipmentdraftid IN (SELECT id FROM fulfillment.shipment_drafts WHERE orderid IN (SELECT id FROM fulfillment.orders WHERE supplyingfacilityid = :facilityid)))";
+  private static final String SQL_15 = "DELETE FROM fulfillment.shipment_draft_line_items WHERE shipmentdraftid IN (SELECT id FROM fulfillment.shipment_drafts WHERE orderid IN (SELECT id FROM fulfillment.orders WHERE supplyingfacilityid = ?))";
+  private static final String SQL_16 = "DELETE FROM fulfillment.shipment_drafts WHERE orderid IN (SELECT id FROM fulfillment.orders WHERE supplyingfacilityid = ?)";
+  private static final String SQL_17 = "DELETE FROM siglusintegration.pod_line_items_by_location WHERE podlineitemid IN (SELECT podlineitemid FROM siglusintegration.pod_line_items_extension WHERE subdraftid IN (SELECT id FROM siglusintegration.pod_sub_draft WHERE proofofdeliveryid IN (SELECT id FROM fulfillment.proofs_of_delivery WHERE shipmentid IN (SELECT id FROM fulfillment.shipments WHERE orderid IN (SELECT id FROM fulfillment.orders WHERE requestingfacilityid = :facilityid)))))";
+  private static final String SQL_18 = "DELETE FROM siglusintegration.pod_line_items_extension WHERE subdraftid IN (SELECT id FROM siglusintegration.pod_sub_draft WHERE proofofdeliveryid IN (SELECT id FROM fulfillment.proofs_of_delivery WHERE shipmentid IN (SELECT id FROM fulfillment.shipments WHERE orderid IN (SELECT id FROM fulfillment.orders WHERE requestingfacilityid = ?))))";
+  private static final String SQL_19 = "DELETE FROM siglusintegration.pod_sub_draft WHERE proofofdeliveryid IN (SELECT id FROM fulfillment.proofs_of_delivery WHERE shipmentid IN (SELECT id FROM fulfillment.shipments WHERE orderid IN (SELECT id FROM fulfillment.orders WHERE requestingfacilityid = ?)))";
 
   private final JdbcTemplate jdbc;
 
   @Transactional
   public void deleteLocationRelatedDrafts(UUID facilityId) {
     Lists.newArrayList(SQL_1, SQL_2, SQL_3, SQL_4, SQL_5, SQL_6, SQL_7, SQL_8, SQL_9, SQL_10, SQL_11, SQL_12, SQL_13,
-        SQL_14, SQL_15, SQL_16, SQL_17)
+        SQL_14, SQL_15, SQL_16, SQL_17, SQL_18, SQL_19)
         .forEach(sql -> {
           jdbc.update(sql, facilityId);
         });
