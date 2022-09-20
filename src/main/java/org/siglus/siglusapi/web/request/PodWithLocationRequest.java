@@ -13,21 +13,19 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.dto;
+package org.siglus.siglusapi.web.request;
 
-import java.util.UUID;
-import lombok.Builder;
+import java.util.List;
+import javax.validation.constraints.NotNull;
 import lombok.Data;
+import org.openlmis.fulfillment.web.util.ProofOfDeliveryDto;
+import org.siglus.siglusapi.dto.PodLineItemWithLocationDto;
 
 @Data
-@Builder
-public class PodLineItemWithLocationDto {
+public class PodWithLocationRequest {
 
-  private UUID podLineItemId;
+  @NotNull
+  private ProofOfDeliveryDto podDto;
 
-  private String locationCode;
-
-  private String area;
-
-  private Integer quantityAccepted;
+  private List<PodLineItemWithLocationDto> podLineItemLocation;
 }

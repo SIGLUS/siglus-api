@@ -47,4 +47,7 @@ public class SiglusPodFulfillmentService extends
     return findOne(id.toString(), queryParams, true);
   }
 
+  public ProofOfDeliveryDto updateProofOfDelivery(UUID podId, ProofOfDeliveryDto podDto) {
+    return put(podId.toString(), podDto, ProofOfDeliveryDto.class, true);
+  }
 }

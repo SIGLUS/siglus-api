@@ -15,19 +15,14 @@
 
 package org.siglus.siglusapi.dto;
 
-import java.util.UUID;
-import lombok.Builder;
+import java.util.List;
 import lombok.Data;
+import org.openlmis.fulfillment.web.util.ProofOfDeliveryDto;
 
 @Data
-@Builder
-public class PodLineItemWithLocationDto {
+public class PodWithLocationDto {
 
-  private UUID podLineItemId;
+  private ProofOfDeliveryDto podDto;
 
-  private String locationCode;
-
-  private String area;
-
-  private Integer quantityAccepted;
+  private List<PodLineItemWithLocationDto> podLineItemLocation;
 }

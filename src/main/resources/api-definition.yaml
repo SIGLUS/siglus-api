@@ -3420,11 +3420,16 @@ traits:
         responses:
           204:
             description: sub draft deleted.
-    /proofsOfDeliveryWithLocation/{id}:
+    /proofsOfDeliveryWithLocation/{id}/subDrafts/{subDraftId}:
       displayName: Proof Of Delivery - Sub Draft With Location Detail
       uriParameters:
         id:
           displayName: proofOfDeliveryId
+          type: string
+          required: true
+          repeat: false
+        subDraftId:
+          displayName: subDraftId
           type: string
           required: true
           repeat: false
@@ -3445,16 +3450,23 @@ traits:
             body:
               application/json:
                 schema: localizedMessage
-    /proofsOfDeliveryWithLocation/{id}/subDraft/{subDraftId}:
+      delete:
+        is: [ secured ]
+        description: Delete proof of delivery sub draft with location
+        responses:
+          204:
+            description: Sub draft with location deleted.
+      put:
+        is: [ secured ]
+        description: Update or submit sub draft with location
+        responses:
+          204:
+            description: Sub draft updated or submitted
+    /proofsOfDeliveryWithLocation/{id}/subDrafts:
       displayName: Proof Of Delivery - Sub Draft Detail
       uriParameters:
         id:
           displayName: proofOfDeliveryId
-          type: string
-          required: true
-          repeat: false
-        subDraftId:
-          displayName: subDraftId
           type: string
           required: true
           repeat: false
@@ -3464,20 +3476,45 @@ traits:
         responses:
           204:
             description: Sub draft with location deleted.
-    /proofsOfDeliveryWithLocation/{subDraftId}:
-      displayName: Proof Of Delivery - Sub Draft Detail
+    /proofsOfDeliveryWithLocation/{id}:
       uriParameters:
-        subDraftId:
-          displayName: subDraftId
+        id:
+          displayName: proofOfDeliveryId
           type: string
           required: true
           repeat: false
+      get:
+        is: [ secured ]
+        description: Get merged sub drafts with location
+        responses:
+          200:
+            body:
+              application/json:
+          400:
+            body:
+              application/json:
+                schema: badRequestResponse
+          404:
+          403:
+            body:
+              application/json:
+                schema: localizedMessage
       put:
         is: [ secured ]
-        description: Update or submit sub draft with location
+        description: Submit sub drafts with location
         responses:
-          204:
-            description: Sub draft updated or submitted
+          200:
+            body:
+              application/json:
+          400:
+            body:
+              application/json:
+                schema: badRequestResponse
+          404:
+          403:
+            body:
+              application/json:
+                schema: localizedMessage
     /integration:
       /stockMovements:
         displayName: Get Stock Movements

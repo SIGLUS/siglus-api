@@ -13,16 +13,24 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.dto;
+package org.siglus.siglusapi.domain;
 
 import java.util.UUID;
+import javax.persistence.Entity;
+import javax.persistence.Table;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.siglus.common.domain.BaseEntity;
 
+@Entity
 @Data
 @Builder
-public class PodLineItemWithLocationDto {
-
+@AllArgsConstructor
+@NoArgsConstructor
+@Table(name = "pod_sub_draft_line_items_by_location", schema = "siglusintegration")
+public class PodSubDraftLineItemsByLocation extends BaseEntity {
   private UUID podLineItemId;
 
   private String locationCode;

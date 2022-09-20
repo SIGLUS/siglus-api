@@ -13,21 +13,17 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.dto;
+package org.siglus.siglusapi.repository;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.UUID;
-import lombok.Builder;
-import lombok.Data;
+import org.siglus.siglusapi.domain.PodSubDraftLineItemsByLocation;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-@Data
-@Builder
-public class PodLineItemWithLocationDto {
+public interface PodSubDraftLineItemsByLocationRepository extends JpaRepository<PodSubDraftLineItemsByLocation, UUID> {
 
-  private UUID podLineItemId;
+  List<PodSubDraftLineItemsByLocation> findByPodLineItemIdIn(Collection<UUID> podLineItemIds);
 
-  private String locationCode;
-
-  private String area;
-
-  private Integer quantityAccepted;
+  void deleteByPodLineItemIdIn(Collection<UUID> podLineItemIds);
 }

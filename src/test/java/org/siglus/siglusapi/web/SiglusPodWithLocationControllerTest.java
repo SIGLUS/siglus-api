@@ -17,8 +17,6 @@ package org.siglus.siglusapi.web;
 
 import static org.mockito.Mockito.verify;
 
-import java.util.HashSet;
-import java.util.Set;
 import java.util.UUID;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -39,17 +37,16 @@ public class SiglusPodWithLocationControllerTest {
   private SiglusPodService proofOfDeliveryService;
 
   @Test
-  public void shouldGetPodWithLocation() {
+  public void shouldGetPodSubDraftWithLocation() {
     // given
     UUID podId = UUID.randomUUID();
-    Set<String> expand = new HashSet<>();
-    expand.add("shipment.pod");
+    UUID subDraftId = UUID.randomUUID();
 
     // when
-    controller.getProofOfDeliveryWithLocation(podId, expand);
+    controller.getPodSubDraftWithLocation(podId, subDraftId);
 
     // then
-    verify(proofOfDeliveryService).getPodWithLocation(podId, expand);
+    verify(proofOfDeliveryService).getPodSubDraftWithLocation(podId, subDraftId);
   }
 
   @Test
@@ -69,10 +66,11 @@ public class SiglusPodWithLocationControllerTest {
   public void shouldUpdateSubDraftWithLocation() {
     // given
     UUID subDraftId = UUID.randomUUID();
+    UUID podId = UUID.randomUUID();
     UpdatePodSubDraftWithLocationRequest request = buildForRequest(OperateTypeEnum.SAVE);
 
     // when
-    controller.updateSubDraftWithLocation(subDraftId, request);
+    controller.updateSubDraftWithLocation(podId, subDraftId, request);
 
     // then
     verify(proofOfDeliveryService).updateSubDraftWithLocation(request, subDraftId);
@@ -82,13 +80,38 @@ public class SiglusPodWithLocationControllerTest {
   public void shouldSubmitSubDraftWithLocation() {
     // given
     UUID subDraftId = UUID.randomUUID();
+    UUID podId = UUID.randomUUID();
     UpdatePodSubDraftWithLocationRequest request = buildForRequest(OperateTypeEnum.SUBMIT);
 
     // when
-    controller.updateSubDraftWithLocation(subDraftId, request);
+    controller.updateSubDraftWithLocation(podId, subDraftId, request);
 
     // then
     verify(proofOfDeliveryService).updateSubDraftWithLocation(request, subDraftId);
+  }
+
+  @Test
+  public void shouldDeleteAllSubDraftsWithLocation() {
+    // given
+    UUID podId = UUID.randomUUID();
+
+    // when
+    controller.deleteSubDraftsWithLocation(podId);
+
+    // then
+    verify(proofOfDeliveryService).deleteSubDraftsWithLocation(podId);
+  }
+
+  @Test
+  public void shouldGetMergedSubDraftWithLocation() {
+    // given
+    UUID podId = UUID.randomUUID();
+
+    // when
+    controller.getMergedSubDraftWithLocation(podId);
+
+    // then
+    verify(proofOfDeliveryService).getMergedSubDraftWithLocation(podId);
   }
 
   private UpdatePodSubDraftWithLocationRequest buildForRequest(OperateTypeEnum operateType) {
