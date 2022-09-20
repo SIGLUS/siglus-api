@@ -1327,13 +1327,12 @@ public class SiglusPodServiceTest {
   }
 
   private PodLineItemWithLocationDto buildMockPodLineItemWithLocationDto() {
-    return PodLineItemWithLocationDto
-        .builder()
-        .podLineItemId(lineItemId1)
-        .locationCode(locationCode)
-        .area(area)
-        .quantityAccepted(10)
-        .build();
+    PodLineItemWithLocationDto podLineItemWithLocationDto = new PodLineItemWithLocationDto();
+    podLineItemWithLocationDto.setPodLineItemId(lineItemId1);
+    podLineItemWithLocationDto.setLocationCode(locationCode);
+    podLineItemWithLocationDto.setArea(area);
+    podLineItemWithLocationDto.setQuantityAccepted(10);
+    return podLineItemWithLocationDto;
   }
 
   private PodWithLocationRequest buildMockPodWithLocationRequest() {

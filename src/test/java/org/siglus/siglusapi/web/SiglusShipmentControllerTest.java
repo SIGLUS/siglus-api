@@ -23,9 +23,9 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.openlmis.fulfillment.web.shipment.ShipmentDto;
 import org.siglus.siglusapi.service.SiglusNotificationService;
 import org.siglus.siglusapi.service.SiglusShipmentService;
+import org.siglus.siglusapi.web.request.ShipmentExtensionRequest;
 
 @RunWith(MockitoJUnitRunner.class)
 public class SiglusShipmentControllerTest {
@@ -42,7 +42,7 @@ public class SiglusShipmentControllerTest {
   @Test
   public void shouldCallServiceWhenCreateShipment() {
     // given
-    ShipmentDto shipmentDto = new ShipmentDto();
+    ShipmentExtensionRequest shipmentDto = new ShipmentExtensionRequest();
 
     // when
     siglusShipmentController.createShipment(false, shipmentDto);

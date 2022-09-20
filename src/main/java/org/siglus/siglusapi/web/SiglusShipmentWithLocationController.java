@@ -18,6 +18,7 @@ package org.siglus.siglusapi.web;
 import org.openlmis.fulfillment.web.shipment.ShipmentDto;
 import org.siglus.siglusapi.service.SiglusNotificationService;
 import org.siglus.siglusapi.service.SiglusShipmentService;
+import org.siglus.siglusapi.web.request.ShipmentExtensionRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -41,8 +42,9 @@ public class SiglusShipmentWithLocationController {
   @ResponseStatus(HttpStatus.CREATED)
   public void confirmShipmentByLocation(
       @RequestParam(name = "isSubOrder", required = false, defaultValue = "false")
-      boolean isSubOrder, @RequestBody ShipmentDto shipmentDto) {
-    ShipmentDto shipmentByLocation = siglusShipmentService.createOrderAndShipmentByLocation(isSubOrder, shipmentDto);
+      boolean isSubOrder, @RequestBody ShipmentExtensionRequest shipmentExtensionRequest) {
+    ShipmentDto shipmentByLocation = siglusShipmentService.createOrderAndShipmentByLocation(isSubOrder,
+        shipmentExtensionRequest);
     notificationService.postConfirmShipment(shipmentByLocation);
   }
 }

@@ -776,13 +776,11 @@ public class SiglusPodService {
     List<PodSubDraftLineItemsByLocation> subDraftLineItemsByLocationList = podSubDraftLineItemsByLocationRepository
         .findByPodLineItemIdIn(lineItemIds);
     subDraftLineItemsByLocationList.forEach(lineItemsWithLocation -> {
-      PodLineItemWithLocationDto podLineItemWithLocationDto = PodLineItemWithLocationDto
-          .builder()
-          .podLineItemId(lineItemsWithLocation.getPodLineItemId())
-          .locationCode(lineItemsWithLocation.getLocationCode())
-          .area(lineItemsWithLocation.getArea())
-          .quantityAccepted(lineItemsWithLocation.getQuantityAccepted())
-          .build();
+      PodLineItemWithLocationDto podLineItemWithLocationDto = new PodLineItemWithLocationDto();
+      podLineItemWithLocationDto.setPodLineItemId(lineItemsWithLocation.getPodLineItemId());
+      podLineItemWithLocationDto.setLocationCode(lineItemsWithLocation.getLocationCode());
+      podLineItemWithLocationDto.setArea(lineItemsWithLocation.getArea());
+      podLineItemWithLocationDto.setQuantityAccepted(lineItemsWithLocation.getQuantityAccepted());
       podLineItemWithLocationDtos.add(podLineItemWithLocationDto);
     });
     return podLineItemWithLocationDtos;
