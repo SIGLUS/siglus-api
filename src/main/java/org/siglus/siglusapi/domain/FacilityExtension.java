@@ -42,4 +42,6 @@ public class FacilityExtension extends BaseEntity {
 
   private Boolean enableLocationManagement;
 
+  private Boolean isLocalMachine;
+
 }
