@@ -936,7 +936,7 @@ public class SiglusOrderServiceTest {
     orderableIdToSoh.put(orderableId1, 100);
     orderableIdToSoh.put(orderableId2, 200);
 
-    when(stockManagementRepository.getStockOnHandByProduct(any(), any(), anyList(), anyObject())).thenReturn(
+    when(stockManagementRepository.getAvailableStockOnHandByProduct(any(), any(), anyList(), anyObject())).thenReturn(
         orderableIdToSoh);
 
     // when
@@ -969,7 +969,7 @@ public class SiglusOrderServiceTest {
     orderableIdToSoh.put(orderableId1, 10);
     orderableIdToSoh.put(orderableId2, 20);
 
-    when(stockManagementRepository.getStockOnHandByProduct(any(), any(), anyList(), anyObject())).thenReturn(
+    when(stockManagementRepository.getAvailableStockOnHandByProduct(any(), any(), anyList(), anyObject())).thenReturn(
         orderableIdToSoh);
 
     // when
@@ -1001,7 +1001,7 @@ public class SiglusOrderServiceTest {
     orderableIdToSoh.put(orderableId1, 10);
     orderableIdToSoh.put(orderableId2, 20);
 
-    when(stockManagementRepository.getStockOnHandByProduct(any(), any(), anyList(), anyObject())).thenReturn(
+    when(stockManagementRepository.getAvailableStockOnHandByProduct(any(), any(), anyList(), anyObject())).thenReturn(
         orderableIdToSoh);
 
     // when

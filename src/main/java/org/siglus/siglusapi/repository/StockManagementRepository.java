@@ -154,16 +154,18 @@ public class StockManagementRepository extends BaseNativeRepository {
     return new PeriodOfProductMovements(productMovements, stocksOnHand);
   }
 
-  public Map<UUID, Integer> getStockOnHandByProduct(UUID facilityId, UUID programId, Iterable<UUID> orderableIds,
-      LocalDate asOfDate) {
-    String sql = "SELECT DISTINCT ON (csoh.stockcardid) sc.orderableid, csoh.stockonhand "
-        + "    FROM stockmanagement.calculated_stocks_on_hand csoh "
-        + "    LEFT JOIN stockmanagement.stock_cards sc ON csoh.stockcardid = sc.id "
-        + "    WHERE sc.facilityid = :facilityId "
-        + "    AND sc.programid = :programId "
-        + "    AND sc.orderableid in (:orderableIds) "
-        + "    AND csoh.occurreddate <= :asOfDate "
-        + "    ORDER BY csoh.stockcardid, csoh.occurreddate DESC";
+  public Map<UUID, Integer> getAvailableStockOnHandByProduct(UUID facilityId, UUID programId,
+      Iterable<UUID> orderableIds, LocalDate asOfDate) {
+    String sql = "SELECT DISTINCT ON (csoh.stockcardid) csoh.stockcardid, sc.orderableid, csoh.stockonhand\n"
+        + "    FROM stockmanagement.calculated_stocks_on_hand csoh \n"
+        + "    LEFT JOIN stockmanagement.stock_cards sc ON csoh.stockcardid = sc.id\n"
+        + "    left join referencedata.lots l ON (l.id = sc.lotid)\n"
+        + "    WHERE sc.facilityid = :facilityId \n"
+        + "    AND sc.programid = :programId \n"
+        + "    AND sc.orderableid IN (:orderableIds) \n"
+        + "    AND csoh.occurreddate <= :asOfDate \n"
+        + "    AND l.expirationdate >= :asOfDate \n"
+        + "    ORDER BY csoh.stockcardid, csoh.occurreddate DESC;";
     MapSqlParameterSource parameters = new MapSqlParameterSource();
     parameters.addValue("facilityId", facilityId);
     parameters.addValue("programId", programId);
