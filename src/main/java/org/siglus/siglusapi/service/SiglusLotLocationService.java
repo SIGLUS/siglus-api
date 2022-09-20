@@ -218,9 +218,9 @@ public class SiglusLotLocationService {
   }
 
   private boolean hasSohChangeWithMonthlyReport(Code schedulesCode, List<StockCardLineItem> stockCardLineItems) {
-    return Objects.isNull(schedulesCode)
-        || (PeriodConstants.MONTH_SCHEDULE_CODE.equals(schedulesCode)
-        || PeriodConstants.REPORT_MONTH_SCHEDULE_CODE.equals(schedulesCode))
+    return (PeriodConstants.MONTH_SCHEDULE_CODE.equals(schedulesCode)
+        || PeriodConstants.REPORT_MONTH_SCHEDULE_CODE.equals(schedulesCode)
+        || Objects.isNull(schedulesCode))
         && hasActualSohChangesInTimeRange(stockCardLineItems, MONTHLY_SUBMIT_PRODUCT_ZERO_INVENTORY_DAY_RANGE);
   }
 
