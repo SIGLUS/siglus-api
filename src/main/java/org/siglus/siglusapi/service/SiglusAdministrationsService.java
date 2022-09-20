@@ -266,7 +266,9 @@ public class SiglusAdministrationsService {
     stockCardLineItemRepository.deleteByStockCardIdIn(stockCardIds);
     log.info("delete on calculatedStockOnHand when upgrade to web, facilityId: {}", facilityId);
     Set<UUID> orderableIds = stockCards.stream().map(StockCard::getOrderableId).collect(Collectors.toSet());
-    calculatedStockOnHandRepository.deleteByFacilityIdAndOrderableIds(facilityId, orderableIds);
+    if (CollectionUtils.isNotEmpty(orderableIds)) {
+      calculatedStockOnHandRepository.deleteByFacilityIdAndOrderableIds(facilityId, orderableIds);
+    }
     log.info("delete on stockCardExtension when upgrade to web, stockCardId: {}", stockCardIds);
     stockCardExtensionRepository.deleteByStockCardIdIn(stockCardIds);
     log.info("delete on stockCard when upgrade to web, stockCardId: {}", stockCardIds);
