@@ -91,20 +91,20 @@ public class SiglusProcessingPeriodService {
 
   public LocalDate getPreviousPeriodStartDateSinceInitiate(String programCode, UUID facilityId) {
     ProgramDto program = siglusProgramService.getProgramByCode(programCode)
-            .orElseThrow(() -> new NotFoundException("Program code" + programCode + " Not Found"));
+        .orElseThrow(() -> new NotFoundException("Program code" + programCode + " Not Found"));
 
     List<Requisition> requisitions = requisitionRepository.searchRequisitions(
-            null, facilityId, program.getId(), false);
+        null, facilityId, program.getId(), false);
     if (CollectionUtils.isEmpty(requisitions)) {
       return null;
     }
     Set<UUID> startedPeriodIds = requisitions.stream()
-            .map(Requisition::getProcessingPeriodId).collect(Collectors.toSet());
+        .map(Requisition::getProcessingPeriodId).collect(Collectors.toSet());
     List<ProcessingPeriodDto> sortedPeriods = periodReferenceDataService
-            .searchByProgramAndFacility(program.getId(), facilityId)
-            .stream()
-            .sorted(Comparator.comparing(ProcessingPeriodDto::getStartDate))
-            .collect(Collectors.toList());
+        .searchByProgramAndFacility(program.getId(), facilityId)
+        .stream()
+        .sorted(Comparator.comparing(ProcessingPeriodDto::getStartDate))
+        .collect(Collectors.toList());
 
     int lastStartedIndex = -1;
     for (int i = sortedPeriods.size() - 1; i >= 0; i--) {
@@ -247,7 +247,27 @@ public class SiglusProcessingPeriodService {
       }
     }
 
-    return requisitionPeriods;
+    return limitFirstPeriodToOneYear(requisitionPeriods, periods);
+  }
+
+  private List<RequisitionPeriodDto> limitFirstPeriodToOneYear(List<RequisitionPeriodDto> requisitionPeriods,
+      Collection<ProcessingPeriodDto> periods) {
+    int limitPeriodNumber = 14;
+    if (periods.size() < limitPeriodNumber + 1) {
+      return requisitionPeriods;
+    }
+    List<ProcessingPeriodDto> periodDtos = new ArrayList<>(periods);
+    LocalDate limitPeriodStartDate = periodDtos.get(periodDtos.size() - (limitPeriodNumber + 1)).getStartDate();
+    LocalDate limitPeriodEndDate = periodDtos.get(periodDtos.size() - (limitPeriodNumber + 1)).getEndDate();
+
+    List<RequisitionPeriodDto> requisitionPeriodDtos = requisitionPeriods.subList(
+        Math.max(requisitionPeriods.size() - limitPeriodNumber, 0),
+        requisitionPeriods.size());
+
+    return requisitionPeriodDtos.stream()
+        .filter(requisitionPeriodDto -> requisitionPeriodDto.getStartDate().isAfter(limitPeriodStartDate)
+            && requisitionPeriodDto.getEndDate().isAfter(limitPeriodEndDate))
+        .collect(Collectors.toList());
   }
 
   private void processingEmergencyRequisitionPeriod(
@@ -277,9 +297,9 @@ public class SiglusProcessingPeriodService {
 
   private void getFirstPreAuthorizeRequisition(List<Requisition> preAuthorizeRequisitions,
       RequisitionPeriodDto requisitionPeriod) {
-    Requisition firstPreAuthorizeRequisition = preAuthorizeRequisitions.stream().min(
-        Comparator.comparing(Requisition::getCreatedDate)).orElseThrow(
-            () -> new NotFoundException("first Requisition Not Found"));
+    Requisition firstPreAuthorizeRequisition = preAuthorizeRequisitions.stream()
+        .min(Comparator.comparing(Requisition::getCreatedDate))
+        .orElseThrow(() -> new NotFoundException("first Requisition Not Found"));
     requisitionPeriod.setRequisitionId(firstPreAuthorizeRequisition.getId());
     requisitionPeriod.setRequisitionStatus(firstPreAuthorizeRequisition.getStatus());
   }
