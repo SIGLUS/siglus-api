@@ -284,7 +284,7 @@ public class SiglusOrderService {
     }
     Sort orders = new Sort("local", "status", "createdDate");
     PageRequest pageRequest = new PageRequest(pageable.getPageNumber(), pageable.getPageSize(), orders);
-    return new PageImpl<>(basicOrderExtensionResponses, pageRequest, basicOrderExtensionResponses.size());
+    return new PageImpl<>(basicOrderExtensionResponses, pageRequest, basicOrderDtoPage.getTotalElements());
   }
 
   private List<BasicOrderExtensionResponse> getElectronicBasicOrderExtensionResponses(
