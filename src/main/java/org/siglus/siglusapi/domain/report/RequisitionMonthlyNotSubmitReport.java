@@ -32,7 +32,7 @@ import org.siglus.common.domain.BaseEntity;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "requisition_monthly_not_submit_report", schema = "siglusintegration")
+@Table(name = "requisition_monthly_not_submit_report", schema = "dashboard")
 public class RequisitionMonthlyNotSubmitReport extends BaseEntity {
 
   @Column(name = "programid")
