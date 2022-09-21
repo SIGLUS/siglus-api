@@ -47,6 +47,7 @@ public class EventPublisher {
     Event event = eventBuilder.build();
     // the only receiver the local facility itself and online web
     event.setReceiverSynced(true);
+    event.setLocalReplayed(true);
     event.setReceiverId(event.getSenderId());
     doEmit(event);
   }

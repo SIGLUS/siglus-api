@@ -72,7 +72,7 @@ public class EventStore {
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   public void importQuietly(Event event) {
     log.info("insert event:{}", event.getId());
-    repository.insert(EventRecord.from(event, payloadSerializer.dump(event.getPayload())));
+    repository.importExternalEvent(EventRecord.from(event, payloadSerializer.dump(event.getPayload())));
   }
 
   public List<Event> loadSortedGroupEvents(String groupId) {
