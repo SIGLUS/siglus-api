@@ -84,7 +84,9 @@ public class JdbcSinker {
             row -> {
               List<String> columns = event.getColumns();
               List<Object> values = row.getValues();
+              // key is identifier of the row
               Struct keyStruct = new Struct(tableSchema.keySchema());
+              // values are value of all columns
               Struct valueStruct = new Struct(tableSchema.valueSchema());
               for (int i = 0; i < columns.size(); i++) {
                 String column = columns.get(i);

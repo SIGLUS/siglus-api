@@ -21,18 +21,15 @@ import org.siglus.siglusapi.localmachine.EventPublisher;
 import org.siglus.siglusapi.localmachine.cdc.CdcListener;
 import org.siglus.siglusapi.localmachine.cdc.CdcRecord;
 import org.siglus.siglusapi.localmachine.cdc.CdcRecordMapper;
-import org.siglus.siglusapi.localmachine.cdc.CdcRecordRepository;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 @Component
 @RequiredArgsConstructor
-// fixme:
-//@Profile({"localmachine"})
+@Profile({"localmachine"})
 public class LocalMovementEventEmitter implements CdcListener {
   private final EventPublisher eventPublisher;
-  private final CdcRecordRepository cdcRecordRepository;
   private final CdcRecordMapper cdcRecordMapper;
 
   @Override
@@ -53,6 +50,5 @@ public class LocalMovementEventEmitter implements CdcListener {
   @Override
   public void on(List<CdcRecord> records) {
     eventPublisher.emitNonGroupEvent(new LocalMovementEvent(cdcRecordMapper.buildEvents(records)));
-    cdcRecordRepository.deleteInBatch(records);
   }
 }

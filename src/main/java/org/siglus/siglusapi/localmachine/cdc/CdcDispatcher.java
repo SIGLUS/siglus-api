@@ -70,6 +70,7 @@ public class CdcDispatcher {
               for (CdcListener cdcListener : listeners) {
                 cdcListener.on(value);
               }
+              cdcRecordRepository.deleteInBatch(value);
             });
   }
 
