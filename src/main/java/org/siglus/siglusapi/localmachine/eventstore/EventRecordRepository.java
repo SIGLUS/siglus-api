@@ -26,6 +26,9 @@ import org.springframework.data.repository.query.Param;
 
 public interface EventRecordRepository extends JpaRepository<EventRecord, UUID> {
 
+  @Query(value = "select * from localmachine.events where localreplayed=false", nativeQuery = true)
+  List<EventRecord> findNotReplayedEvents();
+
   @Query(
       value =
           "select groupsequencenumber + 1 from localmachine.events where groupid=:groupId order by "

@@ -16,15 +16,10 @@
 package org.siglus.siglusapi.localmachine;
 
 import java.time.ZonedDateTime;
-import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.siglus.siglusapi.dto.UserDto;
-import org.siglus.siglusapi.exception.NotFoundException;
-import org.siglus.siglusapi.i18n.MessageKeys;
 import org.siglus.siglusapi.localmachine.eventstore.EventStore;
-import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
@@ -35,10 +30,10 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 public class EventPublisher {
   public static final int PROTOCOL_VERSION = 1;
+  private static final ThreadLocal<Boolean> isReplaying = ThreadLocal.withInitial(() -> Boolean.FALSE);
   private final EventStore eventStore;
   private final ApplicationEventPublisher applicationEventPublisher;
-  private final SiglusAuthenticationHelper siglusAuthenticationHelper;
-  private static final ThreadLocal<Boolean> isReplaying = ThreadLocal.withInitial(() -> Boolean.FALSE);
+  private final Machine machine;
 
   public void emitGroupEvent(String groupId, UUID receiverId, Object payload) {
     Event.EventBuilder eventBuilder = baseEventBuilder(groupId, receiverId, payload);
@@ -48,9 +43,11 @@ public class EventPublisher {
   }
 
   public void emitNonGroupEvent(Object payload) {
-    // the only receiver is online web so don't need to set receiver id
     Event.EventBuilder eventBuilder = baseEventBuilder(null, null, payload);
     Event event = eventBuilder.build();
+    // the only receiver the local facility itself and online web
+    event.setReceiverSynced(true);
+    event.setReceiverId(event.getSenderId());
     doEmit(event);
   }
 
@@ -78,14 +75,11 @@ public class EventPublisher {
   }
 
   private Event.EventBuilder baseEventBuilder(String groupId, UUID receiverId, Object payload) {
-    UserDto currentUser =
-        Optional.ofNullable(siglusAuthenticationHelper.getCurrentUser())
-            .orElseThrow(() -> new NotFoundException(MessageKeys.ERROR_USER_NOT_FOUND));
     return Event.builder()
         .id(UUID.randomUUID())
         .protocolVersion(PROTOCOL_VERSION)
         .occurredTime(ZonedDateTime.now())
-        .senderId(currentUser.getHomeFacilityId())
+        .senderId(machine.getFacilityId())
         .receiverId(receiverId)
         .groupId(groupId)
         .payload(payload)

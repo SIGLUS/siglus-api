@@ -37,6 +37,7 @@ import org.siglus.siglusapi.repository.FacilitySupplierLevelRepository;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusUserReferenceDataService;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -65,7 +66,10 @@ public class SiglusAuthenticationHelper {
   private String role3DirectorSn;
 
   public Optional<UUID> getCurrentUserId() {
-    Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+    Object principal =
+        Optional.ofNullable(SecurityContextHolder.getContext().getAuthentication())
+            .map(Authentication::getPrincipal)
+            .orElse(null);
     Set<String> trustedClients = Sets.asSet("trusted-client", "fc-client");
     if (principal == null || trustedClients.contains(principal.toString())) {
       return Optional.empty();

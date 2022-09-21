@@ -17,13 +17,16 @@ package org.siglus.siglusapi.localmachine;
 
 import java.util.HashSet;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import javax.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.localmachine.repository.AgentInfoRepository;
+import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -31,6 +34,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class Machine {
   private final AgentInfoRepository agentInfoRepository;
+  private final SiglusAuthenticationHelper siglusAuthenticationHelper;
 
   @Getter private UUID machineId;
 
@@ -48,5 +52,17 @@ public class Machine {
     log.info("touch machine id:{}", tempMachineId);
     agentInfoRepository.touchMachineId(tempMachineId);
     machineId = tempMachineId;
+  }
+
+  public UUID getFacilityId() {
+    return Optional.ofNullable(siglusAuthenticationHelper.getCurrentUser())
+        .map(UserDto::getHomeFacilityId)
+        .orElseGet(
+            () ->
+                UUID.fromString(
+                    this.fetchSupportedFacilityIds().stream()
+                        .findFirst()
+                        .orElseThrow(
+                            () -> new IllegalStateException("can not resolve local facility id"))));
   }
 }

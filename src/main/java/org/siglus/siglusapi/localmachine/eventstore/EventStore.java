@@ -109,4 +109,10 @@ public class EventStore {
         .filter(it -> !existingIds.contains(it.getId()))
         .collect(Collectors.toList());
   }
+
+  public List<Event> findNotReplayedEvents() {
+    return repository.findNotReplayedEvents().stream()
+        .map(it -> it.toEvent(payloadSerializer::load))
+        .collect(Collectors.toList());
+  }
 }

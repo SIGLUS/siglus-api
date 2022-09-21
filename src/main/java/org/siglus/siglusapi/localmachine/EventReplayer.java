@@ -15,19 +15,26 @@
 
 package org.siglus.siglusapi.localmachine;
 
-import static ca.uhn.fhir.util.ElementUtil.isEmpty;
+import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
+import static org.apache.commons.collections.CollectionUtils.isEmpty;
 
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.javacrumbs.shedlock.core.LockConfiguration;
 import net.javacrumbs.shedlock.core.LockProvider;
 import net.javacrumbs.shedlock.core.SimpleLock;
+import org.apache.commons.collections4.CollectionUtils;
+import org.siglus.siglusapi.localmachine.ShedLockFactory.AutoClosableLock;
 import org.siglus.siglusapi.localmachine.eventstore.EventStore;
 import org.springframework.stereotype.Component;
 
@@ -35,18 +42,48 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 @Slf4j
 public class EventReplayer {
+
+  private static final String DEFAULT_REPLAY_LOCK = "lock.replay.default";
   private final EventPublisher eventPublisher;
   private final EventStore eventStore;
   private final LockProvider lockProvider;
+  private final ShedLockFactory lockFactory;
 
-  public void playGroupEvents(String groupId) {
-    Optional<SimpleLock> optionalLock = getLock(groupId);
-    if (!optionalLock.isPresent()) {
-      log.warn("fail to get lock, cancel this round of replay");
+  public void replay(List<Event> events) {
+    if (CollectionUtils.isEmpty(events)) {
       return;
     }
-    SimpleLock lock = optionalLock.get();
-    try {
+    // replay event one by one in order. if the event is a group event (e.g. event2 below), should
+    // check dependency first
+    // |-------|
+    // |event 1|
+    // |event 2|--->[group event M, group event M-1,..., group event 0] (dependent events are ready)
+    // |event 3|
+    // |event 4|--->[group event M, group event M-1] (dependent events are not ready)
+    // |.......|
+    // |event N|
+    List<Event> defaultGroup = new LinkedList<>();
+    List<Event> groupEvents = new LinkedList<>();
+    events.forEach(
+        it -> {
+          if (Objects.isNull(it.getGroupId())) {
+            defaultGroup.add(it);
+          } else {
+            groupEvents.add(it);
+          }
+        });
+    this.playDefaultGroupEvents(defaultGroup);
+    Map<String, List<Event>> eventGroups =
+        groupEvents.stream().collect(groupingBy(Event::getGroupId, LinkedHashMap::new, toList()));
+    eventGroups.forEach((groupId, value) -> this.playGroupEvents(groupId));
+  }
+
+  private void playGroupEvents(String groupId) {
+    try (AutoClosableLock lock = lockFactory.lock(groupId)) {
+      if (!lock.isPresent()) {
+        log.warn("fail to get lock, cancel this round of replay");
+        return;
+      }
       List<Event> events = eventStore.loadSortedGroupEvents(groupId);
       for (int i = 0; i < events.size(); i++) {
         Event currentEvent = events.get(i);
@@ -55,17 +92,17 @@ public class EventReplayer {
         }
         eventPublisher.publishEvent(currentEvent);
       }
-    } finally {
-      lock.unlock();
     }
   }
 
-  public void playDefaultGroupEvents(List<Event> events) {
+  private void playDefaultGroupEvents(List<Event> events) {
     if (isEmpty(events)) {
       return;
     }
-    events = sortEventsByLocalSequence(events);
-    events.forEach(eventPublisher::publishEvent);
+    final List<Event> eventsForReplaying = sortEventsByLocalSequence(events);
+    try (AutoClosableLock lock = lockFactory.lock(DEFAULT_REPLAY_LOCK)) {
+      lock.ifPresent(() -> eventsForReplaying.forEach(eventPublisher::publishEvent));
+    }
   }
 
   private List<Event> sortEventsByLocalSequence(List<Event> events) {

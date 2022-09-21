@@ -15,14 +15,8 @@
 
 package org.siglus.siglusapi.localmachine;
 
-import static java.util.stream.Collectors.groupingBy;
-import static java.util.stream.Collectors.toList;
-import static org.apache.commons.collections4.CollectionUtils.isEmpty;
-
-import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.siglus.siglusapi.localmachine.eventstore.EventStore;
@@ -43,30 +37,10 @@ public abstract class EventImporter {
     resetStatus(acceptedEvents);
     List<Event> nonExistentEvents = eventStore.excludeExisted(acceptedEvents);
     List<Event> newAdded = importGetNewAdded(nonExistentEvents);
-    replay(newAdded);
+    replayer.replay(newAdded);
   }
 
   protected abstract boolean accept(Event it);
-
-  protected void replay(List<Event> events) {
-    if (isEmpty(events)) {
-      return;
-    }
-    // replay event one by one in order. if the event is a group event (e.g. event2 below), should
-    // check dependency first
-    // |-------|
-    // |event 1|
-    // |event 2|--->[group event M, group event M-1,..., group event 0] (dependent events are ready)
-    // |event 3|
-    // |event 4|--->[group event M, group event M-1] (dependent events are not ready)
-    // |.......|
-    // |event N|
-    Map<String, List<Event>> eventGroups =
-        events.stream().collect(groupingBy(Event::getGroupId, LinkedHashMap::new, toList()));
-    List<Event> defaultGroup = eventGroups.remove(null);
-    replayer.playDefaultGroupEvents(defaultGroup);
-    eventGroups.forEach((groupId, value) -> replayer.playGroupEvents(groupId));
-  }
 
   protected void resetStatus(List<Event> acceptedEvents) {
     // The local replayed flag is private, don't trust external ones, so reset it here.
