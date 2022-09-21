@@ -23,8 +23,10 @@ import io.debezium.relational.TableSchema;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.PreDestroy;
 import lombok.SneakyThrows;
 import org.apache.kafka.connect.data.Field;
+import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.data.Struct;
 import org.apache.kafka.connect.sink.SinkRecord;
 import org.slf4j.Logger;
@@ -37,11 +39,20 @@ public class JdbcSinker {
   private final Map<String, String> sinkConfig;
   private final DbSchemaReader schemaReader;
   private final JdbcSinkerContext context;
+  private final JdbcSinkTask jdbcSinkTask;
 
   public JdbcSinker(ConfigBuilder configBuilder, DbSchemaReader schemaReader) {
-    context = new JdbcSinkerContext();
-    sinkConfig = configBuilder.sinkConfig();
+    this.context = new JdbcSinkerContext();
+    this.sinkConfig = configBuilder.sinkConfig();
+    this.jdbcSinkTask = initJdbcSinkTask();
     this.schemaReader = schemaReader;
+  }
+
+  private JdbcSinkTask initJdbcSinkTask() {
+    JdbcSinkTask jdbcSinkTask = new JdbcSinkTask();
+    jdbcSinkTask.initialize(context);
+    jdbcSinkTask.start(sinkConfig);
+    return jdbcSinkTask;
   }
 
   public void sink(Collection<TableChangeEvent> events) {
@@ -51,21 +62,11 @@ public class JdbcSinker {
 
   @SneakyThrows
   private void sinkByJdbcSinkTask(Collection<SinkRecord> sinkRecords) {
-    // todo: singleton
-    JdbcSinkTask jdbcSinkTask = new JdbcSinkTask();
     try {
-      jdbcSinkTask.initialize(context);
-      jdbcSinkTask.start(sinkConfig);
       jdbcSinkTask.put(sinkRecords);
     } catch (Exception e) {
       logger.error("fail to sink records, err:{}", e.getMessage());
       throw new RuntimeException(e);
-    } finally {
-      try {
-        jdbcSinkTask.stop();
-      } catch (Exception e) {
-        logger.error("fail to stop task, err:{}", e.getMessage());
-      }
     }
   }
 
@@ -84,7 +85,6 @@ public class JdbcSinker {
               List<String> columns = event.getColumns();
               List<Object> values = row.getValues();
               Struct keyStruct = new Struct(tableSchema.keySchema());
-              // todo: build sink record for deletion, make values null?
               Struct valueStruct = new Struct(tableSchema.valueSchema());
               for (int i = 0; i < columns.size(); i++) {
                 String column = columns.get(i);
@@ -96,9 +96,18 @@ public class JdbcSinker {
                 }
               }
               String topic = tableId.identifier();
+              Schema valueSchema = valueStruct.schema();
+              if (row.isDeletion()) {
+                valueStruct = null;
+              }
               return new SinkRecord(
-                  topic, 0, keyStruct.schema(), keyStruct, valueStruct.schema(), valueStruct, 0);
+                  topic, 0, keyStruct.schema(), keyStruct, valueSchema, valueStruct, 0);
             })
         .collect(toList());
+  }
+
+  @PreDestroy
+  private void stop() {
+    this.jdbcSinkTask.stop();
   }
 }

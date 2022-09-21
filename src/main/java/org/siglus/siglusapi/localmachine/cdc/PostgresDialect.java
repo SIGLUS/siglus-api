@@ -27,8 +27,8 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.Objects;
+import java.util.Optional;
 import org.apache.kafka.common.config.AbstractConfig;
 import org.apache.kafka.connect.data.Schema;
 import org.postgresql.jdbc.PgConnection;
@@ -61,17 +61,17 @@ public class PostgresDialect extends PostgreSqlDatabaseDialect {
           index,
           Timestamp.valueOf(
               LocalDateTime.ofInstant(
-                  Instant.ofEpochMilli((Long) value / 1000), ZoneId.systemDefault())));
+                  Instant.ofEpochMilli((Long) value / 1000), this.timeZone().toZoneId())));
       return true;
     }
     if (io.debezium.time.Timestamp.SCHEMA_NAME.equals(schema.name())) {
       statement.setTimestamp(
           index,
           Timestamp.valueOf(
-              LocalDateTime.ofInstant(Instant.ofEpochMilli((Long) value), ZoneId.systemDefault())));
+              LocalDateTime.ofInstant(Instant.ofEpochMilli((Long) value), this.timeZone().toZoneId())));
       return true;
     }
-    if (schema.name().contains("io.debezium.time")) {
+    if (Optional.ofNullable(schema.name()).orElse("").contains("io.debezium.time")) {
       throw new RuntimeException("can not bind value for schema " + schema.name());
     }
     return super.maybeBindLogical(statement, index, schema, value);
