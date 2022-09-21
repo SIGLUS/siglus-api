@@ -15,7 +15,6 @@
 
 package org.siglus.siglusapi.interceptor;
 
-import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_LOCATION_MACHINE_PERMISSION_DENIED;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_NOT_WEB_USER;
 
 import lombok.RequiredArgsConstructor;
@@ -49,10 +48,7 @@ public class WebApiCheckAspect {
 
   @Before("webApi()")
   public void before() {
-    if (localMachineHelper.isLocalMachine()) {
-      throw new PermissionMessageException(new Message(ERROR_LOCATION_MACHINE_PERMISSION_DENIED));
-    }
-    if (androidHelper.isAndroid()) {
+    if (localMachineHelper.isLocalMachine() || androidHelper.isAndroid()) {
       throw new PermissionMessageException(new Message(ERROR_NOT_WEB_USER));
     }
   }

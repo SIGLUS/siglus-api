@@ -17,7 +17,6 @@ package org.siglus.siglusapi.interceptor;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.mockito.Mockito.when;
-import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_LOCATION_MACHINE_PERMISSION_DENIED;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_NOT_WEB_USER;
 
 import org.junit.Rule;
@@ -50,7 +49,7 @@ public class WebApiCheckAspectTest {
   public void shouldThrowPermissionMessageExceptionWhenFacilityIsLocalMachine() {
     // then
     exception.expect(PermissionMessageException.class);
-    exception.expectMessage(containsString(ERROR_LOCATION_MACHINE_PERMISSION_DENIED));
+    exception.expectMessage(containsString(ERROR_NOT_WEB_USER));
     // given
     when(localMachineHelper.isLocalMachine()).thenReturn(true);
     // when

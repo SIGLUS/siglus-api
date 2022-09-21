@@ -166,8 +166,6 @@ public abstract class MessageKeys {
   public static final String ERROR_FACILITY_NOT_FOUND = "localmachine.facility.notFound";
   public static final String ERROR_NOT_ACTIVATED_YET = "localmachine.notActivated";
   public static final String ERROR_FACILITY_CHANGED = "localmachine.facilityChanged";
-  public static final String ERROR_LOCATION_MACHINE_PERMISSION_DENIED = "localmachine.permission.denied";
-
 
   // android
   public static final String ERROR_NOT_WEB_USER = "siglusapi.error.notWebUser";
