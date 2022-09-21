@@ -58,6 +58,7 @@ public class ConfigBuilder {
         .with("database.server.id", "local")
         .with("database.server.name", "local")
         .with("time.precision.mode", "adaptive")
+        .with("publication.autocreate.mode", "filtered")
         .with("snapshot.mode", "never");
   }
 }

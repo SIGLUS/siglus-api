@@ -31,7 +31,7 @@ public class DebeziumWrapper {
   @PostConstruct
   private void cleanSlot() {
     try {
-      // fixme: for web prod, can not clean it
+      // fixme: remove later
       jdbcTemplate.execute("select pg_drop_replication_slot('debezium')");
     } catch (Throwable e) {
       // ignore error, coz the debezium may not exists when cleaning
