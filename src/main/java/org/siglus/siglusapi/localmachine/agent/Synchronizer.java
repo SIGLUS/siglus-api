@@ -66,6 +66,7 @@ public class Synchronizer {
     List<Event> events = webClient.exportPeeringEvents();
     if (CollectionUtils.isEmpty(events)) {
       log.info("pull events got empty");
+      return;
     }
     events.forEach(it -> it.setOnlineWebSynced(true));
     eventImporter.importEvents(events);

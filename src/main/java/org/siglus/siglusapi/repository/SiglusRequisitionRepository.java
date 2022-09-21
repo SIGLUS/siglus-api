@@ -109,4 +109,6 @@ public interface SiglusRequisitionRepository extends JpaRepository<Requisition, 
   @Query(name = "Order.findRequisitionOrderDtos", nativeQuery = true)
   List<RequisitionOrderDto> findRequisitionOrderDtoByRequisitionIds(
       @Param("requisitionIds") Iterable<UUID> requisitionIds);
+
+  int countById(UUID id);
 }
