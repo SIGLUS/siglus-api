@@ -484,7 +484,7 @@ public class MeService {
           .collect(toList());
       productLine.setLots(lotLines);
     });
-    ProofsOfDeliveryExtension proofsOfDeliveryExtension = proofsOfDeliveryExtensionRepository.findByProofOfDeliveryId(
+    ProofsOfDeliveryExtension proofsOfDeliveryExtension = proofsOfDeliveryExtensionRepository.findByPodId(
         pod.getId());
     podResponse.setConferredBy(proofsOfDeliveryExtension.getConferredBy());
     podResponse.setPreparedBy(proofsOfDeliveryExtension.getPreparedBy());

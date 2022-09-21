@@ -200,7 +200,7 @@ public class SiglusMeControllerProofOfDeliveryMvcTest extends FileBasedTest {
     RequestBuilder request = get("/api/siglusapi/android/me/facility/pods")
         .contentType(MediaType.APPLICATION_JSON)
         .characterEncoding("utf-8");
-    when(proofsOfDeliveryExtensionRepository.findByProofOfDeliveryId(any()))
+    when(proofsOfDeliveryExtensionRepository.findByPodId(any()))
         .thenReturn(new ProofsOfDeliveryExtension());
 
     // when
@@ -291,7 +291,7 @@ public class SiglusMeControllerProofOfDeliveryMvcTest extends FileBasedTest {
     RequestBuilder request = get("/api/siglusapi/android/me/facility/pods?startDate=2020-09-11&shippedOnly=true")
         .contentType(MediaType.APPLICATION_JSON)
         .characterEncoding("utf-8");
-    when(proofsOfDeliveryExtensionRepository.findByProofOfDeliveryId(any()))
+    when(proofsOfDeliveryExtensionRepository.findByPodId(any()))
         .thenReturn(new ProofsOfDeliveryExtension());
 
     // when
@@ -316,7 +316,7 @@ public class SiglusMeControllerProofOfDeliveryMvcTest extends FileBasedTest {
     RequestBuilder request = get("/api/siglusapi/android/me/facility/pods?startDate=2020-09-11")
         .contentType(MediaType.APPLICATION_JSON)
         .characterEncoding("utf-8");
-    when(proofsOfDeliveryExtensionRepository.findByProofOfDeliveryId(any()))
+    when(proofsOfDeliveryExtensionRepository.findByPodId(any()))
         .thenReturn(new ProofsOfDeliveryExtension());
 
     // when
@@ -343,7 +343,7 @@ public class SiglusMeControllerProofOfDeliveryMvcTest extends FileBasedTest {
     RequestBuilder request = get("/api/siglusapi/android/me/facility/pods?shippedOnly=true")
         .contentType(MediaType.APPLICATION_JSON)
         .characterEncoding("utf-8");
-    when(proofsOfDeliveryExtensionRepository.findByProofOfDeliveryId(any()))
+    when(proofsOfDeliveryExtensionRepository.findByPodId(any()))
         .thenReturn(new ProofsOfDeliveryExtension());
 
     // when
