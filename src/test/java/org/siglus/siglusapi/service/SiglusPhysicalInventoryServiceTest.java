@@ -31,6 +31,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.openlmis.stockmanagement.service.PermissionService.STOCK_INVENTORIES_EDIT;
+import static org.siglus.siglusapi.constant.FacilityTypeConstants.CENTRAL;
 import static org.siglus.siglusapi.constant.FieldConstants.ALL_PROGRAM;
 import static org.siglus.siglusapi.constant.FieldConstants.EXCLUDE_ARCHIVED;
 import static org.siglus.siglusapi.constant.FieldConstants.FACILITY_ID;
@@ -41,6 +42,7 @@ import static org.siglus.siglusapi.constant.FieldConstants.SINGLE_PROGRAM;
 import static org.siglus.siglusapi.constant.FieldConstants.STOCK_CARD_ID;
 import static org.siglus.siglusapi.constant.FieldConstants.VM_STATUS;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_NOT_ACCEPTABLE;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_PERMISSION_NOT_SUPPORTED;
 
 import com.google.common.collect.Lists;
@@ -1034,13 +1036,60 @@ public class SiglusPhysicalInventoryServiceTest {
     PhysicalInventoryExtension extension = PhysicalInventoryExtension.builder()
         .locationOption(LocationManagementOption.BY_PRODUCT).build();
     when(physicalInventoryExtensionRepository.findByPhysicalInventoryId(physicalInventoryIdOne))
-        .thenReturn(Arrays.asList(extension));
+        .thenReturn(Collections.singletonList(extension));
     // when
     SiglusPhysicalInventoryDto actualPhysicalInventoryDto = siglusPhysicalInventoryService
         .getSubLocationPhysicalInventoryDtoBySubDraftId(subDraftIds, false);
 
     // then
     assertEquals(siglusPhysicalInventoryDto, actualPhysicalInventoryDto);
+
+  }
+
+  @Test
+  public void shouldThrowExceptionWhenFacilityIsVirtualFacility() {
+    // then
+    exception.expect(ValidationMessageException.class);
+    exception.expectMessage(containsString(ERROR_NOT_ACCEPTABLE));
+    // given
+
+    FacilityDto facilityDto = new FacilityDto();
+    FacilityTypeDto typeDto = new FacilityTypeDto();
+    typeDto.setCode(CENTRAL);
+    facilityDto.setType(typeDto);
+    when(facilityReferenceDataService.findOne(facilityId)).thenReturn(facilityDto);
+    when(stockCardRepository.countByFacilityId(facilityId)).thenReturn(10);
+    PhysicalInventoryDto physicalInventoryDto = PhysicalInventoryDto.builder()
+        .id(physicalInventoryIdOne)
+        .programId(programId)
+        .facilityId(facilityId)
+        .build();
+    // when
+    siglusPhysicalInventoryService.createAndSpiltNewDraftForOneProgram(
+        physicalInventoryDto, 2, "product", false);
+
+  }
+
+  @Test
+  public void shouldThrowExceptionWhenFacilityNeedToDoInitialInventoryFirstly() {
+    // then
+    exception.expect(ValidationMessageException.class);
+    exception.expectMessage(containsString(ERROR_NOT_ACCEPTABLE));
+    // given
+    FacilityDto facilityDto = new FacilityDto();
+    FacilityTypeDto typeDto = new FacilityTypeDto();
+    typeDto.setCode("DDM");
+    facilityDto.setType(typeDto);
+    when(facilityReferenceDataService.findOne(facilityId)).thenReturn(facilityDto);
+    when(stockCardRepository.countByFacilityId(facilityId)).thenReturn(0);
+    PhysicalInventoryDto physicalInventoryDto = PhysicalInventoryDto.builder()
+        .id(physicalInventoryIdOne)
+        .programId(programId)
+        .facilityId(facilityId)
+        .build();
+    // when
+    siglusPhysicalInventoryService.createAndSpiltNewDraftForOneProgram(
+        physicalInventoryDto, 2, "product", false);
 
   }
 
