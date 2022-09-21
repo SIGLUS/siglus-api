@@ -39,7 +39,7 @@ public class ConfigBuilder {
     config.put("connection.password", dbPassword);
     config.put("auto.create", "true");
     config.put("auto.evolve", "false");
-    config.put("delete.enabled", "false");
+    config.put("delete.enabled", "true");
     config.put("pk.mode", "record_key");
     config.put("insert.mode", "upsert");
     config.put("dialect.name", "PostgresDialect");

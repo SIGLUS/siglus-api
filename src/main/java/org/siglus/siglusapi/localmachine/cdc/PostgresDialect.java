@@ -53,7 +53,8 @@ public class PostgresDialect extends PostgreSqlDatabaseDialect {
       return false;
     }
     if (Date.SCHEMA_NAME.equals(schema.name())) {
-      statement.setDate(index, java.sql.Date.valueOf(LocalDate.ofEpochDay((Integer) value)));
+      statement.setDate(
+          index, java.sql.Date.valueOf(LocalDate.ofEpochDay(((Number) value).longValue())));
       return true;
     }
     if (MicroTimestamp.schema().name().equals(schema.name())) {
@@ -61,14 +62,16 @@ public class PostgresDialect extends PostgreSqlDatabaseDialect {
           index,
           Timestamp.valueOf(
               LocalDateTime.ofInstant(
-                  Instant.ofEpochMilli((Long) value / 1000), this.timeZone().toZoneId())));
+                  Instant.ofEpochMilli(((Number) value).longValue() / 1000),
+                  this.timeZone().toZoneId())));
       return true;
     }
     if (io.debezium.time.Timestamp.SCHEMA_NAME.equals(schema.name())) {
       statement.setTimestamp(
           index,
           Timestamp.valueOf(
-              LocalDateTime.ofInstant(Instant.ofEpochMilli((Long) value), this.timeZone().toZoneId())));
+              LocalDateTime.ofInstant(
+                  Instant.ofEpochMilli(((Number) value).longValue()), this.timeZone().toZoneId())));
       return true;
     }
     if (Optional.ofNullable(schema.name()).orElse("").contains("io.debezium.time")) {

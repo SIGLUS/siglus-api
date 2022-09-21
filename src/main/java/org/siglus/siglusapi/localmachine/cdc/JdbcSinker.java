@@ -91,13 +91,16 @@ public class JdbcSinker {
                 Object value = values.get(i);
                 if (keyColumns.contains(column)) {
                   keyStruct.put(column, value);
-                } else {
+                } else if (!row.isDeletion()) {
+                  // for deletion record, the value may be truncated to zero and lost correct type,
+                  // so don't put it in struct otherwise may cause validation failure.
                   valueStruct.put(column, value);
                 }
               }
               String topic = tableId.identifier();
               Schema valueSchema = valueStruct.schema();
               if (row.isDeletion()) {
+                // make the valueStruct to null as a flag of deletion
                 valueStruct = null;
               }
               return new SinkRecord(
