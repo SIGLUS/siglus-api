@@ -621,10 +621,12 @@ public class SiglusPodServiceTest {
     when(podSubDraftRepository.findAll(example)).thenReturn(buildMockSubDraftsAllSubmitted());
     when(fulfillmentService.searchProofOfDelivery(any(), any())).thenReturn(buildMockPodDtoWithNoLineItems());
     ProofOfDeliveryDto expectedResponse = buildMockPodDtoWithNoLineItems();
-
+    when(podExtensionRepository.findOne(
+        Example.of(ProofsOfDeliveryExtension.builder().podId(podId).build()))).thenReturn(
+        new ProofsOfDeliveryExtension());
     // when
-    ProofOfDeliveryDto actualResponse = service.mergeSubDrafts(podId, defaultExpands);
-    assertEquals(expectedResponse, actualResponse);
+    PodExtensionResponse actualResponse = service.mergeSubDrafts(podId, defaultExpands);
+    assertEquals(expectedResponse, actualResponse.getPodDto());
   }
 
   @Test(expected = AuthenticationException.class)

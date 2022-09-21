@@ -109,6 +109,7 @@ import org.springframework.data.domain.Example;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.ObjectUtils;
 
 @Slf4j
 @Service
@@ -283,10 +284,19 @@ public class SiglusPodService {
     podSubDraftLineItemsByLocationRepository.deleteByPodLineItemIdIn(podLineItemIds);
   }
 
-  public ProofOfDeliveryDto mergeSubDrafts(UUID podId, Set<String> expand) {
+  public PodExtensionResponse mergeSubDrafts(UUID podId, Set<String> expand) {
     checkAuth();
     checkIfSubDraftsSubmitted(podId);
-    return getExpandedPodDtoById(podId, expand);
+    ProofOfDeliveryDto expandedPodDto = getExpandedPodDtoById(podId, expand);
+    ProofsOfDeliveryExtension podExtensionBy = getPodExtensionByPodId(podId);
+    PodExtensionResponse podExtensionResponse = new PodExtensionResponse();
+    podExtensionResponse.setPodDto(expandedPodDto);
+    if (ObjectUtils.isEmpty(podExtensionBy)) {
+      return podExtensionResponse;
+    }
+    podExtensionResponse.setPreparedBy(podExtensionBy.getPreparedBy());
+    podExtensionResponse.setConferredBy(podExtensionBy.getConferredBy());
+    return podExtensionResponse;
   }
 
   public ProofOfDeliveryWithLocationResponse getMergedSubDraftWithLocation(UUID podId) {
@@ -406,7 +416,7 @@ public class SiglusPodService {
         orderDto.getProgramId(),
         orderDto.getProcessingPeriodId(), orderDto.getEmergency(), REQUISITION_STATUS_POST_SUBMIT);
     List<StatusChange> statusChanges = requisitionStatusChangeRepository.findByRequisitionIdIn(
-        requisitionIds.stream().map(UUID::fromString).collect(Collectors.toList())).stream()
+            requisitionIds.stream().map(UUID::fromString).collect(Collectors.toList())).stream()
         .filter(statusChange -> RequisitionStatus.SUBMITTED == statusChange.getStatus())
         .sorted(Comparator.comparing(StatusChange::getCreatedDate)).collect(Collectors.toList());
 
@@ -590,12 +600,12 @@ public class SiglusPodService {
 
   private List<SubDraftInfo> buildSubDraftInfos(List<PodSubDraft> podSubDrafts) {
     return podSubDrafts.stream().map(podSubDraft ->
-        SubDraftInfo.builder()
-            .subDraftId(podSubDraft.getId())
-            .groupNum(podSubDraft.getNumber())
-            .saver(authenticationHelper.getUserNameByUserId(podSubDraft.getOperatorId()))
-            .status(podSubDraft.getStatus())
-            .build())
+            SubDraftInfo.builder()
+                .subDraftId(podSubDraft.getId())
+                .groupNum(podSubDraft.getNumber())
+                .saver(authenticationHelper.getUserNameByUserId(podSubDraft.getOperatorId()))
+                .status(podSubDraft.getStatus())
+                .build())
         .collect(Collectors.toList());
   }
 
