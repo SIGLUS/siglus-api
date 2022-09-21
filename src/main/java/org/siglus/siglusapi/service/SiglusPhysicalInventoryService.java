@@ -30,6 +30,7 @@ import static org.siglus.siglusapi.constant.FieldConstants.SEPARATOR;
 import static org.siglus.siglusapi.constant.FieldConstants.SINGLE_PROGRAM;
 import static org.siglus.siglusapi.constant.FieldConstants.STOCK_CARD_ID;
 import static org.siglus.siglusapi.constant.FieldConstants.VM_STATUS;
+import static org.siglus.siglusapi.constant.LocationConstants.VIRTUAL_LOCATION_CODE;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_UUID;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_INVENTORY_CONFLICT_DRAFT;
@@ -583,22 +584,24 @@ public class SiglusPhysicalInventoryService {
       List<CalculatedStockOnHandByLocation> stockOnHandByLocations,
       Map<UUID, StockCard> stockCardIdMap,
       UUID programId) {
-    return stockOnHandByLocations.stream().map(soh -> {
-      Map<String, String> extraData = new HashMap<>();
-      extraData.put(VM_STATUS, null);
-      extraData.put(STOCK_CARD_ID, String.valueOf(soh.getStockCardId()));
-      StockCard stockCard = stockCardIdMap.get(soh.getStockCardId());
-      return PhysicalInventoryLineItemDto.builder()
-          .orderableId(stockCard.getOrderableId())
-          .lotId(stockCard.getLotId())
-          .extraData(extraData)
-          .stockAdjustments(Collections.emptyList())
-          .programId(programId)
-          .stockOnHand(soh.getStockOnHand())
-          .locationCode(soh.getLocationCode())
-          .area(soh.getArea())
-          .build();
-    }).collect(Collectors.toList());
+    return stockOnHandByLocations.stream()
+            .filter(stockOnHandByLocation -> !VIRTUAL_LOCATION_CODE.equals(stockOnHandByLocation.getLocationCode()))
+            .map(soh -> {
+              Map<String, String> extraData = new HashMap<>();
+              extraData.put(VM_STATUS, null);
+              extraData.put(STOCK_CARD_ID, String.valueOf(soh.getStockCardId()));
+              StockCard stockCard = stockCardIdMap.get(soh.getStockCardId());
+              return PhysicalInventoryLineItemDto.builder()
+                  .orderableId(stockCard.getOrderableId())
+                  .lotId(stockCard.getLotId())
+                  .extraData(extraData)
+                  .stockAdjustments(Collections.emptyList())
+                  .programId(programId)
+                  .stockOnHand(soh.getStockOnHand())
+                  .locationCode(soh.getLocationCode())
+                  .area(soh.getArea())
+                  .build();
+            }).collect(Collectors.toList());
   }
 
   private List<PhysicalInventoryLineItemDto> convertSummaryV2DtosToLineItems(List<StockCardSummaryV2Dto> summaryV2Dtos,
