@@ -51,6 +51,7 @@ public class JdbcSinker {
 
   @SneakyThrows
   private void sinkByJdbcSinkTask(Collection<SinkRecord> sinkRecords) {
+    // todo: singleton
     JdbcSinkTask jdbcSinkTask = new JdbcSinkTask();
     try {
       jdbcSinkTask.initialize(context);

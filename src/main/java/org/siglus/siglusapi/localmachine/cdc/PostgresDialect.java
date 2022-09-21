@@ -18,9 +18,19 @@ package org.siglus.siglusapi.localmachine.cdc;
 import io.confluent.connect.jdbc.dialect.DatabaseDialect;
 import io.confluent.connect.jdbc.dialect.DatabaseDialectProvider.SubprotocolBasedProvider;
 import io.confluent.connect.jdbc.dialect.PostgreSqlDatabaseDialect;
+import io.debezium.time.Date;
+import io.debezium.time.MicroTimestamp;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.Objects;
 import org.apache.kafka.common.config.AbstractConfig;
+import org.apache.kafka.connect.data.Schema;
 import org.postgresql.jdbc.PgConnection;
 
 public class PostgresDialect extends PostgreSqlDatabaseDialect {
@@ -34,6 +44,37 @@ public class PostgresDialect extends PostgreSqlDatabaseDialect {
     PgConnection conn = (PgConnection) super.getConnection();
     configureConnAsReplicaRole(conn);
     return conn;
+  }
+
+  @Override
+  protected boolean maybeBindLogical(
+      PreparedStatement statement, int index, Schema schema, Object value) throws SQLException {
+    if (Objects.isNull(schema)) {
+      return false;
+    }
+    if (Date.SCHEMA_NAME.equals(schema.name())) {
+      statement.setDate(index, java.sql.Date.valueOf(LocalDate.ofEpochDay((Integer) value)));
+      return true;
+    }
+    if (MicroTimestamp.schema().name().equals(schema.name())) {
+      statement.setTimestamp(
+          index,
+          Timestamp.valueOf(
+              LocalDateTime.ofInstant(
+                  Instant.ofEpochMilli((Long) value / 1000), ZoneId.systemDefault())));
+      return true;
+    }
+    if (io.debezium.time.Timestamp.SCHEMA_NAME.equals(schema.name())) {
+      statement.setTimestamp(
+          index,
+          Timestamp.valueOf(
+              LocalDateTime.ofInstant(Instant.ofEpochMilli((Long) value), ZoneId.systemDefault())));
+      return true;
+    }
+    if (schema.name().contains("io.debezium.time")) {
+      throw new RuntimeException("can not bind value for schema " + schema.name());
+    }
+    return super.maybeBindLogical(statement, index, schema, value);
   }
 
   private void configureConnAsReplicaRole(PgConnection conn) throws SQLException {

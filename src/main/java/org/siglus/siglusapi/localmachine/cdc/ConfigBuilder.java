@@ -42,6 +42,7 @@ public class ConfigBuilder {
     config.put("delete.enabled", "false");
     config.put("pk.mode", "record_key");
     config.put("insert.mode", "upsert");
+    config.put("dialect.name", "PostgresDialect");
     return config;
   }
 
@@ -56,6 +57,7 @@ public class ConfigBuilder {
         .with("database.allowPublicKeyRetrieval", "true")
         .with("database.server.id", "local")
         .with("database.server.name", "local")
+        .with("time.precision.mode", "adaptive")
         .with("snapshot.mode", "never");
   }
 }
