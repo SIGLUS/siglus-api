@@ -27,12 +27,10 @@ import lombok.NoArgsConstructor;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
-import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.localmachine.eventstore.EventRecord;
 import org.siglus.siglusapi.localmachine.eventstore.EventRecordRepository;
 import org.siglus.siglusapi.localmachine.eventstore.EventStore;
 import org.siglus.siglusapi.localmachine.eventstore.PayloadSerializer;
-import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -46,8 +44,8 @@ import org.springframework.test.context.junit4.SpringRunner;
     })
 @RunWith(SpringRunner.class)
 public class EventPublisherTest {
-  @MockBean protected SiglusAuthenticationHelper authenticationHelper;
   @MockBean protected EventRecordRepository eventRecordRepository;
+  @MockBean protected Machine machine;
   @Autowired private EventPublisher eventPublisher;
 
   @Test
@@ -55,17 +53,17 @@ public class EventPublisherTest {
     // given
     TestEventPayload payload = TestEventPayload.builder().id("id").build();
     ArgumentCaptor<EventRecord> recordArgumentCaptor = ArgumentCaptor.forClass(EventRecord.class);
-    UserDto mockedCurrentUser = getMockedCurrentUser();
+    UUID facilityId = getMockedFacility();
     // when
     eventPublisher.emitNonGroupEvent(payload);
     // then
     verify(eventRecordRepository)
         .insertAndAllocateLocalSequenceNumber(recordArgumentCaptor.capture());
     EventRecord eventRecord = recordArgumentCaptor.getValue();
-    assertThat(eventRecord.getSenderId()).isEqualTo(mockedCurrentUser.getHomeFacilityId());
+    assertThat(eventRecord.getSenderId()).isEqualTo(facilityId);
     assertThat(eventRecord.getId()).isNotNull();
     assertThat(eventRecord.getGroupId()).isNull();
-    assertThat(eventRecord.getReceiverId()).isNull();
+    assertThat(eventRecord.getReceiverId()).isEqualTo(facilityId);
   }
 
   @Test
@@ -75,25 +73,23 @@ public class EventPublisherTest {
     ArgumentCaptor<EventRecord> recordArgumentCaptor = ArgumentCaptor.forClass(EventRecord.class);
     String groupId = "groupId";
     UUID receiverId = UUID.randomUUID();
-    UserDto mockedCurrentUser = getMockedCurrentUser();
+    UUID facilityId = getMockedFacility();
     // when
     eventPublisher.emitGroupEvent(groupId, receiverId, payload);
     // then
     verify(eventRecordRepository)
         .insertAndAllocateLocalSequenceNumber(recordArgumentCaptor.capture());
     EventRecord eventRecord = recordArgumentCaptor.getValue();
-    assertThat(eventRecord.getSenderId()).isEqualTo(mockedCurrentUser.getHomeFacilityId());
+    assertThat(eventRecord.getSenderId()).isEqualTo(facilityId);
     assertThat(eventRecord.getId()).isNotNull();
     assertThat(eventRecord.getGroupId()).isEqualTo(groupId);
     assertThat(eventRecord.getReceiverId()).isEqualTo(receiverId);
   }
 
-  private UserDto getMockedCurrentUser() {
-    UserDto mockedCurrentUser = new UserDto();
-    mockedCurrentUser.setId(UUID.randomUUID());
-    mockedCurrentUser.setHomeFacilityId(UUID.randomUUID());
-    given(authenticationHelper.getCurrentUser()).willReturn(mockedCurrentUser);
-    return mockedCurrentUser;
+  private UUID getMockedFacility() {
+    UUID facilityId = UUID.randomUUID();
+    given(machine.getFacilityId()).willReturn(facilityId);
+    return facilityId;
   }
 
   @Data
