@@ -45,9 +45,9 @@ public class SiglusShipmentController {
   public ShipmentDto createShipment(
       @RequestParam(name = "isSubOrder", required = false, defaultValue = "false")
           boolean isSubOrder, @RequestBody ShipmentExtensionRequest shipmentExtensionRequest) {
+    orderFulfillmentSyncedEmitter.emit(false, isSubOrder, shipmentExtensionRequest);
     ShipmentDto created = siglusShipmentService.createOrderAndShipment(isSubOrder, shipmentExtensionRequest);
     notificationService.postConfirmShipment(created);
-    orderFulfillmentSyncedEmitter.emit(false, isSubOrder, shipmentExtensionRequest);
     return created;
   }
 }

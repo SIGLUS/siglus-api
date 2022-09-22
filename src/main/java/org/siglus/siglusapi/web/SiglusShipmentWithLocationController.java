@@ -22,6 +22,7 @@ import org.siglus.siglusapi.service.SiglusNotificationService;
 import org.siglus.siglusapi.service.SiglusShipmentService;
 import org.siglus.siglusapi.web.request.ShipmentExtensionRequest;
 import org.springframework.http.HttpStatus;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -40,12 +41,13 @@ public class SiglusShipmentWithLocationController {
 
   @PostMapping
   @ResponseStatus(HttpStatus.CREATED)
+  @Transactional
   public void confirmShipmentByLocation(
       @RequestParam(name = "isSubOrder", required = false, defaultValue = "false")
       boolean isSubOrder, @RequestBody ShipmentExtensionRequest shipmentExtensionRequest) {
+    orderFulfillmentSyncedEmitter.emit(true, isSubOrder, shipmentExtensionRequest);
     ShipmentDto shipmentByLocation = siglusShipmentService.createOrderAndShipmentByLocation(isSubOrder,
         shipmentExtensionRequest);
     notificationService.postConfirmShipment(shipmentByLocation);
-    orderFulfillmentSyncedEmitter.emit(false, isSubOrder, shipmentExtensionRequest);
   }
 }
