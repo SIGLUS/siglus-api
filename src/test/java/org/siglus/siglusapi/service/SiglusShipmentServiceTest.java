@@ -63,10 +63,12 @@ import org.openlmis.fulfillment.web.util.OrderLineItemDto;
 import org.openlmis.fulfillment.web.util.OrderObjectReferenceDto;
 import org.openlmis.fulfillment.web.util.VersionObjectReferenceDto;
 import org.siglus.siglusapi.domain.OrderLineItemExtension;
+import org.siglus.siglusapi.domain.StockCardLineItemExtension;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.ShipmentLineItemsExtensionRepository;
+import org.siglus.siglusapi.repository.StockCardLineItemExtensionRepository;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 
 @SuppressWarnings("PMD.TooManyMethods")
@@ -117,6 +119,9 @@ public class SiglusShipmentServiceTest {
 
   @Mock
   private SiglusAuthenticationHelper authenticationHelper;
+
+  @Mock
+  private StockCardLineItemExtensionRepository stockCardLineItemExtensionRepository;
 
   private final UUID orderId = UUID.randomUUID();
 
@@ -374,6 +379,7 @@ public class SiglusShipmentServiceTest {
     shipmentLineItem.setLocation(locationDto);
     ShipmentDto shipmentDto = createShipmentDto();
     shipmentDto.setLineItems(Lists.newArrayList(shipmentLineItem));
+    shipmentDto.setId(lineItemId);
     Order order = new Order();
     OrderLineItem lineItem = new OrderLineItem();
     lineItem.setId(lineItemId);
@@ -389,6 +395,8 @@ public class SiglusShipmentServiceTest {
     verify(shipmentLineItemsExtensionRepository, times(0)).save(Lists.newArrayList());
     verify(calculatedStocksOnHandByLocationService, times(0))
         .calculateStockOnHandByLocationForShipment(Lists.newArrayList(), facilityId);
+    verify(stockCardLineItemExtensionRepository, times(0))
+        .save(Lists.newArrayList(buildStockCardLineItemExtension()));
   }
 
   private ShipmentDto createShipmentDto() {
@@ -463,5 +471,14 @@ public class SiglusShipmentServiceTest {
     UserDto userDto = new UserDto();
     userDto.setHomeFacilityId(facilityId);
     return userDto;
+  }
+
+  private StockCardLineItemExtension buildStockCardLineItemExtension() {
+    return StockCardLineItemExtension
+        .builder()
+        .stockCardLineItemId(lineItemId)
+        .locationCode("ABC")
+        .area("DEF")
+        .build();
   }
 }

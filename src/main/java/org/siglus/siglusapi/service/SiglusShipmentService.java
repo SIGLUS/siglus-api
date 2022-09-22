@@ -45,10 +45,12 @@ import org.openlmis.fulfillment.web.util.OrderLineItemDto;
 import org.openlmis.fulfillment.web.util.OrderObjectReferenceDto;
 import org.siglus.siglusapi.domain.OrderLineItemExtension;
 import org.siglus.siglusapi.domain.ShipmentLineItemsExtension;
+import org.siglus.siglusapi.domain.StockCardLineItemExtension;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.ShipmentLineItemsExtensionRepository;
+import org.siglus.siglusapi.repository.StockCardLineItemExtensionRepository;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -81,6 +83,9 @@ public class SiglusShipmentService {
 
   @Autowired
   private SiglusAuthenticationHelper authenticationHelper;
+
+  @Autowired
+  private StockCardLineItemExtensionRepository stockCardLineItemExtensionRepository;
 
   @Transactional
   public ShipmentDto createOrderAndShipment(boolean isSubOrder, ShipmentDto shipmentDto) {
@@ -115,6 +120,7 @@ public class SiglusShipmentService {
     UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
     calculatedStocksOnHandByLocationService.calculateStockOnHandByLocationForShipment(confirmedShipmentDto.lineItems(),
         facilityId);
+    saveStockCardLineItemsWithLocation(confirmedShipmentDto.lineItems());
     return confirmedShipmentDto;
   }
 
@@ -274,4 +280,19 @@ public class SiglusShipmentService {
     orderRepository.save(order);
   }
 
+  private void saveStockCardLineItemsWithLocation(List<ShipmentLineItemDto> lineItems) {
+    List<StockCardLineItemExtension> stockCardLineItemByLocationList = Lists.newArrayList();
+    lineItems.forEach(lineItem -> {
+      StockCardLineItemExtension stockCardLineItemExtension = StockCardLineItemExtension
+          .builder()
+          .stockCardLineItemId(lineItem.getId())
+          .locationCode(lineItem.getLocation().getLocationCode())
+          .area(lineItem.getLocation().getArea())
+          .build();
+      stockCardLineItemByLocationList.add(stockCardLineItemExtension);
+    });
+    log.info("saveStockCardLineItemsWithLocation when confirm shipment; size: {}",
+        stockCardLineItemByLocationList.size());
+    stockCardLineItemExtensionRepository.save(stockCardLineItemByLocationList);
+  }
 }
