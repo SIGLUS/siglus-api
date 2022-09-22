@@ -110,6 +110,7 @@ public class CalculatedStockOnHandByLocationServiceTest {
     target.setId(lineItemId1);
     target.setQuantity(previousSoh);
     target.setOccurredDate(LocalDate.now().minusDays(5L));
+    target.setProcessedDate(LocalDate.now().minusDays(5L).atStartOfDay(ZoneId.systemDefault()));
     StockCard stockCard = buildStockCard(target);
     target.setStockCard(stockCard);
 
@@ -142,6 +143,7 @@ public class CalculatedStockOnHandByLocationServiceTest {
     target.setId(lineItemId1);
     target.setQuantity(previousSoh);
     target.setOccurredDate(LocalDate.now().minusDays(5L));
+    target.setProcessedDate(LocalDate.now().minusDays(5L).atStartOfDay(ZoneId.systemDefault()));
     StockCard stockCard = buildStockCard(target);
     target.setStockCard(stockCard);
 
@@ -319,11 +321,13 @@ public class CalculatedStockOnHandByLocationServiceTest {
     line2.setQuantity(30);
     line2.setReason(buildIssueReason());
     line2.setOccurredDate(LocalDate.now().minusDays(3L));
+    line2.setProcessedDate(LocalDate.now().minusDays(3L).atStartOfDay(ZoneId.systemDefault()));
     StockCardLineItem line3 = new StockCardLineItem();
     line3.setId(lineItemId3);
     line3.setQuantity(10);
     line3.setReason(buildReceiveReason());
     line3.setOccurredDate(LocalDate.now().minusDays(1L));
+    line3.setProcessedDate(LocalDate.now().minusDays(1L).atStartOfDay(ZoneId.systemDefault()));
     stockCard.setLineItems(Arrays.asList(target, line2, line3));
     return stockCard;
   }
