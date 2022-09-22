@@ -334,6 +334,7 @@ public class CalculatedStocksOnHandByLocationService {
     if (CollectionUtils.isNotEmpty(movements)) {
       List<StockCardLineItem> followingMovementLineItems = movements.stream()
               .filter(movement -> !movement.getSrcLocationCode().equals(movement.getDestLocationCode()))
+              .filter(movement -> movement.getProcessedDate().isAfter(lineItem.getProcessedDate().toLocalDateTime()))
               .map(movement -> convertMovementToStockCardLineItem(movement, extension.getLocationCode(), stockCard))
               .collect(Collectors.toList());
       followingLineItems.addAll(followingMovementLineItems);
@@ -440,6 +441,7 @@ public class CalculatedStocksOnHandByLocationService {
             .stream()
             .filter(item -> !item.getOccurredDate().isBefore(lineItem.getOccurredDate())
                     && item.getId() != lineItem.getId())
+            .filter(item -> item.getProcessedDate().isAfter(lineItem.getProcessedDate()))
             .filter(item -> {
               StockCardLineItemExtension extensionForFollowingLine = lineItemIdToExtension.get(item.getId());
               if (extensionForFollowingLine == null) {
@@ -454,7 +456,7 @@ public class CalculatedStocksOnHandByLocationService {
   private Map<String, Integer> getPreviousStockOnHandMap(Set<UUID> stockCardIds,
                                LocalDate occurredDate) {
     return calculatedStockOnHandByLocationRepository
-        .findPreviousLocationStockOnHands(stockCardIds, occurredDate).stream()
+        .findPreviousLocationStockOnHandsTillNow(stockCardIds, occurredDate).stream()
         .collect(toMap(calculatedStockOnHand ->
                         calculatedStockOnHand.getStockCardId().toString() + calculatedStockOnHand.getLocationCode(),
             CalculatedStockOnHandByLocation::getStockOnHand, (stockOnHand1, stockOnHand2) -> stockOnHand1));
