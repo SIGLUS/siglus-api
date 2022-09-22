@@ -739,13 +739,12 @@ public class SiglusOrderService {
 
   private List<Requisition> getCurrentPeriodAfterApprovedRequisitions(Order order, List<ProcessingPeriod> periods,
       List<UUID> clientFacilityIds) {
-    return siglusRequisitionRepository.findRequisitionsByOrderInfoAndSupplyingFacilityId(
+    return siglusRequisitionRepository.findRequisitionsByOrderInfo(
         clientFacilityIds,
         order.getProgramId(),
         Lists.newArrayList(getCurrentPeriodIdByFulfillDate(periods, LocalDate.now())),
         order.getEmergency(),
-        REQUISITION_STATUS_AFTER_FINAL_APPROVED,
-        order.getSupplyingFacilityId());
+        REQUISITION_STATUS_AFTER_FINAL_APPROVED);
   }
 
   private List<Requisition> getPreviousThreePeriodAfterApprovedRequisitions(Order order, List<ProcessingPeriod> periods,
@@ -755,13 +754,12 @@ public class SiglusOrderService {
     List<UUID> noApprovedRequisitionFacilityIds = clientFacilityIds.stream()
         .filter(e -> !hasApprovedRequisitionFacilityIds.contains(e)).collect(Collectors.toList());
 
-    return siglusRequisitionRepository.findRequisitionsByOrderInfoAndSupplyingFacilityId(
+    return siglusRequisitionRepository.findRequisitionsByOrderInfo(
         noApprovedRequisitionFacilityIds,
         order.getProgramId(),
         getPreviousThreePeriodIds(periods),
         order.getEmergency(),
-        REQUISITION_STATUS_AFTER_FINAL_APPROVED,
-        order.getSupplyingFacilityId());
+        REQUISITION_STATUS_AFTER_FINAL_APPROVED);
   }
 
   private UUID getRequisitionId(UUID externalId) {
