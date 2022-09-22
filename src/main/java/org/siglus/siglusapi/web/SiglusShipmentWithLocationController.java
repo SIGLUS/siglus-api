@@ -15,12 +15,14 @@
 
 package org.siglus.siglusapi.web;
 
+import lombok.RequiredArgsConstructor;
 import org.openlmis.fulfillment.web.shipment.ShipmentDto;
+import org.siglus.siglusapi.localmachine.event.order.fulfillment.OrderFulfillmentSyncedEmitter;
 import org.siglus.siglusapi.service.SiglusNotificationService;
 import org.siglus.siglusapi.service.SiglusShipmentService;
 import org.siglus.siglusapi.web.request.ShipmentExtensionRequest;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -28,21 +30,22 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+@RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/siglusapi/shipmentsWithLocation")
 public class SiglusShipmentWithLocationController {
 
-  @Autowired
-  private SiglusShipmentService siglusShipmentService;
-
-  @Autowired
-  private SiglusNotificationService notificationService;
+  private final SiglusShipmentService siglusShipmentService;
+  private final SiglusNotificationService notificationService;
+  private final OrderFulfillmentSyncedEmitter orderFulfillmentSyncedEmitter;
 
   @PostMapping
   @ResponseStatus(HttpStatus.CREATED)
+  @Transactional
   public void confirmShipmentByLocation(
       @RequestParam(name = "isSubOrder", required = false, defaultValue = "false")
       boolean isSubOrder, @RequestBody ShipmentExtensionRequest shipmentExtensionRequest) {
+    orderFulfillmentSyncedEmitter.emit(true, isSubOrder, shipmentExtensionRequest);
     ShipmentDto shipmentByLocation = siglusShipmentService.createOrderAndShipmentByLocation(isSubOrder,
         shipmentExtensionRequest);
     notificationService.postConfirmShipment(shipmentByLocation);

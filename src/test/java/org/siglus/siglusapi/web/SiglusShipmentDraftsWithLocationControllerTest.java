@@ -24,15 +24,19 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftDto;
+import org.siglus.siglusapi.localmachine.event.order.fulfillment.OrderFulfillmentSyncedEmitter;
 import org.siglus.siglusapi.service.SiglusShipmentDraftService;
 
 @RunWith(MockitoJUnitRunner.class)
+@SuppressWarnings("PMD.UnusedPrivateField")
 public class SiglusShipmentDraftsWithLocationControllerTest {
   @InjectMocks
   private SiglusShipmentDraftsWithLocationController siglusShipmentDraftsWithLocationController;
 
   @Mock
   private SiglusShipmentDraftService siglusShipmentDraftService;
+  @Mock
+  private OrderFulfillmentSyncedEmitter orderFulfillmentSyncedEmitter;
 
   private final UUID draftId = UUID.randomUUID();
 

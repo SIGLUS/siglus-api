@@ -573,7 +573,12 @@ traits:
             200:
               description: GET subDrafts with location
 
-    /draftsWithLocation/{id}:
+      /{initialDraftId}:
+        delete:
+          is: [ secured ]
+          description: Delete initial draft with related stock management draft with Location.
+
+    /draftsWithLocation/{initialDraftId}/subDraft/{id}:
       put:
         is: [ secured ]
         description: save a stock management draft with location

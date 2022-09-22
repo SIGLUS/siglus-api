@@ -1,0 +1,993 @@
+{
+  "id": "1a0e0f64-9851-4974-9443-179f15ad8c7c",
+  "order": {
+    "id": "531064a6-f79b-4c5c-bd84-dca6b8bc1ec5",
+    "externalId": "e312348b-44c2-44c6-92b8-7e4ae7b2ee71",
+    "emergency": false,
+    "facility": {
+      "code": "01011015",
+      "name": "Centro de Saúde de Chamba",
+      "description": "Centro de Saúde de Chamba",
+      "active": true,
+      "goLiveDate": null,
+      "goDownDate": null,
+      "comment": null,
+      "enabled": true,
+      "openLmisAccessible": null,
+      "supportedPrograms": [
+        {
+          "code": "ML",
+          "name": "Malaria",
+          "description": null,
+          "active": null,
+          "periodsSkippable": false,
+          "showNonFullSupplyTab": false,
+          "supportLocallyFulfilled": true,
+          "id": "ad8c9a54-cc66-4395-a353-1849caec87da"
+        },
+        {
+          "code": "TB",
+          "name": "MTB",
+          "description": null,
+          "active": null,
+          "periodsSkippable": false,
+          "showNonFullSupplyTab": false,
+          "supportLocallyFulfilled": true,
+          "id": "bff50392-0a46-4da3-8adc-d47a37fb6a9f"
+        },
+        {
+          "code": "T",
+          "name": "TARV",
+          "description": null,
+          "active": null,
+          "periodsSkippable": false,
+          "showNonFullSupplyTab": false,
+          "supportLocallyFulfilled": true,
+          "id": "10845cb9-d365-4aaa-badd-b4fa39c6a26a"
+        },
+        {
+          "code": "VC",
+          "name": "Via Clássica",
+          "description": null,
+          "active": null,
+          "periodsSkippable": false,
+          "showNonFullSupplyTab": false,
+          "supportLocallyFulfilled": true,
+          "id": "dce17f2e-af3e-40ad-8e00-3496adef44c3"
+        },
+        {
+          "code": "TR",
+          "name": "Testes Rápidos Diag.",
+          "description": null,
+          "active": null,
+          "periodsSkippable": false,
+          "showNonFullSupplyTab": false,
+          "supportLocallyFulfilled": true,
+          "id": "a24f19a8-3743-4a1a-a919-e8f97b5719ad"
+        }
+      ],
+      "geographicZone": {
+        "code": "0110",
+        "name": "MECANHELAS",
+        "level": {
+          "code": "district",
+          "name": "District",
+          "levelNumber": 3,
+          "id": "ac8f50b4-cfae-11e9-9398-0242ac130008"
+        },
+        "parent": {
+          "code": "01",
+          "name": "NIASSA",
+          "level": {
+            "code": "province",
+            "name": "Province",
+            "levelNumber": 2,
+            "id": "ac8f4dee-cfae-11e9-9398-0242ac130008"
+          },
+          "parent": {
+            "code": "NR",
+            "name": "NORTE",
+            "level": {
+              "code": "national",
+              "name": "National",
+              "levelNumber": 1,
+              "id": "ac8f43da-cfae-11e9-9398-0242ac130008"
+            },
+            "parent": null,
+            "id": "f5d5f91f-05db-4e7d-b8fb-61094d666193"
+          },
+          "id": "3f2e29b8-cfaf-11e9-9398-0242ac130008"
+        },
+        "id": "63de6d37-8fcd-4178-b847-3fe374a45b3d"
+      },
+      "operator": null,
+      "type": {
+        "code": "CS",
+        "name": "CS - Centro de Saúde",
+        "description": null,
+        "displayOrder": 17,
+        "active": true,
+        "id": "26834258-faa0-420b-a83b-a9af60c605c8"
+      },
+      "id": "e40aadfd-33cc-425f-b605-fb1732341bbf"
+    },
+    "processingPeriod": {
+      "processingSchedule": {
+        "code": "M1",
+        "description": "Monthly",
+        "modifiedDate": null,
+        "name": "Monthly",
+        "id": "727bef28-de1c-11e9-8785-0242ac130007"
+      },
+      "name": "Setembro 2022",
+      "description": "21Ago - 20Set",
+      "startDate": "2022-08-21T00:00:00.000Z",
+      "endDate": "2022-09-20T00:00:00.000Z",
+      "id": "454e3273-c882-4085-a153-cd18324f5e53"
+    },
+    "createdDate": "2022-09-13T06:59:25.064Z",
+    "createdBy": {
+      "username": "rengang_dpm",
+      "firstName": "rengang",
+      "lastName": "dpm",
+      "email": null,
+      "verified": false,
+      "active": true,
+      "homeFacilityId": "2a43595b-9730-4fc9-9552-6ec93e8e2df0",
+      "roleAssignments": [
+        {
+          "role": null,
+          "user": null,
+          "id": null
+        },
+        {
+          "role": null,
+          "user": null,
+          "id": null
+        },
+        {
+          "role": null,
+          "user": null,
+          "id": null
+        },
+        {
+          "role": null,
+          "user": null,
+          "id": null
+        },
+        {
+          "role": null,
+          "user": null,
+          "id": null
+        },
+        {
+          "role": null,
+          "user": null,
+          "id": null
+        },
+        {
+          "role": null,
+          "user": null,
+          "id": null
+        },
+        {
+          "role": null,
+          "user": null,
+          "id": null
+        },
+        {
+          "role": null,
+          "user": null,
+          "id": null
+        },
+        {
+          "role": null,
+          "user": null,
+          "id": null
+        },
+        {
+          "role": null,
+          "user": null,
+          "id": null
+        },
+        {
+          "role": null,
+          "user": null,
+          "id": null
+        },
+        {
+          "role": null,
+          "user": null,
+          "id": null
+        },
+        {
+          "role": null,
+          "user": null,
+          "id": null
+        },
+        {
+          "role": null,
+          "user": null,
+          "id": null
+        },
+        {
+          "role": null,
+          "user": null,
+          "id": null
+        },
+        {
+          "role": null,
+          "user": null,
+          "id": null
+        },
+        {
+          "role": null,
+          "user": null,
+          "id": null
+        },
+        {
+          "role": null,
+          "user": null,
+          "id": null
+        },
+        {
+          "role": null,
+          "user": null,
+          "id": null
+        },
+        {
+          "role": null,
+          "user": null,
+          "id": null
+        },
+        {
+          "role": null,
+          "user": null,
+          "id": null
+        },
+        {
+          "role": null,
+          "user": null,
+          "id": null
+        },
+        {
+          "role": null,
+          "user": null,
+          "id": null
+        },
+        {
+          "role": null,
+          "user": null,
+          "id": null
+        },
+        {
+          "role": null,
+          "user": null,
+          "id": null
+        }
+      ],
+      "id": "fd9d1518-9903-4fb5-9521-77798d5dc939"
+    },
+    "program": {
+      "code": "TR",
+      "name": "Testes Rápidos Diag.",
+      "description": null,
+      "active": true,
+      "periodsSkippable": false,
+      "showNonFullSupplyTab": false,
+      "supportLocallyFulfilled": false,
+      "id": "a24f19a8-3743-4a1a-a919-e8f97b5719ad"
+    },
+    "requestingFacility": {
+      "code": "01011015",
+      "name": "Centro de Saúde de Chamba",
+      "description": "Centro de Saúde de Chamba",
+      "active": true,
+      "goLiveDate": null,
+      "goDownDate": null,
+      "comment": null,
+      "enabled": true,
+      "openLmisAccessible": null,
+      "supportedPrograms": [
+        {
+          "code": "ML",
+          "name": "Malaria",
+          "description": null,
+          "active": null,
+          "periodsSkippable": false,
+          "showNonFullSupplyTab": false,
+          "supportLocallyFulfilled": true,
+          "id": "ad8c9a54-cc66-4395-a353-1849caec87da"
+        },
+        {
+          "code": "TB",
+          "name": "MTB",
+          "description": null,
+          "active": null,
+          "periodsSkippable": false,
+          "showNonFullSupplyTab": false,
+          "supportLocallyFulfilled": true,
+          "id": "bff50392-0a46-4da3-8adc-d47a37fb6a9f"
+        },
+        {
+          "code": "T",
+          "name": "TARV",
+          "description": null,
+          "active": null,
+          "periodsSkippable": false,
+          "showNonFullSupplyTab": false,
+          "supportLocallyFulfilled": true,
+          "id": "10845cb9-d365-4aaa-badd-b4fa39c6a26a"
+        },
+        {
+          "code": "VC",
+          "name": "Via Clássica",
+          "description": null,
+          "active": null,
+          "periodsSkippable": false,
+          "showNonFullSupplyTab": false,
+          "supportLocallyFulfilled": true,
+          "id": "dce17f2e-af3e-40ad-8e00-3496adef44c3"
+        },
+        {
+          "code": "TR",
+          "name": "Testes Rápidos Diag.",
+          "description": null,
+          "active": null,
+          "periodsSkippable": false,
+          "showNonFullSupplyTab": false,
+          "supportLocallyFulfilled": true,
+          "id": "a24f19a8-3743-4a1a-a919-e8f97b5719ad"
+        }
+      ],
+      "geographicZone": {
+        "code": "0110",
+        "name": "MECANHELAS",
+        "level": {
+          "code": "district",
+          "name": "District",
+          "levelNumber": 3,
+          "id": "ac8f50b4-cfae-11e9-9398-0242ac130008"
+        },
+        "parent": {
+          "code": "01",
+          "name": "NIASSA",
+          "level": {
+            "code": "province",
+            "name": "Province",
+            "levelNumber": 2,
+            "id": "ac8f4dee-cfae-11e9-9398-0242ac130008"
+          },
+          "parent": {
+            "code": "NR",
+            "name": "NORTE",
+            "level": {
+              "code": "national",
+              "name": "National",
+              "levelNumber": 1,
+              "id": "ac8f43da-cfae-11e9-9398-0242ac130008"
+            },
+            "parent": null,
+            "id": "f5d5f91f-05db-4e7d-b8fb-61094d666193"
+          },
+          "id": "3f2e29b8-cfaf-11e9-9398-0242ac130008"
+        },
+        "id": "63de6d37-8fcd-4178-b847-3fe374a45b3d"
+      },
+      "operator": null,
+      "type": {
+        "code": "CS",
+        "name": "CS - Centro de Saúde",
+        "description": null,
+        "displayOrder": 17,
+        "active": true,
+        "id": "26834258-faa0-420b-a83b-a9af60c605c8"
+      },
+      "id": "e40aadfd-33cc-425f-b605-fb1732341bbf"
+    },
+    "receivingFacility": {
+      "code": "01011015",
+      "name": "Centro de Saúde de Chamba",
+      "description": "Centro de Saúde de Chamba",
+      "active": true,
+      "goLiveDate": null,
+      "goDownDate": null,
+      "comment": null,
+      "enabled": true,
+      "openLmisAccessible": null,
+      "supportedPrograms": [
+        {
+          "code": "ML",
+          "name": "Malaria",
+          "description": null,
+          "active": null,
+          "periodsSkippable": false,
+          "showNonFullSupplyTab": false,
+          "supportLocallyFulfilled": true,
+          "id": "ad8c9a54-cc66-4395-a353-1849caec87da"
+        },
+        {
+          "code": "TB",
+          "name": "MTB",
+          "description": null,
+          "active": null,
+          "periodsSkippable": false,
+          "showNonFullSupplyTab": false,
+          "supportLocallyFulfilled": true,
+          "id": "bff50392-0a46-4da3-8adc-d47a37fb6a9f"
+        },
+        {
+          "code": "T",
+          "name": "TARV",
+          "description": null,
+          "active": null,
+          "periodsSkippable": false,
+          "showNonFullSupplyTab": false,
+          "supportLocallyFulfilled": true,
+          "id": "10845cb9-d365-4aaa-badd-b4fa39c6a26a"
+        },
+        {
+          "code": "VC",
+          "name": "Via Clássica",
+          "description": null,
+          "active": null,
+          "periodsSkippable": false,
+          "showNonFullSupplyTab": false,
+          "supportLocallyFulfilled": true,
+          "id": "dce17f2e-af3e-40ad-8e00-3496adef44c3"
+        },
+        {
+          "code": "TR",
+          "name": "Testes Rápidos Diag.",
+          "description": null,
+          "active": null,
+          "periodsSkippable": false,
+          "showNonFullSupplyTab": false,
+          "supportLocallyFulfilled": true,
+          "id": "a24f19a8-3743-4a1a-a919-e8f97b5719ad"
+        }
+      ],
+      "geographicZone": {
+        "code": "0110",
+        "name": "MECANHELAS",
+        "level": {
+          "code": "district",
+          "name": "District",
+          "levelNumber": 3,
+          "id": "ac8f50b4-cfae-11e9-9398-0242ac130008"
+        },
+        "parent": {
+          "code": "01",
+          "name": "NIASSA",
+          "level": {
+            "code": "province",
+            "name": "Province",
+            "levelNumber": 2,
+            "id": "ac8f4dee-cfae-11e9-9398-0242ac130008"
+          },
+          "parent": {
+            "code": "NR",
+            "name": "NORTE",
+            "level": {
+              "code": "national",
+              "name": "National",
+              "levelNumber": 1,
+              "id": "ac8f43da-cfae-11e9-9398-0242ac130008"
+            },
+            "parent": null,
+            "id": "f5d5f91f-05db-4e7d-b8fb-61094d666193"
+          },
+          "id": "3f2e29b8-cfaf-11e9-9398-0242ac130008"
+        },
+        "id": "63de6d37-8fcd-4178-b847-3fe374a45b3d"
+      },
+      "operator": null,
+      "type": {
+        "code": "CS",
+        "name": "CS - Centro de Saúde",
+        "description": null,
+        "displayOrder": 17,
+        "active": true,
+        "id": "26834258-faa0-420b-a83b-a9af60c605c8"
+      },
+      "id": "e40aadfd-33cc-425f-b605-fb1732341bbf"
+    },
+    "supplyingFacility": {
+      "code": "03010101",
+      "name": "DPM NIASSA",
+      "description": "DPM NIASSA",
+      "active": true,
+      "goLiveDate": null,
+      "goDownDate": null,
+      "comment": null,
+      "enabled": true,
+      "openLmisAccessible": null,
+      "supportedPrograms": [
+        {
+          "code": "ML",
+          "name": "Malaria",
+          "description": null,
+          "active": null,
+          "periodsSkippable": false,
+          "showNonFullSupplyTab": false,
+          "supportLocallyFulfilled": true,
+          "id": "ad8c9a54-cc66-4395-a353-1849caec87da"
+        },
+        {
+          "code": "TR",
+          "name": "Testes Rápidos Diag.",
+          "description": null,
+          "active": null,
+          "periodsSkippable": false,
+          "showNonFullSupplyTab": false,
+          "supportLocallyFulfilled": true,
+          "id": "a24f19a8-3743-4a1a-a919-e8f97b5719ad"
+        },
+        {
+          "code": "TB",
+          "name": "MTB",
+          "description": null,
+          "active": null,
+          "periodsSkippable": false,
+          "showNonFullSupplyTab": false,
+          "supportLocallyFulfilled": true,
+          "id": "bff50392-0a46-4da3-8adc-d47a37fb6a9f"
+        },
+        {
+          "code": "T",
+          "name": "TARV",
+          "description": null,
+          "active": null,
+          "periodsSkippable": false,
+          "showNonFullSupplyTab": false,
+          "supportLocallyFulfilled": true,
+          "id": "10845cb9-d365-4aaa-badd-b4fa39c6a26a"
+        },
+        {
+          "code": "VC",
+          "name": "Via Clássica",
+          "description": null,
+          "active": null,
+          "periodsSkippable": false,
+          "showNonFullSupplyTab": false,
+          "supportLocallyFulfilled": true,
+          "id": "dce17f2e-af3e-40ad-8e00-3496adef44c3"
+        }
+      ],
+      "geographicZone": {
+        "code": "0101",
+        "name": "CIDADE DE LICHINGAA",
+        "level": {
+          "code": "district",
+          "name": "District",
+          "levelNumber": 3,
+          "id": "ac8f50b4-cfae-11e9-9398-0242ac130008"
+        },
+        "parent": {
+          "code": "01",
+          "name": "NIASSA",
+          "level": {
+            "code": "province",
+            "name": "Province",
+            "levelNumber": 2,
+            "id": "ac8f4dee-cfae-11e9-9398-0242ac130008"
+          },
+          "parent": {
+            "code": "NR",
+            "name": "NORTE",
+            "level": {
+              "code": "national",
+              "name": "National",
+              "levelNumber": 1,
+              "id": "ac8f43da-cfae-11e9-9398-0242ac130008"
+            },
+            "parent": null,
+            "id": "f5d5f91f-05db-4e7d-b8fb-61094d666193"
+          },
+          "id": "3f2e29b8-cfaf-11e9-9398-0242ac130008"
+        },
+        "id": "f4322289-8453-4e46-b497-debcdd785984"
+      },
+      "operator": null,
+      "type": {
+        "code": "DPM",
+        "name": "DPM - Depósito Provincial de Medicamentos",
+        "description": null,
+        "displayOrder": 2,
+        "active": true,
+        "id": "b6069fa4-cfad-11e9-9398-0242ac130008"
+      },
+      "id": "2a43595b-9730-4fc9-9552-6ec93e8e2df0"
+    },
+    "orderCode": "ORDEM-70OJ91JFR-2",
+    "status": "FULFILLING",
+    "quotedCost": 0,
+    "orderLineItems": [
+      {
+        "id": "6c8e0252-bc42-4401-b64f-7807d54c2b73",
+        "orderable": {
+          "id": "9f74be18-18d9-4ef4-8b43-0eda127e2e08",
+          "productCode": "22A07",
+          "fullProductName": "TDR de Unigold; kit de 20; Tests",
+          "netContent": 1,
+          "packRoundingThreshold": 1,
+          "roundToZero": false,
+          "programs": [
+            {
+              "programId": "a24f19a8-3743-4a1a-a919-e8f97b5719ad",
+              "orderableDisplayCategoryId": "40b66746-01f4-11eb-afa4-4c32759554d9",
+              "orderableCategoryDisplayName": "Default",
+              "orderableCategoryDisplayOrder": 0,
+              "active": true,
+              "fullSupply": true,
+              "displayOrder": 0,
+              "dosesPerPatient": null,
+              "pricePerPack": 9
+            }
+          ],
+          "dispensable": {
+            "dispensingUnit": "each",
+            "displayUnit": "each"
+          },
+          "extraData": {
+            "isBasic": "true"
+          },
+          "meta": {
+            "versionNumber": 4,
+            "lastUpdated": "2022-07-21T06:34:32.789Z"
+          },
+          "isKit": false
+        },
+        "orderedQuantity": 4,
+        "totalDispensingUnits": 4,
+        "partialFulfilledQuantity": 1,
+        "skipped": false,
+        "added": false
+      },
+      {
+        "id": "420d3845-fc38-42a9-b502-ab8885ed02d8",
+        "orderable": {
+          "id": "f56977c3-af28-4daf-a92a-4244a4a13335",
+          "productCode": "22A08",
+          "fullProductName": "TDR de Malaria; kit de 25; Tests",
+          "netContent": 1,
+          "packRoundingThreshold": 1,
+          "roundToZero": false,
+          "programs": [
+            {
+              "programId": "a24f19a8-3743-4a1a-a919-e8f97b5719ad",
+              "orderableDisplayCategoryId": "40b66746-01f4-11eb-afa4-4c32759554d9",
+              "orderableCategoryDisplayName": "Default",
+              "orderableCategoryDisplayOrder": 0,
+              "active": true,
+              "fullSupply": true,
+              "displayOrder": 0,
+              "dosesPerPatient": null,
+              "pricePerPack": 13.14
+            }
+          ],
+          "dispensable": {
+            "dispensingUnit": "each",
+            "displayUnit": "each"
+          },
+          "extraData": {
+            "isBasic": "true"
+          },
+          "meta": {
+            "versionNumber": 4,
+            "lastUpdated": "2022-07-21T06:34:33.601Z"
+          },
+          "isKit": false
+        },
+        "orderedQuantity": 2,
+        "totalDispensingUnits": 2,
+        "partialFulfilledQuantity": 1,
+        "skipped": false,
+        "added": false
+      }
+    ],
+    "statusMessages": [],
+    "statusChanges": [
+      {
+        "status": "SUBMITTED",
+        "authorId": "baa45136-3937-4b9d-a82d-b3834a51d880",
+        "createdDate": "2022-09-13T01:23:32.645Z"
+      },
+      {
+        "status": "INITIATED",
+        "authorId": "baa45136-3937-4b9d-a82d-b3834a51d880",
+        "createdDate": "2022-09-13T01:23:32.645Z"
+      },
+      {
+        "status": "AUTHORIZED",
+        "authorId": "baa45136-3937-4b9d-a82d-b3834a51d880",
+        "createdDate": "2022-09-13T01:23:32.646Z"
+      },
+      {
+        "status": "IN_APPROVAL",
+        "authorId": "f114e726-a36c-4b63-a317-2b884979b5ff",
+        "createdDate": "2022-09-13T01:23:32.646Z"
+      },
+      {
+        "status": "RELEASED",
+        "authorId": "fd9d1518-9903-4fb5-9521-77798d5dc939",
+        "createdDate": "2022-09-13T06:50:39.802Z"
+      },
+      {
+        "status": "APPROVED",
+        "authorId": "fd9d1518-9903-4fb5-9521-77798d5dc939",
+        "createdDate": "2022-09-13T05:54:20.781Z"
+      }
+    ],
+    "lastUpdater": {
+      "id": "fd9d1518-9903-4fb5-9521-77798d5dc939",
+      "href": "null/api/users/fd9d1518-9903-4fb5-9521-77798d5dc939"
+    },
+    "lastUpdatedDate": "2022-09-13T08:13:01.279Z",
+    "requisitionNumber": "RNR-NO010110150000002",
+    "actualStartDate": "2022-08-21",
+    "actualEndDate": "2022-09-13",
+    "$promise": {},
+    "$resolved": true,
+    "availableProducts": [
+      {
+        "id": "37806f29-8c43-4d46-961d-376b9668f474",
+        "productCode": "22A05",
+        "dispensable": {
+          "dispensingUnit": "each",
+          "displayUnit": "each"
+        },
+        "fullProductName": "TDR de Sifilis ; kit de 25; Tests",
+        "description": "TDR de Sifilis; teste (kit de 30)",
+        "netContent": 1,
+        "packRoundingThreshold": 1,
+        "roundToZero": false,
+        "programs": [
+          {
+            "programId": "a24f19a8-3743-4a1a-a919-e8f97b5719ad",
+            "orderableDisplayCategoryId": "40b66746-01f4-11eb-afa4-4c32759554d9",
+            "orderableCategoryDisplayName": "Default",
+            "orderableCategoryDisplayOrder": 0,
+            "active": true,
+            "fullSupply": true,
+            "displayOrder": 0,
+            "pricePerPack": 7
+          }
+        ],
+        "children": [],
+        "identifiers": {
+          "tradeItem": "edde23cc-74d1-4cc3-8e6c-4c126ff6f5e5"
+        },
+        "extraData": {
+          "isBasic": true
+        },
+        "meta": {
+          "versionNumber": 2,
+          "lastUpdated": "2022-07-21T06:34:39.551Z"
+        },
+        "archived": false,
+        "isKit": false,
+        "tradeItemIdentifier": "edde23cc-74d1-4cc3-8e6c-4c126ff6f5e5"
+      },
+      {
+        "id": "f56977c3-af28-4daf-a92a-4244a4a13335",
+        "productCode": "22A08",
+        "dispensable": {
+          "dispensingUnit": "each",
+          "displayUnit": "each"
+        },
+        "fullProductName": "TDR de Malaria; kit de 25; Tests",
+        "description": "TDR de Malaria; teste (kit de 25)",
+        "netContent": 1,
+        "packRoundingThreshold": 1,
+        "roundToZero": false,
+        "programs": [
+          {
+            "programId": "a24f19a8-3743-4a1a-a919-e8f97b5719ad",
+            "orderableDisplayCategoryId": "40b66746-01f4-11eb-afa4-4c32759554d9",
+            "orderableCategoryDisplayName": "Default",
+            "orderableCategoryDisplayOrder": 0,
+            "active": true,
+            "fullSupply": true,
+            "displayOrder": 0,
+            "pricePerPack": 13.14
+          }
+        ],
+        "children": [],
+        "identifiers": {
+          "tradeItem": "7e5e2f9c-8134-4c6e-a097-6c7f2816ab80"
+        },
+        "extraData": {
+          "isBasic": true
+        },
+        "meta": {
+          "versionNumber": 4,
+          "lastUpdated": "2022-07-21T06:34:33.601Z"
+        },
+        "archived": false,
+        "isKit": false,
+        "tradeItemIdentifier": "7e5e2f9c-8134-4c6e-a097-6c7f2816ab80"
+      },
+      {
+        "id": "9f74be18-18d9-4ef4-8b43-0eda127e2e08",
+        "productCode": "22A07",
+        "dispensable": {
+          "dispensingUnit": "each",
+          "displayUnit": "each"
+        },
+        "fullProductName": "TDR de Unigold; kit de 20; Tests",
+        "description": "TDR de Unigold; teste (kit de 20)",
+        "netContent": 1,
+        "packRoundingThreshold": 1,
+        "roundToZero": false,
+        "programs": [
+          {
+            "programId": "a24f19a8-3743-4a1a-a919-e8f97b5719ad",
+            "orderableDisplayCategoryId": "40b66746-01f4-11eb-afa4-4c32759554d9",
+            "orderableCategoryDisplayName": "Default",
+            "orderableCategoryDisplayOrder": 0,
+            "active": true,
+            "fullSupply": true,
+            "displayOrder": 0,
+            "pricePerPack": 9
+          }
+        ],
+        "children": [],
+        "identifiers": {
+          "tradeItem": "22645082-6af9-4695-8a51-3b6d12939da8"
+        },
+        "extraData": {
+          "isBasic": true
+        },
+        "meta": {
+          "versionNumber": 4,
+          "lastUpdated": "2022-07-21T06:34:32.789Z"
+        },
+        "archived": false,
+        "isKit": false,
+        "tradeItemIdentifier": "22645082-6af9-4695-8a51-3b6d12939da8"
+      },
+      {
+        "id": "72044e17-d868-40bc-9d5b-32cd2a0fde30",
+        "productCode": "22A06",
+        "dispensable": {
+          "dispensingUnit": "each",
+          "displayUnit": "each"
+        },
+        "fullProductName": "TDR de Determine; kit de 100; Tests",
+        "description": "TDR de Determine; teste (kit de 100)",
+        "netContent": 1,
+        "packRoundingThreshold": 1,
+        "roundToZero": false,
+        "programs": [
+          {
+            "programId": "a24f19a8-3743-4a1a-a919-e8f97b5719ad",
+            "orderableDisplayCategoryId": "40b66746-01f4-11eb-afa4-4c32759554d9",
+            "orderableCategoryDisplayName": "Default",
+            "orderableCategoryDisplayOrder": 0,
+            "active": true,
+            "fullSupply": true,
+            "displayOrder": 0,
+            "pricePerPack": 10
+          }
+        ],
+        "children": [],
+        "identifiers": {
+          "tradeItem": "f18ec9f2-c084-4f04-888e-c5b165cce246"
+        },
+        "extraData": {
+          "isBasic": true
+        },
+        "meta": {
+          "versionNumber": 2,
+          "lastUpdated": "2022-07-21T06:34:39.952Z"
+        },
+        "archived": false,
+        "isKit": false,
+        "tradeItemIdentifier": "f18ec9f2-c084-4f04-888e-c5b165cce246"
+      }
+    ]
+  },
+  "notes": null,
+  "lineItems": [
+    {
+      "id": "940807ba-538e-495d-919c-5217f81f48cb",
+      "orderable": {
+        "id": "9f74be18-18d9-4ef4-8b43-0eda127e2e08",
+        "href": "http://192.168.1.6/api/orderables/9f74be18-18d9-4ef4-8b43-0eda127e2e08",
+        "versionNumber": 4
+      },
+      "lot": {
+        "id": "29f493c4-cc78-4947-b8d6-ae8b30ce1c32",
+        "href": "http://192.168.1.6/api/lots/29f493c4-cc78-4947-b8d6-ae8b30ce1c32"
+      },
+      "quantityShipped": 1,
+      "stockOnHand": 93
+    },
+    {
+      "id": "06925084-8b4c-4a43-b887-66d695e6dd47",
+      "orderable": {
+        "id": "f56977c3-af28-4daf-a92a-4244a4a13335",
+        "href": "http://192.168.1.6/api/orderables/f56977c3-af28-4daf-a92a-4244a4a13335",
+        "versionNumber": 4
+      },
+      "lot": {
+        "id": "e46fdd1c-6d6c-4e84-b169-43e781af0e6d",
+        "href": "http://192.168.1.6/api/lots/e46fdd1c-6d6c-4e84-b169-43e781af0e6d"
+      },
+      "quantityShipped": 0,
+      "stockOnHand": 93
+    }
+  ],
+  "repository": {
+    "impl": {
+      "shipmentResource": {
+        "uri": "/api/shipments",
+        "resourceUrl": "/api/shipments",
+        "idParam": "id",
+        "splitter": {}
+      },
+      "shipmentDraftResource": {
+        "uri": "/api/shipmentDrafts",
+        "resourceUrl": "/api/shipmentDrafts",
+        "idParam": "id",
+        "splitter": {}
+      },
+      "stockCardSummaryRepositoryImpl": {
+        "LotResource": {
+          "uri": "/api/lots",
+          "resourceUrl": "/api/lots",
+          "idParam": "id",
+          "splitter": {}
+        },
+        "orderableResource": {
+          "database": {
+            "resourceName": "orderables"
+          },
+          "isVersioned": true,
+          "config": {
+            "versioned": true,
+            "offlineMessage": "orderable.notCachedOfflineError",
+            "cache": true
+          },
+          "openlmisResource": {
+            "uri": "/api/siglusapi/orderables",
+            "config": {
+              "versioned": true,
+              "offlineMessage": "orderable.notCachedOfflineError",
+              "cache": true
+            },
+            "resourceUrl": "/api/siglusapi/orderables",
+            "idParam": "id",
+            "splitter": {},
+            "isVersioned": true
+          }
+        },
+        "resource": {
+          "uri": "/api/siglusapi/stockCardSummaries",
+          "resourceUrl": "/api/siglusapi/stockCardSummaries",
+          "idParam": "id",
+          "splitter": {}
+        }
+      },
+      "orderResource": {
+        "uri": "/api/siglusapi/orders",
+        "resourceUrl": "/api/siglusapi/orders",
+        "idParam": "id",
+        "splitter": {}
+      },
+      "siglusShipmentResource": {
+        "uri": "/api/siglusapi/shipments",
+        "resourceUrl": "/api/siglusapi/shipments",
+        "idParam": "id",
+        "splitter": {}
+      },
+      "siglusShipmentDraftResource": {
+        "uri": "/api/siglusapi/shipmentDrafts",
+        "resourceUrl": "/api/siglusapi/shipmentDrafts",
+        "idParam": "id",
+        "splitter": {}
+      }
+    }
+  }
+}

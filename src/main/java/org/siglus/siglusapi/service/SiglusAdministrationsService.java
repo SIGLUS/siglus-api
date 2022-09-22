@@ -253,12 +253,13 @@ public class SiglusAdministrationsService {
         .collect(Collectors.toList());
     List<UUID> orderableIdsWithEmptyLotId = stockCardsWithEmptyLotId.stream().map(StockCard::getOrderableId)
         .collect(Collectors.toList());
-
-    List<Orderable> orderables = orderableRepository.findLatestByIds(orderableIdsWithEmptyLotId);
+    List<Orderable> orderables = Lists.newArrayList();
+    if (CollectionUtils.isNotEmpty(orderableIdsWithEmptyLotId)) {
+      orderables = orderableRepository.findLatestByIds(orderableIdsWithEmptyLotId);
+    }
     List<UUID> orderableIdsNoKit = orderables.stream()
         .filter(orderable -> !KitConstants.isKit(orderable.getProductCode().toString()))
         .map(Orderable::getId).collect(Collectors.toList());
-
     List<StockCard> stockCards = stockCardsWithEmptyLotId.stream()
         .filter(stockCard -> orderableIdsNoKit.contains(stockCard.getOrderableId())).collect(Collectors.toList());
     List<UUID> stockCardIds = stockCards.stream().map(StockCard::getId).collect(Collectors.toList());

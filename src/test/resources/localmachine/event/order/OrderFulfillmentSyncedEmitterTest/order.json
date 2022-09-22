@@ -1,0 +1,95 @@
+{
+  "id": "2249165a-d305-46fa-b02f-e684a61b63e2",
+  "externalId": "f6a7e171-6f83-4f97-97ec-c51c58255f6e",
+  "emergency": false,
+  "facilityId": "e40aadfd-33cc-425f-b605-fb1732341bbf",
+  "processingPeriodId": "454e3273-c882-4085-a153-cd18324f5e53",
+  "createdDate": "2022-09-16T03:23:41.624Z",
+  "createdById": "fd9d1518-9903-4fb5-9521-77798d5dc939",
+  "programId": "a24f19a8-3743-4a1a-a919-e8f97b5719ad",
+  "requestingFacilityId": "e40aadfd-33cc-425f-b605-fb1732341bbf",
+  "receivingFacilityId": "e40aadfd-33cc-425f-b605-fb1732341bbf",
+  "supplyingFacilityId": "2a43595b-9730-4fc9-9552-6ec93e8e2df0",
+  "orderCode": "ORDEM-DXCK81H0R-1",
+  "status": "SHIPPED",
+  "quotedCost": 0.00,
+  "orderLineItems": [
+    {
+      "id": "f77962e9-79ee-4d2d-a36e-3450294d7d57",
+      "orderable": {
+        "id": "9f74be18-18d9-4ef4-8b43-0eda127e2e08",
+        "versionNumber": 4
+      },
+      "orderedQuantity": 11
+    },
+    {
+      "id": "515e75e8-c467-45df-b4ec-626a60e3e26b",
+      "orderable": {
+        "id": "f56977c3-af28-4daf-a92a-4244a4a13335",
+        "versionNumber": 4
+      },
+      "orderedQuantity": 11
+    },
+    {
+      "id": "832d8504-3841-44d4-bd92-1565f5019f72",
+      "orderable": {
+        "id": "37806f29-8c43-4d46-961d-376b9668f474",
+        "versionNumber": 2
+      },
+      "orderedQuantity": 11
+    },
+    {
+      "id": "a0e66c4f-79e8-42a1-96fe-c3db60897b2c",
+      "orderable": {
+        "id": "72044e17-d868-40bc-9d5b-32cd2a0fde30",
+        "versionNumber": 2
+      },
+      "orderedQuantity": 11
+    }
+  ],
+  "statusMessages": [],
+  "statusChanges": [
+    {
+      "id": "3852acb0-4b24-4b0e-8ad6-7026dc865bc6",
+      "status": "AUTHORIZED",
+      "authorId": "baa45136-3937-4b9d-a82d-b3834a51d880",
+      "createdDate": "2022-09-16T03:22:34.929Z"
+    },
+    {
+      "id": "c9a96998-fa6f-42f2-b43d-ebcbdd967685",
+      "status": "RELEASED",
+      "authorId": "fd9d1518-9903-4fb5-9521-77798d5dc939",
+      "createdDate": "2022-09-16T03:23:41.232Z"
+    },
+    {
+      "id": "3689da24-2a05-4f27-89da-111bf2e59e53",
+      "status": "SUBMITTED",
+      "authorId": "baa45136-3937-4b9d-a82d-b3834a51d880",
+      "createdDate": "2022-09-16T03:22:33.98Z"
+    },
+    {
+      "id": "24b4c8a1-4949-412f-9333-576d6ee77940",
+      "status": "IN_APPROVAL",
+      "authorId": "f114e726-a36c-4b63-a317-2b884979b5ff",
+      "createdDate": "2022-09-16T03:22:58.417Z"
+    },
+    {
+      "id": "b1c695b6-c422-459c-be73-63ac2cb1be71",
+      "status": "APPROVED",
+      "authorId": "fd9d1518-9903-4fb5-9521-77798d5dc939",
+      "createdDate": "2022-09-16T03:23:30.249Z"
+    },
+    {
+      "id": "c8b4faf7-5b33-4458-8137-a16921d13599",
+      "status": "INITIATED",
+      "authorId": "baa45136-3937-4b9d-a82d-b3834a51d880",
+      "createdDate": "2022-09-16T03:22:14.125Z"
+    }
+  ],
+  "updateDetails": {
+    "updaterId": "fd9d1518-9903-4fb5-9521-77798d5dc939",
+    "updatedDate": "2022-09-16T03:24:17.779Z"
+  },
+  "ordered": false,
+  "external": false
+}

@@ -13,12 +13,21 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.repository;
+package org.siglus.siglusapi.localmachine.event.order.fulfillment;
 
-import java.util.UUID;
-import org.siglus.siglusapi.domain.ProofsOfDeliveryExtension;
-import org.springframework.data.jpa.repository.JpaRepository;
+import java.util.List;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.openlmis.fulfillment.domain.Order;
 
-public interface ProofsOfDeliveryExtensionRepository extends JpaRepository<ProofsOfDeliveryExtension, UUID> {
-  ProofsOfDeliveryExtension findByPodId(UUID podId);
+@Data
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
+public class ConvertToOrderRequest {
+  private String requisitionNumber;
+  private List<RequisitionLineItemRequest> requisitionLineItems;
+  private Order firstOrder;
 }

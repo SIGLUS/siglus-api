@@ -68,6 +68,7 @@ import org.siglus.siglusapi.constant.PodConstants;
 import org.siglus.siglusapi.domain.AppInfo;
 import org.siglus.siglusapi.domain.HfCmm;
 import org.siglus.siglusapi.domain.PodRequestBackup;
+import org.siglus.siglusapi.domain.ProofsOfDeliveryExtension;
 import org.siglus.siglusapi.domain.RequisitionRequestBackup;
 import org.siglus.siglusapi.domain.ResyncInfo;
 import org.siglus.siglusapi.domain.SiglusReportType;
@@ -103,6 +104,7 @@ import org.siglus.siglusapi.repository.AppInfoRepository;
 import org.siglus.siglusapi.repository.FacilityCmmsRepository;
 import org.siglus.siglusapi.repository.LotNativeRepository;
 import org.siglus.siglusapi.repository.PodRequestBackupRepository;
+import org.siglus.siglusapi.repository.ProofsOfDeliveryExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionRequestBackupRepository;
 import org.siglus.siglusapi.repository.ResyncInfoRepository;
 import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
@@ -185,6 +187,7 @@ public class MeService {
   private final SiglusProofOfDeliveryRepository podRepository;
   private final EntityManager entityManager;
   private final ResyncInfoRepository resyncInfoRepository;
+  private final ProofsOfDeliveryExtensionRepository proofsOfDeliveryExtensionRepository;
 
   public FacilityResponse getCurrentFacility() {
     FacilityDto facilityDto = getCurrentFacilityInfo();
@@ -481,6 +484,10 @@ public class MeService {
           .collect(toList());
       productLine.setLots(lotLines);
     });
+    ProofsOfDeliveryExtension proofsOfDeliveryExtension = proofsOfDeliveryExtensionRepository.findByPodId(
+        pod.getId());
+    podResponse.setConferredBy(proofsOfDeliveryExtension.getConferredBy());
+    podResponse.setPreparedBy(proofsOfDeliveryExtension.getPreparedBy());
     return podResponse;
   }
 
