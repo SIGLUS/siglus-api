@@ -51,18 +51,18 @@ public class SiglusStockManagementDraftWithLocationController {
     return stockManagementDraftService.findStockManagementDraftWithLocation(program, draftType, isDraft);
   }
 
-  @GetMapping("/{id}")
+  @GetMapping("/{initialDraftId}/subDraft/{id}")
   public StockManagementDraftWithLocationDto searchDraftWithLocation(@PathVariable UUID id) {
     return stockManagementDraftService.searchDraftWithLocation(id);
   }
 
-  @DeleteMapping("/{id}")
+  @DeleteMapping("/{initialDraftId}/subDraft/{id}")
   @ResponseStatus(NO_CONTENT)
   public void deleteDraft(@PathVariable UUID id) {
     stockManagementDraftService.deleteStockManagementDraft(id);
   }
 
-  @PutMapping("/{id}")
+  @PutMapping("/{initialDraftId}/subDraft/{id}")
   @ResponseStatus(OK)
   public StockManagementDraftWithLocationDto updateDraft(@PathVariable UUID id,
       @RequestBody StockManagementDraftWithLocationDto dto) {
