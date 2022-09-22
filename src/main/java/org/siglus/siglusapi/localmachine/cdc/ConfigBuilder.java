@@ -18,10 +18,14 @@ package org.siglus.siglusapi.localmachine.cdc;
 import io.debezium.config.Configuration;
 import java.util.HashMap;
 import java.util.Map;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
+@NoArgsConstructor
+@AllArgsConstructor
 public class ConfigBuilder {
   @Value("${spring.datasource.url}")
   private String dbUrl;

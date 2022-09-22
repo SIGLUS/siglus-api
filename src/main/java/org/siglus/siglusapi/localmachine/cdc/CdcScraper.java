@@ -21,6 +21,7 @@ import static io.debezium.data.Envelope.FieldName.OPERATION;
 import static io.debezium.data.Envelope.Operation;
 import static java.util.stream.Collectors.toMap;
 
+import com.google.common.annotations.VisibleForTesting;
 import io.debezium.embedded.Connect;
 import io.debezium.engine.DebeziumEngine;
 import io.debezium.engine.RecordChangeEvent;
@@ -57,16 +58,16 @@ import org.springframework.transaction.annotation.Transactional;
 @Component
 public class CdcScraper {
 
-  private static final long DUMMY_TX_ID = -1;
+  static final long DUMMY_TX_ID = -1;
+  final BlockingDeque<Long> dispatchQueue = new LinkedBlockingDeque<>();
   private final Executor executor = Executors.newSingleThreadExecutor();
   private final Executor dispatchExecutor = Executors.newSingleThreadExecutor();
-  private final BlockingDeque<Long> dispatchQueue = new LinkedBlockingDeque<>();
-  private final DebeziumEngine<RecordChangeEvent<SourceRecord>> debeziumEngine;
   private final CdcRecordRepository cdcRecordRepository;
   private final CdcDispatcher cdcDispatcher;
   private final ConfigBuilder baseConfig;
   private final AtomicLong currentTxId = new AtomicLong(DUMMY_TX_ID);
   private final DebeziumWrapper debeziumWrapper;
+  private DebeziumEngine<RecordChangeEvent<SourceRecord>> debeziumEngine;
 
   public CdcScraper(
       CdcRecordRepository cdcRecordRepository,
@@ -77,11 +78,6 @@ public class CdcScraper {
     this.cdcDispatcher = cdcDispatcher;
     this.baseConfig = baseConfig;
     this.debeziumWrapper = debeziumWrapper;
-    this.debeziumEngine =
-        DebeziumEngine.create(ChangeEventFormat.of(Connect.class))
-            .using(config().asProperties())
-            .notifying(this::handleChangeEvent)
-            .build();
   }
 
   @SneakyThrows
@@ -103,26 +99,34 @@ public class CdcScraper {
     CdcRecord cdcRecord = buildCdcRecord(sourceRecord, operation, payload);
     log.debug("save cdc record: {} with operation: {}", payload, operation.name());
     cdcRecordRepository.save(cdcRecord);
-    long previousTxId = currentTxId.getAndSet(cdcRecord.getTxId());
-    boolean previousTxEnded = previousTxId != cdcRecord.getTxId();
+    mayNeedToDispatch(cdcRecord.getTxId());
+  }
+
+  void mayNeedToDispatch(Long txId) throws InterruptedException {
+    long previousTxId = currentTxId.getAndSet(txId);
+    boolean previousTxEnded = previousTxId != txId;
     if (previousTxEnded) {
       dispatchQueue.put(previousTxId);
     }
   }
 
   private Map<String, Object> extractPayload(Struct sourceRecordChangeValue, Operation operation) {
-    String record = operation == Operation.DELETE ? BEFORE : AFTER;
+    String record = getRecordName(operation);
     Struct struct = (Struct) sourceRecordChangeValue.get(record);
     return struct.schema().fields().stream()
         .map(Field::name)
-        .filter(fieldName -> struct.get(fieldName) != null)
+        .filter(fieldName -> Objects.nonNull(struct.get(fieldName)))
         .map(fieldName -> Pair.of(fieldName, struct.get(fieldName)))
         .collect(toMap(Pair::getKey, Pair::getValue));
   }
 
+  String getRecordName(Operation operation) {
+    return operation == Operation.DELETE ? BEFORE : AFTER;
+  }
+
   private CdcRecord buildCdcRecord(
       SourceRecord sourceRecord, Operation operation, Map<String, Object> payload) {
-    Long txId = (Long) sourceRecord.sourceOffset().get("txId");
+    Long txId = ((Number) sourceRecord.sourceOffset().get("txId")).longValue();
     String[] topic = sourceRecord.topic().split("\\.");
     String schemaName = topic[1];
     String tableName = topic[2];
@@ -166,6 +170,11 @@ public class CdcScraper {
   private void start() {
     // todo: the engine should be run with distributed lock
     // todo: exit application if debezium dead due to exception?
+    this.debeziumEngine =
+        DebeziumEngine.create(ChangeEventFormat.of(Connect.class))
+            .using(config().asProperties())
+            .notifying(this::handleChangeEvent)
+            .build();
     this.executor.execute(debeziumEngine);
     this.dispatchExecutor.execute(this::dispatching);
   }
@@ -191,7 +200,8 @@ public class CdcScraper {
     }
   }
 
-  private void doDispatch(Long txId) {
+  @VisibleForTesting
+  void doDispatch(Long txId) {
     if (Objects.isNull(txId)) {
       // timeout
       cdcDispatcher.dispatchAll();

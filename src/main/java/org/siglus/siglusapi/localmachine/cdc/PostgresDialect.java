@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.localmachine.cdc;
 
+import com.google.common.annotations.VisibleForTesting;
 import io.confluent.connect.jdbc.dialect.DatabaseDialect;
 import io.confluent.connect.jdbc.dialect.DatabaseDialectProvider.SubprotocolBasedProvider;
 import io.confluent.connect.jdbc.dialect.PostgreSqlDatabaseDialect;
@@ -29,6 +30,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.TimeZone;
 import org.apache.kafka.common.config.AbstractConfig;
 import org.apache.kafka.connect.data.Schema;
 import org.postgresql.jdbc.PgConnection;
@@ -44,6 +46,12 @@ public class PostgresDialect extends PostgreSqlDatabaseDialect {
     PgConnection conn = (PgConnection) super.getConnection();
     configureConnAsReplicaRole(conn);
     return conn;
+  }
+
+  @VisibleForTesting
+  @Override
+  protected TimeZone timeZone() {
+    return super.timeZone();
   }
 
   @Override
@@ -80,7 +88,7 @@ public class PostgresDialect extends PostgreSqlDatabaseDialect {
     return super.maybeBindLogical(statement, index, schema, value);
   }
 
-  private void configureConnAsReplicaRole(PgConnection conn) throws SQLException {
+  void configureConnAsReplicaRole(PgConnection conn) throws SQLException {
     conn.execSQLUpdate("SET session_replication_role = 'replica'");
     if (!conn.getAutoCommit()) {
       conn.commit();

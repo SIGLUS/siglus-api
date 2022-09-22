@@ -56,7 +56,7 @@ public class JdbcSinker {
   }
 
   public void sink(Collection<TableChangeEvent> events) {
-    Collection<SinkRecord> sinkRecords = getSinkRecords(events);
+    Collection<SinkRecord> sinkRecords = convertEvents(events);
     sinkByJdbcSinkTask(sinkRecords);
   }
 
@@ -70,11 +70,14 @@ public class JdbcSinker {
     }
   }
 
-  private Collection<SinkRecord> getSinkRecords(Collection<TableChangeEvent> events) {
-    return events.stream().map(this::getSinkRecords).flatMap(Collection::stream).collect(toList());
+  private Collection<SinkRecord> convertEvents(Collection<TableChangeEvent> events) {
+    return events.stream()
+        .map(it -> this.convertEvent(schemaReader, it))
+        .flatMap(Collection::stream)
+        .collect(toList());
   }
 
-  private List<SinkRecord> getSinkRecords(TableChangeEvent event) {
+  List<SinkRecord> convertEvent(DbSchemaReader schemaReader, TableChangeEvent event) {
     TableId tableId = new TableId("", event.getSchemaName(), event.getTableName());
     TableSchema tableSchema = schemaReader.schemaFor(tableId);
     List<String> keyColumns =
