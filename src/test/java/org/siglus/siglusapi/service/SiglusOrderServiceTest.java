@@ -1102,8 +1102,8 @@ public class SiglusOrderServiceTest {
     when(siglusFacilityRepository.findAllClientFacilityIds(supplyingFacilityId, programId)).thenReturn(
         clientFacilityIds);
 
-    when(siglusRequisitionRepository.findRequisitionsByOrderInfoAndSupplyingFacilityId(anyList(), any(), anyList(),
-        anyBoolean(), anyList(), any()))
+    when(siglusRequisitionRepository.findRequisitionsByOrderInfo(anyList(), any(), anyList(),
+        anyBoolean(), anyList()))
         .thenReturn(currentPeriodRequisitions)
         .thenReturn(buildPreviousPeriodRequisitions());
 
