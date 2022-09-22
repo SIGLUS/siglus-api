@@ -23,6 +23,7 @@ import static org.mockito.Mockito.when;
 
 import com.google.common.collect.ImmutableSet;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -249,6 +250,7 @@ public class CalculatedStockOnHandByLocationServiceTest {
             .destLocationCode(locationCode2)
             .quantity(30)
             .occurredDate(LocalDate.now())
+            .processedDate(LocalDateTime.now())
             .build();
     StockCardLocationMovementLineItem movement2 = StockCardLocationMovementLineItem.builder()
             .stockCardId(stockCardId)
@@ -256,6 +258,7 @@ public class CalculatedStockOnHandByLocationServiceTest {
             .destLocationCode(locationCode3)
             .quantity(10)
             .occurredDate(LocalDate.now())
+            .processedDate(LocalDateTime.now())
             .build();
 
     return Arrays.asList(movement2, movement1);
@@ -292,6 +295,7 @@ public class CalculatedStockOnHandByLocationServiceTest {
             .destLocationCode(locationCode)
             .quantity(40)
             .occurredDate(LocalDate.now().minusDays(4L))
+            .processedDate(LocalDateTime.now().minusDays(4L))
             .build();
 
     StockCardLocationMovementLineItem movement2 = StockCardLocationMovementLineItem.builder()
@@ -300,6 +304,7 @@ public class CalculatedStockOnHandByLocationServiceTest {
             .destLocationCode("")
             .quantity(20)
             .occurredDate(LocalDate.now().minusDays(2L))
+            .processedDate(LocalDateTime.now().minusDays(2L))
             .build();
     Map<UUID, List<StockCardLocationMovementLineItem>> stockCardIdToMovements = new HashMap<>();
     stockCardIdToMovements.put(stockCardId, Arrays.asList(movement2, movement1));
