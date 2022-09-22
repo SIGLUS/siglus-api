@@ -18,9 +18,12 @@ package org.siglus.siglusapi.service;
 import static java.util.stream.Collectors.toMap;
 import static org.openlmis.stockmanagement.i18n.MessageKeys.ERROR_EVENT_DEBIT_QUANTITY_EXCEED_SOH;
 import static org.siglus.siglusapi.constant.FieldConstants.SEPARATOR;
+import static org.siglus.siglusapi.constant.LocationConstants.VIRTUAL_LOCATION_CODE;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -333,8 +336,10 @@ public class CalculatedStocksOnHandByLocationService {
             stockCard.getId(), extension.getLocationCode(), lineItem.getOccurredDate());
     if (CollectionUtils.isNotEmpty(movements)) {
       List<StockCardLineItem> followingMovementLineItems = movements.stream()
+              .filter(movement -> !VIRTUAL_LOCATION_CODE.equals(movement.getSrcLocationCode())
+                      && !VIRTUAL_LOCATION_CODE.equals(movement.getDestLocationCode()))
               .filter(movement -> !movement.getSrcLocationCode().equals(movement.getDestLocationCode()))
-              .map(movement -> convertMovementToStockCardLineItem(movement, extension.getLocationCode()))
+              .map(movement -> convertMovementToStockCardLineItem(movement, extension.getLocationCode(), stockCard))
               .collect(Collectors.toList());
       followingLineItems.addAll(followingMovementLineItems);
       followingLineItems = followingLineItems.stream()
@@ -363,11 +368,14 @@ public class CalculatedStocksOnHandByLocationService {
   }
 
   private StockCardLineItem convertMovementToStockCardLineItem(StockCardLocationMovementLineItem movement,
-                                                               String locationCode) {
+                                                               String locationCode,
+                                                               StockCard stockCard) {
     StockCardLineItem lineItem = new StockCardLineItem();
+    lineItem.setStockCard(stockCard);
     lineItem.setQuantity(movement.getQuantity());
     lineItem.setOccurredDate(movement.getOccurredDate());
-    lineItem.setProcessedDate(movement.getOccurredDate().atStartOfDay(ZoneId.systemDefault()));
+    lineItem.setProcessedDate(ZonedDateTime.of(movement.getOccurredDate().atTime(LocalTime.MAX),
+            ZoneId.systemDefault()));
     if (locationCode.equals(movement.getSrcLocationCode())) {
       lineItem.setReason(StockCardLineItemReason.physicalDebit());
     } else {
