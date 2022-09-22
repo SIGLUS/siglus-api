@@ -48,7 +48,7 @@ public class OnlineWebController {
   @PostMapping("/events")
   public void syncEvents(@RequestBody @Validated SyncRequest request) {
     importer.importEvents(request.getEvents().stream()
-        .map(ExternalEventDto::getEvent)
+        .map(externalEventDtoMapper::map)
         .collect(Collectors.toList()));
   }
 
