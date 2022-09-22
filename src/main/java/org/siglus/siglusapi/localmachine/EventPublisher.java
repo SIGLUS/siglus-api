@@ -47,7 +47,6 @@ public class EventPublisher {
     Event event = eventBuilder.build();
     // the only receiver the local facility itself and online web
     event.setReceiverSynced(true);
-    event.setLocalReplayed(true);
     event.setReceiverId(event.getSenderId());
     doEmit(event);
   }
@@ -72,6 +71,9 @@ public class EventPublisher {
     if (isReplaying.get()) {
       throw new IllegalStateException("emit event when replaying is not allowed");
     }
+    // the event is created by me, so local replayed should be true, otherwise it will be replayed
+    // by me causing error
+    event.setLocalReplayed(true);
     eventStore.emit(event);
   }
 
