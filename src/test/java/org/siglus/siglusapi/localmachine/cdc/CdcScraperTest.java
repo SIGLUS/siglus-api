@@ -27,7 +27,12 @@ import com.google.common.collect.ImmutableMap;
 import io.debezium.data.Envelope.FieldName;
 import io.debezium.data.Envelope.Operation;
 import io.debezium.engine.RecordChangeEvent;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
 import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.data.SchemaBuilder;
 import org.apache.kafka.connect.data.Struct;
@@ -41,6 +46,7 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
+@SuppressWarnings({"PMD.AvoidDuplicateLiterals"})
 public class CdcScraperTest {
   @Mock private CdcRecordRepository cdcRecordRepository;
   @Mock private CdcDispatcher cdcDispatcher;
@@ -52,6 +58,28 @@ public class CdcScraperTest {
   public void setup() {
     given(configBuilder.sinkConfig()).willCallRealMethod();
     doNothing().when(debeziumWrapper).cleanSlot();
+  }
+
+  @Test
+  public void shouldKeepCriticalConfigNotChanged() {
+    // given
+    given(configBuilder.debeziumConfigBuilder())
+        .willReturn(
+            new ConfigBuilder(
+                    "jdbc:postgresql://localhost:5432/open_lmis?stringtype=unspecified",
+                    "username",
+                    "password")
+                .debeziumConfigBuilder());
+    List<String> criticalConfigKeys = Arrays.asList("name", "plugin.name", "connector.class", "snapshot.mode");
+    // when
+    Map<String, String> configSnap = cdcScraper.config().asMap().entrySet().stream()
+        .filter(it -> criticalConfigKeys.contains(it.getKey())).collect(
+            Collectors.toMap(Entry::getKey, Entry::getValue));
+    // then
+    assertThat(configSnap.get("name")).isEqualTo("local-scraper");
+    assertThat(configSnap.get("plugin.name")).isEqualTo("pgoutput");
+    assertThat(configSnap.get("connector.class")).isEqualTo("io.debezium.connector.postgresql.PostgresConnector");
+    assertThat(configSnap.get("snapshot.mode")).isEqualTo("never");
   }
 
   @Test

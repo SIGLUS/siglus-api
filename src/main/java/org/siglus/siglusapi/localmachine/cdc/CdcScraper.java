@@ -142,7 +142,7 @@ public class CdcScraper {
   }
 
   @SneakyThrows
-  private io.debezium.config.Configuration config() {
+  io.debezium.config.Configuration config() {
     // fixme: persist the offset in db
     File offsetStorageFile = new File(".data", "offsets.dat");
     FileUtils.forceMkdirParent(offsetStorageFile);
