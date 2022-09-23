@@ -83,7 +83,7 @@ public class PostgresDialect extends PostgreSqlDatabaseDialect {
       return true;
     }
     if (Optional.ofNullable(schema.name()).orElse("").contains("io.debezium.time")) {
-      throw new RuntimeException("can not bind value for schema " + schema.name());
+      throw new IllegalArgumentException("can not bind value for schema " + schema.name());
     }
     return super.maybeBindLogical(statement, index, schema, value);
   }

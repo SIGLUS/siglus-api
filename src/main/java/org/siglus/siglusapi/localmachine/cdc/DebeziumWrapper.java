@@ -15,12 +15,13 @@
 
 package org.siglus.siglusapi.localmachine.cdc;
 
-import javax.annotation.PostConstruct;
 import javax.sql.DataSource;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
 @Component
+@Slf4j
 public class DebeziumWrapper {
   private final JdbcTemplate jdbcTemplate;
 
@@ -28,13 +29,13 @@ public class DebeziumWrapper {
     this.jdbcTemplate = new JdbcTemplate(dataSource);
   }
 
-  @PostConstruct
-  private void cleanSlot() {
+  public void cleanSlot() {
     try {
       // fixme: remove later
       jdbcTemplate.execute("select pg_drop_replication_slot('debezium')");
     } catch (Throwable e) {
       // ignore error, coz the debezium may not exists when cleaning
+      log.info("clean slot may fail");
     }
   }
 }

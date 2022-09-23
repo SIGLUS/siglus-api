@@ -66,7 +66,7 @@ public class JdbcSinker {
       jdbcSinkTask.put(sinkRecords);
     } catch (Exception e) {
       logger.error("fail to sink records, err:{}", e.getMessage());
-      throw new RuntimeException(e);
+      throw new IllegalStateException(e);
     }
   }
 

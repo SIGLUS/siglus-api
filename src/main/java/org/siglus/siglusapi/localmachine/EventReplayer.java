@@ -19,20 +19,14 @@ import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.collections.CollectionUtils.isEmpty;
 
-import java.time.Duration;
-import java.time.Instant;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.javacrumbs.shedlock.core.LockConfiguration;
-import net.javacrumbs.shedlock.core.LockProvider;
-import net.javacrumbs.shedlock.core.SimpleLock;
 import org.apache.commons.collections4.CollectionUtils;
 import org.siglus.siglusapi.localmachine.ShedLockFactory.AutoClosableLock;
 import org.siglus.siglusapi.localmachine.eventstore.EventStore;
@@ -46,7 +40,6 @@ public class EventReplayer {
   private static final String DEFAULT_REPLAY_LOCK = "lock.replay.default";
   private final EventPublisher eventPublisher;
   private final EventStore eventStore;
-  private final LockProvider lockProvider;
   private final ShedLockFactory lockFactory;
 
   public void replay(List<Event> events) {
@@ -78,20 +71,24 @@ public class EventReplayer {
     eventGroups.forEach((groupId, value) -> this.playGroupEvents(groupId));
   }
 
-  private void playGroupEvents(String groupId) {
+  protected void playGroupEvents(String groupId) {
     try (AutoClosableLock lock = lockFactory.lock(groupId)) {
       if (!lock.isPresent()) {
         log.warn("fail to get lock, cancel this round of replay");
         return;
       }
-      List<Event> events = eventStore.loadSortedGroupEvents(groupId);
-      for (int i = 0; i < events.size(); i++) {
-        Event currentEvent = events.get(i);
-        if (i != currentEvent.getGroupSequenceNumber()) {
-          return;
-        }
-        eventPublisher.publishEvent(currentEvent);
+      doPlayGroupEvents(groupId);
+    }
+  }
+
+  protected void doPlayGroupEvents(String groupId) {
+    List<Event> events = eventStore.loadSortedGroupEvents(groupId);
+    for (int i = 0; i < events.size(); i++) {
+      Event currentEvent = events.get(i);
+      if (i != currentEvent.getGroupSequenceNumber()) {
+        return;
       }
+      eventPublisher.publishEvent(currentEvent);
     }
   }
 
@@ -109,15 +106,5 @@ public class EventReplayer {
     return events.stream()
         .sorted(Comparator.comparingLong(Event::getLocalSequenceNumber))
         .collect(toList());
-  }
-
-  private Optional<SimpleLock> getLock(String groupId) {
-    // the lock will be extended after 1/2 minutes until task done.
-    Duration lockAtMost10Minutes = Duration.ofMinutes(1);
-    Duration lockAtLeast100MilliSeconds = Duration.ofMillis(100);
-    LockConfiguration lockConfiguration =
-        new LockConfiguration(
-            Instant.now(), groupId, lockAtMost10Minutes, lockAtLeast100MilliSeconds);
-    return lockProvider.lock(lockConfiguration);
   }
 }

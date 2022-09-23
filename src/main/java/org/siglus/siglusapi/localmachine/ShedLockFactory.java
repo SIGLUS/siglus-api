@@ -52,7 +52,9 @@ public class ShedLockFactory {
     }
 
     public void ifPresent(Runnable runnable) {
-      runnable.run();
+      if (this.isPresent()) {
+        runnable.run();
+      }
     }
 
     @Override

@@ -170,6 +170,7 @@ public class CdcScraper {
   private void start() {
     // todo: the engine should be run with distributed lock
     // todo: exit application if debezium dead due to exception?
+    this.debeziumWrapper.cleanSlot();
     this.debeziumEngine =
         DebeziumEngine.create(ChangeEventFormat.of(Connect.class))
             .using(config().asProperties())
