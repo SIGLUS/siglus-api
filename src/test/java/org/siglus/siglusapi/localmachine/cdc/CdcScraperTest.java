@@ -18,6 +18,7 @@ package org.siglus.siglusapi.localmachine.cdc;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -31,6 +32,7 @@ import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.data.SchemaBuilder;
 import org.apache.kafka.connect.data.Struct;
 import org.apache.kafka.connect.source.SourceRecord;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -45,6 +47,12 @@ public class CdcScraperTest {
   @Mock private ConfigBuilder configBuilder;
   @Mock private DebeziumWrapper debeziumWrapper;
   @InjectMocks private CdcScraper cdcScraper;
+
+  @Before
+  public void setup() {
+    given(configBuilder.sinkConfig()).willCallRealMethod();
+    doNothing().when(debeziumWrapper).cleanSlot();
+  }
 
   @Test
   public void shouldReturnBeforeWhenGetRecordNameGivenOperationIsDelete() {
