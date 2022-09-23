@@ -59,7 +59,6 @@ import lombok.Data;
             + "    when scli.sourceid is null\n"
             + "    and scli.destinationid is null\n"
             + "    and scli.reasonid is null then 'INVENTORY'\n"
-            + "    when pili.previousstockonhandwhensubmitted is null then 'INITIAL'\n"
             + "    when scli.sourceid is not null then 'RECEIVE'\n"
             + "    when scli.destinationid is not null then 'ISSUE'\n"
             + "    else sclir.reasoncategory\n"
