@@ -33,7 +33,6 @@ import org.siglus.siglusapi.dto.TracerDrugExportDto;
 import org.siglus.siglusapi.interceptor.OperationGuardAspect.Guarded;
 import org.siglus.siglusapi.service.task.report.TracerDrugReportService;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -53,25 +52,22 @@ public class TracerDrugReportController {
 
   @PostMapping("/refresh")
   @Guarded
-  public ResponseEntity<String> refresh(String startDate, String endDate) {
+  public void refresh(String startDate, String endDate) {
     tracerDrugReportService.refreshTracerDrugPersistentData(startDate, endDate);
-    return ResponseEntity.ok("refresh start!");
   }
 
   @PostMapping("/initialize")
   @Guarded
-  public ResponseEntity<String> initialize() {
+  public void initialize() {
     tracerDrugReportService.initializeTracerDrugPersistentData();
-    return ResponseEntity.ok("initialize start!");
   }
 
   @PostMapping("/refreshByFacility")
   @Guarded
-  public ResponseEntity<String> refreshByFacility(@RequestBody List<UUID> facilityIds,
+  public void refreshByFacility(@RequestBody List<UUID> facilityIds,
       @RequestParam String startDate,
       @RequestParam String endDate) {
     tracerDrugReportService.refreshTracerDrugPersistentDataByFacility(facilityIds, startDate, endDate);
-    return ResponseEntity.ok("refresh by facility start");
   }
 
   @GetMapping("/exportFilter")
