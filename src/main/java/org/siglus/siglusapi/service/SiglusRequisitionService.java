@@ -774,7 +774,7 @@ public class SiglusRequisitionService {
       lineItemList.add(requisition.constructLineItem(requisitionTemplate, stockOnHand,
           beginningBalances, approvedProductDto, numberOfPreviousPeriodsToAverage,
           idealStockAmounts, stockCardRangeSummaryDtos, stockCardRangeSummariesToAverage,
-          periods, pod, approvedProducts));
+          periods, pod, program.getCode(), facility.getType().getCode()));
     }
     return lineItemList;
   }
@@ -847,8 +847,7 @@ public class SiglusRequisitionService {
             .getInstance(requisitionTemplate, columnName)
             .forProgram(programId)
             .forFacility(facilityId)
-            .forProducts(new ApproveProductsAggregator(groupApprovedProduct.get(programId),
-                programId))
+            .forProducts(new ApproveProductsAggregator(groupApprovedProduct.get(programId), programId))
             .asOfDate(date)
             .build()
             .get())
