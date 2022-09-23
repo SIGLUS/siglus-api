@@ -324,7 +324,7 @@ traits:
           description: submit the sub draft for physical inventory
           body:
             application/json:
-              schema:
+              schema: physicalInventory
           queryParameters:
             isByLocation:
               required: true
