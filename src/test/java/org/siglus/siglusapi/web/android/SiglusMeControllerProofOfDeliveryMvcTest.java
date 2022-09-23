@@ -72,7 +72,6 @@ import org.siglus.siglusapi.dto.SiglusOrderDto;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.dto.android.Lot;
 import org.siglus.siglusapi.dto.android.db.ProductLot;
-import org.siglus.siglusapi.localmachine.event.requisition.andriod.AndroidRequisitionSyncedEmitter;
 import org.siglus.siglusapi.repository.LotNativeRepository;
 import org.siglus.siglusapi.repository.ProofsOfDeliveryExtensionRepository;
 import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
@@ -130,8 +129,6 @@ public class SiglusMeControllerProofOfDeliveryMvcTest extends FileBasedTest {
   private MeService service;
 
   @Mock
-  private AndroidRequisitionSyncedEmitter androidRequisitionSyncedEmitter;
-  @Mock
   private SiglusProofOfDeliveryRepository podRepo;
   @Mock
   private SiglusAuthenticationHelper authHelper;
@@ -181,7 +178,7 @@ public class SiglusMeControllerProofOfDeliveryMvcTest extends FileBasedTest {
     objectMapper.configure(SerializationFeature.WRITE_DATE_TIMESTAMPS_AS_NANOSECONDS, false);
     objectMapper.registerModule(new JavaTimeModule());
     jackson2HttpMessageConverter.setObjectMapper(objectMapper);
-    SiglusMeController controller = new SiglusMeController(service, androidRequisitionSyncedEmitter);
+    SiglusMeController controller = new SiglusMeController(service);
     this.mockMvc = MockMvcBuilders
         .standaloneSetup(controller)
         .setMessageConverters(jackson2HttpMessageConverter)
