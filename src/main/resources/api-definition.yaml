@@ -318,6 +318,35 @@ traits:
             body:
               application/json:
                 schema: localizedMessage
+      /subDraftSubmit:
+        post:
+          is: [ secured ]
+          description: submit the sub draft for physical inventory
+          body:
+            application/json:
+              schema:
+          queryParameters:
+            isByLocation:
+              required: true
+              description: is inventory by Location or not
+              repeat: false
+              type: boolean
+          responses:
+            201:
+              description: sub draft submitted.
+              body:
+                application/json:
+                  schema: physicalInventory
+            400:
+              body:
+                application/json:
+                  schema: localizedMessage
+              description: An error occured during request processing.
+            403:
+              description: User does not have permission to submit sub draft physical inventory.
+              body:
+                application/json:
+                  schema: localizedMessage
       /subDraft:
         get:
           is: [ secured ]
