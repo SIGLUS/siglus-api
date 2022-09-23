@@ -83,6 +83,7 @@ import org.openlmis.requisition.dto.BasicProcessingPeriodDto;
 import org.openlmis.requisition.dto.BasicRequisitionDto;
 import org.openlmis.requisition.dto.BasicRequisitionTemplateDto;
 import org.openlmis.requisition.dto.FacilityDto;
+import org.openlmis.requisition.dto.FacilityTypeDto;
 import org.openlmis.requisition.dto.IdealStockAmountDto;
 import org.openlmis.requisition.dto.MetadataDto;
 import org.openlmis.requisition.dto.MinimalFacilityDto;
@@ -617,11 +618,9 @@ public class SiglusRequisitionServiceTest {
     when(
         siglusApprovedReferenceDataService.getApprovedProducts(any(), any(), anyCollectionOf(UUID.class), anyBoolean()))
         .thenReturn(getApprovedProductList());
-    when(requisitionService.validateCanApproveRequisition(any(), any()))
-        .thenReturn(new ValidationResult());
+    when(requisitionService.validateCanApproveRequisition(any(), any())).thenReturn(new ValidationResult());
     when(siglusOrderableService.getOrderableExpirationDate(any(), any()))
-        .thenReturn(Lists.newArrayList(new OrderableExpirationDateDto(orderableId2,
-            LocalDate.of(2022, 1, 1))));
+        .thenReturn(Lists.newArrayList(new OrderableExpirationDateDto(orderableId2, LocalDate.of(2022, 1, 1))));
     MetadataDto meta = createMetadataDto();
     OrderableDto orderable = createOrderableDto(meta);
     ApprovedProductDto productDto = createApprovedProductDto(orderable, meta);
@@ -1725,7 +1724,7 @@ public class SiglusRequisitionServiceTest {
     when(requisition.getPreviousRequisitions()).thenReturn(previousRequisions);
     RequisitionLineItem lineItemCreated = new RequisitionLineItemDataBuilder().build();
     when(requisition.constructLineItem(any(), anyInt(), anyInt(), any(), anyInt(), any(),
-        any(), any(), any(), any(), any())).thenReturn(lineItemCreated);
+        any(), any(), any(), any(), any(), any())).thenReturn(lineItemCreated);
 
     return requisition;
   }
@@ -1849,12 +1848,14 @@ public class SiglusRequisitionServiceTest {
   private FacilityDto createFacility() {
     FacilityDto facilityDto = new FacilityDto();
     facilityDto.setId(facilityId);
+    facilityDto.setType(new FacilityTypeDto());
     return facilityDto;
   }
 
   private FacilityDto createUserFacility() {
     FacilityDto facilityDto = new FacilityDto();
     facilityDto.setId(userFacilityId);
+    facilityDto.setType(new FacilityTypeDto());
     return facilityDto;
   }
 
