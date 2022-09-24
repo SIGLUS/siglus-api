@@ -115,9 +115,7 @@ public class SiglusPhysicalInventorySubDraftService {
 
 
   private void resetInitialLineItems(UUID physicalInventoryId, UUID subDraftId, Integer number) {
-    List<PhysicalInventoryLineItemsExtension> extensionsForSubDraft = lineItemsExtensionRepository
-            .findByPhysicalInventoryIdAndSubDraftId(physicalInventoryId, subDraftId);
-    lineItemsExtensionRepository.delete(extensionsForSubDraft);
+    lineItemsExtensionRepository.deleteBySubDraftId(subDraftId);
     PhysicalInventoryDto physicalInventoryDto = siglusPhysicalInventoryService.getFullPhysicalInventoryDto(
         physicalInventoryId);
     List<PhysicalInventoryLineItemDto> allInitialInventoryLineItems = siglusPhysicalInventoryService
