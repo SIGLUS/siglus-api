@@ -51,13 +51,13 @@ public class CdcScraperTest {
   @Mock private CdcRecordRepository cdcRecordRepository;
   @Mock private CdcDispatcher cdcDispatcher;
   @Mock private ConfigBuilder configBuilder;
-  @Mock private DebeziumWrapper debeziumWrapper;
+  @Mock private PublicationPreparer publicationPreparer;
   @InjectMocks private CdcScraper cdcScraper;
 
   @Before
   public void setup() {
     given(configBuilder.sinkConfig()).willCallRealMethod();
-    doNothing().when(debeziumWrapper).cleanSlot();
+    doNothing().when(publicationPreparer).prepare(any());
   }
 
   @Test

@@ -22,6 +22,7 @@ import static io.debezium.data.Envelope.Operation;
 import static java.util.stream.Collectors.toMap;
 
 import com.google.common.annotations.VisibleForTesting;
+import io.debezium.config.Configuration;
 import io.debezium.embedded.Connect;
 import io.debezium.engine.DebeziumEngine;
 import io.debezium.engine.RecordChangeEvent;
@@ -66,24 +67,23 @@ public class CdcScraper {
   private final CdcDispatcher cdcDispatcher;
   private final ConfigBuilder baseConfig;
   private final AtomicLong currentTxId = new AtomicLong(DUMMY_TX_ID);
-  private final DebeziumWrapper debeziumWrapper;
+  private final PublicationPreparer publicationPreparer;
   private DebeziumEngine<RecordChangeEvent<SourceRecord>> debeziumEngine;
 
   public CdcScraper(
       CdcRecordRepository cdcRecordRepository,
       CdcDispatcher cdcDispatcher,
       ConfigBuilder baseConfig,
-      DebeziumWrapper debeziumWrapper) {
+      PublicationPreparer publicationPreparer) {
     this.cdcRecordRepository = cdcRecordRepository;
     this.cdcDispatcher = cdcDispatcher;
     this.baseConfig = baseConfig;
-    this.debeziumWrapper = debeziumWrapper;
+    this.publicationPreparer = publicationPreparer;
   }
 
   @SneakyThrows
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   public void handleChangeEvent(RecordChangeEvent<SourceRecord> sourceRecordRecordChangeEvent) {
-    // todo: listen to batch instead
     SourceRecord sourceRecord = sourceRecordRecordChangeEvent.record();
     log.debug("receive record:{}", sourceRecord);
     Struct sourceRecordChangeValue = (Struct) sourceRecord.value();
@@ -170,10 +170,11 @@ public class CdcScraper {
   private void start() {
     // todo: the engine should be run with distributed lock
     // todo: exit application if debezium dead due to exception?
-    this.debeziumWrapper.cleanSlot();
+    Configuration config = config();
+    this.publicationPreparer.prepare(config);
     this.debeziumEngine =
         DebeziumEngine.create(ChangeEventFormat.of(Connect.class))
-            .using(config().asProperties())
+            .using(config.asProperties())
             .notifying(this::handleChangeEvent)
             .build();
     this.executor.execute(debeziumEngine);
@@ -194,6 +195,7 @@ public class CdcScraper {
         doDispatch(txId);
       } catch (InterruptedException e) {
         log.warn("dispatching task interrupted, exit");
+        Thread.currentThread().interrupt();
         return;
       } catch (Throwable e) {
         log.error("got error when dispatching, err:", e);
