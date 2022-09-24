@@ -87,8 +87,8 @@ public class PublicationPreparer {
         rs -> {
           Set<TableId> tableIds = new HashSet<>();
           while (rs.next()) {
-            String schema = rs.getString(0);
-            String table = rs.getString(1);
+            String schema = rs.getString(1);
+            String table = rs.getString(2);
             tableIds.add(new TableId("", schema, table));
           }
           return tableIds;
