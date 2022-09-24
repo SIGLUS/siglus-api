@@ -37,8 +37,6 @@ import org.apache.commons.collections.CollectionUtils;
 import org.openlmis.referencedata.dto.OrderableDto;
 import org.openlmis.stockmanagement.dto.PhysicalInventoryDto;
 import org.openlmis.stockmanagement.dto.PhysicalInventoryLineItemDto;
-import org.openlmis.stockmanagement.web.stockcardsummariesv2.CanFulfillForMeEntryDto;
-import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2Dto;
 import org.siglus.siglusapi.domain.PhysicalInventoryEmptyLocationLineItem;
 import org.siglus.siglusapi.domain.PhysicalInventoryLineItemsExtension;
 import org.siglus.siglusapi.domain.PhysicalInventorySubDraft;
@@ -51,6 +49,7 @@ import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.repository.PhysicalInventoryEmptyLocationLineItemRepository;
 import org.siglus.siglusapi.repository.PhysicalInventoryLineItemsExtensionRepository;
 import org.siglus.siglusapi.repository.PhysicalInventorySubDraftRepository;
+import org.siglus.siglusapi.util.CustomListSortHelper;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
@@ -115,13 +114,22 @@ public class SiglusPhysicalInventorySubDraftService {
   }
 
 
-  private void resetInitialLineItems(UUID physicalInventoryId, UUID subDraftId) {
-    lineItemsExtensionRepository.deleteByPhysicalInventoryIdIn(Collections.singleton(physicalInventoryId));
+  private void resetInitialLineItems(UUID physicalInventoryId, UUID subDraftId, Integer number) {
+    List<PhysicalInventoryLineItemsExtension> extensionsForSubDraft = lineItemsExtensionRepository
+            .findByPhysicalInventoryIdAndSubDraftId(physicalInventoryId, subDraftId);
+    lineItemsExtensionRepository.delete(extensionsForSubDraft);
     PhysicalInventoryDto physicalInventoryDto = siglusPhysicalInventoryService.getFullPhysicalInventoryDto(
         physicalInventoryId);
-    List<PhysicalInventoryLineItemDto> originalInitialInventoryLineItems = siglusPhysicalInventoryService
+    List<PhysicalInventoryLineItemDto> allInitialInventoryLineItems = siglusPhysicalInventoryService
         .buildInitialInventoryLineItemDtos(Collections.singleton(physicalInventoryDto.getProgramId()),
             physicalInventoryDto.getFacilityId());
+
+    Integer splitNum = physicalInventorySubDraftRepository.findSplitNumberByPhysicalInventoryId(physicalInventoryId);
+    List<List<PhysicalInventoryLineItemDto>> lists = siglusPhysicalInventoryService
+            .groupByProductCode(allInitialInventoryLineItems);
+    List<List<List<PhysicalInventoryLineItemDto>>> groupList = CustomListSortHelper.averageAssign(lists, splitNum);
+    List<PhysicalInventoryLineItemDto> originalInitialInventoryLineItems = groupList.get(number - 1)
+            .stream().flatMap(list -> list.stream()).collect(Collectors.toList());
     if (CollectionUtils.isNotEmpty(originalInitialInventoryLineItems)) {
       physicalInventoryDto.setLineItems(originalInitialInventoryLineItems);
       List<PhysicalInventorySubDraftLineItemsExtensionDto> newLineItemsExtension = convertToLineItemsExtension(
@@ -141,17 +149,14 @@ public class SiglusPhysicalInventorySubDraftService {
       boolean initialPhysicalInventory) {
     Map<UUID, UUID> physicalInventoryIdToSubDraftIdMap = subDrafts.stream()
         .collect(Collectors.toMap(PhysicalInventorySubDraft::getPhysicalInventoryId, PhysicalInventorySubDraft::getId));
-    List<StockCardSummaryV2Dto> stockSummaries = siglusStockCardSummariesService.findAllProgramStockSummaries();
-    Set<CanFulfillForMeEntryDto> canFulfillForMeEntryDtos = new HashSet<>();
-    for (StockCardSummaryV2Dto stockCardSummaryV2Dto : stockSummaries) {
-      if (CollectionUtils.isNotEmpty(stockCardSummaryV2Dto.getCanFulfillForMe())) {
-        canFulfillForMeEntryDtos.addAll(stockCardSummaryV2Dto.getCanFulfillForMe());
-      }
-    }
+    Map<UUID, Integer> subDraftIdToNumber = subDrafts.stream()
+            .collect(Collectors.toMap(PhysicalInventorySubDraft::getId, PhysicalInventorySubDraft::getNum));
     for (final Map.Entry<UUID, UUID> physicalInventoryIdToSubDraftId : physicalInventoryIdToSubDraftIdMap.entrySet()) {
       UUID physicalInventoryId = physicalInventoryIdToSubDraftId.getKey();
       if (initialPhysicalInventory) {
-        resetInitialLineItems(physicalInventoryId, physicalInventoryIdToSubDraftId.getValue());
+        resetInitialLineItems(physicalInventoryId,
+                physicalInventoryIdToSubDraftId.getValue(),
+                subDraftIdToNumber.get(physicalInventoryIdToSubDraftId.getValue()));
         continue;
       }
       List<PhysicalInventoryLineItemsExtension> oldLineItemsExtension
