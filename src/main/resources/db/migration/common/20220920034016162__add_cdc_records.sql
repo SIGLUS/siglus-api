@@ -4,7 +4,7 @@
 
 CREATE TABLE IF NOT EXISTS localmachine.cdc_records
 (
-    id UUID PRIMARY KEY,
+    lsn BIGINT PRIMARY KEY,
     txid BIGINT NOT NULL,
     tablename varchar(255) NOT NULL,
     schemaname varchar(255) NOT NULL,

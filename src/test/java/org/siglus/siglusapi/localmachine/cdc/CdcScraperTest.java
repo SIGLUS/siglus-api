@@ -170,7 +170,7 @@ public class CdcScraperTest {
     return () ->
         new SourceRecord(
             Collections.emptyMap(),
-            ImmutableMap.of("txId", 1L),
+            ImmutableMap.of("txId", 1L, "lsn", 2L),
             "server.schema.table",
             0,
             valueSchema,

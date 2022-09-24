@@ -35,7 +35,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -126,12 +125,13 @@ public class CdcScraper {
 
   private CdcRecord buildCdcRecord(
       SourceRecord sourceRecord, Operation operation, Map<String, Object> payload) {
+    Long lsn = ((Number) sourceRecord.sourceOffset().get("lsn")).longValue();
     Long txId = ((Number) sourceRecord.sourceOffset().get("txId")).longValue();
     String[] topic = sourceRecord.topic().split("\\.");
     String schemaName = topic[1];
     String tableName = topic[2];
     return CdcRecord.builder()
-        .id(UUID.randomUUID())
+        .id(lsn)
         .txId(txId)
         .payload(payload)
         .operationCode(operation.code())

@@ -24,7 +24,6 @@ import static org.mockito.Mockito.verify;
 
 import java.math.BigInteger;
 import java.util.Collections;
-import java.util.UUID;
 import org.junit.Test;
 import org.springframework.data.domain.Example;
 
@@ -35,7 +34,7 @@ public class CdcDispatcherTest {
     CdcRecordRepository cdcRecordRepository = mock(CdcRecordRepository.class);
     given(cdcRecordRepository.allTxIds()).willReturn(Collections.singletonList(BigInteger.TEN));
     CdcRecord cdcRecord =
-        CdcRecord.builder().id(UUID.randomUUID()).schema("schema").table("table1").build();
+        CdcRecord.builder().id(1L).schema("schema").table("table1").build();
     given(cdcRecordRepository.findAll(any(Example.class)))
         .willReturn(Collections.singletonList(cdcRecord));
     CdcListener cdcListener = mock(CdcListener.class);

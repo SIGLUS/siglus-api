@@ -19,7 +19,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.ZonedDateTime;
 import java.util.Map;
-import java.util.UUID;
 import javax.persistence.AttributeConverter;
 import javax.persistence.Column;
 import javax.persistence.Convert;
@@ -39,7 +38,9 @@ import lombok.SneakyThrows;
 @NoArgsConstructor
 @Table(name = "cdc_records", schema = "localmachine")
 public class CdcRecord {
-  @Id private UUID id;
+  @Id
+  @Column(name = "lsn")
+  private Long id;
 
   @Column(name = "tablename")
   private String table;
