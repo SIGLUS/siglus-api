@@ -104,7 +104,7 @@ public class OrderFulfillmentSyncedReplayerTest extends FileBasedTest {
     String jsonOrder = readFromFile("order.json");
     Order order = objectMapper.readValue(jsonOrder, Order.class);
     when(ordersRepository.saveAndFlush(any())).thenReturn(order);
-    when( ordersRepository.findByOrderCode(any())).thenReturn(order);
+    when(ordersRepository.findByOrderCode(any())).thenReturn(order);
     OrderDto orderDto = objectMapper.readValue(readFromFile("orderDto.json"), OrderDto.class);
     when(orderDtoBuilder.build(any())).thenReturn(orderDto);
     when(ordersRepository.findOne(any(UUID.class))).thenReturn(order);
@@ -117,14 +117,12 @@ public class OrderFulfillmentSyncedReplayerTest extends FileBasedTest {
   @Test
   public void shouldDoReplaySuccessWhenWithConvertToOrder() throws IOException {
     // given
-    ObjectMapper objectMapper = PayloadSerializer.LOCALMACHINE_EVENT_OBJECT_MAPPER;
-    String jsonRequest = readFromFile("request1.json");
-    OrderFulfillmentSyncedEvent event = objectMapper.readValue(jsonRequest, OrderFulfillmentSyncedEvent.class);
 
     RequisitionExtension requisitionExtension = new RequisitionExtension();
     requisitionExtension.setRequisitionId(requisitionId);
     when(requisitionExtensionRepository.findByRequisitionNumber(any())).thenReturn(requisitionExtension);
-    when(orderExternalRepository.saveAndFlush(any())).thenReturn(OrderExternal.builder().requisitionId(requisitionId).build());
+    when(orderExternalRepository.saveAndFlush(any())).thenReturn(
+        OrderExternal.builder().requisitionId(requisitionId).build());
     Requisition requisition = RequisitionBuilder.newRequisition(facilityId, programId, true);
     requisition.setId(requisitionId);
     requisition.setTemplate(new RequisitionTemplate());
@@ -132,6 +130,9 @@ public class OrderFulfillmentSyncedReplayerTest extends FileBasedTest {
     when(requisitionRepository.findOne(requisitionId)).thenReturn(requisition);
     final OrderDto orderDto = new OrderDto();
     orderDto.setId(orderableId);
+    ObjectMapper objectMapper = PayloadSerializer.LOCALMACHINE_EVENT_OBJECT_MAPPER;
+    String jsonRequest = readFromFile("request1.json");
+    OrderFulfillmentSyncedEvent event = objectMapper.readValue(jsonRequest, OrderFulfillmentSyncedEvent.class);
     // when
     orderFulfillmentSyncedReplayer.replay(event);
   }
@@ -139,14 +140,12 @@ public class OrderFulfillmentSyncedReplayerTest extends FileBasedTest {
   @Test
   public void shouldDoReplaySuccessWhenNotConvertToOrder() throws IOException {
     // given
-    ObjectMapper objectMapper = PayloadSerializer.LOCALMACHINE_EVENT_OBJECT_MAPPER;
-    String jsonRequest = readFromFile("request2.json");
-    OrderFulfillmentSyncedEvent event = objectMapper.readValue(jsonRequest, OrderFulfillmentSyncedEvent.class);
 
     RequisitionExtension requisitionExtension = new RequisitionExtension();
     requisitionExtension.setRequisitionId(requisitionId);
     when(requisitionExtensionRepository.findByRequisitionNumber(any())).thenReturn(requisitionExtension);
-    when(orderExternalRepository.saveAndFlush(any())).thenReturn(OrderExternal.builder().requisitionId(requisitionId).build());
+    when(orderExternalRepository.saveAndFlush(any())).thenReturn(
+        OrderExternal.builder().requisitionId(requisitionId).build());
     Requisition requisition = RequisitionBuilder.newRequisition(facilityId, programId, true);
     requisition.setId(requisitionId);
     requisition.setTemplate(new RequisitionTemplate());
@@ -154,6 +153,9 @@ public class OrderFulfillmentSyncedReplayerTest extends FileBasedTest {
     when(requisitionRepository.findOne(requisitionId)).thenReturn(requisition);
     final OrderDto orderDto = new OrderDto();
     orderDto.setId(orderableId);
+    ObjectMapper objectMapper = PayloadSerializer.LOCALMACHINE_EVENT_OBJECT_MAPPER;
+    String jsonRequest = readFromFile("request2.json");
+    OrderFulfillmentSyncedEvent event = objectMapper.readValue(jsonRequest, OrderFulfillmentSyncedEvent.class);
     // when
     orderFulfillmentSyncedReplayer.replay(event);
   }

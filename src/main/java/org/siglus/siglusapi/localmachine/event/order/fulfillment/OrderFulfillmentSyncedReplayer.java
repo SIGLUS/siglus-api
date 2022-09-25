@@ -100,9 +100,11 @@ public class OrderFulfillmentSyncedReplayer {
   @EventListener(value = {OrderFulfillmentSyncedEvent.class})
   public void replay(OrderFulfillmentSyncedEvent event) {
     try {
-      log.info("start replay order code = " + event.getShipmentExtensionRequest().getShipment().getOrder().getOrderCode());
+      log.info("start replay order code = "
+          + event.getShipmentExtensionRequest().getShipment().getOrder().getOrderCode());
       doReplay(event);
-      log.info("end replay order code = " + event.getShipmentExtensionRequest().getShipment().getOrder().getOrderCode());
+      log.info("end replay order code = "
+          + event.getShipmentExtensionRequest().getShipment().getOrder().getOrderCode());
     } catch (Exception e) {
       log.error("fail to replay fulfill order event, msg = " + e.getMessage(), e);
       log.error(e.getMessage(), e);
@@ -118,7 +120,8 @@ public class OrderFulfillmentSyncedReplayer {
           requisitionExtensionRepository.findByRequisitionNumber(
               event.getConvertToOrderRequest().getRequisitionNumber());
       // reset requisition id
-      event.getShipmentExtensionRequest().getShipment().getOrder().setExternalId(requisitionExtension.getRequisitionId());
+      event.getShipmentExtensionRequest()
+          .getShipment().getOrder().setExternalId(requisitionExtension.getRequisitionId());
       Requisition requisition = requisitionRepository.findOne(requisitionExtension.getRequisitionId());
 
       finalApprove(requisition, requisitionExtension, event);
@@ -226,7 +229,7 @@ public class OrderFulfillmentSyncedReplayer {
       saveShipmentLineItemsExtensionWithLocation(event, shipment);
     }
     savePodExtension(shipment.getId(), event.getShipmentExtensionRequest());
-//   todo notificationService.postConfirmShipment(shipmentDto);
+    //   todo notificationService.postConfirmShipment(shipmentDto);
   }
 
   public void savePodExtension(UUID shipmentId, ShipmentExtensionRequest shipmentExtensionRequest) {
