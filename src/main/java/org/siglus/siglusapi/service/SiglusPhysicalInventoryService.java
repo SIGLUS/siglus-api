@@ -503,13 +503,9 @@ public class SiglusPhysicalInventoryService {
 
   @VisibleForTesting
   List<UUID> getPhysicalInventoryIds(PhysicalInventoryDto physicalInventory, UUID facilityId) {
-    List<UUID> updatePhysicalInventoryIds;
-    if (physicalInventory.getProgramId().equals(ALL_PRODUCTS_PROGRAM_ID)) {
-      updatePhysicalInventoryIds = getSupportPhysicalInventoryIds(facilityId);
-    } else {
-      updatePhysicalInventoryIds = Collections.singletonList(physicalInventory.getId());
-    }
-    return updatePhysicalInventoryIds;
+    return physicalInventory.getProgramId().equals(ALL_PRODUCTS_PROGRAM_ID)
+        ? getSupportPhysicalInventoryIds(facilityId)
+        : Collections.singletonList(physicalInventory.getId());
   }
 
   @VisibleForTesting

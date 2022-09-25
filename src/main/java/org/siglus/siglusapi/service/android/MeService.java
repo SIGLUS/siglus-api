@@ -169,7 +169,6 @@ public class MeService {
   private final AndroidHelper androidHelper;
   private final SiglusReportTypeRepository reportTypeRepository;
   private final SiglusRequisitionRepository requisitionRepository;
-  private final RequisitionCreateService requisitionCreateService;
   private final RequisitionSearchService requisitionSearchService;
   private final SiglusProofOfDeliveryRepository podRepo;
   private final SiglusOrderService orderService;
@@ -188,6 +187,7 @@ public class MeService {
   private final EntityManager entityManager;
   private final ResyncInfoRepository resyncInfoRepository;
   private final ProofsOfDeliveryExtensionRepository proofsOfDeliveryExtensionRepository;
+  private final MeCreateRequisitionService meCreateRequisitionService;
 
   public FacilityResponse getCurrentFacility() {
     FacilityDto facilityDto = getCurrentFacilityInfo();
@@ -351,7 +351,7 @@ public class MeService {
   @SuppressWarnings("PMD.PreserveStackTrace")
   public UUID createRequisition(RequisitionCreateRequest request) {
     try {
-      return requisitionCreateService.createRequisition(request);
+      return meCreateRequisitionService.createRequisition(request);
     } catch (Exception e) {
       try {
         backupRequisitionRequest(request, e);

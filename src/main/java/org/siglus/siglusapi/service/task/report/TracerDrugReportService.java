@@ -97,7 +97,6 @@ public class TracerDrugReportService {
   }
 
   @Transactional
-  @SneakyThrows
   @Async
   public void refreshTracerDrugPersistentDataByFacility(List<UUID> facilityIds, String startDate, String endDate) {
     log.info("tracer drug persistentData refresh. start = " + System.currentTimeMillis());
@@ -106,7 +105,6 @@ public class TracerDrugReportService {
   }
 
   @Transactional
-  @SneakyThrows
   @Async
   public void initializeTracerDrugPersistentData() {
     log.info("tracer drug persistentData initialize. start = " + System.currentTimeMillis());

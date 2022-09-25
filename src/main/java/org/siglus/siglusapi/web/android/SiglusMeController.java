@@ -21,11 +21,9 @@ import static org.springframework.http.HttpStatus.NO_CONTENT;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.UUID;
 import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.validator.constraints.NotEmpty;
@@ -43,12 +41,10 @@ import org.siglus.siglusapi.dto.android.response.FacilityResponse;
 import org.siglus.siglusapi.dto.android.response.PodResponse;
 import org.siglus.siglusapi.dto.android.response.ProductSyncResponse;
 import org.siglus.siglusapi.dto.android.response.RequisitionResponse;
-import org.siglus.siglusapi.localmachine.event.requisition.andriod.AndroidRequisitionSyncedEmitter;
 import org.siglus.siglusapi.service.android.MeService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.format.annotation.DateTimeFormat.ISO;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -68,7 +64,6 @@ import org.springframework.web.bind.annotation.RestController;
 public class SiglusMeController {
 
   private final MeService service;
-  private final AndroidRequisitionSyncedEmitter androidRequisitionSyncedEmitter;
 
   @GetMapping("/facility")
   public FacilityResponse getFacility() {
@@ -119,10 +114,8 @@ public class SiglusMeController {
 
   @PostMapping("/facility/requisitions")
   @ResponseStatus(CREATED)
-  @Transactional
   public void createRequisition(@RequestBody @Valid RequisitionCreateRequest request) {
-    UUID requisitionId = service.createRequisition(request);
-    androidRequisitionSyncedEmitter.emit(request, requisitionId);
+    service.createRequisition(request);
   }
 
   @GetMapping("/facility/requisitions")

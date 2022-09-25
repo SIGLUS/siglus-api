@@ -226,9 +226,6 @@ public class MeServiceTest {
   private SiglusRequisitionRepository requisitionRepository;
 
   @Mock
-  private RequisitionCreateService requisitionCreateService;
-
-  @Mock
   private RequisitionSearchService requisitionSearchService;
 
   @Mock
@@ -287,6 +284,8 @@ public class MeServiceTest {
 
   @Mock
   private EntityManager entityManager;
+  @Mock
+  private MeCreateRequisitionService meCreateRequisitionService;
 
   @Autowired
   private ProductMapper mapper;
@@ -634,7 +633,7 @@ public class MeServiceTest {
     service.createRequisition(requisitionRequest);
 
     // then
-    verify(requisitionCreateService).createRequisition(requisitionRequest);
+    verify(meCreateRequisitionService).createRequisition(requisitionRequest);
   }
 
   @Test
@@ -651,14 +650,14 @@ public class MeServiceTest {
     // given
     RequisitionCreateRequest requisitionRequest = buildRequisitionCreateRequest();
     when(requisitionRequestBackupRepository.findOneByHash(anyString())).thenReturn(null);
-    doThrow(new NullPointerException()).when(requisitionCreateService).createRequisition(requisitionRequest);
+    doThrow(new NullPointerException()).when(meCreateRequisitionService).createRequisition(requisitionRequest);
 
     try {
       // when
       service.createRequisition(requisitionRequest);
     } catch (Exception e) {
       // then
-      verify(requisitionCreateService).createRequisition(requisitionRequest);
+      verify(meCreateRequisitionService).createRequisition(requisitionRequest);
       verify(requisitionRequestBackupRepository).save(requestBackupArgumentCaptor.capture());
     }
   }
@@ -670,14 +669,14 @@ public class MeServiceTest {
     RequisitionRequestBackup backup = new RequisitionRequestBackup();
     when(requisitionRequestBackupRepository.findOneByHash(anyString())).thenReturn(backup);
     doThrow(new ConstraintViolationException(Collections.emptySet()))
-        .when(requisitionCreateService).createRequisition(requisitionRequest);
+        .when(meCreateRequisitionService).createRequisition(requisitionRequest);
 
     try {
       // when
       service.createRequisition(requisitionRequest);
     } catch (Exception e) {
       // then
-      verify(requisitionCreateService).createRequisition(requisitionRequest);
+      verify(meCreateRequisitionService).createRequisition(requisitionRequest);
       verify(requisitionRequestBackupRepository, times(0)).save(backup);
     }
   }
@@ -687,7 +686,7 @@ public class MeServiceTest {
     // given
     RequisitionCreateRequest requisitionRequest = new RequisitionCreateRequest();
     doThrow(new ConstraintViolationException(Collections.emptySet()))
-        .when(requisitionCreateService).createRequisition(requisitionRequest);
+        .when(meCreateRequisitionService).createRequisition(requisitionRequest);
     // when
     try {
       // when

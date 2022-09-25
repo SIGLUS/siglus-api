@@ -13,29 +13,25 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.localmachine.event.requisition.andriod;
+package org.siglus.siglusapi.service.android;
 
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.siglus.siglusapi.service.android.RequisitionCreateService;
-import org.siglus.siglusapi.util.SiglusSimulateUserAuthHelper;
-import org.springframework.context.event.EventListener;
+import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
+import org.siglus.siglusapi.localmachine.event.requisition.andriod.AndroidRequisitionSyncedEmitter;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-@Service
-@Slf4j
 @RequiredArgsConstructor
-public class AndroidRequisitionSyncedReplayer {
-  private final SiglusSimulateUserAuthHelper simulateUserAuthHelper;
+@Service
+public class MeCreateRequisitionService {
   private final RequisitionCreateService requisitionCreateService;
+  private final AndroidRequisitionSyncedEmitter androidRequisitionSyncedEmitter;
 
-  @EventListener(value = {AndroidRequisitionSyncedEvent.class})
-  public void replay(AndroidRequisitionSyncedEvent event) {
-    try {
-      simulateUserAuthHelper.simulateNewUserAuth(event.getUserId());
-      requisitionCreateService.createRequisition(event.getRequest());
-    } catch (Exception e) {
-      log.error(e.getMessage(), e);
-    }
+  @Transactional
+  public UUID createRequisition(RequisitionCreateRequest request) {
+    UUID requisitionId = requisitionCreateService.createRequisition(request);
+    androidRequisitionSyncedEmitter.emit(request, requisitionId);
+    return requisitionId;
   }
 }
