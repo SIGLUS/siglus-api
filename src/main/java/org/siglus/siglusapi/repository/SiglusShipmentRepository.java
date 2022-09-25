@@ -16,19 +16,9 @@
 package org.siglus.siglusapi.repository;
 
 import java.util.UUID;
-import org.openlmis.fulfillment.domain.Order;
-import org.siglus.siglusapi.repository.dto.OrderDto;
+import org.openlmis.fulfillment.domain.Shipment;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 
-/**
- * Persistence repository for saving/finding {@link Order}.
- */
-public interface OrdersRepository extends JpaRepository<Order, UUID> {
+public interface SiglusShipmentRepository extends JpaRepository<Shipment, UUID> {
 
-  @Query(name = "Order.findOrderDto", nativeQuery = true)
-  OrderDto findOrderDtoById(@Param("orderId") UUID orderId);
-
-  Order findByOrderCode(String orderCode);
 }

@@ -890,33 +890,51 @@
   },
   "notes": null,
   "lineItems": [
+
     {
       "id": "940807ba-538e-495d-919c-5217f81f48cb",
       "orderable": {
         "id": "9f74be18-18d9-4ef4-8b43-0eda127e2e08",
         "href": "http://192.168.1.6/api/orderables/9f74be18-18d9-4ef4-8b43-0eda127e2e08",
-        "versionNumber": 4
+        "versionNumber": 3
       },
+      "lotId": "945ed07b-f562-5400-a3ca-a8307d6b8f74",
       "lot": {
-        "id": "29f493c4-cc78-4947-b8d6-ae8b30ce1c32",
+        "id": "46305839-af34-4379-b900-46f0dca8bf5a",
         "href": "http://192.168.1.6/api/lots/29f493c4-cc78-4947-b8d6-ae8b30ce1c32"
       },
       "quantityShipped": 1,
+      "stockOnHand": 4
+    },
+    {
+      "id": "06925084-8b4c-4a43-b887-66d695e6dd47",
+      "orderable": {
+        "id": "37806f29-8c43-4d46-961d-376b9668f474",
+        "href": "http://192.168.1.6/api/orderables/f56977c3-af28-4daf-a92a-4244a4a13335",
+        "versionNumber": 3
+      },
+      "lotId": "d45cda21-c639-4cf7-9c84-9acfe0dbd314",
+      "lot": {
+        "id": "d45cda21-c639-4cf7-9c84-9acfe0dbd314",
+        "href": "http://192.168.1.6/api/lots/e46fdd1c-6d6c-4e84-b169-43e781af0e6d"
+      },
+      "quantityShipped": 3,
       "stockOnHand": 93
     },
     {
       "id": "06925084-8b4c-4a43-b887-66d695e6dd47",
       "orderable": {
-        "id": "f56977c3-af28-4daf-a92a-4244a4a13335",
+        "id": "72044e17-d868-40bc-9d5b-32cd2a0fde30",
         "href": "http://192.168.1.6/api/orderables/f56977c3-af28-4daf-a92a-4244a4a13335",
-        "versionNumber": 4
+        "versionNumber": 3
       },
+      "lotId": "46305839-af34-4379-b900-46f0dca8bf5a",
       "lot": {
-        "id": "e46fdd1c-6d6c-4e84-b169-43e781af0e6d",
+        "id": "945ed07b-f562-5400-a3ca-a8307d6b8f74",
         "href": "http://192.168.1.6/api/lots/e46fdd1c-6d6c-4e84-b169-43e781af0e6d"
       },
-      "quantityShipped": 0,
-      "stockOnHand": 93
+      "quantityShipped": 4,
+      "stockOnHand": 1
     }
   ],
   "repository": {

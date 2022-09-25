@@ -16,6 +16,7 @@
 package org.siglus.siglusapi.localmachine.event.order.fulfillment;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.openlmis.fulfillment.repository.OrderRepository;
@@ -25,6 +26,7 @@ import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.domain.requisition.StatusChange;
 import org.openlmis.requisition.repository.RequisitionRepository;
+import org.siglus.common.repository.OrderExternalRepository;
 import org.siglus.siglusapi.domain.RequisitionExtension;
 import org.siglus.siglusapi.localmachine.EventPublisher;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
@@ -38,7 +40,6 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class OrderFulfillmentSyncedEmitter {
 
-  public static final String FULFILL = "FULFILL-";
   private final EventPublisher eventPublisher;
   private final SiglusAuthenticationHelper authHelper;
   private final SiglusRequisitionRepository siglusRequisitionRepository;
@@ -46,6 +47,7 @@ public class OrderFulfillmentSyncedEmitter {
   private final OrderRepository orderRepository;
   private final SiglusStatusChangeRepository siglusStatusChangeRepository;
   private final RequisitionExtensionRepository requisitionExtensionRepository;
+  private final OrderExternalRepository orderExternalRepository;
 
   public OrderFulfillmentSyncedEvent emit(boolean isWithLocation, boolean isSubOrder,
       ShipmentExtensionRequest shipmentExtensionRequest) {
@@ -69,16 +71,15 @@ public class OrderFulfillmentSyncedEmitter {
         .shipmentExtensionRequest(shipmentExtensionRequest)
         .convertToOrderRequest(getConvertToOrderRequest(shipmentDto, requisitionExtension))
         .build();
-    // todo at this break point, shipmentDto.getOrder().getOrderCode() is not right
     eventPublisher.emitGroupEvent(
-        FULFILL + shipmentDto.getOrder().getRequisitionNumber(),
+        requisitionExtension.getRequisitionNumberPrefix() + requisitionExtension.getRequisitionNumber(),
         shipmentDto.getOrder().getFacility().getId(), event);
     return event;
   }
 
   private ConvertToOrderRequest getConvertToOrderRequest(ShipmentDto shipmentDto,
       RequisitionExtension requisitionExtension) {
-    if (checkIfNeededFirstOrder(shipmentDto.getOrder())) {
+    if (neededFirstOrder(shipmentDto.getOrder(), requisitionExtension.getRequisitionId())) {
       Requisition requisition = requisitionRepository.findOne(requisitionExtension.getRequisitionId());
       final List<RequisitionLineItemRequest> requisitionLineItemRequests =
           requisition.getRequisitionLineItems().stream()
@@ -96,7 +97,11 @@ public class OrderFulfillmentSyncedEmitter {
     return null;
   }
 
-  private boolean checkIfNeededFirstOrder(OrderObjectReferenceDto order) {
+  private boolean neededFirstOrder(OrderObjectReferenceDto order, UUID requisitionId) {
+    return externalIdIsRequisitionId(order) || orderExternalRepository.findByRequisitionId(requisitionId).size() == 1;
+  }
+
+  private boolean externalIdIsRequisitionId(OrderObjectReferenceDto order) {
     return siglusRequisitionRepository.countById(order.getExternalId()) > 0;
   }
 }

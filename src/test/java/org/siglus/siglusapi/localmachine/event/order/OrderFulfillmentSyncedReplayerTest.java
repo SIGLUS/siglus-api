@@ -21,36 +21,41 @@ import static org.powermock.api.mockito.PowerMockito.when;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.fulfillment.domain.Order;
-import org.openlmis.fulfillment.web.shipment.ShipmentDto;
+import org.openlmis.fulfillment.domain.ProofOfDelivery;
+import org.openlmis.fulfillment.domain.Shipment;
+import org.openlmis.fulfillment.repository.ProofOfDeliveryRepository;
 import org.openlmis.fulfillment.web.util.OrderDto;
 import org.openlmis.fulfillment.web.util.OrderDtoBuilder;
 import org.openlmis.requisition.domain.RequisitionTemplate;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.RequisitionBuilder;
-import org.openlmis.requisition.domain.requisition.VersionEntityReference;
 import org.openlmis.requisition.repository.RequisitionRepository;
 import org.openlmis.requisition.service.referencedata.OrderableReferenceDataService;
+import org.siglus.common.domain.OrderExternal;
+import org.siglus.common.repository.OrderExternalRepository;
 import org.siglus.siglusapi.domain.RequisitionExtension;
-import org.siglus.siglusapi.localmachine.event.order.fulfillment.ConvertToOrderRequest;
 import org.siglus.siglusapi.localmachine.event.order.fulfillment.OrderFulfillmentSyncedEvent;
 import org.siglus.siglusapi.localmachine.event.order.fulfillment.OrderFulfillmentSyncedReplayer;
-import org.siglus.siglusapi.localmachine.event.order.fulfillment.RequisitionLineItemRequest;
 import org.siglus.siglusapi.localmachine.eventstore.PayloadSerializer;
+import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.OrdersRepository;
+import org.siglus.siglusapi.repository.ProofsOfDeliveryExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
+import org.siglus.siglusapi.repository.ShipmentLineItemsExtensionRepository;
+import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
+import org.siglus.siglusapi.repository.SiglusShipmentRepository;
 import org.siglus.siglusapi.service.SiglusNotificationService;
 import org.siglus.siglusapi.service.SiglusShipmentService;
 import org.siglus.siglusapi.util.SiglusSimulateUserAuthHelper;
 import org.siglus.siglusapi.web.android.FileBasedTest;
-import org.siglus.siglusapi.web.request.ShipmentExtensionRequest;
 
 @RunWith(MockitoJUnitRunner.class)
 @SuppressWarnings({"PMD.UnusedPrivateField"})
@@ -73,46 +78,82 @@ public class OrderFulfillmentSyncedReplayerTest extends FileBasedTest {
   private RequisitionRepository requisitionRepository;
   @Mock
   private OrderableReferenceDataService orderableReferenceDataService;
+  @Mock
+  private OrderExternalRepository orderExternalRepository;
+  @Mock
+  private OrderLineItemExtensionRepository lineItemExtensionRepository;
+  @Mock
+  private SiglusShipmentRepository siglusShipmentRepository;
+  @Mock
+  private ProofOfDeliveryRepository proofOfDeliveryRepository;
+  @Mock
+  private ShipmentLineItemsExtensionRepository shipmentLineItemsExtensionRepository;
+  @Mock
+  private SiglusProofOfDeliveryRepository siglusProofOfDeliveryRepository;
+  @Mock
+  private ProofsOfDeliveryExtensionRepository proofsOfDeliveryExtensionRepository;
   private final UUID requisitionId = UUID.randomUUID();
 
   private final UUID facilityId = UUID.randomUUID();
   private final UUID orderableId = UUID.randomUUID();
   private final UUID programId = UUID.randomUUID();
 
-  @Test
-  public void shouldDoReplaySuccess() throws IOException {
-    // given
+  @Before
+  public void setup() throws IOException {
     ObjectMapper objectMapper = PayloadSerializer.LOCALMACHINE_EVENT_OBJECT_MAPPER;
     String jsonOrder = readFromFile("order.json");
     Order order = objectMapper.readValue(jsonOrder, Order.class);
-    ConvertToOrderRequest convertToOrderRequest = ConvertToOrderRequest.builder().build();
-    convertToOrderRequest.setFirstOrder(order);
-    convertToOrderRequest.setRequisitionNumber("RNR-1");
-    final List<RequisitionLineItemRequest> list = new ArrayList<>();
-    list.add(RequisitionLineItemRequest.builder()
-        .approvedQuantity(100)
-        .orderable(new VersionEntityReference(orderableId, 1L)).build());
-    convertToOrderRequest.setRequisitionLineItems(list);
-    String jsonShipment = readFromFile("shipmentRequest.json");
-    ShipmentDto req = objectMapper.readValue(jsonShipment, ShipmentDto.class);
-    final ShipmentExtensionRequest reqExtension = new ShipmentExtensionRequest();
-    reqExtension.setShipment(req);
-    reqExtension.setConferredBy("test1");
-    reqExtension.setPreparedBy("test2");
-    final OrderFulfillmentSyncedEvent event = new OrderFulfillmentSyncedEvent(UUID.randomUUID(), UUID.randomUUID(),
-        UUID.randomUUID(), UUID.randomUUID(), true, true, reqExtension, convertToOrderRequest);
+    when(ordersRepository.saveAndFlush(any())).thenReturn(order);
+    when( ordersRepository.findByOrderCode(any())).thenReturn(order);
+    OrderDto orderDto = objectMapper.readValue(readFromFile("orderDto.json"), OrderDto.class);
+    when(orderDtoBuilder.build(any())).thenReturn(orderDto);
+    when(ordersRepository.findOne(any(UUID.class))).thenReturn(order);
+    Shipment shipment = objectMapper.readValue(readFromFile("shipmentRequest.json"), Shipment.class);
+    when(siglusShipmentRepository.saveAndFlush(any())).thenReturn(shipment);
+    when(siglusProofOfDeliveryRepository.findByShipmentId(any())).thenReturn(ProofOfDelivery.newInstance(shipment));
+  }
+
+
+  @Test
+  public void shouldDoReplaySuccessWhenWithConvertToOrder() throws IOException {
+    // given
+    ObjectMapper objectMapper = PayloadSerializer.LOCALMACHINE_EVENT_OBJECT_MAPPER;
+    String jsonRequest = readFromFile("request1.json");
+    OrderFulfillmentSyncedEvent event = objectMapper.readValue(jsonRequest, OrderFulfillmentSyncedEvent.class);
+
     RequisitionExtension requisitionExtension = new RequisitionExtension();
     requisitionExtension.setRequisitionId(requisitionId);
     when(requisitionExtensionRepository.findByRequisitionNumber(any())).thenReturn(requisitionExtension);
+    when(orderExternalRepository.saveAndFlush(any())).thenReturn(OrderExternal.builder().requisitionId(requisitionId).build());
     Requisition requisition = RequisitionBuilder.newRequisition(facilityId, programId, true);
     requisition.setId(requisitionId);
     requisition.setTemplate(new RequisitionTemplate());
     requisition.setRequisitionLineItems(new ArrayList<>());
     when(requisitionRepository.findOne(requisitionId)).thenReturn(requisition);
-    when(ordersRepository.saveAndFlush(any())).thenReturn(order);
     final OrderDto orderDto = new OrderDto();
     orderDto.setId(orderableId);
-    when(orderDtoBuilder.build(any())).thenReturn(orderDto);
+    // when
+    orderFulfillmentSyncedReplayer.replay(event);
+  }
+
+  @Test
+  public void shouldDoReplaySuccessWhenNotConvertToOrder() throws IOException {
+    // given
+    ObjectMapper objectMapper = PayloadSerializer.LOCALMACHINE_EVENT_OBJECT_MAPPER;
+    String jsonRequest = readFromFile("request2.json");
+    OrderFulfillmentSyncedEvent event = objectMapper.readValue(jsonRequest, OrderFulfillmentSyncedEvent.class);
+
+    RequisitionExtension requisitionExtension = new RequisitionExtension();
+    requisitionExtension.setRequisitionId(requisitionId);
+    when(requisitionExtensionRepository.findByRequisitionNumber(any())).thenReturn(requisitionExtension);
+    when(orderExternalRepository.saveAndFlush(any())).thenReturn(OrderExternal.builder().requisitionId(requisitionId).build());
+    Requisition requisition = RequisitionBuilder.newRequisition(facilityId, programId, true);
+    requisition.setId(requisitionId);
+    requisition.setTemplate(new RequisitionTemplate());
+    requisition.setRequisitionLineItems(new ArrayList<>());
+    when(requisitionRepository.findOne(requisitionId)).thenReturn(requisition);
+    final OrderDto orderDto = new OrderDto();
+    orderDto.setId(orderableId);
     // when
     orderFulfillmentSyncedReplayer.replay(event);
   }
