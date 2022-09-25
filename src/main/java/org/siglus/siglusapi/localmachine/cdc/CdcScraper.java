@@ -68,15 +68,18 @@ public class CdcScraper {
   private final AtomicLong currentTxId = new AtomicLong(DUMMY_TX_ID);
   private final PublicationPreparer publicationPreparer;
   private DebeziumEngine<RecordChangeEvent<SourceRecord>> debeziumEngine;
+  private final OffsetBackingStoreWrapper offsetBackingStoreWrapper;
 
   public CdcScraper(
       CdcRecordRepository cdcRecordRepository,
       CdcDispatcher cdcDispatcher,
       ConfigBuilder baseConfig,
-      PublicationPreparer publicationPreparer) {
+      PublicationPreparer publicationPreparer,
+      OffsetBackingStoreWrapper offsetBackingStoreWrapper) {
     this.cdcRecordRepository = cdcRecordRepository;
     this.cdcDispatcher = cdcDispatcher;
     this.baseConfig = baseConfig;
+    this.offsetBackingStoreWrapper = offsetBackingStoreWrapper;
     this.publicationPreparer = publicationPreparer;
   }
 
@@ -157,7 +160,7 @@ public class CdcScraper {
         .with("name", "local-scraper")
         .with("plugin.name", "pgoutput")
         .with("connector.class", "io.debezium.connector.postgresql.PostgresConnector")
-        .with("offset.storage", "org.apache.kafka.connect.storage.FileOffsetBackingStore")
+        .with("offset.storage", "org.siglus.siglusapi.localmachine.cdc.OffsetBackingStore")
         .with("offset.storage.file.filename", offsetStorageFile.getAbsolutePath())
         .with("offset.flush.interval.ms", "10000")
         .with("table.include.list", tablesForCapture)
