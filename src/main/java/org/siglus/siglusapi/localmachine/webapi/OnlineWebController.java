@@ -18,6 +18,7 @@ package org.siglus.siglusapi.localmachine.webapi;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.siglus.siglusapi.localmachine.EventImporter;
 import org.siglus.siglusapi.localmachine.ExternalEventDto;
 import org.siglus.siglusapi.localmachine.ExternalEventDtoMapper;
@@ -31,6 +32,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/siglusapi/localmachine/server")
@@ -47,6 +49,7 @@ public class OnlineWebController {
 
   @PostMapping("/events")
   public void syncEvents(@RequestBody @Validated SyncRequest request) {
+    log.info("syncEvents, event size:{}", request.getEvents().size());
     importer.importEvents(request.getEvents().stream()
         .map(externalEventDtoMapper::map)
         .collect(Collectors.toList()));
