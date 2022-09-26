@@ -16,12 +16,14 @@
 package org.siglus.siglusapi.web;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.openlmis.referencedata.dto.OrderableDto;
+import org.siglus.siglusapi.dto.AvailableOrderablesDto;
 import org.siglus.siglusapi.dto.QueryOrderableSearchParams;
 import org.siglus.siglusapi.repository.dto.ProgramOrderableDto;
 import org.siglus.siglusapi.service.SiglusOrderableService;
@@ -67,5 +69,10 @@ public class SiglusOrderableController {
     return orderableService.getAllProgramOrderableDtos().stream()
         .filter(e -> Objects.nonNull(e.getPrice()))
         .collect(Collectors.toMap(ProgramOrderableDto::getOrderableId, ProgramOrderableDto::getPrice));
+  }
+
+  @GetMapping("/available")
+  public List<AvailableOrderablesDto> getAvailableOrderablesByFacility(@RequestParam Boolean isRequestAll) {
+    return orderableService.getAvailableOrderablesByFacility(isRequestAll);
   }
 }

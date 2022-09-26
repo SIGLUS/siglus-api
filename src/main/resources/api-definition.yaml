@@ -924,7 +924,15 @@ traits:
           "200":
             body:
               application/json:
-
+    /orderables/available:
+      displayName: Get available orderables for one facility
+      get:
+        is: [ secured ]
+        description: Get available orderables for one facility
+        responses:
+          200:
+            body:
+              application/json:
     /validDestinations:
       get:
         is: [ secured ]

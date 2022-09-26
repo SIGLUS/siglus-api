@@ -27,6 +27,8 @@ import static org.mockito.Mockito.when;
 import static org.siglus.siglusapi.constant.FieldConstants.FULL_PRODUCT_NAME;
 import static org.siglus.siglusapi.constant.FieldConstants.PRODUCT_CODE;
 
+import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -39,19 +41,31 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.openlmis.referencedata.domain.Code;
+import org.openlmis.referencedata.domain.Orderable;
 import org.openlmis.referencedata.dto.OrderableDto;
 import org.openlmis.referencedata.dto.ProgramOrderableDto;
+import org.openlmis.stockmanagement.domain.card.StockCard;
+import org.openlmis.stockmanagement.domain.event.CalculatedStockOnHand;
+import org.openlmis.stockmanagement.repository.CalculatedStockOnHandRepository;
+import org.openlmis.stockmanagement.repository.StockCardRepository;
 import org.openlmis.stockmanagement.web.Pagination;
 import org.siglus.common.domain.ProgramAdditionalOrderable;
 import org.siglus.common.repository.ArchivedProductRepository;
 import org.siglus.common.repository.ProgramAdditionalOrderableRepository;
+import org.siglus.siglusapi.domain.DispensableAttributes;
 import org.siglus.siglusapi.domain.StockManagementDraft;
 import org.siglus.siglusapi.domain.StockManagementDraftLineItem;
+import org.siglus.siglusapi.dto.AvailableOrderablesDto;
 import org.siglus.siglusapi.dto.QueryOrderableSearchParams;
+import org.siglus.siglusapi.dto.UserDto;
+import org.siglus.siglusapi.repository.DispensableAttributesRepository;
+import org.siglus.siglusapi.repository.OrderableRepository;
 import org.siglus.siglusapi.repository.ProgramOrderablesRepository;
 import org.siglus.siglusapi.repository.SiglusOrderableRepository;
 import org.siglus.siglusapi.repository.StockManagementDraftRepository;
 import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
+import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -88,6 +102,21 @@ public class SiglusOrderableServiceTest {
   @Mock
   private ProgramOrderablesRepository programOrderablesRepository;
 
+  @Mock
+  private SiglusAuthenticationHelper authenticationHelper;
+
+  @Mock
+  private StockCardRepository stockCardRepository;
+
+  @Mock
+  private CalculatedStockOnHandRepository calculatedStockOnHandRepository;
+
+  @Mock
+  private OrderableRepository orderableRepository;
+
+  @Mock
+  private DispensableAttributesRepository dispensableAttributesRepository;
+
   private Pageable pageable = new PageRequest(0, Integer.MAX_VALUE);
 
   private final UUID facilityId = UUID.randomUUID();
@@ -105,6 +134,15 @@ public class SiglusOrderableServiceTest {
   private final UUID targetOrderableId = UUID.randomUUID();
 
   private final StockManagementDraft draft = StockManagementDraft.builder().build();
+
+  private static final UUID stockCardId = UUID.randomUUID();
+
+  private final UUID stockCardId1 = UUID.randomUUID();
+
+  private final UUID stockCardId2 = UUID.randomUUID();
+  private final UUID dispensableId = UUID.randomUUID();
+
+  private final String productCode = "product code";
 
   @Before
   public void prepare() {
@@ -288,5 +326,61 @@ public class SiglusOrderableServiceTest {
 
     // then
     verify(programOrderablesRepository, times(1)).findAllMaxVersionProgramOrderableDtos();
+  }
+
+  @Test
+  public void shouldGetAllProductsForOneFacility() {
+    // given
+    UserDto user = new UserDto();
+    user.setId(UUID.randomUUID());
+    user.setHomeFacilityId(facilityId);
+    when(authenticationHelper.getCurrentUser()).thenReturn(user);
+    when(stockCardRepository.findByFacilityIdIn(facilityId)).thenReturn(Lists.newArrayList(mockStockCard()));
+    LocalDate outTimeRangeDate = LocalDate.now().minusMonths(12);
+    CalculatedStockOnHand calculatedStockOnHand1 = new CalculatedStockOnHand();
+    calculatedStockOnHand1.setStockOnHand(0);
+    calculatedStockOnHand1.setOccurredDate(outTimeRangeDate);
+    calculatedStockOnHand1.setStockCardId(stockCardId1);
+    LocalDate inTimeRangeDate = LocalDate.now().minusMonths(2);
+    CalculatedStockOnHand calculatedStockOnHand2 = new CalculatedStockOnHand();
+    calculatedStockOnHand2.setStockOnHand(120);
+    calculatedStockOnHand2.setOccurredDate(inTimeRangeDate);
+    calculatedStockOnHand2.setStockCardId(stockCardId2);
+    when(calculatedStockOnHandRepository.findLatestStockOnHands(any(), any())).thenReturn(Arrays.asList(
+        calculatedStockOnHand1, calculatedStockOnHand2
+    ));
+    when(orderableRepository.findLatestByIds(Lists.newArrayList(orderableId))).thenReturn(buildMockOrderables());
+    when(programOrderablesRepository.findAllMaxVersionProgramOrderableDtos()).thenReturn(Lists.newArrayList());
+    when(dispensableAttributesRepository.findAll(Lists.newArrayList(dispensableId)))
+        .thenReturn(Lists.newArrayList(buildMockDispensable()));
+
+    // when
+    List<AvailableOrderablesDto> availableOrderables = siglusOrderableService.getAvailableOrderablesByFacility(
+        true);
+
+    // then
+    assertEquals(Lists.newArrayList(), availableOrderables);
+  }
+
+  private StockCard mockStockCard() {
+    StockCard stockCard = new StockCard();
+    stockCard.setId(stockCardId);
+    stockCard.setFacilityId(facilityId);
+    stockCard.setOrderableId(orderableId);
+    return stockCard;
+  }
+
+  private List<Orderable> buildMockOrderables() {
+    Orderable orderable = new Orderable(Code.code(productCode), null, 0, 0,
+        Boolean.FALSE, orderableId, 0L);
+    return Lists.newArrayList(orderable);
+  }
+
+  private DispensableAttributes buildMockDispensable() {
+    DispensableAttributes dispensableAttributes = new DispensableAttributes();
+    dispensableAttributes.setDispensableId(dispensableId);
+    dispensableAttributes.setKey("dispensingUnit");
+    dispensableAttributes.setValue("each");
+    return dispensableAttributes;
   }
 }
