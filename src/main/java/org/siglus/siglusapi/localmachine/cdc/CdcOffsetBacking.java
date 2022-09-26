@@ -36,9 +36,6 @@ public class CdcOffsetBacking {
   @Id
   private UUID id;
 
-  @Column(name = "offsetkey")
-  private byte[] offsetKey;
-
-  @Column(name = "offsetValue")
-  private byte[] offsetValue;
+  @Column(name = "offsetdata")
+  private String offsetData;
 }

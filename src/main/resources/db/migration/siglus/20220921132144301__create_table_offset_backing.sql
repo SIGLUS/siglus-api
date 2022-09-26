@@ -5,6 +5,5 @@
 CREATE TABLE localmachine.cdc_offset_backing
 (
     id          UUID NOT NULL PRIMARY KEY,
-    offsetkey   bytea NULL,
-    offsetvalue bytea NULL
+    offsetdata  TEXT NULL
 );
