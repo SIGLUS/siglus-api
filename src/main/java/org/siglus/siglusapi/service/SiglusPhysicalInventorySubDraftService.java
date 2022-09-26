@@ -128,6 +128,15 @@ public class SiglusPhysicalInventorySubDraftService {
     List<List<List<PhysicalInventoryLineItemDto>>> groupList = CustomListSortHelper.averageAssign(lists, splitNum);
     List<PhysicalInventoryLineItemDto> originalInitialInventoryLineItems = groupList.get(number - 1)
             .stream().flatMap(list -> list.stream()).collect(Collectors.toList());
+
+    // existing lines for other darft
+    List<PhysicalInventoryLineItemsExtension> existingExtensions = lineItemsExtensionRepository
+            .findByPhysicalInventoryIdIn(Collections.singleton(physicalInventoryId));
+    Set<UUID> existingLineItemIds = existingExtensions.stream()
+            .map(PhysicalInventoryLineItemsExtension::getPhysicalInventoryLineItemId).collect(Collectors.toSet());
+    List<PhysicalInventoryLineItemDto> existingLineItems = physicalInventoryDto.getLineItems()
+            .stream().filter(line -> existingLineItemIds.contains(line.getId())).collect(Collectors.toList());
+    originalInitialInventoryLineItems.addAll(existingLineItems);
     if (CollectionUtils.isNotEmpty(originalInitialInventoryLineItems)) {
       physicalInventoryDto.setLineItems(originalInitialInventoryLineItems);
       List<PhysicalInventorySubDraftLineItemsExtensionDto> newLineItemsExtension = convertToLineItemsExtension(
@@ -136,6 +145,7 @@ public class SiglusPhysicalInventorySubDraftService {
           physicalInventoryDto.getId());
       PhysicalInventoryLineItemExtensionDto physicalInventoryExtendDto = new PhysicalInventoryLineItemExtensionDto();
       BeanUtils.copyProperties(physicalInventoryDto, physicalInventoryExtendDto);
+
       physicalInventoryExtendDto.setLineItemsExtensions(newLineItemsExtension);
       siglusPhysicalInventoryService.saveDraftForProductsForOneProgramWithExtension(physicalInventoryExtendDto);
       siglusPhysicalInventoryService.saveDraftForProductsForOneProgram(physicalInventoryDto);
