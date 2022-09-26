@@ -260,6 +260,9 @@ traits:
         /ack:
           post:
             description: confirm events synced by the local agent
+        /reSync:
+          get:
+            description: resync data from onlineweb
       /agent:
         put:
           description: local api for localmachine control plane to activate the machine
