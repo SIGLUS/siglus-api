@@ -28,6 +28,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.postgresql.copy.CopyManager;
 import org.postgresql.core.BaseConnection;
+import org.siglus.siglusapi.dto.Message;
+import org.siglus.siglusapi.localmachine.exception.DbOperationException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
@@ -52,6 +54,7 @@ public class TableCopyRepository {
       connection.commit();
     } catch (SQLException e) {
       log.error("facilityId {} copy table data to file fail,{}", homeFacilityId, e);
+      throw new DbOperationException(e, new Message("copy table data to file fail"));
     }
     return tableFiles;
   }
@@ -62,6 +65,7 @@ public class TableCopyRepository {
       copyManager.copyOut("COPY (" + querySql + ") TO STDOUT", fileOutputStream);
     } catch (SQLException | IOException e) {
       log.error("querySql {} copy table data to file fail,{}", querySql, e);
+      throw new DbOperationException(e, new Message("copy table data to file fail"));
     }
   }
 }

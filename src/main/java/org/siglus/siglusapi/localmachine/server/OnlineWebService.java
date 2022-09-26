@@ -34,6 +34,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.siglus.siglusapi.dto.Message;
+import org.siglus.siglusapi.localmachine.exception.DbOperationException;
 import org.siglus.siglusapi.localmachine.repository.MasterDataSql;
 import org.siglus.siglusapi.localmachine.repository.MovementSql;
 import org.siglus.siglusapi.localmachine.repository.RequisitionOrderSql;
@@ -106,6 +108,7 @@ public class OnlineWebService {
       }
     } catch (Exception e) {
       log.error("facilityId {} generate zip file fail,{}", homeFacilityId, e);
+      throw new DbOperationException(e, new Message(homeFacilityId + " generate zip file fail"));
     }
     return zipFile;
   }

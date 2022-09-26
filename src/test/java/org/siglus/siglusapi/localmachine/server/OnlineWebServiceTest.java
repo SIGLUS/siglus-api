@@ -26,6 +26,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -57,9 +58,22 @@ public class OnlineWebServiceTest {
   public void shouldGenerateZipWhenLocalMachineResync() throws IOException {
     // given
     ReflectionTestUtils.setField(onlineWebService, "zipExportPath", "/tmp/");
-    List<File> tableFiles = Collections.singletonList(new File("/tmp/test.txt"));
-    when(tableCopyRepository.copyDateToFile(any(), any(), any())).thenReturn(tableFiles);
+    List<File> tableFiles = new ArrayList<>();
+    tableFiles.add(new File("/tmp/masterdata.txt"));
+    tableFiles.add(new File("/tmp/movement.txt"));
+    tableFiles.add(new File("/tmp/requisitionOrder.txt"));
+
+    when(tableCopyRepository.copyDateToFile(any(), eq(MasterDataSql.getMasterDataSqlMap()), eq(facilityId)))
+        .thenReturn(Collections.singletonList(tableFiles.get(0)));
+    when(tableCopyRepository.copyDateToFile(any(), eq(MovementSql.getMovementSql()), eq(facilityId)))
+        .thenReturn(Collections.singletonList(tableFiles.get(1)));
+    when(tableCopyRepository.copyDateToFile(any(), eq(RequisitionOrderSql.getRequisitionOrderSql()), eq(facilityId)))
+        .thenReturn(Collections.singletonList(tableFiles.get(2)));
+
     writeDataToFile(tableFiles.get(0));
+    writeDataToFile(tableFiles.get(1));
+    writeDataToFile(tableFiles.get(2));
+
     HttpServletResponse httpServletResponse = new MockHttpServletResponse();
 
     // when
