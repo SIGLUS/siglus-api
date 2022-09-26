@@ -29,20 +29,22 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 @Profile({"localmachine"})
 public class LocalMovementEventEmitter implements CdcListener {
+
   private final EventPublisher eventPublisher;
   private final CdcRecordMapper cdcRecordMapper;
 
   @Override
   public String[] acceptedTables() {
-    // todo: correct the table list of movement
-    return new String[] {
-      "stockmanagement.stock_events",
-      "stockmanagement.stock_event_line_items",
-      "stockmanagement.stock_cards",
-      "stockmanagement.stock_card_line_items",
-      "stockmanagement.physical_inventories",
-      "stockmanagement.physical_inventory_line_items",
-      "stockmanagement.physical_inventory_line_item_adjustments",
+    return new String[]{
+        "stockmanagement.stock_events",
+        "stockmanagement.stock_event_line_items",
+        "stockmanagement.stock_cards",
+        "stockmanagement.stock_card_line_items",
+        "stockmanagement.physical_inventories",
+        "stockmanagement.physical_inventory_line_items",
+        "stockmanagement.calculated_stocks_on_hand",
+        "siglusintegration.stock_card_extension",
+        "referencedata.lots"
     };
   }
 
