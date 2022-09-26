@@ -36,7 +36,6 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class CsvValidator {
-  private static final String ERROR_BUSINESS_CODE = "upload csv failed";
   private static final List<String> mandatoryColumnNames = Arrays.asList(LocationConstants.LOCATION_CODE,
       LocationConstants.AREA, LocationConstants.ZONE, LocationConstants.RACK,
       LocationConstants.BARCODE, LocationConstants.BIN, LocationConstants.LEVEL);
@@ -101,11 +100,11 @@ public class CsvValidator {
     List<String> invalidHeaders = ListUtils.subtract(mandatoryColumnNames, headers);
     if (!invalidHeaders.isEmpty()) {
       throw new BusinessDataException(new Message(CsvUploadMessageKeys.ERROR_UPLOAD_HEADER_INVALID,
-          headers.toString()), ERROR_BUSINESS_CODE);
+          headers.toString()), headers.toString());
     }
     if (headers.size() == 6) {
       throw new BusinessDataException(new Message(CsvUploadMessageKeys.ERROR_UPLOAD_HEADER_INVALID,
-          headers.toString()), ERROR_BUSINESS_CODE);
+          headers.toString()), headers.toString());
     }
   }
 

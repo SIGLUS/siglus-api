@@ -62,6 +62,10 @@ import org.openlmis.fulfillment.web.util.OrderDto;
 import org.openlmis.fulfillment.web.util.OrderLineItemDto;
 import org.openlmis.fulfillment.web.util.OrderObjectReferenceDto;
 import org.openlmis.fulfillment.web.util.VersionObjectReferenceDto;
+import org.openlmis.stockmanagement.domain.card.StockCard;
+import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
+import org.openlmis.stockmanagement.repository.StockCardLineItemRepository;
+import org.openlmis.stockmanagement.repository.StockCardRepository;
 import org.siglus.siglusapi.domain.OrderLineItemExtension;
 import org.siglus.siglusapi.domain.StockCardLineItemExtension;
 import org.siglus.siglusapi.dto.UserDto;
@@ -123,6 +127,12 @@ public class SiglusShipmentServiceTest {
   @Mock
   private StockCardLineItemExtensionRepository stockCardLineItemExtensionRepository;
 
+  @Mock
+  private StockCardLineItemRepository stockCardLineItemRepository;
+
+  @Mock
+  private StockCardRepository stockCardRepository;
+
   private final UUID orderId = UUID.randomUUID();
 
   private final UUID orderableId = UUID.randomUUID();
@@ -132,6 +142,10 @@ public class SiglusShipmentServiceTest {
   private final UUID facilityId = UUID.randomUUID();
 
   private final UUID lotId = UUID.randomUUID();
+
+  private final UUID stockCardId = UUID.randomUUID();
+
+  private final UUID stockCardLineItemId = UUID.randomUUID();
 
   @Before
   public void prepare() {
@@ -387,6 +401,10 @@ public class SiglusShipmentServiceTest {
     when(orderRepository.findOne(shipmentDto.getOrder().getId())).thenReturn(order);
     when(shipmentController.createShipment(shipmentDto)).thenReturn(createShipmentDtoWithLocation());
     when(authenticationHelper.getCurrentUser()).thenReturn(buildUserDto());
+    when(stockCardRepository.findByFacilityIdAndOrderableIdAndLotId(any(), any(), any()))
+        .thenReturn(buildStockCard());
+    when(stockCardLineItemRepository.findLatestByStockCardIds(any()))
+        .thenReturn(Lists.newArrayList(buildStockCardLineItem()));
 
     // when
     siglusShipmentService.createOrderAndShipmentByLocation(false, shipmentDto);
@@ -480,5 +498,18 @@ public class SiglusShipmentServiceTest {
         .locationCode("ABC")
         .area("DEF")
         .build();
+  }
+
+  private StockCard buildStockCard() {
+    StockCard stockCard = new StockCard();
+    stockCard.setId(stockCardId);
+    return stockCard;
+  }
+
+  private StockCardLineItem buildStockCardLineItem() {
+    StockCardLineItem stockCardLineItem = new StockCardLineItem();
+    stockCardLineItem.setStockCard(buildStockCard());
+    stockCardLineItem.setId(stockCardLineItemId);
+    return stockCardLineItem;
   }
 }
