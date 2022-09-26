@@ -57,7 +57,6 @@ public class CsvValidator {
     Map<String, Integer> csvHeaderToColumnMap = csvParser.getHeaderMap();
     List<String> headers = csvHeaderToColumnMap.keySet().stream().map(portugueseToEnglishMap::get)
         .collect(Collectors.toList());
-    validateNullHeaders(headers);
     headers = headersWithoutNull(headers);
     validateInvalidHeaders(headers);
   }
@@ -98,17 +97,8 @@ public class CsvValidator {
     return records;
   }
 
-  private void validateNullHeaders(List<String> headers) throws ValidationMessageException {
-    for (int i = 0; i < headers.size(); i++) {
-      if (StringUtils.isEmpty(headers.get(i))) {
-        throw new BusinessDataException(new Message(CsvUploadMessageKeys.ERROR_UPLOAD_HEADER_MISSING,
-            String.valueOf(i + 1)), String.valueOf(i + 1));
-      }
-    }
-  }
-
   private void validateInvalidHeaders(List<String> headers) {
-    List<String> invalidHeaders = ListUtils.subtract(headers, mandatoryColumnNames);
+    List<String> invalidHeaders = ListUtils.subtract(mandatoryColumnNames, headers);
     if (!invalidHeaders.isEmpty()) {
       throw new BusinessDataException(new Message(CsvUploadMessageKeys.ERROR_UPLOAD_HEADER_INVALID,
           headers.toString()), ERROR_BUSINESS_CODE);
