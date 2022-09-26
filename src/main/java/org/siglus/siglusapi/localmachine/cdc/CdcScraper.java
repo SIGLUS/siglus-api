@@ -56,6 +56,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Component
+@SuppressWarnings("PMD.UnusedPrivateField")
 public class CdcScraper {
 
   static final long DUMMY_TX_ID = -1;
