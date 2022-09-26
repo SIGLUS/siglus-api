@@ -55,6 +55,10 @@ import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.RequisitionLineItem;
 import org.openlmis.requisition.domain.requisition.VersionEntityReference;
 import org.openlmis.requisition.dto.BasicOrderableDto;
+import org.openlmis.requisition.dto.BasicProcessingPeriodDto;
+import org.openlmis.requisition.dto.BasicProgramDto;
+import org.openlmis.requisition.dto.BasicRequisitionDto;
+import org.openlmis.requisition.dto.MinimalFacilityDto;
 import org.openlmis.requisition.dto.OrderableDto;
 import org.openlmis.requisition.dto.VersionIdentityDto;
 import org.openlmis.requisition.repository.RequisitionRepository;
@@ -72,6 +76,7 @@ import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.repository.ShipmentLineItemsExtensionRepository;
 import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
 import org.siglus.siglusapi.repository.SiglusShipmentRepository;
+import org.siglus.siglusapi.service.SiglusNotificationService;
 import org.siglus.siglusapi.util.SiglusSimulateUserAuthHelper;
 import org.siglus.siglusapi.web.request.ShipmentExtensionRequest;
 import org.springframework.beans.BeanUtils;
@@ -96,6 +101,7 @@ public class OrderFulfillmentSyncedReplayer {
   private final ShipmentLineItemsExtensionRepository shipmentLineItemsExtensionRepository;
   private final SiglusProofOfDeliveryRepository siglusProofOfDeliveryRepository;
   private final ProofsOfDeliveryExtensionRepository proofsOfDeliveryExtensionRepository;
+  private final SiglusNotificationService siglusNotificationService;
 
   @EventListener(value = {OrderFulfillmentSyncedEvent.class})
   public void replay(OrderFulfillmentSyncedEvent event) {
@@ -179,7 +185,23 @@ public class OrderFulfillmentSyncedReplayer {
     requisitionExtension.setIsApprovedByInternal(false);
     requisitionExtensionRepository.saveAndFlush(requisitionExtension);
 
-    // todo 需要发notice siglusNotificationService.postApprove(buildBaseRequisitionDto(requisition));
+    siglusNotificationService.postApprove(buildBaseRequisitionDto(requisition));
+  }
+
+  private BasicRequisitionDto buildBaseRequisitionDto(Requisition requisition) {
+    BasicRequisitionDto basicRequisitionDto = new BasicRequisitionDto();
+    basicRequisitionDto.setId(requisition.getId());
+    MinimalFacilityDto minimalFacilityDto = new MinimalFacilityDto();
+    minimalFacilityDto.setId(requisition.getFacilityId());
+    basicRequisitionDto.setFacility(minimalFacilityDto);
+    BasicProgramDto basicProgramDto = new BasicProgramDto();
+    basicProgramDto.setId(requisition.getProgramId());
+    basicRequisitionDto.setProgram(basicProgramDto);
+    basicRequisitionDto.setEmergency(requisition.getEmergency());
+    BasicProcessingPeriodDto basicProcessingPeriodDto = new BasicProcessingPeriodDto();
+    basicProcessingPeriodDto.setId(requisition.getProcessingPeriodId());
+    basicRequisitionDto.setProcessingPeriod(basicProcessingPeriodDto);
+    return basicRequisitionDto;
   }
 
   private void resetApprovedQuantity(Requisition requisition, OrderFulfillmentSyncedEvent event) {
@@ -205,20 +227,20 @@ public class OrderFulfillmentSyncedReplayer {
 
   public Order convertToOrder(OrderFulfillmentSyncedEvent event, Requisition requisition) {
     releaseRequisitionsAsOrder(requisition, event.getConvertToOrderUserId(), event.getSupplierFacilityId());
+    // todo siglusNotificationService.postConvertToOrder(new ApproveRequisitionDto(requisition)); called rpc
     return createOrder(event);
-    // todo 需要发notice吗 前端主动掉的？后端没这个逻辑 notificationService.postConvertToOrder(order);
   }
 
   private Order createOrder(OrderFulfillmentSyncedEvent event) {
     return ordersRepository.saveAndFlush(event.getConvertToOrderRequest().getFirstOrder());
-    // TODO: notifiction of create order:  FulfillmentNotificationService.sendOrderCreatedNotification() 看一下表里的数据就行了！！
+    // TODO: notifiction of create order: FulfillmentNotificationService.sendOrderCreatedNotification() called rpc
   }
 
   private void releaseRequisitionsAsOrder(Requisition requisition, UUID supplierUserId, UUID supplierFacilityId) {
     requisition.release(supplierUserId);
     requisition.setSupplyingFacilityId(supplierFacilityId);
     requisitionRepository.saveAndFlush(requisition);
-    // TODO: notifiction of release add implement ( 2022/9/19 by kourengang)  notificationService.postRelease();
+    // TODO: notifiction of release,  notificationService.postRelease() not exists
   }
 
   private void doFulfillOrder(OrderFulfillmentSyncedEvent event, Order shiped) {
@@ -229,7 +251,7 @@ public class OrderFulfillmentSyncedReplayer {
       saveShipmentLineItemsExtensionWithLocation(event, shipment);
     }
     savePodExtension(shipment.getId(), event.getShipmentExtensionRequest());
-    //   todo notificationService.postConfirmShipment(shipmentDto);
+    // todo siglusNotificationService.postConfirmShipment(event.getShipmentExtensionRequest().getShipment()); rpc
   }
 
   public void savePodExtension(UUID shipmentId, ShipmentExtensionRequest shipmentExtensionRequest) {

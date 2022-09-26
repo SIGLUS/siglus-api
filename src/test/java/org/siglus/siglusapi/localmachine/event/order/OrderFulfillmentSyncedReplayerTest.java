@@ -91,6 +91,8 @@ public class OrderFulfillmentSyncedReplayerTest extends FileBasedTest {
   @Mock
   private SiglusProofOfDeliveryRepository siglusProofOfDeliveryRepository;
   @Mock
+  private SiglusNotificationService siglusNotificationService;
+  @Mock
   private ProofsOfDeliveryExtensionRepository proofsOfDeliveryExtensionRepository;
   private final UUID requisitionId = UUID.randomUUID();
 
