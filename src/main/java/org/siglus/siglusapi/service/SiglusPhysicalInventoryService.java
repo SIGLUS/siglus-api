@@ -252,7 +252,7 @@ public class SiglusPhysicalInventoryService {
       List<PhysicalInventoryEmptyLocationLineItem> emptyLocations) {
     return emptyLocations.stream()
         .map(location -> PhysicalInventoryLineItemDto.builder().locationCode(location.getLocationCode())
-            .area(location.getArea()).build()).collect(Collectors.toList());
+            .area(location.getArea()).skipped(location.isSkipped()).build()).collect(Collectors.toList());
   }
 
   public SiglusPhysicalInventoryDto fillLocationOption(PhysicalInventoryDto physicalInventoryDto) {
