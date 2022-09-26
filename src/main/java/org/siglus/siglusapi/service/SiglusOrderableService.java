@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.service;
 
+import static java.util.Comparator.comparing;
 import static org.siglus.siglusapi.constant.CacheConstants.CACHE_KEY_GENERATOR;
 import static org.siglus.siglusapi.constant.CacheConstants.SIGLUS_PROGRAM_ORDERABLES;
 import static org.siglus.siglusapi.constant.FieldConstants.CODE;
@@ -256,6 +257,7 @@ public class SiglusOrderableService {
       availableOrderablesDto.setDispensable(dispensable);
       availableOrderablesDtoList.add(availableOrderablesDto);
     });
-    return availableOrderablesDtoList;
+    return availableOrderablesDtoList.stream().sorted(comparing(AvailableOrderablesDto::getFullProductName)).collect(
+        Collectors.toList());
   }
 }
