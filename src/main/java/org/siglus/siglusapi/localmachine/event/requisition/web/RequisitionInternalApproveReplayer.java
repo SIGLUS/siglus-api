@@ -62,7 +62,6 @@ import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.TestConsumptionLineItemRepository;
 import org.siglus.siglusapi.repository.UsageInformationLineItemRepository;
-import org.siglus.siglusapi.service.SiglusNotificationService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
@@ -84,7 +83,6 @@ public class RequisitionInternalApproveReplayer {
   private final RegimenSummaryLineItemRepository regimenSummaryLineItemRepository;
   private final KitUsageLineItemRepository kitUsageRepository;
   private final RequisitionService requisitionService;
-  private final SiglusNotificationService siglusNotificationService;
 
   @EventListener(classes = {RequisitionInternalApprovedEvent.class})
   public void replay(RequisitionInternalApprovedEvent event) {
@@ -138,7 +136,6 @@ public class RequisitionInternalApproveReplayer {
     buildRequisitionLineItemsExtension(requisition, orderableIdToLineItemExtension);
 
     buildRequisitionUsageSections(requisition, event);
-    siglusNotificationService.postApprove(buildBaseRequisitionDto(requisition));
   }
 
   private BasicRequisitionDto buildBaseRequisitionDto(Requisition requisition) {

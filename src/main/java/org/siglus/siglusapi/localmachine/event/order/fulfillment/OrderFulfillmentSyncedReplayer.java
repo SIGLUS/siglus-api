@@ -76,7 +76,6 @@ import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.repository.ShipmentLineItemsExtensionRepository;
 import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
 import org.siglus.siglusapi.repository.SiglusShipmentRepository;
-import org.siglus.siglusapi.service.SiglusNotificationService;
 import org.siglus.siglusapi.util.SiglusSimulateUserAuthHelper;
 import org.siglus.siglusapi.web.request.ShipmentExtensionRequest;
 import org.springframework.beans.BeanUtils;
@@ -101,7 +100,6 @@ public class OrderFulfillmentSyncedReplayer {
   private final ShipmentLineItemsExtensionRepository shipmentLineItemsExtensionRepository;
   private final SiglusProofOfDeliveryRepository siglusProofOfDeliveryRepository;
   private final ProofsOfDeliveryExtensionRepository proofsOfDeliveryExtensionRepository;
-  private final SiglusNotificationService siglusNotificationService;
 
   @EventListener(value = {OrderFulfillmentSyncedEvent.class})
   public void replay(OrderFulfillmentSyncedEvent event) {
@@ -185,7 +183,7 @@ public class OrderFulfillmentSyncedReplayer {
     requisitionExtension.setIsApprovedByInternal(false);
     requisitionExtensionRepository.saveAndFlush(requisitionExtension);
 
-    siglusNotificationService.postApprove(buildBaseRequisitionDto(requisition));
+    // todo siglusNotificationService.postApprove(buildBaseRequisitionDto(requisition));
   }
 
   private BasicRequisitionDto buildBaseRequisitionDto(Requisition requisition) {
