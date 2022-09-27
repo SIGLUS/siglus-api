@@ -32,14 +32,19 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.siglus.siglusapi.localmachine.CommonConstants;
 import org.siglus.siglusapi.localmachine.domain.AgentInfo;
 import org.siglus.siglusapi.localmachine.repository.AgentInfoRepository;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.client.ClientHttpRequestExecution;
+import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.mock.http.client.MockClientHttpRequest;
+import org.springframework.mock.http.client.MockClientHttpResponse;
 
 @RunWith(MockitoJUnitRunner.class)
 public class LocalTokenInterceptorTest {
   private static final KeyPair keyPair = Keys.keyPairFor(SignatureAlgorithm.RS256);
-  @InjectMocks private LocalTokenInterceptor interceptor;
-  @Mock private AgentInfoRepository agentInfoRepository;
+  @InjectMocks
+  private LocalTokenInterceptor interceptor;
+  @Mock
+  private AgentInfoRepository agentInfoRepository;
 
   @Test
   public void shouldAddHeadersWhenIntercept() throws IOException {
@@ -52,8 +57,12 @@ public class LocalTokenInterceptorTest {
                 .privateKey(keyPair.getPrivate().getEncoded())
                 .build());
     MockClientHttpRequest request = new MockClientHttpRequest();
+    ClientHttpRequestExecution execution;
+    try (ClientHttpResponse response = new MockClientHttpResponse(new byte[] {1, 2}, HttpStatus.BAD_REQUEST)) {
+      execution = (request1, body) -> response;
+    }
     // when
-    interceptor.intercept(request, new byte[0], mock(ClientHttpRequestExecution.class));
+    interceptor.intercept(request, new byte[0], execution);
     // then
     assertThat(request.getHeaders()).containsKey(CommonConstants.VERSION);
     assertThat(request.getHeaders()).containsKey(CommonConstants.ACCESS_TOKEN);
