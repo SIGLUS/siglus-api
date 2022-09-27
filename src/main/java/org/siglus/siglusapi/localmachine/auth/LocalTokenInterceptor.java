@@ -67,7 +67,7 @@ public class LocalTokenInterceptor implements ClientHttpRequestInterceptor {
   @SneakyThrows
   private void logClientHttpResponse(HttpRequest request, ClientHttpResponse httpResponse) {
     HttpStatus statusCode = httpResponse.getStatusCode();
-    if (statusCode.is4xxClientError() || statusCode.is5xxServerError()) {
+    if (!statusCode.is2xxSuccessful()) {
       StringBuilder bodyStringBuilder = new StringBuilder();
       BufferedReader inputStreamReader = new BufferedReader(new InputStreamReader(httpResponse.getBody(),
           StandardCharsets.UTF_8));
