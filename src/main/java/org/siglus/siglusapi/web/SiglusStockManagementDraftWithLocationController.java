@@ -22,6 +22,7 @@ import static org.springframework.http.HttpStatus.OK;
 import java.util.List;
 import java.util.UUID;
 import org.siglus.siglusapi.dto.MergedLineItemWithLocationDto;
+import org.siglus.siglusapi.dto.StockManagementDraftDto;
 import org.siglus.siglusapi.dto.StockManagementDraftWithLocationDto;
 import org.siglus.siglusapi.dto.StockManagementInitialDraftDto;
 import org.siglus.siglusapi.service.SiglusStockManagementDraftService;
@@ -67,6 +68,13 @@ public class SiglusStockManagementDraftWithLocationController {
   public StockManagementDraftWithLocationDto updateDraft(@PathVariable UUID id,
       @RequestBody StockManagementDraftWithLocationDto dto) {
     return stockManagementDraftService.updateDraftWithLocation(dto, id);
+  }
+
+  @PutMapping("/{initialDraftId}/subDraft/{id}/info")
+  @ResponseStatus(OK)
+  public StockManagementDraftDto restoreSubDraftWhenDoDelete(
+      @RequestBody StockManagementDraftDto dto) {
+    return stockManagementDraftService.restoreSubDraftWhenDoDelete(dto);
   }
 
   @PutMapping("/{initialDraftId}/subDraft/{subDraftId}/submit")
