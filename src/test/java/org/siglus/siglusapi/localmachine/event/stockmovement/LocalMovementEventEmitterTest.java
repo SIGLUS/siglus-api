@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.localmachine.event.stockmovement;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.anyList;
 import static org.mockito.Mockito.when;
 
@@ -47,5 +48,8 @@ public class LocalMovementEventEmitterTest {
 
     // when
     emitter.on(anyList());
+
+    // then
+    assertThat(emitter.acceptedTables().length).isGreaterThan(0);
   }
 }

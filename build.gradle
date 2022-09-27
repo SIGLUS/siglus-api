@@ -251,7 +251,6 @@ def jacocoTestExclusion = [
         'org/siglus/siglusapi/dto',
         'org/siglus/siglusapi/config',
         'org/siglus/siglusapi/errorhandling',
-        'org/siglus/siglusapi/localmachine/event/stockmovement',
         'org/siglus/siglusapi/service/SiglusLocalIssueVoucherService.class'
 ]
 
