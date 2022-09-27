@@ -2756,6 +2756,40 @@ traits:
             body:
               application/json:
                 schema: localizedMessage
+      /print:
+        get:
+          is: [ secured ]
+          description: >
+            Print all order line items from an order to a csv or pdf file. This endpoint
+            requires one of the following rights: ORDERS_EDIT, ORDERS_VIEW, SHIPMENT_EDIT,
+            SHIPMENT_VIEW (for supplying facility) POD_MANAGE, POD_VIEW (for requesting
+            facility)
+          queryParameters:
+            format:
+              displayName: format
+              type: string
+              required: true
+              repeat: false
+          responses:
+            200:
+              headers:
+                Content-Disposition:
+                Keep-Alive:
+              body:
+                application/pdf:
+                text/csv:
+            404:
+              headers:
+                Keep-Alive:
+              body:
+                application/json:
+                  schema: localizedMessage
+            403:
+              headers:
+                Keep-Alive:
+              body:
+                application/json:
+                  schema: localizedMessage
     /orders/{id}/suggestedQuantity:
       uriParameters:
         id:
@@ -2814,40 +2848,7 @@ traits:
             body:
               application/json:
                 schema: localizedMessagepickPackInfo
-      /print:
-        get:
-          is: [ secured ]
-          description: >
-            Print all order line items from an order to a csv or pdf file. This endpoint
-            requires one of the following rights: ORDERS_EDIT, ORDERS_VIEW, SHIPMENT_EDIT,
-            SHIPMENT_VIEW (for supplying facility) POD_MANAGE, POD_VIEW (for requesting
-            facility)
-          queryParameters:
-            format:
-              displayName: format
-              type: string
-              required: true
-              repeat: false
-          responses:
-            200:
-              headers:
-                Content-Disposition:
-                Keep-Alive:
-              body:
-                application/pdf:
-                text/csv:
-            404:
-              headers:
-                Keep-Alive:
-              body:
-                application/json:
-                  schema: localizedMessage
-            403:
-              headers:
-                Keep-Alive:
-              body:
-                application/json:
-                  schema: localizedMessage
+
       /export:
         get:
           is: [ secured ]
