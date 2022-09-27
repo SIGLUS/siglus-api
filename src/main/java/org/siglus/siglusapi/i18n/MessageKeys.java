@@ -130,6 +130,10 @@ public abstract class MessageKeys {
   public static final String ERROR_MOVEMENT_QUANTITY_LESS_THAN_STOCK_ON_HAND =
       PRODUCT_LOCATION_MOVEMENT_ERROR_PREFIX + ".movement.quantity.less.than.stock.on.hand";
 
+  //convert to order
+  public static final String ERROR_REQUISITION_EXPIRED = ERROR_PREFIX + ".requisition.expired";
+  public static final String ERROR_PERIOD_NOT_FOUND = ERROR_PREFIX + ".period.not.found";
+
   //location
   public static final String ERROR_LOCATIONS_BY_FACILITY_NOT_FOUND =
       ERROR_PREFIX + ".locations.by.facility.not.found";

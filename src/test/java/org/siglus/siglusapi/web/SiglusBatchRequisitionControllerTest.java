@@ -27,7 +27,7 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.requisition.dto.ReleasableRequisitionBatchDto;
 import org.openlmis.requisition.dto.RequisitionsProcessingStatusDto;
-import org.openlmis.requisition.web.BatchRequisitionController;
+import org.siglus.siglusapi.service.BatchReleaseRequisitionService;
 import org.siglus.siglusapi.service.SiglusNotificationService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -39,7 +39,7 @@ public class SiglusBatchRequisitionControllerTest {
   private SiglusBatchRequisitionController controller;
 
   @Mock
-  private BatchRequisitionController actualController;
+  private BatchReleaseRequisitionService batchReleaseRequisitionService;
 
   private ReleasableRequisitionBatchDto releasableRequisitionBatchDto;
 
@@ -55,11 +55,11 @@ public class SiglusBatchRequisitionControllerTest {
   @Test
   public void shouldCallOpenlmisControllerWhenBatchReleaseRequisitions() {
     RequisitionsProcessingStatusDto dto = new RequisitionsProcessingStatusDto();
-    when(actualController.batchReleaseRequisitions(any()))
+    when(batchReleaseRequisitionService.getRequisitionsProcessingStatusDtoResponse(any()))
         .thenReturn(new ResponseEntity<>(dto, HttpStatus.OK));
     controller.batchReleaseRequisitions(releasableRequisitionBatchDto);
 
-    verify(actualController).batchReleaseRequisitions(releasableRequisitionBatchDto);
+    verify(batchReleaseRequisitionService).getRequisitionsProcessingStatusDtoResponse(releasableRequisitionBatchDto);
   }
 
 }

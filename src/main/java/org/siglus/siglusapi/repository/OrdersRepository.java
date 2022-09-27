@@ -15,8 +15,10 @@
 
 package org.siglus.siglusapi.repository;
 
+import java.util.List;
 import java.util.UUID;
 import org.openlmis.fulfillment.domain.Order;
+import org.openlmis.fulfillment.domain.OrderStatus;
 import org.siglus.siglusapi.repository.dto.OrderDto;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -31,4 +33,7 @@ public interface OrdersRepository extends JpaRepository<Order, UUID> {
   OrderDto findOrderDtoById(@Param("orderId") UUID orderId);
 
   Order findByOrderCode(String orderCode);
+
+  List<Order> findBySupplyingFacilityIdAndProgramIdAndStatusIn(UUID supplyingFacilityId, UUID programId,
+      List<OrderStatus> statuses);
 }
