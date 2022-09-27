@@ -19,9 +19,9 @@ import static io.debezium.data.Envelope.FieldName.AFTER;
 import static io.debezium.data.Envelope.FieldName.BEFORE;
 import static io.debezium.data.Envelope.FieldName.OPERATION;
 import static io.debezium.data.Envelope.Operation;
-import static java.util.stream.Collectors.toMap;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Maps;
 import io.debezium.config.Configuration;
 import io.debezium.embedded.Connect;
 import io.debezium.engine.DebeziumEngine;
@@ -46,7 +46,6 @@ import javax.annotation.PreDestroy;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.kafka.connect.data.Field;
 import org.apache.kafka.connect.data.Struct;
 import org.apache.kafka.connect.source.SourceRecord;
@@ -116,11 +115,11 @@ public class CdcScraper {
   private Map<String, Object> extractPayload(Struct sourceRecordChangeValue, Operation operation) {
     String record = getRecordName(operation);
     Struct struct = (Struct) sourceRecordChangeValue.get(record);
-    return struct.schema().fields().stream()
+    Map<String, Object> payload = Maps.newHashMap();
+    struct.schema().fields().stream()
         .map(Field::name)
-        .filter(fieldName -> Objects.nonNull(struct.get(fieldName)))
-        .map(fieldName -> Pair.of(fieldName, struct.get(fieldName)))
-        .collect(toMap(Pair::getKey, Pair::getValue));
+        .forEach(filedName -> payload.put(filedName, struct.get(filedName)));
+    return payload;
   }
 
   String getRecordName(Operation operation) {
