@@ -73,12 +73,14 @@ import org.openlmis.stockmanagement.repository.StockCardLineItemRepository;
 import org.openlmis.stockmanagement.repository.StockCardRepository;
 import org.siglus.siglusapi.domain.OrderLineItemExtension;
 import org.siglus.siglusapi.domain.ProofsOfDeliveryExtension;
+import org.siglus.siglusapi.domain.StockCardLineItemExtension;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.ProofsOfDeliveryExtensionRepository;
 import org.siglus.siglusapi.repository.ShipmentLineItemsExtensionRepository;
 import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
+import org.siglus.siglusapi.repository.StockCardLineItemExtensionRepository;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.web.request.ShipmentExtensionRequest;
 
@@ -142,6 +144,9 @@ public class SiglusShipmentServiceTest {
 
   @Mock
   private StockCardRepository stockCardRepository;
+
+  @Mock
+  private StockCardLineItemExtensionRepository stockCardLineItemExtensionRepository;
 
   private final UUID orderId = UUID.randomUUID();
 
@@ -474,6 +479,8 @@ public class SiglusShipmentServiceTest {
     verify(shipmentLineItemsExtensionRepository, times(0)).save(Lists.newArrayList());
     verify(calculatedStocksOnHandByLocationService, times(0))
         .calculateStockOnHandByLocationForShipment(Lists.newArrayList(), facilityId);
+    verify(stockCardLineItemExtensionRepository, times(0))
+        .save(Lists.newArrayList(buildStockCardLineItemExtension()));
   }
 
   private ShipmentDto createShipmentDto() {
@@ -572,6 +579,15 @@ public class SiglusShipmentServiceTest {
         .podId(podId)
         .preparedBy(preparedBy)
         .conferredBy(conferredBy)
+        .build();
+  }
+
+  private StockCardLineItemExtension buildStockCardLineItemExtension() {
+    return StockCardLineItemExtension
+        .builder()
+        .stockCardLineItemId(lineItemId)
+        .locationCode("ABC")
+        .area("DEF")
         .build();
   }
 

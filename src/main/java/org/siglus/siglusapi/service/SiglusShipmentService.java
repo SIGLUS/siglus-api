@@ -53,12 +53,14 @@ import org.openlmis.stockmanagement.repository.StockCardRepository;
 import org.siglus.siglusapi.domain.OrderLineItemExtension;
 import org.siglus.siglusapi.domain.ProofsOfDeliveryExtension;
 import org.siglus.siglusapi.domain.ShipmentLineItemsExtension;
+import org.siglus.siglusapi.domain.StockCardLineItemExtension;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.ProofsOfDeliveryExtensionRepository;
 import org.siglus.siglusapi.repository.ShipmentLineItemsExtensionRepository;
 import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
+import org.siglus.siglusapi.repository.StockCardLineItemExtensionRepository;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.web.request.ShipmentExtensionRequest;
 import org.springframework.stereotype.Service;
@@ -92,6 +94,8 @@ public class SiglusShipmentService {
   private final StockCardLineItemRepository stockCardLineItemRepository;
 
   private final StockCardRepository stockCardRepository;
+
+  private final StockCardLineItemExtensionRepository stockCardLineItemExtensionRepository;
 
   @Transactional
   public ShipmentDto createOrderAndShipment(boolean isSubOrder, ShipmentExtensionRequest shipmentExtensionRequest) {
