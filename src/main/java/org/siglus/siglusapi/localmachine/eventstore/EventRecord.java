@@ -92,6 +92,7 @@ public class EventRecord {
         .payload(payloadMapper.apply(payload))
         .onlineWebSynced(onlineWebSynced)
         .receiverSynced(receiverSynced)
+        .localReplayed(localReplayed)
         .build();
   }
 }
