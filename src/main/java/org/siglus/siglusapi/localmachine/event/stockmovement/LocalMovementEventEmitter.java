@@ -43,6 +43,7 @@ public class LocalMovementEventEmitter implements CdcListener {
         "stockmanagement.physical_inventories",
         "stockmanagement.physical_inventory_line_items",
         "stockmanagement.calculated_stocks_on_hand",
+        "stockmanagement.physical_inventory_line_item_adjustments",
         "siglusintegration.stock_card_extension",
         "referencedata.lots"
     };
