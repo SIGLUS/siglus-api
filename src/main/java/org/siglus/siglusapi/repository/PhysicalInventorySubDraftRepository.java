@@ -20,6 +20,8 @@ import java.util.List;
 import java.util.UUID;
 import org.siglus.siglusapi.domain.PhysicalInventorySubDraft;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 
 public interface PhysicalInventorySubDraftRepository extends
@@ -33,4 +35,8 @@ public interface PhysicalInventorySubDraftRepository extends
 
   @Transactional
   void deletePhysicalInventorySubDraftsByPhysicalInventoryId(UUID physicalInventoryId);
+
+  @Query(value = "select max(number) from siglusintegration.physical_inventory_sub_draft "
+          + "where physicalinventoryid = :physicalInventoryId", nativeQuery = true)
+  Integer findSplitNumberByPhysicalInventoryId(@Param("physicalInventoryId") UUID physicalInventoryId);
 }

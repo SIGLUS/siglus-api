@@ -427,7 +427,7 @@ public class SiglusPhysicalInventoryService {
     return buildPhysicalInventoryValidationDto(true, Lists.newArrayList());
   }
 
-  private List<List<PhysicalInventoryLineItemDto>> groupByProductCode(List<PhysicalInventoryLineItemDto> lineItemDtos) {
+  public List<List<PhysicalInventoryLineItemDto>> groupByProductCode(List<PhysicalInventoryLineItemDto> lineItemDtos) {
 
     List<List<PhysicalInventoryLineItemDto>> list = new LinkedList<>();
     Map<UUID, List<PhysicalInventoryLineItemDto>> orderableIdToLineItemsMap = lineItemDtos.stream()

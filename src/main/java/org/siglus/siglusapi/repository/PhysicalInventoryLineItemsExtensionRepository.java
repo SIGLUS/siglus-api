@@ -30,12 +30,18 @@ public interface PhysicalInventoryLineItemsExtensionRepository extends
 
   List<PhysicalInventoryLineItemsExtension> findByPhysicalInventoryId(UUID id);
 
+  List<PhysicalInventoryLineItemsExtension> findByPhysicalInventoryIdAndSubDraftId(
+          UUID physicalInventoryId, UUID subDraftId);
+
   Optional<PhysicalInventoryLineItemsExtension> findFirstBySubDraftId(UUID subDraftId);
 
 
 
   @Transactional
   void deleteByPhysicalInventoryIdIn(Collection<UUID> ids);
+
+  @Transactional
+  void deleteBySubDraftId(UUID subDraftId);
 
   List<PhysicalInventoryLineItemsExtension> findBySubDraftIdIn(List<UUID> subDraftUuids);
 }

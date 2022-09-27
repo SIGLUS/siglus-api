@@ -23,6 +23,7 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -45,6 +46,10 @@ import org.openlmis.fulfillment.web.shipment.ShipmentLineItemDto;
 import org.openlmis.fulfillment.web.util.OrderDto;
 import org.openlmis.fulfillment.web.util.OrderLineItemDto;
 import org.openlmis.fulfillment.web.util.OrderObjectReferenceDto;
+import org.openlmis.stockmanagement.domain.card.StockCard;
+import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
+import org.openlmis.stockmanagement.repository.StockCardLineItemRepository;
+import org.openlmis.stockmanagement.repository.StockCardRepository;
 import org.siglus.siglusapi.domain.OrderLineItemExtension;
 import org.siglus.siglusapi.domain.ProofsOfDeliveryExtension;
 import org.siglus.siglusapi.domain.ShipmentLineItemsExtension;
@@ -83,6 +88,10 @@ public class SiglusShipmentService {
   private final SiglusProofOfDeliveryRepository siglusProofOfDeliveryRepository;
 
   private final ProofsOfDeliveryExtensionRepository proofsOfDeliveryExtensionRepository;
+
+  private final StockCardLineItemRepository stockCardLineItemRepository;
+
+  private final StockCardRepository stockCardRepository;
 
   @Transactional
   public ShipmentDto createOrderAndShipment(boolean isSubOrder, ShipmentExtensionRequest shipmentExtensionRequest) {
@@ -123,6 +132,7 @@ public class SiglusShipmentService {
     calculatedStocksOnHandByLocationService.calculateStockOnHandByLocationForShipment(confirmedShipmentDto.lineItems(),
         facilityId);
     savePodExtension(confirmedShipmentDto.getId(), shipmentExtensionRequest);
+    saveShipmentLineItemsWithLocation(confirmedShipmentDto.lineItems(), facilityId);
     return confirmedShipmentDto;
   }
 
@@ -280,6 +290,45 @@ public class SiglusShipmentService {
 
     log.info("update orderId: {}, orderLineItem: {}", order.getId(), original);
     orderRepository.save(order);
+  }
+
+  private void saveShipmentLineItemsWithLocation(List<ShipmentLineItemDto> shipmentLineItems, UUID facilityId) {
+    Map<UUID, UUID> shipmentLineItemIdToStockCardId = new HashMap<>();
+    Map<UUID, ShipmentLineItemDto> shipmentLineItemIdToDto = new HashMap<>();
+    shipmentLineItems.forEach(shipmentLineItem -> {
+      UUID orderableId = shipmentLineItem.getOrderable().getId();
+      UUID lotId = shipmentLineItem.getLotId();
+      StockCard stockCard = stockCardRepository.findByFacilityIdAndOrderableIdAndLotId(
+          facilityId, orderableId, lotId);
+      shipmentLineItemIdToStockCardId.put(shipmentLineItem.getId(), stockCard.getId());
+      shipmentLineItemIdToDto.put(shipmentLineItem.getId(), shipmentLineItem);
+    });
+
+    List<StockCardLineItem> stockCardLineItems = stockCardLineItemRepository
+        .findLatestByStockCardIds(shipmentLineItemIdToStockCardId.values());
+    Map<UUID, StockCardLineItem> shipmentLineItemIdToStockCardLineItem = new HashMap<>();
+    shipmentLineItemIdToStockCardId.forEach((shipmentLineItemId, stockCardId) -> {
+      stockCardLineItems.stream()
+          .filter(m -> m.getStockCard().getId().equals(stockCardId))
+          .findFirst()
+          .ifPresent(
+              stockCardLineItem -> shipmentLineItemIdToStockCardLineItem.put(shipmentLineItemId, stockCardLineItem));
+    });
+
+    List<StockCardLineItemExtension> stockCardLineItemExtensions = Lists.newArrayList();
+    shipmentLineItemIdToStockCardLineItem.forEach((shipmentLineItemId, stockCardLineItem) -> {
+      if (shipmentLineItemIdToDto.containsKey(shipmentLineItemId)) {
+        StockCardLineItemExtension stockCardLineItemExtension = StockCardLineItemExtension
+            .builder()
+            .stockCardLineItemId(stockCardLineItem.getId())
+            .locationCode(shipmentLineItemIdToDto.get(shipmentLineItemId).getLocation().getLocationCode())
+            .area(shipmentLineItemIdToDto.get(shipmentLineItemId).getLocation().getArea())
+            .build();
+        stockCardLineItemExtensions.add(stockCardLineItemExtension);
+      }
+    });
+    log.info("save to stock card line item by location; size: {}", stockCardLineItemExtensions.size());
+    stockCardLineItemExtensionRepository.save(stockCardLineItemExtensions);
   }
 
   private void savePodExtension(UUID shipmentId, ShipmentExtensionRequest shipmentExtensionRequest) {
