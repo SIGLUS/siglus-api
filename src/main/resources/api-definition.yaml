@@ -246,6 +246,12 @@ traits:
 /api:
 
   /siglusapi:
+    /internet:
+      get:
+        is: [ secured ]
+        responses:
+          200:
+            description: get internet status
     /localmachine:
       /server:
         /agents:
