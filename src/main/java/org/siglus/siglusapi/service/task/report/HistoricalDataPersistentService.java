@@ -15,13 +15,21 @@
 
 package org.siglus.siglusapi.service.task.report;
 
-import java.util.Date;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.siglus.siglusapi.repository.HistoricalDataRepository;
+import org.siglus.siglusapi.repository.dto.FacilityLastRequisitionTimeDto;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.ObjectUtils;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -33,9 +41,44 @@ public class HistoricalDataPersistentService {
   @Transactional
   @Async
   public void refreshHistoricalDataReport() {
-    log.info("historical data persistentData refresh. start at {} ", new Date());
-    historicalDataRepository.insertDataFromLastUpdateDate();
+    log.info("historical data persistentData refresh. start at {} ", LocalDateTime.now());
+    historicalDataRepository.deleteAll();
+    updateHistoricalData(new HashMap<>());
     long count = historicalDataRepository.count();
-    log.info("historical data persistentData  refresh. end at {}, data quanrity is {}", new Date(), count);
+    log.info("historical data persistentData refresh. end at {}, data quanrity is {}", LocalDateTime.now(), count);
+  }
+
+  @Transactional
+  @Async
+  public void updateAllFacilityHistoricalData() {
+    updateHistoricalData(null);
+  }
+
+  @Transactional
+  @Async
+  public void updateHistoricalDataByFacility(Map<UUID, LocalDate> facilityIdEndDateMap) {
+    updateHistoricalData(facilityIdEndDateMap);
+  }
+
+  public void updateHistoricalData(Map<UUID, LocalDate> requestMap) {
+    List<FacilityLastRequisitionTimeDto> facilityLatestRequisitionDateList;
+    if (ObjectUtils.isEmpty(requestMap) || requestMap.size() == 0) {
+      facilityLatestRequisitionDateList = historicalDataRepository.getFacilityLatestRequisitionDate();
+    } else {
+      Set<UUID> facilityIds = requestMap.keySet();
+      facilityLatestRequisitionDateList = historicalDataRepository.getFacilityLatestRequisitionDate(facilityIds);
+    }
+    for (FacilityLastRequisitionTimeDto facilityLastRequisitionTimeDto : facilityLatestRequisitionDateList) {
+      LocalDate startDate = facilityLastRequisitionTimeDto.getLastRequisitionDate();
+      LocalDate endDate =
+          ObjectUtils.isEmpty(requestMap) ? null : requestMap.get(facilityLastRequisitionTimeDto.getFacilityId());
+      log.info("update facility {} historical data start at {}", facilityLastRequisitionTimeDto.getFacilityId(),
+          LocalDateTime.now());
+      historicalDataRepository.updateFacilityHistoricalData(facilityLastRequisitionTimeDto.getFacilityId(),
+          startDate == null ? LocalDate.of(1970, 1, 1) : startDate,
+          endDate == null ? LocalDate.of(2099, 12, 31) : endDate);
+      log.info("finish update facility {} historical data start at {}", facilityLastRequisitionTimeDto.getFacilityId(),
+          LocalDateTime.now());
+    }
   }
 }

@@ -15,26 +15,39 @@
 
 package org.siglus.siglusapi.web.report;
 
-import lombok.RequiredArgsConstructor;
-import org.siglus.siglusapi.interceptor.OperationGuardAspect.Guarded;
+import java.time.LocalDate;
+import java.util.Map;
+import java.util.UUID;
+import lombok.AllArgsConstructor;
 import org.siglus.siglusapi.service.task.report.HistoricalDataPersistentService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-@RequiredArgsConstructor
+@AllArgsConstructor
 @RestController
 @RequestMapping("/api/siglusapi/report/historicalData")
 public class HistoricalDataReportController {
-  @Autowired
-  private HistoricalDataPersistentService historicalDataPersistentService;
+
+  private final HistoricalDataPersistentService historicalDataPersistentService;
 
   @PostMapping("/refresh")
-  @Guarded
   public ResponseEntity<String> refresh() {
     historicalDataPersistentService.refreshHistoricalDataReport();
+    return ResponseEntity.ok("refresh begin");
+  }
+
+  @PostMapping("/updateAll")
+  public ResponseEntity<String> updateAll() {
+    historicalDataPersistentService.updateAllFacilityHistoricalData();
+    return ResponseEntity.ok("refresh begin");
+  }
+
+  @PostMapping("/updateByFacility")
+  public ResponseEntity<String> update(@RequestBody Map<UUID, LocalDate> request) {
+    historicalDataPersistentService.updateHistoricalDataByFacility(request);
     return ResponseEntity.ok("refresh begin");
   }
 }
