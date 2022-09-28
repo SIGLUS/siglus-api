@@ -34,7 +34,8 @@ public interface HistoricalDataRepository extends
   void insertDataFromLastUpdateDate();
 
   @Query(name = "HistoricalDateService.getFacilityLatestRequisitionDateByFacilitys", nativeQuery = true)
-  List<FacilityLastRequisitionTimeDto> getFacilityLatestRequisitionDate(@Param("facilityIds") Collection<UUID> facilityIds);
+  List<FacilityLastRequisitionTimeDto> getFacilityLatestRequisitionDate(
+      @Param("facilityIds") Collection<UUID> facilityIds);
 
   @Query(name = "HistoricalDateService.getFacilityLatestRequisitionDate", nativeQuery = true)
   List<FacilityLastRequisitionTimeDto> getFacilityLatestRequisitionDate();
