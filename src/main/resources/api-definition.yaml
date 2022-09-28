@@ -665,6 +665,32 @@ traits:
               application/json:
                 schema: localizedMessage
 
+    /draftsWithLocation/{initialDraftId}/subDraft/{subDraftId}/info:
+      put:
+        is: [ secured ]
+        description: restore a stock management sub-draft.
+        body:
+          application/json:
+            schema: stockManagementDraft
+
+        responses:
+          200:
+            description: Draft restored.
+            body:
+              application/json:
+                schema: stockManagementDraft
+          400:
+            body:
+              application/json:
+                schema: localizedMessage
+            description: An error occured during request processing.
+
+          403:
+            description: User does not have permission to restored stock management sub-draft with Location.
+            body:
+              application/json:
+                schema: localizedMessage
+
     /draftsWithLocation/{initialDraftId}/subDraft/merge:
       get:
         is: [ secured ]
