@@ -33,6 +33,6 @@ public class HistoricalDataPersistentDataTask {
   @SchedulerLock(name = "historical_data_refresh_monthly")
   @Transactional
   public void monthlyRefreshForTracerDrugReport() {
-    historicalDataPersistentService.refreshHistoricalDataReport();
+    historicalDataPersistentService.updateAllFacilityHistoricalData();
   }
 }

@@ -19,6 +19,7 @@ import java.time.LocalDate;
 import java.util.Map;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
+import org.siglus.siglusapi.interceptor.OperationGuardAspect.Guarded;
 import org.siglus.siglusapi.service.task.report.HistoricalDataPersistentService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -34,18 +35,21 @@ public class HistoricalDataReportController {
   private final HistoricalDataPersistentService historicalDataPersistentService;
 
   @PostMapping("/refresh")
+  @Guarded
   public ResponseEntity<String> refresh() {
     historicalDataPersistentService.refreshHistoricalDataReport();
     return ResponseEntity.ok("refresh begin");
   }
 
   @PostMapping("/updateAll")
+  @Guarded
   public ResponseEntity<String> updateAll() {
     historicalDataPersistentService.updateAllFacilityHistoricalData();
     return ResponseEntity.ok("refresh begin");
   }
 
   @PostMapping("/updateByFacility")
+  @Guarded
   public ResponseEntity<String> update(@RequestBody Map<UUID, LocalDate> request) {
     historicalDataPersistentService.updateHistoricalDataByFacility(request);
     return ResponseEntity.ok("refresh begin");
