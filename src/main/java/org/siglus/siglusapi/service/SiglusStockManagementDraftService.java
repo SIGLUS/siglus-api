@@ -119,10 +119,11 @@ public class SiglusStockManagementDraftService {
   @Transactional
   public StockManagementDraftWithLocationDto updateDraftWithLocation(StockManagementDraftWithLocationDto subDraftDto,
       UUID id) {
-
     stockManagementDraftValidator.validateDraft(StockManagementDraftDto.from(subDraftDto), id);
-    if (subDraftDto.getDraftType().equals(FieldConstants.ISSUE)
-        || subDraftDto.getDraftType().equals(FieldConstants.RECEIVE)) {
+    if (FieldConstants.ISSUE.equals(subDraftDto.getDraftType())
+        || FieldConstants.RECEIVE.equals(subDraftDto.getDraftType())
+        || FieldConstants.ISSUE_WITH_LOCATION.equals(subDraftDto.getDraftType())
+        || FieldConstants.RECEIVE_WITH_LOCATION.equals(subDraftDto.getDraftType())) {
       StockManagementDraft subDraft = stockManagementDraftRepository.findOne(id);
       draftValidator.validateSubDraftStatus(subDraft);
       conflictOrderableInSubDraftsService.checkConflictOrderableBetweenSubDrafts(StockManagementDraftDto
