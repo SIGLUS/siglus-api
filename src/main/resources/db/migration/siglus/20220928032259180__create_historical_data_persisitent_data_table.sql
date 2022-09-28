@@ -5,7 +5,7 @@
 -- Not all database features are supported. Do not use for backup.
 
 -- Table Definition ----------------------------------------------
-drop Materialized view if exists dashboard.vw_historical_data
+drop Materialized view if exists dashboard.vw_historical_data;
 CREATE TABLE dashboard.historical_data_persistent_data (
                                                            id uuid PRIMARY KEY,
                                                            periodid uuid,
