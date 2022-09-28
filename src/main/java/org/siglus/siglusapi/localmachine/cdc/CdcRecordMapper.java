@@ -17,6 +17,7 @@ package org.siglus.siglusapi.localmachine.cdc;
 
 import io.debezium.data.Envelope.Operation;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.siglus.siglusapi.localmachine.cdc.TableChangeEvent.RowChangeEvent;
@@ -25,6 +26,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class CdcRecordMapper {
+
   // todo: schema version using the latest flyway version? checksum of table schema
   private String schemaVersion = "todo";
 
@@ -36,7 +38,7 @@ public class CdcRecordMapper {
 
   protected TableChangeEvent buildChangeEvent(List<CdcRecord> cdcRecords) {
     CdcRecord first = cdcRecords.get(0);
-    List<String> columns = new ArrayList<>(first.getPayload().keySet());
+    List<String> columns = getColumn(cdcRecords);
     TableChangeEventBuilder eventBuilder =
         TableChangeEvent.builder()
             .schemaName(first.getSchema())
@@ -55,5 +57,12 @@ public class CdcRecordMapper {
     List<Object> values =
         columns.stream().map(column -> v.getPayload().get(column)).collect(Collectors.toList());
     return new RowChangeEvent(isDeletion, values);
+  }
+
+  private List<String> getColumn(List<CdcRecord> cdcRecords) {
+    return new ArrayList<>(cdcRecords.stream()
+        .max(Comparator.comparingInt(cdcRecord -> cdcRecord.getPayload().size()))
+        .orElseThrow(() -> new IllegalStateException("no cdc records"))
+        .getPayload().keySet());
   }
 }
