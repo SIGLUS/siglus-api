@@ -171,10 +171,12 @@ public class SiglusAdministrationsService {
           .facilityCode(siglusFacilityDto.getCode())
           .enableLocationManagement(siglusFacilityDto.getEnableLocationManagement())
           .isAndroid(siglusFacilityDto.getIsAndroidDevice())
+          .isLocalMachine(siglusFacilityDto.getIsLocalMachine())
           .build();
     } else {
       facilityExtension.setIsAndroid(siglusFacilityDto.getIsAndroidDevice());
       facilityExtension.setEnableLocationManagement(siglusFacilityDto.getEnableLocationManagement());
+      facilityExtension.setIsLocalMachine(siglusFacilityDto.getIsLocalMachine());
     }
     log.info("The facility extension info has changed; facilityId: {}", facilityId);
     facilityExtensionRepository.save(facilityExtension);
