@@ -2790,6 +2790,41 @@ traits:
               body:
                 application/json:
                   schema: localizedMessage
+      /export:
+        get:
+          is: [ secured ]
+          description: >
+            Export Order to csv. This endpoint requires one of the following rights:
+            ORDERS_EDIT, ORDERS_VIEW, SHIPMENT_EDIT, SHIPMENT_VIEW (for supplying
+            facility) POD_MANAGE, POD_VIEW (for requesting facility)
+          queryParameters:
+            type:
+              displayName: type
+              type: string
+              required: false
+              default: csv
+              repeat: false
+          responses:
+            200:
+              headers:
+                Content-Disposition:
+                Keep-Alive:
+              body:
+                text/csv:
+            400:
+              body:
+                application/json:
+            403:
+              headers:
+                Keep-Alive:
+              body:
+                application/json:
+                  schema: localizedMessage
+            404:
+              headers:
+                Keep-Alive:
+              body:
+                application/json:
     /orders/{id}/suggestedQuantity:
       uriParameters:
         id:
@@ -2849,41 +2884,7 @@ traits:
               application/json:
                 schema: localizedMessagepickPackInfo
 
-      /export:
-        get:
-          is: [ secured ]
-          description: >
-            Export Order to csv. This endpoint requires one of the following rights:
-            ORDERS_EDIT, ORDERS_VIEW, SHIPMENT_EDIT, SHIPMENT_VIEW (for supplying
-            facility) POD_MANAGE, POD_VIEW (for requesting facility)
-          queryParameters:
-            type:
-              displayName: type
-              type: string
-              required: false
-              default: csv
-              repeat: false
-          responses:
-            200:
-              headers:
-                Content-Disposition:
-                Keep-Alive:
-              body:
-                text/csv:
-            400:
-              body:
-                application/json:
-            403:
-              headers:
-                Keep-Alive:
-              body:
-                application/json:
-                  schema: localizedMessage
-            404:
-              headers:
-                Keep-Alive:
-              body:
-                application/json:
+
     /orders/createLineItem:
       post:
         is: [ secured, idempotent ]
