@@ -19,7 +19,6 @@ import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
-import javax.annotation.Nullable;
 import org.siglus.siglusapi.domain.HistoricalDataPersistent;
 import org.siglus.siglusapi.repository.dto.FacilityLastRequisitionTimeDto;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -35,7 +34,7 @@ public interface HistoricalDataRepository extends
   void insertDataFromLastUpdateDate();
 
   @Query(name = "HistoricalDateService.getFacilityLatestRequisitionDateByFacilitys", nativeQuery = true)
-  List<FacilityLastRequisitionTimeDto> getFacilityLatestRequisitionDate(@Nullable Collection<UUID> facilityIds);
+  List<FacilityLastRequisitionTimeDto> getFacilityLatestRequisitionDate(@Param("facilityIds") Collection<UUID> facilityIds);
 
   @Query(name = "HistoricalDateService.getFacilityLatestRequisitionDate", nativeQuery = true)
   List<FacilityLastRequisitionTimeDto> getFacilityLatestRequisitionDate();

@@ -761,12 +761,31 @@ traits:
           200:
             description: success
     /report/historicalData/refresh:
-      displayName: refresh historical data persistent data task
+      displayName: refresh historical data persistent data
       post:
         is: [ secured ]
         body:
           application/json:
             schema: arrayOfStrings
+        responses:
+          201:
+            description: submit success
+    /report/historicalData/updateAll:
+      displayName: update all facility historical data persistent data
+      post:
+        is: [ secured ]
+        body:
+          application/json:
+        responses:
+          201:
+            description: submit success
+    /report/historicalData/updateByFacility:
+      displayName: update historical data persistent data by facility
+      post:
+        is: [ secured ]
+        body:
+          application/json:
+            schema: Map
         responses:
           201:
             description: submit success
