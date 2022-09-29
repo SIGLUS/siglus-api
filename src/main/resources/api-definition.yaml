@@ -530,7 +530,7 @@ traits:
                 description: all subDrafts deleted.
           /{subDraftId}:
             get:
-              is: [secured]
+              is: [ secured ]
               responses:
                 201:
                   description: get subdraft filling page detail
@@ -802,6 +802,7 @@ traits:
         is: [ secured ]
         body:
           application/json:
+            schema:
         responses:
           201:
             description: submit success
@@ -811,7 +812,7 @@ traits:
         is: [ secured ]
         body:
           application/json:
-            schema: Map
+            schema: listOfHistoricalDataRequest
         responses:
           201:
             description: submit success

@@ -15,12 +15,11 @@
 
 package org.siglus.siglusapi.web.report;
 
-import java.time.LocalDate;
-import java.util.Map;
-import java.util.UUID;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import org.siglus.siglusapi.interceptor.OperationGuardAspect.Guarded;
 import org.siglus.siglusapi.service.task.report.HistoricalDataPersistentService;
+import org.siglus.siglusapi.web.request.HistoricalDataRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -50,8 +49,9 @@ public class HistoricalDataReportController {
 
   @PostMapping("/updateByFacility")
   @Guarded
-  public ResponseEntity<String> update(@RequestBody Map<UUID, LocalDate> request) {
-    historicalDataPersistentService.updateHistoricalDataByFacility(request);
+  // TODO: 2022/9/28 param name  begindate\enddate
+  public ResponseEntity<String> update(@RequestBody List<HistoricalDataRequest> requests) {
+    historicalDataPersistentService.updateHistoricalDataByFacility(requests);
     return ResponseEntity.ok("refresh begin");
   }
 }

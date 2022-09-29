@@ -30,6 +30,7 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.siglus.siglusapi.repository.HistoricalDataRepository;
 import org.siglus.siglusapi.repository.dto.FacilityLastRequisitionTimeDto;
+import org.siglus.siglusapi.web.request.HistoricalDataRequest;
 
 @RunWith(MockitoJUnitRunner.class)
 public class HistoricalDataPersistentServiceTest {
@@ -70,16 +71,45 @@ public class HistoricalDataPersistentServiceTest {
   @Test
   public void shouleUpdateFacilityHistoricalDataByFacility() {
     //given
-    HashMap<UUID, LocalDate> requestMap = new HashMap<>();
-    requestMap.put(facilityId, endDate);
+    HistoricalDataRequest historicalDataRequest = new HistoricalDataRequest(facilityId, startDate, endDate);
     FacilityLastRequisitionTimeDto facilityLastRequisitionTimeDto =
         new FacilityLastRequisitionTimeDto(facilityId, null);
     //when
     when(historicalDataRepository.getFacilityLatestRequisitionDate(Sets.newHashSet(facilityId)))
         .thenReturn(Collections.singletonList(facilityLastRequisitionTimeDto));
-    service.updateHistoricalDataByFacility(requestMap);
+    service.updateHistoricalDataByFacility(Collections.singletonList(historicalDataRequest));
     //then
     verify(historicalDataRepository).updateFacilityHistoricalData(facilityId,
-        LocalDate.of(1970, 1, 1), endDate);
+        startDate, endDate);
+  }
+
+  @Test
+  public void shouleUpdateFacilityHistoricalDataByFacilityWithoutEndDate() {
+    //given
+    HistoricalDataRequest historicalDataRequest = new HistoricalDataRequest(facilityId, startDate, null);
+    FacilityLastRequisitionTimeDto facilityLastRequisitionTimeDto =
+        new FacilityLastRequisitionTimeDto(facilityId, startDate);
+    //when
+    when(historicalDataRepository.getFacilityLatestRequisitionDate(Sets.newHashSet(facilityId)))
+        .thenReturn(Collections.singletonList(facilityLastRequisitionTimeDto));
+    service.updateHistoricalDataByFacility(Collections.singletonList(historicalDataRequest));
+    //then
+    verify(historicalDataRepository).updateFacilityHistoricalData(facilityId,
+        startDate, LocalDate.of(2099, 12, 31));
+  }
+
+  @Test
+  public void shouleUpdateFacilityHistoricalDataByFacilityWithOutStartDate() {
+    //given
+    HistoricalDataRequest historicalDataRequest = new HistoricalDataRequest(facilityId, null, endDate);
+    FacilityLastRequisitionTimeDto facilityLastRequisitionTimeDto =
+        new FacilityLastRequisitionTimeDto(facilityId, startDate);
+    //when
+    when(historicalDataRepository.getFacilityLatestRequisitionDate(Sets.newHashSet(facilityId)))
+        .thenReturn(Collections.singletonList(facilityLastRequisitionTimeDto));
+    service.updateHistoricalDataByFacility(Collections.singletonList(historicalDataRequest));
+    //then
+    verify(historicalDataRepository).updateFacilityHistoricalData(facilityId,
+        startDate, endDate);
   }
 }

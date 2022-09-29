@@ -18,8 +18,7 @@ package org.siglus.siglusapi.web.report;
 import static org.mockito.Mockito.verify;
 
 import java.time.LocalDate;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Collections;
 import java.util.UUID;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -27,6 +26,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.siglus.siglusapi.service.task.report.HistoricalDataPersistentService;
+import org.siglus.siglusapi.web.request.HistoricalDataRequest;
 
 @RunWith(MockitoJUnitRunner.class)
 public class HistoricalDataReportControllerTest {
@@ -39,6 +39,7 @@ public class HistoricalDataReportControllerTest {
   private static final UUID facilityId = UUID.randomUUID();
 
   private static final LocalDate endDate = LocalDate.of(2022, 12, 31);
+  private static final LocalDate startDate = LocalDate.of(2022, 1, 1);
 
   @Test
   public void shouldCallRefreshWithServiceWhenCallByController() {
@@ -54,9 +55,9 @@ public class HistoricalDataReportControllerTest {
 
   @Test
   public void shouldCallUpdateByFacilityWithServiceWhenCallByController() {
-    Map<UUID, LocalDate> requestMap = new HashMap<>();
-    requestMap.put(facilityId, endDate);
-    controller.update(requestMap);
-    verify(historicalDataPersistentService).updateHistoricalDataByFacility(requestMap);
+    HistoricalDataRequest historicalDataRequest = new HistoricalDataRequest(facilityId, startDate, endDate);
+    controller.update(Collections.singletonList(historicalDataRequest));
+    verify(historicalDataPersistentService).updateHistoricalDataByFacility(
+        Collections.singletonList(historicalDataRequest));
   }
 }
