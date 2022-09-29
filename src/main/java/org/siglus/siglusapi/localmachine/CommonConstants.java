@@ -22,4 +22,5 @@ import lombok.NoArgsConstructor;
 public class CommonConstants {
   public static final String VERSION = "x-local-version";
   public static final String ACCESS_TOKEN = "x-local-token";
+  public static final String DEVICE_INFO = "x-local-deviceInfo";
 }

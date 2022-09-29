@@ -18,21 +18,34 @@ package org.siglus.siglusapi.localmachine.auth;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
+import java.util.UUID;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.openlmis.referencedata.domain.Facility;
+import org.openlmis.referencedata.repository.FacilityRepository;
+import org.siglus.siglusapi.domain.AppInfo;
 import org.siglus.siglusapi.localmachine.CommonConstants;
 import org.siglus.siglusapi.localmachine.repository.AgentInfoRepository;
+import org.siglus.siglusapi.repository.AppInfoRepository;
 import org.springframework.mock.web.MockHttpServletRequest;
 
 @RunWith(MockitoJUnitRunner.class)
 public class MachineTokenMatcherTest {
   @InjectMocks private MachineTokenMatcher machineTokenMatcher;
   @Mock private AgentInfoRepository agentInfoRepository;
+  @Mock private FacilityRepository facilityRepository;
+  @Mock private AppInfoRepository appInfoRepository;
+
+  private final UUID facilityId = UUID.randomUUID();
+  private final String facilityCode = "facilityCode";
 
   @Before
   public void setup() {
@@ -48,5 +61,31 @@ public class MachineTokenMatcherTest {
     // when
     boolean matched = machineTokenMatcher.matches(request);
     assertThat(matched).isFalse();
+  }
+
+  @Test
+  public void shouldSaveMachineDeviceInfoWhenNewRequestIn() {
+    // given
+    MockHttpServletRequest request = new MockHttpServletRequest();
+    request.addHeader(CommonConstants.VERSION, "1.0");
+    request.addHeader(CommonConstants.DEVICE_INFO, "deviceInfo");
+    when(facilityRepository.findOne((UUID) any())).thenReturn(mockFacility());
+    when(appInfoRepository.findByFacilityCode(facilityCode)).thenReturn(null);
+    MachineToken machineToken = new MachineToken();
+    machineToken.setMachineId(UUID.randomUUID());
+    machineToken.setFacilityId(UUID.randomUUID());
+
+    // when
+    machineTokenMatcher.updateMachineDeviceInfo(request, machineToken);
+
+    // then
+    verify(appInfoRepository, times(1)).save((AppInfo) any());
+  }
+
+  private Facility mockFacility() {
+    Facility facility = new Facility();
+    facility.setId(facilityId);
+    facility.setCode(facilityCode);
+    return facility;
   }
 }

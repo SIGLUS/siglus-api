@@ -30,6 +30,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.localmachine.CommonConstants;
+import org.siglus.siglusapi.localmachine.Machine;
 import org.siglus.siglusapi.localmachine.domain.AgentInfo;
 import org.siglus.siglusapi.localmachine.repository.AgentInfoRepository;
 import org.springframework.beans.factory.annotation.Value;
@@ -49,6 +50,8 @@ public class LocalTokenInterceptor implements ClientHttpRequestInterceptor {
 
   @Value("${machine.version}")
   private String localMachineVersion;
+
+  private final Machine machine;
 
   @Setter private Function<HttpRequest, Boolean> acceptFunc = (httpRequest -> true);
 
@@ -88,6 +91,7 @@ public class LocalTokenInterceptor implements ClientHttpRequestInterceptor {
     String accessToken = buildAccessToken(agentInfo);
     headers.add(CommonConstants.VERSION, localMachineVersion);
     headers.add(CommonConstants.ACCESS_TOKEN, accessToken);
+    headers.add(CommonConstants.DEVICE_INFO, machine.getDeviceInfo());
   }
 
   private String buildAccessToken(AgentInfo agentInfo) {

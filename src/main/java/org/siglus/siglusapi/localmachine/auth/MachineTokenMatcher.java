@@ -23,9 +23,14 @@ import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.codehaus.plexus.util.StringUtils;
+import org.openlmis.referencedata.domain.Facility;
+import org.openlmis.referencedata.repository.FacilityRepository;
+import org.siglus.siglusapi.domain.AppInfo;
 import org.siglus.siglusapi.localmachine.CommonConstants;
 import org.siglus.siglusapi.localmachine.domain.AgentInfo;
 import org.siglus.siglusapi.localmachine.repository.AgentInfoRepository;
+import org.siglus.siglusapi.repository.AppInfoRepository;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.stereotype.Component;
 
@@ -34,6 +39,8 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class MachineTokenMatcher implements RequestMatcher {
   private final AgentInfoRepository agentInfoRepository;
+  private final AppInfoRepository appInfoRepository;
+  private final FacilityRepository facilityRepository;
 
   @Override
   public boolean matches(HttpServletRequest request) {
@@ -41,6 +48,9 @@ public class MachineTokenMatcher implements RequestMatcher {
       String tokenValue = mustGetTokenValue(request);
       MachineToken machineToken = authenticate(tokenValue);
       bindRequestAttribute(request, machineToken);
+      if (StringUtils.isNotBlank(request.getHeader(CommonConstants.DEVICE_INFO))) {
+        updateMachineDeviceInfo(request, machineToken);
+      }
     } catch (IllegalAccessException e) {
       log.error("illegal access", e);
       return false;
@@ -77,5 +87,34 @@ public class MachineTokenMatcher implements RequestMatcher {
 
   private void bindRequestAttribute(HttpServletRequest request, MachineToken machineToken) {
     request.setAttribute(LOCAL_MACHINE_TOKEN, machineToken);
+  }
+
+  void updateMachineDeviceInfo(HttpServletRequest request, MachineToken machineToken) {
+    String deviceInfo = request.getHeader(CommonConstants.DEVICE_INFO);
+    UUID facilityId = machineToken.getFacilityId();
+    Facility facility = facilityRepository.findOne(facilityId);
+    AppInfo appInfo = appInfoRepository.findByFacilityCode(facility.getCode());
+    if (null != appInfo && !appInfo.getUniqueId().equals(machineToken.getMachineId().toString())) {
+      return;
+    }
+    if (null != appInfo && deviceInfo.equals(appInfo.getDeviceInfo())) {
+      return;
+    }
+    if (null == appInfo) {
+      appInfo = buildForAppInfo(facility, machineToken.getMachineId());
+    }
+    appInfo.setVersionCode(request.getHeader(CommonConstants.VERSION));
+    appInfo.setDeviceInfo(deviceInfo);
+    log.info("deviceInfo updated, facilityId: {}; new deviceInfo: {}", facilityId, deviceInfo);
+    appInfoRepository.save(appInfo);
+  }
+
+  private AppInfo buildForAppInfo(Facility facility, UUID machineId) {
+    return AppInfo
+        .builder()
+        .facilityCode(facility.getCode())
+        .facilityName(facility.getName())
+        .uniqueId(machineId.toString())
+        .build();
   }
 }

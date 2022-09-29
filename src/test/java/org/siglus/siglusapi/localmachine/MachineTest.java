@@ -86,4 +86,13 @@ public class MachineTest {
     // when
     machine.getFacilityId();
   }
+
+  @Test
+  public void shouldGetDeviceInfoWhenMachineSettingUp() {
+    // given
+    given(agentInfoRepository.getMachineId()).willReturn(Optional.empty());
+
+    // when
+    machine.ensureMachineInfoExists();
+  }
 }

@@ -29,6 +29,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.siglus.siglusapi.localmachine.CommonConstants;
+import org.siglus.siglusapi.localmachine.Machine;
 import org.siglus.siglusapi.localmachine.domain.AgentInfo;
 import org.siglus.siglusapi.localmachine.repository.AgentInfoRepository;
 import org.springframework.http.HttpStatus;
@@ -44,6 +45,8 @@ public class LocalTokenInterceptorTest {
   private LocalTokenInterceptor interceptor;
   @Mock
   private AgentInfoRepository agentInfoRepository;
+  @Mock
+  private Machine machine;
 
   @Test
   public void shouldAddHeadersWhenIntercept() throws IOException {
@@ -55,6 +58,7 @@ public class LocalTokenInterceptorTest {
                 .machineId(UUID.randomUUID())
                 .privateKey(keyPair.getPrivate().getEncoded())
                 .build());
+    given(machine.getDeviceInfo()).willReturn("deviceInfo");
     MockClientHttpRequest request = new MockClientHttpRequest();
     ClientHttpRequestExecution execution;
     try (ClientHttpResponse response = new MockClientHttpResponse(new byte[] {1, 2}, HttpStatus.BAD_REQUEST)) {
@@ -65,5 +69,6 @@ public class LocalTokenInterceptorTest {
     // then
     assertThat(request.getHeaders()).containsKey(CommonConstants.VERSION);
     assertThat(request.getHeaders()).containsKey(CommonConstants.ACCESS_TOKEN);
+    assertThat(request.getHeaders().containsKey(CommonConstants.DEVICE_INFO));
   }
 }
