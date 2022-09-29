@@ -802,7 +802,6 @@ traits:
         is: [ secured ]
         body:
           application/json:
-            schema:
         responses:
           201:
             description: submit success
