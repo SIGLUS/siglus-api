@@ -64,6 +64,7 @@ public class SiglusAuthenticationHelper {
   private String role3Director;
   @Value("${role.role3.director.sn}")
   private String role3DirectorSn;
+  private static final String ANONYMOUS_USER = "anonymousUser";
 
   public Optional<UUID> getCurrentUserId() {
     Object principal =
@@ -72,6 +73,9 @@ public class SiglusAuthenticationHelper {
             .orElse(null);
     Set<String> trustedClients = Sets.asSet("trusted-client", "fc-client");
     if (principal == null || trustedClients.contains(principal.toString())) {
+      return Optional.empty();
+    }
+    if (ANONYMOUS_USER.equals(principal)) {
       return Optional.empty();
     }
     return Optional.of((UUID) principal);
