@@ -21,6 +21,7 @@ import static org.siglus.siglusapi.constant.CacheConstants.SIGLUS_PROGRAM_ORDERA
 import static org.siglus.siglusapi.constant.FieldConstants.CODE;
 import static org.siglus.siglusapi.constant.FieldConstants.FULL_PRODUCT_NAME;
 import static org.siglus.siglusapi.constant.FieldConstants.PRODUCT_CODE;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_ID_NOT_FOUND;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_NOT_FOUND;
 
 import com.google.common.collect.Lists;
@@ -40,8 +41,10 @@ import org.openlmis.referencedata.dto.DispensableDto;
 import org.openlmis.referencedata.dto.OrderableDto;
 import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.domain.event.CalculatedStockOnHand;
+import org.openlmis.stockmanagement.exception.ResourceNotFoundException;
 import org.openlmis.stockmanagement.repository.CalculatedStockOnHandRepository;
 import org.openlmis.stockmanagement.repository.StockCardRepository;
+import org.openlmis.stockmanagement.util.Message;
 import org.openlmis.stockmanagement.web.Pagination;
 import org.siglus.common.constant.KitConstants;
 import org.siglus.common.domain.ProgramAdditionalOrderable;
@@ -202,7 +205,7 @@ public class SiglusOrderableService {
     return programOrderablesRepository.findAllMaxVersionProgramOrderableDtos();
   }
 
-  public List<AvailableOrderablesDto> getAvailableOrderablesByFacility(Boolean isRequestAll) {
+  public List<AvailableOrderablesDto> getAvailableOrderablesByFacility(Boolean isRequestAll, UUID draftId) {
     UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
     List<StockCard> stockCards = stockCardRepository.findByFacilityIdIn(facilityId);
     List<UUID> allStockCardIds = stockCards.stream().map(StockCard::getId).collect(Collectors.toList());
@@ -225,6 +228,11 @@ public class SiglusOrderableService {
       if (stockCardIds.contains(stockCard.getId())) {
         satisfiedStockCards.add(stockCard);
       }
+    }
+
+    if (draftId != null) {
+      Set<UUID> existOrderableIds = getExistOrderablesIdByDraftId(draftId);
+      satisfiedStockCards.removeIf(e -> existOrderableIds.contains(e.getOrderableId()));
     }
 
     Set<UUID> orderableIds = satisfiedStockCards.stream().map(StockCard::getOrderableId).collect(Collectors.toSet());
@@ -260,4 +268,23 @@ public class SiglusOrderableService {
     return availableOrderablesDtoList.stream().sorted(comparing(AvailableOrderablesDto::getFullProductName)).collect(
         Collectors.toList());
   }
+
+  private Set<UUID> getExistOrderablesIdByDraftId(UUID draftId) {
+    StockManagementDraft foundDraft = stockManagementDraftRepository.findOne(draftId);
+    if (foundDraft == null) {
+      throw new ResourceNotFoundException(
+          new Message(
+              ERROR_STOCK_MANAGEMENT_DRAFT_ID_NOT_FOUND,
+              draftId));
+    }
+    List<StockManagementDraft> drafts = stockManagementDraftRepository
+        .findByInitialDraftId(foundDraft.getInitialDraftId());
+
+    drafts.remove(foundDraft);
+
+    return drafts.stream()
+        .flatMap(draft -> draft.getLineItems().stream().map(StockManagementDraftLineItem::getOrderableId))
+        .collect(Collectors.toSet());
+  }
+
 }

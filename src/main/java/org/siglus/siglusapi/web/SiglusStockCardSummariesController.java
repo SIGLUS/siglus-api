@@ -17,12 +17,12 @@ package org.siglus.siglusapi.web;
 
 import java.util.List;
 import java.util.UUID;
+import lombok.RequiredArgsConstructor;
 import org.openlmis.referencedata.dto.LotDto;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2Dto;
 import org.siglus.siglusapi.dto.StockCardDetailsDto;
 import org.siglus.siglusapi.dto.StockCardSummaryDto;
 import org.siglus.siglusapi.service.SiglusStockCardSummariesService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -36,10 +36,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/siglusapi/stockCardSummaries")
+@RequiredArgsConstructor
 public class SiglusStockCardSummariesController {
 
-  @Autowired
-  private SiglusStockCardSummariesService stockCardSummariesSiglusService;
+  private final SiglusStockCardSummariesService stockCardSummariesSiglusService;
 
   @GetMapping
   public Page<StockCardSummaryV2Dto> searchStockCardSummaries(
