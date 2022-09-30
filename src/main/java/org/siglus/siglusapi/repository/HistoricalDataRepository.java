@@ -260,8 +260,8 @@ public interface HistoricalDataRepository extends
       + "  r.status in ('IN_APPROVAL', 'APPROVED', 'RELEASED', 'RELEASED_WITHOUT_ORDER')\n"
       + "  and r.emergency = false\n"
       + "  and r.facilityid = :facilityId\n"
-      + "  and pp.startdate > :startDate\n"
-      + "  and pp.enddate < :endDate\n"
+      + "  and pp.startdate >= :startDate\n"
+      + "  and pp.enddate <= :endDate\n"
       + "on conflict (periodid, facilityid, orderableid) do nothing", nativeQuery = true)
   void updateFacilityHistoricalData(@Param("facilityId") UUID facilityId,
       @Param("startDate") LocalDate startDate,
