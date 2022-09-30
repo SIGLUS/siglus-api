@@ -27,6 +27,7 @@ import lombok.NoArgsConstructor;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
+import org.siglus.siglusapi.localmachine.eventstore.EventPayloadRepository;
 import org.siglus.siglusapi.localmachine.eventstore.EventRecord;
 import org.siglus.siglusapi.localmachine.eventstore.EventRecordRepository;
 import org.siglus.siglusapi.localmachine.eventstore.EventStore;
@@ -45,6 +46,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 @RunWith(SpringRunner.class)
 public class EventPublisherTest {
   @MockBean protected EventRecordRepository eventRecordRepository;
+  @MockBean protected EventPayloadRepository eventPayloadRepository;
   @MockBean protected Machine machine;
   @Autowired private EventPublisher eventPublisher;
 

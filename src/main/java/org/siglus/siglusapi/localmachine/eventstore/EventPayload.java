@@ -13,26 +13,33 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.task;
+package org.siglus.siglusapi.localmachine.eventstore;
 
-import lombok.RequiredArgsConstructor;
-import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
-import org.siglus.siglusapi.service.task.report.RequisitionReportTaskService;
-import org.springframework.context.annotation.Profile;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import java.util.UUID;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-@Profile("!localmachine")
-@RequiredArgsConstructor
-@Service
-public class RequisitionReportTask {
-  private final RequisitionReportTaskService requisitionReportTaskService;
+@Entity
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Table(name = "event_payload", schema = "localmachine")
+public class EventPayload {
+  @Id
+  @Column(name = "eventid")
+  private UUID eventid;
 
-  @Scheduled(cron = "${report.requisition.monthly.cron}", zone = "${time.zoneId}")
-  @SchedulerLock(name = "requisition_not_submit_monthly_report")
-  @Transactional
-  public void refresh() {
-    requisitionReportTaskService.refresh();
+  @Column(name = "payload")
+  private byte[] payload;
+
+  public static EventPayload newInstance(UUID eventId) {
+    EventPayload eventPayload = new EventPayload();
+    eventPayload.setEventid(eventId);
+    return eventPayload;
   }
 }

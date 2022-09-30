@@ -17,6 +17,8 @@ package org.siglus.siglusapi.localmachine.agent;
 
 import static org.springframework.util.ObjectUtils.isEmpty;
 
+import com.google.common.collect.Iterators;
+import com.google.common.collect.UnmodifiableIterator;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,6 +38,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @Profile({"localmachine"})
 public class Synchronizer {
+  public static final int BATCH_PUSH_LIMIT = 5;
   private final EventStore localEventStore;
   private final OnlineWebClient webClient;
   private final EventImporter eventImporter;
@@ -79,8 +82,12 @@ public class Synchronizer {
       if (isEmpty(events)) {
         return;
       }
-      webClient.sync(events);
-      localEventStore.confirmEventsByWeb(events);
+      UnmodifiableIterator<List<Event>> partitionList = Iterators.partition(events.iterator(), BATCH_PUSH_LIMIT);
+      while (partitionList.hasNext()) {
+        List<Event> partEvents = partitionList.next();
+        webClient.sync(partEvents);
+        localEventStore.confirmEventsByWeb(partEvents);
+      }
     } catch (Throwable e) {
       log.error("push event failed", e);
     }

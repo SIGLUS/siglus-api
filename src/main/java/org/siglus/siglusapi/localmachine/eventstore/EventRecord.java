@@ -21,6 +21,8 @@ import java.util.function.Function;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import javax.persistence.PrimaryKeyJoinColumn;
+import javax.persistence.SecondaryTable;
 import javax.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -34,6 +36,8 @@ import org.siglus.siglusapi.localmachine.Event;
 @AllArgsConstructor
 @NoArgsConstructor
 @Table(name = "events", schema = "localmachine")
+@SecondaryTable(name = "event_payload", schema = "localmachine", pkJoinColumns = @PrimaryKeyJoinColumn(name =
+    "eventid"))
 public class EventRecord {
   @Id private UUID id;
   @Column(name = "protocolversion")
@@ -50,8 +54,10 @@ public class EventRecord {
   private String groupId;
   @Column(name = "groupsequencenumber")
   private long groupSequenceNumber;
-  @Column(name = "payload")
+  @Column(name = "payload", table = "event_payload")
   private byte[] payload;
+  @Column(name = "archived")
+  private boolean archived;
   @Column(name = "onlinewebsynced")
   private boolean onlineWebSynced;
   @Column(name = "receiversynced")

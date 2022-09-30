@@ -19,10 +19,12 @@ import java.time.LocalDate;
 import lombok.RequiredArgsConstructor;
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.siglus.siglusapi.service.task.report.TracerDrugReportService;
+import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Profile("!localmachine")
 @RequiredArgsConstructor
 @Service
 public class TracerDrugPersistentDataTask {

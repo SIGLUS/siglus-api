@@ -13,26 +13,28 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.task;
+package org.siglus.siglusapi.localmachine.eventstore.backup;
 
-import java.time.LocalDate;
-import lombok.RequiredArgsConstructor;
-import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
-import org.siglus.siglusapi.service.task.report.CalculateWebCmmService;
-import org.springframework.context.annotation.Profile;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Service;
+import java.util.UUID;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-@Profile("!localmachine")
-@RequiredArgsConstructor
-@Service
-public class CalculateWebCmmTask {
+@Entity
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Table(name = "event_payload_backup", schema = "localmachine")
+public class EventPayloadBackup {
 
-  private final CalculateWebCmmService calculateWebCmmService;
+  @Id
+  @Column(name = "eventid")
+  private UUID eventid;
 
-  @Scheduled(cron = "${cmm.calculate.cron}", zone = "${time.zoneId}")
-  @SchedulerLock(name = "calculate_cmm_task")
-  public void calculate() {
-    calculateWebCmmService.calculateCmms(LocalDate.now());
-  }
+  @Column(name = "payload")
+  private byte[] payload;
 }

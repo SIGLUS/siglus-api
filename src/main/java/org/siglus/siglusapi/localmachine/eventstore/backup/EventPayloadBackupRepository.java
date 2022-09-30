@@ -13,26 +13,11 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.task;
+package org.siglus.siglusapi.localmachine.eventstore.backup;
 
-import lombok.RequiredArgsConstructor;
-import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
-import org.siglus.siglusapi.service.task.report.RequisitionReportTaskService;
-import org.springframework.context.annotation.Profile;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import java.util.UUID;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-@Profile("!localmachine")
-@RequiredArgsConstructor
-@Service
-public class RequisitionReportTask {
-  private final RequisitionReportTaskService requisitionReportTaskService;
+public interface EventPayloadBackupRepository extends JpaRepository<EventPayloadBackup, UUID> {
 
-  @Scheduled(cron = "${report.requisition.monthly.cron}", zone = "${time.zoneId}")
-  @SchedulerLock(name = "requisition_not_submit_monthly_report")
-  @Transactional
-  public void refresh() {
-    requisitionReportTaskService.refresh();
-  }
 }

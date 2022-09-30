@@ -35,6 +35,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 public class EventStore {
   private final EventRecordRepository repository;
+  private final EventPayloadRepository eventPayloadRepository;
   private final PayloadSerializer payloadSerializer;
 
   @SneakyThrows
@@ -43,6 +44,7 @@ public class EventStore {
     EventRecord eventRecord = EventRecord.from(event, payloadSerializer.dump(event.getPayload()));
     log.info("insert event emitted event:{}", event.getId());
     repository.insertAndAllocateLocalSequenceNumber(eventRecord);
+    eventPayloadRepository.save(new EventPayload(eventRecord.getId(), eventRecord.getPayload()));
   }
 
   public long nextGroupSequenceNumber(String groupId) {
@@ -50,13 +52,14 @@ public class EventStore {
   }
 
   public List<Event> getEventsForOnlineWeb() {
-    return repository.findEventRecordByOnlineWebSyncedIsFalse().stream()
+    return repository.findEventRecordByOnlineWebSyncedAndArchived(false, false).stream()
         .map(it -> it.toEvent(payloadSerializer::load))
         .collect(Collectors.toList());
   }
 
   public List<Event> getEventsForReceiver(UUID receiverId) {
-    return repository.findByReceiverIdAndReceiverSynced(receiverId, false).stream()
+    return repository.findByReceiverIdAndReceiverSyncedAndArchived(
+        receiverId, false, false).stream()
         .map(it -> it.toEvent(payloadSerializer::load))
         .collect(Collectors.toList());
   }
@@ -72,11 +75,12 @@ public class EventStore {
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   public void importQuietly(Event event) {
     log.info("insert event:{}", event.getId());
-    repository.importExternalEvent(EventRecord.from(event, payloadSerializer.dump(event.getPayload())));
+    // TODO: ??? ( 2022/9/30 by kourengang)
+    repository.save(EventRecord.from(event, payloadSerializer.dump(event.getPayload())));
   }
 
   public List<Event> loadSortedGroupEvents(String groupId) {
-    return repository.findEventRecordByGroupId(groupId).stream()
+    return repository.findEventRecordByGroupIdAndArchived(groupId, false).stream()
         .map(it -> it.toEvent(payloadSerializer::load))
         .sorted(Comparator.comparingLong(Event::getGroupSequenceNumber))
         .collect(Collectors.toList());
@@ -111,7 +115,7 @@ public class EventStore {
   }
 
   public List<Event> findNotReplayedEvents() {
-    return repository.findNotReplayedEvents().stream()
+    return repository.findEventRecordByLocalReplayed(false).stream()
         .map(it -> it.toEvent(payloadSerializer::load))
         .collect(Collectors.toList());
   }
