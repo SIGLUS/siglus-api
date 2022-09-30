@@ -47,6 +47,7 @@ import org.siglus.siglusapi.localmachine.ExternalEventDtoMapper;
 import org.siglus.siglusapi.localmachine.eventstore.EventSerializer;
 import org.siglus.siglusapi.localmachine.eventstore.EventStore;
 import org.siglus.siglusapi.service.SiglusFacilityService;
+import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
@@ -63,6 +64,7 @@ public class LocalService {
   private final EventSerializer eventSerializer;
   private final ExternalEventDtoMapper externalEventDtoMapper;
   private final SiglusFacilityService siglusFacilityService;
+  private final SiglusAuthenticationHelper authenticationHelper;
 
   @Value("${machine.event.zip.export.path}")
   private String zipExportPath;
@@ -173,32 +175,48 @@ public class LocalService {
 
   @Transactional
   public void importEvent(MultipartFile[] files) {
-    // TODO: 2022/9/29 file checksum, 后缀校验, receiver 过滤, files 大小校验?
+    // TODO: 2022/9/29 files 大小校验?
     for (MultipartFile file : files) {
-      List<ExternalEventDto> events = eventSerializer.loadList(getEvents(file));
-      eventImporter.importEvents(events.stream()
+      eventImporter.importEvents(getEvents(file).stream()
           .map(externalEventDtoMapper::map)
           .collect(Collectors.toList()));
     }
   }
 
   @SneakyThrows
-  private byte[] getEvents(MultipartFile file) {
-    checkFile(file);
-    return checkAndGetEvents(file);
-  }
+  private List<ExternalEventDto> getEvents(MultipartFile file) {
+    checkFileSuffix(file);
 
-  private byte[] checkAndGetEvents(MultipartFile file) throws IOException {
     String readData = getReadData(file);
     int checksumIndex = readData.indexOf(CHECKSUM_SPLIT);
     String readChecksum = readData.substring(0, checksumIndex);
     byte[] events = readData.substring(checksumIndex + 1).getBytes();
+
+    checkChecksum(readChecksum, events);
+
+    List<ExternalEventDto> externalEventDtos = eventSerializer.loadList(events);
+    checkFacility(externalEventDtos);
+    return externalEventDtos;
+  }
+
+  private void checkChecksum(String readChecksum, byte[] events) {
     String eventsChecksum = getChecksum(events);
     if (!eventsChecksum.equals(readChecksum)) {
       log.error("file may be modified, readChecksum:{}, eventsChecksum: {}", readChecksum, eventsChecksum);
       throw new BusinessDataException(new Message("file may be modified"));
     }
-    return events;
+  }
+
+  private void checkFacility(List<ExternalEventDto> externalEventDtos) {
+    externalEventDtos.forEach(externalEventDto -> {
+      UUID receiverId = externalEventDto.getEvent().getReceiverId();
+      UUID homeFacilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
+      if (!receiverId.equals(homeFacilityId)) {
+        log.error("file shouldn't be imported, facilityId not match, file receiverId:{}, current user facilityId:{}",
+            receiverId, homeFacilityId);
+        throw new BusinessDataException(new Message("file shouldn't be imported"));
+      }
+    });
   }
 
   private String getReadData(MultipartFile file) throws IOException {
@@ -211,7 +229,7 @@ public class LocalService {
     return stringBuilder.toString();
   }
 
-  private void checkFile(MultipartFile file) {
+  private void checkFileSuffix(MultipartFile file) {
     String filename = file.getOriginalFilename();
     String suffix = filename.substring(filename.lastIndexOf("."));
     if (!FILE_SUFFIX.equals(suffix)) {
