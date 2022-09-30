@@ -76,6 +76,9 @@ public class EventBackupTask {
         .map(item -> new org.siglus.siglusapi.localmachine.eventstore.EventPayload(item.getId(), item.getPayload()))
         .collect(Collectors.toList());
     eventPayloadRepository.delete(payloads);
+
+    archiveEventRecords.forEach(item-> item.setArchived(true));
+    eventRecordRepository.save(archiveEventRecords);
   }
 
   private boolean isLocalMachine() {
