@@ -34,16 +34,18 @@ import jersey.repackaged.com.google.common.collect.Lists;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.siglus.siglusapi.dto.Message;
+import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.localmachine.Event;
 import org.siglus.siglusapi.localmachine.EventImporter;
 import org.siglus.siglusapi.localmachine.ExternalEventDto;
 import org.siglus.siglusapi.localmachine.ExternalEventDtoMapper;
 import org.siglus.siglusapi.localmachine.eventstore.EventSerializer;
 import org.siglus.siglusapi.localmachine.eventstore.EventStore;
-import org.siglus.siglusapi.localmachine.exception.DbOperationException;
 import org.siglus.siglusapi.service.SiglusFacilityService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
@@ -77,16 +79,17 @@ public class LocalService {
     // TODO: 2022/9/29 需要考虑阿丹代码删除directory
     String zipName = ZIP_PREFIX + System.currentTimeMillis() + ZIP_SUFFIX;
     File directory = makeDirectory();
-    List<File> files = generateFilesForEachFacility();
-    File zipFile = generateZipFile(zipName, files);
-    setResponseAttribute(response, zipName);
-
-    try (FileInputStream fileInputStream = new FileInputStream(zipFile)) {
+    try {
+      List<File> files = generateFilesForEachFacility();
+      File zipFile = generateZipFile(zipName, files);
+      setResponseAttribute(response, zipName);
+      FileInputStream fileInputStream = new FileInputStream(zipFile);
       IOUtils.copy(fileInputStream, response.getOutputStream());
       response.flushBuffer();
-      FileUtils.deleteDirectory(directory);
     } catch (IOException e) {
       log.error("delete directory fail, ", e);
+    } finally {
+      FileUtils.deleteDirectory(directory);
     }
   }
 
@@ -95,7 +98,7 @@ public class LocalService {
     boolean mkdirs = directory.mkdirs();
     if (!mkdirs) {
       log.warn("export zip dir make fail, dir: {}", zipExportPath);
-      throw new IllegalStateException("make dir failed");
+      throw new RuntimeException("make dir failed");
     }
     return directory;
   }
@@ -141,41 +144,79 @@ public class LocalService {
       }
     } catch (Exception e) {
       log.error("generate zip file fail", e);
-      throw new DbOperationException(e, new Message(" generate zip file fail"));
+      throw new RuntimeException(" generate zip file fail");
     }
     return zipFile;
   }
 
   @SneakyThrows
   private File generateFile(String fileFullName, byte[] data) {
-    // TODO add checksum
     File file = new File(fileFullName);
     if (file.exists()) {
       file.delete();
     }
     FileOutputStream fos = new FileOutputStream(file);
-    fos.write(data, 0, data.length);
+    byte[] concatBytes = ArrayUtils.addAll(getChecksumPrefix(data).getBytes(), data);
+    fos.write(concatBytes, 0, concatBytes.length);
     fos.flush();
     fos.close();
     return file;
   }
 
-  @SneakyThrows
+  private String getChecksumPrefix(byte[] data) {
+    return new StringBuilder(getChecksum(data)).append(CHECKSUM_SPLIT).toString();
+  }
+
+  private String getChecksum(byte[] data) {
+    return DigestUtils.md5Hex(data);
+  }
+
   @Transactional
   public void importEvent(MultipartFile[] files) {
     // TODO: 2022/9/29 file checksum, 后缀校验, receiver 过滤, files 大小校验?
     for (MultipartFile file : files) {
-      BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(file.getInputStream()));
-      StringBuilder stringBuilder = new StringBuilder();
-      String lineTxt;
-      while ((lineTxt = bufferedReader.readLine()) != null) {
-        stringBuilder.append(lineTxt);
-      }
-      List<ExternalEventDto> events = eventSerializer.loadList(stringBuilder.toString().getBytes());
-
+      List<ExternalEventDto> events = eventSerializer.loadList(getEvents(file));
       eventImporter.importEvents(events.stream()
           .map(externalEventDtoMapper::map)
           .collect(Collectors.toList()));
+    }
+  }
+
+  @SneakyThrows
+  private byte[] getEvents(MultipartFile file) {
+    checkFile(file);
+    return checkAndGetEvents(file);
+  }
+
+  private byte[] checkAndGetEvents(MultipartFile file) throws IOException {
+    String readData = getReadData(file);
+    int checksumIndex = readData.indexOf(CHECKSUM_SPLIT);
+    String readChecksum = readData.substring(0, checksumIndex);
+    byte[] events = readData.substring(checksumIndex + 1).getBytes();
+    String eventsChecksum = getChecksum(events);
+    if (!eventsChecksum.equals(readChecksum)) {
+      log.error("file may be modified, readChecksum:{}, eventsChecksum: {}", readChecksum, eventsChecksum);
+      throw new BusinessDataException(new Message("file may be modified"));
+    }
+    return events;
+  }
+
+  private String getReadData(MultipartFile file) throws IOException {
+    BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(file.getInputStream()));
+    StringBuilder stringBuilder = new StringBuilder();
+    String lineTxt;
+    while ((lineTxt = bufferedReader.readLine()) != null) {
+      stringBuilder.append(lineTxt);
+    }
+    return stringBuilder.toString();
+  }
+
+  private void checkFile(MultipartFile file) {
+    String filename = file.getOriginalFilename();
+    String suffix = filename.substring(filename.lastIndexOf("."));
+    if (!FILE_SUFFIX.equals(suffix)) {
+      log.error("file may be modified, file suffix:{}, correct suffix:{}", suffix, FILE_SUFFIX);
+      throw new BusinessDataException(new Message("file may be modified"));
     }
   }
 }
