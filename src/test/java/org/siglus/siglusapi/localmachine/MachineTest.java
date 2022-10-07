@@ -17,6 +17,9 @@ package org.siglus.siglusapi.localmachine;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import java.util.Collections;
 import java.util.Optional;
@@ -37,13 +40,13 @@ public class MachineTest {
   @InjectMocks private Machine machine;
 
   @Test
-  public void shouldSetMachineIdWhenCalledEnsureMachineInfoExistsGivenAgentInfoNotExists() {
+  public void shouldTouchMachineIdWhenCalledEnsureMachineInfoExistsGivenAgentInfoNotExists() {
     // given
     given(agentInfoRepository.getMachineId()).willReturn(Optional.empty());
     // when
     machine.ensureMachineInfoExists();
     // then
-    assertThat(machine.getMachineId()).isNotNull();
+    verify(agentInfoRepository, times(1)).touchMachineId(any(UUID.class));
   }
 
   @Test

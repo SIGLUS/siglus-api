@@ -45,24 +45,24 @@ public class Machine {
   private static final String NOT_SPECIFIED = "Not Specified";
   private static final String DELIMITER = " ";
 
-  @Getter private UUID machineId;
   @Getter private String deviceInfo;
 
   public Set<String> fetchSupportedFacilityIds() {
     return new HashSet<>(agentInfoRepository.findRegisteredFacilityIds());
   }
 
+  public UUID getMachineId() {
+    return agentInfoRepository.getMachineId().map(UUID::fromString).orElse(null);
+  }
+
   @PostConstruct
   public void ensureMachineInfoExists() {
-    machineId = agentInfoRepository.getMachineId().map(UUID::fromString).orElse(null);
+    UUID machineId = this.getMachineId();
     deviceInfo = getMachineDeviceInfo();
     if (Objects.nonNull(machineId)) {
       return;
     }
-    UUID tempMachineId = UUID.randomUUID();
-    log.info("touch machine id:{}", tempMachineId);
-    agentInfoRepository.touchMachineId(tempMachineId);
-    machineId = tempMachineId;
+    generateMachineId();
   }
 
   public UUID getFacilityId() {
@@ -75,6 +75,12 @@ public class Machine {
                         .findFirst()
                         .orElseThrow(
                             () -> new IllegalStateException("can not resolve local facility id"))));
+  }
+
+  private void generateMachineId() {
+    UUID tempMachineId = UUID.randomUUID();
+    log.info("touch machine id:{}", tempMachineId);
+    agentInfoRepository.touchMachineId(tempMachineId);
   }
 
   private String getMachineDeviceInfo() {
