@@ -22,12 +22,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import javax.servlet.http.HttpServletResponse;
 import jersey.repackaged.com.google.common.collect.Lists;
@@ -47,6 +45,7 @@ import org.siglus.siglusapi.localmachine.ExternalEventDtoMapper;
 import org.siglus.siglusapi.localmachine.eventstore.EventSerializer;
 import org.siglus.siglusapi.localmachine.eventstore.EventStore;
 import org.siglus.siglusapi.service.SiglusFacilityService;
+import org.siglus.siglusapi.util.FileUtil;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
@@ -78,7 +77,6 @@ public class LocalService {
 
   @SneakyThrows
   public void exportEvent(HttpServletResponse response) {
-    // TODO: 2022/9/29 需要考虑阿丹代码删除directory
     String zipName = ZIP_PREFIX + System.currentTimeMillis() + ZIP_SUFFIX;
     File directory = makeDirectory();
     try {
@@ -92,6 +90,15 @@ public class LocalService {
       log.error("delete directory fail, ", e);
     } finally {
       FileUtils.deleteDirectory(directory);
+    }
+  }
+
+  @Transactional
+  public void importEvent(MultipartFile[] files) {
+    for (MultipartFile file : files) {
+      eventImporter.importEvents(getEvents(file).stream()
+          .map(externalEventDtoMapper::map)
+          .collect(Collectors.toList()));
     }
   }
 
@@ -112,7 +119,6 @@ public class LocalService {
 
     List<File> files = Lists.newArrayListWithExpectedSize(receiverIdToEvents.size());
     receiverIdToEvents.forEach((receiverId, events) ->
-        // TODO: 2022/9/29 校验 events 数据量, 如果太大则拆分
         files.add(generateFile(zipExportPath + facilityIdToCode.get(receiverId) + FILE_SUFFIX,
             eventSerializer.dump(events.stream()
                 .map(externalEventDtoMapper::map)
@@ -129,21 +135,8 @@ public class LocalService {
   private File generateZipFile(String zipName, List<File> files) {
     File zipFile = new File(zipExportPath + zipName);
     try (FileOutputStream fileOutputStream = new FileOutputStream(zipFile);
-        ZipOutputStream zipOutputStream = new ZipOutputStream(fileOutputStream);) {
-      byte[] buffer = new byte[8 * 1024];
-      for (File srcFile : files) {
-        try (FileInputStream fileInputStream = new FileInputStream(srcFile);) {
-          zipOutputStream.putNextEntry(new ZipEntry(srcFile.getName()));
-          int length;
-          while ((length = fileInputStream.read(buffer)) > 0) {
-            zipOutputStream.write(buffer, 0, length);
-          }
-          zipOutputStream.closeEntry();
-          if (srcFile.exists()) {
-            Files.delete(srcFile.toPath());
-          }
-        }
-      }
+        ZipOutputStream zipOutputStream = new ZipOutputStream(fileOutputStream)) {
+      FileUtil.write(files, zipOutputStream);
     } catch (Exception e) {
       log.error("generate zip file fail", e);
       throw new RuntimeException(" generate zip file fail");
@@ -171,16 +164,6 @@ public class LocalService {
 
   private String getChecksum(byte[] data) {
     return DigestUtils.md5Hex(data);
-  }
-
-  @Transactional
-  public void importEvent(MultipartFile[] files) {
-    // TODO: 2022/9/29 files 大小校验?
-    for (MultipartFile file : files) {
-      eventImporter.importEvents(getEvents(file).stream()
-          .map(externalEventDtoMapper::map)
-          .collect(Collectors.toList()));
-    }
   }
 
   @SneakyThrows
