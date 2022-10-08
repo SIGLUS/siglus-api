@@ -4178,3 +4178,40 @@ traits:
             body:
               application/json:
                 schema: localizedMessage
+
+    /localmachine/event/export:
+      displayName: test local machine pull
+      post:
+        is: [ secured ]
+        description: >
+          test local machine pull
+        responses:
+          200:
+            body:
+          400:
+            body:
+              application/json:
+                schema: badRequestResponse
+          404:
+          403:
+            body:
+              application/json:
+                schema: localizedMessage
+    /localmachine/event/import:
+      displayName: test local machine pull
+      post:
+        is: [ secured ]
+        description: >
+          test local machine pull
+        responses:
+          200:
+            body:
+          400:
+            body:
+              application/json:
+                schema: badRequestResponse
+          404:
+          403:
+            body:
+              application/json:
+                schema: localizedMessage

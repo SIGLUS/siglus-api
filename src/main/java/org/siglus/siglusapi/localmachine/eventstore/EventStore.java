@@ -34,6 +34,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 @Slf4j
 public class EventStore {
+
   private final EventRecordRepository repository;
   private final EventPayloadRepository eventPayloadRepository;
   private final PayloadSerializer payloadSerializer;
@@ -59,7 +60,16 @@ public class EventStore {
 
   public List<Event> getEventsForReceiver(UUID receiverId) {
     return repository.findByReceiverIdAndReceiverSyncedAndArchived(
-        receiverId, false, false).stream()
+            receiverId, false, false).stream()
+        .map(it -> it.toEvent(payloadSerializer::load))
+        .collect(Collectors.toList());
+  }
+
+  public List<Event> getEventsForExport() {
+    List<UUID> exportEventIds = repository.findExportEventIds().stream()
+        .map(UUID::fromString)
+        .collect(Collectors.toList());
+    return repository.findAll(exportEventIds).stream()
         .map(it -> it.toEvent(payloadSerializer::load))
         .collect(Collectors.toList());
   }
