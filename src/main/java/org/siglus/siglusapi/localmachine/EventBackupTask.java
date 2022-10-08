@@ -77,7 +77,7 @@ public class EventBackupTask {
         .collect(Collectors.toList());
     eventPayloadRepository.delete(payloads);
 
-    archiveEventRecords.forEach(item-> item.setArchived(true));
+    archiveEventRecords.forEach(item -> item.setArchived(true));
     eventRecordRepository.save(archiveEventRecords);
   }
 

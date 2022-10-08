@@ -81,6 +81,33 @@ public interface EventRecordRepository extends JpaRepository<EventRecord, UUID> 
   @Modifying
   @Query(
       value =
+          "INSERT INTO localmachine.events("
+              + "id,"
+              + "protocolversion,"
+              + "occurredtime,"
+              + "senderid,"
+              + "localsequencenumber,"
+              + "receiverid,"
+              + "groupid,"
+              + "groupsequencenumber,"
+              + "onlinewebsynced,"
+              + "receiversynced) VALUES ("
+              + ":#{#r.id},"
+              + ":#{#r.protocolVersion},"
+              + ":#{#r.occurredTime},"
+              + ":#{#r.senderId},"
+              + ":#{#r.localSequenceNumber},"
+              + ":#{#r.receiverId},"
+              + ":#{#r.groupId},"
+              + ":#{#r.groupSequenceNumber},"
+              + ":#{#r.onlineWebSynced},"
+              + ":#{#r.receiverSynced})",
+      nativeQuery = true)
+  void importExternalEvent(@Param("r") EventRecord eventRecord);
+
+  @Modifying
+  @Query(
+      value =
           "update localmachine.events set receiversynced=true where receiverid=:receiverId and id in :ids",
       nativeQuery = true)
   void markAsReceived(@Param("receiverId") UUID receiverId, @Param("ids") Collection<UUID> ids);
