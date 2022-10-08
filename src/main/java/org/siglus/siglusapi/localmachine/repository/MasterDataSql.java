@@ -190,7 +190,7 @@ public class MasterDataSql {
   public static final String RIGHT_ASSIGNMENTS = "referencedata.right_assignments";
 
   public static final String RIGHT_ASSIGNMENTS_QUERY = "select ra.* from referencedata.right_assignments ra "
-      + "left join referencedata.users u on u.id = ra.userid"
+      + "left join referencedata.users u on u.id = ra.userid "
       + "where u.homefacilityid = '@@' ";
 
   public static final String SYSTEM_NOTIFICATIONS = "referencedata.system_notifications";
