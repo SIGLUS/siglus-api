@@ -15,14 +15,20 @@
 
 package org.siglus.siglusapi.domain;
 
+import static javax.persistence.CascadeType.ALL;
+import static org.hibernate.annotations.LazyCollectionOption.FALSE;
+
+import java.util.List;
 import java.util.UUID;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.LazyCollection;
 import org.siglus.common.domain.BaseEntity;
 import org.siglus.siglusapi.dto.enums.PodSubDraftStatusEnum;
 
@@ -38,8 +44,11 @@ public class LocalIssueVoucherSubDraft extends BaseEntity {
   private Integer number;
   @Column
   private PodSubDraftStatusEnum status;
-  @Column(name = "operatorid")
   private UUID operatorId;
-  @Column(name = "proofofdeliveryid")
-  private UUID podId;
+  private UUID localIssueVoucherId;
+  private boolean isDraft;
+
+  @LazyCollection(FALSE)
+  @OneToMany(cascade = ALL, mappedBy = "localIssueVoucherSubDraft", orphanRemoval = true)
+  private List<LocalIssueVoucherSubDraftLineItem> lineItems;
 }

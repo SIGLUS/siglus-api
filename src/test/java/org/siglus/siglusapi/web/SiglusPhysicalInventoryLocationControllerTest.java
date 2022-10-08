@@ -45,8 +45,6 @@ public class SiglusPhysicalInventoryLocationControllerTest {
   @Mock
   private SiglusPhysicalInventorySubDraftService siglusPhysicalInventorySubDraftService;
 
-  private final UUID programId = UUID.randomUUID();
-
   private final UUID facilityId = UUID.randomUUID();
 
   private final Boolean isDraft = true;
@@ -63,19 +61,9 @@ public class SiglusPhysicalInventoryLocationControllerTest {
     controller.searchPhysicalInventories(ALL_PRODUCTS_PROGRAM_ID, facilityId,
         isDraft, isByLocation);
     // then
-    verify(siglusPhysicalInventoryService).getPhysicalInventoryDtosForAllProducts(facilityId,
+    verify(siglusPhysicalInventoryService).getLocationPhysicalInventoryDtosForAllProducts(facilityId,
         isDraft, isByLocation);
   }
-
-  @Test
-  public void shouldCallGetPhysicalInventoryDtosWhenSearchIfProgramIsNotAllProducts() {
-    // when
-    controller.searchPhysicalInventories(programId, facilityId, isDraft, isByLocation);
-    // then
-    verify(siglusPhysicalInventoryService)
-        .getPhysicalInventoryDtosForProductsForOneProgram(programId, facilityId, isDraft, isByLocation);
-  }
-
 
   @Test
   public void shouldCallCreateWithLocationOptionForAllProductsWhenCreateIfProgramIsAllProducts() {
@@ -88,19 +76,6 @@ public class SiglusPhysicalInventoryLocationControllerTest {
     // then
     verify(siglusPhysicalInventoryService).createAndSplitNewDraftForAllProduct(
         physicalInventoryDto, 2, true, optionString, isByLocation);
-  }
-
-  @Test
-  public void shouldCallCreateNewDraftWhenCreateIfProgramIsNotAllProducts() {
-    // given
-    PhysicalInventoryDto physicalInventoryDto = PhysicalInventoryDto.builder().programId(programId)
-        .build();
-    // when
-    controller.createEmptyPhysicalInventoryWithLocationOption(
-        physicalInventoryDto, 2, false, optionString, isByLocation);
-    // then
-    verify(siglusPhysicalInventoryService).createAndSpiltNewDraftForOneProgram(
-        physicalInventoryDto, 2, optionString, isByLocation);
   }
 
   @Test
@@ -131,22 +106,6 @@ public class SiglusPhysicalInventoryLocationControllerTest {
     controller.searchSubDraftList(ALL_PRODUCTS_PROGRAM_ID, facilityId, isDraft);
     // then
     verify(siglusPhysicalInventoryService).getSubDraftListForAllProduct(facilityId, isDraft);
-  }
-
-  @Test
-  public void shouldCallGetSubDraftListInOneProgramWhenSearchOneProgramSubDraftList() {
-    // when
-    controller.searchSubDraftList(programId, facilityId, isDraft);
-    // then
-    verify(siglusPhysicalInventoryService).getSubDraftListForOneProgram(programId, facilityId, isDraft);
-  }
-
-  @Test
-  public void shouldCallGetSubPhysicalInventoryDtoBysubDraftIdWhenSearchSubDraftDetail() {
-    // when
-    controller.searchSubDraftList(programId, facilityId, isDraft);
-    // then
-    verify(siglusPhysicalInventoryService).getSubDraftListForOneProgram(programId, facilityId, isDraft);
   }
 
   @Test

@@ -38,6 +38,7 @@ import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_NOT_ACCEPTABLE;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_PERMISSION_NOT_SUPPORTED;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_SPLIT_NUM_TOO_LARGE;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -251,14 +252,23 @@ public class SiglusPhysicalInventoryService {
       List<PhysicalInventoryEmptyLocationLineItem> emptyLocations) {
     return emptyLocations.stream()
         .map(location -> PhysicalInventoryLineItemDto.builder().locationCode(location.getLocationCode())
-            .area(location.getArea()).build()).collect(Collectors.toList());
+            .area(location.getArea()).skipped(location.isSkipped()).build()).collect(Collectors.toList());
   }
 
   public SiglusPhysicalInventoryDto fillLocationOption(PhysicalInventoryDto physicalInventoryDto) {
     SiglusPhysicalInventoryDto dto = new SiglusPhysicalInventoryDto();
     BeanUtils.copyProperties(physicalInventoryDto, dto);
+
+    UUID physicalInventoryId = physicalInventoryDto.getId();
+    if (physicalInventoryDto.getProgramId() == ALL_PRODUCTS_PROGRAM_ID) {
+      UUID programId = supportedProgramsHelper
+          .findHomeFacilitySupportedProgramIds().iterator().next();
+      physicalInventoryId = UUID.fromString(physicalInventoriesRepository
+          .findIdByProgramIdAndFacilityIdAndIsDraft(
+              programId, physicalInventoryDto.getFacilityId(), true));
+    }
     List<PhysicalInventoryExtension> extensions = physicalInventoryExtensionRepository
-        .findByPhysicalInventoryId(physicalInventoryDto.getId());
+        .findByPhysicalInventoryId(physicalInventoryId);
     if (CollectionUtils.isNotEmpty(extensions) && null != extensions.get(0).getLocationOption()) {
       dto.setLocationOption(extensions.get(0).getLocationOption().getValue());
     }
@@ -430,7 +440,8 @@ public class SiglusPhysicalInventoryService {
     return list;
   }
 
-  private List<List<PhysicalInventoryLineItemDto>> groupByLocationCode(
+  @VisibleForTesting
+  List<List<PhysicalInventoryLineItemDto>> groupByLocationCode(
       List<PhysicalInventoryLineItemDto> lineItemDtos) {
 
     List<List<PhysicalInventoryLineItemDto>> list = new LinkedList<>();
@@ -447,28 +458,23 @@ public class SiglusPhysicalInventoryService {
     spiltLineItem(dto, splitNum, isBylocation);
   }
 
-  private void spiltLineItem(PhysicalInventoryDto physicalInventory, Integer splitNum, boolean isByLocation) {
+  @VisibleForTesting
+  void spiltLineItem(PhysicalInventoryDto physicalInventory, Integer splitNum, boolean isByLocation) {
     if (physicalInventory == null
         || physicalInventory.getLineItems() == null
         || (physicalInventory.getLineItems().isEmpty() && !isByLocation)) {
       return;
     }
     UUID facilityId = physicalInventory.getFacilityId();
-    List<UUID> updatePhysicalInventoryIds;
-    if (physicalInventory.getProgramId().equals(ALL_PRODUCTS_PROGRAM_ID)) {
-      updatePhysicalInventoryIds = getSupportPhysicalInventoryIds(facilityId);
-    } else {
-      updatePhysicalInventoryIds = Collections.singletonList(physicalInventory.getId());
-    }
+    List<UUID> updatePhysicalInventoryIds = getPhysicalInventoryIds(physicalInventory, facilityId);
     List<PhysicalInventorySubDraft> subDraftList = physicalInventorySubDraftRepository
         .findByPhysicalInventoryIdIn(updatePhysicalInventoryIds);
 
     List<PhysicalInventoryLineItemDto> lineItems = physicalInventory.getLineItems();
 
     if (isByLocation) {
-      List<FacilityLocations> locations = facilityLocationsRepository.findByFacilityId(facilityId);
       List<PhysicalInventoryLineItemDto> emptyLocationPhysicalInventoryLineItems =
-          getPhysicalInventoryEmtpyLocationLineItemDtos(locations, lineItems);
+          getPhysicalInventoryEmptyLocationLineItemDtos(facilityId, lineItems);
       lineItems.addAll(emptyLocationPhysicalInventoryLineItems);
     }
 
@@ -495,17 +501,25 @@ public class SiglusPhysicalInventoryService {
     lineItemsExtensionRepository.save(updateExtensions);
   }
 
-  private List<PhysicalInventoryLineItemDto> getPhysicalInventoryEmtpyLocationLineItemDtos(
-      List<FacilityLocations> locations, List<PhysicalInventoryLineItemDto> lineItems) {
-    List<FacilityLocations> emptyLocations = locations.stream().filter(location -> lineItems.stream()
+  @VisibleForTesting
+  List<UUID> getPhysicalInventoryIds(PhysicalInventoryDto physicalInventory, UUID facilityId) {
+    return physicalInventory.getProgramId().equals(ALL_PRODUCTS_PROGRAM_ID)
+        ? getSupportPhysicalInventoryIds(facilityId)
+        : Collections.singletonList(physicalInventory.getId());
+  }
+
+  @VisibleForTesting
+  List<PhysicalInventoryLineItemDto> getPhysicalInventoryEmptyLocationLineItemDtos(
+      UUID facilityId, List<PhysicalInventoryLineItemDto> lineItems) {
+    List<FacilityLocations> locations = facilityLocationsRepository.findByFacilityId(facilityId);
+    return locations.stream().filter(location -> lineItems.stream()
             .noneMatch(lineItem -> lineItem.getLocationCode().equals(location.getLocationCode())))
-        .collect(Collectors.toList());
-    return emptyLocations.stream()
         .map(location -> PhysicalInventoryLineItemDto.builder().locationCode(location.getLocationCode())
             .area(location.getArea()).build()).collect(Collectors.toList());
   }
 
-  private void associateEmptyLocation(List<PhysicalInventorySubDraft> subDraftList,
+  @VisibleForTesting
+  void associateEmptyLocation(List<PhysicalInventorySubDraft> subDraftList,
       List<List<List<PhysicalInventoryLineItemDto>>> groupList) {
     Map<Integer, PhysicalInventorySubDraft> numToSubDraftMap = subDraftList.stream()
         .collect(Collectors.toMap(PhysicalInventorySubDraft::getNum, a -> a, (k1, k2) -> k1));
@@ -979,6 +993,18 @@ public class SiglusPhysicalInventoryService {
       return Collections.singletonList(resultInventory);
     }
     return Collections.emptyList();
+  }
+
+  public List<SiglusPhysicalInventoryDto> getLocationPhysicalInventoryDtosForAllProducts(
+      UUID facilityId, Boolean isDraft, boolean isByLocation) {
+    List<PhysicalInventoryDto> physicalInventoryDtosForAllProducts = getPhysicalInventoryDtosForAllProducts(facilityId,
+        isDraft, isByLocation);
+    if (physicalInventoryDtosForAllProducts.isEmpty()) {
+      return Collections.emptyList();
+    }
+    PhysicalInventoryDto physicalInventoryDto = physicalInventoryDtosForAllProducts.get(0);
+    return Collections.singletonList(fillLocationOption(physicalInventoryDto));
+
   }
 
   public List<PhysicalInventoryDto> getPhysicalInventoryDtosForAllProducts(UUID facilityId, Boolean isDraft,

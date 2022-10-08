@@ -130,6 +130,10 @@ public abstract class MessageKeys {
   public static final String ERROR_MOVEMENT_QUANTITY_LESS_THAN_STOCK_ON_HAND =
       PRODUCT_LOCATION_MOVEMENT_ERROR_PREFIX + ".movement.quantity.less.than.stock.on.hand";
 
+  //convert to order
+  public static final String ERROR_REQUISITION_EXPIRED = ERROR_PREFIX + ".requisition.expired";
+  public static final String ERROR_PERIOD_NOT_FOUND = ERROR_PREFIX + ".period.not.found";
+
   //location
   public static final String ERROR_LOCATIONS_BY_FACILITY_NOT_FOUND =
       ERROR_PREFIX + ".locations.by.facility.not.found";
@@ -151,6 +155,14 @@ public abstract class MessageKeys {
       LOCAL_ISSUE_VOUCHER_PREFIX + ".local.issue.voucher.id.invalid";
   public static final String ERROR_LOCAL_ISSUE_VOUCHER_SUB_DRAFTS_MORE_THAN_TEN =
       LOCAL_ISSUE_VOUCHER_PREFIX + ".subDrafts.more.than.ten";
+  public static final String ERROR_ID_NOT_MATCH_SUB_DRAFT_ID =
+      LOCAL_ISSUE_VOUCHER_PREFIX + ".local.issue.voucher.id.not.match.subdraft.id";
+  public static final String ERROR_NO_LOCAL_ISSUE_VOUCHER_SUB_DRAFT_FOUND = LOCAL_ISSUE_VOUCHER_PREFIX
+      + ".no.local.issue.voucher.sub.draft.found";
+  public static final String ERROR_LOCAL_ISSUE_VOUCHER_SUB_DRAFT_EMPTY =
+      LOCAL_ISSUE_VOUCHER_PREFIX + ".subDrafts.empty";
+  public static final String ERROR_LOCAL_ISSUE_VOUCHER_SUB_DRAFT_NOT_ALL_SUBMITTED =
+      LOCAL_ISSUE_VOUCHER_PREFIX + ".subDrafts.not.all.submitted";
 
   // localmachine
   public static final String ERROR_INVALID_ACTIVATION_CODE = "localmachine.activationCode.invalid";
@@ -158,6 +170,9 @@ public abstract class MessageKeys {
   public static final String ERROR_FACILITY_NOT_FOUND = "localmachine.facility.notFound";
   public static final String ERROR_NOT_ACTIVATED_YET = "localmachine.notActivated";
   public static final String ERROR_FACILITY_CHANGED = "localmachine.facilityChanged";
+
+  // android
+  public static final String ERROR_NOT_WEB_USER = "siglusapi.error.notWebUser";
 
   // proof of delivery
   public static final String ERROR_NO_POD_OR_POD_LINE_ITEM_FOUND = POD_ERROR_PREFIX

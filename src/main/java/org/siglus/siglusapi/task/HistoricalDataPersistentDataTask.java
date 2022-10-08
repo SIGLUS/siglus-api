@@ -15,7 +15,7 @@
 
 package org.siglus.siglusapi.task;
 
-import lombok.RequiredArgsConstructor;
+import lombok.AllArgsConstructor;
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.siglus.siglusapi.service.task.report.HistoricalDataPersistentService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +23,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-@RequiredArgsConstructor
+@AllArgsConstructor
 @Service
 public class HistoricalDataPersistentDataTask {
 
@@ -33,6 +33,6 @@ public class HistoricalDataPersistentDataTask {
   @SchedulerLock(name = "historical_data_refresh_monthly")
   @Transactional
   public void monthlyRefreshForTracerDrugReport() {
-    historicalDataPersistentService.refreshHistoricalDataReport();
+    historicalDataPersistentService.updateAllFacilityHistoricalData();
   }
 }

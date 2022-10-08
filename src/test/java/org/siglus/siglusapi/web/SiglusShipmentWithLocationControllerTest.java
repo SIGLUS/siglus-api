@@ -23,11 +23,13 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.openlmis.fulfillment.web.shipment.ShipmentDto;
+import org.siglus.siglusapi.localmachine.event.order.fulfillment.OrderFulfillmentSyncedEmitter;
 import org.siglus.siglusapi.service.SiglusNotificationService;
 import org.siglus.siglusapi.service.SiglusShipmentService;
+import org.siglus.siglusapi.web.request.ShipmentExtensionRequest;
 
 @RunWith(MockitoJUnitRunner.class)
+@SuppressWarnings("PMD.UnusedPrivateField")
 public class SiglusShipmentWithLocationControllerTest {
 
   @InjectMocks
@@ -39,16 +41,19 @@ public class SiglusShipmentWithLocationControllerTest {
   @Mock
   private SiglusNotificationService notificationService;
 
+  @Mock
+  private OrderFulfillmentSyncedEmitter orderFulfillmentSyncedEmitter;
+
   @Test
   public void shouldCreateShipmentByLocation() {
     // given
-    ShipmentDto shipmentDto = new ShipmentDto();
+    ShipmentExtensionRequest shipmentExtensionRequest = new ShipmentExtensionRequest();
 
     // when
-    siglusShipmentWithLocationController.confirmShipmentByLocation(false, shipmentDto);
+    siglusShipmentWithLocationController.confirmShipmentByLocation(false, shipmentExtensionRequest);
 
     // then
-    verify(siglusShipmentService).createOrderAndShipmentByLocation(false, shipmentDto);
+    verify(siglusShipmentService).createOrderAndShipmentByLocation(false, shipmentExtensionRequest);
     verify(notificationService).postConfirmShipment(any());
   }
 }

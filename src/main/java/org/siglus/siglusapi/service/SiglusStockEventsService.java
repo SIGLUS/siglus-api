@@ -369,7 +369,7 @@ public class SiglusStockEventsService {
     if (lotId == null) {
       return orderableId.toString() + SEPARATOR + locationCode;
     }
-    return orderableId.toString() + lotId + SEPARATOR + locationCode;
+    return orderableId.toString() + SEPARATOR + lotId + SEPARATOR + locationCode;
   }
 
 }

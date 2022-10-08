@@ -50,7 +50,6 @@ public class MoneyDeserializer extends JsonDeserializer<Money> {
       }
     }
     if (StringUtils.isBlank(amount) || StringUtils.isBlank(currencyCode)) {
-      // TODO:  throw exception or return null
       return null;
     }
     return Money.parse(currencyCode + " " + amount);

@@ -69,7 +69,7 @@ public class SiglusRequisitionController {
   @ResponseStatus(HttpStatus.CREATED)
   public SiglusRequisitionDto initiate(@RequestParam(value = "program") UUID programId,
       @RequestParam(value = "facility") UUID facilityId,
-      @RequestParam(value = "suggestedPeriod", required = false) UUID suggestedPeriod,
+      @RequestParam(value = "suggestedPeriod") UUID suggestedPeriod,
       @RequestParam(value = "emergency") boolean emergency,
       @RequestParam(value = "physicalInventoryDate", required = false)
           String physicalInventoryDateStr,

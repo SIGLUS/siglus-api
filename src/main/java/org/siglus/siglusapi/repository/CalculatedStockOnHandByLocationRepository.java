@@ -16,17 +16,12 @@
 package org.siglus.siglusapi.repository;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import javax.persistence.criteria.Predicate;
-import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
 import org.siglus.siglusapi.domain.CalculatedStockOnHandByLocation;
-import org.siglus.siglusapi.domain.StockCardLineItemExtension;
 import org.siglus.siglusapi.dto.LocationMovementLineItemDto;
 import org.siglus.siglusapi.dto.LotLocationSohDto;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -110,22 +105,6 @@ public interface CalculatedStockOnHandByLocationRepository extends JpaRepository
           @Param("stockCardIds") Collection<UUID> stockCardIds,
           @Param("occurredDate") LocalDate occurredDate);
 
-
-  default List<CalculatedStockOnHandByLocation> getFollowingStockOnHands(
-      List<StockCardLineItem> lineItems,
-      Map<UUID, StockCardLineItemExtension> lineItemIdToExtension,
-      Date occurredDate) {
-    return findAll((root, query, cb) -> {
-      Predicate byFutureDate = cb.greaterThanOrEqualTo(root.get("occurredDate"), occurredDate);
-      List<Predicate> predicates = new ArrayList<>();
-      lineItems.forEach(lineItem -> predicates.add(cb.and(
-          cb.equal(root.get("stockCardId"), lineItem.getStockCard().getId()),
-          cb.equal(root.get("locationCode"), lineItemIdToExtension.get(lineItem.getId()).getLocationCode())
-      )));
-      Predicate byStockCardIdAndLocationCode = predicates.stream().reduce(cb.conjunction(), cb::or);
-      return cb.and(byFutureDate, byStockCardIdAndLocationCode);
-    });
-  }
 
   @Query(value = "select * from siglusintegration.calculated_stocks_on_hand_by_location\n"
       + "where (stockcardid, processeddate) in\n"

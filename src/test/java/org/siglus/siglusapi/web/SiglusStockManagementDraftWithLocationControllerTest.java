@@ -70,7 +70,7 @@ public class SiglusStockManagementDraftWithLocationControllerTest extends TestCa
 
   @Test
   public void shouldCallUpdateDraft() {
-    controller.updateDraft(draftId, draftWithLocationDto);
+    controller.updateDraftWithMutilUser(draftId, draftWithLocationDto);
 
     verify(service).updateDraftWithLocation(draftWithLocationDto, draftId);
   }
@@ -84,7 +84,7 @@ public class SiglusStockManagementDraftWithLocationControllerTest extends TestCa
 
   @Test
   public void shouldCallDeleteInitialDraft() {
-    controller.deleteDraft(draftId);
+    controller.deleteDraftWithMutilUser(draftId);
 
     verify(service).deleteStockManagementDraft(draftId);
   }

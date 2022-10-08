@@ -21,11 +21,12 @@ import static org.springframework.http.HttpStatus.OK;
 
 import java.util.List;
 import java.util.UUID;
+import lombok.RequiredArgsConstructor;
 import org.siglus.siglusapi.dto.MergedLineItemWithLocationDto;
+import org.siglus.siglusapi.dto.StockManagementDraftDto;
 import org.siglus.siglusapi.dto.StockManagementDraftWithLocationDto;
 import org.siglus.siglusapi.dto.StockManagementInitialDraftDto;
 import org.siglus.siglusapi.service.SiglusStockManagementDraftService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -39,10 +40,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/siglusapi/draftsWithLocation")
+@SuppressWarnings("PMD.AvoidDuplicateLiterals")
+@RequiredArgsConstructor
 public class SiglusStockManagementDraftWithLocationController {
-
-  @Autowired
-  SiglusStockManagementDraftService stockManagementDraftService;
+  private final SiglusStockManagementDraftService stockManagementDraftService;
 
   @GetMapping
   public List<StockManagementDraftWithLocationDto> searchDrafts(@RequestParam UUID program,
@@ -51,15 +52,27 @@ public class SiglusStockManagementDraftWithLocationController {
     return stockManagementDraftService.findStockManagementDraftWithLocation(program, draftType, isDraft);
   }
 
-  @GetMapping("/{id}")
-  public StockManagementDraftWithLocationDto searchDraftWithLocation(@PathVariable UUID id) {
-    return stockManagementDraftService.searchDraftWithLocation(id);
+  @GetMapping("/{id}/subDraft/{subDraftId}")
+  public StockManagementDraftWithLocationDto searchDraftWithMutilUser(@PathVariable UUID subDraftId) {
+    return stockManagementDraftService.searchDraftWithLocation(subDraftId);
   }
 
-  @DeleteMapping("/{id}")
+  @DeleteMapping("/{id}/subDraft/{subDraftId}")
   @ResponseStatus(NO_CONTENT)
-  public void deleteDraft(@PathVariable UUID id) {
-    stockManagementDraftService.deleteStockManagementDraft(id);
+  public void deleteDraftWithMutilUser(@PathVariable UUID subDraftId) {
+    stockManagementDraftService.deleteStockManagementDraft(subDraftId);
+  }
+
+  @PutMapping("/{id}/subDraft/{subDraftId}")
+  @ResponseStatus(OK)
+  public StockManagementDraftWithLocationDto updateDraftWithMutilUser(@PathVariable UUID subDraftId,
+      @RequestBody StockManagementDraftWithLocationDto dto) {
+    return stockManagementDraftService.updateDraftWithLocation(dto, subDraftId);
+  }
+
+  @GetMapping("/{id}")
+  public StockManagementDraftWithLocationDto searchDraft(@PathVariable UUID id) {
+    return stockManagementDraftService.searchDraftWithLocation(id);
   }
 
   @PutMapping("/{id}")
@@ -69,22 +82,31 @@ public class SiglusStockManagementDraftWithLocationController {
     return stockManagementDraftService.updateDraftWithLocation(dto, id);
   }
 
-  @PutMapping("/{initialDraftId}/subDraft/{subDraftId}/submit")
+  @PutMapping("/{id}/subDraft/{subDraftId}/info")
+  @ResponseStatus(OK)
+  public StockManagementDraftDto restoreSubDraftWhenDoDelete(
+      @RequestBody StockManagementDraftDto dto) {
+    return stockManagementDraftService.restoreSubDraftWhenDoDelete(dto);
+  }
+
+  @PutMapping("/{id}/subDraft/{subDraftId}/submit")
   @ResponseStatus(OK)
   public StockManagementDraftWithLocationDto updateStatusAfterSubmitWithLocation(
       @RequestBody StockManagementDraftWithLocationDto draftDto) {
     return stockManagementDraftService.updateStatusAfterSubmitWithLocation(draftDto);
   }
 
-  @GetMapping("/{initialDraftId}/subDraft/merge")
-  public List<MergedLineItemWithLocationDto> mergeSubDraftsWithLocation(@PathVariable UUID initialDraftId) {
-    return stockManagementDraftService.mergeSubDraftsWithLocation(initialDraftId);
+  @GetMapping("/{id}/subDraft/merge")
+  public List<MergedLineItemWithLocationDto> mergeSubDraftsWithLocation(@PathVariable UUID id) {
+    return stockManagementDraftService.mergeSubDraftsWithLocation(id);
   }
 
-  @DeleteMapping("/{initialDraftId}")
+
+
+  @DeleteMapping("/{id}")
   @ResponseStatus(NO_CONTENT)
-  public void deleteInitialDraft(@PathVariable UUID initialDraftId) {
-    stockManagementDraftService.deleteInitialDraft(initialDraftId);
+  public void deleteInitialDraft(@PathVariable UUID id) {
+    stockManagementDraftService.deleteInitialDraft(id);
   }
 
   @GetMapping("/initialDraft")

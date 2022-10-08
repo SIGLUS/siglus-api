@@ -104,7 +104,7 @@ public class ResourceServerSecurityConfiguration implements ResourceServerConfig
         .permitAll()
         .requestMatchers(
             new AndRequestMatcher(
-                new AntPathRequestMatcher("/api/siglusapi/localmachine/**"),
+                new AntPathRequestMatcher("/api/siglusapi/localmachine/server/**"),
                 machineTokenMatcher))
         .permitAll()
         .antMatchers("/**")

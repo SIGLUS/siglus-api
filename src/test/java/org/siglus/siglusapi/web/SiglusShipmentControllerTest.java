@@ -23,11 +23,13 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.openlmis.fulfillment.web.shipment.ShipmentDto;
+import org.siglus.siglusapi.localmachine.event.order.fulfillment.OrderFulfillmentSyncedEmitter;
 import org.siglus.siglusapi.service.SiglusNotificationService;
 import org.siglus.siglusapi.service.SiglusShipmentService;
+import org.siglus.siglusapi.web.request.ShipmentExtensionRequest;
 
 @RunWith(MockitoJUnitRunner.class)
+@SuppressWarnings("PMD.UnusedPrivateField")
 public class SiglusShipmentControllerTest {
 
   @InjectMocks
@@ -38,11 +40,13 @@ public class SiglusShipmentControllerTest {
 
   @Mock
   private SiglusNotificationService notificationService;
+  @Mock
+  private OrderFulfillmentSyncedEmitter orderFulfillmentSyncedEmitter;
 
   @Test
   public void shouldCallServiceWhenCreateShipment() {
     // given
-    ShipmentDto shipmentDto = new ShipmentDto();
+    ShipmentExtensionRequest shipmentDto = new ShipmentExtensionRequest();
 
     // when
     siglusShipmentController.createShipment(false, shipmentDto);

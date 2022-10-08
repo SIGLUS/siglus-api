@@ -65,9 +65,9 @@ public class SiglusLocalIssueVoucherControllerTest {
 
   @Test
   public void shouldUpdateWhenCallByService() {
-    controller.updateSubDraft(subDraftId, null);
+    controller.updateSubDraft(localIssueVoucherId, subDraftId, null);
 
-    verify(siglusLocalIssueVoucherService).updateSubDraft(null, subDraftId);
+    verify(siglusLocalIssueVoucherService).updateSubDraft(localIssueVoucherId, null, subDraftId);
   }
 
   @Test

@@ -15,8 +15,6 @@
 
 package org.siglus.siglusapi.web;
 
-import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
-import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_UUID;
 import static org.springframework.http.HttpStatus.CREATED;
 import static org.springframework.http.HttpStatus.NO_CONTENT;
 
@@ -59,26 +57,18 @@ public class SiglusPhysicalInventoryLocationController {
       @RequestParam(required = false) boolean initialPhysicalInventory,
       @RequestParam(name = "locationManagementOption") String optionString,
       @RequestParam(required = false) boolean isByLocation) {
-    if (ALL_PRODUCTS_PROGRAM_ID.equals(dto.getProgramId())) {
-      return siglusPhysicalInventoryService.createAndSplitNewDraftForAllProduct(dto, splitNum,
-          initialPhysicalInventory, optionString, isByLocation);
-    }
-    return siglusPhysicalInventoryService.createAndSpiltNewDraftForOneProgram(dto, splitNum,
-        optionString, isByLocation);
+    return siglusPhysicalInventoryService.createAndSplitNewDraftForAllProduct(dto, splitNum,
+        initialPhysicalInventory, optionString, isByLocation);
   }
 
   @GetMapping
-  public List<PhysicalInventoryDto> searchPhysicalInventories(
+  public List<SiglusPhysicalInventoryDto> searchPhysicalInventories(
       @RequestParam UUID program,
       @RequestParam UUID facility,
       @RequestParam(required = false) Boolean isDraft,
       @RequestParam(required = false) boolean isByLocation) {
-    if (ALL_PRODUCTS_PROGRAM_ID.equals(program)) {
-      return siglusPhysicalInventoryService
-          .getPhysicalInventoryDtosForAllProducts(facility, isDraft, isByLocation);
-    }
-    return siglusPhysicalInventoryService.getPhysicalInventoryDtosForProductsForOneProgram(program, facility, isDraft,
-        isByLocation);
+    return siglusPhysicalInventoryService
+        .getLocationPhysicalInventoryDtosForAllProducts(facility, isDraft, isByLocation);
   }
 
   @GetMapping("/subDraft")
@@ -117,10 +107,7 @@ public class SiglusPhysicalInventoryLocationController {
   public DraftListDto searchSubDraftList(@RequestParam UUID program,
       @RequestParam UUID facility,
       @RequestParam(required = false) Boolean isDraft) {
-    if (ALL_PRODUCTS_UUID.equals(program)) {
-      return siglusPhysicalInventoryService.getSubDraftListForAllProduct(facility, isDraft);
-    }
-    return siglusPhysicalInventoryService.getSubDraftListForOneProgram(program, facility, isDraft);
+    return siglusPhysicalInventoryService.getSubDraftListForAllProduct(facility, isDraft);
   }
 
 }

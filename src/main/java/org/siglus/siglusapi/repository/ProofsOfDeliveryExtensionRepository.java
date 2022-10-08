@@ -20,5 +20,5 @@ import org.siglus.siglusapi.domain.ProofsOfDeliveryExtension;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface ProofsOfDeliveryExtensionRepository extends JpaRepository<ProofsOfDeliveryExtension, UUID> {
-
+  ProofsOfDeliveryExtension findByPodId(UUID podId);
 }

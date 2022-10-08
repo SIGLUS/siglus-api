@@ -17,7 +17,7 @@ package org.siglus.siglusapi.localmachine.event.requisition.andriod;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.siglus.siglusapi.service.android.MeService;
+import org.siglus.siglusapi.service.android.RequisitionCreateService;
 import org.siglus.siglusapi.util.SiglusSimulateUserAuthHelper;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
@@ -26,14 +26,14 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @RequiredArgsConstructor
 public class AndroidRequisitionSyncedReplayer {
-  private final MeService meService;
   private final SiglusSimulateUserAuthHelper simulateUserAuthHelper;
+  private final RequisitionCreateService requisitionCreateService;
 
   @EventListener(value = {AndroidRequisitionSyncedEvent.class})
   public void replay(AndroidRequisitionSyncedEvent event) {
     try {
       simulateUserAuthHelper.simulateNewUserAuth(event.getUserId());
-      meService.createRequisition(event.getRequest());
+      requisitionCreateService.createRequisition(event.getRequest());
     } catch (Exception e) {
       log.error(e.getMessage(), e);
     }

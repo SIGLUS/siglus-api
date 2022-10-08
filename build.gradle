@@ -26,6 +26,9 @@ archivesBaseName = serviceName
 project.ext.buildTime = Instant.now().toString() // for versioning
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
+ext {
+    debeziumVersion = '1.9.4.Final'
+}
 
 repositories {
     mavenLocal()
@@ -33,13 +36,14 @@ repositories {
     jcenter()
     maven { url "https://jaspersoft.jfrog.io/jaspersoft/third-party-ce-artifacts/" }
     maven { url "http://jasperreports.sourceforge.net/maven2/" }
+    maven { url 'https://packages.confluent.io/maven/' }
     maven { url "http://10.0.0.91:8091/repository/maven-public/" }
     maven { url "http://localhost:8091/repository/maven-public/" }
 }
 
 // NOTE: do NOT use implementation, otherwise the SpringBoot won't pack the dependencies into the fat jar
 dependencies {
-    compile 'org.openlmis:siglus-api-extension:1.1.0-20220926.073809-126'
+    compile 'org.openlmis:siglus-api-extension:1.1.0-20220928.064407-127'
     compile 'org.springframework.boot:spring-boot-starter-web'
     compile 'org.springframework.boot:spring-boot-starter-data-rest'
     compile 'org.springframework.boot:spring-boot-starter-data-jpa'
@@ -56,7 +60,7 @@ dependencies {
     compile 'org.springframework.boot:spring-boot-starter-data-redis:1.5.21.RELEASE'
     compile 'org.openlmis:openlmis-service-util:3.0.0'
     compile 'org.jadira.usertype:usertype.core:5.0.0.GA'
-    compile 'org.postgresql:postgresql:42.0.0'
+    compile 'org.postgresql:postgresql:42.3.3'
     compile 'com.google.guava:guava:18.0'
     compile 'org.webjars.npm:api-console:3.0.17'
     compile 'org.apache.commons:commons-lang3:3.6'
@@ -122,6 +126,11 @@ dependencies {
     compile 'org.togglz:togglz-console:2.6.1.Final'
     compile 'org.togglz:togglz-spring-security:2.6.1.Final'
     compile 'org.togglz:togglz-redis:2.6.1.Final'
+    // cdc debezium
+    compile "io.debezium:debezium-api:${debeziumVersion}"
+    compile "io.debezium:debezium-embedded:${debeziumVersion}"
+    compile "io.debezium:debezium-connector-postgres:${debeziumVersion}"
+    compile 'io.confluent:kafka-connect-jdbc:10.4.0'
 
     testCompileOnly 'org.projectlombok:lombok:1.18.20'
     testAnnotationProcessor 'org.projectlombok:lombok:1.18.20'
@@ -241,6 +250,7 @@ def jacocoTestExclusion = [
         'org/siglus/siglusapi/exception',
         'org/siglus/siglusapi/dto',
         'org/siglus/siglusapi/config',
+        'org/siglus/siglusapi/errorhandling',
         'org/siglus/siglusapi/service/SiglusLocalIssueVoucherService.class'
 ]
 

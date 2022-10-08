@@ -42,6 +42,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
+import org.openlmis.stockmanagement.domain.sourcedestination.Node;
+import org.openlmis.stockmanagement.repository.NodeRepository;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.siglus.siglusapi.domain.ProgramRealProgram;
 import org.siglus.siglusapi.dto.FacilityDto;
@@ -83,7 +85,7 @@ public class FcFacilityServiceTest {
   private SiglusFacilityTypeReferenceDataService facilityTypeService;
 
   @Mock
-  private FcSourceDestinationService fcSourceDestinationService;
+  private NodeRepository nodeRepository;
 
   @InjectMocks
   private FcFacilityService fcFacilityService;
@@ -152,15 +154,13 @@ public class FcFacilityServiceTest {
     ProgramDto programDto = getProgramDto();
     when(programReferenceDataService.findAll()).thenReturn(Collections.singletonList(programDto));
     when(programRealProgramRepository.findAll()).thenReturn(
-        Collections.singletonList(
-            mockRealProgram(UUID.randomUUID(), "PT", programDto.getCode(),
-                PTV, true)));
+        Collections.singletonList(mockRealProgram(UUID.randomUUID(), "PT", programDto.getCode(), PTV, true)));
     when(facilityService.findAll()).thenReturn(emptyList());
     when(geographicZoneService.searchAllGeographicZones()).thenReturn(getGeographicZones());
     FacilityTypeDto typeDto1 = mockFacilityTypeDto(TYPE_1, TYPE_NAME, true);
-    when(facilityTypeService.searchAllFacilityTypes())
-        .thenReturn(Collections.singletonList(typeDto1));
+    when(facilityTypeService.searchAllFacilityTypes()).thenReturn(Collections.singletonList(typeDto1));
     FcFacilityDto facilityDto = getFcFacilityDto(FACILITY, TYPE_1);
+    when(facilityService.createFacility(any())).thenReturn(new FacilityDto());
 
     // when
     FcIntegrationResultDto result = fcFacilityService.processData(Collections.singletonList(facilityDto), START_DATE,
@@ -169,7 +169,7 @@ public class FcFacilityServiceTest {
     // then
     assertNotNull(result);
     verify(facilityService).createFacility(facilityCaptor.capture());
-    verify(fcSourceDestinationService).createSourceAndDestination(any());
+    verify(nodeRepository).save(any(Node.class));
     assertEquals(DESCRIPTION, facilityCaptor.getValue().getGeographicZone().getName());
     assertEquals(FACILITY, facilityCaptor.getValue().getCode());
     assertEquals(TYPE_1, facilityCaptor.getValue().getType().getCode());
@@ -182,9 +182,7 @@ public class FcFacilityServiceTest {
     ProgramDto programDto = getProgramDto();
     when(programReferenceDataService.findAll()).thenReturn(Collections.singletonList(programDto));
     when(programRealProgramRepository.findAll()).thenReturn(
-        Collections.singletonList(
-            mockRealProgram(UUID.randomUUID(), "PT", programDto.getCode(),
-                PTV, true)));
+        Collections.singletonList(mockRealProgram(UUID.randomUUID(), "PT", programDto.getCode(), PTV, true)));
     when(facilityService.findAll()).thenReturn(singletonList(getFacilityDto()));
     when(facilityService.findOne(FACILITY_ID)).thenReturn(getFacilityDto());
     when(geographicZoneService.searchAllGeographicZones()).thenReturn(getGeographicZones());
@@ -244,8 +242,7 @@ public class FcFacilityServiceTest {
 
     // then
     verify(facilityService).saveFacility(facilityCaptor.capture());
-    assertEquals(DESCRIPTION,
-        facilityCaptor.getValue().getGeographicZone().getName());
+    assertEquals(DESCRIPTION, facilityCaptor.getValue().getGeographicZone().getName());
     assertEquals("facility2", facilityCaptor.getValue().getCode());
     assertEquals(TYPE_2, facilityCaptor.getValue().getType().getCode());
     assertEquals("TARV", facilityCaptor.getValue()

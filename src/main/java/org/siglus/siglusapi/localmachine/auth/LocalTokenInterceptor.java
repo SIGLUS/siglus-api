@@ -17,20 +17,26 @@ package org.siglus.siglusapi.localmachine.auth;
 
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_NOT_ACTIVATED_YET;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.localmachine.CommonConstants;
+import org.siglus.siglusapi.localmachine.Machine;
 import org.siglus.siglusapi.localmachine.domain.AgentInfo;
 import org.siglus.siglusapi.localmachine.repository.AgentInfoRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpRequest;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.client.ClientHttpRequestExecution;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.http.client.ClientHttpResponse;
@@ -45,6 +51,8 @@ public class LocalTokenInterceptor implements ClientHttpRequestInterceptor {
   @Value("${machine.version}")
   private String localMachineVersion;
 
+  private final Machine machine;
+
   @Setter private Function<HttpRequest, Boolean> acceptFunc = (httpRequest -> true);
 
   @Override
@@ -54,7 +62,26 @@ public class LocalTokenInterceptor implements ClientHttpRequestInterceptor {
       HttpHeaders headers = request.getHeaders();
       attachHeaders(headers);
     }
-    return execution.execute(request, body);
+    ClientHttpResponse httpResponse = execution.execute(request, body);
+    logClientHttpResponse(request, httpResponse);
+    return httpResponse;
+  }
+
+  @SneakyThrows
+  private void logClientHttpResponse(HttpRequest request, ClientHttpResponse httpResponse) {
+    HttpStatus statusCode = httpResponse.getStatusCode();
+    if (!statusCode.is2xxSuccessful()) {
+      StringBuilder bodyStringBuilder = new StringBuilder();
+      BufferedReader inputStreamReader = new BufferedReader(new InputStreamReader(httpResponse.getBody(),
+          StandardCharsets.UTF_8));
+      String line = inputStreamReader.readLine();
+      while (line != null) {
+        bodyStringBuilder.append(line).append('\n');
+        line = inputStreamReader.readLine();
+      }
+      log.error("localmachine agent error response, request = {}, status code = {}, headers = {} ,body = {}",
+          request.getURI(), statusCode, httpResponse.getHeaders(), bodyStringBuilder);
+    }
   }
 
   private void attachHeaders(HttpHeaders headers) {
@@ -64,6 +91,7 @@ public class LocalTokenInterceptor implements ClientHttpRequestInterceptor {
     String accessToken = buildAccessToken(agentInfo);
     headers.add(CommonConstants.VERSION, localMachineVersion);
     headers.add(CommonConstants.ACCESS_TOKEN, accessToken);
+    headers.add(CommonConstants.DEVICE_INFO, machine.getDeviceInfo());
   }
 
   private String buildAccessToken(AgentInfo agentInfo) {

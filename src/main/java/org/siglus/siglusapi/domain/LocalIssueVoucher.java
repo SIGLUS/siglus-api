@@ -64,7 +64,7 @@ public class LocalIssueVoucher extends BaseEntity {
   @Column(updatable = false)
   private ZonedDateTime createdDate;
 
-  public static LocalIssueVoucher createLocalReceiptVoucher(LocalIssueVoucherDto localIssueVoucherDto) {
+  public static LocalIssueVoucher createLocalIssueVoucher(LocalIssueVoucherDto localIssueVoucherDto) {
     LocalIssueVoucher localIssueVoucher = new LocalIssueVoucher();
     BeanUtils.copyProperties(localIssueVoucherDto, localIssueVoucher);
     return localIssueVoucher;

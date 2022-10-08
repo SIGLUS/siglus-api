@@ -30,10 +30,12 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.openlmis.fulfillment.domain.Order;
 import org.openlmis.fulfillment.domain.OrderLineItem;
 import org.openlmis.fulfillment.domain.OrderStatus;
+import org.openlmis.fulfillment.domain.ProofOfDelivery;
 import org.openlmis.fulfillment.domain.ShipmentLineItem;
 import org.openlmis.fulfillment.domain.ShipmentLineItem.Importer;
 import org.openlmis.fulfillment.repository.OrderRepository;
@@ -49,69 +51,71 @@ import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
 import org.openlmis.stockmanagement.repository.StockCardLineItemRepository;
 import org.openlmis.stockmanagement.repository.StockCardRepository;
 import org.siglus.siglusapi.domain.OrderLineItemExtension;
+import org.siglus.siglusapi.domain.ProofsOfDeliveryExtension;
 import org.siglus.siglusapi.domain.ShipmentLineItemsExtension;
 import org.siglus.siglusapi.domain.StockCardLineItemExtension;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
+import org.siglus.siglusapi.repository.ProofsOfDeliveryExtensionRepository;
 import org.siglus.siglusapi.repository.ShipmentLineItemsExtensionRepository;
+import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
 import org.siglus.siglusapi.repository.StockCardLineItemExtensionRepository;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.siglus.siglusapi.web.request.ShipmentExtensionRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class SiglusShipmentService {
 
-  @Autowired
-  private OrderRepository orderRepository;
+  private final OrderRepository orderRepository;
 
-  @Autowired
-  private OrderLineItemExtensionRepository lineItemExtensionRepository;
+  private final OrderLineItemExtensionRepository lineItemExtensionRepository;
 
-  @Autowired
-  private ShipmentController shipmentController;
+  private final ShipmentController shipmentController;
 
-  @Autowired
-  private SiglusOrderService siglusOrderService;
+  private final SiglusOrderService siglusOrderService;
 
-  @Autowired
-  private OrderController orderController;
+  private final OrderController orderController;
 
-  @Autowired
-  private ShipmentLineItemsExtensionRepository shipmentLineItemsExtensionRepository;
+  private final ShipmentLineItemsExtensionRepository shipmentLineItemsExtensionRepository;
 
-  @Autowired
-  private CalculatedStocksOnHandByLocationService calculatedStocksOnHandByLocationService;
+  private final CalculatedStocksOnHandByLocationService calculatedStocksOnHandByLocationService;
 
-  @Autowired
-  private SiglusAuthenticationHelper authenticationHelper;
+  private final SiglusAuthenticationHelper authenticationHelper;
 
-  @Autowired
-  private StockCardLineItemExtensionRepository stockCardLineItemExtensionRepository;
+  private final SiglusProofOfDeliveryRepository siglusProofOfDeliveryRepository;
 
-  @Autowired
-  private StockCardLineItemRepository stockCardLineItemRepository;
+  private final ProofsOfDeliveryExtensionRepository proofsOfDeliveryExtensionRepository;
 
-  @Autowired
-  private StockCardRepository stockCardRepository;
+  private final StockCardLineItemRepository stockCardLineItemRepository;
+
+  private final StockCardRepository stockCardRepository;
+
+  private final StockCardLineItemExtensionRepository stockCardLineItemExtensionRepository;
 
   @Transactional
-  public ShipmentDto createOrderAndShipment(boolean isSubOrder, ShipmentDto shipmentDto) {
-    return createOrderAndConfirmShipment(isSubOrder, shipmentDto);
+  public ShipmentDto createOrderAndShipment(boolean isSubOrder, ShipmentExtensionRequest shipmentExtensionRequest) {
+    ShipmentDto shipmentDto = createOrderAndConfirmShipment(isSubOrder,
+        shipmentExtensionRequest.getShipment());
+    savePodExtension(shipmentDto.getId(), shipmentExtensionRequest);
+    return shipmentDto;
   }
 
   @Transactional
-  public ShipmentDto createOrderAndShipmentByLocation(boolean isSubOrder, ShipmentDto shipmentDto) {
-    List<ShipmentLineItemDto> shipmentLineItemDtos = shipmentDto.lineItems();
+  public ShipmentDto createOrderAndShipmentByLocation(boolean isSubOrder,
+      ShipmentExtensionRequest shipmentExtensionRequest) {
+    List<ShipmentLineItemDto> shipmentLineItemDtos = shipmentExtensionRequest.getShipment().lineItems();
     Multimap<String, ShipmentLineItemDto> uniqueKeyMap = ArrayListMultimap.create();
     shipmentLineItemDtos.forEach(shipmentLineItemDto -> {
       String uniqueKey = buildForUniqueKey(shipmentLineItemDto);
       uniqueKeyMap.put(uniqueKey, shipmentLineItemDto);
     });
-    ShipmentDto confirmedShipmentDto = createOrderAndConfirmShipment(isSubOrder, shipmentDto);
+    ShipmentDto confirmedShipmentDto = createOrderAndConfirmShipment(isSubOrder,
+        shipmentExtensionRequest.getShipment());
     List<ShipmentLineItemsExtension> shipmentLineItemsByLocations = Lists.newArrayList();
     fulfillLocationInfo(uniqueKeyMap, confirmedShipmentDto);
     confirmedShipmentDto.lineItems().forEach(shipmentLineItemDto -> {
@@ -131,6 +135,7 @@ public class SiglusShipmentService {
     UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
     calculatedStocksOnHandByLocationService.calculateStockOnHandByLocationForShipment(confirmedShipmentDto.lineItems(),
         facilityId);
+    savePodExtension(confirmedShipmentDto.getId(), shipmentExtensionRequest);
     saveShipmentLineItemsWithLocation(confirmedShipmentDto.lineItems(), facilityId);
     return confirmedShipmentDto;
   }
@@ -328,5 +333,18 @@ public class SiglusShipmentService {
     });
     log.info("save to stock card line item by location; size: {}", stockCardLineItemExtensions.size());
     stockCardLineItemExtensionRepository.save(stockCardLineItemExtensions);
+  }
+
+  private void savePodExtension(UUID shipmentId, ShipmentExtensionRequest shipmentExtensionRequest) {
+    ProofOfDelivery proofOfDelivery = siglusProofOfDeliveryRepository.findByShipmentId(shipmentId);
+    UUID podId = proofOfDelivery.getId();
+    ProofsOfDeliveryExtension proofsOfDeliveryExtension = ProofsOfDeliveryExtension
+        .builder()
+        .podId(podId)
+        .conferredBy(shipmentExtensionRequest.getConferredBy())
+        .preparedBy(shipmentExtensionRequest.getPreparedBy())
+        .build();
+    log.info("save pod extension when confirm shipment, shipmentId: {}", shipmentId);
+    proofsOfDeliveryExtensionRepository.save(proofsOfDeliveryExtension);
   }
 }

@@ -16,6 +16,7 @@
 package org.siglus.siglusapi.web;
 
 import static org.springframework.http.HttpStatus.NO_CONTENT;
+import static org.springframework.http.HttpStatus.OK;
 
 import java.util.List;
 import java.util.UUID;
@@ -24,6 +25,8 @@ import lombok.AllArgsConstructor;
 import org.openlmis.referencedata.dto.OrderableDto;
 import org.siglus.siglusapi.dto.LocalIssueVoucherDto;
 import org.siglus.siglusapi.dto.LocalIssueVoucherSubDraftDto;
+import org.siglus.siglusapi.dto.LocalIssueVoucherSubDraftLineItemDto;
+import org.siglus.siglusapi.dto.LocalIssueVoucherSubmitRequestDto;
 import org.siglus.siglusapi.service.SiglusLocalIssueVoucherService;
 import org.siglus.siglusapi.web.response.PodSubDraftsSummaryResponse;
 import org.siglus.siglusapi.web.response.PodSubDraftsSummaryResponse.SubDraftInfo;
@@ -71,32 +74,54 @@ public class SiglusLocalIssueVoucherController {
     localIssueVoucherService.deleteLocalIssueVoucher(localIssueVoucherId);
   }
 
-  @GetMapping("/{id}/subDraft/{subDraftId}")
+
+  @GetMapping("/{id}/subDrafts/merge")
+  public List<LocalIssueVoucherSubDraftLineItemDto> mergeLocalIssueDrafts(
+      @PathVariable("id") UUID localIssueVoucherId) {
+    return localIssueVoucherService.mergeLocalIssueDrafts(localIssueVoucherId);
+  }
+
+  @PutMapping("/{id}/subDraft/submit")
+  @ResponseStatus(OK)
+  public void submitLocalIssueVoucherdrafts(@RequestBody LocalIssueVoucherSubmitRequestDto submitRequestDto) {
+    localIssueVoucherService.submitLocalIssueVoucherDrafts(submitRequestDto);
+  }
+
+  @GetMapping("/{id}/subDrafts/{subDraftId}")
   public LocalIssueVoucherSubDraftDto getSubDraftDetail(@PathVariable(SUB_DRAFT_ID) UUID subDraftId) {
     return localIssueVoucherService.getSubDraftDetail(subDraftId);
   }
 
   @DeleteMapping("/{id}/subDrafts/{subDraftId}")
   @ResponseStatus(NO_CONTENT)
-  public void deleteSubDraft(@PathVariable("id") UUID podId, @PathVariable(SUB_DRAFT_ID) UUID subDraftId) {
-    localIssueVoucherService.deleteSubDraft(podId, subDraftId);
+  public void deleteSubDraft(@PathVariable("id") UUID localIssueVoucherId,
+      @PathVariable(SUB_DRAFT_ID) UUID subDraftId) {
+    localIssueVoucherService.deleteSubDraft(localIssueVoucherId, subDraftId);
   }
 
-  @PutMapping("/{id}/subDraft/{subDraftId}")
+
+  @DeleteMapping("/{id}/subDrafts")
+  public void deleteAllSubDrafts(@PathVariable("id") UUID localIssueVoucherId) {
+    localIssueVoucherService.deleteAllSubDrafts(localIssueVoucherId);
+  }
+
+  @PutMapping("/{id}/subDrafts/{subDraftId}")
   @ResponseStatus(NO_CONTENT)
-  public void updateSubDraft(@PathVariable(SUB_DRAFT_ID) UUID subDraftId,
+  public void updateSubDraft(@PathVariable("id") UUID localIssueVoucherId,
+      @PathVariable(SUB_DRAFT_ID) UUID subDraftId,
       @Valid @RequestBody LocalIssueVoucherSubDraftDto request) {
-    localIssueVoucherService.updateSubDraft(request, subDraftId);
+    localIssueVoucherService.updateSubDraft(localIssueVoucherId, request, subDraftId);
   }
 
-  @PostMapping("/{id}/clearSubDraftFillingPage/{subDraftId}")
+  @PutMapping("/{id}/subDrafts/{subDraftId}/clear")
   @ResponseStatus(NO_CONTENT)
-  public void clearFillingPage(@PathVariable("id") UUID podId, @PathVariable(SUB_DRAFT_ID) UUID subDraftId) {
+  public void clearFillingPage(@PathVariable("id") UUID localIssueVoucherId,
+      @PathVariable(SUB_DRAFT_ID) UUID subDraftId) {
     localIssueVoucherService.clearFillingPage(subDraftId);
   }
 
-  @GetMapping("/availableProduct")
-  public List<OrderableDto> availableProduct(@RequestParam("podId") UUID podId) {
-    return localIssueVoucherService.getAvailableOrderables(podId);
+  @GetMapping("{id}/availableProducts")
+  public List<OrderableDto> availableProduct(@RequestParam("id") UUID localIssueVoucherId) {
+    return localIssueVoucherService.getAvailableOrderables(localIssueVoucherId);
   }
 }

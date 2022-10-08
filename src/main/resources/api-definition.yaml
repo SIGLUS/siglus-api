@@ -260,6 +260,9 @@ traits:
         /ack:
           post:
             description: confirm events synced by the local agent
+        /reSync:
+          get:
+            description: resync data from onlineweb
       /agent:
         put:
           description: local api for localmachine control plane to activate the machine
@@ -318,6 +321,35 @@ traits:
             body:
               application/json:
                 schema: localizedMessage
+      /subDraftSubmit:
+        post:
+          is: [ secured ]
+          description: submit the sub draft for physical inventory
+          body:
+            application/json:
+              schema: physicalInventory
+          queryParameters:
+            isByLocation:
+              required: true
+              description: is inventory by Location or not
+              repeat: false
+              type: boolean
+          responses:
+            201:
+              description: sub draft submitted.
+              body:
+                application/json:
+                  schema: physicalInventory
+            400:
+              body:
+                application/json:
+                  schema: localizedMessage
+              description: An error occured during request processing.
+            403:
+              description: User does not have permission to submit sub draft physical inventory.
+              body:
+                application/json:
+                  schema: localizedMessage
       /subDraft:
         get:
           is: [ secured ]
@@ -490,9 +522,15 @@ traits:
             responses:
               201:
                 description: issueVouchers update.
+          delete:
+            is: [ secured ]
+            description: delete all local issue voucher subDrafts
+            responses:
+              204:
+                description: all subDrafts deleted.
           /{subDraftId}:
             get:
-              is: [secured]
+              is: [ secured ]
               responses:
                 201:
                   description: get subdraft filling page detail
@@ -567,7 +605,12 @@ traits:
             200:
               description: GET subDrafts with location
 
-    /draftsWithLocation/{id}:
+      /{initialDraftId}:
+        delete:
+          is: [ secured ]
+          description: Delete initial draft with related stock management draft with Location.
+
+    /draftsWithLocation/{initialDraftId}/subDraft/{id}:
       put:
         is: [ secured ]
         description: save a stock management draft with location
@@ -618,6 +661,32 @@ traits:
 
           403:
             description: User does not have permission to update stock management sub-draft with Location.
+            body:
+              application/json:
+                schema: localizedMessage
+
+    /draftsWithLocation/{initialDraftId}/subDraft/{subDraftId}/info:
+      put:
+        is: [ secured ]
+        description: restore a stock management sub-draft.
+        body:
+          application/json:
+            schema: stockManagementDraft
+
+        responses:
+          200:
+            description: Draft restored.
+            body:
+              application/json:
+                schema: stockManagementDraft
+          400:
+            body:
+              application/json:
+                schema: localizedMessage
+            description: An error occured during request processing.
+
+          403:
+            description: User does not have permission to restored stock management sub-draft with Location.
             body:
               application/json:
                 schema: localizedMessage
@@ -718,12 +787,31 @@ traits:
           200:
             description: success
     /report/historicalData/refresh:
-      displayName: refresh historical data persistent data task
+      displayName: refresh historical data persistent data
       post:
         is: [ secured ]
         body:
           application/json:
             schema: arrayOfStrings
+        responses:
+          201:
+            description: submit success
+    /report/historicalData/updateAll:
+      displayName: update all facility historical data persistent data
+      post:
+        is: [ secured ]
+        body:
+          application/json:
+        responses:
+          201:
+            description: submit success
+    /report/historicalData/updateByFacility:
+      displayName: update historical data persistent data by facility
+      post:
+        is: [ secured ]
+        body:
+          application/json:
+            schema: listOfHistoricalDataRequest
         responses:
           201:
             description: submit success
@@ -884,7 +972,15 @@ traits:
           "200":
             body:
               application/json:
-
+    /orderables/available:
+      displayName: Get available orderables for one facility
+      get:
+        is: [ secured ]
+        description: Get available orderables for one facility
+        responses:
+          200:
+            body:
+              application/json:
     /validDestinations:
       get:
         is: [ secured ]
@@ -3416,6 +3512,101 @@ traits:
         responses:
           204:
             description: sub draft deleted.
+    /proofsOfDeliveryWithLocation/{id}/subDrafts/{subDraftId}:
+      displayName: Proof Of Delivery - Sub Draft With Location Detail
+      uriParameters:
+        id:
+          displayName: proofOfDeliveryId
+          type: string
+          required: true
+          repeat: false
+        subDraftId:
+          displayName: subDraftId
+          type: string
+          required: true
+          repeat: false
+      get:
+        is: [ secured ]
+        description: Get proof of delivery sub draft with location detail
+        responses:
+          200:
+            body:
+              application/json:
+                schema: proofOfDeliveryDto
+          400:
+            body:
+              application/json:
+                schema: badRequestResponse
+          404:
+          403:
+            body:
+              application/json:
+                schema: localizedMessage
+      delete:
+        is: [ secured ]
+        description: Delete proof of delivery sub draft with location
+        responses:
+          204:
+            description: Sub draft with location deleted.
+      put:
+        is: [ secured ]
+        description: Update or submit sub draft with location
+        responses:
+          204:
+            description: Sub draft updated or submitted
+    /proofsOfDeliveryWithLocation/{id}/subDrafts:
+      displayName: Proof Of Delivery - Sub Draft Detail
+      uriParameters:
+        id:
+          displayName: proofOfDeliveryId
+          type: string
+          required: true
+          repeat: false
+      delete:
+        is: [ secured ]
+        description: Delete proof of delivery sub draft with location
+        responses:
+          204:
+            description: Sub draft with location deleted.
+    /proofsOfDeliveryWithLocation/{id}:
+      uriParameters:
+        id:
+          displayName: proofOfDeliveryId
+          type: string
+          required: true
+          repeat: false
+      get:
+        is: [ secured ]
+        description: Get merged sub drafts with location
+        responses:
+          200:
+            body:
+              application/json:
+          400:
+            body:
+              application/json:
+                schema: badRequestResponse
+          404:
+          403:
+            body:
+              application/json:
+                schema: localizedMessage
+      put:
+        is: [ secured ]
+        description: Submit sub drafts with location
+        responses:
+          200:
+            body:
+              application/json:
+          400:
+            body:
+              application/json:
+                schema: badRequestResponse
+          404:
+          403:
+            body:
+              application/json:
+                schema: localizedMessage
     /integration:
       /stockMovements:
         displayName: Get Stock Movements

@@ -99,4 +99,6 @@ public interface SiglusProofOfDeliveryRepository extends JpaRepository<ProofOfDe
       @Param("receiveddate") LocalDate receivedDate,
       @Param("status") String status,
       @Param("id") UUID proofOfDeliveryId);
+
+  ProofOfDelivery findByShipmentId(UUID shipmentId);
 }

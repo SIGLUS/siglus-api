@@ -36,6 +36,8 @@ import org.apache.commons.collections.CollectionUtils;
 import org.openlmis.requisition.dto.BasicProgramDto;
 import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
+import org.openlmis.stockmanagement.domain.sourcedestination.Node;
+import org.openlmis.stockmanagement.repository.NodeRepository;
 import org.siglus.siglusapi.constant.ProgramConstants;
 import org.siglus.siglusapi.domain.FcIntegrationChanges;
 import org.siglus.siglusapi.domain.ProgramRealProgram;
@@ -63,8 +65,8 @@ public class FcFacilityService implements ProcessDataService {
   private final SiglusGeographicZoneReferenceDataService geographicZoneService;
   private final ProgramReferenceDataService programReferenceDataService;
   private final SiglusFacilityTypeReferenceDataService facilityTypeService;
-  private final FcSourceDestinationService fcSourceDestinationService;
   private final ProgramRealProgramRepository programRealProgramRepository;
+  private final NodeRepository nodeRepository;
 
   @Override
   public FcIntegrationResultDto processData(List<? extends ResponseBaseDto> facilities, String startDate,
@@ -273,7 +275,16 @@ public class FcFacilityService implements ProcessDataService {
           codeToGeographicZoneDtoMap, codeToFacilityType, supportedProgramDtos));
       createdFacilities.add(createdFacility);
     });
-    fcSourceDestinationService.createSourceAndDestination(createdFacilities);
+    createNode(createdFacilities);
+  }
+
+  private void createNode(List<FacilityDto> facilities) {
+    facilities.forEach(facility -> {
+      Node node = new Node();
+      node.setRefDataFacility(true);
+      node.setReferenceId(facility.getId());
+      nodeRepository.save(node);
+    });
   }
 
   private FacilityDto getFacilityDto(FcFacilityDto fcFacilityDto,

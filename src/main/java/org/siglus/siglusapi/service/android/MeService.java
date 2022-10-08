@@ -68,6 +68,7 @@ import org.siglus.siglusapi.constant.PodConstants;
 import org.siglus.siglusapi.domain.AppInfo;
 import org.siglus.siglusapi.domain.HfCmm;
 import org.siglus.siglusapi.domain.PodRequestBackup;
+import org.siglus.siglusapi.domain.ProofsOfDeliveryExtension;
 import org.siglus.siglusapi.domain.RequisitionRequestBackup;
 import org.siglus.siglusapi.domain.ResyncInfo;
 import org.siglus.siglusapi.domain.SiglusReportType;
@@ -103,6 +104,7 @@ import org.siglus.siglusapi.repository.AppInfoRepository;
 import org.siglus.siglusapi.repository.FacilityCmmsRepository;
 import org.siglus.siglusapi.repository.LotNativeRepository;
 import org.siglus.siglusapi.repository.PodRequestBackupRepository;
+import org.siglus.siglusapi.repository.ProofsOfDeliveryExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionRequestBackupRepository;
 import org.siglus.siglusapi.repository.ResyncInfoRepository;
 import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
@@ -167,7 +169,6 @@ public class MeService {
   private final AndroidHelper androidHelper;
   private final SiglusReportTypeRepository reportTypeRepository;
   private final SiglusRequisitionRepository requisitionRepository;
-  private final RequisitionCreateService requisitionCreateService;
   private final RequisitionSearchService requisitionSearchService;
   private final SiglusProofOfDeliveryRepository podRepo;
   private final SiglusOrderService orderService;
@@ -185,6 +186,8 @@ public class MeService {
   private final SiglusProofOfDeliveryRepository podRepository;
   private final EntityManager entityManager;
   private final ResyncInfoRepository resyncInfoRepository;
+  private final ProofsOfDeliveryExtensionRepository proofsOfDeliveryExtensionRepository;
+  private final MeCreateRequisitionService meCreateRequisitionService;
 
   public FacilityResponse getCurrentFacility() {
     FacilityDto facilityDto = getCurrentFacilityInfo();
@@ -348,7 +351,7 @@ public class MeService {
   @SuppressWarnings("PMD.PreserveStackTrace")
   public UUID createRequisition(RequisitionCreateRequest request) {
     try {
-      return requisitionCreateService.createRequisition(request);
+      return meCreateRequisitionService.createRequisition(request);
     } catch (Exception e) {
       try {
         backupRequisitionRequest(request, e);
@@ -481,6 +484,10 @@ public class MeService {
           .collect(toList());
       productLine.setLots(lotLines);
     });
+    ProofsOfDeliveryExtension proofsOfDeliveryExtension = proofsOfDeliveryExtensionRepository.findByPodId(
+        pod.getId());
+    podResponse.setConferredBy(proofsOfDeliveryExtension.getConferredBy());
+    podResponse.setPreparedBy(proofsOfDeliveryExtension.getPreparedBy());
     return podResponse;
   }
 

@@ -21,7 +21,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.siglus.siglusapi.domain.LocalIssueVoucherDraftLineItem;
 import org.siglus.siglusapi.web.request.OperateTypeEnum;
 
 @AllArgsConstructor
@@ -31,7 +30,8 @@ import org.siglus.siglusapi.web.request.OperateTypeEnum;
 public class LocalIssueVoucherSubDraftDto {
 
   private UUID localIssueVoucherId;
-  private UUID localissuevouchersubdriftid;
-  private List<LocalIssueVoucherDraftLineItem> lineItems;
+  private UUID localIssueVoucherSubDraftId;
+  private List<LocalIssueVoucherSubDraftLineItemDto> lineItems;
   private OperateTypeEnum operateType;
+  private boolean isDraft;
 }

@@ -17,7 +17,7 @@ package org.siglus.siglusapi.web;
 
 import org.openlmis.requisition.dto.ReleasableRequisitionBatchDto;
 import org.openlmis.requisition.dto.RequisitionsProcessingStatusDto;
-import org.openlmis.requisition.web.BatchRequisitionController;
+import org.siglus.siglusapi.service.BatchReleaseRequisitionService;
 import org.siglus.siglusapi.service.SiglusNotificationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -35,7 +35,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class SiglusBatchRequisitionController {
 
   @Autowired
-  private BatchRequisitionController batchRequisitionController;
+  private BatchReleaseRequisitionService batchReleaseRequisitionService;
 
   @Autowired
   private SiglusNotificationService notificationService;
@@ -50,13 +50,10 @@ public class SiglusBatchRequisitionController {
   @Transactional
   public ResponseEntity<RequisitionsProcessingStatusDto> batchReleaseRequisitions(
       @RequestBody ReleasableRequisitionBatchDto releaseDto) {
-    @SuppressWarnings("unchecked")
-    ResponseEntity<RequisitionsProcessingStatusDto> responseEntity = batchRequisitionController
-        .batchReleaseRequisitions(releaseDto);
+    ResponseEntity<RequisitionsProcessingStatusDto> responseEntity = batchReleaseRequisitionService
+        .getRequisitionsProcessingStatusDtoResponse(releaseDto);
     RequisitionsProcessingStatusDto body = responseEntity.getBody();
-    body.getRequisitionDtos()
-        .forEach(requisition -> notificationService.postConvertToOrder(requisition));
+    body.getRequisitionDtos().forEach(requisition -> notificationService.postConvertToOrder(requisition));
     return responseEntity;
   }
-
 }

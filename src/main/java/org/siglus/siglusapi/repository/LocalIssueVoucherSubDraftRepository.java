@@ -15,10 +15,21 @@
 
 package org.siglus.siglusapi.repository;
 
+import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import org.siglus.siglusapi.domain.LocalIssueVoucherSubDraft;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface LocalIssueVoucherSubDraftRepository extends JpaRepository<LocalIssueVoucherSubDraft, UUID> {
 
+  void deleteById(UUID podSubDraftId);
+
+  void deleteAllById(Set<UUID> subDraftIds);
+
+  void deleteAllByLocalIssueVoucherId(UUID localIssueVoucherId);
+
+  int countAllByLocalIssueVoucherId(UUID localIssueVoucherId);
+
+  List<LocalIssueVoucherSubDraft> findByLocalIssueVoucherId(UUID localIssueVoucherId);
 }

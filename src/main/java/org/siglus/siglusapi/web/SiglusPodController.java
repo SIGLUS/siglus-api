@@ -93,7 +93,7 @@ public class SiglusPodController {
   }
 
   @PostMapping("/{id}/subDrafts/merge")
-  public ProofOfDeliveryDto mergeSubDrafts(@PathVariable("id") UUID podId,
+  public PodExtensionResponse mergeSubDrafts(@PathVariable("id") UUID podId,
       @RequestParam Set<String> expand) {
     return siglusPodService.mergeSubDrafts(podId, expand);
   }

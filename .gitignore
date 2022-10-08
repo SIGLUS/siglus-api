@@ -5,8 +5,9 @@ node_modules/
 out/
 .env
 package-lock.json
-.DS_Store 
+.DS_Store
 */.DS_Store
 clear.sh
 .consul_service_id~
 src/main/generated
+.data/

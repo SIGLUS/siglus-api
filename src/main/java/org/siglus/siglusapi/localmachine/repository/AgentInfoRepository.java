@@ -34,7 +34,7 @@ public interface AgentInfoRepository extends JpaRepository<AgentInfo, UUID> {
 
   @Query(
       value =
-          "select a.* from localmachine.machine m left join localmachine.agents a on m.id=a.machineid limit 1",
+          "select a.* from localmachine.machine m inner join localmachine.agents a on m.id=a.machineid limit 1",
       nativeQuery = true)
   AgentInfo getLocalAgent();
 

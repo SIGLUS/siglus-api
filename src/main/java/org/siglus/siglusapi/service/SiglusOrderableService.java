@@ -15,36 +15,57 @@
 
 package org.siglus.siglusapi.service;
 
+import static java.util.Comparator.comparing;
 import static org.siglus.siglusapi.constant.CacheConstants.CACHE_KEY_GENERATOR;
 import static org.siglus.siglusapi.constant.CacheConstants.SIGLUS_PROGRAM_ORDERABLES;
 import static org.siglus.siglusapi.constant.FieldConstants.CODE;
 import static org.siglus.siglusapi.constant.FieldConstants.FULL_PRODUCT_NAME;
 import static org.siglus.siglusapi.constant.FieldConstants.PRODUCT_CODE;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_ID_NOT_FOUND;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_NOT_FOUND;
 
+import com.google.common.collect.Lists;
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.collections4.CollectionUtils;
+import org.openlmis.referencedata.domain.Orderable;
+import org.openlmis.referencedata.dto.DispensableDto;
 import org.openlmis.referencedata.dto.OrderableDto;
+import org.openlmis.stockmanagement.domain.card.StockCard;
+import org.openlmis.stockmanagement.domain.event.CalculatedStockOnHand;
+import org.openlmis.stockmanagement.exception.ResourceNotFoundException;
+import org.openlmis.stockmanagement.repository.CalculatedStockOnHandRepository;
+import org.openlmis.stockmanagement.repository.StockCardRepository;
+import org.openlmis.stockmanagement.util.Message;
 import org.openlmis.stockmanagement.web.Pagination;
+import org.siglus.common.constant.KitConstants;
 import org.siglus.common.domain.ProgramAdditionalOrderable;
 import org.siglus.common.repository.ArchivedProductRepository;
 import org.siglus.common.repository.ProgramAdditionalOrderableRepository;
 import org.siglus.siglusapi.constant.PaginationConstants;
+import org.siglus.siglusapi.domain.DispensableAttributes;
 import org.siglus.siglusapi.domain.StockManagementDraft;
 import org.siglus.siglusapi.domain.StockManagementDraftLineItem;
+import org.siglus.siglusapi.dto.AvailableOrderablesDto;
 import org.siglus.siglusapi.dto.OrderableExpirationDateDto;
 import org.siglus.siglusapi.dto.QueryOrderableSearchParams;
 import org.siglus.siglusapi.exception.NotFoundException;
+import org.siglus.siglusapi.repository.DispensableAttributesRepository;
+import org.siglus.siglusapi.repository.OrderableRepository;
 import org.siglus.siglusapi.repository.ProgramOrderablesRepository;
 import org.siglus.siglusapi.repository.SiglusOrderableRepository;
 import org.siglus.siglusapi.repository.StockManagementDraftRepository;
 import org.siglus.siglusapi.repository.dto.ProgramOrderableDto;
 import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
+import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -63,6 +84,11 @@ public class SiglusOrderableService {
   private final ArchivedProductRepository archivedProductRepository;
   private final StockManagementDraftRepository stockManagementDraftRepository;
   private final ProgramOrderablesRepository programOrderablesRepository;
+  private final SiglusAuthenticationHelper authenticationHelper;
+  private final StockCardRepository stockCardRepository;
+  private final CalculatedStockOnHandRepository calculatedStockOnHandRepository;
+  private final OrderableRepository orderableRepository;
+  private final DispensableAttributesRepository dispensableAttributesRepository;
 
   public Page<OrderableDto> searchOrderables(QueryOrderableSearchParams searchParams,
       Pageable pageable, UUID facilityId) {
@@ -178,4 +204,87 @@ public class SiglusOrderableService {
   public List<ProgramOrderableDto> getAllProgramOrderableDtos() {
     return programOrderablesRepository.findAllMaxVersionProgramOrderableDtos();
   }
+
+  public List<AvailableOrderablesDto> getAvailableOrderablesByFacility(Boolean isRequestAll, UUID draftId) {
+    UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
+    List<StockCard> stockCards = stockCardRepository.findByFacilityIdIn(facilityId);
+    List<UUID> allStockCardIds = stockCards.stream().map(StockCard::getId).collect(Collectors.toList());
+    List<CalculatedStockOnHand> sohForOrderable = calculatedStockOnHandRepository.findLatestStockOnHands(
+        allStockCardIds, ZonedDateTime.now());
+    List<UUID> stockCardIds;
+    if (isRequestAll) {
+      stockCardIds = sohForOrderable.stream()
+          .map(CalculatedStockOnHand::getStockCardId)
+          .collect(Collectors.toList());
+    } else {
+      stockCardIds = sohForOrderable.stream()
+          .filter(soh -> soh.getStockOnHand() > 0)
+          .map(CalculatedStockOnHand::getStockCardId)
+          .collect(Collectors.toList());
+    }
+
+    List<StockCard> satisfiedStockCards = Lists.newArrayList();
+    for (StockCard stockCard : stockCards) {
+      if (stockCardIds.contains(stockCard.getId())) {
+        satisfiedStockCards.add(stockCard);
+      }
+    }
+
+    if (draftId != null) {
+      Set<UUID> existOrderableIds = getExistOrderablesIdByDraftId(draftId);
+      satisfiedStockCards.removeIf(e -> existOrderableIds.contains(e.getOrderableId()));
+    }
+
+    Set<UUID> orderableIds = satisfiedStockCards.stream().map(StockCard::getOrderableId).collect(Collectors.toSet());
+    List<Orderable> orderables = orderableRepository.findLatestByIds(orderableIds);
+    List<ProgramOrderableDto> programOrderables = programOrderablesRepository.findAllMaxVersionProgramOrderableDtos();
+    Map<UUID, UUID> orderableIdToProgramIdMap = programOrderables.stream()
+        .filter(programOrderable -> orderableIds.contains(programOrderable.getOrderableId()))
+        .collect(Collectors.toMap(ProgramOrderableDto::getOrderableId, ProgramOrderableDto::getProgramId));
+
+    Map<UUID, DispensableAttributes> orderableIdToDispensable = new HashMap<>();
+    Map<UUID, UUID> orderableIdToDispensableIdMap = orderables.stream()
+        .collect(Collectors.toMap(Orderable::getId, orderable -> orderable.getDispensable().getId()));
+    List<DispensableAttributes> dispensableAttributes = dispensableAttributesRepository
+        .findAll(orderableIdToDispensableIdMap.values());
+    orderableIdToDispensableIdMap.forEach((orderableId, dispensableId) -> orderableIdToDispensable
+        .put(orderableId, dispensableAttributes.stream()
+        .filter(dispensable -> dispensable.getDispensableId().equals(dispensableId))
+        .findFirst().orElse(null)));
+
+    List<AvailableOrderablesDto> availableOrderablesDtoList = new ArrayList<>();
+    orderables.forEach(orderable -> {
+      AvailableOrderablesDto availableOrderablesDto = new AvailableOrderablesDto();
+      availableOrderablesDto.setOrderableId(orderable.getId());
+      availableOrderablesDto.setProductCode(orderable.getProductCode().toString());
+      availableOrderablesDto.setFullProductName(orderable.getFullProductName());
+      availableOrderablesDto.setProgramId(orderableIdToProgramIdMap.get(orderable.getId()));
+      availableOrderablesDto.setIsKit(KitConstants.isKit(orderable.getProductCode().toString()));
+      DispensableDto dispensable = new DispensableDto(orderableIdToDispensable.get(orderable.getId()).getValue(),
+          null, null, orderableIdToDispensable.get(orderable.getId()).getValue());
+      availableOrderablesDto.setDispensable(dispensable);
+      availableOrderablesDtoList.add(availableOrderablesDto);
+    });
+    return availableOrderablesDtoList.stream().sorted(comparing(AvailableOrderablesDto::getFullProductName)).collect(
+        Collectors.toList());
+  }
+
+  private Set<UUID> getExistOrderablesIdByDraftId(UUID draftId) {
+    StockManagementDraft foundDraft = stockManagementDraftRepository.findOne(draftId);
+    if (foundDraft == null) {
+      throw new ResourceNotFoundException(
+          new Message(
+              ERROR_STOCK_MANAGEMENT_DRAFT_ID_NOT_FOUND,
+              draftId));
+    }
+    List<StockManagementDraft> drafts = stockManagementDraftRepository
+        .findByInitialDraftId(foundDraft.getInitialDraftId());
+
+    drafts.remove(foundDraft);
+
+    return drafts.stream()
+        .flatMap(draft -> draft.getLineItems().stream().map(StockManagementDraftLineItem::getOrderableId))
+        .collect(Collectors.toSet());
+  }
+
 }

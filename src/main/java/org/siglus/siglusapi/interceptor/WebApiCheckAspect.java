@@ -15,6 +15,8 @@
 
 package org.siglus.siglusapi.interceptor;
 
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_NOT_WEB_USER;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.annotation.Aspect;
@@ -23,6 +25,7 @@ import org.aspectj.lang.annotation.Pointcut;
 import org.openlmis.stockmanagement.exception.PermissionMessageException;
 import org.openlmis.stockmanagement.util.Message;
 import org.siglus.siglusapi.util.AndroidHelper;
+import org.siglus.siglusapi.util.LocalMachineHelper;
 import org.springframework.stereotype.Component;
 
 @Aspect
@@ -32,6 +35,7 @@ import org.springframework.stereotype.Component;
 public class WebApiCheckAspect {
 
   private final AndroidHelper androidHelper;
+  private final LocalMachineHelper localMachineHelper;
 
   @Pointcut("within(org.siglus.siglusapi.web.*) && "
       + "(@annotation(org.springframework.web.bind.annotation.PostMapping) "
@@ -44,8 +48,8 @@ public class WebApiCheckAspect {
 
   @Before("webApi()")
   public void before() {
-    if (androidHelper.isAndroid()) {
-      throw new PermissionMessageException(new Message("siglusapi.error.notWebUser"));
+    if (localMachineHelper.isLocalMachine() || androidHelper.isAndroid()) {
+      throw new PermissionMessageException(new Message(ERROR_NOT_WEB_USER));
     }
   }
 

@@ -35,6 +35,10 @@ import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.domain.requisition.StatusChange;
 import org.openlmis.requisition.domain.requisition.VersionEntityReference;
 import org.openlmis.requisition.dto.ApprovedProductDto;
+import org.openlmis.requisition.dto.BasicProcessingPeriodDto;
+import org.openlmis.requisition.dto.BasicProgramDto;
+import org.openlmis.requisition.dto.BasicRequisitionDto;
+import org.openlmis.requisition.dto.MinimalFacilityDto;
 import org.openlmis.requisition.repository.RequisitionRepository;
 import org.openlmis.requisition.service.RequisitionService;
 import org.openlmis.requisition.service.referencedata.ApproveProductsAggregator;
@@ -132,6 +136,23 @@ public class RequisitionInternalApproveReplayer {
     buildRequisitionLineItemsExtension(requisition, orderableIdToLineItemExtension);
 
     buildRequisitionUsageSections(requisition, event);
+  }
+
+  private BasicRequisitionDto buildBaseRequisitionDto(Requisition requisition) {
+    BasicRequisitionDto basicRequisitionDto = new BasicRequisitionDto();
+    basicRequisitionDto.setId(requisition.getId());
+    basicRequisitionDto.setStatus(requisition.getStatus());
+    MinimalFacilityDto facility = new MinimalFacilityDto();
+    facility.setId(requisition.getFacilityId());
+    basicRequisitionDto.setFacility(facility);
+    BasicProgramDto program = new BasicProgramDto();
+    program.setId(requisition.getProgramId());
+    basicRequisitionDto.setProgram(program);
+    basicRequisitionDto.setEmergency(requisition.getEmergency());
+    BasicProcessingPeriodDto processingPeriod = new BasicProcessingPeriodDto();
+    processingPeriod.setId(requisition.getProcessingPeriodId());
+    basicRequisitionDto.setProcessingPeriod(processingPeriod);
+    return basicRequisitionDto;
   }
 
   private void buildRequisitionApprovedProduct(Requisition requisition, UUID homeFacilityId, UUID programId) {

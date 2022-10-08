@@ -66,13 +66,14 @@ import org.openlmis.fulfillment.web.util.OrderLineItemDto;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.stockmanagement.domain.reason.StockCardLineItemReason;
 import org.openlmis.stockmanagement.dto.ValidReasonAssignmentDto;
+import org.siglus.siglusapi.domain.ProofsOfDeliveryExtension;
 import org.siglus.siglusapi.dto.FacilityTypeDto;
 import org.siglus.siglusapi.dto.SiglusOrderDto;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.dto.android.Lot;
 import org.siglus.siglusapi.dto.android.db.ProductLot;
-import org.siglus.siglusapi.localmachine.event.requisition.andriod.AndroidRequisitionSyncedEmitter;
 import org.siglus.siglusapi.repository.LotNativeRepository;
+import org.siglus.siglusapi.repository.ProofsOfDeliveryExtensionRepository;
 import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
 import org.siglus.siglusapi.service.LotConflictService;
 import org.siglus.siglusapi.service.SiglusOrderService;
@@ -128,8 +129,6 @@ public class SiglusMeControllerProofOfDeliveryMvcTest extends FileBasedTest {
   private MeService service;
 
   @Mock
-  private AndroidRequisitionSyncedEmitter androidRequisitionSyncedEmitter;
-  @Mock
   private SiglusProofOfDeliveryRepository podRepo;
   @Mock
   private SiglusAuthenticationHelper authHelper;
@@ -145,6 +144,8 @@ public class SiglusMeControllerProofOfDeliveryMvcTest extends FileBasedTest {
   private LotNativeRepository lotNativeRepository;
   @Mock
   private SiglusValidReasonAssignmentService validReasonAssignmentService;
+  @Mock
+  private ProofsOfDeliveryExtensionRepository proofsOfDeliveryExtensionRepository;
 
   @Captor
   private ArgumentCaptor<UUID> facilityIdCaptor;
@@ -177,7 +178,7 @@ public class SiglusMeControllerProofOfDeliveryMvcTest extends FileBasedTest {
     objectMapper.configure(SerializationFeature.WRITE_DATE_TIMESTAMPS_AS_NANOSECONDS, false);
     objectMapper.registerModule(new JavaTimeModule());
     jackson2HttpMessageConverter.setObjectMapper(objectMapper);
-    SiglusMeController controller = new SiglusMeController(service, androidRequisitionSyncedEmitter);
+    SiglusMeController controller = new SiglusMeController(service);
     this.mockMvc = MockMvcBuilders
         .standaloneSetup(controller)
         .setMessageConverters(jackson2HttpMessageConverter)
@@ -196,6 +197,8 @@ public class SiglusMeControllerProofOfDeliveryMvcTest extends FileBasedTest {
     RequestBuilder request = get("/api/siglusapi/android/me/facility/pods")
         .contentType(MediaType.APPLICATION_JSON)
         .characterEncoding("utf-8");
+    when(proofsOfDeliveryExtensionRepository.findByPodId(any()))
+        .thenReturn(new ProofsOfDeliveryExtension());
 
     // when
     ResultActions resultActions = mockMvc.perform(request).andDo(print());
@@ -285,6 +288,8 @@ public class SiglusMeControllerProofOfDeliveryMvcTest extends FileBasedTest {
     RequestBuilder request = get("/api/siglusapi/android/me/facility/pods?startDate=2020-09-11&shippedOnly=true")
         .contentType(MediaType.APPLICATION_JSON)
         .characterEncoding("utf-8");
+    when(proofsOfDeliveryExtensionRepository.findByPodId(any()))
+        .thenReturn(new ProofsOfDeliveryExtension());
 
     // when
     ResultActions resultActions = mockMvc.perform(request).andDo(print());
@@ -308,6 +313,8 @@ public class SiglusMeControllerProofOfDeliveryMvcTest extends FileBasedTest {
     RequestBuilder request = get("/api/siglusapi/android/me/facility/pods?startDate=2020-09-11")
         .contentType(MediaType.APPLICATION_JSON)
         .characterEncoding("utf-8");
+    when(proofsOfDeliveryExtensionRepository.findByPodId(any()))
+        .thenReturn(new ProofsOfDeliveryExtension());
 
     // when
     ResultActions resultActions = mockMvc.perform(request).andDo(print());
@@ -333,6 +340,8 @@ public class SiglusMeControllerProofOfDeliveryMvcTest extends FileBasedTest {
     RequestBuilder request = get("/api/siglusapi/android/me/facility/pods?shippedOnly=true")
         .contentType(MediaType.APPLICATION_JSON)
         .characterEncoding("utf-8");
+    when(proofsOfDeliveryExtensionRepository.findByPodId(any()))
+        .thenReturn(new ProofsOfDeliveryExtension());
 
     // when
     ResultActions resultActions = mockMvc.perform(request).andDo(print());

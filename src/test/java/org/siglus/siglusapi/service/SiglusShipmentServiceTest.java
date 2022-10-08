@@ -47,6 +47,11 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.fulfillment.domain.Order;
 import org.openlmis.fulfillment.domain.OrderLineItem;
 import org.openlmis.fulfillment.domain.OrderStatus;
+import org.openlmis.fulfillment.domain.ProofOfDelivery;
+import org.openlmis.fulfillment.domain.ProofOfDeliveryLineItem;
+import org.openlmis.fulfillment.domain.ProofOfDeliveryStatus;
+import org.openlmis.fulfillment.domain.Shipment;
+import org.openlmis.fulfillment.domain.ShipmentLineItem;
 import org.openlmis.fulfillment.domain.VersionEntityReference;
 import org.openlmis.fulfillment.repository.OrderRepository;
 import org.openlmis.fulfillment.service.referencedata.FacilityDto;
@@ -67,13 +72,17 @@ import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
 import org.openlmis.stockmanagement.repository.StockCardLineItemRepository;
 import org.openlmis.stockmanagement.repository.StockCardRepository;
 import org.siglus.siglusapi.domain.OrderLineItemExtension;
+import org.siglus.siglusapi.domain.ProofsOfDeliveryExtension;
 import org.siglus.siglusapi.domain.StockCardLineItemExtension;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
+import org.siglus.siglusapi.repository.ProofsOfDeliveryExtensionRepository;
 import org.siglus.siglusapi.repository.ShipmentLineItemsExtensionRepository;
+import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
 import org.siglus.siglusapi.repository.StockCardLineItemExtensionRepository;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
+import org.siglus.siglusapi.web.request.ShipmentExtensionRequest;
 
 @SuppressWarnings("PMD.TooManyMethods")
 @RunWith(MockitoJUnitRunner.class)
@@ -125,13 +134,19 @@ public class SiglusShipmentServiceTest {
   private SiglusAuthenticationHelper authenticationHelper;
 
   @Mock
-  private StockCardLineItemExtensionRepository stockCardLineItemExtensionRepository;
+  private SiglusProofOfDeliveryRepository siglusProofOfDeliveryRepository;
+
+  @Mock
+  private ProofsOfDeliveryExtensionRepository proofsOfDeliveryExtensionRepository;
 
   @Mock
   private StockCardLineItemRepository stockCardLineItemRepository;
 
   @Mock
   private StockCardRepository stockCardRepository;
+
+  @Mock
+  private StockCardLineItemExtensionRepository stockCardLineItemExtensionRepository;
 
   private final UUID orderId = UUID.randomUUID();
 
@@ -142,6 +157,12 @@ public class SiglusShipmentServiceTest {
   private final UUID facilityId = UUID.randomUUID();
 
   private final UUID lotId = UUID.randomUUID();
+
+  private final UUID podId = UUID.randomUUID();
+
+  private final String conferredBy = "conferredBy";
+
+  private final String preparedBy = "preparedBy";
 
   private final UUID stockCardId = UUID.randomUUID();
 
@@ -167,9 +188,13 @@ public class SiglusShipmentServiceTest {
     ShipmentDto shipmentDto = new ShipmentDto();
     OrderObjectReferenceDto orderDto = new OrderObjectReferenceDto(orderId);
     shipmentDto.setOrder(orderDto);
+    ShipmentExtensionRequest shipmentExtensionRequest = new ShipmentExtensionRequest();
+    shipmentExtensionRequest.setShipment(shipmentDto);
+    shipmentExtensionRequest.setConferredBy(conferredBy);
+    shipmentExtensionRequest.setPreparedBy(preparedBy);
 
     // when
-    siglusShipmentService.createOrderAndShipment(false, shipmentDto);
+    siglusShipmentService.createOrderAndShipment(false, shipmentExtensionRequest);
 
     // then
     expectedException.expect(ValidationMessageException.class);
@@ -187,6 +212,10 @@ public class SiglusShipmentServiceTest {
     ShipmentDto shipmentDto = new ShipmentDto();
     OrderObjectReferenceDto orderReferenceDto = new OrderObjectReferenceDto(orderId);
     shipmentDto.setOrder(orderReferenceDto);
+    ShipmentExtensionRequest shipmentExtensionRequest = new ShipmentExtensionRequest();
+    shipmentExtensionRequest.setShipment(shipmentDto);
+    shipmentExtensionRequest.setConferredBy(conferredBy);
+    shipmentExtensionRequest.setPreparedBy(preparedBy);
     org.openlmis.requisition.dto.ProcessingPeriodDto dto =
         new org.openlmis.requisition.dto.ProcessingPeriodDto();
     dto.setEndDate(LocalDate.now().minusDays(10));
@@ -196,7 +225,7 @@ public class SiglusShipmentServiceTest {
     when(orderRepository.findOne(orderId)).thenReturn(order);
 
     // when
-    siglusShipmentService.createOrderAndShipment(false, shipmentDto);
+    siglusShipmentService.createOrderAndShipment(false, shipmentExtensionRequest);
 
     // then
     verify(draftService).deleteOrderLineItemAndInitialedExtension(order);
@@ -220,6 +249,10 @@ public class SiglusShipmentServiceTest {
     ShipmentDto shipmentDto = new ShipmentDto();
     shipmentDto.setOrder(orderDto);
     shipmentDto.setLineItems(newArrayList(shipmentLineItemDto));
+    ShipmentExtensionRequest shipmentExtensionRequest = new ShipmentExtensionRequest();
+    shipmentExtensionRequest.setShipment(shipmentDto);
+    shipmentExtensionRequest.setConferredBy(conferredBy);
+    shipmentExtensionRequest.setPreparedBy(preparedBy);
     OrderLineItem lineItem = new OrderLineItem();
     lineItem.setId(lineItemId);
     lineItem.setOrderable(new VersionEntityReference(orderableId, 1L));
@@ -230,9 +263,11 @@ public class SiglusShipmentServiceTest {
         .orderLineItemId(lineItemId).build();
     when(lineItemExtensionRepository.findByOrderLineItemIdIn(newHashSet(lineItemId)))
         .thenReturn(newArrayList(orderLineItemExtension));
+    when(siglusProofOfDeliveryRepository.findByShipmentId(any())).thenReturn(buildMockProofOfDelivery());
+    when(shipmentController.createShipment(any())).thenReturn(shipmentDto);
 
     // when
-    siglusShipmentService.createOrderAndShipment(false, shipmentDto);
+    siglusShipmentService.createOrderAndShipment(false, shipmentExtensionRequest);
 
     // then
     verify(orderRepository, times(2)).save(orderArgumentCaptor.capture());
@@ -263,6 +298,10 @@ public class SiglusShipmentServiceTest {
     ShipmentDto shipmentDto = new ShipmentDto();
     shipmentDto.setOrder(orderDto);
     shipmentDto.setLineItems(newArrayList(shipmentLineItemDto));
+    ShipmentExtensionRequest shipmentExtensionRequest = new ShipmentExtensionRequest();
+    shipmentExtensionRequest.setShipment(shipmentDto);
+    shipmentExtensionRequest.setConferredBy(conferredBy);
+    shipmentExtensionRequest.setPreparedBy(preparedBy);
     OrderLineItem lineItem = new OrderLineItem();
     lineItem.setOrderable(new VersionEntityReference(orderableId, 1L));
     Order order = new Order();
@@ -271,9 +310,11 @@ public class SiglusShipmentServiceTest {
     when(orderRepository.findOne(orderId)).thenReturn(order);
     when(lineItemExtensionRepository.findByOrderLineItemIdIn(newHashSet()))
         .thenReturn(newArrayList());
+    when(siglusProofOfDeliveryRepository.findByShipmentId(any())).thenReturn(buildMockProofOfDelivery());
+    when(shipmentController.createShipment(any())).thenReturn(shipmentDto);
 
     // when
-    siglusShipmentService.createOrderAndShipment(false, shipmentDto);
+    siglusShipmentService.createOrderAndShipment(false, shipmentExtensionRequest);
 
     // then
     verify(orderRepository, times(2)).save(orderArgumentCaptor.capture());
@@ -286,12 +327,17 @@ public class SiglusShipmentServiceTest {
     assertTrue(CollectionUtils.isNotEmpty(orderToSave.getOrderLineItems()));
     assertTrue(CollectionUtils.isEmpty(lineItemExtensionsToDelete));
     assertTrue(CollectionUtils.isNotEmpty(shipmentDtoToSave.getLineItems()));
+    verify(proofsOfDeliveryExtensionRepository, times(1)).save(buildMockPodExtension());
   }
 
   @Test
   public void shouldCreateSubOrderWhenLineItemShippedQualityLessOrderQuality() {
     // given
     ShipmentDto shipmentDto = createShipmentDto();
+    ShipmentExtensionRequest shipmentExtensionRequest = new ShipmentExtensionRequest();
+    shipmentExtensionRequest.setShipment(shipmentDto);
+    shipmentExtensionRequest.setConferredBy(conferredBy);
+    shipmentExtensionRequest.setPreparedBy(preparedBy);
     Order order = new Order();
     OrderLineItem lineItem = new OrderLineItem();
     lineItem.setId(lineItemId);
@@ -299,9 +345,11 @@ public class SiglusShipmentServiceTest {
     when(orderRepository.findOne(shipmentDto.getOrder().getId())).thenReturn(order);
     when(lineItemExtensionRepository.findByOrderLineItemIdIn(newHashSet()))
         .thenReturn(newArrayList());
+    when(siglusProofOfDeliveryRepository.findByShipmentId(any())).thenReturn(buildMockProofOfDelivery());
+    when(shipmentController.createShipment(any())).thenReturn(shipmentDto);
 
     // when
-    siglusShipmentService.createOrderAndShipment(true, shipmentDto);
+    siglusShipmentService.createOrderAndShipment(true, shipmentExtensionRequest);
 
     // then
     verify(siglusOrderService).createSubOrder(any(OrderObjectReferenceDto.class),
@@ -321,10 +369,14 @@ public class SiglusShipmentServiceTest {
     shipmentLineItem1.setOrderable(orderReferenceDto);
     shipmentLineItem1.setQuantityShipped(50L);
     shipmentDto.setLineItems(Collections.singletonList(shipmentLineItem1));
+    ShipmentExtensionRequest shipmentExtensionRequest = new ShipmentExtensionRequest();
+    shipmentExtensionRequest.setShipment(shipmentDto);
+    shipmentExtensionRequest.setConferredBy(conferredBy);
+    shipmentExtensionRequest.setPreparedBy(preparedBy);
     when(orderRepository.findOne(any())).thenReturn(mockOrder());
 
     // when
-    siglusShipmentService.createOrderAndShipment(true, shipmentDto);
+    siglusShipmentService.createOrderAndShipment(true, shipmentExtensionRequest);
 
     // then
     expectedException.expect(ValidationMessageException.class);
@@ -343,10 +395,14 @@ public class SiglusShipmentServiceTest {
     order.setOrderLineItems(Collections.singletonList(lineItem));
     shipmentDto.setOrder(order);
     shipmentDto.setLineItems(new ArrayList<>());
+    ShipmentExtensionRequest shipmentExtensionRequest = new ShipmentExtensionRequest();
+    shipmentExtensionRequest.setShipment(shipmentDto);
+    shipmentExtensionRequest.setConferredBy(conferredBy);
+    shipmentExtensionRequest.setPreparedBy(preparedBy);
     when(orderRepository.findOne(any())).thenReturn(mockOrder());
 
     // when
-    siglusShipmentService.createOrderAndShipment(true, shipmentDto);
+    siglusShipmentService.createOrderAndShipment(true, shipmentExtensionRequest);
 
     // then
     expectedException.expect(ValidationMessageException.class);
@@ -358,6 +414,10 @@ public class SiglusShipmentServiceTest {
   public void shouldCreateSubOrderWhenLineItemOrderQualityGreaterThan0AndShipmentEmpty() {
     ShipmentDto shipmentDto = createShipmentDto();
     shipmentDto.setLineItems(new ArrayList<>());
+    ShipmentExtensionRequest shipmentExtensionRequest = new ShipmentExtensionRequest();
+    shipmentExtensionRequest.setShipment(shipmentDto);
+    shipmentExtensionRequest.setConferredBy(conferredBy);
+    shipmentExtensionRequest.setPreparedBy(preparedBy);
     Order order = new Order();
     OrderLineItem lineItem = new OrderLineItem();
     lineItem.setId(lineItemId);
@@ -365,9 +425,11 @@ public class SiglusShipmentServiceTest {
     when(orderRepository.findOne(shipmentDto.getOrder().getId())).thenReturn(order);
     when(lineItemExtensionRepository.findByOrderLineItemIdIn(newHashSet()))
         .thenReturn(newArrayList());
+    when(siglusProofOfDeliveryRepository.findByShipmentId(any())).thenReturn(buildMockProofOfDelivery());
+    when(shipmentController.createShipment(any())).thenReturn(shipmentDto);
 
     // when
-    siglusShipmentService.createOrderAndShipment(true, shipmentDto);
+    siglusShipmentService.createOrderAndShipment(true, shipmentExtensionRequest);
 
     // then
     verify(siglusOrderService).createSubOrder(any(OrderObjectReferenceDto.class),
@@ -393,21 +455,25 @@ public class SiglusShipmentServiceTest {
     shipmentLineItem.setLocation(locationDto);
     ShipmentDto shipmentDto = createShipmentDto();
     shipmentDto.setLineItems(Lists.newArrayList(shipmentLineItem));
-    shipmentDto.setId(lineItemId);
     Order order = new Order();
     OrderLineItem lineItem = new OrderLineItem();
     lineItem.setId(lineItemId);
     order.setOrderLineItems(newArrayList(lineItem));
+    ShipmentExtensionRequest shipmentExtensionRequest = new ShipmentExtensionRequest();
+    shipmentExtensionRequest.setShipment(shipmentDto);
+    shipmentExtensionRequest.setConferredBy(conferredBy);
+    shipmentExtensionRequest.setPreparedBy(preparedBy);
     when(orderRepository.findOne(shipmentDto.getOrder().getId())).thenReturn(order);
     when(shipmentController.createShipment(shipmentDto)).thenReturn(createShipmentDtoWithLocation());
     when(authenticationHelper.getCurrentUser()).thenReturn(buildUserDto());
+    when(siglusProofOfDeliveryRepository.findByShipmentId(any())).thenReturn(buildMockProofOfDelivery());
     when(stockCardRepository.findByFacilityIdAndOrderableIdAndLotId(any(), any(), any()))
         .thenReturn(buildStockCard());
     when(stockCardLineItemRepository.findLatestByStockCardIds(any()))
         .thenReturn(Lists.newArrayList(buildStockCardLineItem()));
 
     // when
-    siglusShipmentService.createOrderAndShipmentByLocation(false, shipmentDto);
+    siglusShipmentService.createOrderAndShipmentByLocation(false, shipmentExtensionRequest);
 
     // then
     verify(shipmentLineItemsExtensionRepository, times(0)).save(Lists.newArrayList());
@@ -489,6 +555,31 @@ public class SiglusShipmentServiceTest {
     UserDto userDto = new UserDto();
     userDto.setHomeFacilityId(facilityId);
     return userDto;
+  }
+
+  private ProofOfDelivery buildMockProofOfDelivery() {
+    VersionEntityReference orderable = new VersionEntityReference();
+    orderable.setId(orderableId);
+    orderable.setVersionNumber(1L);
+    ShipmentLineItem shipmentLineItem = new ShipmentLineItem(orderable, 10L, null);
+    Shipment shipment = new Shipment(new Order(), null, "notes",
+        org.assertj.core.util.Lists.newArrayList(shipmentLineItem), null);
+    ProofOfDeliveryLineItem proofOfDeliveryLineItem = new ProofOfDeliveryLineItem(orderable, lotId, 10,
+        null, 0, null, "notes");
+    ProofOfDelivery proofOfDelivery = new ProofOfDelivery(shipment, ProofOfDeliveryStatus.CONFIRMED,
+        org.assertj.core.util.Lists.newArrayList(proofOfDeliveryLineItem),
+        "test", "test", LocalDate.now());
+    proofOfDelivery.setId(podId);
+    return proofOfDelivery;
+  }
+
+  private ProofsOfDeliveryExtension buildMockPodExtension() {
+    return ProofsOfDeliveryExtension
+        .builder()
+        .podId(podId)
+        .preparedBy(preparedBy)
+        .conferredBy(conferredBy)
+        .build();
   }
 
   private StockCardLineItemExtension buildStockCardLineItemExtension() {

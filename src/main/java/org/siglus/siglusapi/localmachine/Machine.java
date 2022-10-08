@@ -15,15 +15,22 @@
 
 package org.siglus.siglusapi.localmachine;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.util.HashSet;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.StringUtils;
+import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.localmachine.repository.AgentInfoRepository;
+import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -31,22 +38,90 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class Machine {
   private final AgentInfoRepository agentInfoRepository;
+  private final SiglusAuthenticationHelper siglusAuthenticationHelper;
+  private static final String SYSTEM_INFO_COMMAND = "dmidecode -t system";
+  private static final String OS_NAME = "os.name";
+  private static final String OS_VERSION = "os.version";
+  private static final String NOT_SPECIFIED = "Not Specified";
+  private static final String DELIMITER = " ";
 
-  @Getter private UUID machineId;
+  @Getter private String deviceInfo;
 
   public Set<String> fetchSupportedFacilityIds() {
     return new HashSet<>(agentInfoRepository.findRegisteredFacilityIds());
   }
 
+  public UUID getMachineId() {
+    return agentInfoRepository.getMachineId().map(UUID::fromString).orElse(null);
+  }
+
   @PostConstruct
   public void ensureMachineInfoExists() {
-    machineId = agentInfoRepository.getMachineId().map(UUID::fromString).orElse(null);
+    UUID machineId = this.getMachineId();
+    deviceInfo = getMachineDeviceInfo();
     if (Objects.nonNull(machineId)) {
       return;
     }
+    generateMachineId();
+  }
+
+  public UUID getFacilityId() {
+    return Optional.ofNullable(siglusAuthenticationHelper.getCurrentUser())
+        .map(UserDto::getHomeFacilityId)
+        .orElseGet(
+            () ->
+                UUID.fromString(
+                    this.fetchSupportedFacilityIds().stream()
+                        .findFirst()
+                        .orElseThrow(
+                            () -> new IllegalStateException("can not resolve local facility id"))));
+  }
+
+  private void generateMachineId() {
     UUID tempMachineId = UUID.randomUUID();
     log.info("touch machine id:{}", tempMachineId);
     agentInfoRepository.touchMachineId(tempMachineId);
-    machineId = tempMachineId;
+  }
+
+  private String getMachineDeviceInfo() {
+    String osName = System.getProperty(OS_NAME);
+    String osVersion = System.getProperty(OS_VERSION);
+    String systemInfo = getSystemInfo();
+    return StringUtils.isBlank(systemInfo)
+        ? getSystemInfoString(osName, osVersion, NOT_SPECIFIED)
+        : getSystemInfoString(osName, osVersion, systemInfo);
+  }
+
+  private String getSystemInfo() {
+    String systemInfo = null;
+    try {
+      Process systemInfoProcess = Runtime.getRuntime().exec(SYSTEM_INFO_COMMAND);
+      InputStreamReader inputStreamReader = new InputStreamReader(systemInfoProcess.getInputStream());
+      BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
+      String allSystemInfo = bufferedReader.lines().collect(Collectors.joining());
+      String manufacturer = getTargetString(allSystemInfo, "Manufacturer: ", "Product Name")
+          .equals(NOT_SPECIFIED)
+          ? null : getTargetString(allSystemInfo, "Manufacturer: ", "Product Name");
+      String productName = getTargetString(allSystemInfo, "Product Name: ", "Version")
+          .equals(NOT_SPECIFIED)
+          ? null : getTargetString(allSystemInfo, "Product Name: ", "Version");
+      String version = getTargetString(allSystemInfo, "Version: ", "Serial Number")
+          .equals(NOT_SPECIFIED)
+          ? null : getTargetString(allSystemInfo, "Version: ", "Serial Number");
+      systemInfo = String.join(DELIMITER, manufacturer, productName, version);
+      systemInfoProcess.waitFor();
+      bufferedReader.close();
+    } catch (Exception e) {
+      log.warn("Get system info failed", e.getCause());
+    }
+    return systemInfo;
+  }
+
+  private String getTargetString(String target, String start, String end) {
+    return StringUtils.substringBetween(target, start, end);
+  }
+
+  private String getSystemInfoString(String osName, String osVersion, String systemInfo) {
+    return String.join(DELIMITER, "OS:", osName, osVersion, "Model:", systemInfo);
   }
 }

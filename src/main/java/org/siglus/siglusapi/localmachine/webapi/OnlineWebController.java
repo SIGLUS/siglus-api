@@ -17,13 +17,16 @@ package org.siglus.siglusapi.localmachine.webapi;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import javax.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.siglus.siglusapi.localmachine.EventImporter;
 import org.siglus.siglusapi.localmachine.ExternalEventDto;
 import org.siglus.siglusapi.localmachine.ExternalEventDtoMapper;
 import org.siglus.siglusapi.localmachine.auth.MachineToken;
 import org.siglus.siglusapi.localmachine.eventstore.EventStore;
 import org.siglus.siglusapi.localmachine.server.ActivationService;
+import org.siglus.siglusapi.localmachine.server.OnlineWebService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -31,14 +34,17 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/siglusapi/localmachine/server")
 public class OnlineWebController {
+
   private final EventImporter importer;
   private final EventStore eventStore;
   private final ActivationService activationService;
   private final ExternalEventDtoMapper externalEventDtoMapper;
+  private final OnlineWebService onlineWebService;
 
   @PostMapping("/agents")
   public void activateAgent(@RequestBody @Validated RemoteActivationRequest request) {
@@ -47,8 +53,9 @@ public class OnlineWebController {
 
   @PostMapping("/events")
   public void syncEvents(@RequestBody @Validated SyncRequest request) {
+    log.info("syncEvents, event size:{}", request.getEvents().size());
     importer.importEvents(request.getEvents().stream()
-        .map(ExternalEventDto::getEvent)
+        .map(externalEventDtoMapper::map)
         .collect(Collectors.toList()));
   }
 
@@ -67,5 +74,10 @@ public class OnlineWebController {
   public void confirmReceived(
       @RequestBody @Validated AckRequest request, MachineToken authentication) {
     eventStore.confirmReceived(authentication.getFacilityId(), request.getEventIds());
+  }
+
+  @GetMapping("/reSync")
+  public void reSync(MachineToken machineToken, HttpServletResponse response) {
+    onlineWebService.reSyncData(machineToken.getFacilityId(), response);
   }
 }

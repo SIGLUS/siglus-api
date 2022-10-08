@@ -13,29 +13,28 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.dto;
+package org.siglus.siglusapi.localmachine.cdc;
 
-import java.util.UUID;
-import lombok.Data;
-import org.openlmis.fulfillment.web.util.ObjectReferenceDto;
-import org.openlmis.fulfillment.web.util.VersionObjectReferenceDto;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
-@Data
-public class LocalIssueVoucherDraftLineItemDto {
+@Slf4j
+@Service
+public class OffsetBackingStoreWrapper implements InitializingBean {
 
-  private UUID localIssueVoucherSubDraftId;
+  @Autowired
+  private CdcOffsetBackingRepository cdcOffsetBackingRepository;
 
-  private UUID localIssueVoucherId;
+  private static CdcOffsetBackingRepository repository;
 
-  private Integer quantityAccepted;
+  @Override
+  public void afterPropertiesSet() {
+    repository = cdcOffsetBackingRepository;
+  }
 
-  private Integer quantityrejected;
-
-  private VersionObjectReferenceDto orderable;
-
-  private ObjectReferenceDto lot;
-
-  private UUID rejectionReasonId;
-
-  private String notes;
+  public static CdcOffsetBackingRepository getRepository() {
+    return repository;
+  }
 }

@@ -72,7 +72,7 @@ public class EventStore {
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   public void importQuietly(Event event) {
     log.info("insert event:{}", event.getId());
-    repository.insert(EventRecord.from(event, payloadSerializer.dump(event.getPayload())));
+    repository.importExternalEvent(EventRecord.from(event, payloadSerializer.dump(event.getPayload())));
   }
 
   public List<Event> loadSortedGroupEvents(String groupId) {
@@ -107,6 +107,12 @@ public class EventStore {
             .collect(Collectors.toSet());
     return events.stream()
         .filter(it -> !existingIds.contains(it.getId()))
+        .collect(Collectors.toList());
+  }
+
+  public List<Event> findNotReplayedEvents() {
+    return repository.findNotReplayedEvents().stream()
+        .map(it -> it.toEvent(payloadSerializer::load))
         .collect(Collectors.toList());
   }
 }

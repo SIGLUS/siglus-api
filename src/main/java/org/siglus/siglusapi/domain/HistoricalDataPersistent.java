@@ -20,7 +20,7 @@ import javax.persistence.Table;
 import org.siglus.common.domain.BaseEntity;
 
 @Entity
-@Table(name = "vw_historical_data", schema = "dashboard")
+@Table(name = "historical_data_persistent_data", schema = "dashboard")
 public class HistoricalDataPersistent extends BaseEntity {
 
 }
