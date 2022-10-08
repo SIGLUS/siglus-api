@@ -101,13 +101,13 @@ public class Machine {
       String allSystemInfo = bufferedReader.lines().collect(Collectors.joining());
       String manufacturer = getTargetString(allSystemInfo, "Manufacturer: ", "Product Name")
           .equals(NOT_SPECIFIED)
-          ? null : getTargetString(allSystemInfo, "Manufacturer: ", "Product Name");
+          ? "" : getTargetString(allSystemInfo, "Manufacturer: ", "Product Name");
       String productName = getTargetString(allSystemInfo, "Product Name: ", "Version")
           .equals(NOT_SPECIFIED)
-          ? null : getTargetString(allSystemInfo, "Product Name: ", "Version");
+          ? "" : getTargetString(allSystemInfo, "Product Name: ", "Version");
       String version = getTargetString(allSystemInfo, "Version: ", "Serial Number")
           .equals(NOT_SPECIFIED)
-          ? null : getTargetString(allSystemInfo, "Version: ", "Serial Number");
+          ? "" : getTargetString(allSystemInfo, "Version: ", "Serial Number");
       systemInfo = String.join(DELIMITER, manufacturer, productName, version);
       systemInfoProcess.waitFor();
       bufferedReader.close();
@@ -118,7 +118,8 @@ public class Machine {
   }
 
   private String getTargetString(String target, String start, String end) {
-    return StringUtils.substringBetween(target, start, end);
+    String result = StringUtils.substringBetween(target, start, end);
+    return result.trim();
   }
 
   private String getSystemInfoString(String osName, String osVersion, String systemInfo) {

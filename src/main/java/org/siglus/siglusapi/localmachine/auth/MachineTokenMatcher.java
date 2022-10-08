@@ -31,6 +31,7 @@ import org.siglus.siglusapi.localmachine.CommonConstants;
 import org.siglus.siglusapi.localmachine.domain.AgentInfo;
 import org.siglus.siglusapi.localmachine.repository.AgentInfoRepository;
 import org.siglus.siglusapi.repository.AppInfoRepository;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.stereotype.Component;
 
@@ -48,7 +49,9 @@ public class MachineTokenMatcher implements RequestMatcher {
       String tokenValue = mustGetTokenValue(request);
       MachineToken machineToken = authenticate(tokenValue);
       bindRequestAttribute(request, machineToken);
-      if (StringUtils.isNotBlank(request.getHeader(CommonConstants.DEVICE_INFO))) {
+      if (StringUtils.isNotBlank(request.getHeader(CommonConstants.DEVICE_INFO))
+          && (HttpMethod.PUT.name().equals(request.getMethod())
+          || HttpMethod.POST.name().equals(request.getMethod()))) {
         updateMachineDeviceInfo(request, machineToken);
       }
     } catch (IllegalAccessException e) {
