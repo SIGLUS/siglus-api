@@ -17,25 +17,32 @@ package org.siglus.siglusapi.localmachine.webapi;
 
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_NOT_ACTIVATED_YET;
 
+import javax.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.localmachine.agent.LocalActivationService;
 import org.siglus.siglusapi.localmachine.domain.AgentInfo;
+import org.siglus.siglusapi.localmachine.server.LocalExportImportService;
 import org.springframework.context.annotation.Profile;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 @Profile("localmachine")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/siglusapi/localmachine/agent")
 public class LocalAgentController {
+
   private final LocalActivationService localActivationService;
+  private final LocalExportImportService localExportImportService;
 
   @PutMapping
   public void activate(@RequestBody @Validated LocalActivationRequest request) {
@@ -47,5 +54,15 @@ public class LocalAgentController {
     AgentInfo agentInfo = localActivationService.getCurrentAgentInfo()
         .orElseThrow(() -> new BusinessDataException(new Message(ERROR_NOT_ACTIVATED_YET)));
     return AgentInfoResponse.from(agentInfo);
+  }
+
+  @GetMapping("/events/export")
+  public void exportEvents(HttpServletResponse response) {
+    localExportImportService.exportEvents(response);
+  }
+
+  @PostMapping("/events/import")
+  public void importEvents(@RequestParam("files") MultipartFile[] files) {
+    localExportImportService.importEvents(files);
   }
 }

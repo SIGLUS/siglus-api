@@ -121,9 +121,9 @@ public interface EventRecordRepository extends JpaRepository<EventRecord, UUID> 
   List<EventRecord> findByArchived(boolean archived);
 
   @Query(value = "select cast(id as varchar) \n"
-      + "from localmachine.events e\n"
+      + "from localmachine.events e \n"
       + "where e.groupid is not null \n"
-      + "and e.senderid != e.receiverid \n"
+      + "and e.receiverid != :facilityId \n"
       + "and e.receiversynced = false;", nativeQuery = true)
-  List<String> findExportEventIds();
+  List<String> findExportEventIds(@Param("facilityId") UUID facilityId);
 }

@@ -15,7 +15,9 @@
 
 package org.siglus.siglusapi.localmachine.server;
 
+import com.amazonaws.util.CRC32ChecksumCalculatingInputStream;
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -24,6 +26,7 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.zip.ZipOutputStream;
@@ -32,7 +35,6 @@ import jersey.repackaged.com.google.common.collect.Lists;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.ArrayUtils;
@@ -56,7 +58,7 @@ import org.springframework.web.multipart.MultipartFile;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class LocalService {
+public class LocalExportImportService {
 
   private final EventStore eventStore;
   private final EventImporter eventImporter;
@@ -71,12 +73,13 @@ public class LocalService {
   private static final String ZIP_PREFIX = "event_export_";
   private static final String ZIP_SUFFIX = ".zip";
   private static final String FILE_SUFFIX = ".dat";
+  private static final String FILE_NAME_SPLIT = "_";
   private static final String CONTENT_TYPE = "application/zip";
   private static final String DISPOSITION_BASE = "attachment; filename=";
   private static final String CHECKSUM_SPLIT = "_";
 
   @SneakyThrows
-  public void exportEvent(HttpServletResponse response) {
+  public void exportEvents(HttpServletResponse response) {
     String zipName = ZIP_PREFIX + System.currentTimeMillis() + ZIP_SUFFIX;
     File directory = makeDirectory();
     try {
@@ -94,7 +97,7 @@ public class LocalService {
   }
 
   @Transactional
-  public void importEvent(MultipartFile[] files) {
+  public void importEvents(MultipartFile[] files) {
     for (MultipartFile file : files) {
       eventImporter.importEvents(getEvents(file).stream()
           .map(externalEventDtoMapper::map)
@@ -113,17 +116,39 @@ public class LocalService {
   }
 
   private List<File> generateFilesForEachFacility() {
-    Map<UUID, List<Event>> receiverIdToEvents = eventStore.getEventsForExport().stream()
+    UUID homeFacilityId = getHomeFacilityId();
+    Map<UUID, List<Event>> receiverIdToEvents = eventStore.getEventsForExport(homeFacilityId).stream()
         .collect(Collectors.groupingBy(Event::getReceiverId));
-    Map<UUID, String> facilityIdToCode = siglusFacilityService.getFacilityIdToCode(receiverIdToEvents.keySet());
+    Map<UUID, String> facilityIdToCode = siglusFacilityService.getFacilityIdToCode(
+        getFacilityIds(homeFacilityId, receiverIdToEvents));
 
     List<File> files = Lists.newArrayListWithExpectedSize(receiverIdToEvents.size());
-    receiverIdToEvents.forEach((receiverId, events) ->
-        files.add(generateFile(zipExportPath + facilityIdToCode.get(receiverId) + FILE_SUFFIX,
-            eventSerializer.dump(events.stream()
-                .map(externalEventDtoMapper::map)
-                .collect(Collectors.toList())))));
+    receiverIdToEvents.forEach((receiverId, events) -> {
+      String fileName = getFileName(facilityIdToCode.get(homeFacilityId), facilityIdToCode.get(receiverId));
+      files.add(generateFile(fileName,
+          eventSerializer.dump(events.stream()
+              .map(externalEventDtoMapper::map)
+              .collect(Collectors.toList()))));
+    });
     return files;
+  }
+
+  private Set<UUID> getFacilityIds(UUID homeFacilityId, Map<UUID, List<Event>> receiverIdToEvents) {
+    Set<UUID> facilityIds = receiverIdToEvents.keySet();
+    facilityIds.add(homeFacilityId);
+    return facilityIds;
+  }
+
+  private String getFileName(String fromFacilityCode, String toFacilityCode) {
+    return new StringBuilder(zipExportPath)
+        .append("from")
+        .append(FILE_NAME_SPLIT)
+        .append(fromFacilityCode)
+        .append(FILE_NAME_SPLIT)
+        .append("to")
+        .append(toFacilityCode)
+        .append(FILE_SUFFIX)
+        .toString();
   }
 
   private void setResponseAttribute(HttpServletResponse response, String zipName) {
@@ -159,11 +184,11 @@ public class LocalService {
   }
 
   private String getChecksumPrefix(byte[] data) {
-    return new StringBuilder(getChecksum(data)).append(CHECKSUM_SPLIT).toString();
+    return new StringBuilder().append(getChecksum(data)).append(CHECKSUM_SPLIT).toString();
   }
 
-  private String getChecksum(byte[] data) {
-    return DigestUtils.md5Hex(data);
+  private long getChecksum(byte[] data) {
+    return new CRC32ChecksumCalculatingInputStream(new ByteArrayInputStream(data)).getCRC32Checksum();
   }
 
   @SneakyThrows
@@ -183,8 +208,8 @@ public class LocalService {
   }
 
   private void checkChecksum(String readChecksum, byte[] events) {
-    String eventsChecksum = getChecksum(events);
-    if (!eventsChecksum.equals(readChecksum)) {
+    long eventsChecksum = getChecksum(events);
+    if (!String.valueOf(eventsChecksum).equals(readChecksum)) {
       log.error("file may be modified, readChecksum:{}, eventsChecksum: {}", readChecksum, eventsChecksum);
       throw new BusinessDataException(new Message("file may be modified"));
     }
@@ -193,13 +218,17 @@ public class LocalService {
   private void checkFacility(List<ExternalEventDto> externalEventDtos) {
     externalEventDtos.forEach(externalEventDto -> {
       UUID receiverId = externalEventDto.getEvent().getReceiverId();
-      UUID homeFacilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
+      UUID homeFacilityId = getHomeFacilityId();
       if (!receiverId.equals(homeFacilityId)) {
         log.error("file shouldn't be imported, facilityId not match, file receiverId:{}, current user facilityId:{}",
             receiverId, homeFacilityId);
         throw new BusinessDataException(new Message("file shouldn't be imported"));
       }
     });
+  }
+
+  private UUID getHomeFacilityId() {
+    return authenticationHelper.getCurrentUser().getHomeFacilityId();
   }
 
   private String getReadData(MultipartFile file) throws IOException {

@@ -65,8 +65,8 @@ public class EventStore {
         .collect(Collectors.toList());
   }
 
-  public List<Event> getEventsForExport() {
-    List<UUID> exportEventIds = repository.findExportEventIds().stream()
+  public List<Event> getEventsForExport(UUID facilityId) {
+    List<UUID> exportEventIds = repository.findExportEventIds(facilityId).stream()
         .map(UUID::fromString)
         .collect(Collectors.toList());
     return repository.findAll(exportEventIds).stream()

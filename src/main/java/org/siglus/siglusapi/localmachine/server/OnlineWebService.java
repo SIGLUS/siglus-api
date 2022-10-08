@@ -20,14 +20,12 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import javax.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -40,6 +38,7 @@ import org.siglus.siglusapi.localmachine.repository.MasterDataSql;
 import org.siglus.siglusapi.localmachine.repository.MovementSql;
 import org.siglus.siglusapi.localmachine.repository.RequisitionOrderSql;
 import org.siglus.siglusapi.localmachine.repository.TableCopyRepository;
+import org.siglus.siglusapi.util.FileUtil;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
@@ -91,21 +90,8 @@ public class OnlineWebService {
         .flatMap(Collection::stream)
         .collect(Collectors.toList());
     try (FileOutputStream fileOutputStream = new FileOutputStream(zipFile);
-        ZipOutputStream zipOutputStream = new ZipOutputStream(fileOutputStream);) {
-      byte[] buffer = new byte[8 * 1024];
-      for (File srcFile : tableFiles) {
-        try (FileInputStream fileInputStream = new FileInputStream(srcFile);) {
-          zipOutputStream.putNextEntry(new ZipEntry(srcFile.getName()));
-          int length;
-          while ((length = fileInputStream.read(buffer)) > 0) {
-            zipOutputStream.write(buffer, 0, length);
-          }
-          zipOutputStream.closeEntry();
-          if (srcFile.exists()) {
-            Files.delete(srcFile.toPath());
-          }
-        }
-      }
+        ZipOutputStream zipOutputStream = new ZipOutputStream(fileOutputStream)) {
+      FileUtil.write(tableFiles, zipOutputStream);
     } catch (Exception e) {
       log.error("facilityId {} generate zip file fail,{}", homeFacilityId, e);
       throw new DbOperationException(e, new Message(homeFacilityId + " generate zip file fail"));
