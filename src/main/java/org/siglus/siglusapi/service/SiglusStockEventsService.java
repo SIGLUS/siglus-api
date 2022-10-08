@@ -17,7 +17,9 @@ package org.siglus.siglusapi.service;
 
 import static org.siglus.siglusapi.constant.FieldConstants.ADJUSTMENT;
 import static org.siglus.siglusapi.constant.FieldConstants.ISSUE;
+import static org.siglus.siglusapi.constant.FieldConstants.ISSUE_WITH_LOCATION;
 import static org.siglus.siglusapi.constant.FieldConstants.RECEIVE;
+import static org.siglus.siglusapi.constant.FieldConstants.RECEIVE_WITH_LOCATION;
 import static org.siglus.siglusapi.constant.FieldConstants.SEPARATOR;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_ADJUSTMENT_LOCATION_IS_RESTRICTED;
@@ -290,9 +292,9 @@ public class SiglusStockEventsService {
 
   private String getDraftType(StockEventDto eventDto) {
     if (eventDto.hasSource()) {
-      return RECEIVE;
+      return Objects.nonNull(eventDto.getLineItems().get(0).getLocationCode()) ? RECEIVE_WITH_LOCATION : RECEIVE;
     } else if (eventDto.hasDestination()) {
-      return ISSUE;
+      return Objects.nonNull(eventDto.getLineItems().get(0).getLocationCode()) ? ISSUE_WITH_LOCATION : ISSUE;
     } else {
       return ADJUSTMENT;
     }
