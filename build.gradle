@@ -43,7 +43,7 @@ repositories {
 
 // NOTE: do NOT use implementation, otherwise the SpringBoot won't pack the dependencies into the fat jar
 dependencies {
-    compile 'org.openlmis:siglus-api-extension:1.1.0-20220928.064407-127'
+    compile 'org.openlmis:siglus-api-extension:1.1.0-20221009.014011-136'
     compile 'org.springframework.boot:spring-boot-starter-web'
     compile 'org.springframework.boot:spring-boot-starter-data-rest'
     compile 'org.springframework.boot:spring-boot-starter-data-jpa'
@@ -105,19 +105,9 @@ dependencies {
     compile "org.springframework.boot:spring-boot-starter-security"
     compile "org.springframework.security.oauth:spring-security-oauth2"
     compile "org.slf4j:slf4j-ext:1.7.25"
-    compile 'org.webjars.npm:api-console:3.0.17'
-    compile 'org.apache.commons:commons-lang3:3.6'
-    compile 'org.apache.commons:commons-csv:1.4'
-    compile 'org.apache.commons:commons-collections4:4.1'
-    compile 'commons-io:commons-io:2.5'
-    compile 'org.openlmis:openlmis-service-util:3.0.0'
-    compile 'org.hibernate:hibernate-java8'
     compile 'org.hibernate:hibernate-spatial:5.0.11.Final'
     compile 'com.bedatadriven:jackson-datatype-jts:2.2'
-    compile 'net.sf.ehcache:ehcache:2.4.3'
-    compile group: 'org.hibernate', name: 'hibernate-ehcache', version: '5.0.12.Final'
     compile 'org.joda:joda-money:0.12'
-    compile 'org.jadira.usertype:usertype.core:5.0.0.GA'
     compile 'net.sf.supercsv:super-csv:2.4.0'
     compile 'net.sf.supercsv:super-csv-dozer:2.4.0'
     compile 'ca.uhn.hapi.fhir:hapi-fhir-client:3.7.0'
