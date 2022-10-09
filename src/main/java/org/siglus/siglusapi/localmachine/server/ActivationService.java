@@ -32,6 +32,7 @@ import org.siglus.siglusapi.localmachine.domain.ActivationCode;
 import org.siglus.siglusapi.localmachine.domain.AgentInfo;
 import org.siglus.siglusapi.localmachine.repository.ActivationCodeRepository;
 import org.siglus.siglusapi.localmachine.repository.AgentInfoRepository;
+import org.siglus.siglusapi.localmachine.webapi.ActivationResponse;
 import org.siglus.siglusapi.localmachine.webapi.LocalActivationRequest;
 import org.siglus.siglusapi.localmachine.webapi.RemoteActivationRequest;
 import org.springframework.stereotype.Service;
@@ -46,13 +47,14 @@ public class ActivationService {
   private final ActivationCodeRepository activationCodeRepository;
 
   @Transactional
-  public void activate(RemoteActivationRequest request) {
+  public ActivationResponse activate(RemoteActivationRequest request) {
     LocalActivationRequest localActivationRequest = request.getLocalActivationRequest();
     Facility facility = mustGetFacility(localActivationRequest.getFacilityCode());
     doActivation(localActivationRequest);
     AgentInfo agentInfo = buildAgentInfo(request, facility);
     log.info("add agent {} for facility {}", request.getMachineId(), facility.getCode());
     agentInfoRepository.save(agentInfo);
+    return new ActivationResponse(facility.getId(), facility.getCode(), agentInfo.getActivationCode());
   }
 
   void doActivation(LocalActivationRequest localActivationRequest) {

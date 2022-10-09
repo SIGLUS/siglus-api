@@ -16,7 +16,6 @@
 package org.siglus.siglusapi.localmachine.agent;
 
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_FACILITY_CHANGED;
-import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_FACILITY_NOT_FOUND;
 
 import com.google.common.annotations.VisibleForTesting;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -27,15 +26,15 @@ import java.util.Base64;
 import java.util.Base64.Encoder;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.openlmis.referencedata.domain.Facility;
-import org.openlmis.referencedata.repository.FacilityRepository;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.localmachine.Machine;
 import org.siglus.siglusapi.localmachine.domain.AgentInfo;
 import org.siglus.siglusapi.localmachine.repository.AgentInfoRepository;
+import org.siglus.siglusapi.localmachine.webapi.ActivationResponse;
 import org.siglus.siglusapi.localmachine.webapi.LocalActivationRequest;
 import org.siglus.siglusapi.localmachine.webapi.RemoteActivationRequest;
 import org.springframework.stereotype.Service;
@@ -45,7 +44,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 @Slf4j
 public class LocalActivationService {
-  private final FacilityRepository facilityRepository;
+
   private final AgentInfoRepository agentInfoRepository;
   private final OnlineWebClient onlineWebClient;
   private final Machine machine;
@@ -53,8 +52,7 @@ public class LocalActivationService {
   @Transactional
   public void activate(LocalActivationRequest request) {
     if (checkForActivation(request)) {
-      Facility facility = mustGetFacility(request);
-      activateWithOnlineWeb(request, facility);
+      activateWithOnlineWeb(request);
     }
   }
 
@@ -72,15 +70,21 @@ public class LocalActivationService {
     return !agentInfo.getActivationCode().equals(request.getActivationCode());
   }
 
-  private void activateWithOnlineWeb(LocalActivationRequest request, Facility facility) {
+  private void activateWithOnlineWeb(LocalActivationRequest request) {
     KeyPair keyPair = Keys.keyPairFor(SignatureAlgorithm.RS256);
     byte[] encodedPrivateKey = keyPair.getPrivate().getEncoded();
     byte[] encodedPublicKey = keyPair.getPublic().getEncoded();
-    AgentInfo agentInfo = buildAgentInfo(request, facility, encodedPrivateKey, encodedPublicKey);
     RemoteActivationRequest remoteActivationRequest =
         buildRemoteActivationRequest(request, encodedPrivateKey, encodedPublicKey);
-    onlineWebClient.activate(remoteActivationRequest);
-    log.info("save agentInfo info for facility:{}", facility.getCode());
+    ActivationResponse resp = onlineWebClient.activate(remoteActivationRequest);
+    AgentInfo agentInfo =
+        buildAgentInfo(
+            request,
+            resp.getFacilityCode(),
+            resp.getFacilityId(),
+            encodedPrivateKey,
+            encodedPublicKey);
+    log.info("save agentInfo info for facility:{}", request.getFacilityCode());
     agentInfoRepository.save(agentInfo);
   }
 
@@ -97,24 +101,19 @@ public class LocalActivationService {
 
   private AgentInfo buildAgentInfo(
       LocalActivationRequest request,
-      Facility facility,
+      String facilityCode,
+      UUID facilityId,
       byte[] encodedPrivateKey,
       byte[] encodedPublicKey) {
     return AgentInfo.builder()
         .machineId(machine.getMachineId())
-        .facilityId(facility.getId())
-        .facilityCode(facility.getCode())
+        .facilityId(facilityId)
+        .facilityCode(facilityCode)
         .activationCode(request.getActivationCode())
         .activatedAt(ZonedDateTime.now())
         .privateKey(encodedPrivateKey)
         .publicKey(encodedPublicKey)
         .build();
-  }
-
-  private Facility mustGetFacility(LocalActivationRequest request) {
-    return facilityRepository
-        .findByCode(request.getFacilityCode())
-        .orElseThrow(() -> new BusinessDataException(new Message(ERROR_FACILITY_NOT_FOUND)));
   }
 
   public Optional<AgentInfo> getCurrentAgentInfo() {

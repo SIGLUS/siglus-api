@@ -47,8 +47,8 @@ public class OnlineWebController {
   private final OnlineWebService onlineWebService;
 
   @PostMapping("/agents")
-  public void activateAgent(@RequestBody @Validated RemoteActivationRequest request) {
-    activationService.activate(request);
+  public ActivationResponse activateAgent(@RequestBody @Validated RemoteActivationRequest request) {
+    return activationService.activate(request);
   }
 
   @PostMapping("/events")

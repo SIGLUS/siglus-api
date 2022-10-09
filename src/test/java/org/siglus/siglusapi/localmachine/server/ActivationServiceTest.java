@@ -37,6 +37,7 @@ import org.siglus.siglusapi.localmachine.domain.ActivationCode;
 import org.siglus.siglusapi.localmachine.domain.AgentInfo;
 import org.siglus.siglusapi.localmachine.repository.ActivationCodeRepository;
 import org.siglus.siglusapi.localmachine.repository.AgentInfoRepository;
+import org.siglus.siglusapi.localmachine.webapi.ActivationResponse;
 import org.siglus.siglusapi.localmachine.webapi.LocalActivationRequest;
 import org.siglus.siglusapi.localmachine.webapi.RemoteActivationRequest;
 
@@ -67,7 +68,7 @@ public class ActivationServiceTest {
             .base64EncodedPublicKey(encoder.encodeToString("publickey".getBytes()))
             .build();
     // when
-    activationService.activate(request);
+    ActivationResponse resp = activationService.activate(request);
     // then
     ArgumentCaptor<AgentInfo> capture = ArgumentCaptor.forClass(AgentInfo.class);
     verify(agentInfoRepository).save(capture.capture());
@@ -75,6 +76,7 @@ public class ActivationServiceTest {
     assertThat(agentInfo.getMachineId()).isEqualTo(request.getMachineId());
     assertThat(agentInfo.getPublicKey()).isEqualTo("publickey".getBytes());
     assertThat(agentInfo.getPrivateKey()).isEqualTo("privatekey".getBytes());
+    assertThat(resp.getFacilityId()).isEqualTo(facility.getId());
   }
 
   @Test(expected = BusinessDataException.class)
