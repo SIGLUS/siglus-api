@@ -18,6 +18,7 @@ package org.siglus.siglusapi.service;
 import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Maps.newHashMap;
 import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -178,6 +179,9 @@ public class SiglusPhysicalInventoryServiceTest {
 
   @Mock
   private PhysicalInventoryEmptyLocationLineItemRepository physicalInventoryEmptyLocationLineItemRepository;
+
+  @Mock
+  private SiglusOrderableService siglusOrderableService;
 
   private final UUID facilityId = UUID.randomUUID();
 
@@ -941,6 +945,12 @@ public class SiglusPhysicalInventoryServiceTest {
         .lineItems(Collections.singletonList(expectedPhysicalInventoryLineItem))
         .build();
     when(inventoryController.getPhysicalInventory(physicalInventoryIdOne)).thenReturn(expectedPhysicalInventoryDto);
+    org.openlmis.referencedata.dto.OrderableDto orderableDto1 = new org.openlmis.referencedata.dto.OrderableDto();
+    orderableDto1.setId(orderableId);
+    orderableDto1.setProductCode("22A01");
+    List<org.openlmis.referencedata.dto.OrderableDto> orderableDtos = singletonList(orderableDto1);
+    when(siglusOrderableService.getAllProducts()).thenReturn(orderableDtos);
+
     // when
     PhysicalInventoryDto returnedPhysicalInventoryDto = siglusPhysicalInventoryService
         .createAndSpiltNewDraftForOneProgram(physicalInventoryDto, 1, null, false);
