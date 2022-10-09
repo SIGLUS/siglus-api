@@ -27,6 +27,7 @@ import org.siglus.siglusapi.web.request.PodWithLocationRequest;
 import org.siglus.siglusapi.web.request.UpdatePodSubDraftWithLocationRequest;
 import org.siglus.siglusapi.web.response.ProofOfDeliveryWithLocationResponse;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -75,9 +76,10 @@ public class SiglusPodWithLocationController {
   }
 
   @PutMapping("/{id}")
-  public void submitSubDraftsWithLocation(@PathVariable("id") UUID podId, @RequestBody PodWithLocationRequest request) {
+  public void submitSubDraftsWithLocation(@PathVariable("id") UUID podId, @RequestBody PodWithLocationRequest request,
+      OAuth2Authentication authentication) {
     movementDateValidator.validateMovementDate(request.getPodDto().getReceivedDate(),
         request.getPodDto().getShipment().getOrder().getReceivingFacility().getId());
-    siglusPodService.submitSubDraftsWithLocation(podId, request);
+    siglusPodService.submitSubDraftsWithLocation(podId, request, authentication);
   }
 }

@@ -323,12 +323,13 @@ public class SiglusPodService {
   }
 
   @Transactional
-  public void submitSubDraftsWithLocation(UUID podId, PodWithLocationRequest request) {
+  public void submitSubDraftsWithLocation(UUID podId, PodWithLocationRequest request,
+      OAuth2Authentication authentication) {
     checkAuth();
     List<PodSubDraft> subDrafts = checkIfSubDraftsSubmitted(podId);
     deleteSubDraftAndLineExtensionBySubDraftIds(subDrafts.stream().map(PodSubDraft::getId).collect(Collectors.toSet()));
     submitPodSubDraftsWithLocation(request.getPodLineItemLocation());
-    ProofOfDeliveryDto podDto = fulfillmentService.updateProofOfDelivery(podId, request.getPodDto());
+    ProofOfDeliveryDto podDto = podController.updateProofOfDelivery(podId, request.getPodDto(), authentication);
     if (podDto.getStatus() == ProofOfDeliveryStatus.CONFIRMED) {
       notificationService.postConfirmPod(request.getPodDto());
     }

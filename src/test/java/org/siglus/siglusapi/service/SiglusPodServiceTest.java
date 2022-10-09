@@ -969,13 +969,13 @@ public class SiglusPodServiceTest {
     ProofOfDeliveryDto dto = request.getPodDto();
     when(fulfillmentService.searchProofOfDelivery(any(), any())).thenReturn(dto);
     when(podController.updateProofOfDelivery(podId, dto, null)).thenReturn(dto);
-    when(fulfillmentService.updateProofOfDelivery(any(), any())).thenReturn(dto);
     ProofOfDelivery proofOfDelivery = buildMockProofOfDelivery();
     when(proofOfDeliveryRepository.findOne(podId)).thenReturn(proofOfDelivery);
     when(stockEventBuilder.fromProofOfDelivery(proofOfDelivery)).thenReturn(buildMockStockEventDto());
+    when(podController.updateProofOfDelivery(any(), any(), any())).thenReturn(dto);
 
     // when
-    service.submitSubDraftsWithLocation(podId, buildMockPodWithLocationRequest());
+    service.submitSubDraftsWithLocation(podId, buildMockPodWithLocationRequest(), null);
 
     // then
     verify(podLineItemsByLocationRepository, times(1)).save(any(List.class));

@@ -94,13 +94,15 @@ public class MachineTokenMatcher implements RequestMatcher {
 
   void updateMachineDeviceInfo(HttpServletRequest request, MachineToken machineToken) {
     String deviceInfo = request.getHeader(CommonConstants.DEVICE_INFO);
+    String deviceVersion = request.getHeader(CommonConstants.VERSION);
     UUID facilityId = machineToken.getFacilityId();
     Facility facility = facilityRepository.findOne(facilityId);
     AppInfo appInfo = appInfoRepository.findByFacilityCode(facility.getCode());
     if (null != appInfo && !appInfo.getUniqueId().equals(machineToken.getMachineId().toString())) {
       return;
     }
-    if (null != appInfo && deviceInfo.equals(appInfo.getDeviceInfo())) {
+    if (null != appInfo && deviceInfo.equals(appInfo.getDeviceInfo())
+        && deviceVersion.equals(appInfo.getVersionCode())) {
       return;
     }
     if (null == appInfo) {
