@@ -13,29 +13,25 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.task;
+package org.siglus.siglusapi.scheduledtask;
 
-import java.time.LocalDate;
 import lombok.RequiredArgsConstructor;
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
-import org.siglus.siglusapi.service.task.report.TracerDrugReportService;
+import org.siglus.siglusapi.service.scheduledtask.HistoricalDataPersistentService;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Profile("!localmachine")
-@RequiredArgsConstructor
 @Service
-public class TracerDrugPersistentDataTask {
+@RequiredArgsConstructor
+public class HistoricalDataPersistentDataTask {
 
-  private final TracerDrugReportService tracerDrugReportService;
+  private final HistoricalDataPersistentService historicalDataPersistentService;
 
-  @Scheduled(cron = "${report.tracer.drug.cron}", zone = "${time.zoneId}")
-  @SchedulerLock(name = "tracer_drug_report")
-  @Transactional
-  public void refreshForTracerDrugReport() {
-    tracerDrugReportService.refreshTracerDrugPersistentData(
-        LocalDate.now().toString(), LocalDate.now().toString());
+  @Scheduled(cron = "${report.historical.data.cron}", zone = "${time.zoneId}")
+  @SchedulerLock(name = "historical_data_refresh_monthly")
+  public void monthlyRefreshForTracerDrugReport() {
+    historicalDataPersistentService.updateAllFacilityHistoricalData();
   }
 }

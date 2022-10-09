@@ -13,28 +13,26 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.task;
+package org.siglus.siglusapi.scheduledtask;
 
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
-import org.siglus.siglusapi.service.task.report.HistoricalDataPersistentService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Profile;
+import org.siglus.siglusapi.repository.RequisitionAvailableProductRepository;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-@Profile("!localmachine")
-@AllArgsConstructor
+@RequiredArgsConstructor
 @Service
-public class HistoricalDataPersistentDataTask {
+@Slf4j
+public class ClearRequisitionAvailableProductTask {
 
-  @Autowired private HistoricalDataPersistentService historicalDataPersistentService;
+  private final RequisitionAvailableProductRepository requisitionAvailableProductRepository;
 
-  @Scheduled(cron = "${report.historical.data.cron}", zone = "${time.zoneId}")
-  @SchedulerLock(name = "historical_data_refresh_monthly")
-  @Transactional
-  public void monthlyRefreshForTracerDrugReport() {
-    historicalDataPersistentService.updateAllFacilityHistoricalData();
+  @Scheduled(cron = "${requisition.available.products.clear.cron}", zone = "${time.zoneId}")
+  @SchedulerLock(name = "clear_requisition_available_products_task")
+  public void clear() {
+    log.info("clear unused requisition available products for more than 1 year");
+    requisitionAvailableProductRepository.clearRequisitionAvailableProducts();
   }
 }

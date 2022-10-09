@@ -13,7 +13,7 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.service.task.report;
+package org.siglus.siglusapi.service.scheduledtask;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;

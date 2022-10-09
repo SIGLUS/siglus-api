@@ -13,12 +13,12 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.task;
+package org.siglus.siglusapi.scheduledtask;
 
 import java.time.LocalDate;
 import lombok.RequiredArgsConstructor;
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
-import org.siglus.siglusapi.service.task.report.CalculateWebCmmService;
+import org.siglus.siglusapi.service.scheduledtask.TracerDrugReportService;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -26,13 +26,13 @@ import org.springframework.stereotype.Service;
 @Profile("!localmachine")
 @RequiredArgsConstructor
 @Service
-public class CalculateWebCmmTask {
+public class TracerDrugPersistentDataTask {
 
-  private final CalculateWebCmmService calculateWebCmmService;
+  private final TracerDrugReportService tracerDrugReportService;
 
-  @Scheduled(cron = "${cmm.calculate.cron}", zone = "${time.zoneId}")
-  @SchedulerLock(name = "calculate_cmm_task")
-  public void calculate() {
-    calculateWebCmmService.calculateCmms(LocalDate.now());
+  @Scheduled(cron = "${report.tracer.drug.cron}", zone = "${time.zoneId}")
+  @SchedulerLock(name = "tracer_drug_report")
+  public void refreshForTracerDrugReport() {
+    tracerDrugReportService.refreshTracerDrugPersistentData(LocalDate.now().toString(), LocalDate.now().toString());
   }
 }

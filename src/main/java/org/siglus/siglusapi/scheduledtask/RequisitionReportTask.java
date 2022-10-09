@@ -13,27 +13,26 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.web.report;
+package org.siglus.siglusapi.scheduledtask;
 
 import lombok.RequiredArgsConstructor;
-import org.siglus.siglusapi.interceptor.OperationGuardAspect.Guarded;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.siglus.siglusapi.service.scheduledtask.RequisitionReportTaskService;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.context.annotation.Profile;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+@Profile("!localmachine")
 @RequiredArgsConstructor
-@RestController
-@RequestMapping("/api/siglusapi/task/requisition")
-public class RequisitionReportTaskController {
-
+@Service
+public class RequisitionReportTask {
   private final RequisitionReportTaskService requisitionReportTaskService;
 
-  @PostMapping("/refresh")
-  @Guarded
-  public ResponseEntity<String> refresh() {
+  @Scheduled(cron = "${report.requisition.monthly.cron}", zone = "${time.zoneId}")
+  @SchedulerLock(name = "requisition_not_submit_monthly_report")
+  @Transactional
+  public void refresh() {
     requisitionReportTaskService.refresh();
-    return ResponseEntity.ok("ok");
   }
 }

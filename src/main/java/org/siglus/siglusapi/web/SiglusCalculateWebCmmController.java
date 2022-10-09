@@ -15,7 +15,7 @@
 
 package org.siglus.siglusapi.web;
 
-import org.siglus.siglusapi.service.task.report.CalculateWebCmmService;
+import org.siglus.siglusapi.service.scheduledtask.CalculateWebCmmService;
 import org.siglus.siglusapi.web.request.CalculateCmmRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
