@@ -7,42 +7,6 @@ CREATE TABLE siglusintegration.program_requisition_name_mapping
     requisitionname varchar(255)
 );
 
-INSERT INTO siglusintegration.program_requisition_name_mapping (
-    id, programid, programcode, requisitionname
-)
-VALUES ( 'b9c97279-c6cc-4cda-b9cd-b3147d204e6f',
-         (SELECT id FROM referencedata.programs WHERE code = 'TR'),
-         (SELECT name FROM referencedata.programs WHERE code = 'TR'),
-         'MMIT');
-INSERT INTO siglusintegration.program_requisition_name_mapping (
-    id, programid, programcode, requisitionname
-)
-VALUES ( '9308af3a-7b9f-4766-be44-c6be01f94ac7',
-         (SELECT id FROM referencedata.programs WHERE code = 'ML'),
-         (SELECT name FROM referencedata.programs WHERE code = 'ML'),
-         'Malaria');
-INSERT INTO siglusintegration.program_requisition_name_mapping (
-    id, programid, programcode, requisitionname
-)
-VALUES ( 'd565b01b-903f-43bb-9c63-9e4aea405c2a',
-         (SELECT id FROM referencedata.programs WHERE code = 'T'),
-         (SELECT name FROM referencedata.programs WHERE code = 'T'),
-         'MMIA');
-INSERT INTO siglusintegration.program_requisition_name_mapping (
-    id, programid, programcode, requisitionname
-)
-VALUES ( '936d3ccb-4d09-4c50-9b91-09bb35886640',
-         (SELECT id FROM referencedata.programs WHERE code = 'VC'),
-         (SELECT name FROM referencedata.programs WHERE code = 'VC'),
-         'Balance Requisition');
-INSERT INTO siglusintegration.program_requisition_name_mapping (
-    id, programid, programcode, requisitionname
-)
-VALUES ( 'b9c8a001-a7ce-42ab-9e11-4e0f85fab07a',
-         (SELECT id FROM referencedata.programs WHERE code = 'TB'),
-         (SELECT name FROM referencedata.programs WHERE code = 'TB'),
-         'MMTB');
-
 CREATE VIEW dashboard.vw_requisition_monthly_report
             (id, district, province, facilityname, ficilitycode, inventorydate, statusdetail, submittedstatus,
              reporttype, reportname, originalperiod, submittedtime, synctime, facilityid, facilitytype,
