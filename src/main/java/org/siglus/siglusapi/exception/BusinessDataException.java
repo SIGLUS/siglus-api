@@ -29,4 +29,8 @@ public class BusinessDataException extends BaseMessageException {
   public BusinessDataException(Message message) {
     super(message, true);
   }
+
+  public BusinessDataException(Throwable cause, Message message) {
+    super(message, cause);
+  }
 }

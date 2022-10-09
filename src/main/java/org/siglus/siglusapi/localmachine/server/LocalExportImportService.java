@@ -111,7 +111,7 @@ public class LocalExportImportService {
     boolean mkdirs = directory.mkdirs();
     if (!mkdirs) {
       log.warn("export zip dir make fail, dir: {}", zipExportPath);
-      throw new RuntimeException("make dir failed");
+      throw new BusinessDataException(new Message("make dir failed"));
     }
     return directory;
   }
@@ -165,7 +165,7 @@ public class LocalExportImportService {
       FileUtil.write(files, zipOutputStream);
     } catch (Exception e) {
       log.error("generate zip file fail", e);
-      throw new RuntimeException(" generate zip file fail");
+      throw new BusinessDataException(e, new Message("generate zip file fail"));
     }
     return zipFile;
   }
@@ -244,7 +244,7 @@ public class LocalExportImportService {
 
   private void checkFileSuffix(MultipartFile file) {
     String filename = file.getOriginalFilename();
-    String suffix = filename.substring(filename.lastIndexOf("."));
+    String suffix = filename.substring(filename.lastIndexOf('.'));
     if (!FILE_SUFFIX.equals(suffix)) {
       log.error("file may be modified, file suffix:{}, correct suffix:{}", suffix, FILE_SUFFIX);
       throw new BusinessDataException(new Message("file may be modified"));
