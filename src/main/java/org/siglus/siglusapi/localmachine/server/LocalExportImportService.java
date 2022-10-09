@@ -15,9 +15,7 @@
 
 package org.siglus.siglusapi.localmachine.server;
 
-import com.amazonaws.util.CRC32ChecksumCalculatingInputStream;
 import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -29,6 +27,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.zip.CRC32;
+import java.util.zip.Checksum;
 import java.util.zip.ZipOutputStream;
 import javax.servlet.http.HttpServletResponse;
 import jersey.repackaged.com.google.common.collect.Lists;
@@ -54,6 +54,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 @Service
@@ -85,13 +86,15 @@ public class LocalExportImportService {
     File directory = makeDirectory();
     try {
       List<File> files = generateFilesForEachFacility();
+      if (CollectionUtils.isEmpty(files)) {
+        log.warn("no data need to be exported, homeFacilityId:{}", getHomeFacilityId());
+        throw new BusinessDataException(new Message("no data need to be exported"));
+      }
       File zipFile = generateZipFile(zipName, files);
       setResponseAttribute(response, zipName);
       FileInputStream fileInputStream = new FileInputStream(zipFile);
       IOUtils.copy(fileInputStream, response.getOutputStream());
       response.flushBuffer();
-    } catch (IOException e) {
-      log.error("delete directory fail, ", e);
     } finally {
       FileUtils.deleteDirectory(directory);
     }
@@ -147,6 +150,7 @@ public class LocalExportImportService {
         .append(fromFacilityCode)
         .append(FILE_NAME_SPLIT)
         .append("to")
+        .append(FILE_NAME_SPLIT)
         .append(toFacilityCode)
         .append(FILE_SUFFIX)
         .toString();
@@ -189,7 +193,9 @@ public class LocalExportImportService {
   }
 
   private long getChecksum(byte[] data) {
-    return new CRC32ChecksumCalculatingInputStream(new ByteArrayInputStream(data)).getCRC32Checksum();
+    Checksum crc32 = new CRC32();
+    crc32.update(data, 0, data.length);
+    return crc32.getValue();
   }
 
   @SneakyThrows
