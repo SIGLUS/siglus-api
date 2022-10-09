@@ -278,10 +278,10 @@ public class SiglusPodService {
 
   @Transactional
   public void deleteSubDraftsWithLocation(UUID podId) {
-    deletePodSubDrafts(podId);
     Set<UUID> podLineItemIds = findLineItemsIdsByPodId(podId, Collections.emptySet());
     log.info("delete all sub drafts with location, pod line items id: {}", podLineItemIds);
     podSubDraftLineItemsByLocationRepository.deleteByPodLineItemIdIn(podLineItemIds);
+    deletePodSubDrafts(podId);
   }
 
   public PodExtensionResponse mergeSubDrafts(UUID podId, Set<String> expand) {
