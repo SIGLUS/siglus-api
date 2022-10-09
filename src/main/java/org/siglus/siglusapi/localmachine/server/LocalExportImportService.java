@@ -32,6 +32,7 @@ import java.util.stream.Collectors;
 import java.util.zip.ZipOutputStream;
 import javax.servlet.http.HttpServletResponse;
 import jersey.repackaged.com.google.common.collect.Lists;
+import jersey.repackaged.com.google.common.collect.Sets;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -44,8 +45,8 @@ import org.siglus.siglusapi.localmachine.Event;
 import org.siglus.siglusapi.localmachine.EventImporter;
 import org.siglus.siglusapi.localmachine.ExternalEventDto;
 import org.siglus.siglusapi.localmachine.ExternalEventDtoMapper;
-import org.siglus.siglusapi.localmachine.eventstore.EventSerializer;
 import org.siglus.siglusapi.localmachine.eventstore.EventStore;
+import org.siglus.siglusapi.localmachine.eventstore.ExternalEventDtoSerializer;
 import org.siglus.siglusapi.service.SiglusFacilityService;
 import org.siglus.siglusapi.util.FileUtil;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
@@ -62,7 +63,7 @@ public class LocalExportImportService {
 
   private final EventStore eventStore;
   private final EventImporter eventImporter;
-  private final EventSerializer eventSerializer;
+  private final ExternalEventDtoSerializer externalEventDtoSerializer;
   private final ExternalEventDtoMapper externalEventDtoMapper;
   private final SiglusFacilityService siglusFacilityService;
   private final SiglusAuthenticationHelper authenticationHelper;
@@ -126,7 +127,7 @@ public class LocalExportImportService {
     receiverIdToEvents.forEach((receiverId, events) -> {
       String fileName = getFileName(facilityIdToCode.get(homeFacilityId), facilityIdToCode.get(receiverId));
       files.add(generateFile(fileName,
-          eventSerializer.dump(events.stream()
+          externalEventDtoSerializer.dump(events.stream()
               .map(externalEventDtoMapper::map)
               .collect(Collectors.toList()))));
     });
@@ -134,7 +135,7 @@ public class LocalExportImportService {
   }
 
   private Set<UUID> getFacilityIds(UUID homeFacilityId, Map<UUID, List<Event>> receiverIdToEvents) {
-    Set<UUID> facilityIds = receiverIdToEvents.keySet();
+    Set<UUID> facilityIds = Sets.newHashSet(receiverIdToEvents.keySet());
     facilityIds.add(homeFacilityId);
     return facilityIds;
   }
@@ -202,7 +203,7 @@ public class LocalExportImportService {
 
     checkChecksum(readChecksum, events);
 
-    List<ExternalEventDto> externalEventDtos = eventSerializer.loadList(events);
+    List<ExternalEventDto> externalEventDtos = externalEventDtoSerializer.loadList(events);
     checkFacility(externalEventDtos);
     return externalEventDtos;
   }

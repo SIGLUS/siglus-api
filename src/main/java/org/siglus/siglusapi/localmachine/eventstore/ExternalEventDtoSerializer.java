@@ -30,44 +30,46 @@ import org.springframework.stereotype.Component;
 
 @Component
 @Slf4j
-public class EventSerializer {
+public class ExternalEventDtoSerializer {
 
-  public static final ObjectMapper LOCALMACHINE_EVENT_OBJECT_MAPPER;
+  public static final ObjectMapper LOCALMACHINE_EVENT_DTO_OBJECT_MAPPER;
 
   static {
-    LOCALMACHINE_EVENT_OBJECT_MAPPER = new ObjectMapper();
-    LOCALMACHINE_EVENT_OBJECT_MAPPER.registerModule(new JavaTimeModule());
-    LOCALMACHINE_EVENT_OBJECT_MAPPER.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-    LOCALMACHINE_EVENT_OBJECT_MAPPER.configure(
+    LOCALMACHINE_EVENT_DTO_OBJECT_MAPPER = new ObjectMapper();
+    LOCALMACHINE_EVENT_DTO_OBJECT_MAPPER.registerModule(new JavaTimeModule());
+    LOCALMACHINE_EVENT_DTO_OBJECT_MAPPER.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+    LOCALMACHINE_EVENT_DTO_OBJECT_MAPPER.configure(
         DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
   }
 
-  public EventSerializer() {
+  public ExternalEventDtoSerializer() {
   }
 
   @SneakyThrows
-  public byte[] dump(Object events) {
-    byte[] eventsBytes = LOCALMACHINE_EVENT_OBJECT_MAPPER.writeValueAsBytes(events);
-    EventWrapper eventWrapper = new EventWrapper(getEventsName(events), eventsBytes);
-    return LOCALMACHINE_EVENT_OBJECT_MAPPER.writeValueAsBytes(eventWrapper);
+  public byte[] dump(List<ExternalEventDto> externalEventDtos) {
+    byte[] bytes = LOCALMACHINE_EVENT_DTO_OBJECT_MAPPER.writeValueAsBytes(externalEventDtos);
+    ExternalEventDtoWrapper externalEventDtoWrapper = new ExternalEventDtoWrapper(getClassName(externalEventDtos),
+        bytes);
+    return LOCALMACHINE_EVENT_DTO_OBJECT_MAPPER.writeValueAsBytes(externalEventDtoWrapper);
   }
 
   @SneakyThrows
-  public List<ExternalEventDto> loadList(byte[] events) {
-    EventWrapper eventWrapper = LOCALMACHINE_EVENT_OBJECT_MAPPER.readValue(events, EventWrapper.class);
-    return LOCALMACHINE_EVENT_OBJECT_MAPPER.readValue(
-        eventWrapper.getEvents(),
-        LOCALMACHINE_EVENT_OBJECT_MAPPER.getTypeFactory().constructCollectionType(List.class, ExternalEventDto.class));
+  public List<ExternalEventDto> loadList(byte[] data) {
+    ExternalEventDtoWrapper externalEventDtoWrapper = LOCALMACHINE_EVENT_DTO_OBJECT_MAPPER.readValue(data,
+        ExternalEventDtoWrapper.class);
+    return LOCALMACHINE_EVENT_DTO_OBJECT_MAPPER.readValue(externalEventDtoWrapper.getEvents(),
+        LOCALMACHINE_EVENT_DTO_OBJECT_MAPPER.getTypeFactory()
+            .constructCollectionType(List.class, ExternalEventDto.class));
   }
 
-  public String getEventsName(Object events) {
-    return events.getClass().getName();
+  public String getClassName(Object object) {
+    return object.getClass().getName();
   }
 
   @Data
   @AllArgsConstructor
   @NoArgsConstructor
-  static class EventWrapper {
+  static class ExternalEventDtoWrapper {
 
     private String name;
     private byte[] events;
