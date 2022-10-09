@@ -25,7 +25,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
-import lombok.Getter;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
@@ -40,6 +40,7 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 @Slf4j
+@Data
 public class Machine {
   private static final String SYSTEM_INFO_COMMAND = "dmidecode -t system";
   private static final String OS_NAME = "os.name";
@@ -51,7 +52,8 @@ public class Machine {
   private final Environment env;
   private final FacilityExtensionRepository facilityExtensionRepository;
 
-  @Getter private String deviceInfo;
+  private String deviceInfo;
+  private boolean isConnectedOnlineWeb;
 
   public Set<String> fetchSupportedFacilityIds() {
     if (isOnlineWeb()) {

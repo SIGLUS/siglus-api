@@ -46,6 +46,7 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class LocalTokenInterceptor implements ClientHttpRequestInterceptor {
+
   private final AgentInfoRepository agentInfoRepository;
 
   @Value("${machine.version}")
@@ -53,7 +54,8 @@ public class LocalTokenInterceptor implements ClientHttpRequestInterceptor {
 
   private final Machine machine;
 
-  @Setter private Function<HttpRequest, Boolean> acceptFunc = (httpRequest -> true);
+  @Setter
+  private Function<HttpRequest, Boolean> acceptFunc = (httpRequest -> true);
 
   @Override
   public ClientHttpResponse intercept(
@@ -62,9 +64,15 @@ public class LocalTokenInterceptor implements ClientHttpRequestInterceptor {
       HttpHeaders headers = request.getHeaders();
       attachHeaders(headers);
     }
-    ClientHttpResponse httpResponse = execution.execute(request, body);
-    logClientHttpResponse(request, httpResponse);
-    return httpResponse;
+    machine.setConnectedOnlineWeb(true);
+    try {
+      ClientHttpResponse httpResponse = execution.execute(request, body);
+      logClientHttpResponse(request, httpResponse);
+      return httpResponse;
+    } catch (IOException ioException) {
+      machine.setConnectedOnlineWeb(false);
+      throw ioException;
+    }
   }
 
   @SneakyThrows
@@ -100,7 +108,7 @@ public class LocalTokenInterceptor implements ClientHttpRequestInterceptor {
 
   private String buildAccessToken(AgentInfo agentInfo) {
     return MachineToken.sign(
-            agentInfo.getMachineId(), agentInfo.getFacilityId(), agentInfo.getPrivateKey())
+        agentInfo.getMachineId(), agentInfo.getFacilityId(), agentInfo.getPrivateKey())
         .getPayload();
   }
 }

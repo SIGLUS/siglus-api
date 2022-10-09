@@ -23,6 +23,7 @@ import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.localmachine.Machine;
 import org.siglus.siglusapi.localmachine.agent.LocalActivationService;
+import org.siglus.siglusapi.localmachine.agent.Synchronizer;
 import org.siglus.siglusapi.localmachine.domain.AgentInfo;
 import org.siglus.siglusapi.localmachine.server.LocalExportImportService;
 import org.siglus.siglusapi.service.scheduledtask.CalculateCmmService;
@@ -48,6 +49,7 @@ public class LocalAgentController {
   private final LocalExportImportService localExportImportService;
   private final Machine machine;
   private final CalculateCmmService calculateCmmService;
+  private final Synchronizer synchronizer;
 
   @PutMapping
   public void activate(@RequestBody @Validated LocalActivationRequest request) {

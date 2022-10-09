@@ -13,12 +13,12 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.web.response;
+package org.siglus.siglusapi.localmachine.webapi;
 
 import lombok.Data;
 
 @Data
 public class InternetStatusResponse {
 
-  private boolean isConnectInternet;
+  private boolean isConnectedOnlineWeb;
 }
