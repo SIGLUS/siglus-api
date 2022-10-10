@@ -265,6 +265,8 @@ public class SiglusPodService {
     List<PodLineItemWithLocationDto> podLineItemWithLocationDtos =
         getSubDraftLineItemsWithLocation(subDraftLineItemsIds);
     podWithLocationDto.setPodLineItemLocation(podLineItemWithLocationDtos);
+    mergeSamePodLineItems(podWithLocationDto.getPodDto());
+    mergeSameShipmentLineItems(podWithLocationDto.getPodDto().getShipment());
     return podWithLocationDto;
   }
 
