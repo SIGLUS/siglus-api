@@ -77,7 +77,7 @@ import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 import org.siglus.siglusapi.dto.SiglusUsageTemplateDto;
 import org.siglus.siglusapi.dto.UsageTemplateColumnDto;
 import org.siglus.siglusapi.dto.UsageTemplateSectionDto;
-import org.siglus.siglusapi.repository.PodExtensionRepository;
+import org.siglus.siglusapi.repository.ShipmentsExtensionRepository;
 import org.siglus.siglusapi.repository.ProgramOrderablesExtensionRepository;
 import org.siglus.siglusapi.repository.ProgramRealProgramRepository;
 import org.siglus.siglusapi.repository.RequisitionLineItemExtensionRepository;
@@ -157,7 +157,7 @@ public class SiglusFcIntegrationServiceTest {
   private ProgramRealProgramRepository programRealProgramRepository;
 
   @Mock
-  private PodExtensionRepository podExtensionRepository;
+  private ShipmentsExtensionRepository shipmentsExtensionRepository;
 
   private final UUID dpmFacilityTypeId = UUID.randomUUID();
 
@@ -325,7 +325,7 @@ public class SiglusFcIntegrationServiceTest {
   @Test
   public void shouldSearchProofOfDelivery() {
     // given
-    when(podExtensionRepository.findByShipmentIdIn(any())).thenReturn(newArrayList());
+    when(shipmentsExtensionRepository.findByShipmentIdIn(any())).thenReturn(newArrayList());
 
     // when
     Page<FcProofOfDeliveryDto> fcProofOfDeliveryDtos = siglusFcIntegrationService

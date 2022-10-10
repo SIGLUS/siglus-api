@@ -13,30 +13,18 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.domain;
+package org.siglus.siglusapi.repository;
 
+import java.util.List;
+import java.util.Set;
 import java.util.UUID;
-import javax.persistence.Entity;
-import javax.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
-import org.siglus.common.domain.BaseEntity;
+import org.siglus.siglusapi.domain.ShipmentsExtension;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-@Entity
-@Data
-@Builder
-@EqualsAndHashCode(callSuper = true)
-@AllArgsConstructor
-@NoArgsConstructor
-@Table(name = "pod_extension", schema = "siglusintegration")
-public class PodExtension extends BaseEntity {
+public interface ShipmentsExtensionRepository extends JpaRepository<ShipmentsExtension, UUID> {
 
-  private UUID shipmentId;
+  ShipmentsExtension findByClientCodeAndIssueVoucherNumber(String clientCode, String issueVoucherNumber);
 
-  private String issueVoucherNumber;
+  List<ShipmentsExtension> findByShipmentIdIn(Set<UUID> ids);
 
-  private String clientCode;
 }

@@ -66,7 +66,7 @@ import org.openlmis.stockmanagement.dto.ValidSourceDestinationDto;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2Dto;
 import org.siglus.common.domain.OrderExternal;
 import org.siglus.common.repository.OrderExternalRepository;
-import org.siglus.siglusapi.domain.PodExtension;
+import org.siglus.siglusapi.domain.ShipmentsExtension;
 import org.siglus.siglusapi.domain.RequisitionExtension;
 import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.LotDto;
@@ -78,7 +78,7 @@ import org.siglus.siglusapi.dto.fc.FcIntegrationResultDto;
 import org.siglus.siglusapi.dto.fc.IssueVoucherDto;
 import org.siglus.siglusapi.dto.fc.ProductDto;
 import org.siglus.siglusapi.dto.fc.ResponseBaseDto;
-import org.siglus.siglusapi.repository.PodExtensionRepository;
+import org.siglus.siglusapi.repository.ShipmentsExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.service.SiglusOrderService;
 import org.siglus.siglusapi.service.SiglusShipmentDraftService;
@@ -122,7 +122,7 @@ public class FcIssueVoucherService implements ProcessDataService {
   private final SiglusApprovedProductReferenceDataService approvedProductService;
   private final SiglusStockEventsService stockEventsService;
   private final ValidSourceDestinationStockManagementService sourceDestinationService;
-  private final PodExtensionRepository podExtensionRepository;
+  private final ShipmentsExtensionRepository shipmentsExtensionRepository;
   private final OrderExternalRepository orderExternalRepository;
   private final OrderRepository orderRepository;
   private final SiglusOrderService siglusOrderService;
@@ -157,9 +157,9 @@ public class FcIssueVoucherService implements ProcessDataService {
           .collect(Collectors.toList());
       for (ResponseBaseDto item : issueVoucherList) {
         IssueVoucherDto issueVoucherDto = (IssueVoucherDto) item;
-        PodExtension podExtension = podExtensionRepository.findByClientCodeAndIssueVoucherNumber(
+        ShipmentsExtension shipmentsExtension = shipmentsExtensionRepository.findByClientCodeAndIssueVoucherNumber(
             issueVoucherDto.getClientCode(), issueVoucherDto.getIssueVoucherNumber());
-        if (podExtension == null) {
+        if (shipmentsExtension == null) {
           log.info("[FC issueVoucher] create: {}", issueVoucherDto);
           createIssueVoucher(issueVoucherDto);
         } else {
@@ -220,7 +220,7 @@ public class FcIssueVoucherService implements ProcessDataService {
         if (orderId != null) {
           ShipmentDto shipmentDto = createShipmentDraftAndShipment(orderId, productMaps,
               approvedProductDtos, approvedProductsMap, supplyFacility, requisitionV2Dto, issueVoucherDto);
-          saveFcPodExtension(issueVoucherDto, shipmentDto);
+          saveFcShipmentsExtension(issueVoucherDto, shipmentDto);
         }
       } else {
         issueVoucherErrors.add("product not exist error" + SPLIT + issueVoucherDto.getIssueVoucherNumber());
@@ -462,13 +462,13 @@ public class FcIssueVoucherService implements ProcessDataService {
     return userDto;
   }
 
-  private void saveFcPodExtension(IssueVoucherDto dto, ShipmentDto shipmentDto) {
-    PodExtension podExtension = new PodExtension();
-    podExtension.setClientCode(dto.getClientCode());
-    podExtension.setIssueVoucherNumber(dto.getIssueVoucherNumber());
-    podExtension.setShipmentId(shipmentDto.getId());
-    log.info("save fc pod extension: {}", podExtension);
-    podExtensionRepository.save(podExtension);
+  private void saveFcShipmentsExtension(IssueVoucherDto dto, ShipmentDto shipmentDto) {
+    ShipmentsExtension shipmentsExtension = new ShipmentsExtension();
+    shipmentsExtension.setShipmentId(shipmentDto.getId());
+    shipmentsExtension.setClientCode(dto.getClientCode());
+    shipmentsExtension.setIssueVoucherNumber(dto.getIssueVoucherNumber());
+    log.info("save fc shipments extension: {}", shipmentsExtension);
+    shipmentsExtensionRepository.save(shipmentsExtension);
   }
 
   private ShipmentDto createShipmentDraftAndShipment(UUID orderId,

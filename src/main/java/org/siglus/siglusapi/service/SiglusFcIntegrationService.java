@@ -58,7 +58,7 @@ import org.siglus.common.domain.RequisitionTemplateExtension;
 import org.siglus.common.repository.OrderExternalRepository;
 import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
 import org.siglus.siglusapi.constant.FacilityTypeConstants;
-import org.siglus.siglusapi.domain.PodExtension;
+import org.siglus.siglusapi.domain.ShipmentsExtension;
 import org.siglus.siglusapi.domain.ProgramOrderablesExtension;
 import org.siglus.siglusapi.domain.ProgramRealProgram;
 import org.siglus.siglusapi.domain.RequisitionLineItemExtension;
@@ -82,7 +82,7 @@ import org.siglus.siglusapi.dto.fc.FacilityStockMovementResponse;
 import org.siglus.siglusapi.dto.fc.FacilityStockOnHandResponse;
 import org.siglus.siglusapi.dto.fc.ProductStockOnHandResponse;
 import org.siglus.siglusapi.repository.FacilityNativeRepository;
-import org.siglus.siglusapi.repository.PodExtensionRepository;
+import org.siglus.siglusapi.repository.ShipmentsExtensionRepository;
 import org.siglus.siglusapi.repository.ProgramOrderablesExtensionRepository;
 import org.siglus.siglusapi.repository.ProgramRealProgramRepository;
 import org.siglus.siglusapi.repository.RequisitionLineItemExtensionRepository;
@@ -129,8 +129,7 @@ public class SiglusFcIntegrationService {
   private final StockCardLineItemReasonRepository stockCardLineItemReasonRepository;
   private final OrderExternalRepository orderExternalRepository;
   private final SiglusDateHelper dateHelper;
-  private final PodExtensionRepository podExtensionRepository;
-  private final SiglusFacilityRepository facilityRepo;
+  private final ShipmentsExtensionRepository shipmentsExtensionRepository;
   private final FacilityNativeRepository facilityNativeRepository;
   private final SiglusFacilityTypeReferenceDataService facilityTypeDataService;
   private final StockManagementRepository stockManagementRepository;
@@ -220,9 +219,9 @@ public class SiglusFcIntegrationService {
 
     Set<UUID> shipmentIds = page.getContent().stream()
         .map(ProofOfDelivery::getShipment).map(Shipment::getId).collect(toSet());
-    Map<UUID, PodExtension> shipmenIdToPodExtensionMap =
-        podExtensionRepository.findByShipmentIdIn(shipmentIds).stream()
-            .collect(toMap(PodExtension::getShipmentId, Function.identity()));
+    Map<UUID, ShipmentsExtension> shipmenIdToShipmentsExtensionMap =
+        shipmentsExtensionRepository.findByShipmentIdIn(shipmentIds).stream()
+            .collect(toMap(ShipmentsExtension::getShipmentId, Function.identity()));
 
     Set<UUID> externalIds = page.getContent()
         .stream()
@@ -282,7 +281,7 @@ public class SiglusFcIntegrationService {
         .reasonIdToReasonMap(reasonIdToReasonMap)
         .podIdToRequisitionIdMap(podIdToRequisitionIdMap)
         .facilityIdTofacilityCodeMap(facilityIdToFacilityCodeMap)
-        .shipmenIdToPodExtensionMap(shipmenIdToPodExtensionMap)
+        .shipmenIdToShipmentsExtensionMap(shipmenIdToShipmentsExtensionMap)
         .build();
 
     List<FcProofOfDeliveryDto> pods = page.getContent()
@@ -299,7 +298,7 @@ public class SiglusFcIntegrationService {
     String requisitionNumber = proofOfDeliverParameter.getRequisitionIdToRequisitionNumberMap()
         .get(proofOfDeliverParameter.getPodIdToRequisitionIdMap().get(pod.getId()));
 
-    PodExtension podExtension = proofOfDeliverParameter.getShipmenIdToPodExtensionMap()
+    ShipmentsExtension shipmentsExtension = proofOfDeliverParameter.getShipmenIdToShipmentsExtensionMap()
         .get(pod.getShipment().getId());
 
     List<FcProofOfDeliveryProductDto> products = pod.getLineItems()
@@ -315,7 +314,7 @@ public class SiglusFcIntegrationService {
         .orderNumber(pod.getShipment().getOrder().getOrderCode())
         .facilityCode(proofOfDeliverParameter.getFacilityIdTofacilityCodeMap()
             .get(pod.getShipment().getOrder().getRequestingFacilityId()))
-        .issueVoucherNumber(podExtension == null ? null : podExtension.getIssueVoucherNumber())
+        .issueVoucherNumber(shipmentsExtension == null ? null : shipmentsExtension.getIssueVoucherNumber())
         .requisitionNumber(requisitionNumber)
         .deliveredBy(pod.getDeliveredBy())
         .receivedBy(pod.getReceivedBy())
