@@ -18,10 +18,8 @@ package org.siglus.siglusapi.localmachine.agent;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
 
-import java.util.Optional;
 import java.util.UUID;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -30,11 +28,11 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.referencedata.domain.Facility;
-import org.openlmis.referencedata.repository.FacilityRepository;
 import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.localmachine.Machine;
 import org.siglus.siglusapi.localmachine.domain.AgentInfo;
 import org.siglus.siglusapi.localmachine.repository.AgentInfoRepository;
+import org.siglus.siglusapi.localmachine.webapi.ActivationResponse;
 import org.siglus.siglusapi.localmachine.webapi.LocalActivationRequest;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -43,7 +41,6 @@ public class LocalActivationServiceTest {
   private static final String FACILITY_CODE = "facility-code";
   private static final String ACTIVATION_CODE = "activation code";
   @InjectMocks private LocalActivationService localActivationService;
-  @Mock private FacilityRepository facilityRepository;
   @Mock private AgentInfoRepository agentInfoRepository;
   @Mock private OnlineWebClient onlineWebClient;
   @Mock private Machine machine;
@@ -54,13 +51,11 @@ public class LocalActivationServiceTest {
     UUID machineId = UUID.randomUUID();
     Facility facility = new Facility(FACILITY_CODE);
     facility.setId(UUID.randomUUID());
-    doNothing().when(onlineWebClient).activate(any());
+    given(onlineWebClient.activate(any())).willReturn(ActivationResponse.builder().build());
     given(machine.getMachineId()).willReturn(machineId);
     given(agentInfoRepository.getLocalAgent()).willReturn(null);
     LocalActivationRequest localActivationRequest =
         new LocalActivationRequest(ACTIVATION_CODE, FACILITY_CODE);
-    given(facilityRepository.findByCode(localActivationRequest.getFacilityCode()))
-        .willReturn(Optional.of(facility));
     ArgumentCaptor<AgentInfo> agentInfoCapture = ArgumentCaptor.forClass(AgentInfo.class);
     // when
     localActivationService.activate(localActivationRequest);

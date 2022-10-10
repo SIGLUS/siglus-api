@@ -24,7 +24,7 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.siglus.siglusapi.service.task.report.TracerDrugReportService;
+import org.siglus.siglusapi.service.scheduledtask.TracerDrugReportService;
 
 @RunWith(MockitoJUnitRunner.class)
 public class TracerDrugReportControllerTest extends TestCase {

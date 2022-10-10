@@ -25,7 +25,7 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.siglus.siglusapi.service.task.report.HistoricalDataPersistentService;
+import org.siglus.siglusapi.service.scheduledtask.HistoricalDataPersistentService;
 import org.siglus.siglusapi.web.request.HistoricalDataRequest;
 
 @RunWith(MockitoJUnitRunner.class)

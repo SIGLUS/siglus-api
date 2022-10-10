@@ -19,10 +19,12 @@ import java.io.IOException;
 import java.util.UUID;
 import javax.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.siglus.siglusapi.dto.FacilityDeviceDto;
 import org.siglus.siglusapi.dto.FacilitySearchParamDto;
 import org.siglus.siglusapi.dto.FacilitySearchResultDto;
 import org.siglus.siglusapi.dto.SiglusFacilityDto;
 import org.siglus.siglusapi.service.SiglusAdministrationsService;
+import org.siglus.siglusapi.web.request.DeviceTypeRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -90,5 +92,30 @@ public class SiglusAdministrationsController {
   @DeleteMapping("/{facilityCode}/deviceInfo")
   public void eraseAndroidDeviceInfo(@PathVariable String facilityCode) {
     administrationsService.eraseDeviceInfoByFacilityId(facilityCode);
+  }
+
+  @GetMapping("/{facilityId}/facilityDevice")
+  public FacilityDeviceDto getFacilityDevice(@PathVariable UUID facilityId) {
+    return administrationsService.getFacilityDevice(facilityId);
+  }
+
+  @DeleteMapping("/{facilityId}/facilityDevice")
+  public void eraseFacilityDevice(@PathVariable UUID facilityId, @RequestBody DeviceTypeRequest deviceTypeRequest) {
+    administrationsService.eraseDeviceInfo(deviceTypeRequest.getFacilityDeviceType(), facilityId);
+  }
+
+  @PutMapping("/{facilityId}/toWeb")
+  public void toWeb(@PathVariable UUID facilityId) {
+    administrationsService.changeToWeb(facilityId);
+  }
+
+  @PutMapping("/{facilityId}/toLocalMachine")
+  public void toLocalMachine(@PathVariable UUID facilityId) {
+    administrationsService.changeToLocalMachine(facilityId);
+  }
+
+  @PutMapping("/{facilityId}/toAndroid")
+  public void toAndroid(@PathVariable UUID facilityId) {
+    administrationsService.changeToAndroid(facilityId);
   }
 }

@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.siglus.siglusapi.dto.enums.FacilityDeviceTypeEnum;
 import org.springframework.beans.BeanUtils;
 
 @Data
@@ -34,6 +35,8 @@ public class FacilitySearchResultDto extends FacilityDto {
   private List<SiglusReportTypeDto> reportTypes;
 
   private Boolean hasSuccessUploadLocations;
+
+  private FacilityDeviceTypeEnum facilityDeviceType;
 
   public static FacilitySearchResultDto from(FacilityDto facilityDto) {
     FacilitySearchResultDto searchResultDto = new FacilitySearchResultDto();

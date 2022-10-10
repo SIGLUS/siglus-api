@@ -56,4 +56,6 @@ public interface AgentInfoRepository extends JpaRepository<AgentInfo, UUID> {
       value = "insert into localmachine.machine(id) values (?1) ON CONFLICT DO NOTHING",
       nativeQuery = true)
   void touchMachineId(UUID machineId);
+
+  void deleteByFacilityId(UUID facilityId);
 }

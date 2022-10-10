@@ -1,0 +1,10 @@
+fileignoreconfig:
+- filename: src/main/java/org/siglus/siglusapi/service/SiglusPodService.java
+  checksum: 451902a52d43265fbd9b6dd2da662392c0381354547d6e1d4b04465a3f66da9f
+- filename: src/main/resources/db/migration/siglus/20220929191513191__create_table_event_payload_backup.sql
+  checksum: ed4f41f473647a364e8f0a0abce53514c0fa01b961d14be3470be26067f2aaa0
+- filename: src/test/java/org/siglus/siglusapi/localmachine/server/LocalExportImportServiceTest.java
+  checksum: 33e349ea4e37810cf403edcf1ff4903b05514d8033a07d10789290e0b4136d26
+- filename: src/test/resources/schema.sql
+  checksum: a4bfc1aa19ef594d87a3f08e99a8155e859598c091b6d383eee5de053682a94f
+version: "1.0"

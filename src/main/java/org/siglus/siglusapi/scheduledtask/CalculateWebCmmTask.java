@@ -13,24 +13,26 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.task;
+package org.siglus.siglusapi.scheduledtask;
 
+import java.time.LocalDate;
 import lombok.RequiredArgsConstructor;
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
-import org.siglus.siglusapi.service.task.report.RequisitionReportTaskService;
+import org.siglus.siglusapi.service.scheduledtask.CalculateWebCmmService;
+import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
+@Profile("!localmachine")
 @RequiredArgsConstructor
 @Service
-public class RequisitionReportTask {
-  private final RequisitionReportTaskService requisitionReportTaskService;
+public class CalculateWebCmmTask {
 
-  @Scheduled(cron = "${report.requisition.monthly.cron}", zone = "${time.zoneId}")
-  @SchedulerLock(name = "requisition_not_submit_monthly_report")
-  @Transactional
-  public void refresh() {
-    requisitionReportTaskService.refresh();
+  private final CalculateWebCmmService calculateWebCmmService;
+
+  @Scheduled(cron = "${cmm.calculate.cron}", zone = "${time.zoneId}")
+  @SchedulerLock(name = "calculate_cmm_task")
+  public void calculate() {
+    calculateWebCmmService.calculateCmms(LocalDate.now());
   }
 }

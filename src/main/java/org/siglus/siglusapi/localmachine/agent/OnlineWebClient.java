@@ -26,6 +26,7 @@ import org.siglus.siglusapi.localmachine.ExternalEventDto;
 import org.siglus.siglusapi.localmachine.ExternalEventDtoMapper;
 import org.siglus.siglusapi.localmachine.auth.LocalTokenInterceptor;
 import org.siglus.siglusapi.localmachine.webapi.AckRequest;
+import org.siglus.siglusapi.localmachine.webapi.ActivationResponse;
 import org.siglus.siglusapi.localmachine.webapi.PeeringEventsResponse;
 import org.siglus.siglusapi.localmachine.webapi.RemoteActivationRequest;
 import org.siglus.siglusapi.localmachine.webapi.SyncRequest;
@@ -70,9 +71,9 @@ public class OnlineWebClient {
     restTemplate.postForEntity(url, ackRequest, Void.class);
   }
 
-  public void activate(RemoteActivationRequest remoteActivationRequest) {
+  public ActivationResponse activate(RemoteActivationRequest remoteActivationRequest) {
     URI url = URI.create(webBaseUrl + PATH_ACTIVATE_AGENT);
-    restTemplate.postForEntity(url, remoteActivationRequest, Void.class);
+    return restTemplate.postForObject(url, remoteActivationRequest, ActivationResponse.class);
   }
 
   private void configureLocalTokenInterceptor(LocalTokenInterceptor localTokenInterceptor) {

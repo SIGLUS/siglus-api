@@ -46,8 +46,4 @@ public class SiglusPodFulfillmentService extends
     RequestParameters queryParams = RequestParameters.init().set(EXPAND, expand);
     return findOne(id.toString(), queryParams, true);
   }
-
-  public ProofOfDeliveryDto updateProofOfDelivery(UUID podId, ProofOfDeliveryDto podDto) {
-    return put(podId.toString(), podDto, ProofOfDeliveryDto.class, true);
-  }
 }

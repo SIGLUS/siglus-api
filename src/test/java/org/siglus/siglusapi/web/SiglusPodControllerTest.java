@@ -23,7 +23,6 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.openlmis.fulfillment.web.ProofOfDeliveryController;
 import org.siglus.siglusapi.service.SiglusPodService;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -33,9 +32,6 @@ public class SiglusPodControllerTest {
 
   @InjectMocks
   private SiglusPodController controller;
-
-  @Mock
-  private ProofOfDeliveryController podController;
 
   @Mock
   private SiglusPodService proofOfDeliveryService;
@@ -63,7 +59,7 @@ public class SiglusPodControllerTest {
     controller.getAllProofsOfDelivery(orderId, shipmentId, pageable);
 
     // then
-    verify(podController).getAllProofsOfDelivery(orderId, shipmentId, pageable);
+    verify(proofOfDeliveryService).getAllProofsOfDelivery(orderId, shipmentId, pageable);
   }
 
 }

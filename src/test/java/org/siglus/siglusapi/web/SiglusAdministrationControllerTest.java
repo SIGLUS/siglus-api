@@ -26,7 +26,9 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.siglus.siglusapi.dto.FacilitySearchParamDto;
 import org.siglus.siglusapi.dto.SiglusFacilityDto;
+import org.siglus.siglusapi.dto.enums.FacilityDeviceTypeEnum;
 import org.siglus.siglusapi.service.SiglusAdministrationsService;
+import org.siglus.siglusapi.web.request.DeviceTypeRequest;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -121,6 +123,37 @@ public class SiglusAdministrationControllerTest {
 
     // then
     verify(siglusAdministrationsService).upgradeAndroidFacilityToWeb(facilityId);
+  }
+
+  @Test
+  public void shouldGetFacilityDeviceInfoWhenCall() {
+    siglusAdministrationsController.getFacilityDevice(facilityId);
+    verify(siglusAdministrationsService).getFacilityDevice(facilityId);
+  }
+
+  @Test
+  public void shouldEraseFacilityDeviceInfoWhenCall() {
+    siglusAdministrationsController.eraseFacilityDevice(facilityId,
+        new DeviceTypeRequest(FacilityDeviceTypeEnum.ANDROID));
+    verify(siglusAdministrationsService).eraseDeviceInfo(FacilityDeviceTypeEnum.ANDROID, facilityId);
+  }
+
+  @Test
+  public void shouldChangeFacilityToWebWhenCall() {
+    siglusAdministrationsController.toWeb(facilityId);
+    verify(siglusAdministrationsService).changeToWeb(facilityId);
+  }
+
+  @Test
+  public void shouldChangeFacilityToAndroidWhenCall() {
+    siglusAdministrationsController.toAndroid(facilityId);
+    verify(siglusAdministrationsService).changeToAndroid(facilityId);
+  }
+
+  @Test
+  public void shouldChangeFacilityToLocalMachineWhenCall() {
+    siglusAdministrationsController.toLocalMachine(facilityId);
+    verify(siglusAdministrationsService).changeToLocalMachine(facilityId);
   }
 
   private FacilitySearchParamDto mockFacilitySearchParamDto() {

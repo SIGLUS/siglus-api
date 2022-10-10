@@ -13,24 +13,12 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.task;
+package org.siglus.siglusapi.web.response;
 
-import java.time.LocalDate;
-import lombok.RequiredArgsConstructor;
-import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
-import org.siglus.siglusapi.service.task.report.CalculateWebCmmService;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Service;
+import lombok.Data;
 
-@RequiredArgsConstructor
-@Service
-public class CalculateWebCmmTask {
+@Data
+public class InternetStatusResponse {
 
-  private final CalculateWebCmmService calculateWebCmmService;
-
-  @Scheduled(cron = "${cmm.calculate.cron}", zone = "${time.zoneId}")
-  @SchedulerLock(name = "calculate_cmm_task")
-  public void calculate() {
-    calculateWebCmmService.calculateCmms(LocalDate.now());
-  }
+  private boolean isConnectInternet;
 }

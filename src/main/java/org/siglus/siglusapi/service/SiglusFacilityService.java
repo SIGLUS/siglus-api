@@ -16,12 +16,16 @@
 package org.siglus.siglusapi.service;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.openlmis.referencedata.domain.Facility;
 import org.siglus.siglusapi.dto.RequisitionGroupMembersDto;
 import org.siglus.siglusapi.repository.RequisitionGroupMembersRepository;
+import org.siglus.siglusapi.repository.SiglusFacilityRepository;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -30,8 +34,14 @@ import org.springframework.stereotype.Service;
 public class SiglusFacilityService {
 
   private final RequisitionGroupMembersRepository requisitionGroupMembersRepository;
+  private final SiglusFacilityRepository siglusFacilityRepository;
 
   public List<RequisitionGroupMembersDto> searchFacilityRequisitionGroup(UUID id, Set<UUID> programIds) {
     return requisitionGroupMembersRepository.findParentFacilityByRequisitionGroup(id, programIds);
+  }
+
+  public Map<UUID, String> getFacilityIdToCode(Set<UUID> facilityIds) {
+    return siglusFacilityRepository.findFacilityBasicInfoByIds(facilityIds).stream()
+        .collect(Collectors.toMap(Facility::getId, Facility::getCode));
   }
 }

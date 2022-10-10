@@ -72,6 +72,9 @@ import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.domain.requisition.StatusChange;
 import org.openlmis.requisition.repository.StatusChangeRepository;
+import org.openlmis.stockmanagement.domain.card.StockCard;
+import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
+import org.openlmis.stockmanagement.repository.StockCardLineItemRepository;
 import org.siglus.common.repository.OrderExternalRepository;
 import org.siglus.siglusapi.domain.PodLineItemsByLocation;
 import org.siglus.siglusapi.domain.PodLineItemsExtension;
@@ -96,6 +99,8 @@ import org.siglus.siglusapi.repository.PodSubDraftLineItemsByLocationRepository;
 import org.siglus.siglusapi.repository.PodSubDraftRepository;
 import org.siglus.siglusapi.repository.ProofsOfDeliveryExtensionRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
+import org.siglus.siglusapi.repository.SiglusStockCardRepository;
+import org.siglus.siglusapi.repository.StockCardLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.dto.OrderDto;
 import org.siglus.siglusapi.repository.dto.PodLineItemDto;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
@@ -184,6 +189,15 @@ public class SiglusPodServiceTest {
   @Mock
   private CalculatedStocksOnHandByLocationService calculatedStocksOnHandByLocationService;
 
+  @Mock
+  private SiglusStockCardRepository siglusStockCardRepository;
+
+  @Mock
+  private StockCardLineItemRepository stockCardLineItemRepository;
+
+  @Mock
+  private StockCardLineItemExtensionRepository stockCardLineItemExtensionRepository;
+
   private final UUID externalId = UUID.randomUUID();
   private final UUID orderableId = UUID.randomUUID();
   private final UUID podId = UUID.randomUUID();
@@ -211,6 +225,8 @@ public class SiglusPodServiceTest {
   private final String area = "DEF";
   private final String resourceName = "resourceName";
   private final String notes = "test notes";
+  private final UUID stockCardId = UUID.randomUUID();
+  private final UUID stockCardLineItemId = UUID.randomUUID();
 
   @Test
   public void shouldGetPartialQualityWhenGetProofOfDelivery() {
@@ -969,18 +985,24 @@ public class SiglusPodServiceTest {
     ProofOfDeliveryDto dto = request.getPodDto();
     when(fulfillmentService.searchProofOfDelivery(any(), any())).thenReturn(dto);
     when(podController.updateProofOfDelivery(podId, dto, null)).thenReturn(dto);
-    when(fulfillmentService.updateProofOfDelivery(any(), any())).thenReturn(dto);
     ProofOfDelivery proofOfDelivery = buildMockProofOfDelivery();
     when(proofOfDeliveryRepository.findOne(podId)).thenReturn(proofOfDelivery);
-    when(stockEventBuilder.fromProofOfDelivery(proofOfDelivery)).thenReturn(buildMockStockEventDto());
+    StockEventDto stockEventDto = buildMockStockEventDto();
+    when(stockEventBuilder.fromProofOfDelivery(any())).thenReturn(stockEventDto);
+    when(podController.updateProofOfDelivery(any(), any(), any())).thenReturn(dto);
+    when(siglusStockCardRepository.findByFacilityIdAndOrderableLotIdPairs(any(), any()))
+        .thenReturn(Lists.newArrayList(buildStockCard()));
+    when(stockCardLineItemRepository.findLatestByStockCardIds(any()))
+        .thenReturn(com.google.common.collect.Lists.newArrayList(buildStockCardLineItem()));
 
     // when
-    service.submitSubDraftsWithLocation(podId, buildMockPodWithLocationRequest());
+    service.submitSubDraftsWithLocation(podId, buildMockPodWithLocationRequest(), null);
 
     // then
     verify(podLineItemsByLocationRepository, times(1)).save(any(List.class));
     verify(calculatedStocksOnHandByLocationService, times(1))
         .calculateStockOnHandByLocation(any());
+    verify(stockCardLineItemExtensionRepository, times(1)).save(any(List.class));
   }
 
   private void mockPodExtensionQuery() {
@@ -1224,6 +1246,12 @@ public class SiglusPodServiceTest {
     orderDto.setExternalId(externalId);
     ShipmentObjectReferenceDto shipmentDto = new ShipmentObjectReferenceDto(shipmentDtoId);
     shipmentDto.setOrder(orderDto);
+    ShipmentLineItemDto shipmentLineItemDto = new ShipmentLineItemDto();
+    shipmentLineItemDto.setLotId(lotId);
+    OrderableDto orderableDto = new OrderableDto();
+    orderableDto.setId(orderableId);
+    shipmentLineItemDto.setOrderable(orderableDto);
+    shipmentDto.setLineItems(Lists.newArrayList(shipmentLineItemDto));
     return shipmentDto;
   }
 
@@ -1366,7 +1394,23 @@ public class SiglusPodServiceTest {
     stockEventLineItemDto.setLotId(lotId);
     stockEventLineItemDto.setQuantityAccepted(10);
     stockEventLineItemDto.setQuantity(10);
+    stockEventLineItemDto.setOrderableId(orderableId);
     stockEventDto.setLineItems(Lists.newArrayList(stockEventLineItemDto));
     return stockEventDto;
+  }
+
+  private StockCard buildStockCard() {
+    StockCard stockCard = new StockCard();
+    stockCard.setId(stockCardId);
+    stockCard.setOrderableId(orderableId);
+    stockCard.setLotId(lotId);
+    return stockCard;
+  }
+
+  private StockCardLineItem buildStockCardLineItem() {
+    StockCardLineItem stockCardLineItem = new StockCardLineItem();
+    stockCardLineItem.setStockCard(buildStockCard());
+    stockCardLineItem.setId(stockCardLineItemId);
+    return stockCardLineItem;
   }
 }

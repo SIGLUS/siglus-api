@@ -15,6 +15,10 @@
 
 package org.siglus.siglusapi.service;
 
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_FACILITY_CHANGE_TO_ANDROID;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_FACILITY_CHANGE_TO_LOCALMACHINE;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_FACILITY_CHANGE_TO_WEB;
+
 import com.alibaba.excel.EasyExcelFactory;
 import com.alibaba.excel.support.ExcelTypeEnum;
 import com.google.common.collect.Lists;
@@ -59,15 +63,20 @@ import org.siglus.siglusapi.domain.FacilityExtension;
 import org.siglus.siglusapi.domain.FacilityLocations;
 import org.siglus.siglusapi.domain.SiglusReportType;
 import org.siglus.siglusapi.domain.StockCardLocationMovementLineItem;
+import org.siglus.siglusapi.dto.FacilityDeviceDto;
 import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.FacilitySearchParamDto;
 import org.siglus.siglusapi.dto.FacilitySearchResultDto;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.dto.SiglusFacilityDto;
 import org.siglus.siglusapi.dto.SiglusReportTypeDto;
+import org.siglus.siglusapi.dto.enums.FacilityDeviceTypeEnum;
 import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.i18n.CsvUploadMessageKeys;
+import org.siglus.siglusapi.localmachine.domain.ActivationCode;
+import org.siglus.siglusapi.localmachine.repository.ActivationCodeRepository;
+import org.siglus.siglusapi.localmachine.repository.AgentInfoRepository;
 import org.siglus.siglusapi.repository.AppInfoRepository;
 import org.siglus.siglusapi.repository.CalculatedStockOnHandByLocationRepository;
 import org.siglus.siglusapi.repository.FacilityExtensionRepository;
@@ -86,12 +95,14 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.ObjectUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
 public class SiglusAdministrationsService {
+
   private final AppInfoRepository appInfoRepository;
   private final SiglusFacilityReferenceDataService siglusFacilityReferenceDataService;
   private final FacilityExtensionRepository facilityExtensionRepository;
@@ -108,6 +119,9 @@ public class SiglusAdministrationsService {
   private final StockCardExtensionRepository stockCardExtensionRepository;
   private final SiglusAuthenticationHelper authenticationHelper;
   private final LocationDraftRepository locationDraftRepository;
+  private final AgentInfoRepository agentInfoRepository;
+
+  private final ActivationCodeRepository activationCodeRepository;
 
   private static final String LOCATION_MANAGEMENT_TAB = "locationManagement";
   private static final String CSV_SUFFIX = ".csv";
@@ -125,7 +139,14 @@ public class SiglusAdministrationsService {
 
     facilitySearchResultDtoList.forEach(eachFacility -> {
       FacilityExtension byFacilityId = facilityExtensionRepository.findByFacilityId(eachFacility.getId());
-      eachFacility.setIsAndroidDevice(null != byFacilityId && BooleanUtils.isTrue(byFacilityId.getIsAndroid()));
+      if (ObjectUtils.isEmpty(byFacilityId)) {
+        eachFacility.setFacilityDeviceType(FacilityDeviceTypeEnum.WEB);
+        eachFacility.setIsAndroidDevice(false);
+      } else {
+        eachFacility.setFacilityDeviceType(
+            byFacilityId.getIsLocalMachine() ? FacilityDeviceTypeEnum.ANDROID : FacilityDeviceTypeEnum.ANDROID);
+        eachFacility.setIsAndroidDevice(byFacilityId.getIsAndroid() ? true : false);
+      }
     });
 
     return Pagination.getPage(facilitySearchResultDtoList, pageable, facilityDtos.getTotalElements());
@@ -348,6 +369,104 @@ public class SiglusAdministrationsService {
     dto.setPreviousPeriodStartDateSinceRecentSubmit(siglusProcessingPeriodService
         .getPreviousPeriodStartDateSinceInitiate(reportType.getProgramCode(), reportType.getFacilityId()));
     return dto;
+  }
+
+  public FacilityDeviceDto getFacilityDevice(UUID facilityId) {
+    FacilityDto facilityDto = siglusFacilityReferenceDataService.findOne(facilityId);
+    AppInfo appInfo = appInfoRepository.findByFacilityCode(facilityDto.getCode());
+    FacilityExtension facilityExtension = facilityExtensionRepository.findByFacilityId(facilityId);
+    FacilityDeviceDto facilityDeviceDto = new FacilityDeviceDto();
+    if (!ObjectUtils.isEmpty(appInfo)) {
+      facilityDeviceDto.setDeviceInfo(appInfo.getDeviceInfo());
+      facilityDeviceDto.setVersion(appInfo.getVersionCode());
+    }
+    if (!ObjectUtils.isEmpty(facilityExtension)) {
+      if (facilityExtension.getIsAndroid()) {
+        facilityDeviceDto.setDeviceType(FacilityDeviceTypeEnum.ANDROID);
+      } else if (facilityExtension.getIsLocalMachine()) {
+        facilityDeviceDto.setDeviceType(FacilityDeviceTypeEnum.LOCAL_MACHINE);
+      } else {
+        facilityDeviceDto.setDeviceType(FacilityDeviceTypeEnum.WEB);
+      }
+    } else {
+      facilityDeviceDto.setDeviceType(FacilityDeviceTypeEnum.WEB);
+    }
+    return facilityDeviceDto;
+  }
+
+  @Transactional
+  public void eraseDeviceInfo(FacilityDeviceTypeEnum deviceType, UUID facilityId) {
+    FacilityDto facilityDto = siglusFacilityReferenceDataService.findOne(facilityId);
+    appInfoRepository.deleteByFacilityCode(facilityDto.getCode());
+    if (deviceType.equals(FacilityDeviceTypeEnum.LOCAL_MACHINE)) {
+      agentInfoRepository.deleteByFacilityId(facilityId);
+      String activationCode = UUID.randomUUID().toString().substring(10);
+      ActivationCode code = ActivationCode
+          .builder()
+          .id(UUID.randomUUID())
+          .activationCode(activationCode)
+          .facilityCode(facilityDto.getCode())
+          .isUsed(false)
+          .build();
+      activationCodeRepository.save(code);
+    }
+  }
+
+  public void changeToWeb(UUID facilityId) {
+    FacilityDeviceDto facilityDevice = getFacilityDevice(facilityId);
+    if (facilityDevice.getDeviceType().equals(FacilityDeviceTypeEnum.WEB)
+        || !ObjectUtils.isEmpty(facilityDevice.getDeviceInfo())) {
+      throw new ValidationMessageException(ERROR_FACILITY_CHANGE_TO_WEB);
+    }
+    FacilityExtension facilityExtension = facilityExtensionRepository.findByFacilityId(facilityId);
+    facilityExtension.setIsAndroid(false);
+    facilityExtension.setIsLocalMachine(false);
+    facilityExtensionRepository.save(facilityExtension);
+  }
+
+  public void changeToLocalMachine(UUID facilityId) {
+    FacilityExtension facilityExtension = facilityExtensionRepository.findByFacilityId(facilityId);
+    FacilityDeviceDto facilityDevice = getFacilityDevice(facilityId);
+    if (!facilityDevice.getDeviceType().equals(FacilityDeviceTypeEnum.WEB)) {
+      throw new ValidationMessageException(ERROR_FACILITY_CHANGE_TO_LOCALMACHINE);
+    }
+    if (ObjectUtils.isEmpty(facilityExtension)) {
+      FacilityDto facilityDto = siglusFacilityReferenceDataService.findOne(facilityId);
+      facilityExtension = FacilityExtension.builder()
+          .facilityId(facilityId)
+          .isLocalMachine(true)
+          .facilityCode(facilityDto.getCode())
+          .enableLocationManagement(false)
+          .isAndroid(false)
+          .build();
+    } else {
+      facilityExtension.setIsAndroid(false);
+      facilityExtension.setIsLocalMachine(true);
+    }
+    facilityExtensionRepository.save(facilityExtension);
+  }
+
+  public void changeToAndroid(UUID facilityId) {
+    List<StockCard> stockCards = stockCardRepository.findByFacilityIdIn(facilityId);
+    FacilityDeviceDto facilityDevice = getFacilityDevice(facilityId);
+    if (CollectionUtils.isNotEmpty(stockCards) || !facilityDevice.getDeviceType().equals(FacilityDeviceTypeEnum.WEB)) {
+      throw new ValidationMessageException(ERROR_FACILITY_CHANGE_TO_ANDROID);
+    }
+    FacilityExtension facilityExtension = facilityExtensionRepository.findByFacilityId(facilityId);
+    if (ObjectUtils.isEmpty(facilityExtension)) {
+      FacilityDto facilityDto = siglusFacilityReferenceDataService.findOne(facilityId);
+      facilityExtension = FacilityExtension.builder()
+          .facilityId(facilityId)
+          .isLocalMachine(false)
+          .facilityCode(facilityDto.getCode())
+          .enableLocationManagement(false)
+          .isAndroid(true)
+          .build();
+    } else {
+      facilityExtension.setIsAndroid(true);
+      facilityExtension.setIsLocalMachine(false);
+    }
+    facilityExtensionRepository.save(facilityExtension);
   }
 
   private FacilitySearchResultDto getFacilityInfo(UUID facilityId) {

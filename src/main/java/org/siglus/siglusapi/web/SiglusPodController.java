@@ -21,9 +21,7 @@ import java.util.Set;
 import java.util.UUID;
 import javax.validation.Valid;
 import lombok.AllArgsConstructor;
-import org.openlmis.fulfillment.web.ProofOfDeliveryController;
 import org.openlmis.fulfillment.web.util.ProofOfDeliveryDto;
-import org.siglus.siglusapi.service.SiglusNotificationService;
 import org.siglus.siglusapi.service.SiglusPodService;
 import org.siglus.siglusapi.util.MovementDateValidator;
 import org.siglus.siglusapi.web.request.CreatePodSubDraftRequest;
@@ -52,9 +50,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/siglusapi/proofsOfDelivery")
 @AllArgsConstructor
 public class SiglusPodController {
-
-  private final ProofOfDeliveryController podController;
-  private final SiglusNotificationService notificationService;
   private final SiglusPodService siglusPodService;
   private final MovementDateValidator movementDateValidator;
 
@@ -76,7 +71,7 @@ public class SiglusPodController {
       @RequestParam(required = false) UUID orderId,
       @RequestParam(required = false) UUID shipmentId,
       Pageable pageable) {
-    return podController.getAllProofsOfDelivery(orderId, shipmentId, pageable);
+    return siglusPodService.getAllProofsOfDelivery(orderId, shipmentId, pageable);
   }
 
   @ResponseStatus(HttpStatus.CREATED)

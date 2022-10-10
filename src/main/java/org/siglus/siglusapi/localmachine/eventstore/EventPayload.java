@@ -13,26 +13,33 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.task;
+package org.siglus.siglusapi.localmachine.eventstore;
 
+import java.util.UUID;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.Table;
 import lombok.AllArgsConstructor;
-import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
-import org.siglus.siglusapi.service.task.report.HistoricalDataPersistentService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
+@Entity
+@Data
 @AllArgsConstructor
-@Service
-public class HistoricalDataPersistentDataTask {
+@NoArgsConstructor
+@Table(name = "event_payload", schema = "localmachine")
+public class EventPayload {
+  @Id
+  @Column(name = "eventid")
+  private UUID eventid;
 
-  @Autowired private HistoricalDataPersistentService historicalDataPersistentService;
+  @Column(name = "payload")
+  private byte[] payload;
 
-  @Scheduled(cron = "${report.historical.data.cron}", zone = "${time.zoneId}")
-  @SchedulerLock(name = "historical_data_refresh_monthly")
-  @Transactional
-  public void monthlyRefreshForTracerDrugReport() {
-    historicalDataPersistentService.updateAllFacilityHistoricalData();
+  public static EventPayload newInstance(UUID eventId) {
+    EventPayload eventPayload = new EventPayload();
+    eventPayload.setEventid(eventId);
+    return eventPayload;
   }
 }

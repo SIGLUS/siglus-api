@@ -17,7 +17,7 @@ package org.siglus.siglusapi.web.report;
 
 import lombok.RequiredArgsConstructor;
 import org.siglus.siglusapi.interceptor.OperationGuardAspect.Guarded;
-import org.siglus.siglusapi.service.task.report.RequisitionReportTaskService;
+import org.siglus.siglusapi.service.scheduledtask.RequisitionReportTaskService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;

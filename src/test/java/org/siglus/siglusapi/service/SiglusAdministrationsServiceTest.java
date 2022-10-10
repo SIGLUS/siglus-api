@@ -63,14 +63,18 @@ import org.siglus.siglusapi.domain.CalculatedStockOnHandByLocation;
 import org.siglus.siglusapi.domain.FacilityExtension;
 import org.siglus.siglusapi.domain.FacilityLocations;
 import org.siglus.siglusapi.domain.SiglusReportType;
+import org.siglus.siglusapi.dto.FacilityDeviceDto;
 import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.FacilitySearchParamDto;
 import org.siglus.siglusapi.dto.FacilitySearchResultDto;
 import org.siglus.siglusapi.dto.SiglusFacilityDto;
 import org.siglus.siglusapi.dto.SiglusReportTypeDto;
 import org.siglus.siglusapi.dto.UserDto;
+import org.siglus.siglusapi.dto.enums.FacilityDeviceTypeEnum;
 import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
+import org.siglus.siglusapi.localmachine.repository.ActivationCodeRepository;
+import org.siglus.siglusapi.localmachine.repository.AgentInfoRepository;
 import org.siglus.siglusapi.repository.AppInfoRepository;
 import org.siglus.siglusapi.repository.CalculatedStockOnHandByLocationRepository;
 import org.siglus.siglusapi.repository.FacilityExtensionRepository;
@@ -130,6 +134,10 @@ public class SiglusAdministrationsServiceTest {
   private OrderableRepository orderableRepository;
   @Mock
   private LocationDraftRepository locationDraftRepository;
+  @Mock
+  private AgentInfoRepository agentInfoRepository;
+  @Mock
+  public ActivationCodeRepository activationCodeRepository;
   @Rule
   public ExpectedException exception = ExpectedException.none();
   private static final UUID facilityId = UUID.randomUUID();
@@ -163,11 +171,11 @@ public class SiglusAdministrationsServiceTest {
     // given
     FacilitySearchParamDto facilitySearchParamDto = mockFacilitySearchParamDto();
     when(siglusFacilityReferenceDataService.searchAllFacilities(facilitySearchParamDto, pageable))
-              .thenReturn(mockFacilityDtoPage());
+        .thenReturn(mockFacilityDtoPage());
     when(facilityExtensionRepository.findByFacilityId(device1)).thenReturn(
-        mockFacilityExtension(device1, true, false));
+        mockFacilityExtension(device1, true, false, false));
     when(facilityExtensionRepository.findByFacilityId(device2)).thenReturn(
-        mockFacilityExtension(device2, false, false));
+        mockFacilityExtension(device2, false, false, false));
     when(facilityExtensionRepository.findByFacilityId(device3)).thenReturn(null);
 
     // when
@@ -214,11 +222,11 @@ public class SiglusAdministrationsServiceTest {
     // given
     LocalDate date = LocalDate.of(2022, 1, 1);
     when(siglusReportTypeRepository.findByFacilityId(facilityId))
-            .thenReturn(Arrays.asList(mockReportType()));
+        .thenReturn(Arrays.asList(mockReportType()));
     when(siglusProcessingPeriodService.getPreviousPeriodStartDateSinceInitiate(PROGRAM_CODE, facilityId))
-            .thenReturn(date);
+        .thenReturn(date);
     when(siglusFacilityReferenceDataService.findOneWithoutCache(facilityId))
-            .thenReturn(mockFacilityDtoPage().getContent().get(0));
+        .thenReturn(mockFacilityDtoPage().getContent().get(0));
 
     when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(null);
 
@@ -233,9 +241,9 @@ public class SiglusAdministrationsServiceTest {
   public void shouldGetFacilityInfoWhenFacilityExistsAndFacilityExtensionIsNull() {
     // given
     when(siglusReportTypeRepository.findByFacilityId(facilityId))
-            .thenReturn(Collections.emptyList());
+        .thenReturn(Collections.emptyList());
     when(siglusProcessingPeriodService.getPreviousPeriodStartDateSinceInitiate(null, facilityId))
-            .thenReturn(null);
+        .thenReturn(null);
     when(siglusFacilityReferenceDataService.findOneWithoutCache(facilityId))
         .thenReturn(mockFacilityDtoPage().getContent().get(0));
 
@@ -255,7 +263,7 @@ public class SiglusAdministrationsServiceTest {
         .thenReturn(mockFacilityDtoPage().getContent().get(0));
 
     when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(
-        mockFacilityExtension(facilityId, false, false));
+        mockFacilityExtension(facilityId, false, false, false));
 
     // when
     FacilitySearchResultDto facility = siglusAdministrationsService.getFacility(facilityId);
@@ -279,11 +287,11 @@ public class SiglusAdministrationsServiceTest {
   public void shouldThrowExceptionWhenFacilityReportTypeStartDateInvalid() {
     // given
     String programCode = "Via";
-    FacilityExtension facilityExtension = mockFacilityExtension(facilityId, false, true);
+    FacilityExtension facilityExtension = mockFacilityExtension(facilityId, false, true, false);
     when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(null);
     when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(facilityExtension);
     when(siglusFacilityReferenceDataService.findOneWithoutCache(facilityId))
-            .thenReturn(mockFacilityDtoPage().getContent().get(0));
+        .thenReturn(mockFacilityDtoPage().getContent().get(0));
     SiglusReportTypeDto reportTypeDto = SiglusReportTypeDto.builder()
         .facilityId(facilityId)
         .programCode(programCode)
@@ -295,7 +303,7 @@ public class SiglusAdministrationsServiceTest {
     reportType.setStartDate(reportTypeDto.getStartDate().plusDays(1L));
     when(siglusReportTypeRepository.findByFacilityId(facilityId)).thenReturn(Arrays.asList(reportType));
     when(siglusProcessingPeriodService.getPreviousPeriodStartDateSinceInitiate(programCode, facilityId))
-            .thenReturn(LocalDate.now().plusDays(2L));
+        .thenReturn(LocalDate.now().plusDays(2L));
 
     // when
     siglusAdministrationsService.updateFacility(facilityId, mock);
@@ -304,7 +312,7 @@ public class SiglusAdministrationsServiceTest {
   @Test
   public void shouldEnableLocationManagementWhenFacilityExtensionIsNotNull() {
     // given
-    FacilityExtension facilityExtension = mockFacilityExtension(facilityId, false, true);
+    FacilityExtension facilityExtension = mockFacilityExtension(facilityId, false, true, false);
     when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(null);
     when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(facilityExtension);
     when(siglusFacilityReferenceDataService.findOneWithoutCache(facilityId))
@@ -337,7 +345,7 @@ public class SiglusAdministrationsServiceTest {
   @Test
   public void shouldDeleteDraftsWhenEnableLocationManagementIfExtensionExisted() {
     // given
-    FacilityExtension facilityExtension = mockFacilityExtension(facilityId, false, false);
+    FacilityExtension facilityExtension = mockFacilityExtension(facilityId, false, false, false);
     when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(facilityExtension);
     when(siglusFacilityReferenceDataService.findOneWithoutCache(facilityId))
         .thenReturn(mockFacilityDtoPage().getContent().get(0));
@@ -366,7 +374,7 @@ public class SiglusAdministrationsServiceTest {
   @Test
   public void shouldDeleteDraftsWhenDisableLocationManagement() {
     // given
-    FacilityExtension facilityExtension = mockFacilityExtension(facilityId, false, true);
+    FacilityExtension facilityExtension = mockFacilityExtension(facilityId, false, true, false);
     when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(facilityExtension);
     when(siglusFacilityReferenceDataService.findOneWithoutCache(facilityId))
         .thenReturn(mockFacilityDtoPage().getContent().get(0));
@@ -452,7 +460,7 @@ public class SiglusAdministrationsServiceTest {
 
     // then
     verify(facilityExtensionRepository, times(1))
-        .save(mockFacilityExtension(facilityId, true, null));
+        .save(mockFacilityExtension(facilityId, true, null, null));
   }
 
   @Test
@@ -534,7 +542,7 @@ public class SiglusAdministrationsServiceTest {
   public void shouldReturnWhenTheAndroidFacilityIsNewFacility() {
     // given
     when(facilityExtensionRepository.findByFacilityId(facilityId))
-        .thenReturn(mockFacilityExtension(facilityId, true, false));
+        .thenReturn(mockFacilityExtension(facilityId, true, false, false));
     when(stockCardRepository.countByFacilityId(facilityId)).thenReturn(0);
 
     // when
@@ -551,7 +559,7 @@ public class SiglusAdministrationsServiceTest {
   public void shouldAllowAndroidFacilityUpgradeToWebFacility() {
     // given
     when(facilityExtensionRepository.findByFacilityId(facilityId))
-        .thenReturn(mockFacilityExtension(facilityId, true, false));
+        .thenReturn(mockFacilityExtension(facilityId, true, false, false));
     when(stockCardRepository.countByFacilityId(facilityId)).thenReturn(1);
     when(stockCardRepository.findByFacilityIdIn(facilityId)).thenReturn(Lists.newArrayList(mockStockCard()));
     when(orderableRepository.findLatestByIds(Lists.newArrayList(orderableId)))
@@ -569,6 +577,237 @@ public class SiglusAdministrationsServiceTest {
         .deleteByIdIn(Lists.newArrayList(stockCardId));
     verify(stockCardExtensionRepository, times(1))
         .deleteByStockCardIdIn(Lists.newArrayList(stockCardId));
+  }
+
+  @Test
+  public void shouldReturnFacilityDeviceWhenIsAndroidCallByService() {
+    //given
+    AppInfo appInfo = mockAppInfo();
+    FacilityExtension facilityExtension = mockFacilityExtension(facilityId, true, true, false);
+    FacilityDto facilityDto = mockFacilityDto();
+    when(siglusFacilityReferenceDataService.findOne(facilityId)).thenReturn(facilityDto);
+    when(appInfoRepository.findByFacilityCode(facilityDto.getCode())).thenReturn(appInfo);
+    when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(facilityExtension);
+    //when
+    FacilityDeviceDto facilityDevice = siglusAdministrationsService.getFacilityDevice(facilityId);
+    //then
+    assertEquals(FacilityDeviceTypeEnum.ANDROID, facilityDevice.getDeviceType());
+  }
+
+  @Test
+  public void shouldReturnFacilityDeviceWhenIsLocalMachineCallByService() {
+    //given
+    AppInfo appInfo = mockAppInfo();
+    FacilityExtension facilityExtension = mockFacilityExtension(facilityId, false, true, true);
+    FacilityDto facilityDto = mockFacilityDto();
+    when(siglusFacilityReferenceDataService.findOne(facilityId)).thenReturn(facilityDto);
+    when(appInfoRepository.findByFacilityCode(facilityDto.getCode())).thenReturn(appInfo);
+    when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(facilityExtension);
+    //when
+    FacilityDeviceDto facilityDevice = siglusAdministrationsService.getFacilityDevice(facilityId);
+    //then
+    assertEquals(FacilityDeviceTypeEnum.LOCAL_MACHINE, facilityDevice.getDeviceType());
+  }
+
+  @Test
+  public void shouldReturnFacilityDeviceWhenIsWebCallByService() {
+    //given
+    AppInfo appInfo = null;
+    FacilityExtension facilityExtension = mockFacilityExtension(facilityId, false, true, false);
+    FacilityDto facilityDto = mockFacilityDto();
+    when(siglusFacilityReferenceDataService.findOne(facilityId)).thenReturn(facilityDto);
+    when(appInfoRepository.findByFacilityCode(facilityDto.getCode())).thenReturn(appInfo);
+    when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(facilityExtension);
+    //when
+    FacilityDeviceDto facilityDevice = siglusAdministrationsService.getFacilityDevice(facilityId);
+    //then
+    assertEquals(FacilityDeviceTypeEnum.WEB, facilityDevice.getDeviceType());
+  }
+
+  @Test
+  public void shouldReturnFacilityDeviceWhenNoExtensionInfoCallByService() {
+    //given
+    AppInfo appInfo = null;
+    FacilityExtension facilityExtension = null;
+    FacilityDto facilityDto = mockFacilityDto();
+    when(siglusFacilityReferenceDataService.findOne(facilityId)).thenReturn(facilityDto);
+    when(appInfoRepository.findByFacilityCode(facilityDto.getCode())).thenReturn(appInfo);
+    when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(facilityExtension);
+    //when
+    FacilityDeviceDto facilityDevice = siglusAdministrationsService.getFacilityDevice(facilityId);
+    //then
+    assertEquals(FacilityDeviceTypeEnum.WEB, facilityDevice.getDeviceType());
+  }
+
+  @Test
+  public void shoudlEraseDeviceInfoWhenAndroidFacilityCallByService() {
+    //given
+    FacilityDto facilityDto = mockFacilityDto();
+    when(siglusFacilityReferenceDataService.findOne(facilityId)).thenReturn(facilityDto);
+    //when
+    siglusAdministrationsService.eraseDeviceInfo(FacilityDeviceTypeEnum.ANDROID, facilityId);
+    //then
+    verify(appInfoRepository).deleteByFacilityCode(facilityDto.getCode());
+  }
+
+  @Test
+  public void shoudlEraseDeviceInfoWhenLocalMachineFacilityCallByService() {
+    //given
+    FacilityDto facilityDto = mockFacilityDto();
+    when(siglusFacilityReferenceDataService.findOne(facilityId)).thenReturn(facilityDto);
+    //when
+    siglusAdministrationsService.eraseDeviceInfo(FacilityDeviceTypeEnum.LOCAL_MACHINE, facilityId);
+    //then
+    verify(agentInfoRepository).deleteByFacilityId(facilityId);
+  }
+
+  @Test(expected = ValidationMessageException.class)
+  public void shouldThrowWhenWebFacilityChangeToWeb() {
+    //given
+    AppInfo appInfo = null;
+    FacilityExtension facilityExtension = mockFacilityExtension(facilityId, false, true, false);
+    FacilityDto facilityDto = mockFacilityDto();
+    when(siglusFacilityReferenceDataService.findOne(facilityId)).thenReturn(facilityDto);
+    when(appInfoRepository.findByFacilityCode(facilityDto.getCode())).thenReturn(appInfo);
+    when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(facilityExtension);
+    FacilityDeviceDto facilityDeviceDto = new FacilityDeviceDto();
+    facilityDeviceDto.setDeviceType(FacilityDeviceTypeEnum.WEB);
+    //when
+    siglusAdministrationsService.changeToWeb(facilityId);
+  }
+
+  @Test
+  public void shouldChangeToWebWhenAndroidFacilityCallByService() {
+    //given
+    AppInfo appInfo = null;
+    FacilityExtension facilityExtension = mockFacilityExtension(facilityId, true, true, false);
+    FacilityDto facilityDto = mockFacilityDto();
+    when(siglusFacilityReferenceDataService.findOne(facilityId)).thenReturn(facilityDto);
+    when(appInfoRepository.findByFacilityCode(facilityDto.getCode())).thenReturn(appInfo);
+    when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(facilityExtension);
+    FacilityDeviceDto facilityDeviceDto = new FacilityDeviceDto();
+    facilityDeviceDto.setDeviceType(FacilityDeviceTypeEnum.WEB);
+    //when
+    siglusAdministrationsService.changeToWeb(facilityId);
+    facilityExtension.setIsAndroid(true);
+    verify(facilityExtensionRepository).save(facilityExtension);
+  }
+
+  @Test(expected = ValidationMessageException.class)
+  public void shouldThrowWhenNotWebFacilityChangeToLocalMachine() {
+    //given
+    AppInfo appInfo = null;
+    FacilityExtension facilityExtension = mockFacilityExtension(facilityId, true, true, false);
+    FacilityDto facilityDto = mockFacilityDto();
+    when(siglusFacilityReferenceDataService.findOne(facilityId)).thenReturn(facilityDto);
+    when(appInfoRepository.findByFacilityCode(facilityDto.getCode())).thenReturn(appInfo);
+    when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(facilityExtension);
+    FacilityDeviceDto facilityDeviceDto = new FacilityDeviceDto();
+    facilityDeviceDto.setDeviceType(FacilityDeviceTypeEnum.WEB);
+    //when
+    siglusAdministrationsService.changeToLocalMachine(facilityId);
+  }
+
+  @Test
+  public void shouldThrowWhenWithoutFacilityExtensionChangeToLocalMachine() {
+    //given
+    AppInfo appInfo = null;
+    FacilityExtension facilityExtension = null;
+    FacilityDto facilityDto = mockFacilityDto();
+    when(siglusFacilityReferenceDataService.findOne(facilityId)).thenReturn(facilityDto);
+    when(appInfoRepository.findByFacilityCode(facilityDto.getCode())).thenReturn(appInfo);
+    when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(facilityExtension);
+    FacilityDeviceDto facilityDeviceDto = new FacilityDeviceDto();
+    facilityDeviceDto.setDeviceType(FacilityDeviceTypeEnum.WEB);
+    //when
+    siglusAdministrationsService.changeToLocalMachine(facilityId);
+  }
+
+  @Test
+  public void shouldThrowWhenWithFacilityExtensionChangeToLocalMachine() {
+    //given
+    AppInfo appInfo = null;
+    FacilityExtension facilityExtension = mockFacilityExtension(facilityId, false, true, false);
+    FacilityDto facilityDto = mockFacilityDto();
+    when(siglusFacilityReferenceDataService.findOne(facilityId)).thenReturn(facilityDto);
+    when(appInfoRepository.findByFacilityCode(facilityDto.getCode())).thenReturn(appInfo);
+    when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(facilityExtension);
+    FacilityDeviceDto facilityDeviceDto = new FacilityDeviceDto();
+    facilityDeviceDto.setDeviceType(FacilityDeviceTypeEnum.WEB);
+    //when
+    siglusAdministrationsService.changeToLocalMachine(facilityId);
+  }
+
+  @Test(expected = ValidationMessageException.class)
+  public void shouldThrowWhenOldFacilityChangeToAndroid() {
+    //given
+    AppInfo appInfo = null;
+    FacilityExtension facilityExtension = null;
+    FacilityDto facilityDto = mockFacilityDto();
+    when(siglusFacilityReferenceDataService.findOne(facilityId)).thenReturn(facilityDto);
+    when(appInfoRepository.findByFacilityCode(facilityDto.getCode())).thenReturn(appInfo);
+    when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(facilityExtension);
+    when(stockCardRepository.findByFacilityIdIn(facilityId)).thenReturn(Collections.singletonList(new StockCard()));
+    FacilityDeviceDto facilityDeviceDto = new FacilityDeviceDto();
+    facilityDeviceDto.setDeviceType(FacilityDeviceTypeEnum.WEB);
+    //when
+    siglusAdministrationsService.changeToAndroid(facilityId);
+  }
+
+  @Test(expected = ValidationMessageException.class)
+  public void shouldThrowWhenOtherFacilityChangeToAndroid() {
+    //given
+    AppInfo appInfo = null;
+    FacilityExtension facilityExtension = mockFacilityExtension(facilityId, true, false, false);
+    FacilityDto facilityDto = mockFacilityDto();
+    when(siglusFacilityReferenceDataService.findOne(facilityId)).thenReturn(facilityDto);
+    when(appInfoRepository.findByFacilityCode(facilityDto.getCode())).thenReturn(appInfo);
+    when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(facilityExtension);
+    when(stockCardRepository.findByFacilityIdIn(facilityId)).thenReturn(null);
+    FacilityDeviceDto facilityDeviceDto = new FacilityDeviceDto();
+    facilityDeviceDto.setDeviceType(FacilityDeviceTypeEnum.WEB);
+    //when
+    siglusAdministrationsService.changeToAndroid(facilityId);
+  }
+
+  @Test
+  public void shouldChangeToAndroidWhenWithFacilityExtensionChangeToAndroid() {
+    //given
+    AppInfo appInfo = null;
+    FacilityExtension facilityExtension = mockFacilityExtension(facilityId, false, false, false);
+    FacilityDto facilityDto = mockFacilityDto();
+    when(siglusFacilityReferenceDataService.findOne(facilityId)).thenReturn(facilityDto);
+    when(appInfoRepository.findByFacilityCode(facilityDto.getCode())).thenReturn(appInfo);
+    when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(facilityExtension);
+    when(stockCardRepository.findByFacilityIdIn(facilityId)).thenReturn(null);
+    FacilityDeviceDto facilityDeviceDto = new FacilityDeviceDto();
+    facilityDeviceDto.setDeviceType(FacilityDeviceTypeEnum.WEB);
+    //when
+    siglusAdministrationsService.changeToAndroid(facilityId);
+    facilityExtension.setIsAndroid(true);
+    facilityExtension.setFacilityCode(facilityDto.getCode());
+    //then
+    verify(facilityExtensionRepository).save(facilityExtension);
+  }
+
+  @Test
+  public void shouldChangeToAndroidWhenWithoutFacilityExtensionChangeToAndroid() {
+    //given
+    AppInfo appInfo = null;
+    FacilityExtension facilityExtension = null;
+    FacilityDto facilityDto = mockFacilityDto();
+    when(siglusFacilityReferenceDataService.findOne(facilityId)).thenReturn(facilityDto);
+    when(appInfoRepository.findByFacilityCode(facilityDto.getCode())).thenReturn(appInfo);
+    when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(facilityExtension);
+    when(stockCardRepository.findByFacilityIdIn(facilityId)).thenReturn(null);
+    FacilityDeviceDto facilityDeviceDto = new FacilityDeviceDto();
+    facilityDeviceDto.setDeviceType(FacilityDeviceTypeEnum.WEB);
+    //when
+    siglusAdministrationsService.changeToAndroid(facilityId);
+    facilityExtension = mockFacilityExtension(facilityId, true, false, false);
+    facilityExtension.setFacilityCode(facilityDto.getCode());
+    //then
+    verify(facilityExtensionRepository).save(facilityExtension);
   }
 
   private FacilitySearchParamDto mockFacilitySearchParamDto() {
@@ -603,12 +842,14 @@ public class SiglusAdministrationsServiceTest {
     return Pagination.getPage(content, pageable);
   }
 
-  private FacilityExtension mockFacilityExtension(UUID facilityId, Boolean isAndroid, Boolean enableLocation) {
+  private FacilityExtension mockFacilityExtension(UUID facilityId, Boolean isAndroid, Boolean enableLocation,
+      Boolean isLocalMachine) {
     FacilityExtension facilityExtension = new FacilityExtension();
     facilityExtension.setFacilityId(facilityId);
     facilityExtension.setIsAndroid(isAndroid);
     facilityExtension.setEnableLocationManagement(enableLocation);
     facilityExtension.setFacilityCode(facilityCode);
+    facilityExtension.setIsLocalMachine(isLocalMachine);
     return facilityExtension;
   }
 
@@ -645,10 +886,10 @@ public class SiglusAdministrationsServiceTest {
 
   private SiglusReportType mockReportType() {
     return SiglusReportType
-            .builder()
-            .facilityId(facilityId)
-            .programCode(PROGRAM_CODE)
-            .build();
+        .builder()
+        .facilityId(facilityId)
+        .programCode(PROGRAM_CODE)
+        .build();
   }
 
   private CalculatedStockOnHandByLocation mockCalculatedStocksOnHandLocations() {

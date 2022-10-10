@@ -120,9 +120,8 @@ public class OrderFulfillmentSyncedReplayer {
     Order order;
     simulateUserAuthHelper.simulateNewUserAuth(event.getFulfillUserId());
     if (event.isNeedConvertToOrder()) {
-      RequisitionExtension requisitionExtension =
-          requisitionExtensionRepository.findByRequisitionNumber(
-              event.getConvertToOrderRequest().getRequisitionNumber());
+      RequisitionExtension requisitionExtension = requisitionExtensionRepository.findByRequisitionNumber(
+          event.getConvertToOrderRequest().getRequisitionNumber());
       // reset requisition id
       event.getShipmentExtensionRequest()
           .getShipment().getOrder().setExternalId(requisitionExtension.getRequisitionId());
@@ -134,8 +133,7 @@ public class OrderFulfillmentSyncedReplayer {
     } else {
       Order orderOrigin =
           ordersRepository.findByOrderCode(event.getShipmentExtensionRequest().getShipment().getOrder().getOrderCode());
-      order = updateOrderLineItems(event.getShipmentExtensionRequest().getShipment().getOrder(),
-          orderOrigin);
+      order = updateOrderLineItems(event.getShipmentExtensionRequest().getShipment().getOrder(), orderOrigin);
       order.setExternalId(orderOrigin.getExternalId());
     }
     // pre handle
@@ -213,9 +211,8 @@ public class OrderFulfillmentSyncedReplayer {
   }
 
   public Map<VersionIdentityDto, OrderableDto> getOrderableDtoMap(Requisition requisition) {
-    Set<VersionEntityReference> orderables =
-        requisition.getRequisitionLineItems().stream()
-            .map(RequisitionLineItem::getOrderable).collect(Collectors.toSet());
+    Set<VersionEntityReference> orderables = requisition.getRequisitionLineItems().stream()
+        .map(RequisitionLineItem::getOrderable).collect(Collectors.toSet());
     Map<VersionIdentityDto, OrderableDto> orderableDtoMap =
         orderableReferenceDataService.findByIdentities(orderables).stream()
             .collect(Collectors.toMap(BasicOrderableDto::getIdentity, Function.identity()));
@@ -241,10 +238,9 @@ public class OrderFulfillmentSyncedReplayer {
     // TODO: notifiction of release,  notificationService.postRelease() not exists
   }
 
-  private void doFulfillOrder(OrderFulfillmentSyncedEvent event, Order shiped) {
+  private void doFulfillOrder(OrderFulfillmentSyncedEvent event, Order shipped) {
     Shipment shipment = createSubOrderAndShipment(event.isSubOrder(),
-        event.getShipmentExtensionRequest().getShipment(), event.getFulfillUserId(), shiped,
-        event.isNeedConvertToOrder());
+        event.getShipmentExtensionRequest().getShipment(), event.getFulfillUserId(), shipped);
     if (event.isWithLocation()) {
       saveShipmentLineItemsExtensionWithLocation(event, shipment);
     }
@@ -326,17 +322,17 @@ public class OrderFulfillmentSyncedReplayer {
   }
 
   private Shipment createSubOrderAndShipment(boolean isSubOrder, ShipmentDto shipmentDto, UUID fulfillUserId,
-      Order shiped, boolean needConvertToOrder) {
+      Order shipped) {
     if (isSubOrder) {
-      createSubOrder(shipmentDto, fulfillUserId, needConvertToOrder);
+      createSubOrder(shipmentDto, fulfillUserId);
     }
-    return createShipment(shipmentDto, fulfillUserId, shiped);
+    return createShipment(shipmentDto, fulfillUserId, shipped);
   }
 
-  private Shipment createShipment(ShipmentDto shipmentDto, UUID fulfillUserId, Order shipedOrder) {
+  private Shipment createShipment(ShipmentDto shipmentDto, UUID fulfillUserId, Order shippedOrder) {
     nullIds(shipmentDto);
     shipmentDto.setShipDetails(new CreationDetails(fulfillUserId, ZonedDateTime.now()));
-    Shipment shipment = Shipment.newInstance(shipmentDto, shipedOrder);
+    Shipment shipment = Shipment.newInstance(shipmentDto, shippedOrder);
 
     Shipment saved = this.siglusShipmentRepository.saveAndFlush(shipment);
     ProofOfDelivery proofOfDelivery = ProofOfDelivery.newInstance(saved);
@@ -367,15 +363,14 @@ public class OrderFulfillmentSyncedReplayer {
     if (CollectionUtils.isEmpty(skippedLineItemIds)) {
       return;
     }
-    List<OrderLineItemExtension> extensions = lineItemExtensionRepository
-        .findByOrderLineItemIdIn(skippedLineItemIds);
+    List<OrderLineItemExtension> extensions = lineItemExtensionRepository.findByOrderLineItemIdIn(skippedLineItemIds);
     lineItemExtensionRepository.delete(extensions);
 
     event.getShipmentExtensionRequest().getShipment().lineItems().removeIf(lineItem ->
         skippedOrderableIds.contains(lineItem.getOrderable().getId()));
   }
 
-  private void createSubOrder(ShipmentDto shipmentDto, UUID fulfillUserId, boolean needConvertToOrder) {
+  private void createSubOrder(ShipmentDto shipmentDto, UUID fulfillUserId) {
     Set<UUID> skippedOrderLineItemIds = getSkippedOrderLineItemIds(shipmentDto);
     Map<UUID, List<ShipmentLineItem.Importer>> groupShipment = shipmentDto.getLineItems().stream()
         .collect(Collectors.groupingBy(lineItem -> lineItem.getOrderableIdentity().getId()));
@@ -383,11 +378,11 @@ public class OrderFulfillmentSyncedReplayer {
     List<OrderLineItemDto> orderLineItems = order.getOrderLineItems();
     List<OrderLineItemDto> subOrderLineItems = getSubOrderLineItemDtos(skippedOrderLineItemIds,
         groupShipment, orderLineItems);
-    createSubOrder(order, subOrderLineItems, fulfillUserId, needConvertToOrder);
+    createSubOrder(order, subOrderLineItems, fulfillUserId);
   }
 
   public void createSubOrder(OrderObjectReferenceDto order,
-      List<OrderLineItemDto> orderLineItemDtos, UUID fulfillUserId, boolean needConvertToOrder) {
+      List<OrderLineItemDto> orderLineItemDtos, UUID fulfillUserId) {
     List<OrderExternal> externals = new ArrayList<>();
     // if order's external id is not found in orderExternalRepository, then it means this is a requisition id
     OrderExternal external = orderExternalRepository.findOne(order.getExternalId());
@@ -407,10 +402,8 @@ public class OrderFulfillmentSyncedReplayer {
       newOrderCode = order.getOrderCode().concat("-" + 2);
       newOrderExternal = externals.get(1);
     } else {
-      externals = orderExternalRepository
-          .findByRequisitionId(external.getRequisitionId());
-      OrderExternal newExternal = OrderExternal.builder()
-          .requisitionId(external.getRequisitionId()).build();
+      externals = orderExternalRepository.findByRequisitionId(external.getRequisitionId());
+      OrderExternal newExternal = OrderExternal.builder().requisitionId(external.getRequisitionId()).build();
       log.info("save new external : {}", newExternal);
       newOrderExternal = orderExternalRepository.saveAndFlush(newExternal);
       externals.add(newOrderExternal);
@@ -433,11 +426,12 @@ public class OrderFulfillmentSyncedReplayer {
     newOrder.setStatus(OrderStatus.PARTIALLY_FULFILLED);
     newOrder.setStatusMessages(Collections.emptyList());
 
-    Order saved = saveOrder(order, fulfillUserId, newOrder);
+    Order saved = saveOrder(fulfillUserId, newOrder);
     updateOrderExtension(orderLineItemDtos, saved);
   }
 
-  private Order saveOrder(OrderObjectReferenceDto orderDto, UUID fulfillUserId, OrderDto order) {
+  private Order saveOrder(UUID fulfillUserId, OrderDto order) {
+    //todo orderDto
     Order newOrder = Order.newInstance(order, new UpdateDetails(fulfillUserId, ZonedDateTime.now()));
     return ordersRepository.saveAndFlush(newOrder);
   }

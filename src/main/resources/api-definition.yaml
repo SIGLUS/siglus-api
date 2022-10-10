@@ -246,6 +246,12 @@ traits:
 /api:
 
   /siglusapi:
+    /internet:
+      get:
+        is: [ secured ]
+        responses:
+          200:
+            description: get internet status
     /localmachine:
       /server:
         /agents:
@@ -266,6 +272,42 @@ traits:
       /agent:
         put:
           description: local api for localmachine control plane to activate the machine
+        /events/export:
+          displayName: test local machine pull
+          get:
+            is: [ secured ]
+            description: >
+              test local machine pull
+            responses:
+              200:
+                body:
+              400:
+                body:
+                  application/json:
+                    schema: badRequestResponse
+              404:
+              403:
+                body:
+                  application/json:
+                    schema: localizedMessage
+        /events/import:
+          displayName: test local machine pull
+          post:
+            is: [ secured ]
+            description: >
+              test local machine pull
+            responses:
+              200:
+                body:
+              400:
+                body:
+                  application/json:
+                    schema: badRequestResponse
+              404:
+              403:
+                body:
+                  application/json:
+                    schema: localizedMessage
     /location/physicalInventories:
       get:
         is: [ secured ]
@@ -429,6 +471,64 @@ traits:
           responses:
             200:
               description: Upgrade success
+      /{facilityId}/facilityDevice:
+        uriParameters:
+          facilityId:
+            displayName: facilityId
+            type: string
+            required: true
+            repeat: false
+        get:
+          is: [ secured ]
+          description: get facility device info
+          responses:
+            200:
+              description: success
+        delete:
+          is: [ secured ]
+          description: erase facility device info
+          responses:
+            200:
+              description: success
+      /{facilityId}/toWeb:
+        uriParameters:
+          facilityId:
+            displayName: facilityId
+            type: string
+            required: true
+            repeat: false
+        put:
+          is: [ secured ]
+          description: change facility to web
+          responses:
+            200:
+              description: success
+      /{facilityId}/toLocalMachine:
+        uriParameters:
+          facilityId:
+            displayName: facilityId
+            type: string
+            required: true
+            repeat: false
+        put:
+          is: [ secured ]
+          description: change facility to localMachine
+          responses:
+            200:
+              description: success
+      /{facilityId}/toAndroid:
+        uriParameters:
+          facilityId:
+            displayName: facilityId
+            type: string
+            required: true
+            repeat: false
+        put:
+          is: [ secured ]
+          description: change facility to android
+          responses:
+            200:
+              description: success
       /{facilityId}/locations:
         uriParameters:
           facilityId:
@@ -4172,3 +4272,4 @@ traits:
             body:
               application/json:
                 schema: localizedMessage
+

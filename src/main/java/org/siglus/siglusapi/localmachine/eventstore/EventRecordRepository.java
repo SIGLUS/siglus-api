@@ -26,8 +26,7 @@ import org.springframework.data.repository.query.Param;
 
 public interface EventRecordRepository extends JpaRepository<EventRecord, UUID> {
 
-  @Query(value = "select * from localmachine.events where localreplayed=false", nativeQuery = true)
-  List<EventRecord> findNotReplayedEvents();
+  List<EventRecord> findEventRecordByLocalReplayed(boolean localReplayed);
 
   @Query(
       value =
@@ -36,9 +35,9 @@ public interface EventRecordRepository extends JpaRepository<EventRecord, UUID> 
       nativeQuery = true)
   Long getNextGroupSequenceNumber(@Param("groupId") String groupId);
 
-  List<EventRecord> findEventRecordByOnlineWebSyncedIsFalse();
+  List<EventRecord> findEventRecordByOnlineWebSyncedAndArchived(boolean onlineWebSynced, boolean archived);
 
-  List<EventRecord> findEventRecordByGroupId(String groupId);
+  List<EventRecord> findEventRecordByGroupIdAndArchived(String groupId, boolean archived);
 
   @Modifying
   @Query(
@@ -63,7 +62,6 @@ public interface EventRecordRepository extends JpaRepository<EventRecord, UUID> 
               + "receiverid,"
               + "groupid,"
               + "groupsequencenumber,"
-              + "payload,"
               + "onlinewebsynced,"
               + "localreplayed,"
               + "receiversynced) VALUES ("
@@ -74,7 +72,6 @@ public interface EventRecordRepository extends JpaRepository<EventRecord, UUID> 
               + ":#{#r.receiverId},"
               + ":#{#r.groupId},"
               + ":#{#r.groupSequenceNumber},"
-              + ":#{#r.payload},"
               + ":#{#r.onlineWebSynced},"
               + ":#{#r.localReplayed},"
               + ":#{#r.receiverSynced})",
@@ -93,7 +90,6 @@ public interface EventRecordRepository extends JpaRepository<EventRecord, UUID> 
               + "receiverid,"
               + "groupid,"
               + "groupsequencenumber,"
-              + "payload,"
               + "onlinewebsynced,"
               + "receiversynced) VALUES ("
               + ":#{#r.id},"
@@ -104,7 +100,6 @@ public interface EventRecordRepository extends JpaRepository<EventRecord, UUID> 
               + ":#{#r.receiverId},"
               + ":#{#r.groupId},"
               + ":#{#r.groupSequenceNumber},"
-              + ":#{#r.payload},"
               + ":#{#r.onlineWebSynced},"
               + ":#{#r.receiverSynced})",
       nativeQuery = true)
@@ -120,5 +115,15 @@ public interface EventRecordRepository extends JpaRepository<EventRecord, UUID> 
   @Query(value = "select cast(id as varchar) as id from localmachine.events where id in :ids", nativeQuery = true)
   Set<String> filterExistsEventIds(@Param("ids") Set<UUID> ids);
 
-  List<EventRecord> findByReceiverIdAndReceiverSynced(UUID receiverId, Boolean receiverSynced);
+  List<EventRecord> findByReceiverIdAndReceiverSyncedAndArchived(
+      UUID receiverId, Boolean receiverSynced, boolean archived);
+
+  List<EventRecord> findByArchived(boolean archived);
+
+  @Query(value = "select cast(id as varchar) \n"
+      + "from localmachine.events e \n"
+      + "where e.groupid is not null \n"
+      + "and e.receiverid != :facilityId \n"
+      + "and e.receiversynced = false;", nativeQuery = true)
+  List<String> findExportEventIds(@Param("facilityId") UUID facilityId);
 }

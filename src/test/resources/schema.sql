@@ -33,3 +33,23 @@ CREATE TABLE IF NOT EXISTS localmachine.machine (
     touched  INT NOT NULL DEFAULT 1,
     id UUID NOT NULL PRIMARY KEY
 );
+
+DROP TABLE IF EXISTS localmachine.event_payload;
+CREATE TABLE localmachine.event_payload
+(
+    eventid uuid PRIMARY KEY,
+    payload bytea
+);
+DROP TABLE IF EXISTS localmachine.event_payload_backup;
+CREATE TABLE localmachine.event_payload_backup
+(
+    eventid uuid PRIMARY KEY,
+    payload bytea
+);
+
+INSERT INTO localmachine.event_payload (eventid, payload) (SELECT id, payload FROM localmachine.events);
+
+ALTER TABLE localmachine.events
+    ADD COLUMN archived boolean NOT NULL DEFAULT FALSE;
+ALTER TABLE localmachine.events
+    DROP COLUMN payload;

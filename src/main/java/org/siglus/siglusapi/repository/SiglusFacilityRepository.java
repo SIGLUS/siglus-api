@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.repository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 import org.openlmis.referencedata.domain.Facility;
@@ -43,4 +44,9 @@ public interface SiglusFacilityRepository extends JpaRepository<Facility, UUID>,
       + "and sn.facilityid = :facilityId \n"
       + "and rgps.programid = :programId ;", nativeQuery = true)
   List<String> findAllClientFacilityIds(@Param("facilityId") UUID facilityId, @Param("programId") UUID programId);
+
+  @Query(value = "select f.* \n"
+      + "from referencedata.facilities f \n"
+      + "where f.id in (:facilityIds);", nativeQuery = true)
+  List<Facility> findFacilityBasicInfoByIds(@Param("facilityIds") Collection<UUID> facilityIds);
 }

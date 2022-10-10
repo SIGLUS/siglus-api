@@ -18,7 +18,7 @@ package org.siglus.siglusapi.web.report;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import org.siglus.siglusapi.interceptor.OperationGuardAspect.Guarded;
-import org.siglus.siglusapi.service.task.report.HistoricalDataPersistentService;
+import org.siglus.siglusapi.service.scheduledtask.HistoricalDataPersistentService;
 import org.siglus.siglusapi.web.request.HistoricalDataRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;

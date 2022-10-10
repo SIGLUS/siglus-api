@@ -87,7 +87,7 @@ public class MovementSql {
   public static final String CALCULATED_STOCKS_ON_HAND = "stockmanagement.calculated_stocks_on_hand";
 
   public static final String CALCULATED_STOCKS_ON_HAND_QUERY =
-      "select * from stockmanagement.calculated_stocks_on_hand" + WHERE_ID_IN_STOCK_CARD;
+      "select * from stockmanagement.calculated_stocks_on_hand " + WHERE_ID_IN_STOCK_CARD;
 
   public static final String STOCK_MANAGEMENT_INITIAL_DRAFTS = "siglusintegration.stock_management_initial_drafts";
 
