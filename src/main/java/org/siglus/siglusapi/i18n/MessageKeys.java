@@ -67,6 +67,11 @@ public abstract class MessageKeys {
   public static final String ERROR_DRAFT_DOCUMENT_NUMBER_MISSING = ERROR_PREFIX + ".draft.document.number.missing";
   public static final String ERROR_NOT_EXPECTED_DRAFT_TYPE_ERROR = ERROR_PREFIX + ".not.expected.draft.type.error";
   public static final String ERROR_NOT_EXPECTED_USER_DRAFT = ERROR_PREFIX + ".not.expected.user.draft";
+  public static final String ERROR_FACILITY_CHANGE_TO_WEB = ERROR_PREFIX + ".facility.change.to.web.error";
+  public static final String ERROR_FACILITY_CHANGE_TO_ANDROID = ERROR_PREFIX + ".facility.change.to.android.error";
+  public static final String ERROR_FACILITY_CHANGE_TO_LOCALMACHINE =
+      ERROR_PREFIX + ".facility.change.to.localmachine.error";
+
 
   // stock management
   public static final String ERROR_VALIDATE_STOCK_MOVEMENT_DATE =

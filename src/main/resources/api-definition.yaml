@@ -471,6 +471,64 @@ traits:
           responses:
             200:
               description: Upgrade success
+      /{facilityId}/facilityDevice:
+        uriParameters:
+          facilityId:
+            displayName: facilityId
+            type: string
+            required: true
+            repeat: false
+        get:
+          is: [ secured ]
+          description: get facility device info
+          responses:
+            200:
+              description: success
+        delete:
+          is: [ secured ]
+          description: erase facility device info
+          responses:
+            200:
+              description: success
+      /{facilityId}/toWeb:
+        uriParameters:
+          facilityId:
+            displayName: facilityId
+            type: string
+            required: true
+            repeat: false
+        put:
+          is: [ secured ]
+          description: change facility to web
+          responses:
+            200:
+              description: success
+      /{facilityId}/toLocalMachine:
+        uriParameters:
+          facilityId:
+            displayName: facilityId
+            type: string
+            required: true
+            repeat: false
+        put:
+          is: [ secured ]
+          description: change facility to localMachine
+          responses:
+            200:
+              description: success
+      /{facilityId}/toAndroid:
+        uriParameters:
+          facilityId:
+            displayName: facilityId
+            type: string
+            required: true
+            repeat: false
+        put:
+          is: [ secured ]
+          description: change facility to android
+          responses:
+            200:
+              description: success
       /{facilityId}/locations:
         uriParameters:
           facilityId:
