@@ -299,9 +299,9 @@ public class RequisitionOrderSql {
           + LEFT_JOIN_SUPERVISORY_NODES
           + WHERE_FACILITY_ID;
 
-  public static final String POD_EXTENSION = "siglusintegration.pod_extension";
+  public static final String SHIPMENTS_EXTENSION = "siglusintegration.shipments_extension";
 
-  public static final String POD_EXTENSION_QUERY = "select pe.* from siglusintegration.pod_extension pe "
+  public static final String SHIPMENTS_EXTENSION_QUERY = "select pe.* from siglusintegration.shipments_extension pe "
       + "left join fulfillment.shipments s on s.id = pe.shipmentid "
       + SHIPMENT_LEFT_JOIN_ORDERS
       + WHERE_FACILITYID_SUPPLYING_FACILITYID;
@@ -502,7 +502,7 @@ public class RequisitionOrderSql {
     requisitionOrderSql.put(ORDER_LINE_ITEM_EXTENSION, ORDER_LINE_ITEM_EXTENSION_QUERY);
     requisitionOrderSql.put(PATIENT_LINE_ITEMS, PATIENT_LINE_ITEMS_QUERY);
     requisitionOrderSql.put(PATIENT_LINE_ITEM_DRAFTS, PATIENT_LINE_ITEM_DRAFTS_QUERY);
-    requisitionOrderSql.put(POD_EXTENSION, POD_EXTENSION_QUERY);
+    requisitionOrderSql.put(SHIPMENTS_EXTENSION, SHIPMENTS_EXTENSION_QUERY);
     requisitionOrderSql.put(POD_SUB_DRAFT, POD_SUB_DRAFT_QUERY);
     requisitionOrderSql.put(POD_LINE_ITEMS_EXTENSION, POD_LINE_ITEMS_EXTENSION_QUERY);
     requisitionOrderSql.put(PROOFS_OF_DELIVERY_EXTENSION, PROOFS_OF_DELIVERY_EXTENSION_QUERY);
