@@ -113,6 +113,8 @@ import org.siglus.siglusapi.web.response.PodSubDraftsSummaryResponse.SubDraftInf
 import org.siglus.siglusapi.web.response.ProofOfDeliveryWithLocationResponse;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.Example;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -196,6 +198,8 @@ public class SiglusPodService {
       response.setPreparedBy(podExtension.getPreparedBy());
       response.setConferredBy(podExtension.getConferredBy());
     }
+    mergeSamePodLineItems(podDto);
+    mergeSameShipmentLineItems(podDto.getShipment());
     return response;
   }
 
@@ -211,6 +215,12 @@ public class SiglusPodService {
     if (CollectionUtils.isNotEmpty(order.getOrderLineItems())) {
       podDto.getShipment().setOrder(siglusOrderService.getExtensionOrder(order));
     }
+    return podDto;
+  }
+
+  public Page<ProofOfDeliveryDto> getAllProofsOfDelivery(UUID orderId, UUID shipmentId, Pageable pageable) {
+    Page<ProofOfDeliveryDto> podDto = podController.getAllProofsOfDelivery(orderId, shipmentId, pageable);
+    mergeSamePodLineItems(podDto.getContent().get(0));
     return podDto;
   }
 
@@ -936,6 +946,39 @@ public class SiglusPodService {
     log.info("save into stock card line item by location when submit pod; size: {}",
         stockCardLineItemExtensions.size());
     stockCardLineItemExtensionRepository.save(stockCardLineItemExtensions);
+  }
+
+  private void mergeSamePodLineItems(ProofOfDeliveryDto podDto) {
+    List<Importer> lineItems = podDto.getLineItems();
+    Map<String, Importer> uniqueKeyToPodDto = new HashMap<>();
+    lineItems.forEach(lineItem -> {
+      String key = getOrderableLotIdPair(lineItem.getOrderableIdentity().getId(), lineItem.getLotId());
+      uniqueKeyToPodDto.put(key, uniqueKeyToPodDto.getOrDefault(key, lineItem));
+    });
+    List<ProofOfDeliveryLineItemDto> newLineItems = Lists.newArrayList();
+    uniqueKeyToPodDto.forEach((key, value) -> {
+      ProofOfDeliveryLineItemDto proofOfDeliveryLineItemDto = new ProofOfDeliveryLineItemDto();
+      BeanUtils.copyProperties(value, proofOfDeliveryLineItemDto);
+      newLineItems.add(proofOfDeliveryLineItemDto);
+    });
+    podDto.setLineItems(newLineItems);
+  }
+
+  private void mergeSameShipmentLineItems(ShipmentObjectReferenceDto shipmentDto) {
+    List<ShipmentLineItemDto> shipmentLineItems = shipmentDto.getLineItems();
+    Map<String, ShipmentLineItemDto> uniqueKeyToShipmentDto = new HashMap<>();
+    shipmentLineItems.forEach(shipmentLineItem -> {
+      String key = getOrderableLotIdPair(shipmentLineItem.getOrderable().getId(), shipmentLineItem.getLotId());
+      if (uniqueKeyToShipmentDto.containsKey(key)) {
+        ShipmentLineItemDto shipmentLineItemDto = uniqueKeyToShipmentDto.get(key);
+        Long quantityShipped = shipmentLineItemDto.getQuantityShipped() + shipmentLineItem.getQuantityShipped();
+        shipmentLineItemDto.setQuantityShipped(quantityShipped);
+        uniqueKeyToShipmentDto.put(key, shipmentLineItemDto);
+      } else {
+        uniqueKeyToShipmentDto.put(key, shipmentLineItem);
+      }
+    });
+    shipmentDto.setLineItems(new ArrayList<>(uniqueKeyToShipmentDto.values()));
   }
 
   private String getOrderableLotIdPair(UUID orderableId, UUID lotId) {

@@ -1246,6 +1246,12 @@ public class SiglusPodServiceTest {
     orderDto.setExternalId(externalId);
     ShipmentObjectReferenceDto shipmentDto = new ShipmentObjectReferenceDto(shipmentDtoId);
     shipmentDto.setOrder(orderDto);
+    ShipmentLineItemDto shipmentLineItemDto = new ShipmentLineItemDto();
+    shipmentLineItemDto.setLotId(lotId);
+    OrderableDto orderableDto = new OrderableDto();
+    orderableDto.setId(orderableId);
+    shipmentLineItemDto.setOrderable(orderableDto);
+    shipmentDto.setLineItems(Lists.newArrayList(shipmentLineItemDto));
     return shipmentDto;
   }
 
