@@ -674,7 +674,7 @@ public class SiglusPhysicalInventoryService {
     Pageable pageable = new PageRequest(0, Integer.MAX_VALUE);
 
     List<StockCardSummaryV2Dto> summaryV2Dtos = siglusStockCardSummariesService.findSiglusStockCard(
-        parameters, Collections.emptyList(), pageable).getContent();
+        parameters, Collections.emptyList(), pageable, false).getContent();
 
     return convertSummaryV2DtosToLineItems(summaryV2Dtos, physicalInventoryDto.getProgramId());
   }

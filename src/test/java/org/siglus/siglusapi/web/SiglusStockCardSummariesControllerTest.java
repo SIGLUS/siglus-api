@@ -47,7 +47,7 @@ public class SiglusStockCardSummariesControllerTest {
   public void shouldCallServiceAndBuilderWhenSearchStockCardSummaries() {
     controller.searchStockCardSummaries(parameters, Collections.emptyList(), draftId, pageable);
 
-    verify(service).searchStockCardSummaryV2Dtos(parameters, Collections.emptyList(), draftId, pageable);
+    verify(service).searchStockCardSummaryV2Dtos(parameters, Collections.emptyList(), draftId, pageable, false);
   }
 
   @Test

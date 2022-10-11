@@ -20,12 +20,14 @@ import static org.springframework.http.HttpStatus.OK;
 import java.util.List;
 import java.util.UUID;
 import org.openlmis.stockmanagement.dto.StockCardDto;
+import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2Dto;
 import org.siglus.siglusapi.dto.LocationMovementDto;
 import org.siglus.siglusapi.dto.ProductMovementDto;
 import org.siglus.siglusapi.dto.StockCardSummaryWithLocationDto;
 import org.siglus.siglusapi.service.SiglusStockCardLocationMovementService;
 import org.siglus.siglusapi.service.SiglusStockCardService;
 import org.siglus.siglusapi.service.SiglusStockCardSummariesService;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
@@ -46,6 +48,15 @@ public class SiglusStockCardSummariesWithLocationController {
 
   private final SiglusStockCardLocationMovementService siglusStockCardLocationMovementService;
 
+  @GetMapping
+  public Page<StockCardSummaryV2Dto> searchStockCardSummaries(
+      @RequestParam MultiValueMap<String, String> parameters,
+      @RequestParam(required = false) List<UUID> subDraftIds,
+      @RequestParam(required = false) UUID draftId,
+      @PageableDefault(size = Integer.MAX_VALUE) Pageable pageable) {
+    return siglusStockCardSummariesService
+        .searchStockCardSummaryV2Dtos(parameters, subDraftIds, draftId, pageable, true);
+  }
 
   public SiglusStockCardSummariesWithLocationController(SiglusStockCardSummariesService siglusStockCardSummariesService,
       SiglusStockCardService siglusStockCardService,

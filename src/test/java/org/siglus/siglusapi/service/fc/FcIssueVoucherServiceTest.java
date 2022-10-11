@@ -313,7 +313,7 @@ public class FcIssueVoucherServiceTest {
     Set<CanFulfillForMeEntryDto> fulfillForMeEntryDtos = new HashSet();
     fulfillForMeEntryDtos.add(fulfillForMeEntryDto);
     summaryV2Dto.setCanFulfillForMe(fulfillForMeEntryDtos);
-    when(stockCardSummariesService.findSiglusStockCard(any(), any(), any()))
+    when(stockCardSummariesService.findSiglusStockCard(any(), any(), any(), any(Boolean.class)))
         .thenReturn(Pagination.getPage(Collections.singletonList(summaryV2Dto)));
     ShipmentLineItemDto shipmentLineItemDto = new ShipmentLineItemDto();
     org.openlmis.fulfillment.service.referencedata.OrderableDto orderableDto1 =
@@ -394,7 +394,7 @@ public class FcIssueVoucherServiceTest {
     Set<CanFulfillForMeEntryDto> fulfillForMeEntryDtos = new HashSet();
     fulfillForMeEntryDtos.add(fulfillForMeEntryDto);
     summaryV2Dto.setCanFulfillForMe(fulfillForMeEntryDtos);
-    when(stockCardSummariesService.findSiglusStockCard(any(), any(), any()))
+    when(stockCardSummariesService.findSiglusStockCard(any(), any(), any(), any(Boolean.class)))
         .thenReturn(Pagination.getPage(Collections.singletonList(summaryV2Dto)));
     ShipmentLineItemDto shipmentLineItemDto = new ShipmentLineItemDto();
     org.openlmis.fulfillment.service.referencedata.OrderableDto orderableDto1 =
@@ -466,7 +466,7 @@ public class FcIssueVoucherServiceTest {
     Set<CanFulfillForMeEntryDto> fulfillForMeEntryDtos = new HashSet();
     fulfillForMeEntryDtos.add(fulfillForMeEntryDto);
     summaryV2Dto.setCanFulfillForMe(fulfillForMeEntryDtos);
-    when(stockCardSummariesService.findSiglusStockCard(any(), any(), any()))
+    when(stockCardSummariesService.findSiglusStockCard(any(), any(), any(), any(Boolean.class)))
         .thenReturn(Pagination.getPage(Collections.singletonList(summaryV2Dto)));
     ShipmentLineItemDto shipmentLineItemDto = new ShipmentLineItemDto();
     org.openlmis.fulfillment.service.referencedata.OrderableDto orderableDto1 =

@@ -169,7 +169,7 @@ public class SiglusStockCardSummariesServiceTest {
 
     // when
     Page<StockCardSummaryV2Dto> resultSummaries =
-        service.findSiglusStockCard(getProgramsParms(), null, pageable);
+        service.findSiglusStockCard(getProgramsParms(), null, pageable, false);
 
     // then
     assertEquals(true, resultSummaries.getContent().isEmpty());
@@ -189,7 +189,7 @@ public class SiglusStockCardSummariesServiceTest {
 
     // when
     Page<StockCardSummaryV2Dto> resultSummaries =
-        service.findSiglusStockCard(getProgramsParms(), Collections.emptyList(), pageable);
+        service.findSiglusStockCard(getProgramsParms(), Collections.emptyList(), pageable, false);
 
     // then
     assertEquals(2, resultSummaries.getContent().size());
@@ -217,7 +217,8 @@ public class SiglusStockCardSummariesServiceTest {
         .thenReturn(Arrays.asList(summaryV2Dto, summaryV2Dto2, summaryV2Dto3));
 
     // when
-    Page<StockCardSummaryV2Dto> resultSummaries = service.findSiglusStockCard(params, null, pageable);
+    Page<StockCardSummaryV2Dto> resultSummaries = service.findSiglusStockCard(
+        params, null, pageable, false);
 
     // then
     assertEquals(2, resultSummaries.getContent().size());
@@ -248,7 +249,8 @@ public class SiglusStockCardSummariesServiceTest {
 
     // then
     Pageable pageable = new PageRequest(DEFAULT_PAGE_NUMBER, Integer.MAX_VALUE);
-    Page<StockCardSummaryV2Dto> resultSummaries = service.findSiglusStockCard(params, null, pageable);
+    Page<StockCardSummaryV2Dto> resultSummaries = service.findSiglusStockCard(
+        params, null, pageable, false);
     assertEquals(1, resultSummaries.getContent().size());
   }
 
@@ -270,7 +272,8 @@ public class SiglusStockCardSummariesServiceTest {
     params.add(ORDERABLE_ID, orderableId.toString());
 
     // when
-    Page<StockCardSummaryV2Dto> resultSummaries = service.findSiglusStockCard(params, null, pageable);
+    Page<StockCardSummaryV2Dto> resultSummaries = service.findSiglusStockCard(
+        params, null, pageable, false);
 
     // then
     assertEquals(1, resultSummaries.getContent().size());
@@ -297,7 +300,7 @@ public class SiglusStockCardSummariesServiceTest {
 
     // when
     Page<StockCardSummaryV2Dto> resultSummaries = service.findSiglusStockCard(params,
-        Lists.newArrayList(subDraftId), pageable);
+        Lists.newArrayList(subDraftId), pageable, false);
 
     // then
     assertEquals(1, resultSummaries.getContent().size());
@@ -324,7 +327,7 @@ public class SiglusStockCardSummariesServiceTest {
 
     // when
     Page<StockCardSummaryV2Dto> resultSummaries = service.findSiglusStockCard(params,
-        Lists.newArrayList(subDraftId), pageable);
+        Lists.newArrayList(subDraftId), pageable, false);
 
     // then
     assertEquals(1, resultSummaries.getContent().size());

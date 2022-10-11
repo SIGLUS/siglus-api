@@ -16,8 +16,10 @@
 package org.siglus.siglusapi.web;
 
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import org.openlmis.fulfillment.web.shipment.ShipmentDto;
 import org.siglus.siglusapi.localmachine.event.order.fulfillment.OrderFulfillmentSyncedEmitter;
+import org.siglus.siglusapi.localmachine.eventstore.PayloadSerializer;
 import org.siglus.siglusapi.service.SiglusNotificationService;
 import org.siglus.siglusapi.service.SiglusShipmentService;
 import org.siglus.siglusapi.web.request.ShipmentExtensionRequest;
@@ -39,15 +41,23 @@ public class SiglusShipmentWithLocationController {
   private final SiglusNotificationService notificationService;
   private final OrderFulfillmentSyncedEmitter orderFulfillmentSyncedEmitter;
 
+  @SneakyThrows
   @PostMapping
   @ResponseStatus(HttpStatus.CREATED)
   @Transactional
   public void confirmShipmentByLocation(
       @RequestParam(name = "isSubOrder", required = false, defaultValue = "false")
       boolean isSubOrder, @RequestBody ShipmentExtensionRequest shipmentExtensionRequest) {
-    orderFulfillmentSyncedEmitter.emit(true, isSubOrder, shipmentExtensionRequest);
+    byte[] reqBytes = PayloadSerializer.LOCALMACHINE_EVENT_OBJECT_MAPPER.writeValueAsBytes(shipmentExtensionRequest);
     ShipmentDto shipmentByLocation = siglusShipmentService.createOrderAndShipmentByLocation(isSubOrder,
         shipmentExtensionRequest);
     notificationService.postConfirmShipment(shipmentByLocation);
+    /*
+    shipmentExtensionRequest changed in method 'createOrderAndShipment',
+    but emitter need the old request, so write the old request to bytes and load it back when emitting.
+     */
+    ShipmentExtensionRequest request =
+        PayloadSerializer.LOCALMACHINE_EVENT_OBJECT_MAPPER.readValue(reqBytes, ShipmentExtensionRequest.class);
+    orderFulfillmentSyncedEmitter.emit(false, isSubOrder, request);
   }
 }

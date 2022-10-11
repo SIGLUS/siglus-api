@@ -795,7 +795,7 @@ public class SiglusPhysicalInventoryServiceTest {
         anyBoolean()))
         .thenReturn(makeResponseEntity(Collections.emptyList()));
     when(siglusStockCardSummariesService.findSiglusStockCard(
-        parameters, Collections.emptyList(), new PageRequest(0, Integer.MAX_VALUE)))
+        parameters, Collections.emptyList(), new PageRequest(0, Integer.MAX_VALUE), false))
         .thenReturn(new PageImpl<>(summaryV2Dtos, new PageRequest(0, Integer.MAX_VALUE), 0));
     when(physicalInventorySubDraftRepository.findByPhysicalInventoryId(physicalInventoryIdOne))
         .thenReturn(Collections.singletonList(PhysicalInventorySubDraft.builder().build()));
@@ -897,7 +897,7 @@ public class SiglusPhysicalInventoryServiceTest {
     parameters.set(EXCLUDE_ARCHIVED, Boolean.TRUE.toString());
     Pageable pageable = new PageRequest(0, Integer.MAX_VALUE);
     when(siglusStockCardSummariesService.findSiglusStockCard(
-        parameters, emptyList(), pageable)).thenReturn(
+        parameters, emptyList(), pageable, false)).thenReturn(
         (new PageImpl<>(Collections.singletonList(stockCardSummaryV2Dto), new PageRequest(0, Integer.MAX_VALUE), 0)));
 
     PhysicalInventoryDto createdPhysicalInventoryDto = PhysicalInventoryDto.builder().id(physicalInventoryIdOne)
