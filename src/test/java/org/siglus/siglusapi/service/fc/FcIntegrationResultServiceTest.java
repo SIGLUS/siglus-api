@@ -35,7 +35,6 @@ import static org.siglus.siglusapi.service.fc.FcVariables.START_DATE;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
