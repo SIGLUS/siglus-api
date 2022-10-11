@@ -15,16 +15,21 @@
 
 package org.siglus.siglusapi.localmachine.webapi;
 
+import java.time.ZonedDateTime;
+import java.util.List;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Builder.Default;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Builder
 @Data
-public class LocalMachineBasicInfo {
+@AllArgsConstructor
+@NoArgsConstructor
+public class LocalSyncResultsResponse {
 
-  private String localMachineVersion;
+  private ZonedDateTime latestSyncedTime;
 
-  @Default
-  private boolean isConnectedOnlineWeb = false;
+  private List<Object> errors;
+
 }

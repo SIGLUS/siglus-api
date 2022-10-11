@@ -23,4 +23,5 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface LatestSyncReplayRecordRepository extends JpaRepository<LatestSyncReplayRecord, UUID> {
 
+  LatestSyncReplayRecord findFirstByOrderByLatestSyncedTimeDesc();
 }

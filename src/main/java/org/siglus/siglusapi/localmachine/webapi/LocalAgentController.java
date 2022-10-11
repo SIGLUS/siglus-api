@@ -23,6 +23,7 @@ import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.localmachine.Machine;
 import org.siglus.siglusapi.localmachine.agent.LocalActivationService;
+import org.siglus.siglusapi.localmachine.agent.LocalSyncResultsService;
 import org.siglus.siglusapi.localmachine.agent.Synchronizer;
 import org.siglus.siglusapi.localmachine.domain.AgentInfo;
 import org.siglus.siglusapi.localmachine.server.LocalExportImportService;
@@ -51,6 +52,8 @@ public class LocalAgentController {
   private final Machine machine;
   private final CalculateCmmService calculateCmmService;
   private final Synchronizer synchronizer;
+  private final LocalSyncResultsService syncErrorService;
+
   @Value("${machine.version}")
   private String localMachineVersion;
 
@@ -87,9 +90,14 @@ public class LocalAgentController {
 
   @GetMapping("/basicInfo")
   public LocalMachineBasicInfo getInternetStatus() {
-    LocalMachineBasicInfo localMachineBasicInfo = new LocalMachineBasicInfo();
-    localMachineBasicInfo.setConnectedOnlineWeb(synchronizer.getMachine().isConnectedOnlineWeb());
-    localMachineBasicInfo.setLocalMachineVersion(localMachineVersion);
-    return localMachineBasicInfo;
+    return LocalMachineBasicInfo.builder()
+        .isConnectedOnlineWeb(synchronizer.getMachine().isConnectedOnlineWeb())
+        .localMachineVersion(localMachineVersion)
+        .build();
+  }
+
+  @GetMapping("/syncResults")
+  public LocalSyncResultsResponse getSyncResults() {
+    return syncErrorService.getSyncResults();
   }
 }

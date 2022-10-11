@@ -15,12 +15,21 @@
 
 package org.siglus.siglusapi.localmachine.repository;
 
+import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.UUID;
 import org.siglus.siglusapi.localmachine.domain.ReplayErrorRecords;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 @Repository
 public interface ReplayErrorRecordsRepository extends JpaRepository<ReplayErrorRecords, UUID> {
+
+  @Query(value = "select * from localmachine.replay_error_records e where e.occurredtime >= :occurredTime limit 10",
+      nativeQuery = true)
+  List<ReplayErrorRecords> findTopTenWithCreationDateTimeAfter(
+      @Param("occurredTime") ZonedDateTime occurredTime);
 
 }
