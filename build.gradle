@@ -76,7 +76,7 @@ dependencies {
     compile 'com.alibaba:easyexcel:3.1.1'
     compile 'org.apache.poi:poi:4.1.2'
     compile 'org.apache.poi:poi-ooxml:4.1.2'
-    compile 'com.amazonaws:aws-java-sdk-s3:1.11.627'
+    compile 'com.amazonaws:aws-java-sdk-s3:1.12.319'
     compile 'org.owasp:security-logging-logback:1.1.6'
     compileOnly 'org.projectlombok:lombok:1.18.20'
     annotationProcessor 'org.projectlombok:lombok:1.18.20'

@@ -214,6 +214,9 @@ public abstract class MessageKeys {
   public static final String ID = "id";
   public static final String FACILITY = "facility";
 
+  // s3
+  public static final String ERROR_FILE_NOT_FOUND = ERROR_PREFIX + ".fileNotFound";
+
   protected MessageKeys() {
     throw new UnsupportedOperationException();
   }
