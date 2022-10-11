@@ -19,7 +19,10 @@ import java.time.ZonedDateTime;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.siglus.siglusapi.localmachine.domain.ReplayErrorRecords;
 import org.siglus.siglusapi.localmachine.eventstore.EventStore;
+import org.siglus.siglusapi.localmachine.eventstore.PayloadSerializer;
+import org.siglus.siglusapi.localmachine.repository.ReplayErrorRecordsRepository;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
@@ -34,6 +37,8 @@ public class EventPublisher {
   private final EventStore eventStore;
   private final ApplicationEventPublisher applicationEventPublisher;
   private final Machine machine;
+  private final ReplayErrorRecordsRepository errorRecordsRepository;
+  private final PayloadSerializer serializer;
 
   public void emitGroupEvent(String groupId, UUID receiverId, Object payload) {
     Event.EventBuilder eventBuilder = baseEventBuilder(groupId, receiverId, payload);
@@ -60,6 +65,9 @@ public class EventPublisher {
     isReplaying.set(Boolean.TRUE);
     try {
       applicationEventPublisher.publishEvent(event.getPayload());
+    } catch (Exception e) {
+      errorRecordsRepository.save(buildReplayError(event));
+      throw e;
     } finally {
       isReplaying.remove();
     }
@@ -87,5 +95,12 @@ public class EventPublisher {
         .groupId(groupId)
         .payload(payload)
         .localReplayed(true); // marked as replayed at sender side
+  }
+
+  private ReplayErrorRecords buildReplayError(Event event) {
+    return ReplayErrorRecords.builder().occurredTime(ZonedDateTime.now())
+        .type("Replay")
+        .errors(serializer.dump(event.getPayload()))
+        .build();
   }
 }

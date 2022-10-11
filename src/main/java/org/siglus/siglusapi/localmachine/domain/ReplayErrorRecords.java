@@ -13,12 +13,36 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.localmachine.webapi;
+package org.siglus.siglusapi.localmachine.domain;
 
+import java.time.ZonedDateTime;
+import java.util.UUID;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
+@Entity
 @Data
-public class InternetStatusResponse {
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
+@Table(name = "replay_error_records", schema = "localmachine")
+public class ReplayErrorRecords {
 
-  private boolean isConnectedOnlineWeb;
+  @Id
+  private UUID id;
+
+  @Column(name = "type")
+  private String type;
+
+  @Column(name = "errors")
+  private byte[] errors;
+
+  @Column(name = "occurredtime")
+  private ZonedDateTime occurredTime;
 }

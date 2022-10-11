@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.localmachine;
 
+import java.time.ZonedDateTime;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
@@ -23,18 +24,23 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.siglus.siglusapi.localmachine.eventstore.EventStore;
+import org.siglus.siglusapi.localmachine.repository.ReplayErrorRecordsRepository;
 import org.springframework.dao.DataIntegrityViolationException;
 
 @Slf4j
 public abstract class EventImporter {
+
   protected final EventStore eventStore;
   protected final EventReplayer replayer;
   protected final Machine machine;
+  private final ReplayErrorRecordsRepository errorRecordsRepository;
 
-  protected EventImporter(EventStore eventStore, EventReplayer replayer, Machine machine) {
+  protected EventImporter(EventStore eventStore, EventReplayer replayer, Machine machine,
+      ReplayErrorRecordsRepository replayErrorRecordsRepository) {
     this.eventStore = eventStore;
     this.replayer = replayer;
     this.machine = machine;
+    this.errorRecordsRepository = replayErrorRecordsRepository;
   }
 
   public void importEvents(List<Event> events) {

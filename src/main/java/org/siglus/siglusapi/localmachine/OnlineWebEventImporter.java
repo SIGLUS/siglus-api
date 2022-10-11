@@ -17,6 +17,7 @@ package org.siglus.siglusapi.localmachine;
 
 import java.util.List;
 import org.siglus.siglusapi.localmachine.eventstore.EventStore;
+import org.siglus.siglusapi.localmachine.repository.ReplayErrorRecordsRepository;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
@@ -24,8 +25,9 @@ import org.springframework.stereotype.Component;
 @Component
 public class OnlineWebEventImporter extends EventImporter {
 
-  public OnlineWebEventImporter(EventStore localEventStore, EventReplayer replayer, Machine machine) {
-    super(localEventStore, replayer, machine);
+  public OnlineWebEventImporter(EventStore localEventStore, EventReplayer replayer, Machine machine,
+      ReplayErrorRecordsRepository replayErrorRecordsRepository) {
+    super(localEventStore, replayer, machine, replayErrorRecordsRepository);
   }
 
   @Override
