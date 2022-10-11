@@ -16,11 +16,9 @@
 package org.siglus.siglusapi.service;
 
 import static com.google.common.collect.Lists.newArrayList;
-import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
-import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 import static org.openlmis.requisition.domain.requisition.RequisitionStatus.APPROVED;
 import static org.openlmis.requisition.domain.requisition.RequisitionStatus.AUTHORIZED;
 import static org.openlmis.requisition.domain.requisition.RequisitionStatus.IN_APPROVAL;
@@ -33,12 +31,10 @@ import static org.siglus.common.constant.KitConstants.US_KITS;
 
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -68,12 +64,9 @@ import org.openlmis.requisition.dto.BasicRequisitionDto;
 import org.openlmis.requisition.dto.BasicRequisitionTemplateColumnDto;
 import org.openlmis.requisition.dto.BasicRequisitionTemplateDto;
 import org.openlmis.requisition.dto.FacilityDto;
-import org.openlmis.requisition.dto.IdealStockAmountDto;
 import org.openlmis.requisition.dto.MetadataDto;
 import org.openlmis.requisition.dto.OrderableDto;
-import org.openlmis.requisition.dto.ProcessingPeriodDto;
 import org.openlmis.requisition.dto.ProgramDto;
-import org.openlmis.requisition.dto.ProofOfDeliveryDto;
 import org.openlmis.requisition.dto.RequisitionGroupDto;
 import org.openlmis.requisition.dto.RequisitionLineItemV2Dto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
@@ -83,27 +76,19 @@ import org.openlmis.requisition.dto.RoleDto;
 import org.openlmis.requisition.dto.SupervisoryNodeDto;
 import org.openlmis.requisition.dto.SupportedProgramDto;
 import org.openlmis.requisition.dto.UserDto;
-import org.openlmis.requisition.dto.VersionIdentityDto;
 import org.openlmis.requisition.dto.VersionObjectReferenceDto;
-import org.openlmis.requisition.dto.stockmanagement.StockCardRangeSummaryDto;
 import org.openlmis.requisition.exception.ValidationMessageException;
 import org.openlmis.requisition.i18n.MessageKeys;
 import org.openlmis.requisition.repository.RequisitionRepository;
 import org.openlmis.requisition.repository.custom.RequisitionSearchParams;
-import org.openlmis.requisition.service.PeriodService;
 import org.openlmis.requisition.service.PermissionService;
-import org.openlmis.requisition.service.ProofOfDeliveryService;
 import org.openlmis.requisition.service.RequisitionService;
-import org.openlmis.requisition.service.referencedata.ApproveProductsAggregator;
 import org.openlmis.requisition.service.referencedata.FacilityReferenceDataService;
 import org.openlmis.requisition.service.referencedata.FacilityTypeApprovedProductReferenceDataService;
-import org.openlmis.requisition.service.referencedata.IdealStockAmountReferenceDataService;
 import org.openlmis.requisition.service.referencedata.RequisitionGroupReferenceDataService;
 import org.openlmis.requisition.service.referencedata.RightReferenceDataService;
 import org.openlmis.requisition.service.referencedata.RoleReferenceDataService;
 import org.openlmis.requisition.service.referencedata.SupervisoryNodeReferenceDataService;
-import org.openlmis.requisition.service.stockmanagement.StockCardRangeSummaryStockManagementService;
-import org.openlmis.requisition.service.stockmanagement.StockOnHandRetrieverBuilderFactory;
 import org.openlmis.requisition.utils.AuthenticationHelper;
 import org.openlmis.requisition.utils.Message;
 import org.openlmis.requisition.web.QueryRequisitionSearchParams;
@@ -113,7 +98,6 @@ import org.openlmis.stockmanagement.exception.PermissionMessageException;
 import org.siglus.common.domain.RequisitionTemplateExtension;
 import org.siglus.common.dto.RequisitionTemplateExtensionDto;
 import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
-import org.siglus.common.util.SimulateAuthenticationHelper;
 import org.siglus.siglusapi.domain.ConsultationNumberLineItemDraft;
 import org.siglus.siglusapi.domain.FacilityExtension;
 import org.siglus.siglusapi.domain.KitUsageLineItemDraft;
@@ -129,7 +113,6 @@ import org.siglus.siglusapi.domain.UsageInformationLineItemDraft;
 import org.siglus.siglusapi.dto.OrderableExpirationDateDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionLineItemDto;
-import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.repository.FacilityExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionDraftRepository;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
@@ -145,7 +128,6 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.MultiValueMap;
@@ -161,11 +143,6 @@ public class SiglusRequisitionService {
   private final RequisitionService requisitionService;
   private final PermissionService permissionService;
   private final SiglusOrderableService siglusOrderableService;
-  private final PeriodService periodService;
-  private final StockCardRangeSummaryStockManagementService stockCardRangeSummaryStockManagementService;
-  private final StockOnHandRetrieverBuilderFactory stockOnHandRetrieverBuilderFactory;
-  private final ProofOfDeliveryService proofOfDeliveryService;
-  private final IdealStockAmountReferenceDataService idealStockAmountReferenceDataService;
   private final SiglusRequisitionRequisitionService siglusRequisitionRequisitionService;
   private final SiglusArchiveProductService archiveProductService;
   private final RequisitionTemplateExtensionRepository requisitionTemplateExtensionRepository;
@@ -173,7 +150,6 @@ public class SiglusRequisitionService {
   private final FacilityTypeApprovedProductReferenceDataService facilityTypeApprovedProductReferenceDataService;
   private final RequisitionRepository requisitionRepository;
   private final AuthenticationHelper authenticationHelper;
-  private final SimulateAuthenticationHelper simulateAuthenticationHelper;
   private final SiglusUsageReportService siglusUsageReportService;
   private final RequisitionDraftRepository draftRepository;
   private final OperatePermissionService operatePermissionService;
@@ -248,8 +224,9 @@ public class SiglusRequisitionService {
     permissionService.canInitOrAuthorizeRequisition(programId, facilityId);
     UserDto userDto = authenticationHelper.getCurrentUser();
     FacilityDto userFacility = requisitionController.findFacility(userDto.getHomeFacilityId(), profiler);
-    List<RequisitionLineItem> lineItemList = constructLineItem(existedRequisition, program, facility, orderableIds,
-        userFacility);
+
+    List<RequisitionLineItem> lineItemList = createLineItemWhenAddProduct(existedRequisition, program, facility,
+        orderableIds, userFacility);
     boolean isApprove = requisitionService.validateCanApproveRequisition(existedRequisition, userDto.getId())
         .isSuccess();
     boolean isInternalFacility = userDto.getHomeFacilityId().equals(existedRequisition.getFacilityId());
@@ -705,76 +682,15 @@ public class SiglusRequisitionService {
     return null;
   }
 
-  private List<RequisitionLineItem> constructLineItem(Requisition requisition, ProgramDto program,
+  private List<RequisitionLineItem> createLineItemWhenAddProduct(Requisition requisition, ProgramDto program,
       FacilityDto facility, List<UUID> orderableIds, FacilityDto userFacility) {
-    RequisitionTemplate requisitionTemplate = requisition.getTemplate();
-    Integer numberOfPreviousPeriodsToAverage = decrementOrZero(requisitionTemplate
-        .getNumberOfPeriodsToAverage());
-    List<StockCardRangeSummaryDto> stockCardRangeSummaryDtos = Collections.emptyList();
-    List<StockCardRangeSummaryDto> stockCardRangeSummariesToAverage = Collections.emptyList();
-    List<ProcessingPeriodDto> periods = Collections.emptyList();
-    List<Requisition> previousRequisitions = requisition.getPreviousRequisitions();
     List<ApprovedProductDto> approvedProducts = siglusApprovedReferenceDataService
         .getApprovedProducts(userFacility.getId(), program.getId(), orderableIds,
             requisition.getReportOnly() && Boolean.FALSE.equals(requisition.getEmergency()));
-    Map<UUID, List<ApprovedProductDto>> groupApprovedProduct =
-        approvedProducts.stream().collect(groupingBy(approvedProduct -> approvedProduct.getProgram().getId()));
-    if (requisitionTemplate.isPopulateStockOnHandFromStockCards() && Boolean.TRUE.equals(requisition.getEmergency())) {
-      stockCardRangeSummaryDtos = getStockCardRangeSummaryDtos(facility,
-          groupApprovedProduct, requisition.getActualStartDate(), requisition.getActualEndDate());
-      LocalDate startDateForCalculateAvg;
-      LocalDate endDateForCalculateAvg = requisition.getActualEndDate();
-      ProcessingPeriodDto period = periodService.getPeriod(requisition.getProcessingPeriodId());
-      if (CollectionUtils.isNotEmpty(previousRequisitions)) {
-        Set<UUID> periodIds = previousRequisitions.stream().map(Requisition::getProcessingPeriodId).collect(toSet());
-        periods = periodService.getPeriods(periodIds);
-        periods.add(period);
-        startDateForCalculateAvg = previousRequisitions.stream()
-            .min(Comparator.comparing(Requisition::getActualStartDate))
-            .orElseThrow(() -> new NotFoundException("Earlier Rquisition Not Found"))
-            .getActualStartDate();
-        if (Boolean.TRUE.equals(requisition.getEmergency())) {
-          List<Requisition> requisitions = requisitionService.searchAfterAuthorizedRequisitions(
-              requisition.getFacilityId(), requisition.getProgramId(), period.getId(), false);
-          endDateForCalculateAvg = requisitions.get(0).getActualEndDate();
-        }
-      } else {
-        startDateForCalculateAvg = period.getStartDate();
-        periods = newArrayList(period);
-      }
-      stockCardRangeSummariesToAverage = getStockCardRangeSummaryDtos(facility,
-          groupApprovedProduct, startDateForCalculateAvg, endDateForCalculateAvg);
-    } else if (numberOfPreviousPeriodsToAverage > previousRequisitions.size()) {
-      numberOfPreviousPeriodsToAverage = previousRequisitions.size();
-    }
-
-    OAuth2Authentication originAuth = simulateAuthenticationHelper.simulateCrossServiceAuth();
-    Map<UUID, Integer> orderableSoh = getOrderableSohMap(requisitionTemplate,
-        facility.getId(), requisition.getActualEndDate(), RequisitionLineItem.STOCK_ON_HAND, groupApprovedProduct);
-    Map<UUID, Integer> orderableBeginning = getOrderableSohMap(requisitionTemplate,
-        facility.getId(), requisition.getActualStartDate().minusDays(1),
-        RequisitionLineItem.BEGINNING_BALANCE, groupApprovedProduct);
-    simulateAuthenticationHelper.recoveryAuth(originAuth);
-
-    ProofOfDeliveryDto pod = null;
-    if (!isEmpty(previousRequisitions)) {
-      pod = proofOfDeliveryService.get(previousRequisitions.get(0));
-    }
-
-    final Map<UUID, Integer> idealStockAmounts = idealStockAmountReferenceDataService
-        .search(requisition.getFacilityId(), requisition.getProcessingPeriodId())
-        .stream()
-        .collect(toMap(isa -> isa.getCommodityType().getId(), IdealStockAmountDto::getAmount));
-
     List<RequisitionLineItem> lineItemList = new ArrayList<>();
     for (ApprovedProductDto approvedProductDto : approvedProducts) {
-      UUID orderableId = approvedProductDto.getOrderable().getId();
-      Integer stockOnHand = orderableSoh.get(orderableId);
-      Integer beginningBalances = orderableBeginning.get(orderableId);
-      lineItemList.add(requisition.constructLineItem(requisitionTemplate, stockOnHand,
-          beginningBalances, approvedProductDto, numberOfPreviousPeriodsToAverage,
-          idealStockAmounts, stockCardRangeSummaryDtos, stockCardRangeSummariesToAverage,
-          periods, pod, program.getCode(), facility.getType().getCode()));
+      lineItemList.add(requisition.createLineItemWhenAddProduct(requisition.getTemplate(), approvedProductDto,
+          program.getCode(), facility.getType().getCode()));
     }
     return lineItemList;
   }
@@ -816,54 +732,6 @@ public class SiglusRequisitionService {
     return lineItems.stream()
         .map(BaseEntity::getId)
         .collect(Collectors.toList());
-  }
-
-  private List<StockCardRangeSummaryDto> getStockCardRangeSummaryDtos(FacilityDto facility,
-      Map<UUID, List<ApprovedProductDto>> groupApprovedProduct, LocalDate startDate,
-      LocalDate endDate) {
-    return groupApprovedProduct.keySet().stream()
-        .map(programId -> {
-          Set<VersionIdentityDto> orderableIdentities = groupApprovedProduct.get(programId)
-              .stream()
-              .map(approveProduct -> {
-                OrderableDto orderableDto = approveProduct.getOrderable();
-                return new VersionIdentityDto(orderableDto.getId(),
-                    orderableDto.getVersionNumber());
-              }).collect(Collectors.toSet());
-          return stockCardRangeSummaryStockManagementService
-              .search(programId, facility.getId(),
-                  orderableIdentities, null,
-                  startDate, endDate);
-        })
-        .flatMap(Collection::stream)
-        .collect(toList());
-  }
-
-  private Map<UUID, Integer> getOrderableSohMap(RequisitionTemplate requisitionTemplate,
-      UUID facilityId, LocalDate date, String columnName,
-      Map<UUID, List<ApprovedProductDto>> groupApprovedProduct) {
-    return groupApprovedProduct.keySet().stream()
-        .map(programId -> stockOnHandRetrieverBuilderFactory
-            .getInstance(requisitionTemplate, columnName)
-            .forProgram(programId)
-            .forFacility(facilityId)
-            .forProducts(new ApproveProductsAggregator(groupApprovedProduct.get(programId), programId))
-            .asOfDate(date)
-            .build()
-            .get())
-        .map(Map::entrySet)
-        .flatMap(Collection::stream)
-        .collect(HashMap::new, (m, e) -> m.put(e.getKey(), e.getValue()), Map::putAll);
-  }
-
-  private Integer decrementOrZero(Integer numberOfPreviousPeriodsToAverage) {
-    // numberOfPeriodsToAverage is always >= 2 or null
-    if (numberOfPreviousPeriodsToAverage == null) {
-      numberOfPreviousPeriodsToAverage = 0;
-    } else {
-      numberOfPreviousPeriodsToAverage--;
-    }
-    return numberOfPreviousPeriodsToAverage;
   }
 
   private void initiateExpirationDate(List<BaseRequisitionLineItemDto> lineItems, UUID facilityId) {

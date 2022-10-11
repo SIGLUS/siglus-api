@@ -29,7 +29,6 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyCollectionOf;
-import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyVararg;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -1719,12 +1718,11 @@ public class SiglusRequisitionServiceTest {
     when(requisition.getProcessingPeriodId()).thenReturn(processingPeriodId);
     when(requisition.getActualStartDate()).thenReturn(LocalDate.of(2020, 1, 23));
     when(requisition.getActualEndDate()).thenReturn(LocalDate.of(2020, 1, 30));
-    List<Requisition> previousRequisions = new ArrayList<>();
-    previousRequisions.add(createRequisition());
-    when(requisition.getPreviousRequisitions()).thenReturn(previousRequisions);
+    List<Requisition> previousRequistions = new ArrayList<>();
+    previousRequistions.add(createRequisition());
+    when(requisition.getPreviousRequisitions()).thenReturn(previousRequistions);
     RequisitionLineItem lineItemCreated = new RequisitionLineItemDataBuilder().build();
-    when(requisition.constructLineItem(any(), anyInt(), anyInt(), any(), anyInt(), any(),
-        any(), any(), any(), any(), any(), any())).thenReturn(lineItemCreated);
+    when(requisition.createLineItemWhenAddProduct(any(), any(), any(), any())).thenReturn(lineItemCreated);
 
     return requisition;
   }
