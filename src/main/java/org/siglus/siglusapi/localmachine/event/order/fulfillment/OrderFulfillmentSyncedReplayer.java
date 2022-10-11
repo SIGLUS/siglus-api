@@ -66,12 +66,12 @@ import org.openlmis.requisition.service.referencedata.OrderableReferenceDataServ
 import org.siglus.common.domain.OrderExternal;
 import org.siglus.common.repository.OrderExternalRepository;
 import org.siglus.siglusapi.domain.OrderLineItemExtension;
-import org.siglus.siglusapi.domain.ProofsOfDeliveryExtension;
+import org.siglus.siglusapi.domain.PodExtension;
 import org.siglus.siglusapi.domain.RequisitionExtension;
 import org.siglus.siglusapi.domain.ShipmentLineItemsExtension;
 import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.OrdersRepository;
-import org.siglus.siglusapi.repository.ProofsOfDeliveryExtensionRepository;
+import org.siglus.siglusapi.repository.PodExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.repository.ShipmentLineItemsExtensionRepository;
 import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
@@ -99,7 +99,7 @@ public class OrderFulfillmentSyncedReplayer {
   private final ProofOfDeliveryRepository proofOfDeliveryRepository;
   private final ShipmentLineItemsExtensionRepository shipmentLineItemsExtensionRepository;
   private final SiglusProofOfDeliveryRepository siglusProofOfDeliveryRepository;
-  private final ProofsOfDeliveryExtensionRepository proofsOfDeliveryExtensionRepository;
+  private final PodExtensionRepository podExtensionRepository;
 
   @EventListener(value = {OrderFulfillmentSyncedEvent.class})
   public void replay(OrderFulfillmentSyncedEvent event) {
@@ -251,14 +251,14 @@ public class OrderFulfillmentSyncedReplayer {
   public void savePodExtension(UUID shipmentId, ShipmentExtensionRequest shipmentExtensionRequest) {
     ProofOfDelivery proofOfDelivery = siglusProofOfDeliveryRepository.findByShipmentId(shipmentId);
     UUID podId = proofOfDelivery.getId();
-    ProofsOfDeliveryExtension proofsOfDeliveryExtension = ProofsOfDeliveryExtension
+    PodExtension podExtension = PodExtension
         .builder()
         .podId(podId)
         .conferredBy(shipmentExtensionRequest.getConferredBy())
         .preparedBy(shipmentExtensionRequest.getPreparedBy())
         .build();
     log.info("save pod extension when confirm shipment, shipmentId: {}", shipmentId);
-    proofsOfDeliveryExtensionRepository.save(proofsOfDeliveryExtension);
+    podExtensionRepository.save(podExtension);
   }
 
   private void saveShipmentLineItemsExtensionWithLocation(OrderFulfillmentSyncedEvent event, Shipment shipment) {

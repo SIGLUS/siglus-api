@@ -80,7 +80,7 @@ import org.siglus.siglusapi.domain.PodLineItemsByLocation;
 import org.siglus.siglusapi.domain.PodLineItemsExtension;
 import org.siglus.siglusapi.domain.PodSubDraft;
 import org.siglus.siglusapi.domain.PodSubDraftLineItemsByLocation;
-import org.siglus.siglusapi.domain.ProofsOfDeliveryExtension;
+import org.siglus.siglusapi.domain.PodExtension;
 import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.GeographicLevelDto;
 import org.siglus.siglusapi.dto.GeographicZoneDto;
@@ -97,7 +97,7 @@ import org.siglus.siglusapi.repository.PodLineItemsExtensionRepository;
 import org.siglus.siglusapi.repository.PodLineItemsRepository;
 import org.siglus.siglusapi.repository.PodSubDraftLineItemsByLocationRepository;
 import org.siglus.siglusapi.repository.PodSubDraftRepository;
-import org.siglus.siglusapi.repository.ProofsOfDeliveryExtensionRepository;
+import org.siglus.siglusapi.repository.PodExtensionRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.repository.SiglusStockCardRepository;
 import org.siglus.siglusapi.repository.StockCardLineItemExtensionRepository;
@@ -172,7 +172,7 @@ public class SiglusPodServiceTest {
   private StatusChangeRepository requisitionStatusChangeRepository;
 
   @Mock
-  private ProofsOfDeliveryExtensionRepository podExtensionRepository;
+  private PodExtensionRepository podExtensionRepository;
 
   @Mock
   private PodLineItemsByLocationRepository podLineItemsByLocationRepository;
@@ -638,8 +638,8 @@ public class SiglusPodServiceTest {
     when(fulfillmentService.searchProofOfDelivery(any(), any())).thenReturn(buildMockPodDtoWithNoLineItems());
     ProofOfDeliveryDto expectedResponse = buildMockPodDtoWithNoLineItems();
     when(podExtensionRepository.findOne(
-        Example.of(ProofsOfDeliveryExtension.builder().podId(podId).build()))).thenReturn(
-        new ProofsOfDeliveryExtension());
+        Example.of(PodExtension.builder().podId(podId).build()))).thenReturn(
+        new PodExtension());
     // when
     PodExtensionResponse actualResponse = service.mergeSubDrafts(podId, defaultExpands);
     assertEquals(expectedResponse, actualResponse.getPodDto());
@@ -1006,14 +1006,14 @@ public class SiglusPodServiceTest {
   }
 
   private void mockPodExtensionQuery() {
-    Example<ProofsOfDeliveryExtension> podExtensionExample = Example.of(
-        ProofsOfDeliveryExtension.builder().podId(podId).build());
+    Example<PodExtension> podExtensionExample = Example.of(
+        PodExtension.builder().podId(podId).build());
     when(podExtensionRepository.findOne(podExtensionExample)).thenReturn(buildMockPodExtension());
   }
 
   private void mockPodExtensionQueryReturnNull() {
-    Example<ProofsOfDeliveryExtension> podExtensionExample = Example.of(
-        ProofsOfDeliveryExtension.builder().podId(podId).build());
+    Example<PodExtension> podExtensionExample = Example.of(
+        PodExtension.builder().podId(podId).build());
     when(podExtensionRepository.findOne(podExtensionExample)).thenReturn(null);
   }
 
@@ -1033,8 +1033,8 @@ public class SiglusPodServiceTest {
     return request;
   }
 
-  private ProofsOfDeliveryExtension buildMockPodExtension() {
-    return ProofsOfDeliveryExtension.builder()
+  private PodExtension buildMockPodExtension() {
+    return PodExtension.builder()
         .preparedBy(preparedBy)
         .conferredBy(conferredBy)
         .build();

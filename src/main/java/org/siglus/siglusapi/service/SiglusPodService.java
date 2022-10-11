@@ -71,7 +71,7 @@ import org.siglus.siglusapi.domain.PodLineItemsByLocation;
 import org.siglus.siglusapi.domain.PodLineItemsExtension;
 import org.siglus.siglusapi.domain.PodSubDraft;
 import org.siglus.siglusapi.domain.PodSubDraftLineItemsByLocation;
-import org.siglus.siglusapi.domain.ProofsOfDeliveryExtension;
+import org.siglus.siglusapi.domain.PodExtension;
 import org.siglus.siglusapi.domain.StockCardLineItemExtension;
 import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.GeographicZoneDto;
@@ -89,7 +89,7 @@ import org.siglus.siglusapi.repository.PodLineItemsExtensionRepository;
 import org.siglus.siglusapi.repository.PodLineItemsRepository;
 import org.siglus.siglusapi.repository.PodSubDraftLineItemsByLocationRepository;
 import org.siglus.siglusapi.repository.PodSubDraftRepository;
-import org.siglus.siglusapi.repository.ProofsOfDeliveryExtensionRepository;
+import org.siglus.siglusapi.repository.PodExtensionRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.repository.SiglusStockCardRepository;
 import org.siglus.siglusapi.repository.StockCardLineItemExtensionRepository;
@@ -157,7 +157,7 @@ public class SiglusPodService {
 
   private final SiglusRequisitionExtensionService requisitionExtensionService;
 
-  private final ProofsOfDeliveryExtensionRepository podExtensionRepository;
+  private final PodExtensionRepository podExtensionRepository;
 
   private final PodLineItemsByLocationRepository podLineItemsByLocationRepository;
 
@@ -193,7 +193,7 @@ public class SiglusPodService {
     ProofOfDeliveryDto podDto = getExpandedPodDtoById(id, expand);
     response.setPodDto(podDto);
 
-    ProofsOfDeliveryExtension podExtension = getPodExtensionByPodId(id);
+    PodExtension podExtension = getPodExtensionByPodId(id);
     if (Objects.nonNull(podExtension)) {
       response.setPreparedBy(podExtension.getPreparedBy());
       response.setConferredBy(podExtension.getConferredBy());
@@ -307,7 +307,7 @@ public class SiglusPodService {
     checkAuth();
     checkIfSubDraftsSubmitted(podId);
     ProofOfDeliveryDto expandedPodDto = getExpandedPodDtoById(podId, expand);
-    ProofsOfDeliveryExtension podExtensionBy = getPodExtensionByPodId(podId);
+    PodExtension podExtensionBy = getPodExtensionByPodId(podId);
     PodExtensionResponse podExtensionResponse = new PodExtensionResponse();
     podExtensionResponse.setPodDto(expandedPodDto);
     if (ObjectUtils.isEmpty(podExtensionBy)) {
@@ -357,15 +357,15 @@ public class SiglusPodService {
     calculatedStocksOnHandByLocationService.calculateStockOnHandByLocation(stockEventDto);
   }
 
-  private ProofsOfDeliveryExtension getPodExtensionByPodId(UUID podId) {
-    Example<ProofsOfDeliveryExtension> example = Example.of(ProofsOfDeliveryExtension.builder().podId(podId).build());
+  private PodExtension getPodExtensionByPodId(UUID podId) {
+    Example<PodExtension> example = Example.of(PodExtension.builder().podId(podId).build());
     return podExtensionRepository.findOne(example);
   }
 
   private void savePodExtension(PodExtensionRequest request) {
-    ProofsOfDeliveryExtension podExtension = getPodExtensionByPodId(request.getPodDto().getId());
+    PodExtension podExtension = getPodExtensionByPodId(request.getPodDto().getId());
     if (Objects.isNull(podExtension)) {
-      podExtension = ProofsOfDeliveryExtension.builder().podId(request.getPodDto().getId()).build();
+      podExtension = PodExtension.builder().podId(request.getPodDto().getId()).build();
     }
     podExtension.setPreparedBy(request.getPreparedBy());
     podExtension.setConferredBy(request.getConferredBy());
@@ -401,7 +401,7 @@ public class SiglusPodService {
       }
     }
 
-    ProofsOfDeliveryExtension podExtension = getPodExtensionByPodId(podId);
+    PodExtension podExtension = getPodExtensionByPodId(podId);
     if (Objects.nonNull(podExtension)) {
       response.setPreparedBy(podExtension.getPreparedBy());
       response.setConferredBy(podExtension.getConferredBy());
@@ -846,7 +846,7 @@ public class SiglusPodService {
     ProofOfDeliveryWithLocationResponse podWithLocationDto = new ProofOfDeliveryWithLocationResponse();
     PodExtensionResponse podExtensionResponse = new PodExtensionResponse();
     podExtensionResponse.setPodDto(podDto);
-    ProofsOfDeliveryExtension podExtension = getPodExtensionByPodId(podDto.getId());
+    PodExtension podExtension = getPodExtensionByPodId(podDto.getId());
     if (Objects.nonNull(podExtension)) {
       podExtensionResponse.setPreparedBy(podExtension.getPreparedBy());
       podExtensionResponse.setConferredBy(podExtension.getConferredBy());

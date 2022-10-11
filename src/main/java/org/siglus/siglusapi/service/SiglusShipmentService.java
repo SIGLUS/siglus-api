@@ -51,13 +51,13 @@ import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
 import org.openlmis.stockmanagement.repository.StockCardLineItemRepository;
 import org.openlmis.stockmanagement.repository.StockCardRepository;
 import org.siglus.siglusapi.domain.OrderLineItemExtension;
-import org.siglus.siglusapi.domain.ProofsOfDeliveryExtension;
+import org.siglus.siglusapi.domain.PodExtension;
 import org.siglus.siglusapi.domain.ShipmentLineItemsExtension;
 import org.siglus.siglusapi.domain.StockCardLineItemExtension;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
-import org.siglus.siglusapi.repository.ProofsOfDeliveryExtensionRepository;
+import org.siglus.siglusapi.repository.PodExtensionRepository;
 import org.siglus.siglusapi.repository.ShipmentLineItemsExtensionRepository;
 import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
 import org.siglus.siglusapi.repository.StockCardLineItemExtensionRepository;
@@ -91,7 +91,7 @@ public class SiglusShipmentService {
 
   private final SiglusProofOfDeliveryRepository siglusProofOfDeliveryRepository;
 
-  private final ProofsOfDeliveryExtensionRepository proofsOfDeliveryExtensionRepository;
+  private final PodExtensionRepository podExtensionRepository;
 
   private final StockCardLineItemRepository stockCardLineItemRepository;
 
@@ -332,14 +332,14 @@ public class SiglusShipmentService {
   private void savePodExtension(UUID shipmentId, ShipmentExtensionRequest shipmentExtensionRequest) {
     ProofOfDelivery proofOfDelivery = siglusProofOfDeliveryRepository.findByShipmentId(shipmentId);
     UUID podId = proofOfDelivery.getId();
-    ProofsOfDeliveryExtension proofsOfDeliveryExtension = ProofsOfDeliveryExtension
+    PodExtension podExtension = PodExtension
         .builder()
         .podId(podId)
         .conferredBy(shipmentExtensionRequest.getConferredBy())
         .preparedBy(shipmentExtensionRequest.getPreparedBy())
         .build();
     log.info("save pod extension when confirm shipment, shipmentId: {}", shipmentId);
-    proofsOfDeliveryExtensionRepository.save(proofsOfDeliveryExtension);
+    podExtensionRepository.save(podExtension);
   }
 
   private void mergeShipmentLineItems(ShipmentDto shipmentDto) {

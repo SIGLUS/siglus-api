@@ -47,7 +47,7 @@ import org.siglus.siglusapi.localmachine.event.order.fulfillment.OrderFulfillmen
 import org.siglus.siglusapi.localmachine.eventstore.PayloadSerializer;
 import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.OrdersRepository;
-import org.siglus.siglusapi.repository.ProofsOfDeliveryExtensionRepository;
+import org.siglus.siglusapi.repository.PodExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.repository.ShipmentLineItemsExtensionRepository;
 import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
@@ -93,7 +93,7 @@ public class OrderFulfillmentSyncedReplayerTest extends FileBasedTest {
   @Mock
   private SiglusNotificationService siglusNotificationService;
   @Mock
-  private ProofsOfDeliveryExtensionRepository proofsOfDeliveryExtensionRepository;
+  private PodExtensionRepository podExtensionRepository;
   private final UUID requisitionId = UUID.randomUUID();
 
   private final UUID facilityId = UUID.randomUUID();
