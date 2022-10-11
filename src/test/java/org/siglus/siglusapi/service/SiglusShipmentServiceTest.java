@@ -80,6 +80,7 @@ import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.ProofsOfDeliveryExtensionRepository;
 import org.siglus.siglusapi.repository.ShipmentLineItemsExtensionRepository;
 import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
+import org.siglus.siglusapi.repository.SiglusStockCardRepository;
 import org.siglus.siglusapi.repository.StockCardLineItemExtensionRepository;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.web.request.ShipmentExtensionRequest;
@@ -147,6 +148,9 @@ public class SiglusShipmentServiceTest {
 
   @Mock
   private StockCardLineItemExtensionRepository stockCardLineItemExtensionRepository;
+
+  @Mock
+  private SiglusStockCardRepository siglusStockCardRepository;
 
   private final UUID orderId = UUID.randomUUID();
 
@@ -471,6 +475,8 @@ public class SiglusShipmentServiceTest {
         .thenReturn(buildStockCard());
     when(stockCardLineItemRepository.findLatestByStockCardIds(any()))
         .thenReturn(Lists.newArrayList(buildStockCardLineItem()));
+    when(siglusStockCardRepository.findByFacilityIdAndOrderableLotIdPairs(any(), any()))
+        .thenReturn(Lists.newArrayList(buildStockCard()));
 
     // when
     siglusShipmentService.createOrderAndShipmentByLocation(false, shipmentExtensionRequest);
@@ -594,6 +600,8 @@ public class SiglusShipmentServiceTest {
   private StockCard buildStockCard() {
     StockCard stockCard = new StockCard();
     stockCard.setId(stockCardId);
+    stockCard.setOrderableId(orderableId);
+    stockCard.setLotId(lotId);
     return stockCard;
   }
 

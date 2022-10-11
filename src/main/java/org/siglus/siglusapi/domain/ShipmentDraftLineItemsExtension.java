@@ -41,4 +41,6 @@ public class ShipmentDraftLineItemsExtension extends BaseEntity {
   private String locationCode;
 
   private String area;
+
+  private Integer quantityShipped;
 }

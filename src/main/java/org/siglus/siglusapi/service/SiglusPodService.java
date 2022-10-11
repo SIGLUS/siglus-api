@@ -198,8 +198,6 @@ public class SiglusPodService {
       response.setPreparedBy(podExtension.getPreparedBy());
       response.setConferredBy(podExtension.getConferredBy());
     }
-    mergeSamePodLineItems(podDto);
-    mergeSameShipmentLineItems(podDto.getShipment());
     return response;
   }
 
@@ -219,9 +217,7 @@ public class SiglusPodService {
   }
 
   public Page<ProofOfDeliveryDto> getAllProofsOfDelivery(UUID orderId, UUID shipmentId, Pageable pageable) {
-    Page<ProofOfDeliveryDto> podDto = podController.getAllProofsOfDelivery(orderId, shipmentId, pageable);
-    mergeSamePodLineItems(podDto.getContent().get(0));
-    return podDto;
+    return podController.getAllProofsOfDelivery(orderId, shipmentId, pageable);
   }
 
   @Transactional
@@ -265,8 +261,6 @@ public class SiglusPodService {
     List<PodLineItemWithLocationDto> podLineItemWithLocationDtos =
         getSubDraftLineItemsWithLocation(subDraftLineItemsIds);
     podWithLocationDto.setPodLineItemLocation(podLineItemWithLocationDtos);
-    mergeSamePodLineItems(podWithLocationDto.getPodDto());
-    mergeSameShipmentLineItems(podWithLocationDto.getPodDto().getShipment());
     return podWithLocationDto;
   }
 
@@ -927,60 +921,37 @@ public class SiglusPodService {
       }
     }));
 
-    Map<UUID, PodLineItemWithLocationDto> podLineItemIdToLocation = new HashMap<>();
-    request.getPodLineItemLocation().forEach(podLineItemLocation ->
-        podLineItemIdToLocation.put(podLineItemLocation.getPodLineItemId(), podLineItemLocation));
+    Map<UUID, List<PodLineItemWithLocationDto>> podLineItemIdToLocation = new HashMap<>();
+    request.getPodLineItemLocation().forEach(podLineItemLocation -> {
+      if (podLineItemIdToLocation.containsKey(podLineItemLocation.getPodLineItemId())) {
+        List<PodLineItemWithLocationDto> podLineItemWithLocationDtos = podLineItemIdToLocation.get(
+            podLineItemLocation.getPodLineItemId());
+        podLineItemWithLocationDtos.add(podLineItemLocation);
+        podLineItemIdToLocation.put(podLineItemLocation.getPodLineItemId(), podLineItemWithLocationDtos);
+      } else {
+        podLineItemIdToLocation.put(podLineItemLocation.getPodLineItemId(), Lists.newArrayList(podLineItemLocation));
+      }
+    });
 
-    Map<UUID, PodLineItemWithLocationDto> stockCardLineItemIdToPodLocation = new HashMap<>();
+    Map<UUID, List<PodLineItemWithLocationDto>> stockCardLineItemIdToPodLocation = new HashMap<>();
     stockCardLineItemIdToPodLineItemId.forEach((stockCardLineItemId, podLineItemId) ->
         stockCardLineItemIdToPodLocation.put(stockCardLineItemId, podLineItemIdToLocation.get(podLineItemId)));
 
     List<StockCardLineItemExtension> stockCardLineItemExtensions = Lists.newArrayList();
-    stockCardLineItemIdToPodLocation.forEach((stockCardLineItemId, podLocation) -> {
-      StockCardLineItemExtension stockCardLineItemExtension = StockCardLineItemExtension
-          .builder()
-          .stockCardLineItemId(stockCardLineItemId)
-          .locationCode(podLocation.getLocationCode())
-          .area(podLocation.getArea())
-          .build();
-      stockCardLineItemExtensions.add(stockCardLineItemExtension);
+    stockCardLineItemIdToPodLocation.forEach((stockCardLineItemId, podLocationList) -> {
+      podLocationList.forEach(podLocation -> {
+        StockCardLineItemExtension stockCardLineItemExtension = StockCardLineItemExtension
+            .builder()
+            .stockCardLineItemId(stockCardLineItemId)
+            .locationCode(podLocation.getLocationCode())
+            .area(podLocation.getArea())
+            .build();
+        stockCardLineItemExtensions.add(stockCardLineItemExtension);
+      });
     });
     log.info("save into stock card line item by location when submit pod; size: {}",
         stockCardLineItemExtensions.size());
     stockCardLineItemExtensionRepository.save(stockCardLineItemExtensions);
-  }
-
-  private void mergeSamePodLineItems(ProofOfDeliveryDto podDto) {
-    List<Importer> lineItems = podDto.getLineItems();
-    Map<String, Importer> uniqueKeyToPodDto = new HashMap<>();
-    lineItems.forEach(lineItem -> {
-      String key = getOrderableLotIdPair(lineItem.getOrderableIdentity().getId(), lineItem.getLotId());
-      uniqueKeyToPodDto.put(key, uniqueKeyToPodDto.getOrDefault(key, lineItem));
-    });
-    List<ProofOfDeliveryLineItemDto> newLineItems = Lists.newArrayList();
-    uniqueKeyToPodDto.forEach((key, value) -> {
-      ProofOfDeliveryLineItemDto proofOfDeliveryLineItemDto = new ProofOfDeliveryLineItemDto();
-      BeanUtils.copyProperties(value, proofOfDeliveryLineItemDto);
-      newLineItems.add(proofOfDeliveryLineItemDto);
-    });
-    podDto.setLineItems(newLineItems);
-  }
-
-  private void mergeSameShipmentLineItems(ShipmentObjectReferenceDto shipmentDto) {
-    List<ShipmentLineItemDto> shipmentLineItems = shipmentDto.getLineItems();
-    Map<String, ShipmentLineItemDto> uniqueKeyToShipmentDto = new HashMap<>();
-    shipmentLineItems.forEach(shipmentLineItem -> {
-      String key = getOrderableLotIdPair(shipmentLineItem.getOrderable().getId(), shipmentLineItem.getLotId());
-      if (uniqueKeyToShipmentDto.containsKey(key)) {
-        ShipmentLineItemDto shipmentLineItemDto = uniqueKeyToShipmentDto.get(key);
-        Long quantityShipped = shipmentLineItemDto.getQuantityShipped() + shipmentLineItem.getQuantityShipped();
-        shipmentLineItemDto.setQuantityShipped(quantityShipped);
-        uniqueKeyToShipmentDto.put(key, shipmentLineItemDto);
-      } else {
-        uniqueKeyToShipmentDto.put(key, shipmentLineItem);
-      }
-    });
-    shipmentDto.setLineItems(new ArrayList<>(uniqueKeyToShipmentDto.values()));
   }
 
   private String getOrderableLotIdPair(UUID orderableId, UUID lotId) {

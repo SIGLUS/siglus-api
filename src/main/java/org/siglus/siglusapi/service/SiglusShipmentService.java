@@ -63,8 +63,10 @@ import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
 import org.siglus.siglusapi.repository.StockCardLineItemExtensionRepository;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.web.request.ShipmentExtensionRequest;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 
 @Slf4j
 @Service
@@ -114,29 +116,16 @@ public class SiglusShipmentService {
       String uniqueKey = buildForUniqueKey(shipmentLineItemDto);
       uniqueKeyMap.put(uniqueKey, shipmentLineItemDto);
     });
+    mergeShipmentLineItems(shipmentExtensionRequest.getShipment());
     ShipmentDto confirmedShipmentDto = createOrderAndConfirmShipment(isSubOrder,
         shipmentExtensionRequest.getShipment());
-    List<ShipmentLineItemsExtension> shipmentLineItemsByLocations = Lists.newArrayList();
     fulfillLocationInfo(uniqueKeyMap, confirmedShipmentDto);
-    confirmedShipmentDto.lineItems().forEach(shipmentLineItemDto -> {
-      UUID lineItemId = shipmentLineItemDto.getId();
-      String locationCode = shipmentLineItemDto.getLocation().getLocationCode();
-      String area = shipmentLineItemDto.getLocation().getArea();
-      ShipmentLineItemsExtension shipmentLineItemsByLocation = ShipmentLineItemsExtension
-          .builder()
-          .shipmentLineItemId(lineItemId)
-          .locationCode(locationCode)
-          .area(area)
-          .build();
-      shipmentLineItemsByLocations.add(shipmentLineItemsByLocation);
-    });
-    log.info("create shipment line item by location, size: {}", shipmentLineItemsByLocations.size());
-    shipmentLineItemsExtensionRepository.save(shipmentLineItemsByLocations);
+    List<ShipmentLineItemDto> shipmentLineItems = new ArrayList<>(uniqueKeyMap.values());
+    saveToShipmentLineItemExtension(shipmentLineItems);
     UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
-    calculatedStocksOnHandByLocationService.calculateStockOnHandByLocationForShipment(confirmedShipmentDto.lineItems(),
-        facilityId);
+    calculatedStocksOnHandByLocationService.calculateStockOnHandByLocationForShipment(shipmentLineItems, facilityId);
     savePodExtension(confirmedShipmentDto.getId(), shipmentExtensionRequest);
-    saveShipmentLineItemsWithLocation(confirmedShipmentDto.lineItems(), facilityId);
+    saveShipmentLineItemsWithLocation(shipmentLineItems, facilityId);
     return confirmedShipmentDto;
   }
 
@@ -144,19 +133,17 @@ public class SiglusShipmentService {
     for (ShipmentLineItemDto lineItemDto : shipmentDto.lineItems()) {
       String newKey = buildForUniqueKey(lineItemDto);
       List<ShipmentLineItemDto> lineItemDtos = (List<ShipmentLineItemDto>) uniqueKeyMap.get(newKey);
-      if (null != lineItemDtos.get(0).getLocation()) {
-        lineItemDto.setLocation(lineItemDtos.get(0).getLocation());
-        uniqueKeyMap.remove(newKey, lineItemDtos.get(0));
+      if (!CollectionUtils.isEmpty(lineItemDtos)) {
+        lineItemDtos.forEach(m -> m.setId(lineItemDto.getId()));
       }
     }
   }
 
   private String buildForUniqueKey(ShipmentLineItemDto shipmentLineItemDto) {
     if (null == shipmentLineItemDto.getLot()) {
-      return shipmentLineItemDto.getOrderable().getId() + "&" + shipmentLineItemDto.getQuantityShipped();
+      return shipmentLineItemDto.getOrderable().getId().toString();
     }
-    return shipmentLineItemDto.getLot().getId() + "&" + shipmentLineItemDto.getOrderable().getId()
-        + "&" + shipmentLineItemDto.getQuantityShipped();
+    return shipmentLineItemDto.getLot().getId() + "&" + shipmentLineItemDto.getOrderable().getId();
   }
 
   @Transactional
@@ -298,37 +285,44 @@ public class SiglusShipmentService {
 
   private void saveShipmentLineItemsWithLocation(List<ShipmentLineItemDto> shipmentLineItems, UUID facilityId) {
     Map<UUID, UUID> shipmentLineItemIdToStockCardId = new HashMap<>();
-    Map<UUID, ShipmentLineItemDto> shipmentLineItemIdToDto = new HashMap<>();
+    Map<UUID, List<ShipmentLineItemDto>> shipmentLineItemIdToDtos = new HashMap<>();
     shipmentLineItems.forEach(shipmentLineItem -> {
       UUID orderableId = shipmentLineItem.getOrderable().getId();
       UUID lotId = shipmentLineItem.getLotId();
       StockCard stockCard = stockCardRepository.findByFacilityIdAndOrderableIdAndLotId(
           facilityId, orderableId, lotId);
       shipmentLineItemIdToStockCardId.put(shipmentLineItem.getId(), stockCard.getId());
-      shipmentLineItemIdToDto.put(shipmentLineItem.getId(), shipmentLineItem);
+      if (shipmentLineItemIdToDtos.containsKey(shipmentLineItem.getId())) {
+        List<ShipmentLineItemDto> shipmentLineItemDtos = shipmentLineItemIdToDtos.get(shipmentLineItem.getId());
+        shipmentLineItemDtos.add(shipmentLineItem);
+        shipmentLineItemIdToDtos.put(shipmentLineItem.getId(), shipmentLineItemDtos);
+      } else {
+        shipmentLineItemIdToDtos.put(shipmentLineItem.getId(), Lists.newArrayList(shipmentLineItem));
+      }
     });
 
     List<StockCardLineItem> stockCardLineItems = stockCardLineItemRepository
         .findLatestByStockCardIds(shipmentLineItemIdToStockCardId.values());
     Map<UUID, StockCardLineItem> shipmentLineItemIdToStockCardLineItem = new HashMap<>();
-    shipmentLineItemIdToStockCardId.forEach((shipmentLineItemId, stockCardId) -> {
-      stockCardLineItems.stream()
-          .filter(m -> m.getStockCard().getId().equals(stockCardId))
-          .findFirst()
-          .ifPresent(
-              stockCardLineItem -> shipmentLineItemIdToStockCardLineItem.put(shipmentLineItemId, stockCardLineItem));
-    });
+    shipmentLineItemIdToStockCardId.forEach((shipmentLineItemId, stockCardId) ->
+        stockCardLineItems.stream()
+        .filter(m -> m.getStockCard().getId().equals(stockCardId))
+        .findFirst()
+        .ifPresent(
+            stockCardLineItem -> shipmentLineItemIdToStockCardLineItem.put(shipmentLineItemId, stockCardLineItem)));
 
     List<StockCardLineItemExtension> stockCardLineItemExtensions = Lists.newArrayList();
-    shipmentLineItemIdToStockCardLineItem.forEach((shipmentLineItemId, stockCardLineItem) -> {
-      if (shipmentLineItemIdToDto.containsKey(shipmentLineItemId)) {
-        StockCardLineItemExtension stockCardLineItemExtension = StockCardLineItemExtension
-            .builder()
-            .stockCardLineItemId(stockCardLineItem.getId())
-            .locationCode(shipmentLineItemIdToDto.get(shipmentLineItemId).getLocation().getLocationCode())
-            .area(shipmentLineItemIdToDto.get(shipmentLineItemId).getLocation().getArea())
-            .build();
-        stockCardLineItemExtensions.add(stockCardLineItemExtension);
+    shipmentLineItemIdToDtos.forEach((shipmentLineItemId, shipmentLineItemDtoList) -> {
+      if (shipmentLineItemIdToStockCardLineItem.containsKey(shipmentLineItemId)) {
+        shipmentLineItemDtoList.forEach(shipmentLineItemDto -> {
+          StockCardLineItemExtension stockCardLineItemExtension = StockCardLineItemExtension
+              .builder()
+              .stockCardLineItemId(shipmentLineItemIdToStockCardLineItem.get(shipmentLineItemId).getId())
+              .area(shipmentLineItemDto.getLocation().getArea())
+              .locationCode(shipmentLineItemDto.getLocation().getLocationCode())
+              .build();
+          stockCardLineItemExtensions.add(stockCardLineItemExtension);
+        });
       }
     });
     log.info("save to stock card line item by location; size: {}", stockCardLineItemExtensions.size());
@@ -346,5 +340,52 @@ public class SiglusShipmentService {
         .build();
     log.info("save pod extension when confirm shipment, shipmentId: {}", shipmentId);
     proofsOfDeliveryExtensionRepository.save(proofsOfDeliveryExtension);
+  }
+
+  private void mergeShipmentLineItems(ShipmentDto shipmentDto) {
+    List<ShipmentLineItemDto> lineItemDtos = shipmentDto.lineItems();
+    List<ShipmentLineItemDto> newLineItemDtos = new ArrayList<>();
+    lineItemDtos.forEach(lineItem -> {
+      ShipmentLineItemDto shipmentLineItemDto = new ShipmentLineItemDto();
+      BeanUtils.copyProperties(lineItem, shipmentLineItemDto);
+      newLineItemDtos.add(shipmentLineItemDto);
+    });
+    Map<String, ShipmentLineItemDto> uniqueKeyToShipmentDto = new HashMap<>();
+    newLineItemDtos.forEach(shipmentLineItem -> {
+      String key = buildForUniqueKey(shipmentLineItem);
+      if (uniqueKeyToShipmentDto.containsKey(key)) {
+        ShipmentLineItemDto shipmentLineItemDto = uniqueKeyToShipmentDto.get(key);
+        Long quantityShipped = shipmentLineItem.getQuantityShipped() + shipmentLineItemDto.getQuantityShipped();
+        if (null != shipmentLineItemDto.getId()) {
+          shipmentLineItemDto.setQuantityShipped(quantityShipped);
+          uniqueKeyToShipmentDto.put(key, shipmentLineItemDto);
+        } else {
+          shipmentLineItem.setQuantityShipped(quantityShipped);
+          uniqueKeyToShipmentDto.put(key, shipmentLineItem);
+        }
+      } else {
+        uniqueKeyToShipmentDto.put(key, shipmentLineItem);
+      }
+    });
+    shipmentDto.setLineItems(new ArrayList<>(uniqueKeyToShipmentDto.values()));
+  }
+
+  private void saveToShipmentLineItemExtension(List<ShipmentLineItemDto> shipmentLineItems) {
+    List<ShipmentLineItemsExtension> shipmentLineItemsByLocations = Lists.newArrayList();
+    shipmentLineItems.forEach(shipmentLineItemDto -> {
+      UUID lineItemId = shipmentLineItemDto.getId();
+      String locationCode = shipmentLineItemDto.getLocation().getLocationCode();
+      String area = shipmentLineItemDto.getLocation().getArea();
+      ShipmentLineItemsExtension shipmentLineItemsByLocation = ShipmentLineItemsExtension
+          .builder()
+          .shipmentLineItemId(lineItemId)
+          .locationCode(locationCode)
+          .area(area)
+          .quantityShipped(shipmentLineItemDto.getQuantityShipped().intValue())
+          .build();
+      shipmentLineItemsByLocations.add(shipmentLineItemsByLocation);
+    });
+    log.info("create shipment line item by location, size: {}", shipmentLineItemsByLocations.size());
+    shipmentLineItemsExtensionRepository.save(shipmentLineItemsByLocations);
   }
 }

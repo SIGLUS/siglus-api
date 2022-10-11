@@ -236,11 +236,12 @@ public class SiglusShipmentDraftServiceTest {
   @Test
   public void shouldGetShipmentDraftByLocation() {
     // given
-    ShipmentDraftDto draftDto = new ShipmentDraftDto();
     ShipmentLineItemDto shipmentLineItemDto = new ShipmentLineItemDto();
     LocationDto locationDto = LocationDto.builder().area(area).locationCode(locationCode).build();
     shipmentLineItemDto.setLocation(locationDto);
     shipmentLineItemDto.setId(lineItemId);
+    shipmentLineItemDto.setQuantityShipped(10L);
+    ShipmentDraftDto draftDto = new ShipmentDraftDto();
     draftDto.setLineItems(newArrayList(shipmentLineItemDto));
     OrderObjectReferenceDto orderDto = new OrderObjectReferenceDto(orderId);
     draftDto.setOrder(orderDto);
@@ -252,6 +253,7 @@ public class SiglusShipmentDraftServiceTest {
     shipmentDraftLineItemsByLocation.setArea(area);
     shipmentDraftLineItemsByLocation.setShipmentDraftLineItemId(lineItemId);
     shipmentDraftLineItemsByLocation.setId(lineItemId);
+    shipmentDraftLineItemsByLocation.setQuantityShipped(10);
     List<UUID> lineItemIds = shipmentLineItemDtos.stream().map(ShipmentLineItemDto::getId).collect(Collectors.toList());
     when(shipmentDraftLineItemsByLocationRepository.findByShipmentDraftLineItemIdIn(lineItemIds))
         .thenReturn(newArrayList(shipmentDraftLineItemsByLocation));
