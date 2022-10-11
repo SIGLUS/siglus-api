@@ -63,6 +63,7 @@ import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
 import org.openlmis.stockmanagement.web.Pagination;
 import org.siglus.siglusapi.domain.BasicProductCode;
+import org.siglus.siglusapi.domain.CustomProductsRegimens;
 import org.siglus.siglusapi.domain.ProgramOrderablesExtension;
 import org.siglus.siglusapi.domain.ProgramRealProgram;
 import org.siglus.siglusapi.dto.ApprovedProductDto;
@@ -74,6 +75,7 @@ import org.siglus.siglusapi.dto.fc.FcIntegrationResultDto;
 import org.siglus.siglusapi.dto.fc.ProductInfoDto;
 import org.siglus.siglusapi.dto.fc.ResponseBaseDto;
 import org.siglus.siglusapi.repository.BasicProductCodeRepository;
+import org.siglus.siglusapi.repository.CustomProductsRegimensRepository;
 import org.siglus.siglusapi.repository.ProgramOrderablesExtensionRepository;
 import org.siglus.siglusapi.repository.ProgramRealProgramRepository;
 import org.siglus.siglusapi.service.SiglusOrderableService;
@@ -135,6 +137,9 @@ public class FcProductServiceTest {
 
   @Mock
   private CacheManager cacheManager;
+
+  @Mock
+  private CustomProductsRegimensRepository customProductsRegimensRepository;
 
   private final Pageable pageable = new PageRequest(0, Integer.MAX_VALUE);
 
@@ -494,5 +499,12 @@ public class FcProductServiceTest {
         .isSentinel(isTracer)
         .isKit(true)
         .build();
+  }
+
+  @Test
+  public void shouldSelectCustomProductsRegimens() {
+    CustomProductsRegimens customProductsRegimens = customProductsRegimensRepository
+        .findCustomProductsRegimensByCode("08S01");
+    System.out.println(customProductsRegimens);
   }
 }
