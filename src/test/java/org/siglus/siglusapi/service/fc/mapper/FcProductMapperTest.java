@@ -31,14 +31,19 @@ import com.google.common.collect.ImmutableMap;
 import java.util.Collections;
 import java.util.Set;
 import org.junit.Test;
+import org.mockito.Mock;
 import org.openlmis.referencedata.dto.ProgramOrderableDto;
 import org.siglus.siglusapi.dto.OrderableDisplayCategoryDto;
 import org.siglus.siglusapi.dto.fc.AreaDto;
 import org.siglus.siglusapi.dto.fc.ProductInfoDto;
+import org.siglus.siglusapi.repository.CustomProductsRegimensRepository;
 
 public class FcProductMapperTest {
 
   private static final String CATEGORY_CODE = "category-code";
+
+  @Mock
+  private CustomProductsRegimensRepository customProductsRegimensRepository;
 
   @Test
   public void shouldReturnDefaultCategoryWhenProductCategoryCodeIsUnknown() {
@@ -88,7 +93,7 @@ public class FcProductMapperTest {
 
     Set<ProgramOrderableDto> programOrderableDtos =
         new FcProductMapper(null, null,
-            null).getProgramOrderablesFrom(productInfo);
+            null).getProgramOrderablesFrom(productInfo, customProductsRegimensRepository);
 
     assertThat(programOrderableDtos).isEmpty();
   }
@@ -98,8 +103,8 @@ public class FcProductMapperTest {
     ProductInfoDto productInfo = ProductInfoDto.builder().areas(emptyList()).status("inActivo").build();
 
     Set<ProgramOrderableDto> programOrderableDtos =
-        new FcProductMapper(null, null,
-            null).getProgramOrderablesFrom(productInfo);
+        new FcProductMapper(null, null, null)
+            .getProgramOrderablesFrom(productInfo, customProductsRegimensRepository);
 
     assertThat(programOrderableDtos).isEmpty();
   }
@@ -110,9 +115,10 @@ public class FcProductMapperTest {
         .build();
     FcProductMapper fcProductMapper = mock(FcProductMapper.class);
     given(fcProductMapper.getProgramCodes(productInfo)).willReturn(emptySet());
-    given(fcProductMapper.getProgramOrderablesFrom(productInfo)).willCallRealMethod();
+    given(fcProductMapper.getProgramOrderablesFrom(productInfo, customProductsRegimensRepository)).willCallRealMethod();
 
-    Set<ProgramOrderableDto> programOrderableDtos = fcProductMapper.getProgramOrderablesFrom(productInfo);
+    Set<ProgramOrderableDto> programOrderableDtos = fcProductMapper
+        .getProgramOrderablesFrom(productInfo, customProductsRegimensRepository);
 
     assertThat(programOrderableDtos).isEmpty();
   }

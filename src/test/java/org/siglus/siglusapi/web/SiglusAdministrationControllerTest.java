@@ -140,19 +140,21 @@ public class SiglusAdministrationControllerTest {
 
   @Test
   public void shouldChangeFacilityToWebWhenCall() {
-    siglusAdministrationsController.toWeb(facilityId);
+    siglusAdministrationsController.changeFacility(facilityId,
+        new DeviceTypeRequest(FacilityDeviceTypeEnum.WEB));
     verify(siglusAdministrationsService).changeToWeb(facilityId);
   }
 
   @Test
   public void shouldChangeFacilityToAndroidWhenCall() {
-    siglusAdministrationsController.toAndroid(facilityId);
+    siglusAdministrationsController.changeFacility(facilityId, new DeviceTypeRequest(FacilityDeviceTypeEnum.ANDROID));
     verify(siglusAdministrationsService).changeToAndroid(facilityId);
   }
 
   @Test
   public void shouldChangeFacilityToLocalMachineWhenCall() {
-    siglusAdministrationsController.toLocalMachine(facilityId);
+    siglusAdministrationsController.changeFacility(facilityId,
+        new DeviceTypeRequest(FacilityDeviceTypeEnum.LOCAL_MACHINE));
     verify(siglusAdministrationsService).changeToLocalMachine(facilityId);
   }
 

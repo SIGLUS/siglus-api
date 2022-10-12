@@ -30,6 +30,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyCollectionOf;
 import static org.mockito.Matchers.anyVararg;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -134,6 +135,7 @@ import org.siglus.common.domain.RequisitionTemplateExtension;
 import org.siglus.common.repository.OrderExternalRepository;
 import org.siglus.common.repository.OrderableKitRepository;
 import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
+import org.siglus.common.repository.StockManagementRepository;
 import org.siglus.common.util.SimulateAuthenticationHelper;
 import org.siglus.siglusapi.domain.FacilityExtension;
 import org.siglus.siglusapi.domain.KitUsageLineItemDraft;
@@ -317,6 +319,9 @@ public class SiglusRequisitionServiceTest {
 
   @Mock
   private SupportedProgramsHelper supportedProgramsHelper;
+
+  @Mock
+  private StockManagementRepository stockManagementRepository;
 
   @Captor
   private ArgumentCaptor<Requisition> requisitionArgumentCaptor;
@@ -627,6 +632,8 @@ public class SiglusRequisitionServiceTest {
         .thenReturn(Lists.newArrayList(productDto));
     List<UUID> orderableIds = new ArrayList<>();
     orderableIds.add(orderableId2);
+    Map<UUID, Integer> orderableSoh = new HashMap<>();
+    when(stockManagementRepository.getStockOnHandByProduct(eq(facilityId), any())).thenReturn(orderableSoh);
 
     // when
     List<SiglusRequisitionLineItemDto> response =
@@ -1722,7 +1729,8 @@ public class SiglusRequisitionServiceTest {
     previousRequistions.add(createRequisition());
     when(requisition.getPreviousRequisitions()).thenReturn(previousRequistions);
     RequisitionLineItem lineItemCreated = new RequisitionLineItemDataBuilder().build();
-    when(requisition.createLineItemWhenAddProduct(any(), any(), any(), any())).thenReturn(lineItemCreated);
+    when(requisition.createLineItemWhenAddProduct(any(), any(), any(), any(), any(), any(), any()))
+        .thenReturn(lineItemCreated);
 
     return requisition;
   }

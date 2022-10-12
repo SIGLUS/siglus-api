@@ -380,25 +380,29 @@ public class SiglusAdministrationsService {
       facilityDeviceDto.setDeviceInfo(appInfo.getDeviceInfo());
       facilityDeviceDto.setVersion(appInfo.getVersionCode());
     }
-    if (!ObjectUtils.isEmpty(facilityExtension)) {
+    if (facilityExtension != null) {
       if (facilityExtension.getIsAndroid()) {
         facilityDeviceDto.setDeviceType(FacilityDeviceTypeEnum.ANDROID);
-      } else if (facilityExtension.getIsLocalMachine()) {
-        facilityDeviceDto.setDeviceType(FacilityDeviceTypeEnum.LOCAL_MACHINE);
-      } else {
-        facilityDeviceDto.setDeviceType(FacilityDeviceTypeEnum.WEB);
+        return facilityDeviceDto;
       }
+      if (facilityExtension.getIsLocalMachine()) {
+        facilityDeviceDto.setDeviceType(FacilityDeviceTypeEnum.LOCAL_MACHINE);
+        return facilityDeviceDto;
+      }
+      facilityDeviceDto.setDeviceType(FacilityDeviceTypeEnum.WEB);
+      return facilityDeviceDto;
+
     } else {
       facilityDeviceDto.setDeviceType(FacilityDeviceTypeEnum.WEB);
+      return facilityDeviceDto;
     }
-    return facilityDeviceDto;
   }
 
   @Transactional
   public void eraseDeviceInfo(FacilityDeviceTypeEnum deviceType, UUID facilityId) {
     FacilityDto facilityDto = siglusFacilityReferenceDataService.findOne(facilityId);
     appInfoRepository.deleteByFacilityCode(facilityDto.getCode());
-    if (deviceType.equals(FacilityDeviceTypeEnum.LOCAL_MACHINE)) {
+    if (deviceType == FacilityDeviceTypeEnum.LOCAL_MACHINE) {
       agentInfoRepository.deleteByFacilityId(facilityId);
       String activationCode = UUID.randomUUID().toString().substring(10);
       ActivationCode code = ActivationCode
@@ -408,22 +412,28 @@ public class SiglusAdministrationsService {
           .facilityCode(facilityDto.getCode())
           .isUsed(false)
           .build();
+      log.info("Erase device info facility:{}, operator:{}", facilityId,
+          authenticationHelper.getCurrentUser().getUsername());
       activationCodeRepository.save(code);
     }
   }
 
+  @Transactional
   public void changeToWeb(UUID facilityId) {
     FacilityDeviceDto facilityDevice = getFacilityDevice(facilityId);
-    if (facilityDevice.getDeviceType().equals(FacilityDeviceTypeEnum.WEB)
+    if (facilityDevice.getDeviceType() == (FacilityDeviceTypeEnum.WEB)
         || !ObjectUtils.isEmpty(facilityDevice.getDeviceInfo())) {
       throw new ValidationMessageException(ERROR_FACILITY_CHANGE_TO_WEB);
     }
     FacilityExtension facilityExtension = facilityExtensionRepository.findByFacilityId(facilityId);
     facilityExtension.setIsAndroid(false);
     facilityExtension.setIsLocalMachine(false);
+    log.info("change facility:{} to web, operator:{}", facilityId,
+        authenticationHelper.getCurrentUser().getUsername());
     facilityExtensionRepository.save(facilityExtension);
   }
 
+  @Transactional
   public void changeToLocalMachine(UUID facilityId) {
     FacilityExtension facilityExtension = facilityExtensionRepository.findByFacilityId(facilityId);
     FacilityDeviceDto facilityDevice = getFacilityDevice(facilityId);
@@ -443,13 +453,16 @@ public class SiglusAdministrationsService {
       facilityExtension.setIsAndroid(false);
       facilityExtension.setIsLocalMachine(true);
     }
+    log.info("change facility:{} to local machine, operator:{}", facilityId,
+        authenticationHelper.getCurrentUser().getUsername());
     facilityExtensionRepository.save(facilityExtension);
   }
 
+  @Transactional
   public void changeToAndroid(UUID facilityId) {
-    List<StockCard> stockCards = stockCardRepository.findByFacilityIdIn(facilityId);
+    int count = stockCardRepository.countByFacilityId(facilityId);
     FacilityDeviceDto facilityDevice = getFacilityDevice(facilityId);
-    if (CollectionUtils.isNotEmpty(stockCards) || !facilityDevice.getDeviceType().equals(FacilityDeviceTypeEnum.WEB)) {
+    if (count != 0 || facilityDevice.getDeviceType() != (FacilityDeviceTypeEnum.WEB)) {
       throw new ValidationMessageException(ERROR_FACILITY_CHANGE_TO_ANDROID);
     }
     FacilityExtension facilityExtension = facilityExtensionRepository.findByFacilityId(facilityId);
@@ -466,6 +479,8 @@ public class SiglusAdministrationsService {
       facilityExtension.setIsAndroid(true);
       facilityExtension.setIsLocalMachine(false);
     }
+    log.info("change facility:{} to android, operator:{}", facilityId,
+        authenticationHelper.getCurrentUser().getUsername());
     facilityExtensionRepository.save(facilityExtension);
   }
 

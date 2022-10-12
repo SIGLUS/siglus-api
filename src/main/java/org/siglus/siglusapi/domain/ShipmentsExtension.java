@@ -16,7 +16,6 @@
 package org.siglus.siglusapi.domain;
 
 import java.util.UUID;
-import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -32,13 +31,12 @@ import org.siglus.common.domain.BaseEntity;
 @EqualsAndHashCode(callSuper = true)
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "proofs_of_delivery_extension", schema = "siglusintegration")
-public class ProofsOfDeliveryExtension extends BaseEntity {
+@Table(name = "shipments_extension", schema = "siglusintegration")
+public class ShipmentsExtension extends BaseEntity {
 
-  @Column(name = "proofofdeliveryid")
-  private UUID podId;
+  private UUID shipmentId;
 
-  private String preparedBy;
+  private String issueVoucherNumber;
 
-  private String conferredBy;
+  private String clientCode;
 }

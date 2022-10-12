@@ -33,6 +33,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
+import org.siglus.siglusapi.domain.CustomProductsRegimens;
 import org.siglus.siglusapi.domain.FcIntegrationChanges;
 import org.siglus.siglusapi.domain.ProgramRealProgram;
 import org.siglus.siglusapi.domain.Regimen;
@@ -41,6 +42,7 @@ import org.siglus.siglusapi.dto.fc.FcIntegrationResultBuildDto;
 import org.siglus.siglusapi.dto.fc.FcIntegrationResultDto;
 import org.siglus.siglusapi.dto.fc.RegimenDto;
 import org.siglus.siglusapi.dto.fc.ResponseBaseDto;
+import org.siglus.siglusapi.repository.CustomProductsRegimensRepository;
 import org.siglus.siglusapi.repository.ProgramRealProgramRepository;
 import org.siglus.siglusapi.repository.RegimenCategoryRepository;
 import org.siglus.siglusapi.repository.RegimenRepository;
@@ -58,6 +60,8 @@ public class FcRegimenService implements ProcessDataService {
   private final ProgramRealProgramRepository programRealProgramRepository;
   private final ProgramReferenceDataService programRefDataService;
   private final RegimenCategoryRepository regimenCategoryRepository;
+
+  private final CustomProductsRegimensRepository customProductsRegimensRepository;
 
   @Override
   public FcIntegrationResultDto processData(List<? extends ResponseBaseDto> regimens, String startDate,
@@ -104,7 +108,9 @@ public class FcRegimenService implements ProcessDataService {
         if (existed == null) {
           log.info("[FC regimen] create regimen: {}", current);
           regimensToUpdate.add(Regimen.from(current, realProgramId, programId,
-              getRegimenCategory(current, regimenCategoryCodeToCategory), maxRegimenDisplayOrder.incrementAndGet()));
+              getRegimenCategoryFromCustomProductsRegimensRepository(current,
+                  regimenCategoryCodeToCategory, customProductsRegimensRepository),
+              maxRegimenDisplayOrder.incrementAndGet()));
           createCounter.getAndIncrement();
           FcIntegrationChanges createChanges = FcUtil
               .buildCreateFcIntegrationChanges(REGIMEN_API, current.getCode(), current.toString());
@@ -154,6 +160,14 @@ public class FcRegimenService implements ProcessDataService {
           .append(existed.getRegimenCategory() == null ? null : existed.getRegimenCategory().getCode()).append("; ");
       isSame = false;
     }
+
+    CustomProductsRegimens customProductsRegimens = customProductsRegimensRepository
+        .findCustomProductsRegimensByCode(existed.getCode());
+    if (null != customProductsRegimens
+        && !existed.getRegimenCategory().getName().equals(customProductsRegimens.getCategoryType())) {
+      isSame = false;
+    }
+
     if (isSame) {
       return null;
     }
@@ -169,7 +183,21 @@ public class FcRegimenService implements ProcessDataService {
     existed.setProgramId(programId);
     // do not update regimen category as FC don't provide the value, we fill the value by script
     // existed.setRegimenCategory(getRegimenCategory(current, codeToCategoryMap));
+    existed.setRegimenCategory(getRegimenCategoryFromCustomProductsRegimensRepository(current,
+        codeToCategoryMap, customProductsRegimensRepository));
     return existed;
+  }
+
+  private RegimenCategory getRegimenCategoryFromCustomProductsRegimensRepository(RegimenDto dto,
+      Map<String, RegimenCategory> codeToCategoryMap,
+      CustomProductsRegimensRepository customProductsRegimensRepository) {
+    CustomProductsRegimens customProductsRegimensByCode = customProductsRegimensRepository
+        .findCustomProductsRegimensByCode(dto.getCode());
+    if (null != customProductsRegimensByCode) {
+      return codeToCategoryMap.get("Adult".equals(customProductsRegimensByCode.getCategoryType())
+          ? "ADULTS" : customProductsRegimensByCode.getCategoryType().toUpperCase());
+    }
+    return getRegimenCategory(dto, codeToCategoryMap);
   }
 
   private RegimenCategory getRegimenCategory(RegimenDto dto,

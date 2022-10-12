@@ -77,3 +77,15 @@ docker run --rm -v $PWD:/target hawkeyesec/scanner-cli:latest
 npm install -g raml-cop 
 ./gradlew checkApiIsRaml
 ```
+
+### local machine develop guide
+1. Work through how the function runs 
+   1. config spring.jpa.show-sql=true to show jpa logs, and record the db changes.
+   2. check and record rpc calls from this function.(these calls doesn't have logs in this server)
+   3. check if this is a group event.
+2. Design the structure and create event payload class, add @EventPayload to it.
+3. Create emitter class, and initialize the event, then emit it. (eventPublisher.emitGroupEvent/emitNonGroupEvent)
+Keep the emitter and emit caller in the same transaction.
+4. Create replayer class, do replay of the event. Add @EventListener to the replay method.
+5. Add unit test for serializing of event. Check if the serialization is right, data are not changed. 
+EventPayloadCheckUtils.checkEventSerializeChanges

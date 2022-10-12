@@ -49,7 +49,7 @@ public class SiglusStockCardSummariesController {
       @PageableDefault(size = Integer.MAX_VALUE) Pageable pageable) {
 
     return stockCardSummariesSiglusService
-        .searchStockCardSummaryV2Dtos(parameters, subDraftIds, draftId, pageable);
+        .searchStockCardSummaryV2Dtos(parameters, subDraftIds, draftId, pageable, false);
   }
 
   @GetMapping("/integration/detail")

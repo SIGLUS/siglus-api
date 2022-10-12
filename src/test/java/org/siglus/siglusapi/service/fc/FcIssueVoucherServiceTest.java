@@ -70,8 +70,8 @@ import org.openlmis.stockmanagement.web.stockcardsummariesv2.CanFulfillForMeEntr
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2Dto;
 import org.siglus.common.domain.OrderExternal;
 import org.siglus.common.repository.OrderExternalRepository;
-import org.siglus.siglusapi.domain.PodExtension;
 import org.siglus.siglusapi.domain.RequisitionExtension;
+import org.siglus.siglusapi.domain.ShipmentsExtension;
 import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.LotDto;
 import org.siglus.siglusapi.dto.SiglusOrderDto;
@@ -79,8 +79,8 @@ import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.dto.fc.FcIntegrationResultDto;
 import org.siglus.siglusapi.dto.fc.IssueVoucherDto;
 import org.siglus.siglusapi.dto.fc.ProductDto;
-import org.siglus.siglusapi.repository.PodExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
+import org.siglus.siglusapi.repository.ShipmentsExtensionRepository;
 import org.siglus.siglusapi.service.SiglusOrderService;
 import org.siglus.siglusapi.service.SiglusShipmentDraftService;
 import org.siglus.siglusapi.service.SiglusShipmentService;
@@ -128,7 +128,7 @@ public class FcIssueVoucherServiceTest {
   private ValidSourceDestinationStockManagementService sourceDestinationService;
 
   @Mock
-  private PodExtensionRepository podExtensionRepository;
+  private ShipmentsExtensionRepository shipmentsExtensionRepository;
 
   @Mock
   private OrderExternalRepository orderExternalRepository;
@@ -197,7 +197,7 @@ public class FcIssueVoucherServiceTest {
     when(userReferenceDataService.getUserInfo(facilityDto.getId()))
         .thenReturn(Pagination.getPage(Collections.singletonList(userDto), new PageRequest(0, 10), 0));
     IssueVoucherDto issueVoucherDto = getIssueVoucherDto();
-    when(podExtensionRepository.findByClientCodeAndIssueVoucherNumber(issueVoucherDto.getClientCode(),
+    when(shipmentsExtensionRepository.findByClientCodeAndIssueVoucherNumber(issueVoucherDto.getClientCode(),
         issueVoucherDto.getIssueVoucherNumber())).thenReturn(null);
     ValidSourceDestinationDto sourceDestinationDto = new ValidSourceDestinationDto();
     sourceDestinationDto.setId(UUID.randomUUID());
@@ -223,8 +223,8 @@ public class FcIssueVoucherServiceTest {
   public void shouldNotCreateIssueVoucherWhenPodHaveExist() {
     // given
     IssueVoucherDto issueVoucherDto = getIssueVoucherDto();
-    PodExtension extension = new PodExtension();
-    when(podExtensionRepository.findByClientCodeAndIssueVoucherNumber(issueVoucherDto.getClientCode(),
+    ShipmentsExtension extension = new ShipmentsExtension();
+    when(shipmentsExtensionRepository.findByClientCodeAndIssueVoucherNumber(issueVoucherDto.getClientCode(),
         issueVoucherDto.getIssueVoucherNumber())).thenReturn(extension);
 
     // when
@@ -313,7 +313,7 @@ public class FcIssueVoucherServiceTest {
     Set<CanFulfillForMeEntryDto> fulfillForMeEntryDtos = new HashSet();
     fulfillForMeEntryDtos.add(fulfillForMeEntryDto);
     summaryV2Dto.setCanFulfillForMe(fulfillForMeEntryDtos);
-    when(stockCardSummariesService.findSiglusStockCard(any(), any(), any()))
+    when(stockCardSummariesService.findSiglusStockCard(any(), any(), any(), any(Boolean.class)))
         .thenReturn(Pagination.getPage(Collections.singletonList(summaryV2Dto)));
     ShipmentLineItemDto shipmentLineItemDto = new ShipmentLineItemDto();
     org.openlmis.fulfillment.service.referencedata.OrderableDto orderableDto1 =
@@ -326,8 +326,8 @@ public class FcIssueVoucherServiceTest {
     when(shipmentDraftService.createShipmentDraft(any())).thenReturn(shipmentDraftDto);
     ShipmentDto shipmentDto = new ShipmentDto();
     shipmentDto.setId(UUID.randomUUID());
-    PodExtension podExtension = new PodExtension();
-    when(podExtensionRepository.save(any(PodExtension.class))).thenReturn(podExtension);
+    ShipmentsExtension shipmentsExtension = new ShipmentsExtension();
+    when(shipmentsExtensionRepository.save(any(ShipmentsExtension.class))).thenReturn(shipmentsExtension);
     when(siglusShipmentService.createSubOrderAndShipment(shipmentCaptor.capture()))
         .thenReturn(shipmentDto);
     LotDto lotDto = getLotDto(lotId);
@@ -394,7 +394,7 @@ public class FcIssueVoucherServiceTest {
     Set<CanFulfillForMeEntryDto> fulfillForMeEntryDtos = new HashSet();
     fulfillForMeEntryDtos.add(fulfillForMeEntryDto);
     summaryV2Dto.setCanFulfillForMe(fulfillForMeEntryDtos);
-    when(stockCardSummariesService.findSiglusStockCard(any(), any(), any()))
+    when(stockCardSummariesService.findSiglusStockCard(any(), any(), any(), any(Boolean.class)))
         .thenReturn(Pagination.getPage(Collections.singletonList(summaryV2Dto)));
     ShipmentLineItemDto shipmentLineItemDto = new ShipmentLineItemDto();
     org.openlmis.fulfillment.service.referencedata.OrderableDto orderableDto1 =
@@ -407,8 +407,8 @@ public class FcIssueVoucherServiceTest {
     when(shipmentDraftService.createShipmentDraft(any())).thenReturn(shipmentDraftDto);
     ShipmentDto shipmentDto = new ShipmentDto();
     shipmentDto.setId(UUID.randomUUID());
-    PodExtension podExtension = new PodExtension();
-    when(podExtensionRepository.save(any(PodExtension.class))).thenReturn(podExtension);
+    ShipmentsExtension shipmentsExtension = new ShipmentsExtension();
+    when(shipmentsExtensionRepository.save(any(ShipmentsExtension.class))).thenReturn(shipmentsExtension);
     when(siglusShipmentService.createSubOrderAndShipment(shipmentCaptor.capture()))
         .thenReturn(shipmentDto);
     LotDto lotDto = getLotDto(lotId);
@@ -466,7 +466,7 @@ public class FcIssueVoucherServiceTest {
     Set<CanFulfillForMeEntryDto> fulfillForMeEntryDtos = new HashSet();
     fulfillForMeEntryDtos.add(fulfillForMeEntryDto);
     summaryV2Dto.setCanFulfillForMe(fulfillForMeEntryDtos);
-    when(stockCardSummariesService.findSiglusStockCard(any(), any(), any()))
+    when(stockCardSummariesService.findSiglusStockCard(any(), any(), any(), any(Boolean.class)))
         .thenReturn(Pagination.getPage(Collections.singletonList(summaryV2Dto)));
     ShipmentLineItemDto shipmentLineItemDto = new ShipmentLineItemDto();
     org.openlmis.fulfillment.service.referencedata.OrderableDto orderableDto1 =
@@ -479,8 +479,8 @@ public class FcIssueVoucherServiceTest {
     when(shipmentDraftService.createShipmentDraft(any())).thenReturn(shipmentDraftDto);
     ShipmentDto shipmentDto = new ShipmentDto();
     shipmentDto.setId(UUID.randomUUID());
-    PodExtension podExtension = new PodExtension();
-    when(podExtensionRepository.save(any(PodExtension.class))).thenReturn(podExtension);
+    ShipmentsExtension shipmentsExtension = new ShipmentsExtension();
+    when(shipmentsExtensionRepository.save(any(ShipmentsExtension.class))).thenReturn(shipmentsExtension);
     when(siglusShipmentService.createSubOrderAndShipment(shipmentCaptor.capture()))
         .thenReturn(shipmentDto);
     when(lotReferenceDataService.getLots(any())).thenReturn(

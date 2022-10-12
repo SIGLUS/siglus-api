@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.service;
 
+import static com.google.common.collect.Lists.newArrayList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -22,9 +23,11 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyList;
 import static org.mockito.Matchers.anySet;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
 
 import com.google.common.collect.Sets;
 import java.time.Instant;
@@ -76,11 +79,11 @@ import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
 import org.openlmis.stockmanagement.repository.StockCardLineItemRepository;
 import org.siglus.common.repository.OrderExternalRepository;
+import org.siglus.siglusapi.domain.PodExtension;
 import org.siglus.siglusapi.domain.PodLineItemsByLocation;
 import org.siglus.siglusapi.domain.PodLineItemsExtension;
 import org.siglus.siglusapi.domain.PodSubDraft;
 import org.siglus.siglusapi.domain.PodSubDraftLineItemsByLocation;
-import org.siglus.siglusapi.domain.ProofsOfDeliveryExtension;
 import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.GeographicLevelDto;
 import org.siglus.siglusapi.dto.GeographicZoneDto;
@@ -90,21 +93,23 @@ import org.siglus.siglusapi.dto.enums.PodSubDraftStatusEnum;
 import org.siglus.siglusapi.exception.AuthenticationException;
 import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.NotFoundException;
+import org.siglus.siglusapi.localmachine.event.proofofdelivery.web.ProofOfDeliveryEmitter;
+import org.siglus.siglusapi.localmachine.event.proofofdelivery.web.ProofOfDeliveryEvent;
 import org.siglus.siglusapi.repository.OrderableRepository;
 import org.siglus.siglusapi.repository.OrdersRepository;
+import org.siglus.siglusapi.repository.PodExtensionRepository;
 import org.siglus.siglusapi.repository.PodLineItemsByLocationRepository;
 import org.siglus.siglusapi.repository.PodLineItemsExtensionRepository;
 import org.siglus.siglusapi.repository.PodLineItemsRepository;
 import org.siglus.siglusapi.repository.PodSubDraftLineItemsByLocationRepository;
 import org.siglus.siglusapi.repository.PodSubDraftRepository;
-import org.siglus.siglusapi.repository.ProofsOfDeliveryExtensionRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.repository.SiglusStockCardRepository;
-import org.siglus.siglusapi.repository.StockCardLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.dto.OrderDto;
 import org.siglus.siglusapi.repository.dto.PodLineItemDto;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusPodFulfillmentService;
+import org.siglus.siglusapi.testutils.StockEventLineItemDtoDataBuilder;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.web.request.CreatePodSubDraftRequest;
 import org.siglus.siglusapi.web.request.OperateTypeEnum;
@@ -172,7 +177,7 @@ public class SiglusPodServiceTest {
   private StatusChangeRepository requisitionStatusChangeRepository;
 
   @Mock
-  private ProofsOfDeliveryExtensionRepository podExtensionRepository;
+  private PodExtensionRepository podExtensionRepository;
 
   @Mock
   private PodLineItemsByLocationRepository podLineItemsByLocationRepository;
@@ -187,16 +192,16 @@ public class SiglusPodServiceTest {
   private StockEventBuilder stockEventBuilder;
 
   @Mock
-  private CalculatedStocksOnHandByLocationService calculatedStocksOnHandByLocationService;
-
-  @Mock
   private SiglusStockCardRepository siglusStockCardRepository;
 
   @Mock
   private StockCardLineItemRepository stockCardLineItemRepository;
 
   @Mock
-  private StockCardLineItemExtensionRepository stockCardLineItemExtensionRepository;
+  private ProofOfDeliveryEmitter proofOfDeliveryEmitter;
+
+  @Mock
+  private SiglusStockEventsService stockEventsService;
 
   private final UUID externalId = UUID.randomUUID();
   private final UUID orderableId = UUID.randomUUID();
@@ -638,8 +643,8 @@ public class SiglusPodServiceTest {
     when(fulfillmentService.searchProofOfDelivery(any(), any())).thenReturn(buildMockPodDtoWithNoLineItems());
     ProofOfDeliveryDto expectedResponse = buildMockPodDtoWithNoLineItems();
     when(podExtensionRepository.findOne(
-        Example.of(ProofsOfDeliveryExtension.builder().podId(podId).build()))).thenReturn(
-        new ProofsOfDeliveryExtension());
+        Example.of(PodExtension.builder().podId(podId).build()))).thenReturn(
+        new PodExtension());
     // when
     PodExtensionResponse actualResponse = service.mergeSubDrafts(podId, defaultExpands);
     assertEquals(expectedResponse, actualResponse.getPodDto());
@@ -697,14 +702,15 @@ public class SiglusPodServiceTest {
     PodExtensionRequest request = buildPodExtensionRequest();
     ProofOfDeliveryDto dto = request.getPodDto();
     when(fulfillmentService.searchProofOfDelivery(any(), any())).thenReturn(dto);
-    when(podController.updateProofOfDelivery(podId, dto, null)).thenReturn(dto);
+    when(podController.updateProofOfDelivery(podId, dto, null, false)).thenReturn(dto);
+    when(proofOfDeliveryEmitter.emit(podId)).thenReturn(new ProofOfDeliveryEvent());
 
     // when
     ProofOfDeliveryDto actualResponse = service.submitSubDrafts(podId, request, null);
 
     // then
     assertEquals(dto, actualResponse);
-    verify(podController).updateProofOfDelivery(any(), any(), any());
+    verify(podController).updateProofOfDelivery(any(), any(), any(), any());
     verify(podSubDraftRepository).deleteAllByIds(any(List.class));
     verify(podLineItemsExtensionRepository).deleteAllBySubDraftIds(any(List.class));
     verify(notificationService).postConfirmPod(dto);
@@ -719,15 +725,16 @@ public class SiglusPodServiceTest {
     PodExtensionRequest request = buildPodExtensionRequest();
     ProofOfDeliveryDto dto = request.getPodDto();
     when(fulfillmentService.searchProofOfDelivery(any(), any())).thenReturn(dto);
-    when(podController.updateProofOfDelivery(podId, dto, null)).thenReturn(dto);
+    when(podController.updateProofOfDelivery(podId, dto, null, false)).thenReturn(dto);
     mockPodExtensionQuery();
+    when(proofOfDeliveryEmitter.emit(podId)).thenReturn(new ProofOfDeliveryEvent());
 
     // when
     ProofOfDeliveryDto actualResponse = service.submitSubDrafts(podId, request, null);
 
     // then
     assertEquals(dto, actualResponse);
-    verify(podController).updateProofOfDelivery(any(), any(), any());
+    verify(podController).updateProofOfDelivery(any(), any(), any(), any());
     verify(podSubDraftRepository).deleteAllByIds(any(List.class));
     verify(podLineItemsExtensionRepository).deleteAllBySubDraftIds(any(List.class));
     verify(notificationService).postConfirmPod(dto);
@@ -742,14 +749,15 @@ public class SiglusPodServiceTest {
     PodExtensionRequest request = buildPodExtensionRequestWithPodTwoLineItems();
     ProofOfDeliveryDto dto = request.getPodDto();
     when(fulfillmentService.searchProofOfDelivery(any(), any())).thenReturn(dto);
-    when(podController.updateProofOfDelivery(podId, dto, null)).thenReturn(dto);
+    when(podController.updateProofOfDelivery(podId, dto, null, false)).thenReturn(dto);
+    when(proofOfDeliveryEmitter.emit(podId)).thenReturn(new ProofOfDeliveryEvent());
 
     // when
     ProofOfDeliveryDto actualResponse = service.submitSubDrafts(podId, request, null);
 
     // then
     assertEquals(dto, actualResponse);
-    verify(podController).updateProofOfDelivery(any(), any(), any());
+    verify(podController).updateProofOfDelivery(any(), any(), any(), any());
     verify(podSubDraftRepository).deleteAllByIds(any(List.class));
     verify(podLineItemsExtensionRepository).deleteAllBySubDraftIds(any(List.class));
     verify(notificationService, times(0)).postConfirmPod(dto);
@@ -984,36 +992,33 @@ public class SiglusPodServiceTest {
     PodExtensionRequest request = buildPodExtensionRequest();
     ProofOfDeliveryDto dto = request.getPodDto();
     when(fulfillmentService.searchProofOfDelivery(any(), any())).thenReturn(dto);
-    when(podController.updateProofOfDelivery(podId, dto, null)).thenReturn(dto);
     ProofOfDelivery proofOfDelivery = buildMockProofOfDelivery();
     when(proofOfDeliveryRepository.findOne(podId)).thenReturn(proofOfDelivery);
     StockEventDto stockEventDto = buildMockStockEventDto();
     when(stockEventBuilder.fromProofOfDelivery(any())).thenReturn(stockEventDto);
-    when(podController.updateProofOfDelivery(any(), any(), any())).thenReturn(dto);
+    when(podController.updateProofOfDelivery(any(), any(), any(), any())).thenReturn(dto);
     when(siglusStockCardRepository.findByFacilityIdAndOrderableLotIdPairs(any(), any()))
         .thenReturn(Lists.newArrayList(buildStockCard()));
     when(stockCardLineItemRepository.findLatestByStockCardIds(any()))
         .thenReturn(com.google.common.collect.Lists.newArrayList(buildStockCardLineItem()));
+    doNothing().when(stockEventsService).processStockEvent(buildStockManagementStockEvent(), false);
 
     // when
     service.submitSubDraftsWithLocation(podId, buildMockPodWithLocationRequest(), null);
 
     // then
     verify(podLineItemsByLocationRepository, times(1)).save(any(List.class));
-    verify(calculatedStocksOnHandByLocationService, times(1))
-        .calculateStockOnHandByLocation(any());
-    verify(stockCardLineItemExtensionRepository, times(1)).save(any(List.class));
   }
 
   private void mockPodExtensionQuery() {
-    Example<ProofsOfDeliveryExtension> podExtensionExample = Example.of(
-        ProofsOfDeliveryExtension.builder().podId(podId).build());
+    Example<PodExtension> podExtensionExample = Example.of(
+        PodExtension.builder().podId(podId).build());
     when(podExtensionRepository.findOne(podExtensionExample)).thenReturn(buildMockPodExtension());
   }
 
   private void mockPodExtensionQueryReturnNull() {
-    Example<ProofsOfDeliveryExtension> podExtensionExample = Example.of(
-        ProofsOfDeliveryExtension.builder().podId(podId).build());
+    Example<PodExtension> podExtensionExample = Example.of(
+        PodExtension.builder().podId(podId).build());
     when(podExtensionRepository.findOne(podExtensionExample)).thenReturn(null);
   }
 
@@ -1033,8 +1038,8 @@ public class SiglusPodServiceTest {
     return request;
   }
 
-  private ProofsOfDeliveryExtension buildMockPodExtension() {
-    return ProofsOfDeliveryExtension.builder()
+  private PodExtension buildMockPodExtension() {
+    return PodExtension.builder()
         .preparedBy(preparedBy)
         .conferredBy(conferredBy)
         .build();
@@ -1381,6 +1386,7 @@ public class SiglusPodServiceTest {
         Lists.newArrayList(shipmentLineItem), null);
     ProofOfDeliveryLineItem proofOfDeliveryLineItem = new ProofOfDeliveryLineItem(orderable, lotId, 10,
         null, 0, null, notes);
+    proofOfDeliveryLineItem.setId(lineItemId1);
     return new ProofOfDelivery(shipment, ProofOfDeliveryStatus.CONFIRMED, Lists.newArrayList(proofOfDeliveryLineItem),
         "test", "test", LocalDate.now());
   }
@@ -1412,5 +1418,14 @@ public class SiglusPodServiceTest {
     stockCardLineItem.setStockCard(buildStockCard());
     stockCardLineItem.setId(stockCardLineItemId);
     return stockCardLineItem;
+  }
+
+  private org.openlmis.stockmanagement.dto.StockEventDto buildStockManagementStockEvent() {
+    org.openlmis.stockmanagement.dto.StockEventLineItemDto lineItemDto1 = new StockEventLineItemDtoDataBuilder()
+        .buildForAdjustment();
+    lineItemDto1.setOrderableId(orderableId);
+    return org.openlmis.stockmanagement.dto.StockEventDto.builder()
+        .lineItems(newArrayList(lineItemDto1))
+        .programId(ALL_PRODUCTS_PROGRAM_ID).build();
   }
 }

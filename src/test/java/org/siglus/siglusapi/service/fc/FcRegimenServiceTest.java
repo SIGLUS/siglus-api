@@ -41,6 +41,7 @@ import org.siglus.siglusapi.domain.Regimen;
 import org.siglus.siglusapi.domain.RegimenCategory;
 import org.siglus.siglusapi.dto.fc.FcIntegrationResultDto;
 import org.siglus.siglusapi.dto.fc.RegimenDto;
+import org.siglus.siglusapi.repository.CustomProductsRegimensRepository;
 import org.siglus.siglusapi.repository.ProgramRealProgramRepository;
 import org.siglus.siglusapi.repository.RegimenCategoryRepository;
 import org.siglus.siglusapi.repository.RegimenRepository;
@@ -63,6 +64,9 @@ public class FcRegimenServiceTest {
 
   @Mock
   private RegimenCategoryRepository regimenCategoryRepository;
+
+  @Mock
+  private CustomProductsRegimensRepository customProductsRegimensRepository;
 
   @Captor
   private ArgumentCaptor<Set<Regimen>> regimensArgumentCaptor;
@@ -101,6 +105,9 @@ public class FcRegimenServiceTest {
     when(regimenRepository.findAll()).thenReturn(newArrayList(mockRegimen1(), mockRegimen3()));
     when(regimenCategoryRepository.findAll())
         .thenReturn(newArrayList(mockCategory(categoryId2)));
+
+    when(customProductsRegimensRepository.findCustomProductsRegimensByCode(mockRegimen1().getCode()))
+        .thenReturn(null);
 
     // when
     fcRegimenService.processData(newArrayList(mockRegimenDto1(), mockRegimenDto2(), mockRegimenDto3()), START_DATE,

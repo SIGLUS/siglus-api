@@ -17,10 +17,12 @@ package org.siglus.siglusapi.web.request;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.siglus.siglusapi.dto.enums.FacilityDeviceTypeEnum;
 
 @Data
 @AllArgsConstructor
+@NoArgsConstructor
 public class DeviceTypeRequest {
 
   private FacilityDeviceTypeEnum facilityDeviceType;

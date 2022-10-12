@@ -60,19 +60,15 @@ import org.openlmis.referencedata.domain.Orderable;
 import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.domain.requisition.StatusChange;
 import org.openlmis.requisition.repository.StatusChangeRepository;
-import org.openlmis.stockmanagement.domain.card.StockCard;
-import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
 import org.openlmis.stockmanagement.dto.StockEventDto;
 import org.openlmis.stockmanagement.dto.StockEventLineItemDto;
-import org.openlmis.stockmanagement.repository.StockCardLineItemRepository;
 import org.siglus.common.domain.OrderExternal;
 import org.siglus.common.repository.OrderExternalRepository;
+import org.siglus.siglusapi.domain.PodExtension;
 import org.siglus.siglusapi.domain.PodLineItemsByLocation;
 import org.siglus.siglusapi.domain.PodLineItemsExtension;
 import org.siglus.siglusapi.domain.PodSubDraft;
 import org.siglus.siglusapi.domain.PodSubDraftLineItemsByLocation;
-import org.siglus.siglusapi.domain.ProofsOfDeliveryExtension;
-import org.siglus.siglusapi.domain.StockCardLineItemExtension;
 import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.GeographicZoneDto;
 import org.siglus.siglusapi.dto.Message;
@@ -82,17 +78,16 @@ import org.siglus.siglusapi.dto.enums.PodSubDraftStatusEnum;
 import org.siglus.siglusapi.exception.AuthenticationException;
 import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.NotFoundException;
+import org.siglus.siglusapi.localmachine.event.proofofdelivery.web.ProofOfDeliveryEmitter;
 import org.siglus.siglusapi.repository.OrderableRepository;
 import org.siglus.siglusapi.repository.OrdersRepository;
+import org.siglus.siglusapi.repository.PodExtensionRepository;
 import org.siglus.siglusapi.repository.PodLineItemsByLocationRepository;
 import org.siglus.siglusapi.repository.PodLineItemsExtensionRepository;
 import org.siglus.siglusapi.repository.PodLineItemsRepository;
 import org.siglus.siglusapi.repository.PodSubDraftLineItemsByLocationRepository;
 import org.siglus.siglusapi.repository.PodSubDraftRepository;
-import org.siglus.siglusapi.repository.ProofsOfDeliveryExtensionRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
-import org.siglus.siglusapi.repository.SiglusStockCardRepository;
-import org.siglus.siglusapi.repository.StockCardLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.dto.OrderDto;
 import org.siglus.siglusapi.repository.dto.PodLineItemDto;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
@@ -157,23 +152,19 @@ public class SiglusPodService {
 
   private final SiglusRequisitionExtensionService requisitionExtensionService;
 
-  private final ProofsOfDeliveryExtensionRepository podExtensionRepository;
+  private final PodExtensionRepository podExtensionRepository;
 
   private final PodLineItemsByLocationRepository podLineItemsByLocationRepository;
 
   private final PodSubDraftLineItemsByLocationRepository podSubDraftLineItemsByLocationRepository;
 
-  private final CalculatedStocksOnHandByLocationService calculatedStocksOnHandByLocationService;
-
   private final ProofOfDeliveryRepository proofOfDeliveryRepository;
 
   private final StockEventBuilder stockEventBuilder;
 
-  private final SiglusStockCardRepository siglusStockCardRepository;
+  private final ProofOfDeliveryEmitter proofOfDeliveryEmitter;
 
-  private final StockCardLineItemRepository stockCardLineItemRepository;
-
-  private final StockCardLineItemExtensionRepository stockCardLineItemExtensionRepository;
+  private final SiglusStockEventsService stockEventsService;
 
   private static final String FILE_NAME_PREFIX_EMERGENCY = "OF.REM.";
   private static final String FILE_NAME_PREFIX_NORMAL = "OF.RNO.";
@@ -193,13 +184,11 @@ public class SiglusPodService {
     ProofOfDeliveryDto podDto = getExpandedPodDtoById(id, expand);
     response.setPodDto(podDto);
 
-    ProofsOfDeliveryExtension podExtension = getPodExtensionByPodId(id);
+    PodExtension podExtension = getPodExtensionByPodId(id);
     if (Objects.nonNull(podExtension)) {
       response.setPreparedBy(podExtension.getPreparedBy());
       response.setConferredBy(podExtension.getConferredBy());
     }
-    mergeSamePodLineItems(podDto);
-    mergeSameShipmentLineItems(podDto.getShipment());
     return response;
   }
 
@@ -219,9 +208,7 @@ public class SiglusPodService {
   }
 
   public Page<ProofOfDeliveryDto> getAllProofsOfDelivery(UUID orderId, UUID shipmentId, Pageable pageable) {
-    Page<ProofOfDeliveryDto> podDto = podController.getAllProofsOfDelivery(orderId, shipmentId, pageable);
-    mergeSamePodLineItems(podDto.getContent().get(0));
-    return podDto;
+    return podController.getAllProofsOfDelivery(orderId, shipmentId, pageable);
   }
 
   @Transactional
@@ -265,8 +252,6 @@ public class SiglusPodService {
     List<PodLineItemWithLocationDto> podLineItemWithLocationDtos =
         getSubDraftLineItemsWithLocation(subDraftLineItemsIds);
     podWithLocationDto.setPodLineItemLocation(podLineItemWithLocationDtos);
-    mergeSamePodLineItems(podWithLocationDto.getPodDto());
-    mergeSameShipmentLineItems(podWithLocationDto.getPodDto().getShipment());
     return podWithLocationDto;
   }
 
@@ -313,7 +298,7 @@ public class SiglusPodService {
     checkAuth();
     checkIfSubDraftsSubmitted(podId);
     ProofOfDeliveryDto expandedPodDto = getExpandedPodDtoById(podId, expand);
-    ProofsOfDeliveryExtension podExtensionBy = getPodExtensionByPodId(podId);
+    PodExtension podExtensionBy = getPodExtensionByPodId(podId);
     PodExtensionResponse podExtensionResponse = new PodExtensionResponse();
     podExtensionResponse.setPodDto(expandedPodDto);
     if (ObjectUtils.isEmpty(podExtensionBy)) {
@@ -340,9 +325,11 @@ public class SiglusPodService {
     savePodExtension(request);
     deleteSubDraftAndLineExtensionBySubDraftIds(subDrafts.stream().map(PodSubDraft::getId).collect(Collectors.toSet()));
 
-    ProofOfDeliveryDto podDto = podController.updateProofOfDelivery(podId, request.getPodDto(), authentication);
+    ProofOfDeliveryDto podDto = podController.updateProofOfDelivery(
+        podId, request.getPodDto(), authentication, false);
     if (podDto.getStatus() == ProofOfDeliveryStatus.CONFIRMED) {
       notificationService.postConfirmPod(request.getPodDto());
+      proofOfDeliveryEmitter.emit(request.getPodDto().getId());
     }
     return podDto;
   }
@@ -354,24 +341,25 @@ public class SiglusPodService {
     List<PodSubDraft> subDrafts = checkIfSubDraftsSubmitted(podId);
     deleteSubDraftAndLineExtensionBySubDraftIds(subDrafts.stream().map(PodSubDraft::getId).collect(Collectors.toSet()));
     submitPodSubDraftsWithLocation(request.getPodLineItemLocation());
-    ProofOfDeliveryDto podDto = podController.updateProofOfDelivery(podId, request.getPodDto(), authentication);
+    ProofOfDeliveryDto podDto = podController.updateProofOfDelivery(
+        podId, request.getPodDto(), authentication, true);
+    StockEventDto stockEventDto = createStockEventDto(podId, request);
+    stockEventsService.processStockEvent(stockEventDto, true);
     if (podDto.getStatus() == ProofOfDeliveryStatus.CONFIRMED) {
       notificationService.postConfirmPod(request.getPodDto());
+      proofOfDeliveryEmitter.emit(request.getPodDto().getId());
     }
-    StockEventDto stockEventDto = createStockEventDto(podId);
-    saveToStockCardLineItemByLocation(request, stockEventDto);
-    calculatedStocksOnHandByLocationService.calculateStockOnHandByLocation(stockEventDto);
   }
 
-  private ProofsOfDeliveryExtension getPodExtensionByPodId(UUID podId) {
-    Example<ProofsOfDeliveryExtension> example = Example.of(ProofsOfDeliveryExtension.builder().podId(podId).build());
+  private PodExtension getPodExtensionByPodId(UUID podId) {
+    Example<PodExtension> example = Example.of(PodExtension.builder().podId(podId).build());
     return podExtensionRepository.findOne(example);
   }
 
   private void savePodExtension(PodExtensionRequest request) {
-    ProofsOfDeliveryExtension podExtension = getPodExtensionByPodId(request.getPodDto().getId());
+    PodExtension podExtension = getPodExtensionByPodId(request.getPodDto().getId());
     if (Objects.isNull(podExtension)) {
-      podExtension = ProofsOfDeliveryExtension.builder().podId(request.getPodDto().getId()).build();
+      podExtension = PodExtension.builder().podId(request.getPodDto().getId()).build();
     }
     podExtension.setPreparedBy(request.getPreparedBy());
     podExtension.setConferredBy(request.getConferredBy());
@@ -407,7 +395,7 @@ public class SiglusPodService {
       }
     }
 
-    ProofsOfDeliveryExtension podExtension = getPodExtensionByPodId(podId);
+    PodExtension podExtension = getPodExtensionByPodId(podId);
     if (Objects.nonNull(podExtension)) {
       response.setPreparedBy(podExtension.getPreparedBy());
       response.setConferredBy(podExtension.getConferredBy());
@@ -852,7 +840,7 @@ public class SiglusPodService {
     ProofOfDeliveryWithLocationResponse podWithLocationDto = new ProofOfDeliveryWithLocationResponse();
     PodExtensionResponse podExtensionResponse = new PodExtensionResponse();
     podExtensionResponse.setPodDto(podDto);
-    ProofsOfDeliveryExtension podExtension = getPodExtensionByPodId(podDto.getId());
+    PodExtension podExtension = getPodExtensionByPodId(podDto.getId());
     if (Objects.nonNull(podExtension)) {
       podExtensionResponse.setPreparedBy(podExtension.getPreparedBy());
       podExtensionResponse.setConferredBy(podExtension.getConferredBy());
@@ -866,121 +854,37 @@ public class SiglusPodService {
     return podWithLocationDto;
   }
 
-  private StockEventDto createStockEventDto(UUID podId) {
+  private StockEventDto createStockEventDto(UUID podId, PodWithLocationRequest request) {
     ProofOfDelivery pod = proofOfDeliveryRepository.findOne(podId);
     org.openlmis.fulfillment.web.stockmanagement.StockEventDto fulfillmentStockEventDto = stockEventBuilder
         .fromProofOfDelivery(pod);
     StockEventDto stockEventDto = new StockEventDto();
     List<StockEventLineItemDto> lineItems = Lists.newArrayList();
+
+    Map<String, List<PodLineItemWithLocationDto>> uniqueKeyToPodLineItemLocationList = new HashMap<>();
+    pod.getLineItems().forEach(podLineItem -> {
+      String key = getOrderableLotIdPair(podLineItem.getOrderable().getId(), podLineItem.getLotId());
+      List<PodLineItemWithLocationDto> podLineItemWithLocationDtoList = request.getPodLineItemLocation().stream()
+          .filter(m -> podLineItem.getId().equals(m.getPodLineItemId())).collect(Collectors.toList());
+      uniqueKeyToPodLineItemLocationList.put(key, podLineItemWithLocationDtoList);
+    });
     fulfillmentStockEventDto.getLineItems().forEach(lineItemDto -> {
-      StockEventLineItemDto stockEventLineItemDto = new StockEventLineItemDto();
-      BeanUtils.copyProperties(lineItemDto, stockEventLineItemDto);
-      lineItems.add(stockEventLineItemDto);
+      String newKey = getOrderableLotIdPair(lineItemDto.getOrderableId(), lineItemDto.getLotId());
+      if (uniqueKeyToPodLineItemLocationList.containsKey(newKey)) {
+        List<PodLineItemWithLocationDto> podLineItemWithLocationDtos = uniqueKeyToPodLineItemLocationList.get(newKey);
+        podLineItemWithLocationDtos.forEach(podLineItemWithLocationDto -> {
+          StockEventLineItemDto stockEventLineItemDto = new StockEventLineItemDto();
+          BeanUtils.copyProperties(lineItemDto, stockEventLineItemDto);
+          stockEventLineItemDto.setQuantity(podLineItemWithLocationDto.getQuantityAccepted());
+          stockEventLineItemDto.setLocationCode(podLineItemWithLocationDto.getLocationCode());
+          stockEventLineItemDto.setArea(podLineItemWithLocationDto.getArea());
+          lineItems.add(stockEventLineItemDto);
+        });
+      }
     });
     BeanUtils.copyProperties(fulfillmentStockEventDto, stockEventDto);
     stockEventDto.setLineItems(lineItems);
-    setStockCardLineItemId(lineItems, pod.getReceivingFacilityId());
     return stockEventDto;
-  }
-
-  private void setStockCardLineItemId(List<StockEventLineItemDto> lineItems, UUID facilityId) {
-    Set<String> orderableLotIdPairs = lineItems.stream()
-        .map(lineItem ->
-            getOrderableLotIdPair(lineItem.getOrderableId(), lineItem.getLotId()))
-        .collect(Collectors.toSet());
-    List<StockCard> stockCards = siglusStockCardRepository.findByFacilityIdAndOrderableLotIdPairs(
-        facilityId, orderableLotIdPairs);
-
-    Map<UUID, StockEventLineItemDto> stockCardIdToStockEventLineItems = new HashMap<>();
-    stockCards.forEach(stockCard -> lineItems.forEach(lineItem -> {
-      if (stockCard.getOrderableId().equals(lineItem.getOrderableId())) {
-        if (stockCard.getLotId() == null && lineItem.getLotId() == null) {
-          stockCardIdToStockEventLineItems.put(stockCard.getId(), lineItem);
-        } else if (stockCard.getLotId().equals(lineItem.getLotId())) {
-          stockCardIdToStockEventLineItems.put(stockCard.getId(), lineItem);
-        }
-      }
-    }));
-    List<StockCardLineItem> stockCardLineItems = stockCardLineItemRepository
-        .findLatestByStockCardIds(stockCardIdToStockEventLineItems.keySet());
-
-    stockCardLineItems.forEach(stockCardLineItem -> {
-      StockEventLineItemDto stockEventLineItemDto =
-          stockCardIdToStockEventLineItems.get(stockCardLineItem.getStockCard().getId());
-      if (null != stockEventLineItemDto) {
-        stockEventLineItemDto.setId(stockCardLineItem.getId());
-      }
-    });
-  }
-
-  private void saveToStockCardLineItemByLocation(PodWithLocationRequest request, StockEventDto stockEventDto) {
-    List<StockEventLineItemDto> stockEventLineItems = stockEventDto.getLineItems();
-    Map<UUID, UUID> stockCardLineItemIdToPodLineItemId = new HashMap<>();
-    List<Importer> podLineItems = request.getPodDto().getLineItems();
-    stockEventLineItems.forEach(stockEventLineItem -> podLineItems.forEach(podLineItem -> {
-      if (stockEventLineItem.getOrderableId().equals(podLineItem.getOrderableIdentity().getId())) {
-        if (stockEventLineItem.getLotId() == null && podLineItem.getLotId() == null) {
-          stockCardLineItemIdToPodLineItemId.put(stockEventLineItem.getId(), podLineItem.getId());
-        } else if (stockEventLineItem.getLotId().equals(podLineItem.getLotId())) {
-          stockCardLineItemIdToPodLineItemId.put(stockEventLineItem.getId(), podLineItem.getId());
-        }
-      }
-    }));
-
-    Map<UUID, PodLineItemWithLocationDto> podLineItemIdToLocation = new HashMap<>();
-    request.getPodLineItemLocation().forEach(podLineItemLocation ->
-        podLineItemIdToLocation.put(podLineItemLocation.getPodLineItemId(), podLineItemLocation));
-
-    Map<UUID, PodLineItemWithLocationDto> stockCardLineItemIdToPodLocation = new HashMap<>();
-    stockCardLineItemIdToPodLineItemId.forEach((stockCardLineItemId, podLineItemId) ->
-        stockCardLineItemIdToPodLocation.put(stockCardLineItemId, podLineItemIdToLocation.get(podLineItemId)));
-
-    List<StockCardLineItemExtension> stockCardLineItemExtensions = Lists.newArrayList();
-    stockCardLineItemIdToPodLocation.forEach((stockCardLineItemId, podLocation) -> {
-      StockCardLineItemExtension stockCardLineItemExtension = StockCardLineItemExtension
-          .builder()
-          .stockCardLineItemId(stockCardLineItemId)
-          .locationCode(podLocation.getLocationCode())
-          .area(podLocation.getArea())
-          .build();
-      stockCardLineItemExtensions.add(stockCardLineItemExtension);
-    });
-    log.info("save into stock card line item by location when submit pod; size: {}",
-        stockCardLineItemExtensions.size());
-    stockCardLineItemExtensionRepository.save(stockCardLineItemExtensions);
-  }
-
-  private void mergeSamePodLineItems(ProofOfDeliveryDto podDto) {
-    List<Importer> lineItems = podDto.getLineItems();
-    Map<String, Importer> uniqueKeyToPodDto = new HashMap<>();
-    lineItems.forEach(lineItem -> {
-      String key = getOrderableLotIdPair(lineItem.getOrderableIdentity().getId(), lineItem.getLotId());
-      uniqueKeyToPodDto.put(key, uniqueKeyToPodDto.getOrDefault(key, lineItem));
-    });
-    List<ProofOfDeliveryLineItemDto> newLineItems = Lists.newArrayList();
-    uniqueKeyToPodDto.forEach((key, value) -> {
-      ProofOfDeliveryLineItemDto proofOfDeliveryLineItemDto = new ProofOfDeliveryLineItemDto();
-      BeanUtils.copyProperties(value, proofOfDeliveryLineItemDto);
-      newLineItems.add(proofOfDeliveryLineItemDto);
-    });
-    podDto.setLineItems(newLineItems);
-  }
-
-  private void mergeSameShipmentLineItems(ShipmentObjectReferenceDto shipmentDto) {
-    List<ShipmentLineItemDto> shipmentLineItems = shipmentDto.getLineItems();
-    Map<String, ShipmentLineItemDto> uniqueKeyToShipmentDto = new HashMap<>();
-    shipmentLineItems.forEach(shipmentLineItem -> {
-      String key = getOrderableLotIdPair(shipmentLineItem.getOrderable().getId(), shipmentLineItem.getLotId());
-      if (uniqueKeyToShipmentDto.containsKey(key)) {
-        ShipmentLineItemDto shipmentLineItemDto = uniqueKeyToShipmentDto.get(key);
-        Long quantityShipped = shipmentLineItemDto.getQuantityShipped() + shipmentLineItem.getQuantityShipped();
-        shipmentLineItemDto.setQuantityShipped(quantityShipped);
-        uniqueKeyToShipmentDto.put(key, shipmentLineItemDto);
-      } else {
-        uniqueKeyToShipmentDto.put(key, shipmentLineItem);
-      }
-    });
-    shipmentDto.setLineItems(new ArrayList<>(uniqueKeyToShipmentDto.values()));
   }
 
   private String getOrderableLotIdPair(UUID orderableId, UUID lotId) {

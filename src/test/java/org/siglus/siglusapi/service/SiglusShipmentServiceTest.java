@@ -72,14 +72,15 @@ import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
 import org.openlmis.stockmanagement.repository.StockCardLineItemRepository;
 import org.openlmis.stockmanagement.repository.StockCardRepository;
 import org.siglus.siglusapi.domain.OrderLineItemExtension;
-import org.siglus.siglusapi.domain.ProofsOfDeliveryExtension;
+import org.siglus.siglusapi.domain.PodExtension;
 import org.siglus.siglusapi.domain.StockCardLineItemExtension;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
-import org.siglus.siglusapi.repository.ProofsOfDeliveryExtensionRepository;
+import org.siglus.siglusapi.repository.PodExtensionRepository;
 import org.siglus.siglusapi.repository.ShipmentLineItemsExtensionRepository;
 import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
+import org.siglus.siglusapi.repository.SiglusStockCardRepository;
 import org.siglus.siglusapi.repository.StockCardLineItemExtensionRepository;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.web.request.ShipmentExtensionRequest;
@@ -137,7 +138,7 @@ public class SiglusShipmentServiceTest {
   private SiglusProofOfDeliveryRepository siglusProofOfDeliveryRepository;
 
   @Mock
-  private ProofsOfDeliveryExtensionRepository proofsOfDeliveryExtensionRepository;
+  private PodExtensionRepository podExtensionRepository;
 
   @Mock
   private StockCardLineItemRepository stockCardLineItemRepository;
@@ -147,6 +148,9 @@ public class SiglusShipmentServiceTest {
 
   @Mock
   private StockCardLineItemExtensionRepository stockCardLineItemExtensionRepository;
+
+  @Mock
+  private SiglusStockCardRepository siglusStockCardRepository;
 
   private final UUID orderId = UUID.randomUUID();
 
@@ -327,7 +331,7 @@ public class SiglusShipmentServiceTest {
     assertTrue(CollectionUtils.isNotEmpty(orderToSave.getOrderLineItems()));
     assertTrue(CollectionUtils.isEmpty(lineItemExtensionsToDelete));
     assertTrue(CollectionUtils.isNotEmpty(shipmentDtoToSave.getLineItems()));
-    verify(proofsOfDeliveryExtensionRepository, times(1)).save(buildMockPodExtension());
+    verify(podExtensionRepository, times(1)).save(buildMockPodExtension());
   }
 
   @Test
@@ -471,6 +475,8 @@ public class SiglusShipmentServiceTest {
         .thenReturn(buildStockCard());
     when(stockCardLineItemRepository.findLatestByStockCardIds(any()))
         .thenReturn(Lists.newArrayList(buildStockCardLineItem()));
+    when(siglusStockCardRepository.findByFacilityIdAndOrderableLotIdPairs(any(), any()))
+        .thenReturn(Lists.newArrayList(buildStockCard()));
 
     // when
     siglusShipmentService.createOrderAndShipmentByLocation(false, shipmentExtensionRequest);
@@ -573,8 +579,8 @@ public class SiglusShipmentServiceTest {
     return proofOfDelivery;
   }
 
-  private ProofsOfDeliveryExtension buildMockPodExtension() {
-    return ProofsOfDeliveryExtension
+  private PodExtension buildMockPodExtension() {
+    return PodExtension
         .builder()
         .podId(podId)
         .preparedBy(preparedBy)
@@ -594,6 +600,8 @@ public class SiglusShipmentServiceTest {
   private StockCard buildStockCard() {
     StockCard stockCard = new StockCard();
     stockCard.setId(stockCardId);
+    stockCard.setOrderableId(orderableId);
+    stockCard.setLotId(lotId);
     return stockCard;
   }
 

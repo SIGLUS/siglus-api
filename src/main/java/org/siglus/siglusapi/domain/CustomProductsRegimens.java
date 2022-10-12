@@ -13,12 +13,33 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.repository;
+package org.siglus.siglusapi.domain;
 
-import java.util.UUID;
-import org.siglus.siglusapi.domain.PodExtension;
-import org.springframework.data.jpa.repository.JpaRepository;
+import javax.persistence.Entity;
+import javax.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import org.siglus.common.domain.BaseEntity;
 
-public interface PodExtensionRepository extends JpaRepository<PodExtension, UUID> {
-  PodExtension findByPodId(UUID podId);
+@Builder
+@Entity
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
+@Table(name = "custom_products_regimens", schema = "siglusintegration")
+public class CustomProductsRegimens extends BaseEntity {
+
+  private String code;
+
+  private String programCode;
+
+  private String categoryType;
+
+  private String type;
+
+  private Boolean isCustom;
 }

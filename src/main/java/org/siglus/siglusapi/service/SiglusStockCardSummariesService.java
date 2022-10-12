@@ -132,7 +132,7 @@ public class SiglusStockCardSummariesService {
   }
 
   public Page<StockCardSummaryV2Dto> findSiglusStockCard(
-      MultiValueMap<String, String> parameters, List<UUID> subDraftIds, Pageable pageable) {
+      MultiValueMap<String, String> parameters, List<UUID> subDraftIds, Pageable pageable, boolean withLocation) {
     log.info("findSiglusStockCard subDraftIds=" + Optional.ofNullable(subDraftIds));
     UserDto currentUser = authenticationHelper.getCurrentUser();
     UUID facilityId = currentUser.getHomeFacilityId();
@@ -168,7 +168,7 @@ public class SiglusStockCardSummariesService {
         }
       }
     }
-    if (CollectionUtils.isNotEmpty(subDraftIds)) {
+    if (!withLocation && CollectionUtils.isNotEmpty(subDraftIds)) {
       summaryV2Dtos = filterBySubDraftIds(summaryV2Dtos, subDraftIds);
     }
     return Pagination.getPage(summaryV2Dtos, pageable);
@@ -250,7 +250,7 @@ public class SiglusStockCardSummariesService {
     valueMap.set(NON_EMPTY_ONLY, Boolean.TRUE.toString());
     valueMap.set(FACILITY_ID, authenticationHelper.getCurrentUser().getHomeFacilityId().toString());
     Pageable pageable = new PageRequest(0, Integer.MAX_VALUE);
-    return findSiglusStockCard(valueMap, null, pageable).getContent();
+    return findSiglusStockCard(valueMap, null, pageable, false).getContent();
   }
 
   private void getSummaries(MultiValueMap<String, String> parameters, Set<String> archivedProducts,
@@ -312,10 +312,11 @@ public class SiglusStockCardSummariesService {
   }
 
   public Page<StockCardSummaryV2Dto> searchStockCardSummaryV2Dtos(
-      MultiValueMap<String, String> parameters, List<UUID> subDraftIds, UUID draftId, Pageable pageable) {
+      MultiValueMap<String, String> parameters, List<UUID> subDraftIds, UUID draftId, Pageable pageable,
+      boolean withLocation) {
     try {
       if (draftId != null) {
-        Page<StockCardSummaryV2Dto> stockCards = findSiglusStockCard(parameters, subDraftIds, pageable);
+        Page<StockCardSummaryV2Dto> stockCards = findSiglusStockCard(parameters, subDraftIds, pageable, withLocation);
         StockManagementDraft foundDraft = stockManagementDraftRepository.findOne(draftId);
         if (foundDraft == null) {
           throw new ResourceNotFoundException(
@@ -337,7 +338,7 @@ public class SiglusStockCardSummariesService {
             .collect(Collectors.toList()), pageable);
       }
       // reason: support all program && archive
-      return findSiglusStockCard(parameters, subDraftIds, pageable);
+      return findSiglusStockCard(parameters, subDraftIds, pageable, withLocation);
 
     } catch (PermissionMessageException e) {
       if (parameters.getFirst(RIGHT_NAME).equals(STOCK_INVENTORIES_EDIT)) {
@@ -388,10 +389,9 @@ public class SiglusStockCardSummariesService {
   }
 
   public List<StockCardSummaryWithLocationDto> getStockCardSummaryWithLocationDtos(
-      MultiValueMap<String, String> parameters,
-      List<UUID> subDraftIds, UUID draftId, Pageable pageable) {
-    List<StockCardSummaryV2Dto> stockCardSummaryV2Dtos = getStockCardSummaryV2Dtos(parameters, subDraftIds, draftId,
-        pageable);
+      MultiValueMap<String, String> parameters, UUID draftId, Pageable pageable) {
+    List<StockCardSummaryV2Dto> stockCardSummaryV2Dtos =
+        getStockCardSummaryV2DtosWithLocation(parameters, new ArrayList<>(), draftId, pageable);
     List<UUID> orderableIds = new ArrayList<>();
     List<CanFulfillForMeEntryDto> canFulfillForMeEntryDtos = getCanFulfillForMeEntryDtos(
         stockCardSummaryV2Dtos, orderableIds);
@@ -440,7 +440,12 @@ public class SiglusStockCardSummariesService {
 
   private List<StockCardSummaryV2Dto> getStockCardSummaryV2Dtos(MultiValueMap<String, String> parameters,
       List<UUID> subDraftIds, UUID draftId, Pageable pageable) {
-    return searchStockCardSummaryV2Dtos(parameters, subDraftIds, draftId, pageable).getContent();
+    return searchStockCardSummaryV2Dtos(parameters, subDraftIds, draftId, pageable, false).getContent();
+  }
+
+  private List<StockCardSummaryV2Dto> getStockCardSummaryV2DtosWithLocation(MultiValueMap<String, String> parameters,
+      List<UUID> subDraftIds, UUID draftId, Pageable pageable) {
+    return searchStockCardSummaryV2Dtos(parameters, subDraftIds, draftId, pageable, true).getContent();
   }
 
   private List<StockCardSummaryDto> combineResponse(List<StockCardSummaryV2Dto> stockCardSummaryV2Dtos,

@@ -47,6 +47,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.joda.money.CurrencyUnit;
 import org.joda.money.Money;
 import org.openlmis.referencedata.domain.Dispensable;
+import org.openlmis.referencedata.domain.ProgramOrderable;
 import org.openlmis.referencedata.dto.OrderableDto;
 import org.openlmis.referencedata.dto.ProgramOrderableDto;
 import org.openlmis.requisition.dto.BaseDto;
@@ -55,6 +56,7 @@ import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
 import org.openlmis.stockmanagement.util.RequestParameters;
 import org.siglus.siglusapi.domain.BasicProductCode;
+import org.siglus.siglusapi.domain.CustomProductsRegimens;
 import org.siglus.siglusapi.domain.FcIntegrationChanges;
 import org.siglus.siglusapi.domain.ProgramOrderablesExtension;
 import org.siglus.siglusapi.domain.ProgramRealProgram;
@@ -68,7 +70,9 @@ import org.siglus.siglusapi.dto.fc.ProductInfoDto;
 import org.siglus.siglusapi.dto.fc.ProductPriceDto;
 import org.siglus.siglusapi.dto.fc.ResponseBaseDto;
 import org.siglus.siglusapi.repository.BasicProductCodeRepository;
+import org.siglus.siglusapi.repository.CustomProductsRegimensRepository;
 import org.siglus.siglusapi.repository.ProgramOrderablesExtensionRepository;
+import org.siglus.siglusapi.repository.ProgramOrderablesRepository;
 import org.siglus.siglusapi.repository.ProgramRealProgramRepository;
 import org.siglus.siglusapi.service.SiglusOrderableService;
 import org.siglus.siglusapi.service.client.OrderableDisplayCategoryReferenceDataService;
@@ -99,6 +103,11 @@ public class FcProductService implements ProcessDataService {
   private final ProgramRealProgramRepository programRealProgramRepository;
   private final ProgramOrderablesExtensionRepository programOrderablesExtensionRepository;
   private final BasicProductCodeRepository basicProductCodeRepository;
+
+  private final CustomProductsRegimensRepository customProductsRegimensRepository;
+
+  private final ProgramOrderablesRepository programOrderablesRepository;
+
   private final CacheManager cacheManager;
 
   private static final String SYSTEM_DEFAULT_MANUFACTURER = "Mozambique";
@@ -298,7 +307,7 @@ public class FcProductService implements ProcessDataService {
   private Set<ProgramOrderableDto> buildProgramOrderableDtos(ProductInfoDto product) {
     return new FcProductMapper(
         realProgramCodeToEntityMap, programCodeToIdMap, categoryCodeToEntityMap)
-        .getProgramOrderablesFrom(product);
+        .getProgramOrderablesFrom(product, customProductsRegimensRepository);
   }
 
   private FcIntegrationChanges getUpdatedOrderable(OrderableDto existed, ProductInfoDto current) {
@@ -409,6 +418,19 @@ public class FcProductService implements ProcessDataService {
   }
 
   private boolean isDifferentProgramOrderable(OrderableDto existed, ProductInfoDto current) {
+
+    CustomProductsRegimens customProductsRegimensByCode = customProductsRegimensRepository
+        .findCustomProductsRegimensByCode(current.getFnm());
+    if (null != customProductsRegimensByCode) {
+      ProgramOrderable programOrderableByOrderableId = programOrderablesRepository
+          .findNewestProgramOrderableByOrderableId(existed.getId());
+      if (null != programOrderableByOrderableId) {
+        String orginCategoryName = programOrderableByOrderableId.getOrderableDisplayCategory()
+            .getOrderedDisplayValue().getDisplayName();
+        return !customProductsRegimensByCode.getCategoryType().equals(orginCategoryName);
+      }
+    }
+
     Set<ProgramOrderableDto> productPrograms = buildProgramOrderableDtos(current);
     Set<ProgramOrderableDto> existingOrderablePrograms =
         existed.getPrograms() == null ? Collections.emptySet() : existed.getPrograms();

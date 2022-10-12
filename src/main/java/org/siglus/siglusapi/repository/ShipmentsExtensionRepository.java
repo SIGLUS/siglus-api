@@ -16,25 +16,15 @@
 package org.siglus.siglusapi.repository;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
-import org.openlmis.referencedata.domain.ProgramOrderable;
-import org.siglus.siglusapi.repository.dto.ProgramOrderableDto;
+import org.siglus.siglusapi.domain.ShipmentsExtension;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 
-public interface ProgramOrderablesRepository extends JpaRepository<ProgramOrderable, UUID> {
+public interface ShipmentsExtensionRepository extends JpaRepository<ShipmentsExtension, UUID> {
 
-  @Query(name = "ProgramOrderable.findProgramOrderableDto", nativeQuery = true)
-  List<ProgramOrderableDto> findAllMaxVersionProgramOrderableDtos();
+  ShipmentsExtension findByClientCodeAndIssueVoucherNumber(String clientCode, String issueVoucherNumber);
 
-  @Query(value = "select * from referencedata.program_orderables "
-      + "where (orderableid, orderableversionnumber) in "
-      + "("
-      + "select orderableid, max(orderableversionnumber) orderableversionnumber "
-      + "from referencedata.program_orderables "
-      + "group by orderableid "
-      + ") "
-      + "and orderableid = :orderableId", nativeQuery = true)
-  ProgramOrderable findNewestProgramOrderableByOrderableId(@Param("orderableId") UUID orderableId);
+  List<ShipmentsExtension> findByShipmentIdIn(Set<UUID> ids);
+
 }

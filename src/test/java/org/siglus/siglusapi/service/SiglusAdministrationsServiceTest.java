@@ -655,6 +655,7 @@ public class SiglusAdministrationsServiceTest {
     //given
     FacilityDto facilityDto = mockFacilityDto();
     when(siglusFacilityReferenceDataService.findOne(facilityId)).thenReturn(facilityDto);
+    when(authenticationHelper.getCurrentUser()).thenReturn(new UserDto());
     //when
     siglusAdministrationsService.eraseDeviceInfo(FacilityDeviceTypeEnum.LOCAL_MACHINE, facilityId);
     //then
@@ -670,6 +671,7 @@ public class SiglusAdministrationsServiceTest {
     when(siglusFacilityReferenceDataService.findOne(facilityId)).thenReturn(facilityDto);
     when(appInfoRepository.findByFacilityCode(facilityDto.getCode())).thenReturn(appInfo);
     when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(facilityExtension);
+    when(authenticationHelper.getCurrentUser()).thenReturn(new UserDto());
     FacilityDeviceDto facilityDeviceDto = new FacilityDeviceDto();
     facilityDeviceDto.setDeviceType(FacilityDeviceTypeEnum.WEB);
     //when
@@ -685,6 +687,7 @@ public class SiglusAdministrationsServiceTest {
     when(siglusFacilityReferenceDataService.findOne(facilityId)).thenReturn(facilityDto);
     when(appInfoRepository.findByFacilityCode(facilityDto.getCode())).thenReturn(appInfo);
     when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(facilityExtension);
+    when(authenticationHelper.getCurrentUser()).thenReturn(new UserDto());
     FacilityDeviceDto facilityDeviceDto = new FacilityDeviceDto();
     facilityDeviceDto.setDeviceType(FacilityDeviceTypeEnum.WEB);
     //when
@@ -702,6 +705,7 @@ public class SiglusAdministrationsServiceTest {
     when(siglusFacilityReferenceDataService.findOne(facilityId)).thenReturn(facilityDto);
     when(appInfoRepository.findByFacilityCode(facilityDto.getCode())).thenReturn(appInfo);
     when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(facilityExtension);
+    when(authenticationHelper.getCurrentUser()).thenReturn(new UserDto());
     FacilityDeviceDto facilityDeviceDto = new FacilityDeviceDto();
     facilityDeviceDto.setDeviceType(FacilityDeviceTypeEnum.WEB);
     //when
@@ -717,6 +721,7 @@ public class SiglusAdministrationsServiceTest {
     when(siglusFacilityReferenceDataService.findOne(facilityId)).thenReturn(facilityDto);
     when(appInfoRepository.findByFacilityCode(facilityDto.getCode())).thenReturn(appInfo);
     when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(facilityExtension);
+    when(authenticationHelper.getCurrentUser()).thenReturn(new UserDto());
     FacilityDeviceDto facilityDeviceDto = new FacilityDeviceDto();
     facilityDeviceDto.setDeviceType(FacilityDeviceTypeEnum.WEB);
     //when
@@ -732,6 +737,7 @@ public class SiglusAdministrationsServiceTest {
     when(siglusFacilityReferenceDataService.findOne(facilityId)).thenReturn(facilityDto);
     when(appInfoRepository.findByFacilityCode(facilityDto.getCode())).thenReturn(appInfo);
     when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(facilityExtension);
+    when(authenticationHelper.getCurrentUser()).thenReturn(new UserDto());
     FacilityDeviceDto facilityDeviceDto = new FacilityDeviceDto();
     facilityDeviceDto.setDeviceType(FacilityDeviceTypeEnum.WEB);
     //when
@@ -747,7 +753,8 @@ public class SiglusAdministrationsServiceTest {
     when(siglusFacilityReferenceDataService.findOne(facilityId)).thenReturn(facilityDto);
     when(appInfoRepository.findByFacilityCode(facilityDto.getCode())).thenReturn(appInfo);
     when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(facilityExtension);
-    when(stockCardRepository.findByFacilityIdIn(facilityId)).thenReturn(Collections.singletonList(new StockCard()));
+    when(stockCardRepository.countByFacilityId(facilityId)).thenReturn(2);
+    when(authenticationHelper.getCurrentUser()).thenReturn(new UserDto());
     FacilityDeviceDto facilityDeviceDto = new FacilityDeviceDto();
     facilityDeviceDto.setDeviceType(FacilityDeviceTypeEnum.WEB);
     //when
@@ -763,7 +770,8 @@ public class SiglusAdministrationsServiceTest {
     when(siglusFacilityReferenceDataService.findOne(facilityId)).thenReturn(facilityDto);
     when(appInfoRepository.findByFacilityCode(facilityDto.getCode())).thenReturn(appInfo);
     when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(facilityExtension);
-    when(stockCardRepository.findByFacilityIdIn(facilityId)).thenReturn(null);
+    when(stockCardRepository.countByFacilityId(facilityId)).thenReturn(0);
+    when(authenticationHelper.getCurrentUser()).thenReturn(new UserDto());
     FacilityDeviceDto facilityDeviceDto = new FacilityDeviceDto();
     facilityDeviceDto.setDeviceType(FacilityDeviceTypeEnum.WEB);
     //when
@@ -779,7 +787,8 @@ public class SiglusAdministrationsServiceTest {
     when(siglusFacilityReferenceDataService.findOne(facilityId)).thenReturn(facilityDto);
     when(appInfoRepository.findByFacilityCode(facilityDto.getCode())).thenReturn(appInfo);
     when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(facilityExtension);
-    when(stockCardRepository.findByFacilityIdIn(facilityId)).thenReturn(null);
+    when(stockCardRepository.countByFacilityId(facilityId)).thenReturn(0);
+    when(authenticationHelper.getCurrentUser()).thenReturn(new UserDto());
     FacilityDeviceDto facilityDeviceDto = new FacilityDeviceDto();
     facilityDeviceDto.setDeviceType(FacilityDeviceTypeEnum.WEB);
     //when
@@ -799,7 +808,8 @@ public class SiglusAdministrationsServiceTest {
     when(siglusFacilityReferenceDataService.findOne(facilityId)).thenReturn(facilityDto);
     when(appInfoRepository.findByFacilityCode(facilityDto.getCode())).thenReturn(appInfo);
     when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(facilityExtension);
-    when(stockCardRepository.findByFacilityIdIn(facilityId)).thenReturn(null);
+    when(stockCardRepository.countByFacilityId(facilityId)).thenReturn(0);
+    when(authenticationHelper.getCurrentUser()).thenReturn(new UserDto());
     FacilityDeviceDto facilityDeviceDto = new FacilityDeviceDto();
     facilityDeviceDto.setDeviceType(FacilityDeviceTypeEnum.WEB);
     //when
