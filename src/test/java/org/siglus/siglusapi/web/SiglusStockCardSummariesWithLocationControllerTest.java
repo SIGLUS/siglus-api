@@ -17,7 +17,6 @@ package org.siglus.siglusapi.web;
 
 import static org.mockito.Mockito.verify;
 
-import java.util.Collections;
 import java.util.UUID;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -58,10 +57,10 @@ public class SiglusStockCardSummariesWithLocationControllerTest {
 
   @Test
   public void shouldCallServiceAndBuilderWhenSearchStockCardSummaries() {
-    controller.getStockCardSummaryDtos(parameters, Collections.emptyList(), draftId, pageable);
+    controller.getStockCardSummaryDtos(parameters, draftId, pageable);
 
     verify(siglusStockCardSummariesService)
-        .getStockCardSummaryWithLocationDtos(parameters, Collections.emptyList(), draftId, pageable);
+        .getStockCardSummaryWithLocationDtos(parameters, draftId, pageable);
   }
 
   @Test

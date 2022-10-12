@@ -69,11 +69,9 @@ public class SiglusStockCardSummariesWithLocationController {
   @GetMapping("/integration/summary")
   public List<StockCardSummaryWithLocationDto> getStockCardSummaryDtos(
       @RequestParam MultiValueMap<String, String> parameters,
-      @RequestParam(required = false) List<UUID> subDraftIds,
       @RequestParam(required = false) UUID draftId,
       @PageableDefault(size = Integer.MAX_VALUE) Pageable pageable) {
-    return siglusStockCardSummariesService
-        .getStockCardSummaryWithLocationDtos(parameters, subDraftIds, draftId, pageable);
+    return siglusStockCardSummariesService.getStockCardSummaryWithLocationDtos(parameters, draftId, pageable);
   }
 
   @GetMapping("/stockCard/{stockCardId}")

@@ -389,10 +389,9 @@ public class SiglusStockCardSummariesService {
   }
 
   public List<StockCardSummaryWithLocationDto> getStockCardSummaryWithLocationDtos(
-      MultiValueMap<String, String> parameters,
-      List<UUID> subDraftIds, UUID draftId, Pageable pageable) {
-    List<StockCardSummaryV2Dto> stockCardSummaryV2Dtos = getStockCardSummaryV2Dtos(parameters, subDraftIds, draftId,
-        pageable);
+      MultiValueMap<String, String> parameters, UUID draftId, Pageable pageable) {
+    List<StockCardSummaryV2Dto> stockCardSummaryV2Dtos =
+        getStockCardSummaryV2DtosWithLocation(parameters, new ArrayList<>(), draftId, pageable);
     List<UUID> orderableIds = new ArrayList<>();
     List<CanFulfillForMeEntryDto> canFulfillForMeEntryDtos = getCanFulfillForMeEntryDtos(
         stockCardSummaryV2Dtos, orderableIds);
@@ -441,8 +440,12 @@ public class SiglusStockCardSummariesService {
 
   private List<StockCardSummaryV2Dto> getStockCardSummaryV2Dtos(MultiValueMap<String, String> parameters,
       List<UUID> subDraftIds, UUID draftId, Pageable pageable) {
-    // fixme align with zz
     return searchStockCardSummaryV2Dtos(parameters, subDraftIds, draftId, pageable, false).getContent();
+  }
+
+  private List<StockCardSummaryV2Dto> getStockCardSummaryV2DtosWithLocation(MultiValueMap<String, String> parameters,
+      List<UUID> subDraftIds, UUID draftId, Pageable pageable) {
+    return searchStockCardSummaryV2Dtos(parameters, subDraftIds, draftId, pageable, true).getContent();
   }
 
   private List<StockCardSummaryDto> combineResponse(List<StockCardSummaryV2Dto> stockCardSummaryV2Dtos,
