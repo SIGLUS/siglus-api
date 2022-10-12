@@ -13,24 +13,48 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.localmachine.webapi;
+package org.siglus.siglusapi.localmachine.domain;
 
-import java.time.ZonedDateTime;
-import java.util.List;
+import java.util.UUID;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.OneToOne;
+import javax.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.siglus.siglusapi.localmachine.domain.ErrorRecord;
 
-@Builder
+@Entity
 @Data
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class LocalSyncResultsResponse {
+@Table(name = "error_payloads", schema = "localmachine")
+public class ErrorPayload {
 
-  private ZonedDateTime latestSyncedTime;
+  @Id
+  private UUID id;
 
-  private List<ErrorRecord> errors;
+  @OneToOne
+  @JoinColumn(nullable = false)
+  private ErrorRecord errorRecord;
+
+  @Column(name = "errorname")
+  private String errorName;
+
+  @Column(name = "rootstacktrace")
+  private String rootStackTrace;
+
+  @Column(name = "eventid")
+  private UUID eventId;
+
+  @Column(name = "messagekey")
+  private String messageKey;
+
+  @Column(name = "detailmessage")
+  private String detailMessage;
 
 }

@@ -29,7 +29,6 @@ import org.springframework.stereotype.Component;
 public class Synchronizer {
   private final SyncService syncService;
   private final Machine machine;
-
   @Scheduled(fixedRate = 60 * 1000, initialDelay = 60 * 1000)
   public void scheduledSync() {
     log.info("start scheduled synchronization with online web");

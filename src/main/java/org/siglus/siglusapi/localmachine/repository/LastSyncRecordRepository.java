@@ -13,36 +13,15 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.localmachine.domain;
+package org.siglus.siglusapi.localmachine.repository;
 
-import java.time.ZonedDateTime;
 import java.util.UUID;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import org.siglus.siglusapi.localmachine.domain.LatestSyncReplayRecord;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
-@Entity
-@Data
-@Builder
-@AllArgsConstructor
-@NoArgsConstructor
-@Table(name = "replay_error_records", schema = "localmachine")
-public class ReplayErrorRecords {
+@Repository
+public interface LastSyncRecordRepository extends JpaRepository<LatestSyncReplayRecord, UUID> {
 
-  @Id
-  private UUID id;
-
-  @Column(name = "type")
-  private String type;
-
-  @Column(name = "errors")
-  private byte[] errors;
-
-  @Column(name = "occurredtime")
-  private ZonedDateTime occurredTime;
+  LatestSyncReplayRecord findFirstByOrderByLatestSyncedTimeDesc();
 }

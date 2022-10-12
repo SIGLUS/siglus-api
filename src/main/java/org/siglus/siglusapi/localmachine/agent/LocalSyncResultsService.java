@@ -16,14 +16,12 @@
 package org.siglus.siglusapi.localmachine.agent;
 
 import java.util.List;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.siglus.siglusapi.localmachine.domain.ErrorRecord;
 import org.siglus.siglusapi.localmachine.domain.LatestSyncReplayRecord;
-import org.siglus.siglusapi.localmachine.domain.ReplayErrorRecords;
-import org.siglus.siglusapi.localmachine.eventstore.PayloadSerializer;
-import org.siglus.siglusapi.localmachine.repository.LatestSyncReplayRecordRepository;
-import org.siglus.siglusapi.localmachine.repository.ReplayErrorRecordsRepository;
+import org.siglus.siglusapi.localmachine.repository.ErrorRecordRepository;
+import org.siglus.siglusapi.localmachine.repository.LastSyncRecordRepository;
 import org.siglus.siglusapi.localmachine.webapi.LocalSyncResultsResponse;
 import org.springframework.stereotype.Service;
 
@@ -32,23 +30,20 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class LocalSyncResultsService {
 
-  private final LatestSyncReplayRecordRepository latestSyncReplayRecordRepository;
+  private final LastSyncRecordRepository lastSyncRecordRepository;
 
-  private final ReplayErrorRecordsRepository errorRecordsRepository;
-
-  private final PayloadSerializer serializer;
+  private final ErrorRecordRepository errorRecordsRepository;
 
   public LocalSyncResultsResponse getSyncResults() {
-    LatestSyncReplayRecord firstByLatestSyncedTimeDesc = latestSyncReplayRecordRepository
+    LatestSyncReplayRecord firstByLatestSyncedTimeDesc = lastSyncRecordRepository
         .findFirstByOrderByLatestSyncedTimeDesc();
 
-    List<ReplayErrorRecords> errorRecords = errorRecordsRepository
+    List<ErrorRecord> errorRecords = errorRecordsRepository
         .findTopTenWithCreationDateTimeAfter(firstByLatestSyncedTimeDesc.getLatestReplayedTime());
-    List<Object> errors = errorRecords.stream().map(ReplayErrorRecords::getErrors).map(serializer::load)
-        .collect(Collectors.toList());
 
-    return LocalSyncResultsResponse.builder().latestSyncedTime(firstByLatestSyncedTimeDesc.getLatestSyncedTime())
-        .errors(errors)
+    return LocalSyncResultsResponse.builder()
+        .latestSyncedTime(firstByLatestSyncedTimeDesc.getLatestSyncedTime())
+        .errors(errorRecords)
         .build();
   }
 }

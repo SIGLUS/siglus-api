@@ -17,8 +17,8 @@ package org.siglus.siglusapi.localmachine;
 
 import java.util.Optional;
 import java.util.UUID;
+import org.siglus.siglusapi.localmachine.agent.ErrorHandleService;
 import org.siglus.siglusapi.localmachine.eventstore.EventStore;
-import org.siglus.siglusapi.localmachine.repository.ReplayErrorRecordsRepository;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
@@ -27,8 +27,8 @@ import org.springframework.stereotype.Component;
 public class LocalEventImporter extends EventImporter {
 
   public LocalEventImporter(EventStore localEventStore, EventReplayer replayer, Machine machine,
-      ReplayErrorRecordsRepository replayErrorRecordsRepository) {
-    super(localEventStore, replayer, machine, replayErrorRecordsRepository);
+      ErrorHandleService errorHandleService) {
+    super(localEventStore, replayer, machine, errorHandleService);
   }
 
   @Override
