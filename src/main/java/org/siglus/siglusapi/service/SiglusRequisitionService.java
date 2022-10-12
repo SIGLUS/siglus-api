@@ -16,6 +16,7 @@
 package org.siglus.siglusapi.service;
 
 import static com.google.common.collect.Lists.newArrayList;
+import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
@@ -31,6 +32,7 @@ import static org.siglus.common.constant.KitConstants.US_KITS;
 
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -76,19 +78,24 @@ import org.openlmis.requisition.dto.RoleDto;
 import org.openlmis.requisition.dto.SupervisoryNodeDto;
 import org.openlmis.requisition.dto.SupportedProgramDto;
 import org.openlmis.requisition.dto.UserDto;
+import org.openlmis.requisition.dto.VersionIdentityDto;
 import org.openlmis.requisition.dto.VersionObjectReferenceDto;
+import org.openlmis.requisition.dto.stockmanagement.StockCardRangeSummaryDto;
 import org.openlmis.requisition.exception.ValidationMessageException;
 import org.openlmis.requisition.i18n.MessageKeys;
 import org.openlmis.requisition.repository.RequisitionRepository;
 import org.openlmis.requisition.repository.custom.RequisitionSearchParams;
 import org.openlmis.requisition.service.PermissionService;
 import org.openlmis.requisition.service.RequisitionService;
+import org.openlmis.requisition.service.referencedata.ApproveProductsAggregator;
 import org.openlmis.requisition.service.referencedata.FacilityReferenceDataService;
 import org.openlmis.requisition.service.referencedata.FacilityTypeApprovedProductReferenceDataService;
 import org.openlmis.requisition.service.referencedata.RequisitionGroupReferenceDataService;
 import org.openlmis.requisition.service.referencedata.RightReferenceDataService;
 import org.openlmis.requisition.service.referencedata.RoleReferenceDataService;
 import org.openlmis.requisition.service.referencedata.SupervisoryNodeReferenceDataService;
+import org.openlmis.requisition.service.stockmanagement.StockCardRangeSummaryStockManagementService;
+import org.openlmis.requisition.service.stockmanagement.StockOnHandRetrieverBuilderFactory;
 import org.openlmis.requisition.utils.AuthenticationHelper;
 import org.openlmis.requisition.utils.Message;
 import org.openlmis.requisition.web.QueryRequisitionSearchParams;
@@ -98,6 +105,7 @@ import org.openlmis.stockmanagement.exception.PermissionMessageException;
 import org.siglus.common.domain.RequisitionTemplateExtension;
 import org.siglus.common.dto.RequisitionTemplateExtensionDto;
 import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
+import org.siglus.common.util.SimulateAuthenticationHelper;
 import org.siglus.siglusapi.domain.ConsultationNumberLineItemDraft;
 import org.siglus.siglusapi.domain.FacilityExtension;
 import org.siglus.siglusapi.domain.KitUsageLineItemDraft;
@@ -128,6 +136,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.MultiValueMap;
@@ -169,6 +178,9 @@ public class SiglusRequisitionService {
   private final SupportedProgramsHelper supportedProgramsHelper;
   private final RequisitionMonthlyNotSubmitReportRepository requisitionMonthlyNotSubmitReportRepository;
   private final HttpServletResponse response;
+  private final SimulateAuthenticationHelper simulateAuthenticationHelper;
+  private final StockCardRangeSummaryStockManagementService stockCardRangeSummaryStockManagementService;
+  private final StockOnHandRetrieverBuilderFactory stockOnHandRetrieverBuilderFactory;
 
 
   @Value("${service.url}")
@@ -193,7 +205,7 @@ public class SiglusRequisitionService {
   public SiglusRequisitionDto initiate(UUID programId, UUID facilityId, UUID suggestedPeriod, boolean emergency,
       String physicalInventoryDateStr, HttpServletRequest request, HttpServletResponse response) {
     RequisitionV2Dto v2Dto = requisitionV2Controller.initiate(programId, facilityId, suggestedPeriod, emergency,
-            physicalInventoryDateStr, request, response);
+        physicalInventoryDateStr, request, response);
     SiglusRequisitionDto siglusRequisitionDto = siglusUsageReportService.initiateUsageReport(v2Dto);
     initiateRequisitionNumber(siglusRequisitionDto);
     List<BaseRequisitionLineItemDto> lineItems = siglusRequisitionDto.getLineItems();
@@ -684,15 +696,72 @@ public class SiglusRequisitionService {
 
   private List<RequisitionLineItem> createLineItemWhenAddProduct(Requisition requisition, ProgramDto program,
       FacilityDto facility, List<UUID> orderableIds, FacilityDto userFacility) {
-    List<ApprovedProductDto> approvedProducts = siglusApprovedReferenceDataService
-        .getApprovedProducts(userFacility.getId(), program.getId(), orderableIds,
-            requisition.getReportOnly() && Boolean.FALSE.equals(requisition.getEmergency()));
+    RequisitionTemplate requisitionTemplate = requisition.getTemplate();
+    List<StockCardRangeSummaryDto> stockCardRangeSummaries = Collections.emptyList();
+    List<ApprovedProductDto> approvedProducts = siglusApprovedReferenceDataService.getApprovedProducts(
+        userFacility.getId(), program.getId(), orderableIds, requisition.getReportOnly());
+    if (requisitionTemplate.isPopulateStockOnHandFromStockCards() && Boolean.TRUE.equals(requisition.getEmergency())) {
+      Map<UUID, List<ApprovedProductDto>> groupApprovedProduct =
+          approvedProducts.stream().collect(groupingBy(approvedProduct -> approvedProduct.getProgram().getId()));
+      stockCardRangeSummaries = getStockCardRangeSummaryDtos(facility, groupApprovedProduct,
+          requisition.getActualStartDate(), requisition.getActualEndDate());
+    }
+
+    OAuth2Authentication originAuth = simulateAuthenticationHelper.simulateCrossServiceAuth();
+    Map<UUID, List<ApprovedProductDto>> groupApprovedProduct =
+        approvedProducts.stream().collect(groupingBy(approvedProduct -> approvedProduct.getProgram().getId()));
+    Map<UUID, Integer> orderableSoh = getOrderableSohMap(requisitionTemplate, facility.getId(),
+        requisition.getActualEndDate(), RequisitionLineItem.STOCK_ON_HAND, groupApprovedProduct);
+    Map<UUID, Integer> orderableBeginning = getOrderableSohMap(requisitionTemplate, facility.getId(),
+        requisition.getActualStartDate().minusDays(1),
+        RequisitionLineItem.BEGINNING_BALANCE, groupApprovedProduct);
+    simulateAuthenticationHelper.recoveryAuth(originAuth);
+
     List<RequisitionLineItem> lineItemList = new ArrayList<>();
     for (ApprovedProductDto approvedProductDto : approvedProducts) {
-      lineItemList.add(requisition.createLineItemWhenAddProduct(requisition.getTemplate(), approvedProductDto,
-          program.getCode(), facility.getType().getCode()));
+      UUID orderableId = approvedProductDto.getOrderable().getId();
+      Integer beginningBalances = orderableBeginning.get(orderableId);
+      Integer stockOnHand = orderableSoh.get(orderableId);
+      lineItemList.add(requisition.createLineItemWhenAddProduct(requisitionTemplate, stockOnHand,
+          beginningBalances, approvedProductDto, stockCardRangeSummaries, program.getCode(),
+          facility.getType().getCode()));
     }
     return lineItemList;
+  }
+
+  private List<StockCardRangeSummaryDto> getStockCardRangeSummaryDtos(FacilityDto facility,
+      Map<UUID, List<ApprovedProductDto>> groupApprovedProduct, LocalDate startDate, LocalDate endDate) {
+    return groupApprovedProduct.keySet().stream()
+        .map(programId -> {
+          Set<VersionIdentityDto> orderableIdentities = groupApprovedProduct.get(programId)
+              .stream()
+              .map(approveProduct -> {
+                OrderableDto orderableDto = approveProduct.getOrderable();
+                return new VersionIdentityDto(orderableDto.getId(), orderableDto.getVersionNumber());
+              })
+              .collect(Collectors.toSet());
+          return stockCardRangeSummaryStockManagementService.search(programId, facility.getId(), orderableIdentities,
+              null, startDate, endDate);
+        })
+        .flatMap(Collection::stream)
+        .collect(toList());
+  }
+
+  private Map<UUID, Integer> getOrderableSohMap(RequisitionTemplate requisitionTemplate,
+      UUID facilityId, LocalDate date, String columnName,
+      Map<UUID, List<ApprovedProductDto>> groupApprovedProduct) {
+    return groupApprovedProduct.keySet().stream()
+        .map(programId -> stockOnHandRetrieverBuilderFactory
+            .getInstance(requisitionTemplate, columnName)
+            .forProgram(programId)
+            .forFacility(facilityId)
+            .forProducts(new ApproveProductsAggregator(groupApprovedProduct.get(programId), programId))
+            .asOfDate(date)
+            .build()
+            .get())
+        .map(Map::entrySet)
+        .flatMap(Collection::stream)
+        .collect(HashMap::new, (m, e) -> m.put(e.getKey(), e.getValue()), Map::putAll);
   }
 
   @Transactional
@@ -900,8 +969,8 @@ public class SiglusRequisitionService {
       siglusRequisitionDto.setIsExternalApproval(!checkIsInternal(siglusRequisitionDto.getFacility().getId(), userDto));
       Set<VersionObjectReferenceDto> availableProducts = siglusRequisitionDto.getAvailableProducts();
       Set<UUID> approverMainProgramAndAdditionalProgramApprovedProducts = Optional.ofNullable(
-          requisitionService.getApproveProduct(userDto.getHomeFacilityId(), requisition.getProgramId(),
-              siglusRequisitionDto.getReportOnly()).getApprovedProductReferences())
+              requisitionService.getApproveProduct(userDto.getHomeFacilityId(), requisition.getProgramId(),
+                  siglusRequisitionDto.getReportOnly()).getApprovedProductReferences())
           .orElse(Collections.emptySet())
           .stream()
           .map(ApprovedProductReference::getOrderable)
@@ -966,7 +1035,7 @@ public class SiglusRequisitionService {
       return null;
     }
     return extensions.stream().filter(extension ->
-        lineItem.getId().equals(extension.getRequisitionLineItemId()))
+            lineItem.getId().equals(extension.getRequisitionLineItemId()))
         .findFirst().orElse(null);
   }
 

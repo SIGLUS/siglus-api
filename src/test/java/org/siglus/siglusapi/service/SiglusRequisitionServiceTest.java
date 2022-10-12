@@ -1722,7 +1722,8 @@ public class SiglusRequisitionServiceTest {
     previousRequistions.add(createRequisition());
     when(requisition.getPreviousRequisitions()).thenReturn(previousRequistions);
     RequisitionLineItem lineItemCreated = new RequisitionLineItemDataBuilder().build();
-    when(requisition.createLineItemWhenAddProduct(any(), any(), any(), any())).thenReturn(lineItemCreated);
+    when(requisition.createLineItemWhenAddProduct(any(), any(), any(), any(), any(), any(), any()))
+        .thenReturn(lineItemCreated);
 
     return requisition;
   }
