@@ -82,6 +82,7 @@ import org.siglus.siglusapi.dto.enums.PodSubDraftStatusEnum;
 import org.siglus.siglusapi.exception.AuthenticationException;
 import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.NotFoundException;
+import org.siglus.siglusapi.localmachine.event.proofofdelivery.web.ProofOfDeliveryEmitter;
 import org.siglus.siglusapi.repository.OrderableRepository;
 import org.siglus.siglusapi.repository.OrdersRepository;
 import org.siglus.siglusapi.repository.PodExtensionRepository;
@@ -174,6 +175,8 @@ public class SiglusPodService {
   private final StockCardLineItemRepository stockCardLineItemRepository;
 
   private final StockCardLineItemExtensionRepository stockCardLineItemExtensionRepository;
+
+  private final ProofOfDeliveryEmitter proofOfDeliveryEmitter;
 
   private static final String FILE_NAME_PREFIX_EMERGENCY = "OF.REM.";
   private static final String FILE_NAME_PREFIX_NORMAL = "OF.RNO.";
@@ -337,6 +340,7 @@ public class SiglusPodService {
     ProofOfDeliveryDto podDto = podController.updateProofOfDelivery(podId, request.getPodDto(), authentication);
     if (podDto.getStatus() == ProofOfDeliveryStatus.CONFIRMED) {
       notificationService.postConfirmPod(request.getPodDto());
+      proofOfDeliveryEmitter.emit(request.getPodDto().getId());
     }
     return podDto;
   }
@@ -351,6 +355,7 @@ public class SiglusPodService {
     ProofOfDeliveryDto podDto = podController.updateProofOfDelivery(podId, request.getPodDto(), authentication);
     if (podDto.getStatus() == ProofOfDeliveryStatus.CONFIRMED) {
       notificationService.postConfirmPod(request.getPodDto());
+      proofOfDeliveryEmitter.emit(request.getPodDto().getId());
     }
     StockEventDto stockEventDto = createStockEventDto(podId);
     saveToStockCardLineItemByLocation(request, stockEventDto);

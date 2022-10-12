@@ -90,6 +90,8 @@ import org.siglus.siglusapi.dto.enums.PodSubDraftStatusEnum;
 import org.siglus.siglusapi.exception.AuthenticationException;
 import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.NotFoundException;
+import org.siglus.siglusapi.localmachine.event.proofofdelivery.web.ProofOfDeliveryEmitter;
+import org.siglus.siglusapi.localmachine.event.proofofdelivery.web.ProofOfDeliveryEvent;
 import org.siglus.siglusapi.repository.OrderableRepository;
 import org.siglus.siglusapi.repository.OrdersRepository;
 import org.siglus.siglusapi.repository.PodExtensionRepository;
@@ -197,6 +199,9 @@ public class SiglusPodServiceTest {
 
   @Mock
   private StockCardLineItemExtensionRepository stockCardLineItemExtensionRepository;
+
+  @Mock
+  private ProofOfDeliveryEmitter proofOfDeliveryEmitter;
 
   private final UUID externalId = UUID.randomUUID();
   private final UUID orderableId = UUID.randomUUID();
@@ -698,6 +703,7 @@ public class SiglusPodServiceTest {
     ProofOfDeliveryDto dto = request.getPodDto();
     when(fulfillmentService.searchProofOfDelivery(any(), any())).thenReturn(dto);
     when(podController.updateProofOfDelivery(podId, dto, null)).thenReturn(dto);
+    when(proofOfDeliveryEmitter.emit(podId)).thenReturn(new ProofOfDeliveryEvent());
 
     // when
     ProofOfDeliveryDto actualResponse = service.submitSubDrafts(podId, request, null);
@@ -721,6 +727,7 @@ public class SiglusPodServiceTest {
     when(fulfillmentService.searchProofOfDelivery(any(), any())).thenReturn(dto);
     when(podController.updateProofOfDelivery(podId, dto, null)).thenReturn(dto);
     mockPodExtensionQuery();
+    when(proofOfDeliveryEmitter.emit(podId)).thenReturn(new ProofOfDeliveryEvent());
 
     // when
     ProofOfDeliveryDto actualResponse = service.submitSubDrafts(podId, request, null);
@@ -743,6 +750,7 @@ public class SiglusPodServiceTest {
     ProofOfDeliveryDto dto = request.getPodDto();
     when(fulfillmentService.searchProofOfDelivery(any(), any())).thenReturn(dto);
     when(podController.updateProofOfDelivery(podId, dto, null)).thenReturn(dto);
+    when(proofOfDeliveryEmitter.emit(podId)).thenReturn(new ProofOfDeliveryEvent());
 
     // when
     ProofOfDeliveryDto actualResponse = service.submitSubDrafts(podId, request, null);
