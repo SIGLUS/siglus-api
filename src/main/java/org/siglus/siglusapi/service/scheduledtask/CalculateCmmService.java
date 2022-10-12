@@ -31,7 +31,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.openlmis.referencedata.domain.Facility;
 import org.openlmis.referencedata.domain.ProcessingPeriod;
-import org.openlmis.referencedata.dto.OrderableDto;
+import org.siglus.siglusapi.constant.PeriodConstants;
 import org.siglus.siglusapi.domain.HfCmm;
 import org.siglus.siglusapi.repository.FacilityCmmNativeRepository;
 import org.siglus.siglusapi.repository.ProcessingPeriodRepository;
@@ -49,7 +49,7 @@ import org.springframework.util.CollectionUtils;
 @Slf4j
 @RequiredArgsConstructor
 @Service
-public class CalculateWebCmmService {
+public class CalculateCmmService {
 
   private final SiglusFacilityRepository siglusFacilityRepository;
   private final ProcessingPeriodRepository processingPeriodRepository;
@@ -61,22 +61,23 @@ public class CalculateWebCmmService {
   private static final Long SKIP_ISSUE_QUANTITY = -1L;
   private static final Long STOCK_OUT_QUANTITY = 0L;
   private static final double INIT_CMM = -1d;
-  private static final String MONTHLY_SCHEDULE_CODE = "M1";
   private static final int MAX_PERIOD_ISSUE_COUNT = 3;
+  private static final int MILLISECONDS_OF_ONE_SECOND = 1000;
 
   @Transactional
-  public void calculateCmms(LocalDate periodLocalDateRequest) {
-    log.info("calculate cmm start");
-    long startTime = System.currentTimeMillis();
-    LocalDate endDate = Objects.isNull(periodLocalDateRequest) ? LocalDate.now() : periodLocalDateRequest;
+  public void calculateWebCmms(LocalDate periodLocalDateRequest) {
+    log.info("calculate web cmm start");
+    long startTime = getCurrentTimeMillis();
 
+    // TODO: 2022/10/12 修改获取 web facility 逻辑, localmachine 不计算在内
     List<Facility> webFacilities = siglusFacilityRepository.findAllWebFacility();
     Set<UUID> webFacilityIds = webFacilities.stream().map(Facility::getId).collect(Collectors.toSet());
     Map<UUID, String> facilityIdToCode = webFacilities.stream()
         .collect(Collectors.toMap(Facility::getId, Facility::getCode));
-    Map<UUID, String> orderableIdToCode = getOrderableIdToCode();
+    Map<UUID, String> orderableIdToCode = siglusOrderableService.getAllProductIdToCode();
     List<ProcessingPeriod> upToNowAllPeriods = getUpToNowAllPeriods();
 
+    LocalDate endDate = Objects.isNull(periodLocalDateRequest) ? LocalDate.now() : periodLocalDateRequest;
     ProcessingPeriod startPeriod = getStartProcessingPeriod(upToNowAllPeriods, endDate);
     ProcessingPeriod endPeriod = getEndProcessingPeriod(upToNowAllPeriods, endDate);
 
@@ -88,8 +89,7 @@ public class CalculateWebCmmService {
           endPeriod, facilityId);
     });
 
-    long endTime = System.currentTimeMillis();
-    log.info("calculate cmm end, cost:{}s", (endTime - startTime) / 1000);
+    log.info("calculate web cmm end, cost:{}s", (getCurrentTimeMillis() - startTime) / MILLISECONDS_OF_ONE_SECOND);
   }
 
   private void calculateAndSavaCmms(LocalDate periodLocalDateRequest, Map<UUID, String> facilityIdToCode,
@@ -302,15 +302,10 @@ public class CalculateWebCmmService {
 
   private List<ProcessingPeriod> getUpToNowAllPeriods() {
     return processingPeriodRepository.findAll().stream()
-        .filter(e -> e.getProcessingSchedule().getCode().toString().equals(MONTHLY_SCHEDULE_CODE))
+        .filter(e -> e.getProcessingSchedule().getCode().equals(PeriodConstants.MONTH_SCHEDULE_CODE))
         .filter(e -> !e.getStartDate().isAfter(LocalDate.now()))
         .sorted(Comparator.comparing(ProcessingPeriod::getStartDate))
         .collect(Collectors.toList());
-  }
-
-  private Map<UUID, String> getOrderableIdToCode() {
-    return siglusOrderableService.getAllProducts().stream()
-        .collect(Collectors.toMap(OrderableDto::getId, OrderableDto::getProductCode, (a, b) -> a));
   }
 
   private LocalDate getFirstMovementPeriodStart(List<StockOnHandDto> stockOnHandDtos,
@@ -335,5 +330,9 @@ public class CalculateWebCmmService {
 
   private boolean isDateInPeriod(ProcessingPeriod period, LocalDate localDate) {
     return !localDate.isBefore(period.getStartDate()) && !localDate.isAfter(period.getEndDate());
+  }
+
+  private long getCurrentTimeMillis() {
+    return System.currentTimeMillis();
   }
 }

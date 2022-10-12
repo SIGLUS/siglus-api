@@ -18,7 +18,7 @@ package org.siglus.siglusapi.scheduledtask;
 import java.time.LocalDate;
 import lombok.RequiredArgsConstructor;
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
-import org.siglus.siglusapi.service.scheduledtask.CalculateWebCmmService;
+import org.siglus.siglusapi.service.scheduledtask.CalculateCmmService;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -28,11 +28,11 @@ import org.springframework.stereotype.Service;
 @Service
 public class CalculateWebCmmTask {
 
-  private final CalculateWebCmmService calculateWebCmmService;
+  private final CalculateCmmService calculateCmmService;
 
   @Scheduled(cron = "${cmm.calculate.cron}", zone = "${time.zoneId}")
   @SchedulerLock(name = "calculate_cmm_task")
   public void calculate() {
-    calculateWebCmmService.calculateCmms(LocalDate.now());
+    calculateCmmService.calculateWebCmms(LocalDate.now());
   }
 }

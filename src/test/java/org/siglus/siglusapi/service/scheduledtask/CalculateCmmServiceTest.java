@@ -21,8 +21,10 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.powermock.api.mockito.PowerMockito.when;
 
+import com.google.common.collect.Maps;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.assertj.core.util.Lists;
 import org.junit.Test;
@@ -46,10 +48,10 @@ import org.siglus.siglusapi.service.SiglusOrderableService;
 
 
 @RunWith(MockitoJUnitRunner.class)
-public class CalculateWebCmmServiceTest {
+public class CalculateCmmServiceTest {
 
   @InjectMocks
-  private CalculateWebCmmService calculateWebCmmService;
+  private CalculateCmmService calculateCmmService;
 
   @Mock
   private SiglusFacilityRepository siglusFacilityRepository;
@@ -75,14 +77,14 @@ public class CalculateWebCmmServiceTest {
   public void shouldSuccessWhenCalculateAllPeriod() {
     // given
     mockFacility();
-    when(siglusOrderableService.getAllProducts()).thenReturn(buildMockOrderableDtos());
+    when(siglusOrderableService.getAllProductIdToCode()).thenReturn(buildMockOrderableIdToCode());
     when(processingPeriodRepository.findAll()).thenReturn(buildMockPeriods());
     when(siglusStockCardRepository.findStockCardDtos(any(), any(), any())).thenReturn(buildMockStockOhHandDtos());
     when(siglusStockCardLineItemRepository.findStockCardLineItemDtos(any(), any(), any())).thenReturn(
         buildMockStockCardLineItemDtos());
 
     // when
-    calculateWebCmmService.calculateCmms(null);
+    calculateCmmService.calculateWebCmms(null);
 
     // then
     verify(facilityCmmNativeRepository).batchCreateHfCmms(anyList());
@@ -91,13 +93,13 @@ public class CalculateWebCmmServiceTest {
   @Test
   public void shouldSuccessWhenCalculateSpecifiedPeriod() {
     mockFacility();
-    when(siglusOrderableService.getAllProducts()).thenReturn(buildMockOrderableDtos());
+    when(siglusOrderableService.getAllProductIdToCode()).thenReturn(buildMockOrderableIdToCode());
     when(processingPeriodRepository.findAll()).thenReturn(buildMockPeriods());
     when(siglusStockCardRepository.findStockCardDtos(any(), any(), any())).thenReturn(buildMockStockOhHandDtos());
     when(siglusStockCardLineItemRepository.findStockCardLineItemDtos(any(), any(), any())).thenReturn(
         buildMockStockCardLineItemDtos());
 
-    calculateWebCmmService.calculateCmms(LocalDate.of(oneYearAgo.getDayOfYear(), 10, 21));
+    calculateCmmService.calculateWebCmms(LocalDate.of(oneYearAgo.getDayOfYear(), 10, 21));
 
     verify(facilityCmmNativeRepository).batchCreateHfCmms(anyList());
   }
@@ -105,13 +107,13 @@ public class CalculateWebCmmServiceTest {
   @Test
   public void shouldNotSaveWhenSpecifiedPeriodBeforeFirstMovement() {
     mockFacility();
-    when(siglusOrderableService.getAllProducts()).thenReturn(buildMockOrderableDtos());
+    when(siglusOrderableService.getAllProductIdToCode()).thenReturn(buildMockOrderableIdToCode());
     when(processingPeriodRepository.findAll()).thenReturn(buildMockPeriods());
     when(siglusStockCardRepository.findStockCardDtos(any(), any(), any())).thenReturn(buildMockStockOhHandDtos());
     when(siglusStockCardLineItemRepository.findStockCardLineItemDtos(any(), any(), any())).thenReturn(
         buildMockStockCardLineItemDtos());
 
-    calculateWebCmmService.calculateCmms(LocalDate.of(oneYearAgo.getDayOfYear(), 8, 21));
+    calculateCmmService.calculateWebCmms(LocalDate.of(oneYearAgo.getDayOfYear(), 8, 21));
 
     verify(facilityCmmNativeRepository, times(0)).batchCreateHfCmms(anyList());
   }
@@ -120,11 +122,10 @@ public class CalculateWebCmmServiceTest {
     when(siglusFacilityRepository.findAllWebFacility()).thenReturn(buildMockFacilitys());
   }
 
-  private List<OrderableDto> buildMockOrderableDtos() {
-    OrderableDto orderableDto = new OrderableDto();
-    orderableDto.setId(orderableId);
-    orderableDto.setProductCode(orderableCode);
-    return Lists.newArrayList(orderableDto);
+  private Map<UUID, String> buildMockOrderableIdToCode() {
+    Map<UUID, String> orderableIdToCode = Maps.newHashMap();
+    orderableIdToCode.put(orderableId, orderableCode);
+    return orderableIdToCode;
   }
 
   private List<StockCardLineItemDto> buildMockStockCardLineItemDtos() {
