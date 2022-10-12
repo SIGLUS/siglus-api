@@ -490,7 +490,7 @@ traits:
           responses:
             200:
               description: success
-      /{facilityId}/toWeb:
+      /{facilityId}/to:
         uriParameters:
           facilityId:
             displayName: facilityId
@@ -499,33 +499,10 @@ traits:
             repeat: false
         put:
           is: [ secured ]
-          description: change facility to web
-          responses:
-            200:
-              description: success
-      /{facilityId}/toLocalMachine:
-        uriParameters:
-          facilityId:
-            displayName: facilityId
-            type: string
-            required: true
-            repeat: false
-        put:
-          is: [ secured ]
-          description: change facility to localMachine
-          responses:
-            200:
-              description: success
-      /{facilityId}/toAndroid:
-        uriParameters:
-          facilityId:
-            displayName: facilityId
-            type: string
-            required: true
-            repeat: false
-        put:
-          is: [ secured ]
-          description: change facility to android
+          body:
+            application/json:
+              schema: deviceTypeRequest
+          description: change facility to other type
           responses:
             200:
               description: success

@@ -104,18 +104,20 @@ public class SiglusAdministrationsController {
     administrationsService.eraseDeviceInfo(deviceTypeRequest.getFacilityDeviceType(), facilityId);
   }
 
-  @PutMapping("/{facilityId}/toWeb")
-  public void toWeb(@PathVariable UUID facilityId) {
-    administrationsService.changeToWeb(facilityId);
-  }
-
-  @PutMapping("/{facilityId}/toLocalMachine")
-  public void toLocalMachine(@PathVariable UUID facilityId) {
-    administrationsService.changeToLocalMachine(facilityId);
-  }
-
-  @PutMapping("/{facilityId}/toAndroid")
-  public void toAndroid(@PathVariable UUID facilityId) {
-    administrationsService.changeToAndroid(facilityId);
+  @PutMapping("/{facilityId}/to")
+  public void changeFacility(@PathVariable UUID facilityId, @RequestBody DeviceTypeRequest deviceTypeRequest) {
+    switch (deviceTypeRequest.getFacilityDeviceType()) {
+      case WEB:
+        administrationsService.changeToWeb(facilityId);
+        break;
+      case ANDROID:
+        administrationsService.changeToAndroid(facilityId);
+        break;
+      case LOCAL_MACHINE:
+        administrationsService.changeToLocalMachine((facilityId));
+        break;
+      default:
+        break;
+    }
   }
 }

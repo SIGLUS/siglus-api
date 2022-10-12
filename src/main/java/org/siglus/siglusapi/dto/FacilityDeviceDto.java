@@ -21,8 +21,8 @@ import org.siglus.siglusapi.dto.enums.FacilityDeviceTypeEnum;
 @Data
 public class FacilityDeviceDto {
 
-  FacilityDeviceTypeEnum deviceType;
-  String deviceInfo;
-  String version;
+  private FacilityDeviceTypeEnum deviceType;
+  private String deviceInfo;
+  private String version;
 
 }
