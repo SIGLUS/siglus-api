@@ -15,15 +15,22 @@
 
 package org.siglus.siglusapi.localmachine.agent;
 
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_NOT_FOUND_SYNC_RECORD;
+
+import java.time.ZonedDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.siglus.siglusapi.constant.FieldConstants;
+import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.localmachine.domain.ErrorRecord;
-import org.siglus.siglusapi.localmachine.domain.LatestSyncReplayRecord;
+import org.siglus.siglusapi.localmachine.domain.lastSyncReplayRecord;
 import org.siglus.siglusapi.localmachine.repository.ErrorRecordRepository;
 import org.siglus.siglusapi.localmachine.repository.LastSyncRecordRepository;
 import org.siglus.siglusapi.localmachine.webapi.LocalSyncResultsResponse;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -34,16 +41,48 @@ public class LocalSyncResultsService {
 
   private final ErrorRecordRepository errorRecordsRepository;
 
+  private final ErrorHandleService errorHandleService;
+
   public LocalSyncResultsResponse getSyncResults() {
-    LatestSyncReplayRecord firstByLatestSyncedTimeDesc = lastSyncRecordRepository
-        .findFirstByOrderByLatestSyncedTimeDesc();
+    lastSyncReplayRecord firstByLatestSyncedTimeDesc = lastSyncRecordRepository
+        .findFirstByOrderByLastSyncedTimeDesc();
 
     List<ErrorRecord> errorRecords = errorRecordsRepository
-        .findTopTenWithCreationDateTimeAfter(firstByLatestSyncedTimeDesc.getLatestReplayedTime());
+        .findTopTenWithCreationDateTimeAfter(firstByLatestSyncedTimeDesc.getLastReplayedTime());
 
     return LocalSyncResultsResponse.builder()
-        .latestSyncedTime(firstByLatestSyncedTimeDesc.getLatestSyncedTime())
+        .latestSyncedTime(firstByLatestSyncedTimeDesc.getLastSyncedTime())
         .errors(errorRecords)
         .build();
+  }
+
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
+  public void storeLastSyncRecord() {
+    lastSyncRecordRepository.save(buildSyncTime());
+  }
+
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
+  public void storeLastReplayRecord() {
+    lastSyncRecordRepository.save(buildReplayTime());
+  }
+
+  private lastSyncReplayRecord buildReplayTime() {
+    lastSyncReplayRecord lastRecord = validLastSyncReplayRecord();
+    lastRecord.setLastReplayedTime(ZonedDateTime.now());
+    return lastRecord;
+  }
+
+  private lastSyncReplayRecord buildSyncTime() {
+    lastSyncReplayRecord lastRecord = validLastSyncReplayRecord();
+    lastRecord.setLastSyncedTime(ZonedDateTime.now());
+    return lastRecord;
+  }
+
+  private lastSyncReplayRecord validLastSyncReplayRecord() {
+    lastSyncReplayRecord lastRecord = lastSyncRecordRepository.findOne(FieldConstants.LAST_SYNC_RECORD_ID);
+    if (lastRecord == null) {
+      throw new NotFoundException(ERROR_NOT_FOUND_SYNC_RECORD);
+    }
+    return lastRecord;
   }
 }

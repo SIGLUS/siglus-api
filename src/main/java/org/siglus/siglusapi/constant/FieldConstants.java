@@ -15,6 +15,8 @@
 
 package org.siglus.siglusapi.constant;
 
+import java.util.UUID;
+
 public class FieldConstants {
 
   private FieldConstants() {
@@ -203,4 +205,6 @@ public class FieldConstants {
   public static final String PHYSICAL_INVENTORY_KEY = "stockCard.physicalInventory";
 
   public static final String INITIAL_INVENTORY_KEY = "stockCard.inventory";
+
+  public static final UUID LAST_SYNC_RECORD_ID = UUID.fromString("07997013-b33b-4159-bdf4-585182fb82fb");
 }

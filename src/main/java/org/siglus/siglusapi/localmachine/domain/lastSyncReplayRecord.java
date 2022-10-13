@@ -31,16 +31,16 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "latest_sync_replay_record", schema = "localmachine")
-public class LatestSyncReplayRecord {
+@Table(name = "last_sync_replay_record", schema = "localmachine")
+public class lastSyncReplayRecord {
 
   @Id
   private UUID id;
 
-  @Column(name = "latestsyncedtime")
-  private ZonedDateTime latestSyncedTime;
+  @Column(name = "lastsyncedtime")
+  private ZonedDateTime lastSyncedTime;
 
-  @Column(name = "latestreplayedtime")
-  private ZonedDateTime latestReplayedTime;
+  @Column(name = "lastreplayedtime")
+  private ZonedDateTime lastReplayedTime;
 
 }

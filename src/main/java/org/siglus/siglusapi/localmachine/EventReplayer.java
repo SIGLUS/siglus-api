@@ -29,6 +29,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.siglus.siglusapi.localmachine.ShedLockFactory.AutoClosableLock;
+import org.siglus.siglusapi.localmachine.agent.LocalSyncResultsService;
 import org.siglus.siglusapi.localmachine.eventstore.EventStore;
 import org.springframework.stereotype.Component;
 
@@ -41,11 +42,13 @@ public class EventReplayer {
   private final EventPublisher eventPublisher;
   private final EventStore eventStore;
   private final ShedLockFactory lockFactory;
+  private final LocalSyncResultsService syncResultsService;
 
   public void replay(List<Event> events) {
     if (CollectionUtils.isEmpty(events)) {
       return;
     }
+    syncResultsService.storeLastReplayRecord();
     // replay event one by one in order. if the event is a group event (e.g. event2 below), should
     // check dependency first
     // |-------|

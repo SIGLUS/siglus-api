@@ -16,12 +16,12 @@
 package org.siglus.siglusapi.localmachine.repository;
 
 import java.util.UUID;
-import org.siglus.siglusapi.localmachine.domain.LatestSyncReplayRecord;
+import org.siglus.siglusapi.localmachine.domain.lastSyncReplayRecord;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface LastSyncRecordRepository extends JpaRepository<LatestSyncReplayRecord, UUID> {
+public interface LastSyncRecordRepository extends JpaRepository<lastSyncReplayRecord, UUID> {
 
-  LatestSyncReplayRecord findFirstByOrderByLatestSyncedTimeDesc();
+  lastSyncReplayRecord findFirstByOrderByLastSyncedTimeDesc();
 }
