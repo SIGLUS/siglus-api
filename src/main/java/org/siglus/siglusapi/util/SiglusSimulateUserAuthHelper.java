@@ -22,6 +22,9 @@ import static org.springframework.security.oauth2.provider.token.AccessTokenConv
 import com.google.common.collect.ImmutableMap;
 import java.util.Collection;
 import java.util.UUID;
+import java.util.function.Consumer;
+import lombok.extern.slf4j.Slf4j;
+import org.siglus.siglusapi.domain.Notification;
 import org.siglus.siglusapi.security.CustomUserAuthenticationConverter;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -29,6 +32,7 @@ import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.security.oauth2.provider.token.UserAuthenticationConverter;
 import org.springframework.stereotype.Component;
 
+@Slf4j
 @Component
 public class SiglusSimulateUserAuthHelper {
 
@@ -55,5 +59,17 @@ public class SiglusSimulateUserAuthHelper {
         ImmutableMap.of(REFERENCE_DATA_USER_ID, userId.toString(), AUTHORITIES, authorities));
     OAuth2Authentication newAuth = new OAuth2Authentication(null, authentication);
     SecurityContextHolder.getContext().setAuthentication(newAuth);
+  }
+
+  public void simulateNewUserThenRollbackAuth(UUID userId, Notification notification,
+      Consumer<Notification> notificationConsumer) {
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    try {
+      simulateNewUserAuth(userId);
+      notificationConsumer.accept(notification);
+    } finally {
+      // reset
+      SecurityContextHolder.getContext().setAuthentication(authentication);
+    }
   }
 }

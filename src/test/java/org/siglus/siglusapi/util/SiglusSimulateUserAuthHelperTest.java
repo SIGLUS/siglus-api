@@ -20,17 +20,17 @@ import static org.mockito.Mockito.when;
 
 import java.util.UUID;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.siglus.siglusapi.domain.Notification;
+import org.siglus.siglusapi.domain.NotificationType;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.security.oauth2.provider.OAuth2Request;
 
-@Ignore
 @RunWith(MockitoJUnitRunner.class)
 public class SiglusSimulateUserAuthHelperTest {
 
@@ -53,5 +53,21 @@ public class SiglusSimulateUserAuthHelperTest {
     // then
     Assert.assertEquals(SecurityContextHolder.getContext().getAuthentication().getPrincipal(),
         userId);
+  }
+
+
+  @Test
+  public void simulateNewUserThenRollbackAuth() {
+    // given
+    UUID userId = UUID.randomUUID();
+    SecurityContextHolder.getContext().setAuthentication(authentication);
+    when(authentication.getOAuth2Request()).thenReturn(mock(OAuth2Request.class));
+    Notification notification2 = new Notification();
+    // when
+    simulateUserAuth.simulateNewUserThenRollbackAuth(userId, notification2,
+        notification -> notification.setType(NotificationType.TODO));
+    // then
+    Assert.assertEquals(notification2.getType(), NotificationType.TODO);
+    Assert.assertEquals(SecurityContextHolder.getContext().getAuthentication(), authentication);
   }
 }

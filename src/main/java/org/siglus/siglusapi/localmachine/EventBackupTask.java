@@ -41,7 +41,7 @@ public class EventBackupTask {
   private final EventPayloadBackupRepository eventPayloadBackupRepository;
   private final EventPayloadRepository eventPayloadRepository;
 
-  @Scheduled(cron = "${localmachine.archive.event.cron}", zone = "${time.zoneId}")
+  @Scheduled(cron = "${event.archive.cron}", zone = "${time.zoneId}")
   @SchedulerLock(name = "localmachine_archive_event")
   @Transactional
   public void run() {
@@ -50,20 +50,10 @@ public class EventBackupTask {
     if (CollectionUtils.isEmpty(eventRecords)) {
       return;
     }
-    /*
-     * when I am a localmachine:
-     * then I can do archive when event 3 flag = true.
-     * when I am a onlineweb server:
-     * then I can do archive when event is locally replayed.
-     */
     Set<EventRecord> archiveEventRecords;
-    if (isLocalMachine()) {
-      archiveEventRecords = eventRecords.stream()
-          .filter(item -> item.isReceiverSynced() && item.isOnlineWebSynced() && item.isLocalReplayed())
-          .collect(Collectors.toSet());
-    } else {
-      archiveEventRecords = eventRecords.stream().filter(EventRecord::isLocalReplayed).collect(Collectors.toSet());
-    }
+    archiveEventRecords = eventRecords.stream()
+        .filter(item -> item.isReceiverSynced() && item.isOnlineWebSynced() && item.isLocalReplayed())
+        .collect(Collectors.toSet());
     if (archiveEventRecords.isEmpty()) {
       return;
     }
@@ -79,9 +69,5 @@ public class EventBackupTask {
 
     archiveEventRecords.forEach(item -> item.setArchived(true));
     eventRecordRepository.save(archiveEventRecords);
-  }
-
-  private boolean isLocalMachine() {
-    return agentInfoRepository.count() == 1;
   }
 }
