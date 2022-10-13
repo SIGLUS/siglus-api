@@ -74,7 +74,6 @@ import org.openlmis.fulfillment.web.util.OrderDto;
 import org.openlmis.fulfillment.web.util.OrderDtoBuilder;
 import org.openlmis.fulfillment.web.util.OrderLineItemDto;
 import org.openlmis.fulfillment.web.util.OrderObjectReferenceDto;
-import org.openlmis.referencedata.domain.Code;
 import org.openlmis.referencedata.domain.Facility;
 import org.openlmis.referencedata.domain.ProcessingPeriod;
 import org.openlmis.referencedata.domain.ProcessingSchedule;
@@ -102,6 +101,7 @@ import org.siglus.common.domain.OrderExternal;
 import org.siglus.common.domain.ProcessingPeriodExtension;
 import org.siglus.common.repository.OrderExternalRepository;
 import org.siglus.common.repository.ProcessingPeriodExtensionRepository;
+import org.siglus.siglusapi.constant.PeriodConstants;
 import org.siglus.siglusapi.domain.OrderLineItemExtension;
 import org.siglus.siglusapi.dto.SiglusOrderDto;
 import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
@@ -879,7 +879,6 @@ public class SiglusOrderServiceTest {
     // given
     when(orderRepository.findOne(orderId)).thenReturn(buildMockOrderWithPreviousPeriodId());
     when(siglusProcessingPeriodService.getUpToNowMonthlyPeriods()).thenReturn(buildMockPeriods());
-    when(siglusProcessingPeriodService.getPeriodDateIn(anyList(), any())).thenReturn(buildMockCurrentPeriod());
 
     // when
     OrderSuggestedQuantityResponse actualResponse = siglusOrderService.getOrderSuggestedQuantityResponse(orderId);
@@ -896,7 +895,6 @@ public class SiglusOrderServiceTest {
     // given
     when(orderRepository.findOne(orderId)).thenReturn(buildMockEmergencyOrderWithCurrentPeriodId());
     when(siglusProcessingPeriodService.getUpToNowMonthlyPeriods()).thenReturn(buildMockPeriods());
-    when(siglusProcessingPeriodService.getPeriodDateIn(anyList(), any())).thenReturn(buildMockCurrentPeriod());
 
     // when
     OrderSuggestedQuantityResponse actualResponse = siglusOrderService.getOrderSuggestedQuantityResponse(orderId);
@@ -913,7 +911,6 @@ public class SiglusOrderServiceTest {
     // given
     when(orderRepository.findOne(orderId)).thenReturn(buildMockSubOrderWithCurrentPeriodId());
     when(siglusProcessingPeriodService.getUpToNowMonthlyPeriods()).thenReturn(buildMockPeriods());
-    when(siglusProcessingPeriodService.getPeriodDateIn(anyList(), any())).thenReturn(buildMockCurrentPeriod());
     when(orderExternalRepository.findOne(orderExternalId)).thenReturn(buildMockOrderExternal());
 
     // when
@@ -1098,7 +1095,6 @@ public class SiglusOrderServiceTest {
 
     when(orderRepository.findOne(orderId)).thenReturn(order);
     when(siglusProcessingPeriodService.getUpToNowMonthlyPeriods()).thenReturn(buildMockPeriods());
-    when(siglusProcessingPeriodService.getPeriodDateIn(anyList(), any())).thenReturn(buildMockCurrentPeriod());
     when(siglusFacilityRepository.findAllClientFacilityIds(supplyingFacilityId, programId)).thenReturn(
         clientFacilityIds);
 
@@ -1408,7 +1404,7 @@ public class SiglusOrderServiceTest {
   private List<ProcessingPeriod> buildMockPeriods() {
     // up to now 12 periods
     ProcessingSchedule m1Schedule = new ProcessingSchedule();
-    m1Schedule.setCode(Code.code("M1"));
+    m1Schedule.setCode(PeriodConstants.MONTH_SCHEDULE_CODE);
     List<ProcessingPeriod> periods = Lists.newArrayList();
     LocalDate currentPeriodStartDate = getCurrentPeriodStartDate();
     for (int i = 1; i < 6; i++) {
@@ -1419,10 +1415,6 @@ public class SiglusOrderServiceTest {
       periods.add(m1ProcessingPeriod);
     }
     return periods;
-  }
-
-  private ProcessingPeriod buildMockCurrentPeriod() {
-    return buildMockPeriods().get(0);
   }
 
   private LocalDate getCurrentPeriodStartDate() {

@@ -31,16 +31,16 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.openlmis.referencedata.domain.Facility;
 import org.openlmis.referencedata.domain.ProcessingPeriod;
-import org.siglus.siglusapi.constant.PeriodConstants;
 import org.siglus.siglusapi.domain.HfCmm;
 import org.siglus.siglusapi.repository.FacilityCmmNativeRepository;
-import org.siglus.siglusapi.repository.ProcessingPeriodRepository;
 import org.siglus.siglusapi.repository.SiglusFacilityRepository;
 import org.siglus.siglusapi.repository.SiglusStockCardLineItemRepository;
 import org.siglus.siglusapi.repository.SiglusStockCardRepository;
 import org.siglus.siglusapi.repository.dto.StockCardLineItemDto;
 import org.siglus.siglusapi.repository.dto.StockOnHandDto;
 import org.siglus.siglusapi.service.SiglusOrderableService;
+import org.siglus.siglusapi.service.SiglusProcessingPeriodService;
+import org.siglus.siglusapi.util.PeriodUtil;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -52,11 +52,11 @@ import org.springframework.util.CollectionUtils;
 public class CalculateCmmService {
 
   private final SiglusFacilityRepository siglusFacilityRepository;
-  private final ProcessingPeriodRepository processingPeriodRepository;
   private final FacilityCmmNativeRepository facilityCmmNativeRepository;
   private final SiglusStockCardRepository siglusStockCardRepository;
   private final SiglusStockCardLineItemRepository siglusStockCardLineItemRepository;
   private final SiglusOrderableService siglusOrderableService;
+  private final SiglusProcessingPeriodService periodService;
 
   private static final Long SKIP_ISSUE_QUANTITY = -1L;
   private static final Long STOCK_OUT_QUANTITY = 0L;
@@ -69,13 +69,12 @@ public class CalculateCmmService {
     log.info("calculate web cmm start");
     long startTime = getCurrentTimeMillis();
 
-    // TODO: 2022/10/12 修改获取 web facility 逻辑, localmachine 不计算在内
     List<Facility> webFacilities = siglusFacilityRepository.findAllWebFacility();
     Set<UUID> webFacilityIds = webFacilities.stream().map(Facility::getId).collect(Collectors.toSet());
     Map<UUID, String> facilityIdToCode = webFacilities.stream()
         .collect(Collectors.toMap(Facility::getId, Facility::getCode));
     Map<UUID, String> orderableIdToCode = siglusOrderableService.getAllProductIdToCode();
-    List<ProcessingPeriod> upToNowAllPeriods = getUpToNowAllPeriods();
+    List<ProcessingPeriod> upToNowAllPeriods = periodService.getUpToNowMonthlyPeriods();
 
     LocalDate endDate = Objects.isNull(periodLocalDateRequest) ? LocalDate.now() : periodLocalDateRequest;
     ProcessingPeriod startPeriod = getStartProcessingPeriod(upToNowAllPeriods, endDate);
@@ -148,7 +147,8 @@ public class CalculateCmmService {
     }
     Map<LocalDate, Long> periodStartDateToIssueQuantity = Maps.newHashMap();
     lineItemDtos.forEach(lineItemDto -> {
-      ProcessingPeriod period = getDateInPeriod(upToNowAllPeriods, lineItemDto.getOccurredDate());
+      ProcessingPeriod period = PeriodUtil.getPeriodDateInDefaultNull(upToNowAllPeriods,
+          lineItemDto.getOccurredDate());
       Long issueQuantity = periodStartDateToIssueQuantity.get(period.getStartDate());
       if (Objects.isNull(issueQuantity)) {
         periodStartDateToIssueQuantity.put(period.getStartDate(), lineItemDto.getIssueQuantity());
@@ -177,7 +177,8 @@ public class CalculateCmmService {
       List<StockOnHandDto> stockOnHandDtos) {
     Map<LocalDate, List<StockOnHandDto>> periodStartDateToStockOnHandDtos = Maps.newHashMap();
     stockOnHandDtos.forEach(stockOnHandDto -> {
-      ProcessingPeriod period = getDateInPeriod(upToNowAllPeriods, stockOnHandDto.getOccurredDate());
+      ProcessingPeriod period = PeriodUtil.getPeriodDateInDefaultNull(upToNowAllPeriods,
+          stockOnHandDto.getOccurredDate());
       if (Objects.isNull(periodStartDateToStockOnHandDtos.get(period.getStartDate()))) {
         periodStartDateToStockOnHandDtos.put(period.getStartDate(), Lists.newArrayList(stockOnHandDto));
         return;
@@ -254,7 +255,7 @@ public class CalculateCmmService {
               && !period.getStartDate().isAfter(endPeriod.getStartDate()))
           .collect(Collectors.toList());
     }
-    ProcessingPeriod period = getDateInPeriod(allPeriods, periodLocalDateRequest);
+    ProcessingPeriod period = PeriodUtil.getPeriodDateInDefaultNull(allPeriods, periodLocalDateRequest);
     if (Objects.isNull(period)) {
       log.warn("no period match, request date:{}", periodLocalDateRequest);
       return Lists.newArrayList();
@@ -271,7 +272,7 @@ public class CalculateCmmService {
   private ProcessingPeriod getStartProcessingPeriod(List<ProcessingPeriod> processingPeriods,
       LocalDate endDate) {
     ProcessingPeriod relativelyOneYearAgoPeriod = processingPeriods.stream()
-        .filter(period -> isDateInPeriod(period, endDate.minusMonths(11))).findFirst().orElse(null);
+        .filter(period -> PeriodUtil.isDateInPeriod(period, endDate.minusMonths(11))).findFirst().orElse(null);
     if (Objects.isNull(relativelyOneYearAgoPeriod)) {
       return processingPeriods.get(0);
     }
@@ -280,7 +281,7 @@ public class CalculateCmmService {
 
   private ProcessingPeriod getEndProcessingPeriod(List<ProcessingPeriod> processingPeriods, LocalDate endDate) {
     ProcessingPeriod oneYearAgoPeriod = processingPeriods.stream()
-        .filter(period -> isDateInPeriod(period, endDate)).findFirst().orElse(null);
+        .filter(period -> PeriodUtil.isDateInPeriod(period, endDate)).findFirst().orElse(null);
     if (Objects.isNull(oneYearAgoPeriod)) {
       return processingPeriods.get(processingPeriods.size() - 1);
     }
@@ -300,14 +301,6 @@ public class CalculateCmmService {
     return hfCmm;
   }
 
-  private List<ProcessingPeriod> getUpToNowAllPeriods() {
-    return processingPeriodRepository.findAll().stream()
-        .filter(e -> e.getProcessingSchedule().getCode().equals(PeriodConstants.MONTH_SCHEDULE_CODE))
-        .filter(e -> !e.getStartDate().isAfter(LocalDate.now()))
-        .sorted(Comparator.comparing(ProcessingPeriod::getStartDate))
-        .collect(Collectors.toList());
-  }
-
   private LocalDate getFirstMovementPeriodStart(List<StockOnHandDto> stockOnHandDtos,
       List<ProcessingPeriod> processingPeriods) {
     // first movement date is by product(any movement type)
@@ -317,19 +310,11 @@ public class CalculateCmmService {
   }
 
   private LocalDate getPeriodStartDate(LocalDate localDate, List<ProcessingPeriod> processingPeriods) {
-    ProcessingPeriod dateInPeriod = getDateInPeriod(processingPeriods, localDate);
+    ProcessingPeriod dateInPeriod = PeriodUtil.getPeriodDateInDefaultNull(processingPeriods, localDate);
     if (Objects.isNull(dateInPeriod)) {
       return null;
     }
     return dateInPeriod.getStartDate();
-  }
-
-  private ProcessingPeriod getDateInPeriod(List<ProcessingPeriod> processingPeriods, LocalDate localDate) {
-    return processingPeriods.stream().filter(period -> isDateInPeriod(period, localDate)).findFirst().orElse(null);
-  }
-
-  private boolean isDateInPeriod(ProcessingPeriod period, LocalDate localDate) {
-    return !localDate.isBefore(period.getStartDate()) && !localDate.isAfter(period.getEndDate());
   }
 
   private long getCurrentTimeMillis() {

@@ -110,6 +110,7 @@ import org.siglus.siglusapi.repository.dto.RequisitionOrderDto;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusProcessingPeriodReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
+import org.siglus.siglusapi.util.PeriodUtil;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.web.response.BasicOrderExtensionResponse;
 import org.siglus.siglusapi.web.response.OrderPickPackResponse;
@@ -824,7 +825,7 @@ public class SiglusOrderService {
   }
 
   private UUID getPeriodIdDateIn(List<ProcessingPeriod> periods, LocalDate localDate) {
-    ProcessingPeriod currentPeriod = siglusProcessingPeriodService.getPeriodDateIn(periods, localDate);
+    ProcessingPeriod currentPeriod = PeriodUtil.getPeriodDateIn(periods, localDate);
     return currentPeriod.getId();
   }
 
