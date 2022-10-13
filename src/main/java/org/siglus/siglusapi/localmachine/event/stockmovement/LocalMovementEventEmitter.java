@@ -27,7 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Component
 @RequiredArgsConstructor
-@Profile({"localmachine"})
+@Profile("localmachine")
 public class LocalMovementEventEmitter implements CdcListener {
 
   private final EventPublisher eventPublisher;
