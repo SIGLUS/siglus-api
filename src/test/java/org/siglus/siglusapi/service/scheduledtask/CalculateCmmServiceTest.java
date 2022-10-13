@@ -76,16 +76,16 @@ public class CalculateCmmServiceTest {
   @Before
   public void setup() {
     when(periodService.getUpToNowMonthlyPeriods()).thenReturn(buildMockPeriods());
+    when(siglusOrderableService.getAllProductIdToCode()).thenReturn(buildMockOrderableIdToCode());
+    when(siglusStockCardRepository.findStockCardDtos(any(), any(), any())).thenReturn(buildMockStockOhHandDtos());
+    when(siglusStockCardLineItemRepository.findStockCardLineItemDtos(any(), any(), any())).thenReturn(
+        buildMockStockCardLineItemDtos());
   }
 
   @Test
   public void shouldSuccessWhenCalculateAllPeriod() {
     // given
-    mockFacility();
-    when(siglusOrderableService.getAllProductIdToCode()).thenReturn(buildMockOrderableIdToCode());
-    when(siglusStockCardRepository.findStockCardDtos(any(), any(), any())).thenReturn(buildMockStockOhHandDtos());
-    when(siglusStockCardLineItemRepository.findStockCardLineItemDtos(any(), any(), any())).thenReturn(
-        buildMockStockCardLineItemDtos());
+    when(siglusFacilityRepository.findAllWebFacility()).thenReturn(buildMockFacilitys());
 
     // when
     calculateCmmService.calculateWebCmms(null);
@@ -96,32 +96,38 @@ public class CalculateCmmServiceTest {
 
   @Test
   public void shouldSuccessWhenCalculateSpecifiedPeriod() {
-    mockFacility();
-    when(siglusOrderableService.getAllProductIdToCode()).thenReturn(buildMockOrderableIdToCode());
-    when(siglusStockCardRepository.findStockCardDtos(any(), any(), any())).thenReturn(buildMockStockOhHandDtos());
-    when(siglusStockCardLineItemRepository.findStockCardLineItemDtos(any(), any(), any())).thenReturn(
-        buildMockStockCardLineItemDtos());
+    // given
+    when(siglusFacilityRepository.findAllWebFacility()).thenReturn(buildMockFacilitys());
 
+    // when
     calculateCmmService.calculateWebCmms(LocalDate.of(oneYearAgo.getYear(), 10, 21));
 
+    // then
     verify(facilityCmmNativeRepository).batchCreateHfCmms(anyList());
   }
 
   @Test
   public void shouldNotSaveWhenSpecifiedPeriodBeforeFirstMovement() {
-    mockFacility();
-    when(siglusOrderableService.getAllProductIdToCode()).thenReturn(buildMockOrderableIdToCode());
-    when(siglusStockCardRepository.findStockCardDtos(any(), any(), any())).thenReturn(buildMockStockOhHandDtos());
-    when(siglusStockCardLineItemRepository.findStockCardLineItemDtos(any(), any(), any())).thenReturn(
-        buildMockStockCardLineItemDtos());
+    // given
+    when(siglusFacilityRepository.findAllWebFacility()).thenReturn(buildMockFacilitys());
 
+    // when
     calculateCmmService.calculateWebCmms(LocalDate.of(oneYearAgo.getYear(), 8, 21));
 
+    // then
     verify(facilityCmmNativeRepository, times(0)).batchCreateHfCmms(anyList());
   }
 
-  private void mockFacility() {
-    when(siglusFacilityRepository.findAllWebFacility()).thenReturn(buildMockFacilitys());
+  @Test
+  public void shouldSuccessWhenCalculateLocalMachineCmms() {
+    // given
+    when(siglusFacilityRepository.findOne(facilityId)).thenReturn(buildMockFacility());
+
+    // when
+    calculateCmmService.calculateLocalMachineCmms(null, facilityId);
+
+    // then
+    verify(facilityCmmNativeRepository).batchCreateHfCmms(anyList());
   }
 
   private Map<UUID, String> buildMockOrderableIdToCode() {
@@ -217,11 +223,15 @@ public class CalculateCmmServiceTest {
   }
 
   private List<Facility> buildMockFacilitys() {
+    return Lists.newArrayList(buildMockFacility());
+  }
+
+  private Facility buildMockFacility() {
     Facility facility = new Facility();
     facility.setId(facilityId);
     facility.setCode(facilityCode);
     facility.setActive(Boolean.TRUE);
     facility.setEnabled(Boolean.TRUE);
-    return Lists.newArrayList(facility);
+    return facility;
   }
 }
