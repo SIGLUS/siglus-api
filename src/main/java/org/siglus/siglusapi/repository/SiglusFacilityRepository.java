@@ -28,10 +28,14 @@ public interface SiglusFacilityRepository extends JpaRepository<Facility, UUID>,
 
   Facility findFirstByTypeId(UUID typeId);
 
-  @Query(value = "select f.*\n"
-      + "from referencedata.facilities f\n"
-      + "left join siglusintegration.facility_extension fe on f.id = fe.facilityid\n"
-      + "where fe.isandroid = false and f.active = true and f.enabled = true or fe.id is null;", nativeQuery = true)
+  @Query(value = "select f.* \n"
+      + "from referencedata.facilities f \n"
+      + "left join siglusintegration.facility_extension fe on f.id = fe.facilityid \n"
+      + "where fe.isandroid = false \n"
+      + "and fe.islocalmachine = false \n"
+      + "and f.active = true \n"
+      + "and f.enabled = true \n"
+      + "or fe.id is null;", nativeQuery = true)
   List<Facility> findAllWebFacility();
 
   @Query(value = "select distinct(cast(rgm.facilityid as varchar)) \n"
