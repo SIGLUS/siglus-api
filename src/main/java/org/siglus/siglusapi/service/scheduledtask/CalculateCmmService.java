@@ -91,6 +91,30 @@ public class CalculateCmmService {
     log.info("calculate web cmm end, cost:{}s", (getCurrentTimeMillis() - startTime) / MILLISECONDS_OF_ONE_SECOND);
   }
 
+  @Transactional
+  public void calculateLocalMachineCmms(LocalDate periodLocalDateRequest, UUID facilityId) {
+    log.info("calculate local machine cmm start, facilityId: {}", facilityId);
+    long startTime = getCurrentTimeMillis();
+
+    Facility facility = siglusFacilityRepository.findOne(facilityId);
+    LocalDate endDate = Objects.isNull(periodLocalDateRequest) ? LocalDate.now() : periodLocalDateRequest;
+
+    Map<UUID, String> facilityIdToCode = Maps.newHashMap();
+    facilityIdToCode.put(facilityId, facility.getCode());
+
+    Map<UUID, String> orderableIdToCode = siglusOrderableService.getAllProductIdToCode();
+    List<ProcessingPeriod> upToNowAllPeriods = periodService.getUpToNowMonthlyPeriods();
+
+    ProcessingPeriod startPeriod = getStartProcessingPeriod(upToNowAllPeriods, endDate);
+    ProcessingPeriod endPeriod = getEndProcessingPeriod(upToNowAllPeriods, endDate);
+
+    calculateAndSavaCmms(periodLocalDateRequest, facilityIdToCode, orderableIdToCode, upToNowAllPeriods, startPeriod,
+        endPeriod, facilityId);
+
+    log.info("calculate local machine cmm end, facilityId: {}, cost:{}s", facilityId,
+        (getCurrentTimeMillis() - startTime) / MILLISECONDS_OF_ONE_SECOND);
+  }
+
   private void calculateAndSavaCmms(LocalDate periodLocalDateRequest, Map<UUID, String> facilityIdToCode,
       Map<UUID, String> orderableIdToCode, List<ProcessingPeriod> upToNowAllPeriods, ProcessingPeriod startPeriod,
       ProcessingPeriod endPeriod, UUID facilityId) {
