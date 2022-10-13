@@ -15,20 +15,20 @@
 
 package org.siglus.siglusapi.web;
 
+import lombok.RequiredArgsConstructor;
 import org.siglus.siglusapi.service.scheduledtask.CalculateCmmService;
 import org.siglus.siglusapi.web.request.CalculateCmmRequest;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/siglusapi/cmms")
 public class SiglusCalculateWebCmmController {
 
-  @Autowired
-  private CalculateCmmService calculateCmmService;
+  private final CalculateCmmService calculateCmmService;
 
   @PostMapping("/calculate")
   public void calculateCurrentPeriod(@RequestBody CalculateCmmRequest calculateCmmRequest) {
