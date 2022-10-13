@@ -68,9 +68,9 @@ public class OnlineWebControllerTest {
     eventIds.add(UUID.randomUUID());
     request.setEventIds(eventIds);
     // when
-    onlineWebController.confirmReceived(request, buildMachineToken());
+    onlineWebController.confirmReceived(request);
     // then
-    verify(eventStore).confirmReceived(facilityId, request.getEventIds());
+    verify(eventStore).confirmReceivedToOnlineWeb(request.getEventIds());
   }
 
   @Test

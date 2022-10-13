@@ -13,41 +13,25 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.localmachine;
+package org.siglus.siglusapi.localmachine.eventstore;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import java.time.ZonedDateTime;
 import java.util.UUID;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@Builder
+@Entity
 @Data
-@NoArgsConstructor
+@Builder
 @AllArgsConstructor
-public class Event {
-  private UUID id;
-  private int protocolVersion;
-  private long localSequenceNumber;
-  private ZonedDateTime occurredTime;
-  private UUID senderId;
-  private UUID receiverId;
-  private String groupId;
-  private long groupSequenceNumber;
-  private Object payload;
-  private boolean onlineWebSynced;
-  private boolean receiverSynced;
-  private boolean localReplayed;
-
-  @JsonIgnore
-  public boolean isPeeringEvent() {
-    return !this.senderId.equals(this.receiverId);
-  }
-
-  @JsonIgnore
-  public boolean shouldSendAck() {
-    return this.isReceiverSynced() && this.isPeeringEvent();
-  }
+@NoArgsConstructor
+@Table(name = "ack_records", schema = "localmachine")
+public class AckRecord {
+  @Id private UUID eventId;
+  private UUID sendTo;
+  private Boolean shipped;
 }

@@ -16,6 +16,8 @@
 package org.siglus.siglusapi.localmachine.webapi;
 
 import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -24,12 +26,14 @@ import org.siglus.siglusapi.localmachine.EventImporter;
 import org.siglus.siglusapi.localmachine.ExternalEventDto;
 import org.siglus.siglusapi.localmachine.ExternalEventDtoMapper;
 import org.siglus.siglusapi.localmachine.auth.MachineToken;
+import org.siglus.siglusapi.localmachine.eventstore.AckRecord;
 import org.siglus.siglusapi.localmachine.eventstore.EventStore;
 import org.siglus.siglusapi.localmachine.server.ActivationService;
 import org.siglus.siglusapi.localmachine.server.OnlineWebService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -70,10 +74,21 @@ public class OnlineWebController {
         .build();
   }
 
-  @PostMapping("/ack")
-  public void confirmReceived(
-      @RequestBody @Validated AckRequest request, MachineToken authentication) {
-    eventStore.confirmReceived(authentication.getFacilityId(), request.getEventIds());
+  @PostMapping("/acks")
+  public void confirmReceived(@RequestBody @Validated AckRequest request) {
+    eventStore.confirmReceivedToOnlineWeb(request.getEventIds());
+  }
+
+  @PutMapping("/acks")
+  public void confirmAcks(@RequestBody @Validated AckRequest request) {
+    eventStore.confirmAckShipped(request.getEventIds());
+  }
+
+  @GetMapping("/acks")
+  public AckResponse exportAcks(MachineToken authentication) {
+    List<AckRecord> acks = eventStore.getAcksForEventSender(authentication.getFacilityId());
+    Set<UUID> eventIds = acks.stream().map(AckRecord::getEventId).collect(Collectors.toSet());
+    return new AckResponse(eventIds);
   }
 
   @GetMapping("/reSync")

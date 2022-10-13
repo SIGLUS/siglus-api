@@ -20,12 +20,15 @@ import static java.util.stream.Collectors.toSet;
 
 import java.net.URI;
 import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import org.siglus.siglusapi.localmachine.Event;
 import org.siglus.siglusapi.localmachine.ExternalEventDto;
 import org.siglus.siglusapi.localmachine.ExternalEventDtoMapper;
 import org.siglus.siglusapi.localmachine.auth.LocalTokenInterceptor;
 import org.siglus.siglusapi.localmachine.webapi.AckRequest;
+import org.siglus.siglusapi.localmachine.webapi.AckResponse;
 import org.siglus.siglusapi.localmachine.webapi.ActivationResponse;
 import org.siglus.siglusapi.localmachine.webapi.PeeringEventsResponse;
 import org.siglus.siglusapi.localmachine.webapi.RemoteActivationRequest;
@@ -65,10 +68,21 @@ public class OnlineWebClient {
         .collect(Collectors.toList());
   }
 
+  public Set<UUID> exportAcks() {
+    URI url = URI.create(webBaseUrl + "/server/acks");
+    return restTemplate.getForObject(url, AckResponse.class).getEventIds();
+  }
+
   public void confirmReceived(List<Event> events) {
-    URI url = URI.create(webBaseUrl + "/server/ack");
+    URI url = URI.create(webBaseUrl + "/server/acks");
     AckRequest ackRequest = new AckRequest(events.stream().map(Event::getId).collect(toSet()));
     restTemplate.postForEntity(url, ackRequest, Void.class);
+  }
+
+  public void confirmAcks(Set<UUID> eventIds) {
+    URI url = URI.create(webBaseUrl + "/server/acks");
+    AckRequest ackRequest = new AckRequest(eventIds);
+    restTemplate.put(url, ackRequest);
   }
 
   public ActivationResponse activate(RemoteActivationRequest remoteActivationRequest) {

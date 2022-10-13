@@ -13,41 +13,21 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.localmachine;
+package org.siglus.siglusapi.localmachine.webapi;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import java.time.ZonedDateTime;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Builder.Default;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Builder
 @Data
-@NoArgsConstructor
 @AllArgsConstructor
-public class Event {
-  private UUID id;
-  private int protocolVersion;
-  private long localSequenceNumber;
-  private ZonedDateTime occurredTime;
-  private UUID senderId;
-  private UUID receiverId;
-  private String groupId;
-  private long groupSequenceNumber;
-  private Object payload;
-  private boolean onlineWebSynced;
-  private boolean receiverSynced;
-  private boolean localReplayed;
-
-  @JsonIgnore
-  public boolean isPeeringEvent() {
-    return !this.senderId.equals(this.receiverId);
-  }
-
-  @JsonIgnore
-  public boolean shouldSendAck() {
-    return this.isReceiverSynced() && this.isPeeringEvent();
-  }
+@NoArgsConstructor
+public class AckResponse {
+  @Default private Set<UUID> eventIds = new HashSet<>();
 }

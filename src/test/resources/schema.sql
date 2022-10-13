@@ -53,3 +53,9 @@ ALTER TABLE localmachine.events
     ADD COLUMN archived boolean NOT NULL DEFAULT FALSE;
 ALTER TABLE localmachine.events
     DROP COLUMN payload;
+
+CREATE TABLE IF NOT EXISTS localmachine.ack_records (
+    eventid uuid PRIMARY KEY,
+    sendto uuid NOT NULL,
+    shipped BOOL NOT NULL DEFAULT FALSE
+);

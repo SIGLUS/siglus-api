@@ -20,6 +20,8 @@ import static org.springframework.util.ObjectUtils.isEmpty;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.UnmodifiableIterator;
 import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
@@ -58,10 +60,15 @@ public class Synchronizer {
 
   @Transactional
   public void sync() {
-    // TODO: 2022/9/7 segregate push and pull
     pull();
     push();
-    // TODO: 2022/8/26 report local replay info to web for Ops
+    pullAcks();
+  }
+
+  public void pullAcks() {
+    Set<UUID> eventIds = webClient.exportAcks();
+    localEventStore.markAsReceived(eventIds);
+    webClient.confirmAcks(eventIds);
   }
 
   @Transactional
