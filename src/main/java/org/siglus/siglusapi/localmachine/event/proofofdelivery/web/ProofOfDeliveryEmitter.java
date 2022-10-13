@@ -18,16 +18,20 @@ package org.siglus.siglusapi.localmachine.event.proofofdelivery.web;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.openlmis.fulfillment.domain.BaseEntity;
 import org.openlmis.fulfillment.domain.ProofOfDelivery;
 import org.openlmis.fulfillment.repository.ProofOfDeliveryRepository;
 import org.siglus.common.domain.OrderExternal;
 import org.siglus.common.repository.OrderExternalRepository;
 import org.siglus.siglusapi.domain.PodExtension;
+import org.siglus.siglusapi.domain.PodLineItemsByLocation;
 import org.siglus.siglusapi.domain.RequisitionExtension;
 import org.siglus.siglusapi.localmachine.EventPublisher;
 import org.siglus.siglusapi.repository.PodExtensionRepository;
+import org.siglus.siglusapi.repository.PodLineItemsByLocationRepository;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.springframework.stereotype.Service;
 
@@ -41,6 +45,7 @@ public class ProofOfDeliveryEmitter {
   private final PodExtensionRepository podExtensionRepository;
   private final OrderExternalRepository orderExternalRepository;
   private final RequisitionExtensionRepository requisitionExtensionRepository;
+  private final PodLineItemsByLocationRepository podLineItemsByLocationRepository;
 
   public ProofOfDeliveryEvent emit(UUID podId) {
     ProofOfDeliveryEvent event = getEvent(podId);
@@ -57,6 +62,14 @@ public class ProofOfDeliveryEmitter {
     if (proofOfDelivery == null) {
       throw new IllegalStateException("no proofOfDelivery found, id = " + podId);
     }
+    List<UUID> proofOfDelieveryLineItemIds = proofOfDelivery.getLineItems()
+        .stream()
+        .map(BaseEntity::getId)
+        .collect(Collectors.toList());
+    List<PodLineItemsByLocation> podLineItemsByLocations = podLineItemsByLocationRepository.findByPodLineItemIdIn(
+        proofOfDelieveryLineItemIds);
+    event.setPodLineItemsByLocation(
+        podLineItemsByLocations);
     event.setProofOfDelivery(proofOfDelivery);
     PodExtension podExtension = podExtensionRepository.findByPodId(podId);
     event.setPodExtension(podExtension);
