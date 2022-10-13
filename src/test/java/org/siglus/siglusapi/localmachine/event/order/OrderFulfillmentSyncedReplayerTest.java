@@ -42,6 +42,7 @@ import org.openlmis.requisition.service.referencedata.OrderableReferenceDataServ
 import org.siglus.common.domain.OrderExternal;
 import org.siglus.common.repository.OrderExternalRepository;
 import org.siglus.siglusapi.domain.RequisitionExtension;
+import org.siglus.siglusapi.localmachine.event.NotificationService;
 import org.siglus.siglusapi.localmachine.event.order.fulfillment.OrderFulfillmentSyncedEvent;
 import org.siglus.siglusapi.localmachine.event.order.fulfillment.OrderFulfillmentSyncedReplayer;
 import org.siglus.siglusapi.localmachine.eventstore.PayloadSerializer;
@@ -66,8 +67,6 @@ public class OrderFulfillmentSyncedReplayerTest extends FileBasedTest {
   private SiglusSimulateUserAuthHelper simulateUserAuthHelper;
   @Mock
   private SiglusShipmentService siglusShipmentService;
-  @Mock
-  private SiglusNotificationService notificationService;
   @Mock
   private OrdersRepository ordersRepository;
   @Mock
@@ -94,8 +93,10 @@ public class OrderFulfillmentSyncedReplayerTest extends FileBasedTest {
   private SiglusNotificationService siglusNotificationService;
   @Mock
   private PodExtensionRepository podExtensionRepository;
-  private final UUID requisitionId = UUID.randomUUID();
+  @Mock
+  private  NotificationService notificationService;
 
+  private final UUID requisitionId = UUID.randomUUID();
   private final UUID facilityId = UUID.randomUUID();
   private final UUID orderableId = UUID.randomUUID();
   private final UUID programId = UUID.randomUUID();

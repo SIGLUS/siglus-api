@@ -18,6 +18,7 @@ package org.siglus.siglusapi.localmachine.event.requisition;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
 
+import com.google.common.collect.Lists;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -31,12 +32,14 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.RequisitionLineItem;
 import org.openlmis.requisition.domain.requisition.RequisitionStatus;
+import org.openlmis.requisition.domain.requisition.StatusChange;
 import org.openlmis.requisition.domain.requisition.VersionEntityReference;
 import org.openlmis.requisition.repository.RequisitionRepository;
 import org.openlmis.requisition.service.RequisitionService;
 import org.openlmis.requisition.service.referencedata.ApproveProductsAggregator;
 import org.siglus.siglusapi.domain.RequisitionExtension;
 import org.siglus.siglusapi.localmachine.EventPublisher;
+import org.siglus.siglusapi.localmachine.event.NotificationService;
 import org.siglus.siglusapi.localmachine.event.requisition.web.RequisitionInternalApproveReplayer;
 import org.siglus.siglusapi.localmachine.event.requisition.web.RequisitionInternalApprovedEvent;
 import org.siglus.siglusapi.repository.AgeGroupLineItemRepository;
@@ -85,7 +88,8 @@ public class RequisitionInternalApproveReplayerTest {
   private RequisitionGroupMembersRepository requisitionGroupMembersRepository;
   @Mock
   private SiglusNotificationService siglusNotificationService;
-
+  @Mock
+  private NotificationService notificationService;
   @Mock
   private RequisitionService requisitionService;
   private final UUID requisitionId = UUID.randomUUID();
@@ -123,6 +127,9 @@ public class RequisitionInternalApproveReplayerTest {
     requisition.setStatus(RequisitionStatus.IN_APPROVAL);
     requisition.setEmergency(false);
     requisition.setReportOnly(false);
+    StatusChange statusChange = StatusChange.newStatusChange(requisition, UUID.randomUUID());
+    statusChange.setStatus(RequisitionStatus.IN_APPROVAL);
+    requisition.setStatusChanges(Lists.newArrayList(statusChange));
 
     event.setRequisition(requisition);
     event.setRequisitionExtension(new RequisitionExtension());

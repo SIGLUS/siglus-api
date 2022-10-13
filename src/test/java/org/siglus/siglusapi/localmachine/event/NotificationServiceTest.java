@@ -15,7 +15,11 @@
 
 package org.siglus.siglusapi.localmachine.event;
 
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.when;
+
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.UUID;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -23,19 +27,25 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.fulfillment.domain.Order;
+import org.openlmis.fulfillment.service.referencedata.FacilityDto;
+import org.openlmis.fulfillment.service.referencedata.ProcessingPeriodDto;
+import org.openlmis.fulfillment.web.util.OrderLineItemDto;
+import org.openlmis.fulfillment.web.util.OrderObjectReferenceDto;
 import org.openlmis.fulfillment.web.util.ProofOfDeliveryDto;
+import org.openlmis.fulfillment.web.util.ShipmentObjectReferenceDto;
+import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.dto.BasicProcessingPeriodDto;
 import org.openlmis.requisition.dto.BasicRequisitionDto;
 import org.openlmis.requisition.dto.MinimalFacilityDto;
 import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.repository.RequisitionRepository;
 import org.siglus.common.repository.OrderExternalRepository;
-import org.siglus.siglusapi.localmachine.eventstore.PayloadSerializer;
 import org.siglus.siglusapi.repository.NotificationRepository;
 import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
 import org.siglus.siglusapi.util.SiglusSimulateUserAuthHelper;
 
 @RunWith(MockitoJUnitRunner.class)
+@SuppressWarnings({"PMD.UnusedPrivateField"})
 public class NotificationServiceTest {
 
   @InjectMocks
@@ -70,6 +80,7 @@ public class NotificationServiceTest {
   public void shouldPostFulfillmentSuccess() {
     // given
     final Order order = new Order();
+    when(requisitionRepository.findOne(any(UUID.class))).thenReturn(new Requisition());
     // when
     notificationService.postFulfillment(userId, UUID.randomUUID(), order);
   }
@@ -88,22 +99,21 @@ public class NotificationServiceTest {
   @Test
   public void shouldPostConfirmPodSuccess() throws IOException {
     // given
-    ProofOfDeliveryDto proofOfDeliveryDto = PayloadSerializer.LOCALMACHINE_EVENT_OBJECT_MAPPER.readValue("{\"shipment\": {\"href\": " +
-        "\"null/api/shipments/\", \"order\": {\"externalId\": null, \"emergency\": null, \"facility\": {\"code\": " +
-        "\"\", \"name\": \"\", \"description\": \"\", \"active\": null, \"goLiveDate\": \"2022-10-12\", " +
-        "\"goDownDate\": \"2022-10-12\", \"comment\": \"\", \"enabled\": null, \"openLmisAccessible\": null, " +
-        "\"supportedPrograms\": [{\"code\": \"\", \"name\": \"\", \"description\": \"\", \"active\": null, " +
-        "\"periodsSkippable\": null, \"showNonFullSupplyTab\": null, \"supportLocallyFulfilled\": {}, \"id\": null}]," +
-        " \"geographicZone\": {\"code\": \"\", \"name\": \"\", \"level\": {\"code\": \"\", \"name\": \"\", " +
-        "\"levelNumber\": 1, \"id\": null}, \"parent\": null, \"id\": null}, \"operator\": {\"code\": \"\", \"name\":" +
-        " \"\", \"id\": null}, \"type\": {\"code\": \"\", \"name\": \"\", \"description\": \"\", \"displayOrder\": 1," +
-        " \"active\": null, \"id\": null}, \"id\": null}, \"processingPeriod\": {\"processingSchedule\": {\"code\": " +
-        "\"\", \"description\": \"\", \"modifiedDate\": null, \"name\": \"\", \"id\": null}, \"name\": \"\", " +
-        "\"description\": \"\", \"startDate\": \"2022-10-12\", \"endDate\": \"2022-10-12\", \"id\": null}, " +
-        "\"createdDate\": null, \"program\": null, \"requestingFacility\": {}, \"supplyingFacility\": {}, " +
-        "\"lastUpdatedDate\": null, \"requisitionNumber\": \"\", \"id\": null, \"href\": \"\"}}}", ProofOfDeliveryDto.class);
+    OrderObjectReferenceDto orderDto = new OrderObjectReferenceDto(UUID.randomUUID());
+    OrderLineItemDto lineItemDto = new OrderLineItemDto();
+    lineItemDto.setId(UUID.randomUUID());
+    orderDto.setOrderLineItems(Arrays.asList(lineItemDto));
+    orderDto.setProgram(new org.openlmis.fulfillment.service.referencedata.ProgramDto());
+    orderDto.setProcessingPeriod(new ProcessingPeriodDto());
+    orderDto.setFacility(new FacilityDto());
+    orderDto.setSupplyingFacility(new FacilityDto());
+    orderDto.setRequestingFacility(new FacilityDto());
+    ShipmentObjectReferenceDto shipmentDto = new ShipmentObjectReferenceDto(UUID.randomUUID());
+    shipmentDto.setOrder(orderDto);
+    ProofOfDeliveryDto dto = new ProofOfDeliveryDto();
+    dto.setShipment(shipmentDto);
     // when
-    notificationService.postConfirmPod(userId, proofOfDeliveryDto);
+    notificationService.postConfirmPod(userId, dto);
   }
 
 }
