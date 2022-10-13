@@ -18,18 +18,19 @@ package org.siglus.siglusapi.localmachine.domain;
 import static javax.persistence.CascadeType.ALL;
 
 import java.time.ZonedDateTime;
-import java.util.UUID;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
-import javax.persistence.Id;
+import javax.persistence.JoinColumn;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.siglus.common.domain.BaseEntity;
 import org.siglus.siglusapi.localmachine.constant.ErrorType;
 
 @Entity
@@ -37,19 +38,17 @@ import org.siglus.siglusapi.localmachine.constant.ErrorType;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+@EqualsAndHashCode(callSuper = true)
 @Table(name = "error_records", schema = "localmachine")
-public class ErrorRecord {
-
-  @Id
-  private UUID id;
+public class ErrorRecord extends BaseEntity {
 
   @Column(name = "type")
   @Enumerated(EnumType.STRING)
   private ErrorType type;
 
-  @OneToOne(cascade = ALL, mappedBy = "errorRecord", orphanRemoval = true)
+  @OneToOne(cascade = ALL)
+  @JoinColumn(nullable = false, name = "errorpayloadid")
   private ErrorPayload errorPayload;
-
 
   @Column(name = "occurredtime")
   private ZonedDateTime occurredTime;

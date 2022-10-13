@@ -25,21 +25,20 @@ import javax.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.siglus.common.domain.BaseEntity;
 
 @Entity
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+@EqualsAndHashCode(callSuper = true)
 @Table(name = "error_payloads", schema = "localmachine")
-public class ErrorPayload {
+public class ErrorPayload extends BaseEntity {
 
-  @Id
-  private UUID id;
-
-  @OneToOne
-  @JoinColumn(nullable = false)
+  @OneToOne(mappedBy = "errorPayload")
   private ErrorRecord errorRecord;
 
   @Column(name = "errorname")

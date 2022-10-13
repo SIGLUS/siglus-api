@@ -5,7 +5,7 @@
 DROP TABLE IF EXISTS localmachine.last_sync_record;
 CREATE TABLE localmachine.last_sync_record
 (
-    id                 uuid PRIMARY KEY,
+    id               uuid PRIMARY KEY,
     lastsyncedtime   TIMESTAMP WITH TIME ZONE NOT NULL,
     lastreplayedtime TIMESTAMP WITH TIME ZONE NOT NULL
 );
@@ -13,20 +13,25 @@ CREATE TABLE localmachine.last_sync_record
 DROP TABLE IF EXISTS localmachine.error_records;
 CREATE TABLE localmachine.error_records
 (
-    id           uuid PRIMARY KEY,
-    type         varchar(255),
-    occurredtime TIMESTAMP WITH TIME ZONE NOT NULL
+    id             uuid PRIMARY KEY,
+    errorpayloadid uuid                     NOT NULL,
+    type           varchar(255),
+    occurredtime   TIMESTAMP WITH TIME ZONE NOT NULL
 );
 
 DROP TABLE IF EXISTS localmachine.error_payloads;
 CREATE TABLE localmachine.error_payloads
 (
-    errorid        uuid PRIMARY KEY,
+    id             uuid PRIMARY KEY,
     eventid        uuid,
     rootstacktrace text,
     errorname      varchar(255),
     messagekey     varchar(255),
     detailmessage  text
 );
+ALTER TABLE localmachine.error_records
+    ADD FOREIGN KEY (errorpayloadid) REFERENCES localmachine.error_payloads (id);
 
-create index error_records_index on localmachine.error_records (occurredtime);
+
+create
+index error_records_index on localmachine.error_records (occurredtime);
