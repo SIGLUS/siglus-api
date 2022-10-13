@@ -17,7 +17,6 @@ package org.siglus.siglusapi.localmachine.eventstore;
 
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -26,6 +25,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
+import org.siglus.siglusapi.localmachine.Ack;
 import org.siglus.siglusapi.localmachine.Event;
 import org.springframework.data.domain.Example;
 import org.springframework.stereotype.Component;
@@ -92,8 +92,7 @@ public class EventStore {
     repository.importExternalEvent(eventRecord);
     eventPayloadRepository.save(new EventPayload(eventRecord.getId(), eventRecord.getPayload()));
     if (event.shouldSendAck()) {
-      AckRecord ack = new AckRecord(event.getId(), event.getReceiverId(), false);
-      ackRepository.save(ack);
+      emitAckForEvent(event);
     }
   }
 
@@ -119,13 +118,8 @@ public class EventStore {
   }
 
   @Transactional
-  public void confirmReceivedToOnlineWeb(Set<UUID> eventIds) {
-    markAsReceived(eventIds);
-    emitAcks(eventIds);
-  }
-
-  @Transactional
-  public void confirmAckShipped(Set<UUID> eventIds) {
+  public void confirmAckShipped(Set<Ack> acks) {
+    Set<UUID> eventIds = acks.stream().map(Ack::getEventId).collect(Collectors.toSet());
     if (CollectionUtils.isNotEmpty(eventIds)) {
       ackRepository.markShipped(eventIds);
     }
@@ -151,19 +145,37 @@ public class EventStore {
         .collect(Collectors.toList());
   }
 
-  public List<AckRecord> getAcksForEventSender(UUID eventSender) {
+  public List<Ack> getAcksForEventSender(UUID eventSender) {
     Example<AckRecord> example = Example.of(AckRecord.builder().sendTo(eventSender).shipped(Boolean.FALSE).build());
-    return ackRepository.findAll(example);
+    return ackRepository.findAll(example).stream().map(AckRecord::toAck).collect(Collectors.toList());
   }
 
-  private void emitAcks(Set<UUID> eventIds) {
-    List<EventRecord> events = repository.getPartialEventWithSender(eventIds);
-    Map<UUID, AckRecord> eventIdToAck = ackRepository.findAll(eventIds).stream()
-        .collect(Collectors.toMap(AckRecord::getEventId, it -> it));
-    List<AckRecord> acksToSave = events.stream()
-        .map(it -> eventIdToAck.getOrDefault(it.getId(), new AckRecord(it.getId(), it.getSenderId(), false)))
-        .collect(Collectors.toList());
-    ackRepository.save(acksToSave);
+  public Set<Ack> getNotShippedAcks() {
+    Example<AckRecord> example = Example.of(AckRecord.builder().shipped(Boolean.FALSE).build());
+    return ackRepository.findAll(example).stream().map(AckRecord::toAck).collect(Collectors.toSet());
   }
 
+  @Transactional
+  public void confirmEventsByAcks(Set<Ack> acks) {
+    Set<UUID> eventIds = acks.stream().map(Ack::getEventId).collect(Collectors.toSet());
+    if (CollectionUtils.isNotEmpty(eventIds)) {
+      this.markAsReceived(eventIds);
+    }
+  }
+
+  @Transactional
+  public void routeAcks(Set<Ack> acks) {
+    confirmEventsByAcks(acks);
+    saveAcks(acks);
+  }
+
+  private void saveAcks(Set<Ack> acks) {
+    List<AckRecord> ackRecords = acks.stream().map(AckRecord::from).collect(Collectors.toList());
+    ackRepository.save(ackRecords);
+  }
+
+  private void emitAckForEvent(Event event) {
+    AckRecord ack = new AckRecord(event.getId(), event.getReceiverId(), false);
+    ackRepository.save(ack);
+  }
 }

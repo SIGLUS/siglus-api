@@ -23,6 +23,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.siglus.siglusapi.localmachine.Ack;
 
 @Entity
 @Data
@@ -34,4 +35,16 @@ public class AckRecord {
   @Id private UUID eventId;
   private UUID sendTo;
   private Boolean shipped;
+
+  public static AckRecord from(Ack ack) {
+    return AckRecord.builder()
+        .eventId(ack.getEventId())
+        .sendTo(ack.getSendTo())
+        .shipped(Boolean.FALSE)
+        .build();
+  }
+
+  public Ack toAck() {
+    return new Ack(eventId, sendTo);
+  }
 }

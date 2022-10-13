@@ -15,18 +15,17 @@
 
 package org.siglus.siglusapi.localmachine.webapi;
 
+import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
-import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.siglus.siglusapi.localmachine.Ack;
 import org.siglus.siglusapi.localmachine.EventImporter;
 import org.siglus.siglusapi.localmachine.ExternalEventDto;
 import org.siglus.siglusapi.localmachine.ExternalEventDtoMapper;
 import org.siglus.siglusapi.localmachine.auth.MachineToken;
-import org.siglus.siglusapi.localmachine.eventstore.AckRecord;
 import org.siglus.siglusapi.localmachine.eventstore.EventStore;
 import org.siglus.siglusapi.localmachine.server.ActivationService;
 import org.siglus.siglusapi.localmachine.server.OnlineWebService;
@@ -75,20 +74,15 @@ public class OnlineWebController {
   }
 
   @PostMapping("/acks")
-  public void confirmReceived(@RequestBody @Validated AckRequest request) {
-    eventStore.confirmReceivedToOnlineWeb(request.getEventIds());
+  public AckExchange exchangeAcks(AckExchange request, MachineToken authentication) {
+    eventStore.routeAcks(request.getAcks());
+    List<Ack> acks = eventStore.getAcksForEventSender(authentication.getFacilityId());
+    return new AckExchange(new HashSet<>(acks));
   }
 
   @PutMapping("/acks")
-  public void confirmAcks(@RequestBody @Validated AckRequest request) {
-    eventStore.confirmAckShipped(request.getEventIds());
-  }
-
-  @GetMapping("/acks")
-  public AckResponse exportAcks(MachineToken authentication) {
-    List<AckRecord> acks = eventStore.getAcksForEventSender(authentication.getFacilityId());
-    Set<UUID> eventIds = acks.stream().map(AckRecord::getEventId).collect(Collectors.toSet());
-    return new AckResponse(eventIds);
+  public void confirmAcks(AckExchange request) {
+    eventStore.confirmAckShipped(request.getAcks());
   }
 
   @GetMapping("/reSync")

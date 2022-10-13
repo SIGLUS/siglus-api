@@ -18,8 +18,6 @@ package org.siglus.siglusapi.localmachine.webapi;
 
 import static org.mockito.Mockito.verify;
 
-import java.util.HashSet;
-import java.util.Set;
 import java.util.UUID;
 import javax.servlet.http.HttpServletResponse;
 import org.junit.Test;
@@ -28,7 +26,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.siglus.siglusapi.localmachine.auth.MachineToken;
-import org.siglus.siglusapi.localmachine.eventstore.EventStore;
 import org.siglus.siglusapi.localmachine.server.ActivationService;
 import org.siglus.siglusapi.localmachine.server.OnlineWebService;
 import org.springframework.mock.web.MockHttpServletResponse;
@@ -45,9 +42,6 @@ public class OnlineWebControllerTest {
   @Mock
   private ActivationService activationService;
 
-  @Mock
-  private EventStore eventStore;
-
   private static final UUID facilityId = UUID.randomUUID();
 
   @Test
@@ -58,19 +52,6 @@ public class OnlineWebControllerTest {
     onlineWebController.activateAgent(request);
     // then
     verify(activationService).activate(request);
-  }
-
-  @Test
-  public void confirmReceivedFromOnlineWeb() {
-    // given
-    AckRequest request = new AckRequest();
-    Set<UUID> eventIds = new HashSet<>();
-    eventIds.add(UUID.randomUUID());
-    request.setEventIds(eventIds);
-    // when
-    onlineWebController.confirmReceived(request);
-    // then
-    verify(eventStore).confirmReceivedToOnlineWeb(request.getEventIds());
   }
 
   @Test

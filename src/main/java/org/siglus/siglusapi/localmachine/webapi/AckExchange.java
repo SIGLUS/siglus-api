@@ -17,17 +17,17 @@ package org.siglus.siglusapi.localmachine.webapi;
 
 import java.util.HashSet;
 import java.util.Set;
-import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Builder.Default;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.siglus.siglusapi.localmachine.Ack;
 
 @Builder
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class AckResponse {
-  @Default private Set<UUID> eventIds = new HashSet<>();
+public class AckExchange {
+  @Default private Set<Ack> acks = new HashSet<>();
 }

@@ -16,19 +16,17 @@
 package org.siglus.siglusapi.localmachine.agent;
 
 import static java.util.Collections.singletonList;
-import static java.util.stream.Collectors.toSet;
 
 import java.net.URI;
 import java.util.List;
 import java.util.Set;
-import java.util.UUID;
 import java.util.stream.Collectors;
+import org.siglus.siglusapi.localmachine.Ack;
 import org.siglus.siglusapi.localmachine.Event;
 import org.siglus.siglusapi.localmachine.ExternalEventDto;
 import org.siglus.siglusapi.localmachine.ExternalEventDtoMapper;
 import org.siglus.siglusapi.localmachine.auth.LocalTokenInterceptor;
-import org.siglus.siglusapi.localmachine.webapi.AckRequest;
-import org.siglus.siglusapi.localmachine.webapi.AckResponse;
+import org.siglus.siglusapi.localmachine.webapi.AckExchange;
 import org.siglus.siglusapi.localmachine.webapi.ActivationResponse;
 import org.siglus.siglusapi.localmachine.webapi.PeeringEventsResponse;
 import org.siglus.siglusapi.localmachine.webapi.RemoteActivationRequest;
@@ -68,26 +66,21 @@ public class OnlineWebClient {
         .collect(Collectors.toList());
   }
 
-  public Set<UUID> exportAcks() {
-    URI url = URI.create(webBaseUrl + "/server/acks");
-    return restTemplate.getForObject(url, AckResponse.class).getEventIds();
-  }
-
-  public void confirmReceived(List<Event> events) {
-    URI url = URI.create(webBaseUrl + "/server/acks");
-    AckRequest ackRequest = new AckRequest(events.stream().map(Event::getId).collect(toSet()));
-    restTemplate.postForEntity(url, ackRequest, Void.class);
-  }
-
-  public void confirmAcks(Set<UUID> eventIds) {
-    URI url = URI.create(webBaseUrl + "/server/acks");
-    AckRequest ackRequest = new AckRequest(eventIds);
-    restTemplate.put(url, ackRequest);
-  }
-
   public ActivationResponse activate(RemoteActivationRequest remoteActivationRequest) {
     URI url = URI.create(webBaseUrl + PATH_ACTIVATE_AGENT);
     return restTemplate.postForObject(url, remoteActivationRequest, ActivationResponse.class);
+  }
+
+  public Set<Ack> exchangeAcks(Set<Ack> notShippedAcks) {
+    URI url = URI.create(webBaseUrl + "/server/acks");
+    AckExchange request = new AckExchange(notShippedAcks);
+    return restTemplate.postForEntity(url, request, AckExchange.class).getBody().getAcks();
+  }
+
+  public void confirmAcks(Set<Ack> acks) {
+    URI url = URI.create(webBaseUrl + "/server/acks");
+    AckExchange request = new AckExchange(acks);
+    restTemplate.put(url, request);
   }
 
   private void configureLocalTokenInterceptor(LocalTokenInterceptor localTokenInterceptor) {

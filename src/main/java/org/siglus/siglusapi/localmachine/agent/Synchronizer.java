@@ -21,11 +21,11 @@ import com.google.common.collect.Iterators;
 import com.google.common.collect.UnmodifiableIterator;
 import java.util.List;
 import java.util.Set;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.apache.commons.collections.CollectionUtils;
+import org.siglus.siglusapi.localmachine.Ack;
 import org.siglus.siglusapi.localmachine.Event;
 import org.siglus.siglusapi.localmachine.EventImporter;
 import org.siglus.siglusapi.localmachine.Machine;
@@ -61,14 +61,17 @@ public class Synchronizer {
   @Transactional
   public void sync() {
     pull();
+    exchangeAcks();
     push();
-    pullAcks();
   }
 
-  public void pullAcks() {
-    Set<UUID> eventIds = webClient.exportAcks();
-    localEventStore.markAsReceived(eventIds);
-    webClient.confirmAcks(eventIds);
+  @Transactional
+  public void exchangeAcks() {
+    Set<Ack> notShippedAcks = localEventStore.getNotShippedAcks();
+    Set<Ack> downloadedAcks = webClient.exchangeAcks(notShippedAcks);
+    localEventStore.confirmAckShipped(notShippedAcks);
+    localEventStore.confirmEventsByAcks(downloadedAcks);
+    webClient.confirmAcks(downloadedAcks);
   }
 
   @Transactional
@@ -80,7 +83,6 @@ public class Synchronizer {
     }
     events.forEach(it -> it.setOnlineWebSynced(true));
     eventImporter.importEvents(events);
-    webClient.confirmReceived(events);
   }
 
   public void push() {
