@@ -21,9 +21,12 @@ import javax.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.exception.BusinessDataException;
+import org.siglus.siglusapi.localmachine.Machine;
 import org.siglus.siglusapi.localmachine.agent.LocalActivationService;
 import org.siglus.siglusapi.localmachine.domain.AgentInfo;
 import org.siglus.siglusapi.localmachine.server.LocalExportImportService;
+import org.siglus.siglusapi.service.scheduledtask.CalculateCmmService;
+import org.siglus.siglusapi.web.request.CalculateCmmRequest;
 import org.springframework.context.annotation.Profile;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -43,6 +46,8 @@ public class LocalAgentController {
 
   private final LocalActivationService localActivationService;
   private final LocalExportImportService localExportImportService;
+  private final Machine machine;
+  private final CalculateCmmService calculateCmmService;
 
   @PutMapping
   public void activate(@RequestBody @Validated LocalActivationRequest request) {
@@ -64,5 +69,14 @@ public class LocalAgentController {
   @PostMapping("/events/import")
   public void importEvents(@RequestParam("files") MultipartFile[] files) {
     localExportImportService.importEvents(files);
+  }
+
+  /**
+   * The api will only be called by system admin, is used to recalculate cmm when {@link
+   * org.siglus.siglusapi.localmachine.scheduledtask.CalculateLocalMachineCmmTask} failed
+   */
+  @PostMapping("/cmms/calculate")
+  public void calculateCurrentPeriod(@RequestBody CalculateCmmRequest calculateCmmRequest) {
+    calculateCmmService.calculateLocalMachineCmms(calculateCmmRequest.getPeriodLocalDate(), machine.getFacilityId());
   }
 }

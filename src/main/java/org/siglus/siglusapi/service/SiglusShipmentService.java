@@ -342,7 +342,7 @@ public class SiglusShipmentService {
     podExtensionRepository.save(podExtension);
   }
 
-  private void mergeShipmentLineItems(ShipmentDto shipmentDto) {
+  public void mergeShipmentLineItems(ShipmentDto shipmentDto) {
     List<ShipmentLineItemDto> lineItemDtos = shipmentDto.lineItems();
     List<ShipmentLineItemDto> newLineItemDtos = new ArrayList<>();
     lineItemDtos.forEach(lineItem -> {

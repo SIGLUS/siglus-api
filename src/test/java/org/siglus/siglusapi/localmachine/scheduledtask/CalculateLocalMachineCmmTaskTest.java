@@ -13,26 +13,41 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.scheduledtask;
+package org.siglus.siglusapi.localmachine.scheduledtask;
 
-import java.time.LocalDate;
-import lombok.RequiredArgsConstructor;
-import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.util.UUID;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
+import org.siglus.siglusapi.localmachine.Machine;
 import org.siglus.siglusapi.service.scheduledtask.CalculateCmmService;
-import org.springframework.context.annotation.Profile;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Service;
 
-@Profile("!localmachine")
-@RequiredArgsConstructor
-@Service
-public class CalculateWebCmmTask {
+@RunWith(MockitoJUnitRunner.class)
+public class CalculateLocalMachineCmmTaskTest {
 
-  private final CalculateCmmService calculateCmmService;
+  @InjectMocks
+  private CalculateLocalMachineCmmTask task;
 
-  @Scheduled(cron = "${cmm.calculate.cron}", zone = "${time.zoneId}")
-  @SchedulerLock(name = "calculate_cmm_task")
-  public void calculate() {
-    calculateCmmService.calculateWebCmms(LocalDate.now());
+  @Mock
+  private CalculateCmmService calculateCmmService;
+  @Mock
+  private Machine machine;
+
+  @Test
+  public void shouldSuccessWhenScheduledTaskExecute() {
+    // given
+    when(machine.getFacilityId()).thenReturn(UUID.randomUUID());
+
+    // when
+    task.calculate();
+
+    // then
+    verify(calculateCmmService).calculateLocalMachineCmms(any(), any());
   }
 }

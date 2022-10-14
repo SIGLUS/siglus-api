@@ -13,26 +13,22 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.scheduledtask;
+package org.siglus.siglusapi.localmachine.event.cmm;
 
-import java.time.LocalDate;
-import lombok.RequiredArgsConstructor;
-import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
-import org.siglus.siglusapi.service.scheduledtask.CalculateCmmService;
-import org.springframework.context.annotation.Profile;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Service;
+import java.util.List;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.siglus.siglusapi.localmachine.EventPayload;
+import org.siglus.siglusapi.localmachine.cdc.TableChangeEvent;
 
-@Profile("!localmachine")
-@RequiredArgsConstructor
-@Service
-public class CalculateWebCmmTask {
+@EventPayload
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class CmmEvent {
 
-  private final CalculateCmmService calculateCmmService;
-
-  @Scheduled(cron = "${cmm.calculate.cron}", zone = "${time.zoneId}")
-  @SchedulerLock(name = "calculate_cmm_task")
-  public void calculate() {
-    calculateCmmService.calculateWebCmms(LocalDate.now());
-  }
+  private List<TableChangeEvent> tableChangeEvents;
 }

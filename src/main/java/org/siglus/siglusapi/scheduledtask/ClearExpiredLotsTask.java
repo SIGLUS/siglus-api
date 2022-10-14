@@ -15,24 +15,26 @@
 
 package org.siglus.siglusapi.scheduledtask;
 
-import java.time.LocalDate;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
-import org.siglus.siglusapi.service.scheduledtask.CalculateCmmService;
+import org.siglus.siglusapi.repository.LotManagementRepository;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-@Profile("!localmachine")
 @RequiredArgsConstructor
 @Service
-public class CalculateWebCmmTask {
+@Slf4j
+@Profile("!localmachine")
+public class ClearExpiredLotsTask {
 
-  private final CalculateCmmService calculateCmmService;
+  private final LotManagementRepository lotManagementRepository;
 
-  @Scheduled(cron = "${cmm.calculate.cron}", zone = "${time.zoneId}")
-  @SchedulerLock(name = "calculate_cmm_task")
-  public void calculate() {
-    calculateCmmService.calculateWebCmms(LocalDate.now());
+  @Scheduled(cron = "${clear.expired.lots.cron}", zone = "${time.zoneId}")
+  @SchedulerLock(name = "clear_expiredLots_task")
+  public void clear() {
+    log.info("clear lots which are expired and SOH = 0 in all facilities for more than 6 months");
+    lotManagementRepository.clearExpiredLots();
   }
 }

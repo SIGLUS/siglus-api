@@ -42,7 +42,6 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.openlmis.referencedata.domain.ProcessingPeriod;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.RequisitionLineItem;
 import org.openlmis.requisition.domain.requisition.RequisitionStatus;
@@ -474,36 +473,6 @@ public class SiglusProcessingPeriodServiceTest {
 
     // then
     verify(processingPeriodRepository).getUpToNowMonthlyPeriods(any(LocalDate.class));
-  }
-
-  @Test
-  public void shouldReturnTrueWhenDateInPeriod() {
-    // given
-    LocalDate now = LocalDate.now();
-    ProcessingPeriod period = new ProcessingPeriod();
-    period.setStartDate(now);
-    period.setEndDate(now.plusDays(1));
-
-    // when
-    boolean actualResponse = siglusProcessingPeriodService.isDateInPeriod(period, now);
-
-    // then
-    assertEquals(Boolean.TRUE, actualResponse);
-  }
-
-  @Test
-  public void shouldReturnFalseWhenDateNotInPeriod() {
-    // given
-    LocalDate now = LocalDate.now();
-    ProcessingPeriod period = new ProcessingPeriod();
-    period.setStartDate(now.plusDays(1));
-    period.setEndDate(now.plusDays(2));
-
-    // when
-    boolean actualResponse = siglusProcessingPeriodService.isDateInPeriod(period, now);
-
-    // then
-    assertEquals(Boolean.FALSE, actualResponse);
   }
 }
 

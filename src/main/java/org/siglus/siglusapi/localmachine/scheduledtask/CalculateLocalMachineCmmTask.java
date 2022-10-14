@@ -13,26 +13,28 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.scheduledtask;
+package org.siglus.siglusapi.localmachine.scheduledtask;
 
 import java.time.LocalDate;
 import lombok.RequiredArgsConstructor;
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
+import org.siglus.siglusapi.localmachine.Machine;
 import org.siglus.siglusapi.service.scheduledtask.CalculateCmmService;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-@Profile("!localmachine")
+@Profile("localmachine")
 @RequiredArgsConstructor
 @Service
-public class CalculateWebCmmTask {
+public class CalculateLocalMachineCmmTask {
 
   private final CalculateCmmService calculateCmmService;
+  private final Machine machine;
 
   @Scheduled(cron = "${cmm.calculate.cron}", zone = "${time.zoneId}")
   @SchedulerLock(name = "calculate_cmm_task")
   public void calculate() {
-    calculateCmmService.calculateWebCmms(LocalDate.now());
+    calculateCmmService.calculateLocalMachineCmms(LocalDate.now(), machine.getFacilityId());
   }
 }

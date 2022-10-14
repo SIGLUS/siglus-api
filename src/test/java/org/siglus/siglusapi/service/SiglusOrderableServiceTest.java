@@ -27,9 +27,12 @@ import static org.mockito.Mockito.when;
 import static org.siglus.siglusapi.constant.FieldConstants.FULL_PRODUCT_NAME;
 import static org.siglus.siglusapi.constant.FieldConstants.PRODUCT_CODE;
 
+import com.google.common.collect.Maps;
 import java.time.LocalDate;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import org.assertj.core.util.Lists;
@@ -150,6 +153,7 @@ public class SiglusOrderableServiceTest {
     programOrderableDto.setProgramId(programId);
     OrderableDto orderableDto = new OrderableDto();
     orderableDto.setId(orderableId);
+    orderableDto.setProductCode(productCode);
     orderableDto.setPrograms(newHashSet(programOrderableDto));
     when(orderableReferenceDataService.searchOrderables(searchParams, pageable)).thenReturn(
         Pagination.getPage(newArrayList(orderableDto), pageable, 1));
@@ -319,7 +323,7 @@ public class SiglusOrderableServiceTest {
   @Test
   public void shouldGetAllProgramOrderables() {
     // given
-    when(programOrderablesRepository.findAllMaxVersionProgramOrderableDtos()).thenReturn(Lists.emptyList());
+    when(programOrderablesRepository.findAllMaxVersionProgramOrderableDtos()).thenReturn(Lists.newArrayList());
 
     // when
     siglusOrderableService.getAllProgramOrderableDtos();
@@ -360,6 +364,28 @@ public class SiglusOrderableServiceTest {
 
     // then
     assertEquals(Lists.newArrayList(), availableOrderables);
+  }
+
+  @Test
+  public void shouldGetAllProductToCode() {
+    // given
+    when(orderableReferenceDataService.searchOrderables(any(), any())).thenReturn(
+        Pagination.getPage(buildMockOrderableDtos(), pageable, 1));
+    HashMap<UUID, String> expectedResult = Maps.newHashMap();
+    expectedResult.put(orderableId, productCode);
+
+    // when
+    Map<UUID, String> actualResult = siglusOrderableService.getAllProductIdToCode();
+
+    // then
+    assertEquals(expectedResult, actualResult);
+  }
+
+  private List<OrderableDto> buildMockOrderableDtos() {
+    OrderableDto orderableDto = new OrderableDto();
+    orderableDto.setId(orderableId);
+    orderableDto.setProductCode(productCode);
+    return Lists.newArrayList(orderableDto);
   }
 
   private StockCard mockStockCard() {

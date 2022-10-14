@@ -15,8 +15,6 @@
 
 package org.siglus.siglusapi.service;
 
-import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_NO_PERIOD_MATCH;
-
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -41,9 +39,7 @@ import org.openlmis.requisition.service.referencedata.PeriodReferenceDataService
 import org.siglus.common.domain.ProcessingPeriodExtension;
 import org.siglus.common.repository.ProcessingPeriodExtensionRepository;
 import org.siglus.siglusapi.constant.ProgramConstants;
-import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.dto.ProcessingPeriodSearchParams;
-import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.repository.ProcessingPeriodRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
@@ -166,26 +162,12 @@ public class SiglusProcessingPeriodService {
   }
 
   public ProcessingPeriodDto getProcessingPeriodDto(UUID periodId) {
-
     ProcessingPeriodDto dto = siglusProcessingPeriodReferenceDataService.findOne(periodId);
     return getProcessingPeriodbyOpenLmisPeroid(dto);
   }
 
-  public ProcessingPeriod getPeriodDateIn(List<ProcessingPeriod> processingPeriods, LocalDate localDate) {
-    return processingPeriods.stream().filter(period -> isDateInPeriod(period, localDate)).findFirst()
-        .orElseThrow(() -> new BusinessDataException(new Message(ERROR_NO_PERIOD_MATCH)));
-  }
-
   public List<ProcessingPeriod> getUpToNowMonthlyPeriods() {
     return processingPeriodRepository.getUpToNowMonthlyPeriods(LocalDate.now());
-  }
-
-  public boolean isDateInPeriod(ProcessingPeriod period, LocalDate localDate) {
-    return !isDateNotInPeriod(period, localDate);
-  }
-
-  private boolean isDateNotInPeriod(ProcessingPeriod period, LocalDate localDate) {
-    return localDate.isBefore(period.getStartDate()) || localDate.isAfter(period.getEndDate());
   }
 
   public ProcessingPeriodDto getProcessingPeriodbyOpenLmisPeroid(ProcessingPeriodDto dto) {

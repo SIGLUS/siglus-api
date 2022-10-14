@@ -15,6 +15,8 @@
 
 package org.siglus.siglusapi.localmachine.event.proofofdelivery.web;
 
+import java.util.List;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.openlmis.fulfillment.domain.Order;
@@ -22,8 +24,10 @@ import org.openlmis.fulfillment.domain.ProofOfDelivery;
 import org.openlmis.fulfillment.domain.Shipment;
 import org.openlmis.fulfillment.repository.ProofOfDeliveryRepository;
 import org.siglus.siglusapi.domain.PodExtension;
+import org.siglus.siglusapi.domain.PodLineItemsByLocation;
 import org.siglus.siglusapi.repository.OrdersRepository;
 import org.siglus.siglusapi.repository.PodExtensionRepository;
+import org.siglus.siglusapi.repository.PodLineItemsByLocationRepository;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
@@ -35,6 +39,7 @@ public class ProofOfDeliveryReplayer {
   private final ProofOfDeliveryRepository proofOfDeliveryRepository;
   private final PodExtensionRepository podExtensionRepository;
   private final OrdersRepository ordersRepository;
+  private final PodLineItemsByLocationRepository podLineItemsByLocationRepository;
 
   @EventListener(classes = {ProofOfDeliveryEvent.class})
   public void replay(ProofOfDeliveryEvent event) {
@@ -62,6 +67,11 @@ public class ProofOfDeliveryReplayer {
     String orderCode = shipment.getOrder().getOrderCode();
     Order order = ordersRepository.findByOrderCode(orderCode);
     order.setStatus(shipment.getOrder().getStatus());
+
+    List<PodLineItemsByLocation> podLineItemsByLocations = event.getPodLineItemsByLocation();
+    if (Objects.nonNull(podLineItemsByLocations) && !podLineItemsByLocations.isEmpty()) {
+      podLineItemsByLocationRepository.save(podLineItemsByLocations);
+    }
 
   }
 

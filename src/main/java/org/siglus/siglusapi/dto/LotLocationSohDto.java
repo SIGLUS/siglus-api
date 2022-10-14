@@ -43,7 +43,6 @@ import lombok.Data;
             + "  select\n"
             + "    *,\n"
             + "    row_number() over (partition by locationcode,\n"
-            + "    area,\n"
             + "    stockcardid\n"
             + "  order by\n"
             + "    occurreddate desc)\n"

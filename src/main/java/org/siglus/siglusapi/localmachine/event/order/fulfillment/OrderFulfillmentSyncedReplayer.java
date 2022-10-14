@@ -69,6 +69,7 @@ import org.siglus.siglusapi.domain.OrderLineItemExtension;
 import org.siglus.siglusapi.domain.PodExtension;
 import org.siglus.siglusapi.domain.RequisitionExtension;
 import org.siglus.siglusapi.domain.ShipmentLineItemsExtension;
+import org.siglus.siglusapi.localmachine.event.NotificationService;
 import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.OrdersRepository;
 import org.siglus.siglusapi.repository.PodExtensionRepository;
@@ -76,6 +77,7 @@ import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.repository.ShipmentLineItemsExtensionRepository;
 import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
 import org.siglus.siglusapi.repository.SiglusShipmentRepository;
+import org.siglus.siglusapi.service.SiglusShipmentService;
 import org.siglus.siglusapi.util.SiglusSimulateUserAuthHelper;
 import org.siglus.siglusapi.web.request.ShipmentExtensionRequest;
 import org.springframework.beans.BeanUtils;
@@ -100,6 +102,8 @@ public class OrderFulfillmentSyncedReplayer {
   private final ShipmentLineItemsExtensionRepository shipmentLineItemsExtensionRepository;
   private final SiglusProofOfDeliveryRepository siglusProofOfDeliveryRepository;
   private final PodExtensionRepository podExtensionRepository;
+  private final NotificationService notificationService;
+  private final SiglusShipmentService siglusShipmentService;
 
   @EventListener(value = {OrderFulfillmentSyncedEvent.class})
   public void replay(OrderFulfillmentSyncedEvent event) {
@@ -143,15 +147,17 @@ public class OrderFulfillmentSyncedReplayer {
     order.updateStatus(OrderStatus.SHIPPED, new UpdateDetails(event.getFulfillUserId(), ZonedDateTime.now()));
     Order shipped = ordersRepository.saveAndFlush(order);
 
-    fulfillOrder(event, shipped);
+    UUID proofOfDeliveryId = fulfillOrder(event, shipped);
+
+    notificationService.postFulfillment(event.getFulfillUserId(), proofOfDeliveryId, order);
   }
 
-  private void fulfillOrder(OrderFulfillmentSyncedEvent event, Order shipped) {
+  private UUID fulfillOrder(OrderFulfillmentSyncedEvent event, Order shipped) {
     OrderDto orderDto = orderDtoBuilder.build(shipped);
     OrderObjectReferenceDto orderObjectReferenceDto = new OrderObjectReferenceDto(orderDto.getId());
     BeanUtils.copyProperties(orderDto, orderObjectReferenceDto);
     event.getShipmentExtensionRequest().getShipment().setOrder(orderObjectReferenceDto);
-    doFulfillOrder(event, shipped);
+    return doFulfillOrder(event, shipped);
   }
 
   private Order updateOrderLineItems(OrderObjectReferenceDto orderDto, Order orderOrigin) {
@@ -181,7 +187,6 @@ public class OrderFulfillmentSyncedReplayer {
     requisitionExtension.setIsApprovedByInternal(false);
     requisitionExtensionRepository.saveAndFlush(requisitionExtension);
 
-    // todo siglusNotificationService.postApprove(buildBaseRequisitionDto(requisition));
   }
 
   private BasicRequisitionDto buildBaseRequisitionDto(Requisition requisition) {
@@ -222,43 +227,43 @@ public class OrderFulfillmentSyncedReplayer {
 
   public Order convertToOrder(OrderFulfillmentSyncedEvent event, Requisition requisition) {
     releaseRequisitionsAsOrder(requisition, event.getConvertToOrderUserId(), event.getSupplierFacilityId());
-    // todo siglusNotificationService.postConvertToOrder(new ApproveRequisitionDto(requisition)); called rpc
     return createOrder(event);
   }
 
   private Order createOrder(OrderFulfillmentSyncedEvent event) {
     return ordersRepository.saveAndFlush(event.getConvertToOrderRequest().getFirstOrder());
-    // TODO: notifiction of create order: FulfillmentNotificationService.sendOrderCreatedNotification() called rpc
   }
 
   private void releaseRequisitionsAsOrder(Requisition requisition, UUID supplierUserId, UUID supplierFacilityId) {
     requisition.release(supplierUserId);
     requisition.setSupplyingFacilityId(supplierFacilityId);
     requisitionRepository.saveAndFlush(requisition);
-    // TODO: notifiction of release,  notificationService.postRelease() not exists
   }
 
-  private void doFulfillOrder(OrderFulfillmentSyncedEvent event, Order shipped) {
+  private UUID doFulfillOrder(OrderFulfillmentSyncedEvent event, Order shipped) {
+    if (event.isWithLocation()) {
+      siglusShipmentService.mergeShipmentLineItems(event.getShipmentExtensionRequest().getShipment());
+    }
     Shipment shipment = createSubOrderAndShipment(event.isSubOrder(),
         event.getShipmentExtensionRequest().getShipment(), event.getFulfillUserId(), shipped);
     if (event.isWithLocation()) {
       saveShipmentLineItemsExtensionWithLocation(event, shipment);
     }
-    savePodExtension(shipment.getId(), event.getShipmentExtensionRequest());
-    // todo siglusNotificationService.postConfirmShipment(event.getShipmentExtensionRequest().getShipment()); rpc
+    return savePodExtension(shipment.getId(), event.getShipmentExtensionRequest());
   }
 
-  public void savePodExtension(UUID shipmentId, ShipmentExtensionRequest shipmentExtensionRequest) {
+  public UUID savePodExtension(UUID shipmentId, ShipmentExtensionRequest shipmentExtensionRequest) {
     ProofOfDelivery proofOfDelivery = siglusProofOfDeliveryRepository.findByShipmentId(shipmentId);
-    UUID podId = proofOfDelivery.getId();
+    UUID proofOfDeliveryId = proofOfDelivery.getId();
     PodExtension podExtension = PodExtension
         .builder()
-        .podId(podId)
+        .podId(proofOfDeliveryId)
         .conferredBy(shipmentExtensionRequest.getConferredBy())
         .preparedBy(shipmentExtensionRequest.getPreparedBy())
         .build();
     log.info("save pod extension when confirm shipment, shipmentId: {}", shipmentId);
     podExtensionRepository.save(podExtension);
+    return proofOfDeliveryId;
   }
 
   private void saveShipmentLineItemsExtensionWithLocation(OrderFulfillmentSyncedEvent event, Shipment shipment) {
@@ -431,7 +436,6 @@ public class OrderFulfillmentSyncedReplayer {
   }
 
   private Order saveOrder(UUID fulfillUserId, OrderDto order) {
-    //todo orderDto
     Order newOrder = Order.newInstance(order, new UpdateDetails(fulfillUserId, ZonedDateTime.now()));
     return ordersRepository.saveAndFlush(newOrder);
   }

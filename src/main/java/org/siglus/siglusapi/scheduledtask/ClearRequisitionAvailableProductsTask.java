@@ -25,11 +25,11 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 @Service
 @Slf4j
-public class ClearRequisitionAvailableProductTask {
+public class ClearRequisitionAvailableProductsTask {
 
   private final RequisitionAvailableProductRepository requisitionAvailableProductRepository;
 
-  @Scheduled(cron = "${requisition.available.products.clear.cron}", zone = "${time.zoneId}")
+  @Scheduled(cron = "${clear.requisition.available.products.cron}", zone = "${time.zoneId}")
   @SchedulerLock(name = "clear_requisition_available_products_task")
   public void clear() {
     log.info("clear unused requisition available products for more than 1 year");

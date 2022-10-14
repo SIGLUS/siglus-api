@@ -13,26 +13,36 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.scheduledtask;
+package org.siglus.siglusapi.localmachine.event.cmm;
 
-import java.time.LocalDate;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
-import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
-import org.siglus.siglusapi.service.scheduledtask.CalculateCmmService;
+import org.siglus.siglusapi.localmachine.EventPublisher;
+import org.siglus.siglusapi.localmachine.cdc.CdcListener;
+import org.siglus.siglusapi.localmachine.cdc.CdcRecord;
+import org.siglus.siglusapi.localmachine.cdc.CdcRecordMapper;
 import org.springframework.context.annotation.Profile;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
-@Profile("!localmachine")
+@Component
 @RequiredArgsConstructor
-@Service
-public class CalculateWebCmmTask {
+@Profile("localmachine")
+public class CmmEventEmitter implements CdcListener {
 
-  private final CalculateCmmService calculateCmmService;
+  private final EventPublisher eventPublisher;
+  private final CdcRecordMapper cdcRecordMapper;
 
-  @Scheduled(cron = "${cmm.calculate.cron}", zone = "${time.zoneId}")
-  @SchedulerLock(name = "calculate_cmm_task")
-  public void calculate() {
-    calculateCmmService.calculateWebCmms(LocalDate.now());
+  @Override
+  public String[] acceptedTables() {
+    return new String[]{
+        "siglusintegration.hf_cmms"
+    };
+  }
+
+  @Transactional
+  @Override
+  public void on(List<CdcRecord> records) {
+    eventPublisher.emitNonGroupEvent(new CmmEvent(cdcRecordMapper.buildEvents(records)));
   }
 }

@@ -193,6 +193,11 @@ public class SiglusOrderableService {
         .orElse(null);
   }
 
+  public Map<UUID, String> getAllProductIdToCode() {
+    return getAllProducts().stream()
+        .collect(Collectors.toMap(OrderableDto::getId, OrderableDto::getProductCode, (a, b) -> a));
+  }
+
   public List<OrderableDto> getAllProducts() {
     QueryOrderableSearchParams params = new QueryOrderableSearchParams(new LinkedMultiValueMap<>());
     Pageable pageable = new PageRequest(PaginationConstants.DEFAULT_PAGE_NUMBER,

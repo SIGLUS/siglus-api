@@ -52,6 +52,7 @@ import org.siglus.siglusapi.domain.RequisitionExtension;
 import org.siglus.siglusapi.domain.RequisitionLineItemExtension;
 import org.siglus.siglusapi.domain.TestConsumptionLineItem;
 import org.siglus.siglusapi.domain.UsageInformationLineItem;
+import org.siglus.siglusapi.localmachine.event.NotificationService;
 import org.siglus.siglusapi.repository.AgeGroupLineItemRepository;
 import org.siglus.siglusapi.repository.ConsultationNumberLineItemRepository;
 import org.siglus.siglusapi.repository.KitUsageLineItemRepository;
@@ -83,6 +84,7 @@ public class RequisitionInternalApproveReplayer {
   private final RegimenSummaryLineItemRepository regimenSummaryLineItemRepository;
   private final KitUsageLineItemRepository kitUsageRepository;
   private final RequisitionService requisitionService;
+  private final NotificationService notificationService;
 
   @EventListener(classes = {RequisitionInternalApprovedEvent.class})
   public void replay(RequisitionInternalApprovedEvent event) {
@@ -116,8 +118,9 @@ public class RequisitionInternalApproveReplayer {
         .filter(item -> item.getStatus() == RequisitionStatus.SUBMITTED).findFirst());
     buildStatusChanges(newRequisition, event.getRequisition().getStatusChanges().stream()
         .filter(item -> item.getStatus() == RequisitionStatus.AUTHORIZED).findFirst());
-    buildStatusChanges(newRequisition, event.getRequisition().getStatusChanges().stream()
-        .filter(item -> item.getStatus() == RequisitionStatus.IN_APPROVAL).findFirst());
+    Optional<StatusChange> internalApprovalStatusChange = event.getRequisition().getStatusChanges().stream()
+        .filter(item -> item.getStatus() == RequisitionStatus.IN_APPROVAL).findFirst();
+    buildStatusChanges(newRequisition, internalApprovalStatusChange);
 
     buildRequisitionApprovedProduct(newRequisition, event.getRequisition().getFacilityId(),
         event.getRequisition().getProgramId());
@@ -136,6 +139,8 @@ public class RequisitionInternalApproveReplayer {
     buildRequisitionLineItemsExtension(requisition, orderableIdToLineItemExtension);
 
     buildRequisitionUsageSections(requisition, event);
+    notificationService.postInternalApproval(internalApprovalStatusChange.get().getAuthorId(),
+        buildBaseRequisitionDto(requisition), requisition.getSupervisoryNodeId());
   }
 
   private BasicRequisitionDto buildBaseRequisitionDto(Requisition requisition) {
