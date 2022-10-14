@@ -227,7 +227,7 @@ public class SiglusAdministrationsServiceTest {
         .thenReturn(date);
     when(siglusFacilityReferenceDataService.findOneWithoutCache(facilityId))
         .thenReturn(mockFacilityDtoPage().getContent().get(0));
-
+    when(authenticationHelper.getCurrentUser()).thenReturn(mockUserDto());
     when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(null);
 
     // when
@@ -246,7 +246,7 @@ public class SiglusAdministrationsServiceTest {
         .thenReturn(null);
     when(siglusFacilityReferenceDataService.findOneWithoutCache(facilityId))
         .thenReturn(mockFacilityDtoPage().getContent().get(0));
-
+    when(authenticationHelper.getCurrentUser()).thenReturn(mockUserDto());
     when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(null);
 
     // when
@@ -261,7 +261,7 @@ public class SiglusAdministrationsServiceTest {
     // given
     when(siglusFacilityReferenceDataService.findOneWithoutCache(facilityId))
         .thenReturn(mockFacilityDtoPage().getContent().get(0));
-
+    when(authenticationHelper.getCurrentUser()).thenReturn(mockUserDto());
     when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(
         mockFacilityExtension(facilityId, false, false, false));
 
@@ -278,6 +278,8 @@ public class SiglusAdministrationsServiceTest {
     exception.expect(NotFoundException.class);
     exception.expectMessage("Resources not found");
     when(siglusFacilityReferenceDataService.findOneWithoutCache(facilityId)).thenReturn(null);
+    when(authenticationHelper.getCurrentUser()).thenReturn(mockUserDto());
+    when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(null);
 
     // when
     siglusAdministrationsService.getFacility(facilityId);
@@ -930,6 +932,7 @@ public class SiglusAdministrationsServiceTest {
   private UserDto mockUserDto() {
     UserDto userDto = new UserDto();
     userDto.setId(userId);
+    userDto.setHomeFacilityId(facilityId);
     return userDto;
   }
 

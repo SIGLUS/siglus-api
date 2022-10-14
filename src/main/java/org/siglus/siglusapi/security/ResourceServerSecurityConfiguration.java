@@ -80,6 +80,14 @@ public class ResourceServerSecurityConfiguration implements ResourceServerConfig
       @Override
       protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
           throws ServletException, IOException {
+        boolean isServerUrlMatch = new AntPathRequestMatcher(
+            "/api/siglusapi/localmachine/server/**").matches(request);
+        if (isServerUrlMatch) {
+          boolean isLocalMachineTokenMatch = new AndRequestMatcher(machineTokenMatcher).matches(request);
+          if (!isLocalMachineTokenMatch) {
+            response.setStatus(461);
+          }
+        }
         // We don't want to allow access to a resource with no token so clear
         // the security context in case it is actually an OAuth2Authentication
         if (tokenExtractor.extract(request) == null) {
@@ -101,11 +109,6 @@ public class ResourceServerSecurityConfiguration implements ResourceServerConfig
             "/api/siglusapi/localmachine/agent",
             "/api/siglusapi/localmachine/server/agents",
             "/health")
-        .permitAll()
-        .requestMatchers(
-            new AndRequestMatcher(
-                new AntPathRequestMatcher("/api/siglusapi/localmachine/server/**"),
-                machineTokenMatcher))
         .permitAll()
         .antMatchers("/**")
         .fullyAuthenticated();
