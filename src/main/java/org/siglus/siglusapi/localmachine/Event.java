@@ -42,12 +42,11 @@ public class Event {
   private boolean localReplayed;
 
   @JsonIgnore
-  public boolean isPeeringEvent() {
-    return !this.senderId.equals(this.receiverId);
-  }
+  private Ack ack;
 
   @JsonIgnore
-  public boolean shouldSendAck() {
-    return this.isReceiverSynced() && this.isPeeringEvent();
+  public void confirmedReceiverSynced() {
+    this.setReceiverSynced(true);
+    this.ack = new Ack(this.id, senderId);
   }
 }

@@ -17,6 +17,7 @@ package org.siglus.siglusapi.localmachine.eventstore;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -91,8 +92,8 @@ public class EventStore {
     EventRecord eventRecord = EventRecord.from(event, payloadSerializer.dump(event.getPayload()));
     repository.importExternalEvent(eventRecord);
     eventPayloadRepository.save(new EventPayload(eventRecord.getId(), eventRecord.getPayload()));
-    if (event.shouldSendAck()) {
-      emitAckForEvent(event);
+    if (Objects.nonNull(event.getAck())) {
+      emitAck(event.getAck());
     }
   }
 
@@ -174,8 +175,8 @@ public class EventStore {
     ackRepository.save(ackRecords);
   }
 
-  private void emitAckForEvent(Event event) {
-    AckRecord ack = new AckRecord(event.getId(), event.getReceiverId(), false);
-    ackRepository.save(ack);
+  private void emitAck(Ack ack) {
+    AckRecord ackRecord = AckRecord.from(ack);
+    ackRepository.save(ackRecord);
   }
 }

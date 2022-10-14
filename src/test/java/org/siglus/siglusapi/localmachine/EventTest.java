@@ -21,39 +21,20 @@ import java.util.UUID;
 import org.junit.Test;
 
 public class EventTest {
-  @Test
-  public void shouldNotSendAckGivenReceiverNotSynced() {
-    // given
-    UUID senderId = UUID.randomUUID();
-    Event event =
-        Event.builder()
-            .senderId(senderId)
-            .receiverId(UUID.randomUUID())
-            .receiverSynced(false)
-            .build();
-    // then
-    assertThat(event.shouldSendAck()).isFalse();
-  }
 
   @Test
-  public void shouldNotSendAckGivenNotPeeringEvent() {
-    // given
-    UUID senderId = UUID.randomUUID();
-    Event event = Event.builder().senderId(senderId).receiverId(senderId).receiverSynced(true).build();
-    // then
-    assertThat(event.shouldSendAck()).isFalse();
-  }
-
-  @Test
-  public void shouldSendAckGivenPeeringEventAndReceiverSynced() {
+  public void shouldSetAckWhenEventConfirmedAsReceiverSynced() {
     // given
     Event event =
         Event.builder()
             .senderId(UUID.randomUUID())
             .receiverId(UUID.randomUUID())
-            .receiverSynced(true)
+            .receiverSynced(false)
             .build();
+    // when
+    event.confirmedReceiverSynced();
     // then
-    assertThat(event.shouldSendAck()).isTrue();
+    assertThat(event.isReceiverSynced()).isTrue();
+    assertThat(event.getAck()).isEqualTo(new Ack(event.getId(), event.getSenderId()));
   }
 }

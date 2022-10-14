@@ -24,8 +24,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class OnlineWebEventImporter extends EventImporter {
 
-  public OnlineWebEventImporter(EventStore localEventStore, EventReplayer replayer) {
-    super(localEventStore, replayer);
+  public OnlineWebEventImporter(EventStore localEventStore, EventReplayer replayer, Machine machine) {
+    super(localEventStore, replayer, machine);
   }
 
   @Override
