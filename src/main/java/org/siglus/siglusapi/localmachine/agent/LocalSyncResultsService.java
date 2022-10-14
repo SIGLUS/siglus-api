@@ -27,8 +27,6 @@ import org.siglus.siglusapi.localmachine.repository.ErrorRecordRepository;
 import org.siglus.siglusapi.localmachine.repository.LastSyncRecordRepository;
 import org.siglus.siglusapi.localmachine.webapi.LocalSyncResultsResponse;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -50,12 +48,10 @@ public class LocalSyncResultsService {
         .build();
   }
 
-  @Transactional(propagation = Propagation.REQUIRES_NEW)
   public void storeLastSyncRecord() {
     lastSyncRecordRepository.save(buildSyncTime());
   }
 
-  @Transactional(propagation = Propagation.REQUIRES_NEW)
   public void storeLastReplayRecord() {
     lastSyncRecordRepository.save(buildReplayTime());
   }

@@ -48,7 +48,6 @@ public class EventReplayer {
     if (CollectionUtils.isEmpty(events)) {
       return;
     }
-    syncResultsService.storeLastReplayRecord();
     // replay event one by one in order. if the event is a group event (e.g. event2 below), should
     // check dependency first
     // |-------|

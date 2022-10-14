@@ -20,6 +20,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.siglus.siglusapi.localmachine.agent.ErrorHandler;
+import org.siglus.siglusapi.localmachine.agent.LocalSyncResultsService;
 import org.siglus.siglusapi.localmachine.constant.ErrorType;
 import org.siglus.siglusapi.localmachine.eventstore.EventStore;
 import org.springframework.context.ApplicationEventPublisher;
@@ -38,6 +39,7 @@ public class EventPublisher {
   private final ApplicationEventPublisher applicationEventPublisher;
   private final Machine machine;
   private final ErrorHandler errorHandler;
+  private final LocalSyncResultsService localSyncResultsService;
 
   public void emitGroupEvent(String groupId, UUID receiverId, Object payload) {
     Event.EventBuilder eventBuilder = baseEventBuilder(groupId, receiverId, payload);
@@ -72,6 +74,7 @@ public class EventPublisher {
     }
     event.setLocalReplayed(true);
     eventStore.confirmReplayed(event);
+    localSyncResultsService.storeLastReplayRecord();
   }
 
   private void doEmit(Event event) {

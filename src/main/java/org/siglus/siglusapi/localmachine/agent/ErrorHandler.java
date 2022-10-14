@@ -41,12 +41,15 @@ public class ErrorHandler {
   private static final String SIGLUS_PACKAGE_PREFIX = "org.siglus.siglusapi";
   private static final String OPENLMIS_PACKAGE_PREFIX = "org.openlmis";
 
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
   public void storeErrorRecord(Throwable t, ErrorType errorType) {
+    localSyncResultsService.storeLastSyncRecord();
     errorRecordRepository.save(buildSyncDownError(t, errorType));
   }
 
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   public void storeErrorRecord(Event event, Throwable t, ErrorType errorType) {
+    localSyncResultsService.storeLastReplayRecord();
     errorRecordRepository.save(buildSyncDownError(event, t, errorType));
   }
 
