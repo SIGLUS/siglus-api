@@ -36,8 +36,11 @@ import org.springframework.transaction.annotation.Transactional;
 public class ErrorHandleService {
 
   private final ErrorRecordRepository errorRecordRepository;
+  private final LocalSyncResultsService localSyncResultsService;
 
-  @Transactional(propagation = Propagation.REQUIRES_NEW)
+  private static final String SIGLUS_PACKAGE_PREFIX = "org.siglus.siglusapi";
+  private static final String OPENLMIS_PACKAGE_PREFIX = "org.openlmis";
+
   public void storeErrorRecord(Throwable t, ErrorType errorType) {
     errorRecordRepository.save(buildSyncDownError(t, errorType));
   }
@@ -131,7 +134,8 @@ public class ErrorHandleService {
     }
     StackTraceElement[] traceElements = t.getStackTrace();
     for (int i = 0; i <= traceElements.length; i++) {
-      if (traceElements[i].getClassName().startsWith("org.siglus.siglusapi")) {
+      if (traceElements[i].getClassName().startsWith(SIGLUS_PACKAGE_PREFIX) ||
+          traceElements[i].getClassName().startsWith(OPENLMIS_PACKAGE_PREFIX)) {
         return traceElements[i].toString();
       }
     }
