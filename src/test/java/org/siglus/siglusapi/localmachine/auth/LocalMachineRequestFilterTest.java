@@ -15,7 +15,6 @@
 
 package org.siglus.siglusapi.localmachine.auth;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.times;
@@ -33,13 +32,14 @@ import org.openlmis.referencedata.domain.Facility;
 import org.openlmis.referencedata.repository.FacilityRepository;
 import org.siglus.siglusapi.domain.AppInfo;
 import org.siglus.siglusapi.localmachine.CommonConstants;
+import org.siglus.siglusapi.localmachine.auth.LocalMachineRequestFilter.AuthorizeException;
 import org.siglus.siglusapi.localmachine.repository.AgentInfoRepository;
 import org.siglus.siglusapi.repository.AppInfoRepository;
 import org.springframework.mock.web.MockHttpServletRequest;
 
 @RunWith(MockitoJUnitRunner.class)
-public class MachineTokenMatcherTest {
-  @InjectMocks private MachineTokenMatcher machineTokenMatcher;
+public class LocalMachineRequestFilterTest {
+  @InjectMocks private LocalMachineRequestFilter localMachineRequestFilter;
   @Mock private AgentInfoRepository agentInfoRepository;
   @Mock private FacilityRepository facilityRepository;
   @Mock private AppInfoRepository appInfoRepository;
@@ -52,15 +52,14 @@ public class MachineTokenMatcherTest {
     given(agentInfoRepository.findOneByMachineIdAndFacilityId(any(), any())).willReturn(null);
   }
 
-  @Test
-  public void shouldReturnFalseGivenTokenHeaderIsEmpty() {
+  @Test(expected = AuthorizeException.class)
+  public void shouldThrowGivenTokenHeaderIsEmpty() {
     // given
     MockHttpServletRequest request = new MockHttpServletRequest();
     request.addHeader(CommonConstants.VERSION, "1.0");
     request.removeHeader(CommonConstants.ACCESS_TOKEN);
     // when
-    boolean matched = machineTokenMatcher.matches(request);
-    assertThat(matched).isFalse();
+    localMachineRequestFilter.authenticate(request);
   }
 
   @Test
@@ -76,7 +75,7 @@ public class MachineTokenMatcherTest {
     machineToken.setFacilityId(UUID.randomUUID());
 
     // when
-    machineTokenMatcher.updateMachineDeviceInfo(request, machineToken);
+    localMachineRequestFilter.updateMachineDeviceInfo(request, machineToken);
 
     // then
     verify(appInfoRepository, times(1)).save((AppInfo) any());

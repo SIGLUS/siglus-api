@@ -18,9 +18,13 @@ package org.siglus.siglusapi.localmachine.auth;
 import static org.siglus.siglusapi.localmachine.auth.AuthenticationArgumentResolver.LOCAL_MACHINE_TOKEN;
 import static org.springframework.util.StringUtils.isEmpty;
 
+import java.io.IOException;
 import java.util.Optional;
 import java.util.UUID;
+import javax.servlet.FilterChain;
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.codehaus.plexus.util.StringUtils;
@@ -32,60 +36,95 @@ import org.siglus.siglusapi.localmachine.domain.AgentInfo;
 import org.siglus.siglusapi.localmachine.repository.AgentInfoRepository;
 import org.siglus.siglusapi.repository.AppInfoRepository;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.stereotype.Component;
+import org.springframework.web.filter.OncePerRequestFilter;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class MachineTokenMatcher implements RequestMatcher {
+public class LocalMachineRequestFilter extends OncePerRequestFilter {
+  private static final RequestMatcher securedRequestMatcher =
+      new AntPathRequestMatcher("/api/siglusapi/localmachine/server/**");
   private final AgentInfoRepository agentInfoRepository;
   private final AppInfoRepository appInfoRepository;
   private final FacilityRepository facilityRepository;
 
-  @Override
-  public boolean matches(HttpServletRequest request) {
-    try {
-      String tokenValue = mustGetTokenValue(request);
-      MachineToken machineToken = authenticate(tokenValue);
-      bindRequestAttribute(request, machineToken);
-      if (StringUtils.isNotBlank(request.getHeader(CommonConstants.DEVICE_INFO))
-          && (HttpMethod.PUT.name().equals(request.getMethod())
-          || HttpMethod.POST.name().equals(request.getMethod()))) {
-        updateMachineDeviceInfo(request, machineToken);
-      }
-    } catch (IllegalAccessException e) {
-      log.error("illegal access", e);
-      return false;
+  public static class AuthorizeException extends IllegalStateException {
+    private final HttpStatus status;
+
+    public AuthorizeException(String message) {
+      this(HttpStatus.UNAUTHORIZED, message);
     }
-    return true;
+
+    public AuthorizeException(HttpStatus status, String message) {
+      super(message);
+      this.status = status;
+    }
   }
 
-  private String mustGetTokenValue(HttpServletRequest request) throws IllegalAccessException {
+  public RequestMatcher getRequestMatcher() {
+    return securedRequestMatcher;
+  }
+
+  @Override
+  protected void doFilterInternal(
+      HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+      throws ServletException, IOException {
+    try {
+      if (securedRequestMatcher.matches(request)) {
+        authenticate(request);
+      }
+    } catch (AuthorizeException e) {
+      log.error("localmachine auth fail", e);
+      response.setStatus(e.status.value());
+      response.getWriter().write(e.getMessage());
+      return;
+    }
+    filterChain.doFilter(request, response);
+  }
+
+  public void authenticate(HttpServletRequest request) throws AuthorizeException {
+    String tokenValue = mustGetTokenValue(request);
+    MachineToken machineToken = parseToken(tokenValue);
+    bindRequestAttribute(request, machineToken);
+    if (StringUtils.isNotBlank(request.getHeader(CommonConstants.DEVICE_INFO))
+        && (HttpMethod.PUT.name().equals(request.getMethod())
+        || HttpMethod.POST.name().equals(request.getMethod()))) {
+      updateMachineDeviceInfo(request, machineToken);
+    }
+  }
+
+  private String mustGetTokenValue(HttpServletRequest request) throws AuthorizeException {
     String tokenValue = request.getHeader(CommonConstants.ACCESS_TOKEN);
     if (isEmpty(tokenValue)) {
-      throw new IllegalAccessException("machine access token is required");
+      throw new AuthorizeException("machine access token is required");
     }
     return tokenValue;
   }
 
-  private MachineToken authenticate(String tokenValue) throws IllegalAccessException {
+  private MachineToken parseToken(String tokenValue) throws AuthorizeException {
     MachineToken machineToken = MachineToken.parse(tokenValue);
     AgentInfo agentInfo = mustGetAgentInfo(machineToken);
     if (!machineToken.verify(agentInfo.getPublicKey())) {
-      throw new IllegalAccessException("invalid machine token");
+      throw new AuthorizeException("invalid machine token");
     }
     return machineToken;
   }
 
-  private AgentInfo mustGetAgentInfo(MachineToken machineToken) throws IllegalAccessException {
+  private AgentInfo mustGetAgentInfo(MachineToken machineToken) throws AuthorizeException {
     UUID machineId = machineToken.getMachineId();
     UUID facilityId = machineToken.getFacilityId();
     log.info(String.format("auth check, machineId = %s, facilityId=%s", machineId, facilityId));
     return Optional.ofNullable(
             agentInfoRepository.findOneByMachineIdAndFacilityId(machineId, facilityId))
         .orElseThrow(
-            () -> new IllegalAccessException("agentInfo not exists. machineId = " + machineId));
+            () ->
+                new AuthorizeException(
+                    HttpStatus.PRECONDITION_FAILED,
+                    "localmachine not activated yet. machineId = " + machineId));
   }
 
   private void bindRequestAttribute(HttpServletRequest request, MachineToken machineToken) {
