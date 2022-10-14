@@ -13,10 +13,11 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.web;
+package org.siglus.siglusapi.web.withoutlocation;
 
 import static org.mockito.Mockito.verify;
 
+import java.util.UUID;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -26,21 +27,34 @@ import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftDto;
 import org.siglus.siglusapi.service.SiglusShipmentDraftService;
 
 @RunWith(MockitoJUnitRunner.class)
-public class SiglusShipmentDraftControllerTest {
+public class SiglusShipmentDraftWithoutLocationControllerTest {
 
   @InjectMocks
-  private SiglusShipmentDraftController controller;
+  private SiglusShipmentDraftWithoutLocationController controller;
 
   @Mock
   private SiglusShipmentDraftService siglusShipmentDraftService;
 
+  private final UUID draftId = UUID.randomUUID();
+
   @Test
-  public void shouldCallV3ControllerWhenCreateShipmentDraft() {
-    // when
+  public void shouldCallServiceWhenUpdateShipmentDraft() {
+    // given
     ShipmentDraftDto draftDto = new ShipmentDraftDto();
-    controller.createShipmentDraft(draftDto);
+
+    // when
+    controller.updateShipmentDraft(draftId, draftDto);
 
     // then
-    verify(siglusShipmentDraftService).createShipmentDraft(draftDto);
+    verify(siglusShipmentDraftService).updateShipmentDraft(draftId, draftDto);
+  }
+
+  @Test
+  public void shouldCallServiceWhenDeleteShipmentDraft() {
+    // when
+    controller.deleteShipmentDraft(draftId);
+
+    // then
+    verify(siglusShipmentDraftService).deleteShipmentDraft(draftId);
   }
 }

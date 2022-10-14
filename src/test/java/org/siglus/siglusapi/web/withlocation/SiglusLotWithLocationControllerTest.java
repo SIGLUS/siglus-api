@@ -13,34 +13,40 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.web;
+package org.siglus.siglusapi.web.withlocation;
 
+import static com.google.common.collect.Lists.newArrayList;
 import static org.mockito.Mockito.verify;
 
+import java.util.UUID;
+import junit.framework.TestCase;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftDto;
-import org.siglus.siglusapi.service.SiglusShipmentDraftService;
+import org.siglus.siglusapi.service.SiglusLotLocationService;
 
 @RunWith(MockitoJUnitRunner.class)
-public class SiglusShipmentDraftControllerTest {
+public class SiglusLotWithLocationControllerTest extends TestCase {
 
   @InjectMocks
-  private SiglusShipmentDraftController controller;
+  private SiglusLotWithLocationController controller;
 
   @Mock
-  private SiglusShipmentDraftService siglusShipmentDraftService;
+  private SiglusLotLocationService service;
+
+  private final UUID orderableId = UUID.randomUUID();
 
   @Test
-  public void shouldCallV3ControllerWhenCreateShipmentDraft() {
-    // when
-    ShipmentDraftDto draftDto = new ShipmentDraftDto();
-    controller.createShipmentDraft(draftDto);
+  public void shouldCallSearchLotLocationDto() {
+    controller.searchLotLocationDto(newArrayList(orderableId), true, false);
+    verify(service).searchLotLocationDtos(newArrayList(orderableId), true, false);
+  }
 
-    // then
-    verify(siglusShipmentDraftService).createShipmentDraft(draftDto);
+  @Test
+  public void shouldCallSearchLocationsByFacility() {
+    controller.searchLocationsByFacility(false);
+    verify(service).searchLocationsByFacility(false);
   }
 }

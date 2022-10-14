@@ -13,8 +13,9 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.web;
+package org.siglus.siglusapi.web.withoutlocation;
 
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.verify;
 
 import org.junit.Test;
@@ -22,25 +23,36 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftDto;
-import org.siglus.siglusapi.service.SiglusShipmentDraftService;
+import org.siglus.siglusapi.localmachine.event.order.fulfillment.OrderFulfillmentSyncedEmitter;
+import org.siglus.siglusapi.service.SiglusNotificationService;
+import org.siglus.siglusapi.service.SiglusShipmentService;
+import org.siglus.siglusapi.web.request.ShipmentExtensionRequest;
 
 @RunWith(MockitoJUnitRunner.class)
-public class SiglusShipmentDraftControllerTest {
+@SuppressWarnings("PMD.UnusedPrivateField")
+public class SiglusShipmentWithoutLocationControllerTest {
 
   @InjectMocks
-  private SiglusShipmentDraftController controller;
+  private SiglusShipmentWithoutLocationController controller;
 
   @Mock
-  private SiglusShipmentDraftService siglusShipmentDraftService;
+  private SiglusShipmentService siglusShipmentService;
+
+  @Mock
+  private SiglusNotificationService notificationService;
+  @Mock
+  private OrderFulfillmentSyncedEmitter orderFulfillmentSyncedEmitter;
 
   @Test
-  public void shouldCallV3ControllerWhenCreateShipmentDraft() {
+  public void shouldCallServiceWhenCreateShipment() {
+    // given
+    ShipmentExtensionRequest shipmentDto = new ShipmentExtensionRequest();
+
     // when
-    ShipmentDraftDto draftDto = new ShipmentDraftDto();
-    controller.createShipmentDraft(draftDto);
+    controller.createShipment(false, shipmentDto);
 
     // then
-    verify(siglusShipmentDraftService).createShipmentDraft(draftDto);
+    verify(siglusShipmentService).createOrderAndShipment(false, shipmentDto);
+    verify(notificationService).postConfirmShipment(any());
   }
 }

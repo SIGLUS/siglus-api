@@ -13,7 +13,7 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.web;
+package org.siglus.siglusapi.web.withlocation;
 
 import static org.mockito.Mockito.verify;
 
@@ -22,25 +22,24 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftDto;
-import org.siglus.siglusapi.service.SiglusShipmentDraftService;
+import org.siglus.siglusapi.dto.StockCardLocationMovementDto;
+import org.siglus.siglusapi.service.SiglusStockCardLocationMovementService;
 
 @RunWith(MockitoJUnitRunner.class)
-public class SiglusShipmentDraftControllerTest {
+public class SiglusStockMovementWithLocationControllerTest {
 
   @InjectMocks
-  private SiglusShipmentDraftController controller;
+  private SiglusStockMovementWithLocationController controller;
 
   @Mock
-  private SiglusShipmentDraftService siglusShipmentDraftService;
+  private SiglusStockCardLocationMovementService service;
+
+  private final StockCardLocationMovementDto stockCardLocationMovementDto = new StockCardLocationMovementDto();
 
   @Test
-  public void shouldCallV3ControllerWhenCreateShipmentDraft() {
-    // when
-    ShipmentDraftDto draftDto = new ShipmentDraftDto();
-    controller.createShipmentDraft(draftDto);
+  public void shouldCallCreateEmptyProductLocationMovementDraft() {
+    controller.createMovementLineItems(stockCardLocationMovementDto);
 
-    // then
-    verify(siglusShipmentDraftService).createShipmentDraft(draftDto);
+    verify(service).createMovementLineItems(stockCardLocationMovementDto);
   }
 }

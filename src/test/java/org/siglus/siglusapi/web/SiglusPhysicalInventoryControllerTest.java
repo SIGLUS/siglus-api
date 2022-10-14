@@ -21,18 +21,14 @@ import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRA
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_UUID;
 
 import java.util.UUID;
-import org.assertj.core.util.Lists;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.stockmanagement.dto.PhysicalInventoryDto;
-import org.siglus.siglusapi.dto.PhysicalInventorySubDraftDto;
 import org.siglus.siglusapi.dto.UserDto;
-import org.siglus.siglusapi.dto.enums.PhysicalInventorySubDraftEnum;
 import org.siglus.siglusapi.service.SiglusPhysicalInventoryService;
-import org.siglus.siglusapi.service.SiglusPhysicalInventorySubDraftService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -40,13 +36,10 @@ import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 public class SiglusPhysicalInventoryControllerTest {
 
   @InjectMocks
-  private SiglusPhysicalInventoryController siglusPhysicalInventoryController;
+  private SiglusPhysicalInventoryController controller;
 
   @Mock
   private SiglusPhysicalInventoryService siglusPhysicalInventoryService;
-
-  @Mock
-  private SiglusPhysicalInventorySubDraftService siglusPhysicalInventorySubDraftService;
 
   @Mock
   private SiglusAuthenticationHelper authenticationHelper;
@@ -57,81 +50,22 @@ public class SiglusPhysicalInventoryControllerTest {
 
   private final UUID id = UUID.randomUUID();
 
-  private final UUID subDraftId = UUID.randomUUID();
-
-  private final Boolean isDraft = true;
-
-  private final String startDate = "startDate";
-
-  private final String endDate = "endDate";
-
-  @Test
-  public void shouldCallGetForAllProductsWhenSearchIfProgramIsAllProducts() {
-    siglusPhysicalInventoryController.searchPhysicalInventories(ALL_PRODUCTS_PROGRAM_ID, facilityId,
-        isDraft);
-
-    verify(siglusPhysicalInventoryService).getPhysicalInventoryDtosForAllProducts(facilityId,
-        isDraft, false);
-  }
-
-  @Test
-  public void shouldCallGetPhysicalInventoryDtosWhenSearchIfProgramIsNotAllProducts() {
-    siglusPhysicalInventoryController.searchPhysicalInventories(programId, facilityId, isDraft);
-
-    verify(siglusPhysicalInventoryService)
-        .getPhysicalInventoryDtosForProductsForOneProgram(programId, facilityId, isDraft, false);
-  }
-
   @Test
   public void shouldCallGetForAllProductsWhenSearchByIdIfIdIsAllProducts() {
     UserDto user = new UserDto();
     user.setHomeFacilityId(facilityId);
     when(authenticationHelper.getCurrentUser()).thenReturn(user);
 
-    siglusPhysicalInventoryController.searchPhysicalInventory(ALL_PRODUCTS_UUID);
+    controller.searchPhysicalInventory(ALL_PRODUCTS_UUID);
 
     verify(siglusPhysicalInventoryService).getPhysicalInventoryForAllProducts(facilityId);
   }
 
   @Test
   public void shouldCallGetPhysicalInventoryWhenSearchByIdIfIdIsNotAllProducts() {
-    siglusPhysicalInventoryController.searchPhysicalInventory(id);
+    controller.searchPhysicalInventory(id);
 
     verify(siglusPhysicalInventoryService).getPhysicalInventory(id);
-  }
-
-  @Test
-  public void shouldCallCreateWithLocationOptionForAllProductsWhenCreateIfProgramIsAllProducts()
-          throws InterruptedException {
-    PhysicalInventoryDto physicalInventoryDto = PhysicalInventoryDto.builder()
-            .programId(ALL_PRODUCTS_PROGRAM_ID).build();
-
-    siglusPhysicalInventoryController.createEmptyPhysicalInventory(physicalInventoryDto, 2, true);
-
-    verify(siglusPhysicalInventoryService).createAndSplitNewDraftForAllProduct(
-            physicalInventoryDto, 2, true, null, false);
-  }
-
-  @Test
-  public void shouldCallCreateForAllProductsWhenCreateIfProgramIsAllProducts() throws InterruptedException {
-    PhysicalInventoryDto physicalInventoryDto = PhysicalInventoryDto.builder()
-        .programId(ALL_PRODUCTS_PROGRAM_ID).build();
-
-    siglusPhysicalInventoryController.createEmptyPhysicalInventory(physicalInventoryDto, 2, true);
-
-    verify(siglusPhysicalInventoryService).createAndSplitNewDraftForAllProduct(
-        physicalInventoryDto, 2, true, null, false);
-  }
-
-  @Test
-  public void shouldCallCreateNewDraftWhenCreateIfProgramIsNotAllProducts() {
-    PhysicalInventoryDto physicalInventoryDto = PhysicalInventoryDto.builder().programId(programId)
-        .build();
-
-    siglusPhysicalInventoryController.createEmptyPhysicalInventory(
-        physicalInventoryDto, 2, false);
-
-    verify(siglusPhysicalInventoryService).createAndSpiltNewDraftForOneProgram(physicalInventoryDto, 2, null, false);
   }
 
   @Test
@@ -141,8 +75,7 @@ public class SiglusPhysicalInventoryControllerTest {
         .facilityId(facilityId)
         .build();
 
-    siglusPhysicalInventoryController.updatePhysicalInventory(ALL_PRODUCTS_UUID,
-        physicalInventoryDto);
+    controller.updatePhysicalInventory(ALL_PRODUCTS_UUID, physicalInventoryDto);
 
     verify(siglusPhysicalInventoryService).checkDraftIsExist(physicalInventoryDto.getFacilityId());
     verify(siglusPhysicalInventoryService).saveDraftForAllProducts(physicalInventoryDto);
@@ -152,7 +85,7 @@ public class SiglusPhysicalInventoryControllerTest {
   public void shouldCallSaveDraftWhenUpdateIfIdIsNotAllProducts() {
     PhysicalInventoryDto physicalInventoryDto = PhysicalInventoryDto.builder().id(id).build();
 
-    siglusPhysicalInventoryController.updatePhysicalInventory(id, physicalInventoryDto);
+    controller.updatePhysicalInventory(id, physicalInventoryDto);
 
     verify(siglusPhysicalInventoryService).saveDraftForProductsForOneProgram(physicalInventoryDto);
   }
@@ -163,21 +96,23 @@ public class SiglusPhysicalInventoryControllerTest {
     user.setHomeFacilityId(facilityId);
     when(authenticationHelper.getCurrentUser()).thenReturn(user);
 
-    siglusPhysicalInventoryController.deletePhysicalInventory(ALL_PRODUCTS_UUID);
+    controller.deletePhysicalInventory(ALL_PRODUCTS_UUID);
 
     verify(siglusPhysicalInventoryService).deletePhysicalInventoryDraftForAllProgramsWithSubDraft(facilityId);
   }
 
   @Test
   public void shouldCallDeletePhysicalInventoryWhenDeleteIfIdIsNotAllProducts() {
-    siglusPhysicalInventoryController.deletePhysicalInventory(id);
+    controller.deletePhysicalInventory(id);
 
     verify(siglusPhysicalInventoryService).deletePhysicalInventoryDraftWithSubDrafts(id);
   }
 
   @Test
   public void shouldCallFindPhysicalInventoryDatesWhenSearchPhysicalInventoryDates() {
-    siglusPhysicalInventoryController.searchPhysicalInventoryDates(programId, facilityId, startDate, endDate);
+    String startDate = "startDate";
+    String endDate = "endDate";
+    controller.searchPhysicalInventoryDates(programId, facilityId, startDate, endDate);
 
     verify(siglusPhysicalInventoryService).findPhysicalInventoryDates(programId, facilityId, startDate,
         endDate);
@@ -185,71 +120,21 @@ public class SiglusPhysicalInventoryControllerTest {
 
   @Test
   public void shouldCallFindLatestPhysicalInventoryWhenSearchLatestPhysicalInventoryOccurDate() {
-    siglusPhysicalInventoryController.searchLatestPhysicalInventoryOccurDate(facilityId, programId);
+    controller.searchLatestPhysicalInventoryOccurDate(facilityId, programId);
 
     verify(siglusPhysicalInventoryService).findLatestPhysicalInventory(facilityId, programId);
   }
 
   @Test
-  public void shouldCallGetSubDraftListForAllProductWhenSearchAllProductSubDraftList() {
-    siglusPhysicalInventoryController.searchSubDraftList(ALL_PRODUCTS_PROGRAM_ID, facilityId, isDraft);
-
-    verify(siglusPhysicalInventoryService).getSubDraftListForAllProduct(facilityId, isDraft);
-  }
-
-  @Test
-  public void shouldCallGetSubDraftListInOneProgramWhenSearchOneProgramSubDraftList() {
-    siglusPhysicalInventoryController.searchSubDraftList(programId, facilityId, isDraft);
-
-    verify(siglusPhysicalInventoryService).getSubDraftListForOneProgram(programId, facilityId, isDraft);
-  }
-
-  @Test
-  public void shouldCallGetSubPhysicalInventoryDtoBysubDraftIdWhenSearchSubDraftDetail() {
-    siglusPhysicalInventoryController.searchSubDraftList(programId, facilityId, isDraft);
-
-    verify(siglusPhysicalInventoryService).getSubDraftListForOneProgram(programId, facilityId, isDraft);
-  }
-
-
-  @Test
-  public void shouldCallDeleteSubDraftsBySubDraftIdsWhenDeleteSubDrafts() {
-    siglusPhysicalInventoryController.deleteSubDrafts(Boolean.FALSE, Lists.newArrayList(subDraftId));
-
-    verify(siglusPhysicalInventorySubDraftService).deleteSubDrafts(
-        Lists.newArrayList(subDraftId), Boolean.FALSE, false);
-  }
-
-  @Test
-  public void shouldCallUpdateSubDraftsBySubDraftIdsWhenUpdateSubDrafts() {
-    PhysicalInventorySubDraftDto physicalInventoryDto = new PhysicalInventorySubDraftDto();
-
-    siglusPhysicalInventoryController.submitSubDrafts(physicalInventoryDto);
-
-    verify(siglusPhysicalInventorySubDraftService).updateSubDrafts(null, physicalInventoryDto,
-        PhysicalInventorySubDraftEnum.SUBMITTED, false);
-  }
-
-  @Test
-  public void shouldCallSubmitSubDraftsBySubDraftIdsWhenSubmitSubDrafts() {
-    PhysicalInventorySubDraftDto physicalInventoryDto = new PhysicalInventorySubDraftDto();
-
-    siglusPhysicalInventoryController.updateSubDrafts(physicalInventoryDto);
-
-    verify(siglusPhysicalInventorySubDraftService).updateSubDrafts(null, physicalInventoryDto,
-        PhysicalInventorySubDraftEnum.DRAFT, false);
-  }
-
-  @Test
   public void shouldConflictIfOtherProgramHaveDraft() {
-    siglusPhysicalInventoryController.checkPhysicalInventoryConflict(ALL_PRODUCTS_PROGRAM_ID, facilityId);
+    controller.checkPhysicalInventoryConflict(ALL_PRODUCTS_PROGRAM_ID, facilityId);
 
     verify(siglusPhysicalInventoryService).checkConflictForAllProduct(facilityId);
   }
 
   @Test
   public void shouldConflictWithAllProductsWhenAllProductsHaveDraft() {
-    siglusPhysicalInventoryController.checkPhysicalInventoryConflict(programId, facilityId);
+    controller.checkPhysicalInventoryConflict(programId, facilityId);
 
     verify(siglusPhysicalInventoryService).checkConflictForOneProgram(facilityId);
   }

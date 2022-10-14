@@ -13,41 +13,47 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.web;
+package org.siglus.siglusapi.web.withlocation;
 
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.verify;
 
-import java.util.UUID;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.siglus.siglusapi.service.SiglusPodService;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
+import org.siglus.siglusapi.localmachine.event.order.fulfillment.OrderFulfillmentSyncedEmitter;
+import org.siglus.siglusapi.service.SiglusNotificationService;
+import org.siglus.siglusapi.service.SiglusShipmentService;
+import org.siglus.siglusapi.web.request.ShipmentExtensionRequest;
 
 @RunWith(MockitoJUnitRunner.class)
-public class SiglusPodControllerTest {
+@SuppressWarnings("PMD.UnusedPrivateField")
+public class SiglusShipmentWithLocationControllerTest {
 
   @InjectMocks
-  private SiglusPodController controller;
+  private SiglusShipmentWithLocationController siglusShipmentWithLocationController;
 
   @Mock
-  private SiglusPodService proofOfDeliveryService;
+  private SiglusShipmentService siglusShipmentService;
+
+  @Mock
+  private SiglusNotificationService notificationService;
+
+  @Mock
+  private OrderFulfillmentSyncedEmitter orderFulfillmentSyncedEmitter;
 
   @Test
-  public void shouldAetAllProofsOfDelivery() {
+  public void shouldCreateShipmentByLocation() {
     // given
-    UUID orderId = UUID.randomUUID();
-    UUID shipmentId = UUID.randomUUID();
-    Pageable pageable = new PageRequest(0, Integer.MAX_VALUE);
+    ShipmentExtensionRequest shipmentExtensionRequest = new ShipmentExtensionRequest();
 
     // when
-    controller.getAllProofsOfDelivery(orderId, shipmentId, pageable);
+    siglusShipmentWithLocationController.confirmShipmentByLocation(false, shipmentExtensionRequest);
 
     // then
-    verify(proofOfDeliveryService).getAllProofsOfDelivery(orderId, shipmentId, pageable);
+    verify(siglusShipmentService).createOrderAndShipmentByLocation(false, shipmentExtensionRequest);
+    verify(notificationService).postConfirmShipment(any());
   }
-
 }

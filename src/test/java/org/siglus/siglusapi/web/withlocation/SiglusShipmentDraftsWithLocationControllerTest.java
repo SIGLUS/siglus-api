@@ -13,34 +13,60 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.web;
+package org.siglus.siglusapi.web.withlocation;
 
 import static org.mockito.Mockito.verify;
 
+import java.util.UUID;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftDto;
+import org.siglus.siglusapi.localmachine.event.order.fulfillment.OrderFulfillmentSyncedEmitter;
 import org.siglus.siglusapi.service.SiglusShipmentDraftService;
 
 @RunWith(MockitoJUnitRunner.class)
-public class SiglusShipmentDraftControllerTest {
-
+@SuppressWarnings("PMD.UnusedPrivateField")
+public class SiglusShipmentDraftsWithLocationControllerTest {
   @InjectMocks
-  private SiglusShipmentDraftController controller;
+  private SiglusShipmentDraftsWithLocationController siglusShipmentDraftsWithLocationController;
 
   @Mock
   private SiglusShipmentDraftService siglusShipmentDraftService;
+  @Mock
+  private OrderFulfillmentSyncedEmitter orderFulfillmentSyncedEmitter;
+
+  private final UUID draftId = UUID.randomUUID();
 
   @Test
-  public void shouldCallV3ControllerWhenCreateShipmentDraft() {
+  public void shouldGetShipmentDraftByLocation() {
     // when
-    ShipmentDraftDto draftDto = new ShipmentDraftDto();
-    controller.createShipmentDraft(draftDto);
+    siglusShipmentDraftsWithLocationController.getShipmentDraftByLocation(draftId);
 
     // then
-    verify(siglusShipmentDraftService).createShipmentDraft(draftDto);
+    verify(siglusShipmentDraftService).getShipmentDraftByLocation(draftId);
+  }
+
+  @Test
+  public void shouldUpdateShipmentDraftByLocation() {
+    // given
+    ShipmentDraftDto draftDto = new ShipmentDraftDto();
+
+    // when
+    siglusShipmentDraftsWithLocationController.updateShipmentDraftByLocation(draftId, draftDto);
+
+    // then
+    verify(siglusShipmentDraftService).updateShipmentDraftByLocation(draftId, draftDto);
+  }
+
+  @Test
+  public void shouldDeleteShipmentDraftByLocation() {
+    // when
+    siglusShipmentDraftsWithLocationController.deleteShipmentDraftByLocation(draftId);
+
+    // then
+    verify(siglusShipmentDraftService).deleteShipmentDraftByLocation(draftId);
   }
 }

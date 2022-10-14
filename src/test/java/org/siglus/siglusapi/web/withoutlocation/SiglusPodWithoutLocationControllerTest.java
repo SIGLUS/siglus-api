@@ -13,22 +13,37 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.localmachine.webapi;
+package org.siglus.siglusapi.web.withoutlocation;
+
+import static org.mockito.Mockito.verify;
 
 import java.util.UUID;
-import javax.validation.Valid;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
+import org.siglus.siglusapi.service.SiglusPodService;
 
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-@Data
-public class RemoteActivationRequest {
-  @Valid private LocalActivationRequest localActivationRequest;
-  private String base64EncodedPublicKey;
-  private String base64EncodedPrivateKey;
-  private UUID machineId;
+@RunWith(MockitoJUnitRunner.class)
+public class SiglusPodWithoutLocationControllerTest {
+
+  @InjectMocks
+  private SiglusPodWithoutLocationController controller;
+
+  @Mock
+  private SiglusPodService proofOfDeliveryService;
+
+  @Test
+  public void shouldCallSiglusServiceWhenGetProofOfDelivery() {
+    // given
+    UUID podId = UUID.randomUUID();
+
+    // when
+    controller.getProofOfDelivery(podId, null);
+
+    // then
+    verify(proofOfDeliveryService).getPodExtensionResponse(podId, null);
+  }
+
 }

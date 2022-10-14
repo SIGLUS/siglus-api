@@ -13,30 +13,39 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.web;
+package org.siglus.siglusapi.web.withlocation;
 
+import static org.springframework.http.HttpStatus.CREATED;
+
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
-import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftDto;
-import org.siglus.siglusapi.service.SiglusShipmentDraftService;
-import org.springframework.http.HttpStatus;
+import org.siglus.siglusapi.dto.InitialMoveProductFieldDto;
+import org.siglus.siglusapi.dto.StockCardLocationMovementDto;
+import org.siglus.siglusapi.service.SiglusStockCardLocationMovementService;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/siglusapi/shipmentDrafts")
 @RequiredArgsConstructor
-public class SiglusShipmentDraftController {
+@RequestMapping("/api/siglusapi/locationMovements")
+public class SiglusStockMovementWithLocationController {
 
-  private final SiglusShipmentDraftService siglusShipmentDraftService;
+  private final SiglusStockCardLocationMovementService movementService;
 
   @PostMapping
-  @ResponseStatus(HttpStatus.CREATED)
-  @ResponseBody
-  public ShipmentDraftDto createShipmentDraft(@RequestBody ShipmentDraftDto draftDto) {
-    return siglusShipmentDraftService.createShipmentDraft(draftDto);
+  @ResponseStatus(CREATED)
+  public void createMovementLineItems(@RequestBody StockCardLocationMovementDto movementDto) {
+    movementService.createMovementLineItems(movementDto);
   }
+
+  @GetMapping
+  public InitialMoveProductFieldDto searchInitialMoveProductFieldDto(@RequestParam UUID facilityId) {
+    return movementService.canInitialMoveProduct(facilityId);
+  }
+
 }
