@@ -41,7 +41,6 @@ import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.repository.RequisitionRepository;
 import org.siglus.common.repository.OrderExternalRepository;
 import org.siglus.siglusapi.repository.NotificationRepository;
-import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
 import org.siglus.siglusapi.util.SiglusSimulateUserAuthHelper;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -59,8 +58,6 @@ public class NotificationServiceTest {
   private OrderExternalRepository orderExternalRepository;
   @Mock
   private RequisitionRepository requisitionRepository;
-  @Mock
-  private SiglusProofOfDeliveryRepository siglusProofOfDeliveryRepository;
 
   private final UUID userId = UUID.randomUUID();
   private final UUID programId = UUID.randomUUID();
