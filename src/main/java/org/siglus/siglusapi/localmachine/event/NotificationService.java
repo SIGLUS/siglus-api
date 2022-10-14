@@ -31,7 +31,6 @@ import org.siglus.siglusapi.domain.Notification;
 import org.siglus.siglusapi.domain.NotificationStatus;
 import org.siglus.siglusapi.domain.NotificationType;
 import org.siglus.siglusapi.repository.NotificationRepository;
-import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
 import org.siglus.siglusapi.util.SiglusSimulateUserAuthHelper;
 import org.springframework.stereotype.Service;
 
@@ -43,7 +42,6 @@ public class NotificationService {
   private final NotificationRepository notificationRepository;
   private final OrderExternalRepository orderExternalRepository;
   private final RequisitionRepository requisitionRepository;
-  private final SiglusProofOfDeliveryRepository siglusProofOfDeliveryRepository;
 
   public void postInternalApproval(UUID userId, BasicRequisitionDto requisition, UUID notifySupervisoryNodeId) {
     saveNotificationFromRequisition(userId, requisition, notification -> {
@@ -81,7 +79,6 @@ public class NotificationService {
     OrderExternal external = orderExternalRepository.findOne(order.getExternalId());
     UUID requisitionId = external == null ? order.getExternalId() : external.getRequisitionId();
     Requisition requisition = requisitionRepository.findOne(requisitionId);
-    siglusProofOfDeliveryRepository.findByOrderId(order.getId());
     Stream.of(NotificationType.values()).forEach(notificationType -> {
       Notification notification = new Notification();
       notification.setRefId(proofOfDeliveryId);

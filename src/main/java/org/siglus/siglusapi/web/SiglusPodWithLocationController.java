@@ -70,7 +70,7 @@ public class SiglusPodWithLocationController {
     siglusPodService.deleteSubDraftsWithLocation(podId);
   }
 
-  @GetMapping("/{id}")
+  @GetMapping("/{id}/subDrafts/merge")
   public ProofOfDeliveryWithLocationResponse getMergedSubDraftWithLocation(@PathVariable("id") UUID podId) {
     return siglusPodService.getMergedSubDraftWithLocation(podId);
   }
@@ -81,5 +81,10 @@ public class SiglusPodWithLocationController {
     movementDateValidator.validateMovementDate(request.getPodDto().getReceivedDate(),
         request.getPodDto().getShipment().getOrder().getReceivingFacility().getId());
     siglusPodService.submitSubDraftsWithLocation(podId, request, authentication);
+  }
+
+  @GetMapping("/{id}")
+  public ProofOfDeliveryWithLocationResponse viewPodWithLocation(@PathVariable("id") UUID podId) {
+    return siglusPodService.getPodExtensionResponseWithLocation(podId);
   }
 }

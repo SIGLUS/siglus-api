@@ -101,6 +101,4 @@ public interface SiglusProofOfDeliveryRepository extends JpaRepository<ProofOfDe
       @Param("id") UUID proofOfDeliveryId);
 
   ProofOfDelivery findByShipmentId(UUID shipmentId);
-
-  List<ProofOfDelivery> findByOrderId(UUID id);
 }
