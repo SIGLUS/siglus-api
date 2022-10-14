@@ -222,7 +222,9 @@ public class SiglusPhysicalInventorySubDraftService {
     List<UUID> physicalInventoryIds = subDrafts.stream().map(PhysicalInventorySubDraft::getPhysicalInventoryId)
         .distinct().collect(Collectors.toList());
 
-    checkConflictSubDraft(physicalInventoryIds, physicalInventoryDto, subDraftIds);
+    if (!isByLocation) {
+      checkConflictSubDraft(physicalInventoryIds, physicalInventoryDto, subDraftIds);
+    }
 
     updateSubDraftsStatus(subDraftIds, status, false);
 
