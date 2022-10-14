@@ -107,7 +107,7 @@ import lombok.Data;
             + "  pilia.stockcardlineitemid = scli.id\n"
             + "left join stockmanagement.stock_card_line_item_reasons sclir2 on\n"
             + "  sclir2.id = pilia.reasonid\n"
-            + "join siglusintegration.physical_inventory_line_items_extension pilie on\n"
+            + "left join siglusintegration.physical_inventory_line_items_extension pilie on\n"
             + "    pilie.orderableid = sc.orderableid\n"
             + "  and (case\n"
             + "    when pilie.lotid is null then '28b3c24d-94b3-465e-b751-d24dcaa1cd82'\n"
