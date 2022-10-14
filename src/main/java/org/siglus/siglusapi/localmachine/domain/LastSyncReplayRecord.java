@@ -32,7 +32,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Table(name = "last_sync_replay_record", schema = "localmachine")
-public class lastSyncReplayRecord {
+public class LastSyncReplayRecord {
 
   @Id
   private UUID id;

@@ -15,16 +15,14 @@
 
 package org.siglus.siglusapi.localmachine.agent;
 
-import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_NOT_FOUND_SYNC_RECORD;
-
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.siglus.siglusapi.constant.FieldConstants;
-import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.localmachine.domain.ErrorRecord;
-import org.siglus.siglusapi.localmachine.domain.lastSyncReplayRecord;
+import org.siglus.siglusapi.localmachine.domain.LastSyncReplayRecord;
 import org.siglus.siglusapi.localmachine.repository.ErrorRecordRepository;
 import org.siglus.siglusapi.localmachine.repository.LastSyncRecordRepository;
 import org.siglus.siglusapi.localmachine.webapi.LocalSyncResultsResponse;
@@ -41,17 +39,13 @@ public class LocalSyncResultsService {
 
   private final ErrorRecordRepository errorRecordsRepository;
 
-  private final ErrorHandleService errorHandleService;
-
   public LocalSyncResultsResponse getSyncResults() {
-    lastSyncReplayRecord firstByLatestSyncedTimeDesc = lastSyncRecordRepository
-        .findFirstByOrderByLastSyncedTimeDesc();
+    LastSyncReplayRecord lastSyncTime = lastSyncRecordRepository.findFirstByOrderByLastSyncedTimeDesc();
 
-    List<ErrorRecord> errorRecords = errorRecordsRepository
-        .findTopTenWithCreationDateTimeAfter(firstByLatestSyncedTimeDesc.getLastReplayedTime());
+    List<ErrorRecord> errorRecords = errorRecordsRepository.findLastTenErrorRecords();
 
     return LocalSyncResultsResponse.builder()
-        .latestSyncedTime(firstByLatestSyncedTimeDesc.getLastSyncedTime())
+        .latestSyncedTime(lastSyncTime.getLastSyncedTime())
         .errors(errorRecords)
         .build();
   }
@@ -66,23 +60,25 @@ public class LocalSyncResultsService {
     lastSyncRecordRepository.save(buildReplayTime());
   }
 
-  private lastSyncReplayRecord buildReplayTime() {
-    lastSyncReplayRecord lastRecord = validLastSyncReplayRecord();
+  private LastSyncReplayRecord buildReplayTime() {
+    LastSyncReplayRecord lastRecord = getLastSyncReplayRecord();
     lastRecord.setLastReplayedTime(ZonedDateTime.now());
     return lastRecord;
   }
 
-  private lastSyncReplayRecord buildSyncTime() {
-    lastSyncReplayRecord lastRecord = validLastSyncReplayRecord();
+  private LastSyncReplayRecord buildSyncTime() {
+    LastSyncReplayRecord lastRecord = getLastSyncReplayRecord();
     lastRecord.setLastSyncedTime(ZonedDateTime.now());
     return lastRecord;
   }
 
-  private lastSyncReplayRecord validLastSyncReplayRecord() {
-    lastSyncReplayRecord lastRecord = lastSyncRecordRepository.findOne(FieldConstants.LAST_SYNC_RECORD_ID);
-    if (lastRecord == null) {
-      throw new NotFoundException(ERROR_NOT_FOUND_SYNC_RECORD);
-    }
-    return lastRecord;
+  private LastSyncReplayRecord getLastSyncReplayRecord() {
+    Optional<LastSyncReplayRecord> lastRecord = lastSyncRecordRepository.findById(FieldConstants.LAST_SYNC_RECORD_ID);
+    LastSyncReplayRecord buildLastRecord = LastSyncReplayRecord.builder()
+        .id(FieldConstants.LAST_SYNC_RECORD_ID)
+        .lastSyncedTime(ZonedDateTime.now())
+        .lastReplayedTime(ZonedDateTime.now())
+        .build();
+    return lastRecord.orElse(buildLastRecord);
   }
 }

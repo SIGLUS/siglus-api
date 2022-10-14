@@ -15,11 +15,10 @@
 
 package org.siglus.siglusapi.localmachine.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.util.UUID;
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -35,6 +34,7 @@ import org.siglus.common.domain.BaseEntity;
 @AllArgsConstructor
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
+@JsonIgnoreProperties(value = {"errorRecord"})
 @Table(name = "error_payloads", schema = "localmachine")
 public class ErrorPayload extends BaseEntity {
 
