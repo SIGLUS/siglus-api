@@ -28,6 +28,7 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.TimeZone;
@@ -82,6 +83,13 @@ public class PostgresDialect extends PostgreSqlDatabaseDialect {
                   Instant.ofEpochMilli(((Number) value).longValue()), this.timeZone().toZoneId())));
       return true;
     }
+    if (io.debezium.time.ZonedTimestamp.SCHEMA_NAME.equals(schema.name())) {
+      statement.setTimestamp(
+          index,
+          Timestamp.valueOf(
+              LocalDateTime.ofInstant(ZonedDateTime.parse((String) value).toInstant(), this.timeZone().toZoneId())));
+      return true;
+    }
     if (Optional.ofNullable(schema.name()).orElse("").contains("io.debezium.time")) {
       throw new IllegalArgumentException("can not bind value for schema " + schema.name());
     }
@@ -96,6 +104,7 @@ public class PostgresDialect extends PostgreSqlDatabaseDialect {
   }
 
   public static class Provider extends SubprotocolBasedProvider {
+
     public Provider() {
       super(PostgresDialect.class.getSimpleName(), "postgresql-as-replica-role");
     }
