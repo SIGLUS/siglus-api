@@ -213,6 +213,12 @@ public abstract class MessageKeys {
   public static final String PROCESSING_PERIOD = "processingPeriod";
   public static final String ID = "id";
   public static final String FACILITY = "facility";
+  public static final String CURRENT_IS_NOT_LOCATION_MANAGEMENT = "CURRENT_IS_NOT_LOCATION_MANAGEMENT";
+  public static final String CURRENT_IS_NOT_STOCK_MANAGEMENT = "CURRENT_IS_NOT_STOCK_MANAGEMENT";
+  public static final String ERROR_CURRENT_IS_NOT_LOCATION_MANAGEMENT =
+      ERROR_PREFIX + CURRENT_IS_NOT_LOCATION_MANAGEMENT;
+  public static final String ERROR_CURRENT_IS_NOT_STOCK_MANAGEMENT =
+      ERROR_PREFIX + CURRENT_IS_NOT_STOCK_MANAGEMENT;
 
   // s3
   public static final String ERROR_FILE_NOT_FOUND = ERROR_PREFIX + ".fileNotFound";
