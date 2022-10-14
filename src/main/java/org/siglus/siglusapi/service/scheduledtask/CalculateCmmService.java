@@ -19,7 +19,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import java.time.LocalDate;
-import java.time.OffsetDateTime;
+import java.time.ZonedDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -32,7 +32,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.openlmis.referencedata.domain.Facility;
 import org.openlmis.referencedata.domain.ProcessingPeriod;
 import org.siglus.siglusapi.domain.HfCmm;
-import org.siglus.siglusapi.repository.FacilityCmmNativeRepository;
+import org.siglus.siglusapi.repository.FacilityCmmsRepository;
 import org.siglus.siglusapi.repository.SiglusFacilityRepository;
 import org.siglus.siglusapi.repository.SiglusStockCardLineItemRepository;
 import org.siglus.siglusapi.repository.SiglusStockCardRepository;
@@ -52,7 +52,7 @@ import org.springframework.util.CollectionUtils;
 public class CalculateCmmService {
 
   private final SiglusFacilityRepository siglusFacilityRepository;
-  private final FacilityCmmNativeRepository facilityCmmNativeRepository;
+  private final FacilityCmmsRepository facilityCmmsRepository;
   private final SiglusStockCardRepository siglusStockCardRepository;
   private final SiglusStockCardLineItemRepository siglusStockCardLineItemRepository;
   private final SiglusOrderableService siglusOrderableService;
@@ -129,7 +129,7 @@ public class CalculateCmmService {
         orderableIdToStockCardLineItemDtos);
     if (!CollectionUtils.isEmpty(hfCmms)) {
       log.info("save hf cmms, size={}, facilityId:{}", hfCmms.size(), facilityId);
-      facilityCmmNativeRepository.batchCreateHfCmms(hfCmms);
+      facilityCmmsRepository.save(hfCmms);
     }
   }
 
@@ -319,7 +319,7 @@ public class CalculateCmmService {
         .periodEnd(period.getEndDate())
         .productCode(orderableCode)
         .facilityCode(facilityCode)
-        .lastUpdated(OffsetDateTime.now())
+        .lastUpdated(ZonedDateTime.now())
         .build();
     hfCmm.setId(UUID.randomUUID());
     return hfCmm;

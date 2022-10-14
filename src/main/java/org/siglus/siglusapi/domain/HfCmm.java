@@ -16,7 +16,7 @@
 package org.siglus.siglusapi.domain;
 
 import java.time.LocalDate;
-import java.time.OffsetDateTime;
+import java.time.ZonedDateTime;
 import javax.persistence.Entity;
 import javax.persistence.EntityListeners;
 import javax.persistence.Table;
@@ -50,5 +50,5 @@ public class HfCmm extends BaseEntity {
   private Double cmm;
 
   @LastModifiedDate
-  private OffsetDateTime lastUpdated;
+  private ZonedDateTime lastUpdated;
 }
