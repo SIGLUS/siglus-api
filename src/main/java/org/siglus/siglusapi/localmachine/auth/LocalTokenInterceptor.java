@@ -55,8 +55,6 @@ public class LocalTokenInterceptor implements ClientHttpRequestInterceptor {
 
   @Setter private Function<HttpRequest, Boolean> acceptFunc = (httpRequest -> true);
 
-  private final String deactivatedHttpStatus = "461";
-
   @Override
   public ClientHttpResponse intercept(
       HttpRequest request, byte[] body, ClientHttpRequestExecution execution) throws IOException {
@@ -84,7 +82,7 @@ public class LocalTokenInterceptor implements ClientHttpRequestInterceptor {
       log.error("localmachine agent error response, request = {}, status code = {}, headers = {} ,body = {}",
           request.getURI(), statusCode, httpResponse.getHeaders(), bodyStringBuilder);
     }
-    if (deactivatedHttpStatus.equals(statusCode.toString())) {
+    if (HttpStatus.UNAUTHORIZED.equals(statusCode)) {
       log.info("unauthorized access, delete local machine table");
       agentInfoRepository.deleteMachine();
     }
