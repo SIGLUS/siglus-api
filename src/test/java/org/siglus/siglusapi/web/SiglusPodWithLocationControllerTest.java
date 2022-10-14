@@ -114,6 +114,18 @@ public class SiglusPodWithLocationControllerTest {
     verify(proofOfDeliveryService).getMergedSubDraftWithLocation(podId);
   }
 
+  @Test
+  public void shouldGetPodWithLocation() {
+    // given
+    UUID podId = UUID.randomUUID();
+
+    // when
+    controller.viewPodWithLocation(podId);
+
+    // then
+    verify(proofOfDeliveryService).getPodExtensionResponseWithLocation(podId);
+  }
+
   private UpdatePodSubDraftWithLocationRequest buildForRequest(OperateTypeEnum operateType) {
     UpdatePodSubDraftWithLocationRequest request = new UpdatePodSubDraftWithLocationRequest();
     request.setOperateType(operateType);

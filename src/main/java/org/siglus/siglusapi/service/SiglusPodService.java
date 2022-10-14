@@ -316,6 +316,11 @@ public class SiglusPodService {
     return getPodWithLocation(podDto);
   }
 
+  public ProofOfDeliveryWithLocationResponse getPodExtensionResponseWithLocation(UUID podId) {
+    ProofOfDeliveryDto podDto = getExpandedPodDtoById(podId, EXPAND_PARAM);
+    return getPodWithLocation(podDto);
+  }
+
   @Transactional
   public ProofOfDeliveryDto submitSubDrafts(UUID podId, PodExtensionRequest request,
       OAuth2Authentication authentication) {

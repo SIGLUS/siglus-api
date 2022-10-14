@@ -3690,6 +3690,29 @@ traits:
         responses:
           204:
             description: Sub draft with location deleted.
+    /proofsOfDeliveryWithLocation/{id}/subDrafts/merge:
+      uriParameters:
+        id:
+          displayName: proofOfDeliveryId
+          type: string
+          required: true
+          repeat: false
+      get:
+        is: [ secured ]
+        description: Get merged sub drafts with location
+        responses:
+          200:
+            body:
+              application/json:
+          400:
+            body:
+              application/json:
+                schema: badRequestResponse
+          404:
+          403:
+            body:
+              application/json:
+                schema: localizedMessage
     /proofsOfDeliveryWithLocation/{id}:
       uriParameters:
         id:
