@@ -38,6 +38,7 @@ import org.siglus.siglusapi.repository.AppInfoRepository;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.security.web.util.matcher.OrRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -46,6 +47,8 @@ import org.springframework.web.filter.OncePerRequestFilter;
 @Component
 @RequiredArgsConstructor
 public class LocalMachineRequestFilter extends OncePerRequestFilter {
+  private static final RequestMatcher nonSecuredRequestMatcher =
+      new AntPathRequestMatcher("/api/siglusapi/localmachine/server/agents");
   private static final RequestMatcher securedRequestMatcher =
       new AntPathRequestMatcher("/api/siglusapi/localmachine/server/**");
   private final AgentInfoRepository agentInfoRepository;
@@ -66,22 +69,26 @@ public class LocalMachineRequestFilter extends OncePerRequestFilter {
   }
 
   public RequestMatcher getRequestMatcher() {
-    return securedRequestMatcher;
+    return new OrRequestMatcher(nonSecuredRequestMatcher, securedRequestMatcher);
   }
 
   @Override
   protected void doFilterInternal(
       HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
       throws ServletException, IOException {
-    try {
-      if (securedRequestMatcher.matches(request)) {
-        authenticate(request);
-      }
-    } catch (AuthorizeException e) {
-      log.error("localmachine auth fail", e);
-      response.setStatus(e.status.value());
-      response.getWriter().write(e.getMessage());
+    if (nonSecuredRequestMatcher.matches(request)) {
+      filterChain.doFilter(request, response);
       return;
+    }
+    if (securedRequestMatcher.matches(request)) {
+      try {
+        authenticate(request);
+      } catch (AuthorizeException e) {
+        log.error("localmachine auth fail", e);
+        response.setStatus(e.status.value());
+        response.getWriter().write(e.getMessage());
+        return;
+      }
     }
     filterChain.doFilter(request, response);
   }
