@@ -22,7 +22,8 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
-import org.siglus.siglusapi.localmachine.agent.ErrorHandleService;
+import org.siglus.siglusapi.localmachine.agent.ErrorHandler;
+import org.siglus.siglusapi.localmachine.constant.ErrorType;
 import org.siglus.siglusapi.localmachine.eventstore.EventStore;
 import org.springframework.dao.DataIntegrityViolationException;
 
@@ -32,14 +33,14 @@ public abstract class EventImporter {
   protected final EventStore eventStore;
   protected final EventReplayer replayer;
   protected final Machine machine;
-  protected final ErrorHandleService errorHandleService;
+  protected final ErrorHandler errorHandler;
 
   protected EventImporter(EventStore eventStore, EventReplayer replayer, Machine machine,
-      ErrorHandleService errorHandleService) {
+      ErrorHandler errorHandler) {
     this.eventStore = eventStore;
     this.replayer = replayer;
     this.machine = machine;
-    this.errorHandleService = errorHandleService;
+    this.errorHandler = errorHandler;
   }
 
   public void importEvents(List<Event> events) {

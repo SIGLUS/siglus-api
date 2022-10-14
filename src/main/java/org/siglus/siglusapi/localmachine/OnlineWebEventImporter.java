@@ -16,7 +16,7 @@
 package org.siglus.siglusapi.localmachine;
 
 import java.util.List;
-import org.siglus.siglusapi.localmachine.agent.ErrorHandleService;
+import org.siglus.siglusapi.localmachine.agent.ErrorHandler;
 import org.siglus.siglusapi.localmachine.eventstore.EventStore;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
@@ -26,8 +26,8 @@ import org.springframework.stereotype.Component;
 public class OnlineWebEventImporter extends EventImporter {
 
   public OnlineWebEventImporter(EventStore localEventStore, EventReplayer replayer, Machine machine,
-      ErrorHandleService errorHandleService) {
-    super(localEventStore, replayer, machine, errorHandleService);
+      ErrorHandler errorHandler) {
+    super(localEventStore, replayer, machine, errorHandler);
   }
 
   @Override

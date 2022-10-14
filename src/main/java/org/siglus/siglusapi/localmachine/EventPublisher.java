@@ -19,7 +19,7 @@ import java.time.ZonedDateTime;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.siglus.siglusapi.localmachine.agent.ErrorHandleService;
+import org.siglus.siglusapi.localmachine.agent.ErrorHandler;
 import org.siglus.siglusapi.localmachine.constant.ErrorType;
 import org.siglus.siglusapi.localmachine.eventstore.EventStore;
 import org.springframework.context.ApplicationEventPublisher;
@@ -37,7 +37,7 @@ public class EventPublisher {
   private final EventStore eventStore;
   private final ApplicationEventPublisher applicationEventPublisher;
   private final Machine machine;
-  private final ErrorHandleService errorHandleService;
+  private final ErrorHandler errorHandler;
 
   public void emitGroupEvent(String groupId, UUID receiverId, Object payload) {
     Event.EventBuilder eventBuilder = baseEventBuilder(groupId, receiverId, payload);
@@ -65,7 +65,7 @@ public class EventPublisher {
     try {
       applicationEventPublisher.publishEvent(event.getPayload());
     } catch (Exception e) {
-      errorHandleService.storeErrorRecord(event, e, ErrorType.REPLAY);
+      errorHandler.storeErrorRecord(event, e, ErrorType.REPLAY);
       throw e;
     } finally {
       isReplaying.remove();

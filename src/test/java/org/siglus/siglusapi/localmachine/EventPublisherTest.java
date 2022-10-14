@@ -28,6 +28,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.siglus.siglusapi.localmachine.eventstore.AckRepository;
+import org.siglus.siglusapi.localmachine.agent.ErrorHandler;
+import org.siglus.siglusapi.localmachine.agent.LocalSyncResultsService;
 import org.siglus.siglusapi.localmachine.eventstore.EventPayloadRepository;
 import org.siglus.siglusapi.localmachine.eventstore.EventRecord;
 import org.siglus.siglusapi.localmachine.eventstore.EventRecordRepository;
@@ -50,6 +52,8 @@ public class EventPublisherTest {
   @MockBean protected EventPayloadRepository eventPayloadRepository;
   @MockBean protected AckRepository ackRepository;
   @MockBean protected Machine machine;
+  @MockBean protected ErrorHandler errorHandler;
+  @MockBean protected LocalSyncResultsService localSyncResultsService;
   @Autowired private EventPublisher eventPublisher;
 
   @Test
