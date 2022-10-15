@@ -23,13 +23,13 @@ public class EventImporterTest {
 
   @Test(expected = DataIntegrityViolationException.class)
   public void shouldThrowWhenHandleViolationErrorGivenNotCausedByIdExists() {
-    EventImporter.checkViolationError(
+    EventImporter.checkIdViolationError(
         UUID.randomUUID(), new DataIntegrityViolationException("err"));
   }
 
   @Test
   public void shouldNotThrowWhenHandleViolationErrorGivenCausedByIdExists() {
-    EventImporter.checkViolationError(
+    EventImporter.checkIdViolationError(
         UUID.randomUUID(), new DataIntegrityViolationException("Key (id)"));
   }
 }

@@ -15,90 +15,34 @@
 
 package org.siglus.siglusapi.localmachine.agent;
 
-import static org.springframework.util.ObjectUtils.isEmpty;
-
-import com.google.common.collect.Iterators;
-import com.google.common.collect.UnmodifiableIterator;
-import java.util.List;
-import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
-import org.apache.commons.collections.CollectionUtils;
-import org.siglus.siglusapi.localmachine.Ack;
-import org.siglus.siglusapi.localmachine.Event;
-import org.siglus.siglusapi.localmachine.EventImporter;
 import org.siglus.siglusapi.localmachine.Machine;
-import org.siglus.siglusapi.localmachine.eventstore.EventStore;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 @Component
 @RequiredArgsConstructor
 @Slf4j
 @Profile({"localmachine"})
 public class Synchronizer {
-  public static final int BATCH_PUSH_LIMIT = 5;
-  private final EventStore localEventStore;
-  private final OnlineWebClient webClient;
-  private final EventImporter eventImporter;
+  private final SyncService syncService;
   private final Machine machine;
 
   @Scheduled(fixedRate = 60 * 1000, initialDelay = 60 * 1000)
-  @SchedulerLock(name = "localmachine_synchronizer", lockAtMostFor = "PT1M")
-  @Transactional
   public void scheduledSync() {
     log.info("start scheduled synchronization with online web");
-    if (machine.fetchSupportedFacilityIds().isEmpty()) {
-      log.info("no need to sync");
-      return;
-    }
     this.sync();
   }
 
-  @Transactional
   public void sync() {
-    pull();
-    exchangeAcks();
-    push();
-  }
-
-  @Transactional
-  public void exchangeAcks() {
-    Set<Ack> notShippedAcks = localEventStore.getNotShippedAcks();
-    Set<Ack> downloadedAcks = webClient.exchangeAcks(notShippedAcks);
-    localEventStore.confirmAckShipped(notShippedAcks);
-    localEventStore.confirmEventsByAcks(downloadedAcks);
-    webClient.confirmAcks(downloadedAcks);
-  }
-
-  @Transactional
-  public void pull() {
-    List<Event> events = webClient.exportPeeringEvents();
-    if (CollectionUtils.isEmpty(events)) {
-      log.info("pull events got empty");
+    if (!machine.isActive()) {
+      log.info("machine is inactive, no need to sync");
       return;
     }
-    events.forEach(it -> it.setOnlineWebSynced(true));
-    eventImporter.importEvents(events);
-  }
-
-  public void push() {
-    try {
-      List<Event> events = localEventStore.getEventsForOnlineWeb();
-      if (isEmpty(events)) {
-        return;
-      }
-      UnmodifiableIterator<List<Event>> partitionList = Iterators.partition(events.iterator(), BATCH_PUSH_LIMIT);
-      while (partitionList.hasNext()) {
-        List<Event> partEvents = partitionList.next();
-        webClient.sync(partEvents);
-        localEventStore.confirmEventsByWeb(partEvents);
-      }
-    } catch (Throwable e) {
-      log.error("push event failed", e);
-    }
+    syncService.pull();
+    syncService.exchangeAcks();
+    syncService.push();
   }
 }

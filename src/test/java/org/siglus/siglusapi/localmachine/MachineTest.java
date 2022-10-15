@@ -18,8 +18,10 @@ package org.siglus.siglusapi.localmachine;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.util.Collections;
 import java.util.Optional;
@@ -52,6 +54,26 @@ public class MachineTest {
   @Test(expected = IllegalStateException.class)
   public void shouldThrowWhenGetLocalFacilityIdOnWeb() {
     machine.getLocalFacilityId();
+  }
+
+  @Test
+  public void shouldBeActiveGivenSupportedFacilityIdsNotEmpty() {
+    // given
+    Machine machine = mock(Machine.class);
+    given(machine.fetchSupportedFacilityIds()).willReturn(Collections.singleton("facility id"));
+    when(machine.isActive()).thenCallRealMethod();
+    // then
+    assertThat(machine.isActive()).isTrue();
+  }
+
+  @Test
+  public void shouldNotBeActiveGivenSupportedFacilityIdsIsEmpty() {
+    // given
+    Machine machine = mock(Machine.class);
+    given(machine.fetchSupportedFacilityIds()).willReturn(Collections.emptySet());
+    when(machine.isActive()).thenCallRealMethod();
+    // then
+    assertThat(machine.isActive()).isFalse();
   }
 
   @Test

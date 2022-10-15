@@ -69,13 +69,15 @@ public abstract class EventImporter {
             eventStore.importQuietly(it);
             newAdded.add(it);
           } catch (DataIntegrityViolationException e) {
-            checkViolationError(it.getId(), e);
+            checkIdViolationError(it.getId(), e);
+            // id violation means the event exists, to make sure sender get ack, here to emit ack again.
+            eventStore.emitAckForEvent(it);
           }
         });
     return newAdded;
   }
 
-  static void checkViolationError(UUID eventId, DataIntegrityViolationException e) {
+  static void checkIdViolationError(UUID eventId, DataIntegrityViolationException e) {
     boolean idExists = e.getMessage().contains("Key (id)");
     if (idExists) {
       log.info("event exists, skip it, eventid:{}", eventId);

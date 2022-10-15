@@ -28,6 +28,7 @@ import javax.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.localmachine.repository.AgentInfoRepository;
@@ -57,6 +58,10 @@ public class Machine {
       return new HashSet<>(facilityExtensionRepository.findNonLocalMachineFacilityIds());
     }
     return new HashSet<>(agentInfoRepository.findRegisteredFacilityIds());
+  }
+
+  public boolean isActive() {
+    return CollectionUtils.isNotEmpty(fetchSupportedFacilityIds());
   }
 
   public UUID getMachineId() {

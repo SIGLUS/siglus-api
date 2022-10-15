@@ -92,6 +92,11 @@ public class EventStore {
     EventRecord eventRecord = EventRecord.from(event, payloadSerializer.dump(event.getPayload()));
     repository.importExternalEvent(eventRecord);
     eventPayloadRepository.save(new EventPayload(eventRecord.getId(), eventRecord.getPayload()));
+    emitAckForEvent(event);
+  }
+
+  @Transactional
+  public void emitAckForEvent(Event event) {
     if (Objects.nonNull(event.getAck())) {
       emitAck(event.getAck());
     }
