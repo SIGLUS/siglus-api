@@ -263,9 +263,11 @@ traits:
         /peeringEvents:
           get:
             description: pull peering events from onlineweb
-        /ack:
+        /acks:
           post:
-            description: confirm events synced by the local agent
+            description: exchange acks with oneline web
+          put:
+            description: confirm acks received by localmachine
         /reSync:
           get:
             description: resync data from onlineweb
