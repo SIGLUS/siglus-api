@@ -80,6 +80,7 @@ import org.siglus.siglusapi.localmachine.agent.LocalActivationService;
 import org.siglus.siglusapi.localmachine.domain.ActivationCode;
 import org.siglus.siglusapi.localmachine.repository.ActivationCodeRepository;
 import org.siglus.siglusapi.localmachine.repository.AgentInfoRepository;
+import org.siglus.siglusapi.localmachine.utils.ActivationCodeGenerator;
 import org.siglus.siglusapi.repository.AppInfoRepository;
 import org.siglus.siglusapi.repository.CalculatedStockOnHandByLocationRepository;
 import org.siglus.siglusapi.repository.FacilityExtensionRepository;
@@ -407,7 +408,7 @@ public class SiglusAdministrationsService {
     appInfoRepository.deleteByFacilityCode(facilityDto.getCode());
     if (deviceType == FacilityDeviceTypeEnum.LOCAL_MACHINE) {
       agentInfoRepository.deleteByFacilityId(facilityId);
-      String activationCode = UUID.randomUUID().toString().substring(10);
+      String activationCode = ActivationCodeGenerator.get();
       ActivationCode code = ActivationCode
           .builder()
           .id(UUID.randomUUID())

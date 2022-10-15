@@ -13,22 +13,14 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.localmachine.webapi;
+package org.siglus.siglusapi.localmachine.utils;
 
-import java.util.Optional;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.hibernate.validator.constraints.NotBlank;
+import java.util.UUID;
 
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-public class LocalActivationRequest {
-  @NotBlank private String activationCode;
-  @NotBlank private String facilityCode;
+public class ActivationCodeGenerator {
+  private ActivationCodeGenerator() {}
 
-  public String getActivationCode() {
-    return Optional.ofNullable(activationCode).map(String::toUpperCase).orElse(null);
+  public static String get() {
+    return UUID.randomUUID().toString().substring(0, 13).toUpperCase();
   }
 }

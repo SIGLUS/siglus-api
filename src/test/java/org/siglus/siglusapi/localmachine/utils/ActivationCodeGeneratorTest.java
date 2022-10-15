@@ -13,22 +13,19 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.localmachine.webapi;
+package org.siglus.siglusapi.localmachine.utils;
 
-import java.util.Optional;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.hibernate.validator.constraints.NotBlank;
+import static org.assertj.core.api.Assertions.assertThat;
 
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-public class LocalActivationRequest {
-  @NotBlank private String activationCode;
-  @NotBlank private String facilityCode;
+import org.junit.Test;
 
-  public String getActivationCode() {
-    return Optional.ofNullable(activationCode).map(String::toUpperCase).orElse(null);
+public class ActivationCodeGeneratorTest {
+
+  @Test
+  public void shouldBeUpperCaseWhenGetNewActivationCode() {
+    // given
+    String code = ActivationCodeGenerator.get();
+    // then
+    assertThat(code.toUpperCase()).isEqualTo(code);
   }
 }
