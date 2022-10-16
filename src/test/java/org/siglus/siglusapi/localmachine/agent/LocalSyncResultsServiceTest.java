@@ -16,6 +16,7 @@
 package org.siglus.siglusapi.localmachine.agent;
 
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -48,6 +49,9 @@ public class LocalSyncResultsServiceTest extends TestCase {
   @Mock
   private ErrorRecordRepository errorRecordRepository;
 
+  @Mock
+  private Synchronizer synchronizer;
+
   private final ZonedDateTime lastSyncTime = ZonedDateTime.now();
   private final ZonedDateTime lastReplayTime = ZonedDateTime.now();
   private final LastSyncReplayRecord syncRecord = LastSyncReplayRecord.builder()
@@ -62,6 +66,7 @@ public class LocalSyncResultsServiceTest extends TestCase {
     ErrorRecord errorRecord = ErrorRecord.builder().type(ErrorType.SYNC_UP).build();
 
     //when
+    doNothing().when(synchronizer).sync();
     when(lastSyncRecordRepository.findFirstByOrderByLastSyncedTimeDesc()).thenReturn(syncRecord);
     when(errorRecordRepository.findLastTenErrorRecords()).thenReturn(Lists.newArrayList(errorRecord));
     LocalSyncResultsResponse syncResults = localSyncResultsService.getSyncResults();

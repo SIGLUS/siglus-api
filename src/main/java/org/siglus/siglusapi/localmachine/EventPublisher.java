@@ -67,7 +67,7 @@ public class EventPublisher {
     try {
       applicationEventPublisher.publishEvent(event.getPayload());
     } catch (Exception e) {
-      errorHandler.storeErrorRecord(event, e, ErrorType.REPLAY);
+      errorHandler.storeErrorRecord(event.getId(), e, ErrorType.REPLAY);
       throw e;
     } finally {
       isReplaying.remove();

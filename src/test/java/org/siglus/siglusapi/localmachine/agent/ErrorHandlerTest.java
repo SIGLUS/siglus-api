@@ -32,7 +32,6 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.exception.BusinessDataException;
-import org.siglus.siglusapi.localmachine.Event;
 import org.siglus.siglusapi.localmachine.constant.ErrorType;
 import org.siglus.siglusapi.localmachine.domain.ErrorRecord;
 import org.siglus.siglusapi.localmachine.repository.ErrorRecordRepository;
@@ -49,8 +48,7 @@ public class ErrorHandlerTest extends TestCase {
   @Mock
   private LocalSyncResultsService localSyncResultsService;
 
-  private final Event event = Event.builder().id(UUID.randomUUID()).build();
-
+  private final UUID eventId = UUID.randomUUID();
 
   @Test
   public void shouldStoreBusinessSyncErrorWithoutEvent() {
@@ -85,7 +83,7 @@ public class ErrorHandlerTest extends TestCase {
 
     //when
     doNothing().when(localSyncResultsService).storeLastReplayRecord();
-    errorHandler.storeErrorRecord(event, businessDataException, ErrorType.SYNC_DOWN);
+    errorHandler.storeErrorRecord(eventId, businessDataException, ErrorType.SYNC_DOWN);
 
     //then
     verify(errorRecordRepository).save(any(ErrorRecord.class));
@@ -108,11 +106,11 @@ public class ErrorHandlerTest extends TestCase {
   public void shouldStoreBusinessSyncUpErrorWithEvents() {
     //given
     BusinessDataException businessDataException = new BusinessDataException(new Message(ERROR_NOT_FOUND_SYNC_RECORD));
-    ArrayList<Event> events = Lists.newArrayList(event);
+    ArrayList<UUID> eventIds = Lists.newArrayList(eventId);
 
     //when
     doNothing().when(localSyncResultsService).storeLastSyncRecord();
-    errorHandler.storeErrorRecord(events, businessDataException);
+    errorHandler.storeErrorRecord(eventIds, businessDataException, ErrorType.SYNC_UP);
 
     //then
     verify(errorRecordRepository).save(anyListOf(ErrorRecord.class));
@@ -122,11 +120,10 @@ public class ErrorHandlerTest extends TestCase {
   public void shouldStoreGeneralSyncUpErrorWithEvents() {
     //given
     Exception nullPointerException = new NullPointerException();
-    ArrayList<Event> events = Lists.newArrayList(event);
-
+    ArrayList<UUID> eventIds = Lists.newArrayList(eventId);
     //when
     doNothing().when(localSyncResultsService).storeLastSyncRecord();
-    errorHandler.storeErrorRecord(events, nullPointerException);
+    errorHandler.storeErrorRecord(eventIds, nullPointerException, ErrorType.SYNC_UP);
 
     //then
     verify(errorRecordRepository).save(anyListOf(ErrorRecord.class));

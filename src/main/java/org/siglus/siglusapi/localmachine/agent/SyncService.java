@@ -22,6 +22,8 @@ import com.google.common.collect.UnmodifiableIterator;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
@@ -50,10 +52,23 @@ public class SyncService {
   @Transactional
   public void exchangeAcks() {
     Set<Ack> notShippedAcks = localEventStore.getNotShippedAcks();
-    Set<Ack> downloadedAcks = webClient.exchangeAcks(notShippedAcks);
+    Set<Ack> downloadedAcks;
+    try {
+      downloadedAcks = webClient.exchangeAcks(notShippedAcks);
+    } catch (Exception e) {
+      List<UUID> eventIds = notShippedAcks.stream().map(Ack::getEventId).collect(Collectors.toList());
+      errorHandler.storeErrorRecord(eventIds, e, ErrorType.EXCHANGE_DOWN);
+      throw e;
+    }
     localEventStore.confirmAckShipped(notShippedAcks);
     localEventStore.confirmEventsByAcks(downloadedAcks);
-    webClient.confirmAcks(downloadedAcks);
+    try {
+      webClient.confirmAcks(downloadedAcks);
+    } catch (Exception e) {
+      List<UUID> eventIds = downloadedAcks.stream().map(Ack::getEventId).collect(Collectors.toList());
+      errorHandler.storeErrorRecord(eventIds, e, ErrorType.EXCHANGE_UP);
+      throw e;
+    }
   }
 
   @Transactional
@@ -90,7 +105,8 @@ public class SyncService {
       }
     } catch (Throwable e) {
       log.error("push event failed", e);
-      errorHandler.storeErrorRecord(readyForHandleEvents, e);
+      List<UUID> eventIds = readyForHandleEvents.stream().map(Event::getId).collect(Collectors.toList());
+      errorHandler.storeErrorRecord(eventIds, e, ErrorType.SYNC_UP);
     }
   }
 }

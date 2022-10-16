@@ -18,5 +18,7 @@ package org.siglus.siglusapi.localmachine.constant;
 public enum ErrorType {
   SYNC_UP,
   SYNC_DOWN,
+  EXCHANGE_UP,
+  EXCHANGE_DOWN,
   REPLAY
 }

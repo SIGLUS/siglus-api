@@ -17,11 +17,11 @@ package org.siglus.siglusapi.localmachine.agent;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.siglus.siglusapi.exception.BusinessDataException;
-import org.siglus.siglusapi.localmachine.Event;
 import org.siglus.siglusapi.localmachine.constant.ErrorType;
 import org.siglus.siglusapi.localmachine.domain.ErrorPayload;
 import org.siglus.siglusapi.localmachine.domain.ErrorRecord;
@@ -48,29 +48,28 @@ public class ErrorHandler {
   }
 
   @Transactional(propagation = Propagation.REQUIRES_NEW)
-  public void storeErrorRecord(Event event, Throwable t, ErrorType errorType) {
+  public void storeErrorRecord(UUID eventId, Throwable t, ErrorType errorType) {
     localSyncResultsService.storeLastReplayRecord();
-    errorRecordRepository.save(buildSyncDownError(event, t, errorType));
+    errorRecordRepository.save(buildSyncDownError(eventId, t, errorType));
   }
 
   @Transactional(propagation = Propagation.REQUIRES_NEW)
-  public void storeErrorRecord(List<Event> events, Throwable t) {
-    errorRecordRepository.save(buildSyncUpError(events, t));
+  public void storeErrorRecord(List<UUID> eventIds, Throwable t, ErrorType errorType) {
+    errorRecordRepository.save(buildSyncUpError(eventIds, t, errorType));
   }
 
-  //build sync down error with event
-  private ErrorRecord buildSyncDownError(Event event, Throwable t, ErrorType errorType) {
+  private ErrorRecord buildSyncDownError(UUID eventId, Throwable t, ErrorType errorType) {
     if (t instanceof BusinessDataException) {
       return ErrorRecord.builder()
           .occurredTime(ZonedDateTime.now())
           .type(errorType)
-          .errorPayload(buildBusinessErrorPayload(event, t))
+          .errorPayload(buildBusinessErrorPayload(eventId, t))
           .build();
     }
     return ErrorRecord.builder()
         .occurredTime(ZonedDateTime.now())
         .type(errorType)
-        .errorPayload(buildGeneralErrorPayload(event, t))
+        .errorPayload(buildGeneralErrorPayload(eventId, t))
         .build();
   }
 
@@ -89,12 +88,12 @@ public class ErrorHandler {
         .build();
   }
 
-  private ErrorPayload buildBusinessErrorPayload(Event event, Throwable t) {
+  private ErrorPayload buildBusinessErrorPayload(UUID eventId, Throwable t) {
     BusinessDataException businessDataException = (BusinessDataException) t;
     return ErrorPayload.builder()
         .errorName(businessDataException.getClass().getName())
         .messageKey(businessDataException.asMessage().getKey())
-        .eventId(event.getId())
+        .eventId(eventId)
         .rootStackTrace(getRootStackTrace(businessDataException))
         .build();
   }
@@ -108,10 +107,10 @@ public class ErrorHandler {
         .build();
   }
 
-  private ErrorPayload buildGeneralErrorPayload(Event event, Throwable t) {
+  private ErrorPayload buildGeneralErrorPayload(UUID eventId, Throwable t) {
     return ErrorPayload.builder()
         .errorName(t.getClass().getName())
-        .eventId(event.getId())
+        .eventId(eventId)
         .detailMessage(t.toString())
         .rootStackTrace(getRootStackTrace(t))
         .build();
@@ -139,20 +138,20 @@ public class ErrorHandler {
     return traceElements[0].toString();
   }
 
-  public List<ErrorRecord> buildSyncUpError(List<Event> events, Throwable t) {
+  public List<ErrorRecord> buildSyncUpError(List<UUID> eventIds, Throwable t, ErrorType errorType) {
     if (t instanceof BusinessDataException) {
-      return events.stream().map(event -> {
+      return eventIds.stream().map(event -> {
         return ErrorRecord.builder()
             .occurredTime(ZonedDateTime.now())
-            .type(ErrorType.SYNC_UP)
+            .type(errorType)
             .errorPayload(buildBusinessErrorPayload(t))
             .build();
       }).collect(Collectors.toList());
     }
-    return events.stream().map(event -> {
+    return eventIds.stream().map(event -> {
       return ErrorRecord.builder()
           .occurredTime(ZonedDateTime.now())
-          .type(ErrorType.SYNC_UP)
+          .type(errorType)
           .errorPayload(buildGeneralErrorPayload(t))
           .build();
     }).collect(Collectors.toList());

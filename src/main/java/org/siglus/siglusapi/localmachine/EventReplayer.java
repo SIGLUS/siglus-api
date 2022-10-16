@@ -42,7 +42,6 @@ public class EventReplayer {
   private final EventPublisher eventPublisher;
   private final EventStore eventStore;
   private final ShedLockFactory lockFactory;
-  private final LocalSyncResultsService syncResultsService;
 
   public void replay(List<Event> events) {
     if (CollectionUtils.isEmpty(events)) {
