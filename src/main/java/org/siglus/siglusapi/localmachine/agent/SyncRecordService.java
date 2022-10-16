@@ -15,32 +15,47 @@
 
 package org.siglus.siglusapi.localmachine.agent;
 
-import java.util.List;
+import java.time.ZonedDateTime;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.siglus.siglusapi.localmachine.domain.ErrorRecord;
+import org.siglus.siglusapi.constant.FieldConstants;
 import org.siglus.siglusapi.localmachine.domain.LastSyncReplayRecord;
-import org.siglus.siglusapi.localmachine.repository.ErrorRecordRepository;
 import org.siglus.siglusapi.localmachine.repository.LastSyncRecordRepository;
-import org.siglus.siglusapi.localmachine.webapi.LocalSyncResultsResponse;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-@Slf4j
-public class LocalSyncResultsService {
+public class SyncRecordService {
 
   private final LastSyncRecordRepository lastSyncRecordRepository;
 
-  private final ErrorRecordRepository errorRecordsRepository;
+  public void storeLastSyncRecord() {
+    lastSyncRecordRepository.save(buildSyncTime());
+  }
 
-  public LocalSyncResultsResponse getSyncResults() {
-    LastSyncReplayRecord lastSyncTime = lastSyncRecordRepository.findFirstByOrderByLastSyncedTimeDesc();
-    List<ErrorRecord> errorRecords = errorRecordsRepository.findLastTenErrorRecords();
+  public void storeLastReplayRecord() {
+    lastSyncRecordRepository.save(buildReplayTime());
+  }
 
-    return LocalSyncResultsResponse.builder()
-        .latestSyncedTime(lastSyncTime.getLastSyncedTime())
-        .errors(errorRecords)
+  private LastSyncReplayRecord buildReplayTime() {
+    LastSyncReplayRecord lastRecord = getLastSyncReplayRecord();
+    lastRecord.setLastReplayedTime(ZonedDateTime.now());
+    return lastRecord;
+  }
+
+  private LastSyncReplayRecord buildSyncTime() {
+    LastSyncReplayRecord lastRecord = getLastSyncReplayRecord();
+    lastRecord.setLastSyncedTime(ZonedDateTime.now());
+    return lastRecord;
+  }
+
+  private LastSyncReplayRecord getLastSyncReplayRecord() {
+    Optional<LastSyncReplayRecord> lastRecord = lastSyncRecordRepository.findById(FieldConstants.LAST_SYNC_RECORD_ID);
+    LastSyncReplayRecord buildLastRecord = LastSyncReplayRecord.builder()
+        .id(FieldConstants.LAST_SYNC_RECORD_ID)
+        .lastSyncedTime(ZonedDateTime.now())
+        .lastReplayedTime(ZonedDateTime.now())
         .build();
+    return lastRecord.orElse(buildLastRecord);
   }
 }

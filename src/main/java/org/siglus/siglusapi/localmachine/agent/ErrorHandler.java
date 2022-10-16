@@ -36,20 +36,20 @@ import org.springframework.transaction.annotation.Transactional;
 public class ErrorHandler {
 
   private final ErrorRecordRepository errorRecordRepository;
-  private final LocalSyncResultsService localSyncResultsService;
+  private final SyncRecordService syncRecordService;
 
   private static final String SIGLUS_PACKAGE_PREFIX = "org.siglus.siglusapi";
   private static final String OPENLMIS_PACKAGE_PREFIX = "org.openlmis";
 
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   public void storeErrorRecord(Throwable t, ErrorType errorType) {
-    localSyncResultsService.storeLastSyncRecord();
+    syncRecordService.storeLastSyncRecord();
     errorRecordRepository.save(buildSyncDownError(t, errorType));
   }
 
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   public void storeErrorRecord(UUID eventId, Throwable t, ErrorType errorType) {
-    localSyncResultsService.storeLastReplayRecord();
+    syncRecordService.storeLastReplayRecord();
     errorRecordRepository.save(buildSyncDownError(eventId, t, errorType));
   }
 

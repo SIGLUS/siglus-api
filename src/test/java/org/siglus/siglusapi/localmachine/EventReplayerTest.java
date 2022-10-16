@@ -38,18 +38,23 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.siglus.siglusapi.localmachine.ShedLockFactory.AutoClosableLock;
-import org.siglus.siglusapi.localmachine.agent.LocalSyncResultsService;
+import org.siglus.siglusapi.localmachine.agent.SyncRecordService;
 import org.siglus.siglusapi.localmachine.eventstore.EventStore;
 
 @RunWith(MockitoJUnitRunner.class)
 public class EventReplayerTest {
 
   private static final String GROUP_1 = "group1";
-  @Mock private EventStore eventStore;
-  @Mock private ShedLockFactory lockFactory;
-  @Mock private EventPublisher eventPublisher;
-  @Mock private LocalSyncResultsService localSyncResultsService;
-  @InjectMocks private EventReplayer eventReplayer;
+  @Mock
+  private EventStore eventStore;
+  @Mock
+  private ShedLockFactory lockFactory;
+  @Mock
+  private EventPublisher eventPublisher;
+  @Mock
+  private SyncRecordService syncRecordService;
+  @InjectMocks
+  private EventReplayer eventReplayer;
 
   @Before
   public void setup() {
@@ -73,7 +78,7 @@ public class EventReplayerTest {
                 .collect(Collectors.toList()));
     List<Event> publishedEvents = getPublishedEvents();
     // when
-    doNothing().when(localSyncResultsService).storeLastReplayRecord();
+    doNothing().when(syncRecordService).storeLastReplayRecord();
     eventReplayer.replay(groupEvents);
     // then
     assertThat(publishedEvents)
@@ -93,7 +98,7 @@ public class EventReplayerTest {
     List<Event> nonGroupEvents = Arrays.asList(event2, event1, event3);
     List<Event> publishedEvents = getPublishedEvents();
     // when
-    doNothing().when(localSyncResultsService).storeLastReplayRecord();
+    doNothing().when(syncRecordService).storeLastReplayRecord();
     eventReplayer.replay(nonGroupEvents);
     // then
     assertThat(publishedEvents)

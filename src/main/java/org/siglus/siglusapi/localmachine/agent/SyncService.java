@@ -47,7 +47,7 @@ public class SyncService {
   private final OnlineWebClient webClient;
   private final EventImporter eventImporter;
   private final ErrorHandler errorHandler;
-  private final LocalSyncResultsService localSyncResultsService;
+  private final SyncRecordService syncRecordService;
 
   @Transactional
   public void exchangeAcks() {
@@ -85,7 +85,7 @@ public class SyncService {
     }
     events.forEach(it -> it.setOnlineWebSynced(true));
     eventImporter.importEvents(events);
-    localSyncResultsService.storeLastSyncRecord();
+    syncRecordService.storeLastSyncRecord();
   }
 
   @Transactional

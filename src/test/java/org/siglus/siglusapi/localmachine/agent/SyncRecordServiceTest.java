@@ -15,10 +15,12 @@
 
 package org.siglus.siglusapi.localmachine.agent;
 
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.google.common.collect.Lists;
 import java.time.ZonedDateTime;
+import java.util.Optional;
 import junit.framework.TestCase;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -26,24 +28,17 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.siglus.siglusapi.constant.FieldConstants;
-import org.siglus.siglusapi.localmachine.constant.ErrorType;
-import org.siglus.siglusapi.localmachine.domain.ErrorRecord;
 import org.siglus.siglusapi.localmachine.domain.LastSyncReplayRecord;
-import org.siglus.siglusapi.localmachine.repository.ErrorRecordRepository;
 import org.siglus.siglusapi.localmachine.repository.LastSyncRecordRepository;
-import org.siglus.siglusapi.localmachine.webapi.LocalSyncResultsResponse;
 
 @RunWith(MockitoJUnitRunner.class)
-public class LocalSyncResultsServiceTest extends TestCase {
+public class SyncRecordServiceTest extends TestCase {
 
   @InjectMocks
-  private LocalSyncResultsService localSyncResultsService;
+  private SyncRecordService syncRecordService;
 
   @Mock
   private LastSyncRecordRepository lastSyncRecordRepository;
-
-  @Mock
-  private ErrorRecordRepository errorRecordRepository;
 
   private final ZonedDateTime lastSyncTime = ZonedDateTime.now();
   private final ZonedDateTime lastReplayTime = ZonedDateTime.now();
@@ -54,17 +49,22 @@ public class LocalSyncResultsServiceTest extends TestCase {
       .build();
 
   @Test
-  public void shouldGetSyncResult() {
-    //given
-    ErrorRecord errorRecord = ErrorRecord.builder().type(ErrorType.SYNC_UP).build();
-
+  public void shouldStoreLastSyncRecord() {
     //when
-    when(lastSyncRecordRepository.findFirstByOrderByLastSyncedTimeDesc()).thenReturn(syncRecord);
-    when(errorRecordRepository.findLastTenErrorRecords()).thenReturn(Lists.newArrayList(errorRecord));
-    LocalSyncResultsResponse syncResults = localSyncResultsService.getSyncResults();
+    when(lastSyncRecordRepository.findById(FieldConstants.LAST_SYNC_RECORD_ID)).thenReturn(Optional.of(syncRecord));
+    syncRecordService.storeLastSyncRecord();
 
     //then
-    assertEquals(lastSyncTime, syncResults.getLatestSyncedTime());
-    assertEquals(1, syncResults.getErrors().size());
+    verify(lastSyncRecordRepository).save(any(LastSyncReplayRecord.class));
+  }
+
+  @Test
+  public void shouldStoreLastReplayRecord() {
+    //when
+    when(lastSyncRecordRepository.findById(FieldConstants.LAST_SYNC_RECORD_ID)).thenReturn(Optional.of(syncRecord));
+    syncRecordService.storeLastReplayRecord();
+
+    //then
+    verify(lastSyncRecordRepository).save(any(LastSyncReplayRecord.class));
   }
 }

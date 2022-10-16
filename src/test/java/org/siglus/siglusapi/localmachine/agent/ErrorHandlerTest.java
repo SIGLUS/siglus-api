@@ -46,7 +46,7 @@ public class ErrorHandlerTest extends TestCase {
   private ErrorRecordRepository errorRecordRepository;
 
   @Mock
-  private LocalSyncResultsService localSyncResultsService;
+  private SyncRecordService syncRecordService;
 
   private final UUID eventId = UUID.randomUUID();
 
@@ -56,7 +56,7 @@ public class ErrorHandlerTest extends TestCase {
     BusinessDataException businessDataException = new BusinessDataException(new Message(ERROR_NOT_FOUND_SYNC_RECORD));
 
     //when
-    doNothing().when(localSyncResultsService).storeLastSyncRecord();
+    doNothing().when(syncRecordService).storeLastSyncRecord();
     errorHandler.storeErrorRecord(businessDataException, ErrorType.SYNC_DOWN);
 
     //then
@@ -69,7 +69,7 @@ public class ErrorHandlerTest extends TestCase {
     Exception nullPointerException = new NullPointerException();
 
     //when
-    doNothing().when(localSyncResultsService).storeLastSyncRecord();
+    doNothing().when(syncRecordService).storeLastSyncRecord();
     errorHandler.storeErrorRecord(nullPointerException, ErrorType.SYNC_DOWN);
 
     //then
@@ -82,7 +82,7 @@ public class ErrorHandlerTest extends TestCase {
     BusinessDataException businessDataException = new BusinessDataException(new Message(ERROR_NOT_FOUND_SYNC_RECORD));
 
     //when
-    doNothing().when(localSyncResultsService).storeLastReplayRecord();
+    doNothing().when(syncRecordService).storeLastReplayRecord();
     errorHandler.storeErrorRecord(eventId, businessDataException, ErrorType.SYNC_DOWN);
 
     //then
@@ -95,7 +95,7 @@ public class ErrorHandlerTest extends TestCase {
     Exception nullPointerException = new NullPointerException();
 
     //when
-    doNothing().when(localSyncResultsService).storeLastReplayRecord();
+    doNothing().when(syncRecordService).storeLastReplayRecord();
     errorHandler.storeErrorRecord(nullPointerException, ErrorType.SYNC_DOWN);
 
     //then
@@ -109,7 +109,7 @@ public class ErrorHandlerTest extends TestCase {
     ArrayList<UUID> eventIds = Lists.newArrayList(eventId);
 
     //when
-    doNothing().when(localSyncResultsService).storeLastSyncRecord();
+    doNothing().when(syncRecordService).storeLastSyncRecord();
     errorHandler.storeErrorRecord(eventIds, businessDataException, ErrorType.SYNC_UP);
 
     //then
@@ -122,7 +122,7 @@ public class ErrorHandlerTest extends TestCase {
     Exception nullPointerException = new NullPointerException();
     ArrayList<UUID> eventIds = Lists.newArrayList(eventId);
     //when
-    doNothing().when(localSyncResultsService).storeLastSyncRecord();
+    doNothing().when(syncRecordService).storeLastSyncRecord();
     errorHandler.storeErrorRecord(eventIds, nullPointerException, ErrorType.SYNC_UP);
 
     //then
