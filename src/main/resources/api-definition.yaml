@@ -272,6 +272,12 @@ traits:
           get:
             description: resync data from onlineweb
       /agent:
+        /basicInfo:
+          get:
+            description: get local machine basic info
+        /syncResults:
+          get:
+            description: get sync results
         put:
           description: local api for localmachine control plane to activate the machine
         /events/export:
