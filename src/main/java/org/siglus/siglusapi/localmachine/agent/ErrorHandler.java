@@ -74,7 +74,6 @@ public class ErrorHandler {
         .build();
   }
 
-  //build sync down error without event
   private ErrorRecord buildSyncDownError(Throwable t, ErrorType errorType) {
     if (t instanceof BusinessDataException) {
       return ErrorRecord.builder()
@@ -90,7 +89,6 @@ public class ErrorHandler {
         .build();
   }
 
-  //build business error payload with event
   private ErrorPayload buildBusinessErrorPayload(Event event, Throwable t) {
     BusinessDataException businessDataException = (BusinessDataException) t;
     return ErrorPayload.builder()
@@ -101,7 +99,6 @@ public class ErrorHandler {
         .build();
   }
 
-  //build business error payload without event
   private ErrorPayload buildBusinessErrorPayload(Throwable t) {
     BusinessDataException businessDataException = (BusinessDataException) t;
     return ErrorPayload.builder()
@@ -111,7 +108,6 @@ public class ErrorHandler {
         .build();
   }
 
-  //build general error payload with event
   private ErrorPayload buildGeneralErrorPayload(Event event, Throwable t) {
     return ErrorPayload.builder()
         .errorName(t.getClass().getName())
@@ -121,9 +117,7 @@ public class ErrorHandler {
         .build();
   }
 
-  //build general error payload without event
   private ErrorPayload buildGeneralErrorPayload(Throwable t) {
-
     return ErrorPayload.builder()
         .errorName(t.getClass().getName())
         .detailMessage(t.toString())

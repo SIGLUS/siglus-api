@@ -19,6 +19,7 @@ import static org.springframework.util.ObjectUtils.isEmpty;
 
 import com.google.common.collect.Iterators;
 import com.google.common.collect.UnmodifiableIterator;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +28,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.siglus.siglusapi.localmachine.Ack;
 import org.siglus.siglusapi.localmachine.Event;
 import org.siglus.siglusapi.localmachine.EventImporter;
+import org.siglus.siglusapi.localmachine.constant.ErrorType;
 import org.siglus.siglusapi.localmachine.eventstore.EventStore;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
@@ -37,10 +39,13 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @Profile({"localmachine"})
 public class SyncService {
+
   public static final int BATCH_PUSH_LIMIT = 5;
   private final EventStore localEventStore;
   private final OnlineWebClient webClient;
   private final EventImporter eventImporter;
+  private final ErrorHandler errorHandler;
+  private final LocalSyncResultsService localSyncResultsService;
 
   @Transactional
   public void exchangeAcks() {
@@ -53,17 +58,24 @@ public class SyncService {
 
   @Transactional
   public void pull() {
-    List<Event> events = webClient.exportPeeringEvents();
+    List<Event> events = null;
+    try {
+      events = webClient.exportPeeringEvents();
+    } catch (Exception e) {
+      errorHandler.storeErrorRecord(e, ErrorType.SYNC_DOWN);
+    }
     if (CollectionUtils.isEmpty(events)) {
       log.info("pull events got empty");
       return;
     }
     events.forEach(it -> it.setOnlineWebSynced(true));
     eventImporter.importEvents(events);
+    localSyncResultsService.storeLastSyncRecord();
   }
 
   @Transactional
   public void push() {
+    List<Event> readyForHandleEvents = new ArrayList<>();
     try {
       List<Event> events = localEventStore.getEventsForOnlineWeb();
       if (isEmpty(events)) {
@@ -71,12 +83,14 @@ public class SyncService {
       }
       UnmodifiableIterator<List<Event>> partitionList = Iterators.partition(events.iterator(), BATCH_PUSH_LIMIT);
       while (partitionList.hasNext()) {
-        List<Event> partEvents = partitionList.next();
-        webClient.sync(partEvents);
-        localEventStore.confirmEventsByWeb(partEvents);
+        readyForHandleEvents.addAll(partitionList.next());
+        webClient.sync(readyForHandleEvents);
+        localEventStore.confirmEventsByWeb(readyForHandleEvents);
+        readyForHandleEvents.clear();
       }
     } catch (Throwable e) {
       log.error("push event failed", e);
+      errorHandler.storeErrorRecord(readyForHandleEvents, e);
     }
   }
 }
