@@ -675,6 +675,12 @@ traits:
 
     /draftsWithLocation:
       displayName: stock management draft with location
+      /update:
+        put:
+          is: [ secured ]
+          responses:
+            200:
+              description: update sub draft status and operator
       get:
         is: [ secured ]
         body:
