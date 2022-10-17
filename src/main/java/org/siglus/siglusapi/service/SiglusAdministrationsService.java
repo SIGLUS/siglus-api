@@ -18,6 +18,7 @@ package org.siglus.siglusapi.service;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_FACILITY_CHANGE_TO_ANDROID;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_FACILITY_CHANGE_TO_LOCALMACHINE;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_FACILITY_CHANGE_TO_WEB;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_LOGIN_USER_NOT_MATCH;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_NOT_ACTIVATED_YET;
 
 import com.alibaba.excel.EasyExcelFactory;
@@ -79,6 +80,7 @@ import org.siglus.siglusapi.i18n.CsvUploadMessageKeys;
 import org.siglus.siglusapi.localmachine.Machine;
 import org.siglus.siglusapi.localmachine.agent.LocalActivationService;
 import org.siglus.siglusapi.localmachine.domain.ActivationCode;
+import org.siglus.siglusapi.localmachine.domain.AgentInfo;
 import org.siglus.siglusapi.localmachine.repository.ActivationCodeRepository;
 import org.siglus.siglusapi.localmachine.repository.AgentInfoRepository;
 import org.siglus.siglusapi.localmachine.utils.ActivationCodeGenerator;
@@ -668,8 +670,12 @@ public class SiglusAdministrationsService {
 
   private void validateIfLocalMachineActive() {
     if (!machine.isOnlineWeb()) {
-      localActivationService.getCurrentAgentInfo()
+      AgentInfo agentInfo = localActivationService.getCurrentAgentInfo()
           .orElseThrow(() -> new BusinessDataException(new Message(ERROR_NOT_ACTIVATED_YET)));
+      UUID loginUserHomeFacilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
+      if (!loginUserHomeFacilityId.equals(agentInfo.getFacilityId())) {
+        throw new BusinessDataException(new Message(ERROR_LOGIN_USER_NOT_MATCH));
+      }
     }
   }
 }

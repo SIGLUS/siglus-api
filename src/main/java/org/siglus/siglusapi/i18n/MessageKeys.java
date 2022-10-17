@@ -177,6 +177,7 @@ public abstract class MessageKeys {
   public static final String ERROR_FACILITY_CHANGED = "localmachine.facilityChanged";
   public static final String ERROR_FACILITY_IS_NOT_LOCALMACHINE = "facility.is.not.localmachine";
   public static final String ERROR_NOT_FOUND_SYNC_RECORD = "localmachine.not.found.sync.record";
+  public static final String ERROR_LOGIN_USER_NOT_MATCH = "localmachine.login.user.not.match.active.facility";
 
   // android
   public static final String ERROR_NOT_WEB_USER = "siglusapi.error.notWebUser";
