@@ -30,6 +30,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ArrayUtils;
 import org.joda.money.Money;
 import org.siglus.siglusapi.localmachine.EventPayload;
 import org.siglus.siglusapi.localmachine.utils.MoneyDeserializer;
@@ -74,6 +75,9 @@ public class PayloadSerializer {
 
   @SneakyThrows
   public Object load(byte[] payload) {
+    if (ArrayUtils.isEmpty(payload)) {
+      return null;
+    }
     PayloadWrapper payloadWrapper =
         LOCALMACHINE_EVENT_OBJECT_MAPPER.readValue(payload, PayloadWrapper.class);
     return LOCALMACHINE_EVENT_OBJECT_MAPPER.readValue(

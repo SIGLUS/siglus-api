@@ -17,6 +17,7 @@ package org.siglus.siglusapi.web;
 
 import static org.mockito.Mockito.verify;
 
+import java.util.UUID;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -34,6 +35,8 @@ public class SiglusShipmentDraftControllerTest {
   @Mock
   private SiglusShipmentDraftService siglusShipmentDraftService;
 
+  private final UUID draftId = UUID.randomUUID();
+
   @Test
   public void shouldCallV3ControllerWhenCreateShipmentDraft() {
     // when
@@ -42,5 +45,14 @@ public class SiglusShipmentDraftControllerTest {
 
     // then
     verify(siglusShipmentDraftService).createShipmentDraft(draftDto);
+  }
+
+  @Test
+  public void shouldCallServiceWhenDeleteShipmentDraft() {
+    // when
+    controller.deleteShipmentDraft(draftId);
+
+    // then
+    verify(siglusShipmentDraftService).deleteShipmentDraft(draftId);
   }
 }

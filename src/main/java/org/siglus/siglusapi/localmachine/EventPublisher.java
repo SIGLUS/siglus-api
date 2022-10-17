@@ -65,8 +65,10 @@ public class EventPublisher {
     }
     isReplaying.set(Boolean.TRUE);
     try {
+      log.info("start publish event, event id = " + event.getId());
       applicationEventPublisher.publishEvent(event.getPayload());
     } catch (Exception e) {
+      log.error("failed publish event, event id = {}, ex mag = {}", event.getId(), e.getMessage());
       errorHandler.storeErrorRecord(event.getId(), e, ErrorType.REPLAY);
       throw e;
     } finally {

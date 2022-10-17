@@ -38,7 +38,7 @@ public interface EventRecordRepository extends JpaRepository<EventRecord, UUID> 
 
   List<EventRecord> findEventRecordByOnlineWebSyncedAndArchived(boolean onlineWebSynced, boolean archived);
 
-  List<EventRecord> findEventRecordByGroupIdAndArchived(String groupId, boolean archived);
+  List<EventRecord> findEventRecordByGroupId(String groupId);
 
   @Modifying
   @Query(
