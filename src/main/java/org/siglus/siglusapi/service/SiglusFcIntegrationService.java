@@ -442,6 +442,7 @@ public class SiglusFcIntegrationService {
         .findOne(requisition.getFacilityId());
     fcRequisitionDto.setRequestingFacilityCode(requestingFacility.getCode());
     fcRequisitionDto.setRequestingFacilityName(requestingFacility.getName());
+    fcRequisitionDto.setRequestingFacilityType(requestingFacility.getType().getCode());
     fcRequisitionDto.setRequestingFacilityDescription(requestingFacility.getDescription());
     if (fcSupervisoryNodeIds.contains(requisition.getSupervisoryNodeId())) {
       fcRequisitionDto.setFacilityCode(requestingFacility.getCode());

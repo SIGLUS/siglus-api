@@ -24,7 +24,6 @@ import java.util.UUID;
 import javax.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
 import org.openlmis.requisition.exception.ValidationMessageException;
-import org.siglus.siglusapi.dto.ProductMovementDto;
 import org.siglus.siglusapi.dto.StockMovementResDto;
 import org.siglus.siglusapi.service.SiglusStockCardService;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -60,9 +59,4 @@ public class SiglusStockMovementWithoutLocationController {
     return new ResponseEntity<>(productMovements, OK);
   }
 
-  @GetMapping("/byProduct/{orderableId}")
-  public ProductMovementDto getMovementByProduct(@PathVariable("orderableId") UUID orderableId,
-      @RequestParam UUID facilityId) {
-    return siglusStockCardService.getMovementByProduct(facilityId, orderableId);
-  }
 }

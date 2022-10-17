@@ -19,7 +19,16 @@ import java.util.Optional;
 import java.util.UUID;
 import org.siglus.siglusapi.localmachine.domain.ActivationCode;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface ActivationCodeRepository extends JpaRepository<ActivationCode, UUID> {
+
   Optional<ActivationCode> findFirstByFacilityCodeAndActivationCode(String facilityCode, String activationCode);
+
+  @Query(value = "select activationcode "
+      + "from localmachine.activation_codes "
+      + "where facilitycode=:facilityCode "
+      + "and used=false", nativeQuery = true)
+  String findUsableAcivationCode(@Param("facilityCode") String facilityCode);
 }

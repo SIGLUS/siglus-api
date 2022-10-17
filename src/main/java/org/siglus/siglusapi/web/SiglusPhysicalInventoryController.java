@@ -15,9 +15,11 @@
 
 package org.siglus.siglusapi.web;
 
+import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_UUID;
 import static org.springframework.http.HttpStatus.NO_CONTENT;
 
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -45,6 +47,18 @@ public class SiglusPhysicalInventoryController {
   private final SiglusPhysicalInventoryService siglusPhysicalInventoryService;
   private final SiglusAuthenticationHelper authenticationHelper;
 
+
+  @GetMapping
+  public List<PhysicalInventoryDto> searchPhysicalInventories(
+      @RequestParam UUID program, @RequestParam UUID facility,
+      @RequestParam(required = false) Boolean isDraft) {
+    if (ALL_PRODUCTS_PROGRAM_ID.equals(program)) {
+      return siglusPhysicalInventoryService.getPhysicalInventoryDtosForAllProducts(facility, isDraft, false);
+    }
+    return siglusPhysicalInventoryService.getPhysicalInventoryDtosForProductsForOneProgram(program, facility, isDraft,
+        false);
+  }
+
   @GetMapping("/{id}")
   public PhysicalInventoryDto searchPhysicalInventory(@PathVariable UUID id) {
     if (ALL_PRODUCTS_UUID.equals(id)) {
@@ -53,7 +67,6 @@ public class SiglusPhysicalInventoryController {
     }
     return siglusPhysicalInventoryService.getPhysicalInventory(id);
   }
-
 
   @PutMapping("/{id}")
   public PhysicalInventoryDto updatePhysicalInventory(@PathVariable UUID id, @RequestBody PhysicalInventoryDto dto) {

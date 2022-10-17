@@ -43,6 +43,7 @@ import org.springframework.web.bind.annotation.RestController;
 @SuppressWarnings("PMD.AvoidDuplicateLiterals")
 @RequiredArgsConstructor
 public class SiglusStockManagementDraftWithLocationController {
+
   private final SiglusStockManagementDraftService stockManagementDraftService;
 
   @GetMapping
@@ -102,7 +103,6 @@ public class SiglusStockManagementDraftWithLocationController {
   }
 
 
-
   @DeleteMapping("/{id}")
   @ResponseStatus(NO_CONTENT)
   public void deleteInitialDraft(@PathVariable UUID id) {
@@ -133,6 +133,13 @@ public class SiglusStockManagementDraftWithLocationController {
   public StockManagementDraftWithLocationDto createEmptyStockManagementDraftWithLocation(
       @RequestBody StockManagementDraftWithLocationDto dto) {
     return stockManagementDraftService.createEmptyStockManagementDraftWithLocation(dto);
+  }
+
+  @PutMapping("/update")
+  @ResponseStatus(OK)
+  public StockManagementDraftDto updateOperatorAndStatus(
+      @RequestBody StockManagementDraftDto dto) {
+    return stockManagementDraftService.updateOperatorAndStatus(dto);
   }
 }
 

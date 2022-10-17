@@ -24,7 +24,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
 import org.siglus.siglusapi.localmachine.event.requisition.andriod.AndroidRequisitionSyncedEvent;
 import org.siglus.siglusapi.localmachine.event.requisition.andriod.AndroidRequisitionSyncedReplayer;
-import org.siglus.siglusapi.service.android.MeService;
+import org.siglus.siglusapi.service.android.RequisitionCreateService;
 import org.siglus.siglusapi.util.SiglusSimulateUserAuthHelper;
 
 
@@ -33,12 +33,10 @@ import org.siglus.siglusapi.util.SiglusSimulateUserAuthHelper;
 public class AndroidRequisitionSyncedReplayerTest {
   @InjectMocks
   private AndroidRequisitionSyncedReplayer androidRequisitionSyncedReplayer;
-
-  @Mock
-  private MeService meService;
   @Mock
   private SiglusSimulateUserAuthHelper simulateUserAuthHelper;
-
+  @Mock
+  private RequisitionCreateService requisitionCreateService;
 
   private final UUID requisitionId = UUID.randomUUID();
   private final UUID facilityId = UUID.randomUUID();

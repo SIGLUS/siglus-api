@@ -272,6 +272,12 @@ traits:
           get:
             description: resync data from onlineweb
       /agent:
+        /basicInfo:
+          get:
+            description: get local machine basic info
+        /syncResults:
+          get:
+            description: get sync results
         put:
           description: local api for localmachine control plane to activate the machine
         /events/export:
@@ -439,6 +445,31 @@ traits:
           responses:
             204:
               description: subDraft successfully deleted
+      /draftList:
+        get:
+          is: [ secured ]
+          description: Get subDrafts belongs to the program and facility.
+          queryParameters:
+            program:
+              required: true
+              description: program id
+              repeat: false
+              type: string
+            facility:
+              required: true
+              description: facility id
+              repeat: false
+              type: string
+            isDraft:
+              required: false
+              description: is draft
+              repeat: false
+              type: boolean
+          responses:
+            200:
+              body:
+                application/json:
+                  schema: draftListResponse
     /facilities:
       post:
         is: [ secured ]
@@ -669,6 +700,12 @@ traits:
 
     /draftsWithLocation:
       displayName: stock management draft with location
+      /update:
+        put:
+          is: [ secured ]
+          responses:
+            200:
+              description: update sub draft status and operator
       get:
         is: [ secured ]
         body:

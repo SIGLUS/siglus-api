@@ -49,6 +49,8 @@ public class FcRequisitionDto {
 
   private String requestingFacilityName;
 
+  private String requestingFacilityType;
+
   private String requestingFacilityDescription;
 
   private String programCode;

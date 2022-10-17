@@ -13,14 +13,10 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.web.withoutlocation;
+package org.siglus.siglusapi.web;
 
-import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.when;
-import static org.springframework.http.HttpStatus.OK;
+import static org.mockito.Mockito.verify;
 
-import java.util.LinkedList;
-import java.util.List;
 import java.util.UUID;
 import org.junit.Before;
 import org.junit.Rule;
@@ -30,13 +26,10 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.openlmis.requisition.exception.ValidationMessageException;
-import org.siglus.siglusapi.dto.StockMovementResDto;
 import org.siglus.siglusapi.service.SiglusStockCardService;
-import org.springframework.http.ResponseEntity;
 
 @RunWith(MockitoJUnitRunner.class)
-public class SiglusStockMovementWithoutLocationControllerTest {
+public class SiglusStockMovementControllerTest {
 
   @Rule
   public final ExpectedException expectedEx = ExpectedException.none();
@@ -45,27 +38,21 @@ public class SiglusStockMovementWithoutLocationControllerTest {
   private SiglusStockCardService siglusStockCardService;
 
   @InjectMocks
-  private SiglusStockMovementWithoutLocationController controller;
+  private SiglusStockMovementController controller;
 
   private UUID facilityId;
+
+  private UUID orderableId;
 
   @Before
   public void prepare() {
     facilityId = UUID.randomUUID();
+    orderableId = UUID.randomUUID();
   }
 
   @Test
-  public void shouldGetStockMovementByFacilityId() {
-    when(siglusStockCardService.getProductMovements(facilityId, null, null, null))
-        .thenReturn(new LinkedList<>());
-    ResponseEntity<List<StockMovementResDto>> responseEntity =
-        controller.getStockMovement(facilityId, null, null, null);
-    assertEquals(OK, responseEntity.getStatusCode());
+  public void shouldCallGetProductMovementByServiceGivenFacilityIdAndOrderableId() {
+    controller.getMovementByProduct(orderableId, facilityId);
+    verify(siglusStockCardService).getMovementByProduct(facilityId, orderableId);
   }
-
-  @Test(expected = ValidationMessageException.class)
-  public void shouldThrowExceptionWhenOrderableIdAndFacilityIdAreNull() throws ValidationMessageException {
-    controller.getStockMovement(null, null, null, null);
-  }
-
 }

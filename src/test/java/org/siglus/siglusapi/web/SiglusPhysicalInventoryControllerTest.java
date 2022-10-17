@@ -50,6 +50,23 @@ public class SiglusPhysicalInventoryControllerTest {
 
   private final UUID id = UUID.randomUUID();
 
+  private final Boolean isDraft = true;
+
+  @Test
+  public void shouldCallGetForAllProductsWhenSearchIfProgramIsAllProducts() {
+    controller.searchPhysicalInventories(ALL_PRODUCTS_PROGRAM_ID, facilityId, isDraft);
+
+    verify(siglusPhysicalInventoryService).getPhysicalInventoryDtosForAllProducts(facilityId, isDraft, false);
+  }
+
+  @Test
+  public void shouldCallGetPhysicalInventoryDtosWhenSearchIfProgramIsNotAllProducts() {
+    controller.searchPhysicalInventories(programId, facilityId, isDraft);
+
+    verify(siglusPhysicalInventoryService)
+        .getPhysicalInventoryDtosForProductsForOneProgram(programId, facilityId, isDraft, false);
+  }
+
   @Test
   public void shouldCallGetForAllProductsWhenSearchByIdIfIdIsAllProducts() {
     UserDto user = new UserDto();

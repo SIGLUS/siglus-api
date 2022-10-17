@@ -13,26 +13,28 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.localmachine.scheduledtask;
+package org.siglus.siglusapi.web;
 
-import java.time.LocalDate;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
-import org.siglus.siglusapi.localmachine.Machine;
-import org.siglus.siglusapi.service.scheduledtask.CalculateCmmService;
-import org.springframework.context.annotation.Profile;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Service;
+import org.siglus.siglusapi.dto.ProductMovementDto;
+import org.siglus.siglusapi.service.SiglusStockCardService;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
-@Profile("localmachine")
+@RestController
+@RequestMapping("/api/siglusapi/stockMovement")
 @RequiredArgsConstructor
-@Service
-public class CalculateLocalMachineCmmTask {
+public class SiglusStockMovementController {
 
-  private final CalculateCmmService calculateCmmService;
-  private final Machine machine;
+  private final SiglusStockCardService siglusStockCardService;
 
-  @Scheduled(cron = "${cmm.calculate.cron}", zone = "${time.zoneId}")
-  public void calculate() {
-    calculateCmmService.calculateLocalMachineCmms(LocalDate.now(), machine.getFacilityId());
+  @GetMapping("/byProduct/{orderableId}")
+  public ProductMovementDto getMovementByProduct(@PathVariable("orderableId") UUID orderableId,
+      @RequestParam UUID facilityId) {
+    return siglusStockCardService.getMovementByProduct(facilityId, orderableId);
   }
 }

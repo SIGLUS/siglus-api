@@ -15,12 +15,12 @@
 
 package org.siglus.siglusapi.service.fc.mapper;
 
+import static com.google.common.collect.Maps.newHashMap;
 import static java.util.Collections.emptySet;
 import static java.util.Collections.singleton;
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -35,7 +35,6 @@ import org.siglus.siglusapi.domain.ProgramRealProgram;
 import org.siglus.siglusapi.dto.OrderableDisplayCategoryDto;
 import org.siglus.siglusapi.dto.fc.AreaDto;
 import org.siglus.siglusapi.dto.fc.ProductInfoDto;
-import org.siglus.siglusapi.repository.CustomProductsRegimensRepository;
 import org.siglus.siglusapi.service.fc.FcProductService;
 import org.siglus.siglusapi.util.FcUtil;
 
@@ -47,7 +46,7 @@ public class FcProductMapper {
 
   private final Map<String, OrderableDisplayCategoryDto> categoryCodeToEntityMap;
 
-  private static final Map<String, String> categoryDisplayNameToCode = new HashMap<>();
+  private static final Map<String, String> categoryDisplayNameToCode = newHashMap();
 
   public FcProductMapper(
       Map<String, ProgramRealProgram> realProgramCodeToEntityMap,
@@ -66,10 +65,9 @@ public class FcProductMapper {
   static OrderableDisplayCategoryDto getOrderableDisplayCategoryDtoFromCustomProductsRegimens(
       ProductInfoDto product,
       Map<String, OrderableDisplayCategoryDto> categoryCodeToEntityMap,
-      CustomProductsRegimensRepository customProductsRegimensRepository) {
-    CustomProductsRegimens customProductsRegimens = customProductsRegimensRepository
-        .findCustomProductsRegimensByCode(product.getFnm());
-    if (null != customProductsRegimens) {
+      Map<String, CustomProductsRegimens> codeToCustomProductsRegimens) {
+    CustomProductsRegimens customProductsRegimens = codeToCustomProductsRegimens.get(product.getFnm());
+    if (customProductsRegimens != null) {
       String categoryType = customProductsRegimens.getCategoryType();
       return categoryCodeToEntityMap.get(categoryDisplayNameToCode.get(categoryType));
     }
@@ -101,7 +99,7 @@ public class FcProductMapper {
   }
 
   public Set<ProgramOrderableDto> getProgramOrderablesFrom(ProductInfoDto product,
-      CustomProductsRegimensRepository customProductsRegimensRepository) {
+      Map<String, CustomProductsRegimens> codeToCustomProductsRegimens) {
     if (product.getAreas() == null || product.getAreas().isEmpty() || !FcUtil.isActive(
         product.getStatus())) {
       return emptySet();
@@ -111,13 +109,13 @@ public class FcProductMapper {
       return emptySet();
     }
     ProgramOrderableDto programOrderableDto = getProgramOrderableDto(product, programCodes,
-        customProductsRegimensRepository);
+        codeToCustomProductsRegimens);
     return singleton(programOrderableDto);
   }
 
   private ProgramOrderableDto getProgramOrderableDto(
       ProductInfoDto product, Set<String> programCodes,
-      CustomProductsRegimensRepository customProductsRegimensRepository) {
+      Map<String, CustomProductsRegimens> codeToCustomProductsRegimens) {
     String programCode = getProgramCode(programCodes);
     ProgramOrderableDto programOrderableDto = new ProgramOrderableDto();
     programOrderableDto.setProgramId(programCodeToIdMap.get(programCode));
@@ -125,7 +123,7 @@ public class FcProductMapper {
     programOrderableDto.setFullSupply(true);
     OrderableDisplayCategoryDto categoryDto =
         getOrderableDisplayCategoryDtoFromCustomProductsRegimens(product,
-            categoryCodeToEntityMap, customProductsRegimensRepository);
+            categoryCodeToEntityMap, codeToCustomProductsRegimens);
     programOrderableDto.setOrderableDisplayCategoryId(categoryDto.getId());
     programOrderableDto.setOrderableCategoryDisplayName(categoryDto.getDisplayName());
     programOrderableDto.setOrderableCategoryDisplayOrder(categoryDto.getDisplayOrder());

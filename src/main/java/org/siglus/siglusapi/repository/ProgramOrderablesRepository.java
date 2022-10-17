@@ -21,20 +21,9 @@ import org.openlmis.referencedata.domain.ProgramOrderable;
 import org.siglus.siglusapi.repository.dto.ProgramOrderableDto;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 
 public interface ProgramOrderablesRepository extends JpaRepository<ProgramOrderable, UUID> {
 
   @Query(name = "ProgramOrderable.findProgramOrderableDto", nativeQuery = true)
   List<ProgramOrderableDto> findAllMaxVersionProgramOrderableDtos();
-
-  @Query(value = "select * from referencedata.program_orderables "
-      + "where (orderableid, orderableversionnumber) in "
-      + "("
-      + "select orderableid, max(orderableversionnumber) orderableversionnumber "
-      + "from referencedata.program_orderables "
-      + "group by orderableid "
-      + ") "
-      + "and orderableid = :orderableId", nativeQuery = true)
-  ProgramOrderable findNewestProgramOrderableByOrderableId(@Param("orderableId") UUID orderableId);
 }

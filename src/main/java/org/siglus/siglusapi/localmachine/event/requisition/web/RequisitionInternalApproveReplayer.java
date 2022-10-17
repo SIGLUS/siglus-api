@@ -17,7 +17,6 @@ package org.siglus.siglusapi.localmachine.event.requisition.web;
 
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toMap;
-import static org.springframework.util.CollectionUtils.isEmpty;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,6 +26,7 @@ import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.openlmis.requisition.domain.requisition.ApprovedProductReference;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.RequisitionBuilder;
@@ -66,7 +66,6 @@ import org.siglus.siglusapi.repository.UsageInformationLineItemRepository;
 import org.springframework.beans.BeanUtils;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
 
 @Slf4j
 @Service
@@ -134,9 +133,11 @@ public class RequisitionInternalApproveReplayer {
 
     Map<UUID, UUID> lineItemIdToOrderableId = event.getRequisition().getRequisitionLineItems().stream()
         .collect(toMap(RequisitionLineItem::getId, item -> item.getOrderable().getId()));
-    Map<UUID, RequisitionLineItemExtension> orderableIdToLineItemExtension = event.getLineItemExtensions().stream()
-        .collect(toMap(item -> lineItemIdToOrderableId.get(item.getRequisitionLineItemId()), identity()));
-    buildRequisitionLineItemsExtension(requisition, orderableIdToLineItemExtension);
+    if (CollectionUtils.isNotEmpty(event.getLineItemExtensions())) {
+      Map<UUID, RequisitionLineItemExtension> orderableIdToLineItemExtension = event.getLineItemExtensions().stream()
+          .collect(toMap(item -> lineItemIdToOrderableId.get(item.getRequisitionLineItemId()), identity()));
+      buildRequisitionLineItemsExtension(requisition, orderableIdToLineItemExtension);
+    }
 
     buildRequisitionUsageSections(requisition, event);
     notificationService.postInternalApproval(internalApprovalStatusChange.get().getAuthorId(),
@@ -324,7 +325,7 @@ public class RequisitionInternalApproveReplayer {
 
   private void buildRequisitionLineItemsExtension(Requisition requisition,
       Map<UUID, RequisitionLineItemExtension> requisitionLineItemExtensionMap) {
-    if (isEmpty(requisition.getRequisitionLineItems())) {
+    if (CollectionUtils.isEmpty(requisition.getRequisitionLineItems())) {
       return;
     }
     log.info("requisition line size: {}", requisition.getRequisitionLineItems().size());
@@ -346,7 +347,7 @@ public class RequisitionInternalApproveReplayer {
   }
 
   private void buildRequisitionLineItems(Requisition newRequisition, Requisition eventRequisition) {
-    if (isEmpty(eventRequisition.getRequisitionLineItems())) {
+    if (CollectionUtils.isEmpty(eventRequisition.getRequisitionLineItems())) {
       return;
     }
     Map<UUID, VersionEntityReference> productIdToApproveds = newRequisition.getAvailableProducts().stream().collect(
