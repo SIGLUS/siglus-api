@@ -17,6 +17,7 @@ package org.siglus.siglusapi.localmachine;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Optional;
@@ -24,31 +25,45 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
-import lombok.Getter;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.localmachine.repository.AgentInfoRepository;
+import org.siglus.siglusapi.repository.FacilityExtensionRepository;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
 @Slf4j
+@Data
 public class Machine {
-  private final AgentInfoRepository agentInfoRepository;
-  private final SiglusAuthenticationHelper siglusAuthenticationHelper;
   private static final String SYSTEM_INFO_COMMAND = "dmidecode -t system";
   private static final String OS_NAME = "os.name";
   private static final String OS_VERSION = "os.version";
   private static final String NOT_SPECIFIED = "Not Specified";
   private static final String DELIMITER = " ";
+  private final AgentInfoRepository agentInfoRepository;
+  private final SiglusAuthenticationHelper siglusAuthenticationHelper;
+  private final Environment env;
+  private final FacilityExtensionRepository facilityExtensionRepository;
 
-  @Getter private String deviceInfo;
+  private String deviceInfo;
+  private boolean isConnectedOnlineWeb;
 
   public Set<String> fetchSupportedFacilityIds() {
+    if (isOnlineWeb()) {
+      return new HashSet<>(facilityExtensionRepository.findNonLocalMachineFacilityIds());
+    }
     return new HashSet<>(agentInfoRepository.findRegisteredFacilityIds());
+  }
+
+  public boolean isActive() {
+    return CollectionUtils.isNotEmpty(fetchSupportedFacilityIds());
   }
 
   public UUID getMachineId() {
@@ -68,13 +83,18 @@ public class Machine {
   public UUID getFacilityId() {
     return Optional.ofNullable(siglusAuthenticationHelper.getCurrentUser())
         .map(UserDto::getHomeFacilityId)
-        .orElseGet(
-            () ->
-                UUID.fromString(
-                    this.fetchSupportedFacilityIds().stream()
-                        .findFirst()
-                        .orElseThrow(
-                            () -> new IllegalStateException("can not resolve local facility id"))));
+        .orElseGet(this::getLocalFacilityId);
+  }
+
+  UUID getLocalFacilityId() {
+    if (isOnlineWeb()) {
+      throw new IllegalStateException("not allowed to get local facility id on onlineweb");
+    }
+    return UUID.fromString(
+        this.fetchSupportedFacilityIds().stream()
+            .findFirst()
+            .orElseThrow(
+                () -> new IllegalStateException("can not resolve local facility id")));
   }
 
   private void generateMachineId() {
@@ -124,5 +144,9 @@ public class Machine {
 
   private String getSystemInfoString(String osName, String osVersion, String systemInfo) {
     return String.join(DELIMITER, "OS:", osName, osVersion, "Model:", systemInfo);
+  }
+
+  private boolean isOnlineWeb() {
+    return Arrays.stream(env.getActiveProfiles()).noneMatch(it -> it.equalsIgnoreCase("localmachine"));
   }
 }

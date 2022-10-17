@@ -20,6 +20,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 
 import java.util.Arrays;
@@ -37,16 +38,23 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.siglus.siglusapi.localmachine.ShedLockFactory.AutoClosableLock;
+import org.siglus.siglusapi.localmachine.agent.SyncRecordService;
 import org.siglus.siglusapi.localmachine.eventstore.EventStore;
 
 @RunWith(MockitoJUnitRunner.class)
 public class EventReplayerTest {
 
   private static final String GROUP_1 = "group1";
-  @Mock private EventStore eventStore;
-  @Mock private ShedLockFactory lockFactory;
-  @Mock private EventPublisher eventPublisher;
-  @InjectMocks private EventReplayer eventReplayer;
+  @Mock
+  private EventStore eventStore;
+  @Mock
+  private ShedLockFactory lockFactory;
+  @Mock
+  private EventPublisher eventPublisher;
+  @Mock
+  private SyncRecordService syncRecordService;
+  @InjectMocks
+  private EventReplayer eventReplayer;
 
   @Before
   public void setup() {
@@ -63,13 +71,14 @@ public class EventReplayerTest {
     Event groupEvent4MissingDependency =
         Event.builder().id(UUID.randomUUID()).groupId(GROUP_1).groupSequenceNumber(3).build();
     List<Event> groupEvents = Arrays.asList(groupEvent2, groupEvent1, groupEvent4MissingDependency);
-    List<Event> publishedEvents = getPublishedEvents();
     given(eventStore.loadSortedGroupEvents(GROUP_1))
         .willReturn(
             groupEvents.stream()
                 .sorted(Comparator.comparingLong(Event::getGroupSequenceNumber))
                 .collect(Collectors.toList()));
+    List<Event> publishedEvents = getPublishedEvents();
     // when
+    doNothing().when(syncRecordService).storeLastReplayRecord();
     eventReplayer.replay(groupEvents);
     // then
     assertThat(publishedEvents)
@@ -89,6 +98,7 @@ public class EventReplayerTest {
     List<Event> nonGroupEvents = Arrays.asList(event2, event1, event3);
     List<Event> publishedEvents = getPublishedEvents();
     // when
+    doNothing().when(syncRecordService).storeLastReplayRecord();
     eventReplayer.replay(nonGroupEvents);
     // then
     assertThat(publishedEvents)

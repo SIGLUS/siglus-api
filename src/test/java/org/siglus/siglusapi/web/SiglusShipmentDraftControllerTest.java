@@ -17,7 +17,6 @@ package org.siglus.siglusapi.web;
 
 import static org.mockito.Mockito.verify;
 
-import java.util.UUID;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -30,39 +29,16 @@ import org.siglus.siglusapi.service.SiglusShipmentDraftService;
 public class SiglusShipmentDraftControllerTest {
 
   @InjectMocks
-  private SiglusShipmentDraftController siglusShipmentDraftController;
+  private SiglusShipmentDraftController controller;
 
   @Mock
   private SiglusShipmentDraftService siglusShipmentDraftService;
-
-  private final UUID draftId = UUID.randomUUID();
-
-  @Test
-  public void shouldCallServiceWhenUpdateShipmentDraft() {
-    // given
-    ShipmentDraftDto draftDto = new ShipmentDraftDto();
-
-    // when
-    siglusShipmentDraftController.updateShipmentDraft(draftId, draftDto);
-
-    // then
-    verify(siglusShipmentDraftService).updateShipmentDraft(draftId, draftDto);
-  }
-
-  @Test
-  public void shouldCallServiceWhenDeleteShipmentDraft() {
-    // when
-    siglusShipmentDraftController.deleteShipmentDraft(draftId);
-
-    // then
-    verify(siglusShipmentDraftService).deleteShipmentDraft(draftId);
-  }
 
   @Test
   public void shouldCallV3ControllerWhenCreateShipmentDraft() {
     // when
     ShipmentDraftDto draftDto = new ShipmentDraftDto();
-    siglusShipmentDraftController.createShipmentDraft(draftDto);
+    controller.createShipmentDraft(draftDto);
 
     // then
     verify(siglusShipmentDraftService).createShipmentDraft(draftDto);

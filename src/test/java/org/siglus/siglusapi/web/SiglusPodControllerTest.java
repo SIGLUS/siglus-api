@@ -37,18 +37,6 @@ public class SiglusPodControllerTest {
   private SiglusPodService proofOfDeliveryService;
 
   @Test
-  public void shouldCallSiglusServiceWhenGetProofOfDelivery() {
-    // given
-    UUID podId = UUID.randomUUID();
-
-    // when
-    controller.getProofOfDelivery(podId, null);
-
-    // then
-    verify(proofOfDeliveryService).getPodExtensionResponse(podId, null);
-  }
-
-  @Test
   public void shouldAetAllProofsOfDelivery() {
     // given
     UUID orderId = UUID.randomUUID();

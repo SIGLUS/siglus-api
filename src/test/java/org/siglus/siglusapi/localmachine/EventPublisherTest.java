@@ -27,6 +27,9 @@ import lombok.NoArgsConstructor;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
+import org.siglus.siglusapi.localmachine.agent.ErrorHandler;
+import org.siglus.siglusapi.localmachine.agent.SyncRecordService;
+import org.siglus.siglusapi.localmachine.eventstore.AckRepository;
 import org.siglus.siglusapi.localmachine.eventstore.EventPayloadRepository;
 import org.siglus.siglusapi.localmachine.eventstore.EventRecord;
 import org.siglus.siglusapi.localmachine.eventstore.EventRecordRepository;
@@ -39,16 +42,27 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 @SpringBootTest(
     classes = {
-      EventPublisher.class,
-      EventStore.class,
-      PayloadSerializer.class,
+        EventPublisher.class,
+        EventStore.class,
+        PayloadSerializer.class,
     })
 @RunWith(SpringRunner.class)
 public class EventPublisherTest {
-  @MockBean protected EventRecordRepository eventRecordRepository;
-  @MockBean protected EventPayloadRepository eventPayloadRepository;
-  @MockBean protected Machine machine;
-  @Autowired private EventPublisher eventPublisher;
+
+  @MockBean
+  protected EventRecordRepository eventRecordRepository;
+  @MockBean
+  protected EventPayloadRepository eventPayloadRepository;
+  @MockBean
+  protected AckRepository ackRepository;
+  @MockBean
+  protected Machine machine;
+  @MockBean
+  protected ErrorHandler errorHandler;
+  @MockBean
+  protected SyncRecordService syncRecordService;
+  @Autowired
+  private EventPublisher eventPublisher;
 
   @Test
   public void canEmitNonGroupEventSuccessfully() {
@@ -99,6 +113,7 @@ public class EventPublisherTest {
   @AllArgsConstructor
   @NoArgsConstructor
   static class TestEventPayload {
+
     private String id;
   }
 }

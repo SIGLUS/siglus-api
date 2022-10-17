@@ -16,7 +16,6 @@
 package org.siglus.siglusapi.localmachine.event.requisition.web;
 
 import java.util.List;
-
 import lombok.Data;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.siglus.siglusapi.domain.AgeGroupLineItem;

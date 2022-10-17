@@ -15,11 +15,13 @@
 
 package org.siglus.siglusapi.localmachine.webapi;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.siglus.siglusapi.localmachine.Ack;
 import org.siglus.siglusapi.localmachine.EventImporter;
 import org.siglus.siglusapi.localmachine.ExternalEventDto;
 import org.siglus.siglusapi.localmachine.ExternalEventDtoMapper;
@@ -30,6 +32,7 @@ import org.siglus.siglusapi.localmachine.server.OnlineWebService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -70,10 +73,16 @@ public class OnlineWebController {
         .build();
   }
 
-  @PostMapping("/ack")
-  public void confirmReceived(
-      @RequestBody @Validated AckRequest request, MachineToken authentication) {
-    eventStore.confirmReceived(authentication.getFacilityId(), request.getEventIds());
+  @PostMapping("/acks")
+  public AckExchange exchangeAcks(AckExchange request, MachineToken authentication) {
+    eventStore.routeAcks(request.getAcks());
+    List<Ack> acks = eventStore.getAcksForEventSender(authentication.getFacilityId());
+    return new AckExchange(new HashSet<>(acks));
+  }
+
+  @PutMapping("/acks")
+  public void confirmAcks(AckExchange request) {
+    eventStore.confirmAckShipped(request.getAcks());
   }
 
   @GetMapping("/reSync")

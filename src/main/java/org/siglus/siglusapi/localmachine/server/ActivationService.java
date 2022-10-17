@@ -16,12 +16,14 @@
 package org.siglus.siglusapi.localmachine.server;
 
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_ACTIVATION_CODE_USED_ALREADY;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_FACILITY_IS_NOT_LOCALMACHINE;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_FACILITY_NOT_FOUND;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_INVALID_ACTIVATION_CODE;
 
 import java.time.ZonedDateTime;
 import java.util.Base64;
 import java.util.Base64.Decoder;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.openlmis.referencedata.domain.Facility;
@@ -35,6 +37,7 @@ import org.siglus.siglusapi.localmachine.repository.AgentInfoRepository;
 import org.siglus.siglusapi.localmachine.webapi.ActivationResponse;
 import org.siglus.siglusapi.localmachine.webapi.LocalActivationRequest;
 import org.siglus.siglusapi.localmachine.webapi.RemoteActivationRequest;
+import org.siglus.siglusapi.repository.FacilityExtensionRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -45,11 +48,13 @@ public class ActivationService {
   private final AgentInfoRepository agentInfoRepository;
   private final FacilityRepository facilityRepository;
   private final ActivationCodeRepository activationCodeRepository;
+  private final FacilityExtensionRepository facilityExtensionRepository;
 
   @Transactional
   public ActivationResponse activate(RemoteActivationRequest request) {
     LocalActivationRequest localActivationRequest = request.getLocalActivationRequest();
     Facility facility = mustGetFacility(localActivationRequest.getFacilityCode());
+    checkFacilityType(facility);
     doActivation(localActivationRequest);
     AgentInfo agentInfo = buildAgentInfo(request, facility);
     log.info("add agent {} for facility {}", request.getMachineId(), facility.getCode());
@@ -72,6 +77,16 @@ public class ActivationService {
     activationCode.isUsedAt(ZonedDateTime.now());
     log.info("mark activation code as used, id:{}", activationCode.getId());
     activationCodeRepository.save(activationCode);
+  }
+
+  void checkFacilityType(Facility facility) {
+    Boolean isLocalMachine =
+        Optional.ofNullable(facilityExtensionRepository.findByFacilityId(facility.getId()))
+            .map(it -> Boolean.TRUE.equals(it.getIsLocalMachine()))
+            .orElse(Boolean.FALSE);
+    if (Boolean.FALSE.equals(isLocalMachine)) {
+      throw new BusinessDataException(new Message(ERROR_FACILITY_IS_NOT_LOCALMACHINE));
+    }
   }
 
   private Facility mustGetFacility(String facilityCode) {

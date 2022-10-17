@@ -18,6 +18,7 @@ package org.siglus.siglusapi.service;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_FACILITY_CHANGE_TO_ANDROID;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_FACILITY_CHANGE_TO_LOCALMACHINE;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_FACILITY_CHANGE_TO_WEB;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_NOT_ACTIVATED_YET;
 
 import com.alibaba.excel.EasyExcelFactory;
 import com.alibaba.excel.support.ExcelTypeEnum;
@@ -71,12 +72,15 @@ import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.dto.SiglusFacilityDto;
 import org.siglus.siglusapi.dto.SiglusReportTypeDto;
 import org.siglus.siglusapi.dto.enums.FacilityDeviceTypeEnum;
+import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.i18n.CsvUploadMessageKeys;
+import org.siglus.siglusapi.localmachine.agent.LocalActivationService;
 import org.siglus.siglusapi.localmachine.domain.ActivationCode;
 import org.siglus.siglusapi.localmachine.repository.ActivationCodeRepository;
 import org.siglus.siglusapi.localmachine.repository.AgentInfoRepository;
+import org.siglus.siglusapi.localmachine.utils.ActivationCodeGenerator;
 import org.siglus.siglusapi.repository.AppInfoRepository;
 import org.siglus.siglusapi.repository.CalculatedStockOnHandByLocationRepository;
 import org.siglus.siglusapi.repository.FacilityExtensionRepository;
@@ -120,9 +124,8 @@ public class SiglusAdministrationsService {
   private final SiglusAuthenticationHelper authenticationHelper;
   private final LocationDraftRepository locationDraftRepository;
   private final AgentInfoRepository agentInfoRepository;
-
   private final ActivationCodeRepository activationCodeRepository;
-
+  private final LocalActivationService localActivationService;
   private static final String LOCATION_MANAGEMENT_TAB = "locationManagement";
   private static final String CSV_SUFFIX = ".csv";
   private static final String CONTENT_TYPE = "application/force-download";
@@ -175,6 +178,7 @@ public class SiglusAdministrationsService {
   }
 
   public FacilitySearchResultDto getFacility(UUID facilityId) {
+    validateIfLocalMachineActive();
     return getFacilityInfo(facilityId);
   }
 
@@ -404,7 +408,7 @@ public class SiglusAdministrationsService {
     appInfoRepository.deleteByFacilityCode(facilityDto.getCode());
     if (deviceType == FacilityDeviceTypeEnum.LOCAL_MACHINE) {
       agentInfoRepository.deleteByFacilityId(facilityId);
-      String activationCode = UUID.randomUUID().toString().substring(10);
+      String activationCode = ActivationCodeGenerator.get();
       ActivationCode code = ActivationCode
           .builder()
           .id(UUID.randomUUID())
@@ -644,6 +648,15 @@ public class SiglusAdministrationsService {
     } else if (facilityExtension.getEnableLocationManagement() != siglusFacilityDto.getEnableLocationManagement()) {
       log.info("delete location related drafts, facilityId: {}", siglusFacilityDto.getId());
       locationDraftRepository.deleteLocationRelatedDrafts(siglusFacilityDto.getId());
+    }
+  }
+
+  private void validateIfLocalMachineActive() {
+    UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
+    FacilityExtension facilityExtension = facilityExtensionRepository.findByFacilityId(facilityId);
+    if (null != facilityExtension && facilityExtension.getIsLocalMachine()) {
+      localActivationService.getCurrentAgentInfo()
+          .orElseThrow(() -> new BusinessDataException(new Message(ERROR_NOT_ACTIVATED_YET)));
     }
   }
 }

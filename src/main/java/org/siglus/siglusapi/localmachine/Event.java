@@ -15,9 +15,9 @@
 
 package org.siglus.siglusapi.localmachine;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.time.ZonedDateTime;
 import java.util.UUID;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -40,4 +40,13 @@ public class Event {
   private boolean onlineWebSynced;
   private boolean receiverSynced;
   private boolean localReplayed;
+
+  @JsonIgnore
+  private Ack ack;
+
+  @JsonIgnore
+  public void confirmedReceiverSynced() {
+    this.setReceiverSynced(true);
+    this.ack = new Ack(this.id, senderId);
+  }
 }

@@ -17,6 +17,7 @@ package org.siglus.siglusapi.localmachine.eventstore;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -25,7 +26,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
+import org.siglus.siglusapi.localmachine.Ack;
 import org.siglus.siglusapi.localmachine.Event;
+import org.springframework.data.domain.Example;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,6 +41,7 @@ public class EventStore {
   private final EventRecordRepository repository;
   private final EventPayloadRepository eventPayloadRepository;
   private final PayloadSerializer payloadSerializer;
+  private final AckRepository ackRepository;
 
   @SneakyThrows
   @Transactional
@@ -88,6 +92,14 @@ public class EventStore {
     EventRecord eventRecord = EventRecord.from(event, payloadSerializer.dump(event.getPayload()));
     repository.importExternalEvent(eventRecord);
     eventPayloadRepository.save(new EventPayload(eventRecord.getId(), eventRecord.getPayload()));
+    emitAckForEvent(event);
+  }
+
+  @Transactional
+  public void emitAckForEvent(Event event) {
+    if (Objects.nonNull(event.getAck())) {
+      emitAck(event.getAck());
+    }
   }
 
   public List<Event> loadSortedGroupEvents(String groupId) {
@@ -104,11 +116,19 @@ public class EventStore {
   }
 
   @Transactional
-  public void confirmReceived(UUID ackClaimerId, Set<UUID> eventIds) {
+  public void markAsReceived(Set<UUID> eventIds) {
     if (CollectionUtils.isEmpty(eventIds)) {
       return;
     }
-    repository.markAsReceived(ackClaimerId, eventIds);
+    repository.markAsReceived(eventIds);
+  }
+
+  @Transactional
+  public void confirmAckShipped(Set<Ack> acks) {
+    Set<UUID> eventIds = acks.stream().map(Ack::getEventId).collect(Collectors.toSet());
+    if (CollectionUtils.isNotEmpty(eventIds)) {
+      ackRepository.markShipped(eventIds);
+    }
   }
 
   public List<Event> excludeExisted(List<Event> events) {
@@ -129,5 +149,39 @@ public class EventStore {
     return repository.findEventRecordByLocalReplayed(false).stream()
         .map(it -> it.toEvent(payloadSerializer::load))
         .collect(Collectors.toList());
+  }
+
+  public List<Ack> getAcksForEventSender(UUID eventSender) {
+    Example<AckRecord> example = Example.of(AckRecord.builder().sendTo(eventSender).shipped(Boolean.FALSE).build());
+    return ackRepository.findAll(example).stream().map(AckRecord::toAck).collect(Collectors.toList());
+  }
+
+  public Set<Ack> getNotShippedAcks() {
+    Example<AckRecord> example = Example.of(AckRecord.builder().shipped(Boolean.FALSE).build());
+    return ackRepository.findAll(example).stream().map(AckRecord::toAck).collect(Collectors.toSet());
+  }
+
+  @Transactional
+  public void confirmEventsByAcks(Set<Ack> acks) {
+    Set<UUID> eventIds = acks.stream().map(Ack::getEventId).collect(Collectors.toSet());
+    if (CollectionUtils.isNotEmpty(eventIds)) {
+      this.markAsReceived(eventIds);
+    }
+  }
+
+  @Transactional
+  public void routeAcks(Set<Ack> acks) {
+    confirmEventsByAcks(acks);
+    saveAcks(acks);
+  }
+
+  private void saveAcks(Set<Ack> acks) {
+    List<AckRecord> ackRecords = acks.stream().map(AckRecord::from).collect(Collectors.toList());
+    ackRepository.save(ackRecords);
+  }
+
+  private void emitAck(Ack ack) {
+    AckRecord ackRecord = AckRecord.from(ack);
+    ackRepository.save(ackRecord);
   }
 }

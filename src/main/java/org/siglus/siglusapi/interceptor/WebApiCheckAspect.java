@@ -15,6 +15,10 @@
 
 package org.siglus.siglusapi.interceptor;
 
+import static org.siglus.siglusapi.i18n.MessageKeys.CURRENT_IS_NOT_LOCATION_MANAGEMENT;
+import static org.siglus.siglusapi.i18n.MessageKeys.CURRENT_IS_NOT_STOCK_MANAGEMENT;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_CURRENT_IS_NOT_LOCATION_MANAGEMENT;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_CURRENT_IS_NOT_STOCK_MANAGEMENT;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_NOT_WEB_USER;
 
 import lombok.RequiredArgsConstructor;
@@ -24,7 +28,9 @@ import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
 import org.openlmis.stockmanagement.exception.PermissionMessageException;
 import org.openlmis.stockmanagement.util.Message;
+import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.util.AndroidHelper;
+import org.siglus.siglusapi.util.FacilityConfigHelper;
 import org.siglus.siglusapi.util.LocalMachineHelper;
 import org.springframework.stereotype.Component;
 
@@ -36,6 +42,7 @@ public class WebApiCheckAspect {
 
   private final AndroidHelper androidHelper;
   private final LocalMachineHelper localMachineHelper;
+  private final FacilityConfigHelper facilityConfigHelper;
 
   @Pointcut("within(org.siglus.siglusapi.web.*) && "
       + "(@annotation(org.springframework.web.bind.annotation.PostMapping) "
@@ -47,10 +54,35 @@ public class WebApiCheckAspect {
   }
 
   @Before("webApi()")
-  public void before() {
+  public void beforeWebApi() {
     if (localMachineHelper.isLocalMachine() || androidHelper.isAndroid()) {
       throw new PermissionMessageException(new Message(ERROR_NOT_WEB_USER));
     }
   }
 
+  @Pointcut("within(org.siglus.siglusapi.web.withlocation.*)")
+  public void withLocationApi() {
+    // do nothing
+  }
+
+  @Before("withLocationApi()")
+  public void beforeWithLocationApi() {
+    if (facilityConfigHelper.isStockManagement()) {
+      throw new BusinessDataException(new org.siglus.siglusapi.dto.Message(ERROR_CURRENT_IS_NOT_LOCATION_MANAGEMENT),
+          CURRENT_IS_NOT_LOCATION_MANAGEMENT);
+    }
+  }
+
+  @Pointcut("within(org.siglus.siglusapi.web.withoutlocation.*)")
+  public void withoutLocationApi() {
+    // do nothing
+  }
+
+  @Before("withoutLocationApi()")
+  public void beforeWithoutLocationApi() {
+    if (facilityConfigHelper.isLocationManagement()) {
+      throw new BusinessDataException(new org.siglus.siglusapi.dto.Message(ERROR_CURRENT_IS_NOT_STOCK_MANAGEMENT),
+          CURRENT_IS_NOT_STOCK_MANAGEMENT);
+    }
+  }
 }

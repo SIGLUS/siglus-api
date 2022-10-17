@@ -15,15 +15,11 @@
 
 package org.siglus.siglusapi.web;
 
-import java.util.UUID;
+import lombok.RequiredArgsConstructor;
 import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftDto;
 import org.siglus.siglusapi.service.SiglusShipmentDraftService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -32,27 +28,15 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/siglusapi/shipmentDrafts")
+@RequiredArgsConstructor
 public class SiglusShipmentDraftController {
 
-  @Autowired
-  private SiglusShipmentDraftService siglusShipmentDraftService;
+  private final SiglusShipmentDraftService siglusShipmentDraftService;
 
   @PostMapping
   @ResponseStatus(HttpStatus.CREATED)
   @ResponseBody
   public ShipmentDraftDto createShipmentDraft(@RequestBody ShipmentDraftDto draftDto) {
     return siglusShipmentDraftService.createShipmentDraft(draftDto);
-  }
-
-  @PutMapping("/{id}")
-  public ShipmentDraftDto updateShipmentDraft(@PathVariable UUID id,
-      @RequestBody ShipmentDraftDto draftDto) {
-    return siglusShipmentDraftService.updateShipmentDraft(id, draftDto);
-  }
-
-  @DeleteMapping("/{id}")
-  @ResponseStatus(HttpStatus.NO_CONTENT)
-  public void deleteShipmentDraft(@PathVariable UUID id) {
-    siglusShipmentDraftService.deleteShipmentDraft(id);
   }
 }

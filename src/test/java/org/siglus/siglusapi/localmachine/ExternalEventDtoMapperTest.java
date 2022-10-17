@@ -42,6 +42,8 @@ public class ExternalEventDtoMapperTest {
     TestPayload testPayload = new TestPayload("test-payload-1");
     Event originEvent = Event.builder()
         .id(UUID.randomUUID())
+        .senderId(UUID.randomUUID())
+        .receiverId(UUID.randomUUID())
         .onlineWebSynced(false)
         .payload(testPayload)
         .build();

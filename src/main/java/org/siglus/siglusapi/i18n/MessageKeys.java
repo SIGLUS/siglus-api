@@ -175,6 +175,8 @@ public abstract class MessageKeys {
   public static final String ERROR_FACILITY_NOT_FOUND = "localmachine.facility.notFound";
   public static final String ERROR_NOT_ACTIVATED_YET = "localmachine.notActivated";
   public static final String ERROR_FACILITY_CHANGED = "localmachine.facilityChanged";
+  public static final String ERROR_FACILITY_IS_NOT_LOCALMACHINE = "facility.is.not.localmachine";
+  public static final String ERROR_NOT_FOUND_SYNC_RECORD = "localmachine.not.found.sync.record";
 
   // android
   public static final String ERROR_NOT_WEB_USER = "siglusapi.error.notWebUser";
@@ -213,6 +215,12 @@ public abstract class MessageKeys {
   public static final String PROCESSING_PERIOD = "processingPeriod";
   public static final String ID = "id";
   public static final String FACILITY = "facility";
+  public static final String CURRENT_IS_NOT_LOCATION_MANAGEMENT = "CURRENT_IS_NOT_LOCATION_MANAGEMENT";
+  public static final String CURRENT_IS_NOT_STOCK_MANAGEMENT = "CURRENT_IS_NOT_STOCK_MANAGEMENT";
+  public static final String ERROR_CURRENT_IS_NOT_LOCATION_MANAGEMENT =
+      ERROR_PREFIX + ".current.is.not.location.management";
+  public static final String ERROR_CURRENT_IS_NOT_STOCK_MANAGEMENT =
+      ERROR_PREFIX + ".current.is.not.stock.management";
 
   // s3
   public static final String ERROR_FILE_NOT_FOUND = ERROR_PREFIX + ".fileNotFound";

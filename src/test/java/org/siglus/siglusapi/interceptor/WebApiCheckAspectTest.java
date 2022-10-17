@@ -53,7 +53,7 @@ public class WebApiCheckAspectTest {
     // given
     when(localMachineHelper.isLocalMachine()).thenReturn(true);
     // when
-    webApiCheckAspect.before();
+    webApiCheckAspect.beforeWebApi();
   }
 
   @Test
@@ -65,7 +65,7 @@ public class WebApiCheckAspectTest {
     when(localMachineHelper.isLocalMachine()).thenReturn(false);
     when(androidHelper.isAndroid()).thenReturn(true);
     // when
-    webApiCheckAspect.before();
+    webApiCheckAspect.beforeWebApi();
   }
 
 }

@@ -24,6 +24,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+@SuppressWarnings("PMD.AvoidDuplicateLiterals")
 public interface EventRecordRepository extends JpaRepository<EventRecord, UUID> {
 
   List<EventRecord> findEventRecordByLocalReplayed(boolean localReplayed);
@@ -108,12 +109,15 @@ public interface EventRecordRepository extends JpaRepository<EventRecord, UUID> 
   @Modifying
   @Query(
       value =
-          "update localmachine.events set receiversynced=true where receiverid=:receiverId and id in :ids",
+          "update localmachine.events set receiversynced=true where id in :ids",
       nativeQuery = true)
-  void markAsReceived(@Param("receiverId") UUID receiverId, @Param("ids") Collection<UUID> ids);
+  void markAsReceived(@Param("ids") Collection<UUID> ids);
 
   @Query(value = "select cast(id as varchar) as id from localmachine.events where id in :ids", nativeQuery = true)
   Set<String> filterExistsEventIds(@Param("ids") Set<UUID> ids);
+
+  @Query(value = "select id, senderid from localmachine.events where id in :ids", nativeQuery = true)
+  List<EventRecord> getPartialEventWithSender(@Param("ids") Set<UUID> ids);
 
   List<EventRecord> findByReceiverIdAndReceiverSyncedAndArchived(
       UUID receiverId, Boolean receiverSynced, boolean archived);

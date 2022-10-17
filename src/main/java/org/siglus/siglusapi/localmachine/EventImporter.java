@@ -17,19 +17,29 @@ package org.siglus.siglusapi.localmachine;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import org.siglus.siglusapi.localmachine.agent.ErrorHandler;
 import org.siglus.siglusapi.localmachine.eventstore.EventStore;
 import org.springframework.dao.DataIntegrityViolationException;
 
 @Slf4j
 public abstract class EventImporter {
-  private final EventStore eventStore;
-  private final EventReplayer replayer;
 
-  protected EventImporter(EventStore eventStore, EventReplayer replayer) {
+  protected final EventStore eventStore;
+  protected final EventReplayer replayer;
+  protected final Machine machine;
+  protected final ErrorHandler errorHandler;
+
+  protected EventImporter(EventStore eventStore, EventReplayer replayer, Machine machine,
+      ErrorHandler errorHandler) {
     this.eventStore = eventStore;
     this.replayer = replayer;
+    this.machine = machine;
+    this.errorHandler = errorHandler;
   }
 
   public void importEvents(List<Event> events) {
@@ -45,6 +55,15 @@ public abstract class EventImporter {
   protected void resetStatus(List<Event> acceptedEvents) {
     // The local replayed flag is private, don't trust external ones, so reset it here.
     acceptedEvents.forEach(it -> it.setLocalReplayed(false));
+    Set<String> supportedFacilityIds = machine.fetchSupportedFacilityIds();
+    acceptedEvents.forEach(
+        it -> {
+          String facilityId =
+              Optional.ofNullable(it.getReceiverId()).map(UUID::toString).orElse("");
+          if (supportedFacilityIds.contains(facilityId)) {
+            it.confirmedReceiverSynced();
+          }
+        });
   }
 
   private List<Event> importGetNewAdded(List<Event> acceptedEvents) {
@@ -55,9 +74,20 @@ public abstract class EventImporter {
             eventStore.importQuietly(it);
             newAdded.add(it);
           } catch (DataIntegrityViolationException e) {
-            log.info("event exists, skip it");
+            checkIdViolationError(it.getId(), e);
+            // id violation means the event exists, to make sure sender get ack, here to emit ack again.
+            eventStore.emitAckForEvent(it);
           }
         });
     return newAdded;
+  }
+
+  static void checkIdViolationError(UUID eventId, DataIntegrityViolationException e) {
+    boolean idExists = e.getMessage().contains("Key (id)");
+    if (idExists) {
+      log.info("event exists, skip it, eventid:{}", eventId);
+    } else {
+      throw e;
+    }
   }
 }

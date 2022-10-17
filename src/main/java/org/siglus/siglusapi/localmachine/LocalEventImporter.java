@@ -15,10 +15,9 @@
 
 package org.siglus.siglusapi.localmachine;
 
-import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
+import org.siglus.siglusapi.localmachine.agent.ErrorHandler;
 import org.siglus.siglusapi.localmachine.eventstore.EventStore;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
@@ -26,30 +25,15 @@ import org.springframework.stereotype.Component;
 @Profile({"localmachine"})
 @Component
 public class LocalEventImporter extends EventImporter {
-  private final Machine machine;
 
-  public LocalEventImporter(EventStore localEventStore, EventReplayer replayer, Machine machine) {
-    super(localEventStore, replayer);
-    this.machine = machine;
+  public LocalEventImporter(EventStore localEventStore, EventReplayer replayer, Machine machine,
+      ErrorHandler errorHandler) {
+    super(localEventStore, replayer, machine, errorHandler);
   }
 
   @Override
   protected boolean accept(Event it) {
     return isTheReceiverAndEventNotBeConfirmedYet(it);
-  }
-
-  @Override
-  protected void resetStatus(List<Event> acceptedEvents) {
-    super.resetStatus(acceptedEvents);
-    Set<String> supportedFacilityIds = machine.fetchSupportedFacilityIds();
-    acceptedEvents.forEach(
-        it -> {
-          String facilityId =
-              Optional.ofNullable(it.getReceiverId()).map(UUID::toString).orElse("");
-          if (supportedFacilityIds.contains(facilityId)) {
-            it.setReceiverSynced(true);
-          }
-        });
   }
 
   private boolean isTheReceiverAndEventNotBeConfirmedYet(Event it) {

@@ -17,7 +17,6 @@ package org.siglus.siglusapi.localmachine.webapi;
 
 import java.util.UUID;
 import javax.validation.Valid;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

@@ -18,12 +18,14 @@ package org.siglus.siglusapi.localmachine.server;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
 import java.util.Base64;
 import java.util.Base64.Encoder;
 import java.util.Optional;
 import java.util.UUID;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -32,6 +34,7 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.referencedata.domain.Facility;
 import org.openlmis.referencedata.repository.FacilityRepository;
+import org.siglus.siglusapi.domain.FacilityExtension;
 import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.localmachine.domain.ActivationCode;
 import org.siglus.siglusapi.localmachine.domain.AgentInfo;
@@ -40,13 +43,42 @@ import org.siglus.siglusapi.localmachine.repository.AgentInfoRepository;
 import org.siglus.siglusapi.localmachine.webapi.ActivationResponse;
 import org.siglus.siglusapi.localmachine.webapi.LocalActivationRequest;
 import org.siglus.siglusapi.localmachine.webapi.RemoteActivationRequest;
+import org.siglus.siglusapi.repository.FacilityExtensionRepository;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ActivationServiceTest {
   @Mock FacilityRepository facilityRepository;
   @Mock AgentInfoRepository agentInfoRepository;
   @Mock ActivationCodeRepository activationCodeRepository;
+  @Mock FacilityExtensionRepository facilityExtensionRepository;
   @InjectMocks private ActivationService activationService;
+
+  @Before
+  public void setup() {
+    given(facilityExtensionRepository.findByFacilityId(any()))
+        .willReturn(FacilityExtension.builder().isLocalMachine(Boolean.TRUE).build());
+  }
+
+  @Test(expected = BusinessDataException.class)
+  public void shouldThrowWhenCheckFacilityTypeGivenFacilityExtensionNotExists() {
+    // given
+    Facility facility = mock(Facility.class);
+    given(facility.getId()).willReturn(UUID.randomUUID());
+    given(facilityExtensionRepository.findByFacilityId(any())).willReturn(null);
+    // then
+    activationService.checkFacilityType(facility);
+  }
+
+  @Test(expected = BusinessDataException.class)
+  public void shouldThrowWhenCheckFacilityTypeGivenNotLocalMachine() {
+    // given
+    Facility facility = mock(Facility.class);
+    given(facility.getId()).willReturn(UUID.randomUUID());
+    FacilityExtension nonLocalMachineExtension = FacilityExtension.builder().isLocalMachine(Boolean.FALSE).build();
+    given(facilityExtensionRepository.findByFacilityId(any())).willReturn(nonLocalMachineExtension);
+    // then
+    activationService.checkFacilityType(facility);
+  }
 
   @Test
   public void shouldActivateAgentSuccessfullyGivenAgentNotActivated() {

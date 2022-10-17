@@ -19,6 +19,9 @@ import java.time.ZonedDateTime;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.siglus.siglusapi.localmachine.agent.ErrorHandler;
+import org.siglus.siglusapi.localmachine.agent.SyncRecordService;
+import org.siglus.siglusapi.localmachine.constant.ErrorType;
 import org.siglus.siglusapi.localmachine.eventstore.EventStore;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
@@ -29,11 +32,14 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 @Slf4j
 public class EventPublisher {
+
   public static final int PROTOCOL_VERSION = 1;
   private static final ThreadLocal<Boolean> isReplaying = ThreadLocal.withInitial(() -> Boolean.FALSE);
   private final EventStore eventStore;
   private final ApplicationEventPublisher applicationEventPublisher;
   private final Machine machine;
+  private final ErrorHandler errorHandler;
+  private final SyncRecordService syncRecordService;
 
   public void emitGroupEvent(String groupId, UUID receiverId, Object payload) {
     Event.EventBuilder eventBuilder = baseEventBuilder(groupId, receiverId, payload);
@@ -60,11 +66,15 @@ public class EventPublisher {
     isReplaying.set(Boolean.TRUE);
     try {
       applicationEventPublisher.publishEvent(event.getPayload());
+    } catch (Exception e) {
+      errorHandler.storeErrorRecord(event.getId(), e, ErrorType.REPLAY);
+      throw e;
     } finally {
       isReplaying.remove();
     }
     event.setLocalReplayed(true);
     eventStore.confirmReplayed(event);
+    syncRecordService.storeLastReplayRecord();
   }
 
   private void doEmit(Event event) {

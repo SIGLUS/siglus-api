@@ -15,12 +15,21 @@
 
 package org.siglus.siglusapi.repository;
 
+import java.util.List;
 import java.util.UUID;
 import org.siglus.siglusapi.domain.FacilityExtension;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
 public interface FacilityExtensionRepository extends JpaRepository<FacilityExtension, UUID> {
 
   FacilityExtension findByFacilityId(UUID facilityId);
 
+  @Query(
+      value =
+          "select cast(fa.id as varchar) as id from referencedata.facilities fa "
+              + "left join siglusintegration.facility_extension fe on fa.id=fe.facilityid "
+              + "where fe.islocalmachine=true",
+      nativeQuery = true)
+  List<String> findNonLocalMachineFacilityIds();
 }

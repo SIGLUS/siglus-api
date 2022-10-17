@@ -21,7 +21,7 @@ import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import org.siglus.siglusapi.localmachine.auth.MachineTokenMatcher;
+import org.siglus.siglusapi.localmachine.auth.LocalMachineRequestFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -39,8 +39,6 @@ import org.springframework.security.oauth2.provider.token.AccessTokenConverter;
 import org.springframework.security.oauth2.provider.token.DefaultAccessTokenConverter;
 import org.springframework.security.oauth2.provider.token.RemoteTokenServices;
 import org.springframework.security.web.authentication.preauth.AbstractPreAuthenticatedProcessingFilter;
-import org.springframework.security.web.util.matcher.AndRequestMatcher;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -53,7 +51,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 public class ResourceServerSecurityConfiguration implements ResourceServerConfigurer {
 
   private final TokenExtractor tokenExtractor = new BearerTokenExtractor();
-  private final MachineTokenMatcher machineTokenMatcher;
+  private final LocalMachineRequestFilter localMachineRequestFilter;
 
   @Value("${auth.resourceId}")
   private String resourceId;
@@ -64,8 +62,8 @@ public class ResourceServerSecurityConfiguration implements ResourceServerConfig
   @Value("${cors.allowedMethods}")
   private String[] allowedMethods;
 
-  public ResourceServerSecurityConfiguration(MachineTokenMatcher machineTokenMatcher) {
-    this.machineTokenMatcher = machineTokenMatcher;
+  public ResourceServerSecurityConfiguration(LocalMachineRequestFilter localMachineRequestFilter) {
+    this.localMachineRequestFilter = localMachineRequestFilter;
   }
 
 
@@ -76,6 +74,7 @@ public class ResourceServerSecurityConfiguration implements ResourceServerConfig
 
   @Override
   public void configure(HttpSecurity http) throws Exception {
+    http.addFilterAfter(localMachineRequestFilter, AbstractPreAuthenticatedProcessingFilter.class);
     http.addFilterAfter(new OncePerRequestFilter() {
       @Override
       protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -99,13 +98,9 @@ public class ResourceServerSecurityConfiguration implements ResourceServerConfig
             "/siglusapi/webjars/**",
             "/siglusapi/docs/**",
             "/api/siglusapi/localmachine/agent",
-            "/api/siglusapi/localmachine/server/agents",
             "/health")
         .permitAll()
-        .requestMatchers(
-            new AndRequestMatcher(
-                new AntPathRequestMatcher("/api/siglusapi/localmachine/server/**"),
-                machineTokenMatcher))
+        .requestMatchers(localMachineRequestFilter.getRequestMatcher())
         .permitAll()
         .antMatchers("/**")
         .fullyAuthenticated();

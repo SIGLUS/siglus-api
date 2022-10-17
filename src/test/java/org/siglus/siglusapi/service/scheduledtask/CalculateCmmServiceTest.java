@@ -37,7 +37,7 @@ import org.openlmis.referencedata.domain.Facility;
 import org.openlmis.referencedata.domain.ProcessingPeriod;
 import org.openlmis.referencedata.domain.ProcessingSchedule;
 import org.siglus.siglusapi.constant.PeriodConstants;
-import org.siglus.siglusapi.repository.FacilityCmmNativeRepository;
+import org.siglus.siglusapi.repository.FacilityCmmsRepository;
 import org.siglus.siglusapi.repository.SiglusFacilityRepository;
 import org.siglus.siglusapi.repository.SiglusStockCardLineItemRepository;
 import org.siglus.siglusapi.repository.SiglusStockCardRepository;
@@ -56,7 +56,7 @@ public class CalculateCmmServiceTest {
   @Mock
   private SiglusFacilityRepository siglusFacilityRepository;
   @Mock
-  private FacilityCmmNativeRepository facilityCmmNativeRepository;
+  private FacilityCmmsRepository facilityCmmsRepository;
   @Mock
   private SiglusStockCardRepository siglusStockCardRepository;
   @Mock
@@ -91,7 +91,7 @@ public class CalculateCmmServiceTest {
     calculateCmmService.calculateWebCmms(null);
 
     // then
-    verify(facilityCmmNativeRepository).batchCreateHfCmms(anyList());
+    verify(facilityCmmsRepository).save(anyList());
   }
 
   @Test
@@ -103,7 +103,7 @@ public class CalculateCmmServiceTest {
     calculateCmmService.calculateWebCmms(LocalDate.of(oneYearAgo.getYear(), 10, 21));
 
     // then
-    verify(facilityCmmNativeRepository).batchCreateHfCmms(anyList());
+    verify(facilityCmmsRepository).save(anyList());
   }
 
   @Test
@@ -115,7 +115,7 @@ public class CalculateCmmServiceTest {
     calculateCmmService.calculateWebCmms(LocalDate.of(oneYearAgo.getYear(), 8, 21));
 
     // then
-    verify(facilityCmmNativeRepository, times(0)).batchCreateHfCmms(anyList());
+    verify(facilityCmmsRepository, times(0)).save(anyList());
   }
 
   @Test
@@ -127,7 +127,7 @@ public class CalculateCmmServiceTest {
     calculateCmmService.calculateLocalMachineCmms(null, facilityId);
 
     // then
-    verify(facilityCmmNativeRepository).batchCreateHfCmms(anyList());
+    verify(facilityCmmsRepository).save(anyList());
   }
 
   private Map<UUID, String> buildMockOrderableIdToCode() {

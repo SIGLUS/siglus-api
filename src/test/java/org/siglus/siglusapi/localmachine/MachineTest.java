@@ -18,12 +18,15 @@ package org.siglus.siglusapi.localmachine;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.util.Collections;
 import java.util.Optional;
 import java.util.UUID;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -31,13 +34,58 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.localmachine.repository.AgentInfoRepository;
+import org.siglus.siglusapi.repository.FacilityExtensionRepository;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
+import org.springframework.core.env.Environment;
 
 @RunWith(MockitoJUnitRunner.class)
 public class MachineTest {
   @Mock private AgentInfoRepository agentInfoRepository;
   @Mock private SiglusAuthenticationHelper siglusAuthenticationHelper;
+  @Mock private FacilityExtensionRepository facilityExtensionRepository;
+  @Mock private Environment environment;
   @InjectMocks private Machine machine;
+
+  @Before
+  public void setup() {
+    given(environment.getActiveProfiles()).willReturn(new String[]{"localmachine"});
+  }
+
+  @Test(expected = IllegalStateException.class)
+  public void shouldThrowWhenGetLocalFacilityIdOnWeb() {
+    machine.getLocalFacilityId();
+  }
+
+  @Test
+  public void shouldBeActiveGivenSupportedFacilityIdsNotEmpty() {
+    // given
+    Machine machine = mock(Machine.class);
+    given(machine.fetchSupportedFacilityIds()).willReturn(Collections.singleton("facility id"));
+    when(machine.isActive()).thenCallRealMethod();
+    // then
+    assertThat(machine.isActive()).isTrue();
+  }
+
+  @Test
+  public void shouldNotBeActiveGivenSupportedFacilityIdsIsEmpty() {
+    // given
+    Machine machine = mock(Machine.class);
+    given(machine.fetchSupportedFacilityIds()).willReturn(Collections.emptySet());
+    when(machine.isActive()).thenCallRealMethod();
+    // then
+    assertThat(machine.isActive()).isFalse();
+  }
+
+  @Test
+  public void shouldReturn() {
+    // given
+    String nonLocalMachineFacilityId = UUID.randomUUID().toString();
+    given(facilityExtensionRepository.findNonLocalMachineFacilityIds()).willReturn(
+        Collections.singletonList(nonLocalMachineFacilityId));
+    given(environment.getActiveProfiles()).willReturn(new String[]{});
+    // then
+    assertThat(machine.fetchSupportedFacilityIds()).containsExactly(nonLocalMachineFacilityId);
+  }
 
   @Test
   public void shouldTouchMachineIdWhenCalledEnsureMachineInfoExistsGivenAgentInfoNotExists() {

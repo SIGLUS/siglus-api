@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.localmachine.webapi;
 
+import java.util.Optional;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -26,4 +27,8 @@ import org.hibernate.validator.constraints.NotBlank;
 public class LocalActivationRequest {
   @NotBlank private String activationCode;
   @NotBlank private String facilityCode;
+
+  public String getActivationCode() {
+    return Optional.ofNullable(activationCode).map(String::toUpperCase).orElse(null);
+  }
 }

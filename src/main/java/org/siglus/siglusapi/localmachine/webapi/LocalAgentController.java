@@ -23,10 +23,12 @@ import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.localmachine.Machine;
 import org.siglus.siglusapi.localmachine.agent.LocalActivationService;
+import org.siglus.siglusapi.localmachine.agent.LocalSyncResultsService;
 import org.siglus.siglusapi.localmachine.domain.AgentInfo;
 import org.siglus.siglusapi.localmachine.server.LocalExportImportService;
 import org.siglus.siglusapi.service.scheduledtask.CalculateCmmService;
 import org.siglus.siglusapi.web.request.CalculateCmmRequest;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -48,6 +50,10 @@ public class LocalAgentController {
   private final LocalExportImportService localExportImportService;
   private final Machine machine;
   private final CalculateCmmService calculateCmmService;
+  private final LocalSyncResultsService syncErrorService;
+
+  @Value("${machine.version}")
+  private String localMachineVersion;
 
   @PutMapping
   public void activate(@RequestBody @Validated LocalActivationRequest request) {
@@ -78,5 +84,18 @@ public class LocalAgentController {
   @PostMapping("/cmms/calculate")
   public void calculateCurrentPeriod(@RequestBody CalculateCmmRequest calculateCmmRequest) {
     calculateCmmService.calculateLocalMachineCmms(calculateCmmRequest.getPeriodLocalDate(), machine.getFacilityId());
+  }
+
+  @GetMapping("/basicInfo")
+  public LocalMachineBasicInfo getInternetStatus() {
+    return LocalMachineBasicInfo.builder()
+        .isConnectedOnlineWeb(machine.isConnectedOnlineWeb())
+        .localMachineVersion(localMachineVersion)
+        .build();
+  }
+
+  @GetMapping("/syncResults")
+  public LocalSyncResultsResponse getSyncResults() {
+    return syncErrorService.getSyncResults();
   }
 }
