@@ -972,7 +972,7 @@ public class SiglusPodServiceTest {
     when(authenticationHelper.isTheCurrentUserCanMergeOrDeleteSubDrafts()).thenReturn(Boolean.TRUE);
     Example<PodSubDraft> example = Example.of(PodSubDraft.builder().podId(podId).build());
     when(podSubDraftRepository.findAll(example)).thenReturn(buildMockSubDraftsAllSubmitted());
-    when(fulfillmentService.searchProofOfDelivery(any(), any())).thenReturn(buildMockPodDtoWithOneLineItem());
+    when(fulfillmentService.searchProofOfDelivery(any(), any())).thenReturn(buildMockPodDtoWithOneLineItemInitial());
     when(podSubDraftLineItemsByLocationRepository.findByPodLineItemIdIn(Lists.newArrayList(lineItemId1)))
         .thenReturn(Lists.newArrayList(buildMockPodSubDraftLineItemsByLocation()));
 
@@ -1198,6 +1198,30 @@ public class SiglusPodServiceTest {
     ProofOfDeliveryDto podDto = new ProofOfDeliveryDto();
     podDto.setId(podId);
     podDto.setStatus(ProofOfDeliveryStatus.CONFIRMED);
+    podDto.setShipment(buildMockShipmentDto());
+
+    ProofOfDeliveryLineItemDto lineItemDto = new ProofOfDeliveryLineItemDto(serviceUrl,
+        new VersionObjectReferenceDto(),
+        new ObjectReferenceDto(UUID.randomUUID(), serviceUrl, resourceName), 10, Boolean.TRUE, null, 0,
+        UUID.randomUUID(), notes);
+    OrderableDto orderableDto = new OrderableDto();
+    orderableDto.setId(orderableId);
+    orderableDto.setProductCode(productCode);
+    lineItemDto.setOrderable(orderableDto);
+    lineItemDto.setId(lineItemId1);
+
+    List<ProofOfDeliveryLineItemDto> lineItemDtos = Lists.newArrayList();
+    lineItemDtos.add(lineItemDto);
+
+    podDto.setLineItems(lineItemDtos);
+
+    return podDto;
+  }
+
+  private ProofOfDeliveryDto buildMockPodDtoWithOneLineItemInitial() {
+    ProofOfDeliveryDto podDto = new ProofOfDeliveryDto();
+    podDto.setId(podId);
+    podDto.setStatus(ProofOfDeliveryStatus.INITIATED);
     podDto.setShipment(buildMockShipmentDto());
 
     ProofOfDeliveryLineItemDto lineItemDto = new ProofOfDeliveryLineItemDto(serviceUrl,

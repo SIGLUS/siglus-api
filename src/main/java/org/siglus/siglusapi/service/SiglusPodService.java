@@ -816,6 +816,21 @@ public class SiglusPodService {
     return podLineItemWithLocationDtos;
   }
 
+  private List<PodLineItemWithLocationDto> getLineItemsWithLocation(List<UUID> lineItemIds) {
+    List<PodLineItemWithLocationDto> podLineItemWithLocationDtos = Lists.newArrayList();
+    List<PodLineItemsByLocation> podLineItemsByLocationList = podLineItemsByLocationRepository
+        .findByPodLineItemIdIn(lineItemIds);
+    podLineItemsByLocationList.forEach(lineItemsWithLocation -> {
+      PodLineItemWithLocationDto podLineItemWithLocationDto = new PodLineItemWithLocationDto();
+      podLineItemWithLocationDto.setPodLineItemId(lineItemsWithLocation.getPodLineItemId());
+      podLineItemWithLocationDto.setLocationCode(lineItemsWithLocation.getLocationCode());
+      podLineItemWithLocationDto.setArea(lineItemsWithLocation.getArea());
+      podLineItemWithLocationDto.setQuantityAccepted(lineItemsWithLocation.getQuantityAccepted());
+      podLineItemWithLocationDtos.add(podLineItemWithLocationDto);
+    });
+    return podLineItemWithLocationDtos;
+  }
+
   private void submitPodSubDraftsWithLocation(List<PodLineItemWithLocationDto> podLineItemLocationList) {
     deleteSubDraftAndSaveLineItemsWithLocation(podLineItemLocationList);
   }
@@ -853,7 +868,12 @@ public class SiglusPodService {
     podWithLocationDto.setPodExtension(podExtensionResponse);
     List<UUID> podLineItemIds = podExtensionResponse.getPodDto().getLineItems().stream()
         .map(Importer::getId).collect(Collectors.toList());
-    List<PodLineItemWithLocationDto> lineItemsWithLocation = getSubDraftLineItemsWithLocation(podLineItemIds);
+    List<PodLineItemWithLocationDto> lineItemsWithLocation;
+    if (ProofOfDeliveryStatus.CONFIRMED.equals(podDto.getStatus())) {
+      lineItemsWithLocation = getLineItemsWithLocation(podLineItemIds);
+    } else {
+      lineItemsWithLocation = getSubDraftLineItemsWithLocation(podLineItemIds);
+    }
     podWithLocationDto.setPodLineItemLocation(CollectionUtils.isEmpty(lineItemsWithLocation)
         ? Lists.newArrayList() : lineItemsWithLocation);
     return podWithLocationDto;
