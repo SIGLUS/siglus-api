@@ -115,7 +115,6 @@ import org.siglus.siglusapi.service.client.SiglusProcessingPeriodReferenceDataSe
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
 import org.siglus.siglusapi.web.response.OrderPickPackResponse;
 import org.siglus.siglusapi.web.response.OrderSuggestedQuantityResponse;
-import org.siglus.siglusapi.web.withoutlocation.SiglusStockCardSummariesWithoutLocationController;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -151,9 +150,6 @@ public class SiglusOrderServiceTest {
 
   @Mock
   private SiglusArchiveProductService siglusArchiveProductService;
-
-  @Mock
-  private SiglusStockCardSummariesWithoutLocationController siglusStockCardSummariesWithoutLocationController;
 
   @Mock
   private SiglusStockCardSummariesService siglusStockCardSummariesService;

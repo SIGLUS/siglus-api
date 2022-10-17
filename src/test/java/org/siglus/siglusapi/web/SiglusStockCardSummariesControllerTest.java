@@ -13,7 +13,7 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.web.withoutlocation;
+package org.siglus.siglusapi.web;
 
 import static org.mockito.Mockito.verify;
 
@@ -31,10 +31,10 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
 @RunWith(MockitoJUnitRunner.class)
-public class SiglusStockCardSummariesWithoutLocationControllerTest {
+public class SiglusStockCardSummariesControllerTest {
 
   @InjectMocks
-  private SiglusStockCardSummariesWithoutLocationController controller;
+  private SiglusStockCardSummariesController controller;
 
   @Mock
   private SiglusStockCardSummariesService service;

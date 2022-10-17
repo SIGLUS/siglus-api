@@ -46,11 +46,7 @@ public class SiglusPhysicalInventoryWithoutLocationControllerTest {
 
   private final UUID programId = UUID.randomUUID();
 
-  private final UUID facilityId = UUID.randomUUID();
-
   private final UUID subDraftId = UUID.randomUUID();
-
-  private final Boolean isDraft = true;
 
   @Test
   public void shouldCallCreateWithLocationOptionForAllProductsWhenCreateIfProgramIsAllProducts()
@@ -82,28 +78,6 @@ public class SiglusPhysicalInventoryWithoutLocationControllerTest {
     controller.createEmptyPhysicalInventory(physicalInventoryDto, 2, false);
 
     verify(siglusPhysicalInventoryService).createAndSpiltNewDraftForOneProgram(physicalInventoryDto, 2, null, false);
-  }
-
-
-  @Test
-  public void shouldCallGetSubDraftListForAllProductWhenSearchAllProductSubDraftList() {
-    controller.searchSubDraftList(ALL_PRODUCTS_PROGRAM_ID, facilityId, isDraft);
-
-    verify(siglusPhysicalInventoryService).getSubDraftListForAllProduct(facilityId, isDraft);
-  }
-
-  @Test
-  public void shouldCallGetSubDraftListInOneProgramWhenSearchOneProgramSubDraftList() {
-    controller.searchSubDraftList(programId, facilityId, isDraft);
-
-    verify(siglusPhysicalInventoryService).getSubDraftListForOneProgram(programId, facilityId, isDraft);
-  }
-
-  @Test
-  public void shouldCallGetSubPhysicalInventoryDtoBysubDraftIdWhenSearchSubDraftDetail() {
-    controller.searchSubDraftList(programId, facilityId, isDraft);
-
-    verify(siglusPhysicalInventoryService).getSubDraftListForOneProgram(programId, facilityId, isDraft);
   }
 
   @Test
