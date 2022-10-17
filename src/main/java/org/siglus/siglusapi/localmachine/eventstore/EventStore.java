@@ -103,7 +103,7 @@ public class EventStore {
   }
 
   public List<Event> loadSortedGroupEvents(String groupId) {
-    return repository.findEventRecordByGroupIdAndArchived(groupId, false).stream()
+    return repository.findEventRecordByGroupId(groupId).stream()
         .map(it -> it.toEvent(payloadSerializer::load))
         .sorted(Comparator.comparingLong(Event::getGroupSequenceNumber))
         .collect(Collectors.toList());
