@@ -65,7 +65,8 @@ public interface EventRecordRepository extends JpaRepository<EventRecord, UUID> 
               + "groupsequencenumber,"
               + "onlinewebsynced,"
               + "localreplayed,"
-              + "receiversynced) VALUES ("
+              + "receiversynced,"
+              + "syncedtime) VALUES ("
               + ":#{#r.id},"
               + ":#{#r.protocolVersion},"
               + ":#{#r.occurredTime},"
@@ -75,7 +76,8 @@ public interface EventRecordRepository extends JpaRepository<EventRecord, UUID> 
               + ":#{#r.groupSequenceNumber},"
               + ":#{#r.onlineWebSynced},"
               + ":#{#r.localReplayed},"
-              + ":#{#r.receiverSynced})",
+              + ":#{#r.receiverSynced},"
+              + ":#{#r.syncedTime})",
       nativeQuery = true)
   void insertAndAllocateLocalSequenceNumber(@Param("r") EventRecord eventRecord);
 
@@ -92,7 +94,8 @@ public interface EventRecordRepository extends JpaRepository<EventRecord, UUID> 
               + "groupid,"
               + "groupsequencenumber,"
               + "onlinewebsynced,"
-              + "receiversynced) VALUES ("
+              + "receiversynced,"
+              + "syncedtime) VALUES ("
               + ":#{#r.id},"
               + ":#{#r.protocolVersion},"
               + ":#{#r.occurredTime},"
@@ -102,7 +105,8 @@ public interface EventRecordRepository extends JpaRepository<EventRecord, UUID> 
               + ":#{#r.groupId},"
               + ":#{#r.groupSequenceNumber},"
               + ":#{#r.onlineWebSynced},"
-              + ":#{#r.receiverSynced})",
+              + ":#{#r.receiverSynced},"
+              + ":#{#r.syncedTime})",
       nativeQuery = true)
   void importExternalEvent(@Param("r") EventRecord eventRecord);
 

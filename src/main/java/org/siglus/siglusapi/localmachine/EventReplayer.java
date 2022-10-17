@@ -104,7 +104,7 @@ public class EventReplayer {
 
   private List<Event> sortEventsByLocalSequence(List<Event> events) {
     return events.stream()
-        .sorted(Comparator.comparingLong(Event::getLocalSequenceNumber))
+        .sorted(Comparator.comparing(Event::getSyncedTime).thenComparingLong(Event::getLocalSequenceNumber))
         .collect(toList());
   }
 }

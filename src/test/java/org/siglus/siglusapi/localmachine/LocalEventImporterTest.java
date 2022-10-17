@@ -66,7 +66,7 @@ public class LocalEventImporterTest {
         .willReturn(Collections.singleton(receiverFacilityId.toString()));
     Event event = Event.builder().receiverId(receiverFacilityId).receiverSynced(false).build();
     // when
-    localEventImporter.resetStatus(Collections.singletonList(event));
+    localEventImporter.resetStatusAndSyncedTime(Collections.singletonList(event));
     // then
     assertThat(event.isReceiverSynced()).isTrue();
   }
@@ -76,7 +76,7 @@ public class LocalEventImporterTest {
     // given
     Event event = Event.builder().localReplayed(true).build();
     // when
-    localEventImporter.resetStatus(Collections.singletonList(event));
+    localEventImporter.resetStatusAndSyncedTime(Collections.singletonList(event));
     // then
     assertThat(event.isLocalReplayed()).isFalse();
   }

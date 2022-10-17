@@ -86,6 +86,7 @@ public class EventPublisher {
     // the event is created by me, so local replayed should be true, otherwise it will be replayed
     // by me causing error
     event.setLocalReplayed(true);
+    event.setSyncedTime(ZonedDateTime.now());
     eventStore.emit(event);
   }
 

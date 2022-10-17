@@ -40,6 +40,7 @@ public class Event {
   private boolean onlineWebSynced;
   private boolean receiverSynced;
   private boolean localReplayed;
+  private ZonedDateTime syncedTime;
 
   @JsonIgnore
   private Ack ack;

@@ -36,8 +36,8 @@ public class OnlineWebEventImporter extends EventImporter {
   }
 
   @Override
-  protected void resetStatus(List<Event> acceptedEvents) {
-    super.resetStatus(acceptedEvents);
+  protected void resetStatusAndSyncedTime(List<Event> acceptedEvents) {
+    super.resetStatusAndSyncedTime(acceptedEvents);
     acceptedEvents.forEach(it -> it.setOnlineWebSynced(true));
   }
 }
