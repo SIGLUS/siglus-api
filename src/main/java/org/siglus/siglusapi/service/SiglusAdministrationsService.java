@@ -146,8 +146,13 @@ public class SiglusAdministrationsService {
         eachFacility.setFacilityDeviceType(FacilityDeviceTypeEnum.WEB);
         eachFacility.setIsAndroidDevice(false);
       } else {
-        eachFacility.setFacilityDeviceType(
-            byFacilityId.getIsLocalMachine() ? FacilityDeviceTypeEnum.ANDROID : FacilityDeviceTypeEnum.ANDROID);
+        if (byFacilityId.getIsLocalMachine()) {
+          eachFacility.setFacilityDeviceType(FacilityDeviceTypeEnum.LOCAL_MACHINE);
+        } else if (byFacilityId.getIsAndroid()) {
+          eachFacility.setFacilityDeviceType(FacilityDeviceTypeEnum.ANDROID);
+        } else {
+          eachFacility.setFacilityDeviceType(FacilityDeviceTypeEnum.WEB);
+        }
         eachFacility.setIsAndroidDevice(byFacilityId.getIsAndroid() ? true : false);
       }
     });
@@ -379,7 +384,9 @@ public class SiglusAdministrationsService {
     FacilityDto facilityDto = siglusFacilityReferenceDataService.findOne(facilityId);
     AppInfo appInfo = appInfoRepository.findByFacilityCode(facilityDto.getCode());
     FacilityExtension facilityExtension = facilityExtensionRepository.findByFacilityId(facilityId);
+    String usableAcivationCode = activationCodeRepository.findUsableAcivationCode(facilityDto.getCode());
     FacilityDeviceDto facilityDeviceDto = new FacilityDeviceDto();
+    facilityDeviceDto.setActivationCode(usableAcivationCode);
     if (!ObjectUtils.isEmpty(appInfo)) {
       facilityDeviceDto.setDeviceInfo(appInfo.getDeviceInfo());
       facilityDeviceDto.setVersion(appInfo.getVersionCode());
@@ -407,18 +414,9 @@ public class SiglusAdministrationsService {
     FacilityDto facilityDto = siglusFacilityReferenceDataService.findOne(facilityId);
     appInfoRepository.deleteByFacilityCode(facilityDto.getCode());
     if (deviceType == FacilityDeviceTypeEnum.LOCAL_MACHINE) {
+      log.info("delete agent info of facility: {}", facilityDto.getCode());
       agentInfoRepository.deleteByFacilityId(facilityId);
-      String activationCode = ActivationCodeGenerator.get();
-      ActivationCode code = ActivationCode
-          .builder()
-          .id(UUID.randomUUID())
-          .activationCode(activationCode)
-          .facilityCode(facilityDto.getCode())
-          .isUsed(false)
-          .build();
-      log.info("Erase device info facility:{}, operator:{}", facilityId,
-          authenticationHelper.getCurrentUser().getUsername());
-      activationCodeRepository.save(code);
+      createAndSaveActivationCode(facilityDto.getCode());
     }
   }
 
@@ -460,6 +458,7 @@ public class SiglusAdministrationsService {
     log.info("change facility:{} to local machine, operator:{}", facilityId,
         authenticationHelper.getCurrentUser().getUsername());
     facilityExtensionRepository.save(facilityExtension);
+    createAndSaveActivationCode(facilityExtension.getFacilityCode());
   }
 
   @Transactional
@@ -486,6 +485,20 @@ public class SiglusAdministrationsService {
     log.info("change facility:{} to android, operator:{}", facilityId,
         authenticationHelper.getCurrentUser().getUsername());
     facilityExtensionRepository.save(facilityExtension);
+  }
+
+  private void createAndSaveActivationCode(String facilityCode) {
+    String activationCode = ActivationCodeGenerator.get();
+    ActivationCode code = ActivationCode
+        .builder()
+        .id(UUID.randomUUID())
+        .activationCode(activationCode)
+        .facilityCode(facilityCode)
+        .isUsed(false)
+        .build();
+    log.info("Erase device info facility:{}, operator:{}", facilityCode,
+        authenticationHelper.getCurrentUser().getUsername());
+    activationCodeRepository.save(code);
   }
 
   private FacilitySearchResultDto getFacilityInfo(UUID facilityId) {

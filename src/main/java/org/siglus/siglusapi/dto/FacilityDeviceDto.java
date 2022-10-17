@@ -24,5 +24,6 @@ public class FacilityDeviceDto {
   private FacilityDeviceTypeEnum deviceType;
   private String deviceInfo;
   private String version;
+  private String activationCode;
 
 }
