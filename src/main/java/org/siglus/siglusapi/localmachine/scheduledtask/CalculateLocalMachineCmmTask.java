@@ -17,7 +17,6 @@ package org.siglus.siglusapi.localmachine.scheduledtask;
 
 import java.time.LocalDate;
 import lombok.RequiredArgsConstructor;
-import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.siglus.siglusapi.localmachine.Machine;
 import org.siglus.siglusapi.service.scheduledtask.CalculateCmmService;
 import org.springframework.context.annotation.Profile;
@@ -33,7 +32,6 @@ public class CalculateLocalMachineCmmTask {
   private final Machine machine;
 
   @Scheduled(cron = "${cmm.calculate.cron}", zone = "${time.zoneId}")
-  @SchedulerLock(name = "calculate_cmm_task")
   public void calculate() {
     calculateCmmService.calculateLocalMachineCmms(LocalDate.now(), machine.getFacilityId());
   }
