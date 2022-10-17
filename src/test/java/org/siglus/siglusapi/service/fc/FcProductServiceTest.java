@@ -357,7 +357,6 @@ public class FcProductServiceTest {
     // then
     //    assertNull(getCurrentProductPrice(product.getProductPrices()));
     //    assertNotEquals(currentProductPrice, originProductPrice);
-
   }
 
   @Test

@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.service.fc;
 
+import static com.google.common.collect.Maps.newHashMap;
 import static org.siglus.siglusapi.constant.FcConstants.DEFAULT_REGIMEN_CATEGORY_CODE;
 import static org.siglus.siglusapi.constant.FcConstants.REGIMEN_API;
 import static org.siglus.siglusapi.dto.fc.FcIntegrationResultDto.buildResult;
@@ -24,6 +25,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -63,6 +65,8 @@ public class FcRegimenService implements ProcessDataService {
 
   private final CustomProductsRegimensRepository customProductsRegimensRepository;
 
+  private final Map<String, CustomProductsRegimens> codeToCustomProductsRegimens = newHashMap();
+
   @Override
   public FcIntegrationResultDto processData(List<? extends ResponseBaseDto> regimens, String startDate,
       ZonedDateTime previousLastUpdatedAt) {
@@ -91,6 +95,10 @@ public class FcRegimenService implements ProcessDataService {
       maxRegimenCategoryDisplayOrder = allCategories.stream()
           .mapToInt(RegimenCategory::getDisplayOrder).max().orElse(0);
       Set<Regimen> regimensToUpdate = new HashSet<>();
+
+      List<CustomProductsRegimens> customProductsRegimens = customProductsRegimensRepository.findAll();
+      customProductsRegimens.forEach(item -> codeToCustomProductsRegimens.put(item.getCode(), item));
+
       regimens.forEach(item -> {
         RegimenDto current = (RegimenDto) item;
         ProgramRealProgram realProgram = realProgramCodeToProgram.get(current.getAreaCode());
@@ -109,14 +117,15 @@ public class FcRegimenService implements ProcessDataService {
           log.info("[FC regimen] create regimen: {}", current);
           regimensToUpdate.add(Regimen.from(current, realProgramId, programId,
               getRegimenCategoryFromCustomProductsRegimensRepository(current,
-                  regimenCategoryCodeToCategory, customProductsRegimensRepository),
+                  regimenCategoryCodeToCategory, codeToCustomProductsRegimens),
               maxRegimenDisplayOrder.incrementAndGet()));
           createCounter.getAndIncrement();
           FcIntegrationChanges createChanges = FcUtil
               .buildCreateFcIntegrationChanges(REGIMEN_API, current.getCode(), current.toString());
           fcIntegrationChangesList.add(createChanges);
         } else {
-          FcIntegrationChanges updateChanges = getUpdatedRegimen(existed, current, realProgram.getId());
+          FcIntegrationChanges updateChanges = getUpdatedRegimen(existed, current, realProgram.getId(),
+              regimenCategoryCodeToCategory);
           if (updateChanges != null) {
             log.info("[FC regimen] update regimen, existed: {}, current: {}", existed, current);
             regimensToUpdate.add(merge(existed, current, realProgramId, programId, regimenCategoryCodeToCategory));
@@ -140,7 +149,8 @@ public class FcRegimenService implements ProcessDataService {
             createCounter.get(), updateCounter.get(), null, fcIntegrationChangesList));
   }
 
-  private FcIntegrationChanges getUpdatedRegimen(Regimen existed, RegimenDto current, UUID realProgramId) {
+  private FcIntegrationChanges getUpdatedRegimen(Regimen existed, RegimenDto current, UUID realProgramId,
+      Map<String, RegimenCategory> regimenCategoryCodeToCategory) {
     boolean isSame = true;
     StringBuilder updateContent = new StringBuilder();
     StringBuilder originContent = new StringBuilder();
@@ -154,17 +164,10 @@ public class FcRegimenService implements ProcessDataService {
       originContent.append("realProgramId=").append(existed.getRealProgramId()).append("; ");
       isSame = false;
     }
-    if (!isCategoryEquivalent(existed, current)) {
-      updateContent.append("category=").append(current.getCategoryCode()).append("; ");
+    if (!isCategoryEquivalent(existed, current, regimenCategoryCodeToCategory)) {
+      updateContent.append("category=").append(getCurrentRegimenCategoryCode(current)).append("; ");
       originContent.append("category=")
           .append(existed.getRegimenCategory() == null ? null : existed.getRegimenCategory().getCode()).append("; ");
-      isSame = false;
-    }
-
-    CustomProductsRegimens customProductsRegimens = customProductsRegimensRepository
-        .findCustomProductsRegimensByCode(existed.getCode());
-    if (null != customProductsRegimens
-        && !existed.getRegimenCategory().getName().equals(customProductsRegimens.getCategoryType())) {
       isSame = false;
     }
 
@@ -173,6 +176,15 @@ public class FcRegimenService implements ProcessDataService {
     }
     return FcUtil.buildUpdateFcIntegrationChanges(REGIMEN_API, current.getCode(), updateContent.toString(),
         originContent.toString());
+  }
+
+  private String getCurrentRegimenCategoryCode(RegimenDto current) {
+    CustomProductsRegimens customProductsRegimens = codeToCustomProductsRegimens.get(current.getCode());
+    if (null != customProductsRegimens) {
+      return Objects.equals(customProductsRegimens.getCategoryType(), "Adult")
+          ? "ADULTS" : customProductsRegimens.getCategoryType();
+    }
+    return current.getCategoryCode() == null ? "DEFAULT" : current.getCategoryCode();
   }
 
   @SuppressWarnings("java:S125")
@@ -184,15 +196,14 @@ public class FcRegimenService implements ProcessDataService {
     // do not update regimen category as FC don't provide the value, we fill the value by script
     // existed.setRegimenCategory(getRegimenCategory(current, codeToCategoryMap));
     existed.setRegimenCategory(getRegimenCategoryFromCustomProductsRegimensRepository(current,
-        codeToCategoryMap, customProductsRegimensRepository));
+        codeToCategoryMap, codeToCustomProductsRegimens));
     return existed;
   }
 
   private RegimenCategory getRegimenCategoryFromCustomProductsRegimensRepository(RegimenDto dto,
       Map<String, RegimenCategory> codeToCategoryMap,
-      CustomProductsRegimensRepository customProductsRegimensRepository) {
-    CustomProductsRegimens customProductsRegimensByCode = customProductsRegimensRepository
-        .findCustomProductsRegimensByCode(dto.getCode());
+      Map<String, CustomProductsRegimens> codeToCustomProductsRegimens) {
+    CustomProductsRegimens customProductsRegimensByCode = codeToCustomProductsRegimens.get(dto.getCode());
     if (null != customProductsRegimensByCode) {
       return codeToCategoryMap.get("Adult".equals(customProductsRegimensByCode.getCategoryType())
           ? "ADULTS" : customProductsRegimensByCode.getCategoryType().toUpperCase());
@@ -220,16 +231,19 @@ public class FcRegimenService implements ProcessDataService {
   }
 
 
-  private boolean isCategoryEquivalent(Regimen regimen, RegimenDto dto) {
+  private boolean isCategoryEquivalent(Regimen regimen, RegimenDto dto,
+      Map<String, RegimenCategory> regimenCategoryCodeToCategory) {
+
     RegimenCategory category = regimen.getRegimenCategory();
-    if ((category == null || DEFAULT_REGIMEN_CATEGORY_CODE.equals(category.getCode()))
+    if (category == null
         && dto.getCategoryCode() == null && dto.getCategoryDescription() == null) {
       return true;
     }
 
     return category != null
-        && category.getCode().equals(dto.getCategoryCode())
-        && category.getName().equals(dto.getCategoryDescription());
+        && category.getCode().equalsIgnoreCase(getCurrentRegimenCategoryCode(dto))
+        && category.getName().equals(regimenCategoryCodeToCategory
+        .get(getCurrentRegimenCategoryCode(dto).toUpperCase()).getName());
   }
 
 }

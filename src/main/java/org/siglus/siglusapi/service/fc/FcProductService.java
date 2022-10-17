@@ -35,6 +35,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -47,7 +48,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.joda.money.CurrencyUnit;
 import org.joda.money.Money;
 import org.openlmis.referencedata.domain.Dispensable;
-import org.openlmis.referencedata.domain.ProgramOrderable;
 import org.openlmis.referencedata.dto.OrderableDto;
 import org.openlmis.referencedata.dto.ProgramOrderableDto;
 import org.openlmis.requisition.dto.BaseDto;
@@ -72,7 +72,6 @@ import org.siglus.siglusapi.dto.fc.ResponseBaseDto;
 import org.siglus.siglusapi.repository.BasicProductCodeRepository;
 import org.siglus.siglusapi.repository.CustomProductsRegimensRepository;
 import org.siglus.siglusapi.repository.ProgramOrderablesExtensionRepository;
-import org.siglus.siglusapi.repository.ProgramOrderablesRepository;
 import org.siglus.siglusapi.repository.ProgramRealProgramRepository;
 import org.siglus.siglusapi.service.SiglusOrderableService;
 import org.siglus.siglusapi.service.client.OrderableDisplayCategoryReferenceDataService;
@@ -106,8 +105,6 @@ public class FcProductService implements ProcessDataService {
 
   private final CustomProductsRegimensRepository customProductsRegimensRepository;
 
-  private final ProgramOrderablesRepository programOrderablesRepository;
-
   private final CacheManager cacheManager;
 
   private static final String SYSTEM_DEFAULT_MANUFACTURER = "Mozambique";
@@ -121,6 +118,8 @@ public class FcProductService implements ProcessDataService {
   private Map<String, OrderableDisplayCategoryDto> categoryCodeToEntityMap;
 
   private Set<String> basicProductCodes;
+
+  private final Map<String, CustomProductsRegimens> codeToCustomProductsRegimens = newHashMap();
 
   @Override
   public FcIntegrationResultDto processData(List<? extends ResponseBaseDto> products,
@@ -145,6 +144,10 @@ public class FcProductService implements ProcessDataService {
         trimProductCode(product);
         addProductCodeToProductMap(productCodeToProduct, product);
       });
+
+      List<CustomProductsRegimens> customProductsRegimens = customProductsRegimensRepository.findAll();
+      customProductsRegimens.forEach(item -> codeToCustomProductsRegimens.put(item.getCode(), item));
+
       productCodeToProduct.values().forEach(current -> {
         OrderableDto existed = orderableService.getOrderableByCode(current.getFnm());
         if (existed != null) {
@@ -307,7 +310,7 @@ public class FcProductService implements ProcessDataService {
   private Set<ProgramOrderableDto> buildProgramOrderableDtos(ProductInfoDto product) {
     return new FcProductMapper(
         realProgramCodeToEntityMap, programCodeToIdMap, categoryCodeToEntityMap)
-        .getProgramOrderablesFrom(product, customProductsRegimensRepository);
+        .getProgramOrderablesFrom(product, codeToCustomProductsRegimens);
   }
 
   private FcIntegrationChanges getUpdatedOrderable(OrderableDto existed, ProductInfoDto current) {
@@ -356,6 +359,18 @@ public class FcProductService implements ProcessDataService {
       isSame = false;
       isUpdateProgram = true;
     }
+
+    if (isDifferentProductCategory(existed, current)) {
+      String originProductCategory = getOriginProductCategory(existed);
+      String currentProductCategory = getCurrentProductCategory(current);
+      log.info("[FC product] productCategory different, existed: {}, current: {}",
+          originProductCategory, currentProductCategory);
+      updateContent.append("productCategory=").append(currentProductCategory).append("; ");
+      originContent.append("productCategory=").append(originProductCategory).append("; ");
+      isSame = false;
+      isUpdateProgram = true;
+    }
+
     if (isDifferentProductPrice(existed, current)) {
       log.info("[FC product] productPrice different, existed: {}, current: {}",
           getOriginProductPrice(existed.getPrograms()), getCurrentProductPrice(current.getPrice()));
@@ -372,6 +387,30 @@ public class FcProductService implements ProcessDataService {
     return FcUtil.buildUpdateFcIntegrationChanges(PRODUCT_API, existed.getProductCode(),
         updateContent.toString(),
         originContent.toString(), isUpdateProgram);
+  }
+
+  private boolean isDifferentProductCategory(OrderableDto existed, ProductInfoDto current) {
+    String originProductCategory = getOriginProductCategory(existed);
+    String currentProductCategory = getCurrentProductCategory(current);
+    return !Objects.equals(originProductCategory, currentProductCategory);
+  }
+
+  private String getCurrentProductCategory(ProductInfoDto current) {
+    CustomProductsRegimens customProductsRegimensByCode = codeToCustomProductsRegimens
+        .get(current.getFnm());
+    if (customProductsRegimensByCode != null) {
+      return customProductsRegimensByCode.getCategoryType();
+    }
+    return current.getCategoryCode() == null
+        ? "Default" : categoryCodeToEntityMap.get(current.getCategoryCode()).getDisplayName();
+  }
+
+  private String getOriginProductCategory(OrderableDto existed) {
+    if (existed.getPrograms() != null && existed.getPrograms().size() > 0) {
+      ProgramOrderableDto existedProgramOrderableDto = (ProgramOrderableDto) existed.getPrograms().toArray()[0];
+      return existedProgramOrderableDto.getOrderableCategoryDisplayName();
+    }
+    return null;
   }
 
   private boolean isDifferentProductPrice(OrderableDto existed, ProductInfoDto current) {
@@ -418,19 +457,6 @@ public class FcProductService implements ProcessDataService {
   }
 
   private boolean isDifferentProgramOrderable(OrderableDto existed, ProductInfoDto current) {
-
-    CustomProductsRegimens customProductsRegimensByCode = customProductsRegimensRepository
-        .findCustomProductsRegimensByCode(current.getFnm());
-    if (null != customProductsRegimensByCode) {
-      ProgramOrderable programOrderableByOrderableId = programOrderablesRepository
-          .findNewestProgramOrderableByOrderableId(existed.getId());
-      if (null != programOrderableByOrderableId) {
-        String orginCategoryName = programOrderableByOrderableId.getOrderableDisplayCategory()
-            .getOrderedDisplayValue().getDisplayName();
-        return !customProductsRegimensByCode.getCategoryType().equals(orginCategoryName);
-      }
-    }
-
     Set<ProgramOrderableDto> productPrograms = buildProgramOrderableDtos(current);
     Set<ProgramOrderableDto> existingOrderablePrograms =
         existed.getPrograms() == null ? Collections.emptySet() : existed.getPrograms();
