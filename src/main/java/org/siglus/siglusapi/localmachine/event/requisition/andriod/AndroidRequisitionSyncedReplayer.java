@@ -36,6 +36,7 @@ public class AndroidRequisitionSyncedReplayer {
       requisitionCreateService.createRequisition(event.getRequest());
     } catch (Exception e) {
       log.error(e.getMessage(), e);
+      throw e;
     }
   }
 }
