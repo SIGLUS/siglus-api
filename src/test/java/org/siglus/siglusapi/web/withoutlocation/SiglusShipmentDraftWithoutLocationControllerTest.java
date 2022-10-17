@@ -49,12 +49,4 @@ public class SiglusShipmentDraftWithoutLocationControllerTest {
     verify(siglusShipmentDraftService).updateShipmentDraft(draftId, draftDto);
   }
 
-  @Test
-  public void shouldCallServiceWhenDeleteShipmentDraft() {
-    // when
-    controller.deleteShipmentDraft(draftId);
-
-    // then
-    verify(siglusShipmentDraftService).deleteShipmentDraft(draftId);
-  }
 }

@@ -15,10 +15,13 @@
 
 package org.siglus.siglusapi.web;
 
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftDto;
 import org.siglus.siglusapi.service.SiglusShipmentDraftService;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -38,5 +41,11 @@ public class SiglusShipmentDraftController {
   @ResponseBody
   public ShipmentDraftDto createShipmentDraft(@RequestBody ShipmentDraftDto draftDto) {
     return siglusShipmentDraftService.createShipmentDraft(draftDto);
+  }
+
+  @DeleteMapping("/{id}")
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  public void deleteShipmentDraft(@PathVariable UUID id) {
+    siglusShipmentDraftService.deleteShipmentDraft(id);
   }
 }
