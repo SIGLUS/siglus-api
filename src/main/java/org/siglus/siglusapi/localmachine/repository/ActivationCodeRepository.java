@@ -29,6 +29,7 @@ public interface ActivationCodeRepository extends JpaRepository<ActivationCode, 
   @Query(value = "select activationcode "
       + "from localmachine.activation_codes "
       + "where facilitycode=:facilityCode "
-      + "and used=false", nativeQuery = true)
+      + "and used=false "
+      + "limit 1", nativeQuery = true)
   String findUsableAcivationCode(@Param("facilityCode") String facilityCode);
 }
