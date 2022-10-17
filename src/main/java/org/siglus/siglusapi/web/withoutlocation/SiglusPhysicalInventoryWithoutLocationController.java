@@ -30,7 +30,6 @@ import org.siglus.siglusapi.dto.PhysicalInventorySubDraftDto;
 import org.siglus.siglusapi.dto.enums.PhysicalInventorySubDraftEnum;
 import org.siglus.siglusapi.service.SiglusPhysicalInventoryService;
 import org.siglus.siglusapi.service.SiglusPhysicalInventorySubDraftService;
-import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -48,19 +47,8 @@ import org.springframework.web.bind.annotation.RestController;
 public class SiglusPhysicalInventoryWithoutLocationController {
 
   private final SiglusPhysicalInventoryService siglusPhysicalInventoryService;
-  private final SiglusAuthenticationHelper authenticationHelper;
   private final SiglusPhysicalInventorySubDraftService siglusPhysicalInventorySubDraftService;
 
-  @GetMapping
-  public List<PhysicalInventoryDto> searchPhysicalInventories(
-      @RequestParam UUID program, @RequestParam UUID facility,
-      @RequestParam(required = false) Boolean isDraft) {
-    if (ALL_PRODUCTS_PROGRAM_ID.equals(program)) {
-      return siglusPhysicalInventoryService.getPhysicalInventoryDtosForAllProducts(facility, isDraft, false);
-    }
-    return siglusPhysicalInventoryService.getPhysicalInventoryDtosForProductsForOneProgram(program, facility, isDraft,
-        false);
-  }
 
   @PostMapping
   @ResponseStatus(CREATED)

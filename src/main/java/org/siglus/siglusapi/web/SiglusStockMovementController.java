@@ -13,21 +13,12 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.web.withoutlocation;
+package org.siglus.siglusapi.web;
 
-import static org.openlmis.stockmanagement.i18n.MessageKeys.ERROR_INVALID_PARAMS;
-import static org.springframework.http.HttpStatus.OK;
-
-import java.time.LocalDate;
-import java.util.List;
 import java.util.UUID;
-import javax.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
-import org.openlmis.requisition.exception.ValidationMessageException;
-import org.siglus.siglusapi.dto.StockMovementResDto;
+import org.siglus.siglusapi.dto.ProductMovementDto;
 import org.siglus.siglusapi.service.SiglusStockCardService;
-import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -37,26 +28,13 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/siglusapi/stockMovement")
 @RequiredArgsConstructor
-public class SiglusStockMovementWithoutLocationController {
+public class SiglusStockMovementController {
 
   private final SiglusStockCardService siglusStockCardService;
 
-  @GetMapping("/{id}")
-  public ResponseEntity<List<StockMovementResDto>> getStockMovement(
-      @PathVariable("id") UUID facilityId,
-      @RequestParam(required = false) UUID orderableId,
-      @RequestParam(value = "startTime", required = false)
-      @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-      @Nullable LocalDate since,
-      @RequestParam(value = "endTime", required = false)
-      @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-      @Nullable LocalDate tillExclusive) {
-    if (facilityId == null) {
-      throw new ValidationMessageException(ERROR_INVALID_PARAMS);
-    }
-    List<StockMovementResDto> productMovements =
-        siglusStockCardService.getProductMovements(facilityId, orderableId, since, tillExclusive);
-    return new ResponseEntity<>(productMovements, OK);
+  @GetMapping("/byProduct/{orderableId}")
+  public ProductMovementDto getMovementByProduct(@PathVariable("orderableId") UUID orderableId,
+      @RequestParam UUID facilityId) {
+    return siglusStockCardService.getMovementByProduct(facilityId, orderableId);
   }
-
 }
