@@ -13,7 +13,7 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.web.withoutlocation;
+package org.siglus.siglusapi.web;
 
 import java.util.List;
 import java.util.UUID;
@@ -37,7 +37,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/siglusapi/stockCardSummaries")
 @RequiredArgsConstructor
-public class SiglusStockCardSummariesWithoutLocationController {
+public class SiglusStockCardSummariesController {
 
   private final SiglusStockCardSummariesService stockCardSummariesSiglusService;
 

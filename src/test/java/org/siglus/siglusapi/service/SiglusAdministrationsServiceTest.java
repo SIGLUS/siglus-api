@@ -73,6 +73,7 @@ import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.dto.enums.FacilityDeviceTypeEnum;
 import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
+import org.siglus.siglusapi.localmachine.Machine;
 import org.siglus.siglusapi.localmachine.repository.ActivationCodeRepository;
 import org.siglus.siglusapi.localmachine.repository.AgentInfoRepository;
 import org.siglus.siglusapi.repository.AppInfoRepository;
@@ -138,6 +139,8 @@ public class SiglusAdministrationsServiceTest {
   private AgentInfoRepository agentInfoRepository;
   @Mock
   public ActivationCodeRepository activationCodeRepository;
+  @Mock
+  public Machine machine;
   @Rule
   public ExpectedException exception = ExpectedException.none();
   private static final UUID facilityId = UUID.randomUUID();
@@ -229,6 +232,7 @@ public class SiglusAdministrationsServiceTest {
         .thenReturn(mockFacilityDtoPage().getContent().get(0));
     when(authenticationHelper.getCurrentUser()).thenReturn(mockUserDto());
     when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(null);
+    when(machine.isOnlineWeb()).thenReturn(true);
 
     // when
     FacilitySearchResultDto facility = siglusAdministrationsService.getFacility(facilityId);
@@ -248,6 +252,7 @@ public class SiglusAdministrationsServiceTest {
         .thenReturn(mockFacilityDtoPage().getContent().get(0));
     when(authenticationHelper.getCurrentUser()).thenReturn(mockUserDto());
     when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(null);
+    when(machine.isOnlineWeb()).thenReturn(true);
 
     // when
     FacilitySearchResultDto facility = siglusAdministrationsService.getFacility(facilityId);
@@ -264,6 +269,7 @@ public class SiglusAdministrationsServiceTest {
     when(authenticationHelper.getCurrentUser()).thenReturn(mockUserDto());
     when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(
         mockFacilityExtension(facilityId, false, false, false));
+    when(machine.isOnlineWeb()).thenReturn(true);
 
     // when
     FacilitySearchResultDto facility = siglusAdministrationsService.getFacility(facilityId);
@@ -280,6 +286,7 @@ public class SiglusAdministrationsServiceTest {
     when(siglusFacilityReferenceDataService.findOneWithoutCache(facilityId)).thenReturn(null);
     when(authenticationHelper.getCurrentUser()).thenReturn(mockUserDto());
     when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(null);
+    when(machine.isOnlineWeb()).thenReturn(true);
 
     // when
     siglusAdministrationsService.getFacility(facilityId);

@@ -25,6 +25,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.openlmis.stockmanagement.dto.PhysicalInventoryDto;
+import org.siglus.siglusapi.dto.DraftListDto;
 import org.siglus.siglusapi.dto.PhysicalInventoryValidationDto;
 import org.siglus.siglusapi.service.SiglusPhysicalInventoryService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
@@ -46,7 +47,6 @@ public class SiglusPhysicalInventoryController {
 
   private final SiglusPhysicalInventoryService siglusPhysicalInventoryService;
   private final SiglusAuthenticationHelper authenticationHelper;
-
 
   @GetMapping
   public List<PhysicalInventoryDto> searchPhysicalInventories(
@@ -108,5 +108,15 @@ public class SiglusPhysicalInventoryController {
       return siglusPhysicalInventoryService.checkConflictForAllProduct(facility);
     }
     return siglusPhysicalInventoryService.checkConflictForOneProgram(facility);
+  }
+
+  @GetMapping("/draftList")
+  public DraftListDto searchSubDraftList(@RequestParam UUID program,
+      @RequestParam UUID facility,
+      @RequestParam(required = false) Boolean isDraft) {
+    if (ALL_PRODUCTS_UUID.equals(program)) {
+      return siglusPhysicalInventoryService.getSubDraftListForAllProduct(facility, isDraft);
+    }
+    return siglusPhysicalInventoryService.getSubDraftListForOneProgram(program, facility, isDraft);
   }
 }

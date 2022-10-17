@@ -21,11 +21,11 @@ import static org.springframework.http.HttpStatus.OK;
 
 import java.util.List;
 import java.util.UUID;
+import lombok.RequiredArgsConstructor;
 import org.siglus.siglusapi.dto.MergedLineItemDto;
 import org.siglus.siglusapi.dto.StockManagementDraftDto;
 import org.siglus.siglusapi.dto.StockManagementInitialDraftDto;
 import org.siglus.siglusapi.service.SiglusStockManagementDraftService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -40,10 +40,10 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/siglusapi/drafts")
 @SuppressWarnings("PMD.TooManyMethods")
+@RequiredArgsConstructor
 public class SiglusStockManagementDraftWithoutLocationController {
 
-  @Autowired
-  SiglusStockManagementDraftService stockManagementDraftService;
+  private final SiglusStockManagementDraftService stockManagementDraftService;
 
   @GetMapping
   public List<StockManagementDraftDto> searchDrafts(@RequestParam UUID program,
@@ -60,13 +60,6 @@ public class SiglusStockManagementDraftWithoutLocationController {
   @GetMapping("/multi")
   public List<StockManagementDraftDto> searchMultiUserDrafts(@RequestParam UUID initialDraftId) {
     return stockManagementDraftService.findStockManagementDrafts(initialDraftId);
-  }
-
-  @PostMapping
-  @ResponseStatus(CREATED)
-  public StockManagementDraftDto createEmptyStockManagementDraft(
-      @RequestBody StockManagementDraftDto dto) {
-    return stockManagementDraftService.createNewDraft(dto);
   }
 
   @PostMapping("/multi")

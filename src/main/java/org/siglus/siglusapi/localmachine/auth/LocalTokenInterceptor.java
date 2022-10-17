@@ -90,9 +90,9 @@ public class LocalTokenInterceptor implements ClientHttpRequestInterceptor {
       log.error("localmachine agent error response, request = {}, status code = {}, headers = {} ,body = {}",
           request.getURI(), statusCode, httpResponse.getHeaders(), bodyStringBuilder);
     }
-    if (HttpStatus.UNAUTHORIZED.equals(statusCode)) {
+    if (HttpStatus.PRECONDITION_FAILED.equals(statusCode)) {
       log.info("unauthorized access, delete local machine table");
-      agentInfoRepository.deleteMachine();
+      agentInfoRepository.deleteLocalMachineAgents();
     }
   }
 

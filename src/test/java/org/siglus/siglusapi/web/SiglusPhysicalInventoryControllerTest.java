@@ -155,4 +155,25 @@ public class SiglusPhysicalInventoryControllerTest {
 
     verify(siglusPhysicalInventoryService).checkConflictForOneProgram(facilityId);
   }
+
+  @Test
+  public void shouldCallGetSubDraftListForAllProductWhenSearchAllProductSubDraftList() {
+    controller.searchSubDraftList(ALL_PRODUCTS_PROGRAM_ID, facilityId, isDraft);
+
+    verify(siglusPhysicalInventoryService).getSubDraftListForAllProduct(facilityId, isDraft);
+  }
+
+  @Test
+  public void shouldCallGetSubDraftListInOneProgramWhenSearchOneProgramSubDraftList() {
+    controller.searchSubDraftList(programId, facilityId, isDraft);
+
+    verify(siglusPhysicalInventoryService).getSubDraftListForOneProgram(programId, facilityId, isDraft);
+  }
+
+  @Test
+  public void shouldCallGetSubPhysicalInventoryDtoBysubDraftIdWhenSearchSubDraftDetail() {
+    controller.searchSubDraftList(programId, facilityId, isDraft);
+
+    verify(siglusPhysicalInventoryService).getSubDraftListForOneProgram(programId, facilityId, isDraft);
+  }
 }

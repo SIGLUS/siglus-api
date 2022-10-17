@@ -16,7 +16,6 @@
 package org.siglus.siglusapi.web.withoutlocation;
 
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
-import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_UUID;
 import static org.springframework.http.HttpStatus.CREATED;
 import static org.springframework.http.HttpStatus.NO_CONTENT;
 
@@ -25,7 +24,6 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.openlmis.stockmanagement.dto.PhysicalInventoryDto;
-import org.siglus.siglusapi.dto.DraftListDto;
 import org.siglus.siglusapi.dto.PhysicalInventorySubDraftDto;
 import org.siglus.siglusapi.dto.enums.PhysicalInventorySubDraftEnum;
 import org.siglus.siglusapi.service.SiglusPhysicalInventoryService;
@@ -49,7 +47,6 @@ public class SiglusPhysicalInventoryWithoutLocationController {
   private final SiglusPhysicalInventoryService siglusPhysicalInventoryService;
   private final SiglusPhysicalInventorySubDraftService siglusPhysicalInventorySubDraftService;
 
-
   @PostMapping
   @ResponseStatus(CREATED)
   public PhysicalInventoryDto createEmptyPhysicalInventory(
@@ -62,16 +59,6 @@ public class SiglusPhysicalInventoryWithoutLocationController {
           initialPhysicalInventory, null, false);
     }
     return siglusPhysicalInventoryService.createAndSpiltNewDraftForOneProgram(dto, splitNum, null, false);
-  }
-
-  @GetMapping("/draftList")
-  public DraftListDto searchSubDraftList(@RequestParam UUID program,
-      @RequestParam UUID facility,
-      @RequestParam(required = false) Boolean isDraft) {
-    if (ALL_PRODUCTS_UUID.equals(program)) {
-      return siglusPhysicalInventoryService.getSubDraftListForAllProduct(facility, isDraft);
-    }
-    return siglusPhysicalInventoryService.getSubDraftListForOneProgram(program, facility, isDraft);
   }
 
   @GetMapping("/subDraft")

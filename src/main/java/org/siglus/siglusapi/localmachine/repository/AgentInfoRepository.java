@@ -59,8 +59,9 @@ public interface AgentInfoRepository extends JpaRepository<AgentInfo, UUID> {
 
   void deleteByFacilityId(UUID facilityId);
 
+  @Modifying
   @Query(
-      value = "delete from localmachine.machine where 1 = 1;",
+      value = "delete from localmachine.agents where 1 = 1",
       nativeQuery = true)
-  void deleteMachine();
+  void deleteLocalMachineAgents();
 }
