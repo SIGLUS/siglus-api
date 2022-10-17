@@ -18,17 +18,6 @@ pipeline {
                 '''
             }
         }
-        stage('SonarQube Analysis') {
-            steps {
-                withCredentials([string(credentialsId: 'sonar-token', variable: 'SONARQUBE_TOKEN')]) {
-                    sh '''
-                        if [ "$GIT_BRANCH" = "master" ]; then
-                            ./gradlew sonarqube -x test -Dsonar.projectKey=siglus-api -Dsonar.host.url=http://localhost:9000 -Dsonar.login=$SONARQUBE_TOKEN
-                        fi
-                    '''
-                }
-            }
-        }
         stage('Push Image') {
             steps {
                 withCredentials([usernamePassword(credentialsId: "docker-hub", usernameVariable: "USER", passwordVariable: "PASS")]) {
