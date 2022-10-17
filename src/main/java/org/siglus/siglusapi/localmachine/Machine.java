@@ -97,6 +97,10 @@ public class Machine {
                 () -> new IllegalStateException("can not resolve local facility id")));
   }
 
+  public boolean isOnlineWeb() {
+    return Arrays.stream(env.getActiveProfiles()).noneMatch(it -> it.equalsIgnoreCase("localmachine"));
+  }
+
   private void generateMachineId() {
     UUID tempMachineId = UUID.randomUUID();
     log.info("touch machine id:{}", tempMachineId);
@@ -144,9 +148,5 @@ public class Machine {
 
   private String getSystemInfoString(String osName, String osVersion, String systemInfo) {
     return String.join(DELIMITER, "OS:", osName, osVersion, "Model:", systemInfo);
-  }
-
-  private boolean isOnlineWeb() {
-    return Arrays.stream(env.getActiveProfiles()).noneMatch(it -> it.equalsIgnoreCase("localmachine"));
   }
 }

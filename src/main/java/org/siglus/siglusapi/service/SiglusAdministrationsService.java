@@ -76,6 +76,7 @@ import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.i18n.CsvUploadMessageKeys;
+import org.siglus.siglusapi.localmachine.Machine;
 import org.siglus.siglusapi.localmachine.agent.LocalActivationService;
 import org.siglus.siglusapi.localmachine.domain.ActivationCode;
 import org.siglus.siglusapi.localmachine.repository.ActivationCodeRepository;
@@ -126,6 +127,7 @@ public class SiglusAdministrationsService {
   private final AgentInfoRepository agentInfoRepository;
   private final ActivationCodeRepository activationCodeRepository;
   private final LocalActivationService localActivationService;
+  private final Machine machine;
   private static final String LOCATION_MANAGEMENT_TAB = "locationManagement";
   private static final String CSV_SUFFIX = ".csv";
   private static final String CONTENT_TYPE = "application/force-download";
@@ -665,9 +667,7 @@ public class SiglusAdministrationsService {
   }
 
   private void validateIfLocalMachineActive() {
-    UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
-    FacilityExtension facilityExtension = facilityExtensionRepository.findByFacilityId(facilityId);
-    if (null != facilityExtension && facilityExtension.getIsLocalMachine()) {
+    if (!machine.isOnlineWeb()) {
       localActivationService.getCurrentAgentInfo()
           .orElseThrow(() -> new BusinessDataException(new Message(ERROR_NOT_ACTIVATED_YET)));
     }
