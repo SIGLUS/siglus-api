@@ -35,15 +35,15 @@ public class SiglusPodWithoutLocationControllerTest {
   private SiglusPodService proofOfDeliveryService;
 
   @Test
-  public void shouldCallSiglusServiceWhenGetProofOfDelivery() {
+  public void shouldDeleteSubDrafts() {
     // given
     UUID podId = UUID.randomUUID();
 
     // when
-    controller.getProofOfDelivery(podId, null);
+    controller.deleteSubDrafts(podId);
 
     // then
-    verify(proofOfDeliveryService).getPodExtensionResponse(podId, null);
+    verify(proofOfDeliveryService).deleteSubDrafts(podId);
   }
 
 }

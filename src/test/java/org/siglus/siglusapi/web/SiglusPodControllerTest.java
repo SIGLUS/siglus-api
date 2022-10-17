@@ -50,4 +50,16 @@ public class SiglusPodControllerTest {
     verify(proofOfDeliveryService).getAllProofsOfDelivery(orderId, shipmentId, pageable);
   }
 
+  @Test
+  public void shouldGetProofsOfDelivery() {
+    // given
+    UUID podId = UUID.randomUUID();
+
+    // when
+    controller.getProofOfDelivery(podId, null);
+
+    // then
+    verify(proofOfDeliveryService).getPodExtensionResponse(podId, null);
+  }
+
 }

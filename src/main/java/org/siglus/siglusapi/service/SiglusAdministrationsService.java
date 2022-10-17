@@ -18,6 +18,7 @@ package org.siglus.siglusapi.service;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_FACILITY_CHANGE_TO_ANDROID;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_FACILITY_CHANGE_TO_LOCALMACHINE;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_FACILITY_CHANGE_TO_WEB;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_FACILITY_NOT_FOUND;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_LOGIN_USER_NOT_MATCH;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_NOT_ACTIVATED_YET;
 
@@ -673,6 +674,9 @@ public class SiglusAdministrationsService {
       AgentInfo agentInfo = localActivationService.getCurrentAgentInfo()
           .orElseThrow(() -> new BusinessDataException(new Message(ERROR_NOT_ACTIVATED_YET)));
       UUID loginUserHomeFacilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
+      if (null == loginUserHomeFacilityId) {
+        throw new BusinessDataException(new Message(ERROR_FACILITY_NOT_FOUND));
+      }
       if (!loginUserHomeFacilityId.equals(agentInfo.getFacilityId())) {
         throw new BusinessDataException(new Message(ERROR_LOGIN_USER_NOT_MATCH));
       }

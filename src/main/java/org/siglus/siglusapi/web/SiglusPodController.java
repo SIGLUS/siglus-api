@@ -15,12 +15,14 @@
 
 package org.siglus.siglusapi.web;
 
+import java.util.Set;
 import java.util.UUID;
 import javax.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.openlmis.fulfillment.web.util.ProofOfDeliveryDto;
 import org.siglus.siglusapi.service.SiglusPodService;
 import org.siglus.siglusapi.web.request.CreatePodSubDraftRequest;
+import org.siglus.siglusapi.web.response.PodExtensionResponse;
 import org.siglus.siglusapi.web.response.PodPrintInfoResponse;
 import org.siglus.siglusapi.web.response.PodSubDraftsSummaryResponse;
 import org.springframework.data.domain.Page;
@@ -32,6 +34,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -40,6 +43,14 @@ import org.springframework.web.bind.annotation.RestController;
 @AllArgsConstructor
 public class SiglusPodController {
   private final SiglusPodService siglusPodService;
+
+  @ResponseStatus(HttpStatus.OK)
+  @ResponseBody
+  @GetMapping("/{id}")
+  public PodExtensionResponse getProofOfDelivery(@PathVariable("id") UUID podId,
+      @RequestParam(required = false) Set<String> expand) {
+    return siglusPodService.getPodExtensionResponse(podId, expand);
+  }
 
   @GetMapping
   public Page<ProofOfDeliveryDto> getAllProofsOfDelivery(
@@ -65,6 +76,4 @@ public class SiglusPodController {
   public PodSubDraftsSummaryResponse getSubDraftSummary(@PathVariable("id") UUID podId) {
     return siglusPodService.getSubDraftSummary(podId);
   }
-
-
 }
