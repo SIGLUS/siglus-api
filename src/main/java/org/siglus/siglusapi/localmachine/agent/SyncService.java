@@ -19,6 +19,7 @@ import static org.springframework.util.ObjectUtils.isEmpty;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -36,6 +37,8 @@ import org.siglus.siglusapi.localmachine.io.EventResourcePacker;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
 
 @Component
 @RequiredArgsConstructor
@@ -54,13 +57,12 @@ public class SyncService {
   @Transactional
   public void exchangeAcks() {
     Set<Ack> notShippedAcks = localEventStore.getNotShippedAcks();
-    Set<Ack> downloadedAcks;
+    Set<Ack> downloadedAcks = new HashSet<>();
     try {
       downloadedAcks = webClient.exchangeAcks(notShippedAcks);
     } catch (Exception e) {
       List<UUID> eventIds = notShippedAcks.stream().map(Ack::getEventId).collect(Collectors.toList());
       errorHandler.storeErrorRecord(eventIds, e, ErrorType.EXCHANGE_DOWN);
-      throw e;
     }
     localEventStore.confirmAckShipped(notShippedAcks);
     localEventStore.confirmEventsByAcks(downloadedAcks);
@@ -69,7 +71,6 @@ public class SyncService {
     } catch (Exception e) {
       List<UUID> eventIds = downloadedAcks.stream().map(Ack::getEventId).collect(Collectors.toList());
       errorHandler.storeErrorRecord(eventIds, e, ErrorType.EXCHANGE_UP);
-      throw e;
     }
   }
 
