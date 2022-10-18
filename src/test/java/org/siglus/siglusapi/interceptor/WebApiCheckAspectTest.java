@@ -17,6 +17,8 @@ package org.siglus.siglusapi.interceptor;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.mockito.Mockito.when;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_CURRENT_IS_NOT_LOCATION_MANAGEMENT;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_CURRENT_IS_NOT_STOCK_MANAGEMENT;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_NOT_WEB_USER;
 
 import org.junit.Rule;
@@ -27,7 +29,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.stockmanagement.exception.PermissionMessageException;
+import org.siglus.siglusapi.exception.BusinessDataException;
+import org.siglus.siglusapi.localmachine.Machine;
 import org.siglus.siglusapi.util.AndroidHelper;
+import org.siglus.siglusapi.util.FacilityConfigHelper;
 import org.siglus.siglusapi.util.LocalMachineHelper;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -45,15 +50,24 @@ public class WebApiCheckAspectTest {
   @Mock
   private LocalMachineHelper localMachineHelper;
 
+  @Mock
+  private FacilityConfigHelper facilityConfigHelper;
+
+  @Mock
+  private Machine machine;
+
   @Test
   public void shouldThrowPermissionMessageExceptionWhenFacilityIsLocalMachine() {
     // then
     exception.expect(PermissionMessageException.class);
     exception.expectMessage(containsString(ERROR_NOT_WEB_USER));
+
     // given
     when(localMachineHelper.isLocalMachine()).thenReturn(true);
+    when(machine.isOnlineWeb()).thenReturn(true);
+
     // when
-    webApiCheckAspect.beforeWebApi();
+    webApiCheckAspect.checkWebWriteApi();
   }
 
   @Test
@@ -61,11 +75,44 @@ public class WebApiCheckAspectTest {
     // then
     exception.expect(PermissionMessageException.class);
     exception.expectMessage(containsString(ERROR_NOT_WEB_USER));
+
     // given
     when(localMachineHelper.isLocalMachine()).thenReturn(false);
     when(androidHelper.isAndroid()).thenReturn(true);
+    when(machine.isOnlineWeb()).thenReturn(true);
+
     // when
-    webApiCheckAspect.beforeWebApi();
+    webApiCheckAspect.checkWebWriteApi();
+  }
+
+  @Test
+  public void shouldThrowBusinessDataExceptionWhenCheckWithLocation() {
+    // then
+    exception.expect(BusinessDataException.class);
+    exception.expectMessage(containsString(ERROR_CURRENT_IS_NOT_LOCATION_MANAGEMENT));
+
+    // given
+    when(localMachineHelper.isLocalMachine()).thenReturn(false);
+    when(machine.isOnlineWeb()).thenReturn(true);
+    when(facilityConfigHelper.isStockManagement()).thenReturn(true);
+
+    // when
+    webApiCheckAspect.checkWithLocationApi();
+  }
+
+  @Test
+  public void shouldThrowBusinessDataExceptionWhenCheckWithoutLocation() {
+    // then
+    exception.expect(BusinessDataException.class);
+    exception.expectMessage(containsString(ERROR_CURRENT_IS_NOT_STOCK_MANAGEMENT));
+
+    // given
+    when(localMachineHelper.isLocalMachine()).thenReturn(false);
+    when(machine.isOnlineWeb()).thenReturn(true);
+    when(facilityConfigHelper.isLocationManagement()).thenReturn(true);
+
+    // when
+    webApiCheckAspect.checkWithoutLocationApi();
   }
 
 }

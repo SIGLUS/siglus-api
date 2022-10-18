@@ -22,13 +22,13 @@ import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_CURRENT_IS_NOT_STOCK_M
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_NOT_WEB_USER;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
 import org.openlmis.stockmanagement.exception.PermissionMessageException;
 import org.openlmis.stockmanagement.util.Message;
 import org.siglus.siglusapi.exception.BusinessDataException;
+import org.siglus.siglusapi.localmachine.Machine;
 import org.siglus.siglusapi.util.AndroidHelper;
 import org.siglus.siglusapi.util.FacilityConfigHelper;
 import org.siglus.siglusapi.util.LocalMachineHelper;
@@ -36,26 +36,26 @@ import org.springframework.stereotype.Component;
 
 @Aspect
 @Component
-@Slf4j
 @RequiredArgsConstructor
 public class WebApiCheckAspect {
 
   private final AndroidHelper androidHelper;
   private final LocalMachineHelper localMachineHelper;
   private final FacilityConfigHelper facilityConfigHelper;
+  private final Machine machine;
 
-  @Pointcut("within(org.siglus.siglusapi.web.*) && "
+  @Pointcut("within(org.siglus.siglusapi.web..*) && !within(org.siglus.siglusapi.web.android.*) &&"
       + "(@annotation(org.springframework.web.bind.annotation.PostMapping) "
       + "|| @annotation(org.springframework.web.bind.annotation.PutMapping) "
       + "|| @annotation(org.springframework.web.bind.annotation.PatchMapping) "
       + "|| @annotation(org.springframework.web.bind.annotation.DeleteMapping))")
-  public void webApi() {
+  public void webWriteApi() {
     // do nothing
   }
 
-  @Before("webApi()")
-  public void beforeWebApi() {
-    if (localMachineHelper.isLocalMachine() || androidHelper.isAndroid()) {
+  @Before("webWriteApi()")
+  public void checkWebWriteApi() {
+    if (machine.isOnlineWeb() && (localMachineHelper.isLocalMachine() || androidHelper.isAndroid())) {
       throw new PermissionMessageException(new Message(ERROR_NOT_WEB_USER));
     }
   }
@@ -66,7 +66,7 @@ public class WebApiCheckAspect {
   }
 
   @Before("withLocationApi()")
-  public void beforeWithLocationApi() {
+  public void checkWithLocationApi() {
     if (facilityConfigHelper.isStockManagement()) {
       throw new BusinessDataException(new org.siglus.siglusapi.dto.Message(ERROR_CURRENT_IS_NOT_LOCATION_MANAGEMENT),
           CURRENT_IS_NOT_LOCATION_MANAGEMENT);
@@ -79,7 +79,7 @@ public class WebApiCheckAspect {
   }
 
   @Before("withoutLocationApi()")
-  public void beforeWithoutLocationApi() {
+  public void checkWithoutLocationApi() {
     if (facilityConfigHelper.isLocationManagement()) {
       throw new BusinessDataException(new org.siglus.siglusapi.dto.Message(ERROR_CURRENT_IS_NOT_STOCK_MANAGEMENT),
           CURRENT_IS_NOT_STOCK_MANAGEMENT);

@@ -102,14 +102,10 @@ public class HistoricalDataPersistentServiceTest {
   public void shouleUpdateFacilityHistoricalDataByFacilityWithOutStartDate() {
     //given
     HistoricalDataRequest historicalDataRequest = new HistoricalDataRequest(facilityId, null, endDate);
-    FacilityLastRequisitionTimeDto facilityLastRequisitionTimeDto =
-        new FacilityLastRequisitionTimeDto(facilityId, startDate);
     //when
-    when(historicalDataRepository.getFacilityLatestRequisitionDate(Sets.newHashSet(facilityId)))
-        .thenReturn(Collections.singletonList(facilityLastRequisitionTimeDto));
     service.updateHistoricalDataByFacility(Collections.singletonList(historicalDataRequest));
     //then
     verify(historicalDataRepository).updateFacilityHistoricalData(facilityId,
-        startDate, endDate);
+        LocalDate.of(1970, 1, 1), endDate);
   }
 }

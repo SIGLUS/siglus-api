@@ -636,11 +636,9 @@ public class SiglusOrderService {
 
     Map<UUID, BigDecimal> orderableIdToSuggestedQuantity = Maps.newHashMapWithExpectedSize(orderableIds.size());
     orderableIds.forEach(orderableId -> {
-      Integer sumApprovedQuantity = getNoneNullDefaultZero(
-          orderableIdToCurrentPeriodSumApprovedQuantity.get(orderableId));
-      Integer sumHistoryApprovedQuantity = getNoneNullDefaultZero(
-          orderableIdToHistoryPeriodSumApprovedQuantity.get(orderableId));
-      Integer soh = getNoneNullDefaultZero(orderableIdToSoh.get(orderableId));
+      Integer sumApprovedQuantity = orderableIdToCurrentPeriodSumApprovedQuantity.getOrDefault(orderableId, 0);
+      Integer sumHistoryApprovedQuantity = orderableIdToHistoryPeriodSumApprovedQuantity.getOrDefault(orderableId, 0);
+      Integer soh = orderableIdToSoh.getOrDefault(orderableId, 0);
 
       BigDecimal suggestedQuantity = calculateSuggestedQuantity(sumApprovedQuantity, sumHistoryApprovedQuantity, soh,
           currentRequisitionOrderableToApprovedQuantity.get(orderableId));
@@ -678,7 +676,7 @@ public class SiglusOrderService {
       requisitions.forEach(requisition ->
           requisition.getRequisitionLineItems().forEach(requisitionLineItem -> {
             UUID orderableId = requisitionLineItem.getOrderable().getId();
-            Integer maxApprovedQuantity = getNoneNullDefaultZero(orderableIdToMaxApprovedQuantity.get(orderableId));
+            Integer maxApprovedQuantity = orderableIdToMaxApprovedQuantity.getOrDefault(orderableId, 0);
             orderableIdToMaxApprovedQuantity.put(orderableId,
                 Math.max(maxApprovedQuantity, requisitionLineItem.getApprovedQuantity()));
           })
@@ -694,10 +692,9 @@ public class SiglusOrderService {
     currentPeriodNotFinishedRequisitions.forEach(requisition ->
         requisition.getRequisitionLineItems().forEach(lineItem -> {
           UUID orderableId = lineItem.getOrderable().getId();
-          Integer sumApprovedQuantity = getNoneNullDefaultZero(
-              orderableIdToCurrentPeriodSumApprovedQuantity.get(orderableId));
+          Integer sumApprovedQuantity = orderableIdToCurrentPeriodSumApprovedQuantity.getOrDefault(orderableId, 0);
           orderableIdToCurrentPeriodSumApprovedQuantity.put(orderableId,
-              sumApprovedQuantity + lineItem.getApprovedQuantity());
+              sumApprovedQuantity + getNoneNullDefaultZero(lineItem.getApprovedQuantity()));
         })
     );
     return orderableIdToCurrentPeriodSumApprovedQuantity;
