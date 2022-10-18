@@ -25,6 +25,7 @@ import org.openlmis.fulfillment.domain.Shipment;
 import org.openlmis.fulfillment.repository.ProofOfDeliveryRepository;
 import org.siglus.siglusapi.domain.PodExtension;
 import org.siglus.siglusapi.domain.PodLineItemsByLocation;
+import org.siglus.siglusapi.localmachine.event.NotificationService;
 import org.siglus.siglusapi.repository.OrdersRepository;
 import org.siglus.siglusapi.repository.PodExtensionRepository;
 import org.siglus.siglusapi.repository.PodLineItemsByLocationRepository;
@@ -40,6 +41,7 @@ public class ProofOfDeliveryReplayer {
   private final PodExtensionRepository podExtensionRepository;
   private final OrdersRepository ordersRepository;
   private final PodLineItemsByLocationRepository podLineItemsByLocationRepository;
+  private final NotificationService notificationService;
 
   @EventListener(classes = {ProofOfDeliveryEvent.class})
   public void replay(ProofOfDeliveryEvent event) {
@@ -72,7 +74,7 @@ public class ProofOfDeliveryReplayer {
     if (Objects.nonNull(podLineItemsByLocations) && !podLineItemsByLocations.isEmpty()) {
       podLineItemsByLocationRepository.save(podLineItemsByLocations);
     }
-
+    notificationService.postConfirmPod(event.getUserId(), proofOfDelivery.getId(), order);
   }
 
 }

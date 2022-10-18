@@ -35,9 +35,12 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.alibaba.fastjson.JSON;
+import com.google.common.collect.Lists;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -48,11 +51,17 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.openlmis.fulfillment.domain.CreationDetails;
+import org.openlmis.fulfillment.domain.Order;
+import org.openlmis.fulfillment.domain.OrderLineItem;
+import org.openlmis.fulfillment.domain.ProofOfDelivery;
+import org.openlmis.fulfillment.domain.Shipment;
 import org.openlmis.fulfillment.service.referencedata.PeriodReferenceDataService;
 import org.openlmis.fulfillment.service.referencedata.ProcessingPeriodDto;
 import org.openlmis.fulfillment.service.referencedata.ProgramDto;
 import org.openlmis.fulfillment.util.Pagination;
 import org.openlmis.fulfillment.web.shipment.ShipmentDto;
+import org.openlmis.fulfillment.web.shipment.ShipmentLineItemDto;
 import org.openlmis.fulfillment.web.util.BasicOrderDto;
 import org.openlmis.fulfillment.web.util.OrderObjectReferenceDto;
 import org.openlmis.fulfillment.web.util.ShipmentObjectReferenceDto;
@@ -68,7 +77,6 @@ import org.openlmis.requisition.dto.ObjectReferenceDto;
 import org.openlmis.requisition.dto.ProofOfDeliveryDto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.service.PermissionService;
-import org.openlmis.requisition.service.fulfillment.ProofOfDeliveryFulfillmentService;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
 import org.openlmis.requisition.service.referencedata.RequisitionGroupReferenceDataService;
 import org.openlmis.requisition.service.referencedata.UserReferenceDataService;
@@ -81,6 +89,8 @@ import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.SiglusOrderDto;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.repository.NotificationRepository;
+import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
+import org.siglus.siglusapi.repository.SiglusShipmentRepository;
 import org.siglus.siglusapi.service.SiglusNotificationService.ViewableStatus;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
@@ -114,9 +124,6 @@ public class SiglusNotificationServiceTest {
   private SiglusRequisitionRequisitionService requisitionService;
 
   @Mock
-  private ProofOfDeliveryFulfillmentService podService;
-
-  @Mock
   private OrderExternalRepository orderExternalRepository;
 
   @Mock
@@ -139,6 +146,12 @@ public class SiglusNotificationServiceTest {
 
   @Mock
   private UserReferenceDataService userReferenceDataService;
+
+  @Mock
+  private SiglusProofOfDeliveryRepository siglusProofOfDeliveryRepository;
+
+  @Mock
+  private SiglusShipmentRepository siglusShipmentRepository;
 
   private UUID notificationId;
 
@@ -477,6 +490,12 @@ public class SiglusNotificationServiceTest {
     ShipmentDto shipment = new ShipmentDto();
     OrderObjectReferenceDto orderDto = new OrderObjectReferenceDto(randomUUID());
     shipment.setOrder(orderDto);
+    final List<ShipmentLineItemDto> list = new ArrayList<>();
+    final ShipmentLineItemDto item = new ShipmentLineItemDto();
+    list.add(item);
+    shipment.setLineItems(list);
+    CreationDetails creationDetails = new CreationDetails(UUID.randomUUID(), null);
+    shipment.setShipDetails(creationDetails);
     org.openlmis.fulfillment.web.util.OrderDto order =
         new org.openlmis.fulfillment.web.util.OrderDto();
     order.setId(orderDto.getId());
@@ -484,13 +503,22 @@ public class SiglusNotificationServiceTest {
     ProcessingPeriodDto period = new ProcessingPeriodDto();
     period.setId(randomUUID());
     order.setProcessingPeriod(period);
+    order.setSupplyingFacility(new org.openlmis.fulfillment.service.referencedata.FacilityDto());
     SiglusOrderDto siglusOrderDto = new SiglusOrderDto();
     siglusOrderDto.setOrder(order);
+    final Order orderItem = new Order();
+    OrderLineItem orderLineItem = new OrderLineItem();
+    orderItem.setOrderLineItems(Lists.newArrayList(orderLineItem));
+    Shipment shipmentItem = Shipment.newInstance(shipment, orderItem);
+    shipmentItem.getOrder().setSupplyingFacilityId(UUID.randomUUID());
+    shipmentItem.getOrder().setProcessingPeriodId(UUID.randomUUID());
+    ProofOfDelivery proofOfDelivery = JSON.parseObject("{}", ProofOfDelivery.class);
+    when(siglusShipmentRepository.findShipmentByOrderId(any())).thenReturn(shipmentItem);
+    when(siglusProofOfDeliveryRepository.findByShipmentId(any())).thenReturn(proofOfDelivery);
     when(siglusOrderService.searchOrderById(order.getId())).thenReturn(siglusOrderDto);
 
     ProofOfDeliveryDto pod = new ProofOfDeliveryDto();
     pod.setId(randomUUID());
-    when(podService.getProofOfDeliveries(order.getId())).thenReturn(singletonList(pod));
 
     RequisitionV2Dto requisition = new RequisitionV2Dto();
     requisition.setId(randomUUID());
@@ -511,7 +539,7 @@ public class SiglusNotificationServiceTest {
         .updateLastNotificationProcessed(order.getId(), NotificationStatus.ORDERED);
     List<Notification> notification = verifySavedNotification(2);
     Notification notification1 = notification.get(0);
-    assertEquals(pod.getId(), notification1.getRefId());
+    assertEquals(proofOfDelivery.getId(), notification1.getRefId());
     assertEquals(requisition.getFacility().getId(), notification1.getFacilityId());
     assertEquals(requisition.getEmergency(), notification1.getEmergency());
     assertEquals(NotificationStatus.SHIPPED, notification1.getStatus());

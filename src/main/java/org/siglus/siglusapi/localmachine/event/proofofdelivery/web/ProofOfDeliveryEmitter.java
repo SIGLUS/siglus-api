@@ -24,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.openlmis.fulfillment.domain.BaseEntity;
 import org.openlmis.fulfillment.domain.ProofOfDelivery;
 import org.openlmis.fulfillment.repository.ProofOfDeliveryRepository;
+import org.openlmis.fulfillment.util.AuthenticationHelper;
 import org.siglus.common.domain.OrderExternal;
 import org.siglus.common.repository.OrderExternalRepository;
 import org.siglus.siglusapi.domain.PodExtension;
@@ -46,6 +47,7 @@ public class ProofOfDeliveryEmitter {
   private final OrderExternalRepository orderExternalRepository;
   private final RequisitionExtensionRepository requisitionExtensionRepository;
   private final PodLineItemsByLocationRepository podLineItemsByLocationRepository;
+  private final AuthenticationHelper authenticationHelper;
 
   public ProofOfDeliveryEvent emit(UUID podId) {
     ProofOfDeliveryEvent event = getEvent(podId);
@@ -73,6 +75,7 @@ public class ProofOfDeliveryEmitter {
     event.setProofOfDelivery(proofOfDelivery);
     PodExtension podExtension = podExtensionRepository.findByPodId(podId);
     event.setPodExtension(podExtension);
+    event.setUserId(authenticationHelper.getCurrentUser().getId());
     return event;
   }
 

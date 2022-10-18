@@ -17,11 +17,9 @@ package org.siglus.siglusapi.localmachine.event;
 
 import java.util.UUID;
 import java.util.function.Consumer;
-import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.openlmis.fulfillment.domain.Order;
-import org.openlmis.fulfillment.web.util.OrderObjectReferenceDto;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.dto.BasicRequisitionDto;
 import org.openlmis.requisition.repository.RequisitionRepository;
@@ -61,49 +59,44 @@ public class NotificationService {
 
 
   public void postFulfillment(UUID userId, UUID proofOfDeliveryId, Order order) {
-    // supplier notification
-    Notification supplierNotification = new Notification();
-    supplierNotification.setRefId(order.getId());
-    supplierNotification.setFacilityId(order.getFacilityId());
-    supplierNotification.setProgramId(order.getProgramId());
-    supplierNotification.setEmergency(order.getEmergency());
-    supplierNotification.setStatus(NotificationStatus.ORDERED);
-    supplierNotification.setType(NotificationType.TODO);
-    supplierNotification.setProcessingPeriodId(order.getProcessingPeriodId());
-    supplierNotification.setRequestingFacilityId(order.getRequestingFacilityId());
-    supplierNotification.setProcessed(true);
-    log.info("fulfill order notification: {}", supplierNotification);
-    save(userId, supplierNotification);
-
-    // client notification
     OrderExternal external = orderExternalRepository.findOne(order.getExternalId());
     UUID requisitionId = external == null ? order.getExternalId() : external.getRequisitionId();
     Requisition requisition = requisitionRepository.findOne(requisitionId);
-    Stream.of(NotificationType.values()).forEach(notificationType -> {
-      Notification notification = new Notification();
-      notification.setRefId(proofOfDeliveryId);
-      notification.setFacilityId(requisition.getFacilityId());
-      notification.setProgramId(requisition.getProgramId());
-      notification.setEmergency(requisition.getEmergency());
-      notification.setStatus(NotificationStatus.SHIPPED);
-      notification.setType(notificationType);
-      notification.setProcessingPeriodId(order.getProcessingPeriodId());
-      notification.setRequestingFacilityId(requisition.getFacilityId());
-      log.info("confirm shipment notification: {}", notification);
-      save(userId, notification);
-    });
+
+    Notification requestNotification = new Notification();
+    requestNotification.setRefId(proofOfDeliveryId);
+    requestNotification.setFacilityId(requisition.getFacilityId());
+    requestNotification.setProgramId(requisition.getProgramId());
+    requestNotification.setEmergency(requisition.getEmergency());
+    requestNotification.setStatus(NotificationStatus.SHIPPED);
+    requestNotification.setType(NotificationType.TODO);
+    requestNotification.setProcessingPeriodId(order.getProcessingPeriodId());
+    requestNotification.setRequestingFacilityId(requisition.getFacilityId());
+    log.info("confirm shipment notification: {}", requestNotification);
+    save(userId, requestNotification);
+
+    Notification supplierNotification = new Notification();
+    supplierNotification.setRefId(proofOfDeliveryId);
+    supplierNotification.setFacilityId(requisition.getFacilityId());
+    supplierNotification.setProgramId(requisition.getProgramId());
+    supplierNotification.setEmergency(requisition.getEmergency());
+    supplierNotification.setStatus(NotificationStatus.SHIPPED);
+    requestNotification.setType(NotificationType.UPDATE);
+    supplierNotification.setProcessingPeriodId(order.getProcessingPeriodId());
+    supplierNotification.setRequestingFacilityId(requisition.getFacilityId());
+    log.info("confirm shipment notification for supplier facility: {}", supplierNotification);
+    save(userId, supplierNotification);
   }
 
-  public void postConfirmPod(UUID userId, org.openlmis.fulfillment.web.util.ProofOfDeliveryDto pod) {
-    notificationRepository.updateLastNotificationProcessed(pod.getId(), NotificationStatus.SHIPPED);
+  public void postConfirmPod(UUID userId, UUID proofOfDeliveryId, Order order) {
+    notificationRepository.updateLastNotificationProcessed(proofOfDeliveryId, NotificationStatus.SHIPPED);
     Notification notification = new Notification();
-    notification.setRefId(pod.getId());
-    OrderObjectReferenceDto order = pod.getShipment().getOrder();
-    notification.setProgramId(order.getProgram().getId());
+    notification.setRefId(proofOfDeliveryId);
+    notification.setProgramId(order.getProgramId());
     notification.setEmergency(order.getEmergency());
-    notification.setProcessingPeriodId(order.getProcessingPeriod().getId());
-    notification.setFacilityId(order.getSupplyingFacility().getId());
-    notification.setRequestingFacilityId(order.getRequestingFacility().getId());
+    notification.setProcessingPeriodId(order.getProcessingPeriodId());
+    notification.setFacilityId(order.getSupplyingFacilityId());
+    notification.setRequestingFacilityId(order.getRequestingFacilityId());
     notification.setStatus(NotificationStatus.RECEIVED);
     notification.setType(NotificationType.UPDATE);
     log.info("confirm pod notification: {}", notification);
