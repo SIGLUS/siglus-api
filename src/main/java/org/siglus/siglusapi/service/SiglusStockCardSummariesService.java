@@ -401,7 +401,7 @@ public class SiglusStockCardSummariesService {
     List<LotDto> lotDtos = getLotDtos(canFulfillForMeEntryDtos);
     List<UUID> lotIds = lotDtos.stream().map(LotDto::getId).collect(Collectors.toList());
     List<LotLocationSohDto> locationSoh = new ArrayList<>();
-    if (CollectionUtils.isNotEmpty(lotIds)) {
+    if (CollectionUtils.isEmpty(lotIds)) {
       lotIds.add(UUID.randomUUID());
     }
     locationSoh = calculatedStockOnHandByLocationRepository.getLocationSoh(lotIds, facilityId);
