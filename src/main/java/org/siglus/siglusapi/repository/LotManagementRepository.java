@@ -26,7 +26,8 @@ import org.springframework.transaction.annotation.Transactional;
 @SuppressWarnings("checkstyle:LineLength")
 public class LotManagementRepository {
 
-  private static final String SQL_FROM = "FROM referencedata.lots\n"
+  // set expired lots which are expired and SOH = 0 in all facilities for more than 6 months to inactive
+  private static final String UPDATE_SQL = "UPDATE referencedata.lots SET active = FALSE\n"
       + "WHERE id IN (\n"
       + "        SELECT lotid\n"
       + "        FROM (\n"
@@ -42,17 +43,35 @@ public class LotManagementRepository {
       + "            GROUP BY l.id) result\n"
       + "        WHERE result.totalstockonhand = 0)";
 
-  // back tp be cleared expired lots
-  private static final String SQL_1 = "INSERT INTO siglusintegration.expired_lots_backup (id, lotcode, expirationdate, manufacturedate, tradeitemid, active) "
+  private static final String SQL_FROM = "FROM referencedata.lots\n"
+      + "WHERE id NOT IN (\n"
+      + "        SELECT lotid\n"
+      + "        FROM stockmanagement.stock_cards\n"
+      + "        WHERE lotid IS NOT NULL)\n"
+      + "    AND id NOT IN (\n"
+      + "        SELECT lotid\n"
+      + "        FROM stockmanagement.physical_inventory_line_items\n"
+      + "        WHERE lotid IS NOT NULL)\n"
+      + "    AND id NOT IN (\n"
+      + "        SELECT lotid\n"
+      + "        FROM fulfillment.shipment_line_items\n"
+      + "        WHERE lotid IS NOT NULL)\n"
+      + "    AND id NOT IN (\n"
+      + "        SELECT lotid\n"
+      + "        FROM fulfillment.proof_of_delivery_line_items\n"
+      + "        WHERE lotid IS NOT NULL)";
+
+  // back up to be cleared unused lots
+  private static final String INSERT_SQL = "INSERT INTO siglusintegration.expired_lots_backup (id, lotcode, expirationdate, manufacturedate, tradeitemid, active) "
       + "(SELECT id, lotcode, expirationdate, manufacturedate, tradeitemid, active " + SQL_FROM + ") ON CONFLICT DO NOTHING";
 
-  // clear lots which are expired and SOH = 0 in all facilities for more than 6 months
-  private static final String SQL_2 = "DELETE " + SQL_FROM;
+  // clear lots which are not used by any facility
+  private static final String DELETE_SQL = "DELETE " + SQL_FROM;
 
   private final JdbcTemplate jdbc;
 
   @Transactional
   public void clearExpiredLots() {
-    Lists.newArrayList(SQL_1, SQL_2).forEach(jdbc::update);
+    Lists.newArrayList(UPDATE_SQL, INSERT_SQL, DELETE_SQL).forEach(jdbc::update);
   }
 }
