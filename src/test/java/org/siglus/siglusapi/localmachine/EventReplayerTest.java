@@ -23,6 +23,7 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 
+import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.LinkedList;
@@ -89,12 +90,24 @@ public class EventReplayerTest {
   @Test
   public void shouldSendEventsToPublisherWhenReplayGivenNonGroupEvents() {
     // given
-    Event event1 =
-        Event.builder().id(UUID.randomUUID()).groupId(null).localSequenceNumber(0).build();
-    Event event2 =
-        Event.builder().id(UUID.randomUUID()).groupId(null).localSequenceNumber(1).build();
-    Event event3 =
-        Event.builder().id(UUID.randomUUID()).groupId(null).localSequenceNumber(2).build();
+    Event event1 = Event.builder()
+            .id(UUID.randomUUID())
+            .groupId(null)
+            .localSequenceNumber(0)
+            .syncedTime(ZonedDateTime.now())
+            .build();
+    Event event2 = Event.builder()
+            .id(UUID.randomUUID())
+            .groupId(null)
+            .localSequenceNumber(1)
+            .syncedTime(ZonedDateTime.now())
+            .build();
+    Event event3 = Event.builder()
+        .id(UUID.randomUUID())
+        .groupId(null)
+        .localSequenceNumber(2)
+        .syncedTime(ZonedDateTime.now())
+        .build();
     List<Event> nonGroupEvents = Arrays.asList(event2, event1, event3);
     List<Event> publishedEvents = getPublishedEvents();
     // when

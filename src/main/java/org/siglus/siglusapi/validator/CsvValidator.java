@@ -57,18 +57,19 @@ public class CsvValidator {
     List<String> headers = csvHeaderToColumnMap.keySet().stream().map(portugueseToEnglishMap::get)
         .collect(Collectors.toList());
     headers = headersWithoutNull(headers);
-    validateInvalidHeaders(headers);
+    validateInvalidHeaders(headers, csvHeaderToColumnMap);
   }
 
   public void validateNullRow(CSVRecord eachRow) {
     long row = eachRow.getRecordNumber();
-    validateEachColumn(eachRow.get(LocationConstants.PORTUGUESE_LOCATION_CODE), LocationConstants.LOCATION_CODE, row);
-    validateEachColumn(eachRow.get(LocationConstants.PORTUGUESE_AREA), LocationConstants.AREA, row);
-    validateEachColumn(eachRow.get(LocationConstants.PORTUGUESE_ZONE), LocationConstants.ZONE, row);
-    validateEachColumn(eachRow.get(LocationConstants.PORTUGUESE_RACK), LocationConstants.RACK, row);
-    validateEachColumn(eachRow.get(LocationConstants.PORTUGUESE_BARCODE), LocationConstants.BARCODE, row);
-    validateEachColumn(eachRow.get(LocationConstants.PORTUGUESE_BIN), LocationConstants.BIN, row);
-    validateEachColumn(eachRow.get(LocationConstants.PORTUGUESE_LEVEL), LocationConstants.LEVEL, row);
+    validateEachColumn(eachRow.get(LocationConstants.PORTUGUESE_LOCATION_CODE),
+        LocationConstants.PORTUGUESE_LOCATION_CODE, row);
+    validateEachColumn(eachRow.get(LocationConstants.PORTUGUESE_AREA), LocationConstants.PORTUGUESE_AREA, row);
+    validateEachColumn(eachRow.get(LocationConstants.PORTUGUESE_ZONE), LocationConstants.PORTUGUESE_ZONE, row);
+    validateEachColumn(eachRow.get(LocationConstants.PORTUGUESE_RACK), LocationConstants.PORTUGUESE_RACK, row);
+    validateEachColumn(eachRow.get(LocationConstants.PORTUGUESE_BARCODE), LocationConstants.PORTUGUESE_BARCODE, row);
+    validateEachColumn(eachRow.get(LocationConstants.PORTUGUESE_BIN), LocationConstants.PORTUGUESE_BIN, row);
+    validateEachColumn(eachRow.get(LocationConstants.PORTUGUESE_LEVEL), LocationConstants.PORTUGUESE_LEVEL, row);
   }
 
   public List<CSVRecord> validateDuplicateLocationCode(CSVParser csvParser) throws IOException {
@@ -96,15 +97,15 @@ public class CsvValidator {
     return records;
   }
 
-  private void validateInvalidHeaders(List<String> headers) {
+  private void validateInvalidHeaders(List<String> headers, Map<String, Integer> csvHeaderToColumnMap) {
     List<String> invalidHeaders = ListUtils.subtract(mandatoryColumnNames, headers);
     if (!invalidHeaders.isEmpty()) {
       throw new BusinessDataException(new Message(CsvUploadMessageKeys.ERROR_UPLOAD_HEADER_INVALID,
-          headers.toString()), headers.toString());
+          csvHeaderToColumnMap.keySet().toString()), csvHeaderToColumnMap.keySet().toString());
     }
     if (headers.size() == 6) {
       throw new BusinessDataException(new Message(CsvUploadMessageKeys.ERROR_UPLOAD_HEADER_INVALID,
-          headers.toString()), headers.toString());
+          csvHeaderToColumnMap.keySet().toString()), csvHeaderToColumnMap.keySet().toString());
     }
   }
 

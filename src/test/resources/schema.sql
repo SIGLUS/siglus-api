@@ -59,3 +59,8 @@ CREATE TABLE IF NOT EXISTS localmachine.ack_records (
     sendto uuid NOT NULL,
     shipped BOOL NOT NULL DEFAULT FALSE
 );
+
+DROP INDEX localmachine.localmachine_sender_localsequencenumber;
+
+ALTER TABLE localmachine.events
+    ADD COLUMN syncedtime TIMESTAMP DEFAULT now();

@@ -27,7 +27,6 @@ import org.siglus.siglusapi.util.MovementDateValidator;
 import org.siglus.siglusapi.web.request.PodExtensionRequest;
 import org.siglus.siglusapi.web.request.UpdatePodSubDraftRequest;
 import org.siglus.siglusapi.web.response.PodExtensionResponse;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -37,7 +36,6 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -47,14 +45,6 @@ import org.springframework.web.bind.annotation.RestController;
 public class SiglusPodWithoutLocationController {
   private final SiglusPodService siglusPodService;
   private final MovementDateValidator movementDateValidator;
-
-  @ResponseStatus(HttpStatus.OK)
-  @ResponseBody
-  @GetMapping("/{id}")
-  public PodExtensionResponse getProofOfDelivery(@PathVariable("id") UUID podId,
-      @RequestParam(required = false) Set<String> expand) {
-    return siglusPodService.getPodExtensionResponse(podId, expand);
-  }
 
   @DeleteMapping("/{id}/subDrafts")
   @ResponseStatus(NO_CONTENT)

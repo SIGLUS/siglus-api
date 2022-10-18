@@ -90,6 +90,7 @@ public class EventRecordRepositoryTest extends LocalMachineIntegrationTest {
         .occurredTime(ZonedDateTime.now())
         .senderId(UUID.randomUUID())
         .payload("payload".getBytes())
+        .syncedTime(ZonedDateTime.now())
         .build();
   }
 }

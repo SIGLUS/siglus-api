@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.localmachine;
 
+import java.time.ZonedDateTime;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
@@ -44,7 +45,7 @@ public abstract class EventImporter {
 
   public void importEvents(List<Event> events) {
     List<Event> acceptedEvents = events.stream().filter(this::accept).collect(Collectors.toList());
-    resetStatus(acceptedEvents);
+    resetStatusAndSyncedTime(acceptedEvents);
     List<Event> nonExistentEvents = eventStore.excludeExisted(acceptedEvents);
     List<Event> newAdded = importGetNewAdded(nonExistentEvents);
     replayer.replay(newAdded);
@@ -52,7 +53,8 @@ public abstract class EventImporter {
 
   protected abstract boolean accept(Event it);
 
-  protected void resetStatus(List<Event> acceptedEvents) {
+  protected void resetStatusAndSyncedTime(List<Event> acceptedEvents) {
+    ZonedDateTime now = ZonedDateTime.now();
     // The local replayed flag is private, don't trust external ones, so reset it here.
     acceptedEvents.forEach(it -> it.setLocalReplayed(false));
     Set<String> supportedFacilityIds = machine.fetchSupportedFacilityIds();
@@ -63,6 +65,7 @@ public abstract class EventImporter {
           if (supportedFacilityIds.contains(facilityId)) {
             it.confirmedReceiverSynced();
           }
+          it.setSyncedTime(now);
         });
   }
 
