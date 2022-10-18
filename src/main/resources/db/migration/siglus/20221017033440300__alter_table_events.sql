@@ -2,8 +2,15 @@
 -- Adding migrations out of order may cause this migration to never execute or behave in an unexpected way.
 -- Migrations should NOT BE EDITED. Add a new migration to apply changes.
 
-DROP INDEX localmachine.localmachine_sender_localsequencenumber;
+DROP INDEX IF EXISTS localmachine.localmachine_sender_localsequencenumber;
 
 ALTER TABLE localmachine.events
-    ADD COLUMN syncedtime TIMESTAMP DEFAULT now();
+    DROP COLUMN occurredtime;
+ALTER TABLE localmachine.events
+    ADD COLUMN occurredtime TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP;
+
+ALTER TABLE localmachine.events
+    ADD COLUMN syncedtime TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP;
+
+
 
