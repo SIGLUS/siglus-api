@@ -17,8 +17,7 @@ package org.siglus.siglusapi.localmachine.agent;
 
 import static org.springframework.util.ObjectUtils.isEmpty;
 
-import com.google.common.collect.Iterators;
-import com.google.common.collect.UnmodifiableIterator;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -30,8 +29,10 @@ import org.apache.commons.collections.CollectionUtils;
 import org.siglus.siglusapi.localmachine.Ack;
 import org.siglus.siglusapi.localmachine.Event;
 import org.siglus.siglusapi.localmachine.EventImporter;
+import org.siglus.siglusapi.localmachine.ExternalEventDtoMapper;
 import org.siglus.siglusapi.localmachine.constant.ErrorType;
 import org.siglus.siglusapi.localmachine.eventstore.EventStore;
+import org.siglus.siglusapi.localmachine.io.EventResource;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,12 +43,13 @@ import org.springframework.transaction.annotation.Transactional;
 @Profile({"localmachine"})
 public class SyncService {
 
-  public static final int BATCH_PUSH_LIMIT = 5;
+  private static final int PUSH_CAPACITY_BYTES_PER_REQUEST = 20 * 1024 * 1024;
   private final EventStore localEventStore;
   private final OnlineWebClient webClient;
   private final EventImporter eventImporter;
   private final ErrorHandler errorHandler;
   private final SyncRecordService syncRecordService;
+  private final ExternalEventDtoMapper externalEventDtoMapper;
 
   @Transactional
   public void exchangeAcks() {
@@ -90,23 +92,34 @@ public class SyncService {
 
   @Transactional
   public void push() {
-    List<Event> readyForHandleEvents = new ArrayList<>();
+    List<Event> currentEvents = new ArrayList<>();
     try {
       List<Event> events = localEventStore.getEventsForOnlineWeb();
       if (isEmpty(events)) {
         return;
       }
-      UnmodifiableIterator<List<Event>> partitionList = Iterators.partition(events.iterator(), BATCH_PUSH_LIMIT);
-      while (partitionList.hasNext()) {
-        readyForHandleEvents.addAll(partitionList.next());
-        webClient.sync(readyForHandleEvents);
-        localEventStore.confirmEventsByWeb(readyForHandleEvents);
-        readyForHandleEvents.clear();
+      EventResource eventResource = new EventResource(PUSH_CAPACITY_BYTES_PER_REQUEST, externalEventDtoMapper);
+      for (Event evt : events) {
+        if (eventResource.write(evt)) {
+          currentEvents.add(evt);
+          continue;
+        }
+        doPush(currentEvents, eventResource);
       }
+      doPush(currentEvents, eventResource);
     } catch (Throwable e) {
       log.error("push event failed", e);
-      List<UUID> eventIds = readyForHandleEvents.stream().map(Event::getId).collect(Collectors.toList());
+      List<UUID> eventIds = currentEvents.stream().map(Event::getId).collect(Collectors.toList());
       errorHandler.storeErrorRecord(eventIds, e, ErrorType.SYNC_UP);
+    }
+  }
+
+  private void doPush(List<Event> currentEvents, EventResource eventResource) throws IOException {
+    if (!currentEvents.isEmpty()) {
+      webClient.sync(eventResource.toResource());
+      localEventStore.confirmEventsByWeb(currentEvents);
+      currentEvents.clear();
+      eventResource.reset();
     }
   }
 }

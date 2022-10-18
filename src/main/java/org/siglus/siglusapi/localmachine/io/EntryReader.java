@@ -37,8 +37,8 @@ public class EntryReader implements AutoCloseable {
     if (Entry.MAGIC_NUMBER != magicNumber) {
       throw new IOException("invalid magic number " + magicNumber);
     }
-    long checksum = in.readLong();
-    int size = in.readInt();
+    final long checksum = in.readLong();
+    final int size = in.readInt();
     if (size <= 0 || size > Entry.MAX_SIZE_BYTES) {
       throw new IllegalArgumentException("invalid entry size " + size);
     }

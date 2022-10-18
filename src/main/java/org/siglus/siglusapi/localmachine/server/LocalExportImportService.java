@@ -20,6 +20,8 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
@@ -59,6 +61,7 @@ import org.springframework.web.multipart.MultipartFile;
 @Slf4j
 public class LocalExportImportService {
 
+  private static final int EVENT_FILE_CAPACITY_BYTES = 50 * 1024 * 1024;
   private final EventStore eventStore;
   private final EventImporter eventImporter;
   private final ExternalEventDtoMapper externalEventDtoMapper;
@@ -99,20 +102,24 @@ public class LocalExportImportService {
   public void importEvents(MultipartFile[] files) {
     for (MultipartFile file : files) {
       checkFileSuffix(file);
-      try{
+      try {
         List<Event> events = eventFileReader.readAll(file);
         checkFacility(events);
         eventImporter.importEvents(events);
       } catch (ChecksumNotMatchedException e) {
         throw new BusinessDataException(new Message("file may be modified"));
       } catch (IOException e) {
-        throw new BusinessDataException(new Message("fail to import events, file name:" + file.getName()));
+        throw new BusinessDataException(
+            new Message("fail to import events, file name:" + file.getName()));
       }
     }
   }
 
   private File makeDirectory() {
     File directory = new File(zipExportPath);
+    if (directory.exists()) {
+      return directory;
+    }
     boolean mkdirs = directory.mkdirs();
     if (!mkdirs) {
       log.warn("export zip dir make fail, dir: {}", zipExportPath);
@@ -121,8 +128,10 @@ public class LocalExportImportService {
     return directory;
   }
 
+  @SneakyThrows
   private List<File> generateFilesForEachFacility() {
-    String workingDir = zipExportPath + System.currentTimeMillis() + "/";
+    String workingDir = zipExportPath + "/" + System.currentTimeMillis() + "/";
+    Files.createDirectories(Paths.get(workingDir));
     UUID homeFacilityId = getHomeFacilityId();
     Map<UUID, List<Event>> receiverIdToEvents = eventStore.getEventsForExport(homeFacilityId).stream()
         .collect(Collectors.groupingBy(Event::getReceiverId));
@@ -136,18 +145,19 @@ public class LocalExportImportService {
         .collect(Collectors.toList());
   }
 
-  private List<File> generateFilesForOneReceiver(String workingDir, UUID homeFacilityId, Map<UUID, String> facilityIdToCode,
-      UUID receiverId, List<Event> events) {
+  private List<File> generateFilesForOneReceiver(
+      String workingDir,
+      UUID homeFacilityId,
+      Map<UUID, String> facilityIdToCode,
+      UUID receiverId,
+      List<Event> events) {
     List<File> files = new LinkedList<>();
     int currentFilePartSeq = 1;
     boolean needMultipleFiles = false;
     String fileName =
         getFileName(
-            workingDir,
-            facilityIdToCode.get(homeFacilityId),
-            facilityIdToCode.get(receiverId),
-            "");
-    int capacityBytes = 50 * 1024 * 1024;
+            workingDir, facilityIdToCode.get(homeFacilityId), facilityIdToCode.get(receiverId), "");
+    int capacityBytes = EVENT_FILE_CAPACITY_BYTES;
     EventFile eventFile = new EventFile(capacityBytes, fileName, externalEventDtoMapper);
     for (int i = 0; i < events.size(); i++) {
       try {
@@ -170,8 +180,9 @@ public class LocalExportImportService {
                   currentFilePartSuffix);
           eventFile.renameTo(newFileName);
         }
-        files.add(eventFile.getFile());
-        eventFile.close();
+        if (eventFile.getCount() > 0) {
+          files.add(eventFile.getFile());
+        }
         // prepare for new event file
         eventFile = new EventFile(capacityBytes, fileName, externalEventDtoMapper);
         currentFilePartSeq += 1;
@@ -179,6 +190,9 @@ public class LocalExportImportService {
         log.error("error when generate files, facility:{}, err:{}", homeFacilityId, e);
         throw new BusinessDataException(new Message("fail to generate files"));
       }
+    }
+    if (eventFile.getCount() > 0) {
+      files.add(eventFile.getFile());
     }
     return files;
   }

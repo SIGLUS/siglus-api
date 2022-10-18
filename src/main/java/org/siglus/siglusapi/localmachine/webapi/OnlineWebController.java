@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.localmachine.webapi;
 
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -22,11 +23,13 @@ import javax.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.siglus.siglusapi.localmachine.Ack;
+import org.siglus.siglusapi.localmachine.Event;
 import org.siglus.siglusapi.localmachine.EventImporter;
 import org.siglus.siglusapi.localmachine.ExternalEventDto;
 import org.siglus.siglusapi.localmachine.ExternalEventDtoMapper;
 import org.siglus.siglusapi.localmachine.auth.MachineToken;
 import org.siglus.siglusapi.localmachine.eventstore.EventStore;
+import org.siglus.siglusapi.localmachine.io.EventFileReader;
 import org.siglus.siglusapi.localmachine.server.ActivationService;
 import org.siglus.siglusapi.localmachine.server.OnlineWebService;
 import org.springframework.validation.annotation.Validated;
@@ -35,7 +38,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 @Slf4j
 @RestController
@@ -48,6 +53,7 @@ public class OnlineWebController {
   private final ActivationService activationService;
   private final ExternalEventDtoMapper externalEventDtoMapper;
   private final OnlineWebService onlineWebService;
+  private final EventFileReader eventFileReader;
 
   @PostMapping("/agents")
   public ActivationResponse activateAgent(@RequestBody @Validated RemoteActivationRequest request) {
@@ -60,6 +66,13 @@ public class OnlineWebController {
     importer.importEvents(request.getEvents().stream()
         .map(externalEventDtoMapper::map)
         .collect(Collectors.toList()));
+  }
+
+  @PostMapping("/eventFile")
+  public void syncEventFile(@RequestParam("file") MultipartFile file) throws IOException {
+    log.info("sync event file, size:{}", file.getSize());
+    List<Event> events = eventFileReader.readAll(file);
+    importer.importEvents(events);
   }
 
   @GetMapping("/peeringEvents")

@@ -15,27 +15,24 @@
 
 package org.siglus.siglusapi.localmachine.io;
 
+import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.zip.DeflaterOutputStream;
 import org.siglus.siglusapi.localmachine.Event;
 import org.siglus.siglusapi.localmachine.ExternalEventDtoMapper;
+import org.springframework.core.io.ByteArrayResource;
 
-public class EventFile implements AutoCloseable {
+public class EventResource implements AutoCloseable {
 
   private final ExternalEventDtoMapper mapper;
   private final int capacityBytes;
-  private final File file;
   private EventWriter eventWriter;
   private DataOutputStream out;
-  private int count = 0;
+  private ByteArrayOutputStream dest;
 
-  public EventFile(int capacityBytes, String fileName, ExternalEventDtoMapper mapper) {
+  public EventResource(int capacityBytes, ExternalEventDtoMapper mapper) {
     this.capacityBytes = capacityBytes;
-    this.file = new File(fileName);
     this.mapper = mapper;
   }
 
@@ -47,20 +44,16 @@ public class EventFile implements AutoCloseable {
     }
     this.eventWriter.write(event);
     this.eventWriter.flush();
-    this.count += 1;
     return true;
   }
 
-  public void renameTo(String fileName) throws IOException {
-    File newFile = new File(fileName);
-    if (!this.file.renameTo(newFile)) {
-      throw new IOException("fail to rename file");
-    }
-    reset();
-  }
-
-  public File getFile() {
-    return file;
+  public ByteArrayResource toResource() {
+    return new ByteArrayResource(dest.toByteArray()) {
+      @Override
+      public String getFilename() {
+        return "events.dat";
+      }
+    };
   }
 
   @Override
@@ -68,23 +61,24 @@ public class EventFile implements AutoCloseable {
     this.reset();
   }
 
-  public int getCount() {
-    return count;
-  }
-
-  private void reset() throws IOException {
+  public void reset() throws IOException {
     if (this.eventWriter != null) {
       this.eventWriter.flush();
       this.eventWriter.close();
+      this.dest.reset();
       this.eventWriter = null;
       this.out = null;
-      this.count = 0;
     }
   }
 
-  private void prepare() throws IOException {
+  public boolean hasData() {
+    return this.out != null && this.out.size() > 0;
+  }
+
+  private void prepare() {
     if (eventWriter == null) {
-      out = new DataOutputStream(new FileOutputStream(this.file));
+      dest = new ByteArrayOutputStream();
+      out = new DataOutputStream(dest);
       eventWriter = new EventWriter(new EntryWriter(new DeflaterOutputStream(out)), mapper);
     }
   }
