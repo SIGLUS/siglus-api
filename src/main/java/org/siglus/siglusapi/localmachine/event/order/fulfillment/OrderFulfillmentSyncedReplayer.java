@@ -25,6 +25,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -162,7 +163,11 @@ public class OrderFulfillmentSyncedReplayer {
 
   private Order updateOrderLineItems(OrderObjectReferenceDto orderDto, Order orderOrigin) {
     List<OrderLineItemDto> orderLineItemDtos = orderDto.getOrderLineItems();
-    List<OrderLineItem> lineItemsOrigin = orderOrigin.getOrderLineItems();
+    if (CollectionUtils.isEmpty(orderLineItemDtos)) {
+      return orderOrigin;
+    }
+    List<OrderLineItem> lineItemsOrigin = CollectionUtils.isEmpty(orderOrigin.getOrderLineItems())
+        ? new ArrayList<>() : orderOrigin.getOrderLineItems();
     orderLineItemDtos.stream()
         .filter(orderLineItemDto -> orderLineItemDto.getId() == null)
         .filter(orderLineItemDto -> !orderLineItemDto.isSkipped())
@@ -206,6 +211,9 @@ public class OrderFulfillmentSyncedReplayer {
   }
 
   private void resetApprovedQuantity(Requisition requisition, OrderFulfillmentSyncedEvent event) {
+    if (CollectionUtils.isEmpty(event.getConvertToOrderRequest().getRequisitionLineItems())) {
+      return;
+    }
     Map<VersionEntityReference, Integer> orderableToQuantity =
         event.getConvertToOrderRequest().getRequisitionLineItems().stream().collect(Collectors.toMap(
             RequisitionLineItemRequest::getOrderable, RequisitionLineItemRequest::getApprovedQuantity));
@@ -216,6 +224,9 @@ public class OrderFulfillmentSyncedReplayer {
   }
 
   public Map<VersionIdentityDto, OrderableDto> getOrderableDtoMap(Requisition requisition) {
+    if (CollectionUtils.isEmpty(requisition.getRequisitionLineItems())) {
+      return new HashMap<>();
+    }
     Set<VersionEntityReference> orderables = requisition.getRequisitionLineItems().stream()
         .map(RequisitionLineItem::getOrderable).collect(Collectors.toSet());
     Map<VersionIdentityDto, OrderableDto> orderableDtoMap =
