@@ -697,7 +697,7 @@ public class SiglusOrderService {
           Integer sumApprovedQuantity = getNoneNullDefaultZero(
               orderableIdToCurrentPeriodSumApprovedQuantity.get(orderableId));
           orderableIdToCurrentPeriodSumApprovedQuantity.put(orderableId,
-              sumApprovedQuantity + lineItem.getApprovedQuantity());
+              sumApprovedQuantity + getNoneNullDefaultZero(lineItem.getApprovedQuantity()));
         })
     );
     return orderableIdToCurrentPeriodSumApprovedQuantity;
