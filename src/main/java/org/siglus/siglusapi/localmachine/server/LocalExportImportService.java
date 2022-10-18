@@ -15,38 +15,35 @@
 
 package org.siglus.siglusapi.localmachine.server;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.Collection;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import java.util.zip.CRC32;
-import java.util.zip.Checksum;
 import java.util.zip.ZipOutputStream;
 import javax.servlet.http.HttpServletResponse;
-import jersey.repackaged.com.google.common.collect.Lists;
 import jersey.repackaged.com.google.common.collect.Sets;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.ArrayUtils;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.localmachine.Event;
 import org.siglus.siglusapi.localmachine.EventImporter;
-import org.siglus.siglusapi.localmachine.ExternalEventDto;
 import org.siglus.siglusapi.localmachine.ExternalEventDtoMapper;
 import org.siglus.siglusapi.localmachine.eventstore.EventStore;
-import org.siglus.siglusapi.localmachine.eventstore.ExternalEventDtoSerializer;
+import org.siglus.siglusapi.localmachine.io.ChecksumNotMatchedException;
+import org.siglus.siglusapi.localmachine.io.EventFile;
+import org.siglus.siglusapi.localmachine.io.EventFileReader;
 import org.siglus.siglusapi.service.SiglusFacilityService;
 import org.siglus.siglusapi.util.FileUtil;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
@@ -64,11 +61,10 @@ public class LocalExportImportService {
 
   private final EventStore eventStore;
   private final EventImporter eventImporter;
-  private final ExternalEventDtoSerializer externalEventDtoSerializer;
   private final ExternalEventDtoMapper externalEventDtoMapper;
   private final SiglusFacilityService siglusFacilityService;
   private final SiglusAuthenticationHelper authenticationHelper;
-
+  private final EventFileReader eventFileReader;
   @Value("${machine.event.zip.export.path}")
   private String zipExportPath;
 
@@ -78,7 +74,6 @@ public class LocalExportImportService {
   private static final String FILE_NAME_SPLIT = "_";
   private static final String CONTENT_TYPE = "application/zip";
   private static final String DISPOSITION_BASE = "attachment; filename=";
-  private static final String CHECKSUM_SPLIT = "_";
 
   @SneakyThrows
   public void exportEvents(HttpServletResponse response) {
@@ -103,9 +98,16 @@ public class LocalExportImportService {
   @Transactional
   public void importEvents(MultipartFile[] files) {
     for (MultipartFile file : files) {
-      eventImporter.importEvents(getEvents(file).stream()
-          .map(externalEventDtoMapper::map)
-          .collect(Collectors.toList()));
+      checkFileSuffix(file);
+      try{
+        List<Event> events = eventFileReader.readAll(file);
+        checkFacility(events);
+        eventImporter.importEvents(events);
+      } catch (ChecksumNotMatchedException e) {
+        throw new BusinessDataException(new Message("file may be modified"));
+      } catch (IOException e) {
+        throw new BusinessDataException(new Message("fail to import events, file name:" + file.getName()));
+      }
     }
   }
 
@@ -120,20 +122,64 @@ public class LocalExportImportService {
   }
 
   private List<File> generateFilesForEachFacility() {
+    String workingDir = zipExportPath + System.currentTimeMillis() + "/";
     UUID homeFacilityId = getHomeFacilityId();
     Map<UUID, List<Event>> receiverIdToEvents = eventStore.getEventsForExport(homeFacilityId).stream()
         .collect(Collectors.groupingBy(Event::getReceiverId));
     Map<UUID, String> facilityIdToCode = siglusFacilityService.getFacilityIdToCode(
         getFacilityIds(homeFacilityId, receiverIdToEvents));
 
-    List<File> files = Lists.newArrayListWithExpectedSize(receiverIdToEvents.size());
-    receiverIdToEvents.forEach((receiverId, events) -> {
-      String fileName = getFileName(facilityIdToCode.get(homeFacilityId), facilityIdToCode.get(receiverId));
-      files.add(generateFile(fileName,
-          externalEventDtoSerializer.dump(events.stream()
-              .map(externalEventDtoMapper::map)
-              .collect(Collectors.toList()))));
-    });
+    return receiverIdToEvents.entrySet().stream()
+        .map((it) -> generateFilesForOneReceiver(
+            workingDir, homeFacilityId, facilityIdToCode, it.getKey(), it.getValue()))
+        .flatMap(Collection::stream)
+        .collect(Collectors.toList());
+  }
+
+  private List<File> generateFilesForOneReceiver(String workingDir, UUID homeFacilityId, Map<UUID, String> facilityIdToCode,
+      UUID receiverId, List<Event> events) {
+    List<File> files = new LinkedList<>();
+    int currentFilePartSeq = 1;
+    boolean needMultipleFiles = false;
+    String fileName =
+        getFileName(
+            workingDir,
+            facilityIdToCode.get(homeFacilityId),
+            facilityIdToCode.get(receiverId),
+            "");
+    int capacityBytes = 50 * 1024 * 1024;
+    EventFile eventFile = new EventFile(capacityBytes, fileName, externalEventDtoMapper);
+    for (int i = 0; i < events.size(); i++) {
+      try {
+        boolean canAddMore = eventFile.write(events.get(i));
+        if (canAddMore) {
+          continue;
+        }
+        // finalize current file
+        int remainingCount = events.size() - (i + 1);
+        if (remainingCount > 0) {
+          needMultipleFiles = true;
+        }
+        if (needMultipleFiles) {
+          String currentFilePartSuffix = "_part" + currentFilePartSeq;
+          String newFileName =
+              getFileName(
+                  workingDir,
+                  facilityIdToCode.get(homeFacilityId),
+                  facilityIdToCode.get(receiverId),
+                  currentFilePartSuffix);
+          eventFile.renameTo(newFileName);
+        }
+        files.add(eventFile.getFile());
+        eventFile.close();
+        // prepare for new event file
+        eventFile = new EventFile(capacityBytes, fileName, externalEventDtoMapper);
+        currentFilePartSeq += 1;
+      } catch (IOException e) {
+        log.error("error when generate files, facility:{}, err:{}", homeFacilityId, e);
+        throw new BusinessDataException(new Message("fail to generate files"));
+      }
+    }
     return files;
   }
 
@@ -143,17 +189,18 @@ public class LocalExportImportService {
     return facilityIds;
   }
 
-  private String getFileName(String fromFacilityCode, String toFacilityCode) {
-    return new StringBuilder(zipExportPath)
-        .append("from")
-        .append(FILE_NAME_SPLIT)
-        .append(fromFacilityCode)
-        .append(FILE_NAME_SPLIT)
-        .append("to")
-        .append(FILE_NAME_SPLIT)
-        .append(toFacilityCode)
-        .append(FILE_SUFFIX)
-        .toString();
+  private String getFileName(String workingDir, String fromFacilityCode, String toFacilityCode,
+      String filePartSuffix) {
+    return workingDir
+        + "from"
+        + FILE_NAME_SPLIT
+        + fromFacilityCode
+        + FILE_NAME_SPLIT
+        + "to"
+        + FILE_NAME_SPLIT
+        + toFacilityCode
+        + filePartSuffix
+        + FILE_SUFFIX;
   }
 
   private void setResponseAttribute(HttpServletResponse response, String zipName) {
@@ -174,58 +221,10 @@ public class LocalExportImportService {
     return zipFile;
   }
 
-  @SneakyThrows
-  private File generateFile(String fileFullName, byte[] data) {
-    File file = new File(fileFullName);
-    if (file.exists()) {
-      file.delete();
-    }
-    FileOutputStream fos = new FileOutputStream(file);
-    byte[] concatBytes = ArrayUtils.addAll(getChecksumPrefix(data).getBytes(), data);
-    fos.write(concatBytes, 0, concatBytes.length);
-    fos.flush();
-    fos.close();
-    return file;
-  }
-
-  private String getChecksumPrefix(byte[] data) {
-    return new StringBuilder().append(getChecksum(data)).append(CHECKSUM_SPLIT).toString();
-  }
-
-  private long getChecksum(byte[] data) {
-    Checksum crc32 = new CRC32();
-    crc32.update(data, 0, data.length);
-    return crc32.getValue();
-  }
-
-  @SneakyThrows
-  private List<ExternalEventDto> getEvents(MultipartFile file) {
-    checkFileSuffix(file);
-
-    String readData = getReadData(file);
-    int checksumIndex = readData.indexOf(CHECKSUM_SPLIT);
-    String readChecksum = readData.substring(0, checksumIndex);
-    byte[] events = readData.substring(checksumIndex + 1).getBytes();
-
-    checkChecksum(readChecksum, events);
-
-    List<ExternalEventDto> externalEventDtos = externalEventDtoSerializer.loadList(events);
-    checkFacility(externalEventDtos);
-    return externalEventDtos;
-  }
-
-  private void checkChecksum(String readChecksum, byte[] events) {
-    long eventsChecksum = getChecksum(events);
-    if (!String.valueOf(eventsChecksum).equals(readChecksum)) {
-      log.error("file may be modified, readChecksum:{}, eventsChecksum: {}", readChecksum, eventsChecksum);
-      throw new BusinessDataException(new Message("file may be modified"));
-    }
-  }
-
-  private void checkFacility(List<ExternalEventDto> externalEventDtos) {
-    externalEventDtos.forEach(externalEventDto -> {
-      UUID receiverId = externalEventDto.getEvent().getReceiverId();
-      UUID homeFacilityId = getHomeFacilityId();
+  private void checkFacility(List<Event> events) {
+    UUID homeFacilityId = getHomeFacilityId();
+    events.forEach(it -> {
+      UUID receiverId = it.getReceiverId();
       if (!receiverId.equals(homeFacilityId)) {
         log.error("file shouldn't be imported, facilityId not match, file receiverId:{}, current user facilityId:{}",
             receiverId, homeFacilityId);
@@ -236,16 +235,6 @@ public class LocalExportImportService {
 
   private UUID getHomeFacilityId() {
     return authenticationHelper.getCurrentUser().getHomeFacilityId();
-  }
-
-  private String getReadData(MultipartFile file) throws IOException {
-    BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(file.getInputStream()));
-    StringBuilder stringBuilder = new StringBuilder();
-    String lineTxt;
-    while ((lineTxt = bufferedReader.readLine()) != null) {
-      stringBuilder.append(lineTxt);
-    }
-    return stringBuilder.toString();
   }
 
   private void checkFileSuffix(MultipartFile file) {
