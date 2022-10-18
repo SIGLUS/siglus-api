@@ -23,7 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Repository
 @RequiredArgsConstructor
-@SuppressWarnings("checkstyle:LineLength")
+@SuppressWarnings({"checkstyle:LineLength", "PMD.AvoidDuplicateLiterals"})
 public class LotManagementRepository {
 
   // set expired lots which are expired and SOH = 0 in all facilities for more than 6 months to inactive
