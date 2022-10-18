@@ -18,10 +18,6 @@ package org.siglus.siglusapi.service.scheduledtask;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.siglus.siglusapi.repository.HistoricalDataRepository;
@@ -76,36 +72,19 @@ public class HistoricalDataPersistentService {
             facilityLastRequisitionTimeDto.getFacilityId(), LocalDateTime.now());
       }
     } else {
-      Map<UUID, HistoricalDataRequest> facilityDataMap = requests.stream().collect(
-          Collectors.toMap(HistoricalDataRequest::getFacilityId, historicalDataRequest -> historicalDataRequest));
-      Set<UUID> facilityIds = facilityDataMap.keySet();
-      facilityLatestRequisitionDateList = historicalDataRepository.getFacilityLatestRequisitionDate(facilityIds);
-      for (FacilityLastRequisitionTimeDto facilityLastRequisitionTimeDto : facilityLatestRequisitionDateList) {
-        HistoricalDataRequest historicalDataRequest = facilityDataMap.get(
-            facilityLastRequisitionTimeDto.getFacilityId());
-        LocalDate startDate = getUpdateBeginDate(facilityLastRequisitionTimeDto.getLastRequisitionDate(),
-            facilityDataMap.get(facilityLastRequisitionTimeDto.getFacilityId()).getBeginDate());
+      for (HistoricalDataRequest request : requests) {
+        LocalDate startDate =
+            request.getBeginDate() == null ? LocalDate.of(1970, 1, 1) : request.getBeginDate();
         LocalDate endDate =
-            historicalDataRequest.getEndDate() == null ? LocalDate.of(2099, 12, 31)
-                : historicalDataRequest.getEndDate();
-        log.info("update facility {} historical data start at {}", facilityLastRequisitionTimeDto.getFacilityId(),
+            request.getEndDate() == null ? LocalDate.of(2099, 12, 31) : request.getEndDate();
+        log.info("update facility {} historical data start at {}", request.getFacilityId(),
             LocalDateTime.now());
-        historicalDataRepository.updateFacilityHistoricalData(facilityLastRequisitionTimeDto.getFacilityId(),
+        historicalDataRepository.updateFacilityHistoricalData(request.getFacilityId(),
             startDate, endDate);
         log.info("finish update facility {} historical data start at {}",
-            facilityLastRequisitionTimeDto.getFacilityId(),
+            request.getFacilityId(),
             LocalDateTime.now());
       }
     }
-  }
-
-  private LocalDate getUpdateBeginDate(LocalDate lastRequisitionDate, LocalDate updateBeginDate) {
-    if (lastRequisitionDate == null) {
-      return updateBeginDate == null ? LocalDate.of(1970, 1, 1) : updateBeginDate;
-    }
-    if (updateBeginDate == null) {
-      return lastRequisitionDate;
-    }
-    return lastRequisitionDate.isBefore(updateBeginDate) ? lastRequisitionDate : updateBeginDate;
   }
 }
