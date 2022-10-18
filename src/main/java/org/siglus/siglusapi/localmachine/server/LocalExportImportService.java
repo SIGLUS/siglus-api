@@ -46,6 +46,7 @@ import org.siglus.siglusapi.localmachine.eventstore.EventStore;
 import org.siglus.siglusapi.localmachine.io.ChecksumNotMatchedException;
 import org.siglus.siglusapi.localmachine.io.EventFile;
 import org.siglus.siglusapi.localmachine.io.EventFileReader;
+import org.siglus.siglusapi.localmachine.utils.FacilityNameNormalizer;
 import org.siglus.siglusapi.service.SiglusFacilityService;
 import org.siglus.siglusapi.util.FileUtil;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
@@ -135,20 +136,27 @@ public class LocalExportImportService {
     UUID homeFacilityId = getHomeFacilityId();
     Map<UUID, List<Event>> receiverIdToEvents = eventStore.getEventsForExport(homeFacilityId).stream()
         .collect(Collectors.groupingBy(Event::getReceiverId));
-    Map<UUID, String> facilityIdToCode = siglusFacilityService.getFacilityIdToCode(
+    Map<UUID, String> facilityIdToName = siglusFacilityService.getFacilityIdToName(
         getFacilityIds(homeFacilityId, receiverIdToEvents));
+    for (Map.Entry<UUID, String> entry: facilityIdToName.entrySet()) {
+      entry.setValue(normalizeFacilityName(entry.getValue()));
+    }
 
     return receiverIdToEvents.entrySet().stream()
         .map((it) -> generateFilesForOneReceiver(
-            workingDir, homeFacilityId, facilityIdToCode, it.getKey(), it.getValue()))
+            workingDir, homeFacilityId, facilityIdToName, it.getKey(), it.getValue()))
         .flatMap(Collection::stream)
         .collect(Collectors.toList());
+  }
+
+  private String normalizeFacilityName(String facilityName) {
+    return FacilityNameNormalizer.normalize(facilityName);
   }
 
   private List<File> generateFilesForOneReceiver(
       String workingDir,
       UUID homeFacilityId,
-      Map<UUID, String> facilityIdToCode,
+      Map<UUID, String> facilityIdToName,
       UUID receiverId,
       List<Event> events) {
     List<File> files = new LinkedList<>();
@@ -156,7 +164,7 @@ public class LocalExportImportService {
     boolean needMultipleFiles = false;
     String fileName =
         getFileName(
-            workingDir, facilityIdToCode.get(homeFacilityId), facilityIdToCode.get(receiverId), "");
+            workingDir, facilityIdToName.get(homeFacilityId), facilityIdToName.get(receiverId), "");
     int capacityBytes = EVENT_FILE_CAPACITY_BYTES;
     EventFile eventFile = new EventFile(capacityBytes, fileName, externalEventDtoMapper);
     for (int i = 0; i < events.size(); i++) {
@@ -175,8 +183,8 @@ public class LocalExportImportService {
           String newFileName =
               getFileName(
                   workingDir,
-                  facilityIdToCode.get(homeFacilityId),
-                  facilityIdToCode.get(receiverId),
+                  facilityIdToName.get(homeFacilityId),
+                  facilityIdToName.get(receiverId),
                   currentFilePartSuffix);
           eventFile.renameTo(newFileName);
         }
@@ -203,16 +211,15 @@ public class LocalExportImportService {
     return facilityIds;
   }
 
-  private String getFileName(String workingDir, String fromFacilityCode, String toFacilityCode,
-      String filePartSuffix) {
+  private String getFileName(String workingDir, String senderName, String receiverName, String filePartSuffix) {
     return workingDir
         + "from"
         + FILE_NAME_SPLIT
-        + fromFacilityCode
+        + senderName
         + FILE_NAME_SPLIT
         + "to"
         + FILE_NAME_SPLIT
-        + toFacilityCode
+        + receiverName
         + filePartSuffix
         + FILE_SUFFIX;
   }

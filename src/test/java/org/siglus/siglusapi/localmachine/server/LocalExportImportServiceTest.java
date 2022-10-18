@@ -92,8 +92,8 @@ public class LocalExportImportServiceTest {
     File tempDir = Files.createTempDirectory("event-export").toFile();
     ReflectionTestUtils.setField(localExportImportService, "zipExportPath", tempDir.getAbsolutePath());
     when(eventStore.getEventsForExport(homeFacilityId)).thenReturn(buildMockEvents());
-    when(siglusFacilityService.getFacilityIdToCode(
-        Sets.newHashSet(receiverId1, receiverId2, homeFacilityId))).thenReturn(buildMockFacilityIdToCode());
+    when(siglusFacilityService.getFacilityIdToName(
+        Sets.newHashSet(receiverId1, receiverId2, homeFacilityId))).thenReturn(buildMockFacilityIdToName());
     when(authenticationHelper.getCurrentUser()).thenReturn(buildMockUserDto());
     when(externalEventDtoSerializer.dump(anyList())).thenReturn(buildMockData());
 
@@ -102,7 +102,7 @@ public class LocalExportImportServiceTest {
     localExportImportService.exportEvents(httpServletResponse);
 
     // then
-    verify(siglusFacilityService).getFacilityIdToCode(anySet());
+    verify(siglusFacilityService).getFacilityIdToName(anySet());
     verify(eventStore).getEventsForExport(homeFacilityId);
   }
 
@@ -112,8 +112,8 @@ public class LocalExportImportServiceTest {
     File tempDir = Files.createTempDirectory("event-export").toFile();
     ReflectionTestUtils.setField(localExportImportService, "zipExportPath", tempDir.getAbsolutePath());
     when(eventStore.getEventsForExport(homeFacilityId)).thenReturn(Lists.newArrayList());
-    when(siglusFacilityService.getFacilityIdToCode(
-        Sets.newHashSet(receiverId1, receiverId2, homeFacilityId))).thenReturn(buildMockFacilityIdToCode());
+    when(siglusFacilityService.getFacilityIdToName(
+        Sets.newHashSet(receiverId1, receiverId2, homeFacilityId))).thenReturn(buildMockFacilityIdToName());
     when(authenticationHelper.getCurrentUser()).thenReturn(buildMockUserDto());
 
     // when
@@ -230,12 +230,12 @@ public class LocalExportImportServiceTest {
     return Lists.newArrayList(dto1, dto2);
   }
 
-  private Map<UUID, String> buildMockFacilityIdToCode() {
-    Map<UUID, String> facilityIdToCode = Maps.newHashMap();
-    facilityIdToCode.put(receiverId1, "receiverCode1");
-    facilityIdToCode.put(receiverId2, "receiverCode2");
-    facilityIdToCode.put(homeFacilityId, "homeFacilityCode");
-    return facilityIdToCode;
+  private Map<UUID, String> buildMockFacilityIdToName() {
+    Map<UUID, String> facilityIdToName = Maps.newHashMap();
+    facilityIdToName.put(receiverId1, "receiverCode1");
+    facilityIdToName.put(receiverId2, "receiverCode2");
+    facilityIdToName.put(homeFacilityId, "homeFacilityCode");
+    return facilityIdToName;
   }
 
 }

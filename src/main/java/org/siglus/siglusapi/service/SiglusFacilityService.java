@@ -40,8 +40,8 @@ public class SiglusFacilityService {
     return requisitionGroupMembersRepository.findParentFacilityByRequisitionGroup(id, programIds);
   }
 
-  public Map<UUID, String> getFacilityIdToCode(Set<UUID> facilityIds) {
+  public Map<UUID, String> getFacilityIdToName(Set<UUID> facilityIds) {
     return siglusFacilityRepository.findFacilityBasicInfoByIds(facilityIds).stream()
-        .collect(Collectors.toMap(Facility::getId, Facility::getCode));
+        .collect(Collectors.toMap(Facility::getId, Facility::getName));
   }
 }
