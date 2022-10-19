@@ -210,8 +210,10 @@ public class SiglusAdministrationsService {
     }
 
     if (StringUtils.equals(siglusFacilityDto.getTab(), LOCATION_MANAGEMENT_TAB)) {
-      deleteDraftsWhenToggleLocationManagement(siglusFacilityDto, facilityExtension);
-      assignToVirtualLocation(siglusFacilityDto);
+      if (!isLocalMachine(facilityExtension)) {
+        deleteDraftsWhenToggleLocationManagement(siglusFacilityDto, facilityExtension);
+        assignToVirtualLocation(siglusFacilityDto);
+      }
       facilityExtension.setEnableLocationManagement(siglusFacilityDto.getEnableLocationManagement());
     }
 
@@ -310,6 +312,10 @@ public class SiglusAdministrationsService {
     stockCardExtensionRepository.deleteByStockCardIdIn(stockCardIds);
     log.info("delete on stockCard when upgrade to web, stockCardId: {}", stockCardIds);
     stockCardRepository.deleteByIdIn(stockCardIds);
+  }
+
+  private boolean isLocalMachine(FacilityExtension facilityExtension) {
+    return Objects.nonNull(facilityExtension) && facilityExtension.getIsLocalMachine();
   }
 
   private void validateReportTypes(SiglusFacilityDto siglusFacilityDto) {

@@ -354,7 +354,7 @@ public class SiglusAdministrationsServiceTest {
   }
 
   @Test
-  public void shouldDeleteDraftsWhenEnableLocationManagementIfExtensionExisted() {
+  public void shouldDeleteDraftsWhenEnableWebLocationManagementIfExtensionExisted() {
     // given
     FacilityExtension facilityExtension = mockFacilityExtension(facilityId, false, false, false);
     when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(facilityExtension);
@@ -369,7 +369,7 @@ public class SiglusAdministrationsServiceTest {
   }
 
   @Test
-  public void shouldDeleteDraftsWhenEnableLocationManagementIfExtensionIsNull() {
+  public void shouldDeleteDraftsWhenEnableWebLocationManagementIfExtensionIsNull() {
     // given
     when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(null);
     when(siglusFacilityReferenceDataService.findOneWithoutCache(facilityId))
@@ -383,7 +383,7 @@ public class SiglusAdministrationsServiceTest {
   }
 
   @Test
-  public void shouldDeleteDraftsWhenDisableLocationManagement() {
+  public void shouldDeleteDraftsWhenDisableWebLocationManagement() {
     // given
     FacilityExtension facilityExtension = mockFacilityExtension(facilityId, false, true, false);
     when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(facilityExtension);
@@ -395,6 +395,38 @@ public class SiglusAdministrationsServiceTest {
 
     // then
     verify(locationDraftRepository).deleteLocationRelatedDrafts(facilityId);
+  }
+
+  @Test
+  public void shouldNodDeleteDraftsWhenEnableLocalMachineLocationManagement() {
+    // given
+    FacilityExtension facilityExtension = mockFacilityExtension(facilityId, Boolean.FALSE, Boolean.FALSE, Boolean.TRUE);
+    when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(facilityExtension);
+    when(siglusFacilityReferenceDataService.findOneWithoutCache(facilityId))
+        .thenReturn(mockFacilityDtoPage().getContent().get(0));
+
+    // when
+    siglusAdministrationsService.updateFacility(facilityId,
+        mockSiglusFacilityDto(Boolean.TRUE, LOCATION_MANAGEMENT_TAB));
+
+    // then
+    verify(locationDraftRepository, times(0)).deleteLocationRelatedDrafts(facilityId);
+  }
+
+  @Test
+  public void shouldDeleteDraftsWhenDisableLocalMachineLocationManagement() {
+    // given
+    FacilityExtension facilityExtension = mockFacilityExtension(facilityId, Boolean.FALSE, Boolean.TRUE, Boolean.TRUE);
+    when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(facilityExtension);
+    when(siglusFacilityReferenceDataService.findOneWithoutCache(facilityId))
+        .thenReturn(mockFacilityDtoPage().getContent().get(0));
+
+    // when
+    siglusAdministrationsService.updateFacility(facilityId,
+        mockSiglusFacilityDto(Boolean.FALSE, LOCATION_MANAGEMENT_TAB));
+
+    // then
+    verify(locationDraftRepository, times(0)).deleteLocationRelatedDrafts(facilityId);
   }
 
   @Test
