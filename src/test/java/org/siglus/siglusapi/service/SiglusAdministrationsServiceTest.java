@@ -687,10 +687,11 @@ public class SiglusAdministrationsServiceTest {
     siglusAdministrationsService.changeToWeb(facilityId);
   }
 
-  @Test
-  public void shouldChangeToWebWhenAndroidFacilityCallByService() {
+  @Test(expected = ValidationMessageException.class)
+  public void shouldThrowWhenHasDeviceInfo() {
     //given
-    AppInfo appInfo = null;
+    AppInfo appInfo = new AppInfo();
+    appInfo.setDeviceInfo("111");
     FacilityExtension facilityExtension = mockFacilityExtension(facilityId, true, true, false);
     FacilityDto facilityDto = mockFacilityDto();
     when(siglusFacilityReferenceDataService.findOne(facilityId)).thenReturn(facilityDto);
@@ -701,8 +702,84 @@ public class SiglusAdministrationsServiceTest {
     facilityDeviceDto.setDeviceType(FacilityDeviceTypeEnum.WEB);
     //when
     siglusAdministrationsService.changeToWeb(facilityId);
+  }
+
+
+  @Test
+  public void shouldChangeToWebWhenLocalMachineFacilityCallByService() {
+    //given
+    AppInfo appInfo = null;
+    FacilityExtension facilityExtension = mockFacilityExtension(facilityId, false, true, true);
+    FacilityDto facilityDto = mockFacilityDto();
+    when(siglusFacilityReferenceDataService.findOne(facilityId)).thenReturn(facilityDto);
+    when(appInfoRepository.findByFacilityCode(facilityDto.getCode())).thenReturn(appInfo);
+    when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(facilityExtension);
+    when(authenticationHelper.getCurrentUser()).thenReturn(new UserDto());
+    when(facilityExtensionRepository.findByFacilityId(facilityId))
+        .thenReturn(mockFacilityExtension(facilityId, true, false, false));
+    when(stockCardRepository.countByFacilityId(facilityId)).thenReturn(1);
+    StockCard stockCard1 = mockStockCard();
+    stockCard1.setLotId(UUID.randomUUID());
+    StockCard stockCard2 = mockStockCard();
+    when(stockCardRepository.findByFacilityIdIn(facilityId)).thenReturn(Lists.newArrayList(stockCard1, stockCard2));
+    when(orderableRepository.findLatestByIds(Lists.newArrayList(orderableId)))
+        .thenReturn(Lists.newArrayList(mockOrderable()));
+    FacilityDeviceDto facilityDeviceDto = new FacilityDeviceDto();
+    facilityDeviceDto.setDeviceType(FacilityDeviceTypeEnum.WEB);
+    //when
+    siglusAdministrationsService.changeToWeb(facilityId);
     facilityExtension.setIsAndroid(true);
-    verify(facilityExtensionRepository).save(facilityExtension);
+  }
+
+  @Test
+  public void shouldChangeToWebWhenLocalMachineFacilityWithNoProductCallByService() {
+    //given
+    AppInfo appInfo = null;
+    FacilityExtension facilityExtension = mockFacilityExtension(facilityId, false, true, true);
+    FacilityDto facilityDto = mockFacilityDto();
+    when(siglusFacilityReferenceDataService.findOne(facilityId)).thenReturn(facilityDto);
+    when(appInfoRepository.findByFacilityCode(facilityDto.getCode())).thenReturn(appInfo);
+    when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(facilityExtension);
+    when(authenticationHelper.getCurrentUser()).thenReturn(new UserDto());
+    when(facilityExtensionRepository.findByFacilityId(facilityId))
+        .thenReturn(mockFacilityExtension(facilityId, true, false, false));
+    when(stockCardRepository.countByFacilityId(facilityId)).thenReturn(1);
+    StockCard stockCard1 = mockStockCard();
+    stockCard1.setOrderableId(null);
+    stockCard1.setLotId(UUID.randomUUID());
+    StockCard stockCard2 = mockStockCard();
+    stockCard2.setOrderableId(null);
+    when(stockCardRepository.findByFacilityIdIn(facilityId)).thenReturn(Lists.newArrayList(stockCard1, stockCard2));
+    when(orderableRepository.findLatestByIds(null))
+        .thenReturn(Lists.newArrayList(mockOrderable()));
+    FacilityDeviceDto facilityDeviceDto = new FacilityDeviceDto();
+    facilityDeviceDto.setDeviceType(FacilityDeviceTypeEnum.WEB);
+    //when
+    siglusAdministrationsService.changeToWeb(facilityId);
+    facilityExtension.setIsAndroid(true);
+  }
+
+  @Test
+  public void shouldChangeToWebWhenAndroidFacilityCallByService() {
+    //given
+    AppInfo appInfo = null;
+    FacilityExtension facilityExtension = mockFacilityExtension(facilityId, true, true, false);
+    FacilityDto facilityDto = mockFacilityDto();
+    when(siglusFacilityReferenceDataService.findOne(facilityId)).thenReturn(facilityDto);
+    when(appInfoRepository.findByFacilityCode(facilityDto.getCode())).thenReturn(appInfo);
+    when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(facilityExtension);
+    when(authenticationHelper.getCurrentUser()).thenReturn(new UserDto());
+    when(facilityExtensionRepository.findByFacilityId(facilityId))
+        .thenReturn(mockFacilityExtension(facilityId, true, false, false));
+    when(stockCardRepository.countByFacilityId(facilityId)).thenReturn(1);
+    when(stockCardRepository.findByFacilityIdIn(facilityId)).thenReturn(Lists.newArrayList(mockStockCard()));
+    when(orderableRepository.findLatestByIds(Lists.newArrayList(orderableId)))
+        .thenReturn(Lists.newArrayList(mockOrderable()));
+    FacilityDeviceDto facilityDeviceDto = new FacilityDeviceDto();
+    facilityDeviceDto.setDeviceType(FacilityDeviceTypeEnum.WEB);
+    //when
+    siglusAdministrationsService.changeToWeb(facilityId);
+    facilityExtension.setIsAndroid(true);
   }
 
   @Test(expected = ValidationMessageException.class)

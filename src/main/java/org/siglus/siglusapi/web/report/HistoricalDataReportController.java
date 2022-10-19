@@ -33,6 +33,9 @@ public class HistoricalDataReportController {
 
   private final HistoricalDataPersistentService historicalDataPersistentService;
 
+  /**
+   * will delete all data and insert again
+   */
   @PostMapping("/refresh")
   @Guarded
   public ResponseEntity<String> refresh() {
@@ -40,6 +43,9 @@ public class HistoricalDataReportController {
     return ResponseEntity.ok("refresh begin");
   }
 
+  /**
+   * will search each facility latest data time, and insert all data from then till now
+   */
   @PostMapping("/updateAll")
   @Guarded
   public ResponseEntity<String> updateAll() {
@@ -47,9 +53,11 @@ public class HistoricalDataReportController {
     return ResponseEntity.ok("refresh begin");
   }
 
+  /**
+   * update or insert data from begindate till enddate
+   */
   @PostMapping("/updateByFacility")
   @Guarded
-  // TODO: 2022/9/28 param name  begindate\enddate
   public ResponseEntity<String> update(@RequestBody List<HistoricalDataRequest> requests) {
     historicalDataPersistentService.updateHistoricalDataByFacility(requests);
     return ResponseEntity.ok("refresh begin");
