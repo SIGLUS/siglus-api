@@ -30,9 +30,14 @@ import org.siglus.siglusapi.localmachine.webapi.AckExchange;
 import org.siglus.siglusapi.localmachine.webapi.ActivationResponse;
 import org.siglus.siglusapi.localmachine.webapi.PeeringEventsResponse;
 import org.siglus.siglusapi.localmachine.webapi.RemoteActivationRequest;
-import org.siglus.siglusapi.localmachine.webapi.SyncRequest;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
 @Component
@@ -53,10 +58,14 @@ public class OnlineWebClient {
     restTemplate.setInterceptors(singletonList(localTokenInterceptor));
   }
 
-  public void sync(List<Event> events) {
-    List<ExternalEventDto> externalEventDtos = dumpEventForSync(events);
-    URI url = URI.create(webBaseUrl + "/server/events");
-    restTemplate.postForEntity(url, new SyncRequest(externalEventDtos), Void.class);
+  public void sync(ByteArrayResource resource) {
+    HttpHeaders headers = new HttpHeaders();
+    headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+    MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+    body.add("file", resource);
+    HttpEntity<MultiValueMap<String, Object>> request = new HttpEntity<>(body, headers);
+    URI url = URI.create(webBaseUrl + "/server/eventFile");
+    restTemplate.postForEntity(url, request, Void.class);
   }
 
   public List<Event> exportPeeringEvents() {

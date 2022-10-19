@@ -157,7 +157,10 @@ public class SiglusOrderableService {
           .filter(e -> !existOrderableIds.contains(e.getId()))
           .collect(Collectors.toList());
     }
-    return allProducts.stream().map(SimplifyOrderablesDto::from)
+    return allProducts.stream()
+        .map(SimplifyOrderablesDto::from)
+        .sorted(Comparator.comparing(
+            SimplifyOrderablesDto::getFullProductName, Comparator.nullsLast(String::compareTo)))
         .collect(Collectors.toList());
   }
 
