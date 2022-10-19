@@ -54,9 +54,9 @@ import org.siglus.siglusapi.constant.PaginationConstants;
 import org.siglus.siglusapi.domain.DispensableAttributes;
 import org.siglus.siglusapi.domain.StockManagementDraft;
 import org.siglus.siglusapi.domain.StockManagementDraftLineItem;
-import org.siglus.siglusapi.dto.AvailableOrderablesDto;
 import org.siglus.siglusapi.dto.OrderableExpirationDateDto;
 import org.siglus.siglusapi.dto.QueryOrderableSearchParams;
+import org.siglus.siglusapi.dto.SimplifyOrderablesDto;
 import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.repository.DispensableAttributesRepository;
 import org.siglus.siglusapi.repository.OrderableRepository;
@@ -142,6 +142,21 @@ public class SiglusOrderableService {
     return siglusOrderableRepository.findExpirationDate(orderableIds, facilityId);
   }
 
+  public List<SimplifyOrderablesDto> searchOrderablesDropDownList(UUID draftId) {
+    List<OrderableDto> allProducts = getAllProducts();
+    UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
+    Set<String> archivedProducts = archivedProductRepository
+        .findArchivedProductsByFacilityId(facilityId);
+    List<UUID> archivedProductIds = archivedProducts.stream().map(UUID::fromString).collect(Collectors.toList());
+    allProducts.removeIf(e -> archivedProductIds.contains(e.getId()));
+    if (draftId != null) {
+      Set<UUID> existOrderableIds = getExistOrderablesIdByDraftId(draftId);
+      allProducts.removeIf(e -> existOrderableIds.contains(e.getId()));
+    }
+    return allProducts.stream().map(SimplifyOrderablesDto::from)
+        .collect(Collectors.toList());
+  }
+
   public Page<OrderableDto> additionalToAdd(UUID programId, QueryOrderableSearchParams searchParams,
       Pageable pageable) {
     Pageable noPagination = new PageRequest(PaginationConstants.DEFAULT_PAGE_NUMBER,
@@ -210,7 +225,7 @@ public class SiglusOrderableService {
     return programOrderablesRepository.findAllMaxVersionProgramOrderableDtos();
   }
 
-  public List<AvailableOrderablesDto> getAvailableOrderablesByFacility(Boolean isRequestAll, UUID draftId) {
+  public List<SimplifyOrderablesDto> getAvailableOrderablesByFacility(Boolean isRequestAll, UUID draftId) {
     UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
     List<StockCard> stockCards = stockCardRepository.findByFacilityIdIn(facilityId);
     List<UUID> allStockCardIds = stockCards.stream().map(StockCard::getId).collect(Collectors.toList());
@@ -257,20 +272,20 @@ public class SiglusOrderableService {
         .filter(dispensable -> dispensable.getDispensableId().equals(dispensableId))
         .findFirst().orElse(null)));
 
-    List<AvailableOrderablesDto> availableOrderablesDtoList = new ArrayList<>();
+    List<SimplifyOrderablesDto> simplifyOrderablesDtoList = new ArrayList<>();
     orderables.forEach(orderable -> {
-      AvailableOrderablesDto availableOrderablesDto = new AvailableOrderablesDto();
-      availableOrderablesDto.setOrderableId(orderable.getId());
-      availableOrderablesDto.setProductCode(orderable.getProductCode().toString());
-      availableOrderablesDto.setFullProductName(orderable.getFullProductName());
-      availableOrderablesDto.setProgramId(orderableIdToProgramIdMap.get(orderable.getId()));
-      availableOrderablesDto.setIsKit(KitConstants.isKit(orderable.getProductCode().toString()));
+      SimplifyOrderablesDto simplifyOrderablesDto = new SimplifyOrderablesDto();
+      simplifyOrderablesDto.setOrderableId(orderable.getId());
+      simplifyOrderablesDto.setProductCode(orderable.getProductCode().toString());
+      simplifyOrderablesDto.setFullProductName(orderable.getFullProductName());
+      simplifyOrderablesDto.setProgramId(orderableIdToProgramIdMap.get(orderable.getId()));
+      simplifyOrderablesDto.setIsKit(KitConstants.isKit(orderable.getProductCode().toString()));
       DispensableDto dispensable = new DispensableDto(orderableIdToDispensable.get(orderable.getId()).getValue(),
           null, null, orderableIdToDispensable.get(orderable.getId()).getValue());
-      availableOrderablesDto.setDispensable(dispensable);
-      availableOrderablesDtoList.add(availableOrderablesDto);
+      simplifyOrderablesDto.setDispensable(dispensable);
+      simplifyOrderablesDtoList.add(simplifyOrderablesDto);
     });
-    return availableOrderablesDtoList.stream().sorted(comparing(AvailableOrderablesDto::getFullProductName)).collect(
+    return simplifyOrderablesDtoList.stream().sorted(comparing(SimplifyOrderablesDto::getFullProductName)).collect(
         Collectors.toList());
   }
 

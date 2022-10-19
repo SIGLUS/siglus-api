@@ -1115,6 +1115,17 @@ traits:
           200:
             body:
               application/json:
+
+    /orderables/dropDownList:
+      displayName: Get orderables dropDownList
+      get:
+        is: [ secured ]
+        description: Get orderables dropDownList
+        responses:
+          200:
+            body:
+              application/json:
+
     /validDestinations:
       get:
         is: [ secured ]

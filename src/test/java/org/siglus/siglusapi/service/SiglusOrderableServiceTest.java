@@ -59,8 +59,8 @@ import org.siglus.common.repository.ProgramAdditionalOrderableRepository;
 import org.siglus.siglusapi.domain.DispensableAttributes;
 import org.siglus.siglusapi.domain.StockManagementDraft;
 import org.siglus.siglusapi.domain.StockManagementDraftLineItem;
-import org.siglus.siglusapi.dto.AvailableOrderablesDto;
 import org.siglus.siglusapi.dto.QueryOrderableSearchParams;
+import org.siglus.siglusapi.dto.SimplifyOrderablesDto;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.repository.DispensableAttributesRepository;
 import org.siglus.siglusapi.repository.OrderableRepository;
@@ -359,7 +359,7 @@ public class SiglusOrderableServiceTest {
         .thenReturn(Lists.newArrayList(buildMockDispensable()));
 
     // when
-    List<AvailableOrderablesDto> availableOrderables = siglusOrderableService.getAvailableOrderablesByFacility(
+    List<SimplifyOrderablesDto> availableOrderables = siglusOrderableService.getAvailableOrderablesByFacility(
         true, null);
 
     // then
