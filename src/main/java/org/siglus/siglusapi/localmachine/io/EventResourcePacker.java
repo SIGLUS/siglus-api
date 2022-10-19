@@ -23,7 +23,7 @@ import org.siglus.siglusapi.localmachine.Event;
 import org.siglus.siglusapi.localmachine.ExternalEventDtoMapper;
 import org.springframework.core.io.ByteArrayResource;
 
-public class EventResource implements AutoCloseable {
+public class EventResourcePacker implements AutoCloseable {
 
   private final ExternalEventDtoMapper mapper;
   private final int capacityBytes;
@@ -31,26 +31,27 @@ public class EventResource implements AutoCloseable {
   private DataOutputStream out;
   private ByteArrayOutputStream dest;
 
-  public EventResource(int capacityBytes, ExternalEventDtoMapper mapper) {
+  public EventResourcePacker(int capacityBytes, ExternalEventDtoMapper mapper) {
     this.capacityBytes = capacityBytes;
     this.mapper = mapper;
   }
 
-  public boolean write(Event event) throws IOException {
+  public int writeGetRemainingCapacity(Event event) throws IOException {
     prepare();
     boolean isFull = out.size() >= capacityBytes;
     if (isFull) {
-      return false;
+      throw new OutOfCapacityException();
     }
     this.eventWriter.write(event);
     this.eventWriter.flush();
-    return true;
+    return capacityBytes - out.size();
   }
 
   public ByteArrayResource toResource() {
     return new ByteArrayResource(dest.toByteArray()) {
       @Override
       public String getFilename() {
+        // tricky: need to set file name otherwise rest api call will fail
         return "events.dat";
       }
     };
@@ -65,21 +66,17 @@ public class EventResource implements AutoCloseable {
     if (this.eventWriter != null) {
       this.eventWriter.flush();
       this.eventWriter.close();
-      this.dest.reset();
       this.eventWriter = null;
+      this.dest = null;
       this.out = null;
     }
-  }
-
-  public boolean hasData() {
-    return this.out != null && this.out.size() > 0;
   }
 
   private void prepare() {
     if (eventWriter == null) {
       dest = new ByteArrayOutputStream();
-      out = new DataOutputStream(dest);
-      eventWriter = new EventWriter(new EntryWriter(new DeflaterOutputStream(out)), mapper);
+      this.out = new DataOutputStream(new DeflaterOutputStream(dest, true));
+      eventWriter = new EventWriter(new EntryWriter(this.out), mapper);
     }
   }
 }

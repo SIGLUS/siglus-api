@@ -32,7 +32,7 @@ import org.siglus.siglusapi.localmachine.EventImporter;
 import org.siglus.siglusapi.localmachine.ExternalEventDtoMapper;
 import org.siglus.siglusapi.localmachine.constant.ErrorType;
 import org.siglus.siglusapi.localmachine.eventstore.EventStore;
-import org.siglus.siglusapi.localmachine.io.EventResource;
+import org.siglus.siglusapi.localmachine.io.EventResourcePacker;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -98,15 +98,17 @@ public class SyncService {
       if (isEmpty(events)) {
         return;
       }
-      EventResource eventResource = new EventResource(PUSH_CAPACITY_BYTES_PER_REQUEST, externalEventDtoMapper);
+      EventResourcePacker eventResourcePacker =
+          new EventResourcePacker(PUSH_CAPACITY_BYTES_PER_REQUEST, externalEventDtoMapper);
       for (Event evt : events) {
-        if (eventResource.write(evt)) {
-          currentEvents.add(evt);
+        int remainingCapacity = eventResourcePacker.writeGetRemainingCapacity(evt);
+        currentEvents.add(evt);
+        if (remainingCapacity > 0) {
           continue;
         }
-        doPush(currentEvents, eventResource);
+        doPushAndReset(currentEvents, eventResourcePacker);
       }
-      doPush(currentEvents, eventResource);
+      doPushAndReset(currentEvents, eventResourcePacker);
     } catch (Throwable e) {
       log.error("push event failed", e);
       List<UUID> eventIds = currentEvents.stream().map(Event::getId).collect(Collectors.toList());
@@ -114,12 +116,12 @@ public class SyncService {
     }
   }
 
-  private void doPush(List<Event> currentEvents, EventResource eventResource) throws IOException {
+  private void doPushAndReset(List<Event> currentEvents, EventResourcePacker eventResourcePacker) throws IOException {
     if (!currentEvents.isEmpty()) {
-      webClient.sync(eventResource.toResource());
+      webClient.sync(eventResourcePacker.toResource());
       localEventStore.confirmEventsByWeb(currentEvents);
       currentEvents.clear();
-      eventResource.reset();
+      eventResourcePacker.reset();
     }
   }
 }

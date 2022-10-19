@@ -17,7 +17,6 @@ package org.siglus.siglusapi.localmachine.io;
 
 import java.io.DataOutputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.zip.DeflaterOutputStream;
@@ -39,16 +38,16 @@ public class EventFile implements AutoCloseable {
     this.mapper = mapper;
   }
 
-  public boolean write(Event event) throws IOException {
+  public int writeGetRemainingCapacity(Event event) throws IOException {
     prepare();
     boolean isFull = out.size() >= capacityBytes;
     if (isFull) {
-      return false;
+      throw new OutOfCapacityException();
     }
     this.eventWriter.write(event);
     this.eventWriter.flush();
     this.count += 1;
-    return true;
+    return capacityBytes - this.out.size();
   }
 
   public void renameTo(String fileName) throws IOException {
@@ -72,7 +71,7 @@ public class EventFile implements AutoCloseable {
     return count;
   }
 
-  private void reset() throws IOException {
+  void reset() throws IOException {
     if (this.eventWriter != null) {
       this.eventWriter.flush();
       this.eventWriter.close();
@@ -84,8 +83,8 @@ public class EventFile implements AutoCloseable {
 
   private void prepare() throws IOException {
     if (eventWriter == null) {
-      out = new DataOutputStream(new FileOutputStream(this.file));
-      eventWriter = new EventWriter(new EntryWriter(new DeflaterOutputStream(out)), mapper);
+      out = new DataOutputStream(new DeflaterOutputStream(new FileOutputStream(this.file), true));
+      eventWriter = new EventWriter(new EntryWriter(out), mapper);
     }
   }
 }

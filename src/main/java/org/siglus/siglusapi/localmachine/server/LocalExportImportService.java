@@ -169,8 +169,8 @@ public class LocalExportImportService {
     EventFile eventFile = new EventFile(capacityBytes, fileName, externalEventDtoMapper);
     for (int i = 0; i < events.size(); i++) {
       try {
-        boolean canAddMore = eventFile.write(events.get(i));
-        if (canAddMore) {
+        int remaining = eventFile.writeGetRemainingCapacity(events.get(i));
+        if (remaining > 0) {
           continue;
         }
         // finalize current file

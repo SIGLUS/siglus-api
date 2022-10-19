@@ -18,6 +18,7 @@ package org.siglus.siglusapi.localmachine.io;
 import java.io.BufferedInputStream;
 import java.io.EOFException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.zip.InflaterInputStream;
@@ -33,11 +34,14 @@ public class EventFileReader {
   private final ExternalEventDtoMapper mapper;
 
   public List<Event> readAll(MultipartFile file) throws IOException {
+    InputStream in = file.getInputStream();
+    return readAll(in);
+  }
+
+  public List<Event> readAll(InputStream in) throws IOException {
     EventReader reader =
         new EventReader(
-            new EntryReader(
-                new InflaterInputStream(new BufferedInputStream(file.getInputStream()))),
-            mapper);
+            new EntryReader(new InflaterInputStream(new BufferedInputStream(in))), mapper);
     List<Event> events = new LinkedList<>();
     while (true) {
       try {
