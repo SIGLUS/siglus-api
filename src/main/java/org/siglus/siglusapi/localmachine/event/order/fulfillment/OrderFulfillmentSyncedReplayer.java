@@ -215,8 +215,10 @@ public class OrderFulfillmentSyncedReplayer {
       return;
     }
     Map<VersionEntityReference, Integer> orderableToQuantity =
-        event.getConvertToOrderRequest().getRequisitionLineItems().stream().collect(Collectors.toMap(
-            RequisitionLineItemRequest::getOrderable, RequisitionLineItemRequest::getApprovedQuantity));
+        event.getConvertToOrderRequest().getRequisitionLineItems().stream()
+            .filter(item -> item.getApprovedQuantity() != null)
+            .collect(Collectors.toMap(
+                RequisitionLineItemRequest::getOrderable, RequisitionLineItemRequest::getApprovedQuantity));
     requisition.getRequisitionLineItems().forEach(requisitionLineItem -> {
       Integer approvedQuantity = orderableToQuantity.get(requisitionLineItem.getOrderable());
       requisitionLineItem.setApprovedQuantity(approvedQuantity);
