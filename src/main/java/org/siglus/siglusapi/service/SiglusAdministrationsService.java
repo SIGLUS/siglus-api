@@ -198,26 +198,24 @@ public class SiglusAdministrationsService {
     saveReportTypes(siglusFacilityDto);
     siglusFacilityReferenceDataService.saveFacility(facilityDto);
     FacilityExtension facilityExtension = facilityExtensionRepository.findByFacilityId(facilityId);
-    deleteDraftsWhenToggleLocationManagement(siglusFacilityDto, facilityExtension);
     if (null == facilityExtension) {
       facilityExtension = FacilityExtension
           .builder()
           .facilityId(facilityId)
           .facilityCode(siglusFacilityDto.getCode())
-          .enableLocationManagement(siglusFacilityDto.getEnableLocationManagement())
-          .isAndroid(siglusFacilityDto.getIsAndroidDevice())
-          .isLocalMachine(siglusFacilityDto.getIsLocalMachine())
+          .isAndroid(Boolean.FALSE)
+          .isLocalMachine(Boolean.FALSE)
           .build();
-    } else {
-      facilityExtension.setIsAndroid(siglusFacilityDto.getIsAndroidDevice());
-      facilityExtension.setEnableLocationManagement(siglusFacilityDto.getEnableLocationManagement());
-      facilityExtension.setIsLocalMachine(siglusFacilityDto.getIsLocalMachine());
     }
-    log.info("The facility extension info has changed; facilityId: {}", facilityId);
-    facilityExtensionRepository.save(facilityExtension);
+
     if (StringUtils.equals(siglusFacilityDto.getTab(), LOCATION_MANAGEMENT_TAB)) {
+      facilityExtension.setEnableLocationManagement(siglusFacilityDto.getEnableLocationManagement());
+      deleteDraftsWhenToggleLocationManagement(siglusFacilityDto, facilityExtension);
       assignToVirtualLocation(siglusFacilityDto);
     }
+
+    log.info("The facility extension info has changed; facilityId: {}", facilityId);
+    facilityExtensionRepository.save(facilityExtension);
     return getFacilityInfo(siglusFacilityDto.getId());
   }
 
