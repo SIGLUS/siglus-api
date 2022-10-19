@@ -29,7 +29,9 @@ import static org.siglus.siglusapi.constant.FieldConstants.PRODUCT_CODE;
 
 import com.google.common.collect.Maps;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -379,6 +381,107 @@ public class SiglusOrderableServiceTest {
 
     // then
     assertEquals(expectedResult, actualResult);
+  }
+
+  @Test
+  public void shouldGetAllSimplifyOrderablesDtoWhenThereIsNoDraftIdAndArchivedProduct() {
+    // given
+    OrderableDto orderableDto = new OrderableDto();
+    orderableDto.setId(targetOrderableId);
+    OrderableDto orderableDtoTwo = new OrderableDto();
+    orderableDtoTwo.setId(orderableId);
+    when(orderableReferenceDataService.searchOrderables(any(), any())).thenReturn(
+        Pagination.getPage(Arrays.asList(orderableDto, orderableDtoTwo), pageable, 1));
+
+    UserDto user = new UserDto();
+    user.setId(UUID.randomUUID());
+    user.setHomeFacilityId(facilityId);
+    when(authenticationHelper.getCurrentUser()).thenReturn(user);
+
+    when(archivedProductRepository
+        .findArchivedProductsByFacilityId(facilityId)).thenReturn(Collections.emptySet());
+
+    List<SimplifyOrderablesDto> expectedSimplifyOrderablesDtos = Arrays.asList(
+        SimplifyOrderablesDto.builder().orderableId(targetOrderableId).isKit(Boolean.FALSE).build(),
+        SimplifyOrderablesDto.builder().orderableId(orderableId).isKit(Boolean.FALSE).build());
+
+    // when
+    List<SimplifyOrderablesDto> simplifyOrderablesDtos = siglusOrderableService.searchOrderablesDropDownList(null);
+
+    // then
+    assertEquals(expectedSimplifyOrderablesDtos, simplifyOrderablesDtos);
+  }
+
+  @Test
+  public void shouldGetExcluedArchivedProductSimplifyOrderablesDtoWhenThereIsArchivedProduct() {
+    // given
+    OrderableDto orderableDto = new OrderableDto();
+    orderableDto.setId(targetOrderableId);
+    OrderableDto orderableDtoTwo = new OrderableDto();
+    orderableDtoTwo.setId(orderableId);
+    when(orderableReferenceDataService.searchOrderables(any(), any())).thenReturn(
+        Pagination.getPage(Arrays.asList(orderableDto, orderableDtoTwo), pageable, 1));
+
+    UserDto user = new UserDto();
+    user.setId(UUID.randomUUID());
+    user.setHomeFacilityId(facilityId);
+    when(authenticationHelper.getCurrentUser()).thenReturn(user);
+
+    when(archivedProductRepository
+        .findArchivedProductsByFacilityId(facilityId)).thenReturn(Collections.singleton(orderableId.toString()));
+
+    List<SimplifyOrderablesDto> expectedSimplifyOrderablesDtos = Collections.singletonList(
+        SimplifyOrderablesDto.builder().orderableId(targetOrderableId).isKit(Boolean.FALSE).build()
+    );
+
+    // when
+    List<SimplifyOrderablesDto> simplifyOrderablesDtos = siglusOrderableService.searchOrderablesDropDownList(null);
+
+    // then
+    assertEquals(expectedSimplifyOrderablesDtos, simplifyOrderablesDtos);
+  }
+
+  @Test
+  public void shouldGetFilteredConflictsSimplifyOrderablesDtoWhenThereIsDraftId() {
+    // given
+    OrderableDto orderableDto = new OrderableDto();
+    orderableDto.setId(targetOrderableId);
+    OrderableDto orderableDtoTwo = new OrderableDto();
+    orderableDtoTwo.setId(orderableId);
+    when(orderableReferenceDataService.searchOrderables(any(), any())).thenReturn(
+        Pagination.getPage(Arrays.asList(orderableDto, orderableDtoTwo), pageable, 1));
+
+    UserDto user = new UserDto();
+    user.setId(UUID.randomUUID());
+    user.setHomeFacilityId(facilityId);
+    when(authenticationHelper.getCurrentUser()).thenReturn(user);
+
+    when(archivedProductRepository
+        .findArchivedProductsByFacilityId(facilityId)).thenReturn(Collections.emptySet());
+
+    StockManagementDraft stockManagementDraftTwo = StockManagementDraft.builder()
+        .initialDraftId(initialDraftId).build();
+    when(stockManagementDraftRepository.findOne(draftId)).thenReturn(stockManagementDraftTwo);
+
+    StockManagementDraftLineItem stockManagementDraftLineItem = StockManagementDraftLineItem.builder()
+        .orderableId(orderableId)
+        .build();
+    StockManagementDraft stockManagementDraft = StockManagementDraft.builder()
+        .lineItems(Collections.singletonList(stockManagementDraftLineItem))
+        .build();
+
+    when(stockManagementDraftRepository.findByInitialDraftId(initialDraftId))
+        .thenReturn(new ArrayList<>(Arrays.asList(stockManagementDraft, stockManagementDraftTwo)));
+
+    List<SimplifyOrderablesDto> expectedSimplifyOrderablesDtos = Collections.singletonList(
+        SimplifyOrderablesDto.builder().orderableId(targetOrderableId).isKit(Boolean.FALSE).build()
+    );
+
+    // when
+    List<SimplifyOrderablesDto> simplifyOrderablesDtos = siglusOrderableService.searchOrderablesDropDownList(draftId);
+
+    // then
+    assertEquals(expectedSimplifyOrderablesDtos, simplifyOrderablesDtos);
   }
 
   private List<OrderableDto> buildMockOrderableDtos() {

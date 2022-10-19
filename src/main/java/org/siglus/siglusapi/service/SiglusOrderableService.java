@@ -148,10 +148,14 @@ public class SiglusOrderableService {
     Set<String> archivedProducts = archivedProductRepository
         .findArchivedProductsByFacilityId(facilityId);
     List<UUID> archivedProductIds = archivedProducts.stream().map(UUID::fromString).collect(Collectors.toList());
-    allProducts.removeIf(e -> archivedProductIds.contains(e.getId()));
+    allProducts = allProducts.stream()
+        .filter(e -> !archivedProductIds.contains(e.getId()))
+        .collect(Collectors.toList());
     if (draftId != null) {
       Set<UUID> existOrderableIds = getExistOrderablesIdByDraftId(draftId);
-      allProducts.removeIf(e -> existOrderableIds.contains(e.getId()));
+      allProducts = allProducts.stream()
+          .filter(e -> !existOrderableIds.contains(e.getId()))
+          .collect(Collectors.toList());
     }
     return allProducts.stream().map(SimplifyOrderablesDto::from)
         .collect(Collectors.toList());
