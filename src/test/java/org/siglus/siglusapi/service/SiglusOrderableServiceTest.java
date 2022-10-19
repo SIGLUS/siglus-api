@@ -24,8 +24,10 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.openlmis.stockmanagement.service.PermissionService.STOCK_ADJUST;
 import static org.siglus.siglusapi.constant.FieldConstants.FULL_PRODUCT_NAME;
 import static org.siglus.siglusapi.constant.FieldConstants.PRODUCT_CODE;
+import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
 
 import com.google.common.collect.Maps;
 import java.time.LocalDate;
@@ -52,15 +54,20 @@ import org.openlmis.referencedata.dto.OrderableDto;
 import org.openlmis.referencedata.dto.ProgramOrderableDto;
 import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.domain.event.CalculatedStockOnHand;
+import org.openlmis.stockmanagement.dto.referencedata.ApprovedProductDto;
+import org.openlmis.stockmanagement.dto.referencedata.OrderablesAggregator;
 import org.openlmis.stockmanagement.repository.CalculatedStockOnHandRepository;
 import org.openlmis.stockmanagement.repository.StockCardRepository;
+import org.openlmis.stockmanagement.service.referencedata.ApprovedProductReferenceDataService;
 import org.openlmis.stockmanagement.web.Pagination;
 import org.siglus.common.domain.ProgramAdditionalOrderable;
 import org.siglus.common.repository.ArchivedProductRepository;
 import org.siglus.common.repository.ProgramAdditionalOrderableRepository;
+import org.siglus.common.repository.ProgramOrderableRepository;
 import org.siglus.siglusapi.domain.DispensableAttributes;
 import org.siglus.siglusapi.domain.StockManagementDraft;
 import org.siglus.siglusapi.domain.StockManagementDraftLineItem;
+import org.siglus.siglusapi.dto.AvailableOrderablesDto;
 import org.siglus.siglusapi.dto.QueryOrderableSearchParams;
 import org.siglus.siglusapi.dto.SimplifyOrderablesDto;
 import org.siglus.siglusapi.dto.UserDto;
@@ -122,6 +129,15 @@ public class SiglusOrderableServiceTest {
   @Mock
   private DispensableAttributesRepository dispensableAttributesRepository;
 
+  @Mock
+  private SiglusProgramService programService;
+
+  @Mock
+  private ProgramOrderableRepository programOrderableRepository;
+
+  @Mock
+  private ApprovedProductReferenceDataService approvedProductReferenceDataService;
+
   private Pageable pageable = new PageRequest(0, Integer.MAX_VALUE);
 
   private final UUID facilityId = UUID.randomUUID();
@@ -149,6 +165,8 @@ public class SiglusOrderableServiceTest {
 
   private final String productCode = "product code";
 
+  private final UUID userId = UUID.randomUUID();
+
   @Before
   public void prepare() {
     ProgramOrderableDto programOrderableDto = new ProgramOrderableDto();
@@ -159,6 +177,11 @@ public class SiglusOrderableServiceTest {
     orderableDto.setPrograms(newHashSet(programOrderableDto));
     when(orderableReferenceDataService.searchOrderables(searchParams, pageable)).thenReturn(
         Pagination.getPage(newArrayList(orderableDto), pageable, 1));
+
+    UserDto user = new UserDto();
+    user.setId(userId);
+    user.setHomeFacilityId(facilityId);
+    when(authenticationHelper.getCurrentUser()).thenReturn(user);
   }
 
   @Test
@@ -361,7 +384,7 @@ public class SiglusOrderableServiceTest {
         .thenReturn(Lists.newArrayList(buildMockDispensable()));
 
     // when
-    List<SimplifyOrderablesDto> availableOrderables = siglusOrderableService.getAvailableOrderablesByFacility(
+    List<AvailableOrderablesDto> availableOrderables = siglusOrderableService.getAvailableOrderablesByFacility(
         true, null);
 
     // then
@@ -395,23 +418,25 @@ public class SiglusOrderableServiceTest {
     when(orderableReferenceDataService.searchOrderables(any(), any())).thenReturn(
         Pagination.getPage(Arrays.asList(orderableDto, orderableDtoTwo), pageable, 1));
 
-    UserDto user = new UserDto();
-    user.setId(UUID.randomUUID());
-    user.setHomeFacilityId(facilityId);
-    when(authenticationHelper.getCurrentUser()).thenReturn(user);
+    when(programService.getProgramIds(ALL_PRODUCTS_PROGRAM_ID, userId, STOCK_ADJUST, facilityId.toString()))
+        .thenReturn(Collections.singleton(programId));
+    when(programOrderableRepository.countByProgramId(programId)).thenReturn(Long.valueOf(1));
+
+    org.openlmis.stockmanagement.dto.referencedata.OrderableDto orderableDto1 =
+        org.openlmis.stockmanagement.dto.referencedata.OrderableDto.builder().id(orderableId).build();
+    ApprovedProductDto approvedProductDto = new ApprovedProductDto(orderableDto1);
+    OrderablesAggregator orderablesAggregator = new OrderablesAggregator(Collections.singletonList(approvedProductDto));
+    when(approvedProductReferenceDataService.getApprovedProducts(facilityId, programId, Collections.emptyList()))
+        .thenReturn(orderablesAggregator);
 
     when(archivedProductRepository
         .findArchivedProductsByFacilityId(facilityId)).thenReturn(Collections.emptySet());
 
-    List<SimplifyOrderablesDto> expectedSimplifyOrderablesDtos = Arrays.asList(
-        SimplifyOrderablesDto.builder()
-            .orderableId(targetOrderableId)
-            .isKit(Boolean.FALSE)
-            .fullProductName("AAA")
-            .build(),
+    List<SimplifyOrderablesDto> expectedSimplifyOrderablesDtos = Collections.singletonList(
         SimplifyOrderablesDto.builder()
             .orderableId(orderableId)
             .isKit(Boolean.FALSE)
+            .archived(Boolean.FALSE)
             .fullProductName("BBB")
             .build());
 
@@ -423,7 +448,7 @@ public class SiglusOrderableServiceTest {
   }
 
   @Test
-  public void shouldGetExcluedArchivedProductSimplifyOrderablesDtoWhenThereIsArchivedProduct() {
+  public void shouldGetSimplifyOrderablesDtoWithArchivedWhenThereIsArchivedProduct() {
     // given
     OrderableDto orderableDto = new OrderableDto();
     orderableDto.setId(targetOrderableId);
@@ -432,16 +457,26 @@ public class SiglusOrderableServiceTest {
     when(orderableReferenceDataService.searchOrderables(any(), any())).thenReturn(
         Pagination.getPage(Arrays.asList(orderableDto, orderableDtoTwo), pageable, 1));
 
-    UserDto user = new UserDto();
-    user.setId(UUID.randomUUID());
-    user.setHomeFacilityId(facilityId);
-    when(authenticationHelper.getCurrentUser()).thenReturn(user);
+    when(programService.getProgramIds(ALL_PRODUCTS_PROGRAM_ID, userId, STOCK_ADJUST, facilityId.toString()))
+        .thenReturn(Collections.singleton(programId));
+    when(programOrderableRepository.countByProgramId(programId)).thenReturn(Long.valueOf(1));
+
+    org.openlmis.stockmanagement.dto.referencedata.OrderableDto orderableDto1 =
+        org.openlmis.stockmanagement.dto.referencedata.OrderableDto.builder().id(orderableId).build();
+    ApprovedProductDto approvedProductDto = new ApprovedProductDto(orderableDto1);
+    OrderablesAggregator orderablesAggregator = new OrderablesAggregator(Collections.singletonList(approvedProductDto));
+    when(approvedProductReferenceDataService.getApprovedProducts(facilityId, programId, Collections.emptyList()))
+        .thenReturn(orderablesAggregator);
 
     when(archivedProductRepository
         .findArchivedProductsByFacilityId(facilityId)).thenReturn(Collections.singleton(orderableId.toString()));
 
     List<SimplifyOrderablesDto> expectedSimplifyOrderablesDtos = Collections.singletonList(
-        SimplifyOrderablesDto.builder().orderableId(targetOrderableId).isKit(Boolean.FALSE).build()
+        SimplifyOrderablesDto.builder()
+            .orderableId(orderableId)
+            .isKit(Boolean.FALSE)
+            .archived(Boolean.TRUE)
+            .build()
     );
 
     // when
@@ -461,10 +496,20 @@ public class SiglusOrderableServiceTest {
     when(orderableReferenceDataService.searchOrderables(any(), any())).thenReturn(
         Pagination.getPage(Arrays.asList(orderableDto, orderableDtoTwo), pageable, 1));
 
-    UserDto user = new UserDto();
-    user.setId(UUID.randomUUID());
-    user.setHomeFacilityId(facilityId);
-    when(authenticationHelper.getCurrentUser()).thenReturn(user);
+    when(programService.getProgramIds(ALL_PRODUCTS_PROGRAM_ID, userId, STOCK_ADJUST, facilityId.toString()))
+        .thenReturn(Collections.singleton(programId));
+    when(programOrderableRepository.countByProgramId(programId)).thenReturn(Long.valueOf(1));
+
+    org.openlmis.stockmanagement.dto.referencedata.OrderableDto orderableDto1 =
+        org.openlmis.stockmanagement.dto.referencedata.OrderableDto.builder().id(orderableId).build();
+    ApprovedProductDto approvedProductDto = new ApprovedProductDto(orderableDto1);
+    org.openlmis.stockmanagement.dto.referencedata.OrderableDto orderableDto2 =
+        org.openlmis.stockmanagement.dto.referencedata.OrderableDto.builder().id(targetOrderableId).build();
+    ApprovedProductDto approvedProductDto2 = new ApprovedProductDto(orderableDto2);
+    OrderablesAggregator orderablesAggregator = new OrderablesAggregator(
+        Arrays.asList(approvedProductDto, approvedProductDto2));
+    when(approvedProductReferenceDataService.getApprovedProducts(facilityId, programId, Collections.emptyList()))
+        .thenReturn(orderablesAggregator);
 
     when(archivedProductRepository
         .findArchivedProductsByFacilityId(facilityId)).thenReturn(Collections.emptySet());
@@ -484,7 +529,11 @@ public class SiglusOrderableServiceTest {
         .thenReturn(new ArrayList<>(Arrays.asList(stockManagementDraft, stockManagementDraftTwo)));
 
     List<SimplifyOrderablesDto> expectedSimplifyOrderablesDtos = Collections.singletonList(
-        SimplifyOrderablesDto.builder().orderableId(targetOrderableId).isKit(Boolean.FALSE).build()
+        SimplifyOrderablesDto.builder()
+            .orderableId(targetOrderableId)
+            .isKit(Boolean.FALSE)
+            .archived(Boolean.FALSE)
+            .build()
     );
 
     // when

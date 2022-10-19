@@ -114,7 +114,7 @@ public class FieldConstants {
 
   public static final String SINGLE_PROGRAM = "SINGLE";
 
-  public static final String ALL_PROGRAM = "ALL";
+  public static final String  ALL_PROGRAM = "ALL";
 
   public static final String EXCEL_CONTENT_TYPE = "application/vnd.ms-excel";
 

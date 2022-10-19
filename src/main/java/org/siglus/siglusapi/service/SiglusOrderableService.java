@@ -16,19 +16,23 @@
 package org.siglus.siglusapi.service;
 
 import static java.util.Comparator.comparing;
+import static org.openlmis.stockmanagement.service.PermissionService.STOCK_ADJUST;
 import static org.siglus.siglusapi.constant.CacheConstants.CACHE_KEY_GENERATOR;
 import static org.siglus.siglusapi.constant.CacheConstants.SIGLUS_PROGRAM_ORDERABLES;
 import static org.siglus.siglusapi.constant.FieldConstants.CODE;
 import static org.siglus.siglusapi.constant.FieldConstants.FULL_PRODUCT_NAME;
 import static org.siglus.siglusapi.constant.FieldConstants.PRODUCT_CODE;
+import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_ID_NOT_FOUND;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_NOT_FOUND;
 
 import com.google.common.collect.Lists;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -44,19 +48,23 @@ import org.openlmis.stockmanagement.domain.event.CalculatedStockOnHand;
 import org.openlmis.stockmanagement.exception.ResourceNotFoundException;
 import org.openlmis.stockmanagement.repository.CalculatedStockOnHandRepository;
 import org.openlmis.stockmanagement.repository.StockCardRepository;
+import org.openlmis.stockmanagement.service.referencedata.ApprovedProductReferenceDataService;
 import org.openlmis.stockmanagement.util.Message;
 import org.openlmis.stockmanagement.web.Pagination;
 import org.siglus.common.constant.KitConstants;
 import org.siglus.common.domain.ProgramAdditionalOrderable;
 import org.siglus.common.repository.ArchivedProductRepository;
 import org.siglus.common.repository.ProgramAdditionalOrderableRepository;
+import org.siglus.common.repository.ProgramOrderableRepository;
 import org.siglus.siglusapi.constant.PaginationConstants;
 import org.siglus.siglusapi.domain.DispensableAttributes;
 import org.siglus.siglusapi.domain.StockManagementDraft;
 import org.siglus.siglusapi.domain.StockManagementDraftLineItem;
+import org.siglus.siglusapi.dto.AvailableOrderablesDto;
 import org.siglus.siglusapi.dto.OrderableExpirationDateDto;
 import org.siglus.siglusapi.dto.QueryOrderableSearchParams;
 import org.siglus.siglusapi.dto.SimplifyOrderablesDto;
+import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.repository.DispensableAttributesRepository;
 import org.siglus.siglusapi.repository.OrderableRepository;
@@ -89,6 +97,9 @@ public class SiglusOrderableService {
   private final CalculatedStockOnHandRepository calculatedStockOnHandRepository;
   private final OrderableRepository orderableRepository;
   private final DispensableAttributesRepository dispensableAttributesRepository;
+  private final ApprovedProductReferenceDataService approvedProductReferenceDataService;
+  private final ProgramOrderableRepository programOrderableRepository;
+  private final SiglusProgramService programService;
 
   public Page<OrderableDto> searchOrderables(QueryOrderableSearchParams searchParams,
       Pageable pageable, UUID facilityId) {
@@ -116,8 +127,9 @@ public class SiglusOrderableService {
 
     drafts.remove(foundDraft);
 
-    Set<UUID> existOrderableIds = drafts.stream().flatMap(
-        draft -> draft.getLineItems().stream()
+    Set<UUID> existOrderableIds = drafts.stream()
+        .flatMap(draft -> draft.getLineItems()
+            .stream()
             .map(StockManagementDraftLineItem::getOrderableId))
         .collect(Collectors.toSet());
 
@@ -144,13 +156,23 @@ public class SiglusOrderableService {
 
   public List<SimplifyOrderablesDto> searchOrderablesDropDownList(UUID draftId) {
     List<OrderableDto> allProducts = getAllProducts();
-    UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
-    Set<String> archivedProducts = archivedProductRepository
-        .findArchivedProductsByFacilityId(facilityId);
-    List<UUID> archivedProductIds = archivedProducts.stream().map(UUID::fromString).collect(Collectors.toList());
+    UserDto currentUser = authenticationHelper.getCurrentUser();
+    UUID facilityId = currentUser.getHomeFacilityId();
+
+    Set<UUID> programIds = programService.getProgramIds(
+        ALL_PRODUCTS_PROGRAM_ID, currentUser.getId(), STOCK_ADJUST, facilityId.toString());
+
+    List<UUID> approvedOrderableIds = getApprovedOrderableIds(facilityId, programIds);
+
     allProducts = allProducts.stream()
-        .filter(e -> !archivedProductIds.contains(e.getId()))
+        .filter(e -> approvedOrderableIds.contains(e.getId()))
         .collect(Collectors.toList());
+
+    List<UUID> archivedProductIds = archivedProductRepository
+        .findArchivedProductsByFacilityId(facilityId).stream().map(UUID::fromString).collect(Collectors.toList());
+
+    allProducts.forEach(e -> e.setArchived(archivedProductIds.contains(e.getId())));
+
     if (draftId != null) {
       Set<UUID> existOrderableIds = getExistOrderablesIdByDraftId(draftId);
       allProducts = allProducts.stream()
@@ -159,9 +181,26 @@ public class SiglusOrderableService {
     }
     return allProducts.stream()
         .map(SimplifyOrderablesDto::from)
-        .sorted(Comparator.comparing(e -> e.getFullProductName() == null ? null : e.getFullProductName().trim(),
-            Comparator.nullsLast(String::compareTo)))
+        .sorted(Comparator.comparing(SimplifyOrderablesDto::getArchived)
+            .thenComparing(e -> e.getFullProductName() == null ? null : e.getFullProductName().trim(),
+                Comparator.nullsLast(String::compareTo)))
         .collect(Collectors.toList());
+  }
+
+  private List<UUID> getApprovedOrderableIds(UUID facilityId, Set<UUID> programIds) {
+    List<UUID> approvedOrderableIds = new LinkedList<>();
+    for (UUID programId : programIds) {
+      if (programOrderableRepository.countByProgramId(programId) <= 0) {
+        continue;
+      }
+      approvedOrderableIds.addAll(
+          approvedProductReferenceDataService.getApprovedProducts(
+                  facilityId, programId, Collections.emptyList()).getOrderablesPage().getContent()
+              .stream()
+              .map(org.openlmis.stockmanagement.dto.referencedata.OrderableDto::getId)
+              .collect(Collectors.toList()));
+    }
+    return approvedOrderableIds;
   }
 
   public Page<OrderableDto> additionalToAdd(UUID programId, QueryOrderableSearchParams searchParams,
@@ -232,7 +271,7 @@ public class SiglusOrderableService {
     return programOrderablesRepository.findAllMaxVersionProgramOrderableDtos();
   }
 
-  public List<SimplifyOrderablesDto> getAvailableOrderablesByFacility(Boolean isRequestAll, UUID draftId) {
+  public List<AvailableOrderablesDto> getAvailableOrderablesByFacility(Boolean isRequestAll, UUID draftId) {
     UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
     List<StockCard> stockCards = stockCardRepository.findByFacilityIdIn(facilityId);
     List<UUID> allStockCardIds = stockCards.stream().map(StockCard::getId).collect(Collectors.toList());
@@ -276,8 +315,8 @@ public class SiglusOrderableService {
         .findAll(orderableIdToDispensableIdMap.values());
     orderableIdToDispensableIdMap.forEach((orderableId, dispensableId) -> orderableIdToDispensable
         .put(orderableId, dispensableAttributes.stream()
-        .filter(dispensable -> dispensable.getDispensableId().equals(dispensableId))
-        .findFirst().orElse(null)));
+            .filter(dispensable -> dispensable.getDispensableId().equals(dispensableId))
+            .findFirst().orElse(null)));
 
     List<SimplifyOrderablesDto> simplifyOrderablesDtoList = new ArrayList<>();
     orderables.forEach(orderable -> {
