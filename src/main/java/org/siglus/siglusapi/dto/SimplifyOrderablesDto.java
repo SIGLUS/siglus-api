@@ -15,7 +15,6 @@
 
 package org.siglus.siglusapi.dto;
 
-import java.util.Optional;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -45,14 +44,13 @@ public class SimplifyOrderablesDto {
 
 
   public static SimplifyOrderablesDto from(OrderableDto orderableDto) {
-    Optional<ProgramOrderableDto> programOrderableDto = orderableDto.getPrograms().stream().findFirst();
-    UUID programId = programOrderableDto.map(ProgramOrderableDto::getProgramId).orElse(null);
-
     return SimplifyOrderablesDto.builder()
         .orderableId(orderableDto.getId())
         .fullProductName(orderableDto.getFullProductName())
         .productCode(orderableDto.getProductCode())
-        .programId(programId)
+        .programId(null != orderableDto.getPrograms()
+            ? orderableDto.getPrograms().stream().findFirst().map(ProgramOrderableDto::getProgramId).orElse(null)
+            : null)
         .isKit(orderableDto.getIsKit())
         .dispensable(orderableDto.getDispensable())
         .build();
