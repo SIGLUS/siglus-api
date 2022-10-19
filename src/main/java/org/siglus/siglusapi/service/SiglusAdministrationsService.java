@@ -492,7 +492,6 @@ public class SiglusAdministrationsService {
     log.info("change facility:{} to local machine, operator:{}", facilityId,
         authenticationHelper.getCurrentUser().getUsername());
     facilityExtensionRepository.save(facilityExtension);
-    createAndSaveActivationCode(facilityExtension.getFacilityCode());
   }
 
   @Transactional
