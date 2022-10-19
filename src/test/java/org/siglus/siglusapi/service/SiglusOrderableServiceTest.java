@@ -387,9 +387,11 @@ public class SiglusOrderableServiceTest {
   public void shouldGetAllSimplifyOrderablesDtoWhenThereIsNoDraftIdAndArchivedProduct() {
     // given
     OrderableDto orderableDto = new OrderableDto();
+    orderableDto.setFullProductName("AAA");
     orderableDto.setId(targetOrderableId);
     OrderableDto orderableDtoTwo = new OrderableDto();
     orderableDtoTwo.setId(orderableId);
+    orderableDtoTwo.setFullProductName("BBB");
     when(orderableReferenceDataService.searchOrderables(any(), any())).thenReturn(
         Pagination.getPage(Arrays.asList(orderableDto, orderableDtoTwo), pageable, 1));
 
@@ -402,8 +404,16 @@ public class SiglusOrderableServiceTest {
         .findArchivedProductsByFacilityId(facilityId)).thenReturn(Collections.emptySet());
 
     List<SimplifyOrderablesDto> expectedSimplifyOrderablesDtos = Arrays.asList(
-        SimplifyOrderablesDto.builder().orderableId(targetOrderableId).isKit(Boolean.FALSE).build(),
-        SimplifyOrderablesDto.builder().orderableId(orderableId).isKit(Boolean.FALSE).build());
+        SimplifyOrderablesDto.builder()
+            .orderableId(targetOrderableId)
+            .isKit(Boolean.FALSE)
+            .fullProductName("AAA")
+            .build(),
+        SimplifyOrderablesDto.builder()
+            .orderableId(orderableId)
+            .isKit(Boolean.FALSE)
+            .fullProductName("BBB")
+            .build());
 
     // when
     List<SimplifyOrderablesDto> simplifyOrderablesDtos = siglusOrderableService.searchOrderablesDropDownList(null);
