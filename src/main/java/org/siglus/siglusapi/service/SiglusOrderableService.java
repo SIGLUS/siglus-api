@@ -160,7 +160,7 @@ public class SiglusOrderableService {
     return allProducts.stream()
         .map(SimplifyOrderablesDto::from)
         .sorted(Comparator.comparing(
-            SimplifyOrderablesDto::getFullProductName, Comparator.nullsLast(String::compareTo)))
+            e -> e.getFullProductName().trim(), Comparator.nullsLast(String::compareTo)))
         .collect(Collectors.toList());
   }
 
