@@ -62,7 +62,7 @@ import org.springframework.web.multipart.MultipartFile;
 @Slf4j
 public class LocalExportImportService {
 
-  private static final int EVENT_FILE_CAPACITY_BYTES = 50 * 1024 * 1024;
+  static int EVENT_FILE_CAPACITY_BYTES = 50 * 1024 * 1024;
   private final EventStore eventStore;
   private final EventImporter eventImporter;
   private final ExternalEventDtoMapper externalEventDtoMapper;
@@ -82,9 +82,9 @@ public class LocalExportImportService {
   @SneakyThrows
   public void exportEvents(HttpServletResponse response) {
     String zipName = ZIP_PREFIX + System.currentTimeMillis() + ZIP_SUFFIX;
-    File directory = makeDirectory();
+    File directory = prepareDirectory();
     try {
-      List<File> files = generateFilesForEachFacility();
+      List<File> files = generateFilesForPeeringFacilities();
       if (CollectionUtils.isEmpty(files)) {
         log.warn("no data need to be exported, homeFacilityId:{}", getHomeFacilityId());
         throw new BusinessDataException(new Message("no data need to be exported"));
@@ -108,17 +108,23 @@ public class LocalExportImportService {
         checkFacility(events);
         eventImporter.importEvents(events);
       } catch (ChecksumNotMatchedException e) {
-        throw new BusinessDataException(new Message("file may be modified"));
+        log.error("checksum not match", e);
+        throw new BusinessDataException(e, new Message("file may be modified"));
       } catch (IOException e) {
+        log.error("err occurs when import files", e);
         throw new BusinessDataException(
-            new Message("fail to import events, file name:" + file.getName()));
+            e, new Message("fail to import events, file name:" + file.getName()));
       }
     }
   }
 
-  private File makeDirectory() {
+  private File prepareDirectory() {
     File directory = new File(zipExportPath);
-    if (directory.exists()) {
+    return makeDirectory(directory);
+  }
+
+  File makeDirectory(File directory) {
+    if (directory.isDirectory()) {
       return directory;
     }
     boolean mkdirs = directory.mkdirs();
@@ -130,17 +136,13 @@ public class LocalExportImportService {
   }
 
   @SneakyThrows
-  private List<File> generateFilesForEachFacility() {
+  private List<File> generateFilesForPeeringFacilities() {
     String workingDir = zipExportPath + "/" + System.currentTimeMillis() + "/";
     Files.createDirectories(Paths.get(workingDir));
     UUID homeFacilityId = getHomeFacilityId();
     Map<UUID, List<Event>> receiverIdToEvents = eventStore.getEventsForExport(homeFacilityId).stream()
         .collect(Collectors.groupingBy(Event::getReceiverId));
-    Map<UUID, String> facilityIdToName = siglusFacilityService.getFacilityIdToName(
-        getFacilityIds(homeFacilityId, receiverIdToEvents));
-    for (Map.Entry<UUID, String> entry: facilityIdToName.entrySet()) {
-      entry.setValue(normalizeFacilityName(entry.getValue()));
-    }
+    Map<UUID, String> facilityIdToName = getFacilityIdToName(homeFacilityId, receiverIdToEvents);
 
     return receiverIdToEvents.entrySet().stream()
         .map((it) -> generateFilesForOneReceiver(
@@ -149,60 +151,66 @@ public class LocalExportImportService {
         .collect(Collectors.toList());
   }
 
+  private Map<UUID, String> getFacilityIdToName(UUID homeFacilityId, Map<UUID, List<Event>> receiverIdToEvents) {
+    Map<UUID, String> facilityIdToName = siglusFacilityService.getFacilityIdToName(
+        getFacilityIds(homeFacilityId, receiverIdToEvents));
+    for (Map.Entry<UUID, String> entry: facilityIdToName.entrySet()) {
+      entry.setValue(normalizeFacilityName(entry.getValue()));
+    }
+    return facilityIdToName;
+  }
+
   private String normalizeFacilityName(String facilityName) {
     return FacilityNameNormalizer.normalize(facilityName);
   }
 
+  @SneakyThrows
   private List<File> generateFilesForOneReceiver(
       String workingDir,
       UUID homeFacilityId,
       Map<UUID, String> facilityIdToName,
       UUID receiverId,
       List<Event> events) {
-    List<File> files = new LinkedList<>();
-    int currentFilePartSeq = 1;
-    boolean needMultipleFiles = false;
-    String fileName =
+    List<EventFile> files = new LinkedList<>();
+    int capacityBytes = EVENT_FILE_CAPACITY_BYTES;
+    String firstFileName =
         getFileName(
             workingDir, facilityIdToName.get(homeFacilityId), facilityIdToName.get(receiverId), "");
-    int capacityBytes = EVENT_FILE_CAPACITY_BYTES;
-    EventFile eventFile = new EventFile(capacityBytes, fileName, externalEventDtoMapper);
+    EventFile eventFile = new EventFile(capacityBytes, firstFileName, externalEventDtoMapper);
     for (int i = 0; i < events.size(); i++) {
       try {
         int remaining = eventFile.writeGetRemainingCapacity(events.get(i));
         if (remaining > 0) {
           continue;
         }
-        // finalize current file
-        int remainingCount = events.size() - (i + 1);
-        if (remainingCount > 0) {
-          needMultipleFiles = true;
-        }
-        if (needMultipleFiles) {
-          String currentFilePartSuffix = "_part" + currentFilePartSeq;
+        // finalize current file, which is full now
+        files.add(eventFile);
+        // prepare next file
+        boolean needContinue = events.size() > (i + 1);
+        if (needContinue) {
+          String nextFileSuffix = "_part" + (files.size() + 1);
           String newFileName =
               getFileName(
                   workingDir,
                   facilityIdToName.get(homeFacilityId),
                   facilityIdToName.get(receiverId),
-                  currentFilePartSuffix);
-          eventFile.renameTo(newFileName);
+                  nextFileSuffix);
+          eventFile = new EventFile(capacityBytes, newFileName, externalEventDtoMapper);
         }
-        if (eventFile.getCount() > 0) {
-          files.add(eventFile.getFile());
-        }
-        // prepare for new event file
-        eventFile = new EventFile(capacityBytes, fileName, externalEventDtoMapper);
-        currentFilePartSeq += 1;
       } catch (IOException e) {
         log.error("error when generate files, facility:{}, err:{}", homeFacilityId, e);
-        throw new BusinessDataException(new Message("fail to generate files"));
+        throw new BusinessDataException(e, new Message("fail to generate files"));
       }
     }
     if (eventFile.getCount() > 0) {
-      files.add(eventFile.getFile());
+      files.add(eventFile);
     }
-    return files;
+    boolean hasMultiParts = files.size() > 1;
+    if (hasMultiParts) {
+      // rename the first file to xxx_part1.dat
+      files.get(0).renameTo(firstFileName.replace(".dat", "_part1.dat"));
+    }
+    return files.stream().map(EventFile::getFile).collect(Collectors.toList());
   }
 
   private Set<UUID> getFacilityIds(UUID homeFacilityId, Map<UUID, List<Event>> receiverIdToEvents) {
@@ -211,7 +219,7 @@ public class LocalExportImportService {
     return facilityIds;
   }
 
-  private String getFileName(String workingDir, String senderName, String receiverName, String filePartSuffix) {
+  private static String getFileName(String workingDir, String senderName, String receiverName, String filePartSuffix) {
     return workingDir
         + "from"
         + FILE_NAME_SPLIT

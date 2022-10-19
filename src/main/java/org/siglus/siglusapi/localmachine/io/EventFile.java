@@ -27,7 +27,7 @@ public class EventFile implements AutoCloseable {
 
   private final ExternalEventDtoMapper mapper;
   private final int capacityBytes;
-  private final File file;
+  private File file;
   private EventWriter eventWriter;
   private DataOutputStream out;
   private int count = 0;
@@ -51,11 +51,16 @@ public class EventFile implements AutoCloseable {
   }
 
   public void renameTo(String fileName) throws IOException {
+    if (this.file.getName().equals(fileName)) {
+      return;
+    }
     File newFile = new File(fileName);
     if (!this.file.renameTo(newFile)) {
       throw new IOException("fail to rename file");
     }
-    reset();
+    // ignore delete failure
+    this.file.delete();
+    this.file = newFile;
   }
 
   public File getFile() {

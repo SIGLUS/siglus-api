@@ -30,7 +30,6 @@ import org.siglus.siglusapi.localmachine.webapi.AckExchange;
 import org.siglus.siglusapi.localmachine.webapi.ActivationResponse;
 import org.siglus.siglusapi.localmachine.webapi.PeeringEventsResponse;
 import org.siglus.siglusapi.localmachine.webapi.RemoteActivationRequest;
-import org.siglus.siglusapi.localmachine.webapi.SyncRequest;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpEntity;
