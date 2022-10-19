@@ -260,6 +260,9 @@ traits:
         /events:
           post:
             description: upload events to onlineweb
+        /eventFile:
+          post:
+            description: upload events to onlineweb via compressed file stream
         /peeringEvents:
           get:
             description: pull peering events from onlineweb
