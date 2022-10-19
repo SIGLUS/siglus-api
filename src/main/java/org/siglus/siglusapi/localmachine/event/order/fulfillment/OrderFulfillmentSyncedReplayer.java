@@ -130,6 +130,7 @@ public class OrderFulfillmentSyncedReplayer {
       // reset requisition id
       event.getShipmentExtensionRequest()
           .getShipment().getOrder().setExternalId(requisitionExtension.getRequisitionId());
+      event.getConvertToOrderRequest().getFirstOrder().setExternalId(requisitionExtension.getRequisitionId());
       Requisition requisition = requisitionRepository.findOne(requisitionExtension.getRequisitionId());
 
       finalApprove(requisition, requisitionExtension, event);
