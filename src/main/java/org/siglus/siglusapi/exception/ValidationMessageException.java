@@ -43,6 +43,17 @@ public class ValidationMessageException extends BaseMessageException {
   }
 
   /**
+   * Create a new validation exception with the given message.
+   *
+   * @param message the message.
+   * @param isBusiness is business.
+   */
+  public ValidationMessageException(Message message, boolean isBusiness) {
+    super(message, isBusiness);
+  }
+
+
+  /**
    * Create a new validation exception with the given message and cause.
    *
    * @param message the message.
