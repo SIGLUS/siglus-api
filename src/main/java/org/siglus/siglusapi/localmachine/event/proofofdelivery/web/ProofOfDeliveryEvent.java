@@ -16,6 +16,7 @@
 package org.siglus.siglusapi.localmachine.event.proofofdelivery.web;
 
 import java.util.List;
+import java.util.UUID;
 import lombok.Data;
 import org.openlmis.fulfillment.domain.ProofOfDelivery;
 import org.siglus.siglusapi.domain.PodExtension;
@@ -26,6 +27,7 @@ import org.siglus.siglusapi.localmachine.EventPayload;
 @Data
 public class ProofOfDeliveryEvent {
 
+  private UUID userId;
   private ProofOfDelivery proofOfDelivery;
   private PodExtension podExtension;
   private List<PodLineItemsByLocation> podLineItemsByLocation;

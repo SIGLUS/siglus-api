@@ -42,6 +42,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.openlmis.fulfillment.domain.Order;
+import org.openlmis.fulfillment.domain.ProofOfDelivery;
+import org.openlmis.fulfillment.domain.Shipment;
 import org.openlmis.fulfillment.service.OrderSearchParams;
 import org.openlmis.fulfillment.service.ProofOfDeliveryService;
 import org.openlmis.fulfillment.service.referencedata.PeriodReferenceDataService;
@@ -56,13 +58,11 @@ import org.openlmis.requisition.dto.ApproveRequisitionDto;
 import org.openlmis.requisition.dto.BasicRequisitionDto;
 import org.openlmis.requisition.dto.FacilityDto;
 import org.openlmis.requisition.dto.ProgramDto;
-import org.openlmis.requisition.dto.ProofOfDeliveryDto;
 import org.openlmis.requisition.dto.RequisitionGroupDto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.dto.RightDto;
 import org.openlmis.requisition.dto.RoleAssignmentDto;
 import org.openlmis.requisition.service.PermissionService;
-import org.openlmis.requisition.service.fulfillment.ProofOfDeliveryFulfillmentService;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
 import org.openlmis.requisition.service.referencedata.RequisitionGroupReferenceDataService;
 import org.openlmis.requisition.service.referencedata.RoleReferenceDataService;
@@ -76,6 +76,8 @@ import org.siglus.siglusapi.domain.NotificationType;
 import org.siglus.siglusapi.dto.NotificationDto;
 import org.siglus.siglusapi.dto.SiglusOrderDto;
 import org.siglus.siglusapi.repository.NotificationRepository;
+import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
+import org.siglus.siglusapi.repository.SiglusShipmentRepository;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
 import org.siglus.siglusapi.service.mapper.NotificationMapper;
@@ -129,7 +131,9 @@ public class SiglusNotificationService {
 
   private final SiglusRequisitionRequisitionService requisitionService;
 
-  private final ProofOfDeliveryFulfillmentService podService;
+  private final SiglusProofOfDeliveryRepository siglusProofOfDeliveryRepository;
+
+  private final SiglusShipmentRepository siglusShipmentRepository;
 
   private final SiglusFacilityReferenceDataService facilityReferenceDataService;
 
@@ -286,22 +290,32 @@ public class SiglusNotificationService {
     OrderExternal external = orderExternalRepository.findOne(order.getExternalId());
     UUID requisitionId = external == null ? order.getExternalId() : external.getRequisitionId();
     RequisitionV2Dto requisition = requisitionService.searchRequisition(requisitionId);
-    List<ProofOfDeliveryDto> pods = podService.getProofOfDeliveries(order.getId());
-    pods.forEach(pod ->
-        Stream.of(NotificationType.values()).forEach(notificationType -> {
-          Notification notification = new Notification();
-          notification.setRefId(pod.getId());
-          notification.setFacilityId(requisition.getFacilityId());
-          notification.setProgramId(requisition.getProgramId());
-          notification.setEmergency(requisition.getEmergency());
-          notification.setStatus(NotificationStatus.SHIPPED);
-          notification.setType(notificationType);
-          notification.setProcessingPeriodId(order.getProcessingPeriod().getId());
-          notification.setRequestingFacilityId(requisition.getFacilityId());
-          log.info("confirm shipment notification: {}", notification);
-          repo.save(notification);
-        })
-    );
+    Shipment orderedShipment = siglusShipmentRepository.findShipmentByOrderId(order.getId());
+    ProofOfDelivery proofOfDelivery = siglusProofOfDeliveryRepository.findByShipmentId(orderedShipment.getId());
+
+    Notification requestNotification = new Notification();
+    requestNotification.setRefId(proofOfDelivery.getId());
+    requestNotification.setFacilityId(requisition.getFacilityId());
+    requestNotification.setProgramId(requisition.getProgramId());
+    requestNotification.setEmergency(requisition.getEmergency());
+    requestNotification.setStatus(NotificationStatus.SHIPPED);
+    requestNotification.setType(NotificationType.TODO);
+    requestNotification.setProcessingPeriodId(order.getProcessingPeriod().getId());
+    requestNotification.setRequestingFacilityId(requisition.getFacilityId());
+    log.info("confirm shipment notification for request facility: {}", requestNotification);
+    repo.save(requestNotification);
+
+    Notification supplierNotification = new Notification();
+    supplierNotification.setRefId(proofOfDelivery.getId());
+    supplierNotification.setFacilityId(order.getSupplyingFacility().getId());
+    supplierNotification.setProgramId(requisition.getProgramId());
+    supplierNotification.setEmergency(requisition.getEmergency());
+    supplierNotification.setStatus(NotificationStatus.SHIPPED);
+    supplierNotification.setType(NotificationType.UPDATE);
+    supplierNotification.setProcessingPeriodId(order.getProcessingPeriod().getId());
+    supplierNotification.setRequestingFacilityId(requisition.getFacilityId());
+    log.info("confirm shipment notification for supplier facility: {}", supplierNotification);
+    repo.save(supplierNotification);
   }
 
   public void postConfirmPod(org.openlmis.fulfillment.web.util.ProofOfDeliveryDto pod) {

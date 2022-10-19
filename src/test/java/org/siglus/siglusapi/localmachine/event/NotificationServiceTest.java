@@ -18,8 +18,6 @@ package org.siglus.siglusapi.localmachine.event;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
 
-import java.io.IOException;
-import java.util.Arrays;
 import java.util.UUID;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -27,12 +25,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.fulfillment.domain.Order;
-import org.openlmis.fulfillment.service.referencedata.FacilityDto;
-import org.openlmis.fulfillment.service.referencedata.ProcessingPeriodDto;
-import org.openlmis.fulfillment.web.util.OrderLineItemDto;
-import org.openlmis.fulfillment.web.util.OrderObjectReferenceDto;
-import org.openlmis.fulfillment.web.util.ProofOfDeliveryDto;
-import org.openlmis.fulfillment.web.util.ShipmentObjectReferenceDto;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.dto.BasicProcessingPeriodDto;
 import org.openlmis.requisition.dto.BasicRequisitionDto;
@@ -94,23 +86,11 @@ public class NotificationServiceTest {
   }
 
   @Test
-  public void shouldPostConfirmPodSuccess() throws IOException {
+  public void shouldPostConfirmPodSuccess() {
     // given
-    OrderObjectReferenceDto orderDto = new OrderObjectReferenceDto(UUID.randomUUID());
-    OrderLineItemDto lineItemDto = new OrderLineItemDto();
-    lineItemDto.setId(UUID.randomUUID());
-    orderDto.setOrderLineItems(Arrays.asList(lineItemDto));
-    orderDto.setProgram(new org.openlmis.fulfillment.service.referencedata.ProgramDto());
-    orderDto.setProcessingPeriod(new ProcessingPeriodDto());
-    orderDto.setFacility(new FacilityDto());
-    orderDto.setSupplyingFacility(new FacilityDto());
-    orderDto.setRequestingFacility(new FacilityDto());
-    ShipmentObjectReferenceDto shipmentDto = new ShipmentObjectReferenceDto(UUID.randomUUID());
-    shipmentDto.setOrder(orderDto);
-    ProofOfDeliveryDto dto = new ProofOfDeliveryDto();
-    dto.setShipment(shipmentDto);
+    Order orderDto = new Order(UUID.randomUUID());
     // when
-    notificationService.postConfirmPod(userId, dto);
+    notificationService.postConfirmPod(userId, UUID.randomUUID(), orderDto);
   }
 
 }

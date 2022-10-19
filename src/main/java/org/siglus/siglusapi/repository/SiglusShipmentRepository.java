@@ -21,4 +21,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface SiglusShipmentRepository extends JpaRepository<Shipment, UUID> {
 
+  Shipment findShipmentByOrderId(UUID orderId);
 }
