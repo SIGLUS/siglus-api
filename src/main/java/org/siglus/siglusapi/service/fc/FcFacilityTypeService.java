@@ -23,11 +23,20 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
+import org.openlmis.referencedata.domain.BaseEntity;
+import org.openlmis.referencedata.domain.FacilityType;
+import org.openlmis.referencedata.domain.FacilityTypeApprovedProduct;
+import org.openlmis.referencedata.domain.Program;
+import org.openlmis.referencedata.domain.VersionIdentity;
+import org.openlmis.referencedata.repository.FacilityTypeApprovedProductRepository;
+import org.openlmis.referencedata.repository.FacilityTypeRepository;
+import org.openlmis.referencedata.repository.ProgramRepository;
 import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
 import org.openlmis.stockmanagement.domain.reason.StockCardLineItemReason;
@@ -55,6 +64,10 @@ public class FcFacilityTypeService implements ProcessDataService {
   private final SiglusStockCardLineItemReasons siglusStockCardLineItemReasons;
   private final ProgramReferenceDataService programRefDataService;
   private final ValidReasonAssignmentStockManagementService assignmentService;
+
+  private final FacilityTypeApprovedProductRepository facilityTypeApprovedProductRepository;
+  private final ProgramRepository programRepository;
+  private final FacilityTypeRepository facilityTypeRepository;
 
   @Override
   public FcIntegrationResultDto processData(List<? extends ResponseBaseDto> facilityTypes, String startDate,
@@ -135,19 +148,40 @@ public class FcFacilityTypeService implements ProcessDataService {
 
   private void updateFacilityTypes(Map<String, FacilityTypeDto> codeToFacilityType,
       List<FcFacilityTypeDto> currentFacilityTypes) {
+
+    List<UUID> needDeletedFacilityTypeId = new ArrayList<>();
+    List<UUID> needCreatedFacilityTypeId = new ArrayList<>();
+
     currentFacilityTypes.forEach(current -> {
       FacilityTypeDto existed = codeToFacilityType.get(current.getCode());
       log.info("[FC facilityType] update facilityType, existed: {}, current: {}", existed, current);
+
+      if (existed.getActive() && !FcUtil.isActive(current.getStatus())) {
+        needDeletedFacilityTypeId.add(existed.getId());
+      } else if (!existed.getActive() && FcUtil.isActive(current.getStatus())) {
+        needCreatedFacilityTypeId.add(existed.getId());
+      }
+
       existed.setActive(FcUtil.isActive(current.getStatus()));
       existed.setName(current.getDescription());
       facilityTypeService.saveFacilityType(existed);
     });
+
+    if (!needDeletedFacilityTypeId.isEmpty()) {
+      facilityTypeApprovedProductRepository.deleteFtapWhenFacilityIsNotActive(needDeletedFacilityTypeId);
+    }
+    if (!needCreatedFacilityTypeId.isEmpty()) {
+      insertIntoFtap(needCreatedFacilityTypeId);
+    }
   }
 
   private void createFacilityTypes(Map<String, FacilityTypeDto> codeToFacilityType,
       List<FcFacilityTypeDto> needAddedFacilityTypes) {
     int originSize = codeToFacilityType.size();
     List<FacilityTypeDto> needUpdateReasonType = new ArrayList<>();
+
+    List<UUID> needAddedFacilityTypesId = new ArrayList<>();
+
     needAddedFacilityTypes.forEach(typeDto -> {
       log.info("[FC facilityType] create facilityType: {}", typeDto);
       int index = needAddedFacilityTypes.indexOf(typeDto);
@@ -156,9 +190,46 @@ public class FcFacilityTypeService implements ProcessDataService {
       dto.setActive(FcUtil.isActive(typeDto.getStatus()));
       dto.setName(typeDto.getDescription());
       dto.setDisplayOrder(originSize + index + 1);
-      needUpdateReasonType.add(facilityTypeService.createFacilityType(dto));
+
+      FacilityTypeDto facilityTypeWithId = facilityTypeService.createFacilityType(dto);
+      needAddedFacilityTypesId.add(facilityTypeWithId.getId());
+
+      needUpdateReasonType.add(facilityTypeWithId);
     });
     updateReason(needUpdateReasonType);
+    insertIntoFtap(needAddedFacilityTypesId);
+  }
+
+  private void insertIntoFtap(List<UUID> needAddedFacilityTypesId) {
+    List<String> orderableIdAndProgramIdInFtap = facilityTypeApprovedProductRepository
+        .findOrderableIdAndProgramIdInFtap();
+    List<Program> programs = programRepository.findAll();
+    Map<UUID, Program> programIdToProgram = programs.stream()
+        .collect(Collectors.toMap(BaseEntity::getId, Function.identity()));
+    List<FacilityType> facilityTypes = facilityTypeRepository.findAll();
+    Map<UUID, FacilityType> facilityTypeIdToFacilityType = facilityTypes.stream()
+        .collect(Collectors.toMap(BaseEntity::getId, Function.identity()));
+
+    List<FacilityTypeApprovedProduct> needAddedFtap = new ArrayList<>();
+    needAddedFacilityTypesId.forEach(facilityTypeId -> orderableIdAndProgramIdInFtap.forEach(oapId -> {
+      String orderableId = oapId.split("\\+")[0];
+      String programId = oapId.split("\\+")[1];
+      VersionIdentity versionIdentity = new VersionIdentity(UUID.randomUUID(), 1L);
+      FacilityTypeApprovedProduct facilityTypeApprovedProduct = new FacilityTypeApprovedProduct(
+          versionIdentity,
+          UUID.fromString(orderableId),
+          programIdToProgram.get(UUID.fromString(programId)),
+          facilityTypeIdToFacilityType.get(facilityTypeId),
+          3.0,
+          null,
+          null,
+          true,
+          ZonedDateTime.now()
+      );
+      needAddedFtap.add(facilityTypeApprovedProduct);
+    }));
+
+    facilityTypeApprovedProductRepository.save(needAddedFtap);
   }
 
   private void updateReason(List<FacilityTypeDto> facilityTypeDtos) {

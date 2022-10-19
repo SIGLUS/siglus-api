@@ -38,6 +38,9 @@ import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.openlmis.referencedata.repository.FacilityTypeApprovedProductRepository;
+import org.openlmis.referencedata.repository.FacilityTypeRepository;
+import org.openlmis.referencedata.repository.ProgramRepository;
 import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
 import org.openlmis.stockmanagement.dto.StockCardLineItemReasonDto;
@@ -61,6 +64,14 @@ public class FcFacilityTypeServiceTest {
   private FcFacilityTypeService fcFacilityTypeService;
 
   @Mock
+  private FacilityTypeApprovedProductRepository facilityTypeApprovedProductRepository;
+
+  @Mock
+  private ProgramRepository programRepository;
+
+  @Mock
+  private FacilityTypeRepository facilityTypeRepository;
+  @Mock
   private SiglusFacilityTypeReferenceDataService facilityTypeService;
 
   @Mock
@@ -80,6 +91,7 @@ public class FcFacilityTypeServiceTest {
 
   @Captor
   private ArgumentCaptor<ValidReasonAssignmentDto> reasonArgumentCaptor;
+
 
   private final UUID programId = UUID.randomUUID();
   private final UUID reasonId = UUID.randomUUID();
@@ -141,6 +153,9 @@ public class FcFacilityTypeServiceTest {
 
     // when
     fcFacilityTypeService.processData(newArrayList(typeDto4, typeDto5), START_DATE, LAST_UPDATED_AT);
+    when(facilityTypeApprovedProductRepository.findOrderableIdAndProgramIdInFtap()).thenReturn(newArrayList());
+    when(programRepository.findAll()).thenReturn(newArrayList());
+    when(facilityTypeRepository.findAll()).thenReturn(newArrayList());
 
     // then
     verify(facilityTypeService).createFacilityType(addFacilityType.capture());
