@@ -53,7 +53,7 @@ public class EventFileTest {
     EventFile eventFile = new EventFile(1, "/tmp/" + System.currentTimeMillis() + ".dat", mapper);
     // then
     for (Event it : rawEvents) {
-      eventFile.writeGetRemainingCapacity(it);
+      eventFile.writeEventAndGetRemainingCapacity(it);
       eventFile.reset();
     }
   }
@@ -64,7 +64,7 @@ public class EventFileTest {
     String fileName = "/tmp/" + System.currentTimeMillis() + ".dat";
     EventFile eventFile = new EventFile(1, fileName, mapper);
     for (Event it : rawEvents) {
-      eventFile.writeGetRemainingCapacity(it);
+      eventFile.writeEventAndGetRemainingCapacity(it);
       eventFile.reset();
     }
     eventFile.renameTo(fileName + ".renamed");

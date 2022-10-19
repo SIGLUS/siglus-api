@@ -56,7 +56,7 @@ public class EventResourcePackerTest {
     EventResourcePacker packer = new EventResourcePacker(1, mapper);
     // then
     for (Event it : rawEvents) {
-      packer.writeGetRemainingCapacity(it);
+      packer.writeEventAndGetRemainingCapacity(it);
       packer.reset();
     }
   }
@@ -66,7 +66,7 @@ public class EventResourcePackerTest {
     // given capacity is 1 byte
     EventResourcePacker packer = new EventResourcePacker(1, mapper);
     // when
-    int remaining = packer.writeGetRemainingCapacity(rawEvents.get(0));
+    int remaining = packer.writeEventAndGetRemainingCapacity(rawEvents.get(0));
     // then
     assertThat(remaining).isLessThan(0);
   }
@@ -75,9 +75,9 @@ public class EventResourcePackerTest {
   public void shouldThrowWhenWriteGivenPackerIsFull() throws IOException {
     // given capacity is 1 byte
     EventResourcePacker packer = new EventResourcePacker(1, mapper);
-    packer.writeGetRemainingCapacity(rawEvents.get(0));
+    packer.writeEventAndGetRemainingCapacity(rawEvents.get(0));
     // when
-    int remaining = packer.writeGetRemainingCapacity(rawEvents.get(1));
+    int remaining = packer.writeEventAndGetRemainingCapacity(rawEvents.get(1));
     // then
     assertThat(remaining).isLessThan(0);
   }

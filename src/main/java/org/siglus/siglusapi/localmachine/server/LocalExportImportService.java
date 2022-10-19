@@ -75,6 +75,8 @@ public class LocalExportImportService {
   private static final String ZIP_PREFIX = "event_export_";
   private static final String ZIP_SUFFIX = ".zip";
   private static final String FILE_SUFFIX = ".dat";
+  private static final String PART_FILE_SUFFIX = "_part";
+  private static final String PART_1_FILE_SUFFIX = "_part1" + FILE_SUFFIX;
   private static final String FILE_NAME_SPLIT = "_";
   private static final String CONTENT_TYPE = "application/zip";
   private static final String DISPOSITION_BASE = "attachment; filename=";
@@ -165,21 +167,16 @@ public class LocalExportImportService {
   }
 
   @SneakyThrows
-  private List<File> generateFilesForOneReceiver(
-      String workingDir,
-      UUID homeFacilityId,
-      Map<UUID, String> facilityIdToName,
-      UUID receiverId,
-      List<Event> events) {
+  private List<File> generateFilesForOneReceiver(String workingDir, UUID homeFacilityId,
+      Map<UUID, String> facilityIdToName, UUID receiverId, List<Event> events) {
     List<EventFile> files = new LinkedList<>();
     int capacityBytes = EVENT_FILE_CAPACITY_BYTES;
-    String firstFileName =
-        getFileName(
-            workingDir, facilityIdToName.get(homeFacilityId), facilityIdToName.get(receiverId), "");
+    String firstFileName = getFileName(workingDir, facilityIdToName.get(homeFacilityId),
+        facilityIdToName.get(receiverId), "");
     EventFile eventFile = new EventFile(capacityBytes, firstFileName, externalEventDtoMapper);
     for (int i = 0; i < events.size(); i++) {
       try {
-        int remaining = eventFile.writeGetRemainingCapacity(events.get(i));
+        int remaining = eventFile.writeEventAndGetRemainingCapacity(events.get(i));
         if (remaining > 0) {
           continue;
         }
@@ -188,13 +185,9 @@ public class LocalExportImportService {
         // prepare next file
         boolean needContinue = events.size() > (i + 1);
         if (needContinue) {
-          String nextFileSuffix = "_part" + (files.size() + 1);
-          String newFileName =
-              getFileName(
-                  workingDir,
-                  facilityIdToName.get(homeFacilityId),
-                  facilityIdToName.get(receiverId),
-                  nextFileSuffix);
+          String nextFileSuffix = PART_FILE_SUFFIX + (files.size() + 1);
+          String newFileName = getFileName(workingDir, facilityIdToName.get(homeFacilityId),
+              facilityIdToName.get(receiverId), nextFileSuffix);
           eventFile = new EventFile(capacityBytes, newFileName, externalEventDtoMapper);
         }
       } catch (IOException e) {
@@ -208,7 +201,7 @@ public class LocalExportImportService {
     boolean hasMultiParts = files.size() > 1;
     if (hasMultiParts) {
       // rename the first file to xxx_part1.dat
-      files.get(0).renameTo(firstFileName.replace(".dat", "_part1.dat"));
+      files.get(0).renameTo(firstFileName.replace(FILE_SUFFIX, PART_1_FILE_SUFFIX));
     }
     return files.stream().map(EventFile::getFile).collect(Collectors.toList());
   }

@@ -111,7 +111,7 @@ public class SyncService {
     EventResourcePacker eventResourcePacker =
         new EventResourcePacker(sizePerRequest, externalEventDtoMapper);
     for (Event evt : events) {
-      int remainingCapacity = eventResourcePacker.writeGetRemainingCapacity(evt);
+      int remainingCapacity = eventResourcePacker.writeEventAndGetRemainingCapacity(evt);
       workingQueue.add(evt);
       if (remainingCapacity > 0) {
         continue;
