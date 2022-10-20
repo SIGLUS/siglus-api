@@ -103,6 +103,7 @@ import org.siglus.common.repository.OrderExternalRepository;
 import org.siglus.common.repository.ProcessingPeriodExtensionRepository;
 import org.siglus.siglusapi.constant.PeriodConstants;
 import org.siglus.siglusapi.domain.OrderLineItemExtension;
+import org.siglus.siglusapi.dto.FulfillOrderDto;
 import org.siglus.siglusapi.dto.SiglusOrderDto;
 import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.OrderableRepository;
@@ -484,7 +485,7 @@ public class SiglusOrderServiceTest {
     Pageable pageable = mock(Pageable.class);
 
     // when
-    Page<BasicOrderDto> basicOrderDtos = siglusOrderService
+    Page<FulfillOrderDto> basicOrderDtos = siglusOrderService
         .searchOrdersForFulfill(params, pageable);
 
     //then

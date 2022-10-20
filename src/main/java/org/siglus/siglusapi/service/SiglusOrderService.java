@@ -27,6 +27,7 @@ import static org.siglus.siglusapi.constant.FieldConstants.PROGRAM_ID;
 import static org.siglus.siglusapi.constant.FieldConstants.RIGHT_NAME;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_NO_PERIOD_MATCH;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_PERIOD_NOT_FOUND;
 import static org.siglus.siglusapi.util.SiglusDateHelper.DATE_MONTH_YEAR;
 import static org.siglus.siglusapi.util.SiglusDateHelper.getFormatDate;
 
@@ -92,6 +93,7 @@ import org.siglus.common.repository.OrderExternalRepository;
 import org.siglus.common.repository.ProcessingPeriodExtensionRepository;
 import org.siglus.siglusapi.domain.LocalIssueVoucher;
 import org.siglus.siglusapi.domain.OrderLineItemExtension;
+import org.siglus.siglusapi.dto.FulfillOrderDto;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.dto.OrderStatusDto;
 import org.siglus.siglusapi.dto.SiglusOrderDto;
@@ -328,12 +330,59 @@ public class SiglusOrderService {
         }).collect(toList());
   }
 
-  public Page<BasicOrderDto> searchOrdersForFulfill(OrderSearchParams params, Pageable pageable) {
+  public Page<FulfillOrderDto> searchOrdersForFulfill(OrderSearchParams params, Pageable pageable) {
     Page<Order> orders = orderService.searchOrdersForFulfillPage(params, pageable);
     List<BasicOrderDto> dtos = basicOrderDtoBuilder.build(orders.getContent());
+
+    List<FulfillOrderDto> fulfillOrderDtos = dtos.stream().map(basicOrderDto -> {
+      return FulfillOrderDto.builder().basicOrder(basicOrderDto).build();
+    }).collect(toList());
+    List<FulfillOrderDto> processedFulfillOrderDtos = processExpiredFulfillOrder(fulfillOrderDtos);
+
     return new PageImpl<>(
-        dtos,
+        processedFulfillOrderDtos,
         pageable, orders.getTotalElements());
+  }
+
+  private List<FulfillOrderDto> processExpiredFulfillOrder(List<FulfillOrderDto> fulfillOrderDtos) {
+    Map<LocalDate, List<FulfillOrderDto>> endDateToMap = fulfillOrderDtos.stream()
+        .collect(Collectors.groupingBy(fulfillOrderDto -> {
+          return fulfillOrderDto.getBasicOrder().getProcessingPeriod().getEndDate();
+        }));
+    UUID processingPeriodId = fulfillOrderDtos.get(0).getBasicOrder().getProcessingPeriod().getId();
+    ProcessingPeriodExtension processingPeriodExtension = processingPeriodExtensionRepository
+        .findOne(processingPeriodId);
+    if (processingPeriodExtension == null) {
+      throw new NotFoundException(ERROR_PERIOD_NOT_FOUND);
+    }
+    processExpiredFulfillOrders(endDateToMap, processingPeriodExtension);
+    return fulfillOrderDtos;
+  }
+
+  private void processExpiredFulfillOrders(Map<LocalDate, List<FulfillOrderDto>> endDateToMap,
+      ProcessingPeriodExtension processingPeriodExtension) {
+    List<Entry<LocalDate, List<FulfillOrderDto>>> entries = endDateToMap.entrySet().stream()
+        .sorted(Entry.<LocalDate, List<FulfillOrderDto>>comparingByKey().reversed()).collect(toList());
+    List<FulfillOrderDto> latestFulfillOrderDtos = entries.get(0).getValue();
+    int latestFulfillOrderMonth = entries.get(0).getKey().getMonthValue();
+    List<Integer> canFulfillOrderMonth = canFulfillOrderMonth(processingPeriodExtension);
+    if (canFulfillOrderMonth.contains(latestFulfillOrderMonth)) {
+      latestFulfillOrderDtos.forEach(dto -> {
+        dto.setExpired(false);
+      });
+    }
+  }
+
+  private List<Integer> canFulfillOrderMonth(ProcessingPeriodExtension processingPeriodExtension) {
+    LocalDate submitStartDate = processingPeriodExtension.getSubmitStartDate();
+    LocalDate submitEndDate = processingPeriodExtension.getSubmitEndDate();
+    LocalDate currentDate = LocalDate.now();
+    if (currentDate.getDayOfMonth() >= submitStartDate.getDayOfMonth() && currentDate.getDayOfMonth() <= submitEndDate
+        .getDayOfMonth()) {
+      return Lists.newArrayList(currentDate.getMonthValue() - 1, currentDate.getMonthValue());
+    } else {
+      return Lists.newArrayList(currentDate.getMonthValue() - 1);
+    }
   }
 
   public OrderStatusDto searchOrderStatusById(UUID orderId) {
