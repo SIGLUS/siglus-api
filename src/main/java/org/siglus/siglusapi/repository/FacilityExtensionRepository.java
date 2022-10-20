@@ -29,7 +29,7 @@ public interface FacilityExtensionRepository extends JpaRepository<FacilityExten
       value =
           "select cast(fa.id as varchar) as id from referencedata.facilities fa "
               + "left join siglusintegration.facility_extension fe on fa.id=fe.facilityid "
-              + "where fe.islocalmachine=true",
+              + "where fe.islocalmachine is null or fe.islocalmachine=false",
       nativeQuery = true)
   List<String> findNonLocalMachineFacilityIds();
 }
