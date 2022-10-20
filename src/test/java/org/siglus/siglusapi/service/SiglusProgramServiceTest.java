@@ -27,13 +27,21 @@ import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRA
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_NAME;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Supplier;
+import jersey.repackaged.com.google.common.collect.Sets;
+import org.assertj.core.util.Lists;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.requisition.dto.ProgramDto;
+import org.openlmis.requisition.service.PermissionService;
+import org.openlmis.requisition.service.referencedata.PermissionStringDto;
+import org.openlmis.requisition.service.referencedata.PermissionStrings;
+import org.openlmis.requisition.service.referencedata.PermissionStrings.Handler;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -46,6 +54,12 @@ public class SiglusProgramServiceTest {
 
   @Mock
   private ProgramReferenceDataService programRefDataService;
+  @Mock
+  private PermissionService permissionService;
+
+  private final String rightName = "rightName";
+  private final UUID facilityId = UUID.randomUUID();
+  private final UUID programId = UUID.randomUUID();
 
   @Test
   public void shouldReturnAllProgramListWhenGetProgramsGivenAllProductsProgramCode() {
@@ -63,10 +77,7 @@ public class SiglusProgramServiceTest {
   @Test
   public void shouldReturnListWithSpecifiedProgramWhenGetProgramsGivenNotAllProductsProgramCode() {
     // given
-    String code = random(NOT_TOO_LONG);
-    while (code.equals(ALL_PRODUCTS_PROGRAM_CODE)) {
-      code = random(NOT_TOO_LONG);
-    }
+    String code = mockRandomCode();
     ProgramDto mockProgram1 = mockProgram(UUID.randomUUID(), code);
     ProgramDto mockProgram2 = mockProgram(UUID.randomUUID(), random(NOT_TOO_LONG));
     when(programRefDataService.findAll()).thenReturn(asList(mockProgram1, mockProgram2));
@@ -82,10 +93,7 @@ public class SiglusProgramServiceTest {
   @Test
   public void shouldReturnProgramListWhenGetProgramsGivenNoMatchedProgramExt() {
     // given
-    String code = random(NOT_TOO_LONG);
-    while (code.equals(ALL_PRODUCTS_PROGRAM_CODE)) {
-      code = random(NOT_TOO_LONG);
-    }
+    String code = mockRandomCode();
     UUID programId = UUID.randomUUID();
     ProgramDto mockProgram = mockProgram(programId, code);
     when(programRefDataService.findAll()).thenReturn(singletonList(mockProgram));
@@ -129,11 +137,34 @@ public class SiglusProgramServiceTest {
     assertEquals(mockProgram, program);
   }
 
+  @Test
+  public void shouldReturnWhenGetProgramByCode() {
+    // given
+    UUID programId = UUID.randomUUID();
+    String code = mockRandomCode();
+    ProgramDto mockProgram = mockProgram(programId, code);
+    when(programRefDataService.findAll()).thenReturn(Lists.newArrayList(mockProgram));
+
+    // when
+    ProgramDto program = service.getProgramByCode(code).orElse(null);
+
+    // then
+    assertEquals(mockProgram, program);
+  }
+
   private ProgramDto mockProgram(UUID programId, String code) {
     ProgramDto mockProgram = new ProgramDto();
     mockProgram.setId(programId);
     mockProgram.setCode(code);
     return mockProgram;
+  }
+
+  private String mockRandomCode() {
+    String code = random(NOT_TOO_LONG);
+    while (code.equals(ALL_PRODUCTS_PROGRAM_CODE)) {
+      code = random(NOT_TOO_LONG);
+    }
+    return code;
   }
 
 }
