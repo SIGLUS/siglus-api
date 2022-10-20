@@ -25,9 +25,11 @@ import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_SPLIT_NUM_TOO_LARGE;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_SUB_DRAFTS_ALREADY_EXISTED;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -121,63 +123,51 @@ import org.springframework.util.ObjectUtils;
 public class SiglusPodService {
 
   private final SiglusPodFulfillmentService fulfillmentService;
-
   private final SiglusOrderService siglusOrderService;
-
   private final SiglusRequisitionExtensionService siglusRequisitionExtensionService;
-
   private final OrderExternalRepository orderExternalRepository;
-
   private final OrderableRepository orderableRepository;
-
   private final PodSubDraftRepository podSubDraftRepository;
-
   private final PodLineItemsExtensionRepository podLineItemsExtensionRepository;
-
   private final SiglusAuthenticationHelper authenticationHelper;
-
   private final PodLineItemsRepository podLineItemsRepository;
-
   private final ProofOfDeliveryController podController;
-
   private final SiglusNotificationService notificationService;
-
   private final OrdersRepository ordersRepository;
-
   private final SiglusRequisitionRepository siglusRequisitionRepository;
-
   private final SiglusFacilityReferenceDataService siglusFacilityReferenceDataService;
-
   private final StatusChangeRepository requisitionStatusChangeRepository;
-
   private final SiglusRequisitionExtensionService requisitionExtensionService;
-
   private final PodExtensionRepository podExtensionRepository;
-
   private final PodLineItemsByLocationRepository podLineItemsByLocationRepository;
-
   private final PodSubDraftLineItemsByLocationRepository podSubDraftLineItemsByLocationRepository;
-
   private final ProofOfDeliveryRepository proofOfDeliveryRepository;
-
   private final StockEventBuilder stockEventBuilder;
-
   private final ProofOfDeliveryEmitter proofOfDeliveryEmitter;
-
   private final SiglusStockEventsService stockEventsService;
 
-  private static final String FILE_NAME_PREFIX_EMERGENCY = "OF.REM.";
-  private static final String FILE_NAME_PREFIX_NORMAL = "OF.RNO.";
+  private static final String FILE_NAME_PREFIX = "OF.";
+  private static final String FILE_NAME_PREFIX_EMERGENCY = FILE_NAME_PREFIX + "REM.";
   private static final List<String> REQUISITION_STATUS_POST_SUBMIT = Lists.newArrayList(
       RequisitionStatus.APPROVED.name(),
       RequisitionStatus.RELEASED.name(),
       RequisitionStatus.RELEASED_WITHOUT_ORDER.name());
   private static final Integer PROVINCE_LEVEL_NUMBER = 2;
   private static final Integer DISTRICT_LEVEL_NUMBER = 3;
+  private static final Map<String, String> PROGRAM_CODE_TO_FILE_PREFIX_NORMAL = Maps.newHashMap();
+  private static final Set<String> EXPAND_PARAM = Sets.asSet("shipment.order");
+  private static final String DOT = ".";
+  private static final String UNDERSCORE = "_";
+  private static final String SHORT_LINE = "-";
 
   private final DateFormat dateFormat = new SimpleDateFormat("yyMM");
 
-  private static final Set<String> EXPAND_PARAM = Sets.asSet("shipment.order");
+  static {
+    PROGRAM_CODE_TO_FILE_PREFIX_NORMAL.put("T", FILE_NAME_PREFIX + "MIA");
+    PROGRAM_CODE_TO_FILE_PREFIX_NORMAL.put("TR", FILE_NAME_PREFIX + "MIT");
+    PROGRAM_CODE_TO_FILE_PREFIX_NORMAL.put("TB", FILE_NAME_PREFIX + "MTB");
+    PROGRAM_CODE_TO_FILE_PREFIX_NORMAL.put("VC", FILE_NAME_PREFIX + "RNO");
+  }
 
   public PodExtensionResponse getPodExtensionResponse(UUID id, Set<String> expand) {
     PodExtensionResponse response = new PodExtensionResponse();
@@ -373,22 +363,49 @@ public class SiglusPodService {
   }
 
   public PodPrintInfoResponse getPrintInfo(UUID orderId, UUID podId) {
-    PodPrintInfoResponse response = new PodPrintInfoResponse();
-
     OrderDto orderDto = ordersRepository.findOrderDtoById(orderId);
     UUID realRequisitionId =
         Objects.isNull(orderDto.getRequisitionId()) ? orderDto.getExternalId() : orderDto.getRequisitionId();
 
-    response.setFileName(getFileName(orderDto, realRequisitionId));
-    response.setClient(orderDto.getReceivingFacilityName());
-    response.setSupplier(orderDto.getSupplyingFacilityName());
-    response.setReceivedBy(orderDto.getPodReceivedBy());
-    response.setDeliveredBy(orderDto.getPodDeliveredBy());
-    response.setReceivedDate(orderDto.getPodReceivedDate());
-    response.setIssueVoucherDate(orderDto.getOrderFulfillDate());
+    PodPrintInfoResponse response = PodPrintInfoResponse.builder()
+        .fileName(getFileName(orderDto, realRequisitionId))
+        .client(orderDto.getReceivingFacilityName())
+        .supplier(orderDto.getSupplyingFacilityName())
+        .receivedBy(orderDto.getPodReceivedBy())
+        .deliveredBy(orderDto.getPodDeliveredBy())
+        .receivedDate(orderDto.getPodReceivedDate())
+        .issueVoucherDate(orderDto.getOrderFulfillDate())
+        .build();
+
+    setGeographicInfo(response, orderDto);
+    setPodExtensionInfo(response, podId);
+    setRequisitionInfo(response, realRequisitionId);
+
+    List<PodLineItemDto> podLineItemDtos = podLineItemsRepository.lineItemDtos(podId, orderId, realRequisitionId);
+    response.setLineItems(toLineItemInfo(podLineItemDtos));
+    return response;
+  }
+
+  private void setRequisitionInfo(PodPrintInfoResponse response, UUID realRequisitionId) {
     response.setRequisitionId(realRequisitionId);
     response.setRequisitionNum(requisitionExtensionService.formatRequisitionNumber(realRequisitionId));
 
+    StatusChange requisitionStatusChange = requisitionStatusChangeRepository.findByRequisitionId(realRequisitionId)
+        .stream()
+        .filter(e -> RequisitionStatus.RELEASED == e.getStatus()).findFirst().orElse(null);
+    response.setRequisitionDate(
+        Objects.nonNull(requisitionStatusChange) ? requisitionStatusChange.getCreatedDate() : null);
+  }
+
+  private void setPodExtensionInfo(PodPrintInfoResponse response, UUID podId) {
+    PodExtension podExtension = getPodExtensionByPodId(podId);
+    if (Objects.nonNull(podExtension)) {
+      response.setPreparedBy(podExtension.getPreparedBy());
+      response.setConferredBy(podExtension.getConferredBy());
+    }
+  }
+
+  private void setGeographicInfo(PodPrintInfoResponse response, OrderDto orderDto) {
     FacilityDto facilityDto = siglusFacilityReferenceDataService.findOneWithoutCache(orderDto.getSupplyingFacilityId());
     GeographicZoneDto zoneDto = facilityDto.getGeographicZone();
     if (Objects.nonNull(zoneDto)) {
@@ -399,33 +416,23 @@ public class SiglusPodService {
         response.setSupplierProvince(zoneDto.getName());
       }
     }
-
-    PodExtension podExtension = getPodExtensionByPodId(podId);
-    if (Objects.nonNull(podExtension)) {
-      response.setPreparedBy(podExtension.getPreparedBy());
-      response.setConferredBy(podExtension.getConferredBy());
-    }
-
-    StatusChange requisitionStatusChange = requisitionStatusChangeRepository.findByRequisitionId(realRequisitionId)
-        .stream()
-        .filter(e -> RequisitionStatus.RELEASED == e.getStatus()).findFirst().orElse(null);
-    response.setRequisitionDate(
-        Objects.nonNull(requisitionStatusChange) ? requisitionStatusChange.getCreatedDate() : null);
-
-    List<PodLineItemDto> podLineItemDtos = podLineItemsRepository.lineItemDtos(podId, orderId, realRequisitionId);
-    response.setLineItems(toLineItemInfo(podLineItemDtos));
-
-    return response;
   }
 
   private String getFileName(OrderDto orderDto, UUID realRequisitionId) {
     int requisitionCount = getRequisitionCount(orderDto, realRequisitionId);
 
     StringBuilder fileName = new StringBuilder()
-        .append(Boolean.TRUE.equals(orderDto.getEmergency()) ? FILE_NAME_PREFIX_EMERGENCY : FILE_NAME_PREFIX_NORMAL)
-        .append(orderDto.getReceivingFacilityCode()).append(".")
-        .append(dateFormat.format(orderDto.getPeriodEndDate())).append(".")
-        .append(formatCount(requisitionCount));
+        .append(Boolean.TRUE.equals(orderDto.getEmergency()) ? FILE_NAME_PREFIX_EMERGENCY
+            : PROGRAM_CODE_TO_FILE_PREFIX_NORMAL.get(orderDto.getProgramCode()))
+        .append(orderDto.getReceivingFacilityCode()).append(DOT)
+        .append(dateFormat.format(orderDto.getPeriodEndDate())).append(DOT)
+        .append(formatNumber(String.valueOf(requisitionCount)));
+
+    List<String> splitStrings = Arrays.asList(orderDto.getOrderCode().split(SHORT_LINE));
+    if (splitStrings.size() > 2) {
+      fileName.append(UNDERSCORE)
+          .append(formatNumber(splitStrings.get(splitStrings.size() - 1)));
+    }
 
     return fileName.toString();
   }
@@ -449,12 +456,11 @@ public class SiglusPodService {
     return requisitionIds.size();
   }
 
-  private String formatCount(int count) {
-    String formatString = String.valueOf(count);
-    if (formatString.length() >= 2) {
-      return formatString;
+  private String formatNumber(String number) {
+    if (number.length() >= 2) {
+      return number;
     }
-    return "0" + formatString;
+    return "0" + number;
   }
 
   private List<LineItemInfo> toLineItemInfo(List<PodLineItemDto> lineItemDtos) {

@@ -19,6 +19,7 @@ import static com.google.common.collect.Lists.newArrayList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyList;
@@ -232,6 +233,8 @@ public class SiglusPodServiceTest {
   private final String notes = "test notes";
   private final UUID stockCardId = UUID.randomUUID();
   private final UUID stockCardLineItemId = UUID.randomUUID();
+  private final UUID programId = UUID.randomUUID();
+  private final String programCode = "program code";
 
   @Test
   public void shouldGetPartialQualityWhenGetProofOfDelivery() {
@@ -806,6 +809,29 @@ public class SiglusPodServiceTest {
   }
 
   @Test
+  public void shouldReturnWithSubOrderNumberWhenGetSubOrderPintInfo() {
+    // given
+    OrderDto orderDto = buildMockSubOrderDto();
+    when(ordersRepository.findOrderDtoById(orderId)).thenReturn(orderDto);
+    mockForRequisitionCount();
+    when(siglusFacilityReferenceDataService.findOneWithoutCache(orderDto.getSupplyingFacilityId())).thenReturn(
+        buildMockFacilityDtoWithLevel3());
+    when(requisitionStatusChangeRepository.findByRequisitionId(requisitionId)).thenReturn(
+        buildMockRequisitionStatusChanges());
+    when(podLineItemsRepository.lineItemDtos(podId, orderId, requisitionId)).thenReturn(buildMockPodLineItemDtos());
+    when(siglusRequisitionExtensionService.formatRequisitionNumber(requisitionId)).thenReturn(requisitionNum);
+    mockPodExtensionQuery();
+
+    // when
+    PodPrintInfoResponse response = service.getPrintInfo(orderId, podId);
+
+    // then
+    assertNotNull(response);
+    assertNotNull(response.getSupplierDistrict());
+    assertTrue(response.getFileName().endsWith("01"));
+  }
+
+  @Test
   public void shouldReturnWhenGetPintInfoWithDifferentDbResult() {
     // given
     OrderDto orderDto = buildMockOrderDtoWithOutRequisitionId();
@@ -1143,6 +1169,25 @@ public class SiglusPodServiceTest {
   private OrderDto buildMockOrderDto() {
     return OrderDto.builder()
         .id(orderId)
+        .programId(programId)
+        .programCode(programCode)
+        .orderCode("ORDEM-1ASJKT54R")
+        .emergency(Boolean.FALSE)
+        .receivingFacilityId(facilityId)
+        .supplyingFacilityId(facilityId)
+        .receivingFacilityCode(facilityCode)
+        .requisitionId(requisitionId)
+        .processingPeriodId(processingPeriodId)
+        .periodEndDate(Date.from(Instant.now()))
+        .build();
+  }
+
+  private OrderDto buildMockSubOrderDto() {
+    return OrderDto.builder()
+        .id(orderId)
+        .programId(programId)
+        .programCode(programCode)
+        .orderCode("ORDEM-1ASJKT54R-1")
         .emergency(Boolean.FALSE)
         .receivingFacilityId(facilityId)
         .supplyingFacilityId(facilityId)
@@ -1156,6 +1201,9 @@ public class SiglusPodServiceTest {
   private OrderDto buildMockOrderDtoWithOutRequisitionId() {
     return OrderDto.builder()
         .id(orderId)
+        .programId(programId)
+        .programCode(programCode)
+        .orderCode("ORDEM-1ASJKT54R")
         .emergency(Boolean.TRUE)
         .receivingFacilityId(facilityId)
         .supplyingFacilityId(facilityId)

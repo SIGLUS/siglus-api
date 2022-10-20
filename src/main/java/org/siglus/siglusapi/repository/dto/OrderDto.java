@@ -32,18 +32,20 @@ import lombok.Data;
     query = "select o.*, \n"
         + "f1.code as receivingfacilitycode, f1.name as receivingfacilityname, \n"
         + "f2.code as supplyingfacilitycode, f2.name as supplyingfacilityname, \n"
-        + "p.enddate as periodenddate,\n"
+        + "pp.enddate as periodenddate,\n"
         + "pod.deliveredby, pod.receivedby, pod.receiveddate,\n"
         + "oei.requisitionid,\n"
-        + "sc.createddate as orderfulfilldate\n"
+        + "sc.createddate as orderfulfilldate, \n"
+        + "p.code as programcode \n"
         + "from (select * from fulfillment.orders where id = :orderId ) o \n"
         + "left join referencedata.facilities f1 on f1.id = o.receivingfacilityid\n"
         + "left join referencedata.facilities f2 on f2.id = o.supplyingfacilityid\n"
-        + "left join referencedata.processing_periods p on (o.processingperiodid = p.id)\n"
+        + "left join referencedata.processing_periods pp on (o.processingperiodid = pp.id)\n"
         + "left join fulfillment.shipments s on (s.orderid = :orderId)\n"
         + "left join fulfillment.proofs_of_delivery pod on (s.id = pod.shipmentid)\n"
         + "left join siglusintegration.order_external_ids oei on (oei.id = o.externalid)\n"
-        + "left join fulfillment.status_changes sc on (sc.orderid = o.id) and sc.status = 'RELEASED'",
+        + "left join fulfillment.status_changes sc on (sc.orderid = o.id) and sc.status = 'RELEASED'"
+        + "left join referencedata.programs p on (p.id = o.programid)",
     resultSetMapping = "Order.OrderDto")
 
 @MappedSuperclass
@@ -53,8 +55,10 @@ import lombok.Data;
         targetClass = OrderDto.class,
         columns = {
             @ColumnResult(name = "id", type = UUID.class),
+            @ColumnResult(name = "ordercode", type = String.class),
             @ColumnResult(name = "emergency", type = Boolean.class),
             @ColumnResult(name = "programid", type = UUID.class),
+            @ColumnResult(name = "programcode", type = String.class),
             @ColumnResult(name = "receivingfacilityid", type = UUID.class),
             @ColumnResult(name = "supplyingfacilityid", type = UUID.class),
             @ColumnResult(name = "orderfulfilldate", type = Date.class),
@@ -79,8 +83,10 @@ import lombok.Data;
 public class OrderDto {
 
   private UUID id;
+  private String orderCode;
   private Boolean emergency;
   private UUID programId;
+  private String programCode;
   private UUID receivingFacilityId;
   private UUID supplyingFacilityId;
   private Date orderFulfillDate;
