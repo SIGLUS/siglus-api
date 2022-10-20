@@ -271,6 +271,9 @@ public class SiglusLotLocationService {
       if (null != lotId) {
         lot = idToLot.get(lotId);
       }
+      if (lot != null && !lot.isActive()) {
+        return;
+      }
       lotDtoList.add(LotsDto
           .builder()
           .lotId(lotId)
