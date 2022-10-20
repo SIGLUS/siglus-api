@@ -26,6 +26,7 @@ import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.dto.BasicRequisitionDto;
 import org.openlmis.requisition.dto.FacilityDto;
 import org.openlmis.requisition.dto.RequisitionPeriodDto;
+import org.openlmis.requisition.dto.RequisitionWithSupplyingDepotsDto;
 import org.openlmis.requisition.utils.AuthenticationHelper;
 import org.openlmis.requisition.web.RequisitionController;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
@@ -171,6 +172,14 @@ public class SiglusRequisitionController {
       @RequestParam(value = "facility", required = false) UUID facilityId,
       Pageable pageable) {
     return requisitionController.requisitionsForApproval(programId, facilityId, pageable);
+  }
+
+  @GetMapping("/requisitionsForConvertToOrder")
+  public Page<RequisitionWithSupplyingDepotsDto> searchRequisitionsForApprovalList(
+      @RequestParam(value = "program", required = false) UUID programId,
+      @RequestParam(value = "facility", required = false) UUID facilityId,
+      Pageable pageable) {
+    return requisitionController.listForConvertToOrder(programId, facilityId, pageable);
   }
 
   @GetMapping("/facilitiesForApproval")
