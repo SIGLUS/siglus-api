@@ -17,13 +17,21 @@ package org.siglus.siglusapi.localmachine;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import java.time.ZonedDateTime;
+import java.util.Collections;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.poi.ss.formula.functions.Even;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -39,6 +47,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.util.ReflectionTestUtils;
 
 @SpringBootTest(
     classes = {
@@ -62,7 +71,22 @@ public class EventPublisherTest {
   @MockBean
   protected SyncRecordService syncRecordService;
   @Autowired
+  protected EventStore eventStore;
+  @Autowired
   private EventPublisher eventPublisher;
+  private final UUID webFacilityId1 = UUID.randomUUID();
+
+  @After
+  public void clean() {
+    EventPublisher.isReplaying.remove();
+    ReflectionTestUtils.setField(eventPublisher, "eventStore", eventStore);
+  }
+
+  @Before
+  public void setup() {
+    given(machine.fetchSupportedFacilityIds()).willReturn(Collections.singleton(webFacilityId1.toString()));
+    given(machine.isOnlineWeb()).willReturn(false);
+  }
 
   @Test
   public void canEmitNonGroupEventSuccessfully() {
@@ -100,6 +124,77 @@ public class EventPublisherTest {
     assertThat(eventRecord.getId()).isNotNull();
     assertThat(eventRecord.getGroupId()).isEqualTo(groupId);
     assertThat(eventRecord.getReceiverId()).isEqualTo(receiverId);
+  }
+
+  @Test(expected = IllegalStateException.class)
+  public void shouldThrowWhenDoEmitGivenIsReplayingContext() {
+    EventPublisher.isReplaying.set(Boolean.TRUE);
+    eventPublisher.doEmit(Event.builder().build());
+  }
+
+  @Test
+  public void shouldNotEmitEventGivenBothSenderAndReceiverIsUsingOnlineWeb() {
+    // given
+    EventStore eventStore = mockEventStore();
+    given(machine.isOnlineWeb()).willReturn(Boolean.TRUE);
+    // when
+    eventPublisher.doEmit(Event.builder().senderId(UUID.randomUUID()).receiverId(webFacilityId1).build());
+    // then
+    verify(eventStore, times(0)).emit(any());
+  }
+
+  @Test
+  public void shouldEmitEventGivenIsOnLocalMachine() {
+    // given
+    EventStore eventStore = mockEventStore();
+    given(machine.isOnlineWeb()).willReturn(false);
+    Event event = Event.builder().senderId(UUID.randomUUID()).receiverId(webFacilityId1).build();
+    // when
+    eventPublisher.doEmit(event);
+    // then
+    verify(eventStore, times(1)).emit(event);
+  }
+
+  @Test
+  public void shouldSetLocalReplayedAndSynceTimeWhenDoEmit() {
+    // given
+    mockEventStore();
+    Event event = Event.builder().senderId(UUID.randomUUID()).receiverId(webFacilityId1).build();
+    // when
+    eventPublisher.doEmit(event);
+    // then
+    assertThat(event.getSyncedTime()).isBeforeOrEqualTo(ZonedDateTime.now());
+    assertThat(event.isLocalReplayed()).isTrue();
+  }
+
+  @Test
+  public void shouldSetOnlineWebSyncedWhenDoEmitWhenItIsOnWeb() {
+    // given
+    mockEventStore();
+    Event event = Event.builder().senderId(UUID.randomUUID()).receiverId(UUID.randomUUID()).build();
+    given(machine.isOnlineWeb()).willReturn(true);
+    // when
+    eventPublisher.doEmit(event);
+    // then
+    assertThat(event.isOnlineWebSynced()).isTrue();
+  }
+
+  @Test
+  public void shouldNotSetOnlineWebSyncedWhenDoEmitWhenItIsNotOnWeb() {
+    // given
+    mockEventStore();
+    Event event = Event.builder().senderId(UUID.randomUUID()).receiverId(UUID.randomUUID()).build();
+    given(machine.isOnlineWeb()).willReturn(false);
+    // when
+    eventPublisher.doEmit(event);
+    // then
+    assertThat(event.isOnlineWebSynced()).isFalse();
+  }
+
+  private EventStore mockEventStore() {
+    EventStore eventStore = mock(EventStore.class);
+    ReflectionTestUtils.setField(eventPublisher, "eventStore", eventStore);
+    return eventStore;
   }
 
   private UUID getMockedFacility() {

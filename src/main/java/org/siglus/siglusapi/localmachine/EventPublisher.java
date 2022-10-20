@@ -34,7 +34,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class EventPublisher {
 
   public static final int PROTOCOL_VERSION = 1;
-  private static final ThreadLocal<Boolean> isReplaying = ThreadLocal.withInitial(() -> Boolean.FALSE);
+  static final ThreadLocal<Boolean> isReplaying = ThreadLocal.withInitial(() -> Boolean.FALSE);
   private final EventStore eventStore;
   private final ApplicationEventPublisher applicationEventPublisher;
   private final Machine machine;
@@ -79,7 +79,7 @@ public class EventPublisher {
     syncRecordService.storeLastReplayRecord();
   }
 
-  private void doEmit(Event event) {
+  void doEmit(Event event) {
     if (isReplaying.get()) {
       throw new IllegalStateException("emit event when replaying is not allowed");
     }
@@ -87,6 +87,15 @@ public class EventPublisher {
     // by me causing error
     event.setLocalReplayed(true);
     event.setSyncedTime(ZonedDateTime.now());
+    boolean isOnlineWeb = machine.isOnlineWeb();
+    if (isOnlineWeb) {
+      event.setOnlineWebSynced(true);
+    }
+    boolean receiverIsUsingOnlineWeb = machine.fetchSupportedFacilityIds().contains(event.getReceiverId().toString());
+    if (isOnlineWeb && receiverIsUsingOnlineWeb) {
+      // current machine is online web and receiver is also using online web, so don't need to emit event.
+      return;
+    }
     eventStore.emit(event);
   }
 
