@@ -63,7 +63,7 @@ public class EventFileReaderIntegrationTest {
     List<File> files = new LinkedList<>();
     int currentFileIndex = 1;
     for (Event it : rawEvents) {
-      int remaining = eventFile.writeGetRemainingCapacity(it);
+      int remaining = eventFile.writeEventAndGetRemainingCapacity(it);
       if (remaining > 0) {
         continue;
       }
@@ -93,7 +93,7 @@ public class EventFileReaderIntegrationTest {
     EventResourcePacker packer = new EventResourcePacker(1023, mapper);
     List<ByteArrayResource> resources = new LinkedList<>();
     for (Event it : rawEvents) {
-      int remaining = packer.writeGetRemainingCapacity(it);
+      int remaining = packer.writeEventAndGetRemainingCapacity(it);
       if (remaining > 0) {
         continue;
       }

@@ -81,7 +81,7 @@ public class NotificationService {
     supplierNotification.setProgramId(requisition.getProgramId());
     supplierNotification.setEmergency(requisition.getEmergency());
     supplierNotification.setStatus(NotificationStatus.SHIPPED);
-    requestNotification.setType(NotificationType.UPDATE);
+    supplierNotification.setType(NotificationType.UPDATE);
     supplierNotification.setProcessingPeriodId(order.getProcessingPeriodId());
     supplierNotification.setRequestingFacilityId(requisition.getFacilityId());
     log.info("confirm shipment notification for supplier facility: {}", supplierNotification);

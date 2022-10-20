@@ -38,7 +38,7 @@ public class EventFile implements AutoCloseable {
     this.mapper = mapper;
   }
 
-  public int writeGetRemainingCapacity(Event event) throws IOException {
+  public int writeEventAndGetRemainingCapacity(Event event) throws IOException {
     prepare();
     boolean isFull = out.size() >= capacityBytes;
     if (isFull) {

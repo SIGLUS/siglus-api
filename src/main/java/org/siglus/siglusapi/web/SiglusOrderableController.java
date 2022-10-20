@@ -23,6 +23,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.openlmis.referencedata.dto.OrderableDto;
+import org.siglus.siglusapi.dto.AvailableOrderablesDto;
 import org.siglus.siglusapi.dto.QueryOrderableSearchParams;
 import org.siglus.siglusapi.dto.SimplifyOrderablesDto;
 import org.siglus.siglusapi.repository.dto.ProgramOrderableDto;
@@ -72,7 +73,7 @@ public class SiglusOrderableController {
   }
 
   @GetMapping("/available")
-  public List<SimplifyOrderablesDto> getAvailableOrderablesByFacility(@RequestParam Boolean isRequestAll,
+  public List<AvailableOrderablesDto> getAvailableOrderablesByFacility(@RequestParam Boolean isRequestAll,
       @RequestParam(required = false) UUID draftId) {
     return orderableService.getAvailableOrderablesByFacility(isRequestAll, draftId);
   }

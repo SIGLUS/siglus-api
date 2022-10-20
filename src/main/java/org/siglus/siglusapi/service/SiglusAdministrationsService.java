@@ -492,7 +492,6 @@ public class SiglusAdministrationsService {
     log.info("change facility:{} to local machine, operator:{}", facilityId,
         authenticationHelper.getCurrentUser().getUsername());
     facilityExtensionRepository.save(facilityExtension);
-    createAndSaveActivationCode(facilityExtension.getFacilityCode());
   }
 
   @Transactional
@@ -500,7 +499,7 @@ public class SiglusAdministrationsService {
     int count = stockCardRepository.countByFacilityId(facilityId);
     FacilityDeviceDto facilityDevice = getFacilityDevice(facilityId);
     if (count != 0 || facilityDevice.getDeviceType() != (FacilityDeviceTypeEnum.WEB)) {
-      throw new ValidationMessageException(ERROR_FACILITY_CHANGE_TO_ANDROID);
+      throw new ValidationMessageException(new Message(ERROR_FACILITY_CHANGE_TO_ANDROID), true);
     }
     FacilityExtension facilityExtension = facilityExtensionRepository.findByFacilityId(facilityId);
     if (ObjectUtils.isEmpty(facilityExtension)) {
@@ -522,6 +521,10 @@ public class SiglusAdministrationsService {
   }
 
   private void createAndSaveActivationCode(String facilityCode) {
+    String usableAcivationCode = activationCodeRepository.findUsableAcivationCode(facilityCode);
+    if (usableAcivationCode != null) {
+      return;
+    }
     String activationCode = ActivationCodeGenerator.get();
     ActivationCode code = ActivationCode
         .builder()

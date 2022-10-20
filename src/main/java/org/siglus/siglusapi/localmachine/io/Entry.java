@@ -22,7 +22,7 @@ import lombok.Data;
 @Data
 public class Entry {
   public static final byte MAGIC_NUMBER = '|';
-  public static final int MAX_SIZE_BYTES = 50 * 1024 * 1024;
+  public static final int MAX_SIZE_BYTES = 100 * 1024 * 1024;
   private byte[] data;
 
   public Entry(byte[] data) {

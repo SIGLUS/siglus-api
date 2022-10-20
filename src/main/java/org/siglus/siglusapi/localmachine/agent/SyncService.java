@@ -43,7 +43,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Profile({"localmachine"})
 public class SyncService {
 
-  private static final int PUSH_CAPACITY_BYTES_PER_REQUEST = 20 * 1024 * 1024;
+  static int PUSH_CAPACITY_BYTES_PER_REQUEST = 20 * 1024 * 1024;
   private final EventStore localEventStore;
   private final OnlineWebClient webClient;
   private final EventImporter eventImporter;
@@ -92,28 +92,33 @@ public class SyncService {
 
   @Transactional
   public void push() {
-    List<Event> currentEvents = new ArrayList<>();
+    List<Event> workingQueue = new ArrayList<>();
     try {
       List<Event> events = localEventStore.getEventsForOnlineWeb();
       if (isEmpty(events)) {
         return;
       }
-      EventResourcePacker eventResourcePacker =
-          new EventResourcePacker(PUSH_CAPACITY_BYTES_PER_REQUEST, externalEventDtoMapper);
-      for (Event evt : events) {
-        int remainingCapacity = eventResourcePacker.writeGetRemainingCapacity(evt);
-        currentEvents.add(evt);
-        if (remainingCapacity > 0) {
-          continue;
-        }
-        doPushAndReset(currentEvents, eventResourcePacker);
-      }
-      doPushAndReset(currentEvents, eventResourcePacker);
+      pushAsEventResource(PUSH_CAPACITY_BYTES_PER_REQUEST, workingQueue, events);
     } catch (Throwable e) {
       log.error("push event failed", e);
-      List<UUID> eventIds = currentEvents.stream().map(Event::getId).collect(Collectors.toList());
+      List<UUID> eventIds = workingQueue.stream().map(Event::getId).collect(Collectors.toList());
       errorHandler.storeErrorRecord(eventIds, e, ErrorType.SYNC_UP);
     }
+  }
+
+  private void pushAsEventResource(int sizePerRequest, List<Event> workingQueue, List<Event> events)
+      throws IOException {
+    EventResourcePacker eventResourcePacker =
+        new EventResourcePacker(sizePerRequest, externalEventDtoMapper);
+    for (Event evt : events) {
+      int remainingCapacity = eventResourcePacker.writeEventAndGetRemainingCapacity(evt);
+      workingQueue.add(evt);
+      if (remainingCapacity > 0) {
+        continue;
+      }
+      doPushAndReset(workingQueue, eventResourcePacker);
+    }
+    doPushAndReset(workingQueue, eventResourcePacker);
   }
 
   private void doPushAndReset(List<Event> currentEvents, EventResourcePacker eventResourcePacker) throws IOException {

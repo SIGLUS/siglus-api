@@ -15,34 +15,29 @@
 
 package org.siglus.siglusapi.dto;
 
+import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-import org.openlmis.referencedata.dto.OrderableDto;
-import org.openlmis.referencedata.dto.ProgramOrderableDto;
+import org.openlmis.referencedata.dto.DispensableDto;
 
-@EqualsAndHashCode(callSuper = true)
 @Data
 @SuperBuilder
-@NoArgsConstructor
 @AllArgsConstructor
-public class SimplifyOrderablesDto extends AvailableOrderablesDto {
+@NoArgsConstructor
+public class AvailableOrderablesDto {
 
-  private Boolean archived;
+  private UUID orderableId;
 
-  public static SimplifyOrderablesDto from(OrderableDto orderableDto) {
-    return SimplifyOrderablesDto.builder()
-        .orderableId(orderableDto.getId())
-        .fullProductName(orderableDto.getFullProductName())
-        .productCode(orderableDto.getProductCode())
-        .programId(null != orderableDto.getPrograms()
-            ? orderableDto.getPrograms().stream().findFirst().map(ProgramOrderableDto::getProgramId).orElse(null)
-            : null)
-        .isKit(orderableDto.getIsKit())
-        .dispensable(orderableDto.getDispensable())
-        .archived(orderableDto.getArchived())
-        .build();
-  }
+  private String fullProductName;
+
+  private String productCode;
+
+  private UUID programId;
+
+  private Boolean isKit;
+
+  private DispensableDto dispensable;
+
 }
