@@ -100,6 +100,7 @@ import org.siglus.siglusapi.dto.android.response.ReportTypeResponse;
 import org.siglus.siglusapi.dto.android.response.RequisitionResponse;
 import org.siglus.siglusapi.exception.NoPermissionException;
 import org.siglus.siglusapi.exception.OrderNotFoundException;
+import org.siglus.siglusapi.localmachine.event.proofofdelivery.andriod.AndroidProofOfDeliverySyncedEmitter;
 import org.siglus.siglusapi.repository.AppInfoRepository;
 import org.siglus.siglusapi.repository.FacilityCmmsRepository;
 import org.siglus.siglusapi.repository.LotNativeRepository;
@@ -188,6 +189,7 @@ public class MeService {
   private final ResyncInfoRepository resyncInfoRepository;
   private final PodExtensionRepository podExtensionRepository;
   private final MeCreateRequisitionService meCreateRequisitionService;
+  private final AndroidProofOfDeliverySyncedEmitter proofOfDeliverySyncedEmitter;
 
   public FacilityResponse getCurrentFacility() {
     FacilityDto facilityDto = getCurrentFacilityInfo();
@@ -444,6 +446,10 @@ public class MeService {
       profiler.start("confirm");
       try {
         podConfirmService.confirmPod(podRequest, toUpdate, podResponse);
+        log.info("Pod orderCode: {} has originNumber {},backup request", podRequest.getOrderCode(),
+            podRequest.getOriginNumber());
+        proofOfDeliverySyncedEmitter.emit(podRequest, toUpdate.getShipment().getOrder().getExternalId(),
+            toUpdate.getSupplyingFacilityId());
         profiler.start("get response");
         return getPodByOrderCode(podRequest.getOrderCode());
       } catch (Exception e) {
