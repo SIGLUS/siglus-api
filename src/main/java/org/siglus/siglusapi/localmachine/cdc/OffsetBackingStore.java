@@ -15,13 +15,8 @@
 
 package org.siglus.siglusapi.localmachine.cdc;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.EOFException;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.nio.ByteBuffer;
@@ -38,16 +33,6 @@ import org.apache.kafka.connect.util.SafeObjectInputStream;
 
 @Slf4j
 public class OffsetBackingStore extends MemoryOffsetBackingStore {
-
-  public static final ObjectMapper OBJECT_MAPPER;
-
-  static {
-    OBJECT_MAPPER = new ObjectMapper();
-    OBJECT_MAPPER.registerModule(new JavaTimeModule());
-    OBJECT_MAPPER.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-    OBJECT_MAPPER.configure(
-        DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-  }
 
   @Override
   public synchronized void start() {
@@ -86,10 +71,7 @@ public class OffsetBackingStore extends MemoryOffsetBackingStore {
         ByteBuffer value = (mapEntry.getValue() != null) ? ByteBuffer.wrap(mapEntry.getValue()) : null;
         data.put(key, value);
       }
-    } catch (EOFException e) {
-      // NoSuchFileException: Ignore, may be new.
-      // EOFException: Ignore, this means the file was missing or corrupt
-    } catch (IOException | ClassNotFoundException e) {
+    } catch (ClassNotFoundException e) {
       throw new ConnectException(e);
     }
   }
