@@ -15,6 +15,10 @@
 
 package org.siglus.siglusapi.localmachine.server;
 
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_EXPORT_NO_DATA;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_IMPORT_FILE_RECEIVER_NOT_MATCH;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_IMPORT_INVALID_FILE;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -89,7 +93,7 @@ public class LocalExportImportService {
       List<File> files = generateFilesForPeeringFacilities();
       if (CollectionUtils.isEmpty(files)) {
         log.warn("no data need to be exported, homeFacilityId:{}", getHomeFacilityId());
-        throw new BusinessDataException(new Message("no data need to be exported"));
+        throw new BusinessDataException(new Message(ERROR_EXPORT_NO_DATA));
       }
       File zipFile = generateZipFile(zipName, files);
       setResponseAttribute(response, zipName);
@@ -111,7 +115,7 @@ public class LocalExportImportService {
         eventImporter.importEvents(events);
       } catch (ChecksumNotMatchedException e) {
         log.error("checksum not match", e);
-        throw new BusinessDataException(e, new Message("file may be modified"));
+        throw new BusinessDataException(e, new Message(ERROR_IMPORT_INVALID_FILE));
       } catch (IOException e) {
         log.error("err occurs when import files", e);
         throw new BusinessDataException(
@@ -156,7 +160,7 @@ public class LocalExportImportService {
   private Map<UUID, String> getFacilityIdToName(UUID homeFacilityId, Map<UUID, List<Event>> receiverIdToEvents) {
     Map<UUID, String> facilityIdToName = siglusFacilityService.getFacilityIdToName(
         getFacilityIds(homeFacilityId, receiverIdToEvents));
-    for (Map.Entry<UUID, String> entry: facilityIdToName.entrySet()) {
+    for (Map.Entry<UUID, String> entry : facilityIdToName.entrySet()) {
       entry.setValue(normalizeFacilityName(entry.getValue()));
     }
     return facilityIdToName;
@@ -248,9 +252,9 @@ public class LocalExportImportService {
     events.forEach(it -> {
       UUID receiverId = it.getReceiverId();
       if (!receiverId.equals(homeFacilityId)) {
-        log.error("file shouldn't be imported, facilityId not match, file receiverId:{}, current user facilityId:{}",
-            receiverId, homeFacilityId);
-        throw new BusinessDataException(new Message("file shouldn't be imported"));
+        log.error("file shouldn't be imported, file receiver not match current facility, "
+            + "file receiverId:{}, current user facilityId:{}", receiverId, homeFacilityId);
+        throw new BusinessDataException(new Message(ERROR_IMPORT_FILE_RECEIVER_NOT_MATCH));
       }
     });
   }
@@ -264,7 +268,7 @@ public class LocalExportImportService {
     String suffix = filename.substring(filename.lastIndexOf('.'));
     if (!FILE_SUFFIX.equals(suffix)) {
       log.error("file may be modified, file suffix:{}, correct suffix:{}", suffix, FILE_SUFFIX);
-      throw new BusinessDataException(new Message("file may be modified"));
+      throw new BusinessDataException(new Message(ERROR_IMPORT_INVALID_FILE));
     }
   }
 }
