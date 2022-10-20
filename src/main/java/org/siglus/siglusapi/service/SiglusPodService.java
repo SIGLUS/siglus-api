@@ -163,10 +163,10 @@ public class SiglusPodService {
   private final DateFormat dateFormat = new SimpleDateFormat("yyMM");
 
   static {
-    PROGRAM_CODE_TO_FILE_PREFIX_NORMAL.put("T", FILE_NAME_PREFIX + "MIA");
-    PROGRAM_CODE_TO_FILE_PREFIX_NORMAL.put("TR", FILE_NAME_PREFIX + "MIT");
-    PROGRAM_CODE_TO_FILE_PREFIX_NORMAL.put("TB", FILE_NAME_PREFIX + "MTB");
-    PROGRAM_CODE_TO_FILE_PREFIX_NORMAL.put("VC", FILE_NAME_PREFIX + "RNO");
+    PROGRAM_CODE_TO_FILE_PREFIX_NORMAL.put("T", FILE_NAME_PREFIX + "MIA.");
+    PROGRAM_CODE_TO_FILE_PREFIX_NORMAL.put("TR", FILE_NAME_PREFIX + "MIT.");
+    PROGRAM_CODE_TO_FILE_PREFIX_NORMAL.put("TB", FILE_NAME_PREFIX + "MTB.");
+    PROGRAM_CODE_TO_FILE_PREFIX_NORMAL.put("VC", FILE_NAME_PREFIX + "RNO.");
   }
 
   public PodExtensionResponse getPodExtensionResponse(UUID id, Set<String> expand) {
