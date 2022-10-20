@@ -499,7 +499,7 @@ public class SiglusAdministrationsService {
     int count = stockCardRepository.countByFacilityId(facilityId);
     FacilityDeviceDto facilityDevice = getFacilityDevice(facilityId);
     if (count != 0 || facilityDevice.getDeviceType() != (FacilityDeviceTypeEnum.WEB)) {
-      throw new ValidationMessageException(new Message(ERROR_FACILITY_CHANGE_TO_ANDROID), true);
+      throw new BusinessDataException(new Message(ERROR_FACILITY_CHANGE_TO_ANDROID));
     }
     FacilityExtension facilityExtension = facilityExtensionRepository.findByFacilityId(facilityId);
     if (ObjectUtils.isEmpty(facilityExtension)) {
