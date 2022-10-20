@@ -73,7 +73,7 @@ public class StockMovementService {
     LinkedList<StockMovementResDto> stockMovementResDtos = new LinkedList<>();
     boolean initialFlag = true;
     for (ProductMovement productMovement : productMovements) {
-      MovementTypeHandlerResultDto movementTypeHandlerResultDto = movementTypeHandler(productMovement, initialFlag);
+      MovementTypeHandlerResultDto movementTypeHandlerResultDto = movementTypeHandler(productMovement);
       initialFlag = false;
       StockMovementResDto stockMovementResDto = StockMovementResDto.builder()
           .movementQuantity(movementTypeHandlerResultDto.getCount())
@@ -99,7 +99,7 @@ public class StockMovementService {
     return stockMovementResDtos;
   }
 
-  MovementTypeHandlerResultDto movementTypeHandler(ProductMovement productMovement, boolean initialFlag) {
+  MovementTypeHandlerResultDto movementTypeHandler(ProductMovement productMovement) {
     String destinationName = "";
     String destinationFreeText = "";
     String sourceName = "";
@@ -130,7 +130,7 @@ public class StockMovementService {
       case PHYSICAL_INVENTORY:
         count += productMovement.getMovementDetail().getAdjustment();
         soh += productMovement.getStockQuantity();
-        reason = initialFlag ? INITIAL_INVENTORY_KEY : PHYSICAL_INVENTORY_KEY;
+        reason = PHYSICAL_INVENTORY_KEY;
         break;
       case ADJUSTMENT:
         count += productMovement.getMovementDetail().getAdjustment();
