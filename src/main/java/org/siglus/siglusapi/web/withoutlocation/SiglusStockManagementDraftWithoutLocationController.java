@@ -69,12 +69,6 @@ public class SiglusStockManagementDraftWithoutLocationController {
     return stockManagementDraftService.createNewSubDraft(dto);
   }
 
-  @DeleteMapping("/{id}")
-  @ResponseStatus(NO_CONTENT)
-  public void deleteDraft(@PathVariable UUID id) {
-    stockManagementDraftService.deleteStockManagementDraft(id);
-  }
-
   @PutMapping("/{id}")
   @ResponseStatus(OK)
   public StockManagementDraftDto updateDraft(@PathVariable UUID id, @RequestBody StockManagementDraftDto dto) {

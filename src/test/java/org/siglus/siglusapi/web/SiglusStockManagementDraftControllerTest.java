@@ -17,6 +17,7 @@ package org.siglus.siglusapi.web;
 
 import static org.mockito.Mockito.verify;
 
+import java.util.UUID;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -40,5 +41,13 @@ public class SiglusStockManagementDraftControllerTest {
   public void shouldCallCreateEmptyStockManagementDraft() {
     controller.createEmptyStockManagementDraft(dto);
     verify(service).createNewDraft(dto);
+  }
+
+  @Test
+  public void shouldCallServiceWhenDeleteDraft() {
+    UUID id = UUID.randomUUID();
+    controller.deleteDraft(id);
+
+    verify(service).deleteStockManagementDraft(id);
   }
 }

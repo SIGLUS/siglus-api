@@ -71,14 +71,6 @@ public class SiglusStockManagementDraftWithoutLocationControllerTest {
   }
 
   @Test
-  public void shouldCallServiceWhenDeleteDraft() {
-    UUID id = UUID.randomUUID();
-    controller.deleteDraft(id);
-
-    verify(service).deleteStockManagementDraft(id);
-  }
-
-  @Test
   public void shouldCallServiceWhenUpdateDraft() {
     UUID id = UUID.randomUUID();
     controller.updateDraft(id, dto);
