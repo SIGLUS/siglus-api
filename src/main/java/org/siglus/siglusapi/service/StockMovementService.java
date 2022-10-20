@@ -93,11 +93,9 @@ public class StockMovementService {
     }
     Collections.reverse(stockMovementResDtos);
     StockMovementResDto first = stockMovementResDtos.get(stockMovementResDtos.size() - 1);
-    if (!first.getType().equals(PHYSICAL_INVENTORY)) {
-      StockMovementResDto initial = StockMovementResDto.builder().reason(INITIAL_INVENTORY_KEY)
-          .dateOfMovement(first.getDateOfMovement()).productSoh(0).build();
-      stockMovementResDtos.add(initial);
-    }
+    StockMovementResDto initial = StockMovementResDto.builder().reason(INITIAL_INVENTORY_KEY)
+        .dateOfMovement(first.getDateOfMovement()).productSoh(0).build();
+    stockMovementResDtos.add(initial);
     return stockMovementResDtos;
   }
 
