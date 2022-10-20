@@ -450,6 +450,7 @@ public class MeService {
             podRequest.getOriginNumber());
         proofOfDeliverySyncedEmitter.emit(podRequest, toUpdate.getShipment().getOrder().getExternalId(),
             toUpdate.getSupplyingFacilityId());
+        log.info("andrioid Pod confirmed synced successfully, orderCode : {}", podRequest.getOrderCode());
         profiler.start("get response");
         return getPodByOrderCode(podRequest.getOrderCode());
       } catch (Exception e) {

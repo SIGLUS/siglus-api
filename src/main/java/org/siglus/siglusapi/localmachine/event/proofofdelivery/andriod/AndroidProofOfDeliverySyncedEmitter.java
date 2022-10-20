@@ -19,6 +19,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.siglus.common.domain.OrderExternal;
 import org.siglus.common.repository.OrderExternalRepository;
 import org.siglus.siglusapi.domain.RequisitionExtension;
@@ -31,6 +32,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AndroidProofOfDeliverySyncedEmitter {
 
   private final EventPublisher eventPublisher;
@@ -39,6 +41,7 @@ public class AndroidProofOfDeliverySyncedEmitter {
   private final RequisitionExtensionRepository requisitionExtensionRepository;
 
   public AndroidProofOfDeliverySyncedEvent emit(PodRequest request, UUID externalId, UUID supplyingFacilityId) {
+    log.info("android pod externalId : {}, supplyFacilityId : {}", externalId, supplyingFacilityId);
     UserDto user = authHelper.getCurrentUser();
     AndroidProofOfDeliverySyncedEvent event = AndroidProofOfDeliverySyncedEvent.builder()
         .userId(user.getId())
@@ -46,6 +49,7 @@ public class AndroidProofOfDeliverySyncedEmitter {
         .build();
 
     eventPublisher.emitGroupEvent(getGroupId(externalId), supplyingFacilityId, event);
+    log.info("android pod event : {}", event);
     return event;
   }
 
@@ -53,6 +57,8 @@ public class AndroidProofOfDeliverySyncedEmitter {
     List<OrderExternal> orderExternal = orderExternalRepository.findByIdIn(Collections.singleton(externalId));
     UUID requisitionId = orderExternal.isEmpty() ? externalId : orderExternal.get(0).getRequisitionId();
     RequisitionExtension requisitionExtension = requisitionExtensionRepository.findByRequisitionId(requisitionId);
+    log.info("android pod getGroupId : {}", requisitionExtension.getRequisitionNumberPrefix()
+        + requisitionExtension.getRequisitionNumber());
     return requisitionExtension.getRequisitionNumberPrefix() + requisitionExtension.getRequisitionNumber();
   }
 }
