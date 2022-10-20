@@ -19,14 +19,22 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.EOFException;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.nio.ByteBuffer;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.kafka.connect.errors.ConnectException;
 import org.apache.kafka.connect.storage.MemoryOffsetBackingStore;
+import org.apache.kafka.connect.util.SafeObjectInputStream;
 
 @Slf4j
 public class OffsetBackingStore extends MemoryOffsetBackingStore {
@@ -44,15 +52,16 @@ public class OffsetBackingStore extends MemoryOffsetBackingStore {
   @Override
   public synchronized void start() {
     super.start();
-    log.info("Starting FileOffsetBackingStore");
+    log.info("Starting OffsetBackingStore");
     load();
   }
 
   @Override
   public synchronized void stop() {
+    save();
     super.stop();
     // Nothing to do since this doesn't maintain any outstanding connections/data
-    log.info("Stopped FileOffsetBackingStore");
+    log.info("Stopped OffsetBackingStore");
   }
 
   @SneakyThrows
@@ -64,18 +73,49 @@ public class OffsetBackingStore extends MemoryOffsetBackingStore {
       return;
     }
     CdcOffsetBacking offsetBacking = offsetBackings.get(0);
-    Map<ByteBuffer, ByteBuffer> offsetBackingMap = OBJECT_MAPPER.readValue(offsetBacking.getOffsetData(), Map.class);
-    data.putAll(offsetBackingMap);
+    try (SafeObjectInputStream is = new SafeObjectInputStream(
+        new ByteArrayInputStream(offsetBacking.getOffsetData()))) {
+      Object obj = is.readObject();
+      if (!(obj instanceof HashMap)) {
+        throw new ConnectException("Expected HashMap but found " + obj.getClass());
+      }
+      Map<byte[], byte[]> raw = (Map<byte[], byte[]>) obj;
+      data = new HashMap<>();
+      for (Map.Entry<byte[], byte[]> mapEntry : raw.entrySet()) {
+        ByteBuffer key = (mapEntry.getKey() != null) ? ByteBuffer.wrap(mapEntry.getKey()) : null;
+        ByteBuffer value = (mapEntry.getValue() != null) ? ByteBuffer.wrap(mapEntry.getValue()) : null;
+        data.put(key, value);
+      }
+    } catch (EOFException e) {
+      // NoSuchFileException: Ignore, may be new.
+      // EOFException: Ignore, this means the file was missing or corrupt
+    } catch (IOException | ClassNotFoundException e) {
+      throw new ConnectException(e);
+    }
   }
 
   @SneakyThrows
   @Override
   protected void save() {
-    List<CdcOffsetBacking> offsetBackings = OffsetBackingStoreWrapper.getRepository().findAll();
-    CdcOffsetBacking offsetBacking =
-        CollectionUtils.isEmpty(offsetBackings) ? initCdcOffsetBacking() : offsetBackings.get(0);
-    offsetBacking.setOffsetData(OBJECT_MAPPER.writeValueAsString(data));
-    OffsetBackingStoreWrapper.getRepository().save(offsetBacking);
+    log.info("save offset");
+    ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+    try (ObjectOutputStream os = new ObjectOutputStream(byteArrayOutputStream)) {
+      Map<byte[], byte[]> raw = new HashMap<>();
+      for (Map.Entry<ByteBuffer, ByteBuffer> mapEntry : data.entrySet()) {
+        byte[] key = (mapEntry.getKey() != null) ? mapEntry.getKey().array() : null;
+        byte[] value = (mapEntry.getValue() != null) ? mapEntry.getValue().array() : null;
+        raw.put(key, value);
+      }
+      os.writeObject(raw);
+
+      List<CdcOffsetBacking> offsetBackings = OffsetBackingStoreWrapper.getRepository().findAll();
+      CdcOffsetBacking offsetBacking =
+          CollectionUtils.isEmpty(offsetBackings) ? initCdcOffsetBacking() : offsetBackings.get(0);
+      offsetBacking.setOffsetData(byteArrayOutputStream.toByteArray());
+      OffsetBackingStoreWrapper.getRepository().save(offsetBacking);
+    } catch (IOException e) {
+      throw new ConnectException(e);
+    }
   }
 
   private CdcOffsetBacking initCdcOffsetBacking() {
