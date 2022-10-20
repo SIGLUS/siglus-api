@@ -498,6 +498,8 @@ public class SiglusAdministrationsService {
     log.info("change facility:{} to local machine, operator:{}", facilityId,
         authenticationHelper.getCurrentUser().getUsername());
     facilityExtensionRepository.save(facilityExtension);
+    createAndSaveActivationCode(facilityExtension.getFacilityCode());
+    deleteDrafts(facilityId);
   }
 
   @Transactional
@@ -524,6 +526,11 @@ public class SiglusAdministrationsService {
     log.info("change facility:{} to android, operator:{}", facilityId,
         authenticationHelper.getCurrentUser().getUsername());
     facilityExtensionRepository.save(facilityExtension);
+  }
+
+  public void deleteDrafts(UUID facilityId) {
+    log.info("delete location related drafts, facilityId: {}", facilityId);
+    locationDraftRepository.deleteFacilityRelatedDrafts(facilityId);
   }
 
   private void createAndSaveActivationCode(String facilityCode) {
@@ -699,12 +706,10 @@ public class SiglusAdministrationsService {
       FacilityExtension facilityExtension) {
     if (facilityExtension == null || facilityExtension.getEnableLocationManagement() == null) {
       if (siglusFacilityDto.getEnableLocationManagement()) {
-        log.info("delete location related drafts, facilityId: {}", siglusFacilityDto.getId());
-        locationDraftRepository.deleteLocationRelatedDrafts(siglusFacilityDto.getId());
+        deleteDrafts(siglusFacilityDto.getId());
       }
     } else if (facilityExtension.getEnableLocationManagement() != siglusFacilityDto.getEnableLocationManagement()) {
-      log.info("delete location related drafts, facilityId: {}", siglusFacilityDto.getId());
-      locationDraftRepository.deleteLocationRelatedDrafts(siglusFacilityDto.getId());
+      deleteDrafts(siglusFacilityDto.getId());
     }
   }
 

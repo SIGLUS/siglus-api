@@ -365,7 +365,7 @@ public class SiglusAdministrationsServiceTest {
     siglusAdministrationsService.updateFacility(facilityId, mockSiglusFacilityDto(true, LOCATION_MANAGEMENT_TAB));
 
     // then
-    verify(locationDraftRepository).deleteLocationRelatedDrafts(facilityId);
+    verify(locationDraftRepository).deleteFacilityRelatedDrafts(facilityId);
   }
 
   @Test
@@ -379,7 +379,7 @@ public class SiglusAdministrationsServiceTest {
     siglusAdministrationsService.updateFacility(facilityId, mockSiglusFacilityDto(true, LOCATION_MANAGEMENT_TAB));
 
     // then
-    verify(locationDraftRepository).deleteLocationRelatedDrafts(facilityId);
+    verify(locationDraftRepository).deleteFacilityRelatedDrafts(facilityId);
   }
 
   @Test
@@ -394,7 +394,7 @@ public class SiglusAdministrationsServiceTest {
     siglusAdministrationsService.updateFacility(facilityId, mockSiglusFacilityDto(false, LOCATION_MANAGEMENT_TAB));
 
     // then
-    verify(locationDraftRepository).deleteLocationRelatedDrafts(facilityId);
+    verify(locationDraftRepository).deleteFacilityRelatedDrafts(facilityId);
   }
 
   @Test
@@ -410,7 +410,7 @@ public class SiglusAdministrationsServiceTest {
         mockSiglusFacilityDto(Boolean.TRUE, LOCATION_MANAGEMENT_TAB));
 
     // then
-    verify(locationDraftRepository, times(0)).deleteLocationRelatedDrafts(facilityId);
+    verify(locationDraftRepository, times(0)).deleteFacilityRelatedDrafts(facilityId);
   }
 
   @Test
@@ -426,7 +426,7 @@ public class SiglusAdministrationsServiceTest {
         mockSiglusFacilityDto(Boolean.FALSE, LOCATION_MANAGEMENT_TAB));
 
     // then
-    verify(locationDraftRepository, times(0)).deleteLocationRelatedDrafts(facilityId);
+    verify(locationDraftRepository, times(0)).deleteFacilityRelatedDrafts(facilityId);
   }
 
   @Test
