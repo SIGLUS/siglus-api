@@ -16,9 +16,12 @@
 package org.siglus.siglusapi.web;
 
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.google.common.collect.Lists;
+import java.util.UUID;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -26,9 +29,13 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.requisition.dto.ReleasableRequisitionBatchDto;
+import org.openlmis.requisition.dto.ReleasableRequisitionDto;
 import org.openlmis.requisition.dto.RequisitionsProcessingStatusDto;
+import org.siglus.siglusapi.dto.UserDto;
+import org.siglus.siglusapi.localmachine.event.order.release.OrderReleaseEmitter;
 import org.siglus.siglusapi.service.BatchReleaseRequisitionService;
 import org.siglus.siglusapi.service.SiglusNotificationService;
+import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
@@ -47,19 +54,42 @@ public class SiglusBatchRequisitionControllerTest {
   @SuppressWarnings("unused")
   private SiglusNotificationService notificationService;
 
+  @Mock
+  private OrderReleaseEmitter orderReleaseEmitter;
+
+  @Mock
+  private SiglusAuthenticationHelper siglusAuthenticationHelper;
+
+  private final UUID userId = UUID.randomUUID();
+  private final UUID requisitionId = UUID.randomUUID();
+  private final UUID supplyingDepotId = UUID.randomUUID();
+
   @Before
   public void prepare() {
     releasableRequisitionBatchDto = new ReleasableRequisitionBatchDto();
+    releasableRequisitionBatchDto.setCreateOrder(false);
+    ReleasableRequisitionDto releasableRequisitionDto = new ReleasableRequisitionDto();
+    releasableRequisitionDto.setRequisitionId(requisitionId);
+    releasableRequisitionDto.setSupplyingDepotId(supplyingDepotId);
+    releasableRequisitionBatchDto.setRequisitionsToRelease(Lists.newArrayList(releasableRequisitionDto));
+    UserDto user = new UserDto();
+    user.setId(userId);
+    when(siglusAuthenticationHelper.getCurrentUser()).thenReturn(user);
   }
 
   @Test
   public void shouldCallOpenlmisControllerWhenBatchReleaseRequisitions() {
+    // given
     RequisitionsProcessingStatusDto dto = new RequisitionsProcessingStatusDto();
     when(batchReleaseRequisitionService.getRequisitionsProcessingStatusDtoResponse(any()))
         .thenReturn(new ResponseEntity<>(dto, HttpStatus.OK));
+
+    // when
     controller.batchReleaseRequisitions(releasableRequisitionBatchDto);
 
+    // then
     verify(batchReleaseRequisitionService).getRequisitionsProcessingStatusDtoResponse(releasableRequisitionBatchDto);
+    verify(orderReleaseEmitter, times(1)).emit(any(), any());
   }
 
 }

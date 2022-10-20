@@ -15,11 +15,14 @@
 
 package org.siglus.siglusapi.web;
 
+import java.util.UUID;
+import lombok.RequiredArgsConstructor;
 import org.openlmis.requisition.dto.ReleasableRequisitionBatchDto;
 import org.openlmis.requisition.dto.RequisitionsProcessingStatusDto;
+import org.siglus.siglusapi.localmachine.event.order.release.OrderReleaseEmitter;
 import org.siglus.siglusapi.service.BatchReleaseRequisitionService;
 import org.siglus.siglusapi.service.SiglusNotificationService;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,14 +34,16 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/siglusapi/requisitions")
 public class SiglusBatchRequisitionController {
+  private final BatchReleaseRequisitionService batchReleaseRequisitionService;
 
-  @Autowired
-  private BatchReleaseRequisitionService batchReleaseRequisitionService;
+  private final SiglusNotificationService notificationService;
 
-  @Autowired
-  private SiglusNotificationService notificationService;
+  private final OrderReleaseEmitter orderReleaseEmitter;
+
+  private final SiglusAuthenticationHelper siglusAuthenticationHelper;
 
   /**
    * why we redo this api? to support #245?<br> we refactor the {@linkplain
@@ -52,8 +57,11 @@ public class SiglusBatchRequisitionController {
       @RequestBody ReleasableRequisitionBatchDto releaseDto) {
     ResponseEntity<RequisitionsProcessingStatusDto> responseEntity = batchReleaseRequisitionService
         .getRequisitionsProcessingStatusDtoResponse(releaseDto);
+    UUID authorId = siglusAuthenticationHelper.getCurrentUser().getId();
+    releaseDto.getRequisitionsToRelease().forEach(releasableRequisition ->
+        orderReleaseEmitter.emit(releasableRequisition, authorId));
     RequisitionsProcessingStatusDto body = responseEntity.getBody();
-    body.getRequisitionDtos().forEach(requisition -> notificationService.postConvertToOrder(requisition));
+    body.getRequisitionDtos().forEach(notificationService::postConvertToOrder);
     return responseEntity;
   }
 }
