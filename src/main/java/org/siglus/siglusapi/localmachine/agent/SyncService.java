@@ -20,6 +20,7 @@ import static org.springframework.util.ObjectUtils.isEmpty;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -100,6 +101,9 @@ public class SyncService {
 
   private List<Event> getMasterDataEvents() {
     MasterDataOffset masterDataOffset = localEventStore.findMasterDataOffsetByFacilityId(machine.getFacilityId());
+    if (masterDataOffset == null) {
+      return Collections.emptyList();
+    }
     List<Event> masterDataEvents = webClient.exportMasterDataEvents(masterDataOffset.getRecordOffset());
     if (!CollectionUtils.isEmpty(masterDataEvents)) {
       siglusCacheService.invalidateCache();
