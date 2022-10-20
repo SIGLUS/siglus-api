@@ -71,6 +71,7 @@ import org.siglus.siglusapi.dto.SiglusFacilityDto;
 import org.siglus.siglusapi.dto.SiglusReportTypeDto;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.dto.enums.FacilityDeviceTypeEnum;
+import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.localmachine.Machine;
@@ -671,7 +672,7 @@ public class SiglusAdministrationsServiceTest {
     verify(agentInfoRepository).deleteByFacilityId(facilityId);
   }
 
-  @Test(expected = ValidationMessageException.class)
+  @Test(expected = BusinessDataException.class)
   public void shouldThrowWhenWebFacilityChangeToWeb() {
     //given
     AppInfo appInfo = null;
@@ -687,7 +688,7 @@ public class SiglusAdministrationsServiceTest {
     siglusAdministrationsService.changeToWeb(facilityId);
   }
 
-  @Test(expected = ValidationMessageException.class)
+  @Test(expected = BusinessDataException.class)
   public void shouldThrowWhenHasDeviceInfo() {
     //given
     AppInfo appInfo = new AppInfo();
