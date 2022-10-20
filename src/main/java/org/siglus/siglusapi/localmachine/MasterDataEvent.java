@@ -13,27 +13,24 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.web;
+package org.siglus.siglusapi.localmachine;
 
-import static org.springframework.http.HttpStatus.NO_CONTENT;
+import java.time.ZonedDateTime;
+import java.util.UUID;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-import lombok.RequiredArgsConstructor;
-import org.siglus.siglusapi.service.SiglusCacheService;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
+@Builder
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class MasterDataEvent {
 
-@RestController
-@RequestMapping("/api/siglusapi/management")
-@RequiredArgsConstructor
-public class SiglusManagementController {
-
-  private final SiglusCacheService siglusCacheService;
-
-  @DeleteMapping(value = "/caches")
-  @ResponseStatus(NO_CONTENT)
-  public void invalidateCache() {
-    siglusCacheService.invalidateCache();
-  }
+  private long id;
+  private String snapshotVersion;
+  private UUID facilityId;
+  private Object payload;
+  private ZonedDateTime occurredTime;
 }

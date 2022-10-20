@@ -13,27 +13,23 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.web;
+package org.siglus.siglusapi.localmachine.webapi;
 
-import static org.springframework.http.HttpStatus.NO_CONTENT;
+import java.util.LinkedList;
+import java.util.List;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Builder.Default;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.siglus.siglusapi.localmachine.ExternalEventDto;
 
-import lombok.RequiredArgsConstructor;
-import org.siglus.siglusapi.service.SiglusCacheService;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
+@Builder
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class EventsResponse {
 
-@RestController
-@RequestMapping("/api/siglusapi/management")
-@RequiredArgsConstructor
-public class SiglusManagementController {
-
-  private final SiglusCacheService siglusCacheService;
-
-  @DeleteMapping(value = "/caches")
-  @ResponseStatus(NO_CONTENT)
-  public void invalidateCache() {
-    siglusCacheService.invalidateCache();
-  }
+  @Default
+  private List<ExternalEventDto> events = new LinkedList<>();
 }

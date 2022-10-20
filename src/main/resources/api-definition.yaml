@@ -263,6 +263,9 @@ traits:
         /eventFile:
           post:
             description: upload events to onlineweb via compressed file stream
+        /getMasterDataEvents/{offsetId}:
+          get:
+            description: pull master data events from onlineweb
         /peeringEvents:
           get:
             description: pull peering events from onlineweb
@@ -274,6 +277,9 @@ traits:
         /reSync:
           get:
             description: resync data from onlineweb
+        /reSyncMasterData:
+          get:
+            description: resync master data from onlineweb
       /agent:
         /basicInfo:
           get:

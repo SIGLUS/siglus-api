@@ -18,16 +18,19 @@ package org.siglus.siglusapi.localmachine;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.time.ZonedDateTime;
 import java.util.UUID;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.siglus.common.util.Uuid5Generator;
 
 @Builder
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class Event {
+
   private UUID id;
   private int protocolVersion;
   private long localSequenceNumber;
@@ -49,5 +52,16 @@ public class Event {
   public void confirmedReceiverSynced() {
     this.setReceiverSynced(true);
     this.ack = new Ack(this.id, senderId);
+  }
+
+  public static Event from(MasterDataEvent masterDataEvent, UUID facilityId, Machine machine) {
+    return Event.builder()
+        .id(Uuid5Generator.fromUtf8(String.valueOf(masterDataEvent.getId())))
+        .localSequenceNumber(masterDataEvent.getId())
+        .occurredTime(masterDataEvent.getOccurredTime())
+        .senderId(machine.getMachineId())
+        .receiverId(facilityId)
+        .payload(masterDataEvent.getPayload())
+        .build();
   }
 }

@@ -13,27 +13,25 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.web;
+package org.siglus.siglusapi.exception;
 
-import static org.springframework.http.HttpStatus.NO_CONTENT;
+import org.siglus.siglusapi.dto.Message;
+import org.siglus.siglusapi.exception.BaseMessageException;
 
-import lombok.RequiredArgsConstructor;
-import org.siglus.siglusapi.service.SiglusCacheService;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
+/**
+ * Exception for indicating that some input or constraint is invalid.  This should result in a BAD REQUEST api
+ * response.
+ */
+public class DbOperationException extends BaseMessageException {
 
-@RestController
-@RequestMapping("/api/siglusapi/management")
-@RequiredArgsConstructor
-public class SiglusManagementController {
-
-  private final SiglusCacheService siglusCacheService;
-
-  @DeleteMapping(value = "/caches")
-  @ResponseStatus(NO_CONTENT)
-  public void invalidateCache() {
-    siglusCacheService.invalidateCache();
+  /**
+   * Create a new validation exception with the given message and cause.
+   *
+   * @param message the message.
+   * @param cause   the exception.
+   */
+  public DbOperationException(Throwable cause, Message message) {
+    super(message, cause);
   }
+
 }

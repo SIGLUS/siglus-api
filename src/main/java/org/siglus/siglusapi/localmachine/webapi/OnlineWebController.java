@@ -16,6 +16,8 @@
 package org.siglus.siglusapi.localmachine.webapi;
 
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
+import java.lang.management.RuntimeMXBean;
 import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -27,6 +29,9 @@ import org.siglus.siglusapi.localmachine.Event;
 import org.siglus.siglusapi.localmachine.EventImporter;
 import org.siglus.siglusapi.localmachine.ExternalEventDto;
 import org.siglus.siglusapi.localmachine.ExternalEventDtoMapper;
+import org.siglus.siglusapi.localmachine.Machine;
+import org.siglus.siglusapi.localmachine.ShedLockFactory;
+import org.siglus.siglusapi.localmachine.ShedLockFactory.AutoClosableLock;
 import org.siglus.siglusapi.localmachine.auth.MachineToken;
 import org.siglus.siglusapi.localmachine.eventstore.EventStore;
 import org.siglus.siglusapi.localmachine.io.EventFileReader;
@@ -34,6 +39,7 @@ import org.siglus.siglusapi.localmachine.server.ActivationService;
 import org.siglus.siglusapi.localmachine.server.OnlineWebService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -53,7 +59,10 @@ public class OnlineWebController {
   private final ActivationService activationService;
   private final ExternalEventDtoMapper externalEventDtoMapper;
   private final OnlineWebService onlineWebService;
+  private final Machine machine;
   private final EventFileReader eventFileReader;
+  private final ShedLockFactory lockFactory;
+  private static final String DEFAULT_RESYNC_LOCK = "lock.localmachine.resync.";
 
   @PostMapping("/agents")
   public ActivationResponse activateAgent(@RequestBody @Validated RemoteActivationRequest request) {
@@ -75,13 +84,25 @@ public class OnlineWebController {
     importer.importEvents(events);
   }
 
+  @GetMapping("/getMasterDataEvents/{offsetId}")
+  public EventsResponse exportMasterDataEvents(MachineToken machineToken, @PathVariable Long offsetId) {
+    List<ExternalEventDto> eventForReceiver =
+        eventStore.getMasterDataEvents(offsetId, machineToken.getFacilityId()).stream()
+            .map(masterDataEvent ->
+                externalEventDtoMapper.map(Event.from(masterDataEvent, machineToken.getFacilityId(), machine)))
+            .collect(Collectors.toList());
+    return EventsResponse.builder()
+        .events(eventForReceiver)
+        .build();
+  }
+
   @GetMapping("/peeringEvents")
-  public PeeringEventsResponse exportPeeringEvents(MachineToken machineToken) {
+  public EventsResponse exportPeeringEvents(MachineToken machineToken) {
     List<ExternalEventDto> eventForReceiver =
         eventStore.getEventsForReceiver(machineToken.getFacilityId()).stream()
             .map(externalEventDtoMapper::map)
             .collect(Collectors.toList());
-    return PeeringEventsResponse.builder()
+    return EventsResponse.builder()
         .events(eventForReceiver)
         .build();
   }
@@ -100,6 +121,20 @@ public class OnlineWebController {
 
   @GetMapping("/reSync")
   public void reSync(MachineToken machineToken, HttpServletResponse response) {
-    onlineWebService.reSyncData(machineToken.getFacilityId(), response);
+    try (AutoClosableLock lock = lockFactory.lock(DEFAULT_RESYNC_LOCK + getRuntimeMxBean())) {
+      lock.ifPresent(() -> onlineWebService.reSyncData(machineToken.getFacilityId(), response));
+    }
   }
+
+  @GetMapping("/reSyncMasterData")
+  public String reSyncMasterData(MachineToken machineToken) {
+    return onlineWebService.reSyncMasterData(machineToken.getFacilityId());
+  }
+
+  static String getRuntimeMxBean() {
+    RuntimeMXBean runtime = ManagementFactory.getRuntimeMXBean();
+    String name = runtime.getName();
+    return name.substring(0, name.indexOf('@'));
+  }
+
 }

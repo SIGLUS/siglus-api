@@ -41,10 +41,14 @@ import org.siglus.siglusapi.localmachine.eventstore.EventPayloadRepository;
 import org.siglus.siglusapi.localmachine.eventstore.EventRecord;
 import org.siglus.siglusapi.localmachine.eventstore.EventRecordRepository;
 import org.siglus.siglusapi.localmachine.eventstore.EventStore;
+import org.siglus.siglusapi.localmachine.eventstore.MasterDataEventRecord;
+import org.siglus.siglusapi.localmachine.eventstore.MasterDataEventRecordRepository;
+import org.siglus.siglusapi.localmachine.eventstore.MasterDataOffsetRepository;
 import org.siglus.siglusapi.localmachine.eventstore.PayloadSerializer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -71,6 +75,12 @@ public class EventPublisherTest {
   protected SyncRecordService syncRecordService;
   @Autowired
   protected EventStore eventStore;
+  @MockBean
+  protected MasterDataEventRecordRepository masterDataEventRecordRepository;
+  @MockBean
+  protected MasterDataOffsetRepository masterDataOffsetRepository;
+  @MockBean
+  protected ApplicationEventPublisher applicationEventPublisher;
   @Autowired
   private EventPublisher eventPublisher;
   private final UUID webFacilityId1 = UUID.randomUUID();
@@ -139,7 +149,7 @@ public class EventPublisherTest {
     // when
     eventPublisher.doEmit(Event.builder().senderId(UUID.randomUUID()).receiverId(webFacilityId1).build());
     // then
-    verify(eventStore, times(0)).emit(any());
+    verify(eventStore, times(0)).emit(any(Event.class));
   }
 
   @Test
@@ -194,6 +204,44 @@ public class EventPublisherTest {
     EventStore eventStore = mock(EventStore.class);
     ReflectionTestUtils.setField(eventPublisher, "eventStore", eventStore);
     return eventStore;
+  }
+
+
+  @Test
+  public void canEmitMasterDataEventSuccessfully() {
+    // given
+    TestEventPayload payload = TestEventPayload.builder().id("id").build();
+    ArgumentCaptor<MasterDataEventRecord> recordArgumentCaptor = ArgumentCaptor.forClass(MasterDataEventRecord.class);
+    UUID facilityId = getMockedFacility();
+    // when
+    eventPublisher.emitMasterDataEvent(payload, facilityId);
+    // then
+    verify(masterDataEventRecordRepository)
+        .insertMarkFacilityIdMasterDataEvents(recordArgumentCaptor.capture());
+    MasterDataEventRecord eventRecord = recordArgumentCaptor.getValue();
+    assertThat(eventRecord.getFacilityId()).isEqualTo(facilityId);
+    assertThat(eventRecord.getId()).isNotNull();
+    assertThat(eventRecord.getSnapshotVersion()).isNull();
+    assertThat(eventRecord.getPayload()).isNotNull();
+    assertThat(eventRecord.getOccurredTime()).isNotNull();
+  }
+
+  @Test
+  public void ignorePublishEventWhenLocalReplayedIsTrue() {
+    // when
+    eventPublisher.publishEvent(Event.builder().localReplayed(true).build());
+    // then
+    verify(applicationEventPublisher, times(0)).publishEvent(any());
+  }
+
+  @Test
+  public void publishEventWhenLocalReplayedIsFalse() {
+    // given
+    TestEventPayload payload = new TestEventPayload();
+    // when
+    eventPublisher.publishEvent(Event.builder().payload(payload).localReplayed(false).build());
+    // then
+    verify(syncRecordService, times(1)).storeLastReplayRecord();
   }
 
   private UUID getMockedFacility() {

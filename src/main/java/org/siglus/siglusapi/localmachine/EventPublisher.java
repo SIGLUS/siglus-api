@@ -57,6 +57,12 @@ public class EventPublisher {
     doEmit(event);
   }
 
+  public void emitMasterDataEvent(Object payload, UUID facilityId) {
+    MasterDataEvent.MasterDataEventBuilder eventBuilder = baseMasterDataEventBuilder(payload, facilityId);
+    MasterDataEvent masterDataEvent = eventBuilder.build();
+    eventStore.emit(masterDataEvent);
+  }
+
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   public void publishEvent(Event event) {
     if (event.isLocalReplayed()) {
@@ -109,5 +115,12 @@ public class EventPublisher {
         .groupId(groupId)
         .payload(payload)
         .localReplayed(true); // marked as replayed at sender side
+  }
+
+  private MasterDataEvent.MasterDataEventBuilder baseMasterDataEventBuilder(Object payload, UUID facilityId) {
+    return MasterDataEvent.builder()
+        .payload(payload)
+        .facilityId(facilityId)
+        .occurredTime(ZonedDateTime.now());
   }
 }

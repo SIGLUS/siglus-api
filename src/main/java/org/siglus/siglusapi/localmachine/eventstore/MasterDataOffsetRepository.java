@@ -13,27 +13,23 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.web;
+package org.siglus.siglusapi.localmachine.eventstore;
 
-import static org.springframework.http.HttpStatus.NO_CONTENT;
+import java.util.UUID;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
-import lombok.RequiredArgsConstructor;
-import org.siglus.siglusapi.service.SiglusCacheService;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
+public interface MasterDataOffsetRepository extends JpaRepository<MasterDataOffset, UUID> {
 
-@RestController
-@RequestMapping("/api/siglusapi/management")
-@RequiredArgsConstructor
-public class SiglusManagementController {
+  MasterDataOffset findByFacilityIdIs(UUID facilityId);
 
-  private final SiglusCacheService siglusCacheService;
+  @Modifying
+  @Query(
+      value = "update localmachine.master_data_offset set recordoffset = :recordoffset "
+          + "where facilityid = :facilityid",
+      nativeQuery = true)
+  void updateRecordOffsetByFacilityId(@Param("recordoffset") Long recordOffset, @Param("facilityid") UUID facilityId);
 
-  @DeleteMapping(value = "/caches")
-  @ResponseStatus(NO_CONTENT)
-  public void invalidateCache() {
-    siglusCacheService.invalidateCache();
-  }
 }

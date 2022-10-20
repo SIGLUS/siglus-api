@@ -13,27 +13,25 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.web;
-
-import static org.springframework.http.HttpStatus.NO_CONTENT;
+package org.siglus.siglusapi.service;
 
 import lombok.RequiredArgsConstructor;
-import org.siglus.siglusapi.service.SiglusCacheService;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
+import org.springframework.stereotype.Service;
 
-@RestController
-@RequestMapping("/api/siglusapi/management")
+@Service
 @RequiredArgsConstructor
-public class SiglusManagementController {
+@Slf4j
+public class SiglusCacheService {
 
-  private final SiglusCacheService siglusCacheService;
+  private final CacheManager cacheManager;
 
-  @DeleteMapping(value = "/caches")
-  @ResponseStatus(NO_CONTENT)
   public void invalidateCache() {
-    siglusCacheService.invalidateCache();
+    cacheManager.getCacheNames().stream()
+        .filter(name -> name.startsWith("siglus"))
+        .map(cacheManager::getCache)
+        .forEach(Cache::clear);
   }
 }

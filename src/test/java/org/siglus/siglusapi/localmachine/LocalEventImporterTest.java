@@ -16,6 +16,7 @@
 package org.siglus.siglusapi.localmachine;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertFalse;
 import static org.mockito.BDDMockito.given;
 
 import java.util.Collections;
@@ -28,8 +29,11 @@ import org.mockito.runners.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
 public class LocalEventImporterTest {
-  @Mock private Machine machine;
-  @InjectMocks private LocalEventImporter localEventImporter;
+
+  @Mock
+  private Machine machine;
+  @InjectMocks
+  private LocalEventImporter localEventImporter;
 
   @Test
   public void returnTrueWhenCheckIfSupportedFacilityGivenFacilityInSupportedFacilityList() {
@@ -48,6 +52,21 @@ public class LocalEventImporterTest {
     given(machine.fetchSupportedFacilityIds()).willReturn(Collections.emptySet());
     // then
     assertThat(localEventImporter.supportedFacility(receiverFacilityId)).isFalse();
+  }
+
+  @Test
+  public void returnFalseWhenEventReceiverSyncedIsTrue() {
+    // given
+    UUID receiverFacilityId = UUID.randomUUID();
+    Event event = Event.builder().receiverId(receiverFacilityId).receiverSynced(true).build();
+    given(machine.fetchSupportedFacilityIds())
+        .willReturn(Collections.singleton(receiverFacilityId.toString()));
+
+    // when
+    boolean result = localEventImporter.accept(event);
+
+    // then
+    assertFalse(result);
   }
 
   @Test

@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class MasterDataSql {
+
   private MasterDataSql() {
     throw new IllegalStateException("Utility class");
   }
@@ -30,10 +31,6 @@ public class MasterDataSql {
   public static final String OAUTH_ACCESS_TOKEN = "auth.oauth_access_token";
 
   public static final String OAUTH_ACCESS_TOKEN_QUERY = "select * from auth.oauth_access_token";
-
-  public static final String AUTH_SCHEMA_VERSION = "auth.schema_version";
-
-  public static final String AUTH_SCHEMA_VERSION_QUERY = "select * from auth.schema_version";
 
   public static final String CONFIGURATION_SETTINGS = "fulfillment.configuration_settings";
 
@@ -52,10 +49,6 @@ public class MasterDataSql {
 
   public static final String FILE_COLUMNS_QUERY = "select * from fulfillment.file_columns";
 
-  public static final String FULFILLMENT_SCHEMA_VERSION = "fulfillment.schema_version";
-
-  public static final String FULFILLMENT_SCHEMA_VERSION_QUERY = "select * from fulfillment.schema_version";
-
   public static final String USER_CONTACT_DETAILS = "notification.user_contact_details";
 
   public static final String USER_CONTACT_DETAILS_QUERY = "select * from notification.user_contact_details";
@@ -67,10 +60,6 @@ public class MasterDataSql {
   public static final String DIGEST_CONFIGURATIONS = "notification.digest_configurations";
 
   public static final String DIGEST_CONFIGURATIONS_QUERY = "select * from notification.digest_configurations";
-
-  public static final String NOTIFICATION_SCHEMA_VERSION = "notification.schema_version";
-
-  public static final String NOTIFICATION_SCHEMA_VERSION_QUERY = "select * from notification.schema_version";
 
   public static final String GEOGRAPHIC_LEVELS = "referencedata.geographic_levels";
 
@@ -187,19 +176,9 @@ public class MasterDataSql {
 
   public static final String ROLE_ASSIGNMENTS_QUERY = "select * from referencedata.role_assignments";
 
-  public static final String RIGHT_ASSIGNMENTS = "referencedata.right_assignments";
-
-  public static final String RIGHT_ASSIGNMENTS_QUERY = "select ra.* from referencedata.right_assignments ra "
-      + "left join referencedata.users u on u.id = ra.userid "
-      + "where u.homefacilityid = '@@' ";
-
   public static final String SYSTEM_NOTIFICATIONS = "referencedata.system_notifications";
 
   public static final String SYSTEM_NOTIFICATIONS_QUERY = "select * from referencedata.system_notifications";
-
-  public static final String REFERENCEDATA_SCHEMA_VERSION = "referencedata.schema_version";
-
-  public static final String REFERENCEDATA_SCHEMA_VERSION_QUERY = "select * from referencedata.schema_version";
 
   public static final String JASPER_TEMPLATES = "report.jasper_templates";
 
@@ -212,10 +191,6 @@ public class MasterDataSql {
   public static final String TEMPLATE_PARAMETERS = "report.template_parameters";
 
   public static final String TEMPLATE_PARAMETERS_QUERY = "select * from report.template_parameters";
-
-  public static final String REPORT_SCHEMA_VERSION = "report.schema_version";
-
-  public static final String REPORT_SCHEMA_VERSION_QUERY = "select * from report.schema_version";
 
   public static final String AVAILABLE_REQUISITION_COLUMNS = "requisition.available_requisition_columns";
 
@@ -244,10 +219,6 @@ public class MasterDataSql {
   public static final String COLUMNS_MAPS = "requisition.columns_maps";
 
   public static final String COLUMNS_MAPS_QUERY = "select * from requisition.columns_maps";
-
-  public static final String REQUISITION_SCHEMA_VERSION = "requisition.schema_version";
-
-  public static final String REQUISITION_SCHEMA_VERSION_QUERY = "select * from requisition.schema_version";
 
   public static final String AVAILABLE_USAGE_COLUMN_SECTIONS = "siglusintegration.available_usage_column_sections";
 
@@ -331,10 +302,6 @@ public class MasterDataSql {
   public static final String REQUISITION_TEMPLATE_EXTENSION_QUERY =
       "select * from siglusintegration.requisition_template_extension";
 
-  public static final String SIGLUSINTEGRATION_SCHEMA_VERSION = "siglusintegration.schema_version";
-
-  public static final String SIGLUSINTEGRATION_SCHEMA_VERSION_QUERY = "select * from siglusintegration.schema_version";
-
   public static final String ORGANIZATIONS = "stockmanagement.organizations";
 
   public static final String ORGANIZATIONS_QUERY = "select * from stockmanagement.organizations";
@@ -381,26 +348,19 @@ public class MasterDataSql {
 
   public static final String STOCKMANAGEMENT_JASPER_TEMPLATES_QUERY = "select * from stockmanagement.jasper_templates";
 
-  public static final String STOCKMANAGEMENT_SCHEMA_VERSION = "stockmanagement.schema_version";
-
-  public static final String STOCKMANAGEMENT_SCHEMA_VERSION_QUERY = "select * from stockmanagement.schema_version";
-
   public static Map<String, String> getMasterDataSqlMap() {
     Map<String, String> masterDataSql = new HashMap<>();
     masterDataSql.put(AUTH_USERS, AUTH_USERS_QUERY);
     masterDataSql.put(OAUTH_ACCESS_TOKEN, OAUTH_ACCESS_TOKEN_QUERY);
-    masterDataSql.put(AUTH_SCHEMA_VERSION, AUTH_SCHEMA_VERSION_QUERY);
 
     masterDataSql.put(CONFIGURATION_SETTINGS, CONFIGURATION_SETTINGS_QUERY);
     masterDataSql.put(ORDER_NUMBER_CONFIGURATIONS, ORDER_NUMBER_CONFIGURATIONS_QUERY);
     masterDataSql.put(FILE_TEMPLATES, FILE_TEMPLATES_QUERY);
     masterDataSql.put(FILE_COLUMNS, FILE_COLUMNS_QUERY);
-    masterDataSql.put(FULFILLMENT_SCHEMA_VERSION, FULFILLMENT_SCHEMA_VERSION_QUERY);
 
     masterDataSql.put(USER_CONTACT_DETAILS, USER_CONTACT_DETAILS_QUERY);
     masterDataSql.put(EMAIL_VERIFICATION_TOKENS, EMAIL_VERIFICATION_TOKENS_QUERY);
     masterDataSql.put(DIGEST_CONFIGURATIONS, DIGEST_CONFIGURATIONS_QUERY);
-    masterDataSql.put(NOTIFICATION_SCHEMA_VERSION, NOTIFICATION_SCHEMA_VERSION_QUERY);
 
     masterDataSql.put(GEOGRAPHIC_LEVELS, GEOGRAPHIC_LEVELS_QUERY);
     masterDataSql.put(GEOGRAPHIC_ZONES, GEOGRAPHIC_ZONES_QUERY);
@@ -430,14 +390,11 @@ public class MasterDataSql {
     masterDataSql.put(ROLE_RIGHTS, ROLE_RIGHTS_QUERY);
     masterDataSql.put(USERS, USERS_QUERY);
     masterDataSql.put(ROLE_ASSIGNMENTS, ROLE_ASSIGNMENTS_QUERY);
-    masterDataSql.put(RIGHT_ASSIGNMENTS, RIGHT_ASSIGNMENTS_QUERY);
     masterDataSql.put(SYSTEM_NOTIFICATIONS, SYSTEM_NOTIFICATIONS_QUERY);
-    masterDataSql.put(REFERENCEDATA_SCHEMA_VERSION, REFERENCEDATA_SCHEMA_VERSION_QUERY);
 
     masterDataSql.put(JASPER_TEMPLATES, JASPER_TEMPLATES_QUERY);
     masterDataSql.put(JASPERTEMPLATE_REQUIREDRIGHTS, JASPERTEMPLATE_REQUIREDRIGHTS_QUERY);
     masterDataSql.put(TEMPLATE_PARAMETERS, TEMPLATE_PARAMETERS_QUERY);
-    masterDataSql.put(REPORT_SCHEMA_VERSION, REPORT_SCHEMA_VERSION_QUERY);
 
     masterDataSql.put(AVAILABLE_REQUISITION_COLUMNS, AVAILABLE_REQUISITION_COLUMNS_QUERY);
     masterDataSql.put(AVAILABLE_REQUISITION_COLUMN_OPTIONS, AVAILABLE_REQUISITION_COLUMN_OPTIONS_QUERY);
@@ -445,7 +402,6 @@ public class MasterDataSql {
     masterDataSql.put(REQUISITION_TEMPLATES, REQUISITION_TEMPLATES_QUERY);
     masterDataSql.put(REQUISITION_TEMPLATE_ASSIGNMENTS, REQUISITION_TEMPLATE_ASSIGNMENTS_QUERY);
     masterDataSql.put(COLUMNS_MAPS, COLUMNS_MAPS_QUERY);
-    masterDataSql.put(REQUISITION_SCHEMA_VERSION, REQUISITION_SCHEMA_VERSION_QUERY);
 
     masterDataSql.put(AVAILABLE_USAGE_COLUMN_SECTIONS, AVAILABLE_USAGE_COLUMN_SECTIONS_QUERY);
     masterDataSql.put(AVAILABLE_USAGE_COLUMNS, AVAILABLE_USAGE_COLUMNS_QUERY);
@@ -466,7 +422,6 @@ public class MasterDataSql {
     masterDataSql.put(REGIMENS, REGIMENS_QUERY);
     masterDataSql.put(REPORT_TYPES, REPORT_TYPES_QUERY);
     masterDataSql.put(REQUISITION_TEMPLATE_EXTENSION, REQUISITION_TEMPLATE_EXTENSION_QUERY);
-    masterDataSql.put(SIGLUSINTEGRATION_SCHEMA_VERSION, SIGLUSINTEGRATION_SCHEMA_VERSION_QUERY);
 
     masterDataSql.put(ORGANIZATIONS, ORGANIZATIONS_QUERY);
     masterDataSql.put(NODES, NODES_QUERY);
@@ -478,7 +433,6 @@ public class MasterDataSql {
     masterDataSql.put(AVAILABLE_STOCK_CARD_FIELDS, AVAILABLE_STOCK_CARD_FIELDS_QUERY);
     masterDataSql.put(AVAILABLE_STOCK_CARD_LINE_ITEM_FIELDS, AVAILABLE_STOCK_CARD_LINE_ITEM_FIELDS_QUERY);
     masterDataSql.put(STOCKMANAGEMENT_JASPER_TEMPLATES, STOCKMANAGEMENT_JASPER_TEMPLATES_QUERY);
-    masterDataSql.put(STOCKMANAGEMENT_SCHEMA_VERSION, STOCKMANAGEMENT_SCHEMA_VERSION_QUERY);
 
     return masterDataSql;
   }

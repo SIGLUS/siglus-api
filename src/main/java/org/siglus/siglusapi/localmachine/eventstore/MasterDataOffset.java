@@ -13,25 +13,33 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.localmachine.exception;
+package org.siglus.siglusapi.localmachine.eventstore;
 
-import org.siglus.siglusapi.dto.Message;
-import org.siglus.siglusapi.exception.BaseMessageException;
+import java.util.UUID;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-/**
- * Exception for indicating that some input or constraint is invalid.  This should result in a BAD REQUEST api
- * response.
- */
-public class DbOperationException extends BaseMessageException {
+@Entity
+@Data
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
+@Table(name = "master_data_offset", schema = "localmachine")
+public class MasterDataOffset {
 
-  /**
-   * Create a new validation exception with the given message and cause.
-   *
-   * @param message the message.
-   * @param cause   the exception.
-   */
-  public DbOperationException(Throwable cause, Message message) {
-    super(message, cause);
-  }
+  @Id
+  private UUID id;
+  @Column(name = "snapshotversion")
+  private String snapshotVersion;
+  @Column(name = "recordoffset")
+  private long recordOffset;
+  @Column(name = "facilityid")
+  private UUID facilityId;
 
 }

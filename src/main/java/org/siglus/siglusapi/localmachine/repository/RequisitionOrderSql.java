@@ -324,15 +324,6 @@ public class RequisitionOrderSql {
           + SHIPMENT_LEFT_JOIN_ORDERS
           + WHERE_FACILITYID_SUPPLYING_FACILITYID;
 
-  public static final String PROOFS_OF_DELIVERY_EXTENSION = "siglusintegration.proofs_of_delivery_extension";
-
-  public static final String PROOFS_OF_DELIVERY_EXTENSION_QUERY =
-      "select pode.* from siglusintegration.proofs_of_delivery_extension pode "
-          + "left join fulfillment.proofs_of_delivery pod on pod.id = pode.proofofdeliveryid "
-          + POD_LEFT_JOIN_SHIPMENT
-          + SHIPMENT_LEFT_JOIN_ORDERS
-          + WHERE_FACILITYID_SUPPLYING_FACILITYID;
-
   public static final String RAPID_TEST_CONSUMPTION_LINE_ITEMS = "siglusintegration.rapid_test_consumption_line_items";
 
   public static final String RAPID_TEST_CONSUMPTION_LINE_ITEMS_QUERY =
@@ -505,7 +496,6 @@ public class RequisitionOrderSql {
     requisitionOrderSql.put(SHIPMENTS_EXTENSION, SHIPMENTS_EXTENSION_QUERY);
     requisitionOrderSql.put(POD_SUB_DRAFT, POD_SUB_DRAFT_QUERY);
     requisitionOrderSql.put(POD_LINE_ITEMS_EXTENSION, POD_LINE_ITEMS_EXTENSION_QUERY);
-    requisitionOrderSql.put(PROOFS_OF_DELIVERY_EXTENSION, PROOFS_OF_DELIVERY_EXTENSION_QUERY);
     requisitionOrderSql.put(RAPID_TEST_CONSUMPTION_LINE_ITEMS, RAPID_TEST_CONSUMPTION_LINE_ITEMS_QUERY);
     requisitionOrderSql.put(REGIMEN_LINE_ITEMS, REGIMEN_LINE_ITEMS_QUERY);
     requisitionOrderSql.put(REGIMEN_LINE_ITEM_DRAFT, REGIMEN_LINE_ITEM_DRAFT_QUERY);

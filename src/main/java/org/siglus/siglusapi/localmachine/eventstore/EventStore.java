@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.localmachine.eventstore;
 
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -28,6 +29,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.siglus.siglusapi.localmachine.Ack;
 import org.siglus.siglusapi.localmachine.Event;
+import org.siglus.siglusapi.localmachine.MasterDataEvent;
 import org.springframework.data.domain.Example;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
@@ -40,6 +42,8 @@ public class EventStore {
 
   private final EventRecordRepository repository;
   private final EventPayloadRepository eventPayloadRepository;
+  private final MasterDataEventRecordRepository masterDataEventRecordRepository;
+  private final MasterDataOffsetRepository masterDataOffsetRepository;
   private final PayloadSerializer payloadSerializer;
   private final AckRepository ackRepository;
 
@@ -50,6 +54,19 @@ public class EventStore {
     log.info("insert event emitted event:{}", event.getId());
     repository.insertAndAllocateLocalSequenceNumber(eventRecord);
     eventPayloadRepository.save(new EventPayload(eventRecord.getId(), eventRecord.getPayload()));
+  }
+
+  @SneakyThrows
+  @Transactional
+  public void emit(MasterDataEvent masterDataEvent) {
+    MasterDataEventRecord masterDataEventRecord = MasterDataEventRecord
+        .from(masterDataEvent, payloadSerializer.dump(masterDataEvent.getPayload()));
+    log.info("insert master data event emitted event:{}", masterDataEvent.getId());
+    if (masterDataEvent.getFacilityId() == null) {
+      masterDataEventRecordRepository.insertMasterDataEvents(masterDataEventRecord);
+    } else {
+      masterDataEventRecordRepository.insertMarkFacilityIdMasterDataEvents(masterDataEventRecord);
+    }
   }
 
   public long nextGroupSequenceNumber(String groupId) {
@@ -64,7 +81,7 @@ public class EventStore {
 
   public List<Event> getEventsForReceiver(UUID receiverId) {
     return repository.findByReceiverIdAndReceiverSyncedAndArchived(
-            receiverId, false, false).stream()
+        receiverId, false, false).stream()
         .map(it -> it.toEvent(payloadSerializer::load))
         .collect(Collectors.toList());
   }
@@ -76,6 +93,35 @@ public class EventStore {
     return repository.findAll(exportEventIds).stream()
         .map(it -> it.toEvent(payloadSerializer::load))
         .collect(Collectors.toList());
+  }
+
+  public List<MasterDataEvent> getMasterDataEvents(Long offsetId, UUID facilityId) {
+    if (offsetId == null) {
+      return Collections.emptyList();
+    }
+    List<MasterDataEvent> masterDataEvents = masterDataEventRecordRepository.findByIdAfterOrderById(offsetId).stream()
+        .filter(it -> filterMasterDataEventRecord(it, facilityId))
+        .map(it -> it.toMasterDataEvent(payloadSerializer::load))
+        .collect(Collectors.toList());
+    int size = masterDataEvents.size();
+    if (size > 0) {
+      MasterDataEvent masterDataEvent = masterDataEvents.get(size - 1);
+      offsetId = masterDataEvent.getId();
+      MasterDataOffset masterDataOffset = masterDataOffsetRepository.findByFacilityIdIs(facilityId);
+      if (masterDataOffset == null) {
+        masterDataOffset = MasterDataOffset.builder().id(UUID.randomUUID()).build();
+      }
+      masterDataOffset.setFacilityId(facilityId);
+      masterDataOffset.setRecordOffset(offsetId);
+      log.info("save facility increment master data offset: {}", masterDataOffset);
+      masterDataOffsetRepository.save(masterDataOffset);
+    }
+    return masterDataEvents;
+  }
+
+  private boolean filterMasterDataEventRecord(MasterDataEventRecord eventRecord, UUID facilityId) {
+    return (eventRecord.getFacilityId() == null && eventRecord.getSnapshotVersion() == null)
+        || (eventRecord.getFacilityId() != null && eventRecord.getFacilityId().equals(facilityId));
   }
 
   @Transactional
@@ -92,6 +138,10 @@ public class EventStore {
     EventRecord eventRecord = EventRecord.from(event, payloadSerializer.dump(event.getPayload()));
     repository.importExternalEvent(eventRecord);
     eventPayloadRepository.save(new EventPayload(eventRecord.getId(), eventRecord.getPayload()));
+    if (isMasterDataEvent(event)) {
+      log.info("update master data record offset event:{}", event.getId());
+      masterDataOffsetRepository.updateRecordOffsetByFacilityId(event.getLocalSequenceNumber(), event.getReceiverId());
+    }
     emitAckForEvent(event);
   }
 
@@ -150,6 +200,19 @@ public class EventStore {
         .map(it -> it.toEvent(payloadSerializer::load))
         .collect(Collectors.toList());
   }
+
+  public MasterDataOffset findMasterDataOffsetByFacilityId(UUID facilityId) {
+    return masterDataOffsetRepository.findByFacilityIdIs(facilityId);
+  }
+
+  private boolean isMasterDataEvent(Event event) {
+    //comment 背景，目前event分为三类:
+    // 1，groupid不为空的，一般用于requisition order等业务；
+    // 2，groupid为空，但是senderid = receiverid,一般用于movement业务；
+    // 3，groupid为空，但是senderid ！= receiverid,senderid为onlineweb端的machineid,receiverid为localmachine的facilityid
+    return event.getGroupId() == null && !event.getSenderId().equals(event.getReceiverId());
+  }
+
 
   public List<Ack> getAcksForEventSender(UUID eventSender) {
     Example<AckRecord> example = Example.of(AckRecord.builder().sendTo(eventSender).shipped(Boolean.FALSE).build());

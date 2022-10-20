@@ -13,27 +13,23 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.web;
-
-import static org.springframework.http.HttpStatus.NO_CONTENT;
+package org.siglus.siglusapi.localmachine.event.masterdata;
 
 import lombok.RequiredArgsConstructor;
-import org.siglus.siglusapi.service.SiglusCacheService;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
+import org.siglus.siglusapi.localmachine.cdc.JdbcSinker;
+import org.springframework.context.annotation.Profile;
+import org.springframework.context.event.EventListener;
+import org.springframework.stereotype.Component;
 
-@RestController
-@RequestMapping("/api/siglusapi/management")
+@Component
 @RequiredArgsConstructor
-public class SiglusManagementController {
+@Profile({"localmachine"})
+public class MasterDataEventReplayer {
 
-  private final SiglusCacheService siglusCacheService;
+  private final JdbcSinker jdbcSinker;
 
-  @DeleteMapping(value = "/caches")
-  @ResponseStatus(NO_CONTENT)
-  public void invalidateCache() {
-    siglusCacheService.invalidateCache();
+  @EventListener(classes = {MasterDataTableChangeEvent.class})
+  public void replay(MasterDataTableChangeEvent masterDataTableChangeEvent) {
+    jdbcSinker.sink(masterDataTableChangeEvent.getTableChangeEvents());
   }
 }

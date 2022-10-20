@@ -19,11 +19,13 @@ import static org.springframework.util.ObjectUtils.isEmpty;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
@@ -31,9 +33,12 @@ import org.siglus.siglusapi.localmachine.Ack;
 import org.siglus.siglusapi.localmachine.Event;
 import org.siglus.siglusapi.localmachine.EventImporter;
 import org.siglus.siglusapi.localmachine.ExternalEventDtoMapper;
+import org.siglus.siglusapi.localmachine.Machine;
 import org.siglus.siglusapi.localmachine.constant.ErrorType;
 import org.siglus.siglusapi.localmachine.eventstore.EventStore;
+import org.siglus.siglusapi.localmachine.eventstore.MasterDataOffset;
 import org.siglus.siglusapi.localmachine.io.EventResourcePacker;
+import org.siglus.siglusapi.service.SiglusCacheService;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -51,6 +56,8 @@ public class SyncService {
   private final ErrorHandler errorHandler;
   private final SyncRecordService syncRecordService;
   private final ExternalEventDtoMapper externalEventDtoMapper;
+  private final Machine machine;
+  private final SiglusCacheService siglusCacheService;
 
   @Transactional
   public void exchangeAcks() {
@@ -76,7 +83,9 @@ public class SyncService {
   public void pull() {
     List<Event> events = null;
     try {
-      events = webClient.exportPeeringEvents();
+      events = Stream.of(getMasterDataEvents(), webClient.exportPeeringEvents())
+          .flatMap(Collection::stream)
+          .collect(Collectors.toList());
     } catch (Exception e) {
       errorHandler.storeErrorRecord(e, ErrorType.SYNC_DOWN);
     }
@@ -87,6 +96,15 @@ public class SyncService {
     events.forEach(it -> it.setOnlineWebSynced(true));
     eventImporter.importEvents(events);
     syncRecordService.storeLastSyncRecord();
+  }
+
+  private List<Event> getMasterDataEvents() {
+    MasterDataOffset masterDataOffset = localEventStore.findMasterDataOffsetByFacilityId(machine.getFacilityId());
+    List<Event> masterDataEvents = webClient.exportMasterDataEvents(masterDataOffset.getRecordOffset());
+    if (!CollectionUtils.isEmpty(masterDataEvents)) {
+      siglusCacheService.invalidateCache();
+    }
+    return masterDataEvents;
   }
 
   @Transactional
