@@ -27,10 +27,7 @@ import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRA
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_NAME;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
-import java.util.function.Supplier;
-import jersey.repackaged.com.google.common.collect.Sets;
 import org.assertj.core.util.Lists;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -38,10 +35,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.requisition.dto.ProgramDto;
-import org.openlmis.requisition.service.PermissionService;
-import org.openlmis.requisition.service.referencedata.PermissionStringDto;
-import org.openlmis.requisition.service.referencedata.PermissionStrings;
-import org.openlmis.requisition.service.referencedata.PermissionStrings.Handler;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -54,12 +47,6 @@ public class SiglusProgramServiceTest {
 
   @Mock
   private ProgramReferenceDataService programRefDataService;
-  @Mock
-  private PermissionService permissionService;
-
-  private final String rightName = "rightName";
-  private final UUID facilityId = UUID.randomUUID();
-  private final UUID programId = UUID.randomUUID();
 
   @Test
   public void shouldReturnAllProgramListWhenGetProgramsGivenAllProductsProgramCode() {
