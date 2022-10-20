@@ -71,10 +71,8 @@ public class StockMovementService {
       return new ArrayList<>();
     }
     LinkedList<StockMovementResDto> stockMovementResDtos = new LinkedList<>();
-    boolean initialFlag = true;
     for (ProductMovement productMovement : productMovements) {
       MovementTypeHandlerResultDto movementTypeHandlerResultDto = movementTypeHandler(productMovement);
-      initialFlag = false;
       StockMovementResDto stockMovementResDto = StockMovementResDto.builder()
           .movementQuantity(movementTypeHandlerResultDto.getCount())
           .productSoh(movementTypeHandlerResultDto.getSoh())
