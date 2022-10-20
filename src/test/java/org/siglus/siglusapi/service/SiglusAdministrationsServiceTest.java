@@ -672,7 +672,7 @@ public class SiglusAdministrationsServiceTest {
     verify(agentInfoRepository).deleteByFacilityId(facilityId);
   }
 
-  @Test(expected = BusinessDataException.class)
+  @Test(expected = ValidationMessageException.class)
   public void shouldThrowWhenWebFacilityChangeToWeb() {
     //given
     AppInfo appInfo = null;
@@ -688,7 +688,7 @@ public class SiglusAdministrationsServiceTest {
     siglusAdministrationsService.changeToWeb(facilityId);
   }
 
-  @Test(expected = BusinessDataException.class)
+  @Test(expected = ValidationMessageException.class)
   public void shouldThrowWhenHasDeviceInfo() {
     //given
     AppInfo appInfo = new AppInfo();
@@ -831,7 +831,7 @@ public class SiglusAdministrationsServiceTest {
     siglusAdministrationsService.changeToLocalMachine(facilityId);
   }
 
-  @Test(expected = ValidationMessageException.class)
+  @Test(expected = BusinessDataException.class)
   public void shouldThrowWhenOldFacilityChangeToAndroid() {
     //given
     AppInfo appInfo = null;
@@ -848,7 +848,7 @@ public class SiglusAdministrationsServiceTest {
     siglusAdministrationsService.changeToAndroid(facilityId);
   }
 
-  @Test(expected = ValidationMessageException.class)
+  @Test(expected = BusinessDataException.class)
   public void shouldThrowWhenOtherFacilityChangeToAndroid() {
     //given
     AppInfo appInfo = null;
