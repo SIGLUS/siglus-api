@@ -22,6 +22,7 @@ import org.openlmis.requisition.dto.ReleasableRequisitionDto;
 import org.openlmis.requisition.repository.RequisitionRepository;
 import org.siglus.siglusapi.localmachine.EventPublisher;
 import org.siglus.siglusapi.localmachine.event.EventCommonService;
+import org.siglus.siglusapi.service.SiglusRequisitionExtensionService;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -30,18 +31,21 @@ public class RequisitionReleaseEmitter {
   private final EventPublisher eventPublisher;
   private final RequisitionRepository requisitionRepository;
   private final EventCommonService eventCommonService;
+  private final SiglusRequisitionExtensionService siglusRequisitionExtensionService;
 
   public RequisitionReleaseEvent emit(ReleasableRequisitionDto releasableRequisitionDto, UUID authorId) {
     RequisitionReleaseEvent requisitionReleaseEvent = getEvent(releasableRequisitionDto, authorId);
-    eventPublisher.emitGroupEvent(requisitionReleaseEvent.getRequisitionNumber(),
+    eventPublisher.emitGroupEvent(eventCommonService.getGroupId(releasableRequisitionDto.getRequisitionId()),
         getReceiverId(releasableRequisitionDto.getRequisitionId()), requisitionReleaseEvent);
     return requisitionReleaseEvent;
   }
 
   private RequisitionReleaseEvent getEvent(ReleasableRequisitionDto releasableRequisitionDto, UUID authorId) {
+    String requisitionNumber = siglusRequisitionExtensionService
+        .formatRequisitionNumber(releasableRequisitionDto.getRequisitionId());
     return RequisitionReleaseEvent
         .builder()
-        .requisitionNumber(eventCommonService.getGroupId(releasableRequisitionDto.getRequisitionId()))
+        .requisitionNumber(requisitionNumber)
         .supplyingDepotId(releasableRequisitionDto.getSupplyingDepotId())
         .authorId(authorId)
         .build();

@@ -34,6 +34,7 @@ import org.siglus.siglusapi.localmachine.event.EventCommonService;
 import org.siglus.siglusapi.localmachine.event.requisition.web.RequisitionReleaseEmitter;
 import org.siglus.siglusapi.localmachine.event.requisition.web.RequisitionReleaseEvent;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
+import org.siglus.siglusapi.service.SiglusRequisitionExtensionService;
 
 @RunWith(MockitoJUnitRunner.class)
 @SuppressWarnings({"PMD.UnusedPrivateField"})
@@ -54,6 +55,9 @@ public class RequisitionReleaseEmitterTest {
   @Mock
   private EventCommonService eventCommonService;
 
+  @Mock
+  private SiglusRequisitionExtensionService siglusRequisitionExtensionService;
+
   private final UUID requisitionId = UUID.randomUUID();
   private final UUID supplyingDepotId = UUID.randomUUID();
 
@@ -64,6 +68,8 @@ public class RequisitionReleaseEmitterTest {
     when(requisitionExtensionRepository.findByRequisitionId(requisitionId)).thenReturn(new RequisitionExtension());
     when(requisitionRepository.findOne(requisitionId)).thenReturn(new Requisition());
     when(eventCommonService.getGroupId(any())).thenReturn("groupId");
+    when(siglusRequisitionExtensionService.formatRequisitionNumber(any(UUID.class)))
+        .thenReturn("requisitionNumber");
 
     // when
     RequisitionReleaseEvent emit = requisitionReleaseEmitter.emit(mockReleasableRequisitionDto(), authorId);
