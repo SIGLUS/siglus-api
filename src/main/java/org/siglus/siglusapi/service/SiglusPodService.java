@@ -432,6 +432,9 @@ public class SiglusPodService {
     if (splitStrings.size() > 2) {
       fileName.append(UNDERSCORE)
           .append(formatNumber(splitStrings.get(splitStrings.size() - 1)));
+    } else {
+      fileName.append(UNDERSCORE)
+          .append(formatNumber("1"));
     }
 
     return fileName.toString();
