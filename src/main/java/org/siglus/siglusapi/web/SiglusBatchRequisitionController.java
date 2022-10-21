@@ -19,8 +19,8 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.openlmis.requisition.dto.ReleasableRequisitionBatchDto;
 import org.openlmis.requisition.dto.RequisitionsProcessingStatusDto;
-import org.siglus.siglusapi.localmachine.event.requisition.web.RequisitionReleaseEmitter;
 import org.openlmis.requisition.web.BatchRequisitionController;
+import org.siglus.siglusapi.localmachine.event.requisition.web.RequisitionReleaseEmitter;
 import org.siglus.siglusapi.service.SiglusNotificationService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.springframework.http.HttpStatus;
@@ -47,8 +47,9 @@ public class SiglusBatchRequisitionController {
   private final SiglusAuthenticationHelper siglusAuthenticationHelper;
 
   /**
-   * why we redo this api? to support #245?<br> we refactor the {@linkplain
-   * org.openlmis.fulfillment.service.OrderService#setOrderStatus}  method}
+   * why we redo this api? to support #245?<br> we refactor the
+   * {@linkplain org.openlmis.fulfillment.service.OrderService#setOrderStatus}
+   * method}
    */
   @PostMapping("/batchReleases")
   @ResponseStatus(HttpStatus.CREATED)

@@ -370,15 +370,15 @@ public class SiglusOrderService {
         .sorted(Entry.<LocalDate, List<FulfillOrderDto>>comparingByKey().reversed()).collect(toList());
     List<FulfillOrderDto> latestFulfillOrderDtos = entries.get(0).getValue();
     int latestFulfillOrderMonth = entries.get(0).getKey().getMonthValue();
-    List<Integer> canFulfillOrderMonth = canFulfillOrderMonth(processingPeriodExtension);
-    if (canFulfillOrderMonth.contains(latestFulfillOrderMonth)) {
+    List<Integer> caculateFulfillOrderMonth = caculateFulfillOrderMonth(processingPeriodExtension);
+    if (caculateFulfillOrderMonth.contains(latestFulfillOrderMonth)) {
       latestFulfillOrderDtos.forEach(dto -> {
         dto.setExpired(false);
       });
     }
   }
 
-  private List<Integer> canFulfillOrderMonth(ProcessingPeriodExtension processingPeriodExtension) {
+  private List<Integer> caculateFulfillOrderMonth(ProcessingPeriodExtension processingPeriodExtension) {
     LocalDate submitStartDate = processingPeriodExtension.getSubmitStartDate();
     LocalDate submitEndDate = processingPeriodExtension.getSubmitEndDate();
     LocalDate currentDate = LocalDate.now();
