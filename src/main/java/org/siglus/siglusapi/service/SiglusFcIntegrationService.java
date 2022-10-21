@@ -58,10 +58,12 @@ import org.siglus.common.domain.RequisitionTemplateExtension;
 import org.siglus.common.repository.OrderExternalRepository;
 import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
 import org.siglus.siglusapi.constant.FacilityTypeConstants;
+import org.siglus.siglusapi.constant.ProgramConstants;
 import org.siglus.siglusapi.domain.ProgramOrderablesExtension;
 import org.siglus.siglusapi.domain.ProgramRealProgram;
 import org.siglus.siglusapi.domain.RequisitionLineItemExtension;
 import org.siglus.siglusapi.domain.ShipmentsExtension;
+import org.siglus.siglusapi.domain.UsageInformationLineItem;
 import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.FacilityTypeDto;
 import org.siglus.siglusapi.dto.FcProofOfDeliveryDto;
@@ -90,6 +92,7 @@ import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.repository.StockManagementRepository;
 import org.siglus.siglusapi.repository.SupervisoryNodeRepository;
+import org.siglus.siglusapi.repository.UsageInformationLineItemRepository;
 import org.siglus.siglusapi.service.android.mapper.ProductMovementMapper;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusFacilityTypeReferenceDataService;
@@ -135,6 +138,10 @@ public class SiglusFcIntegrationService {
   private final ProductMovementMapper productMovementMapper;
   private final LotOnHandMapper lotOnHandMapper;
 
+  private final UsageInformationLineItemRepository usageInformationLineItemRepository;
+
+  private final SiglusOrderableService siglusOrderableService;
+
   @Value("${dpm.facilityTypeId}")
   private UUID dpmFacilityTypeId;
   @Value("${fc.facilityTypeId}")
@@ -142,6 +149,8 @@ public class SiglusFcIntegrationService {
 
   private final Map<String, String> fcMaps = ImmutableMap.of("Farmácia Comunitária",
       "comunitaryPharmacy", "Total doentes", "patientsOnTreatment");
+
+  private Map<UUID, Map<String, String>> orderableIdToInfoMap;
 
   public Page<FcRequisitionDto> searchRequisitions(LocalDate date, Pageable pageable) {
     Set<UUID> dpmSupervisoryNodeIds = supervisoryNodeRepository
@@ -161,6 +170,7 @@ public class SiglusFcIntegrationService {
     List<FcRequisitionDto> fcRequisitionDtos = newArrayList();
     Map<UUID, ProgramRealProgram> realProgramIdToEntityMap = programRealProgramRepository.findAll()
         .stream().collect(Collectors.toMap(ProgramRealProgram::getId, Function.identity()));
+    orderableIdToInfoMap = siglusOrderableService.getAllOrderableInfoForFc();
     requisitions.getContent().forEach(requisition -> fcRequisitionDtos.add(buildDto(requisition,
         fcSupervisoryNodeIds, realProgramIdToEntityMap)));
     return Pagination.getPage(fcRequisitionDtos, pageable, requisitions.getTotalElements());
@@ -358,7 +368,28 @@ public class SiglusFcIntegrationService {
     setPeriodInfo(requisition.getProcessingPeriodId(), fcRequisitionDto);
     setProductInfo(requisition.getNonSkippedRequisitionLineItems(), fcRequisitionDto);
     setRegimenInfo(requisition, fcRequisitionDto, realProgramMap);
+    setUsageInformation(requisition, fcRequisitionDto);
     return fcRequisitionDto;
+  }
+
+
+  private void setUsageInformation(Requisition requisition, FcRequisitionDto fcRequisitionDto) {
+    if (ProgramConstants.MALARIA_PROGRAM_CODE.equals(fcRequisitionDto.getProgramCode())) {
+      List<UsageInformationLineItem> lineItems = usageInformationLineItemRepository
+          .findByRequisitionId(requisition.getId());
+      List<Map<String, Object>> usageInformationLineItems = newArrayList();
+      lineItems.forEach(lineItem -> {
+        Map<String, Object> usageInformationMap = newHashMap();
+        usageInformationMap.put("information", lineItem.getInformation());
+        usageInformationMap.put("productCode", orderableIdToInfoMap.get(lineItem.getOrderableId())
+            .get("code"));
+        usageInformationMap.put("service",
+            "newColumn0".equals(lineItem.getService()) ? "CHW" : lineItem.getService());
+        usageInformationMap.put("value", lineItem.getValue());
+        usageInformationLineItems.add(usageInformationMap);
+      });
+      fcRequisitionDto.setUsageInformationLineItems(usageInformationLineItems);
+    }
   }
 
   private void setRegimenInfo(Requisition requisition, FcRequisitionDto fcRequisitionDto,
@@ -460,10 +491,9 @@ public class SiglusFcIntegrationService {
       Map<UUID, Integer> authorizedQuantityMap) {
     FcRequisitionLineItemDto fcLineItem = new FcRequisitionLineItemDto();
     BeanUtils.copyProperties(lineItem, fcLineItem);
-    OrderableDto orderable = orderableReferenceDataService.findOne(lineItem.getOrderable().getId());
-    fcLineItem.setProductCode(orderable.getProductCode());
-    fcLineItem.setProductName(orderable.getFullProductName());
-    fcLineItem.setProductDescription(orderable.getDescription());
+    fcLineItem.setProductCode(orderableIdToInfoMap.get(lineItem.getOrderable().getId()).get("code"));
+    fcLineItem.setProductName(orderableIdToInfoMap.get(lineItem.getOrderable().getId()).get("name"));
+    fcLineItem.setProductDescription(orderableIdToInfoMap.get(lineItem.getOrderable().getId()).get("description"));
     List<RealProgramDto> realPrograms = newArrayList();
     programOrderablesExtensionRepository.findAllByOrderableId(lineItem.getOrderable().getId())
         .forEach(orderablesExtension ->

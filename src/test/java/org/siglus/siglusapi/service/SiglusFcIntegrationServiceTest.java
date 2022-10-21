@@ -121,6 +121,9 @@ public class SiglusFcIntegrationServiceTest {
   private SiglusProcessingPeriodReferenceDataService processingPeriodReferenceDataService;
 
   @Mock
+  private SiglusOrderableService siglusOrderableService;
+
+  @Mock
   private SiglusOrderableReferenceDataService orderableReferenceDataService;
 
   @Mock
@@ -437,6 +440,14 @@ public class SiglusFcIntegrationServiceTest {
     orderableDto.setId(orderableId);
     when(orderableReferenceDataService.findOne(orderableId)).thenReturn(orderableDto);
     when(orderableReferenceDataService.findByIds(any())).thenReturn(newArrayList(orderableDto));
+
+    Map<String, String> orderableInfoMap = newHashMap();
+    orderableInfoMap.put("code", productCode);
+    orderableInfoMap.put("name", productName);
+    orderableInfoMap.put("description", productDescription);
+    Map<UUID, Map<String, String>> orderableIdToInfoMap = newHashMap();
+    orderableIdToInfoMap.put(orderableId, orderableInfoMap);
+    when(siglusOrderableService.getAllOrderableInfoForFc()).thenReturn(orderableIdToInfoMap);
   }
 
   private void mockProgramOrderableExtensionInfo() {
