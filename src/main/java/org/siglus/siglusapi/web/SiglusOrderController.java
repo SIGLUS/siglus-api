@@ -103,7 +103,7 @@ public class SiglusOrderController {
   @PutMapping("/{id}")
   @ResponseStatus(NO_CONTENT)
   public void closeExpiredOrder(@PathVariable("id") UUID orderId) {
-    siglusOrderService.closeExpiredOrders(orderId);
+    siglusOrderService.closeExpiredOrder(orderId);
   }
 
   @GetMapping("/{id}/status")

@@ -390,7 +390,7 @@ public class SiglusOrderService {
     } else return Lists.newArrayList(currentDate.getMonthValue());
   }
 
-  public void closeExpiredOrders(UUID fulfillOrderId) {
+  public void closeExpiredOrder(UUID fulfillOrderId) {
     Order order = siglusOrdersRepository.findOne(fulfillOrderId);
     if (order == null) {
       throw new NotFoundException(ERROR_ORDER_NOT_EXIST);

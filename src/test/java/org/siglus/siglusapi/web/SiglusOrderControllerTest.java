@@ -119,4 +119,15 @@ public class SiglusOrderControllerTest {
     verify(actualController).export(orderId, type, httpServletResponse);
   }
 
+  @Test
+  public void shouldCallCloseExpiredOrder() {
+    // given
+    UUID orderId = UUID.randomUUID();
+
+    // when
+    controller.closeExpiredOrder(orderId);
+
+    verify(siglusOrderService).closeExpiredOrder(orderId);
+  }
+
 }
