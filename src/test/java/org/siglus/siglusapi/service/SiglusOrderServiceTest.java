@@ -114,6 +114,7 @@ import org.siglus.siglusapi.i18n.MessageKeys;
 import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.OrderableRepository;
 import org.siglus.siglusapi.repository.SiglusFacilityRepository;
+import org.siglus.siglusapi.repository.SiglusOrdersRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.repository.StockManagementRepository;
 import org.siglus.siglusapi.repository.dto.OrderSuggestedQuantityDto;
@@ -176,6 +177,9 @@ public class SiglusOrderServiceTest {
 
   @Mock
   private OrderExternalRepository orderExternalRepository;
+
+  @Mock
+  private SiglusOrdersRepository siglusOrdersRepository;
 
   @Captor
   private ArgumentCaptor<List<OrderDto>> orderDtoArgumentCaptor;
@@ -596,6 +600,34 @@ public class SiglusOrderServiceTest {
   }
 
   @Test
+  public void shouldThrowNotFoundExceptionWhenNotFoundOrder() {
+    //then
+    exception.expect(NotFoundException.class);
+    exception.expectMessage(MessageKeys.ERROR_ORDER_NOT_EXIST);
+
+    //given
+    when(siglusOrdersRepository.findOne(orderId)).thenReturn(null);
+
+    //when
+    siglusOrderService.closeExpiredOrder(orderId);
+  }
+
+  @Test
+  public void shouldCloseFulfillOrder() {
+    //given
+    Order order = new Order();
+    Order savedOrder = new Order();
+    savedOrder.setStatus(OrderStatus.CLOSED);
+    when(siglusOrdersRepository.findOne(orderId)).thenReturn(order);
+
+    //when
+    siglusOrderService.closeExpiredOrder(orderId);
+
+    //then
+    verify(siglusOrdersRepository).save(savedOrder);
+  }
+
+  @Test
   public void shouldIsSuborderWhenExternalExist() {
     // given
     UUID externalId = UUID.randomUUID();
@@ -606,7 +638,7 @@ public class SiglusOrderServiceTest {
     boolean isSuborder = siglusOrderService.isSuborder(externalId);
 
     //then
-    assertEquals(true, isSuborder);
+    assertTrue(isSuborder);
   }
 
   @Test
@@ -619,7 +651,7 @@ public class SiglusOrderServiceTest {
     boolean isSuborder = siglusOrderService.isSuborder(externalId);
 
     //then
-    assertEquals(false, isSuborder);
+    assertFalse(isSuborder);
   }
 
   @Test
@@ -660,7 +692,7 @@ public class SiglusOrderServiceTest {
         siglusOrderService.needCloseOrder(orderDto);
 
     //then
-    assertEquals(true, isAfterNextPeriodEndDate);
+    assertTrue(isAfterNextPeriodEndDate);
   }
 
   @Test
@@ -703,7 +735,7 @@ public class SiglusOrderServiceTest {
         siglusOrderService.needCloseOrder(orderDto);
 
     //then
-    assertEquals(false, isAfterNextPeriodEndDate);
+    assertFalse(isAfterNextPeriodEndDate);
   }
 
   @Test
@@ -731,7 +763,7 @@ public class SiglusOrderServiceTest {
         siglusOrderService.needCloseOrder(orderDto);
 
     //then
-    assertEquals(false, isAfterNextPeriodEndDate);
+    assertFalse(isAfterNextPeriodEndDate);
   }
 
   @Test
