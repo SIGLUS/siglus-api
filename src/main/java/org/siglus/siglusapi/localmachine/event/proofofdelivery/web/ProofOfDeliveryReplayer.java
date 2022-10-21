@@ -26,9 +26,9 @@ import org.openlmis.fulfillment.repository.ProofOfDeliveryRepository;
 import org.siglus.siglusapi.domain.PodExtension;
 import org.siglus.siglusapi.domain.PodLineItemsByLocation;
 import org.siglus.siglusapi.localmachine.event.NotificationService;
-import org.siglus.siglusapi.repository.SiglusOrdersRepository;
 import org.siglus.siglusapi.repository.PodExtensionRepository;
 import org.siglus.siglusapi.repository.PodLineItemsByLocationRepository;
+import org.siglus.siglusapi.repository.SiglusOrdersRepository;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 

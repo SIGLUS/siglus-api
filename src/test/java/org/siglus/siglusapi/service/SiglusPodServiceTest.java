@@ -97,13 +97,13 @@ import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.localmachine.event.proofofdelivery.web.ProofOfDeliveryEmitter;
 import org.siglus.siglusapi.localmachine.event.proofofdelivery.web.ProofOfDeliveryEvent;
 import org.siglus.siglusapi.repository.OrderableRepository;
-import org.siglus.siglusapi.repository.SiglusOrdersRepository;
 import org.siglus.siglusapi.repository.PodExtensionRepository;
 import org.siglus.siglusapi.repository.PodLineItemsByLocationRepository;
 import org.siglus.siglusapi.repository.PodLineItemsExtensionRepository;
 import org.siglus.siglusapi.repository.PodLineItemsRepository;
 import org.siglus.siglusapi.repository.PodSubDraftLineItemsByLocationRepository;
 import org.siglus.siglusapi.repository.PodSubDraftRepository;
+import org.siglus.siglusapi.repository.SiglusOrdersRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.repository.SiglusStockCardRepository;
 import org.siglus.siglusapi.repository.dto.OrderDto;
@@ -1216,12 +1216,12 @@ public class SiglusPodServiceTest {
 
   private List<SubDraftInfo> toSubDraftInfos(List<PodSubDraft> podSubDrafts) {
     return podSubDrafts.stream().map(podSubDraft ->
-            SubDraftInfo.builder()
-                .subDraftId(podSubDraft.getId())
-                .groupNum(podSubDraft.getNumber())
-                .saver(authenticationHelper.getUserNameByUserId(podSubDraft.getOperatorId()))
-                .status(podSubDraft.getStatus())
-                .build())
+        SubDraftInfo.builder()
+            .subDraftId(podSubDraft.getId())
+            .groupNum(podSubDraft.getNumber())
+            .saver(authenticationHelper.getUserNameByUserId(podSubDraft.getOperatorId()))
+            .status(podSubDraft.getStatus())
+            .build())
         .collect(Collectors.toList());
   }
 

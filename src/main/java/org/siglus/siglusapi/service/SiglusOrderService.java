@@ -387,7 +387,9 @@ public class SiglusOrderService {
       return Lists.newArrayList(currentDate.getMonthValue() - 1, currentDate.getMonthValue());
     } else if (currentDate.getDayOfMonth() < submitStartDate.getDayOfMonth()) {
       return Lists.newArrayList(currentDate.getMonthValue() - 1);
-    } else return Lists.newArrayList(currentDate.getMonthValue());
+    } else {
+      return Lists.newArrayList(currentDate.getMonthValue());
+    }
   }
 
   public void closeExpiredOrder(UUID fulfillOrderId) {

@@ -47,7 +47,6 @@ public class SiglusBatchRequisitionControllerTest {
 
   @Mock
   private BatchRequisitionController actualController;
-  ;
 
   private ReleasableRequisitionBatchDto releasableRequisitionBatchDto;
 

@@ -71,10 +71,10 @@ import org.siglus.siglusapi.domain.RequisitionExtension;
 import org.siglus.siglusapi.domain.ShipmentLineItemsExtension;
 import org.siglus.siglusapi.localmachine.event.NotificationService;
 import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
-import org.siglus.siglusapi.repository.SiglusOrdersRepository;
 import org.siglus.siglusapi.repository.PodExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.repository.ShipmentLineItemsExtensionRepository;
+import org.siglus.siglusapi.repository.SiglusOrdersRepository;
 import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
 import org.siglus.siglusapi.repository.SiglusShipmentRepository;
 import org.siglus.siglusapi.service.SiglusShipmentService;
@@ -137,7 +137,8 @@ public class OrderFulfillmentSyncedReplayer {
       order = convertToOrder(event, requisition);
     } else {
       Order orderOrigin =
-          siglusOrdersRepository.findByOrderCode(event.getShipmentExtensionRequest().getShipment().getOrder().getOrderCode());
+          siglusOrdersRepository
+              .findByOrderCode(event.getShipmentExtensionRequest().getShipment().getOrder().getOrderCode());
       order = updateOrderLineItems(event.getShipmentExtensionRequest().getShipment().getOrder(), orderOrigin);
       order.setExternalId(orderOrigin.getExternalId());
     }

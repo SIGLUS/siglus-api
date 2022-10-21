@@ -51,10 +51,10 @@ import org.siglus.siglusapi.localmachine.event.order.fulfillment.OrderFulfillmen
 import org.siglus.siglusapi.localmachine.event.order.fulfillment.StatusMessageRequest;
 import org.siglus.siglusapi.localmachine.eventstore.PayloadSerializer;
 import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
-import org.siglus.siglusapi.repository.SiglusOrdersRepository;
 import org.siglus.siglusapi.repository.PodExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.repository.ShipmentLineItemsExtensionRepository;
+import org.siglus.siglusapi.repository.SiglusOrdersRepository;
 import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
 import org.siglus.siglusapi.repository.SiglusShipmentRepository;
 import org.siglus.siglusapi.service.SiglusNotificationService;
@@ -65,6 +65,7 @@ import org.siglus.siglusapi.web.android.FileBasedTest;
 @RunWith(MockitoJUnitRunner.class)
 @SuppressWarnings({"PMD.UnusedPrivateField"})
 public class OrderFulfillmentSyncedReplayerTest extends FileBasedTest {
+
   @InjectMocks
   private OrderFulfillmentSyncedReplayer orderFulfillmentSyncedReplayer;
   @Mock
