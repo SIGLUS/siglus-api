@@ -18,6 +18,7 @@ package org.siglus.siglusapi.localmachine;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import net.javacrumbs.shedlock.core.LockConfiguration;
 import net.javacrumbs.shedlock.core.LockProvider;
@@ -29,10 +30,24 @@ import org.springframework.stereotype.Component;
 public class ShedLockFactory {
   private final LockProvider lockProvider;
 
+  public AutoClosableLock waitLock(String lockId, long timeoutMillis) throws InterruptedException {
+    long waitUntil = System.currentTimeMillis() + timeoutMillis;
+    while (true) {
+      AutoClosableLock lock = this.lock(lockId);
+      if (lock.isPresent()) {
+        return lock;
+      }
+      if (System.currentTimeMillis() >= waitUntil) {
+        return new AutoClosableLock(Optional.empty());
+      }
+      TimeUnit.MILLISECONDS.sleep(100);
+    }
+  }
+
   public AutoClosableLock lock(String lockId) {
     // the lock will be extended after 1/2 minutes until task done.
-    Duration lockAtMost10Minutes = Duration.ofMinutes(1);
-    Duration lockAtLeast100MilliSeconds = Duration.ofMillis(100);
+    Duration lockAtMost10Minutes = Duration.ofSeconds(30);
+    Duration lockAtLeast100MilliSeconds = Duration.ofMillis(0);
     LockConfiguration lockConfiguration =
         new LockConfiguration(
             Instant.now(), lockId, lockAtMost10Minutes, lockAtLeast100MilliSeconds);

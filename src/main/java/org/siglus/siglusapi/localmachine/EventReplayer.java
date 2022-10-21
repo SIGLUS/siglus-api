@@ -25,6 +25,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -75,7 +76,7 @@ public class EventReplayer {
   protected void playGroupEvents(String groupId) {
     try (AutoClosableLock lock = lockFactory.lock(groupId)) {
       if (!lock.isPresent()) {
-        log.warn("fail to get lock, cancel this round of replay");
+        log.warn("fail to get lock, cancel this round of replay, group:{}", groupId);
         return;
       }
       doPlayGroupEvents(groupId);
@@ -84,12 +85,18 @@ public class EventReplayer {
 
   protected void doPlayGroupEvents(String groupId) {
     List<Event> events = eventStore.loadSortedGroupEvents(groupId);
+    List<UUID> eventIds = events.stream().map(Event::getId).collect(toList());
+    log.info("start to play group:{}, events:{}", groupId, eventIds);
     for (int i = 0; i < events.size(); i++) {
       Event currentEvent = events.get(i);
       if (i != currentEvent.getGroupSequenceNumber()) {
         return;
       }
-      // TODO: 2022/10/18 是否需要把过滤条件这里也加一个 
+      if (currentEvent.isLocalReplayed()) {
+        // continue to check next event
+        continue;
+      }
+      // TODO: 2022/10/18 是否需要把过滤条件这里也加一个
       try (AutoClosableLock lock = lockFactory.lock(DEFAULT_REPLAY_GROUP_LOCK + currentEvent.getReceiverId())) {
         lock.ifPresent(() -> eventPublisher.publishEvent(currentEvent));
       }
