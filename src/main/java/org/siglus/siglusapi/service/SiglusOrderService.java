@@ -351,7 +351,7 @@ public class SiglusOrderService {
         }));
     UUID processingPeriodId = fulfillOrderDtos.get(0).getBasicOrder().getProcessingPeriod().getId();
     ProcessingPeriodExtension processingPeriodExtension = processingPeriodExtensionRepository
-        .findOne(processingPeriodId);
+        .findByProcessingPeriodId(processingPeriodId);
     if (processingPeriodExtension == null) {
       throw new NotFoundException(ERROR_PERIOD_NOT_FOUND);
     }
