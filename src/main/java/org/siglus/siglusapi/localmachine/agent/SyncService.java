@@ -92,6 +92,7 @@ public class SyncService {
     }
     if (CollectionUtils.isEmpty(events)) {
       log.info("pull events got empty");
+      syncRecordService.storeLastSyncRecord();
       return;
     }
     events.forEach(it -> it.setOnlineWebSynced(true));
