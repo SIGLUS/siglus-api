@@ -51,7 +51,7 @@ import org.siglus.siglusapi.localmachine.event.order.fulfillment.OrderFulfillmen
 import org.siglus.siglusapi.localmachine.event.order.fulfillment.StatusMessageRequest;
 import org.siglus.siglusapi.localmachine.eventstore.PayloadSerializer;
 import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
-import org.siglus.siglusapi.repository.OrdersRepository;
+import org.siglus.siglusapi.repository.SiglusOrdersRepository;
 import org.siglus.siglusapi.repository.PodExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.repository.ShipmentLineItemsExtensionRepository;
@@ -72,7 +72,7 @@ public class OrderFulfillmentSyncedReplayerTest extends FileBasedTest {
   @Mock
   private SiglusShipmentService siglusShipmentService;
   @Mock
-  private OrdersRepository ordersRepository;
+  private SiglusOrdersRepository siglusOrdersRepository;
   @Mock
   private OrderDtoBuilder orderDtoBuilder;
   @Mock
@@ -110,11 +110,11 @@ public class OrderFulfillmentSyncedReplayerTest extends FileBasedTest {
     ObjectMapper objectMapper = PayloadSerializer.LOCALMACHINE_EVENT_OBJECT_MAPPER;
     String jsonOrder = readFromFile("order.json");
     Order order = objectMapper.readValue(jsonOrder, Order.class);
-    when(ordersRepository.saveAndFlush(any())).thenReturn(order);
-    when(ordersRepository.findByOrderCode(any())).thenReturn(order);
+    when(siglusOrdersRepository.saveAndFlush(any())).thenReturn(order);
+    when(siglusOrdersRepository.findByOrderCode(any())).thenReturn(order);
     OrderDto orderDto = objectMapper.readValue(readFromFile("orderDto.json"), OrderDto.class);
     when(orderDtoBuilder.build(any())).thenReturn(orderDto);
-    when(ordersRepository.findOne(any(UUID.class))).thenReturn(order);
+    when(siglusOrdersRepository.findOne(any(UUID.class))).thenReturn(order);
     Shipment shipment = objectMapper.readValue(readFromFile("shipmentRequest.json"), Shipment.class);
     when(siglusShipmentRepository.saveAndFlush(any())).thenReturn(shipment);
     when(siglusProofOfDeliveryRepository.findByShipmentId(any())).thenReturn(ProofOfDelivery.newInstance(shipment));

@@ -26,7 +26,7 @@ import org.openlmis.fulfillment.repository.ProofOfDeliveryRepository;
 import org.siglus.siglusapi.domain.PodExtension;
 import org.siglus.siglusapi.domain.PodLineItemsByLocation;
 import org.siglus.siglusapi.localmachine.event.NotificationService;
-import org.siglus.siglusapi.repository.OrdersRepository;
+import org.siglus.siglusapi.repository.SiglusOrdersRepository;
 import org.siglus.siglusapi.repository.PodExtensionRepository;
 import org.siglus.siglusapi.repository.PodLineItemsByLocationRepository;
 import org.springframework.context.event.EventListener;
@@ -39,7 +39,7 @@ public class ProofOfDeliveryReplayer {
 
   private final ProofOfDeliveryRepository proofOfDeliveryRepository;
   private final PodExtensionRepository podExtensionRepository;
-  private final OrdersRepository ordersRepository;
+  private final SiglusOrdersRepository siglusOrdersRepository;
   private final PodLineItemsByLocationRepository podLineItemsByLocationRepository;
   private final NotificationService notificationService;
 
@@ -67,7 +67,7 @@ public class ProofOfDeliveryReplayer {
 
     Shipment shipment = proofOfDelivery.getShipment();
     String orderCode = shipment.getOrder().getOrderCode();
-    Order order = ordersRepository.findByOrderCode(orderCode);
+    Order order = siglusOrdersRepository.findByOrderCode(orderCode);
     order.setStatus(shipment.getOrder().getStatus());
 
     List<PodLineItemsByLocation> podLineItemsByLocations = event.getPodLineItemsByLocation();

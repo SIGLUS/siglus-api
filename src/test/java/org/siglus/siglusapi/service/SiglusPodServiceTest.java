@@ -97,7 +97,7 @@ import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.localmachine.event.proofofdelivery.web.ProofOfDeliveryEmitter;
 import org.siglus.siglusapi.localmachine.event.proofofdelivery.web.ProofOfDeliveryEvent;
 import org.siglus.siglusapi.repository.OrderableRepository;
-import org.siglus.siglusapi.repository.OrdersRepository;
+import org.siglus.siglusapi.repository.SiglusOrdersRepository;
 import org.siglus.siglusapi.repository.PodExtensionRepository;
 import org.siglus.siglusapi.repository.PodLineItemsByLocationRepository;
 import org.siglus.siglusapi.repository.PodLineItemsExtensionRepository;
@@ -166,7 +166,7 @@ public class SiglusPodServiceTest {
   private SiglusNotificationService notificationService;
 
   @Mock
-  private OrdersRepository ordersRepository;
+  private SiglusOrdersRepository siglusOrdersRepository;
 
   @Mock
   private SiglusRequisitionRepository siglusRequisitionRepository;
@@ -790,7 +790,7 @@ public class SiglusPodServiceTest {
   public void shouldReturnWhenGetPintInfo() {
     // given
     OrderDto orderDto = buildMockOrderDto();
-    when(ordersRepository.findOrderDtoById(orderId)).thenReturn(orderDto);
+    when(siglusOrdersRepository.findOrderDtoById(orderId)).thenReturn(orderDto);
     mockForRequisitionCount();
     when(siglusFacilityReferenceDataService.findOneWithoutCache(orderDto.getSupplyingFacilityId())).thenReturn(
         buildMockFacilityDtoWithLevel3());
@@ -812,7 +812,7 @@ public class SiglusPodServiceTest {
   public void shouldReturnWithSubOrderNumberWhenGetSubOrderPintInfo() {
     // given
     OrderDto orderDto = buildMockSubOrderDto();
-    when(ordersRepository.findOrderDtoById(orderId)).thenReturn(orderDto);
+    when(siglusOrdersRepository.findOrderDtoById(orderId)).thenReturn(orderDto);
     mockForRequisitionCount();
     when(siglusFacilityReferenceDataService.findOneWithoutCache(orderDto.getSupplyingFacilityId())).thenReturn(
         buildMockFacilityDtoWithLevel3());
@@ -835,7 +835,7 @@ public class SiglusPodServiceTest {
   public void shouldReturnWhenGetPintInfoWithDifferentDbResult() {
     // given
     OrderDto orderDto = buildMockOrderDtoWithOutRequisitionId();
-    when(ordersRepository.findOrderDtoById(orderId)).thenReturn(orderDto);
+    when(siglusOrdersRepository.findOrderDtoById(orderId)).thenReturn(orderDto);
     mockForRequisitionCount();
     when(siglusFacilityReferenceDataService.findOneWithoutCache(orderDto.getSupplyingFacilityId())).thenReturn(
         buildMockFacilityDtoWithLevel2());
@@ -856,7 +856,7 @@ public class SiglusPodServiceTest {
   public void shouldReturnWhenGetPintInfoWithZoneNull() {
     // given
     OrderDto orderDto = buildMockOrderDtoWithOutRequisitionId();
-    when(ordersRepository.findOrderDtoById(orderId)).thenReturn(orderDto);
+    when(siglusOrdersRepository.findOrderDtoById(orderId)).thenReturn(orderDto);
     mockForRequisitionCount();
     when(siglusFacilityReferenceDataService.findOneWithoutCache(orderDto.getSupplyingFacilityId())).thenReturn(
         new FacilityDto());
@@ -878,7 +878,7 @@ public class SiglusPodServiceTest {
   public void shouldReturnWhenGetPintInfoWithParentZoneNull() {
     // given
     OrderDto orderDto = buildMockOrderDtoWithOutRequisitionId();
-    when(ordersRepository.findOrderDtoById(orderId)).thenReturn(orderDto);
+    when(siglusOrdersRepository.findOrderDtoById(orderId)).thenReturn(orderDto);
     mockForRequisitionCount();
     when(siglusFacilityReferenceDataService.findOneWithoutCache(orderDto.getSupplyingFacilityId())).thenReturn(
         buildMockFacilityDtoWithLevel3AndNoParent());

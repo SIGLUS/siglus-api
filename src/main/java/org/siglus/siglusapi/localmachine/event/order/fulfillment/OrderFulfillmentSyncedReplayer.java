@@ -71,7 +71,7 @@ import org.siglus.siglusapi.domain.RequisitionExtension;
 import org.siglus.siglusapi.domain.ShipmentLineItemsExtension;
 import org.siglus.siglusapi.localmachine.event.NotificationService;
 import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
-import org.siglus.siglusapi.repository.OrdersRepository;
+import org.siglus.siglusapi.repository.SiglusOrdersRepository;
 import org.siglus.siglusapi.repository.PodExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.repository.ShipmentLineItemsExtensionRepository;
@@ -90,7 +90,7 @@ import org.springframework.stereotype.Service;
 public class OrderFulfillmentSyncedReplayer {
 
   private final SiglusSimulateUserAuthHelper simulateUserAuthHelper;
-  private final OrdersRepository ordersRepository;
+  private final SiglusOrdersRepository siglusOrdersRepository;
   private final OrderDtoBuilder orderDtoBuilder;
   private final RequisitionExtensionRepository requisitionExtensionRepository;
   private final RequisitionRepository requisitionRepository;
@@ -137,7 +137,7 @@ public class OrderFulfillmentSyncedReplayer {
       order = convertToOrder(event, requisition);
     } else {
       Order orderOrigin =
-          ordersRepository.findByOrderCode(event.getShipmentExtensionRequest().getShipment().getOrder().getOrderCode());
+          siglusOrdersRepository.findByOrderCode(event.getShipmentExtensionRequest().getShipment().getOrder().getOrderCode());
       order = updateOrderLineItems(event.getShipmentExtensionRequest().getShipment().getOrder(), orderOrigin);
       order.setExternalId(orderOrigin.getExternalId());
     }
@@ -146,7 +146,7 @@ public class OrderFulfillmentSyncedReplayer {
     removeSkippedOrderLineItems(skippedOrderableIds, order, event);
     // set to SHIPPED
     order.updateStatus(OrderStatus.SHIPPED, new UpdateDetails(event.getFulfillUserId(), ZonedDateTime.now()));
-    Order shipped = ordersRepository.saveAndFlush(order);
+    Order shipped = siglusOrdersRepository.saveAndFlush(order);
 
     UUID proofOfDeliveryId = fulfillOrder(event, shipped);
 
@@ -177,7 +177,7 @@ public class OrderFulfillmentSyncedReplayer {
           lineItemsOrigin.add(orderLineItem);
         });
     log.info("update orderId: {}, orderLineItem: {}", orderOrigin.getId(), lineItemsOrigin);
-    return ordersRepository.saveAndFlush(orderOrigin);
+    return siglusOrdersRepository.saveAndFlush(orderOrigin);
   }
 
   private void finalApprove(Requisition requisition, RequisitionExtension requisitionExtension,
@@ -253,7 +253,7 @@ public class OrderFulfillmentSyncedReplayer {
   }
 
   private Order createOrder(OrderFulfillmentSyncedEvent event) {
-    return ordersRepository.saveAndFlush(event.getConvertToOrderRequest().getFirstOrder());
+    return siglusOrdersRepository.saveAndFlush(event.getConvertToOrderRequest().getFirstOrder());
   }
 
   private void releaseRequisitionsAsOrder(Requisition requisition, UUID supplierUserId, UUID supplierFacilityId) {
@@ -386,7 +386,7 @@ public class OrderFulfillmentSyncedReplayer {
     log.info("skippedLineItemIds size = " + skippedLineItemIds.size());
     order.getOrderLineItems().removeIf(
         orderLineItem -> skippedOrderableIds.contains(orderLineItem.getOrderable().getId()));
-    ordersRepository.saveAndFlush(order);
+    siglusOrdersRepository.saveAndFlush(order);
     if (CollectionUtils.isEmpty(skippedLineItemIds)) {
       return;
     }
@@ -459,7 +459,7 @@ public class OrderFulfillmentSyncedReplayer {
 
   private Order saveOrder(UUID fulfillUserId, OrderDto order) {
     Order newOrder = Order.newInstance(order, new UpdateDetails(fulfillUserId, ZonedDateTime.now()));
-    return ordersRepository.saveAndFlush(newOrder);
+    return siglusOrdersRepository.saveAndFlush(newOrder);
   }
 
   private void updateOrderExtension(
@@ -497,12 +497,12 @@ public class OrderFulfillmentSyncedReplayer {
 
   private void updateExistOrderForSubOrder(UUID orderId,
       UUID externalId, String orderCode, OrderStatus orderStatus) {
-    Order originOrder = ordersRepository.findOne(orderId);
+    Order originOrder = siglusOrdersRepository.findOne(orderId);
     originOrder.setExternalId(externalId);
     originOrder.setOrderCode(orderCode);
     originOrder.setStatus(orderStatus);
     log.info("update exist order for subOrder: {}", originOrder);
-    ordersRepository.saveAndFlush(originOrder);
+    siglusOrdersRepository.saveAndFlush(originOrder);
   }
 
   private Set<UUID> getSkippedOrderLineItemIds(ShipmentDto shipmentDto) {

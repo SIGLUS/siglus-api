@@ -27,6 +27,7 @@ import static org.siglus.siglusapi.constant.FieldConstants.PROGRAM_ID;
 import static org.siglus.siglusapi.constant.FieldConstants.RIGHT_NAME;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_NO_PERIOD_MATCH;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_ORDER_NOT_EXIST;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_PERIOD_NOT_FOUND;
 import static org.siglus.siglusapi.util.SiglusDateHelper.DATE_MONTH_YEAR;
 import static org.siglus.siglusapi.util.SiglusDateHelper.getFormatDate;
@@ -99,12 +100,12 @@ import org.siglus.siglusapi.dto.OrderStatusDto;
 import org.siglus.siglusapi.dto.SiglusOrderDto;
 import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.NotFoundException;
-import org.siglus.siglusapi.i18n.MessageKeys;
 import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.OrderableRepository;
 import org.siglus.siglusapi.repository.PodSubDraftRepository;
 import org.siglus.siglusapi.repository.SiglusFacilityRepository;
 import org.siglus.siglusapi.repository.SiglusLocalIssueVoucherRepository;
+import org.siglus.siglusapi.repository.SiglusOrdersRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.repository.StockManagementRepository;
 import org.siglus.siglusapi.repository.dto.OrderSuggestedQuantityDto;
@@ -229,6 +230,10 @@ public class SiglusOrderService {
 
   @Autowired
   private StockManagementRepository stockManagementRepository;
+
+  @Autowired
+  private SiglusOrdersRepository siglusOrdersRepository;
+
 
   private static final List<String> REQUISITION_STATUS_AFTER_FINAL_APPROVED = Lists.newArrayList(
       RequisitionStatus.APPROVED.name(),
@@ -380,9 +385,19 @@ public class SiglusOrderService {
     if (currentDate.getDayOfMonth() >= submitStartDate.getDayOfMonth() && currentDate.getDayOfMonth() <= submitEndDate
         .getDayOfMonth()) {
       return Lists.newArrayList(currentDate.getMonthValue() - 1, currentDate.getMonthValue());
-    } else {
+    } else if (currentDate.getDayOfMonth() < submitStartDate.getDayOfMonth()) {
       return Lists.newArrayList(currentDate.getMonthValue() - 1);
+    } else return Lists.newArrayList(currentDate.getMonthValue());
+  }
+
+  public void closeExpiredOrders(UUID fulfillOrderId) {
+    Order order = siglusOrdersRepository.findOne(fulfillOrderId);
+    if (order == null) {
+      throw new NotFoundException(ERROR_ORDER_NOT_EXIST);
     }
+    log.info("manually close the fulfill order with order id: {}", fulfillOrderId);
+    order.setStatus(OrderStatus.CLOSED);
+    siglusOrdersRepository.save(order);
   }
 
   public OrderStatusDto searchOrderStatusById(UUID orderId) {
@@ -581,7 +596,7 @@ public class SiglusOrderService {
   private Order getOrder(UUID orderId) {
     Order order = orderRepository.findOne(orderId);
     if (Objects.isNull(order)) {
-      throw new NotFoundException(MessageKeys.ERROR_ORDER_NOT_EXIST);
+      throw new NotFoundException(ERROR_ORDER_NOT_EXIST);
     }
     return order;
   }

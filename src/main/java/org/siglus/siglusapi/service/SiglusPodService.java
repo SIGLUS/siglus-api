@@ -82,7 +82,7 @@ import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.localmachine.event.proofofdelivery.web.ProofOfDeliveryEmitter;
 import org.siglus.siglusapi.repository.OrderableRepository;
-import org.siglus.siglusapi.repository.OrdersRepository;
+import org.siglus.siglusapi.repository.SiglusOrdersRepository;
 import org.siglus.siglusapi.repository.PodExtensionRepository;
 import org.siglus.siglusapi.repository.PodLineItemsByLocationRepository;
 import org.siglus.siglusapi.repository.PodLineItemsExtensionRepository;
@@ -133,7 +133,7 @@ public class SiglusPodService {
   private final PodLineItemsRepository podLineItemsRepository;
   private final ProofOfDeliveryController podController;
   private final SiglusNotificationService notificationService;
-  private final OrdersRepository ordersRepository;
+  private final SiglusOrdersRepository siglusOrdersRepository;
   private final SiglusRequisitionRepository siglusRequisitionRepository;
   private final SiglusFacilityReferenceDataService siglusFacilityReferenceDataService;
   private final StatusChangeRepository requisitionStatusChangeRepository;
@@ -363,7 +363,7 @@ public class SiglusPodService {
   }
 
   public PodPrintInfoResponse getPrintInfo(UUID orderId, UUID podId) {
-    OrderDto orderDto = ordersRepository.findOrderDtoById(orderId);
+    OrderDto orderDto = siglusOrdersRepository.findOrderDtoById(orderId);
     UUID realRequisitionId =
         Objects.isNull(orderDto.getRequisitionId()) ? orderDto.getExternalId() : orderDto.getRequisitionId();
 
