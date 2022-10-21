@@ -13,47 +13,38 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.localmachine.event.order.release;
+package org.siglus.siglusapi.localmachine.event.requisition.web;
 
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.dto.ReleasableRequisitionDto;
 import org.openlmis.requisition.repository.RequisitionRepository;
-import org.siglus.siglusapi.domain.RequisitionExtension;
 import org.siglus.siglusapi.localmachine.EventPublisher;
-import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
+import org.siglus.siglusapi.localmachine.event.EventCommonService;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-public class OrderReleaseEmitter {
-
+public class RequisitionReleaseEmitter {
   private final EventPublisher eventPublisher;
-
-  private final RequisitionExtensionRepository requisitionExtensionRepository;
-
   private final RequisitionRepository requisitionRepository;
+  private final EventCommonService eventCommonService;
 
-  public OrderReleaseEvent emit(ReleasableRequisitionDto releasableRequisitionDto, UUID authorId) {
-    OrderReleaseEvent orderReleaseEvent = getEvent(releasableRequisitionDto, authorId);
-    eventPublisher.emitGroupEvent(getGroupId(orderReleaseEvent.getRequisitionId()),
-        getReceiverId(orderReleaseEvent.getRequisitionId()), orderReleaseEvent);
-    return orderReleaseEvent;
+  public RequisitionReleaseEvent emit(ReleasableRequisitionDto releasableRequisitionDto, UUID authorId) {
+    RequisitionReleaseEvent requisitionReleaseEvent = getEvent(releasableRequisitionDto, authorId);
+    eventPublisher.emitGroupEvent(requisitionReleaseEvent.getRequisitionNumber(),
+        getReceiverId(releasableRequisitionDto.getRequisitionId()), requisitionReleaseEvent);
+    return requisitionReleaseEvent;
   }
 
-  private OrderReleaseEvent getEvent(ReleasableRequisitionDto releasableRequisitionDto, UUID authorId) {
-    return OrderReleaseEvent
+  private RequisitionReleaseEvent getEvent(ReleasableRequisitionDto releasableRequisitionDto, UUID authorId) {
+    return RequisitionReleaseEvent
         .builder()
-        .requisitionId(releasableRequisitionDto.getRequisitionId())
+        .requisitionNumber(eventCommonService.getGroupId(releasableRequisitionDto.getRequisitionId()))
         .supplyingDepotId(releasableRequisitionDto.getSupplyingDepotId())
         .authorId(authorId)
         .build();
-  }
-
-  private String getGroupId(UUID requisitionId) {
-    RequisitionExtension requisitionExtension = requisitionExtensionRepository.findByRequisitionId(requisitionId);
-    return requisitionExtension.getRequisitionNumberPrefix() + requisitionExtension.getRequisitionNumber();
   }
 
   private UUID getReceiverId(UUID requisitionId) {

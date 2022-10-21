@@ -32,7 +32,7 @@ import org.openlmis.requisition.dto.ReleasableRequisitionBatchDto;
 import org.openlmis.requisition.dto.ReleasableRequisitionDto;
 import org.openlmis.requisition.dto.RequisitionsProcessingStatusDto;
 import org.siglus.siglusapi.dto.UserDto;
-import org.siglus.siglusapi.localmachine.event.order.release.OrderReleaseEmitter;
+import org.siglus.siglusapi.localmachine.event.requisition.web.RequisitionReleaseEmitter;
 import org.siglus.siglusapi.service.BatchReleaseRequisitionService;
 import org.siglus.siglusapi.service.SiglusNotificationService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
@@ -55,7 +55,7 @@ public class SiglusBatchRequisitionControllerTest {
   private SiglusNotificationService notificationService;
 
   @Mock
-  private OrderReleaseEmitter orderReleaseEmitter;
+  private RequisitionReleaseEmitter requisitionReleaseEmitter;
 
   @Mock
   private SiglusAuthenticationHelper siglusAuthenticationHelper;
@@ -89,7 +89,7 @@ public class SiglusBatchRequisitionControllerTest {
 
     // then
     verify(batchReleaseRequisitionService).getRequisitionsProcessingStatusDtoResponse(releasableRequisitionBatchDto);
-    verify(orderReleaseEmitter, times(1)).emit(any(), any());
+    verify(requisitionReleaseEmitter, times(1)).emit(any(), any());
   }
 
 }
