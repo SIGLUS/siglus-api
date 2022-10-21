@@ -15,9 +15,10 @@
 
 package org.siglus.siglusapi.localmachine.event.order.fulfillment;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.openlmis.fulfillment.repository.OrderRepository;
 import org.openlmis.fulfillment.web.shipment.ShipmentDto;
@@ -25,6 +26,7 @@ import org.openlmis.fulfillment.web.util.OrderObjectReferenceDto;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.domain.requisition.StatusChange;
+import org.openlmis.requisition.domain.requisition.StatusMessage;
 import org.openlmis.requisition.repository.RequisitionRepository;
 import org.siglus.common.repository.OrderExternalRepository;
 import org.siglus.siglusapi.domain.RequisitionExtension;
@@ -34,6 +36,7 @@ import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.repository.SiglusStatusChangeRepository;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.web.request.ShipmentExtensionRequest;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -57,11 +60,11 @@ public class OrderFulfillmentSyncedEmitter {
         requisitionExtensionRepository.findByRequisitionNumber(shipmentDto.getOrder().getRequisitionNumber());
     List<StatusChange> statusChanges =
         siglusStatusChangeRepository.findByRequisitionId(requisitionExtension.getRequisitionId());
-
+    Optional<StatusChange> finalApprovedStatusChange = statusChanges.stream().filter(item ->
+        item.getStatus() == RequisitionStatus.APPROVED).findFirst();
     // TODO: stock event submit locally add implement ( 2022/9/15 by kourengang)
     OrderFulfillmentSyncedEvent event = OrderFulfillmentSyncedEvent.builder()
-        .finalApproveUserId(statusChanges.stream().filter(item ->
-            item.getStatus() == RequisitionStatus.APPROVED).findFirst().orElse(new StatusChange()).getAuthorId())
+        .finalApproveUserId(finalApprovedStatusChange.orElse(new StatusChange()).getAuthorId())
         .convertToOrderUserId(statusChanges.stream().filter(item ->
             item.getStatus() == RequisitionStatus.RELEASED).findFirst().orElse(new StatusChange()).getAuthorId())
         .fulfillUserId(authHelper.getCurrentUser().getId())
@@ -69,7 +72,7 @@ public class OrderFulfillmentSyncedEmitter {
         .isWithLocation(isWithLocation)
         .isSubOrder(isSubOrder)
         .shipmentExtensionRequest(shipmentExtensionRequest)
-        .convertToOrderRequest(getConvertToOrderRequest(shipmentDto, requisitionExtension))
+        .convertToOrderRequest(getConvertToOrderRequest(shipmentDto, requisitionExtension, finalApprovedStatusChange))
         .build();
     eventPublisher.emitGroupEvent(
         requisitionExtension.getRequisitionNumberPrefix() + requisitionExtension.getRequisitionNumber(),
@@ -78,23 +81,35 @@ public class OrderFulfillmentSyncedEmitter {
   }
 
   private ConvertToOrderRequest getConvertToOrderRequest(ShipmentDto shipmentDto,
-      RequisitionExtension requisitionExtension) {
+      RequisitionExtension requisitionExtension, Optional<StatusChange> finalApprovedStatusChange) {
     if (neededFirstOrder(shipmentDto.getOrder(), requisitionExtension.getRequisitionId())) {
       Requisition requisition = requisitionRepository.findOne(requisitionExtension.getRequisitionId());
-      final List<RequisitionLineItemRequest> requisitionLineItemRequests =
-          requisition.getRequisitionLineItems().stream()
-              .map(requisitionLineItem -> RequisitionLineItemRequest.builder()
-                  .orderable(requisitionLineItem.getOrderable())
-                  .approvedQuantity(requisitionLineItem.getApprovedQuantity())
-                  .build())
-              .collect(Collectors.toList());
+      final List<RequisitionLineItemRequest> requisitionLineItemRequests = new ArrayList<>();
+      requisition.getRequisitionLineItems().forEach(requisitionLineItem -> {
+        RequisitionLineItemRequest requisitionLineItemRequest = new RequisitionLineItemRequest();
+        BeanUtils.copyProperties(requisitionLineItem, requisitionLineItemRequest);
+        requisitionLineItemRequests.add(requisitionLineItemRequest);
+      });
       return ConvertToOrderRequest.builder()
           .firstOrder(orderRepository.findOne(shipmentDto.getOrder().getId()))
           .requisitionNumber(shipmentDto.getOrder().getRequisitionNumber())
           .requisitionLineItems(requisitionLineItemRequests)
+          .finalApproveStatusMessage(getStatusMessageRequest(finalApprovedStatusChange))
+          .finalApproveSupervisoryNodeId(finalApprovedStatusChange.orElse(new StatusChange()).getSupervisoryNodeId())
           .build();
     }
     return null;
+  }
+
+  private StatusMessageRequest getStatusMessageRequest(Optional<StatusChange> finalApprovedStatusChange) {
+    StatusMessage statusMessage =
+        finalApprovedStatusChange.orElseThrow(IllegalStateException::new).getStatusMessage();
+    StatusMessageRequest finalApproveStatusMessage = null;
+    if (statusMessage != null) {
+      finalApproveStatusMessage = new StatusMessageRequest();
+      BeanUtils.copyProperties(statusMessage, finalApproveStatusMessage);
+    }
+    return finalApproveStatusMessage;
   }
 
   private boolean neededFirstOrder(OrderObjectReferenceDto order, UUID requisitionId) {

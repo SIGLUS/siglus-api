@@ -33,6 +33,7 @@ import org.openlmis.requisition.domain.requisition.RequisitionBuilder;
 import org.openlmis.requisition.domain.requisition.RequisitionLineItem;
 import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.domain.requisition.StatusChange;
+import org.openlmis.requisition.domain.requisition.StatusMessage;
 import org.openlmis.requisition.domain.requisition.VersionEntityReference;
 import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.requisition.dto.BasicProcessingPeriodDto;
@@ -317,10 +318,17 @@ public class RequisitionInternalApproveReplayer {
     statusChange.setRequisition(requisition);
     statusChange.setAuthorId(eventStatusChange.get().getAuthorId());
     statusChange.setSupervisoryNodeId(eventStatusChange.get().getSupervisoryNodeId());
-    statusChange.setStatusMessage(eventStatusChange.get().getStatusMessage());
     statusChange.setCreatedDate(eventStatusChange.get().getCreatedDate());
     statusChange.setModifiedDate(eventStatusChange.get().getModifiedDate());
     requisition.getStatusChanges().add(statusChange);
+    StatusMessage oldStatusMessage = eventStatusChange.get().getStatusMessage();
+    if (oldStatusMessage == null) {
+      return;
+    }
+    StatusMessage newStatusMessage = StatusMessage.newStatusMessage(requisition, statusChange,
+        oldStatusMessage.getAuthorId(), oldStatusMessage.getAuthorFirstName(), oldStatusMessage.getAuthorFirstName(),
+        oldStatusMessage.getBody());
+    statusChange.setStatusMessage(newStatusMessage);
   }
 
   private void buildRequisitionLineItemsExtension(Requisition requisition,

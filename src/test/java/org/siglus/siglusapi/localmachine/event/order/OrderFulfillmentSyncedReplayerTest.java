@@ -18,9 +18,11 @@ package org.siglus.siglusapi.localmachine.event.order;
 import static org.mockito.Matchers.any;
 import static org.powermock.api.mockito.PowerMockito.when;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import org.junit.Before;
 import org.junit.Test;
@@ -37,6 +39,7 @@ import org.openlmis.fulfillment.web.util.OrderDtoBuilder;
 import org.openlmis.requisition.domain.RequisitionTemplate;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.RequisitionBuilder;
+import org.openlmis.requisition.dto.OrderableDto;
 import org.openlmis.requisition.repository.RequisitionRepository;
 import org.openlmis.requisition.service.referencedata.OrderableReferenceDataService;
 import org.siglus.common.domain.OrderExternal;
@@ -45,6 +48,7 @@ import org.siglus.siglusapi.domain.RequisitionExtension;
 import org.siglus.siglusapi.localmachine.event.NotificationService;
 import org.siglus.siglusapi.localmachine.event.order.fulfillment.OrderFulfillmentSyncedEvent;
 import org.siglus.siglusapi.localmachine.event.order.fulfillment.OrderFulfillmentSyncedReplayer;
+import org.siglus.siglusapi.localmachine.event.order.fulfillment.StatusMessageRequest;
 import org.siglus.siglusapi.localmachine.eventstore.PayloadSerializer;
 import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.OrdersRepository;
@@ -94,12 +98,12 @@ public class OrderFulfillmentSyncedReplayerTest extends FileBasedTest {
   @Mock
   private PodExtensionRepository podExtensionRepository;
   @Mock
-  private  NotificationService notificationService;
+  private NotificationService notificationService;
 
   private final UUID requisitionId = UUID.randomUUID();
   private final UUID facilityId = UUID.randomUUID();
   private final UUID orderableId = UUID.randomUUID();
-  private final UUID programId = UUID.randomUUID();
+  private final UUID programId = UUID.fromString("a24f19a8-3743-4a1a-a919-e8f97b5719ad");
 
   @Before
   public void setup() throws IOException {
@@ -114,6 +118,19 @@ public class OrderFulfillmentSyncedReplayerTest extends FileBasedTest {
     Shipment shipment = objectMapper.readValue(readFromFile("shipmentRequest.json"), Shipment.class);
     when(siglusShipmentRepository.saveAndFlush(any())).thenReturn(shipment);
     when(siglusProofOfDeliveryRepository.findByShipmentId(any())).thenReturn(ProofOfDelivery.newInstance(shipment));
+    String orderablesJson = "[{\"id\": \"f56977c3-af28-4daf-a92a-4244a4a13335\", \"programs\": [{\"programId\": "
+        + "\"a24f19a8-3743-4a1a-a919-e8f97b5719ad\"}], \"meta\": {\"versionNumber\": 5}}, {\"id\": "
+        + "\"72044e17-d868-40bc-9d5b-32cd2a0fde30\", \"programs\": [{\"programId\": "
+        + "\"a24f19a8-3743-4a1a-a919-e8f97b5719ad\"}], \"meta\": {\"versionNumber\": 3}}, {\"id\": "
+        + "\"9f74be18-18d9-4ef4-8b43-0eda127e2e08\", \"programs\": [{\"programId\": "
+        + "\"a24f19a8-3743-4a1a-a919-e8f97b5719ad\"}], \"meta\": {\"versionNumber\": 5}}, {\"id\": "
+        + "\"37806f29-8c43-4d46-961d-376b9668f474\", \"programs\": [{\"programId\": "
+        + "\"a24f19a8-3743-4a1a-a919-e8f97b5719ad\"}], \"meta\": {\"versionNumber\": 3}}]";
+    final List<OrderableDto> orderableDtos =
+        PayloadSerializer.LOCALMACHINE_EVENT_OBJECT_MAPPER.readValue(orderablesJson,
+            new TypeReference<List<OrderableDto>>() {
+            });
+    when(orderableReferenceDataService.findByIdentities(any())).thenReturn(orderableDtos);
   }
 
 
@@ -136,6 +153,7 @@ public class OrderFulfillmentSyncedReplayerTest extends FileBasedTest {
     ObjectMapper objectMapper = PayloadSerializer.LOCALMACHINE_EVENT_OBJECT_MAPPER;
     String jsonRequest = readFromFile("request1.json");
     OrderFulfillmentSyncedEvent event = objectMapper.readValue(jsonRequest, OrderFulfillmentSyncedEvent.class);
+    resetStatusMessageRequest(event);
     // when
     orderFulfillmentSyncedReplayer.replay(event);
   }
@@ -143,7 +161,6 @@ public class OrderFulfillmentSyncedReplayerTest extends FileBasedTest {
   @Test
   public void shouldDoReplaySuccessWhenNotConvertToOrder() throws IOException {
     // given
-
     RequisitionExtension requisitionExtension = new RequisitionExtension();
     requisitionExtension.setRequisitionId(requisitionId);
     when(requisitionExtensionRepository.findByRequisitionNumber(any())).thenReturn(requisitionExtension);
@@ -161,5 +178,11 @@ public class OrderFulfillmentSyncedReplayerTest extends FileBasedTest {
     OrderFulfillmentSyncedEvent event = objectMapper.readValue(jsonRequest, OrderFulfillmentSyncedEvent.class);
     // when
     orderFulfillmentSyncedReplayer.replay(event);
+  }
+
+  private void resetStatusMessageRequest(OrderFulfillmentSyncedEvent event) {
+    StatusMessageRequest statusMessageRequest = new StatusMessageRequest();
+    statusMessageRequest.setBody("this is a comment");
+    event.getConvertToOrderRequest().setFinalApproveStatusMessage(statusMessageRequest);
   }
 }

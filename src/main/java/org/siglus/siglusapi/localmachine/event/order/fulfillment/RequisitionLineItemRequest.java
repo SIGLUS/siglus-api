@@ -19,6 +19,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.joda.money.Money;
 import org.openlmis.requisition.domain.requisition.VersionEntityReference;
 
 @Data
@@ -29,4 +30,26 @@ public class RequisitionLineItemRequest {
 
   private VersionEntityReference orderable;
   private Integer approvedQuantity;
+  private VersionEntityReference facilityTypeApprovedProduct;
+  private Integer beginningBalance;
+  private Integer totalReceivedQuantity;
+  private Integer totalLossesAndAdjustments;
+  private Integer stockOnHand;
+  private Integer requestedQuantity;
+  private Integer totalConsumedQuantity;
+  private Integer total;
+  private String requestedQuantityExplanation;
+  private String remarks;
+  private Integer totalStockoutDays;
+  private Long packsToShip;
+  private Boolean skipped;
+  private Money totalCost;
+  private Integer numberOfNewPatientsAdded;
+  private Integer additionalQuantityRequired;
+  private Integer adjustedConsumption;
+  private Integer averageConsumption;
+  private Integer maximumStockQuantity;
+  private Integer calculatedOrderQuantity;
+  private Integer idealStockAmount;
+  private Integer calculatedOrderQuantityIsa;
 }
