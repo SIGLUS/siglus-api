@@ -26,9 +26,6 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -54,7 +51,6 @@ import org.siglus.siglusapi.localmachine.event.order.fulfillment.ConvertToOrderR
 import org.siglus.siglusapi.localmachine.event.order.fulfillment.OrderFulfillmentSyncedEmitter;
 import org.siglus.siglusapi.localmachine.event.order.fulfillment.OrderFulfillmentSyncedEvent;
 import org.siglus.siglusapi.localmachine.event.order.fulfillment.RequisitionLineItemRequest;
-import org.siglus.siglusapi.localmachine.event.requisition.web.RequisitionInternalApprovedEvent;
 import org.siglus.siglusapi.localmachine.eventstore.PayloadSerializer;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
@@ -163,25 +159,5 @@ public class OrderFulfillmentSyncedEmitterTest extends FileBasedTest {
     int count = EventPayloadCheckUtils.checkEventSerializeChanges(event, OrderFulfillmentSyncedEvent.class);
     // then
     assertThat(count).isZero();
-  }
-
-  @Test
-  public void test() throws IOException {
-    ObjectMapper objectMapper = PayloadSerializer.LOCALMACHINE_EVENT_OBJECT_MAPPER;
-    String jsonOrder = readFromFile("a.txt");
-    PayloadWrapper payloadWrapper =
-        objectMapper.readValue(jsonOrder, PayloadWrapper.class);
-    RequisitionInternalApprovedEvent requisitionInternalApprovedEvent = objectMapper.readValue(
-        payloadWrapper.getPayload(), RequisitionInternalApprovedEvent.class);
-    assertThat(requisitionInternalApprovedEvent).isNotNull();
-  }
-
-
-  @Data
-  @AllArgsConstructor
-  @NoArgsConstructor
-  static class PayloadWrapper {
-    private String name;
-    private byte[] payload;
   }
 }
