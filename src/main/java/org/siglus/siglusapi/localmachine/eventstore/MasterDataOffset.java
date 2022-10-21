@@ -13,21 +13,33 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.localmachine.webapi;
+package org.siglus.siglusapi.localmachine.eventstore;
 
-import java.util.LinkedList;
-import java.util.List;
+import java.util.UUID;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Builder.Default;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.siglus.siglusapi.localmachine.ExternalEventDto;
 
-@Builder
+@Entity
 @Data
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class PeeringEventsResponse {
-  @Default private List<ExternalEventDto> events = new LinkedList<>();
+@Table(name = "master_data_offset", schema = "localmachine")
+public class MasterDataOffset {
+
+  @Id
+  private UUID id;
+  @Column(name = "snapshotversion")
+  private String snapshotVersion;
+  @Column(name = "recordoffset")
+  private long recordOffset;
+  @Column(name = "facilityid")
+  private UUID facilityId;
+
 }

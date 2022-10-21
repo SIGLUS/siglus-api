@@ -71,10 +71,8 @@ public class StockMovementService {
       return new ArrayList<>();
     }
     LinkedList<StockMovementResDto> stockMovementResDtos = new LinkedList<>();
-    boolean initialFlag = true;
     for (ProductMovement productMovement : productMovements) {
-      MovementTypeHandlerResultDto movementTypeHandlerResultDto = movementTypeHandler(productMovement, initialFlag);
-      initialFlag = false;
+      MovementTypeHandlerResultDto movementTypeHandlerResultDto = movementTypeHandler(productMovement);
       StockMovementResDto stockMovementResDto = StockMovementResDto.builder()
           .movementQuantity(movementTypeHandlerResultDto.getCount())
           .productSoh(movementTypeHandlerResultDto.getSoh())
@@ -93,15 +91,13 @@ public class StockMovementService {
     }
     Collections.reverse(stockMovementResDtos);
     StockMovementResDto first = stockMovementResDtos.get(stockMovementResDtos.size() - 1);
-    if (!first.getType().equals(PHYSICAL_INVENTORY)) {
-      StockMovementResDto initial = StockMovementResDto.builder().reason(INITIAL_INVENTORY_KEY)
-          .dateOfMovement(first.getDateOfMovement()).productSoh(0).build();
-      stockMovementResDtos.add(initial);
-    }
+    StockMovementResDto initial = StockMovementResDto.builder().reason(INITIAL_INVENTORY_KEY)
+        .dateOfMovement(first.getDateOfMovement()).productSoh(0).build();
+    stockMovementResDtos.add(initial);
     return stockMovementResDtos;
   }
 
-  MovementTypeHandlerResultDto movementTypeHandler(ProductMovement productMovement, boolean initialFlag) {
+  MovementTypeHandlerResultDto movementTypeHandler(ProductMovement productMovement) {
     String destinationName = "";
     String destinationFreeText = "";
     String sourceName = "";
@@ -132,7 +128,7 @@ public class StockMovementService {
       case PHYSICAL_INVENTORY:
         count += productMovement.getMovementDetail().getAdjustment();
         soh += productMovement.getStockQuantity();
-        reason = initialFlag ? INITIAL_INVENTORY_KEY : PHYSICAL_INVENTORY_KEY;
+        reason = PHYSICAL_INVENTORY_KEY;
         break;
       case ADJUSTMENT:
         count += productMovement.getMovementDetail().getAdjustment();

@@ -32,8 +32,6 @@ public class SiglusFacilityDto extends FacilityDto {
 
   private Boolean isAndroidDevice;
 
-  private Boolean isLocalMachine;
-
   private List<SiglusReportTypeDto> reportTypes;
 
   private String tab;

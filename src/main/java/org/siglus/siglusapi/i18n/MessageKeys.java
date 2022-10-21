@@ -178,6 +178,10 @@ public abstract class MessageKeys {
   public static final String ERROR_FACILITY_IS_NOT_LOCALMACHINE = "facility.is.not.localmachine";
   public static final String ERROR_NOT_FOUND_SYNC_RECORD = "localmachine.not.found.sync.record";
   public static final String ERROR_LOGIN_USER_NOT_MATCH = "localmachine.login.user.not.match.active.facility";
+  public static final String ERROR_EXPORT_NO_DATA = "localmachine.no.data.need.to.be.exported";
+  public static final String ERROR_IMPORT_INVALID_FILE = "localmachine.invalid.file.type.or.file.may.be.modified";
+  public static final String ERROR_IMPORT_FILE_RECEIVER_NOT_MATCH =
+      "localmachine.file.receiver.not.match.current.facility";
 
   // android
   public static final String ERROR_NOT_WEB_USER = "siglusapi.error.notWebUser";

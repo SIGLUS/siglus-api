@@ -28,7 +28,7 @@ import org.siglus.siglusapi.localmachine.ExternalEventDtoMapper;
 import org.siglus.siglusapi.localmachine.auth.LocalTokenInterceptor;
 import org.siglus.siglusapi.localmachine.webapi.AckExchange;
 import org.siglus.siglusapi.localmachine.webapi.ActivationResponse;
-import org.siglus.siglusapi.localmachine.webapi.PeeringEventsResponse;
+import org.siglus.siglusapi.localmachine.webapi.EventsResponse;
 import org.siglus.siglusapi.localmachine.webapi.RemoteActivationRequest;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
@@ -70,7 +70,14 @@ public class OnlineWebClient {
 
   public List<Event> exportPeeringEvents() {
     URI url = URI.create(webBaseUrl + "/server/peeringEvents");
-    return restTemplate.getForObject(url, PeeringEventsResponse.class).getEvents().stream()
+    return restTemplate.getForObject(url, EventsResponse.class).getEvents().stream()
+        .map(externalEventDtoMapper::map)
+        .collect(Collectors.toList());
+  }
+
+  public List<Event> exportMasterDataEvents(long offsetId) {
+    URI url = URI.create(webBaseUrl + "/server/getMasterDataEvents/" + offsetId);
+    return restTemplate.getForObject(url, EventsResponse.class).getEvents().stream()
         .map(externalEventDtoMapper::map)
         .collect(Collectors.toList());
   }

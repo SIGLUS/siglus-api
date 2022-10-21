@@ -35,6 +35,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
@@ -198,26 +199,26 @@ public class SiglusAdministrationsService {
     saveReportTypes(siglusFacilityDto);
     siglusFacilityReferenceDataService.saveFacility(facilityDto);
     FacilityExtension facilityExtension = facilityExtensionRepository.findByFacilityId(facilityId);
-    deleteDraftsWhenToggleLocationManagement(siglusFacilityDto, facilityExtension);
     if (null == facilityExtension) {
       facilityExtension = FacilityExtension
           .builder()
           .facilityId(facilityId)
           .facilityCode(siglusFacilityDto.getCode())
-          .enableLocationManagement(siglusFacilityDto.getEnableLocationManagement())
-          .isAndroid(siglusFacilityDto.getIsAndroidDevice())
-          .isLocalMachine(siglusFacilityDto.getIsLocalMachine())
+          .isAndroid(Boolean.FALSE)
+          .isLocalMachine(Boolean.FALSE)
           .build();
-    } else {
-      facilityExtension.setIsAndroid(siglusFacilityDto.getIsAndroidDevice());
-      facilityExtension.setEnableLocationManagement(siglusFacilityDto.getEnableLocationManagement());
-      facilityExtension.setIsLocalMachine(siglusFacilityDto.getIsLocalMachine());
     }
+
+    if (StringUtils.equals(siglusFacilityDto.getTab(), LOCATION_MANAGEMENT_TAB)) {
+      if (isWebFacility(facilityExtension)) {
+        deleteDraftsWhenToggleLocationManagement(siglusFacilityDto, facilityExtension);
+        assignToVirtualLocation(siglusFacilityDto);
+      }
+      facilityExtension.setEnableLocationManagement(siglusFacilityDto.getEnableLocationManagement());
+    }
+
     log.info("The facility extension info has changed; facilityId: {}", facilityId);
     facilityExtensionRepository.save(facilityExtension);
-    if (StringUtils.equals(siglusFacilityDto.getTab(), LOCATION_MANAGEMENT_TAB)) {
-      assignToVirtualLocation(siglusFacilityDto);
-    }
     return getFacilityInfo(siglusFacilityDto.getId());
   }
 
@@ -311,6 +312,11 @@ public class SiglusAdministrationsService {
     stockCardExtensionRepository.deleteByStockCardIdIn(stockCardIds);
     log.info("delete on stockCard when upgrade to web, stockCardId: {}", stockCardIds);
     stockCardRepository.deleteByIdIn(stockCardIds);
+  }
+
+  private boolean isWebFacility(FacilityExtension facilityExtension) {
+    return Objects.isNull(facilityExtension)
+        || (!facilityExtension.getIsLocalMachine() && !facilityExtension.getIsAndroid());
   }
 
   private void validateReportTypes(SiglusFacilityDto siglusFacilityDto) {
@@ -492,6 +498,8 @@ public class SiglusAdministrationsService {
     log.info("change facility:{} to local machine, operator:{}", facilityId,
         authenticationHelper.getCurrentUser().getUsername());
     facilityExtensionRepository.save(facilityExtension);
+    createAndSaveActivationCode(facilityExtension.getFacilityCode());
+    deleteDrafts(facilityId);
   }
 
   @Transactional
@@ -499,7 +507,7 @@ public class SiglusAdministrationsService {
     int count = stockCardRepository.countByFacilityId(facilityId);
     FacilityDeviceDto facilityDevice = getFacilityDevice(facilityId);
     if (count != 0 || facilityDevice.getDeviceType() != (FacilityDeviceTypeEnum.WEB)) {
-      throw new ValidationMessageException(new Message(ERROR_FACILITY_CHANGE_TO_ANDROID), true);
+      throw new BusinessDataException(new Message(ERROR_FACILITY_CHANGE_TO_ANDROID));
     }
     FacilityExtension facilityExtension = facilityExtensionRepository.findByFacilityId(facilityId);
     if (ObjectUtils.isEmpty(facilityExtension)) {
@@ -518,6 +526,11 @@ public class SiglusAdministrationsService {
     log.info("change facility:{} to android, operator:{}", facilityId,
         authenticationHelper.getCurrentUser().getUsername());
     facilityExtensionRepository.save(facilityExtension);
+  }
+
+  public void deleteDrafts(UUID facilityId) {
+    log.info("delete location related drafts, facilityId: {}", facilityId);
+    locationDraftRepository.deleteFacilityRelatedDrafts(facilityId);
   }
 
   private void createAndSaveActivationCode(String facilityCode) {
@@ -567,21 +580,22 @@ public class SiglusAdministrationsService {
   }
 
   private void assignToVirtualLocation(SiglusFacilityDto siglusFacilityDto) {
-    if (!emptyStockCardCount(siglusFacilityDto.getId())) {
-      UUID userId = authenticationHelper.getCurrentUser().getId();
-      List<StockCard> stockCards = stockCardRepository.findByFacilityIdIn(siglusFacilityDto.getId());
-      List<UUID> stockCardIds = stockCards.stream().map(StockCard::getId).collect(Collectors.toList());
-      if (BooleanUtils.isTrue(siglusFacilityDto.getEnableLocationManagement())) {
-        List<CalculatedStockOnHand> calculatedStockOnHandList = findStockCardIdsHasStockOnHandOnLot(stockCardIds);
-        if (CollectionUtils.isNotEmpty(calculatedStockOnHandList)) {
-          assignNewVirtualLocations(calculatedStockOnHandList, userId);
-        }
-      } else {
-        List<CalculatedStockOnHandByLocation> stockCardIdsHasStockOnHandOnLocation =
-            findStockCardIdsHasStockOnHandOnLocation(stockCardIds);
-        deletePreviousSohWithLocation(stockCardIds);
-        assignExistLotToVirtualLocations(stockCardIdsHasStockOnHandOnLocation, userId);
+    if (emptyStockCardCount(siglusFacilityDto.getId())) {
+      return;
+    }
+    UUID userId = authenticationHelper.getCurrentUser().getId();
+    List<StockCard> stockCards = stockCardRepository.findByFacilityIdIn(siglusFacilityDto.getId());
+    List<UUID> stockCardIds = stockCards.stream().map(StockCard::getId).collect(Collectors.toList());
+    if (BooleanUtils.isTrue(siglusFacilityDto.getEnableLocationManagement())) {
+      List<CalculatedStockOnHand> calculatedStockOnHandList = findStockCardIdsHasStockOnHandOnLot(stockCardIds);
+      if (CollectionUtils.isNotEmpty(calculatedStockOnHandList)) {
+        assignNewVirtualLocations(calculatedStockOnHandList, userId);
       }
+    } else {
+      List<CalculatedStockOnHandByLocation> stockCardIdsHasStockOnHandOnLocation =
+          findStockCardIdsHasStockOnHandOnLocation(stockCardIds);
+      deletePreviousSohWithLocation(stockCardIds);
+      assignExistLotToVirtualLocations(stockCardIdsHasStockOnHandOnLocation, userId);
     }
   }
 
@@ -692,12 +706,10 @@ public class SiglusAdministrationsService {
       FacilityExtension facilityExtension) {
     if (facilityExtension == null || facilityExtension.getEnableLocationManagement() == null) {
       if (siglusFacilityDto.getEnableLocationManagement()) {
-        log.info("delete location related drafts, facilityId: {}", siglusFacilityDto.getId());
-        locationDraftRepository.deleteLocationRelatedDrafts(siglusFacilityDto.getId());
+        deleteDrafts(siglusFacilityDto.getId());
       }
     } else if (facilityExtension.getEnableLocationManagement() != siglusFacilityDto.getEnableLocationManagement()) {
-      log.info("delete location related drafts, facilityId: {}", siglusFacilityDto.getId());
-      locationDraftRepository.deleteLocationRelatedDrafts(siglusFacilityDto.getId());
+      deleteDrafts(siglusFacilityDto.getId());
     }
   }
 

@@ -18,8 +18,7 @@ package org.siglus.siglusapi.web;
 import static org.springframework.http.HttpStatus.NO_CONTENT;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.cache.Cache;
-import org.springframework.cache.CacheManager;
+import org.siglus.siglusapi.service.SiglusCacheService;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -30,15 +29,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class SiglusManagementController {
 
-  private final CacheManager cacheManager;
+  private final SiglusCacheService siglusCacheService;
 
   @DeleteMapping(value = "/caches")
   @ResponseStatus(NO_CONTENT)
   public void invalidateCache() {
-    cacheManager.getCacheNames().stream()
-        .filter(name -> name.startsWith("siglus"))
-        .map(cacheManager::getCache)
-        .forEach(Cache::clear);
+    siglusCacheService.invalidateCache();
   }
-
 }

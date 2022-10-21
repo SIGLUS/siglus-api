@@ -36,9 +36,11 @@ import org.mockito.internal.verification.VerificationModeFactory;
 import org.siglus.siglusapi.localmachine.Event;
 import org.siglus.siglusapi.localmachine.EventImporter;
 import org.siglus.siglusapi.localmachine.ExternalEventDtoMapper;
+import org.siglus.siglusapi.localmachine.Machine;
 import org.siglus.siglusapi.localmachine.eventstore.EventStore;
 import org.siglus.siglusapi.localmachine.eventstore.PayloadSerializer;
 import org.siglus.siglusapi.localmachine.io.EventFileReader;
+import org.siglus.siglusapi.service.SiglusCacheService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -50,22 +52,34 @@ import org.springframework.test.context.junit4.SpringRunner;
 @RunWith(SpringRunner.class)
 @SpringBootTest(
     classes = {
-      ExternalEventDtoMapper.class,
-      PayloadSerializer.class,
-      EventFileReader.class,
-      SyncService.class
+        ExternalEventDtoMapper.class,
+        PayloadSerializer.class,
+        EventFileReader.class,
+        SyncService.class
     })
 @SuppressWarnings("PMD.UnusedPrivateField")
 public class SyncServiceIntegrationTest {
-  @MockBean private EventStore localEventStore;
-  @MockBean private OnlineWebClient webClient;
-  @MockBean private EventImporter eventImporter;
-  @MockBean private ErrorHandler errorHandler;
-  @MockBean private SyncRecordService syncRecordService;
+
+  @MockBean
+  private EventStore localEventStore;
+  @MockBean
+  private OnlineWebClient webClient;
+  @MockBean
+  private EventImporter eventImporter;
+  @MockBean
+  private ErrorHandler errorHandler;
+  @MockBean
+  private SyncRecordService syncRecordService;
+  @MockBean
+  private Machine machine;
+  @MockBean
+  private SiglusCacheService siglusCacheService;
   private List<Event> rawEvents;
 
-  @Autowired private ExternalEventDtoMapper mapper;
-  @Autowired private SyncService syncService;
+  @Autowired
+  private ExternalEventDtoMapper mapper;
+  @Autowired
+  private SyncService syncService;
   private EventFileReader eventFileReader;
 
   @Before
@@ -112,6 +126,7 @@ public class SyncServiceIntegrationTest {
   @AllArgsConstructor
   @NoArgsConstructor
   static class TestedPayload {
+
     private String content;
   }
 }

@@ -28,7 +28,6 @@ import io.debezium.engine.DebeziumEngine;
 import io.debezium.engine.RecordChangeEvent;
 import io.debezium.engine.format.ChangeEventFormat;
 import io.debezium.util.Strings;
-import java.io.File;
 import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
@@ -45,7 +44,6 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
 import org.apache.kafka.connect.data.Field;
 import org.apache.kafka.connect.data.Struct;
 import org.apache.kafka.connect.source.SourceRecord;
@@ -146,9 +144,6 @@ public class CdcScraper {
 
   @SneakyThrows
   io.debezium.config.Configuration config() {
-    // fixme: persist the offset in db
-    File offsetStorageFile = new File(".data", "offsets.dat");
-    FileUtils.forceMkdirParent(offsetStorageFile);
     Set<String> subscribedTableIds = cdcDispatcher.getTablesForCapture();
     Set<String> includedTableIds = new HashSet<>(subscribedTableIds);
     // add dummy table id, in case of empty subscribedTableIds
@@ -161,7 +156,6 @@ public class CdcScraper {
         .with("plugin.name", "pgoutput")
         .with("connector.class", "io.debezium.connector.postgresql.PostgresConnector")
         .with("offset.storage", "org.siglus.siglusapi.localmachine.cdc.OffsetBackingStore")
-        .with("offset.storage.file.filename", offsetStorageFile.getAbsolutePath())
         .with("offset.flush.interval.ms", "10000")
         .with("table.include.list", tablesForCapture)
         .with("include.schema.changes", "false")

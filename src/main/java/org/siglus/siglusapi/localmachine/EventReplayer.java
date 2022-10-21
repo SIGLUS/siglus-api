@@ -38,6 +38,7 @@ import org.springframework.stereotype.Component;
 public class EventReplayer {
 
   private static final String DEFAULT_REPLAY_LOCK = "lock.replay.default";
+  private static final String DEFAULT_REPLAY_GROUP_LOCK = "lock.replay.group.default.";
   private final EventPublisher eventPublisher;
   private final EventStore eventStore;
   private final ShedLockFactory lockFactory;
@@ -88,7 +89,10 @@ public class EventReplayer {
       if (i != currentEvent.getGroupSequenceNumber()) {
         return;
       }
-      eventPublisher.publishEvent(currentEvent);
+      // TODO: 2022/10/18 是否需要把过滤条件这里也加一个 
+      try (AutoClosableLock lock = lockFactory.lock(DEFAULT_REPLAY_GROUP_LOCK + currentEvent.getReceiverId())) {
+        lock.ifPresent(() -> eventPublisher.publishEvent(currentEvent));
+      }
     }
   }
 
@@ -107,4 +111,5 @@ public class EventReplayer {
         .sorted(Comparator.comparing(Event::getSyncedTime).thenComparingLong(Event::getLocalSequenceNumber))
         .collect(toList());
   }
+
 }

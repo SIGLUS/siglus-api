@@ -15,16 +15,20 @@
 
 package org.siglus.siglusapi.util;
 
+import com.amazonaws.HttpMethod;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
+import com.amazonaws.services.s3.model.GeneratePresignedUrlRequest;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.time.Instant;
 import javax.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.openlmis.requisition.exception.ServerException;
@@ -82,5 +86,24 @@ public class S3FileHandler {
     } catch (IOException e) {
       log.error("Delete file: {} with error {}", fileName, e.getMessage());
     }
+  }
+
+  public String getUrlFromS3(String fileName) {
+    java.util.Date expiration = new java.util.Date();
+    long expTimeMillis = Instant.now().toEpochMilli();
+    // TODO: 2022/10/13 这个频率要和面板一起配合
+    expTimeMillis += 1000 * 60 * 60 * 24 * 7;
+    expiration.setTime(expTimeMillis);
+    String keyName = bucketFolder + FOLDER_SUFFIX + fileName;
+    log.debug("bucketName: {}, keyName: {}", bucketName, keyName);
+    GeneratePresignedUrlRequest generatePresignedUrlRequest =
+        new GeneratePresignedUrlRequest(bucketName, keyName)
+            .withMethod(HttpMethod.GET)
+            .withExpiration(expiration);
+    URL url = s3Client.generatePresignedUrl(generatePresignedUrlRequest);
+    if (url != null) {
+      return url.toString();
+    }
+    return null;
   }
 }

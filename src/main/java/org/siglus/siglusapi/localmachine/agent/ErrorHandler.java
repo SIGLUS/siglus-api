@@ -29,6 +29,7 @@ import org.siglus.siglusapi.localmachine.repository.ErrorRecordRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.HttpServerErrorException;
 
 @Service
 @RequiredArgsConstructor
@@ -43,8 +44,10 @@ public class ErrorHandler {
 
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   public void storeErrorRecord(Throwable t, ErrorType errorType) {
-    syncRecordService.storeLastSyncRecord();
-    errorRecordRepository.save(buildSyncDownError(t, errorType));
+    if (!(t instanceof HttpServerErrorException)) {
+      syncRecordService.storeLastSyncRecord();
+      errorRecordRepository.save(buildSyncDownError(t, errorType));
+    }
   }
 
   @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -55,7 +58,9 @@ public class ErrorHandler {
 
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   public void storeErrorRecord(List<UUID> eventIds, Throwable t, ErrorType errorType) {
-    errorRecordRepository.save(buildSyncUpError(eventIds, t, errorType));
+    if (!(t instanceof HttpServerErrorException)) {
+      errorRecordRepository.save(buildSyncUpError(eventIds, t, errorType));
+    }
   }
 
   private ErrorRecord buildSyncDownError(UUID eventId, Throwable t, ErrorType errorType) {

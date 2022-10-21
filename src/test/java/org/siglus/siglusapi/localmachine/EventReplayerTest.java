@@ -128,7 +128,7 @@ public class EventReplayerTest {
     List<Event> publishedEvents = new LinkedList<>();
     doAnswer(invocation -> publishedEvents.add(invocation.getArgumentAt(0, Event.class)))
         .when(eventPublisher)
-        .publishEvent(any());
+        .publishEvent(any(Event.class));
     return publishedEvents;
   }
 }

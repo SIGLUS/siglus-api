@@ -26,6 +26,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class TableChangeEvent {
+
   private String schemaVersion;
   private String schemaName;
   private String tableName;
@@ -36,6 +37,7 @@ public class TableChangeEvent {
   @AllArgsConstructor
   @NoArgsConstructor
   public static class RowChangeEvent {
+
     private boolean isDeletion;
     private List<Object> values;
   }

@@ -18,18 +18,19 @@ package org.siglus.siglusapi.localmachine.repository;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.postgresql.copy.CopyManager;
 import org.postgresql.core.BaseConnection;
 import org.siglus.siglusapi.dto.Message;
-import org.siglus.siglusapi.localmachine.exception.DbOperationException;
+import org.siglus.siglusapi.exception.DbOperationException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
@@ -41,21 +42,60 @@ public class TableCopyRepository {
   private final JdbcTemplate jdbc;
 
   public List<File> copyDateToFile(String zipDirectory, Map<String, String> tableNameToSql, UUID homeFacilityId) {
-    List<File> tableFiles = new ArrayList<>();
-    try (Connection conn = jdbc.getDataSource().getConnection();) {
-      BaseConnection connection = (BaseConnection) conn.getMetaData().getConnection();
+    List<File> tableFiles;
+    try (BaseConnection connection = (BaseConnection) jdbc.getDataSource().getConnection().getMetaData()
+        .getConnection();) {
       connection.setAutoCommit(false);
-      tableNameToSql.forEach((tableName, selectSql) -> {
-        File file = new File(zipDirectory + tableName + ".txt");
-        selectSql = selectSql.replace("@@", homeFacilityId.toString());
-        copyToFile(file, selectSql, connection);
-        tableFiles.add(file);
-      });
+      tableFiles = handleTableNameToSqlMap(zipDirectory, tableNameToSql, homeFacilityId, connection);
       connection.commit();
     } catch (SQLException e) {
-      log.error("facilityId {} copy table data to file fail,{}", homeFacilityId, e);
-      throw new DbOperationException(e, new Message("copy table data to file fail"));
+      log.error("facilityId {} copy business data table to file fail,{}", homeFacilityId, e);
+      throw new DbOperationException(e, new Message("copy business data table to file fail"));
     }
+    return tableFiles;
+  }
+
+  public List<File> copyMasterDateToFile(String zipDirectory, Map<String, String> tableNameToSql, UUID homeFacilityId) {
+    List<File> tableFiles;
+    String lockTablesSql = buildLockTablesSql(tableNameToSql);
+    try (BaseConnection connection = (BaseConnection) jdbc.getDataSource().getConnection().getMetaData()
+        .getConnection();
+        PreparedStatement psLockTables = connection.prepareStatement(lockTablesSql);) {
+      connection.setAutoCommit(false);
+      psLockTables.execute();
+      tableFiles = handleTableNameToSqlMap(zipDirectory, tableNameToSql, homeFacilityId, connection);
+      connection.commit();
+    } catch (SQLException e) {
+      log.error("facilityId {} copy master data table to file fail,{}", homeFacilityId, e);
+      throw new DbOperationException(e, new Message("copy master data table to file fail"));
+    }
+    return tableFiles;
+  }
+
+  private String buildLockTablesSql(Map<String, String> tableNameToSql) {
+    StringBuilder lockTablesSql = new StringBuilder("LOCK TABLE ");
+    Set<String> tableNameKeys = tableNameToSql.keySet();
+    for (int i = 0; i < tableNameKeys.size(); i++) {
+      lockTablesSql.append(tableNameKeys.toArray()[i]);
+      if (i != tableNameKeys.size() - 1) {
+        lockTablesSql.append(',');
+      }
+    }
+    lockTablesSql.append(" IN SHARE MODE;");
+    return lockTablesSql.toString();
+  }
+
+  private List<File> handleTableNameToSqlMap(String zipDirectory, Map<String, String> tableNameToSql,
+      UUID homeFacilityId, BaseConnection connection) {
+    List<File> tableFiles = new ArrayList<>();
+    tableNameToSql.forEach((tableName, selectSql) -> {
+      File file = new File(zipDirectory + tableName + ".txt");
+      if (homeFacilityId != null) {
+        selectSql = selectSql.replace("@@", homeFacilityId.toString());
+      }
+      copyToFile(file, selectSql, connection);
+      tableFiles.add(file);
+    });
     return tableFiles;
   }
 

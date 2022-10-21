@@ -15,8 +15,12 @@
 
 package org.siglus.siglusapi.localmachine.server;
 
+import static org.junit.Assert.assertEquals;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -29,17 +33,26 @@ import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import javax.servlet.http.HttpServletResponse;
+import net.javacrumbs.shedlock.core.SimpleLock;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.siglus.siglusapi.localmachine.ShedLockFactory;
+import org.siglus.siglusapi.localmachine.ShedLockFactory.AutoClosableLock;
+import org.siglus.siglusapi.localmachine.eventstore.MasterDataEventRecord;
+import org.siglus.siglusapi.localmachine.eventstore.MasterDataEventRecordRepository;
+import org.siglus.siglusapi.localmachine.eventstore.MasterDataOffset;
+import org.siglus.siglusapi.localmachine.eventstore.MasterDataOffsetRepository;
 import org.siglus.siglusapi.localmachine.repository.MasterDataSql;
 import org.siglus.siglusapi.localmachine.repository.MovementSql;
 import org.siglus.siglusapi.localmachine.repository.RequisitionOrderSql;
 import org.siglus.siglusapi.localmachine.repository.TableCopyRepository;
+import org.siglus.siglusapi.util.S3FileHandler;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -49,6 +62,18 @@ public class OnlineWebServiceTest {
   @Mock
   private TableCopyRepository tableCopyRepository;
 
+  @Mock
+  private MasterDataEventRecordRepository masterDataEventRecordRepository;
+
+  @Mock
+  private MasterDataOffsetRepository masterDataOffsetRepository;
+
+  @Mock
+  private S3FileHandler s3FileHandler;
+
+  @Mock
+  private ShedLockFactory lockFactory;
+
   @InjectMocks
   private OnlineWebService onlineWebService;
 
@@ -57,22 +82,19 @@ public class OnlineWebServiceTest {
   @Test
   public void shouldGenerateZipWhenLocalMachineResync() throws IOException {
     // given
-    ReflectionTestUtils.setField(onlineWebService, "zipExportPath", "/tmp/");
+    mockLock();
+    ReflectionTestUtils.setField(onlineWebService, "zipExportPath", "/tmp/simam/resync/");
     List<File> tableFiles = new ArrayList<>();
-    tableFiles.add(new File("/tmp/masterdata.txt"));
     tableFiles.add(new File("/tmp/movement.txt"));
     tableFiles.add(new File("/tmp/requisitionOrder.txt"));
 
-    when(tableCopyRepository.copyDateToFile(any(), eq(MasterDataSql.getMasterDataSqlMap()), eq(facilityId)))
-        .thenReturn(Collections.singletonList(tableFiles.get(0)));
     when(tableCopyRepository.copyDateToFile(any(), eq(MovementSql.getMovementSql()), eq(facilityId)))
-        .thenReturn(Collections.singletonList(tableFiles.get(1)));
+        .thenReturn(Collections.singletonList(tableFiles.get(0)));
     when(tableCopyRepository.copyDateToFile(any(), eq(RequisitionOrderSql.getRequisitionOrderSql()), eq(facilityId)))
-        .thenReturn(Collections.singletonList(tableFiles.get(2)));
+        .thenReturn(Collections.singletonList(tableFiles.get(1)));
 
     writeDataToFile(tableFiles.get(0));
     writeDataToFile(tableFiles.get(1));
-    writeDataToFile(tableFiles.get(2));
 
     HttpServletResponse httpServletResponse = new MockHttpServletResponse();
 
@@ -80,16 +102,44 @@ public class OnlineWebServiceTest {
     onlineWebService.reSyncData(facilityId, httpServletResponse);
 
     // then
-    verify(tableCopyRepository, times(1))
-        .copyDateToFile(any(), eq(MasterDataSql.getMasterDataSqlMap()), eq(facilityId));
     verify(tableCopyRepository, times(1)).copyDateToFile(any(), eq(MovementSql.getMovementSql()), eq(facilityId));
     verify(tableCopyRepository, times(1))
         .copyDateToFile(any(), eq(RequisitionOrderSql.getRequisitionOrderSql()), eq(facilityId));
+  }
+
+  @Test
+  public void shouldReturnS3UrlWhenLocalMachineResyncMasterData() throws IOException {
+    // given
+    ReflectionTestUtils.setField(onlineWebService, "zipExportPath", "/tmp/simam/resync/");
+    List<File> tableFiles = Collections.singletonList(new File("/tmp/masterdata.txt"));
+    when(tableCopyRepository.copyDateToFile(any(), eq(MasterDataSql.getMasterDataSqlMap()), eq(facilityId)))
+        .thenReturn(Collections.singletonList(tableFiles.get(0)));
+    writeDataToFile(tableFiles.get(0));
+    String snapshotVersion = "test.zip";
+    when(masterDataEventRecordRepository.save(any(MasterDataEventRecord.class)))
+        .thenReturn(MasterDataEventRecord.builder().id(10L).snapshotVersion(snapshotVersion).build());
+    when(masterDataEventRecordRepository.findLatestRecordId()).thenReturn(15L);
+    when(s3FileHandler.getUrlFromS3(snapshotVersion)).thenReturn("https://test.zip");
+
+    // when
+    String url = onlineWebService.reSyncMasterData(facilityId);
+
+    // then
+    assertEquals("10+15+https://test.zip", url);
+    verify(tableCopyRepository, times(1))
+        .copyMasterDateToFile(any(), eq(MasterDataSql.getMasterDataSqlMap()), eq(null));
+    verify(masterDataEventRecordRepository, times(1)).save(any(MasterDataEventRecord.class));
+    verify(masterDataOffsetRepository, times(1)).save(any(MasterDataOffset.class));
   }
 
   private void writeDataToFile(File file) throws IOException {
     BufferedWriter out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file)));
     out.write("test");
     out.close();
+  }
+
+  private void mockLock() {
+    AutoClosableLock lock = new AutoClosableLock(Optional.ofNullable(mock(SimpleLock.class)));
+    given(lockFactory.lock(anyString())).willReturn(lock);
   }
 }

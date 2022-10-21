@@ -58,9 +58,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import javax.persistence.EntityManager;
 import javax.validation.ConstraintViolationException;
-import org.hibernate.Session;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -271,9 +269,6 @@ public class MeServiceTest {
   private ResyncInfoRepository resyncInfoRepository;
 
   @Mock
-  private PodConfirmService podConfirmService;
-
-  @Mock
   private SiglusValidReasonAssignmentService validReasonAssignmentService;
 
   @Mock
@@ -282,8 +277,6 @@ public class MeServiceTest {
   @Mock
   private SiglusOrderableReferenceDataService siglusOrderableDataService;
 
-  @Mock
-  private EntityManager entityManager;
   @Mock
   private MeCreateRequisitionService meCreateRequisitionService;
 
@@ -807,28 +800,6 @@ public class MeServiceTest {
 
     // then
     verify(podBackupRepository, times(1)).save(any(PodRequestBackup.class));
-
-  }
-
-  @Test
-  public void shouldCallConfirmPodWhenOrderNumIsExist() {
-    // given
-    PodRequest podRequest = mockPodRequest();
-    when(podRepository.findInitiatedPodByOrderCode(podRequest.getOrderCode())).thenReturn(mock(ProofOfDelivery.class));
-    org.hibernate.Session session = mock(Session.class);
-    when(entityManager.unwrap(Session.class)).thenReturn(session);
-    mockAuth();
-    mockExistedPod();
-    mockOrders();
-    mockProducts();
-    mockLots();
-    mockReasons();
-
-    // when
-    service.confirmPod(podRequest);
-
-    // then
-    verify(podConfirmService).confirmPod(any(), any(), any());
 
   }
 

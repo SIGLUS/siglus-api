@@ -28,6 +28,7 @@ import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRA
 
 import java.util.List;
 import java.util.UUID;
+import org.assertj.core.util.Lists;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -63,10 +64,7 @@ public class SiglusProgramServiceTest {
   @Test
   public void shouldReturnListWithSpecifiedProgramWhenGetProgramsGivenNotAllProductsProgramCode() {
     // given
-    String code = random(NOT_TOO_LONG);
-    while (code.equals(ALL_PRODUCTS_PROGRAM_CODE)) {
-      code = random(NOT_TOO_LONG);
-    }
+    String code = mockRandomCode();
     ProgramDto mockProgram1 = mockProgram(UUID.randomUUID(), code);
     ProgramDto mockProgram2 = mockProgram(UUID.randomUUID(), random(NOT_TOO_LONG));
     when(programRefDataService.findAll()).thenReturn(asList(mockProgram1, mockProgram2));
@@ -82,10 +80,7 @@ public class SiglusProgramServiceTest {
   @Test
   public void shouldReturnProgramListWhenGetProgramsGivenNoMatchedProgramExt() {
     // given
-    String code = random(NOT_TOO_LONG);
-    while (code.equals(ALL_PRODUCTS_PROGRAM_CODE)) {
-      code = random(NOT_TOO_LONG);
-    }
+    String code = mockRandomCode();
     UUID programId = UUID.randomUUID();
     ProgramDto mockProgram = mockProgram(programId, code);
     when(programRefDataService.findAll()).thenReturn(singletonList(mockProgram));
@@ -129,11 +124,34 @@ public class SiglusProgramServiceTest {
     assertEquals(mockProgram, program);
   }
 
+  @Test
+  public void shouldReturnWhenGetProgramByCode() {
+    // given
+    UUID programId = UUID.randomUUID();
+    String code = mockRandomCode();
+    ProgramDto mockProgram = mockProgram(programId, code);
+    when(programRefDataService.findAll()).thenReturn(Lists.newArrayList(mockProgram));
+
+    // when
+    ProgramDto program = service.getProgramByCode(code).orElse(null);
+
+    // then
+    assertEquals(mockProgram, program);
+  }
+
   private ProgramDto mockProgram(UUID programId, String code) {
     ProgramDto mockProgram = new ProgramDto();
     mockProgram.setId(programId);
     mockProgram.setCode(code);
     return mockProgram;
+  }
+
+  private String mockRandomCode() {
+    String code = random(NOT_TOO_LONG);
+    while (code.equals(ALL_PRODUCTS_PROGRAM_CODE)) {
+      code = random(NOT_TOO_LONG);
+    }
+    return code;
   }
 
 }

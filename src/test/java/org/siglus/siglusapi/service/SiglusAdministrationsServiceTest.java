@@ -71,6 +71,7 @@ import org.siglus.siglusapi.dto.SiglusFacilityDto;
 import org.siglus.siglusapi.dto.SiglusReportTypeDto;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.dto.enums.FacilityDeviceTypeEnum;
+import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.localmachine.Machine;
@@ -168,6 +169,7 @@ public class SiglusAdministrationsServiceTest {
   private static final String csvInput =
       "Código de localização,Área,Zona,Prateleira,Código de barras,Caixa,Nível\n"
           + "AA25A,Armazem Principal,A,A,AA25%,25,A\n";
+  private static final String LOCATION_MANAGEMENT_TAB = "locationManagement";
 
   @Test
   public void searchForFacilitiesWithIsAndroid() {
@@ -352,7 +354,7 @@ public class SiglusAdministrationsServiceTest {
   }
 
   @Test
-  public void shouldDeleteDraftsWhenEnableLocationManagementIfExtensionExisted() {
+  public void shouldDeleteDraftsWhenEnableWebLocationManagementIfExtensionExisted() {
     // given
     FacilityExtension facilityExtension = mockFacilityExtension(facilityId, false, false, false);
     when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(facilityExtension);
@@ -360,28 +362,28 @@ public class SiglusAdministrationsServiceTest {
         .thenReturn(mockFacilityDtoPage().getContent().get(0));
 
     // when
-    siglusAdministrationsService.updateFacility(facilityId, mockSiglusFacilityDto(true, null));
+    siglusAdministrationsService.updateFacility(facilityId, mockSiglusFacilityDto(true, LOCATION_MANAGEMENT_TAB));
 
     // then
-    verify(locationDraftRepository).deleteLocationRelatedDrafts(facilityId);
+    verify(locationDraftRepository).deleteFacilityRelatedDrafts(facilityId);
   }
 
   @Test
-  public void shouldDeleteDraftsWhenEnableLocationManagementIfExtensionIsNull() {
+  public void shouldDeleteDraftsWhenEnableWebLocationManagementIfExtensionIsNull() {
     // given
     when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(null);
     when(siglusFacilityReferenceDataService.findOneWithoutCache(facilityId))
         .thenReturn(mockFacilityDtoPage().getContent().get(0));
 
     // when
-    siglusAdministrationsService.updateFacility(facilityId, mockSiglusFacilityDto(true, null));
+    siglusAdministrationsService.updateFacility(facilityId, mockSiglusFacilityDto(true, LOCATION_MANAGEMENT_TAB));
 
     // then
-    verify(locationDraftRepository).deleteLocationRelatedDrafts(facilityId);
+    verify(locationDraftRepository).deleteFacilityRelatedDrafts(facilityId);
   }
 
   @Test
-  public void shouldDeleteDraftsWhenDisableLocationManagement() {
+  public void shouldDeleteDraftsWhenDisableWebLocationManagement() {
     // given
     FacilityExtension facilityExtension = mockFacilityExtension(facilityId, false, true, false);
     when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(facilityExtension);
@@ -389,10 +391,42 @@ public class SiglusAdministrationsServiceTest {
         .thenReturn(mockFacilityDtoPage().getContent().get(0));
 
     // when
-    siglusAdministrationsService.updateFacility(facilityId, mockSiglusFacilityDto(false, null));
+    siglusAdministrationsService.updateFacility(facilityId, mockSiglusFacilityDto(false, LOCATION_MANAGEMENT_TAB));
 
     // then
-    verify(locationDraftRepository).deleteLocationRelatedDrafts(facilityId);
+    verify(locationDraftRepository).deleteFacilityRelatedDrafts(facilityId);
+  }
+
+  @Test
+  public void shouldNodDeleteDraftsWhenEnableLocalMachineLocationManagement() {
+    // given
+    FacilityExtension facilityExtension = mockFacilityExtension(facilityId, Boolean.FALSE, Boolean.FALSE, Boolean.TRUE);
+    when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(facilityExtension);
+    when(siglusFacilityReferenceDataService.findOneWithoutCache(facilityId))
+        .thenReturn(mockFacilityDtoPage().getContent().get(0));
+
+    // when
+    siglusAdministrationsService.updateFacility(facilityId,
+        mockSiglusFacilityDto(Boolean.TRUE, LOCATION_MANAGEMENT_TAB));
+
+    // then
+    verify(locationDraftRepository, times(0)).deleteFacilityRelatedDrafts(facilityId);
+  }
+
+  @Test
+  public void shouldDeleteDraftsWhenDisableLocalMachineLocationManagement() {
+    // given
+    FacilityExtension facilityExtension = mockFacilityExtension(facilityId, Boolean.FALSE, Boolean.TRUE, Boolean.TRUE);
+    when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(facilityExtension);
+    when(siglusFacilityReferenceDataService.findOneWithoutCache(facilityId))
+        .thenReturn(mockFacilityDtoPage().getContent().get(0));
+
+    // when
+    siglusAdministrationsService.updateFacility(facilityId,
+        mockSiglusFacilityDto(Boolean.FALSE, LOCATION_MANAGEMENT_TAB));
+
+    // then
+    verify(locationDraftRepository, times(0)).deleteFacilityRelatedDrafts(facilityId);
   }
 
   @Test
@@ -483,7 +517,7 @@ public class SiglusAdministrationsServiceTest {
     when(calculatedStockOnHandRepository.findLatestStockOnHands(any(), any()))
         .thenReturn(Lists.newArrayList(mockCalculatedStockOnHand()));
     when(authenticationHelper.getCurrentUser()).thenReturn(mockUserDto());
-    SiglusFacilityDto siglusFacilityDto = mockSiglusFacilityDto(true, "locationManagement");
+    SiglusFacilityDto siglusFacilityDto = mockSiglusFacilityDto(true, LOCATION_MANAGEMENT_TAB);
     when(calculatedStocksOnHandLocationsRepository
         .findLatestLocationSohByStockCardIds(any()))
         .thenReturn(Lists.newArrayList(mockCalculatedStocksOnHandLocations()));
@@ -507,7 +541,7 @@ public class SiglusAdministrationsServiceTest {
     when(calculatedStockOnHandRepository.findLatestStockOnHands(Lists.newArrayList(stockCardId), ZonedDateTime.now()))
         .thenReturn(Lists.newArrayList(mockCalculatedStockOnHand()));
     when(authenticationHelper.getCurrentUser()).thenReturn(mockUserDto());
-    SiglusFacilityDto siglusFacilityDto = mockSiglusFacilityDto(false, "locationManagement");
+    SiglusFacilityDto siglusFacilityDto = mockSiglusFacilityDto(false, LOCATION_MANAGEMENT_TAB);
     when(calculatedStocksOnHandLocationsRepository.findLatestLocationSohByStockCardIds(
         Lists.newArrayList(stockCardId))).thenReturn(Lists.newArrayList(mockCalculatedStocksOnHandLocations()));
 
@@ -525,7 +559,7 @@ public class SiglusAdministrationsServiceTest {
     when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(null);
     when(stockCardRepository.countByFacilityId(facilityId)).thenReturn(0);
     when(siglusFacilityReferenceDataService.findOneWithoutCache(facilityId)).thenReturn(mockFacilityDto());
-    SiglusFacilityDto siglusFacilityDto = mockSiglusFacilityDto(true, "locationManagement");
+    SiglusFacilityDto siglusFacilityDto = mockSiglusFacilityDto(true, LOCATION_MANAGEMENT_TAB);
     when(authenticationHelper.getCurrentUser()).thenReturn(mockUserDto());
 
     // when
@@ -830,7 +864,7 @@ public class SiglusAdministrationsServiceTest {
     siglusAdministrationsService.changeToLocalMachine(facilityId);
   }
 
-  @Test(expected = ValidationMessageException.class)
+  @Test(expected = BusinessDataException.class)
   public void shouldThrowWhenOldFacilityChangeToAndroid() {
     //given
     AppInfo appInfo = null;
@@ -847,7 +881,7 @@ public class SiglusAdministrationsServiceTest {
     siglusAdministrationsService.changeToAndroid(facilityId);
   }
 
-  @Test(expected = ValidationMessageException.class)
+  @Test(expected = BusinessDataException.class)
   public void shouldThrowWhenOtherFacilityChangeToAndroid() {
     //given
     AppInfo appInfo = null;
