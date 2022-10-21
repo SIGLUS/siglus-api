@@ -390,8 +390,7 @@ public class SiglusFcIntegrationServiceTest {
     template.setId(templateId);
     requisition.setTemplate(template);
     List<Requisition> requisitions = newArrayList(requisition);
-    when(siglusRequisitionRepository.searchForFc(date, today, newHashSet(dpmSupervisoryNodeId),
-        newHashSet(fcSupervisoryNodeId), pageable))
+    when(siglusRequisitionRepository.searchForFc(date, today, pageable))
         .thenReturn(Pagination.getPage(requisitions, pageable));
   }
 

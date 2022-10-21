@@ -30,30 +30,12 @@ import org.springframework.data.repository.query.Param;
 
 @SuppressWarnings("PMD.AvoidDuplicateLiterals")
 public interface SiglusRequisitionRepository extends JpaRepository<Requisition, UUID> {
-
   @Query(value = "select * from requisition.requisitions r where "
-      + "((r.status in ('APPROVED', 'RELEASED', 'RELEASED_WITHOUT_ORDER') "
-      + "and r.supervisorynodeid in :dpmSupervisoryNodeIds) "
-      + "or "
-      + "(r.status in ('AUTHORIZED', 'IN_APPROVAL') "
-      + "and r.supervisorynodeid in :fcSupervisoryNodeIds)) "
+      + "r.status in ('IN_APPROVAL', 'APPROVED', 'RELEASED', 'RELEASED_WITHOUT_ORDER')"
       + "and r.modifieddate >= :date "
-      + "and r.modifieddate < :today "
-      + "and r.reportonly = false order by ?#{#pageable}", nativeQuery = true)
-  Page<Requisition> searchForFc(@Param("date") LocalDate date, @Param("today") String today,
-      @Param("dpmSupervisoryNodeIds") Set<UUID> dpmSupervisoryNodeIds,
-      @Param("fcSupervisoryNodeIds") Set<UUID> fcSupervisoryNodeIds,
-      Pageable pageable);
-
-  @Query(value = "select * from requisition.requisitions r where "
-      + "r.status in ('APPROVED', 'RELEASED', 'RELEASED_WITHOUT_ORDER') "
-      + "and r.supervisorynodeid in :dpmSupervisoryNodeIds "
-      + "and r.modifieddate >= :date "
-      + "and r.modifieddate < :today "
-      + "and r.reportonly = false order by ?#{#pageable}", nativeQuery = true)
-  Page<Requisition> searchForFc(@Param("date") LocalDate date, @Param("today") String today,
-      @Param("dpmSupervisoryNodeIds") Set<UUID> dpmSupervisoryNodeIds,
-      Pageable pageable);
+      + "and r.modifieddate <= :today "
+      + "order by ?#{#pageable}", nativeQuery = true)
+  Page<Requisition> searchForFc(@Param("date") LocalDate date, @Param("today") String today, Pageable pageable);
 
   @Query(value = "select r.* from requisition.requisitions r, referencedata.processing_periods p "
       + "where r.processingPeriodId = p.id "

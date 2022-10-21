@@ -153,24 +153,16 @@ public class SiglusFcIntegrationService {
   private Map<UUID, Map<String, String>> orderableIdToInfoMap;
 
   public Page<FcRequisitionDto> searchRequisitions(LocalDate date, Pageable pageable) {
-    Set<UUID> dpmSupervisoryNodeIds = supervisoryNodeRepository
-        .findAllByFacilityTypeId(dpmFacilityTypeId).stream().map(SupervisoryNode::getId)
-        .collect(toSet());
-    Set<UUID> fcSupervisoryNodeIds = supervisoryNodeRepository
-        .findAllByFacilityTypeId(fcFacilityTypeId).stream().map(SupervisoryNode::getId)
-        .collect(toSet());
     Page<Requisition> requisitions;
     String today = dateHelper.getTodayDateStr();
-    if (fcSupervisoryNodeIds.isEmpty()) {
-      requisitions = siglusRequisitionRepository.searchForFc(date, today, dpmSupervisoryNodeIds, pageable);
-    } else {
-      requisitions = siglusRequisitionRepository.searchForFc(date, today, dpmSupervisoryNodeIds,
-          fcSupervisoryNodeIds, pageable);
-    }
+    requisitions = siglusRequisitionRepository.searchForFc(date, today, pageable);
     List<FcRequisitionDto> fcRequisitionDtos = newArrayList();
     Map<UUID, ProgramRealProgram> realProgramIdToEntityMap = programRealProgramRepository.findAll()
         .stream().collect(Collectors.toMap(ProgramRealProgram::getId, Function.identity()));
     orderableIdToInfoMap = siglusOrderableService.getAllOrderableInfoForFc();
+    Set<UUID> fcSupervisoryNodeIds = supervisoryNodeRepository
+        .findAllByFacilityTypeId(fcFacilityTypeId).stream().map(SupervisoryNode::getId)
+        .collect(toSet());
     requisitions.getContent().forEach(requisition -> fcRequisitionDtos.add(buildDto(requisition,
         fcSupervisoryNodeIds, realProgramIdToEntityMap)));
     return Pagination.getPage(fcRequisitionDtos, pageable, requisitions.getTotalElements());
