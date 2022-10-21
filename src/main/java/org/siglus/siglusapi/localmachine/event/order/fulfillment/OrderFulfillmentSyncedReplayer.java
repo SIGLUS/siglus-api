@@ -54,12 +54,11 @@ import org.openlmis.fulfillment.web.util.OrderLineItemDto;
 import org.openlmis.fulfillment.web.util.OrderObjectReferenceDto;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.RequisitionLineItem;
+import org.openlmis.requisition.domain.requisition.RequisitionStatus;
+import org.openlmis.requisition.domain.requisition.StatusChange;
+import org.openlmis.requisition.domain.requisition.StatusMessage;
 import org.openlmis.requisition.domain.requisition.VersionEntityReference;
 import org.openlmis.requisition.dto.BasicOrderableDto;
-import org.openlmis.requisition.dto.BasicProcessingPeriodDto;
-import org.openlmis.requisition.dto.BasicProgramDto;
-import org.openlmis.requisition.dto.BasicRequisitionDto;
-import org.openlmis.requisition.dto.MinimalFacilityDto;
 import org.openlmis.requisition.dto.OrderableDto;
 import org.openlmis.requisition.dto.VersionIdentityDto;
 import org.openlmis.requisition.repository.RequisitionRepository;
@@ -188,6 +187,12 @@ public class OrderFulfillmentSyncedReplayer {
     requisition.approve(null, getOrderableDtoMap(requisition), Collections.emptyList(),
         event.getFinalApproveUserId());
 
+    StatusChange finalApprovedStatusChange = requisition.getStatusChanges().stream().filter(item ->
+        item.getStatus() == RequisitionStatus.APPROVED).findFirst().orElseThrow(IllegalStateException::new);
+    resetFinalApproveStatusMessage(requisition, event.getConvertToOrderRequest().getFinalApproveStatusMessage(),
+        finalApprovedStatusChange);
+
+    finalApprovedStatusChange.setSupervisoryNodeId(event.getConvertToOrderRequest().getFinalApproveSupervisoryNodeId());
     requisitionRepository.saveAndFlush(requisition);
 
     requisitionExtension.setIsApprovedByInternal(false);
@@ -195,35 +200,38 @@ public class OrderFulfillmentSyncedReplayer {
 
   }
 
-  private BasicRequisitionDto buildBaseRequisitionDto(Requisition requisition) {
-    BasicRequisitionDto basicRequisitionDto = new BasicRequisitionDto();
-    basicRequisitionDto.setId(requisition.getId());
-    MinimalFacilityDto minimalFacilityDto = new MinimalFacilityDto();
-    minimalFacilityDto.setId(requisition.getFacilityId());
-    basicRequisitionDto.setFacility(minimalFacilityDto);
-    BasicProgramDto basicProgramDto = new BasicProgramDto();
-    basicProgramDto.setId(requisition.getProgramId());
-    basicRequisitionDto.setProgram(basicProgramDto);
-    basicRequisitionDto.setEmergency(requisition.getEmergency());
-    BasicProcessingPeriodDto basicProcessingPeriodDto = new BasicProcessingPeriodDto();
-    basicProcessingPeriodDto.setId(requisition.getProcessingPeriodId());
-    basicRequisitionDto.setProcessingPeriod(basicProcessingPeriodDto);
-    return basicRequisitionDto;
+  private void resetFinalApproveStatusMessage(Requisition requisition, StatusMessageRequest statusMessageRequest,
+      StatusChange finalApprovedStatusChange) {
+    if (statusMessageRequest == null) {
+      return;
+    }
+    final StatusMessage statusMessage = StatusMessage.newStatusMessage(requisition, finalApprovedStatusChange,
+        statusMessageRequest.getAuthorId(), statusMessageRequest.getAuthorFirstName(),
+        statusMessageRequest.getAuthorFirstName(), statusMessageRequest.getBody());
+    finalApprovedStatusChange.setStatusMessage(statusMessage);
   }
 
   private void resetApprovedQuantity(Requisition requisition, OrderFulfillmentSyncedEvent event) {
     if (CollectionUtils.isEmpty(event.getConvertToOrderRequest().getRequisitionLineItems())) {
       return;
     }
-    Map<VersionEntityReference, Integer> orderableToQuantity =
-        event.getConvertToOrderRequest().getRequisitionLineItems().stream()
-            .filter(item -> item.getApprovedQuantity() != null)
-            .collect(Collectors.toMap(
-                RequisitionLineItemRequest::getOrderable, RequisitionLineItemRequest::getApprovedQuantity));
-    requisition.getRequisitionLineItems().forEach(requisitionLineItem -> {
-      Integer approvedQuantity = orderableToQuantity.get(requisitionLineItem.getOrderable());
-      requisitionLineItem.setApprovedQuantity(approvedQuantity);
+    Map<VersionEntityReference, RequisitionLineItem> requisitionLineItemMap =
+        requisition.getRequisitionLineItems().stream().collect(toMap(RequisitionLineItem::getOrderable,
+            Function.identity()));
+    List<RequisitionLineItem> newLineItems = new ArrayList<>();
+    event.getConvertToOrderRequest().getRequisitionLineItems().forEach(item -> {
+      RequisitionLineItem requisitionLineItem = requisitionLineItemMap.get(item.getOrderable());
+      if (requisitionLineItem != null) {
+        requisitionLineItem.setApprovedQuantity(item.getApprovedQuantity());
+      } else {
+        // new and add to line item list
+        RequisitionLineItem requisitionLineItemRequest = new RequisitionLineItem();
+        BeanUtils.copyProperties(item, requisitionLineItemRequest);
+        requisitionLineItemRequest.setRequisition(requisition);
+        newLineItems.add(requisitionLineItemRequest);
+      }
     });
+    requisition.getRequisitionLineItems().addAll(newLineItems);
   }
 
   public Map<VersionIdentityDto, OrderableDto> getOrderableDtoMap(Requisition requisition) {

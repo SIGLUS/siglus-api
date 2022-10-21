@@ -20,7 +20,9 @@ import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.collections.CollectionUtils;
+import org.siglus.siglusapi.domain.RequisitionExtension;
 import org.siglus.siglusapi.dto.RequisitionGroupMembersDto;
+import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionGroupMembersRepository;
 import org.springframework.stereotype.Service;
 
@@ -28,6 +30,8 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class EventCommonService {
   private final RequisitionGroupMembersRepository requisitionGroupMembersRepository;
+
+  private final RequisitionExtensionRepository requisitionExtensionRepository;
 
   public UUID getReceiverId(UUID facilityId, UUID programId) {
     List<RequisitionGroupMembersDto> parentFacility =
@@ -38,5 +42,10 @@ public class EventCommonService {
           facilityId, programId));
     }
     return parentFacility.get(0).getFacilityId();
+  }
+
+  public String getGroupId(UUID requisitionId) {
+    RequisitionExtension requisitionExtension = requisitionExtensionRepository.findByRequisitionId(requisitionId);
+    return requisitionExtension.getRequisitionNumberPrefix() + requisitionExtension.getRequisitionNumber();
   }
 }

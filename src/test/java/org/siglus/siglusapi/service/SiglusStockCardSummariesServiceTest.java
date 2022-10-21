@@ -26,11 +26,13 @@ import static org.siglus.siglusapi.constant.FieldConstants.FACILITY_ID;
 import static org.siglus.siglusapi.constant.FieldConstants.ORDERABLE_ID;
 import static org.siglus.siglusapi.constant.FieldConstants.RIGHT_NAME;
 import static org.siglus.siglusapi.constant.PaginationConstants.DEFAULT_PAGE_NUMBER;
+import static org.siglus.siglusapi.constant.PaginationConstants.NO_PAGINATION;
 
 import com.google.common.collect.Lists;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -42,6 +44,9 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.openlmis.referencedata.domain.Orderable;
+import org.openlmis.referencedata.repository.OrderableRepository;
+import org.openlmis.referencedata.web.LotController;
 import org.openlmis.requisition.service.PermissionService;
 import org.openlmis.requisition.service.referencedata.PermissionStringDto;
 import org.openlmis.requisition.service.referencedata.PermissionStrings;
@@ -125,6 +130,12 @@ public class SiglusStockCardSummariesServiceTest {
   @Mock
   private CalculatedStockOnHandByLocationRepository calculatedStockOnHandByLocationRepository;
 
+  @Mock
+  private OrderableRepository orderableRepository;
+
+  @Mock
+  private LotController lotController;
+
   @InjectMocks
   private SiglusStockCardSummariesService service;
 
@@ -133,6 +144,7 @@ public class SiglusStockCardSummariesServiceTest {
   private final UUID programId = UUID.randomUUID();
   private final UUID subDraftId = UUID.randomUUID();
   private final UUID orderableId = UUID.randomUUID();
+  private final UUID orderableId2 = UUID.randomUUID();
   private final UUID physicalInventoryId = UUID.randomUUID();
   private final String rightName = "STOCK_CARDS_VIEW";
   private final UUID initialDraftId = UUID.randomUUID();
@@ -150,15 +162,41 @@ public class SiglusStockCardSummariesServiceTest {
     user.setId(userId);
     user.setHomeFacilityId(facilityId);
     when(authenticationHelper.getCurrentUser()).thenReturn(user);
-
     Set<PermissionStringDto> dtos = new HashSet<>();
     dtos.add(PermissionStringDto.create(rightName, facilityId, programId));
-    when(permissionStringsHandler.get())
-        .thenReturn(dtos);
-    when(permissionService.getPermissionStrings(userId))
-        .thenReturn(permissionStringsHandler);
-    when(archiveProductService.searchArchivedProductsByFacilityId(facilityId))
-        .thenReturn(new HashSet<>());
+    when(permissionStringsHandler.get()).thenReturn(dtos);
+    when(permissionService.getPermissionStrings(userId)).thenReturn(permissionStringsHandler);
+    when(archiveProductService.searchArchivedProductsByFacilityId(facilityId)).thenReturn(new HashSet<>());
+  }
+
+  @Test
+  public void shouldFilterInactiveLotWhenGetLotsDataByOrderableIds() {
+    // given
+    Map<String, String> identifiers = new HashMap<>();
+    identifiers.put("tradeItem", UUID.randomUUID().toString());
+    Orderable orderable1 = new Orderable();
+    orderable1.setIdentifiers(identifiers);
+    Orderable orderable2 = new Orderable();
+    orderable2.setIdentifiers(identifiers);
+    Page<Orderable> orderablePage = Pagination.getPage(newArrayList(orderable1, orderable1));
+    List<UUID> orderableIds = newArrayList(orderableId, orderableId2);
+    when(orderableRepository.findAllLatestByIds(orderableIds, new PageRequest(DEFAULT_PAGE_NUMBER, NO_PAGINATION)))
+        .thenReturn(orderablePage);
+    org.openlmis.referencedata.dto.LotDto lotDto1 = new org.openlmis.referencedata.dto.LotDto();
+    lotDto1.setLotCode("lot1");
+    lotDto1.setActive(true);
+    org.openlmis.referencedata.dto.LotDto lotDto2 = new org.openlmis.referencedata.dto.LotDto();
+    lotDto2.setLotCode("lot2");
+    lotDto2.setActive(false);
+    Page<org.openlmis.referencedata.dto.LotDto> lotPage = Pagination.getPage(newArrayList(lotDto1, lotDto2));
+    when(lotController.getLots(any(), any())).thenReturn(lotPage);
+
+    // when
+    List<org.openlmis.referencedata.dto.LotDto> lots = service.getLotsDataByOrderableIds(orderableIds);
+
+    // then
+    assertEquals(1, lots.size());
+    assertEquals("lot1", lots.get(0).getLotCode());
   }
 
   @Test

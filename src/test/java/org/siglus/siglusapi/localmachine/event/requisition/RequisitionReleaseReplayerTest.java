@@ -13,7 +13,7 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.localmachine.event.order;
+package org.siglus.siglusapi.localmachine.event.requisition;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.times;
@@ -27,49 +27,50 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.requisition.domain.requisition.Requisition;
-import org.openlmis.requisition.domain.requisition.StatusChange;
 import org.openlmis.requisition.repository.RequisitionRepository;
-import org.openlmis.requisition.repository.StatusChangeRepository;
-import org.siglus.siglusapi.localmachine.event.order.release.OrderReleaseEvent;
-import org.siglus.siglusapi.localmachine.event.order.release.OrderReleaseReplayer;
+import org.siglus.siglusapi.domain.RequisitionExtension;
+import org.siglus.siglusapi.localmachine.event.requisition.web.RequisitionReleaseEvent;
+import org.siglus.siglusapi.localmachine.event.requisition.web.RequisitionReleaseReplayer;
+import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 
 @RunWith(MockitoJUnitRunner.class)
 @SuppressWarnings({"PMD.UnusedPrivateField"})
-public class OrderReleaseReplayerTest {
+public class RequisitionReleaseReplayerTest {
 
   @InjectMocks
-  private OrderReleaseReplayer orderReleaseReplayer;
+  private RequisitionReleaseReplayer requisitionReleaseReplayer;
 
   @Mock
   private RequisitionRepository requisitionRepository;
 
   @Mock
-  private StatusChangeRepository statusChangeRepository;
+  private RequisitionExtensionRepository requisitionExtensionRepository;
 
 
-  private final UUID requisitionId = UUID.randomUUID();
+  private final String requisitionNumber = "requisitionNumber";
   private final UUID supplyingDepotId = UUID.randomUUID();
   private final UUID authorId = UUID.randomUUID();
 
   @Test
   public void shouldDoReplaySuccessWhenOrderReleaseEventReceived() {
     // given
-    OrderReleaseEvent orderReleaseEvent = mockOrderReleaseEvent();
-    when(requisitionRepository.findOne(requisitionId)).thenReturn(new Requisition());
+    RequisitionReleaseEvent requisitionReleaseEvent = mockOrderReleaseEvent();
+    when(requisitionRepository.findOne(any(UUID.class))).thenReturn(new Requisition());
+    when(requisitionExtensionRepository.findByRequisitionNumber(any())).thenReturn(new RequisitionExtension());
 
     // when
-    orderReleaseReplayer.replay(orderReleaseEvent);
+    requisitionReleaseReplayer.replay(requisitionReleaseEvent);
 
     // then
-    verify(statusChangeRepository, times(1)).save(any(StatusChange.class));
+    verify(requisitionRepository, times(1)).findOne(any(UUID.class));
   }
 
-  private OrderReleaseEvent mockOrderReleaseEvent() {
-    return OrderReleaseEvent
+  private RequisitionReleaseEvent mockOrderReleaseEvent() {
+    return RequisitionReleaseEvent
         .builder()
         .authorId(authorId)
         .supplyingDepotId(supplyingDepotId)
-        .requisitionId(requisitionId)
+        .requisitionNumber(requisitionNumber)
         .build();
   }
 }

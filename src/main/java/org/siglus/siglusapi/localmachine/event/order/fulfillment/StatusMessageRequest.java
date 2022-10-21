@@ -15,22 +15,23 @@
 
 package org.siglus.siglusapi.localmachine.event.order.fulfillment;
 
-import java.util.List;
+import java.time.ZonedDateTime;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.openlmis.fulfillment.domain.Order;
 
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class ConvertToOrderRequest {
-  private String requisitionNumber;
-  private List<RequisitionLineItemRequest> requisitionLineItems;
-  private StatusMessageRequest finalApproveStatusMessage;
-  private UUID finalApproveSupervisoryNodeId;
-  private Order firstOrder;
+public class StatusMessageRequest {
+  private UUID id;
+  private UUID authorId;
+  private String authorFirstName;
+  private String authorLastName;
+  private String body;
+  private ZonedDateTime createdDate;
+  private ZonedDateTime modifiedDate;
 }

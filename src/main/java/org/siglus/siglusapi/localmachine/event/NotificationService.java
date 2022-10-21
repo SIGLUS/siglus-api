@@ -35,6 +35,7 @@ import org.springframework.stereotype.Service;
 @Service
 @Slf4j
 @RequiredArgsConstructor
+@SuppressWarnings("PMD.AvoidDuplicateLiterals")
 public class NotificationService {
   private final SiglusSimulateUserAuthHelper simulateUserAuthHelper;
   private final NotificationRepository notificationRepository;
@@ -42,65 +43,81 @@ public class NotificationService {
   private final RequisitionRepository requisitionRepository;
 
   public void postInternalApproval(UUID userId, BasicRequisitionDto requisition, UUID notifySupervisoryNodeId) {
-    saveNotificationFromRequisition(userId, requisition, notification -> {
-      notification.setType(NotificationType.TODO);
-      notification.setStatus(NotificationStatus.IN_APPROVAL);
-      notification.setNotifySupervisoryNodeId(notifySupervisoryNodeId);
-    });
+    try {
+      saveNotificationFromRequisition(userId, requisition, notification -> {
+        notification.setType(NotificationType.TODO);
+        notification.setStatus(NotificationStatus.IN_APPROVAL);
+        notification.setNotifySupervisoryNodeId(notifySupervisoryNodeId);
+      });
+    } catch (Exception e) {
+      log.error("Notification send failed, msg = " + e.getMessage(), e);
+    }
   }
 
   public void postReject(UUID userId, BasicRequisitionDto requisition) {
-    notificationRepository.updateLastNotificationProcessed(requisition.getId(), NotificationStatus.IN_APPROVAL);
-    saveNotificationFromRequisition(userId, requisition, notification -> {
-      notification.setStatus(NotificationStatus.REJECTED);
-      notification.setType(NotificationType.TODO);
-    });
+    try {
+      notificationRepository.updateLastNotificationProcessed(requisition.getId(), NotificationStatus.IN_APPROVAL);
+      saveNotificationFromRequisition(userId, requisition, notification -> {
+        notification.setStatus(NotificationStatus.REJECTED);
+        notification.setType(NotificationType.TODO);
+      });
+    } catch (Exception e) {
+      log.error("Notification send failed, msg = " + e.getMessage(), e);
+    }
   }
 
 
   public void postFulfillment(UUID userId, UUID proofOfDeliveryId, Order order) {
-    OrderExternal external = orderExternalRepository.findOne(order.getExternalId());
-    UUID requisitionId = external == null ? order.getExternalId() : external.getRequisitionId();
-    Requisition requisition = requisitionRepository.findOne(requisitionId);
+    try {
+      OrderExternal external = orderExternalRepository.findOne(order.getExternalId());
+      UUID requisitionId = external == null ? order.getExternalId() : external.getRequisitionId();
+      Requisition requisition = requisitionRepository.findOne(requisitionId);
 
-    Notification requestNotification = new Notification();
-    requestNotification.setRefId(proofOfDeliveryId);
-    requestNotification.setFacilityId(requisition.getFacilityId());
-    requestNotification.setProgramId(requisition.getProgramId());
-    requestNotification.setEmergency(requisition.getEmergency());
-    requestNotification.setStatus(NotificationStatus.SHIPPED);
-    requestNotification.setType(NotificationType.TODO);
-    requestNotification.setProcessingPeriodId(order.getProcessingPeriodId());
-    requestNotification.setRequestingFacilityId(requisition.getFacilityId());
-    log.info("confirm shipment notification: {}", requestNotification);
-    save(userId, requestNotification);
+      Notification requestNotification = new Notification();
+      requestNotification.setRefId(proofOfDeliveryId);
+      requestNotification.setFacilityId(requisition.getFacilityId());
+      requestNotification.setProgramId(requisition.getProgramId());
+      requestNotification.setEmergency(requisition.getEmergency());
+      requestNotification.setStatus(NotificationStatus.SHIPPED);
+      requestNotification.setType(NotificationType.TODO);
+      requestNotification.setProcessingPeriodId(order.getProcessingPeriodId());
+      requestNotification.setRequestingFacilityId(requisition.getFacilityId());
+      log.info("confirm shipment notification: {}", requestNotification);
+      save(userId, requestNotification);
 
-    Notification supplierNotification = new Notification();
-    supplierNotification.setRefId(proofOfDeliveryId);
-    supplierNotification.setFacilityId(requisition.getFacilityId());
-    supplierNotification.setProgramId(requisition.getProgramId());
-    supplierNotification.setEmergency(requisition.getEmergency());
-    supplierNotification.setStatus(NotificationStatus.SHIPPED);
-    supplierNotification.setType(NotificationType.UPDATE);
-    supplierNotification.setProcessingPeriodId(order.getProcessingPeriodId());
-    supplierNotification.setRequestingFacilityId(requisition.getFacilityId());
-    log.info("confirm shipment notification for supplier facility: {}", supplierNotification);
-    save(userId, supplierNotification);
+      Notification supplierNotification = new Notification();
+      supplierNotification.setRefId(proofOfDeliveryId);
+      supplierNotification.setFacilityId(order.getSupplyingFacilityId());
+      supplierNotification.setProgramId(requisition.getProgramId());
+      supplierNotification.setEmergency(requisition.getEmergency());
+      supplierNotification.setStatus(NotificationStatus.SHIPPED);
+      supplierNotification.setType(NotificationType.UPDATE);
+      supplierNotification.setProcessingPeriodId(order.getProcessingPeriodId());
+      supplierNotification.setRequestingFacilityId(requisition.getFacilityId());
+      log.info("confirm shipment notification for supplier facility: {}", supplierNotification);
+      save(userId, supplierNotification);
+    } catch (Exception e) {
+      log.error("Notification send failed, msg = " + e.getMessage(), e);
+    }
   }
 
   public void postConfirmPod(UUID userId, UUID proofOfDeliveryId, Order order) {
-    notificationRepository.updateLastNotificationProcessed(proofOfDeliveryId, NotificationStatus.SHIPPED);
-    Notification notification = new Notification();
-    notification.setRefId(proofOfDeliveryId);
-    notification.setProgramId(order.getProgramId());
-    notification.setEmergency(order.getEmergency());
-    notification.setProcessingPeriodId(order.getProcessingPeriodId());
-    notification.setFacilityId(order.getSupplyingFacilityId());
-    notification.setRequestingFacilityId(order.getRequestingFacilityId());
-    notification.setStatus(NotificationStatus.RECEIVED);
-    notification.setType(NotificationType.UPDATE);
-    log.info("confirm pod notification: {}", notification);
-    save(userId, notification);
+    try {
+      notificationRepository.updateLastNotificationProcessed(proofOfDeliveryId, NotificationStatus.SHIPPED);
+      Notification notification = new Notification();
+      notification.setRefId(proofOfDeliveryId);
+      notification.setProgramId(order.getProgramId());
+      notification.setEmergency(order.getEmergency());
+      notification.setProcessingPeriodId(order.getProcessingPeriodId());
+      notification.setFacilityId(order.getSupplyingFacilityId());
+      notification.setRequestingFacilityId(order.getRequestingFacilityId());
+      notification.setStatus(NotificationStatus.RECEIVED);
+      notification.setType(NotificationType.UPDATE);
+      log.info("confirm pod notification: {}", notification);
+      save(userId, notification);
+    } catch (Exception e) {
+      log.error("Notification send failed, msg = " + e.getMessage(), e);
+    }
   }
 
   private void saveNotificationFromRequisition(UUID userId, BasicRequisitionDto requisition,

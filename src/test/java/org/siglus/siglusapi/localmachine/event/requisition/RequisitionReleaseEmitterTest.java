@@ -13,9 +13,10 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.localmachine.event.order;
+package org.siglus.siglusapi.localmachine.event.requisition;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Matchers.any;
 import static org.powermock.api.mockito.PowerMockito.when;
 
 import java.util.UUID;
@@ -29,16 +30,18 @@ import org.openlmis.requisition.dto.ReleasableRequisitionDto;
 import org.openlmis.requisition.repository.RequisitionRepository;
 import org.siglus.siglusapi.domain.RequisitionExtension;
 import org.siglus.siglusapi.localmachine.EventPublisher;
-import org.siglus.siglusapi.localmachine.event.order.release.OrderReleaseEmitter;
-import org.siglus.siglusapi.localmachine.event.order.release.OrderReleaseEvent;
+import org.siglus.siglusapi.localmachine.event.EventCommonService;
+import org.siglus.siglusapi.localmachine.event.requisition.web.RequisitionReleaseEmitter;
+import org.siglus.siglusapi.localmachine.event.requisition.web.RequisitionReleaseEvent;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
+import org.siglus.siglusapi.service.SiglusRequisitionExtensionService;
 
 @RunWith(MockitoJUnitRunner.class)
 @SuppressWarnings({"PMD.UnusedPrivateField"})
-public class OrderReleaseEmitterTest {
+public class RequisitionReleaseEmitterTest {
 
   @InjectMocks
-  private OrderReleaseEmitter orderReleaseEmitter;
+  private RequisitionReleaseEmitter requisitionReleaseEmitter;
 
   @Mock
   private EventPublisher eventPublisher;
@@ -49,6 +52,12 @@ public class OrderReleaseEmitterTest {
   @Mock
   private RequisitionRepository requisitionRepository;
 
+  @Mock
+  private EventCommonService eventCommonService;
+
+  @Mock
+  private SiglusRequisitionExtensionService siglusRequisitionExtensionService;
+
   private final UUID requisitionId = UUID.randomUUID();
   private final UUID supplyingDepotId = UUID.randomUUID();
 
@@ -58,9 +67,12 @@ public class OrderReleaseEmitterTest {
     UUID authorId = UUID.randomUUID();
     when(requisitionExtensionRepository.findByRequisitionId(requisitionId)).thenReturn(new RequisitionExtension());
     when(requisitionRepository.findOne(requisitionId)).thenReturn(new Requisition());
+    when(eventCommonService.getGroupId(any())).thenReturn("groupId");
+    when(siglusRequisitionExtensionService.formatRequisitionNumber(any(UUID.class)))
+        .thenReturn("requisitionNumber");
 
     // when
-    OrderReleaseEvent emit = orderReleaseEmitter.emit(mockReleasableRequisitionDto(), authorId);
+    RequisitionReleaseEvent emit = requisitionReleaseEmitter.emit(mockReleasableRequisitionDto(), authorId);
 
     // then
     assertThat(emit.getAuthorId()).isEqualTo(authorId);

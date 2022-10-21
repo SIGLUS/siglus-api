@@ -13,7 +13,7 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.localmachine.event.order.release;
+package org.siglus.siglusapi.localmachine.event.requisition.web;
 
 import java.util.UUID;
 import lombok.AllArgsConstructor;
@@ -27,9 +27,9 @@ import org.siglus.siglusapi.localmachine.EventPayload;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class OrderReleaseEvent {
+public class RequisitionReleaseEvent {
 
-  private UUID requisitionId;
+  private String requisitionNumber;
 
   private UUID supplyingDepotId;
 

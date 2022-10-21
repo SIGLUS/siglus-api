@@ -21,6 +21,8 @@ import static org.powermock.api.mockito.PowerMockito.when;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -36,6 +38,9 @@ import org.openlmis.fulfillment.web.shipment.ShipmentDto;
 import org.openlmis.requisition.domain.RequisitionTemplate;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.RequisitionBuilder;
+import org.openlmis.requisition.domain.requisition.RequisitionStatus;
+import org.openlmis.requisition.domain.requisition.StatusChange;
+import org.openlmis.requisition.domain.requisition.StatusMessage;
 import org.openlmis.requisition.domain.requisition.VersionEntityReference;
 import org.openlmis.requisition.repository.RequisitionRepository;
 import org.siglus.siglusapi.domain.RequisitionExtension;
@@ -88,8 +93,17 @@ public class OrderFulfillmentSyncedEmitterTest extends FileBasedTest {
     user.setHomeFacilityId(facilityId);
     user.setId(userId);
     when(authHelper.getCurrentUser()).thenReturn(user);
-
     when(requisitionExtensionRepository.findByRequisitionNumber(any())).thenReturn(new RequisitionExtension());
+    final StatusChange statusChange = new StatusChange();
+    statusChange.setStatus(RequisitionStatus.APPROVED);
+    StatusMessage statusMessage = new StatusMessage();
+    statusMessage.setBody("this is a comment.");
+    statusMessage.setId(UUID.randomUUID());
+    statusMessage.setCreatedDate(ZonedDateTime.now(ZoneId.of("UTC")));
+    statusChange.setStatusMessage(statusMessage);
+    List<StatusChange> statusChanges = new ArrayList<>();
+    statusChanges.add(statusChange);
+    when(siglusStatusChangeRepository.findByRequisitionId(any())).thenReturn(statusChanges);
   }
 
   @Test

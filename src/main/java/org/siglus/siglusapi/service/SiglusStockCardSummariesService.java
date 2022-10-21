@@ -128,7 +128,8 @@ public class SiglusStockCardSummariesService {
         .collect(Collectors.toSet());
     LotSearchParams requestParams = new LotSearchParams(null, new ArrayList<>(tradeItemIds), null, null);
 
-    return lotController.getLots(requestParams, null).getContent();
+    List<org.openlmis.referencedata.dto.LotDto> lotDtos = lotController.getLots(requestParams, null).getContent();
+    return lotDtos.stream().filter(org.openlmis.referencedata.dto.LotDto::isActive).collect(Collectors.toList());
   }
 
   public Page<StockCardSummaryV2Dto> findSiglusStockCard(

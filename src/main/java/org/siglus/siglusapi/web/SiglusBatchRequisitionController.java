@@ -19,7 +19,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.openlmis.requisition.dto.ReleasableRequisitionBatchDto;
 import org.openlmis.requisition.dto.RequisitionsProcessingStatusDto;
-import org.siglus.siglusapi.localmachine.event.order.release.OrderReleaseEmitter;
+import org.siglus.siglusapi.localmachine.event.requisition.web.RequisitionReleaseEmitter;
 import org.siglus.siglusapi.service.BatchReleaseRequisitionService;
 import org.siglus.siglusapi.service.SiglusNotificationService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
@@ -41,7 +41,7 @@ public class SiglusBatchRequisitionController {
 
   private final SiglusNotificationService notificationService;
 
-  private final OrderReleaseEmitter orderReleaseEmitter;
+  private final RequisitionReleaseEmitter requisitionReleaseEmitter;
 
   private final SiglusAuthenticationHelper siglusAuthenticationHelper;
 
@@ -59,7 +59,7 @@ public class SiglusBatchRequisitionController {
         .getRequisitionsProcessingStatusDtoResponse(releaseDto);
     UUID authorId = siglusAuthenticationHelper.getCurrentUser().getId();
     releaseDto.getRequisitionsToRelease().forEach(releasableRequisition ->
-        orderReleaseEmitter.emit(releasableRequisition, authorId));
+        requisitionReleaseEmitter.emit(releasableRequisition, authorId));
     RequisitionsProcessingStatusDto body = responseEntity.getBody();
     body.getRequisitionDtos().forEach(notificationService::postConvertToOrder);
     return responseEntity;

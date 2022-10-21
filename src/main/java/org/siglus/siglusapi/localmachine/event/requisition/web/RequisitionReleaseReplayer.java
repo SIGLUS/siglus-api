@@ -13,49 +13,43 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.localmachine.event.order.release;
+package org.siglus.siglusapi.localmachine.event.requisition.web;
 
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.openlmis.requisition.domain.requisition.Requisition;
-import org.openlmis.requisition.domain.requisition.RequisitionStatus;
-import org.openlmis.requisition.domain.requisition.StatusChange;
 import org.openlmis.requisition.repository.RequisitionRepository;
-import org.openlmis.requisition.repository.StatusChangeRepository;
+import org.siglus.siglusapi.domain.RequisitionExtension;
+import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class OrderReleaseReplayer {
+public class RequisitionReleaseReplayer {
 
   private final RequisitionRepository requisitionRepository;
+  private final RequisitionExtensionRepository requisitionExtensionRepository;
 
-  private final StatusChangeRepository statusChangeRepository;
-
-  @EventListener(classes = {OrderReleaseEvent.class})
-  public void replay(OrderReleaseEvent orderReleaseEvent) {
+  @EventListener(classes = {RequisitionReleaseEvent.class})
+  public void replay(RequisitionReleaseEvent requisitionReleaseEvent) {
     try {
-      log.info("start order release event replay, requisition id = " + orderReleaseEvent.getRequisitionId());
-      doReplay(orderReleaseEvent);
-      log.info("end order release event replay, requisition id = " + orderReleaseEvent.getRequisitionId());
+      log.info("start order release event replay, requisition id = " + requisitionReleaseEvent.getRequisitionNumber());
+      doReplay(requisitionReleaseEvent);
+      log.info("end order release event replay, requisition id = " + requisitionReleaseEvent.getRequisitionNumber());
     } catch (Exception e) {
       log.error("fail to replay order release event, msg = " + e.getMessage(), e);
       throw e;
     }
   }
 
-  private void doReplay(OrderReleaseEvent orderReleaseEvent) {
-    UUID requisitionId = orderReleaseEvent.getRequisitionId();
+  private void doReplay(RequisitionReleaseEvent requisitionReleaseEvent) {
+    RequisitionExtension requisitionExtension = requisitionExtensionRepository.findByRequisitionNumber(
+        requisitionReleaseEvent.getRequisitionNumber());
+    UUID requisitionId = requisitionExtension.getRequisitionId();
     Requisition requisition = requisitionRepository.findOne(requisitionId);
-    requisition.setStatus(RequisitionStatus.RELEASED_WITHOUT_ORDER);
-    StatusChange statusChange = StatusChange.newStatusChange(requisition, orderReleaseEvent.getAuthorId());
-    log.info("do relay save to status change, requisition id = " + requisitionId);
-    statusChangeRepository.save(statusChange);
-
-    log.info("do replay save to requisition, requisition id = " + requisitionId);
-    requisitionRepository.save(requisition);
+    requisition.releaseWithoutOrder(requisitionReleaseEvent.getAuthorId());
   }
 }
