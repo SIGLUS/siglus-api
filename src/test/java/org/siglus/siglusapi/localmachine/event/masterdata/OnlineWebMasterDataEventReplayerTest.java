@@ -81,7 +81,7 @@ public class OnlineWebMasterDataEventReplayerTest {
     // then
     assertEquals(0, i);
     verify(administrationsService).deleteDrafts(facilityId);
-    verify(administrationsService).assignToVirtualLocation(facilityId, Boolean.TRUE);
+    verify(administrationsService).assignToVirtualLocation(facilityId, Boolean.TRUE, null);
   }
 
   @Test
@@ -100,7 +100,7 @@ public class OnlineWebMasterDataEventReplayerTest {
     // then
     assertEquals(0, i);
     verify(administrationsService, times(0)).deleteDrafts(facilityId);
-    verify(administrationsService, times(0)).assignToVirtualLocation(facilityId, Boolean.FALSE);
+    verify(administrationsService, times(0)).assignToVirtualLocation(facilityId, Boolean.FALSE, null);
   }
 
   private MasterDataTableChangeEvent buildMasterDataTableChangeEvent() {

@@ -19,7 +19,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
-import org.openlmis.referencedata.domain.User;
 import org.openlmis.referencedata.repository.UserRepository;
 import org.siglus.siglusapi.domain.FacilityExtension;
 import org.siglus.siglusapi.localmachine.Machine;
@@ -78,14 +77,8 @@ public class MasterDataEventReplayer {
     }
     if (toggledLocationManagement) {
       administrationsService.deleteDrafts(facilityId);
-      simulateAdminUser();
-      administrationsService.assignToVirtualLocation(facilityId, locationManagement);
+      administrationsService.assignToVirtualLocation(facilityId, locationManagement, null);
     }
-  }
-
-  private void simulateAdminUser() {
-    User admin = userRepository.findOneByUsernameIgnoreCase("admin");
-    simulateUserAuthHelper.simulateNewUserAuth(admin.getId());
   }
 
   private Boolean getEnableLocationManagement(FacilityExtension facilityExtension) {

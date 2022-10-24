@@ -213,7 +213,8 @@ public class SiglusAdministrationsService {
       if (isWebFacility(facilityExtension)) {
         deleteDraftsWhenToggleLocationManagement(facilityExtension, siglusFacilityDto.getId(),
             siglusFacilityDto.getEnableLocationManagement());
-        assignToVirtualLocation(siglusFacilityDto.getId(), siglusFacilityDto.getEnableLocationManagement());
+        assignToVirtualLocation(siglusFacilityDto.getId(), siglusFacilityDto.getEnableLocationManagement(),
+            authenticationHelper.getCurrentUser().getId());
       }
       facilityExtension.setEnableLocationManagement(siglusFacilityDto.getEnableLocationManagement());
     }
@@ -551,11 +552,10 @@ public class SiglusAdministrationsService {
     locationDraftRepository.deleteFacilityRelatedDrafts(facilityId);
   }
 
-  public void assignToVirtualLocation(UUID facilityId, boolean toBeUpdatedEnableLocationManagement) {
+  public void assignToVirtualLocation(UUID facilityId, boolean toBeUpdatedEnableLocationManagement, UUID userId) {
     if (emptyStockCardCount(facilityId)) {
       return;
     }
-    UUID userId = authenticationHelper.getCurrentUser().getId();
     List<StockCard> stockCards = stockCardRepository.findByFacilityIdIn(facilityId);
     List<UUID> stockCardIds = stockCards.stream().map(StockCard::getId).collect(Collectors.toList());
     if (BooleanUtils.isTrue(toBeUpdatedEnableLocationManagement)) {
