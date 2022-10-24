@@ -21,6 +21,7 @@ import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
 import static org.siglus.siglusapi.constant.FacilityTypeConstants.DPM;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.TestConsumptionLineItems.TOTAL;
 
 import com.google.common.collect.ImmutableMap;
 import java.time.LocalDate;
@@ -63,6 +64,7 @@ import org.siglus.siglusapi.domain.ProgramOrderablesExtension;
 import org.siglus.siglusapi.domain.ProgramRealProgram;
 import org.siglus.siglusapi.domain.RequisitionLineItemExtension;
 import org.siglus.siglusapi.domain.ShipmentsExtension;
+import org.siglus.siglusapi.domain.TestConsumptionLineItem;
 import org.siglus.siglusapi.domain.UsageInformationLineItem;
 import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.FacilityTypeDto;
@@ -80,6 +82,8 @@ import org.siglus.siglusapi.dto.UsageTemplateColumnDto;
 import org.siglus.siglusapi.dto.UsageTemplateSectionDto;
 import org.siglus.siglusapi.dto.android.PeriodOfProductMovements;
 import org.siglus.siglusapi.dto.android.StocksOnHand;
+import org.siglus.siglusapi.dto.android.enumeration.TestProject;
+import org.siglus.siglusapi.dto.android.enumeration.TestService;
 import org.siglus.siglusapi.dto.fc.FacilityStockMovementResponse;
 import org.siglus.siglusapi.dto.fc.FacilityStockOnHandResponse;
 import org.siglus.siglusapi.dto.fc.ProductStockOnHandResponse;
@@ -92,6 +96,7 @@ import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.repository.StockManagementRepository;
 import org.siglus.siglusapi.repository.SupervisoryNodeRepository;
+import org.siglus.siglusapi.repository.TestConsumptionLineItemRepository;
 import org.siglus.siglusapi.repository.UsageInformationLineItemRepository;
 import org.siglus.siglusapi.service.android.mapper.ProductMovementMapper;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
@@ -139,6 +144,8 @@ public class SiglusFcIntegrationService {
   private final LotOnHandMapper lotOnHandMapper;
 
   private final UsageInformationLineItemRepository usageInformationLineItemRepository;
+
+  private final TestConsumptionLineItemRepository testConsumptionLineItemRepository;
 
   private final SiglusOrderableService siglusOrderableService;
 
@@ -361,14 +368,32 @@ public class SiglusFcIntegrationService {
     setProductInfo(requisition.getNonSkippedRequisitionLineItems(), fcRequisitionDto);
     setRegimenInfo(requisition, fcRequisitionDto, realProgramMap);
     setUsageInformation(requisition, fcRequisitionDto);
+    setTestConsumption(requisition, fcRequisitionDto);
     return fcRequisitionDto;
   }
 
+  private void setTestConsumption(Requisition requisition, FcRequisitionDto fcRequisitionDto) {
+    if (ProgramConstants.RAPIDTEST_PROGRAM_CODE.equals(fcRequisitionDto.getProgramCode())) {
+      List<TestConsumptionLineItem> lineItems = testConsumptionLineItemRepository.findByRequisitionId(
+          requisition.getId());
+      List<Map<String, Object>> testConsumptionLineItems = newArrayList();
+      lineItems.forEach(lineItem -> {
+        Map<String, Object> testConsumptionMap = newHashMap();
+        testConsumptionMap.put("project", TestProject.findByValue(lineItem.getProject()));
+        testConsumptionMap.put("outcome", lineItem.getOutcome().toUpperCase());
+        testConsumptionMap.put("service", TOTAL.equals(lineItem.getService()) ? "TOTAL" :
+            TestService.findByValue(lineItem.getService()));
+        testConsumptionMap.put("value", lineItem.getValue());
+        testConsumptionLineItems.add(testConsumptionMap);
+      });
+      fcRequisitionDto.setTestConsumptionLineItems(testConsumptionLineItems);
+    }
+  }
 
   private void setUsageInformation(Requisition requisition, FcRequisitionDto fcRequisitionDto) {
     if (ProgramConstants.MALARIA_PROGRAM_CODE.equals(fcRequisitionDto.getProgramCode())) {
-      List<UsageInformationLineItem> lineItems = usageInformationLineItemRepository
-          .findByRequisitionId(requisition.getId());
+      List<UsageInformationLineItem> lineItems = usageInformationLineItemRepository.findByRequisitionId(
+          requisition.getId());
       List<Map<String, Object>> usageInformationLineItems = newArrayList();
       lineItems.forEach(lineItem -> {
         Map<String, Object> usageInformationMap = newHashMap();

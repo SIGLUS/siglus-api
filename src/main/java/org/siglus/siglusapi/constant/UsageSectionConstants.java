@@ -145,6 +145,7 @@ public class UsageSectionConstants {
     private TestConsumptionLineItems() {
     }
 
+    public static final String TOTAL = "total";
     public static final String NEW_COLUMN_0 = "newColumn0";
     public static final String NEW_COLUMN_1 = "newColumn1";
     public static final String NEW_COLUMN_2 = "newColumn2";

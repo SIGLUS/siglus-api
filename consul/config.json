@@ -1,7 +1,7 @@
 {
   "service": {
     "Name": "siglusapi",
-    "Port": 8080,
+    "Port": 8090,
     "Tags": ["openlmis-service"],
     "check": {
       "interval": "10s",
