@@ -339,7 +339,7 @@ public class SiglusRequisitionService {
         && requisitionExtension.getIsApprovedByInternal());
   }
 
-  public void revertRequisition(UUID requisitionId) {
+  private void revertRequisition(UUID requisitionId) {
     revertRequisitionLineItem(requisitionId);
     revertRequisitionLineItemExtension(requisitionId);
     deleteSiglusDraft(requisitionId);
