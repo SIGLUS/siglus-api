@@ -342,7 +342,9 @@ public class SiglusOrderService {
     List<FulfillOrderDto> fulfillOrderDtos = dtos.stream().map(basicOrderDto -> {
       return FulfillOrderDto.builder().basicOrder(basicOrderDto).build();
     }).collect(toList());
-    List<FulfillOrderDto> processedFulfillOrderDtos = processExpiredFulfillOrder(fulfillOrderDtos);
+
+    List<FulfillOrderDto> processedFulfillOrderDtos =
+        fulfillOrderDtos.isEmpty() ? fulfillOrderDtos : processExpiredFulfillOrder(fulfillOrderDtos);
 
     return new PageImpl<>(
         processedFulfillOrderDtos,
