@@ -23,7 +23,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -40,11 +43,13 @@ import org.openlmis.requisition.domain.RequisitionTemplate;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.RequisitionBuilder;
 import org.openlmis.requisition.dto.OrderableDto;
+import org.openlmis.requisition.dto.VersionIdentityDto;
 import org.openlmis.requisition.repository.RequisitionRepository;
 import org.openlmis.requisition.service.referencedata.OrderableReferenceDataService;
 import org.siglus.common.domain.OrderExternal;
 import org.siglus.common.repository.OrderExternalRepository;
 import org.siglus.siglusapi.domain.RequisitionExtension;
+import org.siglus.siglusapi.localmachine.event.EventCommonService;
 import org.siglus.siglusapi.localmachine.event.NotificationService;
 import org.siglus.siglusapi.localmachine.event.order.fulfillment.OrderFulfillmentSyncedEvent;
 import org.siglus.siglusapi.localmachine.event.order.fulfillment.OrderFulfillmentSyncedReplayer;
@@ -100,6 +105,8 @@ public class OrderFulfillmentSyncedReplayerTest extends FileBasedTest {
   private PodExtensionRepository podExtensionRepository;
   @Mock
   private NotificationService notificationService;
+  @Mock
+  private EventCommonService eventCommonService;
 
   private final UUID requisitionId = UUID.randomUUID();
   private final UUID facilityId = UUID.randomUUID();
@@ -131,7 +138,8 @@ public class OrderFulfillmentSyncedReplayerTest extends FileBasedTest {
         PayloadSerializer.LOCALMACHINE_EVENT_OBJECT_MAPPER.readValue(orderablesJson,
             new TypeReference<List<OrderableDto>>() {
             });
-    when(orderableReferenceDataService.findByIdentities(any())).thenReturn(orderableDtos);
+    when(eventCommonService.getOrderableDtoMap(any())).thenReturn(
+        orderableDtos.stream().collect(Collectors.toMap(OrderableDto::getIdentity, Function.identity())));
   }
 
 

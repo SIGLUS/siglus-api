@@ -71,8 +71,6 @@ public class RequisitionInternalApproveEmitter {
   }
 
   public RequisitionInternalApprovedEvent getEvent(UUID requisitionId) {
-    RequisitionInternalApprovedEvent event =
-        new RequisitionInternalApprovedEvent();
     log.info("get event of requisition internal approve, id = " + requisitionId);
     Requisition requisition = requisitionRepository.findOne(requisitionId);
     if (requisition == null) {
@@ -84,6 +82,7 @@ public class RequisitionInternalApproveEmitter {
       log.info("requisitionDraft msg=" + Optional.of(requisitionDraft.getDraftStatusMessage()));
       requisition.setDraftStatusMessage(Optional.of(requisitionDraft.getDraftStatusMessage()).toString());
     }
+    RequisitionInternalApprovedEvent event = new RequisitionInternalApprovedEvent();
     event.setRequisition(requisition);
 
     RequisitionExtension requisitionExtension = requisitionExtensionRepository.findByRequisitionId(requisitionId);

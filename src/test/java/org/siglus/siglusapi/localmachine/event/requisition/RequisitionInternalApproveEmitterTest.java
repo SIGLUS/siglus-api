@@ -49,6 +49,7 @@ import org.siglus.siglusapi.repository.KitUsageLineItemRepository;
 import org.siglus.siglusapi.repository.PatientLineItemRepository;
 import org.siglus.siglusapi.repository.RegimenLineItemRepository;
 import org.siglus.siglusapi.repository.RegimenSummaryLineItemRepository;
+import org.siglus.siglusapi.repository.RequisitionDraftRepository;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionGroupMembersRepository;
 import org.siglus.siglusapi.repository.RequisitionLineItemExtensionRepository;
@@ -61,7 +62,8 @@ public class RequisitionInternalApproveEmitterTest {
 
   @InjectMocks
   private RequisitionInternalApproveEmitter requisitionInternalApproveEmitter;
-
+  @Mock
+  private RequisitionDraftRepository requisitionDraftRepository;
   @Mock
   private RequisitionRepository requisitionRepository;
   @Mock
