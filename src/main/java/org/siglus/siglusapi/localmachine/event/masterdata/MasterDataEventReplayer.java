@@ -37,9 +37,9 @@ public class MasterDataEventReplayer {
   private final Machine machine;
   private final FacilityExtensionRepository facilityExtensionRepository;
   private final SiglusAdministrationsService administrationsService;
-  private final String TABLE_NAME_FACILITY_EXTENSION = "facility_extension";
-  private final String FIELD_FACILITY_ID = "facilityid";
-  private final String FIELD_ENABLE_LOCATION_MANAGEMENT = "enablelocationmanagement";
+  private static final String TABLE_NAME_FACILITY_EXTENSION = "facility_extension";
+  private static final String FIELD_FACILITY_ID = "facilityid";
+  private static final String FIELD_ENABLE_LOCATION_MANAGEMENT = "enablelocationmanagement";
 
   @EventListener(classes = {MasterDataTableChangeEvent.class})
   public void replay(MasterDataTableChangeEvent masterDataTableChangeEvent) {
@@ -49,7 +49,7 @@ public class MasterDataEventReplayer {
 
   private void resetDraftAndLocationWhenLocationManagementStatusChange(List<TableChangeEvent> tableChangeEvents) {
     UUID facilityId = machine.getFacilityId();
-    FacilityExtension facilityExtension = facilityExtensionRepository.findOne(facilityId);
+    FacilityExtension facilityExtension = facilityExtensionRepository.findByFacilityId(facilityId);
     tableChangeEvents.forEach(tableChangeEvent -> {
       if (!tableChangeEvent.getTableName().equals(TABLE_NAME_FACILITY_EXTENSION)) {
         return;
