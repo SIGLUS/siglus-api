@@ -116,6 +116,7 @@ public class LocalMachineRequestFilter extends OncePerRequestFilter {
     MachineToken machineToken = MachineToken.parse(tokenValue);
     AgentInfo agentInfo = mustGetAgentInfo(machineToken);
     if (!machineToken.verify(agentInfo.getPublicKey())) {
+      log.error("fail to verify token:{}", tokenValue);
       throw new AuthorizeException("invalid machine token");
     }
     return machineToken;
