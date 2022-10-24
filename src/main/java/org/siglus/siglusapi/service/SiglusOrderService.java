@@ -27,6 +27,8 @@ import static org.siglus.siglusapi.constant.FieldConstants.PROGRAM_ID;
 import static org.siglus.siglusapi.constant.FieldConstants.RIGHT_NAME;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_NO_PERIOD_MATCH;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_ORDER_NOT_EXIST;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_PERIOD_NOT_FOUND;
 import static org.siglus.siglusapi.util.SiglusDateHelper.DATE_MONTH_YEAR;
 import static org.siglus.siglusapi.util.SiglusDateHelper.getFormatDate;
 
@@ -92,17 +94,18 @@ import org.siglus.common.repository.OrderExternalRepository;
 import org.siglus.common.repository.ProcessingPeriodExtensionRepository;
 import org.siglus.siglusapi.domain.LocalIssueVoucher;
 import org.siglus.siglusapi.domain.OrderLineItemExtension;
+import org.siglus.siglusapi.dto.FulfillOrderDto;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.dto.OrderStatusDto;
 import org.siglus.siglusapi.dto.SiglusOrderDto;
 import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.NotFoundException;
-import org.siglus.siglusapi.i18n.MessageKeys;
 import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.OrderableRepository;
 import org.siglus.siglusapi.repository.PodSubDraftRepository;
 import org.siglus.siglusapi.repository.SiglusFacilityRepository;
 import org.siglus.siglusapi.repository.SiglusLocalIssueVoucherRepository;
+import org.siglus.siglusapi.repository.SiglusOrdersRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.repository.StockManagementRepository;
 import org.siglus.siglusapi.repository.dto.OrderSuggestedQuantityDto;
@@ -228,6 +231,10 @@ public class SiglusOrderService {
   @Autowired
   private StockManagementRepository stockManagementRepository;
 
+  @Autowired
+  private SiglusOrdersRepository siglusOrdersRepository;
+
+
   private static final List<String> REQUISITION_STATUS_AFTER_FINAL_APPROVED = Lists.newArrayList(
       RequisitionStatus.APPROVED.name(),
       RequisitionStatus.RELEASED.name(),
@@ -328,12 +335,71 @@ public class SiglusOrderService {
         }).collect(toList());
   }
 
-  public Page<BasicOrderDto> searchOrdersForFulfill(OrderSearchParams params, Pageable pageable) {
+  public Page<FulfillOrderDto> searchOrdersForFulfill(OrderSearchParams params, Pageable pageable) {
     Page<Order> orders = orderService.searchOrdersForFulfillPage(params, pageable);
     List<BasicOrderDto> dtos = basicOrderDtoBuilder.build(orders.getContent());
+
+    List<FulfillOrderDto> fulfillOrderDtos = dtos.stream().map(basicOrderDto -> {
+      return FulfillOrderDto.builder().basicOrder(basicOrderDto).build();
+    }).collect(toList());
+    List<FulfillOrderDto> processedFulfillOrderDtos = processExpiredFulfillOrder(fulfillOrderDtos);
+
     return new PageImpl<>(
-        dtos,
+        processedFulfillOrderDtos,
         pageable, orders.getTotalElements());
+  }
+
+  private List<FulfillOrderDto> processExpiredFulfillOrder(List<FulfillOrderDto> fulfillOrderDtos) {
+    Map<LocalDate, List<FulfillOrderDto>> endDateToMap = fulfillOrderDtos.stream()
+        .collect(Collectors.groupingBy(fulfillOrderDto -> {
+          return fulfillOrderDto.getBasicOrder().getProcessingPeriod().getEndDate();
+        }));
+    UUID processingPeriodId = fulfillOrderDtos.get(0).getBasicOrder().getProcessingPeriod().getId();
+    ProcessingPeriodExtension processingPeriodExtension = processingPeriodExtensionRepository
+        .findByProcessingPeriodId(processingPeriodId);
+    if (processingPeriodExtension == null) {
+      throw new NotFoundException(ERROR_PERIOD_NOT_FOUND);
+    }
+    processExpiredFulfillOrders(endDateToMap, processingPeriodExtension);
+    return fulfillOrderDtos;
+  }
+
+  private void processExpiredFulfillOrders(Map<LocalDate, List<FulfillOrderDto>> endDateToMap,
+      ProcessingPeriodExtension processingPeriodExtension) {
+    List<Entry<LocalDate, List<FulfillOrderDto>>> entries = endDateToMap.entrySet().stream()
+        .sorted(Entry.<LocalDate, List<FulfillOrderDto>>comparingByKey().reversed()).collect(toList());
+    List<FulfillOrderDto> latestFulfillOrderDtos = entries.get(0).getValue();
+    int latestFulfillOrderMonth = entries.get(0).getKey().getMonthValue();
+    List<Integer> caculateFulfillOrderMonth = caculateFulfillOrderMonth(processingPeriodExtension);
+    if (caculateFulfillOrderMonth.contains(latestFulfillOrderMonth)) {
+      latestFulfillOrderDtos.forEach(dto -> {
+        dto.setExpired(false);
+      });
+    }
+  }
+
+  private List<Integer> caculateFulfillOrderMonth(ProcessingPeriodExtension processingPeriodExtension) {
+    LocalDate submitStartDate = processingPeriodExtension.getSubmitStartDate();
+    LocalDate submitEndDate = processingPeriodExtension.getSubmitEndDate();
+    LocalDate currentDate = LocalDate.now();
+    if (currentDate.getDayOfMonth() >= submitStartDate.getDayOfMonth() && currentDate.getDayOfMonth() <= submitEndDate
+        .getDayOfMonth()) {
+      return Lists.newArrayList(currentDate.getMonthValue() - 1, currentDate.getMonthValue());
+    } else if (currentDate.getDayOfMonth() < submitStartDate.getDayOfMonth()) {
+      return Lists.newArrayList(currentDate.getMonthValue() - 1);
+    } else {
+      return Lists.newArrayList(currentDate.getMonthValue());
+    }
+  }
+
+  public void closeExpiredOrder(UUID fulfillOrderId) {
+    Order order = siglusOrdersRepository.findOne(fulfillOrderId);
+    if (order == null) {
+      throw new NotFoundException(ERROR_ORDER_NOT_EXIST);
+    }
+    log.info("manually close the fulfill order with order id: {}", fulfillOrderId);
+    order.setStatus(OrderStatus.CLOSED);
+    siglusOrdersRepository.save(order);
   }
 
   public OrderStatusDto searchOrderStatusById(UUID orderId) {
@@ -532,7 +598,7 @@ public class SiglusOrderService {
   private Order getOrder(UUID orderId) {
     Order order = orderRepository.findOne(orderId);
     if (Objects.isNull(order)) {
-      throw new NotFoundException(MessageKeys.ERROR_ORDER_NOT_EXIST);
+      throw new NotFoundException(ERROR_ORDER_NOT_EXIST);
     }
     return order;
   }

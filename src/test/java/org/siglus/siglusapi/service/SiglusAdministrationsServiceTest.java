@@ -940,6 +940,41 @@ public class SiglusAdministrationsServiceTest {
     verify(facilityExtensionRepository).save(facilityExtension);
   }
 
+  @Test
+  public void shouldReturnTrueWhenGetIfToggledLocationManagementGivenExtensionNullAndEnableLocationTrue() {
+    //given
+
+    //when
+    boolean actualResult = siglusAdministrationsService.toggledLocationManagement(null, Boolean.TRUE);
+
+    //then
+    assertTrue(actualResult);
+  }
+
+  @Test
+  public void shouldReturnTrueWhenGetIfToggledLocationManagementGivenExtensionNullAndLocalManagementStatusChange() {
+    //given
+    FacilityExtension facilityExtension = FacilityExtension.builder().enableLocationManagement(Boolean.FALSE).build();
+
+    //when
+    boolean actualResult = siglusAdministrationsService.toggledLocationManagement(facilityExtension, Boolean.TRUE);
+
+    //then
+    assertTrue(actualResult);
+  }
+
+  @Test
+  public void shouldReturnFalseWhenGetIfToggledLocationManagementGivenLocalManagementStatusDoNotChange() {
+    //given
+    FacilityExtension facilityExtension = FacilityExtension.builder().enableLocationManagement(Boolean.FALSE).build();
+
+    //when
+    boolean actualResult = siglusAdministrationsService.toggledLocationManagement(facilityExtension, Boolean.FALSE);
+
+    //then
+    assertFalse(actualResult);
+  }
+
   private FacilitySearchParamDto mockFacilitySearchParamDto() {
     FacilitySearchParamDto facilitySearchParamDto = new FacilitySearchParamDto();
     facilitySearchParamDto.setName(Name);

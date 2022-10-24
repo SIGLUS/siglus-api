@@ -17,6 +17,7 @@ package org.siglus.siglusapi.web;
 
 import static org.apache.commons.lang3.RandomUtils.nextBoolean;
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -31,6 +32,7 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.dto.BasicRequisitionDto;
 import org.openlmis.requisition.dto.MinimalFacilityDto;
 import org.openlmis.requisition.dto.UserDto;
@@ -38,6 +40,7 @@ import org.openlmis.requisition.utils.AuthenticationHelper;
 import org.openlmis.requisition.web.RequisitionController;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 import org.siglus.siglusapi.localmachine.event.requisition.web.RequisitionInternalApproveEmitter;
+import org.siglus.siglusapi.localmachine.event.requisition.web.RequisitionReleaseEmitter;
 import org.siglus.siglusapi.service.SiglusNotificationService;
 import org.siglus.siglusapi.service.SiglusProcessingPeriodService;
 import org.siglus.siglusapi.service.SiglusRequisitionService;
@@ -74,6 +77,9 @@ public class SiglusRequisitionControllerTest {
 
   @Mock
   private HttpServletRequest request;
+
+  @Mock
+  private RequisitionReleaseEmitter requisitionReleaseEmitter;
 
   private UUID uuid;
 
@@ -144,21 +150,40 @@ public class SiglusRequisitionControllerTest {
   }
 
   @Test
-  public void shouldCallV3ControllerAndServiceWhenApproveRequisition() {
+  public void shouldCallV3ControllerAndServiceWhenApproveRequisitionWithMalaria() {
     // given
-    UUID requisitionId = UUID.randomUUID();
     UUID facilityId = UUID.randomUUID();
     MinimalFacilityDto mockFacility = new MinimalFacilityDto();
     mockFacility.setId(facilityId);
-    BasicRequisitionDto mockBasicRequisitionDto = new BasicRequisitionDto();
-    mockBasicRequisitionDto.setFacility(mockFacility);
-    when(requisitionController.approveRequisition(requisitionId, request, response))
-        .thenReturn(mockBasicRequisitionDto);
-
     BasicRequisitionDto basicRequisitionDto = new BasicRequisitionDto();
     final MinimalFacilityDto facility = new MinimalFacilityDto();
     facility.setId(facilityId);
     basicRequisitionDto.setFacility(facility);
+    basicRequisitionDto.setStatus(RequisitionStatus.RELEASED_WITHOUT_ORDER);
+    UUID requisitionId = UUID.randomUUID();
+    when(siglusRequisitionService.approveRequisition(requisitionId, request, response)).thenReturn(basicRequisitionDto);
+
+    // when
+    siglusRequisitionController.approveRequisition(requisitionId, request, response);
+
+    // then
+    verify(siglusRequisitionService).approveRequisition(requisitionId, request, response);
+    verify(notificationService).postApprove(any());
+    verify(requisitionReleaseEmitter, times(1)).emit(any(), any());
+  }
+
+  @Test
+  public void shouldCallV3ControllerAndServiceWhenInternalApproveRequisition() {
+    // given
+    UUID facilityId = UUID.randomUUID();
+    MinimalFacilityDto mockFacility = new MinimalFacilityDto();
+    mockFacility.setId(facilityId);
+    BasicRequisitionDto basicRequisitionDto = new BasicRequisitionDto();
+    final MinimalFacilityDto facility = new MinimalFacilityDto();
+    facility.setId(facilityId);
+    basicRequisitionDto.setFacility(facility);
+    basicRequisitionDto.setStatus(RequisitionStatus.IN_APPROVAL);
+    UUID requisitionId = UUID.randomUUID();
     when(siglusRequisitionService.approveRequisition(requisitionId, request, response)).thenReturn(basicRequisitionDto);
 
     // when

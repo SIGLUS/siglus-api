@@ -15,6 +15,8 @@
 
 package org.siglus.siglusapi.web;
 
+import static org.springframework.http.HttpStatus.NO_CONTENT;
+
 import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
@@ -24,6 +26,7 @@ import org.openlmis.fulfillment.service.OrderSearchParams;
 import org.openlmis.fulfillment.web.OrderController;
 import org.openlmis.fulfillment.web.util.BasicOrderDto;
 import org.openlmis.fulfillment.web.util.OrderDto;
+import org.siglus.siglusapi.dto.FulfillOrderDto;
 import org.siglus.siglusapi.dto.OrderStatusDto;
 import org.siglus.siglusapi.dto.SiglusOrderDto;
 import org.siglus.siglusapi.service.SiglusOrderService;
@@ -38,6 +41,7 @@ import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -92,8 +96,14 @@ public class SiglusOrderController {
   }
 
   @GetMapping("/fulfill")
-  public Page<BasicOrderDto> searchOrdersForFulfill(OrderSearchParams params, Pageable pageable) {
+  public Page<FulfillOrderDto> searchOrdersForFulfill(OrderSearchParams params, Pageable pageable) {
     return siglusOrderService.searchOrdersForFulfill(params, pageable);
+  }
+
+  @PutMapping("/{id}")
+  @ResponseStatus(NO_CONTENT)
+  public void closeExpiredOrder(@PathVariable("id") UUID orderId) {
+    siglusOrderService.closeExpiredOrder(orderId);
   }
 
   @GetMapping("/{id}/status")

@@ -27,7 +27,7 @@ import org.springframework.data.repository.query.Param;
 /**
  * Persistence repository for saving/finding {@link Order}.
  */
-public interface OrdersRepository extends JpaRepository<Order, UUID> {
+public interface SiglusOrdersRepository extends JpaRepository<Order, UUID> {
 
   @Query(name = "Order.findOrderDto", nativeQuery = true)
   OrderDto findOrderDtoById(@Param("orderId") UUID orderId);

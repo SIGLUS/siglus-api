@@ -25,12 +25,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.dto.BasicRequisitionDto;
 import org.openlmis.requisition.dto.FacilityDto;
+import org.openlmis.requisition.dto.ReleasableRequisitionDto;
 import org.openlmis.requisition.dto.RequisitionPeriodDto;
+import org.openlmis.requisition.dto.RequisitionWithSupplyingDepotsDto;
 import org.openlmis.requisition.utils.AuthenticationHelper;
 import org.openlmis.requisition.web.RequisitionController;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionLineItemDto;
 import org.siglus.siglusapi.localmachine.event.requisition.web.RequisitionInternalApproveEmitter;
+import org.siglus.siglusapi.localmachine.event.requisition.web.RequisitionReleaseEmitter;
 import org.siglus.siglusapi.service.SiglusNotificationService;
 import org.siglus.siglusapi.service.SiglusProcessingPeriodService;
 import org.siglus.siglusapi.service.SiglusRequisitionService;
@@ -63,6 +66,7 @@ public class SiglusRequisitionController {
   private final SiglusNotificationService notificationService;
   private final AuthenticationHelper authenticationHelper;
   private final RequisitionInternalApproveEmitter requisitionInternalApproveEmitter;
+  private final RequisitionReleaseEmitter requisitionReleaseEmitter;
 
   @PostMapping("/initiate")
   @ResponseStatus(HttpStatus.CREATED)
@@ -129,6 +133,13 @@ public class SiglusRequisitionController {
     if (basicRequisitionDto.getStatus() == RequisitionStatus.IN_APPROVAL) {
       requisitionInternalApproveEmitter.emit(requisitionId);
     }
+    if (basicRequisitionDto.getStatus() == RequisitionStatus.RELEASED_WITHOUT_ORDER) {
+      UUID userId = authenticationHelper.getCurrentUser().getId();
+      ReleasableRequisitionDto releasableRequisitionDto = new ReleasableRequisitionDto();
+      releasableRequisitionDto.setRequisitionId(requisitionId);
+      releasableRequisitionDto.setSupplyingDepotId(basicRequisitionDto.getFacility().getId());
+      requisitionReleaseEmitter.emit(releasableRequisitionDto, userId);
+    }
     return basicRequisitionDto;
   }
 
@@ -171,6 +182,14 @@ public class SiglusRequisitionController {
       @RequestParam(value = "facility", required = false) UUID facilityId,
       Pageable pageable) {
     return requisitionController.requisitionsForApproval(programId, facilityId, pageable);
+  }
+
+  @GetMapping("/requisitionsForConvertToOrder")
+  public Page<RequisitionWithSupplyingDepotsDto> searchRequisitionsForApprovalList(
+      @RequestParam(value = "program", required = false) UUID programId,
+      @RequestParam(value = "facility", required = false) UUID facilityId,
+      Pageable pageable) {
+    return requisitionController.listForConvertToOrder(programId, facilityId, pageable);
   }
 
   @GetMapping("/facilitiesForApproval")

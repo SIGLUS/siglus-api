@@ -45,9 +45,11 @@ public class LocalMovementEventReplayerTest {
     LocalMovementEvent event = buildLocalMovementEvent();
     int i = EventPayloadCheckUtils.checkEventSerializeChanges(event, event.getClass());
 
+    // when
+    replayer.replay(event);
+
     // then
     assertEquals(0, i);
-    replayer.replay(event);
   }
 
   private LocalMovementEvent buildLocalMovementEvent() {

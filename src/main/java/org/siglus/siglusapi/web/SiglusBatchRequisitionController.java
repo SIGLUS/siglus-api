@@ -19,8 +19,8 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.openlmis.requisition.dto.ReleasableRequisitionBatchDto;
 import org.openlmis.requisition.dto.RequisitionsProcessingStatusDto;
+import org.openlmis.requisition.web.BatchRequisitionController;
 import org.siglus.siglusapi.localmachine.event.requisition.web.RequisitionReleaseEmitter;
-import org.siglus.siglusapi.service.BatchReleaseRequisitionService;
 import org.siglus.siglusapi.service.SiglusNotificationService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.springframework.http.HttpStatus;
@@ -37,7 +37,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 @RequestMapping("/api/siglusapi/requisitions")
 public class SiglusBatchRequisitionController {
-  private final BatchReleaseRequisitionService batchReleaseRequisitionService;
+
+  private final BatchRequisitionController batchRequisitionController;
 
   private final SiglusNotificationService notificationService;
 
@@ -46,8 +47,9 @@ public class SiglusBatchRequisitionController {
   private final SiglusAuthenticationHelper siglusAuthenticationHelper;
 
   /**
-   * why we redo this api? to support #245?<br> we refactor the {@linkplain
-   * org.openlmis.fulfillment.service.OrderService#setOrderStatus}  method}
+   * why we redo this api? to support #245?<br> we refactor the
+   * {@linkplain org.openlmis.fulfillment.service.OrderService#setOrderStatus}
+   * method}
    */
   @PostMapping("/batchReleases")
   @ResponseStatus(HttpStatus.CREATED)
@@ -55,8 +57,8 @@ public class SiglusBatchRequisitionController {
   @Transactional
   public ResponseEntity<RequisitionsProcessingStatusDto> batchReleaseRequisitions(
       @RequestBody ReleasableRequisitionBatchDto releaseDto) {
-    ResponseEntity<RequisitionsProcessingStatusDto> responseEntity = batchReleaseRequisitionService
-        .getRequisitionsProcessingStatusDtoResponse(releaseDto);
+    ResponseEntity<RequisitionsProcessingStatusDto> responseEntity = batchRequisitionController
+        .batchReleaseRequisitions(releaseDto);
     UUID authorId = siglusAuthenticationHelper.getCurrentUser().getId();
     releaseDto.getRequisitionsToRelease().forEach(releasableRequisition ->
         requisitionReleaseEmitter.emit(releasableRequisition, authorId));

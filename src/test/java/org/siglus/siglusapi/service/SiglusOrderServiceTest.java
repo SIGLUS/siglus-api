@@ -19,6 +19,7 @@ import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Sets.newHashSet;
 import static java.util.stream.Collectors.toList;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
@@ -47,7 +48,9 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
@@ -63,6 +66,7 @@ import org.openlmis.fulfillment.service.OrderService;
 import org.openlmis.fulfillment.service.referencedata.FacilityDto;
 import org.openlmis.fulfillment.service.referencedata.OrderableDto;
 import org.openlmis.fulfillment.service.referencedata.OrderableReferenceDataService;
+import org.openlmis.fulfillment.service.referencedata.ProgramDto;
 import org.openlmis.fulfillment.service.referencedata.UserDto;
 import org.openlmis.fulfillment.util.AuthenticationHelper;
 import org.openlmis.fulfillment.util.Pagination;
@@ -103,7 +107,10 @@ import org.siglus.common.repository.OrderExternalRepository;
 import org.siglus.common.repository.ProcessingPeriodExtensionRepository;
 import org.siglus.siglusapi.constant.PeriodConstants;
 import org.siglus.siglusapi.domain.OrderLineItemExtension;
+import org.siglus.siglusapi.dto.FulfillOrderDto;
 import org.siglus.siglusapi.dto.SiglusOrderDto;
+import org.siglus.siglusapi.exception.NotFoundException;
+import org.siglus.siglusapi.i18n.MessageKeys;
 import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.OrderableRepository;
 import org.siglus.siglusapi.repository.SiglusFacilityRepository;
@@ -120,6 +127,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.test.util.ReflectionTestUtils;
+
 
 @RunWith(PowerMockRunner.class)
 @SuppressWarnings({"PMD.TooManyMethods", "PMD.UnusedPrivateField"})
@@ -208,6 +216,9 @@ public class SiglusOrderServiceTest {
   @Mock
   private StockManagementRepository stockManagementRepository;
 
+  @Rule
+  public ExpectedException exception = ExpectedException.none();
+
   private final UUID requisitionFacilityId = UUID.randomUUID();
   private final UUID approverFacilityId = UUID.randomUUID();
   private final UUID orderId = UUID.randomUUID();
@@ -228,6 +239,8 @@ public class SiglusOrderServiceTest {
   private final UUID receivingFacilityId = UUID.randomUUID();
   private final LocalDate now = LocalDate.now();
   private final String orderCode = "ORDER-CODE";
+  private final UUID periodId1 = UUID.randomUUID();
+  private final LocalDate processPeriodEndDate = LocalDate.of(2022, LocalDate.now().getMonthValue() - 1, 25);
 
   private final List<UUID> periodIds = Lists.newArrayList(
       UUID.randomUUID(),
@@ -470,27 +483,116 @@ public class SiglusOrderServiceTest {
   }
 
   @Test
-  public void shouldCallControllerWhenSearchOrdersForFulfill() {
+  @SuppressWarnings("unchecked")
+  public void shouldThrowNotFoundExceptionWhenPeriodNotFound() {
+    //then
+    exception.expect(NotFoundException.class);
+    exception.expectMessage(MessageKeys.ERROR_PERIOD_NOT_FOUND);
+
     // given
-    @SuppressWarnings("unchecked")
     Page<Order> page = (Page<Order>) mock(Page.class);
-    @SuppressWarnings("unchecked")
     List<Order> list = (List<Order>) mock(List.class);
     when(page.getContent()).thenReturn(list);
+
+    BasicOrderDto basicOrderDto = new BasicOrderDto();
+    ProgramDto programDto = new ProgramDto();
+    programDto.setId(programId);
+    basicOrderDto.setProgram(programDto);
+
+    org.openlmis.fulfillment.service.referencedata.ProcessingPeriodDto processingPeriodDto =
+        new org.openlmis.fulfillment.service.referencedata.ProcessingPeriodDto();
+    processingPeriodDto.setEndDate(processPeriodEndDate);
+    processingPeriodDto.setId(periodId1);
+    basicOrderDto.setProcessingPeriod(processingPeriodDto);
+
+    when(processingPeriodExtensionRepository.findByProcessingPeriodId(periodId1)).thenReturn(null);
     when(orderService.searchOrdersForFulfillPage(any(), any())).thenReturn(page);
-    List<BasicOrderDto> returnList = Collections.singletonList(mock(BasicOrderDto.class));
+    List<BasicOrderDto> returnList = Collections.singletonList(basicOrderDto);
     when(basicOrderDtoBuilder.build(list)).thenReturn(returnList);
+
     OrderSearchParams params = mock(OrderSearchParams.class);
     Pageable pageable = mock(Pageable.class);
 
     // when
-    Page<BasicOrderDto> basicOrderDtos = siglusOrderService
+    siglusOrderService.searchOrdersForFulfill(params, pageable);
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  public void shouldSetExpiredFlagToFulfillOrder() {
+    // given
+    Page<Order> page = (Page<Order>) mock(Page.class);
+    List<Order> list = (List<Order>) mock(List.class);
+    when(page.getContent()).thenReturn(list);
+
+    BasicOrderDto basicOrderDto = new BasicOrderDto();
+    ProgramDto programDto = new ProgramDto();
+    programDto.setId(programId);
+    basicOrderDto.setProgram(programDto);
+
+    org.openlmis.fulfillment.service.referencedata.ProcessingPeriodDto processingPeriodDto =
+        new org.openlmis.fulfillment.service.referencedata.ProcessingPeriodDto();
+    processingPeriodDto.setEndDate(processPeriodEndDate);
+    processingPeriodDto.setId(periodId1);
+    basicOrderDto.setProcessingPeriod(processingPeriodDto);
+
+    ProcessingPeriodExtension processingPeriodExtension = new ProcessingPeriodExtension();
+    processingPeriodExtension.setSubmitStartDate(LocalDate.of(2022, 9, LocalDate.now().getDayOfMonth() - 2));
+    processingPeriodExtension.setSubmitEndDate(LocalDate.of(2022, 9, LocalDate.now().getDayOfMonth() + 2));
+
+    when(processingPeriodExtensionRepository.findByProcessingPeriodId(periodId1)).thenReturn(processingPeriodExtension);
+    when(orderService.searchOrdersForFulfillPage(any(), any())).thenReturn(page);
+    List<BasicOrderDto> returnList = Collections.singletonList(basicOrderDto);
+    when(basicOrderDtoBuilder.build(list)).thenReturn(returnList);
+
+    OrderSearchParams params = mock(OrderSearchParams.class);
+    Pageable pageable = mock(Pageable.class);
+
+    // when
+    Page<FulfillOrderDto> basicOrderDtos = siglusOrderService
         .searchOrdersForFulfill(params, pageable);
 
     //then
-    verify(orderService).searchOrdersForFulfillPage(params, pageable);
-    verify(basicOrderDtoBuilder).build(list);
-    assertEquals(basicOrderDtos.getContent(), returnList);
+    assertFalse(basicOrderDtos.getContent().get(0).isExpired());
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  public void shouldNotSetExpiredFlagToFulfillOrderWhenTodayIsNotInSubmissionDay() {
+    // given
+    Page<Order> page = (Page<Order>) mock(Page.class);
+    List<Order> list = (List<Order>) mock(List.class);
+    when(page.getContent()).thenReturn(list);
+
+    BasicOrderDto basicOrderDto = new BasicOrderDto();
+    ProgramDto programDto = new ProgramDto();
+    programDto.setId(programId);
+    basicOrderDto.setProgram(programDto);
+
+    org.openlmis.fulfillment.service.referencedata.ProcessingPeriodDto processingPeriodDto =
+        new org.openlmis.fulfillment.service.referencedata.ProcessingPeriodDto();
+    processingPeriodDto.setEndDate(processPeriodEndDate);
+    processingPeriodDto.setId(periodId1);
+    basicOrderDto.setProcessingPeriod(processingPeriodDto);
+
+    ProcessingPeriodExtension processingPeriodExtension = new ProcessingPeriodExtension();
+    processingPeriodExtension.setSubmitStartDate(LocalDate.of(2022, 9, LocalDate.now().getDayOfMonth() - 5));
+    processingPeriodExtension.setSubmitEndDate(LocalDate.of(2022, 9, LocalDate.now().getDayOfMonth() - 2));
+
+    when(processingPeriodExtensionRepository.findByProcessingPeriodId(periodId1)).thenReturn(processingPeriodExtension);
+    when(orderService.searchOrdersForFulfillPage(any(), any())).thenReturn(page);
+    List<BasicOrderDto> returnList = Collections.singletonList(basicOrderDto);
+    when(basicOrderDtoBuilder.build(list)).thenReturn(returnList);
+
+    OrderSearchParams params = mock(OrderSearchParams.class);
+    Pageable pageable = mock(Pageable.class);
+
+    // when
+    Page<FulfillOrderDto> basicOrderDtos = siglusOrderService
+        .searchOrdersForFulfill(params, pageable);
+
+    //then
+    assertTrue(basicOrderDtos.getContent().get(0).isExpired());
   }
 
   @Test
