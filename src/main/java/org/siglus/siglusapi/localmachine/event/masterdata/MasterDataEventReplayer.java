@@ -50,37 +50,36 @@ public class MasterDataEventReplayer {
 
   @EventListener(classes = {MasterDataTableChangeEvent.class})
   public void replay(MasterDataTableChangeEvent masterDataTableChangeEvent) {
-    resetDraftAndLocationWhenLocationManagementStatusChange(masterDataTableChangeEvent.getTableChangeEvents());
+    resetDraftAndLocationWhenToggledLocationManagement(masterDataTableChangeEvent.getTableChangeEvents());
     jdbcSinker.sink(masterDataTableChangeEvent.getTableChangeEvents());
   }
 
-  private void resetDraftAndLocationWhenLocationManagementStatusChange(List<TableChangeEvent> tableChangeEvents) {
+  private void resetDraftAndLocationWhenToggledLocationManagement(List<TableChangeEvent> tableChangeEvents) {
     UUID facilityId = machine.getFacilityId();
     FacilityExtension facilityExtension = facilityExtensionRepository.findByFacilityId(facilityId);
-    boolean enableLocalManagement = getEnableLocalManagement(facilityExtension);
+    boolean locationManagement = getEnableLocationManagement(facilityExtension);
     boolean toggledLocationManagement = false;
     for (TableChangeEvent tableChangeEvent : tableChangeEvents) {
       if (!tableChangeEvent.getTableName().equals(TABLE_NAME_FACILITY_EXTENSION)) {
         continue;
       }
       int indexOfFacilityId = tableChangeEvent.getColumns().indexOf(FIELD_FACILITY_ID);
-      int indexOfEnableLocationManagement = tableChangeEvent.getColumns().indexOf(FIELD_ENABLE_LOCATION_MANAGEMENT);
+      int indexOfLocationManagement = tableChangeEvent.getColumns().indexOf(FIELD_ENABLE_LOCATION_MANAGEMENT);
       for (RowChangeEvent rowChangeEvent : tableChangeEvent.getRowChangeEvents()) {
         if (!facilityId.toString().equals(rowChangeEvent.getValues().get(indexOfFacilityId))) {
           continue;
         }
-        Boolean toBeUpdatedEnableLocalManagement = (Boolean) rowChangeEvent.getValues()
-            .get(indexOfEnableLocationManagement);
-        if (enableLocalManagement != toBeUpdatedEnableLocalManagement) {
+        Boolean toBeUpdatedLocalManagement = (Boolean) rowChangeEvent.getValues().get(indexOfLocationManagement);
+        if (locationManagement != toBeUpdatedLocalManagement) {
           toggledLocationManagement = true;
-          enableLocalManagement = toBeUpdatedEnableLocalManagement;
+          locationManagement = toBeUpdatedLocalManagement;
         }
       }
     }
     if (toggledLocationManagement) {
       administrationsService.deleteDrafts(facilityId);
       simulateAdminUser();
-      administrationsService.assignToVirtualLocation(facilityId, enableLocalManagement);
+      administrationsService.assignToVirtualLocation(facilityId, locationManagement);
     }
   }
 
@@ -89,7 +88,7 @@ public class MasterDataEventReplayer {
     simulateUserAuthHelper.simulateNewUserAuth(admin.getId());
   }
 
-  private Boolean getEnableLocalManagement(FacilityExtension facilityExtension) {
+  private Boolean getEnableLocationManagement(FacilityExtension facilityExtension) {
     if (Objects.isNull(facilityExtension)) {
       return Boolean.FALSE;
     }
