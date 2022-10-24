@@ -402,7 +402,6 @@ public class OrderFulfillmentSyncedReplayer {
 
   public void createSubOrder(OrderObjectReferenceDto order,
       List<OrderLineItemDto> orderLineItemDtos, UUID fulfillUserId) {
-    List<OrderExternal> externals = new ArrayList<>();
     // if order's external id is not found in orderExternalRepository, then it means this is a requisition id
     OrderExternal external = orderExternalRepository.findOne(order.getExternalId());
     String newOrderCode = null;
@@ -414,20 +413,19 @@ public class OrderFulfillmentSyncedReplayer {
       OrderExternal secondExternal = OrderExternal.builder()
           .requisitionId(order.getExternalId()).build();
       log.info("save order external : {}", Arrays.asList(firstExternal, secondExternal));
-      externals.add(orderExternalRepository.saveAndFlush(firstExternal));
-      externals.add(orderExternalRepository.saveAndFlush(secondExternal));
-      updateExistOrderForSubOrder(order.getId(), externals.get(0).getId(),
-          order.getOrderCode().concat("-" + 1), order.getStatus());
-      newOrderCode = order.getOrderCode().concat("-" + 2);
-      newOrderExternal = externals.get(1);
+      orderExternalRepository.saveAndFlush(firstExternal);
+      updateExistOrderForSubOrder(order.getId(), firstExternal.getId(), order.getOrderCode(), order.getStatus());
+      newOrderExternal = orderExternalRepository.saveAndFlush(secondExternal);
+      newOrderCode = replaceLast(order.getOrderCode(), "-" + 1, "-" + 2);
+      log.info("lastOrderCode {} newOrderCode {}", order.getOrderCode(), newOrderCode);
     } else {
-      externals = orderExternalRepository.findByRequisitionId(external.getRequisitionId());
+      List<OrderExternal> externals = orderExternalRepository.findByRequisitionId(external.getRequisitionId());
       OrderExternal newExternal = OrderExternal.builder().requisitionId(external.getRequisitionId()).build();
       log.info("save new external : {}", newExternal);
       newOrderExternal = orderExternalRepository.saveAndFlush(newExternal);
-      externals.add(newOrderExternal);
-      newOrderCode = replaceLast(order.getOrderCode(), "-" + (externals.size() - 1),
-          "-" + externals.size());
+      newOrderCode = replaceLast(order.getOrderCode(), "-" + (externals.size()),
+          "-" + externals.size() + 1);
+      log.info("lastOrderCode {} newOrderCode {}", order.getOrderCode(), newOrderCode);
     }
     createNewOrder(order, newOrderCode, orderLineItemDtos, newOrderExternal, fulfillUserId);
   }

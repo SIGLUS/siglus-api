@@ -21,7 +21,6 @@ import org.openlmis.requisition.dto.ReleasableRequisitionBatchDto;
 import org.openlmis.requisition.dto.RequisitionsProcessingStatusDto;
 import org.openlmis.requisition.web.BatchRequisitionController;
 import org.siglus.siglusapi.localmachine.event.requisition.web.RequisitionReleaseEmitter;
-import org.siglus.siglusapi.service.SiglusNotificationService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -39,8 +38,6 @@ import org.springframework.web.bind.annotation.RestController;
 public class SiglusBatchRequisitionController {
 
   private final BatchRequisitionController batchRequisitionController;
-
-  private final SiglusNotificationService notificationService;
 
   private final RequisitionReleaseEmitter requisitionReleaseEmitter;
 
@@ -60,10 +57,10 @@ public class SiglusBatchRequisitionController {
     ResponseEntity<RequisitionsProcessingStatusDto> responseEntity = batchRequisitionController
         .batchReleaseRequisitions(releaseDto);
     UUID authorId = siglusAuthenticationHelper.getCurrentUser().getId();
-    releaseDto.getRequisitionsToRelease().forEach(releasableRequisition ->
-        requisitionReleaseEmitter.emit(releasableRequisition, authorId));
-    RequisitionsProcessingStatusDto body = responseEntity.getBody();
-    body.getRequisitionDtos().forEach(notificationService::postConvertToOrder);
+    if (!releaseDto.getCreateOrder()) {
+      releaseDto.getRequisitionsToRelease().forEach(releasableRequisition ->
+          requisitionReleaseEmitter.emit(releasableRequisition, authorId));
+    }
     return responseEntity;
   }
 }

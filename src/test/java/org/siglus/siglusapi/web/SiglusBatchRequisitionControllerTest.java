@@ -34,7 +34,6 @@ import org.openlmis.requisition.dto.RequisitionsProcessingStatusDto;
 import org.openlmis.requisition.web.BatchRequisitionController;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.localmachine.event.requisition.web.RequisitionReleaseEmitter;
-import org.siglus.siglusapi.service.SiglusNotificationService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -49,10 +48,6 @@ public class SiglusBatchRequisitionControllerTest {
   private BatchRequisitionController actualController;
 
   private ReleasableRequisitionBatchDto releasableRequisitionBatchDto;
-
-  @Mock
-  @SuppressWarnings("unused")
-  private SiglusNotificationService notificationService;
 
   @Mock
   private RequisitionReleaseEmitter requisitionReleaseEmitter;
