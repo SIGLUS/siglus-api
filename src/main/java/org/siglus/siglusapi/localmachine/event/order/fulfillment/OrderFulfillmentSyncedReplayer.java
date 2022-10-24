@@ -69,6 +69,7 @@ import org.siglus.siglusapi.domain.OrderLineItemExtension;
 import org.siglus.siglusapi.domain.PodExtension;
 import org.siglus.siglusapi.domain.RequisitionExtension;
 import org.siglus.siglusapi.domain.ShipmentLineItemsExtension;
+import org.siglus.siglusapi.localmachine.event.EventCommonService;
 import org.siglus.siglusapi.localmachine.event.NotificationService;
 import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.PodExtensionRepository;
@@ -94,7 +95,7 @@ public class OrderFulfillmentSyncedReplayer {
   private final OrderDtoBuilder orderDtoBuilder;
   private final RequisitionExtensionRepository requisitionExtensionRepository;
   private final RequisitionRepository requisitionRepository;
-  private final OrderableReferenceDataService orderableReferenceDataService;
+  private final EventCommonService eventCommonService;
   private final OrderExternalRepository orderExternalRepository;
   private final OrderLineItemExtensionRepository lineItemExtensionRepository;
   private final SiglusShipmentRepository siglusShipmentRepository;
@@ -185,7 +186,7 @@ public class OrderFulfillmentSyncedReplayer {
       OrderFulfillmentSyncedEvent event) {
     resetApprovedQuantity(requisition, event);
     // do approve
-    requisition.approve(null, getOrderableDtoMap(requisition), Collections.emptyList(),
+    requisition.approve(null, eventCommonService.getOrderableDtoMap(requisition), Collections.emptyList(),
         event.getFinalApproveUserId());
 
     StatusChange finalApprovedStatusChange = requisition.getStatusChanges().stream().filter(item ->
@@ -206,10 +207,18 @@ public class OrderFulfillmentSyncedReplayer {
     if (statusMessageRequest == null) {
       return;
     }
-    final StatusMessage statusMessage = StatusMessage.newStatusMessage(requisition, finalApprovedStatusChange,
-        statusMessageRequest.getAuthorId(), statusMessageRequest.getAuthorFirstName(),
-        statusMessageRequest.getAuthorFirstName(), statusMessageRequest.getBody());
-    finalApprovedStatusChange.setStatusMessage(statusMessage);
+    StatusMessage newStatusMessage = new StatusMessage();
+    newStatusMessage.setRequisition(requisition);
+    newStatusMessage.setStatusChange(finalApprovedStatusChange);
+    newStatusMessage.setId(statusMessageRequest.getAuthorId());
+    newStatusMessage.setCreatedDate(statusMessageRequest.getCreatedDate());
+    newStatusMessage.setModifiedDate(statusMessageRequest.getModifiedDate());
+    newStatusMessage.setAuthorId(statusMessageRequest.getAuthorId());
+    newStatusMessage.setAuthorFirstName(statusMessageRequest.getAuthorFirstName());
+    newStatusMessage.setAuthorLastName(statusMessageRequest.getAuthorLastName());
+    newStatusMessage.setStatus(RequisitionStatus.APPROVED);
+    newStatusMessage.setBody(statusMessageRequest.getBody());
+    finalApprovedStatusChange.setStatusMessage(newStatusMessage);
   }
 
   private void resetApprovedQuantity(Requisition requisition, OrderFulfillmentSyncedEvent event) {
@@ -233,19 +242,6 @@ public class OrderFulfillmentSyncedReplayer {
       }
     });
     requisition.getRequisitionLineItems().addAll(newLineItems);
-  }
-
-  public Map<VersionIdentityDto, OrderableDto> getOrderableDtoMap(Requisition requisition) {
-    if (CollectionUtils.isEmpty(requisition.getRequisitionLineItems())) {
-      return new HashMap<>();
-    }
-    Set<VersionEntityReference> orderables = requisition.getRequisitionLineItems().stream()
-        .map(RequisitionLineItem::getOrderable).collect(Collectors.toSet());
-    Map<VersionIdentityDto, OrderableDto> orderableDtoMap =
-        orderableReferenceDataService.findByIdentities(orderables).stream()
-            .collect(Collectors.toMap(BasicOrderableDto::getIdentity, Function.identity()));
-    log.info("orderableDtoMap size = " + orderableDtoMap.keySet().size());
-    return orderableDtoMap;
   }
 
   public Order convertToOrder(OrderFulfillmentSyncedEvent event, Requisition requisition) {

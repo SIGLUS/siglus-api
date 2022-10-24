@@ -325,9 +325,17 @@ public class RequisitionInternalApproveReplayer {
     if (oldStatusMessage == null) {
       return;
     }
-    StatusMessage newStatusMessage = StatusMessage.newStatusMessage(requisition, statusChange,
-        oldStatusMessage.getAuthorId(), oldStatusMessage.getAuthorFirstName(), oldStatusMessage.getAuthorFirstName(),
-        oldStatusMessage.getBody());
+    StatusMessage newStatusMessage = new StatusMessage();
+    newStatusMessage.setRequisition(requisition);
+    newStatusMessage.setStatusChange(statusChange);
+    newStatusMessage.setId(oldStatusMessage.getAuthorId());
+    newStatusMessage.setCreatedDate(oldStatusMessage.getCreatedDate());
+    newStatusMessage.setModifiedDate(oldStatusMessage.getModifiedDate());
+    newStatusMessage.setAuthorId(oldStatusMessage.getAuthorId());
+    newStatusMessage.setAuthorFirstName(oldStatusMessage.getAuthorFirstName());
+    newStatusMessage.setAuthorLastName(oldStatusMessage.getAuthorLastName());
+    newStatusMessage.setStatus(oldStatusMessage.getStatus());
+    newStatusMessage.setBody(oldStatusMessage.getBody());
     statusChange.setStatusMessage(newStatusMessage);
   }
 
