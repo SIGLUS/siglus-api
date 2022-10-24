@@ -19,6 +19,7 @@ package org.siglus.siglusapi.localmachine.webapi;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -134,14 +135,14 @@ public class OnlineWebControllerTest {
   }
 
   @Test
-  public void reSyncDataFromOnlineWeb() {
+  public void resyncDataFromOnlineWeb() throws InterruptedException {
     // given
-    mockLock();
+    mockWaitLock();
     HttpServletResponse httpServletResponse = new MockHttpServletResponse();
     // when
-    onlineWebController.reSync(buildMachineToken(), httpServletResponse);
+    onlineWebController.resync(buildMachineToken(), httpServletResponse);
     // then
-    verify(onlineWebService).reSyncData(facilityId, httpServletResponse);
+    verify(onlineWebService).resyncData(facilityId, httpServletResponse);
   }
 
   @Test
@@ -168,9 +169,9 @@ public class OnlineWebControllerTest {
   @Test
   public void reSyncMasterDataFromOnlineWeb() {
     // when
-    onlineWebController.reSyncMasterData(buildMachineToken());
+    onlineWebController.resyncMasterData(buildMachineToken());
     // then
-    verify(onlineWebService).reSyncMasterData(facilityId);
+    verify(onlineWebService).resyncMasterData(facilityId);
   }
 
   private MachineToken buildMachineToken() {
@@ -179,8 +180,8 @@ public class OnlineWebControllerTest {
     return machineToken;
   }
 
-  private void mockLock() {
+  private void mockWaitLock() throws InterruptedException {
     AutoClosableLock lock = new AutoClosableLock(Optional.ofNullable(mock(SimpleLock.class)));
-    given(lockFactory.lock(anyString())).willReturn(lock);
+    given(lockFactory.waitLock(anyString(), anyLong())).willReturn(lock);
   }
 }

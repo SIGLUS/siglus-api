@@ -37,6 +37,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.exception.FileOperationException;
+import org.siglus.siglusapi.exception.UnableGetLockException;
 import org.siglus.siglusapi.localmachine.ShedLockFactory;
 import org.siglus.siglusapi.localmachine.ShedLockFactory.AutoClosableLock;
 import org.siglus.siglusapi.localmachine.eventstore.MasterDataEventRecord;
@@ -75,7 +76,7 @@ public class OnlineWebService {
   @Value("${resync.zip.export.path}")
   private String zipExportPath;
 
-  public String reSyncMasterData(UUID facilityId) {
+  public String resyncMasterData(UUID facilityId) {
     MasterDataEventRecord eventRecord =
         masterDataEventRecordRepository.findTopBySnapshotVersionIsNotNullOrderByIdDesc();
     if (eventRecord == null) {
@@ -97,9 +98,15 @@ public class OnlineWebService {
     return eventRecord.getId() + "+" + latestId + "+" + s3Url;
   }
 
-  public void reSyncData(UUID homeFacilityId, HttpServletResponse response) {
-    try (AutoClosableLock lock = lockFactory.lock(DEFAULT_REPLAY_GROUP_LOCK + homeFacilityId)) {
-      lock.ifPresent(() -> generateBusinessDataToResponse(homeFacilityId, response, null));
+  public void resyncData(UUID homeFacilityId, HttpServletResponse response) {
+    try (AutoClosableLock waitLock = lockFactory.waitLock(DEFAULT_REPLAY_GROUP_LOCK + homeFacilityId, 180000)) {
+      if (!waitLock.isPresent()) {
+        throw new UnableGetLockException(new Message("facility resync unable to get group lock," + homeFacilityId));
+      }
+      waitLock.ifPresent(() -> generateBusinessDataToResponse(homeFacilityId, response, null));
+    } catch (InterruptedException e) {
+      log.error("facility: {} resync group lock interrupt: {}", homeFacilityId, e);
+      Thread.currentThread().interrupt();
     }
   }
 

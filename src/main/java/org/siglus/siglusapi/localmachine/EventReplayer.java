@@ -96,9 +96,15 @@ public class EventReplayer {
         // continue to check next event
         continue;
       }
-      // TODO: 2022/10/18 是否需要把过滤条件这里也加一个
-      try (AutoClosableLock lock = lockFactory.lock(DEFAULT_REPLAY_GROUP_LOCK + currentEvent.getReceiverId())) {
-        lock.ifPresent(() -> eventPublisher.publishEvent(currentEvent));
+      try (AutoClosableLock waitLock = lockFactory
+          .waitLock(DEFAULT_REPLAY_GROUP_LOCK + currentEvent.getReceiverId(), 1000)) {
+        if (!waitLock.isPresent()) {
+          return;
+        }
+        waitLock.ifPresent(() -> eventPublisher.publishEvent(currentEvent));
+      } catch (InterruptedException e) {
+        log.error("groupId: {} publish event interrupt: {}", groupId, e);
+        Thread.currentThread().interrupt();
       }
     }
   }

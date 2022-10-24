@@ -24,6 +24,8 @@ import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.siglus.siglusapi.dto.Message;
+import org.siglus.siglusapi.exception.UnableGetLockException;
 import org.siglus.siglusapi.localmachine.Ack;
 import org.siglus.siglusapi.localmachine.Event;
 import org.siglus.siglusapi.localmachine.EventImporter;
@@ -119,16 +121,23 @@ public class OnlineWebController {
     eventStore.confirmAckShipped(request.getAcks());
   }
 
-  @GetMapping("/reSync")
-  public void reSync(MachineToken machineToken, HttpServletResponse response) {
-    try (AutoClosableLock lock = lockFactory.lock(DEFAULT_RESYNC_LOCK + getRuntimeMxBean())) {
-      lock.ifPresent(() -> onlineWebService.reSyncData(machineToken.getFacilityId(), response));
+  @GetMapping("/resync")
+  public void resync(MachineToken machineToken, HttpServletResponse response) {
+    try (AutoClosableLock waitLock = lockFactory.waitLock(DEFAULT_RESYNC_LOCK + getRuntimeMxBean(), 180000)) {
+      if (!waitLock.isPresent()) {
+        throw new UnableGetLockException(
+            new Message("facility resync unable to get server lock," + machineToken.getFacilityId()));
+      }
+      waitLock.ifPresent(() -> onlineWebService.resyncData(machineToken.getFacilityId(), response));
+    } catch (InterruptedException e) {
+      log.error("facility: {} resync interrupt: {}", machineToken.getFacilityId(), e);
+      Thread.currentThread().interrupt();
     }
   }
 
-  @GetMapping("/reSyncMasterData")
-  public String reSyncMasterData(MachineToken machineToken) {
-    return onlineWebService.reSyncMasterData(machineToken.getFacilityId());
+  @GetMapping("/resyncMasterData")
+  public String resyncMasterData(MachineToken machineToken) {
+    return onlineWebService.resyncMasterData(machineToken.getFacilityId());
   }
 
   static String getRuntimeMxBean() {

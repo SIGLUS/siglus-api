@@ -274,10 +274,10 @@ traits:
             description: exchange acks with oneline web
           put:
             description: confirm acks received by localmachine
-        /reSync:
+        /resync:
           get:
             description: resync data from onlineweb
-        /reSyncMasterData:
+        /resyncMasterData:
           get:
             description: resync master data from onlineweb
       /agent:
