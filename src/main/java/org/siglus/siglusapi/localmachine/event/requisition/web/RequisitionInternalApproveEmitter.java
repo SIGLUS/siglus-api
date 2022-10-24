@@ -16,7 +16,6 @@
 package org.siglus.siglusapi.localmachine.event.requisition.web;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +24,6 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.RequisitionLineItem;
 import org.openlmis.requisition.repository.RequisitionRepository;
-import org.siglus.siglusapi.domain.RequisitionDraft;
 import org.siglus.siglusapi.domain.RequisitionExtension;
 import org.siglus.siglusapi.domain.RequisitionLineItemExtension;
 import org.siglus.siglusapi.localmachine.EventPublisher;
@@ -36,7 +34,6 @@ import org.siglus.siglusapi.repository.KitUsageLineItemRepository;
 import org.siglus.siglusapi.repository.PatientLineItemRepository;
 import org.siglus.siglusapi.repository.RegimenLineItemRepository;
 import org.siglus.siglusapi.repository.RegimenSummaryLineItemRepository;
-import org.siglus.siglusapi.repository.RequisitionDraftRepository;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.TestConsumptionLineItemRepository;
@@ -60,7 +57,6 @@ public class RequisitionInternalApproveEmitter {
   private final KitUsageLineItemRepository kitUsageRepository;
   private final EventPublisher eventPublisher;
   private final EventCommonService baseEventCommonService;
-  private final RequisitionDraftRepository requisitionDraftRepository;
 
   public RequisitionInternalApprovedEvent emit(UUID requisitionId) {
     RequisitionInternalApprovedEvent event = getEvent(requisitionId);
@@ -75,12 +71,6 @@ public class RequisitionInternalApproveEmitter {
     Requisition requisition = requisitionRepository.findOne(requisitionId);
     if (requisition == null) {
       throw new IllegalStateException("no requisition found, id = " + requisitionId);
-    }
-    // TODO: need delete, just for test ( 2022/10/23 by kourengang)
-    RequisitionDraft requisitionDraft = requisitionDraftRepository.findByRequisitionId(requisitionId);
-    if (requisitionDraft != null) {
-      log.info("requisitionDraft msg=" + Optional.of(requisitionDraft.getDraftStatusMessage()));
-      requisition.setDraftStatusMessage(Optional.of(requisitionDraft.getDraftStatusMessage()).toString());
     }
     RequisitionInternalApprovedEvent event = new RequisitionInternalApprovedEvent();
     event.setRequisition(requisition);
