@@ -71,10 +71,10 @@ public class MasterDataEventReplayer {
           enableLocalManagement = toBeUpdatedEnableLocalManagement;
         }
       }
-      if (toggledLocationManagement) {
-        administrationsService.deleteDrafts(facilityId);
-        administrationsService.assignToVirtualLocation(facilityId, enableLocalManagement);
-      }
+    }
+    if (toggledLocationManagement) {
+      administrationsService.deleteDrafts(facilityId);
+      administrationsService.assignToVirtualLocation(facilityId, enableLocalManagement);
     }
   }
 

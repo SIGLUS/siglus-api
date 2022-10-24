@@ -28,6 +28,7 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.siglus.siglusapi.domain.FacilityExtension;
 import org.siglus.siglusapi.localmachine.EventPayloadCheckUtils;
 import org.siglus.siglusapi.localmachine.Machine;
 import org.siglus.siglusapi.localmachine.cdc.JdbcSinker;
@@ -63,7 +64,6 @@ public class OnlineWebMasterDataEventReplayerTest {
     MasterDataTableChangeEvent event = buildMasterDataTableChangeEvent();
     when(machine.getFacilityId()).thenReturn(facilityId);
     when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(null);
-    when(administrationsService.toggledLocationManagement(null, Boolean.TRUE)).thenReturn(Boolean.TRUE);
 
     // when
     int i = EventPayloadCheckUtils.checkEventSerializeChanges(event, event.getClass());
@@ -80,8 +80,8 @@ public class OnlineWebMasterDataEventReplayerTest {
     // given
     MasterDataTableChangeEvent event = buildMasterDataTableChangeEvent();
     when(machine.getFacilityId()).thenReturn(facilityId);
-    when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(null);
-    when(administrationsService.toggledLocationManagement(null, Boolean.FALSE)).thenReturn(Boolean.FALSE);
+    when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(
+        FacilityExtension.builder().enableLocationManagement(Boolean.TRUE).build());
 
     // when
     int i = EventPayloadCheckUtils.checkEventSerializeChanges(event, event.getClass());
