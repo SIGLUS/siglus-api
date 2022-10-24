@@ -360,6 +360,7 @@ public class SiglusAdministrationsServiceTest {
     when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(facilityExtension);
     when(siglusFacilityReferenceDataService.findOneWithoutCache(facilityId))
         .thenReturn(mockFacilityDtoPage().getContent().get(0));
+    when(authenticationHelper.getCurrentUser()).thenReturn(mockUserDto());
 
     // when
     siglusAdministrationsService.updateFacility(facilityId, mockSiglusFacilityDto(true, LOCATION_MANAGEMENT_TAB));
@@ -374,6 +375,7 @@ public class SiglusAdministrationsServiceTest {
     when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(null);
     when(siglusFacilityReferenceDataService.findOneWithoutCache(facilityId))
         .thenReturn(mockFacilityDtoPage().getContent().get(0));
+    when(authenticationHelper.getCurrentUser()).thenReturn(mockUserDto());
 
     // when
     siglusAdministrationsService.updateFacility(facilityId, mockSiglusFacilityDto(true, LOCATION_MANAGEMENT_TAB));
@@ -389,6 +391,7 @@ public class SiglusAdministrationsServiceTest {
     when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(facilityExtension);
     when(siglusFacilityReferenceDataService.findOneWithoutCache(facilityId))
         .thenReturn(mockFacilityDtoPage().getContent().get(0));
+    when(authenticationHelper.getCurrentUser()).thenReturn(mockUserDto());
 
     // when
     siglusAdministrationsService.updateFacility(facilityId, mockSiglusFacilityDto(false, LOCATION_MANAGEMENT_TAB));
