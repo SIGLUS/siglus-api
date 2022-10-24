@@ -16,14 +16,19 @@
 package org.siglus.siglusapi.localmachine.event.masterdata;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.openlmis.referencedata.domain.User;
+import org.openlmis.referencedata.repository.UserRepository;
 import org.siglus.siglusapi.domain.FacilityExtension;
 import org.siglus.siglusapi.localmachine.Machine;
 import org.siglus.siglusapi.localmachine.cdc.JdbcSinker;
 import org.siglus.siglusapi.localmachine.cdc.TableChangeEvent;
+import org.siglus.siglusapi.localmachine.cdc.TableChangeEvent.RowChangeEvent;
 import org.siglus.siglusapi.repository.FacilityExtensionRepository;
 import org.siglus.siglusapi.service.SiglusAdministrationsService;
+import org.siglus.siglusapi.util.SiglusSimulateUserAuthHelper;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
@@ -36,37 +41,61 @@ public class MasterDataEventReplayer {
   private final JdbcSinker jdbcSinker;
   private final Machine machine;
   private final FacilityExtensionRepository facilityExtensionRepository;
+  private final UserRepository userRepository;
   private final SiglusAdministrationsService administrationsService;
+  private final SiglusSimulateUserAuthHelper simulateUserAuthHelper;
   private static final String TABLE_NAME_FACILITY_EXTENSION = "facility_extension";
   private static final String FIELD_FACILITY_ID = "facilityid";
   private static final String FIELD_ENABLE_LOCATION_MANAGEMENT = "enablelocationmanagement";
 
   @EventListener(classes = {MasterDataTableChangeEvent.class})
   public void replay(MasterDataTableChangeEvent masterDataTableChangeEvent) {
-    jdbcSinker.sink(masterDataTableChangeEvent.getTableChangeEvents());
     resetDraftAndLocationWhenLocationManagementStatusChange(masterDataTableChangeEvent.getTableChangeEvents());
+    jdbcSinker.sink(masterDataTableChangeEvent.getTableChangeEvents());
   }
 
   private void resetDraftAndLocationWhenLocationManagementStatusChange(List<TableChangeEvent> tableChangeEvents) {
     UUID facilityId = machine.getFacilityId();
     FacilityExtension facilityExtension = facilityExtensionRepository.findByFacilityId(facilityId);
-    tableChangeEvents.forEach(tableChangeEvent -> {
+    boolean enableLocalManagement = getEnableLocalManagement(facilityExtension);
+    boolean toggledLocationManagement = false;
+    for (TableChangeEvent tableChangeEvent : tableChangeEvents) {
       if (!tableChangeEvent.getTableName().equals(TABLE_NAME_FACILITY_EXTENSION)) {
-        return;
+        continue;
       }
       int indexOfFacilityId = tableChangeEvent.getColumns().indexOf(FIELD_FACILITY_ID);
       int indexOfEnableLocationManagement = tableChangeEvent.getColumns().indexOf(FIELD_ENABLE_LOCATION_MANAGEMENT);
-      tableChangeEvent.getRowChangeEvents().forEach(rowChangeEvent -> {
+      for (RowChangeEvent rowChangeEvent : tableChangeEvent.getRowChangeEvents()) {
         if (!facilityId.toString().equals(rowChangeEvent.getValues().get(indexOfFacilityId))) {
-          return;
+          continue;
         }
         Boolean toBeUpdatedEnableLocalManagement = (Boolean) rowChangeEvent.getValues()
             .get(indexOfEnableLocationManagement);
-        if (administrationsService.toggledLocationManagement(facilityExtension, toBeUpdatedEnableLocalManagement)) {
-          administrationsService.deleteDrafts(facilityId);
-          administrationsService.assignToVirtualLocation(facilityId, toBeUpdatedEnableLocalManagement);
+        if (enableLocalManagement != toBeUpdatedEnableLocalManagement) {
+          toggledLocationManagement = true;
+          enableLocalManagement = toBeUpdatedEnableLocalManagement;
         }
-      });
-    });
+      }
+    }
+    if (toggledLocationManagement) {
+      administrationsService.deleteDrafts(facilityId);
+      simulateAdminUser();
+      administrationsService.assignToVirtualLocation(facilityId, enableLocalManagement);
+    }
+  }
+
+  private void simulateAdminUser() {
+    User admin = userRepository.findOneByUsernameIgnoreCase("admin");
+    simulateUserAuthHelper.simulateNewUserAuth(admin.getId());
+  }
+
+  private Boolean getEnableLocalManagement(FacilityExtension facilityExtension) {
+    if (Objects.isNull(facilityExtension)) {
+      return Boolean.FALSE;
+    }
+    if (Objects.isNull(facilityExtension.getEnableLocationManagement())) {
+      return Boolean.FALSE;
+    }
+    return facilityExtension.getEnableLocationManagement();
   }
 }

@@ -18,6 +18,7 @@ package org.siglus.siglusapi.localmachine.server;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
@@ -80,9 +81,9 @@ public class OnlineWebServiceTest {
   private static final UUID facilityId = UUID.randomUUID();
 
   @Test
-  public void shouldGenerateZipWhenLocalMachineResync() throws IOException {
+  public void shouldGenerateZipWhenLocalMachineResync() throws IOException, InterruptedException {
     // given
-    mockLock();
+    mockWaitLock();
     ReflectionTestUtils.setField(onlineWebService, "zipExportPath", "/tmp/simam/resync/");
     List<File> tableFiles = new ArrayList<>();
     tableFiles.add(new File("/tmp/movement.txt"));
@@ -99,7 +100,7 @@ public class OnlineWebServiceTest {
     HttpServletResponse httpServletResponse = new MockHttpServletResponse();
 
     // when
-    onlineWebService.reSyncData(facilityId, httpServletResponse);
+    onlineWebService.resyncData(facilityId, httpServletResponse);
 
     // then
     verify(tableCopyRepository, times(1)).copyDateToFile(any(), eq(MovementSql.getMovementSql()), eq(facilityId));
@@ -122,7 +123,7 @@ public class OnlineWebServiceTest {
     when(s3FileHandler.getUrlFromS3(snapshotVersion)).thenReturn("https://test.zip");
 
     // when
-    String url = onlineWebService.reSyncMasterData(facilityId);
+    String url = onlineWebService.resyncMasterData(facilityId);
 
     // then
     assertEquals("10+15+https://test.zip", url);
@@ -138,8 +139,9 @@ public class OnlineWebServiceTest {
     out.close();
   }
 
-  private void mockLock() {
+  private void mockWaitLock() throws InterruptedException {
     AutoClosableLock lock = new AutoClosableLock(Optional.ofNullable(mock(SimpleLock.class)));
-    given(lockFactory.lock(anyString())).willReturn(lock);
+    given(lockFactory.waitLock(anyString(), anyLong())).willReturn(lock);
   }
+
 }

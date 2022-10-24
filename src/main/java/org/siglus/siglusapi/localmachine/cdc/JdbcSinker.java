@@ -20,13 +20,16 @@ import static java.util.stream.Collectors.toList;
 import io.confluent.connect.jdbc.sink.JdbcSinkTask;
 import io.debezium.relational.TableId;
 import io.debezium.relational.TableSchema;
+import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.PreDestroy;
 import lombok.SneakyThrows;
+import org.apache.kafka.connect.data.Decimal;
 import org.apache.kafka.connect.data.Field;
 import org.apache.kafka.connect.data.Schema;
+import org.apache.kafka.connect.data.Schema.Type;
 import org.apache.kafka.connect.data.Struct;
 import org.apache.kafka.connect.sink.SinkRecord;
 import org.slf4j.Logger;
@@ -35,6 +38,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class JdbcSinker {
+
   private final Logger logger = LoggerFactory.getLogger(JdbcSinker.class);
   private final Map<String, String> sinkConfig;
   private final DbSchemaReader schemaReader;
@@ -86,20 +90,21 @@ public class JdbcSinker {
         .map(
             row -> {
               List<String> columns = event.getColumns();
-              List<Object> values = row.getValues();
+              List<?> values = row.getValues();
               // key is identifier of the row
               Struct keyStruct = new Struct(tableSchema.keySchema());
               // values are value of all columns
               Struct valueStruct = new Struct(tableSchema.valueSchema());
               for (int i = 0; i < columns.size(); i++) {
                 String column = columns.get(i);
-                Object value = values.get(i);
+                Field field = valueStruct.schema().field(column);
+                Object value = convertClass(field.schema(), values.get(i));
                 if (keyColumns.contains(column)) {
                   keyStruct.put(column, value);
                 } else if (!row.isDeletion()) {
+                  valueStruct.put(column, value);
                   // for deletion record, the value may be truncated to zero and lost correct type,
                   // so don't put it in struct otherwise may cause validation failure.
-                  valueStruct.put(column, value);
                 }
               }
               String topic = tableId.identifier();
@@ -118,4 +123,18 @@ public class JdbcSinker {
   private void stop() {
     this.jdbcSinkTask.stop();
   }
+
+  private Object convertClass(Schema schema, Object value) {
+    if (value == null) {
+      return null;
+    }
+    if (schema.name() != null && Decimal.LOGICAL_NAME.equals(schema.name())) {
+      value = new BigDecimal(value.toString());
+    }
+    if (Type.INT64.getName().equals(schema.type().getName())) {
+      value = Long.valueOf(value.toString());
+    }
+    return value;
+  }
+
 }

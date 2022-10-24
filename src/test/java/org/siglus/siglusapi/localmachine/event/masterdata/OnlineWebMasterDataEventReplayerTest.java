@@ -16,6 +16,7 @@
 package org.siglus.siglusapi.localmachine.event.masterdata;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -28,6 +29,9 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.openlmis.referencedata.domain.User;
+import org.openlmis.referencedata.repository.UserRepository;
+import org.siglus.siglusapi.domain.FacilityExtension;
 import org.siglus.siglusapi.localmachine.EventPayloadCheckUtils;
 import org.siglus.siglusapi.localmachine.Machine;
 import org.siglus.siglusapi.localmachine.cdc.JdbcSinker;
@@ -35,6 +39,7 @@ import org.siglus.siglusapi.localmachine.cdc.TableChangeEvent;
 import org.siglus.siglusapi.localmachine.cdc.TableChangeEvent.RowChangeEvent;
 import org.siglus.siglusapi.repository.FacilityExtensionRepository;
 import org.siglus.siglusapi.service.SiglusAdministrationsService;
+import org.siglus.siglusapi.util.SiglusSimulateUserAuthHelper;
 
 @RunWith(MockitoJUnitRunner.class)
 @SuppressWarnings({"PMD.UnusedPrivateField"})
@@ -50,7 +55,11 @@ public class OnlineWebMasterDataEventReplayerTest {
   @Mock
   private FacilityExtensionRepository facilityExtensionRepository;
   @Mock
+  private UserRepository userRepository;
+  @Mock
   private SiglusAdministrationsService administrationsService;
+  @Mock
+  private SiglusSimulateUserAuthHelper simulateUserAuthHelper;
 
   private final UUID facilityId = UUID.randomUUID();
   private final String tableNameFacilityExtension = "facility_extension";
@@ -63,7 +72,7 @@ public class OnlineWebMasterDataEventReplayerTest {
     MasterDataTableChangeEvent event = buildMasterDataTableChangeEvent();
     when(machine.getFacilityId()).thenReturn(facilityId);
     when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(null);
-    when(administrationsService.toggledLocationManagement(null, Boolean.TRUE)).thenReturn(Boolean.TRUE);
+    when(userRepository.findOneByUsernameIgnoreCase(anyString())).thenReturn(buildUser());
 
     // when
     int i = EventPayloadCheckUtils.checkEventSerializeChanges(event, event.getClass());
@@ -80,8 +89,9 @@ public class OnlineWebMasterDataEventReplayerTest {
     // given
     MasterDataTableChangeEvent event = buildMasterDataTableChangeEvent();
     when(machine.getFacilityId()).thenReturn(facilityId);
-    when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(null);
-    when(administrationsService.toggledLocationManagement(null, Boolean.FALSE)).thenReturn(Boolean.FALSE);
+    when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(
+        FacilityExtension.builder().enableLocationManagement(Boolean.TRUE).build());
+    when(userRepository.findOneByUsernameIgnoreCase(anyString())).thenReturn(buildUser());
 
     // when
     int i = EventPayloadCheckUtils.checkEventSerializeChanges(event, event.getClass());
@@ -155,5 +165,11 @@ public class OnlineWebMasterDataEventReplayerTest {
     rowChangeEvent.setDeletion(Boolean.FALSE);
     rowChangeEvent.setValues(Lists.newArrayList(UUID.randomUUID().toString(), "status"));
     return rowChangeEvent;
+  }
+
+  private User buildUser() {
+    User user = new User();
+    user.setId(UUID.randomUUID());
+    return user;
   }
 }

@@ -16,10 +16,22 @@
 package org.siglus.siglusapi.localmachine.event;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.collections.CollectionUtils;
+import org.openlmis.requisition.domain.requisition.Requisition;
+import org.openlmis.requisition.domain.requisition.RequisitionLineItem;
+import org.openlmis.requisition.domain.requisition.VersionEntityReference;
+import org.openlmis.requisition.dto.BasicOrderableDto;
+import org.openlmis.requisition.dto.OrderableDto;
+import org.openlmis.requisition.dto.VersionIdentityDto;
+import org.openlmis.requisition.service.referencedata.OrderableReferenceDataService;
 import org.siglus.siglusapi.domain.RequisitionExtension;
 import org.siglus.siglusapi.dto.RequisitionGroupMembersDto;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
@@ -32,6 +44,7 @@ public class EventCommonService {
   private final RequisitionGroupMembersRepository requisitionGroupMembersRepository;
 
   private final RequisitionExtensionRepository requisitionExtensionRepository;
+  private final OrderableReferenceDataService orderableReferenceDataService;
 
   public UUID getReceiverId(UUID facilityId, UUID programId) {
     List<RequisitionGroupMembersDto> parentFacility =
@@ -47,5 +60,15 @@ public class EventCommonService {
   public String getGroupId(UUID requisitionId) {
     RequisitionExtension requisitionExtension = requisitionExtensionRepository.findByRequisitionId(requisitionId);
     return requisitionExtension.getRequisitionNumberPrefix() + requisitionExtension.getRequisitionNumber();
+  }
+
+  public Map<VersionIdentityDto, OrderableDto> getOrderableDtoMap(Requisition requisition) {
+    if (CollectionUtils.isEmpty(requisition.getRequisitionLineItems())) {
+      return new HashMap<>();
+    }
+    Set<VersionEntityReference> orderables = requisition.getRequisitionLineItems().stream()
+        .map(RequisitionLineItem::getOrderable).collect(Collectors.toSet());
+    return orderableReferenceDataService.findByIdentities(orderables).stream()
+        .collect(Collectors.toMap(BasicOrderableDto::getIdentity, Function.identity()));
   }
 }

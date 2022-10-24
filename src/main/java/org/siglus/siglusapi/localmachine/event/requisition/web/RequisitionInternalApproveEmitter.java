@@ -67,13 +67,12 @@ public class RequisitionInternalApproveEmitter {
   }
 
   public RequisitionInternalApprovedEvent getEvent(UUID requisitionId) {
-    RequisitionInternalApprovedEvent event =
-        new RequisitionInternalApprovedEvent();
     log.info("get event of requisition internal approve, id = " + requisitionId);
     Requisition requisition = requisitionRepository.findOne(requisitionId);
     if (requisition == null) {
       throw new IllegalStateException("no requisition found, id = " + requisitionId);
     }
+    RequisitionInternalApprovedEvent event = new RequisitionInternalApprovedEvent();
     event.setRequisition(requisition);
 
     RequisitionExtension requisitionExtension = requisitionExtensionRepository.findByRequisitionId(requisitionId);

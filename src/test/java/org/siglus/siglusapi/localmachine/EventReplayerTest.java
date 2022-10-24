@@ -18,6 +18,7 @@ package org.siglus.siglusapi.localmachine;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
@@ -58,8 +59,9 @@ public class EventReplayerTest {
   private EventReplayer eventReplayer;
 
   @Before
-  public void setup() {
+  public void setup() throws InterruptedException {
     mockLock();
+    mockWaitLock();
   }
 
   @Test
@@ -91,17 +93,17 @@ public class EventReplayerTest {
   public void shouldSendEventsToPublisherWhenReplayGivenNonGroupEvents() {
     // given
     Event event1 = Event.builder()
-            .id(UUID.randomUUID())
-            .groupId(null)
-            .localSequenceNumber(0)
-            .syncedTime(ZonedDateTime.now())
-            .build();
+        .id(UUID.randomUUID())
+        .groupId(null)
+        .localSequenceNumber(0)
+        .syncedTime(ZonedDateTime.now())
+        .build();
     Event event2 = Event.builder()
-            .id(UUID.randomUUID())
-            .groupId(null)
-            .localSequenceNumber(1)
-            .syncedTime(ZonedDateTime.now())
-            .build();
+        .id(UUID.randomUUID())
+        .groupId(null)
+        .localSequenceNumber(1)
+        .syncedTime(ZonedDateTime.now())
+        .build();
     Event event3 = Event.builder()
         .id(UUID.randomUUID())
         .groupId(null)
@@ -122,6 +124,11 @@ public class EventReplayerTest {
   private void mockLock() {
     AutoClosableLock lock = new AutoClosableLock(Optional.ofNullable(mock(SimpleLock.class)));
     given(lockFactory.lock(anyString())).willReturn(lock);
+  }
+
+  private void mockWaitLock() throws InterruptedException {
+    AutoClosableLock lock = new AutoClosableLock(Optional.ofNullable(mock(SimpleLock.class)));
+    given(lockFactory.waitLock(anyString(), anyLong())).willReturn(lock);
   }
 
   private List<Event> getPublishedEvents() {

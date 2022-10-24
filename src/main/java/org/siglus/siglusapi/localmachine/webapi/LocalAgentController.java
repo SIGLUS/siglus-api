@@ -75,7 +75,7 @@ public class LocalAgentController {
   }
 
   @GetMapping("/basicInfo")
-  public LocalMachineBasicInfo getInternetStatus() {
+  public LocalMachineBasicInfo getLocalMachineBasicInfo() {
     return LocalMachineBasicInfo.builder()
         .isConnectedOnlineWeb(machine.isConnectedOnlineWeb())
         .localMachineVersion(localMachineVersion)

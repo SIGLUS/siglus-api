@@ -49,7 +49,10 @@ public class JdbcSinkerTest {
     // given
     TableId tableId = new TableId("", "schema", "table");
     Schema keySchema = SchemaBuilder.struct().field("id", SchemaBuilder.STRING_SCHEMA).build();
-    Schema valueSchema = SchemaBuilder.struct().field("col1", SchemaBuilder.STRING_SCHEMA).build();
+    Schema valueSchema = SchemaBuilder.struct()
+        .field("col1", SchemaBuilder.STRING_SCHEMA)
+        .field("id", SchemaBuilder.STRING_SCHEMA).build();
+
     given(schemaReader.schemaFor(tableId))
         .willReturn(new TableSchema(tableId, keySchema, null, null, valueSchema, null));
     RowChangeEvent nonDeletionRow = new RowChangeEvent(false, Arrays.asList("id1", "col1-value"));

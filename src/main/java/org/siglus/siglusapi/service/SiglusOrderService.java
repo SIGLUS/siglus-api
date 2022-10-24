@@ -342,7 +342,9 @@ public class SiglusOrderService {
     List<FulfillOrderDto> fulfillOrderDtos = dtos.stream().map(basicOrderDto -> {
       return FulfillOrderDto.builder().basicOrder(basicOrderDto).build();
     }).collect(toList());
-    List<FulfillOrderDto> processedFulfillOrderDtos = processExpiredFulfillOrder(fulfillOrderDtos);
+
+    List<FulfillOrderDto> processedFulfillOrderDtos =
+        fulfillOrderDtos.isEmpty() ? fulfillOrderDtos : processExpiredFulfillOrder(fulfillOrderDtos);
 
     return new PageImpl<>(
         processedFulfillOrderDtos,
@@ -350,9 +352,9 @@ public class SiglusOrderService {
   }
 
   private List<FulfillOrderDto> processExpiredFulfillOrder(List<FulfillOrderDto> fulfillOrderDtos) {
-    Map<LocalDate, List<FulfillOrderDto>> endDateToMap = fulfillOrderDtos.stream()
+    Map<UUID, List<FulfillOrderDto>> programIdToMap = fulfillOrderDtos.stream()
         .collect(Collectors.groupingBy(fulfillOrderDto -> {
-          return fulfillOrderDto.getBasicOrder().getProcessingPeriod().getEndDate();
+          return fulfillOrderDto.getBasicOrder().getProgram().getId();
         }));
     UUID processingPeriodId = fulfillOrderDtos.get(0).getBasicOrder().getProcessingPeriod().getId();
     ProcessingPeriodExtension processingPeriodExtension = processingPeriodExtensionRepository
@@ -360,25 +362,31 @@ public class SiglusOrderService {
     if (processingPeriodExtension == null) {
       throw new NotFoundException(ERROR_PERIOD_NOT_FOUND);
     }
-    processExpiredFulfillOrders(endDateToMap, processingPeriodExtension);
+    processExpiredFulfillOrders(programIdToMap, processingPeriodExtension);
     return fulfillOrderDtos;
   }
 
-  private void processExpiredFulfillOrders(Map<LocalDate, List<FulfillOrderDto>> endDateToMap,
+  private void processExpiredFulfillOrders(Map<UUID, List<FulfillOrderDto>> programIdToMap,
       ProcessingPeriodExtension processingPeriodExtension) {
-    List<Entry<LocalDate, List<FulfillOrderDto>>> entries = endDateToMap.entrySet().stream()
-        .sorted(Entry.<LocalDate, List<FulfillOrderDto>>comparingByKey().reversed()).collect(toList());
-    List<FulfillOrderDto> latestFulfillOrderDtos = entries.get(0).getValue();
-    int latestFulfillOrderMonth = entries.get(0).getKey().getMonthValue();
-    List<Integer> caculateFulfillOrderMonth = caculateFulfillOrderMonth(processingPeriodExtension);
-    if (caculateFulfillOrderMonth.contains(latestFulfillOrderMonth)) {
-      latestFulfillOrderDtos.forEach(dto -> {
-        dto.setExpired(false);
-      });
-    }
+    programIdToMap.keySet().forEach(key -> {
+      List<FulfillOrderDto> fulfillOrderDtos = programIdToMap.get(key);
+      fulfillOrderDtos.sort((f1, f2) -> f2.getBasicOrder().getProcessingPeriod().getEndDate()
+          .compareTo(f1.getBasicOrder().getProcessingPeriod().getEndDate()));
+      FulfillOrderDto latestFulfillOrderDto = fulfillOrderDtos.get(0);
+      int latestFulfillOrderMonth = latestFulfillOrderDto.getBasicOrder().getProcessingPeriod().getEndDate()
+          .getMonthValue();
+      List<Integer> calculateFulfillOrderMonth = calculateFulfillOrderMonth(processingPeriodExtension);
+      if (calculateFulfillOrderMonth.contains(latestFulfillOrderMonth)) {
+        List<FulfillOrderDto> filteredDto = fulfillOrderDtos.stream().filter(fulfillOrderDto -> {
+          return fulfillOrderDto.getBasicOrder().getProcessingPeriod().getEndDate()
+              .isEqual(latestFulfillOrderDto.getBasicOrder().getProcessingPeriod().getEndDate());
+        }).collect(toList());
+        filteredDto.forEach(dto -> dto.setExpired(false));
+      }
+    });
   }
 
-  private List<Integer> caculateFulfillOrderMonth(ProcessingPeriodExtension processingPeriodExtension) {
+  private List<Integer> calculateFulfillOrderMonth(ProcessingPeriodExtension processingPeriodExtension) {
     LocalDate submitStartDate = processingPeriodExtension.getSubmitStartDate();
     LocalDate submitEndDate = processingPeriodExtension.getSubmitEndDate();
     LocalDate currentDate = LocalDate.now();
