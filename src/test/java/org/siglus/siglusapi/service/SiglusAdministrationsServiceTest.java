@@ -75,6 +75,7 @@ import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.localmachine.Machine;
+import org.siglus.siglusapi.localmachine.domain.AgentInfo;
 import org.siglus.siglusapi.localmachine.repository.ActivationCodeRepository;
 import org.siglus.siglusapi.localmachine.repository.AgentInfoRepository;
 import org.siglus.siglusapi.repository.AppInfoRepository;
@@ -370,7 +371,7 @@ public class SiglusAdministrationsServiceTest {
   }
 
   @Test
-  public void shouldDeleteDraftsWhenEnableWebLocationManagementIfExtensionIsNull() {
+  public void shouldDeleteDraftsWhenWebEnableLocationManagementIfExtensionIsNull() {
     // given
     when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(null);
     when(siglusFacilityReferenceDataService.findOneWithoutCache(facilityId))
@@ -385,7 +386,7 @@ public class SiglusAdministrationsServiceTest {
   }
 
   @Test
-  public void shouldDeleteDraftsWhenDisableWebLocationManagement() {
+  public void shouldDeleteDraftsWhenWebDisableLocationManagement() {
     // given
     FacilityExtension facilityExtension = mockFacilityExtension(facilityId, false, true, false);
     when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(facilityExtension);
@@ -401,32 +402,35 @@ public class SiglusAdministrationsServiceTest {
   }
 
   @Test
-  public void shouldNodDeleteDraftsWhenEnableLocalMachineLocationManagement() {
+  public void shouldDeleteDraftsWhenInactiveLocalMachineEnableLocationManagement() {
     // given
     FacilityExtension facilityExtension = mockFacilityExtension(facilityId, Boolean.FALSE, Boolean.FALSE, Boolean.TRUE);
     when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(facilityExtension);
     when(siglusFacilityReferenceDataService.findOneWithoutCache(facilityId))
         .thenReturn(mockFacilityDtoPage().getContent().get(0));
+    when(authenticationHelper.getCurrentUser()).thenReturn(mockUserDto());
+    when(agentInfoRepository.findFirstByFacilityId(facilityId)).thenReturn(null);
 
     // when
     siglusAdministrationsService.updateFacility(facilityId,
         mockSiglusFacilityDto(Boolean.TRUE, LOCATION_MANAGEMENT_TAB));
 
     // then
-    verify(locationDraftRepository, times(0)).deleteFacilityRelatedDrafts(facilityId);
+    verify(locationDraftRepository).deleteFacilityRelatedDrafts(facilityId);
   }
 
   @Test
-  public void shouldDeleteDraftsWhenDisableLocalMachineLocationManagement() {
+  public void shouldNotDeleteDraftsWhenActiveLocalMachineEnableLocationManagement() {
     // given
-    FacilityExtension facilityExtension = mockFacilityExtension(facilityId, Boolean.FALSE, Boolean.TRUE, Boolean.TRUE);
+    FacilityExtension facilityExtension = mockFacilityExtension(facilityId, Boolean.FALSE, Boolean.FALSE, Boolean.TRUE);
     when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(facilityExtension);
     when(siglusFacilityReferenceDataService.findOneWithoutCache(facilityId))
         .thenReturn(mockFacilityDtoPage().getContent().get(0));
+    when(agentInfoRepository.findFirstByFacilityId(facilityId)).thenReturn(new AgentInfo());
 
     // when
     siglusAdministrationsService.updateFacility(facilityId,
-        mockSiglusFacilityDto(Boolean.FALSE, LOCATION_MANAGEMENT_TAB));
+        mockSiglusFacilityDto(Boolean.TRUE, LOCATION_MANAGEMENT_TAB));
 
     // then
     verify(locationDraftRepository, times(0)).deleteFacilityRelatedDrafts(facilityId);
