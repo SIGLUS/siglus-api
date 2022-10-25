@@ -21,5 +21,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface GeneratedNumberRepository extends JpaRepository<GeneratedNumber, UUID> {
 
-  GeneratedNumber findByFacilityId(UUID facilityId);
+  GeneratedNumber findByFacilityIdAndProgramIdAndYearAndEmergency(UUID facilityId, UUID programId, int year,
+      boolean emergency);
 }

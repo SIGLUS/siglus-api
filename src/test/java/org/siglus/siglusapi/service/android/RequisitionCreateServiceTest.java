@@ -217,18 +217,18 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
   private final ObjectMapper objectMapper = new ObjectMapper();
 
   private final UUID facilityId = UUID.randomUUID();
-  private final UUID programId = UUID.randomUUID();
-  private final UUID malariaProgramId = UUID.randomUUID();
-  private final UUID mmiaProgramId = UUID.randomUUID();
-  private final UUID rapidTestProgramId = UUID.randomUUID();
-  private final UUID orderableId = UUID.randomUUID();
-  private final UUID mlOrderableId = UUID.randomUUID();
-  private final UUID mmiaOrderableId = UUID.randomUUID();
-  private final UUID rapidTestOrderableId = UUID.randomUUID();
-  private final UUID templateId = UUID.fromString("610a52a5-2217-4fb7-9e8e-90bba3051d4d");
+  private final UUID viaTemplateId = UUID.fromString("610a52a5-2217-4fb7-9e8e-90bba3051d4d");
+  private final UUID viaProgramId = UUID.randomUUID();
+  private final UUID viaOrderableId = UUID.randomUUID();
   private final UUID mmiaTemplateId = UUID.fromString("873c25d6-e53b-11eb-8494-acde48001122");
-  private final UUID malariaTemplateId = UUID.fromString("3f2245ce-ee9f-11eb-ba79-acde48001122");
+  private final UUID mmiaProgramId = UUID.randomUUID();
+  private final UUID mmiaOrderableId = UUID.randomUUID();
   private final UUID rapidtestTemplateId = UUID.fromString("2c10856e-eead-11eb-9718-acde48001122");
+  private final UUID rapidTestProgramId = UUID.randomUUID();
+  private final UUID rapidTestOrderableId = UUID.randomUUID();
+  private final UUID malariaTemplateId = UUID.fromString("3f2245ce-ee9f-11eb-ba79-acde48001122");
+  private final UUID malariaProgramId = UUID.randomUUID();
+  private final UUID malariaOrderableId = UUID.randomUUID();
   private final UUID supervisoryNodeId = UUID.randomUUID();
   private final UUID processingPeriodId = UUID.randomUUID();
   private final UUID requisitionId = UUID.randomUUID();
@@ -257,6 +257,8 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
   private final String vcProductCode = "02A01";
   private final String mlProductCode = "08O05";
   private final UUID facilityTypeId = UUID.randomUUID();
+  private final LocalDate endDate = LocalDate.of(2021, 7, 20);
+  RequisitionExtension requisitionExtension = new RequisitionExtension();
 
   @Before
   public void prepare() {
@@ -267,44 +269,44 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     UserDto user = mock(UserDto.class);
     when(user.getHomeFacilityId()).thenReturn(facilityId);
     when(authHelper.getCurrentUser()).thenReturn(user);
-    ApprovedProductDto productDto = createApprovedProductDto(orderableId);
-    when(requisitionService.getApproveProduct(facilityId, programId, false))
-        .thenReturn(new ApproveProductsAggregator(singletonList(productDto), programId));
+    ApprovedProductDto productDto = createApprovedProductDto(viaOrderableId);
+    when(requisitionService.getApproveProduct(facilityId, viaProgramId, false))
+        .thenReturn(new ApproveProductsAggregator(singletonList(productDto), viaProgramId));
     RequisitionTemplate template = new RequisitionTemplate();
-    template.setId(templateId);
-    when(requisitionTemplateService.findTemplateById(templateId)).thenReturn(template);
+    template.setId(viaTemplateId);
+    when(requisitionTemplateService.findTemplateById(viaTemplateId)).thenReturn(template);
     OrderableDto orderableDto = new OrderableDto();
-    orderableDto.setId(orderableId);
+    orderableDto.setId(viaOrderableId);
     orderableDto.setProductCode(vcProductCode);
     when(siglusOrderableService.getOrderableByCode(vcProductCode)).thenReturn(orderableDto);
     when(siglusOrderableService.getAllProducts()).thenReturn(singletonList(orderableDto));
     SupervisoryNodeDto supervisoryNodeDto = new SupervisoryNodeDto();
     supervisoryNodeDto.setId(supervisoryNodeId);
-    when(supervisoryNodeService.findSupervisoryNode(programId, facilityId)).thenReturn(supervisoryNodeDto);
+    when(supervisoryNodeService.findSupervisoryNode(viaProgramId, facilityId)).thenReturn(supervisoryNodeDto);
     when(supervisoryNodeService.findSupervisoryNode(malariaProgramId, facilityId)).thenReturn(supervisoryNodeDto);
     when(supervisoryNodeService.findSupervisoryNode(mmiaProgramId, facilityId)).thenReturn(supervisoryNodeDto);
+    when(supervisoryNodeService.findSupervisoryNode(rapidTestProgramId, facilityId)).thenReturn(supervisoryNodeDto);
     when(supervisoryNodeService.findOne(supervisoryNodeId)).thenReturn(supervisoryNodeDto);
-    when(requisitionTemplateExtensionRepository.findByRequisitionTemplateId(templateId))
+    when(requisitionTemplateExtensionRepository.findByRequisitionTemplateId(viaTemplateId))
         .thenReturn(buildRequisitionTemplateExtension());
     when(processingPeriodRepository.findPeriodByCodeAndMonth(SCHEDULE_CODE, YearMonth.of(2021, 6)))
         .thenReturn(buildProcessingPeriod());
     when(requisitionRepository.saveAndFlush(requisitionArgumentCaptor.capture()))
-        .thenReturn(buildRequisition(template));
+        .thenReturn(buildViaRequisition());
     when(siglusUsageReportService.initiateUsageReport(requisitionV2DtoArgumentCaptor.capture()))
         .thenReturn(buildSiglusRequisitionDto());
-    RequisitionExtension requisitionExtension = new RequisitionExtension();
-    when(siglusRequisitionExtensionService.buildRequisitionExtension(requisitionId, false, facilityId))
-        .thenReturn(requisitionExtension);
+    when(siglusRequisitionExtensionService.buildRequisitionExtension(requisitionId, false, facilityId, viaProgramId,
+        endDate)).thenReturn(requisitionExtension);
     when(requisitionExtensionRepository.saveAndFlush(requisitionExtensionArgumentCaptor.capture()))
         .thenReturn(requisitionExtension);
     when(syncUpHashRepository.findOne(anyString())).thenReturn(null);
-    when(supportedProgramsHelper.findHomeFacilitySupportedProgramIds()).thenReturn(Collections.singleton(programId));
-    when(approvedProductReferenceDataService.getApprovedProducts(facilityId, programId))
+    when(supportedProgramsHelper.findHomeFacilitySupportedProgramIds()).thenReturn(Collections.singleton(viaProgramId));
+    when(approvedProductReferenceDataService.getApprovedProducts(facilityId, viaProgramId))
         .thenReturn(Collections.singletonList(mockApprovedProduct(vcProductCode)));
     when(additionalOrderableService.searchAdditionalOrderables(any())).thenReturn(emptyList());
 
     ProgramDto program = Mockito.mock(ProgramDto.class);
-    when(program.getId()).thenReturn(programId);
+    when(program.getId()).thenReturn(viaProgramId);
     when(siglusProgramService.getProgramByCode("VC")).thenReturn(Optional.of(program));
     ProgramDto malariaProgram = Mockito.mock(ProgramDto.class);
     when(malariaProgram.getId()).thenReturn(malariaProgramId);
@@ -320,8 +322,8 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     FacilityDto facilityDto = FacilityDto.builder().type(facilityTypeDto).build();
     when(siglusFacilityReferenceDataService.findOne(facilityId)).thenReturn(facilityDto);
     RequisitionTemplate requisitionTemplate = new RequisitionTemplate();
-    requisitionTemplate.setId(templateId);
-    when(requisitionTemplateRepository.findTemplate(programId, facilityTypeId)).thenReturn(requisitionTemplate);
+    requisitionTemplate.setId(viaTemplateId);
+    when(requisitionTemplateRepository.findTemplate(viaProgramId, facilityTypeId)).thenReturn(requisitionTemplate);
     when(requisitionTemplateRepository.findTemplate(malariaProgramId, facilityTypeId)).thenReturn(requisitionTemplate);
     when(requisitionTemplateRepository.findTemplate(mmiaProgramId, facilityTypeId)).thenReturn(requisitionTemplate);
     when(requisitionTemplateRepository.findTemplate(rapidTestProgramId, facilityTypeId))
@@ -334,7 +336,7 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     // given
     ValidationResult success = ValidationResult.success();
     ValidationResult fail = ValidationResult.noPermission(ERROR_NO_FOLLOWING_PERMISSION, "INIT");
-    when(permissionService.canInitRequisition(programId, facilityId)).thenReturn(fail);
+    when(permissionService.canInitRequisition(viaProgramId, facilityId)).thenReturn(fail);
     when(permissionService.canSubmitRequisition(any(Requisition.class))).thenReturn(success);
     when(permissionService.canAuthorizeRequisition(any(Requisition.class))).thenReturn(success);
     when(permissionService.canApproveRequisition(any(Requisition.class))).thenReturn(success);
@@ -348,7 +350,7 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     // given
     ValidationResult success = ValidationResult.success();
     ValidationResult fail = ValidationResult.noPermission(ERROR_NO_FOLLOWING_PERMISSION, "SUBMIT");
-    when(permissionService.canInitRequisition(programId, facilityId)).thenReturn(success);
+    when(permissionService.canInitRequisition(viaProgramId, facilityId)).thenReturn(success);
     when(permissionService.canSubmitRequisition(any(Requisition.class))).thenReturn(fail);
     when(permissionService.canAuthorizeRequisition(any(Requisition.class))).thenReturn(success);
     when(permissionService.canApproveRequisition(any(Requisition.class))).thenReturn(success);
@@ -362,7 +364,7 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     // given
     ValidationResult success = ValidationResult.success();
     ValidationResult fail = ValidationResult.noPermission(ERROR_NO_FOLLOWING_PERMISSION, "AUTHORIZE");
-    when(permissionService.canInitRequisition(programId, facilityId)).thenReturn(success);
+    when(permissionService.canInitRequisition(viaProgramId, facilityId)).thenReturn(success);
     when(permissionService.canSubmitRequisition(any(Requisition.class))).thenReturn(success);
     when(permissionService.canAuthorizeRequisition(any(Requisition.class))).thenReturn(fail);
     when(permissionService.canApproveRequisition(any(Requisition.class))).thenReturn(success);
@@ -376,7 +378,7 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     // given
     ValidationResult success = ValidationResult.success();
     ValidationResult fail = ValidationResult.noPermission(ERROR_NO_FOLLOWING_PERMISSION, "APPROVE");
-    when(permissionService.canInitRequisition(programId, facilityId)).thenReturn(success);
+    when(permissionService.canInitRequisition(viaProgramId, facilityId)).thenReturn(success);
     when(permissionService.canSubmitRequisition(any(Requisition.class))).thenReturn(success);
     when(permissionService.canAuthorizeRequisition(any(Requisition.class))).thenReturn(success);
     when(permissionService.canApproveRequisition(any(Requisition.class))).thenReturn(fail);
@@ -389,7 +391,7 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
   public void shouldSave4TimesRequisitionWhenCreateRequisitionFromAndroid() {
     // given
     ValidationResult success = ValidationResult.success();
-    when(permissionService.canInitRequisition(programId, facilityId)).thenReturn(success);
+    when(permissionService.canInitRequisition(viaProgramId, facilityId)).thenReturn(success);
     when(permissionService.canSubmitRequisition(any(Requisition.class))).thenReturn(success);
     when(permissionService.canAuthorizeRequisition(any(Requisition.class))).thenReturn(success);
     when(permissionService.canApproveRequisition(any(Requisition.class))).thenReturn(success);
@@ -400,7 +402,8 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     // then
     verify(requisitionRepository, times(1)).save(requisitionArgumentCaptor.capture());
     verify(requisitionRepository, times(3)).saveAndFlush(requisitionArgumentCaptor.capture());
-    verify(siglusRequisitionExtensionService).buildRequisitionExtension(requisitionId, false, facilityId);
+    verify(siglusRequisitionExtensionService).buildRequisitionExtension(requisitionId, false, facilityId, viaProgramId,
+        endDate);
     verify(siglusUsageReportService).initiateUsageReport(any());
     verify(siglusUsageReportService).saveUsageReport(any(), any());
     verify(requisitionLineItemExtensionRepository).save(requisitionLineItemExtensionArgumentCaptor.capture());
@@ -411,7 +414,7 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
   public void shouldSkipSaveRequisitionWhenCreateRequisitionIfAlreadySaved() {
     // given
     ValidationResult success = ValidationResult.success();
-    when(permissionService.canInitRequisition(programId, facilityId)).thenReturn(success);
+    when(permissionService.canInitRequisition(viaProgramId, facilityId)).thenReturn(success);
     when(permissionService.canSubmitRequisition(any(Requisition.class))).thenReturn(success);
     when(permissionService.canAuthorizeRequisition(any(Requisition.class))).thenReturn(success);
     when(permissionService.canApproveRequisition(any(Requisition.class))).thenReturn(success);
@@ -422,7 +425,8 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
 
     // then
     verify(requisitionRepository, times(0)).saveAndFlush(requisitionArgumentCaptor.capture());
-    verify(siglusRequisitionExtensionService, times(0)).buildRequisitionExtension(requisitionId, false, facilityId);
+    verify(siglusRequisitionExtensionService, times(0)).buildRequisitionExtension(requisitionId, false, facilityId,
+        viaProgramId, endDate);
     verify(siglusUsageReportService, times(0)).initiateUsageReport(any());
     verify(siglusUsageReportService, times(0)).saveUsageReport(any(), any());
     verify(requisitionLineItemExtensionRepository, times(0))
@@ -439,20 +443,22 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     when(permissionService.canAuthorizeRequisition(any(Requisition.class))).thenReturn(success);
     when(permissionService.canApproveRequisition(any(Requisition.class))).thenReturn(success);
 
-    RequisitionTemplate mlTemplate = new RequisitionTemplate();
-    mlTemplate.setId(malariaTemplateId);
-    ApprovedProductDto productDto = createApprovedProductDto(mlOrderableId);
+    ApprovedProductDto productDto = createApprovedProductDto(malariaOrderableId);
     when(requisitionService.getApproveProduct(facilityId, malariaProgramId, true))
         .thenReturn(new ApproveProductsAggregator(singletonList(productDto), malariaProgramId));
+    RequisitionTemplate mlTemplate = new RequisitionTemplate();
+    mlTemplate.setId(malariaTemplateId);
     when(requisitionTemplateService.findTemplateById(malariaTemplateId)).thenReturn(mlTemplate);
     when(requisitionRepository.saveAndFlush(requisitionArgumentCaptor.capture()))
-        .thenReturn(buildMlRequisition(mlTemplate));
+        .thenReturn(buildMalariaRaequisition());
     when(siglusOrderableService.getOrderableByCode(mlProductCode)).thenReturn(buildOrderableDto());
     when(siglusOrderableService.getAllProducts()).thenReturn(singletonList(buildOrderableDto()));
     when(supportedProgramsHelper.findHomeFacilitySupportedProgramIds())
         .thenReturn(Collections.singleton(malariaProgramId));
     when(approvedProductReferenceDataService.getApprovedProducts(facilityId, malariaProgramId))
         .thenReturn(Collections.singletonList(mockApprovedProduct(mlProductCode)));
+    when(siglusRequisitionExtensionService.buildRequisitionExtension(requisitionId, false, facilityId,
+        malariaProgramId, endDate)).thenReturn(requisitionExtension);
 
     // when
     service.createRequisition(buildMlRequisitionCreateRequest());
@@ -472,14 +478,14 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     when(permissionService.canSubmitRequisition(any(Requisition.class))).thenReturn(success);
     when(permissionService.canAuthorizeRequisition(any(Requisition.class))).thenReturn(success);
     when(permissionService.canApproveRequisition(any(Requisition.class))).thenReturn(success);
-    RequisitionTemplate mmiaTemplate = new RequisitionTemplate();
-    mmiaTemplate.setId(mmiaTemplateId);
     ApprovedProductDto productDto = createApprovedProductDto(mmiaOrderableId);
     when(requisitionService.getApproveProduct(facilityId, mmiaProgramId, false))
         .thenReturn(new ApproveProductsAggregator(singletonList(productDto), mmiaProgramId));
+    RequisitionTemplate mmiaTemplate = new RequisitionTemplate();
+    mmiaTemplate.setId(mmiaTemplateId);
     when(requisitionTemplateService.findTemplateById(mmiaTemplateId)).thenReturn(mmiaTemplate);
     when(requisitionRepository.saveAndFlush(requisitionArgumentCaptor.capture()))
-        .thenReturn(buildMmiaRequisition(mmiaTemplate));
+        .thenReturn(buildMmiaRequisition());
     OrderableDto orderableDto = new OrderableDto();
     orderableDto.setId(mmiaOrderableId);
     orderableDto.setProductCode("08S01ZW");
@@ -491,6 +497,8 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
         .thenReturn(Collections.singleton(mmiaProgramId));
     when(approvedProductReferenceDataService.getApprovedProducts(facilityId, mmiaProgramId))
         .thenReturn(Collections.singletonList(mockApprovedProduct("08S01ZW")));
+    when(siglusRequisitionExtensionService.buildRequisitionExtension(requisitionId, false, facilityId,
+        mmiaProgramId, endDate)).thenReturn(requisitionExtension);
 
     // when
     service.createRequisition(parseParam("buildMmiaRequisitionCreateRequest.json"));
@@ -526,14 +534,14 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     when(permissionService.canSubmitRequisition(any(Requisition.class))).thenReturn(success);
     when(permissionService.canAuthorizeRequisition(any(Requisition.class))).thenReturn(success);
     when(permissionService.canApproveRequisition(any(Requisition.class))).thenReturn(success);
-    RequisitionTemplate trTemplate = new RequisitionTemplate();
-    trTemplate.setId(rapidtestTemplateId);
     ApprovedProductDto productDto = createApprovedProductDto(rapidTestOrderableId);
     when(requisitionService.getApproveProduct(facilityId, rapidTestProgramId, false))
         .thenReturn(new ApproveProductsAggregator(singletonList(productDto), rapidTestProgramId));
+    RequisitionTemplate trTemplate = new RequisitionTemplate();
+    trTemplate.setId(rapidtestTemplateId);
     when(requisitionTemplateService.findTemplateById(rapidtestTemplateId)).thenReturn(trTemplate);
     when(requisitionRepository.saveAndFlush(requisitionArgumentCaptor.capture()))
-        .thenReturn(buildMmiaRequisition(trTemplate));
+        .thenReturn(buildRapidTestRequisition());
     OrderableDto orderableDto = new OrderableDto();
     orderableDto.setId(rapidTestOrderableId);
     orderableDto.setProductCode("08A07");
@@ -544,6 +552,8 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
         .thenReturn(Collections.singleton(rapidTestProgramId));
     when(approvedProductReferenceDataService.getApprovedProducts(facilityId, rapidTestProgramId))
         .thenReturn(Collections.singletonList(mockApprovedProduct("08A07")));
+    when(siglusRequisitionExtensionService.buildRequisitionExtension(requisitionId, false, facilityId,
+        rapidTestProgramId, endDate)).thenReturn(requisitionExtension);
 
     // when
     service.createRequisition(parseParam("buildRapidTestRequisitionCreateRequest.json"));
@@ -623,7 +633,7 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
         .clientSubmittedTime(Instant.parse("2021-07-21T07:59:59Z"))
         .emergency(false)
         .actualStartDate(LocalDate.of(2021, 6, 21))
-        .actualEndDate(LocalDate.of(2021, 7, 20))
+        .actualEndDate(endDate)
         .consultationNumber(20)
         .products(buildProducts())
         .signatures(buildSignatures())
@@ -657,7 +667,7 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
 
   private RequisitionTemplateExtension buildRequisitionTemplateExtension() {
     RequisitionTemplateExtension templateExtension = new RequisitionTemplateExtension();
-    templateExtension.setRequisitionTemplateId(templateId);
+    templateExtension.setRequisitionTemplateId(viaTemplateId);
     templateExtension.setEnableConsultationNumber(true);
     templateExtension.setEnableKitUsage(true);
     templateExtension.setEnableProduct(true);
@@ -668,22 +678,6 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     templateExtension.setEnableQuicklyFill(false);
     templateExtension.setEnableAgeGroup(false);
     return templateExtension;
-  }
-
-  private Requisition buildRequisition(RequisitionTemplate template) {
-    Requisition requisition = new Requisition();
-    requisition.setId(requisitionId);
-    requisition.setFacilityId(facilityId);
-    requisition.setProgramId(programId);
-    requisition.setEmergency(false);
-    RequisitionLineItem requisitionLineItem = new RequisitionLineItem();
-    requisitionLineItem.setRequisition(requisition);
-    VersionEntityReference orderable = new VersionEntityReference();
-    orderable.setId(orderableId);
-    requisitionLineItem.setOrderable(orderable);
-    requisition.setRequisitionLineItems(singletonList(requisitionLineItem));
-    requisition.setTemplate(template);
-    return requisition;
   }
 
   private Optional<ProcessingPeriod> buildProcessingPeriod() {
@@ -904,7 +898,7 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
         .clientSubmittedTime(Instant.parse("2021-07-21T07:59:59Z"))
         .emergency(false)
         .actualStartDate(LocalDate.of(2021, 6, 21))
-        .actualEndDate(LocalDate.of(2021, 7, 20))
+        .actualEndDate(endDate)
         .usageInformationLineItems(buildUsageInfoLineItemRequest())
         .signatures(buildSignatures())
         .build();
@@ -961,43 +955,53 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     return Arrays.asList(usageInfo1, usageInfo2);
   }
 
-  private Requisition buildMlRequisition(RequisitionTemplate template) {
-    VersionEntityReference orderable = new VersionEntityReference(malariaProgramId, 2L);
-    ApprovedProductReference avalibleProduct = new ApprovedProductReference(orderable,
-        any(VersionEntityReference.class));
+  private Requisition buildRequisition(UUID templateId, UUID orderableId, UUID programId) {
+    RequisitionTemplate template = new RequisitionTemplate();
+    template.setId(templateId);
+    VersionEntityReference orderable = new VersionEntityReference(orderableId, 2L);
+    ApprovedProductReference avalibleProduct = new ApprovedProductReference(orderable, new VersionEntityReference());
     Set<ApprovedProductReference> set = new HashSet<>();
     set.add(avalibleProduct);
     Requisition requisition = new Requisition();
     requisition.setId(requisitionId);
     requisition.setFacilityId(facilityId);
-    requisition.setProgramId(malariaProgramId);
+    requisition.setProgramId(programId);
     requisition.setEmergency(false);
     requisition.setRequisitionLineItems(Collections.emptyList());
     requisition.setTemplate(template);
     requisition.setAvailableProducts(set);
+    if (templateId != malariaTemplateId) {
+      RequisitionLineItem requisitionLineItem = new RequisitionLineItem();
+      requisitionLineItem.setRequisition(requisition);
+      requisitionLineItem.setOrderable(orderable);
+      requisition.setRequisitionLineItems(singletonList(requisitionLineItem));
+    }
+    Map<String, Object> extraData = new HashMap<>();
+    extraData.put("actualStartDate", "2021-06-21");
+    extraData.put("actualEndDate", "2021-07-20");
+    requisition.setExtraData(extraData);
     return requisition;
   }
 
-  private Requisition buildMmiaRequisition(RequisitionTemplate template) {
-    VersionEntityReference orderable = new VersionEntityReference(mmiaOrderableId, 2L);
-    ApprovedProductReference avalibleProduct = new ApprovedProductReference(orderable,
-        any(VersionEntityReference.class));
-    Set<ApprovedProductReference> set = new HashSet<>();
-    set.add(avalibleProduct);
-    Requisition requisition = new Requisition();
-    requisition.setId(requisitionId);
-    requisition.setFacilityId(facilityId);
-    requisition.setProgramId(mmiaProgramId);
-    requisition.setEmergency(false);
-    requisition.setRequisitionLineItems(Collections.emptyList());
-    requisition.setTemplate(template);
-    requisition.setAvailableProducts(set);
-    return requisition;
+  private Requisition buildViaRequisition() {
+    return buildRequisition(viaTemplateId, viaOrderableId, viaProgramId);
+  }
+
+  private Requisition buildRapidTestRequisition() {
+    return buildRequisition(rapidtestTemplateId, rapidTestOrderableId, rapidTestProgramId);
+  }
+
+  private Requisition buildMmiaRequisition() {
+    return buildRequisition(mmiaTemplateId, mmiaOrderableId, mmiaProgramId);
+  }
+
+  private Requisition buildMalariaRaequisition() {
+    return buildRequisition(malariaTemplateId, malariaOrderableId, malariaProgramId);
   }
 
   private OrderableDto buildOrderableDto() {
     OrderableDto orderableDto = new OrderableDto();
-    orderableDto.setId(mlOrderableId);
+    orderableDto.setId(malariaOrderableId);
     return orderableDto;
   }
 

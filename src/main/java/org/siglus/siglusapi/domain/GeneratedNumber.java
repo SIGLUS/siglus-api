@@ -34,5 +34,11 @@ public class GeneratedNumber extends BaseEntity {
 
   private UUID facilityId;
 
+  private UUID programId;
+
+  private Integer year;
+
+  private Boolean emergency;
+
   private Integer number;
 }

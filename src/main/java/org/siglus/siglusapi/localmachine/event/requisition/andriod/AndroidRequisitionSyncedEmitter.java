@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.localmachine.event.requisition.andriod;
 
+import java.time.LocalDate;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.openlmis.requisition.dto.BaseDto;
@@ -32,6 +33,7 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class AndroidRequisitionSyncedEmitter {
+
   private final EventPublisher eventPublisher;
   private final SiglusAuthenticationHelper authHelper;
   private final SiglusProgramService siglusProgramService;
@@ -51,14 +53,15 @@ public class AndroidRequisitionSyncedEmitter {
         .orElseThrow(() -> InvalidProgramCodeException.requisition(request.getProgramCode()));
 
     eventPublisher.emitGroupEvent(
-        getGroupId(requisitionId, request.getEmergency(), user.getHomeFacilityId()),
+        getGroupId(requisitionId, request.getEmergency(), user.getHomeFacilityId(), programId,
+            request.getActualEndDate()),
         baseEventCommonService.getReceiverId(user.getHomeFacilityId(), programId), event);
     return event;
   }
 
-  public String getGroupId(UUID requisitionId, Boolean emergency, UUID facilityId) {
+  public String getGroupId(UUID requisitionId, Boolean emergency, UUID facilityId, UUID programId, LocalDate endDate) {
     RequisitionExtension requisitionExtension = siglusRequisitionExtensionService
-        .buildRequisitionExtension(requisitionId, emergency, facilityId);
+        .buildRequisitionExtension(requisitionId, emergency, facilityId, programId, endDate);
     return requisitionExtension.getRequisitionNumberPrefix() + requisitionExtension.getRequisitionNumber();
   }
 }

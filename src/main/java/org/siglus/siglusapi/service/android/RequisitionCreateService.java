@@ -406,7 +406,8 @@ public class RequisitionCreateService {
   private void buildRequisitionExtension(Requisition requisition, RequisitionCreateRequest request, Profiler profiler) {
     profiler.start("build extension");
     RequisitionExtension requisitionExtension = siglusRequisitionExtensionService
-        .buildRequisitionExtension(requisition.getId(), requisition.getEmergency(), requisition.getFacilityId());
+        .buildRequisitionExtension(requisition.getId(), requisition.getEmergency(), requisition.getFacilityId(),
+            requisition.getProgramId(), requisition.getActualEndDate());
     requisitionExtension.setIsApprovedByInternal(true);
     requisitionExtension.setActualStartDate(request.getActualStartDate());
     profiler.start("save and flush");

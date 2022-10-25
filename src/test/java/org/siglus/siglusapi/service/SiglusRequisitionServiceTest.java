@@ -663,8 +663,8 @@ public class SiglusRequisitionServiceTest {
     when(siglusUsageReportService.initiateUsageReport(requisitionV2Dto))
         .thenReturn(SiglusRequisitionDto.from(requisitionV2Dto));
     RequisitionExtension requisitionExtension = new RequisitionExtension();
-    when(siglusRequisitionExtensionService.createRequisitionExtension(requisitionId, false,
-        facilityId)).thenReturn(requisitionExtension);
+    when(siglusRequisitionExtensionService.createRequisitionExtension(siglusRequisitionDto)).thenReturn(
+        requisitionExtension);
     when(siglusRequisitionExtensionService.formatRequisitionNumber(requisitionExtension))
         .thenReturn(REQUISITION_NUMBER);
 

@@ -81,7 +81,7 @@ public class AndroidRequisitionSyncedEmitterTest extends FileBasedTest {
     final RequisitionExtension ex = new RequisitionExtension();
     ex.setRequisitionNumberPrefix("test");
     ex.setRequisitionNumber(123);
-    when(siglusRequisitionExtensionService.buildRequisitionExtension(any(), any(), any())).thenReturn(ex);
+    when(siglusRequisitionExtensionService.buildRequisitionExtension(any(), any(), any(), any(), any())).thenReturn(ex);
   }
 
   @Test

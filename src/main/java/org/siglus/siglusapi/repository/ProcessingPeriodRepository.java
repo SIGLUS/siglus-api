@@ -32,6 +32,8 @@ import org.springframework.data.repository.query.Param;
 public interface ProcessingPeriodRepository extends JpaRepository<ProcessingPeriod, UUID>,
     JpaSpecificationExecutor<ProcessingPeriod> {
 
+  ProcessingPeriod findOneById(UUID id);
+
   List<ProcessingPeriod> findByProcessingSchedule(ProcessingSchedule schedule);
 
   default Optional<ProcessingPeriod> findPeriodByCodeAndMonth(Code code, YearMonth month) {
