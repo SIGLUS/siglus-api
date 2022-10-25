@@ -43,9 +43,11 @@ import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
 import org.openlmis.stockmanagement.domain.event.CalculatedStockOnHand;
 import org.openlmis.stockmanagement.repository.CalculatedStockOnHandRepository;
 import org.openlmis.stockmanagement.repository.StockCardRepository;
+import org.siglus.siglusapi.constant.FieldConstants;
 import org.siglus.siglusapi.constant.PeriodConstants;
 import org.siglus.siglusapi.domain.CalculatedStockOnHandByLocation;
 import org.siglus.siglusapi.domain.FacilityLocations;
+import org.siglus.siglusapi.domain.OrderableIdentifiers;
 import org.siglus.siglusapi.dto.FacilityLocationsDto;
 import org.siglus.siglusapi.dto.InitialMoveProductFieldDto;
 import org.siglus.siglusapi.dto.LotLocationDto;
@@ -55,6 +57,7 @@ import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.repository.CalculatedStockOnHandByLocationRepository;
 import org.siglus.siglusapi.repository.FacilityLocationsRepository;
 import org.siglus.siglusapi.repository.FacilityNativeRepository;
+import org.siglus.siglusapi.repository.OrderableIdentifiersRepository;
 import org.siglus.siglusapi.repository.SiglusStockCardLineItemRepository;
 import org.siglus.siglusapi.repository.dto.FacilityProgramPeriodScheduleDto;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
@@ -95,6 +98,12 @@ public class SiglusLotLocationServiceTest extends TestCase {
 
   @Mock
   private SiglusStockCardLineItemRepository siglusStockCardLineItemRepository;
+
+  @Mock
+  private SiglusStockCardSummariesService siglusStockCardSummariesService;
+
+  @Mock
+  private OrderableIdentifiersRepository orderableIdentifiersRepository;
 
   private final UUID facilityId = UUID.randomUUID();
 
@@ -166,7 +175,7 @@ public class SiglusLotLocationServiceTest extends TestCase {
 
     // when
     List<LotLocationDto> lotLocationDtos = service
-        .searchLotLocationDtos(null, false, false);
+        .searchLotLocationDtos(null, false, false, false);
 
     // then
     assertEquals(expectedLotLocationDto, lotLocationDtos.get(0));
@@ -210,7 +219,7 @@ public class SiglusLotLocationServiceTest extends TestCase {
 
     // when
     List<LotLocationDto> lotLocationDtos = service
-        .searchLotLocationDtos(Collections.singletonList(orderableId), true, false);
+        .searchLotLocationDtos(Collections.singletonList(orderableId), true, false, false);
 
     // then
     assertEquals(expectedLotLocationDtos, lotLocationDtos);
@@ -247,7 +256,7 @@ public class SiglusLotLocationServiceTest extends TestCase {
 
     // when
     List<LotLocationDto> lotLocationDtos = service
-        .searchLotLocationDtos(Collections.singletonList(orderableId), true, false);
+        .searchLotLocationDtos(Collections.singletonList(orderableId), true, false, false);
 
     // then
     assertEquals(expectedLotLocationDtos, lotLocationDtos);
@@ -263,7 +272,7 @@ public class SiglusLotLocationServiceTest extends TestCase {
         .programId(programId2).build();
     stockCard2.setId(stockCardId2);
     when(stockCardRepository.findByOrderableIdInAndFacilityId(Collections.singletonList(orderableId),
-            facilityId)).thenReturn(Arrays.asList(stockCard1, stockCard2));
+        facilityId)).thenReturn(Arrays.asList(stockCard1, stockCard2));
     CalculatedStockOnHandByLocation sohLocation1 = CalculatedStockOnHandByLocation.builder().stockOnHand(0)
         .stockCardId(stockCardId2).locationCode(locationCode1).area(area1).build();
     when(calculatedStockOnHandByLocationRepository
@@ -332,10 +341,67 @@ public class SiglusLotLocationServiceTest extends TestCase {
         .lots(Collections.singletonList(lot2)).build();
     // when
     List<LotLocationDto> lotLocationDtos = service
-        .searchLotLocationDtos(Collections.singletonList(orderableId), true, true);
+        .searchLotLocationDtos(Collections.singletonList(orderableId), true, true, false);
 
     // then
     assertEquals(Collections.singletonList(lotLocation2), lotLocationDtos);
+  }
+
+  @Test
+  public void shouldReturnNoMovementLotsByOrderableIdsWhenReturnNoMovementFlagIsTrue() {
+    // given
+    StockCard stockCard = StockCard.builder().orderableId(orderableId).lotId(lotId1).build();
+    stockCard.setId(stockCardId1);
+    when(stockCardRepository.findByOrderableIdInAndFacilityId(Arrays.asList(orderableId), facilityId))
+        .thenReturn(Collections.singletonList(stockCard));
+    CalculatedStockOnHandByLocation sohLocation1 = CalculatedStockOnHandByLocation.builder()
+        .stockOnHand(100).stockCardId(stockCardId1)
+        .locationCode(locationCode1).area(area1).build();
+    CalculatedStockOnHandByLocation sohLocation2 = CalculatedStockOnHandByLocation.builder()
+        .stockOnHand(200).stockCardId(stockCardId1)
+        .locationCode(locationCode2).area(area2).build();
+    when(calculatedStockOnHandByLocationRepository.findRecentlyLocationSohByStockCardIds(Sets.asSet(stockCard.getId())))
+        .thenReturn(Arrays.asList(sohLocation1, sohLocation2));
+    when(stockCardLocationMovementService.canInitialMoveProduct(facilityId)).thenReturn(
+        new InitialMoveProductFieldDto(false));
+    UUID tradeLineItemId = UUID.randomUUID();
+    LotDto lotDto1 = new LotDto();
+    lotDto1.setId(lotId1);
+    lotDto1.setTradeItemId(tradeLineItemId);
+    lotDto1.setExpirationDate(LocalDate.of(2022, 3, 22));
+    lotDto1.setActive(false);
+    lotDto1.setLotCode(lotCode);
+    when(lotController.getLots(any(), any())).thenReturn(new PageImpl<>(Collections.singletonList(lotDto1)));
+    LotLocationDto lotLocation1 = LotLocationDto.builder().locationCode(locationCode1).area(area1)
+        .lots(Collections.emptyList()).build();
+    LotLocationDto lotLocation2 = LotLocationDto.builder().locationCode(locationCode2).area(area2)
+        .lots(Collections.emptyList()).build();
+    LotsDto lotsDto = LotsDto
+        .builder()
+        .lotId(lotId1)
+        .orderableId(orderableId)
+        .lotCode(lotCode)
+        .expirationDate(LocalDate.of(2022, 3, 22))
+        .build();
+    LotLocationDto lotLocation3 = LotLocationDto.builder().lots(Collections.singletonList(lotsDto)).build();
+    List<LotLocationDto> expectedLotLocationDtos = Arrays.asList(lotLocation2, lotLocation1, lotLocation3);
+
+    when(siglusStockCardSummariesService.getLotsDataByOrderableIds(any())).thenReturn(
+        Collections.singletonList(lotDto1));
+    when(orderableIdentifiersRepository
+        .findByKeyAndValueIn(FieldConstants.TRADE_ITEM, Collections.singletonList(tradeLineItemId.toString())))
+        .thenReturn(Collections.singletonList(OrderableIdentifiers
+            .builder()
+            .orderableId(orderableId)
+            .value(tradeLineItemId.toString())
+            .build()));
+
+    // when
+    List<LotLocationDto> lotLocationDtos = service
+        .searchLotLocationDtos(Collections.singletonList(orderableId), true, false, true);
+
+    // then
+    assertEquals(expectedLotLocationDtos, lotLocationDtos);
   }
 
 }
