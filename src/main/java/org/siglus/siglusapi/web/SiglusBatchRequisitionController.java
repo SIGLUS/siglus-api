@@ -19,8 +19,8 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.openlmis.requisition.dto.ReleasableRequisitionBatchDto;
 import org.openlmis.requisition.dto.RequisitionsProcessingStatusDto;
-import org.openlmis.requisition.web.BatchRequisitionController;
 import org.siglus.siglusapi.localmachine.event.requisition.web.RequisitionReleaseEmitter;
+import org.siglus.siglusapi.service.BatchReleaseRequisitionService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -37,7 +37,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/siglusapi/requisitions")
 public class SiglusBatchRequisitionController {
 
-  private final BatchRequisitionController batchRequisitionController;
+  private final BatchReleaseRequisitionService batchReleaseRequisitionService;
 
   private final RequisitionReleaseEmitter requisitionReleaseEmitter;
 
@@ -54,8 +54,8 @@ public class SiglusBatchRequisitionController {
   @Transactional
   public ResponseEntity<RequisitionsProcessingStatusDto> batchReleaseRequisitions(
       @RequestBody ReleasableRequisitionBatchDto releaseDto) {
-    ResponseEntity<RequisitionsProcessingStatusDto> responseEntity = batchRequisitionController
-        .batchReleaseRequisitions(releaseDto);
+    ResponseEntity<RequisitionsProcessingStatusDto> responseEntity = batchReleaseRequisitionService
+        .getRequisitionsProcessingStatusDtoResponse(releaseDto);
     UUID authorId = siglusAuthenticationHelper.getCurrentUser().getId();
     if (!releaseDto.getCreateOrder()) {
       releaseDto.getRequisitionsToRelease().forEach(releasableRequisition ->
