@@ -111,8 +111,7 @@ public interface SiglusRequisitionRepository extends JpaRepository<Requisition, 
 
   int countById(UUID id);
 
-  List<Requisition> findBySupplyingFacilityIdAndFacilityIdAndProgramIdAndStatus(
-      @Param("supplyingFacilityId") UUID supplyingFacilityId,
+  List<Requisition> findByFacilityIdAndProgramIdAndStatus(
       @Param("facilityId") UUID facilityId,
       @Param("programId") UUID programId,
       @Param("status") RequisitionStatus status

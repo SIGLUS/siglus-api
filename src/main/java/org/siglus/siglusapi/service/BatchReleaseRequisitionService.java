@@ -56,21 +56,19 @@ public class BatchReleaseRequisitionService {
     validateParam(releaseDto);
     ReleasableRequisitionDto releasableRequisitionDto = releaseDto.getRequisitionsToRelease().get(0);
 
-    UUID supplyingDepotId = releasableRequisitionDto.getSupplyingDepotId();
     UUID requisitionId = releasableRequisitionDto.getRequisitionId();
     Requisition requisition = validRequisitionId(requisitionId);
 
-    checkIfRequisitionExpired(requisition, supplyingDepotId);
+    checkIfRequisitionExpired(requisition);
 
     return batchRequisitionController.batchReleaseRequisitions(releaseDto);
   }
 
-  private void checkIfRequisitionExpired(Requisition requisition, UUID supplyingDepotId) {
+  private void checkIfRequisitionExpired(Requisition requisition) {
     UUID programId = requisition.getProgramId();
     UUID facilityId = requisition.getFacilityId();
     List<Requisition> requisitions = siglusRequisitionRepository
-        .findBySupplyingFacilityIdAndFacilityIdAndProgramIdAndStatus(supplyingDepotId, facilityId, programId,
-            RequisitionStatus.APPROVED);
+        .findByFacilityIdAndProgramIdAndStatus(facilityId, programId, RequisitionStatus.APPROVED);
     List<UUID> processingPeriodIds = requisitions.stream().map(Requisition::getProcessingPeriodId)
         .collect(Collectors.toList());
     List<ProcessingPeriodDto> processingPeriodDtos = siglusProcessingPeriodReferenceDataService

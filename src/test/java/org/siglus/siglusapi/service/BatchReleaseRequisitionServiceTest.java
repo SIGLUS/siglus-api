@@ -110,8 +110,8 @@ public class BatchReleaseRequisitionServiceTest extends TestCase {
     //given
     when(siglusRequisitionRepository.findOne(requisitionId1)).thenReturn(createLastPeriodRequisition());
     when(siglusRequisitionRepository
-        .findBySupplyingFacilityIdAndFacilityIdAndProgramIdAndStatus(supplyingDepotId, facilityId,
-            programId, RequisitionStatus.APPROVED)).thenReturn(createRequisitionList());
+        .findByFacilityIdAndProgramIdAndStatus(facilityId, programId, RequisitionStatus.APPROVED))
+        .thenReturn(createRequisitionList());
     when(siglusProcessingPeriodReferenceDataService.findByIds(Lists.asList(processingPeriodId1, processingPeriodId2)))
         .thenReturn(createDifferentProcessingPeriodDtos());
 
@@ -124,8 +124,8 @@ public class BatchReleaseRequisitionServiceTest extends TestCase {
     //given
     when(siglusRequisitionRepository.findOne(requisitionId2)).thenReturn(createCurrentPeriodRequisition());
     when(siglusRequisitionRepository
-        .findBySupplyingFacilityIdAndFacilityIdAndProgramIdAndStatus(supplyingDepotId, facilityId,
-            programId, RequisitionStatus.APPROVED)).thenReturn(createRequisitionList());
+        .findByFacilityIdAndProgramIdAndStatus(facilityId, programId, RequisitionStatus.APPROVED))
+        .thenReturn(createRequisitionList());
     when(siglusProcessingPeriodReferenceDataService.findByIds(Lists.asList(processingPeriodId1, processingPeriodId2)))
         .thenReturn(createDifferentProcessingPeriodDtos());
 
