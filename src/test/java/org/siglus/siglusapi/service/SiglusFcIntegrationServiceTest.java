@@ -393,6 +393,7 @@ public class SiglusFcIntegrationServiceTest {
     assertEquals(1, fcRequisitionDto.getRegimens().size());
     assertEquals(10, fcRequisitionDtos.getContent().get(0).getTestConsumptionLineItems().get(0).get("value"));
   }
+
   @Test
   public void shouldSearchProofOfDelivery() {
     // given
