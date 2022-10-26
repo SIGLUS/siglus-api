@@ -321,8 +321,7 @@ public class SiglusShipmentServiceTest {
     lineItem.setId(lineItemId);
     order.setOrderLineItems(newArrayList(lineItem));
     when(orderRepository.findOne(orderId)).thenReturn(order);
-    when(lineItemExtensionRepository.findByOrderLineItemIdIn(newHashSet()))
-        .thenReturn(newArrayList());
+    when(lineItemExtensionRepository.findByOrderLineItemIdIn(newHashSet())).thenReturn(newArrayList());
     when(siglusProofOfDeliveryRepository.findByShipmentId(any())).thenReturn(buildMockProofOfDelivery());
     when(shipmentController.createShipment(any())).thenReturn(shipmentDto);
 
@@ -330,15 +329,12 @@ public class SiglusShipmentServiceTest {
     siglusShipmentService.createOrderAndShipment(false, shipmentExtensionRequest);
 
     // then
-    verify(orderRepository, times(2)).save(orderArgumentCaptor.capture());
-    verify(lineItemExtensionRepository).delete(lineItemExtensionArgumentCaptor.capture());
+    verify(orderRepository, times(1)).save(orderArgumentCaptor.capture());
+    verify(lineItemExtensionRepository, times(0)).delete(lineItemExtensionArgumentCaptor.capture());
     verify(shipmentController).createShipment(shipmentDtoArgumentCaptor.capture());
     Order orderToSave = orderArgumentCaptor.getValue();
-    List<OrderLineItemExtension> lineItemExtensionsToDelete = lineItemExtensionArgumentCaptor
-        .getValue();
     ShipmentDto shipmentDtoToSave = shipmentDtoArgumentCaptor.getValue();
     assertTrue(CollectionUtils.isNotEmpty(orderToSave.getOrderLineItems()));
-    assertTrue(CollectionUtils.isEmpty(lineItemExtensionsToDelete));
     assertTrue(CollectionUtils.isNotEmpty(shipmentDtoToSave.getLineItems()));
     verify(podExtensionRepository, times(1)).save(buildMockPodExtension());
   }

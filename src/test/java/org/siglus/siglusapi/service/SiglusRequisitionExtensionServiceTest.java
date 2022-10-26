@@ -108,7 +108,7 @@ public class SiglusRequisitionExtensionServiceTest {
     verify(requisitionExtensionRepository).save(requisitionExtensionArgumentCaptor.capture());
     RequisitionExtension requisitionExtension = requisitionExtensionArgumentCaptor.getValue();
     assertEquals(requisitionId, requisitionExtension.getRequisitionId());
-    assertEquals("RNO.01031708.22-10.", requisitionExtension.getRequisitionNumberPrefix());
+    assertEquals("RNO.01031708.2210.", requisitionExtension.getRequisitionNumberPrefix());
     assertEquals(3, requisitionExtension.getRequisitionNumber().intValue());
   }
 
@@ -130,7 +130,7 @@ public class SiglusRequisitionExtensionServiceTest {
     verify(requisitionExtensionRepository).save(requisitionExtensionArgumentCaptor.capture());
     RequisitionExtension requisitionExtension = requisitionExtensionArgumentCaptor.getValue();
     assertEquals(requisitionId, requisitionExtension.getRequisitionId());
-    assertEquals("REM.01031708.22-10.", requisitionExtension.getRequisitionNumberPrefix());
+    assertEquals("REM.01031708.2210.", requisitionExtension.getRequisitionNumberPrefix());
     assertEquals(3, requisitionExtension.getRequisitionNumber().intValue());
   }
 
@@ -151,7 +151,7 @@ public class SiglusRequisitionExtensionServiceTest {
     verify(requisitionExtensionRepository).save(requisitionExtensionArgumentCaptor.capture());
     RequisitionExtension requisitionExtension = requisitionExtensionArgumentCaptor.getValue();
     assertEquals(requisitionId, requisitionExtension.getRequisitionId());
-    assertEquals("MIA.01031708.22-10.", requisitionExtension.getRequisitionNumberPrefix());
+    assertEquals("MIA.01031708.2210.", requisitionExtension.getRequisitionNumberPrefix());
     assertEquals(3, requisitionExtension.getRequisitionNumber().intValue());
   }
 
@@ -172,7 +172,7 @@ public class SiglusRequisitionExtensionServiceTest {
     verify(requisitionExtensionRepository).save(requisitionExtensionArgumentCaptor.capture());
     RequisitionExtension requisitionExtension = requisitionExtensionArgumentCaptor.getValue();
     assertEquals(requisitionId, requisitionExtension.getRequisitionId());
-    assertEquals("MIT.01031708.22-10.", requisitionExtension.getRequisitionNumberPrefix());
+    assertEquals("MIT.01031708.2210.", requisitionExtension.getRequisitionNumberPrefix());
     assertEquals(3, requisitionExtension.getRequisitionNumber().intValue());
   }
 
@@ -193,7 +193,7 @@ public class SiglusRequisitionExtensionServiceTest {
     verify(requisitionExtensionRepository).save(requisitionExtensionArgumentCaptor.capture());
     RequisitionExtension requisitionExtension = requisitionExtensionArgumentCaptor.getValue();
     assertEquals(requisitionId, requisitionExtension.getRequisitionId());
-    assertEquals("MTB.01031708.22-10.", requisitionExtension.getRequisitionNumberPrefix());
+    assertEquals("MTB.01031708.2210.", requisitionExtension.getRequisitionNumberPrefix());
     assertEquals(3, requisitionExtension.getRequisitionNumber().intValue());
   }
 
@@ -214,7 +214,7 @@ public class SiglusRequisitionExtensionServiceTest {
     verify(requisitionExtensionRepository).save(requisitionExtensionArgumentCaptor.capture());
     RequisitionExtension requisitionExtension = requisitionExtensionArgumentCaptor.getValue();
     assertEquals(requisitionId, requisitionExtension.getRequisitionId());
-    assertEquals("ALS.01031708.22-10.", requisitionExtension.getRequisitionNumberPrefix());
+    assertEquals("ALS.01031708.2210.", requisitionExtension.getRequisitionNumberPrefix());
     assertEquals(3, requisitionExtension.getRequisitionNumber().intValue());
   }
 

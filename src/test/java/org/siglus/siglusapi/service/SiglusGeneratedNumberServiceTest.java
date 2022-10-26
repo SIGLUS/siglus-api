@@ -63,7 +63,7 @@ public class SiglusGeneratedNumberServiceTest {
     verify(generatedNumberRepository).save(generatedNumberArgumentCaptor.capture());
     GeneratedNumber generatedNumber = generatedNumberArgumentCaptor.getValue();
     assertEquals(facilityId, generatedNumber.getFacilityId());
-    assertEquals(0, generatedNumber.getNumber().intValue());
+    assertEquals(1, generatedNumber.getNumber().intValue());
   }
 
 
