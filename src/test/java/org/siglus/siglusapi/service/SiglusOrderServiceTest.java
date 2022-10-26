@@ -241,6 +241,7 @@ public class SiglusOrderServiceTest {
   private final UUID orderExternalId = UUID.randomUUID();
   private final UUID supplyingFacilityId = UUID.randomUUID();
   private final UUID receivingFacilityId = UUID.randomUUID();
+  private final UUID facilityId = UUID.randomUUID();
   private final LocalDate now = LocalDate.now();
   private final String orderCode = "ORDER-CODE";
   private final UUID periodId1 = UUID.randomUUID();
@@ -539,6 +540,9 @@ public class SiglusOrderServiceTest {
     processingPeriodDto.setEndDate(processPeriodEndDate);
     processingPeriodDto.setId(periodId1);
     basicOrderDto.setProcessingPeriod(processingPeriodDto);
+    FacilityDto facilityDto = new FacilityDto();
+    facilityDto.setId(supplyingFacilityId);
+    basicOrderDto.setSupplyingFacility(facilityDto);
 
     ProcessingPeriodExtension processingPeriodExtension = new ProcessingPeriodExtension();
     processingPeriodExtension.setSubmitStartDate(LocalDate.of(2022, 9, LocalDate.now().getDayOfMonth() - 2));
@@ -548,6 +552,9 @@ public class SiglusOrderServiceTest {
     when(orderService.searchOrdersForFulfillPage(any(), any())).thenReturn(page);
     List<BasicOrderDto> returnList = Collections.singletonList(basicOrderDto);
     when(basicOrderDtoBuilder.build(list)).thenReturn(returnList);
+    when(siglusOrdersRepository.findBySupplyingFacilityIdAndProgramIdAndStatusIn(supplyingFacilityId, programId,
+        Lists.newArrayList(OrderStatus.SHIPPED, OrderStatus.FULFILLING, OrderStatus.PARTIALLY_FULFILLED,
+            OrderStatus.RECEIVED))).thenReturn(Collections.emptyList());
 
     OrderSearchParams params = mock(OrderSearchParams.class);
     Pageable pageable = mock(Pageable.class);
@@ -573,6 +580,10 @@ public class SiglusOrderServiceTest {
     programDto.setId(programId);
     basicOrderDto.setProgram(programDto);
 
+    FacilityDto facilityDto = new FacilityDto();
+    facilityDto.setId(supplyingFacilityId);
+    basicOrderDto.setSupplyingFacility(facilityDto);
+
     org.openlmis.fulfillment.service.referencedata.ProcessingPeriodDto processingPeriodDto =
         new org.openlmis.fulfillment.service.referencedata.ProcessingPeriodDto();
     processingPeriodDto.setEndDate(processPeriodEndDate);
@@ -587,6 +598,9 @@ public class SiglusOrderServiceTest {
     when(orderService.searchOrdersForFulfillPage(any(), any())).thenReturn(page);
     List<BasicOrderDto> returnList = Collections.singletonList(basicOrderDto);
     when(basicOrderDtoBuilder.build(list)).thenReturn(returnList);
+    when(siglusOrdersRepository.findBySupplyingFacilityIdAndProgramIdAndStatusIn(supplyingFacilityId, programId,
+        Lists.newArrayList(OrderStatus.SHIPPED, OrderStatus.FULFILLING, OrderStatus.PARTIALLY_FULFILLED,
+            OrderStatus.RECEIVED))).thenReturn(Collections.emptyList());
 
     OrderSearchParams params = mock(OrderSearchParams.class);
     Pageable pageable = mock(Pageable.class);
