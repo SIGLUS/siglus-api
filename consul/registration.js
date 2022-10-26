@@ -387,7 +387,7 @@ function CommandLineResolver() {
     return false;
   }
 
-  var consulHost = process.env.CONSUL_HOST || 'localhost';
+  var consulHost = process.env.CONSUL_HOST || 'consul';
   var consulPort = process.env.CONSUL_PORT || '8500';
 
   if (!awaitConsul(consulHost, consulPort)) {
