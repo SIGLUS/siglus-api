@@ -38,8 +38,9 @@ public class SiglusLotWithLocationController {
   @PostMapping
   public List<LotLocationDto> searchLotLocationDto(
       @RequestBody(required = false) List<UUID> orderableIds, @RequestParam(required = false) boolean extraData,
-      @RequestParam(required = false) boolean isAdjustment) {
-    return lotLocationService.searchLotLocationDtos(orderableIds, extraData, isAdjustment);
+      @RequestParam(required = false) boolean isAdjustment,
+      @RequestParam(required = false) boolean returnNoMovementLots) {
+    return lotLocationService.searchLotLocationDtos(orderableIds, extraData, isAdjustment, returnNoMovementLots);
   }
 
   @GetMapping("/facility")

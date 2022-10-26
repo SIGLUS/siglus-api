@@ -31,10 +31,9 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.requisition.dto.ReleasableRequisitionBatchDto;
 import org.openlmis.requisition.dto.ReleasableRequisitionDto;
 import org.openlmis.requisition.dto.RequisitionsProcessingStatusDto;
-import org.openlmis.requisition.web.BatchRequisitionController;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.localmachine.event.requisition.web.RequisitionReleaseEmitter;
-import org.siglus.siglusapi.service.SiglusNotificationService;
+import org.siglus.siglusapi.service.BatchReleaseRequisitionService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -46,13 +45,9 @@ public class SiglusBatchRequisitionControllerTest {
   private SiglusBatchRequisitionController controller;
 
   @Mock
-  private BatchRequisitionController actualController;
+  private BatchReleaseRequisitionService batchReleaseRequisitionService;
 
   private ReleasableRequisitionBatchDto releasableRequisitionBatchDto;
-
-  @Mock
-  @SuppressWarnings("unused")
-  private SiglusNotificationService notificationService;
 
   @Mock
   private RequisitionReleaseEmitter requisitionReleaseEmitter;
@@ -81,7 +76,7 @@ public class SiglusBatchRequisitionControllerTest {
   public void shouldCallOpenlmisControllerWhenBatchReleaseRequisitions() {
     // given
     RequisitionsProcessingStatusDto dto = new RequisitionsProcessingStatusDto();
-    when(actualController.batchReleaseRequisitions(any()))
+    when(batchReleaseRequisitionService.getRequisitionsProcessingStatusDtoResponse(any()))
         .thenReturn(new ResponseEntity<>(dto, HttpStatus.OK));
 
     // when
@@ -89,7 +84,7 @@ public class SiglusBatchRequisitionControllerTest {
 
     // then
     verify(requisitionReleaseEmitter, times(1)).emit(any(), any());
-    verify(actualController).batchReleaseRequisitions(releasableRequisitionBatchDto);
+    verify(batchReleaseRequisitionService).getRequisitionsProcessingStatusDtoResponse(releasableRequisitionBatchDto);
   }
 
 }

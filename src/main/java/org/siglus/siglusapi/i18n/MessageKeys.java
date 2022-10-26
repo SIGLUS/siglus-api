@@ -138,6 +138,7 @@ public abstract class MessageKeys {
   //convert to order
   public static final String ERROR_REQUISITION_EXPIRED = ERROR_PREFIX + ".requisition.expired";
   public static final String ERROR_PERIOD_NOT_FOUND = ERROR_PREFIX + ".period.not.found";
+  public static final String ERROR_REQUISITION_NOT_FOUND = ERROR_PREFIX + ".requisition.not.found";
 
   //location
   public static final String ERROR_LOCATIONS_BY_FACILITY_NOT_FOUND =

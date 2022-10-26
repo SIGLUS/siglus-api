@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import org.openlmis.requisition.domain.requisition.Requisition;
+import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.siglus.siglusapi.repository.dto.RequisitionOrderDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -109,4 +110,11 @@ public interface SiglusRequisitionRepository extends JpaRepository<Requisition, 
       @Param("requisitionIds") Iterable<UUID> requisitionIds);
 
   int countById(UUID id);
+
+  List<Requisition> findBySupplyingFacilityIdAndFacilityIdAndProgramIdAndStatus(
+      @Param("supplyingFacilityId") UUID supplyingFacilityId,
+      @Param("facilityId") UUID facilityId,
+      @Param("programId") UUID programId,
+      @Param("status") RequisitionStatus status
+  );
 }

@@ -210,10 +210,11 @@ public class SiglusAdministrationsService {
     }
 
     if (StringUtils.equals(siglusFacilityDto.getTab(), LOCATION_MANAGEMENT_TAB)) {
-      if (isWebFacility(facilityExtension)) {
+      if (!isActiveLocalMachine(facilityExtension)) {
         deleteDraftsWhenToggleLocationManagement(facilityExtension, siglusFacilityDto.getId(),
             siglusFacilityDto.getEnableLocationManagement());
-        assignToVirtualLocation(siglusFacilityDto.getId(), siglusFacilityDto.getEnableLocationManagement());
+        assignToVirtualLocation(siglusFacilityDto.getId(), siglusFacilityDto.getEnableLocationManagement(),
+            authenticationHelper.getCurrentUser().getId());
       }
       facilityExtension.setEnableLocationManagement(siglusFacilityDto.getEnableLocationManagement());
     }
@@ -315,9 +316,15 @@ public class SiglusAdministrationsService {
     stockCardRepository.deleteByIdIn(stockCardIds);
   }
 
-  private boolean isWebFacility(FacilityExtension facilityExtension) {
-    return Objects.isNull(facilityExtension)
-        || (!facilityExtension.getIsLocalMachine() && !facilityExtension.getIsAndroid());
+  private boolean isActiveLocalMachine(FacilityExtension facilityExtension) {
+    if (Objects.isNull(facilityExtension)) {
+      return Boolean.FALSE;
+    }
+    if (facilityExtension.getIsLocalMachine()) {
+      AgentInfo agentInfo = agentInfoRepository.findFirstByFacilityId(facilityExtension.getFacilityId());
+      return Objects.nonNull(agentInfo);
+    }
+    return Boolean.FALSE;
   }
 
   private void validateReportTypes(SiglusFacilityDto siglusFacilityDto) {
@@ -551,11 +558,10 @@ public class SiglusAdministrationsService {
     locationDraftRepository.deleteFacilityRelatedDrafts(facilityId);
   }
 
-  public void assignToVirtualLocation(UUID facilityId, boolean toBeUpdatedEnableLocationManagement) {
+  public void assignToVirtualLocation(UUID facilityId, boolean toBeUpdatedEnableLocationManagement, UUID userId) {
     if (emptyStockCardCount(facilityId)) {
       return;
     }
-    UUID userId = authenticationHelper.getCurrentUser().getId();
     List<StockCard> stockCards = stockCardRepository.findByFacilityIdIn(facilityId);
     List<UUID> stockCardIds = stockCards.stream().map(StockCard::getId).collect(Collectors.toList());
     if (BooleanUtils.isTrue(toBeUpdatedEnableLocationManagement)) {

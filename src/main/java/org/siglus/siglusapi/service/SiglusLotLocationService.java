@@ -23,6 +23,7 @@ import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_LOCATIONS_BY_FACILITY_
 import com.google.common.collect.Maps;
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -44,10 +45,12 @@ import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
 import org.openlmis.stockmanagement.domain.event.CalculatedStockOnHand;
 import org.openlmis.stockmanagement.repository.CalculatedStockOnHandRepository;
 import org.openlmis.stockmanagement.repository.StockCardRepository;
+import org.siglus.siglusapi.constant.FieldConstants;
 import org.siglus.siglusapi.constant.LocationConstants;
 import org.siglus.siglusapi.constant.PeriodConstants;
 import org.siglus.siglusapi.domain.CalculatedStockOnHandByLocation;
 import org.siglus.siglusapi.domain.FacilityLocations;
+import org.siglus.siglusapi.domain.OrderableIdentifiers;
 import org.siglus.siglusapi.dto.FacilityLocationsDto;
 import org.siglus.siglusapi.dto.LotLocationDto;
 import org.siglus.siglusapi.dto.LotsDto;
@@ -55,6 +58,7 @@ import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.repository.CalculatedStockOnHandByLocationRepository;
 import org.siglus.siglusapi.repository.FacilityLocationsRepository;
 import org.siglus.siglusapi.repository.FacilityNativeRepository;
+import org.siglus.siglusapi.repository.OrderableIdentifiersRepository;
 import org.siglus.siglusapi.repository.SiglusStockCardLineItemRepository;
 import org.siglus.siglusapi.repository.dto.FacilityProgramPeriodScheduleDto;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
@@ -75,13 +79,25 @@ public class SiglusLotLocationService {
   private final SiglusStockCardLocationMovementService stockCardLocationMovementService;
   private final LotController lotController;
   private final SiglusStockCardLineItemRepository siglusStockCardLineItemRepository;
+  private final SiglusStockCardSummariesService siglusStockCardSummariesService;
+  private final OrderableIdentifiersRepository orderableIdentifiersRepository;
 
-  public List<LotLocationDto> searchLotLocationDtos(List<UUID> orderableIds, boolean extraData, boolean isAdjustment) {
+  public List<LotLocationDto> searchLotLocationDtos(List<UUID> orderableIds, boolean extraData, boolean isAdjustment,
+      boolean returnNoMovementLots) {
     UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
     if (!extraData) {
       return getLocationsByFacilityId(facilityId);
     }
-    return getLotLocationDtos(orderableIds, facilityId, isAdjustment);
+
+    List<LotLocationDto> lotLocationDtos = new ArrayList<>(getLotLocationDtos(orderableIds, facilityId, isAdjustment));
+
+    if (returnNoMovementLots) {
+      List<UUID> lotIds = lotLocationDtos.stream().flatMap(e -> e.getLots().stream().map(LotsDto::getLotId))
+          .collect(Collectors.toList());
+      lotLocationDtos.add(getNoMovementLotLocationDto(orderableIds, lotIds));
+    }
+
+    return lotLocationDtos;
   }
 
   public List<FacilityLocationsDto> searchLocationsByFacility(Boolean isEmpty) {
@@ -102,6 +118,37 @@ public class SiglusLotLocationService {
       });
     }
     return dtos;
+  }
+
+  private LotLocationDto getNoMovementLotLocationDto(List<UUID> orderableIds, List<UUID> hasMovementLotIds) {
+    List<LotDto> lotDtos = siglusStockCardSummariesService.getLotsDataByOrderableIds(orderableIds);
+    List<String> tradeLineItemIds = lotDtos
+        .stream()
+        .map(e -> e.getTradeItemId().toString())
+        .collect(Collectors.toList());
+    Map<String, List<OrderableIdentifiers>> tradeItemIdToOrderableIdentifiersMap = orderableIdentifiersRepository
+        .findByKeyAndValueIn(FieldConstants.TRADE_ITEM, tradeLineItemIds)
+        .stream()
+        .collect(Collectors.groupingBy(OrderableIdentifiers::getValue));
+
+    List<UUID> lotIds = lotDtos.stream().map(LotDto::getId).collect(Collectors.toList());
+    LotSearchParams requestParams = new LotSearchParams(null, null, null, lotIds);
+    Map<String, List<LotDto>> lotCodeToLotDtoMap = lotController.getLots(requestParams, null).getContent().stream()
+        .collect(Collectors.groupingBy(LotDto::getLotCode));
+
+    List<LotsDto> allLotDtos = lotDtos
+        .stream()
+        .map(e -> LotsDto.builder()
+            .orderableId(tradeItemIdToOrderableIdentifiersMap.get(
+                e.getTradeItemId().toString()).get(0).getOrderableId())
+            .lotId(lotCodeToLotDtoMap.get(e.getLotCode()).get(0).getId())
+            .expirationDate(e.getExpirationDate())
+            .lotCode(e.getLotCode())
+            .build()).collect(Collectors.toList());
+
+    List<LotsDto> noMovementLotDtos = allLotDtos.stream().filter(e -> !hasMovementLotIds.contains(e.getLotId()))
+        .collect(Collectors.toList());
+    return LotLocationDto.builder().lots(noMovementLotDtos).build();
   }
 
   private String getLocationKey(CalculatedStockOnHandByLocation stockOnHandByLocation) {

@@ -318,20 +318,20 @@ public class SiglusOrderableService {
             .filter(dispensable -> dispensable.getDispensableId().equals(dispensableId))
             .findFirst().orElse(null)));
 
-    List<SimplifyOrderablesDto> simplifyOrderablesDtoList = new ArrayList<>();
+    List<AvailableOrderablesDto> availableOrderablesDtos = new ArrayList<>();
     orderables.forEach(orderable -> {
-      SimplifyOrderablesDto simplifyOrderablesDto = new SimplifyOrderablesDto();
-      simplifyOrderablesDto.setOrderableId(orderable.getId());
-      simplifyOrderablesDto.setProductCode(orderable.getProductCode().toString());
-      simplifyOrderablesDto.setFullProductName(orderable.getFullProductName());
-      simplifyOrderablesDto.setProgramId(orderableIdToProgramIdMap.get(orderable.getId()));
-      simplifyOrderablesDto.setIsKit(KitConstants.isKit(orderable.getProductCode().toString()));
+      AvailableOrderablesDto availableOrderablesDto = new SimplifyOrderablesDto();
+      availableOrderablesDto.setOrderableId(orderable.getId());
+      availableOrderablesDto.setProductCode(orderable.getProductCode().toString());
+      availableOrderablesDto.setFullProductName(orderable.getFullProductName());
+      availableOrderablesDto.setProgramId(orderableIdToProgramIdMap.get(orderable.getId()));
+      availableOrderablesDto.setIsKit(KitConstants.isKit(orderable.getProductCode().toString()));
       DispensableDto dispensable = new DispensableDto(orderableIdToDispensable.get(orderable.getId()).getValue(),
           null, null, orderableIdToDispensable.get(orderable.getId()).getValue());
-      simplifyOrderablesDto.setDispensable(dispensable);
-      simplifyOrderablesDtoList.add(simplifyOrderablesDto);
+      availableOrderablesDto.setDispensable(dispensable);
+      availableOrderablesDtos.add(availableOrderablesDto);
     });
-    return simplifyOrderablesDtoList.stream().sorted(comparing(SimplifyOrderablesDto::getFullProductName)).collect(
+    return availableOrderablesDtos.stream().sorted(comparing(AvailableOrderablesDto::getFullProductName)).collect(
         Collectors.toList());
   }
 
