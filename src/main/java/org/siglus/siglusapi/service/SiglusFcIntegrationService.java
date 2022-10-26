@@ -15,16 +15,20 @@
 
 package org.siglus.siglusapi.service;
 
+import static com.google.common.collect.Lists.asList;
 import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Maps.newHashMap;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
+import static org.apache.commons.lang3.StringUtils.removeEnd;
+import static org.apache.commons.lang3.StringUtils.removeStart;
 import static org.siglus.siglusapi.constant.FacilityTypeConstants.DPM;
 import static org.siglus.siglusapi.constant.UsageSectionConstants.TestConsumptionLineItems.TOTAL;
 
 import com.google.common.collect.ImmutableMap;
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -35,6 +39,7 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import ma.glasnost.orika.impl.util.StringUtil;
 import org.apache.commons.collections.CollectionUtils;
 import org.openlmis.fulfillment.domain.ProofOfDelivery;
 import org.openlmis.fulfillment.domain.ProofOfDeliveryLineItem;
@@ -60,6 +65,7 @@ import org.siglus.common.repository.OrderExternalRepository;
 import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
 import org.siglus.siglusapi.constant.FacilityTypeConstants;
 import org.siglus.siglusapi.constant.ProgramConstants;
+import org.siglus.siglusapi.domain.PatientLineItem;
 import org.siglus.siglusapi.domain.ProgramOrderablesExtension;
 import org.siglus.siglusapi.domain.ProgramRealProgram;
 import org.siglus.siglusapi.domain.RequisitionLineItemExtension;
@@ -82,12 +88,15 @@ import org.siglus.siglusapi.dto.UsageTemplateColumnDto;
 import org.siglus.siglusapi.dto.UsageTemplateSectionDto;
 import org.siglus.siglusapi.dto.android.PeriodOfProductMovements;
 import org.siglus.siglusapi.dto.android.StocksOnHand;
+import org.siglus.siglusapi.dto.android.enumeration.PatientLineItemName;
+import org.siglus.siglusapi.dto.android.enumeration.PatientTableName;
 import org.siglus.siglusapi.dto.android.enumeration.TestProject;
 import org.siglus.siglusapi.dto.android.enumeration.TestService;
 import org.siglus.siglusapi.dto.fc.FacilityStockMovementResponse;
 import org.siglus.siglusapi.dto.fc.FacilityStockOnHandResponse;
 import org.siglus.siglusapi.dto.fc.ProductStockOnHandResponse;
 import org.siglus.siglusapi.repository.FacilityNativeRepository;
+import org.siglus.siglusapi.repository.PatientLineItemRepository;
 import org.siglus.siglusapi.repository.ProgramOrderablesExtensionRepository;
 import org.siglus.siglusapi.repository.ProgramRealProgramRepository;
 import org.siglus.siglusapi.repository.RequisitionLineItemExtensionRepository;
@@ -112,6 +121,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 @Service
 @RequiredArgsConstructor
@@ -147,6 +157,7 @@ public class SiglusFcIntegrationService {
 
   private final TestConsumptionLineItemRepository testConsumptionLineItemRepository;
 
+  private final PatientLineItemRepository patientLineItemRepository;
   private final SiglusOrderableService siglusOrderableService;
 
   @Value("${dpm.facilityTypeId}")
@@ -369,7 +380,34 @@ public class SiglusFcIntegrationService {
     setRegimenInfo(requisition, fcRequisitionDto, realProgramMap);
     setUsageInformation(requisition, fcRequisitionDto);
     setTestConsumption(requisition, fcRequisitionDto);
+    setPatientInfo(requisition, fcRequisitionDto);
     return fcRequisitionDto;
+  }
+
+
+  private void setPatientInfo(Requisition requisition, FcRequisitionDto fcRequisitionDto) {
+    if (ProgramConstants.TARV_PROGRAM_CODE.equals(fcRequisitionDto.getProgramCode())) {
+      List<PatientLineItem> lineItems = patientLineItemRepository.findByRequisitionId(requisition.getId());
+      List<Map<String, Object>> patientLineItems = newArrayList();
+      lineItems.stream()
+          .filter(lineItem -> {
+            return !StringUtils.isEmpty(PatientLineItemName.findKeyByValue(lineItem.getGroup()))
+                && !StringUtils.isEmpty(
+                PatientTableName.valueOf(lineItem.getGroup().toUpperCase()).findKeyByValue(lineItem.getColumn()));
+          })
+          .forEach(lineItem -> {
+            Map<String, Object> patientInfoMap = newHashMap();
+            patientInfoMap.put("groupName",
+                removePrefixAndSuffix(PatientLineItemName.findKeyByValue(lineItem.getGroup()), "table_", "_key"));
+            patientInfoMap.put("columnName",
+                removePrefixAndSuffix(
+                    PatientTableName.valueOf(lineItem.getGroup().toUpperCase()).findKeyByValue(lineItem.getColumn()),
+                    "table_", "_key"));
+            patientInfoMap.put("value", lineItem.getValue());
+            patientLineItems.add(patientInfoMap);
+          });
+      fcRequisitionDto.setPatientLineItems(patientLineItems);
+    }
   }
 
   private void setTestConsumption(Requisition requisition, FcRequisitionDto fcRequisitionDto) {
@@ -517,6 +555,7 @@ public class SiglusFcIntegrationService {
             realPrograms.add(new RealProgramDto(orderablesExtension.getRealProgramCode(),
                 orderablesExtension.getRealProgramName())));
     fcLineItem.setRealPrograms(realPrograms);
+    fcLineItem.setRequestedQuantity(fcLineItem.getRequestedQuantity() == null ? 0 : fcLineItem.getRequestedQuantity());
     fcLineItem.setAuthorizedQuantity(authorizedQuantityMap.get(lineItem.getId()));
     return fcLineItem;
   }
@@ -524,6 +563,11 @@ public class SiglusFcIntegrationService {
   private List<FacilityTypeDto> findFacilityTypes(Collection<String> typeNames) {
     return facilityTypeDataService.getPage(RequestParameters.init()).getContent().stream()
         .filter(t -> typeNames.contains(t.getCode())).collect(toList());
+  }
+
+  private String removePrefixAndSuffix(String s, String prefix, String suffix) {
+    String temp = removeStart(s, prefix);
+    return removeEnd(temp, suffix);
   }
 
 }
