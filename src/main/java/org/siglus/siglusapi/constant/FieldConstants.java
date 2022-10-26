@@ -207,4 +207,6 @@ public class FieldConstants {
   public static final String INITIAL_INVENTORY_KEY = "stockCard.inventory";
 
   public static final UUID LAST_SYNC_RECORD_ID = UUID.fromString("07997013-b33b-4159-bdf4-585182fb82fb");
+
+  public static final String VALUE = "value";
 }

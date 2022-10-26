@@ -15,7 +15,6 @@
 
 package org.siglus.siglusapi.service;
 
-import static com.google.common.collect.Lists.asList;
 import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Maps.newHashMap;
 import static java.util.stream.Collectors.toList;
@@ -24,11 +23,11 @@ import static java.util.stream.Collectors.toSet;
 import static org.apache.commons.lang3.StringUtils.removeEnd;
 import static org.apache.commons.lang3.StringUtils.removeStart;
 import static org.siglus.siglusapi.constant.FacilityTypeConstants.DPM;
+import static org.siglus.siglusapi.constant.FieldConstants.VALUE;
 import static org.siglus.siglusapi.constant.UsageSectionConstants.TestConsumptionLineItems.TOTAL;
 
 import com.google.common.collect.ImmutableMap;
 import java.time.LocalDate;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -39,7 +38,6 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
-import ma.glasnost.orika.impl.util.StringUtil;
 import org.apache.commons.collections.CollectionUtils;
 import org.openlmis.fulfillment.domain.ProofOfDelivery;
 import org.openlmis.fulfillment.domain.ProofOfDeliveryLineItem;
@@ -390,20 +388,16 @@ public class SiglusFcIntegrationService {
       List<PatientLineItem> lineItems = patientLineItemRepository.findByRequisitionId(requisition.getId());
       List<Map<String, Object>> patientLineItems = newArrayList();
       lineItems.stream()
-          .filter(lineItem -> {
-            return !StringUtils.isEmpty(PatientLineItemName.findKeyByValue(lineItem.getGroup()))
-                && !StringUtils.isEmpty(
-                PatientTableName.valueOf(lineItem.getGroup().toUpperCase()).findKeyByValue(lineItem.getColumn()));
-          })
+          .filter(lineItem -> !StringUtils.isEmpty(PatientLineItemName.findKeyByValue(lineItem.getGroup()))
+              && !StringUtils.isEmpty(
+              PatientTableName.valueOf(lineItem.getGroup().toUpperCase()).findKeyByValue(lineItem.getColumn())))
           .forEach(lineItem -> {
             Map<String, Object> patientInfoMap = newHashMap();
             patientInfoMap.put("groupName",
-                removePrefixAndSuffix(PatientLineItemName.findKeyByValue(lineItem.getGroup()), "table_", "_key"));
-            patientInfoMap.put("columnName",
-                removePrefixAndSuffix(
-                    PatientTableName.valueOf(lineItem.getGroup().toUpperCase()).findKeyByValue(lineItem.getColumn()),
-                    "table_", "_key"));
-            patientInfoMap.put("value", lineItem.getValue());
+                removePrefixAndSuffix(PatientLineItemName.findKeyByValue(lineItem.getGroup())));
+            patientInfoMap.put("columnName", removePrefixAndSuffix(
+                PatientTableName.valueOf(lineItem.getGroup().toUpperCase()).findKeyByValue(lineItem.getColumn())));
+            patientInfoMap.put(VALUE, lineItem.getValue());
             patientLineItems.add(patientInfoMap);
           });
       fcRequisitionDto.setPatientLineItems(patientLineItems);
@@ -421,7 +415,7 @@ public class SiglusFcIntegrationService {
         testConsumptionMap.put("outcome", lineItem.getOutcome().toUpperCase());
         testConsumptionMap.put("service", TOTAL.equals(lineItem.getService()) ? "TOTAL" :
             TestService.findByValue(lineItem.getService()));
-        testConsumptionMap.put("value", lineItem.getValue());
+        testConsumptionMap.put(VALUE, lineItem.getValue());
         testConsumptionLineItems.add(testConsumptionMap);
       });
       fcRequisitionDto.setTestConsumptionLineItems(testConsumptionLineItems);
@@ -440,7 +434,7 @@ public class SiglusFcIntegrationService {
             .get("code"));
         usageInformationMap.put("service",
             "newColumn0".equals(lineItem.getService()) ? "CHW" : lineItem.getService());
-        usageInformationMap.put("value", lineItem.getValue());
+        usageInformationMap.put(VALUE, lineItem.getValue());
         usageInformationLineItems.add(usageInformationMap);
       });
       fcRequisitionDto.setUsageInformationLineItems(usageInformationLineItems);
@@ -565,9 +559,9 @@ public class SiglusFcIntegrationService {
         .filter(t -> typeNames.contains(t.getCode())).collect(toList());
   }
 
-  private String removePrefixAndSuffix(String s, String prefix, String suffix) {
-    String temp = removeStart(s, prefix);
-    return removeEnd(temp, suffix);
+  private String removePrefixAndSuffix(String s) {
+    String temp = removeStart(s, "table_");
+    return removeEnd(temp, "_key");
   }
 
 }
