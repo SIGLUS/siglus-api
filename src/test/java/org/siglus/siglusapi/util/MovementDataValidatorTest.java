@@ -26,7 +26,7 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.siglus.siglusapi.exception.ValidationMessageException;
+import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.repository.ProcessingPeriodRepository;
 import org.siglus.siglusapi.repository.SiglusStockCardLineItemRepository;
 
@@ -90,7 +90,7 @@ public class MovementDataValidatorTest {
     assertEquals(movementStartDate, periodStartDate);
   }
 
-  @Test(expected = ValidationMessageException.class)
+  @Test(expected = BusinessDataException.class)
   public void shouldCallGetStartdateWithServiceWhenValidate() {
     //given
     LocalDate currentDate = LocalDate.of(2022, 7, 28);
