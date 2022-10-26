@@ -52,7 +52,9 @@ public class BatchReleaseRequisitionService {
 
   public ResponseEntity<RequisitionsProcessingStatusDto> getRequisitionsProcessingStatusDtoResponse(
       ReleasableRequisitionBatchDto releaseDto) {
-
+    if (Boolean.FALSE.equals(releaseDto.getCreateOrder())) {
+      return batchRequisitionController.batchReleaseRequisitions(releaseDto);
+    }
     validateParam(releaseDto);
     ReleasableRequisitionDto releasableRequisitionDto = releaseDto.getRequisitionsToRelease().get(0);
 
@@ -60,7 +62,6 @@ public class BatchReleaseRequisitionService {
     Requisition requisition = validRequisitionId(requisitionId);
 
     checkIfRequisitionExpired(requisition);
-
     return batchRequisitionController.batchReleaseRequisitions(releaseDto);
   }
 
