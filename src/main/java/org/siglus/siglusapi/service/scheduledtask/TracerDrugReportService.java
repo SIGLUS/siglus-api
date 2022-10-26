@@ -132,6 +132,9 @@ public class TracerDrugReportService {
       String provinceCode,
       String startDate,
       String endDate) throws IOException {
+
+    ExcelWriter excelWriter = EasyExcelFactory.write(response.getOutputStream()).build();
+
     List<String> requisitionFacilityCodes = getRequisitionFacilityCode(districtCode, provinceCode);
 
     List<TracerDrugExcelDto> tracerDrugExcelInfo = tracerDrugRepository.getTracerDrugExcelInfo(startDate,
@@ -142,29 +145,22 @@ public class TracerDrugReportService {
         .collect(Collectors.groupingBy(o -> getUniqueKey(o.getFacilityCode(), o.getProductCode())));
 
     int[][] colorArrays = new int[tracerDrugMap.size()][tracerDrugMap.values().stream()
-        .findFirst().orElseThrow(IllegalStateException::new).size()];
-    int[][] legendaColorArrays = new int[4][1];
-    for (int i = 0; i < 4; i++) {
-      legendaColorArrays[i][0] = i + 1;
-    }
+        .findFirst().orElse(Collections.emptyList()).size()];
+
     List<List<Object>> excelRows = getDataRows(startDate, endDate, tracerDrugMap, colorArrays);
 
-    ExcelWriter excelWriter = EasyExcelFactory.write(response.getOutputStream()).build();
-    WriteSheet writeSheet1 = EasyExcelFactory
+    WriteSheet writeSheet = EasyExcelFactory
         .writerSheet(0)
         .registerWriteHandler(new CustomCellWriteHandler(colorArrays, false))
         .head(getHeadRow(tracerDrugMap))
         .build();
-    WriteSheet writeSheet2 = EasyExcelFactory
-        .writerSheet(1, SUBTITLE)
-        .registerWriteHandler(new CustomCellWriteHandler(legendaColorArrays, true))
-        .head(Collections.singletonList(Collections.singletonList(SUBTITLE)))
-        .build();
-    excelWriter.write(excelRows, writeSheet1);
-    excelWriter.write(getLegendaRows(), writeSheet2);
+
+    excelWriter.write(excelRows, writeSheet);
+    excelWriter.write(getLegendaRows(), getLegendaWriteSheet());
 
     excelWriter.finish();
   }
+
 
   public List<List<Object>> getDataRows(String startDate, String endDate,
       Map<String, List<TracerDrugExcelDto>> tracerDrugMap, int[][] colorArrays) {
@@ -232,7 +228,7 @@ public class TracerDrugReportService {
         .values()
         .stream()
         .findFirst()
-        .orElseThrow(IllegalStateException::new)
+        .orElse(Collections.emptyList())
         .stream()
         .sorted(Comparator.comparing(
             TracerDrugExcelDto::getComputationTime))
@@ -241,6 +237,18 @@ public class TracerDrugReportService {
     firstTracerDrug.forEach(firstTracerDrugDto -> excelHead.add(
         Collections.singletonList(sdf.format(firstTracerDrugDto.getComputationTime()))));
     return excelHead;
+  }
+
+  private WriteSheet getLegendaWriteSheet() {
+    int[][] legendaColorArrays = new int[4][1];
+    for (int i = 0; i < 4; i++) {
+      legendaColorArrays[i][0] = i + 1;
+    }
+    return EasyExcelFactory
+        .writerSheet(1, SUBTITLE)
+        .registerWriteHandler(new CustomCellWriteHandler(legendaColorArrays, true))
+        .head(Collections.singletonList(Collections.singletonList(SUBTITLE)))
+        .build();
   }
 
   private List<List<String>> getLegendaRows() {
