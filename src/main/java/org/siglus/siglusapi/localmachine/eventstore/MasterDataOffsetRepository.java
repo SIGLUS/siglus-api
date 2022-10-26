@@ -32,4 +32,9 @@ public interface MasterDataOffsetRepository extends JpaRepository<MasterDataOffs
       nativeQuery = true)
   void updateRecordOffsetByFacilityId(@Param("recordoffset") Long recordOffset, @Param("facilityid") UUID facilityId);
 
+  @Query(
+      value =
+          "select version from siglusintegration.schema_version order by installed_rank desc limit 1",
+      nativeQuery = true)
+  String findMaxFlywayVersion();
 }

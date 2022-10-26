@@ -86,7 +86,7 @@ public class OnlineWebController {
     importer.importEvents(events);
   }
 
-  @GetMapping("/getMasterDataEvents/{offsetId}")
+  @GetMapping("/masterDataEvents/{offsetId}")
   public EventsResponse exportMasterDataEvents(MachineToken machineToken, @PathVariable Long offsetId) {
     List<ExternalEventDto> eventForReceiver =
         eventStore.getMasterDataEvents(offsetId, machineToken.getFacilityId()).stream()
@@ -136,7 +136,7 @@ public class OnlineWebController {
   }
 
   @GetMapping("/resyncMasterData")
-  public String resyncMasterData(MachineToken machineToken) {
+  public ResyncMasterDataResponse resyncMasterData(MachineToken machineToken) {
     return onlineWebService.resyncMasterData(machineToken.getFacilityId());
   }
 

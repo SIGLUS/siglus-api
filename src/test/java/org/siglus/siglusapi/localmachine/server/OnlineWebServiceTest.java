@@ -53,6 +53,7 @@ import org.siglus.siglusapi.localmachine.repository.MasterDataSql;
 import org.siglus.siglusapi.localmachine.repository.MovementSql;
 import org.siglus.siglusapi.localmachine.repository.RequisitionOrderSql;
 import org.siglus.siglusapi.localmachine.repository.TableCopyRepository;
+import org.siglus.siglusapi.localmachine.webapi.ResyncMasterDataResponse;
 import org.siglus.siglusapi.util.S3FileHandler;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -123,10 +124,10 @@ public class OnlineWebServiceTest {
     when(s3FileHandler.getUrlFromS3(snapshotVersion)).thenReturn("https://test.zip");
 
     // when
-    String url = onlineWebService.resyncMasterData(facilityId);
+    ResyncMasterDataResponse resp = onlineWebService.resyncMasterData(facilityId);
 
     // then
-    assertEquals("10+15+https://test.zip", url);
+    assertEquals("https://test.zip", resp.getDownloadUrl());
     verify(tableCopyRepository, times(1))
         .copyMasterDateToFile(any(), eq(MasterDataSql.getMasterDataSqlMap()), eq(null));
     verify(masterDataEventRecordRepository, times(1)).save(any(MasterDataEventRecord.class));
