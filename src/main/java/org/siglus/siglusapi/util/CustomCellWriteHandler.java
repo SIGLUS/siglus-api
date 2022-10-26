@@ -40,6 +40,15 @@ public class CustomCellWriteHandler implements CellWriteHandler {
   private int[][] colorArrays;
   private boolean paintForLegenda;
 
+  public static final Map<Integer, Short> colorMarkToColorMap = new HashMap<>();
+
+  static {
+    colorMarkToColorMap.put(RED_MARK, IndexedColors.CORAL.getIndex());
+    colorMarkToColorMap.put(YELLOW_MARK, IndexedColors.LIGHT_YELLOW.getIndex());
+    colorMarkToColorMap.put(GREEN_MARK, IndexedColors.LIME.getIndex());
+    colorMarkToColorMap.put(PURPLE_MARK, IndexedColors.LAVENDER.getIndex());
+  }
+
   @Override
   public void afterCellDispose(CellWriteHandlerContext context) {
     Cell cell = context.getCell();
@@ -54,12 +63,6 @@ public class CustomCellWriteHandler implements CellWriteHandler {
     }
 
     WriteCellData<?> cellData = context.getFirstCellData();
-
-    Map<Integer, Short> colorMarkToColorMap = new HashMap<>();
-    colorMarkToColorMap.put(RED_MARK, IndexedColors.CORAL.getIndex());
-    colorMarkToColorMap.put(YELLOW_MARK, IndexedColors.LIGHT_YELLOW.getIndex());
-    colorMarkToColorMap.put(GREEN_MARK, IndexedColors.LIME.getIndex());
-    colorMarkToColorMap.put(PURPLE_MARK, IndexedColors.LAVENDER.getIndex());
     WriteCellStyle writeCellStyle = cellData.getOrCreateStyle();
 
     writeCellStyle.setFillForegroundColor(colorMarkToColorMap.get(colorArrays[rowIndex][columnIndex]));
