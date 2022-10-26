@@ -54,5 +54,6 @@ public class SiglusShipmentWithoutLocationControllerTest {
     // then
     verify(siglusShipmentService).createOrderAndShipment(false, shipmentDto);
     verify(notificationService).postConfirmShipment(any());
+    verify(siglusShipmentService).checkFulfillOrderExpired(shipmentDto);
   }
 }

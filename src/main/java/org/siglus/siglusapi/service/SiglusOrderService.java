@@ -409,7 +409,7 @@ public class SiglusOrderService {
     });
   }
 
-  private List<Integer> calculateFulfillOrderMonth(ProcessingPeriodExtension processingPeriodExtension) {
+  public List<Integer> calculateFulfillOrderMonth(ProcessingPeriodExtension processingPeriodExtension) {
     LocalDate submitStartDate = processingPeriodExtension.getSubmitStartDate();
     LocalDate submitEndDate = processingPeriodExtension.getSubmitEndDate();
     LocalDate currentDate = LocalDate.now();

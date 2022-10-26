@@ -71,10 +71,14 @@ import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
 import org.openlmis.stockmanagement.repository.StockCardLineItemRepository;
 import org.openlmis.stockmanagement.repository.StockCardRepository;
+import org.siglus.common.domain.ProcessingPeriodExtension;
+import org.siglus.common.repository.ProcessingPeriodExtensionRepository;
 import org.siglus.siglusapi.domain.OrderLineItemExtension;
 import org.siglus.siglusapi.domain.PodExtension;
 import org.siglus.siglusapi.domain.StockCardLineItemExtension;
 import org.siglus.siglusapi.dto.UserDto;
+import org.siglus.siglusapi.exception.BusinessDataException;
+import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.PodExtensionRepository;
@@ -152,6 +156,9 @@ public class SiglusShipmentServiceTest {
   @Mock
   private SiglusStockCardRepository siglusStockCardRepository;
 
+  @Mock
+  private ProcessingPeriodExtensionRepository processingPeriodExtensionRepository;
+
   private final UUID orderId = UUID.randomUUID();
 
   private final UUID orderableId = UUID.randomUUID();
@@ -159,6 +166,8 @@ public class SiglusShipmentServiceTest {
   private final UUID lineItemId = UUID.randomUUID();
 
   private final UUID facilityId = UUID.randomUUID();
+
+  private final UUID processingPeriodId = UUID.randomUUID();
 
   private final UUID lotId = UUID.randomUUID();
 
@@ -487,6 +496,44 @@ public class SiglusShipmentServiceTest {
         .calculateStockOnHandByLocationForShipment(Lists.newArrayList(), facilityId);
     verify(stockCardLineItemExtensionRepository, times(0))
         .save(Lists.newArrayList(buildStockCardLineItemExtension()));
+  }
+
+  @Test(expected = NotFoundException.class)
+  public void shouldThrowNotFoundExceptionWhenProcessingPeriodExtensionIsNull() {
+    //given
+    ShipmentExtensionRequest shipmentExtensionRequest = createShipmentExtensionRequest();
+    when(processingPeriodExtensionRepository.findByProcessingPeriodId(processingPeriodId)).thenReturn(null);
+
+    //when
+    siglusShipmentService.checkFulfillOrderExpired(shipmentExtensionRequest);
+  }
+
+  @Test(expected = BusinessDataException.class)
+  public void shouldThrowBusinessExceptionWhenFulfillOrderExpired() {
+    //given
+    ProcessingPeriodExtension processingPeriodExtension = new ProcessingPeriodExtension();
+    processingPeriodExtension.setSubmitStartDate(LocalDate.now().plusMonths(1).plusDays(1));
+    processingPeriodExtension.setSubmitEndDate(LocalDate.now().plusMonths(1).plusDays(2));
+    ShipmentExtensionRequest shipmentExtensionRequest = createShipmentExtensionRequest();
+    when(processingPeriodExtensionRepository.findByProcessingPeriodId(processingPeriodId))
+        .thenReturn(processingPeriodExtension);
+
+    //when
+    siglusShipmentService.checkFulfillOrderExpired(shipmentExtensionRequest);
+  }
+
+
+  private ShipmentExtensionRequest createShipmentExtensionRequest() {
+    OrderObjectReferenceDto order = new OrderObjectReferenceDto();
+    ProcessingPeriodDto processingPeriodDto = new ProcessingPeriodDto();
+    processingPeriodDto.setId(processingPeriodId);
+    processingPeriodDto.setEndDate(LocalDate.now());
+    order.setProcessingPeriod(processingPeriodDto);
+    ShipmentDto shipmentDto = new ShipmentDto();
+    shipmentDto.setOrder(order);
+    ShipmentExtensionRequest shipmentExtensionRequest = new ShipmentExtensionRequest();
+    shipmentExtensionRequest.setShipment(shipmentDto);
+    return shipmentExtensionRequest;
   }
 
   private ShipmentDto createShipmentDto() {
