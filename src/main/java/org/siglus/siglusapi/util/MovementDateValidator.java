@@ -19,8 +19,9 @@ import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_VALIDATE_STOCK_MOVEMEN
 
 import java.time.LocalDate;
 import java.util.UUID;
+import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.dto.MovementStartDateDto;
-import org.siglus.siglusapi.exception.ValidationMessageException;
+import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.repository.ProcessingPeriodRepository;
 import org.siglus.siglusapi.repository.SiglusStockCardLineItemRepository;
 import org.springframework.stereotype.Service;
@@ -51,7 +52,7 @@ public class MovementDateValidator {
   public void validateMovementDate(LocalDate input, UUID facilityId) {
     LocalDate startDate = getMovementStartDate(input, facilityId).getLastMovementDate();
     if (input.isBefore(startDate)) {
-      throw new ValidationMessageException(ERROR_VALIDATE_STOCK_MOVEMENT_DATE);
+      throw new BusinessDataException(new Message(ERROR_VALIDATE_STOCK_MOVEMENT_DATE));
     }
   }
 }
