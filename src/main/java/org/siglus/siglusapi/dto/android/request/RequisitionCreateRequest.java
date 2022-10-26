@@ -48,7 +48,7 @@ import org.siglus.siglusapi.util.HashEncoder;
 public class RequisitionCreateRequest {
 
   @NotBlank
-  @Pattern(regexp = "(ML)|(TR)|(T)|(VC)",
+  @Pattern(regexp = "(ML)|(TR)|(T)|(VC)|(TB)",
       message = "{org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest.programCode}")
   private String programCode;
 

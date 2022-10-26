@@ -259,6 +259,18 @@ public class SiglusOrderableService {
         .collect(Collectors.toMap(OrderableDto::getId, OrderableDto::getProductCode, (a, b) -> a));
   }
 
+  public Map<UUID, Map<String, String>> getAllOrderableInfoForFc() {
+    Map<UUID, Map<String, String>> orderableIdToInfoMap = new HashMap<>();
+    for (OrderableDto orderableDto : getAllProducts()) {
+      Map<String, String> orderableInfoMap = new HashMap<>();
+      orderableInfoMap.put("code", orderableDto.getProductCode());
+      orderableInfoMap.put("name", orderableDto.getFullProductName());
+      orderableInfoMap.put("description", orderableDto.getFullProductName());
+      orderableIdToInfoMap.put(orderableDto.getId(), orderableInfoMap);
+    }
+    return orderableIdToInfoMap;
+  }
+
   public List<OrderableDto> getAllProducts() {
     QueryOrderableSearchParams params = new QueryOrderableSearchParams(new LinkedMultiValueMap<>());
     Pageable pageable = new PageRequest(PaginationConstants.DEFAULT_PAGE_NUMBER,

@@ -149,7 +149,6 @@ public class SiglusOrderService {
   @Autowired
   private SiglusAuthenticationHelper siglusAuthenticationHelper;
 
-
   @Autowired
   private SiglusArchiveProductService siglusArchiveProductService;
 
@@ -370,18 +369,42 @@ public class SiglusOrderService {
       ProcessingPeriodExtension processingPeriodExtension) {
     programIdToMap.keySet().forEach(key -> {
       List<FulfillOrderDto> fulfillOrderDtos = programIdToMap.get(key);
-      fulfillOrderDtos.sort((f1, f2) -> f2.getBasicOrder().getProcessingPeriod().getEndDate()
-          .compareTo(f1.getBasicOrder().getProcessingPeriod().getEndDate()));
       FulfillOrderDto latestFulfillOrderDto = fulfillOrderDtos.get(0);
-      int latestFulfillOrderMonth = latestFulfillOrderDto.getBasicOrder().getProcessingPeriod().getEndDate()
-          .getMonthValue();
-      List<Integer> calculateFulfillOrderMonth = calculateFulfillOrderMonth(processingPeriodExtension);
-      if (calculateFulfillOrderMonth.contains(latestFulfillOrderMonth)) {
-        List<FulfillOrderDto> filteredDto = fulfillOrderDtos.stream().filter(fulfillOrderDto -> {
-          return fulfillOrderDto.getBasicOrder().getProcessingPeriod().getEndDate()
-              .isEqual(latestFulfillOrderDto.getBasicOrder().getProcessingPeriod().getEndDate());
-        }).collect(toList());
-        filteredDto.forEach(dto -> dto.setExpired(false));
+      UUID supplyingFacilityId = latestFulfillOrderDto.getBasicOrder().getSupplyingFacility().getId();
+      UUID programId = latestFulfillOrderDto.getBasicOrder().getProgram().getId();
+      List<Integer> calculatedFulfillOrderMonth = calculateFulfillOrderMonth(processingPeriodExtension);
+      List<Order> orders = siglusOrdersRepository
+          .findBySupplyingFacilityIdAndProgramIdAndStatusIn(supplyingFacilityId, programId, Lists
+              .newArrayList(OrderStatus.SHIPPED, OrderStatus.FULFILLING, OrderStatus.PARTIALLY_FULFILLED,
+                  OrderStatus.RECEIVED));
+
+      List<FulfillOrderDto> filteredFulfillOrderDtos = fulfillOrderDtos.stream().filter(fulfillOrderDto -> {
+        return calculatedFulfillOrderMonth
+            .contains(fulfillOrderDto.getBasicOrder().getProcessingPeriod().getEndDate().getMonthValue());
+      }).collect(toList());
+
+      if (orders.isEmpty()) {
+        filteredFulfillOrderDtos.forEach(dto -> dto.setExpired(false));
+      } else {
+        setWarningPopupFlag(orders, filteredFulfillOrderDtos);
+      }
+    });
+  }
+
+  private void setWarningPopupFlag(List<Order> orders, List<FulfillOrderDto> filteredFulfillOrderDtos) {
+    Set<UUID> processingPeriodIds = orders.stream().map(Order::getProcessingPeriodId).collect(Collectors.toSet());
+    List<org.openlmis.requisition.dto.ProcessingPeriodDto> processingPeriodDtos = periodService
+        .findByIds(processingPeriodIds);
+    processingPeriodDtos.sort((o1, o2) -> o2.getEndDate().compareTo(o1.getEndDate()));
+    LocalDate latestOrderPeriodEndDate = processingPeriodDtos.get(0).getEndDate();
+    filteredFulfillOrderDtos.forEach(dto -> {
+      if (dto.getBasicOrder().getProcessingPeriod().getEndDate().getMonthValue() >= latestOrderPeriodEndDate
+          .getMonthValue()) {
+        dto.setExpired(false);
+        LocalDate requisitionPeriodEndDate = dto.getBasicOrder().getProcessingPeriod().getEndDate();
+        if (requisitionPeriodEndDate.isAfter(latestOrderPeriodEndDate)) {
+          dto.setShowWarningPopup(true);
+        }
       }
     });
   }

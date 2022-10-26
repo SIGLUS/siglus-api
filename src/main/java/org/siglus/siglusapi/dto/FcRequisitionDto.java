@@ -64,4 +64,10 @@ public class FcRequisitionDto {
   private List<FcRequisitionLineItemDto> products;
 
   private List<Map<String, Object>> regimens;
+
+  private List<Map<String, Object>> usageInformationLineItems;
+
+  private List<Map<String, Object>> testConsumptionLineItems;
+
+  private List<Map<String, Object>> patientLineItems;
 }

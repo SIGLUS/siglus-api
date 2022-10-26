@@ -137,6 +137,19 @@ public class BatchReleaseRequisitionServiceTest extends TestCase {
     verify(batchRequisitionController).batchReleaseRequisitions(createReleasableRequisitionBatchDto());
   }
 
+  @Test
+  public void shouldDoNothingWhenReleaseRequisition() {
+    //given
+    ReleasableRequisitionBatchDto batchDto = new ReleasableRequisitionBatchDto();
+    batchDto.setCreateOrder(false);
+    //when
+    batchReleaseRequisitionService
+        .getRequisitionsProcessingStatusDtoResponse(batchDto);
+
+    //then
+    verify(batchRequisitionController).batchReleaseRequisitions(batchDto);
+  }
+
 
   private List<ProcessingPeriodDto> createDifferentProcessingPeriodDtos() {
     ProcessingPeriodDto processingPeriodDto1 = new ProcessingPeriodDto();

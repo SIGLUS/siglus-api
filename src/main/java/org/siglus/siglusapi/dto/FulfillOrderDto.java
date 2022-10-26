@@ -33,4 +33,7 @@ public class FulfillOrderDto {
   @Default
   private boolean expired = true;
 
+  @Default
+  private boolean showWarningPopup = false;
+
 }

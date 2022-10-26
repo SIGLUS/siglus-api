@@ -61,10 +61,13 @@ import org.siglus.common.domain.RequisitionTemplateExtension;
 import org.siglus.common.repository.OrderExternalRepository;
 import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
 import org.siglus.siglusapi.constant.PaginationConstants;
+import org.siglus.siglusapi.domain.PatientLineItem;
 import org.siglus.siglusapi.domain.ProgramOrderablesExtension;
 import org.siglus.siglusapi.domain.ProgramRealProgram;
 import org.siglus.siglusapi.domain.RegimenLineItem;
 import org.siglus.siglusapi.domain.RequisitionLineItemExtension;
+import org.siglus.siglusapi.domain.TestConsumptionLineItem;
+import org.siglus.siglusapi.domain.UsageInformationLineItem;
 import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.FacilityTypeDto;
 import org.siglus.siglusapi.dto.FcProofOfDeliveryDto;
@@ -77,6 +80,7 @@ import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 import org.siglus.siglusapi.dto.SiglusUsageTemplateDto;
 import org.siglus.siglusapi.dto.UsageTemplateColumnDto;
 import org.siglus.siglusapi.dto.UsageTemplateSectionDto;
+import org.siglus.siglusapi.repository.PatientLineItemRepository;
 import org.siglus.siglusapi.repository.ProgramOrderablesExtensionRepository;
 import org.siglus.siglusapi.repository.ProgramRealProgramRepository;
 import org.siglus.siglusapi.repository.RequisitionLineItemExtensionRepository;
@@ -84,6 +88,8 @@ import org.siglus.siglusapi.repository.ShipmentsExtensionRepository;
 import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.repository.SupervisoryNodeRepository;
+import org.siglus.siglusapi.repository.TestConsumptionLineItemRepository;
+import org.siglus.siglusapi.repository.UsageInformationLineItemRepository;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
@@ -119,6 +125,9 @@ public class SiglusFcIntegrationServiceTest {
 
   @Mock
   private SiglusProcessingPeriodReferenceDataService processingPeriodReferenceDataService;
+
+  @Mock
+  private SiglusOrderableService siglusOrderableService;
 
   @Mock
   private SiglusOrderableReferenceDataService orderableReferenceDataService;
@@ -158,6 +167,15 @@ public class SiglusFcIntegrationServiceTest {
 
   @Mock
   private ShipmentsExtensionRepository shipmentsExtensionRepository;
+
+  @Mock
+  private PatientLineItemRepository patientLineItemRepository;
+
+  @Mock
+  private UsageInformationLineItemRepository usageInformationLineItemRepository;
+
+  @Mock
+  private TestConsumptionLineItemRepository testConsumptionLineItemRepository;
 
   private final UUID dpmFacilityTypeId = UUID.randomUUID();
 
@@ -215,8 +233,6 @@ public class SiglusFcIntegrationServiceTest {
 
   private final String requestingFacilityDescription = "Centro de Saude de Nhacatundo";
 
-  private final String programCode = "MP";
-
   private final String programName = "Multiple Programs";
 
   private final String productCode = "21A01";
@@ -262,9 +278,11 @@ public class SiglusFcIntegrationServiceTest {
     when(siglusRequisitionExtensionService.formatRequisitionNumber(requisitionId))
         .thenReturn(requisitionNumber);
     mockFacilityInfo();
-    mockProgramInfo();
     mockPeriodInfo();
     mockLineItemExtensionInfo();
+    mockPatientInfo();
+    mockUsageInfo();
+    mockTestConsumption();
     mockOrderableInfo();
     mockProgramOrderableExtensionInfo();
     mockTemplateInfo(true);
@@ -279,6 +297,9 @@ public class SiglusFcIntegrationServiceTest {
 
   @Test
   public void shouldSearchRequisitionsWithRegimen() {
+    // given
+    mockProgramInfo("VC");
+
     // when
     Page<FcRequisitionDto> fcRequisitionDtos = siglusFcIntegrationService
         .searchRequisitions(date, pageable);
@@ -293,6 +314,7 @@ public class SiglusFcIntegrationServiceTest {
   public void shouldSearchRequisitionsWithoutRegimen() {
     // given
     mockTemplateInfo(false);
+    mockProgramInfo("VC");
 
     // when
     Page<FcRequisitionDto> fcRequisitionDtos = siglusFcIntegrationService
@@ -308,6 +330,7 @@ public class SiglusFcIntegrationServiceTest {
   @Test
   public void shouldSearchRequisitionsWithFacilityCodeEqualsRequestingFacilityCode() {
     // given
+    mockProgramInfo("VC");
     mockRequisitionInfo(fcSupervisoryNodeId);
 
     // when
@@ -320,6 +343,55 @@ public class SiglusFcIntegrationServiceTest {
     assertEquals(1, fcRequisitionDto.getProducts().size());
     assertEquals(1, fcRequisitionDto.getRegimens().size());
     assertEquals(fcRequisitionDto.getRequestingFacilityCode(), fcRequisitionDto.getFacilityCode());
+  }
+
+
+  @Test
+  public void shouldSearchRequisitionWithPatientInfo() {
+    // given
+    mockProgramInfo("T");
+
+    // when
+    Page<FcRequisitionDto> fcRequisitionDtos = siglusFcIntegrationService.searchRequisitions(date, pageable);
+
+    // then
+    assertEquals(1, fcRequisitionDtos.getContent().size());
+    FcRequisitionDto fcRequisitionDto = fcRequisitionDtos.getContent().get(0);
+    assertEquals(1, fcRequisitionDto.getProducts().size());
+    assertEquals(1, fcRequisitionDto.getRegimens().size());
+    assertEquals(4, fcRequisitionDtos.getContent().get(0).getPatientLineItems().get(0).get("value"));
+  }
+
+  @Test
+  public void shouldSearchRequisitionWithUsageInfo() {
+    // given
+    mockProgramInfo("ML");
+
+    // when
+    Page<FcRequisitionDto> fcRequisitionDtos = siglusFcIntegrationService.searchRequisitions(date, pageable);
+
+    // then
+    assertEquals(1, fcRequisitionDtos.getContent().size());
+    FcRequisitionDto fcRequisitionDto = fcRequisitionDtos.getContent().get(0);
+    assertEquals(1, fcRequisitionDto.getProducts().size());
+    assertEquals(1, fcRequisitionDto.getRegimens().size());
+    assertEquals(11, fcRequisitionDtos.getContent().get(0).getUsageInformationLineItems().get(0).get("value"));
+  }
+
+  @Test
+  public void shouldSearchRequisitionWithTestConsumption() {
+    // given
+    mockProgramInfo("TR");
+
+    // when
+    Page<FcRequisitionDto> fcRequisitionDtos = siglusFcIntegrationService.searchRequisitions(date, pageable);
+
+    // then
+    assertEquals(1, fcRequisitionDtos.getContent().size());
+    FcRequisitionDto fcRequisitionDto = fcRequisitionDtos.getContent().get(0);
+    assertEquals(1, fcRequisitionDto.getProducts().size());
+    assertEquals(1, fcRequisitionDto.getRegimens().size());
+    assertEquals(10, fcRequisitionDtos.getContent().get(0).getTestConsumptionLineItems().get(0).get("value"));
   }
 
   @Test
@@ -387,8 +459,7 @@ public class SiglusFcIntegrationServiceTest {
     template.setId(templateId);
     requisition.setTemplate(template);
     List<Requisition> requisitions = newArrayList(requisition);
-    when(siglusRequisitionRepository.searchForFc(date, today, newHashSet(dpmSupervisoryNodeId),
-        newHashSet(fcSupervisoryNodeId), pageable))
+    when(siglusRequisitionRepository.searchForFc(date, today, pageable))
         .thenReturn(Pagination.getPage(requisitions, pageable));
   }
 
@@ -405,7 +476,7 @@ public class SiglusFcIntegrationServiceTest {
     when(facilityReferenceDataService.findAll()).thenReturn(newArrayList(requestingFacility));
   }
 
-  private void mockProgramInfo() {
+  private void mockProgramInfo(String programCode) {
     ProgramDto programDto = new ProgramDto();
     programDto.setCode(programCode);
     programDto.setName(programName);
@@ -429,6 +500,39 @@ public class SiglusFcIntegrationServiceTest {
         .thenReturn(lineItemExtensions);
   }
 
+  private void mockPatientInfo() {
+    PatientLineItem patientLineItem = new PatientLineItem();
+    patientLineItem.setRequisitionId(requisitionId);
+    patientLineItem.setId(UUID.randomUUID());
+    patientLineItem.setGroup("newSection1");
+    patientLineItem.setColumn("new");
+    patientLineItem.setValue(4);
+    when(patientLineItemRepository.findByRequisitionId(any())).thenReturn(newArrayList(patientLineItem));
+  }
+
+  private void mockUsageInfo() {
+    UsageInformationLineItem lineItem = new UsageInformationLineItem();
+    lineItem.setId(UUID.randomUUID());
+    lineItem.setRequisitionId(requisitionId);
+    lineItem.setOrderableId(orderableId);
+    lineItem.setId(UUID.randomUUID());
+    lineItem.setService("total");
+    lineItem.setInformation("existentStock");
+    lineItem.setValue(11);
+    when(usageInformationLineItemRepository.findByRequisitionId(any())).thenReturn(newArrayList(lineItem));
+  }
+
+  private void mockTestConsumption() {
+    TestConsumptionLineItem lineItem = new TestConsumptionLineItem();
+    lineItem.setId(UUID.randomUUID());
+    lineItem.setRequisitionId(requisitionId);
+    lineItem.setService("total");
+    lineItem.setProject("newColumn1");
+    lineItem.setOutcome("consumo");
+    lineItem.setValue(10);
+    when(testConsumptionLineItemRepository.findByRequisitionId(any())).thenReturn(newArrayList(lineItem));
+  }
+
   private void mockOrderableInfo() {
     OrderableDto orderableDto = new OrderableDto();
     orderableDto.setProductCode(productCode);
@@ -437,6 +541,14 @@ public class SiglusFcIntegrationServiceTest {
     orderableDto.setId(orderableId);
     when(orderableReferenceDataService.findOne(orderableId)).thenReturn(orderableDto);
     when(orderableReferenceDataService.findByIds(any())).thenReturn(newArrayList(orderableDto));
+
+    Map<String, String> orderableInfoMap = newHashMap();
+    orderableInfoMap.put("code", productCode);
+    orderableInfoMap.put("name", productName);
+    orderableInfoMap.put("description", productDescription);
+    Map<UUID, Map<String, String>> orderableIdToInfoMap = newHashMap();
+    orderableIdToInfoMap.put(orderableId, orderableInfoMap);
+    when(siglusOrderableService.getAllOrderableInfoForFc()).thenReturn(orderableIdToInfoMap);
   }
 
   private void mockProgramOrderableExtensionInfo() {
