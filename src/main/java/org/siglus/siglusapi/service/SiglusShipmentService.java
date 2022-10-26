@@ -109,8 +109,7 @@ public class SiglusShipmentService {
 
   @Transactional
   public ShipmentDto createOrderAndShipment(boolean isSubOrder, ShipmentExtensionRequest shipmentExtensionRequest) {
-    ShipmentDto shipmentDto = createOrderAndConfirmShipment(isSubOrder,
-        shipmentExtensionRequest.getShipment());
+    ShipmentDto shipmentDto = createOrderAndConfirmShipment(isSubOrder, shipmentExtensionRequest.getShipment());
     savePodExtension(shipmentDto.getId(), shipmentExtensionRequest);
     return shipmentDto;
   }
@@ -240,14 +239,15 @@ public class SiglusShipmentService {
         .collect(toSet());
   }
 
-  private void removeSkippedOrderLineItemsAndExtensions(Set<UUID> skippedOrderLineItemIds,
-      UUID orderId) {
+  private void removeSkippedOrderLineItemsAndExtensions(Set<UUID> skippedOrderLineItemIds, UUID orderId) {
+    if (CollectionUtils.isEmpty(skippedOrderLineItemIds)) {
+      return;
+    }
     Order order = orderRepository.findOne(orderId);
-    order.getOrderLineItems().removeIf(
-        orderLineItem -> skippedOrderLineItemIds.contains(orderLineItem.getId()));
+    order.getOrderLineItems().removeIf(orderLineItem -> skippedOrderLineItemIds.contains(orderLineItem.getId()));
     orderRepository.save(order);
-    List<OrderLineItemExtension> extensions = lineItemExtensionRepository
-        .findByOrderLineItemIdIn(skippedOrderLineItemIds);
+    List<OrderLineItemExtension> extensions = lineItemExtensionRepository.findByOrderLineItemIdIn(
+        skippedOrderLineItemIds);
     lineItemExtensionRepository.delete(extensions);
   }
 

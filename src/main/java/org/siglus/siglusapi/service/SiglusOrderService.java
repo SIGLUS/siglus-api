@@ -233,6 +233,7 @@ public class SiglusOrderService {
   @Autowired
   private SiglusOrdersRepository siglusOrdersRepository;
 
+  private static final String SLASH = "/";
 
   private static final List<String> REQUISITION_STATUS_AFTER_FINAL_APPROVED = Lists.newArrayList(
       RequisitionStatus.APPROVED.name(),
@@ -527,31 +528,25 @@ public class SiglusOrderService {
   }
 
   public Iterable<BasicOrderDto> createSubOrder(OrderObjectReferenceDto order,
-      List<org.openlmis.fulfillment.web.util.OrderLineItemDto>
-          orderLineItemDtos) {
+      List<org.openlmis.fulfillment.web.util.OrderLineItemDto> orderLineItemDtos) {
     OrderExternal external = orderExternalRepository.findOne(order.getExternalId());
     List<OrderExternal> externals;
     if (external == null) {
-      OrderExternal firstExternal = OrderExternal.builder()
-          .requisitionId(order.getExternalId()).build();
-      OrderExternal secondExternal = OrderExternal.builder()
-          .requisitionId(order.getExternalId()).build();
+      OrderExternal firstExternal = OrderExternal.builder().requisitionId(order.getExternalId()).build();
+      OrderExternal secondExternal = OrderExternal.builder().requisitionId(order.getExternalId()).build();
       log.info("save order external : {}", Arrays.asList(firstExternal, secondExternal));
-      externals = orderExternalRepository
-          .save(Arrays.asList(firstExternal, secondExternal));
+      externals = orderExternalRepository.save(Arrays.asList(firstExternal, secondExternal));
       updateExistOrderForSubOrder(order.getId(), externals.get(0).getId(),
-          order.getOrderCode().concat("-" + 1), order.getStatus());
-      order.setOrderCode(order.getOrderCode().concat("-" + 2));
+          order.getOrderCode().concat(SLASH + 1), order.getStatus());
+      order.setOrderCode(order.getOrderCode().concat(SLASH + 2));
     } else {
-      externals = orderExternalRepository
-          .findByRequisitionId(external.getRequisitionId());
-      OrderExternal newExternal = OrderExternal.builder()
-          .requisitionId(external.getRequisitionId()).build();
+      externals = orderExternalRepository.findByRequisitionId(external.getRequisitionId());
+      OrderExternal newExternal = OrderExternal.builder().requisitionId(external.getRequisitionId()).build();
       log.info("save new external : {}", newExternal);
       newExternal = orderExternalRepository.save(newExternal);
       externals.add(newExternal);
-      order.setOrderCode(replaceLast(order.getOrderCode(), "-" + (externals.size() - 1),
-          "-" + externals.size()));
+      order.setOrderCode(replaceLast(order.getOrderCode(), SLASH + (externals.size() - 1),
+          SLASH + externals.size()));
     }
     return createNewOrder(order, orderLineItemDtos, externals);
   }
@@ -1008,7 +1003,7 @@ public class SiglusOrderService {
     newOrder.setOrderLineItems(orderLineItemDtos);
     newOrder.setStatus(OrderStatus.ORDERED);
     newOrder.setStatusMessages(Collections.emptyList());
-    Iterable<BasicOrderDto> orderDtos = orderController.batchCreateOrders(Arrays.asList(newOrder),
+    Iterable<BasicOrderDto> orderDtos = orderController.batchCreateOrders(Collections.singletonList(newOrder),
         (OAuth2Authentication) SecurityContextHolder.getContext().getAuthentication());
     if (orderDtos.iterator().hasNext()) {
       UUID newOrderId = orderDtos.iterator().next().getId();

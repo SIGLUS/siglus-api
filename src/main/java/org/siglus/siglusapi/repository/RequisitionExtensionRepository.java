@@ -29,12 +29,9 @@ public interface RequisitionExtensionRepository extends JpaRepository<Requisitio
 
   List<RequisitionExtension> findByRequisitionIdIn(Set<UUID> requisitionIds);
 
-  @Query(value = "select * from siglusintegration.requisition_extension r"
-      + " where (CHAR_LENGTH(CAST(r.requisitionnumber as varchar)) > 7 and"
-      + " concat(r.requisitionnumberprefix, r.requisitionnumber) = :requisitionNumber) or"
-      + " (CHAR_LENGTH(CAST(r.requisitionnumber as varchar)) < 7 and"
-      + " concat(r.requisitionnumberprefix, "
-      + "to_char(r.requisitionnumber, 'fm0000000')) = :requisitionNumber);", nativeQuery = true)
+  @Query(value = "SELECT * FROM siglusintegration.requisition_extension r"
+      + " WHERE concat(r.requisitionnumberprefix, to_char(r.requisitionnumber, 'fm00')) = :requisitionNumber",
+      nativeQuery = true)
   RequisitionExtension findByRequisitionNumber(@Param("requisitionNumber") String requisitionNumber);
 
   @Query(value = "SELECT * FROM siglusintegration.requisition_extension e "
