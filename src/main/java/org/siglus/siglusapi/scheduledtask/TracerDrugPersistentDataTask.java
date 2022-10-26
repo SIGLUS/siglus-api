@@ -29,10 +29,16 @@ import org.springframework.stereotype.Service;
 public class TracerDrugPersistentDataTask {
 
   private final TracerDrugReportService tracerDrugReportService;
+  private static final int STOCK_MOVEMENT_MODIFY_LIMITED_MONTH = 1;
+  private static final int TRACER_DRUG_AUTO_REFRESH_PERIOD = 7;
 
   @Scheduled(cron = "${report.tracer.drug.cron}", zone = "${time.zoneId}")
   @SchedulerLock(name = "tracer_drug_report")
   public void refreshForTracerDrugReport() {
-    tracerDrugReportService.refreshTracerDrugPersistentData(LocalDate.now().toString(), LocalDate.now().toString());
+    tracerDrugReportService.refreshTracerDrugPersistentData(
+        LocalDate.now()
+            .minusMonths(STOCK_MOVEMENT_MODIFY_LIMITED_MONTH)
+            .minusDays(TRACER_DRUG_AUTO_REFRESH_PERIOD).toString(),
+        LocalDate.now().toString());
   }
 }
