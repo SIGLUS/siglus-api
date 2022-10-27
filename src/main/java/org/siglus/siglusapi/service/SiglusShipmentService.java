@@ -24,6 +24,7 @@ import static org.siglus.siglusapi.i18n.MessageKeys.SHIPMENT_ORDER_STATUS_INVALI
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
+import java.time.Month;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -115,15 +116,15 @@ public class SiglusShipmentService {
   }
 
   public void checkFulfillOrderExpired(ShipmentExtensionRequest shipmentExtensionRequest) {
-    int currentOrderFulfillMonth = shipmentExtensionRequest.getShipment().getOrder().getProcessingPeriod().getEndDate()
-        .getMonthValue();
+    Month currentOrderFulfillMonth = shipmentExtensionRequest.getShipment().getOrder().getProcessingPeriod()
+        .getEndDate().getMonth();
     UUID processingPeriodId = shipmentExtensionRequest.getShipment().getOrder().getProcessingPeriod().getId();
     ProcessingPeriodExtension processingPeriodExtension = processingPeriodExtensionRepository
         .findByProcessingPeriodId(processingPeriodId);
     if (processingPeriodExtension == null) {
       throw new NotFoundException(ERROR_PERIOD_NOT_FOUND);
     }
-    List<Integer> calculatedFulfillOrderMonth = siglusOrderService
+    List<Month> calculatedFulfillOrderMonth = siglusOrderService
         .calculateFulfillOrderMonth(processingPeriodExtension);
     if (!calculatedFulfillOrderMonth.contains(currentOrderFulfillMonth)) {
       throw new BusinessDataException(new Message(ERROR_ORDER_EXPIRED));

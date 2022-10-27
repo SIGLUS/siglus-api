@@ -38,6 +38,7 @@ import com.google.common.collect.Sets;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.Month;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -373,7 +374,7 @@ public class SiglusOrderService {
       FulfillOrderDto latestFulfillOrderDto = fulfillOrderDtos.get(0);
       UUID supplyingFacilityId = latestFulfillOrderDto.getBasicOrder().getSupplyingFacility().getId();
       UUID programId = latestFulfillOrderDto.getBasicOrder().getProgram().getId();
-      List<Integer> calculatedFulfillOrderMonth = calculateFulfillOrderMonth(processingPeriodExtension);
+      List<Month> calculatedFulfillOrderMonth = calculateFulfillOrderMonth(processingPeriodExtension);
       List<Order> orders = siglusOrdersRepository
           .findBySupplyingFacilityIdAndProgramIdAndStatusIn(supplyingFacilityId, programId, Lists
               .newArrayList(OrderStatus.SHIPPED, OrderStatus.FULFILLING, OrderStatus.PARTIALLY_FULFILLED,
@@ -381,7 +382,7 @@ public class SiglusOrderService {
 
       List<FulfillOrderDto> filteredFulfillOrderDtos = fulfillOrderDtos.stream().filter(fulfillOrderDto -> {
         return calculatedFulfillOrderMonth
-            .contains(fulfillOrderDto.getBasicOrder().getProcessingPeriod().getEndDate().getMonthValue());
+            .contains(fulfillOrderDto.getBasicOrder().getProcessingPeriod().getEndDate().getMonth());
       }).collect(toList());
 
       if (orders.isEmpty()) {
@@ -410,17 +411,17 @@ public class SiglusOrderService {
     });
   }
 
-  public List<Integer> calculateFulfillOrderMonth(ProcessingPeriodExtension processingPeriodExtension) {
+  public List<Month> calculateFulfillOrderMonth(ProcessingPeriodExtension processingPeriodExtension) {
     LocalDate submitStartDate = processingPeriodExtension.getSubmitStartDate();
     LocalDate submitEndDate = processingPeriodExtension.getSubmitEndDate();
     LocalDate currentDate = LocalDate.now();
     if (currentDate.getDayOfMonth() >= submitStartDate.getDayOfMonth() && currentDate.getDayOfMonth() <= submitEndDate
         .getDayOfMonth()) {
-      return Lists.newArrayList(currentDate.getMonthValue() - 1, currentDate.getMonthValue());
+      return Lists.newArrayList(currentDate.getMonth().minus(1), currentDate.getMonth());
     } else if (currentDate.getDayOfMonth() < submitStartDate.getDayOfMonth()) {
-      return Lists.newArrayList(currentDate.getMonthValue() - 1);
+      return Lists.newArrayList(currentDate.getMonth().minus(1));
     } else {
-      return Lists.newArrayList(currentDate.getMonthValue());
+      return Lists.newArrayList(currentDate.getMonth());
     }
   }
 
