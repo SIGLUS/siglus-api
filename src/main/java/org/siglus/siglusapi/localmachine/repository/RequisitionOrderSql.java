@@ -323,7 +323,7 @@ public class RequisitionOrderSql {
   public static final String POD_LINE_ITEMS_BY_LOCATION = "siglusintegration.pod_line_items_by_location";
 
   public static final String POD_LINE_ITEMS_BY_LOCATION_QUERY =
-      "select plie.* from siglusintegration.pod_line_items_by_location plibl "
+      "select plibl.* from siglusintegration.pod_line_items_by_location plibl "
           + "left join fulfillment.proof_of_delivery_line_items podli on podli.id = plibl.podlineitemid "
           + POD_LEFT_JOIN_PROOFS_OF_DELIVERY
           + POD_LEFT_JOIN_SHIPMENT
@@ -334,7 +334,7 @@ public class RequisitionOrderSql {
       "siglusintegration.pod_sub_draft_line_items_by_location";
 
   public static final String POD_SUB_DRAFT_LINE_ITEMS_BY_LOCATION_QUERY =
-      "select plie.* from siglusintegration.pod_sub_draft_line_items_by_location psdlibl "
+      "select psdlibl.* from siglusintegration.pod_sub_draft_line_items_by_location psdlibl "
           + "left join fulfillment.proof_of_delivery_line_items podli on podli.id = psdlibl.podlineitemid "
           + POD_LEFT_JOIN_PROOFS_OF_DELIVERY
           + POD_LEFT_JOIN_SHIPMENT
