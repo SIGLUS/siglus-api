@@ -40,6 +40,8 @@ import org.openlmis.requisition.dto.ProcessingPeriodDto;
 import org.openlmis.requisition.dto.ReleasableRequisitionBatchDto;
 import org.openlmis.requisition.dto.ReleasableRequisitionDto;
 import org.openlmis.requisition.web.BatchRequisitionController;
+import org.siglus.common.domain.ProcessingPeriodExtension;
+import org.siglus.common.repository.ProcessingPeriodExtensionRepository;
 import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
@@ -62,6 +64,12 @@ public class BatchReleaseRequisitionServiceTest extends TestCase {
 
   @Mock
   private BatchRequisitionController batchRequisitionController;
+
+  @Mock
+  private ProcessingPeriodExtensionRepository processingPeriodExtensionRepository;
+
+  @Mock
+  private SiglusOrderService siglusOrderService;
 
   private final UUID requisitionId1 = UUID.randomUUID();
   private final UUID requisitionId2 = UUID.randomUUID();
@@ -102,12 +110,19 @@ public class BatchReleaseRequisitionServiceTest extends TestCase {
   }
 
   @Test
-  public void shouldThrowBusinessDataExceptionWhenRequisitionExpired() {
+  public void shouldThrowBusinessDataExceptionWhenHasNewRequisition() {
     //then
     exception.expect(BusinessDataException.class);
     exception.expectMessage(containsString(ERROR_REQUISITION_EXPIRED));
 
     //given
+    ProcessingPeriodExtension processingPeriodExtension = new ProcessingPeriodExtension();
+    processingPeriodExtension.setSubmitEndDate(LocalDate.now());
+
+    when(siglusOrderService.calculateFulfillOrderMonth(processingPeriodExtension))
+        .thenReturn(Lists.asList(LocalDate.now().getMonth()));
+    when(processingPeriodExtensionRepository.findByProcessingPeriodId(processingPeriodId1))
+        .thenReturn(processingPeriodExtension);
     when(siglusRequisitionRepository.findOne(requisitionId1)).thenReturn(createLastPeriodRequisition());
     when(siglusRequisitionRepository
         .findByFacilityIdAndProgramIdAndStatus(facilityId, programId, RequisitionStatus.APPROVED))
@@ -120,8 +135,35 @@ public class BatchReleaseRequisitionServiceTest extends TestCase {
   }
 
   @Test
+  public void shouldThrowBusinessDataExceptionWhenRequisitionExpired() {
+    //then
+    exception.expect(BusinessDataException.class);
+    exception.expectMessage(containsString(ERROR_REQUISITION_EXPIRED));
+
+    //given
+    ProcessingPeriodExtension processingPeriodExtension = new ProcessingPeriodExtension();
+    processingPeriodExtension.setSubmitEndDate(LocalDate.now());
+
+    when(siglusOrderService.calculateFulfillOrderMonth(processingPeriodExtension))
+        .thenReturn(Lists.asList(LocalDate.now().getMonth().plus(1)));
+    when(processingPeriodExtensionRepository.findByProcessingPeriodId(processingPeriodId1))
+        .thenReturn(processingPeriodExtension);
+    when(siglusRequisitionRepository.findOne(requisitionId1)).thenReturn(createLastPeriodRequisition());
+
+    //when
+    batchReleaseRequisitionService.getRequisitionsProcessingStatusDtoResponse(createReleasableRequisitionBatchDto());
+  }
+
+  @Test
   public void shouldDoNothingWhenRequisitionNotExpired() {
     //given
+    ProcessingPeriodExtension processingPeriodExtension = new ProcessingPeriodExtension();
+    processingPeriodExtension.setSubmitEndDate(LocalDate.now());
+
+    when(siglusOrderService.calculateFulfillOrderMonth(processingPeriodExtension))
+        .thenReturn(Lists.asList(LocalDate.now().getMonth()));
+    when(processingPeriodExtensionRepository.findByProcessingPeriodId(processingPeriodId2))
+        .thenReturn(processingPeriodExtension);
     when(siglusRequisitionRepository.findOne(requisitionId2)).thenReturn(createCurrentPeriodRequisition());
     when(siglusRequisitionRepository
         .findByFacilityIdAndProgramIdAndStatus(facilityId, programId, RequisitionStatus.APPROVED))

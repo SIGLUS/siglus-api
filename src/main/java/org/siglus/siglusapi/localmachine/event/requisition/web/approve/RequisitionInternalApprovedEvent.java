@@ -13,7 +13,7 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.localmachine.event.requisition.web;
+package org.siglus.siglusapi.localmachine.event.requisition.web.approve;
 
 import java.util.List;
 import lombok.Data;

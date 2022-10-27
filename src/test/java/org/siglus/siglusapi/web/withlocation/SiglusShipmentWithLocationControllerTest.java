@@ -55,5 +55,6 @@ public class SiglusShipmentWithLocationControllerTest {
     // then
     verify(siglusShipmentService).createOrderAndShipmentByLocation(false, shipmentExtensionRequest);
     verify(notificationService).postConfirmShipment(any());
+    verify(siglusShipmentService).checkFulfillOrderExpired(shipmentExtensionRequest);
   }
 }

@@ -87,7 +87,7 @@ public class NotificationService {
 
       Notification supplierNotification = new Notification();
       supplierNotification.setRefId(proofOfDeliveryId);
-      supplierNotification.setFacilityId(order.getSupplyingFacilityId());
+      supplierNotification.setFacilityId(requisition.getFacilityId());
       supplierNotification.setProgramId(requisition.getProgramId());
       supplierNotification.setEmergency(requisition.getEmergency());
       supplierNotification.setStatus(NotificationStatus.SHIPPED);

@@ -18,6 +18,7 @@ package org.siglus.siglusapi.service;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_REQUISITION_EXPIRED;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_REQUISITION_NOT_FOUND;
 
+import java.time.Month;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -30,6 +31,8 @@ import org.openlmis.requisition.dto.ReleasableRequisitionBatchDto;
 import org.openlmis.requisition.dto.ReleasableRequisitionDto;
 import org.openlmis.requisition.dto.RequisitionsProcessingStatusDto;
 import org.openlmis.requisition.web.BatchRequisitionController;
+import org.siglus.common.domain.ProcessingPeriodExtension;
+import org.siglus.common.repository.ProcessingPeriodExtensionRepository;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.NotFoundException;
@@ -50,6 +53,10 @@ public class BatchReleaseRequisitionService {
 
   private final BatchRequisitionController batchRequisitionController;
 
+  private final SiglusOrderService siglusOrderService;
+
+  private final ProcessingPeriodExtensionRepository processingPeriodExtensionRepository;
+
   public ResponseEntity<RequisitionsProcessingStatusDto> getRequisitionsProcessingStatusDtoResponse(
       ReleasableRequisitionBatchDto releaseDto) {
     if (Boolean.FALSE.equals(releaseDto.getCreateOrder())) {
@@ -68,6 +75,14 @@ public class BatchReleaseRequisitionService {
   private void checkIfRequisitionExpired(Requisition requisition) {
     UUID programId = requisition.getProgramId();
     UUID facilityId = requisition.getFacilityId();
+    UUID processingPeriodId = requisition.getProcessingPeriodId();
+    ProcessingPeriodExtension processingPeriodExtension = processingPeriodExtensionRepository
+        .findByProcessingPeriodId(processingPeriodId);
+    List<Month> calculatedFulfillOrderMonth = siglusOrderService.calculateFulfillOrderMonth(processingPeriodExtension);
+    if (!calculatedFulfillOrderMonth.contains(processingPeriodExtension.getSubmitEndDate().getMonth())) {
+      throw new BusinessDataException(new Message(ERROR_REQUISITION_EXPIRED));
+    }
+
     List<Requisition> requisitions = siglusRequisitionRepository
         .findByFacilityIdAndProgramIdAndStatus(facilityId, programId, RequisitionStatus.APPROVED);
     List<UUID> processingPeriodIds = requisitions.stream().map(Requisition::getProcessingPeriodId)

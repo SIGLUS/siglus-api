@@ -263,7 +263,7 @@ traits:
         /eventFile:
           post:
             description: upload events to onlineweb via compressed file stream
-        /getMasterDataEvents/{offsetId}:
+        /masterDataEvents/{offsetId}:
           get:
             description: pull master data events from onlineweb
         /peeringEvents:

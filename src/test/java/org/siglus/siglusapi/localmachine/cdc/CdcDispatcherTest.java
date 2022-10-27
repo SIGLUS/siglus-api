@@ -25,9 +25,9 @@ import static org.mockito.Mockito.verify;
 import java.math.BigInteger;
 import java.util.Collections;
 import org.junit.Test;
-import org.springframework.data.domain.Example;
 
 public class CdcDispatcherTest {
+
   @Test
   public void shouldDispatchRecordsToListenerWhenDispatchAll() {
     // given
@@ -35,10 +35,9 @@ public class CdcDispatcherTest {
     given(cdcRecordRepository.allTxIds()).willReturn(Collections.singletonList(BigInteger.TEN));
     CdcRecord cdcRecord =
         CdcRecord.builder().id(1L).schema("schema").table("table1").build();
-    given(cdcRecordRepository.findAll(any(Example.class)))
-        .willReturn(Collections.singletonList(cdcRecord));
+    given(cdcRecordRepository.findCdcRecordByTxIdOrderById(any())).willReturn(Collections.singletonList(cdcRecord));
     CdcListener cdcListener = mock(CdcListener.class);
-    given(cdcListener.acceptedTables()).willReturn(new String[] {"schema.table1", "schema.table2"});
+    given(cdcListener.acceptedTables()).willReturn(new String[]{"schema.table1", "schema.table2"});
     CdcDispatcher cdcDispatcher =
         new CdcDispatcher(Collections.singletonList(cdcListener), cdcRecordRepository);
     // when

@@ -38,6 +38,7 @@ import com.google.common.collect.Sets;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.Month;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -373,7 +374,7 @@ public class SiglusOrderService {
       FulfillOrderDto latestFulfillOrderDto = fulfillOrderDtos.get(0);
       UUID supplyingFacilityId = latestFulfillOrderDto.getBasicOrder().getSupplyingFacility().getId();
       UUID programId = latestFulfillOrderDto.getBasicOrder().getProgram().getId();
-      List<Integer> calculatedFulfillOrderMonth = calculateFulfillOrderMonth(processingPeriodExtension);
+      List<Month> calculatedFulfillOrderMonth = calculateFulfillOrderMonth(processingPeriodExtension);
       List<Order> orders = siglusOrdersRepository
           .findBySupplyingFacilityIdAndProgramIdAndStatusIn(supplyingFacilityId, programId, Lists
               .newArrayList(OrderStatus.SHIPPED, OrderStatus.FULFILLING, OrderStatus.PARTIALLY_FULFILLED,
@@ -381,7 +382,7 @@ public class SiglusOrderService {
 
       List<FulfillOrderDto> filteredFulfillOrderDtos = fulfillOrderDtos.stream().filter(fulfillOrderDto -> {
         return calculatedFulfillOrderMonth
-            .contains(fulfillOrderDto.getBasicOrder().getProcessingPeriod().getEndDate().getMonthValue());
+            .contains(fulfillOrderDto.getBasicOrder().getProcessingPeriod().getEndDate().getMonth());
       }).collect(toList());
 
       if (orders.isEmpty()) {
@@ -410,17 +411,17 @@ public class SiglusOrderService {
     });
   }
 
-  public List<Integer> calculateFulfillOrderMonth(ProcessingPeriodExtension processingPeriodExtension) {
+  public List<Month> calculateFulfillOrderMonth(ProcessingPeriodExtension processingPeriodExtension) {
     LocalDate submitStartDate = processingPeriodExtension.getSubmitStartDate();
     LocalDate submitEndDate = processingPeriodExtension.getSubmitEndDate();
     LocalDate currentDate = LocalDate.now();
     if (currentDate.getDayOfMonth() >= submitStartDate.getDayOfMonth() && currentDate.getDayOfMonth() <= submitEndDate
         .getDayOfMonth()) {
-      return Lists.newArrayList(currentDate.getMonthValue() - 1, currentDate.getMonthValue());
+      return Lists.newArrayList(currentDate.getMonth().minus(1), currentDate.getMonth());
     } else if (currentDate.getDayOfMonth() < submitStartDate.getDayOfMonth()) {
-      return Lists.newArrayList(currentDate.getMonthValue() - 1);
+      return Lists.newArrayList(currentDate.getMonth().minus(1));
     } else {
-      return Lists.newArrayList(currentDate.getMonthValue());
+      return Lists.newArrayList(currentDate.getMonth());
     }
   }
 
@@ -536,18 +537,15 @@ public class SiglusOrderService {
       OrderExternal secondExternal = OrderExternal.builder().requisitionId(order.getExternalId()).build();
       log.info("save order external : {}", Arrays.asList(firstExternal, secondExternal));
       externals = orderExternalRepository.save(Arrays.asList(firstExternal, secondExternal));
-      updateExistOrderForSubOrder(order.getId(), externals.get(0).getId(),
-          order.getOrderCode().concat(SLASH + 1), order.getStatus());
-      order.setOrderCode(order.getOrderCode().concat(SLASH + 2));
+      updateExternalIdAndStatusForSubOrder(order.getId(), externals.get(0).getId(), order.getStatus());
     } else {
       externals = orderExternalRepository.findByRequisitionId(external.getRequisitionId());
       OrderExternal newExternal = OrderExternal.builder().requisitionId(external.getRequisitionId()).build();
       log.info("save new external : {}", newExternal);
       newExternal = orderExternalRepository.save(newExternal);
       externals.add(newExternal);
-      order.setOrderCode(replaceLast(order.getOrderCode(), SLASH + (externals.size() - 1),
-          SLASH + externals.size()));
     }
+    order.setOrderCode(increaseOrderNumber(order.getOrderCode()));
     return createNewOrder(order, orderLineItemDtos, externals);
   }
 
@@ -594,6 +592,11 @@ public class SiglusOrderService {
         .clientFacility(facilityIdToName.get(order.getReceivingFacilityId()))
         .supplierFacility(facilityIdToName.get(order.getSupplyingFacilityId()))
         .build();
+  }
+
+  private String increaseOrderNumber(String orderNumber) {
+    String[] split = orderNumber.split(SLASH);
+    return String.format("%s%02d", split[0] + SLASH, (Integer.parseInt(split[1]) + 1));
   }
 
   private Map<UUID, BigDecimal> getOrderableIdToSuggestedQuantity(Order order, List<ProcessingPeriod> periods) {
@@ -971,13 +974,11 @@ public class SiglusOrderService {
     return false;
   }
 
-  private void updateExistOrderForSubOrder(UUID orderId,
-      UUID externalId, String orderCode, OrderStatus orderStatus) {
+  private void updateExternalIdAndStatusForSubOrder(UUID orderId, UUID externalId, OrderStatus orderStatus) {
     Order originOrder = orderRepository.findOne(orderId);
     originOrder.setExternalId(externalId);
-    originOrder.setOrderCode(orderCode);
     originOrder.setStatus(orderStatus);
-    log.info("update exist order for subOrder: {}", originOrder);
+    log.info("update externalId and Status for subOrder: {}", originOrder);
     orderRepository.save(originOrder);
   }
 
@@ -1007,8 +1008,7 @@ public class SiglusOrderService {
         (OAuth2Authentication) SecurityContextHolder.getContext().getAuthentication());
     if (orderDtos.iterator().hasNext()) {
       UUID newOrderId = orderDtos.iterator().next().getId();
-      updateExistOrderForSubOrder(newOrderId, newOrder.getExternalId(),
-          newOrder.getOrderCode(), OrderStatus.PARTIALLY_FULFILLED);
+      updateExternalIdAndStatusForSubOrder(newOrderId, newOrder.getExternalId(), OrderStatus.PARTIALLY_FULFILLED);
       updateOrderExtension(orderLineItemDtos, orderDtos);
     }
     return orderDtos;

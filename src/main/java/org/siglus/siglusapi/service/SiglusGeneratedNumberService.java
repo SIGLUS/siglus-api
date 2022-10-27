@@ -32,7 +32,7 @@ public class SiglusGeneratedNumberService {
   public synchronized Integer getGeneratedNumber(UUID facilityId, UUID programId, int year, boolean emergency) {
     GeneratedNumber generatedNumber = generatedNumberRepository.findByFacilityIdAndProgramIdAndYearAndEmergency(
         facilityId, programId, year, emergency);
-    if (null == generatedNumber) {
+    if (generatedNumber == null) {
       generatedNumber = GeneratedNumber.builder()
           .facilityId(facilityId)
           .programId(programId)
@@ -45,5 +45,16 @@ public class SiglusGeneratedNumberService {
     }
     log.info("save generated number: {}", generatedNumber);
     return generatedNumberRepository.save(generatedNumber).getNumber();
+  }
+
+  public synchronized void revertGeneratedNumber(UUID facilityId, UUID programId, int year, boolean emergency) {
+    GeneratedNumber generatedNumber = generatedNumberRepository.findByFacilityIdAndProgramIdAndYearAndEmergency(
+        facilityId, programId, year, emergency);
+    if (generatedNumber == null) {
+      return;
+    }
+    generatedNumber.setNumber(generatedNumber.getNumber() - 1);
+    log.info("revert generated number: {}", generatedNumber);
+    generatedNumberRepository.save(generatedNumber);
   }
 }

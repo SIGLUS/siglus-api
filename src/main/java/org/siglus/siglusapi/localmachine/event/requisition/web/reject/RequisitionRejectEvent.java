@@ -13,17 +13,15 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.localmachine.cdc;
+package org.siglus.siglusapi.localmachine.event.requisition.web.reject;
 
-import java.math.BigInteger;
-import java.util.List;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
+import java.util.UUID;
+import lombok.Data;
+import org.siglus.siglusapi.localmachine.EventPayload;
 
-public interface CdcRecordRepository extends JpaRepository<CdcRecord, Long> {
-
-  @Query(value = "select txid from localmachine.cdc_records", nativeQuery = true)
-  List<BigInteger> allTxIds();
-
-  List<CdcRecord> findCdcRecordByTxIdOrderById(Long txId);
+@EventPayload
+@Data
+public class RequisitionRejectEvent {
+  private String requisitionNumber;
+  private UUID userId;
 }

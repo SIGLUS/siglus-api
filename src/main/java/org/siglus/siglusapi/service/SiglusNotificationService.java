@@ -306,7 +306,7 @@ public class SiglusNotificationService {
 
     Notification supplierNotification = new Notification();
     supplierNotification.setRefId(proofOfDelivery.getId());
-    supplierNotification.setFacilityId(order.getSupplyingFacility().getId());
+    supplierNotification.setFacilityId(requisition.getFacilityId());
     supplierNotification.setProgramId(requisition.getProgramId());
     supplierNotification.setEmergency(requisition.getEmergency());
     supplierNotification.setStatus(NotificationStatus.SHIPPED);
