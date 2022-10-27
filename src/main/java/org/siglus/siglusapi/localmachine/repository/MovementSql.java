@@ -191,6 +191,11 @@ public class MovementSql {
   public static final String CALCULATED_STOCKS_ON_HAND_BY_LOCATION_QUERY =
       "select * from siglusintegration.calculated_stocks_on_hand_by_location " + WHERE_ID_IN_STOCK_CARD;
 
+  public static final String ARCHIVED_PRODUCTS = "siglusintegration.archived_products";
+
+  public static final String ARCHIVED_PRODUCTS_QUERY =
+      "select * from siglusintegration.archived_products where facilityid = '@@'";
+
   public static final String CMMS = "siglusintegration.cmms";
 
   public static final String CMMS_QUERY = "select * from siglusintegration.cmms " + WHERE_FACILITYCODE_IN_FACILITY;
@@ -239,6 +244,7 @@ public class MovementSql {
         .put(PHYSICAL_INVENTORY_EMPTY_LOCATION_LINE_ITEMS, PHYSICAL_INVENTORY_EMPTY_LOCATION_LINE_ITEMS_QUERY);
     movementSql
         .put(CALCULATED_STOCKS_ON_HAND_BY_LOCATION, CALCULATED_STOCKS_ON_HAND_BY_LOCATION_QUERY);
+    movementSql.put(ARCHIVED_PRODUCTS, ARCHIVED_PRODUCTS_QUERY);
     movementSql.put(CMMS, CMMS_QUERY);
     movementSql.put(CPS, CPS_QUERY);
     movementSql.put(HF_CMMS, HF_CMMS_QUERY);

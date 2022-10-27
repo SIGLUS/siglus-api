@@ -32,6 +32,9 @@ public class RequisitionOrderSql {
 
   private static final String POD_LEFT_JOIN_SHIPMENT = "left join fulfillment.shipments s on s.id = pod.shipmentid ";
 
+  private static final String POD_LEFT_JOIN_PROOFS_OF_DELIVERY =
+      "left join fulfillment.proofs_of_delivery pod on pod.id = podli.proofofdeliveryid ";
+
   private static final String REQUISITION_DRAFT_LEFT_JOIN_REQUISITIONS =
       "left join requisition.requisitions r on r.id = rd.requisitionid ";
 
@@ -179,7 +182,7 @@ public class RequisitionOrderSql {
 
   public static final String PROOF_OF_DELIVERY_LINE_ITEMS_QUERY =
       "select podli.* from fulfillment.proof_of_delivery_line_items podli "
-          + "left join fulfillment.proofs_of_delivery pod on pod.id = podli.proofofdeliveryid "
+          + POD_LEFT_JOIN_PROOFS_OF_DELIVERY
           + POD_LEFT_JOIN_SHIPMENT
           + SHIPMENT_LEFT_JOIN_ORDERS
           + WHERE_FACILITYID_SUPPLYING_FACILITYID;
@@ -312,7 +315,28 @@ public class RequisitionOrderSql {
   public static final String POD_LINE_ITEMS_EXTENSION_QUERY =
       "select plie.* from siglusintegration.pod_line_items_extension plie "
           + "left join fulfillment.proof_of_delivery_line_items podli on podli.id = plie.podlineitemid "
-          + "left join fulfillment.proofs_of_delivery pod on pod.id = podli.proofofdeliveryid "
+          + POD_LEFT_JOIN_PROOFS_OF_DELIVERY
+          + POD_LEFT_JOIN_SHIPMENT
+          + SHIPMENT_LEFT_JOIN_ORDERS
+          + WHERE_FACILITYID_SUPPLYING_FACILITYID;
+
+  public static final String POD_LINE_ITEMS_BY_LOCATION = "siglusintegration.pod_line_items_by_location";
+
+  public static final String POD_LINE_ITEMS_BY_LOCATION_QUERY =
+      "select plie.* from siglusintegration.pod_line_items_by_location plibl "
+          + "left join fulfillment.proof_of_delivery_line_items podli on podli.id = plibl.podlineitemid "
+          + POD_LEFT_JOIN_PROOFS_OF_DELIVERY
+          + POD_LEFT_JOIN_SHIPMENT
+          + SHIPMENT_LEFT_JOIN_ORDERS
+          + WHERE_FACILITYID_SUPPLYING_FACILITYID;
+
+  public static final String POD_SUB_DRAFT_LINE_ITEMS_BY_LOCATION =
+      "siglusintegration.pod_sub_draft_line_items_by_location";
+
+  public static final String POD_SUB_DRAFT_LINE_ITEMS_BY_LOCATION_QUERY =
+      "select plie.* from siglusintegration.pod_sub_draft_line_items_by_location psdlibl "
+          + "left join fulfillment.proof_of_delivery_line_items podli on podli.id = psdlibl.podlineitemid "
+          + POD_LEFT_JOIN_PROOFS_OF_DELIVERY
           + POD_LEFT_JOIN_SHIPMENT
           + SHIPMENT_LEFT_JOIN_ORDERS
           + WHERE_FACILITYID_SUPPLYING_FACILITYID;
@@ -450,6 +474,16 @@ public class RequisitionOrderSql {
           + LEFT_JOIN_SUPERVISORY_NODES
           + WHERE_FACILITY_ID;
 
+  public static final String AGE_GROUP_LINE_ITEMS =
+      "siglusintegration.age_group_line_items";
+
+  public static final String AGE_GROUP_LINE_ITEMS_QUERY =
+      "select * from siglusintegration.age_group_line_items "
+          + WHERE_ID_IN_REQUISITIONS
+          + LEFT_JOIN_SUPERVISORY_NODES
+          + WHERE_FACILITY_ID
+          + ") ";
+
 
   public static Map<String, String> getRequisitionOrderSql() {
     Map<String, String> requisitionOrderSql = new HashMap<>();
@@ -471,6 +505,8 @@ public class RequisitionOrderSql {
     requisitionOrderSql.put(SHIPMENT_LINE_ITEMS, SHIPMENT_LINE_ITEMS_QUERY);
     requisitionOrderSql.put(PROOFS_OF_DELIVERY, PROOFS_OF_DELIVERY_QUERY);
     requisitionOrderSql.put(PROOF_OF_DELIVERY_LINE_ITEMS, PROOF_OF_DELIVERY_LINE_ITEMS_QUERY);
+    requisitionOrderSql.put(POD_LINE_ITEMS_BY_LOCATION, POD_LINE_ITEMS_BY_LOCATION_QUERY);
+    requisitionOrderSql.put(POD_SUB_DRAFT_LINE_ITEMS_BY_LOCATION, POD_SUB_DRAFT_LINE_ITEMS_BY_LOCATION_QUERY);
     requisitionOrderSql.put(FULFILLMENT_STATUS_CHANGES, FULFILLMENT_STATUS_CHANGES_QUERY);
     requisitionOrderSql.put(FULFILLMENT_STATUS_MESSAGES, FULFILLMENT_STATUS_MESSAGES_QUERY);
     requisitionOrderSql.put(BASE_LINE_ITEMS, BASE_LINE_ITEMS_QUERY);
@@ -503,6 +539,7 @@ public class RequisitionOrderSql {
     requisitionOrderSql.put(TEST_CONSUMPTION_LINE_ITEMS_DRAFT, TEST_CONSUMPTION_LINE_ITEMS_DRAFT_QUERY);
     requisitionOrderSql.put(USAGE_INFORMATION_LINE_ITEMS, USAGE_INFORMATION_LINE_ITEMS_QUERY);
     requisitionOrderSql.put(USAGE_INFORMATION_LINE_ITEMS_DRAFT, USAGE_INFORMATION_LINE_ITEMS_DRAFT_QUERY);
+    requisitionOrderSql.put(AGE_GROUP_LINE_ITEMS, AGE_GROUP_LINE_ITEMS_QUERY);
 
     return requisitionOrderSql;
   }

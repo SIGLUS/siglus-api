@@ -302,6 +302,19 @@ public class MasterDataSql {
   public static final String REQUISITION_TEMPLATE_EXTENSION_QUERY =
       "select * from siglusintegration.requisition_template_extension";
 
+  public static final String CUSTOM_PRODUCTS_REGIMENS = "siglusintegration.custom_products_regimens";
+
+  public static final String CUSTOM_PRODUCTS_REGIMENS_QUERY =
+      "select * from siglusintegration.custom_products_regimens";
+
+  public static final String APP_INFO = "siglusintegration.app_info";
+
+  public static final String APP_INFO_QUERY = "select * from siglusintegration.app_info";
+
+  public static final String EXPIRED_LOTS_BACKUP = "siglusintegration.expired_lots_backup";
+
+  public static final String EXPIRED_LOTS_BACKUP_QUERY = "select * from siglusintegration.expired_lots_backup";
+
   public static final String ORGANIZATIONS = "stockmanagement.organizations";
 
   public static final String ORGANIZATIONS_QUERY = "select * from stockmanagement.organizations";
@@ -347,6 +360,7 @@ public class MasterDataSql {
   public static final String STOCKMANAGEMENT_JASPER_TEMPLATES = "stockmanagement.jasper_templates";
 
   public static final String STOCKMANAGEMENT_JASPER_TEMPLATES_QUERY = "select * from stockmanagement.jasper_templates";
+
 
   public static Map<String, String> getMasterDataSqlMap() {
     Map<String, String> masterDataSql = new HashMap<>();
@@ -422,6 +436,9 @@ public class MasterDataSql {
     masterDataSql.put(REGIMENS, REGIMENS_QUERY);
     masterDataSql.put(REPORT_TYPES, REPORT_TYPES_QUERY);
     masterDataSql.put(REQUISITION_TEMPLATE_EXTENSION, REQUISITION_TEMPLATE_EXTENSION_QUERY);
+    masterDataSql.put(CUSTOM_PRODUCTS_REGIMENS, CUSTOM_PRODUCTS_REGIMENS_QUERY);
+    masterDataSql.put(APP_INFO, APP_INFO_QUERY);
+    masterDataSql.put(EXPIRED_LOTS_BACKUP, EXPIRED_LOTS_BACKUP_QUERY);
 
     masterDataSql.put(ORGANIZATIONS, ORGANIZATIONS_QUERY);
     masterDataSql.put(NODES, NODES_QUERY);
