@@ -25,13 +25,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Example;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Component
 public class CdcDispatcher {
+
   private final Map<String, List<CdcListener>> tableIdToListeners = new LinkedHashMap<>();
   private final CdcRecordRepository cdcRecordRepository;
 
@@ -56,10 +56,9 @@ public class CdcDispatcher {
   @Transactional
   public synchronized void dispatchByTxId(Long txId) {
     // todo: get distribute lock to dispatch
-    List<CdcRecord> cdcRecords =
-        cdcRecordRepository.findAll(Example.of(CdcRecord.builder().txId(txId).build()));
+    List<CdcRecord> cdcRecords = cdcRecordRepository.findCdcRecordByTxIdOrderById(txId);
     cdcRecords.stream()
-        .collect(Collectors.groupingBy(CdcRecord::tableId))
+        .collect(Collectors.groupingBy(CdcRecord::tableId, LinkedHashMap::new, Collectors.toList()))
         .forEach(
             (key, value) -> {
               List<CdcListener> listeners =
