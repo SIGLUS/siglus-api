@@ -50,6 +50,7 @@ import javax.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
+import org.openlmis.referencedata.domain.ProcessingPeriod;
 import org.openlmis.requisition.domain.BaseEntity;
 import org.openlmis.requisition.domain.RequisitionTemplate;
 import org.openlmis.requisition.domain.requisition.ApprovedProductReference;
@@ -94,7 +95,6 @@ import org.openlmis.requisition.service.referencedata.RightReferenceDataService;
 import org.openlmis.requisition.service.referencedata.RoleReferenceDataService;
 import org.openlmis.requisition.service.referencedata.SupervisoryNodeReferenceDataService;
 import org.openlmis.requisition.service.stockmanagement.StockCardRangeSummaryStockManagementService;
-import org.openlmis.requisition.service.stockmanagement.StockOnHandRetrieverBuilderFactory;
 import org.openlmis.requisition.utils.AuthenticationHelper;
 import org.openlmis.requisition.utils.Message;
 import org.openlmis.requisition.web.QueryRequisitionSearchParams;
@@ -105,7 +105,6 @@ import org.siglus.common.domain.RequisitionTemplateExtension;
 import org.siglus.common.dto.RequisitionTemplateExtensionDto;
 import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
 import org.siglus.common.repository.StockManagementRepository;
-import org.siglus.common.util.SimulateAuthenticationHelper;
 import org.siglus.siglusapi.domain.ConsultationNumberLineItemDraft;
 import org.siglus.siglusapi.domain.FacilityExtension;
 import org.siglus.siglusapi.domain.KitUsageLineItemDraft;
@@ -122,6 +121,7 @@ import org.siglus.siglusapi.dto.OrderableExpirationDateDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionLineItemDto;
 import org.siglus.siglusapi.repository.FacilityExtensionRepository;
+import org.siglus.siglusapi.repository.ProcessingPeriodRepository;
 import org.siglus.siglusapi.repository.RequisitionDraftRepository;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionLineItemExtensionRepository;
@@ -177,10 +177,10 @@ public class SiglusRequisitionService {
   private final SupportedProgramsHelper supportedProgramsHelper;
   private final RequisitionMonthlyNotSubmitReportRepository requisitionMonthlyNotSubmitReportRepository;
   private final HttpServletResponse response;
-  private final SimulateAuthenticationHelper simulateAuthenticationHelper;
   private final StockCardRangeSummaryStockManagementService stockCardRangeSummaryStockManagementService;
-  private final StockOnHandRetrieverBuilderFactory stockOnHandRetrieverBuilderFactory;
   private final StockManagementRepository stockManagementRepository;
+  private final SiglusGeneratedNumberService siglusGeneratedNumberService;
+  private final ProcessingPeriodRepository processingPeriodRepository;
 
 
   @Value("${service.url}")
@@ -742,7 +742,9 @@ public class SiglusRequisitionService {
 
   @Transactional
   public void deleteRequisition(UUID requisitionId) {
-    deleteExtensionForRequisition(requisitionId);
+    Requisition requisition = requisitionRepository.findOne(requisitionId);
+    deleteExtensionForRequisition(requisition);
+    revertGeneratedNumber(requisition);
     deleteSiglusDraft(requisitionId);
     siglusUsageReportService.deleteUsageReport(requisitionId);
     siglusRequisitionExtensionService.deleteRequisitionExtension(requisitionId);
@@ -754,8 +756,7 @@ public class SiglusRequisitionService {
     return siglusRequisitionRequisitionService.getPreviousEmergencyRequisition(from(requisition));
   }
 
-  private void deleteExtensionForRequisition(UUID requisitionId) {
-    Requisition requisition = requisitionRepository.findOne(requisitionId);
+  private void deleteExtensionForRequisition(Requisition requisition) {
     List<UUID> ids = findLineItemIds(requisition);
     List<RequisitionLineItemExtension> extensions =
         ids.isEmpty() ? new ArrayList<>() : lineItemExtensionRepository.findLineItems(ids);
@@ -763,6 +764,12 @@ public class SiglusRequisitionService {
       log.info("delete line item extension: {}", extensions);
       lineItemExtensionRepository.delete(extensions);
     }
+  }
+
+  private void revertGeneratedNumber(Requisition requisition) {
+    ProcessingPeriod period = processingPeriodRepository.findOneById(requisition.getProcessingPeriodId());
+    siglusGeneratedNumberService.revertGeneratedNumber(requisition.getFacilityId(), requisition.getProgramId(),
+        period.getEndDate().getYear(), requisition.getEmergency());
   }
 
   public void deleteSiglusDraft(UUID requisitionId) {

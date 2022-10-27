@@ -29,8 +29,10 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyCollectionOf;
+import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyVararg;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -71,6 +73,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.fulfillment.domain.Order;
 import org.openlmis.fulfillment.domain.OrderLineItem;
 import org.openlmis.fulfillment.service.OrderService;
+import org.openlmis.referencedata.domain.ProcessingPeriod;
 import org.openlmis.requisition.domain.AvailableRequisitionColumnOption;
 import org.openlmis.requisition.domain.RequisitionTemplate;
 import org.openlmis.requisition.domain.SourceType;
@@ -113,7 +116,6 @@ import org.openlmis.requisition.service.PermissionService;
 import org.openlmis.requisition.service.ProofOfDeliveryService;
 import org.openlmis.requisition.service.RequisitionService;
 import org.openlmis.requisition.service.fulfillment.OrderFulfillmentService;
-import org.openlmis.requisition.service.fulfillment.ShipmentFulfillmentService;
 import org.openlmis.requisition.service.referencedata.ApproveProductsAggregator;
 import org.openlmis.requisition.service.referencedata.FacilityReferenceDataService;
 import org.openlmis.requisition.service.referencedata.FacilityTypeApprovedProductReferenceDataService;
@@ -125,7 +127,6 @@ import org.openlmis.requisition.service.referencedata.RoleReferenceDataService;
 import org.openlmis.requisition.service.referencedata.SupervisingUsersReferenceDataService;
 import org.openlmis.requisition.service.referencedata.SupervisoryNodeReferenceDataService;
 import org.openlmis.requisition.service.stockmanagement.StockCardRangeSummaryStockManagementService;
-import org.openlmis.requisition.service.stockmanagement.StockOnHandRetrieverBuilderFactory;
 import org.openlmis.requisition.utils.AuthenticationHelper;
 import org.openlmis.requisition.web.QueryRequisitionSearchParams;
 import org.openlmis.requisition.web.RequisitionController;
@@ -151,13 +152,13 @@ import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionLineItemDto;
 import org.siglus.siglusapi.i18n.MessageService;
 import org.siglus.siglusapi.repository.FacilityExtensionRepository;
+import org.siglus.siglusapi.repository.ProcessingPeriodRepository;
 import org.siglus.siglusapi.repository.RequisitionDraftRepository;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionMonthlyNotSubmitReportRepository;
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
-import org.siglus.siglusapi.service.fc.FcCmmCpService;
 import org.siglus.siglusapi.testutils.IdealStockAmountDtoDataBuilder;
 import org.siglus.siglusapi.testutils.RequisitionLineItemDataBuilder;
 import org.siglus.siglusapi.testutils.RequisitionTemplateDataBuilder;
@@ -229,9 +230,6 @@ public class SiglusRequisitionServiceTest {
 
   @Mock
   private ProofOfDeliveryService proofOfDeliveryService;
-
-  @Mock
-  private StockOnHandRetrieverBuilderFactory stockOnHandRetrieverBuilderFactory;
 
   @Mock
   private SiglusOrderableService siglusOrderableService;
@@ -306,9 +304,6 @@ public class SiglusRequisitionServiceTest {
   private SiglusApprovedProductReferenceDataService siglusApprovedReferenceDataService;
 
   @Mock
-  private FcCmmCpService fcCmmCpService;
-
-  @Mock
   private OrderService orderService;
 
   @Mock
@@ -325,6 +320,12 @@ public class SiglusRequisitionServiceTest {
 
   @Captor
   private ArgumentCaptor<Requisition> requisitionArgumentCaptor;
+
+  @Mock
+  private SiglusGeneratedNumberService siglusGeneratedNumberService;
+
+  @Mock
+  private ProcessingPeriodRepository processingPeriodRepository;
 
   private final UUID facilityId = UUID.randomUUID();
 
@@ -421,10 +422,6 @@ public class SiglusRequisitionServiceTest {
   private OrderFulfillmentService orderFulfillmentService;
 
   @Mock
-  private ShipmentFulfillmentService shipmentFulfillmentService;
-  //fields for emergency req test end
-
-  @Mock
   private OrderExternalRepository orderExternalRepository;
 
   @Mock
@@ -438,7 +435,6 @@ public class SiglusRequisitionServiceTest {
 
   @Mock
   private HttpServletResponse response;
-
 
   @Before
   public void prepare() {
@@ -470,6 +466,13 @@ public class SiglusRequisitionServiceTest {
         new org.openlmis.referencedata.dto.OrderableDto();
     when(siglusOrderableService.getOrderableByCode(any())).thenReturn(orderableDto);
     when(supportedProgramsHelper.findHomeFacilitySupportedPrograms()).thenReturn(newArrayList());
+    doNothing().when(requisitionMonthlyNotSubmitReportRepository).deleteByFacilityIdAndProgramIdAndProcessingPeriodId(
+        any(), any(), any());
+    ProcessingPeriod processingPeriod = new ProcessingPeriod();
+    processingPeriod.setEndDate(LocalDate.of(2022, 10, 22));
+    when(processingPeriodRepository.findOneById(any())).thenReturn(processingPeriod);
+    doNothing().when(siglusGeneratedNumberService).revertGeneratedNumber(any(), any(), anyInt(), anyBoolean());
+
   }
 
   @Test
