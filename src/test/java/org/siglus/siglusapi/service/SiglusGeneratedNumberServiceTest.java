@@ -44,35 +44,40 @@ public class SiglusGeneratedNumberServiceTest {
   private GeneratedNumberRepository generatedNumberRepository;
 
   private final UUID facilityId = UUID.randomUUID();
+  private final UUID programId = UUID.randomUUID();
+  private final int year = 2022;
+  private final boolean emergency = false;
 
   @Test
   public void shouldSave0WhenGeneratedNumberIsNull() {
     // given
-    when(generatedNumberRepository.findByFacilityId(facilityId)).thenReturn(null);
+    when(generatedNumberRepository.findByFacilityIdAndProgramIdAndYearAndEmergency(facilityId, programId, year,
+        emergency)).thenReturn(null);
     when(generatedNumberRepository.save(any(GeneratedNumber.class)))
         .thenReturn(GeneratedNumber.builder().number(0).build());
 
     // when
-    siglusGeneratedNumberService.getGeneratedNumber(facilityId);
+    siglusGeneratedNumberService.getGeneratedNumber(facilityId, programId, year, emergency);
 
     // then
     verify(generatedNumberRepository).save(generatedNumberArgumentCaptor.capture());
     GeneratedNumber generatedNumber = generatedNumberArgumentCaptor.getValue();
     assertEquals(facilityId, generatedNumber.getFacilityId());
-    assertEquals(0, generatedNumber.getNumber().intValue());
+    assertEquals(1, generatedNumber.getNumber().intValue());
   }
 
 
   @Test
   public void shouldSaveWhenGeneratedNumberIsNotNull() {
     // given
-    when(generatedNumberRepository.findByFacilityId(facilityId))
+    when(generatedNumberRepository.findByFacilityIdAndProgramIdAndYearAndEmergency(facilityId, programId, year,
+        emergency))
         .thenReturn(GeneratedNumber.builder().facilityId(facilityId).number(3).build());
     when(generatedNumberRepository.save(any(GeneratedNumber.class)))
         .thenReturn(GeneratedNumber.builder().number(4).build());
 
     // when
-    siglusGeneratedNumberService.getGeneratedNumber(facilityId);
+    siglusGeneratedNumberService.getGeneratedNumber(facilityId, programId, year, emergency);
 
     // then
     verify(generatedNumberRepository).save(generatedNumberArgumentCaptor.capture());

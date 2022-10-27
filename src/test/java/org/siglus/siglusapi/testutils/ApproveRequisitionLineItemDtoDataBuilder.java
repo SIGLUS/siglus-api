@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.testutils;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 import org.joda.money.CurrencyUnit;
 import org.joda.money.Money;
@@ -29,7 +30,7 @@ public class ApproveRequisitionLineItemDtoDataBuilder implements
   private UUID id;
   private BasicOrderableDto orderable;
   private Integer approvedQuantity;
-  private Money pricePerPack;
+  private BigDecimal pricePerPack;
   private Money totalCost;
   private Boolean skipped;
 
@@ -40,7 +41,7 @@ public class ApproveRequisitionLineItemDtoDataBuilder implements
     id = UUID.randomUUID();
     orderable = new BasicOrderableDto();
     approvedQuantity = 1;
-    pricePerPack = Money.of(CurrencyUnit.EUR, 1);
+    pricePerPack = BigDecimal.ONE;
     totalCost = Money.of(CurrencyUnit.EUR, 2);
     skipped = false;
   }

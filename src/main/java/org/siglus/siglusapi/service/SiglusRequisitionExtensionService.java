@@ -15,44 +15,81 @@
 
 package org.siglus.siglusapi.service;
 
+import static org.siglus.siglusapi.constant.ProgramConstants.MALARIA_PROGRAM_CODE;
+import static org.siglus.siglusapi.constant.ProgramConstants.MTB_PROGRAM_CODE;
+import static org.siglus.siglusapi.constant.ProgramConstants.RAPIDTEST_PROGRAM_CODE;
+import static org.siglus.siglusapi.constant.ProgramConstants.TARV_PROGRAM_CODE;
+import static org.siglus.siglusapi.constant.ProgramConstants.VIA_PROGRAM_CODE;
+
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.openlmis.referencedata.domain.ProcessingPeriod;
 import org.siglus.siglusapi.domain.RequisitionExtension;
+import org.siglus.siglusapi.dto.SiglusRequisitionDto;
+import org.siglus.siglusapi.repository.ProcessingPeriodRepository;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class SiglusRequisitionExtensionService {
 
-  @Autowired
-  private SiglusFacilityReferenceDataService siglusFacilityReferenceDataService;
+  private final SiglusFacilityReferenceDataService siglusFacilityReferenceDataService;
+  private final SiglusGeneratedNumberService siglusGeneratedNumberService;
+  private final RequisitionExtensionRepository requisitionExtensionRepository;
+  private final ProcessingPeriodRepository processingPeriodRepository;
+  private final SiglusProgramService siglusProgramService;
+  private static final String DOT = ".";
 
-  @Autowired
-  private SiglusGeneratedNumberService siglusGeneratedNumberService;
-
-  @Autowired
-  private RequisitionExtensionRepository requisitionExtensionRepository;
-
-  public RequisitionExtension createRequisitionExtension(UUID requisitionId, Boolean emergency, UUID facilityId) {
-    RequisitionExtension requisitionExtension = buildRequisitionExtension(requisitionId, emergency, facilityId);
+  public RequisitionExtension createRequisitionExtension(SiglusRequisitionDto siglusRequisitionDto) {
+    ProcessingPeriod period = processingPeriodRepository.findOneById(siglusRequisitionDto.getProcessingPeriodId());
+    RequisitionExtension requisitionExtension = buildRequisitionExtension(siglusRequisitionDto.getId(),
+        siglusRequisitionDto.getEmergency(), siglusRequisitionDto.getFacilityId(),
+        siglusRequisitionDto.getProgramId(), period.getEndDate());
     log.info("save requisition extension: {}", requisitionExtension);
     return requisitionExtensionRepository.save(requisitionExtension);
   }
 
-  public RequisitionExtension buildRequisitionExtension(UUID requisitionId, Boolean emergency, UUID facilityId) {
+  public RequisitionExtension buildRequisitionExtension(UUID requisitionId, Boolean emergency, UUID facilityId,
+      UUID programId, LocalDate endDate) {
     String facilityCode = siglusFacilityReferenceDataService.findOne(facilityId).getCode();
-    Integer requisitionNumber = siglusGeneratedNumberService.getGeneratedNumber(facilityId);
+    Integer consequentialNumber = siglusGeneratedNumberService.getGeneratedNumber(facilityId, programId,
+        endDate.getYear(), emergency);
+    String programCode = siglusProgramService.getProgram(programId).getCode();
+    String prefix;
+    switch (programCode) {
+      case VIA_PROGRAM_CODE:
+        prefix = emergency ? "REM" : "RNO";
+        break;
+      case MTB_PROGRAM_CODE:
+        prefix = "MTB";
+        break;
+      case RAPIDTEST_PROGRAM_CODE:
+        prefix = "MIT";
+        break;
+      case TARV_PROGRAM_CODE:
+        prefix = "MIA";
+        break;
+      case MALARIA_PROGRAM_CODE:
+        prefix = "ALS";
+        break;
+      default:
+        prefix = "";
+    }
+    String yearMonth = endDate.format(DateTimeFormatter.ofPattern("yyMM"));
     return RequisitionExtension.builder()
         .requisitionId(requisitionId)
-        .requisitionNumberPrefix("RNR-" + (Boolean.TRUE.equals(emergency) ? "EM" : "NO") + facilityCode)
-        .requisitionNumber(requisitionNumber)
+        .requisitionNumberPrefix(prefix + DOT + facilityCode + DOT + yearMonth + DOT)
+        .requisitionNumber(consequentialNumber)
         .facilityId(facilityId)
         .build();
   }
@@ -61,30 +98,26 @@ public class SiglusRequisitionExtensionService {
     if (null == requisitionExtension) {
       return null;
     }
-    return String.format("%s%07d", requisitionExtension.getRequisitionNumberPrefix(),
+    return String.format("%s%02d", requisitionExtension.getRequisitionNumberPrefix(),
         requisitionExtension.getRequisitionNumber());
   }
 
   public String formatRequisitionNumber(UUID requisitionId) {
-    RequisitionExtension requisitionExtension = requisitionExtensionRepository
-        .findByRequisitionId(requisitionId);
+    RequisitionExtension requisitionExtension = requisitionExtensionRepository.findByRequisitionId(requisitionId);
     return formatRequisitionNumber(requisitionExtension);
   }
 
   // requisitionId: requisitionNumber
   public Map<UUID, String> getRequisitionNumbers(Set<UUID> requisitionIds) {
-    List<RequisitionExtension> requisitionExtensions = requisitionExtensionRepository
-        .findByRequisitionIdIn(requisitionIds);
-    return requisitionExtensions
-        .stream()
-        .collect(Collectors.toMap(RequisitionExtension::getRequisitionId,
-            this::formatRequisitionNumber));
+    List<RequisitionExtension> requisitionExtensions = requisitionExtensionRepository.findByRequisitionIdIn(
+        requisitionIds);
+    return requisitionExtensions.stream()
+        .collect(Collectors.toMap(RequisitionExtension::getRequisitionId, this::formatRequisitionNumber));
   }
 
 
   public void deleteRequisitionExtension(UUID requisitionId) {
-    RequisitionExtension requisitionExtension = requisitionExtensionRepository
-        .findByRequisitionId(requisitionId);
+    RequisitionExtension requisitionExtension = requisitionExtensionRepository.findByRequisitionId(requisitionId);
     if (null == requisitionExtension) {
       return;
     }

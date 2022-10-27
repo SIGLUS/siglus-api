@@ -16,23 +16,30 @@
 package org.siglus.siglusapi.service;
 
 import java.util.UUID;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.siglus.siglusapi.domain.GeneratedNumber;
 import org.siglus.siglusapi.repository.GeneratedNumberRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class SiglusGeneratedNumberService {
 
-  @Autowired
-  private GeneratedNumberRepository generatedNumberRepository;
+  private final GeneratedNumberRepository generatedNumberRepository;
 
-  public synchronized Integer getGeneratedNumber(UUID facilityId) {
-    GeneratedNumber generatedNumber = generatedNumberRepository.findByFacilityId(facilityId);
+  public synchronized Integer getGeneratedNumber(UUID facilityId, UUID programId, int year, boolean emergency) {
+    GeneratedNumber generatedNumber = generatedNumberRepository.findByFacilityIdAndProgramIdAndYearAndEmergency(
+        facilityId, programId, year, emergency);
     if (null == generatedNumber) {
-      generatedNumber = GeneratedNumber.builder().facilityId(facilityId).number(0).build();
+      generatedNumber = GeneratedNumber.builder()
+          .facilityId(facilityId)
+          .programId(programId)
+          .year(year)
+          .emergency(emergency)
+          .number(1)
+          .build();
     } else {
       generatedNumber.setNumber(generatedNumber.getNumber() + 1);
     }

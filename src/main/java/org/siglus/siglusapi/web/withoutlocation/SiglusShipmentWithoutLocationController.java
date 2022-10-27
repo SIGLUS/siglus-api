@@ -49,6 +49,7 @@ public class SiglusShipmentWithoutLocationController {
       @RequestParam(name = "isSubOrder", required = false, defaultValue = "false")
           boolean isSubOrder, @RequestBody ShipmentExtensionRequest shipmentExtensionRequest) {
     byte[] reqBytes = PayloadSerializer.LOCALMACHINE_EVENT_OBJECT_MAPPER.writeValueAsBytes(shipmentExtensionRequest);
+    siglusShipmentService.checkFulfillOrderExpired(shipmentExtensionRequest);
     ShipmentDto created = siglusShipmentService.createOrderAndShipment(isSubOrder, shipmentExtensionRequest);
     notificationService.postConfirmShipment(created);
     /*

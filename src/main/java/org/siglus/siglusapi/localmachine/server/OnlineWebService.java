@@ -48,6 +48,7 @@ import org.siglus.siglusapi.localmachine.repository.MasterDataSql;
 import org.siglus.siglusapi.localmachine.repository.MovementSql;
 import org.siglus.siglusapi.localmachine.repository.RequisitionOrderSql;
 import org.siglus.siglusapi.localmachine.repository.TableCopyRepository;
+import org.siglus.siglusapi.localmachine.webapi.ResyncMasterDataResponse;
 import org.siglus.siglusapi.util.FileUtil;
 import org.siglus.siglusapi.util.S3FileHandler;
 import org.springframework.beans.factory.annotation.Value;
@@ -76,7 +77,7 @@ public class OnlineWebService {
   @Value("${resync.zip.export.path}")
   private String zipExportPath;
 
-  public String resyncMasterData(UUID facilityId) {
+  public ResyncMasterDataResponse resyncMasterData(UUID facilityId) {
     MasterDataEventRecord eventRecord =
         masterDataEventRecordRepository.findTopBySnapshotVersionIsNotNullOrderByIdDesc();
     if (eventRecord == null) {
@@ -94,8 +95,10 @@ public class OnlineWebService {
     masterDataOffsetRepository.save(masterDataOffset);
     String s3Url = s3FileHandler.getUrlFromS3(eventRecord.getSnapshotVersion());
     Long latestId = masterDataEventRecordRepository.findLatestRecordId();
+    String maxFlywaySersion = masterDataOffsetRepository.findMaxFlywayVersion();
     latestId = latestId == null || latestId < eventRecord.getId() ? eventRecord.getId() : latestId;
-    return eventRecord.getId() + "+" + latestId + "+" + s3Url;
+    return new ResyncMasterDataResponse(
+        eventRecord.getId(), latestId, s3Url, eventRecord.getSnapshotVersion(), maxFlywaySersion);
   }
 
   public void resyncData(UUID homeFacilityId, HttpServletResponse response) {
@@ -132,7 +135,7 @@ public class OnlineWebService {
     response.setContentType(CONTENT_TYPE);
     response.setCharacterEncoding(StandardCharsets.UTF_8.name());
     response.setHeader(HttpHeaders.CONTENT_DISPOSITION, DISPOSITION_BASE + zipName);
-    try (FileInputStream fileInputStream = new FileInputStream(zipFile);) {
+    try (FileInputStream fileInputStream = new FileInputStream(zipFile)) {
       IOUtils.copy(fileInputStream, response.getOutputStream());
       response.flushBuffer();
       FileUtils.deleteDirectory(directory);

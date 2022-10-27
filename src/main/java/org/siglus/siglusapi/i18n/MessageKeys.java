@@ -48,6 +48,7 @@ public abstract class MessageKeys {
 
   // order
   public static final String ERROR_ORDER_NOT_EXIST = ERROR_PREFIX + ".order.not.exist";
+  public static final String ERROR_ORDER_EXPIRED = ERROR_PREFIX + ".order.expired";
   public static final String ERROR_SUB_ORDER_LINE_ITEM = ERROR_PREFIX + ".suborder.line.item.not.exist";
   public static final String ERROR_TRADE_ITEM_IS_EMPTY = ERROR_PREFIX + ".tradeItem.is.empty";
   public static final String ERROR_LOT_ID_AND_CODE_SHOULD_EMPTY = ERROR_PREFIX + ".lotinfo.should.empty";

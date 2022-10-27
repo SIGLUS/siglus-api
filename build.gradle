@@ -43,7 +43,7 @@ repositories {
 
 // NOTE: do NOT use implementation, otherwise the SpringBoot won't pack the dependencies into the fat jar
 dependencies {
-    compile 'org.openlmis:siglus-api-extension:1.1.0-20221026.022530-169'
+    compile 'org.openlmis:siglus-api-extension:1.1.0-20221026.111414-183'
     compile 'org.springframework.boot:spring-boot-starter-web'
     compile 'org.springframework.boot:spring-boot-starter-data-rest'
     compile 'org.springframework.boot:spring-boot-starter-data-jpa'
@@ -84,7 +84,7 @@ dependencies {
     annotationProcessor 'org.mapstruct:mapstruct-processor:1.4.2.Final'
     compile 'com.google.code.findbugs:annotations:3.0.1'
     compile 'org.zalando:problem-spring-web:0.23.0'
-    compile 'com.alibaba:fastjson:1.2.76'
+    compile 'com.alibaba.fastjson2:fastjson2:2.0.16'
     compile 'org.zalando:logbook-spring-boot-starter:2.11.0'
     compile 'org.javers:javers-spring-boot-starter-sql:3.11.6'
     compile 'net.minidev:asm:1.0.2'

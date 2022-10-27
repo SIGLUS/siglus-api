@@ -76,7 +76,7 @@ public class OnlineWebClient {
   }
 
   public List<Event> exportMasterDataEvents(long offsetId) {
-    URI url = URI.create(webBaseUrl + "/server/getMasterDataEvents/" + offsetId);
+    URI url = URI.create(webBaseUrl + "/server/masterDataEvents/" + offsetId);
     return restTemplate.getForObject(url, EventsResponse.class).getEvents().stream()
         .map(externalEventDtoMapper::map)
         .collect(Collectors.toList());

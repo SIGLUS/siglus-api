@@ -21,8 +21,15 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.siglus.siglusapi.constant.ProgramConstants.MALARIA_PROGRAM_CODE;
+import static org.siglus.siglusapi.constant.ProgramConstants.MTB_PROGRAM_CODE;
+import static org.siglus.siglusapi.constant.ProgramConstants.RAPIDTEST_PROGRAM_CODE;
+import static org.siglus.siglusapi.constant.ProgramConstants.TARV_PROGRAM_CODE;
+import static org.siglus.siglusapi.constant.ProgramConstants.VIA_PROGRAM_CODE;
 
+import java.time.LocalDate;
 import java.util.UUID;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -30,15 +37,20 @@ import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.openlmis.referencedata.domain.ProcessingPeriod;
+import org.openlmis.requisition.dto.ObjectReferenceDto;
+import org.openlmis.requisition.dto.ProgramDto;
 import org.siglus.siglusapi.domain.RequisitionExtension;
 import org.siglus.siglusapi.dto.FacilityDto;
+import org.siglus.siglusapi.dto.SiglusRequisitionDto;
+import org.siglus.siglusapi.repository.ProcessingPeriodRepository;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 
 @RunWith(MockitoJUnitRunner.class)
 public class SiglusRequisitionExtensionServiceTest {
 
-  private static final String FACILITY_CODE = "facilityCode";
+  private static final String FACILITY_CODE = "01031708";
 
   @Captor
   private ArgumentCaptor<RequisitionExtension> requisitionExtensionArgumentCaptor;
@@ -55,45 +67,154 @@ public class SiglusRequisitionExtensionServiceTest {
   @Mock
   private RequisitionExtensionRepository requisitionExtensionRepository;
 
-  private final UUID requisitionId = UUID.randomUUID();
+  @Mock
+  private ProcessingPeriodRepository processingPeriodRepository;
 
+  @Mock
+  private SiglusProgramService siglusProgramService;
+
+  private final UUID requisitionId = UUID.randomUUID();
   private final UUID facilityId = UUID.randomUUID();
+  private final UUID programId = UUID.randomUUID();
+  private final int year = 2022;
+  private final boolean emergency = false;
+  private final ProcessingPeriod period = new ProcessingPeriod();
+  private final SiglusRequisitionDto siglusRequisitionDto = new SiglusRequisitionDto();
+
+  @Before
+  public void prepare() {
+    period.setEndDate(LocalDate.of(2022, 10, 22));
+    siglusRequisitionDto.setId(requisitionId);
+    siglusRequisitionDto.setEmergency(false);
+    siglusRequisitionDto.setFacility(new ObjectReferenceDto(facilityId));
+    siglusRequisitionDto.setProgram(new ObjectReferenceDto(programId));
+    when(processingPeriodRepository.findOneById(siglusRequisitionDto.getProcessingPeriodId())).thenReturn(period);
+  }
 
   @Test
-  public void shouldSaveRequisitionExtensionWhenCreateRequisitionExtensionIfNotEmergency() {
+  public void shouldSaveRequisitionExtensionWhenCreateVia() {
     // given
     FacilityDto facilityDto = FacilityDto.builder().code(FACILITY_CODE).build();
     when(siglusFacilityReferenceDataService.findOne(facilityId)).thenReturn(facilityDto);
-    when(siglusGeneratedNumberService.getGeneratedNumber(facilityId)).thenReturn(3);
+    when(siglusGeneratedNumberService.getGeneratedNumber(facilityId, programId, year, emergency)).thenReturn(3);
+    ProgramDto programDto = new ProgramDto();
+    programDto.setCode(VIA_PROGRAM_CODE);
+    when(siglusProgramService.getProgram(programId)).thenReturn(programDto);
 
     // when
-    siglusRequisitionExtensionService.createRequisitionExtension(requisitionId, false,
-        facilityId);
+    siglusRequisitionExtensionService.createRequisitionExtension(siglusRequisitionDto);
 
     // then
     verify(requisitionExtensionRepository).save(requisitionExtensionArgumentCaptor.capture());
     RequisitionExtension requisitionExtension = requisitionExtensionArgumentCaptor.getValue();
     assertEquals(requisitionId, requisitionExtension.getRequisitionId());
-    assertEquals("RNR-NO" + FACILITY_CODE, requisitionExtension.getRequisitionNumberPrefix());
+    assertEquals("RNO.01031708.2210.", requisitionExtension.getRequisitionNumberPrefix());
     assertEquals(3, requisitionExtension.getRequisitionNumber().intValue());
   }
 
   @Test
-  public void shouldSaveRequisitionExtensionWhenCreateRequisitionExtensionIfIsEmergency() {
+  public void shouldSaveRequisitionExtensionWhenCreateEmergencyVia() {
     // given
     FacilityDto facilityDto = FacilityDto.builder().code(FACILITY_CODE).build();
     when(siglusFacilityReferenceDataService.findOne(facilityId)).thenReturn(facilityDto);
-    when(siglusGeneratedNumberService.getGeneratedNumber(facilityId)).thenReturn(3);
+    when(siglusGeneratedNumberService.getGeneratedNumber(facilityId, programId, year, true)).thenReturn(3);
+    siglusRequisitionDto.setEmergency(true);
+    ProgramDto programDto = new ProgramDto();
+    programDto.setCode(VIA_PROGRAM_CODE);
+    when(siglusProgramService.getProgram(programId)).thenReturn(programDto);
 
     // when
-    siglusRequisitionExtensionService.createRequisitionExtension(requisitionId, true,
-        facilityId);
+    siglusRequisitionExtensionService.createRequisitionExtension(siglusRequisitionDto);
 
     // then
     verify(requisitionExtensionRepository).save(requisitionExtensionArgumentCaptor.capture());
     RequisitionExtension requisitionExtension = requisitionExtensionArgumentCaptor.getValue();
     assertEquals(requisitionId, requisitionExtension.getRequisitionId());
-    assertEquals("RNR-EM" + FACILITY_CODE, requisitionExtension.getRequisitionNumberPrefix());
+    assertEquals("REM.01031708.2210.", requisitionExtension.getRequisitionNumberPrefix());
+    assertEquals(3, requisitionExtension.getRequisitionNumber().intValue());
+  }
+
+  @Test
+  public void shouldSaveRequisitionExtensionWhenCreateMmia() {
+    // given
+    FacilityDto facilityDto = FacilityDto.builder().code(FACILITY_CODE).build();
+    when(siglusFacilityReferenceDataService.findOne(facilityId)).thenReturn(facilityDto);
+    when(siglusGeneratedNumberService.getGeneratedNumber(facilityId, programId, year, emergency)).thenReturn(3);
+    ProgramDto programDto = new ProgramDto();
+    programDto.setCode(TARV_PROGRAM_CODE);
+    when(siglusProgramService.getProgram(programId)).thenReturn(programDto);
+
+    // when
+    siglusRequisitionExtensionService.createRequisitionExtension(siglusRequisitionDto);
+
+    // then
+    verify(requisitionExtensionRepository).save(requisitionExtensionArgumentCaptor.capture());
+    RequisitionExtension requisitionExtension = requisitionExtensionArgumentCaptor.getValue();
+    assertEquals(requisitionId, requisitionExtension.getRequisitionId());
+    assertEquals("MIA.01031708.2210.", requisitionExtension.getRequisitionNumberPrefix());
+    assertEquals(3, requisitionExtension.getRequisitionNumber().intValue());
+  }
+
+  @Test
+  public void shouldSaveRequisitionExtensionWhenCreateRapidTest() {
+    // given
+    FacilityDto facilityDto = FacilityDto.builder().code(FACILITY_CODE).build();
+    when(siglusFacilityReferenceDataService.findOne(facilityId)).thenReturn(facilityDto);
+    when(siglusGeneratedNumberService.getGeneratedNumber(facilityId, programId, year, emergency)).thenReturn(3);
+    ProgramDto programDto = new ProgramDto();
+    programDto.setCode(RAPIDTEST_PROGRAM_CODE);
+    when(siglusProgramService.getProgram(programId)).thenReturn(programDto);
+
+    // when
+    siglusRequisitionExtensionService.createRequisitionExtension(siglusRequisitionDto);
+
+    // then
+    verify(requisitionExtensionRepository).save(requisitionExtensionArgumentCaptor.capture());
+    RequisitionExtension requisitionExtension = requisitionExtensionArgumentCaptor.getValue();
+    assertEquals(requisitionId, requisitionExtension.getRequisitionId());
+    assertEquals("MIT.01031708.2210.", requisitionExtension.getRequisitionNumberPrefix());
+    assertEquals(3, requisitionExtension.getRequisitionNumber().intValue());
+  }
+
+  @Test
+  public void shouldSaveRequisitionExtensionWhenCreateMtb() {
+    // given
+    FacilityDto facilityDto = FacilityDto.builder().code(FACILITY_CODE).build();
+    when(siglusFacilityReferenceDataService.findOne(facilityId)).thenReturn(facilityDto);
+    when(siglusGeneratedNumberService.getGeneratedNumber(facilityId, programId, year, emergency)).thenReturn(3);
+    ProgramDto programDto = new ProgramDto();
+    programDto.setCode(MTB_PROGRAM_CODE);
+    when(siglusProgramService.getProgram(programId)).thenReturn(programDto);
+
+    // when
+    siglusRequisitionExtensionService.createRequisitionExtension(siglusRequisitionDto);
+
+    // then
+    verify(requisitionExtensionRepository).save(requisitionExtensionArgumentCaptor.capture());
+    RequisitionExtension requisitionExtension = requisitionExtensionArgumentCaptor.getValue();
+    assertEquals(requisitionId, requisitionExtension.getRequisitionId());
+    assertEquals("MTB.01031708.2210.", requisitionExtension.getRequisitionNumberPrefix());
+    assertEquals(3, requisitionExtension.getRequisitionNumber().intValue());
+  }
+
+  @Test
+  public void shouldSaveRequisitionExtensionWhenCreateMalaria() {
+    // given
+    FacilityDto facilityDto = FacilityDto.builder().code(FACILITY_CODE).build();
+    when(siglusFacilityReferenceDataService.findOne(facilityId)).thenReturn(facilityDto);
+    when(siglusGeneratedNumberService.getGeneratedNumber(facilityId, programId, year, emergency)).thenReturn(3);
+    ProgramDto programDto = new ProgramDto();
+    programDto.setCode(MALARIA_PROGRAM_CODE);
+    when(siglusProgramService.getProgram(programId)).thenReturn(programDto);
+
+    // when
+    siglusRequisitionExtensionService.createRequisitionExtension(siglusRequisitionDto);
+
+    // then
+    verify(requisitionExtensionRepository).save(requisitionExtensionArgumentCaptor.capture());
+    RequisitionExtension requisitionExtension = requisitionExtensionArgumentCaptor.getValue();
+    assertEquals(requisitionId, requisitionExtension.getRequisitionId());
+    assertEquals("ALS.01031708.2210.", requisitionExtension.getRequisitionNumberPrefix());
     assertEquals(3, requisitionExtension.getRequisitionNumber().intValue());
   }
 
@@ -101,18 +222,16 @@ public class SiglusRequisitionExtensionServiceTest {
   public void shouldReturnFormatRequisitionNumber() {
     // given
     RequisitionExtension requisitionExtension = RequisitionExtension.builder()
-        .requisitionNumberPrefix("NO01051002")
+        .requisitionNumberPrefix("RNO.01031708.22-10.")
         .requisitionNumber(4)
         .build();
-    when(requisitionExtensionRepository.findByRequisitionId(requisitionId))
-        .thenReturn(requisitionExtension);
+    when(requisitionExtensionRepository.findByRequisitionId(requisitionId)).thenReturn(requisitionExtension);
 
     // when
-    String formatRequisitionNumber = siglusRequisitionExtensionService
-        .formatRequisitionNumber(requisitionId);
+    String formatRequisitionNumber = siglusRequisitionExtensionService.formatRequisitionNumber(requisitionId);
 
     // then
-    assertEquals("NO010510020000004", formatRequisitionNumber);
+    assertEquals("RNO.01031708.22-10.04", formatRequisitionNumber);
   }
 
   @Test

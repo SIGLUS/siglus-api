@@ -16,6 +16,8 @@
 package org.siglus.siglusapi.service;
 
 import static java.util.stream.Collectors.toSet;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_ORDER_EXPIRED;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_PERIOD_NOT_FOUND;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_SUB_ORDER_LINE_ITEM;
 import static org.siglus.siglusapi.i18n.MessageKeys.SHIPMENT_ORDER_STATUS_INVALID;
 
@@ -50,11 +52,15 @@ import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
 import org.openlmis.stockmanagement.repository.StockCardLineItemRepository;
 import org.openlmis.stockmanagement.repository.StockCardRepository;
+import org.siglus.common.domain.ProcessingPeriodExtension;
+import org.siglus.common.repository.ProcessingPeriodExtensionRepository;
 import org.siglus.siglusapi.domain.OrderLineItemExtension;
 import org.siglus.siglusapi.domain.PodExtension;
 import org.siglus.siglusapi.domain.ShipmentLineItemsExtension;
 import org.siglus.siglusapi.domain.StockCardLineItemExtension;
 import org.siglus.siglusapi.dto.Message;
+import org.siglus.siglusapi.exception.BusinessDataException;
+import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.PodExtensionRepository;
@@ -99,12 +105,29 @@ public class SiglusShipmentService {
 
   private final StockCardLineItemExtensionRepository stockCardLineItemExtensionRepository;
 
+  private final ProcessingPeriodExtensionRepository processingPeriodExtensionRepository;
+
   @Transactional
   public ShipmentDto createOrderAndShipment(boolean isSubOrder, ShipmentExtensionRequest shipmentExtensionRequest) {
-    ShipmentDto shipmentDto = createOrderAndConfirmShipment(isSubOrder,
-        shipmentExtensionRequest.getShipment());
+    ShipmentDto shipmentDto = createOrderAndConfirmShipment(isSubOrder, shipmentExtensionRequest.getShipment());
     savePodExtension(shipmentDto.getId(), shipmentExtensionRequest);
     return shipmentDto;
+  }
+
+  public void checkFulfillOrderExpired(ShipmentExtensionRequest shipmentExtensionRequest) {
+    int currentOrderFulfillMonth = shipmentExtensionRequest.getShipment().getOrder().getProcessingPeriod().getEndDate()
+        .getMonthValue();
+    UUID processingPeriodId = shipmentExtensionRequest.getShipment().getOrder().getProcessingPeriod().getId();
+    ProcessingPeriodExtension processingPeriodExtension = processingPeriodExtensionRepository
+        .findByProcessingPeriodId(processingPeriodId);
+    if (processingPeriodExtension == null) {
+      throw new NotFoundException(ERROR_PERIOD_NOT_FOUND);
+    }
+    List<Integer> calculatedFulfillOrderMonth = siglusOrderService
+        .calculateFulfillOrderMonth(processingPeriodExtension);
+    if (!calculatedFulfillOrderMonth.contains(currentOrderFulfillMonth)) {
+      throw new BusinessDataException(new Message(ERROR_ORDER_EXPIRED));
+    }
   }
 
   @Transactional
@@ -216,14 +239,15 @@ public class SiglusShipmentService {
         .collect(toSet());
   }
 
-  private void removeSkippedOrderLineItemsAndExtensions(Set<UUID> skippedOrderLineItemIds,
-      UUID orderId) {
+  private void removeSkippedOrderLineItemsAndExtensions(Set<UUID> skippedOrderLineItemIds, UUID orderId) {
+    if (CollectionUtils.isEmpty(skippedOrderLineItemIds)) {
+      return;
+    }
     Order order = orderRepository.findOne(orderId);
-    order.getOrderLineItems().removeIf(
-        orderLineItem -> skippedOrderLineItemIds.contains(orderLineItem.getId()));
+    order.getOrderLineItems().removeIf(orderLineItem -> skippedOrderLineItemIds.contains(orderLineItem.getId()));
     orderRepository.save(order);
-    List<OrderLineItemExtension> extensions = lineItemExtensionRepository
-        .findByOrderLineItemIdIn(skippedOrderLineItemIds);
+    List<OrderLineItemExtension> extensions = lineItemExtensionRepository.findByOrderLineItemIdIn(
+        skippedOrderLineItemIds);
     lineItemExtensionRepository.delete(extensions);
   }
 
@@ -306,10 +330,10 @@ public class SiglusShipmentService {
     Map<UUID, StockCardLineItem> shipmentLineItemIdToStockCardLineItem = new HashMap<>();
     shipmentLineItemIdToStockCardId.forEach((shipmentLineItemId, stockCardId) ->
         stockCardLineItems.stream()
-        .filter(m -> m.getStockCard().getId().equals(stockCardId))
-        .findFirst()
-        .ifPresent(
-            stockCardLineItem -> shipmentLineItemIdToStockCardLineItem.put(shipmentLineItemId, stockCardLineItem)));
+            .filter(m -> m.getStockCard().getId().equals(stockCardId))
+            .findFirst()
+            .ifPresent(
+                stockCardLineItem -> shipmentLineItemIdToStockCardLineItem.put(shipmentLineItemId, stockCardLineItem)));
 
     List<StockCardLineItemExtension> stockCardLineItemExtensions = Lists.newArrayList();
     shipmentLineItemIdToDtos.forEach((shipmentLineItemId, shipmentLineItemDtoList) -> {

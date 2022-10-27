@@ -61,13 +61,6 @@ public class RequisitionOrderSql {
       + "left join notification.notifications n on n.id = nm.notificationid "
       + LEFT_JOIN_USERS;
 
-  public static final String EMAIL_ATTACHMENT = "notification.email_attachment";
-
-  public static final String EMAIL_ATTACHMENT_QUERY = "select ea.* from notification.email_attachment ea "
-      + "left join notification.notification_messages nm on nm.id = ea.notificationmessageid "
-      + "left join notification.notifications n on n.id = nm.notificationid "
-      + LEFT_JOIN_USERS;
-
   public static final String REQUISITIONS = "requisition.requisitions";
 
   public static final String REQUISITIONS_QUERY = "select r.* from requisition.requisitions r "
@@ -462,7 +455,6 @@ public class RequisitionOrderSql {
     Map<String, String> requisitionOrderSql = new HashMap<>();
     requisitionOrderSql.put(NOTIFICATIONS, NOTIFICATIONS_QUERY);
     requisitionOrderSql.put(NOTIFICATION_MESSAGES, NOTIFICATION_MESSAGES_QUERY);
-    requisitionOrderSql.put(EMAIL_ATTACHMENT, EMAIL_ATTACHMENT_QUERY);
     requisitionOrderSql.put(REQUISITIONS, REQUISITIONS_QUERY);
     requisitionOrderSql.put(REQUISITIONS_PREVIOUS_REQUISITIONS, REQUISITIONS_PREVIOUS_REQUISITIONS_QUERY);
     requisitionOrderSql.put(REQUISITION_PERMISSION_STRINGS, REQUISITION_PERMISSION_STRINGS_QUERY);

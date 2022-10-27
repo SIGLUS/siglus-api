@@ -53,7 +53,7 @@ public class ProgramOrderableDtoDataBuilder implements DtoDataBuilder<ProgramOrd
         orderableCategoryDisplayOrder,
         fullSupply,
         displayOrder,
-        pricePerPack
+        pricePerPack.getAmount()
     );
   }
 

@@ -1095,9 +1095,8 @@ public class SiglusRequisitionService {
   }
 
   private void initiateRequisitionNumber(SiglusRequisitionDto siglusRequisitionDto) {
-    RequisitionExtension requisitionExtension = siglusRequisitionExtensionService
-        .createRequisitionExtension(siglusRequisitionDto.getId(),
-            siglusRequisitionDto.getEmergency(), siglusRequisitionDto.getFacilityId());
+    RequisitionExtension requisitionExtension = siglusRequisitionExtensionService.createRequisitionExtension(
+        siglusRequisitionDto);
     siglusRequisitionDto.setRequisitionNumber(
         siglusRequisitionExtensionService.formatRequisitionNumber(requisitionExtension));
   }

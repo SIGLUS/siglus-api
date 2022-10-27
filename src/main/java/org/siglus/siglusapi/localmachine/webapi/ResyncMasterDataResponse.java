@@ -13,14 +13,21 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.repository;
+package org.siglus.siglusapi.localmachine.webapi;
 
-import java.util.UUID;
-import org.siglus.siglusapi.domain.GeneratedNumber;
-import org.springframework.data.jpa.repository.JpaRepository;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-public interface GeneratedNumberRepository extends JpaRepository<GeneratedNumber, UUID> {
-
-  GeneratedNumber findByFacilityIdAndProgramIdAndYearAndEmergency(UUID facilityId, UUID programId, int year,
-      boolean emergency);
+@Builder
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class ResyncMasterDataResponse {
+  private Long snapshotOffsetId;
+  private Long maxOffsetId;
+  private String downloadUrl;
+  private String snapshotVersion;
+  private String maxFlywayVersion;
 }
