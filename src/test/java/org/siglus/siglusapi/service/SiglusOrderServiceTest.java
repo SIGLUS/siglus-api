@@ -437,15 +437,14 @@ public class SiglusOrderServiceTest {
   @Test
   public void shouldCreateNewOrderAndUpdateExistOrderWhenFistPartial() {
     // given
-    OrderObjectReferenceDto orderObjectReferenceDto = new OrderObjectReferenceDto(
-        UUID.randomUUID());
+    OrderObjectReferenceDto orderObjectReferenceDto = new OrderObjectReferenceDto(UUID.randomUUID());
     orderObjectReferenceDto.setExternalId(UUID.randomUUID());
-    orderObjectReferenceDto.setOrderCode("order_code");
+    orderObjectReferenceDto.setOrderCode("order_code/01");
     OrderLineItemDto lineItemDto = new OrderLineItemDto();
-    lineItemDto.setOrderedQuantity(Long.valueOf(50));
-    lineItemDto.setPartialFulfilledQuantity(Long.valueOf(20));
+    lineItemDto.setOrderedQuantity(50L);
+    lineItemDto.setPartialFulfilledQuantity(20L);
     lineItemDto.setOrderable(createOrderableDto(orderableId1));
-    orderObjectReferenceDto.setOrderLineItems(Arrays.asList(lineItemDto));
+    orderObjectReferenceDto.setOrderLineItems(Collections.singletonList(lineItemDto));
     OrderExternal firstExternal = OrderExternal.builder()
         .requisitionId(orderObjectReferenceDto.getExternalId()).build();
     firstExternal.setId(UUID.randomUUID());
@@ -453,28 +452,27 @@ public class SiglusOrderServiceTest {
         .requisitionId(orderObjectReferenceDto.getExternalId()).build();
     secondExternal.setId(UUID.randomUUID());
     when(orderExternalRepository.findOne(orderObjectReferenceDto.getExternalId())).thenReturn(null);
-    when(orderExternalRepository.save(anyList()))
-        .thenReturn(Arrays.asList(firstExternal, secondExternal));
+    when(orderExternalRepository.save(anyList())).thenReturn(Arrays.asList(firstExternal, secondExternal));
     Order order = new Order();
     when(orderRepository.findOne(orderObjectReferenceDto.getId())).thenReturn(order);
     BasicOrderDto basicOrderDto = new BasicOrderDto();
     basicOrderDto.setId(UUID.randomUUID());
     basicOrderDto.setExternalId(secondExternal.getId());
-    basicOrderDto.setOrderCode("order_code");
+    basicOrderDto.setOrderCode("order_code/01");
     when(orderRepository.findOne(basicOrderDto.getId())).thenReturn(order);
     when(orderController.batchCreateOrders(anyList(), any(OAuth2Authentication.class)))
-        .thenReturn(Arrays.asList(basicOrderDto));
+        .thenReturn(Collections.singletonList(basicOrderDto));
     when(orderController.getOrder(basicOrderDto.getId(), null))
         .thenReturn(createOrderDto());
 
     // when
-    siglusOrderService.createSubOrder(orderObjectReferenceDto, Arrays.asList(lineItemDto));
+    siglusOrderService.createSubOrder(orderObjectReferenceDto, Collections.singletonList(lineItemDto));
 
     // then
     verify(orderController).batchCreateOrders(orderDtoArgumentCaptor.capture(), any());
     OrderDto orderDto = orderDtoArgumentCaptor.getValue().get(0);
     verify(orderRepository, times(2)).save(any(Order.class));
-    assertEquals("order_code/2", orderDto.getOrderCode());
+    assertEquals("order_code/02", orderDto.getOrderCode());
     assertEquals(secondExternal.getId(), orderDto.getExternalId());
   }
 
@@ -976,7 +974,7 @@ public class SiglusOrderServiceTest {
     OrderExternal secondExternal = OrderExternal.builder().requisitionId(requisitionId).build();
     secondExternal.setId(UUID.randomUUID());
     orderObjectReferenceDto.setExternalId(secondExternal.getId());
-    orderObjectReferenceDto.setOrderCode("order_code/2");
+    orderObjectReferenceDto.setOrderCode("order_code/02");
     OrderLineItemDto lineItemDto = new OrderLineItemDto();
     lineItemDto.setOrderedQuantity(Long.valueOf(50));
     lineItemDto.setPartialFulfilledQuantity(Long.valueOf(20));
@@ -1000,7 +998,7 @@ public class SiglusOrderServiceTest {
     BasicOrderDto basicOrderDto = new BasicOrderDto();
     basicOrderDto.setId(UUID.randomUUID());
     basicOrderDto.setExternalId(thirdExternal.getId());
-    basicOrderDto.setOrderCode("order_code/2");
+    basicOrderDto.setOrderCode("order_code/02");
     when(orderRepository.findOne(basicOrderDto.getId())).thenReturn(order);
     when(orderController.batchCreateOrders(anyList(), any(OAuth2Authentication.class)))
         .thenReturn(Arrays.asList(basicOrderDto));
@@ -1014,7 +1012,7 @@ public class SiglusOrderServiceTest {
     verify(orderController).batchCreateOrders(orderDtoArgumentCaptor.capture(), any());
     OrderDto orderDto = orderDtoArgumentCaptor.getValue().get(0);
     verify(orderRepository, times(1)).save(any(Order.class));
-    assertEquals("order_code/3", orderDto.getOrderCode());
+    assertEquals("order_code/03", orderDto.getOrderCode());
     assertEquals(thirdExternal.getId(), orderDto.getExternalId());
   }
 

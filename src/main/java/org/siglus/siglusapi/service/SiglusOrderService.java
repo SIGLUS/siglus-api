@@ -537,18 +537,15 @@ public class SiglusOrderService {
       OrderExternal secondExternal = OrderExternal.builder().requisitionId(order.getExternalId()).build();
       log.info("save order external : {}", Arrays.asList(firstExternal, secondExternal));
       externals = orderExternalRepository.save(Arrays.asList(firstExternal, secondExternal));
-      updateExistOrderForSubOrder(order.getId(), externals.get(0).getId(),
-          order.getOrderCode().concat(SLASH + 1), order.getStatus());
-      order.setOrderCode(order.getOrderCode().concat(SLASH + 2));
+      updateExternalIdAndStatusForSubOrder(order.getId(), externals.get(0).getId(), order.getStatus());
     } else {
       externals = orderExternalRepository.findByRequisitionId(external.getRequisitionId());
       OrderExternal newExternal = OrderExternal.builder().requisitionId(external.getRequisitionId()).build();
       log.info("save new external : {}", newExternal);
       newExternal = orderExternalRepository.save(newExternal);
       externals.add(newExternal);
-      order.setOrderCode(replaceLast(order.getOrderCode(), SLASH + (externals.size() - 1),
-          SLASH + externals.size()));
     }
+    order.setOrderCode(increaseOrderNumber(order.getOrderCode()));
     return createNewOrder(order, orderLineItemDtos, externals);
   }
 
@@ -595,6 +592,11 @@ public class SiglusOrderService {
         .clientFacility(facilityIdToName.get(order.getReceivingFacilityId()))
         .supplierFacility(facilityIdToName.get(order.getSupplyingFacilityId()))
         .build();
+  }
+
+  private String increaseOrderNumber(String orderNumber) {
+    String[] split = orderNumber.split(SLASH);
+    return String.format("%s%02d", split[0] + SLASH, (Integer.parseInt(split[1]) + 1));
   }
 
   private Map<UUID, BigDecimal> getOrderableIdToSuggestedQuantity(Order order, List<ProcessingPeriod> periods) {
@@ -972,13 +974,11 @@ public class SiglusOrderService {
     return false;
   }
 
-  private void updateExistOrderForSubOrder(UUID orderId,
-      UUID externalId, String orderCode, OrderStatus orderStatus) {
+  private void updateExternalIdAndStatusForSubOrder(UUID orderId, UUID externalId, OrderStatus orderStatus) {
     Order originOrder = orderRepository.findOne(orderId);
     originOrder.setExternalId(externalId);
-    originOrder.setOrderCode(orderCode);
     originOrder.setStatus(orderStatus);
-    log.info("update exist order for subOrder: {}", originOrder);
+    log.info("update externalId and Status for subOrder: {}", originOrder);
     orderRepository.save(originOrder);
   }
 
@@ -1008,8 +1008,7 @@ public class SiglusOrderService {
         (OAuth2Authentication) SecurityContextHolder.getContext().getAuthentication());
     if (orderDtos.iterator().hasNext()) {
       UUID newOrderId = orderDtos.iterator().next().getId();
-      updateExistOrderForSubOrder(newOrderId, newOrder.getExternalId(),
-          newOrder.getOrderCode(), OrderStatus.PARTIALLY_FULFILLED);
+      updateExternalIdAndStatusForSubOrder(newOrderId, newOrder.getExternalId(), OrderStatus.PARTIALLY_FULFILLED);
       updateOrderExtension(orderLineItemDtos, orderDtos);
     }
     return orderDtos;
