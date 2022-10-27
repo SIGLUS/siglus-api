@@ -32,8 +32,9 @@ import org.openlmis.requisition.utils.AuthenticationHelper;
 import org.openlmis.requisition.web.RequisitionController;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionLineItemDto;
-import org.siglus.siglusapi.localmachine.event.requisition.web.RequisitionInternalApproveEmitter;
-import org.siglus.siglusapi.localmachine.event.requisition.web.RequisitionReleaseEmitter;
+import org.siglus.siglusapi.localmachine.event.requisition.web.approve.RequisitionInternalApproveEmitter;
+import org.siglus.siglusapi.localmachine.event.requisition.web.reject.RequisitionRejectEmitter;
+import org.siglus.siglusapi.localmachine.event.requisition.web.release.RequisitionReleaseEmitter;
 import org.siglus.siglusapi.service.SiglusNotificationService;
 import org.siglus.siglusapi.service.SiglusProcessingPeriodService;
 import org.siglus.siglusapi.service.SiglusRequisitionService;
@@ -67,6 +68,7 @@ public class SiglusRequisitionController {
   private final AuthenticationHelper authenticationHelper;
   private final RequisitionInternalApproveEmitter requisitionInternalApproveEmitter;
   private final RequisitionReleaseEmitter requisitionReleaseEmitter;
+  private final RequisitionRejectEmitter requisitionRejectEmitter;
 
   @PostMapping("/initiate")
   @ResponseStatus(HttpStatus.CREATED)
@@ -151,11 +153,15 @@ public class SiglusRequisitionController {
    * getNonSkippedFullSupplyRequisitionLineItems->filterLineItems
    */
   @PutMapping("/{id}/reject")
+  @Transactional
   public BasicRequisitionDto rejectRequisition(
       @PathVariable("id") UUID requisitionId,
       HttpServletRequest request,
       HttpServletResponse response) {
-    return siglusRequisitionService.rejectRequisition(requisitionId, request, response);
+    BasicRequisitionDto basicRequisitionDto = siglusRequisitionService.rejectRequisition(requisitionId, request,
+        response);
+    requisitionRejectEmitter.emit(requisitionId, basicRequisitionDto.getFacility().getId());
+    return basicRequisitionDto;
   }
 
   @PostMapping("/createLineItem")

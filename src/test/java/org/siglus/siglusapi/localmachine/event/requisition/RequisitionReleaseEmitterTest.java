@@ -31,8 +31,8 @@ import org.openlmis.requisition.repository.RequisitionRepository;
 import org.siglus.siglusapi.domain.RequisitionExtension;
 import org.siglus.siglusapi.localmachine.EventPublisher;
 import org.siglus.siglusapi.localmachine.event.EventCommonService;
-import org.siglus.siglusapi.localmachine.event.requisition.web.RequisitionReleaseEmitter;
-import org.siglus.siglusapi.localmachine.event.requisition.web.RequisitionReleaseEvent;
+import org.siglus.siglusapi.localmachine.event.requisition.web.release.RequisitionReleaseEmitter;
+import org.siglus.siglusapi.localmachine.event.requisition.web.release.RequisitionReleaseEvent;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.service.SiglusRequisitionExtensionService;
 

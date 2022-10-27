@@ -29,8 +29,8 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.repository.RequisitionRepository;
 import org.siglus.siglusapi.domain.RequisitionExtension;
-import org.siglus.siglusapi.localmachine.event.requisition.web.RequisitionReleaseEvent;
-import org.siglus.siglusapi.localmachine.event.requisition.web.RequisitionReleaseReplayer;
+import org.siglus.siglusapi.localmachine.event.requisition.web.release.RequisitionReleaseEvent;
+import org.siglus.siglusapi.localmachine.event.requisition.web.release.RequisitionReleaseReplayer;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 
 @RunWith(MockitoJUnitRunner.class)
