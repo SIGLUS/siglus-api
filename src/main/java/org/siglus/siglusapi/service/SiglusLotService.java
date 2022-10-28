@@ -20,7 +20,9 @@ import static org.apache.commons.lang.StringUtils.isBlank;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_LOT_ID_AND_CODE_SHOULD_EMPTY;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_TRADE_ITEM_IS_EMPTY;
 
+import com.google.common.collect.Lists;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -30,6 +32,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.openlmis.referencedata.dto.OrderableDto;
+import org.openlmis.referencedata.repository.LotRepository;
 import org.openlmis.stockmanagement.dto.StockEventDto;
 import org.openlmis.stockmanagement.dto.StockEventLineItemDto;
 import org.siglus.siglusapi.dto.LotDto;
@@ -50,11 +53,13 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class SiglusLotService {
 
+  public static final int SIZE = 50;
   private final SiglusOrderableReferenceDataService orderableReferenceDataService;
   private final SiglusAuthenticationHelper authenticationHelper;
   private final SiglusDateHelper dateHelper;
   private final SiglusLotReferenceDataService lotReferenceDataService;
   private final LotConflictService lotConflictService;
+  private final LotRepository lotRepository;
 
   /**
    * reason for create a new transaction:
@@ -84,6 +89,27 @@ public class SiglusLotService {
       UUID facilityId = getFacilityId(eventDto);
       fillLotIdIfNull(facilityId, orderable, eventLineItem);
     }
+  }
+
+  public List<LotDto> getLotList(List<UUID> lotIds) {
+    List<LotDto> lotDtos = new ArrayList<>();
+    List<List<UUID>> partitionList = Lists.partition(lotIds, SIZE);
+    partitionList.forEach(list -> {
+      Iterable<org.openlmis.referencedata.domain.Lot> lots = lotRepository.findAll(list);
+      lots.forEach(lot -> {
+            LotDto lotDto = LotDto.builder()
+                .lotCode(lot.getLotCode())
+                .expirationDate(lot.getExpirationDate())
+                .tradeItemId(lot.getTradeItem().getId())
+                .manufactureDate(lot.getManufactureDate())
+                .active(lot.isActive())
+                .build();
+            lotDto.setId(lot.getId());
+            lotDtos.add(lotDto);
+          }
+      );
+    });
+    return lotDtos;
   }
 
   private UUID getFacilityId(StockEventDto eventDto) {

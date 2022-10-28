@@ -16,11 +16,13 @@
 package org.siglus.siglusapi.localmachine.event.order.fulfillment;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.List;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.siglus.siglusapi.dto.LotDto;
 import org.siglus.siglusapi.localmachine.EventPayload;
 import org.siglus.siglusapi.web.request.ShipmentExtensionRequest;
 
@@ -33,17 +35,14 @@ public class OrderFulfillmentSyncedEvent {
   private UUID finalApproveUserId;
   private UUID convertToOrderUserId;
   private UUID fulfillUserId;
-
   private UUID supplierFacilityId;
-
-
   @JsonProperty("isSubOrder")
   private boolean isSubOrder;
   @JsonProperty("isWithLocation")
   private boolean isWithLocation;
   private ShipmentExtensionRequest shipmentExtensionRequest;
-
   private ConvertToOrderRequest convertToOrderRequest;
+  private List<LotDto> shippedLotList;
 
   public boolean isNeedConvertToOrder() {
     return convertToOrderRequest != null;

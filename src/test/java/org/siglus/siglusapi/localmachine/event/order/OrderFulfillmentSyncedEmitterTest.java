@@ -55,6 +55,7 @@ import org.siglus.siglusapi.localmachine.eventstore.PayloadSerializer;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.repository.SiglusStatusChangeRepository;
+import org.siglus.siglusapi.service.SiglusLotService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.web.android.FileBasedTest;
 import org.siglus.siglusapi.web.request.ShipmentExtensionRequest;
@@ -79,6 +80,8 @@ public class OrderFulfillmentSyncedEmitterTest extends FileBasedTest {
   private SiglusStatusChangeRepository siglusStatusChangeRepository;
   @Mock
   private RequisitionExtensionRepository requisitionExtensionRepository;
+  @Mock
+  private SiglusLotService siglusLotService;
 
   private final UUID requisitionId = UUID.randomUUID();
 
@@ -154,7 +157,8 @@ public class OrderFulfillmentSyncedEmitterTest extends FileBasedTest {
     reqExtension.setConferredBy("test1");
     reqExtension.setPreparedBy("test2");
     final OrderFulfillmentSyncedEvent event = new OrderFulfillmentSyncedEvent(UUID.randomUUID(), UUID.randomUUID(),
-        UUID.randomUUID(), UUID.randomUUID(), true, true, reqExtension, convertToOrderRequest);
+        UUID.randomUUID(), UUID.randomUUID(), true, true,
+        reqExtension, convertToOrderRequest, new ArrayList<>());
     // when
     int count = EventPayloadCheckUtils.checkEventSerializeChanges(event, OrderFulfillmentSyncedEvent.class);
     // then

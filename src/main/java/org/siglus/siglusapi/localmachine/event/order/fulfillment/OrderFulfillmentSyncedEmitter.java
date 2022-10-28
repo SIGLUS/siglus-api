@@ -19,7 +19,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.collections.CollectionUtils;
+import org.openlmis.fulfillment.domain.ShipmentLineItem;
 import org.openlmis.fulfillment.repository.OrderRepository;
 import org.openlmis.fulfillment.web.shipment.ShipmentDto;
 import org.openlmis.fulfillment.web.util.OrderObjectReferenceDto;
@@ -30,10 +33,12 @@ import org.openlmis.requisition.domain.requisition.StatusMessage;
 import org.openlmis.requisition.repository.RequisitionRepository;
 import org.siglus.common.repository.OrderExternalRepository;
 import org.siglus.siglusapi.domain.RequisitionExtension;
+import org.siglus.siglusapi.dto.LotDto;
 import org.siglus.siglusapi.localmachine.EventPublisher;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.repository.SiglusStatusChangeRepository;
+import org.siglus.siglusapi.service.SiglusLotService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.web.request.ShipmentExtensionRequest;
 import org.springframework.beans.BeanUtils;
@@ -51,6 +56,7 @@ public class OrderFulfillmentSyncedEmitter {
   private final SiglusStatusChangeRepository siglusStatusChangeRepository;
   private final RequisitionExtensionRepository requisitionExtensionRepository;
   private final OrderExternalRepository orderExternalRepository;
+  private final SiglusLotService siglusLotService;
 
   public OrderFulfillmentSyncedEvent emit(boolean isWithLocation, boolean isSubOrder,
       ShipmentExtensionRequest shipmentExtensionRequest) {
@@ -73,11 +79,21 @@ public class OrderFulfillmentSyncedEmitter {
         .isSubOrder(isSubOrder)
         .shipmentExtensionRequest(shipmentExtensionRequest)
         .convertToOrderRequest(getConvertToOrderRequest(shipmentDto, requisitionExtension, finalApprovedStatusChange))
+        .shippedLotList(getAllShippedLots(shipmentExtensionRequest.getShipment()))
         .build();
     eventPublisher.emitGroupEvent(
         requisitionExtension.getRequisitionNumberPrefix() + requisitionExtension.getRequisitionNumber(),
         shipmentDto.getOrder().getFacility().getId(), event);
     return event;
+  }
+
+  private List<LotDto> getAllShippedLots(ShipmentDto shipment) {
+    if (CollectionUtils.isEmpty(shipment.getLineItems())) {
+      return new ArrayList<>();
+    }
+    List<UUID> lotIds = shipment.getLineItems().stream()
+        .map(ShipmentLineItem.Importer::getLotId).collect(Collectors.toList());
+    return siglusLotService.getLotList(new ArrayList<>(lotIds));
   }
 
   private ConvertToOrderRequest getConvertToOrderRequest(ShipmentDto shipmentDto,
