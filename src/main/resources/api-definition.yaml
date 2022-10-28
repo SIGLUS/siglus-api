@@ -4394,4 +4394,9 @@ traits:
             body:
               application/json:
                 schema: localizedMessage
-
+    /machineType:
+      get:
+        is: [ secured ]
+        responses:
+          200:
+            description: get current machine type
