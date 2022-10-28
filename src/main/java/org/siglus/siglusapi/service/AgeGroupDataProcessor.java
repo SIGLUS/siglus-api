@@ -27,7 +27,6 @@ import org.siglus.siglusapi.domain.UsageTemplateColumnSection;
 import org.siglus.siglusapi.dto.AgeGroupServiceDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 import org.siglus.siglusapi.repository.AgeGroupLineItemRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -38,11 +37,8 @@ public class AgeGroupDataProcessor implements UsageReportDataProcessor {
   private static final String SERVICE = "service";
   private static final String GROUP = "group";
 
-  @Autowired
-  private AgeGroupLineItemRepository ageGroupLineItemRepository;
-
-  @Autowired
-  private SiglusUsageReportService siglusUsageReportService;
+  private final AgeGroupLineItemRepository ageGroupLineItemRepository;
+  private final SiglusUsageReportService siglusUsageReportService;
 
   @Override
   public void doInitiate(SiglusRequisitionDto siglusRequisitionDto,
@@ -50,8 +46,7 @@ public class AgeGroupDataProcessor implements UsageReportDataProcessor {
     List<AgeGroupLineItem> ageGroupLineItems =
             createAgeGroupLineItems(siglusRequisitionDto, templateColumnSections);
 
-    List<AgeGroupLineItem> saved =
-            ageGroupLineItemRepository.save(ageGroupLineItems);
+    List<AgeGroupLineItem> saved = ageGroupLineItemRepository.save(ageGroupLineItems);
 
     List<AgeGroupServiceDto> serviceDtos = AgeGroupServiceDto.from(saved);
     siglusRequisitionDto.setAgeGroupLineItems(serviceDtos);
@@ -82,21 +77,17 @@ public class AgeGroupDataProcessor implements UsageReportDataProcessor {
     return !siglusRequisitionDto.getTemplate().getExtension().isEnableAgeGroup();
   }
 
-  private List<AgeGroupLineItem> createAgeGroupLineItems(
-          SiglusRequisitionDto siglusRequisitionDto,
-          List<UsageTemplateColumnSection> templateColumnSections) {
+  private List<AgeGroupLineItem> createAgeGroupLineItems(SiglusRequisitionDto siglusRequisitionDto,
+      List<UsageTemplateColumnSection> templateColumnSections) {
     UsageTemplateColumnSection service = siglusUsageReportService
             .getColumnSection(templateColumnSections, UsageCategory.AGEGROUP, SERVICE);
     UsageTemplateColumnSection group = siglusUsageReportService
             .getColumnSection(templateColumnSections, UsageCategory.AGEGROUP, GROUP);
-
     List<AgeGroupLineItem> ageGroupLineItems = new ArrayList<>();
-
     for (UsageTemplateColumn templateServiceColumn : service.getColumns()) {
       if (!Boolean.TRUE.equals(templateServiceColumn.getIsDisplayed())) {
         continue;
       }
-
       for (UsageTemplateColumn templateGroupColumn : group.getColumns()) {
         if (!Boolean.TRUE.equals(templateGroupColumn.getIsDisplayed())) {
           continue;

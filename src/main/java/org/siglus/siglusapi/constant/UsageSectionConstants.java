@@ -333,6 +333,16 @@ public class UsageSectionConstants {
     public static final String TABLE_2_COLUMN_2_VALUE = "criança < 25Kg";
     public static final String TABLE_2_COLUMN_3_KEY = "table_age_group_service_key_child_more_than_25kg";
     public static final String TABLE_2_COLUMN_3_VALUE = "criança > 25Kg";
+
+    public static final Set<Pair<String, String>> MMTB_AGE_GROUP_TABLE_1_COLUMNS = Sets.asSet(
+        Pair.of(TABLE_1_COLUMN_1_KEY, TABLE_1_COLUMN_1_VALUE),
+        Pair.of(TABLE_1_COLUMN_2_KEY, TABLE_1_COLUMN_2_VALUE)
+    );
+    public static final Set<Pair<String, String>> MMTB_AGE_GROUP_TABLE_2_COLUMNS = Sets.asSet(
+        Pair.of(TABLE_2_COLUMN_1_KEY, TABLE_2_COLUMN_1_VALUE),
+        Pair.of(TABLE_2_COLUMN_2_KEY, TABLE_2_COLUMN_2_VALUE),
+        Pair.of(TABLE_2_COLUMN_3_KEY, TABLE_2_COLUMN_3_VALUE)
+    );
   }
 
 }

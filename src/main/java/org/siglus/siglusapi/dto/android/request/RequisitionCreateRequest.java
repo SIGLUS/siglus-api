@@ -89,6 +89,9 @@ public class RequisitionCreateRequest {
   @Valid
   private List<TestConsumptionLineItemRequest> testConsumptionLineItems;
 
+  @Valid
+  private List<AgeGroupLineItemRequest> ageGroupLineItems;
+
   public String getSyncUpHash(UserDto user) {
     return HashEncoder.hash(actualStartDate.toString() + actualEndDate + clientSubmittedTime
         + user.getId() + user.getHomeFacilityId() + programCode + emergency);
