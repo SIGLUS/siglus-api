@@ -16,7 +16,6 @@
 package org.siglus.siglusapi.exception;
 
 import org.siglus.siglusapi.dto.Message;
-import org.siglus.siglusapi.exception.BaseMessageException;
 
 /**
  * Exception for indicating that some input or constraint is invalid.  This should result in a BAD REQUEST api

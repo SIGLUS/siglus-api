@@ -18,7 +18,6 @@ package org.siglus.siglusapi.localmachine;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.time.ZonedDateTime;
 import java.util.UUID;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
