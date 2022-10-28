@@ -41,7 +41,7 @@ import lombok.Data;
             + "      then concat((case\n"
             + "      when sclir2.reasontype = 'DEBIT' then '[Ajustes Negativos] '\n"
             + "      when sclir2.reasonType = 'CREDIT' then '[Ajustes Positivos] '\n"
-            + "      end), sclir2.name, ': ', pilie.reasonfreetext)\n"
+            + "      end), sclir2.name, ': ', scli.reasonfreetext)\n"
             + "    when scli.sourceid is null\n "
             + "    and scli.destinationid is null\n "
             + "    and scli.reasonid is null then 'Inventário físico'\n"
