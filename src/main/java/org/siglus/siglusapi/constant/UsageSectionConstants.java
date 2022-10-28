@@ -21,6 +21,7 @@ import org.javers.common.collections.Sets;
 import org.springframework.data.util.Pair;
 
 @NoArgsConstructor
+@SuppressWarnings("PMD.AvoidDuplicateLiterals")
 public class UsageSectionConstants {
 
   @NoArgsConstructor

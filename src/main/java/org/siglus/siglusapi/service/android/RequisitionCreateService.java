@@ -534,9 +534,6 @@ public class RequisitionCreateService {
   }
 
   private void buildMmtbPatientLineItem(PatientGroupDto patientGroupDto, PatientLineItemsRequest patientRequest) {
-    if (patientGroupDto == null) {
-      throw new NotFoundException("patientGroupDto not found");
-    }
     List<PatientLineItemColumnRequest> patientRequestLineItems = patientRequest.getColumns();
     Set<Pair<String, String>> tableColumnSet = MMTB_PATIENT_TABLE_TO_COLUMN.stream()
         .filter(item -> item.getFirst().equals(patientGroupDto.getName())).findFirst()
@@ -622,9 +619,6 @@ public class RequisitionCreateService {
   }
 
   private void buildPatientGroupDtoData(PatientGroupDto patientGroupDto, PatientLineItemsRequest patientRequest) {
-    if (patientGroupDto == null) {
-      throw new NotFoundException("patientGroupDto not found");
-    }
     Map<String, PatientColumnDto> patientGroupDtoColumns = patientGroupDto.getColumns();
     List<PatientLineItemColumnRequest> patientRequestColumns = patientRequest.getColumns();
     patientRequestColumns.forEach(k -> {
@@ -713,9 +707,6 @@ public class RequisitionCreateService {
 
   private void buildRegimenSummaryPatientsAndCommunity(RegimenSummaryLineDto summaryLineDto,
       RegimenLineItemRequest summaryRequest, RegimenSummaryLineDto totalDto) {
-    if (summaryLineDto == null) {
-      throw new NotFoundException("summaryLineDto not found");
-    }
     Map<String, RegimenColumnDto> columns = summaryLineDto.getColumns();
     columns.get(COLUMN_NAME_PATIENT).setValue(summaryRequest.getPatientsOnTreatment());
     columns.get(COLUMN_NAME_COMMUNITY).setValue(summaryRequest.getComunitaryPharmacy());
