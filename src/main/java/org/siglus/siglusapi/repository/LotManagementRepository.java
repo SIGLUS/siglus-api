@@ -29,7 +29,7 @@ public class LotManagementRepository {
   // set expired lots which are expired and SOH = 0 in all facilities for more than 6 months to inactive
   private static final String UPDATE_SQL = "UPDATE referencedata.lots SET active = FALSE\n"
       + "WHERE id IN (\n"
-      + "        SELECT lotid\n"
+      + "        SELECT lotid\n "
       + "        FROM (\n"
       + "            SELECT l.id lotid, l.lotcode, l.expirationdate, sum(csoh.stockonhand) totalstockonhand\n"
       + "            FROM referencedata.lots l\n"
@@ -45,7 +45,7 @@ public class LotManagementRepository {
 
   private static final String SQL_FROM = "FROM referencedata.lots\n"
       + "WHERE id NOT IN (\n"
-      + "        SELECT lotid\n"
+      + "        SELECT lotid\n "
       + "        FROM stockmanagement.stock_cards\n"
       + "        WHERE lotid IS NOT NULL)\n"
       + "    AND id NOT IN (\n"
