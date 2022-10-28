@@ -31,6 +31,11 @@ import static org.siglus.common.constant.KitConstants.ALL_KITS;
 import static org.siglus.common.constant.KitConstants.KIT_26A01;
 import static org.siglus.common.constant.KitConstants.KIT_26A02;
 import static org.siglus.siglusapi.constant.AndroidConstants.SCHEDULE_CODE;
+import static org.siglus.siglusapi.constant.ProgramConstants.MALARIA_PROGRAM_CODE;
+import static org.siglus.siglusapi.constant.ProgramConstants.MTB_PROGRAM_CODE;
+import static org.siglus.siglusapi.constant.ProgramConstants.RAPIDTEST_PROGRAM_CODE;
+import static org.siglus.siglusapi.constant.ProgramConstants.TARV_PROGRAM_CODE;
+import static org.siglus.siglusapi.constant.ProgramConstants.VIA_PROGRAM_CODE;
 import static org.siglus.siglusapi.constant.UsageSectionConstants.ConsultationNumberLineItems.COLUMN_NAME;
 import static org.siglus.siglusapi.constant.UsageSectionConstants.ConsultationNumberLineItems.GROUP_NAME;
 import static org.siglus.siglusapi.constant.UsageSectionConstants.KitUsageLineItems.COLLECTION_KIT_OPENED;
@@ -134,8 +139,8 @@ import org.siglus.siglusapi.dto.TestConsumptionProjectDto;
 import org.siglus.siglusapi.dto.TestConsumptionServiceDto;
 import org.siglus.siglusapi.dto.UsageInformationServiceDto;
 import org.siglus.siglusapi.dto.UserDto;
-import org.siglus.siglusapi.dto.android.enumeration.PatientLineItemName;
-import org.siglus.siglusapi.dto.android.enumeration.PatientTableName;
+import org.siglus.siglusapi.dto.android.enumeration.MmiaPatientTableKeyValue;
+import org.siglus.siglusapi.dto.android.enumeration.MmiaPatientTableColumnKeyValue;
 import org.siglus.siglusapi.dto.android.enumeration.RegimenSummaryCode;
 import org.siglus.siglusapi.dto.android.enumeration.TestOutcome;
 import org.siglus.siglusapi.dto.android.enumeration.TestProject;
@@ -266,7 +271,7 @@ public class RequisitionCreateService {
     profiler.start("build req extension");
     buildRequisitionExtension(requisition, request, profiler.startNested("build req extension"));
     buildRequisitionLineItemsExtension(requisition, request, profiler.startNested("build line extensions"));
-    buildRequisitionUsageSections(requisition, request, programId, profiler.startNested("build usage sections"));
+    buildRequisitionUsageSections(requisition, request, programId, programCode);
     profiler.stop().log();
     return requisition;
   }
@@ -519,8 +524,7 @@ public class RequisitionCreateService {
   }
 
   private void buildRequisitionUsageSections(Requisition requisition, RequisitionCreateRequest request,
-      UUID programId, Profiler profiler) {
-    profiler.start("new instance");
+      UUID programId, String programCode) {
     RequisitionV2Dto dto = new RequisitionV2Dto();
     requisition.export(dto);
     BasicRequisitionTemplateDto templateDto = BasicRequisitionTemplateDto.newInstance(requisition.getTemplate());
@@ -530,27 +534,30 @@ public class RequisitionCreateService {
     dto.setProcessingPeriod(new ObjectReferenceDto(requisition.getProcessingPeriodId(), "", PROCESSING_PERIODS));
     dto.setProgram(new ObjectReferenceDto(requisition.getProgramId(), "", PROGRAMS));
     buildAvailableProducts(dto, requisition);
-    profiler.start("init usage report");
     SiglusRequisitionDto requisitionDto = siglusUsageReportService.initiateUsageReport(dto);
-    profiler.start("buildConsultationNumber");
-    buildConsultationNumber(requisitionDto, request);
-    profiler.start("buildRequisitionKitUsage");
-    buildRequisitionKitUsage(requisitionDto, request);
-    profiler.start("updateRegimenLineItems");
-    updateRegimenLineItems(requisitionDto, programId, request);
-    profiler.start("updateRegimenSummaryLineItems");
-    updateRegimenSummaryLineItems(requisitionDto, request);
-    profiler.start("updatePatientLineItems");
-    updatePatientLineItems(requisitionDto, request);
-    profiler.start("updateUsageInformationLineItems");
-    updateUsageInformationLineItems(requisitionDto, request);
-    profiler.start("updateTestConsumptionLineItems");
-    updateTestConsumptionLineItems(requisitionDto, request);
-    profiler.start("save usage report");
+    if (VIA_PROGRAM_CODE.equals(programCode)) {
+      buildConsultationNumber(requisitionDto, request);
+      buildRequisitionKitUsage(requisitionDto, request);
+    } else if (TARV_PROGRAM_CODE.equals(programCode)) {
+      updateRegimenLineItems(requisitionDto, programId, request);
+      updateRegimenSummaryLineItems(requisitionDto, request);
+      updateMmiaPatientLineItems(requisitionDto, request);
+    } else if (MALARIA_PROGRAM_CODE.equals(programCode)) {
+      updateUsageInformationLineItems(requisitionDto, request);
+    } else if (RAPIDTEST_PROGRAM_CODE.equals(programCode)) {
+      updateTestConsumptionLineItems(requisitionDto, request);
+    } else if (MTB_PROGRAM_CODE.equals(programCode)) {
+      updateMmtbPatientLineItems(requisitionDto, request);
+    }
     siglusUsageReportService.saveUsageReport(requisitionDto, dto);
   }
 
-  private void updatePatientLineItems(SiglusRequisitionDto requisitionDto, RequisitionCreateRequest request) {
+  private void updateMmtbPatientLineItems(SiglusRequisitionDto requisitionDto, RequisitionCreateRequest request) {
+    // TODO
+
+  }
+
+  private void updateMmiaPatientLineItems(SiglusRequisitionDto requisitionDto, RequisitionCreateRequest request) {
     if (isEmpty(request.getPatientLineItems())) {
       return;
     }
@@ -560,7 +567,7 @@ public class RequisitionCreateService {
     splitTableDispensedPatientData(patientLineItemsRequests);
     patientLineItemsRequests.forEach(patientRequest ->
         buildPatientGroupDtoData(
-            patientNameToPatientGroupDto.get(PatientLineItemName.findValueByKey(patientRequest.getName())),
+            patientNameToPatientGroupDto.get(MmiaPatientTableKeyValue.findValueByKey(patientRequest.getName())),
             patientRequest)
     );
     calculatePatientDispensedTotal(patientNameToPatientGroupDto);
@@ -599,7 +606,7 @@ public class RequisitionCreateService {
     List<PatientLineItemColumnRequest> patientRequestColumns = patientRequest.getColumns();
     patientRequestColumns.forEach(k -> {
       String name = patientGroupDto.getName();
-      String patientGroupDtoKey = PatientTableName.valueOf(name.toUpperCase()).findValueByKey(k.getName());
+      String patientGroupDtoKey = MmiaPatientTableColumnKeyValue.valueOf(name.toUpperCase()).findValueByKey(k.getName());
       PatientColumnDto patientColumnDto = patientGroupDtoColumns.get(patientGroupDtoKey);
       patientColumnDto.setValue(k.getValue());
     });

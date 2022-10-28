@@ -20,160 +20,160 @@ import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 @Getter
-public enum PatientTableName {
+public enum MmiaPatientTableColumnKeyValue {
 
   PATIENTTYPE() {
     @Override
     public String findKeyByValue(String columnName) {
-      return PatientType.findKeyByValue(columnName);
+      return MmiaPatientTable1.findKeyByValue(columnName);
     }
 
     @Override
     public String findValueByKey(String key) {
-      return PatientType.findValueByKey(key);
+      return MmiaPatientTable1.findValueByKey(key);
     }
   },
   NEWSECTION0() {
     @Override
     public String findKeyByValue(String columnName) {
-      return NewSection0.findKeyByValue(columnName);
+      return MmiaPatientTable2.findKeyByValue(columnName);
     }
 
     @Override
     public String findValueByKey(String key) {
-      return NewSection0.findValueByKey(key);
+      return MmiaPatientTable2.findValueByKey(key);
     }
   },
   NEWSECTION1() {
     @Override
     public String findKeyByValue(String columnName) {
-      return NewSection1.findKeyByValue(columnName);
+      return MmiaPatientTable3.findKeyByValue(columnName);
     }
 
     @Override
     public String findValueByKey(String key) {
-      return NewSection1.findValueByKey(key);
-    }
-  },
-  NEWSECTION2() {
-    @Override
-    public String findKeyByValue(String columnName) {
-      return NewSection2.findKeyByValue(columnName);
-    }
-
-    @Override
-    public String findValueByKey(String key) {
-      return NewSection2.findValueByKey(key);
-    }
-  },
-  NEWSECTION3() {
-    @Override
-    public String findKeyByValue(String columnName) {
-      return NewSection3.findKeyByValue(columnName);
-    }
-
-    @Override
-    public String findValueByKey(String key) {
-      return NewSection3.findValueByKey(key);
-    }
-  },
-  NEWSECTION4() {
-    @Override
-    public String findKeyByValue(String columnName) {
-      return NewSection4.findKeyByValue(columnName);
-    }
-
-    @Override
-    public String findValueByKey(String key) {
-      return NewSection4.findValueByKey(key);
+      return MmiaPatientTable3.findValueByKey(key);
     }
   },
   NEWSECTION8() {
     @Override
     public String findKeyByValue(String columnName) {
-      return NewSection8.findKeyByValue(columnName);
+      return MmiaPatientTable4.findKeyByValue(columnName);
     }
 
     @Override
     public String findValueByKey(String key) {
-      return NewSection8.findValueByKey(key);
+      return MmiaPatientTable4.findValueByKey(key);
     }
   },
+  NEWSECTION2() {
+    @Override
+    public String findKeyByValue(String columnName) {
+      return MmiaPatientTable5.findKeyByValue(columnName);
+    }
 
+    @Override
+    public String findValueByKey(String key) {
+      return MmiaPatientTable5.findValueByKey(key);
+    }
+  },
+  NEWSECTION3() {
+    @Override
+    public String findKeyByValue(String columnName) {
+      return MmiaPatientTable6.findKeyByValue(columnName);
+    }
+
+    @Override
+    public String findValueByKey(String key) {
+      return MmiaPatientTable6.findValueByKey(key);
+    }
+  },
+  NEWSECTION4() {
+    @Override
+    public String findKeyByValue(String columnName) {
+      return MmiaPatientTable7.findKeyByValue(columnName);
+    }
+
+    @Override
+    public String findValueByKey(String key) {
+      return MmiaPatientTable7.findValueByKey(key);
+    }
+  },
   TABLE_ARVT_KEY() {
     @Override
     public String findKeyByValue(String columnName) {
-      return PatientType.findKeyByValue(columnName);
+      return MmiaPatientTable1.findKeyByValue(columnName);
     }
 
     @Override
     public String findValueByKey(String key) {
-      return PatientType.findValueByKey(key);
+      return MmiaPatientTable1.findValueByKey(key);
     }
   },
   TABLE_PATIENTS_KEY() {
     @Override
     public String findKeyByValue(String columnName) {
-      return NewSection0.findKeyByValue(columnName);
+      return MmiaPatientTable2.findKeyByValue(columnName);
     }
 
     @Override
     public String findValueByKey(String key) {
-      return NewSection0.findValueByKey(key);
+      return MmiaPatientTable2.findValueByKey(key);
     }
   },
   TABLE_PROPHYLAXY_KEY() {
     @Override
     public String findKeyByValue(String columnName) {
-      return NewSection1.findKeyByValue(columnName);
+      return MmiaPatientTable3.findKeyByValue(columnName);
     }
 
     @Override
     public String findValueByKey(String key) {
-      return NewSection1.findValueByKey(key);
+      return MmiaPatientTable3.findValueByKey(key);
     }
-  }, TABLE_TOTAL_KEY() {
+  },
+  TABLE_TOTAL_KEY() {
     @Override
     public String findKeyByValue(String columnName) {
-      return NewSection8.findKeyByValue(columnName);
+      return MmiaPatientTable4.findKeyByValue(columnName);
     }
 
     @Override
     public String findValueByKey(String key) {
-      return NewSection8.findValueByKey(key);
+      return MmiaPatientTable4.findValueByKey(key);
     }
   },
   TABLE_DISPENSED_DS_KEY() {
     @Override
     public String findKeyByValue(String columnName) {
-      return NewSection2.findKeyByValue(columnName);
+      return MmiaPatientTable5.findKeyByValue(columnName);
     }
 
     @Override
     public String findValueByKey(String key) {
-      return NewSection2.findValueByKey(key);
+      return MmiaPatientTable5.findValueByKey(key);
     }
   },
   TABLE_DISPENSED_DT_KEY() {
     @Override
     public String findKeyByValue(String columnName) {
-      return NewSection3.findKeyByValue(columnName);
+      return MmiaPatientTable6.findKeyByValue(columnName);
     }
 
     @Override
     public String findValueByKey(String key) {
-      return NewSection3.findValueByKey(key);
+      return MmiaPatientTable6.findValueByKey(key);
     }
   },
   TABLE_DISPENSED_DM_KEY() {
     @Override
     public String findKeyByValue(String columnName) {
-      return NewSection4.findKeyByValue(columnName);
+      return MmiaPatientTable7.findKeyByValue(columnName);
     }
 
     @Override
     public String findValueByKey(String key) {
-      return NewSection4.findValueByKey(key);
+      return MmiaPatientTable7.findValueByKey(key);
     }
   };
 

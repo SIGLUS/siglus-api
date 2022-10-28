@@ -34,7 +34,7 @@ import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 @Getter
-public enum NewSection2 {
+public enum MmiaPatientTable5 {
   DS5(DISPENSED_DS5, NEW_COLUMN),
   DS4(DISPENSED_DS4, NEW_COLUMN_0),
   DS3(DISPENSED_DS3, NEW_COLUMN_1),
@@ -52,7 +52,7 @@ public enum NewSection2 {
     }
     return Arrays.stream(values())
         .filter(e -> e.value.equals(value))
-        .map(NewSection2::getKey)
+        .map(MmiaPatientTable5::getKey)
         .findFirst().orElse(null);
   }
 
@@ -62,7 +62,7 @@ public enum NewSection2 {
     }
     return Arrays.stream(values())
         .filter(e -> e.key.equals(key))
-        .map(NewSection2::getValue)
+        .map(MmiaPatientTable5::getValue)
         .findFirst().orElse(null);
   }
 }

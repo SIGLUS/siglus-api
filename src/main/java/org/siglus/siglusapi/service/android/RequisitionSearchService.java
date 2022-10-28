@@ -69,8 +69,8 @@ import org.siglus.siglusapi.dto.PatientGroupDto;
 import org.siglus.siglusapi.dto.RegimenDto;
 import org.siglus.siglusapi.dto.UsageInformationInformationDto;
 import org.siglus.siglusapi.dto.UsageInformationServiceDto;
-import org.siglus.siglusapi.dto.android.enumeration.PatientLineItemName;
-import org.siglus.siglusapi.dto.android.enumeration.PatientTableName;
+import org.siglus.siglusapi.dto.android.enumeration.MmiaPatientTableKeyValue;
+import org.siglus.siglusapi.dto.android.enumeration.MmiaPatientTableColumnKeyValue;
 import org.siglus.siglusapi.dto.android.enumeration.TestOutcome;
 import org.siglus.siglusapi.dto.android.enumeration.TestProject;
 import org.siglus.siglusapi.dto.android.enumeration.TestService;
@@ -246,7 +246,7 @@ public class RequisitionSearchService {
   private List<PatientLineItemsRequest> buildPatientLineItemRequestList(List<PatientLineItem> patientLineItems) {
     List<PatientGroupDto> patientGroupDtos = patientLineItemMapper.from(patientLineItems);
     List<PatientLineItemsRequest> list = patientGroupDtos.stream()
-        .filter(t -> !StringUtils.isEmpty(PatientLineItemName.findKeyByValue(t.getName())))
+        .filter(t -> !StringUtils.isEmpty(MmiaPatientTableKeyValue.findKeyByValue(t.getName())))
         .map(this::buildPatientLineItemRequest)
         .collect(Collectors.toList());
     List<PatientLineItemsRequest> despenseList = list.stream()
@@ -261,7 +261,7 @@ public class RequisitionSearchService {
 
   private PatientLineItemsRequest buildPatientLineItemRequest(PatientGroupDto patientGroupDto) {
     List<PatientLineItemColumnRequest> columns = newArrayList();
-    String name = PatientLineItemName.findKeyByValue(patientGroupDto.getName());
+    String name = MmiaPatientTableKeyValue.findKeyByValue(patientGroupDto.getName());
     Map<String, PatientColumnDto> map = patientGroupDto.getColumns();
     map.forEach((colName, patientColumnDto) -> {
       if (FieldConstants.TOTAL.equals(colName) && !TABLE_PROPHYLAXY_KEY.equals(name)) {
@@ -292,7 +292,7 @@ public class RequisitionSearchService {
   }
 
   private String getRealColumnName(String tableName, String columnName) {
-    return PatientTableName.valueOf(tableName.toUpperCase()).findKeyByValue(columnName);
+    return MmiaPatientTableColumnKeyValue.valueOf(tableName.toUpperCase()).findKeyByValue(columnName);
   }
 
   private List<UsageInformationLineItemRequest> getUsageInformationLineItems(Map<UUID, String> orderableIdToCode,

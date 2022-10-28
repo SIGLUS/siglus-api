@@ -78,34 +78,39 @@ public class UsageSectionConstants {
     public static final String NEW_SECTION_7 = "newSection7";
     public static final String NEW_SECTION_8 = "newSection8";
 
-    public static final String TABLE_ARVT_KEY = "table_arvt_key";
-    public static final String TABLE_PATIENTS_KEY = "table_patients_key";
-    public static final String TABLE_PROPHYLAXY_KEY = "table_prophylaxy_key";
-    public static final String TABLE_TOTAL_KEY = "table_total_key";
-    public static final String TABLE_DISPENSED_DS_KEY = "table_dispensed_ds_key";
-    public static final String TABLE_DISPENSED_DT_KEY = "table_dispensed_dt_key";
-    public static final String TABLE_DISPENSED_DM_KEY = "table_dispensed_dm_key";
+    // MMIA Patient data section: 7 tables, last 3 tables will be auto calculated
+    public static final String TABLE_ARVT_KEY = "table_arvt_key"; // table 1: "patientType" section
+    public static final String TABLE_PATIENTS_KEY = "table_patients_key"; // table 2: "newSection0" section
+    public static final String TABLE_PROPHYLAXY_KEY = "table_prophylaxy_key"; // table 3: "newSection1" section
+    public static final String TABLE_TOTAL_KEY = "table_total_key"; // table 4: "newSection8" section
+    public static final String TABLE_DISPENSED_DS_KEY = "table_dispensed_ds_key"; // table 5: "newSection2" section
+    public static final String TABLE_DISPENSED_DT_KEY = "table_dispensed_dt_key"; // table 6: "newSection3" section
+    public static final String TABLE_DISPENSED_DM_KEY = "table_dispensed_dm_key"; // table 7: "newSection4" section
 
+    // MMIA Patient data section table 1: Tipo de doentes em TARV
     public static final String TABLE_TRAV_LABEL_NEW_KEY = "table_trav_label_new_key";
     public static final String TABLE_TRAV_LABEL_MAINTENANCE_KEY = "table_trav_label_maintenance_key";
     public static final String TABLE_TRAV_LABEL_TRANSIT_KEY = "table_trav_label_transit_key";
     public static final String TABLE_TRAV_LABEL_TRANSFERS_KEY = "table_trav_label_transfers_key";
     public static final String TABLE_TRAV_LABEL_ALTERATION_KEY = "table_trav_label_alteration_key";
 
+    // MMIA Patient data section table 2: Faixa Etária dos Pacientes TARV
     public static final String TABLE_PATIENTS_ADULTS_KEY = "table_patients_adults_key";
     public static final String TABLE_PATIENTS_0TO4_KEY = "table_patients_0to4_key";
     public static final String TABLE_PATIENTS_5TO9_KEY = "table_patients_5to9_key";
     public static final String TABLE_PATIENTS_10TO14_KEY = "table_patients_10to14_key";
 
+    // MMIA Patient data section table 3: Profilaxia
     public static final String TABLE_PROPHYLAXIS_PPE_KEY = "table_prophylaxis_ppe_key";
     public static final String TABLE_PROPHYLAXIS_PREP_KEY = "table_prophylaxis_prep_key";
     public static final String TABLE_PROPHYLAXIS_CHILD_KEY = "table_prophylaxis_child_key";
     public static final String TABLE_PROPHYLAXIS_TOTAL_KEY = "table_prophylaxis_total_key";
 
+    // MMIA Patient data section table 4: Total global
     public static final String TABLE_TOTAL_PATIENT_KEY = "table_total_patient_key";
     public static final String TABLE_TOTAL_MONTH_KEY = "table_total_month_key";
 
-
+    // MMIA Patient data section table 5: Tipo de dispensa - Dispensa para 6 Meses (DS)
     public static final String DISPENSED_DS5 = "dispensed_ds5";
     public static final String DISPENSED_DS4 = "dispensed_ds4";
     public static final String DISPENSED_DS3 = "dispensed_ds3";
@@ -113,10 +118,12 @@ public class UsageSectionConstants {
     public static final String DISPENSED_DS1 = "dispensed_ds1";
     public static final String DISPENSED_DS = "dispensed_ds";
 
+    // MMIA Patient data section table 6: Tipo de dispensa - Dispensa para 3 Meses (DT)
     public static final String DISPENSED_DT2 = "dispensed_dt2";
     public static final String DISPENSED_DT1 = "dispensed_dt1";
     public static final String DISPENSED_DT = "dispensed_dt";
 
+    // MMIA Patient data section table 7: Tipo de dispensa - Dispensa Mensal(DM)
     public static final String DISPENSED_DM = "dispensed_dm";
 
     public static final String CONTAIN_DS = "ds";

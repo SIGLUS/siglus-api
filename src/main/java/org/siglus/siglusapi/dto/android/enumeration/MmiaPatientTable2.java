@@ -19,12 +19,10 @@ import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineIte
 import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_COLUMN_0;
 import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_COLUMN_1;
 import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_COLUMN_2;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_COLUMN_3;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TABLE_TRAV_LABEL_ALTERATION_KEY;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TABLE_TRAV_LABEL_MAINTENANCE_KEY;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TABLE_TRAV_LABEL_NEW_KEY;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TABLE_TRAV_LABEL_TRANSFERS_KEY;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TABLE_TRAV_LABEL_TRANSIT_KEY;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TABLE_PATIENTS_0TO4_KEY;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TABLE_PATIENTS_10TO14_KEY;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TABLE_PATIENTS_5TO9_KEY;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TABLE_PATIENTS_ADULTS_KEY;
 
 import java.util.Arrays;
 import lombok.Getter;
@@ -32,12 +30,11 @@ import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 @Getter
-public enum PatientType {
-  TRAV_LABEL_NEW_KEY(TABLE_TRAV_LABEL_NEW_KEY, NEW_COLUMN),
-  TRAV_LABEL_MAINTENANCE_KEY(TABLE_TRAV_LABEL_MAINTENANCE_KEY, NEW_COLUMN_0),
-  TRAV_LABEL_TRANSIT_KEY(TABLE_TRAV_LABEL_TRANSIT_KEY, NEW_COLUMN_1),
-  TRAV_LABEL_TRANSFERS_KEY(TABLE_TRAV_LABEL_TRANSFERS_KEY, NEW_COLUMN_2),
-  TRAV_LABEL_ALTERATION_KEY(TABLE_TRAV_LABEL_ALTERATION_KEY, NEW_COLUMN_3);
+public enum MmiaPatientTable2 {
+  PATIENTS_ADULTS_KEY(TABLE_PATIENTS_ADULTS_KEY, NEW_COLUMN),
+  PATIENTS_0TO4_KEY(TABLE_PATIENTS_0TO4_KEY, NEW_COLUMN_0),
+  PATIENTS_5TO9_KEY(TABLE_PATIENTS_5TO9_KEY, NEW_COLUMN_1),
+  PATIENTS_10TO14_KEY(TABLE_PATIENTS_10TO14_KEY, NEW_COLUMN_2);
 
   private final String key;
 
@@ -49,7 +46,7 @@ public enum PatientType {
     }
     return Arrays.stream(values())
         .filter(e -> e.value.equals(value))
-        .map(PatientType::getKey)
+        .map(MmiaPatientTable2::getKey)
         .findFirst().orElse(null);
   }
 
@@ -59,7 +56,7 @@ public enum PatientType {
     }
     return Arrays.stream(values())
         .filter(e -> e.key.equals(key))
-        .map(PatientType::getValue)
+        .map(MmiaPatientTable2::getValue)
         .findFirst().orElse(null);
   }
 }

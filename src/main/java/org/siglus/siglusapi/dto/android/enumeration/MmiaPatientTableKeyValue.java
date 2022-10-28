@@ -36,14 +36,14 @@ import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 @Getter
-public enum PatientLineItemName {
+public enum MmiaPatientTableKeyValue {
   ARVT_KEY(TABLE_ARVT_KEY, PATIENT_TYPE),
   PATIENTS_KEY(TABLE_PATIENTS_KEY, NEW_SECTION_0),
   PROPHYLAXY_KEY(TABLE_PROPHYLAXY_KEY, NEW_SECTION_1),
+  TOTAL_KEY(TABLE_TOTAL_KEY, NEW_SECTION_8),
   DISPENSED_DS_KEY(TABLE_DISPENSED_DS_KEY, NEW_SECTION_2),
   DISPENSED_DT_KEY(TABLE_DISPENSED_DT_KEY, NEW_SECTION_3),
-  DISPENSED_DM_KEY(TABLE_DISPENSED_DM_KEY, NEW_SECTION_4),
-  TOTAL_KEY(TABLE_TOTAL_KEY, NEW_SECTION_8);
+  DISPENSED_DM_KEY(TABLE_DISPENSED_DM_KEY, NEW_SECTION_4);
 
   private final String key;
 
@@ -55,7 +55,7 @@ public enum PatientLineItemName {
     }
     return Arrays.stream(values())
         .filter(e -> e.value.equals(value))
-        .map(PatientLineItemName::getKey)
+        .map(MmiaPatientTableKeyValue::getKey)
         .findFirst().orElse(null);
   }
 
@@ -65,7 +65,7 @@ public enum PatientLineItemName {
     }
     return Arrays.stream(values())
         .filter(e -> e.key.equals(key))
-        .map(PatientLineItemName::getValue)
+        .map(MmiaPatientTableKeyValue::getValue)
         .findFirst().orElse(null);
   }
 }

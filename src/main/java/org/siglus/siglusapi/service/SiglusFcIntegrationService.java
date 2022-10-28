@@ -86,8 +86,8 @@ import org.siglus.siglusapi.dto.UsageTemplateColumnDto;
 import org.siglus.siglusapi.dto.UsageTemplateSectionDto;
 import org.siglus.siglusapi.dto.android.PeriodOfProductMovements;
 import org.siglus.siglusapi.dto.android.StocksOnHand;
-import org.siglus.siglusapi.dto.android.enumeration.PatientLineItemName;
-import org.siglus.siglusapi.dto.android.enumeration.PatientTableName;
+import org.siglus.siglusapi.dto.android.enumeration.MmiaPatientTableColumnKeyValue;
+import org.siglus.siglusapi.dto.android.enumeration.MmiaPatientTableKeyValue;
 import org.siglus.siglusapi.dto.android.enumeration.TestProject;
 import org.siglus.siglusapi.dto.android.enumeration.TestService;
 import org.siglus.siglusapi.dto.fc.FacilityStockMovementResponse;
@@ -388,15 +388,16 @@ public class SiglusFcIntegrationService {
       List<PatientLineItem> lineItems = patientLineItemRepository.findByRequisitionId(requisition.getId());
       List<Map<String, Object>> patientLineItems = newArrayList();
       lineItems.stream()
-          .filter(lineItem -> !StringUtils.isEmpty(PatientLineItemName.findKeyByValue(lineItem.getGroup()))
-              && !StringUtils.isEmpty(
-              PatientTableName.valueOf(lineItem.getGroup().toUpperCase()).findKeyByValue(lineItem.getColumn())))
+          .filter(lineItem -> !StringUtils.isEmpty(MmiaPatientTableKeyValue.findKeyByValue(lineItem.getGroup()))
+              && !StringUtils.isEmpty(MmiaPatientTableColumnKeyValue.valueOf(lineItem.getGroup().toUpperCase())
+              .findKeyByValue(lineItem.getColumn())))
           .forEach(lineItem -> {
             Map<String, Object> patientInfoMap = newHashMap();
             patientInfoMap.put("groupName",
-                removePrefixAndSuffix(PatientLineItemName.findKeyByValue(lineItem.getGroup())));
+                removePrefixAndSuffix(MmiaPatientTableKeyValue.findKeyByValue(lineItem.getGroup())));
             patientInfoMap.put("columnName", removePrefixAndSuffix(
-                PatientTableName.valueOf(lineItem.getGroup().toUpperCase()).findKeyByValue(lineItem.getColumn())));
+                MmiaPatientTableColumnKeyValue.valueOf(lineItem.getGroup().toUpperCase())
+                    .findKeyByValue(lineItem.getColumn())));
             patientInfoMap.put(VALUE, lineItem.getValue());
             patientLineItems.add(patientInfoMap);
           });
