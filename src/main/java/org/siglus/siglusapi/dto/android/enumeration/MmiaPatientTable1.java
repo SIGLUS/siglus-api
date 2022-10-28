@@ -15,16 +15,16 @@
 
 package org.siglus.siglusapi.dto.android.enumeration;
 
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_COLUMN;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_COLUMN_0;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_COLUMN_1;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_COLUMN_2;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_COLUMN_3;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TABLE_TRAV_LABEL_ALTERATION_KEY;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TABLE_TRAV_LABEL_MAINTENANCE_KEY;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TABLE_TRAV_LABEL_NEW_KEY;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TABLE_TRAV_LABEL_TRANSFERS_KEY;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TABLE_TRAV_LABEL_TRANSIT_KEY;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.MmiaPatientLineItems.NEW_COLUMN;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.MmiaPatientLineItems.NEW_COLUMN_0;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.MmiaPatientLineItems.NEW_COLUMN_1;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.MmiaPatientLineItems.NEW_COLUMN_2;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.MmiaPatientLineItems.NEW_COLUMN_3;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.MmiaPatientLineItems.TABLE_TRAV_LABEL_ALTERATION_KEY;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.MmiaPatientLineItems.TABLE_TRAV_LABEL_MAINTENANCE_KEY;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.MmiaPatientLineItems.TABLE_TRAV_LABEL_NEW_KEY;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.MmiaPatientLineItems.TABLE_TRAV_LABEL_TRANSFERS_KEY;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.MmiaPatientLineItems.TABLE_TRAV_LABEL_TRANSIT_KEY;
 
 import java.util.Arrays;
 import lombok.Getter;

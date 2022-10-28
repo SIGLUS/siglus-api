@@ -15,14 +15,14 @@
 
 package org.siglus.siglusapi.dto.android.enumeration;
 
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_COLUMN;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_COLUMN_0;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_COLUMN_1;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_COLUMN_2;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TABLE_PATIENTS_0TO4_KEY;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TABLE_PATIENTS_10TO14_KEY;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TABLE_PATIENTS_5TO9_KEY;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TABLE_PATIENTS_ADULTS_KEY;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.MmiaPatientLineItems.NEW_COLUMN;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.MmiaPatientLineItems.NEW_COLUMN_0;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.MmiaPatientLineItems.NEW_COLUMN_1;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.MmiaPatientLineItems.NEW_COLUMN_2;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.MmiaPatientLineItems.TABLE_PATIENTS_0TO4_KEY;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.MmiaPatientLineItems.TABLE_PATIENTS_10TO14_KEY;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.MmiaPatientLineItems.TABLE_PATIENTS_5TO9_KEY;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.MmiaPatientLineItems.TABLE_PATIENTS_ADULTS_KEY;
 
 import java.util.Arrays;
 import lombok.Getter;

@@ -15,18 +15,18 @@
 
 package org.siglus.siglusapi.dto.android.enumeration;
 
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.DISPENSED_DS;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.DISPENSED_DS1;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.DISPENSED_DS2;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.DISPENSED_DS3;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.DISPENSED_DS4;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.DISPENSED_DS5;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_COLUMN;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_COLUMN_0;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_COLUMN_1;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_COLUMN_2;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_COLUMN_3;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_COLUMN_4;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.MmiaPatientLineItems.DISPENSED_DS;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.MmiaPatientLineItems.DISPENSED_DS1;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.MmiaPatientLineItems.DISPENSED_DS2;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.MmiaPatientLineItems.DISPENSED_DS3;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.MmiaPatientLineItems.DISPENSED_DS4;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.MmiaPatientLineItems.DISPENSED_DS5;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.MmiaPatientLineItems.NEW_COLUMN;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.MmiaPatientLineItems.NEW_COLUMN_0;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.MmiaPatientLineItems.NEW_COLUMN_1;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.MmiaPatientLineItems.NEW_COLUMN_2;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.MmiaPatientLineItems.NEW_COLUMN_3;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.MmiaPatientLineItems.NEW_COLUMN_4;
 
 import java.util.Arrays;
 import lombok.Getter;

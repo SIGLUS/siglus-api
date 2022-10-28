@@ -15,12 +15,12 @@
 
 package org.siglus.siglusapi.dto.android.enumeration;
 
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.DISPENSED_DT;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.DISPENSED_DT1;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.DISPENSED_DT2;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_COLUMN;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_COLUMN_0;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_COLUMN_1;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.MmiaPatientLineItems.DISPENSED_DT;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.MmiaPatientLineItems.DISPENSED_DT1;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.MmiaPatientLineItems.DISPENSED_DT2;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.MmiaPatientLineItems.NEW_COLUMN;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.MmiaPatientLineItems.NEW_COLUMN_0;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.MmiaPatientLineItems.NEW_COLUMN_1;
 
 import java.util.Arrays;
 import lombok.Getter;

@@ -25,10 +25,10 @@ import static org.siglus.common.constant.ExtraDataConstants.SIGNATURE;
 import static org.siglus.common.constant.ExtraDataConstants.SUBMIT;
 import static org.siglus.siglusapi.constant.UsageSectionConstants.ConsultationNumberLineItems.COLUMN_NAME;
 import static org.siglus.siglusapi.constant.UsageSectionConstants.ConsultationNumberLineItems.GROUP_NAME;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TABLE_DISPENSED;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TABLE_DISPENSED_KEY;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TABLE_PROPHYLAXY_KEY;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TOTAL_COLUMN;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.MmiaPatientLineItems.TABLE_DISPENSED;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.MmiaPatientLineItems.TABLE_DISPENSED_KEY;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.MmiaPatientLineItems.TABLE_PROPHYLAXY_KEY;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.MmiaPatientLineItems.TOTAL_COLUMN;
 
 import java.time.Instant;
 import java.time.LocalDate;
