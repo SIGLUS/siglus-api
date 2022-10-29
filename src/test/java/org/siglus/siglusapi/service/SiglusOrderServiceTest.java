@@ -543,8 +543,8 @@ public class SiglusOrderServiceTest {
     basicOrderDto.setSupplyingFacility(facilityDto);
 
     ProcessingPeriodExtension processingPeriodExtension = new ProcessingPeriodExtension();
-    processingPeriodExtension.setSubmitStartDate(LocalDate.of(2022, 9, LocalDate.now().getDayOfMonth() - 2));
-    processingPeriodExtension.setSubmitEndDate(LocalDate.of(2022, 9, LocalDate.now().getDayOfMonth() + 2));
+    processingPeriodExtension.setSubmitStartDate(LocalDate.now().minusDays(2));
+    processingPeriodExtension.setSubmitEndDate(LocalDate.now().plusDays(2));
 
     when(processingPeriodExtensionRepository.findByProcessingPeriodId(periodId1)).thenReturn(processingPeriodExtension);
     when(orderService.searchOrdersForFulfillPage(any(), any())).thenReturn(page);
