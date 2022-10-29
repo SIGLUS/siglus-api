@@ -52,6 +52,7 @@ import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.siglus.siglusapi.constant.FieldConstants;
 import org.siglus.siglusapi.constant.UsageSectionConstants.UsageInformationLineItems;
+import org.siglus.siglusapi.domain.AgeGroupLineItem;
 import org.siglus.siglusapi.domain.ConsultationNumberLineItem;
 import org.siglus.siglusapi.domain.PatientLineItem;
 import org.siglus.siglusapi.domain.Regimen;
@@ -74,6 +75,7 @@ import org.siglus.siglusapi.dto.android.enumeration.MmiaPatientTableKeyValue;
 import org.siglus.siglusapi.dto.android.enumeration.TestOutcome;
 import org.siglus.siglusapi.dto.android.enumeration.TestProject;
 import org.siglus.siglusapi.dto.android.enumeration.TestService;
+import org.siglus.siglusapi.dto.android.request.AgeGroupLineItemRequest;
 import org.siglus.siglusapi.dto.android.request.PatientLineItemColumnRequest;
 import org.siglus.siglusapi.dto.android.request.PatientLineItemsRequest;
 import org.siglus.siglusapi.dto.android.request.RegimenLineItemRequest;
@@ -84,6 +86,7 @@ import org.siglus.siglusapi.dto.android.request.TestConsumptionLineItemRequest;
 import org.siglus.siglusapi.dto.android.request.UsageInformationLineItemRequest;
 import org.siglus.siglusapi.dto.android.response.RequisitionResponse;
 import org.siglus.siglusapi.exception.NotFoundException;
+import org.siglus.siglusapi.repository.AgeGroupLineItemRepository;
 import org.siglus.siglusapi.repository.ConsultationNumberLineItemRepository;
 import org.siglus.siglusapi.repository.PatientLineItemRepository;
 import org.siglus.siglusapi.repository.RegimenLineItemRepository;
@@ -117,6 +120,7 @@ public class RequisitionSearchService {
   private final PatientLineItemRepository patientLineItemRepository;
   private final UsageInformationLineItemRepository usageInformationLineItemRepository;
   private final TestConsumptionLineItemRepository testConsumptionLineItemRepository;
+  private final AgeGroupLineItemRepository ageGroupLineItemRepository;
   private final PatientLineItemMapper patientLineItemMapper;
   private final ConsultationNumberLineItemMapper consultationNumberLineItemMapper;
 
@@ -138,6 +142,8 @@ public class RequisitionSearchService {
         requisitionIds);
     Map<UUID, List<TestConsumptionLineItemRequest>> requisitionIdToTestConsumptionLines =
         buildToTestConsumptionLineRequestsMap(requisitionIds);
+    Map<UUID, List<AgeGroupLineItemRequest>> requisitionIdToAgeGroupLines = buildToAgeGroupLineRequestsMap(
+        requisitionIds);
     List<RequisitionCreateRequest> requisitionCreateRequests = new ArrayList<>();
     requisitionExtensions.forEach(
         extension -> {
@@ -146,17 +152,19 @@ public class RequisitionSearchService {
           if (!requisitionV2Dto.getStatus().isAuthorized()) {
             return;
           }
+          UUID requisitionId = requisitionV2Dto.getId();
           RequisitionCreateRequest requisitionCreateRequest = RequisitionCreateRequest.builder()
               .programCode(getProgramCode(requisitionV2Dto.getProgram().getId()))
               .emergency(requisitionV2Dto.getEmergency())
               .consultationNumber(getConsultationNumber(requisitionV2Dto, requisitionIdToConsultationNumbers))
               .products(getProducts(requisitionV2Dto, orderableIdToCode))
-              .regimenLineItems(getLineItems(requisitionV2Dto.getId(), requisitionIdToRegimenLines))
-              .regimenSummaryLineItems(getLineItems(requisitionV2Dto.getId(), requisitionIdToRegimenSummaryLines))
-              .patientLineItems(getLineItems(requisitionV2Dto.getId(), requisitionIdToPatientLines))
+              .regimenLineItems(getLineItems(requisitionId, requisitionIdToRegimenLines))
+              .regimenSummaryLineItems(getLineItems(requisitionId, requisitionIdToRegimenSummaryLines))
+              .patientLineItems(getLineItems(requisitionId, requisitionIdToPatientLines))
               .usageInformationLineItems(
                   getUsageInformationLineItems(orderableIdToCode, requisitionIdToUsageInfoDtos, requisitionV2Dto))
-              .testConsumptionLineItems(getLineItems(requisitionV2Dto.getId(), requisitionIdToTestConsumptionLines))
+              .testConsumptionLineItems(getLineItems(requisitionId, requisitionIdToTestConsumptionLines))
+              .ageGroupLineItems((getLineItems(requisitionId, requisitionIdToAgeGroupLines)))
               .comments(requisitionV2Dto.getDraftStatusMessage())
               .build();
           setTimeAndSignature(requisitionCreateRequest, requisitionV2Dto);
@@ -171,6 +179,15 @@ public class RequisitionSearchService {
       return Collections.emptyList();
     }
     return requisitionIdToLineItemRequests.get(requisitionId);
+  }
+
+  private Map<UUID, List<AgeGroupLineItemRequest>> buildToAgeGroupLineRequestsMap(Set<UUID> requisitionIds) {
+    List<AgeGroupLineItem> ageGroupLineItems = ageGroupLineItemRepository.findByRequisitionIdIn(requisitionIds);
+    Map<UUID, List<AgeGroupLineItem>> requisitionIdToAgeGroupItem = ageGroupLineItems.stream()
+        .collect(Collectors.groupingBy(AgeGroupLineItem::getRequisitionId));
+    return requisitionIdToAgeGroupItem.entrySet().stream().collect(
+        Collectors.toMap(Entry::getKey, valueMapper -> AgeGroupLineItemRequest.from(valueMapper.getValue()))
+    );
   }
 
   private Map<UUID, List<RegimenLineItemRequest>> buildIdToRegimenLineRequestsMap(Set<UUID> requisitionIds) {
@@ -228,7 +245,6 @@ public class RequisitionSearchService {
     return idToTestConsumptionLines.entrySet().stream()
         .collect(Collectors.toMap(Entry::getKey, e -> buildTestConsumptionsFromItems(e.getValue())));
   }
-
 
   private List<TestConsumptionLineItemRequest> buildTestConsumptionsFromItems(
       List<TestConsumptionLineItem> testConsumptionLineItems) {

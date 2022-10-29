@@ -15,6 +15,8 @@
 
 package org.siglus.siglusapi.dto.android.request;
 
+import java.util.List;
+import java.util.stream.Collectors;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -22,6 +24,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.validator.constraints.NotBlank;
+import org.siglus.siglusapi.domain.AgeGroupLineItem;
 
 @Data
 @Builder
@@ -38,4 +41,14 @@ public class AgeGroupLineItemRequest {
   @NotNull
   @Min(0)
   private Integer value;
+
+  public static List<AgeGroupLineItemRequest> from(List<AgeGroupLineItem> ageGroupLineItems) {
+    return ageGroupLineItems.stream()
+        .map(ageGroupLineItem -> AgeGroupLineItemRequest.builder()
+            .service(ageGroupLineItem.getService())
+            .group(ageGroupLineItem.getGroup())
+            .value(ageGroupLineItem.getValue())
+            .build())
+        .collect(Collectors.toList());
+  }
 }

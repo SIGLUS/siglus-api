@@ -16,6 +16,7 @@
 package org.siglus.siglusapi.repository;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import org.siglus.siglusapi.domain.AgeGroupLineItem;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -23,6 +24,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface AgeGroupLineItemRepository extends JpaRepository<AgeGroupLineItem, UUID> {
 
   List<AgeGroupLineItem> findByRequisitionId(UUID requisitionId);
+
+  List<AgeGroupLineItem> findByRequisitionIdIn(Set<UUID> requisitionIds);
 
   void deleteByRequisitionId(UUID requisitionId);
 }
