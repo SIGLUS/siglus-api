@@ -18,7 +18,7 @@ package org.siglus.siglusapi.dto.android.validator;
 import static org.openlmis.requisition.domain.requisition.RequisitionStatus.AUTHORIZED;
 import static org.openlmis.requisition.domain.requisition.RequisitionStatus.INITIATED;
 import static org.openlmis.requisition.domain.requisition.RequisitionStatus.SUBMITTED;
-import static org.siglus.siglusapi.constant.AndroidConstants.SCHEDULE_CODE;
+import static org.siglus.siglusapi.constant.android.AndroidConstants.SCHEDULE_CODE;
 
 import java.time.LocalDate;
 import java.time.YearMonth;

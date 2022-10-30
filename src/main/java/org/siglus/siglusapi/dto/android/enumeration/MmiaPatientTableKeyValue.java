@@ -15,20 +15,20 @@
 
 package org.siglus.siglusapi.dto.android.enumeration;
 
-import static org.siglus.siglusapi.constant.UsageSectionConstants.MmiaPatientLineItems.NEW_SECTION_0;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.MmiaPatientLineItems.NEW_SECTION_1;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.MmiaPatientLineItems.NEW_SECTION_2;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.MmiaPatientLineItems.NEW_SECTION_3;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.MmiaPatientLineItems.NEW_SECTION_4;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.MmiaPatientLineItems.NEW_SECTION_8;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.MmiaPatientLineItems.PATIENT_TYPE;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.MmiaPatientLineItems.TABLE_ARVT_KEY;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.MmiaPatientLineItems.TABLE_DISPENSED_DM_KEY;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.MmiaPatientLineItems.TABLE_DISPENSED_DS_KEY;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.MmiaPatientLineItems.TABLE_DISPENSED_DT_KEY;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.MmiaPatientLineItems.TABLE_PATIENTS_KEY;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.MmiaPatientLineItems.TABLE_PROPHYLAXY_KEY;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.MmiaPatientLineItems.TABLE_TOTAL_KEY;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_SECTION_0;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_SECTION_1;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_SECTION_2;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_SECTION_3;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_SECTION_4;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_SECTION_8;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.PATIENT_TYPE;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.TABLE_ARVT_KEY;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.TABLE_DISPENSED_DM_KEY;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.TABLE_DISPENSED_DS_KEY;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.TABLE_DISPENSED_DT_KEY;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.TABLE_PATIENTS_KEY;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.TABLE_PROPHYLAXY_KEY;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.TABLE_TOTAL_KEY;
 
 import java.util.Arrays;
 import lombok.Getter;

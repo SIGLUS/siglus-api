@@ -15,7 +15,7 @@
 
 package org.siglus.siglusapi.util;
 
-import static org.siglus.siglusapi.constant.AndroidConstants.UNIQUE_ID;
+import static org.siglus.siglusapi.constant.android.AndroidConstants.UNIQUE_ID;
 
 import javax.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;

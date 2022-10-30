@@ -13,7 +13,7 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.constant;
+package org.siglus.siglusapi.constant.android;
 
 import static org.openlmis.referencedata.domain.Code.code;
 

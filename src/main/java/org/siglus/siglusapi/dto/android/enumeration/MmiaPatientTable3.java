@@ -15,10 +15,10 @@
 
 package org.siglus.siglusapi.dto.android.enumeration;
 
-import static org.siglus.siglusapi.constant.UsageSectionConstants.MmiaPatientLineItems.NEW_COLUMN;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.MmiaPatientLineItems.NEW_COLUMN_1;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.MmiaPatientLineItems.TABLE_PROPHYLAXIS_CHILD_KEY;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.MmiaPatientLineItems.TABLE_PROPHYLAXIS_PPE_KEY;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_COLUMN;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_COLUMN_1;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.TABLE_PROPHYLAXIS_CHILD_KEY;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.TABLE_PROPHYLAXIS_PPE_KEY;
 
 import java.util.Arrays;
 import lombok.Getter;

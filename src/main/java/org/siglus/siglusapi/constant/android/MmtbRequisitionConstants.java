@@ -203,7 +203,7 @@ public class MmtbRequisitionConstants {
     private static final Pair<String, String> PAIR_TABLE_2_COLUMN_1 = Pair.of(
         "table_age_group_service_key_adult", "adultos");
     private static final Pair<String, String> PAIR_TABLE_2_COLUMN_2 = Pair.of(
-        "table_age_group_service_key_child_less_than_25kg", "criança < 25K");
+        "table_age_group_service_key_child_less_than_25kg", "criança < 25Kg");
     private static final Pair<String, String> PAIR_TABLE_2_COLUMN_3 = Pair.of(
         "table_age_group_service_key_child_more_than_25kg", "criança > 25Kg");
     private static final Set<Pair<String, String>> MMTB_AGE_GROUP_TABLE_1_COLUMNS = Sets.asSet(

@@ -24,7 +24,7 @@ import static org.apache.commons.lang3.StringUtils.removeEnd;
 import static org.apache.commons.lang3.StringUtils.removeStart;
 import static org.siglus.siglusapi.constant.FacilityTypeConstants.DPM;
 import static org.siglus.siglusapi.constant.FieldConstants.VALUE;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.TestConsumptionLineItems.TOTAL;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.TestConsumptionLineItems.TOTAL;
 
 import com.google.common.collect.ImmutableMap;
 import java.time.LocalDate;
