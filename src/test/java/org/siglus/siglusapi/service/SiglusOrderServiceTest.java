@@ -65,7 +65,6 @@ import org.openlmis.fulfillment.service.OrderSearchParams;
 import org.openlmis.fulfillment.service.OrderService;
 import org.openlmis.fulfillment.service.referencedata.FacilityDto;
 import org.openlmis.fulfillment.service.referencedata.OrderableDto;
-import org.openlmis.fulfillment.service.referencedata.OrderableReferenceDataService;
 import org.openlmis.fulfillment.service.referencedata.ProgramDto;
 import org.openlmis.fulfillment.service.referencedata.UserDto;
 import org.openlmis.fulfillment.util.AuthenticationHelper;
@@ -75,7 +74,6 @@ import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftDto;
 import org.openlmis.fulfillment.web.util.BasicOrderDto;
 import org.openlmis.fulfillment.web.util.BasicOrderDtoBuilder;
 import org.openlmis.fulfillment.web.util.OrderDto;
-import org.openlmis.fulfillment.web.util.OrderDtoBuilder;
 import org.openlmis.fulfillment.web.util.OrderLineItemDto;
 import org.openlmis.fulfillment.web.util.OrderObjectReferenceDto;
 import org.openlmis.referencedata.domain.Facility;
@@ -94,7 +92,6 @@ import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.dto.VersionObjectReferenceDto;
 import org.openlmis.requisition.service.RequisitionService;
 import org.openlmis.requisition.service.referencedata.ApproveProductsAggregator;
-import org.openlmis.requisition.service.referencedata.FacilityReferenceDataService;
 import org.openlmis.requisition.web.RequisitionController;
 import org.openlmis.stockmanagement.dto.ObjectReferenceDto;
 import org.openlmis.stockmanagement.util.PageImplRepresentation;
@@ -131,7 +128,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 
 @RunWith(PowerMockRunner.class)
-@SuppressWarnings({"PMD.TooManyMethods", "PMD.UnusedPrivateField"})
+@SuppressWarnings("PMD.TooManyMethods")
 public class SiglusOrderServiceTest {
 
   private final String receivingFacilityName = "receiving facility name";
@@ -155,25 +152,16 @@ public class SiglusOrderServiceTest {
   private AuthenticationHelper authenticationHelper;
 
   @Mock
-  private FacilityReferenceDataService facilityReferenceDataService;
-
-  @Mock
   private SiglusArchiveProductService siglusArchiveProductService;
 
   @Mock
   private SiglusStockCardSummariesService siglusStockCardSummariesService;
 
   @Mock
-  private OrderableReferenceDataService orderableReferenceDataService;
-
-  @Mock
   private OrderLineItemExtensionRepository lineItemExtensionRepository;
 
   @Mock
   private OrderRepository orderRepository;
-
-  @Mock
-  private OrderDtoBuilder orderDtoBuilder;
 
   @Mock
   private OrderExternalRepository orderExternalRepository;
@@ -241,7 +229,6 @@ public class SiglusOrderServiceTest {
   private final UUID orderExternalId = UUID.randomUUID();
   private final UUID supplyingFacilityId = UUID.randomUUID();
   private final UUID receivingFacilityId = UUID.randomUUID();
-  private final UUID facilityId = UUID.randomUUID();
   private final LocalDate now = LocalDate.now();
   private final String orderCode = "ORDER-CODE";
   private final UUID periodId1 = UUID.randomUUID();
@@ -486,7 +473,6 @@ public class SiglusOrderServiceTest {
   }
 
   @Test
-  @SuppressWarnings("unchecked")
   public void shouldThrowNotFoundExceptionWhenPeriodNotFound() {
     //then
     exception.expect(NotFoundException.class);
@@ -521,7 +507,6 @@ public class SiglusOrderServiceTest {
   }
 
   @Test
-  @SuppressWarnings("unchecked")
   public void shouldSetExpiredFlagToFulfillOrder() {
     // given
     Page<Order> page = (Page<Order>) mock(Page.class);
@@ -543,8 +528,8 @@ public class SiglusOrderServiceTest {
     basicOrderDto.setSupplyingFacility(facilityDto);
 
     ProcessingPeriodExtension processingPeriodExtension = new ProcessingPeriodExtension();
-    processingPeriodExtension.setSubmitStartDate(LocalDate.now().minusDays(2));
-    processingPeriodExtension.setSubmitEndDate(LocalDate.now().plusDays(2));
+    processingPeriodExtension.setSubmitStartDate(LocalDate.now());
+    processingPeriodExtension.setSubmitEndDate(LocalDate.now());
 
     when(processingPeriodExtensionRepository.findByProcessingPeriodId(periodId1)).thenReturn(processingPeriodExtension);
     when(orderService.searchOrdersForFulfillPage(any(), any())).thenReturn(page);
@@ -566,7 +551,6 @@ public class SiglusOrderServiceTest {
   }
 
   @Test
-  @SuppressWarnings("unchecked")
   public void shouldNotSetExpiredFlagToFulfillOrderWhenTodayIsNotInSubmissionDay() {
     // given
     Page<Order> page = (Page<Order>) mock(Page.class);
@@ -976,10 +960,10 @@ public class SiglusOrderServiceTest {
     orderObjectReferenceDto.setExternalId(secondExternal.getId());
     orderObjectReferenceDto.setOrderCode("order_code/02");
     OrderLineItemDto lineItemDto = new OrderLineItemDto();
-    lineItemDto.setOrderedQuantity(Long.valueOf(50));
-    lineItemDto.setPartialFulfilledQuantity(Long.valueOf(20));
+    lineItemDto.setOrderedQuantity(50L);
+    lineItemDto.setPartialFulfilledQuantity(20L);
     lineItemDto.setOrderable(createOrderableDto(orderableId1));
-    orderObjectReferenceDto.setOrderLineItems(Arrays.asList(lineItemDto));
+    orderObjectReferenceDto.setOrderLineItems(Collections.singletonList(lineItemDto));
     OrderExternal firstExternal = OrderExternal.builder().requisitionId(requisitionId).build();
     firstExternal.setId(UUID.randomUUID());
     OrderExternal thirdExternal = OrderExternal.builder().requisitionId(requisitionId).build();
@@ -1001,7 +985,7 @@ public class SiglusOrderServiceTest {
     basicOrderDto.setOrderCode("order_code/02");
     when(orderRepository.findOne(basicOrderDto.getId())).thenReturn(order);
     when(orderController.batchCreateOrders(anyList(), any(OAuth2Authentication.class)))
-        .thenReturn(Arrays.asList(basicOrderDto));
+        .thenReturn(Collections.singletonList(basicOrderDto));
     when(orderController.getOrder(basicOrderDto.getId(), null))
         .thenReturn(createOrderDto());
 
