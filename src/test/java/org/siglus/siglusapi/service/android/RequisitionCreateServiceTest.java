@@ -84,8 +84,6 @@ import org.openlmis.requisition.service.referencedata.SupervisoryNodeReferenceDa
 import org.openlmis.requisition.web.PermissionMessageException;
 import org.siglus.common.domain.RequisitionTemplateExtension;
 import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
-import org.siglus.siglusapi.constant.android.MmtbRequisitionConstants.MmtbAgeGroupSection;
-import org.siglus.siglusapi.constant.android.MmtbRequisitionConstants.MmtbPatientSection;
 import org.siglus.siglusapi.domain.Regimen;
 import org.siglus.siglusapi.domain.RequisitionExtension;
 import org.siglus.siglusapi.domain.RequisitionLineItemExtension;
@@ -134,7 +132,7 @@ import org.siglus.siglusapi.web.android.FileBasedTest;
 import org.springframework.beans.BeanUtils;
 
 @RunWith(MockitoJUnitRunner.class)
-@SuppressWarnings("PMD.TooManyMethods")
+@SuppressWarnings({"PMD.TooManyMethods", "PMD.AvoidDuplicateLiterals"})
 public class RequisitionCreateServiceTest extends FileBasedTest {
 
   @InjectMocks
@@ -875,69 +873,69 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
 
   private List<PatientGroupDto> buildMmtbPatientGroupDto() {
     Map<String, PatientColumnDto> table1Columns = new HashMap<>();
-    table1Columns.put(MmtbPatientSection.TABLE_1_COLUMN_1_VALUE, new PatientColumnDto());
-    table1Columns.put(MmtbPatientSection.TABLE_1_COLUMN_2_VALUE, new PatientColumnDto());
-    table1Columns.put(MmtbPatientSection.TABLE_1_COLUMN_3_VALUE, new PatientColumnDto());
-    table1Columns.put(MmtbPatientSection.TABLE_1_COLUMN_4_VALUE, new PatientColumnDto());
-    table1Columns.put(MmtbPatientSection.TABLE_1_COLUMN_5_VALUE, new PatientColumnDto());
-    table1Columns.put(MmtbPatientSection.TABLE_1_COLUMN_6_VALUE, new PatientColumnDto());
-    table1Columns.put(MmtbPatientSection.TABLE_1_COLUMN_7_VALUE, new PatientColumnDto());
+    table1Columns.put("new", new PatientColumnDto());
+    table1Columns.put("newColumn6", new PatientColumnDto());
+    table1Columns.put("newColumn0", new PatientColumnDto());
+    table1Columns.put("newColumn1", new PatientColumnDto());
+    table1Columns.put("newColumn2", new PatientColumnDto());
+    table1Columns.put("newColumn3", new PatientColumnDto());
+    table1Columns.put("newColumn4", new PatientColumnDto());
     PatientGroupDto table1 = new PatientGroupDto();
-    table1.setName(MmtbPatientSection.TABLE_1_VALUE);
+    table1.setName("newSection3");
     table1.setColumns(table1Columns);
 
     Map<String, PatientColumnDto> table2Columns = new HashMap<>();
-    table2Columns.put(MmtbPatientSection.TABLE_2_COLUMN_1_VALUE, new PatientColumnDto());
-    table2Columns.put(MmtbPatientSection.TABLE_2_COLUMN_2_VALUE, new PatientColumnDto());
-    table2Columns.put(MmtbPatientSection.TABLE_2_COLUMN_3_VALUE, new PatientColumnDto());
-    table2Columns.put(MmtbPatientSection.TABLE_2_COLUMN_4_VALUE, new PatientColumnDto());
-    table2Columns.put(MmtbPatientSection.TABLE_2_COLUMN_5_VALUE, new PatientColumnDto());
-    table2Columns.put(MmtbPatientSection.TABLE_2_COLUMN_6_VALUE, new PatientColumnDto());
-    table2Columns.put(MmtbPatientSection.TABLE_2_COLUMN_7_VALUE, new PatientColumnDto());
+    table2Columns.put("new", new PatientColumnDto());
+    table2Columns.put("newColumn6", new PatientColumnDto());
+    table2Columns.put("newColumn0", new PatientColumnDto());
+    table2Columns.put("newColumn1", new PatientColumnDto());
+    table2Columns.put("newColumn2", new PatientColumnDto());
+    table2Columns.put("newColumn3", new PatientColumnDto());
+    table2Columns.put("newColumn4", new PatientColumnDto());
     PatientGroupDto table2 = new PatientGroupDto();
-    table2.setName(MmtbPatientSection.TABLE_2_VALUE);
+    table2.setName("newSection4");
     table2.setColumns(table2Columns);
 
     Map<String, PatientColumnDto> table3Columns = new HashMap<>();
-    table3Columns.put(MmtbPatientSection.TABLE_3_COLUMN_1_VALUE, new PatientColumnDto());
-    table3Columns.put(MmtbPatientSection.TABLE_3_COLUMN_2_VALUE, new PatientColumnDto());
-    table3Columns.put(MmtbPatientSection.TABLE_3_COLUMN_3_VALUE, new PatientColumnDto());
-    table3Columns.put(MmtbPatientSection.TABLE_3_COLUMN_4_VALUE, new PatientColumnDto());
-    table3Columns.put(MmtbPatientSection.TABLE_3_COLUMN_5_VALUE, new PatientColumnDto());
-    table3Columns.put(MmtbPatientSection.TABLE_3_COLUMN_6_VALUE, new PatientColumnDto());
-    table3Columns.put(MmtbPatientSection.TABLE_3_COLUMN_7_VALUE, new PatientColumnDto());
-    table3Columns.put(MmtbPatientSection.TABLE_3_COLUMN_8_VALUE, new PatientColumnDto());
+    table3Columns.put("new", new PatientColumnDto());
+    table3Columns.put("newColumn0", new PatientColumnDto());
+    table3Columns.put("newColumn1", new PatientColumnDto());
+    table3Columns.put("newColumn2", new PatientColumnDto());
+    table3Columns.put("newColumn3", new PatientColumnDto());
+    table3Columns.put("newColumn4", new PatientColumnDto());
+    table3Columns.put("newColumn5", new PatientColumnDto());
+    table3Columns.put("newColumn6", new PatientColumnDto());
     PatientGroupDto table3 = new PatientGroupDto();
-    table3.setName(MmtbPatientSection.TABLE_3_VALUE);
+    table3.setName("newSection2");
     table3.setColumns(table3Columns);
 
     Map<String, PatientColumnDto> table4Columns = new HashMap<>();
-    table4Columns.put(MmtbPatientSection.TABLE_4_COLUMN_1_VALUE, new PatientColumnDto());
-    table4Columns.put(MmtbPatientSection.TABLE_4_COLUMN_2_VALUE, new PatientColumnDto());
-    table4Columns.put(MmtbPatientSection.TABLE_4_COLUMN_3_VALUE, new PatientColumnDto());
-    table4Columns.put(MmtbPatientSection.TABLE_4_COLUMN_4_VALUE, new PatientColumnDto());
-    table4Columns.put(MmtbPatientSection.TABLE_4_COLUMN_5_VALUE, new PatientColumnDto());
-    table4Columns.put(MmtbPatientSection.TABLE_4_COLUMN_6_VALUE, new PatientColumnDto());
-    table4Columns.put(MmtbPatientSection.TABLE_4_COLUMN_7_VALUE, new PatientColumnDto());
+    table4Columns.put("new", new PatientColumnDto());
+    table4Columns.put("newColumn0", new PatientColumnDto());
+    table4Columns.put("newColumn1", new PatientColumnDto());
+    table4Columns.put("newColumn2", new PatientColumnDto());
+    table4Columns.put("newColumn3", new PatientColumnDto());
+    table4Columns.put("newColumn4", new PatientColumnDto());
+    table4Columns.put("total", new PatientColumnDto());
     PatientGroupDto table4 = new PatientGroupDto();
-    table4.setName(MmtbPatientSection.TABLE_4_VALUE);
+    table4.setName("patientType");
     table4.setColumns(table4Columns);
 
     Map<String, PatientColumnDto> table5Columns = new HashMap<>();
-    table5Columns.put(MmtbPatientSection.TABLE_5_COLUMN_1_VALUE, new PatientColumnDto());
-    table5Columns.put(MmtbPatientSection.TABLE_5_COLUMN_2_VALUE, new PatientColumnDto());
-    table5Columns.put(MmtbPatientSection.TABLE_5_COLUMN_3_VALUE, new PatientColumnDto());
-    table5Columns.put(MmtbPatientSection.TABLE_5_COLUMN_4_VALUE, new PatientColumnDto());
+    table5Columns.put("new", new PatientColumnDto());
+    table5Columns.put("newColumn0", new PatientColumnDto());
+    table5Columns.put("newColumn1", new PatientColumnDto());
+    table5Columns.put("total", new PatientColumnDto());
     PatientGroupDto table5 = new PatientGroupDto();
-    table5.setName(MmtbPatientSection.TABLE_5_VALUE);
+    table5.setName("newSection0");
     table5.setColumns(table5Columns);
 
     Map<String, PatientColumnDto> table6Columns = new HashMap<>();
-    table6Columns.put(MmtbPatientSection.TABLE_6_COLUMN_1_VALUE, new PatientColumnDto());
-    table6Columns.put(MmtbPatientSection.TABLE_6_COLUMN_2_VALUE, new PatientColumnDto());
-    table6Columns.put(MmtbPatientSection.TABLE_6_COLUMN_3_VALUE, new PatientColumnDto());
+    table6Columns.put("new", new PatientColumnDto());
+    table6Columns.put("newColumn0", new PatientColumnDto());
+    table6Columns.put("total", new PatientColumnDto());
     PatientGroupDto table6 = new PatientGroupDto();
-    table6.setName(MmtbPatientSection.TABLE_6_VALUE);
+    table6.setName("newSection1");
     table6.setColumns(table6Columns);
 
     return Arrays.asList(table1, table2, table3, table4, table5, table6);
@@ -945,16 +943,16 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
 
   private List<AgeGroupServiceDto> buildMmtbAgeGroupDto() {
     Map<String, AgeGroupLineItemDto> table1Column = new HashMap<>();
-    table1Column.put(MmtbAgeGroupSection.TABLE_1_COLUMN_1_VALUE, new AgeGroupLineItemDto());
-    table1Column.put(MmtbAgeGroupSection.TABLE_1_COLUMN_2_VALUE, new AgeGroupLineItemDto());
+    table1Column.put("treatment", new AgeGroupLineItemDto());
+    table1Column.put("prophylaxis", new AgeGroupLineItemDto());
     AgeGroupServiceDto table1 = new AgeGroupServiceDto();
-    table1.setService(MmtbAgeGroupSection.TABLE_2_COLUMN_1_VALUE);
+    table1.setService("adultos");
     table1.setColumns(table1Column);
     AgeGroupServiceDto table2 = new AgeGroupServiceDto();
-    table2.setService(MmtbAgeGroupSection.TABLE_2_COLUMN_2_VALUE);
+    table2.setService("criança < 25K");
     table2.setColumns(table1Column);
     AgeGroupServiceDto table3 = new AgeGroupServiceDto();
-    table3.setService(MmtbAgeGroupSection.TABLE_2_COLUMN_3_VALUE);
+    table3.setService("criança > 25Kg");
     table3.setColumns(table1Column);
 
     return Arrays.asList(table1, table2, table3);

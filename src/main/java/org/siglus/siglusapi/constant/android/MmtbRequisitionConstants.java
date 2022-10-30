@@ -26,163 +26,124 @@ import org.springframework.data.util.Pair;
 public class MmtbRequisitionConstants {
 
   @NoArgsConstructor
-  // MMTB Patient data section: 6 tables
   public static class MmtbPatientSection {
 
-    // table 1: Fases de Tratamento (Adulto), "newSection3"
-    public static final String TABLE_1_KEY = "table_treatment_adult_key";
-    public static final String TABLE_1_VALUE = "newSection3";
-    public static final String TABLE_1_COLUMN_1_KEY = "table_treatment_adult_key_sensitive_intensive";
-    public static final String TABLE_1_COLUMN_1_VALUE = "new";
-    public static final String TABLE_1_COLUMN_2_KEY = "table_treatment_adult_key_sensitive_maintenance";
-    public static final String TABLE_1_COLUMN_2_VALUE = "newColumn6";
-    public static final String TABLE_1_COLUMN_3_KEY = "table_treatment_adult_key_mr_induction";
-    public static final String TABLE_1_COLUMN_3_VALUE = "newColumn0";
-    public static final String TABLE_1_COLUMN_4_KEY = "table_treatment_adult_key_mr_intensive";
-    public static final String TABLE_1_COLUMN_4_VALUE = "newColumn1";
-    public static final String TABLE_1_COLUMN_5_KEY = "table_treatment_adult_key_mr_maintenance";
-    public static final String TABLE_1_COLUMN_5_VALUE = "newColumn2";
-    public static final String TABLE_1_COLUMN_6_KEY = "table_treatment_adult_key_xr_induction";
-    public static final String TABLE_1_COLUMN_6_VALUE = "newColumn3";
-    public static final String TABLE_1_COLUMN_7_KEY = "table_treatment_adult_key_xr_maintenance";
-    public static final String TABLE_1_COLUMN_7_VALUE = "newColumn4";
-    // table 2: Fases de Tratamento (Pediatrico), "newSection4"
-    public static final String TABLE_2_KEY = "table_treatment_pediatric_key";
-    public static final String TABLE_2_VALUE = "newSection4";
-    public static final String TABLE_2_COLUMN_1_KEY = "table_treatment_pediatric_key_sensitive_intensive";
-    public static final String TABLE_2_COLUMN_1_VALUE = "new";
-    public static final String TABLE_2_COLUMN_2_KEY = "table_treatment_pediatric_key_sensitive_maintenance";
-    public static final String TABLE_2_COLUMN_2_VALUE = "newColumn6";
-    public static final String TABLE_2_COLUMN_3_KEY = "table_treatment_pediatric_key_mr_induction";
-    public static final String TABLE_2_COLUMN_3_VALUE = "newColumn0";
-    public static final String TABLE_2_COLUMN_4_KEY = "table_treatment_pediatric_key_mr_intensive";
-    public static final String TABLE_2_COLUMN_4_VALUE = "newColumn1";
-    public static final String TABLE_2_COLUMN_5_KEY = "table_treatment_pediatric_key_mr_maintenance";
-    public static final String TABLE_2_COLUMN_5_VALUE = "newColumn2";
-    public static final String TABLE_2_COLUMN_6_KEY = "table_treatment_pediatric_key_xr_maintenance";
-    public static final String TABLE_2_COLUMN_6_VALUE = "newColumn3";
-    public static final String TABLE_2_COLUMN_7_KEY = "table_treatment_pediatric_key_xr_intensive";
-    public static final String TABLE_2_COLUMN_7_VALUE = "newColumn4";
-    // table 3: PUs e Farmácia Ambulatório, "newSection2"
-    public static final String TABLE_3_KEY = "table_pharmacy_product_key";
-    public static final String TABLE_3_VALUE = "newSection2";
-    public static final String TABLE_3_COLUMN_1_KEY = "table_pharmacy_product_key_isoniazida_100_mg";
-    public static final String TABLE_3_COLUMN_1_VALUE = "new";
-    public static final String TABLE_3_COLUMN_2_KEY = "table_pharmacy_product_key_isoniazida_300_mg";
-    public static final String TABLE_3_COLUMN_2_VALUE = "newColumn0";
-    public static final String TABLE_3_COLUMN_3_KEY = "table_pharmacy_product_key_levofloxacina_100_mg";
-    public static final String TABLE_3_COLUMN_3_VALUE = "newColumn1";
-    public static final String TABLE_3_COLUMN_4_KEY = "table_pharmacy_product_key_levofloxacina_250_mg";
-    public static final String TABLE_3_COLUMN_4_VALUE = "newColumn2";
-    public static final String TABLE_3_COLUMN_5_KEY = "table_pharmacy_product_key_rifapentina_300_mg_isoniazida_300_mg";
-    public static final String TABLE_3_COLUMN_5_VALUE = "newColumn3";
-    public static final String TABLE_3_COLUMN_6_KEY = "table_pharmacy_product_key_rifapentina_150_mg";
-    public static final String TABLE_3_COLUMN_6_VALUE = "newColumn4";
-    public static final String TABLE_3_COLUMN_7_KEY = "table_pharmacy_product_key_piridoxina_25_mg";
-    public static final String TABLE_3_COLUMN_7_VALUE = "newColumn5";
-    public static final String TABLE_3_COLUMN_8_KEY = "table_pharmacy_product_key_piridoxina_50_mg";
-    public static final String TABLE_3_COLUMN_8_VALUE = "newColumn6";
-    // table 4: Pacientes Novos no Sector da TB, "patientType"
-    public static final String TABLE_4_KEY = "table_new_patients_key";
-    public static final String TABLE_4_VALUE = "patientType";
-    public static final String TABLE_4_COLUMN_1_KEY = "table_new_patients_key_new_adult_sensitive";
-    public static final String TABLE_4_COLUMN_1_VALUE = "new";
-    public static final String TABLE_4_COLUMN_2_KEY = "table_new_patients_key_new_adult_mr";
-    public static final String TABLE_4_COLUMN_2_VALUE = "newColumn0";
-    public static final String TABLE_4_COLUMN_3_KEY = "table_new_patients_key_new_adult_xr";
-    public static final String TABLE_4_COLUMN_3_VALUE = "newColumn1";
-    public static final String TABLE_4_COLUMN_4_KEY = "table_new_patients_key_new_child_sensitive";
-    public static final String TABLE_4_COLUMN_4_VALUE = "newColumn2";
-    public static final String TABLE_4_COLUMN_5_KEY = "table_new_patients_key_new_child_mr";
-    public static final String TABLE_4_COLUMN_5_VALUE = "newColumn3";
-    public static final String TABLE_4_COLUMN_6_KEY = "table_new_patients_key_new_child_xr";
-    public static final String TABLE_4_COLUMN_6_VALUE = "newColumn4";
-    public static final String TABLE_4_COLUMN_7_KEY = "table_new_patients_key_total";
-    public static final String TABLE_4_COLUMN_7_VALUE = "total";
-    // table 5: Seguimento Profilaxias (Pus e Farmácia Pública), "newSection0"
-    public static final String TABLE_5_KEY = "table_prophylaxis_key";
-    public static final String TABLE_5_VALUE = "newSection0";
-    public static final String TABLE_5_COLUMN_1_KEY = "table_prophylaxis_key_initial";
-    public static final String TABLE_5_COLUMN_1_VALUE = "new";
-    public static final String TABLE_5_COLUMN_2_KEY = "table_prophylaxis_key_continuous_maintenance";
-    public static final String TABLE_5_COLUMN_2_VALUE = "newColumn0";
-    public static final String TABLE_5_COLUMN_3_KEY = "table_prophylaxis_key_final_last_dismissal";
-    public static final String TABLE_5_COLUMN_3_VALUE = "newColumn1";
-    public static final String TABLE_5_COLUMN_4_KEY = "table_prophylaxis_key_total";
-    public static final String TABLE_5_COLUMN_4_VALUE = "total";
-    // table 6: Tipo de Dispensa dos Profilacticos, "newSection1"
-    public static final String TABLE_6_KEY = "table_prophylactics_key";
-    public static final String TABLE_6_VALUE = "newSection1";
-    public static final String TABLE_6_COLUMN_1_KEY = "table_prophylactics_key_monthly";
-    public static final String TABLE_6_COLUMN_1_VALUE = "new";
-    public static final String TABLE_6_COLUMN_2_KEY = "table_prophylactics_key_trimenstral";
-    public static final String TABLE_6_COLUMN_2_VALUE = "newColumn0";
-    public static final String TABLE_6_COLUMN_3_KEY = "table_prophylactics_key_total";
-    public static final String TABLE_6_COLUMN_3_VALUE = "total";
-
-    public static final Set<Pair<String, String>> MMTB_PATIENT_TABLES = Sets.asSet(
-        Pair.of(TABLE_1_KEY, TABLE_1_VALUE),
-        Pair.of(TABLE_2_KEY, TABLE_2_VALUE),
-        Pair.of(TABLE_3_KEY, TABLE_3_VALUE),
-        Pair.of(TABLE_4_KEY, TABLE_4_VALUE),
-        Pair.of(TABLE_5_KEY, TABLE_5_VALUE),
-        Pair.of(TABLE_6_KEY, TABLE_6_VALUE)
+    // table 1: Fases de Tratamento (Adulto)
+    private static final Pair<String, String> PAIR_TABLE_1 = Pair.of("table_treatment_adult_key", "newSection3");
+    private static final Pair<String, String> PAIR_TABLE_1_COLUMN_1 = Pair.of(
+        "table_treatment_adult_key_sensitive_intensive", "new");
+    private static final Pair<String, String> PAIR_TABLE_1_COLUMN_2 = Pair.of(
+        "table_treatment_adult_key_sensitive_maintenance", "newColumn6");
+    private static final Pair<String, String> PAIR_TABLE_1_COLUMN_3 = Pair.of(
+        "table_treatment_adult_key_mr_induction", "newColumn0");
+    private static final Pair<String, String> PAIR_TABLE_1_COLUMN_4 = Pair.of(
+        "table_treatment_adult_key_mr_intensive", "newColumn1");
+    private static final Pair<String, String> PAIR_TABLE_1_COLUMN_5 = Pair.of(
+        "table_treatment_adult_key_mr_maintenance", "newColumn2");
+    private static final Pair<String, String> PAIR_TABLE_1_COLUMN_6 = Pair.of(
+        "table_treatment_adult_key_xr_induction", "newColumn3");
+    private static final Pair<String, String> PAIR_TABLE_1_COLUMN_7 = Pair.of(
+        "table_treatment_adult_key_xr_maintenance", "newColumn4");
+    // table 2: Fases de Tratamento (Pediatrico)
+    private static final Pair<String, String> PAIR_TABLE_2 = Pair.of("table_treatment_pediatric_key", "newSection4");
+    private static final Pair<String, String> PAIR_TABLE_2_COLUMN_1 = Pair.of(
+        "table_treatment_pediatric_key_sensitive_intensive", "new");
+    private static final Pair<String, String> PAIR_TABLE_2_COLUMN_2 = Pair.of(
+        "table_treatment_pediatric_key_sensitive_maintenance", "newColumn6");
+    private static final Pair<String, String> PAIR_TABLE_2_COLUMN_3 = Pair.of(
+        "table_treatment_pediatric_key_mr_induction", "newColumn0");
+    private static final Pair<String, String> PAIR_TABLE_2_COLUMN_4 = Pair.of(
+        "table_treatment_pediatric_key_mr_intensive", "newColumn1");
+    private static final Pair<String, String> PAIR_TABLE_2_COLUMN_5 = Pair.of(
+        "table_treatment_pediatric_key_mr_maintenance", "newColumn2");
+    private static final Pair<String, String> PAIR_TABLE_2_COLUMN_6 = Pair.of(
+        "table_treatment_pediatric_key_xr_maintenance", "newColumn3");
+    private static final Pair<String, String> PAIR_TABLE_2_COLUMN_7 = Pair.of(
+        "table_treatment_pediatric_key_xr_intensive", "newColumn4");
+    // table 3: PUs e Farmácia Ambulatório
+    private static final Pair<String, String> PAIR_TABLE_3 = Pair.of("table_pharmacy_product_key", "newSection2");
+    private static final Pair<String, String> PAIR_TABLE_3_COLUMN_1 = Pair.of(
+        "table_pharmacy_product_key_isoniazida_100_mg", "new");
+    private static final Pair<String, String> PAIR_TABLE_3_COLUMN_2 = Pair.of(
+        "table_pharmacy_product_key_isoniazida_300_mg", "newColumn0");
+    private static final Pair<String, String> PAIR_TABLE_3_COLUMN_3 = Pair.of(
+        "table_pharmacy_product_key_levofloxacina_100_mg", "newColumn1");
+    private static final Pair<String, String> PAIR_TABLE_3_COLUMN_4 = Pair.of(
+        "table_pharmacy_product_key_levofloxacina_250_mg", "newColumn2");
+    private static final Pair<String, String> PAIR_TABLE_3_COLUMN_5 = Pair.of(
+        "table_pharmacy_product_key_rifapentina_300_mg_isoniazida_300_mg", "newColumn3");
+    private static final Pair<String, String> PAIR_TABLE_3_COLUMN_6 = Pair.of(
+        "table_pharmacy_product_key_rifapentina_150_mg", "newColumn4");
+    private static final Pair<String, String> PAIR_TABLE_3_COLUMN_7 = Pair.of(
+        "table_pharmacy_product_key_piridoxina_25_mg", "newColumn5");
+    private static final Pair<String, String> PAIR_TABLE_3_COLUMN_8 = Pair.of(
+        "table_pharmacy_product_key_piridoxina_50_mg", "newColumn6");
+    // table 4: Pacientes Novos no Sector da TB
+    private static final Pair<String, String> PAIR_TABLE_4 = Pair.of("table_new_patients_key", "patientType");
+    private static final Pair<String, String> PAIR_TABLE_4_COLUMN_1 = Pair.of(
+        "table_new_patients_key_new_adult_sensitive", "new");
+    private static final Pair<String, String> PAIR_TABLE_4_COLUMN_2 = Pair.of(
+        "table_new_patients_key_new_adult_mr", "newColumn0");
+    private static final Pair<String, String> PAIR_TABLE_4_COLUMN_3 = Pair.of(
+        "table_new_patients_key_new_adult_xr", "newColumn1");
+    private static final Pair<String, String> PAIR_TABLE_4_COLUMN_4 = Pair.of(
+        "table_new_patients_key_new_child_sensitive", "newColumn2");
+    private static final Pair<String, String> PAIR_TABLE_4_COLUMN_5 = Pair.of(
+        "table_new_patients_key_new_child_mr", "newColumn3");
+    private static final Pair<String, String> PAIR_TABLE_4_COLUMN_6 = Pair.of(
+        "table_new_patients_key_new_child_xr", "newColumn4");
+    private static final Pair<String, String> PAIR_TABLE_4_COLUMN_7 = Pair.of(
+        "table_new_patients_key_total", "total");
+    // table 5: Seguimento Profilaxias (Pus e Farmácia Pública)
+    private static final Pair<String, String> PAIR_TABLE_5 = Pair.of("table_prophylaxis_key", "newSection0");
+    private static final Pair<String, String> PAIR_TABLE_5_COLUMN_1 = Pair.of(
+        "table_prophylaxis_key_initial", "new");
+    private static final Pair<String, String> PAIR_TABLE_5_COLUMN_2 = Pair.of(
+        "table_prophylaxis_key_continuous_maintenance", "newColumn0");
+    private static final Pair<String, String> PAIR_TABLE_5_COLUMN_3 = Pair.of(
+        "table_prophylaxis_key_final_last_dismissal", "newColumn1");
+    private static final Pair<String, String> PAIR_TABLE_5_COLUMN_4 = Pair.of(
+        "table_prophylaxis_key_total", "total");
+    // table 6: Tipo de Dispensa dos Profilacticos
+    private static final Pair<String, String> PAIR_TABLE_6 = Pair.of("table_prophylactics_key", "newSection1");
+    private static final Pair<String, String> PAIR_TABLE_6_COLUMN_1 = Pair.of(
+        "table_prophylactics_key_monthly", "new");
+    private static final Pair<String, String> PAIR_TABLE_6_COLUMN_2 = Pair.of(
+        "table_prophylactics_key_trimenstral", "newColumn0");
+    private static final Pair<String, String> PAIR_TABLE_6_COLUMN_3 = Pair.of(
+        "table_prophylactics_key_total", "total");
+    private static final Set<Pair<String, String>> MMTB_PATIENT_TABLES = Sets.asSet(
+        PAIR_TABLE_1, PAIR_TABLE_2, PAIR_TABLE_3, PAIR_TABLE_4, PAIR_TABLE_5, PAIR_TABLE_6
     );
-    public static final Set<Pair<String, String>> MMTB_PATIENT_TABLE_1_COLUMNS = Sets.asSet(
-        Pair.of(TABLE_1_COLUMN_1_KEY, TABLE_1_COLUMN_1_VALUE),
-        Pair.of(TABLE_1_COLUMN_2_KEY, TABLE_1_COLUMN_2_VALUE),
-        Pair.of(TABLE_1_COLUMN_3_KEY, TABLE_1_COLUMN_3_VALUE),
-        Pair.of(TABLE_1_COLUMN_4_KEY, TABLE_1_COLUMN_4_VALUE),
-        Pair.of(TABLE_1_COLUMN_5_KEY, TABLE_1_COLUMN_5_VALUE),
-        Pair.of(TABLE_1_COLUMN_6_KEY, TABLE_1_COLUMN_6_VALUE),
-        Pair.of(TABLE_1_COLUMN_7_KEY, TABLE_1_COLUMN_7_VALUE)
+    private static final Set<Pair<String, String>> MMTB_PATIENT_TABLE_1_COLUMNS = Sets.asSet(
+        PAIR_TABLE_1_COLUMN_1, PAIR_TABLE_1_COLUMN_2, PAIR_TABLE_1_COLUMN_3, PAIR_TABLE_1_COLUMN_4,
+        PAIR_TABLE_1_COLUMN_5, PAIR_TABLE_1_COLUMN_6, PAIR_TABLE_1_COLUMN_7
     );
-    public static final Set<Pair<String, String>> MMTB_PATIENT_TABLE_2_COLUMNS = Sets.asSet(
-        Pair.of(TABLE_2_COLUMN_1_KEY, TABLE_2_COLUMN_1_VALUE),
-        Pair.of(TABLE_2_COLUMN_2_KEY, TABLE_2_COLUMN_2_VALUE),
-        Pair.of(TABLE_2_COLUMN_3_KEY, TABLE_2_COLUMN_3_VALUE),
-        Pair.of(TABLE_2_COLUMN_4_KEY, TABLE_2_COLUMN_4_VALUE),
-        Pair.of(TABLE_2_COLUMN_5_KEY, TABLE_2_COLUMN_5_VALUE),
-        Pair.of(TABLE_2_COLUMN_6_KEY, TABLE_2_COLUMN_6_VALUE),
-        Pair.of(TABLE_2_COLUMN_7_KEY, TABLE_2_COLUMN_7_VALUE)
+    private static final Set<Pair<String, String>> MMTB_PATIENT_TABLE_2_COLUMNS = Sets.asSet(
+        PAIR_TABLE_2_COLUMN_1, PAIR_TABLE_2_COLUMN_2, PAIR_TABLE_2_COLUMN_3, PAIR_TABLE_2_COLUMN_4,
+        PAIR_TABLE_2_COLUMN_5, PAIR_TABLE_2_COLUMN_6, PAIR_TABLE_2_COLUMN_7
     );
-    public static final Set<Pair<String, String>> MMTB_PATIENT_TABLE_3_COLUMNS = Sets.asSet(
-        Pair.of(TABLE_3_COLUMN_1_KEY, TABLE_3_COLUMN_1_VALUE),
-        Pair.of(TABLE_3_COLUMN_2_KEY, TABLE_3_COLUMN_2_VALUE),
-        Pair.of(TABLE_3_COLUMN_3_KEY, TABLE_3_COLUMN_3_VALUE),
-        Pair.of(TABLE_3_COLUMN_4_KEY, TABLE_3_COLUMN_4_VALUE),
-        Pair.of(TABLE_3_COLUMN_5_KEY, TABLE_3_COLUMN_5_VALUE),
-        Pair.of(TABLE_3_COLUMN_6_KEY, TABLE_3_COLUMN_6_VALUE),
-        Pair.of(TABLE_3_COLUMN_7_KEY, TABLE_3_COLUMN_7_VALUE),
-        Pair.of(TABLE_3_COLUMN_8_KEY, TABLE_3_COLUMN_8_VALUE)
+    private static final Set<Pair<String, String>> MMTB_PATIENT_TABLE_3_COLUMNS = Sets.asSet(
+        PAIR_TABLE_3_COLUMN_1, PAIR_TABLE_3_COLUMN_2, PAIR_TABLE_3_COLUMN_3, PAIR_TABLE_3_COLUMN_4,
+        PAIR_TABLE_3_COLUMN_5, PAIR_TABLE_3_COLUMN_6, PAIR_TABLE_3_COLUMN_7, PAIR_TABLE_3_COLUMN_8
     );
-    public static final Set<Pair<String, String>> MMTB_PATIENT_TABLE_4_COLUMNS = Sets.asSet(
-        Pair.of(TABLE_4_COLUMN_1_KEY, TABLE_4_COLUMN_1_VALUE),
-        Pair.of(TABLE_4_COLUMN_2_KEY, TABLE_4_COLUMN_2_VALUE),
-        Pair.of(TABLE_4_COLUMN_3_KEY, TABLE_4_COLUMN_3_VALUE),
-        Pair.of(TABLE_4_COLUMN_4_KEY, TABLE_4_COLUMN_4_VALUE),
-        Pair.of(TABLE_4_COLUMN_5_KEY, TABLE_4_COLUMN_5_VALUE),
-        Pair.of(TABLE_4_COLUMN_6_KEY, TABLE_4_COLUMN_6_VALUE),
-        Pair.of(TABLE_4_COLUMN_7_KEY, TABLE_4_COLUMN_7_VALUE)
+    private static final Set<Pair<String, String>> MMTB_PATIENT_TABLE_4_COLUMNS = Sets.asSet(
+        PAIR_TABLE_4_COLUMN_1, PAIR_TABLE_4_COLUMN_2, PAIR_TABLE_4_COLUMN_3, PAIR_TABLE_4_COLUMN_4,
+        PAIR_TABLE_4_COLUMN_5, PAIR_TABLE_4_COLUMN_6, PAIR_TABLE_4_COLUMN_7
     );
-    public static final Set<Pair<String, String>> MMTB_PATIENT_TABLE_5_COLUMNS = Sets.asSet(
-        Pair.of(TABLE_5_COLUMN_1_KEY, TABLE_5_COLUMN_1_VALUE),
-        Pair.of(TABLE_5_COLUMN_2_KEY, TABLE_5_COLUMN_2_VALUE),
-        Pair.of(TABLE_5_COLUMN_3_KEY, TABLE_5_COLUMN_3_VALUE),
-        Pair.of(TABLE_5_COLUMN_4_KEY, TABLE_5_COLUMN_4_VALUE)
+    private static final Set<Pair<String, String>> MMTB_PATIENT_TABLE_5_COLUMNS = Sets.asSet(
+        PAIR_TABLE_5_COLUMN_1, PAIR_TABLE_5_COLUMN_2, PAIR_TABLE_5_COLUMN_3, PAIR_TABLE_5_COLUMN_4
     );
-    public static final Set<Pair<String, String>> MMTB_PATIENT_TABLE_6_COLUMNS = Sets.asSet(
-        Pair.of(TABLE_6_COLUMN_1_KEY, TABLE_6_COLUMN_1_VALUE),
-        Pair.of(TABLE_6_COLUMN_2_KEY, TABLE_6_COLUMN_2_VALUE),
-        Pair.of(TABLE_6_COLUMN_3_KEY, TABLE_6_COLUMN_3_VALUE)
+    private static final Set<Pair<String, String>> MMTB_PATIENT_TABLE_6_COLUMNS = Sets.asSet(
+        PAIR_TABLE_6_COLUMN_1, PAIR_TABLE_6_COLUMN_2, PAIR_TABLE_6_COLUMN_3
     );
-    public static final Set<Pair<String, Set<Pair<String, String>>>> MMTB_PATIENT_TABLE_TO_COLUMN = Sets.asSet(
-        Pair.of(TABLE_1_VALUE, MMTB_PATIENT_TABLE_1_COLUMNS),
-        Pair.of(TABLE_2_VALUE, MMTB_PATIENT_TABLE_2_COLUMNS),
-        Pair.of(TABLE_3_VALUE, MMTB_PATIENT_TABLE_3_COLUMNS),
-        Pair.of(TABLE_4_VALUE, MMTB_PATIENT_TABLE_4_COLUMNS),
-        Pair.of(TABLE_5_VALUE, MMTB_PATIENT_TABLE_5_COLUMNS),
-        Pair.of(TABLE_6_VALUE, MMTB_PATIENT_TABLE_6_COLUMNS)
+    private static final Set<Pair<String, Set<Pair<String, String>>>> MMTB_PATIENT_TABLE_TO_COLUMN = Sets.asSet(
+        Pair.of(PAIR_TABLE_1.getSecond(), MMTB_PATIENT_TABLE_1_COLUMNS),
+        Pair.of(PAIR_TABLE_2.getSecond(), MMTB_PATIENT_TABLE_2_COLUMNS),
+        Pair.of(PAIR_TABLE_3.getSecond(), MMTB_PATIENT_TABLE_3_COLUMNS),
+        Pair.of(PAIR_TABLE_4.getSecond(), MMTB_PATIENT_TABLE_4_COLUMNS),
+        Pair.of(PAIR_TABLE_5.getSecond(), MMTB_PATIENT_TABLE_5_COLUMNS),
+        Pair.of(PAIR_TABLE_6.getSecond(), MMTB_PATIENT_TABLE_6_COLUMNS)
     );
 
     public static String getTableKeyByValue(String tableValue) {
@@ -229,38 +190,27 @@ public class MmtbRequisitionConstants {
   }
 
   @NoArgsConstructor
-  // MMTB Age group section: 2 tables
   public static class MmtbAgeGroupSection {
 
-    // table 1: Faixas Etarias, "group"
-    public static final String TABLE_1_KEY = "table_age_group_header_key";
-    public static final String TABLE_1_VALUE = "group";
-    public static final String TABLE_1_COLUMN_1_KEY = "table_age_group_header_key_treatment";
-    public static final String TABLE_1_COLUMN_1_VALUE = "treatment";
-    public static final String TABLE_1_COLUMN_2_KEY = "table_age_group_header_key_prophylaxis";
-    public static final String TABLE_1_COLUMN_2_VALUE = "prophylaxis";
-    // table 2: Service, "service"
-    public static final String TABLE_2_KEY = "table_age_group_service_key";
-    public static final String TABLE_2_VALUE = "service";
-    public static final String TABLE_2_COLUMN_1_KEY = "table_age_group_service_key_adult";
-    public static final String TABLE_2_COLUMN_1_VALUE = "adultos";
-    public static final String TABLE_2_COLUMN_2_KEY = "table_age_group_service_key_child_less_than_25kg";
-    public static final String TABLE_2_COLUMN_2_VALUE = "criança < 25Kg";
-    public static final String TABLE_2_COLUMN_3_KEY = "table_age_group_service_key_child_more_than_25kg";
-    public static final String TABLE_2_COLUMN_3_VALUE = "criança > 25Kg";
-
-    public static final Set<Pair<String, String>> MMTB_AGE_GROUP_TABLE_1_COLUMNS = Sets.asSet(
-        Pair.of(TABLE_1_COLUMN_1_KEY, TABLE_1_COLUMN_1_VALUE),
-        Pair.of(TABLE_1_COLUMN_2_KEY, TABLE_1_COLUMN_2_VALUE)
+    // table 1: Faixas Etarias
+    private static final Pair<String, String> PAIR_TABLE_1 = Pair.of("table_age_group_header_key", "group");
+    private static final Pair<String, String> PAIR_TABLE_1_COLUMN_1 = Pair.of(
+        "table_age_group_header_key_treatment", "treatment");
+    private static final Pair<String, String> PAIR_TABLE_1_COLUMN_2 = Pair.of(
+        "table_age_group_header_key_prophylaxis", "prophylaxis");
+    // table 2: Service
+    private static final Pair<String, String> PAIR_TABLE_2 = Pair.of("table_age_group_service_key", "service");
+    private static final Pair<String, String> PAIR_TABLE_2_COLUMN_1 = Pair.of(
+        "table_age_group_service_key_adult", "adultos");
+    private static final Pair<String, String> PAIR_TABLE_2_COLUMN_2 = Pair.of(
+        "table_age_group_service_key_child_less_than_25kg", "criança < 25K");
+    private static final Pair<String, String> PAIR_TABLE_2_COLUMN_3 = Pair.of(
+        "table_age_group_service_key_child_more_than_25kg", "criança > 25Kg");
+    private static final Set<Pair<String, String>> MMTB_AGE_GROUP_TABLE_1_COLUMNS = Sets.asSet(
+        PAIR_TABLE_1_COLUMN_1, PAIR_TABLE_1_COLUMN_2
     );
-    public static final Set<Pair<String, String>> MMTB_AGE_GROUP_TABLE_2_COLUMNS = Sets.asSet(
-        Pair.of(TABLE_2_COLUMN_1_KEY, TABLE_2_COLUMN_1_VALUE),
-        Pair.of(TABLE_2_COLUMN_2_KEY, TABLE_2_COLUMN_2_VALUE),
-        Pair.of(TABLE_2_COLUMN_3_KEY, TABLE_2_COLUMN_3_VALUE)
-    );
-    public static final Set<Pair<String, Set<Pair<String, String>>>> MMTB_AGE_GROUP_TABLE_TO_COLUMN = Sets.asSet(
-        Pair.of(TABLE_1_VALUE, MMTB_AGE_GROUP_TABLE_1_COLUMNS),
-        Pair.of(TABLE_2_VALUE, MMTB_AGE_GROUP_TABLE_2_COLUMNS)
+    private static final Set<Pair<String, String>> MMTB_AGE_GROUP_TABLE_2_COLUMNS = Sets.asSet(
+        PAIR_TABLE_2_COLUMN_1, PAIR_TABLE_2_COLUMN_2, PAIR_TABLE_2_COLUMN_3
     );
 
     public static String getGroupValueByKey(String groupKey) {
