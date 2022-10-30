@@ -46,10 +46,10 @@ public class PatientLineItemsRequest {
     String tableValue = patientGroupDto.getName();
     String tableKey = MmtbPatientSection.getTableKeyByValue(tableValue);
     Map<String, PatientColumnDto> columnNameToPatientColumn = patientGroupDto.getColumns();
-    columnNameToPatientColumn.forEach((columnName, patientColumn) -> {
+    columnNameToPatientColumn.forEach((columnValue, patientColumn) -> {
       columns.add(PatientLineItemColumnRequest.builder()
           .tableName(tableKey)
-          .name(MmtbPatientSection.getColumnValueByKey(tableValue, columnName))
+          .name(MmtbPatientSection.getColumnKeyByValue(tableValue, columnValue))
           .value(patientColumn.getValue())
           .build());
     });

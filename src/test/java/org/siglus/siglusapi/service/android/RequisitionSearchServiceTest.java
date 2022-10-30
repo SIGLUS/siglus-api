@@ -319,8 +319,9 @@ public class RequisitionSearchServiceTest {
     RequisitionCreateRequest mmtbResponse = requisitionResponse.getRequisitionResponseList().get(4);
     assertEquals(6, mmtbResponse.getAgeGroupLineItems().size());
     List<PatientLineItemsRequest> patientLineItems = mmtbResponse.getPatientLineItems();
-    assertEquals(1, patientLineItems.size());
-    assertEquals(2, patientLineItems.get(0).getColumns().size());
+    assertEquals(2, patientLineItems.size());
+    assertEquals(1, patientLineItems.get(0).getColumns().size());
+    assertEquals(1, patientLineItems.get(1).getColumns().size());
   }
 
   private void createGetRequisitionData() {
@@ -668,35 +669,35 @@ public class RequisitionSearchServiceTest {
   }
 
   private List<PatientLineItem> buildMmiaPatientLineItems() {
-    PatientLineItem patientLineItem0 = new PatientLineItem();
-    patientLineItem0.setRequisitionId(requisitionIdMmia);
-    patientLineItem0.setGroup("newSection2");
-    patientLineItem0.setColumn("new");
-    patientLineItem0.setValue(20);
-
-    PatientLineItem patientLineItem1 = new PatientLineItem();
-    patientLineItem1.setRequisitionId(requisitionIdMmia);
-    patientLineItem1.setGroup("newSection3");
-    patientLineItem1.setColumn(newColumn0);
-    patientLineItem1.setValue(27);
-
-    return Arrays.asList(patientLineItem0, patientLineItem1);
+    PatientLineItem patientLineItem1 = PatientLineItem.builder()
+        .requisitionId(requisitionIdMmia)
+        .group("newSection2")
+        .column("new")
+        .value(20)
+        .build();
+    PatientLineItem patientLineItem2 = PatientLineItem.builder()
+        .requisitionId(requisitionIdMmia)
+        .group("newSection3")
+        .column("newColumn0")
+        .value(27)
+        .build();
+    return Arrays.asList(patientLineItem1, patientLineItem2);
   }
 
   private List<PatientLineItem> buildMmtbPatientLineItems() {
-    PatientLineItem patientLineItem0 = new PatientLineItem();
-    patientLineItem0.setRequisitionId(requisitionIdMmtb);
-    patientLineItem0.setGroup("newSection2");
-    patientLineItem0.setColumn("new");
-    patientLineItem0.setValue(20);
-
-    PatientLineItem patientLineItem1 = new PatientLineItem();
-    patientLineItem1.setRequisitionId(requisitionIdMmtb);
-    patientLineItem1.setGroup("newSection3");
-    patientLineItem1.setColumn(newColumn0);
-    patientLineItem1.setValue(27);
-
-    return Arrays.asList(patientLineItem0, patientLineItem1);
+    PatientLineItem patientLineItem1 = PatientLineItem.builder()
+        .requisitionId(requisitionIdMmtb)
+        .group("newSection2")
+        .column("new")
+        .value(20)
+        .build();
+    PatientLineItem patientLineItem2 = PatientLineItem.builder()
+        .requisitionId(requisitionIdMmtb)
+        .group("newSection3")
+        .column("newColumn0")
+        .value(27)
+        .build();
+    return Arrays.asList(patientLineItem1, patientLineItem2);
   }
 
 

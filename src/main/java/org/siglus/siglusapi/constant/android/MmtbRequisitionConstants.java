@@ -184,7 +184,7 @@ public class MmtbRequisitionConstants {
         Pair.of(TABLE_6_VALUE, MMTB_PATIENT_TABLE_6_COLUMNS)
     );
 
-    public static String getTableValueByKey(String tableValue) {
+    public static String getTableKeyByValue(String tableValue) {
       return MMTB_PATIENT_TABLES.stream()
           .filter(pair -> pair.getSecond().equals(tableValue))
           .findFirst()
@@ -192,7 +192,7 @@ public class MmtbRequisitionConstants {
           .getFirst();
     }
 
-    public static String getTableKeyByValue(String tableKey) {
+    public static String getTableValueByKey(String tableKey) {
       return MMTB_PATIENT_TABLES.stream()
           .filter(pair -> pair.getFirst().equals(tableKey))
           .findFirst()
@@ -200,20 +200,7 @@ public class MmtbRequisitionConstants {
           .getSecond();
     }
 
-    public static String getColumnKeyByValue(String tableValue, String columnKey) {
-      Set<Pair<String, String>> columnKeyToValueSet = MMTB_PATIENT_TABLE_TO_COLUMN.stream()
-          .filter(pair -> pair.getFirst().equals(tableValue))
-          .findFirst()
-          .orElseThrow(EntityNotFoundException::new)
-          .getSecond();
-      return columnKeyToValueSet.stream()
-          .filter(pair -> pair.getFirst().equals(columnKey))
-          .findFirst()
-          .orElseThrow(EntityNotFoundException::new)
-          .getSecond();
-    }
-
-    public static String getColumnValueByKey(String tableValue, String columnValue) {
+    public static String getColumnKeyByValue(String tableValue, String columnValue) {
       Set<Pair<String, String>> columnKeyToValueSet = MMTB_PATIENT_TABLE_TO_COLUMN.stream()
           .filter(pair -> pair.getFirst().equals(tableValue))
           .findFirst()
@@ -224,6 +211,19 @@ public class MmtbRequisitionConstants {
           .findFirst()
           .orElseThrow(EntityNotFoundException::new)
           .getFirst();
+    }
+
+    public static String getColumnValueByKey(String tableValue, String columnKey) {
+      Set<Pair<String, String>> columnKeyToValueSet = MMTB_PATIENT_TABLE_TO_COLUMN.stream()
+          .filter(pair -> pair.getFirst().equals(tableValue))
+          .findFirst()
+          .orElseThrow(EntityNotFoundException::new)
+          .getSecond();
+      return columnKeyToValueSet.stream()
+          .filter(pair -> pair.getFirst().equals(columnKey))
+          .findFirst()
+          .orElseThrow(EntityNotFoundException::new)
+          .getSecond();
     }
   }
 

@@ -521,18 +521,19 @@ public class RequisitionCreateService {
     Map<String, PatientGroupDto> patientTableNameToPatientGroup = requisitionDto.getPatientLineItems().stream()
         .collect(toMap(PatientGroupDto::getName, identity()));
     patientLineItemsRequests.forEach(patientLineItem -> {
-      String tableValue = MmtbPatientSection.getTableValueByKey(patientLineItem.getName());
+      String tableKey = patientLineItem.getName();
+      String tableValue = MmtbPatientSection.getTableValueByKey(tableKey);
       buildMmtbPatientLineItem(patientTableNameToPatientGroup.get(tableValue), patientLineItem);
     });
   }
 
   private void buildMmtbPatientLineItem(PatientGroupDto patientGroupDto, PatientLineItemsRequest patientRequest) {
     List<PatientLineItemColumnRequest> patientRequestLineItems = patientRequest.getColumns();
-    String tableKey = patientGroupDto.getName();
+    String tableValue = patientGroupDto.getName();
     patientRequestLineItems.forEach(patientRequestLineItem -> {
       String columnKey = patientRequestLineItem.getName();
-      String tableColumnValue = MmtbPatientSection.getColumnValueByKey(tableKey, columnKey);
-      PatientColumnDto patientColumnDto = patientGroupDto.getColumns().get(tableColumnValue);
+      String columnValue = MmtbPatientSection.getColumnValueByKey(tableValue, columnKey);
+      PatientColumnDto patientColumnDto = patientGroupDto.getColumns().get(columnValue);
       patientColumnDto.setValue(patientRequestLineItem.getValue());
     });
   }
