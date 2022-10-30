@@ -513,13 +513,13 @@ public class RequisitionSearchServiceTest {
         .build();
     AgeGroupLineItem ageGroupLineItem3 = AgeGroupLineItem.builder()
         .requisitionId(requisitionIdMmtb)
-        .service("criança < 25K")
+        .service("criança < 25Kg")
         .group("treatment")
         .value(3)
         .build();
     AgeGroupLineItem ageGroupLineItem4 = AgeGroupLineItem.builder()
         .requisitionId(requisitionIdMmtb)
-        .service("criança < 25K")
+        .service("criança < 25Kg")
         .group("prophylaxis")
         .value(4)
         .build();

@@ -949,7 +949,7 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     table1.setService("adultos");
     table1.setColumns(table1Column);
     AgeGroupServiceDto table2 = new AgeGroupServiceDto();
-    table2.setService("criança < 25K");
+    table2.setService("criança < 25Kg");
     table2.setColumns(table1Column);
     AgeGroupServiceDto table3 = new AgeGroupServiceDto();
     table3.setService("criança > 25Kg");

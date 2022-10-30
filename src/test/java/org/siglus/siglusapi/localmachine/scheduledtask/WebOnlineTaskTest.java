@@ -27,7 +27,6 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.siglus.siglusapi.localmachine.eventstore.MasterDataEventRecord;
 import org.siglus.siglusapi.localmachine.eventstore.MasterDataEventRecordRepository;
-import org.siglus.siglusapi.localmachine.scheduledtask.OnlineWebTask;
 import org.siglus.siglusapi.localmachine.server.OnlineWebService;
 import org.springframework.test.util.ReflectionTestUtils;
 
