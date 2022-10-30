@@ -60,10 +60,6 @@ import static org.siglus.siglusapi.constant.UsageSectionConstants.MmiaPatientLin
 import static org.siglus.siglusapi.constant.UsageSectionConstants.MmiaPatientLineItems.TABLE_DISPENSED_DT_KEY;
 import static org.siglus.siglusapi.constant.UsageSectionConstants.MmiaPatientLineItems.TABLE_DISPENSED_KEY;
 import static org.siglus.siglusapi.constant.UsageSectionConstants.MmiaPatientLineItems.TOTAL_COLUMN;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.MmtbAgeGroupLineItems.MMTB_AGE_GROUP_TABLE_1_COLUMNS;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.MmtbAgeGroupLineItems.MMTB_AGE_GROUP_TABLE_2_COLUMNS;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.MmtbPatientLineItems.MMTB_PATIENT_TABLES;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.MmtbPatientLineItems.MMTB_PATIENT_TABLE_TO_COLUMN;
 import static org.siglus.siglusapi.constant.UsageSectionConstants.RegimenLineItems.COLUMN_NAME_COMMUNITY;
 import static org.siglus.siglusapi.constant.UsageSectionConstants.RegimenLineItems.COLUMN_NAME_PATIENT;
 import static org.siglus.siglusapi.constant.UsageSectionConstants.TestConsumptionLineItems.SERVICE_APES;
@@ -125,6 +121,8 @@ import org.siglus.common.dto.RequisitionTemplateExtensionDto;
 import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
 import org.siglus.siglusapi.constant.ProgramConstants;
 import org.siglus.siglusapi.constant.UsageSectionConstants.UsageInformationLineItems;
+import org.siglus.siglusapi.constant.android.MmtbRequisitionConstants.MmtbAgeGroupSection;
+import org.siglus.siglusapi.constant.android.MmtbRequisitionConstants.MmtbPatientSection;
 import org.siglus.siglusapi.domain.RegimenLineItem;
 import org.siglus.siglusapi.domain.RequisitionExtension;
 import org.siglus.siglusapi.domain.RequisitionLineItemExtension;
@@ -180,7 +178,6 @@ import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataSer
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.util.SupportedProgramsHelper;
-import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
@@ -524,26 +521,17 @@ public class RequisitionCreateService {
     Map<String, PatientGroupDto> patientTableNameToPatientGroup = requisitionDto.getPatientLineItems().stream()
         .collect(toMap(PatientGroupDto::getName, identity()));
     patientLineItemsRequests.forEach(patientLineItem -> {
-      String tableValue = MMTB_PATIENT_TABLES.stream()
-          .filter(item -> item.getFirst().equals(patientLineItem.getName()))
-          .findFirst()
-          .orElseThrow(EntityNotFoundException::new)
-          .getSecond();
+      String tableValue = MmtbPatientSection.getTableValueByKey(patientLineItem.getName());
       buildMmtbPatientLineItem(patientTableNameToPatientGroup.get(tableValue), patientLineItem);
     });
   }
 
   private void buildMmtbPatientLineItem(PatientGroupDto patientGroupDto, PatientLineItemsRequest patientRequest) {
     List<PatientLineItemColumnRequest> patientRequestLineItems = patientRequest.getColumns();
-    Set<Pair<String, String>> tableColumnSet = MMTB_PATIENT_TABLE_TO_COLUMN.stream()
-        .filter(item -> item.getFirst().equals(patientGroupDto.getName())).findFirst()
-        .orElseThrow(EntityNotFoundException::new)
-        .getSecond();
+    String tableKey = patientGroupDto.getName();
     patientRequestLineItems.forEach(patientRequestLineItem -> {
-      String tableColumnValue = tableColumnSet.stream()
-          .filter(item -> item.getFirst().equals(patientRequestLineItem.getName())).findFirst()
-          .orElseThrow(EntityNotFoundException::new)
-          .getSecond();
+      String columnKey = patientRequestLineItem.getName();
+      String tableColumnValue = MmtbPatientSection.getColumnValueByKey(tableKey, columnKey);
       PatientColumnDto patientColumnDto = patientGroupDto.getColumns().get(tableColumnValue);
       patientColumnDto.setValue(patientRequestLineItem.getValue());
     });
@@ -573,24 +561,11 @@ public class RequisitionCreateService {
     Map<String, AgeGroupServiceDto> ageGroupServiceToAgeGroup = requisitionDto.getAgeGroupLineItems().stream()
         .collect(toMap(AgeGroupServiceDto::getService, identity()));
     ageGroupLineItemRequests.forEach(lineItemRequest -> {
-      String serviceName = MMTB_AGE_GROUP_TABLE_2_COLUMNS.stream()
-          .filter(item -> item.getFirst().equals(lineItemRequest.getService()))
-          .findFirst()
-          .orElseThrow(EntityNotFoundException::new)
-          .getSecond();
-      updateAgeGroupLineItem(ageGroupServiceToAgeGroup.get(serviceName), lineItemRequest);
+      String serviceValue = MmtbAgeGroupSection.getServiceValueByKey(lineItemRequest.getService());
+      String groupValue = MmtbAgeGroupSection.getGroupValueByKey(lineItemRequest.getGroup());
+      AgeGroupLineItemDto ageGroupLineItem = ageGroupServiceToAgeGroup.get(serviceValue).getColumns().get(groupValue);
+      ageGroupLineItem.setValue(lineItemRequest.getValue());
     });
-  }
-
-  private void updateAgeGroupLineItem(AgeGroupServiceDto ageGroupServiceDto,
-      AgeGroupLineItemRequest ageGroupLineItemRequest) {
-    String groupName = MMTB_AGE_GROUP_TABLE_1_COLUMNS.stream()
-        .filter(item -> item.getFirst().equals(ageGroupLineItemRequest.getGroup()))
-        .findFirst()
-        .orElseThrow(EntityNotFoundException::new)
-        .getSecond();
-    AgeGroupLineItemDto ageGroupLineItemDto = ageGroupServiceDto.getColumns().get(groupName);
-    ageGroupLineItemDto.setValue(ageGroupLineItemRequest.getValue());
   }
 
   private void splitTableDispensedPatientData(List<PatientLineItemsRequest> patientLineItemsRequests) {

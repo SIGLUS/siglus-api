@@ -15,13 +15,19 @@
 
 package org.siglus.siglusapi.dto.android.request;
 
+import static com.google.common.collect.Lists.newArrayList;
+
 import java.util.List;
+import java.util.Map;
 import javax.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.validator.constraints.NotBlank;
+import org.siglus.siglusapi.constant.android.MmtbRequisitionConstants.MmtbPatientSection;
+import org.siglus.siglusapi.dto.PatientColumnDto;
+import org.siglus.siglusapi.dto.PatientGroupDto;
 
 @Data
 @Builder
@@ -34,4 +40,22 @@ public class PatientLineItemsRequest {
 
   @NotNull
   private List<PatientLineItemColumnRequest> columns;
+  
+  public static PatientLineItemsRequest from(PatientGroupDto patientGroupDto) {
+    List<PatientLineItemColumnRequest> columns = newArrayList();
+    String tableValue = patientGroupDto.getName();
+    String tableKey = MmtbPatientSection.getTableKeyByValue(tableValue);
+    Map<String, PatientColumnDto> columnNameToPatientColumn = patientGroupDto.getColumns();
+    columnNameToPatientColumn.forEach((columnName, patientColumn) -> {
+      columns.add(PatientLineItemColumnRequest.builder()
+          .tableName(tableKey)
+          .name(MmtbPatientSection.getColumnValueByKey(tableValue, columnName))
+          .value(patientColumn.getValue())
+          .build());
+    });
+    return PatientLineItemsRequest.builder()
+        .name(tableKey)
+        .columns(columns)
+        .build();
+  }
 }

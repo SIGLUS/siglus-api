@@ -47,8 +47,8 @@ import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.dto.RequisitionLineItemV2Dto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.dto.VersionObjectReferenceDto;
-import org.siglus.siglusapi.constant.UsageSectionConstants.MmtbAgeGroupLineItems;
 import org.siglus.siglusapi.constant.UsageSectionConstants.TestConsumptionLineItems;
+import org.siglus.siglusapi.constant.android.MmtbRequisitionConstants.MmtbAgeGroupSection;
 import org.siglus.siglusapi.domain.AgeGroupLineItem;
 import org.siglus.siglusapi.domain.ConsultationNumberLineItem;
 import org.siglus.siglusapi.domain.PatientLineItem;
@@ -501,38 +501,38 @@ public class RequisitionSearchServiceTest {
   private List<AgeGroupLineItem> buildAgeGroupLineItems() {
     AgeGroupLineItem ageGroupLineItem1 = AgeGroupLineItem.builder()
         .requisitionId(requisitionIdMmtb)
-        .service(MmtbAgeGroupLineItems.TABLE_2_COLUMN_1_VALUE)
-        .group(MmtbAgeGroupLineItems.TABLE_1_COLUMN_1_VALUE)
+        .service(MmtbAgeGroupSection.TABLE_2_COLUMN_1_VALUE)
+        .group(MmtbAgeGroupSection.TABLE_1_COLUMN_1_VALUE)
         .value(1)
         .build();
     AgeGroupLineItem ageGroupLineItem2 = AgeGroupLineItem.builder()
         .requisitionId(requisitionIdMmtb)
-        .service(MmtbAgeGroupLineItems.TABLE_2_COLUMN_1_VALUE)
-        .group(MmtbAgeGroupLineItems.TABLE_1_COLUMN_2_VALUE)
+        .service(MmtbAgeGroupSection.TABLE_2_COLUMN_1_VALUE)
+        .group(MmtbAgeGroupSection.TABLE_1_COLUMN_2_VALUE)
         .value(2)
         .build();
     AgeGroupLineItem ageGroupLineItem3 = AgeGroupLineItem.builder()
         .requisitionId(requisitionIdMmtb)
-        .service(MmtbAgeGroupLineItems.TABLE_2_COLUMN_2_VALUE)
-        .group(MmtbAgeGroupLineItems.TABLE_1_COLUMN_1_VALUE)
+        .service(MmtbAgeGroupSection.TABLE_2_COLUMN_2_VALUE)
+        .group(MmtbAgeGroupSection.TABLE_1_COLUMN_1_VALUE)
         .value(3)
         .build();
     AgeGroupLineItem ageGroupLineItem4 = AgeGroupLineItem.builder()
         .requisitionId(requisitionIdMmtb)
-        .service(MmtbAgeGroupLineItems.TABLE_2_COLUMN_2_VALUE)
-        .group(MmtbAgeGroupLineItems.TABLE_1_COLUMN_2_VALUE)
+        .service(MmtbAgeGroupSection.TABLE_2_COLUMN_2_VALUE)
+        .group(MmtbAgeGroupSection.TABLE_1_COLUMN_2_VALUE)
         .value(4)
         .build();
     AgeGroupLineItem ageGroupLineItem5 = AgeGroupLineItem.builder()
         .requisitionId(requisitionIdMmtb)
-        .service(MmtbAgeGroupLineItems.TABLE_2_COLUMN_3_VALUE)
-        .group(MmtbAgeGroupLineItems.TABLE_1_COLUMN_1_VALUE)
+        .service(MmtbAgeGroupSection.TABLE_2_COLUMN_3_VALUE)
+        .group(MmtbAgeGroupSection.TABLE_1_COLUMN_1_VALUE)
         .value(5)
         .build();
     AgeGroupLineItem ageGroupLineItem6 = AgeGroupLineItem.builder()
         .requisitionId(requisitionIdMmtb)
-        .service(MmtbAgeGroupLineItems.TABLE_2_COLUMN_3_VALUE)
-        .group(MmtbAgeGroupLineItems.TABLE_1_COLUMN_2_VALUE)
+        .service(MmtbAgeGroupSection.TABLE_2_COLUMN_3_VALUE)
+        .group(MmtbAgeGroupSection.TABLE_1_COLUMN_2_VALUE)
         .value(6)
         .build();
     return Arrays.asList(ageGroupLineItem1, ageGroupLineItem2, ageGroupLineItem3, ageGroupLineItem4, ageGroupLineItem5,
