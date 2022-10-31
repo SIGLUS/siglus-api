@@ -145,7 +145,8 @@ public class SiglusRequisitionController {
   }
 
   /**
-   * why we redo this api? for bug card #228, change dependency: {@linkplain org.openlmis.requisition.domain.requisition.Requisition#reject(Map,
+   * why we redo this api? for bug card #228, change dependency:
+   * {@linkplain org.openlmis.requisition.domain.requisition.Requisition#reject(Map,
    * UUID)}  method} requisition.reject->updateConsumptions(products)-> {@linkplain
    * org.openlmis.requisition.domain.requisition.Requisition#filterLineItems(Boolean, Boolean, Map)} method}
    * getNonSkippedFullSupplyRequisitionLineItems->filterLineItems
@@ -190,7 +191,7 @@ public class SiglusRequisitionController {
       @RequestParam(value = "program", required = false) UUID programId,
       @RequestParam(value = "facility", required = false) UUID facilityId,
       Pageable pageable) {
-    return siglusRequisitionService.listForConvertToOrderWithRequisitionExtraData(programId, facilityId, pageable);
+    return siglusRequisitionService.getRequisitionsForConvertToOrder(programId, facilityId, pageable);
   }
 
   @GetMapping("/facilitiesForApproval")

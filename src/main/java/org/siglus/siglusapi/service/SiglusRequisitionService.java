@@ -325,7 +325,7 @@ public class SiglusRequisitionService {
     return basicRequisitionDto;
   }
 
-  public Page<RequisitionWithSupplyingDepotsDto> listForConvertToOrderWithRequisitionExtraData(UUID programId,
+  public Page<RequisitionWithSupplyingDepotsDto> getRequisitionsForConvertToOrder(UUID programId,
       UUID facilityId, Pageable pageable) {
     Page<RequisitionWithSupplyingDepotsDto> page = requisitionController.listForConvertToOrder(programId, facilityId,
         pageable);

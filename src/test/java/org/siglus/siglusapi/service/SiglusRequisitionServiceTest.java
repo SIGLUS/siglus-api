@@ -23,9 +23,12 @@ import static java.util.Collections.singletonList;
 import static org.apache.commons.lang3.RandomUtils.nextInt;
 import static org.hamcrest.Matchers.hasItems;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyCollectionOf;
@@ -100,6 +103,7 @@ import org.openlmis.requisition.dto.ProofOfDeliveryDto;
 import org.openlmis.requisition.dto.RequisitionGroupDto;
 import org.openlmis.requisition.dto.RequisitionLineItemV2Dto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
+import org.openlmis.requisition.dto.RequisitionWithSupplyingDepotsDto;
 import org.openlmis.requisition.dto.RightDto;
 import org.openlmis.requisition.dto.RoleAssignmentDto;
 import org.openlmis.requisition.dto.RoleDto;
@@ -150,6 +154,7 @@ import org.siglus.siglusapi.dto.OrderableExpirationDateDto;
 import org.siglus.siglusapi.dto.RegimenDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionLineItemDto;
+import org.siglus.siglusapi.dto.SimpleRequisitionDto;
 import org.siglus.siglusapi.i18n.MessageService;
 import org.siglus.siglusapi.repository.FacilityExtensionRepository;
 import org.siglus.siglusapi.repository.ProcessingPeriodRepository;
@@ -157,6 +162,7 @@ import org.siglus.siglusapi.repository.RequisitionDraftRepository;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionMonthlyNotSubmitReportRepository;
+import org.siglus.siglusapi.repository.RequisitionNativeSqlRepository;
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
 import org.siglus.siglusapi.testutils.IdealStockAmountDtoDataBuilder;
@@ -177,7 +183,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
 @RunWith(MockitoJUnitRunner.class)
-@SuppressWarnings({"PMD.TooManyMethods", "PMD.UnusedPrivateField"})
+@SuppressWarnings({"PMD.TooManyMethods", "PMD.UnusedPrivateField", "checkstyle:LineLength"})
 public class SiglusRequisitionServiceTest {
 
   private static final String REQUISITION_NUMBER = "requisitionNumber";
@@ -327,6 +333,9 @@ public class SiglusRequisitionServiceTest {
   @Mock
   private ProcessingPeriodRepository processingPeriodRepository;
 
+  @Mock
+  private RequisitionNativeSqlRepository requisitionNativeSqlRepository;
+
   private final UUID facilityId = UUID.randomUUID();
 
   private final UUID facilityId2 = UUID.randomUUID();
@@ -417,6 +426,8 @@ public class SiglusRequisitionServiceTest {
   private final UUID adminRoleId = UUID.randomUUID();
 
   private final UUID orderId = UUID.randomUUID();
+
+  private final String extraDataJsonString = "{\"isSaved\":false,\"signaure\":{\"submit\":\"kkk\",\"approve\":[\"lll\",\"dprole2ApproveSig\"],\"authorize\":\"kkk\"},\"actualEndDate\":\"2022-04-18\",\"actualStartDate\":\"2022-03-18\",\"clientSubmittedTime\":\"2022-04-18T13:07:45.982Z\"}";
 
   @Mock
   private OrderFulfillmentService orderFulfillmentService;
@@ -1423,6 +1434,52 @@ public class SiglusRequisitionServiceTest {
     verify(requisitionExtensionRepository).save(requisitionExtensionCaptor.capture());
     RequisitionExtension captorValue = requisitionExtensionCaptor.getValue();
     assertEquals(Boolean.FALSE, captorValue.getIsApprovedByInternal());
+  }
+
+  @Test
+  public void shouldReturnWhenGetRequisitionsForConvertToOrderGivenNoContent() {
+    // given
+    given(requisitionController.listForConvertToOrder(any(), any(), any())).willReturn(
+        Pagination.getPage(Collections.emptyList(), null));
+
+    // when
+    Page<RequisitionWithSupplyingDepotsDto> actualResponse = siglusRequisitionService
+        .getRequisitionsForConvertToOrder(programId, facilityId, pageable);
+
+    // then
+    assertFalse(actualResponse.hasContent());
+  }
+
+  @Test
+  public void shouldReturnExtraDataWhenGetRequisitionsForConvertToOrderGivenContent() {
+    // given
+    when(requisitionController.listForConvertToOrder(any(), any(), any())).thenReturn(
+        Pagination.getPage(buildRequisitionWithSupplyingDepotsDtos(), null));
+    when(requisitionNativeSqlRepository.findSimpleRequisitionDto(any())).thenReturn(buildSimpleRequisitionDtos());
+
+    // when
+    Page<RequisitionWithSupplyingDepotsDto> actualResponse = siglusRequisitionService
+        .getRequisitionsForConvertToOrder(programId, facilityId, pageable);
+
+    // then
+    assertNotNull(actualResponse.getContent().get(0).getRequisition().getExtraData());
+  }
+
+  private List<RequisitionWithSupplyingDepotsDto> buildRequisitionWithSupplyingDepotsDtos() {
+    BasicRequisitionDto requisitionDto = new BasicRequisitionDto();
+    requisitionDto.setId(requisitionId);
+
+    RequisitionWithSupplyingDepotsDto dto = new RequisitionWithSupplyingDepotsDto();
+    dto.setRequisition(requisitionDto);
+    return Lists.newArrayList(dto);
+  }
+
+  private List<SimpleRequisitionDto> buildSimpleRequisitionDtos() {
+    SimpleRequisitionDto simpleRequisitionDto = SimpleRequisitionDto.builder()
+        .id(requisitionId)
+        .extraData(extraDataJsonString)
+        .build();
+    return Lists.newArrayList(simpleRequisitionDto);
   }
 
 
