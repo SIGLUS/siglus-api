@@ -354,9 +354,7 @@ public class SiglusOrderService {
 
   private List<FulfillOrderDto> processExpiredFulfillOrder(List<FulfillOrderDto> fulfillOrderDtos) {
     Map<UUID, List<FulfillOrderDto>> programIdToMap = fulfillOrderDtos.stream()
-        .collect(Collectors.groupingBy(fulfillOrderDto -> {
-          return fulfillOrderDto.getBasicOrder().getProgram().getId();
-        }));
+        .collect(Collectors.groupingBy(fulfillOrderDto -> fulfillOrderDto.getBasicOrder().getProgram().getId()));
     UUID processingPeriodId = fulfillOrderDtos.get(0).getBasicOrder().getProcessingPeriod().getId();
     ProcessingPeriodExtension processingPeriodExtension = processingPeriodExtensionRepository
         .findByProcessingPeriodId(processingPeriodId);
@@ -379,11 +377,10 @@ public class SiglusOrderService {
           .findBySupplyingFacilityIdAndProgramIdAndStatusIn(supplyingFacilityId, programId, Lists
               .newArrayList(OrderStatus.SHIPPED, OrderStatus.FULFILLING, OrderStatus.PARTIALLY_FULFILLED,
                   OrderStatus.RECEIVED));
-
-      List<FulfillOrderDto> filteredFulfillOrderDtos = fulfillOrderDtos.stream().filter(fulfillOrderDto -> {
-        return calculatedFulfillOrderMonth
-            .contains(fulfillOrderDto.getBasicOrder().getProcessingPeriod().getEndDate().getMonth());
-      }).collect(toList());
+      List<FulfillOrderDto> filteredFulfillOrderDtos = fulfillOrderDtos.stream()
+          .filter(fulfillOrderDto -> calculatedFulfillOrderMonth
+              .contains(fulfillOrderDto.getBasicOrder().getProcessingPeriod().getEndDate().getMonth()))
+          .collect(toList());
 
       if (orders.isEmpty()) {
         filteredFulfillOrderDtos.forEach(dto -> dto.setExpired(false));

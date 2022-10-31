@@ -25,6 +25,8 @@ import static org.mockito.Mockito.when;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_LOT_ID_AND_CODE_SHOULD_EMPTY;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.junit.Before;
@@ -35,8 +37,11 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.openlmis.referencedata.domain.Lot;
+import org.openlmis.referencedata.domain.TradeItem;
 import org.openlmis.referencedata.dto.OrderableChildDto;
 import org.openlmis.referencedata.dto.OrderableDto;
+import org.openlmis.referencedata.repository.LotRepository;
 import org.openlmis.stockmanagement.dto.StockEventDto;
 import org.openlmis.stockmanagement.dto.StockEventLineItemDto;
 import org.siglus.siglusapi.constant.FieldConstants;
@@ -66,6 +71,9 @@ public class SiglusLotServiceTest {
 
   @Mock
   private SiglusLotReferenceDataService lotReferenceDataService;
+
+  @Mock
+  private LotRepository lotRepository;
 
   @Rule
   public ExpectedException exception = ExpectedException.none();
@@ -185,6 +193,19 @@ public class SiglusLotServiceTest {
 
     // then
     assertEquals(lotId, lineItemDto.getLotId());
+  }
+
+  @Test
+  public void shouldReturnLotListWhenGet() {
+    // given
+    ArrayList<UUID> ids = newArrayList(UUID.randomUUID());
+    org.openlmis.referencedata.domain.Lot lot = new Lot();
+    lot.setTradeItem(new TradeItem());
+    when(lotRepository.findAll(ids)).thenReturn(newArrayList(lot));
+    // when
+    List<LotDto> lotList = siglusLotService.getLotList(ids);
+    // then
+    assertEquals(lotList.size(), 1);
   }
 
   private OrderableDto createOrderable(UUID orderableId, UUID tradeItemId) {

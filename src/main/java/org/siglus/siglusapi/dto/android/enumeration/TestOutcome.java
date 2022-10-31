@@ -15,9 +15,9 @@
 
 package org.siglus.siglusapi.dto.android.enumeration;
 
-import static org.siglus.siglusapi.constant.UsageSectionConstants.TestConsumptionLineItems.PROJECT_CONSUMO;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.TestConsumptionLineItems.PROJECT_POSITIVE;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.TestConsumptionLineItems.PROJECT_UNJUSTIFIED;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.TestConsumptionLineItems.PROJECT_CONSUMO;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.TestConsumptionLineItems.PROJECT_POSITIVE;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.TestConsumptionLineItems.PROJECT_UNJUSTIFIED;
 
 import java.util.Arrays;
 import lombok.Getter;

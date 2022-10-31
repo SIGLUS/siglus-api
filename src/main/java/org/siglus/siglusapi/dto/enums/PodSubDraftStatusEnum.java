@@ -15,6 +15,8 @@
 
 package org.siglus.siglusapi.dto.enums;
 
+import org.siglus.siglusapi.web.request.OperateTypeEnum;
+
 public enum PodSubDraftStatusEnum {
   NOT_YET_STARTED(1),
   DRAFT(2),
@@ -28,5 +30,15 @@ public enum PodSubDraftStatusEnum {
 
   public int getValue() {
     return value;
+  }
+
+  public static PodSubDraftStatusEnum getPodSubDraftEnum(OperateTypeEnum operateEnum) {
+    switch (operateEnum) {
+      case SAVE:
+        return PodSubDraftStatusEnum.DRAFT;
+      case SUBMIT:
+      default:
+        return PodSubDraftStatusEnum.SUBMITTED;
+    }
   }
 }

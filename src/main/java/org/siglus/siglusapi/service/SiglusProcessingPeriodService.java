@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -22,10 +23,13 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import lombok.SneakyThrows;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.openlmis.referencedata.domain.ProcessingPeriod;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.RequisitionStatus;
@@ -40,11 +44,15 @@ import org.siglus.common.domain.ProcessingPeriodExtension;
 import org.siglus.common.repository.ProcessingPeriodExtensionRepository;
 import org.siglus.siglusapi.constant.ProgramConstants;
 import org.siglus.siglusapi.dto.ProcessingPeriodSearchParams;
+import org.siglus.siglusapi.dto.SimpleRequisitionDto;
 import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.repository.ProcessingPeriodRepository;
+import org.siglus.siglusapi.repository.RequisitionNativeSqlRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.service.client.SiglusProcessingPeriodReferenceDataService;
 import org.siglus.siglusapi.validator.SiglusProcessingPeriodValidator;
+import org.siglus.siglusapi.web.response.RequisitionPeriodExtensionResponse;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -75,6 +83,9 @@ public class SiglusProcessingPeriodService {
 
   @Autowired
   private SiglusRequisitionRepository siglusRequisitionRepository;
+
+  @Autowired
+  private RequisitionNativeSqlRepository requisitionNativeSqlRepository;
 
   @Autowired
   private SiglusProgramService siglusProgramService;
@@ -186,9 +197,53 @@ public class SiglusProcessingPeriodService {
     return dto;
   }
 
+  public List<RequisitionPeriodExtensionResponse> getRequisitionPeriodExtensionResponses(UUID program, UUID facility,
+      boolean emergency) {
+    Collection<RequisitionPeriodDto> requisitionPeriodDtos = getRequisitionPeriods(program, facility, emergency);
+    if (CollectionUtils.isEmpty(requisitionPeriodDtos)) {
+      return requisitionPeriodDtos.stream().map(this::convertToRequisitionPeriodExtensionResponse)
+          .collect(Collectors.toList());
+    }
+
+    Set<UUID> requisitionIds = requisitionPeriodDtos.stream().map(RequisitionPeriodDto::getRequisitionId)
+        .collect(Collectors.toSet());
+    Map<UUID, SimpleRequisitionDto> requisitionIdToSimpleRequisition = requisitionNativeSqlRepository
+        .findSimpleRequisitionDto(requisitionIds).stream()
+        .collect(Collectors.toMap(SimpleRequisitionDto::getId, e -> e));
+
+    return requisitionPeriodDtos.stream()
+        .map(dto -> buildRequisitionPeriodExtensionResponse(dto, requisitionIdToSimpleRequisition))
+        .collect(Collectors.toList());
+  }
+
+  public RequisitionPeriodExtensionResponse buildRequisitionPeriodExtensionResponse(RequisitionPeriodDto dto,
+      Map<UUID, SimpleRequisitionDto> requisitionIdToSimpleRequisition) {
+    SimpleRequisitionDto simpleRequisitionDto = requisitionIdToSimpleRequisition.get(dto.getRequisitionId());
+    RequisitionPeriodExtensionResponse response = convertToRequisitionPeriodExtensionResponse(dto);
+    response.setRequisitionExtraData(getRequisitionExtraData(simpleRequisitionDto));
+    return response;
+  }
+
+  private Map<String, Object> getRequisitionExtraData(SimpleRequisitionDto simpleRequisitionDto) {
+    if (Objects.isNull(simpleRequisitionDto) || StringUtils.isBlank(simpleRequisitionDto.getExtraData())) {
+      return null;
+    }
+    return jsonStringToMap(simpleRequisitionDto.getExtraData());
+  }
+
+  private RequisitionPeriodExtensionResponse convertToRequisitionPeriodExtensionResponse(RequisitionPeriodDto dto) {
+    RequisitionPeriodExtensionResponse response = new RequisitionPeriodExtensionResponse();
+    BeanUtils.copyProperties(dto, response);
+    return response;
+  }
+
+  @SneakyThrows
+  private Map<String, Object> jsonStringToMap(String jsonString) {
+    return new ObjectMapper().readValue(jsonString, Map.class);
+  }
+
   // get periods for initiate
-  public Collection<RequisitionPeriodDto> getPeriods(UUID program,
-      UUID facility, boolean emergency) {
+  private Collection<RequisitionPeriodDto> getRequisitionPeriods(UUID program, UUID facility, boolean emergency) {
     ProgramDto programDto = siglusProgramService.getProgram(program);
     if (emergency && !ProgramConstants.VIA_PROGRAM_CODE.equals(programDto.getCode())) {
       return new ArrayList<>();

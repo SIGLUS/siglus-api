@@ -15,8 +15,10 @@
 
 package org.siglus.siglusapi.dto.android.enumeration;
 
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.DISPENSED_DM;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_COLUMN;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_COLUMN;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_COLUMN_0;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.TABLE_TOTAL_MONTH_KEY;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.TABLE_TOTAL_PATIENT_KEY;
 
 import java.util.Arrays;
 import lombok.Getter;
@@ -24,8 +26,9 @@ import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 @Getter
-public enum NewSection4 {
-  DM(DISPENSED_DM, NEW_COLUMN);
+public enum MmiaPatientTable4 {
+  TOTAL_PATIENT_KEY(TABLE_TOTAL_PATIENT_KEY, NEW_COLUMN),
+  TOTAL_MONTH_KEY(TABLE_TOTAL_MONTH_KEY, NEW_COLUMN_0);
 
   private final String key;
 
@@ -37,7 +40,7 @@ public enum NewSection4 {
     }
     return Arrays.stream(values())
         .filter(e -> e.value.equals(value))
-        .map(NewSection4::getKey)
+        .map(MmiaPatientTable4::getKey)
         .findFirst().orElse(null);
   }
 
@@ -47,7 +50,7 @@ public enum NewSection4 {
     }
     return Arrays.stream(values())
         .filter(e -> e.key.equals(key))
-        .map(NewSection4::getValue)
+        .map(MmiaPatientTable4::getValue)
         .findFirst().orElse(null);
   }
 }

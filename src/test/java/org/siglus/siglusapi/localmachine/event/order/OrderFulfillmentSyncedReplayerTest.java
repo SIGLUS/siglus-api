@@ -47,6 +47,7 @@ import org.openlmis.requisition.service.referencedata.OrderableReferenceDataServ
 import org.siglus.common.domain.OrderExternal;
 import org.siglus.common.repository.OrderExternalRepository;
 import org.siglus.siglusapi.domain.RequisitionExtension;
+import org.siglus.siglusapi.dto.LotDto;
 import org.siglus.siglusapi.localmachine.event.EventCommonService;
 import org.siglus.siglusapi.localmachine.event.NotificationService;
 import org.siglus.siglusapi.localmachine.event.order.fulfillment.OrderFulfillmentSyncedEvent;
@@ -60,8 +61,10 @@ import org.siglus.siglusapi.repository.ShipmentLineItemsExtensionRepository;
 import org.siglus.siglusapi.repository.SiglusOrdersRepository;
 import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
 import org.siglus.siglusapi.repository.SiglusShipmentRepository;
+import org.siglus.siglusapi.service.SiglusLotService;
 import org.siglus.siglusapi.service.SiglusNotificationService;
 import org.siglus.siglusapi.service.SiglusShipmentService;
+import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
 import org.siglus.siglusapi.util.SiglusSimulateUserAuthHelper;
 import org.siglus.siglusapi.web.android.FileBasedTest;
 
@@ -105,6 +108,10 @@ public class OrderFulfillmentSyncedReplayerTest extends FileBasedTest {
   private NotificationService notificationService;
   @Mock
   private EventCommonService eventCommonService;
+  @Mock
+  private SiglusLotReferenceDataService lotReferenceDataService;
+  @Mock
+  private SiglusLotService siglusLotService;
 
   private final UUID requisitionId = UUID.randomUUID();
   private final UUID facilityId = UUID.randomUUID();
@@ -161,6 +168,9 @@ public class OrderFulfillmentSyncedReplayerTest extends FileBasedTest {
     String jsonRequest = readFromFile("request1.json");
     OrderFulfillmentSyncedEvent event = objectMapper.readValue(jsonRequest, OrderFulfillmentSyncedEvent.class);
     resetStatusMessageRequest(event);
+    List<LotDto> list = new ArrayList<>();
+    list.add(new LotDto());
+    event.setShippedLotList(list);
     // when
     orderFulfillmentSyncedReplayer.replay(event);
   }
@@ -183,6 +193,9 @@ public class OrderFulfillmentSyncedReplayerTest extends FileBasedTest {
     ObjectMapper objectMapper = PayloadSerializer.LOCALMACHINE_EVENT_OBJECT_MAPPER;
     String jsonRequest = readFromFile("request2.json");
     OrderFulfillmentSyncedEvent event = objectMapper.readValue(jsonRequest, OrderFulfillmentSyncedEvent.class);
+    List<LotDto> list = new ArrayList<>();
+    list.add(new LotDto());
+    event.setShippedLotList(list);
     // when
     orderFulfillmentSyncedReplayer.replay(event);
   }

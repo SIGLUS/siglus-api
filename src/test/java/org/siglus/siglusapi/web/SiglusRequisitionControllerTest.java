@@ -232,7 +232,7 @@ public class SiglusRequisitionControllerTest {
     siglusRequisitionController.searchProcessingPeriodIds(programId, facilityId, emergency);
 
     // then
-    verify(siglusProcessingPeriodService).getPeriods(programId, facilityId, emergency);
+    verify(siglusProcessingPeriodService).getRequisitionPeriodExtensionResponses(programId, facilityId, emergency);
   }
 
   @Test

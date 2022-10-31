@@ -13,24 +13,20 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.exception;
+package org.siglus.siglusapi.dto;
 
-import org.siglus.siglusapi.dto.Message;
+import java.util.UUID;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-/**
- * Exception for indicating that some input or constraint is invalid.  This should result in a BAD REQUEST api
- * response.
- */
-public class DbOperationException extends BaseMessageException {
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class SimpleRequisitionDto {
 
-  /**
-   * Create a new validation exception with the given message and cause.
-   *
-   * @param message the message.
-   * @param cause   the exception.
-   */
-  public DbOperationException(Throwable cause, Message message) {
-    super(message, cause);
-  }
-
+  private UUID id;
+  private String extraData;
 }

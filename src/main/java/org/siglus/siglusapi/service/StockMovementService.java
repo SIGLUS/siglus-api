@@ -19,7 +19,6 @@ import static org.siglus.siglusapi.constant.FacilityTypeConstants.OUTROS;
 import static org.siglus.siglusapi.constant.FieldConstants.ADJUSTMENT_KEY;
 import static org.siglus.siglusapi.constant.FieldConstants.INITIAL_INVENTORY_KEY;
 import static org.siglus.siglusapi.constant.FieldConstants.ISSUE_TYPE;
-import static org.siglus.siglusapi.constant.FieldConstants.PHYSICAL_INVENTORY;
 import static org.siglus.siglusapi.constant.FieldConstants.PHYSICAL_INVENTORY_KEY;
 import static org.siglus.siglusapi.constant.FieldConstants.UNPACK_KIT_REASON;
 import static org.siglus.siglusapi.constant.FieldConstants.UNPACK_KIT_TYPE;

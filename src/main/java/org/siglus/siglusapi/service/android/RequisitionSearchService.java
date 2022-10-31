@@ -23,12 +23,14 @@ import static org.siglus.common.constant.ExtraDataConstants.AUTHORIZE;
 import static org.siglus.common.constant.ExtraDataConstants.CLIENT_SUBMITTED_TIME;
 import static org.siglus.common.constant.ExtraDataConstants.SIGNATURE;
 import static org.siglus.common.constant.ExtraDataConstants.SUBMIT;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.ConsultationNumberLineItems.COLUMN_NAME;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.ConsultationNumberLineItems.GROUP_NAME;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TABLE_DISPENSED;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TABLE_DISPENSED_KEY;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TABLE_PROPHYLAXY_KEY;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TOTAL_COLUMN;
+import static org.siglus.siglusapi.constant.ProgramConstants.MTB_PROGRAM_CODE;
+import static org.siglus.siglusapi.constant.ProgramConstants.TARV_PROGRAM_CODE;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.ConsultationNumberLineItems.COLUMN_NAME;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.ConsultationNumberLineItems.GROUP_NAME;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.TABLE_DISPENSED;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.TABLE_DISPENSED_KEY;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.TABLE_PROPHYLAXY_KEY;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.TOTAL_COLUMN;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -51,7 +53,8 @@ import org.openlmis.requisition.domain.requisition.RequisitionLineItem.Importer;
 import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.siglus.siglusapi.constant.FieldConstants;
-import org.siglus.siglusapi.constant.UsageSectionConstants.UsageInformationLineItems;
+import org.siglus.siglusapi.constant.android.UsageSectionConstants.UsageInformationLineItems;
+import org.siglus.siglusapi.domain.AgeGroupLineItem;
 import org.siglus.siglusapi.domain.ConsultationNumberLineItem;
 import org.siglus.siglusapi.domain.PatientLineItem;
 import org.siglus.siglusapi.domain.Regimen;
@@ -69,11 +72,12 @@ import org.siglus.siglusapi.dto.PatientGroupDto;
 import org.siglus.siglusapi.dto.RegimenDto;
 import org.siglus.siglusapi.dto.UsageInformationInformationDto;
 import org.siglus.siglusapi.dto.UsageInformationServiceDto;
-import org.siglus.siglusapi.dto.android.enumeration.PatientLineItemName;
-import org.siglus.siglusapi.dto.android.enumeration.PatientTableName;
+import org.siglus.siglusapi.dto.android.enumeration.MmiaPatientTableColumnKeyValue;
+import org.siglus.siglusapi.dto.android.enumeration.MmiaPatientTableKeyValue;
 import org.siglus.siglusapi.dto.android.enumeration.TestOutcome;
 import org.siglus.siglusapi.dto.android.enumeration.TestProject;
 import org.siglus.siglusapi.dto.android.enumeration.TestService;
+import org.siglus.siglusapi.dto.android.request.AgeGroupLineItemRequest;
 import org.siglus.siglusapi.dto.android.request.PatientLineItemColumnRequest;
 import org.siglus.siglusapi.dto.android.request.PatientLineItemsRequest;
 import org.siglus.siglusapi.dto.android.request.RegimenLineItemRequest;
@@ -84,6 +88,7 @@ import org.siglus.siglusapi.dto.android.request.TestConsumptionLineItemRequest;
 import org.siglus.siglusapi.dto.android.request.UsageInformationLineItemRequest;
 import org.siglus.siglusapi.dto.android.response.RequisitionResponse;
 import org.siglus.siglusapi.exception.NotFoundException;
+import org.siglus.siglusapi.repository.AgeGroupLineItemRepository;
 import org.siglus.siglusapi.repository.ConsultationNumberLineItemRepository;
 import org.siglus.siglusapi.repository.PatientLineItemRepository;
 import org.siglus.siglusapi.repository.RegimenLineItemRepository;
@@ -117,6 +122,7 @@ public class RequisitionSearchService {
   private final PatientLineItemRepository patientLineItemRepository;
   private final UsageInformationLineItemRepository usageInformationLineItemRepository;
   private final TestConsumptionLineItemRepository testConsumptionLineItemRepository;
+  private final AgeGroupLineItemRepository ageGroupLineItemRepository;
   private final PatientLineItemMapper patientLineItemMapper;
   private final ConsultationNumberLineItemMapper consultationNumberLineItemMapper;
 
@@ -130,14 +136,15 @@ public class RequisitionSearchService {
         requisitionIds);
     Map<UUID, List<RegimenLineItemRequest>> requisitionIdToRegimenSummaryLines = buildIdToRegimenSummaryLineRequestsMap(
         requisitionIds);
-    Map<UUID, List<PatientLineItemsRequest>> requisitionIdToPatientLines = buildIdToPatientLineRequestsMap(
-        requisitionIds);
+    Map<UUID, List<PatientLineItem>> requisitionIdToPatientLineItems = buildIdToPatientLineItemsMap(requisitionIds);
     Map<UUID, List<ConsultationNumberGroupDto>> requisitionIdToConsultationNumbers = buildIdToConsultationNumbersMap(
         requisitionIds);
     Map<UUID, List<UsageInformationServiceDto>> requisitionIdToUsageInfoDtos = buildIdToUsageInformationLineItemMap(
         requisitionIds);
     Map<UUID, List<TestConsumptionLineItemRequest>> requisitionIdToTestConsumptionLines =
         buildToTestConsumptionLineRequestsMap(requisitionIds);
+    Map<UUID, List<AgeGroupLineItemRequest>> requisitionIdToAgeGroupLines = buildToAgeGroupLineRequestsMap(
+        requisitionIds);
     List<RequisitionCreateRequest> requisitionCreateRequests = new ArrayList<>();
     requisitionExtensions.forEach(
         extension -> {
@@ -146,17 +153,20 @@ public class RequisitionSearchService {
           if (!requisitionV2Dto.getStatus().isAuthorized()) {
             return;
           }
+          UUID requisitionId = requisitionV2Dto.getId();
+          String programCode = getProgramCode(requisitionV2Dto.getProgram().getId());
           RequisitionCreateRequest requisitionCreateRequest = RequisitionCreateRequest.builder()
-              .programCode(getProgramCode(requisitionV2Dto.getProgram().getId()))
+              .programCode(programCode)
               .emergency(requisitionV2Dto.getEmergency())
               .consultationNumber(getConsultationNumber(requisitionV2Dto, requisitionIdToConsultationNumbers))
               .products(getProducts(requisitionV2Dto, orderableIdToCode))
-              .regimenLineItems(getLineItems(requisitionV2Dto.getId(), requisitionIdToRegimenLines))
-              .regimenSummaryLineItems(getLineItems(requisitionV2Dto.getId(), requisitionIdToRegimenSummaryLines))
-              .patientLineItems(getLineItems(requisitionV2Dto.getId(), requisitionIdToPatientLines))
+              .regimenLineItems(getLineItems(requisitionId, requisitionIdToRegimenLines))
+              .regimenSummaryLineItems(getLineItems(requisitionId, requisitionIdToRegimenSummaryLines))
+              .patientLineItems(getPatientLineItemsRequest(requisitionId, programCode, requisitionIdToPatientLineItems))
               .usageInformationLineItems(
                   getUsageInformationLineItems(orderableIdToCode, requisitionIdToUsageInfoDtos, requisitionV2Dto))
-              .testConsumptionLineItems(getLineItems(requisitionV2Dto.getId(), requisitionIdToTestConsumptionLines))
+              .testConsumptionLineItems(getLineItems(requisitionId, requisitionIdToTestConsumptionLines))
+              .ageGroupLineItems((getLineItems(requisitionId, requisitionIdToAgeGroupLines)))
               .comments(requisitionV2Dto.getDraftStatusMessage())
               .build();
           setTimeAndSignature(requisitionCreateRequest, requisitionV2Dto);
@@ -166,11 +176,35 @@ public class RequisitionSearchService {
     return RequisitionResponse.builder().requisitionResponseList(requisitionCreateRequests).build();
   }
 
+  private List<PatientLineItemsRequest> getPatientLineItemsRequest(UUID requisitionId, String programCode,
+      Map<UUID, List<PatientLineItem>> requisitionIdToPatientLineItems) {
+    if (requisitionIdToPatientLineItems.get(requisitionId) == null) {
+      return Collections.emptyList();
+    }
+    List<PatientLineItem> patientLineItems = requisitionIdToPatientLineItems.get(requisitionId);
+    if (TARV_PROGRAM_CODE.equals(programCode)) {
+      return buildPatientLineItemRequestList(patientLineItems);
+    } else if (MTB_PROGRAM_CODE.equals(programCode)) {
+      List<PatientGroupDto> patientGroupDtos = patientLineItemMapper.from(patientLineItems);
+      return patientGroupDtos.stream().map(PatientLineItemsRequest::from).collect(Collectors.toList());
+    }
+    return Collections.emptyList();
+  }
+
   private <T> List<T> getLineItems(UUID requisitionId, Map<UUID, List<T>> requisitionIdToLineItemRequests) {
     if (requisitionIdToLineItemRequests.get(requisitionId) == null) {
       return Collections.emptyList();
     }
     return requisitionIdToLineItemRequests.get(requisitionId);
+  }
+
+  private Map<UUID, List<AgeGroupLineItemRequest>> buildToAgeGroupLineRequestsMap(Set<UUID> requisitionIds) {
+    List<AgeGroupLineItem> ageGroupLineItems = ageGroupLineItemRepository.findByRequisitionIdIn(requisitionIds);
+    Map<UUID, List<AgeGroupLineItem>> requisitionIdToAgeGroupItem = ageGroupLineItems.stream()
+        .collect(Collectors.groupingBy(AgeGroupLineItem::getRequisitionId));
+    return requisitionIdToAgeGroupItem.entrySet().stream().collect(
+        Collectors.toMap(Entry::getKey, valueMapper -> AgeGroupLineItemRequest.from(valueMapper.getValue()))
+    );
   }
 
   private Map<UUID, List<RegimenLineItemRequest>> buildIdToRegimenLineRequestsMap(Set<UUID> requisitionIds) {
@@ -211,12 +245,9 @@ public class RequisitionSearchService {
         .collect(Collectors.toMap(Entry::getKey, e -> RegimenLineItemRequest.from(e.getValue())));
   }
 
-  private Map<UUID, List<PatientLineItemsRequest>> buildIdToPatientLineRequestsMap(Set<UUID> requisitionIds) {
+  private Map<UUID, List<PatientLineItem>> buildIdToPatientLineItemsMap(Set<UUID> requisitionIds) {
     List<PatientLineItem> patientLineItems = patientLineItemRepository.findByRequisitionIdIn(requisitionIds);
-    Map<UUID, List<PatientLineItem>> idToPatientLines = patientLineItems.stream()
-        .collect(Collectors.groupingBy(PatientLineItem::getRequisitionId));
-    return idToPatientLines.entrySet().stream()
-        .collect(Collectors.toMap(Entry::getKey, e -> buildPatientLineItemRequestList(e.getValue())));
+    return patientLineItems.stream().collect(Collectors.groupingBy(PatientLineItem::getRequisitionId));
   }
 
   private Map<UUID, List<TestConsumptionLineItemRequest>> buildToTestConsumptionLineRequestsMap(
@@ -228,7 +259,6 @@ public class RequisitionSearchService {
     return idToTestConsumptionLines.entrySet().stream()
         .collect(Collectors.toMap(Entry::getKey, e -> buildTestConsumptionsFromItems(e.getValue())));
   }
-
 
   private List<TestConsumptionLineItemRequest> buildTestConsumptionsFromItems(
       List<TestConsumptionLineItem> testConsumptionLineItems) {
@@ -246,7 +276,7 @@ public class RequisitionSearchService {
   private List<PatientLineItemsRequest> buildPatientLineItemRequestList(List<PatientLineItem> patientLineItems) {
     List<PatientGroupDto> patientGroupDtos = patientLineItemMapper.from(patientLineItems);
     List<PatientLineItemsRequest> list = patientGroupDtos.stream()
-        .filter(t -> !StringUtils.isEmpty(PatientLineItemName.findKeyByValue(t.getName())))
+        .filter(t -> !StringUtils.isEmpty(MmiaPatientTableKeyValue.findKeyByValue(t.getName())))
         .map(this::buildPatientLineItemRequest)
         .collect(Collectors.toList());
     List<PatientLineItemsRequest> despenseList = list.stream()
@@ -261,7 +291,7 @@ public class RequisitionSearchService {
 
   private PatientLineItemsRequest buildPatientLineItemRequest(PatientGroupDto patientGroupDto) {
     List<PatientLineItemColumnRequest> columns = newArrayList();
-    String name = PatientLineItemName.findKeyByValue(patientGroupDto.getName());
+    String name = MmiaPatientTableKeyValue.findKeyByValue(patientGroupDto.getName());
     Map<String, PatientColumnDto> map = patientGroupDto.getColumns();
     map.forEach((colName, patientColumnDto) -> {
       if (FieldConstants.TOTAL.equals(colName) && !TABLE_PROPHYLAXY_KEY.equals(name)) {
@@ -292,7 +322,7 @@ public class RequisitionSearchService {
   }
 
   private String getRealColumnName(String tableName, String columnName) {
-    return PatientTableName.valueOf(tableName.toUpperCase()).findKeyByValue(columnName);
+    return MmiaPatientTableColumnKeyValue.valueOf(tableName.toUpperCase()).findKeyByValue(columnName);
   }
 
   private List<UsageInformationLineItemRequest> getUsageInformationLineItems(Map<UUID, String> orderableIdToCode,

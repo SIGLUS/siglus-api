@@ -64,6 +64,7 @@ import org.siglus.siglusapi.domain.OrderLineItemExtension;
 import org.siglus.siglusapi.domain.PodExtension;
 import org.siglus.siglusapi.domain.RequisitionExtension;
 import org.siglus.siglusapi.domain.ShipmentLineItemsExtension;
+import org.siglus.siglusapi.dto.LotDto;
 import org.siglus.siglusapi.localmachine.event.EventCommonService;
 import org.siglus.siglusapi.localmachine.event.NotificationService;
 import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
@@ -73,7 +74,9 @@ import org.siglus.siglusapi.repository.ShipmentLineItemsExtensionRepository;
 import org.siglus.siglusapi.repository.SiglusOrdersRepository;
 import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
 import org.siglus.siglusapi.repository.SiglusShipmentRepository;
+import org.siglus.siglusapi.service.SiglusLotService;
 import org.siglus.siglusapi.service.SiglusShipmentService;
+import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
 import org.siglus.siglusapi.util.SiglusSimulateUserAuthHelper;
 import org.siglus.siglusapi.web.request.ShipmentExtensionRequest;
 import org.springframework.beans.BeanUtils;
@@ -100,6 +103,8 @@ public class OrderFulfillmentSyncedReplayer {
   private final PodExtensionRepository podExtensionRepository;
   private final NotificationService notificationService;
   private final SiglusShipmentService siglusShipmentService;
+  private final SiglusLotReferenceDataService lotReferenceDataService;
+  private final SiglusLotService siglusLotService;
 
   @EventListener(value = {OrderFulfillmentSyncedEvent.class})
   public void replay(OrderFulfillmentSyncedEvent event) {
@@ -119,6 +124,7 @@ public class OrderFulfillmentSyncedReplayer {
   public void doReplay(OrderFulfillmentSyncedEvent event) {
     Order order;
     simulateUserAuthHelper.simulateNewUserAuth(event.getFulfillUserId());
+    createLotsIfNotExist(event.getShippedLotList());
     if (event.isNeedConvertToOrder()) {
       RequisitionExtension requisitionExtension = requisitionExtensionRepository.findByRequisitionNumber(
           event.getConvertToOrderRequest().getRequisitionNumber());
@@ -194,7 +200,16 @@ public class OrderFulfillmentSyncedReplayer {
 
     requisitionExtension.setIsApprovedByInternal(false);
     requisitionExtensionRepository.saveAndFlush(requisitionExtension);
+  }
 
+  private void createLotsIfNotExist(List<LotDto> shippedLotList) {
+    List<UUID> lotIds = shippedLotList.stream().map(LotDto::getId).collect(Collectors.toList());
+    List<LotDto> lotList = siglusLotService.getLotList(lotIds);
+    List<UUID> existedLotIds = lotList.stream().map(LotDto::getId).collect(Collectors.toList());
+    List<LotDto> notExistedLotIds =
+        shippedLotList.stream().filter(item -> !existedLotIds.contains(item.getId())).collect(Collectors.toList());
+    log.info("create lots, size = " + notExistedLotIds.size());
+    lotReferenceDataService.batchSaveLot(notExistedLotIds);
   }
 
   private void resetFinalApproveStatusMessage(Requisition requisition, StatusMessageRequest statusMessageRequest,

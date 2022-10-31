@@ -136,22 +136,15 @@ public class SiglusUsageReportService {
   }
 
   public SiglusRequisitionDto initiateUsageReport(RequisitionV2Dto requisitionV2Dto) {
-    Profiler profiler = new Profiler("init usage report");
-    profiler.setLogger(log);
-    profiler.start("find templates");
     List<UsageTemplateColumnSection> templateColumnSections =
         columnSectionRepository.findByRequisitionTemplateId(requisitionV2Dto.getTemplate().getId());
     SiglusRequisitionDto siglusRequisitionDto = SiglusRequisitionDto.from(requisitionV2Dto);
     if (templateColumnSections.isEmpty()) {
       return siglusRequisitionDto;
     }
-    profiler.start("loop templates");
     usageReportDataProcessors.forEach(processor -> processor.initiate(siglusRequisitionDto, templateColumnSections));
-    profiler.start("updateKitUsage");
     updateKitUsage(requisitionV2Dto, templateColumnSections, siglusRequisitionDto);
-    profiler.start("buildUsageTemplateDto");
     buildUsageTemplateDto(siglusRequisitionDto, templateColumnSections);
-    profiler.stop().log();
     return siglusRequisitionDto;
   }
 
@@ -271,12 +264,10 @@ public class SiglusUsageReportService {
           .collect(Collectors.groupingBy(kitProduct -> {
             OrderableDto kitProductDto = new OrderableDto();
             kitProduct.export(kitProductDto);
-            return kitProductDto.getPrograms().stream().findFirst().get()
-                .getProgramId();
+            return kitProductDto.getPrograms().stream().findFirst().get().getProgramId();
           }));
       for (Map.Entry<UUID, List<Orderable>> groupKit : groupKitProducts.entrySet()) {
-        updateSupportProgramStockCardRange(requisitionV2Dto, summaryDtos,
-            groupKit);
+        updateSupportProgramStockCardRange(requisitionV2Dto, summaryDtos, groupKit);
       }
     }
     return summaryDtos;

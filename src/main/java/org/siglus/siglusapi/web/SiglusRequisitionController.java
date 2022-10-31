@@ -15,7 +15,6 @@
 
 package org.siglus.siglusapi.web;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
@@ -26,7 +25,6 @@ import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.dto.BasicRequisitionDto;
 import org.openlmis.requisition.dto.FacilityDto;
 import org.openlmis.requisition.dto.ReleasableRequisitionDto;
-import org.openlmis.requisition.dto.RequisitionPeriodDto;
 import org.openlmis.requisition.dto.RequisitionWithSupplyingDepotsDto;
 import org.openlmis.requisition.utils.AuthenticationHelper;
 import org.openlmis.requisition.web.RequisitionController;
@@ -38,6 +36,7 @@ import org.siglus.siglusapi.localmachine.event.requisition.web.release.Requisiti
 import org.siglus.siglusapi.service.SiglusNotificationService;
 import org.siglus.siglusapi.service.SiglusProcessingPeriodService;
 import org.siglus.siglusapi.service.SiglusRequisitionService;
+import org.siglus.siglusapi.web.response.RequisitionPeriodExtensionResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -172,14 +171,11 @@ public class SiglusRequisitionController {
   }
 
   @GetMapping("/periodsForInitiate")
-  public Collection<RequisitionPeriodDto> searchProcessingPeriodIds(
+  public List<RequisitionPeriodExtensionResponse> searchProcessingPeriodIds(
       @RequestParam(value = "programId") UUID programId,
       @RequestParam(value = "facilityId") UUID facilityId,
       @RequestParam(value = "emergency") boolean emergency) {
-
-    return siglusProcessingPeriodService.getPeriods(
-        programId, facilityId, emergency
-    );
+    return siglusProcessingPeriodService.getRequisitionPeriodExtensionResponses(programId, facilityId, emergency);
   }
 
   @GetMapping("/requisitionsForApproval")

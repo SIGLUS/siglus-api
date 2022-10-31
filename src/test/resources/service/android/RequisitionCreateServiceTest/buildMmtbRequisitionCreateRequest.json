@@ -1,0 +1,240 @@
+
+{
+  "comments": "ysw_test",
+  "emergency": false,
+  "programCode": "TB",
+  "actualStartDate": "2021-06-21",
+  "actualEndDate": "2021-07-20",
+  "clientSubmittedTime": "2022-10-26T07:28:03.199Z",
+  "products": [
+    {
+      "totalLossesAndAdjustments": 0,
+      "beginningBalance": 0,
+      "stockOnHand": 0,
+      "isManualAdd": false,
+      "totalConsumedQuantity": 0,
+      "productCode": "08H07",
+      "totalReceivedQuantity": 0
+    }
+  ],
+  "patientLineItems": [
+    {
+      "name": "table_treatment_adult_key",
+      "columns": [
+        {
+          "name": "table_treatment_adult_key_sensitive_intensive",
+          "value": "1"
+        },
+        {
+          "name": "table_treatment_adult_key_sensitive_maintenance",
+          "value": "2"
+        },
+        {
+          "name": "table_treatment_adult_key_mr_induction",
+          "value": "3"
+        },
+        {
+          "name": "table_treatment_adult_key_mr_intensive",
+          "value": "4"
+        },
+        {
+          "name": "table_treatment_adult_key_mr_maintenance",
+          "value": "5"
+        },
+        {
+          "name": "table_treatment_adult_key_xr_induction",
+          "value": "6"
+        },
+        {
+          "name": "table_treatment_adult_key_xr_maintenance",
+          "value": "7"
+        }
+      ]
+    },
+    {
+      "name": "table_treatment_pediatric_key",
+      "columns": [
+        {
+          "name": "table_treatment_pediatric_key_sensitive_intensive",
+          "value": "8"
+        },
+        {
+          "name": "table_treatment_pediatric_key_sensitive_maintenance",
+          "value": "9"
+        },
+        {
+          "name": "table_treatment_pediatric_key_mr_induction",
+          "value": "10"
+        },
+        {
+          "name": "table_treatment_pediatric_key_mr_intensive",
+          "value": "11"
+        },
+        {
+          "name": "table_treatment_pediatric_key_mr_maintenance",
+          "value": "12"
+        },
+        {
+          "name": "table_treatment_pediatric_key_xr_maintenance",
+          "value": "13"
+        },
+        {
+          "name": "table_treatment_pediatric_key_xr_intensive",
+          "value": "14"
+        }
+
+      ]
+    },
+    {
+      "name": "table_pharmacy_product_key",
+      "columns": [
+        {
+          "name": "table_pharmacy_product_key_isoniazida_100_mg",
+          "value": "15"
+        },
+        {
+          "name": "table_pharmacy_product_key_isoniazida_300_mg",
+          "value": "16"
+        },
+        {
+          "name": "table_pharmacy_product_key_levofloxacina_100_mg",
+          "value": "17"
+        },
+        {
+          "name": "table_pharmacy_product_key_levofloxacina_250_mg",
+          "value": "18"
+        },
+        {
+          "name": "table_pharmacy_product_key_rifapentina_300_mg_isoniazida_300_mg",
+          "value": "19"
+        },
+        {
+          "name": "table_pharmacy_product_key_rifapentina_150_mg",
+          "value": "20"
+        },
+        {
+          "name": "table_pharmacy_product_key_piridoxina_25_mg",
+          "value": "21"
+        },
+        {
+          "name": "table_pharmacy_product_key_piridoxina_50_mg",
+          "value": "22"
+        }
+
+      ]
+    },
+    {
+      "name": "table_new_patients_key",
+      "columns": [
+        {
+          "name": "table_new_patients_key_new_adult_sensitive",
+          "value": "23"
+        },
+        {
+          "name": "table_new_patients_key_new_adult_mr",
+          "value": "24"
+        },
+        {
+          "name": "table_new_patients_key_new_adult_xr",
+          "value": "25"
+        },
+        {
+          "name": "table_new_patients_key_new_child_sensitive",
+          "value": "26"
+        },
+        {
+          "name": "table_new_patients_key_new_child_mr",
+          "value": "27"
+        },
+        {
+          "name": "table_new_patients_key_new_child_xr",
+          "value": "28"
+        },
+        {
+          "name": "table_new_patients_key_total",
+          "value": "29"
+        }
+      ]
+    },
+    {
+      "name": "table_prophylaxis_key",
+      "columns": [
+        {
+          "name": "table_prophylaxis_key_initial",
+          "value": "30"
+        },
+        {
+          "name": "table_prophylaxis_key_continuous_maintenance",
+          "value": "31"
+        },
+        {
+          "name": "table_prophylaxis_key_final_last_dismissal",
+          "value": "32"
+        },
+        {
+          "name": "table_prophylaxis_key_total",
+          "value": "33"
+        }
+      ]
+    },
+    {
+      "name": "table_prophylactics_key",
+      "columns": [
+        {
+          "name": "table_prophylactics_key_monthly",
+          "value": "34"
+        },
+        {
+          "name": "table_prophylactics_key_trimenstral",
+          "value": "35"
+        },
+        {
+          "name": "table_prophylactics_key_total",
+          "value": "36"
+        }
+      ]
+    }
+  ],
+  "ageGroupLineItems": [
+    {
+      "service": "table_age_group_service_key_adult",
+      "group": "table_age_group_header_key_treatment",
+      "value": "37"
+    },
+    {
+      "service": "table_age_group_service_key_adult",
+      "group": "table_age_group_header_key_prophylaxis",
+      "value": "38"
+    },
+    {
+      "service": "table_age_group_service_key_child_less_than_25kg",
+      "group": "table_age_group_header_key_treatment",
+      "value": "39"
+    },
+    {
+      "service": "table_age_group_service_key_child_less_than_25kg",
+      "group": "table_age_group_header_key_prophylaxis",
+      "value": "40"
+    },
+    {
+      "service": "table_age_group_service_key_child_more_than_25kg",
+      "group": "table_age_group_header_key_treatment",
+      "value": "41"
+    },
+    {
+      "service": "table_age_group_service_key_child_more_than_25kg",
+      "group": "table_age_group_header_key_prophylaxis",
+      "value": "42"
+    }
+  ],
+  "signatures": [
+    {
+      "name": "xzh",
+      "type": "SUBMITTER"
+    },
+    {
+      "name": "xzh",
+      "type": "APPROVER"
+    }
+  ]
+}

@@ -15,10 +15,12 @@
 
 package org.siglus.siglusapi.dto.android.enumeration;
 
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_COLUMN;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_COLUMN_1;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TABLE_PROPHYLAXIS_CHILD_KEY;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TABLE_PROPHYLAXIS_PPE_KEY;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.DISPENSED_DT;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.DISPENSED_DT1;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.DISPENSED_DT2;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_COLUMN;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_COLUMN_0;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_COLUMN_1;
 
 import java.util.Arrays;
 import lombok.Getter;
@@ -26,9 +28,10 @@ import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 @Getter
-public enum NewSection1 {
-  PROPHYLAXIS_PPE_KEY(TABLE_PROPHYLAXIS_PPE_KEY, NEW_COLUMN),
-  PROPHYLAXIS_CHILD_KEY(TABLE_PROPHYLAXIS_CHILD_KEY, NEW_COLUMN_1);
+public enum MmiaPatientTable6 {
+  DT2(DISPENSED_DT2, NEW_COLUMN),
+  DT1(DISPENSED_DT1, NEW_COLUMN_0),
+  DT(DISPENSED_DT, NEW_COLUMN_1);
 
   private final String key;
 
@@ -40,7 +43,7 @@ public enum NewSection1 {
     }
     return Arrays.stream(values())
         .filter(e -> e.value.equals(value))
-        .map(NewSection1::getKey)
+        .map(MmiaPatientTable6::getKey)
         .findFirst().orElse(null);
   }
 
@@ -50,7 +53,7 @@ public enum NewSection1 {
     }
     return Arrays.stream(values())
         .filter(e -> e.key.equals(key))
-        .map(NewSection1::getValue)
+        .map(MmiaPatientTable6::getValue)
         .findFirst().orElse(null);
   }
 }

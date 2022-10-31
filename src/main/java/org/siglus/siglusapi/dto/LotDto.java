@@ -27,6 +27,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 import org.apache.commons.collections.CollectionUtils;
 import org.openlmis.referencedata.dto.BaseDto;
 import org.siglus.siglusapi.dto.android.db.ProductLot;
@@ -37,6 +38,7 @@ import org.springframework.beans.BeanUtils;
 @Getter
 @Setter
 @Builder
+@ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
 public class LotDto extends BaseDto {
 

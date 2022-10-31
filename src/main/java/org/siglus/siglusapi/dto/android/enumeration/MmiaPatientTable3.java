@@ -15,14 +15,10 @@
 
 package org.siglus.siglusapi.dto.android.enumeration;
 
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_COLUMN;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_COLUMN_0;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_COLUMN_1;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_COLUMN_2;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TABLE_PATIENTS_0TO4_KEY;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TABLE_PATIENTS_10TO14_KEY;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TABLE_PATIENTS_5TO9_KEY;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TABLE_PATIENTS_ADULTS_KEY;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_COLUMN;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_COLUMN_1;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.TABLE_PROPHYLAXIS_CHILD_KEY;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.TABLE_PROPHYLAXIS_PPE_KEY;
 
 import java.util.Arrays;
 import lombok.Getter;
@@ -30,11 +26,9 @@ import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 @Getter
-public enum NewSection0 {
-  PATIENTS_ADULTS_KEY(TABLE_PATIENTS_ADULTS_KEY, NEW_COLUMN),
-  PATIENTS_0TO4_KEY(TABLE_PATIENTS_0TO4_KEY, NEW_COLUMN_0),
-  PATIENTS_5TO9_KEY(TABLE_PATIENTS_5TO9_KEY, NEW_COLUMN_1),
-  PATIENTS_10TO14_KEY(TABLE_PATIENTS_10TO14_KEY, NEW_COLUMN_2);
+public enum MmiaPatientTable3 {
+  PROPHYLAXIS_PPE_KEY(TABLE_PROPHYLAXIS_PPE_KEY, NEW_COLUMN),
+  PROPHYLAXIS_CHILD_KEY(TABLE_PROPHYLAXIS_CHILD_KEY, NEW_COLUMN_1);
 
   private final String key;
 
@@ -46,7 +40,7 @@ public enum NewSection0 {
     }
     return Arrays.stream(values())
         .filter(e -> e.value.equals(value))
-        .map(NewSection0::getKey)
+        .map(MmiaPatientTable3::getKey)
         .findFirst().orElse(null);
   }
 
@@ -56,7 +50,7 @@ public enum NewSection0 {
     }
     return Arrays.stream(values())
         .filter(e -> e.key.equals(key))
-        .map(NewSection0::getValue)
+        .map(MmiaPatientTable3::getValue)
         .findFirst().orElse(null);
   }
 }

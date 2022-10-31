@@ -15,18 +15,8 @@
 
 package org.siglus.siglusapi.dto.android.enumeration;
 
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.DISPENSED_DS;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.DISPENSED_DS1;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.DISPENSED_DS2;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.DISPENSED_DS3;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.DISPENSED_DS4;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.DISPENSED_DS5;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_COLUMN;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_COLUMN_0;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_COLUMN_1;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_COLUMN_2;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_COLUMN_3;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_COLUMN_4;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.DISPENSED_DM;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_COLUMN;
 
 import java.util.Arrays;
 import lombok.Getter;
@@ -34,13 +24,8 @@ import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 @Getter
-public enum NewSection2 {
-  DS5(DISPENSED_DS5, NEW_COLUMN),
-  DS4(DISPENSED_DS4, NEW_COLUMN_0),
-  DS3(DISPENSED_DS3, NEW_COLUMN_1),
-  DS2(DISPENSED_DS2, NEW_COLUMN_2),
-  DS1(DISPENSED_DS1, NEW_COLUMN_3),
-  DS(DISPENSED_DS, NEW_COLUMN_4);
+public enum MmiaPatientTable7 {
+  DM(DISPENSED_DM, NEW_COLUMN);
 
   private final String key;
 
@@ -52,7 +37,7 @@ public enum NewSection2 {
     }
     return Arrays.stream(values())
         .filter(e -> e.value.equals(value))
-        .map(NewSection2::getKey)
+        .map(MmiaPatientTable7::getKey)
         .findFirst().orElse(null);
   }
 
@@ -62,7 +47,7 @@ public enum NewSection2 {
     }
     return Arrays.stream(values())
         .filter(e -> e.key.equals(key))
-        .map(NewSection2::getValue)
+        .map(MmiaPatientTable7::getValue)
         .findFirst().orElse(null);
   }
 }

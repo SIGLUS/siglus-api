@@ -27,7 +27,7 @@ import javax.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.validator.constraints.NotEmpty;
-import org.siglus.siglusapi.constant.AndroidConstants;
+import org.siglus.siglusapi.constant.android.AndroidConstants;
 import org.siglus.siglusapi.domain.AppInfo;
 import org.siglus.siglusapi.dto.android.request.AndroidHeader;
 import org.siglus.siglusapi.dto.android.request.HfCmmDto;

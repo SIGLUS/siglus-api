@@ -713,11 +713,11 @@ public class SiglusPodService {
     List<ProofOfDeliveryLineItem> lineItems = podLineItemsRepository.findAll(lineItemIds);
 
     List<ProofOfDeliveryLineItem> toBeUpdatedLineItems = buildToBeUpdatedLineItems(
-        podDto, lineItems, OperateTypeEnum.getPodSubDraftEnum(operateType));
+        podDto, lineItems, PodSubDraftStatusEnum.getPodSubDraftEnum(operateType));
     log.info("update ProofOfDeliveryLineItem list, subDraftId:{}, lineItemIds:{}", subDraftId, lineItemIds);
     podLineItemsRepository.save(toBeUpdatedLineItems);
 
-    updateSubDraftStatusAndOperator(podSubDraft, OperateTypeEnum.getPodSubDraftEnum(operateType));
+    updateSubDraftStatusAndOperator(podSubDraft, PodSubDraftStatusEnum.getPodSubDraftEnum(operateType));
   }
 
   private void deletePodSubDraft(UUID podId, UUID subDraftId) {

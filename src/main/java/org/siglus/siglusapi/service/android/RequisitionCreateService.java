@@ -30,34 +30,39 @@ import static org.siglus.common.constant.ExtraDataConstants.SIGNATURE;
 import static org.siglus.common.constant.KitConstants.ALL_KITS;
 import static org.siglus.common.constant.KitConstants.KIT_26A01;
 import static org.siglus.common.constant.KitConstants.KIT_26A02;
-import static org.siglus.siglusapi.constant.AndroidConstants.SCHEDULE_CODE;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.ConsultationNumberLineItems.COLUMN_NAME;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.ConsultationNumberLineItems.GROUP_NAME;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.KitUsageLineItems.COLLECTION_KIT_OPENED;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.KitUsageLineItems.COLLECTION_KIT_RECEIVED;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.KitUsageLineItems.SERVICE_CHW;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.KitUsageLineItems.SERVICE_HF;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.CONTAIN_DM;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.CONTAIN_DS;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.CONTAIN_DT;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_COLUMN;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_COLUMN_0;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_COLUMN_1;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_COLUMN_4;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_SECTION_2;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_SECTION_3;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_SECTION_4;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_SECTION_5;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_SECTION_6;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_SECTION_7;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TABLE_DISPENSED_DM_KEY;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TABLE_DISPENSED_DS_KEY;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TABLE_DISPENSED_DT_KEY;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TABLE_DISPENSED_KEY;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TOTAL_COLUMN;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.RegimenLineItems.COLUMN_NAME_COMMUNITY;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.RegimenLineItems.COLUMN_NAME_PATIENT;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.TestConsumptionLineItems.SERVICE_APES;
+import static org.siglus.siglusapi.constant.ProgramConstants.MALARIA_PROGRAM_CODE;
+import static org.siglus.siglusapi.constant.ProgramConstants.MTB_PROGRAM_CODE;
+import static org.siglus.siglusapi.constant.ProgramConstants.RAPIDTEST_PROGRAM_CODE;
+import static org.siglus.siglusapi.constant.ProgramConstants.TARV_PROGRAM_CODE;
+import static org.siglus.siglusapi.constant.ProgramConstants.VIA_PROGRAM_CODE;
+import static org.siglus.siglusapi.constant.android.AndroidConstants.SCHEDULE_CODE;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.ConsultationNumberLineItems.COLUMN_NAME;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.ConsultationNumberLineItems.GROUP_NAME;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.KitUsageLineItems.COLLECTION_KIT_OPENED;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.KitUsageLineItems.COLLECTION_KIT_RECEIVED;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.KitUsageLineItems.SERVICE_CHW;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.KitUsageLineItems.SERVICE_HF;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.CONTAIN_DM;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.CONTAIN_DS;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.CONTAIN_DT;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_COLUMN;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_COLUMN_0;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_COLUMN_1;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_COLUMN_4;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_SECTION_2;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_SECTION_3;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_SECTION_4;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_SECTION_5;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_SECTION_6;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_SECTION_7;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.TABLE_DISPENSED_DM_KEY;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.TABLE_DISPENSED_DS_KEY;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.TABLE_DISPENSED_DT_KEY;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.TABLE_DISPENSED_KEY;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.TOTAL_COLUMN;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.RegimenLineItems.COLUMN_NAME_COMMUNITY;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.RegimenLineItems.COLUMN_NAME_PATIENT;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.TestConsumptionLineItems.SERVICE_APES;
 import static org.springframework.util.CollectionUtils.isEmpty;
 
 import java.time.YearMonth;
@@ -115,12 +120,16 @@ import org.siglus.common.dto.ProgramAdditionalOrderableDto;
 import org.siglus.common.dto.RequisitionTemplateExtensionDto;
 import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
 import org.siglus.siglusapi.constant.ProgramConstants;
-import org.siglus.siglusapi.constant.UsageSectionConstants.UsageInformationLineItems;
+import org.siglus.siglusapi.constant.android.MmtbRequisitionConstants.MmtbAgeGroupSection;
+import org.siglus.siglusapi.constant.android.MmtbRequisitionConstants.MmtbPatientSection;
+import org.siglus.siglusapi.constant.android.UsageSectionConstants.UsageInformationLineItems;
 import org.siglus.siglusapi.domain.RegimenLineItem;
 import org.siglus.siglusapi.domain.RequisitionExtension;
 import org.siglus.siglusapi.domain.RequisitionLineItemExtension;
 import org.siglus.siglusapi.domain.SyncUpHash;
 import org.siglus.siglusapi.domain.UsageInformationLineItem;
+import org.siglus.siglusapi.dto.AgeGroupLineItemDto;
+import org.siglus.siglusapi.dto.AgeGroupServiceDto;
 import org.siglus.siglusapi.dto.ExtraDataSignatureDto;
 import org.siglus.siglusapi.dto.PatientColumnDto;
 import org.siglus.siglusapi.dto.PatientGroupDto;
@@ -134,12 +143,13 @@ import org.siglus.siglusapi.dto.TestConsumptionProjectDto;
 import org.siglus.siglusapi.dto.TestConsumptionServiceDto;
 import org.siglus.siglusapi.dto.UsageInformationServiceDto;
 import org.siglus.siglusapi.dto.UserDto;
-import org.siglus.siglusapi.dto.android.enumeration.PatientLineItemName;
-import org.siglus.siglusapi.dto.android.enumeration.PatientTableName;
+import org.siglus.siglusapi.dto.android.enumeration.MmiaPatientTableColumnKeyValue;
+import org.siglus.siglusapi.dto.android.enumeration.MmiaPatientTableKeyValue;
 import org.siglus.siglusapi.dto.android.enumeration.RegimenSummaryCode;
 import org.siglus.siglusapi.dto.android.enumeration.TestOutcome;
 import org.siglus.siglusapi.dto.android.enumeration.TestProject;
 import org.siglus.siglusapi.dto.android.enumeration.TestService;
+import org.siglus.siglusapi.dto.android.request.AgeGroupLineItemRequest;
 import org.siglus.siglusapi.dto.android.request.PatientLineItemColumnRequest;
 import org.siglus.siglusapi.dto.android.request.PatientLineItemsRequest;
 import org.siglus.siglusapi.dto.android.request.RegimenLineItemRequest;
@@ -168,7 +178,6 @@ import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataSer
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.util.SupportedProgramsHelper;
-import org.slf4j.profiler.Profiler;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
@@ -230,99 +239,60 @@ public class RequisitionCreateService {
 
   private Requisition initiateRequisition(RequisitionCreateRequest request, UserDto user) {
     log.info("prepare android requisition: {}", request);
-    Profiler profiler = new Profiler("initiateRequisition");
-    profiler.setLogger(log);
     String programCode = request.getProgramCode();
-    profiler.start("get program");
     UUID programId = siglusProgramService.getProgramByCode(programCode).map(org.openlmis.requisition.dto.BaseDto::getId)
         .orElseThrow(() -> InvalidProgramCodeException.requisition(programCode));
-    profiler.start("get user facility");
     UUID homeFacilityId = user.getHomeFacilityId();
-    profiler.start("check permission: init req");
     checkPermission(() -> permissionService.canInitRequisition(programId, homeFacilityId));
-    profiler.start("check supported products");
     checkSupportedProducts(homeFacilityId, programId, request);
-    Profiler newReqProfiler = profiler.startNested("new req");
-    newReqProfiler.start("build req");
     Requisition newRequisition = RequisitionBuilder.newRequisition(homeFacilityId, programId, request.getEmergency());
-    newReqProfiler.start("get template");
     newRequisition.setTemplate(getRequisitionTemplate(programId, homeFacilityId));
     newRequisition.setStatus(RequisitionStatus.INITIATED);
-    newReqProfiler.start("get period");
     newRequisition.setProcessingPeriodId(getPeriodId(request));
     newRequisition.setNumberOfMonthsInPeriod(1);
     newRequisition.setDraftStatusMessage(request.getComments());
     newRequisition.setReportOnly(ProgramConstants.MALARIA_PROGRAM_CODE.equals(programCode));
-    newReqProfiler.start("build status change for init");
     buildStatusChanges(newRequisition, user.getId());
-    newReqProfiler.start("build approved product");
     buildRequisitionApprovedProduct(newRequisition, homeFacilityId, programId);
-    newReqProfiler.start("build extra data");
     buildRequisitionExtraData(newRequisition, request);
-    newReqProfiler.start("build line items");
     buildRequisitionLineItems(newRequisition, request);
-    profiler.start("save req and flush");
     Requisition requisition = requisitionRepository.saveAndFlush(newRequisition);
-    profiler.start("build req extension");
-    buildRequisitionExtension(requisition, request, profiler.startNested("build req extension"));
-    buildRequisitionLineItemsExtension(requisition, request, profiler.startNested("build line extensions"));
-    buildRequisitionUsageSections(requisition, request, programId, profiler.startNested("build usage sections"));
-    profiler.stop().log();
+    buildRequisitionExtension(requisition, request);
+    buildRequisitionLineItemsExtension(requisition, request);
+    buildRequisitionUsageSections(requisition, request, programId, programCode);
     return requisition;
   }
 
   private Requisition submitRequisition(Requisition requisition, UUID authorId) {
-    Profiler profiler = new Profiler("submitRequisition");
-    profiler.setLogger(log);
-    profiler.start("check permission: submit req");
     checkPermission(() -> permissionService.canSubmitRequisition(requisition));
     requisition.setModifiedDate(ZonedDateTime.now());
     requisition.setStatus(RequisitionStatus.SUBMITTED);
-    profiler.start("build status change for submit");
     buildStatusChanges(requisition, authorId);
     log.info("submit android requisition: {}", requisition);
-    profiler.start("save and flush for submit");
-    Requisition saved = requisitionRepository.saveAndFlush(requisition);
-    profiler.stop().log();
-    return saved;
+    return requisitionRepository.saveAndFlush(requisition);
   }
 
   private Requisition authorizeRequisition(Requisition requisition, UUID authorId) {
-    Profiler profiler = new Profiler("authorizeRequisition");
-    profiler.setLogger(log);
-    profiler.start("check permission: authorize req");
     checkPermission(() -> permissionService.canAuthorizeRequisition(requisition));
-    profiler.start("find supervisory node");
     UUID supervisoryNodeId = supervisoryNodeService.findSupervisoryNode(
         requisition.getProgramId(), requisition.getFacilityId()).getId();
     requisition.setSupervisoryNodeId(supervisoryNodeId);
     requisition.setModifiedDate(ZonedDateTime.now());
     requisition.setStatus(RequisitionStatus.AUTHORIZED);
-    profiler.start("build status change for auth");
     buildStatusChanges(requisition, authorId);
     log.info("authorize android requisition: {}", requisition);
-    profiler.start("save and flush for auth");
-    Requisition saved = requisitionRepository.saveAndFlush(requisition);
-    profiler.stop().log();
-    return saved;
+    return requisitionRepository.saveAndFlush(requisition);
   }
 
   private void internalApproveRequisition(Requisition requisition, UUID authorId) {
-    Profiler profiler = new Profiler("internalApproveRequisition");
-    profiler.setLogger(log);
-    profiler.start("check permission: int-approve req");
     checkPermission(() -> permissionService.canApproveRequisition(requisition));
-    profiler.start("find supervisory node");
     SupervisoryNodeDto supervisoryNodeDto = supervisoryNodeService.findOne(requisition.getSupervisoryNodeId());
     requisition.setSupervisoryNodeId(supervisoryNodeDto.getParentNodeId());
     requisition.setModifiedDate(ZonedDateTime.now());
     requisition.setStatus(RequisitionStatus.IN_APPROVAL);
-    profiler.start("build status change for int-approve");
     buildStatusChanges(requisition, authorId);
     log.info("internal-approve android requisition: {}", requisition);
-    profiler.start("save and flush for int-approve");
     requisitionRepository.save(requisition);
-    profiler.stop().log();
   }
 
   private void checkPermission(Supplier<ValidationResult> supplier) {
@@ -403,23 +373,20 @@ public class RequisitionCreateService {
     return template;
   }
 
-  private void buildRequisitionExtension(Requisition requisition, RequisitionCreateRequest request, Profiler profiler) {
-    profiler.start("build extension");
+  private void buildRequisitionExtension(Requisition requisition, RequisitionCreateRequest request) {
     RequisitionExtension requisitionExtension = siglusRequisitionExtensionService
         .buildRequisitionExtension(requisition.getId(), requisition.getEmergency(), requisition.getFacilityId(),
             requisition.getProgramId(), requisition.getActualEndDate());
     requisitionExtension.setIsApprovedByInternal(true);
     requisitionExtension.setActualStartDate(request.getActualStartDate());
-    profiler.start("save and flush");
     requisitionExtensionRepository.saveAndFlush(requisitionExtension);
   }
 
   private void buildRequisitionLineItemsExtension(Requisition requisition,
-      RequisitionCreateRequest requisitionRequest, Profiler profiler) {
+      RequisitionCreateRequest requisitionRequest) {
     if (isEmpty(requisition.getRequisitionLineItems())) {
       return;
     }
-    profiler.start("load all products");
     log.info("requisition line size: {}", requisition.getRequisitionLineItems().size());
     log.info("requisition request product count: {}", requisitionRequest.getProducts().size());
     // since this api is cached, so load all data is even faster than for-each and load single
@@ -427,7 +394,6 @@ public class RequisitionCreateService {
         getAllProducts().stream().collect(toMap(OrderableDto::getProductCode, BaseDto::getId));
     Map<UUID, RequisitionLineItemRequest> productIdToLineItems = requisitionRequest.getProducts().stream()
         .collect(toMap(product -> productCodeToIds.get(product.getProductCode()), identity()));
-    profiler.start("mapping line items");
     requisition.getRequisitionLineItems().forEach(requisitionLineItem -> {
       RequisitionLineItemExtension extension = new RequisitionLineItemExtension();
       extension.setRequisitionLineItemId(requisitionLineItem.getId());
@@ -437,7 +403,6 @@ public class RequisitionCreateService {
       extension.setExpirationDate(requisitionProduct.getExpirationDate());
       requisitionLineItemExtensionRepository.save(extension);
     });
-    profiler.start("flush");
     requisitionLineItemExtensionRepository.flush();
   }
 
@@ -519,8 +484,7 @@ public class RequisitionCreateService {
   }
 
   private void buildRequisitionUsageSections(Requisition requisition, RequisitionCreateRequest request,
-      UUID programId, Profiler profiler) {
-    profiler.start("new instance");
+      UUID programId, String programCode) {
     RequisitionV2Dto dto = new RequisitionV2Dto();
     requisition.export(dto);
     BasicRequisitionTemplateDto templateDto = BasicRequisitionTemplateDto.newInstance(requisition.getTemplate());
@@ -530,27 +494,51 @@ public class RequisitionCreateService {
     dto.setProcessingPeriod(new ObjectReferenceDto(requisition.getProcessingPeriodId(), "", PROCESSING_PERIODS));
     dto.setProgram(new ObjectReferenceDto(requisition.getProgramId(), "", PROGRAMS));
     buildAvailableProducts(dto, requisition);
-    profiler.start("init usage report");
     SiglusRequisitionDto requisitionDto = siglusUsageReportService.initiateUsageReport(dto);
-    profiler.start("buildConsultationNumber");
-    buildConsultationNumber(requisitionDto, request);
-    profiler.start("buildRequisitionKitUsage");
-    buildRequisitionKitUsage(requisitionDto, request);
-    profiler.start("updateRegimenLineItems");
-    updateRegimenLineItems(requisitionDto, programId, request);
-    profiler.start("updateRegimenSummaryLineItems");
-    updateRegimenSummaryLineItems(requisitionDto, request);
-    profiler.start("updatePatientLineItems");
-    updatePatientLineItems(requisitionDto, request);
-    profiler.start("updateUsageInformationLineItems");
-    updateUsageInformationLineItems(requisitionDto, request);
-    profiler.start("updateTestConsumptionLineItems");
-    updateTestConsumptionLineItems(requisitionDto, request);
-    profiler.start("save usage report");
+    if (VIA_PROGRAM_CODE.equals(programCode)) {
+      buildConsultationNumber(requisitionDto, request);
+      buildRequisitionKitUsage(requisitionDto, request);
+    } else if (TARV_PROGRAM_CODE.equals(programCode)) {
+      updateRegimenLineItems(requisitionDto, programId, request);
+      updateRegimenSummaryLineItems(requisitionDto, request);
+      updateMmiaPatientLineItems(requisitionDto, request);
+    } else if (MALARIA_PROGRAM_CODE.equals(programCode)) {
+      updateUsageInformationLineItems(requisitionDto, request);
+    } else if (RAPIDTEST_PROGRAM_CODE.equals(programCode)) {
+      updateTestConsumptionLineItems(requisitionDto, request);
+    } else if (MTB_PROGRAM_CODE.equals(programCode)) {
+      updateMmtbPatientLineItems(requisitionDto, request);
+      updateAgeGroupLineItems(requisitionDto, request);
+    }
     siglusUsageReportService.saveUsageReport(requisitionDto, dto);
   }
 
-  private void updatePatientLineItems(SiglusRequisitionDto requisitionDto, RequisitionCreateRequest request) {
+  private void updateMmtbPatientLineItems(SiglusRequisitionDto requisitionDto, RequisitionCreateRequest request) {
+    if (isEmpty(request.getPatientLineItems())) {
+      return;
+    }
+    List<PatientLineItemsRequest> patientLineItemsRequests = request.getPatientLineItems();
+    Map<String, PatientGroupDto> patientTableNameToPatientGroup = requisitionDto.getPatientLineItems().stream()
+        .collect(toMap(PatientGroupDto::getName, identity()));
+    patientLineItemsRequests.forEach(patientLineItem -> {
+      String tableKey = patientLineItem.getName();
+      String tableValue = MmtbPatientSection.getTableValueByKey(tableKey);
+      buildMmtbPatientLineItem(patientTableNameToPatientGroup.get(tableValue), patientLineItem);
+    });
+  }
+
+  private void buildMmtbPatientLineItem(PatientGroupDto patientGroupDto, PatientLineItemsRequest patientRequest) {
+    List<PatientLineItemColumnRequest> patientRequestLineItems = patientRequest.getColumns();
+    String tableValue = patientGroupDto.getName();
+    patientRequestLineItems.forEach(patientRequestLineItem -> {
+      String columnKey = patientRequestLineItem.getName();
+      String columnValue = MmtbPatientSection.getColumnValueByKey(tableValue, columnKey);
+      PatientColumnDto patientColumnDto = patientGroupDto.getColumns().get(columnValue);
+      patientColumnDto.setValue(patientRequestLineItem.getValue());
+    });
+  }
+
+  private void updateMmiaPatientLineItems(SiglusRequisitionDto requisitionDto, RequisitionCreateRequest request) {
     if (isEmpty(request.getPatientLineItems())) {
       return;
     }
@@ -560,10 +548,25 @@ public class RequisitionCreateService {
     splitTableDispensedPatientData(patientLineItemsRequests);
     patientLineItemsRequests.forEach(patientRequest ->
         buildPatientGroupDtoData(
-            patientNameToPatientGroupDto.get(PatientLineItemName.findValueByKey(patientRequest.getName())),
+            patientNameToPatientGroupDto.get(MmiaPatientTableKeyValue.findValueByKey(patientRequest.getName())),
             patientRequest)
     );
     calculatePatientDispensedTotal(patientNameToPatientGroupDto);
+  }
+
+  private void updateAgeGroupLineItems(SiglusRequisitionDto requisitionDto, RequisitionCreateRequest request) {
+    if (isEmpty(request.getAgeGroupLineItems())) {
+      return;
+    }
+    List<AgeGroupLineItemRequest> ageGroupLineItemRequests = request.getAgeGroupLineItems();
+    Map<String, AgeGroupServiceDto> ageGroupServiceToAgeGroup = requisitionDto.getAgeGroupLineItems().stream()
+        .collect(toMap(AgeGroupServiceDto::getService, identity()));
+    ageGroupLineItemRequests.forEach(lineItemRequest -> {
+      String serviceValue = MmtbAgeGroupSection.getServiceValueByKey(lineItemRequest.getService());
+      String groupValue = MmtbAgeGroupSection.getGroupValueByKey(lineItemRequest.getGroup());
+      AgeGroupLineItemDto ageGroupLineItem = ageGroupServiceToAgeGroup.get(serviceValue).getColumns().get(groupValue);
+      ageGroupLineItem.setValue(lineItemRequest.getValue());
+    });
   }
 
   private void splitTableDispensedPatientData(List<PatientLineItemsRequest> patientLineItemsRequests) {
@@ -592,14 +595,12 @@ public class RequisitionCreateService {
   }
 
   private void buildPatientGroupDtoData(PatientGroupDto patientGroupDto, PatientLineItemsRequest patientRequest) {
-    if (patientGroupDto == null) {
-      throw new NotFoundException("patientGroupDto not found");
-    }
     Map<String, PatientColumnDto> patientGroupDtoColumns = patientGroupDto.getColumns();
     List<PatientLineItemColumnRequest> patientRequestColumns = patientRequest.getColumns();
     patientRequestColumns.forEach(k -> {
       String name = patientGroupDto.getName();
-      String patientGroupDtoKey = PatientTableName.valueOf(name.toUpperCase()).findValueByKey(k.getName());
+      String patientGroupDtoKey = MmiaPatientTableColumnKeyValue.valueOf(name.toUpperCase())
+          .findValueByKey(k.getName());
       PatientColumnDto patientColumnDto = patientGroupDtoColumns.get(patientGroupDtoKey);
       patientColumnDto.setValue(k.getValue());
     });
@@ -682,9 +683,6 @@ public class RequisitionCreateService {
 
   private void buildRegimenSummaryPatientsAndCommunity(RegimenSummaryLineDto summaryLineDto,
       RegimenLineItemRequest summaryRequest, RegimenSummaryLineDto totalDto) {
-    if (summaryLineDto == null) {
-      throw new NotFoundException("summaryLineDto not found");
-    }
     Map<String, RegimenColumnDto> columns = summaryLineDto.getColumns();
     columns.get(COLUMN_NAME_PATIENT).setValue(summaryRequest.getPatientsOnTreatment());
     columns.get(COLUMN_NAME_COMMUNITY).setValue(summaryRequest.getComunitaryPharmacy());

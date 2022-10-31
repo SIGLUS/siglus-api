@@ -26,7 +26,11 @@ import static org.mockito.Mockito.verify;
 import static org.openlmis.requisition.i18n.MessageKeys.ERROR_NO_FOLLOWING_PERMISSION;
 import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.when;
-import static org.siglus.siglusapi.constant.AndroidConstants.SCHEDULE_CODE;
+import static org.siglus.siglusapi.constant.android.AndroidConstants.SCHEDULE_CODE;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.KitUsageLineItems.COLLECTION_KIT_OPENED;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.KitUsageLineItems.COLLECTION_KIT_RECEIVED;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.KitUsageLineItems.SERVICE_CHW;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.KitUsageLineItems.SERVICE_HF;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -84,10 +88,14 @@ import org.siglus.siglusapi.domain.Regimen;
 import org.siglus.siglusapi.domain.RequisitionExtension;
 import org.siglus.siglusapi.domain.RequisitionLineItemExtension;
 import org.siglus.siglusapi.domain.SyncUpHash;
+import org.siglus.siglusapi.dto.AgeGroupLineItemDto;
+import org.siglus.siglusapi.dto.AgeGroupServiceDto;
 import org.siglus.siglusapi.dto.ConsultationNumberColumnDto;
 import org.siglus.siglusapi.dto.ConsultationNumberGroupDto;
 import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.FacilityTypeDto;
+import org.siglus.siglusapi.dto.KitUsageLineItemDto;
+import org.siglus.siglusapi.dto.KitUsageServiceLineItemDto;
 import org.siglus.siglusapi.dto.PatientColumnDto;
 import org.siglus.siglusapi.dto.PatientGroupDto;
 import org.siglus.siglusapi.dto.RegimenColumnDto;
@@ -124,7 +132,7 @@ import org.siglus.siglusapi.web.android.FileBasedTest;
 import org.springframework.beans.BeanUtils;
 
 @RunWith(MockitoJUnitRunner.class)
-@SuppressWarnings("PMD.TooManyMethods")
+@SuppressWarnings({"PMD.TooManyMethods", "PMD.AvoidDuplicateLiterals"})
 public class RequisitionCreateServiceTest extends FileBasedTest {
 
   @InjectMocks
@@ -229,6 +237,9 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
   private final UUID malariaTemplateId = UUID.fromString("3f2245ce-ee9f-11eb-ba79-acde48001122");
   private final UUID malariaProgramId = UUID.randomUUID();
   private final UUID malariaOrderableId = UUID.randomUUID();
+  private final UUID mmtbTemplateId = UUID.randomUUID();
+  private final UUID mmtbProgramId = UUID.randomUUID();
+  private final UUID mmtbOrderableId = UUID.randomUUID();
   private final UUID supervisoryNodeId = UUID.randomUUID();
   private final UUID processingPeriodId = UUID.randomUUID();
   private final UUID requisitionId = UUID.randomUUID();
@@ -286,6 +297,7 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     when(supervisoryNodeService.findSupervisoryNode(malariaProgramId, facilityId)).thenReturn(supervisoryNodeDto);
     when(supervisoryNodeService.findSupervisoryNode(mmiaProgramId, facilityId)).thenReturn(supervisoryNodeDto);
     when(supervisoryNodeService.findSupervisoryNode(rapidTestProgramId, facilityId)).thenReturn(supervisoryNodeDto);
+    when(supervisoryNodeService.findSupervisoryNode(mmtbProgramId, facilityId)).thenReturn(supervisoryNodeDto);
     when(supervisoryNodeService.findOne(supervisoryNodeId)).thenReturn(supervisoryNodeDto);
     when(requisitionTemplateExtensionRepository.findByRequisitionTemplateId(viaTemplateId))
         .thenReturn(buildRequisitionTemplateExtension());
@@ -317,6 +329,9 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     ProgramDto rapidTestProgram = Mockito.mock(ProgramDto.class);
     when(rapidTestProgram.getId()).thenReturn(rapidTestProgramId);
     when(siglusProgramService.getProgramByCode("TR")).thenReturn(Optional.of(rapidTestProgram));
+    ProgramDto mmtbProgram = Mockito.mock(ProgramDto.class);
+    when(mmtbProgram.getId()).thenReturn(mmtbProgramId);
+    when(siglusProgramService.getProgramByCode("TB")).thenReturn(Optional.of(mmtbProgram));
     FacilityTypeDto facilityTypeDto = new FacilityTypeDto();
     facilityTypeDto.setId(facilityTypeId);
     FacilityDto facilityDto = FacilityDto.builder().type(facilityTypeDto).build();
@@ -328,6 +343,7 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     when(requisitionTemplateRepository.findTemplate(mmiaProgramId, facilityTypeId)).thenReturn(requisitionTemplate);
     when(requisitionTemplateRepository.findTemplate(rapidTestProgramId, facilityTypeId))
         .thenReturn(requisitionTemplate);
+    when(requisitionTemplateRepository.findTemplate(mmtbProgramId, facilityTypeId)).thenReturn(requisitionTemplate);
     doNothing().when(siglusNotificationService).postApprove(any());
   }
 
@@ -571,6 +587,44 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
         getTestOutcomeDto(total, newColumn1, unjustified, siglusRequisitionDto).getValue());
   }
 
+  @Test
+  public void shouldEqualsValueWhenCreateMmtbFromAndroid() throws IOException {
+    // given
+    ValidationResult success = ValidationResult.success();
+    when(permissionService.canInitRequisition(mmtbProgramId, facilityId)).thenReturn(success);
+    when(permissionService.canSubmitRequisition(any(Requisition.class))).thenReturn(success);
+    when(permissionService.canAuthorizeRequisition(any(Requisition.class))).thenReturn(success);
+    when(permissionService.canApproveRequisition(any(Requisition.class))).thenReturn(success);
+    ApprovedProductDto productDto = createApprovedProductDto(mmtbOrderableId);
+    when(requisitionService.getApproveProduct(facilityId, mmtbProgramId, false))
+        .thenReturn(new ApproveProductsAggregator(singletonList(productDto), mmtbProgramId));
+    RequisitionTemplate template = new RequisitionTemplate();
+    template.setId(mmtbTemplateId);
+    when(requisitionTemplateService.findTemplateById(mmtbTemplateId)).thenReturn(template);
+    when(requisitionRepository.saveAndFlush(requisitionArgumentCaptor.capture())).thenReturn(buildMmtbRaequisition());
+    OrderableDto orderableDto = new OrderableDto();
+    orderableDto.setId(mmtbOrderableId);
+    orderableDto.setProductCode("08H07");
+    when(siglusOrderableService.getOrderableByCode("08H07")).thenReturn(orderableDto);
+    when(siglusOrderableService.getAllProducts()).thenReturn(singletonList(orderableDto));
+    when(siglusUsageReportService.initiateUsageReport(any())).thenReturn(buildMmtbSiglusRequisitionDto());
+    when(supportedProgramsHelper.findHomeFacilitySupportedProgramIds())
+        .thenReturn(Collections.singleton(mmtbProgramId));
+    when(approvedProductReferenceDataService.getApprovedProducts(facilityId, mmtbProgramId))
+        .thenReturn(Collections.singletonList(mockApprovedProduct("08H07")));
+    when(siglusRequisitionExtensionService.buildRequisitionExtension(requisitionId, false, facilityId,
+        mmtbProgramId, endDate)).thenReturn(requisitionExtension);
+
+    // when
+    service.createRequisition(parseParam("buildMmtbRequisitionCreateRequest.json"));
+
+    // then
+    verify(siglusUsageReportService).saveUsageReport(siglusRequisitionDtoArgumentCaptor.capture(), any());
+    SiglusRequisitionDto siglusRequisitionDto = siglusRequisitionDtoArgumentCaptor.getValue();
+    assertEquals(6, siglusRequisitionDto.getPatientLineItems().size());
+    assertEquals(3, siglusRequisitionDto.getAgeGroupLineItems().size());
+  }
+
   private TestConsumptionOutcomeDto getTestOutcomeDto(String service, String project, String outcome,
       SiglusRequisitionDto siglusRequisitionDto) {
     List<TestConsumptionOutcomeDto> outcomeDto = siglusRequisitionDto.getTestConsumptionLineItems().stream()
@@ -694,6 +748,17 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     consultationNumberGroupDto.setColumns(consultationNumberColumnDtoMap);
     SiglusRequisitionDto requisitionDto = new SiglusRequisitionDto();
     requisitionDto.setConsultationNumberLineItems(singletonList(consultationNumberGroupDto));
+
+    Map<String, KitUsageServiceLineItemDto> services = new HashMap<>();
+    services.put(SERVICE_CHW, new KitUsageServiceLineItemDto());
+    services.put(SERVICE_HF, new KitUsageServiceLineItemDto());
+    KitUsageLineItemDto kitUsageLineItem1 = new KitUsageLineItemDto();
+    kitUsageLineItem1.setCollection(COLLECTION_KIT_RECEIVED);
+    kitUsageLineItem1.setServices(services);
+    KitUsageLineItemDto kitUsageLineItem2 = new KitUsageLineItemDto();
+    kitUsageLineItem2.setCollection(COLLECTION_KIT_OPENED);
+    kitUsageLineItem2.setServices(services);
+    requisitionDto.setKitUsageLineItems(Arrays.asList(kitUsageLineItem1, kitUsageLineItem2));
     return requisitionDto;
   }
 
@@ -758,6 +823,13 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     return requisitionDto;
   }
 
+  private SiglusRequisitionDto buildMmtbSiglusRequisitionDto() {
+    SiglusRequisitionDto requisitionDto = new SiglusRequisitionDto();
+    requisitionDto.setPatientLineItems(buildMmtbPatientGroupDto());
+    requisitionDto.setAgeGroupLineItems(buildMmtbAgeGroupDto());
+    return requisitionDto;
+  }
+
   private List<Regimen> buildRegimenDto() {
     Regimen regimen = new Regimen();
     regimen.setId(regimenId);
@@ -797,6 +869,93 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     totalSummaryLineDto.setName(total);
     totalSummaryLineDto.setColumns(totalColumns);
     return Arrays.asList(dtoNewColumn0, dtoNewColumn1, dtoLinhas, totalSummaryLineDto);
+  }
+
+  private List<PatientGroupDto> buildMmtbPatientGroupDto() {
+    Map<String, PatientColumnDto> table1Columns = new HashMap<>();
+    table1Columns.put("new", new PatientColumnDto());
+    table1Columns.put("newColumn6", new PatientColumnDto());
+    table1Columns.put("newColumn0", new PatientColumnDto());
+    table1Columns.put("newColumn1", new PatientColumnDto());
+    table1Columns.put("newColumn2", new PatientColumnDto());
+    table1Columns.put("newColumn3", new PatientColumnDto());
+    table1Columns.put("newColumn4", new PatientColumnDto());
+    PatientGroupDto table1 = new PatientGroupDto();
+    table1.setName("newSection3");
+    table1.setColumns(table1Columns);
+
+    Map<String, PatientColumnDto> table2Columns = new HashMap<>();
+    table2Columns.put("new", new PatientColumnDto());
+    table2Columns.put("newColumn6", new PatientColumnDto());
+    table2Columns.put("newColumn0", new PatientColumnDto());
+    table2Columns.put("newColumn1", new PatientColumnDto());
+    table2Columns.put("newColumn2", new PatientColumnDto());
+    table2Columns.put("newColumn3", new PatientColumnDto());
+    table2Columns.put("newColumn4", new PatientColumnDto());
+    PatientGroupDto table2 = new PatientGroupDto();
+    table2.setName("newSection4");
+    table2.setColumns(table2Columns);
+
+    Map<String, PatientColumnDto> table3Columns = new HashMap<>();
+    table3Columns.put("new", new PatientColumnDto());
+    table3Columns.put("newColumn0", new PatientColumnDto());
+    table3Columns.put("newColumn1", new PatientColumnDto());
+    table3Columns.put("newColumn2", new PatientColumnDto());
+    table3Columns.put("newColumn3", new PatientColumnDto());
+    table3Columns.put("newColumn4", new PatientColumnDto());
+    table3Columns.put("newColumn5", new PatientColumnDto());
+    table3Columns.put("newColumn6", new PatientColumnDto());
+    PatientGroupDto table3 = new PatientGroupDto();
+    table3.setName("newSection2");
+    table3.setColumns(table3Columns);
+
+    Map<String, PatientColumnDto> table4Columns = new HashMap<>();
+    table4Columns.put("new", new PatientColumnDto());
+    table4Columns.put("newColumn0", new PatientColumnDto());
+    table4Columns.put("newColumn1", new PatientColumnDto());
+    table4Columns.put("newColumn2", new PatientColumnDto());
+    table4Columns.put("newColumn3", new PatientColumnDto());
+    table4Columns.put("newColumn4", new PatientColumnDto());
+    table4Columns.put("total", new PatientColumnDto());
+    PatientGroupDto table4 = new PatientGroupDto();
+    table4.setName("patientType");
+    table4.setColumns(table4Columns);
+
+    Map<String, PatientColumnDto> table5Columns = new HashMap<>();
+    table5Columns.put("new", new PatientColumnDto());
+    table5Columns.put("newColumn0", new PatientColumnDto());
+    table5Columns.put("newColumn1", new PatientColumnDto());
+    table5Columns.put("total", new PatientColumnDto());
+    PatientGroupDto table5 = new PatientGroupDto();
+    table5.setName("newSection0");
+    table5.setColumns(table5Columns);
+
+    Map<String, PatientColumnDto> table6Columns = new HashMap<>();
+    table6Columns.put("new", new PatientColumnDto());
+    table6Columns.put("newColumn0", new PatientColumnDto());
+    table6Columns.put("total", new PatientColumnDto());
+    PatientGroupDto table6 = new PatientGroupDto();
+    table6.setName("newSection1");
+    table6.setColumns(table6Columns);
+
+    return Arrays.asList(table1, table2, table3, table4, table5, table6);
+  }
+
+  private List<AgeGroupServiceDto> buildMmtbAgeGroupDto() {
+    Map<String, AgeGroupLineItemDto> table1Column = new HashMap<>();
+    table1Column.put("treatment", new AgeGroupLineItemDto());
+    table1Column.put("prophylaxis", new AgeGroupLineItemDto());
+    AgeGroupServiceDto table1 = new AgeGroupServiceDto();
+    table1.setService("adultos");
+    table1.setColumns(table1Column);
+    AgeGroupServiceDto table2 = new AgeGroupServiceDto();
+    table2.setService("criança < 25Kg");
+    table2.setColumns(table1Column);
+    AgeGroupServiceDto table3 = new AgeGroupServiceDto();
+    table3.setService("criança > 25Kg");
+    table3.setColumns(table1Column);
+
+    return Arrays.asList(table1, table2, table3);
   }
 
   private List<PatientGroupDto> buildPatientGroupDto() {
@@ -886,7 +1045,6 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     PatientGroupDto groupDtoNewSection8 = new PatientGroupDto();
     groupDtoNewSection8.setName("newSection8");
     groupDtoNewSection8.setColumns(newSection8);
-
     return Arrays
         .asList(groupDtoNewSection0, groupDtoNewSection1, groupDtoNewSection2, groupDtoNewSection3, groupDtoNewSection4,
             groupDtoNewSection5, groupDtoNewSection6, groupDtoNewSection7, groupDtoPatientType, groupDtoNewSection8);
@@ -997,6 +1155,10 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
 
   private Requisition buildMalariaRaequisition() {
     return buildRequisition(malariaTemplateId, malariaOrderableId, malariaProgramId);
+  }
+
+  private Requisition buildMmtbRaequisition() {
+    return buildRequisition(mmtbTemplateId, mmtbOrderableId, mmtbProgramId);
   }
 
   private OrderableDto buildOrderableDto() {

@@ -21,9 +21,10 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.powermock.api.mockito.PowerMockito.when;
 import static org.siglus.siglusapi.constant.FieldConstants.TOTAL;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.ConsultationNumberLineItems.COLUMN_NAME;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.ConsultationNumberLineItems.GROUP_NAME;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.ConsultationNumberLineItems.COLUMN_NAME;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.ConsultationNumberLineItems.GROUP_NAME;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -46,7 +47,8 @@ import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.dto.RequisitionLineItemV2Dto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.dto.VersionObjectReferenceDto;
-import org.siglus.siglusapi.constant.UsageSectionConstants.TestConsumptionLineItems;
+import org.siglus.siglusapi.constant.android.UsageSectionConstants.TestConsumptionLineItems;
+import org.siglus.siglusapi.domain.AgeGroupLineItem;
 import org.siglus.siglusapi.domain.ConsultationNumberLineItem;
 import org.siglus.siglusapi.domain.PatientLineItem;
 import org.siglus.siglusapi.domain.Regimen;
@@ -69,6 +71,7 @@ import org.siglus.siglusapi.dto.android.request.RequisitionSignatureRequest;
 import org.siglus.siglusapi.dto.android.request.TestConsumptionLineItemRequest;
 import org.siglus.siglusapi.dto.android.request.UsageInformationLineItemRequest;
 import org.siglus.siglusapi.dto.android.response.RequisitionResponse;
+import org.siglus.siglusapi.repository.AgeGroupLineItemRepository;
 import org.siglus.siglusapi.repository.ConsultationNumberLineItemRepository;
 import org.siglus.siglusapi.repository.PatientLineItemRepository;
 import org.siglus.siglusapi.repository.RegimenLineItemRepository;
@@ -125,22 +128,28 @@ public class RequisitionSearchServiceTest {
   private TestConsumptionLineItemRepository testConsumptionLineItemRepository;
 
   @Mock
+  private AgeGroupLineItemRepository ageGroupLineItemRepository;
+
+  @Mock
   private PatientLineItemMapper patientLineItemMapper;
 
   private final UUID programId = UUID.randomUUID();
   private final UUID programIdMmia = UUID.randomUUID();
   private final UUID programIdMalaria = UUID.randomUUID();
   private final UUID programIdRapidTest = UUID.randomUUID();
+  private final UUID programIdMmtb = UUID.randomUUID();
   private final UUID orderableId = UUID.randomUUID();
   private final UUID orderableId2 = UUID.randomUUID();
   private final UUID templateId = UUID.fromString("610a52a5-2217-4fb7-9e8e-90bba3051d4d");
   private final UUID mmiaTemplateId = UUID.fromString("873c25d6-e53b-11eb-8494-acde48001122");
   private final UUID malariaTemplateId = UUID.fromString("3f2245ce-ee9f-11eb-ba79-acde48001122");
   private final UUID rapidtestTemplateId = UUID.fromString("2c10856e-eead-11eb-9718-acde48001122");
+  private final UUID mmtbTemplateId = UUID.randomUUID();
   private final UUID requisitionId = UUID.randomUUID();
   private final UUID requisitionIdMmia = UUID.randomUUID();
   private final UUID requisitionIdMalaria = UUID.randomUUID();
   private final UUID requisitionIdRapidTest = UUID.randomUUID();
+  private final UUID requisitionIdMmtb = UUID.randomUUID();
   private final UUID requisitionLineItemId = UUID.randomUUID();
   private final UUID requisitionLineItemId2 = UUID.randomUUID();
   private final Map<UUID, String> orderableIdToCode = new HashMap<>();
@@ -160,6 +169,7 @@ public class RequisitionSearchServiceTest {
     createGetMmiaRequisitionData();
     createGetMalariaRequisitionData();
     createGetRapidTestRequisitionData();
+    createGetMmtbRequisitionData();
   }
 
   @Test
@@ -298,6 +308,21 @@ public class RequisitionSearchServiceTest {
     assertEquals(Integer.valueOf(1), testConsumptionLineItemRequest2.getValue());
   }
 
+  @Test
+  public void shouldGetMmtbRequisitionResponseWhenByFacilityIdAndStartDate() {
+    // when
+    RequisitionResponse requisitionResponse = service
+        .getRequisitionResponseByFacilityIdAndDate(UUID.randomUUID(), startDate, orderableIdToCode);
+
+    // then
+    RequisitionCreateRequest mmtbResponse = requisitionResponse.getRequisitionResponseList().get(4);
+    assertEquals(6, mmtbResponse.getAgeGroupLineItems().size());
+    List<PatientLineItemsRequest> patientLineItems = mmtbResponse.getPatientLineItems();
+    assertEquals(2, patientLineItems.size());
+    assertEquals(1, patientLineItems.get(0).getColumns().size());
+    assertEquals(1, patientLineItems.get(1).getColumns().size());
+  }
+
   private void createGetRequisitionData() {
     orderableIdToCode.put(orderableId, orderableCode);
     orderableIdToCode.put(orderableId2, orderableCode2);
@@ -374,8 +399,8 @@ public class RequisitionSearchServiceTest {
     when(regimenLineItemRepository.findByRequisitionIdIn(any())).thenReturn(buildRegimenLineItems());
     when(regimenSummaryLineItemRepository.findByRequisitionIdIn(any()))
         .thenReturn(buildRegimenSummaryLineItems());
-    when(patientLineItemRepository.findByRequisitionIdIn(any())).thenReturn(buildPatientLineItems());
-    when(patientLineItemMapper.from(buildPatientLineItems())).thenReturn(buildPatientGroupDtos());
+    when(patientLineItemRepository.findByRequisitionIdIn(any())).thenReturn(buildAllPatientLineItems());
+    when(patientLineItemMapper.from(buildMmiaPatientLineItems())).thenReturn(buildPatientGroupDtos());
     when(siglusRequisitionRequisitionService.searchRequisition(requisitionIdMmia)).thenReturn(buildMmiaV2Dto());
 
     ProgramDto programDto = new ProgramDto();
@@ -403,6 +428,17 @@ public class RequisitionSearchServiceTest {
     programDto.setCode("TR");
     programDto.setId(programIdRapidTest);
     when(siglusProgramService.getProgram(programIdRapidTest)).thenReturn(programDto);
+  }
+
+  private void createGetMmtbRequisitionData() {
+    when(ageGroupLineItemRepository.findByRequisitionIdIn(any())).thenReturn(buildAgeGroupLineItems());
+    when(patientLineItemRepository.findByRequisitionIdIn(any())).thenReturn(buildAllPatientLineItems());
+    when(patientLineItemMapper.from(buildMmtbPatientLineItems())).thenReturn(buildPatientGroupDtos());
+    when(siglusRequisitionRequisitionService.searchRequisition(requisitionIdMmtb)).thenReturn(buildMmtbV2Dto());
+    ProgramDto programDto = new ProgramDto();
+    programDto.setCode("TB");
+    programDto.setId(programIdMmtb);
+    when(siglusProgramService.getProgram(programIdMmtb)).thenReturn(programDto);
   }
 
   private List<UsageInformationLineItem> buildUsageInformationLineItems() {
@@ -458,9 +494,49 @@ public class RequisitionSearchServiceTest {
         .requisitionId(requisitionIdRapidTest)
         .service(TOTAL).project(TestConsumptionLineItems.PROJECT_HIVDETERMINE)
         .outcome(TestConsumptionLineItems.PROJECT_POSITIVE).value(2).build();
-    return Arrays
-        .asList(testConsumptionLineItem1, testConsumptionLineItem2, testConsumptionLineItem3, testConsumptionLineItem4,
-            testConsumptionLineItem5);
+    return Arrays.asList(testConsumptionLineItem1, testConsumptionLineItem2, testConsumptionLineItem3,
+        testConsumptionLineItem4, testConsumptionLineItem5);
+  }
+
+  private List<AgeGroupLineItem> buildAgeGroupLineItems() {
+    AgeGroupLineItem ageGroupLineItem1 = AgeGroupLineItem.builder()
+        .requisitionId(requisitionIdMmtb)
+        .service("adultos")
+        .group("treatment")
+        .value(1)
+        .build();
+    AgeGroupLineItem ageGroupLineItem2 = AgeGroupLineItem.builder()
+        .requisitionId(requisitionIdMmtb)
+        .service("adultos")
+        .group("prophylaxis")
+        .value(2)
+        .build();
+    AgeGroupLineItem ageGroupLineItem3 = AgeGroupLineItem.builder()
+        .requisitionId(requisitionIdMmtb)
+        .service("criança < 25Kg")
+        .group("treatment")
+        .value(3)
+        .build();
+    AgeGroupLineItem ageGroupLineItem4 = AgeGroupLineItem.builder()
+        .requisitionId(requisitionIdMmtb)
+        .service("criança < 25Kg")
+        .group("prophylaxis")
+        .value(4)
+        .build();
+    AgeGroupLineItem ageGroupLineItem5 = AgeGroupLineItem.builder()
+        .requisitionId(requisitionIdMmtb)
+        .service("criança > 25Kg")
+        .group("treatment")
+        .value(5)
+        .build();
+    AgeGroupLineItem ageGroupLineItem6 = AgeGroupLineItem.builder()
+        .requisitionId(requisitionIdMmtb)
+        .service("criança > 25Kg")
+        .group("prophylaxis")
+        .value(6)
+        .build();
+    return Arrays.asList(ageGroupLineItem1, ageGroupLineItem2, ageGroupLineItem3, ageGroupLineItem4, ageGroupLineItem5,
+        ageGroupLineItem6);
   }
 
   private RequisitionV2Dto buildMalariaV2Dto() {
@@ -474,7 +550,6 @@ public class RequisitionSearchServiceTest {
     extraData.put("actualStartDate", "2021-07-01");
     extraData.put("actualEndDate", "2021-07-21");
     extraData.put("clientSubmittedTime", "2021-07-21T07:59:59Z");
-
     BasicRequisitionTemplateDto templateDto = new BasicRequisitionTemplateDto();
     templateDto.setId(malariaTemplateId);
     RequisitionV2Dto v2Dto = new RequisitionV2Dto();
@@ -493,7 +568,6 @@ public class RequisitionSearchServiceTest {
     signatureDto.setAuthorize("wangj2");
     String[] approve = {"wangj3", "wangj4"};
     signatureDto.setApprove(approve);
-
     BasicRequisitionTemplateDto templateDto = new BasicRequisitionTemplateDto();
     templateDto.setId(mmiaTemplateId);
     RequisitionV2Dto v2Dto = new RequisitionV2Dto();
@@ -513,7 +587,6 @@ public class RequisitionSearchServiceTest {
     signatureDto.setAuthorize("wangj6");
     String[] approve = {"wangj7", "wangj8"};
     signatureDto.setApprove(approve);
-
     BasicRequisitionTemplateDto templateDto = new BasicRequisitionTemplateDto();
     templateDto.setId(rapidtestTemplateId);
     RequisitionV2Dto v2Dto = new RequisitionV2Dto();
@@ -522,6 +595,24 @@ public class RequisitionSearchServiceTest {
     v2Dto.setId(requisitionIdRapidTest);
     v2Dto.setStatus(RequisitionStatus.AUTHORIZED);
     v2Dto.setProgram(new ObjectReferenceDto(programIdRapidTest));
+    v2Dto.setEmergency(false);
+    return v2Dto;
+  }
+
+  private RequisitionV2Dto buildMmtbV2Dto() {
+    ExtraDataSignatureDto signatureDto = new ExtraDataSignatureDto();
+    signatureDto.setSubmit("wangj5");
+    signatureDto.setAuthorize("wangj6");
+    String[] approve = {"wangj7", "wangj8"};
+    signatureDto.setApprove(approve);
+    BasicRequisitionTemplateDto templateDto = new BasicRequisitionTemplateDto();
+    templateDto.setId(mmtbTemplateId);
+    RequisitionV2Dto v2Dto = new RequisitionV2Dto();
+    v2Dto.setExtraData(buildExtraData(signatureDto));
+    v2Dto.setTemplate(templateDto);
+    v2Dto.setId(requisitionIdMmtb);
+    v2Dto.setStatus(RequisitionStatus.AUTHORIZED);
+    v2Dto.setProgram(new ObjectReferenceDto(programIdMmtb));
     v2Dto.setEmergency(false);
     return v2Dto;
   }
@@ -539,8 +630,11 @@ public class RequisitionSearchServiceTest {
     RequisitionExtension rapidTestRequisitionExtension = RequisitionExtension.builder()
         .requisitionId(requisitionIdRapidTest)
         .build();
+    RequisitionExtension mmtbRequisitionExtension = RequisitionExtension.builder()
+        .requisitionId(requisitionIdMmtb)
+        .build();
     return Arrays.asList(viaRequisitionExtension, mmiaRequisitionExtension, malariaRequisitionExtension,
-        rapidTestRequisitionExtension);
+        rapidTestRequisitionExtension, mmtbRequisitionExtension);
   }
 
   private List<RegimenLineItem> buildRegimenLineItems() {
@@ -573,20 +667,44 @@ public class RequisitionSearchServiceTest {
     return Arrays.asList(regimenSummaryLineItem1, regimenSummaryLineItem2);
   }
 
-  private List<PatientLineItem> buildPatientLineItems() {
-    PatientLineItem patientLineItem0 = new PatientLineItem();
-    patientLineItem0.setRequisitionId(requisitionIdMmia);
-    patientLineItem0.setGroup("newSection2");
-    patientLineItem0.setColumn("new");
-    patientLineItem0.setValue(20);
+  private List<PatientLineItem> buildMmiaPatientLineItems() {
+    PatientLineItem patientLineItem1 = PatientLineItem.builder()
+        .requisitionId(requisitionIdMmia)
+        .group("newSection2")
+        .column("new")
+        .value(20)
+        .build();
+    PatientLineItem patientLineItem2 = PatientLineItem.builder()
+        .requisitionId(requisitionIdMmia)
+        .group("newSection3")
+        .column("newColumn0")
+        .value(27)
+        .build();
+    return Arrays.asList(patientLineItem1, patientLineItem2);
+  }
 
-    PatientLineItem patientLineItem1 = new PatientLineItem();
-    patientLineItem1.setRequisitionId(requisitionIdMmia);
-    patientLineItem1.setGroup("newSection3");
-    patientLineItem1.setColumn(newColumn0);
-    patientLineItem1.setValue(27);
+  private List<PatientLineItem> buildMmtbPatientLineItems() {
+    PatientLineItem patientLineItem1 = PatientLineItem.builder()
+        .requisitionId(requisitionIdMmtb)
+        .group("newSection2")
+        .column("new")
+        .value(20)
+        .build();
+    PatientLineItem patientLineItem2 = PatientLineItem.builder()
+        .requisitionId(requisitionIdMmtb)
+        .group("newSection3")
+        .column("newColumn0")
+        .value(27)
+        .build();
+    return Arrays.asList(patientLineItem1, patientLineItem2);
+  }
 
-    return Arrays.asList(patientLineItem0, patientLineItem1);
+
+  private List<PatientLineItem> buildAllPatientLineItems() {
+    List<PatientLineItem> all = new ArrayList<>();
+    all.addAll(buildMmtbPatientLineItems());
+    all.addAll(buildMmiaPatientLineItems());
+    return all;
   }
 
   private List<PatientGroupDto> buildPatientGroupDtos() {

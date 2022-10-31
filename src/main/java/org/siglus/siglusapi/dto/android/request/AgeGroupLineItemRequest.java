@@ -13,38 +13,42 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.localmachine.event.order.fulfillment;
+package org.siglus.siglusapi.dto.android.request;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
-import java.util.UUID;
+import java.util.stream.Collectors;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.siglus.siglusapi.dto.LotDto;
-import org.siglus.siglusapi.localmachine.EventPayload;
-import org.siglus.siglusapi.web.request.ShipmentExtensionRequest;
+import org.hibernate.validator.constraints.NotBlank;
+import org.siglus.siglusapi.domain.AgeGroupLineItem;
 
 @Data
 @Builder
-@EventPayload
-@AllArgsConstructor
 @NoArgsConstructor
-public class OrderFulfillmentSyncedEvent {
-  private UUID finalApproveUserId;
-  private UUID convertToOrderUserId;
-  private UUID fulfillUserId;
-  private UUID supplierFacilityId;
-  @JsonProperty("isSubOrder")
-  private boolean isSubOrder;
-  @JsonProperty("isWithLocation")
-  private boolean isWithLocation;
-  private ShipmentExtensionRequest shipmentExtensionRequest;
-  private ConvertToOrderRequest convertToOrderRequest;
-  private List<LotDto> shippedLotList;
+@AllArgsConstructor
+public class AgeGroupLineItemRequest {
 
-  public boolean isNeedConvertToOrder() {
-    return convertToOrderRequest != null;
+  @NotBlank
+  private String service;
+
+  @NotBlank
+  private String group;
+
+  @NotNull
+  @Min(0)
+  private Integer value;
+
+  public static List<AgeGroupLineItemRequest> from(List<AgeGroupLineItem> ageGroupLineItems) {
+    return ageGroupLineItems.stream()
+        .map(ageGroupLineItem -> AgeGroupLineItemRequest.builder()
+            .service(ageGroupLineItem.getService())
+            .group(ageGroupLineItem.getGroup())
+            .value(ageGroupLineItem.getValue())
+            .build())
+        .collect(Collectors.toList());
   }
 }
