@@ -83,6 +83,7 @@ public class MasterDataEventEmitter implements CdcListener {
         "referencedata.users",
         "referencedata.role_assignments",
         // TODO: 2022/10/21 remove "referencedata.right_assignments" temporarily
+        "referencedata.right_assignments",
         "referencedata.system_notifications",
         "report.jasper_templates",
         "report.jaspertemplate_requiredrights",

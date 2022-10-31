@@ -40,7 +40,6 @@ import org.apache.kafka.connect.source.SourceRecord;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
@@ -58,6 +57,7 @@ public class CdcScraperTest {
   public void setup() {
     given(configBuilder.sinkConfig()).willCallRealMethod();
     doNothing().when(publicationPreparer).prepare(any());
+    doNothing().when(cdcDispatcher).doDispatch(any());
   }
 
   @Test
@@ -88,43 +88,6 @@ public class CdcScraperTest {
   }
 
   @Test
-  public void shouldNotPutPreviousTxIdWhenCheckIfNeedToDispatchGivenCurrentTxIdSameAsPrevious()
-      throws InterruptedException {
-    // given
-    cdcScraper.dispatchQueue.clear();
-    // when
-    cdcScraper.mayNeedToDispatch(CdcScraper.DUMMY_TX_ID);
-    // then
-    assertThat(cdcScraper.dispatchQueue.isEmpty()).isTrue();
-  }
-
-  @Test
-  public void shouldDispatchTargetTxIdWhenDoDispatchGivenActualTxId() {
-    // given
-    long txId = 1L;
-    // when
-    cdcScraper.doDispatch(txId);
-    // then
-    verify(cdcDispatcher, times(1)).dispatchByTxId(txId);
-  }
-
-  @Test
-  public void shouldDispatchAllWhenDoDispatchGivenDummyTxId() {
-    // when
-    cdcScraper.doDispatch(CdcScraper.DUMMY_TX_ID);
-    // then
-    verify(cdcDispatcher, times(1)).dispatchAll();
-  }
-
-  @Test
-  public void shouldDispatchAllWhenDoDispatchGivenTxIdIsNull() {
-    // when
-    cdcScraper.doDispatch(null);
-    // then
-    verify(cdcDispatcher, times(1)).dispatchAll();
-  }
-
-  @Test
   public void shouldNotPersistCdcRecordWhenHandleChangeEventGivenNullSource() {
     // given
     RecordChangeEvent<SourceRecord> changeEvent = mock(RecordChangeEvent.class);
@@ -148,13 +111,12 @@ public class CdcScraperTest {
   @Test
   public void shouldPersistCdcRecordWhenHandleChangeEventGivenNonReadSource() {
     // given
-    ArgumentCaptor<CdcRecord> cdcRecordCaptor = ArgumentCaptor.forClass(CdcRecord.class);
     RecordChangeEvent<SourceRecord> changeEvent = getChangeEvent(Operation.UPDATE.code());
     // when
     cdcScraper.handleChangeEvent(changeEvent);
-    verify(cdcRecordRepository).save(cdcRecordCaptor.capture());
     // then
-    assertThat(cdcRecordCaptor.getValue().getPayload().get("name")).isEqualTo("name value");
+    CdcRecord cdcRecord = cdcScraper.dispatchQueue.peekLast();
+    assertThat(cdcRecord.getPayload().get("name")).isEqualTo("name value");
   }
 
   private RecordChangeEvent<SourceRecord> getChangeEvent(String code) {

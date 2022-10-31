@@ -30,16 +30,17 @@ import io.debezium.engine.format.ChangeEventFormat;
 import io.debezium.util.Strings;
 import java.io.IOException;
 import java.time.ZonedDateTime;
+import java.util.Arrays;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.BlockingDeque;
-import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import lombok.SneakyThrows;
@@ -56,25 +57,24 @@ import org.springframework.transaction.annotation.Transactional;
 @SuppressWarnings("PMD.UnusedPrivateField")
 public class CdcScraper {
 
-  static final long DUMMY_TX_ID = -1;
-  final BlockingDeque<Long> dispatchQueue = new LinkedBlockingDeque<>();
-  private final Executor executor = Executors.newSingleThreadExecutor();
-  private final Executor dispatchExecutor = Executors.newSingleThreadExecutor();
-  private final CdcRecordRepository cdcRecordRepository;
+  private static final int DISPATCH_BUFFER_CAPACITY = 10240;
+  private final LinkedList<CdcRecord> dispatchBuffer = new LinkedList<>();
+  final BlockingDeque<CdcRecord> dispatchQueue = new LinkedBlockingDeque<>(DISPATCH_BUFFER_CAPACITY);
+  private final ExecutorService executor = Executors.newSingleThreadExecutor();
+  private final ExecutorService dispatchExecutor = Executors.newSingleThreadExecutor();
   private final CdcDispatcher cdcDispatcher;
   private final ConfigBuilder baseConfig;
-  private final AtomicLong currentTxId = new AtomicLong(DUMMY_TX_ID);
   private final PublicationPreparer publicationPreparer;
   private DebeziumEngine<RecordChangeEvent<SourceRecord>> debeziumEngine;
+  // suppress warning - unused private field
+  // the wrapper is injected here to ensure the Scraper is constructed after backing store ready
   private final OffsetBackingStoreWrapper offsetBackingStoreWrapper;
 
   public CdcScraper(
-      CdcRecordRepository cdcRecordRepository,
       CdcDispatcher cdcDispatcher,
       ConfigBuilder baseConfig,
       PublicationPreparer publicationPreparer,
       OffsetBackingStoreWrapper offsetBackingStoreWrapper) {
-    this.cdcRecordRepository = cdcRecordRepository;
     this.cdcDispatcher = cdcDispatcher;
     this.baseConfig = baseConfig;
     this.offsetBackingStoreWrapper = offsetBackingStoreWrapper;
@@ -88,7 +88,7 @@ public class CdcScraper {
     log.debug("receive record:{}", sourceRecord);
     Struct sourceRecordChangeValue = (Struct) sourceRecord.value();
     if (Objects.isNull(sourceRecordChangeValue)) {
-      log.warn("receive null source record value");
+      log.debug("receive null source record value");
       return;
     }
     Operation operation = Operation.forCode((String) sourceRecordChangeValue.get(OPERATION));
@@ -98,16 +98,7 @@ public class CdcScraper {
     Map<String, Object> payload = extractPayload(sourceRecordChangeValue, operation);
     CdcRecord cdcRecord = buildCdcRecord(sourceRecord, operation, payload);
     log.debug("save cdc record: {} with operation: {}", payload, operation.name());
-    cdcRecordRepository.save(cdcRecord);
-    mayNeedToDispatch(cdcRecord.getTxId());
-  }
-
-  void mayNeedToDispatch(Long txId) throws InterruptedException {
-    long previousTxId = currentTxId.getAndSet(txId);
-    boolean previousTxEnded = previousTxId != txId;
-    if (previousTxEnded) {
-      dispatchQueue.put(previousTxId);
-    }
+    dispatchQueue.put(cdcRecord);
   }
 
   private Map<String, Object> extractPayload(Struct sourceRecordChangeValue, Operation operation) {
@@ -179,19 +170,28 @@ public class CdcScraper {
   }
 
   @PreDestroy
-  private void stop() throws IOException {
+  private void stop() throws IOException, InterruptedException {
     if (this.debeziumEngine != null) {
       this.debeziumEngine.close();
+      this.executor.shutdown();
+      if (!this.executor.awaitTermination(5, TimeUnit.SECONDS)) {
+        log.error("timeout when waiting for debezium executor shutdown");
+      }
+    }
+    this.dispatchExecutor.shutdown();
+    if (!this.dispatchExecutor.awaitTermination(5, TimeUnit.SECONDS)) {
+      log.error("timeout when waiting for dispatcher shutdown");
     }
   }
 
   private void dispatching() {
     while (true) {
       try {
-        Long txId = dispatchQueue.poll(1, TimeUnit.MINUTES);
-        doDispatch(txId);
+        CdcRecord currenRecord = dispatchQueue.poll(30, TimeUnit.SECONDS);
+        doDispatch(currenRecord);
       } catch (InterruptedException e) {
-        log.warn("dispatching task interrupted, exit");
+        log.warn("dispatching task interrupted, continue to flush buff");
+        doDispatch(null);
         Thread.currentThread().interrupt();
         return;
       } catch (Throwable e) {
@@ -201,16 +201,23 @@ public class CdcScraper {
   }
 
   @VisibleForTesting
-  void doDispatch(Long txId) {
-    if (Objects.isNull(txId)) {
-      // timeout
-      cdcDispatcher.dispatchAll();
+  void doDispatch(CdcRecord current) {
+    boolean timeoutOccurs = Objects.isNull(current);
+    boolean buffCapacityIsFull = dispatchBuffer.size() > DISPATCH_BUFFER_CAPACITY;
+    boolean buffIsNotEmpty = !dispatchBuffer.isEmpty();
+    boolean isPreviousTxEnded =
+        (buffIsNotEmpty && !Objects.isNull(current))
+            && (!dispatchBuffer.getLast().getTxId().equals(current.getTxId()));
+    boolean needToFlush = buffIsNotEmpty && (timeoutOccurs || buffCapacityIsFull || isPreviousTxEnded);
+    if (needToFlush) {
+      log.info("flush cdc records: {}", dispatchBuffer.size());
+      CdcRecord[] records = dispatchBuffer.toArray(new CdcRecord[0]);
+      cdcDispatcher.doDispatch(Arrays.asList(records));
+      dispatchBuffer.clear();
+    }
+    if (Objects.isNull(current)) {
       return;
     }
-    if (DUMMY_TX_ID == txId) {
-      cdcDispatcher.dispatchAll();
-      return;
-    }
-    cdcDispatcher.dispatchByTxId(txId);
+    dispatchBuffer.addLast(current);
   }
 }
