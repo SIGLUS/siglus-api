@@ -75,6 +75,7 @@ import org.siglus.siglusapi.repository.SiglusOrdersRepository;
 import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
 import org.siglus.siglusapi.repository.SiglusShipmentRepository;
 import org.siglus.siglusapi.service.SiglusLotService;
+import org.siglus.siglusapi.service.SiglusShipmentService;
 import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
 import org.siglus.siglusapi.util.SiglusSimulateUserAuthHelper;
 import org.siglus.siglusapi.web.request.ShipmentExtensionRequest;
@@ -101,6 +102,7 @@ public class OrderFulfillmentSyncedReplayer {
   private final SiglusProofOfDeliveryRepository siglusProofOfDeliveryRepository;
   private final PodExtensionRepository podExtensionRepository;
   private final NotificationService notificationService;
+  private final SiglusShipmentService siglusShipmentService;
   private final SiglusLotReferenceDataService lotReferenceDataService;
   private final SiglusLotService siglusLotService;
 
@@ -268,6 +270,9 @@ public class OrderFulfillmentSyncedReplayer {
   }
 
   private UUID doFulfillOrder(OrderFulfillmentSyncedEvent event, Order shipped) {
+    if (event.isWithLocation()) {
+      siglusShipmentService.mergeShipmentLineItems(event.getShipmentExtensionRequest().getShipment());
+    }
     Shipment shipment = createSubOrderAndShipment(event.isSubOrder(),
         event.getShipmentExtensionRequest().getShipment(), event.getFulfillUserId(), shipped);
     if (event.isWithLocation()) {
