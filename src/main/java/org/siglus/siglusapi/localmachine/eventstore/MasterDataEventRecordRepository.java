@@ -24,7 +24,11 @@ import org.springframework.data.repository.query.Param;
 
 public interface MasterDataEventRecordRepository extends JpaRepository<MasterDataEventRecord, UUID> {
 
-  List<MasterDataEventRecord> findByIdAfterOrderById(Long id);
+  @Query(
+      value =
+          "select * from localmachine.master_data_events where id > :id order by id limit :limit",
+      nativeQuery = true)
+  List<MasterDataEventRecord> findLimitedOrderedEventsByIdGreaterThan(Long id, Integer limit);
 
   @Modifying
   @Query(

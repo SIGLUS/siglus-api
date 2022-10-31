@@ -99,7 +99,9 @@ public class EventStoreTest {
   @Test
   public void shouldReturnMasterDataEventWhenLocalMachineGet() {
     // given
-    when(masterDataEventRecordRepository.findByIdAfterOrderById(2L)).thenReturn(buildMasterDataEvents());
+    when(masterDataEventRecordRepository.findLimitedOrderedEventsByIdGreaterThan(
+            2L, EventStore.MASTER_DATA_EVENT_BATCH_LIMIT))
+        .thenReturn(buildMasterDataEvents());
 
     // when
     List<MasterDataEvent> masterDataEvents = eventStore.getMasterDataEvents(2L, facilityId);
@@ -108,7 +110,7 @@ public class EventStoreTest {
     verify(masterDataOffsetRepository, times(1)).save(masterDataOffsetCaptor.capture());
     MasterDataOffset masterDataOffset = masterDataOffsetCaptor.getValue();
     assertEquals(5L, masterDataOffset.getRecordOffset());
-    assertEquals(2, masterDataEvents.size());
+    assertEquals(EventStore.MASTER_DATA_EVENT_BATCH_LIMIT + 2, masterDataEvents.size());
   }
 
   @Test

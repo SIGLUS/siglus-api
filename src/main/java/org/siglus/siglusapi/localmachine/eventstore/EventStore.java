@@ -17,6 +17,7 @@ package org.siglus.siglusapi.localmachine.eventstore;
 
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -40,6 +41,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 public class EventStore {
 
+  static final int MASTER_DATA_EVENT_BATCH_LIMIT = 1024;
   private final EventRecordRepository repository;
   private final EventPayloadRepository eventPayloadRepository;
   private final MasterDataEventRecordRepository masterDataEventRecordRepository;
@@ -99,10 +101,12 @@ public class EventStore {
     if (offsetId == null) {
       return Collections.emptyList();
     }
-    List<MasterDataEvent> masterDataEvents = masterDataEventRecordRepository.findByIdAfterOrderById(offsetId).stream()
-        .filter(it -> filterMasterDataEventRecord(it, facilityId))
-        .map(it -> it.toMasterDataEvent(payloadSerializer::load))
-        .collect(Collectors.toList());
+    List<MasterDataEventRecord> bufferedMasterDataRecords = getMasterDataRecordsGreedily(
+        offsetId, facilityId, MASTER_DATA_EVENT_BATCH_LIMIT);
+    List<MasterDataEvent> masterDataEvents =
+        bufferedMasterDataRecords.stream()
+            .map(it -> it.toMasterDataEvent(payloadSerializer::load))
+            .collect(Collectors.toList());
     int size = masterDataEvents.size();
     if (size > 0) {
       MasterDataEvent masterDataEvent = masterDataEvents.get(size - 1);
@@ -117,11 +121,6 @@ public class EventStore {
       masterDataOffsetRepository.save(masterDataOffset);
     }
     return masterDataEvents;
-  }
-
-  private boolean filterMasterDataEventRecord(MasterDataEventRecord eventRecord, UUID facilityId) {
-    return (eventRecord.getFacilityId() == null && eventRecord.getSnapshotVersion() == null)
-        || (eventRecord.getFacilityId() != null && eventRecord.getFacilityId().equals(facilityId));
   }
 
   @Transactional
@@ -236,6 +235,30 @@ public class EventStore {
   public void routeAcks(Set<Ack> acks) {
     confirmEventsByAcks(acks);
     saveAcks(acks);
+  }
+
+  List<MasterDataEventRecord> getMasterDataRecordsGreedily(Long offsetId, UUID facilityId, int limit) {
+    List<MasterDataEventRecord> bufferedMasterDataRecords = new LinkedList<>();
+    while (bufferedMasterDataRecords.size() <= limit) {
+      List<MasterDataEventRecord> masterDataRecords =
+          masterDataEventRecordRepository.findLimitedOrderedEventsByIdGreaterThan(offsetId, limit);
+      if (masterDataRecords.isEmpty()) {
+        break;
+      }
+      bufferedMasterDataRecords.addAll(
+          masterDataRecords.stream()
+              .filter(it -> filterMasterDataEventRecord(it, facilityId))
+              .collect(Collectors.toList()));
+    }
+    return bufferedMasterDataRecords;
+  }
+
+  boolean filterMasterDataEventRecord(MasterDataEventRecord eventRecord, UUID facilityId) {
+    boolean isSharedIncrementalRecord =
+        eventRecord.getFacilityId() == null && eventRecord.getSnapshotVersion() == null;
+    boolean isFacilityOwnedRecord =
+        eventRecord.getFacilityId() != null && eventRecord.getFacilityId().equals(facilityId);
+    return isSharedIncrementalRecord || isFacilityOwnedRecord;
   }
 
   private void saveAcks(Set<Ack> acks) {
