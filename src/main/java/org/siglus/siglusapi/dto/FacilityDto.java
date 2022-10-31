@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.dto;
 
+import com.google.gson.Gson;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.List;
@@ -42,5 +43,10 @@ public class FacilityDto implements Serializable {
   private List<SupportedProgramDto> supportedPrograms;
   private GeographicZoneDto geographicZone;
   private FacilityTypeDto type;
+
+  public static org.openlmis.referencedata.dto.FacilityDto convert(FacilityDto dto) {
+    Gson gson = new Gson();
+    return gson.fromJson(gson.toJson(dto), org.openlmis.referencedata.dto.FacilityDto.class);
+  }
 
 }

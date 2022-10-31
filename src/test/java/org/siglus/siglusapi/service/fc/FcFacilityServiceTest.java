@@ -23,6 +23,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -40,6 +41,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.openlmis.referencedata.web.FacilityController;
 import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
 import org.openlmis.stockmanagement.domain.sourcedestination.Node;
@@ -58,6 +60,7 @@ import org.siglus.siglusapi.repository.ProgramRealProgramRepository;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusFacilityTypeReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusGeographicZoneReferenceDataService;
+import org.springframework.validation.BeanPropertyBindingResult;
 
 @RunWith(PowerMockRunner.class)
 public class FcFacilityServiceTest {
@@ -76,6 +79,9 @@ public class FcFacilityServiceTest {
   private SiglusGeographicZoneReferenceDataService geographicZoneService;
 
   @Mock
+  private FacilityController facilityController;
+
+  @Mock
   private ProgramReferenceDataService programReferenceDataService;
 
   @Mock
@@ -89,6 +95,9 @@ public class FcFacilityServiceTest {
 
   @InjectMocks
   private FcFacilityService fcFacilityService;
+
+  @Captor
+  private ArgumentCaptor<org.openlmis.referencedata.dto.FacilityDto> rfFacilityCaptor;
 
   @Captor
   private ArgumentCaptor<FacilityDto> facilityCaptor;
@@ -197,14 +206,15 @@ public class FcFacilityServiceTest {
 
     // then
     assertNotNull(result);
-    verify(facilityService).saveFacility(facilityCaptor.capture());
-    assertEquals(DESCRIPTION, facilityCaptor.getValue().getGeographicZone().getName());
-    assertEquals("facilityName", facilityCaptor.getValue().getName());
-    assertEquals("description", facilityCaptor.getValue().getDescription());
-    assertEquals(FACILITY, facilityCaptor.getValue().getCode());
-    assertEquals(TYPE_1, facilityCaptor.getValue().getType().getCode());
-    assertTrue(facilityCaptor.getValue().getActive());
-    assertEquals("T", facilityCaptor.getValue().getSupportedPrograms().get(0).getCode());
+    verify(facilityController)
+        .saveFacility(rfFacilityCaptor.capture(), eq(FACILITY_ID), any(BeanPropertyBindingResult.class));
+    assertEquals(DESCRIPTION, rfFacilityCaptor.getValue().getGeographicZone().getName());
+    assertEquals("facilityName", rfFacilityCaptor.getValue().getName());
+    assertEquals("description", rfFacilityCaptor.getValue().getDescription());
+    assertEquals(FACILITY, rfFacilityCaptor.getValue().getCode());
+    assertEquals(TYPE_1, rfFacilityCaptor.getValue().getType().getCode());
+    assertTrue(rfFacilityCaptor.getValue().getActive());
+    assertEquals("T", rfFacilityCaptor.getValue().getSupportedPrograms().iterator().next().getCode());
   }
 
   @Test
@@ -241,12 +251,12 @@ public class FcFacilityServiceTest {
     fcFacilityService.processData(Collections.singletonList(facilityDto), START_DATE, LAST_UPDATED_AT);
 
     // then
-    verify(facilityService).saveFacility(facilityCaptor.capture());
-    assertEquals(DESCRIPTION, facilityCaptor.getValue().getGeographicZone().getName());
-    assertEquals("facility2", facilityCaptor.getValue().getCode());
-    assertEquals(TYPE_2, facilityCaptor.getValue().getType().getCode());
-    assertEquals("TARV", facilityCaptor.getValue()
-        .getSupportedPrograms().get(0).getName());
+    verify(facilityController)
+        .saveFacility(rfFacilityCaptor.capture(), eq(originFacility.getId()), any(BeanPropertyBindingResult.class));
+    assertEquals(DESCRIPTION, rfFacilityCaptor.getValue().getGeographicZone().getName());
+    assertEquals("facility2", rfFacilityCaptor.getValue().getCode());
+    assertEquals(TYPE_2, rfFacilityCaptor.getValue().getType().getCode());
+    assertEquals("TARV", rfFacilityCaptor.getValue().getSupportedPrograms().iterator().next().getName());
   }
 
   public FcFacilityDto getFcFacilityDto(String code, String typeCode) {
