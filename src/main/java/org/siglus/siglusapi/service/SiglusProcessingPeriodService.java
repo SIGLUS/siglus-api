@@ -15,7 +15,8 @@
 
 package org.siglus.siglusapi.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import static org.siglus.siglusapi.util.RequisitionUtil.getRequisitionExtraData;
+
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -23,13 +24,10 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import lombok.SneakyThrows;
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.openlmis.referencedata.domain.ProcessingPeriod;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.RequisitionStatus;
@@ -205,10 +203,8 @@ public class SiglusProcessingPeriodService {
           .collect(Collectors.toList());
     }
 
-    Set<UUID> requisitionIds = requisitionPeriodDtos.stream().map(RequisitionPeriodDto::getRequisitionId)
-        .collect(Collectors.toSet());
     Map<UUID, SimpleRequisitionDto> requisitionIdToSimpleRequisition = requisitionNativeSqlRepository
-        .findSimpleRequisitionDto(requisitionIds).stream()
+        .findSimpleRequisitionDto(getRequisitionIds(requisitionPeriodDtos)).stream()
         .collect(Collectors.toMap(SimpleRequisitionDto::getId, e -> e));
 
     return requisitionPeriodDtos.stream()
@@ -224,22 +220,16 @@ public class SiglusProcessingPeriodService {
     return response;
   }
 
-  private Map<String, Object> getRequisitionExtraData(SimpleRequisitionDto simpleRequisitionDto) {
-    if (Objects.isNull(simpleRequisitionDto) || StringUtils.isBlank(simpleRequisitionDto.getExtraData())) {
-      return null;
-    }
-    return jsonStringToMap(simpleRequisitionDto.getExtraData());
+  private Set<UUID> getRequisitionIds(Collection<RequisitionPeriodDto> requisitionPeriodDtos) {
+    return requisitionPeriodDtos.stream()
+        .map(RequisitionPeriodDto::getRequisitionId)
+        .collect(Collectors.toSet());
   }
 
   private RequisitionPeriodExtensionResponse convertToRequisitionPeriodExtensionResponse(RequisitionPeriodDto dto) {
     RequisitionPeriodExtensionResponse response = new RequisitionPeriodExtensionResponse();
     BeanUtils.copyProperties(dto, response);
     return response;
-  }
-
-  @SneakyThrows
-  private Map<String, Object> jsonStringToMap(String jsonString) {
-    return new ObjectMapper().readValue(jsonString, Map.class);
   }
 
   // get periods for initiate
