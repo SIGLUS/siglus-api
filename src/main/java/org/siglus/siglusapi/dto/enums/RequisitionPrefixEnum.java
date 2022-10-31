@@ -13,32 +13,14 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.constant;
+package org.siglus.siglusapi.dto.enums;
 
-import java.util.UUID;
-
-public class ProgramConstants {
-
-  private ProgramConstants() {
-  }
-
-  public static final UUID ALL_PRODUCTS_UUID = UUID.fromString("00000000-0000-0000-0000-000000000000");
-
-  public static final UUID ALL_PRODUCTS_PROGRAM_ID = UUID.fromString("00000000-0000-0000-0000-000000000000");
-
-  public static final String ALL_PRODUCTS_PROGRAM_CODE = "ALL";
-
-  public static final String ALL_PRODUCTS_PROGRAM_NAME = "Todos os produtos";
-
-  public static final String VIA_PROGRAM_CODE = "VC";
-
-  public static final String TARV_PROGRAM_CODE = "T";
-
-  public static final String MALARIA_PROGRAM_CODE = "ML";
-
-  public static final String RAPIDTEST_PROGRAM_CODE = "TR";
-
-  public static final String MTB_PROGRAM_CODE = "TB";
-
-  public static final String MMC_PROGRAM_CODE = "MMC";
+public enum RequisitionPrefixEnum {
+  RNO,
+  REM,
+  MTB,
+  MIT,
+  MIA,
+  ALS,
+  MMC;
 }
