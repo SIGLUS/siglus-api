@@ -54,12 +54,6 @@ public interface MasterDataEventRecordRepository extends JpaRepository<MasterDat
       nativeQuery = true)
   void insertMasterDataEvents(@Param("r") MasterDataEventRecord masterDataEventRecord);
 
-  @Modifying
-  @Query(
-      value = "update localmachine.master_data_events set localreplayed=true where id =:id",
-      nativeQuery = true)
-  void markAsReplayed(@Param("id") Long id);
-
   @Query(
       value = "select count(id) from localmachine.master_data_events where id > :id",
       nativeQuery = true)
