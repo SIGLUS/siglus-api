@@ -15,6 +15,8 @@
 
 package org.siglus.siglusapi.domain;
 
+import static com.google.common.collect.Lists.newArrayList;
+
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
@@ -173,7 +175,7 @@ public class RequisitionLineItemDraft extends BaseEntity {
     approvedProduct.setId(lineItemV2Dto.getApprovedProductIdentity().getId());
     approvedProduct.setVersionNumber(lineItemV2Dto.getApprovedProductIdentity().getVersionNumber());
     lineItemDraft.setRequisitionDraft(draft);
-    lineItemDraft.setPreviousAdjustedConsumptions(lineItemV2Dto.getPreviousAdjustedConsumptions());
+    lineItemDraft.setPreviousAdjustedConsumptions(newArrayList(lineItemV2Dto.getPreviousAdjustedConsumptions()));
     lineItemDraft.setFacilityTypeApprovedProduct(approvedProduct);
     lineItemDraft.setRequisitionId(draft.getRequisitionId());
     lineItemDraft.setStockAdjustments(lineItemV2Dto.getStockAdjustments().stream()
