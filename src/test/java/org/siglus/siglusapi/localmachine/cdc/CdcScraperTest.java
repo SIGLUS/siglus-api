@@ -18,6 +18,7 @@ package org.siglus.siglusapi.localmachine.cdc;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyListOf;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -47,7 +48,6 @@ import org.mockito.runners.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 @SuppressWarnings({"PMD.AvoidDuplicateLiterals"})
 public class CdcScraperTest {
-  @Mock private CdcRecordRepository cdcRecordRepository;
   @Mock private CdcDispatcher cdcDispatcher;
   @Mock private ConfigBuilder configBuilder;
   @Mock private PublicationPreparer publicationPreparer;
@@ -58,6 +58,8 @@ public class CdcScraperTest {
     given(configBuilder.sinkConfig()).willCallRealMethod();
     doNothing().when(publicationPreparer).prepare(any());
     doNothing().when(cdcDispatcher).doDispatch(any());
+    cdcScraper.dispatchQueue.clear();
+    cdcScraper.dispatchBuffer.clear();
   }
 
   @Test
@@ -95,7 +97,7 @@ public class CdcScraperTest {
     // when
     cdcScraper.handleChangeEvent(changeEvent);
     // then
-    verify(cdcRecordRepository, times(0)).save(any(CdcRecord.class));
+    assertThat(cdcScraper.dispatchQueue.isEmpty()).isTrue();
   }
 
   @Test
@@ -105,7 +107,7 @@ public class CdcScraperTest {
     // when
     cdcScraper.handleChangeEvent(changeEvent);
     // then
-    verify(cdcRecordRepository, times(0)).save(any(CdcRecord.class));
+    assertThat(cdcScraper.dispatchQueue.isEmpty()).isTrue();
   }
 
   @Test
@@ -117,6 +119,49 @@ public class CdcScraperTest {
     // then
     CdcRecord cdcRecord = cdcScraper.dispatchQueue.peekLast();
     assertThat(cdcRecord.getPayload().get("name")).isEqualTo("name value");
+  }
+
+  @Test
+  public void shouldNotFlushCdcRecordsGivenTxIdNotChanged() {
+    // given
+    long previousTxId = 1L;
+    cdcScraper.dispatchBuffer.add(CdcRecord.builder().txId(previousTxId).build());
+    // when
+    cdcScraper.doDispatch(CdcRecord.builder().txId(previousTxId).build());
+    // then
+    verify(cdcDispatcher, times(0)).doDispatch(anyListOf(CdcRecord.class));
+  }
+
+  @Test
+  public void shouldFlushCdcRecordsGivenTxIdChanged() {
+    // given
+    long previousTxId = 1L;
+    cdcScraper.dispatchBuffer.add(CdcRecord.builder().txId(previousTxId).build());
+    // when
+    cdcScraper.doDispatch(CdcRecord.builder().txId(2L).build());
+    // then
+    verify(cdcDispatcher, times(1)).doDispatch(anyListOf(CdcRecord.class));
+  }
+
+  @Test
+  public void shouldNotFlushCdcRecordsWhenPollTimeoutAndBufferIsEmpty() {
+    // given
+    cdcScraper.dispatchBuffer.clear();
+    // when
+    cdcScraper.doDispatch(null);
+    // then
+    verify(cdcDispatcher, times(0)).doDispatch(anyListOf(CdcRecord.class));
+  }
+
+  @Test
+  public void shouldFlushCdcRecordsWhenPollTimeoutAndBufferIsNotEmpty() {
+    // given
+    long txId = 1L;
+    cdcScraper.dispatchBuffer.add(CdcRecord.builder().txId(txId).build());
+    // when
+    cdcScraper.doDispatch(null);
+    // then
+    verify(cdcDispatcher, times(1)).doDispatch(anyListOf(CdcRecord.class));
   }
 
   private RecordChangeEvent<SourceRecord> getChangeEvent(String code) {

@@ -58,7 +58,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class CdcScraper {
 
   private static final int DISPATCH_BUFFER_CAPACITY = 10240;
-  private final LinkedList<CdcRecord> dispatchBuffer = new LinkedList<>();
+  final LinkedList<CdcRecord> dispatchBuffer = new LinkedList<>();
   final BlockingDeque<CdcRecord> dispatchQueue = new LinkedBlockingDeque<>(DISPATCH_BUFFER_CAPACITY);
   private final ExecutorService executor = Executors.newSingleThreadExecutor();
   private final ExecutorService dispatchExecutor = Executors.newSingleThreadExecutor();
@@ -157,7 +157,6 @@ public class CdcScraper {
   @PostConstruct
   private void start() {
     // todo: the engine should be run with distributed lock
-    // todo: exit application if debezium dead due to exception?
     Configuration config = config();
     this.publicationPreparer.prepare(config);
     this.debeziumEngine =
