@@ -1121,6 +1121,7 @@ public class SiglusRequisitionServiceTest {
     lineItemV2Dto.setApprovedProduct(approvedProductDto);
     lineItemV2Dto.setId(requisitionLineItemId);
     lineItemV2Dto.setAuthorizedQuantity(10);
+    lineItemV2Dto.setPreviousAdjustedConsumptions(newArrayList());
     siglusRequisitionDto.setRequisitionLineItems(singletonList(lineItemV2Dto));
     when(operatePermissionService.canSubmit(siglusRequisitionDto)).thenReturn(false);
     RequisitionTemplate requisitionTemplate = new RequisitionTemplate();
