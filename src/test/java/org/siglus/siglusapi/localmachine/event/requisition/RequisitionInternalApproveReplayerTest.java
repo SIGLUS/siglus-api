@@ -34,7 +34,6 @@ import org.openlmis.requisition.domain.requisition.RequisitionLineItem;
 import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.domain.requisition.StatusChange;
 import org.openlmis.requisition.domain.requisition.VersionEntityReference;
-import org.openlmis.requisition.repository.RequisitionRepository;
 import org.openlmis.requisition.service.RequisitionService;
 import org.openlmis.requisition.service.referencedata.ApproveProductsAggregator;
 import org.siglus.siglusapi.domain.RequisitionExtension;
@@ -51,6 +50,7 @@ import org.siglus.siglusapi.repository.RegimenSummaryLineItemRepository;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionGroupMembersRepository;
 import org.siglus.siglusapi.repository.RequisitionLineItemExtensionRepository;
+import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.repository.SiglusStatusChangeRepository;
 import org.siglus.siglusapi.repository.TestConsumptionLineItemRepository;
 import org.siglus.siglusapi.repository.UsageInformationLineItemRepository;
@@ -62,7 +62,7 @@ public class RequisitionInternalApproveReplayerTest {
   @InjectMocks
   private RequisitionInternalApproveReplayer requisitionInternalApproveReplayer;
   @Mock
-  private RequisitionRepository requisitionRepository;
+  private SiglusRequisitionRepository requisitionRepository;
   @Mock
   private RequisitionExtensionRepository requisitionExtensionRepository;
   @Mock
@@ -141,6 +141,7 @@ public class RequisitionInternalApproveReplayerTest {
         new ApproveProductsAggregator(new ArrayList<>(), programId);
     when(requisitionService.getApproveProduct(facilityId, programId)).thenReturn(approveProductsAggregator);
     when(requisitionRepository.saveAndFlush(any())).thenReturn(requisition);
+    when(requisitionExtensionRepository.findByRequisitionNumber(any())).thenReturn(new RequisitionExtension());
     // when
     requisitionInternalApproveReplayer.replay(event);
   }

@@ -98,6 +98,7 @@ public interface SiglusRequisitionRepository extends JpaRepository<Requisition, 
       @Param("programId") UUID programId,
       @Param("status") RequisitionStatus status
   );
+
   void deleteById(UUID id);
 
 }
