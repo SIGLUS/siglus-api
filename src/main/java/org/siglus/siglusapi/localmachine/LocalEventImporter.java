@@ -15,20 +15,47 @@
 
 package org.siglus.siglusapi.localmachine;
 
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.TimeoutException;
+import lombok.extern.slf4j.Slf4j;
 import org.siglus.siglusapi.localmachine.agent.ErrorHandler;
 import org.siglus.siglusapi.localmachine.eventstore.EventStore;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 @Profile({"localmachine"})
 @Component
+@Slf4j
 public class LocalEventImporter extends EventImporter {
 
   public LocalEventImporter(EventStore localEventStore, EventReplayer replayer, Machine machine,
       ErrorHandler errorHandler) {
     super(localEventStore, replayer, machine, errorHandler);
+  }
+
+  @Override
+  @Transactional
+  public void importMasterData(List<Event> events) {
+    final long offset = this.eventStore.getCurrentMasterDataOffset();
+    List<Event> masterDataToSync = new LinkedList<>();
+    long newOffset = offset;
+    for (Event it: events) {
+      if (it.getLocalSequenceNumber() <= offset) {
+        continue;
+      }
+      masterDataToSync.add(it);
+      newOffset = Math.max(it.getLocalSequenceNumber(), newOffset);
+    }
+    try {
+      replayer.playDefaultGroupEvents(masterDataToSync);
+      eventStore.updateLocalMasterDataOffset(newOffset);
+    } catch (InterruptedException | TimeoutException e) {
+      log.warn("fail to replay master data due to retryable reason, err:{}", e.getMessage());
+    }
   }
 
   @Override

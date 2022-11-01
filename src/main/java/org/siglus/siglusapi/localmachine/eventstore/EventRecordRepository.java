@@ -120,8 +120,12 @@ public interface EventRecordRepository extends JpaRepository<EventRecord, UUID> 
   @Query(value = "select cast(id as varchar) as id from localmachine.events where id in :ids", nativeQuery = true)
   Set<String> filterExistsEventIds(@Param("ids") Set<UUID> ids);
 
-  List<EventRecord> findByReceiverIdAndReceiverSyncedAndArchived(
-      UUID receiverId, Boolean receiverSynced, boolean archived);
+  @Query(
+      value = "select * from localmachine.events e left join localmachine.event_payload ep on e.id=ep.eventid "
+          + "where e.receiverid=:receiverId and e.receiversynced=false and e.archived=false "
+          + "order by e.syncedtime limit :limit",
+      nativeQuery = true)
+  List<EventRecord> findEventsForReceiver(@Param("receiverId") UUID receiverId, @Param("limit") int limit);
 
   List<EventRecord> findByArchived(boolean archived);
 

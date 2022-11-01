@@ -27,10 +27,13 @@ public interface MasterDataOffsetRepository extends JpaRepository<MasterDataOffs
 
   @Modifying
   @Query(
-      value = "update localmachine.master_data_offset set recordoffset = :recordoffset "
-          + "where facilityid = :facilityid",
+      value =
+          "update localmachine.master_data_offset set recordoffset=:offset where recordOffset<:offset",
       nativeQuery = true)
-  void updateRecordOffsetByFacilityId(@Param("recordoffset") Long recordOffset, @Param("facilityid") UUID facilityId);
+  void updateLocalMasterDataOffset(@Param("offset") long offset);
+
+  @Query(value = "select max(recordoffset) from localmachine.master_data_offset", nativeQuery = true)
+  Long findLocalMasterDataOffset();
 
   @Query(
       value =

@@ -28,7 +28,8 @@ public interface MasterDataEventRecordRepository extends JpaRepository<MasterDat
       value =
           "select * from localmachine.master_data_events where id > :id order by id limit :limit",
       nativeQuery = true)
-  List<MasterDataEventRecord> findLimitedOrderedEventsByIdGreaterThan(Long id, Integer limit);
+  List<MasterDataEventRecord> findLimitedOrderedEventsByIdGreaterThan(
+      @Param("id") long id, @Param("limit") int limit);
 
   @Modifying
   @Query(

@@ -78,8 +78,6 @@ public class EventStoreTest {
     verify(payloadSerializer, times(1)).dump(any(Event.class));
     verify(repository, times(1)).importExternalEvent(any(EventRecord.class));
     verify(eventPayloadRepository, times(1)).save(any(EventPayload.class));
-    verify(masterDataOffsetRepository, times(1))
-        .updateRecordOffsetByFacilityId(2L, facilityId);
   }
 
   @Test

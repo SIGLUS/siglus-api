@@ -42,6 +42,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class EventStore {
 
   static final int MASTER_DATA_EVENT_BATCH_LIMIT = 1024;
+  static final int PEERING_EVENT_BATCH_LIMIT = 24;
   private final EventRecordRepository repository;
   private final EventPayloadRepository eventPayloadRepository;
   private final MasterDataEventRecordRepository masterDataEventRecordRepository;
@@ -82,8 +83,7 @@ public class EventStore {
   }
 
   public List<Event> getEventsForReceiver(UUID receiverId) {
-    return repository.findByReceiverIdAndReceiverSyncedAndArchived(
-        receiverId, false, false).stream()
+    return repository.findEventsForReceiver(receiverId, PEERING_EVENT_BATCH_LIMIT).stream()
         .map(it -> it.toEvent(payloadSerializer::load))
         .collect(Collectors.toList());
   }
@@ -137,10 +137,6 @@ public class EventStore {
     EventRecord eventRecord = EventRecord.from(event, payloadSerializer.dump(event.getPayload()));
     repository.importExternalEvent(eventRecord);
     eventPayloadRepository.save(new EventPayload(eventRecord.getId(), eventRecord.getPayload()));
-    if (isMasterDataEvent(event)) {
-      log.info("update master data record offset event:{}", event.getId());
-      masterDataOffsetRepository.updateRecordOffsetByFacilityId(event.getLocalSequenceNumber(), event.getReceiverId());
-    }
     emitAckForEvent(event);
   }
 
@@ -204,15 +200,6 @@ public class EventStore {
     return masterDataOffsetRepository.findByFacilityIdIs(facilityId);
   }
 
-  private boolean isMasterDataEvent(Event event) {
-    //comment 背景，目前event分为三类:
-    // 1，groupid不为空的，一般用于requisition order等业务；
-    // 2，groupid为空，但是senderid = receiverid,一般用于movement业务；
-    // 3，groupid为空，但是senderid ！= receiverid,senderid为onlineweb端的machineid,receiverid为localmachine的facilityid
-    return event.getGroupId() == null && !event.getSenderId().equals(event.getReceiverId());
-  }
-
-
   public List<Ack> getAcksForEventSender(UUID eventSender) {
     Example<AckRecord> example = Example.of(AckRecord.builder().sendTo(eventSender).shipped(Boolean.FALSE).build());
     return ackRepository.findAll(example).stream().map(AckRecord::toAck).collect(Collectors.toList());
@@ -269,5 +256,13 @@ public class EventStore {
   private void emitAck(Ack ack) {
     AckRecord ackRecord = AckRecord.from(ack);
     ackRepository.save(ackRecord);
+  }
+
+  public long getCurrentMasterDataOffset() {
+    return Optional.ofNullable(masterDataOffsetRepository.findLocalMasterDataOffset()).orElse(0L);
+  }
+
+  public void updateLocalMasterDataOffset(long newOffset) {
+    masterDataOffsetRepository.updateLocalMasterDataOffset(newOffset);
   }
 }

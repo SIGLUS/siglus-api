@@ -26,7 +26,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.concurrent.TimeoutException;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.siglus.siglusapi.localmachine.ShedLockFactory.AutoClosableLock;
@@ -44,6 +46,7 @@ public class EventReplayer {
   private final EventStore eventStore;
   private final ShedLockFactory lockFactory;
 
+  @SneakyThrows
   public void replay(List<Event> events) {
     if (CollectionUtils.isEmpty(events)) {
       return;
@@ -109,13 +112,16 @@ public class EventReplayer {
     }
   }
 
-  private void playDefaultGroupEvents(List<Event> events) {
+  void playDefaultGroupEvents(List<Event> events) throws TimeoutException, InterruptedException {
     if (isEmpty(events)) {
       return;
     }
     final List<Event> eventsForReplaying = sortEventsByLocalSequence(events);
-    try (AutoClosableLock lock = lockFactory.lock(DEFAULT_REPLAY_LOCK)) {
+    try (AutoClosableLock lock = lockFactory.waitLock(DEFAULT_REPLAY_LOCK, 1000)) {
       lock.ifPresent(() -> eventsForReplaying.forEach(eventPublisher::publishEvent));
+      if (!lock.isPresent()) {
+        throw new TimeoutException();
+      }
     }
   }
 
