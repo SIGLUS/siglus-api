@@ -103,8 +103,7 @@ public class SiglusRequisitionExtensionService {
     if (null == requisitionExtension) {
       return null;
     }
-    return String.format("%s%02d", requisitionExtension.getRequisitionNumberPrefix(),
-        requisitionExtension.getRequisitionNumber());
+    return requisitionExtension.getRealRequisitionNumber();
   }
 
   public String formatRequisitionNumber(UUID requisitionId) {

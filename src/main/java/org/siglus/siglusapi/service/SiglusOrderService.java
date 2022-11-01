@@ -591,7 +591,7 @@ public class SiglusOrderService {
         .build();
   }
 
-  private String increaseOrderNumber(String orderNumber) {
+  public String increaseOrderNumber(String orderNumber) {
     String[] split = orderNumber.split(SLASH);
     return String.format("%s%02d", split[0] + SLASH, (Integer.parseInt(split[1]) + 1));
   }

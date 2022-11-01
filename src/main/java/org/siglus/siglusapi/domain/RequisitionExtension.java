@@ -46,4 +46,8 @@ public class RequisitionExtension extends BaseEntity {
   private UUID facilityId;
 
   private LocalDate actualStartDate;
+
+  public String getRealRequisitionNumber() {
+    return String.format("%s%02d", requisitionNumberPrefix, requisitionNumber);
+  }
 }

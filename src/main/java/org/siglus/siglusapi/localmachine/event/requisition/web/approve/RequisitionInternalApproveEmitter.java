@@ -94,7 +94,7 @@ public class RequisitionInternalApproveEmitter {
 
   private String getGroupId(RequisitionInternalApprovedEvent event) {
     RequisitionExtension requisitionExtension = event.getRequisitionExtension();
-    return requisitionExtension.getRequisitionNumberPrefix() + requisitionExtension.getRequisitionNumber();
+    return requisitionExtension.getRealRequisitionNumber();
   }
 
   private void buildRequisitionUsage(UUID id, RequisitionInternalApprovedEvent event) {
