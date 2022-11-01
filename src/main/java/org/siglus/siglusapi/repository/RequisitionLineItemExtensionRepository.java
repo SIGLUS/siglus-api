@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.UUID;
 import org.siglus.siglusapi.domain.RequisitionLineItemExtension;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -30,4 +31,12 @@ public interface RequisitionLineItemExtensionRepository extends JpaRepository<Re
       nativeQuery = true
   )
   List<RequisitionLineItemExtension> findLineItems(@Param("ids") Iterable<UUID> ids);
+
+  @Modifying
+  @Query(value = "delete from  siglusintegration.requisition_line_items_extension "
+      + "where requisitionlineitemId in ( "
+      + "select id from requisition.requisition_line_items "
+      + "where requisitionid = :requisitionId "
+      + ")", nativeQuery = true)
+  void deleteByRequisitionId(@Param("requisitionId") UUID requisitionId);
 }

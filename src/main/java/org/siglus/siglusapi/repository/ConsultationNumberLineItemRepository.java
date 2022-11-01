@@ -27,4 +27,6 @@ public interface ConsultationNumberLineItemRepository extends
   List<ConsultationNumberLineItem> findByRequisitionId(UUID requisitionId);
 
   List<ConsultationNumberLineItem> findByRequisitionIdIn(Set<UUID> requisitionIds);
+
+  void deleteByRequisitionId(UUID requisitionId);
 }

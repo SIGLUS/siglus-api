@@ -28,4 +28,5 @@ public interface UsageInformationLineItemRepository
 
   List<UsageInformationLineItem> findByRequisitionIdIn(Set<UUID> requisitionIds);
 
+  void deleteByRequisitionId(UUID requisitionId);
 }

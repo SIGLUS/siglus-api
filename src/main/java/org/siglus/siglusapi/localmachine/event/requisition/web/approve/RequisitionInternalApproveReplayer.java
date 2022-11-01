@@ -40,7 +40,6 @@ import org.openlmis.requisition.dto.BasicProcessingPeriodDto;
 import org.openlmis.requisition.dto.BasicProgramDto;
 import org.openlmis.requisition.dto.BasicRequisitionDto;
 import org.openlmis.requisition.dto.MinimalFacilityDto;
-import org.openlmis.requisition.repository.RequisitionRepository;
 import org.openlmis.requisition.service.RequisitionService;
 import org.openlmis.requisition.service.referencedata.ApproveProductsAggregator;
 import org.siglus.siglusapi.domain.AgeGroupLineItem;
@@ -62,7 +61,7 @@ import org.siglus.siglusapi.repository.RegimenLineItemRepository;
 import org.siglus.siglusapi.repository.RegimenSummaryLineItemRepository;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionLineItemExtensionRepository;
-import org.siglus.siglusapi.repository.SiglusStatusChangeRepository;
+import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.repository.TestConsumptionLineItemRepository;
 import org.siglus.siglusapi.repository.UsageInformationLineItemRepository;
 import org.springframework.beans.BeanUtils;
@@ -74,7 +73,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class RequisitionInternalApproveReplayer {
 
-  private final RequisitionRepository requisitionRepository;
+  private final SiglusRequisitionRepository requisitionRepository;
   private final RequisitionExtensionRepository requisitionExtensionRepository;
   private final RequisitionLineItemExtensionRepository requisitionLineItemExtensionRepository;
   private final AgeGroupLineItemRepository ageGroupLineItemRepository;
@@ -85,7 +84,6 @@ public class RequisitionInternalApproveReplayer {
   private final RegimenLineItemRepository regimenLineItemRepository;
   private final RegimenSummaryLineItemRepository regimenSummaryLineItemRepository;
   private final KitUsageLineItemRepository kitUsageRepository;
-  private final SiglusStatusChangeRepository statusChangeRepository;
   private final RequisitionService requisitionService;
   private final NotificationService notificationService;
 
@@ -102,9 +100,10 @@ public class RequisitionInternalApproveReplayer {
   }
 
   public void doReplay(RequisitionInternalApprovedEvent event) {
+    // if this is a rejected requisition, then delete requisition before replaying
+    deleteIfExistRequisition(event);
     Requisition newRequisition = RequisitionBuilder.newRequisition(event.getRequisition().getFacilityId(),
         event.getRequisition().getProgramId(), event.getRequisition().getEmergency());
-    resetIdIfExistRequisition(event, newRequisition);
     newRequisition.setTemplate(event.getRequisition().getTemplate());
     newRequisition.setStatus(event.getRequisition().getStatus());
     newRequisition.setProcessingPeriodId(event.getRequisition().getProcessingPeriodId());
@@ -115,7 +114,6 @@ public class RequisitionInternalApproveReplayer {
     newRequisition.setModifiedDate(event.getRequisition().getModifiedDate());
     newRequisition.setVersion(event.getRequisition().getVersion());
     newRequisition.setSupervisoryNodeId(event.getRequisition().getSupervisoryNodeId());
-    newRequisition.setStatusChanges(new ArrayList<>());
     saveStatusChanges(newRequisition, event.getRequisition().getStatusChanges());
 
     buildRequisitionApprovedProduct(newRequisition, event.getRequisition().getFacilityId(),
@@ -147,22 +145,30 @@ public class RequisitionInternalApproveReplayer {
   }
 
   private void saveStatusChanges(Requisition requisition, List<StatusChange> statusChanges) {
+    requisition.setStatusChanges(new ArrayList<>());
     statusChanges.forEach(statusChange -> {
       buildStatusChanges(requisition, statusChange);
     });
-    if (requisition.getId() != null) {
-      statusChangeRepository.deleteByRequisitionId(requisition.getId());
-    }
-    statusChangeRepository.save(requisition.getStatusChanges());
   }
 
-  private void resetIdIfExistRequisition(RequisitionInternalApprovedEvent event, Requisition newRequisition) {
+  private void deleteIfExistRequisition(RequisitionInternalApprovedEvent event) {
     // TODO: this formation is write everywhere ( 2022/11/1 by kourengang)
     RequisitionExtension requisitionExtension = requisitionExtensionRepository.findByRequisitionNumber(
         String.format("%s%02d", event.getRequisitionExtension().getRequisitionNumberPrefix(),
             event.getRequisitionExtension().getRequisitionNumber()));
     if (requisitionExtension != null) {
-      newRequisition.setId(requisitionExtension.getRequisitionId());
+      UUID requisitionId = requisitionExtension.getRequisitionId();
+      requisitionRepository.deleteById(requisitionId);
+      requisitionExtensionRepository.deleteByRequisitionId(requisitionId);
+      requisitionLineItemExtensionRepository.deleteByRequisitionId(requisitionId);
+      ageGroupLineItemRepository.deleteByRequisitionId(requisitionId);
+      consultationNumberLineItemRepository.deleteByRequisitionId(requisitionId);
+      usageInformationLineItemRepository.deleteByRequisitionId(requisitionId);
+      patientLineItemRepository.deleteByRequisitionId(requisitionId);
+      testConsumptionLineItemRepository.deleteByRequisitionId(requisitionId);
+      regimenLineItemRepository.deleteByRequisitionId(requisitionId);
+      regimenSummaryLineItemRepository.deleteByRequisitionId(requisitionId);
+      kitUsageRepository.deleteByRequisitionId(requisitionId);
     }
   }
 

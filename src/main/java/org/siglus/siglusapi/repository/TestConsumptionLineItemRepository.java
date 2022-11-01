@@ -28,4 +28,5 @@ public interface TestConsumptionLineItemRepository
 
   List<TestConsumptionLineItem> findByRequisitionIdIn(Set<UUID> requisitionIds);
 
+  void deleteByRequisitionId(UUID requisitionId);
 }
