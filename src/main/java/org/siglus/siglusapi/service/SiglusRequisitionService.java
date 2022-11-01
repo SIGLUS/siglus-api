@@ -980,8 +980,8 @@ public class SiglusRequisitionService {
       siglusRequisitionDto.setIsExternalApproval(!checkIsInternal(siglusRequisitionDto.getFacility().getId(), userDto));
       Set<VersionObjectReferenceDto> availableProducts = siglusRequisitionDto.getAvailableProducts();
       Set<UUID> approverMainProgramAndAdditionalProgramApprovedProducts = Optional.ofNullable(
-              requisitionService.getApproveProduct(userDto.getHomeFacilityId(), requisition.getProgramId(),
-                  siglusRequisitionDto.getReportOnly()).getApprovedProductReferences())
+              requisitionService.getApproveProduct(userDto.getHomeFacilityId(), requisition.getProgramId())
+                  .getApprovedProductReferences())
           .orElse(Collections.emptySet())
           .stream()
           .map(ApprovedProductReference::getOrderable)

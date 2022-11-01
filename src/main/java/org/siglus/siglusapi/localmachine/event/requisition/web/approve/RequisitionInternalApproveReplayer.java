@@ -72,6 +72,7 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class RequisitionInternalApproveReplayer {
+
   private final RequisitionRepository requisitionRepository;
   private final RequisitionExtensionRepository requisitionExtensionRepository;
   private final RequisitionLineItemExtensionRepository requisitionLineItemExtensionRepository;
@@ -163,8 +164,8 @@ public class RequisitionInternalApproveReplayer {
   }
 
   private void buildRequisitionApprovedProduct(Requisition requisition, UUID homeFacilityId, UUID programId) {
-    ApproveProductsAggregator approvedProductsContainKit = requisitionService
-        .getApproveProduct(homeFacilityId, programId, requisition.getReportOnly());
+    ApproveProductsAggregator approvedProductsContainKit = requisitionService.getApproveProduct(homeFacilityId,
+        programId);
     List<ApprovedProductDto> approvedProductDtos = approvedProductsContainKit.getFullSupplyProducts();
     ApproveProductsAggregator approvedProducts = new ApproveProductsAggregator(approvedProductDtos, programId);
     Set<ApprovedProductReference> availableProductIdentities = approvedProducts.getApprovedProductReferences();

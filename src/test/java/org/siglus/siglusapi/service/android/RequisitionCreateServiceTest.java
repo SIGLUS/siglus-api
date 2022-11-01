@@ -281,7 +281,7 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     when(user.getHomeFacilityId()).thenReturn(facilityId);
     when(authHelper.getCurrentUser()).thenReturn(user);
     ApprovedProductDto productDto = createApprovedProductDto(viaOrderableId);
-    when(requisitionService.getApproveProduct(facilityId, viaProgramId, false))
+    when(requisitionService.getApproveProduct(facilityId, viaProgramId))
         .thenReturn(new ApproveProductsAggregator(singletonList(productDto), viaProgramId));
     RequisitionTemplate template = new RequisitionTemplate();
     template.setId(viaTemplateId);
@@ -460,7 +460,7 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     when(permissionService.canApproveRequisition(any(Requisition.class))).thenReturn(success);
 
     ApprovedProductDto productDto = createApprovedProductDto(malariaOrderableId);
-    when(requisitionService.getApproveProduct(facilityId, malariaProgramId, true))
+    when(requisitionService.getApproveProduct(facilityId, malariaProgramId))
         .thenReturn(new ApproveProductsAggregator(singletonList(productDto), malariaProgramId));
     RequisitionTemplate mlTemplate = new RequisitionTemplate();
     mlTemplate.setId(malariaTemplateId);
@@ -495,7 +495,7 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     when(permissionService.canAuthorizeRequisition(any(Requisition.class))).thenReturn(success);
     when(permissionService.canApproveRequisition(any(Requisition.class))).thenReturn(success);
     ApprovedProductDto productDto = createApprovedProductDto(mmiaOrderableId);
-    when(requisitionService.getApproveProduct(facilityId, mmiaProgramId, false))
+    when(requisitionService.getApproveProduct(facilityId, mmiaProgramId))
         .thenReturn(new ApproveProductsAggregator(singletonList(productDto), mmiaProgramId));
     RequisitionTemplate mmiaTemplate = new RequisitionTemplate();
     mmiaTemplate.setId(mmiaTemplateId);
@@ -551,7 +551,7 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     when(permissionService.canAuthorizeRequisition(any(Requisition.class))).thenReturn(success);
     when(permissionService.canApproveRequisition(any(Requisition.class))).thenReturn(success);
     ApprovedProductDto productDto = createApprovedProductDto(rapidTestOrderableId);
-    when(requisitionService.getApproveProduct(facilityId, rapidTestProgramId, false))
+    when(requisitionService.getApproveProduct(facilityId, rapidTestProgramId))
         .thenReturn(new ApproveProductsAggregator(singletonList(productDto), rapidTestProgramId));
     RequisitionTemplate trTemplate = new RequisitionTemplate();
     trTemplate.setId(rapidtestTemplateId);
@@ -596,7 +596,7 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     when(permissionService.canAuthorizeRequisition(any(Requisition.class))).thenReturn(success);
     when(permissionService.canApproveRequisition(any(Requisition.class))).thenReturn(success);
     ApprovedProductDto productDto = createApprovedProductDto(mmtbOrderableId);
-    when(requisitionService.getApproveProduct(facilityId, mmtbProgramId, false))
+    when(requisitionService.getApproveProduct(facilityId, mmtbProgramId))
         .thenReturn(new ApproveProductsAggregator(singletonList(productDto), mmtbProgramId));
     RequisitionTemplate template = new RequisitionTemplate();
     template.setId(mmtbTemplateId);

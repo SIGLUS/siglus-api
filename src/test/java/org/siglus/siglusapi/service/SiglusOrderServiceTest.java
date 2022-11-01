@@ -275,22 +275,18 @@ public class SiglusOrderServiceTest {
     requisition.setEmergency(false);
     when(requisitionController.findRequisition(any(), any())).thenReturn(requisition);
     when(authenticationHelper.getCurrentUser()).thenReturn(createUser(userId, userHomeFacilityId));
-    when(requisitionService.getApproveProduct(approverFacilityId, programId, false))
-        .thenReturn(createApproverAggregator());
-    when(requisitionService.getApproveProduct(userHomeFacilityId, programId, false))
-        .thenReturn(createUserAggregator());
-    when(siglusArchiveProductService.searchArchivedProductsByFacilityId(any()))
-        .thenReturn(createArchivedProducts());
-    when(siglusStockCardSummariesService
-        .searchStockCardSummaryV2Dtos(any(), any(), any(), any(), any(Boolean.class))).thenReturn(createSummaryPage());
+    when(requisitionService.getApproveProduct(approverFacilityId, programId)).thenReturn(createApproverAggregator());
+    when(requisitionService.getApproveProduct(userHomeFacilityId, programId)).thenReturn(createUserAggregator());
+    when(siglusArchiveProductService.searchArchivedProductsByFacilityId(any())).thenReturn(createArchivedProducts());
+    when(siglusStockCardSummariesService.searchStockCardSummaryV2Dtos(any(), any(), any(), any(), any(Boolean.class)))
+        .thenReturn(createSummaryPage());
     OrderLineItemExtension extension = OrderLineItemExtension.builder()
         .orderLineItemId(lineItemId)
         .skipped(true)
         .build();
     when(lineItemExtensionRepository.findByOrderLineItemIdIn((newHashSet(lineItemId))))
         .thenReturn(newArrayList(extension));
-    when(siglusRequisitionExtensionService.formatRequisitionNumber(requisitionId))
-        .thenReturn("requisitionNumber-1");
+    when(siglusRequisitionExtensionService.formatRequisitionNumber(requisitionId)).thenReturn("requisitionNumber-1");
     List<UUID> orderableIds = newArrayList(orderableId1);
     when(orderableRepository.findLatestByIds(orderableIds)).thenReturn(Collections.emptyList());
 
@@ -320,9 +316,9 @@ public class SiglusOrderServiceTest {
     ApprovedProductDto productDto1 = createApprovedProductDto(orderableId1);
     ApprovedProductDto productDto2 = createApprovedProductDto(orderableId2);
     List<ApprovedProductDto> list = Arrays.asList(productDto1, productDto2);
-    when(requisitionService.getApproveProduct(approverFacilityId, programId, false))
+    when(requisitionService.getApproveProduct(approverFacilityId, programId))
         .thenReturn(new ApproveProductsAggregator(list, programId));
-    when(requisitionService.getApproveProduct(userHomeFacilityId, programId, false))
+    when(requisitionService.getApproveProduct(userHomeFacilityId, programId))
         .thenReturn(createUserAggregator());
     when(siglusArchiveProductService.searchArchivedProductsByFacilityId(any()))
         .thenReturn(Collections.emptySet());
@@ -370,9 +366,9 @@ public class SiglusOrderServiceTest {
     ApprovedProductDto productDto1 = createApprovedProductDto(orderableId1);
     ApprovedProductDto productDto2 = createApprovedProductDto(orderableId2);
     List<ApprovedProductDto> list = Arrays.asList(productDto1, productDto2);
-    when(requisitionService.getApproveProduct(approverFacilityId, programId, false))
+    when(requisitionService.getApproveProduct(approverFacilityId, programId))
         .thenReturn(new ApproveProductsAggregator(list, programId));
-    when(requisitionService.getApproveProduct(userHomeFacilityId, programId, false))
+    when(requisitionService.getApproveProduct(userHomeFacilityId, programId))
         .thenReturn(createUserAggregator());
     when(siglusArchiveProductService.searchArchivedProductsByFacilityId(any()))
         .thenReturn(Collections.emptySet());

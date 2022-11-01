@@ -461,8 +461,7 @@ public class SiglusRequisitionServiceTest {
     when(authenticationHelper.getCurrentUser()).thenReturn(userDto);
     when(requisitionController.findProgram(programId, profiler)).thenReturn(programDto);
     when(requisitionController.findFacility(facilityId, profiler)).thenReturn(facilityDto);
-    when(requisitionService.getApproveProduct(any(), any(), anyBoolean()))
-        .thenReturn(createApproveProductsAggregator());
+    when(requisitionService.getApproveProduct(any(), any())).thenReturn(createApproveProductsAggregator());
     when(supervisoryNodeReferenceDataService.findOne(parentSupervisoryNodeId)).thenReturn(createSupervisoryNodeDto());
     when(draftRepository.findByRequisitionId(any(UUID.class))).thenReturn(null);
     when(operatePermissionService.canSubmit(any())).thenReturn(true);

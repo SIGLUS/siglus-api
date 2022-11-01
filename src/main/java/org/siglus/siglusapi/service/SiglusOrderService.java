@@ -1045,14 +1045,14 @@ public class SiglusOrderService {
     UUID approverFacilityId = orderDto.getCreatedBy().getHomeFacilityId();
     UUID userHomeFacilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
     // 10+ seconds cost when call following requisitionService.getApproveProduct
+    UUID programId = requisition.getProgramId();
     ApproveProductsAggregator approverProductAggregator = requisitionService.getApproveProduct(
-        approverFacilityId, requisition.getProgramId(), false);
+        approverFacilityId, programId);
     ApproveProductsAggregator userProductAggregator;
     if (approverFacilityId.equals(userHomeFacilityId)) {
       userProductAggregator = approverProductAggregator;
     } else {
-      userProductAggregator = requisitionService.getApproveProduct(userHomeFacilityId,
-          requisition.getProgramId(), false);
+      userProductAggregator = requisitionService.getApproveProduct(userHomeFacilityId, programId);
     }
     Set<UUID> approverOrderableIds = getOrderableIds(approverProductAggregator);
     Set<UUID> userOrderableIds;

@@ -136,8 +136,7 @@ public class RequisitionInternalApproveReplayerTest {
     event.setLineItemExtensions(new ArrayList<>());
     final ApproveProductsAggregator approveProductsAggregator =
         new ApproveProductsAggregator(new ArrayList<>(), programId);
-    when(requisitionService.getApproveProduct(facilityId,
-        programId, requisition.getReportOnly())).thenReturn(approveProductsAggregator);
+    when(requisitionService.getApproveProduct(facilityId, programId)).thenReturn(approveProductsAggregator);
     when(requisitionRepository.saveAndFlush(any())).thenReturn(requisition);
     // when
     requisitionInternalApproveReplayer.replay(event);
