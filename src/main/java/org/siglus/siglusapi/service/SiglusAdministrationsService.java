@@ -52,6 +52,7 @@ import org.apache.commons.io.input.BOMInputStream;
 import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.StringUtils;
 import org.openlmis.referencedata.domain.Orderable;
+import org.openlmis.referencedata.web.FacilityController;
 import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.domain.event.CalculatedStockOnHand;
 import org.openlmis.stockmanagement.exception.PermissionMessageException;
@@ -105,6 +106,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ObjectUtils;
+import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.web.multipart.MultipartFile;
 
 @Service
@@ -113,6 +115,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class SiglusAdministrationsService {
 
   private final AppInfoRepository appInfoRepository;
+  private final FacilityController facilityController;
   private final SiglusFacilityReferenceDataService siglusFacilityReferenceDataService;
   private final FacilityExtensionRepository facilityExtensionRepository;
   private final FacilityLocationsRepository facilityLocationsRepository;
@@ -197,7 +200,9 @@ public class SiglusAdministrationsService {
   public FacilitySearchResultDto updateFacility(UUID facilityId, SiglusFacilityDto siglusFacilityDto) {
     FacilityDto facilityDto = SiglusFacilityDto.from(siglusFacilityDto);
     saveReportTypes(siglusFacilityDto);
-    siglusFacilityReferenceDataService.saveFacility(facilityDto);
+    org.openlmis.referencedata.dto.FacilityDto saveFacility = FacilityDto.convert(facilityDto);
+    BeanPropertyBindingResult bindingResult = new BeanPropertyBindingResult(saveFacility, "facilityDto");
+    facilityController.saveFacility(saveFacility, facilityId, bindingResult);
     FacilityExtension facilityExtension = facilityExtensionRepository.findByFacilityId(facilityId);
     if (null == facilityExtension) {
       facilityExtension = FacilityExtension

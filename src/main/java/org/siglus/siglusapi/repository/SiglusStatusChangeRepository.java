@@ -34,4 +34,5 @@ public interface SiglusStatusChangeRepository
       + "where requisitionid = :requisitionId", nativeQuery = true)
   List<StatusChange> findByRequisitionId(@Param("requisitionId") UUID requisitionId);
 
+  void deleteByRequisitionId(UUID requisitionId);
 }

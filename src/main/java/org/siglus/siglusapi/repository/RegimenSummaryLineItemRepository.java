@@ -27,4 +27,6 @@ public interface RegimenSummaryLineItemRepository
   List<RegimenSummaryLineItem> findByRequisitionId(UUID requisitionId);
 
   List<RegimenSummaryLineItem> findByRequisitionIdIn(Set<UUID> requisitionIds);
+
+  void deleteByRequisitionId(UUID requisitionId);
 }

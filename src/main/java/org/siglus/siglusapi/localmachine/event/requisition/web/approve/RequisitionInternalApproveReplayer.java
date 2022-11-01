@@ -19,9 +19,9 @@ import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toMap;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -40,7 +40,6 @@ import org.openlmis.requisition.dto.BasicProcessingPeriodDto;
 import org.openlmis.requisition.dto.BasicProgramDto;
 import org.openlmis.requisition.dto.BasicRequisitionDto;
 import org.openlmis.requisition.dto.MinimalFacilityDto;
-import org.openlmis.requisition.repository.RequisitionRepository;
 import org.openlmis.requisition.service.RequisitionService;
 import org.openlmis.requisition.service.referencedata.ApproveProductsAggregator;
 import org.siglus.siglusapi.domain.AgeGroupLineItem;
@@ -62,6 +61,7 @@ import org.siglus.siglusapi.repository.RegimenLineItemRepository;
 import org.siglus.siglusapi.repository.RegimenSummaryLineItemRepository;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionLineItemExtensionRepository;
+import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.repository.TestConsumptionLineItemRepository;
 import org.siglus.siglusapi.repository.UsageInformationLineItemRepository;
 import org.springframework.beans.BeanUtils;
@@ -72,7 +72,8 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class RequisitionInternalApproveReplayer {
-  private final RequisitionRepository requisitionRepository;
+
+  private final SiglusRequisitionRepository requisitionRepository;
   private final RequisitionExtensionRepository requisitionExtensionRepository;
   private final RequisitionLineItemExtensionRepository requisitionLineItemExtensionRepository;
   private final AgeGroupLineItemRepository ageGroupLineItemRepository;
@@ -99,6 +100,8 @@ public class RequisitionInternalApproveReplayer {
   }
 
   public void doReplay(RequisitionInternalApprovedEvent event) {
+    // if this is a rejected requisition, then delete requisition before replaying
+    deleteIfExistRequisition(event);
     Requisition newRequisition = RequisitionBuilder.newRequisition(event.getRequisition().getFacilityId(),
         event.getRequisition().getProgramId(), event.getRequisition().getEmergency());
     newRequisition.setTemplate(event.getRequisition().getTemplate());
@@ -111,16 +114,7 @@ public class RequisitionInternalApproveReplayer {
     newRequisition.setModifiedDate(event.getRequisition().getModifiedDate());
     newRequisition.setVersion(event.getRequisition().getVersion());
     newRequisition.setSupervisoryNodeId(event.getRequisition().getSupervisoryNodeId());
-    newRequisition.setStatusChanges(new ArrayList<>());
-    buildStatusChanges(newRequisition, event.getRequisition().getStatusChanges().stream()
-        .filter(item -> item.getStatus() == RequisitionStatus.INITIATED).findFirst());
-    buildStatusChanges(newRequisition, event.getRequisition().getStatusChanges().stream()
-        .filter(item -> item.getStatus() == RequisitionStatus.SUBMITTED).findFirst());
-    buildStatusChanges(newRequisition, event.getRequisition().getStatusChanges().stream()
-        .filter(item -> item.getStatus() == RequisitionStatus.AUTHORIZED).findFirst());
-    Optional<StatusChange> internalApprovalStatusChange = event.getRequisition().getStatusChanges().stream()
-        .filter(item -> item.getStatus() == RequisitionStatus.IN_APPROVAL).findFirst();
-    buildStatusChanges(newRequisition, internalApprovalStatusChange);
+    saveStatusChanges(newRequisition, event.getRequisition().getStatusChanges());
 
     buildRequisitionApprovedProduct(newRequisition, event.getRequisition().getFacilityId(),
         event.getRequisition().getProgramId());
@@ -141,8 +135,41 @@ public class RequisitionInternalApproveReplayer {
     }
 
     buildRequisitionUsageSections(requisition, event);
-    notificationService.postInternalApproval(internalApprovalStatusChange.get().getAuthorId(),
+    UUID internalApprovalAuthorId = event.getRequisition().getStatusChanges().stream()
+        .sorted(Comparator.comparing(StatusChange::getCreatedDate).reversed())
+        .filter(item -> item.getStatus() == RequisitionStatus.IN_APPROVAL)
+        .findFirst().orElseThrow(IllegalStateException::new)
+        .getAuthorId();
+    notificationService.postInternalApproval(internalApprovalAuthorId,
         buildBaseRequisitionDto(requisition), requisition.getSupervisoryNodeId());
+  }
+
+  private void saveStatusChanges(Requisition requisition, List<StatusChange> statusChanges) {
+    requisition.setStatusChanges(new ArrayList<>());
+    statusChanges.forEach(statusChange -> {
+      buildStatusChanges(requisition, statusChange);
+    });
+  }
+
+  private void deleteIfExistRequisition(RequisitionInternalApprovedEvent event) {
+    // TODO: this formation is write everywhere ( 2022/11/1 by kourengang)
+    RequisitionExtension requisitionExtension = requisitionExtensionRepository.findByRequisitionNumber(
+        String.format("%s%02d", event.getRequisitionExtension().getRequisitionNumberPrefix(),
+            event.getRequisitionExtension().getRequisitionNumber()));
+    if (requisitionExtension != null) {
+      UUID requisitionId = requisitionExtension.getRequisitionId();
+      requisitionRepository.deleteById(requisitionId);
+      requisitionExtensionRepository.deleteByRequisitionId(requisitionId);
+      requisitionLineItemExtensionRepository.deleteByRequisitionId(requisitionId);
+      ageGroupLineItemRepository.deleteByRequisitionId(requisitionId);
+      consultationNumberLineItemRepository.deleteByRequisitionId(requisitionId);
+      usageInformationLineItemRepository.deleteByRequisitionId(requisitionId);
+      patientLineItemRepository.deleteByRequisitionId(requisitionId);
+      testConsumptionLineItemRepository.deleteByRequisitionId(requisitionId);
+      regimenLineItemRepository.deleteByRequisitionId(requisitionId);
+      regimenSummaryLineItemRepository.deleteByRequisitionId(requisitionId);
+      kitUsageRepository.deleteByRequisitionId(requisitionId);
+    }
   }
 
   private BasicRequisitionDto buildBaseRequisitionDto(Requisition requisition) {
@@ -163,8 +190,8 @@ public class RequisitionInternalApproveReplayer {
   }
 
   private void buildRequisitionApprovedProduct(Requisition requisition, UUID homeFacilityId, UUID programId) {
-    ApproveProductsAggregator approvedProductsContainKit = requisitionService
-        .getApproveProduct(homeFacilityId, programId, requisition.getReportOnly());
+    ApproveProductsAggregator approvedProductsContainKit = requisitionService.getApproveProduct(homeFacilityId,
+        programId);
     List<ApprovedProductDto> approvedProductDtos = approvedProductsContainKit.getFullSupplyProducts();
     ApproveProductsAggregator approvedProducts = new ApproveProductsAggregator(approvedProductDtos, programId);
     Set<ApprovedProductReference> availableProductIdentities = approvedProducts.getApprovedProductReferences();
@@ -309,19 +336,16 @@ public class RequisitionInternalApproveReplayer {
     requisitionExtensionRepository.save(requisitionExtension);
   }
 
-  private void buildStatusChanges(Requisition requisition, Optional<StatusChange> eventStatusChange) {
-    if (!eventStatusChange.isPresent()) {
-      return;
-    }
+  private void buildStatusChanges(Requisition requisition, StatusChange eventStatusChange) {
     StatusChange statusChange = new StatusChange();
-    statusChange.setStatus(eventStatusChange.get().getStatus());
+    statusChange.setStatus(eventStatusChange.getStatus());
     statusChange.setRequisition(requisition);
-    statusChange.setAuthorId(eventStatusChange.get().getAuthorId());
-    statusChange.setSupervisoryNodeId(eventStatusChange.get().getSupervisoryNodeId());
-    statusChange.setCreatedDate(eventStatusChange.get().getCreatedDate());
-    statusChange.setModifiedDate(eventStatusChange.get().getModifiedDate());
+    statusChange.setAuthorId(eventStatusChange.getAuthorId());
+    statusChange.setSupervisoryNodeId(eventStatusChange.getSupervisoryNodeId());
+    statusChange.setCreatedDate(eventStatusChange.getCreatedDate());
+    statusChange.setModifiedDate(eventStatusChange.getModifiedDate());
     requisition.getStatusChanges().add(statusChange);
-    StatusMessage oldStatusMessage = eventStatusChange.get().getStatusMessage();
+    StatusMessage oldStatusMessage = eventStatusChange.getStatusMessage();
     if (oldStatusMessage == null) {
       return;
     }

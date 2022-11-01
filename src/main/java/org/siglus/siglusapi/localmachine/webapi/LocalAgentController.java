@@ -26,6 +26,8 @@ import org.siglus.siglusapi.localmachine.agent.LocalActivationService;
 import org.siglus.siglusapi.localmachine.agent.LocalSyncResultsService;
 import org.siglus.siglusapi.localmachine.domain.AgentInfo;
 import org.siglus.siglusapi.localmachine.server.LocalExportImportService;
+import org.siglus.siglusapi.service.scheduledtask.CalculateCmmService;
+import org.siglus.siglusapi.web.request.CalculateCmmRequest;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.validation.annotation.Validated;
@@ -48,6 +50,7 @@ public class LocalAgentController {
   private final LocalExportImportService localExportImportService;
   private final Machine machine;
   private final LocalSyncResultsService syncErrorService;
+  private final CalculateCmmService calculateCmmService;
 
   @Value("${machine.version}")
   private String localMachineVersion;
@@ -85,5 +88,13 @@ public class LocalAgentController {
   @GetMapping("/syncResults")
   public LocalSyncResultsResponse getSyncResults() {
     return syncErrorService.getSyncResults();
+  }
+
+  /**
+   * TODO add api for qa test, after the test is finished, remove the api
+   */
+  @PostMapping("/cmms/calculate")
+  public void calculateCurrentPeriod(@RequestBody CalculateCmmRequest calculateCmmRequest) {
+    calculateCmmService.calculateLocalMachineCmms(calculateCmmRequest.getPeriodLocalDate(), machine.getFacilityId());
   }
 }

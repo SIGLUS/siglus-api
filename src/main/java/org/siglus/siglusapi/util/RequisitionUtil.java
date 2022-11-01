@@ -13,20 +13,27 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.repository;
+package org.siglus.siglusapi.util;
 
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
-import org.siglus.siglusapi.domain.UsageInformationLineItem;
-import org.springframework.data.jpa.repository.JpaRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.Map;
+import java.util.Objects;
+import lombok.SneakyThrows;
+import org.apache.commons.lang3.StringUtils;
+import org.siglus.siglusapi.dto.SimpleRequisitionDto;
 
-public interface UsageInformationLineItemRepository
-    extends JpaRepository<UsageInformationLineItem, UUID> {
+public class RequisitionUtil {
 
-  List<UsageInformationLineItem> findByRequisitionId(UUID requisitionId);
+  public static Map<String, Object> getRequisitionExtraData(SimpleRequisitionDto simpleRequisitionDto) {
+    if (Objects.isNull(simpleRequisitionDto) || StringUtils.isBlank(simpleRequisitionDto.getExtraData())) {
+      return null;
+    }
+    return jsonStringToMap(simpleRequisitionDto.getExtraData());
+  }
 
-  List<UsageInformationLineItem> findByRequisitionIdIn(Set<UUID> requisitionIds);
+  @SneakyThrows
+  private static Map<String, Object> jsonStringToMap(String jsonString) {
+    return new ObjectMapper().readValue(jsonString, Map.class);
+  }
 
-  void deleteByRequisitionId(UUID requisitionId);
 }

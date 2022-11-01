@@ -16,6 +16,7 @@
 package org.siglus.siglusapi.service;
 
 import static org.siglus.siglusapi.constant.ProgramConstants.MALARIA_PROGRAM_CODE;
+import static org.siglus.siglusapi.constant.ProgramConstants.MMC_PROGRAM_CODE;
 import static org.siglus.siglusapi.constant.ProgramConstants.MTB_PROGRAM_CODE;
 import static org.siglus.siglusapi.constant.ProgramConstants.RAPIDTEST_PROGRAM_CODE;
 import static org.siglus.siglusapi.constant.ProgramConstants.TARV_PROGRAM_CODE;
@@ -33,6 +34,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.openlmis.referencedata.domain.ProcessingPeriod;
 import org.siglus.siglusapi.domain.RequisitionExtension;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
+import org.siglus.siglusapi.dto.enums.RequisitionPrefixEnum;
 import org.siglus.siglusapi.repository.ProcessingPeriodRepository;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
@@ -68,19 +70,22 @@ public class SiglusRequisitionExtensionService {
     String prefix;
     switch (programCode) {
       case VIA_PROGRAM_CODE:
-        prefix = emergency ? "REM" : "RNO";
+        prefix = emergency ? RequisitionPrefixEnum.REM.toString() : RequisitionPrefixEnum.RNO.toString();
         break;
       case MTB_PROGRAM_CODE:
-        prefix = "MTB";
+        prefix = RequisitionPrefixEnum.MTB.toString();
         break;
       case RAPIDTEST_PROGRAM_CODE:
-        prefix = "MIT";
+        prefix = RequisitionPrefixEnum.MIT.toString();
         break;
       case TARV_PROGRAM_CODE:
-        prefix = "MIA";
+        prefix = RequisitionPrefixEnum.MIA.toString();
         break;
       case MALARIA_PROGRAM_CODE:
-        prefix = "ALS";
+        prefix = RequisitionPrefixEnum.ALS.toString();
+        break;
+      case MMC_PROGRAM_CODE:
+        prefix = RequisitionPrefixEnum.MMC.toString();
         break;
       default:
         prefix = "";

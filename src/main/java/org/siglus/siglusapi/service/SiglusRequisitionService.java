@@ -29,6 +29,7 @@ import static org.openlmis.requisition.domain.requisition.RequisitionStatus.SUBM
 import static org.openlmis.requisition.i18n.MessageKeys.ERROR_ID_MISMATCH;
 import static org.siglus.common.constant.KitConstants.APE_KITS;
 import static org.siglus.common.constant.KitConstants.US_KITS;
+import static org.siglus.siglusapi.util.RequisitionUtil.getRequisitionExtraData;
 
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -73,6 +74,7 @@ import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.dto.RequisitionGroupDto;
 import org.openlmis.requisition.dto.RequisitionLineItemV2Dto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
+import org.openlmis.requisition.dto.RequisitionWithSupplyingDepotsDto;
 import org.openlmis.requisition.dto.RightDto;
 import org.openlmis.requisition.dto.RoleAssignmentDto;
 import org.openlmis.requisition.dto.RoleDto;
@@ -120,12 +122,14 @@ import org.siglus.siglusapi.domain.UsageInformationLineItemDraft;
 import org.siglus.siglusapi.dto.OrderableExpirationDateDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionLineItemDto;
+import org.siglus.siglusapi.dto.SimpleRequisitionDto;
 import org.siglus.siglusapi.repository.FacilityExtensionRepository;
 import org.siglus.siglusapi.repository.ProcessingPeriodRepository;
 import org.siglus.siglusapi.repository.RequisitionDraftRepository;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionMonthlyNotSubmitReportRepository;
+import org.siglus.siglusapi.repository.RequisitionNativeSqlRepository;
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
 import org.siglus.siglusapi.service.fc.FcCmmCpService;
@@ -181,6 +185,7 @@ public class SiglusRequisitionService {
   private final StockManagementRepository stockManagementRepository;
   private final SiglusGeneratedNumberService siglusGeneratedNumberService;
   private final ProcessingPeriodRepository processingPeriodRepository;
+  private final RequisitionNativeSqlRepository requisitionNativeSqlRepository;
 
 
   @Value("${service.url}")
@@ -318,6 +323,36 @@ public class SiglusRequisitionService {
     }
     requisitionExtensionRepository.save(requisitionExtension);
     return basicRequisitionDto;
+  }
+
+  public Page<RequisitionWithSupplyingDepotsDto> getRequisitionsForConvertToOrder(UUID programId,
+      UUID facilityId, Pageable pageable) {
+    Page<RequisitionWithSupplyingDepotsDto> page = requisitionController.listForConvertToOrder(programId, facilityId,
+        pageable);
+    if (!page.hasContent()) {
+      return page;
+    }
+
+    List<RequisitionWithSupplyingDepotsDto> dtos = page.getContent();
+    Map<UUID, SimpleRequisitionDto> requisitionIdToSimpleRequisitionDto = getRequisitionIdToSimpleRequisitionDto(
+        getRequisitionIds(dtos));
+    dtos.forEach(dto -> {
+      BasicRequisitionDto requisition = dto.getRequisition();
+      requisition.setExtraData(getRequisitionExtraData(requisitionIdToSimpleRequisitionDto.get(requisition.getId())));
+    });
+    return page;
+  }
+
+  public Map<UUID, SimpleRequisitionDto> getRequisitionIdToSimpleRequisitionDto(Set<UUID> requisitionIds) {
+    return requisitionNativeSqlRepository
+        .findSimpleRequisitionDto(requisitionIds).stream()
+        .collect(Collectors.toMap(SimpleRequisitionDto::getId, e -> e));
+  }
+
+  private Set<UUID> getRequisitionIds(List<RequisitionWithSupplyingDepotsDto> dtos) {
+    Set<UUID> requisitionIds = Sets.newHashSet();
+    dtos.forEach(dto -> requisitionIds.add(dto.getRequisition().getId()));
+    return requisitionIds;
   }
 
   private void verifyIsAndroidFacilityRequisition(UUID requisitionId) {
@@ -945,8 +980,8 @@ public class SiglusRequisitionService {
       siglusRequisitionDto.setIsExternalApproval(!checkIsInternal(siglusRequisitionDto.getFacility().getId(), userDto));
       Set<VersionObjectReferenceDto> availableProducts = siglusRequisitionDto.getAvailableProducts();
       Set<UUID> approverMainProgramAndAdditionalProgramApprovedProducts = Optional.ofNullable(
-              requisitionService.getApproveProduct(userDto.getHomeFacilityId(), requisition.getProgramId(),
-                  siglusRequisitionDto.getReportOnly()).getApprovedProductReferences())
+              requisitionService.getApproveProduct(userDto.getHomeFacilityId(), requisition.getProgramId())
+                  .getApprovedProductReferences())
           .orElse(Collections.emptySet())
           .stream()
           .map(ApprovedProductReference::getOrderable)

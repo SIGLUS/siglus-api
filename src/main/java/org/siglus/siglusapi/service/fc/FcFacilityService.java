@@ -33,6 +33,7 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
+import org.openlmis.referencedata.web.FacilityController;
 import org.openlmis.requisition.dto.BasicProgramDto;
 import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
@@ -55,12 +56,14 @@ import org.siglus.siglusapi.service.client.SiglusFacilityTypeReferenceDataServic
 import org.siglus.siglusapi.service.client.SiglusGeographicZoneReferenceDataService;
 import org.siglus.siglusapi.util.FcUtil;
 import org.springframework.stereotype.Service;
+import org.springframework.validation.BeanPropertyBindingResult;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
 public class FcFacilityService implements ProcessDataService {
 
+  private final FacilityController facilityController;
   private final SiglusFacilityReferenceDataService facilityService;
   private final SiglusGeographicZoneReferenceDataService geographicZoneService;
   private final ProgramReferenceDataService programReferenceDataService;
@@ -321,7 +324,9 @@ public class FcFacilityService implements ProcessDataService {
       existed.setType(codeToFacilityType.get(current.getClientTypeCode()));
       existed.setGeographicZone(codeToGeographicZoneDtoMap.get(current.getDistrictCode()));
       existed.setSupportedPrograms(supportedProgramDtos);
-      facilityService.saveFacility(existed);
+      org.openlmis.referencedata.dto.FacilityDto saveFacility = FacilityDto.convert(existed);
+      BeanPropertyBindingResult bindingResult = new BeanPropertyBindingResult(saveFacility, "facilityDto");
+      facilityController.saveFacility(saveFacility, existed.getId(), bindingResult);
     });
   }
 

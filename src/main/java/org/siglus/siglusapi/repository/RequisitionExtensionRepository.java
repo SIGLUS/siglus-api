@@ -38,4 +38,6 @@ public interface RequisitionExtensionRepository extends JpaRepository<Requisitio
       + "WHERE e.facilityId = :facilityId and e.actualstartdate > :startDate", nativeQuery = true)
   List<RequisitionExtension> searchRequisitionIdByFacilityAndDate(@Param("facilityId") UUID facilityId,
       @Param("startDate") String startDate);
+
+  void deleteByRequisitionId(UUID requisitionId);
 }

@@ -13,20 +13,14 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.repository;
+package org.siglus.siglusapi.dto.enums;
 
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
-import org.siglus.siglusapi.domain.UsageInformationLineItem;
-import org.springframework.data.jpa.repository.JpaRepository;
-
-public interface UsageInformationLineItemRepository
-    extends JpaRepository<UsageInformationLineItem, UUID> {
-
-  List<UsageInformationLineItem> findByRequisitionId(UUID requisitionId);
-
-  List<UsageInformationLineItem> findByRequisitionIdIn(Set<UUID> requisitionIds);
-
-  void deleteByRequisitionId(UUID requisitionId);
+public enum RequisitionPrefixEnum {
+  RNO,
+  REM,
+  MTB,
+  MIT,
+  MIA,
+  ALS,
+  MMC;
 }

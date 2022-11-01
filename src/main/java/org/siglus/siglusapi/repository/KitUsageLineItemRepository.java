@@ -24,4 +24,6 @@ public interface KitUsageLineItemRepository
     extends JpaRepository<KitUsageLineItem, UUID> {
 
   List<KitUsageLineItem> findByRequisitionId(UUID requisitionId);
+
+  void deleteByRequisitionId(UUID requisitionId);
 }

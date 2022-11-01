@@ -24,6 +24,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.validator.constraints.NotBlank;
+import org.siglus.siglusapi.constant.android.MmtbRequisitionConstants.MmtbAgeGroupSection;
 import org.siglus.siglusapi.domain.AgeGroupLineItem;
 
 @Data
@@ -45,8 +46,8 @@ public class AgeGroupLineItemRequest {
   public static List<AgeGroupLineItemRequest> from(List<AgeGroupLineItem> ageGroupLineItems) {
     return ageGroupLineItems.stream()
         .map(ageGroupLineItem -> AgeGroupLineItemRequest.builder()
-            .service(ageGroupLineItem.getService())
-            .group(ageGroupLineItem.getGroup())
+            .service(MmtbAgeGroupSection.getServiceKeyByValue(ageGroupLineItem.getService()))
+            .group(MmtbAgeGroupSection.getGroupKeyByValue(ageGroupLineItem.getGroup()))
             .value(ageGroupLineItem.getValue())
             .build())
         .collect(Collectors.toList());

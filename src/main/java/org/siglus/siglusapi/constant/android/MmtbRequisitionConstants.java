@@ -213,12 +213,28 @@ public class MmtbRequisitionConstants {
         PAIR_TABLE_2_COLUMN_1, PAIR_TABLE_2_COLUMN_2, PAIR_TABLE_2_COLUMN_3
     );
 
+    public static String getGroupKeyByValue(String groupValue) {
+      return MMTB_AGE_GROUP_TABLE_1_COLUMNS.stream()
+          .filter(pair -> pair.getSecond().equals(groupValue))
+          .findFirst()
+          .orElseThrow(EntityNotFoundException::new)
+          .getFirst();
+    }
+
     public static String getGroupValueByKey(String groupKey) {
       return MMTB_AGE_GROUP_TABLE_1_COLUMNS.stream()
           .filter(pair -> pair.getFirst().equals(groupKey))
           .findFirst()
           .orElseThrow(EntityNotFoundException::new)
           .getSecond();
+    }
+
+    public static String getServiceKeyByValue(String serviceValue) {
+      return MMTB_AGE_GROUP_TABLE_2_COLUMNS.stream()
+          .filter(pair -> pair.getSecond().equals(serviceValue))
+          .findFirst()
+          .orElseThrow(EntityNotFoundException::new)
+          .getFirst();
     }
 
     public static String getServiceValueByKey(String groupKey) {

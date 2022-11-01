@@ -28,6 +28,10 @@ public class MovementSql {
       + "left join referencedata.users u on u.id = ra.userid "
       + "where u.homefacilityid = '@@' ";
 
+  public static final String LOTS = "referencedata.lots";
+
+  public static final String LOTS_QUERY = "select * from referencedata.lots ";
+
   // 2022/10/13 by yyd, events本属于localmachine的events数据
   public static final String LOCALMACHINE_EVENTS = "localmachine.events";
 
@@ -212,6 +216,7 @@ public class MovementSql {
   public static Map<String, String> getMovementSql() {
     Map<String, String> movementSql = new HashMap<>();
     movementSql.put(RIGHT_ASSIGNMENTS, RIGHT_ASSIGNMENTS_QUERY);
+    movementSql.put(LOTS, LOTS_QUERY);
     movementSql.put(LOCALMACHINE_EVENTS, LOCALMACHINE_EVENTS_QUERY);
 
     movementSql.put(STOCK_EVENTS, STOCK_EVENTS_QUERY);

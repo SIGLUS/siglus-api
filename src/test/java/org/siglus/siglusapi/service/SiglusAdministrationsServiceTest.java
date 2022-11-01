@@ -19,6 +19,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -51,6 +52,7 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.referencedata.domain.Code;
 import org.openlmis.referencedata.domain.Orderable;
+import org.openlmis.referencedata.web.FacilityController;
 import org.openlmis.requisition.utils.Pagination;
 import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.domain.event.CalculatedStockOnHand;
@@ -95,6 +97,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.web.multipart.MultipartFile;
 
 @SuppressWarnings("PMD.TooManyMethods")
@@ -105,6 +108,8 @@ public class SiglusAdministrationsServiceTest {
   private SiglusAdministrationsService siglusAdministrationsService;
   @Mock
   private AppInfoRepository appInfoRepository;
+  @Mock
+  private FacilityController facilityController;
   @Mock
   private SiglusFacilityReferenceDataService siglusFacilityReferenceDataService;
   @Mock
@@ -536,6 +541,9 @@ public class SiglusAdministrationsServiceTest {
     // then
     verify(stockCardLocationMovementLineItemRepository, times(0))
         .save(Lists.newArrayList());
+    verify(facilityController, times(1))
+        .saveFacility(any(org.openlmis.referencedata.dto.FacilityDto.class), eq(facilityId),
+        any(BeanPropertyBindingResult.class));
   }
 
   @Test

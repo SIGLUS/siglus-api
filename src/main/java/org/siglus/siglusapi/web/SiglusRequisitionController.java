@@ -191,7 +191,7 @@ public class SiglusRequisitionController {
       @RequestParam(value = "program", required = false) UUID programId,
       @RequestParam(value = "facility", required = false) UUID facilityId,
       Pageable pageable) {
-    return requisitionController.listForConvertToOrder(programId, facilityId, pageable);
+    return siglusRequisitionService.getRequisitionsForConvertToOrder(programId, facilityId, pageable);
   }
 
   @GetMapping("/facilitiesForApproval")
