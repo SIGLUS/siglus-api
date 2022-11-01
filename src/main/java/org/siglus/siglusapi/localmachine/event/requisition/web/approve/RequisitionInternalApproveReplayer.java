@@ -153,7 +153,7 @@ public class RequisitionInternalApproveReplayer {
 
   private void deleteIfExistRequisition(RequisitionInternalApprovedEvent event) {
     RequisitionExtension requisitionExtension = requisitionExtensionRepository.findByRequisitionNumber(
-       event.getRequisitionExtension().getRealRequisitionNumber());
+        event.getRequisitionExtension().getRealRequisitionNumber());
     if (requisitionExtension != null) {
       UUID requisitionId = requisitionExtension.getRequisitionId();
       requisitionRepository.deleteById(requisitionId);
