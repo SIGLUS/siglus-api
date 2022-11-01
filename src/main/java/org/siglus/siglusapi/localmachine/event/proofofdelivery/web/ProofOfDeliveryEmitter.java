@@ -84,7 +84,7 @@ public class ProofOfDeliveryEmitter {
     List<OrderExternal> orderExternal = orderExternalRepository.findByIdIn(Collections.singleton(externalId));
     UUID requisitionId = orderExternal.isEmpty() ? externalId : orderExternal.get(0).getRequisitionId();
     RequisitionExtension requisitionExtension = requisitionExtensionRepository.findByRequisitionId(requisitionId);
-    return requisitionExtension.getRequisitionNumberPrefix() + requisitionExtension.getRequisitionNumber();
+    return requisitionExtension.getRealRequisitionNumber();
   }
 
 }

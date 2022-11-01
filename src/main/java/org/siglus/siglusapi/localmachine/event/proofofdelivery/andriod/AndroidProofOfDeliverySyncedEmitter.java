@@ -59,6 +59,6 @@ public class AndroidProofOfDeliverySyncedEmitter {
     RequisitionExtension requisitionExtension = requisitionExtensionRepository.findByRequisitionId(requisitionId);
     log.info("android pod getGroupId : {}", requisitionExtension.getRequisitionNumberPrefix()
         + requisitionExtension.getRequisitionNumber());
-    return requisitionExtension.getRequisitionNumberPrefix() + requisitionExtension.getRequisitionNumber();
+    return requisitionExtension.getRealRequisitionNumber();
   }
 }
