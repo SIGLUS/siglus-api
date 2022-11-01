@@ -51,6 +51,7 @@ import org.siglus.siglusapi.repository.RegimenSummaryLineItemRepository;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionGroupMembersRepository;
 import org.siglus.siglusapi.repository.RequisitionLineItemExtensionRepository;
+import org.siglus.siglusapi.repository.SiglusStatusChangeRepository;
 import org.siglus.siglusapi.repository.TestConsumptionLineItemRepository;
 import org.siglus.siglusapi.repository.UsageInformationLineItemRepository;
 import org.siglus.siglusapi.service.SiglusNotificationService;
@@ -80,6 +81,8 @@ public class RequisitionInternalApproveReplayerTest {
   private RegimenLineItemRepository regimenLineItemRepository;
   @Mock
   private RegimenSummaryLineItemRepository regimenSummaryLineItemRepository;
+  @Mock
+  private SiglusStatusChangeRepository statusChangeRepository;
   @Mock
   private KitUsageLineItemRepository kitUsageRepository;
   @Mock
