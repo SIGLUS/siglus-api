@@ -568,13 +568,13 @@ public class SiglusOrderServiceTest {
 
     org.openlmis.fulfillment.service.referencedata.ProcessingPeriodDto processingPeriodDto =
         new org.openlmis.fulfillment.service.referencedata.ProcessingPeriodDto();
-    processingPeriodDto.setEndDate(processPeriodEndDate);
+    processingPeriodDto.setEndDate(LocalDate.now().minusMonths(3));
     processingPeriodDto.setId(periodId1);
     basicOrderDto.setProcessingPeriod(processingPeriodDto);
 
     ProcessingPeriodExtension processingPeriodExtension = new ProcessingPeriodExtension();
-    processingPeriodExtension.setSubmitStartDate(LocalDate.of(2022, 9, LocalDate.now().getDayOfMonth() - 5));
-    processingPeriodExtension.setSubmitEndDate(LocalDate.of(2022, 9, LocalDate.now().getDayOfMonth() - 2));
+    processingPeriodExtension.setSubmitStartDate(LocalDate.now().minusMonths(1).minusDays(5));
+    processingPeriodExtension.setSubmitEndDate(LocalDate.now().minusMonths(1).minusDays(2));
 
     when(processingPeriodExtensionRepository.findByProcessingPeriodId(periodId1)).thenReturn(processingPeriodExtension);
     when(orderService.searchOrdersForFulfillPage(any(), any())).thenReturn(page);
