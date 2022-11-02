@@ -49,16 +49,12 @@ import org.openlmis.fulfillment.web.shipment.ShipmentLineItemDto;
 import org.openlmis.fulfillment.web.util.OrderDto;
 import org.openlmis.fulfillment.web.util.OrderLineItemDto;
 import org.openlmis.fulfillment.web.util.OrderObjectReferenceDto;
-import org.openlmis.stockmanagement.domain.card.StockCard;
-import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
-import org.openlmis.stockmanagement.repository.StockCardLineItemRepository;
-import org.openlmis.stockmanagement.repository.StockCardRepository;
 import org.siglus.common.domain.ProcessingPeriodExtension;
 import org.siglus.common.repository.ProcessingPeriodExtensionRepository;
+import org.siglus.siglusapi.constant.FieldConstants;
 import org.siglus.siglusapi.domain.OrderLineItemExtension;
 import org.siglus.siglusapi.domain.PodExtension;
 import org.siglus.siglusapi.domain.ShipmentLineItemsExtension;
-import org.siglus.siglusapi.domain.StockCardLineItemExtension;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.NotFoundException;
@@ -67,8 +63,6 @@ import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.PodExtensionRepository;
 import org.siglus.siglusapi.repository.ShipmentLineItemsExtensionRepository;
 import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
-import org.siglus.siglusapi.repository.StockCardLineItemExtensionRepository;
-import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.web.request.ShipmentExtensionRequest;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
@@ -92,25 +86,16 @@ public class SiglusShipmentService {
 
   private final ShipmentLineItemsExtensionRepository shipmentLineItemsExtensionRepository;
 
-  private final CalculatedStocksOnHandByLocationService calculatedStocksOnHandByLocationService;
-
-  private final SiglusAuthenticationHelper authenticationHelper;
-
   private final SiglusProofOfDeliveryRepository siglusProofOfDeliveryRepository;
 
   private final PodExtensionRepository podExtensionRepository;
-
-  private final StockCardLineItemRepository stockCardLineItemRepository;
-
-  private final StockCardRepository stockCardRepository;
-
-  private final StockCardLineItemExtensionRepository stockCardLineItemExtensionRepository;
 
   private final ProcessingPeriodExtensionRepository processingPeriodExtensionRepository;
 
   @Transactional
   public ShipmentDto createOrderAndShipment(boolean isSubOrder, ShipmentExtensionRequest shipmentExtensionRequest) {
-    ShipmentDto shipmentDto = createOrderAndConfirmShipment(isSubOrder, shipmentExtensionRequest.getShipment());
+    ShipmentDto shipmentDto = createOrderAndConfirmShipment(isSubOrder,
+        shipmentExtensionRequest.getShipment(), false);
     savePodExtension(shipmentDto.getId(), shipmentExtensionRequest);
     return shipmentDto;
   }
@@ -140,16 +125,12 @@ public class SiglusShipmentService {
       String uniqueKey = buildForUniqueKey(shipmentLineItemDto);
       uniqueKeyMap.put(uniqueKey, shipmentLineItemDto);
     });
-    mergeShipmentLineItems(shipmentExtensionRequest.getShipment());
     ShipmentDto confirmedShipmentDto = createOrderAndConfirmShipment(isSubOrder,
-        shipmentExtensionRequest.getShipment());
+        shipmentExtensionRequest.getShipment(), true);
     fulfillLocationInfo(uniqueKeyMap, confirmedShipmentDto);
     List<ShipmentLineItemDto> shipmentLineItems = new ArrayList<>(uniqueKeyMap.values());
     saveToShipmentLineItemExtension(shipmentLineItems);
-    UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
-    calculatedStocksOnHandByLocationService.calculateStockOnHandByLocationForShipment(shipmentLineItems, facilityId);
     savePodExtension(confirmedShipmentDto.getId(), shipmentExtensionRequest);
-    saveShipmentLineItemsWithLocation(shipmentLineItems, facilityId);
     return confirmedShipmentDto;
   }
 
@@ -167,23 +148,25 @@ public class SiglusShipmentService {
     if (null == shipmentLineItemDto.getLot()) {
       return shipmentLineItemDto.getOrderable().getId().toString();
     }
-    return shipmentLineItemDto.getLot().getId() + "&" + shipmentLineItemDto.getOrderable().getId();
+    return shipmentLineItemDto.getLot().getId() + FieldConstants.SEPARATOR + shipmentLineItemDto.getOrderable().getId()
+        + FieldConstants.SEPARATOR + shipmentLineItemDto.getLocation().getLocationCode();
   }
 
   @Transactional
   public ShipmentDto createSubOrderAndShipment(ShipmentDto shipmentDto) {
     createSubOrder(shipmentDto, false);
-    return createShipment(shipmentDto);
+    return createShipment(shipmentDto, false);
   }
 
-  ShipmentDto createSubOrderAndShipment(boolean isSubOrder, ShipmentDto shipmentDto) {
+  ShipmentDto createSubOrderAndShipment(boolean isSubOrder, ShipmentDto shipmentDto, boolean isByLocation) {
     if (isSubOrder) {
       createSubOrder(shipmentDto, true);
     }
-    return createShipment(shipmentDto);
+    return createShipment(shipmentDto, isByLocation);
   }
 
-  private ShipmentDto createOrderAndConfirmShipment(boolean isSubOrder, ShipmentDto shipmentDto) {
+  private ShipmentDto createOrderAndConfirmShipment(boolean isSubOrder, ShipmentDto shipmentDto,
+      boolean isByLocation) {
     OrderDto orderDto = orderController.getOrder(shipmentDto.getOrder().getId(), null);
     validateOrderStatus(orderDto);
     if (siglusOrderService.needCloseOrder(orderDto)) {
@@ -193,7 +176,7 @@ public class SiglusShipmentService {
       isSubOrder = false;
     }
     updateOrderLineItems(shipmentDto.getOrder());
-    return createSubOrderAndShipment(isSubOrder, shipmentDto);
+    return createSubOrderAndShipment(isSubOrder, shipmentDto, isByLocation);
   }
 
   private void validateOrderStatus(OrderDto orderDto) {
@@ -217,12 +200,12 @@ public class SiglusShipmentService {
     }
   }
 
-  private ShipmentDto createShipment(ShipmentDto shipmentDto) {
+  private ShipmentDto createShipment(ShipmentDto shipmentDto, boolean isByLocation) {
     Set<UUID> skippedOrderLineItemIds = getSkippedOrderLineItemIds(shipmentDto);
     removeSkippedOrderLineItemsAndExtensions(skippedOrderLineItemIds, shipmentDto.getOrder().getId());
     Set<UUID> skippedOrderableIds = getSkippedOrderableIds(shipmentDto);
     shipmentDto.lineItems().removeIf(lineItem -> skippedOrderableIds.contains(lineItem.getOrderable().getId()));
-    return shipmentController.createShipment(shipmentDto);
+    return shipmentController.createShipment(shipmentDto, isByLocation);
   }
 
   private Set<UUID> getSkippedOrderableIds(ShipmentDto shipmentDto) {
@@ -306,52 +289,6 @@ public class SiglusShipmentService {
 
     log.info("update orderId: {}, orderLineItem: {}", order.getId(), original);
     orderRepository.save(order);
-  }
-
-  private void saveShipmentLineItemsWithLocation(List<ShipmentLineItemDto> shipmentLineItems, UUID facilityId) {
-    Map<UUID, UUID> shipmentLineItemIdToStockCardId = new HashMap<>();
-    Map<UUID, List<ShipmentLineItemDto>> shipmentLineItemIdToDtos = new HashMap<>();
-    shipmentLineItems.forEach(shipmentLineItem -> {
-      UUID orderableId = shipmentLineItem.getOrderable().getId();
-      UUID lotId = shipmentLineItem.getLotId();
-      StockCard stockCard = stockCardRepository.findByFacilityIdAndOrderableIdAndLotId(
-          facilityId, orderableId, lotId);
-      shipmentLineItemIdToStockCardId.put(shipmentLineItem.getId(), stockCard.getId());
-      if (shipmentLineItemIdToDtos.containsKey(shipmentLineItem.getId())) {
-        List<ShipmentLineItemDto> shipmentLineItemDtos = shipmentLineItemIdToDtos.get(shipmentLineItem.getId());
-        shipmentLineItemDtos.add(shipmentLineItem);
-        shipmentLineItemIdToDtos.put(shipmentLineItem.getId(), shipmentLineItemDtos);
-      } else {
-        shipmentLineItemIdToDtos.put(shipmentLineItem.getId(), Lists.newArrayList(shipmentLineItem));
-      }
-    });
-
-    List<StockCardLineItem> stockCardLineItems = stockCardLineItemRepository
-        .findLatestByStockCardIds(shipmentLineItemIdToStockCardId.values());
-    Map<UUID, StockCardLineItem> shipmentLineItemIdToStockCardLineItem = new HashMap<>();
-    shipmentLineItemIdToStockCardId.forEach((shipmentLineItemId, stockCardId) ->
-        stockCardLineItems.stream()
-            .filter(m -> m.getStockCard().getId().equals(stockCardId))
-            .findFirst()
-            .ifPresent(
-                stockCardLineItem -> shipmentLineItemIdToStockCardLineItem.put(shipmentLineItemId, stockCardLineItem)));
-
-    List<StockCardLineItemExtension> stockCardLineItemExtensions = Lists.newArrayList();
-    shipmentLineItemIdToDtos.forEach((shipmentLineItemId, shipmentLineItemDtoList) -> {
-      if (shipmentLineItemIdToStockCardLineItem.containsKey(shipmentLineItemId)) {
-        shipmentLineItemDtoList.forEach(shipmentLineItemDto -> {
-          StockCardLineItemExtension stockCardLineItemExtension = StockCardLineItemExtension
-              .builder()
-              .stockCardLineItemId(shipmentLineItemIdToStockCardLineItem.get(shipmentLineItemId).getId())
-              .area(shipmentLineItemDto.getLocation().getArea())
-              .locationCode(shipmentLineItemDto.getLocation().getLocationCode())
-              .build();
-          stockCardLineItemExtensions.add(stockCardLineItemExtension);
-        });
-      }
-    });
-    log.info("save to stock card line item by location; size: {}", stockCardLineItemExtensions.size());
-    stockCardLineItemExtensionRepository.save(stockCardLineItemExtensions);
   }
 
   private void savePodExtension(UUID shipmentId, ShipmentExtensionRequest shipmentExtensionRequest) {

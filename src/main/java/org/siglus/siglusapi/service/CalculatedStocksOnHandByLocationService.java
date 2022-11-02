@@ -27,7 +27,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -41,7 +40,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.javers.common.collections.Sets;
-import org.openlmis.fulfillment.web.shipment.ShipmentLineItemDto;
 import org.openlmis.stockmanagement.domain.BaseEntity;
 import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
@@ -128,42 +126,6 @@ public class CalculatedStocksOnHandByLocationService {
       toSaveList.add(soh);
     });
 
-    saveAll(toSaveList, false);
-  }
-
-  public void calculateStockOnHandByLocationForShipment(List<ShipmentLineItemDto> shipmentLineItems, UUID facilityId) {
-    Map<UUID, UUID> shipmentLineItemIdToStockCardIdMap = new HashMap<>();
-    shipmentLineItems.forEach(shipmentLineItem -> {
-      StockCard stockCard = stockCardRepository.findByFacilityIdAndOrderableIdAndLotId(
-          facilityId, shipmentLineItem.getOrderable().getId(), shipmentLineItem.getLotId());
-      shipmentLineItemIdToStockCardIdMap.put(shipmentLineItem.getId(), stockCard.getId());
-    });
-    Map<String, Integer> stockCardIdAndLocationCodeToPreviousStockOnHandMap =
-        this.getPreviousStockOnHandMapTillNow(
-            new HashSet<>(shipmentLineItemIdToStockCardIdMap.values()), LocalDate.now());
-    List<CalculatedStockOnHandByLocation> toSaveList = new ArrayList<>();
-    shipmentLineItems.forEach(shipmentLineItem -> {
-      UUID stockCardId = shipmentLineItemIdToStockCardIdMap.get(shipmentLineItem.getId());
-      String locationCode = shipmentLineItem.getLocation().getLocationCode();
-      Integer previousSoh = stockCardIdAndLocationCodeToPreviousStockOnHandMap
-          .get(stockCardId + SEPARATOR + locationCode);
-      previousSoh = previousSoh == null ? 0 : previousSoh;
-
-      log.info("delete on calculatedStockOnHandByLocation with stockCardId:{}", stockCardId);
-      calculatedStockOnHandByLocationRepository.deleteAllByStockCardIdAndOccurredDateAndLocationCodes(
-          stockCardId, new Date(), locationCode);
-      previousSoh = previousSoh - shipmentLineItem.getQuantityShipped().intValue();
-      String area = shipmentLineItem.getLocation().getArea();
-      CalculatedStockOnHandByLocation sohByLocation = CalculatedStockOnHandByLocation
-          .builder()
-          .stockCardId(stockCardId)
-          .occurredDate(new Date())
-          .stockOnHand(previousSoh)
-          .locationCode(locationCode)
-          .area(area)
-          .build();
-      toSaveList.add(sohByLocation);
-    });
     saveAll(toSaveList, false);
   }
 
