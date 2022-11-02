@@ -52,8 +52,8 @@ public class EventRecord {
   private UUID receiverId;
   @Column(name = "groupid")
   private String groupId;
-  @Column(name = "groupsequencenumber")
-  private long groupSequenceNumber;
+  @Column(name = "parentid")
+  private UUID parentId;
   @Column(name = "payload", table = "event_payload")
   private byte[] payload;
   @Column(name = "archived")
@@ -77,7 +77,7 @@ public class EventRecord {
             .senderId(event.getSenderId())
             .receiverId(event.getReceiverId())
             .groupId(event.getGroupId())
-            .groupSequenceNumber(event.getGroupSequenceNumber())
+            .parentId(event.getParentId())
             .payload(payload)
             .receiverSynced(event.isReceiverSynced())
             .onlineWebSynced(event.isOnlineWebSynced())
@@ -97,7 +97,7 @@ public class EventRecord {
         .senderId(senderId)
         .receiverId(receiverId)
         .groupId(groupId)
-        .groupSequenceNumber(groupSequenceNumber)
+        .parentId(parentId)
         .payload(payloadMapper.apply(payload))
         .onlineWebSynced(onlineWebSynced)
         .receiverSynced(receiverSynced)

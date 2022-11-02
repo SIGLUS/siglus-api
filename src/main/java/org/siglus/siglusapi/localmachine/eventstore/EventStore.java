@@ -16,7 +16,6 @@
 package org.siglus.siglusapi.localmachine.eventstore;
 
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
@@ -45,7 +44,6 @@ public class EventStore {
 
   static final int MASTER_DATA_EVENT_BATCH_LIMIT = 1024;
   static final int PEERING_EVENT_BATCH_LIMIT = 24;
-  static final int REPLAY_BATCH_LIMIT = 48;
   private final EventRecordRepository repository;
   private final EventPayloadRepository eventPayloadRepository;
   private final MasterDataEventRecordRepository masterDataEventRecordRepository;
@@ -73,10 +71,6 @@ public class EventStore {
     } else {
       masterDataEventRecordRepository.insertMarkFacilityIdMasterDataEvents(masterDataEventRecord);
     }
-  }
-
-  public long nextGroupSequenceNumber(String groupId) {
-    return Optional.ofNullable(repository.getNextGroupSequenceNumber(groupId)).orElse(0L);
   }
 
   public List<Event> getEventsForOnlineWeb() {
@@ -140,7 +134,6 @@ public class EventStore {
     log.info("insert event:{}", event.getId());
     EventRecord eventRecord = EventRecord.from(event, payloadSerializer.dump(event.getPayload()));
     repository.importExternalEvent(eventRecord);
-    eventPayloadRepository.save(new EventPayload(eventRecord.getId(), eventRecord.getPayload()));
     emitAckForEvent(event);
   }
 
@@ -151,10 +144,9 @@ public class EventStore {
     }
   }
 
-  public List<Event> loadSortedGroupEvents(String groupId) {
+  public List<Event> loadGroupEvents(String groupId) {
     return repository.findEventRecordByGroupId(groupId).stream()
         .map(it -> it.toEvent(payloadSerializer::load))
-        .sorted(Comparator.comparingLong(Event::getGroupSequenceNumber))
         .collect(Collectors.toList());
   }
 

@@ -32,6 +32,29 @@ public class EventStoreIntegrationTest extends LocalMachineIntegrationTest {
   @Autowired private EventStore eventStore;
 
   @Test
+  public void shouldReturnImportedEventWhenLoadGroupEvents() {
+    // given
+    TestEventPayload eventPayload = new TestEventPayload(UUID.randomUUID(), "test event payload");
+    String groupId = "group-id";
+    int localSeq = 999;
+    Event event =
+        Event.builder()
+            .id(UUID.randomUUID())
+            .senderId(UUID.randomUUID())
+            .payload(eventPayload)
+            .localSequenceNumber(localSeq)
+            .groupId(groupId)
+            .build();
+    eventStore.importQuietly(event);
+    // when
+    Event got = eventStore.loadGroupEvents(groupId).get(0);
+    // then
+    assertThat(got.getId()).isEqualTo(event.getId());
+    assertThat(got.getPayload()).isEqualTo(eventPayload);
+    assertThat(got.getLocalSequenceNumber()).isEqualTo(localSeq);
+  }
+
+  @Test
   public void shouldReturnEmittedEventWhenGetEventForWebGivenEventNotSyncedYet() {
     // given
     TestEventPayload eventPayload = new TestEventPayload(UUID.randomUUID(), "test event payload");

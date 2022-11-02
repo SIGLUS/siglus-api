@@ -15,12 +15,9 @@
 
 package org.siglus.siglusapi.localmachine;
 
-import java.time.ZonedDateTime;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Spliterator;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.siglus.siglusapi.localmachine.eventstore.EventStore;

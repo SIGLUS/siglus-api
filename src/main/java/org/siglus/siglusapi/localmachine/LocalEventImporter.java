@@ -51,7 +51,7 @@ public class LocalEventImporter extends EventImporter {
       newOffset = Math.max(it.getLocalSequenceNumber(), newOffset);
     }
     try {
-      replayer.playDefaultGroupEvents(masterDataToSync);
+      replayer.playNonGroupEvents(masterDataToSync);
       eventStore.updateLocalMasterDataOffset(newOffset);
     } catch (InterruptedException | TimeoutException e) {
       log.warn("fail to replay master data due to retryable reason, err:{}", e.getMessage());

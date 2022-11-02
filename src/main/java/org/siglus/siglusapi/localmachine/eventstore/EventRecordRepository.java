@@ -26,16 +26,9 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 @SuppressWarnings("PMD.AvoidDuplicateLiterals")
-public interface EventRecordRepository extends JpaRepository<EventRecord, UUID> {
+public interface EventRecordRepository extends JpaRepository<EventRecord, UUID>, EventRecordRepositoryCustom {
 
   Stream<EventRecord> streamByLocalReplayedOrderBySyncedTime(Boolean localReplayed);
-
-  @Query(
-      value =
-          "select groupsequencenumber + 1 from localmachine.events where groupid=:groupId order by "
-              + "groupsequencenumber desc limit 1",
-      nativeQuery = true)
-  Long getNextGroupSequenceNumber(@Param("groupId") String groupId);
 
   List<EventRecord> findEventRecordByOnlineWebSyncedAndArchived(boolean onlineWebSynced, boolean archived);
 
@@ -52,64 +45,6 @@ public interface EventRecordRepository extends JpaRepository<EventRecord, UUID> 
       value = "update localmachine.events set localreplayed=true where id =:id",
       nativeQuery = true)
   void markAsReplayed(@Param("id") UUID id);
-
-  @Modifying
-  @Query(
-      value =
-          "INSERT INTO localmachine.events("
-              + "id,"
-              + "protocolversion,"
-              + "occurredtime,"
-              + "senderid,"
-              + "receiverid,"
-              + "groupid,"
-              + "groupsequencenumber,"
-              + "onlinewebsynced,"
-              + "localreplayed,"
-              + "receiversynced,"
-              + "syncedtime) VALUES ("
-              + ":#{#r.id},"
-              + ":#{#r.protocolVersion},"
-              + ":#{#r.occurredTime},"
-              + ":#{#r.senderId},"
-              + ":#{#r.receiverId},"
-              + ":#{#r.groupId},"
-              + ":#{#r.groupSequenceNumber},"
-              + ":#{#r.onlineWebSynced},"
-              + ":#{#r.localReplayed},"
-              + ":#{#r.receiverSynced},"
-              + ":#{#r.syncedTime})",
-      nativeQuery = true)
-  void insertAndAllocateLocalSequenceNumber(@Param("r") EventRecord eventRecord);
-
-  @Modifying
-  @Query(
-      value =
-          "INSERT INTO localmachine.events("
-              + "id,"
-              + "protocolversion,"
-              + "occurredtime,"
-              + "senderid,"
-              + "localsequencenumber,"
-              + "receiverid,"
-              + "groupid,"
-              + "groupsequencenumber,"
-              + "onlinewebsynced,"
-              + "receiversynced,"
-              + "syncedtime) VALUES ("
-              + ":#{#r.id},"
-              + ":#{#r.protocolVersion},"
-              + ":#{#r.occurredTime},"
-              + ":#{#r.senderId},"
-              + ":#{#r.localSequenceNumber},"
-              + ":#{#r.receiverId},"
-              + ":#{#r.groupId},"
-              + ":#{#r.groupSequenceNumber},"
-              + ":#{#r.onlineWebSynced},"
-              + ":#{#r.receiverSynced},"
-              + ":#{#r.syncedTime})",
-      nativeQuery = true)
-  void importExternalEvent(@Param("r") EventRecord eventRecord);
 
   @Modifying
   @Query(

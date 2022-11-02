@@ -15,11 +15,8 @@
 
 package org.siglus.siglusapi.localmachine.eventstore;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
-import static org.mockito.BDDMockito.given;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -63,13 +60,6 @@ public class EventStoreTest {
   private static final UUID eventId3 = UUID.randomUUID();
 
   @Test
-  public void shouldReturn0WhenGetNextGroupSeqGivenGroupNotExists() {
-    given(repository.getNextGroupSequenceNumber(anyString())).willReturn(null);
-    long nextGroupSeq = eventStore.nextGroupSequenceNumber("groupId");
-    assertThat(nextGroupSeq).isZero();
-  }
-
-  @Test
   public void shouldSuccessWhenImportQuietlyEvent() {
     //when
     eventStore.importQuietly(buildMasterDataEvent());
@@ -77,7 +67,7 @@ public class EventStoreTest {
     //then
     verify(payloadSerializer, times(1)).dump(any(Event.class));
     verify(repository, times(1)).importExternalEvent(any(EventRecord.class));
-    verify(eventPayloadRepository, times(1)).save(any(EventPayload.class));
+    verify(eventPayloadRepository, times(0)).save(any(EventPayload.class));
   }
 
   @Test

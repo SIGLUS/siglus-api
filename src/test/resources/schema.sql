@@ -11,14 +11,15 @@ CREATE TABLE IF NOT EXISTS localmachine.events (
     senderid UUID NOT NULL,
     receiverid UUID NULL,
     groupid VARCHAR(255) NULL,
-    groupsequencenumber BIGINT NULL,
+    parentid UUID NULL,
     payload TEXT NULL,
     onlinewebsynced INT NOT NULL DEFAULT 0,
     receiversynced INT NOT NULL DEFAULT 0,
-    localreplayed INT NOT NULL DEFAULT 0
+    localreplayed INT NOT NULL DEFAULT 0,
+    syncedtime TIMESTAMP DEFAULT now()
 );
 CREATE UNIQUE INDEX IF NOT EXISTS localmachine_sender_localsequencenumber on localmachine.events(senderid, localsequencenumber);
-CREATE UNIQUE INDEX IF NOT EXISTS localmachine_group_seq on localmachine.events(groupid, groupsequencenumber);
+CREATE UNIQUE INDEX IF NOT EXISTS localmachine_group_id on localmachine.events(groupid);
 
 CREATE TABLE IF NOT EXISTS localmachine.agents (
     machineid UUID NOT NULL,
@@ -61,6 +62,3 @@ CREATE TABLE IF NOT EXISTS localmachine.ack_records (
 );
 
 DROP INDEX localmachine.localmachine_sender_localsequencenumber;
-
-ALTER TABLE localmachine.events
-    ADD COLUMN syncedtime TIMESTAMP DEFAULT now();
