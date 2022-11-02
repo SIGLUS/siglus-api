@@ -148,8 +148,7 @@ public class SiglusShipmentService {
     if (null == shipmentLineItemDto.getLot()) {
       return shipmentLineItemDto.getOrderable().getId().toString();
     }
-    return shipmentLineItemDto.getLot().getId() + FieldConstants.SEPARATOR + shipmentLineItemDto.getOrderable().getId()
-        + FieldConstants.SEPARATOR + shipmentLineItemDto.getLocation().getLocationCode();
+    return shipmentLineItemDto.getLot().getId() + FieldConstants.SEPARATOR + shipmentLineItemDto.getOrderable().getId();
   }
 
   @Transactional
