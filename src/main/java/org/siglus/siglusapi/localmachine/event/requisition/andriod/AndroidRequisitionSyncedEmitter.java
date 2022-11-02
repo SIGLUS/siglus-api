@@ -15,18 +15,15 @@
 
 package org.siglus.siglusapi.localmachine.event.requisition.andriod;
 
-import java.time.LocalDate;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.openlmis.requisition.dto.BaseDto;
-import org.siglus.siglusapi.domain.RequisitionExtension;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
 import org.siglus.siglusapi.exception.InvalidProgramCodeException;
 import org.siglus.siglusapi.localmachine.EventPublisher;
 import org.siglus.siglusapi.localmachine.event.EventCommonService;
 import org.siglus.siglusapi.service.SiglusProgramService;
-import org.siglus.siglusapi.service.SiglusRequisitionExtensionService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.springframework.stereotype.Service;
 
@@ -38,7 +35,6 @@ public class AndroidRequisitionSyncedEmitter {
   private final SiglusAuthenticationHelper authHelper;
   private final SiglusProgramService siglusProgramService;
   private final EventCommonService baseEventCommonService;
-  private final SiglusRequisitionExtensionService siglusRequisitionExtensionService;
 
   public AndroidRequisitionSyncedEvent emit(RequisitionCreateRequest request, UUID requisitionId) {
     UserDto user = authHelper.getCurrentUser();
@@ -53,15 +49,8 @@ public class AndroidRequisitionSyncedEmitter {
         .orElseThrow(() -> InvalidProgramCodeException.requisition(request.getProgramCode()));
 
     eventPublisher.emitGroupEvent(
-        getGroupId(requisitionId, request.getEmergency(), user.getHomeFacilityId(), programId,
-            request.getActualEndDate()),
+        baseEventCommonService.getGroupId(requisitionId),
         baseEventCommonService.getReceiverId(user.getHomeFacilityId(), programId), event);
     return event;
-  }
-
-  public String getGroupId(UUID requisitionId, Boolean emergency, UUID facilityId, UUID programId, LocalDate endDate) {
-    RequisitionExtension requisitionExtension = siglusRequisitionExtensionService
-        .buildRequisitionExtension(requisitionId, emergency, facilityId, programId, endDate);
-    return requisitionExtension.getRealRequisitionNumber();
   }
 }

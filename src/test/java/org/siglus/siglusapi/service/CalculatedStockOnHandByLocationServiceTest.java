@@ -202,28 +202,6 @@ public class CalculatedStockOnHandByLocationServiceTest {
     assertEquals(110, (int) sohLocation3.getStockOnHand());
   }
 
-  @Test
-  public void shouldCalculateSohByLocationWhenConfirmShipment() {
-    // given
-    when(calculatedStockOnHandByLocationRepository.findPreviousLocationStockOnHandsTillNow(
-        ImmutableSet.of(stockCardId), LocalDate.now())).thenReturn(buildPreviousSohByLocation());
-    when(stockCardRepository.findByFacilityIdAndOrderableIdAndLotId(facilityId, orderableId, lotId))
-        .thenReturn(createStockCard());
-
-    // when
-    calculatedStocksOnHandByLocationService
-        .calculateStockOnHandByLocationForShipment(buildShipmentLineItemList(), facilityId);
-
-    // then
-    verify(calculatedStockOnHandByLocationRepository).save(sohByLocationArgumentCaptor.capture());
-    List<CalculatedStockOnHandByLocation> sohToSave = sohByLocationArgumentCaptor.getValue();
-    assertEquals(1, sohToSave.size());
-    CalculatedStockOnHandByLocation sohLocation1 = sohToSave.stream()
-        .filter(s -> locationCode1.equals(s.getLocationCode())).findFirst().orElse(null);
-    assertNotNull(sohLocation1);
-    assertEquals(90, (int) sohLocation1.getStockOnHand());
-  }
-
   private List<CalculatedStockOnHandByLocation> buildPreviousSohByLocation() {
     CalculatedStockOnHandByLocation soh1 = CalculatedStockOnHandByLocation.builder()
             .stockCardId(stockCardId)
