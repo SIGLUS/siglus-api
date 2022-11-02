@@ -33,7 +33,7 @@ public class FcValidate {
 
   public void validateEmptyFacilityCode(String code) {
     if (code == null || code.isEmpty()) {
-      throw new FcDataException(new Message("requisitionNumber should be not null"));
+      throw new FcDataException(new Message("facility code should be not null"));
     }
   }
 

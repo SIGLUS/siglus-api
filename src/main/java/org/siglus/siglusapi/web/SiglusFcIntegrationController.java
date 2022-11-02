@@ -53,6 +53,16 @@ public class SiglusFcIntegrationController {
     return siglusFcIntegrationService.searchRequisitions(date, pageable);
   }
 
+  @GetMapping("/requisitions/needApproval")
+  public Page<FcRequisitionDto> searchNeedApprovalRequisitions(
+      @DateTimeFormat(pattern = DATE_FORMAT) @RequestParam LocalDate date,
+      Pageable pageable) {
+    if (PaginationConstants.NO_PAGINATION == pageable.getPageSize()) {
+      pageable = new PageRequest(PaginationConstants.DEFAULT_PAGE_NUMBER, 20);
+    }
+    return siglusFcIntegrationService.searchNeedApprovalRequisitions(date, pageable);
+  }
+
   @GetMapping("/stockMovements")
   public Page<FacilityStockMovementResponse> searchStockMovements(
       @DateTimeFormat(pattern = DATE_FORMAT) @RequestParam LocalDate date, Pageable pageable) {

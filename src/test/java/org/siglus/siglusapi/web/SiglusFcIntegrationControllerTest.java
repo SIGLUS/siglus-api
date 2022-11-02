@@ -63,4 +63,17 @@ public class SiglusFcIntegrationControllerTest {
     // then
     verify(siglusFcIntegrationService).searchRequisitions(date, pageable);
   }
+
+  @Test
+  public void shouldOnlySearchNeedApprovalRequisition() {
+    // given
+    pageable = new PageRequest(1, 20);
+
+    // when
+    siglusFcIntegrationController.searchNeedApprovalRequisitions(date, pageable);
+
+    // then
+    verify(siglusFcIntegrationService).searchNeedApprovalRequisitions(date, pageable);
+
+  }
 }

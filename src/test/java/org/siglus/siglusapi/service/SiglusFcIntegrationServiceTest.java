@@ -21,6 +21,8 @@ import static com.google.common.collect.Sets.newHashSet;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
@@ -345,6 +347,20 @@ public class SiglusFcIntegrationServiceTest {
     assertEquals(fcRequisitionDto.getRequestingFacilityCode(), fcRequisitionDto.getFacilityCode());
   }
 
+  @Test
+  public void shouldOnlyReturnNeedApprovalRequisitionsWhenCallRequisitionNeedApprovalApi() {
+    // given
+    mockProgramInfo("VC");
+    mockRequisitionInfo(fcSupervisoryNodeId);
+
+    // when
+    siglusFcIntegrationService.searchNeedApprovalRequisitions(date, pageable);
+
+    // then
+    verify(siglusRequisitionRepository, times(1)).searchNeedApprovalForFc(date, pageable,
+        newHashSet(fcSupervisoryNodeId));
+  }
+
 
   @Test
   public void shouldSearchRequisitionWithPatientInfo() {
@@ -459,8 +475,10 @@ public class SiglusFcIntegrationServiceTest {
     template.setId(templateId);
     requisition.setTemplate(template);
     List<Requisition> requisitions = newArrayList(requisition);
-    when(siglusRequisitionRepository.searchForFc(date, today, pageable))
+    when(siglusRequisitionRepository.searchAllForFc(date, pageable))
         .thenReturn(Pagination.getPage(requisitions, pageable));
+    when(siglusRequisitionRepository.searchNeedApprovalForFc(date, pageable,
+        newHashSet(fcSupervisoryNodeId))).thenReturn(Pagination.getPage(requisitions, pageable));
   }
 
   private void mockFacilityInfo() {
@@ -610,7 +628,7 @@ public class SiglusFcIntegrationServiceTest {
     Pageable pageable = new PageRequest(0, 10);
     Page<ProofOfDelivery> page = Pagination.getPage(newArrayList(proofOfDelivery), pageable, 1);
     when(siglusProofOfDeliveryRepository
-        .search(any(), any(), any(), any())).thenReturn(page);
+        .search(any(), any(), any())).thenReturn(page);
   }
 
   private Shipment mockShipment() {
