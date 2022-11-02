@@ -22,8 +22,10 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.Spliterator;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -43,6 +45,7 @@ public class EventStore {
 
   static final int MASTER_DATA_EVENT_BATCH_LIMIT = 1024;
   static final int PEERING_EVENT_BATCH_LIMIT = 24;
+  static final int REPLAY_BATCH_LIMIT = 48;
   private final EventRecordRepository repository;
   private final EventPayloadRepository eventPayloadRepository;
   private final MasterDataEventRecordRepository masterDataEventRecordRepository;
@@ -97,11 +100,12 @@ public class EventStore {
         .collect(Collectors.toList());
   }
 
+  @Transactional
   public List<MasterDataEvent> getMasterDataEvents(Long offsetId, UUID facilityId) {
     if (offsetId == null) {
       return Collections.emptyList();
     }
-    List<MasterDataEventRecord> bufferedMasterDataRecords = getMasterDataRecordsGreedily(
+    List<MasterDataEventRecord> bufferedMasterDataRecords = getMasterDataRecords(
         offsetId, facilityId, MASTER_DATA_EVENT_BATCH_LIMIT);
     List<MasterDataEvent> masterDataEvents =
         bufferedMasterDataRecords.stream()
@@ -190,10 +194,11 @@ public class EventStore {
         .collect(Collectors.toList());
   }
 
-  public List<Event> findNotReplayedEvents() {
-    return repository.findEventRecordByLocalReplayed(false).stream()
-        .map(it -> it.toEvent(payloadSerializer::load))
-        .collect(Collectors.toList());
+  public Stream<Event> streamNotReplayedEvents() {
+    return repository
+        .streamByLocalReplayedOrderBySyncedTime(Boolean.FALSE)
+        .sequential()
+        .map(it -> it.toEvent(payloadSerializer::load));
   }
 
   public MasterDataOffset findMasterDataOffsetByFacilityId(UUID facilityId) {
@@ -224,19 +229,24 @@ public class EventStore {
     saveAcks(acks);
   }
 
-  List<MasterDataEventRecord> getMasterDataRecordsGreedily(Long offsetId, UUID facilityId, int limit) {
-    List<MasterDataEventRecord> bufferedMasterDataRecords = new LinkedList<>();
-    while (bufferedMasterDataRecords.size() <= limit) {
-      List<MasterDataEventRecord> masterDataRecords =
-          masterDataEventRecordRepository.findLimitedOrderedEventsByIdGreaterThan(offsetId, limit);
-      if (masterDataRecords.isEmpty()) {
-        break;
-      }
-      bufferedMasterDataRecords.addAll(
-          masterDataRecords.stream()
-              .filter(it -> filterMasterDataEventRecord(it, facilityId))
-              .collect(Collectors.toList()));
-    }
+  @Transactional
+  public LinkedList<MasterDataEventRecord> getMasterDataRecords(Long offset, UUID facilityId, int limit) {
+    LinkedList<MasterDataEventRecord> bufferedMasterDataRecords = new LinkedList<>();
+    Spliterator<MasterDataEventRecord> spliterator =
+        masterDataEventRecordRepository
+            .streamMasterDataEventRecordsByIdAfterOrderById(offset)
+            .sequential()
+            .spliterator();
+    boolean hasNext;
+    do {
+      hasNext =
+          spliterator.tryAdvance(
+              it -> {
+                if (filterMasterDataEventRecord(it, facilityId)) {
+                  bufferedMasterDataRecords.add(it);
+                }
+              });
+    } while (hasNext && bufferedMasterDataRecords.size() < limit);
     return bufferedMasterDataRecords;
   }
 

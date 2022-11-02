@@ -15,14 +15,18 @@
 
 package org.siglus.siglusapi.localmachine;
 
+import java.time.ZonedDateTime;
+import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Spliterator;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.siglus.siglusapi.localmachine.eventstore.EventStore;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 @Component
 @RequiredArgsConstructor
@@ -32,11 +36,23 @@ public class ScheduledReplayer {
   private final EventReplayer replayer;
 
   @Scheduled(fixedRate = 30 * 1000, initialDelay = 30 * 1000)
+  @Transactional
   public void start() {
-    // TODO: 2022/10/21 limit size to avoid OOM
-    List<Event> events = eventStore.findNotReplayedEvents();
-    List<UUID> eventIds = events.stream().map(Event::getId).collect(Collectors.toList());
-    log.info("start to replay events:{}", eventIds);
-    replayer.replay(events);
+    log.info("start scheduled replay task");
+    Spliterator<Event> spliterator = eventStore.streamNotReplayedEvents().sequential().spliterator();
+    int batchSize = 24;
+    List<Event> currentBatch = new LinkedList<>();
+    boolean hasNext;
+    // split and replay events in batches
+    do {
+      hasNext = spliterator.tryAdvance(currentBatch::add);
+      if (currentBatch.size() >= batchSize) {
+        // flush and reset
+        replayer.replay(currentBatch);
+        currentBatch.clear();
+      }
+    } while (hasNext);
+    // flush remaining
+    replayer.replay(currentBatch);
   }
 }

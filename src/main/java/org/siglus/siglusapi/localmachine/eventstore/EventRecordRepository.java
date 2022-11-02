@@ -19,6 +19,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Stream;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -27,7 +28,7 @@ import org.springframework.data.repository.query.Param;
 @SuppressWarnings("PMD.AvoidDuplicateLiterals")
 public interface EventRecordRepository extends JpaRepository<EventRecord, UUID> {
 
-  List<EventRecord> findEventRecordByLocalReplayed(boolean localReplayed);
+  Stream<EventRecord> streamByLocalReplayedOrderBySyncedTime(Boolean localReplayed);
 
   @Query(
       value =

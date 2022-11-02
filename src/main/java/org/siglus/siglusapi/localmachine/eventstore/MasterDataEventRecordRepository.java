@@ -15,8 +15,8 @@
 
 package org.siglus.siglusapi.localmachine.eventstore;
 
-import java.util.List;
 import java.util.UUID;
+import java.util.stream.Stream;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -24,12 +24,7 @@ import org.springframework.data.repository.query.Param;
 
 public interface MasterDataEventRecordRepository extends JpaRepository<MasterDataEventRecord, UUID> {
 
-  @Query(
-      value =
-          "select * from localmachine.master_data_events where id > :id order by id limit :limit",
-      nativeQuery = true)
-  List<MasterDataEventRecord> findLimitedOrderedEventsByIdGreaterThan(
-      @Param("id") long id, @Param("limit") int limit);
+  Stream<MasterDataEventRecord> streamMasterDataEventRecordsByIdAfterOrderById(Long id);
 
   @Modifying
   @Query(
