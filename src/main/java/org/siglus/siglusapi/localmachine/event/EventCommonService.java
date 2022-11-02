@@ -59,7 +59,7 @@ public class EventCommonService {
 
   public String getGroupId(UUID requisitionId) {
     RequisitionExtension requisitionExtension = requisitionExtensionRepository.findByRequisitionId(requisitionId);
-    return requisitionExtension.getRequisitionNumberPrefix() + requisitionExtension.getRequisitionNumber();
+    return requisitionExtension.getRealRequisitionNumber();
   }
 
   public Map<VersionIdentityDto, OrderableDto> getOrderableDtoMap(Requisition requisition) {
