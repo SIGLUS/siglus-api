@@ -62,6 +62,6 @@ public class AndroidRequisitionSyncedEmitter {
   public String getGroupId(UUID requisitionId, Boolean emergency, UUID facilityId, UUID programId, LocalDate endDate) {
     RequisitionExtension requisitionExtension = siglusRequisitionExtensionService
         .buildRequisitionExtension(requisitionId, emergency, facilityId, programId, endDate);
-    return requisitionExtension.getRequisitionNumberPrefix() + requisitionExtension.getRequisitionNumber();
+    return requisitionExtension.getRealRequisitionNumber();
   }
 }

@@ -152,10 +152,8 @@ public class RequisitionInternalApproveReplayer {
   }
 
   private void deleteIfExistRequisition(RequisitionInternalApprovedEvent event) {
-    // TODO: this formation is write everywhere ( 2022/11/1 by kourengang)
     RequisitionExtension requisitionExtension = requisitionExtensionRepository.findByRequisitionNumber(
-        String.format("%s%02d", event.getRequisitionExtension().getRequisitionNumberPrefix(),
-            event.getRequisitionExtension().getRequisitionNumber()));
+        event.getRequisitionExtension().getRealRequisitionNumber());
     if (requisitionExtension != null) {
       UUID requisitionId = requisitionExtension.getRequisitionId();
       requisitionRepository.deleteById(requisitionId);

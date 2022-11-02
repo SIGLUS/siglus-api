@@ -23,7 +23,6 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -75,6 +74,7 @@ import org.siglus.siglusapi.repository.SiglusOrdersRepository;
 import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
 import org.siglus.siglusapi.repository.SiglusShipmentRepository;
 import org.siglus.siglusapi.service.SiglusLotService;
+import org.siglus.siglusapi.service.SiglusOrderService;
 import org.siglus.siglusapi.service.SiglusShipmentService;
 import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
 import org.siglus.siglusapi.util.SiglusSimulateUserAuthHelper;
@@ -105,6 +105,7 @@ public class OrderFulfillmentSyncedReplayer {
   private final SiglusShipmentService siglusShipmentService;
   private final SiglusLotReferenceDataService lotReferenceDataService;
   private final SiglusLotService siglusLotService;
+  private final SiglusOrderService siglusOrderService;
 
   @EventListener(value = {OrderFulfillmentSyncedEvent.class})
   public void replay(OrderFulfillmentSyncedEvent event) {
@@ -419,7 +420,6 @@ public class OrderFulfillmentSyncedReplayer {
       List<OrderLineItemDto> orderLineItemDtos, UUID fulfillUserId) {
     // if order's external id is not found in orderExternalRepository, then it means this is a requisition id
     OrderExternal external = orderExternalRepository.findOne(order.getExternalId());
-    String newOrderCode = null;
     OrderExternal newOrderExternal = null;
     if (external == null) {
       // need convert to order
@@ -427,21 +427,15 @@ public class OrderFulfillmentSyncedReplayer {
           .requisitionId(order.getExternalId()).build();
       OrderExternal secondExternal = OrderExternal.builder()
           .requisitionId(order.getExternalId()).build();
-      log.info("save order external : {}", Arrays.asList(firstExternal, secondExternal));
       orderExternalRepository.saveAndFlush(firstExternal);
       updateExistOrderForSubOrder(order.getId(), firstExternal.getId(), order.getOrderCode(), order.getStatus());
       newOrderExternal = orderExternalRepository.saveAndFlush(secondExternal);
-      newOrderCode = replaceLast(order.getOrderCode(), "-" + 1, "-" + 2);
-      log.info("lastOrderCode {} newOrderCode {}", order.getOrderCode(), newOrderCode);
     } else {
-      List<OrderExternal> externals = orderExternalRepository.findByRequisitionId(external.getRequisitionId());
       OrderExternal newExternal = OrderExternal.builder().requisitionId(external.getRequisitionId()).build();
-      log.info("save new external : {}", newExternal);
       newOrderExternal = orderExternalRepository.saveAndFlush(newExternal);
-      newOrderCode = replaceLast(order.getOrderCode(), "-" + (externals.size()),
-          "-" + externals.size() + 1);
-      log.info("lastOrderCode {} newOrderCode {}", order.getOrderCode(), newOrderCode);
     }
+    String newOrderCode = siglusOrderService.increaseOrderNumber(order.getOrderCode());
+    log.info("lastOrderCode {} newOrderCode {}", order.getOrderCode(), newOrderCode);
     createNewOrder(order, newOrderCode, orderLineItemDtos, newOrderExternal, fulfillUserId);
   }
 

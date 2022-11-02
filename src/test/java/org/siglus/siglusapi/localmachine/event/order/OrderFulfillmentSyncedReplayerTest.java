@@ -63,6 +63,7 @@ import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
 import org.siglus.siglusapi.repository.SiglusShipmentRepository;
 import org.siglus.siglusapi.service.SiglusLotService;
 import org.siglus.siglusapi.service.SiglusNotificationService;
+import org.siglus.siglusapi.service.SiglusOrderService;
 import org.siglus.siglusapi.service.SiglusShipmentService;
 import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
 import org.siglus.siglusapi.util.SiglusSimulateUserAuthHelper;
@@ -112,6 +113,8 @@ public class OrderFulfillmentSyncedReplayerTest extends FileBasedTest {
   private SiglusLotReferenceDataService lotReferenceDataService;
   @Mock
   private SiglusLotService siglusLotService;
+  @Mock
+  private SiglusOrderService siglusOrderService;
 
   private final UUID requisitionId = UUID.randomUUID();
   private final UUID facilityId = UUID.randomUUID();
