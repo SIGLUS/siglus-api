@@ -50,6 +50,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.referencedata.dto.OrderableDto;
+import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
 import org.openlmis.stockmanagement.domain.event.StockEvent;
@@ -157,6 +158,9 @@ public class SiglusStockEventsServiceTest {
   @Mock
   private CalculatedStockOnHandByLocationRepository calculatedStockOnHandByLocationRepository;
 
+  @Mock
+  private SiglusProgramService siglusProgramService;
+
   private final UUID orderableId1 = UUID.randomUUID();
 
   private final UUID tradeItemId1 = UUID.randomUUID();
@@ -222,16 +226,21 @@ public class SiglusStockEventsServiceTest {
         .build();
     negativeReason.setId(negativeReasonId);
     when(stockCardLineItemReasonRepository.findAll()).thenReturn(Arrays.asList(positiveReason, negativeReason));
+    ProgramDto programDto = new ProgramDto();
+    UUID programId = UUID.randomUUID();
+    programDto.setId(programId);
+    programDto.setCode("VC");
+    when(siglusProgramService.getProgram(any())).thenReturn(programDto);
+    Optional<ProgramDto> programDtoOptional = Optional.of(programDto);
+    when(siglusProgramService.getProgramByCode("VC")).thenReturn(programDtoOptional);
   }
 
   @Test
   public void shouldCallV3WhenCreateStockEventForAdjustment() {
     // given
-    StockEventLineItemDto lineItemDto1 = new StockEventLineItemDtoDataBuilder()
-        .buildForAdjustment();
+    StockEventLineItemDto lineItemDto1 = new StockEventLineItemDtoDataBuilder().buildForAdjustment();
     lineItemDto1.setOrderableId(orderableId1);
-    StockEventLineItemDto lineItemDto2 = new StockEventLineItemDtoDataBuilder()
-        .buildForAdjustment();
+    StockEventLineItemDto lineItemDto2 = new StockEventLineItemDtoDataBuilder().buildForAdjustment();
     lineItemDto2.setOrderableId(orderableId2);
     StockEventDto eventDto = StockEventDto.builder()
         .lineItems(newArrayList(lineItemDto1, lineItemDto2))

@@ -34,6 +34,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import org.junit.Before;
@@ -57,6 +58,7 @@ import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.requisition.dto.ObjectReferenceDto;
 import org.openlmis.requisition.dto.OrderDto;
 import org.openlmis.requisition.dto.OrderableDto;
+import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.repository.RequisitionRepository;
 import org.openlmis.requisition.service.RequisitionService;
@@ -82,6 +84,7 @@ import org.siglus.siglusapi.dto.fc.ProductDto;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.repository.ShipmentsExtensionRepository;
 import org.siglus.siglusapi.service.SiglusOrderService;
+import org.siglus.siglusapi.service.SiglusProgramService;
 import org.siglus.siglusapi.service.SiglusShipmentDraftService;
 import org.siglus.siglusapi.service.SiglusShipmentService;
 import org.siglus.siglusapi.service.SiglusStockCardSummariesService;
@@ -169,6 +172,9 @@ public class FcIssueVoucherServiceTest {
   @Mock
   private OrderFulfillmentService orderFulfillmentService;
 
+  @Mock
+  private SiglusProgramService siglusProgramService;
+
   @Captor
   private ArgumentCaptor<ShipmentDto> shipmentCaptor;
 
@@ -207,6 +213,12 @@ public class FcIssueVoucherServiceTest {
     sourceDestinationDto.setNode(node);
     when(sourceDestinationService.getValidSources(programId,
         facilityDto.getId())).thenReturn(Collections.singletonList(sourceDestinationDto));
+    ProgramDto programDto = new ProgramDto();
+    programDto.setId(programId);
+    programDto.setCode("VC");
+    when(siglusProgramService.getProgram(programId)).thenReturn(programDto);
+    Optional<ProgramDto> programDtoOptional = Optional.of(programDto);
+    when(siglusProgramService.getProgramByCode("VC")).thenReturn(programDtoOptional);
   }
 
   @Test
@@ -310,7 +322,7 @@ public class FcIssueVoucherServiceTest {
     fulfillForMeEntryDto.setStockOnHand(50);
     fulfillForMeEntryDto.setLot(
         new org.openlmis.stockmanagement.dto.ObjectReferenceDto("", "", lotId));
-    Set<CanFulfillForMeEntryDto> fulfillForMeEntryDtos = new HashSet();
+    Set<CanFulfillForMeEntryDto> fulfillForMeEntryDtos = new HashSet<>();
     fulfillForMeEntryDtos.add(fulfillForMeEntryDto);
     summaryV2Dto.setCanFulfillForMe(fulfillForMeEntryDtos);
     when(stockCardSummariesService.findSiglusStockCard(any(), any(), any(), any(Boolean.class)))
@@ -391,7 +403,7 @@ public class FcIssueVoucherServiceTest {
     fulfillForMeEntryDto.setStockOnHand(50);
     fulfillForMeEntryDto.setLot(
         new org.openlmis.stockmanagement.dto.ObjectReferenceDto("", "", lotId));
-    Set<CanFulfillForMeEntryDto> fulfillForMeEntryDtos = new HashSet();
+    Set<CanFulfillForMeEntryDto> fulfillForMeEntryDtos = new HashSet<>();
     fulfillForMeEntryDtos.add(fulfillForMeEntryDto);
     summaryV2Dto.setCanFulfillForMe(fulfillForMeEntryDtos);
     when(stockCardSummariesService.findSiglusStockCard(any(), any(), any(), any(Boolean.class)))
@@ -463,7 +475,7 @@ public class FcIssueVoucherServiceTest {
     fulfillForMeEntryDto.setStockOnHand(50);
     fulfillForMeEntryDto.setLot(
         new org.openlmis.stockmanagement.dto.ObjectReferenceDto("", "", lotId));
-    Set<CanFulfillForMeEntryDto> fulfillForMeEntryDtos = new HashSet();
+    Set<CanFulfillForMeEntryDto> fulfillForMeEntryDtos = new HashSet<>();
     fulfillForMeEntryDtos.add(fulfillForMeEntryDto);
     summaryV2Dto.setCanFulfillForMe(fulfillForMeEntryDtos);
     when(stockCardSummariesService.findSiglusStockCard(any(), any(), any(), any(Boolean.class)))
