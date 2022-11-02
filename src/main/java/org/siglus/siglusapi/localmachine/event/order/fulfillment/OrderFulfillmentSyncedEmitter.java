@@ -82,8 +82,7 @@ public class OrderFulfillmentSyncedEmitter {
         .shippedLotList(getAllShippedLots(shipmentExtensionRequest.getShipment()))
         .build();
     eventPublisher.emitGroupEvent(
-        requisitionExtension.getRequisitionNumberPrefix() + requisitionExtension.getRequisitionNumber(),
-        shipmentDto.getOrder().getFacility().getId(), event);
+        requisitionExtension.getRealRequisitionNumber(), shipmentDto.getOrder().getFacility().getId(), event);
     return event;
   }
 
