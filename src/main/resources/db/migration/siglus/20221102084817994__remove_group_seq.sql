@@ -13,4 +13,4 @@ ALTER TABLE localmachine.events
 
 -- add new columns
 ALTER TABLE localmachine.events
-    ADD COLUMN IF NOT EXISTS parentid UUID NULL;
+    ADD COLUMN parentid UUID NULL;
