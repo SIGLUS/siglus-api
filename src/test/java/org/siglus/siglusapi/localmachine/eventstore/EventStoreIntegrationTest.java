@@ -18,11 +18,14 @@ package org.siglus.siglusapi.localmachine.eventstore;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.siglus.siglusapi.localmachine.Event;
 import org.siglus.siglusapi.localmachine.EventPayload;
@@ -38,6 +41,24 @@ public class EventStoreIntegrationTest extends LocalMachineIntegrationTest {
   @Before
   public void setup() {
     eventRecordRepository.deleteAll();
+  }
+
+  @Ignore
+  @Test
+  public void canFindLeafEventInGroup() {
+    // given
+    Event event1 = getEvent();
+    Event event2 = getEvent();
+    Event event3 = getEvent();
+    Event event4 = getEvent();
+    event2.setParentId(event1.getId());
+    event3.setParentId(event1.getId());
+    event4.setParentId(event2.getId());
+    Arrays.asList(event1, event2, event3, event4).forEach(it -> eventStore.importQuietly(it));
+    // when
+    List<Event> leafEvents = eventStore.getNotReplayedLeafEventsInGroup(event1.getGroupId());
+    // then
+    assertThat(leafEvents.stream().map(Event::getId)).containsExactlyInAnyOrder(event4.getId(), event3.getId());
   }
 
   @Test

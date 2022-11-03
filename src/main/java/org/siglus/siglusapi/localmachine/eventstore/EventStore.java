@@ -150,6 +150,17 @@ public class EventStore {
         .collect(Collectors.toList());
   }
 
+  public List<Event> getNotReplayedLeafEventsInGroup(String groupId) {
+    return repository.findNotReplayedLeafNodeIdsInGroup(groupId).stream()
+        .map(it -> it.toEvent(payloadSerializer::load))
+        .collect(Collectors.toList());
+  }
+
+  public Optional<Event> findEvent(UUID parentId) {
+    return Optional.ofNullable(repository.findOne(parentId))
+        .map(it -> it.toEvent(payloadSerializer::load));
+  }
+
   @Transactional
   public void confirmReplayed(Event event) {
     log.info("mark event replayed:{}", event.getId());

@@ -25,8 +25,8 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
@@ -72,8 +72,10 @@ public class EventReplayerTest {
         Event.builder().id(UUID.randomUUID()).groupId(GROUP_1).parentId(groupEvent1.getId()).build();
     Event groupEvent4MissingDependency =
         Event.builder().id(UUID.randomUUID()).groupId(GROUP_1).parentId(UUID.randomUUID()).build();
-    List<Event> groupEvents = Arrays.asList(groupEvent2, groupEvent1, groupEvent4MissingDependency);
-    given(eventStore.loadGroupEvents(GROUP_1)).willReturn(new ArrayList<>(groupEvents));
+    final List<Event> groupEvents = Arrays.asList(groupEvent2, groupEvent1, groupEvent4MissingDependency);
+    Arrays.asList(groupEvent1, groupEvent2, groupEvent4MissingDependency)
+        .forEach(it -> given(eventStore.findEvent(it.getId())).willReturn(Optional.of(it)));
+    given(eventStore.getNotReplayedLeafEventsInGroup(GROUP_1)).willReturn(Collections.singletonList(groupEvent2));
     List<Event> publishedEvents = getPublishedEvents();
     // when
     doNothing().when(syncRecordService).storeLastReplayRecord();
@@ -92,9 +94,15 @@ public class EventReplayerTest {
     Event groupEvent2 =
         Event.builder().id(UUID.randomUUID()).groupId(GROUP_1).parentId(groupEvent1.getId()).build();
     Event groupEvent3 =
-        Event.builder().id(UUID.randomUUID()).groupId(GROUP_1).parentId(groupEvent2.getId()).build();
-    List<Event> groupEvents = Arrays.asList(groupEvent2, groupEvent1, groupEvent3);
-    given(eventStore.loadGroupEvents(GROUP_1)).willReturn(new ArrayList<>(groupEvents));
+        Event.builder()
+            .id(UUID.randomUUID())
+            .groupId(GROUP_1)
+            .parentId(groupEvent2.getId())
+            .build();
+    final List<Event> groupEvents = Arrays.asList(groupEvent2, groupEvent1, groupEvent3);
+    Arrays.asList(groupEvent1, groupEvent2, groupEvent3)
+        .forEach(it -> given(eventStore.findEvent(it.getId())).willReturn(Optional.of(it)));
+    given(eventStore.getNotReplayedLeafEventsInGroup(GROUP_1)).willReturn(Collections.singletonList(groupEvent3));
     List<Event> publishedEvents = getPublishedEvents();
     // when
     doNothing().when(syncRecordService).storeLastReplayRecord();

@@ -20,22 +20,18 @@ import static java.util.stream.Collectors.toList;
 import static org.apache.commons.collections.CollectionUtils.isEmpty;
 
 import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeoutException;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.collections4.SetUtils;
 import org.siglus.siglusapi.localmachine.ShedLockFactory.AutoClosableLock;
 import org.siglus.siglusapi.localmachine.eventstore.EventStore;
 import org.springframework.stereotype.Component;
@@ -83,31 +79,28 @@ public class EventReplayer {
   }
 
   protected void tryToPlayGroupEvents(String groupId) {
-    List<Event> events = eventStore.loadGroupEvents(groupId);
-    Map<UUID, Event> idToEvent = new HashMap<>(events.size());
-    Set<UUID> parentEventIds = new HashSet<>();
-    for (Event it : events) {
-      idToEvent.put(it.getId(), it);
-      Optional.ofNullable(it.getParentId()).ifPresent(parentEventIds::add);
+    List<Event> leafEvents = eventStore.getNotReplayedLeafEventsInGroup(groupId);
+    List<UUID> leafEventIds = leafEvents.stream().map(Event::getId).collect(toList());
+    if (CollectionUtils.isEmpty(leafEvents)) {
+      log.info("no leaf events in group pending replay, group id:{}", groupId);
+      return;
     }
-    Set<UUID> leafEventIds = SetUtils.difference(idToEvent.keySet(), parentEventIds).toSet();
     log.info("start to play group:{}, leaf event ids:{}", groupId, leafEventIds);
-    for (UUID leafId : leafEventIds) {
-      Event leafEvent = idToEvent.get(leafId);
-      playGroupEvent(leafEvent, idToEvent);
+    for (Event event : leafEvents) {
+      playGroupEvent(event);
     }
   }
 
-  private void playGroupEvent(Event current, Map<UUID, Event> idToEvent) {
+  private void playGroupEvent(Event current) {
     if (Objects.isNull(current) || current.isLocalReplayed()) {
       return;
     }
     UUID parentId = current.getParentId();
-    boolean canReplayCurrentEvent = false;
+    boolean canReplayCurrentEvent;
     if (Objects.nonNull(parentId)) {
-      Event parentEvent = idToEvent.getOrDefault(parentId, null);
-      playGroupEvent(parentEvent, idToEvent);
-      canReplayCurrentEvent = Optional.ofNullable(parentEvent).map(Event::isLocalReplayed).orElse(false);
+      Optional<Event> parentEvent = eventStore.findEvent(parentId);
+      playGroupEvent(parentEvent.orElse(null));
+      canReplayCurrentEvent = parentEvent.map(Event::isLocalReplayed).orElse(false);
     } else {
       // parent id is null, current event is root event
       canReplayCurrentEvent = true;

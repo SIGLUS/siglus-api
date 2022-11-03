@@ -35,6 +35,13 @@ public interface EventRecordRepository extends JpaRepository<EventRecord, UUID>,
 
   List<EventRecord> findEventRecordByGroupId(String groupId);
 
+  @Query(value = "select * from localmachine.events e left join"
+      + " localmachine.event_payload p on e.id=p.eventid "
+      + " where e.groupid=:groupId and e.localreplayed=false and e.id not in "
+      + " (select e2.parentid from localmachine.events e2 where e2.groupid=:groupId and e2.parentid is not null)",
+      nativeQuery = true)
+  List<EventRecord> findNotReplayedLeafNodeIdsInGroup(@Param("groupId") String groupId);
+
   @Modifying
   @Query(
       value = "update localmachine.events set onlinewebsynced=true where id in :ids",

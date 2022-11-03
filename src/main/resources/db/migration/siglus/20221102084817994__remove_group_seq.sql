@@ -14,3 +14,7 @@ ALTER TABLE localmachine.events
 -- add new columns
 ALTER TABLE localmachine.events
     ADD COLUMN parentid UUID NULL;
+
+CREATE INDEX IF NOT EXISTS event_parentid on localmachine.events(parentid);
+CREATE INDEX IF NOT EXISTS event_groupid on localmachine.events(groupid);
+CREATE INDEX IF NOT EXISTS event_syncedtime on localmachine.events(syncedtime);
