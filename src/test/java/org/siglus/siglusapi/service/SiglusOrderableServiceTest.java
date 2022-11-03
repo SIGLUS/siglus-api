@@ -24,10 +24,8 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.openlmis.stockmanagement.service.PermissionService.STOCK_ADJUST;
 import static org.siglus.siglusapi.constant.FieldConstants.FULL_PRODUCT_NAME;
 import static org.siglus.siglusapi.constant.FieldConstants.PRODUCT_CODE;
-import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
 
 import com.google.common.collect.Maps;
 import java.time.LocalDate;
@@ -78,6 +76,7 @@ import org.siglus.siglusapi.repository.SiglusOrderableRepository;
 import org.siglus.siglusapi.repository.StockManagementDraftRepository;
 import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
+import org.siglus.siglusapi.util.SupportedProgramsHelper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -130,13 +129,13 @@ public class SiglusOrderableServiceTest {
   private DispensableAttributesRepository dispensableAttributesRepository;
 
   @Mock
-  private SiglusProgramService programService;
-
-  @Mock
   private ProgramOrderableRepository programOrderableRepository;
 
   @Mock
   private ApprovedProductReferenceDataService approvedProductReferenceDataService;
+
+  @Mock
+  private SupportedProgramsHelper supportedProgramsHelper;
 
   private Pageable pageable = new PageRequest(0, Integer.MAX_VALUE);
 
@@ -418,8 +417,7 @@ public class SiglusOrderableServiceTest {
     when(orderableReferenceDataService.searchOrderables(any(), any())).thenReturn(
         Pagination.getPage(Arrays.asList(orderableDto, orderableDtoTwo), pageable, 1));
 
-    when(programService.getProgramIds(ALL_PRODUCTS_PROGRAM_ID, userId, STOCK_ADJUST, facilityId.toString()))
-        .thenReturn(Collections.singleton(programId));
+    when(supportedProgramsHelper.findHomeFacilitySupportedProgramIds()).thenReturn(Collections.singleton(programId));
     when(programOrderableRepository.countByProgramId(programId)).thenReturn(Long.valueOf(1));
 
     org.openlmis.stockmanagement.dto.referencedata.OrderableDto orderableDto1 =
@@ -457,8 +455,7 @@ public class SiglusOrderableServiceTest {
     when(orderableReferenceDataService.searchOrderables(any(), any())).thenReturn(
         Pagination.getPage(Arrays.asList(orderableDto, orderableDtoTwo), pageable, 1));
 
-    when(programService.getProgramIds(ALL_PRODUCTS_PROGRAM_ID, userId, STOCK_ADJUST, facilityId.toString()))
-        .thenReturn(Collections.singleton(programId));
+    when(supportedProgramsHelper.findHomeFacilitySupportedProgramIds()).thenReturn(Collections.singleton(programId));
     when(programOrderableRepository.countByProgramId(programId)).thenReturn(Long.valueOf(1));
 
     org.openlmis.stockmanagement.dto.referencedata.OrderableDto orderableDto1 =
@@ -496,8 +493,7 @@ public class SiglusOrderableServiceTest {
     when(orderableReferenceDataService.searchOrderables(any(), any())).thenReturn(
         Pagination.getPage(Arrays.asList(orderableDto, orderableDtoTwo), pageable, 1));
 
-    when(programService.getProgramIds(ALL_PRODUCTS_PROGRAM_ID, userId, STOCK_ADJUST, facilityId.toString()))
-        .thenReturn(Collections.singleton(programId));
+    when(supportedProgramsHelper.findHomeFacilitySupportedProgramIds()).thenReturn(Collections.singleton(programId));
     when(programOrderableRepository.countByProgramId(programId)).thenReturn(Long.valueOf(1));
 
     org.openlmis.stockmanagement.dto.referencedata.OrderableDto orderableDto1 =

@@ -16,13 +16,11 @@
 package org.siglus.siglusapi.service;
 
 import static java.util.Comparator.comparing;
-import static org.openlmis.stockmanagement.service.PermissionService.STOCK_ADJUST;
 import static org.siglus.siglusapi.constant.CacheConstants.CACHE_KEY_GENERATOR;
 import static org.siglus.siglusapi.constant.CacheConstants.SIGLUS_PROGRAM_ORDERABLES;
 import static org.siglus.siglusapi.constant.FieldConstants.CODE;
 import static org.siglus.siglusapi.constant.FieldConstants.FULL_PRODUCT_NAME;
 import static org.siglus.siglusapi.constant.FieldConstants.PRODUCT_CODE;
-import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_ID_NOT_FOUND;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_NOT_FOUND;
 
@@ -74,6 +72,7 @@ import org.siglus.siglusapi.repository.StockManagementDraftRepository;
 import org.siglus.siglusapi.repository.dto.ProgramOrderableDto;
 import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
+import org.siglus.siglusapi.util.SupportedProgramsHelper;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -100,6 +99,7 @@ public class SiglusOrderableService {
   private final ApprovedProductReferenceDataService approvedProductReferenceDataService;
   private final ProgramOrderableRepository programOrderableRepository;
   private final SiglusProgramService programService;
+  private final SupportedProgramsHelper supportedProgramsHelper;
 
   public Page<OrderableDto> searchOrderables(QueryOrderableSearchParams searchParams,
       Pageable pageable, UUID facilityId) {
@@ -159,8 +159,8 @@ public class SiglusOrderableService {
     UserDto currentUser = authenticationHelper.getCurrentUser();
     UUID facilityId = currentUser.getHomeFacilityId();
 
-    Set<UUID> programIds = programService.getProgramIds(
-        ALL_PRODUCTS_PROGRAM_ID, currentUser.getId(), STOCK_ADJUST, facilityId.toString());
+    Set<UUID> programIds = supportedProgramsHelper
+        .findHomeFacilitySupportedProgramIds();
 
     List<UUID> approvedOrderableIds = getApprovedOrderableIds(facilityId, programIds);
 
