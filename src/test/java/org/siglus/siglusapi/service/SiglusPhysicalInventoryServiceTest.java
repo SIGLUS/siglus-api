@@ -412,7 +412,7 @@ public class SiglusPhysicalInventoryServiceTest {
         .thenReturn(inventoryOne.toString());
 
     // when
-    siglusPhysicalInventoryService.deletePhysicalInventoryDraftForOneProgram(facilityId, programIdOne);
+    siglusPhysicalInventoryService.deletePhysicalInventoryDraftForOneProgramWithSubDraft(facilityId, programIdOne);
 
     // then
     verify(inventoryController, times(1)).deletePhysicalInventory(any());
@@ -475,7 +475,7 @@ public class SiglusPhysicalInventoryServiceTest {
         .thenReturn(inventoryTwo.toString());
 
     // when
-    siglusPhysicalInventoryService.deletePhysicalInventoryDraftForAllPrograms(facilityId);
+    siglusPhysicalInventoryService.deletePhysicalInventoryDraftForAllProgramsWithSubDraft(facilityId);
 
     // then
     verify(inventoryController, times(2)).deletePhysicalInventory(any());
