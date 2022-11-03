@@ -146,9 +146,7 @@ public class RequisitionInternalApproveReplayer {
 
   private void saveStatusChanges(Requisition requisition, List<StatusChange> statusChanges) {
     requisition.setStatusChanges(new ArrayList<>());
-    statusChanges.forEach(statusChange -> {
-      buildStatusChanges(requisition, statusChange);
-    });
+    statusChanges.forEach(statusChange -> buildStatusChanges(requisition, statusChange));
   }
 
   private void deleteIfExistRequisition(RequisitionInternalApprovedEvent event) {
