@@ -25,7 +25,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Data
 @Builder
-public class LotLocationDto {
+public class LocationLotsDto {
 
   private String locationCode;
   private String area;

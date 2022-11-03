@@ -50,7 +50,7 @@ import org.siglus.siglusapi.domain.FacilityLocations;
 import org.siglus.siglusapi.domain.OrderableIdentifiers;
 import org.siglus.siglusapi.dto.FacilityLocationsDto;
 import org.siglus.siglusapi.dto.InitialMoveProductFieldDto;
-import org.siglus.siglusapi.dto.LotLocationDto;
+import org.siglus.siglusapi.dto.LocationLotsDto;
 import org.siglus.siglusapi.dto.LotsDto;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.exception.NotFoundException;
@@ -170,15 +170,15 @@ public class SiglusLotLocationServiceTest extends TestCase {
 
     // given
     when(facilityLocationsRepository.findByFacilityId(facilityId)).thenReturn(newArrayList(facilityLocations));
-    LotLocationDto expectedLotLocationDto =
-        LotLocationDto.builder().area(area1).locationCode(locationCode1).build();
+    LocationLotsDto expectedLocationLotsDto =
+        LocationLotsDto.builder().area(area1).locationCode(locationCode1).build();
 
     // when
-    List<LotLocationDto> lotLocationDtos = service
+    List<LocationLotsDto> locationLotsDtos = service
         .searchLotLocationDtos(null, false, false, false);
 
     // then
-    assertEquals(expectedLotLocationDto, lotLocationDtos.get(0));
+    assertEquals(expectedLocationLotsDto, locationLotsDtos.get(0));
   }
 
   @Test
@@ -211,18 +211,18 @@ public class SiglusLotLocationServiceTest extends TestCase {
     LotsDto lot2 = LotsDto.builder().lotCode(lotCode).lotId(lotId1).expirationDate(lotDto1.getExpirationDate())
         .orderableId(orderableId)
         .stockOnHand(200).build();
-    LotLocationDto lotLocation1 = LotLocationDto.builder().locationCode(locationCode1).area(area1)
+    LocationLotsDto lotLocation1 = LocationLotsDto.builder().locationCode(locationCode1).area(area1)
         .lots(Collections.singletonList(lot1)).build();
-    LotLocationDto lotLocation2 = LotLocationDto.builder().locationCode(locationCode2).area(area2)
+    LocationLotsDto lotLocation2 = LocationLotsDto.builder().locationCode(locationCode2).area(area2)
         .lots(Collections.singletonList(lot2)).build();
-    List<LotLocationDto> expectedLotLocationDtos = Arrays.asList(lotLocation2, lotLocation1);
+    List<LocationLotsDto> expectedLocationLotsDtos = Arrays.asList(lotLocation2, lotLocation1);
 
     // when
-    List<LotLocationDto> lotLocationDtos = service
+    List<LocationLotsDto> locationLotsDtos = service
         .searchLotLocationDtos(Collections.singletonList(orderableId), true, false, false);
 
     // then
-    assertEquals(expectedLotLocationDtos, lotLocationDtos);
+    assertEquals(expectedLocationLotsDtos, locationLotsDtos);
   }
 
   @Test
@@ -248,18 +248,18 @@ public class SiglusLotLocationServiceTest extends TestCase {
     lotDto1.setActive(false);
     lotDto1.setLotCode(lotCode);
     when(lotController.getLots(any(), any())).thenReturn(new PageImpl<>(Collections.singletonList(lotDto1)));
-    LotLocationDto lotLocation1 = LotLocationDto.builder().locationCode(locationCode1).area(area1)
+    LocationLotsDto lotLocation1 = LocationLotsDto.builder().locationCode(locationCode1).area(area1)
         .lots(Collections.emptyList()).build();
-    LotLocationDto lotLocation2 = LotLocationDto.builder().locationCode(locationCode2).area(area2)
+    LocationLotsDto lotLocation2 = LocationLotsDto.builder().locationCode(locationCode2).area(area2)
         .lots(Collections.emptyList()).build();
-    List<LotLocationDto> expectedLotLocationDtos = Arrays.asList(lotLocation2, lotLocation1);
+    List<LocationLotsDto> expectedLocationLotsDtos = Arrays.asList(lotLocation2, lotLocation1);
 
     // when
-    List<LotLocationDto> lotLocationDtos = service
+    List<LocationLotsDto> locationLotsDtos = service
         .searchLotLocationDtos(Collections.singletonList(orderableId), true, false, false);
 
     // then
-    assertEquals(expectedLotLocationDtos, lotLocationDtos);
+    assertEquals(expectedLocationLotsDtos, locationLotsDtos);
   }
 
   @Test
@@ -337,14 +337,14 @@ public class SiglusLotLocationServiceTest extends TestCase {
         .expirationDate(lot.getExpirationDate())
         .orderableId(orderableId)
         .stockOnHand(0).build();
-    LotLocationDto lotLocation2 = LotLocationDto.builder().locationCode(locationCode1).area(area1)
+    LocationLotsDto lotLocation2 = LocationLotsDto.builder().locationCode(locationCode1).area(area1)
         .lots(Collections.singletonList(lot2)).build();
     // when
-    List<LotLocationDto> lotLocationDtos = service
+    List<LocationLotsDto> locationLotsDtos = service
         .searchLotLocationDtos(Collections.singletonList(orderableId), true, true, false);
 
     // then
-    assertEquals(Collections.singletonList(lotLocation2), lotLocationDtos);
+    assertEquals(Collections.singletonList(lotLocation2), locationLotsDtos);
   }
 
   @Test
@@ -372,9 +372,9 @@ public class SiglusLotLocationServiceTest extends TestCase {
     lotDto1.setActive(false);
     lotDto1.setLotCode(lotCode);
     when(lotController.getLots(any(), any())).thenReturn(new PageImpl<>(Collections.singletonList(lotDto1)));
-    LotLocationDto lotLocation1 = LotLocationDto.builder().locationCode(locationCode1).area(area1)
+    LocationLotsDto lotLocation1 = LocationLotsDto.builder().locationCode(locationCode1).area(area1)
         .lots(Collections.emptyList()).build();
-    LotLocationDto lotLocation2 = LotLocationDto.builder().locationCode(locationCode2).area(area2)
+    LocationLotsDto lotLocation2 = LocationLotsDto.builder().locationCode(locationCode2).area(area2)
         .lots(Collections.emptyList()).build();
     LotsDto lotsDto = LotsDto
         .builder()
@@ -383,8 +383,8 @@ public class SiglusLotLocationServiceTest extends TestCase {
         .lotCode(lotCode)
         .expirationDate(LocalDate.of(2022, 3, 22))
         .build();
-    LotLocationDto lotLocation3 = LotLocationDto.builder().lots(Collections.singletonList(lotsDto)).build();
-    List<LotLocationDto> expectedLotLocationDtos = Arrays.asList(lotLocation2, lotLocation1, lotLocation3);
+    LocationLotsDto lotLocation3 = LocationLotsDto.builder().lots(Collections.singletonList(lotsDto)).build();
+    List<LocationLotsDto> expectedLocationLotsDtos = Arrays.asList(lotLocation2, lotLocation1, lotLocation3);
 
     when(siglusStockCardSummariesService.getLotsDataByOrderableIds(any())).thenReturn(
         Collections.singletonList(lotDto1));
@@ -397,11 +397,11 @@ public class SiglusLotLocationServiceTest extends TestCase {
             .build()));
 
     // when
-    List<LotLocationDto> lotLocationDtos = service
+    List<LocationLotsDto> locationLotsDtos = service
         .searchLotLocationDtos(Collections.singletonList(orderableId), true, false, true);
 
     // then
-    assertEquals(expectedLotLocationDtos, lotLocationDtos);
+    assertEquals(expectedLocationLotsDtos, locationLotsDtos);
   }
 
 }

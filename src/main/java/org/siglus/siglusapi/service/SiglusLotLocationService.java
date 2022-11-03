@@ -52,7 +52,7 @@ import org.siglus.siglusapi.domain.CalculatedStockOnHandByLocation;
 import org.siglus.siglusapi.domain.FacilityLocations;
 import org.siglus.siglusapi.domain.OrderableIdentifiers;
 import org.siglus.siglusapi.dto.FacilityLocationsDto;
-import org.siglus.siglusapi.dto.LotLocationDto;
+import org.siglus.siglusapi.dto.LocationLotsDto;
 import org.siglus.siglusapi.dto.LotsDto;
 import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.repository.CalculatedStockOnHandByLocationRepository;
@@ -82,22 +82,27 @@ public class SiglusLotLocationService {
   private final SiglusStockCardSummariesService siglusStockCardSummariesService;
   private final OrderableIdentifiersRepository orderableIdentifiersRepository;
 
-  public List<LotLocationDto> searchLotLocationDtos(List<UUID> orderableIds, boolean extraData, boolean isAdjustment,
+  public List<LocationLotsDto> searchLotLocationDtos(List<UUID> orderableIds, boolean extraData, boolean isAdjustment,
       boolean returnNoMovementLots) {
     UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
     if (!extraData) {
       return getLocationsByFacilityId(facilityId);
     }
 
-    List<LotLocationDto> lotLocationDtos = new ArrayList<>(getLotLocationDtos(orderableIds, facilityId, isAdjustment));
+    List<LocationLotsDto> locationLotsDtos = new ArrayList<>(
+        getLotLocationDtos(orderableIds, facilityId, isAdjustment));
 
     if (returnNoMovementLots) {
-      List<UUID> lotIds = lotLocationDtos.stream().flatMap(e -> e.getLots().stream().map(LotsDto::getLotId))
+      List<UUID> lotIds = locationLotsDtos
+          .stream()
+          .flatMap(e -> e.getLots()
+              .stream()
+              .map(LotsDto::getLotId))
           .collect(Collectors.toList());
-      lotLocationDtos.add(getNoMovementLotLocationDto(orderableIds, lotIds));
+      locationLotsDtos.add(getNoMovementLotLocationDto(orderableIds, lotIds));
     }
 
-    return lotLocationDtos;
+    return locationLotsDtos;
   }
 
   public List<FacilityLocationsDto> searchLocationsByFacility(Boolean isEmpty) {
@@ -109,10 +114,16 @@ public class SiglusLotLocationService {
     List<FacilityLocationsDto> dtos = convertToDto(locations);
     if (Boolean.TRUE.equals(isEmpty)) {
       List<StockCard> stockCards = stockCardRepository.findByFacilityIdIn(facilityId);
-      List<UUID> stockCardIds = stockCards.stream().map(StockCard::getId).collect(Collectors.toList());
+      List<UUID> stockCardIds = stockCards
+          .stream()
+          .map(StockCard::getId)
+          .collect(Collectors.toList());
       List<CalculatedStockOnHandByLocation> sohByLocations = calculatedStockOnHandByLocationRepository
           .findPreviousLocationStockOnHandsGreaterThan0(stockCardIds, LocalDate.now());
-      Set<String> noEmptyLocationKeys = sohByLocations.stream().map(this::getLocationKey).collect(Collectors.toSet());
+      Set<String> noEmptyLocationKeys = sohByLocations
+          .stream()
+          .map(this::getLocationKey)
+          .collect(Collectors.toSet());
       dtos.forEach(dto -> {
         dto.setIsEmpty(!noEmptyLocationKeys.contains(getLocationKey(dto)));
       });
@@ -120,7 +131,7 @@ public class SiglusLotLocationService {
     return dtos;
   }
 
-  private LotLocationDto getNoMovementLotLocationDto(List<UUID> orderableIds, List<UUID> hasMovementLotIds) {
+  private LocationLotsDto getNoMovementLotLocationDto(List<UUID> orderableIds, List<UUID> hasMovementLotIds) {
     List<LotDto> lotDtos = siglusStockCardSummariesService.getLotsDataByOrderableIds(orderableIds);
     List<String> tradeLineItemIds = lotDtos
         .stream()
@@ -131,9 +142,13 @@ public class SiglusLotLocationService {
         .stream()
         .collect(Collectors.groupingBy(OrderableIdentifiers::getValue));
 
-    List<UUID> lotIds = lotDtos.stream().map(LotDto::getId).collect(Collectors.toList());
+    List<UUID> lotIds = lotDtos
+        .stream()
+        .map(LotDto::getId)
+        .collect(Collectors.toList());
     LotSearchParams requestParams = new LotSearchParams(null, null, null, lotIds);
-    Map<String, List<LotDto>> lotCodeToLotDtoMap = lotController.getLots(requestParams, null).getContent().stream()
+    Map<String, List<LotDto>> lotCodeToLotDtoMap = lotController.getLots(requestParams, null).getContent()
+        .stream()
         .collect(Collectors.groupingBy(LotDto::getLotCode));
 
     List<LotsDto> allLotDtos = lotDtos
@@ -144,11 +159,14 @@ public class SiglusLotLocationService {
             .lotId(lotCodeToLotDtoMap.get(e.getLotCode()).get(0).getId())
             .expirationDate(e.getExpirationDate())
             .lotCode(e.getLotCode())
-            .build()).collect(Collectors.toList());
+            .build())
+        .collect(Collectors.toList());
 
     List<LotsDto> noMovementLotDtos = allLotDtos.stream().filter(e -> !hasMovementLotIds.contains(e.getLotId()))
         .collect(Collectors.toList());
-    return LotLocationDto.builder().lots(noMovementLotDtos).build();
+    return LocationLotsDto.builder()
+        .lots(noMovementLotDtos)
+        .build();
   }
 
   private String getLocationKey(CalculatedStockOnHandByLocation stockOnHandByLocation) {
@@ -159,19 +177,18 @@ public class SiglusLotLocationService {
     return facilityLocationsDto.getArea() + SEPARATOR + facilityLocationsDto.getLocationCode();
   }
 
-  private List<LotLocationDto> getLocationsByFacilityId(UUID facilityId) {
-    List<LotLocationDto> lotLocationDtos = new LinkedList<>();
+  private List<LocationLotsDto> getLocationsByFacilityId(UUID facilityId) {
+    List<LocationLotsDto> locationLotsDtos = new LinkedList<>();
     List<FacilityLocations> locations = facilityLocationsRepository.findByFacilityId(facilityId);
-    locations.forEach(location -> lotLocationDtos.add(LotLocationDto
-        .builder()
+    locations.forEach(location -> locationLotsDtos.add(LocationLotsDto.builder()
         .locationCode(location.getLocationCode())
         .area(location.getArea())
         .build()));
-    return lotLocationDtos;
+    return locationLotsDtos;
   }
 
-  private List<LotLocationDto> getLotLocationDtos(List<UUID> orderableIds, UUID facilityId, boolean isAdjustment) {
-    List<LotLocationDto> lotLocationDtos = new LinkedList<>();
+  private List<LocationLotsDto> getLotLocationDtos(List<UUID> orderableIds, UUID facilityId, boolean isAdjustment) {
+    List<LocationLotsDto> locationLotsDtos = new LinkedList<>();
     List<StockCard> stockCardList;
     if (isAdjustment) {
       stockCardList = getUnrestrictedAdjustmentStockCards(facilityId, orderableIds);
@@ -192,14 +209,13 @@ public class SiglusLotLocationService {
         return;
       }
       List<LotsDto> lotDtoList = getLotsDtos(locationPairs, stockCardIdToStockCard);
-      lotLocationDtos.add(LotLocationDto
-          .builder()
+      locationLotsDtos.add(LocationLotsDto.builder()
           .locationCode(locationCode)
           .area(locationPairs.get(0).getSecond().getArea())
           .lots(lotDtoList)
           .build());
     });
-    return lotLocationDtos;
+    return locationLotsDtos;
   }
 
 
@@ -296,7 +312,9 @@ public class SiglusLotLocationService {
         -> locationStockOnHandList.forEach(locationsStockOnHand -> stockCardLocationPairs.add(Pair.of(
         stockCardId, locationsStockOnHand))));
 
-    return stockCardLocationPairs.stream().collect(Collectors.groupingBy(e -> e.getSecond().getLocationCode()));
+    return stockCardLocationPairs
+        .stream()
+        .collect(Collectors.groupingBy(e -> e.getSecond().getLocationCode()));
   }
 
   private List<LotsDto> getLotsDtos(List<Pair<UUID, CalculatedStockOnHandByLocation>> locationPairs,
@@ -321,8 +339,7 @@ public class SiglusLotLocationService {
       if (lot != null && !lot.isActive()) {
         return;
       }
-      lotDtoList.add(LotsDto
-          .builder()
+      lotDtoList.add(LotsDto.builder()
           .lotId(lotId)
           .orderableId(stockCard.getOrderableId())
           .lotCode(lot == null ? null : lot.getLotCode())

@@ -15,7 +15,6 @@
 
 package org.siglus.siglusapi.service;
 
-import static com.google.common.collect.Sets.newHashSet;
 import static org.siglus.siglusapi.constant.CacheConstants.CACHE_KEY_GENERATOR;
 import static org.siglus.siglusapi.constant.CacheConstants.SIGLUS_PROGRAM;
 import static org.siglus.siglusapi.constant.CacheConstants.SIGLUS_PROGRAMS;
@@ -23,21 +22,15 @@ import static org.siglus.siglusapi.constant.CacheConstants.SIGLUS_PROGRAM_BY_COD
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_CODE;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_NAME;
-import static org.siglus.siglusapi.i18n.PermissionMessageKeys.ERROR_NO_FOLLOWING_PERMISSION;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.openlmis.requisition.dto.ProgramDto;
-import org.openlmis.requisition.service.PermissionService;
-import org.openlmis.requisition.service.referencedata.PermissionStringDto;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
-import org.openlmis.stockmanagement.exception.PermissionMessageException;
-import org.openlmis.stockmanagement.util.Message;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
@@ -46,7 +39,6 @@ import org.springframework.stereotype.Service;
 public class SiglusProgramService {
 
   private final ProgramReferenceDataService programRefDataService;
-  private final PermissionService permissionService;
 
   @Cacheable(value = SIGLUS_PROGRAMS, keyGenerator = CACHE_KEY_GENERATOR)
   public List<ProgramDto> getPrograms(String code) {
@@ -78,30 +70,4 @@ public class SiglusProgramService {
     programDto.setName(ALL_PRODUCTS_PROGRAM_NAME);
     return programDto;
   }
-
-  public Set<UUID> getProgramIds(UUID programId, UUID userId, String rightName,
-      String facilityId) {
-    Set<UUID> programIds = newHashSet();
-    Set<PermissionStringDto> permissionStrings = permissionService
-        .getPermissionStrings(userId).get();
-    if (ALL_PRODUCTS_PROGRAM_ID.equals(programId)) {
-      Set<UUID> programsByRight = permissionStrings
-          .stream()
-          .filter(permissionStringDto -> permissionStringDto.getRightName().equals(rightName)
-              && UUID.fromString(facilityId).equals(permissionStringDto.getFacilityId())
-          )
-          .map(PermissionStringDto::getProgramId)
-          .collect(Collectors.toSet());
-      if (org.apache.commons.collections.CollectionUtils.isEmpty(programsByRight)) {
-        throw new PermissionMessageException(
-            new Message(ERROR_NO_FOLLOWING_PERMISSION, rightName, facilityId));
-      }
-      return programsByRight;
-    }
-
-    programIds.add(programId);
-
-    return programIds;
-  }
-
 }
