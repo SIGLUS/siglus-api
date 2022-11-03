@@ -47,7 +47,7 @@ public interface SiglusProofOfDeliveryRepository extends JpaRepository<ProofOfDe
       + "join fulfillment.orders o2 on s2.orderid = o2.id "
       + "where p.status = 'CONFIRMED' "
       + "and p.receiveddate >= :date "
-      + "and p.receiveddate < :today "
+      + "and p.receiveddate <= now() "
       + "and p.shipmentid in ("
       + "     select s.id from fulfillment.shipments s "
       + "     join fulfillment.orders o "
@@ -55,7 +55,7 @@ public interface SiglusProofOfDeliveryRepository extends JpaRepository<ProofOfDe
       + "     where o.requestingfacilityid in :requestingFacilityIds) "
       + "order by ?#{#pageable}",
       nativeQuery = true)
-  Page<ProofOfDelivery> search(@Param("date") LocalDate date, @Param("today") String today,
+  Page<ProofOfDelivery> search(@Param("date") LocalDate date,
       @Param("requestingFacilityIds") Set<UUID> requestingFacilityIds,
       Pageable pageable);
 

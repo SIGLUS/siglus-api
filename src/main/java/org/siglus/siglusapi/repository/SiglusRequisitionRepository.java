@@ -30,12 +30,22 @@ import org.springframework.data.repository.query.Param;
 
 @SuppressWarnings("PMD.AvoidDuplicateLiterals")
 public interface SiglusRequisitionRepository extends JpaRepository<Requisition, UUID> {
+
   @Query(value = "select * from requisition.requisitions r where "
       + "r.status in ('IN_APPROVAL', 'APPROVED', 'RELEASED', 'RELEASED_WITHOUT_ORDER')"
       + "and r.modifieddate >= :date "
-      + "and r.modifieddate <= :today "
+      + "and r.modifieddate <= now() "
       + "order by ?#{#pageable}", nativeQuery = true)
-  Page<Requisition> searchForFc(@Param("date") LocalDate date, @Param("today") String today, Pageable pageable);
+  Page<Requisition> searchAllForFc(@Param("date") LocalDate date, Pageable pageable);
+
+  @Query(value = "select * from requisition.requisitions r where "
+      + "r.status = 'IN_APPROVAL' "
+      + "and r.modifieddate >= :date "
+      + "and r.modifieddate <= now() "
+      + "and r.supervisorynodeid in :fcSupervisoryNodeIds "
+      + "order by ?#{#pageable}", nativeQuery = true)
+  Page<Requisition> searchNeedApprovalForFc(@Param("date") LocalDate date,
+      Pageable pageable, @Param("fcSupervisoryNodeIds") Set<UUID> fcSupervisoryNodeIds);
 
   @Query(value = "select r.* from requisition.requisitions r, referencedata.processing_periods p "
       + "where r.processingPeriodId = p.id "

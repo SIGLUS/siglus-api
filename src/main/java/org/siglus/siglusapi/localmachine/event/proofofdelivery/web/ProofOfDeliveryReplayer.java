@@ -29,6 +29,7 @@ import org.siglus.siglusapi.localmachine.event.NotificationService;
 import org.siglus.siglusapi.repository.PodExtensionRepository;
 import org.siglus.siglusapi.repository.PodLineItemsByLocationRepository;
 import org.siglus.siglusapi.repository.SiglusOrdersRepository;
+import org.siglus.siglusapi.repository.SiglusShipmentRepository;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
@@ -42,6 +43,7 @@ public class ProofOfDeliveryReplayer {
   private final SiglusOrdersRepository siglusOrdersRepository;
   private final PodLineItemsByLocationRepository podLineItemsByLocationRepository;
   private final NotificationService notificationService;
+  private final SiglusShipmentRepository siglusShipmentRepository;
 
   @EventListener(classes = {ProofOfDeliveryEvent.class})
   public void replay(ProofOfDeliveryEvent event) {
@@ -58,23 +60,24 @@ public class ProofOfDeliveryReplayer {
   public void doReplay(ProofOfDeliveryEvent event) {
 
     ProofOfDelivery proofOfDelivery = event.getProofOfDelivery();
-    System.out.println("pod = " + proofOfDelivery);
+    Shipment shipment = proofOfDelivery.getShipment();
+    Order order = shipment.getOrder();
+    Shipment shipmentByOrderId = siglusShipmentRepository.findShipmentByOrderId(order.getId());
+    proofOfDelivery.setShipment(shipmentByOrderId);
     proofOfDeliveryRepository.saveAndFlush(proofOfDelivery);
-    log.info("proofOfDelivery has been saved! id = {}", event.getProofOfDelivery().getId());
+    log.info("proofOfDelivery has been saved! id = {}", proofOfDelivery.getId());
     PodExtension proofsOfDeliveryExtension = event.getPodExtension();
     podExtensionRepository.saveAndFlush(proofsOfDeliveryExtension);
     log.info("ProofsOfDeliveryExtension has been saved! ProofOfDelivery id = {}", event.getProofOfDelivery().getId());
 
-    Shipment shipment = proofOfDelivery.getShipment();
-    String orderCode = shipment.getOrder().getOrderCode();
-    Order order = siglusOrdersRepository.findByOrderCode(orderCode);
-    order.setStatus(shipment.getOrder().getStatus());
+    Order orderByOrderCode = siglusOrdersRepository.findByOrderCode(order.getOrderCode());
+    orderByOrderCode.setStatus(order.getStatus());
 
     List<PodLineItemsByLocation> podLineItemsByLocations = event.getPodLineItemsByLocation();
     if (Objects.nonNull(podLineItemsByLocations) && !podLineItemsByLocations.isEmpty()) {
       podLineItemsByLocationRepository.save(podLineItemsByLocations);
     }
-    notificationService.postConfirmPod(event.getUserId(), proofOfDelivery.getId(), order);
+    notificationService.postConfirmPod(event.getUserId(), proofOfDelivery.getId(), orderByOrderCode);
   }
 
 }

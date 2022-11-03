@@ -170,8 +170,7 @@ public class SiglusFcIntegrationService {
 
   public Page<FcRequisitionDto> searchRequisitions(LocalDate date, Pageable pageable) {
     Page<Requisition> requisitions;
-    String today = dateHelper.getTodayDateStr();
-    requisitions = siglusRequisitionRepository.searchForFc(date, today, pageable);
+    requisitions = siglusRequisitionRepository.searchAllForFc(date, pageable);
     List<FcRequisitionDto> fcRequisitionDtos = newArrayList();
     Map<UUID, ProgramRealProgram> realProgramIdToEntityMap = programRealProgramRepository.findAll()
         .stream().collect(Collectors.toMap(ProgramRealProgram::getId, Function.identity()));
@@ -179,6 +178,22 @@ public class SiglusFcIntegrationService {
     Set<UUID> fcSupervisoryNodeIds = supervisoryNodeRepository
         .findAllByFacilityTypeId(fcFacilityTypeId).stream().map(SupervisoryNode::getId)
         .collect(toSet());
+    requisitions.getContent().forEach(requisition -> fcRequisitionDtos.add(buildDto(requisition,
+        fcSupervisoryNodeIds, realProgramIdToEntityMap)));
+    return Pagination.getPage(fcRequisitionDtos, pageable, requisitions.getTotalElements());
+  }
+
+  public Page<FcRequisitionDto> searchNeedApprovalRequisitions(LocalDate date, Pageable pageable) {
+    Page<Requisition> requisitions;
+    Set<UUID> fcSupervisoryNodeIds = supervisoryNodeRepository
+        .findAllByFacilityTypeId(fcFacilityTypeId).stream().map(SupervisoryNode::getId)
+        .collect(toSet());
+    requisitions = siglusRequisitionRepository.searchNeedApprovalForFc(date, pageable, fcSupervisoryNodeIds);
+    List<FcRequisitionDto> fcRequisitionDtos = newArrayList();
+    Map<UUID, ProgramRealProgram> realProgramIdToEntityMap = programRealProgramRepository.findAll()
+        .stream().collect(Collectors.toMap(ProgramRealProgram::getId, Function.identity()));
+    orderableIdToInfoMap = siglusOrderableService.getAllOrderableInfoForFc();
+
     requisitions.getContent().forEach(requisition -> fcRequisitionDtos.add(buildDto(requisition,
         fcSupervisoryNodeIds, realProgramIdToEntityMap)));
     return Pagination.getPage(fcRequisitionDtos, pageable, requisitions.getTotalElements());
@@ -232,7 +247,7 @@ public class SiglusFcIntegrationService {
         .collect(toMap(FacilityDto::getId, FacilityDto::getCode));
 
     Page<ProofOfDelivery> page = siglusProofOfDeliveryRepository
-        .search(date, dateHelper.getTodayDateStr(), dpmRequestingFacilityIds, pageable);
+        .search(date, dpmRequestingFacilityIds, pageable);
 
     Set<UUID> shipmentIds = page.getContent().stream()
         .map(ProofOfDelivery::getShipment).map(Shipment::getId).collect(toSet());
