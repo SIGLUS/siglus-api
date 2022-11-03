@@ -16,6 +16,7 @@
 package org.siglus.siglusapi.web;
 
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -34,6 +35,7 @@ import org.openlmis.requisition.dto.RequisitionsProcessingStatusDto;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.localmachine.event.requisition.web.release.RequisitionReleaseEmitter;
 import org.siglus.siglusapi.service.BatchReleaseRequisitionService;
+import org.siglus.siglusapi.service.SiglusNotificationService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -53,6 +55,9 @@ public class SiglusBatchRequisitionControllerTest {
   private RequisitionReleaseEmitter requisitionReleaseEmitter;
 
   @Mock
+  private SiglusNotificationService notificationService;
+
+  @Mock
   private SiglusAuthenticationHelper siglusAuthenticationHelper;
 
   private final UUID userId = UUID.randomUUID();
@@ -70,6 +75,7 @@ public class SiglusBatchRequisitionControllerTest {
     UserDto user = new UserDto();
     user.setId(userId);
     when(siglusAuthenticationHelper.getCurrentUser()).thenReturn(user);
+    doNothing().when(notificationService).postConvertToOrder(any());
   }
 
   @Test
