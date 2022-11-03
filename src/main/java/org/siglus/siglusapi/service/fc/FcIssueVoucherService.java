@@ -22,6 +22,8 @@ import static org.siglus.siglusapi.constant.FieldConstants.ORDERABLE_ID;
 import static org.siglus.siglusapi.constant.FieldConstants.PROGRAM_ID;
 import static org.siglus.siglusapi.constant.FieldConstants.RIGHT_NAME;
 import static org.siglus.siglusapi.constant.PaginationConstants.DEFAULT_PAGE_NUMBER;
+import static org.siglus.siglusapi.constant.ProgramConstants.MMC_PROGRAM_CODE;
+import static org.siglus.siglusapi.constant.ProgramConstants.VIA_PROGRAM_CODE;
 import static org.siglus.siglusapi.dto.fc.FcIntegrationResultDto.buildResult;
 
 import com.google.common.collect.ImmutableMap;
@@ -78,9 +80,11 @@ import org.siglus.siglusapi.dto.fc.FcIntegrationResultDto;
 import org.siglus.siglusapi.dto.fc.IssueVoucherDto;
 import org.siglus.siglusapi.dto.fc.ProductDto;
 import org.siglus.siglusapi.dto.fc.ResponseBaseDto;
+import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.repository.ShipmentsExtensionRepository;
 import org.siglus.siglusapi.service.SiglusOrderService;
+import org.siglus.siglusapi.service.SiglusProgramService;
 import org.siglus.siglusapi.service.SiglusShipmentDraftService;
 import org.siglus.siglusapi.service.SiglusShipmentService;
 import org.siglus.siglusapi.service.SiglusStockCardSummariesService;
@@ -135,6 +139,7 @@ public class FcIssueVoucherService implements ProcessDataService {
   private final RequisitionStatusProcessor requisitionStatusProcessor;
   private final OrderDtoBuilder orderDtoBuilder;
   private final OrderFulfillmentService orderFulfillmentService;
+  private final SiglusProgramService siglusProgramService;
 
   private final List<String> issueVoucherErrors = new ArrayList<>();
 
@@ -212,12 +217,17 @@ public class FcIssueVoucherService implements ProcessDataService {
       List<ProductDto> existProducts = getExistProducts(issueVoucherDto, approvedProductsMap);
       if (!CollectionUtils.isEmpty(existProducts)) {
         simulateUser.simulateUserAuth(userDto.getId());
+        // before shipment, need sufficient products for the warehouse first,
+        // so that it can have enough products to fulfill when do shipment
+        log.info("FC] sufficient products for AC warehouse");
         createStockEvent(userDto, requisitionV2Dto, existProducts, approvedProductsMap);
         Map<String, List<ProductDto>> productMaps = existProducts.stream()
             .collect(Collectors.groupingBy(ProductDto::getFnmCode));
         UUID orderId = createOrder(requisitionV2Dto, approvedProductDtos, productMaps,
             supplyFacility, userDto, approvedProductsMap, issueVoucherDto);
         if (orderId != null) {
+          // when do shipment for AC warehouse, it will fulfill products
+          log.info("FC] create shipment for AC warehouse");
           ShipmentDto shipmentDto = createShipmentDraftAndShipment(orderId, productMaps,
               approvedProductDtos, approvedProductsMap, supplyFacility, requisitionV2Dto, issueVoucherDto);
           saveFcShipmentsExtension(issueVoucherDto, shipmentDto);
@@ -282,8 +292,15 @@ public class FcIssueVoucherService implements ProcessDataService {
 
   private void createStockEvent(UserDto useDto, RequisitionV2Dto requisitionV2Dto,
       List<ProductDto> existProductDtos, Map<String, ApprovedProductDto> orderableDtoMap) {
+    UUID programId = requisitionV2Dto.getProgramId();
+    String programCode = siglusProgramService.getProgram(programId).getCode();
+    if (MMC_PROGRAM_CODE.equals(programCode)) {
+      programId = siglusProgramService.getProgramByCode(VIA_PROGRAM_CODE)
+          .orElseThrow(() -> new NotFoundException("VIA program not found"))
+          .getId();
+    }
     Collection<ValidSourceDestinationDto> validSourceDtos = sourceDestinationService
-        .getValidSources(requisitionV2Dto.getProgramId(), useDto.getHomeFacilityId());
+        .getValidSources(programId, useDto.getHomeFacilityId());
     ValidSourceDestinationDto fcSource = validSourceDtos.stream()
         .filter(validSourceDto -> validSourceDto.getName().equals(FC_INTEGRATION))
         .findFirst()
@@ -295,7 +312,7 @@ public class FcIssueVoucherService implements ProcessDataService {
           .map(productDto -> getStockEventLineItemDto(requisitionV2Dto,
               orderableDtoMap, sourceId, productDto)).collect(Collectors.toList());
       StockEventDto eventDto = StockEventDto.builder()
-          .programId(requisitionV2Dto.getProgramId())
+          .programId(programId)
           .facilityId(useDto.getHomeFacilityId())
           .signature(FC_INTEGRATION)
           .userId(useDto.getId())
@@ -409,7 +426,7 @@ public class FcIssueVoucherService implements ProcessDataService {
 
   private OrderLineItem getOrderLineItems(List<OrderLineItem> lineItems, UUID productId) {
     return lineItems.stream().filter(orderLineItem ->
-        orderLineItem.getOrderable().getId().equals(productId))
+            orderLineItem.getOrderable().getId().equals(productId))
         .findFirst()
         .orElse(null);
   }
@@ -556,8 +573,8 @@ public class FcIssueVoucherService implements ProcessDataService {
   private ProductDto getProductDto(ApprovedProductDto productDto, LotDto lotDto,
       List<ProductDto> products) {
     return products.stream().filter(dto ->
-        dto.getFnmCode().equals(productDto.getOrderable().getProductCode())
-            && dto.getBatch().equals(lotDto.getLotCode()))
+            dto.getFnmCode().equals(productDto.getOrderable().getProductCode())
+                && dto.getBatch().equals(lotDto.getLotCode()))
         .findFirst()
         .orElse(null);
   }

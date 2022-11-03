@@ -276,10 +276,10 @@ public class MasterDataSql {
   public static final String PROGRAM_ORDERABLES_EXTENSION_QUERY =
       "select * from siglusintegration.program_orderables_extension";
 
-  public static final String PROGRAM_REQUISITION_NAME_MAPPING = "siglusintegration.program_requisition_name_mapping";
+  public static final String PROGRAM_REPORT_NAME_MAPPING = "siglusintegration.program_report_name_mapping";
 
-  public static final String PROGRAM_REQUISITION_NAME_MAPPING_QUERY =
-      "select * from siglusintegration.program_requisition_name_mapping";
+  public static final String PROGRAM_REPORT_NAME_MAPPING_QUERY =
+      "select * from siglusintegration.program_report_name_mapping";
 
   public static final String PROGRAM_REAL_PROGRAM = "siglusintegration.program_real_program";
 
@@ -430,7 +430,7 @@ public class MasterDataSql {
     masterDataSql.put(PROGRAM_ADDITIONAL_ORDERABLES, PROGRAM_ADDITIONAL_ORDERABLES_QUERY);
     masterDataSql.put(PROCESSING_PERIOD_EXTENSION, PROCESSING_PERIOD_EXTENSION_QUERY);
     masterDataSql.put(PROGRAM_ORDERABLES_EXTENSION, PROGRAM_ORDERABLES_EXTENSION_QUERY);
-    masterDataSql.put(PROGRAM_REQUISITION_NAME_MAPPING, PROGRAM_REQUISITION_NAME_MAPPING_QUERY);
+    masterDataSql.put(PROGRAM_REPORT_NAME_MAPPING, PROGRAM_REPORT_NAME_MAPPING_QUERY);
     masterDataSql.put(PROGRAM_REAL_PROGRAM, PROGRAM_REAL_PROGRAM_QUERY);
     masterDataSql.put(REGIMEN_CATEGORIES, REGIMEN_CATEGORIES_QUERY);
     masterDataSql.put(REGIMENS, REGIMENS_QUERY);
