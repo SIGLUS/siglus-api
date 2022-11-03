@@ -829,24 +829,32 @@ public class SiglusPhysicalInventoryService {
   // fill the beforeSavedDto.lineItem id where id = null, before has locationCode, after doesn't
   private void fillLineItemId(PhysicalInventoryLineItemExtensionDto beforeSavedDto,
       PhysicalInventoryDto afterSavedDto) {
-    Set<UUID> previousLineItemIds = beforeSavedDto.getLineItems().stream()
-        .map(PhysicalInventoryLineItemDto::getId).filter(Objects::nonNull).collect(Collectors.toSet());
+    Set<UUID> previousLineItemIds = beforeSavedDto.getLineItems()
+        .stream()
+        .map(PhysicalInventoryLineItemDto::getId)
+        .filter(Objects::nonNull)
+        .collect(Collectors.toSet());
     // no locationCode in new saved lineitem, uniqueKey can be duplicate
-    List<PhysicalInventoryLineItemDto> newSavedLineItems = afterSavedDto.getLineItems().stream()
-        .filter(lineItem -> !previousLineItemIds.contains(lineItem.getId())).collect(Collectors.toList());
+    List<PhysicalInventoryLineItemDto> newSavedLineItems = afterSavedDto.getLineItems()
+        .stream()
+        .filter(lineItem -> !previousLineItemIds.contains(lineItem.getId()))
+        .collect(Collectors.toList());
 
     Set<UUID> usedIds = new HashSet<>();
-    beforeSavedDto.getLineItems().stream()
+    beforeSavedDto.getLineItems()
+        .stream()
         .filter(lineItemDto -> lineItemDto.getId() == null)
         .forEach(lineItemDto -> {
-          UUID id = newSavedLineItems.stream()
+          UUID id = newSavedLineItems
+              .stream()
               .filter(saved -> getUniqueKey(saved).equals(getUniqueKey(lineItemDto)))
               .filter(saved -> !usedIds.contains(saved.getId()))
               .findFirst().orElseThrow(() -> new IllegalArgumentException("can't find saved line item"))
               .getId();
           lineItemDto.setId(id);
           Optional<PhysicalInventorySubDraftLineItemsExtensionDto> lineItemsExtension =
-              beforeSavedDto.getLineItemsExtensions().stream()
+              beforeSavedDto.getLineItemsExtensions()
+                  .stream()
                   .filter(lineItemsExtensionDto -> lineItemsExtensionDto.getPhysicalInventoryLineItemId() == null)
                   .filter(lineItemsExtensionDto -> getUniqueKeyWithLocation(lineItemDto)
                       .equals(getUniqueKeyWithLocation(lineItemsExtensionDto)))
@@ -858,17 +866,24 @@ public class SiglusPhysicalInventoryService {
 
   private void fillLineItemIdForInitiate(PhysicalInventoryDto beforeSavedDto,
       PhysicalInventoryDto afterSavedDto) {
-    Set<UUID> previousLineItemIds = beforeSavedDto.getLineItems().stream()
-        .map(PhysicalInventoryLineItemDto::getId).filter(Objects::nonNull).collect(Collectors.toSet());
+    Set<UUID> previousLineItemIds = beforeSavedDto.getLineItems()
+        .stream()
+        .map(PhysicalInventoryLineItemDto::getId)
+        .filter(Objects::nonNull)
+        .collect(Collectors.toSet());
     // no locationCode in new saved lineitem, uniqueKey can be duplicate
-    List<PhysicalInventoryLineItemDto> newSavedLineItems = afterSavedDto.getLineItems().stream()
-        .filter(lineItem -> !previousLineItemIds.contains(lineItem.getId())).collect(Collectors.toList());
+    List<PhysicalInventoryLineItemDto> newSavedLineItems = afterSavedDto.getLineItems()
+        .stream()
+        .filter(lineItem -> !previousLineItemIds.contains(lineItem.getId()))
+        .collect(Collectors.toList());
 
     Set<UUID> usedIds = new HashSet<>();
-    beforeSavedDto.getLineItems().stream()
+    beforeSavedDto.getLineItems()
+        .stream()
         .filter(lineItemDto -> lineItemDto.getId() == null)
         .forEach(lineItemDto -> {
-          UUID id = newSavedLineItems.stream()
+          UUID id = newSavedLineItems
+              .stream()
               .filter(saved -> getUniqueKey(saved).equals(getUniqueKey(lineItemDto)))
               .filter(saved -> !usedIds.contains(saved.getId()))
               .findFirst().orElseThrow(() -> new IllegalArgumentException("can't find saved line item"))
@@ -893,8 +908,10 @@ public class SiglusPhysicalInventoryService {
   public PhysicalInventoryDto saveDraftForAllProducts(PhysicalInventoryDto dto) {
     deletePhysicalInventoryDraftForAllProgramsWithSubDraft(dto.getFacilityId());
     createNewDraftForAllProducts(dto, null);
-    Set<UUID> programIds = dto.getLineItems().stream()
-        .map(PhysicalInventoryLineItemDto::getProgramId).collect(Collectors.toSet());
+    Set<UUID> programIds = dto.getLineItems()
+        .stream()
+        .map(PhysicalInventoryLineItemDto::getProgramId)
+        .collect(Collectors.toSet());
     List<PhysicalInventoryDto> inventories = fetchPhysicalInventories(programIds, dto.getFacilityId(),
         Boolean.TRUE);
     inventories.forEach(inventory -> inventory.setLineItems(
@@ -924,8 +941,10 @@ public class SiglusPhysicalInventoryService {
   public void deletePhysicalInventoryDraftWithSubDrafts(UUID id) {
     deletePhysicalInventoryDraftById(id);
     physicalInventorySubDraftRepository.deletePhysicalInventorySubDraftsByPhysicalInventoryId(id);
-    List<UUID> subDraftIds = physicalInventorySubDraftRepository.findByPhysicalInventoryId(
-        id).stream().map(BaseEntity::getId).collect(Collectors.toList());
+    List<UUID> subDraftIds = physicalInventorySubDraftRepository.findByPhysicalInventoryId(id)
+        .stream()
+        .map(BaseEntity::getId)
+        .collect(Collectors.toList());
     physicalInventoryEmptyLocationLineItemRepository
         .deletePhysicalInventoryEmptyLocationLineItemsBySubDraftIdIn(subDraftIds);
   }
@@ -984,7 +1003,10 @@ public class SiglusPhysicalInventoryService {
     List<PhysicalInventoryDto> inventories = fetchPhysicalInventories(supportedPrograms, facilityId, isDraft);
     if (CollectionUtils.isNotEmpty(inventories)) {
       List<UUID> updatePhysicalInventoryIds =
-          inventories.stream().map(PhysicalInventoryDto::getId).collect(Collectors.toList());
+          inventories
+              .stream()
+              .map(PhysicalInventoryDto::getId)
+              .collect(Collectors.toList());
       log.info("find physical inventory extension in one program: {}", updatePhysicalInventoryIds);
       List<PhysicalInventoryLineItemsExtension> extensions =
           lineItemsExtensionRepository.findByPhysicalInventoryIdIn(updatePhysicalInventoryIds);
@@ -1021,7 +1043,10 @@ public class SiglusPhysicalInventoryService {
       List<PhysicalInventoryDto> inventories = fetchPhysicalInventories(supportedPrograms, facilityId, isDraft);
       if (CollectionUtils.isNotEmpty(inventories)) {
         List<UUID> updatePhysicalInventoryIds =
-            inventories.stream().map(PhysicalInventoryDto::getId).collect(Collectors.toList());
+            inventories
+                .stream()
+                .map(PhysicalInventoryDto::getId)
+                .collect(Collectors.toList());
         log.info("find physical inventory extension: {}", updatePhysicalInventoryIds);
         List<PhysicalInventoryLineItemsExtension> extensions =
             lineItemsExtensionRepository.findByPhysicalInventoryIdIn(updatePhysicalInventoryIds);
@@ -1043,11 +1068,16 @@ public class SiglusPhysicalInventoryService {
   private List<PhysicalInventoryLineItemDto> getEmptyLocations(UUID facilityId) {
     List<UUID> supportPhysicalInventoryIds = getSupportPhysicalInventoryIds(facilityId);
     List<UUID> subDraftIds = physicalInventorySubDraftRepository.findByPhysicalInventoryIdIn(
-        supportPhysicalInventoryIds).stream().map(BaseEntity::getId).collect(Collectors.toList());
+        supportPhysicalInventoryIds)
+        .stream()
+        .map(BaseEntity::getId)
+        .collect(Collectors.toList());
     List<PhysicalInventoryEmptyLocationLineItem> emptyLocations
         = physicalInventoryEmptyLocationLineItemRepository.findBySubDraftIdIn(subDraftIds);
-    List<PhysicalInventoryEmptyLocationLineItem> visualEmptyLocations = emptyLocations.stream()
-        .filter(lineItem -> !lineItem.isHasProduct()).collect(Collectors.toList());
+    List<PhysicalInventoryEmptyLocationLineItem> visualEmptyLocations = emptyLocations
+        .stream()
+        .filter(lineItem -> !lineItem.isHasProduct())
+        .collect(Collectors.toList());
     return convertEmptyLocationToPhysicalInventoryLineItemDto(visualEmptyLocations);
   }
 
@@ -1062,8 +1092,9 @@ public class SiglusPhysicalInventoryService {
   private PhysicalInventoryDto doCreateNewDraftForAllProducts(PhysicalInventoryDto dto, boolean directly,
       LocationManagementOption locationOption) {
     Set<UUID> supportedPrograms = supportedProgramsHelper.findHomeFacilitySupportedProgramIds();
-    List<PhysicalInventoryDto> inventories = supportedPrograms.stream().map(
-        supportedVirtualProgram -> {
+    List<PhysicalInventoryDto> inventories = supportedPrograms
+        .stream()
+        .map(supportedVirtualProgram -> {
           // avoid direct change dto
           PhysicalInventoryDto copy = new PhysicalInventoryDto();
           BeanUtils.copyProperties(dto, copy);
@@ -1098,7 +1129,9 @@ public class SiglusPhysicalInventoryService {
     }
     List<UUID> physicalInventoryIdList = new ArrayList<>(
         Collections.singleton(UUID.fromString(physicalInventoryId)))
-        .stream().filter(Objects::nonNull).collect(Collectors.toList());
+        .stream()
+        .filter(Objects::nonNull)
+        .collect(Collectors.toList());
     if (hasSubDraft) {
       physicalInventoryIdList.forEach(this::deletePhysicalInventoryDraftWithSubDrafts);
     } else {
@@ -1116,7 +1149,10 @@ public class SiglusPhysicalInventoryService {
       PhysicalInventoryDto inventoryDto,
       List<PhysicalInventoryDto> updatedDto) {
     List<UUID> updatePhysicalInventoryIds =
-        updatedDto.stream().map(PhysicalInventoryDto::getId).collect(Collectors.toList());
+        updatedDto
+            .stream()
+            .map(PhysicalInventoryDto::getId)
+            .collect(Collectors.toList());
     log.info("find physical inventory extension: {}", updatePhysicalInventoryIds);
     List<PhysicalInventoryLineItemsExtension> extensions = lineItemsExtensionRepository
         .findByPhysicalInventoryIdIn(updatePhysicalInventoryIds);
@@ -1153,12 +1189,16 @@ public class SiglusPhysicalInventoryService {
       PhysicalInventoryLineItemExtensionDto inventoryDto,
       List<PhysicalInventoryDto> updatedDto) {
     List<PhysicalInventorySubDraftLineItemsExtensionDto> lineItemsExtensions = inventoryDto.getLineItemsExtensions();
-    Map<UUID, UUID> lineItemsExtensionMap = lineItemsExtensions.stream()
+    Map<UUID, UUID> lineItemsExtensionMap = lineItemsExtensions
+        .stream()
         .collect(Collectors.toMap(PhysicalInventorySubDraftLineItemsExtensionDto::getPhysicalInventoryLineItemId,
             PhysicalInventorySubDraftLineItemsExtensionDto::getSubDraftId, (item1, item2) -> item1));
 
     List<UUID> updatePhysicalInventoryIds =
-        updatedDto.stream().map(PhysicalInventoryDto::getId).collect(Collectors.toList());
+        updatedDto
+            .stream()
+            .map(PhysicalInventoryDto::getId)
+            .collect(Collectors.toList());
     log.info("find physical inventory extension: {}", updatePhysicalInventoryIds);
     List<PhysicalInventoryLineItemsExtension> extensions = lineItemsExtensionRepository
         .findByPhysicalInventoryIdIn(updatePhysicalInventoryIds);
@@ -1192,7 +1232,8 @@ public class SiglusPhysicalInventoryService {
         updateExtensions.add(extension);
       });
     });
-    List<PhysicalInventoryLineItemsExtension> needDeleteLineItemsExtensions = extensions.stream()
+    List<PhysicalInventoryLineItemsExtension> needDeleteLineItemsExtensions = extensions
+        .stream()
         .filter(extension -> !uniqueKeys.contains(extension.getPhysicalInventoryLineItemId()))
         .collect(Collectors.toList());
     if (CollectionUtils.isNotEmpty(needDeleteLineItemsExtensions)) {
@@ -1223,7 +1264,8 @@ public class SiglusPhysicalInventoryService {
 
   private PhysicalInventoryLineItemsExtension getExtension(
       List<PhysicalInventoryLineItemsExtension> extensions, PhysicalInventoryLineItemDto lineItem) {
-    return extensions.stream()
+    return extensions
+        .stream()
         .filter(extension -> Objects.equals(extension.getPhysicalInventoryLineItemId(), lineItem.getId()))
         .findFirst()
         .orElse(null);
@@ -1231,7 +1273,8 @@ public class SiglusPhysicalInventoryService {
 
   private PhysicalInventoryLineItemDto getMatchedLineItem(PhysicalInventoryDto inventoryDto,
       PhysicalInventoryLineItemDto lineItem) {
-    return inventoryDto.getLineItems().stream()
+    return inventoryDto.getLineItems()
+        .stream()
         .filter(itemDto -> Objects.equals(itemDto.getId(), lineItem.getId()))
         .findFirst()
         .orElse(null);
@@ -1262,7 +1305,8 @@ public class SiglusPhysicalInventoryService {
 
   private List<PhysicalInventoryLineItemDto> getLineItems(List<PhysicalInventoryDto> inventories,
       List<PhysicalInventoryLineItemsExtension> extensions) {
-    return inventories.stream()
+    return inventories
+        .stream()
         .map(inventory -> {
           Optional<List<PhysicalInventoryLineItemDto>> optionalList = Optional
               .ofNullable(inventory.getLineItems());
@@ -1319,7 +1363,8 @@ public class SiglusPhysicalInventoryService {
     List<PhysicalInventory> physicalInventories =
         physicalInventoriesRepository.findByProgramIdAndFacilityIdAndStartDateAndEndDate(programId,
             facility, startDate, endDate);
-    return physicalInventories.stream()
+    return physicalInventories
+        .stream()
         .map(physicalInventory -> physicalInventory.getOccurredDate().toString())
         .collect(Collectors.toSet());
   }

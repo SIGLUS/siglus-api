@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.siglus.siglusapi.dto.FacilityLocationsDto;
-import org.siglus.siglusapi.dto.LotLocationDto;
+import org.siglus.siglusapi.dto.LocationLotsDto;
 import org.siglus.siglusapi.service.SiglusLotLocationService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -36,7 +36,7 @@ public class SiglusLotWithLocationController {
   private final SiglusLotLocationService lotLocationService;
 
   @PostMapping
-  public List<LotLocationDto> searchLotLocationDto(
+  public List<LocationLotsDto> searchLotLocationDto(
       @RequestBody(required = false) List<UUID> orderableIds, @RequestParam(required = false) boolean extraData,
       @RequestParam(required = false) boolean isAdjustment,
       @RequestParam(required = false) boolean returnNoMovementLots) {
