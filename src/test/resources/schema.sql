@@ -18,8 +18,6 @@ CREATE TABLE IF NOT EXISTS localmachine.events (
     localreplayed INT NOT NULL DEFAULT 0,
     syncedtime TIMESTAMP DEFAULT now()
 );
-CREATE UNIQUE INDEX IF NOT EXISTS localmachine_sender_localsequencenumber on localmachine.events(senderid, localsequencenumber);
-CREATE UNIQUE INDEX IF NOT EXISTS localmachine_group_id on localmachine.events(groupid);
 
 CREATE TABLE IF NOT EXISTS localmachine.agents (
     machineid UUID NOT NULL,
@@ -60,5 +58,3 @@ CREATE TABLE IF NOT EXISTS localmachine.ack_records (
     sendto uuid NOT NULL,
     shipped BOOL NOT NULL DEFAULT FALSE
 );
-
-DROP INDEX localmachine.localmachine_sender_localsequencenumber;

@@ -30,6 +30,6 @@ public class EventImporterTest {
   @Test
   public void shouldNotThrowWhenHandleViolationErrorGivenCausedByIdExists() {
     EventImporter.checkIdViolationError(
-        UUID.randomUUID(), new DataIntegrityViolationException("Key (id)"));
+        UUID.randomUUID(), new DataIntegrityViolationException("pkey"));
   }
 }

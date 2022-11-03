@@ -16,60 +16,81 @@
 package org.siglus.siglusapi.localmachine.eventstore;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.junit.Before;
 import org.junit.Test;
 import org.siglus.siglusapi.localmachine.Event;
 import org.siglus.siglusapi.localmachine.EventPayload;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.transaction.annotation.Transactional;
 
 @Transactional
 public class EventStoreIntegrationTest extends LocalMachineIntegrationTest {
   @Autowired private EventStore eventStore;
+  @Autowired private EventRecordRepository eventRecordRepository;
+
+  @Before
+  public void setup() {
+    eventRecordRepository.deleteAll();
+  }
+
+  @Test
+  public void shouldThrowWhenImportThatAlreadyExists() {
+    // given
+    Event event = getEvent();
+    eventStore.importQuietly(event);
+    // when
+    try {
+      eventStore.importQuietly(event);
+      fail("should not reach here");
+    } catch (Exception e) {
+      // then
+      assertThat(e).isInstanceOf(DataIntegrityViolationException.class);
+    }
+  }
 
   @Test
   public void shouldReturnImportedEventWhenLoadGroupEvents() {
     // given
-    TestEventPayload eventPayload = new TestEventPayload(UUID.randomUUID(), "test event payload");
-    String groupId = "group-id";
-    int localSeq = 999;
-    Event event =
-        Event.builder()
-            .id(UUID.randomUUID())
-            .senderId(UUID.randomUUID())
-            .payload(eventPayload)
-            .localSequenceNumber(localSeq)
-            .groupId(groupId)
-            .build();
+    Event event = getEvent();
     eventStore.importQuietly(event);
     // when
-    Event got = eventStore.loadGroupEvents(groupId).get(0);
+    Event got = eventStore.loadGroupEvents(event.getGroupId()).get(0);
     // then
     assertThat(got.getId()).isEqualTo(event.getId());
-    assertThat(got.getPayload()).isEqualTo(eventPayload);
-    assertThat(got.getLocalSequenceNumber()).isEqualTo(localSeq);
+    assertThat(got.getPayload()).isEqualTo(event.getPayload());
+    assertThat(got.getLocalSequenceNumber()).isEqualTo(event.getLocalSequenceNumber());
   }
 
   @Test
   public void shouldReturnEmittedEventWhenGetEventForWebGivenEventNotSyncedYet() {
     // given
-    TestEventPayload eventPayload = new TestEventPayload(UUID.randomUUID(), "test event payload");
-    Event event =
-        Event.builder()
-            .id(UUID.randomUUID())
-            .senderId(UUID.randomUUID())
-            .payload(eventPayload)
-            .build();
+    Event event = getEvent();
     eventStore.emit(event);
     // when
     Event eventForWeb = eventStore.getEventsForOnlineWeb().get(0);
     // then
     assertThat(eventForWeb.getId()).isEqualTo(event.getId());
-    assertThat(eventForWeb.getPayload()).isEqualTo(eventPayload);
+    assertThat(eventForWeb.getPayload()).isEqualTo(event.getPayload());
+  }
+
+  private Event getEvent() {
+    TestEventPayload eventPayload = new TestEventPayload(UUID.randomUUID(), "test event payload");
+    String groupId = "group-id";
+    int localSeq = 999;
+    return Event.builder()
+        .id(UUID.randomUUID())
+        .senderId(UUID.randomUUID())
+        .payload(eventPayload)
+        .localSequenceNumber(localSeq)
+        .groupId(groupId)
+        .build();
   }
 
   @Data

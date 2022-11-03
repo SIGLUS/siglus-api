@@ -91,7 +91,7 @@ public abstract class EventImporter {
   }
 
   static void checkIdViolationError(UUID eventId, DataIntegrityViolationException e) {
-    boolean idExists = e.getMessage().contains("Key (id)");
+    boolean idExists = e.getMessage().toLowerCase().contains("pkey");
     if (idExists) {
       log.info("event exists, skip it, eventid:{}", eventId);
     } else {
