@@ -147,7 +147,7 @@ public class CdcScraper {
         .with("plugin.name", "pgoutput")
         .with("connector.class", "io.debezium.connector.postgresql.PostgresConnector")
         .with("offset.storage", "org.siglus.siglusapi.localmachine.cdc.OffsetBackingStore")
-        .with("offset.flush.interval.ms", "10000")
+        .with("offset.flush.interval.ms", "1000")
         .with("table.include.list", tablesForCapture)
         .with("include.schema.changes", "false")
         .with("snapshot.mode", "never")
