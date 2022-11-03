@@ -267,4 +267,8 @@ public class EventStore {
   public void updateLocalMasterDataOffset(long newOffset) {
     masterDataOffsetRepository.updateLocalMasterDataOffset(newOffset);
   }
+
+  public Optional<UUID> getLastEventIdInGroup(String groupId) {
+    return repository.findLastEventIdGroupId(groupId).map(UUID::fromString);
+  }
 }

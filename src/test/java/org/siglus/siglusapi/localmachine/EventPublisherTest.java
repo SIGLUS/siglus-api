@@ -18,12 +18,14 @@ package org.siglus.siglusapi.localmachine;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
 import java.util.Collections;
+import java.util.Optional;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -61,6 +63,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 @RunWith(SpringRunner.class)
 public class EventPublisherTest {
 
+  private static final String GROUP_ID = "groupId";
   @MockBean
   protected EventRecordRepository eventRecordRepository;
   @MockBean
@@ -93,6 +96,8 @@ public class EventPublisherTest {
 
   @Before
   public void setup() {
+    given(eventRecordRepository.findLastEventIdGroupId(anyString()))
+        .willReturn(Optional.of(UUID.randomUUID().toString()));
     given(machine.fetchSupportedFacilityIds()).willReturn(Collections.singleton(webFacilityId1.toString()));
     given(machine.isOnlineWeb()).willReturn(false);
   }
@@ -113,6 +118,27 @@ public class EventPublisherTest {
     assertThat(eventRecord.getId()).isNotNull();
     assertThat(eventRecord.getGroupId()).isNull();
     assertThat(eventRecord.getReceiverId()).isEqualTo(facilityId);
+    assertThat(eventRecord.getParentId()).isNull();
+    assertThat(eventRecord.getSyncedTime()).isBeforeOrEqualTo(ZonedDateTime.now());
+    assertThat(eventRecord.isLocalReplayed()).isTrue();
+  }
+
+  @Test
+  public void eventParentIdShouldBeSetWhenEmitGivenOtherEventsInTheGroupExists() {
+    // given
+    UUID lastEventIdInTheGroup = UUID.randomUUID();
+    given(eventRecordRepository.findLastEventIdGroupId(GROUP_ID))
+        .willReturn(Optional.of(lastEventIdInTheGroup.toString()));
+    TestEventPayload payload = TestEventPayload.builder().id("id").build();
+    ArgumentCaptor<EventRecord> recordArgumentCaptor = ArgumentCaptor.forClass(EventRecord.class);
+    UUID receiverId = UUID.randomUUID();
+    // when
+    eventPublisher.emitGroupEvent(GROUP_ID, receiverId, payload);
+    // then
+    verify(eventRecordRepository)
+        .insertAndAllocateLocalSequenceNumber(recordArgumentCaptor.capture());
+    EventRecord eventRecord = recordArgumentCaptor.getValue();
+    assertThat(eventRecord.getParentId()).isEqualTo(lastEventIdInTheGroup);
   }
 
   @Test
@@ -120,7 +146,7 @@ public class EventPublisherTest {
     // given
     TestEventPayload payload = TestEventPayload.builder().id("id").build();
     ArgumentCaptor<EventRecord> recordArgumentCaptor = ArgumentCaptor.forClass(EventRecord.class);
-    String groupId = "groupId";
+    String groupId = GROUP_ID;
     UUID receiverId = UUID.randomUUID();
     UUID facilityId = getMockedFacility();
     // when
@@ -133,6 +159,8 @@ public class EventPublisherTest {
     assertThat(eventRecord.getId()).isNotNull();
     assertThat(eventRecord.getGroupId()).isEqualTo(groupId);
     assertThat(eventRecord.getReceiverId()).isEqualTo(receiverId);
+    assertThat(eventRecord.getSyncedTime()).isBeforeOrEqualTo(ZonedDateTime.now());
+    assertThat(eventRecord.isLocalReplayed()).isTrue();
   }
 
   @Test(expected = IllegalStateException.class)

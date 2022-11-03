@@ -17,6 +17,7 @@ package org.siglus.siglusapi.localmachine.eventstore;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Stream;
@@ -71,4 +72,8 @@ public interface EventRecordRepository extends JpaRepository<EventRecord, UUID>,
       + "and e.receiverid != :facilityId \n"
       + "and e.receiversynced = false;", nativeQuery = true)
   List<String> findExportEventIds(@Param("facilityId") UUID facilityId);
+
+  @Query(value = "select cast(id as varchar) as id from localmachine.events "
+      + " where groupid=:groupId order by syncedtime desc limit 1", nativeQuery = true)
+  Optional<String> findLastEventIdGroupId(@Param("groupId") String groupId);
 }

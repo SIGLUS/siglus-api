@@ -16,6 +16,7 @@
 package org.siglus.siglusapi.localmachine;
 
 import java.time.ZonedDateTime;
+import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -42,8 +43,9 @@ public class EventPublisher {
   private final SyncRecordService syncRecordService;
 
   public void emitGroupEvent(String groupId, UUID receiverId, Object payload) {
-    // fixme: parentId
-    Event.EventBuilder eventBuilder = baseEventBuilder(groupId, null, receiverId, payload);
+    Optional<UUID> lastEventIdInGroup = eventStore.getLastEventIdInGroup(groupId);
+    UUID parentId = lastEventIdInGroup.orElse(null);
+    Event.EventBuilder eventBuilder = baseEventBuilder(groupId, parentId, receiverId, payload);
     Event event = eventBuilder.build();
     doEmit(event);
   }
@@ -52,7 +54,6 @@ public class EventPublisher {
     Event.EventBuilder eventBuilder = baseEventBuilder(null, null, null, payload);
     Event event = eventBuilder.build();
     // the only receiver the local facility itself and online web
-    event.setParentId(event.getId());
     event.setReceiverSynced(true);
     event.setReceiverId(event.getSenderId());
     doEmit(event);
