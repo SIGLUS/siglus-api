@@ -23,6 +23,8 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.UUID;
@@ -49,6 +51,34 @@ public class MachineTest {
   @Before
   public void setup() {
     given(environment.getActiveProfiles()).willReturn(new String[]{"localmachine"});
+  }
+
+  @Test
+  public void shouldParseSystemInfoCorrectlyWhenGetSystemInfo() throws IOException {
+    // given
+    String dmidecodeResult = "# dmidecode 3.2\n"
+        + "Getting SMBIOS data from sysfs.\n"
+        + "SMBIOS 2.7 present.\n"
+        + "\n"
+        + "Handle 0x0001, DMI type 1, 27 bytes\n"
+        + "System Information\n"
+        + "\tManufacturer: Amazon EC2\n"
+        + "\tProduct Name: m5.large\n"
+        + "\tVersion: Not Specified\n"
+        + "\tSerial Number: ec2886be-249a-a171-88f6-f6648c7d03c0\n"
+        + "\tUUID: ec2886be-249a-a171-88f6-f6648c7d03c0\n"
+        + "\tWake-up Type: Power Switch\n"
+        + "\tSKU Number: Not Specified\n"
+        + "\tFamily: Not Specified\n";
+    Machine machine = mock(Machine.class);
+    Process process = mock(Process.class);
+    given(machine.getSystemInfoProcess()).willReturn(process);
+    given(machine.getSystemInfo()).willCallRealMethod();
+    given(process.getInputStream()).willReturn(new ByteArrayInputStream(dmidecodeResult.getBytes()));
+    // when
+    String systemInfo = machine.getSystemInfo();
+    // then
+    assertThat(systemInfo).isEqualTo("Amazon EC2 m5.large");
   }
 
   @Test(expected = IllegalStateException.class)

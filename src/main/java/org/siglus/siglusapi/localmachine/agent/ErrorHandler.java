@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.siglus.siglusapi.exception.BusinessDataException;
+import org.siglus.siglusapi.exception.DeferredException;
 import org.siglus.siglusapi.localmachine.constant.ErrorType;
 import org.siglus.siglusapi.localmachine.domain.ErrorPayload;
 import org.siglus.siglusapi.localmachine.domain.ErrorRecord;
@@ -44,8 +45,14 @@ public class ErrorHandler {
 
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   public void storeErrorRecord(Throwable t, ErrorType errorType) {
-    if (!(t instanceof HttpServerErrorException)) {
-      syncRecordService.storeLastSyncRecord();
+    if (t instanceof HttpServerErrorException) {
+      return;
+    }
+    syncRecordService.storeLastSyncRecord();
+    if (t instanceof DeferredException) {
+      DeferredException deferredException = (DeferredException) t;
+      deferredException.getExceptions().forEach(it -> errorRecordRepository.save(buildSyncDownError(it, errorType)));
+    } else {
       errorRecordRepository.save(buildSyncDownError(t, errorType));
     }
   }

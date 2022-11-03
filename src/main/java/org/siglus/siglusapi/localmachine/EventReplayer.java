@@ -32,6 +32,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.siglus.siglusapi.exception.DeferredException;
 import org.siglus.siglusapi.localmachine.ShedLockFactory.AutoClosableLock;
 import org.siglus.siglusapi.localmachine.eventstore.EventStore;
 import org.springframework.stereotype.Component;
@@ -43,6 +44,7 @@ public class EventReplayer {
 
   private static final String DEFAULT_REPLAY_LOCK = "lock.replay.default";
   private static final String DEFAULT_REPLAY_GROUP_LOCK = "lock.replay.group.default.";
+  private static final int TIMEOUT_MILLIS = 1000;
   private final EventPublisher eventPublisher;
   private final EventStore eventStore;
   private final ShedLockFactory lockFactory;
@@ -62,14 +64,27 @@ public class EventReplayer {
             groupEvents.add(it);
           }
         });
-    this.playNonGroupEvents(nonGroupEvents);
-    Map<String, List<Event>> eventGroups =
-        groupEvents.stream().collect(groupingBy(Event::getGroupId, LinkedHashMap::new, toList()));
-    eventGroups.forEach((groupId, value) -> this.playGroupEvents(groupId));
+    playNonGroupEvents(nonGroupEvents);
+    playGroups(groupEvents);
   }
 
-  protected void playGroupEvents(String groupId) {
-    try (AutoClosableLock lock = lockFactory.lock(groupId)) {
+  protected void playGroups(List<Event> groupEvents) {
+    Map<String, List<Event>> eventGroups =
+        groupEvents.stream().collect(groupingBy(Event::getGroupId, LinkedHashMap::new, toList()));
+    DeferredException deferredExceptions = new DeferredException();
+    for (String groupId : eventGroups.keySet()) {
+      try {
+        this.playGroup(groupId);
+      } catch (Exception e) {
+        log.error("fail to replay group:" + groupId, e);
+        deferredExceptions.add(e);
+      }
+    }
+    deferredExceptions.emit();
+  }
+
+  protected void playGroup(String groupId) throws InterruptedException {
+    try (AutoClosableLock lock = lockFactory.waitLock(groupId, TIMEOUT_MILLIS)) {
       if (!lock.isPresent()) {
         log.warn("fail to get lock, cancel this round of replay, group:{}", groupId);
         return;
@@ -112,13 +127,12 @@ public class EventReplayer {
 
   private void playEventWithLock(Event current) {
     String lockId = DEFAULT_REPLAY_GROUP_LOCK + current.getReceiverId();
-    try (AutoClosableLock waitLock = lockFactory
-        .waitLock(lockId, 1000)) {
+    try (AutoClosableLock waitLock = lockFactory.waitLock(lockId, TIMEOUT_MILLIS)) {
       if (!waitLock.isPresent()) {
         log.info("fail to get lock {} to replay event {}", lockId, current.getId());
-        return;
+      } else {
+        eventPublisher.publishEvent(current);
       }
-      waitLock.ifPresent(() -> eventPublisher.publishEvent(current));
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
     }
@@ -129,7 +143,7 @@ public class EventReplayer {
       return;
     }
     final List<Event> eventsForReplaying = sortEventsByLocalSequence(events);
-    try (AutoClosableLock lock = lockFactory.waitLock(DEFAULT_REPLAY_LOCK, 1000)) {
+    try (AutoClosableLock lock = lockFactory.waitLock(DEFAULT_REPLAY_LOCK, TIMEOUT_MILLIS)) {
       lock.ifPresent(() -> eventsForReplaying.forEach(eventPublisher::publishEvent));
       if (!lock.isPresent()) {
         throw new TimeoutException();
@@ -139,8 +153,9 @@ public class EventReplayer {
 
   private List<Event> sortEventsByLocalSequence(List<Event> events) {
     return events.stream()
-        .sorted(Comparator.comparing(Event::getSyncedTime).thenComparingLong(Event::getLocalSequenceNumber))
+        .sorted(
+            Comparator.comparing(Event::getSyncedTime)
+                .thenComparingLong(Event::getLocalSequenceNumber))
         .collect(toList());
   }
-
 }

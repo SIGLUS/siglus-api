@@ -16,6 +16,7 @@
 package org.siglus.siglusapi.localmachine;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -116,10 +117,10 @@ public class Machine {
         : getSystemInfoString(osName, osVersion, systemInfo);
   }
 
-  private String getSystemInfo() {
+  String getSystemInfo() {
     String systemInfo = null;
     try {
-      Process systemInfoProcess = Runtime.getRuntime().exec(SYSTEM_INFO_COMMAND);
+      Process systemInfoProcess = getSystemInfoProcess();
       InputStreamReader inputStreamReader = new InputStreamReader(systemInfoProcess.getInputStream());
       BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
       String allSystemInfo = bufferedReader.lines().collect(Collectors.joining());
@@ -138,7 +139,11 @@ public class Machine {
     } catch (Exception e) {
       log.warn("Get system info failed", e.getCause());
     }
-    return systemInfo;
+    return Optional.ofNullable(systemInfo).map(String::trim).orElse("");
+  }
+
+  Process getSystemInfoProcess() throws IOException {
+    return Runtime.getRuntime().exec(SYSTEM_INFO_COMMAND);
   }
 
   private String getTargetString(String target, String start, String end) {
