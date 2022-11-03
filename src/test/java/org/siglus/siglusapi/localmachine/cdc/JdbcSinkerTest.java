@@ -33,15 +33,21 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.siglus.siglusapi.localmachine.cdc.TableChangeEvent.RowChangeEvent;
+import org.springframework.test.util.ReflectionTestUtils;
 
 @RunWith(MockitoJUnitRunner.class)
 public class JdbcSinkerTest {
+
   private final JdbcSinker sinker = mock(JdbcSinker.class);
-  @Mock private DbSchemaReader schemaReader;
+  @Mock
+  private DbSchemaReader schemaReader;
+  @Mock
+  private SinkerConvertObjectUtil sinkerConvertObjectUtil;
 
   @Before
   public void setup() {
     given(sinker.convertEvent(any(), any())).willCallRealMethod();
+    ReflectionTestUtils.setField(sinker, "sinkerConvertObjectUtil", sinkerConvertObjectUtil);
   }
 
   @Test
@@ -55,8 +61,10 @@ public class JdbcSinkerTest {
 
     given(schemaReader.schemaFor(tableId))
         .willReturn(new TableSchema(tableId, keySchema, null, null, valueSchema, null));
-    RowChangeEvent nonDeletionRow = new RowChangeEvent(false, Arrays.asList("id1", "col1-value"));
-    RowChangeEvent deletionRow = new RowChangeEvent(true, Arrays.asList("id2", "col1-value"));
+    String id1 = "id1";
+    String col1Value = "col1-value";
+    RowChangeEvent nonDeletionRow = new RowChangeEvent(false, Arrays.asList(id1, col1Value));
+    RowChangeEvent deletionRow = new RowChangeEvent(true, Arrays.asList(id1, col1Value));
     TableChangeEvent event =
         TableChangeEvent.builder()
             .tableName("table")
@@ -65,6 +73,10 @@ public class JdbcSinkerTest {
             .columns(Arrays.asList("id", "col1"))
             .rowChangeEvents(Arrays.asList(nonDeletionRow, deletionRow))
             .build();
+    given(sinkerConvertObjectUtil.convertObjectByType(SchemaBuilder.STRING_SCHEMA, col1Value))
+        .willReturn(col1Value);
+    given(sinkerConvertObjectUtil.convertObjectByType(SchemaBuilder.STRING_SCHEMA, id1))
+        .willReturn(id1);
     // when
     List<SinkRecord> sinkRecords = sinker.convertEvent(schemaReader, event);
     // then

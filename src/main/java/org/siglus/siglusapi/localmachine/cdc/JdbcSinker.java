@@ -20,16 +20,13 @@ import static java.util.stream.Collectors.toList;
 import io.confluent.connect.jdbc.sink.JdbcSinkTask;
 import io.debezium.relational.TableId;
 import io.debezium.relational.TableSchema;
-import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.PreDestroy;
 import lombok.SneakyThrows;
-import org.apache.kafka.connect.data.Decimal;
 import org.apache.kafka.connect.data.Field;
 import org.apache.kafka.connect.data.Schema;
-import org.apache.kafka.connect.data.Schema.Type;
 import org.apache.kafka.connect.data.Struct;
 import org.apache.kafka.connect.sink.SinkRecord;
 import org.slf4j.Logger;
@@ -44,8 +41,11 @@ public class JdbcSinker {
   private final DbSchemaReader schemaReader;
   private final JdbcSinkerContext context;
   private final JdbcSinkTask jdbcSinkTask;
+  private final SinkerConvertObjectUtil sinkerConvertObjectUtil;
 
-  public JdbcSinker(ConfigBuilder configBuilder, DbSchemaReader schemaReader) {
+  public JdbcSinker(ConfigBuilder configBuilder, DbSchemaReader schemaReader,
+      SinkerConvertObjectUtil sinkerConvertObjectUtil) {
+    this.sinkerConvertObjectUtil = sinkerConvertObjectUtil;
     this.context = new JdbcSinkerContext();
     this.sinkConfig = configBuilder.sinkConfig();
     this.jdbcSinkTask = initJdbcSinkTask();
@@ -98,7 +98,7 @@ public class JdbcSinker {
               for (int i = 0; i < columns.size(); i++) {
                 String column = columns.get(i);
                 Field field = valueStruct.schema().field(column);
-                Object value = convertClass(field.schema(), values.get(i));
+                Object value = sinkerConvertObjectUtil.convertObjectByType(field.schema(), values.get(i));
                 if (keyColumns.contains(column)) {
                   keyStruct.put(column, value);
                 } else if (!row.isDeletion()) {
@@ -122,19 +122,6 @@ public class JdbcSinker {
   @PreDestroy
   private void stop() {
     this.jdbcSinkTask.stop();
-  }
-
-  private Object convertClass(Schema schema, Object value) {
-    if (value == null) {
-      return null;
-    }
-    if (schema.name() != null && Decimal.LOGICAL_NAME.equals(schema.name())) {
-      value = new BigDecimal(value.toString());
-    }
-    if (Type.INT64.getName().equals(schema.type().getName())) {
-      value = Long.valueOf(value.toString());
-    }
-    return value;
   }
 
 }
