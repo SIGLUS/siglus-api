@@ -124,7 +124,7 @@ public class RequisitionReportTaskService {
     List<RequisitionMonthlyNotSubmitReport> notSubmitList = new ArrayList<>();
     for (ProgramDto programDto : dataWrapper.allProgramDto) {
       UUID programId = programDto.getId();
-      String programCode = dataWrapper.programIdToRequisitionNameMapping.get(programId).getRequisitionName();
+      String programCode = dataWrapper.programIdToRequisitionNameMapping.get(programId).getReportName();
       FacillityStockCardDateDto facillityStockCardDateDto = dataWrapper.facilityProgramToStockCardDate.get(
           dataWrapper.getUniqueKey(facilityInfo.getFacilityId(), programId));
       if (facillityStockCardDateDto == null) {
@@ -200,7 +200,7 @@ public class RequisitionReportTaskService {
         .provinceFacilityCode(requisitionMonthlyReportFacility.getProvinceFacilityCode())
 
         .originalPeriod(formatDate(processingPeriodDto))
-        .reportName(requisitionNameMappingMap.get(programId).getRequisitionName())
+        .reportName(requisitionNameMappingMap.get(programId).getReportName())
         .inventorydDate(null)
         .statusDetail(null)
         .submittedStatus("Not submitted")

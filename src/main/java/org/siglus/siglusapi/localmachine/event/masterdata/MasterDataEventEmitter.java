@@ -105,7 +105,7 @@ public class MasterDataEventEmitter implements CdcListener {
         "siglusintegration.program_additional_orderables",
         "siglusintegration.processing_period_extension",
         "siglusintegration.program_orderables_extension",
-        "siglusintegration.program_requisition_name_mapping",
+        "siglusintegration.program_report_name_mapping",
         "siglusintegration.program_real_program",
         "siglusintegration.regimen_categories",
         "siglusintegration.regimens",

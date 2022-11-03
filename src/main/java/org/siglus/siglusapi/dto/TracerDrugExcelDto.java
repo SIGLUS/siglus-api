@@ -30,7 +30,7 @@ import lombok.NoArgsConstructor;
 @NamedNativeQuery(
     name = "TracerDrug.findExcelDetail",
     query = " select maindata.code as productCode,\n"
-        + "       maindata.programcode as programCode,\n"
+        + "       maindata.programname as programName,\n"
         + "       maindata.fullproductname as productName,\n"
         + "       maindata.provincename as provinceName,\n"
         + "       maindata.districtname as districtName,\n"
@@ -46,11 +46,11 @@ import lombok.NoArgsConstructor;
         + "               or tracertdpd.cmm is null then 3 \n"
         + "           when cast(tracertdpd.stockonhand as double precision) < "
         + "round(cast(tracertdpd.cmm as numeric), 2) then 2 \n"
-        + "           when cast(maindata.programcode as text) = cast('TARV' as text)\n"
+        + "           when cast(maindata.programname as text) = cast('TARV' as text)\n"
         + "               and (round(cast(tracertdpd.cmm as numeric), 2) * cast(3 as double precision)) < "
         + "cast(tracertdpd.stockonhand as double precision)\n"
         + "               then 4 \n"
-        + "           when cast(maindata.programcode as text) <> cast('TARV' as text)\n"
+        + "           when cast(maindata.programname as text) <> cast('TARV' as text)\n"
         + "               and (round(cast(tracertdpd.cmm as numeric), 2) * cast(2 as double precision)) < "
         + "cast(tracertdpd.stockonhand as double precision)\n"
         + "               then 4 \n"
@@ -58,15 +58,15 @@ import lombok.NoArgsConstructor;
         + "           end as stockStatusColorCode\n"
         + "           from\n"
         + "    (\n"
-        + "    select tracero.code,tracero.programcode,tracero.fullproductname,"
+        + "    select tracero.code,tracero.programname,tracero.fullproductname,"
         + "tracerf.facilitycode,tracerf.facilityname,tracerf.districtname,tracerf.provincename,td.day from\n"
         + "(\n"
         + "        select distinct on\n"
-        + "                          (o.id) o.id,fullproductname,o.code,prnm.programcode,\n"
+        + "                          (o.id) o.id,fullproductname,o.code,prnm.programname,\n"
         + "                               max(versionnumber) over (partition by o.id)\n"
         + "                            from  referencedata.orderables o\n"
         + "        left join referencedata.program_orderables po on o.id = po.orderableid\n"
-        + "        left join siglusintegration.program_requisition_name_mapping prnm on prnm.programid = po.programid\n"
+        + "        left join siglusintegration.program_report_name_mapping prnm on prnm.programid = po.programid\n"
         + "                                                   where o.extradata @> '{\n"
         + "                     \"isTracer\": true\n"
         + "                   }' and o.code = ?3 \n"
@@ -105,7 +105,7 @@ import lombok.NoArgsConstructor;
         targetClass = TracerDrugExcelDto.class,
         columns = {
             @ColumnResult(name = "productCode", type = String.class),
-            @ColumnResult(name = "programCode", type = String.class),
+            @ColumnResult(name = "programName", type = String.class),
             @ColumnResult(name = "productName", type = String.class),
             @ColumnResult(name = "provinceName", type = String.class),
             @ColumnResult(name = "districtName", type = String.class),
@@ -126,7 +126,7 @@ import lombok.NoArgsConstructor;
 public class TracerDrugExcelDto {
 
   private String productCode;
-  private String programCode;
+  private String programName;
   private String productName;
   private String provinceName;
   private String districtName;

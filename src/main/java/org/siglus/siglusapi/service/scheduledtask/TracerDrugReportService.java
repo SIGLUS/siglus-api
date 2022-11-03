@@ -176,7 +176,7 @@ public class TracerDrugReportService {
           .collect(Collectors.toList());
       TracerDrugExcelDto firstTracerDrugDto = tracerDrugList.get(0);
       excelRow.add(firstTracerDrugDto.getProductCode());
-      excelRow.add(firstTracerDrugDto.getProgramCode());
+      excelRow.add(firstTracerDrugDto.getProgramName());
       excelRow.add(firstTracerDrugDto.getProductName());
       excelRow.add(firstTracerDrugDto.getProvinceName());
       excelRow.add(firstTracerDrugDto.getDistrictName());

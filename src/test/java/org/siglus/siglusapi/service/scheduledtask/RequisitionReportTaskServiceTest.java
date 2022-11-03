@@ -118,8 +118,8 @@ public class RequisitionReportTaskServiceTest {
 
     ProgramRequisitionNameMapping item5 = new ProgramRequisitionNameMapping();
     item5.setProgramId(programId);
-    item5.setRequisitionName("Via RequisitionName");
-    item5.setProgramCode("code1");
+    item5.setReportName("Via RequisitionName");
+    item5.setProgramName("code1");
     List<ProgramRequisitionNameMapping> requisitionNameMapping = new ArrayList<>();
     requisitionNameMapping.add(item5);
     when(programRequisitionNameMappingRepository.findAll()).thenReturn(requisitionNameMapping);

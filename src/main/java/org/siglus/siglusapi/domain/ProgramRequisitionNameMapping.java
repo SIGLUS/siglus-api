@@ -30,14 +30,14 @@ import org.siglus.common.domain.BaseEntity;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "program_requisition_name_mapping", schema = "siglusintegration")
+@Table(name = "program_report_name_mapping", schema = "siglusintegration")
 public class ProgramRequisitionNameMapping extends BaseEntity {
 
   @Column(name = "programid")
   private UUID programId;
-  @Column(name = "programcode")
-  private String programCode;
-  @Column(name = "requisitionname")
-  private String requisitionName;
+  @Column(name = "programname")
+  private String programName;
+  @Column(name = "reportname")
+  private String reportName;
 }
 
