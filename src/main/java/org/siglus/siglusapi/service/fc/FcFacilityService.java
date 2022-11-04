@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -51,10 +52,13 @@ import org.siglus.siglusapi.dto.fc.FcIntegrationResultBuildDto;
 import org.siglus.siglusapi.dto.fc.FcIntegrationResultDto;
 import org.siglus.siglusapi.dto.fc.ResponseBaseDto;
 import org.siglus.siglusapi.repository.ProgramRealProgramRepository;
+import org.siglus.siglusapi.repository.SiglusFacilityRepository;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusFacilityTypeReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusGeographicZoneReferenceDataService;
 import org.siglus.siglusapi.util.FcUtil;
+import org.siglus.siglusapi.util.SiglusSimulateUserAuthHelper;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.BeanPropertyBindingResult;
 
@@ -70,6 +74,10 @@ public class FcFacilityService implements ProcessDataService {
   private final SiglusFacilityTypeReferenceDataService facilityTypeService;
   private final ProgramRealProgramRepository programRealProgramRepository;
   private final NodeRepository nodeRepository;
+  private final SiglusSimulateUserAuthHelper siglusSimulateUserAuthHelper;
+  private final SiglusFacilityRepository siglusFacilityRepository;
+  @Value("${role.admin.id}")
+  private String roleAdminId;
 
   @Override
   public FcIntegrationResultDto processData(List<? extends ResponseBaseDto> facilities, String startDate,
@@ -312,6 +320,8 @@ public class FcFacilityService implements ProcessDataService {
       Map<String, ProgramDto> codeToProgramMap,
       Map<String, ProgramRealProgram> codeToRealProgramMap,
       Map<String, GeographicZoneDto> codeToGeographicZoneDtoMap) {
+    siglusSimulateUserAuthHelper.simulateUserAuth(
+        UUID.fromString(siglusFacilityRepository.findAdminUserIdByAdminRoleId(UUID.fromString(roleAdminId))));
     needUpdateFacilities.forEach(current -> {
       FacilityDto existed = codeToFacilityMap.get(current.getCode());
       log.info("[FC facility] update, existed: {}, current: {}", existed, current);

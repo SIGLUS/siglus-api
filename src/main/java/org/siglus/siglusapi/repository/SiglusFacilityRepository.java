@@ -53,4 +53,10 @@ public interface SiglusFacilityRepository extends JpaRepository<Facility, UUID>,
       + "from referencedata.facilities f \n"
       + "where f.id in (:facilityIds);", nativeQuery = true)
   List<Facility> findFacilityBasicInfoByIds(@Param("facilityIds") Collection<UUID> facilityIds);
+
+  @Query(value = "select cast(u.id as varchar) id from referencedata.users u "
+      + "left join referencedata.role_assignments ra on ra.userid = u.id "
+      + "where ra.roleid = :roleId limit 1;", nativeQuery = true)
+  String findAdminUserIdByAdminRoleId(@Param("roleId") UUID roleId);
+
 }
