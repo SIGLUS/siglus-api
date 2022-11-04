@@ -65,6 +65,7 @@ public class SyncService {
     try {
       downloadedAcks = webClient.exchangeAcks(notShippedAcks);
     } catch (Exception e) {
+      log.error("fail to download ack", e);
       List<UUID> eventIds = notShippedAcks.stream().map(Ack::getEventId).collect(Collectors.toList());
       errorHandler.storeErrorRecord(eventIds, e, ErrorType.EXCHANGE_DOWN);
     }
@@ -73,6 +74,7 @@ public class SyncService {
     try {
       webClient.confirmAcks(downloadedAcks);
     } catch (Exception e) {
+      log.error("fail to upload ack", e);
       List<UUID> eventIds = downloadedAcks.stream().map(Ack::getEventId).collect(Collectors.toList());
       errorHandler.storeErrorRecord(eventIds, e, ErrorType.EXCHANGE_UP);
     }
@@ -84,6 +86,7 @@ public class SyncService {
       pullMasterData();
       pullPeeringEvents();
     } catch (Exception e) {
+      log.error("fail to pull events", e);
       errorHandler.storeErrorRecord(e, ErrorType.SYNC_DOWN);
     }
   }

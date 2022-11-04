@@ -76,21 +76,31 @@ public class LocalMachineRequestFilter extends OncePerRequestFilter {
   protected void doFilterInternal(
       HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
       throws ServletException, IOException {
-    if (nonSecuredRequestMatcher.matches(request)) {
-      filterChain.doFilter(request, response);
-      return;
-    }
-    if (securedRequestMatcher.matches(request)) {
-      try {
-        authenticate(request);
-      } catch (AuthorizeException e) {
-        log.error("localmachine auth fail", e);
-        response.setStatus(e.status.value());
-        response.getWriter().write(e.getMessage());
+    long startTime = System.currentTimeMillis();
+    try {
+      if (nonSecuredRequestMatcher.matches(request)) {
+        filterChain.doFilter(request, response);
         return;
       }
+      if (securedRequestMatcher.matches(request)) {
+        try {
+          authenticate(request);
+        } catch (AuthorizeException e) {
+          log.error("localmachine auth fail", e);
+          response.setStatus(e.status.value());
+          response.getWriter().write(e.getMessage());
+          return;
+        }
+      }
+      filterChain.doFilter(request, response);
+    } finally {
+      long cost = System.currentTimeMillis() - startTime;
+      log.info(
+          "[localmachine] {} - {} cost:{}",
+          request.getMethod(),
+          request.getRequestURL().toString(),
+          cost);
     }
-    filterChain.doFilter(request, response);
   }
 
   public void authenticate(HttpServletRequest request) throws AuthorizeException {
