@@ -62,7 +62,9 @@ public class ProofOfDeliveryReplayer {
     ProofOfDelivery proofOfDelivery = event.getProofOfDelivery();
     Shipment shipment = proofOfDelivery.getShipment();
     Order order = shipment.getOrder();
-    Shipment shipmentByOrderId = siglusShipmentRepository.findShipmentByOrderId(order.getId());
+    Order orderByOrderCode = siglusOrdersRepository.findByOrderCode(order.getOrderCode());
+
+    Shipment shipmentByOrderId = siglusShipmentRepository.findShipmentByOrderId(orderByOrderCode.getId());
     proofOfDelivery.setShipment(shipmentByOrderId);
     proofOfDeliveryRepository.saveAndFlush(proofOfDelivery);
     log.info("proofOfDelivery has been saved! id = {}", proofOfDelivery.getId());
@@ -70,7 +72,6 @@ public class ProofOfDeliveryReplayer {
     podExtensionRepository.saveAndFlush(proofsOfDeliveryExtension);
     log.info("ProofsOfDeliveryExtension has been saved! ProofOfDelivery id = {}", event.getProofOfDelivery().getId());
 
-    Order orderByOrderCode = siglusOrdersRepository.findByOrderCode(order.getOrderCode());
     orderByOrderCode.setStatus(order.getStatus());
 
     List<PodLineItemsByLocation> podLineItemsByLocations = event.getPodLineItemsByLocation();

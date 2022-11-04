@@ -115,14 +115,14 @@ public class SiglusPhysicalInventoryControllerTest {
 
     controller.deletePhysicalInventory(ALL_PRODUCTS_UUID);
 
-    verify(siglusPhysicalInventoryService).deletePhysicalInventoryDraftForAllProgramsWithSubDraft(facilityId);
+    verify(siglusPhysicalInventoryService).deletePhysicalInventoryDraftForAllPrograms(facilityId);
   }
 
   @Test
   public void shouldCallDeletePhysicalInventoryWhenDeleteIfIdIsNotAllProducts() {
     controller.deletePhysicalInventory(id);
 
-    verify(siglusPhysicalInventoryService).deletePhysicalInventoryDraftWithSubDrafts(id);
+    verify(siglusPhysicalInventoryService).deletePhysicalInventoryDraft(id);
   }
 
   @Test

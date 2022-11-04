@@ -412,7 +412,7 @@ public class SiglusPhysicalInventoryServiceTest {
         .thenReturn(inventoryOne.toString());
 
     // when
-    siglusPhysicalInventoryService.deletePhysicalInventoryDraftForOneProgramWithSubDraft(facilityId, programIdOne);
+    siglusPhysicalInventoryService.deletePhysicalInventoryDraftForOneProgram(facilityId, programIdOne);
 
     // then
     verify(inventoryController, times(1)).deletePhysicalInventory(any());
@@ -427,7 +427,7 @@ public class SiglusPhysicalInventoryServiceTest {
         .thenReturn(inventoryOne.toString());
 
     // when
-    siglusPhysicalInventoryService.deletePhysicalInventoryDraftForOneProgramWithSubDraft(facilityId, programIdOne);
+    siglusPhysicalInventoryService.deletePhysicalInventoryDraftForOneProgram(facilityId, programIdOne);
 
     // then
     verify(inventoryController, times(1)).deletePhysicalInventory(any());
@@ -453,7 +453,7 @@ public class SiglusPhysicalInventoryServiceTest {
         .thenReturn(Collections.singletonList(physicalInventorySubDraftTwo));
 
     // when
-    siglusPhysicalInventoryService.deletePhysicalInventoryDraftForAllProgramsWithSubDraft(facilityId);
+    siglusPhysicalInventoryService.deletePhysicalInventoryDraftForAllPrograms(facilityId);
 
     // then
     verify(inventoryController, times(2)).deletePhysicalInventory(any());
@@ -475,7 +475,7 @@ public class SiglusPhysicalInventoryServiceTest {
         .thenReturn(inventoryTwo.toString());
 
     // when
-    siglusPhysicalInventoryService.deletePhysicalInventoryDraftForAllProgramsWithSubDraft(facilityId);
+    siglusPhysicalInventoryService.deletePhysicalInventoryDraftForAllPrograms(facilityId);
 
     // then
     verify(inventoryController, times(2)).deletePhysicalInventory(any());

@@ -153,9 +153,9 @@ public class SiglusStockEventsService {
   private void deleteDraft(StockEventDto eventDto) {
     if (eventDto.isPhysicalInventory()) {
       if (isAllProgram(eventDto)) {
-        siglusPhysicalInventoryService.deletePhysicalInventoryDraftForAllProgramsWithSubDraft(eventDto.getFacilityId());
+        siglusPhysicalInventoryService.deletePhysicalInventoryDraftForAllPrograms(eventDto.getFacilityId());
       } else {
-        siglusPhysicalInventoryService.deletePhysicalInventoryDraftForOneProgramWithSubDraft(eventDto.getFacilityId(),
+        siglusPhysicalInventoryService.deletePhysicalInventoryDraftForOneProgram(eventDto.getFacilityId(),
             eventDto.getProgramId());
       }
     } else if (isNotUnpackKit(eventDto)) {

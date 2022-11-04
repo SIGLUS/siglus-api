@@ -906,7 +906,7 @@ public class SiglusPhysicalInventoryService {
   }
 
   public PhysicalInventoryDto saveDraftForAllProducts(PhysicalInventoryDto dto) {
-    deletePhysicalInventoryDraftForAllProgramsWithSubDraft(dto.getFacilityId());
+    deletePhysicalInventoryDraftForAllPrograms(dto.getFacilityId());
     createNewDraftForAllProducts(dto, null);
     Set<UUID> programIds = dto.getLineItems()
         .stream()
@@ -938,7 +938,7 @@ public class SiglusPhysicalInventoryService {
     }
   }
 
-  public void deletePhysicalInventoryDraftWithSubDrafts(UUID id) {
+  public void deletePhysicalInventoryDraft(UUID id) {
     deletePhysicalInventoryDraftById(id);
     physicalInventorySubDraftRepository.deletePhysicalInventorySubDraftsByPhysicalInventoryId(id);
     List<UUID> subDraftIds = physicalInventorySubDraftRepository.findByPhysicalInventoryId(id)
@@ -953,11 +953,11 @@ public class SiglusPhysicalInventoryService {
     inventoryController.deletePhysicalInventory(id);
   }
 
-  public void deletePhysicalInventoryDraftForOneProgramWithSubDraft(UUID facilityId, UUID programId) {
+  public void deletePhysicalInventoryDraftForOneProgram(UUID facilityId, UUID programId) {
     doDeletePhysicalInventoryForProductInOneProgram(facilityId, programId);
   }
 
-  public void deletePhysicalInventoryDraftForAllProgramsWithSubDraft(UUID facilityId) {
+  public void deletePhysicalInventoryDraftForAllPrograms(UUID facilityId) {
     doDeletePhysicalInventoryForAllProducts(facilityId);
   }
 
@@ -1124,7 +1124,7 @@ public class SiglusPhysicalInventoryService {
         .stream()
         .filter(Objects::nonNull)
         .collect(Collectors.toList());
-    physicalInventoryIdList.forEach(this::deletePhysicalInventoryDraftWithSubDrafts);
+    physicalInventoryIdList.forEach(this::deletePhysicalInventoryDraft);
     lineItemsExtensionRepository.deleteByPhysicalInventoryIdIn(physicalInventoryIdList);
   }
 
