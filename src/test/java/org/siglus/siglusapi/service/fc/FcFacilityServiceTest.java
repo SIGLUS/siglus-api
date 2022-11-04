@@ -35,6 +35,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -57,9 +58,12 @@ import org.siglus.siglusapi.dto.fc.FcAreaDto;
 import org.siglus.siglusapi.dto.fc.FcFacilityDto;
 import org.siglus.siglusapi.dto.fc.FcIntegrationResultDto;
 import org.siglus.siglusapi.repository.ProgramRealProgramRepository;
+import org.siglus.siglusapi.repository.SiglusFacilityRepository;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusFacilityTypeReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusGeographicZoneReferenceDataService;
+import org.siglus.siglusapi.util.SiglusSimulateUserAuthHelper;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.validation.BeanPropertyBindingResult;
 
 @RunWith(PowerMockRunner.class)
@@ -93,6 +97,12 @@ public class FcFacilityServiceTest {
   @Mock
   private NodeRepository nodeRepository;
 
+  @Mock
+  private SiglusSimulateUserAuthHelper siglusSimulateUserAuthHelper;
+
+  @Mock
+  private SiglusFacilityRepository siglusFacilityRepository;
+
   @InjectMocks
   private FcFacilityService fcFacilityService;
 
@@ -103,6 +113,16 @@ public class FcFacilityServiceTest {
   private ArgumentCaptor<FacilityDto> facilityCaptor;
 
   private final UUID programId = UUID.randomUUID();
+
+  private final UUID roleAdminId = UUID.randomUUID();
+
+  private final UUID adminUserId = UUID.randomUUID();
+
+  @Before
+  public void setup() {
+    ReflectionTestUtils.setField(fcFacilityService, "roleAdminId", roleAdminId.toString());
+    when(siglusFacilityRepository.findAdminUserIdByAdminRoleId(roleAdminId)).thenReturn(adminUserId.toString());
+  }
 
   @Test
   public void shouldReturnNullGivenEmptyFcResult() {
@@ -179,6 +199,7 @@ public class FcFacilityServiceTest {
     assertNotNull(result);
     verify(facilityService).createFacility(facilityCaptor.capture());
     verify(nodeRepository).save(any(Node.class));
+    verify(siglusSimulateUserAuthHelper).simulateUserAuth(adminUserId);
     assertEquals(DESCRIPTION, facilityCaptor.getValue().getGeographicZone().getName());
     assertEquals(FACILITY, facilityCaptor.getValue().getCode());
     assertEquals(TYPE_1, facilityCaptor.getValue().getType().getCode());
@@ -251,6 +272,7 @@ public class FcFacilityServiceTest {
     fcFacilityService.processData(Collections.singletonList(facilityDto), START_DATE, LAST_UPDATED_AT);
 
     // then
+    verify(siglusSimulateUserAuthHelper).simulateUserAuth(adminUserId);
     verify(facilityController)
         .saveFacility(rfFacilityCaptor.capture(), eq(originFacility.getId()), any(BeanPropertyBindingResult.class));
     assertEquals(DESCRIPTION, rfFacilityCaptor.getValue().getGeographicZone().getName());

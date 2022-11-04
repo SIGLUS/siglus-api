@@ -357,7 +357,7 @@ public class SiglusArchiveProductServiceTest {
     archiveProductService.archiveProduct(facilityId, orderableId);
 
     // then
-    verify(siglusPhysicalInventoryService).deletePhysicalInventoryDraftForAllProgramsWithSubDraft(facilityId);
+    verify(siglusPhysicalInventoryService).deletePhysicalInventoryDraftForAllPrograms(facilityId);
   }
 
   @Test

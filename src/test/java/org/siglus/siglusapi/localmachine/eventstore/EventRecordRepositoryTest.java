@@ -29,26 +29,6 @@ public class EventRecordRepositoryTest extends LocalMachineIntegrationTest {
   @Autowired private EventRecordRepository eventRecordRepository;
 
   @Test
-  public void shouldReturnNullWhenGetNextGroupSeqGivenGroupNotExists() {
-    Long nextGroupSeq = eventRecordRepository.getNextGroupSequenceNumber("group not exits");
-    assertThat(nextGroupSeq).isNull();
-  }
-
-  @Test
-  public void shouldReturn1WhenGetNextGroupSeqGivenCurrentMaxGroupSeqIs0() {
-    // given
-    String groupId = "group-id";
-    EventRecord eventRecord = getEventRecord();
-    eventRecord.setGroupId(groupId);
-    eventRecord.setGroupSequenceNumber(0);
-    eventRecordRepository.insertAndAllocateLocalSequenceNumber(eventRecord);
-    // when
-    Long nextGroupSeq = eventRecordRepository.getNextGroupSequenceNumber(groupId);
-    // then
-    assertThat(nextGroupSeq).isEqualTo(1L);
-  }
-
-  @Test
   public void couldRetrieveEventGivenEventInserted() {
     // given
     EventRecord eventRecord = getEventRecord();

@@ -262,8 +262,8 @@ public class MeService {
     Map<UUID, String> programIdToCode = programsHelper.findHomeFacilitySupportedProgramIds().stream()
         .map(programDataService::findOne)
         .collect(toMap(ProgramDto::getId, BasicProgramDto::getCode));
-
     Map<UUID, String> productIdToAdditionalProgramCode = additionalProductRepo.findAll().stream()
+        .filter(p -> programIdToCode.get(p.getProgramId()) != null)
         .collect(
             toMap(ProgramAdditionalOrderable::getAdditionalOrderableId, p -> programIdToCode.get(p.getProgramId())));
 

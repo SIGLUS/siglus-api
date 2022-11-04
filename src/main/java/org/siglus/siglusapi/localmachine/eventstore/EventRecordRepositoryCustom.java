@@ -13,17 +13,11 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.localmachine.cdc;
+package org.siglus.siglusapi.localmachine.eventstore;
 
-import java.math.BigInteger;
-import java.util.List;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
+public interface EventRecordRepositoryCustom {
 
-public interface CdcRecordRepository extends JpaRepository<CdcRecord, Long> {
+  void importExternalEvent(EventRecord eventRecord);
 
-  @Query(value = "select txid from localmachine.cdc_records", nativeQuery = true)
-  List<BigInteger> allTxIds();
-
-  List<CdcRecord> findCdcRecordByTxIdOrderById(Long txId);
+  void insertAndAllocateLocalSequenceNumber(EventRecord eventRecord);
 }

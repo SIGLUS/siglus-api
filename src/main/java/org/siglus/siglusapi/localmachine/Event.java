@@ -37,7 +37,7 @@ public class Event {
   private UUID senderId;
   private UUID receiverId;
   private String groupId;
-  private long groupSequenceNumber;
+  private UUID parentId;
   private Object payload;
   private boolean onlineWebSynced;
   private boolean receiverSynced;

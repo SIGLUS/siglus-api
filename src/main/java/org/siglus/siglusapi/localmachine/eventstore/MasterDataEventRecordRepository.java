@@ -15,8 +15,8 @@
 
 package org.siglus.siglusapi.localmachine.eventstore;
 
-import java.util.List;
 import java.util.UUID;
+import java.util.stream.Stream;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -24,7 +24,7 @@ import org.springframework.data.repository.query.Param;
 
 public interface MasterDataEventRecordRepository extends JpaRepository<MasterDataEventRecord, UUID> {
 
-  List<MasterDataEventRecord> findByIdAfterOrderById(Long id);
+  Stream<MasterDataEventRecord> streamMasterDataEventRecordsByIdAfterOrderById(Long id);
 
   @Modifying
   @Query(
@@ -49,12 +49,6 @@ public interface MasterDataEventRecordRepository extends JpaRepository<MasterDat
               + ":#{#r.occurredTime})",
       nativeQuery = true)
   void insertMasterDataEvents(@Param("r") MasterDataEventRecord masterDataEventRecord);
-
-  @Modifying
-  @Query(
-      value = "update localmachine.master_data_events set localreplayed=true where id =:id",
-      nativeQuery = true)
-  void markAsReplayed(@Param("id") Long id);
 
   @Query(
       value = "select count(id) from localmachine.master_data_events where id > :id",

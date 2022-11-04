@@ -13,29 +13,25 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.localmachine.cdc;
+package org.siglus.siglusapi.exception;
 
-import java.time.ZonedDateTime;
-import java.util.Map;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import java.util.LinkedList;
+import java.util.List;
+import lombok.Getter;
 
-@Data
-@Builder
-@AllArgsConstructor
-@NoArgsConstructor
-public class CdcRecord {
-  private Long id;
-  private String table;
-  private String schema;
-  private Long txId;
-  private String operationCode;
-  private ZonedDateTime capturedAt;
-  private Map<String, Object> payload;
+@Getter
+public class DeferredException extends RuntimeException {
+  private final List<Exception> exceptions = new LinkedList<>();
 
-  public String tableId() {
-    return schema + "." + table;
+  public DeferredException add(Exception item) {
+    exceptions.add(item);
+    return this;
+  }
+
+  public void emit() {
+    if (exceptions.isEmpty()) {
+      return;
+    }
+    throw this;
   }
 }

@@ -20,8 +20,6 @@ import java.util.Map;
 
 public class MovementSql {
 
-  // 2022/10/13 by yyd, right_assignments本该属于主数据，但是由于主数据无法去区分facility，而这个表的数据非常大，
-  // 需要区分facility来下发给lacal machine，所以目前当做业务数据下发
   public static final String RIGHT_ASSIGNMENTS = "referencedata.right_assignments";
 
   public static final String RIGHT_ASSIGNMENTS_QUERY = "select ra.* from referencedata.right_assignments ra "
@@ -32,12 +30,18 @@ public class MovementSql {
 
   public static final String LOTS_QUERY = "select * from referencedata.lots ";
 
-  // 2022/10/13 by yyd, events本属于localmachine的events数据
   public static final String LOCALMACHINE_EVENTS = "localmachine.events";
 
   public static final String LOCALMACHINE_EVENTS_QUERY =
       "select * from localmachine.events where receiverid = '@@' "
           + "and (localreplayed is true or receiversynced  is true)";
+
+  public static final String LOCALMACHINE_EVENT_PAYLOAD = "localmachine.event_payload";
+
+  public static final String LOCALMACHINE_EVENT_PAYLOAD_QUERY =
+      "select * from localmachine.event_payload where eventid in "
+          + " (select id from localmachine.events where receiverid = '@@' "
+          + " and (localreplayed is true or receiversynced is true))";
 
   private static final String WHERE_ID_IN_STOCK_CARD =
       "where stockcardid in (select id from stockmanagement.stock_cards where facilityid = '@@')";
@@ -218,6 +222,7 @@ public class MovementSql {
     movementSql.put(RIGHT_ASSIGNMENTS, RIGHT_ASSIGNMENTS_QUERY);
     movementSql.put(LOTS, LOTS_QUERY);
     movementSql.put(LOCALMACHINE_EVENTS, LOCALMACHINE_EVENTS_QUERY);
+    movementSql.put(LOCALMACHINE_EVENT_PAYLOAD, LOCALMACHINE_EVENT_PAYLOAD_QUERY);
 
     movementSql.put(STOCK_EVENTS, STOCK_EVENTS_QUERY);
     movementSql.put(STOCK_EVENT_LINE_ITEMS, STOCK_EVENT_LINE_ITEMS_QUERY);

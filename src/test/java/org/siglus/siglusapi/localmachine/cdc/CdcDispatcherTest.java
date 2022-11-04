@@ -16,14 +16,13 @@
 package org.siglus.siglusapi.localmachine.cdc;
 
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyListOf;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-import java.math.BigInteger;
 import java.util.Collections;
+import java.util.List;
 import org.junit.Test;
 
 public class CdcDispatcherTest {
@@ -31,17 +30,13 @@ public class CdcDispatcherTest {
   @Test
   public void shouldDispatchRecordsToListenerWhenDispatchAll() {
     // given
-    CdcRecordRepository cdcRecordRepository = mock(CdcRecordRepository.class);
-    given(cdcRecordRepository.allTxIds()).willReturn(Collections.singletonList(BigInteger.TEN));
-    CdcRecord cdcRecord =
-        CdcRecord.builder().id(1L).schema("schema").table("table1").build();
-    given(cdcRecordRepository.findCdcRecordByTxIdOrderById(any())).willReturn(Collections.singletonList(cdcRecord));
+    CdcRecord cdcRecord = CdcRecord.builder().id(1L).schema("schema").table("table1").build();
+    List<CdcRecord> cdcRecords = Collections.singletonList(cdcRecord);
     CdcListener cdcListener = mock(CdcListener.class);
-    given(cdcListener.acceptedTables()).willReturn(new String[]{"schema.table1", "schema.table2"});
-    CdcDispatcher cdcDispatcher =
-        new CdcDispatcher(Collections.singletonList(cdcListener), cdcRecordRepository);
+    given(cdcListener.acceptedTables()).willReturn(new String[] {"schema.table1", "schema.table2"});
+    CdcDispatcher cdcDispatcher = new CdcDispatcher(Collections.singletonList(cdcListener));
     // when
-    cdcDispatcher.dispatchAll();
+    cdcDispatcher.doDispatch(cdcRecords);
     // then
     verify(cdcListener, times(1)).on(anyListOf(CdcRecord.class));
   }

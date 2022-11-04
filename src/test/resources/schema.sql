@@ -11,14 +11,13 @@ CREATE TABLE IF NOT EXISTS localmachine.events (
     senderid UUID NOT NULL,
     receiverid UUID NULL,
     groupid VARCHAR(255) NULL,
-    groupsequencenumber BIGINT NULL,
-    payload TEXT NULL,
+    parentid UUID NULL,
+    archived boolean NOT NULL DEFAULT FALSE,
     onlinewebsynced INT NOT NULL DEFAULT 0,
     receiversynced INT NOT NULL DEFAULT 0,
-    localreplayed INT NOT NULL DEFAULT 0
+    localreplayed INT NOT NULL DEFAULT 0,
+    syncedtime TIMESTAMP DEFAULT now()
 );
-CREATE UNIQUE INDEX IF NOT EXISTS localmachine_sender_localsequencenumber on localmachine.events(senderid, localsequencenumber);
-CREATE UNIQUE INDEX IF NOT EXISTS localmachine_group_seq on localmachine.events(groupid, groupsequencenumber);
 
 CREATE TABLE IF NOT EXISTS localmachine.agents (
     machineid UUID NOT NULL,
@@ -29,38 +28,26 @@ CREATE TABLE IF NOT EXISTS localmachine.agents (
     activationcode TEXT NULL,
     activatedat TIMESTAMP WITH TIME ZONE
 );
+
 CREATE TABLE IF NOT EXISTS localmachine.machine (
     touched  INT NOT NULL DEFAULT 1,
     id UUID NOT NULL PRIMARY KEY
 );
 
-DROP TABLE IF EXISTS localmachine.event_payload;
 CREATE TABLE localmachine.event_payload
 (
     eventid uuid PRIMARY KEY,
     payload bytea
 );
-DROP TABLE IF EXISTS localmachine.event_payload_backup;
+
 CREATE TABLE localmachine.event_payload_backup
 (
     eventid uuid PRIMARY KEY,
     payload bytea
 );
 
-INSERT INTO localmachine.event_payload (eventid, payload) (SELECT id, payload FROM localmachine.events);
-
-ALTER TABLE localmachine.events
-    ADD COLUMN archived boolean NOT NULL DEFAULT FALSE;
-ALTER TABLE localmachine.events
-    DROP COLUMN payload;
-
 CREATE TABLE IF NOT EXISTS localmachine.ack_records (
     eventid uuid PRIMARY KEY,
     sendto uuid NOT NULL,
     shipped BOOL NOT NULL DEFAULT FALSE
 );
-
-DROP INDEX localmachine.localmachine_sender_localsequencenumber;
-
-ALTER TABLE localmachine.events
-    ADD COLUMN syncedtime TIMESTAMP DEFAULT now();

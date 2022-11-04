@@ -16,13 +16,15 @@
 package org.siglus.siglusapi.localmachine.eventstore;
 
 import java.util.Collections;
-import java.util.Comparator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.Spliterator;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -40,6 +42,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 public class EventStore {
 
+  static final int MASTER_DATA_EVENT_BATCH_LIMIT = 1024;
+  static final int PEERING_EVENT_BATCH_LIMIT = 24;
   private final EventRecordRepository repository;
   private final EventPayloadRepository eventPayloadRepository;
   private final MasterDataEventRecordRepository masterDataEventRecordRepository;
@@ -69,10 +73,6 @@ public class EventStore {
     }
   }
 
-  public long nextGroupSequenceNumber(String groupId) {
-    return Optional.ofNullable(repository.getNextGroupSequenceNumber(groupId)).orElse(0L);
-  }
-
   public List<Event> getEventsForOnlineWeb() {
     return repository.findEventRecordByOnlineWebSyncedAndArchived(false, false).stream()
         .map(it -> it.toEvent(payloadSerializer::load))
@@ -80,8 +80,7 @@ public class EventStore {
   }
 
   public List<Event> getEventsForReceiver(UUID receiverId) {
-    return repository.findByReceiverIdAndReceiverSyncedAndArchived(
-        receiverId, false, false).stream()
+    return repository.findEventsForReceiver(receiverId, PEERING_EVENT_BATCH_LIMIT).stream()
         .map(it -> it.toEvent(payloadSerializer::load))
         .collect(Collectors.toList());
   }
@@ -95,14 +94,17 @@ public class EventStore {
         .collect(Collectors.toList());
   }
 
+  @Transactional
   public List<MasterDataEvent> getMasterDataEvents(Long offsetId, UUID facilityId) {
     if (offsetId == null) {
       return Collections.emptyList();
     }
-    List<MasterDataEvent> masterDataEvents = masterDataEventRecordRepository.findByIdAfterOrderById(offsetId).stream()
-        .filter(it -> filterMasterDataEventRecord(it, facilityId))
-        .map(it -> it.toMasterDataEvent(payloadSerializer::load))
-        .collect(Collectors.toList());
+    List<MasterDataEventRecord> bufferedMasterDataRecords = getMasterDataRecords(
+        offsetId, facilityId, MASTER_DATA_EVENT_BATCH_LIMIT);
+    List<MasterDataEvent> masterDataEvents =
+        bufferedMasterDataRecords.stream()
+            .map(it -> it.toMasterDataEvent(payloadSerializer::load))
+            .collect(Collectors.toList());
     int size = masterDataEvents.size();
     if (size > 0) {
       MasterDataEvent masterDataEvent = masterDataEvents.get(size - 1);
@@ -119,11 +121,6 @@ public class EventStore {
     return masterDataEvents;
   }
 
-  private boolean filterMasterDataEventRecord(MasterDataEventRecord eventRecord, UUID facilityId) {
-    return (eventRecord.getFacilityId() == null && eventRecord.getSnapshotVersion() == null)
-        || (eventRecord.getFacilityId() != null && eventRecord.getFacilityId().equals(facilityId));
-  }
-
   @Transactional
   public void confirmEventsByWeb(List<Event> confirmedEvents) {
     confirmedEvents.forEach(it -> it.setOnlineWebSynced(true));
@@ -137,11 +134,6 @@ public class EventStore {
     log.info("insert event:{}", event.getId());
     EventRecord eventRecord = EventRecord.from(event, payloadSerializer.dump(event.getPayload()));
     repository.importExternalEvent(eventRecord);
-    eventPayloadRepository.save(new EventPayload(eventRecord.getId(), eventRecord.getPayload()));
-    if (isMasterDataEvent(event)) {
-      log.info("update master data record offset event:{}", event.getId());
-      masterDataOffsetRepository.updateRecordOffsetByFacilityId(event.getLocalSequenceNumber(), event.getReceiverId());
-    }
     emitAckForEvent(event);
   }
 
@@ -152,11 +144,21 @@ public class EventStore {
     }
   }
 
-  public List<Event> loadSortedGroupEvents(String groupId) {
+  public List<Event> loadGroupEvents(String groupId) {
     return repository.findEventRecordByGroupId(groupId).stream()
         .map(it -> it.toEvent(payloadSerializer::load))
-        .sorted(Comparator.comparingLong(Event::getGroupSequenceNumber))
         .collect(Collectors.toList());
+  }
+
+  public List<Event> getNotReplayedLeafEventsInGroup(String groupId) {
+    return repository.findNotReplayedLeafNodeIdsInGroup(groupId).stream()
+        .map(it -> it.toEvent(payloadSerializer::load))
+        .collect(Collectors.toList());
+  }
+
+  public Optional<Event> findEvent(UUID parentId) {
+    return Optional.ofNullable(repository.findOne(parentId))
+        .map(it -> it.toEvent(payloadSerializer::load));
   }
 
   @Transactional
@@ -195,24 +197,16 @@ public class EventStore {
         .collect(Collectors.toList());
   }
 
-  public List<Event> findNotReplayedEvents() {
-    return repository.findEventRecordByLocalReplayed(false).stream()
-        .map(it -> it.toEvent(payloadSerializer::load))
-        .collect(Collectors.toList());
+  public Stream<Event> streamNotReplayedEvents() {
+    return repository
+        .streamByLocalReplayedOrderBySyncedTime(Boolean.FALSE)
+        .sequential()
+        .map(it -> it.toEvent(payloadSerializer::load));
   }
 
   public MasterDataOffset findMasterDataOffsetByFacilityId(UUID facilityId) {
     return masterDataOffsetRepository.findByFacilityIdIs(facilityId);
   }
-
-  private boolean isMasterDataEvent(Event event) {
-    //comment 背景，目前event分为三类:
-    // 1，groupid不为空的，一般用于requisition order等业务；
-    // 2，groupid为空，但是senderid = receiverid,一般用于movement业务；
-    // 3，groupid为空，但是senderid ！= receiverid,senderid为onlineweb端的machineid,receiverid为localmachine的facilityid
-    return event.getGroupId() == null && !event.getSenderId().equals(event.getReceiverId());
-  }
-
 
   public List<Ack> getAcksForEventSender(UUID eventSender) {
     Example<AckRecord> example = Example.of(AckRecord.builder().sendTo(eventSender).shipped(Boolean.FALSE).build());
@@ -238,6 +232,35 @@ public class EventStore {
     saveAcks(acks);
   }
 
+  @Transactional
+  public LinkedList<MasterDataEventRecord> getMasterDataRecords(Long offset, UUID facilityId, int limit) {
+    LinkedList<MasterDataEventRecord> bufferedMasterDataRecords = new LinkedList<>();
+    Spliterator<MasterDataEventRecord> spliterator =
+        masterDataEventRecordRepository
+            .streamMasterDataEventRecordsByIdAfterOrderById(offset)
+            .sequential()
+            .spliterator();
+    boolean hasNext;
+    do {
+      hasNext =
+          spliterator.tryAdvance(
+              it -> {
+                if (filterMasterDataEventRecord(it, facilityId)) {
+                  bufferedMasterDataRecords.add(it);
+                }
+              });
+    } while (hasNext && bufferedMasterDataRecords.size() < limit);
+    return bufferedMasterDataRecords;
+  }
+
+  boolean filterMasterDataEventRecord(MasterDataEventRecord eventRecord, UUID facilityId) {
+    boolean isSharedIncrementalRecord =
+        eventRecord.getFacilityId() == null && eventRecord.getSnapshotVersion() == null;
+    boolean isFacilityOwnedRecord =
+        eventRecord.getFacilityId() != null && eventRecord.getFacilityId().equals(facilityId);
+    return isSharedIncrementalRecord || isFacilityOwnedRecord;
+  }
+
   private void saveAcks(Set<Ack> acks) {
     List<AckRecord> ackRecords = acks.stream().map(AckRecord::from).collect(Collectors.toList());
     ackRepository.save(ackRecords);
@@ -246,5 +269,17 @@ public class EventStore {
   private void emitAck(Ack ack) {
     AckRecord ackRecord = AckRecord.from(ack);
     ackRepository.save(ackRecord);
+  }
+
+  public long getCurrentMasterDataOffset() {
+    return Optional.ofNullable(masterDataOffsetRepository.findLocalMasterDataOffset()).orElse(0L);
+  }
+
+  public void updateLocalMasterDataOffset(long newOffset) {
+    masterDataOffsetRepository.updateLocalMasterDataOffset(newOffset);
+  }
+
+  public Optional<UUID> getLastEventIdInGroup(String groupId) {
+    return repository.findLastEventIdGroupId(groupId).map(UUID::fromString);
   }
 }

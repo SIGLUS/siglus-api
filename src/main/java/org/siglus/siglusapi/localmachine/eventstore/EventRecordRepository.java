@@ -17,28 +17,30 @@ package org.siglus.siglusapi.localmachine.eventstore;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Stream;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 @SuppressWarnings("PMD.AvoidDuplicateLiterals")
-public interface EventRecordRepository extends JpaRepository<EventRecord, UUID> {
+public interface EventRecordRepository extends JpaRepository<EventRecord, UUID>, EventRecordRepositoryCustom {
 
-  List<EventRecord> findEventRecordByLocalReplayed(boolean localReplayed);
-
-  @Query(
-      value =
-          "select groupsequencenumber + 1 from localmachine.events where groupid=:groupId order by "
-              + "groupsequencenumber desc limit 1",
-      nativeQuery = true)
-  Long getNextGroupSequenceNumber(@Param("groupId") String groupId);
+  Stream<EventRecord> streamByLocalReplayedOrderBySyncedTime(Boolean localReplayed);
 
   List<EventRecord> findEventRecordByOnlineWebSyncedAndArchived(boolean onlineWebSynced, boolean archived);
 
   List<EventRecord> findEventRecordByGroupId(String groupId);
+
+  @Query(value = "select * from localmachine.events e left join"
+      + " localmachine.event_payload p on e.id=p.eventid "
+      + " where e.groupid=:groupId and e.localreplayed=false and e.id not in "
+      + " (select e2.parentid from localmachine.events e2 where e2.groupid=:groupId and e2.parentid is not null)",
+      nativeQuery = true)
+  List<EventRecord> findNotReplayedLeafNodeIdsInGroup(@Param("groupId") String groupId);
 
   @Modifying
   @Query(
@@ -55,64 +57,6 @@ public interface EventRecordRepository extends JpaRepository<EventRecord, UUID> 
   @Modifying
   @Query(
       value =
-          "INSERT INTO localmachine.events("
-              + "id,"
-              + "protocolversion,"
-              + "occurredtime,"
-              + "senderid,"
-              + "receiverid,"
-              + "groupid,"
-              + "groupsequencenumber,"
-              + "onlinewebsynced,"
-              + "localreplayed,"
-              + "receiversynced,"
-              + "syncedtime) VALUES ("
-              + ":#{#r.id},"
-              + ":#{#r.protocolVersion},"
-              + ":#{#r.occurredTime},"
-              + ":#{#r.senderId},"
-              + ":#{#r.receiverId},"
-              + ":#{#r.groupId},"
-              + ":#{#r.groupSequenceNumber},"
-              + ":#{#r.onlineWebSynced},"
-              + ":#{#r.localReplayed},"
-              + ":#{#r.receiverSynced},"
-              + ":#{#r.syncedTime})",
-      nativeQuery = true)
-  void insertAndAllocateLocalSequenceNumber(@Param("r") EventRecord eventRecord);
-
-  @Modifying
-  @Query(
-      value =
-          "INSERT INTO localmachine.events("
-              + "id,"
-              + "protocolversion,"
-              + "occurredtime,"
-              + "senderid,"
-              + "localsequencenumber,"
-              + "receiverid,"
-              + "groupid,"
-              + "groupsequencenumber,"
-              + "onlinewebsynced,"
-              + "receiversynced,"
-              + "syncedtime) VALUES ("
-              + ":#{#r.id},"
-              + ":#{#r.protocolVersion},"
-              + ":#{#r.occurredTime},"
-              + ":#{#r.senderId},"
-              + ":#{#r.localSequenceNumber},"
-              + ":#{#r.receiverId},"
-              + ":#{#r.groupId},"
-              + ":#{#r.groupSequenceNumber},"
-              + ":#{#r.onlineWebSynced},"
-              + ":#{#r.receiverSynced},"
-              + ":#{#r.syncedTime})",
-      nativeQuery = true)
-  void importExternalEvent(@Param("r") EventRecord eventRecord);
-
-  @Modifying
-  @Query(
-      value =
           "update localmachine.events set receiversynced=true where id in :ids",
       nativeQuery = true)
   void markAsReceived(@Param("ids") Collection<UUID> ids);
@@ -120,11 +64,12 @@ public interface EventRecordRepository extends JpaRepository<EventRecord, UUID> 
   @Query(value = "select cast(id as varchar) as id from localmachine.events where id in :ids", nativeQuery = true)
   Set<String> filterExistsEventIds(@Param("ids") Set<UUID> ids);
 
-  @Query(value = "select id, senderid from localmachine.events where id in :ids", nativeQuery = true)
-  List<EventRecord> getPartialEventWithSender(@Param("ids") Set<UUID> ids);
-
-  List<EventRecord> findByReceiverIdAndReceiverSyncedAndArchived(
-      UUID receiverId, Boolean receiverSynced, boolean archived);
+  @Query(
+      value = "select * from localmachine.events e left join localmachine.event_payload ep on e.id=ep.eventid "
+          + "where e.receiverid=:receiverId and e.receiversynced=false and e.archived=false "
+          + "order by e.syncedtime limit :limit",
+      nativeQuery = true)
+  List<EventRecord> findEventsForReceiver(@Param("receiverId") UUID receiverId, @Param("limit") int limit);
 
   List<EventRecord> findByArchived(boolean archived);
 
@@ -134,4 +79,8 @@ public interface EventRecordRepository extends JpaRepository<EventRecord, UUID> 
       + "and e.receiverid != :facilityId \n"
       + "and e.receiversynced = false;", nativeQuery = true)
   List<String> findExportEventIds(@Param("facilityId") UUID facilityId);
+
+  @Query(value = "select cast(id as varchar) as id from localmachine.events "
+      + " where groupid=:groupId order by syncedtime desc limit 1", nativeQuery = true)
+  Optional<String> findLastEventIdGroupId(@Param("groupId") String groupId);
 }

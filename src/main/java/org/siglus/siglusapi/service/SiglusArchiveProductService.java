@@ -171,7 +171,7 @@ public class SiglusArchiveProductService {
       return;
     }
     if (CollectionUtils.isEmpty(filteredLineItems)) {
-      siglusPhysicalInventoryService.deletePhysicalInventoryDraftForAllProgramsWithSubDraft(facilityId);
+      siglusPhysicalInventoryService.deletePhysicalInventoryDraftForAllPrograms(facilityId);
     } else {
       physicalInventoryDraft.setLineItems(filteredLineItems);
       siglusPhysicalInventoryService.saveDraftForAllProducts(physicalInventoryDraft);

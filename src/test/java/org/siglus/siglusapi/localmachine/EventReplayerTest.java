@@ -26,12 +26,11 @@ import static org.mockito.Mockito.mock;
 
 import java.time.ZonedDateTime;
 import java.util.Arrays;
-import java.util.Comparator;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import net.javacrumbs.shedlock.core.SimpleLock;
 import org.junit.Before;
 import org.junit.Test;
@@ -65,20 +64,18 @@ public class EventReplayerTest {
   }
 
   @Test
-  public void shouldSendEventsToPublisherWhenReplayGivenGroupEvents() {
+  public void shouldSkipEventsWhoseParentNotExistsWhenReplayGroupEvents() {
     // given
     Event groupEvent1 =
-        Event.builder().id(UUID.randomUUID()).groupId(GROUP_1).groupSequenceNumber(0).build();
+        Event.builder().id(UUID.randomUUID()).groupId(GROUP_1).parentId(null).build();
     Event groupEvent2 =
-        Event.builder().id(UUID.randomUUID()).groupId(GROUP_1).groupSequenceNumber(1).build();
+        Event.builder().id(UUID.randomUUID()).groupId(GROUP_1).parentId(groupEvent1.getId()).build();
     Event groupEvent4MissingDependency =
-        Event.builder().id(UUID.randomUUID()).groupId(GROUP_1).groupSequenceNumber(3).build();
-    List<Event> groupEvents = Arrays.asList(groupEvent2, groupEvent1, groupEvent4MissingDependency);
-    given(eventStore.loadSortedGroupEvents(GROUP_1))
-        .willReturn(
-            groupEvents.stream()
-                .sorted(Comparator.comparingLong(Event::getGroupSequenceNumber))
-                .collect(Collectors.toList()));
+        Event.builder().id(UUID.randomUUID()).groupId(GROUP_1).parentId(UUID.randomUUID()).build();
+    final List<Event> groupEvents = Arrays.asList(groupEvent2, groupEvent1, groupEvent4MissingDependency);
+    Arrays.asList(groupEvent1, groupEvent2, groupEvent4MissingDependency)
+        .forEach(it -> given(eventStore.findEvent(it.getId())).willReturn(Optional.of(it)));
+    given(eventStore.getNotReplayedLeafEventsInGroup(GROUP_1)).willReturn(Collections.singletonList(groupEvent2));
     List<Event> publishedEvents = getPublishedEvents();
     // when
     doNothing().when(syncRecordService).storeLastReplayRecord();
@@ -87,6 +84,33 @@ public class EventReplayerTest {
     assertThat(publishedEvents)
         .extracting(Event::getId)
         .containsExactly(groupEvent1.getId(), groupEvent2.getId());
+  }
+
+  @Test
+  public void shouldSendEventsToPublisherWhenReplayGivenGroupEvents() {
+    // given
+    Event groupEvent1 =
+        Event.builder().id(UUID.randomUUID()).groupId(GROUP_1).parentId(null).build();
+    Event groupEvent2 =
+        Event.builder().id(UUID.randomUUID()).groupId(GROUP_1).parentId(groupEvent1.getId()).build();
+    Event groupEvent3 =
+        Event.builder()
+            .id(UUID.randomUUID())
+            .groupId(GROUP_1)
+            .parentId(groupEvent2.getId())
+            .build();
+    final List<Event> groupEvents = Arrays.asList(groupEvent2, groupEvent1, groupEvent3);
+    Arrays.asList(groupEvent1, groupEvent2, groupEvent3)
+        .forEach(it -> given(eventStore.findEvent(it.getId())).willReturn(Optional.of(it)));
+    given(eventStore.getNotReplayedLeafEventsInGroup(GROUP_1)).willReturn(Collections.singletonList(groupEvent3));
+    List<Event> publishedEvents = getPublishedEvents();
+    // when
+    doNothing().when(syncRecordService).storeLastReplayRecord();
+    eventReplayer.replay(groupEvents);
+    // then
+    assertThat(publishedEvents)
+        .extracting(Event::getId)
+        .containsExactly(groupEvent1.getId(), groupEvent2.getId(), groupEvent3.getId());
   }
 
   @Test
@@ -133,7 +157,13 @@ public class EventReplayerTest {
 
   private List<Event> getPublishedEvents() {
     List<Event> publishedEvents = new LinkedList<>();
-    doAnswer(invocation -> publishedEvents.add(invocation.getArgumentAt(0, Event.class)))
+    doAnswer(
+        invocation -> {
+          Event event = invocation.getArgumentAt(0, Event.class);
+          // assume event is replayed successfully
+          event.setLocalReplayed(true);
+          return publishedEvents.add(event);
+        })
         .when(eventPublisher)
         .publishEvent(any(Event.class));
     return publishedEvents;

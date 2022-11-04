@@ -19,14 +19,12 @@ import static org.springframework.util.ObjectUtils.isEmpty;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
@@ -67,6 +65,7 @@ public class SyncService {
     try {
       downloadedAcks = webClient.exchangeAcks(notShippedAcks);
     } catch (Exception e) {
+      log.error("fail to download ack", e);
       List<UUID> eventIds = notShippedAcks.stream().map(Ack::getEventId).collect(Collectors.toList());
       errorHandler.storeErrorRecord(eventIds, e, ErrorType.EXCHANGE_DOWN);
     }
@@ -75,6 +74,7 @@ public class SyncService {
     try {
       webClient.confirmAcks(downloadedAcks);
     } catch (Exception e) {
+      log.error("fail to upload ack", e);
       List<UUID> eventIds = downloadedAcks.stream().map(Ack::getEventId).collect(Collectors.toList());
       errorHandler.storeErrorRecord(eventIds, e, ErrorType.EXCHANGE_UP);
     }
@@ -82,22 +82,33 @@ public class SyncService {
 
   @Transactional
   public void pull() {
-    List<Event> events = null;
     try {
-      events = Stream.of(getMasterDataEvents(), webClient.exportPeeringEvents())
-          .flatMap(Collection::stream)
-          .collect(Collectors.toList());
+      pullMasterData();
+      pullPeeringEvents();
     } catch (Exception e) {
+      log.error("fail to pull events", e);
       errorHandler.storeErrorRecord(e, ErrorType.SYNC_DOWN);
     }
+  }
+
+  private void pullPeeringEvents() {
+    List<Event> events;
+    events = webClient.exportPeeringEvents();
     if (CollectionUtils.isEmpty(events)) {
       log.info("pull events got empty");
       syncRecordService.storeLastSyncRecord();
-      return;
     }
     events.forEach(it -> it.setOnlineWebSynced(true));
     eventImporter.importEvents(events);
     syncRecordService.storeLastSyncRecord();
+  }
+
+  private void pullMasterData() {
+    List<Event> masterDataEvents = getMasterDataEvents();
+    eventImporter.importMasterData(masterDataEvents);
+    if (CollectionUtils.isNotEmpty(masterDataEvents)) {
+      siglusCacheService.invalidateCache();
+    }
   }
 
   private List<Event> getMasterDataEvents() {
@@ -105,11 +116,7 @@ public class SyncService {
     if (masterDataOffset == null) {
       return Collections.emptyList();
     }
-    List<Event> masterDataEvents = webClient.exportMasterDataEvents(masterDataOffset.getRecordOffset());
-    if (!CollectionUtils.isEmpty(masterDataEvents)) {
-      siglusCacheService.invalidateCache();
-    }
-    return masterDataEvents;
+    return webClient.exportMasterDataEvents(masterDataOffset.getRecordOffset());
   }
 
   @Transactional

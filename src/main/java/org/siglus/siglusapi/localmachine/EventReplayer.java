@@ -25,10 +25,14 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.TimeoutException;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.siglus.siglusapi.exception.DeferredException;
 import org.siglus.siglusapi.localmachine.ShedLockFactory.AutoClosableLock;
 import org.siglus.siglusapi.localmachine.eventstore.EventStore;
 import org.springframework.stereotype.Component;
@@ -40,89 +44,118 @@ public class EventReplayer {
 
   private static final String DEFAULT_REPLAY_LOCK = "lock.replay.default";
   private static final String DEFAULT_REPLAY_GROUP_LOCK = "lock.replay.group.default.";
+  private static final int TIMEOUT_MILLIS = 1000;
   private final EventPublisher eventPublisher;
   private final EventStore eventStore;
   private final ShedLockFactory lockFactory;
 
+  @SneakyThrows
   public void replay(List<Event> events) {
     if (CollectionUtils.isEmpty(events)) {
       return;
     }
-    // replay event one by one in order. if the event is a group event (e.g. event2 below), should
-    // check dependency first
-    // |-------|
-    // |event 1|
-    // |event 2|--->[group event M, group event M-1,..., group event 0] (dependent events are ready)
-    // |event 3|
-    // |event 4|--->[group event M, group event M-1] (dependent events are not ready)
-    // |.......|
-    // |event N|
-    List<Event> defaultGroup = new LinkedList<>();
+    List<Event> nonGroupEvents = new LinkedList<>();
     List<Event> groupEvents = new LinkedList<>();
     events.forEach(
         it -> {
           if (Objects.isNull(it.getGroupId())) {
-            defaultGroup.add(it);
+            nonGroupEvents.add(it);
           } else {
             groupEvents.add(it);
           }
         });
-    this.playDefaultGroupEvents(defaultGroup);
-    Map<String, List<Event>> eventGroups =
-        groupEvents.stream().collect(groupingBy(Event::getGroupId, LinkedHashMap::new, toList()));
-    eventGroups.forEach((groupId, value) -> this.playGroupEvents(groupId));
+    playNonGroupEvents(nonGroupEvents);
+    playGroups(groupEvents);
   }
 
-  protected void playGroupEvents(String groupId) {
-    try (AutoClosableLock lock = lockFactory.lock(groupId)) {
+  protected void playGroups(List<Event> groupEvents) {
+    Map<String, List<Event>> eventGroups =
+        groupEvents.stream().collect(groupingBy(Event::getGroupId, LinkedHashMap::new, toList()));
+    DeferredException deferredExceptions = new DeferredException();
+    for (String groupId : eventGroups.keySet()) {
+      try {
+        this.playGroup(groupId);
+      } catch (Exception e) {
+        log.error("fail to replay group:" + groupId, e);
+        deferredExceptions.add(e);
+      }
+    }
+    deferredExceptions.emit();
+  }
+
+  protected void playGroup(String groupId) throws InterruptedException {
+    try (AutoClosableLock lock = lockFactory.waitLock(groupId, TIMEOUT_MILLIS)) {
       if (!lock.isPresent()) {
         log.warn("fail to get lock, cancel this round of replay, group:{}", groupId);
         return;
       }
-      doPlayGroupEvents(groupId);
+      tryToPlayGroupEvents(groupId);
     }
   }
 
-  protected void doPlayGroupEvents(String groupId) {
-    List<Event> events = eventStore.loadSortedGroupEvents(groupId);
-    List<UUID> eventIds = events.stream().map(Event::getId).collect(toList());
-    log.info("start to play group:{}, events:{}", groupId, eventIds);
-    for (int i = 0; i < events.size(); i++) {
-      Event currentEvent = events.get(i);
-      if (i != currentEvent.getGroupSequenceNumber()) {
-        return;
-      }
-      if (currentEvent.isLocalReplayed()) {
-        // continue to check next event
-        continue;
-      }
-      try (AutoClosableLock waitLock = lockFactory
-          .waitLock(DEFAULT_REPLAY_GROUP_LOCK + currentEvent.getReceiverId(), 1000)) {
-        if (!waitLock.isPresent()) {
-          return;
-        }
-        waitLock.ifPresent(() -> eventPublisher.publishEvent(currentEvent));
-      } catch (InterruptedException e) {
-        log.error("groupId: {} publish event interrupt: {}", groupId, e);
-        Thread.currentThread().interrupt();
-      }
+  protected void tryToPlayGroupEvents(String groupId) {
+    List<Event> leafEvents = eventStore.getNotReplayedLeafEventsInGroup(groupId);
+    List<UUID> leafEventIds = leafEvents.stream().map(Event::getId).collect(toList());
+    if (CollectionUtils.isEmpty(leafEvents)) {
+      log.info("no leaf events in group pending replay, group id:{}", groupId);
+      return;
+    }
+    log.info("start to play group:{}, leaf event ids:{}", groupId, leafEventIds);
+    for (Event event : leafEvents) {
+      playGroupEvent(event);
     }
   }
 
-  private void playDefaultGroupEvents(List<Event> events) {
+  private void playGroupEvent(Event current) {
+    if (Objects.isNull(current) || current.isLocalReplayed()) {
+      return;
+    }
+    UUID parentId = current.getParentId();
+    boolean canReplayCurrentEvent;
+    if (Objects.nonNull(parentId)) {
+      Optional<Event> parentEvent = eventStore.findEvent(parentId);
+      playGroupEvent(parentEvent.orElse(null));
+      canReplayCurrentEvent = parentEvent.map(Event::isLocalReplayed).orElse(false);
+    } else {
+      // parent id is null, current event is root event
+      canReplayCurrentEvent = true;
+    }
+    if (canReplayCurrentEvent) {
+      playEventWithLock(current);
+    }
+  }
+
+  private void playEventWithLock(Event current) {
+    String lockId = DEFAULT_REPLAY_GROUP_LOCK + current.getReceiverId();
+    try (AutoClosableLock waitLock = lockFactory.waitLock(lockId, TIMEOUT_MILLIS)) {
+      if (!waitLock.isPresent()) {
+        log.info("fail to get lock {} to replay event {}", lockId, current.getId());
+      } else {
+        eventPublisher.publishEvent(current);
+      }
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
+  }
+
+  void playNonGroupEvents(List<Event> events) throws TimeoutException, InterruptedException {
     if (isEmpty(events)) {
       return;
     }
     final List<Event> eventsForReplaying = sortEventsByLocalSequence(events);
-    try (AutoClosableLock lock = lockFactory.lock(DEFAULT_REPLAY_LOCK)) {
+    try (AutoClosableLock lock = lockFactory.waitLock(DEFAULT_REPLAY_LOCK, TIMEOUT_MILLIS)) {
       lock.ifPresent(() -> eventsForReplaying.forEach(eventPublisher::publishEvent));
+      if (!lock.isPresent()) {
+        throw new TimeoutException();
+      }
     }
   }
 
   private List<Event> sortEventsByLocalSequence(List<Event> events) {
     return events.stream()
-        .sorted(Comparator.comparing(Event::getSyncedTime).thenComparingLong(Event::getLocalSequenceNumber))
+        .sorted(
+            Comparator.comparing(Event::getSyncedTime)
+                .thenComparingLong(Event::getLocalSequenceNumber))
         .collect(toList());
   }
-
 }

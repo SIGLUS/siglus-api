@@ -23,6 +23,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.NotImplementedException;
 import org.siglus.siglusapi.localmachine.agent.ErrorHandler;
 import org.siglus.siglusapi.localmachine.eventstore.EventStore;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -41,6 +42,10 @@ public abstract class EventImporter {
     this.replayer = replayer;
     this.machine = machine;
     this.errorHandler = errorHandler;
+  }
+
+  public void importMasterData(List<Event> events) {
+    throw new NotImplementedException("master data can be only on localmachine");
   }
 
   public void importEvents(List<Event> events) {
@@ -86,7 +91,7 @@ public abstract class EventImporter {
   }
 
   static void checkIdViolationError(UUID eventId, DataIntegrityViolationException e) {
-    boolean idExists = e.getMessage().contains("Key (id)");
+    boolean idExists = e.getMessage().toLowerCase().contains("pkey");
     if (idExists) {
       log.info("event exists, skip it, eventid:{}", eventId);
     } else {

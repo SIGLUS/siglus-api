@@ -16,6 +16,7 @@
 package org.siglus.siglusapi.localmachine;
 
 import java.time.ZonedDateTime;
+import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -42,14 +43,15 @@ public class EventPublisher {
   private final SyncRecordService syncRecordService;
 
   public void emitGroupEvent(String groupId, UUID receiverId, Object payload) {
-    Event.EventBuilder eventBuilder = baseEventBuilder(groupId, receiverId, payload);
-    eventBuilder.groupSequenceNumber(eventStore.nextGroupSequenceNumber(groupId));
+    Optional<UUID> lastEventIdInGroup = eventStore.getLastEventIdInGroup(groupId);
+    UUID parentId = lastEventIdInGroup.orElse(null);
+    Event.EventBuilder eventBuilder = baseEventBuilder(groupId, parentId, receiverId, payload);
     Event event = eventBuilder.build();
     doEmit(event);
   }
 
   public void emitNonGroupEvent(Object payload) {
-    Event.EventBuilder eventBuilder = baseEventBuilder(null, null, payload);
+    Event.EventBuilder eventBuilder = baseEventBuilder(null, null, null, payload);
     Event event = eventBuilder.build();
     // the only receiver the local facility itself and online web
     event.setReceiverSynced(true);
@@ -105,7 +107,7 @@ public class EventPublisher {
     eventStore.emit(event);
   }
 
-  private Event.EventBuilder baseEventBuilder(String groupId, UUID receiverId, Object payload) {
+  private Event.EventBuilder baseEventBuilder(String groupId, UUID parentId, UUID receiverId, Object payload) {
     return Event.builder()
         .id(UUID.randomUUID())
         .protocolVersion(PROTOCOL_VERSION)
@@ -113,6 +115,7 @@ public class EventPublisher {
         .senderId(machine.getFacilityId())
         .receiverId(receiverId)
         .groupId(groupId)
+        .parentId(parentId)
         .payload(payload)
         .localReplayed(true); // marked as replayed at sender side
   }
