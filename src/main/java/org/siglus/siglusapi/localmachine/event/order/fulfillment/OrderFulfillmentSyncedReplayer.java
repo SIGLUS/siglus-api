@@ -342,18 +342,16 @@ public class OrderFulfillmentSyncedReplayer {
 
   private String buildForUniqueKey(ShipmentLineItem shipmentLineItemDto) {
     if (null == shipmentLineItemDto.getLotId()) {
-      return shipmentLineItemDto.getOrderable().getId() + "&" + shipmentLineItemDto.getQuantityShipped();
+      return shipmentLineItemDto.getOrderable().getId().toString();
     }
-    return shipmentLineItemDto.getLotId() + "&" + shipmentLineItemDto.getOrderable().getId()
-        + "&" + shipmentLineItemDto.getQuantityShipped();
+    return shipmentLineItemDto.getLotId() + "&" + shipmentLineItemDto.getOrderable().getId();
   }
 
   private String buildForUniqueKey(ShipmentLineItemDto shipmentLineItemDto) {
     if (null == shipmentLineItemDto.getLot()) {
-      return shipmentLineItemDto.getOrderable().getId() + "&" + shipmentLineItemDto.getQuantityShipped();
+      return shipmentLineItemDto.getOrderable().getId().toString();
     }
-    return shipmentLineItemDto.getLot().getId() + "&" + shipmentLineItemDto.getOrderable().getId()
-        + "&" + shipmentLineItemDto.getQuantityShipped();
+    return shipmentLineItemDto.getLot().getId() + "&" + shipmentLineItemDto.getOrderable().getId();
   }
 
   private Shipment createSubOrderAndShipment(boolean isSubOrder, ShipmentDto shipmentDto, UUID fulfillUserId,
