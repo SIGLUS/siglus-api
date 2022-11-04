@@ -22,6 +22,8 @@ import net.javacrumbs.shedlock.provider.jdbctemplate.JdbcTemplateLockProvider;
 import net.javacrumbs.shedlock.support.KeepAliveLockProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.scheduling.TaskScheduler;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 
 @Configuration
 public class SchedulerConfiguration {
@@ -34,5 +36,13 @@ public class SchedulerConfiguration {
         new JdbcTemplateLockProvider(dataSource, SHEDLOCK_TABLE_NAME);
     return new KeepAliveLockProvider(
         jdbcLockProvider, Executors.newSingleThreadScheduledExecutor());
+  }
+
+  @Bean
+  public TaskScheduler taskScheduler() {
+    ThreadPoolTaskScheduler threadPoolTaskScheduler = new ThreadPoolTaskScheduler();
+    threadPoolTaskScheduler.setPoolSize(8);
+    threadPoolTaskScheduler.setThreadNamePrefix("scheduler");
+    return threadPoolTaskScheduler;
   }
 }
