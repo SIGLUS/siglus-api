@@ -22,6 +22,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeoutException;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.siglus.siglusapi.localmachine.agent.ErrorHandler;
 import org.siglus.siglusapi.localmachine.eventstore.EventStore;
 import org.springframework.context.annotation.Profile;
@@ -41,6 +42,9 @@ public class LocalEventImporter extends EventImporter {
   @Override
   @Transactional
   public void importMasterData(List<Event> events) {
+    if (CollectionUtils.isEmpty(events)) {
+      return;
+    }
     final long offset = this.eventStore.getCurrentMasterDataOffset();
     List<Event> masterDataToSync = new LinkedList<>();
     long newOffset = offset;
