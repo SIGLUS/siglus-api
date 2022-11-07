@@ -23,11 +23,13 @@ import org.siglus.siglusapi.localmachine.domain.LastSyncReplayRecord;
 import org.siglus.siglusapi.localmachine.repository.ErrorRecordRepository;
 import org.siglus.siglusapi.localmachine.repository.LastSyncRecordRepository;
 import org.siglus.siglusapi.localmachine.webapi.LocalSyncResultsResponse;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@Profile("localmachine")
 public class LocalSyncResultsService {
 
   private final LastSyncRecordRepository lastSyncRecordRepository;
