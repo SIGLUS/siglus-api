@@ -1,30 +1,25 @@
--- WHEN COMMITTING OR REVIEWING THIS FILE: Make sure that the timestamp in the file name (that serves as a version) is the latest timestamp, and that no new migration have been added in the meanwhile.
--- Adding migrations out of order may cause this migration to never execute or behave in an unexpected way.
--- Migrations should NOT BE EDITED. Add a new migration to apply changes.
-drop view if exists dashboard.vw_stock_on_hand_by_product;
-create view dashboard.vw_stock_on_hand_by_product as
 select distinct
-        on
-        (soh.facilityid,
-        soh.orderableid) soh.facilityid,
-        f.name as facilityname,
-        f.code as facilitycode,
-        ft.code as facilitytype,
-        soh.orderableid,
-        o.code as productcode,
-        o.fullproductname as productname,
-        prnm.programcode as programname,
-        gz_prov.name as provincename,
-        gz.name as districtname,
-        vfs.districtfacilitycode,
-        vfs.provincefacilitycode,
-        soh.totalsoh,
-        soh.totalsoh * po.priceperpack as totalprice,
-        h.cmm as realcmm,
-        case
-        when h.cmm is null
-        or h.cmm <= 0:: double precision then 0:: numeric
-        else round(h.cmm:: numeric, 2)
+on
+    (soh.facilityid,
+    soh.orderableid) soh.facilityid,
+    f.name as facilityname,
+    f.code as facilitycode,
+    ft.code as facilitytype,
+    soh.orderableid,
+    o.code as productcode,
+    o.fullproductname as productname,
+    prnm.programname as programname,
+    gz_prov.name as provincename,
+    gz.name as districtname,
+    vfs.districtfacilitycode,
+    vfs.provincefacilitycode,
+    soh.totalsoh,
+    soh.totalsoh * po.priceperpack as totalprice,
+    h.cmm as realcmm,
+    case
+    when h.cmm is null
+    or h.cmm <= 0:: double precision then 0:: numeric
+    else round(h.cmm:: numeric, 2)
 end
 as cmm,
 	case
@@ -38,9 +33,9 @@ as mos,
 		when h.cmm = '-1'::integer::double precision
 		or h.cmm is null then 'Stock regular'::text
 		when soh.totalsoh::double precision < h.cmm then 'Eminência de roptura'::text
-		when prnm.programcode::text = 'TARV'::text
+		when prnm.programname::text = 'TARV'::text
 		and (h.cmm * 3::double precision) < soh.totalsoh::double precision then 'Stock acumulado'::text
-		when prnm.programcode::text <> 'TARV'::text
+		when prnm.programname::text <> 'TARV'::text
 		and (h.cmm * 2::double precision) < soh.totalsoh::double precision then 'Stock acumulado'::text
 		else 'Stock regular'::text
 end
@@ -90,7 +85,7 @@ left join (
 	csoh.facilityid = soh.facilityid
 	and csoh.orderableid = soh.orderableid
 left join stockmanagement.stock_cards sc on sc.facilityid=soh.facilityid and sc.orderableid=soh.orderableid
-left join siglusintegration.program_requisition_name_mapping prnm on prnm.programid =sc.programid
+left join siglusintegration.program_report_name_mapping prnm on prnm.programid =sc.programid
 left join referencedata.facilities f on
 	f.id = soh.facilityid
 left join (
