@@ -18,6 +18,8 @@ package org.siglus.siglusapi.localmachine.agent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.siglus.siglusapi.localmachine.Machine;
+import org.siglus.siglusapi.localmachine.ShedLockFactory;
+import org.siglus.siglusapi.localmachine.ShedLockFactory.AutoClosableLock;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -30,6 +32,8 @@ public class Synchronizer {
 
   private final SyncService syncService;
   private final Machine machine;
+  private final ShedLockFactory lockFactory;
+  private static final int TIMEOUT_MILLIS = 3 * 1000;
 
   @Scheduled(fixedRate = 60 * 1000, initialDelay = 60 * 1000)
   public void scheduledSync() {
@@ -42,8 +46,16 @@ public class Synchronizer {
       log.info("machine is inactive, no need to sync");
       return;
     }
-    syncService.pull();
-    syncService.exchangeAcks();
-    syncService.push();
+    try (AutoClosableLock lock = lockFactory.waitLock("lock.synchronizer", TIMEOUT_MILLIS)) {
+      if (!lock.isPresent()) {
+        log.warn("[sync] fail to get lock, cancel this round");
+        return;
+      }
+      syncService.pull();
+      syncService.exchangeAcks();
+      syncService.push();
+    } catch (InterruptedException e) {
+      log.error("sync thread is interrupted", e);
+    }
   }
 }
