@@ -112,7 +112,7 @@ public class SyncService {
   }
 
   private List<Event> getMasterDataEvents() {
-    MasterDataOffset masterDataOffset = localEventStore.findMasterDataOffsetByFacilityId(machine.getFacilityId());
+    MasterDataOffset masterDataOffset = localEventStore.findMasterDataOffsetByFacilityId(machine.getLocalFacilityId());
     if (masterDataOffset == null) {
       return Collections.emptyList();
     }

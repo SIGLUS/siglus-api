@@ -33,6 +33,6 @@ public class CalculateLocalMachineCmmTask {
 
   @Scheduled(cron = "${cmm.calculate.cron}", zone = "${time.zoneId}")
   public void calculate() {
-    calculateCmmService.calculateLocalMachineCmms(LocalDate.now(), machine.getFacilityId());
+    calculateCmmService.calculateLocalMachineCmms(LocalDate.now(), machine.getLocalFacilityId());
   }
 }

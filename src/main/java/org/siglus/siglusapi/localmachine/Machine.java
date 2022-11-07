@@ -81,13 +81,13 @@ public class Machine {
     generateMachineId();
   }
 
-  public UUID getFacilityId() {
+  public UUID evalEventSenderId() {
     return Optional.ofNullable(siglusAuthenticationHelper.getCurrentUser())
         .map(UserDto::getHomeFacilityId)
         .orElseGet(this::getLocalFacilityId);
   }
 
-  UUID getLocalFacilityId() {
+  public UUID getLocalFacilityId() {
     if (isOnlineWeb()) {
       throw new IllegalStateException("not allowed to get local facility id on onlineweb");
     }

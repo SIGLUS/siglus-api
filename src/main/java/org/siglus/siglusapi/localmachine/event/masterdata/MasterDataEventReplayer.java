@@ -50,7 +50,7 @@ public class MasterDataEventReplayer {
   }
 
   private void resetDraftAndLocationWhenToggledLocationManagement(List<TableChangeEvent> tableChangeEvents) {
-    UUID facilityId = machine.getFacilityId();
+    UUID facilityId = machine.getLocalFacilityId();
     FacilityExtension facilityExtension = facilityExtensionRepository.findByFacilityId(facilityId);
     boolean locationManagement = getEnableLocationManagement(facilityExtension);
     boolean toggledLocationManagement = false;
