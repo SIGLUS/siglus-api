@@ -64,9 +64,9 @@ public class LocalTokenInterceptor implements ClientHttpRequestInterceptor {
       HttpHeaders headers = request.getHeaders();
       attachHeaders(headers);
     }
-    machine.setConnectedOnlineWeb(true);
     try {
       ClientHttpResponse httpResponse = execution.execute(request, body);
+      machine.setConnectedOnlineWeb(true);
       logClientHttpResponse(request, httpResponse);
       return httpResponse;
     } catch (IOException ioException) {
