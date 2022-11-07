@@ -83,7 +83,7 @@ public class LocalAgentController {
   }
 
   @GetMapping("/syncResults")
-  public LocalSyncResultsResponse getSyncResults() {
-    return syncErrorService.getSyncResults();
+  public LocalSyncResultsResponse doSyncAndGetResults() {
+    return syncErrorService.doSync();
   }
 }

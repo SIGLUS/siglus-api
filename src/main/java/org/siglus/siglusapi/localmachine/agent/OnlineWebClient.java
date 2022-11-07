@@ -23,7 +23,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import org.siglus.siglusapi.localmachine.Ack;
 import org.siglus.siglusapi.localmachine.Event;
-import org.siglus.siglusapi.localmachine.ExternalEventDto;
 import org.siglus.siglusapi.localmachine.ExternalEventDtoMapper;
 import org.siglus.siglusapi.localmachine.auth.LocalTokenInterceptor;
 import org.siglus.siglusapi.localmachine.webapi.AckExchange;
@@ -31,6 +30,7 @@ import org.siglus.siglusapi.localmachine.webapi.ActivationResponse;
 import org.siglus.siglusapi.localmachine.webapi.EventsResponse;
 import org.siglus.siglusapi.localmachine.webapi.RemoteActivationRequest;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -53,7 +53,7 @@ public class OnlineWebClient {
   public OnlineWebClient(
       LocalTokenInterceptor localTokenInterceptor, ExternalEventDtoMapper externalEventDtoMapper) {
     this.externalEventDtoMapper = externalEventDtoMapper;
-    this.restTemplate = new RestTemplate();
+    this.restTemplate = new RestTemplateBuilder().setConnectTimeout(5 * 1000).build();
     configureLocalTokenInterceptor(localTokenInterceptor);
     restTemplate.setInterceptors(singletonList(localTokenInterceptor));
   }
@@ -102,9 +102,5 @@ public class OnlineWebClient {
   private void configureLocalTokenInterceptor(LocalTokenInterceptor localTokenInterceptor) {
     localTokenInterceptor.setAcceptFunc(
         httpRequest -> !httpRequest.getURI().getRawPath().contains(PATH_ACTIVATE_AGENT));
-  }
-
-  private List<ExternalEventDto> dumpEventForSync(List<Event> events) {
-    return events.stream().map(externalEventDtoMapper::map).collect(Collectors.toList());
   }
 }

@@ -34,7 +34,10 @@ public class LocalSyncResultsService {
 
   private final ErrorRecordRepository errorRecordsRepository;
 
-  public LocalSyncResultsResponse getSyncResults() {
+  private final Synchronizer synchronizer;
+
+  public LocalSyncResultsResponse doSync() {
+    synchronizer.sync();
     LastSyncReplayRecord lastSyncTime = lastSyncRecordRepository.findFirstByOrderByLastSyncedTimeDesc();
     List<ErrorRecord> errorRecords = errorRecordsRepository.findLastTenErrorRecords();
 
