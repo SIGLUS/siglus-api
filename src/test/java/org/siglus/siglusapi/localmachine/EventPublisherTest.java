@@ -274,7 +274,7 @@ public class EventPublisherTest {
 
   private UUID getMockedFacility() {
     UUID facilityId = UUID.randomUUID();
-    given(machine.getFacilityId()).willReturn(facilityId);
+    given(machine.evalEventSenderId()).willReturn(facilityId);
     return facilityId;
   }
 

@@ -42,7 +42,7 @@ public class CalculateLocalMachineCmmTaskTest {
   @Test
   public void shouldSuccessWhenScheduledTaskExecute() {
     // given
-    when(machine.getFacilityId()).thenReturn(UUID.randomUUID());
+    when(machine.getLocalFacilityId()).thenReturn(UUID.randomUUID());
 
     // when
     task.calculate();

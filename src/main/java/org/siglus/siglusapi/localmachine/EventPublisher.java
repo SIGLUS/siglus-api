@@ -112,7 +112,7 @@ public class EventPublisher {
         .id(UUID.randomUUID())
         .protocolVersion(PROTOCOL_VERSION)
         .occurredTime(ZonedDateTime.now())
-        .senderId(machine.getFacilityId())
+        .senderId(machine.evalEventSenderId())
         .receiverId(receiverId)
         .groupId(groupId)
         .parentId(parentId)

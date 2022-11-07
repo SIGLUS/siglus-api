@@ -62,7 +62,7 @@ public class OnlineWebMasterDataEventReplayerTest {
   public void shouldReplaySuccessAndResetDraftAndLocationWhenReplayGivenLocationManagementStatusChange() {
     // given
     MasterDataTableChangeEvent event = buildMasterDataTableChangeEvent();
-    when(machine.getFacilityId()).thenReturn(facilityId);
+    when(machine.getLocalFacilityId()).thenReturn(facilityId);
     when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(null);
 
     // when
@@ -79,7 +79,7 @@ public class OnlineWebMasterDataEventReplayerTest {
   public void shouldReplaySuccessAndDoNotResetDraftAndLocationWhenReplayGivenLocationManagementStatusDoNotChange() {
     // given
     MasterDataTableChangeEvent event = buildMasterDataTableChangeEvent();
-    when(machine.getFacilityId()).thenReturn(facilityId);
+    when(machine.getLocalFacilityId()).thenReturn(facilityId);
     when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(
         FacilityExtension.builder().enableLocationManagement(Boolean.TRUE).build());
 

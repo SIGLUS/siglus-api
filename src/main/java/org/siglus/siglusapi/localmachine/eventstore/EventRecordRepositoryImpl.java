@@ -15,8 +15,14 @@
 
 package org.siglus.siglusapi.localmachine.eventstore;
 
+import java.util.LinkedList;
+import java.util.Objects;
+import java.util.stream.Collectors;
 import javax.persistence.EntityManager;
+import javax.persistence.Query;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 
 @RequiredArgsConstructor
 public class EventRecordRepositoryImpl implements EventRecordRepositoryCustom {
@@ -31,34 +37,40 @@ public class EventRecordRepositoryImpl implements EventRecordRepositoryCustom {
 
   @Override
   public void insertAndAllocateLocalSequenceNumber(EventRecord eventRecord) {
-    entityManager
-        .createNativeQuery(
-            "insert into localmachine.events("
-                + "protocolversion, "
-                + "senderid, "
-                + "receiverid, "
-                + "onlinewebsynced, "
-                + "receiversynced, "
-                + "localreplayed, "
-                + "archived, "
-                + "occurredtime, "
-                + "syncedtime, "
-                + "parentid, "
-                + "id, "
-                + "groupid) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)")
-        .setParameter(1, eventRecord.getProtocolVersion())
-        .setParameter(2, eventRecord.getSenderId())
-        .setParameter(3, eventRecord.getReceiverId())
-        .setParameter(4, eventRecord.isOnlineWebSynced())
-        .setParameter(5, eventRecord.isReceiverSynced())
-        .setParameter(6, eventRecord.isLocalReplayed())
-        .setParameter(7, eventRecord.isArchived())
-        .setParameter(8, eventRecord.getOccurredTime())
-        .setParameter(9, eventRecord.getSyncedTime())
-        .setParameter(10, eventRecord.getParentId())
-        .setParameter(11, eventRecord.getId())
-        .setParameter(12, eventRecord.getGroupId())
-        .executeUpdate();
+    LinkedList<Pair<String, Object>> fields = new LinkedList<>();
+    String sql = buildSqlForInsert(eventRecord, fields);
+    Query nativeQuery = entityManager.createNativeQuery(sql);
+    for (int i = 0; i < fields.size(); i++) {
+      nativeQuery.setParameter(i + 1, fields.get(i).getRight());
+    }
+    nativeQuery.executeUpdate();
     entityManager.flush();
+  }
+
+  static String buildSqlForInsert(EventRecord eventRecord, LinkedList<Pair<String, Object>> fields) {
+    fields.add(Pair.of("protocolversion", eventRecord.getProtocolVersion()));
+    fields.add(Pair.of("senderid", eventRecord.getSenderId()));
+    fields.add(Pair.of("receiverid", eventRecord.getReceiverId()));
+    fields.add(Pair.of("onlinewebsynced", eventRecord.isOnlineWebSynced()));
+    fields.add(Pair.of("receiversynced", eventRecord.isReceiverSynced()));
+    fields.add(Pair.of("localreplayed", eventRecord.isLocalReplayed()));
+    fields.add(Pair.of("archived", eventRecord.isArchived()));
+    fields.add(Pair.of("occurredtime", eventRecord.getOccurredTime()));
+    fields.add(Pair.of("syncedtime", eventRecord.getSyncedTime()));
+    fields.add(Pair.of("groupid", eventRecord.getGroupId()));
+    fields.add(Pair.of("id", eventRecord.getId()));
+    // omit null parentid, otherwise it can't be accepted by jpa due to cast uuid of null failure
+    if (Objects.nonNull(eventRecord.getParentId())) {
+      fields.add(Pair.of("parentid", eventRecord.getParentId()));
+    }
+    String placeHolderSection = StringUtils.repeat("?", ",", fields.size());
+    String columnSection =
+        StringUtils.join(
+            fields.stream().map(Pair::getLeft).sequential().collect(Collectors.toList()), ",");
+    return "INSERT INTO localmachine.events("
+        + columnSection
+        + ") VALUES ("
+        + placeHolderSection
+        + ")";
   }
 }

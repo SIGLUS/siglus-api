@@ -145,7 +145,7 @@ public class MachineTest {
     userDto.setHomeFacilityId(UUID.randomUUID());
     given(siglusAuthenticationHelper.getCurrentUser()).willReturn(userDto);
     // then
-    assertThat(machine.getFacilityId()).isEqualTo(userDto.getHomeFacilityId());
+    assertThat(machine.evalEventSenderId()).isEqualTo(userDto.getHomeFacilityId());
   }
 
   @Test
@@ -156,7 +156,7 @@ public class MachineTest {
     given(agentInfoRepository.findRegisteredFacilityIds())
         .willReturn(Collections.singletonList(facilityId));
     // then
-    assertThat(machine.getFacilityId()).isEqualTo(UUID.fromString(facilityId));
+    assertThat(machine.evalEventSenderId()).isEqualTo(UUID.fromString(facilityId));
   }
 
   @Test(expected = IllegalStateException.class)
@@ -165,7 +165,7 @@ public class MachineTest {
     given(siglusAuthenticationHelper.getCurrentUser()).willReturn(null);
     given(agentInfoRepository.findRegisteredFacilityIds()).willReturn(Collections.emptyList());
     // when
-    machine.getFacilityId();
+    machine.evalEventSenderId();
   }
 
   @Test
