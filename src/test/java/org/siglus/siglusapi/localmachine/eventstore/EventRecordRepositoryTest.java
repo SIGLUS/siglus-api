@@ -18,6 +18,7 @@ package org.siglus.siglusapi.localmachine.eventstore;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
+import java.util.LinkedList;
 import java.util.UUID;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +28,34 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public class EventRecordRepositoryTest extends LocalMachineIntegrationTest {
   @Autowired private EventRecordRepository eventRecordRepository;
+
+  @Test
+  public void hasParentIdWhenBuildSqlForInsertGivenParentIdIsNull() {
+    // given
+    EventRecord eventRecord = getEventRecord();
+    eventRecord.setParentId(UUID.randomUUID());
+    // when
+    String sql = EventRecordRepositoryImpl.buildSqlForInsert(eventRecord, new LinkedList<>());
+    assertThat(sql)
+        .isEqualTo(
+            "INSERT INTO localmachine.events("
+                + "protocolversion,senderid,receiverid,onlinewebsynced,receiversynced,localreplayed,archived,"
+                + "occurredtime,syncedtime,groupid,id,parentid) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)");
+  }
+
+  @Test
+  public void noParentIdWhenBuildSqlForInsertGivenParentIdIsNull() {
+    // given
+    EventRecord eventRecord = getEventRecord();
+    eventRecord.setParentId(null);
+    // when
+    String sql = EventRecordRepositoryImpl.buildSqlForInsert(eventRecord, new LinkedList<>());
+    assertThat(sql)
+        .isEqualTo(
+            "INSERT INTO localmachine.events("
+                + "protocolversion,senderid,receiverid,onlinewebsynced,receiversynced,localreplayed,archived,"
+                + "occurredtime,syncedtime,groupid,id) VALUES (?,?,?,?,?,?,?,?,?,?,?)");
+  }
 
   @Test
   public void couldRetrieveEventGivenEventInserted() {
