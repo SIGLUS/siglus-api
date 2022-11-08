@@ -770,7 +770,7 @@ public class SiglusOrderService {
             UUID orderableId = requisitionLineItem.getOrderable().getId();
             Integer maxApprovedQuantity = orderableIdToMaxApprovedQuantity.getOrDefault(orderableId, 0);
             orderableIdToMaxApprovedQuantity.put(orderableId,
-                Math.max(maxApprovedQuantity, requisitionLineItem.getApprovedQuantity()));
+                Math.max(maxApprovedQuantity, getNoneNullDefaultZero(requisitionLineItem.getApprovedQuantity())));
           })
       );
       facilityIdToOrderableIdToMaxApprovedQuantity.put(facilityId, orderableIdToMaxApprovedQuantity);
