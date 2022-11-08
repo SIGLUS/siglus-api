@@ -756,9 +756,6 @@ public class SiglusRequisitionService {
           beginningBalances, approvedProductDto, stockCardRangeSummaries, program.getCode(),
           facility.getType().getCode()));
     }
-    requisition.getRequisitionLineItems().addAll(lineItemList);
-    log.info("save requisition {} when add {} products", requisition.getId(), lineItemList.size());
-    requisitionRepository.save(requisition);
     return lineItemList;
   }
 
