@@ -17,15 +17,21 @@ package org.siglus.siglusapi.exception;
 
 import java.util.LinkedList;
 import java.util.List;
-import lombok.Getter;
+import java.util.stream.Collectors;
+import org.apache.commons.lang3.StringUtils;
+import org.siglus.siglusapi.localmachine.utils.ErrorFormatter;
+import org.springframework.data.util.Pair;
 
-@Getter
 public class DeferredException extends RuntimeException {
-  private final List<Exception> exceptions = new LinkedList<>();
+  private final List<Pair<String, Exception>> exceptions = new LinkedList<>();
 
-  public DeferredException add(Exception item) {
-    exceptions.add(item);
+  public DeferredException add(String contextId, Exception item) {
+    exceptions.add(Pair.of(contextId, item));
     return this;
+  }
+
+  public List<Exception> getExceptions() {
+    return exceptions.stream().map(Pair::getSecond).collect(Collectors.toList());
   }
 
   public void emit() {
@@ -33,5 +39,17 @@ public class DeferredException extends RuntimeException {
       return;
     }
     throw this;
+  }
+
+  @Override
+  public String getMessage() {
+    return StringUtils.join(
+        exceptions.stream().map(this::formatException).collect(Collectors.toList()), ",");
+  }
+
+  private String formatException(Pair<String, Exception> it) {
+    return String.format(
+        "%s:%s (%s)",
+        it.getFirst(), it.getSecond(), ErrorFormatter.getRootStackTrace(it.getSecond()));
   }
 }

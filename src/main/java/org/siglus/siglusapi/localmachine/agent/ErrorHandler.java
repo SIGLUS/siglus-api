@@ -15,6 +15,8 @@
 
 package org.siglus.siglusapi.localmachine.agent;
 
+import static org.siglus.siglusapi.localmachine.utils.ErrorFormatter.getRootStackTrace;
+
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -39,9 +41,6 @@ public class ErrorHandler {
 
   private final ErrorRecordRepository errorRecordRepository;
   private final SyncRecordService syncRecordService;
-
-  private static final String SIGLUS_PACKAGE_PREFIX = "org.siglus.siglusapi";
-  private static final String OPENLMIS_PACKAGE_PREFIX = "org.openlmis";
 
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   public void storeErrorRecord(Throwable t, ErrorType errorType) {
@@ -136,36 +135,18 @@ public class ErrorHandler {
         .build();
   }
 
-  private String getRootStackTrace(Throwable t) {
-    if (t.getCause() != null) {
-      getRootStackTrace(t.getCause());
-    }
-    StackTraceElement[] traceElements = t.getStackTrace();
-    for (int i = 0; i <= traceElements.length; i++) {
-      if (traceElements[i].getClassName().startsWith(SIGLUS_PACKAGE_PREFIX)
-          || traceElements[i].getClassName().startsWith(OPENLMIS_PACKAGE_PREFIX)) {
-        return traceElements[i].toString();
-      }
-    }
-    return traceElements[0].toString();
-  }
-
   public List<ErrorRecord> buildSyncUpError(List<UUID> eventIds, Throwable t, ErrorType errorType) {
     if (t instanceof BusinessDataException) {
-      return eventIds.stream().map(event -> {
-        return ErrorRecord.builder()
-            .occurredTime(ZonedDateTime.now())
-            .type(errorType)
-            .errorPayload(buildBusinessErrorPayload(t))
-            .build();
-      }).collect(Collectors.toList());
-    }
-    return eventIds.stream().map(event -> {
-      return ErrorRecord.builder()
+      return eventIds.stream().map(event -> ErrorRecord.builder()
           .occurredTime(ZonedDateTime.now())
           .type(errorType)
-          .errorPayload(buildGeneralErrorPayload(t))
-          .build();
-    }).collect(Collectors.toList());
+          .errorPayload(buildBusinessErrorPayload(t))
+          .build()).collect(Collectors.toList());
+    }
+    return eventIds.stream().map(event -> ErrorRecord.builder()
+        .occurredTime(ZonedDateTime.now())
+        .type(errorType)
+        .errorPayload(buildGeneralErrorPayload(t))
+        .build()).collect(Collectors.toList());
   }
 }

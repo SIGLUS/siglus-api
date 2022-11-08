@@ -77,7 +77,7 @@ public class EventReplayer {
         this.playGroup(groupId);
       } catch (Exception e) {
         log.error("fail to replay group:" + groupId, e);
-        deferredExceptions.add(e);
+        deferredExceptions.add(groupId, e);
       }
     }
     deferredExceptions.emit();
