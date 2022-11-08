@@ -65,6 +65,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.referencedata.dto.OrderableDto;
 import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.requisition.dto.ProgramDto;
+import org.openlmis.requisition.service.RequisitionService;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
 import org.openlmis.stockmanagement.domain.reason.StockCardLineItemReason;
 import org.openlmis.stockmanagement.domain.sourcedestination.Node;
@@ -98,7 +99,6 @@ import org.siglus.siglusapi.service.SiglusValidSourceDestinationService;
 import org.siglus.siglusapi.service.android.StockCardCreateService;
 import org.siglus.siglusapi.service.android.StockCardSearchService;
 import org.siglus.siglusapi.service.android.context.StockCardCreateContextHolder;
-import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.util.SupportedProgramsHelper;
 import org.slf4j.profiler.Profiler;
@@ -137,7 +137,7 @@ public class SiglusMeControllerCreateStockCardsValidationTest extends FileBasedT
   private ProgramReferenceDataService programDataService;
 
   @Mock
-  private SiglusApprovedProductReferenceDataService approvedProductDataService;
+  private RequisitionService requisitionService;
 
   @InjectMocks
   private StockCardCreateContextHolder holder;
@@ -698,7 +698,7 @@ public class SiglusMeControllerCreateStockCardsValidationTest extends FileBasedT
     when(programsHelper.findHomeFacilitySupportedProgramIds())
         .thenReturn(Stream.of(supportProgramId).collect(Collectors.toSet()));
     when(programDataService.findOne(supportProgramId)).thenReturn(buildSupportProgramDto());
-    when(approvedProductDataService.getApprovedProducts(facilityId, supportProgramId, emptyList()))
+    when(requisitionService.getApprovedProducts(facilityId, supportProgramId))
         .thenReturn(facilitySupportOrderables);
   }
 

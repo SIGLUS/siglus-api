@@ -91,7 +91,6 @@ import org.openlmis.requisition.dto.ProgramOrderableDto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.dto.VersionObjectReferenceDto;
 import org.openlmis.requisition.service.RequisitionService;
-import org.openlmis.requisition.service.referencedata.ApproveProductsAggregator;
 import org.openlmis.requisition.web.RequisitionController;
 import org.openlmis.stockmanagement.dto.ObjectReferenceDto;
 import org.openlmis.stockmanagement.util.PageImplRepresentation;
@@ -275,8 +274,9 @@ public class SiglusOrderServiceTest {
     requisition.setEmergency(false);
     when(requisitionController.findRequisition(any(), any())).thenReturn(requisition);
     when(authenticationHelper.getCurrentUser()).thenReturn(createUser(userId, userHomeFacilityId));
-    when(requisitionService.getApproveProduct(approverFacilityId, programId)).thenReturn(createApproverAggregator());
-    when(requisitionService.getApproveProduct(userHomeFacilityId, programId)).thenReturn(createUserAggregator());
+    when(requisitionService.getApprovedProducts(approverFacilityId, programId)).thenReturn(createApprovedProducts());
+    when(requisitionService.getApprovedProducts(userHomeFacilityId, programId))
+        .thenReturn(createUserApprovedProducts());
     when(siglusArchiveProductService.searchArchivedProductsByFacilityId(any())).thenReturn(createArchivedProducts());
     when(siglusStockCardSummariesService.searchStockCardSummaryV2Dtos(any(), any(), any(), any(), any(Boolean.class)))
         .thenReturn(createSummaryPage());
@@ -316,10 +316,9 @@ public class SiglusOrderServiceTest {
     ApprovedProductDto productDto1 = createApprovedProductDto(orderableId1);
     ApprovedProductDto productDto2 = createApprovedProductDto(orderableId2);
     List<ApprovedProductDto> list = Arrays.asList(productDto1, productDto2);
-    when(requisitionService.getApproveProduct(approverFacilityId, programId))
-        .thenReturn(new ApproveProductsAggregator(list, programId));
-    when(requisitionService.getApproveProduct(userHomeFacilityId, programId))
-        .thenReturn(createUserAggregator());
+    when(requisitionService.getApprovedProducts(approverFacilityId, programId)).thenReturn(list);
+    when(requisitionService.getApprovedProducts(userHomeFacilityId, programId))
+        .thenReturn(createUserApprovedProducts());
     when(siglusArchiveProductService.searchArchivedProductsByFacilityId(any()))
         .thenReturn(Collections.emptySet());
     when(siglusStockCardSummariesService
@@ -366,10 +365,9 @@ public class SiglusOrderServiceTest {
     ApprovedProductDto productDto1 = createApprovedProductDto(orderableId1);
     ApprovedProductDto productDto2 = createApprovedProductDto(orderableId2);
     List<ApprovedProductDto> list = Arrays.asList(productDto1, productDto2);
-    when(requisitionService.getApproveProduct(approverFacilityId, programId))
-        .thenReturn(new ApproveProductsAggregator(list, programId));
-    when(requisitionService.getApproveProduct(userHomeFacilityId, programId))
-        .thenReturn(createUserAggregator());
+    when(requisitionService.getApprovedProducts(approverFacilityId, programId)).thenReturn(list);
+    when(requisitionService.getApprovedProducts(userHomeFacilityId, programId))
+        .thenReturn(createUserApprovedProducts());
     when(siglusArchiveProductService.searchArchivedProductsByFacilityId(any()))
         .thenReturn(Collections.emptySet());
     when(siglusStockCardSummariesService
@@ -1566,20 +1564,20 @@ public class SiglusOrderServiceTest {
     return dto;
   }
 
-  private ApproveProductsAggregator createApproverAggregator() {
+  private List<ApprovedProductDto> createApprovedProducts() {
     ApprovedProductDto productDto = createApprovedProductDto(orderableId1);
     List<ApprovedProductDto> list = new ArrayList<>();
     list.add(productDto);
-    return new ApproveProductsAggregator(list, programId);
+    return list;
   }
 
-  private ApproveProductsAggregator createUserAggregator() {
+  private List<ApprovedProductDto> createUserApprovedProducts() {
     ApprovedProductDto productDto1 = createApprovedProductDto(orderableId1);
     ApprovedProductDto productDto2 = createApprovedProductDto(orderableId2);
     List<ApprovedProductDto> list = new ArrayList<>();
     list.add(productDto1);
     list.add(productDto2);
-    return new ApproveProductsAggregator(list, programId);
+    return list;
   }
 
   private ApprovedProductDto createApprovedProductDto(UUID orderableId) {

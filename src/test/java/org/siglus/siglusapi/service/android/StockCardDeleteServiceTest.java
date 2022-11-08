@@ -17,7 +17,6 @@ package org.siglus.siglusapi.service.android;
 
 import static com.google.common.collect.Sets.newHashSet;
 import static java.util.Arrays.asList;
-import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
@@ -47,6 +46,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.requisition.dto.OrderableDto;
 import org.openlmis.requisition.dto.ProgramDto;
+import org.openlmis.requisition.service.RequisitionService;
 import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
 import org.openlmis.stockmanagement.domain.physicalinventory.PhysicalInventory;
 import org.openlmis.stockmanagement.domain.physicalinventory.PhysicalInventoryLineItem;
@@ -73,7 +73,6 @@ import org.siglus.siglusapi.repository.SiglusStockCardRepository;
 import org.siglus.siglusapi.repository.StockCardDeletedBackupRepository;
 import org.siglus.siglusapi.repository.StockCardExtensionRepository;
 import org.siglus.siglusapi.service.SiglusStockCardSummariesService;
-import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
 import org.siglus.siglusapi.testutils.CanFulfillForMeEntryDtoDataBuilder;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
@@ -95,7 +94,7 @@ public class StockCardDeleteServiceTest {
   private SiglusLotReferenceDataService lotReferenceDataService;
 
   @Mock
-  private SiglusApprovedProductReferenceDataService approvedProductService;
+  private RequisitionService requisitionService;
 
   @Mock
   private SiglusStockCardSummariesService stockCardSummariesService;
@@ -241,7 +240,7 @@ public class StockCardDeleteServiceTest {
     ProgramDto programDto = mock(ProgramDto.class);
     when(programDto.getId()).thenReturn(UUID.randomUUID());
     when(programDto.getCode()).thenReturn("code");
-    when(approvedProductService.getApprovedProducts(facilityId, programDto.getId(), emptyList()))
+    when(requisitionService.getApprovedProducts(facilityId, programDto.getId()))
         .thenReturn(asList(mockApprovedProduct1(), mockApprovedProduct2()));
     String lotCode1 = "lotCode1";
     String lotCode2 = "lotCode2";

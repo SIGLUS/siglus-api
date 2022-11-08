@@ -15,7 +15,6 @@
 
 package org.siglus.siglusapi.service.android;
 
-import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
@@ -58,6 +57,7 @@ import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.requisition.dto.BasicOrderableDto;
 import org.openlmis.requisition.dto.BasicProgramDto;
 import org.openlmis.requisition.dto.ProgramDto;
+import org.openlmis.requisition.service.RequisitionService;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
 import org.openlmis.stockmanagement.domain.reason.StockCardLineItemReason;
 import org.openlmis.stockmanagement.dto.ValidReasonAssignmentDto;
@@ -125,7 +125,6 @@ import org.siglus.siglusapi.service.android.context.StockCardCreateContextHolder
 import org.siglus.siglusapi.service.android.mapper.PodLotLineMapper;
 import org.siglus.siglusapi.service.android.mapper.PodMapper;
 import org.siglus.siglusapi.service.android.mapper.ProductMapper;
-import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
 import org.siglus.siglusapi.util.AndroidHelper;
@@ -154,7 +153,7 @@ public class MeService {
   private final SiglusFacilityReferenceDataService facilityReferenceDataService;
   private final SiglusArchiveProductService siglusArchiveProductService;
   private final SiglusOrderableService orderableService;
-  private final SiglusApprovedProductReferenceDataService approvedProductDataService;
+  private final RequisitionService requisitionService;
   private final SiglusAuthenticationHelper authHelper;
   private final SupportedProgramsHelper programsHelper;
   private final ProgramAdditionalOrderableRepository additionalProductRepo;
@@ -514,8 +513,7 @@ public class MeService {
   }
 
   private List<org.openlmis.requisition.dto.OrderableDto> getProgramProducts(UUID homeFacilityId, ProgramDto program) {
-    return approvedProductDataService
-        .getApprovedProducts(homeFacilityId, program.getId(), emptyList()).stream()
+    return requisitionService.getApprovedProducts(homeFacilityId, program.getId()).stream()
         .map(ApprovedProductDto::getOrderable)
         .map(orderable -> {
           orderable.getExtraData().put(KEY_PROGRAM_CODE, program.getCode());

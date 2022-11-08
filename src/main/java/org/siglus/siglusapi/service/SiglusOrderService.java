@@ -82,6 +82,7 @@ import org.openlmis.requisition.domain.requisition.ApprovedProductReference;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.domain.requisition.VersionEntityReference;
+import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.dto.VersionObjectReferenceDto;
@@ -339,17 +340,12 @@ public class SiglusOrderService {
   public Page<FulfillOrderDto> searchOrdersForFulfill(OrderSearchParams params, Pageable pageable) {
     Page<Order> orders = orderService.searchOrdersForFulfillPage(params, pageable);
     List<BasicOrderDto> dtos = basicOrderDtoBuilder.build(orders.getContent());
-
-    List<FulfillOrderDto> fulfillOrderDtos = dtos.stream().map(basicOrderDto -> {
-      return FulfillOrderDto.builder().basicOrder(basicOrderDto).build();
-    }).collect(toList());
-
+    List<FulfillOrderDto> fulfillOrderDtos = dtos.stream()
+        .map(basicOrderDto -> FulfillOrderDto.builder().basicOrder(basicOrderDto).build())
+        .collect(toList());
     List<FulfillOrderDto> processedFulfillOrderDtos =
         fulfillOrderDtos.isEmpty() ? fulfillOrderDtos : processExpiredFulfillOrder(fulfillOrderDtos);
-
-    return new PageImpl<>(
-        processedFulfillOrderDtos,
-        pageable, orders.getTotalElements());
+    return new PageImpl<>(processedFulfillOrderDtos, pageable, orders.getTotalElements());
   }
 
   private List<FulfillOrderDto> processExpiredFulfillOrder(List<FulfillOrderDto> fulfillOrderDtos) {
@@ -1046,20 +1042,19 @@ public class SiglusOrderService {
     UUID userHomeFacilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
     // 10+ seconds cost when call following requisitionService.getApproveProduct
     UUID programId = requisition.getProgramId();
-    ApproveProductsAggregator approverProductAggregator = requisitionService.getApproveProduct(
-        approverFacilityId, programId);
-    ApproveProductsAggregator userProductAggregator;
+    List<ApprovedProductDto> approverProducts = requisitionService.getApprovedProducts(approverFacilityId, programId);
+    List<ApprovedProductDto> userProducts;
     if (approverFacilityId.equals(userHomeFacilityId)) {
-      userProductAggregator = approverProductAggregator;
+      userProducts = approverProducts;
     } else {
-      userProductAggregator = requisitionService.getApproveProduct(userHomeFacilityId, programId);
+      userProducts = requisitionService.getApprovedProducts(userHomeFacilityId, programId);
     }
-    Set<UUID> approverOrderableIds = getOrderableIds(approverProductAggregator);
+    Set<UUID> approverOrderableIds = getOrderableIds(approverProducts, programId);
     Set<UUID> userOrderableIds;
     if (approverFacilityId.equals(userHomeFacilityId)) {
       userOrderableIds = approverOrderableIds;
     } else {
-      userOrderableIds = getOrderableIds(userProductAggregator);
+      userOrderableIds = getOrderableIds(userProducts, programId);
     }
 
     Set<UUID> archivedOrderableIds = getArchivedOrderableIds(Sets.newHashSet(
@@ -1104,7 +1099,8 @@ public class SiglusOrderService {
     return emergencyOrderableIds;
   }
 
-  private Set<UUID> getOrderableIds(ApproveProductsAggregator aggregator) {
+  private Set<UUID> getOrderableIds(List<ApprovedProductDto> productDtos, UUID programId) {
+    ApproveProductsAggregator aggregator = new ApproveProductsAggregator(productDtos, programId);
     return Optional
         .ofNullable(aggregator.getApprovedProductReferences())
         .orElse(Collections.emptySet())

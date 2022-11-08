@@ -70,6 +70,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.referencedata.domain.Orderable;
 import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.requisition.dto.OrderableDto;
+import org.openlmis.requisition.service.RequisitionService;
 import org.openlmis.stockmanagement.domain.physicalinventory.PhysicalInventory;
 import org.openlmis.stockmanagement.dto.ObjectReferenceDto;
 import org.openlmis.stockmanagement.dto.PhysicalInventoryDto;
@@ -105,7 +106,6 @@ import org.siglus.siglusapi.repository.PhysicalInventoryEmptyLocationLineItemRep
 import org.siglus.siglusapi.repository.PhysicalInventoryExtensionRepository;
 import org.siglus.siglusapi.repository.PhysicalInventoryLineItemsExtensionRepository;
 import org.siglus.siglusapi.repository.PhysicalInventorySubDraftRepository;
-import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.util.SupportedProgramsHelper;
@@ -151,7 +151,7 @@ public class SiglusPhysicalInventoryServiceTest {
   private FacilityLocationsRepository facilityLocationsRepository;
 
   @Mock
-  private SiglusApprovedProductReferenceDataService approvedProductReferenceDataService;
+  private RequisitionService requisitionService;
 
   @Mock
   private PhysicalInventoriesRepository physicalInventoriesRepository;
@@ -867,8 +867,7 @@ public class SiglusPhysicalInventoryServiceTest {
     when(stockCardRepository.countByFacilityId(facilityId)).thenReturn(1);
     when(facilityReferenceDataService.findOne(facilityId))
         .thenReturn(facilityDto);
-    when(approvedProductReferenceDataService
-        .getApprovedProducts(facilityId, programIdOne, emptyList()))
+    when(requisitionService.getApprovedProducts(facilityId, programIdOne))
         .thenReturn(Collections.singletonList(approvedProductDto));
 
     doNothing().when(physicalInventoryService).checkPermission(programId, facilityId);
