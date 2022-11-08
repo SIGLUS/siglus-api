@@ -374,7 +374,7 @@ public class SiglusPodService {
         .receivedBy(orderDto.getPodReceivedBy())
         .deliveredBy(orderDto.getPodDeliveredBy())
         .receivedDate(orderDto.getPodReceivedDate())
-        .issueVoucherDate(orderDto.getOrderFulfillDate())
+        .issueVoucherDate(orderDto.getShippedDate())
         .build();
 
     setGeographicInfo(response, orderDto);
