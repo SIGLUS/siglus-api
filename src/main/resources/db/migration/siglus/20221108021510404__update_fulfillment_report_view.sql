@@ -167,7 +167,7 @@ with
                   else t.program end) as program,
             (case when t.productcode in (select code from temp_malaria_product_code) is true then 'ML'
                   when t.productcode in (select code from temp_mmc_product_code) is true then 'MMC'
-                  else t.programcode end) programcode,
+                  else t.programcode end) as programcode,
             t.province,
             t.provincefacilitycode,
             t.reporttype,
@@ -280,7 +280,6 @@ union all
  from temp_all_line_items t
  where t.programcode = 'VC'
    and t.reporttype = 'Emergency' and t.productcode in (select code from temp_malaria_product_code))
-);
 --  Material Medico Cirúrgico & Emergency
 union all
 (select distinct on (t.ficilitycode, t.periodid, t.productcode) t.rliid,
