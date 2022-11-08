@@ -17,7 +17,6 @@ package org.siglus.siglusapi.web.response;
 
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
-import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
@@ -42,7 +41,7 @@ public class PodPrintInfoResponse {
   // Date that the HF Role3 internally approve the requisition
   private ZonedDateTime requisitionDate;
   // Date that the supplier fulfills the order
-  private Date issueVoucherDate;
+  private ZonedDateTime issueVoucherDate;
 
   private String deliveredBy;
   private String preparedBy;
