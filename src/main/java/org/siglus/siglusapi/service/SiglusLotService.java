@@ -25,6 +25,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -92,8 +93,9 @@ public class SiglusLotService {
   }
 
   public List<LotDto> getLotList(List<UUID> lotIds) {
+    List<UUID> nonNullLotIds = lotIds.stream().filter(Objects::nonNull).collect(Collectors.toList());
     List<LotDto> lotDtos = new ArrayList<>();
-    List<List<UUID>> partitionList = Lists.partition(lotIds, SIZE);
+    List<List<UUID>> partitionList = Lists.partition(nonNullLotIds, SIZE);
     partitionList.forEach(list -> {
       Iterable<org.openlmis.referencedata.domain.Lot> lots = lotRepository.findAll(list);
       lots.forEach(lot -> {
