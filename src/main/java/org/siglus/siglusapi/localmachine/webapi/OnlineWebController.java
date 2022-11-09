@@ -110,14 +110,14 @@ public class OnlineWebController {
   }
 
   @PostMapping("/acks")
-  public AckExchange exchangeAcks(AckExchange request, MachineToken authentication) {
+  public AckExchange exchangeAcks(@RequestBody @Validated AckExchange request, MachineToken authentication) {
     eventStore.routeAcks(request.getAcks());
     List<Ack> acks = eventStore.getAcksForEventSender(authentication.getFacilityId());
     return new AckExchange(new HashSet<>(acks));
   }
 
   @PutMapping("/acks")
-  public void confirmAcks(AckExchange request) {
+  public void confirmAcks(@RequestBody @Validated AckExchange request) {
     eventStore.confirmAckShipped(request.getAcks());
   }
 
