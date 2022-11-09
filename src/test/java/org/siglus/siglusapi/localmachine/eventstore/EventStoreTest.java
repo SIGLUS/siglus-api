@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.localmachine.eventstore;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.times;
@@ -32,7 +33,9 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.internal.verification.VerificationModeFactory;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.siglus.siglusapi.localmachine.Ack;
 import org.siglus.siglusapi.localmachine.Event;
 import org.siglus.siglusapi.localmachine.MasterDataEvent;
 
@@ -51,6 +54,8 @@ public class EventStoreTest {
   private EventPayloadRepository eventPayloadRepository;
   @Mock
   private PayloadSerializer payloadSerializer;
+  @Mock
+  private AckRepository ackRepository;
   @Captor
   private ArgumentCaptor<MasterDataOffset> masterDataOffsetCaptor;
 
@@ -68,6 +73,22 @@ public class EventStoreTest {
     verify(payloadSerializer, times(1)).dump(any(Event.class));
     verify(repository, times(1)).importExternalEvent(any(EventRecord.class));
     verify(eventPayloadRepository, times(0)).save(any(EventPayload.class));
+  }
+
+  @Test
+  public void shouldEmitAckWhenExcludeExistsEventGivenImportedEventsExists() {
+    //given
+    when(repository.filterExistsEventIds(Sets.newHashSet(eventId1, eventId2, eventId3)))
+        .thenReturn(Sets.newHashSet(eventId1.toString(), eventId2.toString()));
+
+    //when
+    eventStore.excludeExisted(buildImportEvents());
+
+    //then
+    ArgumentCaptor<AckRecord> ackCaptor = ArgumentCaptor.forClass(AckRecord.class);
+    verify(ackRepository, VerificationModeFactory.atLeastOnce()).save(ackCaptor.capture());
+    assertThat(ackCaptor.getAllValues().stream().map(AckRecord::getEventId))
+        .containsExactlyInAnyOrder(eventId1, eventId2);
   }
 
   @Test
@@ -127,9 +148,9 @@ public class EventStoreTest {
   }
 
   private List<Event> buildImportEvents() {
-    Event event1 = Event.builder().id(eventId1).build();
-    Event event2 = Event.builder().id(eventId2).build();
-    Event event3 = Event.builder().id(eventId3).build();
+    Event event1 = Event.builder().id(eventId1).ack(new Ack(eventId1, UUID.randomUUID())).build();
+    Event event2 = Event.builder().id(eventId2).ack(new Ack(eventId2, UUID.randomUUID())).build();
+    Event event3 = Event.builder().id(eventId3).ack(new Ack(eventId3, UUID.randomUUID())).build();
     return Arrays.asList(event1, event2, event3);
   }
 

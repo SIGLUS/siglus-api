@@ -192,9 +192,15 @@ public class EventStore {
         repository.filterExistsEventIds(eventIds).stream()
             .map(UUID::fromString)
             .collect(Collectors.toSet());
-    return events.stream()
-        .filter(it -> !existingIds.contains(it.getId()))
-        .collect(Collectors.toList());
+    List<Event> nonExistEvents = new LinkedList<>();
+    for (Event evt : events) {
+      if (existingIds.contains(evt.getId())) {
+        emitAckForEvent(evt);
+      } else {
+        nonExistEvents.add(evt);
+      }
+    }
+    return nonExistEvents;
   }
 
   public Stream<Event> streamNotReplayedEvents() {
