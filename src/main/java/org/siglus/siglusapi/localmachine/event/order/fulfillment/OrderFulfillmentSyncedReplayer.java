@@ -44,6 +44,7 @@ import org.openlmis.fulfillment.domain.Shipment;
 import org.openlmis.fulfillment.domain.ShipmentLineItem;
 import org.openlmis.fulfillment.domain.UpdateDetails;
 import org.openlmis.fulfillment.repository.ProofOfDeliveryRepository;
+import org.openlmis.fulfillment.service.ShipmentService;
 import org.openlmis.fulfillment.web.shipment.ShipmentDto;
 import org.openlmis.fulfillment.web.shipment.ShipmentLineItemDto;
 import org.openlmis.fulfillment.web.util.OrderDto;
@@ -106,6 +107,7 @@ public class OrderFulfillmentSyncedReplayer {
   private final SiglusLotReferenceDataService lotReferenceDataService;
   private final SiglusLotService siglusLotService;
   private final SiglusOrderService siglusOrderService;
+  private final ShipmentService shipmentService;
 
   @EventListener(value = {OrderFulfillmentSyncedEvent.class})
   public void replay(OrderFulfillmentSyncedEvent event) {
@@ -365,6 +367,7 @@ public class OrderFulfillmentSyncedReplayer {
   private Shipment createShipment(ShipmentDto shipmentDto, UUID fulfillUserId, Order shippedOrder) {
     nullIds(shipmentDto);
     shipmentDto.setShipDetails(new CreationDetails(fulfillUserId, ZonedDateTime.now()));
+    shipmentService.mergeShipmentLineItems(shipmentDto);
     Shipment shipment = Shipment.newInstance(shipmentDto, shippedOrder);
 
     Shipment saved = this.siglusShipmentRepository.saveAndFlush(shipment);

@@ -36,6 +36,7 @@ import org.openlmis.fulfillment.domain.Order;
 import org.openlmis.fulfillment.domain.ProofOfDelivery;
 import org.openlmis.fulfillment.domain.Shipment;
 import org.openlmis.fulfillment.repository.ProofOfDeliveryRepository;
+import org.openlmis.fulfillment.service.ShipmentService;
 import org.openlmis.fulfillment.web.util.OrderDto;
 import org.openlmis.fulfillment.web.util.OrderDtoBuilder;
 import org.openlmis.requisition.domain.RequisitionTemplate;
@@ -115,6 +116,8 @@ public class OrderFulfillmentSyncedReplayerTest extends FileBasedTest {
   private SiglusLotService siglusLotService;
   @Mock
   private SiglusOrderService siglusOrderService;
+  @Mock
+  private ShipmentService shipmentService;
 
   private final UUID requisitionId = UUID.randomUUID();
   private final UUID facilityId = UUID.randomUUID();
