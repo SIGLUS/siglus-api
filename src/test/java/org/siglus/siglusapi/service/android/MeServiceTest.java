@@ -372,9 +372,9 @@ public class MeServiceTest {
     when(programsHelper.findHomeFacilitySupportedProgramIds()).thenReturn(ImmutableSet.of(programId1, programId2));
     when(orderableDataService.searchOrderables(any(), any(), any()))
         .thenReturn(new PageImpl<>(asList(mockOrderable1(), mockOrderable2(), mockOrderable3())));
-    when(requisitionService.getApprovedProducts(facilityId, programId1))
+    when(requisitionService.getApprovedProductsWithoutAdditional(facilityId, programId1))
         .thenReturn(asList(mockApprovedProduct1(), mockApprovedProduct2()));
-    when(requisitionService.getApprovedProducts(facilityId, programId2))
+    when(requisitionService.getApprovedProductsWithoutAdditional(facilityId, programId2))
         .thenReturn(singletonList(mockApprovedProduct3()));
     when(archivedProductRepo.findArchivedProductsByFacilityId(facilityId)).thenReturn(singleton(productId1.toString()));
     when(androidHelper.isAndroid()).thenReturn(true);
@@ -848,7 +848,7 @@ public class MeServiceTest {
     ProgramDto programDto = mock(ProgramDto.class);
     when(programDto.getId()).thenReturn(UUID.randomUUID());
     when(programDto.getCode()).thenReturn("code");
-    when(requisitionService.getApprovedProducts(facilityId, programDto.getId()))
+    when(requisitionService.getApprovedProductsWithoutAdditional(facilityId, programDto.getId()))
         .thenReturn(asList(mockApprovedProduct1(), mockApprovedProduct2()));
     String lotCode1 = "lotCode1";
     String lotCode2 = "lotCode2";

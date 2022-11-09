@@ -185,7 +185,7 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
 
   @Mock
   private SupportedProgramsHelper supportedProgramsHelper;
-  
+
   @Mock
   private SiglusProgramAdditionalOrderableService additionalOrderableService;
 
@@ -278,7 +278,8 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     when(user.getHomeFacilityId()).thenReturn(facilityId);
     when(authHelper.getCurrentUser()).thenReturn(user);
     ApprovedProductDto productDto = createApprovedProductDto(viaOrderableId, vcProductCode);
-    when(requisitionService.getApprovedProducts(facilityId, viaProgramId)).thenReturn(singletonList(productDto));
+    when(requisitionService.getApprovedProductsWithoutAdditional(facilityId, viaProgramId)).thenReturn(
+        singletonList(productDto));
     RequisitionTemplate template = new RequisitionTemplate();
     template.setId(viaTemplateId);
     when(requisitionTemplateService.findTemplateById(viaTemplateId)).thenReturn(template);
@@ -454,7 +455,8 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     when(permissionService.canApproveRequisition(any(Requisition.class))).thenReturn(success);
 
     ApprovedProductDto productDto = createApprovedProductDto(malariaOrderableId, mlProductCode);
-    when(requisitionService.getApprovedProducts(facilityId, malariaProgramId)).thenReturn(singletonList(productDto));
+    when(requisitionService.getApprovedProductsWithoutAdditional(facilityId, malariaProgramId)).thenReturn(
+        singletonList(productDto));
     RequisitionTemplate mlTemplate = new RequisitionTemplate();
     mlTemplate.setId(malariaTemplateId);
     when(requisitionTemplateService.findTemplateById(malariaTemplateId)).thenReturn(mlTemplate);
@@ -486,7 +488,8 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     when(permissionService.canAuthorizeRequisition(any(Requisition.class))).thenReturn(success);
     when(permissionService.canApproveRequisition(any(Requisition.class))).thenReturn(success);
     ApprovedProductDto productDto = createApprovedProductDto(mmiaOrderableId, mmiaProductCode);
-    when(requisitionService.getApprovedProducts(facilityId, mmiaProgramId)).thenReturn(singletonList(productDto));
+    when(requisitionService.getApprovedProductsWithoutAdditional(facilityId, mmiaProgramId)).thenReturn(
+        singletonList(productDto));
     RequisitionTemplate mmiaTemplate = new RequisitionTemplate();
     mmiaTemplate.setId(mmiaTemplateId);
     when(requisitionTemplateService.findTemplateById(mmiaTemplateId)).thenReturn(mmiaTemplate);
@@ -539,7 +542,8 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     when(permissionService.canAuthorizeRequisition(any(Requisition.class))).thenReturn(success);
     when(permissionService.canApproveRequisition(any(Requisition.class))).thenReturn(success);
     ApprovedProductDto productDto = createApprovedProductDto(rapidTestOrderableId, rapidTestProductCode);
-    when(requisitionService.getApprovedProducts(facilityId, rapidTestProgramId)).thenReturn(singletonList(productDto));
+    when(requisitionService.getApprovedProductsWithoutAdditional(facilityId, rapidTestProgramId)).thenReturn(
+        singletonList(productDto));
     RequisitionTemplate trTemplate = new RequisitionTemplate();
     trTemplate.setId(rapidtestTemplateId);
     when(requisitionTemplateService.findTemplateById(rapidtestTemplateId)).thenReturn(trTemplate);
@@ -581,7 +585,8 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     when(permissionService.canAuthorizeRequisition(any(Requisition.class))).thenReturn(success);
     when(permissionService.canApproveRequisition(any(Requisition.class))).thenReturn(success);
     ApprovedProductDto productDto = createApprovedProductDto(mmtbOrderableId, mmtbProductCode);
-    when(requisitionService.getApprovedProducts(facilityId, mmtbProgramId)).thenReturn(singletonList(productDto));
+    when(requisitionService.getApprovedProductsWithoutAdditional(facilityId, mmtbProgramId)).thenReturn(
+        singletonList(productDto));
     RequisitionTemplate template = new RequisitionTemplate();
     template.setId(mmtbTemplateId);
     when(requisitionTemplateService.findTemplateById(mmtbTemplateId)).thenReturn(template);
