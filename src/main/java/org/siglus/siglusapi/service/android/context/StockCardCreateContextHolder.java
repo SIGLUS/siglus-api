@@ -110,7 +110,7 @@ public class StockCardCreateContextHolder {
   }
 
   private List<OrderableDto> getActualApprovedOrderableDtos(UUID homeFacilityId, ProgramDto program) {
-    return requisitionService.getApprovedProducts(homeFacilityId, program.getId())
+    return requisitionService.getApprovedProductsWithoutAdditional(homeFacilityId, program.getId())
         .stream()
         .map(ApprovedProductDto::getOrderable)
         .collect(toList());

@@ -103,7 +103,7 @@ public class StockCardCreateContextHolderTest {
     OrderableDto orderable = new OrderableDto();
     orderable.setId(actualApprovedOrderable.getId());
     actualApprovedOrderable.setOrderable(orderable);
-    given(requisitionService.getApprovedProducts(homeFacilityId, program.getId()))
+    given(requisitionService.getApprovedProductsWithoutAdditional(homeFacilityId, program.getId()))
         .willReturn(singletonList(actualApprovedOrderable));
     return actualApprovedOrderable;
   }

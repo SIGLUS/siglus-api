@@ -370,9 +370,9 @@ public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
   }
 
   private void mockApprovedProducts() {
-    when(requisitionService.getApprovedProducts(eq(facilityId), eq(programId1)))
+    when(requisitionService.getApprovedProductsWithoutAdditional(eq(facilityId), eq(programId1)))
         .thenReturn(mockProgramProducts(programId1, "08A07", "08O05", "08O05Y", "08O05X"));
-    when(requisitionService.getApprovedProducts(eq(facilityId), eq(programId2)))
+    when(requisitionService.getApprovedProductsWithoutAdditional(eq(facilityId), eq(programId2)))
         .thenReturn(mockProgramProducts(programId1, "02A01", "04B05", "07A03", "22A06", "22A08", "22A05", "22A07"));
   }
 

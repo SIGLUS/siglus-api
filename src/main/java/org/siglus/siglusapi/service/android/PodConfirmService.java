@@ -221,7 +221,7 @@ public class PodConfirmService {
       }
       UUID supportedProgramId = supportedProgram.getId();
       Set<String> approvedProductCodes =
-          requisitionService.getApprovedProducts(homeFacilityId, supportedProgramId)
+          requisitionService.getApprovedProductsWithoutAdditional(homeFacilityId, supportedProgramId)
               .stream().map(product -> product.getOrderable().getProductCode()).collect(toSet());
       Set<String> productCodesInRequest = podRequest.getProducts()
           .stream().map(PodProductLineRequest::getCode).collect(toSet());

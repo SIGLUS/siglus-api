@@ -332,7 +332,7 @@ public class StockCardCreateService {
   }
 
   private List<OrderableDto> getProgramProducts(UUID homeFacilityId, ProgramDto program) {
-    return requisitionService.getApprovedProducts(homeFacilityId, program.getId())
+    return requisitionService.getApprovedProductsWithoutAdditional(homeFacilityId, program.getId())
         .stream()
         .map(ApprovedProductDto::getOrderable)
         .map(orderable -> {

@@ -245,7 +245,7 @@ public class PodConfirmServiceTest {
     orderableDto.setProductCode("02A01");
     ApprovedProductDto approvedProductDto = new ApprovedProductDto();
     approvedProductDto.setOrderable(orderableDto);
-    when(requisitionService.getApprovedProducts(facilityId, programId))
+    when(requisitionService.getApprovedProductsWithoutAdditional(facilityId, programId))
         .thenReturn(singletonList(approvedProductDto));
     ProofOfDelivery toUpdate = mockPod(user, false);
     PodResponse podResponse = mockPodResponse();
@@ -268,7 +268,7 @@ public class PodConfirmServiceTest {
     orderableDto.setProductCode(productCode);
     ApprovedProductDto approvedProductDto = new ApprovedProductDto();
     approvedProductDto.setOrderable(orderableDto);
-    when(requisitionService.getApprovedProducts(facilityId, programId))
+    when(requisitionService.getApprovedProductsWithoutAdditional(facilityId, programId))
         .thenReturn(ImmutableList.of(approvedProductDto));
     org.openlmis.referencedata.dto.OrderableDto orderableDto1 =
         new org.openlmis.referencedata.dto.OrderableDto();

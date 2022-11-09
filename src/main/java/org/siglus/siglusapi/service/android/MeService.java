@@ -513,7 +513,7 @@ public class MeService {
   }
 
   private List<org.openlmis.requisition.dto.OrderableDto> getProgramProducts(UUID homeFacilityId, ProgramDto program) {
-    return requisitionService.getApprovedProducts(homeFacilityId, program.getId()).stream()
+    return requisitionService.getApprovedProductsWithoutAdditional(homeFacilityId, program.getId()).stream()
         .map(ApprovedProductDto::getOrderable)
         .map(orderable -> {
           orderable.getExtraData().put(KEY_PROGRAM_CODE, program.getCode());
