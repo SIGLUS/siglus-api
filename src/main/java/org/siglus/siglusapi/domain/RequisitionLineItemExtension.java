@@ -48,5 +48,8 @@ public class RequisitionLineItemExtension extends BaseEntity {
   private Integer suggestedQuantity;
 
   @Column
+  private Integer estimatedQuantity;
+
+  @Column
   private LocalDate expirationDate;
 }

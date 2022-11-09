@@ -57,6 +57,7 @@ import org.openlmis.requisition.dto.RequisitionLineItemV2Dto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.dto.VersionObjectReferenceDto;
 import org.openlmis.requisition.repository.RequisitionRepository;
+import org.openlmis.requisition.service.RequisitionService;
 import org.siglus.siglusapi.domain.ReceiptPlan;
 import org.siglus.siglusapi.domain.RequisitionExtension;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
@@ -70,7 +71,6 @@ import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.repository.SiglusFacilityRepository;
 import org.siglus.siglusapi.repository.SiglusStatusChangeRepository;
 import org.siglus.siglusapi.service.SiglusRequisitionService;
-import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusUserReferenceDataService;
 import org.siglus.siglusapi.util.OperatePermissionService;
 import org.siglus.siglusapi.util.SiglusSimulateUserAuthHelper;
@@ -108,7 +108,7 @@ public class FcReceiptPlanServiceTest {
   private FcValidate fcDataValidate;
 
   @Mock
-  private SiglusApprovedProductReferenceDataService approvedProductService;
+  private RequisitionService requisitionService;
 
   @Mock
   private RequisitionRepository requisitionRepository;
@@ -268,7 +268,7 @@ public class FcReceiptPlanServiceTest {
     orderableDto.setId(orderableId);
     ApprovedProductDto approvedProduct = new ApprovedProductDto();
     approvedProduct.setOrderable(orderableDto);
-    when(approvedProductService.getApprovedProducts(any(), any(), any())).thenReturn(singletonList(approvedProduct));
+    when(requisitionService.getApprovedProducts(any(), any())).thenReturn(singletonList(approvedProduct));
     Requisition requisition = new Requisition();
     when(requisitionRepository.findOne(requisitionId)).thenReturn(requisition);
     StatusChange statusChange = new StatusChange();
@@ -327,7 +327,7 @@ public class FcReceiptPlanServiceTest {
     OrderableDto orderableDto = new OrderableDto();
     ApprovedProductDto approvedProduct = new ApprovedProductDto();
     approvedProduct.setOrderable(orderableDto);
-    when(approvedProductService.getApprovedProducts(any(), any(), any())).thenReturn(singletonList(approvedProduct));
+    when(requisitionService.getApprovedProducts(any(), any())).thenReturn(singletonList(approvedProduct));
     SiglusRequisitionLineItemDto lineItem = new SiglusRequisitionLineItemDto(requisitionLineItem, null);
     List<SiglusRequisitionLineItemDto> lineItems = newArrayList(lineItem);
     when(siglusRequisitionService.createRequisitionLineItem(any(), any())).thenReturn(lineItems);

@@ -15,7 +15,6 @@
 
 package org.siglus.siglusapi.service.android.context;
 
-import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
@@ -32,9 +31,9 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.requisition.dto.OrderableDto;
 import org.openlmis.requisition.dto.ProgramDto;
+import org.openlmis.requisition.service.RequisitionService;
 import org.siglus.siglusapi.migration.AdditionalOrderable;
 import org.siglus.siglusapi.migration.MasterDataRepository;
-import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -51,7 +50,8 @@ public class StockCardCreateContextHolderTest {
   @Mock
   private MasterDataRepository masterDataRepository;
   @Mock
-  private SiglusApprovedProductReferenceDataService approvedProductReferenceDataService;
+  private RequisitionService requisitionService;
+
   private ApprovedProductDto actualApprovedOrderable;
 
   @Before
@@ -103,7 +103,7 @@ public class StockCardCreateContextHolderTest {
     OrderableDto orderable = new OrderableDto();
     orderable.setId(actualApprovedOrderable.getId());
     actualApprovedOrderable.setOrderable(orderable);
-    given(approvedProductReferenceDataService.getApprovedProducts(homeFacilityId, program.getId(), emptyList()))
+    given(requisitionService.getApprovedProducts(homeFacilityId, program.getId()))
         .willReturn(singletonList(actualApprovedOrderable));
     return actualApprovedOrderable;
   }

@@ -83,6 +83,7 @@ import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.requisition.dto.OrderableDto;
 import org.openlmis.requisition.dto.ProgramDto;
+import org.openlmis.requisition.service.RequisitionService;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
 import org.openlmis.stockmanagement.domain.reason.StockCardLineItemReason;
 import org.openlmis.stockmanagement.dto.ValidReasonAssignmentDto;
@@ -148,7 +149,6 @@ import org.siglus.siglusapi.service.android.mapper.PodRequisitionMapperImpl;
 import org.siglus.siglusapi.service.android.mapper.ProductChildMapperImpl;
 import org.siglus.siglusapi.service.android.mapper.ProductMapper;
 import org.siglus.siglusapi.service.android.mapper.ProductMapperImpl;
-import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
@@ -185,7 +185,7 @@ public class MeServiceTest {
   private SiglusOrderableService orderableDataService;
 
   @Mock
-  private SiglusApprovedProductReferenceDataService approvedProductService;
+  private RequisitionService requisitionService;
 
   @Mock
   private SiglusAuthenticationHelper authHelper;
@@ -372,9 +372,9 @@ public class MeServiceTest {
     when(programsHelper.findHomeFacilitySupportedProgramIds()).thenReturn(ImmutableSet.of(programId1, programId2));
     when(orderableDataService.searchOrderables(any(), any(), any()))
         .thenReturn(new PageImpl<>(asList(mockOrderable1(), mockOrderable2(), mockOrderable3())));
-    when(approvedProductService.getApprovedProducts(facilityId, programId1, emptyList()))
+    when(requisitionService.getApprovedProducts(facilityId, programId1))
         .thenReturn(asList(mockApprovedProduct1(), mockApprovedProduct2()));
-    when(approvedProductService.getApprovedProducts(facilityId, programId2, emptyList()))
+    when(requisitionService.getApprovedProducts(facilityId, programId2))
         .thenReturn(singletonList(mockApprovedProduct3()));
     when(archivedProductRepo.findArchivedProductsByFacilityId(facilityId)).thenReturn(singleton(productId1.toString()));
     when(androidHelper.isAndroid()).thenReturn(true);
@@ -848,7 +848,7 @@ public class MeServiceTest {
     ProgramDto programDto = mock(ProgramDto.class);
     when(programDto.getId()).thenReturn(UUID.randomUUID());
     when(programDto.getCode()).thenReturn("code");
-    when(approvedProductService.getApprovedProducts(facilityId, programDto.getId(), emptyList()))
+    when(requisitionService.getApprovedProducts(facilityId, programDto.getId()))
         .thenReturn(asList(mockApprovedProduct1(), mockApprovedProduct2()));
     String lotCode1 = "lotCode1";
     String lotCode2 = "lotCode2";

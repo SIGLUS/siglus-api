@@ -150,20 +150,9 @@ public class SiglusAdministrationsService {
     List<FacilitySearchResultDto> facilitySearchResultDtoList = FacilitySearchResultDto.from(facilityDtoList);
 
     facilitySearchResultDtoList.forEach(eachFacility -> {
-      FacilityExtension byFacilityId = facilityExtensionRepository.findByFacilityId(eachFacility.getId());
-      if (ObjectUtils.isEmpty(byFacilityId)) {
-        eachFacility.setFacilityDeviceType(FacilityDeviceTypeEnum.WEB);
-        eachFacility.setIsAndroidDevice(false);
-      } else {
-        if (byFacilityId.getIsLocalMachine()) {
-          eachFacility.setFacilityDeviceType(FacilityDeviceTypeEnum.LOCAL_MACHINE);
-        } else if (byFacilityId.getIsAndroid()) {
-          eachFacility.setFacilityDeviceType(FacilityDeviceTypeEnum.ANDROID);
-        } else {
-          eachFacility.setFacilityDeviceType(FacilityDeviceTypeEnum.WEB);
-        }
-        eachFacility.setIsAndroidDevice(byFacilityId.getIsAndroid() ? true : false);
-      }
+      FacilityExtension facilityExtension = facilityExtensionRepository.findByFacilityId(eachFacility.getId());
+      eachFacility.setIsAndroidDevice(isAndroidDevice(facilityExtension));
+      eachFacility.setFacilityDeviceType(getFacilityDeviceType(facilityExtension));
     });
 
     return Pagination.getPage(facilitySearchResultDtoList, pageable, facilityDtos.getTotalElements());
@@ -613,15 +602,40 @@ public class SiglusAdministrationsService {
     searchResultDto.setIsNewFacility(emptyStockCardCount(facilityId));
     searchResultDto.setHasSuccessUploadLocations(
         !CollectionUtils.isEmpty(facilityLocationsRepository.findByFacilityId(facilityId)));
+
     FacilityExtension facilityExtension = facilityExtensionRepository.findByFacilityId(facilityId);
-    if (null == facilityExtension) {
-      searchResultDto.setEnableLocationManagement(false);
-      searchResultDto.setIsAndroidDevice(false);
-      return searchResultDto;
-    }
-    searchResultDto.setIsAndroidDevice(facilityExtension.getIsAndroid());
-    searchResultDto.setEnableLocationManagement(BooleanUtils.isTrue(facilityExtension.getEnableLocationManagement()));
+    searchResultDto.setIsAndroidDevice(isAndroidDevice(facilityExtension));
+    searchResultDto.setEnableLocationManagement(isEnableLocationManagement(facilityExtension));
+    searchResultDto.setFacilityDeviceType(getFacilityDeviceType(facilityExtension));
+
     return searchResultDto;
+  }
+
+  private FacilityDeviceTypeEnum getFacilityDeviceType(FacilityExtension facilityExtension) {
+    if (Objects.isNull(facilityExtension)) {
+      return FacilityDeviceTypeEnum.WEB;
+    }
+    if (facilityExtension.getIsLocalMachine()) {
+      return FacilityDeviceTypeEnum.LOCAL_MACHINE;
+    }
+    if (facilityExtension.getIsAndroid()) {
+      return FacilityDeviceTypeEnum.ANDROID;
+    }
+    return FacilityDeviceTypeEnum.WEB;
+  }
+
+  private boolean isAndroidDevice(FacilityExtension facilityExtension) {
+    if (Objects.isNull(facilityExtension)) {
+      return false;
+    }
+    return facilityExtension.getIsAndroid();
+  }
+
+  private boolean isEnableLocationManagement(FacilityExtension facilityExtension) {
+    if (Objects.isNull(facilityExtension)) {
+      return false;
+    }
+    return BooleanUtils.isTrue(facilityExtension.getEnableLocationManagement());
   }
 
   private boolean emptyStockCardCount(UUID facilityId) {

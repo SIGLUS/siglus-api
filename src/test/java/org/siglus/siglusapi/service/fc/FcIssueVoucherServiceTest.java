@@ -89,7 +89,6 @@ import org.siglus.siglusapi.service.SiglusShipmentDraftService;
 import org.siglus.siglusapi.service.SiglusShipmentService;
 import org.siglus.siglusapi.service.SiglusStockCardSummariesService;
 import org.siglus.siglusapi.service.SiglusStockEventsService;
-import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
@@ -117,9 +116,6 @@ public class FcIssueVoucherServiceTest {
 
   @Mock
   private RequisitionExtensionRepository requisitionExtensionRepository;
-
-  @Mock
-  private SiglusApprovedProductReferenceDataService approvedProductService;
 
   @Spy
   private FcValidate fcDataValidate;
@@ -287,8 +283,7 @@ public class FcIssueVoucherServiceTest {
         .thenReturn(requisitionV2Dto);
     OrderableDto orderableDto = getOrderableDto();
     ApprovedProductDto approvedProductDto = getApprovedProductDto(orderableDto);
-    when(approvedProductService.getApprovedProducts(userDto.getHomeFacilityId(),
-        requisitionV2Dto.getProgramId(), null, false))
+    when(requisitionService.getApprovedProducts(userDto.getHomeFacilityId(), requisitionV2Dto.getProgramId()))
         .thenReturn(Collections.singletonList(approvedProductDto));
     OrderExternal orderExternal = new OrderExternal();
     orderExternal.setId(UUID.randomUUID());
@@ -370,8 +365,7 @@ public class FcIssueVoucherServiceTest {
         .thenReturn(requisitionV2Dto);
     OrderableDto orderableDto = getOrderableDto();
     ApprovedProductDto approvedProductDto = getApprovedProductDto(orderableDto);
-    when(approvedProductService.getApprovedProducts(userDto.getHomeFacilityId(),
-        requisitionV2Dto.getProgramId(), null, false))
+    when(requisitionService.getApprovedProducts(userDto.getHomeFacilityId(), requisitionV2Dto.getProgramId()))
         .thenReturn(Collections.singletonList(approvedProductDto));
     OrderExternal orderExternal = new OrderExternal();
     orderExternal.setId(UUID.randomUUID());
@@ -451,8 +445,7 @@ public class FcIssueVoucherServiceTest {
         .thenReturn(requisitionV2Dto);
     OrderableDto orderableDto = getOrderableDto();
     ApprovedProductDto approvedProductDto = getApprovedProductDto(orderableDto);
-    when(approvedProductService.getApprovedProducts(userDto.getHomeFacilityId(),
-        requisitionV2Dto.getProgramId(), null, false))
+    when(requisitionService.getApprovedProducts(userDto.getHomeFacilityId(), requisitionV2Dto.getProgramId()))
         .thenReturn(Collections.singletonList(approvedProductDto));
     when(orderExternalRepository.findByRequisitionId(requisitionV2Dto.getId())).thenReturn(
         Collections.emptyList());

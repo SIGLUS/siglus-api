@@ -63,6 +63,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.openlmis.referencedata.dto.OrderableDto;
 import org.openlmis.requisition.dto.ApprovedProductDto;
+import org.openlmis.requisition.service.RequisitionService;
 import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.domain.physicalinventory.PhysicalInventory;
 import org.openlmis.stockmanagement.dto.PhysicalInventoryDto;
@@ -99,7 +100,6 @@ import org.siglus.siglusapi.repository.PhysicalInventoryExtensionRepository;
 import org.siglus.siglusapi.repository.PhysicalInventoryLineItemsExtensionRepository;
 import org.siglus.siglusapi.repository.PhysicalInventorySubDraftRepository;
 import org.siglus.siglusapi.repository.SiglusStockCardRepository;
-import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.util.CustomListSortHelper;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
@@ -125,7 +125,7 @@ public class SiglusPhysicalInventoryService {
   private final PhysicalInventoryController inventoryController;
   private final SiglusFacilityReferenceDataService facilityReferenceDataService;
   private final OrderableRepository orderableRepository;
-  private final SiglusApprovedProductReferenceDataService approvedProductReferenceDataService;
+  private final RequisitionService requisitionService;
   private final PhysicalInventorySubDraftRepository physicalInventorySubDraftRepository;
   private final SiglusStockCardSummariesService siglusStockCardSummariesService;
   private final SiglusAuthenticationHelper authenticationHelper;
@@ -140,8 +140,8 @@ public class SiglusPhysicalInventoryService {
       Set<UUID> supportedVirtualProgramIds, UUID facilityId) {
     return supportedVirtualProgramIds.stream()
         .map(programId ->
-            approvedProductReferenceDataService
-                .getApprovedProducts(facilityId, programId, emptyList()).stream()
+            requisitionService
+                .getApprovedProducts(facilityId, programId).stream()
                 .map(ApprovedProductDto::getOrderable)
                 .filter(o -> o.getExtraData().containsKey(IS_BASIC))
                 .filter(o -> Boolean.parseBoolean(o.getExtraData().get(IS_BASIC)))

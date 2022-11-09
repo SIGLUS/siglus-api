@@ -90,6 +90,7 @@ import org.openlmis.requisition.repository.RequisitionRepository;
 import org.openlmis.requisition.repository.custom.RequisitionSearchParams;
 import org.openlmis.requisition.service.PermissionService;
 import org.openlmis.requisition.service.RequisitionService;
+import org.openlmis.requisition.service.referencedata.ApproveProductsAggregator;
 import org.openlmis.requisition.service.referencedata.FacilityReferenceDataService;
 import org.openlmis.requisition.service.referencedata.FacilityTypeApprovedProductReferenceDataService;
 import org.openlmis.requisition.service.referencedata.RequisitionGroupReferenceDataService;
@@ -130,7 +131,6 @@ import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionMonthlyNotSubmitReportRepository;
 import org.siglus.siglusapi.repository.RequisitionNativeSqlRepository;
-import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
 import org.siglus.siglusapi.service.fc.FcCmmCpService;
 import org.siglus.siglusapi.util.OperatePermissionService;
@@ -173,7 +173,6 @@ public class SiglusRequisitionService {
   private final FacilityReferenceDataService facilityReferenceDataService;
   private final SiglusRequisitionExtensionService siglusRequisitionExtensionService;
   private final RegimenDataProcessor regimenDataProcessor;
-  private final SiglusApprovedProductReferenceDataService siglusApprovedReferenceDataService;
   private final RequisitionExtensionRepository requisitionExtensionRepository;
   private final FacilityExtensionRepository facilityExtensionRepository;
   private final FcCmmCpService fcCmmCpService;
@@ -733,8 +732,11 @@ public class SiglusRequisitionService {
       BasicRequisitionTemplateDto template, ProgramDto program,
       FacilityDto facility, List<UUID> orderableIds, FacilityDto userFacility) {
     List<StockCardRangeSummaryDto> stockCardRangeSummaries = Collections.emptyList();
-    List<ApprovedProductDto> approvedProducts = siglusApprovedReferenceDataService.getApprovedProducts(
-        userFacility.getId(), program.getId(), orderableIds, requisition.getReportOnly());
+    List<ApprovedProductDto> approvedProducts =
+        requisitionService.getApprovedProducts(userFacility.getId(), program.getId())
+            .stream()
+            .filter(approvedProduct -> orderableIds.contains(approvedProduct.getOrderable().getId()))
+            .collect(Collectors.toList());
     if (template.isPopulateStockOnHandFromStockCards() && Boolean.TRUE.equals(requisition.getEmergency())) {
       Map<UUID, List<ApprovedProductDto>> groupApprovedProduct =
           approvedProducts.stream().collect(groupingBy(approvedProduct -> approvedProduct.getProgram().getId()));
@@ -979,14 +981,16 @@ public class SiglusRequisitionService {
     if (requisitionService.validateCanApproveRequisition(requisition, userDto.getId()).isSuccess()) {
       siglusRequisitionDto.setIsExternalApproval(!checkIsInternal(siglusRequisitionDto.getFacility().getId(), userDto));
       Set<VersionObjectReferenceDto> availableProducts = siglusRequisitionDto.getAvailableProducts();
-      Set<UUID> approverMainProgramAndAdditionalProgramApprovedProducts = Optional.ofNullable(
-              requisitionService.getApproveProduct(userDto.getHomeFacilityId(), requisition.getProgramId())
-                  .getApprovedProductReferences())
-          .orElse(Collections.emptySet())
-          .stream()
-          .map(ApprovedProductReference::getOrderable)
-          .map(VersionEntityReference::getId)
-          .collect(toSet());
+      UUID programId = requisition.getProgramId();
+      ApproveProductsAggregator aggregator = new ApproveProductsAggregator(
+          requisitionService.getApprovedProducts(userDto.getHomeFacilityId(), programId), programId);
+      Set<UUID> approverMainProgramAndAdditionalProgramApprovedProducts =
+          Optional.ofNullable(aggregator.getApprovedProductReferences())
+              .orElse(Collections.emptySet())
+              .stream()
+              .map(ApprovedProductReference::getOrderable)
+              .map(VersionEntityReference::getId)
+              .collect(toSet());
 
       // keep only products in approver facility main & associate programs
       // toggle no/full-supply will update the version
@@ -1021,6 +1025,7 @@ public class SiglusRequisitionService {
           RequisitionLineItemV2Dto lineItemV2Dto = (RequisitionLineItemV2Dto) lineItem;
           lineItemV2Dto.setAuthorizedQuantity(itemExtension.getAuthorizedQuantity());
           lineItemV2Dto.setSuggestedQuantity(itemExtension.getSuggestedQuantity());
+          lineItemV2Dto.setEstimatedQuantity(itemExtension.getEstimatedQuantity());
           lineItemV2Dto.setExpirationDate(itemExtension.getExpirationDate());
         }
       });

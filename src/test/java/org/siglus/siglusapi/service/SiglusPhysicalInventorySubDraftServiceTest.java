@@ -59,7 +59,6 @@ import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.repository.OrderableRepository;
 import org.siglus.siglusapi.repository.PhysicalInventoryLineItemsExtensionRepository;
 import org.siglus.siglusapi.repository.PhysicalInventorySubDraftRepository;
-import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.util.SupportedProgramsHelper;
@@ -91,9 +90,6 @@ public class SiglusPhysicalInventorySubDraftServiceTest {
 
   @Mock
   private StockCardRepository stockCardRepository;
-
-  @Mock
-  private SiglusApprovedProductReferenceDataService approvedProductReferenceDataService;
 
   @Mock
   private PhysicalInventoriesRepository physicalInventoriesRepository;

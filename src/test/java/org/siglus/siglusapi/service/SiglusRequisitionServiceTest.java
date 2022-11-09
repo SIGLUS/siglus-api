@@ -31,7 +31,6 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Matchers.anyCollectionOf;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyVararg;
 import static org.mockito.Matchers.eq;
@@ -120,7 +119,6 @@ import org.openlmis.requisition.service.PermissionService;
 import org.openlmis.requisition.service.ProofOfDeliveryService;
 import org.openlmis.requisition.service.RequisitionService;
 import org.openlmis.requisition.service.fulfillment.OrderFulfillmentService;
-import org.openlmis.requisition.service.referencedata.ApproveProductsAggregator;
 import org.openlmis.requisition.service.referencedata.FacilityReferenceDataService;
 import org.openlmis.requisition.service.referencedata.FacilityTypeApprovedProductReferenceDataService;
 import org.openlmis.requisition.service.referencedata.IdealStockAmountReferenceDataService;
@@ -163,7 +161,6 @@ import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionMonthlyNotSubmitReportRepository;
 import org.siglus.siglusapi.repository.RequisitionNativeSqlRepository;
-import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
 import org.siglus.siglusapi.testutils.IdealStockAmountDtoDataBuilder;
 import org.siglus.siglusapi.testutils.RequisitionLineItemDataBuilder;
@@ -305,9 +302,6 @@ public class SiglusRequisitionServiceTest {
 
   @Mock
   private RegimenDataProcessor regimenDataProcessor;
-
-  @Mock
-  private SiglusApprovedProductReferenceDataService siglusApprovedReferenceDataService;
 
   @Mock
   private OrderService orderService;
@@ -461,7 +455,7 @@ public class SiglusRequisitionServiceTest {
     when(authenticationHelper.getCurrentUser()).thenReturn(userDto);
     when(requisitionController.findProgram(programId, profiler)).thenReturn(programDto);
     when(requisitionController.findFacility(facilityId, profiler)).thenReturn(facilityDto);
-    when(requisitionService.getApproveProduct(any(), any())).thenReturn(createApproveProductsAggregator());
+    when(requisitionService.getApprovedProducts(any(), any())).thenReturn(buildApprovedProducts());
     when(supervisoryNodeReferenceDataService.findOne(parentSupervisoryNodeId)).thenReturn(createSupervisoryNodeDto());
     when(draftRepository.findByRequisitionId(any(UUID.class))).thenReturn(null);
     when(operatePermissionService.canSubmit(any())).thenReturn(true);
@@ -632,9 +626,7 @@ public class SiglusRequisitionServiceTest {
     when(proofOfDeliveryService.get(any())).thenReturn(new ProofOfDeliveryDto());
     when(idealStockAmountReferenceDataService.search(facilityId, processingPeriodId))
         .thenReturn(createIdealStockAmountDtoList());
-    when(
-        siglusApprovedReferenceDataService.getApprovedProducts(any(), any(), anyCollectionOf(UUID.class), anyBoolean()))
-        .thenReturn(getApprovedProductList());
+    when(requisitionService.getApprovedProducts(any(), any())).thenReturn(getApprovedProductList());
     when(requisitionService.validateCanApproveRequisition(any(), any())).thenReturn(new ValidationResult());
     when(siglusOrderableService.getOrderableExpirationDate(any(), any()))
         .thenReturn(Lists.newArrayList(new OrderableExpirationDateDto(orderableId2, LocalDate.of(2022, 1, 1))));
@@ -1875,12 +1867,13 @@ public class SiglusRequisitionServiceTest {
     return list;
   }
 
-  private ApproveProductsAggregator createApproveProductsAggregator() {
+  private List<ApprovedProductDto> buildApprovedProducts() {
     MetadataDto meta = new MetadataDto();
     meta.setVersionNumber(1L);
     OrderableDto orderable = new OrderableDto();
     orderable.setId(productId2);
     ProgramOrderableDto programOrderableDto = new ProgramOrderableDto();
+    programOrderableDto.setProgramId(programId);
     programOrderableDto.setFullSupply(true);
     orderable.setPrograms(Sets.newHashSet(programOrderableDto));
     orderable.setMeta(meta);
@@ -1890,7 +1883,7 @@ public class SiglusRequisitionServiceTest {
     productDto.setOrderable(orderable);
     List<ApprovedProductDto> list = new ArrayList<>();
     list.add(productDto);
-    return new ApproveProductsAggregator(list, programId);
+    return list;
   }
 
   private SupervisoryNodeDto createSupervisoryNodeDto() {
