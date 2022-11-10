@@ -42,6 +42,7 @@ import java.time.Month;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -478,40 +479,33 @@ public class SiglusOrderService {
     return extendOrderDto(orderDto);
   }
 
-  // manually fill no-id lineitem
+  // manually fill no-id lineItem
   public Set<UUID> updateOrderLineItems(ShipmentDraftDto draftDto) {
     Order order = orderRepository.findOne(draftDto.getOrder().getId());
     List<OrderLineItem> orderLineItems = order.getOrderLineItems();
-    List<org.openlmis.fulfillment.web.util.OrderLineItemDto> draftOrderLineItems
-        = draftDto.getOrder().getOrderLineItems();
-
-    Set<UUID> addedOrderableIds = new HashSet<>();
-
+    List<OrderLineItemDto> draftOrderLineItems = draftDto.getOrder().getOrderLineItems();
+    Collection<UUID> draftOrderableIds = draftOrderLineItems.stream()
+        .map(draftOrderLineItem -> draftOrderLineItem.getOrderable().getId())
+        .collect(Collectors.toList());
+    // remove order line item if it was removed in draft
+    orderLineItems.removeIf(orderLineItem -> !draftOrderableIds.contains(orderLineItem.getOrderable().getId()));
     draftOrderLineItems.stream()
         .filter(orderLineItemDto -> orderLineItemDto.getId() == null)
         .map(OrderLineItem::newInstance)
         .forEach(orderLineItem -> {
           orderLineItem.setOrder(order);
           orderLineItems.add(orderLineItem);
-          addedOrderableIds.add(orderLineItem.getOrderable().getId());
         });
-
-    if (addedOrderableIds.isEmpty()) {
-      return Collections.emptySet();
-    }
-    log.info("orderId: {}, addedOrderableIds: {}", order.getId(), addedOrderableIds);
+    log.info("save order with added products, orderId: {}", order.getId());
     Order saved = orderRepository.save(order);
-    Set<UUID> addedLineItemIds = new HashSet<>();
-    // orderable-id : lineItem-id
-    Map<UUID, UUID> addedLineItemMap = saved.getOrderLineItems()
-        .stream().collect(toMap(
-            orderLineItem -> orderLineItem.getOrderable().getId(),
-            OrderLineItem::getId));
 
+    Set<UUID> addedLineItemIds = new HashSet<>();
+    Map<UUID, UUID> orderableIdToLineItemId = saved.getOrderLineItems().stream()
+        .collect(toMap(orderLineItem -> orderLineItem.getOrderable().getId(), OrderLineItem::getId));
     draftOrderLineItems.forEach(orderLineItemDto -> {
       if (orderLineItemDto.getId() == null) {
         UUID orderableId = orderLineItemDto.getOrderable().getId();
-        UUID lineItemId = addedLineItemMap.get(orderableId);
+        UUID lineItemId = orderableIdToLineItemId.get(orderableId);
         orderLineItemDto.setId(lineItemId);
         addedLineItemIds.add(lineItemId);
       }
