@@ -64,10 +64,10 @@ public class MasterDataEventReplayer {
         if (!facilityId.toString().equals(rowChangeEvent.getValues().get(indexOfFacilityId))) {
           continue;
         }
-        Boolean toBeUpdatedLocalManagement = (Boolean) rowChangeEvent.getValues().get(indexOfLocationManagement);
-        if (locationManagement != toBeUpdatedLocalManagement) {
+        Boolean toBeUpdatedLocationManagement = (Boolean) rowChangeEvent.getValues().get(indexOfLocationManagement);
+        if (locationManagement != toBeUpdatedLocationManagement) {
           toggledLocationManagement = true;
-          locationManagement = toBeUpdatedLocalManagement;
+          locationManagement = toBeUpdatedLocationManagement;
         }
       }
     }
