@@ -26,10 +26,12 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.google.common.collect.Lists;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -102,6 +104,16 @@ public class SiglusShipmentDraftServiceTest {
 
   private final String locationCode = "AA25A";
   private final String area = "Armazem Principal";
+
+  @Before
+  public void prepare() {
+    ShipmentDraftDto shipmentDraft = new ShipmentDraftDto();
+    ShipmentLineItemDto lineItemDto = new ShipmentLineItemDto();
+    lineItemDto.setId(lineItemId);
+    List<ShipmentLineItemDto> shipmentLineItemDtos = Collections.singletonList(lineItemDto);
+    shipmentDraft.setLineItems(shipmentLineItemDtos);
+    when(draftController.getShipmentDraft(draftId, Collections.emptySet())).thenReturn(shipmentDraft);
+  }
 
   @Test
   public void shouldUpdateLineItemExtensionWhenUpdateShipmentDraftIfExtensionExist() {

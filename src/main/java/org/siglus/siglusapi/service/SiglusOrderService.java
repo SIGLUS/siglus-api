@@ -496,7 +496,7 @@ public class SiglusOrderService {
           orderLineItem.setOrder(order);
           orderLineItems.add(orderLineItem);
         });
-    log.info("save order with added products, orderId: {}", order.getId());
+    log.info("save order line items with added products, orderId: {}", order.getId());
     Order saved = orderRepository.save(order);
 
     Set<UUID> addedLineItemIds = new HashSet<>();
