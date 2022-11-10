@@ -64,12 +64,12 @@ public class ProofOfDeliveryReplayer {
     Shipment shipment = proofOfDelivery.getShipment();
     Order order = shipment.getOrder();
     Order orderByOrderCode = siglusOrdersRepository.findByOrderCode(order.getOrderCode());
+    Shipment shipmentByOrderId = siglusShipmentRepository.findShipmentByOrderId(orderByOrderCode.getId());
 
     // use the db pod id rather than event pod id
-    ProofOfDelivery existedPod = siglusProofOfDeliveryRepository.findByShipmentId(shipment.getId());
+    ProofOfDelivery existedPod = siglusProofOfDeliveryRepository.findByShipmentId(shipmentByOrderId.getId());
     proofOfDelivery.setId(existedPod.getId());
 
-    Shipment shipmentByOrderId = siglusShipmentRepository.findShipmentByOrderId(orderByOrderCode.getId());
     proofOfDelivery.setShipment(shipmentByOrderId);
     log.info("save proofOfDelivery, id = {}", proofOfDelivery.getId());
     proofOfDeliveryRepository.saveAndFlush(proofOfDelivery);
