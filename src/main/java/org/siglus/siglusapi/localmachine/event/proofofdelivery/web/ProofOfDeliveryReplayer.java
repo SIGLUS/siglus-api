@@ -29,6 +29,7 @@ import org.siglus.siglusapi.localmachine.event.NotificationService;
 import org.siglus.siglusapi.repository.PodExtensionRepository;
 import org.siglus.siglusapi.repository.PodLineItemsByLocationRepository;
 import org.siglus.siglusapi.repository.SiglusOrdersRepository;
+import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
 import org.siglus.siglusapi.repository.SiglusShipmentRepository;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
@@ -39,6 +40,7 @@ import org.springframework.stereotype.Service;
 public class ProofOfDeliveryReplayer {
 
   private final ProofOfDeliveryRepository proofOfDeliveryRepository;
+  private final SiglusProofOfDeliveryRepository siglusProofOfDeliveryRepository;
   private final PodExtensionRepository podExtensionRepository;
   private final SiglusOrdersRepository siglusOrdersRepository;
   private final PodLineItemsByLocationRepository podLineItemsByLocationRepository;
@@ -58,19 +60,25 @@ public class ProofOfDeliveryReplayer {
   }
 
   public void doReplay(ProofOfDeliveryEvent event) {
-
     ProofOfDelivery proofOfDelivery = event.getProofOfDelivery();
     Shipment shipment = proofOfDelivery.getShipment();
     Order order = shipment.getOrder();
     Order orderByOrderCode = siglusOrdersRepository.findByOrderCode(order.getOrderCode());
 
+    // use the db pod id rather than event pod id
+    ProofOfDelivery existedPod = siglusProofOfDeliveryRepository.findByShipmentId(shipment.getId());
+    proofOfDelivery.setId(existedPod.getId());
+
     Shipment shipmentByOrderId = siglusShipmentRepository.findShipmentByOrderId(orderByOrderCode.getId());
     proofOfDelivery.setShipment(shipmentByOrderId);
+    log.info("save proofOfDelivery, id = {}", proofOfDelivery.getId());
     proofOfDeliveryRepository.saveAndFlush(proofOfDelivery);
-    log.info("proofOfDelivery has been saved! id = {}", proofOfDelivery.getId());
-    PodExtension proofsOfDeliveryExtension = event.getPodExtension();
-    podExtensionRepository.saveAndFlush(proofsOfDeliveryExtension);
-    log.info("ProofsOfDeliveryExtension has been saved! ProofOfDelivery id = {}", event.getProofOfDelivery().getId());
+
+    PodExtension podExtension = event.getPodExtension();
+    if (Objects.nonNull(podExtension)) {
+      log.info("save podExtension, pod id = {}", event.getProofOfDelivery().getId());
+      podExtensionRepository.saveAndFlush(podExtension);
+    }
 
     orderByOrderCode.setStatus(order.getStatus());
 

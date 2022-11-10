@@ -42,7 +42,7 @@ import lombok.Data;
         + "left join referencedata.facilities f1 on f1.id = o.receivingfacilityid\n"
         + "left join referencedata.facilities f2 on f2.id = o.supplyingfacilityid\n"
         + "left join referencedata.processing_periods pp on (o.processingperiodid = pp.id)\n"
-        + "left join fulfillment.shipments s on (s.orderid = :orderId)\n"
+        + "left join fulfillment.shipments s on (s.orderid = o.id)\n"
         + "left join fulfillment.proofs_of_delivery pod on (s.id = pod.shipmentid)\n"
         + "left join siglusintegration.order_external_ids oei on (oei.id = o.externalid)\n"
         + "left join referencedata.programs p on (p.id = o.programid)",
