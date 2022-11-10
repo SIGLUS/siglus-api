@@ -174,7 +174,6 @@ import org.siglus.siglusapi.service.SiglusProgramAdditionalOrderableService;
 import org.siglus.siglusapi.service.SiglusProgramService;
 import org.siglus.siglusapi.service.SiglusRequisitionExtensionService;
 import org.siglus.siglusapi.service.SiglusUsageReportService;
-import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.util.SupportedProgramsHelper;
@@ -205,7 +204,6 @@ public class RequisitionCreateService {
   private final RegimenRepository regimenRepository;
   private final SyncUpHashRepository syncUpHashRepository;
   private final SupportedProgramsHelper supportedProgramsHelper;
-  private final SiglusApprovedProductReferenceDataService approvedProductDataService;
   private final SiglusProgramAdditionalOrderableService additionalOrderableService;
   private final SiglusFacilityReferenceDataService siglusFacilityReferenceDataService;
   private final RequisitionTemplateRepository requisitionTemplateRepository;
@@ -304,8 +302,11 @@ public class RequisitionCreateService {
         .stream()
         .collect(
             toMap(Function.identity(),
-                supportProgramId -> approvedProductDataService.getApprovedProducts(facilityId, supportProgramId)
-                    .stream().map(product -> product.getOrderable().getProductCode()).collect(toSet())
+                supportProgramId -> requisitionService.getApprovedProductsWithoutAdditional(facilityId,
+                        supportProgramId)
+                    .stream()
+                    .map(product -> product.getOrderable().getProductCode())
+                    .collect(toSet())
             )
         );
     Set<String> requisitionProductCodes = new HashSet<>();
@@ -475,11 +476,10 @@ public class RequisitionCreateService {
   }
 
   private void buildRequisitionApprovedProduct(Requisition requisition, UUID homeFacilityId, UUID programId) {
-    ApproveProductsAggregator approvedProductsContainKit = requisitionService.getApproveProduct(homeFacilityId,
-        programId);
-    List<ApprovedProductDto> approvedProductDtos = approvedProductsContainKit.getFullSupplyProducts();
-    ApproveProductsAggregator approvedProducts = new ApproveProductsAggregator(approvedProductDtos, programId);
-    Set<ApprovedProductReference> availableProductIdentities = approvedProducts.getApprovedProductReferences();
+    List<ApprovedProductDto> approvedProductDtos = requisitionService.getApprovedProductsWithoutAdditional(
+        homeFacilityId, programId);
+    ApproveProductsAggregator aggregator = new ApproveProductsAggregator(approvedProductDtos, programId);
+    Set<ApprovedProductReference> availableProductIdentities = aggregator.getApprovedProductReferences();
     requisition.setAvailableProducts(availableProductIdentities);
   }
 

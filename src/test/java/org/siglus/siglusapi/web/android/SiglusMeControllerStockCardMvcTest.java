@@ -63,6 +63,7 @@ import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.requisition.dto.OrderableDto;
 import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.dto.ProgramOrderableDto;
+import org.openlmis.requisition.service.RequisitionService;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
 import org.openlmis.stockmanagement.domain.reason.StockCardLineItemReason;
 import org.openlmis.stockmanagement.domain.sourcedestination.Node;
@@ -104,7 +105,6 @@ import org.siglus.siglusapi.service.android.StockCardSearchService;
 import org.siglus.siglusapi.service.android.context.StockCardCreateContextHolder;
 import org.siglus.siglusapi.service.android.mapper.ProductMovementMapper;
 import org.siglus.siglusapi.service.android.mapper.ProductMovementMapperImpl;
-import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
 import org.siglus.siglusapi.util.AndroidHelper;
@@ -152,7 +152,7 @@ public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
   @Mock
   private ProgramReferenceDataService programDataService;
   @Mock
-  private SiglusApprovedProductReferenceDataService approvedProductService;
+  private RequisitionService requisitionService;
   @Mock
   private SiglusValidReasonAssignmentService validReasonAssignmentService;
   @Mock
@@ -370,9 +370,9 @@ public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
   }
 
   private void mockApprovedProducts() {
-    when(approvedProductService.getApprovedProducts(eq(facilityId), eq(programId1), eq(emptyList())))
+    when(requisitionService.getApprovedProductsWithoutAdditional(eq(facilityId), eq(programId1)))
         .thenReturn(mockProgramProducts(programId1, "08A07", "08O05", "08O05Y", "08O05X"));
-    when(approvedProductService.getApprovedProducts(eq(facilityId), eq(programId2), eq(emptyList())))
+    when(requisitionService.getApprovedProductsWithoutAdditional(eq(facilityId), eq(programId2)))
         .thenReturn(mockProgramProducts(programId1, "02A01", "04B05", "07A03", "22A06", "22A08", "22A05", "22A07"));
   }
 

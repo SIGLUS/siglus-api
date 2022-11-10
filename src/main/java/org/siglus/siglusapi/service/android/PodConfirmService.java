@@ -43,6 +43,7 @@ import org.openlmis.fulfillment.service.PermissionService;
 import org.openlmis.fulfillment.util.DateHelper;
 import org.openlmis.fulfillment.web.MissingPermissionException;
 import org.openlmis.referencedata.dto.OrderableDto;
+import org.openlmis.requisition.service.RequisitionService;
 import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
 import org.openlmis.stockmanagement.domain.reason.StockCardLineItemReason;
 import org.openlmis.stockmanagement.dto.ValidReasonAssignmentDto;
@@ -74,7 +75,6 @@ import org.siglus.siglusapi.service.android.context.ContextHolder;
 import org.siglus.siglusapi.service.android.context.CurrentUserContext;
 import org.siglus.siglusapi.service.android.context.LotContext;
 import org.siglus.siglusapi.service.android.context.ProductContext;
-import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -99,7 +99,7 @@ public class PodConfirmService {
   private final SiglusShipmentLineItemRepository shipmentLineItemRepository;
   private final OrderLineItemRepository orderLineItemRepository;
   private final SiglusStockCardLineItemRepository stockCardLineItemRepository;
-  private final SiglusApprovedProductReferenceDataService approvedProductDataService;
+  private final RequisitionService requisitionService;
   private final PodConfirmBackupRepository podConfirmBackupRepository;
   private final SiglusNotificationService siglusNotificationService;
 
@@ -221,7 +221,7 @@ public class PodConfirmService {
       }
       UUID supportedProgramId = supportedProgram.getId();
       Set<String> approvedProductCodes =
-          approvedProductDataService.getApprovedProducts(homeFacilityId, supportedProgramId)
+          requisitionService.getApprovedProductsWithoutAdditional(homeFacilityId, supportedProgramId)
               .stream().map(product -> product.getOrderable().getProductCode()).collect(toSet());
       Set<String> productCodesInRequest = podRequest.getProducts()
           .stream().map(PodProductLineRequest::getCode).collect(toSet());

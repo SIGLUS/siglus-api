@@ -159,6 +159,8 @@ public class RequisitionLineItemDraft extends BaseEntity {
 
   private Integer suggestedQuantity;
 
+  private Integer estimatedQuantity;
+
   private LocalDate expirationDate;
 
   public static RequisitionLineItemDraft from(RequisitionDraft draft,

@@ -20,6 +20,7 @@ import static org.mockito.Mockito.when;
 
 import com.google.common.collect.Lists;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import org.joda.money.CurrencyUnit;
@@ -35,7 +36,6 @@ import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.domain.requisition.StatusChange;
 import org.openlmis.requisition.domain.requisition.VersionEntityReference;
 import org.openlmis.requisition.service.RequisitionService;
-import org.openlmis.requisition.service.referencedata.ApproveProductsAggregator;
 import org.siglus.siglusapi.domain.RequisitionExtension;
 import org.siglus.siglusapi.localmachine.EventPublisher;
 import org.siglus.siglusapi.localmachine.event.NotificationService;
@@ -137,9 +137,7 @@ public class RequisitionInternalApproveReplayerTest {
     event.setRequisition(requisition);
     event.setRequisitionExtension(new RequisitionExtension());
     event.setLineItemExtensions(new ArrayList<>());
-    final ApproveProductsAggregator approveProductsAggregator =
-        new ApproveProductsAggregator(new ArrayList<>(), programId);
-    when(requisitionService.getApproveProduct(facilityId, programId)).thenReturn(approveProductsAggregator);
+    when(requisitionService.getApprovedProducts(facilityId, programId)).thenReturn(Collections.emptyList());
     when(requisitionRepository.saveAndFlush(any())).thenReturn(requisition);
     when(requisitionExtensionRepository.findByRequisitionNumber(any())).thenReturn(new RequisitionExtension());
     // when

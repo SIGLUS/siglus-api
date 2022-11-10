@@ -15,7 +15,6 @@
 
 package org.siglus.siglusapi.service.fc;
 
-import static java.util.Collections.emptyList;
 import static org.openlmis.requisition.domain.requisition.RequisitionStatus.APPROVED;
 import static org.openlmis.requisition.domain.requisition.RequisitionStatus.SKIPPED;
 import static org.siglus.siglusapi.constant.FcConstants.RECEIPT_PLAN_API;
@@ -42,6 +41,7 @@ import org.openlmis.requisition.dto.OrderableDto;
 import org.openlmis.requisition.dto.RequisitionLineItemV2Dto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.repository.RequisitionRepository;
+import org.openlmis.requisition.service.RequisitionService;
 import org.siglus.siglusapi.domain.ReceiptPlan;
 import org.siglus.siglusapi.domain.RequisitionExtension;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
@@ -57,7 +57,6 @@ import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.repository.SiglusFacilityRepository;
 import org.siglus.siglusapi.repository.SiglusStatusChangeRepository;
 import org.siglus.siglusapi.service.SiglusRequisitionService;
-import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusUserReferenceDataService;
 import org.siglus.siglusapi.util.OperatePermissionService;
 import org.siglus.siglusapi.util.SiglusSimulateUserAuthHelper;
@@ -77,7 +76,7 @@ public class FcReceiptPlanService implements ProcessDataService {
   private final SiglusStatusChangeRepository siglusStatusChangeRepository;
   private final RequisitionExtensionRepository requisitionExtensionRepository;
   private final SiglusUserReferenceDataService userReferenceDataService;
-  private final SiglusApprovedProductReferenceDataService approvedProductService;
+  private final RequisitionService requisitionService;
   private final SiglusRequisitionService siglusRequisitionService;
   private final OperatePermissionService operatePermissionService;
   private final FcValidate fcDataValidate;
@@ -189,8 +188,7 @@ public class FcReceiptPlanService implements ProcessDataService {
   }
 
   private Map<String, OrderableDto> getApprovedProductsMap(UserDto userDto, RequisitionV2Dto dto) {
-    return approvedProductService
-        .getApprovedProducts(userDto.getHomeFacilityId(), dto.getProgramId(), emptyList())
+    return requisitionService.getApprovedProducts(userDto.getHomeFacilityId(), dto.getProgramId())
         .stream()
         .map(ApprovedProductDto::getOrderable)
         .collect(Collectors.toMap(OrderableDto::getProductCode, orderableDto -> orderableDto));

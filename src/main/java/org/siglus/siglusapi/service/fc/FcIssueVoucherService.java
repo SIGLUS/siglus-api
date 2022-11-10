@@ -59,6 +59,7 @@ import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.requisition.dto.OrderableDto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.repository.RequisitionRepository;
+import org.openlmis.requisition.service.RequisitionService;
 import org.openlmis.requisition.service.RequisitionStatusProcessor;
 import org.openlmis.requisition.service.fulfillment.OrderFulfillmentService;
 import org.openlmis.requisition.web.OrderDtoBuilder;
@@ -89,7 +90,6 @@ import org.siglus.siglusapi.service.SiglusShipmentDraftService;
 import org.siglus.siglusapi.service.SiglusShipmentService;
 import org.siglus.siglusapi.service.SiglusStockCardSummariesService;
 import org.siglus.siglusapi.service.SiglusStockEventsService;
-import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
@@ -123,7 +123,7 @@ public class FcIssueVoucherService implements ProcessDataService {
   private final SiglusUserReferenceDataService userReferenceDataService;
   private final SiglusRequisitionRequisitionService siglusRequisitionRequisitionService;
   private final RequisitionExtensionRepository requisitionExtensionRepository;
-  private final SiglusApprovedProductReferenceDataService approvedProductService;
+  private final RequisitionService requisitionService;
   private final SiglusStockEventsService stockEventsService;
   private final ValidSourceDestinationStockManagementService sourceDestinationService;
   private final ShipmentsExtensionRepository shipmentsExtensionRepository;
@@ -212,7 +212,8 @@ public class FcIssueVoucherService implements ProcessDataService {
         issueVoucherErrors.add("requisition status is error" + SPLIT + issueVoucherDto.getIssueVoucherNumber());
         return;
       }
-      List<ApprovedProductDto> approvedProductDtos = getApprovedProducts(userDto, requisitionV2Dto);
+      List<ApprovedProductDto> approvedProductDtos = requisitionService.getApprovedProducts(userDto.getHomeFacilityId(),
+          requisitionV2Dto.getProgramId());
       Map<String, ApprovedProductDto> approvedProductsMap = getApprovedProductsMap(approvedProductDtos);
       List<ProductDto> existProducts = getExistProducts(issueVoucherDto, approvedProductsMap);
       if (!CollectionUtils.isEmpty(existProducts)) {
@@ -269,10 +270,6 @@ public class FcIssueVoucherService implements ProcessDataService {
   private Map<String, ApprovedProductDto> getApprovedProductsMap(List<ApprovedProductDto> approvedProductDtos) {
     return approvedProductDtos.stream()
         .collect(Collectors.toMap(product -> product.getOrderable().getProductCode(), Function.identity()));
-  }
-
-  private List<ApprovedProductDto> getApprovedProducts(UserDto userDto, RequisitionV2Dto dto) {
-    return approvedProductService.getApprovedProducts(userDto.getHomeFacilityId(), dto.getProgramId(), null, false);
   }
 
   private List<ProductDto> getExistProducts(IssueVoucherDto issueVoucherDto,

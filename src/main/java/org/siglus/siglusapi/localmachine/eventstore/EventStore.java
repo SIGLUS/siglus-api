@@ -172,6 +172,7 @@ public class EventStore {
     if (CollectionUtils.isEmpty(eventIds)) {
       return;
     }
+    log.info("mark events events receiversynced:{}", eventIds);
     repository.markAsReceived(eventIds);
   }
 
@@ -179,6 +180,7 @@ public class EventStore {
   public void confirmAckShipped(Set<Ack> acks) {
     Set<UUID> eventIds = acks.stream().map(Ack::getEventId).collect(Collectors.toSet());
     if (CollectionUtils.isNotEmpty(eventIds)) {
+      log.info("mark ack shipped:{}", eventIds);
       ackRepository.markShipped(eventIds);
     }
   }
@@ -192,9 +194,15 @@ public class EventStore {
         repository.filterExistsEventIds(eventIds).stream()
             .map(UUID::fromString)
             .collect(Collectors.toSet());
-    return events.stream()
-        .filter(it -> !existingIds.contains(it.getId()))
-        .collect(Collectors.toList());
+    List<Event> nonExistEvents = new LinkedList<>();
+    for (Event evt : events) {
+      if (existingIds.contains(evt.getId())) {
+        emitAckForEvent(evt);
+      } else {
+        nonExistEvents.add(evt);
+      }
+    }
+    return nonExistEvents;
   }
 
   public Stream<Event> streamNotReplayedEvents() {
@@ -263,11 +271,13 @@ public class EventStore {
 
   private void saveAcks(Set<Ack> acks) {
     List<AckRecord> ackRecords = acks.stream().map(AckRecord::from).collect(Collectors.toList());
+    log.info("save acks:{}", ackRecords.stream().map(AckRecord::getEventId).collect(Collectors.toList()));
     ackRepository.save(ackRecords);
   }
 
   private void emitAck(Ack ack) {
     AckRecord ackRecord = AckRecord.from(ack);
+    log.info("save ack for emit:{}", ackRecord.getEventId());
     ackRepository.save(ackRecord);
   }
 

@@ -15,7 +15,6 @@
 
 package org.siglus.siglusapi.service.android.context;
 
-import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toList;
 
 import java.time.LocalDate;
@@ -26,6 +25,7 @@ import lombok.RequiredArgsConstructor;
 import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.requisition.dto.OrderableDto;
 import org.openlmis.requisition.dto.ProgramDto;
+import org.openlmis.requisition.service.RequisitionService;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
 import org.openlmis.stockmanagement.dto.ValidReasonAssignmentDto;
 import org.openlmis.stockmanagement.dto.ValidSourceDestinationDto;
@@ -37,7 +37,6 @@ import org.siglus.siglusapi.migration.MasterDataRepository;
 import org.siglus.siglusapi.repository.StockManagementRepository;
 import org.siglus.siglusapi.service.SiglusValidReasonAssignmentService;
 import org.siglus.siglusapi.service.SiglusValidSourceDestinationService;
-import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.util.SupportedProgramsHelper;
 import org.springframework.stereotype.Component;
@@ -52,7 +51,7 @@ public class StockCardCreateContextHolder {
   private final SiglusValidSourceDestinationService nodeService;
   private final SupportedProgramsHelper programsHelper;
   private final ProgramReferenceDataService programDataService;
-  private final SiglusApprovedProductReferenceDataService approvedProductDataService;
+  private final RequisitionService requisitionService;
   private final StockManagementRepository stockManagementRepository;
   private final MasterDataRepository masterDataRepository;
   private final SiglusAuthenticationHelper authenticationHelper;
@@ -111,8 +110,8 @@ public class StockCardCreateContextHolder {
   }
 
   private List<OrderableDto> getActualApprovedOrderableDtos(UUID homeFacilityId, ProgramDto program) {
-    return approvedProductDataService.getApprovedProducts(homeFacilityId,
-            program.getId(), emptyList()).stream()
+    return requisitionService.getApprovedProductsWithoutAdditional(homeFacilityId, program.getId())
+        .stream()
         .map(ApprovedProductDto::getOrderable)
         .collect(toList());
   }

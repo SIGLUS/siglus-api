@@ -58,6 +58,7 @@ import org.openlmis.fulfillment.util.DateHelper;
 import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.requisition.dto.OrderableDto;
 import org.openlmis.requisition.dto.ProgramDto;
+import org.openlmis.requisition.service.RequisitionService;
 import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
 import org.openlmis.stockmanagement.domain.reason.StockCardLineItemReason;
 import org.openlmis.stockmanagement.dto.ValidReasonAssignmentDto;
@@ -96,7 +97,6 @@ import org.siglus.siglusapi.service.android.context.ContextHolder;
 import org.siglus.siglusapi.service.android.context.CurrentUserContext;
 import org.siglus.siglusapi.service.android.context.LotContext;
 import org.siglus.siglusapi.service.android.context.ProductContext;
-import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
@@ -144,7 +144,7 @@ public class PodConfirmServiceTest {
   private SiglusProgramService siglusProgramService;
 
   @Mock
-  private SiglusApprovedProductReferenceDataService approvedProductReferenceDataService;
+  private RequisitionService requisitionService;
 
   @Mock
   private SiglusProofOfDeliveryRepository podRepository;
@@ -245,7 +245,7 @@ public class PodConfirmServiceTest {
     orderableDto.setProductCode("02A01");
     ApprovedProductDto approvedProductDto = new ApprovedProductDto();
     approvedProductDto.setOrderable(orderableDto);
-    when(approvedProductReferenceDataService.getApprovedProducts(facilityId, programId))
+    when(requisitionService.getApprovedProductsWithoutAdditional(facilityId, programId))
         .thenReturn(singletonList(approvedProductDto));
     ProofOfDelivery toUpdate = mockPod(user, false);
     PodResponse podResponse = mockPodResponse();
@@ -268,7 +268,7 @@ public class PodConfirmServiceTest {
     orderableDto.setProductCode(productCode);
     ApprovedProductDto approvedProductDto = new ApprovedProductDto();
     approvedProductDto.setOrderable(orderableDto);
-    when(approvedProductReferenceDataService.getApprovedProducts(facilityId, programId))
+    when(requisitionService.getApprovedProductsWithoutAdditional(facilityId, programId))
         .thenReturn(ImmutableList.of(approvedProductDto));
     org.openlmis.referencedata.dto.OrderableDto orderableDto1 =
         new org.openlmis.referencedata.dto.OrderableDto();

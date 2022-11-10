@@ -15,7 +15,6 @@
 
 package org.siglus.siglusapi.service.android;
 
-import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static java.util.Comparator.naturalOrder;
 import static java.util.Objects.requireNonNull;
@@ -43,6 +42,7 @@ import org.hibernate.validator.constraints.NotEmpty;
 import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.requisition.dto.OrderableDto;
 import org.openlmis.requisition.dto.ProgramDto;
+import org.openlmis.requisition.service.RequisitionService;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
 import org.siglus.siglusapi.dto.LotDto;
 import org.siglus.siglusapi.dto.android.EventTime;
@@ -78,7 +78,6 @@ import org.siglus.siglusapi.dto.android.request.StockCardLotEventRequest;
 import org.siglus.siglusapi.dto.android.sequence.PerformanceSequence;
 import org.siglus.siglusapi.repository.StockManagementRepository;
 import org.siglus.siglusapi.service.LotConflictService;
-import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.util.SupportedProgramsHelper;
@@ -97,7 +96,7 @@ public class StockCardCreateService {
   private final SupportedProgramsHelper programsHelper;
   private final ProgramReferenceDataService programDataService;
   private final StockManagementRepository repo;
-  private final SiglusApprovedProductReferenceDataService approvedProductDataService;
+  private final RequisitionService requisitionService;
   private final LotConflictService lotConflictService;
   private final SiglusLotReferenceDataService siglusLotReferenceDataService;
 
@@ -333,8 +332,8 @@ public class StockCardCreateService {
   }
 
   private List<OrderableDto> getProgramProducts(UUID homeFacilityId, ProgramDto program) {
-    return approvedProductDataService
-        .getApprovedProducts(homeFacilityId, program.getId(), emptyList()).stream()
+    return requisitionService.getApprovedProductsWithoutAdditional(homeFacilityId, program.getId())
+        .stream()
         .map(ApprovedProductDto::getOrderable)
         .map(orderable -> {
           orderable.getExtraData().put(KEY_PROGRAM_CODE, program.getCode());
