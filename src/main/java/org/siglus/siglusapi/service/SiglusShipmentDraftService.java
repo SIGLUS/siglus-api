@@ -90,6 +90,9 @@ public class SiglusShipmentDraftService {
   public ShipmentDraftDto updateShipmentDraftByLocation(UUID shipmentDraftId, ShipmentDraftDto draftDto) {
     Multimap<String, ShipmentLineItemDto> uniqueKeyMap = ArrayListMultimap.create();
     draftDto.lineItems().forEach(shipmentLineItemDto -> {
+      if (shipmentLineItemDto.getLotId() == null && shipmentLineItemDto.getId() != null) {
+        shipmentLineItemDto.setId(null);
+      }
       String uniqueKey = buildUniqueKey(shipmentLineItemDto);
       uniqueKeyMap.put(uniqueKey, shipmentLineItemDto);
     });
@@ -289,7 +292,8 @@ public class SiglusShipmentDraftService {
       String key = buildUniqueKey(shipmentLineItem);
       if (uniqueKeyToShipmentDto.containsKey(key)) {
         ShipmentLineItemDto shipmentLineItemDto = uniqueKeyToShipmentDto.get(key);
-        Long quantityShipped = shipmentLineItem.getQuantityShipped() + shipmentLineItemDto.getQuantityShipped();
+        Long quantityShipped = getQuantity(shipmentLineItem.getQuantityShipped())
+            + getQuantity(shipmentLineItemDto.getQuantityShipped());
         if (null != shipmentLineItemDto.getId()) {
           shipmentLineItemDto.setQuantityShipped(quantityShipped);
           uniqueKeyToShipmentDto.put(key, shipmentLineItemDto);
@@ -305,5 +309,9 @@ public class SiglusShipmentDraftService {
     BeanUtils.copyProperties(shipmentDraftDto, shipmentDraftDtoAfterMerge);
     shipmentDraftDtoAfterMerge.setLineItems(new ArrayList<>(uniqueKeyToShipmentDto.values()));
     return shipmentDraftDtoAfterMerge;
+  }
+
+  private long getQuantity(Long value) {
+    return value == null ? 0 : value;
   }
 }
