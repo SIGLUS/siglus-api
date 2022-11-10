@@ -47,7 +47,6 @@ public class MasterDataEventEmitter implements CdcListener {
   public String[] acceptedTables() {
     return new String[]{
         "auth.auth_users",
-        "auth.oauth_access_token",
         "fulfillment.configuration_settings",
         "fulfillment.order_number_configurations",
         "fulfillment.file_templates",
