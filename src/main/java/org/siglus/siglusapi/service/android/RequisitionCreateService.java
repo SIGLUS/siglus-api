@@ -163,6 +163,7 @@ import org.siglus.siglusapi.exception.InvalidProgramCodeException;
 import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.exception.UnsupportedProductsException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
+import org.siglus.siglusapi.localmachine.EventPublisher;
 import org.siglus.siglusapi.repository.ProcessingPeriodRepository;
 import org.siglus.siglusapi.repository.RegimenRepository;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
@@ -294,6 +295,9 @@ public class RequisitionCreateService {
   }
 
   private void checkPermission(Supplier<ValidationResult> supplier) {
+    if (EventPublisher.isReplaying.get()) {
+      return;
+    }
     supplier.get().throwExceptionIfHasErrors();
   }
 
