@@ -43,7 +43,7 @@ public class OnlineWebTask {
   @Value("${masterdata.not.update.interval}")
   private Integer masterDataNotUpdateInterval;
 
-  // 这里的时间尽量在客户时区的晚上，因为生成masterdata时会锁表
+  // ensure to execute the task in evening of Moz time, since it will lock tables to generate master data snapshot
   @Scheduled(cron = "${generate.masterdata.cron}", zone = "${time.zoneId}")
   @SchedulerLock(name = "generate_masterdata_zip", lockAtMostFor = "PT1M")
   public void generateMasterDataZip() {
