@@ -847,7 +847,7 @@ public class SiglusPhysicalInventoryServiceTest {
     when(stockCardRepository.countByFacilityId(facilityId)).thenReturn(1);
     when(facilityReferenceDataService.findOne(facilityId))
         .thenReturn(facilityDto);
-    when(requisitionService.getApprovedProducts(facilityId, programIdOne))
+    when(requisitionService.getApprovedProductsWithoutAdditional(facilityId, programIdOne))
         .thenReturn(Collections.singletonList(approvedProductDto));
 
     doNothing().when(physicalInventoryService).checkPermission(programId, facilityId);

@@ -119,7 +119,7 @@ public class SiglusPhysicalInventorySubDraftService {
     PhysicalInventoryDto physicalInventoryDto = siglusPhysicalInventoryService.getFullPhysicalInventoryDto(
         physicalInventoryId);
     List<PhysicalInventoryLineItemDto> allInitialInventoryLineItems = siglusPhysicalInventoryService
-        .buildInitialInventoryLineItemDtos(Collections.singleton(physicalInventoryDto.getProgramId()),
+        .buildInitialInventoryLineItems(Collections.singleton(physicalInventoryDto.getProgramId()),
             physicalInventoryDto.getFacilityId());
 
     Integer splitNum = physicalInventorySubDraftRepository.findSplitNumberByPhysicalInventoryId(physicalInventoryId);

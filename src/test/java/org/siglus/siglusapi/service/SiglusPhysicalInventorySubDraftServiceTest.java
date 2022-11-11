@@ -356,7 +356,7 @@ public class SiglusPhysicalInventorySubDraftServiceTest {
     // then
     verify(physicalInventorySubDraftRepository).save(any(List.class));
     verify(siglusPhysicalInventoryService, times(2))
-            .buildInitialInventoryLineItemDtos(Collections.singleton(programId), facilityId);
+            .buildInitialInventoryLineItems(Collections.singleton(programId), facilityId);
   }
 
   @Test
