@@ -47,7 +47,7 @@ public class AndroidRequisitionSyncedReplayerTest {
     // given
     final RequisitionCreateRequest req = new RequisitionCreateRequest();
     final AndroidRequisitionSyncedEvent event = new AndroidRequisitionSyncedEvent(facilityId, userId, requisitionId,
-        req);
+        req, "MTB.xxx.202211.", 3);
     // when
     androidRequisitionSyncedReplayer.replay(event);
 

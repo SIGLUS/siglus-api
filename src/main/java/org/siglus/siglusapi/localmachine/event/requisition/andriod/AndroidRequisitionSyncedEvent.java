@@ -18,26 +18,29 @@ package org.siglus.siglusapi.localmachine.event.requisition.andriod;
 import java.util.UUID;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
 import org.siglus.siglusapi.localmachine.EventPayload;
 
 @Getter
 @Builder
 @EventPayload
+@NoArgsConstructor
 public class AndroidRequisitionSyncedEvent {
   private UUID facilityId;
   private UUID userId;
   private UUID requisitionId;
   private RequisitionCreateRequest request;
+  private String requisitionNumberPrefix;
+  private Integer requisitionNumber;
 
   public AndroidRequisitionSyncedEvent(UUID facilityId, UUID userId, UUID requisitionId,
-      RequisitionCreateRequest request) {
+      RequisitionCreateRequest request, String requisitionNumberPrefix, Integer requisitionNumber) {
     this.facilityId = facilityId;
     this.userId = userId;
     this.requisitionId = requisitionId;
     this.request = request;
-  }
-
-  public AndroidRequisitionSyncedEvent() {
+    this.requisitionNumberPrefix = requisitionNumberPrefix;
+    this.requisitionNumber = requisitionNumber;
   }
 }

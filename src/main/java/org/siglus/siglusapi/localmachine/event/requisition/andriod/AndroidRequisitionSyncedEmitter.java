@@ -18,11 +18,13 @@ package org.siglus.siglusapi.localmachine.event.requisition.andriod;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.openlmis.requisition.dto.BaseDto;
+import org.siglus.siglusapi.domain.RequisitionExtension;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
 import org.siglus.siglusapi.exception.InvalidProgramCodeException;
 import org.siglus.siglusapi.localmachine.EventPublisher;
 import org.siglus.siglusapi.localmachine.event.EventCommonService;
+import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.service.SiglusProgramService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.springframework.stereotype.Service;
@@ -35,13 +37,18 @@ public class AndroidRequisitionSyncedEmitter {
   private final SiglusAuthenticationHelper authHelper;
   private final SiglusProgramService siglusProgramService;
   private final EventCommonService baseEventCommonService;
+  private final RequisitionExtensionRepository requisitionExtensionRepository;
 
   public AndroidRequisitionSyncedEvent emit(RequisitionCreateRequest request, UUID requisitionId) {
     UserDto user = authHelper.getCurrentUser();
+    RequisitionExtension extension = requisitionExtensionRepository.findByRequisitionId(
+        requisitionId);
     AndroidRequisitionSyncedEvent event = AndroidRequisitionSyncedEvent.builder()
         .facilityId(user.getHomeFacilityId())
         .userId(user.getId())
         .requisitionId(requisitionId)
+        .requisitionNumberPrefix(extension.getRequisitionNumberPrefix())
+        .requisitionNumber(extension.getRequisitionNumber())
         .request(request)
         .build();
 

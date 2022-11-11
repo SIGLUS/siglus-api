@@ -40,6 +40,7 @@ import org.siglus.siglusapi.localmachine.event.EventCommonService;
 import org.siglus.siglusapi.localmachine.event.requisition.andriod.AndroidRequisitionSyncedEmitter;
 import org.siglus.siglusapi.localmachine.event.requisition.andriod.AndroidRequisitionSyncedEvent;
 import org.siglus.siglusapi.localmachine.eventstore.PayloadSerializer;
+import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.service.SiglusProgramService;
 import org.siglus.siglusapi.service.SiglusRequisitionExtensionService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
@@ -61,12 +62,14 @@ public class AndroidRequisitionSyncedEmitterTest extends FileBasedTest {
   private EventCommonService baseEventCommonService;
   @Mock
   private SiglusRequisitionExtensionService siglusRequisitionExtensionService;
-  private final UUID requisitionId = UUID.randomUUID();
+  @Mock
+  private RequisitionExtensionRepository requisitionExtensionRepository;
 
+  private final UUID requisitionId = UUID.randomUUID();
   private final UUID facilityId = UUID.randomUUID();
   private final UUID userId = UUID.randomUUID();
   private final UUID programId = UUID.randomUUID();
-  private RequisitionCreateRequest req = new RequisitionCreateRequest();
+  private final RequisitionCreateRequest req = new RequisitionCreateRequest();
 
   @Before
   public void setup() {
@@ -82,10 +85,17 @@ public class AndroidRequisitionSyncedEmitterTest extends FileBasedTest {
     ex.setRequisitionNumberPrefix("test");
     ex.setRequisitionNumber(123);
     when(siglusRequisitionExtensionService.buildRequisitionExtension(any(), any(), any(), any(), any())).thenReturn(ex);
+    RequisitionExtension requisitionExtension =
+        RequisitionExtension.builder()
+            .requisitionNumber(2)
+            .requisitionNumberPrefix("MTB.HF01.202209.")
+            .build();
+    when(requisitionExtensionRepository.findByRequisitionId(any()))
+        .thenReturn(requisitionExtension);
   }
 
   @Test
-  public void shouldSuccessWhenEmit() throws IOException {
+  public void shouldSuccessWhenEmit() {
     // when
     androidRequisitionSyncedEmitter.emit(req, requisitionId);
     // then

@@ -164,6 +164,8 @@ import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.exception.UnsupportedProductsException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.localmachine.EventPublisher;
+import org.siglus.siglusapi.localmachine.event.requisition.andriod.AndroidRequisitionSyncedEvent;
+import org.siglus.siglusapi.localmachine.event.requisition.andriod.AndroidRequisitionSyncedReplayer;
 import org.siglus.siglusapi.repository.ProcessingPeriodRepository;
 import org.siglus.siglusapi.repository.RegimenRepository;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
@@ -384,7 +386,18 @@ public class RequisitionCreateService {
             requisition.getProgramId(), requisition.getActualEndDate());
     requisitionExtension.setIsApprovedByInternal(true);
     requisitionExtension.setActualStartDate(request.getActualStartDate());
+    patchExtensionWhenReplaying(requisitionExtension);
     requisitionExtensionRepository.saveAndFlush(requisitionExtension);
+  }
+
+  static void patchExtensionWhenReplaying(RequisitionExtension requisitionExtension) {
+    Optional<AndroidRequisitionSyncedEvent> currentEvent = AndroidRequisitionSyncedReplayer.getCurrentEvent();
+    // when replaying, need to trust the external requisition number instead of the local one
+    currentEvent.ifPresent(
+        it -> {
+          requisitionExtension.setRequisitionNumberPrefix(it.getRequisitionNumberPrefix());
+          requisitionExtension.setRequisitionNumber(it.getRequisitionNumber());
+        });
   }
 
   private void buildRequisitionLineItemsExtension(Requisition requisition,
