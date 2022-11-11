@@ -17,6 +17,7 @@ package org.siglus.siglusapi.service.android;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
@@ -112,6 +113,8 @@ import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
 import org.siglus.siglusapi.dto.android.request.RequisitionLineItemRequest;
 import org.siglus.siglusapi.dto.android.request.RequisitionSignatureRequest;
 import org.siglus.siglusapi.dto.android.request.UsageInformationLineItemRequest;
+import org.siglus.siglusapi.localmachine.event.requisition.andriod.AndroidRequisitionSyncedEvent;
+import org.siglus.siglusapi.localmachine.event.requisition.andriod.AndroidRequisitionSyncedReplayer;
 import org.siglus.siglusapi.repository.ProcessingPeriodRepository;
 import org.siglus.siglusapi.repository.RegimenRepository;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
@@ -340,6 +343,36 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
         .thenReturn(requisitionTemplate);
     when(requisitionTemplateRepository.findTemplate(mmtbProgramId, facilityTypeId)).thenReturn(requisitionTemplate);
     doNothing().when(siglusNotificationService).postApprove(any());
+    AndroidRequisitionSyncedReplayer.currentEvent.remove();
+  }
+
+  @Test
+  public void shouldSetExternalRequisitionNumberWhenReplaying() {
+    // given
+    AndroidRequisitionSyncedEvent event =
+        AndroidRequisitionSyncedEvent.builder()
+            .requisitionNumber(90)
+            .requisitionNumberPrefix("MTB.xxx.202210.")
+            .build();
+    AndroidRequisitionSyncedReplayer.currentEvent.set(event);
+    RequisitionExtension extension = RequisitionExtension.builder().build();
+    // when
+    RequisitionCreateService.patchExtensionWhenReplaying(extension);
+    // then
+    assertThat(extension.getRequisitionNumberPrefix()).isEqualTo(event.getRequisitionNumberPrefix());
+    assertThat(extension.getRequisitionNumber()).isEqualTo(event.getRequisitionNumber());
+  }
+
+  @Test
+  public void shouldNotSetExternalRequisitionNumberWhenNotReplaying() {
+    // given
+    AndroidRequisitionSyncedReplayer.currentEvent.remove();
+    RequisitionExtension extension = RequisitionExtension.builder().build();
+    // when
+    RequisitionCreateService.patchExtensionWhenReplaying(extension);
+    // then
+    assertThat(extension.getRequisitionNumberPrefix()).isNull();
+    assertThat(extension.getRequisitionNumber()).isNull();
   }
 
   @Test(expected = PermissionMessageException.class)

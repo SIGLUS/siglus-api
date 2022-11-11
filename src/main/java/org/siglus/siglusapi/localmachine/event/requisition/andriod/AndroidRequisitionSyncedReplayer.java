@@ -15,6 +15,8 @@
 
 package org.siglus.siglusapi.localmachine.event.requisition.andriod;
 
+import com.google.common.annotations.VisibleForTesting;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.siglus.siglusapi.service.android.RequisitionCreateService;
@@ -26,17 +28,26 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @RequiredArgsConstructor
 public class AndroidRequisitionSyncedReplayer {
+  @VisibleForTesting
+  public static final ThreadLocal<AndroidRequisitionSyncedEvent> currentEvent = ThreadLocal.withInitial(() -> null);
   private final SiglusSimulateUserAuthHelper simulateUserAuthHelper;
   private final RequisitionCreateService requisitionCreateService;
 
   @EventListener(value = {AndroidRequisitionSyncedEvent.class})
   public void replay(AndroidRequisitionSyncedEvent event) {
+    currentEvent.set(event);
     try {
       simulateUserAuthHelper.simulateNewUserAuth(event.getUserId());
       requisitionCreateService.createRequisition(event.getRequest());
     } catch (Exception e) {
       log.error(e.getMessage(), e);
       throw e;
+    } finally {
+      currentEvent.remove();
     }
+  }
+
+  public static Optional<AndroidRequisitionSyncedEvent> getCurrentEvent() {
+    return Optional.ofNullable(currentEvent.get());
   }
 }
