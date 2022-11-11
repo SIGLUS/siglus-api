@@ -249,26 +249,6 @@ public class SiglusPhysicalInventoryServiceTest {
   }
 
   @Test
-  public void shouldCallV3MultipleTimesWhenCreateNewDraftForAllProductsDirectly() {
-    // given
-    PhysicalInventoryDto physicalInventoryDto = PhysicalInventoryDto.builder()
-        .programId(ALL_PRODUCTS_PROGRAM_ID).build();
-    when(supportedProgramsHelper.findHomeFacilitySupportedProgramIds())
-        .thenReturn(Sets.newHashSet(programIdOne, programIdTwo));
-    when(inventoryController.createEmptyPhysicalInventory(any())).thenAnswer(i -> i.getArguments()[0]);
-    PhysicalInventoryDto actualCalled1 = PhysicalInventoryDto.builder()
-        .programId(programIdOne).build();
-    PhysicalInventoryDto actualCalled2 = PhysicalInventoryDto.builder()
-        .programId(programIdTwo).build();
-    // when
-    siglusPhysicalInventoryService.createNewDraftForAllProgramsDirectly(physicalInventoryDto, null);
-
-    // then
-    verify(inventoryController, times(1)).createEmptyPhysicalInventory(actualCalled1);
-    verify(inventoryController, times(1)).createEmptyPhysicalInventory(actualCalled2);
-  }
-
-  @Test
   public void shouldCallV3MultipleTimesWhenSaveDraftForAllProducts() {
     // given
     PhysicalInventoryLineItemDto lineItemDtoOne = PhysicalInventoryLineItemDto.builder()
