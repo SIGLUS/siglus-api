@@ -167,7 +167,7 @@ public class SiglusStockEventsService {
   private List<StockEventDto> getStockEventsWhenDoPhysicalInventory(StockEventDto eventDto, Set<UUID> programIds) {
     List<PhysicalInventoryDto> inventories = programIds.stream()
         .map(programId -> siglusPhysicalInventoryService
-            .getPhysicalInventoryDtosDirectly(programId, eventDto.getFacilityId(), Boolean.TRUE))
+            .getPhysicalInventoryDtos(programId, eventDto.getFacilityId(), Boolean.TRUE))
         .flatMap(Collection::stream)
         .collect(Collectors.toList());
     if (CollectionUtils.isEmpty(inventories)) {

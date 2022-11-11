@@ -291,7 +291,7 @@ public class SiglusStockEventsServiceTest {
     StockEventDto eventDto = StockEventDto.builder()
         .lineItems(newArrayList(lineItemDto1, lineItemDto2))
         .programId(ALL_PRODUCTS_PROGRAM_ID).build();
-    when(siglusPhysicalInventoryService.getPhysicalInventoryDtosDirectly(any(), any(), any()))
+    when(siglusPhysicalInventoryService.getPhysicalInventoryDtos(any(), any(), any()))
         .thenReturn(Collections.emptyList());
 
     // when

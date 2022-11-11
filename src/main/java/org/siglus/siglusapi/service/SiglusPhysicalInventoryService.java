@@ -146,11 +146,10 @@ public class SiglusPhysicalInventoryService {
     if (StringUtils.isNotEmpty(optionString)) {
       option = LocationManagementOption.fromString(optionString);
     }
-    PhysicalInventoryDto allProductPhysicalInventoryDto = createNewDraftForAllPrograms(physicalInventoryDto, option);
-    getPhysicalInventoryWithLineItemForAllPrograms(allProductPhysicalInventoryDto, initialPhysicalInventory,
-        option != null);
-    splitPhysicalInventory(allProductPhysicalInventoryDto, splitNum, isByLocation);
-    return allProductPhysicalInventoryDto;
+    PhysicalInventoryDto physicalInventoryDraft = createNewDraftForAllPrograms(physicalInventoryDto, option);
+    buildPhysicalInventoryLineItemsForAllPrograms(physicalInventoryDraft, initialPhysicalInventory, option != null);
+    splitPhysicalInventory(physicalInventoryDraft, splitNum, isByLocation);
+    return physicalInventoryDraft;
   }
 
   @Transactional
@@ -270,7 +269,7 @@ public class SiglusPhysicalInventoryService {
     }
     List<PhysicalInventoryLineItemDto> subPhysicalInventoryLineItemDtoList =
         getSubPhysicalInventoryLineItemListBySubDraftIds(subDraftIds);
-    List<PhysicalInventoryLineItemDto> sortedSubPhysicalInventoryLineItemList = null;
+    List<PhysicalInventoryLineItemDto> sortedSubPhysicalInventoryLineItemList;
     if (isByLocation) {
       subPhysicalInventoryLineItemDtoList.addAll(findEmptyLocationsBySubDraftIds(subDraftIds));
       sortedSubPhysicalInventoryLineItemList = subPhysicalInventoryLineItemDtoList
@@ -288,12 +287,8 @@ public class SiglusPhysicalInventoryService {
     SiglusPhysicalInventoryDto physicalInventory = fillLocationOption(
         getPhysicalInventoryBySubDraftId(subDraftIds.get(0)));
 
-    UUID programId = subDraftIds.size() > 1
-        ? ALL_PRODUCTS_PROGRAM_ID
-        : physicalInventory.getProgramId();
-    UUID physicalInventoryId = subDraftIds.size() > 1
-        ? ALL_PRODUCTS_UUID
-        : physicalInventory.getId();
+    UUID programId = subDraftIds.size() > 1 ? ALL_PRODUCTS_PROGRAM_ID : physicalInventory.getProgramId();
+    UUID physicalInventoryId = subDraftIds.size() > 1 ? ALL_PRODUCTS_UUID : physicalInventory.getId();
     physicalInventory.setId(physicalInventoryId);
     physicalInventory.setLineItems(sortedSubPhysicalInventoryLineItemList);
     physicalInventory.setProgramId(programId);
@@ -411,7 +406,7 @@ public class SiglusPhysicalInventoryService {
   public void checkDraftIsExist(UUID facilityId) {
     Set<UUID> supportedPrograms = supportedProgramsHelper.findHomeFacilitySupportedProgramIds();
     List<PhysicalInventoryDto> inventories = supportedPrograms.stream()
-        .map(programId -> getPhysicalInventoryDtosDirectly(programId, facilityId, Boolean.TRUE))
+        .map(programId -> getPhysicalInventoryDtos(programId, facilityId, Boolean.TRUE))
         .flatMap(Collection::stream)
         .collect(Collectors.toList());
     if (CollectionUtils.isEmpty(inventories)) {
@@ -459,10 +454,6 @@ public class SiglusPhysicalInventoryService {
   }
 
   public List<PhysicalInventoryDto> getPhysicalInventoryDtos(UUID program, UUID facility, Boolean isDraft) {
-    return getPhysicalInventoryDtosDirectly(program, facility, isDraft);
-  }
-
-  public List<PhysicalInventoryDto> getPhysicalInventoryDtosDirectly(UUID program, UUID facility, Boolean isDraft) {
     return inventoryController.searchPhysicalInventory(program, facility, isDraft).getBody();
   }
 
@@ -586,11 +577,9 @@ public class SiglusPhysicalInventoryService {
 
     UUID physicalInventoryId = physicalInventoryDto.getId();
     if (physicalInventoryDto.getProgramId() == ALL_PRODUCTS_PROGRAM_ID) {
-      UUID programId = supportedProgramsHelper
-          .findHomeFacilitySupportedProgramIds().iterator().next();
+      UUID programId = supportedProgramsHelper.findHomeFacilitySupportedProgramIds().iterator().next();
       physicalInventoryId = UUID.fromString(physicalInventoriesRepository
-          .findIdByProgramIdAndFacilityIdAndIsDraft(
-              programId, physicalInventoryDto.getFacilityId(), true));
+          .findIdByProgramIdAndFacilityIdAndIsDraft(programId, physicalInventoryDto.getFacilityId(), true));
     }
     List<PhysicalInventoryExtension> extensions = physicalInventoryExtensionRepository
         .findByPhysicalInventoryId(physicalInventoryId);
@@ -629,12 +618,10 @@ public class SiglusPhysicalInventoryService {
   private void createEmptySubDraft(Integer spiltNum, PhysicalInventoryDto physicalInventoryDto) {
 
     if (physicalInventoryDto.getProgramId().equals(ALL_PRODUCTS_PROGRAM_ID)) {
-      Set<UUID> supportedPrograms = supportedProgramsHelper
-          .findHomeFacilitySupportedProgramIds();
+      Set<UUID> supportedPrograms = supportedProgramsHelper.findHomeFacilitySupportedProgramIds();
       supportedPrograms.forEach(programId -> {
         UUID physicalInventoryId = UUID.fromString(physicalInventoriesRepository
-            .findIdByProgramIdAndFacilityIdAndIsDraft(
-                programId, physicalInventoryDto.getFacilityId(), true));
+            .findIdByProgramIdAndFacilityIdAndIsDraft(programId, physicalInventoryDto.getFacilityId(), true));
         doCreateEmptySubDraft(spiltNum, physicalInventoryId);
       });
     } else {
@@ -692,9 +679,9 @@ public class SiglusPhysicalInventoryService {
     return list;
   }
 
-  private void splitPhysicalInventory(PhysicalInventoryDto dto, Integer splitNum, boolean isBylocation) {
+  private void splitPhysicalInventory(PhysicalInventoryDto dto, Integer splitNum, boolean isByLocation) {
     createEmptySubDraft(splitNum, dto);
-    spiltLineItem(dto, splitNum, isBylocation);
+    spiltLineItem(dto, splitNum, isByLocation);
   }
 
   @VisibleForTesting
@@ -825,8 +812,7 @@ public class SiglusPhysicalInventoryService {
   }
 
   private List<UUID> getSupportPhysicalInventoryIds(UUID facilityId) {
-    Set<UUID> supportedPrograms = supportedProgramsHelper
-        .findHomeFacilitySupportedProgramIds();
+    Set<UUID> supportedPrograms = supportedProgramsHelper.findHomeFacilitySupportedProgramIds();
     return supportedPrograms.stream().map(programId ->
             UUID.fromString(physicalInventoriesRepository.findIdByProgramIdAndFacilityIdAndIsDraft(
                 programId, facilityId, true)))
@@ -951,7 +937,6 @@ public class SiglusPhysicalInventoryService {
       return saveDraftForProductsForOneProgram(toBeSavedPhysicalInventoryDto);
     }
     return toBeSavedPhysicalInventoryDto;
-
   }
 
   private PhysicalInventoryDto createNewDraft(PhysicalInventoryDto physicalInventoryDto) {
@@ -964,17 +949,9 @@ public class SiglusPhysicalInventoryService {
     return inventoryController.createEmptyPhysicalInventory(physicalInventoryDto);
   }
 
-  private PhysicalInventoryDto createNewDraftDirectly(PhysicalInventoryDto dto) {
-    log.info("create empty physical inventory directly: {}", dto);
-    return inventoryController.createEmptyPhysicalInventory(dto);
-  }
-
-  private void getPhysicalInventoryWithLineItemForAllPrograms(
-      PhysicalInventoryDto allProductPhysicalInventoryDto,
-      boolean initialPhysicalInventory,
-      boolean withLocation) {
-    Set<UUID> supportedPrograms = supportedProgramsHelper
-        .findHomeFacilitySupportedProgramIds();
+  private void buildPhysicalInventoryLineItemsForAllPrograms(PhysicalInventoryDto allProductPhysicalInventoryDto,
+      boolean initialPhysicalInventory, boolean withLocation) {
+    Set<UUID> supportedPrograms = supportedProgramsHelper.findHomeFacilitySupportedProgramIds();
     List<PhysicalInventoryLineItemDto> allProductLineItemDtoList = new LinkedList<>();
     for (UUID programId : supportedPrograms) {
       List<PhysicalInventoryDto> physicalInventoryDtos = getPhysicalInventoryDtos(programId,
@@ -1136,14 +1113,11 @@ public class SiglusPhysicalInventoryService {
     supportedPrograms.forEach(programId -> doDeletePhysicalInventoryCore(facilityId, programId));
   }
 
-  private List<PhysicalInventoryLineItemsExtension> updateExtension(
-      PhysicalInventoryDto inventoryDto,
+  private List<PhysicalInventoryLineItemsExtension> updateExtension(PhysicalInventoryDto inventoryDto,
       List<PhysicalInventoryDto> updatedDto) {
-    List<UUID> updatePhysicalInventoryIds =
-        updatedDto
-            .stream()
-            .map(PhysicalInventoryDto::getId)
-            .collect(Collectors.toList());
+    List<UUID> updatePhysicalInventoryIds = updatedDto.stream()
+        .map(PhysicalInventoryDto::getId)
+        .collect(Collectors.toList());
     log.info("find physical inventory extension: {}", updatePhysicalInventoryIds);
     List<PhysicalInventoryLineItemsExtension> extensions = lineItemsExtensionRepository
         .findByPhysicalInventoryIdIn(updatePhysicalInventoryIds);
@@ -1180,14 +1154,12 @@ public class SiglusPhysicalInventoryService {
       PhysicalInventoryLineItemExtensionDto inventoryDto,
       List<PhysicalInventoryDto> updatedDto) {
     List<PhysicalInventorySubDraftLineItemsExtensionDto> lineItemsExtensions = inventoryDto.getLineItemsExtensions();
-    Map<UUID, UUID> lineItemsExtensionMap = lineItemsExtensions
-        .stream()
+    Map<UUID, UUID> lineItemsExtensionMap = lineItemsExtensions.stream()
         .collect(Collectors.toMap(PhysicalInventorySubDraftLineItemsExtensionDto::getPhysicalInventoryLineItemId,
             PhysicalInventorySubDraftLineItemsExtensionDto::getSubDraftId, (item1, item2) -> item1));
 
     List<UUID> updatePhysicalInventoryIds =
-        updatedDto
-            .stream()
+        updatedDto.stream()
             .map(PhysicalInventoryDto::getId)
             .collect(Collectors.toList());
     log.info("find physical inventory extension: {}", updatePhysicalInventoryIds);
@@ -1223,8 +1195,7 @@ public class SiglusPhysicalInventoryService {
         updateExtensions.add(extension);
       });
     });
-    List<PhysicalInventoryLineItemsExtension> needDeleteLineItemsExtensions = extensions
-        .stream()
+    List<PhysicalInventoryLineItemsExtension> needDeleteLineItemsExtensions = extensions.stream()
         .filter(extension -> !uniqueKeys.contains(extension.getPhysicalInventoryLineItemId()))
         .collect(Collectors.toList());
     if (CollectionUtils.isNotEmpty(needDeleteLineItemsExtensions)) {
