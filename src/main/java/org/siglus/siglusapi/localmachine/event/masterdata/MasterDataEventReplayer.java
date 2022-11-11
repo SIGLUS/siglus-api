@@ -64,10 +64,11 @@ public class MasterDataEventReplayer {
         if (!facilityId.toString().equals(rowChangeEvent.getValues().get(indexOfFacilityId))) {
           continue;
         }
-        Boolean toBeUpdatedLocationManagement = (Boolean) rowChangeEvent.getValues().get(indexOfLocationManagement);
-        if (locationManagement != toBeUpdatedLocationManagement) {
+        Boolean toBeUpdatedLocalManagement =
+            escapeNullBoolean((Boolean) rowChangeEvent.getValues().get(indexOfLocationManagement));
+        if (locationManagement != toBeUpdatedLocalManagement) {
           toggledLocationManagement = true;
-          locationManagement = toBeUpdatedLocationManagement;
+          locationManagement = toBeUpdatedLocalManagement;
         }
       }
     }
@@ -77,13 +78,18 @@ public class MasterDataEventReplayer {
     }
   }
 
-  private Boolean getEnableLocationManagement(FacilityExtension facilityExtension) {
+  static Boolean getEnableLocationManagement(FacilityExtension facilityExtension) {
     if (Objects.isNull(facilityExtension)) {
       return Boolean.FALSE;
     }
-    if (Objects.isNull(facilityExtension.getEnableLocationManagement())) {
+    Boolean locationManagement = facilityExtension.getEnableLocationManagement();
+    return escapeNullBoolean(locationManagement);
+  }
+
+  static Boolean escapeNullBoolean(Boolean locationManagement) {
+    if (Objects.isNull(locationManagement)) {
       return Boolean.FALSE;
     }
-    return facilityExtension.getEnableLocationManagement();
+    return locationManagement;
   }
 }
