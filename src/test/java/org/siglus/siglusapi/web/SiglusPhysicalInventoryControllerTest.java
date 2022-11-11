@@ -56,7 +56,7 @@ public class SiglusPhysicalInventoryControllerTest {
   public void shouldCallGetForAllProductsWhenSearchIfProgramIsAllProducts() {
     controller.searchPhysicalInventories(ALL_PRODUCTS_PROGRAM_ID, facilityId, isDraft);
 
-    verify(siglusPhysicalInventoryService).getPhysicalInventoryDtosForAllProducts(facilityId, isDraft, false);
+    verify(siglusPhysicalInventoryService).getPhysicalInventoryDtosForAllPrograms(facilityId, isDraft, false);
   }
 
   @Test
@@ -75,7 +75,7 @@ public class SiglusPhysicalInventoryControllerTest {
 
     controller.searchPhysicalInventory(ALL_PRODUCTS_UUID);
 
-    verify(siglusPhysicalInventoryService).getPhysicalInventoryForAllProducts(facilityId);
+    verify(siglusPhysicalInventoryService).getPhysicalInventoryForAllPrograms(facilityId);
   }
 
   @Test
@@ -95,7 +95,7 @@ public class SiglusPhysicalInventoryControllerTest {
     controller.updatePhysicalInventory(ALL_PRODUCTS_UUID, physicalInventoryDto);
 
     verify(siglusPhysicalInventoryService).checkDraftIsExist(physicalInventoryDto.getFacilityId());
-    verify(siglusPhysicalInventoryService).saveDraftForAllProducts(physicalInventoryDto);
+    verify(siglusPhysicalInventoryService).saveDraftForAllPrograms(physicalInventoryDto);
   }
 
   @Test
@@ -146,7 +146,7 @@ public class SiglusPhysicalInventoryControllerTest {
   public void shouldConflictIfOtherProgramHaveDraft() {
     controller.checkPhysicalInventoryConflict(ALL_PRODUCTS_PROGRAM_ID, facilityId);
 
-    verify(siglusPhysicalInventoryService).checkConflictForAllProduct(facilityId);
+    verify(siglusPhysicalInventoryService).checkConflictForAllPrograms(facilityId);
   }
 
   @Test
@@ -160,7 +160,7 @@ public class SiglusPhysicalInventoryControllerTest {
   public void shouldCallGetSubDraftListForAllProductWhenSearchAllProductSubDraftList() {
     controller.searchSubDraftList(ALL_PRODUCTS_PROGRAM_ID, facilityId, isDraft);
 
-    verify(siglusPhysicalInventoryService).getSubDraftListForAllProduct(facilityId, isDraft);
+    verify(siglusPhysicalInventoryService).getSubDraftListForAllPrograms(facilityId, isDraft);
   }
 
   @Test

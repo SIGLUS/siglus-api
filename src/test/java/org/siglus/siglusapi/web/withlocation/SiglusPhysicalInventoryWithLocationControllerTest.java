@@ -61,7 +61,7 @@ public class SiglusPhysicalInventoryWithLocationControllerTest {
     controller.searchPhysicalInventories(ALL_PRODUCTS_PROGRAM_ID, facilityId,
         isDraft, isByLocation);
     // then
-    verify(siglusPhysicalInventoryService).getLocationPhysicalInventoryDtosForAllProducts(facilityId,
+    verify(siglusPhysicalInventoryService).getLocationPhysicalInventoryDtosForAllPrograms(facilityId,
         isDraft, isByLocation);
   }
 
@@ -74,7 +74,7 @@ public class SiglusPhysicalInventoryWithLocationControllerTest {
     controller.createEmptyPhysicalInventoryWithLocationOption(
         physicalInventoryDto, 2, true, optionString, isByLocation);
     // then
-    verify(siglusPhysicalInventoryService).createAndSplitNewDraftForAllProduct(
+    verify(siglusPhysicalInventoryService).createAndSplitNewDraftForAllPrograms(
         physicalInventoryDto, 2, true, optionString, isByLocation);
   }
 
@@ -105,7 +105,7 @@ public class SiglusPhysicalInventoryWithLocationControllerTest {
     // when
     controller.searchSubDraftList(ALL_PRODUCTS_PROGRAM_ID, facilityId, isDraft);
     // then
-    verify(siglusPhysicalInventoryService).getSubDraftListForAllProduct(facilityId, isDraft);
+    verify(siglusPhysicalInventoryService).getSubDraftListForAllPrograms(facilityId, isDraft);
   }
 
   @Test

@@ -56,7 +56,7 @@ public class SiglusPhysicalInventoryWithoutLocationControllerTest {
 
     controller.createEmptyPhysicalInventory(physicalInventoryDto, 2, true);
 
-    verify(siglusPhysicalInventoryService).createAndSplitNewDraftForAllProduct(
+    verify(siglusPhysicalInventoryService).createAndSplitNewDraftForAllPrograms(
             physicalInventoryDto, 2, true, null, false);
   }
 
@@ -67,7 +67,7 @@ public class SiglusPhysicalInventoryWithoutLocationControllerTest {
 
     controller.createEmptyPhysicalInventory(physicalInventoryDto, 2, true);
 
-    verify(siglusPhysicalInventoryService).createAndSplitNewDraftForAllProduct(
+    verify(siglusPhysicalInventoryService).createAndSplitNewDraftForAllPrograms(
         physicalInventoryDto, 2, true, null, false);
   }
 

@@ -57,7 +57,7 @@ public class SiglusPhysicalInventoryWithLocationController {
       @RequestParam(required = false) boolean initialPhysicalInventory,
       @RequestParam(name = "locationManagementOption") String optionString,
       @RequestParam(required = false) boolean isByLocation) {
-    return siglusPhysicalInventoryService.createAndSplitNewDraftForAllProduct(dto, splitNum,
+    return siglusPhysicalInventoryService.createAndSplitNewDraftForAllPrograms(dto, splitNum,
         initialPhysicalInventory, optionString, isByLocation);
   }
 
@@ -68,7 +68,7 @@ public class SiglusPhysicalInventoryWithLocationController {
       @RequestParam(required = false) Boolean isDraft,
       @RequestParam(required = false) boolean isByLocation) {
     return siglusPhysicalInventoryService
-        .getLocationPhysicalInventoryDtosForAllProducts(facility, isDraft, isByLocation);
+        .getLocationPhysicalInventoryDtosForAllPrograms(facility, isDraft, isByLocation);
   }
 
   @GetMapping("/subDraft")
@@ -107,7 +107,7 @@ public class SiglusPhysicalInventoryWithLocationController {
   public DraftListDto searchSubDraftList(@RequestParam UUID program,
       @RequestParam UUID facility,
       @RequestParam(required = false) Boolean isDraft) {
-    return siglusPhysicalInventoryService.getSubDraftListForAllProduct(facility, isDraft);
+    return siglusPhysicalInventoryService.getSubDraftListForAllPrograms(facility, isDraft);
   }
 
 }

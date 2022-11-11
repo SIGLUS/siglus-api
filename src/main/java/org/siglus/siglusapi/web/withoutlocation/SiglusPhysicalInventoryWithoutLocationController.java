@@ -55,7 +55,7 @@ public class SiglusPhysicalInventoryWithoutLocationController {
       @RequestParam(required = false) boolean initialPhysicalInventory) {
     if (ALL_PRODUCTS_PROGRAM_ID.equals(dto.getProgramId())) {
       // TODO refactor the last "null" param by override method
-      return siglusPhysicalInventoryService.createAndSplitNewDraftForAllProduct(dto, splitNum,
+      return siglusPhysicalInventoryService.createAndSplitNewDraftForAllPrograms(dto, splitNum,
           initialPhysicalInventory, null, false);
     }
     return siglusPhysicalInventoryService.createAndSpiltNewDraftForOneProgram(dto, splitNum, null, false);

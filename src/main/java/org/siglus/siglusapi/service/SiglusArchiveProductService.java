@@ -155,7 +155,7 @@ public class SiglusArchiveProductService {
 
   private void deleteArchivedItemInPhysicalInventoryDraft(UUID facilityId, UUID orderableId) {
     PhysicalInventoryDto physicalInventoryDraft = siglusPhysicalInventoryService
-        .getPhysicalInventoryForAllProducts(facilityId);
+        .getPhysicalInventoryForAllPrograms(facilityId);
     if (null == physicalInventoryDraft) {
       return;
     }
@@ -174,7 +174,7 @@ public class SiglusArchiveProductService {
       siglusPhysicalInventoryService.deletePhysicalInventoryDraftForAllPrograms(facilityId);
     } else {
       physicalInventoryDraft.setLineItems(filteredLineItems);
-      siglusPhysicalInventoryService.saveDraftForAllProducts(physicalInventoryDraft);
+      siglusPhysicalInventoryService.saveDraftForAllPrograms(physicalInventoryDraft);
     }
   }
 

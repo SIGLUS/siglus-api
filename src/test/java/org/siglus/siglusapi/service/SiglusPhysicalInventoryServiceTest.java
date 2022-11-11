@@ -241,7 +241,7 @@ public class SiglusPhysicalInventoryServiceTest {
         .programId(programIdTwo).build();
 
     // when
-    siglusPhysicalInventoryService.createNewDraftForAllProducts(physicalInventoryDto, null);
+    siglusPhysicalInventoryService.createNewDraftForAllPrograms(physicalInventoryDto, null);
 
     // then
     verify(inventoryController, times(1)).createEmptyPhysicalInventory(actualCalled1);
@@ -261,7 +261,7 @@ public class SiglusPhysicalInventoryServiceTest {
     PhysicalInventoryDto actualCalled2 = PhysicalInventoryDto.builder()
         .programId(programIdTwo).build();
     // when
-    siglusPhysicalInventoryService.createNewDraftForAllProductsDirectly(physicalInventoryDto, null);
+    siglusPhysicalInventoryService.createNewDraftForAllProgramsDirectly(physicalInventoryDto, null);
 
     // then
     verify(inventoryController, times(1)).createEmptyPhysicalInventory(actualCalled1);
@@ -290,7 +290,7 @@ public class SiglusPhysicalInventoryServiceTest {
             .build())));
 
     // when
-    siglusPhysicalInventoryService.saveDraftForAllProducts(physicalInventoryDto);
+    siglusPhysicalInventoryService.saveDraftForAllPrograms(physicalInventoryDto);
 
     // then
     verify(inventoryController, times(2))
@@ -505,7 +505,7 @@ public class SiglusPhysicalInventoryServiceTest {
         )));
 
     // when
-    siglusPhysicalInventoryService.getPhysicalInventoryForAllProducts(facilityId);
+    siglusPhysicalInventoryService.getPhysicalInventoryForAllPrograms(facilityId);
 
     // then
     verify(inventoryController, times(2))
@@ -549,7 +549,7 @@ public class SiglusPhysicalInventoryServiceTest {
 
     // when
     PhysicalInventoryDto dto = siglusPhysicalInventoryService
-        .saveDraftForAllProducts(physicalInventoryDto);
+        .saveDraftForAllPrograms(physicalInventoryDto);
 
     // then
     assertNull(dto.getLineItems().get(0).getReasonFreeText());
@@ -597,7 +597,7 @@ public class SiglusPhysicalInventoryServiceTest {
 
     // when
     PhysicalInventoryDto dto = siglusPhysicalInventoryService
-        .getPhysicalInventoryForAllProducts(facilityId);
+        .getPhysicalInventoryForAllPrograms(facilityId);
 
     // then
     assertEquals("extension", dto.getLineItems().get(0).getReasonFreeText());
@@ -633,7 +633,7 @@ public class SiglusPhysicalInventoryServiceTest {
     exception.expectMessage(containsString(ERROR_PERMISSION_NOT_SUPPORTED));
 
     // when
-    siglusPhysicalInventoryService.getPhysicalInventoryDtosForAllProducts(facilityId, true, false);
+    siglusPhysicalInventoryService.getPhysicalInventoryDtosForAllPrograms(facilityId, true, false);
   }
 
   @Test
@@ -845,7 +845,7 @@ public class SiglusPhysicalInventoryServiceTest {
     when(facilityReferenceDataService.findOne(facilityId)).thenReturn(facilityDto);
 
     // when
-    siglusPhysicalInventoryService.createAndSplitNewDraftForAllProduct(
+    siglusPhysicalInventoryService.createAndSplitNewDraftForAllPrograms(
         physicalInventoryDto, 3, false, null, false);
   }
 
@@ -978,7 +978,7 @@ public class SiglusPhysicalInventoryServiceTest {
         .programId(programId).build();
 
     // when
-    siglusPhysicalInventoryService.createAndSplitNewDraftForAllProduct(physicalInventoryDto, 3, true, null, false);
+    siglusPhysicalInventoryService.createAndSplitNewDraftForAllPrograms(physicalInventoryDto, 3, true, null, false);
   }
 
 
@@ -1172,14 +1172,14 @@ public class SiglusPhysicalInventoryServiceTest {
         .thenReturn(makeResponseEntity(Collections.emptyList()));
 
     // when
-    siglusPhysicalInventoryService.getSubDraftListForAllProduct(facilityId, true);
+    siglusPhysicalInventoryService.getSubDraftListForAllPrograms(facilityId, true);
   }
 
   @Test
   public void shouldGetExceptionWhenConflictForAllProduct() {
     exception.expect(PermissionMessageException.class);
     exception.expectMessage("stockmanagement.error.authorization.program.not.supported");
-    siglusPhysicalInventoryService.checkConflictForAllProduct(facilityId);
+    siglusPhysicalInventoryService.checkConflictForAllPrograms(facilityId);
   }
 
   @Test
@@ -1204,7 +1204,7 @@ public class SiglusPhysicalInventoryServiceTest {
 
     // when
     PhysicalInventoryValidationDto physicalInventoryValidationDto = siglusPhysicalInventoryService
-        .checkConflictForAllProduct(facilityId);
+        .checkConflictForAllPrograms(facilityId);
     // then
     assertFalse(physicalInventoryValidationDto.isCanStartInventory());
   }
@@ -1224,7 +1224,7 @@ public class SiglusPhysicalInventoryServiceTest {
 
     // when
     PhysicalInventoryValidationDto physicalInventoryValidationDto = siglusPhysicalInventoryService
-        .checkConflictForAllProduct(facilityId);
+        .checkConflictForAllPrograms(facilityId);
 
     // then
     assertTrue(physicalInventoryValidationDto.isCanStartInventory());

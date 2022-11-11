@@ -53,7 +53,7 @@ public class SiglusPhysicalInventoryController {
       @RequestParam UUID program, @RequestParam UUID facility,
       @RequestParam(required = false) Boolean isDraft) {
     if (ALL_PRODUCTS_PROGRAM_ID.equals(program)) {
-      return siglusPhysicalInventoryService.getPhysicalInventoryDtosForAllProducts(facility, isDraft, false);
+      return siglusPhysicalInventoryService.getPhysicalInventoryDtosForAllPrograms(facility, isDraft, false);
     }
     return siglusPhysicalInventoryService.getPhysicalInventoryDtosForProductsForOneProgram(program, facility, isDraft,
         false);
@@ -63,7 +63,7 @@ public class SiglusPhysicalInventoryController {
   public PhysicalInventoryDto searchPhysicalInventory(@PathVariable UUID id) {
     if (ALL_PRODUCTS_UUID.equals(id)) {
       UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
-      return siglusPhysicalInventoryService.getPhysicalInventoryForAllProducts(facilityId);
+      return siglusPhysicalInventoryService.getPhysicalInventoryForAllPrograms(facilityId);
     }
     return siglusPhysicalInventoryService.getPhysicalInventory(id);
   }
@@ -72,7 +72,7 @@ public class SiglusPhysicalInventoryController {
   public PhysicalInventoryDto updatePhysicalInventory(@PathVariable UUID id, @RequestBody PhysicalInventoryDto dto) {
     if (ALL_PRODUCTS_UUID.equals(id)) {
       siglusPhysicalInventoryService.checkDraftIsExist(dto.getFacilityId());
-      return siglusPhysicalInventoryService.saveDraftForAllProducts(dto);
+      return siglusPhysicalInventoryService.saveDraftForAllPrograms(dto);
     }
     return siglusPhysicalInventoryService.saveDraftForProductsForOneProgram(dto);
   }
@@ -105,7 +105,7 @@ public class SiglusPhysicalInventoryController {
   public PhysicalInventoryValidationDto checkPhysicalInventoryConflict(@RequestParam UUID program,
       @RequestParam UUID facility) {
     if (ALL_PRODUCTS_UUID.equals(program)) {
-      return siglusPhysicalInventoryService.checkConflictForAllProduct(facility);
+      return siglusPhysicalInventoryService.checkConflictForAllPrograms(facility);
     }
     return siglusPhysicalInventoryService.checkConflictForOneProgram(facility);
   }
@@ -115,7 +115,7 @@ public class SiglusPhysicalInventoryController {
       @RequestParam UUID facility,
       @RequestParam(required = false) Boolean isDraft) {
     if (ALL_PRODUCTS_UUID.equals(program)) {
-      return siglusPhysicalInventoryService.getSubDraftListForAllProduct(facility, isDraft);
+      return siglusPhysicalInventoryService.getSubDraftListForAllPrograms(facility, isDraft);
     }
     return siglusPhysicalInventoryService.getSubDraftListForOneProgram(program, facility, isDraft);
   }

@@ -193,7 +193,7 @@ public class SiglusArchiveProductServiceTest {
     when(unpackService.orderablesInKit()).thenReturn(Sets.newHashSet(UUID.randomUUID()));
     when(archivedProductRepository.findByFacilityIdAndOrderableId(facilityId, orderableId))
         .thenReturn(null);
-    when(siglusPhysicalInventoryService.getPhysicalInventoryForAllProducts(facilityId))
+    when(siglusPhysicalInventoryService.getPhysicalInventoryForAllPrograms(facilityId))
         .thenReturn(null);
     when(stockManagementDraftRepository.findByFacilityId(facilityId)).thenReturn(null);
     when(requisitionRepository.findByFacilityIdAndStatus(facilityId, RequisitionStatus.INITIATED))
@@ -273,7 +273,7 @@ public class SiglusArchiveProductServiceTest {
         .thenReturn(null);
     when(archivedProductRepository.findByFacilityIdAndOrderableId(facilityId, orderableId2))
         .thenReturn(null);
-    when(siglusPhysicalInventoryService.getPhysicalInventoryForAllProducts(facilityId))
+    when(siglusPhysicalInventoryService.getPhysicalInventoryForAllPrograms(facilityId))
         .thenReturn(null);
     when(stockManagementDraftRepository.findByFacilityId(facilityId)).thenReturn(null);
     when(requisitionRepository.findByFacilityIdAndStatus(facilityId, RequisitionStatus.INITIATED))
@@ -318,7 +318,7 @@ public class SiglusArchiveProductServiceTest {
         .thenReturn(null);
     when(archivedProductRepository.findByFacilityIdAndOrderableId(facilityId, orderableId2))
         .thenReturn(null);
-    when(siglusPhysicalInventoryService.getPhysicalInventoryForAllProducts(facilityId))
+    when(siglusPhysicalInventoryService.getPhysicalInventoryForAllPrograms(facilityId))
         .thenReturn(null);
     when(stockManagementDraftRepository.findByFacilityId(facilityId)).thenReturn(null);
     when(requisitionRepository.findByFacilityIdAndStatus(facilityId, RequisitionStatus.INITIATED))
@@ -347,7 +347,7 @@ public class SiglusArchiveProductServiceTest {
     when(archivedProductRepository.findByFacilityIdAndOrderableId(facilityId, orderableId))
         .thenReturn(null);
     PhysicalInventoryDto physicalInventoryDraft = createInventoryDto();
-    when(siglusPhysicalInventoryService.getPhysicalInventoryForAllProducts(facilityId))
+    when(siglusPhysicalInventoryService.getPhysicalInventoryForAllPrograms(facilityId))
         .thenReturn(physicalInventoryDraft);
     when(stockManagementDraftRepository.findByFacilityId(facilityId)).thenReturn(null);
     when(requisitionRepository.findByFacilityIdAndStatus(facilityId, RequisitionStatus.INITIATED))
@@ -370,7 +370,7 @@ public class SiglusArchiveProductServiceTest {
     when(unpackService.orderablesInKit()).thenReturn(Sets.newHashSet(UUID.randomUUID()));
     when(archivedProductRepository.findByFacilityIdAndOrderableId(facilityId, orderableId))
         .thenReturn(null);
-    when(siglusPhysicalInventoryService.getPhysicalInventoryForAllProducts(facilityId))
+    when(siglusPhysicalInventoryService.getPhysicalInventoryForAllPrograms(facilityId))
         .thenReturn(null);
     StockManagementDraft stockManagementDraft = createStockManagementDraft();
     when(stockManagementDraftRepository.findByFacilityId(facilityId))
@@ -395,7 +395,7 @@ public class SiglusArchiveProductServiceTest {
     when(unpackService.orderablesInKit()).thenReturn(Sets.newHashSet(UUID.randomUUID()));
     when(archivedProductRepository.findByFacilityIdAndOrderableId(facilityId, orderableId))
         .thenReturn(null);
-    when(siglusPhysicalInventoryService.getPhysicalInventoryForAllProducts(facilityId))
+    when(siglusPhysicalInventoryService.getPhysicalInventoryForAllPrograms(facilityId))
         .thenReturn(null);
     when(stockManagementDraftRepository.findByFacilityId(facilityId))
         .thenReturn(null);
