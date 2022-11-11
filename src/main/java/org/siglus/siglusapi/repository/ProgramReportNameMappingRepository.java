@@ -16,10 +16,9 @@
 package org.siglus.siglusapi.repository;
 
 import java.util.UUID;
-import org.siglus.siglusapi.domain.ProgramRequisitionNameMapping;
+import org.siglus.siglusapi.domain.ProgramReportNameMapping;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface ProgramRequisitionNameMappingRepository extends
-    JpaRepository<ProgramRequisitionNameMapping, UUID> {
+public interface ProgramReportNameMappingRepository extends JpaRepository<ProgramReportNameMapping, UUID> {
 
 }
