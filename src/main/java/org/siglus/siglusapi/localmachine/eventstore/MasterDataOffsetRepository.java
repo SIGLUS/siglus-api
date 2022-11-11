@@ -25,6 +25,11 @@ public interface MasterDataOffsetRepository extends JpaRepository<MasterDataOffs
 
   MasterDataOffset findByFacilityIdIs(UUID facilityId);
 
+  @Query(
+      value = "select min(recordoffset) from localmachine.master_data_offset",
+      nativeQuery = true)
+  Long getMinimumOffset();
+
   @Modifying
   @Query(
       value =

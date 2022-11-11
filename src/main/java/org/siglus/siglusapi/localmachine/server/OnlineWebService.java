@@ -23,9 +23,12 @@ import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.time.ZonedDateTime;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.Date;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -54,6 +57,7 @@ import org.siglus.siglusapi.util.S3FileHandler;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -77,22 +81,40 @@ public class OnlineWebService {
   @Value("${resync.zip.export.path}")
   private String zipExportPath;
 
+  @Transactional
+  public void cleanIncrementalMasterData() {
+    long minimumOffset = Optional.ofNullable(masterDataOffsetRepository.getMinimumOffset()).orElse(Long.MAX_VALUE);
+    log.info("delete incremental master data, minimum offset:{}", minimumOffset);
+    masterDataEventRecordRepository.deleteIncrementalRecordsLessThan(minimumOffset);
+  }
+
+  @Transactional
+  public void cleanMasterDataSnapshot() {
+    List<MasterDataEventRecord> snapshotRecords = masterDataEventRecordRepository.findBySnapshotVersionIsNotNull();
+    if (snapshotRecords.size() <= 1) {
+      log.info("only one snapshot, no need to clean");
+      return;
+    }
+    Comparator<MasterDataEventRecord> asc = Comparator.comparing(MasterDataEventRecord::getId);
+    snapshotRecords.sort(asc);
+    int lastIndex = snapshotRecords.size() - 1;
+    LinkedList<MasterDataEventRecord> deletedSnapshots = new LinkedList<>();
+    for (MasterDataEventRecord record : snapshotRecords.subList(0, lastIndex)) {
+      String zipName = record.getSnapshotVersion();
+      String s3FileName = getS3Filename(zipName);
+      s3FileHandler.deleteFileFromS3(s3FileName);
+      deletedSnapshots.add(record);
+    }
+    masterDataEventRecordRepository.delete(deletedSnapshots);
+  }
+
   public ResyncMasterDataResponse resyncMasterData(UUID facilityId) {
     MasterDataEventRecord eventRecord =
         masterDataEventRecordRepository.findTopBySnapshotVersionIsNotNullOrderByIdDesc();
     if (eventRecord == null) {
       eventRecord = generateMasterData();
     }
-    MasterDataOffset masterDataOffset = masterDataOffsetRepository.findByFacilityIdIs(facilityId);
-    if (masterDataOffset == null) {
-      masterDataOffset = new MasterDataOffset();
-      masterDataOffset.setId(UUID.randomUUID());
-      masterDataOffset.setFacilityId(facilityId);
-    }
-    masterDataOffset.setSnapshotVersion(eventRecord.getSnapshotVersion());
-    masterDataOffset.setRecordOffset(eventRecord.getId());
-    log.info("save facility resync master data offset: {}", masterDataOffset);
-    masterDataOffsetRepository.save(masterDataOffset);
+    initializeOffset(facilityId, eventRecord);
     String s3Url = s3FileHandler.getUrlFromS3(eventRecord.getSnapshotVersion());
     Long latestId = masterDataEventRecordRepository.findLatestRecordId();
     String maxFlywaySersion = masterDataOffsetRepository.findMaxFlywayVersion();
@@ -145,6 +167,20 @@ public class OnlineWebService {
     }
   }
 
+  private void initializeOffset(UUID facilityId, MasterDataEventRecord eventRecord) {
+    MasterDataOffset masterDataOffset = masterDataOffsetRepository.findByFacilityIdIs(facilityId);
+    if (masterDataOffset == null) {
+      masterDataOffset = new MasterDataOffset();
+      masterDataOffset.setId(UUID.randomUUID());
+      masterDataOffset.setFacilityId(facilityId);
+    }
+    masterDataOffset.setSnapshotVersion(eventRecord.getSnapshotVersion());
+    // reset offset to zero and wait for localmachine to report its actual offset next time
+    masterDataOffset.setRecordOffset(0L);
+    log.info("save facility resync master data offset: {}", masterDataOffset);
+    masterDataOffsetRepository.save(masterDataOffset);
+  }
+
   private String generateMasterDataToS3() {
     String masterDataDir = MASTER_DATA + "_" + format.format(new Date());
     String zipDirectory = zipExportPath + masterDataDir + "/";
@@ -155,7 +191,8 @@ public class OnlineWebService {
       log.warn("master data zip dir make fail");
     }
     generateZipFile(zipDirectory, zipName, null, MASTER_DATA);
-    s3FileHandler.uploadFileToS3(zipDirectory + zipName, zipName);
+    String s3Filename = getS3Filename(zipName);
+    s3FileHandler.uploadFileToS3(zipDirectory + zipName, s3Filename);
     try {
       FileUtils.deleteDirectory(directory);
     } catch (IOException e) {
@@ -163,6 +200,10 @@ public class OnlineWebService {
       throw new FileOperationException(e, new Message("Online web delete master data directory fail"));
     }
     return zipName;
+  }
+
+  private String getS3Filename(String zipName) {
+    return "masterdata/" + zipName;
   }
 
   private File generateZipFile(String zipDirectory, String zipName, UUID homeFacilityId, String type) {

@@ -43,6 +43,7 @@ import org.springframework.util.ResourceUtils;
 public class S3FileHandler {
 
   public static final String FOLDER_SUFFIX = "/";
+  private static final int SEVEN_DAYS = 1000 * 60 * 60 * 24 * 7;
 
   @Value("${aws.access.key}")
   private String accessKey;
@@ -71,6 +72,11 @@ public class S3FileHandler {
         .build();
   }
 
+  public void deleteFileFromS3(String fileName) {
+    String keyName = getKeyName(fileName);
+    s3Client.deleteObject(bucketName, keyName);
+  }
+
   public void uploadFileToS3(String filePath, String fileName) {
     File file;
     try {
@@ -78,7 +84,7 @@ public class S3FileHandler {
     } catch (FileNotFoundException e) {
       throw new ServerException(e, MessageKeys.ERROR_FILE_NOT_FOUND, fileName);
     }
-    String keyName = bucketFolder + FOLDER_SUFFIX + fileName;
+    String keyName = getKeyName(fileName);
     log.debug("bucketName: {}, keyName: {}", bucketName, keyName);
     s3Client.putObject(bucketName, keyName, file);
     try {
@@ -91,10 +97,9 @@ public class S3FileHandler {
   public String getUrlFromS3(String fileName) {
     java.util.Date expiration = new java.util.Date();
     long expTimeMillis = Instant.now().toEpochMilli();
-    // TODO: 2022/10/13 这个频率要和面板一起配合
-    expTimeMillis += 1000 * 60 * 60 * 24 * 7;
+    expTimeMillis += SEVEN_DAYS;
     expiration.setTime(expTimeMillis);
-    String keyName = bucketFolder + FOLDER_SUFFIX + fileName;
+    String keyName = getKeyName(fileName);
     log.debug("bucketName: {}, keyName: {}", bucketName, keyName);
     GeneratePresignedUrlRequest generatePresignedUrlRequest =
         new GeneratePresignedUrlRequest(bucketName, keyName)
@@ -105,5 +110,9 @@ public class S3FileHandler {
       return url.toString();
     }
     return null;
+  }
+
+  private String getKeyName(String fileName) {
+    return bucketFolder + FOLDER_SUFFIX + fileName;
   }
 }
