@@ -129,7 +129,7 @@ import org.siglus.siglusapi.repository.ProcessingPeriodRepository;
 import org.siglus.siglusapi.repository.RequisitionDraftRepository;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionLineItemExtensionRepository;
-import org.siglus.siglusapi.repository.RequisitionMonthlyNotSubmitReportRepository;
+import org.siglus.siglusapi.repository.NotSubmittedMonthlyRequisitionsRepository;
 import org.siglus.siglusapi.repository.RequisitionNativeSqlRepository;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
 import org.siglus.siglusapi.service.fc.FcCmmCpService;
@@ -178,7 +178,7 @@ public class SiglusRequisitionService {
   private final FcCmmCpService fcCmmCpService;
   private final SiglusFilterAddProductForEmergencyService filterProductService;
   private final SupportedProgramsHelper supportedProgramsHelper;
-  private final RequisitionMonthlyNotSubmitReportRepository requisitionMonthlyNotSubmitReportRepository;
+  private final NotSubmittedMonthlyRequisitionsRepository notSubmittedMonthlyRequisitionsRepository;
   private final HttpServletResponse response;
   private final StockCardRangeSummaryStockManagementService stockCardRangeSummaryStockManagementService;
   private final StockManagementRepository stockManagementRepository;
@@ -217,7 +217,7 @@ public class SiglusRequisitionService {
     initiateSuggestedQuantity(lineItems, facilityId, siglusRequisitionDto.getProcessingPeriodId(),
         siglusRequisitionDto.getProgramId(), siglusRequisitionDto.getTemplate());
     saveLineItemExtensions(lineItems);
-    requisitionMonthlyNotSubmitReportRepository.deleteByFacilityIdAndProgramIdAndProcessingPeriodId(facilityId,
+    notSubmittedMonthlyRequisitionsRepository.deleteByFacilityIdAndProgramIdAndProcessingPeriodId(facilityId,
         programId, v2Dto.getProcessingPeriodId());
     return siglusRequisitionDto;
   }

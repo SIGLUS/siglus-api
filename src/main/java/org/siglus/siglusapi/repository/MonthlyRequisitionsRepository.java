@@ -17,12 +17,10 @@ package org.siglus.siglusapi.repository;
 
 import java.util.List;
 import java.util.UUID;
-import org.siglus.siglusapi.domain.RequisitionMonthlyReport;
+import org.siglus.siglusapi.domain.MonthlyRequisitions;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface RequisitionMonthReportRepository extends
-    JpaRepository<RequisitionMonthlyReport, UUID> {
+public interface MonthlyRequisitionsRepository extends JpaRepository<MonthlyRequisitions, UUID> {
 
-
-  List<RequisitionMonthlyReport> findByFacilityId(UUID uuid);
+  List<MonthlyRequisitions> findByFacilityId(UUID uuid);
 }

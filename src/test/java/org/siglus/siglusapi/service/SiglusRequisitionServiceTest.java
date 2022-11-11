@@ -159,7 +159,7 @@ import org.siglus.siglusapi.repository.ProcessingPeriodRepository;
 import org.siglus.siglusapi.repository.RequisitionDraftRepository;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionLineItemExtensionRepository;
-import org.siglus.siglusapi.repository.RequisitionMonthlyNotSubmitReportRepository;
+import org.siglus.siglusapi.repository.NotSubmittedMonthlyRequisitionsRepository;
 import org.siglus.siglusapi.repository.RequisitionNativeSqlRepository;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
 import org.siglus.siglusapi.testutils.IdealStockAmountDtoDataBuilder;
@@ -433,7 +433,7 @@ public class SiglusRequisitionServiceTest {
   private FacilityExtensionRepository facilityExtensionRepository;
 
   @Mock
-  private RequisitionMonthlyNotSubmitReportRepository requisitionMonthlyNotSubmitReportRepository;
+  private NotSubmittedMonthlyRequisitionsRepository notSubmittedMonthlyRequisitionsRepository;
 
   @Mock
   private HttpServletRequest request;
@@ -470,7 +470,7 @@ public class SiglusRequisitionServiceTest {
         new org.openlmis.referencedata.dto.OrderableDto();
     when(siglusOrderableService.getOrderableByCode(any())).thenReturn(orderableDto);
     when(supportedProgramsHelper.findHomeFacilitySupportedPrograms()).thenReturn(newArrayList());
-    doNothing().when(requisitionMonthlyNotSubmitReportRepository).deleteByFacilityIdAndProgramIdAndProcessingPeriodId(
+    doNothing().when(notSubmittedMonthlyRequisitionsRepository).deleteByFacilityIdAndProgramIdAndProcessingPeriodId(
         any(), any(), any());
     ProcessingPeriod processingPeriod = new ProcessingPeriod();
     processingPeriod.setEndDate(LocalDate.of(2022, 10, 22));
