@@ -35,7 +35,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class EventPublisher {
 
   public static final int PROTOCOL_VERSION = 1;
-  static final ThreadLocal<Boolean> isReplaying = ThreadLocal.withInitial(() -> Boolean.FALSE);
+  public static final ThreadLocal<Boolean> isReplaying = ThreadLocal.withInitial(() -> Boolean.FALSE);
   private final EventStore eventStore;
   private final ApplicationEventPublisher applicationEventPublisher;
   private final Machine machine;
