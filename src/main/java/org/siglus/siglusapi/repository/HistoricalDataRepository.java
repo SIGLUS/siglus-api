@@ -47,6 +47,7 @@ public interface HistoricalDataRepository extends
       + "  periodid,\n"
       + "  startdate,\n"
       + "  enddate,\n"
+      + "  periodname,\n"
       + "  orderableid,\n"
       + "  facilityid,\n"
       + "  province,\n"
@@ -69,12 +70,14 @@ public interface HistoricalDataRepository extends
       + "  expiredquantity ,\n"
       + "  provincefacilitycode,\n"
       + "  districtfacilitycode,\n"
-      + "  periodtype) \n"
+      + "  periodtype,\n"
+      + "  programname) \n"
       + "       select\n"
       + "  uuid_generate_v4() as id,\n"
       + "  pp.id as periodid,\n"
       + "  pp.startdate,\n"
       + "  pp.enddate,\n"
+      + "  pp.name as periodname,\n"
       + "  o.id as orderableid,\n"
       + "  f.id as facilityid,\n"
       + "  gz_prov.name as province,\n"
@@ -143,7 +146,8 @@ public interface HistoricalDataRepository extends
       + "  case\n"
       + "    when ps.code like 'M%' then 'monthly'\n"
       + "    when ps.code like 'Q%' then 'quarterly'\n"
-      + "  end as periodtype\n"
+      + "  end as periodtype,\n"
+      + "  p.name as programname\n"
       + "from\n"
       + "  requisition.requisition_line_items rli\n"
       + "left join requisition.requisitions r on\n"
@@ -268,6 +272,7 @@ public interface HistoricalDataRepository extends
       + "  periodid = excluded.periodid,\n"
       + "  startdate = excluded.startdate,\n"
       + "  enddate = excluded.enddate,\n"
+      + "  periodname = excluded.periodname,\n"
       + "  orderableid = excluded.orderableid,\n"
       + "  facilityid = excluded.facilityid,\n"
       + "  province = excluded.province,\n"
@@ -290,7 +295,8 @@ public interface HistoricalDataRepository extends
       + "  expiredquantity = excluded.expiredquantity,\n"
       + "  provincefacilitycode = excluded.provincefacilitycode,\n"
       + "  districtfacilitycode = excluded.districtfacilitycode,\n"
-      + "  periodtype = excluded.periodtype", nativeQuery = true)
+      + "  periodtype = excluded.periodtype,\n"
+      + "  programname = excluded.programname", nativeQuery = true)
   void updateFacilityHistoricalData(@Param("facilityId") UUID facilityId,
       @Param("startDate") LocalDate startDate,
       @Param("endDate") LocalDate endDate);
