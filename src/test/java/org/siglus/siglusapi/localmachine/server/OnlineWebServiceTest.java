@@ -87,6 +87,35 @@ public class OnlineWebServiceTest {
   private static final UUID facilityId = UUID.randomUUID();
 
   @Test
+  public void shouldReturnMinOneOfSnapshotIdOrMinimumOffsetWhenGetMinimumOffset() {
+    // given
+    given(masterDataOffsetRepository.getMinimumOffset()).willReturn(33L);
+    long minOffset = 9L;
+    given(masterDataEventRecordRepository.findBySnapshotVersionIsNotNull())
+        .willReturn(Collections.singletonList(MasterDataEventRecord.builder().id(minOffset).build()));
+    // then
+    assertThat(onlineWebService.getMinimumOffsetForDeletion()).isEqualTo(minOffset);
+  }
+
+  @Test
+  public void shouldReturn0WhenGetMinimumOffsetForDeletionGivenNoOffsetFound() {
+    // given
+    given(masterDataOffsetRepository.getMinimumOffset()).willReturn(null);
+    given(masterDataEventRecordRepository.findBySnapshotVersionIsNotNull())
+        .willReturn(Collections.singletonList(MasterDataEventRecord.builder().id(99L).build()));
+    // then
+    assertThat(onlineWebService.getMinimumOffsetForDeletion()).isZero();
+  }
+
+  @Test
+  public void shouldReturn0WhenGetMinimumOffsetForDeletionGivenSnapshotNotExists() {
+    // given
+    given(masterDataEventRecordRepository.findBySnapshotVersionIsNotNull()).willReturn(Collections.emptyList());
+    // then
+    assertThat(onlineWebService.getMinimumOffsetForDeletion()).isZero();
+  }
+
+  @Test
   public void shouldSkipLastSnapshotWhenCleanMasterDataSnapshot() {
     // given
     MasterDataEventRecord snap1 = MasterDataEventRecord.builder().id(11L).snapshotVersion("11.zip").build();

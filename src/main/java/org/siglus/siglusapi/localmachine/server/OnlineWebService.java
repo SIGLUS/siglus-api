@@ -36,6 +36,7 @@ import java.util.zip.ZipOutputStream;
 import javax.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.siglus.siglusapi.dto.Message;
@@ -64,6 +65,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 public class OnlineWebService {
 
+  private static final long ZERO = 0L;
   private final TableCopyRepository tableCopyRepository;
   private final MasterDataEventRecordRepository masterDataEventRecordRepository;
   private final MasterDataOffsetRepository masterDataOffsetRepository;
@@ -83,7 +85,7 @@ public class OnlineWebService {
 
   @Transactional
   public void cleanIncrementalMasterData() {
-    long minimumOffset = Optional.ofNullable(masterDataOffsetRepository.getMinimumOffset()).orElse(Long.MAX_VALUE);
+    Long minimumOffset = getMinimumOffsetForDeletion();
     log.info("delete incremental master data, minimum offset:{}", minimumOffset);
     masterDataEventRecordRepository.deleteIncrementalRecordsLessThan(minimumOffset);
   }
@@ -105,6 +107,11 @@ public class OnlineWebService {
       s3FileHandler.deleteFileFromS3(s3FileName);
       deletedSnapshots.add(record);
     }
+    List<String> deletedSanpshotVersions =
+        deletedSnapshots.stream()
+            .map(MasterDataEventRecord::getSnapshotVersion)
+            .collect(Collectors.toList());
+    log.info("delete master data snapshot:{}", deletedSanpshotVersions);
     masterDataEventRecordRepository.delete(deletedSnapshots);
   }
 
@@ -167,6 +174,18 @@ public class OnlineWebService {
     }
   }
 
+  Long getMinimumOffsetForDeletion() {
+    List<MasterDataEventRecord> snapshotRecords = masterDataEventRecordRepository.findBySnapshotVersionIsNotNull();
+    if (CollectionUtils.isEmpty(snapshotRecords)) {
+      return ZERO;
+    }
+    MasterDataEventRecord lastSnapshot = snapshotRecords.get(snapshotRecords.size() - 1);
+    long minimumOffset = Optional.ofNullable(masterDataOffsetRepository.getMinimumOffset()).orElse(ZERO);
+    minimumOffset = Math.min(lastSnapshot.getId(), minimumOffset);
+    return minimumOffset;
+  }
+
+
   private void initializeOffset(UUID facilityId, MasterDataEventRecord eventRecord) {
     MasterDataOffset masterDataOffset = masterDataOffsetRepository.findByFacilityIdIs(facilityId);
     if (masterDataOffset == null) {
@@ -176,7 +195,7 @@ public class OnlineWebService {
     }
     masterDataOffset.setSnapshotVersion(eventRecord.getSnapshotVersion());
     // reset offset to zero and wait for localmachine to report its actual offset next time
-    masterDataOffset.setRecordOffset(0L);
+    masterDataOffset.setRecordOffset(ZERO);
     log.info("save facility resync master data offset: {}", masterDataOffset);
     masterDataOffsetRepository.save(masterDataOffset);
   }
