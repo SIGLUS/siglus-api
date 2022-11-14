@@ -19,7 +19,10 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import org.siglus.siglusapi.domain.PatientLineItem;
+import org.siglus.siglusapi.dto.PatientColumnDto;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface PatientLineItemRepository extends JpaRepository<PatientLineItem, UUID> {
 
@@ -28,4 +31,13 @@ public interface PatientLineItemRepository extends JpaRepository<PatientLineItem
   List<PatientLineItem> findByRequisitionIdIn(Set<UUID> requisitionIds);
 
   void deleteByRequisitionId(UUID requisitionId);
+
+  @Query(name = "PatientLineItem.sumValueRequisitionsUnderHighLevelFacility", nativeQuery = true)
+  List<PatientColumnDto> sumValueRequisitionsUnderHighLevelFacility(@Param("facilityId") UUID facilityId,
+      @Param("periodId") UUID periodId, @Param("programId") UUID programId);
+
+  @Query(name = "PatientLineItem.maxValueRequisitionsInLastPeriods", nativeQuery = true)
+  List<PatientColumnDto> maxValueRequisitionsInLastPeriods(@Param("facilityId") UUID facilityId,
+      @Param("periodId") UUID periodId, @Param("programId") UUID programId);
+
 }

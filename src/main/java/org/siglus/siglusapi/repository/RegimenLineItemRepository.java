@@ -19,7 +19,10 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import org.siglus.siglusapi.domain.RegimenLineItem;
+import org.siglus.siglusapi.dto.RegimenColumnDto;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface RegimenLineItemRepository extends JpaRepository<RegimenLineItem, UUID> {
 
@@ -28,4 +31,12 @@ public interface RegimenLineItemRepository extends JpaRepository<RegimenLineItem
   List<RegimenLineItem> findByRequisitionIdIn(Set<UUID> requisitionIds);
 
   void deleteByRequisitionId(UUID requisitionId);
+
+  @Query(name = "RegimenLineItem.sumValueRequisitionsUnderHighLevelFacility", nativeQuery = true)
+  List<RegimenColumnDto> sumValueRequisitionsUnderHighLevelFacility(@Param("facilityId") UUID facilityId,
+      @Param("periodId") UUID periodId, @Param("programId") UUID programId);
+
+  @Query(name = "RegimenLineItem.maxValueRequisitionsInLastPeriods", nativeQuery = true)
+  List<RegimenColumnDto> maxValueRequisitionsInLastPeriods(@Param("facilityId") UUID facilityId,
+      @Param("periodId") UUID periodId, @Param("programId") UUID programId);
 }

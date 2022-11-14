@@ -29,6 +29,7 @@ import org.siglus.siglusapi.domain.RegimenSummaryLineItem;
 import org.siglus.siglusapi.domain.UsageCategory;
 import org.siglus.siglusapi.domain.UsageTemplateColumn;
 import org.siglus.siglusapi.domain.UsageTemplateColumnSection;
+import org.siglus.siglusapi.dto.RegimenColumnDto;
 import org.siglus.siglusapi.dto.RegimenDto;
 import org.siglus.siglusapi.dto.RegimenLineDto;
 import org.siglus.siglusapi.dto.RegimenSummaryLineDto;
@@ -88,12 +89,15 @@ public class RegimenDataProcessor implements UsageReportDataProcessor {
     List<RegimenSummaryLineItem> regimenSummaryLineItems = createRegimenSummaryLineItems(
         siglusRequisitionDto, templateColumnSections, regimenSummaryRowNames);
 
-    log.info("save regimen line items by requisition id: {}",
-        siglusRequisitionDto.getId());
-
+    calculateRegimenValueForTopLevelFacility(regimenLineItems, siglusRequisitionDto.getFacilityId(),
+        siglusRequisitionDto.getProcessingPeriodId(), siglusRequisitionDto.getProgramId());
+    log.info("save regimen line items by requisition id: {}", siglusRequisitionDto.getId());
     List<RegimenLineItem> saved = regimenLineItemRepository.save(regimenLineItems);
     List<RegimenLineDto> lineDtos = RegimenLineDto.from(saved, getRegimenDtoMap());
 
+    calculateRegimenSummaryValueForTopLevelFacility(regimenSummaryLineItems, siglusRequisitionDto.getFacilityId(),
+        siglusRequisitionDto.getProcessingPeriodId(), siglusRequisitionDto.getProgramId());
+    log.info("save regimen summary line items by requisition id: {}", siglusRequisitionDto.getId());
     List<RegimenSummaryLineItem> savedSummaryLineItems =
         regimenSummaryLineItemRepository.save(regimenSummaryLineItems);
     List<RegimenSummaryLineDto> summaryLineItems =
@@ -102,6 +106,54 @@ public class RegimenDataProcessor implements UsageReportDataProcessor {
     siglusRequisitionDto.setRegimenLineItems(lineDtos);
     siglusRequisitionDto.setRegimenSummaryLineItems(summaryLineItems);
     setCustomRegimen(siglusRequisitionDto);
+  }
+
+  private void calculateRegimenValueForTopLevelFacility(List<RegimenLineItem> regimenLineItems, UUID facilityId,
+      UUID periodId, UUID programId) {
+    if (regimenLineItems.isEmpty() || siglusUsageReportService.isNonTopLevelOrNotUsageReports(programId, facilityId)) {
+      return;
+    }
+    Map<String, Integer> regimenItemToSumValue = regimenItemToValue(
+        regimenLineItemRepository.sumValueRequisitionsUnderHighLevelFacility(facilityId, periodId, programId));
+    Map<String, Integer> regimenItemToMaxValueInLastPeriods = regimenItemToValue(
+        regimenLineItemRepository.maxValueRequisitionsInLastPeriods(facilityId, periodId, programId));
+    regimenLineItems.forEach(lineItem -> lineItem.setValue(
+        getSumValue(lineItem.getRegimenIdColumn(), regimenItemToSumValue, regimenItemToMaxValueInLastPeriods)));
+  }
+
+  private Map<String, Integer> regimenItemToValue(List<RegimenColumnDto> regimenColumnDtos) {
+    return regimenColumnDtos.stream()
+        .collect(
+            Collectors.toMap(RegimenColumnDto::getRegimenIdColumn, dto -> dto.getValue() == null ? 0 : dto.getValue()));
+  }
+
+  private void calculateRegimenSummaryValueForTopLevelFacility(List<RegimenSummaryLineItem> regimenSummaryLineItems,
+      UUID facilityId, UUID periodId, UUID programId) {
+    if (regimenSummaryLineItems.isEmpty()
+        || siglusUsageReportService.isNonTopLevelOrNotUsageReports(programId, facilityId)) {
+      return;
+    }
+    Map<String, Integer> regimenSummaryItemToSumValue = regimenSummaryItemToValue(
+        regimenSummaryLineItemRepository.sumValueRequisitionsUnderHighLevelFacility(facilityId, periodId, programId));
+    Map<String, Integer> regimenSummaryItemToMaxValueInLastPeriods = regimenSummaryItemToValue(
+        regimenSummaryLineItemRepository.maxValueRequisitionsInLastPeriods(facilityId, periodId, programId));
+    regimenSummaryLineItems.forEach(
+        lineItem -> lineItem.setValue(getSumValue(lineItem.getNameColumn(), regimenSummaryItemToSumValue,
+            regimenSummaryItemToMaxValueInLastPeriods)));
+  }
+
+  private Map<String, Integer> regimenSummaryItemToValue(List<RegimenSummaryLineDto> regimenSummaryLineDtos) {
+    return regimenSummaryLineDtos.stream()
+        .collect(
+            Collectors.toMap(RegimenSummaryLineDto::getNameColumn, dto -> dto.getValue() == null ? 0 : dto.getValue()));
+  }
+
+  private Integer getSumValue(String column, Map<String, Integer> itemToSumValue,
+      Map<String, Integer> itemToMaxValueInLastPeriods) {
+    Integer sumValue = itemToSumValue.get(column) == null ? 0 : itemToSumValue.get(column);
+    Integer maxValueInLastPeriods =
+        itemToMaxValueInLastPeriods.get(column) == null ? 0 : itemToMaxValueInLastPeriods.get(column);
+    return sumValue + maxValueInLastPeriods;
   }
 
   @Override

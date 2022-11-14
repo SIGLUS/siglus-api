@@ -15,6 +15,8 @@
 
 package org.siglus.siglusapi.domain;
 
+import static org.siglus.siglusapi.constant.FieldConstants.SEPARATOR;
+
 import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
@@ -68,5 +70,9 @@ public class AgeGroupLineItem extends BaseEntity {
     this.group = group;
     this.value = value;
     super.id = id;
+  }
+
+  public String getServiceGroup() {
+    return service + SEPARATOR + group;
   }
 }

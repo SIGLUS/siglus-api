@@ -16,15 +16,61 @@
 package org.siglus.siglusapi.dto;
 
 import static com.google.common.collect.Lists.newArrayList;
+import static org.siglus.siglusapi.constant.FieldConstants.SEPARATOR;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.QUERY_MAX_VALUE_IN_LAST_PERIODS;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.QUERY_REQUISITIONS_UNDER_HIGH_LEVEL;
 
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import javax.persistence.ColumnResult;
+import javax.persistence.ConstructorResult;
+import javax.persistence.MappedSuperclass;
+import javax.persistence.NamedNativeQueries;
+import javax.persistence.NamedNativeQuery;
+import javax.persistence.SqlResultSetMapping;
+import javax.persistence.SqlResultSetMappings;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.siglus.siglusapi.domain.RegimenSummaryLineItem;
 
+@NamedNativeQueries({
+    @NamedNativeQuery(
+        name = "RegimenSummaryLineItem.sumValueRequisitionsUnderHighLevelFacility",
+        query = "select rsli.name,rsli.columnname as column,sum(rsli.value) as value "
+            + "from siglusintegration.regimen_summary_line_items rsli "
+            + "where rsli.requisitionid in "
+            + QUERY_REQUISITIONS_UNDER_HIGH_LEVEL
+            + " group by rsli.name,rsli.columnname",
+        resultSetMapping = "RegimenSummaryLineItem.RegimenSummaryLineDto"),
+    @NamedNativeQuery(
+        name = "RegimenSummaryLineItem.maxValueRequisitionsInLastPeriods",
+        query = "select name,columnname as column,sum(maxvalue) as value from "
+            + "(select rsli.name,rsli.columnname,max(rsli.value) as maxvalue "
+            + "from siglusintegration.regimen_summary_line_items rsli "
+            + "left join requisition.requisitions r on r.id = rsli.requisitionid "
+            + "where rsli.requisitionid in "
+            + QUERY_MAX_VALUE_IN_LAST_PERIODS
+            + "group by rsli.name,rsli.columnname,r.facilityid) maxtmp "
+            + "group by name, columnname",
+
+        resultSetMapping = "RegimenSummaryLineItem.RegimenSummaryLineDto")
+})
+@MappedSuperclass
+@SqlResultSetMappings({
+    @SqlResultSetMapping(
+        name = "RegimenSummaryLineItem.RegimenSummaryLineDto",
+        classes = @ConstructorResult(
+            targetClass = RegimenSummaryLineDto.class,
+            columns = {
+                @ColumnResult(name = "name", type = String.class),
+                @ColumnResult(name = "column", type = String.class),
+                @ColumnResult(name = "value", type = Integer.class),
+            }
+        )
+    )
+})
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -32,8 +78,20 @@ public class RegimenSummaryLineDto {
 
   private String name;
 
+  private String column;
+
+  private Integer value;
+
   // column: value
   private Map<String, RegimenColumnDto> columns;
+
+  // comment by yyd: This constructor will be used after the above query, do not delete it
+  @SuppressWarnings("unused")
+  public RegimenSummaryLineDto(String name, String column, Integer value) {
+    this.name = name;
+    this.column = column;
+    this.value = value;
+  }
 
   public static List<RegimenSummaryLineDto> from(List<RegimenSummaryLineItem> lineItems) {
     List<RegimenSummaryLineDto> regimenSummaryLineDtos = newArrayList();
@@ -60,5 +118,10 @@ public class RegimenSummaryLineDto {
     return regimenSummaryLineDtos;
 
   }
+
+  public String getNameColumn() {
+    return name + SEPARATOR + column;
+  }
+
 
 }

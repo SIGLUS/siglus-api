@@ -17,6 +17,7 @@ package org.siglus.siglusapi.service;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Maps.newHashMap;
+import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.mockito.Matchers.any;
@@ -34,8 +35,10 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.requisition.dto.BasicRequisitionTemplateDto;
+import org.openlmis.requisition.dto.ObjectReferenceDto;
 import org.siglus.common.dto.RequisitionTemplateExtensionDto;
 import org.siglus.siglusapi.domain.AgeGroupLineItem;
 import org.siglus.siglusapi.domain.UsageCategory;
@@ -58,18 +61,26 @@ public class TestAgeGroupDataProcessor {
   private AgeGroupLineItemRepository ageGroupLineItemRepository;
   @Captor
   private ArgumentCaptor<List<AgeGroupLineItem>> lineItemsArgumentCaptor;
+
   private final UUID requisitionId = UUID.randomUUID();
+
+  private final UUID facilityId = UUID.randomUUID();
+
+  private final UUID programId = UUID.randomUUID();
+
+  private final UUID periodId = UUID.randomUUID();
 
   private static final String SERVICE = "service";
   private static final String GROUP = "group";
   private final Integer value = RandomUtils.nextInt();
   private final UUID id = UUID.randomUUID();
+  private final List<UsageTemplateColumnSection> templateColumnSections = newArrayList();
 
   @Test
   public void shouldNotCreateLineItemsWhenInitiateIfDisableAgeGroup() {
     // given
     RequisitionTemplateExtensionDto extension = RequisitionTemplateExtensionDto.builder()
-            .enableAgeGroup(false).build();
+        .enableAgeGroup(false).build();
     BasicRequisitionTemplateDto template = new BasicRequisitionTemplateDto();
     template.setExtension(extension);
     SiglusRequisitionDto siglusRequisitionDto = new SiglusRequisitionDto();
@@ -87,43 +98,11 @@ public class TestAgeGroupDataProcessor {
   @Test
   public void shouldCreateLineItemsWhenInitiateIfEnableAgeGroup() {
     // given
-    RequisitionTemplateExtensionDto extension = RequisitionTemplateExtensionDto.builder()
-            .enableAgeGroup(true).build();
-    BasicRequisitionTemplateDto template = new BasicRequisitionTemplateDto();
-    template.setExtension(extension);
-    SiglusRequisitionDto siglusRequisitionDto = new SiglusRequisitionDto();
-    siglusRequisitionDto.setId(requisitionId);
-    siglusRequisitionDto.setTemplate(template);
-
-    UsageTemplateColumn serviceColumn = UsageTemplateColumn.builder()
-            .isDisplayed(true)
-            .name(SERVICE)
-            .build();
-    UsageTemplateColumnSection serviceSection = UsageTemplateColumnSection.builder()
-            .category(UsageCategory.AGEGROUP)
-            .name(SERVICE)
-            .columns(newArrayList(serviceColumn))
-            .build();
-    UsageTemplateColumn groupColumn = UsageTemplateColumn.builder()
-            .isDisplayed(true)
-            .name(GROUP)
-            .build();
-    UsageTemplateColumnSection groupSection = UsageTemplateColumnSection.builder()
-            .category(UsageCategory.AGEGROUP)
-            .name(GROUP)
-            .columns(newArrayList(groupColumn))
-            .build();
-
-    List<UsageTemplateColumnSection> templateColumnSections = newArrayList();
-    when(siglusUsageReportService
-            .getColumnSection(templateColumnSections, UsageCategory.AGEGROUP, SERVICE))
-            .thenReturn(serviceSection);
-    when(siglusUsageReportService
-            .getColumnSection(templateColumnSections, UsageCategory.AGEGROUP, GROUP))
-            .thenReturn(groupSection);
+    givenReturn();
+    Mockito.when(siglusUsageReportService.isNonTopLevelOrNotUsageReports(any(), any())).thenReturn(true);
 
     // when
-    ageGroupDataProcessor.initiate(siglusRequisitionDto, templateColumnSections);
+    ageGroupDataProcessor.initiate(mockRequisitionDto(), templateColumnSections);
 
     // then
     verify(ageGroupLineItemRepository).save(lineItemsArgumentCaptor.capture());
@@ -136,30 +115,49 @@ public class TestAgeGroupDataProcessor {
   }
 
   @Test
+  public void shouldSumValueWhenIsHighLevelFacility() {
+    // given
+    givenReturn();
+    Mockito.when(siglusUsageReportService.isNonTopLevelOrNotUsageReports(any(), any())).thenReturn(false);
+    Mockito.when(ageGroupLineItemRepository.sumValueRequisitionsUnderHighLevelFacility(facilityId, periodId, programId))
+        .thenReturn(singletonList(mockAgeGroupLineItemDto(10)));
+    Mockito.when(ageGroupLineItemRepository.maxValueRequisitionsInLastPeriods(facilityId, periodId, programId))
+        .thenReturn(singletonList(mockAgeGroupLineItemDto(20)));
+
+    // when
+    ageGroupDataProcessor.initiate(mockRequisitionDto(), templateColumnSections);
+
+    // then
+    verify(ageGroupLineItemRepository).save(lineItemsArgumentCaptor.capture());
+    List<AgeGroupLineItem> lineItems = lineItemsArgumentCaptor.getValue();
+    assertEquals(Integer.valueOf(30), lineItems.get(0).getValue());
+  }
+
+  @Test
   public void shouldGetAgeGroup() {
     // given
     SiglusRequisitionDto siglusRequisitionDto = new SiglusRequisitionDto();
     siglusRequisitionDto.setId(requisitionId);
     AgeGroupLineItem lineItem = AgeGroupLineItem.builder()
-            .requisitionId(requisitionId)
-            .service(SERVICE)
-            .group(GROUP)
-            .value(value)
-            .build();
+        .requisitionId(requisitionId)
+        .service(SERVICE)
+        .group(GROUP)
+        .value(value)
+        .build();
     lineItem.setId(id);
     List<AgeGroupLineItem> lineItems = newArrayList(lineItem);
     when(ageGroupLineItemRepository.findByRequisitionId(requisitionId))
-            .thenReturn(lineItems);
+        .thenReturn(lineItems);
 
     // when
     ageGroupDataProcessor.get(siglusRequisitionDto);
 
     // then
     List<AgeGroupServiceDto> serviceDtos = siglusRequisitionDto
-            .getAgeGroupLineItems();
+        .getAgeGroupLineItems();
     assertEquals(1, serviceDtos.size());
     AgeGroupLineItemDto ageGroupLineItemDto =
-            serviceDtos.get(0).getColumns().get(GROUP);
+        serviceDtos.get(0).getColumns().get(GROUP);
     assertEquals(id, ageGroupLineItemDto.getAgeGroupLineItemId());
     assertEquals(value, ageGroupLineItemDto.getValue());
   }
@@ -168,10 +166,10 @@ public class TestAgeGroupDataProcessor {
   public void shouldSaveLineItemsWhenUpdate() {
     // given
     AgeGroupLineItemDto lineItemDto = AgeGroupLineItemDto
-            .builder()
-            .ageGroupLineItemId(id)
-            .value(value)
-            .build();
+        .builder()
+        .ageGroupLineItemId(id)
+        .value(value)
+        .build();
     Map<String, AgeGroupLineItemDto> groupMap = newHashMap();
     groupMap.put(GROUP, lineItemDto);
     AgeGroupServiceDto serviceDto = new AgeGroupServiceDto();
@@ -185,7 +183,7 @@ public class TestAgeGroupDataProcessor {
     SiglusRequisitionDto siglusRequisitionUpdatedDto = new SiglusRequisitionDto();
 
     when(ageGroupLineItemRepository.save((Iterable<AgeGroupLineItem>) any()))
-            .thenAnswer(i -> i.getArguments()[0]);
+        .thenAnswer(i -> i.getArguments()[0]);
 
     // when
     ageGroupDataProcessor.update(siglusRequisitionDto, siglusRequisitionUpdatedDto);
@@ -209,5 +207,55 @@ public class TestAgeGroupDataProcessor {
 
     // then
     verify(ageGroupLineItemRepository).deleteByRequisitionId(requisitionId);
+  }
+
+  private AgeGroupLineItemDto mockAgeGroupLineItemDto(Integer value) {
+    return AgeGroupLineItemDto.builder()
+        .service(SERVICE)
+        .group(GROUP)
+        .value(value)
+        .build();
+  }
+
+  private void givenReturn() {
+    UsageTemplateColumn serviceColumn = UsageTemplateColumn.builder()
+        .isDisplayed(true)
+        .name(SERVICE)
+        .build();
+    UsageTemplateColumnSection serviceSection = UsageTemplateColumnSection.builder()
+        .category(UsageCategory.AGEGROUP)
+        .name(SERVICE)
+        .columns(newArrayList(serviceColumn))
+        .build();
+    UsageTemplateColumn groupColumn = UsageTemplateColumn.builder()
+        .isDisplayed(true)
+        .name(GROUP)
+        .build();
+    UsageTemplateColumnSection groupSection = UsageTemplateColumnSection.builder()
+        .category(UsageCategory.AGEGROUP)
+        .name(GROUP)
+        .columns(newArrayList(groupColumn))
+        .build();
+
+    when(siglusUsageReportService
+        .getColumnSection(templateColumnSections, UsageCategory.AGEGROUP, SERVICE))
+        .thenReturn(serviceSection);
+    when(siglusUsageReportService
+        .getColumnSection(templateColumnSections, UsageCategory.AGEGROUP, GROUP))
+        .thenReturn(groupSection);
+  }
+
+  private SiglusRequisitionDto mockRequisitionDto() {
+    RequisitionTemplateExtensionDto extension = RequisitionTemplateExtensionDto.builder()
+        .enableAgeGroup(true).build();
+    BasicRequisitionTemplateDto template = new BasicRequisitionTemplateDto();
+    template.setExtension(extension);
+    SiglusRequisitionDto siglusRequisitionDto = new SiglusRequisitionDto();
+    siglusRequisitionDto.setId(requisitionId);
+    siglusRequisitionDto.setTemplate(template);
+    siglusRequisitionDto.setFacility(new ObjectReferenceDto(facilityId));
+    siglusRequisitionDto.setProgram(new ObjectReferenceDto(programId));
+    siglusRequisitionDto.setProcessingPeriod(new ObjectReferenceDto(periodId));
+    return siglusRequisitionDto;
   }
 }

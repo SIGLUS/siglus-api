@@ -16,14 +16,22 @@
 package org.siglus.siglusapi.service;
 
 import static java.util.stream.Collectors.toSet;
+import static org.openlmis.requisition.domain.requisition.Requisition.AI;
+import static org.openlmis.requisition.domain.requisition.Requisition.DPM;
+import static org.openlmis.requisition.domain.requisition.Requisition.HC;
 import static org.openlmis.stockmanagement.i18n.MessageKeys.ERROR_REPORTING_TEMPLATE_NOT_FOUND_WITH_NAME;
 import static org.siglus.common.constant.ExtraDataConstants.ACTUAL_END_DATE;
 import static org.siglus.common.constant.ExtraDataConstants.ACTUAL_START_DATE;
+import static org.siglus.common.constant.ProgramConstants.MALARIA_PROGRAM_CODE;
+import static org.siglus.common.constant.ProgramConstants.MTB_PROGRAM_CODE;
+import static org.siglus.common.constant.ProgramConstants.RAPIDTEST_PROGRAM_CODE;
+import static org.siglus.common.constant.ProgramConstants.TARV_PROGRAM_CODE;
 import static org.siglus.siglusapi.constant.FieldConstants.CONSUMED;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,6 +50,7 @@ import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.dto.VersionIdentityDto;
 import org.openlmis.requisition.dto.stockmanagement.StockCardRangeSummaryDto;
 import org.openlmis.requisition.service.PeriodService;
+import org.openlmis.requisition.service.referencedata.FacilityReferenceDataService;
 import org.openlmis.requisition.service.stockmanagement.StockCardRangeSummaryStockManagementService;
 import org.openlmis.stockmanagement.exception.ValidationMessageException;
 import org.openlmis.stockmanagement.util.Message;
@@ -59,6 +68,7 @@ import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 import org.siglus.siglusapi.dto.SiglusUsageTemplateDto;
 import org.siglus.siglusapi.dto.UsageTemplateSectionDto;
 import org.siglus.siglusapi.repository.KitUsageLineItemRepository;
+import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.repository.UsageTemplateColumnSectionRepository;
 import org.slf4j.profiler.Profiler;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -97,6 +107,15 @@ public class SiglusUsageReportService {
 
   @Autowired
   private PeriodService periodService;
+
+  @Autowired
+  FacilityReferenceDataService facilityReferenceDataService;
+
+  @Autowired
+  SiglusProgramService siglusProgramService;
+
+  @Autowired
+  RequisitionExtensionRepository requisitionExtensionRepository;
 
   public SiglusRequisitionDto searchUsageReport(RequisitionV2Dto requisitionV2Dto) {
     SiglusRequisitionDto siglusRequisitionDto = SiglusRequisitionDto.from(requisitionV2Dto);
@@ -161,6 +180,17 @@ public class SiglusUsageReportService {
             templateColumnSection.getCategory().equals(category)
                 && templateColumnSection.getName().equals(sectionName))
         .findFirst().orElse(null);
+  }
+
+  public boolean isNonTopLevelOrNotUsageReports(UUID programId, UUID facilityId) {
+    return !Arrays.asList(TARV_PROGRAM_CODE, MTB_PROGRAM_CODE, RAPIDTEST_PROGRAM_CODE, MALARIA_PROGRAM_CODE)
+        .contains(siglusProgramService.getProgram(programId).getCode())
+        || !isTopLevelFacilityType(facilityId);
+  }
+
+  private boolean isTopLevelFacilityType(UUID facilityId) {
+    String facilityTypeCode = facilityReferenceDataService.findOne(facilityId).getType().getCode();
+    return Arrays.asList(DPM, AI, HC).contains(facilityTypeCode);
   }
 
   private void updateKitUsageLineItem(SiglusRequisitionDto requisitionDto, SiglusRequisitionDto updatedDto) {

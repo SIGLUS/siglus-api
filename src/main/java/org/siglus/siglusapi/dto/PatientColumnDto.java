@@ -15,12 +15,58 @@
 
 package org.siglus.siglusapi.dto;
 
+import static org.siglus.siglusapi.constant.FieldConstants.SEPARATOR;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.QUERY_MAX_VALUE_IN_LAST_PERIODS;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.QUERY_REQUISITIONS_UNDER_HIGH_LEVEL;
+
 import java.util.UUID;
+import javax.persistence.ColumnResult;
+import javax.persistence.ConstructorResult;
+import javax.persistence.MappedSuperclass;
+import javax.persistence.NamedNativeQueries;
+import javax.persistence.NamedNativeQuery;
+import javax.persistence.SqlResultSetMapping;
+import javax.persistence.SqlResultSetMappings;
 import javax.validation.constraints.Min;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+@NamedNativeQueries({
+    @NamedNativeQuery(
+        name = "PatientLineItem.sumValueRequisitionsUnderHighLevelFacility",
+        query = "select pli.groupname as group,pli.columnname as column,sum(pli.value) as value "
+            + "from siglusintegration.patient_line_items pli "
+            + "where pli.requisitionid in "
+            + QUERY_REQUISITIONS_UNDER_HIGH_LEVEL
+            + " group by pli.groupname,pli.columnname",
+        resultSetMapping = "PatientLineItem.PatientColumnDto"),
+    @NamedNativeQuery(
+        name = "PatientLineItem.maxValueRequisitionsInLastPeriods",
+        query = "select groupname as group, columnname as column, sum(maxvalue) as value from "
+            + "(select pli.groupname,pli.columnname,max(pli.value) as maxvalue "
+            + "from siglusintegration.patient_line_items pli "
+            + "left join requisition.requisitions r on r.id = pli.requisitionid "
+            + "where pli.requisitionid in "
+            + QUERY_MAX_VALUE_IN_LAST_PERIODS
+            + " group by pli.groupname,pli.columnname,r.facilityid) maxtmp "
+            + "group by groupname,columnname",
+        resultSetMapping = "PatientLineItem.PatientColumnDto")
+})
+@MappedSuperclass
+@SqlResultSetMappings({
+    @SqlResultSetMapping(
+        name = "PatientLineItem.PatientColumnDto",
+        classes = @ConstructorResult(
+            targetClass = PatientColumnDto.class,
+            columns = {
+                @ColumnResult(name = "group", type = String.class),
+                @ColumnResult(name = "column", type = String.class),
+                @ColumnResult(name = "value", type = Integer.class),
+            }
+        )
+    )
+})
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -28,7 +74,24 @@ public class PatientColumnDto {
 
   private UUID id;
 
+  private String group;
+
+  private String column;
+
   @Min(value = 0)
   private Integer value;
+
+  // comment by yyd: This constructor will be used after the above query, do not delete it
+  @SuppressWarnings("unused")
+  public PatientColumnDto(String group, String column, Integer value) {
+    this.group = group;
+    this.column = column;
+    this.value = value;
+  }
+
+  public String getGroupColumn() {
+    return group + SEPARATOR + column;
+  }
+
 
 }

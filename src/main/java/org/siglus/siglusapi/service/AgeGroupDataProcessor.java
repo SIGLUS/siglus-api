@@ -17,13 +17,16 @@ package org.siglus.siglusapi.service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.siglus.siglusapi.domain.AgeGroupLineItem;
 import org.siglus.siglusapi.domain.UsageCategory;
 import org.siglus.siglusapi.domain.UsageTemplateColumn;
 import org.siglus.siglusapi.domain.UsageTemplateColumnSection;
+import org.siglus.siglusapi.dto.AgeGroupLineItemDto;
 import org.siglus.siglusapi.dto.AgeGroupServiceDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 import org.siglus.siglusapi.repository.AgeGroupLineItemRepository;
@@ -44,12 +47,44 @@ public class AgeGroupDataProcessor implements UsageReportDataProcessor {
   public void doInitiate(SiglusRequisitionDto siglusRequisitionDto,
       List<UsageTemplateColumnSection> templateColumnSections) {
     List<AgeGroupLineItem> ageGroupLineItems =
-            createAgeGroupLineItems(siglusRequisitionDto, templateColumnSections);
-
+        createAgeGroupLineItems(siglusRequisitionDto, templateColumnSections);
+    calculateValueForTopLevelFacility(ageGroupLineItems, siglusRequisitionDto.getFacilityId(),
+        siglusRequisitionDto.getProcessingPeriodId(), siglusRequisitionDto.getProgramId());
+    log.info("save age group line items by requisition id: {}", siglusRequisitionDto.getId());
     List<AgeGroupLineItem> saved = ageGroupLineItemRepository.save(ageGroupLineItems);
-
     List<AgeGroupServiceDto> serviceDtos = AgeGroupServiceDto.from(saved);
     siglusRequisitionDto.setAgeGroupLineItems(serviceDtos);
+  }
+
+  private void calculateValueForTopLevelFacility(
+      List<AgeGroupLineItem> ageGroupLineItems, UUID facilityId, UUID periodId, UUID programId) {
+    if (ageGroupLineItems.isEmpty() || siglusUsageReportService.isNonTopLevelOrNotUsageReports(programId, facilityId)) {
+      return;
+    }
+    Map<String, Integer> itemToSumValue = itemToValue(
+        ageGroupLineItemRepository.sumValueRequisitionsUnderHighLevelFacility(facilityId, periodId, programId));
+    Map<String, Integer> itemToMaxValueInLastPeriods = itemToValue(
+        ageGroupLineItemRepository.maxValueRequisitionsInLastPeriods(facilityId, periodId, programId));
+    ageGroupLineItems.forEach(lineItem -> setSumValue(lineItem, itemToSumValue, itemToMaxValueInLastPeriods));
+  }
+
+  private Map<String, Integer> itemToValue(List<AgeGroupLineItemDto> ageGroupLineItemDtos) {
+    return ageGroupLineItemDtos.stream()
+        .collect(
+            Collectors.toMap(AgeGroupLineItemDto::getServiceGroup, dto -> dto.getValue() == null ? 0 : dto.getValue()));
+  }
+
+  private void setSumValue(AgeGroupLineItem lineItem, Map<String, Integer> itemToSumValue,
+      Map<String, Integer> itemToMaxValueInLastPeriods) {
+    Integer sumValue = itemToSumValue.get(lineItem.getServiceGroup());
+    Integer maxValueInLastPeriods = itemToMaxValueInLastPeriods.get(lineItem.getServiceGroup());
+    if (sumValue == null) {
+      sumValue = 0;
+    }
+    if (maxValueInLastPeriods == null) {
+      maxValueInLastPeriods = 0;
+    }
+    lineItem.setValue(sumValue + maxValueInLastPeriods);
   }
 
   @Override
@@ -63,7 +98,7 @@ public class AgeGroupDataProcessor implements UsageReportDataProcessor {
   public void update(SiglusRequisitionDto siglusRequisitionDto, SiglusRequisitionDto siglusRequisitionUpdatedDto) {
     List<AgeGroupServiceDto> ageGroupLineDtoList = siglusRequisitionDto.getAgeGroupLineItems();
     List<AgeGroupLineItem> save = ageGroupLineItemRepository.save(AgeGroupLineItem.from(ageGroupLineDtoList,
-            siglusRequisitionDto.getId()));
+        siglusRequisitionDto.getId()));
     siglusRequisitionUpdatedDto.setAgeGroupLineItems(AgeGroupServiceDto.from(save));
   }
 
@@ -80,23 +115,25 @@ public class AgeGroupDataProcessor implements UsageReportDataProcessor {
   private List<AgeGroupLineItem> createAgeGroupLineItems(SiglusRequisitionDto siglusRequisitionDto,
       List<UsageTemplateColumnSection> templateColumnSections) {
     UsageTemplateColumnSection service = siglusUsageReportService
-            .getColumnSection(templateColumnSections, UsageCategory.AGEGROUP, SERVICE);
+        .getColumnSection(templateColumnSections, UsageCategory.AGEGROUP, SERVICE);
     UsageTemplateColumnSection group = siglusUsageReportService
-            .getColumnSection(templateColumnSections, UsageCategory.AGEGROUP, GROUP);
+        .getColumnSection(templateColumnSections, UsageCategory.AGEGROUP, GROUP);
     List<AgeGroupLineItem> ageGroupLineItems = new ArrayList<>();
+
     for (UsageTemplateColumn templateServiceColumn : service.getColumns()) {
       if (!Boolean.TRUE.equals(templateServiceColumn.getIsDisplayed())) {
         continue;
       }
+
       for (UsageTemplateColumn templateGroupColumn : group.getColumns()) {
         if (!Boolean.TRUE.equals(templateGroupColumn.getIsDisplayed())) {
           continue;
         }
         ageGroupLineItems.add(AgeGroupLineItem.builder()
-                .requisitionId(siglusRequisitionDto.getId())
-                .group(templateGroupColumn.getName())
-                .service(templateServiceColumn.getName())
-                .build());
+            .requisitionId(siglusRequisitionDto.getId())
+            .group(templateGroupColumn.getName())
+            .service(templateServiceColumn.getName())
+            .build());
       }
     }
     return ageGroupLineItems;

@@ -27,6 +27,7 @@ import static org.openlmis.requisition.domain.requisition.RequisitionStatus.RELE
 import static org.openlmis.requisition.domain.requisition.RequisitionStatus.RELEASED_WITHOUT_ORDER;
 import static org.openlmis.requisition.domain.requisition.RequisitionStatus.SUBMITTED;
 import static org.openlmis.requisition.i18n.MessageKeys.ERROR_ID_MISMATCH;
+import static org.openlmis.requisition.web.QueryRequisitionSearchParams.REQUISITION_STATUS;
 import static org.siglus.common.constant.KitConstants.APE_KITS;
 import static org.siglus.common.constant.KitConstants.US_KITS;
 import static org.siglus.siglusapi.util.RequisitionUtil.getRequisitionExtraData;
@@ -424,7 +425,7 @@ public class SiglusRequisitionService {
             UUID.fromString(queryParams.getFirst(QueryRequisitionSearchParams.FACILITY)),
             UUID.fromString(queryParams.getFirst(QueryRequisitionSearchParams.PROGRAM)));
     requisitionStatusDisplayInRequisitionHistory.forEach(requisitionStatus -> queryParams
-        .add(QueryRequisitionSearchParams.REQUISITION_STATUS, requisitionStatus.toString()));
+        .add(REQUISITION_STATUS, requisitionStatus.toString()));
     RequisitionSearchParams params = new QueryRequisitionSearchParams(queryParams);
     return siglusRequisitionRequisitionService.searchRequisitions(params, pageable);
   }
