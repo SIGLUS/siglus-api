@@ -20,12 +20,6 @@ import java.util.Map;
 
 public class MovementSql {
 
-  public static final String RIGHT_ASSIGNMENTS = "referencedata.right_assignments";
-
-  public static final String RIGHT_ASSIGNMENTS_QUERY = "select ra.* from referencedata.right_assignments ra "
-      + "left join referencedata.users u on u.id = ra.userid "
-      + "where u.homefacilityid = '@@' ";
-
   public static final String LOTS = "referencedata.lots";
 
   public static final String LOTS_QUERY = "select * from referencedata.lots ";
@@ -219,7 +213,6 @@ public class MovementSql {
 
   public static Map<String, String> getMovementSql() {
     Map<String, String> movementSql = new HashMap<>();
-    movementSql.put(RIGHT_ASSIGNMENTS, RIGHT_ASSIGNMENTS_QUERY);
     movementSql.put(LOTS, LOTS_QUERY);
     movementSql.put(LOCALMACHINE_EVENTS, LOCALMACHINE_EVENTS_QUERY);
     movementSql.put(LOCALMACHINE_EVENT_PAYLOAD, LOCALMACHINE_EVENT_PAYLOAD_QUERY);

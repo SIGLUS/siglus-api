@@ -176,6 +176,10 @@ public class MasterDataSql {
 
   public static final String ROLE_ASSIGNMENTS_QUERY = "select * from referencedata.role_assignments";
 
+  public static final String RIGHT_ASSIGNMENTS = "referencedata.right_assignments";
+
+  public static final String RIGHT_ASSIGNMENTS_QUERY = "select * from referencedata.right_assignments";
+
   public static final String SYSTEM_NOTIFICATIONS = "referencedata.system_notifications";
 
   public static final String SYSTEM_NOTIFICATIONS_QUERY = "select * from referencedata.system_notifications";
@@ -404,6 +408,7 @@ public class MasterDataSql {
     masterDataSql.put(ROLE_RIGHTS, ROLE_RIGHTS_QUERY);
     masterDataSql.put(USERS, USERS_QUERY);
     masterDataSql.put(ROLE_ASSIGNMENTS, ROLE_ASSIGNMENTS_QUERY);
+    masterDataSql.put(RIGHT_ASSIGNMENTS, RIGHT_ASSIGNMENTS_QUERY);
     masterDataSql.put(SYSTEM_NOTIFICATIONS, SYSTEM_NOTIFICATIONS_QUERY);
 
     masterDataSql.put(JASPER_TEMPLATES, JASPER_TEMPLATES_QUERY);
