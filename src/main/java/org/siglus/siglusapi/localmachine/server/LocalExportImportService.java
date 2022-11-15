@@ -27,6 +27,8 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
@@ -77,7 +79,7 @@ public class LocalExportImportService {
   @Value("${machine.event.zip.export.path}")
   private String zipExportPath;
 
-  private static final String ZIP_PREFIX = "event_export_";
+  private static final String ZIP_PREFIX = "Exportar_de_";
   private static final String ZIP_SUFFIX = ".zip";
   private static final String FILE_SUFFIX = ".dat";
   private static final String PART_FILE_SUFFIX = "_part";
@@ -88,7 +90,7 @@ public class LocalExportImportService {
 
   @SneakyThrows
   public void exportEvents(HttpServletResponse response) {
-    String zipName = ZIP_PREFIX + System.currentTimeMillis() + ZIP_SUFFIX;
+    String zipName = getZipName();
     File directory = prepareDirectory();
     try {
       List<File> files = generateFilesForPeeringFacilities();
@@ -123,6 +125,22 @@ public class LocalExportImportService {
             e, new Message("fail to import events, file name:" + file.getName()));
       }
     }
+  }
+
+  private String getZipName() {
+    UUID homeFacility = getHomeFacilityId();
+    return new StringBuilder(ZIP_PREFIX)
+        .append(normalizeFacilityName(
+            siglusFacilityService.getFacilityIdToName(Sets.newHashSet(homeFacility)).get(homeFacility)))
+        .append(FILE_NAME_SPLIT)
+        .append(normalizeDateTime(ZonedDateTime.now()))
+        .append(ZIP_SUFFIX)
+        .toString();
+  }
+
+  private String normalizeDateTime(ZonedDateTime zonedDateTime) {
+    String format = zonedDateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd_hh:mm"));
+    return format.replace(":", "h") + "min";
   }
 
   private File prepareDirectory() {
@@ -219,11 +237,11 @@ public class LocalExportImportService {
 
   private static String getFileName(String workingDir, String senderName, String receiverName, String filePartSuffix) {
     return workingDir
-        + "from"
+        + "Exportar_de"
         + FILE_NAME_SPLIT
         + senderName
         + FILE_NAME_SPLIT
-        + "to"
+        + "para"
         + FILE_NAME_SPLIT
         + receiverName
         + filePartSuffix
