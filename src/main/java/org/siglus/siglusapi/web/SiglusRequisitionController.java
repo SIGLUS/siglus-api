@@ -159,10 +159,14 @@ public class SiglusRequisitionController {
       HttpServletResponse response) {
     BasicRequisitionDto basicRequisitionDto = siglusRequisitionService.rejectRequisition(requisitionId, request,
         response);
-    if (!authenticationHelper.getCurrentUser().getHomeFacilityId().equals(basicRequisitionDto.getFacility().getId())) {
+    if (!internalFacilityUser(basicRequisitionDto)) {
       requisitionRejectEmitter.emit(requisitionId, basicRequisitionDto.getFacility().getId());
     }
     return basicRequisitionDto;
+  }
+
+  private boolean internalFacilityUser(BasicRequisitionDto basicRequisitionDto) {
+    return authenticationHelper.getCurrentUser().getHomeFacilityId().equals(basicRequisitionDto.getFacility().getId());
   }
 
   @PostMapping("/createLineItem")
