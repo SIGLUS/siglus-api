@@ -103,12 +103,12 @@ public class ExportImportIntegrationTest {
     // then
     assertThat(fileNames)
         .containsExactly(
-            "from_HF_S01_to_HF_R1_part1.dat",
-            "from_HF_S01_to_HF_R1_part2.dat",
-            "from_HF_S01_to_HF_R1_part3.dat",
-            "from_HF_S01_to_HF_R1_part4.dat",
-            "from_HF_S01_to_HF_R1_part5.dat",
-            "from_HF_S01_to_HF_R1_part6.dat");
+            "Exportar_de_HF_S01_para_HF_R1_part1.dat",
+            "Exportar_de_HF_S01_para_HF_R1_part2.dat",
+            "Exportar_de_HF_S01_para_HF_R1_part3.dat",
+            "Exportar_de_HF_S01_para_HF_R1_part4.dat",
+            "Exportar_de_HF_S01_para_HF_R1_part5.dat",
+            "Exportar_de_HF_S01_para_HF_R1_part6.dat");
     assertThat(capturedEvents).containsExactly(events.toArray(new Event[0]));
   }
 
