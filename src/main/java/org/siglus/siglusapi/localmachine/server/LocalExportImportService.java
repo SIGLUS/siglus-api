@@ -18,6 +18,7 @@ package org.siglus.siglusapi.localmachine.server;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_EXPORT_NO_DATA;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_IMPORT_FILE_RECEIVER_NOT_MATCH;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_IMPORT_INVALID_FILE;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_IMPORT_INVALID_FILE_TYPE;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -114,7 +115,7 @@ public class LocalExportImportService {
         checkFacility(events);
         eventImporter.importEvents(events);
       } catch (ChecksumNotMatchedException e) {
-        log.error("checksum not match", e);
+        log.error("import error, checksum not match", e);
         throw new BusinessDataException(e, new Message(ERROR_IMPORT_INVALID_FILE));
       } catch (IOException e) {
         log.error("err occurs when import files", e);
@@ -252,7 +253,7 @@ public class LocalExportImportService {
     events.forEach(it -> {
       UUID receiverId = it.getReceiverId();
       if (!receiverId.equals(homeFacilityId)) {
-        log.error("file shouldn't be imported, file receiver not match current facility, "
+        log.error("import error, file shouldn't be imported, file receiver not match current facility, "
             + "file receiverId:{}, current user facilityId:{}", receiverId, homeFacilityId);
         throw new BusinessDataException(new Message(ERROR_IMPORT_FILE_RECEIVER_NOT_MATCH));
       }
@@ -267,8 +268,8 @@ public class LocalExportImportService {
     String filename = file.getOriginalFilename();
     String suffix = filename.substring(filename.lastIndexOf('.'));
     if (!FILE_SUFFIX.equals(suffix)) {
-      log.error("file may be modified, file suffix:{}, correct suffix:{}", suffix, FILE_SUFFIX);
-      throw new BusinessDataException(new Message(ERROR_IMPORT_INVALID_FILE));
+      log.error("import error, invalid file type, file suffix:{}, correct suffix:{}", suffix, FILE_SUFFIX);
+      throw new BusinessDataException(new Message(ERROR_IMPORT_INVALID_FILE_TYPE));
     }
   }
 }
