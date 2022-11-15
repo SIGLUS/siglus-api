@@ -18,13 +18,16 @@ package org.siglus.siglusapi.service;
 import static com.google.common.collect.Lists.newArrayList;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.siglus.siglusapi.domain.TestConsumptionLineItem;
 import org.siglus.siglusapi.domain.UsageCategory;
 import org.siglus.siglusapi.domain.UsageTemplateColumn;
 import org.siglus.siglusapi.domain.UsageTemplateColumnSection;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
+import org.siglus.siglusapi.dto.TestConsumptionOutcomeDto;
 import org.siglus.siglusapi.dto.TestConsumptionServiceDto;
 import org.siglus.siglusapi.repository.TestConsumptionLineItemRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,13 +54,44 @@ public class TestConsumptionDataProcessor implements UsageReportDataProcessor {
       List<UsageTemplateColumnSection> templateColumnSections) {
     List<TestConsumptionLineItem> testConsumptionLineItems =
         createTestConsumptionLineItems(siglusRequisitionDto, templateColumnSections);
-    log.info("save test consumption line items by requisition id: {}",
-        siglusRequisitionDto.getId());
-
-    List<TestConsumptionLineItem> saved =
-        testConsumptionLineItemRepository.save(testConsumptionLineItems);
+    calculateValueForTopLevelFacility(testConsumptionLineItems, siglusRequisitionDto.getFacilityId(),
+        siglusRequisitionDto.getProcessingPeriodId(), siglusRequisitionDto.getProgramId());
+    log.info("save test consumption line items by requisition id: {}", siglusRequisitionDto.getId());
+    List<TestConsumptionLineItem> saved = testConsumptionLineItemRepository.save(testConsumptionLineItems);
     List<TestConsumptionServiceDto> serviceDtos = TestConsumptionServiceDto.from(saved);
     siglusRequisitionDto.setTestConsumptionLineItems(serviceDtos);
+  }
+
+  private void calculateValueForTopLevelFacility(
+      List<TestConsumptionLineItem> testConsumptionLineItems, UUID facilityId, UUID periodId, UUID programId) {
+    if (testConsumptionLineItems.isEmpty()
+        || siglusUsageReportService.isNonTopLevelOrNotUsageReports(programId, facilityId)) {
+      return;
+    }
+    Map<String, Integer> itemToSumValue = itemToValue(
+        testConsumptionLineItemRepository.sumValueRequisitionsUnderHighLevelFacility(facilityId, periodId, programId));
+    Map<String, Integer> itemToMaxValueInLastPeriods = itemToValue(
+        testConsumptionLineItemRepository.maxValueRequisitionsInLastPeriods(facilityId, periodId, programId));
+    testConsumptionLineItems.forEach(lineItem -> setSumValue(lineItem, itemToSumValue, itemToMaxValueInLastPeriods));
+  }
+
+  private Map<String, Integer> itemToValue(List<TestConsumptionOutcomeDto> testConsumptionOutcomeDtos) {
+    return testConsumptionOutcomeDtos.stream()
+        .collect(Collectors.toMap(TestConsumptionOutcomeDto::getServiceProjectOutcome,
+            dto -> dto.getValue() == null ? 0 : dto.getValue()));
+  }
+
+  private void setSumValue(TestConsumptionLineItem lineItem, Map<String, Integer> itemToSumValue,
+      Map<String, Integer> itemToMaxValueInLastPeriods) {
+    Integer sumValue = itemToSumValue.get(lineItem.getServiceProjectOutcome());
+    Integer maxValueInLastPeriods = itemToMaxValueInLastPeriods.get(lineItem.getServiceProjectOutcome());
+    if (sumValue == null) {
+      sumValue = 0;
+    }
+    if (maxValueInLastPeriods == null) {
+      maxValueInLastPeriods = 0;
+    }
+    lineItem.setValue(sumValue + maxValueInLastPeriods);
   }
 
   @Override

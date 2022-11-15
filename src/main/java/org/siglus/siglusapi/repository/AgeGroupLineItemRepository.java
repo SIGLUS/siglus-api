@@ -19,7 +19,10 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import org.siglus.siglusapi.domain.AgeGroupLineItem;
+import org.siglus.siglusapi.dto.AgeGroupLineItemDto;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface AgeGroupLineItemRepository extends JpaRepository<AgeGroupLineItem, UUID> {
 
@@ -28,4 +31,12 @@ public interface AgeGroupLineItemRepository extends JpaRepository<AgeGroupLineIt
   List<AgeGroupLineItem> findByRequisitionIdIn(Set<UUID> requisitionIds);
 
   void deleteByRequisitionId(UUID requisitionId);
+
+  @Query(name = "AgeGroupLineItem.sumValueRequisitionsUnderHighLevelFacility", nativeQuery = true)
+  List<AgeGroupLineItemDto> sumValueRequisitionsUnderHighLevelFacility(@Param("facilityId") UUID facilityId,
+      @Param("periodId") UUID periodId, @Param("programId") UUID programId);
+
+  @Query(name = "AgeGroupLineItem.maxValueRequisitionsInLastPeriods", nativeQuery = true)
+  List<AgeGroupLineItemDto> maxValueRequisitionsInLastPeriods(@Param("facilityId") UUID facilityId,
+      @Param("periodId") UUID periodId, @Param("programId") UUID programId);
 }

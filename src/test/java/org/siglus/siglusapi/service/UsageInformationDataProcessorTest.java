@@ -18,13 +18,13 @@ package org.siglus.siglusapi.service;
 import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Maps.newHashMap;
 import static com.google.common.collect.Sets.newHashSet;
+import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -42,6 +42,7 @@ import org.openlmis.referencedata.domain.Code;
 import org.openlmis.referencedata.domain.Dispensable;
 import org.openlmis.referencedata.domain.Orderable;
 import org.openlmis.requisition.dto.BasicRequisitionTemplateDto;
+import org.openlmis.requisition.dto.ObjectReferenceDto;
 import org.openlmis.requisition.dto.VersionObjectReferenceDto;
 import org.siglus.common.dto.RequisitionTemplateExtensionDto;
 import org.siglus.common.repository.OrderableKitRepository;
@@ -85,6 +86,14 @@ public class UsageInformationDataProcessorTest {
 
   private static final String SERVICE = "service";
 
+  private final UUID facilityId = UUID.randomUUID();
+
+  private final UUID programId = UUID.randomUUID();
+
+  private final UUID periodId = UUID.randomUUID();
+
+  private final List<UsageTemplateColumnSection> templateColumnSections = newArrayList();
+
   @Test
   public void shouldNotCreateLineItemsWhenInitiateIfDisableUsageInformation() {
     // given
@@ -121,6 +130,8 @@ public class UsageInformationDataProcessorTest {
     siglusRequisitionDto.setId(requisitionId);
     siglusRequisitionDto.setTemplate(template);
     siglusRequisitionDto.setAvailableProducts(availableProducts);
+    siglusRequisitionDto.setProgram(new ObjectReferenceDto(programId));
+    siglusRequisitionDto.setFacility(new ObjectReferenceDto(facilityId));
     UsageTemplateColumn serviceColumn = UsageTemplateColumn.builder()
         .isDisplayed(true)
         .name(SERVICE)
@@ -148,7 +159,8 @@ public class UsageInformationDataProcessorTest {
         .thenReturn(informationSection);
     Orderable kitProduct = new Orderable(Code.code("kitProduct"), Dispensable.createNew("each"),
         10, 7, true, orderableId, 1L);
-    when(orderableKitRepository.findAllKitProduct()).thenReturn(Arrays.asList(kitProduct));
+    when(orderableKitRepository.findAllKitProduct()).thenReturn(singletonList(kitProduct));
+    when(siglusUsageReportService.isNonTopLevelOrNotUsageReports(programId, facilityId)).thenReturn(true);
 
     // when
     usageInformationDataProcessor.initiate(siglusRequisitionDto, templateColumnSections);
@@ -167,46 +179,11 @@ public class UsageInformationDataProcessorTest {
   @Test
   public void shouldCreateLineItemsWhenInitiateIfEnableUsageInformation() {
     // given
-    RequisitionTemplateExtensionDto extension = RequisitionTemplateExtensionDto.builder()
-        .enableUsageInformation(true).build();
-    BasicRequisitionTemplateDto template = new BasicRequisitionTemplateDto();
-    template.setExtension(extension);
-    VersionObjectReferenceDto availableProduct = new VersionObjectReferenceDto();
-    availableProduct.setId(orderableId);
-    Set<VersionObjectReferenceDto> availableProducts = newHashSet(availableProduct);
-    SiglusRequisitionDto siglusRequisitionDto = new SiglusRequisitionDto();
-    siglusRequisitionDto.setId(requisitionId);
-    siglusRequisitionDto.setTemplate(template);
-    siglusRequisitionDto.setAvailableProducts(availableProducts);
-    UsageTemplateColumn serviceColumn = UsageTemplateColumn.builder()
-        .isDisplayed(true)
-        .name(SERVICE)
-        .build();
-    UsageTemplateColumnSection serviceSection = UsageTemplateColumnSection.builder()
-        .category(UsageCategory.USAGEINFORMATION)
-        .name(SERVICE)
-        .columns(newArrayList(serviceColumn))
-        .build();
-    UsageTemplateColumn informationColumn = UsageTemplateColumn.builder()
-        .isDisplayed(true)
-        .name(INFORMATION)
-        .build();
-    UsageTemplateColumnSection informationSection = UsageTemplateColumnSection.builder()
-        .category(UsageCategory.USAGEINFORMATION)
-        .name(INFORMATION)
-        .columns(newArrayList(informationColumn))
-        .build();
-    List<UsageTemplateColumnSection> templateColumnSections = newArrayList();
-    when(siglusUsageReportService
-        .getColumnSection(templateColumnSections, UsageCategory.USAGEINFORMATION, SERVICE))
-        .thenReturn(serviceSection);
-    when(siglusUsageReportService
-        .getColumnSection(templateColumnSections, UsageCategory.USAGEINFORMATION, INFORMATION))
-        .thenReturn(informationSection);
-    when(orderableKitRepository.findAllKitProduct()).thenReturn(Collections.emptyList());
+    givenReturn();
+    when(siglusUsageReportService.isNonTopLevelOrNotUsageReports(programId, facilityId)).thenReturn(true);
 
     // when
-    usageInformationDataProcessor.initiate(siglusRequisitionDto, templateColumnSections);
+    usageInformationDataProcessor.initiate(mockRequisitionDto(), templateColumnSections);
 
     // then
     verify(usageInformationLineItemRepository).save(lineItemsArgumentCaptor.capture());
@@ -217,6 +194,24 @@ public class UsageInformationDataProcessorTest {
     assertEquals(SERVICE, lineItems.get(0).getService());
     assertEquals(orderableId, lineItems.get(0).getOrderableId());
     assertNull(lineItems.get(0).getValue());
+  }
+
+  @Test
+  public void shouldSumValueWhenIsHighLevelFacility() {
+    // given
+    givenReturn();
+    when(siglusUsageReportService.isNonTopLevelOrNotUsageReports(programId, facilityId)).thenReturn(false);
+    when(usageInformationLineItemRepository.sumValueRequisitionsUnderHighLevelFacility(facilityId, periodId, programId))
+        .thenReturn(singletonList(mockUsageInformationOrderableDto(20)));
+    when(usageInformationLineItemRepository.maxValueRequisitionsInLastPeriods(facilityId, periodId, programId))
+        .thenReturn(singletonList(mockUsageInformationOrderableDto(30)));
+    // when
+    usageInformationDataProcessor.initiate(mockRequisitionDto(), templateColumnSections);
+
+    // then
+    verify(usageInformationLineItemRepository).save(lineItemsArgumentCaptor.capture());
+    List<UsageInformationLineItem> lineItems = lineItemsArgumentCaptor.getValue();
+    assertEquals(Integer.valueOf(50), lineItems.get(0).getValue());
   }
 
   @Test
@@ -299,5 +294,61 @@ public class UsageInformationDataProcessorTest {
     verify(usageInformationLineItemRepository).findByRequisitionId(requisitionId);
     verify(usageInformationLineItemRepository).delete(lineItems);
   }
+
+  private UsageInformationOrderableDto mockUsageInformationOrderableDto(Integer value) {
+    return UsageInformationOrderableDto.builder()
+        .information(INFORMATION)
+        .orderableId(orderableId)
+        .service(SERVICE)
+        .value(value)
+        .build();
+  }
+
+  private void givenReturn() {
+    UsageTemplateColumn serviceColumn = UsageTemplateColumn.builder()
+        .isDisplayed(true)
+        .name(SERVICE)
+        .build();
+    UsageTemplateColumnSection serviceSection = UsageTemplateColumnSection.builder()
+        .category(UsageCategory.USAGEINFORMATION)
+        .name(SERVICE)
+        .columns(newArrayList(serviceColumn))
+        .build();
+    UsageTemplateColumn informationColumn = UsageTemplateColumn.builder()
+        .isDisplayed(true)
+        .name(INFORMATION)
+        .build();
+    UsageTemplateColumnSection informationSection = UsageTemplateColumnSection.builder()
+        .category(UsageCategory.USAGEINFORMATION)
+        .name(INFORMATION)
+        .columns(newArrayList(informationColumn))
+        .build();
+    when(siglusUsageReportService
+        .getColumnSection(templateColumnSections, UsageCategory.USAGEINFORMATION, SERVICE))
+        .thenReturn(serviceSection);
+    when(siglusUsageReportService
+        .getColumnSection(templateColumnSections, UsageCategory.USAGEINFORMATION, INFORMATION))
+        .thenReturn(informationSection);
+    when(orderableKitRepository.findAllKitProduct()).thenReturn(Collections.emptyList());
+  }
+
+  private SiglusRequisitionDto mockRequisitionDto() {
+    RequisitionTemplateExtensionDto extension = RequisitionTemplateExtensionDto.builder()
+        .enableUsageInformation(true).build();
+    BasicRequisitionTemplateDto template = new BasicRequisitionTemplateDto();
+    template.setExtension(extension);
+    VersionObjectReferenceDto availableProduct = new VersionObjectReferenceDto();
+    availableProduct.setId(orderableId);
+    Set<VersionObjectReferenceDto> availableProducts = newHashSet(availableProduct);
+    SiglusRequisitionDto siglusRequisitionDto = new SiglusRequisitionDto();
+    siglusRequisitionDto.setId(requisitionId);
+    siglusRequisitionDto.setTemplate(template);
+    siglusRequisitionDto.setAvailableProducts(availableProducts);
+    siglusRequisitionDto.setFacility(new ObjectReferenceDto(facilityId));
+    siglusRequisitionDto.setProgram(new ObjectReferenceDto(programId));
+    siglusRequisitionDto.setProcessingPeriod(new ObjectReferenceDto(periodId));
+    return siglusRequisitionDto;
+  }
+
 
 }

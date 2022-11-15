@@ -17,6 +17,7 @@ package org.siglus.siglusapi.service;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +26,7 @@ import org.siglus.siglusapi.domain.PatientLineItem;
 import org.siglus.siglusapi.domain.UsageCategory;
 import org.siglus.siglusapi.domain.UsageTemplateColumn;
 import org.siglus.siglusapi.domain.UsageTemplateColumnSection;
+import org.siglus.siglusapi.dto.PatientColumnDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 import org.siglus.siglusapi.repository.PatientLineItemRepository;
 import org.siglus.siglusapi.service.mapper.PatientLineItemMapper;
@@ -34,6 +36,8 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 @Slf4j
 public class PatientDataProcessor implements UsageReportDataProcessor {
+
+  private final SiglusUsageReportService siglusUsageReportService;
 
   private final PatientLineItemRepository repo;
 
@@ -47,9 +51,43 @@ public class PatientDataProcessor implements UsageReportDataProcessor {
   @Override
   public void doInitiate(SiglusRequisitionDto requisition,
       List<UsageTemplateColumnSection> sectionTemplates) {
-    List<PatientLineItem> saved = createLineItemsFromTemplate(requisition.getId(),
-        sectionTemplates);
-    requisition.setPatientLineItems(mapper.from(saved));
+    List<PatientLineItem> patientLineItems = createLineItemsFromTemplate(requisition.getId(), sectionTemplates);
+    calculateValueForTopLevelFacility(patientLineItems, requisition.getFacilityId(),
+        requisition.getProcessingPeriodId(), requisition.getProgramId());
+    log.info("save patient line items by requisition id: {}", requisition.getId());
+    List<PatientLineItem> save = repo.save(patientLineItems);
+    requisition.setPatientLineItems(mapper.from(save));
+  }
+
+  private void calculateValueForTopLevelFacility(
+      List<PatientLineItem> patientLineItems, UUID facilityId, UUID periodId, UUID programId) {
+    if (patientLineItems.isEmpty() || siglusUsageReportService.isNonTopLevelOrNotUsageReports(programId, facilityId)) {
+      return;
+    }
+    Map<String, Integer> itemToSumValue = itemToValue(
+        repo.sumValueRequisitionsUnderHighLevelFacility(facilityId, periodId, programId));
+    Map<String, Integer> itemToMaxValueInLastPeriods = itemToValue(
+        repo.maxValueRequisitionsInLastPeriods(facilityId, periodId, programId));
+    patientLineItems.forEach(lineItem -> setSumValue(lineItem, itemToSumValue, itemToMaxValueInLastPeriods));
+  }
+
+  private Map<String, Integer> itemToValue(List<PatientColumnDto> patientColumnDtos) {
+    return patientColumnDtos.stream()
+        .collect(Collectors.toMap(PatientColumnDto::getGroupColumn,
+            dto -> dto.getValue() == null ? 0 : dto.getValue()));
+  }
+
+  private void setSumValue(PatientLineItem lineItem,
+      Map<String, Integer> itemToSumValue, Map<String, Integer> itemToMaxValueInLastPeriods) {
+    Integer sumValue = itemToSumValue.get(lineItem.getGroupColumn());
+    Integer maxValueInLastPeriods = itemToMaxValueInLastPeriods.get(lineItem.getGroupColumn());
+    if (sumValue == null) {
+      sumValue = 0;
+    }
+    if (maxValueInLastPeriods == null) {
+      maxValueInLastPeriods = 0;
+    }
+    lineItem.setValue(sumValue + maxValueInLastPeriods);
   }
 
   @Override
@@ -61,7 +99,6 @@ public class PatientDataProcessor implements UsageReportDataProcessor {
   @Override
   public void update(SiglusRequisitionDto requisition,
       SiglusRequisitionDto siglusRequisitionUpdatedDto) {
-
     List<PatientLineItem> lineItems = requisition.getPatientLineItems().stream()
         .map(mapper::from)
         .flatMap(Collection::stream)
@@ -92,8 +129,7 @@ public class PatientDataProcessor implements UsageReportDataProcessor {
     for (PatientLineItem lineItem : lineItems) {
       lineItem.setRequisitionId(requisitionId);
     }
-    log.info("save patient line items by requisition id: {}", requisitionId);
-    return repo.save(lineItems);
+    return lineItems;
   }
 
   private List<PatientLineItem> toLineItems(UsageTemplateColumnSection sectionTemplate) {

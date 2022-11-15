@@ -38,15 +38,15 @@ import org.openlmis.requisition.service.PeriodService;
 import org.openlmis.requisition.service.referencedata.FacilityReferenceDataService;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
 import org.siglus.siglusapi.constant.PeriodConstants;
-import org.siglus.siglusapi.domain.ProgramRequisitionNameMapping;
-import org.siglus.siglusapi.domain.RequisitionMonthlyReport;
+import org.siglus.siglusapi.domain.MonthlyRequisitions;
+import org.siglus.siglusapi.domain.ProgramReportNameMapping;
 import org.siglus.siglusapi.domain.SiglusReportType;
 import org.siglus.siglusapi.domain.report.RequisitionMonthlyReportFacility;
 import org.siglus.siglusapi.dto.SupportedProgramDto;
 import org.siglus.siglusapi.repository.FacilityNativeRepository;
-import org.siglus.siglusapi.repository.ProgramRequisitionNameMappingRepository;
-import org.siglus.siglusapi.repository.RequisitionMonthReportRepository;
-import org.siglus.siglusapi.repository.RequisitionMonthlyNotSubmitReportRepository;
+import org.siglus.siglusapi.repository.MonthlyRequisitionsRepository;
+import org.siglus.siglusapi.repository.NotSubmittedMonthlyRequisitionsRepository;
+import org.siglus.siglusapi.repository.ProgramReportNameMappingRepository;
 import org.siglus.siglusapi.repository.SiglusReportTypeRepository;
 import org.siglus.siglusapi.repository.dto.FacilityProgramPeriodScheduleDto;
 import org.siglus.siglusapi.repository.dto.FacillityStockCardDateDto;
@@ -61,13 +61,13 @@ public class RequisitionReportTaskServiceTest {
   @Mock
   private FacilityReferenceDataService facilityReferenceDataService;
   @Mock
-  private RequisitionMonthReportRepository requisitionMonthReportRepository;
+  private MonthlyRequisitionsRepository monthlyRequisitionsRepository;
   @Mock
-  private RequisitionMonthlyNotSubmitReportRepository requisitionMonthlyNotSubmitReportRepository;
+  private NotSubmittedMonthlyRequisitionsRepository notSubmittedMonthlyRequisitionsRepository;
   @Mock
   private FacilityNativeRepository facilityNativeRepository;
   @Mock
-  private ProgramRequisitionNameMappingRepository programRequisitionNameMappingRepository;
+  private ProgramReportNameMappingRepository programReportNameMappingRepository;
   @Mock
   private SiglusFacilityReferenceDataService siglusFacilityReferenceDataService;
   @InjectMocks
@@ -116,13 +116,13 @@ public class RequisitionReportTaskServiceTest {
     when(facilityNativeRepository.queryAllFacilityInfo()).thenReturn(
         requisitionMonthlyReportFacilities);
 
-    ProgramRequisitionNameMapping item5 = new ProgramRequisitionNameMapping();
+    ProgramReportNameMapping item5 = new ProgramReportNameMapping();
     item5.setProgramId(programId);
     item5.setReportName("Via RequisitionName");
     item5.setProgramName("code1");
-    List<ProgramRequisitionNameMapping> requisitionNameMapping = new ArrayList<>();
+    List<ProgramReportNameMapping> requisitionNameMapping = new ArrayList<>();
     requisitionNameMapping.add(item5);
-    when(programRequisitionNameMappingRepository.findAll()).thenReturn(requisitionNameMapping);
+    when(programReportNameMappingRepository.findAll()).thenReturn(requisitionNameMapping);
 
     org.siglus.siglusapi.dto.FacilityDto facilityDto2 = new org.siglus.siglusapi.dto.FacilityDto();
     facilityDto2.setActive(true);
@@ -172,13 +172,13 @@ public class RequisitionReportTaskServiceTest {
     when(facilityNativeRepository.findFirstStockCardGroupByFacility()).thenReturn(
         getFacillityStockCardDateDto(2021, 1, 10));
 
-    when(requisitionMonthReportRepository.findAll()).thenReturn(new ArrayList<>());
+    when(monthlyRequisitionsRepository.findAll()).thenReturn(new ArrayList<>());
 
     // when
     requisitionReportTaskService.refresh();
 
     // then
-    verify(requisitionMonthlyNotSubmitReportRepository).save(any(List.class));
+    verify(notSubmittedMonthlyRequisitionsRepository).save(any(List.class));
 
   }
 
@@ -200,20 +200,20 @@ public class RequisitionReportTaskServiceTest {
     when(facilityNativeRepository.findFirstStockCardGroupByFacility()).thenReturn(
         getFacillityStockCardDateDto(2021, 1, 10));
 
-    RequisitionMonthlyReport report = new RequisitionMonthlyReport();
+    MonthlyRequisitions report = new MonthlyRequisitions();
     report.setFacilityId(facilityId);
     report.setId(reportId);
     report.setProgramId(programId);
     report.setProcessingPeriodId(periodId);
-    List<RequisitionMonthlyReport> requisitionMonthlyReports = new ArrayList<>();
-    requisitionMonthlyReports.add(report);
-    when(requisitionMonthReportRepository.findAll()).thenReturn(requisitionMonthlyReports);
+    List<MonthlyRequisitions> monthlyRequisitions = new ArrayList<>();
+    monthlyRequisitions.add(report);
+    when(monthlyRequisitionsRepository.findAll()).thenReturn(monthlyRequisitions);
 
     // when
     requisitionReportTaskService.refresh();
 
     // then
-    verify(requisitionMonthlyNotSubmitReportRepository).save(any(List.class));
+    verify(notSubmittedMonthlyRequisitionsRepository).save(any(List.class));
 
   }
 
@@ -243,20 +243,20 @@ public class RequisitionReportTaskServiceTest {
     when(facilityNativeRepository.findFirstStockCardGroupByFacility()).thenReturn(
         getFacillityStockCardDateDto(2019, 10, 10));
 
-    RequisitionMonthlyReport report = new RequisitionMonthlyReport();
+    MonthlyRequisitions report = new MonthlyRequisitions();
     report.setFacilityId(facilityId);
     report.setId(reportId);
     report.setProgramId(programId);
     report.setProcessingPeriodId(UUID.randomUUID());
-    List<RequisitionMonthlyReport> requisitionMonthlyReports = new ArrayList<>();
-    requisitionMonthlyReports.add(report);
-    when(requisitionMonthReportRepository.findAll()).thenReturn(requisitionMonthlyReports);
+    List<MonthlyRequisitions> monthlyRequisitions = new ArrayList<>();
+    monthlyRequisitions.add(report);
+    when(monthlyRequisitionsRepository.findAll()).thenReturn(monthlyRequisitions);
 
     // when
     requisitionReportTaskService.refresh();
 
     // then
-    verify(requisitionMonthlyNotSubmitReportRepository, times(1)).save(any(List.class));
+    verify(notSubmittedMonthlyRequisitionsRepository, times(1)).save(any(List.class));
   }
 
   private List<FacillityStockCardDateDto> getFacillityStockCardDateDto(int year, int month, int dayOfMonth) {

@@ -27,6 +27,7 @@ import static org.openlmis.requisition.domain.requisition.RequisitionStatus.RELE
 import static org.openlmis.requisition.domain.requisition.RequisitionStatus.RELEASED_WITHOUT_ORDER;
 import static org.openlmis.requisition.domain.requisition.RequisitionStatus.SUBMITTED;
 import static org.openlmis.requisition.i18n.MessageKeys.ERROR_ID_MISMATCH;
+import static org.openlmis.requisition.web.QueryRequisitionSearchParams.REQUISITION_STATUS;
 import static org.siglus.common.constant.KitConstants.APE_KITS;
 import static org.siglus.common.constant.KitConstants.US_KITS;
 import static org.siglus.siglusapi.util.RequisitionUtil.getRequisitionExtraData;
@@ -125,11 +126,11 @@ import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionLineItemDto;
 import org.siglus.siglusapi.dto.SimpleRequisitionDto;
 import org.siglus.siglusapi.repository.FacilityExtensionRepository;
+import org.siglus.siglusapi.repository.NotSubmittedMonthlyRequisitionsRepository;
 import org.siglus.siglusapi.repository.ProcessingPeriodRepository;
 import org.siglus.siglusapi.repository.RequisitionDraftRepository;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionLineItemExtensionRepository;
-import org.siglus.siglusapi.repository.RequisitionMonthlyNotSubmitReportRepository;
 import org.siglus.siglusapi.repository.RequisitionNativeSqlRepository;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
 import org.siglus.siglusapi.service.fc.FcCmmCpService;
@@ -178,7 +179,7 @@ public class SiglusRequisitionService {
   private final FcCmmCpService fcCmmCpService;
   private final SiglusFilterAddProductForEmergencyService filterProductService;
   private final SupportedProgramsHelper supportedProgramsHelper;
-  private final RequisitionMonthlyNotSubmitReportRepository requisitionMonthlyNotSubmitReportRepository;
+  private final NotSubmittedMonthlyRequisitionsRepository notSubmittedMonthlyRequisitionsRepository;
   private final HttpServletResponse response;
   private final StockCardRangeSummaryStockManagementService stockCardRangeSummaryStockManagementService;
   private final StockManagementRepository stockManagementRepository;
@@ -217,7 +218,7 @@ public class SiglusRequisitionService {
     initiateSuggestedQuantity(lineItems, facilityId, siglusRequisitionDto.getProcessingPeriodId(),
         siglusRequisitionDto.getProgramId(), siglusRequisitionDto.getTemplate());
     saveLineItemExtensions(lineItems);
-    requisitionMonthlyNotSubmitReportRepository.deleteByFacilityIdAndProgramIdAndProcessingPeriodId(facilityId,
+    notSubmittedMonthlyRequisitionsRepository.deleteByFacilityIdAndProgramIdAndProcessingPeriodId(facilityId,
         programId, v2Dto.getProcessingPeriodId());
     return siglusRequisitionDto;
   }
@@ -424,7 +425,7 @@ public class SiglusRequisitionService {
             UUID.fromString(queryParams.getFirst(QueryRequisitionSearchParams.FACILITY)),
             UUID.fromString(queryParams.getFirst(QueryRequisitionSearchParams.PROGRAM)));
     requisitionStatusDisplayInRequisitionHistory.forEach(requisitionStatus -> queryParams
-        .add(QueryRequisitionSearchParams.REQUISITION_STATUS, requisitionStatus.toString()));
+        .add(REQUISITION_STATUS, requisitionStatus.toString()));
     RequisitionSearchParams params = new QueryRequisitionSearchParams(queryParams);
     return siglusRequisitionRequisitionService.searchRequisitions(params, pageable);
   }

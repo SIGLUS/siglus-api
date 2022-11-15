@@ -38,15 +38,15 @@ import org.openlmis.requisition.service.referencedata.FacilityReferenceDataServi
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
 import org.siglus.common.dto.ProgramAdditionalOrderableDto;
 import org.siglus.siglusapi.constant.ProgramConstants;
-import org.siglus.siglusapi.domain.ProgramRequisitionNameMapping;
-import org.siglus.siglusapi.domain.RequisitionMonthlyReport;
+import org.siglus.siglusapi.domain.MonthlyRequisitions;
+import org.siglus.siglusapi.domain.ProgramReportNameMapping;
 import org.siglus.siglusapi.domain.SiglusReportType;
-import org.siglus.siglusapi.domain.report.RequisitionMonthlyNotSubmitReport;
+import org.siglus.siglusapi.domain.report.NotSubmittedMonthlyRequisitions;
 import org.siglus.siglusapi.domain.report.RequisitionMonthlyReportFacility;
 import org.siglus.siglusapi.repository.FacilityNativeRepository;
-import org.siglus.siglusapi.repository.ProgramRequisitionNameMappingRepository;
-import org.siglus.siglusapi.repository.RequisitionMonthReportRepository;
-import org.siglus.siglusapi.repository.RequisitionMonthlyNotSubmitReportRepository;
+import org.siglus.siglusapi.repository.MonthlyRequisitionsRepository;
+import org.siglus.siglusapi.repository.NotSubmittedMonthlyRequisitionsRepository;
+import org.siglus.siglusapi.repository.ProgramReportNameMappingRepository;
 import org.siglus.siglusapi.repository.SiglusReportTypeRepository;
 import org.siglus.siglusapi.repository.dto.FacillityStockCardDateDto;
 import org.siglus.siglusapi.service.SiglusProcessingPeriodService;
@@ -59,12 +59,13 @@ import org.springframework.stereotype.Service;
 @Service
 @SuppressWarnings("PMD.TooManyMethods")
 public class RequisitionReportTaskService {
+
   private final ProgramReferenceDataService programDataService;
   private final FacilityReferenceDataService facilityReferenceDataService;
-  private final RequisitionMonthReportRepository requisitionMonthReportRepository;
-  private final RequisitionMonthlyNotSubmitReportRepository requisitionMonthlyNotSubmitReportRepository;
+  private final MonthlyRequisitionsRepository monthlyRequisitionsRepository;
+  private final NotSubmittedMonthlyRequisitionsRepository notSubmittedMonthlyRequisitionsRepository;
   private final FacilityNativeRepository facilityNativeRepository;
-  private final ProgramRequisitionNameMappingRepository programRequisitionNameMappingRepository;
+  private final ProgramReportNameMappingRepository programReportNameMappingRepository;
   private final SiglusFacilityReferenceDataService siglusFacilityReferenceDataService;
   private final SiglusProgramAdditionalOrderableService siglusProgramAdditionalOrderableService;
   private final SiglusReportTypeRepository reportTypeRepository;
@@ -112,19 +113,19 @@ public class RequisitionReportTaskService {
       if (Boolean.FALSE.equals(facilityWithSupportedPrograms.getActive())) {
         continue;
       }
-      List<RequisitionMonthlyNotSubmitReport> notSubmitList =
-          getFacilityNotSubmitRequisitions(facilityInfo, facilityReportTypeList, dataWrapper);
+      List<NotSubmittedMonthlyRequisitions> notSubmitList = getNotSubmittedRequisitions(facilityInfo,
+          facilityReportTypeList, dataWrapper);
 
       updateBatch(facilityInfo.getFacilityId(), notSubmitList);
     }
   }
 
-  private List<RequisitionMonthlyNotSubmitReport> getFacilityNotSubmitRequisitions(
+  private List<NotSubmittedMonthlyRequisitions> getNotSubmittedRequisitions(
       RequisitionMonthlyReportFacility facilityInfo, List<SiglusReportType> reportTypes, DataWrapper dataWrapper) {
-    List<RequisitionMonthlyNotSubmitReport> notSubmitList = new ArrayList<>();
+    List<NotSubmittedMonthlyRequisitions> notSubmitList = new ArrayList<>();
     for (ProgramDto programDto : dataWrapper.allProgramDto) {
       UUID programId = programDto.getId();
-      String programCode = dataWrapper.programIdToRequisitionNameMapping.get(programId).getReportName();
+      String programCode = dataWrapper.programIdToReportNameMapping.get(programId).getReportName();
       FacillityStockCardDateDto facillityStockCardDateDto = dataWrapper.facilityProgramToStockCardDate.get(
           dataWrapper.getUniqueKey(facilityInfo.getFacilityId(), programId));
       if (facillityStockCardDateDto == null) {
@@ -139,7 +140,7 @@ public class RequisitionReportTaskService {
             facilityInfo.getFacilityId()));
         continue;
       }
-      List<RequisitionMonthlyNotSubmitReport> programNotSubmitRequisitions =
+      List<NotSubmittedMonthlyRequisitions> programNotSubmitRequisitions =
           getPeriodNotSubmitRequisitions(facilityInfo, programDto, dataWrapper);
       notSubmitList.addAll(programNotSubmitRequisitions);
 
@@ -147,49 +148,47 @@ public class RequisitionReportTaskService {
     return notSubmitList;
   }
 
-  private List<RequisitionMonthlyNotSubmitReport> getPeriodNotSubmitRequisitions(
+  private List<NotSubmittedMonthlyRequisitions> getPeriodNotSubmitRequisitions(
       RequisitionMonthlyReportFacility facilityInfo, ProgramDto programDto, DataWrapper dataWrapper) {
     Collection<ProcessingPeriodDto> periods = siglusProcessingPeriodService.fillProcessingPeriodWithExtension(
         periodService.searchByProgramAndFacility(programDto.getId(), facilityInfo.getFacilityId()));
 
     List<ProcessingPeriodDto> sortedPeriods =
         periods.stream().sorted(Comparator.comparing(ProcessingPeriodDto::getStartDate)).collect(Collectors.toList());
-    List<RequisitionMonthlyNotSubmitReport> notSubmitPeriodList = new ArrayList<>();
+    List<NotSubmittedMonthlyRequisitions> notSubmitPeriodList = new ArrayList<>();
     for (ProcessingPeriodDto processingPeriodDto : sortedPeriods) {
-      RequisitionMonthlyReport requisitionMonthlyReport = dataWrapper.requisitionMonthlyReportKeyToReport.get(
+      MonthlyRequisitions monthlyRequisitions = dataWrapper.monthlyRequisitionKeyToRequisition.get(
           dataWrapper.getUniqueKey(facilityInfo.getFacilityId(), processingPeriodDto.getId(),
               programDto.getId()));
-      if (requisitionMonthlyReport != null) {
+      if (monthlyRequisitions != null) {
         // already exists rr
         continue;
       }
-      RequisitionMonthlyNotSubmitReport notSubmit = getRequisitionMonthlyNotSubmitReport(
-          dataWrapper.programIdToRequisitionNameMapping, facilityInfo.getFacilityId(), facilityInfo, programDto.getId(),
+      NotSubmittedMonthlyRequisitions notSubmit = getRequisitionMonthlyNotSubmitReport(
+          dataWrapper.programIdToReportNameMapping, facilityInfo.getFacilityId(), facilityInfo, programDto.getId(),
           processingPeriodDto);
       notSubmitPeriodList.add(notSubmit);
     }
     return notSubmitPeriodList;
   }
 
-
-
-  public void updateBatch(UUID facilityId, List<RequisitionMonthlyNotSubmitReport> notSubmitList) {
-    requisitionMonthlyNotSubmitReportRepository.deleteByFacilityId(facilityId);
+  public void updateBatch(UUID facilityId, List<NotSubmittedMonthlyRequisitions> notSubmitList) {
+    notSubmittedMonthlyRequisitionsRepository.deleteByFacilityId(facilityId);
     if (CollectionUtils.isEmpty(notSubmitList)) {
       return;
     }
     log.info(String.format("[save] notSubmitList size =%s, facilityId=%s", notSubmitList.size(), facilityId));
-    requisitionMonthlyNotSubmitReportRepository.save(notSubmitList);
+    notSubmittedMonthlyRequisitionsRepository.save(notSubmitList);
   }
 
-  private RequisitionMonthlyNotSubmitReport getRequisitionMonthlyNotSubmitReport(
-      Map<UUID, ProgramRequisitionNameMapping> requisitionNameMappingMap, UUID facilityId,
+  private NotSubmittedMonthlyRequisitions getRequisitionMonthlyNotSubmitReport(
+      Map<UUID, ProgramReportNameMapping> requisitionNameMappingMap, UUID facilityId,
       RequisitionMonthlyReportFacility requisitionMonthlyReportFacility, UUID programId,
       ProcessingPeriodDto processingPeriodDto) {
-    return RequisitionMonthlyNotSubmitReport.builder()
+    return NotSubmittedMonthlyRequisitions.builder()
         .programId(programId)
         .processingPeriodId(processingPeriodDto.getId())
-
+        .processingPeriodName(processingPeriodDto.getName())
         .district(requisitionMonthlyReportFacility.getDistrict())
         .province(requisitionMonthlyReportFacility.getProvince())
         .facilityName(requisitionMonthlyReportFacility.getFacilityName())
@@ -198,7 +197,6 @@ public class RequisitionReportTaskService {
         .facilityMergeType(requisitionMonthlyReportFacility.getFacilityMergeType())
         .districtFacilityCode(requisitionMonthlyReportFacility.getDistrictFacilityCode())
         .provinceFacilityCode(requisitionMonthlyReportFacility.getProvinceFacilityCode())
-
         .originalPeriod(formatDate(processingPeriodDto))
         .reportName(requisitionNameMappingMap.get(programId).getReportName())
         .inventorydDate(null)
@@ -219,7 +217,6 @@ public class RequisitionReportTaskService {
   }
 
   private String formatDate(ProcessingPeriodDto processingPeriod) {
-
     return
         processingPeriod.getStartDate().getDayOfMonth() + " "
             + MONTH_NAME_MAP.getOrDefault(processingPeriod.getStartDate().getMonth().getValue(), StringUtils.EMPTY)
@@ -231,12 +228,13 @@ public class RequisitionReportTaskService {
   }
 
   public class DataWrapper {
+
     protected List<FacilityDto> allFacilityDto;
     protected Map<UUID, RequisitionMonthlyReportFacility> monthlyReportFacilityMap;
     protected List<ProgramDto> allProgramDto;
-    protected Map<UUID, ProgramRequisitionNameMapping> programIdToRequisitionNameMapping;
+    protected Map<UUID, ProgramReportNameMapping> programIdToReportNameMapping;
     protected Map<String, FacillityStockCardDateDto> facilityProgramToStockCardDate;
-    protected Map<String, RequisitionMonthlyReport> requisitionMonthlyReportKeyToReport;
+    protected Map<String, MonthlyRequisitions> monthlyRequisitionKeyToRequisition;
 
     public DataWrapper() {
       allFacilityDto = facilityReferenceDataService.findAll();
@@ -251,10 +249,9 @@ public class RequisitionReportTaskService {
       allProgramDto = programDataService.findAll();
       log.info("allProgramDto.size = " + allProgramDto.size());
 
-      List<ProgramRequisitionNameMapping> requisitionNameMapping = programRequisitionNameMappingRepository.findAll();
-      programIdToRequisitionNameMapping = requisitionNameMapping.stream()
-          .collect(Collectors.toMap(ProgramRequisitionNameMapping::getProgramId, Function.identity()));
-
+      List<ProgramReportNameMapping> requisitionNameMapping = programReportNameMappingRepository.findAll();
+      programIdToReportNameMapping = requisitionNameMapping.stream()
+          .collect(Collectors.toMap(ProgramReportNameMapping::getProgramId, Function.identity()));
 
       List<FacillityStockCardDateDto> firstStockCardGroupByFacility =
           getAllFacilityStockCardDateDtos(allProgramDto);
@@ -264,24 +261,24 @@ public class RequisitionReportTaskService {
               item -> getUniqueKey(item.getFacilityId(),
                   item.getProgramId()), Function.identity()));
 
-      List<RequisitionMonthlyReport> requisitionMonthlyReports = requisitionMonthReportRepository.findAll();
-      requisitionMonthlyReports = requisitionMonthlyReports.stream()
+      List<MonthlyRequisitions> monthlyRequisitions = monthlyRequisitionsRepository.findAll();
+      monthlyRequisitions = monthlyRequisitions.stream()
           .filter(item -> item.getRequisitionCreatedDate() != null).collect(Collectors.toList());
-      requisitionMonthlyReportKeyToReport = requisitionMonthlyReports.stream()
+      monthlyRequisitionKeyToRequisition = monthlyRequisitions.stream()
           .collect(Collectors.toMap(this::getUniqueKey, Function.identity(), (e1, e2) -> e1));
-      log.info("requisitionMonthlyReports.size = " + requisitionMonthlyReports.size());
+      log.info("requisitionMonthlyReports.size = " + monthlyRequisitions.size());
 
       Set<UUID> existedPhysicalInventoryFacilityIds = firstStockCardGroupByFacility.stream()
           .map(FacillityStockCardDateDto::getFacilityId).collect(
               Collectors.toSet());
 
-      allFacilityDto =
-          allFacilityDto.stream().filter(item -> existedPhysicalInventoryFacilityIds.contains(item.getId()))
-              .collect(Collectors.toList());
+      allFacilityDto = allFacilityDto.stream()
+          .filter(item -> existedPhysicalInventoryFacilityIds.contains(item.getId()))
+          .collect(Collectors.toList());
       log.info("filtered allFacilityDto.size = " + allFacilityDto.size());
     }
 
-    private String getUniqueKey(RequisitionMonthlyReport item) {
+    private String getUniqueKey(MonthlyRequisitions item) {
       return getUniqueKey(item.getFacilityId(), item.getProcessingPeriodId(), item.getProgramId());
     }
 

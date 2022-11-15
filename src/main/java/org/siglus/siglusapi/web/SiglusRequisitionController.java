@@ -159,7 +159,9 @@ public class SiglusRequisitionController {
       HttpServletResponse response) {
     BasicRequisitionDto basicRequisitionDto = siglusRequisitionService.rejectRequisition(requisitionId, request,
         response);
-    requisitionRejectEmitter.emit(requisitionId, basicRequisitionDto.getFacility().getId());
+    if (!authenticationHelper.getCurrentUser().getHomeFacilityId().equals(basicRequisitionDto.getFacility().getId())) {
+      requisitionRejectEmitter.emit(requisitionId, basicRequisitionDto.getFacility().getId());
+    }
     return basicRequisitionDto;
   }
 

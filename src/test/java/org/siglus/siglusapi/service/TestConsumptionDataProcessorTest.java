@@ -17,6 +17,7 @@ package org.siglus.siglusapi.service;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Maps.newHashMap;
+import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.mockito.Mockito.times;
@@ -36,6 +37,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.requisition.dto.BasicRequisitionTemplateDto;
+import org.openlmis.requisition.dto.ObjectReferenceDto;
 import org.siglus.common.dto.RequisitionTemplateExtensionDto;
 import org.siglus.siglusapi.domain.TestConsumptionLineItem;
 import org.siglus.siglusapi.domain.UsageCategory;
@@ -74,6 +76,14 @@ public class TestConsumptionDataProcessorTest {
 
   private static final String OUTCOME = "outcome";
 
+  private final UUID facilityId = UUID.randomUUID();
+
+  private final UUID programId = UUID.randomUUID();
+
+  private final UUID periodId = UUID.randomUUID();
+
+  private final List<UsageTemplateColumnSection> templateColumnSections = newArrayList();
+
   @Test
   public void shouldNotCreateLineItemsWhenInitiateIfDisableTestConsumption() {
     // given
@@ -96,55 +106,11 @@ public class TestConsumptionDataProcessorTest {
   @Test
   public void shouldCreateLineItemsWhenInitiateIfEnableTestConsumption() {
     // given
-    RequisitionTemplateExtensionDto extension = RequisitionTemplateExtensionDto.builder()
-        .enableRapidTestConsumption(true).build();
-    BasicRequisitionTemplateDto template = new BasicRequisitionTemplateDto();
-    template.setExtension(extension);
-    SiglusRequisitionDto siglusRequisitionDto = new SiglusRequisitionDto();
-    siglusRequisitionDto.setId(requisitionId);
-    siglusRequisitionDto.setTemplate(template);
-
-    UsageTemplateColumn serviceColumn = UsageTemplateColumn.builder()
-        .isDisplayed(true)
-        .name(SERVICE)
-        .build();
-    UsageTemplateColumnSection serviceSection = UsageTemplateColumnSection.builder()
-        .category(UsageCategory.RAPIDTESTCONSUMPTION)
-        .name(SERVICE)
-        .columns(newArrayList(serviceColumn))
-        .build();
-    UsageTemplateColumn projectColumn = UsageTemplateColumn.builder()
-        .isDisplayed(true)
-        .name(PROJECT)
-        .build();
-    UsageTemplateColumnSection projectSection = UsageTemplateColumnSection.builder()
-        .category(UsageCategory.RAPIDTESTCONSUMPTION)
-        .name(PROJECT)
-        .columns(newArrayList(projectColumn))
-        .build();
-    UsageTemplateColumn outcomeColumn = UsageTemplateColumn.builder()
-        .isDisplayed(true)
-        .name(OUTCOME)
-        .build();
-    UsageTemplateColumnSection outcomeSection = UsageTemplateColumnSection.builder()
-        .category(UsageCategory.RAPIDTESTCONSUMPTION)
-        .name(OUTCOME)
-        .columns(newArrayList(outcomeColumn))
-        .build();
-
-    List<UsageTemplateColumnSection> templateColumnSections = newArrayList();
-    when(siglusUsageReportService
-        .getColumnSection(templateColumnSections, UsageCategory.RAPIDTESTCONSUMPTION, SERVICE))
-        .thenReturn(serviceSection);
-    when(siglusUsageReportService
-        .getColumnSection(templateColumnSections, UsageCategory.RAPIDTESTCONSUMPTION, PROJECT))
-        .thenReturn(projectSection);
-    when(siglusUsageReportService
-        .getColumnSection(templateColumnSections, UsageCategory.RAPIDTESTCONSUMPTION, OUTCOME))
-        .thenReturn(outcomeSection);
+    givenReturn();
+    when(siglusUsageReportService.isNonTopLevelOrNotUsageReports(programId, facilityId)).thenReturn(true);
 
     // when
-    testConsumptionDataProcessor.initiate(siglusRequisitionDto, templateColumnSections);
+    testConsumptionDataProcessor.initiate(mockRequisitionDto(), templateColumnSections);
 
     // then
     verify(testConsumptionLineItemRepository).save(lineItemsArgumentCaptor.capture());
@@ -155,6 +121,25 @@ public class TestConsumptionDataProcessorTest {
     assertEquals(PROJECT, lineItems.get(0).getProject());
     assertEquals(OUTCOME, lineItems.get(0).getOutcome());
     assertNull(lineItems.get(0).getValue());
+  }
+
+  @Test
+  public void shouldSumValueWhenIsHighLevelFacility() {
+    // given
+    givenReturn();
+    when(siglusUsageReportService.isNonTopLevelOrNotUsageReports(programId, facilityId)).thenReturn(false);
+    when(testConsumptionLineItemRepository.sumValueRequisitionsUnderHighLevelFacility(facilityId, periodId, programId))
+        .thenReturn(singletonList(mockTestConsumptionOutcomeDto(40)));
+    when(testConsumptionLineItemRepository.maxValueRequisitionsInLastPeriods(facilityId, periodId, programId))
+        .thenReturn(singletonList(mockTestConsumptionOutcomeDto(30)));
+
+    // when
+    testConsumptionDataProcessor.initiate(mockRequisitionDto(), templateColumnSections);
+
+    // then
+    verify(testConsumptionLineItemRepository).save(lineItemsArgumentCaptor.capture());
+    List<TestConsumptionLineItem> lineItems = lineItemsArgumentCaptor.getValue();
+    assertEquals(Integer.valueOf(70), lineItems.get(0).getValue());
   }
 
   @Test
@@ -244,6 +229,69 @@ public class TestConsumptionDataProcessorTest {
     // then
     verify(testConsumptionLineItemRepository).findByRequisitionId(requisitionId);
     verify(testConsumptionLineItemRepository).delete(lineItems);
+  }
+
+  private TestConsumptionOutcomeDto mockTestConsumptionOutcomeDto(Integer value) {
+    return TestConsumptionOutcomeDto.builder()
+        .outcome(OUTCOME)
+        .service(SERVICE)
+        .project(PROJECT)
+        .value(value)
+        .build();
+  }
+
+  private void givenReturn() {
+    UsageTemplateColumn serviceColumn = UsageTemplateColumn.builder()
+        .isDisplayed(true)
+        .name(SERVICE)
+        .build();
+    UsageTemplateColumnSection serviceSection = UsageTemplateColumnSection.builder()
+        .category(UsageCategory.RAPIDTESTCONSUMPTION)
+        .name(SERVICE)
+        .columns(newArrayList(serviceColumn))
+        .build();
+    UsageTemplateColumn projectColumn = UsageTemplateColumn.builder()
+        .isDisplayed(true)
+        .name(PROJECT)
+        .build();
+    UsageTemplateColumnSection projectSection = UsageTemplateColumnSection.builder()
+        .category(UsageCategory.RAPIDTESTCONSUMPTION)
+        .name(PROJECT)
+        .columns(newArrayList(projectColumn))
+        .build();
+    UsageTemplateColumn outcomeColumn = UsageTemplateColumn.builder()
+        .isDisplayed(true)
+        .name(OUTCOME)
+        .build();
+    UsageTemplateColumnSection outcomeSection = UsageTemplateColumnSection.builder()
+        .category(UsageCategory.RAPIDTESTCONSUMPTION)
+        .name(OUTCOME)
+        .columns(newArrayList(outcomeColumn))
+        .build();
+
+    when(siglusUsageReportService
+        .getColumnSection(templateColumnSections, UsageCategory.RAPIDTESTCONSUMPTION, SERVICE))
+        .thenReturn(serviceSection);
+    when(siglusUsageReportService
+        .getColumnSection(templateColumnSections, UsageCategory.RAPIDTESTCONSUMPTION, PROJECT))
+        .thenReturn(projectSection);
+    when(siglusUsageReportService
+        .getColumnSection(templateColumnSections, UsageCategory.RAPIDTESTCONSUMPTION, OUTCOME))
+        .thenReturn(outcomeSection);
+  }
+
+  private SiglusRequisitionDto mockRequisitionDto() {
+    RequisitionTemplateExtensionDto extension = RequisitionTemplateExtensionDto.builder()
+        .enableRapidTestConsumption(true).build();
+    BasicRequisitionTemplateDto template = new BasicRequisitionTemplateDto();
+    template.setExtension(extension);
+    SiglusRequisitionDto siglusRequisitionDto = new SiglusRequisitionDto();
+    siglusRequisitionDto.setId(requisitionId);
+    siglusRequisitionDto.setTemplate(template);
+    siglusRequisitionDto.setFacility(new ObjectReferenceDto(facilityId));
+    siglusRequisitionDto.setProgram(new ObjectReferenceDto(programId));
+    siglusRequisitionDto.setProcessingPeriod(new ObjectReferenceDto(periodId));
+    return siglusRequisitionDto;
   }
 
 }

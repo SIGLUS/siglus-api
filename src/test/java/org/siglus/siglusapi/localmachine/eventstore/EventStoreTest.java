@@ -117,7 +117,7 @@ public class EventStoreTest {
     //then
     verify(masterDataOffsetRepository, times(1)).save(masterDataOffsetCaptor.capture());
     MasterDataOffset masterDataOffset = masterDataOffsetCaptor.getValue();
-    assertEquals(5L, masterDataOffset.getRecordOffset());
+    assertEquals(2L, masterDataOffset.getRecordOffset());
     assertEquals(2, masterDataEvents.size());
   }
 

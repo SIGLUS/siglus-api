@@ -19,7 +19,10 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import org.siglus.siglusapi.domain.TestConsumptionLineItem;
+import org.siglus.siglusapi.dto.TestConsumptionOutcomeDto;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface TestConsumptionLineItemRepository
     extends JpaRepository<TestConsumptionLineItem, UUID> {
@@ -29,4 +32,13 @@ public interface TestConsumptionLineItemRepository
   List<TestConsumptionLineItem> findByRequisitionIdIn(Set<UUID> requisitionIds);
 
   void deleteByRequisitionId(UUID requisitionId);
+
+  @Query(name = "TestConsumptionLineItem.sumValueRequisitionsUnderHighLevelFacility", nativeQuery = true)
+  List<TestConsumptionOutcomeDto> sumValueRequisitionsUnderHighLevelFacility(@Param("facilityId") UUID facilityId,
+      @Param("periodId") UUID periodId, @Param("programId") UUID programId);
+
+  @Query(name = "TestConsumptionLineItem.maxValueRequisitionsInLastPeriods", nativeQuery = true)
+  List<TestConsumptionOutcomeDto> maxValueRequisitionsInLastPeriods(@Param("facilityId") UUID facilityId,
+      @Param("periodId") UUID periodId, @Param("programId") UUID programId);
+
 }

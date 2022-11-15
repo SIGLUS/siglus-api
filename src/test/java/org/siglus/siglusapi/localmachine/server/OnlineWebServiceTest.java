@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.localmachine.server;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Matchers.any;
@@ -32,7 +33,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -40,8 +43,10 @@ import javax.servlet.http.HttpServletResponse;
 import net.javacrumbs.shedlock.core.SimpleLock;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.internal.verification.VerificationModeFactory;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.siglus.siglusapi.localmachine.ShedLockFactory;
 import org.siglus.siglusapi.localmachine.ShedLockFactory.AutoClosableLock;
@@ -80,6 +85,57 @@ public class OnlineWebServiceTest {
   private OnlineWebService onlineWebService;
 
   private static final UUID facilityId = UUID.randomUUID();
+
+  @Test
+  public void shouldReturnMinOneOfSnapshotIdOrMinimumOffsetWhenGetMinimumOffset() {
+    // given
+    given(masterDataOffsetRepository.getMinimumOffset()).willReturn(33L);
+    long minOffset = 9L;
+    given(masterDataEventRecordRepository.findBySnapshotVersionIsNotNull())
+        .willReturn(Collections.singletonList(MasterDataEventRecord.builder().id(minOffset).build()));
+    // then
+    assertThat(onlineWebService.getMinimumOffsetForDeletion()).isEqualTo(minOffset);
+  }
+
+  @Test
+  public void shouldReturn0WhenGetMinimumOffsetForDeletionGivenNoOffsetFound() {
+    // given
+    given(masterDataOffsetRepository.getMinimumOffset()).willReturn(null);
+    given(masterDataEventRecordRepository.findBySnapshotVersionIsNotNull())
+        .willReturn(Collections.singletonList(MasterDataEventRecord.builder().id(99L).build()));
+    // then
+    assertThat(onlineWebService.getMinimumOffsetForDeletion()).isZero();
+  }
+
+  @Test
+  public void shouldReturn0WhenGetMinimumOffsetForDeletionGivenSnapshotNotExists() {
+    // given
+    given(masterDataEventRecordRepository.findBySnapshotVersionIsNotNull()).willReturn(Collections.emptyList());
+    // then
+    assertThat(onlineWebService.getMinimumOffsetForDeletion()).isZero();
+  }
+
+  @Test
+  public void shouldSkipLastSnapshotWhenCleanMasterDataSnapshot() {
+    // given
+    MasterDataEventRecord snap1 = MasterDataEventRecord.builder().id(11L).snapshotVersion("11.zip").build();
+    MasterDataEventRecord snap2 = MasterDataEventRecord.builder().id(22L).snapshotVersion("22.zip").build();
+    MasterDataEventRecord snap3 = MasterDataEventRecord.builder().id(33L).snapshotVersion("33.zip").build();
+    given(masterDataEventRecordRepository.findBySnapshotVersionIsNotNull())
+        .willReturn(Arrays.asList(snap1, snap3, snap2));
+    // when
+    onlineWebService.cleanMasterDataSnapshot();
+    // then
+    ArgumentCaptor<String> deletedFileNames = ArgumentCaptor.forClass(String.class);
+    verify(s3FileHandler, VerificationModeFactory.atLeastOnce())
+        .deleteFileFromS3(deletedFileNames.capture());
+    assertThat(deletedFileNames.getAllValues())
+        .containsExactlyInAnyOrder("masterdata/11.zip", "masterdata/22.zip");
+    ArgumentCaptor<LinkedList> deletedRecordCaptor = ArgumentCaptor.forClass(LinkedList.class);
+    verify(masterDataEventRecordRepository, VerificationModeFactory.atLeastOnce())
+        .delete(deletedRecordCaptor.capture());
+    assertThat(deletedRecordCaptor.getValue()).containsExactlyInAnyOrder(snap1, snap2);
+  }
 
   @Test
   public void shouldGenerateZipWhenLocalMachineResync() throws IOException, InterruptedException {

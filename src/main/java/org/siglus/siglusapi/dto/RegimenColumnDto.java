@@ -15,12 +15,59 @@
 
 package org.siglus.siglusapi.dto;
 
+import static org.siglus.siglusapi.constant.FieldConstants.SEPARATOR;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.QUERY_MAX_VALUE_IN_LAST_PERIODS;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.QUERY_REQUISITIONS_UNDER_HIGH_LEVEL;
+
 import java.util.UUID;
+import javax.persistence.ColumnResult;
+import javax.persistence.ConstructorResult;
+import javax.persistence.MappedSuperclass;
+import javax.persistence.NamedNativeQueries;
+import javax.persistence.NamedNativeQuery;
+import javax.persistence.SqlResultSetMapping;
+import javax.persistence.SqlResultSetMappings;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+@NamedNativeQueries({
+    @NamedNativeQuery(
+        name = "RegimenLineItem.sumValueRequisitionsUnderHighLevelFacility",
+        query = "select rli.regimenid as regimenId,rli.columnname as column,sum(rli.value) as value "
+            + "from siglusintegration.regimen_line_items rli "
+            + "where rli.requisitionid in "
+            + QUERY_REQUISITIONS_UNDER_HIGH_LEVEL
+            + " group by rli.regimenid,rli.columnname",
+        resultSetMapping = "RegimenLineItem.RegimenColumnDto"),
+    @NamedNativeQuery(
+        name = "RegimenLineItem.maxValueRequisitionsInLastPeriods",
+        query = "select regimenid as regimenId,columnname as column,sum(maxvalue) as value from "
+            + "(select rli.regimenid,rli.columnname,max(rli.value) as maxvalue "
+            + "from siglusintegration.regimen_line_items rli "
+            + "left join requisition.requisitions r on r.id = rli.requisitionid "
+            + "where rli.requisitionid in "
+            + QUERY_MAX_VALUE_IN_LAST_PERIODS
+            + "group by rli.regimenid,rli.columnname,r.facilityid) maxtmp "
+            + "group by regimenid, columnname",
+        resultSetMapping = "RegimenLineItem.RegimenColumnDto")
+})
+
+@MappedSuperclass
+@SqlResultSetMappings({
+    @SqlResultSetMapping(
+        name = "RegimenLineItem.RegimenColumnDto",
+        classes = @ConstructorResult(
+            targetClass = RegimenColumnDto.class,
+            columns = {
+                @ColumnResult(name = "regimenId", type = UUID.class),
+                @ColumnResult(name = "column", type = String.class),
+                @ColumnResult(name = "value", type = Integer.class),
+            }
+        )
+    )
+})
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -29,6 +76,22 @@ public class RegimenColumnDto {
 
   private UUID id;
 
+  private UUID regimenId;
+
+  private String column;
+
   private Integer value;
+
+  // comment by yyd: This constructor will be used after the above query, do not delete it
+  @SuppressWarnings("unused")
+  public RegimenColumnDto(UUID regimenId, String column, Integer value) {
+    this.regimenId = regimenId;
+    this.column = column;
+    this.value = value;
+  }
+
+  public String getRegimenIdColumn() {
+    return regimenId + SEPARATOR + column;
+  }
 
 }

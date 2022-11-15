@@ -16,6 +16,7 @@
 package org.siglus.siglusapi.domain;
 
 import static com.google.common.collect.Lists.newArrayList;
+import static org.siglus.siglusapi.constant.FieldConstants.SEPARATOR;
 
 import java.util.List;
 import java.util.UUID;
@@ -68,6 +69,10 @@ public class UsageInformationLineItem extends BaseEntity {
               }));
     });
     return lineItems;
+  }
+
+  public String getServiceInformationOrderableId() {
+    return service + SEPARATOR + information + SEPARATOR + orderableId;
   }
 
 }

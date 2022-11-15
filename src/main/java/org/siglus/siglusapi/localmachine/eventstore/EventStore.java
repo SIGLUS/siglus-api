@@ -99,26 +99,12 @@ public class EventStore {
     if (offsetId == null) {
       return Collections.emptyList();
     }
+    updateMasterDataOffset(offsetId, facilityId);
     List<MasterDataEventRecord> bufferedMasterDataRecords = getMasterDataRecords(
         offsetId, facilityId, MASTER_DATA_EVENT_BATCH_LIMIT);
-    List<MasterDataEvent> masterDataEvents =
-        bufferedMasterDataRecords.stream()
-            .map(it -> it.toMasterDataEvent(payloadSerializer::load))
-            .collect(Collectors.toList());
-    int size = masterDataEvents.size();
-    if (size > 0) {
-      MasterDataEvent masterDataEvent = masterDataEvents.get(size - 1);
-      offsetId = masterDataEvent.getId();
-      MasterDataOffset masterDataOffset = masterDataOffsetRepository.findByFacilityIdIs(facilityId);
-      if (masterDataOffset == null) {
-        masterDataOffset = MasterDataOffset.builder().id(UUID.randomUUID()).build();
-      }
-      masterDataOffset.setFacilityId(facilityId);
-      masterDataOffset.setRecordOffset(offsetId);
-      log.info("save facility increment master data offset: {}", masterDataOffset);
-      masterDataOffsetRepository.save(masterDataOffset);
-    }
-    return masterDataEvents;
+    return bufferedMasterDataRecords.stream()
+        .map(it -> it.toMasterDataEvent(payloadSerializer::load))
+        .collect(Collectors.toList());
   }
 
   @Transactional
@@ -261,6 +247,18 @@ public class EventStore {
     return bufferedMasterDataRecords;
   }
 
+  public long getCurrentMasterDataOffset() {
+    return Optional.ofNullable(masterDataOffsetRepository.findLocalMasterDataOffset()).orElse(0L);
+  }
+
+  public void updateLocalMasterDataOffset(long newOffset) {
+    masterDataOffsetRepository.updateLocalMasterDataOffset(newOffset);
+  }
+
+  public Optional<UUID> getLastEventIdInGroup(String groupId) {
+    return repository.findLastEventIdGroupId(groupId).map(UUID::fromString);
+  }
+
   boolean filterMasterDataEventRecord(MasterDataEventRecord eventRecord, UUID facilityId) {
     boolean isSharedIncrementalRecord =
         eventRecord.getFacilityId() == null && eventRecord.getSnapshotVersion() == null;
@@ -281,15 +279,14 @@ public class EventStore {
     ackRepository.save(ackRecord);
   }
 
-  public long getCurrentMasterDataOffset() {
-    return Optional.ofNullable(masterDataOffsetRepository.findLocalMasterDataOffset()).orElse(0L);
-  }
-
-  public void updateLocalMasterDataOffset(long newOffset) {
-    masterDataOffsetRepository.updateLocalMasterDataOffset(newOffset);
-  }
-
-  public Optional<UUID> getLastEventIdInGroup(String groupId) {
-    return repository.findLastEventIdGroupId(groupId).map(UUID::fromString);
+  private void updateMasterDataOffset(Long offsetId, UUID facilityId) {
+    MasterDataOffset masterDataOffset = masterDataOffsetRepository.findByFacilityIdIs(facilityId);
+    if (masterDataOffset == null) {
+      masterDataOffset = MasterDataOffset.builder().id(UUID.randomUUID()).build();
+    }
+    masterDataOffset.setFacilityId(facilityId);
+    masterDataOffset.setRecordOffset(offsetId);
+    log.info("save facility increment master data offset: {}", masterDataOffset);
+    masterDataOffsetRepository.save(masterDataOffset);
   }
 }

@@ -13,9 +13,8 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.domain.report;
+package org.siglus.siglusapi.domain;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 import javax.persistence.Column;
@@ -32,33 +31,17 @@ import org.siglus.common.domain.BaseEntity;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "requisition_monthly_not_submit_report", schema = "dashboard")
-public class RequisitionMonthlyNotSubmitReport extends BaseEntity {
+@Table(name = "vw_monthly_requisitions", schema = "dashboard")
+public class MonthlyRequisitions extends BaseEntity {
 
-  @Column(name = "programid")
-  private UUID programId;
-  @Column(name = "processingperiodid")
-  private UUID processingPeriodId;
-  @Column(name = "district")
-  private String district;
-  @Column(name = "province")
-  private String province;
-  @Column(name = "requisitionperiod")
-  private LocalDate requisitionPeriod;
-  @Column(name = "ficilityname")
-  private String facilityName;
-  @Column(name = "ficilitycode")
-  private String ficilityCode;
   @Column(name = "inventorydate")
-  private String inventorydDate;
+  private String inventoryDate;
   @Column(name = "statusdetail")
   private String statusDetail;
   @Column(name = "submittedstatus")
   private String submittedStatus;
   @Column(name = "reporttype")
   private String reportType;
-  @Column(name = "reportname")
-  private String reportName;
   @Column(name = "originalperiod")
   private String originalPeriod;
   @Column(name = "submittedtime")
@@ -67,27 +50,11 @@ public class RequisitionMonthlyNotSubmitReport extends BaseEntity {
   private LocalDateTime syncTime;
   @Column(name = "facilityid")
   private UUID facilityId;
-  @Column(name = "facilitytype")
-  private String facilityType;
-  @Column(name = "facilitymergetype")
-  private String facilityMergeType;
-  @Column(name = "districtfacilitycode")
-  private String districtFacilityCode;
-  @Column(name = "provincefacilitycode")
-  private String provinceFacilityCode;
-  @Column(name = "submitteduser")
-  private String submittedUser;
-  @Column(name = "clientsubmittedtime")
-  private String clientSubmittedTime;
+  @Column(name = "programid")
+  private UUID programId;
+  @Column(name = "processingperiodid")
+  private UUID processingPeriodId;
   @Column(name = "requisitioncreateddate")
   private LocalDateTime requisitionCreatedDate;
-  @Column(name = "statuslastcreateddate")
-  private LocalDateTime statusLastCreateDdate;
-  @Column(name = "submitstartdate")
-  private LocalDate submitStartDate;
-  @Column(name = "submitenddate")
-  private LocalDate submitEndDate;
-
 
 }
-

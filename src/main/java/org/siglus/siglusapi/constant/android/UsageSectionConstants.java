@@ -21,14 +21,83 @@ import lombok.NoArgsConstructor;
 @SuppressWarnings("PMD.AvoidDuplicateLiterals")
 public class UsageSectionConstants {
 
+  public static final String QUERY_REQUISITIONS_UNDER_HIGH_LEVEL =
+      "  (select r.id from requisition.requisitions r "
+          + "    left join referencedata.supervisory_nodes sn on sn.id = r.supervisorynodeid "
+          + "    where sn.facilityid = :facilityId and sn.parentid is null"
+          + "    and r.programid = :programId "
+          + "    and r.status in ('APPROVED','RELEASED','RELEASED_WITHOUT_ORDER') "
+          + "    and r.processingperiodid in "
+          + "    ("
+          + "      select pp.id from referencedata.processing_periods pp "
+          + "      left join referencedata.processing_periods hpp on hpp.name = pp.name "
+          + "      left join referencedata.processing_schedules ps on ps.id = pp.processingscheduleid "
+          + "      where hpp.id = :periodId and ps.code = 'M1' "
+          + "     )"
+          + "  ) ";
+
+  public static final String QUERY_MAX_VALUE_IN_LAST_PERIODS =
+      "  ( select r.id "
+          + "from requisition.requisitions r "
+          + "where r.programid = :programId "
+          + "  and r.facilityid in "
+          + "      ( "
+          + "          select rgm.facilityid "
+          + "          from referencedata.requisition_group_members rgm "
+          + "                   left join "
+          + "               ( "
+          + "                   select r.* "
+          + "                   from requisition.requisitions r "
+          + "                   where r.programid = :programId "
+          + "                     and r.processingperiodid in "
+          + "                         ( "
+          + "                             select pp.id "
+          + "                             from referencedata.processing_periods pp "
+          + "                                    left join referencedata.processing_periods hpp on hpp.name = pp.name "
+          + "                                    left join referencedata.processing_schedules ps "
+          + "                                              on ps.id = pp.processingscheduleid "
+          + "                             where hpp.id = :periodId "
+          + "                               and ps.code = 'M1' "
+          + "                         ) "
+          + "               ) tmp on tmp.facilityid = rgm.facilityid "
+          + "                   left join referencedata.requisition_groups rg on rg.id = rgm.requisitiongroupid "
+          + "                   left join referencedata.requisition_group_program_schedules rgps "
+          + "                             on rgps.requisitiongroupid = rg.id "
+          + "                   left join referencedata.supervisory_nodes sn on sn.id = rg.supervisorynodeid "
+          + "          where sn.facilityid = :facilityId "
+          + "            and sn.parentid is not null "
+          + "            and rgps.programid = :programId "
+          + "            and (tmp.status is null or "
+          + "                 tmp.status in ('INITIATED', 'SUBMITTED', 'AUTHORIZED', 'IN_APPROVAL', 'REJECTED')) "
+          + "      ) "
+          + "  and r.processingperiodid in "
+          + "      ( "
+          + "          select pp.id "
+          + "          from referencedata.processing_periods pp "
+          + "                   left join referencedata.processing_schedules ps on ps.id = pp.processingscheduleid "
+          + "          where ps.code = 'M1' "
+          + "            and pp.startdate < "
+          + "                (select pp.startdate "
+          + "                 from referencedata.processing_periods pp "
+          + "                       left join referencedata.processing_periods hpp on hpp.name = pp.name "
+          + "                       left join referencedata.processing_schedules ps on ps.id = pp.processingscheduleid "
+          + "                 where hpp.id = :periodId "
+          + "                   and ps.code = 'M1') "
+          + "          order by pp.startdate desc "
+          + "          limit 3 "
+          + "      )"
+          + " ) ";
+
   @NoArgsConstructor
   public static class ConsultationNumberLineItems {
+
     public static final String GROUP_NAME = "number";
     public static final String COLUMN_NAME = "consultationNumber";
   }
 
   @NoArgsConstructor
   public static class KitUsageLineItems {
+
     public static final String COLLECTION_KIT_OPENED = "kitOpened";
     public static final String COLLECTION_KIT_RECEIVED = "kitReceived";
     public static final String SERVICE_CHW = "CHW";

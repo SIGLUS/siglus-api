@@ -19,6 +19,7 @@ import static com.google.common.collect.Lists.newArrayList;
 import static java.util.stream.Collectors.toList;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -31,6 +32,7 @@ import org.siglus.siglusapi.domain.UsageInformationLineItem;
 import org.siglus.siglusapi.domain.UsageTemplateColumn;
 import org.siglus.siglusapi.domain.UsageTemplateColumnSection;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
+import org.siglus.siglusapi.dto.UsageInformationOrderableDto;
 import org.siglus.siglusapi.dto.UsageInformationServiceDto;
 import org.siglus.siglusapi.repository.UsageInformationLineItemRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,12 +60,46 @@ public class UsageInformationDataProcessor implements UsageReportDataProcessor {
       List<UsageTemplateColumnSection> templateColumnSections) {
     List<UsageInformationLineItem> lineItems = createUsageInformationLineItems(
         siglusRequisitionDto, templateColumnSections);
+    calculateValueForTopLevelFacility(lineItems, siglusRequisitionDto.getFacilityId(),
+        siglusRequisitionDto.getProcessingPeriodId(), siglusRequisitionDto.getProgramId());
     log.info("save usage information line items by requisition id: {}",
         siglusRequisitionDto.getId());
     List<UsageInformationLineItem> lineItemsSaved = usageInformationLineItemRepository
         .save(lineItems);
     List<UsageInformationServiceDto> serviceDtos = UsageInformationServiceDto.from(lineItemsSaved);
     siglusRequisitionDto.setUsageInformationLineItems(serviceDtos);
+  }
+
+  private void calculateValueForTopLevelFacility(
+      List<UsageInformationLineItem> usageInformationLineItems, UUID facilityId, UUID periodId, UUID programId) {
+    if (usageInformationLineItems.isEmpty()
+        || siglusUsageReportService.isNonTopLevelOrNotUsageReports(programId, facilityId)) {
+      return;
+    }
+    Map<String, Integer> itemToSumValue = itemToValue(
+        usageInformationLineItemRepository.sumValueRequisitionsUnderHighLevelFacility(facilityId, periodId, programId));
+    Map<String, Integer> itemToMaxValueInLastPeriods = itemToValue(
+        usageInformationLineItemRepository.maxValueRequisitionsInLastPeriods(facilityId, periodId, programId));
+    usageInformationLineItems.forEach(lineItem -> setSumValue(lineItem, itemToSumValue, itemToMaxValueInLastPeriods));
+  }
+
+  private Map<String, Integer> itemToValue(List<UsageInformationOrderableDto> usageInformationOrderableDtos) {
+    return usageInformationOrderableDtos.stream()
+        .collect(Collectors.toMap(UsageInformationOrderableDto::getServiceInformationOrderableId,
+            dto -> dto.getValue() == null ? 0 : dto.getValue()));
+  }
+
+  private void setSumValue(UsageInformationLineItem lineItem, Map<String, Integer> itemToSumValue,
+      Map<String, Integer> itemToMaxValueInLastPeriods) {
+    Integer sumValue = itemToSumValue.get(lineItem.getServiceInformationOrderableId());
+    Integer maxValueInLastPeriods = itemToMaxValueInLastPeriods.get(lineItem.getServiceInformationOrderableId());
+    if (sumValue == null) {
+      sumValue = 0;
+    }
+    if (maxValueInLastPeriods == null) {
+      maxValueInLastPeriods = 0;
+    }
+    lineItem.setValue(sumValue + maxValueInLastPeriods);
   }
 
   @Override

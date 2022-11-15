@@ -13,31 +13,19 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.domain;
+package org.siglus.siglusapi.repository;
 
 import java.util.UUID;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.siglus.common.domain.BaseEntity;
+import org.siglus.siglusapi.domain.report.NotSubmittedMonthlyRequisitions;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.transaction.annotation.Transactional;
 
-@Entity
-@Data
-@Builder
-@AllArgsConstructor
-@NoArgsConstructor
-@Table(name = "program_report_name_mapping", schema = "siglusintegration")
-public class ProgramRequisitionNameMapping extends BaseEntity {
+public interface NotSubmittedMonthlyRequisitionsRepository extends
+    JpaRepository<NotSubmittedMonthlyRequisitions, UUID> {
 
-  @Column(name = "programid")
-  private UUID programId;
-  @Column(name = "programname")
-  private String programName;
-  @Column(name = "reportname")
-  private String reportName;
+  @Transactional
+  void deleteByFacilityId(UUID facilityId);
+
+  @Transactional
+  void deleteByFacilityIdAndProgramIdAndProcessingPeriodId(UUID facilityId, UUID programId, UUID processingPeriodId);
 }
-

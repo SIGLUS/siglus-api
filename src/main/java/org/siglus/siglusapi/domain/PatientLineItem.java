@@ -15,6 +15,8 @@
 
 package org.siglus.siglusapi.domain;
 
+import static org.siglus.siglusapi.constant.FieldConstants.SEPARATOR;
+
 import java.util.UUID;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -44,5 +46,9 @@ public class PatientLineItem extends BaseEntity {
   private String column;
 
   private Integer value;
+
+  public String getGroupColumn() {
+    return group + SEPARATOR + column;
+  }
 
 }

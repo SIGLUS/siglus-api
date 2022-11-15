@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.localmachine.eventstore;
 
+import java.util.List;
 import java.util.UUID;
 import java.util.stream.Stream;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -57,8 +58,17 @@ public interface MasterDataEventRecordRepository extends JpaRepository<MasterDat
 
   MasterDataEventRecord findTopBySnapshotVersionIsNotNullOrderByIdDesc();
 
+  List<MasterDataEventRecord> findBySnapshotVersionIsNotNull();
+
   @Query(
       value = "select id from localmachine.master_data_events where snapshotversion = null order by id desc limit 1",
       nativeQuery = true)
   Long findLatestRecordId();
+
+  @Query(
+      value =
+          "delete from localmachine.master_data_events where id <:minimumOffset and snapshotversion is null",
+      nativeQuery = true)
+  @Modifying
+  void deleteIncrementalRecordsLessThan(@Param("minimumOffset") long minimumOffset);
 }

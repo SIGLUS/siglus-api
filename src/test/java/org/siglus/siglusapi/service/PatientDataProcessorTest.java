@@ -37,11 +37,13 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.requisition.dto.BasicRequisitionTemplateDto;
+import org.openlmis.requisition.dto.ObjectReferenceDto;
 import org.siglus.common.dto.RequisitionTemplateExtensionDto;
 import org.siglus.siglusapi.domain.PatientLineItem;
 import org.siglus.siglusapi.domain.UsageCategory;
 import org.siglus.siglusapi.domain.UsageTemplateColumn;
 import org.siglus.siglusapi.domain.UsageTemplateColumnSection;
+import org.siglus.siglusapi.dto.PatientColumnDto;
 import org.siglus.siglusapi.dto.PatientGroupDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 import org.siglus.siglusapi.repository.PatientLineItemRepository;
@@ -57,12 +59,26 @@ public class PatientDataProcessorTest {
   private PatientLineItemRepository repo;
 
   @Mock
+  private SiglusUsageReportService siglusUsageReportService;
+
+  @Mock
   private PatientLineItemMapper mapper;
 
   @Captor
   private ArgumentCaptor<List<PatientLineItem>> captor;
 
   private final UUID requisitionId = UUID.randomUUID();
+
+  private final UUID facilityId = UUID.randomUUID();
+
+  private final UUID programId = UUID.randomUUID();
+
+  private final UUID periodId = UUID.randomUUID();
+
+  private final String patientSection = "patientSection";
+
+  private final String patientColumn = "patientColumn";
+
 
   @Test
   public void shouldReturnFalseWhenIsDisabledGivenNotEnablePatientLineItems() {
@@ -101,36 +117,25 @@ public class PatientDataProcessorTest {
   @Test
   public void shouldCallFindAndMapperWhenDoInitiate() {
     // given
-    SiglusRequisitionDto requisition = new SiglusRequisitionDto();
-    requisition.setId(requisitionId);
-    UsageTemplateColumnSection nonPatientTemplate = new UsageTemplateColumnSection();
-    nonPatientTemplate.setCategory(UsageCategory.KITUSAGE);
-    UsageTemplateColumnSection patientTemplate = new UsageTemplateColumnSection();
-    patientTemplate.setCategory(UsageCategory.PATIENT);
-    String patientName = "patientSection";
-    patientTemplate.setName(patientName);
-    UsageTemplateColumn patientColumn = new UsageTemplateColumn();
-    String columnName = "patientColumn";
-    patientColumn.setName(columnName);
-    patientColumn.setIsDisplayed(true);
-    patientTemplate.setColumns(singletonList(patientColumn));
     List<PatientLineItem> savedLineItems = singletonList(mock(PatientLineItem.class));
     when(repo.save(anyListOf(PatientLineItem.class))).thenReturn(savedLineItems);
     List<PatientGroupDto> mappedGroups = singletonList(mock(PatientGroupDto.class));
     when(mapper.from(savedLineItems)).thenReturn(mappedGroups);
+    when(siglusUsageReportService.isNonTopLevelOrNotUsageReports(programId, facilityId)).thenReturn(true);
+    SiglusRequisitionDto requisitionDto = mockRequisitionDto();
 
     // when
-    processor.doInitiate(requisition, asList(nonPatientTemplate, patientTemplate));
+    processor.doInitiate(requisitionDto, buildSectionTemplates());
 
     // then
-    assertEquals(mappedGroups, requisition.getPatientLineItems());
+    assertEquals(mappedGroups, requisitionDto.getPatientLineItems());
     verify(repo).save(captor.capture());
     List<PatientLineItem> lineItemsToSave = captor.getValue();
-    assertEquals(1, lineItemsToSave.size());
+    assertEquals(2, lineItemsToSave.size());
     PatientLineItem lineItemToSave = lineItemsToSave.get(0);
     assertEquals(requisitionId, lineItemToSave.getRequisitionId());
-    assertEquals(patientName, lineItemToSave.getGroup());
-    assertEquals(columnName, lineItemToSave.getColumn());
+    assertEquals(patientSection, lineItemToSave.getGroup());
+    assertEquals(patientColumn, lineItemToSave.getColumn());
   }
 
   @Test
@@ -189,6 +194,70 @@ public class PatientDataProcessorTest {
     // then
     verify(repo).findByRequisitionId(requisitionId);
     verify(repo).delete(lineItems);
+  }
+
+  @Test
+  public void shouldSumValueWhenIsHighLevelFacility() {
+    // given
+    List<PatientLineItem> savedLineItems = singletonList(mock(PatientLineItem.class));
+    when(repo.save(anyListOf(PatientLineItem.class))).thenReturn(savedLineItems);
+    List<PatientGroupDto> mappedGroups = singletonList(mock(PatientGroupDto.class));
+    when(mapper.from(savedLineItems)).thenReturn(mappedGroups);
+    when(siglusUsageReportService.isNonTopLevelOrNotUsageReports(programId, facilityId)).thenReturn(false);
+    when(repo.sumValueRequisitionsUnderHighLevelFacility(facilityId, periodId, programId))
+        .thenReturn(asList(mockPatientColumnDto(patientSection, patientColumn, 10),
+            mockPatientColumnDto("patientSection2", "patientColumn2", 20)));
+    when(repo.maxValueRequisitionsInLastPeriods(facilityId, periodId, programId))
+        .thenReturn(singletonList(mockPatientColumnDto(patientSection, patientColumn, 30)));
+
+    // when
+    processor.doInitiate(mockRequisitionDto(), buildSectionTemplates());
+
+    // then
+    verify(repo).save(captor.capture());
+    List<PatientLineItem> lineItemsToSave = captor.getValue();
+    assertEquals(Integer.valueOf(40), lineItemsToSave.get(0).getValue());
+    assertEquals(Integer.valueOf(20), lineItemsToSave.get(1).getValue());
+  }
+
+  private PatientColumnDto mockPatientColumnDto(String group, String column, Integer value) {
+    PatientColumnDto patientColumnDto = new PatientColumnDto();
+    patientColumnDto.setGroup(group);
+    patientColumnDto.setColumn(column);
+    patientColumnDto.setValue(value);
+    return patientColumnDto;
+
+  }
+
+  private SiglusRequisitionDto mockRequisitionDto() {
+    SiglusRequisitionDto requisition = new SiglusRequisitionDto();
+    requisition.setId(requisitionId);
+    requisition.setFacility(new ObjectReferenceDto(facilityId));
+    requisition.setProgram(new ObjectReferenceDto(programId));
+    requisition.setProcessingPeriod(new ObjectReferenceDto(periodId));
+    return requisition;
+  }
+
+  private List<UsageTemplateColumnSection> buildSectionTemplates() {
+    UsageTemplateColumnSection nonPatientTemplate = new UsageTemplateColumnSection();
+    nonPatientTemplate.setCategory(UsageCategory.KITUSAGE);
+    UsageTemplateColumnSection patientTemplate = new UsageTemplateColumnSection();
+    patientTemplate.setCategory(UsageCategory.PATIENT);
+    patientTemplate.setName(patientSection);
+    UsageTemplateColumn templateColumn = new UsageTemplateColumn();
+    templateColumn.setName(patientColumn);
+    templateColumn.setIsDisplayed(true);
+    patientTemplate.setColumns(singletonList(templateColumn));
+    UsageTemplateColumnSection patientTemplate2 = new UsageTemplateColumnSection();
+    patientTemplate2.setCategory(UsageCategory.PATIENT);
+    String patientName2 = "patientSection2";
+    patientTemplate2.setName(patientName2);
+    UsageTemplateColumn templateColumn2 = new UsageTemplateColumn();
+    String columnName2 = "patientColumn2";
+    templateColumn2.setName(columnName2);
+    templateColumn2.setIsDisplayed(true);
+    patientTemplate2.setColumns(singletonList(templateColumn2));
+    return asList(nonPatientTemplate, patientTemplate, patientTemplate2);
   }
 
 }

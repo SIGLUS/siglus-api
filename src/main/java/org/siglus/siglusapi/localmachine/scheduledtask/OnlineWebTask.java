@@ -48,12 +48,14 @@ public class OnlineWebTask {
   @SchedulerLock(name = "generate_masterdata_zip", lockAtMostFor = "PT1M")
   public void generateMasterDataZip() {
     log.info("start scheduled generate master data zip on online web");
-    if (verifyNeedGenerate()) {
+    if (needToGenerate()) {
       onlineWebService.generateMasterData();
     }
+    onlineWebService.cleanMasterDataSnapshot();
+    onlineWebService.cleanIncrementalMasterData();
   }
 
-  private boolean verifyNeedGenerate() {
+  private boolean needToGenerate() {
     MasterDataEventRecord masterDataEventRecord = masterDataEventRecordRepository
         .findTopBySnapshotVersionIsNotNullOrderByIdDesc();
     if (masterDataEventRecord == null) {

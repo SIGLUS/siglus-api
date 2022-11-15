@@ -13,8 +13,9 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.domain;
+package org.siglus.siglusapi.domain.report;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 import javax.persistence.Column;
@@ -31,17 +32,35 @@ import org.siglus.common.domain.BaseEntity;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "vw_requisition_monthly_report", schema = "dashboard")
-public class RequisitionMonthlyReport extends BaseEntity {
+@Table(name = "not_submitted_monthly_requisitions", schema = "dashboard")
+public class NotSubmittedMonthlyRequisitions extends BaseEntity {
 
+  @Column(name = "programid")
+  private UUID programId;
+  @Column(name = "processingperiodid")
+  private UUID processingPeriodId;
+  @Column(name = "processingperiodname")
+  private String processingPeriodName;
+  @Column(name = "district")
+  private String district;
+  @Column(name = "province")
+  private String province;
+  @Column(name = "requisitionperiod")
+  private LocalDate requisitionPeriod;
+  @Column(name = "ficilityname")
+  private String facilityName;
+  @Column(name = "ficilitycode")
+  private String ficilityCode;
   @Column(name = "inventorydate")
-  private String inventoryDate;
+  private String inventorydDate;
   @Column(name = "statusdetail")
   private String statusDetail;
   @Column(name = "submittedstatus")
   private String submittedStatus;
   @Column(name = "reporttype")
   private String reportType;
+  @Column(name = "reportname")
+  private String reportName;
   @Column(name = "originalperiod")
   private String originalPeriod;
   @Column(name = "submittedtime")
@@ -50,11 +69,27 @@ public class RequisitionMonthlyReport extends BaseEntity {
   private LocalDateTime syncTime;
   @Column(name = "facilityid")
   private UUID facilityId;
-  @Column(name = "programid")
-  private UUID programId;
-  @Column(name = "processingperiodid")
-  private UUID processingPeriodId;
+  @Column(name = "facilitytype")
+  private String facilityType;
+  @Column(name = "facilitymergetype")
+  private String facilityMergeType;
+  @Column(name = "districtfacilitycode")
+  private String districtFacilityCode;
+  @Column(name = "provincefacilitycode")
+  private String provinceFacilityCode;
+  @Column(name = "submitteduser")
+  private String submittedUser;
+  @Column(name = "clientsubmittedtime")
+  private String clientSubmittedTime;
   @Column(name = "requisitioncreateddate")
   private LocalDateTime requisitionCreatedDate;
+  @Column(name = "statuslastcreateddate")
+  private LocalDateTime statusLastCreateDdate;
+  @Column(name = "submitstartdate")
+  private LocalDate submitStartDate;
+  @Column(name = "submitenddate")
+  private LocalDate submitEndDate;
+
 
 }
+
