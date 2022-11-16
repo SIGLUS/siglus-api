@@ -77,7 +77,7 @@ public class RegimenSummaryLineItem extends BaseEntity {
     return lineItems;
   }
 
-  public String getNameColumn() {
+  public String getMappingKey() {
     return name + SEPARATOR + column;
   }
 

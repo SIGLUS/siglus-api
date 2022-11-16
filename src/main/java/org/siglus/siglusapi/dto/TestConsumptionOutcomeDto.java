@@ -95,7 +95,7 @@ public class TestConsumptionOutcomeDto {
     this.value = value;
   }
 
-  public String getServiceProjectOutcome() {
+  public String getMappingKey() {
     return service + SEPARATOR + project + SEPARATOR + outcome;
   }
 

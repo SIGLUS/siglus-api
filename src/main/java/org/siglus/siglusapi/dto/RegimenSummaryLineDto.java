@@ -86,9 +86,9 @@ public class RegimenSummaryLineDto {
 
   // comment by yyd: This constructor will be used after the above query, do not delete it
   @SuppressWarnings("unused")
-  public RegimenSummaryLineDto(String name, String column, Integer value) {
+  public RegimenSummaryLineDto(String name, String regimenSummaryLineColumn, Integer value) {
     this.name = name;
-    this.regimenSummaryLineColumn = column;
+    this.regimenSummaryLineColumn = regimenSummaryLineColumn;
     this.value = value;
   }
 

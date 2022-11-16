@@ -90,7 +90,7 @@ public class AgeGroupLineItemDto {
     this.value = value;
   }
 
-  public String getServiceGroup() {
+  public String getMappingKey() {
     return service + SEPARATOR + group;
   }
 

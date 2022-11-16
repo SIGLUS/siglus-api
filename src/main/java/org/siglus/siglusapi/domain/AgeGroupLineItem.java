@@ -72,7 +72,7 @@ public class AgeGroupLineItem extends BaseEntity {
     super.id = id;
   }
 
-  public String getServiceGroup() {
+  public String getMappingKey() {
     return service + SEPARATOR + group;
   }
 }

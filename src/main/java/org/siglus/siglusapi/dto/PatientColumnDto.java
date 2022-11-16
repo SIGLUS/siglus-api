@@ -89,7 +89,7 @@ public class PatientColumnDto {
     this.value = value;
   }
 
-  public String getGroupColumn() {
+  public String getMappingKey() {
     return group + SEPARATOR + column;
   }
 

@@ -47,7 +47,7 @@ public class PatientLineItem extends BaseEntity {
 
   private Integer value;
 
-  public String getGroupColumn() {
+  public String getMappingKey() {
     return group + SEPARATOR + column;
   }
 

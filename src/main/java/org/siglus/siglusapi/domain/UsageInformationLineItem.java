@@ -71,7 +71,7 @@ public class UsageInformationLineItem extends BaseEntity {
     return lineItems;
   }
 
-  public String getServiceInformationOrderableId() {
+  public String getMappingKey() {
     return service + SEPARATOR + information + SEPARATOR + orderableId;
   }
 

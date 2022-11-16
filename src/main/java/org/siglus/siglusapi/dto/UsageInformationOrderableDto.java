@@ -93,7 +93,7 @@ public class UsageInformationOrderableDto {
     this.value = value;
   }
 
-  public String getServiceInformationOrderableId() {
+  public String getMappingKey() {
     return service + SEPARATOR + information + SEPARATOR + orderableId;
   }
 

@@ -74,7 +74,7 @@ public class TestConsumptionLineItem extends BaseEntity {
     return lineItems;
   }
 
-  public String getServiceProjectOutcome() {
+  public String getMappingKey() {
     return service + SEPARATOR + project + SEPARATOR + outcome;
   }
 }

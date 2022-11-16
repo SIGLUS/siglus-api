@@ -72,7 +72,7 @@ public class RegimenLineItem extends BaseEntity {
     return lineItems;
   }
 
-  public String getRegimenIdColumn() {
+  public String getMappingKey() {
     return regimenId + SEPARATOR + column;
   }
 }
