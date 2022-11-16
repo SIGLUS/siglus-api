@@ -19,6 +19,7 @@ import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_NOT_ACTIVATED_YET;
 
 import javax.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.localmachine.Machine;
@@ -36,12 +37,14 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.multipart.MultipartFile;
 
 @Profile("localmachine")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/siglusapi/localmachine/agent")
+@Slf4j
 public class LocalAgentController {
 
   private final LocalActivationService localActivationService;
@@ -54,7 +57,12 @@ public class LocalAgentController {
 
   @PutMapping
   public void activate(@RequestBody @Validated LocalActivationRequest request) {
-    localActivationService.activate(request);
+    try {
+      localActivationService.activate(request);
+    } catch (RestClientResponseException e) {
+      String messageContent = String.format("remote error(%d):%s", e.getRawStatusCode(), e.getResponseBodyAsString());
+      throw new BusinessDataException(e, new Message(messageContent));
+    }
   }
 
   @GetMapping
