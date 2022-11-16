@@ -17,6 +17,7 @@ package org.siglus.siglusapi.localmachine.event.order.fulfillment;
 
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
+import static org.siglus.siglusapi.util.LocationUtil.getIfNonNull;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Lists;
@@ -45,6 +46,7 @@ import org.openlmis.fulfillment.domain.ShipmentLineItem;
 import org.openlmis.fulfillment.domain.UpdateDetails;
 import org.openlmis.fulfillment.repository.ProofOfDeliveryRepository;
 import org.openlmis.fulfillment.service.ShipmentService;
+import org.openlmis.fulfillment.web.shipment.LocationDto;
 import org.openlmis.fulfillment.web.shipment.ShipmentDto;
 import org.openlmis.fulfillment.web.shipment.ShipmentLineItemDto;
 import org.openlmis.fulfillment.web.util.OrderDto;
@@ -317,13 +319,11 @@ public class OrderFulfillmentSyncedReplayer {
     fulfillLocationInfo(uniqueKeyMap, event.getShipmentExtensionRequest().getShipment());
     event.getShipmentExtensionRequest().getShipment().lineItems().forEach(shipmentLineItemDto -> {
       UUID lineItemId = shipmentLineItemDto.getId();
-      String locationCode = shipmentLineItemDto.getLocation().getLocationCode();
-      String area = shipmentLineItemDto.getLocation().getArea();
       ShipmentLineItemsExtension shipmentLineItemsByLocation = ShipmentLineItemsExtension
           .builder()
           .shipmentLineItemId(lineItemId)
-          .locationCode(locationCode)
-          .area(area)
+          .locationCode(getIfNonNull(LocationDto::getLocationCode, shipmentLineItemDto.getLocation()))
+          .area(getIfNonNull(LocationDto::getArea, shipmentLineItemDto.getLocation()))
           .build();
       shipmentLineItemsByLocations.add(shipmentLineItemsByLocation);
     });

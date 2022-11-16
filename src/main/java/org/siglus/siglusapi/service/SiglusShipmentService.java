@@ -20,6 +20,7 @@ import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_ORDER_EXPIRED;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_PERIOD_NOT_FOUND;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_SUB_ORDER_LINE_ITEM;
 import static org.siglus.siglusapi.i18n.MessageKeys.SHIPMENT_ORDER_STATUS_INVALID;
+import static org.siglus.siglusapi.util.LocationUtil.getIfNonNull;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Lists;
@@ -43,6 +44,7 @@ import org.openlmis.fulfillment.domain.ShipmentLineItem;
 import org.openlmis.fulfillment.domain.ShipmentLineItem.Importer;
 import org.openlmis.fulfillment.repository.OrderRepository;
 import org.openlmis.fulfillment.web.OrderController;
+import org.openlmis.fulfillment.web.shipment.LocationDto;
 import org.openlmis.fulfillment.web.shipment.ShipmentController;
 import org.openlmis.fulfillment.web.shipment.ShipmentDto;
 import org.openlmis.fulfillment.web.shipment.ShipmentLineItemDto;
@@ -335,13 +337,11 @@ public class SiglusShipmentService {
     List<ShipmentLineItemsExtension> shipmentLineItemsByLocations = Lists.newArrayList();
     shipmentLineItems.forEach(shipmentLineItemDto -> {
       UUID lineItemId = shipmentLineItemDto.getId();
-      String locationCode = shipmentLineItemDto.getLocation().getLocationCode();
-      String area = shipmentLineItemDto.getLocation().getArea();
       ShipmentLineItemsExtension shipmentLineItemsByLocation = ShipmentLineItemsExtension
           .builder()
           .shipmentLineItemId(lineItemId)
-          .locationCode(locationCode)
-          .area(area)
+          .locationCode(getIfNonNull(LocationDto::getLocationCode, shipmentLineItemDto.getLocation()))
+          .area(getIfNonNull(LocationDto::getArea, shipmentLineItemDto.getLocation()))
           .quantityShipped(shipmentLineItemDto.getQuantityShipped().intValue())
           .build();
       shipmentLineItemsByLocations.add(shipmentLineItemsByLocation);
