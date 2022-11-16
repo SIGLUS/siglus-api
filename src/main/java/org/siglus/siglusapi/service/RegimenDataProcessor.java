@@ -118,13 +118,13 @@ public class RegimenDataProcessor implements UsageReportDataProcessor {
     Map<String, Integer> regimenItemToMaxValueInLastPeriods = regimenItemToValue(
         regimenLineItemRepository.maxValueRequisitionsInLastPeriods(facilityId, periodId, programId));
     regimenLineItems.forEach(lineItem -> lineItem.setValue(
-        getSumValue(lineItem.getRegimenIdColumn(), regimenItemToSumValue, regimenItemToMaxValueInLastPeriods)));
+        getSumValue(lineItem.getMappingKey(), regimenItemToSumValue, regimenItemToMaxValueInLastPeriods)));
   }
 
   private Map<String, Integer> regimenItemToValue(List<RegimenColumnDto> regimenColumnDtos) {
     return regimenColumnDtos.stream()
         .collect(
-            Collectors.toMap(RegimenColumnDto::getRegimenIdColumn, dto -> dto.getValue() == null ? 0 : dto.getValue()));
+            Collectors.toMap(RegimenColumnDto::getMappingKey, dto -> dto.getValue() == null ? 0 : dto.getValue()));
   }
 
   private void calculateRegimenSummaryValueForTopLevelFacility(List<RegimenSummaryLineItem> regimenSummaryLineItems,
@@ -138,7 +138,7 @@ public class RegimenDataProcessor implements UsageReportDataProcessor {
     Map<String, Integer> regimenSummaryItemToMaxValueInLastPeriods = regimenSummaryItemToValue(
         regimenSummaryLineItemRepository.maxValueRequisitionsInLastPeriods(facilityId, periodId, programId));
     regimenSummaryLineItems.forEach(
-        lineItem -> lineItem.setValue(getSumValue(lineItem.getNameColumn(), regimenSummaryItemToSumValue,
+        lineItem -> lineItem.setValue(getSumValue(lineItem.getMappingKey(), regimenSummaryItemToSumValue,
             regimenSummaryItemToMaxValueInLastPeriods)));
   }
 

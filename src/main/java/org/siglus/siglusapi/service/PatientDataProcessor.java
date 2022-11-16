@@ -73,14 +73,14 @@ public class PatientDataProcessor implements UsageReportDataProcessor {
 
   private Map<String, Integer> itemToValue(List<PatientColumnDto> patientColumnDtos) {
     return patientColumnDtos.stream()
-        .collect(Collectors.toMap(PatientColumnDto::getGroupColumn,
+        .collect(Collectors.toMap(PatientColumnDto::getMappingKey,
             dto -> dto.getValue() == null ? 0 : dto.getValue()));
   }
 
   private void setSumValue(PatientLineItem lineItem,
       Map<String, Integer> itemToSumValue, Map<String, Integer> itemToMaxValueInLastPeriods) {
-    Integer sumValue = itemToSumValue.get(lineItem.getGroupColumn());
-    Integer maxValueInLastPeriods = itemToMaxValueInLastPeriods.get(lineItem.getGroupColumn());
+    Integer sumValue = itemToSumValue.get(lineItem.getMappingKey());
+    Integer maxValueInLastPeriods = itemToMaxValueInLastPeriods.get(lineItem.getMappingKey());
     if (sumValue == null) {
       sumValue = 0;
     }

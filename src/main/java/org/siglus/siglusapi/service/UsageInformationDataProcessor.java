@@ -85,14 +85,14 @@ public class UsageInformationDataProcessor implements UsageReportDataProcessor {
 
   private Map<String, Integer> itemToValue(List<UsageInformationOrderableDto> usageInformationOrderableDtos) {
     return usageInformationOrderableDtos.stream()
-        .collect(Collectors.toMap(UsageInformationOrderableDto::getServiceInformationOrderableId,
+        .collect(Collectors.toMap(UsageInformationOrderableDto::getMappingKey,
             dto -> dto.getValue() == null ? 0 : dto.getValue()));
   }
 
   private void setSumValue(UsageInformationLineItem lineItem, Map<String, Integer> itemToSumValue,
       Map<String, Integer> itemToMaxValueInLastPeriods) {
-    Integer sumValue = itemToSumValue.get(lineItem.getServiceInformationOrderableId());
-    Integer maxValueInLastPeriods = itemToMaxValueInLastPeriods.get(lineItem.getServiceInformationOrderableId());
+    Integer sumValue = itemToSumValue.get(lineItem.getMappingKey());
+    Integer maxValueInLastPeriods = itemToMaxValueInLastPeriods.get(lineItem.getMappingKey());
     if (sumValue == null) {
       sumValue = 0;
     }

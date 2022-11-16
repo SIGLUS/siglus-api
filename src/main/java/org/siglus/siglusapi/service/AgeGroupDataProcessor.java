@@ -71,13 +71,13 @@ public class AgeGroupDataProcessor implements UsageReportDataProcessor {
   private Map<String, Integer> itemToValue(List<AgeGroupLineItemDto> ageGroupLineItemDtos) {
     return ageGroupLineItemDtos.stream()
         .collect(
-            Collectors.toMap(AgeGroupLineItemDto::getServiceGroup, dto -> dto.getValue() == null ? 0 : dto.getValue()));
+            Collectors.toMap(AgeGroupLineItemDto::getMappingKey, dto -> dto.getValue() == null ? 0 : dto.getValue()));
   }
 
   private void setSumValue(AgeGroupLineItem lineItem, Map<String, Integer> itemToSumValue,
       Map<String, Integer> itemToMaxValueInLastPeriods) {
-    Integer sumValue = itemToSumValue.get(lineItem.getServiceGroup());
-    Integer maxValueInLastPeriods = itemToMaxValueInLastPeriods.get(lineItem.getServiceGroup());
+    Integer sumValue = itemToSumValue.get(lineItem.getMappingKey());
+    Integer maxValueInLastPeriods = itemToMaxValueInLastPeriods.get(lineItem.getMappingKey());
     if (sumValue == null) {
       sumValue = 0;
     }

@@ -77,14 +77,14 @@ public class TestConsumptionDataProcessor implements UsageReportDataProcessor {
 
   private Map<String, Integer> itemToValue(List<TestConsumptionOutcomeDto> testConsumptionOutcomeDtos) {
     return testConsumptionOutcomeDtos.stream()
-        .collect(Collectors.toMap(TestConsumptionOutcomeDto::getServiceProjectOutcome,
+        .collect(Collectors.toMap(TestConsumptionOutcomeDto::getMappingKey,
             dto -> dto.getValue() == null ? 0 : dto.getValue()));
   }
 
   private void setSumValue(TestConsumptionLineItem lineItem, Map<String, Integer> itemToSumValue,
       Map<String, Integer> itemToMaxValueInLastPeriods) {
-    Integer sumValue = itemToSumValue.get(lineItem.getServiceProjectOutcome());
-    Integer maxValueInLastPeriods = itemToMaxValueInLastPeriods.get(lineItem.getServiceProjectOutcome());
+    Integer sumValue = itemToSumValue.get(lineItem.getMappingKey());
+    Integer maxValueInLastPeriods = itemToMaxValueInLastPeriods.get(lineItem.getMappingKey());
     if (sumValue == null) {
       sumValue = 0;
     }
