@@ -83,8 +83,10 @@ public class SyncService {
   @Transactional
   public void pull() {
     try {
-      pullMasterData();
-      pullPeeringEvents();
+      boolean hasNewMasterData = pullMasterData();
+      if (!hasNewMasterData) {
+        pullPeeringEvents();
+      }
     } catch (Exception e) {
       log.error("fail to pull events", e);
       errorHandler.storeErrorRecord(e, ErrorType.SYNC_DOWN);
@@ -103,12 +105,15 @@ public class SyncService {
     syncRecordService.storeLastSyncRecord();
   }
 
-  private void pullMasterData() {
+  private boolean pullMasterData() {
     List<Event> masterDataEvents = getMasterDataEvents();
+    log.info("pull master data, got {}", masterDataEvents.size());
     eventImporter.importMasterData(masterDataEvents);
-    if (CollectionUtils.isNotEmpty(masterDataEvents)) {
+    boolean hasNewMasterData = CollectionUtils.isNotEmpty(masterDataEvents);
+    if (hasNewMasterData) {
       siglusCacheService.invalidateCache();
     }
+    return hasNewMasterData;
   }
 
   private List<Event> getMasterDataEvents() {
