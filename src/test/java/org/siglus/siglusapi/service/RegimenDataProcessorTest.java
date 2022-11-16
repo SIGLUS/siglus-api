@@ -429,7 +429,7 @@ public class RegimenDataProcessorTest {
   private RegimenSummaryLineDto mockRegimenSummaryLineDto(Integer value) {
     RegimenSummaryLineDto regimenSummaryLineDto = new RegimenSummaryLineDto();
     regimenSummaryLineDto.setName(rowName);
-    regimenSummaryLineDto.setColumn(PATIENTS);
+    regimenSummaryLineDto.setRegimenSummaryLineColumn(PATIENTS);
     regimenSummaryLineDto.setValue(value);
     return regimenSummaryLineDto;
   }

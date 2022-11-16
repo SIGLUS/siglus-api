@@ -38,7 +38,7 @@ import org.siglus.siglusapi.domain.RegimenSummaryLineItem;
 @NamedNativeQueries({
     @NamedNativeQuery(
         name = "RegimenSummaryLineItem.sumValueRequisitionsUnderHighLevelFacility",
-        query = "select rsli.name,rsli.columnname as column,sum(rsli.value) as value "
+        query = "select rsli.name,rsli.columnname as regimenSummaryLineColumn,sum(rsli.value) as value "
             + "from siglusintegration.regimen_summary_line_items rsli "
             + "where rsli.requisitionid in "
             + QUERY_REQUISITIONS_UNDER_HIGH_LEVEL
@@ -46,7 +46,7 @@ import org.siglus.siglusapi.domain.RegimenSummaryLineItem;
         resultSetMapping = "RegimenSummaryLineItem.RegimenSummaryLineDto"),
     @NamedNativeQuery(
         name = "RegimenSummaryLineItem.maxValueRequisitionsInLastPeriods",
-        query = "select name,columnname as column,sum(maxvalue) as value from "
+        query = "select name,columnname as regimenSummaryLineColumn,sum(maxvalue) as value from "
             + "(select rsli.name,rsli.columnname,max(rsli.value) as maxvalue "
             + "from siglusintegration.regimen_summary_line_items rsli "
             + "left join requisition.requisitions r on r.id = rsli.requisitionid "
@@ -54,7 +54,6 @@ import org.siglus.siglusapi.domain.RegimenSummaryLineItem;
             + QUERY_MAX_VALUE_IN_LAST_PERIODS
             + "group by rsli.name,rsli.columnname,r.facilityid) maxtmp "
             + "group by name, columnname",
-
         resultSetMapping = "RegimenSummaryLineItem.RegimenSummaryLineDto")
 })
 @MappedSuperclass
@@ -65,7 +64,7 @@ import org.siglus.siglusapi.domain.RegimenSummaryLineItem;
             targetClass = RegimenSummaryLineDto.class,
             columns = {
                 @ColumnResult(name = "name", type = String.class),
-                @ColumnResult(name = "column", type = String.class),
+                @ColumnResult(name = "regimenSummaryLineColumn", type = String.class),
                 @ColumnResult(name = "value", type = Integer.class),
             }
         )
@@ -78,7 +77,7 @@ public class RegimenSummaryLineDto {
 
   private String name;
 
-  private String column;
+  private String regimenSummaryLineColumn;
 
   private Integer value;
 
@@ -89,39 +88,30 @@ public class RegimenSummaryLineDto {
   @SuppressWarnings("unused")
   public RegimenSummaryLineDto(String name, String column, Integer value) {
     this.name = name;
-    this.column = column;
+    this.regimenSummaryLineColumn = column;
     this.value = value;
   }
 
   public static List<RegimenSummaryLineDto> from(List<RegimenSummaryLineItem> lineItems) {
     List<RegimenSummaryLineDto> regimenSummaryLineDtos = newArrayList();
-
     Map<String, List<RegimenSummaryLineItem>> groupBySummaryRow = lineItems.stream()
         .collect(Collectors.groupingBy(RegimenSummaryLineItem::getName));
-
     groupBySummaryRow.forEach((rowName, regimenSummaryLineItems) -> {
-
       Map<String, RegimenColumnDto> columnMap = regimenSummaryLineItems.stream()
           .collect(Collectors.toMap(RegimenSummaryLineItem::getColumn,
               regimenSummaryLineItem -> RegimenColumnDto.builder()
                   .id(regimenSummaryLineItem.getId())
                   .value(regimenSummaryLineItem.getValue())
                   .build()));
-
       RegimenSummaryLineDto lineDto = new RegimenSummaryLineDto();
       lineDto.setColumns(columnMap);
       lineDto.setName(rowName);
-
       regimenSummaryLineDtos.add(lineDto);
     });
-
     return regimenSummaryLineDtos;
-
   }
 
-  public String getNameColumn() {
-    return name + SEPARATOR + column;
+  public String getMappingKey() {
+    return name + SEPARATOR + regimenSummaryLineColumn;
   }
-
-
 }

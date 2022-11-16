@@ -145,7 +145,7 @@ public class RegimenDataProcessor implements UsageReportDataProcessor {
   private Map<String, Integer> regimenSummaryItemToValue(List<RegimenSummaryLineDto> regimenSummaryLineDtos) {
     return regimenSummaryLineDtos.stream()
         .collect(
-            Collectors.toMap(RegimenSummaryLineDto::getNameColumn, dto -> dto.getValue() == null ? 0 : dto.getValue()));
+            Collectors.toMap(RegimenSummaryLineDto::getMappingKey, dto -> dto.getValue() == null ? 0 : dto.getValue()));
   }
 
   private Integer getSumValue(String column, Map<String, Integer> itemToSumValue,
