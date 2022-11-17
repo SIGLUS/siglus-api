@@ -103,7 +103,7 @@ public class OnlineWebService {
     LinkedList<MasterDataEventRecord> deletedSnapshots = new LinkedList<>();
     for (MasterDataEventRecord record : snapshotRecords.subList(0, lastIndex)) {
       String zipName = record.getSnapshotVersion();
-      String s3FileName = getS3Filename(zipName);
+      String s3FileName = getMasterDataS3Filename(zipName);
       s3FileHandler.deleteFileFromS3(s3FileName);
       deletedSnapshots.add(record);
     }
@@ -122,12 +122,13 @@ public class OnlineWebService {
       eventRecord = generateMasterData();
     }
     initializeOffset(facilityId, eventRecord);
-    String s3Url = s3FileHandler.getUrlFromS3(eventRecord.getSnapshotVersion());
+    String snapshotVersion = eventRecord.getSnapshotVersion();
+    String s3Url = s3FileHandler.getUrlFromS3(getMasterDataS3Filename(snapshotVersion));
     Long latestId = masterDataEventRecordRepository.findLatestRecordId();
     String maxFlywaySersion = masterDataOffsetRepository.findMaxFlywayVersion();
     latestId = latestId == null || latestId < eventRecord.getId() ? eventRecord.getId() : latestId;
     return new ResyncMasterDataResponse(
-        eventRecord.getId(), latestId, s3Url, eventRecord.getSnapshotVersion(), maxFlywaySersion);
+        eventRecord.getId(), latestId, s3Url, snapshotVersion, maxFlywaySersion);
   }
 
   public void resyncData(UUID homeFacilityId, HttpServletResponse response) {
@@ -210,7 +211,7 @@ public class OnlineWebService {
       log.warn("master data zip dir make fail");
     }
     generateZipFile(zipDirectory, zipName, null, MASTER_DATA);
-    String s3Filename = getS3Filename(zipName);
+    String s3Filename = getMasterDataS3Filename(zipName);
     s3FileHandler.uploadFileToS3(zipDirectory + zipName, s3Filename);
     try {
       FileUtils.deleteDirectory(directory);
@@ -221,7 +222,7 @@ public class OnlineWebService {
     return zipName;
   }
 
-  private String getS3Filename(String zipName) {
+  private String getMasterDataS3Filename(String zipName) {
     return "masterdata/" + zipName;
   }
 

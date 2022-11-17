@@ -177,7 +177,8 @@ public class OnlineWebServiceTest {
     when(masterDataEventRecordRepository.save(any(MasterDataEventRecord.class)))
         .thenReturn(MasterDataEventRecord.builder().id(10L).snapshotVersion(snapshotVersion).build());
     when(masterDataEventRecordRepository.findLatestRecordId()).thenReturn(15L);
-    when(s3FileHandler.getUrlFromS3(snapshotVersion)).thenReturn("https://test.zip");
+    when(s3FileHandler.getUrlFromS3("masterdata/" + snapshotVersion))
+        .thenReturn("https://test.zip");
 
     // when
     ResyncMasterDataResponse resp = onlineWebService.resyncMasterData(facilityId);
