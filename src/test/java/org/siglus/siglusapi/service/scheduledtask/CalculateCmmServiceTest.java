@@ -88,7 +88,7 @@ public class CalculateCmmServiceTest {
     when(siglusFacilityRepository.findAllWebFacility()).thenReturn(buildMockFacilitys());
 
     // when
-    calculateCmmService.calculateWebCmms(null);
+    calculateCmmService.calculateAllWebCmm(null);
 
     // then
     verify(facilityCmmsRepository).save(anyList());
@@ -100,7 +100,7 @@ public class CalculateCmmServiceTest {
     when(siglusFacilityRepository.findAllWebFacility()).thenReturn(buildMockFacilitys());
 
     // when
-    calculateCmmService.calculateWebCmms(LocalDate.of(oneYearAgo.getYear(), 10, 21));
+    calculateCmmService.calculateAllWebCmm(LocalDate.of(oneYearAgo.getYear(), 10, 21));
 
     // then
     verify(facilityCmmsRepository).save(anyList());
@@ -112,19 +112,19 @@ public class CalculateCmmServiceTest {
     when(siglusFacilityRepository.findAllWebFacility()).thenReturn(buildMockFacilitys());
 
     // when
-    calculateCmmService.calculateWebCmms(LocalDate.of(oneYearAgo.getYear(), 8, 21));
+    calculateCmmService.calculateAllWebCmm(LocalDate.of(oneYearAgo.getYear(), 8, 21));
 
     // then
     verify(facilityCmmsRepository, times(0)).save(anyList());
   }
 
   @Test
-  public void shouldSuccessWhenCalculateLocalMachineCmms() {
+  public void shouldSuccessWhenCalculateSingleFacilityCmms() {
     // given
     when(siglusFacilityRepository.findOne(facilityId)).thenReturn(buildMockFacility());
 
     // when
-    calculateCmmService.calculateLocalMachineCmms(null, facilityId);
+    calculateCmmService.calculateSingleFacilityCmm(null, facilityId);
 
     // then
     verify(facilityCmmsRepository).save(anyList());
