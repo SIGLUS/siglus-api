@@ -33,6 +33,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.openlmis.referencedata.domain.Facility;
 import org.openlmis.referencedata.domain.ProcessingPeriod;
 import org.siglus.siglusapi.domain.HfCmm;
+import org.siglus.siglusapi.dto.HfCmmCountDto;
 import org.siglus.siglusapi.repository.FacilityCmmsRepository;
 import org.siglus.siglusapi.repository.SiglusFacilityRepository;
 import org.siglus.siglusapi.repository.SiglusStockCardLineItemRepository;
@@ -71,23 +72,29 @@ public class CalculateCmmService {
         .collect(Collectors.toMap(Facility::getId, Facility::getCode));
     Map<UUID, String> orderableIdToCode = siglusOrderableService.getAllProductIdToCode();
     List<ProcessingPeriod> periods = getOneYearPeriods(periodService.getUpToNowMonthlyPeriods(), requestDate);
+    Map<String, List<HfCmmCountDto>> facilityCodeToHfCmmCountDtos = facilityCmmsRepository.findAllFacilityCmmCountDtos(
+            periods.stream().map(ProcessingPeriod::getStartDate).collect(Collectors.toList()))
+        .stream().collect(Collectors.groupingBy(HfCmmCountDto::getFacilityCode));
 
     webFacilityIds.forEach(facilityId -> {
       if (!webFacilityIds.contains(facilityId)) {
         return;
       }
       calculateAndSavaCmms(requestDate, Pair.of(facilityId, facilityIdToCode.get(facilityId)), orderableIdToCode,
-          periods);
+          periods, facilityCodeToHfCmmCountDtos.get(facilityIdToCode.get(facilityId)));
     });
   }
 
   @Transactional
-  public void calculateSingleFacilityCmm(LocalDate requestDate, UUID facilityId) {
+  public void calculateOneFacilityCmm(LocalDate requestDate, UUID facilityId) {
     Facility facility = siglusFacilityRepository.findOne(facilityId);
     Map<UUID, String> orderableIdToCode = siglusOrderableService.getAllProductIdToCode();
     List<ProcessingPeriod> periods = getOneYearPeriods(periodService.getUpToNowMonthlyPeriods(), requestDate);
+    List<HfCmmCountDto> hfCmmCountDtos = facilityCmmsRepository.findOneFacilityCmmCountDtos(
+        periods.stream().map(ProcessingPeriod::getStartDate).collect(Collectors.toList()), facility.getCode());
 
-    calculateAndSavaCmms(requestDate, Pair.of(facilityId, facility.getCode()), orderableIdToCode, periods);
+    calculateAndSavaCmms(requestDate, Pair.of(facilityId, facility.getCode()), orderableIdToCode, periods,
+        hfCmmCountDtos);
   }
 
   private List<ProcessingPeriod> getOneYearPeriods(List<ProcessingPeriod> upToNowAllPeriods,
@@ -102,7 +109,7 @@ public class CalculateCmmService {
   }
 
   private void calculateAndSavaCmms(LocalDate requestDate, Pair<UUID, String> facilityIdToCode,
-      Map<UUID, String> orderableIdToCode, List<ProcessingPeriod> periods) {
+      Map<UUID, String> orderableIdToCode, List<ProcessingPeriod> periods, List<HfCmmCountDto> hfCmmCountDtos) {
 
     UUID facilityId = facilityIdToCode.getFirst();
     LocalDate startDate = periods.get(0).getStartDate();
@@ -111,19 +118,25 @@ public class CalculateCmmService {
     Map<UUID, List<StockOnHandDto>> orderableIdToSohDtos = getOrderableIdToSohDtos(startDate, endDate, facilityId);
     Map<UUID, List<StockCardLineItemDto>> orderableIdToStockCardLineItemDtos = getOrderableIdToStockCardLineItemDtos(
         startDate, endDate, facilityId);
+    Map<LocalDate, Integer> periodStartDateToCount = getPeriodStartDateToCount(hfCmmCountDtos);
 
-    List<HfCmm> hfCmms = buildHfCmms(requestDate, facilityIdToCode,
-        orderableIdToCode, periods, orderableIdToSohDtos, orderableIdToStockCardLineItemDtos);
+    List<HfCmm> hfCmms = buildHfCmms(requestDate, facilityIdToCode, orderableIdToCode, periods, orderableIdToSohDtos,
+        orderableIdToStockCardLineItemDtos, periodStartDateToCount);
     if (CollectionUtils.isNotEmpty(hfCmms)) {
       log.info("save hf cmms, facilityId:{}, size:{}", facilityId, hfCmms.size());
       facilityCmmsRepository.save(hfCmms);
     }
   }
 
+  private Map<LocalDate, Integer> getPeriodStartDateToCount(List<HfCmmCountDto> hfCmmCountDtos) {
+    return hfCmmCountDtos.stream().collect(Collectors.toMap(HfCmmCountDto::getPeriodBegin, HfCmmCountDto::getCount));
+  }
+
   private List<HfCmm> buildHfCmms(LocalDate requestDate, Pair<UUID, String> facilityIdCodePair,
       Map<UUID, String> orderableIdToCode, List<ProcessingPeriod> periods,
       Map<UUID, List<StockOnHandDto>> orderableIdToSohDtos,
-      Map<UUID, List<StockCardLineItemDto>> orderableIdToStockCardLineItemDtos) {
+      Map<UUID, List<StockCardLineItemDto>> orderableIdToStockCardLineItemDtos,
+      Map<LocalDate, Integer> periodStartDateToCount) {
 
     List<HfCmm> hfCmms = Lists.newArrayList();
 
@@ -143,12 +156,22 @@ public class CalculateCmmService {
           firstMovementPeriodStart);
 
       toBeCalculatedPeriods.forEach(period -> {
+        if (hasCalculatedCmms(periodStartDateToCount, period)) {
+          log.info("has calculated cmms, do not calculate cmm, facility:{}, period start data:{}",
+              facilityIdCodePair.getFirst(), period.getStartDate());
+          return;
+        }
+
         double cmm = calculateCmm(firstMovementPeriodStart, periodStartDateToIssueQuantity,
             hasStockOutPeriodStarDate, period);
         hfCmms.add(buildHfCmm(cmm, orderableIdToCode.get(orderableId), facilityIdCodePair.getSecond(), period));
       });
     });
     return hfCmms;
+  }
+
+  private boolean hasCalculatedCmms(Map<LocalDate, Integer> periodStartDateToCount, ProcessingPeriod period) {
+    return periodStartDateToCount.getOrDefault(period.getStartDate(), 0) > 0;
   }
 
   private Map<LocalDate, Long> getPeriodStartDateToIssueQuantity(List<ProcessingPeriod> periods,

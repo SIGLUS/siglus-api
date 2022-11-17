@@ -39,7 +39,7 @@ public class CalculateLocalMachineCmmTask {
     UUID facilityId = machine.getLocalFacilityId();
     log.info("calculate local machine cmm start, facilityId: {}", facilityId);
     long startTime = System.currentTimeMillis();
-    calculateCmmService.calculateSingleFacilityCmm(LocalDate.now(), facilityId);
+    calculateCmmService.calculateOneFacilityCmm(LocalDate.now(), facilityId);
     log.info("calculate local machine cmm end, facilityId: {}, cost: {}ms", facilityId,
         System.currentTimeMillis() - startTime);
   }

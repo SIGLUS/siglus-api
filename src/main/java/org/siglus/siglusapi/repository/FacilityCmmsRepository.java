@@ -16,8 +16,10 @@
 package org.siglus.siglusapi.repository;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
 import org.siglus.siglusapi.domain.HfCmm;
+import org.siglus.siglusapi.dto.HfCmmCountDto;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -38,4 +40,11 @@ public interface FacilityCmmsRepository extends JpaRepository<HfCmm, UUID> {
       + ")", nativeQuery = true)
   void deleteHfCmmsByFacilityIdAndProductCode(@Param("facilityId") UUID facilityId,
       @Param("orderableIds") Iterable<UUID> orderableIds);
+
+  @Query(name = "HfCmm.findHfCmmCountDto", nativeQuery = true)
+  List<HfCmmCountDto> findAllFacilityCmmCountDtos(@Param("periodStartDates") List<LocalDate> periodStartDates);
+
+  @Query(name = "HfCmm.findOneHfCmmCountDto", nativeQuery = true)
+  List<HfCmmCountDto> findOneFacilityCmmCountDtos(@Param("periodStartDates") List<LocalDate> periodStartDates,
+      @Param("facilityCode") String facilityCode);
 }

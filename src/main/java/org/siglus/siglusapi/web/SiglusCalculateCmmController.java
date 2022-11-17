@@ -37,6 +37,6 @@ public class SiglusCalculateCmmController {
 
   @PostMapping("/calculate")
   public void calculateCurrentPeriod(@RequestBody CalculateCmmRequest request) {
-    calculateCmmService.calculateSingleFacilityCmm(request.getPeriodLocalDate(), request.getFacilityId());
+    calculateCmmService.calculateOneFacilityCmm(request.getPeriodLocalDate(), request.getFacilityId());
   }
 }

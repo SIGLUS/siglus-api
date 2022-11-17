@@ -17,11 +17,13 @@ package org.siglus.siglusapi.web.request;
 
 import java.time.LocalDate;
 import java.util.UUID;
+import javax.validation.constraints.NotNull;
 import lombok.Data;
 
 @Data
 public class CalculateCmmRequest {
 
+  @NotNull
   private UUID facilityId;
 
   private LocalDate periodLocalDate;
