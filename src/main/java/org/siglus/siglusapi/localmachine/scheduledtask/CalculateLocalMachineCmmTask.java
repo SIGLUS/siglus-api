@@ -16,13 +16,16 @@
 package org.siglus.siglusapi.localmachine.scheduledtask;
 
 import java.time.LocalDate;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.siglus.siglusapi.localmachine.Machine;
 import org.siglus.siglusapi.service.scheduledtask.CalculateCmmService;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Profile("localmachine")
 @RequiredArgsConstructor
 @Service
@@ -33,6 +36,11 @@ public class CalculateLocalMachineCmmTask {
 
   @Scheduled(cron = "${cmm.calculate.cron}", zone = "${time.zoneId}")
   public void calculate() {
-    calculateCmmService.calculateLocalMachineCmms(LocalDate.now(), machine.getLocalFacilityId());
+    UUID facilityId = machine.getLocalFacilityId();
+    log.info("calculate local machine cmm start, facilityId: {}", facilityId);
+    long startTime = System.currentTimeMillis();
+    calculateCmmService.calculateSingleFacilityCmm(LocalDate.now(), facilityId);
+    log.info("calculate local machine cmm end, facilityId: {}, cost: {}ms", facilityId,
+        System.currentTimeMillis() - startTime);
   }
 }

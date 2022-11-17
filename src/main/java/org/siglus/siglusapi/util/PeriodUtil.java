@@ -39,6 +39,14 @@ public class PeriodUtil {
     return !isDateNotInPeriod(period, localDate);
   }
 
+  public static boolean isPeriodBetween(ProcessingPeriod period, LocalDate startDate, LocalDate endDate) {
+    return !isPeriodNotBetween(period, startDate, endDate);
+  }
+
+  private static boolean isPeriodNotBetween(ProcessingPeriod period, LocalDate startDate, LocalDate endDate) {
+    return period.getStartDate().isBefore(startDate) || period.getEndDate().isAfter(endDate);
+  }
+
   private static boolean isDateNotInPeriod(ProcessingPeriod period, LocalDate localDate) {
     return localDate.isBefore(period.getStartDate()) || localDate.isAfter(period.getEndDate());
   }

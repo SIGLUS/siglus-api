@@ -4383,12 +4383,30 @@ traits:
             responses:
               204:
                 description: Save current user ResyncInfo
+    /cmms/init:
+      displayName: calculate all web facility cmms
+      post:
+        is: [ secured ]
+        description: >
+          calculate all web facility cmms for all period
+        responses:
+          200:
+            body:
+          400:
+            body:
+              application/json:
+                schema: badRequestResponse
+          404:
+          403:
+            body:
+              application/json:
+                schema: localizedMessage
     /cmms/calculate:
       displayName: calculate cmms
       post:
         is: [ secured ]
         description: >
-          calculate cmms for all period
+          calculate cmms
         responses:
           200:
             body:

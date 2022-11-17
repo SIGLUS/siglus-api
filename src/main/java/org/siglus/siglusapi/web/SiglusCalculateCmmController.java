@@ -26,12 +26,17 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/siglusapi/cmms")
-public class SiglusCalculateWebCmmController {
+public class SiglusCalculateCmmController {
 
   private final CalculateCmmService calculateCmmService;
 
+  @PostMapping("/init")
+  public void init() {
+    calculateCmmService.calculateAllWebCmm(null);
+  }
+
   @PostMapping("/calculate")
-  public void calculateCurrentPeriod(@RequestBody CalculateCmmRequest calculateCmmRequest) {
-    calculateCmmService.calculateWebCmms(calculateCmmRequest.getPeriodLocalDate());
+  public void calculateCurrentPeriod(@RequestBody CalculateCmmRequest request) {
+    calculateCmmService.calculateSingleFacilityCmm(request.getPeriodLocalDate(), request.getFacilityId());
   }
 }
