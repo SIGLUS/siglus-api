@@ -63,7 +63,6 @@ import org.openlmis.requisition.dto.RightDto;
 import org.openlmis.requisition.dto.RoleAssignmentDto;
 import org.openlmis.requisition.service.PermissionService;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
-import org.openlmis.requisition.service.referencedata.RequisitionGroupReferenceDataService;
 import org.openlmis.requisition.service.referencedata.RoleReferenceDataService;
 import org.openlmis.requisition.service.referencedata.UserReferenceDataService;
 import org.openlmis.requisition.web.RequisitionController;
@@ -140,7 +139,7 @@ public class SiglusNotificationService {
 
   private final RoleReferenceDataService roleService;
 
-  private final RequisitionGroupReferenceDataService requisitionGroupService;
+  private final SiglusRequisitionGroupService siglusRequisitionGroupService;
 
   private final EntityManager em;
 
@@ -414,18 +413,15 @@ public class SiglusNotificationService {
   }
 
   private Specification<Notification> getFilterByRights() {
-    Collection<PermissionString> permissionStrings = authenticationHelper
-        .getCurrentUserPermissionStrings();
+    Collection<PermissionString> permissionStrings = authenticationHelper.getCurrentUserPermissionStrings();
     log.info("current user has {} rights", permissionStrings.size());
     UUID currentUserFacilityId = findCurrentUserFacilityId();
     Set<UUID> currentUserSupervisoryNodeIds = findCurrentUserSupervisoryNodeIds();
     log.info("current user has supervisoryNode {}", currentUserSupervisoryNodeIds);
-    // CAUTION: bad performance, about 5.4 MB data, using 2.5s
-    List<RequisitionGroupDto> requisitionGroups = requisitionGroupService.findAll();
+    List<RequisitionGroupDto> requisitionGroups = siglusRequisitionGroupService.getRequisitionGroups();
     boolean canEditShipments = permissionStrings.stream().anyMatch(
         rightAssignment ->
-            org.openlmis.fulfillment.service.PermissionService.SHIPMENTS_EDIT
-                .equals(rightAssignment.getRightName()));
+            org.openlmis.fulfillment.service.PermissionService.SHIPMENTS_EDIT.equals(rightAssignment.getRightName()));
     return (root, query, cb) -> {
       List<Predicate> predicates = permissionStrings.stream()
           .map(right -> mapRightToPredicate(right, root, cb, currentUserFacilityId,

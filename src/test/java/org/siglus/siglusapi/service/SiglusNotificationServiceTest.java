@@ -78,7 +78,6 @@ import org.openlmis.requisition.dto.ProofOfDeliveryDto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.service.PermissionService;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
-import org.openlmis.requisition.service.referencedata.RequisitionGroupReferenceDataService;
 import org.openlmis.requisition.service.referencedata.UserReferenceDataService;
 import org.openlmis.requisition.web.RequisitionController;
 import org.siglus.common.repository.OrderExternalRepository;
@@ -130,7 +129,7 @@ public class SiglusNotificationServiceTest {
   private SiglusFacilityReferenceDataService facilityReferenceDataService;
 
   @Mock
-  private RequisitionGroupReferenceDataService requisitionGroupService;
+  private SiglusRequisitionGroupService requisitionGroupService;
 
   @Mock
   private SiglusOrderService siglusOrderService;
@@ -173,7 +172,7 @@ public class SiglusNotificationServiceTest {
     RequisitionV2Dto requisition = new RequisitionV2Dto();
     requisition.getStatusChanges().put(RequisitionStatus.SUBMITTED.name(), new StatusLogEntry());
     when(authenticationHelper.getCurrentUser()).thenReturn(user);
-    when(requisitionGroupService.findAll()).thenReturn(emptyList());
+    when(requisitionGroupService.getRequisitionGroups()).thenReturn(emptyList());
     when(periodService.findOne(any())).thenReturn(new ProcessingPeriodDto());
     when(requisitionService.searchRequisition(any())).thenReturn(requisition);
     when(facilityReferenceDataService.findOne((UUID) any())).thenReturn(new FacilityDto());

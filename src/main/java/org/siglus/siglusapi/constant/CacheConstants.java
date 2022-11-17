@@ -47,4 +47,6 @@ public class CacheConstants {
 
   public static final String SIGLUS_PROGRAM_ORDERABLES = "siglus-program-orderables";
 
+  public static final String SIGLUS_REQUISITION_GROUPS = "siglus-requisition-groups";
+
 }
