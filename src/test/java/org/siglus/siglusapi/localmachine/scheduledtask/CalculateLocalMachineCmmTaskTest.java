@@ -48,6 +48,6 @@ public class CalculateLocalMachineCmmTaskTest {
     task.calculate();
 
     // then
-    verify(calculateCmmService).calculateSingleFacilityCmm(any(), any());
+    verify(calculateCmmService).calculateOneFacilityCmm(any(), any());
   }
 }

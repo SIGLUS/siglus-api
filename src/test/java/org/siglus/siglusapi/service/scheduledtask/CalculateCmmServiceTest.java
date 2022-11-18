@@ -17,6 +17,7 @@ package org.siglus.siglusapi.service.scheduledtask;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyList;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.powermock.api.mockito.PowerMockito.when;
@@ -37,6 +38,7 @@ import org.openlmis.referencedata.domain.Facility;
 import org.openlmis.referencedata.domain.ProcessingPeriod;
 import org.openlmis.referencedata.domain.ProcessingSchedule;
 import org.siglus.siglusapi.constant.PeriodConstants;
+import org.siglus.siglusapi.dto.HfCmmCountDto;
 import org.siglus.siglusapi.repository.FacilityCmmsRepository;
 import org.siglus.siglusapi.repository.SiglusFacilityRepository;
 import org.siglus.siglusapi.repository.SiglusStockCardLineItemRepository;
@@ -70,8 +72,9 @@ public class CalculateCmmServiceTest {
   private final UUID facilityId = UUID.randomUUID();
   private final String orderableCode = "orderable code";
   private final String facilityCode = "facility Code";
-  private final LocalDate now = LocalDate.of(2022, 8, 18);
-  private final LocalDate oneYearAgo = LocalDate.now().minusMonths(11);
+  private final LocalDate now = LocalDate.now();
+  private final LocalDate oneYearAgo = now.minusMonths(11);
+  private final LocalDate periodStartDate = LocalDate.of(2022, 11, 21);
 
   @Before
   public void setup() {
@@ -80,12 +83,13 @@ public class CalculateCmmServiceTest {
     when(siglusStockCardRepository.findStockCardDtos(any(), any(), any())).thenReturn(buildMockStockOhHandDtos());
     when(siglusStockCardLineItemRepository.findStockCardLineItemDtos(any(), any(), any())).thenReturn(
         buildMockStockCardLineItemDtos());
+    when(facilityCmmsRepository.findAllFacilityCmmCountDtos(anyList())).thenReturn(buildMockHfCmmCountDtos());
   }
 
   @Test
   public void shouldSuccessWhenCalculateAllPeriod() {
     // given
-    when(siglusFacilityRepository.findAllWebFacility()).thenReturn(buildMockFacilitys());
+    when(siglusFacilityRepository.findAllWebFacility()).thenReturn(buildMockFacilities());
 
     // when
     calculateCmmService.calculateAllWebCmm(null);
@@ -97,10 +101,10 @@ public class CalculateCmmServiceTest {
   @Test
   public void shouldSuccessWhenCalculateSpecifiedPeriod() {
     // given
-    when(siglusFacilityRepository.findAllWebFacility()).thenReturn(buildMockFacilitys());
+    when(siglusFacilityRepository.findAllWebFacility()).thenReturn(buildMockFacilities());
 
     // when
-    calculateCmmService.calculateAllWebCmm(LocalDate.of(oneYearAgo.getYear(), 10, 21));
+    calculateCmmService.calculateAllWebCmm(now);
 
     // then
     verify(facilityCmmsRepository).save(anyList());
@@ -109,7 +113,7 @@ public class CalculateCmmServiceTest {
   @Test
   public void shouldNotSaveWhenSpecifiedPeriodBeforeFirstMovement() {
     // given
-    when(siglusFacilityRepository.findAllWebFacility()).thenReturn(buildMockFacilitys());
+    when(siglusFacilityRepository.findAllWebFacility()).thenReturn(buildMockFacilities());
 
     // when
     calculateCmmService.calculateAllWebCmm(LocalDate.of(oneYearAgo.getYear(), 8, 21));
@@ -119,15 +123,31 @@ public class CalculateCmmServiceTest {
   }
 
   @Test
-  public void shouldSuccessWhenCalculateSingleFacilityCmms() {
+  public void shouldSuccessWhenCalculateOneFacilityCmms() {
     // given
     when(siglusFacilityRepository.findOne(facilityId)).thenReturn(buildMockFacility());
+    when(facilityCmmsRepository.findOneFacilityCmmCountDtos(anyList(), anyString())).thenReturn(
+        buildMockHfCmmCountDtos());
 
     // when
-    calculateCmmService.calculateSingleFacilityCmm(null, facilityId);
+    calculateCmmService.calculateOneFacilityCmm(null, facilityId);
 
     // then
     verify(facilityCmmsRepository).save(anyList());
+  }
+
+  @Test
+  public void shouldNotSaveWhenCalculateOneFacilityCmmsGivenExistedHfCmm() {
+    // given
+    when(siglusFacilityRepository.findOne(facilityId)).thenReturn(buildMockFacility());
+    when(facilityCmmsRepository.findOneFacilityCmmCountDtos(anyList(), anyString())).thenReturn(
+        buildMockHfCmmCountDtosWithBiggerThan0());
+
+    // when
+    calculateCmmService.calculateOneFacilityCmm(periodStartDate, facilityId);
+
+    // then
+    verify(facilityCmmsRepository, times(0)).save(anyList());
   }
 
   private Map<UUID, String> buildMockOrderableIdToCode() {
@@ -139,23 +159,26 @@ public class CalculateCmmServiceTest {
   private List<StockCardLineItemDto> buildMockStockCardLineItemDtos() {
     StockCardLineItemDto lineItem1 = StockCardLineItemDto.builder()
         .orderableId(orderableId)
-        .occurredDate(LocalDate.of(oneYearAgo.getYear(), 9, 21))
+        .occurredDate(LocalDate.of(oneYearAgo.getYear(), oneYearAgo.getMonth(), 21))
         .issueQuantity(30L)
         .build();
     StockCardLineItemDto lineItem2 = StockCardLineItemDto.builder()
         .orderableId(orderableId)
-        .occurredDate(LocalDate.of(oneYearAgo.getYear(), 9, 22))
+        .occurredDate(LocalDate.of(oneYearAgo.getYear(), oneYearAgo.getMonth(), 22))
         .issueQuantity(30L)
         .build();
 
+    LocalDate plusMonth1 = oneYearAgo.plusMonths(1);
     StockCardLineItemDto lineItem3 = StockCardLineItemDto.builder()
         .orderableId(orderableId)
-        .occurredDate(LocalDate.of(oneYearAgo.getYear(), 10, 21))
+        .occurredDate(LocalDate.of(plusMonth1.getYear(), plusMonth1.getMonth(), 21))
         .issueQuantity(30L)
         .build();
+
+    LocalDate plusMonth2 = oneYearAgo.plusMonths(2);
     StockCardLineItemDto lineItem4 = StockCardLineItemDto.builder()
         .orderableId(orderableId)
-        .occurredDate(LocalDate.of(oneYearAgo.getYear(), 11, 20))
+        .occurredDate(LocalDate.of(plusMonth2.getYear(), plusMonth2.getMonth(), 20))
         .issueQuantity(30L)
         .build();
     return Lists.newArrayList(lineItem1, lineItem2, lineItem3, lineItem4);
@@ -164,39 +187,43 @@ public class CalculateCmmServiceTest {
   private List<StockOnHandDto> buildMockStockOhHandDtos() {
     StockOnHandDto soh1 = StockOnHandDto.builder()
         .orderableId(orderableId)
-        .occurredDate(LocalDate.of(oneYearAgo.getYear(), 9, 21))
+        .occurredDate(LocalDate.of(oneYearAgo.getYear(), oneYearAgo.getMonth(), 21))
         .stockOnHand(110L)
         .build();
     StockOnHandDto soh2 = StockOnHandDto.builder()
         .orderableId(orderableId)
-        .occurredDate(LocalDate.of(oneYearAgo.getYear(), 9, 22))
+        .occurredDate(LocalDate.of(oneYearAgo.getYear(), oneYearAgo.getMonth(), 22))
         .stockOnHand(110L)
         .build();
 
+    LocalDate plusMonth1 = oneYearAgo.plusMonths(1);
     StockOnHandDto soh3 = StockOnHandDto.builder()
         .orderableId(orderableId)
-        .occurredDate(LocalDate.of(oneYearAgo.getYear(), 10, 21))
+        .occurredDate(LocalDate.of(plusMonth1.getYear(), plusMonth1.getMonth(), 21))
         .stockOnHand(110L)
         .build();
+
+    LocalDate plusMonth2 = oneYearAgo.plusMonths(2);
     StockOnHandDto soh4 = StockOnHandDto.builder()
         .orderableId(orderableId)
-        .occurredDate(LocalDate.of(oneYearAgo.getYear(), 11, 19))
+        .occurredDate(LocalDate.of(plusMonth2.getYear(), plusMonth2.getMonth(), 19))
         .stockOnHand(0L)
         .build();
     StockOnHandDto soh5 = StockOnHandDto.builder()
         .orderableId(orderableId)
-        .occurredDate(LocalDate.of(oneYearAgo.getYear(), 11, 20))
+        .occurredDate(LocalDate.of(plusMonth2.getYear(), plusMonth2.getMonth(), 20))
         .stockOnHand(100L)
         .build();
 
+    LocalDate plusMonth3 = oneYearAgo.plusMonths(3);
     StockOnHandDto soh6 = StockOnHandDto.builder()
         .orderableId(orderableId)
-        .occurredDate(LocalDate.of(oneYearAgo.getYear(), 12, 21))
+        .occurredDate(LocalDate.of(plusMonth3.getYear(), plusMonth3.getMonth(), 21))
         .stockOnHand(110L)
         .build();
     StockOnHandDto soh7 = StockOnHandDto.builder()
         .orderableId(orderableId)
-        .occurredDate(LocalDate.of(oneYearAgo.getYear(), 12, 22))
+        .occurredDate(LocalDate.of(plusMonth3.getYear(), plusMonth3.getMonth(), 22))
         .stockOnHand(110L)
         .build();
 
@@ -222,7 +249,7 @@ public class CalculateCmmServiceTest {
     return periods;
   }
 
-  private List<Facility> buildMockFacilitys() {
+  private List<Facility> buildMockFacilities() {
     return Lists.newArrayList(buildMockFacility());
   }
 
@@ -233,5 +260,15 @@ public class CalculateCmmServiceTest {
     facility.setActive(Boolean.TRUE);
     facility.setEnabled(Boolean.TRUE);
     return facility;
+  }
+
+  private List<HfCmmCountDto> buildMockHfCmmCountDtos() {
+    HfCmmCountDto dto = new HfCmmCountDto(facilityCode, periodStartDate, 0);
+    return Lists.newArrayList(dto);
+  }
+
+  private List<HfCmmCountDto> buildMockHfCmmCountDtosWithBiggerThan0() {
+    HfCmmCountDto dto = new HfCmmCountDto(facilityCode, periodStartDate, 1);
+    return Lists.newArrayList(dto);
   }
 }

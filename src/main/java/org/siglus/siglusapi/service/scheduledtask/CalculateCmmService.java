@@ -157,8 +157,6 @@ public class CalculateCmmService {
 
       toBeCalculatedPeriods.forEach(period -> {
         if (hasCalculatedCmms(periodStartDateToCount, period)) {
-          log.info("has calculated cmms, do not calculate cmm, facility:{}, period start data:{}",
-              facilityIdCodePair.getFirst(), period.getStartDate());
           return;
         }
 
