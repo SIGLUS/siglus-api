@@ -139,8 +139,7 @@ public class LocalExportImportService {
   }
 
   private String normalizeDateTime(ZonedDateTime zonedDateTime) {
-    String format = zonedDateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd_hh:mm"));
-    return format.replace(":", "h") + "min";
+    return zonedDateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd_hh'h'mm'min'"));
   }
 
   private File prepareDirectory() {
