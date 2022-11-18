@@ -129,7 +129,8 @@ public class CalculateCmmService {
   }
 
   private Map<LocalDate, Integer> getPeriodStartDateToCount(List<HfCmmCountDto> hfCmmCountDtos) {
-    return hfCmmCountDtos.stream().collect(Collectors.toMap(HfCmmCountDto::getPeriodBegin, HfCmmCountDto::getCount));
+    return CollectionUtils.isEmpty(hfCmmCountDtos) ? Maps.newHashMap()
+        : hfCmmCountDtos.stream().collect(Collectors.toMap(HfCmmCountDto::getPeriodBegin, HfCmmCountDto::getCount));
   }
 
   private List<HfCmm> buildHfCmms(LocalDate requestDate, Pair<UUID, String> facilityIdCodePair,
