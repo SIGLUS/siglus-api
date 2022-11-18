@@ -34,7 +34,7 @@ public class CalculateLocalMachineCmmTask {
   private final CalculateCmmService calculateCmmService;
   private final Machine machine;
 
-  @Scheduled(cron = "${cmm.calculate.cron}", zone = "${time.zoneId}")
+  @Scheduled(cron = "${localmachine.cmm.calculate.cron}", zone = "${time.zoneId}")
   public void calculate() {
     UUID facilityId = machine.getLocalFacilityId();
     log.info("calculate local machine cmm start, facilityId: {}", facilityId);

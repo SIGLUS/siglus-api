@@ -32,8 +32,8 @@ public class CalculateWebCmmTask {
 
   private final CalculateCmmService calculateCmmService;
 
-  @Scheduled(cron = "${cmm.calculate.cron}", zone = "${time.zoneId}")
-  @SchedulerLock(name = "calculate_cmm_task")
+  @Scheduled(cron = "${web.cmm.calculate.cron}", zone = "${time.zoneId}")
+  @SchedulerLock(name = "web_calculate_cmm_task")
   public void calculate() {
     log.info("calculate web cmm start");
     long startTime = System.currentTimeMillis();
