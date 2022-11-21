@@ -15,7 +15,9 @@
 
 package org.siglus.siglusapi.web;
 
+import javax.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.siglus.siglusapi.interceptor.OperationGuardAspect.Guarded;
 import org.siglus.siglusapi.service.scheduledtask.CalculateCmmService;
 import org.siglus.siglusapi.web.request.CalculateCmmRequest;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -31,12 +33,14 @@ public class SiglusCalculateCmmController {
   private final CalculateCmmService calculateCmmService;
 
   @PostMapping("/init")
+  @Guarded
   public void init() {
     calculateCmmService.calculateAllWebCmm(null);
   }
 
   @PostMapping("/calculate")
-  public void calculateCurrentPeriod(@RequestBody CalculateCmmRequest request) {
+  @Guarded
+  public void calculateCurrentPeriod(@Valid @RequestBody CalculateCmmRequest request) {
     calculateCmmService.calculateOneFacilityCmm(request.getPeriodLocalDate(), request.getFacilityId());
   }
 }
