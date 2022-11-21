@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.localmachine.auth;
 
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_NETWORK_ERROR;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_NOT_ACTIVATED_YET;
 
 import java.io.BufferedReader;
@@ -69,9 +70,9 @@ public class LocalTokenInterceptor implements ClientHttpRequestInterceptor {
       machine.setConnectedOnlineWeb(true);
       logClientHttpResponse(request, httpResponse);
       return httpResponse;
-    } catch (IOException ioException) {
+    } catch (IOException e) {
       machine.setConnectedOnlineWeb(false);
-      throw ioException;
+      throw new BusinessDataException(e, new Message(ERROR_NETWORK_ERROR));
     }
   }
 
@@ -92,7 +93,7 @@ public class LocalTokenInterceptor implements ClientHttpRequestInterceptor {
     }
     if (HttpStatus.PRECONDITION_FAILED.equals(statusCode)) {
       log.info("unauthorized access, delete local machine table");
-      agentInfoRepository.deleteLocalMachineAgents();
+//      agentInfoRepository.deleteLocalMachineAgents();
     }
   }
 
@@ -108,7 +109,7 @@ public class LocalTokenInterceptor implements ClientHttpRequestInterceptor {
 
   private String buildAccessToken(AgentInfo agentInfo) {
     return MachineToken.sign(
-        agentInfo.getMachineId(), agentInfo.getFacilityId(), agentInfo.getPrivateKey())
+            agentInfo.getMachineId(), agentInfo.getFacilityId(), agentInfo.getPrivateKey())
         .getPayload();
   }
 }

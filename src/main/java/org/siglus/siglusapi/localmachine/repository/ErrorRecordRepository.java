@@ -15,7 +15,6 @@
 
 package org.siglus.siglusapi.localmachine.repository;
 
-import java.util.List;
 import java.util.UUID;
 import org.siglus.siglusapi.localmachine.domain.ErrorRecord;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -29,7 +28,7 @@ public interface ErrorRecordRepository extends JpaRepository<ErrorRecord, UUID> 
       + " and e.occurredtime >= (select lastsyncedtime from localmachine.last_sync_replay_record)"
       + " UNION ALL select * from localmachine.error_records e where e.type = 'REPLAY'"
       + " and e.occurredtime >= (select lastreplayedtime from localmachine.last_sync_replay_record)"
-      + " order by occurredtime limit 10", nativeQuery = true)
-  List<ErrorRecord> findLastTenErrorRecords();
+      + " order by occurredtime limit 1", nativeQuery = true)
+  ErrorRecord findLastErrorRecord();
 
 }

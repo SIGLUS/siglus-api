@@ -18,7 +18,6 @@ package org.siglus.siglusapi.localmachine.agent;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 
-import com.google.common.collect.Lists;
 import java.time.ZonedDateTime;
 import junit.framework.TestCase;
 import org.junit.Test;
@@ -64,7 +63,7 @@ public class LocalSyncResultsServiceTest extends TestCase {
 
     //when
     when(lastSyncRecordRepository.findFirstByOrderByLastSyncedTimeDesc()).thenReturn(syncRecord);
-    when(errorRecordRepository.findLastTenErrorRecords()).thenReturn(Lists.newArrayList(errorRecord));
+    when(errorRecordRepository.findLastErrorRecord()).thenReturn(errorRecord);
     doNothing().when(synchronizer).sync();
     LocalSyncResultsResponse syncResults = localSyncResultsService.doSync();
 

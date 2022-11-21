@@ -15,7 +15,7 @@
 
 package org.siglus.siglusapi.localmachine.agent;
 
-import java.util.List;
+import jersey.repackaged.com.google.common.collect.Lists;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.siglus.siglusapi.localmachine.domain.ErrorRecord;
@@ -41,11 +41,11 @@ public class LocalSyncResultsService {
   public LocalSyncResultsResponse doSync() {
     synchronizer.sync();
     LastSyncReplayRecord lastSyncTime = lastSyncRecordRepository.findFirstByOrderByLastSyncedTimeDesc();
-    List<ErrorRecord> errorRecords = errorRecordsRepository.findLastTenErrorRecords();
+    ErrorRecord errorRecord = errorRecordsRepository.findLastErrorRecord();
 
     return LocalSyncResultsResponse.builder()
         .latestSyncedTime(lastSyncTime.getLastSyncedTime())
-        .errors(errorRecords)
+        .errors(Lists.newArrayList(errorRecord))
         .build();
   }
 }

@@ -185,6 +185,7 @@ public abstract class MessageKeys {
   public static final String ERROR_IMPORT_INVALID_FILE = "localmachine.file.may.be.modified";
   public static final String ERROR_IMPORT_FILE_RECEIVER_NOT_MATCH =
       "localmachine.file.receiver.not.match.current.facility";
+  public static final String ERROR_NETWORK_ERROR = "localmachine.network.error";
 
   // android
   public static final String ERROR_NOT_WEB_USER = "siglusapi.error.notWebUser";
