@@ -435,8 +435,7 @@ public class MeServiceTest {
     // given
     AppInfo existedInfo = mockCurrentAppInfo();
     AppInfo toBeUpdatedInfo = mockUpdateAppInfo();
-    when(appInfoRepository.findByFacilityCodeAndUniqueId(toBeUpdatedInfo.getFacilityCode(),
-        toBeUpdatedInfo.getUniqueId())).thenReturn(existedInfo);
+    when(appInfoRepository.findByFacilityCode(toBeUpdatedInfo.getFacilityCode())).thenReturn(existedInfo);
     when(appInfoRepository.save(toBeUpdatedInfo)).thenReturn(existedInfo);
 
     // when
@@ -452,8 +451,7 @@ public class MeServiceTest {
   public void shouldInsertAppInfoWhenAppInfoIsNotExist() {
     // given
     AppInfo toBeUpdatedInfo = mockUpdateAppInfo();
-    when(appInfoRepository.findByFacilityCodeAndUniqueId(toBeUpdatedInfo.getFacilityCode(),
-        toBeUpdatedInfo.getUniqueId())).thenReturn(null);
+    when(appInfoRepository.findByFacilityCode(toBeUpdatedInfo.getFacilityCode())).thenReturn(null);
     when(appInfoRepository.save(toBeUpdatedInfo)).thenReturn(toBeUpdatedInfo);
 
     // when

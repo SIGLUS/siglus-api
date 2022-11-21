@@ -54,4 +54,6 @@ public class AppInfo extends BaseEntity {
 
   @LastModifiedDate
   private ZonedDateTime lastUpdated;
+
+  private ZonedDateTime upgradeTime;
 }

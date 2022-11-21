@@ -24,6 +24,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.chrono.ChronoZonedDateTime;
 import java.util.Collection;
 import java.util.Collections;
@@ -212,10 +213,15 @@ public class MeService {
 
   @Transactional
   public void processAppInfo(AppInfo appInfo) {
-    AppInfo existAppInfo = appInfoRepository
-        .findByFacilityCodeAndUniqueId(appInfo.getFacilityCode(), appInfo.getUniqueId());
+    AppInfo existAppInfo = appInfoRepository.findByFacilityCode(appInfo.getFacilityCode());
+    if (existAppInfo != null && !existAppInfo.getUniqueId().equals(appInfo.getUniqueId())) {
+      return;
+    }
     UUID appInfoId = existAppInfo != null ? existAppInfo.getId() : UUID.randomUUID();
+    ZonedDateTime upgradeTime = existAppInfo != null && existAppInfo.getVersionCode().equals(appInfo.getVersionCode())
+        ? existAppInfo.getUpgradeTime() : ZonedDateTime.now();
     appInfo.setId(appInfoId);
+    appInfo.setUpgradeTime(upgradeTime);
     log.info("process app-info , id: {}", appInfoId);
     appInfoRepository.save(appInfo);
   }

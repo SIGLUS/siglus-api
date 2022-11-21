@@ -19,6 +19,7 @@ import static org.siglus.siglusapi.localmachine.auth.AuthenticationArgumentResol
 import static org.springframework.util.StringUtils.isEmpty;
 
 import java.io.IOException;
+import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.UUID;
 import javax.servlet.FilterChain;
@@ -47,6 +48,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 @Component
 @RequiredArgsConstructor
 public class LocalMachineRequestFilter extends OncePerRequestFilter {
+
   private static final RequestMatcher nonSecuredRequestMatcher =
       new AntPathRequestMatcher("/api/siglusapi/localmachine/server/agents");
   private static final RequestMatcher securedRequestMatcher =
@@ -56,6 +58,7 @@ public class LocalMachineRequestFilter extends OncePerRequestFilter {
   private final FacilityRepository facilityRepository;
 
   public static class AuthorizeException extends IllegalStateException {
+
     private final HttpStatus status;
 
     public AuthorizeException(String message) {
@@ -153,29 +156,36 @@ public class LocalMachineRequestFilter extends OncePerRequestFilter {
     String deviceVersion = request.getHeader(CommonConstants.VERSION);
     UUID facilityId = machineToken.getFacilityId();
     Facility facility = facilityRepository.findOne(facilityId);
-    AppInfo appInfo = appInfoRepository.findByFacilityCode(facility.getCode());
-    if (null != appInfo && !appInfo.getUniqueId().equals(machineToken.getMachineId().toString())) {
+    AppInfo existAppInfo = appInfoRepository.findByFacilityCode(facility.getCode());
+    if (null != existAppInfo && !existAppInfo.getUniqueId().equals(machineToken.getMachineId().toString())) {
       return;
     }
-    if (null != appInfo && deviceInfo.equals(appInfo.getDeviceInfo())
-        && deviceVersion.equals(appInfo.getVersionCode())) {
+    if (null != existAppInfo && deviceInfo.equals(existAppInfo.getDeviceInfo())
+        && deviceVersion.equals(existAppInfo.getVersionCode())) {
       return;
     }
-    if (null == appInfo) {
-      appInfo = buildForAppInfo(facility, machineToken.getMachineId());
+    AppInfo appInfo = buildForAppInfo(facility, machineToken.getMachineId(), deviceInfo, deviceVersion);
+    if (null != existAppInfo) {
+      appInfo.setId(existAppInfo.getId());
+      if (existAppInfo.getVersionCode().equals(appInfo.getVersionCode())) {
+        appInfo.setUpgradeTime(existAppInfo.getUpgradeTime());
+      }
+    } else {
+      appInfo.setId(UUID.randomUUID());
     }
-    appInfo.setVersionCode(request.getHeader(CommonConstants.VERSION));
-    appInfo.setDeviceInfo(deviceInfo);
     log.info("deviceInfo updated, facilityId: {}; new deviceInfo: {}", facilityId, deviceInfo);
     appInfoRepository.save(appInfo);
   }
 
-  private AppInfo buildForAppInfo(Facility facility, UUID machineId) {
+  private AppInfo buildForAppInfo(Facility facility, UUID machineId, String deviceInfo, String deviceVersion) {
     return AppInfo
         .builder()
         .facilityCode(facility.getCode())
         .facilityName(facility.getName())
         .uniqueId(machineId.toString())
+        .deviceInfo(deviceInfo)
+        .versionCode(deviceVersion)
+        .upgradeTime(ZonedDateTime.now())
         .build();
   }
 }
