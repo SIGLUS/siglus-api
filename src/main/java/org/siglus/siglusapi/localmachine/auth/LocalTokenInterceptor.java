@@ -93,7 +93,7 @@ public class LocalTokenInterceptor implements ClientHttpRequestInterceptor {
     }
     if (HttpStatus.PRECONDITION_FAILED.equals(statusCode)) {
       log.info("unauthorized access, delete local machine table");
-//      agentInfoRepository.deleteLocalMachineAgents();
+      agentInfoRepository.deleteLocalMachineAgents();
     }
   }
 
