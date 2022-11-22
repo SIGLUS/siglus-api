@@ -15,7 +15,7 @@
 
 package org.siglus.siglusapi.localmachine.event.requisition.andriod;
 
-import static org.siglus.siglusapi.dto.enums.EventCategoryEnum.REQUISITION_INTERNAL_APPROVED_ANDROID;
+import static org.siglus.siglusapi.dto.enums.EventCategoryEnum.ANDROID_REQUISITION_INTERNAL_APPROVED;
 
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -60,7 +60,7 @@ public class AndroidRequisitionSyncedEmitter {
     eventPublisher.emitGroupEvent(
         baseEventCommonService.getGroupId(requisitionId),
         baseEventCommonService.getReceiverId(user.getHomeFacilityId(), programId), event,
-        REQUISITION_INTERNAL_APPROVED_ANDROID);
+        ANDROID_REQUISITION_INTERNAL_APPROVED);
     return event;
   }
 }

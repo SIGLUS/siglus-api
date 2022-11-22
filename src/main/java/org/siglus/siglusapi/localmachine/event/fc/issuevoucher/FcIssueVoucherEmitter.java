@@ -15,6 +15,8 @@
 
 package org.siglus.siglusapi.localmachine.event.fc.issuevoucher;
 
+import static org.siglus.siglusapi.dto.enums.EventCategoryEnum.FC_ISSUE_VOUCHER;
+
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,7 +35,7 @@ public class FcIssueVoucherEmitter {
     log.info("get event of fc issue voucher, requisitionNumber = " + issueVoucherDto.getRequisitionNumber());
     FcIssueVoucherEvent event = new FcIssueVoucherEvent();
     event.setIssueVoucherDto(issueVoucherDto);
-    eventPublisher.emitGroupEvent(realRequisitionNumber, facilityId, event);
+    eventPublisher.emitGroupEvent(realRequisitionNumber, facilityId, event, FC_ISSUE_VOUCHER);
     return event;
   }
 }

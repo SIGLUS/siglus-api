@@ -18,6 +18,7 @@ package org.siglus.siglusapi.localmachine.event.proofofdelivery;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.siglus.siglusapi.dto.enums.EventCategoryEnum.POD_CONFIRMED;
 
 import java.util.Collections;
 import java.util.List;
@@ -128,7 +129,7 @@ public class ProofOfDeliveryEmitterTest {
     emitter.emit(podId);
 
     // then
-    verify(eventPublisher, times(1)).emitGroupEvent("MTB.01020409.2203.04", facilityId, event);
+    verify(eventPublisher, times(1)).emitGroupEvent("MTB.01020409.2203.04", facilityId, event, POD_CONFIRMED);
   }
 
 

@@ -40,7 +40,7 @@ public class EventRecordRepositoryTest extends LocalMachineIntegrationTest {
         .isEqualTo(
             "INSERT INTO localmachine.events("
                 + "protocolversion,senderid,receiverid,onlinewebsynced,receiversynced,localreplayed,archived,"
-                + "occurredtime,syncedtime,groupid,id,parentid) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)");
+                + "occurredtime,syncedtime,groupid,id,category,parentid) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)");
   }
 
   @Test
@@ -54,7 +54,7 @@ public class EventRecordRepositoryTest extends LocalMachineIntegrationTest {
         .isEqualTo(
             "INSERT INTO localmachine.events("
                 + "protocolversion,senderid,receiverid,onlinewebsynced,receiversynced,localreplayed,archived,"
-                + "occurredtime,syncedtime,groupid,id) VALUES (?,?,?,?,?,?,?,?,?,?,?)");
+                + "occurredtime,syncedtime,groupid,id,category) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)");
   }
 
   @Test

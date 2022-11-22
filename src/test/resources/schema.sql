@@ -51,3 +51,5 @@ CREATE TABLE IF NOT EXISTS localmachine.ack_records (
     sendto uuid NOT NULL,
     shipped BOOL NOT NULL DEFAULT FALSE
 );
+
+alter table localmachine.events add column category varchar(511);

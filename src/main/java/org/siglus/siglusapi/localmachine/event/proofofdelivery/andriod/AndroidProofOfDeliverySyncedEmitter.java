@@ -15,7 +15,7 @@
 
 package org.siglus.siglusapi.localmachine.event.proofofdelivery.andriod;
 
-import static org.siglus.siglusapi.dto.enums.EventCategoryEnum.POD_CONFIRMED_ANDROID;
+import static org.siglus.siglusapi.dto.enums.EventCategoryEnum.ANDROID_POD_CONFIRMED;
 
 import java.util.Collections;
 import java.util.List;
@@ -50,7 +50,7 @@ public class AndroidProofOfDeliverySyncedEmitter {
         .request(request)
         .build();
 
-    eventPublisher.emitGroupEvent(getGroupId(externalId), supplyingFacilityId, event, POD_CONFIRMED_ANDROID);
+    eventPublisher.emitGroupEvent(getGroupId(externalId), supplyingFacilityId, event, ANDROID_POD_CONFIRMED);
     log.info("android pod event : {}", event);
     return event;
   }

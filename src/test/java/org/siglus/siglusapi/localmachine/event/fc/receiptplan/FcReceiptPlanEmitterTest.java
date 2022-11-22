@@ -17,6 +17,7 @@ package org.siglus.siglusapi.localmachine.event.fc.receiptplan;
 
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.siglus.siglusapi.dto.enums.EventCategoryEnum.FC_RECEIPT_PLAN;
 
 import java.util.UUID;
 import org.junit.Test;
@@ -49,6 +50,6 @@ public class FcReceiptPlanEmitterTest {
     emitter.emit(receiptPlanDto, facilityId, realRequisitionNumber);
 
     // then
-    verify(eventPublisher, times(1)).emitGroupEvent(realRequisitionNumber, facilityId, event);
+    verify(eventPublisher, times(1)).emitGroupEvent(realRequisitionNumber, facilityId, event, FC_RECEIPT_PLAN);
   }
 }

@@ -15,6 +15,8 @@
 
 package org.siglus.siglusapi.localmachine.event.fc.receiptplan;
 
+import static org.siglus.siglusapi.dto.enums.EventCategoryEnum.FC_RECEIPT_PLAN;
+
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,7 +35,7 @@ public class FcReceiptPlanEmitter {
     log.info("get event of fc receipt plan, requisitionNumber = " + receiptPlanDto.getReceiptPlanNumber());
     FcReceiptPlanEvent event = new FcReceiptPlanEvent();
     event.setReceiptPlanDto(receiptPlanDto);
-    eventPublisher.emitGroupEvent(realRequisitionNumber, facilityId, event);
+    eventPublisher.emitGroupEvent(realRequisitionNumber, facilityId, event, FC_RECEIPT_PLAN);
     return event;
   }
 

@@ -17,6 +17,7 @@ package org.siglus.siglusapi.localmachine.event.fc.issuevoucher;
 
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.siglus.siglusapi.dto.enums.EventCategoryEnum.FC_ISSUE_VOUCHER;
 
 import java.util.UUID;
 import org.junit.Test;
@@ -49,6 +50,6 @@ public class FcIssueVoucherEmitterTest {
     emitter.emit(issueVoucherDto, facilityId, realRequisitionNumber);
 
     // then
-    verify(eventPublisher, times(1)).emitGroupEvent(realRequisitionNumber, facilityId, event);
+    verify(eventPublisher, times(1)).emitGroupEvent(realRequisitionNumber, facilityId, event, FC_ISSUE_VOUCHER);
   }
 }

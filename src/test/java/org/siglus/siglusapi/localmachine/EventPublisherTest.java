@@ -38,9 +38,9 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
-import org.siglus.siglusapi.dto.enums.EventCategoryEnum;
 import org.siglus.siglusapi.localmachine.agent.ErrorHandler;
 import org.siglus.siglusapi.localmachine.agent.SyncRecordService;
+import org.siglus.siglusapi.localmachine.cdc.TableChangeEvent;
 import org.siglus.siglusapi.localmachine.event.masterdata.MasterDataTableChangeEvent;
 import org.siglus.siglusapi.localmachine.eventstore.AckRepository;
 import org.siglus.siglusapi.localmachine.eventstore.EventPayloadRepository;
@@ -242,7 +242,12 @@ public class EventPublisherTest {
   @Test
   public void canEmitMasterDataEventSuccessfully() {
     // given
-    MasterDataTableChangeEvent event = MasterDataTableChangeEvent.builder().tableChangeEvents(Lists.newArrayList())
+    MasterDataTableChangeEvent event = MasterDataTableChangeEvent.builder()
+        .tableChangeEvents(Lists.newArrayList(
+            TableChangeEvent.builder()
+                .schemaName("siglusintegration")
+                .tableName("facility_extension")
+                .build()))
         .build();
     ArgumentCaptor<MasterDataEventRecord> recordArgumentCaptor = ArgumentCaptor.forClass(MasterDataEventRecord.class);
     UUID facilityId = getMockedFacility();
