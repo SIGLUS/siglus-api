@@ -15,6 +15,8 @@
 
 package org.siglus.siglusapi.localmachine.cdc;
 
+import static org.siglus.siglusapi.constant.FieldConstants.DOT;
+
 import java.time.ZonedDateTime;
 import java.util.Map;
 import lombok.AllArgsConstructor;
@@ -36,6 +38,6 @@ public class CdcRecord {
   private Map<String, Object> payload;
 
   public String tableId() {
-    return schema + "." + table;
+    return schema + DOT + table;
   }
 }

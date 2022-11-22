@@ -15,6 +15,8 @@
 
 package org.siglus.siglusapi.service;
 
+import static org.siglus.siglusapi.constant.FieldConstants.DOT;
+import static org.siglus.siglusapi.constant.FieldConstants.UNDERSCORE;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_CANNOT_OPERATE_WHEN_SUB_DRAFT_SUBMITTED;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_NOT_ALL_SUB_DRAFTS_SUBMITTED;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_NO_POD_OR_POD_LINE_ITEM_FOUND;
@@ -156,8 +158,6 @@ public class SiglusPodService {
   private static final Integer DISTRICT_LEVEL_NUMBER = 3;
   private static final Map<String, String> PROGRAM_CODE_TO_FILE_PREFIX_NORMAL = Maps.newHashMap();
   private static final Set<String> EXPAND_PARAM = Sets.asSet("shipment.order");
-  private static final String DOT = ".";
-  private static final String UNDERSCORE = "_";
   private static final String SHORT_LINE = "-";
 
   private final DateFormat dateFormat = new SimpleDateFormat("yyMM");

@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.service;
 
+import static org.siglus.siglusapi.constant.FieldConstants.DOT;
 import static org.siglus.siglusapi.constant.ProgramConstants.MALARIA_PROGRAM_CODE;
 import static org.siglus.siglusapi.constant.ProgramConstants.MMC_PROGRAM_CODE;
 import static org.siglus.siglusapi.constant.ProgramConstants.MTB_PROGRAM_CODE;
@@ -50,7 +51,6 @@ public class SiglusRequisitionExtensionService {
   private final RequisitionExtensionRepository requisitionExtensionRepository;
   private final ProcessingPeriodRepository processingPeriodRepository;
   private final SiglusProgramService siglusProgramService;
-  private static final String DOT = ".";
 
   public RequisitionExtension createRequisitionExtension(SiglusRequisitionDto siglusRequisitionDto) {
     ProcessingPeriod period = processingPeriodRepository.findOneById(siglusRequisitionDto.getProcessingPeriodId());

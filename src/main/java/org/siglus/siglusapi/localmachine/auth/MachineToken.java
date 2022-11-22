@@ -15,6 +15,8 @@
 
 package org.siglus.siglusapi.localmachine.auth;
 
+import static org.siglus.siglusapi.constant.FieldConstants.DOT;
+
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -63,7 +65,7 @@ public class MachineToken {
 
   public static MachineToken parse(String token) {
     String[] splitToken = token.split("\\.");
-    String unsignedToken = splitToken[0] + "." + splitToken[1] + ".";
+    String unsignedToken = splitToken[0] + DOT + splitToken[1] + DOT;
     Claims claims = Jwts.parserBuilder().build().parseClaimsJwt(unsignedToken).getBody();
     return new MachineToken(
         UUID.fromString(claims.getIssuer()), UUID.fromString(claims.getSubject()), token);

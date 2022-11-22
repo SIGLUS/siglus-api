@@ -18,6 +18,7 @@ package org.siglus.siglusapi.util;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.siglus.siglusapi.constant.FieldConstants.DOT;
 
 import java.util.Arrays;
 import java.util.List;
@@ -31,7 +32,7 @@ public class AsyncExecutorTest {
     // given
     Function<String, String> extractContent = it -> it.split("\\.")[1];
     Function<String, String> extractThreadName = it -> it.split("\\.")[0];
-    Function<String, String> task = it -> Thread.currentThread().getName() + "." + it.toUpperCase();
+    Function<String, String> task = it -> Thread.currentThread().getName() + DOT + it.toUpperCase();
 
     // when
     List<String> result =

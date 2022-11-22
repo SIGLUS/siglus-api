@@ -30,6 +30,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.when;
+import static org.siglus.siglusapi.constant.FieldConstants.DOT;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JavaType;
@@ -440,7 +441,7 @@ public class SiglusMeControllerCreateStockCardsValidationTest extends FileBasedT
 
     // then
     assertEquals(1, violations.size());
-    assertViolation("08A is not approved by the facility " + facilityId + ".",
+    assertViolation("08A is not approved by the facility " + facilityId + DOT,
         "createStockCards.arg0[0]", violations);
   }
 

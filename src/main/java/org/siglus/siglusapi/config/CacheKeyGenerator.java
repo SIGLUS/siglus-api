@@ -15,6 +15,8 @@
 
 package org.siglus.siglusapi.config;
 
+import static org.siglus.siglusapi.constant.FieldConstants.DOT;
+
 import java.lang.reflect.Method;
 import java.util.Map;
 import org.springframework.cache.interceptor.KeyGenerator;
@@ -23,8 +25,6 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class CacheKeyGenerator implements KeyGenerator {
-
-  private static final String DOT = ".";
 
   @Override
   public Object generate(Object target, Method method, Object... params) {
