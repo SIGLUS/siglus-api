@@ -15,6 +15,8 @@
 
 package org.siglus.siglusapi.localmachine.cdc;
 
+import static org.siglus.siglusapi.constant.FieldConstants.DOT;
+
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -40,5 +42,9 @@ public class TableChangeEvent {
 
     private boolean isDeletion;
     private List<Object> values;
+  }
+
+  public String getTableFullName() {
+    return schemaName + DOT + tableName;
   }
 }

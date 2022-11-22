@@ -33,10 +33,12 @@ public interface MasterDataEventRecordRepository extends JpaRepository<MasterDat
           "INSERT INTO localmachine.master_data_events("
               + "payload,"
               + "facilityid,"
-              + "occurredtime) VALUES ("
+              + "occurredtime,"
+              + "tablefullname) VALUES ("
               + ":#{#r.payload},"
               + ":#{#r.facilityId},"
-              + ":#{#r.occurredTime})",
+              + ":#{#r.occurredTime},"
+              + ":#{#r.tableFullName})",
       nativeQuery = true)
   void insertMarkFacilityIdMasterDataEvents(@Param("r") MasterDataEventRecord masterDataEventRecord);
 
@@ -45,9 +47,11 @@ public interface MasterDataEventRecordRepository extends JpaRepository<MasterDat
       value =
           "INSERT INTO localmachine.master_data_events("
               + "payload,"
-              + "occurredtime) VALUES ("
+              + "occurredtime,"
+              + "tablefullname) VALUES ("
               + ":#{#r.payload},"
-              + ":#{#r.occurredTime})",
+              + ":#{#r.occurredTime},"
+              + ":#{#r.tableFullName})",
       nativeQuery = true)
   void insertMasterDataEvents(@Param("r") MasterDataEventRecord masterDataEventRecord);
 

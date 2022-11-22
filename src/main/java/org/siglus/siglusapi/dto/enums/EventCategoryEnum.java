@@ -13,25 +13,18 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.localmachine;
+package org.siglus.siglusapi.dto.enums;
 
-import java.time.ZonedDateTime;
-import java.util.UUID;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+public enum EventCategoryEnum {
 
-@Builder
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class MasterDataEvent {
-
-  private long id;
-  private String snapshotVersion;
-  private UUID facilityId;
-  private String tableFullName;
-  private Object payload;
-  private ZonedDateTime occurredTime;
+  REQUISITION_INTERNAL_APPROVED,
+  REQUISITION_INTERNAL_APPROVED_ANDROID,
+  REQUISITION_REJECTED,
+  RELEASED_WITHOUT_ORDER,
+  ORDER_FULFILLED,
+  POD_CONFIRMED,
+  POD_CONFIRMED_ANDROID,
+  MASTER_DATA,
+  STOCK_MOVEMENT,
+  CMM
 }

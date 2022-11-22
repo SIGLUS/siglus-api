@@ -20,9 +20,11 @@ import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.CollectionUtils;
 import org.siglus.siglusapi.localmachine.agent.ErrorHandler;
 import org.siglus.siglusapi.localmachine.agent.SyncRecordService;
 import org.siglus.siglusapi.localmachine.constant.ErrorType;
+import org.siglus.siglusapi.localmachine.event.masterdata.MasterDataTableChangeEvent;
 import org.siglus.siglusapi.localmachine.eventstore.EventStore;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
@@ -59,10 +61,12 @@ public class EventPublisher {
     doEmit(event);
   }
 
-  public void emitMasterDataEvent(Object payload, UUID facilityId) {
-    MasterDataEvent.MasterDataEventBuilder eventBuilder = baseMasterDataEventBuilder(payload, facilityId);
-    MasterDataEvent masterDataEvent = eventBuilder.build();
-    eventStore.emit(masterDataEvent);
+  public void emitMasterDataEvent(MasterDataTableChangeEvent payload, UUID facilityId) {
+    if (CollectionUtils.isNotEmpty(payload.getTableChangeEvents())) {
+      MasterDataEvent.MasterDataEventBuilder eventBuilder = baseMasterDataEventBuilder(payload, facilityId);
+      MasterDataEvent masterDataEvent = eventBuilder.build();
+      eventStore.emit(masterDataEvent);
+    }
   }
 
   @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -120,10 +124,12 @@ public class EventPublisher {
         .localReplayed(true); // marked as replayed at sender side
   }
 
-  private MasterDataEvent.MasterDataEventBuilder baseMasterDataEventBuilder(Object payload, UUID facilityId) {
+  private MasterDataEvent.MasterDataEventBuilder baseMasterDataEventBuilder(MasterDataTableChangeEvent payload,
+      UUID facilityId) {
     return MasterDataEvent.builder()
         .payload(payload)
         .facilityId(facilityId)
+        .tableFullName(payload.getTableChangeEvents().get(0).getTableFullName())
         .occurredTime(ZonedDateTime.now());
   }
 }

@@ -49,6 +49,8 @@ public class MasterDataEventRecord {
   private UUID facilityId;
   @Column(name = "occurredtime")
   private ZonedDateTime occurredTime;
+  @Column(name = "tablefullname")
+  private String tableFullName;
 
   public static MasterDataEventRecord from(MasterDataEvent masterDataEvent, byte[] payload) {
     return MasterDataEventRecord.builder()
@@ -57,6 +59,7 @@ public class MasterDataEventRecord {
         .payload(payload)
         .facilityId(masterDataEvent.getFacilityId())
         .occurredTime(masterDataEvent.getOccurredTime())
+        .tableFullName(masterDataEvent.getTableFullName())
         .build();
   }
 
