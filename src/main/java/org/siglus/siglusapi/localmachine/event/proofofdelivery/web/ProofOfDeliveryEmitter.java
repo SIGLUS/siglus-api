@@ -51,14 +51,14 @@ public class ProofOfDeliveryEmitter {
 
   public ProofOfDeliveryEvent emit(UUID podId) {
     ProofOfDeliveryEvent event = getEvent(podId);
-    System.out.println("groupid = " + getGroupId(event));
-    System.out.println("facilityid = " + event.getProofOfDelivery().getSupplyingFacilityId());
+    log.info("get event of pod groupid: {},facilityid: {}", getGroupId(event),
+        event.getProofOfDelivery().getSupplyingFacilityId());
     eventPublisher.emitGroupEvent(getGroupId(event), event.getProofOfDelivery().getSupplyingFacilityId(), event);
     return event;
   }
 
 
-  public ProofOfDeliveryEvent getEvent(UUID podId) {
+  private ProofOfDeliveryEvent getEvent(UUID podId) {
     ProofOfDeliveryEvent event = new ProofOfDeliveryEvent();
     ProofOfDelivery proofOfDelivery = proofOfDeliveryRepository.findOne(podId);
     if (proofOfDelivery == null) {

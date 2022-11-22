@@ -59,7 +59,7 @@ public class ProofOfDeliveryReplayer {
     }
   }
 
-  public void doReplay(ProofOfDeliveryEvent event) {
+  private void doReplay(ProofOfDeliveryEvent event) {
     ProofOfDelivery proofOfDelivery = event.getProofOfDelivery();
     Shipment shipment = proofOfDelivery.getShipment();
     Order order = shipment.getOrder();
