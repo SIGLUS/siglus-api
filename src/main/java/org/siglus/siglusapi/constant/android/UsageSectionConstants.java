@@ -70,6 +70,7 @@ public class UsageSectionConstants {
           + "            and (tmp.status is null or "
           + "                 tmp.status in ('INITIATED', 'SUBMITTED', 'AUTHORIZED', 'IN_APPROVAL', 'REJECTED')) "
           + "      ) "
+          + "  and r.status in ('APPROVED','RELEASED','RELEASED_WITHOUT_ORDER') "
           + "  and r.processingperiodid in "
           + "      ( "
           + "          select pp.id "
