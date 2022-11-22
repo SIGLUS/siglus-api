@@ -15,6 +15,9 @@
 
 package org.siglus.siglusapi.localmachine;
 
+import static org.siglus.siglusapi.constant.FieldConstants.UNDERSCORE;
+import static org.siglus.siglusapi.dto.enums.EventCategoryEnum.MASTER_DATA;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.time.ZonedDateTime;
 import java.util.UUID;
@@ -43,6 +46,7 @@ public class Event {
   private boolean receiverSynced;
   private boolean localReplayed;
   private ZonedDateTime syncedTime;
+  private String category;
 
   @JsonIgnore
   private Ack ack;
@@ -61,6 +65,7 @@ public class Event {
         .senderId(machine.getMachineId())
         .receiverId(facilityId)
         .payload(masterDataEvent.getPayload())
+        .category(MASTER_DATA + UNDERSCORE + masterDataEvent.getTableFullName())
         .build();
   }
 }

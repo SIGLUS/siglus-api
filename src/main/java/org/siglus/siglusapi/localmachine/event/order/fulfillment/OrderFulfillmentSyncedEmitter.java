@@ -15,6 +15,8 @@
 
 package org.siglus.siglusapi.localmachine.event.order.fulfillment;
 
+import static org.siglus.siglusapi.dto.enums.EventCategoryEnum.ORDER_FULFILLED;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -81,8 +83,8 @@ public class OrderFulfillmentSyncedEmitter {
         .convertToOrderRequest(getConvertToOrderRequest(shipmentDto, requisitionExtension, finalApprovedStatusChange))
         .shippedLotList(getAllShippedLots(shipmentExtensionRequest.getShipment()))
         .build();
-    eventPublisher.emitGroupEvent(
-        requisitionExtension.getRealRequisitionNumber(), shipmentDto.getOrder().getFacility().getId(), event);
+    eventPublisher.emitGroupEvent(requisitionExtension.getRealRequisitionNumber(),
+        shipmentDto.getOrder().getFacility().getId(), event, ORDER_FULFILLED);
     return event;
   }
 

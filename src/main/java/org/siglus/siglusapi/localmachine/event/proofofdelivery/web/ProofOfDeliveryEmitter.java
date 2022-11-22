@@ -15,6 +15,8 @@
 
 package org.siglus.siglusapi.localmachine.event.proofofdelivery.web;
 
+import static org.siglus.siglusapi.dto.enums.EventCategoryEnum.POD_CONFIRMED;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -53,7 +55,8 @@ public class ProofOfDeliveryEmitter {
     ProofOfDeliveryEvent event = getEvent(podId);
     log.info("get event of pod groupid: {},facilityid: {}", getGroupId(event),
         event.getProofOfDelivery().getSupplyingFacilityId());
-    eventPublisher.emitGroupEvent(getGroupId(event), event.getProofOfDelivery().getSupplyingFacilityId(), event);
+    eventPublisher.emitGroupEvent(getGroupId(event), event.getProofOfDelivery().getSupplyingFacilityId(), event,
+        POD_CONFIRMED);
     return event;
   }
 

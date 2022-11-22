@@ -15,6 +15,8 @@
 
 package org.siglus.siglusapi.localmachine.event.requisition.web.reject;
 
+import static org.siglus.siglusapi.dto.enums.EventCategoryEnum.REQUISITION_REJECTED;
+
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -39,6 +41,7 @@ public class RequisitionRejectEmitter {
     String requisitionNumber = siglusRequisitionExtensionService.formatRequisitionNumber(requisitionId);
     event.setRequisitionNumber(requisitionNumber);
     event.setUserId(authHelper.getCurrentUser().getId());
-    eventPublisher.emitGroupEvent(baseEventCommonService.getGroupId(requisitionId), facilityId, event);
+    eventPublisher.emitGroupEvent(baseEventCommonService.getGroupId(requisitionId), facilityId, event,
+        REQUISITION_REJECTED);
   }
 }

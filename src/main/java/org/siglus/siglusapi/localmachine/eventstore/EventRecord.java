@@ -66,6 +66,8 @@ public class EventRecord {
   private boolean localReplayed;
   @Column(name = "syncedtime")
   private ZonedDateTime syncedTime;
+  @Column(name = "category")
+  private String category;
 
   public static EventRecord from(Event event, byte[] payload) {
     EventRecord eventRecord =
@@ -83,6 +85,7 @@ public class EventRecord {
             .onlineWebSynced(event.isOnlineWebSynced())
             .localReplayed(event.isLocalReplayed())
             .syncedTime(event.getSyncedTime())
+            .category(event.getCategory())
             .build();
     eventRecord.setId(event.getId());
     return eventRecord;
@@ -103,6 +106,7 @@ public class EventRecord {
         .receiverSynced(receiverSynced)
         .localReplayed(localReplayed)
         .syncedTime(syncedTime)
+        .category(category)
         .build();
   }
 }

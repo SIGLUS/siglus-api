@@ -15,6 +15,8 @@
 
 package org.siglus.siglusapi.localmachine.event.cmm;
 
+import static org.siglus.siglusapi.dto.enums.EventCategoryEnum.CMM;
+
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.siglus.siglusapi.localmachine.EventPublisher;
@@ -43,6 +45,6 @@ public class CmmEventEmitter implements CdcListener {
   @Transactional
   @Override
   public void on(List<CdcRecord> records) {
-    eventPublisher.emitNonGroupEvent(new CmmEvent(cdcRecordMapper.buildEvents(records)));
+    eventPublisher.emitNonGroupEvent(new CmmEvent(cdcRecordMapper.buildEvents(records)), CMM);
   }
 }

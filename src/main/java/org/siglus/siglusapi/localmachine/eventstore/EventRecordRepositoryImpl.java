@@ -59,6 +59,7 @@ public class EventRecordRepositoryImpl implements EventRecordRepositoryCustom {
     fields.add(Pair.of("syncedtime", eventRecord.getSyncedTime()));
     fields.add(Pair.of("groupid", eventRecord.getGroupId()));
     fields.add(Pair.of("id", eventRecord.getId()));
+    fields.add(Pair.of("category", eventRecord.getCategory()));
     // omit null parentid, otherwise it can't be accepted by jpa due to cast uuid of null failure
     if (Objects.nonNull(eventRecord.getParentId())) {
       fields.add(Pair.of("parentid", eventRecord.getParentId()));

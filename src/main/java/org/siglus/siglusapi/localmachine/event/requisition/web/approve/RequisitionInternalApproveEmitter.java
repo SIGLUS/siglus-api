@@ -15,6 +15,8 @@
 
 package org.siglus.siglusapi.localmachine.event.requisition.web.approve;
 
+import static org.siglus.siglusapi.dto.enums.EventCategoryEnum.REQUISITION_INTERNAL_APPROVED;
+
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -62,7 +64,7 @@ public class RequisitionInternalApproveEmitter {
     RequisitionInternalApprovedEvent event = getEvent(requisitionId);
     eventPublisher.emitGroupEvent(getGroupId(event),
         baseEventCommonService.getReceiverId(event.getRequisition().getFacilityId(),
-            event.getRequisition().getProgramId()), event);
+            event.getRequisition().getProgramId()), event, REQUISITION_INTERNAL_APPROVED);
     return event;
   }
 

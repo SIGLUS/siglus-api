@@ -15,6 +15,8 @@
 
 package org.siglus.siglusapi.localmachine.event.requisition.web.release;
 
+import static org.siglus.siglusapi.dto.enums.EventCategoryEnum.RELEASED_WITHOUT_ORDER;
+
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.openlmis.requisition.domain.requisition.Requisition;
@@ -36,7 +38,7 @@ public class RequisitionReleaseEmitter {
   public RequisitionReleaseEvent emit(ReleasableRequisitionDto releasableRequisitionDto, UUID authorId) {
     RequisitionReleaseEvent requisitionReleaseEvent = getEvent(releasableRequisitionDto, authorId);
     eventPublisher.emitGroupEvent(eventCommonService.getGroupId(releasableRequisitionDto.getRequisitionId()),
-        getReceiverId(releasableRequisitionDto.getRequisitionId()), requisitionReleaseEvent);
+        getReceiverId(releasableRequisitionDto.getRequisitionId()), requisitionReleaseEvent, RELEASED_WITHOUT_ORDER);
     return requisitionReleaseEvent;
   }
 

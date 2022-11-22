@@ -15,6 +15,8 @@
 
 package org.siglus.siglusapi.localmachine.event.stockmovement;
 
+import static org.siglus.siglusapi.dto.enums.EventCategoryEnum.STOCK_MOVEMENT;
+
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.siglus.siglusapi.localmachine.EventPublisher;
@@ -57,6 +59,6 @@ public class LocalMovementEventEmitter implements CdcListener {
   @Transactional
   @Override
   public void on(List<CdcRecord> records) {
-    eventPublisher.emitNonGroupEvent(new LocalMovementEvent(cdcRecordMapper.buildEvents(records)));
+    eventPublisher.emitNonGroupEvent(new LocalMovementEvent(cdcRecordMapper.buildEvents(records)), STOCK_MOVEMENT);
   }
 }

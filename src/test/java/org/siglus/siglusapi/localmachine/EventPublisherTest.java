@@ -22,6 +22,7 @@ import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.siglus.siglusapi.dto.enums.EventCategoryEnum.REQUISITION_INTERNAL_APPROVED;
 
 import java.time.ZonedDateTime;
 import java.util.Collections;
@@ -31,13 +32,16 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.assertj.core.util.Lists;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
+import org.siglus.siglusapi.dto.enums.EventCategoryEnum;
 import org.siglus.siglusapi.localmachine.agent.ErrorHandler;
 import org.siglus.siglusapi.localmachine.agent.SyncRecordService;
+import org.siglus.siglusapi.localmachine.event.masterdata.MasterDataTableChangeEvent;
 import org.siglus.siglusapi.localmachine.eventstore.AckRepository;
 import org.siglus.siglusapi.localmachine.eventstore.EventPayloadRepository;
 import org.siglus.siglusapi.localmachine.eventstore.EventRecord;
@@ -109,7 +113,7 @@ public class EventPublisherTest {
     ArgumentCaptor<EventRecord> recordArgumentCaptor = ArgumentCaptor.forClass(EventRecord.class);
     UUID facilityId = getMockedFacility();
     // when
-    eventPublisher.emitNonGroupEvent(payload);
+    eventPublisher.emitNonGroupEvent(payload, REQUISITION_INTERNAL_APPROVED);
     // then
     verify(eventRecordRepository)
         .insertAndAllocateLocalSequenceNumber(recordArgumentCaptor.capture());
@@ -133,7 +137,7 @@ public class EventPublisherTest {
     ArgumentCaptor<EventRecord> recordArgumentCaptor = ArgumentCaptor.forClass(EventRecord.class);
     UUID receiverId = UUID.randomUUID();
     // when
-    eventPublisher.emitGroupEvent(GROUP_ID, receiverId, payload);
+    eventPublisher.emitGroupEvent(GROUP_ID, receiverId, payload, REQUISITION_INTERNAL_APPROVED);
     // then
     verify(eventRecordRepository)
         .insertAndAllocateLocalSequenceNumber(recordArgumentCaptor.capture());
@@ -150,7 +154,7 @@ public class EventPublisherTest {
     UUID receiverId = UUID.randomUUID();
     UUID facilityId = getMockedFacility();
     // when
-    eventPublisher.emitGroupEvent(groupId, receiverId, payload);
+    eventPublisher.emitGroupEvent(groupId, receiverId, payload, REQUISITION_INTERNAL_APPROVED);
     // then
     verify(eventRecordRepository)
         .insertAndAllocateLocalSequenceNumber(recordArgumentCaptor.capture());
@@ -238,11 +242,12 @@ public class EventPublisherTest {
   @Test
   public void canEmitMasterDataEventSuccessfully() {
     // given
-    TestEventPayload payload = TestEventPayload.builder().id("id").build();
+    MasterDataTableChangeEvent event = MasterDataTableChangeEvent.builder().tableChangeEvents(Lists.newArrayList())
+        .build();
     ArgumentCaptor<MasterDataEventRecord> recordArgumentCaptor = ArgumentCaptor.forClass(MasterDataEventRecord.class);
     UUID facilityId = getMockedFacility();
     // when
-    eventPublisher.emitMasterDataEvent(payload, facilityId);
+    eventPublisher.emitMasterDataEvent(event, facilityId);
     // then
     verify(masterDataEventRecordRepository)
         .insertMarkFacilityIdMasterDataEvents(recordArgumentCaptor.capture());

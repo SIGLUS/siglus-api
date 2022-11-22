@@ -21,6 +21,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
+import org.siglus.siglusapi.dto.enums.EventCategoryEnum;
 import org.siglus.siglusapi.localmachine.agent.ErrorHandler;
 import org.siglus.siglusapi.localmachine.agent.SyncRecordService;
 import org.siglus.siglusapi.localmachine.constant.ErrorType;
@@ -44,16 +45,16 @@ public class EventPublisher {
   private final ErrorHandler errorHandler;
   private final SyncRecordService syncRecordService;
 
-  public void emitGroupEvent(String groupId, UUID receiverId, Object payload) {
+  public void emitGroupEvent(String groupId, UUID receiverId, Object payload, EventCategoryEnum category) {
     Optional<UUID> lastEventIdInGroup = eventStore.getLastEventIdInGroup(groupId);
     UUID parentId = lastEventIdInGroup.orElse(null);
-    Event.EventBuilder eventBuilder = baseEventBuilder(groupId, parentId, receiverId, payload);
+    Event.EventBuilder eventBuilder = baseEventBuilder(groupId, parentId, receiverId, payload, category);
     Event event = eventBuilder.build();
     doEmit(event);
   }
 
-  public void emitNonGroupEvent(Object payload) {
-    Event.EventBuilder eventBuilder = baseEventBuilder(null, null, null, payload);
+  public void emitNonGroupEvent(Object payload, EventCategoryEnum category) {
+    Event.EventBuilder eventBuilder = baseEventBuilder(null, null, null, payload, category);
     Event event = eventBuilder.build();
     // the only receiver the local facility itself and online web
     event.setReceiverSynced(true);
@@ -111,7 +112,8 @@ public class EventPublisher {
     eventStore.emit(event);
   }
 
-  private Event.EventBuilder baseEventBuilder(String groupId, UUID parentId, UUID receiverId, Object payload) {
+  private Event.EventBuilder baseEventBuilder(String groupId, UUID parentId, UUID receiverId, Object payload,
+      EventCategoryEnum category) {
     return Event.builder()
         .id(UUID.randomUUID())
         .protocolVersion(PROTOCOL_VERSION)
@@ -121,7 +123,8 @@ public class EventPublisher {
         .groupId(groupId)
         .parentId(parentId)
         .payload(payload)
-        .localReplayed(true); // marked as replayed at sender side
+        .localReplayed(true) // marked as replayed at sender side
+        .category(category.name());
   }
 
   private MasterDataEvent.MasterDataEventBuilder baseMasterDataEventBuilder(MasterDataTableChangeEvent payload,
