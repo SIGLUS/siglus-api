@@ -27,8 +27,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
@@ -52,12 +50,15 @@ import org.siglus.siglusapi.dto.fc.FcIntegrationResultDto;
 import org.siglus.siglusapi.dto.fc.ProductDto;
 import org.siglus.siglusapi.dto.fc.ReceiptPlanDto;
 import org.siglus.siglusapi.dto.fc.ResponseBaseDto;
+import org.siglus.siglusapi.localmachine.Machine;
+import org.siglus.siglusapi.localmachine.event.fc.receiptplan.FcReceiptPlanEmitter;
 import org.siglus.siglusapi.repository.ReceiptPlanRepository;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.repository.SiglusFacilityRepository;
 import org.siglus.siglusapi.repository.SiglusStatusChangeRepository;
 import org.siglus.siglusapi.service.SiglusRequisitionService;
 import org.siglus.siglusapi.service.client.SiglusUserReferenceDataService;
+import org.siglus.siglusapi.util.LocalMachineHelper;
 import org.siglus.siglusapi.util.OperatePermissionService;
 import org.siglus.siglusapi.util.SiglusSimulateUserAuthHelper;
 import org.siglus.siglusapi.validator.FcValidate;
@@ -80,8 +81,9 @@ public class FcReceiptPlanService implements ProcessDataService {
   private final SiglusRequisitionService siglusRequisitionService;
   private final OperatePermissionService operatePermissionService;
   private final FcValidate fcDataValidate;
-  private final HttpServletRequest request;
-  private final HttpServletResponse response;
+  private final FcReceiptPlanEmitter fcReceiptPlanEmitter;
+  private final Machine machine;
+  private final LocalMachineHelper localMachineHelper;
 
   @Value("${fc.facilityTypeId}")
   private UUID fcFacilityTypeId;
@@ -137,19 +139,12 @@ public class FcReceiptPlanService implements ProcessDataService {
             previousLastUpdatedAt, finalSuccess, createCounter, 0, errorMessage, null));
   }
 
-  private boolean isRequisitionNumberExisted(ResponseBaseDto receiptPlanDto) {
-    ReceiptPlanDto receiptPlan = (ReceiptPlanDto) receiptPlanDto;
-    String requisitionNumber = receiptPlan.getRequisitionNumber();
-    return !StringUtils.isEmpty(requisitionNumber)
-        && requisitionExtensionRepository.findByRequisitionNumber(requisitionNumber) != null;
-  }
-
-  private void updateRequisition(ReceiptPlanDto receiptPlanDto, UserDto userDto) {
+  public void updateRequisition(ReceiptPlanDto receiptPlanDto, UserDto userDto) {
     try {
       RequisitionExtension extension = requisitionExtensionRepository.findByRequisitionNumber(
           receiptPlanDto.getRequisitionNumber());
       UUID requisitionId = extension.getRequisitionId();
-      SiglusRequisitionDto requisitionDto = siglusRequisitionService.searchRequisition(requisitionId);
+      SiglusRequisitionDto requisitionDto = siglusRequisitionService.searchRequisitionForFc(requisitionId);
       if (operatePermissionService.isEditable(requisitionDto)) {
         List<RequisitionLineItemV2Dto> requisitionLineItems =
             requisitionDto
@@ -164,10 +159,14 @@ public class FcReceiptPlanService implements ProcessDataService {
         List<RequisitionLineItemV2Dto> lineItems = updateRequisitionLineItems(
             requisitionLineItems, productDtos, approveProductDtos, requisitionId, displaySkipped);
         requisitionDto.setRequisitionLineItems(lineItems);
-        siglusRequisitionService.updateRequisition(requisitionId, requisitionDto, request, response);
-        siglusRequisitionService.approveRequisition(requisitionId, request, response);
+        siglusRequisitionService.updateRequisition(requisitionId, requisitionDto, null, null);
+        siglusRequisitionService.approveRequisition(requisitionId, null, null);
         updateRequisitionChangeDate(requisitionId, receiptPlanDto);
         log.info("[FC] update receipt plan {}", receiptPlanDto);
+        if (machine.isOnlineWeb() && localMachineHelper.isLocalMachine(requisitionDto.getFacilityId())) {
+          fcReceiptPlanEmitter.emit(receiptPlanDto, requisitionDto.getFacilityId(),
+              extension.getRealRequisitionNumber());
+        }
       } else {
         receiptPlanErrors.add("requisition is not editable: " + receiptPlanDto.getReceiptPlanNumber());
       }
@@ -179,12 +178,19 @@ public class FcReceiptPlanService implements ProcessDataService {
     }
   }
 
-  private UserDto getFcUserInfo() {
+  public UserDto getFcUserInfo() {
     Facility facility = siglusFacilityRepository.findFirstByTypeId(fcFacilityTypeId);
     fcDataValidate.validateFacility(facility);
     List<UserDto> userList = userReferenceDataService.getUserInfo(facility.getId()).getContent();
     fcDataValidate.validateExistUser(userList);
     return userList.get(0);
+  }
+
+  private boolean isRequisitionNumberExisted(ResponseBaseDto receiptPlanDto) {
+    ReceiptPlanDto receiptPlan = (ReceiptPlanDto) receiptPlanDto;
+    String requisitionNumber = receiptPlan.getRequisitionNumber();
+    return !StringUtils.isEmpty(requisitionNumber)
+        && requisitionExtensionRepository.findByRequisitionNumber(requisitionNumber) != null;
   }
 
   private Map<String, OrderableDto> getApprovedProductsMap(UserDto userDto, RequisitionV2Dto dto) {

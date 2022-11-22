@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.util;
 
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.siglus.siglusapi.domain.FacilityExtension;
 import org.siglus.siglusapi.dto.UserDto;
@@ -35,6 +36,14 @@ public class LocalMachineHelper {
       return false;
     }
     FacilityExtension facilityExtension = facilityExtensionRepository.findByFacilityId(currentUser.getHomeFacilityId());
+    if (facilityExtension == null) {
+      return false;
+    }
+    return facilityExtension.getIsLocalMachine();
+  }
+
+  public boolean isLocalMachine(UUID facilityId) {
+    FacilityExtension facilityExtension = facilityExtensionRepository.findByFacilityId(facilityId);
     if (facilityExtension == null) {
       return false;
     }

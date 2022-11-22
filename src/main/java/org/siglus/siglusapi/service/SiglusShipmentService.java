@@ -154,16 +154,16 @@ public class SiglusShipmentService {
   }
 
   @Transactional
-  public ShipmentDto createSubOrderAndShipment(ShipmentDto shipmentDto) {
+  public ShipmentDto createSubOrderAndShipmentForFc(ShipmentDto shipmentDto) {
     createSubOrder(shipmentDto, false);
-    return createShipment(shipmentDto, false);
+    return createShipment(shipmentDto, false, true);
   }
 
   ShipmentDto createSubOrderAndShipment(boolean isSubOrder, ShipmentDto shipmentDto, boolean isByLocation) {
     if (isSubOrder) {
       createSubOrder(shipmentDto, true);
     }
-    return createShipment(shipmentDto, isByLocation);
+    return createShipment(shipmentDto, isByLocation, false);
   }
 
   private ShipmentDto createOrderAndConfirmShipment(boolean isSubOrder, ShipmentDto shipmentDto,
@@ -201,12 +201,12 @@ public class SiglusShipmentService {
     }
   }
 
-  private ShipmentDto createShipment(ShipmentDto shipmentDto, boolean isByLocation) {
+  private ShipmentDto createShipment(ShipmentDto shipmentDto, boolean isByLocation, boolean isFcRequest) {
     Set<UUID> skippedOrderLineItemIds = getSkippedOrderLineItemIds(shipmentDto);
     removeSkippedOrderLineItemsAndExtensions(skippedOrderLineItemIds, shipmentDto.getOrder().getId());
     Set<UUID> skippedOrderableIds = getSkippedOrderableIds(shipmentDto);
     shipmentDto.lineItems().removeIf(lineItem -> skippedOrderableIds.contains(lineItem.getOrderable().getId()));
-    return shipmentController.createShipment(shipmentDto, isByLocation);
+    return shipmentController.createShipment(shipmentDto, isByLocation, isFcRequest);
   }
 
   private Set<UUID> getSkippedOrderableIds(ShipmentDto shipmentDto) {

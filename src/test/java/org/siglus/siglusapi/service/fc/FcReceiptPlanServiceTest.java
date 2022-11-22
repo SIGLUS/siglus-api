@@ -24,6 +24,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -66,12 +67,15 @@ import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.dto.fc.FcIntegrationResultDto;
 import org.siglus.siglusapi.dto.fc.ProductDto;
 import org.siglus.siglusapi.dto.fc.ReceiptPlanDto;
+import org.siglus.siglusapi.localmachine.Machine;
+import org.siglus.siglusapi.localmachine.event.fc.receiptplan.FcReceiptPlanEmitter;
 import org.siglus.siglusapi.repository.ReceiptPlanRepository;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.repository.SiglusFacilityRepository;
 import org.siglus.siglusapi.repository.SiglusStatusChangeRepository;
 import org.siglus.siglusapi.service.SiglusRequisitionService;
 import org.siglus.siglusapi.service.client.SiglusUserReferenceDataService;
+import org.siglus.siglusapi.util.LocalMachineHelper;
 import org.siglus.siglusapi.util.OperatePermissionService;
 import org.siglus.siglusapi.util.SiglusSimulateUserAuthHelper;
 import org.siglus.siglusapi.validator.FcValidate;
@@ -116,9 +120,16 @@ public class FcReceiptPlanServiceTest {
   @Mock
   private SiglusStatusChangeRepository siglusStatusChangeRepository;
 
-  private final ZonedDateTime date = ZonedDateTime.now();
+  @Mock
+  private LocalMachineHelper localMachineHelper;
 
-  private final String requisitionNumber = "requisitionNumber";
+  @Mock
+  private Machine machine;
+
+  @Mock
+  private FcReceiptPlanEmitter fcReceiptPlanEmitter;
+
+  private final ZonedDateTime date = ZonedDateTime.now();
 
   private final String fnmCode = "productCode";
 
@@ -146,6 +157,7 @@ public class FcReceiptPlanServiceTest {
         .build();
     List<ProductDto> productDtos = newArrayList(productDto);
 
+    String requisitionNumber = "requisitionNumber";
     receiptPlanDto = ReceiptPlanDto.builder()
         .receiptPlanNumber(receiptPlanNumber)
         .requisitionNumber(requisitionNumber)
@@ -247,6 +259,8 @@ public class FcReceiptPlanServiceTest {
 
     SiglusRequisitionDto requisitionDto = mock(SiglusRequisitionDto.class);
     when(requisitionDto.getTemplate()).thenReturn(template);
+    UUID facilityId = UUID.randomUUID();
+    when(requisitionDto.getFacilityId()).thenReturn(facilityId);
 
     SiglusRequisitionLineItemDto lineItem = new SiglusRequisitionLineItemDto(requisitionLineItem, null);
     List<SiglusRequisitionLineItemDto> lineItems = newArrayList(lineItem);
@@ -261,7 +275,7 @@ public class FcReceiptPlanServiceTest {
         .requisitionId(requisitionId)
         .requisitionNumber(121).build();
     when(requisitionExtensionRepository.findByRequisitionNumber(any())).thenReturn(requisitionExtension);
-    when(siglusRequisitionService.searchRequisition(any())).thenReturn(requisitionDto);
+    when(siglusRequisitionService.searchRequisitionForFc(any())).thenReturn(requisitionDto);
     when(operatePermissionService.isEditable(any())).thenReturn(true);
     OrderableDto orderableDto = new OrderableDto();
     orderableDto.setProductCode(fnmCode);
@@ -273,6 +287,8 @@ public class FcReceiptPlanServiceTest {
     when(requisitionRepository.findOne(requisitionId)).thenReturn(requisition);
     StatusChange statusChange = new StatusChange();
     when(siglusStatusChangeRepository.findByRequisitionIdAndStatus(any(), any())).thenReturn(statusChange);
+    when(machine.isOnlineWeb()).thenReturn(true);
+    when(localMachineHelper.isLocalMachine(facilityId)).thenReturn(true);
 
     // when
     FcIntegrationResultDto result = fcReceiptPlanService.processData(receiptPlanDtos, START_DATE, LAST_UPDATED_AT);
@@ -284,6 +300,7 @@ public class FcReceiptPlanServiceTest {
     ArgumentCaptor<UUID> captorUserId = ArgumentCaptor.forClass(UUID.class);
     verify(siglusSimulateUserAuthHelper).simulateUserAuth(captorUserId.capture());
     assertEquals(userId, captorUserId.getValue());
+    verify(fcReceiptPlanEmitter, times(1)).emit(any(ReceiptPlanDto.class), eq(facilityId), any());
   }
 
   @Test
@@ -322,7 +339,7 @@ public class FcReceiptPlanServiceTest {
         .requisitionId(requisitionId)
         .requisitionNumber(121).build();
     when(requisitionExtensionRepository.findByRequisitionNumber(any())).thenReturn(requisitionExtension);
-    when(siglusRequisitionService.searchRequisition(any())).thenReturn(requisitionDto);
+    when(siglusRequisitionService.searchRequisitionForFc(any())).thenReturn(requisitionDto);
     when(operatePermissionService.isEditable(any())).thenReturn(true);
     OrderableDto orderableDto = new OrderableDto();
     ApprovedProductDto approvedProduct = new ApprovedProductDto();

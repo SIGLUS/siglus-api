@@ -20,8 +20,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -32,10 +30,9 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.Map;
 import java.util.UUID;
 import org.junit.Before;
 import org.junit.Test;
@@ -58,7 +55,6 @@ import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.requisition.dto.ObjectReferenceDto;
 import org.openlmis.requisition.dto.OrderDto;
 import org.openlmis.requisition.dto.OrderableDto;
-import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.repository.RequisitionRepository;
 import org.openlmis.requisition.service.RequisitionService;
@@ -68,8 +64,6 @@ import org.openlmis.requisition.utils.Pagination;
 import org.openlmis.requisition.web.OrderDtoBuilder;
 import org.openlmis.stockmanagement.domain.sourcedestination.Node;
 import org.openlmis.stockmanagement.dto.ValidSourceDestinationDto;
-import org.openlmis.stockmanagement.web.stockcardsummariesv2.CanFulfillForMeEntryDto;
-import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2Dto;
 import org.siglus.common.domain.OrderExternal;
 import org.siglus.common.repository.OrderExternalRepository;
 import org.siglus.siglusapi.domain.RequisitionExtension;
@@ -81,23 +75,21 @@ import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.dto.fc.FcIntegrationResultDto;
 import org.siglus.siglusapi.dto.fc.IssueVoucherDto;
 import org.siglus.siglusapi.dto.fc.ProductDto;
+import org.siglus.siglusapi.localmachine.Machine;
+import org.siglus.siglusapi.localmachine.event.fc.issuevoucher.FcIssueVoucherEmitter;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.repository.ShipmentsExtensionRepository;
 import org.siglus.siglusapi.service.SiglusOrderService;
-import org.siglus.siglusapi.service.SiglusProgramService;
 import org.siglus.siglusapi.service.SiglusShipmentDraftService;
 import org.siglus.siglusapi.service.SiglusShipmentService;
-import org.siglus.siglusapi.service.SiglusStockCardSummariesService;
-import org.siglus.siglusapi.service.SiglusStockEventsService;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
 import org.siglus.siglusapi.service.client.SiglusUserReferenceDataService;
-import org.siglus.siglusapi.service.client.ValidSourceDestinationStockManagementService;
+import org.siglus.siglusapi.util.LocalMachineHelper;
 import org.siglus.siglusapi.util.SiglusSimulateUserAuthHelper;
 import org.siglus.siglusapi.validator.FcValidate;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.test.util.ReflectionTestUtils;
 
 @RunWith(MockitoJUnitRunner.class)
 public class FcIssueVoucherServiceTest {
@@ -121,12 +113,6 @@ public class FcIssueVoucherServiceTest {
   private FcValidate fcDataValidate;
 
   @Mock
-  private SiglusStockEventsService stockEventsService;
-
-  @Mock
-  private ValidSourceDestinationStockManagementService sourceDestinationService;
-
-  @Mock
   private ShipmentsExtensionRepository shipmentsExtensionRepository;
 
   @Mock
@@ -140,9 +126,6 @@ public class FcIssueVoucherServiceTest {
 
   @Mock
   private SiglusShipmentDraftService shipmentDraftService;
-
-  @Mock
-  private SiglusStockCardSummariesService stockCardSummariesService;
 
   @Mock
   private SiglusLotReferenceDataService lotReferenceDataService;
@@ -169,7 +152,13 @@ public class FcIssueVoucherServiceTest {
   private OrderFulfillmentService orderFulfillmentService;
 
   @Mock
-  private SiglusProgramService siglusProgramService;
+  private LocalMachineHelper localMachineHelper;
+
+  @Mock
+  private Machine machine;
+
+  @Mock
+  private FcIssueVoucherEmitter fcIssueVoucherEmitter;
 
   @Captor
   private ArgumentCaptor<ShipmentDto> shipmentCaptor;
@@ -181,14 +170,16 @@ public class FcIssueVoucherServiceTest {
   private ArgumentCaptor<List<OrderDto>> orderListCaptor;
 
   private UserDto userDto;
+
   private final UUID programId = UUID.randomUUID();
+
+  private final UUID facilityId = UUID.randomUUID();
+
   private final IssueVoucherDto issueVoucherDto = getIssueVoucherDto();
 
   @Before
   public void prepare() {
     when(requisitionService.convertToOrder(any(), any())).thenReturn(Collections.emptyList());
-    ReflectionTestUtils.setField(service, "receiveReason", "44814bc4-df64-11e9-9e7e-4c32759554d9");
-    doNothing().when(stockEventsService).processStockEvent(any(), eq(false));
     FacilityDto facilityDto = new FacilityDto();
     facilityDto.setId(UUID.randomUUID());
     when(siglusFacilityReferenceDataService.getFacilityByCode(getIssueVoucherDto().getWarehouseCode()))
@@ -207,14 +198,6 @@ public class FcIssueVoucherServiceTest {
     Node node = new Node();
     node.setId(UUID.randomUUID());
     sourceDestinationDto.setNode(node);
-    when(sourceDestinationService.getValidSources(programId,
-        facilityDto.getId())).thenReturn(Collections.singletonList(sourceDestinationDto));
-    ProgramDto programDto = new ProgramDto();
-    programDto.setId(programId);
-    programDto.setCode("VC");
-    when(siglusProgramService.getProgram(programId)).thenReturn(programDto);
-    Optional<ProgramDto> programDtoOptional = Optional.of(programDto);
-    when(siglusProgramService.getProgramByCode("VC")).thenReturn(programDtoOptional);
   }
 
   @Test
@@ -308,21 +291,8 @@ public class FcIssueVoucherServiceTest {
     basicOrderDto.setId(order.getId());
     when(siglusOrderService.createSubOrder(any(), any())).thenReturn(
         Collections.singletonList(basicOrderDto));
-    StockCardSummaryV2Dto summaryV2Dto = new StockCardSummaryV2Dto();
-    summaryV2Dto.setOrderable(
-        new org.openlmis.stockmanagement.dto.referencedata.VersionObjectReferenceDto(
-            orderableDto.getId(), "", "", 1L));
-    CanFulfillForMeEntryDto fulfillForMeEntryDto = new CanFulfillForMeEntryDto();
-    UUID lotId = UUID.randomUUID();
-    fulfillForMeEntryDto.setStockOnHand(50);
-    fulfillForMeEntryDto.setLot(
-        new org.openlmis.stockmanagement.dto.ObjectReferenceDto("", "", lotId));
-    Set<CanFulfillForMeEntryDto> fulfillForMeEntryDtos = new HashSet<>();
-    fulfillForMeEntryDtos.add(fulfillForMeEntryDto);
-    summaryV2Dto.setCanFulfillForMe(fulfillForMeEntryDtos);
-    when(stockCardSummariesService.findSiglusStockCard(any(), any(), any(), any(Boolean.class)))
-        .thenReturn(Pagination.getPage(Collections.singletonList(summaryV2Dto)));
     ShipmentLineItemDto shipmentLineItemDto = new ShipmentLineItemDto();
+    UUID lotId = UUID.randomUUID();
     org.openlmis.fulfillment.service.referencedata.OrderableDto orderableDto1 =
         new org.openlmis.fulfillment.service.referencedata.OrderableDto();
     orderableDto1.setId(orderableDto.getId());
@@ -335,10 +305,12 @@ public class FcIssueVoucherServiceTest {
     shipmentDto.setId(UUID.randomUUID());
     ShipmentsExtension shipmentsExtension = new ShipmentsExtension();
     when(shipmentsExtensionRepository.save(any(ShipmentsExtension.class))).thenReturn(shipmentsExtension);
-    when(siglusShipmentService.createSubOrderAndShipment(shipmentCaptor.capture()))
+    when(siglusShipmentService.createSubOrderAndShipmentForFc(shipmentCaptor.capture()))
         .thenReturn(shipmentDto);
     LotDto lotDto = getLotDto(lotId);
     when(lotReferenceDataService.getLots(any())).thenReturn(Collections.singletonList(lotDto));
+    when(machine.isOnlineWeb()).thenReturn(true);
+    when(localMachineHelper.isLocalMachine(facilityId)).thenReturn(true);
 
     // when
     FcIntegrationResultDto result = service.processData(Collections.singletonList(issueVoucherDto), START_DATE,
@@ -348,6 +320,7 @@ public class FcIssueVoucherServiceTest {
     ShipmentDto shipmentDto1 = shipmentCaptor.getValue();
     assertEquals(Long.valueOf(2), shipmentDto1.getLineItems().get(0).getQuantityShipped());
     assertNotNull(result);
+    verify(fcIssueVoucherEmitter, times(1)).emit(issueVoucherDto, facilityId, "RNR-NO010906120000192");
   }
 
   @Test
@@ -387,22 +360,8 @@ public class FcIssueVoucherServiceTest {
     dto.setOrder(orderDto);
     when(siglusOrderService.searchOrderByIdForMultiWareHouseSupply(canFulfillOrder.getId()))
         .thenReturn(dto);
-    StockCardSummaryV2Dto summaryV2Dto = new StockCardSummaryV2Dto();
-    summaryV2Dto.setOrderable(
-        new org.openlmis.stockmanagement.dto.referencedata.VersionObjectReferenceDto(
-            orderableDto.getId(), "", "", 1L
-        ));
-    CanFulfillForMeEntryDto fulfillForMeEntryDto = new CanFulfillForMeEntryDto();
-    UUID lotId = UUID.randomUUID();
-    fulfillForMeEntryDto.setStockOnHand(50);
-    fulfillForMeEntryDto.setLot(
-        new org.openlmis.stockmanagement.dto.ObjectReferenceDto("", "", lotId));
-    Set<CanFulfillForMeEntryDto> fulfillForMeEntryDtos = new HashSet<>();
-    fulfillForMeEntryDtos.add(fulfillForMeEntryDto);
-    summaryV2Dto.setCanFulfillForMe(fulfillForMeEntryDtos);
-    when(stockCardSummariesService.findSiglusStockCard(any(), any(), any(), any(Boolean.class)))
-        .thenReturn(Pagination.getPage(Collections.singletonList(summaryV2Dto)));
     ShipmentLineItemDto shipmentLineItemDto = new ShipmentLineItemDto();
+    UUID lotId = UUID.randomUUID();
     org.openlmis.fulfillment.service.referencedata.OrderableDto orderableDto1 =
         new org.openlmis.fulfillment.service.referencedata.OrderableDto();
     orderableDto1.setId(orderableDto.getId());
@@ -415,7 +374,7 @@ public class FcIssueVoucherServiceTest {
     shipmentDto.setId(UUID.randomUUID());
     ShipmentsExtension shipmentsExtension = new ShipmentsExtension();
     when(shipmentsExtensionRepository.save(any(ShipmentsExtension.class))).thenReturn(shipmentsExtension);
-    when(siglusShipmentService.createSubOrderAndShipment(shipmentCaptor.capture()))
+    when(siglusShipmentService.createSubOrderAndShipmentForFc(shipmentCaptor.capture()))
         .thenReturn(shipmentDto);
     LotDto lotDto = getLotDto(lotId);
     when(lotReferenceDataService.getLots(any())).thenReturn(Collections.singletonList(lotDto));
@@ -459,21 +418,8 @@ public class FcIssueVoucherServiceTest {
     SiglusOrderDto dto = new SiglusOrderDto();
     dto.setOrder(orderDto);
     when(siglusOrderService.searchOrderByIdForMultiWareHouseSupply(order.getId())).thenReturn(dto);
-    StockCardSummaryV2Dto summaryV2Dto = new StockCardSummaryV2Dto();
-    summaryV2Dto.setOrderable(
-        new org.openlmis.stockmanagement.dto.referencedata.VersionObjectReferenceDto(
-            orderableDto.getId(), "", "", 1L));
-    CanFulfillForMeEntryDto fulfillForMeEntryDto = new CanFulfillForMeEntryDto();
-    UUID lotId = UUID.randomUUID();
-    fulfillForMeEntryDto.setStockOnHand(50);
-    fulfillForMeEntryDto.setLot(
-        new org.openlmis.stockmanagement.dto.ObjectReferenceDto("", "", lotId));
-    Set<CanFulfillForMeEntryDto> fulfillForMeEntryDtos = new HashSet<>();
-    fulfillForMeEntryDtos.add(fulfillForMeEntryDto);
-    summaryV2Dto.setCanFulfillForMe(fulfillForMeEntryDtos);
-    when(stockCardSummariesService.findSiglusStockCard(any(), any(), any(), any(Boolean.class)))
-        .thenReturn(Pagination.getPage(Collections.singletonList(summaryV2Dto)));
     ShipmentLineItemDto shipmentLineItemDto = new ShipmentLineItemDto();
+    UUID lotId = UUID.randomUUID();
     org.openlmis.fulfillment.service.referencedata.OrderableDto orderableDto1 =
         new org.openlmis.fulfillment.service.referencedata.OrderableDto();
     orderableDto1.setId(orderableDto.getId());
@@ -486,7 +432,7 @@ public class FcIssueVoucherServiceTest {
     shipmentDto.setId(UUID.randomUUID());
     ShipmentsExtension shipmentsExtension = new ShipmentsExtension();
     when(shipmentsExtensionRepository.save(any(ShipmentsExtension.class))).thenReturn(shipmentsExtension);
-    when(siglusShipmentService.createSubOrderAndShipment(shipmentCaptor.capture()))
+    when(siglusShipmentService.createSubOrderAndShipmentForFc(shipmentCaptor.capture()))
         .thenReturn(shipmentDto);
     when(lotReferenceDataService.getLots(any())).thenReturn(
         Collections.singletonList(getLotDto(lotId)));
@@ -538,6 +484,9 @@ public class FcIssueVoucherServiceTest {
     ObjectReferenceDto program = new ObjectReferenceDto();
     program.setId(programId);
     requisitionV2Dto.setProgram(program);
+    ObjectReferenceDto facility = new ObjectReferenceDto();
+    facility.setId(facilityId);
+    requisitionV2Dto.setFacility(facility);
     requisitionV2Dto.setStatus(RequisitionStatus.APPROVED);
     requisitionV2Dto.setId(requisitionExtension.getRequisitionId());
     return requisitionV2Dto;
@@ -548,6 +497,9 @@ public class FcIssueVoucherServiceTest {
     orderableDto.setId(UUID.randomUUID());
     orderableDto.setProductCode("02E01");
     orderableDto.setNetContent(25);
+    Map<String, String> identifiers = new HashMap<>();
+    identifiers.put("tradeItem", UUID.randomUUID().toString());
+    orderableDto.setIdentifiers(identifiers);
     return orderableDto;
   }
 

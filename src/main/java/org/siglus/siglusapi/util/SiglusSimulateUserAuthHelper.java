@@ -29,6 +29,7 @@ import org.siglus.siglusapi.security.CustomUserAuthenticationConverter;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
+import org.springframework.security.oauth2.provider.OAuth2Request;
 import org.springframework.security.oauth2.provider.token.UserAuthenticationConverter;
 import org.springframework.stereotype.Component;
 
@@ -45,7 +46,8 @@ public class SiglusSimulateUserAuthHelper {
     Authentication authentication = userAuthenticationConverter.extractAuthentication(
         ImmutableMap.of(REFERENCE_DATA_USER_ID, userId.toString(), AUTHORITIES, authorities));
     OAuth2Authentication originAuth = (OAuth2Authentication) SecurityContextHolder.getContext().getAuthentication();
-    OAuth2Authentication newAuth = new OAuth2Authentication(originAuth.getOAuth2Request(), authentication);
+    OAuth2Request auth2Request = originAuth != null ? originAuth.getOAuth2Request() : null;
+    OAuth2Authentication newAuth = new OAuth2Authentication(auth2Request, authentication);
     SecurityContextHolder.getContext().setAuthentication(newAuth);
   }
 
@@ -59,6 +61,14 @@ public class SiglusSimulateUserAuthHelper {
         ImmutableMap.of(REFERENCE_DATA_USER_ID, userId.toString(), AUTHORITIES, authorities));
     OAuth2Authentication newAuth = new OAuth2Authentication(null, authentication);
     SecurityContextHolder.getContext().setAuthentication(newAuth);
+  }
+
+  public OAuth2Authentication simulateNewUserBefore() {
+    return (OAuth2Authentication) SecurityContextHolder.getContext().getAuthentication();
+  }
+
+  public void simulateNewUserAfter(OAuth2Authentication auth2Authentication) {
+    SecurityContextHolder.getContext().setAuthentication(auth2Authentication);
   }
 
   public void simulateNewUserThenRollbackAuth(UUID userId, Notification notification,

@@ -258,20 +258,6 @@ public class SiglusRequisitionService {
     return siglusLineItems;
   }
 
-  public SiglusRequisitionDto searchRequisition(UUID requisitionId) {
-    RequisitionV2Dto requisitionDto = requisitionV2Controller.getRequisition(requisitionId, response);
-    setLineItemExtension(requisitionDto);
-    RequisitionTemplateExtension extension = setTemplateExtension(requisitionDto);
-    filterKits(requisitionDto);
-    filterProductsIfEmergency(requisitionDto);
-    SiglusRequisitionDto siglusRequisitionDto = getSiglusRequisitionDto(requisitionId, extension, requisitionDto);
-    // set available products in approve page
-    setAvailableProductsForApprovePage(siglusRequisitionDto);
-    setApprovedByInternal(requisitionId, siglusRequisitionDto);
-    siglusRequisitionDto.setRequisitionNumber(siglusRequisitionExtensionService.formatRequisitionNumber(requisitionId));
-    return setIsFinalApproval(siglusRequisitionDto);
-  }
-
   @Transactional
   public BasicRequisitionDto submitRequisition(UUID requisitionId, HttpServletRequest request,
       HttpServletResponse response) {
@@ -347,6 +333,28 @@ public class SiglusRequisitionService {
     return requisitionNativeSqlRepository
         .findSimpleRequisitionDto(requisitionIds).stream()
         .collect(Collectors.toMap(SimpleRequisitionDto::getId, e -> e));
+  }
+
+  private SiglusRequisitionDto searchRequisition(UUID requisitionId, HttpServletResponse response) {
+    RequisitionV2Dto requisitionDto = requisitionV2Controller.getRequisition(requisitionId, response);
+    setLineItemExtension(requisitionDto);
+    RequisitionTemplateExtension extension = setTemplateExtension(requisitionDto);
+    filterKits(requisitionDto);
+    filterProductsIfEmergency(requisitionDto);
+    SiglusRequisitionDto siglusRequisitionDto = getSiglusRequisitionDto(requisitionId, extension, requisitionDto);
+    // set available products in approve page
+    setAvailableProductsForApprovePage(siglusRequisitionDto);
+    setApprovedByInternal(requisitionId, siglusRequisitionDto);
+    siglusRequisitionDto.setRequisitionNumber(siglusRequisitionExtensionService.formatRequisitionNumber(requisitionId));
+    return setIsFinalApproval(siglusRequisitionDto);
+  }
+
+  public SiglusRequisitionDto searchRequisition(UUID requisitionId) {
+    return searchRequisition(requisitionId, response);
+  }
+
+  public SiglusRequisitionDto searchRequisitionForFc(UUID requisitionId) {
+    return searchRequisition(requisitionId, null);
   }
 
   private Set<UUID> getRequisitionIds(List<RequisitionWithSupplyingDepotsDto> dtos) {
@@ -1052,7 +1060,7 @@ public class SiglusRequisitionService {
       return null;
     }
     return extensions.stream().filter(extension ->
-            lineItem.getId().equals(extension.getRequisitionLineItemId()))
+        lineItem.getId().equals(extension.getRequisitionLineItemId()))
         .findFirst().orElse(null);
   }
 

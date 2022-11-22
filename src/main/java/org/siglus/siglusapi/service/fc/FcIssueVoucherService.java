@@ -15,22 +15,14 @@
 
 package org.siglus.siglusapi.service.fc;
 
-import static org.openlmis.stockmanagement.service.PermissionService.STOCK_CARDS_VIEW;
 import static org.siglus.siglusapi.constant.FcConstants.ISSUE_VOUCHER_API;
-import static org.siglus.siglusapi.constant.FieldConstants.FACILITY_ID;
-import static org.siglus.siglusapi.constant.FieldConstants.ORDERABLE_ID;
-import static org.siglus.siglusapi.constant.FieldConstants.PROGRAM_ID;
-import static org.siglus.siglusapi.constant.FieldConstants.RIGHT_NAME;
-import static org.siglus.siglusapi.constant.PaginationConstants.DEFAULT_PAGE_NUMBER;
-import static org.siglus.siglusapi.constant.ProgramConstants.MMC_PROGRAM_CODE;
-import static org.siglus.siglusapi.constant.ProgramConstants.VIA_PROGRAM_CODE;
+import static org.siglus.siglusapi.constant.FieldConstants.TRADE_ITEM;
 import static org.siglus.siglusapi.dto.fc.FcIntegrationResultDto.buildResult;
 
-import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -63,10 +55,6 @@ import org.openlmis.requisition.service.RequisitionService;
 import org.openlmis.requisition.service.RequisitionStatusProcessor;
 import org.openlmis.requisition.service.fulfillment.OrderFulfillmentService;
 import org.openlmis.requisition.web.OrderDtoBuilder;
-import org.openlmis.stockmanagement.dto.StockEventDto;
-import org.openlmis.stockmanagement.dto.StockEventLineItemDto;
-import org.openlmis.stockmanagement.dto.ValidSourceDestinationDto;
-import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2Dto;
 import org.siglus.common.domain.OrderExternal;
 import org.siglus.common.repository.OrderExternalRepository;
 import org.siglus.siglusapi.domain.RequisitionExtension;
@@ -76,35 +64,30 @@ import org.siglus.siglusapi.dto.LotDto;
 import org.siglus.siglusapi.dto.LotSearchParams;
 import org.siglus.siglusapi.dto.SiglusOrderDto;
 import org.siglus.siglusapi.dto.UserDto;
+import org.siglus.siglusapi.dto.android.Lot;
 import org.siglus.siglusapi.dto.fc.FcIntegrationResultBuildDto;
 import org.siglus.siglusapi.dto.fc.FcIntegrationResultDto;
 import org.siglus.siglusapi.dto.fc.IssueVoucherDto;
 import org.siglus.siglusapi.dto.fc.ProductDto;
 import org.siglus.siglusapi.dto.fc.ResponseBaseDto;
-import org.siglus.siglusapi.exception.NotFoundException;
+import org.siglus.siglusapi.localmachine.Machine;
+import org.siglus.siglusapi.localmachine.event.fc.issuevoucher.FcIssueVoucherEmitter;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.repository.ShipmentsExtensionRepository;
 import org.siglus.siglusapi.service.SiglusOrderService;
-import org.siglus.siglusapi.service.SiglusProgramService;
 import org.siglus.siglusapi.service.SiglusShipmentDraftService;
 import org.siglus.siglusapi.service.SiglusShipmentService;
-import org.siglus.siglusapi.service.SiglusStockCardSummariesService;
-import org.siglus.siglusapi.service.SiglusStockEventsService;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
 import org.siglus.siglusapi.service.client.SiglusUserReferenceDataService;
-import org.siglus.siglusapi.service.client.ValidSourceDestinationStockManagementService;
+import org.siglus.siglusapi.util.LocalMachineHelper;
 import org.siglus.siglusapi.util.SiglusDateHelper;
 import org.siglus.siglusapi.util.SiglusSimulateUserAuthHelper;
 import org.siglus.siglusapi.validator.FcValidate;
 import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.i18n.LocaleContextHolder;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.springframework.util.LinkedMultiValueMap;
 
 @Service
 @Slf4j
@@ -112,11 +95,7 @@ import org.springframework.util.LinkedMultiValueMap;
 @SuppressWarnings("PMD.TooManyMethods")
 public class FcIssueVoucherService implements ProcessDataService {
 
-  private static final String FC_INTEGRATION = "FC Integration";
   private static final String SPLIT = ": ";
-
-  @Value("${reasons.receive}")
-  private String receiveReason;
 
   private final FcValidate fcDataValidate;
   private final SiglusFacilityReferenceDataService siglusFacilityReferenceDataService;
@@ -124,14 +103,11 @@ public class FcIssueVoucherService implements ProcessDataService {
   private final SiglusRequisitionRequisitionService siglusRequisitionRequisitionService;
   private final RequisitionExtensionRepository requisitionExtensionRepository;
   private final RequisitionService requisitionService;
-  private final SiglusStockEventsService stockEventsService;
-  private final ValidSourceDestinationStockManagementService sourceDestinationService;
   private final ShipmentsExtensionRepository shipmentsExtensionRepository;
   private final OrderExternalRepository orderExternalRepository;
   private final OrderRepository orderRepository;
   private final SiglusOrderService siglusOrderService;
   private final SiglusShipmentDraftService shipmentDraftService;
-  private final SiglusStockCardSummariesService stockCardSummariesService;
   private final SiglusLotReferenceDataService lotReferenceDataService;
   private final SiglusShipmentService siglusShipmentService;
   private final SiglusSimulateUserAuthHelper simulateUser;
@@ -139,7 +115,9 @@ public class FcIssueVoucherService implements ProcessDataService {
   private final RequisitionStatusProcessor requisitionStatusProcessor;
   private final OrderDtoBuilder orderDtoBuilder;
   private final OrderFulfillmentService orderFulfillmentService;
-  private final SiglusProgramService siglusProgramService;
+  private final FcIssueVoucherEmitter fcIssueVoucherEmitter;
+  private final Machine machine;
+  private final LocalMachineHelper localMachineHelper;
 
   private final List<String> issueVoucherErrors = new ArrayList<>();
 
@@ -166,6 +144,7 @@ public class FcIssueVoucherService implements ProcessDataService {
             issueVoucherDto.getClientCode(), issueVoucherDto.getIssueVoucherNumber());
         if (shipmentsExtension == null) {
           log.info("[FC issueVoucher] create: {}", issueVoucherDto);
+          createCounter++;
           createIssueVoucher(issueVoucherDto);
         } else {
           duplicatedCounter++;
@@ -199,7 +178,7 @@ public class FcIssueVoucherService implements ProcessDataService {
     return this.issueVoucherErrors;
   }
 
-  private void createIssueVoucher(IssueVoucherDto issueVoucherDto) {
+  public void createIssueVoucher(IssueVoucherDto issueVoucherDto) {
     try {
       RequisitionExtension extension = requisitionExtensionRepository.findByRequisitionNumber(
           issueVoucherDto.getRequisitionNumber());
@@ -221,7 +200,6 @@ public class FcIssueVoucherService implements ProcessDataService {
         // before shipment, need sufficient products for the warehouse first,
         // so that it can have enough products to fulfill when do shipment
         log.info("FC] sufficient products for AC warehouse");
-        createStockEvent(userDto, requisitionV2Dto, existProducts, approvedProductsMap);
         Map<String, List<ProductDto>> productMaps = existProducts.stream()
             .collect(Collectors.groupingBy(ProductDto::getFnmCode));
         UUID orderId = createOrder(requisitionV2Dto, approvedProductDtos, productMaps,
@@ -229,9 +207,14 @@ public class FcIssueVoucherService implements ProcessDataService {
         if (orderId != null) {
           // when do shipment for AC warehouse, it will fulfill products
           log.info("FC] create shipment for AC warehouse");
-          ShipmentDto shipmentDto = createShipmentDraftAndShipment(orderId, productMaps,
-              approvedProductDtos, approvedProductsMap, supplyFacility, requisitionV2Dto, issueVoucherDto);
+          ShipmentDto shipmentDto = createShipmentDraftAndShipment(orderId, productMaps, approvedProductDtos,
+              approvedProductsMap, issueVoucherDto);
           saveFcShipmentsExtension(issueVoucherDto, shipmentDto);
+          boolean isLocalMachine = localMachineHelper.isLocalMachine(requisitionV2Dto.getFacilityId());
+          if (machine.isOnlineWeb() && isLocalMachine) {
+            fcIssueVoucherEmitter.emit(issueVoucherDto, requisitionV2Dto.getFacilityId(),
+                issueVoucherDto.getRequisitionNumber());
+          }
         }
       } else {
         issueVoucherErrors.add("product not exist error" + SPLIT + issueVoucherDto.getIssueVoucherNumber());
@@ -285,62 +268,6 @@ public class FcIssueVoucherService implements ProcessDataService {
       log.error("[FC] not found products: {} ", notFindProducts);
     }
     return findProducts;
-  }
-
-  private void createStockEvent(UserDto useDto, RequisitionV2Dto requisitionV2Dto,
-      List<ProductDto> existProductDtos, Map<String, ApprovedProductDto> orderableDtoMap) {
-    UUID programId = requisitionV2Dto.getProgramId();
-    String programCode = siglusProgramService.getProgram(programId).getCode();
-    if (MMC_PROGRAM_CODE.equals(programCode)) {
-      programId = siglusProgramService.getProgramByCode(VIA_PROGRAM_CODE)
-          .orElseThrow(() -> new NotFoundException("VIA program not found"))
-          .getId();
-    }
-    Collection<ValidSourceDestinationDto> validSourceDtos = sourceDestinationService
-        .getValidSources(programId, useDto.getHomeFacilityId());
-    ValidSourceDestinationDto fcSource = validSourceDtos.stream()
-        .filter(validSourceDto -> validSourceDto.getName().equals(FC_INTEGRATION))
-        .findFirst()
-        .orElse(null);
-    fcDataValidate.validateFcSource(fcSource);
-    if (fcSource != null) {
-      UUID sourceId = fcSource.getNode().getId();
-      List<StockEventLineItemDto> eventLineItemDtos = existProductDtos.stream()
-          .map(productDto -> getStockEventLineItemDto(requisitionV2Dto,
-              orderableDtoMap, sourceId, productDto)).collect(Collectors.toList());
-      StockEventDto eventDto = StockEventDto.builder()
-          .programId(programId)
-          .facilityId(useDto.getHomeFacilityId())
-          .signature(FC_INTEGRATION)
-          .userId(useDto.getId())
-          .lineItems(eventLineItemDtos)
-          .documentNumber(FC_INTEGRATION)
-          .facilityId(useDto.getHomeFacilityId())
-          .build();
-      stockEventsService.processStockEvent(eventDto, false);
-    }
-  }
-
-  private StockEventLineItemDto getStockEventLineItemDto(RequisitionV2Dto requisitionV2Dto,
-      Map<String, ApprovedProductDto> orderableDtoMap, UUID sourceId, ProductDto productDto) {
-    StockEventLineItemDto lineItemDto = new StockEventLineItemDto();
-    ApprovedProductDto dto = orderableDtoMap.get(productDto.getFnmCode());
-    lineItemDto.setOrderableId(dto.getOrderable().getId());
-    lineItemDto.setQuantity(getReceiveQuantity(dto, productDto.getShippedQuantity()));
-    LocalDate date = LocalDate.now().minusDays(1);
-    lineItemDto.setOccurredDate(date);
-    lineItemDto.setReasonId(UUID.fromString(receiveReason));
-    lineItemDto.setDocumentationNo(FC_INTEGRATION);
-    lineItemDto.setProgramId(requisitionV2Dto.getProgramId());
-    lineItemDto.setSourceId(sourceId);
-    lineItemDto.setExtraData(ImmutableMap.of("lotCode", productDto.getBatch(),
-        "expirationDate", SiglusDateHelper.formatDate(productDto.getExpiryDate())));
-    return lineItemDto;
-  }
-
-  private Integer getReceiveQuantity(ApprovedProductDto dto, Integer shipQuantity) {
-    long quantity = dto.getOrderable().packsToOrder(shipQuantity) * dto.getOrderable().getNetContent();
-    return (int) quantity;
   }
 
   private UUID createOrder(RequisitionV2Dto v2Dto, List<ApprovedProductDto> approvedProductDtos,
@@ -423,7 +350,7 @@ public class FcIssueVoucherService implements ProcessDataService {
 
   private OrderLineItem getOrderLineItems(List<OrderLineItem> lineItems, UUID productId) {
     return lineItems.stream().filter(orderLineItem ->
-            orderLineItem.getOrderable().getId().equals(productId))
+        orderLineItem.getOrderable().getId().equals(productId))
         .findFirst()
         .orElse(null);
   }
@@ -489,7 +416,6 @@ public class FcIssueVoucherService implements ProcessDataService {
       Map<String, List<ProductDto>> productMaps,
       List<ApprovedProductDto> approvedProductDtos,
       Map<String, ApprovedProductDto> approvedProductDtoMaps,
-      FacilityDto supplyFacility, RequisitionV2Dto requisitionV2Dto,
       IssueVoucherDto issueVoucherDto) {
     SiglusOrderDto orderDto = siglusOrderService.searchOrderByIdForMultiWareHouseSupply(orderId);
     ShipmentDto shipmentDto = new ShipmentDto();
@@ -497,25 +423,19 @@ public class FcIssueVoucherService implements ProcessDataService {
     BeanUtils.copyProperties(orderDto.getOrder(), orderReferenceDto);
     orderReferenceDto.setOrderLineItems(orderDto.getOrder().orderLineItems());
     shipmentDto.setOrder(orderReferenceDto);
-    List<UUID> productIds = productMaps.keySet().stream()
-        .map(key -> approvedProductDtoMaps.get(key).getOrderable().getId())
-        .collect(Collectors.toList());
-    List<StockCardSummaryV2Dto> stockCardSummaryV2Dtos =
-        searchStockCardSummaries(supplyFacility, requisitionV2Dto, productIds);
     Map<UUID, ApprovedProductDto> approvedProductIdMaps = approvedProductDtos.stream()
         .collect(Collectors.toMap(product -> product.getOrderable().getId(), Function.identity()));
-    ShipmentDraftDto draftDto = createShipmentDraft(orderDto, stockCardSummaryV2Dtos, approvedProductIdMaps);
+    ShipmentDraftDto draftDto = createShipmentDraft(orderDto, approvedProductDtoMaps, productMaps);
     shipmentDto.setId(draftDto.getId());
     shipmentDto.setShippedDate(issueVoucherDto.getShippingDate());
     shipmentDto.setLineItems(getShipmentLineItems(draftDto.lineItems(), issueVoucherDto, approvedProductIdMaps));
-    return siglusShipmentService.createSubOrderAndShipment(shipmentDto);
+    return siglusShipmentService.createSubOrderAndShipmentForFc(shipmentDto);
   }
 
   private ShipmentDraftDto createShipmentDraft(SiglusOrderDto orderDto,
-      List<StockCardSummaryV2Dto> stockCardSummaryV2Dtos,
-      Map<UUID, ApprovedProductDto> approvedProductIdMaps) {
-    List<ShipmentLineItemDto> shipmentLineItemDtos =
-        getShipmentDraftLineItems(stockCardSummaryV2Dtos, approvedProductIdMaps);
+      Map<String, ApprovedProductDto> approvedProductDtoMaps,
+      Map<String, List<ProductDto>> productMaps) {
+    List<ShipmentLineItemDto> shipmentLineItemDtos = getShipmentDraftLineItems(approvedProductDtoMaps, productMaps);
     OrderObjectReferenceDto orderObjectReferenceDto = new OrderObjectReferenceDto(orderDto.getOrder().getId());
     BeanUtils.copyProperties(orderDto, orderObjectReferenceDto);
     ShipmentDraftDto draftDto = new ShipmentDraftDto();
@@ -525,27 +445,39 @@ public class FcIssueVoucherService implements ProcessDataService {
   }
 
   private List<ShipmentLineItemDto> getShipmentDraftLineItems(
-      List<StockCardSummaryV2Dto> stockCardSummaryV2Dtos,
-      Map<UUID, ApprovedProductDto> approvedProductIdMaps) {
+      Map<String, ApprovedProductDto> approvedProductDtoMaps,
+      Map<String, List<ProductDto>> productMaps) {
     List<ShipmentLineItemDto> shipmentLineItemDtos = new ArrayList<>();
-    stockCardSummaryV2Dtos.forEach(stockCardSummaryV2Dto -> {
-      OrderableDto orderableDto = approvedProductIdMaps
-          .get(stockCardSummaryV2Dto.getOrderable().getId()).getOrderable();
-      long netContent = orderableDto.getNetContent();
-      stockCardSummaryV2Dto.getCanFulfillForMe().forEach(fulfillForMeDto -> {
-        if (fulfillForMeDto.getStockOnHand() > netContent) {
-          ShipmentLineItemDto lineItemDto = new ShipmentLineItemDto();
-          VersionObjectReferenceDto orderableReferenceDto =
-              new VersionObjectReferenceDto(orderableDto.getId(),
-                  null, "orderables", orderableDto.getVersionNumber());
-          lineItemDto.setOrderable(orderableReferenceDto);
-          lineItemDto.setQuantityShipped((long) 0);
-          lineItemDto.setLotId(fulfillForMeDto.getLot().getId());
-          shipmentLineItemDtos.add(lineItemDto);
-        }
-      });
+    productMaps.forEach((code, productDtos) -> {
+      ApprovedProductDto approvedProductDto = approvedProductDtoMaps.get(code);
+      if (approvedProductDto == null) {
+        return;
+      }
+      OrderableDto orderableDto = approvedProductDto.getOrderable();
+      productDtos.forEach(productDto -> shipmentLineItemDtos.add(
+          buildShipmentLineItemDto(orderableDto.getId(), orderableDto.getVersionNumber(),
+              generateLotId(orderableDto.getIdentifiers(), productDto))));
     });
     return shipmentLineItemDtos;
+  }
+
+  private ShipmentLineItemDto buildShipmentLineItemDto(UUID orderableId, Long versionNumber, UUID lotId) {
+    VersionObjectReferenceDto orderableReferenceDto = new VersionObjectReferenceDto(orderableId, null, "orderables",
+        versionNumber);
+    ShipmentLineItemDto lineItemDto = new ShipmentLineItemDto();
+    lineItemDto.setOrderable(orderableReferenceDto);
+    lineItemDto.setQuantityShipped((long) 0);
+    lineItemDto.setLotId(lotId);
+    return lineItemDto;
+  }
+
+  private UUID generateLotId(Map<String, String> identifiers, ProductDto productDto) {
+    if (identifiers == null) {
+      identifiers = Maps.newHashMap();
+    }
+    UUID uuidIdentifier = UUID.fromString(identifiers.get(TRADE_ITEM));
+    return Lot.of(productDto.getBatch(), LocalDate.parse(SiglusDateHelper.formatDate(productDto.getExpiryDate())))
+        .getUUid(uuidIdentifier);
   }
 
   private List<ShipmentLineItemDto> getShipmentLineItems(List<ShipmentLineItemDto> draftLineItems,
@@ -570,21 +502,10 @@ public class FcIssueVoucherService implements ProcessDataService {
   private ProductDto getProductDto(ApprovedProductDto productDto, LotDto lotDto,
       List<ProductDto> products) {
     return products.stream().filter(dto ->
-            dto.getFnmCode().equals(productDto.getOrderable().getProductCode())
-                && dto.getBatch().equals(lotDto.getLotCode()))
+        dto.getFnmCode().equals(productDto.getOrderable().getProductCode())
+            && dto.getBatch().equals(lotDto.getLotCode()))
         .findFirst()
         .orElse(null);
-  }
-
-  private List<StockCardSummaryV2Dto> searchStockCardSummaries(FacilityDto supplyFacility,
-      RequisitionV2Dto requisitionV2Dto, List<UUID> productIds) {
-    LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
-    parameters.set(PROGRAM_ID, requisitionV2Dto.getProgram().getId().toString());
-    parameters.set(FACILITY_ID, supplyFacility.getId().toString());
-    parameters.set(RIGHT_NAME, STOCK_CARDS_VIEW);
-    productIds.forEach(productId -> parameters.add(ORDERABLE_ID, productId.toString()));
-    Pageable page = new PageRequest(DEFAULT_PAGE_NUMBER, Integer.MAX_VALUE);
-    return stockCardSummariesService.findSiglusStockCard(parameters, null, page, false).getContent();
   }
 
   private void convertRequisitionToOrder(RequisitionV2Dto v2Dto, FacilityDto supplyFacility,
