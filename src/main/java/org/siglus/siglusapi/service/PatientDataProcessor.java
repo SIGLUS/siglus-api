@@ -61,7 +61,8 @@ public class PatientDataProcessor implements UsageReportDataProcessor {
 
   private void calculateValueForTopLevelFacility(
       List<PatientLineItem> patientLineItems, UUID facilityId, UUID periodId, UUID programId) {
-    if (patientLineItems.isEmpty() || siglusUsageReportService.isNonTopLevelOrNotUsageReports(programId, facilityId)) {
+    if (patientLineItems.isEmpty()
+        || siglusUsageReportService.isNotSupplyFacilityOrNotUsageReports(programId, facilityId)) {
       return;
     }
     Map<String, Integer> itemToSumValue = itemToValue(

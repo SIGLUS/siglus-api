@@ -110,7 +110,8 @@ public class RegimenDataProcessor implements UsageReportDataProcessor {
 
   private void calculateRegimenValueForTopLevelFacility(List<RegimenLineItem> regimenLineItems, UUID facilityId,
       UUID periodId, UUID programId) {
-    if (regimenLineItems.isEmpty() || siglusUsageReportService.isNonTopLevelOrNotUsageReports(programId, facilityId)) {
+    if (regimenLineItems.isEmpty()
+        || siglusUsageReportService.isNotSupplyFacilityOrNotUsageReports(programId, facilityId)) {
       return;
     }
     Map<String, Integer> regimenItemToSumValue = regimenItemToValue(
@@ -130,7 +131,7 @@ public class RegimenDataProcessor implements UsageReportDataProcessor {
   private void calculateRegimenSummaryValueForTopLevelFacility(List<RegimenSummaryLineItem> regimenSummaryLineItems,
       UUID facilityId, UUID periodId, UUID programId) {
     if (regimenSummaryLineItems.isEmpty()
-        || siglusUsageReportService.isNonTopLevelOrNotUsageReports(programId, facilityId)) {
+        || siglusUsageReportService.isNotSupplyFacilityOrNotUsageReports(programId, facilityId)) {
       return;
     }
     Map<String, Integer> regimenSummaryItemToSumValue = regimenSummaryItemToValue(

@@ -160,7 +160,7 @@ public class UsageInformationDataProcessorTest {
     Orderable kitProduct = new Orderable(Code.code("kitProduct"), Dispensable.createNew("each"),
         10, 7, true, orderableId, 1L);
     when(orderableKitRepository.findAllKitProduct()).thenReturn(singletonList(kitProduct));
-    when(siglusUsageReportService.isNonTopLevelOrNotUsageReports(programId, facilityId)).thenReturn(true);
+    when(siglusUsageReportService.isNotSupplyFacilityOrNotUsageReports(programId, facilityId)).thenReturn(true);
 
     // when
     usageInformationDataProcessor.initiate(siglusRequisitionDto, templateColumnSections);
@@ -180,7 +180,7 @@ public class UsageInformationDataProcessorTest {
   public void shouldCreateLineItemsWhenInitiateIfEnableUsageInformation() {
     // given
     givenReturn();
-    when(siglusUsageReportService.isNonTopLevelOrNotUsageReports(programId, facilityId)).thenReturn(true);
+    when(siglusUsageReportService.isNotSupplyFacilityOrNotUsageReports(programId, facilityId)).thenReturn(true);
 
     // when
     usageInformationDataProcessor.initiate(mockRequisitionDto(), templateColumnSections);
@@ -200,7 +200,7 @@ public class UsageInformationDataProcessorTest {
   public void shouldSumValueWhenIsHighLevelFacility() {
     // given
     givenReturn();
-    when(siglusUsageReportService.isNonTopLevelOrNotUsageReports(programId, facilityId)).thenReturn(false);
+    when(siglusUsageReportService.isNotSupplyFacilityOrNotUsageReports(programId, facilityId)).thenReturn(false);
     when(usageInformationLineItemRepository.sumValueRequisitionsUnderHighLevelFacility(facilityId, periodId, programId))
         .thenReturn(singletonList(mockUsageInformationOrderableDto(20)));
     when(usageInformationLineItemRepository.maxValueRequisitionsInLastPeriods(facilityId, periodId, programId))

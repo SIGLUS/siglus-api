@@ -99,7 +99,7 @@ public class TestAgeGroupDataProcessor {
   public void shouldCreateLineItemsWhenInitiateIfEnableAgeGroup() {
     // given
     givenReturn();
-    Mockito.when(siglusUsageReportService.isNonTopLevelOrNotUsageReports(any(), any())).thenReturn(true);
+    Mockito.when(siglusUsageReportService.isNotSupplyFacilityOrNotUsageReports(any(), any())).thenReturn(true);
 
     // when
     ageGroupDataProcessor.initiate(mockRequisitionDto(), templateColumnSections);
@@ -118,7 +118,7 @@ public class TestAgeGroupDataProcessor {
   public void shouldSumValueWhenIsHighLevelFacility() {
     // given
     givenReturn();
-    Mockito.when(siglusUsageReportService.isNonTopLevelOrNotUsageReports(any(), any())).thenReturn(false);
+    Mockito.when(siglusUsageReportService.isNotSupplyFacilityOrNotUsageReports(any(), any())).thenReturn(false);
     Mockito.when(ageGroupLineItemRepository.sumValueRequisitionsUnderHighLevelFacility(facilityId, periodId, programId))
         .thenReturn(singletonList(mockAgeGroupLineItemDto(10)));
     Mockito.when(ageGroupLineItemRepository.maxValueRequisitionsInLastPeriods(facilityId, periodId, programId))

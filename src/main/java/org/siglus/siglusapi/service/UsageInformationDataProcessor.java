@@ -73,7 +73,7 @@ public class UsageInformationDataProcessor implements UsageReportDataProcessor {
   private void calculateValueForTopLevelFacility(
       List<UsageInformationLineItem> usageInformationLineItems, UUID facilityId, UUID periodId, UUID programId) {
     if (usageInformationLineItems.isEmpty()
-        || siglusUsageReportService.isNonTopLevelOrNotUsageReports(programId, facilityId)) {
+        || siglusUsageReportService.isNotSupplyFacilityOrNotUsageReports(programId, facilityId)) {
       return;
     }
     Map<String, Integer> itemToSumValue = itemToValue(

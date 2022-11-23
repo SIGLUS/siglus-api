@@ -58,7 +58,8 @@ public class AgeGroupDataProcessor implements UsageReportDataProcessor {
 
   private void calculateValueForTopLevelFacility(
       List<AgeGroupLineItem> ageGroupLineItems, UUID facilityId, UUID periodId, UUID programId) {
-    if (ageGroupLineItems.isEmpty() || siglusUsageReportService.isNonTopLevelOrNotUsageReports(programId, facilityId)) {
+    if (ageGroupLineItems.isEmpty()
+        || siglusUsageReportService.isNotSupplyFacilityOrNotUsageReports(programId, facilityId)) {
       return;
     }
     Map<String, Integer> itemToSumValue = itemToValue(

@@ -18,7 +18,6 @@ package org.siglus.siglusapi.service;
 import static java.util.stream.Collectors.toSet;
 import static org.openlmis.requisition.domain.requisition.Requisition.AI;
 import static org.openlmis.requisition.domain.requisition.Requisition.DPM;
-import static org.openlmis.requisition.domain.requisition.Requisition.HC;
 import static org.openlmis.stockmanagement.i18n.MessageKeys.ERROR_REPORTING_TEMPLATE_NOT_FOUND_WITH_NAME;
 import static org.siglus.common.constant.ExtraDataConstants.ACTUAL_END_DATE;
 import static org.siglus.common.constant.ExtraDataConstants.ACTUAL_START_DATE;
@@ -182,15 +181,15 @@ public class SiglusUsageReportService {
         .findFirst().orElse(null);
   }
 
-  public boolean isNonTopLevelOrNotUsageReports(UUID programId, UUID facilityId) {
+  public boolean isNotSupplyFacilityOrNotUsageReports(UUID programId, UUID facilityId) {
     return !Arrays.asList(TARV_PROGRAM_CODE, MTB_PROGRAM_CODE, RAPIDTEST_PROGRAM_CODE, MALARIA_PROGRAM_CODE)
         .contains(siglusProgramService.getProgram(programId).getCode())
-        || !isTopLevelFacilityType(facilityId);
+        || !isSupplyFacilityType(facilityId);
   }
 
-  private boolean isTopLevelFacilityType(UUID facilityId) {
+  private boolean isSupplyFacilityType(UUID facilityId) {
     String facilityTypeCode = facilityReferenceDataService.findOne(facilityId).getType().getCode();
-    return Arrays.asList(DPM, AI, HC).contains(facilityTypeCode);
+    return Arrays.asList(DPM, AI).contains(facilityTypeCode);
   }
 
   private void updateKitUsageLineItem(SiglusRequisitionDto requisitionDto, SiglusRequisitionDto updatedDto) {

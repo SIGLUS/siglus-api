@@ -107,7 +107,7 @@ public class TestConsumptionDataProcessorTest {
   public void shouldCreateLineItemsWhenInitiateIfEnableTestConsumption() {
     // given
     givenReturn();
-    when(siglusUsageReportService.isNonTopLevelOrNotUsageReports(programId, facilityId)).thenReturn(true);
+    when(siglusUsageReportService.isNotSupplyFacilityOrNotUsageReports(programId, facilityId)).thenReturn(true);
 
     // when
     testConsumptionDataProcessor.initiate(mockRequisitionDto(), templateColumnSections);
@@ -127,7 +127,7 @@ public class TestConsumptionDataProcessorTest {
   public void shouldSumValueWhenIsHighLevelFacility() {
     // given
     givenReturn();
-    when(siglusUsageReportService.isNonTopLevelOrNotUsageReports(programId, facilityId)).thenReturn(false);
+    when(siglusUsageReportService.isNotSupplyFacilityOrNotUsageReports(programId, facilityId)).thenReturn(false);
     when(testConsumptionLineItemRepository.sumValueRequisitionsUnderHighLevelFacility(facilityId, periodId, programId))
         .thenReturn(singletonList(mockTestConsumptionOutcomeDto(40)));
     when(testConsumptionLineItemRepository.maxValueRequisitionsInLastPeriods(facilityId, periodId, programId))

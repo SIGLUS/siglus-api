@@ -121,7 +121,7 @@ public class PatientDataProcessorTest {
     when(repo.save(anyListOf(PatientLineItem.class))).thenReturn(savedLineItems);
     List<PatientGroupDto> mappedGroups = singletonList(mock(PatientGroupDto.class));
     when(mapper.from(savedLineItems)).thenReturn(mappedGroups);
-    when(siglusUsageReportService.isNonTopLevelOrNotUsageReports(programId, facilityId)).thenReturn(true);
+    when(siglusUsageReportService.isNotSupplyFacilityOrNotUsageReports(programId, facilityId)).thenReturn(true);
     SiglusRequisitionDto requisitionDto = mockRequisitionDto();
 
     // when
@@ -203,7 +203,7 @@ public class PatientDataProcessorTest {
     when(repo.save(anyListOf(PatientLineItem.class))).thenReturn(savedLineItems);
     List<PatientGroupDto> mappedGroups = singletonList(mock(PatientGroupDto.class));
     when(mapper.from(savedLineItems)).thenReturn(mappedGroups);
-    when(siglusUsageReportService.isNonTopLevelOrNotUsageReports(programId, facilityId)).thenReturn(false);
+    when(siglusUsageReportService.isNotSupplyFacilityOrNotUsageReports(programId, facilityId)).thenReturn(false);
     when(repo.sumValueRequisitionsUnderHighLevelFacility(facilityId, periodId, programId))
         .thenReturn(asList(mockPatientColumnDto(patientSection, patientColumn, 10),
             mockPatientColumnDto("patientSection2", "patientColumn2", 20)));

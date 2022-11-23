@@ -140,7 +140,7 @@ public class RegimenDataProcessorTest {
   public void shouldCreateLineItemsWhenInitiateIfEnableRegimen() {
     // given
     givenReturn();
-    when(siglusUsageReportService.isNonTopLevelOrNotUsageReports(programId, facilityId)).thenReturn(true);
+    when(siglusUsageReportService.isNotSupplyFacilityOrNotUsageReports(programId, facilityId)).thenReturn(true);
     SiglusRequisitionDto siglusRequisitionDto = mockRequisitionDto();
 
     // when
@@ -175,7 +175,7 @@ public class RegimenDataProcessorTest {
   public void shouldSumValueWhenIsHighLevelFacility() {
     // given
     givenReturn();
-    when(siglusUsageReportService.isNonTopLevelOrNotUsageReports(programId, facilityId)).thenReturn(false);
+    when(siglusUsageReportService.isNotSupplyFacilityOrNotUsageReports(programId, facilityId)).thenReturn(false);
     when(regimenLineItemRepository.sumValueRequisitionsUnderHighLevelFacility(facilityId, periodId, programId))
         .thenReturn(asList(mockRegimenColumnDto(regimenId1, 10),
             mockRegimenColumnDto(null, 10)));

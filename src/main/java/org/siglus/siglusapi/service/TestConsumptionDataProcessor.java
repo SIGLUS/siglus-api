@@ -65,7 +65,7 @@ public class TestConsumptionDataProcessor implements UsageReportDataProcessor {
   private void calculateValueForTopLevelFacility(
       List<TestConsumptionLineItem> testConsumptionLineItems, UUID facilityId, UUID periodId, UUID programId) {
     if (testConsumptionLineItems.isEmpty()
-        || siglusUsageReportService.isNonTopLevelOrNotUsageReports(programId, facilityId)) {
+        || siglusUsageReportService.isNotSupplyFacilityOrNotUsageReports(programId, facilityId)) {
       return;
     }
     Map<String, Integer> itemToSumValue = itemToValue(
