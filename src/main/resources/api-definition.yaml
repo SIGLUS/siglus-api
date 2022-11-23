@@ -284,8 +284,8 @@ traits:
         /basicInfo:
           get:
             description: get local machine basic info
-        /syncResults:
-          get:
+        /sync:
+          post:
             description: get sync results
         put:
           description: local api for localmachine control plane to activate the machine
