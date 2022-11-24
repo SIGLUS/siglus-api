@@ -15,14 +15,8 @@
 
 package org.siglus.siglusapi.localmachine.agent;
 
-import java.util.Comparator;
-import java.util.List;
-import java.util.stream.Collectors;
-import jersey.repackaged.com.google.common.collect.Lists;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections.CollectionUtils;
-import org.siglus.siglusapi.localmachine.domain.ErrorRecord;
 import org.siglus.siglusapi.localmachine.domain.LastSyncReplayRecord;
 import org.siglus.siglusapi.localmachine.repository.ErrorRecordRepository;
 import org.siglus.siglusapi.localmachine.repository.LastSyncRecordRepository;
@@ -45,14 +39,10 @@ public class LocalSyncResultsService {
   public LocalSyncResultsResponse doSync() {
     synchronizer.sync();
     LastSyncReplayRecord lastSyncTime = lastSyncRecordRepository.findFirstByOrderByLastSyncedTimeDesc();
-    List<ErrorRecord> lastTenErrorRecords = errorRecordsRepository.findLastTenErrorRecords().stream()
-        .sorted(Comparator.comparing(ErrorRecord::getOccurredTime).reversed())
-        .collect(Collectors.toList());
 
     return LocalSyncResultsResponse.builder()
         .latestSyncedTime(lastSyncTime.getLastSyncedTime())
-        .errors(CollectionUtils.isNotEmpty(lastTenErrorRecords) ? Lists.newArrayList(lastTenErrorRecords.get(0))
-            : Lists.newArrayList())
+        .error(errorRecordsRepository.findLastErrorRecord())
         .build();
   }
 }

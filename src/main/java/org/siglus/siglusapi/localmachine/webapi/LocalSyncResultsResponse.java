@@ -31,6 +31,6 @@ public class LocalSyncResultsResponse {
 
   private ZonedDateTime latestSyncedTime;
 
-  private List<ErrorRecord> errors;
+  private ErrorRecord error;
 
 }
