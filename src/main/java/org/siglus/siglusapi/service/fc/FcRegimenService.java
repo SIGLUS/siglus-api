@@ -124,8 +124,7 @@ public class FcRegimenService implements ProcessDataService {
               .buildCreateFcIntegrationChanges(REGIMEN_API, current.getCode(), current.toString());
           fcIntegrationChangesList.add(createChanges);
         } else {
-          FcIntegrationChanges updateChanges = getUpdatedRegimen(existed, current, realProgram.getId(),
-              regimenCategoryCodeToCategory);
+          FcIntegrationChanges updateChanges = getUpdatedRegimen(existed, current, realProgram.getId(), programId);
           if (updateChanges != null) {
             log.info("[FC regimen] update regimen, existed: {}, current: {}", existed, current);
             regimensToUpdate.add(merge(existed, current, realProgramId, programId, regimenCategoryCodeToCategory));
@@ -134,7 +133,6 @@ public class FcRegimenService implements ProcessDataService {
           } else {
             sameCounter.getAndIncrement();
           }
-
         }
       });
       regimenRepository.save(regimensToUpdate);
@@ -150,7 +148,7 @@ public class FcRegimenService implements ProcessDataService {
   }
 
   private FcIntegrationChanges getUpdatedRegimen(Regimen existed, RegimenDto current, UUID realProgramId,
-      Map<String, RegimenCategory> regimenCategoryCodeToCategory) {
+      UUID programId) {
     boolean isSame = true;
     StringBuilder updateContent = new StringBuilder();
     StringBuilder originContent = new StringBuilder();
@@ -159,12 +157,17 @@ public class FcRegimenService implements ProcessDataService {
       originContent.append("name=").append(existed.getName()).append("; ");
       isSame = false;
     }
+    if (!existed.getProgramId().equals(programId)) {
+      updateContent.append("programId=").append(programId).append("; ");
+      originContent.append("programId=").append(existed.getProgramId()).append("; ");
+      isSame = false;
+    }
     if (!existed.getRealProgramId().equals(realProgramId)) {
       updateContent.append("realProgramId=").append(realProgramId).append("; ");
       originContent.append("realProgramId=").append(existed.getRealProgramId()).append("; ");
       isSame = false;
     }
-    if (!isCategoryEquivalent(existed, current, regimenCategoryCodeToCategory)) {
+    if (!isCategoryEquivalent(existed, current)) {
       updateContent.append("category=").append(getCurrentRegimenCategoryCode(current)).append("; ");
       originContent.append("category=")
           .append(existed.getRegimenCategory() == null ? null : existed.getRegimenCategory().getCode()).append("; ");
@@ -231,8 +234,7 @@ public class FcRegimenService implements ProcessDataService {
   }
 
 
-  private boolean isCategoryEquivalent(Regimen regimen, RegimenDto dto,
-      Map<String, RegimenCategory> regimenCategoryCodeToCategory) {
+  private boolean isCategoryEquivalent(Regimen regimen, RegimenDto dto) {
 
     RegimenCategory category = regimen.getRegimenCategory();
     if (category == null
@@ -240,10 +242,7 @@ public class FcRegimenService implements ProcessDataService {
       return true;
     }
 
-    return category != null
-        && category.getCode().equalsIgnoreCase(getCurrentRegimenCategoryCode(dto))
-        && category.getName().equals(regimenCategoryCodeToCategory
-        .get(getCurrentRegimenCategoryCode(dto).toUpperCase()).getName());
+    return category != null && category.getCode().equalsIgnoreCase(getCurrentRegimenCategoryCode(dto));
   }
 
 }
