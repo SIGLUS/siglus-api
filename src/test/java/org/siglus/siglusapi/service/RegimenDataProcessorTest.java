@@ -177,8 +177,8 @@ public class RegimenDataProcessorTest {
     givenReturn();
     when(siglusUsageReportService.isNotSupplyFacilityOrNotUsageReports(programId, facilityId)).thenReturn(false);
     when(regimenLineItemRepository.sumValueRequisitionsUnderHighLevelFacility(facilityId, periodId, programId))
-        .thenReturn(asList(mockRegimenColumnDto(regimenId1, 10),
-            mockRegimenColumnDto(null, 10)));
+        .thenReturn(asList(mockRegimenColumnDto(regimenId1, 10), mockRegimenColumnDto(null, 10),
+            mockRegimenColumnDto(regimenId2, 10)));
     when(regimenLineItemRepository.maxValueRequisitionsInLastPeriods(facilityId, periodId, programId))
         .thenReturn(singletonList(mockRegimenColumnDto(regimenId1, 20)));
     when(regimenSummaryLineItemRepository.sumValueRequisitionsUnderHighLevelFacility(facilityId, periodId, programId))
@@ -195,6 +195,7 @@ public class RegimenDataProcessorTest {
     List<RegimenLineItem> regimenLineItems = lineItemsArgumentCaptor.getValue();
     assertEquals(Integer.valueOf(30), regimenLineItems.get(0).getValue());
     assertEquals(Integer.valueOf(10), regimenLineItems.get(1).getValue());
+    assertEquals(Integer.valueOf(10), regimenLineItems.get(2).getValue());
 
     verify(regimenSummaryLineItemRepository).save(summaryArgumentCaptor.capture());
     List<RegimenSummaryLineItem> summaryLineItems = summaryArgumentCaptor.getValue();
@@ -352,6 +353,8 @@ public class RegimenDataProcessorTest {
         .thenReturn(newArrayList(mockNoCustomRegimen()));
     when(regimenRepository.findAllByProgramIdAndIsAndroidTrueAndIsCustomTrue(any()))
         .thenReturn(newArrayList(mockCustomRegimen()));
+    when(regimenRepository.findAllByProgramIdAndIsAndroidTrue(any()))
+        .thenReturn(newArrayList(mockNoCustomRegimen(), mockCustomRegimen()));
     when(regimenRepository.findAllByProgramIdAndActiveTrue(any()))
         .thenReturn(newArrayList(mockCustomRegimen(), mockNoCustomRegimen()));
     when(siglusUsageReportService

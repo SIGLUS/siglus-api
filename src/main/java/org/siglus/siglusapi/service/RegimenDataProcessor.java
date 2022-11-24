@@ -24,6 +24,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
+import org.siglus.siglusapi.domain.Regimen;
 import org.siglus.siglusapi.domain.RegimenLineItem;
 import org.siglus.siglusapi.domain.RegimenSummaryLineItem;
 import org.siglus.siglusapi.domain.UsageCategory;
@@ -69,18 +70,16 @@ public class RegimenDataProcessor implements UsageReportDataProcessor {
   @Override
   public void doInitiate(SiglusRequisitionDto siglusRequisitionDto,
       List<UsageTemplateColumnSection> templateColumnSections) {
-
-    List<RegimenDto> defaultRegimenDtos =
-        regimenRepository.findAllByProgramIdAndIsAndroidTrueAndIsCustomFalse(
-            siglusRequisitionDto.getProgramId())
-            .stream()
-            .map(RegimenDto::from)
-            .collect(Collectors.toList());
+    boolean isNotNeedCalculate = siglusUsageReportService.isNotSupplyFacilityOrNotUsageReports(
+        siglusRequisitionDto.getProgramId(), siglusRequisitionDto.getFacilityId());
+    List<Regimen> regimens = isNotNeedCalculate
+        ? regimenRepository.findAllByProgramIdAndIsAndroidTrueAndIsCustomFalse(siglusRequisitionDto.getProgramId())
+        : regimenRepository.findAllByProgramIdAndIsAndroidTrue(siglusRequisitionDto.getProgramId());
+    List<RegimenDto> defaultRegimenDtos = regimens.stream().map(RegimenDto::from).collect(Collectors.toList());
 
     if (CollectionUtils.isEmpty(defaultRegimenDtos)) {
       return;
     }
-
     Set<String> regimenSummaryRowNames =
         getValidRegimenSummaryRowNames(templateColumnSections);
 
@@ -90,13 +89,13 @@ public class RegimenDataProcessor implements UsageReportDataProcessor {
         siglusRequisitionDto, templateColumnSections, regimenSummaryRowNames);
 
     calculateRegimenValueForTopLevelFacility(regimenLineItems, siglusRequisitionDto.getFacilityId(),
-        siglusRequisitionDto.getProcessingPeriodId(), siglusRequisitionDto.getProgramId());
+        siglusRequisitionDto.getProcessingPeriodId(), siglusRequisitionDto.getProgramId(), isNotNeedCalculate);
     log.info("save regimen line items by requisition id: {}", siglusRequisitionDto.getId());
     List<RegimenLineItem> saved = regimenLineItemRepository.save(regimenLineItems);
     List<RegimenLineDto> lineDtos = RegimenLineDto.from(saved, getRegimenDtoMap());
 
     calculateRegimenSummaryValueForTopLevelFacility(regimenSummaryLineItems, siglusRequisitionDto.getFacilityId(),
-        siglusRequisitionDto.getProcessingPeriodId(), siglusRequisitionDto.getProgramId());
+        siglusRequisitionDto.getProcessingPeriodId(), siglusRequisitionDto.getProgramId(), isNotNeedCalculate);
     log.info("save regimen summary line items by requisition id: {}", siglusRequisitionDto.getId());
     List<RegimenSummaryLineItem> savedSummaryLineItems =
         regimenSummaryLineItemRepository.save(regimenSummaryLineItems);
@@ -109,9 +108,8 @@ public class RegimenDataProcessor implements UsageReportDataProcessor {
   }
 
   private void calculateRegimenValueForTopLevelFacility(List<RegimenLineItem> regimenLineItems, UUID facilityId,
-      UUID periodId, UUID programId) {
-    if (regimenLineItems.isEmpty()
-        || siglusUsageReportService.isNotSupplyFacilityOrNotUsageReports(programId, facilityId)) {
+      UUID periodId, UUID programId, boolean isNotNeedCalculate) {
+    if (regimenLineItems.isEmpty() || isNotNeedCalculate) {
       return;
     }
     Map<String, Integer> regimenItemToSumValue = regimenItemToValue(
@@ -129,9 +127,8 @@ public class RegimenDataProcessor implements UsageReportDataProcessor {
   }
 
   private void calculateRegimenSummaryValueForTopLevelFacility(List<RegimenSummaryLineItem> regimenSummaryLineItems,
-      UUID facilityId, UUID periodId, UUID programId) {
-    if (regimenSummaryLineItems.isEmpty()
-        || siglusUsageReportService.isNotSupplyFacilityOrNotUsageReports(programId, facilityId)) {
+      UUID facilityId, UUID periodId, UUID programId, boolean isNotNeedCalculate) {
+    if (regimenSummaryLineItems.isEmpty() || isNotNeedCalculate) {
       return;
     }
     Map<String, Integer> regimenSummaryItemToSumValue = regimenSummaryItemToValue(
