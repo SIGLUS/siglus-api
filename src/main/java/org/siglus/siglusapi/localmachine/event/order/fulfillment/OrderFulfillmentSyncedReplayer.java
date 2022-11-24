@@ -191,6 +191,8 @@ public class OrderFulfillmentSyncedReplayer {
   private void finalApprove(Requisition requisition, RequisitionExtension requisitionExtension,
       OrderFulfillmentSyncedEvent event) {
     resetApprovedQuantity(requisition, event);
+    setSkippedOrderable(requisition, event);
+
     // do approve
     requisition.approve(null, eventCommonService.getOrderableDtoMap(requisition), Collections.emptyList(),
         event.getFinalApproveUserId());
@@ -205,6 +207,17 @@ public class OrderFulfillmentSyncedReplayer {
 
     requisitionExtension.setIsApprovedByInternal(false);
     requisitionExtensionRepository.saveAndFlush(requisitionExtension);
+  }
+
+  private void setSkippedOrderable(Requisition requisition, OrderFulfillmentSyncedEvent event) {
+    ShipmentDto shipmentDto = event.getShipmentExtensionRequest().getShipment();
+    Set<UUID> shippedOrderableIds = shipmentDto.getLineItems().stream().map(e -> e.getOrderableIdentity().getId())
+        .collect(Collectors.toSet());
+    requisition.getRequisitionLineItems().forEach(e -> {
+      if (!shippedOrderableIds.contains(e.getOrderable().getId())) {
+        e.setSkipped(Boolean.TRUE);
+      }
+    });
   }
 
   private void createLotsIfNotExist(List<LotDto> shippedLotList) {
