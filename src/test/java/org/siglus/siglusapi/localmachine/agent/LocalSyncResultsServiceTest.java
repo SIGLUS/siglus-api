@@ -20,6 +20,7 @@ import static org.mockito.Mockito.when;
 
 import java.time.ZonedDateTime;
 import junit.framework.TestCase;
+import org.assertj.core.util.Lists;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -63,7 +64,7 @@ public class LocalSyncResultsServiceTest extends TestCase {
 
     //when
     when(lastSyncRecordRepository.findFirstByOrderByLastSyncedTimeDesc()).thenReturn(syncRecord);
-    when(errorRecordRepository.findLastErrorRecord()).thenReturn(errorRecord);
+    when(errorRecordRepository.findLastTenErrorRecords()).thenReturn(Lists.newArrayList(errorRecord));
     doNothing().when(synchronizer).sync();
     LocalSyncResultsResponse syncResults = localSyncResultsService.doSync();
 
