@@ -92,8 +92,8 @@ public class RegimenDataProcessor implements UsageReportDataProcessor {
         siglusRequisitionDto.getProcessingPeriodId(), siglusRequisitionDto.getProgramId(), isNotNeedCalculate);
     log.info("save regimen line items by requisition id: {}", siglusRequisitionDto.getId());
     List<RegimenLineItem> saved = regimenLineItemRepository.save(regimenLineItems);
-    List<RegimenLineDto> lineDtos = RegimenLineDto.from(saved, getRegimenDtoMap());
-
+    List<RegimenLineDto> lineDtos = isNotNeedCalculate ? RegimenLineDto.from(saved, getRegimenDtoMap())
+        : RegimenLineDto.fromCustomFalse(saved, getRegimenDtoMap());
     calculateRegimenSummaryValueForTopLevelFacility(regimenSummaryLineItems, siglusRequisitionDto.getFacilityId(),
         siglusRequisitionDto.getProcessingPeriodId(), siglusRequisitionDto.getProgramId(), isNotNeedCalculate);
     log.info("save regimen summary line items by requisition id: {}", siglusRequisitionDto.getId());
@@ -104,7 +104,11 @@ public class RegimenDataProcessor implements UsageReportDataProcessor {
 
     siglusRequisitionDto.setRegimenLineItems(lineDtos);
     siglusRequisitionDto.setRegimenSummaryLineItems(summaryLineItems);
-    setCustomRegimen(siglusRequisitionDto);
+    if (isNotNeedCalculate) {
+      setCustomRegimen(siglusRequisitionDto);
+    } else {
+      setCustomRegimenFalse(siglusRequisitionDto);
+    }
   }
 
   private void calculateRegimenValueForTopLevelFacility(List<RegimenLineItem> regimenLineItems, UUID facilityId,
@@ -158,15 +162,21 @@ public class RegimenDataProcessor implements UsageReportDataProcessor {
   public void get(SiglusRequisitionDto siglusRequisitionDto) {
     List<RegimenLineItem> regimenLineItems =
         regimenLineItemRepository.findByRequisitionId(siglusRequisitionDto.getId());
-    List<RegimenLineDto> lineDtos = RegimenLineDto.from(regimenLineItems, getRegimenDtoMap());
-
+    boolean isNotNeedCalculate = siglusUsageReportService.isNotSupplyFacilityOrNotUsageReports(
+        siglusRequisitionDto.getProgramId(), siglusRequisitionDto.getFacilityId());
+    List<RegimenLineDto> lineDtos = isNotNeedCalculate ? RegimenLineDto.from(regimenLineItems, getRegimenDtoMap())
+        : RegimenLineDto.fromCustomFalse(regimenLineItems, getRegimenDtoMap());
     List<RegimenSummaryLineItem> summaryLineItems =
         regimenSummaryLineItemRepository.findByRequisitionId(siglusRequisitionDto.getId());
     List<RegimenSummaryLineDto> summaryLineDtos = RegimenSummaryLineDto.from(summaryLineItems);
 
     siglusRequisitionDto.setRegimenLineItems(lineDtos);
     siglusRequisitionDto.setRegimenSummaryLineItems(summaryLineDtos);
-    setCustomRegimen(siglusRequisitionDto);
+    if (isNotNeedCalculate) {
+      setCustomRegimen(siglusRequisitionDto);
+    } else {
+      setCustomRegimenFalse(siglusRequisitionDto);
+    }
   }
 
   @Override
@@ -219,14 +229,30 @@ public class RegimenDataProcessor implements UsageReportDataProcessor {
         .collect(Collectors.toMap(RegimenDto::getId, Function.identity()));
   }
 
-  public void setCustomRegimen(SiglusRequisitionDto siglusRequisitionDto) {
+  private void setCustomRegimen(SiglusRequisitionDto siglusRequisitionDto, boolean needSetCustomFalse) {
     List<RegimenDto> customRegimenDtos = regimenRepository
         .findAllByProgramIdAndIsAndroidTrueAndIsCustomTrue(
             siglusRequisitionDto.getProgramId())
         .stream()
-        .map(RegimenDto::from)
+        .map(regimen -> setCustomFalse(regimen, needSetCustomFalse))
         .collect(Collectors.toList());
     siglusRequisitionDto.setCustomRegimens(customRegimenDtos);
+  }
+
+  public void setCustomRegimen(SiglusRequisitionDto siglusRequisitionDto) {
+    setCustomRegimen(siglusRequisitionDto, false);
+  }
+
+  public void setCustomRegimenFalse(SiglusRequisitionDto siglusRequisitionDto) {
+    setCustomRegimen(siglusRequisitionDto, true);
+  }
+
+  private RegimenDto setCustomFalse(Regimen regimen, boolean needSetCustomFalse) {
+    RegimenDto regimenDto = RegimenDto.from(regimen);
+    if (needSetCustomFalse) {
+      regimenDto.setIsCustom(false);
+    }
+    return regimenDto;
   }
 
   private List<RegimenLineItem> getLineItemToRemove(

@@ -39,8 +39,8 @@ public class RegimenLineDto {
   // column: value
   private Map<String, RegimenColumnDto> columns;
 
-  public static List<RegimenLineDto> from(List<RegimenLineItem> lineItems,
-      Map<UUID, RegimenDto> regimenDtoMap) {
+  private static List<RegimenLineDto> from(List<RegimenLineItem> lineItems,
+      Map<UUID, RegimenDto> regimenDtoMap, boolean needSetCustomFalse) {
     List<RegimenLineDto> regimenLineDtos = newArrayList();
 
     Map<UUID, List<RegimenLineItem>> groupByRegimen =
@@ -54,8 +54,11 @@ public class RegimenLineDto {
 
       RegimenLineDto lineDto = new RegimenLineDto();
       lineDto.setColumns(columnToRegimenColumnMap);
-      lineDto.setRegimen(regimenDtoMap.get(regimenId));
-
+      RegimenDto regimenDto = regimenDtoMap.get(regimenId);
+      if (needSetCustomFalse) {
+        regimenDto.setIsCustom(false);
+      }
+      lineDto.setRegimen(regimenDto);
       regimenLineDtos.add(lineDto);
     });
 
@@ -74,6 +77,16 @@ public class RegimenLineDto {
     }
 
     return regimenLineDtos;
+  }
+
+  public static List<RegimenLineDto> from(List<RegimenLineItem> lineItems,
+      Map<UUID, RegimenDto> regimenDtoMap) {
+    return from(lineItems, regimenDtoMap, false);
+  }
+
+  public static List<RegimenLineDto> fromCustomFalse(List<RegimenLineItem> lineItems,
+      Map<UUID, RegimenDto> regimenDtoMap) {
+    return from(lineItems, regimenDtoMap, true);
   }
 
   private static Map<String, RegimenColumnDto> getColumnToRegimenColumnMap(
