@@ -15,7 +15,6 @@
 
 package org.siglus.siglusapi.localmachine.repository;
 
-import java.util.List;
 import java.util.UUID;
 import org.siglus.siglusapi.localmachine.domain.ErrorRecord;
 import org.springframework.data.jpa.repository.JpaRepository;

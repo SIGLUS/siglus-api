@@ -16,7 +16,6 @@
 package org.siglus.siglusapi.localmachine.webapi;
 
 import java.time.ZonedDateTime;
-import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
