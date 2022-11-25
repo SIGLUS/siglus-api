@@ -36,6 +36,7 @@ import org.siglus.siglusapi.localmachine.cdc.TableChangeEvent;
 import org.siglus.siglusapi.localmachine.cdc.TableChangeEvent.RowChangeEvent;
 import org.siglus.siglusapi.repository.FacilityExtensionRepository;
 import org.siglus.siglusapi.service.SiglusAdministrationsService;
+import org.siglus.siglusapi.service.SiglusCacheService;
 
 @RunWith(MockitoJUnitRunner.class)
 @SuppressWarnings({"PMD.UnusedPrivateField"})
@@ -52,6 +53,8 @@ public class OnlineWebMasterDataEventReplayerTest {
   private FacilityExtensionRepository facilityExtensionRepository;
   @Mock
   private SiglusAdministrationsService administrationsService;
+  @Mock
+  private SiglusCacheService siglusCacheService;
 
   private final UUID facilityId = UUID.randomUUID();
   private final String tableNameFacilityExtension = "facility_extension";
@@ -61,7 +64,7 @@ public class OnlineWebMasterDataEventReplayerTest {
   @Test
   public void shouldReplaySuccessAndResetDraftAndLocationWhenReplayGivenLocationManagementStatusChange() {
     // given
-    MasterDataTableChangeEvent event = buildMasterDataTableChangeEvent();
+    MasterDataTableChangeEvent event = buildFacilityExtensionMasterDataEvent();
     when(machine.getLocalFacilityId()).thenReturn(facilityId);
     when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(null);
 
@@ -78,7 +81,7 @@ public class OnlineWebMasterDataEventReplayerTest {
   @Test
   public void shouldReplaySuccessAndDoNotResetDraftAndLocationWhenReplayGivenLocationManagementStatusDoNotChange() {
     // given
-    MasterDataTableChangeEvent event = buildMasterDataTableChangeEvent();
+    MasterDataTableChangeEvent event = buildFacilityExtensionMasterDataEvent();
     when(machine.getLocalFacilityId()).thenReturn(facilityId);
     when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(
         FacilityExtension.builder().enableLocationManagement(Boolean.TRUE).build());
@@ -93,12 +96,46 @@ public class OnlineWebMasterDataEventReplayerTest {
     verify(administrationsService, times(0)).assignToVirtualLocation(facilityId, Boolean.FALSE, null);
   }
 
-  private MasterDataTableChangeEvent buildMasterDataTableChangeEvent() {
+  @Test
+  public void shouldClearCacheWhenReplayGivenNeedClearTableEvent() {
+    // given
+    MasterDataTableChangeEvent event = buildFacilityExtensionMasterDataEvent();
+    when(machine.getLocalFacilityId()).thenReturn(facilityId);
+    when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(
+        FacilityExtension.builder().enableLocationManagement(Boolean.TRUE).build());
+
+    // when
+    replayer.replay(event);
+
+    // then
+    verify(siglusCacheService).invalidateCache();
+  }
+
+  @Test
+  public void shouldNotClearCacheWhenReplayGivenNeedClearTableEvent() {
+    // given
+    MasterDataTableChangeEvent event = buildRightAssignmentsMasterDataEvent();
+    when(machine.getLocalFacilityId()).thenReturn(facilityId);
+    when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(
+        FacilityExtension.builder().enableLocationManagement(Boolean.TRUE).build());
+
+    // when
+    replayer.replay(event);
+
+    // then
+    verify(siglusCacheService, times(0)).invalidateCache();
+  }
+
+  private MasterDataTableChangeEvent buildFacilityExtensionMasterDataEvent() {
     MasterDataTableChangeEvent event = new MasterDataTableChangeEvent();
-    event.setTableChangeEvents(
-        Lists.newArrayList(buildRightAssignmentsTableChangeEvent(),
-            buildFacilityExtensionTableChangeEvent(),
-            buildNotCurrentFacilityExtensionTableChangeEvent()));
+    event.setTableChangeEvents(Lists.newArrayList(buildFacilityExtensionTableChangeEvent(),
+        buildNotCurrentFacilityExtensionTableChangeEvent()));
+    return event;
+  }
+
+  private MasterDataTableChangeEvent buildRightAssignmentsMasterDataEvent() {
+    MasterDataTableChangeEvent event = new MasterDataTableChangeEvent();
+    event.setTableChangeEvents(Lists.newArrayList(buildRightAssignmentsTableChangeEvent()));
     return event;
   }
 
