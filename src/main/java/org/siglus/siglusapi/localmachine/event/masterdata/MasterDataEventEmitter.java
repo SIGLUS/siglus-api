@@ -18,8 +18,10 @@ package org.siglus.siglusapi.localmachine.event.masterdata;
 import io.debezium.data.Envelope.Operation;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import jersey.repackaged.com.google.common.collect.Sets;
 import lombok.RequiredArgsConstructor;
 import org.openlmis.referencedata.domain.User;
 import org.openlmis.referencedata.repository.UserRepository;
@@ -42,6 +44,15 @@ public class MasterDataEventEmitter implements CdcListener {
   private static final String USER_ID = "userid";
   private static final String REFERENCE_DATA = "referencedata";
   private static final String RIGHT_ASSIGNMENTS = "right_assignments";
+  public static final Set<String> doNotClearCacheTableName = Sets.newHashSet("auth.auth_users",
+      "notification.user_contact_details",
+      "referencedata.roles",
+      "referencedata.rights",
+      "referencedata.role_rights",
+      "referencedata.users",
+      "referencedata.role_assignments",
+      "referencedata.right_assignments"
+  );
 
   @Override
   public String[] acceptedTables() {
@@ -81,7 +92,6 @@ public class MasterDataEventEmitter implements CdcListener {
         "referencedata.role_rights",
         "referencedata.users",
         "referencedata.role_assignments",
-        // TODO: 2022/10/21 remove "referencedata.right_assignments" temporarily
         "referencedata.right_assignments",
         "referencedata.system_notifications",
         "report.jasper_templates",

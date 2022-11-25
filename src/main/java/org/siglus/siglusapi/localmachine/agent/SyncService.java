@@ -109,11 +109,7 @@ public class SyncService {
     List<Event> masterDataEvents = getMasterDataEvents();
     log.info("pull master data, got {}", masterDataEvents.size());
     eventImporter.importMasterData(masterDataEvents);
-    boolean hasNewMasterData = CollectionUtils.isNotEmpty(masterDataEvents);
-    if (hasNewMasterData) {
-      siglusCacheService.invalidateCache();
-    }
-    return hasNewMasterData;
+    return CollectionUtils.isNotEmpty(masterDataEvents);
   }
 
   private List<Event> getMasterDataEvents() {
