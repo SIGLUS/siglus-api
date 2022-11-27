@@ -13,32 +13,11 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.domain;
+package org.siglus.siglusapi.repository;
 
-import java.time.LocalDate;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import java.util.List;
+import org.siglus.siglusapi.domain.TracerDrugPersistentData;
 
-@Data
-@Builder
-@AllArgsConstructor
-@NoArgsConstructor
-@Entity
-@Table(name = "tracer_drug_persistent_data", schema = "dashboard")
-public class TracerDrugPersistentData {
-
-  @Id
-  @Column(name = "id", nullable = false)
-  private Long id;
-  private String facilityCode;
-  private String productCode;
-  private LocalDate computationTime;
-  private int stockOnHand;
-  private Double cmm;
+public interface TracerDrugRepositoryCustom {
+  void batchInsertOrUpdate(List<TracerDrugPersistentData> tracerDrugPersistentData);
 }

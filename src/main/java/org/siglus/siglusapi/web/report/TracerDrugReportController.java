@@ -26,7 +26,6 @@ import java.io.IOException;
 import java.net.URLEncoder;
 import java.text.SimpleDateFormat;
 import java.util.List;
-import java.util.UUID;
 import javax.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.siglus.siglusapi.dto.TracerDrugExportDto;
@@ -64,10 +63,10 @@ public class TracerDrugReportController {
 
   @PostMapping("/refreshByFacility")
   @Guarded
-  public void refreshByFacility(@RequestBody List<UUID> facilityIds,
+  public void refreshByFacility(@RequestBody List<String> facilityCodes,
       @RequestParam String startDate,
       @RequestParam String endDate) {
-    tracerDrugReportService.refreshTracerDrugPersistentDataByFacility(facilityIds, startDate, endDate);
+    tracerDrugReportService.refreshTracerDrugPersistentDataByFacility(facilityCodes, startDate, endDate);
   }
 
   @GetMapping("/exportFilter")

@@ -15,7 +15,9 @@
 
 package org.siglus.siglusapi.service.scheduledtask;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.siglus.siglusapi.constant.FieldConstants.ALL_GEOGRAPHIC_ZONE;
@@ -41,14 +43,19 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.internal.verification.VerificationModeFactory;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.siglus.siglusapi.domain.HfCmm;
+import org.siglus.siglusapi.domain.TracerDrugPersistentData;
 import org.siglus.siglusapi.dto.AssociatedGeographicZoneDto;
 import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.RequisitionGeographicZonesDto;
@@ -57,6 +64,7 @@ import org.siglus.siglusapi.dto.TracerDrugExcelDto;
 import org.siglus.siglusapi.dto.TracerDrugExportDto;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.repository.TracerDrugRepository;
+import org.siglus.siglusapi.repository.dto.ProductLotSohDto;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -66,17 +74,12 @@ public class TracerDrugReportServiceTest {
 
   @Mock
   private TracerDrugRepository tracerDrugRepository;
-
   @InjectMocks
   private TracerDrugReportService tracerDrugReportService;
-
   @Mock
   private SiglusFacilityReferenceDataService siglusFacilityReferenceDataService;
-
   @Mock
   private SiglusAuthenticationHelper authenticationHelper;
-
-
 
   private final UUID facilityId = UUID.randomUUID();
   private final String dateFormat = "yyyy-MM-dd";
@@ -177,6 +180,84 @@ public class TracerDrugReportServiceTest {
         requisitionGeographicZonesDto);
   }
 
+  @Test
+  public void canRefreshTracerDrugReportWhenRefreshTracerDrugPersistentDataByFacilities() {
+    // given
+    String hf001 = "HF001";
+    List<String> facilityCodes = Collections.singletonList(hf001);
+    String endDate = "2022-11-22";
+    String startDate = "2022-11-01";
+    String product1 = "product1";
+    HfCmm lastCmmTillStartDate =
+        HfCmm.builder()
+            .facilityCode(hf001)
+            .productCode(product1)
+            .periodEnd(LocalDate.parse(startDate).minusDays(1))
+            .cmm(null)
+            .build();
+    HfCmm cmm1 =
+        HfCmm.builder()
+            .facilityCode(hf001)
+            .productCode(product1)
+            .periodEnd(LocalDate.parse("2022-11-02"))
+            .cmm(11.02)
+            .build();
+    HfCmm cmm2 =
+        HfCmm.builder()
+            .facilityCode(hf001)
+            .productCode(product1)
+            .periodEnd(LocalDate.parse("2022-11-17"))
+            .cmm(11.17)
+            .build();
+    given(tracerDrugRepository.getLastTracerDrugCmmTillDate(startDate, facilityCodes))
+        .willReturn(Collections.singletonList(lastCmmTillStartDate));
+    ProductLotSohDto lastSohTillStartDate =
+        ProductLotSohDto.builder()
+            .productCode(product1)
+            .facilityCode(hf001)
+            .lotId(null)
+            .occurredDate(LocalDate.parse(startDate).minusDays(1))
+            .stockOnHand(1100)
+            .build();
+    ProductLotSohDto soh1 =
+        ProductLotSohDto.builder()
+            .productCode(product1)
+            .facilityCode(hf001)
+            .lotId(null)
+            .occurredDate(LocalDate.parse("2022-11-03"))
+            .stockOnHand(1103)
+            .build();
+    ProductLotSohDto soh2 =
+        ProductLotSohDto.builder()
+            .productCode(product1)
+            .facilityCode(hf001)
+            .lotId(null)
+            .occurredDate(LocalDate.parse("2022-11-16"))
+            .stockOnHand(1116)
+            .build();
+    given(tracerDrugRepository.getLastTracerDrugSohTillDate(startDate, facilityCodes))
+        .willReturn(Collections.singletonList(lastSohTillStartDate));
+    given(tracerDrugRepository.getTracerDrugCmm(startDate, endDate, facilityCodes))
+        .willReturn(Arrays.asList(cmm2, cmm1));
+    given(tracerDrugRepository.getTracerDrugSoh(startDate, endDate, facilityCodes))
+        .willReturn(Arrays.asList(soh1, soh2));
+    // when
+    tracerDrugReportService.refreshTracerDrugPersistentDataByFacilities(
+        startDate, endDate, facilityCodes);
+    // then
+    ArgumentCaptor<List> persistDataCaptor = ArgumentCaptor.forClass(List.class);
+    verify(tracerDrugRepository, VerificationModeFactory.atLeastOnce())
+        .batchInsertOrUpdate(persistDataCaptor.capture());
+    List<TracerDrugPersistentData> captured = new LinkedList<>();
+    for (Object it : persistDataCaptor.getValue()) {
+      captured.add((TracerDrugPersistentData) it);
+    }
+    assertThat(captured.stream().map(formatPersistentData()))
+        .containsExactlyInAnyOrder(
+            "HF001:product1:2022-11-07+11.02+1103",
+            "HF001:product1:2022-11-14+11.02+1103",
+            "HF001:product1:2022-11-21+11.17+1116");
+  }
 
   @Test
   public void shouldGetALlGeographicZonesWhenFacilityLevelIsAdmin() {
@@ -325,7 +406,7 @@ public class TracerDrugReportServiceTest {
   }
 
   @Test
-  public void shouldGetExcelHeadColumnsByTracerDrugList() throws ParseException {
+  public void shouldGetExcelHeadColumnsByTracerDrugList() {
     // given
     List<List<String>> expectedHeadColumns = new LinkedList<>();
     expectedHeadColumns.add(Collections.singletonList(DRUG_CODE_PORTUGUESE));
@@ -346,37 +427,15 @@ public class TracerDrugReportServiceTest {
     assertEquals(expectedHeadColumns, headRow);
   }
 
-  @Test
-  public void shouldCallInsertDataWithinSpecifiedTime() {
-    // given
-    when(tracerDrugRepository.insertDataWithinSpecifiedTime(startDate, endDate)).thenReturn(1);
-    // when
-    tracerDrugReportService.refreshTracerDrugPersistentData(startDate, endDate);
-    // then
-    verify(tracerDrugRepository).insertDataWithinSpecifiedTime(startDate, endDate);
-  }
-
-  @Test
-  public void shouldCallInsertDataWithinSpecifiedTimeWithConfiguredStartDate() {
-    // given
-    when(tracerDrugRepository.insertDataWithinSpecifiedTime(startDate, endDate)).thenReturn(1);
-    ReflectionTestUtils.setField(tracerDrugReportService, "tracerDrugInitializeDate", "2021-08-01");
-    // when
-    tracerDrugReportService.initializeTracerDrugPersistentData();
-    // then
-    verify(tracerDrugRepository).insertDataWithinSpecifiedTime("2021-08-01", LocalDate.now().toString());
-  }
-
-  @Test
-  public void shouldCallInsertDataWithinSpecifiedTimeByFacilityIds() {
-    // given
-    List<UUID> facilityIds = Collections.singletonList(facilityId);
-    when(tracerDrugRepository.insertDataWithinSpecifiedTimeByFacilityIds(startDate, endDate, facilityIds))
-        .thenReturn(1);
-    // when
-    tracerDrugReportService.refreshTracerDrugPersistentDataByFacility(facilityIds, startDate, endDate);
-    // then
-    verify(tracerDrugRepository).insertDataWithinSpecifiedTimeByFacilityIds(startDate, endDate, facilityIds);
+  private Function<TracerDrugPersistentData, String> formatPersistentData() {
+    return it ->
+        String.format(
+            "%s:%s:%s+%s+%s",
+            it.getFacilityCode(),
+            it.getProductCode(),
+            it.getComputationTime(),
+            it.getCmm(),
+            it.getStockOnHand());
   }
 
 }

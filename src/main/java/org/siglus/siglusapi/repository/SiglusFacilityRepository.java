@@ -59,4 +59,9 @@ public interface SiglusFacilityRepository extends JpaRepository<Facility, UUID>,
       + "where ra.roleid = :roleId limit 1;", nativeQuery = true)
   String findAdminUserIdByAdminRoleId(@Param("roleId") UUID roleId);
 
+  @Query(
+      value =
+          "select distinct code from referencedata.facilities where active=true and enabled=true",
+      nativeQuery = true)
+  List<String> findAllFacilityCodes();
 }

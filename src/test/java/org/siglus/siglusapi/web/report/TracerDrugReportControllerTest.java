@@ -22,7 +22,6 @@ import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.util.Collections;
-import java.util.UUID;
 import javax.servlet.http.HttpServletResponse;
 import junit.framework.TestCase;
 import org.junit.Test;
@@ -44,7 +43,6 @@ public class TracerDrugReportControllerTest extends TestCase {
 
   private final String startDate = "2022-01-01";
   private final String endDate = "2023-01-01";
-  private final UUID facilityId = UUID.randomUUID();
 
   @Test
   public void shouldCallServiceWhenGetTracerDrugExportDto() {
@@ -79,14 +77,15 @@ public class TracerDrugReportControllerTest extends TestCase {
   @Test
   public void shouldCallServiceWhenGetTracerDrugExcel() {
     // given
+    String facilityCode = "HF001";
     doNothing()
         .when(tracerDrugReportService)
-        .refreshTracerDrugPersistentDataByFacility(Collections.singletonList(facilityId), startDate, endDate);
+        .refreshTracerDrugPersistentDataByFacility(Collections.singletonList(facilityCode), startDate, endDate);
     // when
-    tracerDrugReportController.refreshByFacility(Collections.singletonList(facilityId), startDate, endDate);
+    tracerDrugReportController.refreshByFacility(Collections.singletonList(facilityCode), startDate, endDate);
     // then
     verify(tracerDrugReportService)
-        .refreshTracerDrugPersistentDataByFacility(Collections.singletonList(facilityId), startDate, endDate);
+        .refreshTracerDrugPersistentDataByFacility(Collections.singletonList(facilityCode), startDate, endDate);
   }
 
   @Test

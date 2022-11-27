@@ -13,32 +13,24 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.domain;
+package org.siglus.siglusapi.util;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.LocalDate;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import org.junit.Test;
 
-@Data
-@Builder
-@AllArgsConstructor
-@NoArgsConstructor
-@Entity
-@Table(name = "tracer_drug_persistent_data", schema = "dashboard")
-public class TracerDrugPersistentData {
+public class SiglusDateHelperTest {
+  @Test
+  public void shouldReturnTheSameDayWhenGetContiguousMondayGivenDateIsMonday() {
+    LocalDate monday = LocalDate.of(2022, 11, 21);
+    assertThat(SiglusDateHelper.forwardToMonday(monday)).isEqualTo(monday);
+  }
 
-  @Id
-  @Column(name = "id", nullable = false)
-  private Long id;
-  private String facilityCode;
-  private String productCode;
-  private LocalDate computationTime;
-  private int stockOnHand;
-  private Double cmm;
+  @Test
+  public void shouldReturnTheMondayOfNextWeekWhenGetContiguousMondayGivenDateIsNotMonday() {
+    LocalDate nonMonday = LocalDate.of(2022, 11, 22);
+    LocalDate nextMonday = LocalDate.of(2022, 11, 28);
+    assertThat(SiglusDateHelper.forwardToMonday(nonMonday)).isEqualTo(nextMonday);
+  }
 }
