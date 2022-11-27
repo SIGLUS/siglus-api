@@ -36,10 +36,12 @@ import static org.mockito.Matchers.anyVararg;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.openlmis.requisition.domain.requisition.RequisitionStatus.APPROVED;
 import static org.openlmis.requisition.domain.requisition.RequisitionStatus.AUTHORIZED;
+import static org.openlmis.requisition.domain.requisition.RequisitionStatus.INITIATED;
 import static org.openlmis.requisition.domain.requisition.RequisitionStatus.IN_APPROVAL;
 import static org.openlmis.requisition.domain.requisition.RequisitionStatus.RELEASED;
 import static org.openlmis.requisition.domain.requisition.RequisitionStatus.RELEASED_WITHOUT_ORDER;
@@ -47,6 +49,8 @@ import static org.openlmis.requisition.domain.requisition.RequisitionStatus.SUBM
 import static org.openlmis.requisition.i18n.MessageKeys.ERROR_NO_FOLLOWING_PERMISSION;
 import static org.openlmis.requisition.service.PermissionService.REQUISITION_AUTHORIZE;
 import static org.openlmis.requisition.service.PermissionService.REQUISITION_CREATE;
+import static org.siglus.siglusapi.constant.ProgramConstants.RAPIDTEST_PROGRAM_CODE;
+import static org.siglus.siglusapi.constant.ProgramConstants.TARV_PROGRAM_CODE;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -62,6 +66,7 @@ import java.util.Set;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -75,7 +80,11 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.fulfillment.domain.Order;
 import org.openlmis.fulfillment.domain.OrderLineItem;
 import org.openlmis.fulfillment.service.OrderService;
+import org.openlmis.referencedata.domain.Code;
+import org.openlmis.referencedata.domain.Orderable;
 import org.openlmis.referencedata.domain.ProcessingPeriod;
+import org.openlmis.referencedata.domain.Program;
+import org.openlmis.referencedata.repository.ProgramRepository;
 import org.openlmis.requisition.domain.AvailableRequisitionColumnOption;
 import org.openlmis.requisition.domain.RequisitionTemplate;
 import org.openlmis.requisition.domain.SourceType;
@@ -142,6 +151,7 @@ import org.siglus.common.repository.StockManagementRepository;
 import org.siglus.common.util.SimulateAuthenticationHelper;
 import org.siglus.siglusapi.domain.FacilityExtension;
 import org.siglus.siglusapi.domain.KitUsageLineItemDraft;
+import org.siglus.siglusapi.domain.RegimenOrderable;
 import org.siglus.siglusapi.domain.RequisitionDraft;
 import org.siglus.siglusapi.domain.RequisitionExtension;
 import org.siglus.siglusapi.domain.RequisitionLineItemDraft;
@@ -156,10 +166,13 @@ import org.siglus.siglusapi.dto.SimpleRequisitionDto;
 import org.siglus.siglusapi.i18n.MessageService;
 import org.siglus.siglusapi.repository.FacilityExtensionRepository;
 import org.siglus.siglusapi.repository.NotSubmittedMonthlyRequisitionsRepository;
+import org.siglus.siglusapi.repository.OrderableRepository;
 import org.siglus.siglusapi.repository.ProcessingPeriodRepository;
+import org.siglus.siglusapi.repository.RegimenOrderableRepository;
 import org.siglus.siglusapi.repository.RequisitionDraftRepository;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionLineItemExtensionRepository;
+import org.siglus.siglusapi.repository.RequisitionLineItemRepository;
 import org.siglus.siglusapi.repository.RequisitionNativeSqlRepository;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
 import org.siglus.siglusapi.testutils.IdealStockAmountDtoDataBuilder;
@@ -330,6 +343,15 @@ public class SiglusRequisitionServiceTest {
   @Mock
   private RequisitionNativeSqlRepository requisitionNativeSqlRepository;
 
+  //  private final UUID programId = UUID.randomUUID();
+  private final UUID programId = UUID.fromString("10845cb9-d365-4aaa-badd-b4fa39c6a26a");
+  //  private final UUID orderableId = UUID.randomUUID();
+  private final UUID orderableId = UUID.fromString("c880689e-bd21-4c78-a0a9-5aa6137378c1");
+  @Mock
+  private ProgramRepository programRepository;
+  @Mock
+  private RegimenOrderableRepository regimenOrderableRepository;
+
   private final UUID facilityId = UUID.randomUUID();
 
   private final UUID facilityId2 = UUID.randomUUID();
@@ -339,10 +361,10 @@ public class SiglusRequisitionServiceTest {
   private final UUID userFacilityId = UUID.randomUUID();
 
   private final UUID userId = UUID.randomUUID();
-
-  private final UUID programId = UUID.randomUUID();
-
-  private final UUID orderableId = UUID.randomUUID();
+  @Mock
+  private OrderableRepository orderableRepository;
+  @Mock
+  private RequisitionLineItemRepository requisitionLineItemRepository;
 
   private final UUID orderableId2 = UUID.randomUUID();
 
@@ -743,6 +765,15 @@ public class SiglusRequisitionServiceTest {
     HttpServletResponse httpServletResponse = new MockHttpServletResponse();
     when(requisitionV2Controller.updateRequisition(requisitionId, siglusRequisitionDto,
         httpServletRequest, httpServletResponse)).thenReturn(requisitionV2Dto);
+
+    Program program = new Program(programId);
+    program.setCode(new Code("T"));
+    when(programRepository.findAll()).thenReturn(Lists.newArrayList(program));
+    RegimenOrderable regimenOrderable = mockRegimenOrderable();
+    when(regimenOrderableRepository.findByMappingKeyIn(newHashSet("1"))).thenReturn(newHashSet(regimenOrderable));
+    Orderable orderable = new Orderable();
+    when(orderableRepository.findAllByIds(newHashSet(orderableId))).thenReturn(newArrayList(orderable));
+
     SiglusRequisitionDto updatedDto = new SiglusRequisitionDto();
     BeanUtils.copyProperties(requisitionV2Dto, updatedDto);
     RequisitionLineItemExtension requisitionLineItemExtension = RequisitionLineItemExtension
@@ -750,6 +781,7 @@ public class SiglusRequisitionServiceTest {
         .requisitionLineItemId(lineItemV2Dto.getId())
         .authorizedQuantity(10)
         .build();
+
     when(lineItemExtensionRepository.findLineItems(singletonList(lineItemV2Dto.getId())))
         .thenReturn(singletonList(requisitionLineItemExtension));
     when(lineItemExtensionRepository.save(singletonList(requisitionLineItemExtension)))
@@ -1138,6 +1170,14 @@ public class SiglusRequisitionServiceTest {
     when(draftRepository.save(any(RequisitionDraft.class))).thenReturn(draft);
     when(regimenDataProcessor.getRegimenDtoMap()).thenReturn(mockRegimenMap());
 
+    Program program = new Program(programId);
+    program.setCode(new Code("T"));
+    when(programRepository.findAll()).thenReturn(Lists.newArrayList(program));
+    RegimenOrderable regimenOrderable = mockRegimenOrderable();
+    when(regimenOrderableRepository.findByMappingKeyIn(newHashSet("1"))).thenReturn(newHashSet(regimenOrderable));
+    Orderable orderable = new Orderable();
+    when(orderableRepository.findAllByIds(newHashSet(orderableId))).thenReturn(newArrayList(orderable));
+
     // when
     SiglusRequisitionDto requisitionDto = siglusRequisitionService.updateRequisition(
         siglusRequisitionDto.getId(), siglusRequisitionDto, new MockHttpServletRequest(),
@@ -1250,6 +1290,132 @@ public class SiglusRequisitionServiceTest {
 
     // then
     assertEquals(0, response.size());
+  }
+
+  @Test
+  public void shouldGetRegimenOrderablesFromOrderable() {
+    // given
+    RegimenOrderable regimenOrderable = mockRegimenOrderable();
+    when(regimenOrderableRepository.findByMappingKeyIn(newHashSet("1"))).thenReturn(newHashSet(regimenOrderable));
+    Map<String, List<RegimenOrderable>> orderableCodeToRegimenOrderables = new HashMap<>();
+    orderableCodeToRegimenOrderables.put(regimenOrderable.getOrderableCode(), newArrayList(regimenOrderable));
+    RequisitionLineItemV2Dto lineItemV2Dto = new RequisitionLineItemV2Dto();
+    OrderableDto productDto = new OrderableDto();
+    productDto.setId(UUID.randomUUID());
+    lineItemV2Dto.setId(requisitionLineItemId);
+    lineItemV2Dto.setOrderable(productDto);
+    lineItemV2Dto.setAuthorizedQuantity(10);
+    Map<UUID, String> orderableIdToCode = new HashMap<>();
+    // when
+    List<RegimenOrderable> regimenOrderablesFromOrderable = siglusRequisitionService.getRegimenOrderablesFromOrderable(
+        lineItemV2Dto, orderableCodeToRegimenOrderables, orderableIdToCode);
+    // then
+    Assert.assertNull(regimenOrderablesFromOrderable);
+  }
+
+  @Test
+  public void shouldGetEstimatedOrRequestedQuantity() {
+    // given
+    RequisitionLineItemV2Dto lineItemV2Dto = new RequisitionLineItemV2Dto();
+    OrderableDto productDto = new OrderableDto();
+    productDto.setId(orderableId);
+    lineItemV2Dto.setId(requisitionLineItemId);
+    lineItemV2Dto.setOrderable(productDto);
+    lineItemV2Dto.setAuthorizedQuantity(10);
+    RegimenOrderable regimenOrderable = mockRegimenOrderable();
+    when(regimenOrderableRepository.findByMappingKeyIn(newHashSet("1"))).thenReturn(newHashSet(regimenOrderable));
+    Map<String, List<RegimenOrderable>> orderableCodeToRegimenOrderables = new HashMap<>();
+    orderableCodeToRegimenOrderables.put(regimenOrderable.getOrderableCode(), newArrayList(regimenOrderable));
+    Map<UUID, String> orderableIdToCode = new HashMap<>();
+    orderableIdToCode.put(orderableId, "08S30ZY");
+    Map<String, Integer> regimenCodeToPatientNumber = new HashMap<>();
+    // when
+    Integer estimatedOrRequestedQuantity = siglusRequisitionService.getEstimatedOrRequestedQuantity(lineItemV2Dto,
+        orderableCodeToRegimenOrderables, orderableIdToCode, regimenCodeToPatientNumber, 1, 1);
+    // then
+    assertEquals(0, estimatedOrRequestedQuantity.intValue());
+  }
+
+  @Test
+  public void shouldGetEstimatedOrRequestedQuantityV2() {
+    // given
+    RequisitionLineItemV2Dto lineItemV2Dto = new RequisitionLineItemV2Dto();
+    OrderableDto productDto = new OrderableDto();
+    productDto.setId(orderableId);
+    lineItemV2Dto.setId(requisitionLineItemId);
+    lineItemV2Dto.setOrderable(productDto);
+    RegimenOrderable regimenOrderable = new RegimenOrderable();
+    regimenOrderable.setQuantity(1.0);
+    regimenOrderable.setRegimenCode("1alt1");
+    regimenOrderable.setOrderableCode("08S30ZY");
+    when(regimenOrderableRepository.findByMappingKeyIn(newHashSet("1"))).thenReturn(newHashSet(regimenOrderable));
+    Map<String, List<RegimenOrderable>> orderableCodeToRegimenOrderables = new HashMap<>();
+    orderableCodeToRegimenOrderables.put(regimenOrderable.getOrderableCode(), newArrayList(regimenOrderable));
+    Map<UUID, String> orderableIdToCode = new HashMap<>();
+    orderableIdToCode.put(orderableId, "");
+    Map<String, Integer> regimenCodeToPatientNumber = new HashMap<>();
+    regimenCodeToPatientNumber.put("1alt1", 1);
+    // when
+    Integer estimatedOrRequestedQuantity = siglusRequisitionService.getEstimatedOrRequestedQuantity(lineItemV2Dto,
+        orderableCodeToRegimenOrderables, orderableIdToCode, regimenCodeToPatientNumber, 1, 1);
+    // then
+    assertEquals(0, estimatedOrRequestedQuantity.intValue());
+  }
+
+  @Test
+  public void shouldGetOrderableCodeToRegimenOrderables() {
+    // given
+    RegimenOrderable regimenOrderable = new RegimenOrderable();
+    regimenOrderable.setQuantity(1.0);
+    regimenOrderable.setRegimenCode("1alt1");
+    regimenOrderable.setOrderableCode("08S30ZY");
+    Set<RegimenOrderable> regimenOrderables = newHashSet(regimenOrderable);
+    // when
+    Map<String, List<RegimenOrderable>> orderableCodeToRegimenOrderables = siglusRequisitionService.getOrderableCodeToRegimenOrderables(
+        regimenOrderables);
+    // then
+    assertEquals(1, orderableCodeToRegimenOrderables.size());
+  }
+
+  @Test
+  public void shouldCalcEstimatedOrRequestedQuantity() {
+    // given
+    RequisitionLineItemV2Dto lineItemV2Dto = new RequisitionLineItemV2Dto();
+    OrderableDto productDto = new OrderableDto();
+    productDto.setId(orderableId);
+    lineItemV2Dto.setId(requisitionLineItemId);
+    lineItemV2Dto.setOrderable(productDto);
+    RequisitionV2Dto requisitionV2Dto = new RequisitionV2Dto();
+    siglusRequisitionDto = convert(requisitionV2Dto);
+    siglusRequisitionDto.setRequisitionLineItems(newArrayList(lineItemV2Dto));
+    Program program = new Program(programId);
+    program.setCode(new Code("T"));
+    when(programRepository.findAll()).thenReturn(Lists.newArrayList(program));
+    siglusRequisitionDto.setProgram(new ObjectReferenceDto(programId));
+    // when
+    siglusRequisitionService.calcEstimatedOrRequestedQuantity(siglusRequisitionDto, RAPIDTEST_PROGRAM_CODE);
+
+    // then
+    assertEquals(TARV_PROGRAM_CODE, program.getCode().toString());
+    verify(programRepository).findAll();
+  }
+
+  @Test
+  public void shouldInitiateAndSaveRequisitionLineItems() {
+    // given
+    RequisitionV2Dto requisitionV2Dto = new RequisitionV2Dto();
+    siglusRequisitionDto = convert(requisitionV2Dto);
+    siglusRequisitionDto.setStatus(INITIATED);
+    Program program = new Program(programId);
+    program.setCode(new Code("T"));
+    when(programRepository.findAll()).thenReturn(Lists.newArrayList(program));
+    siglusRequisitionDto.setProgram(new ObjectReferenceDto(programId));
+    when(siglusUsageReportService.isSupplyFacilityType(facilityId)).thenReturn(true);
+
+    // when
+    siglusRequisitionService.initiateAndSaveRequisitionLineItems(siglusRequisitionDto, facilityId);
+    // then
+    verify(requisitionLineItemRepository, times(2)).findAllById(any());
   }
 
   private SiglusRequisitionDto convert(RequisitionV2Dto requisitionV2Dto) {
@@ -1473,6 +1639,13 @@ public class SiglusRequisitionServiceTest {
     return Lists.newArrayList(simpleRequisitionDto);
   }
 
+  private RegimenOrderable mockRegimenOrderable() {
+    RegimenOrderable regimenOrderable = new RegimenOrderable();
+    regimenOrderable.setQuantity(1.0);
+    regimenOrderable.setRegimenCode("1alt2");
+    regimenOrderable.setOrderableCode("08S40");
+    return regimenOrderable;
+  }
 
   private UserDto mockUserDto(UUID facilityId) {
     UserDto userDto = new UserDto();

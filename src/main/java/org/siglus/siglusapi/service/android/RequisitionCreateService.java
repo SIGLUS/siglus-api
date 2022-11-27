@@ -63,6 +63,7 @@ import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPa
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.RegimenLineItems.COLUMN_NAME_COMMUNITY;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.RegimenLineItems.COLUMN_NAME_PATIENT;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.TestConsumptionLineItems.SERVICE_APES;
+import static org.siglus.siglusapi.service.SiglusRequisitionService.ESTIMATED_QUANTITY;
 import static org.springframework.util.CollectionUtils.isEmpty;
 
 import java.time.YearMonth;
@@ -105,6 +106,7 @@ import org.openlmis.requisition.dto.BasicRequisitionDto;
 import org.openlmis.requisition.dto.BasicRequisitionTemplateDto;
 import org.openlmis.requisition.dto.MinimalFacilityDto;
 import org.openlmis.requisition.dto.ObjectReferenceDto;
+import org.openlmis.requisition.dto.RequisitionLineItemV2Dto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.dto.SupervisoryNodeDto;
 import org.openlmis.requisition.dto.VersionObjectReferenceDto;
@@ -176,6 +178,7 @@ import org.siglus.siglusapi.service.SiglusOrderableService;
 import org.siglus.siglusapi.service.SiglusProgramAdditionalOrderableService;
 import org.siglus.siglusapi.service.SiglusProgramService;
 import org.siglus.siglusapi.service.SiglusRequisitionExtensionService;
+import org.siglus.siglusapi.service.SiglusRequisitionService;
 import org.siglus.siglusapi.service.SiglusUsageReportService;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
@@ -211,6 +214,7 @@ public class RequisitionCreateService {
   private final SiglusFacilityReferenceDataService siglusFacilityReferenceDataService;
   private final RequisitionTemplateRepository requisitionTemplateRepository;
   private final SiglusNotificationService siglusNotificationService;
+  private final SiglusRequisitionService siglusRequisitionService;
 
   @Transactional
   @Validated(PerformanceSequence.class)
@@ -259,8 +263,11 @@ public class RequisitionCreateService {
     buildRequisitionLineItems(newRequisition, request);
     Requisition requisition = requisitionRepository.saveAndFlush(newRequisition);
     buildRequisitionExtension(requisition, request);
-    buildRequisitionLineItemsExtension(requisition, request);
-    buildRequisitionUsageSections(requisition, request, programId, programCode);
+
+    List<RequisitionLineItemExtension> extensions = buildRequisitionLineItemsExtension(requisition,
+        request);
+    buildRequisitionUsageSections(requisition, request, programId, programCode, extensions);
+
     return requisition;
   }
 
@@ -400,10 +407,11 @@ public class RequisitionCreateService {
         });
   }
 
-  private void buildRequisitionLineItemsExtension(Requisition requisition,
+  private List<RequisitionLineItemExtension> buildRequisitionLineItemsExtension(Requisition requisition,
       RequisitionCreateRequest requisitionRequest) {
+    List<RequisitionLineItemExtension> extensions = new ArrayList<>();
     if (isEmpty(requisition.getRequisitionLineItems())) {
-      return;
+      return extensions;
     }
     log.info("requisition line size: {}", requisition.getRequisitionLineItems().size());
     log.info("requisition request product count: {}", requisitionRequest.getProducts().size());
@@ -420,8 +428,10 @@ public class RequisitionCreateService {
       extension.setAuthorizedQuantity(requisitionProduct.getAuthorizedQuantity());
       extension.setExpirationDate(requisitionProduct.getExpirationDate());
       requisitionLineItemExtensionRepository.save(extension);
+      extensions.add(extension);
     });
     requisitionLineItemExtensionRepository.flush();
+    return extensions;
   }
 
   private List<OrderableDto> getAllProducts() {
@@ -501,7 +511,7 @@ public class RequisitionCreateService {
   }
 
   private void buildRequisitionUsageSections(Requisition requisition, RequisitionCreateRequest request,
-      UUID programId, String programCode) {
+      UUID programId, String programCode, List<RequisitionLineItemExtension> extensions) {
     RequisitionV2Dto dto = new RequisitionV2Dto();
     requisition.export(dto);
     BasicRequisitionTemplateDto templateDto = BasicRequisitionTemplateDto.newInstance(requisition.getTemplate());
@@ -510,6 +520,10 @@ public class RequisitionCreateService {
     dto.setFacility(new ObjectReferenceDto(requisition.getFacilityId(), "", FACILITIES));
     dto.setProcessingPeriod(new ObjectReferenceDto(requisition.getProcessingPeriodId(), "", PROCESSING_PERIODS));
     dto.setProgram(new ObjectReferenceDto(requisition.getProgramId(), "", PROGRAMS));
+    List<RequisitionLineItem> requisitionLineItems = requisition.getRequisitionLineItems();
+    List<RequisitionLineItemV2Dto> requisitionLineItemV2Dtos = requisitionLineItems.stream().map(
+        this::requisitionLineItemToRequisitionLineItemV2Dto).collect(Collectors.toList());
+    dto.setRequisitionLineItems(requisitionLineItemV2Dtos);
     buildAvailableProducts(dto, requisition);
     SiglusRequisitionDto requisitionDto = siglusUsageReportService.initiateUsageReport(dto);
     if (VIA_PROGRAM_CODE.equals(programCode)) {
@@ -519,15 +533,31 @@ public class RequisitionCreateService {
       updateRegimenLineItems(requisitionDto, programId, request);
       updateRegimenSummaryLineItems(requisitionDto, request);
       updateMmiaPatientLineItems(requisitionDto, request);
+      siglusRequisitionService.calcEstimatedQuantityForMmia(requisitionDto, extensions, ESTIMATED_QUANTITY);
     } else if (MALARIA_PROGRAM_CODE.equals(programCode)) {
       updateUsageInformationLineItems(requisitionDto, request);
     } else if (RAPIDTEST_PROGRAM_CODE.equals(programCode)) {
       updateTestConsumptionLineItems(requisitionDto, request);
+      siglusRequisitionService.calcEstimatedQuantityForMmit(requisitionDto, extensions, ESTIMATED_QUANTITY);
     } else if (MTB_PROGRAM_CODE.equals(programCode)) {
       updateMmtbPatientLineItems(requisitionDto, request);
       updateAgeGroupLineItems(requisitionDto, request);
+      siglusRequisitionService.calcEstimatedQuantityForMmtb(requisitionDto, extensions, ESTIMATED_QUANTITY);
     }
     siglusUsageReportService.saveUsageReport(requisitionDto, dto);
+    requisitionLineItemExtensionRepository.save(extensions);
+  }
+
+  private RequisitionLineItemV2Dto requisitionLineItemToRequisitionLineItemV2Dto(
+      RequisitionLineItem requisitionLineItem) {
+    RequisitionLineItemV2Dto requisitionLineItemV2Dto = new RequisitionLineItemV2Dto();
+    requisitionLineItemV2Dto.setId(requisitionLineItem.getId());
+    requisitionLineItemV2Dto.setStockOnHand(requisitionLineItem.getStockOnHand());
+    VersionEntityReference versionEntityReference = requisitionLineItem.getOrderable();
+    requisitionLineItemV2Dto.setOrderable(
+        new VersionObjectReferenceDto(versionEntityReference.getId(), "", "",
+            versionEntityReference.getVersionNumber()));
+    return requisitionLineItemV2Dto;
   }
 
   private void updateMmtbPatientLineItems(SiglusRequisitionDto requisitionDto, RequisitionCreateRequest request) {

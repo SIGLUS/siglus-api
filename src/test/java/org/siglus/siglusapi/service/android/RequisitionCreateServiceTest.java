@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.service.android;
 
+import static com.google.common.collect.Lists.newArrayList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -72,6 +73,7 @@ import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.requisition.dto.MetadataDto;
 import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.dto.ProgramOrderableDto;
+import org.openlmis.requisition.dto.RequisitionLineItemV2Dto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.dto.SupervisoryNodeDto;
 import org.openlmis.requisition.errorhandling.ValidationResult;
@@ -116,6 +118,7 @@ import org.siglus.siglusapi.dto.android.request.UsageInformationLineItemRequest;
 import org.siglus.siglusapi.localmachine.event.requisition.andriod.AndroidRequisitionSyncedEvent;
 import org.siglus.siglusapi.localmachine.event.requisition.andriod.AndroidRequisitionSyncedReplayer;
 import org.siglus.siglusapi.repository.ProcessingPeriodRepository;
+import org.siglus.siglusapi.repository.RegimenOrderableRepository;
 import org.siglus.siglusapi.repository.RegimenRepository;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionLineItemExtensionRepository;
@@ -125,6 +128,7 @@ import org.siglus.siglusapi.service.SiglusOrderableService;
 import org.siglus.siglusapi.service.SiglusProgramAdditionalOrderableService;
 import org.siglus.siglusapi.service.SiglusProgramService;
 import org.siglus.siglusapi.service.SiglusRequisitionExtensionService;
+import org.siglus.siglusapi.service.SiglusRequisitionService;
 import org.siglus.siglusapi.service.SiglusUsageReportService;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
@@ -200,6 +204,14 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
 
   @Mock
   private SiglusNotificationService siglusNotificationService;
+
+  @Mock
+  private RegimenOrderableRepository regimenOrderableRepository;
+
+  @Mock
+  private SiglusRequisitionService siglusRequisitionService;
+
+  // private SiglusRequisitionDto siglusRequisitionDto = buildSiglusRequisitionDto();
 
   @Captor
   private ArgumentCaptor<Requisition> requisitionArgumentCaptor;
@@ -593,6 +605,8 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     when(siglusRequisitionExtensionService.buildRequisitionExtension(requisitionId, false, facilityId,
         rapidTestProgramId, endDate)).thenReturn(requisitionExtension);
 
+    when(regimenOrderableRepository.findByExistedMappingKey()).thenReturn(Sets.newHashSet("1"));
+
     // when
     service.createRequisition(parseParam("buildRapidTestRequisitionCreateRequest.json"));
 
@@ -635,6 +649,11 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     when(siglusRequisitionExtensionService.buildRequisitionExtension(requisitionId, false, facilityId,
         mmtbProgramId, endDate)).thenReturn(requisitionExtension);
 
+    SiglusRequisitionDto siglusRequisitionDto2 = buildSiglusRequisitionDto();
+    RequisitionLineItemV2Dto lineItemV2Dto = buildRequisitionLineItemV2Dto();
+    siglusRequisitionDto2.setRequisitionLineItems(singletonList(lineItemV2Dto));
+    siglusRequisitionService.initiateAndSaveRequisitionLineItems(siglusRequisitionDto2, UUID.randomUUID());
+
     // when
     service.createRequisition(parseParam("buildMmtbRequisitionCreateRequest.json"));
 
@@ -643,6 +662,22 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     SiglusRequisitionDto siglusRequisitionDto = siglusRequisitionDtoArgumentCaptor.getValue();
     assertEquals(6, siglusRequisitionDto.getPatientLineItems().size());
     assertEquals(3, siglusRequisitionDto.getAgeGroupLineItems().size());
+  }
+
+  private RequisitionLineItemV2Dto buildRequisitionLineItemV2Dto() {
+    RequisitionLineItemV2Dto lineItemV2Dto = new RequisitionLineItemV2Dto();
+    UUID requisitionLineItemId = UUID.randomUUID();
+    OrderableDto productDto = new OrderableDto();
+    productDto.setId(UUID.randomUUID());
+    lineItemV2Dto.setId(requisitionLineItemId);
+    // lineItemV2Dto.setOrderable(productDto);
+    ApprovedProductDto approvedProductDto = new ApprovedProductDto();
+    approvedProductDto.setId(UUID.randomUUID());
+    lineItemV2Dto.setApprovedProduct(approvedProductDto);
+    lineItemV2Dto.setId(requisitionLineItemId);
+    lineItemV2Dto.setAuthorizedQuantity(10);
+    lineItemV2Dto.setPreviousAdjustedConsumptions(newArrayList());
+    return lineItemV2Dto;
   }
 
   private TestConsumptionOutcomeDto getTestOutcomeDto(String service, String project, String outcome,

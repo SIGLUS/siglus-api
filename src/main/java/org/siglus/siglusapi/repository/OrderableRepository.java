@@ -22,6 +22,7 @@ import static org.siglus.common.repository.RepositoryConstants.WHERE_LATEST_ORDE
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import org.openlmis.referencedata.domain.Orderable;
 import org.openlmis.referencedata.domain.VersionIdentity;
@@ -42,10 +43,10 @@ public interface OrderableRepository extends JpaRepository<Orderable, VersionIde
       + " AND o.identity.id IN :ids"
       + ORDER_BY_PAGEABLE,
       countQuery = "SELECT COUNT(1)"
-      + FROM_ORDERABLES_CLAUSE
-      + WHERE_LATEST_ORDERABLE
-      + " AND o.identity.id IN :ids"
-      + ORDER_BY_PAGEABLE
+          + FROM_ORDERABLES_CLAUSE
+          + WHERE_LATEST_ORDERABLE
+          + " AND o.identity.id IN :ids"
+          + ORDER_BY_PAGEABLE
   )
   Page<Orderable> findAllLatestByIds(@Param("ids") Iterable<UUID> ids, Pageable pageable);
 
@@ -63,4 +64,10 @@ public interface OrderableRepository extends JpaRepository<Orderable, VersionIde
       + " AND o.identity.id IN :ids"
   )
   List<Orderable> findLatestByIds(@Param("ids") Iterable<UUID> ids);
+
+  @Query(value = SELECT_ORDERABLE
+      + FROM_ORDERABLES_CLAUSE
+      + " WHERE o.identity.id IN :ids"
+  )
+  List<Orderable> findAllByIds(@Param("ids") Set<UUID> ids);
 }

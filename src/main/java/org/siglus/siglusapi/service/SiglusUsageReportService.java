@@ -187,7 +187,7 @@ public class SiglusUsageReportService {
         || !isSupplyFacilityType(facilityId);
   }
 
-  private boolean isSupplyFacilityType(UUID facilityId) {
+  public boolean isSupplyFacilityType(UUID facilityId) {
     String facilityTypeCode = facilityReferenceDataService.findOne(facilityId).getType().getCode();
     return Arrays.asList(DPM, AI).contains(facilityTypeCode);
   }
