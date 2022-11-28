@@ -51,7 +51,7 @@ public class TracerDrugReportController {
 
   @PostMapping("/refresh")
   @Guarded
-  public void refresh(String startDate, String endDate) {
+  public void refresh(@RequestParam String startDate, @RequestParam String endDate) {
     tracerDrugReportService.refreshTracerDrugPersistentData(startDate, endDate);
   }
 

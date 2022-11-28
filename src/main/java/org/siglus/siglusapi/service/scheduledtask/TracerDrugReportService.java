@@ -171,8 +171,6 @@ public class TracerDrugReportService {
       List<ProductCmm> cmms,
       LocalDate beginDate,
       LocalDate endDate) {
-    // fixme: add an oldest record as a sentry in case no record before the begindate? confirm with
-    // BA
     productLotSohDtos.sort(Comparator.comparing(ProductLotSohDto::getOccurredDate));
     cmms.sort(Comparator.comparing(ProductCmm::getPeriodEnd));
     final List<TracerDrugPersistentData> tracerDrugPersistentData = new LinkedList<>();
