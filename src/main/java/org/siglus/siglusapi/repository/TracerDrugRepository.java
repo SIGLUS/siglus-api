@@ -17,11 +17,11 @@ package org.siglus.siglusapi.repository;
 
 import java.util.List;
 import java.util.UUID;
-import org.siglus.siglusapi.domain.HfCmm;
 import org.siglus.siglusapi.domain.TracerDrugPersistentData;
 import org.siglus.siglusapi.dto.RequisitionGeographicZonesDto;
 import org.siglus.siglusapi.dto.TracerDrugDto;
 import org.siglus.siglusapi.dto.TracerDrugExcelDto;
+import org.siglus.siglusapi.repository.dto.ProductCmm;
 import org.siglus.siglusapi.repository.dto.ProductLotSohDto;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -41,66 +41,24 @@ public interface TracerDrugRepository
   List<TracerDrugExcelDto> getTracerDrugExcelInfo(
       String startDate, String endDate, String productCode, List<String> facilityCodes);
 
-  @Query(
-      value =
-          "select cmm.* from siglusintegration.hf_cmms cmm "
-              + "    where cmm.facilitycode in :facilityCodes "
-              + "        and cmm.productcode in "
-              + "            (select code from referencedata.orderables "
-              + "                where cast(orderables.extradata as jsonb) @> cast('{\"isTracer\": true}' as jsonb)) "
-              + "        and cmm.periodend between :beginDate and :endDate",
-      nativeQuery = true)
-  List<HfCmm> getTracerDrugCmm(
+  @Query(name = "TracerDrug.getTracerDrugCmm", nativeQuery = true)
+  List<ProductCmm> getTracerDrugCmm(
       @Param("beginDate") String beginDate,
       @Param("endDate") String endDate,
       @Param("facilityCodes") List<String> facilityCodes);
 
-  @Query(
-      value =
-          "select fa.code as facilitycode, od.code as productcode, sc.lotid, soh.stockonhand, soh.occurreddate from "
-              + "stockmanagement.calculated_stocks_on_hand soh join "
-              + "    stockmanagement.stock_cards sc on sc.id = soh.stockcardid join "
-              + "    referencedata.facilities fa on sc.facilityid=fa.id join "
-              + "    referencedata.orderables od on od.id=sc.orderableid "
-              + "    where fa.code in :facilityCodes "
-              + "        and sc.orderableid in "
-              + "            (select id from referencedata.orderables "
-              + "                where cast(orderables.extradata as jsonb) @> cast('{\"isTracer\": true}' as jsonb)) "
-              + "        and soh.occurreddate between :beginDate and :endDate",
-      nativeQuery = true)
+  @Query(name = "TracerDrugReport.getTracerDrugSoh", nativeQuery = true)
   List<ProductLotSohDto> getTracerDrugSoh(
       @Param("beginDate") String beginDate,
       @Param("endDate") String endDate,
       @Param("facilityCodes") List<String> facilityCodes);
 
-  @Query(
-      value =
-          "select * from (select\n"
-              + "    fa.code as facilitycode, od.code as productcode, sc.lotid, stockonhand, occurreddate,\n"
-              + "    row_number() over (partition by stockcardid order by occurreddate desc) from "
-              + "    stockmanagement.calculated_stocks_on_hand csoh\n"
-              + "    join stockmanagement.stock_cards sc on csoh.stockcardid = sc.id\n"
-              + "    join referencedata.orderables od on od.id=sc.orderableid\n"
-              + "    join referencedata.facilities fa on fa.id=sc.facilityid\n"
-              + "    where fa.code in :facilityCodes and "
-              + "       cast(od.extradata as jsonb) @> cast('{\"isTracer\": true}' as jsonb) and "
-              + "       csoh.occurreddate < :endDate)\n"
-              + "    soh where soh.row_number=1;",
-      nativeQuery = true)
+  @Query(name = "TracerDrugReport.getLastTracerDrugSohTillDate", nativeQuery = true)
   List<ProductLotSohDto> getLastTracerDrugSohTillDate(
       @Param("endDate") String endDate,
       @Param("facilityCodes") List<String> facilityCodes);
 
-  @Query(
-      value =
-          "select * from (select cmm.facilitycode, cmm.productcode, cmm.periodend, cmm.cmm,\n"
-              + " row_number() over (partition by cmm.facilitycode, cmm.productcode order by cmm.periodend desc)"
-              + "    from siglusintegration.hf_cmms cmm\n"
-              + "    join referencedata.orderables od on od.code=cmm.productcode\n"
-              + "    where cmm.facilitycode in :facilityCodes\n"
-              + "        and cast(od.extradata as jsonb) @> cast('{\"isTracer\": true}' as jsonb)\n"
-              + "        and cmm.periodend  < :endDate) sub where sub.row_number=1",
-      nativeQuery = true)
-  List<HfCmm> getLastTracerDrugCmmTillDate(
+  @Query(name = "TracerDrug.getLastTracerDrugCmmTillDate", nativeQuery = true)
+  List<ProductCmm> getLastTracerDrugCmmTillDate(
       @Param("endDate") String endDate, @Param("facilityCodes") List<String> facilityCodes);
 }

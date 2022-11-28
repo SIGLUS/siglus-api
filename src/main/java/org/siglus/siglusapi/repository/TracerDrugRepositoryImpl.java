@@ -16,9 +16,11 @@
 package org.siglus.siglusapi.repository;
 
 import java.sql.Date;
+import java.sql.JDBCType;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.collections4.CollectionUtils;
 import org.siglus.siglusapi.domain.TracerDrugPersistentData;
@@ -49,7 +51,11 @@ public class TracerDrugRepositoryImpl implements TracerDrugRepositoryCustom {
             ps.setString(2, record.getProductCode());
             ps.setDate(3, Date.valueOf(record.getComputationTime()));
             ps.setInt(4, record.getStockOnHand());
-            ps.setDouble(5, record.getCmm());
+            if (Objects.isNull(record.getCmm())) {
+              ps.setNull(5, JDBCType.DOUBLE.getVendorTypeNumber());
+            } else {
+              ps.setDouble(5, record.getCmm());
+            }
           }
 
           @Override

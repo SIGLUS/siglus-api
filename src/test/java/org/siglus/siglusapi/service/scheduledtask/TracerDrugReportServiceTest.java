@@ -54,7 +54,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.internal.verification.VerificationModeFactory;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.siglus.siglusapi.domain.HfCmm;
 import org.siglus.siglusapi.domain.TracerDrugPersistentData;
 import org.siglus.siglusapi.dto.AssociatedGeographicZoneDto;
 import org.siglus.siglusapi.dto.FacilityDto;
@@ -64,6 +63,7 @@ import org.siglus.siglusapi.dto.TracerDrugExcelDto;
 import org.siglus.siglusapi.dto.TracerDrugExportDto;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.repository.TracerDrugRepository;
+import org.siglus.siglusapi.repository.dto.ProductCmm;
 import org.siglus.siglusapi.repository.dto.ProductLotSohDto;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
@@ -188,22 +188,22 @@ public class TracerDrugReportServiceTest {
     String endDate = "2022-11-22";
     String startDate = "2022-11-01";
     String product1 = "product1";
-    HfCmm lastCmmTillStartDate =
-        HfCmm.builder()
+    ProductCmm lastCmmTillStartDate =
+        ProductCmm.builder()
             .facilityCode(hf001)
             .productCode(product1)
             .periodEnd(LocalDate.parse(startDate).minusDays(1))
             .cmm(null)
             .build();
-    HfCmm cmm1 =
-        HfCmm.builder()
+    ProductCmm cmm1 =
+        ProductCmm.builder()
             .facilityCode(hf001)
             .productCode(product1)
             .periodEnd(LocalDate.parse("2022-11-02"))
             .cmm(11.02)
             .build();
-    HfCmm cmm2 =
-        HfCmm.builder()
+    ProductCmm cmm2 =
+        ProductCmm.builder()
             .facilityCode(hf001)
             .productCode(product1)
             .periodEnd(LocalDate.parse("2022-11-17"))

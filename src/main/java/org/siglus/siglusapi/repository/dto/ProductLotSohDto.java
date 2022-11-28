@@ -16,18 +16,77 @@
 package org.siglus.siglusapi.repository.dto;
 
 import java.time.LocalDate;
-import java.util.UUID;
+import javax.persistence.ColumnResult;
+import javax.persistence.ConstructorResult;
+import javax.persistence.MappedSuperclass;
+import javax.persistence.NamedNativeQueries;
+import javax.persistence.NamedNativeQuery;
+import javax.persistence.SqlResultSetMapping;
+import javax.persistence.SqlResultSetMappings;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
+@MappedSuperclass
+@SqlResultSetMappings({
+    @SqlResultSetMapping(
+      name = "TracerDrugReport.ProductLotSohDto",
+      classes =
+          @ConstructorResult(
+              targetClass = ProductLotSohDto.class,
+              columns = {
+                @ColumnResult(name = "facilitycode", type = String.class),
+                @ColumnResult(name = "productcode", type = String.class),
+                @ColumnResult(name = "lotid", type = String.class),
+                @ColumnResult(name = "stockonhand", type = Integer.class),
+                @ColumnResult(name = "occurredDate", type = LocalDate.class),
+              })),
+})
+@NamedNativeQueries({
+    @NamedNativeQuery(
+      name = "TracerDrugReport.getTracerDrugSoh",
+      query =
+          "select fa.code as facilitycode,"
+              + " od.code as productcode,"
+              + " cast(sc.lotid as varchar) as lotid,"
+              + " soh.stockonhand,"
+              + " soh.occurreddate from "
+              + "stockmanagement.calculated_stocks_on_hand soh join "
+              + "    stockmanagement.stock_cards sc on sc.id = soh.stockcardid join "
+              + "    referencedata.facilities fa on sc.facilityid=fa.id join "
+              + "    referencedata.orderables od on od.id=sc.orderableid "
+              + "    where fa.code in :facilityCodes "
+              + "        and sc.orderableid in "
+              + "            (select id from referencedata.orderables "
+              + "                where cast(orderables.extradata as jsonb) @> cast('{\"isTracer\": true}' as jsonb)) "
+              + "        and soh.occurreddate between :beginDate and :endDate",
+      resultSetMapping = "TracerDrugReport.ProductLotSohDto"),
+    @NamedNativeQuery(
+      name = "TracerDrugReport.getLastTracerDrugSohTillDate",
+      query =
+          "select * from (select\n"
+              + "    fa.code as facilitycode, od.code as productcode, cast(sc.lotid as varchar), "
+              + "    stockonhand, occurreddate,\n"
+              + "    row_number() over (partition by stockcardid order by occurreddate desc) from "
+              + "    stockmanagement.calculated_stocks_on_hand csoh\n"
+              + "    join stockmanagement.stock_cards sc on csoh.stockcardid = sc.id\n"
+              + "    join referencedata.orderables od on od.id=sc.orderableid\n"
+              + "    join referencedata.facilities fa on fa.id=sc.facilityid\n"
+              + "    where fa.code in :facilityCodes and "
+              + "       cast(od.extradata as jsonb) @> cast('{\"isTracer\": true}' as jsonb) and "
+              + "       csoh.occurreddate < :endDate)\n"
+              + "    soh where soh.row_number=1;",
+      resultSetMapping = "TracerDrugReport.ProductLotSohDto")
+})
 @Data
 @Builder
 @AllArgsConstructor
+@NoArgsConstructor
 public class ProductLotSohDto {
-  private LocalDate occurredDate;
-  private int stockOnHand;
-  private UUID lotId;
-  private String productCode;
   private String facilityCode;
+  private String productCode;
+  private String lotId;
+  private int stockOnHand;
+  private LocalDate occurredDate;
 }

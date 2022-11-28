@@ -56,7 +56,6 @@ import java.util.Map.Entry;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.TreeSet;
-import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -67,7 +66,6 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.ListUtils;
-import org.siglus.siglusapi.domain.HfCmm;
 import org.siglus.siglusapi.domain.TracerDrugPersistentData;
 import org.siglus.siglusapi.dto.AssociatedGeographicZoneDto;
 import org.siglus.siglusapi.dto.RequisitionGeographicZonesDto;
@@ -76,6 +74,7 @@ import org.siglus.siglusapi.dto.TracerDrugExcelDto;
 import org.siglus.siglusapi.dto.TracerDrugExportDto;
 import org.siglus.siglusapi.repository.SiglusFacilityRepository;
 import org.siglus.siglusapi.repository.TracerDrugRepository;
+import org.siglus.siglusapi.repository.dto.ProductCmm;
 import org.siglus.siglusapi.repository.dto.ProductLotSohDto;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.util.CustomCellWriteHandler;
@@ -113,7 +112,7 @@ public class TracerDrugReportService {
     log.info("tracer drug persistentData  refresh. end = " + System.currentTimeMillis());
   }
 
-  void refreshTracerDrugPersistentDataByFacilities(
+  public void refreshTracerDrugPersistentDataByFacilities(
       String startDate, String endDate, List<String> facilityCodes) {
     if (CollectionUtils.isEmpty(facilityCodes)) {
       log.warn("facility codes is empty, no action");
@@ -121,17 +120,17 @@ public class TracerDrugReportService {
     }
     final Map<String, List<ProductLotSohDto>> facilityCodeToTracerDrugSoh =
         getFacilityCodeToTracerDrugSoh(startDate, endDate, facilityCodes);
-    final Map<String, List<HfCmm>> facilityCodeToCmm = getFacilityCodeToCmm(startDate, endDate, facilityCodes);
+    final Map<String, List<ProductCmm>> facilityCodeToCmm = getFacilityCodeToCmm(startDate, endDate, facilityCodes);
     final List<TracerDrugPersistentData> tracerDrugPersistentData = new LinkedList<>();
     for (String facilityCode : facilityCodes) {
       List<ProductLotSohDto> productLotSohDtos =
           facilityCodeToTracerDrugSoh.getOrDefault(facilityCode, emptyList());
-      List<HfCmm> hfCmms = facilityCodeToCmm.getOrDefault(facilityCode, emptyList());
+      List<ProductCmm> cmms = facilityCodeToCmm.getOrDefault(facilityCode, emptyList());
       List<TracerDrugPersistentData> records =
           calcForOneFacility(
               facilityCode,
               productLotSohDtos,
-              hfCmms,
+              cmms,
               LocalDate.parse(startDate),
               LocalDate.parse(endDate));
       tracerDrugPersistentData.addAll(records);
@@ -144,13 +143,15 @@ public class TracerDrugReportService {
     tracerDrugRepository.batchInsertOrUpdate(tracerDrugPersistentData);
   }
 
-  private Map<String, List<HfCmm>> getFacilityCodeToCmm(String startDate, String endDate, List<String> facilityCodes) {
-    final List<HfCmm> lastCmmTillEndDate = tracerDrugRepository.getLastTracerDrugCmmTillDate(endDate, facilityCodes);
-    List<HfCmm> tracerDrugCmm =
+  private Map<String, List<ProductCmm>> getFacilityCodeToCmm(
+      String startDate, String endDate, List<String> facilityCodes) {
+    final List<ProductCmm> lastCmmTillEndDate =
+        tracerDrugRepository.getLastTracerDrugCmmTillDate(endDate, facilityCodes);
+    List<ProductCmm> tracerDrugCmm =
         tracerDrugRepository.getTracerDrugCmm(startDate, endDate, facilityCodes);
     return Stream.of(lastCmmTillEndDate, tracerDrugCmm)
         .flatMap(Collection::stream)
-        .collect(Collectors.groupingBy(HfCmm::getFacilityCode));
+        .collect(Collectors.groupingBy(ProductCmm::getFacilityCode));
   }
 
   private Map<String, List<ProductLotSohDto>> getFacilityCodeToTracerDrugSoh(String startDate, String endDate,
@@ -167,13 +168,13 @@ public class TracerDrugReportService {
   List<TracerDrugPersistentData> calcForOneFacility(
       String facilityCode,
       List<ProductLotSohDto> productLotSohDtos,
-      List<HfCmm> hfCmms,
+      List<ProductCmm> cmms,
       LocalDate beginDate,
       LocalDate endDate) {
     // fixme: add an oldest record as a sentry in case no record before the begindate? confirm with
     // BA
     productLotSohDtos.sort(Comparator.comparing(ProductLotSohDto::getOccurredDate));
-    hfCmms.sort(Comparator.comparing(HfCmm::getPeriodEnd));
+    cmms.sort(Comparator.comparing(ProductCmm::getPeriodEnd));
     final List<TracerDrugPersistentData> tracerDrugPersistentData = new LinkedList<>();
     final CalculationTable calculationTable = new CalculationTable(facilityCode);
     final MondayIterator mondayIterator = new MondayIterator(beginDate, endDate);
@@ -188,12 +189,12 @@ public class TracerDrugReportService {
         }
         calculationTable.updateWith(currentSoh);
       }
-      for (; currentCmmIdx < hfCmms.size(); currentCmmIdx++) {
-        HfCmm hfCmm = hfCmms.get(currentCmmIdx);
-        if (hfCmm.getPeriodEnd().isAfter(checkpoint)) {
+      for (; currentCmmIdx < cmms.size(); currentCmmIdx++) {
+        ProductCmm productCmm = cmms.get(currentCmmIdx);
+        if (productCmm.getPeriodEnd().isAfter(checkpoint)) {
           break;
         }
-        calculationTable.updateWith(hfCmm);
+        calculationTable.updateWith(productCmm);
       }
       calculationTable.updateCheckpoint(checkpoint);
       tracerDrugPersistentData.addAll(calculationTable.generateRecords());
@@ -451,7 +452,7 @@ public class TracerDrugReportService {
   }
 
   static class CalculationTable {
-    private final HashMap<String, HashMap<UUID, Integer>> productCodeToLotSoh = new HashMap<>();
+    private final HashMap<String, HashMap<String, Integer>> productCodeToLotSoh = new HashMap<>();
     private final HashMap<String, Double> productCodeToCmm = new HashMap<>();
     private LocalDate checkpoint;
     private final String facilityCode;
@@ -471,19 +472,19 @@ public class TracerDrugReportService {
       if (!productCodeToLotSoh.containsKey(productCode)) {
         productCodeToLotSoh.put(productCode, new HashMap<>());
       }
-      HashMap<UUID, Integer> lotIdToSoh = productCodeToLotSoh.get(productCode);
+      HashMap<String, Integer> lotIdToSoh = productCodeToLotSoh.get(productCode);
       lotIdToSoh.put(productLotSoh.getLotId(), productLotSoh.getStockOnHand());
     }
 
-    public void updateWith(HfCmm hfCmm) {
-      productCodeToCmm.put(hfCmm.getProductCode(), hfCmm.getCmm());
+    public void updateWith(ProductCmm productCmm) {
+      productCodeToCmm.put(productCmm.getProductCode(), productCmm.getCmm());
     }
 
     public void updateCheckpoint(LocalDate checkpoint) {
       this.checkpoint = checkpoint;
     }
 
-    private TracerDrugPersistentData buildTracerDrugPersistentData(Entry<String, HashMap<UUID, Integer>> it) {
+    private TracerDrugPersistentData buildTracerDrugPersistentData(Entry<String, HashMap<String, Integer>> it) {
       String productCode = it.getKey();
       Integer productSoh = it.getValue().values().stream().reduce(Integer::sum).orElse(0);
       Double cmm = productCodeToCmm.getOrDefault(productCode, null);
