@@ -51,7 +51,7 @@ import lombok.Data;
               + "    join referencedata.orderables od on od.code=cmm.productcode\n"
               + "    where cmm.facilitycode in :facilityCodes\n"
               + "        and cast(od.extradata as jsonb) @> cast('{\"isTracer\": true}' as jsonb)\n"
-              + "        and cmm.periodend  < :endDate) sub where sub.row_number=1",
+              + "        and cmm.periodend  < :date) sub where sub.row_number=1",
       resultSetMapping = "TracerDrugReport.cmm"),
     @NamedNativeQuery(
       name = "TracerDrug.getTracerDrugCmm",

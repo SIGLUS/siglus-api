@@ -75,7 +75,7 @@ import lombok.NoArgsConstructor;
               + "    join referencedata.facilities fa on fa.id=sc.facilityid\n"
               + "    where fa.code in :facilityCodes and "
               + "       cast(od.extradata as jsonb) @> cast('{\"isTracer\": true}' as jsonb) and "
-              + "       csoh.occurreddate < :endDate)\n"
+              + "       csoh.occurreddate < :date)\n"
               + "    soh where soh.row_number=1;",
       resultSetMapping = "TracerDrugReport.ProductLotSohDto")
 })

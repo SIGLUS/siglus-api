@@ -146,7 +146,7 @@ public class TracerDrugReportService {
   private Map<String, List<ProductCmm>> getFacilityCodeToCmm(
       String startDate, String endDate, List<String> facilityCodes) {
     final List<ProductCmm> lastCmmTillEndDate =
-        tracerDrugRepository.getLastTracerDrugCmmTillDate(endDate, facilityCodes);
+        tracerDrugRepository.getLastTracerDrugCmmTillDate(startDate, facilityCodes);
     List<ProductCmm> tracerDrugCmm =
         tracerDrugRepository.getTracerDrugCmm(startDate, endDate, facilityCodes);
     return Stream.of(lastCmmTillEndDate, tracerDrugCmm)
@@ -156,7 +156,7 @@ public class TracerDrugReportService {
 
   private Map<String, List<ProductLotSohDto>> getFacilityCodeToTracerDrugSoh(String startDate, String endDate,
       List<String> facilityCodes) {
-    List<ProductLotSohDto> lastSohTillEndDate = tracerDrugRepository.getLastTracerDrugSohTillDate(endDate,
+    List<ProductLotSohDto> lastSohTillEndDate = tracerDrugRepository.getLastTracerDrugSohTillDate(startDate,
         facilityCodes);
     List<ProductLotSohDto> tracerDrugSoh =
         tracerDrugRepository.getTracerDrugSoh(startDate, endDate, facilityCodes);

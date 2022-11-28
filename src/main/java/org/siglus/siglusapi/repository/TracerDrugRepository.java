@@ -55,10 +55,10 @@ public interface TracerDrugRepository
 
   @Query(name = "TracerDrugReport.getLastTracerDrugSohTillDate", nativeQuery = true)
   List<ProductLotSohDto> getLastTracerDrugSohTillDate(
-      @Param("endDate") String endDate,
+      @Param("date") String date,
       @Param("facilityCodes") List<String> facilityCodes);
 
   @Query(name = "TracerDrug.getLastTracerDrugCmmTillDate", nativeQuery = true)
   List<ProductCmm> getLastTracerDrugCmmTillDate(
-      @Param("endDate") String endDate, @Param("facilityCodes") List<String> facilityCodes);
+      @Param("date") String date, @Param("facilityCodes") List<String> facilityCodes);
 }

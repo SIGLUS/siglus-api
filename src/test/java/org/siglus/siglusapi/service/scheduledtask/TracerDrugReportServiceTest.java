@@ -193,14 +193,14 @@ public class TracerDrugReportServiceTest {
             .facilityCode(hf001)
             .productCode(product1)
             .periodEnd(LocalDate.parse(startDate).minusDays(1))
-            .cmm(null)
+            .cmm(10.31)
             .build();
     ProductCmm cmm1 =
         ProductCmm.builder()
             .facilityCode(hf001)
             .productCode(product1)
-            .periodEnd(LocalDate.parse("2022-11-02"))
-            .cmm(11.02)
+            .periodEnd(LocalDate.parse("2022-11-08"))
+            .cmm(11.08)
             .build();
     ProductCmm cmm2 =
         ProductCmm.builder()
@@ -254,8 +254,8 @@ public class TracerDrugReportServiceTest {
     }
     assertThat(captured.stream().map(formatPersistentData()))
         .containsExactlyInAnyOrder(
-            "HF001:product1:2022-11-07+11.02+1103",
-            "HF001:product1:2022-11-14+11.02+1103",
+            "HF001:product1:2022-11-07+10.31+1103",
+            "HF001:product1:2022-11-14+11.08+1103",
             "HF001:product1:2022-11-21+11.17+1116");
   }
 
