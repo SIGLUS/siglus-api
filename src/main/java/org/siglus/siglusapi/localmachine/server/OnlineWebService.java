@@ -100,19 +100,13 @@ public class OnlineWebService {
     Comparator<MasterDataEventRecord> asc = Comparator.comparing(MasterDataEventRecord::getId);
     snapshotRecords.sort(asc);
     int lastIndex = snapshotRecords.size() - 1;
-    LinkedList<MasterDataEventRecord> deletedSnapshots = new LinkedList<>();
-    for (MasterDataEventRecord record : snapshotRecords.subList(0, lastIndex)) {
-      String zipName = record.getSnapshotVersion();
-      String s3FileName = getMasterDataS3Filename(zipName);
-      s3FileHandler.deleteFileFromS3(s3FileName);
-      deletedSnapshots.add(record);
-    }
-    List<String> deletedSanpshotVersions =
-        deletedSnapshots.stream()
-            .map(MasterDataEventRecord::getSnapshotVersion)
-            .collect(Collectors.toList());
-    log.info("delete master data snapshot:{}", deletedSanpshotVersions);
-    masterDataEventRecordRepository.delete(deletedSnapshots);
+    List<MasterDataEventRecord> snapshotRecordsForDeletion = snapshotRecords.subList(0, lastIndex);
+    deleteMasterDataSnapshots(snapshotRecordsForDeletion);
+  }
+
+  @Transactional
+  public void evictAllMasterDataSnapshots() {
+    deleteMasterDataSnapshots(masterDataEventRecordRepository.findBySnapshotVersionIsNotNull());
   }
 
   public ResyncMasterDataResponse resyncMasterData(UUID facilityId) {
@@ -173,6 +167,25 @@ public class OnlineWebService {
       log.error("facilityId {} delete directory fail,{}", homeFacilityId, e);
       throw new FileOperationException(e, new Message(homeFacilityId + " flush zip file to response fail"));
     }
+  }
+
+  void deleteMasterDataSnapshots(List<MasterDataEventRecord> snapshotRecordsForDeletion) {
+    LinkedList<MasterDataEventRecord> deletedSnapshots = new LinkedList<>();
+    if (CollectionUtils.isEmpty(snapshotRecordsForDeletion)) {
+      return;
+    }
+    for (MasterDataEventRecord record : snapshotRecordsForDeletion) {
+      String zipName = record.getSnapshotVersion();
+      String s3FileName = getMasterDataS3Filename(zipName);
+      s3FileHandler.deleteFileFromS3(s3FileName);
+      deletedSnapshots.add(record);
+    }
+    List<String> deletedSanpshotVersions =
+        deletedSnapshots.stream()
+            .map(MasterDataEventRecord::getSnapshotVersion)
+            .collect(Collectors.toList());
+    log.info("delete master data snapshot:{}", deletedSanpshotVersions);
+    masterDataEventRecordRepository.delete(deletedSnapshots);
   }
 
   Long getMinimumOffsetForDeletion() {

@@ -38,6 +38,7 @@ import org.openlmis.referencedata.repository.UserRepository;
 import org.siglus.siglusapi.localmachine.EventPublisher;
 import org.siglus.siglusapi.localmachine.cdc.CdcRecord;
 import org.siglus.siglusapi.localmachine.cdc.CdcRecordMapper;
+import org.siglus.siglusapi.localmachine.server.OnlineWebService;
 
 @RunWith(MockitoJUnitRunner.class)
 @SuppressWarnings({"PMD.UnusedPrivateField"})
@@ -55,6 +56,9 @@ public class OnlineWebMasterDataEventEmitterTest {
   @Mock
   private UserRepository userRepository;
 
+  @Mock
+  private OnlineWebService onlineWebService;
+
   private static final UUID userId1 = UUID.randomUUID();
 
   private static final UUID userId2 = UUID.randomUUID();
@@ -62,6 +66,28 @@ public class OnlineWebMasterDataEventEmitterTest {
   private static final UUID facilityId1 = UUID.randomUUID();
 
   private static final UUID facilityId2 = UUID.randomUUID();
+
+  @Test
+  public void shouldNotEvictSnapshotWhenReceiveChangeRecordsNotFromIncompatibles() {
+    // given
+    CdcRecord incompatibleRecord =
+        CdcRecord.builder().schema("siglusintegration").table("hf_cmm").build();
+    // when
+    emitter.on(Collections.singletonList(incompatibleRecord));
+    // then
+    verify(onlineWebService, times(0)).evictAllMasterDataSnapshots();
+  }
+
+  @Test
+  public void shouldEvictSnapshotWhenReceiveChangeRecordsFromIncompatibles() {
+    // given
+    CdcRecord incompatibleRecord =
+        CdcRecord.builder().schema("siglusintegration").table("facility_extension").build();
+    // when
+    emitter.on(Collections.singletonList(incompatibleRecord));
+    // then
+    verify(onlineWebService, times(1)).evictAllMasterDataSnapshots();
+  }
 
   @Test
   public void shouldEmitSuccessfully() {

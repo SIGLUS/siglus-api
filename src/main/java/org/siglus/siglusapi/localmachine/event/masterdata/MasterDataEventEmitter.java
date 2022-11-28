@@ -23,12 +23,15 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import jersey.repackaged.com.google.common.collect.Sets;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.openlmis.referencedata.domain.User;
 import org.openlmis.referencedata.repository.UserRepository;
 import org.siglus.siglusapi.localmachine.EventPublisher;
 import org.siglus.siglusapi.localmachine.cdc.CdcListener;
 import org.siglus.siglusapi.localmachine.cdc.CdcRecord;
 import org.siglus.siglusapi.localmachine.cdc.CdcRecordMapper;
+import org.siglus.siglusapi.localmachine.server.OnlineWebService;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,14 +39,18 @@ import org.springframework.transaction.annotation.Transactional;
 @Component
 @RequiredArgsConstructor
 @Profile({"!localmachine"})
+@Slf4j
 public class MasterDataEventEmitter implements CdcListener {
 
+  private final OnlineWebService onlineWebService;
   private final EventPublisher eventPublisher;
   private final CdcRecordMapper cdcRecordMapper;
   private final UserRepository userRepository;
   private static final String USER_ID = "userid";
   private static final String REFERENCE_DATA = "referencedata";
   private static final String RIGHT_ASSIGNMENTS = "right_assignments";
+  private static final Set<String> snapshotIncompatibleTables =
+      Sets.newHashSet("siglusintegration.facility_extension");
   public static final Set<String> doNotClearCacheTableName = Sets.newHashSet("auth.auth_users",
       "notification.user_contact_details",
       "referencedata.roles",
@@ -139,6 +146,22 @@ public class MasterDataEventEmitter implements CdcListener {
   public void on(List<CdcRecord> records) {
     emitNeedNotMarkFacilityEvent(records);
     emitNeedMarkFacilityEvent(records);
+    evictIncompatibleMasterDataSnapshots(records);
+  }
+
+  void evictIncompatibleMasterDataSnapshots(List<CdcRecord> records) {
+    List<String> snapshotIncompatibleTableIds =
+        records.stream()
+            .map(CdcRecord::tableId)
+            .filter(snapshotIncompatibleTables::contains)
+            .collect(Collectors.toList());
+    boolean needToEvictSnapshot = CollectionUtils.isNotEmpty(snapshotIncompatibleTableIds);
+    if (needToEvictSnapshot) {
+      log.info(
+          "evict all master data snapshots, due to changes occur on tables:{}",
+          snapshotIncompatibleTableIds);
+      onlineWebService.evictAllMasterDataSnapshots();
+    }
   }
 
   private void emitNeedNotMarkFacilityEvent(List<CdcRecord> records) {
