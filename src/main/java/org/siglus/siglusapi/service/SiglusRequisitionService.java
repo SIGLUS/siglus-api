@@ -984,6 +984,7 @@ public class SiglusRequisitionService {
         totalPatientsInTreatment += columns.get(MMIA_COLUMN_TOTAL).getValue();
       }
     }
+    totalPatientsInTreatment = Math.max(1, totalPatientsInTreatment);
     return totalPatients * 1.0 / totalPatientsInTreatment;
   }
 
