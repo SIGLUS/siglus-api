@@ -759,7 +759,10 @@ public class SiglusRequisitionService {
         .stream()
         .map(Importer::getId)
         .collect(toSet());
-    List<RequisitionLineItemExtension> extensions = lineItemExtensionRepository.findLineItems(lineItemsId);
+    List<RequisitionLineItemExtension> extensions = new ArrayList<>();
+    if (lineItemsId.size() != 0) {
+      extensions = lineItemExtensionRepository.findLineItems(lineItemsId);
+    }
     Map<UUID, Program> programIdToCode = programRepository.findAll().stream()
         .collect(toMap(org.openlmis.referencedata.domain.BaseEntity::getId, Function.identity()));
     UUID programId = siglusRequisitionDto.getProgramId();
