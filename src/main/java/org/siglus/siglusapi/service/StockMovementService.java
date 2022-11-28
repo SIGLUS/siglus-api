@@ -89,11 +89,17 @@ public class StockMovementService {
       stockMovementResDtos.add(stockMovementResDto);
     }
     Collections.reverse(stockMovementResDtos);
+    resetFirstMovementQuantity(stockMovementResDtos);
     StockMovementResDto first = stockMovementResDtos.get(stockMovementResDtos.size() - 1);
     StockMovementResDto initial = StockMovementResDto.builder().reason(INITIAL_INVENTORY_KEY)
         .dateOfMovement(first.getDateOfMovement()).productSoh(0).build();
     stockMovementResDtos.add(initial);
     return stockMovementResDtos;
+  }
+
+  private void resetFirstMovementQuantity(List<StockMovementResDto> stockMovementResDtos) {
+    StockMovementResDto first = stockMovementResDtos.get(stockMovementResDtos.size() - 1);
+    first.setMovementQuantity(first.getProductSoh());
   }
 
   MovementTypeHandlerResultDto movementTypeHandler(ProductMovement productMovement) {

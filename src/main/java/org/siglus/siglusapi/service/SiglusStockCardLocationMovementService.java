@@ -173,7 +173,13 @@ public class SiglusStockCardLocationMovementService {
           break;
       }
     }
+    resetFirstMovementQuantity(locationMovementLineItemDtos);
     return createLocationMovmentDto(locationMovementLineItemDtos, stockCardId, latestSoh, locationCode);
+  }
+
+  private void resetFirstMovementQuantity(List<LocationMovementLineItemDto> locationMovementLineItemDtos) {
+    LocationMovementLineItemDto first = locationMovementLineItemDtos.get(locationMovementLineItemDtos.size() - 1);
+    first.setQuantity(first.getSoh());
   }
 
   private List<CalculatedStockOnHandByLocation> findLatestCalculatedSohByLocationVirtualLocationRecordByStockCardId(
