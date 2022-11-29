@@ -903,7 +903,7 @@ public class SiglusRequisitionService {
       columns.forEach((key, value) -> {
         String mappingKey = groupName + FieldConstants.SEPARATOR + key;
         if (existedMappingKeys.contains(mappingKey)) {
-          mappingKeyToPatientNumber.put(mappingKey, value.getValue());
+          mappingKeyToPatientNumber.put(mappingKey, Optional.ofNullable(value.getValue()).orElse(0));
         }
       });
     });
@@ -934,7 +934,7 @@ public class SiglusRequisitionService {
               + FieldConstants.SEPARATOR
               + value2.getOutcome();
           if (existedMappingKeys.contains(mappingKey)) {
-            mappingKeyToPatientNumber.put(mappingKey, value2.getValue());
+            mappingKeyToPatientNumber.put(mappingKey, Optional.ofNullable(value2.getValue()).orElse(0));
           }
         });
       });
