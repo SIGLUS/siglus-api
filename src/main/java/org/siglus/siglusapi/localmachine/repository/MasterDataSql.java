@@ -311,6 +311,10 @@ public class MasterDataSql {
   public static final String CUSTOM_PRODUCTS_REGIMENS_QUERY =
       "select * from siglusintegration.custom_products_regimens";
 
+  public static final String REGIMEN_ORDERABLES = "siglusintegration.regimen_orderables";
+
+  public static final String REGIMEN_ORDERABLES_QUERY = "select * from siglusintegration.regimen_orderables";
+
   public static final String APP_INFO = "siglusintegration.app_info";
 
   public static final String APP_INFO_QUERY = "select * from siglusintegration.app_info";
@@ -442,6 +446,7 @@ public class MasterDataSql {
     masterDataSql.put(REPORT_TYPES, REPORT_TYPES_QUERY);
     masterDataSql.put(REQUISITION_TEMPLATE_EXTENSION, REQUISITION_TEMPLATE_EXTENSION_QUERY);
     masterDataSql.put(CUSTOM_PRODUCTS_REGIMENS, CUSTOM_PRODUCTS_REGIMENS_QUERY);
+    masterDataSql.put(REGIMEN_ORDERABLES, REGIMEN_ORDERABLES_QUERY);
     masterDataSql.put(APP_INFO, APP_INFO_QUERY);
     masterDataSql.put(EXPIRED_LOTS_BACKUP, EXPIRED_LOTS_BACKUP_QUERY);
 

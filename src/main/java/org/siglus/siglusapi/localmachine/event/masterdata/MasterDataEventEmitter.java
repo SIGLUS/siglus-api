@@ -126,6 +126,7 @@ public class MasterDataEventEmitter implements CdcListener {
         "siglusintegration.program_real_program",
         "siglusintegration.regimen_categories",
         "siglusintegration.regimens",
+        "siglusintegration.regimen_orderables",
         "siglusintegration.report_types",
         "siglusintegration.requisition_template_extension",
         "stockmanagement.organizations",
