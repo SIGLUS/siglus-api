@@ -47,6 +47,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -263,8 +264,13 @@ public class SiglusRequisitionService {
     if (siglusRequisitionDto.getStatus().isSubmittable() && siglusUsageReportService.isSupplyFacilityType(facilityId)) {
       Map<UUID, Integer> requisitionLineItemIdToRequestedQuantity = calcEstimatedOrRequestedQuantity(
           siglusRequisitionDto, REQUESTED_QUANTITY);
-      Set<RequisitionLineItem> requisitionLineItems = requisitionLineItemRepository.findAllById(
-          requisitionLineItemIdToRequestedQuantity.keySet());
+
+      Set<RequisitionLineItem> requisitionLineItems = new HashSet<>();
+      if (!requisitionLineItemIdToRequestedQuantity.keySet().isEmpty()) {
+        requisitionLineItems = requisitionLineItemRepository.findAllById(
+            requisitionLineItemIdToRequestedQuantity.keySet());
+      }
+
       requisitionLineItems.forEach(requisitionLineItem ->
           requisitionLineItem.setRequestedQuantity(
               requisitionLineItemIdToRequestedQuantity.get(requisitionLineItem.getId()))
@@ -760,7 +766,7 @@ public class SiglusRequisitionService {
         .map(Importer::getId)
         .collect(toSet());
     List<RequisitionLineItemExtension> extensions = new ArrayList<>();
-    if (lineItemsId.size() != 0) {
+    if (!lineItemsId.isEmpty()) {
       extensions = lineItemExtensionRepository.findLineItems(lineItemsId);
     }
     Map<UUID, Program> programIdToCode = programRepository.findAll().stream()
@@ -803,8 +809,12 @@ public class SiglusRequisitionService {
 
   private void calcEstimatedQuantityForMmitAndMmtb(SiglusRequisitionDto siglusRequisitionDto,
       List<RequisitionLineItemExtension> extensions, Map<String, Integer> mappingKeyToPatientNumber, String calcType) {
-    Set<RegimenOrderable> regimenOrderables = regimenOrderableRepository.findByMappingKeyIn(
-        mappingKeyToPatientNumber.keySet());
+
+    Set<RegimenOrderable> regimenOrderables = new HashSet<>();
+    if (!mappingKeyToPatientNumber.keySet().isEmpty()) {
+      regimenOrderables = regimenOrderableRepository.findByMappingKeyIn(mappingKeyToPatientNumber.keySet());
+    }
+
     Map<String, Integer> regimenCodeToPatientNumber = getRegimenCodeToPatientNumber(mappingKeyToPatientNumber,
         regimenOrderables);
     calcEstimatedQuantity(siglusRequisitionDto,
@@ -864,7 +874,12 @@ public class SiglusRequisitionService {
     Set<UUID> orderableIds = baseRequisitionLineItemDtos.stream()
         .map(baseRequisitionLineItemDto -> baseRequisitionLineItemDto.getOrderableIdentity().getId())
         .collect(toSet());
-    List<Orderable> orderables = orderableRepository.findAllByIds(orderableIds);
+
+    List<Orderable> orderables = new ArrayList<>();
+    if (!orderableIds.isEmpty()) {
+      orderables = orderableRepository.findAllByIds(orderableIds);
+    }
+
     return orderables.stream()
         .collect(toMap(Orderable::getId, orderable -> orderable.getProductCode().toString()));
   }
@@ -932,8 +947,12 @@ public class SiglusRequisitionService {
     Map<String, Integer> regimenCodeToPatientNumber = getRegimenCodeToPatientNumberForMmia(siglusRequisitionDto);
     double correctFactor = getCorrectionFactorForMmia(regimenCodeToPatientNumber,
         siglusRequisitionDto.getPatientLineItems());
-    Set<RegimenOrderable> regimenOrderables = regimenOrderableRepository.findByRegimenCodeIn(
-        regimenCodeToPatientNumber.keySet());
+
+    Set<RegimenOrderable> regimenOrderables = new HashSet<>();
+    if (!regimenCodeToPatientNumber.keySet().isEmpty()) {
+      regimenOrderables = regimenOrderableRepository.findByRegimenCodeIn(regimenCodeToPatientNumber.keySet());
+    }
+
     calcEstimatedQuantity(siglusRequisitionDto, extensions, regimenCodeToPatientNumber, correctFactor,
         regimenOrderables, calcType);
   }
@@ -962,7 +981,12 @@ public class SiglusRequisitionService {
       });
     } else if (REQUESTED_QUANTITY.equals(calcType)) {
       Set<UUID> requisitionLineItemIds = idToBaseRequisitionLineItemDto.keySet();
-      Set<RequisitionLineItem> requisitionLineItems = requisitionLineItemRepository.findAllById(requisitionLineItemIds);
+
+      Set<RequisitionLineItem> requisitionLineItems = new HashSet<>();
+      if (!requisitionLineItemIds.isEmpty()) {
+        requisitionLineItems = requisitionLineItemRepository.findAllById(requisitionLineItemIds);
+      }
+
       requisitionLineItems.forEach(requisitionLineItem -> {
         BaseRequisitionLineItemDto baseRequisitionLineItemDto = idToBaseRequisitionLineItemDto.get(
             requisitionLineItem.getId());

@@ -1410,12 +1410,16 @@ public class SiglusRequisitionServiceTest {
     program.setCode(new Code("T"));
     when(programRepository.findAll()).thenReturn(Lists.newArrayList(program));
     siglusRequisitionDto.setProgram(new ObjectReferenceDto(programId));
+    RequisitionLineItemV2Dto lineItem = new RequisitionLineItemV2Dto();
+    lineItem.setApprovedQuantity(10);
+    lineItem.setId(UUID.randomUUID());
+    lineItem.setOrderable(productVersionObjectReference1);
+    siglusRequisitionDto.setRequisitionLineItems(newArrayList(lineItem));
     when(siglusUsageReportService.isSupplyFacilityType(facilityId)).thenReturn(true);
-
     // when
     siglusRequisitionService.initiateAndSaveRequisitionLineItems(siglusRequisitionDto, facilityId);
     // then
-    verify(requisitionLineItemRepository, times(2)).findAllById(any());
+    verify(requisitionLineItemRepository, times(2)).findAllById(newHashSet(lineItem.getId()));
   }
 
   private SiglusRequisitionDto convert(RequisitionV2Dto requisitionV2Dto) {
