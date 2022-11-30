@@ -61,7 +61,7 @@ public class MasterDataEventReplayer {
       return false;
     }
     String tableFullName = tableChangeEvents.get(0).getTableFullName();
-    return !MasterDataEventEmitter.doNotClearCacheTableName.contains(tableFullName);
+    return !MasterDataEventEmitter.doNotClearCacheTableNames.contains(tableFullName);
   }
 
   private void resetDraftAndLocationWhenToggledLocationManagement(List<TableChangeEvent> tableChangeEvents) {

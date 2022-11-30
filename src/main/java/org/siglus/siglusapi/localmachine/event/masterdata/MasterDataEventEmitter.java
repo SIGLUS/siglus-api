@@ -51,15 +51,8 @@ public class MasterDataEventEmitter implements CdcListener {
   private static final String RIGHT_ASSIGNMENTS = "right_assignments";
   private static final Set<String> snapshotIncompatibleTables =
       Sets.newHashSet("siglusintegration.facility_extension");
-  public static final Set<String> doNotClearCacheTableName = Sets.newHashSet("auth.auth_users",
-      "notification.user_contact_details",
-      "referencedata.roles",
-      "referencedata.rights",
-      "referencedata.role_rights",
-      "referencedata.users",
-      "referencedata.role_assignments",
-      "referencedata.right_assignments"
-  );
+  // TODO: 2022/11/30 check no cache tables, and add to doNotClearCacheTableNames Set
+  public static final Set<String> doNotClearCacheTableNames = Sets.newHashSet();
 
   @Override
   public String[] acceptedTables() {
