@@ -219,72 +219,45 @@ public class CalculatedStocksOnHandByLocationService {
       return;
     }
 
-    if (isPhysicalInventory) {
-      Map<UUID, List<CalculatedStockOnHandByLocation>> stockCardIdToSohByLocationList = toSaveList
-                      .stream()
-                      .collect(Collectors.groupingBy(CalculatedStockOnHandByLocation::getStockCardId));
-
-      for (Map.Entry<UUID, List<CalculatedStockOnHandByLocation>> entry : stockCardIdToSohByLocationList.entrySet()) {
-        UUID stockCardId = entry.getKey();
-        List<CalculatedStockOnHandByLocation> locations = entry.getValue();
-        if (locations.size() > 1) {
-          Integer sum = locations
-                  .stream()
-                  .map(CalculatedStockOnHandByLocation::getStockOnHand)
-                  .mapToInt(Integer::intValue)
-                  .sum();
-          CalculatedStockOnHand found = calculatedStockOnHands
-                  .stream()
-                  .filter(soh -> stockCardId.equals(
-                          soh.getStockCardId() == null ? soh.getStockCard().getId() : soh.getStockCardId()))
-                  .findFirst()
-                  .orElseThrow(() -> new EntityNotFoundException(
-                          "CalculatedStockOnHand not found with stockCardId " + stockCardId));
-          log.info("calculatedStockOnHandId: {}, sumOfLocationSoh: {}", found.getId(), sum);
-          found.setStockOnHand(sum);
-          calculatedStocksOnHandRepository.save(found);
-        }
-      }
-    } else {
-      // toSaveList not be the full set
+    List<CalculatedStockOnHandByLocation> updatedAllSohByLocations = new ArrayList<>(toSaveList);
+    if (!isPhysicalInventory) {
       List<CalculatedStockOnHandByLocation> allSohByLocations = calculatedStockOnHandByLocationRepository
               .findPreviousLocationStockOnHandsTillNow(stockCardIds, date);
       Set<String> keysForToSaveList = toSaveList.stream().map(this::getUniqueKey).collect(Collectors.toSet());
 
-      List<CalculatedStockOnHandByLocation> updatedAllSohByLocations = new ArrayList<>(toSaveList);
       allSohByLocations.forEach(sohByLocation -> {
         if (!keysForToSaveList.contains(getUniqueKey(sohByLocation))) {
           updatedAllSohByLocations.add(sohByLocation);
         }
       });
+    }
 
-      // TODO duplicate code with previous if
-      Map<UUID, List<CalculatedStockOnHandByLocation>> stockCardIdToSohByLocationList = updatedAllSohByLocations
-              .stream()
-              .collect(Collectors.groupingBy(CalculatedStockOnHandByLocation::getStockCardId));
+    Map<UUID, List<CalculatedStockOnHandByLocation>> stockCardIdToSohByLocationList = updatedAllSohByLocations
+            .stream()
+            .collect(Collectors.groupingBy(CalculatedStockOnHandByLocation::getStockCardId));
 
-      for (Map.Entry<UUID, List<CalculatedStockOnHandByLocation>> entry : stockCardIdToSohByLocationList.entrySet()) {
-        UUID stockCardId = entry.getKey();
-        List<CalculatedStockOnHandByLocation> locations = entry.getValue();
-        if (locations.size() > 1) {
-          Integer sum = locations
-                  .stream()
-                  .map(CalculatedStockOnHandByLocation::getStockOnHand)
-                  .mapToInt(Integer::intValue)
-                  .sum();
-          CalculatedStockOnHand found = calculatedStockOnHands
-                  .stream()
-                  .filter(soh -> stockCardId.equals(
-                          soh.getStockCardId() == null ? soh.getStockCard().getId() : soh.getStockCardId()))
-                  .findFirst()
-                  .orElseThrow(() -> new EntityNotFoundException(
-                          "CalculatedStockOnHand not found with stockCardId " + stockCardId));
-          log.info("calculatedStockOnHandId: {}, sumOfLocationSoh: {}", found.getId(), sum);
-          found.setStockOnHand(sum);
-          calculatedStocksOnHandRepository.save(found);
-        }
+    for (Map.Entry<UUID, List<CalculatedStockOnHandByLocation>> entry : stockCardIdToSohByLocationList.entrySet()) {
+      UUID stockCardId = entry.getKey();
+      List<CalculatedStockOnHandByLocation> locations = entry.getValue();
+      if (locations.size() > 1) {
+        Integer sum = locations
+                .stream()
+                .map(CalculatedStockOnHandByLocation::getStockOnHand)
+                .mapToInt(Integer::intValue)
+                .sum();
+        CalculatedStockOnHand found = calculatedStockOnHands
+                .stream()
+                .filter(soh -> stockCardId.equals(
+                        soh.getStockCardId() == null ? soh.getStockCard().getId() : soh.getStockCardId()))
+                .findFirst()
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "CalculatedStockOnHand not found with stockCardId " + stockCardId));
+        log.info("calculatedStockOnHandId: {}, sumOfLocationSoh: {}", found.getId(), sum);
+        found.setStockOnHand(sum);
+        calculatedStocksOnHandRepository.save(found);
       }
     }
+
   }
 
   private Map<UUID, StockCardLineItemExtension> buildExtensionMap(List<StockCardLineItem> lineItems) {
