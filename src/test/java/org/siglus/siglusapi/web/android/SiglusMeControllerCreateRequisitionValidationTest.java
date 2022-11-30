@@ -59,6 +59,8 @@ import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
+import org.siglus.common.domain.ProcessingPeriodExtension;
+import org.siglus.common.repository.ProcessingPeriodExtensionRepository;
 import org.siglus.siglusapi.domain.SiglusReportType;
 import org.siglus.siglusapi.domain.SyncUpHash;
 import org.siglus.siglusapi.dto.UserDto;
@@ -99,6 +101,8 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
   private SyncUpHashRepository syncUpHashRepository;
   @Mock
   private RequisitionRequestBackupRepository requisitionRequestBackupRepository;
+  @Mock
+  private ProcessingPeriodExtensionRepository periodExtensionRepo;
 
   private final ObjectMapper mapper = new ObjectMapper();
 
@@ -182,6 +186,7 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
     when(requisitionRepo.findLatestRequisitionsByFacilityId(restartedFacilityId)).thenReturn(singletonList(req3));
     when(syncUpHashRepository.findOne(anyString())).thenReturn(null);
     when(requisitionRequestBackupRepository.findOneByHash(anyString())).thenReturn(null);
+    when(periodExtensionRepo.findByProcessingPeriodId(any())).thenReturn(mockPeriodExtension());
   }
 
   @Test
@@ -561,7 +566,7 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
     public <T extends ConstraintValidator<?, ?>> T getInstance(Class<T> key) {
       if (key == RequisitionValidStartDateValidator.class) {
         return (T) new RequisitionValidStartDateValidator(authHelper,
-            programDataService, reportTypeRepo, requisitionRepo, periodRepo, syncUpHashRepository);
+            programDataService, reportTypeRepo, requisitionRepo, periodRepo, periodExtensionRepo, syncUpHashRepository);
       } else if (key == RequisitionValidReStartDateValidator.class) {
         return (T) new RequisitionValidReStartDateValidator(authHelper, reportTypeRepo, syncUpHashRepository);
       }
@@ -573,6 +578,13 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
       // nothing to do
     }
 
+  }
+
+  private ProcessingPeriodExtension mockPeriodExtension() {
+    ProcessingPeriodExtension periodExtension = new ProcessingPeriodExtension();
+    periodExtension.setSubmitStartDate(LocalDate.of(2022, 11, 21));
+    periodExtension.setSubmitEndDate(LocalDate.of(2022, 12, 20));
+    return periodExtension;
   }
 
 }

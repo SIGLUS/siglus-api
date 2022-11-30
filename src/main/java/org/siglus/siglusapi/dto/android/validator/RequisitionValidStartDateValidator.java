@@ -45,6 +45,7 @@ import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.repository.SyncUpHashRepository;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 
+@SuppressWarnings("PMD.CyclomaticComplexity")
 @RequiredArgsConstructor
 @Slf4j
 public class RequisitionValidStartDateValidator implements
