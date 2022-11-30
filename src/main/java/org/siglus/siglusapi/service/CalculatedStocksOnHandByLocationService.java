@@ -126,7 +126,7 @@ public class CalculatedStocksOnHandByLocationService {
       toSaveList.add(soh);
     });
 
-    saveAll(toSaveList, false);
+    saveAll(toSaveList, false, true);
   }
 
   public void calculateStockOnHandByLocation(StockEventDto eventDto) {
@@ -172,7 +172,7 @@ public class CalculatedStocksOnHandByLocationService {
                   stockCardIdToMovements));
     });
 
-    saveAll(toSaveList, eventDto.isPhysicalInventory());
+    saveAll(toSaveList, eventDto.isPhysicalInventory(), false);
   }
 
   private List<StockCard> getStockCardsFromStockEvent(StockEventDto eventDto) {
@@ -193,7 +193,9 @@ public class CalculatedStocksOnHandByLocationService {
         + Optional.ofNullable(eventLineItemDto.getLotId()).map(UUID::toString).orElse("");
   }
 
-  private void saveAll(List<CalculatedStockOnHandByLocation> toSaveList, boolean isPhysicalInventory) {
+  private void saveAll(List<CalculatedStockOnHandByLocation> toSaveList,
+                       boolean isPhysicalInventory,
+                       boolean isMovement) {
     if (CollectionUtils.isEmpty(toSaveList)) {
       return;
     }
@@ -213,10 +215,53 @@ public class CalculatedStocksOnHandByLocationService {
     log.info(String.format("save CalculatedStocksOnHandLocations %s", toSaveList.size()));
     calculatedStockOnHandByLocationRepository.save(toSaveList);
 
+    if (isMovement) {
+      return;
+    }
+
     if (isPhysicalInventory) {
       Map<UUID, List<CalculatedStockOnHandByLocation>> stockCardIdToSohByLocationList = toSaveList
                       .stream()
                       .collect(Collectors.groupingBy(CalculatedStockOnHandByLocation::getStockCardId));
+
+      for (Map.Entry<UUID, List<CalculatedStockOnHandByLocation>> entry : stockCardIdToSohByLocationList.entrySet()) {
+        UUID stockCardId = entry.getKey();
+        List<CalculatedStockOnHandByLocation> locations = entry.getValue();
+        if (locations.size() > 1) {
+          Integer sum = locations
+                  .stream()
+                  .map(CalculatedStockOnHandByLocation::getStockOnHand)
+                  .mapToInt(Integer::intValue)
+                  .sum();
+          CalculatedStockOnHand found = calculatedStockOnHands
+                  .stream()
+                  .filter(soh -> stockCardId.equals(
+                          soh.getStockCardId() == null ? soh.getStockCard().getId() : soh.getStockCardId()))
+                  .findFirst()
+                  .orElseThrow(() -> new EntityNotFoundException(
+                          "CalculatedStockOnHand not found with stockCardId " + stockCardId));
+          log.info("calculatedStockOnHandId: {}, sumOfLocationSoh: {}", found.getId(), sum);
+          found.setStockOnHand(sum);
+          calculatedStocksOnHandRepository.save(found);
+        }
+      }
+    } else {
+      // toSaveList not be the full set
+      List<CalculatedStockOnHandByLocation> allSohByLocations = calculatedStockOnHandByLocationRepository
+              .findPreviousLocationStockOnHandsTillNow(stockCardIds, date);
+      Set<String> keysForToSaveList = toSaveList.stream().map(this::getUniqueKey).collect(Collectors.toSet());
+
+      List<CalculatedStockOnHandByLocation> updatedAllSohByLocations = new ArrayList<>(toSaveList);
+      allSohByLocations.forEach(sohByLocation -> {
+        if (!keysForToSaveList.contains(getUniqueKey(sohByLocation))) {
+          updatedAllSohByLocations.add(sohByLocation);
+        }
+      });
+
+      // TODO duplicate code with previous if
+      Map<UUID, List<CalculatedStockOnHandByLocation>> stockCardIdToSohByLocationList = updatedAllSohByLocations
+              .stream()
+              .collect(Collectors.groupingBy(CalculatedStockOnHandByLocation::getStockCardId));
 
       for (Map.Entry<UUID, List<CalculatedStockOnHandByLocation>> entry : stockCardIdToSohByLocationList.entrySet()) {
         UUID stockCardId = entry.getKey();
@@ -469,6 +514,12 @@ public class CalculatedStocksOnHandByLocationService {
     return getString(lineItem.getOrderableId())
         + SEPARATOR
         + getString(lineItem.getLotId());
+  }
+
+  private String getUniqueKey(CalculatedStockOnHandByLocation sohByLocation) {
+    return getString(sohByLocation.getStockCardId())
+            + SEPARATOR
+            + getString(sohByLocation.getLocationCode());
   }
 
   private Set<String> getUniqueKeysFromMovement(StockCardLocationMovementLineItem movement) {
