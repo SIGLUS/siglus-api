@@ -33,6 +33,8 @@ import org.openlmis.referencedata.domain.ProcessingPeriod;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
+import org.siglus.common.domain.ProcessingPeriodExtension;
+import org.siglus.common.repository.ProcessingPeriodExtensionRepository;
 import org.siglus.siglusapi.domain.SiglusReportType;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.dto.android.constraint.RequisitionValidStartDate;
@@ -53,11 +55,13 @@ public class RequisitionValidStartDateValidator implements
   private final SiglusReportTypeRepository reportTypeRepository;
   private final SiglusRequisitionRepository requisitionRepository;
   private final ProcessingPeriodRepository periodRepository;
+  private final ProcessingPeriodExtensionRepository periodExtensionRepository;
   private final SyncUpHashRepository syncUpHashRepository;
 
   private static final String IS_SUBMITTED_PERIOD_INVALID = "isSubmittedPeriodInvalid";
   private static final String IS_PREVIOUS_REQUISITION_FAILED = "isPreviousRequisitionFailed";
   private static final String IS_CONFIGURE_PERIOD_INVALID = "isConfigurePeriodInvalid";
+  private static final String IS_PERIOD_CANNOT_SUBMIT_YET = "isPeriodCannotSubmittedYet";
 
   @Override
   public void initialize(RequisitionValidStartDate constraintAnnotation) {
@@ -72,6 +76,7 @@ public class RequisitionValidStartDateValidator implements
     actualContext.addExpressionVariable(IS_SUBMITTED_PERIOD_INVALID, false);
     actualContext.addExpressionVariable(IS_PREVIOUS_REQUISITION_FAILED, false);
     actualContext.addExpressionVariable(IS_CONFIGURE_PERIOD_INVALID, false);
+    actualContext.addExpressionVariable(IS_PERIOD_CANNOT_SUBMIT_YET, false);
     UUID homeFacilityId = user.getHomeFacilityId();
     boolean alreadySynced = syncUpHashRepository.findOne(value.getSyncUpHash(user)) != null;
     if (alreadySynced || Boolean.TRUE.equals(value.getEmergency())) {
@@ -111,6 +116,12 @@ public class RequisitionValidStartDateValidator implements
     ProcessingPeriod lastPeriod = periodRepository.findOne(lastRequisition.getProcessingPeriodId());
     if (isNotConsecutive(lastEndDate, value.getActualStartDate(), lastPeriod, period)) {
       actualContext.addExpressionVariable(IS_SUBMITTED_PERIOD_INVALID, true);
+      return false;
+    }
+
+    ProcessingPeriodExtension periodExtension = periodExtensionRepository.findByProcessingPeriodId(period.getId());
+    if (LocalDate.now().isBefore(periodExtension.getSubmitStartDate())) {
+      actualContext.addExpressionVariable(IS_PERIOD_CANNOT_SUBMIT_YET, true);
       return false;
     }
     return true;
