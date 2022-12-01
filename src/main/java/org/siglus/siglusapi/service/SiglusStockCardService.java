@@ -15,13 +15,11 @@
 
 package org.siglus.siglusapi.service;
 
-import static org.openlmis.stockmanagement.domain.reason.ReasonCategory.PHYSICAL_INVENTORY;
 import static org.siglus.siglusapi.dto.StockCardLineItemDtoComparators.byOccurredDate;
 import static org.siglus.siglusapi.dto.StockCardLineItemDtoComparators.byProcessedDate;
 import static org.siglus.siglusapi.dto.StockCardLineItemDtoComparators.byReasonPriority;
 
 import java.time.LocalDate;
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -136,41 +134,6 @@ public class SiglusStockCardService {
     return aggregateStockCards;
   }
 
-  private List<StockCardLineItemDto> mergePhysicalInventoryLineItems(List<StockCardLineItemDto> lineItemDtos) {
-    List<StockCardLineItemDto> merged = lineItemDtos.stream().filter(lineItem -> lineItem.getReason() != null
-            && lineItem.getReason().getReasonCategory() != PHYSICAL_INVENTORY).collect(Collectors.toList());
-
-    List<StockCardLineItemDto> physicalInventoryLineItems = lineItemDtos.stream()
-            .filter(lineItem -> lineItem.getReason() != null
-            && lineItem.getReason().getReasonCategory() == PHYSICAL_INVENTORY)
-            .collect(Collectors.toList());
-
-    Map<ZonedDateTime, List<StockCardLineItemDto>> groupByTime =
-            physicalInventoryLineItems.stream().collect(Collectors.groupingBy(StockCardLineItemDto::getProcessedDate));
-    groupByTime.forEach((time, lineItems) -> {
-      StockCardLineItemDto physicalInventoryLineItem = lineItems.get(0);
-      Integer sumQty = lineItems
-              .stream()
-              .map(StockCardLineItemDto::getQuantity)
-              .mapToInt(Integer::intValue)
-              .sum();
-      Integer sumQtyWithSign = lineItems
-              .stream()
-              .map(StockCardLineItemDto::getQuantityWithSign)
-              .mapToInt(Integer::intValue)
-              .sum();
-      physicalInventoryLineItem.setQuantity(sumQty);
-      physicalInventoryLineItem.setQuantityWithSign(sumQtyWithSign);
-      merged.add(physicalInventoryLineItem);
-    });
-
-    Comparator<StockCardLineItemDto> comparator = byOccurredDate()
-            .thenComparing(byProcessedDate())
-            .thenComparing(byReasonPriority());
-    merged.sort(comparator);
-    return merged;
-  }
-
   private StockCardDto findAggregateStockCards(List<StockCard> stockCards, boolean byLot) {
     List<StockCardDto> stockCardDtos = new ArrayList<>();
     List<StockCardLineItemDto> stockCardLineItemDtos = new ArrayList<>();
@@ -181,7 +144,6 @@ public class SiglusStockCardService {
               lineItemsSource.put(stockCardLineItem.getId(), stockCardLineItem));
       StockCardDto stockCardDto = stockCardStockManagementService.getStockCard(stockCard.getId());
       if (stockCardDto != null) {
-        stockCardDto.setLineItems(mergePhysicalInventoryLineItems(stockCardDto.getLineItems()));
         stockCardDtos.add(stockCardDto);
         stockCardLineItemDtos.addAll(stockCardDto.getLineItems());
       }
