@@ -1461,22 +1461,19 @@ public class SiglusRequisitionServiceTest {
     productDto.setId(orderableId);
     lineItemV2Dto.setId(requisitionLineItemId);
     lineItemV2Dto.setOrderable(productDto);
-    RegimenOrderable regimenOrderable = new RegimenOrderable();
-    regimenOrderable.setQuantity(1.0);
-    regimenOrderable.setRegimenCode("1alt1");
-    regimenOrderable.setOrderableCode("08S30ZY");
+    RegimenOrderable regimenOrderable = mockRegimenOrderable();
     when(regimenOrderableRepository.findByMappingKeyIn(newHashSet("1"))).thenReturn(newHashSet(regimenOrderable));
     Map<String, List<RegimenOrderable>> orderableCodeToRegimenOrderables = new HashMap<>();
     orderableCodeToRegimenOrderables.put(regimenOrderable.getOrderableCode(), newArrayList(regimenOrderable));
     Map<UUID, String> orderableIdToCode = new HashMap<>();
-    orderableIdToCode.put(orderableId, "");
+    orderableIdToCode.put(orderableId, regimenOrderable.getOrderableCode());
     Map<String, Integer> regimenCodeToPatientNumber = new HashMap<>();
-    regimenCodeToPatientNumber.put("1alt1", 1);
+    regimenCodeToPatientNumber.put(regimenOrderable.getRegimenCode(), 100);
     // when
     Integer estimatedOrRequestedQuantity = siglusRequisitionService.getEstimatedOrRequestedQuantity(lineItemV2Dto,
-        orderableCodeToRegimenOrderables, orderableIdToCode, regimenCodeToPatientNumber, 1, 1);
+        orderableCodeToRegimenOrderables, orderableIdToCode, regimenCodeToPatientNumber, 10, 10);
     // then
-    assertEquals(0, estimatedOrRequestedQuantity.intValue());
+    assertEquals(1000000, estimatedOrRequestedQuantity.intValue());
   }
 
   @Test
@@ -1762,7 +1759,7 @@ public class SiglusRequisitionServiceTest {
 
   private RegimenOrderable mockRegimenOrderable() {
     RegimenOrderable regimenOrderable = new RegimenOrderable();
-    regimenOrderable.setQuantity(1.0);
+    regimenOrderable.setQuantity(100.0);
     regimenOrderable.setRegimenCode("1alt2");
     regimenOrderable.setOrderableCode("08S40");
     return regimenOrderable;
