@@ -136,13 +136,22 @@ public class SiglusStockCardService {
     return aggregateStockCards;
   }
 
-  private List<StockCardLineItemDto> mergePhysicalInventoryLineItems(List<StockCardLineItemDto> lineItemDtos) {
+  public List<StockCardLineItemDto> mergePhysicalInventoryLineItems(List<StockCardLineItemDto> lineItemDtos,
+                                                                    Map<UUID, StockCardLineItem> lineItemsSource) {
+    lineItemDtos.forEach(lineItem -> {
+      StockCardLineItem lineitemSource = lineItemsSource.get(lineItem.getId());
+      if (lineitemSource != null) {
+        lineItem.setProcessedDate(lineitemSource.getProcessedDate());
+      }
+    });
+
     List<StockCardLineItemDto> merged = lineItemDtos.stream().filter(lineItem -> lineItem.getReason() != null
             && lineItem.getReason().getReasonCategory() != PHYSICAL_INVENTORY).collect(Collectors.toList());
 
     List<StockCardLineItemDto> physicalInventoryLineItems = lineItemDtos.stream()
             .filter(lineItem -> lineItem.getReason() != null
             && lineItem.getReason().getReasonCategory() == PHYSICAL_INVENTORY)
+            .filter(lineItem -> lineItem.getProcessedDate() != null)
             .collect(Collectors.toList());
 
     Map<ZonedDateTime, List<StockCardLineItemDto>> groupByTime =
@@ -181,7 +190,7 @@ public class SiglusStockCardService {
               lineItemsSource.put(stockCardLineItem.getId(), stockCardLineItem));
       StockCardDto stockCardDto = stockCardStockManagementService.getStockCard(stockCard.getId());
       if (stockCardDto != null) {
-        stockCardDto.setLineItems(mergePhysicalInventoryLineItems(stockCardDto.getLineItems()));
+        stockCardDto.setLineItems(mergePhysicalInventoryLineItems(stockCardDto.getLineItems(), lineItemsSource));
         stockCardDtos.add(stockCardDto);
         stockCardLineItemDtos.addAll(stockCardDto.getLineItems());
       }
