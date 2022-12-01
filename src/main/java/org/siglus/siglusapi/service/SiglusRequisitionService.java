@@ -20,6 +20,7 @@ import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
+import static org.openlmis.requisition.domain.requisition.Requisition.HC;
 import static org.openlmis.requisition.domain.requisition.RequisitionStatus.APPROVED;
 import static org.openlmis.requisition.domain.requisition.RequisitionStatus.AUTHORIZED;
 import static org.openlmis.requisition.domain.requisition.RequisitionStatus.IN_APPROVAL;
@@ -247,7 +248,9 @@ public class SiglusRequisitionService {
         physicalInventoryDateStr, request, response);
     SiglusRequisitionDto siglusRequisitionDto = siglusUsageReportService.initiateUsageReport(v2Dto);
 
-    initiateAndSaveRequisitionLineItems(siglusRequisitionDto, facilityId);
+    if (siglusRequisitionDto.getStatus().isSubmittable() && siglusUsageReportService.isSupplyFacilityType(facilityId)) {
+      initiateAndSaveRequisitionLineItems(siglusRequisitionDto);
+    }
 
     initiateRequisitionNumber(siglusRequisitionDto);
     List<BaseRequisitionLineItemDto> lineItems = siglusRequisitionDto.getLineItems();
@@ -260,23 +263,21 @@ public class SiglusRequisitionService {
     return siglusRequisitionDto;
   }
 
-  public void initiateAndSaveRequisitionLineItems(SiglusRequisitionDto siglusRequisitionDto, UUID facilityId) {
-    if (siglusRequisitionDto.getStatus().isSubmittable() && siglusUsageReportService.isSupplyFacilityType(facilityId)) {
-      Map<UUID, Integer> requisitionLineItemIdToRequestedQuantity = calcEstimatedOrRequestedQuantity(
-          siglusRequisitionDto, REQUESTED_QUANTITY);
+  public void initiateAndSaveRequisitionLineItems(SiglusRequisitionDto siglusRequisitionDto) {
+    Map<UUID, Integer> requisitionLineItemIdToRequestedQuantity = calcEstimatedOrRequestedQuantity(
+        siglusRequisitionDto, REQUESTED_QUANTITY);
 
-      Set<RequisitionLineItem> requisitionLineItems = new HashSet<>();
-      if (!requisitionLineItemIdToRequestedQuantity.keySet().isEmpty()) {
-        requisitionLineItems = requisitionLineItemRepository.findAllById(
-            requisitionLineItemIdToRequestedQuantity.keySet());
-      }
-
-      requisitionLineItems.forEach(requisitionLineItem ->
-          requisitionLineItem.setRequestedQuantity(
-              requisitionLineItemIdToRequestedQuantity.get(requisitionLineItem.getId()))
-      );
-      requisitionLineItemRepository.save(requisitionLineItems);
+    Set<RequisitionLineItem> requisitionLineItems = new HashSet<>();
+    if (CollectionUtils.isNotEmpty(requisitionLineItemIdToRequestedQuantity.keySet())) {
+      requisitionLineItems = requisitionLineItemRepository.findAllById(
+          requisitionLineItemIdToRequestedQuantity.keySet());
     }
+
+    requisitionLineItems.forEach(requisitionLineItem ->
+        requisitionLineItem.setRequestedQuantity(
+            requisitionLineItemIdToRequestedQuantity.get(requisitionLineItem.getId()))
+    );
+    requisitionLineItemRepository.save(requisitionLineItems);
   }
 
   @Transactional
@@ -709,13 +710,28 @@ public class SiglusRequisitionService {
 
   private List<RequisitionLineItemDraft> setRequisitionLineItemDraft(SiglusRequisitionDto siglusRequisitionDto,
       RequisitionDraft requisitionDraft) {
+    List<RequisitionLineItemDraft> requisitionDraftLineItems = requisitionDraft.getLineItems();
+
+    if (isHcFacilityType(siglusRequisitionDto.getFacilityId())) {
+      Map<UUID, Integer> requisitionLineItemIdToRequestedQuantity = calcEstimatedOrRequestedQuantity(
+          siglusRequisitionDto, REQUESTED_QUANTITY);
+      requisitionDraftLineItems.forEach(requisitionLineItemDraft ->
+          requisitionLineItemDraft.setRequestedQuantity(
+              requisitionLineItemIdToRequestedQuantity.get(requisitionLineItemDraft.getRequisitionLineItemId())));
+      return requisitionDraftLineItems;
+    }
+
     Map<UUID, Integer> requisitionLineItemIdToEstimatedQuantity = calcEstimatedOrRequestedQuantity(
         siglusRequisitionDto, DRAFT_ESTIMATED_QUANTITY);
-    List<RequisitionLineItemDraft> requisitionDraftLineItems = requisitionDraft.getLineItems();
     requisitionDraftLineItems.forEach(requisitionLineItemDraft ->
         requisitionLineItemDraft.setEstimatedQuantity(
             requisitionLineItemIdToEstimatedQuantity.get(requisitionLineItemDraft.getRequisitionLineItemId())));
     return requisitionDraftLineItems;
+  }
+
+  public boolean isHcFacilityType(UUID facilityId) {
+    String facilityTypeCode = facilityReferenceDataService.findOne(facilityId).getType().getCode();
+    return Objects.equals(HC, facilityTypeCode);
   }
 
   private SiglusRequisitionDto saveRequisitionWithoutValidation(UUID requisitionId,
@@ -1061,12 +1077,15 @@ public class SiglusRequisitionService {
           updateExtension.add(extension);
         }
       });
-
       if (siglusRequisitionDto.getStatus().duringApproval()) {
         Map<UUID, Integer> extensionLineItemIdToEstimatedQuantity =
             calcEstimatedOrRequestedQuantity(siglusRequisitionDto, ESTIMATED_QUANTITY);
         updateExtension.forEach(extension -> extension.setEstimatedQuantity(
             extensionLineItemIdToEstimatedQuantity.get(extension.getId())));
+      }
+
+      if (isHcFacilityType(siglusRequisitionDto.getFacilityId())) {
+        initiateAndSaveRequisitionLineItems(siglusRequisitionDto);
       }
 
       log.info("lineItem Extension Repository {}", updateExtension);
