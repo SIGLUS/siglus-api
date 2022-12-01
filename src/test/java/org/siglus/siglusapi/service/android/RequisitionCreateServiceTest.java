@@ -652,7 +652,7 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     SiglusRequisitionDto siglusRequisitionDto2 = buildSiglusRequisitionDto();
     RequisitionLineItemV2Dto lineItemV2Dto = buildRequisitionLineItemV2Dto();
     siglusRequisitionDto2.setRequisitionLineItems(singletonList(lineItemV2Dto));
-    siglusRequisitionService.initiateAndSaveRequisitionLineItems(siglusRequisitionDto2);
+    siglusRequisitionService.initiateAndSaveRequisitionLineItems(siglusRequisitionDto2, UUID.randomUUID());
 
     // when
     service.createRequisition(parseParam("buildMmtbRequisitionCreateRequest.json"));
