@@ -22,14 +22,11 @@ import static org.mockito.Matchers.any;
 import static org.powermock.api.mockito.PowerMockito.when;
 
 import java.time.LocalDate;
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -47,8 +44,6 @@ import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
 import org.openlmis.stockmanagement.domain.event.CalculatedStockOnHand;
-import org.openlmis.stockmanagement.domain.reason.ReasonCategory;
-import org.openlmis.stockmanagement.domain.reason.ReasonType;
 import org.openlmis.stockmanagement.domain.sourcedestination.Node;
 import org.openlmis.stockmanagement.dto.StockCardDto;
 import org.openlmis.stockmanagement.dto.StockCardLineItemDto;
@@ -154,44 +149,6 @@ public class SiglusStockCardServiceTest {
         .findFirstByStockCardIdAndOccurredDateLessThanEqualOrderByOccurredDateDesc(any(UUID.class),
             any(LocalDate.class))).thenReturn(Optional.of(calculatedStockOnHand));
     Mockito.when(dateHelper.getCurrentDate()).thenReturn(CURRENT_DATE);
-  }
-
-  @Test
-  public void shouldReturnMergedPhysicalInventoryItemDtoWhenViewByLotWithLocation() {
-    UUID lineId1 = UUID.randomUUID();
-    UUID lineId2 = UUID.randomUUID();
-    ZonedDateTime physicalInventoryTime = ZonedDateTime.now();
-    StockCardLineItem source1 = StockCardLineItem.builder().processedDate(physicalInventoryTime).build();
-    Map<UUID, StockCardLineItem> lineItemsSource = new HashMap<>();
-    lineItemsSource.put(lineId1, source1);
-    lineItemsSource.put(lineId2, source1);
-
-    StockCardLineItemReasonDto credit = new StockCardLineItemReasonDto();
-    credit.setCategory(ReasonCategory.PHYSICAL_INVENTORY.toString());
-    credit.setReasonType(ReasonType.CREDIT);
-
-    StockCardLineItemDto physcical1 = StockCardLineItemDto
-            .builder()
-            .quantity(200)
-            .quantityWithSign(200)
-            .stockOnHand(200)
-            .reason(credit)
-            .build();
-    physcical1.setId(lineId1);
-    StockCardLineItemDto physcical2 = StockCardLineItemDto
-            .builder()
-            .quantity(500)
-            .quantityWithSign(500)
-            .stockOnHand(500)
-            .reason(credit)
-            .build();
-    physcical2.setId(lineId2);
-    List<StockCardLineItemDto> merged = siglusStockCardService.mergePhysicalInventoryLineItems(
-            Arrays.asList(physcical1, physcical2), lineItemsSource);
-
-    assertEquals(1, merged.size());
-    StockCardLineItemDto physicalMergedLine = merged.get(0);
-    assertEquals(700, physicalMergedLine.getQuantity().intValue());
   }
 
   @Test
