@@ -823,7 +823,7 @@ public class SiglusRequisitionService {
     calcEstimatedQuantityForMmitAndMmtb(siglusRequisitionDto, extensions, mappingKeyToPatientNumber, calcType);
   }
 
-  private void calcEstimatedQuantityForMmitAndMmtb(SiglusRequisitionDto siglusRequisitionDto,
+  public void calcEstimatedQuantityForMmitAndMmtb(SiglusRequisitionDto siglusRequisitionDto,
       List<RequisitionLineItemExtension> extensions, Map<String, Integer> mappingKeyToPatientNumber, String calcType) {
 
     Set<RegimenOrderable> regimenOrderables = new HashSet<>();
@@ -909,7 +909,7 @@ public class SiglusRequisitionService {
     return regimenCodeToPatientNumber;
   }
 
-  private Map<String, Integer> getMappingKeyToPatientNumberForMmtb(SiglusRequisitionDto siglusRequisitionDto) {
+  public Map<String, Integer> getMappingKeyToPatientNumberForMmtb(SiglusRequisitionDto siglusRequisitionDto) {
     Map<String, Integer> mappingKeyToPatientNumber = new HashMap<>();
     Set<String> existedMappingKeys = regimenOrderableRepository.findByExistedMappingKey();
     List<PatientGroupDto> patientGroupDtos = siglusRequisitionDto.getPatientLineItems();
@@ -934,7 +934,7 @@ public class SiglusRequisitionService {
     calcEstimatedQuantityForMmitAndMmtb(siglusRequisitionDto, extensions, mappingKeyToPatientNumber, calcType);
   }
 
-  private Map<String, Integer> getMappingKeyToPatientNumberForMmit(SiglusRequisitionDto siglusRequisitionDto) {
+  public Map<String, Integer> getMappingKeyToPatientNumberForMmit(SiglusRequisitionDto siglusRequisitionDto) {
     Map<String, Integer> mappingKeyToPatientNumber = new HashMap<>();
     Set<String> existedMappingKeys = regimenOrderableRepository.findByExistedMappingKey();
     List<TestConsumptionServiceDto> testConsumptionServiceDtos = siglusRequisitionDto.getTestConsumptionLineItems();

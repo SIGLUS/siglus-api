@@ -159,10 +159,15 @@ import org.siglus.siglusapi.domain.RequisitionLineItemExtension;
 import org.siglus.siglusapi.domain.TestConsumptionLineItemDraft;
 import org.siglus.siglusapi.domain.UsageInformationLineItemDraft;
 import org.siglus.siglusapi.dto.OrderableExpirationDateDto;
+import org.siglus.siglusapi.dto.PatientColumnDto;
+import org.siglus.siglusapi.dto.PatientGroupDto;
 import org.siglus.siglusapi.dto.RegimenDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionLineItemDto;
 import org.siglus.siglusapi.dto.SimpleRequisitionDto;
+import org.siglus.siglusapi.dto.TestConsumptionOutcomeDto;
+import org.siglus.siglusapi.dto.TestConsumptionProjectDto;
+import org.siglus.siglusapi.dto.TestConsumptionServiceDto;
 import org.siglus.siglusapi.i18n.MessageService;
 import org.siglus.siglusapi.repository.FacilityExtensionRepository;
 import org.siglus.siglusapi.repository.NotSubmittedMonthlyRequisitionsRepository;
@@ -1343,6 +1348,110 @@ public class SiglusRequisitionServiceTest {
     // then
     assertEquals(0, estimatedOrRequestedQuantity.intValue());
   }
+
+
+  @Test
+  public void shouldGetMappingKeyToPatientNumberForMmtb() {
+    // given
+    siglusRequisitionDto.setPatientLineItems(newArrayList(mockPatientGroupDto()));
+    when(regimenOrderableRepository.findByExistedMappingKey()).thenReturn(
+        newHashSet("newSection2&new"));
+    // when
+    Map<String, Integer> mappingKeyToPatientNumberForMmtb = siglusRequisitionService.getMappingKeyToPatientNumberForMmtb(
+        siglusRequisitionDto);
+    // then
+    assertEquals(1, mappingKeyToPatientNumberForMmtb.size());
+
+    // given
+    siglusRequisitionDto.setPatientLineItems(newArrayList(mockPatientGroupDto2()));
+    when(regimenOrderableRepository.findByExistedMappingKey()).thenReturn(
+        newHashSet("newSection2&new"));
+    // when
+    Map<String, Integer> mappingKeyToPatientNumberForMmtb2 = siglusRequisitionService.getMappingKeyToPatientNumberForMmtb(
+        siglusRequisitionDto);
+    // then
+    assertEquals(0, mappingKeyToPatientNumberForMmtb2.size());
+  }
+
+  private PatientGroupDto mockPatientGroupDto() {
+    PatientGroupDto patientGroupDto = new PatientGroupDto();
+    patientGroupDto.setName("newSection2");
+    Map<String, PatientColumnDto> columnDtoMap = new HashMap<>();
+    PatientColumnDto patientColumnDto = new PatientColumnDto();
+    columnDtoMap.put("new", patientColumnDto);
+    patientGroupDto.setColumns(columnDtoMap);
+    return patientGroupDto;
+  }
+
+  private PatientGroupDto mockPatientGroupDto2() {
+    PatientGroupDto patientGroupDto = new PatientGroupDto();
+    patientGroupDto.setName("newSection3");
+    Map<String, PatientColumnDto> columnDtoMap = new HashMap<>();
+    PatientColumnDto patientColumnDto = new PatientColumnDto();
+    columnDtoMap.put("new", patientColumnDto);
+    patientGroupDto.setColumns(columnDtoMap);
+    return patientGroupDto;
+  }
+
+  @Test
+  public void shouldGetMappingKeyToPatientNumberForMmit() {
+    // given
+    siglusRequisitionDto.setTestConsumptionLineItems(newArrayList(mockTestConsumptionServiceDto()));
+    when(regimenOrderableRepository.findByExistedMappingKey()).thenReturn(
+        newHashSet("APES&newColumn2&consumo"));
+    // when
+    Map<String, Integer> mappingKeyToPatientNumberForMmit = siglusRequisitionService.getMappingKeyToPatientNumberForMmit(
+        siglusRequisitionDto);
+    // then
+    assertEquals(1, mappingKeyToPatientNumberForMmit.size());
+
+    // given
+    siglusRequisitionDto.setTestConsumptionLineItems(newArrayList(mockTestConsumptionServiceDto2()));
+    when(regimenOrderableRepository.findByExistedMappingKey()).thenReturn(
+        newHashSet("APES&newColumn2&consumo"));
+    // when
+    Map<String, Integer> mappingKeyToPatientNumberForMmit2 = siglusRequisitionService.getMappingKeyToPatientNumberForMmit(
+        siglusRequisitionDto);
+    // then
+    assertEquals(0, mappingKeyToPatientNumberForMmit2.size());
+  }
+
+  private TestConsumptionServiceDto mockTestConsumptionServiceDto() {
+    TestConsumptionServiceDto testConsumptionServiceDto = new TestConsumptionServiceDto();
+    testConsumptionServiceDto.setService("APES");
+
+    TestConsumptionProjectDto testConsumptionProjectDto = new TestConsumptionProjectDto();
+    testConsumptionProjectDto.setProject("newColumn2");
+    Map<String, TestConsumptionOutcomeDto> outcomeDtoMap = new HashMap<>();
+    TestConsumptionOutcomeDto testConsumptionOutcomeDto = new TestConsumptionOutcomeDto();
+    testConsumptionOutcomeDto.setOutcome("consumo");
+    outcomeDtoMap.put("key2", testConsumptionOutcomeDto);
+    testConsumptionProjectDto.setOutcomes(outcomeDtoMap);
+
+    Map<String, TestConsumptionProjectDto> projectDtoMap = new HashMap<>();
+    projectDtoMap.put("key1", testConsumptionProjectDto);
+    testConsumptionServiceDto.setProjects(projectDtoMap);
+    return testConsumptionServiceDto;
+  }
+
+  private TestConsumptionServiceDto mockTestConsumptionServiceDto2() {
+    TestConsumptionServiceDto testConsumptionServiceDto = new TestConsumptionServiceDto();
+    testConsumptionServiceDto.setService("APES");
+
+    TestConsumptionProjectDto testConsumptionProjectDto = new TestConsumptionProjectDto();
+    testConsumptionProjectDto.setProject("newColumn3");
+    Map<String, TestConsumptionOutcomeDto> outcomeDtoMap = new HashMap<>();
+    TestConsumptionOutcomeDto testConsumptionOutcomeDto = new TestConsumptionOutcomeDto();
+    testConsumptionOutcomeDto.setOutcome("consumo");
+    outcomeDtoMap.put("key2", testConsumptionOutcomeDto);
+    testConsumptionProjectDto.setOutcomes(outcomeDtoMap);
+
+    Map<String, TestConsumptionProjectDto> projectDtoMap = new HashMap<>();
+    projectDtoMap.put("key1", testConsumptionProjectDto);
+    testConsumptionServiceDto.setProjects(projectDtoMap);
+    return testConsumptionServiceDto;
+  }
+
 
   @Test
   public void shouldGetEstimatedOrRequestedQuantityV2() {
