@@ -788,10 +788,6 @@ public class SiglusRequisitionServiceTest {
         .thenReturn(singletonList(requisitionLineItemExtension));
     when(siglusUsageReportService.saveUsageReport(siglusRequisitionDto, requisitionV2Dto))
         .thenReturn(updatedDto);
-    FacilityTypeDto facilityTypeDto = new FacilityTypeDto();
-    facilityTypeDto.setCode("HC");
-    facilityDto.setType(facilityTypeDto);
-    when(facilityReferenceDataService.findOne(facilityId)).thenReturn(facilityDto);
 
     // when
     SiglusRequisitionDto requisitionDto =
@@ -1181,10 +1177,6 @@ public class SiglusRequisitionServiceTest {
     when(regimenOrderableRepository.findByMappingKeyIn(newHashSet("1"))).thenReturn(newHashSet(regimenOrderable));
     Orderable orderable = new Orderable();
     when(orderableRepository.findAllByIds(newHashSet(orderableId))).thenReturn(newArrayList(orderable));
-    FacilityTypeDto facilityTypeDto = new FacilityTypeDto();
-    facilityTypeDto.setCode("HC");
-    facilityDto.setType(facilityTypeDto);
-    when(facilityReferenceDataService.findOne(facilityId)).thenReturn(facilityDto);
 
     // when
     SiglusRequisitionDto requisitionDto = siglusRequisitionService.updateRequisition(
@@ -1425,7 +1417,7 @@ public class SiglusRequisitionServiceTest {
     siglusRequisitionDto.setRequisitionLineItems(newArrayList(lineItem));
     when(siglusUsageReportService.isSupplyFacilityType(facilityId)).thenReturn(true);
     // when
-    siglusRequisitionService.initiateAndSaveRequisitionLineItems(siglusRequisitionDto);
+    siglusRequisitionService.initiateAndSaveRequisitionLineItems(siglusRequisitionDto, facilityId);
     // then
     verify(requisitionLineItemRepository, times(2)).findAllById(newHashSet(lineItem.getId()));
   }
