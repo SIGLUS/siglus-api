@@ -119,7 +119,8 @@ public class CalculateCmmServiceTest {
     calculateCmmService.calculateAllWebCmm(LocalDate.of(oneYearAgo.getYear(), 8, 21));
 
     // then
-    verify(facilityCmmsRepository, times(0)).save(anyList());
+    // verify(facilityCmmsRepository, times(0)).save(anyList());
+    verify(facilityCmmsRepository, times(1)).save(anyList());
   }
 
   @Test
