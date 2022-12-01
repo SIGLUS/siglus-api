@@ -185,6 +185,7 @@ import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.util.SupportedProgramsHelper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 import org.springframework.validation.annotation.Validated;
 
 @Service
@@ -521,9 +522,11 @@ public class RequisitionCreateService {
     dto.setProcessingPeriod(new ObjectReferenceDto(requisition.getProcessingPeriodId(), "", PROCESSING_PERIODS));
     dto.setProgram(new ObjectReferenceDto(requisition.getProgramId(), "", PROGRAMS));
     List<RequisitionLineItem> requisitionLineItems = requisition.getRequisitionLineItems();
-    List<RequisitionLineItemV2Dto> requisitionLineItemV2Dtos = requisitionLineItems.stream().map(
-        this::requisitionLineItemToRequisitionLineItemV2Dto).collect(Collectors.toList());
-    dto.setRequisitionLineItems(requisitionLineItemV2Dtos);
+    if (!CollectionUtils.isEmpty(requisitionLineItems)) {
+      List<RequisitionLineItemV2Dto> requisitionLineItemV2Dtos = requisitionLineItems.stream().map(
+          this::requisitionLineItemToRequisitionLineItemV2Dto).collect(Collectors.toList());
+      dto.setRequisitionLineItems(requisitionLineItemV2Dtos);
+    }
     buildAvailableProducts(dto, requisition);
     SiglusRequisitionDto requisitionDto = siglusUsageReportService.initiateUsageReport(dto);
     if (VIA_PROGRAM_CODE.equals(programCode)) {
