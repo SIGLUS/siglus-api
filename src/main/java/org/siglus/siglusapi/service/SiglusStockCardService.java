@@ -15,11 +15,13 @@
 
 package org.siglus.siglusapi.service;
 
+import static org.openlmis.stockmanagement.domain.reason.ReasonCategory.PHYSICAL_INVENTORY;
 import static org.siglus.siglusapi.dto.StockCardLineItemDtoComparators.byOccurredDate;
 import static org.siglus.siglusapi.dto.StockCardLineItemDtoComparators.byProcessedDate;
 import static org.siglus.siglusapi.dto.StockCardLineItemDtoComparators.byReasonPriority;
 
 import java.time.LocalDate;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -118,7 +120,7 @@ public class SiglusStockCardService {
     if (null == stockCard) {
       return null;
     }
-    StockCardDto aggregateStockCards = findAggregateStockCards(Collections.singletonList(stockCard), true);
+    StockCardDto aggregateStockCards = findAggregateStockCardsForLocation(Collections.singletonList(stockCard), true);
     List<LotLocationSohDto> locationSoh =
         calculatedStockOnHandByLocationRepository.getLocationSohByStockCard(stockCardId);
     String locationCodes =
@@ -132,6 +134,92 @@ public class SiglusStockCardService {
     locationMap.put(LOCATION_KEY, locationCodes);
     aggregateStockCards.setExtraData(locationMap);
     return aggregateStockCards;
+  }
+
+  public List<StockCardLineItemDto> mergePhysicalInventoryLineItems(List<StockCardLineItemDto> lineItemDtos,
+                                                                    Map<UUID, StockCardLineItem> lineItemsSource) {
+    lineItemDtos.forEach(lineItem -> {
+      StockCardLineItem lineitemSource = lineItemsSource.get(lineItem.getId());
+      if (lineitemSource != null) {
+        lineItem.setProcessedDate(lineitemSource.getProcessedDate());
+        lineItem.setQuantity(lineitemSource.getQuantity());
+        lineItem.setQuantityWithSign(lineitemSource.getQuantityWithSign());
+        lineItem.setStockCard(lineitemSource.getStockCard());
+      }
+    });
+
+    List<StockCardLineItemDto> merged = new ArrayList<>();
+    List<StockCardLineItemDto> physicalInventoryLineItems = new ArrayList<>();
+    for (StockCardLineItemDto lineItem : lineItemDtos) {
+      if (lineItem.getReason() != null
+              && lineItem.getReason().getReasonCategory() == PHYSICAL_INVENTORY) {
+        physicalInventoryLineItems.add(lineItem);
+      } else {
+        merged.add(lineItem);
+      }
+    }
+
+    Map<ZonedDateTime, List<StockCardLineItemDto>> groupByTime =
+            physicalInventoryLineItems.stream().collect(Collectors.groupingBy(StockCardLineItemDto::getProcessedDate));
+    groupByTime.forEach((time, lineItems) -> {
+      StockCardLineItemDto physicalInventoryLineItem = lineItems.get(0);
+      Integer sumQty = lineItems
+              .stream()
+              .map(StockCardLineItemDto::getQuantity)
+              .mapToInt(Integer::intValue)
+              .sum();
+      Integer sumQtyWithSign = lineItems
+              .stream()
+              .map(StockCardLineItemDto::getQuantityWithSign)
+              .mapToInt(Integer::intValue)
+              .sum();
+      physicalInventoryLineItem.setQuantity(sumQty);
+      physicalInventoryLineItem.setQuantityWithSign(sumQtyWithSign);
+      merged.add(physicalInventoryLineItem);
+    });
+
+    Comparator<StockCardLineItemDto> comparator = byOccurredDate()
+            .thenComparing(byProcessedDate())
+            .thenComparing(byReasonPriority());
+    merged.sort(comparator);
+
+    int prevSoH = 0;
+    for (StockCardLineItemDto lineItem : merged) {
+      if (lineItem.getReason() != null && lineItem.getReason().getReasonCategory() == PHYSICAL_INVENTORY) {
+        lineItem.setStockOnHand(lineItem.getQuantity());
+      } else {
+        lineItem.setStockOnHand(prevSoH + lineItem.getQuantityWithSign());
+      }
+      prevSoH = lineItem.getStockOnHand();
+    }
+    return merged;
+  }
+
+  private StockCardDto findAggregateStockCardsForLocation(List<StockCard> stockCards, boolean byLot) {
+    List<StockCardDto> stockCardDtos = new ArrayList<>();
+    List<StockCardLineItemDto> calculateNewLineItemDtos = new ArrayList<>();
+    Map<UUID, StockCardLineItem> lineItemsSource = new HashMap<>();
+    for (StockCard stockCard : stockCards) {
+      stockCard.getLineItems()
+              .forEach(stockCardLineItem ->
+                      lineItemsSource.put(stockCardLineItem.getId(), stockCardLineItem));
+      StockCardDto stockCardDto = stockCardStockManagementService.getStockCard(stockCard.getId());
+      if (stockCardDto != null) {
+        stockCardDto.setLineItems(mergePhysicalInventoryLineItems(stockCardDto.getLineItems(), lineItemsSource));
+        stockCardDtos.add(stockCardDto);
+        calculateNewLineItemDtos.addAll(stockCardDto.getLineItems());
+      }
+    }
+    if (!androidHelper.isAndroid()) {
+      addCreateInventory(calculateNewLineItemDtos, stockCards);
+    }
+    List<StockCardLineItemDto> reasonFilter = calculateNewLineItemDtos.stream().peek(dto -> {
+      if (dto.getSource() != null || dto.getDestination() != null) {
+        dto.setReason(null);
+      }
+    }).collect(Collectors.toList());
+
+    return createStockCardDto(stockCardDtos, reasonFilter, byLot);
   }
 
   private StockCardDto findAggregateStockCards(List<StockCard> stockCards, boolean byLot) {
