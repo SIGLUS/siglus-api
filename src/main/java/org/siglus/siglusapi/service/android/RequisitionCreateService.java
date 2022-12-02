@@ -374,6 +374,9 @@ public class RequisitionCreateService {
 
   private UUID getPeriodId(RequisitionCreateRequest request) {
     YearMonth month = request.getActualStartDate().query(YearMonth::from);
+    if (request.getEmergency()) {
+      month = month.minusMonths(1);
+    }
     return processingPeriodRepository.findPeriodByCodeAndMonth(SCHEDULE_CODE, month)
         .map(ProcessingPeriod::getId)
         .orElseThrow(EntityNotFoundException::new);
