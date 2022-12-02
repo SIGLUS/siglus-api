@@ -17,6 +17,7 @@ package org.siglus.siglusapi.localmachine.webapi;
 
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_NOT_ACTIVATED_YET;
 
+import java.time.ZonedDateTime;
 import javax.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -85,13 +86,13 @@ public class LocalAgentController {
   @GetMapping("/basicInfo")
   public LocalMachineBasicInfo getLocalMachineBasicInfo() {
     return LocalMachineBasicInfo.builder()
-        .isConnectedOnlineWeb(machine.isConnectedOnlineWeb())
+        .isConnectedOnlineWeb(false)
         .localMachineVersion(localMachineVersion)
         .build();
   }
 
   @PostMapping("/sync")
   public LocalSyncResultsResponse doSyncAndGetResults() {
-    return syncErrorService.doSync();
+    return new LocalSyncResultsResponse(ZonedDateTime.now(), null);
   }
 }

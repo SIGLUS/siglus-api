@@ -38,7 +38,6 @@ public class Synchronizer {
   @Scheduled(fixedRate = 60 * 1000, initialDelay = 60 * 1000)
   public void scheduledSync() {
     log.info("start scheduled synchronization with online web");
-    this.sync();
   }
 
   public void sync() {
