@@ -365,17 +365,24 @@ public class RequisitionInternalApproveReplayer {
     log.info("requisition line size: {}", requisition.getRequisitionLineItems().size());
     List<RequisitionLineItemExtension> extensions = new ArrayList<>();
 
-    requisition.getRequisitionLineItems().forEach(requisitionLineItem -> {
-      RequisitionLineItemExtension requisitionLineItemExtension =
-          requisitionLineItemExtensionMap.getOrDefault(requisitionLineItem.getOrderable().getId(),
-              new RequisitionLineItemExtension());
+    requisition
+        .getRequisitionLineItems()
+        .forEach(
+            requisitionLineItem -> {
+              RequisitionLineItemExtension requisitionLineItemExtension =
+                  requisitionLineItemExtensionMap.getOrDefault(
+                      requisitionLineItem.getOrderable().getId(),
+                      new RequisitionLineItemExtension());
 
-      RequisitionLineItemExtension newExtension = new RequisitionLineItemExtension();
-      newExtension.setRequisitionLineItemId(requisitionLineItem.getId());
-      newExtension.setAuthorizedQuantity(requisitionLineItemExtension.getAuthorizedQuantity());
-      newExtension.setExpirationDate(requisitionLineItemExtension.getExpirationDate());
-      extensions.add(newExtension);
-    });
+              RequisitionLineItemExtension newExtension =
+                  new RequisitionLineItemExtension(
+                      requisitionLineItem.getId(),
+                      requisitionLineItemExtension.getAuthorizedQuantity(),
+                      requisitionLineItemExtension.getSuggestedQuantity(),
+                      requisitionLineItemExtension.getEstimatedQuantity(),
+                      requisitionLineItemExtension.getExpirationDate());
+              extensions.add(newExtension);
+            });
     requisitionLineItemExtensionRepository.save(extensions);
     requisitionLineItemExtensionRepository.flush();
   }
