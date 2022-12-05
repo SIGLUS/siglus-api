@@ -42,6 +42,6 @@ public class FcProofOfDeliveryDto {
 
   private String receivedBy;
 
-  private List<FcProofOfDeliveryProductDto> products;
+  private List<FcProofOfDeliveryLineItem> podLineItems;
 
 }
