@@ -27,6 +27,7 @@ import static org.siglus.siglusapi.constant.FieldConstants.VALUE;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.TestConsumptionLineItems.TOTAL;
 
 import com.google.common.collect.ImmutableMap;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.HashSet;
@@ -39,6 +40,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.collections.CollectionUtils;
+import org.openlmis.fulfillment.domain.BaseEntity;
 import org.openlmis.fulfillment.domain.ProofOfDelivery;
 import org.openlmis.fulfillment.domain.ProofOfDeliveryLineItem;
 import org.openlmis.fulfillment.domain.Shipment;
@@ -63,6 +65,7 @@ import org.siglus.common.repository.OrderExternalRepository;
 import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
 import org.siglus.siglusapi.constant.FacilityTypeConstants;
 import org.siglus.siglusapi.constant.ProgramConstants;
+import org.siglus.siglusapi.domain.OrderLineItemExtension;
 import org.siglus.siglusapi.domain.PatientLineItem;
 import org.siglus.siglusapi.domain.ProgramOrderablesExtension;
 import org.siglus.siglusapi.domain.ProgramRealProgram;
@@ -73,7 +76,7 @@ import org.siglus.siglusapi.domain.UsageInformationLineItem;
 import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.FacilityTypeDto;
 import org.siglus.siglusapi.dto.FcProofOfDeliveryDto;
-import org.siglus.siglusapi.dto.FcProofOfDeliveryProductDto;
+import org.siglus.siglusapi.dto.FcProofOfDeliveryLineItem;
 import org.siglus.siglusapi.dto.FcRequisitionDto;
 import org.siglus.siglusapi.dto.FcRequisitionLineItemDto;
 import org.siglus.siglusapi.dto.LotDto;
@@ -94,8 +97,10 @@ import org.siglus.siglusapi.dto.fc.FacilityStockMovementResponse;
 import org.siglus.siglusapi.dto.fc.FacilityStockOnHandResponse;
 import org.siglus.siglusapi.dto.fc.ProductStockOnHandResponse;
 import org.siglus.siglusapi.repository.FacilityNativeRepository;
+import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.PatientLineItemRepository;
 import org.siglus.siglusapi.repository.ProgramOrderablesExtensionRepository;
+import org.siglus.siglusapi.repository.ProgramOrderablesRepository;
 import org.siglus.siglusapi.repository.ProgramRealProgramRepository;
 import org.siglus.siglusapi.repository.RequisitionLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.ShipmentsExtensionRepository;
@@ -105,6 +110,7 @@ import org.siglus.siglusapi.repository.StockManagementRepository;
 import org.siglus.siglusapi.repository.SupervisoryNodeRepository;
 import org.siglus.siglusapi.repository.TestConsumptionLineItemRepository;
 import org.siglus.siglusapi.repository.UsageInformationLineItemRepository;
+import org.siglus.siglusapi.repository.dto.ProgramOrderableDto;
 import org.siglus.siglusapi.service.android.mapper.ProductMovementMapper;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusFacilityTypeReferenceDataService;
@@ -136,6 +142,8 @@ public class SiglusFcIntegrationService {
   private final SiglusOrderableReferenceDataService orderableReferenceDataService;
   private final ProgramOrderablesExtensionRepository programOrderablesExtensionRepository;
   private final RequisitionLineItemExtensionRepository lineItemExtensionRepository;
+  private final ProgramOrderablesRepository programOrderablesRepository;
+  private final OrderLineItemExtensionRepository orderLineItemExtensionRepository;
   private final RequisitionTemplateExtensionRepository requisitionTemplateExtensionRepository;
   private final SiglusUsageReportService siglusUsageReportService;
   private final SiglusRequisitionRequisitionService siglusRequisitionRequisitionService;
@@ -327,19 +335,47 @@ public class SiglusFcIntegrationService {
   private FcProofOfDeliveryDto buildProofOfDeliveryDto(ProofOfDelivery pod,
       ProofOfDeliverParameter proofOfDeliverParameter) {
 
+    Map<UUID, Long> productIdToOrderedQuantityMap = newHashMap();
+
+    pod.getShipment().getOrder().getOrderLineItems()
+        .forEach(orderLineItem -> productIdToOrderedQuantityMap.put(orderLineItem.getOrderable().getId(),
+            orderLineItem.getOrderedQuantity()));
+
+    Set<UUID> orderLineItemIds = pod.getShipment().getOrder().getOrderLineItems()
+        .stream()
+        .map(BaseEntity::getId)
+        .collect(toSet());
+
+    Map<UUID, Long> orderLineItemIdToPartialFulfilledMap = orderLineItemExtensionRepository.findByOrderLineItemIdIn(
+        orderLineItemIds).stream().collect(
+        toMap(OrderLineItemExtension::getOrderLineItemId, OrderLineItemExtension::getPartialFulfilledQuantity));
+
+    Map<UUID, Long> productIdToPartialFulfilledMap = newHashMap();
+    pod.getShipment().getOrder().getOrderLineItems()
+        .forEach(orderLineItem -> orderLineItemIdToPartialFulfilledMap.put(orderLineItem.getOrderable().getId(),
+            orderLineItemIdToPartialFulfilledMap.get(orderLineItem.getId())));
+
+    Map<UUID, BigDecimal> productIdToPriceMap = programOrderablesRepository.findAllMaxVersionProgramOrderableDtos()
+        .stream()
+        .filter(programOrderableDto -> programOrderableDto.getPrice() != null)
+        .collect(toMap(ProgramOrderableDto::getOrderableId, ProgramOrderableDto::getPrice));
+
     String requisitionNumber = proofOfDeliverParameter.getRequisitionIdToRequisitionNumberMap()
         .get(proofOfDeliverParameter.getPodIdToRequisitionIdMap().get(pod.getId()));
 
     ShipmentsExtension shipmentsExtension = proofOfDeliverParameter.getShipmenIdToShipmentsExtensionMap()
         .get(pod.getShipment().getId());
 
-    List<FcProofOfDeliveryProductDto> products = pod.getLineItems()
+    List<FcProofOfDeliveryLineItem> products = pod.getLineItems()
         .stream()
         .map(lineItem -> buildProductDto(lineItem,
             proofOfDeliverParameter.getOrderableIdToOrderableMap(),
             proofOfDeliverParameter.getOrderableIdToProgramMap(),
             proofOfDeliverParameter.getLotIdToLotMap(),
-            proofOfDeliverParameter.getReasonIdToReasonMap()))
+            proofOfDeliverParameter.getReasonIdToReasonMap(),
+            productIdToOrderedQuantityMap,
+            productIdToPartialFulfilledMap,
+            productIdToPriceMap))
         .collect(toList());
 
     return FcProofOfDeliveryDto.builder()
@@ -351,29 +387,39 @@ public class SiglusFcIntegrationService {
         .deliveredBy(pod.getDeliveredBy())
         .receivedBy(pod.getReceivedBy())
         .receivedDate(pod.getReceivedDate())
-        .products(products)
+        .podLineItems(products)
         .build();
   }
 
-  private FcProofOfDeliveryProductDto buildProductDto(ProofOfDeliveryLineItem lineItem,
+  private FcProofOfDeliveryLineItem buildProductDto(ProofOfDeliveryLineItem lineItem,
       Map<UUID, OrderableDto> orderableMap,
       Map<UUID, ProgramOrderablesExtension> programMap,
       Map<UUID, LotDto> lotMap,
-      Map<UUID, String> reasonMap) {
+      Map<UUID, String> reasonMap,
+      Map<UUID, Long> productIdToOrderedQuantityMap,
+      Map<UUID, Long> productIdToPartialFulfilledMap,
+      Map<UUID, BigDecimal> productIdToPriceMap) {
     OrderableDto orderableDto = orderableMap.get(lineItem.getOrderable().getId());
     ProgramOrderablesExtension extension = programMap.get(orderableDto.getId());
     RealProgramDto program =
         new RealProgramDto(extension.getRealProgramCode(), extension.getRealProgramName());
 
-    return FcProofOfDeliveryProductDto.builder()
+    return FcProofOfDeliveryLineItem.builder()
         .productCode(orderableDto.getProductCode())
         .productName(orderableDto.getFullProductName())
         .productDescription(orderableDto.getDescription())
         .realPorgrams(newArrayList(program))
         .lotCode(lotMap.get(lineItem.getLotId()).getLotCode())
-        .acceptedQuantity(lineItem.getQuantityAccepted())
-        .rejectedQuantity(lineItem.getQuantityRejected())
-        .rejectedReason(reasonMap.get(lineItem.getRejectionReasonId()))
+        .expiringDate(lotMap.get(lineItem.getLotId()).getExpirationDate())
+        .orderedQuantity(productIdToOrderedQuantityMap.get(orderableDto.getId()))
+        .partialFulfilled(productIdToPartialFulfilledMap.get(orderableDto.getId()))
+        .suppliedQuantity(lineItem.getQuantityAccepted() + lineItem.getQuantityRejected())
+        .price(productIdToPriceMap.get(orderableDto.getId()).doubleValue())
+        .value((lineItem.getQuantityAccepted() + lineItem.getQuantityRejected()) * productIdToPriceMap.get(
+            orderableDto.getId()).doubleValue())
+        .receivedQuantity(lineItem.getQuantityAccepted())
+        .difference(lineItem.getQuantityRejected())
+        .adjustmentReason(reasonMap.get(lineItem.getRejectionReasonId()))
         .notes(lineItem.getNotes())
         .build();
 
