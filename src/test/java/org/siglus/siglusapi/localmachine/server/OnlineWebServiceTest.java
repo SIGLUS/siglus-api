@@ -59,6 +59,7 @@ import org.siglus.siglusapi.localmachine.repository.MovementSql;
 import org.siglus.siglusapi.localmachine.repository.RequisitionOrderSql;
 import org.siglus.siglusapi.localmachine.repository.TableCopyRepository;
 import org.siglus.siglusapi.localmachine.webapi.ResyncMasterDataResponse;
+import org.siglus.siglusapi.service.SiglusAdministrationsService;
 import org.siglus.siglusapi.util.S3FileHandler;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -80,6 +81,9 @@ public class OnlineWebServiceTest {
 
   @Mock
   private ShedLockFactory lockFactory;
+
+  @Mock
+  private SiglusAdministrationsService administrationsService;
 
   @InjectMocks
   private OnlineWebService onlineWebService;
@@ -163,6 +167,7 @@ public class OnlineWebServiceTest {
     verify(tableCopyRepository, times(1)).copyDateToFile(any(), eq(MovementSql.getMovementSql()), eq(facilityId));
     verify(tableCopyRepository, times(1))
         .copyDateToFile(any(), eq(RequisitionOrderSql.getRequisitionOrderSql()), eq(facilityId));
+    verify(administrationsService, times(1)).deleteDrafts(facilityId);
   }
 
   @Test

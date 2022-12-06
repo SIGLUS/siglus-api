@@ -53,6 +53,7 @@ import org.siglus.siglusapi.localmachine.repository.MovementSql;
 import org.siglus.siglusapi.localmachine.repository.RequisitionOrderSql;
 import org.siglus.siglusapi.localmachine.repository.TableCopyRepository;
 import org.siglus.siglusapi.localmachine.webapi.ResyncMasterDataResponse;
+import org.siglus.siglusapi.service.SiglusAdministrationsService;
 import org.siglus.siglusapi.util.FileUtil;
 import org.siglus.siglusapi.util.S3FileHandler;
 import org.springframework.beans.factory.annotation.Value;
@@ -82,6 +83,7 @@ public class OnlineWebService {
   private final SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmssSSS");
   @Value("${resync.zip.export.path}")
   private String zipExportPath;
+  private final SiglusAdministrationsService administrationsService;
 
   @Transactional
   public void cleanIncrementalMasterData() {
@@ -155,6 +157,7 @@ public class OnlineWebService {
     if (!mkdirs) {
       log.warn("facility {} resync zip dir make fail", homeFacilityId);
     }
+    administrationsService.deleteDrafts(homeFacilityId);
     File zipFile = generateZipFile(zipDirectory, zipName, homeFacilityId, type);
     response.setContentType(CONTENT_TYPE);
     response.setCharacterEncoding(StandardCharsets.UTF_8.name());

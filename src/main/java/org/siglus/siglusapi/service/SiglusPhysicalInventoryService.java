@@ -136,6 +136,8 @@ public class SiglusPhysicalInventoryService {
   private final PhysicalInventoryEmptyLocationLineItemRepository physicalInventoryEmptyLocationLineItemRepository;
   private final SiglusOrderableService siglusOrderableService;
 
+  private final SiglusArchiveProductService archiveProductService;
+
   @Transactional
   public PhysicalInventoryDto createAndSplitNewDraftForAllPrograms(PhysicalInventoryDto physicalInventoryDto,
       Integer splitNum, boolean initialPhysicalInventory, String optionString, boolean isByLocation) {
@@ -895,17 +897,24 @@ public class SiglusPhysicalInventoryService {
   private List<PhysicalInventoryLineItemDto> buildPhysicalInventoryLineItemsWithLocation(
       PhysicalInventoryDto physicalInventoryDto) {
     UUID programId = physicalInventoryDto.getProgramId();
+    UUID facilityId = physicalInventoryDto.getFacilityId();
     List<StockCard> stockCards = siglusStockCardRepository.findByFacilityIdAndProgramId(
-        physicalInventoryDto.getFacilityId(), programId);
+            facilityId, programId);
     Map<UUID, StockCard> stockCardIdMap = stockCards.stream()
         .collect(Collectors.toMap(StockCard::getId, Function.identity()));
     if (CollectionUtils.isEmpty(stockCardIdMap.keySet())) {
       return Collections.emptyList();
     }
-    List<CalculatedStockOnHandByLocation> stockOnHandByLocations = calculatedStockOnHandByLocationRepository
+    List<CalculatedStockOnHandByLocation> sohByLocations = calculatedStockOnHandByLocationRepository
         .findByStockCardIdIn(stockCardIdMap.keySet());
 
-    return convertCalculatedStockOnHandByLocationToLineItems(stockOnHandByLocations, stockCardIdMap, programId);
+    Set<String> archivedOrderableIds = archiveProductService.searchArchivedProductsByFacilityId(facilityId);
+    List<CalculatedStockOnHandByLocation> activeSohByLocations = sohByLocations.stream()
+        .filter(stockOnHandByLocation -> {
+          String idString = stockCardIdMap.get(stockOnHandByLocation.getStockCardId()).getOrderableId().toString();
+          return !archivedOrderableIds.contains(idString);
+        }).collect(Collectors.toList());
+    return convertCalculatedStockOnHandByLocationToLineItems(activeSohByLocations, stockCardIdMap, programId);
   }
 
   private PhysicalInventoryDto createNewDraft(PhysicalInventoryDto physicalInventoryDto) {
