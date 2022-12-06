@@ -23,6 +23,7 @@ import static org.siglus.siglusapi.dto.StockCardLineItemDtoComparators.byReasonP
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -42,6 +43,7 @@ import org.openlmis.stockmanagement.domain.event.CalculatedStockOnHand;
 import org.openlmis.stockmanagement.domain.reason.ReasonCategory;
 import org.openlmis.stockmanagement.domain.reason.ReasonType;
 import org.openlmis.stockmanagement.domain.reason.StockCardLineItemReason;
+import org.openlmis.stockmanagement.dto.PhysicalInventoryLineItemAdjustmentDto;
 import org.openlmis.stockmanagement.dto.StockCardDto;
 import org.openlmis.stockmanagement.dto.StockCardLineItemDto;
 import org.openlmis.stockmanagement.dto.StockCardLineItemReasonDto;
@@ -173,8 +175,13 @@ public class SiglusStockCardService {
               .map(StockCardLineItemDto::getQuantityWithSign)
               .mapToInt(Integer::intValue)
               .sum();
+      List<PhysicalInventoryLineItemAdjustmentDto> allAdjustments = lineItems.stream()
+              .map(StockCardLineItemDto::getStockAdjustments)
+              .flatMap(Collection::stream)
+              .collect(Collectors.toList());
       physicalInventoryLineItem.setQuantity(sumQty);
       physicalInventoryLineItem.setQuantityWithSign(sumQtyWithSign);
+      physicalInventoryLineItem.setStockAdjustments(allAdjustments);
       merged.add(physicalInventoryLineItem);
     });
 
