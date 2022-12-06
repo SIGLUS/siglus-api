@@ -312,6 +312,10 @@ public class SiglusFcIntegrationService {
     Map<UUID, String> reasonIdToReasonMap = stockCardLineItemReasonRepository
         .findByReasonTypeIn(newArrayList(ReasonType.DEBIT))
         .stream().collect(toMap(StockCardLineItemReason::getId, StockCardLineItemReason::getName));
+    Map<UUID, BigDecimal> productIdToPriceMap = programOrderablesRepository.findAllMaxVersionProgramOrderableDtos()
+        .stream()
+        .filter(programOrderableDto -> programOrderableDto.getPrice() != null)
+        .collect(toMap(ProgramOrderableDto::getOrderableId, ProgramOrderableDto::getPrice));
 
     ProofOfDeliverParameter proofOfDeliverParameter = ProofOfDeliverParameter.builder()
         .requisitionIdToRequisitionNumberMap(requisitionIdToRequisitionNumberMap)
@@ -322,6 +326,7 @@ public class SiglusFcIntegrationService {
         .podIdToRequisitionIdMap(podIdToRequisitionIdMap)
         .facilityIdTofacilityCodeMap(facilityIdToFacilityCodeMap)
         .shipmenIdToShipmentsExtensionMap(shipmenIdToShipmentsExtensionMap)
+        .productIdToPriceMap(productIdToPriceMap)
         .build();
 
     List<FcProofOfDeliveryDto> pods = page.getContent()
@@ -352,13 +357,8 @@ public class SiglusFcIntegrationService {
 
     Map<UUID, Long> productIdToPartialFulfilledMap = newHashMap();
     pod.getShipment().getOrder().getOrderLineItems()
-        .forEach(orderLineItem -> orderLineItemIdToPartialFulfilledMap.put(orderLineItem.getOrderable().getId(),
+        .forEach(orderLineItem -> productIdToPartialFulfilledMap.put(orderLineItem.getOrderable().getId(),
             orderLineItemIdToPartialFulfilledMap.get(orderLineItem.getId())));
-
-    Map<UUID, BigDecimal> productIdToPriceMap = programOrderablesRepository.findAllMaxVersionProgramOrderableDtos()
-        .stream()
-        .filter(programOrderableDto -> programOrderableDto.getPrice() != null)
-        .collect(toMap(ProgramOrderableDto::getOrderableId, ProgramOrderableDto::getPrice));
 
     String requisitionNumber = proofOfDeliverParameter.getRequisitionIdToRequisitionNumberMap()
         .get(proofOfDeliverParameter.getPodIdToRequisitionIdMap().get(pod.getId()));
@@ -375,7 +375,7 @@ public class SiglusFcIntegrationService {
             proofOfDeliverParameter.getReasonIdToReasonMap(),
             productIdToOrderedQuantityMap,
             productIdToPartialFulfilledMap,
-            productIdToPriceMap))
+            proofOfDeliverParameter.getProductIdToPriceMap()))
         .collect(toList());
 
     return FcProofOfDeliveryDto.builder()
