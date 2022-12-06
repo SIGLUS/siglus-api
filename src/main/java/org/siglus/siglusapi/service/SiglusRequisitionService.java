@@ -38,6 +38,7 @@ import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPa
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_SECTION_4;
 import static org.siglus.siglusapi.util.RequisitionUtil.getRequisitionExtraData;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -218,6 +219,8 @@ public class SiglusRequisitionService {
   private String serviceUrl;
   public static final String SUGGESTED_QUANTITY_COLUMN = "suggestedQuantity";
   public static final List<String> MMIA_SECTIONS = Lists.newArrayList(NEW_SECTION_2, NEW_SECTION_3, NEW_SECTION_4);
+  public static final List<String> CALC_PROGRAM_CODE = Lists.newArrayList(MTB_PROGRAM_CODE, RAPIDTEST_PROGRAM_CODE,
+      TARV_PROGRAM_CODE);
   public static final String MMIA_COLUMN_TOTAL = "total";
   public static final String ESTIMATED_QUANTITY = "estimatedQuantity";
   public static final String REQUESTED_QUANTITY = "requestedQuantity";
@@ -225,6 +228,32 @@ public class SiglusRequisitionService {
   private final ProgramRepository programRepository;
   private final RegimenOrderableRepository regimenOrderableRepository;
   private final RequisitionLineItemRepository requisitionLineItemRepository;
+  private final Map<String, BiConsumer<SiglusRequisitionDto, Set<RequisitionLineItem>>> programToRequestedQuantity =
+      ImmutableMap.<String, BiConsumer<SiglusRequisitionDto, Set<RequisitionLineItem>>>builder()
+          .put(MTB_PROGRAM_CODE, this::calcRequestedQuantityForMmtb)
+          .put(RAPIDTEST_PROGRAM_CODE, this::calcRequestedQuantityForMmit)
+          .put(TARV_PROGRAM_CODE, this::calcRequestedQuantityForMmia)
+          .build();
+  private final Map<String, BiConsumer<SiglusRequisitionDto, RequisitionDraft>> programToRequestedQuantityDraft =
+      ImmutableMap.<String, BiConsumer<SiglusRequisitionDto, RequisitionDraft>>builder()
+          .put(MTB_PROGRAM_CODE, this::calcRequestedQuantityDraftForMmtb)
+          .put(RAPIDTEST_PROGRAM_CODE, this::calcRequestedQuantityDraftForMmit)
+          .put(TARV_PROGRAM_CODE, this::calcRequestedQuantityDraftForMmia)
+          .build();
+  private final Map<String, BiConsumer<SiglusRequisitionDto, RequisitionDraft>> programToEstimatedQuantityDraft =
+      ImmutableMap.<String, BiConsumer<SiglusRequisitionDto, RequisitionDraft>>builder()
+          .put(MTB_PROGRAM_CODE, this::calcEstimatedQuantityDraftForMmtb)
+          .put(RAPIDTEST_PROGRAM_CODE, this::calcEstimatedQuantityDraftForMmit)
+          .put(TARV_PROGRAM_CODE, this::calcEstimatedQuantityDraftForMmia)
+          .build();
+  private final Map<String, BiConsumer<SiglusRequisitionDto, List<RequisitionLineItemExtension>>>
+      programToEstimatedQuantity =
+      ImmutableMap.<String, BiConsumer<SiglusRequisitionDto, List<RequisitionLineItemExtension>>>builder()
+          .put(MTB_PROGRAM_CODE, this::calcEstimatedQuantityForMmtb)
+          .put(RAPIDTEST_PROGRAM_CODE, this::calcEstimatedQuantityForMmit)
+          .put(TARV_PROGRAM_CODE, this::calcEstimatedQuantityForMmia)
+          .build();
+
 
   @Transactional
   public SiglusRequisitionDto updateRequisition(UUID requisitionId, SiglusRequisitionDto requisitionDto,
@@ -272,12 +301,11 @@ public class SiglusRequisitionService {
     if (CollectionUtils.isNotEmpty(lineItemIds)) {
       requisitionLineItems = requisitionLineItemRepository.findAllById(lineItemIds);
     }
-    Map<String, BiConsumer<SiglusRequisitionDto, Set<RequisitionLineItem>>> calcMap = new HashMap<>();
-    calcMap.put(MTB_PROGRAM_CODE, this::calcRequestedQuantityForMmtb);
-    calcMap.put(RAPIDTEST_PROGRAM_CODE, this::calcRequestedQuantityForMmit);
-    calcMap.put(TARV_PROGRAM_CODE, this::calcRequestedQuantityForMmia);
+
     String programCode = programRepository.findOne(siglusRequisitionDto.getProgramId()).getCode().toString();
-    calcMap.get(programCode).accept(siglusRequisitionDto, requisitionLineItems);
+    if (CALC_PROGRAM_CODE.contains(programCode)) {
+      programToRequestedQuantity.get(programCode).accept(siglusRequisitionDto, requisitionLineItems);
+    }
 
     log.info("saved requisitionLineItems {}", requisitionLineItems);
     requisitionLineItemRepository.save(requisitionLineItems);
@@ -834,13 +862,10 @@ public class SiglusRequisitionService {
   }
 
   public void calcRequestedQuantityDraft(SiglusRequisitionDto siglusRequisitionDto, RequisitionDraft requisitionDraft) {
-    Map<String, BiConsumer<SiglusRequisitionDto, RequisitionDraft>> calcMap = new HashMap<>();
-    calcMap.put(MTB_PROGRAM_CODE, this::calcRequestedQuantityDraftForMmtb);
-    calcMap.put(RAPIDTEST_PROGRAM_CODE, this::calcRequestedQuantityDraftForMmit);
-    calcMap.put(TARV_PROGRAM_CODE, this::calcRequestedQuantityDraftForMmia);
     String programCode = programRepository.findOne(siglusRequisitionDto.getProgramId()).getCode().toString();
-    calcMap.get(programCode).accept(siglusRequisitionDto, requisitionDraft);
-
+    if (CALC_PROGRAM_CODE.contains(programCode)) {
+      programToRequestedQuantityDraft.get(programCode).accept(siglusRequisitionDto, requisitionDraft);
+    }
   }
 
   public void calcRequestedQuantityDraftForMmtb(SiglusRequisitionDto siglusRequisitionDto,
@@ -960,12 +985,10 @@ public class SiglusRequisitionService {
   }
 
   public void calcEstimatedQuantityDraft(SiglusRequisitionDto siglusRequisitionDto, RequisitionDraft requisitionDraft) {
-    Map<String, BiConsumer<SiglusRequisitionDto, RequisitionDraft>> calcMap = new HashMap<>();
-    calcMap.put(MTB_PROGRAM_CODE, this::calcEstimatedQuantityDraftForMmtb);
-    calcMap.put(RAPIDTEST_PROGRAM_CODE, this::calcEstimatedQuantityDraftForMmit);
-    calcMap.put(TARV_PROGRAM_CODE, this::calcEstimatedQuantityDraftForMmia);
     String programCode = programRepository.findOne(siglusRequisitionDto.getProgramId()).getCode().toString();
-    calcMap.get(programCode).accept(siglusRequisitionDto, requisitionDraft);
+    if (CALC_PROGRAM_CODE.contains(programCode)) {
+      programToEstimatedQuantityDraft.get(programCode).accept(siglusRequisitionDto, requisitionDraft);
+    }
   }
 
   public void calcEstimatedQuantityDraftForMmia(SiglusRequisitionDto siglusRequisitionDto,
@@ -1133,12 +1156,10 @@ public class SiglusRequisitionService {
 
   public void calcEstimatedQuantity(SiglusRequisitionDto siglusRequisitionDto,
       List<RequisitionLineItemExtension> extensions) {
-    Map<String, BiConsumer<SiglusRequisitionDto, List<RequisitionLineItemExtension>>> calcMap = new HashMap<>();
-    calcMap.put(MTB_PROGRAM_CODE, this::calcEstimatedQuantityForMmtb);
-    calcMap.put(RAPIDTEST_PROGRAM_CODE, this::calcEstimatedQuantityForMmit);
-    calcMap.put(TARV_PROGRAM_CODE, this::calcEstimatedQuantityForMmia);
     String programCode = programRepository.findOne(siglusRequisitionDto.getProgramId()).getCode().toString();
-    calcMap.get(programCode).accept(siglusRequisitionDto, extensions);
+    if (CALC_PROGRAM_CODE.contains(programCode)) {
+      programToEstimatedQuantity.get(programCode).accept(siglusRequisitionDto, extensions);
+    }
   }
 
 
