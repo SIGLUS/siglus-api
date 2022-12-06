@@ -20,7 +20,6 @@ import static com.google.common.collect.Sets.newHashSet;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
-import static java.util.stream.Collectors.toSet;
 import static org.apache.commons.lang3.RandomUtils.nextInt;
 import static org.hamcrest.Matchers.hasItems;
 import static org.junit.Assert.assertEquals;
@@ -92,7 +91,6 @@ import org.openlmis.requisition.domain.requisition.RequisitionLineItem;
 import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.domain.requisition.VersionEntityReference;
 import org.openlmis.requisition.dto.ApprovedProductDto;
-import org.openlmis.requisition.dto.BaseDto;
 import org.openlmis.requisition.dto.BaseRequisitionLineItemDto;
 import org.openlmis.requisition.dto.BasicProcessingPeriodDto;
 import org.openlmis.requisition.dto.BasicRequisitionDto;
@@ -753,7 +751,11 @@ public class SiglusRequisitionServiceTest {
     when(siglusUsageReportService.saveUsageReport(siglusRequisitionDto, requisitionV2Dto))
         .thenReturn(updatedDto);
     when(facilityReferenceDataService.findOne(facilityId)).thenReturn(mockFacilityDto2(facilityId));
-    when(programRepository.findOne(programId)).thenReturn(mockProgram(programId));
+    when(programRepository.findOne(programId)).thenReturn(mockProgram2(programId));
+    RequisitionLineItem requisitionLineItem = new RequisitionLineItem();
+    requisitionLineItem.setId(requisitionLineItemId);
+    when(requisitionLineItemRepository.findAllById(newHashSet(requisitionLineItemId))).thenReturn(
+        newHashSet(requisitionLineItem));
     when(requisitionRepository.findOne(requisition.getId())).thenReturn(requisition);
 
     // when
@@ -807,7 +809,11 @@ public class SiglusRequisitionServiceTest {
     when(siglusUsageReportService.saveUsageReport(siglusRequisitionDto, requisitionV2Dto))
         .thenReturn(updatedDto);
     when(facilityReferenceDataService.findOne(facilityId)).thenReturn(mockFacilityDto2(facilityId));
-    when(programRepository.findOne(programId)).thenReturn(mockProgram(programId));
+    when(programRepository.findOne(programId)).thenReturn(mockProgram2(programId));
+    RequisitionLineItem requisitionLineItem = new RequisitionLineItem();
+    requisitionLineItem.setId(requisitionLineItemId);
+    when(requisitionLineItemRepository.findAllById(newHashSet(requisitionLineItemId))).thenReturn(
+        newHashSet(requisitionLineItem));
     when(requisitionRepository.findOne(requisition.getId())).thenReturn(requisition);
 
     // when
@@ -971,7 +977,11 @@ public class SiglusRequisitionServiceTest {
     when(requisitionV2Controller.updateRequisition(requisitionId, siglusRequisitionDto, request, response))
         .thenReturn(requisitionV2Dto);
     when(facilityReferenceDataService.findOne(facilityId)).thenReturn(mockFacilityDto2(facilityId));
-    when(programRepository.findOne(programId)).thenReturn(mockProgram(programId));
+    when(programRepository.findOne(programId)).thenReturn(mockProgram2(programId));
+    RequisitionLineItem requisitionLineItem = new RequisitionLineItem();
+    requisitionLineItem.setId(requisitionLineItemId);
+    when(requisitionLineItemRepository.findAllById(newHashSet(requisitionLineItemId))).thenReturn(
+        newHashSet(requisitionLineItem));
 
     // when
     BasicRequisitionDto requisitionDto = siglusRequisitionService
@@ -1000,6 +1010,8 @@ public class SiglusRequisitionServiceTest {
         .thenReturn(mockBasicRequisitionDto);
     RequisitionLineItemV2Dto lineItem = new RequisitionLineItemV2Dto();
     lineItem.setId(requisitionLineItemId);
+    OrderableDto orderableDto = createOrderableDto(createMetadataDto());
+    lineItem.setOrderable(orderableDto);
     siglusRequisitionDto.setRequisitionLineItems(singletonList(lineItem));
     when(siglusRequisitionRequisitionService.searchRequisition(requisitionId)).thenReturn(siglusRequisitionDto);
     when(requisitionV2Controller.getRequisition(requisitionId, response)).thenReturn(siglusRequisitionDto);
@@ -1024,7 +1036,11 @@ public class SiglusRequisitionServiceTest {
     when(messageService.localize(any(), anyVararg())).thenReturn(MESSAGE);
     when(siglusUsageReportService.saveUsageReportWithValidation(any(), any())).thenReturn(siglusRequisitionDto);
     when(facilityReferenceDataService.findOne(facilityId)).thenReturn(mockFacilityDto2(facilityId));
-    when(programRepository.findOne(programId)).thenReturn(mockProgram(programId));
+    when(programRepository.findOne(programId)).thenReturn(mockProgram2(programId));
+    RequisitionLineItem requisitionLineItem = new RequisitionLineItem();
+    requisitionLineItem.setId(requisitionLineItemId);
+    when(requisitionLineItemRepository.findAllById(newHashSet(requisitionLineItemId))).thenReturn(
+        newHashSet(requisitionLineItem));
 
     // when
     BasicRequisitionDto requisitionDto = siglusRequisitionService
@@ -1109,7 +1125,9 @@ public class SiglusRequisitionServiceTest {
     when(authenticationHelper.getCurrentUser()).thenReturn(mockUserDto(facilityId));
     RequisitionLineItemV2Dto lineItem = new RequisitionLineItemV2Dto();
     lineItem.setApprovedQuantity(10);
-    lineItem.setId(UUID.randomUUID());
+    lineItem.setId(requisitionLineItemId);
+    OrderableDto orderableDto = createOrderableDto(createMetadataDto());
+    lineItem.setOrderable(orderableDto);
     siglusRequisitionDto.setRequisitionLineItems(singletonList(lineItem));
     siglusRequisitionDto.setStatus(AUTHORIZED);
     when(requisitionRepository.findOne(requisitionId)).thenReturn(requisition);
@@ -1125,7 +1143,11 @@ public class SiglusRequisitionServiceTest {
     when(messageService.localize(any(), anyVararg())).thenReturn(MESSAGE);
     when(siglusUsageReportService.saveUsageReportWithValidation(any(), any())).thenReturn(siglusRequisitionDto);
     when(facilityReferenceDataService.findOne(facilityId)).thenReturn(mockFacilityDto2(facilityId));
-    when(programRepository.findOne(programId)).thenReturn(mockProgram(programId));
+    when(programRepository.findOne(programId)).thenReturn(mockProgram2(programId));
+    RequisitionLineItem requisitionLineItem = new RequisitionLineItem();
+    requisitionLineItem.setId(requisitionLineItemId);
+    when(requisitionLineItemRepository.findAllById(newHashSet(requisitionLineItemId))).thenReturn(
+        newHashSet(requisitionLineItem));
 
     // when
     siglusRequisitionService.approveRequisition(requisitionId, request, response);
@@ -1155,7 +1177,13 @@ public class SiglusRequisitionServiceTest {
     mockBasicRequisitionDto.setProgram(programDto);
     when(requisitionController.approveRequisition(requisitionId, request, response))
         .thenReturn(mockBasicRequisitionDto);
-    requisition.setRequisitionLineItems(emptyList());
+    RequisitionLineItem lineItem = new RequisitionLineItem();
+    lineItem.setApprovedQuantity(10);
+    lineItem.setId(requisitionLineItemId);
+    VersionEntityReference versionEntityReference = new VersionEntityReference();
+    versionEntityReference.setId(orderableId);
+    lineItem.setOrderable(versionEntityReference);
+    requisition.setRequisitionLineItems(newArrayList(lineItem));
     when(requisitionRepository.findOne(requisitionId)).thenReturn(requisition);
     when(requisitionV2Controller.updateRequisition(any(UUID.class), any(RequisitionV2Dto.class),
         any(HttpServletRequest.class), any(HttpServletResponse.class))).thenReturn(requisitionV2Dto);
@@ -1172,7 +1200,11 @@ public class SiglusRequisitionServiceTest {
     when(siglusUsageReportService.saveUsageReportWithValidation(any(), any())).thenReturn(siglusRequisitionDto);
     when(regimenDataProcessor.getRegimenDtoMap()).thenReturn(mockRegimenMap());
     when(facilityReferenceDataService.findOne(facilityId)).thenReturn(mockFacilityDto2(facilityId));
-    when(programRepository.findOne(programId)).thenReturn(mockProgram(programId));
+    when(programRepository.findOne(programId)).thenReturn(mockProgram2(programId));
+    RequisitionLineItem requisitionLineItem = new RequisitionLineItem();
+    requisitionLineItem.setId(requisitionLineItemId);
+    when(requisitionLineItemRepository.findAllById(newHashSet(requisitionLineItemId))).thenReturn(
+        newHashSet(requisitionLineItem));
 
     // when
     siglusRequisitionService.approveRequisition(requisitionId, request, response);
@@ -1205,7 +1237,11 @@ public class SiglusRequisitionServiceTest {
     RequisitionTemplateExtension templateExtension = createTemplateExtension();
     requisitionTemplate.setTemplateExtension(templateExtension);
     requisition2.setTemplate(requisitionTemplate);
-    when(programRepository.findOne(programId)).thenReturn(mockProgram(programId));
+    when(programRepository.findOne(programId)).thenReturn(mockProgram2(programId));
+    RequisitionLineItem requisitionLineItem = new RequisitionLineItem();
+    requisitionLineItem.setId(requisitionLineItemId);
+    when(requisitionLineItemRepository.findAllById(newHashSet(requisitionLineItemId))).thenReturn(
+        newHashSet(requisitionLineItem));
 
     when(requisitionRepository.findOne(siglusRequisitionDto.getId())).thenReturn(requisition2);
     when(requisitionTemplateExtensionRepository.findByRequisitionTemplateId(
@@ -1466,47 +1502,52 @@ public class SiglusRequisitionServiceTest {
   @Test
   public void shouldCalcRequestedQuantityDraft() {
     // given
+    when(programRepository.findOne(programId)).thenReturn(mockProgram2(programId));
+    RequisitionLineItem requisitionLineItem = new RequisitionLineItem();
+    requisitionLineItem.setId(requisitionLineItemId);
+    when(requisitionLineItemRepository.findAllById(newHashSet(requisitionLineItemId))).thenReturn(
+        newHashSet(requisitionLineItem));
     RequisitionDraft requisitionDraft = getRequisitionDraft2(requisitionId);
     // when
-    siglusRequisitionService.calcRequestedQuantityDraft(requisitionDraft);
+    siglusRequisitionService.calcRequestedQuantityDraft(siglusRequisitionDto, requisitionDraft);
     // then
     assertEquals(1, requisitionDraft.getLineItems().size());
     assertEquals(Integer.valueOf(0), requisitionDraft.getLineItems().get(0).getEstimatedQuantity());
   }
 
-  @Test
-  public void shouldSaveRequisitionLineItem() {
-    // given
-    RequisitionV2Dto updateRequisitionDto = createRequisitionV2Dto2();
-    List<BaseRequisitionLineItemDto> lineItems = updateRequisitionDto.getLineItems();
-    Set<UUID> lineItemIds = lineItems.stream().map(BaseDto::getId).collect(toSet());
-    when(requisitionLineItemRepository.findAllById(lineItemIds)).thenReturn(newHashSet(new RequisitionLineItem()));
-    // when
-    siglusRequisitionService.saveRequisitionLineItem(updateRequisitionDto);
-    // then
-    assertNull(updateRequisitionDto.getLineItems().get(0).getRequestedQuantity());
-  }
-
-  @Test
-  public void shouldSaveRequisitionLineItem2() {
-    // given
-    RequisitionV2Dto updateRequisitionDto = new RequisitionV2Dto();
-    List<RequisitionLineItemV2Dto> requisitionLineItemV2Dtos = new ArrayList<>();
-    RequisitionLineItemV2Dto requisitionLineItemV2Dto = new RequisitionLineItemV2Dto();
-    requisitionLineItemV2Dto.setId(requisitionLineItemId);
-    requisitionLineItemV2Dtos.add(requisitionLineItemV2Dto);
-    updateRequisitionDto.setRequisitionLineItems(requisitionLineItemV2Dtos);
-    List<BaseRequisitionLineItemDto> lineItems = updateRequisitionDto.getLineItems();
-    Set<UUID> lineItemIds = lineItems.stream().map(BaseDto::getId).collect(toSet());
-    RequisitionLineItem requisitionLineItem = new RequisitionLineItem();
-    requisitionLineItem.setId(requisitionLineItemV2Dto.getId());
-    requisitionLineItem.setRequestedQuantity(0);
-    when(requisitionLineItemRepository.findAllById(lineItemIds)).thenReturn(newHashSet(requisitionLineItem));
-    // when
-    siglusRequisitionService.saveRequisitionLineItem(updateRequisitionDto);
-    // then
-    assertNull(updateRequisitionDto.getLineItems().get(0).getRequestedQuantity());
-  }
+  //  @Test
+  //  public void shouldSaveRequisitionLineItem() {
+  //    // given
+  //    RequisitionV2Dto updateRequisitionDto = createRequisitionV2Dto2();
+  //    List<BaseRequisitionLineItemDto> lineItems = updateRequisitionDto.getLineItems();
+  //    Set<UUID> lineItemIds = lineItems.stream().map(BaseDto::getId).collect(toSet());
+  //    when(requisitionLineItemRepository.findAllById(lineItemIds)).thenReturn(newHashSet(new RequisitionLineItem()));
+  //    // when
+  //    siglusRequisitionService.saveRequisitionLineItem(updateRequisitionDto, siglusRequisitionDto);
+  //    // then
+  //    assertNull(updateRequisitionDto.getLineItems().get(0).getRequestedQuantity());
+  //  }
+  //
+  //  @Test
+  //  public void shouldSaveRequisitionLineItem2() {
+  //    // given
+  //    RequisitionV2Dto updateRequisitionDto = new RequisitionV2Dto();
+  //    List<RequisitionLineItemV2Dto> requisitionLineItemV2Dtos = new ArrayList<>();
+  //    RequisitionLineItemV2Dto requisitionLineItemV2Dto = new RequisitionLineItemV2Dto();
+  //    requisitionLineItemV2Dto.setId(requisitionLineItemId);
+  //    requisitionLineItemV2Dtos.add(requisitionLineItemV2Dto);
+  //    updateRequisitionDto.setRequisitionLineItems(requisitionLineItemV2Dtos);
+  //    List<BaseRequisitionLineItemDto> lineItems = updateRequisitionDto.getLineItems();
+  //    Set<UUID> lineItemIds = lineItems.stream().map(BaseDto::getId).collect(toSet());
+  //    RequisitionLineItem requisitionLineItem = new RequisitionLineItem();
+  //    requisitionLineItem.setId(requisitionLineItemV2Dto.getId());
+  //    requisitionLineItem.setRequestedQuantity(0);
+  //    when(requisitionLineItemRepository.findAllById(lineItemIds)).thenReturn(newHashSet(requisitionLineItem));
+  //    // when
+  //    siglusRequisitionService.saveRequisitionLineItem(updateRequisitionDto, siglusRequisitionDto);
+  //    // then
+  //    assertNull(updateRequisitionDto.getLineItems().get(0).getRequestedQuantity());
+  //  }
 
   @Test
   public void shouldGetOrderableIdToCode() {
@@ -1540,6 +1581,21 @@ public class SiglusRequisitionServiceTest {
   }
 
   @Test
+  public void shouldCalcRequestedQuantityDraftForMmia() {
+    // given
+    RequisitionLineItemV2Dto lineItem1 = new RequisitionLineItemV2Dto();
+    List<RequisitionLineItemV2Dto> lineItems = new ArrayList<>();
+    lineItems.add(lineItem1);
+    siglusRequisitionDto.setRequisitionLineItems(lineItems);
+
+    RequisitionDraft requisitionDraft = getRequisitionDraft2(requisitionId);
+    // when
+    siglusRequisitionService.calcRequestedQuantityDraftForMmia(siglusRequisitionDto, requisitionDraft);
+    // then
+    assertEquals(1, siglusRequisitionDto.getLineItems().size());
+  }
+
+  @Test
   public void shouldCalcEstimatedQuantityDraftForMmit() {
     // given
     RequisitionLineItemV2Dto lineItem1 = new RequisitionLineItemV2Dto();
@@ -1555,6 +1611,21 @@ public class SiglusRequisitionServiceTest {
   }
 
   @Test
+  public void shouldCalcRequestedQuantityDraftForMmit() {
+    // given
+    RequisitionLineItemV2Dto lineItem1 = new RequisitionLineItemV2Dto();
+    List<RequisitionLineItemV2Dto> lineItems = new ArrayList<>();
+    lineItems.add(lineItem1);
+    siglusRequisitionDto.setRequisitionLineItems(lineItems);
+
+    RequisitionDraft requisitionDraft = getRequisitionDraft2(requisitionId);
+    // when
+    siglusRequisitionService.calcRequestedQuantityDraftForMmit(siglusRequisitionDto, requisitionDraft);
+    // then
+    assertEquals(1, siglusRequisitionDto.getLineItems().size());
+  }
+
+  @Test
   public void shouldCalcEstimatedQuantityDraftForMmtb() {
     // given
     RequisitionLineItemV2Dto lineItem1 = new RequisitionLineItemV2Dto();
@@ -1565,6 +1636,21 @@ public class SiglusRequisitionServiceTest {
     RequisitionDraft requisitionDraft = getRequisitionDraft2(requisitionId);
     // when
     siglusRequisitionService.calcEstimatedQuantityDraftForMmtb(siglusRequisitionDto, requisitionDraft);
+    // then
+    assertEquals(1, siglusRequisitionDto.getLineItems().size());
+  }
+
+  @Test
+  public void shouldCalcRequestedQuantityDraftForMmtb() {
+    // given
+    RequisitionLineItemV2Dto lineItem1 = new RequisitionLineItemV2Dto();
+    List<RequisitionLineItemV2Dto> lineItems = new ArrayList<>();
+    lineItems.add(lineItem1);
+    siglusRequisitionDto.setRequisitionLineItems(lineItems);
+
+    RequisitionDraft requisitionDraft = getRequisitionDraft2(requisitionId);
+    // when
+    siglusRequisitionService.calcRequestedQuantityDraftForMmtb(siglusRequisitionDto, requisitionDraft);
     // then
     assertEquals(1, siglusRequisitionDto.getLineItems().size());
   }
@@ -1783,10 +1869,14 @@ public class SiglusRequisitionServiceTest {
     siglusRequisitionDto.setProgram(new ObjectReferenceDto(programId));
     RequisitionLineItemV2Dto lineItem = new RequisitionLineItemV2Dto();
     lineItem.setApprovedQuantity(10);
-    lineItem.setId(UUID.randomUUID());
+    lineItem.setId(requisitionLineItemId);
     lineItem.setOrderable(productVersionObjectReference1);
     siglusRequisitionDto.setRequisitionLineItems(newArrayList(lineItem));
-    when(programRepository.findOne(programId)).thenReturn(mockProgram(programId));
+    when(programRepository.findOne(programId)).thenReturn(mockProgram2(programId));
+    RequisitionLineItem requisitionLineItem = new RequisitionLineItem();
+    requisitionLineItem.setId(requisitionLineItemId);
+    when(requisitionLineItemRepository.findAllById(newHashSet(requisitionLineItemId))).thenReturn(
+        newHashSet(requisitionLineItem));
     when(siglusUsageReportService.isSupplyFacilityType(facilityId)).thenReturn(true);
     // when
     siglusRequisitionService.calcRequestedQuantity(siglusRequisitionDto);
@@ -2109,7 +2199,8 @@ public class SiglusRequisitionServiceTest {
     when(authenticationHelper.getCurrentUser()).thenReturn(mockUserDto(userFacilityId));
     RequisitionLineItemV2Dto lineItem = new RequisitionLineItemV2Dto();
     lineItem.setApprovedQuantity(10);
-    lineItem.setId(UUID.randomUUID());
+    lineItem.setId(requisitionLineItemId);
+    lineItem.setOrderable(createOrderableDto(createMetadataDto()));
     siglusRequisitionDto.setRequisitionLineItems(singletonList(lineItem));
     siglusRequisitionDto.setStatus(AUTHORIZED);
     when(requisitionRepository.findOne(requisitionId)).thenReturn(requisition);
@@ -2130,7 +2221,11 @@ public class SiglusRequisitionServiceTest {
     when(siglusUsageReportService.saveUsageReportWithValidation(any(), any()))
         .thenReturn(siglusRequisitionDto);
     when(facilityReferenceDataService.findOne(facilityId)).thenReturn(mockFacilityDto2(facilityId));
-    when(programRepository.findOne(programId)).thenReturn(mockProgram(programId));
+    when(programRepository.findOne(programId)).thenReturn(mockProgram2(programId));
+    RequisitionLineItem requisitionLineItem = new RequisitionLineItem();
+    requisitionLineItem.setId(requisitionLineItemId);
+    when(requisitionLineItemRepository.findAllById(newHashSet(requisitionLineItemId))).thenReturn(
+        newHashSet(requisitionLineItem));
 
     // when
     siglusRequisitionService.approveRequisition(requisitionId, request, response);
@@ -2161,7 +2256,9 @@ public class SiglusRequisitionServiceTest {
     when(authenticationHelper.getCurrentUser()).thenReturn(mockUserDto(UUID.randomUUID()));
     RequisitionLineItemV2Dto lineItem = new RequisitionLineItemV2Dto();
     lineItem.setApprovedQuantity(10);
-    lineItem.setId(UUID.randomUUID());
+    lineItem.setId(requisitionLineItemId);
+    OrderableDto orderableDto = createOrderableDto(createMetadataDto());
+    lineItem.setOrderable(orderableDto);
     siglusRequisitionDto.setRequisitionLineItems(singletonList(lineItem));
     siglusRequisitionDto.setStatus(AUTHORIZED);
     when(requisitionRepository.findOne(requisitionId)).thenReturn(requisition);
@@ -2182,7 +2279,11 @@ public class SiglusRequisitionServiceTest {
     when(siglusUsageReportService.saveUsageReportWithValidation(any(), any()))
         .thenReturn(siglusRequisitionDto);
     when(facilityReferenceDataService.findOne(facilityId)).thenReturn(mockFacilityDto2(facilityId));
-    when(programRepository.findOne(programId)).thenReturn(mockProgram(programId));
+    when(programRepository.findOne(programId)).thenReturn(mockProgram2(programId));
+    RequisitionLineItem requisitionLineItem = new RequisitionLineItem();
+    requisitionLineItem.setId(requisitionLineItemId);
+    when(requisitionLineItemRepository.findAllById(newHashSet(requisitionLineItemId))).thenReturn(
+        newHashSet(requisitionLineItem));
 
     // when
     siglusRequisitionService.approveRequisition(requisitionId, request, response);

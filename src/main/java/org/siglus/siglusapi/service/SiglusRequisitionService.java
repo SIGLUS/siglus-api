@@ -221,9 +221,6 @@ public class SiglusRequisitionService {
   public static final String MMIA_COLUMN_TOTAL = "total";
   public static final String ESTIMATED_QUANTITY = "estimatedQuantity";
   public static final String REQUESTED_QUANTITY = "requestedQuantity";
-
-  public static final List<String> CALC_PROGRAM_CODE = newArrayList(MTB_PROGRAM_CODE, RAPIDTEST_PROGRAM_CODE,
-      TARV_PROGRAM_CODE);
   private final OrderableRepository orderableRepository;
   private final ProgramRepository programRepository;
   private final RegimenOrderableRepository regimenOrderableRepository;
@@ -280,9 +277,7 @@ public class SiglusRequisitionService {
     calcMap.put(RAPIDTEST_PROGRAM_CODE, this::calcRequestedQuantityForMmit);
     calcMap.put(TARV_PROGRAM_CODE, this::calcRequestedQuantityForMmia);
     String programCode = programRepository.findOne(siglusRequisitionDto.getProgramId()).getCode().toString();
-    if (CALC_PROGRAM_CODE.contains(programCode)) {
-      calcMap.get(programCode).accept(siglusRequisitionDto, requisitionLineItems);
-    }
+    calcMap.get(programCode).accept(siglusRequisitionDto, requisitionLineItems);
 
     log.info("saved requisitionLineItems {}", requisitionLineItems);
     requisitionLineItemRepository.save(requisitionLineItems);
@@ -829,7 +824,7 @@ public class SiglusRequisitionService {
     if (template.isColumnDisplayed(ESTIMATED_QUANTITY) && template.isColumnCalculated(ESTIMATED_QUANTITY)) {
       calcEstimatedQuantityDraft(requisitionDto, requisitionDraft);
     } else if (template.isColumnDisplayed(REQUESTED_QUANTITY) && template.isColumnStockBased(REQUESTED_QUANTITY)) {
-      calcRequestedQuantityDraft(requisitionDraft);
+      calcRequestedQuantityDraft(requisitionDto, requisitionDraft);
     }
     log.info("save requisition draft extension: {}", requisitionDraft);
     draft = draftRepository.save(requisitionDraft);
@@ -837,11 +832,128 @@ public class SiglusRequisitionService {
     return requisitionDto;
   }
 
-  public void calcRequestedQuantityDraft(RequisitionDraft requisitionDraft) {
+  public void calcRequestedQuantityDraft(SiglusRequisitionDto siglusRequisitionDto, RequisitionDraft requisitionDraft) {
+    Map<String, BiConsumer<SiglusRequisitionDto, RequisitionDraft>> calcMap = new HashMap<>();
+    calcMap.put(MTB_PROGRAM_CODE, this::calcRequestedQuantityDraftForMmtb);
+    calcMap.put(RAPIDTEST_PROGRAM_CODE, this::calcRequestedQuantityDraftForMmit);
+    calcMap.put(TARV_PROGRAM_CODE, this::calcRequestedQuantityDraftForMmia);
+    String programCode = programRepository.findOne(siglusRequisitionDto.getProgramId()).getCode().toString();
+    calcMap.get(programCode).accept(siglusRequisitionDto, requisitionDraft);
+
+  }
+
+  public void calcRequestedQuantityDraftForMmtb(SiglusRequisitionDto siglusRequisitionDto,
+      RequisitionDraft requisitionDraft) {
+    List<BaseRequisitionLineItemDto> lineItems = siglusRequisitionDto.getLineItems();
+    lineItems = lineItems.stream()
+        .filter(baseRequisitionLineItemDto -> baseRequisitionLineItemDto.getId() != null)
+        .collect(toList());
+    Map<UUID, BaseRequisitionLineItemDto> idToLineItems = lineItems.stream()
+        .collect(toMap(BaseDto::getId, Function.identity()));
+
     List<RequisitionLineItemDraft> lineItemDrafts = requisitionDraft.getLineItems();
     lineItemDrafts.forEach(lineItemDraft -> {
       if (lineItemDraft.getRequisitionLineItemId() == null) {
         lineItemDraft.setEstimatedQuantity(0);
+      }
+    });
+    Map<String, Integer> mappingKeyToPatientNumber = getMappingKeyToPatientNumberForMmtb(siglusRequisitionDto);
+    Set<RegimenOrderable> regimenOrderables = new HashSet<>();
+    if (CollectionUtils.isNotEmpty(mappingKeyToPatientNumber.keySet())) {
+      regimenOrderables = regimenOrderableRepository.findByMappingKeyIn(mappingKeyToPatientNumber.keySet());
+    }
+    Map<String, Integer> regimenCodeToPatientNumber = getRegimenCodeToPatientNumber(mappingKeyToPatientNumber,
+        regimenOrderables);
+    Map<String, List<RegimenOrderable>> orderableCodeToRegimenOrderables =
+        getOrderableCodeToRegimenOrderables(regimenOrderables);
+    Map<UUID, String> orderableIdToCode = getOrderableIdToCode(lineItems);
+    lineItemDrafts.forEach(lineItemDraft -> {
+      if (lineItemDraft.getRequisitionLineItemId() != null) {
+        Integer estimatedQuantity = getQuantityByLineItem(idToLineItems.get(lineItemDraft.getRequisitionLineItemId()),
+            orderableCodeToRegimenOrderables,
+            orderableIdToCode,
+            regimenCodeToPatientNumber,
+            DEFAULT_CORRECTION_FACTOR,
+            REQUESTED_QUANTITY_FACTOR);
+        lineItemDraft.setEstimatedQuantity(estimatedQuantity);
+      }
+    });
+  }
+
+  public void calcRequestedQuantityDraftForMmia(SiglusRequisitionDto siglusRequisitionDto,
+      RequisitionDraft requisitionDraft) {
+    List<BaseRequisitionLineItemDto> lineItems = siglusRequisitionDto.getLineItems();
+    lineItems = lineItems.stream()
+        .filter(baseRequisitionLineItemDto -> baseRequisitionLineItemDto.getId() != null)
+        .collect(toList());
+    Map<UUID, BaseRequisitionLineItemDto> idToLineItems = lineItems.stream()
+        .collect(toMap(BaseDto::getId, Function.identity()));
+
+    List<RequisitionLineItemDraft> lineItemDrafts = requisitionDraft.getLineItems();
+    lineItemDrafts.forEach(lineItemDraft -> {
+      if (lineItemDraft.getRequisitionLineItemId() == null) {
+        lineItemDraft.setEstimatedQuantity(0);
+      }
+    });
+
+    Map<String, Integer> regimenCodeToPatientNumber = getRegimenCodeToPatientNumberForMmia(siglusRequisitionDto);
+    Set<RegimenOrderable> regimenOrderables = new HashSet<>();
+    if (CollectionUtils.isNotEmpty(regimenCodeToPatientNumber.keySet())) {
+      regimenOrderables = regimenOrderableRepository.findByRegimenCodeIn(regimenCodeToPatientNumber.keySet());
+    }
+    double correctionFactorForMmia = getCorrectionFactorForMmia(regimenCodeToPatientNumber,
+        siglusRequisitionDto.getPatientLineItems());
+    Map<String, List<RegimenOrderable>> orderableCodeToRegimenOrderables =
+        getOrderableCodeToRegimenOrderables(regimenOrderables);
+    Map<UUID, String> orderableIdToCode = getOrderableIdToCode(lineItems);
+    lineItemDrafts.forEach(lineItemDraft -> {
+      if (lineItemDraft.getRequisitionLineItemId() != null) {
+        Integer estimatedQuantity = getQuantityByLineItem(idToLineItems.get(lineItemDraft.getRequisitionLineItemId()),
+            orderableCodeToRegimenOrderables,
+            orderableIdToCode,
+            regimenCodeToPatientNumber,
+            correctionFactorForMmia,
+            REQUESTED_QUANTITY_FACTOR);
+        lineItemDraft.setEstimatedQuantity(estimatedQuantity);
+      }
+    });
+  }
+
+  public void calcRequestedQuantityDraftForMmit(SiglusRequisitionDto siglusRequisitionDto,
+      RequisitionDraft requisitionDraft) {
+    List<BaseRequisitionLineItemDto> lineItems = siglusRequisitionDto.getLineItems();
+    lineItems = lineItems.stream()
+        .filter(baseRequisitionLineItemDto -> baseRequisitionLineItemDto.getId() != null)
+        .collect(toList());
+    Map<UUID, BaseRequisitionLineItemDto> idToLineItems = lineItems.stream()
+        .collect(toMap(BaseDto::getId, Function.identity()));
+
+    List<RequisitionLineItemDraft> lineItemDrafts = requisitionDraft.getLineItems();
+    lineItemDrafts.forEach(lineItemDraft -> {
+      if (lineItemDraft.getRequisitionLineItemId() == null) {
+        lineItemDraft.setEstimatedQuantity(0);
+      }
+    });
+
+    Map<String, Integer> mappingKeyToPatientNumber = getMappingKeyToPatientNumberForMmit(siglusRequisitionDto);
+    Set<RegimenOrderable> regimenOrderables = new HashSet<>();
+    if (CollectionUtils.isNotEmpty(mappingKeyToPatientNumber.keySet())) {
+      regimenOrderables = regimenOrderableRepository.findByMappingKeyIn(mappingKeyToPatientNumber.keySet());
+    }
+    Map<String, Integer> regimenCodeToPatientNumber = getRegimenCodeToPatientNumber(mappingKeyToPatientNumber,
+        regimenOrderables);
+    Map<String, List<RegimenOrderable>> orderableCodeToRegimenOrderables =
+        getOrderableCodeToRegimenOrderables(regimenOrderables);
+    Map<UUID, String> orderableIdToCode = getOrderableIdToCode(lineItems);
+    lineItemDrafts.forEach(lineItemDraft -> {
+      if (lineItemDraft.getRequisitionLineItemId() != null) {
+        Integer estimatedQuantity = getQuantityByLineItem(idToLineItems.get(lineItemDraft.getRequisitionLineItemId()),
+            orderableCodeToRegimenOrderables,
+            orderableIdToCode,
+            regimenCodeToPatientNumber,
+            DEFAULT_CORRECTION_FACTOR,
+            REQUESTED_QUANTITY_FACTOR);
+        lineItemDraft.setEstimatedQuantity(estimatedQuantity);
       }
     });
   }
@@ -852,9 +964,7 @@ public class SiglusRequisitionService {
     calcMap.put(RAPIDTEST_PROGRAM_CODE, this::calcEstimatedQuantityDraftForMmit);
     calcMap.put(TARV_PROGRAM_CODE, this::calcEstimatedQuantityDraftForMmia);
     String programCode = programRepository.findOne(siglusRequisitionDto.getProgramId()).getCode().toString();
-    if (CALC_PROGRAM_CODE.contains(programCode)) {
-      calcMap.get(programCode).accept(siglusRequisitionDto, requisitionDraft);
-    }
+    calcMap.get(programCode).accept(siglusRequisitionDto, requisitionDraft);
   }
 
   public void calcEstimatedQuantityDraftForMmia(SiglusRequisitionDto siglusRequisitionDto,
@@ -1011,26 +1121,13 @@ public class SiglusRequisitionService {
     saveLineItemExtension(requisitionDto, updateRequisitionDto, requisitionDto);
     RequisitionTemplate template = requisitionRepository.findOne(requisitionDto.getId()).getTemplate();
     if (template.isColumnDisplayed(REQUESTED_QUANTITY) && template.isColumnStockBased(REQUESTED_QUANTITY)) {
-      saveRequisitionLineItem(updateRequisitionDto);
+      calcRequestedQuantity(requisitionDto);
     }
 
     if (validate) {
       return siglusUsageReportService.saveUsageReportWithValidation(requisitionDto, updateRequisitionDto);
     }
     return siglusUsageReportService.saveUsageReport(requisitionDto, updateRequisitionDto);
-  }
-
-  public void saveRequisitionLineItem(RequisitionV2Dto updateRequisitionDto) {
-    List<BaseRequisitionLineItemDto> lineItems = updateRequisitionDto.getLineItems();
-    Set<UUID> lineItemIds = lineItems.stream().map(BaseDto::getId).collect(toSet());
-    Set<RequisitionLineItem> requisitionLineItems = requisitionLineItemRepository.findAllById(lineItemIds);
-    requisitionLineItems.forEach(requisitionLineItem -> {
-      if (requisitionLineItem.getRequestedQuantity() == null) {
-        requisitionLineItem.setRequestedQuantity(0);
-      }
-    });
-    log.info("saved requisitionLineItems {}", requisitionLineItems);
-    requisitionLineItemRepository.save(requisitionLineItems);
   }
 
   public void calcEstimatedQuantity(SiglusRequisitionDto siglusRequisitionDto,
@@ -1040,9 +1137,7 @@ public class SiglusRequisitionService {
     calcMap.put(RAPIDTEST_PROGRAM_CODE, this::calcEstimatedQuantityForMmit);
     calcMap.put(TARV_PROGRAM_CODE, this::calcEstimatedQuantityForMmia);
     String programCode = programRepository.findOne(siglusRequisitionDto.getProgramId()).getCode().toString();
-    if (CALC_PROGRAM_CODE.contains(programCode)) {
-      calcMap.get(programCode).accept(siglusRequisitionDto, extensions);
-    }
+    calcMap.get(programCode).accept(siglusRequisitionDto, extensions);
   }
 
 
