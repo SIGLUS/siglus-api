@@ -20,6 +20,7 @@ import static com.google.common.collect.Sets.newHashSet;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
+import static java.util.stream.Collectors.toSet;
 import static org.apache.commons.lang3.RandomUtils.nextInt;
 import static org.hamcrest.Matchers.hasItems;
 import static org.junit.Assert.assertEquals;
@@ -49,8 +50,6 @@ import static org.openlmis.requisition.domain.requisition.RequisitionStatus.SUBM
 import static org.openlmis.requisition.i18n.MessageKeys.ERROR_NO_FOLLOWING_PERMISSION;
 import static org.openlmis.requisition.service.PermissionService.REQUISITION_AUTHORIZE;
 import static org.openlmis.requisition.service.PermissionService.REQUISITION_CREATE;
-import static org.siglus.siglusapi.constant.ProgramConstants.RAPIDTEST_PROGRAM_CODE;
-import static org.siglus.siglusapi.constant.ProgramConstants.TARV_PROGRAM_CODE;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -93,6 +92,8 @@ import org.openlmis.requisition.domain.requisition.RequisitionLineItem;
 import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.domain.requisition.VersionEntityReference;
 import org.openlmis.requisition.dto.ApprovedProductDto;
+import org.openlmis.requisition.dto.BaseDto;
+import org.openlmis.requisition.dto.BaseRequisitionLineItemDto;
 import org.openlmis.requisition.dto.BasicProcessingPeriodDto;
 import org.openlmis.requisition.dto.BasicRequisitionDto;
 import org.openlmis.requisition.dto.BasicRequisitionTemplateDto;
@@ -109,6 +110,7 @@ import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.dto.ProgramOrderableDto;
 import org.openlmis.requisition.dto.ProofOfDeliveryDto;
 import org.openlmis.requisition.dto.RequisitionGroupDto;
+import org.openlmis.requisition.dto.RequisitionLineItemDto;
 import org.openlmis.requisition.dto.RequisitionLineItemV2Dto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.dto.RequisitionWithSupplyingDepotsDto;
@@ -161,7 +163,9 @@ import org.siglus.siglusapi.domain.UsageInformationLineItemDraft;
 import org.siglus.siglusapi.dto.OrderableExpirationDateDto;
 import org.siglus.siglusapi.dto.PatientColumnDto;
 import org.siglus.siglusapi.dto.PatientGroupDto;
+import org.siglus.siglusapi.dto.RegimenColumnDto;
 import org.siglus.siglusapi.dto.RegimenDto;
+import org.siglus.siglusapi.dto.RegimenLineDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionLineItemDto;
 import org.siglus.siglusapi.dto.SimpleRequisitionDto;
@@ -206,6 +210,8 @@ public class SiglusRequisitionServiceTest {
   private static final String MESSAGE = "message";
 
   public static final String SUGGESTED_QUANTITY_COLUMN = "suggestedQuantity";
+  public static final String ESTIMATED_QUANTITY = "estimatedQuantity";
+  public static final String REQUESTED_QUANTITY = "requestedQuantity";
 
   @Rule
   public ExpectedException exception = ExpectedException.none();
@@ -366,6 +372,8 @@ public class SiglusRequisitionServiceTest {
   private final UUID userFacilityId = UUID.randomUUID();
 
   private final UUID userId = UUID.randomUUID();
+
+  private final String orderableCode = "08S30ZY";
   @Mock
   private OrderableRepository orderableRepository;
   @Mock
@@ -417,6 +425,7 @@ public class SiglusRequisitionServiceTest {
   private final RequisitionV2Dto requisitionV2Dto = createRequisitionV2Dto();
 
   private final Requisition requisition = createRequisition();
+  private final Requisition requisition2 = createRequisition2();
 
   private SiglusRequisitionDto siglusRequisitionDto;
 
@@ -699,6 +708,7 @@ public class SiglusRequisitionServiceTest {
         requisitionExtension);
     when(siglusRequisitionExtensionService.formatRequisitionNumber(requisitionExtension))
         .thenReturn(REQUISITION_NUMBER);
+    when(requisitionRepository.findOne(requisition.getId())).thenReturn(requisition);
 
     // when
     SiglusRequisitionDto siglusRequisitionDto = siglusRequisitionService.initiate(programId,
@@ -742,6 +752,9 @@ public class SiglusRequisitionServiceTest {
     BeanUtils.copyProperties(requisitionV2Dto, updatedDto);
     when(siglusUsageReportService.saveUsageReport(siglusRequisitionDto, requisitionV2Dto))
         .thenReturn(updatedDto);
+    when(facilityReferenceDataService.findOne(facilityId)).thenReturn(mockFacilityDto2(facilityId));
+    when(programRepository.findOne(programId)).thenReturn(mockProgram(programId));
+    when(requisitionRepository.findOne(requisition.getId())).thenReturn(requisition);
 
     // when
     SiglusRequisitionDto requisitionDto =
@@ -793,6 +806,9 @@ public class SiglusRequisitionServiceTest {
         .thenReturn(singletonList(requisitionLineItemExtension));
     when(siglusUsageReportService.saveUsageReport(siglusRequisitionDto, requisitionV2Dto))
         .thenReturn(updatedDto);
+    when(facilityReferenceDataService.findOne(facilityId)).thenReturn(mockFacilityDto2(facilityId));
+    when(programRepository.findOne(programId)).thenReturn(mockProgram(programId));
+    when(requisitionRepository.findOne(requisition.getId())).thenReturn(requisition);
 
     // when
     SiglusRequisitionDto requisitionDto =
@@ -954,6 +970,8 @@ public class SiglusRequisitionServiceTest {
     when(requisitionRepository.findOne(requisitionId)).thenReturn(requisition);
     when(requisitionV2Controller.updateRequisition(requisitionId, siglusRequisitionDto, request, response))
         .thenReturn(requisitionV2Dto);
+    when(facilityReferenceDataService.findOne(facilityId)).thenReturn(mockFacilityDto2(facilityId));
+    when(programRepository.findOne(programId)).thenReturn(mockProgram(programId));
 
     // when
     BasicRequisitionDto requisitionDto = siglusRequisitionService
@@ -1005,6 +1023,8 @@ public class SiglusRequisitionServiceTest {
     when(programReferenceDataService.findOne(programId)).thenReturn(programDto);
     when(messageService.localize(any(), anyVararg())).thenReturn(MESSAGE);
     when(siglusUsageReportService.saveUsageReportWithValidation(any(), any())).thenReturn(siglusRequisitionDto);
+    when(facilityReferenceDataService.findOne(facilityId)).thenReturn(mockFacilityDto2(facilityId));
+    when(programRepository.findOne(programId)).thenReturn(mockProgram(programId));
 
     // when
     BasicRequisitionDto requisitionDto = siglusRequisitionService
@@ -1015,6 +1035,18 @@ public class SiglusRequisitionServiceTest {
     verify(siglusUsageReportService).saveUsageReportWithValidation(any(), any());
     verify(archiveProductService).activateProducts(any(), any());
     verify(notificationService).postAuthorize(requisitionDto);
+  }
+
+  private Program mockProgram(UUID programId) {
+    Program program = new Program(programId);
+    program.setCode(new Code("VC"));
+    return program;
+  }
+
+  private Program mockProgram2(UUID programId) {
+    Program program = new Program(programId);
+    program.setCode(new Code("TB"));
+    return program;
   }
 
   @Test
@@ -1092,6 +1124,8 @@ public class SiglusRequisitionServiceTest {
     when(programReferenceDataService.findOne(programId)).thenReturn(programDto);
     when(messageService.localize(any(), anyVararg())).thenReturn(MESSAGE);
     when(siglusUsageReportService.saveUsageReportWithValidation(any(), any())).thenReturn(siglusRequisitionDto);
+    when(facilityReferenceDataService.findOne(facilityId)).thenReturn(mockFacilityDto2(facilityId));
+    when(programRepository.findOne(programId)).thenReturn(mockProgram(programId));
 
     // when
     siglusRequisitionService.approveRequisition(requisitionId, request, response);
@@ -1137,6 +1171,8 @@ public class SiglusRequisitionServiceTest {
     when(messageService.localize(any(), anyVararg())).thenReturn(MESSAGE);
     when(siglusUsageReportService.saveUsageReportWithValidation(any(), any())).thenReturn(siglusRequisitionDto);
     when(regimenDataProcessor.getRegimenDtoMap()).thenReturn(mockRegimenMap());
+    when(facilityReferenceDataService.findOne(facilityId)).thenReturn(mockFacilityDto2(facilityId));
+    when(programRepository.findOne(programId)).thenReturn(mockProgram(programId));
 
     // when
     siglusRequisitionService.approveRequisition(requisitionId, request, response);
@@ -1163,12 +1199,15 @@ public class SiglusRequisitionServiceTest {
     lineItemV2Dto.setPreviousAdjustedConsumptions(newArrayList());
     siglusRequisitionDto.setRequisitionLineItems(singletonList(lineItemV2Dto));
     when(operatePermissionService.canSubmit(siglusRequisitionDto)).thenReturn(false);
-    RequisitionTemplate requisitionTemplate = new RequisitionTemplate();
+    //  RequisitionTemplate requisitionTemplate = new RequisitionTemplate();
+    RequisitionTemplate requisitionTemplate = createTemplate2();
     requisitionTemplate.setId(templateId);
     RequisitionTemplateExtension templateExtension = createTemplateExtension();
     requisitionTemplate.setTemplateExtension(templateExtension);
-    requisition.setTemplate(requisitionTemplate);
-    when(requisitionRepository.findOne(siglusRequisitionDto.getId())).thenReturn(requisition);
+    requisition2.setTemplate(requisitionTemplate);
+    when(programRepository.findOne(programId)).thenReturn(mockProgram(programId));
+
+    when(requisitionRepository.findOne(siglusRequisitionDto.getId())).thenReturn(requisition2);
     when(requisitionTemplateExtensionRepository.findByRequisitionTemplateId(
         siglusRequisitionDto.getId())).thenReturn(templateExtension);
     RequisitionDraft draft = getRequisitionDraft(siglusRequisitionDto.getId());
@@ -1332,10 +1371,10 @@ public class SiglusRequisitionServiceTest {
     Map<String, List<RegimenOrderable>> orderableCodeToRegimenOrderables = new HashMap<>();
     orderableCodeToRegimenOrderables.put(regimenOrderable.getOrderableCode(), newArrayList(regimenOrderable));
     Map<UUID, String> orderableIdToCode = new HashMap<>();
-    orderableIdToCode.put(orderableId, "08S30ZY");
+    orderableIdToCode.put(orderableId, orderableCode);
     Map<String, Integer> regimenCodeToPatientNumber = new HashMap<>();
     // when
-    Integer estimatedOrRequestedQuantity = siglusRequisitionService.getEstimatedOrRequestedQuantity(lineItemV2Dto,
+    Integer estimatedOrRequestedQuantity = siglusRequisitionService.getQuantityByLineItem(lineItemV2Dto,
         orderableCodeToRegimenOrderables, orderableIdToCode, regimenCodeToPatientNumber, 1, 1);
     // then
     assertEquals(0, estimatedOrRequestedQuantity.intValue());
@@ -1381,6 +1420,22 @@ public class SiglusRequisitionServiceTest {
     Map<String, PatientColumnDto> columnDtoMap = new HashMap<>();
     PatientColumnDto patientColumnDto = new PatientColumnDto();
     columnDtoMap.put("new", patientColumnDto);
+    PatientColumnDto patientColumnDto2 = new PatientColumnDto();
+    patientColumnDto2.setValue(10);
+    columnDtoMap.put("total", patientColumnDto2);
+    patientGroupDto.setColumns(columnDtoMap);
+    return patientGroupDto;
+  }
+
+  private PatientGroupDto mockPatientGroupDto3() {
+    PatientGroupDto patientGroupDto = new PatientGroupDto();
+    patientGroupDto.setName("newSection5");
+    Map<String, PatientColumnDto> columnDtoMap = new HashMap<>();
+    PatientColumnDto patientColumnDto = new PatientColumnDto();
+    columnDtoMap.put("new", patientColumnDto);
+    PatientColumnDto patientColumnDto2 = new PatientColumnDto();
+    patientColumnDto2.setValue(0);
+    columnDtoMap.put("total", patientColumnDto2);
     patientGroupDto.setColumns(columnDtoMap);
     return patientGroupDto;
   }
@@ -1406,6 +1461,220 @@ public class SiglusRequisitionServiceTest {
         siglusRequisitionDto);
     // then
     assertEquals(0, mappingKeyToPatientNumberForMmit2.size());
+  }
+
+  @Test
+  public void shouldCalcRequestedQuantityDraft() {
+    // given
+    RequisitionDraft requisitionDraft = getRequisitionDraft2(requisitionId);
+    // when
+    siglusRequisitionService.calcRequestedQuantityDraft(requisitionDraft);
+    // then
+    assertEquals(1, requisitionDraft.getLineItems().size());
+    assertEquals(Integer.valueOf(0), requisitionDraft.getLineItems().get(0).getEstimatedQuantity());
+  }
+
+  @Test
+  public void shouldSaveRequisitionLineItem() {
+    // given
+    RequisitionV2Dto updateRequisitionDto = createRequisitionV2Dto2();
+    List<BaseRequisitionLineItemDto> lineItems = updateRequisitionDto.getLineItems();
+    Set<UUID> lineItemIds = lineItems.stream().map(BaseDto::getId).collect(toSet());
+    when(requisitionLineItemRepository.findAllById(lineItemIds)).thenReturn(newHashSet(new RequisitionLineItem()));
+    // when
+    siglusRequisitionService.saveRequisitionLineItem(updateRequisitionDto);
+    // then
+    assertNull(updateRequisitionDto.getLineItems().get(0).getRequestedQuantity());
+  }
+
+  @Test
+  public void shouldSaveRequisitionLineItem2() {
+    // given
+    RequisitionV2Dto updateRequisitionDto = new RequisitionV2Dto();
+    List<RequisitionLineItemV2Dto> requisitionLineItemV2Dtos = new ArrayList<>();
+    RequisitionLineItemV2Dto requisitionLineItemV2Dto = new RequisitionLineItemV2Dto();
+    requisitionLineItemV2Dto.setId(requisitionLineItemId);
+    requisitionLineItemV2Dtos.add(requisitionLineItemV2Dto);
+    updateRequisitionDto.setRequisitionLineItems(requisitionLineItemV2Dtos);
+    List<BaseRequisitionLineItemDto> lineItems = updateRequisitionDto.getLineItems();
+    Set<UUID> lineItemIds = lineItems.stream().map(BaseDto::getId).collect(toSet());
+    RequisitionLineItem requisitionLineItem = new RequisitionLineItem();
+    requisitionLineItem.setId(requisitionLineItemV2Dto.getId());
+    requisitionLineItem.setRequestedQuantity(0);
+    when(requisitionLineItemRepository.findAllById(lineItemIds)).thenReturn(newHashSet(requisitionLineItem));
+    // when
+    siglusRequisitionService.saveRequisitionLineItem(updateRequisitionDto);
+    // then
+    assertNull(updateRequisitionDto.getLineItems().get(0).getRequestedQuantity());
+  }
+
+  @Test
+  public void shouldGetOrderableIdToCode() {
+    // given
+    OrderableDto orderableDto = new OrderableDto();
+    orderableDto.setId(orderableId);
+    orderableDto.setProductCode("pcode");
+    List<BaseRequisitionLineItemDto> baseRequisitionLineItemDtos = new ArrayList<>();
+    RequisitionLineItemDto requisitionLineItemDto = new RequisitionLineItemDto();
+    requisitionLineItemDto.setOrderable(orderableDto);
+    baseRequisitionLineItemDtos.add(requisitionLineItemDto);
+    // when
+    Map<UUID, String> orderableIdToCode = siglusRequisitionService.getOrderableIdToCode(baseRequisitionLineItemDtos);
+    // then
+    assertEquals(0, orderableIdToCode.keySet().size());
+  }
+
+  @Test
+  public void shouldCalcEstimatedQuantityDraftForMmia() {
+    // given
+    RequisitionLineItemV2Dto lineItem1 = new RequisitionLineItemV2Dto();
+    List<RequisitionLineItemV2Dto> lineItems = new ArrayList<>();
+    lineItems.add(lineItem1);
+    siglusRequisitionDto.setRequisitionLineItems(lineItems);
+
+    RequisitionDraft requisitionDraft = getRequisitionDraft2(requisitionId);
+    // when
+    siglusRequisitionService.calcEstimatedQuantityDraftForMmia(siglusRequisitionDto, requisitionDraft);
+    // then
+    assertEquals(1, siglusRequisitionDto.getLineItems().size());
+  }
+
+  @Test
+  public void shouldCalcEstimatedQuantityDraftForMmit() {
+    // given
+    RequisitionLineItemV2Dto lineItem1 = new RequisitionLineItemV2Dto();
+    List<RequisitionLineItemV2Dto> lineItems = new ArrayList<>();
+    lineItems.add(lineItem1);
+    siglusRequisitionDto.setRequisitionLineItems(lineItems);
+
+    RequisitionDraft requisitionDraft = getRequisitionDraft2(requisitionId);
+    // when
+    siglusRequisitionService.calcEstimatedQuantityDraftForMmit(siglusRequisitionDto, requisitionDraft);
+    // then
+    assertEquals(1, siglusRequisitionDto.getLineItems().size());
+  }
+
+  @Test
+  public void shouldCalcEstimatedQuantityDraftForMmtb() {
+    // given
+    RequisitionLineItemV2Dto lineItem1 = new RequisitionLineItemV2Dto();
+    List<RequisitionLineItemV2Dto> lineItems = new ArrayList<>();
+    lineItems.add(lineItem1);
+    siglusRequisitionDto.setRequisitionLineItems(lineItems);
+
+    RequisitionDraft requisitionDraft = getRequisitionDraft2(requisitionId);
+    // when
+    siglusRequisitionService.calcEstimatedQuantityDraftForMmtb(siglusRequisitionDto, requisitionDraft);
+    // then
+    assertEquals(1, siglusRequisitionDto.getLineItems().size());
+  }
+
+  @Test
+  public void shouldCalcEstimatedQuantityForMmia() {
+    // given
+    RequisitionLineItemV2Dto lineItem1 = new RequisitionLineItemV2Dto();
+    List<RequisitionLineItemV2Dto> lineItems = new ArrayList<>();
+    lineItems.add(lineItem1);
+    siglusRequisitionDto.setRequisitionLineItems(lineItems);
+
+    List<RequisitionLineItemExtension> extensions = new ArrayList<>();
+    // when
+    siglusRequisitionService.calcEstimatedQuantityForMmia(siglusRequisitionDto, extensions);
+    // then
+    assertEquals(1, siglusRequisitionDto.getLineItems().size());
+  }
+
+  @Test
+  public void shouldCalcEstimatedQuantityForMmit() {
+    // given
+    RequisitionLineItemV2Dto lineItem1 = new RequisitionLineItemV2Dto();
+    List<RequisitionLineItemV2Dto> lineItems = new ArrayList<>();
+    lineItems.add(lineItem1);
+    siglusRequisitionDto.setRequisitionLineItems(lineItems);
+
+    List<RequisitionLineItemExtension> extensions = new ArrayList<>();
+    // when
+    siglusRequisitionService.calcEstimatedQuantityForMmit(siglusRequisitionDto, extensions);
+    // then
+    assertEquals(1, siglusRequisitionDto.getLineItems().size());
+  }
+
+  @Test
+  public void shouldCalcEstimatedQuantityForMmtb() {
+    // given
+    RequisitionLineItemV2Dto lineItem1 = new RequisitionLineItemV2Dto();
+    List<RequisitionLineItemV2Dto> lineItems = new ArrayList<>();
+    lineItems.add(lineItem1);
+    siglusRequisitionDto.setRequisitionLineItems(lineItems);
+
+    List<RequisitionLineItemExtension> extensions = new ArrayList<>();
+    // when
+    siglusRequisitionService.calcEstimatedQuantityForMmtb(siglusRequisitionDto, extensions);
+    // then
+    assertEquals(1, siglusRequisitionDto.getLineItems().size());
+  }
+
+  @Test
+  public void shouldCalcRequestedQuantityForMmia() {
+    // given
+    RequisitionLineItemV2Dto lineItem1 = new RequisitionLineItemV2Dto();
+    OrderableDto orderableDto = new OrderableDto();
+    orderableDto.setId(orderableId);
+    lineItem1.setOrderable(orderableDto);
+    ApprovedProductDto approvedProductDto = new ApprovedProductDto();
+    approvedProductDto.setMeta(createMetadataDto());
+    lineItem1.setApprovedProduct(approvedProductDto);
+    List<RequisitionLineItemV2Dto> lineItems = new ArrayList<>();
+    lineItems.add(lineItem1);
+    siglusRequisitionDto.setRequisitionLineItems(lineItems);
+
+    Set<RequisitionLineItem> requisitionLineItems = new HashSet<>();
+    // when
+    siglusRequisitionService.calcRequestedQuantityForMmia(siglusRequisitionDto, requisitionLineItems);
+    // then
+    assertEquals(1, siglusRequisitionDto.getLineItems().size());
+  }
+
+  @Test
+  public void shouldCalcRequestedQuantityForMmit() {
+    // given
+    RequisitionLineItemV2Dto lineItem1 = new RequisitionLineItemV2Dto();
+    OrderableDto orderableDto = new OrderableDto();
+    orderableDto.setId(orderableId);
+    lineItem1.setOrderable(orderableDto);
+    ApprovedProductDto approvedProductDto = new ApprovedProductDto();
+    approvedProductDto.setMeta(createMetadataDto());
+    lineItem1.setApprovedProduct(approvedProductDto);
+    List<RequisitionLineItemV2Dto> lineItems = new ArrayList<>();
+    lineItems.add(lineItem1);
+    siglusRequisitionDto.setRequisitionLineItems(lineItems);
+
+    Set<RequisitionLineItem> requisitionLineItems = new HashSet<>();
+    // when
+    siglusRequisitionService.calcRequestedQuantityForMmit(siglusRequisitionDto, requisitionLineItems);
+    // then
+    assertEquals(1, siglusRequisitionDto.getLineItems().size());
+  }
+
+  @Test
+  public void shouldCalcRequestedQuantityForMmtb() {
+    // given
+    RequisitionLineItemV2Dto lineItem1 = new RequisitionLineItemV2Dto();
+    OrderableDto orderableDto = new OrderableDto();
+    orderableDto.setId(orderableId);
+    lineItem1.setOrderable(orderableDto);
+    ApprovedProductDto approvedProductDto = new ApprovedProductDto();
+    approvedProductDto.setMeta(createMetadataDto());
+    lineItem1.setApprovedProduct(approvedProductDto);
+    List<RequisitionLineItemV2Dto> lineItems = new ArrayList<>();
+    lineItems.add(lineItem1);
+    siglusRequisitionDto.setRequisitionLineItems(lineItems);
+
+    Set<RequisitionLineItem> requisitionLineItems = new HashSet<>();
+    // when
+    siglusRequisitionService.calcRequestedQuantityForMmtb(siglusRequisitionDto, requisitionLineItems);
+    // then
+    assertEquals(1, siglusRequisitionDto.getLineItems().size());
   }
 
   private TestConsumptionServiceDto mockTestConsumptionServiceDto() {
@@ -1462,7 +1731,7 @@ public class SiglusRequisitionServiceTest {
     Map<String, Integer> regimenCodeToPatientNumber = new HashMap<>();
     regimenCodeToPatientNumber.put(regimenOrderable.getRegimenCode(), 100);
     // when
-    Integer estimatedOrRequestedQuantity = siglusRequisitionService.getEstimatedOrRequestedQuantity(lineItemV2Dto,
+    Integer estimatedOrRequestedQuantity = siglusRequisitionService.getQuantityByLineItem(lineItemV2Dto,
         orderableCodeToRegimenOrderables, orderableIdToCode, regimenCodeToPatientNumber, 10, 10);
     // then
     assertEquals(1000000, estimatedOrRequestedQuantity.intValue());
@@ -1474,7 +1743,7 @@ public class SiglusRequisitionServiceTest {
     RegimenOrderable regimenOrderable = new RegimenOrderable();
     regimenOrderable.setQuantity(1.0);
     regimenOrderable.setRegimenCode("1alt1");
-    regimenOrderable.setOrderableCode("08S30ZY");
+    regimenOrderable.setOrderableCode(orderableCode);
     Set<RegimenOrderable> regimenOrderables = newHashSet(regimenOrderable);
     // when
     Map<String, List<RegimenOrderable>> orderableCodeToRegimenOrderables = siglusRequisitionService.getOrderableCodeToRegimenOrderables(
@@ -1484,26 +1753,22 @@ public class SiglusRequisitionServiceTest {
   }
 
   @Test
-  public void shouldCalcEstimatedOrRequestedQuantity() {
+  public void shouldGetOrderableCodeToRegimenOrderables2() {
     // given
-    RequisitionLineItemV2Dto lineItemV2Dto = new RequisitionLineItemV2Dto();
-    OrderableDto productDto = new OrderableDto();
-    productDto.setId(orderableId);
-    lineItemV2Dto.setId(requisitionLineItemId);
-    lineItemV2Dto.setOrderable(productDto);
-    RequisitionV2Dto requisitionV2Dto = new RequisitionV2Dto();
-    siglusRequisitionDto = convert(requisitionV2Dto);
-    siglusRequisitionDto.setRequisitionLineItems(newArrayList(lineItemV2Dto));
-    Program program = new Program(programId);
-    program.setCode(new Code("T"));
-    when(programRepository.findAll()).thenReturn(Lists.newArrayList(program));
-    siglusRequisitionDto.setProgram(new ObjectReferenceDto(programId));
+    RegimenOrderable regimenOrderable = new RegimenOrderable();
+    regimenOrderable.setQuantity(1.0);
+    regimenOrderable.setRegimenCode("1alt1");
+    regimenOrderable.setOrderableCode(orderableCode);
+    RegimenOrderable regimenOrderable2 = new RegimenOrderable();
+    regimenOrderable2.setQuantity(1.0);
+    regimenOrderable2.setRegimenCode("1alt2");
+    regimenOrderable2.setOrderableCode(orderableCode);
+    Set<RegimenOrderable> regimenOrderables = newHashSet(regimenOrderable, regimenOrderable2);
     // when
-    siglusRequisitionService.calcEstimatedOrRequestedQuantity(siglusRequisitionDto, RAPIDTEST_PROGRAM_CODE);
-
+    Map<String, List<RegimenOrderable>> orderableCodeToRegimenOrderables = siglusRequisitionService.getOrderableCodeToRegimenOrderables(
+        regimenOrderables);
     // then
-    assertEquals(TARV_PROGRAM_CODE, program.getCode().toString());
-    verify(programRepository).findAll();
+    assertEquals(2, orderableCodeToRegimenOrderables.get(orderableCode).size());
   }
 
   @Test
@@ -1521,11 +1786,212 @@ public class SiglusRequisitionServiceTest {
     lineItem.setId(UUID.randomUUID());
     lineItem.setOrderable(productVersionObjectReference1);
     siglusRequisitionDto.setRequisitionLineItems(newArrayList(lineItem));
+    when(programRepository.findOne(programId)).thenReturn(mockProgram(programId));
     when(siglusUsageReportService.isSupplyFacilityType(facilityId)).thenReturn(true);
     // when
-    siglusRequisitionService.initiateAndSaveRequisitionLineItems(siglusRequisitionDto, facilityId);
+    siglusRequisitionService.calcRequestedQuantity(siglusRequisitionDto);
     // then
-    verify(requisitionLineItemRepository, times(2)).findAllById(newHashSet(lineItem.getId()));
+    verify(requisitionLineItemRepository, times(1)).findAllById(newHashSet(lineItem.getId()));
+  }
+
+  @Test
+  public void shouldCalcRequestedQuantity() {
+    // given
+    siglusRequisitionDto = new SiglusRequisitionDto();
+    BeanUtils.copyProperties(requisitionV2Dto, siglusRequisitionDto);
+    when(programRepository.findOne(programId)).thenReturn(mockProgram2(programId));
+    // when
+    siglusRequisitionService.calcRequestedQuantity(siglusRequisitionDto);
+    // then
+    verify(regimenOrderableRepository).findByExistedMappingKey();
+  }
+
+  @Test
+  public void shouldCalcEstimatedQuantityDraft() {
+    // given
+    siglusRequisitionDto = new SiglusRequisitionDto();
+    BeanUtils.copyProperties(requisitionV2Dto, siglusRequisitionDto);
+    when(programRepository.findOne(programId)).thenReturn(mockProgram2(programId));
+
+    RequisitionDraft requisitionDraft = new RequisitionDraft();
+    // when
+    siglusRequisitionService.calcEstimatedQuantityDraft(siglusRequisitionDto, requisitionDraft);
+    // then
+    verify(regimenOrderableRepository).findByExistedMappingKey();
+  }
+
+  @Test
+  public void shouldCalcEstimatedQuantity() {
+    // given
+    siglusRequisitionDto = new SiglusRequisitionDto();
+    BeanUtils.copyProperties(requisitionV2Dto, siglusRequisitionDto);
+    when(programRepository.findOne(programId)).thenReturn(mockProgram2(programId));
+
+    List<RequisitionLineItemExtension> extensions = new ArrayList<>();
+    // when
+    siglusRequisitionService.calcEstimatedQuantity(siglusRequisitionDto, extensions);
+    // then
+    verify(regimenOrderableRepository).findByExistedMappingKey();
+  }
+
+  @Test
+  public void shouldSaveLineItemExtensions() {
+    // given
+    siglusRequisitionDto = new SiglusRequisitionDto();
+    BeanUtils.copyProperties(requisitionV2Dto, siglusRequisitionDto);
+    RequisitionLineItemV2Dto lineItem = new RequisitionLineItemV2Dto();
+    lineItem.setId(UUID.randomUUID());
+    siglusRequisitionDto.setRequisitionLineItems(newArrayList(lineItem));
+    RequisitionLineItemExtension requisitionLineItemExtension = new RequisitionLineItemExtension();
+    requisitionLineItemExtension.setRequisitionLineItemId(lineItem.getId());
+    List<RequisitionLineItemExtension> requisitionLineItemExtensions = new ArrayList<>();
+    requisitionLineItemExtensions.add(requisitionLineItemExtension);
+    when(lineItemExtensionRepository.findLineItems(newArrayList(lineItem.getId()))).thenReturn(
+        requisitionLineItemExtensions);
+    // when
+    siglusRequisitionService.saveLineItemExtensions(siglusRequisitionDto.getLineItems());
+    // then
+    verify(lineItemExtensionRepository).save(newArrayList(requisitionLineItemExtension));
+  }
+
+  @Test
+  public void shouldGetCorrectionFactorForMmia() {
+    RequisitionLineItemV2Dto lineItemV2Dto = new RequisitionLineItemV2Dto();
+    OrderableDto productDto = new OrderableDto();
+    productDto.setId(orderableId);
+    lineItemV2Dto.setId(requisitionLineItemId);
+    lineItemV2Dto.setOrderable(productDto);
+    RegimenOrderable regimenOrderable = mockRegimenOrderable();
+    when(regimenOrderableRepository.findByMappingKeyIn(newHashSet("1"))).thenReturn(newHashSet(regimenOrderable));
+    Map<String, Integer> regimenCodeToPatientNumber = new HashMap<>();
+    regimenCodeToPatientNumber.put(regimenOrderable.getRegimenCode(), 100);
+    PatientGroupDto patientGroupDto = mockPatientGroupDto2();
+    // when
+    double correctionFactorForMmia = siglusRequisitionService.getCorrectionFactorForMmia(regimenCodeToPatientNumber,
+        newArrayList(patientGroupDto));
+    // then
+    assertEquals(10.0, correctionFactorForMmia, 0.0);
+  }
+
+  @Test
+  public void shouldGetCorrectionFactorForMmia2() {
+    RequisitionLineItemV2Dto lineItemV2Dto = new RequisitionLineItemV2Dto();
+    OrderableDto productDto = new OrderableDto();
+    productDto.setId(orderableId);
+    lineItemV2Dto.setId(requisitionLineItemId);
+    lineItemV2Dto.setOrderable(productDto);
+    RegimenOrderable regimenOrderable = mockRegimenOrderable();
+    when(regimenOrderableRepository.findByMappingKeyIn(newHashSet("1"))).thenReturn(newHashSet(regimenOrderable));
+    Map<String, Integer> regimenCodeToPatientNumber = new HashMap<>();
+    regimenCodeToPatientNumber.put(regimenOrderable.getRegimenCode(), 100);
+    PatientGroupDto patientGroupDto = mockPatientGroupDto3();
+    // when
+    double correctionFactorForMmia = siglusRequisitionService.getCorrectionFactorForMmia(regimenCodeToPatientNumber,
+        newArrayList(patientGroupDto));
+    // then
+    assertEquals(100.0, correctionFactorForMmia, 0.0);
+  }
+
+  @Test
+  public void shouldGetRegimenCodeToPatientNumberForMmia() {
+    // given
+    siglusRequisitionDto = new SiglusRequisitionDto();
+    BeanUtils.copyProperties(requisitionV2Dto, siglusRequisitionDto);
+    RegimenLineDto regimenLineDto = new RegimenLineDto();
+    regimenLineDto.setRegimen(mockRegimen());
+    Map<String, RegimenColumnDto> columns = new HashMap<>();
+    RegimenColumnDto regimenColumnDto = new RegimenColumnDto();
+    columns.put("patients", regimenColumnDto);
+    regimenLineDto.setColumns(columns);
+    siglusRequisitionDto.setRegimenLineItems(newArrayList(regimenLineDto));
+    // when
+    Map<String, Integer> regimenCodeToPatientNumberForMmia = siglusRequisitionService.getRegimenCodeToPatientNumberForMmia(
+        siglusRequisitionDto);
+    // then
+    assertEquals(1, regimenCodeToPatientNumberForMmia.keySet().size());
+  }
+
+  @Test
+  public void shouldGetRegimenCodeToPatientNumberForMmia2() {
+    // given
+    siglusRequisitionDto = new SiglusRequisitionDto();
+    BeanUtils.copyProperties(requisitionV2Dto, siglusRequisitionDto);
+    RegimenLineDto regimenLineDto = new RegimenLineDto();
+    Map<String, RegimenColumnDto> columns = new HashMap<>();
+    RegimenColumnDto regimenColumnDto = new RegimenColumnDto();
+    columns.put("patients", regimenColumnDto);
+    regimenLineDto.setColumns(columns);
+    siglusRequisitionDto.setRegimenLineItems(newArrayList(regimenLineDto));
+    // when
+    Map<String, Integer> regimenCodeToPatientNumberForMmia = siglusRequisitionService.getRegimenCodeToPatientNumberForMmia(
+        siglusRequisitionDto);
+    // then
+    assertEquals(0, regimenCodeToPatientNumberForMmia.keySet().size());
+  }
+
+  @Test
+  public void shouldGetRegimenCodeToPatientNumber() {
+    // given
+    Map<String, Integer> mappingKeyToPatientNumber = new HashMap<>();
+    mappingKeyToPatientNumber.put("1", 1);
+    RegimenOrderable regimenOrderable = mockRegimenOrderable();
+    // when
+    Map<String, Integer> regimenCodeToPatientNumber = siglusRequisitionService.getRegimenCodeToPatientNumber(
+        mappingKeyToPatientNumber, newHashSet(regimenOrderable));
+    // then
+    assertEquals(1, regimenCodeToPatientNumber.keySet().size());
+  }
+
+  @Test
+  public void shouldMergeSets() {
+    // given
+    FacilityDto facilityDto1 = mockFacilityDto(facilityId);
+    HashSet<FacilityDto> set1 = newHashSet(facilityDto1);
+    HashSet<FacilityDto> set2 = newHashSet();
+
+    // when
+    Set<FacilityDto> set = siglusRequisitionService.mergeSets(set1, set2);
+    // then
+    assertEquals(set.size(), set1.size());
+  }
+
+  @Test
+  public void shouldMergeSets2() {
+    // given
+    FacilityDto facilityDto1 = mockFacilityDto(facilityId);
+    HashSet<FacilityDto> set1 = newHashSet();
+    HashSet<FacilityDto> set2 = newHashSet(facilityDto1);
+
+    // when
+    Set<FacilityDto> set = siglusRequisitionService.mergeSets(set1, set2);
+    // then
+    assertEquals(set.size(), set2.size());
+  }
+
+  @Test
+  public void shouldMergeSets3() {
+    // given
+    FacilityDto facilityDto1 = mockFacilityDto(facilityId);
+    FacilityDto facilityDto2 = mockFacilityDto(facilityId2);
+    HashSet<FacilityDto> set1 = newHashSet(facilityDto1);
+    HashSet<FacilityDto> set2 = newHashSet(facilityDto2);
+
+    // when
+    Set<FacilityDto> set = siglusRequisitionService.mergeSets(set1, set2);
+    // then
+    assertEquals(2, set.size());
+  }
+
+  @Test
+  public void shouldMergeSets4() {
+    // given
+    HashSet<FacilityDto> set1 = newHashSet();
+    HashSet<FacilityDto> set2 = newHashSet();
+
+    // when
+    Set<FacilityDto> set = siglusRequisitionService.mergeSets(set1, set2);
+    // then
+    assertEquals(0, set.size());
   }
 
   private SiglusRequisitionDto convert(RequisitionV2Dto requisitionV2Dto) {
@@ -1539,6 +2005,26 @@ public class SiglusRequisitionServiceTest {
     draft.setDraftStatusMessage("draft status");
     RequisitionLineItemDraft lineItemDraft1 = new RequisitionLineItemDraft();
     lineItemDraft1.setRequisitionLineItemId(requisitionLineItemId);
+    lineItemDraft1.setOrderable(new VersionEntityReference(UUID.randomUUID(), (long) 1));
+    lineItemDraft1.setFacilityTypeApprovedProduct(new VersionEntityReference(UUID.randomUUID(), (long) 1));
+    lineItemDraft1.setStockAdjustments(emptyList());
+    lineItemDraft1.setApprovedQuantity(20);
+    draft.setLineItems(singletonList(lineItemDraft1));
+    KitUsageLineItemDraft usageLineItemDraft = getKitUsageLineItemDraft();
+    draft.setKitUsageLineItems(singletonList(usageLineItemDraft));
+    UsageInformationLineItemDraft usageLineItem = getUsageInformationLineItemDraft();
+    draft.setUsageInformationLineItemDrafts(singletonList(usageLineItem));
+    TestConsumptionLineItemDraft testConsumptionLineItemDraft = getTestConsumptionLineItemDraft();
+    draft.setTestConsumptionLineItemDrafts(singletonList(testConsumptionLineItemDraft));
+    return draft;
+  }
+
+  private RequisitionDraft getRequisitionDraft2(UUID requisitionId) {
+    RequisitionDraft draft = new RequisitionDraft();
+    draft.setId(UUID.randomUUID());
+    draft.setRequisitionId(requisitionId);
+    draft.setDraftStatusMessage("draft status");
+    RequisitionLineItemDraft lineItemDraft1 = new RequisitionLineItemDraft();
     lineItemDraft1.setOrderable(new VersionEntityReference(UUID.randomUUID(), (long) 1));
     lineItemDraft1.setFacilityTypeApprovedProduct(new VersionEntityReference(UUID.randomUUID(), (long) 1));
     lineItemDraft1.setStockAdjustments(emptyList());
@@ -1643,6 +2129,8 @@ public class SiglusRequisitionServiceTest {
     when(messageService.localize(any(), anyVararg())).thenReturn(MESSAGE);
     when(siglusUsageReportService.saveUsageReportWithValidation(any(), any()))
         .thenReturn(siglusRequisitionDto);
+    when(facilityReferenceDataService.findOne(facilityId)).thenReturn(mockFacilityDto2(facilityId));
+    when(programRepository.findOne(programId)).thenReturn(mockProgram(programId));
 
     // when
     siglusRequisitionService.approveRequisition(requisitionId, request, response);
@@ -1693,6 +2181,8 @@ public class SiglusRequisitionServiceTest {
     when(messageService.localize(any(), anyVararg())).thenReturn(MESSAGE);
     when(siglusUsageReportService.saveUsageReportWithValidation(any(), any()))
         .thenReturn(siglusRequisitionDto);
+    when(facilityReferenceDataService.findOne(facilityId)).thenReturn(mockFacilityDto2(facilityId));
+    when(programRepository.findOne(programId)).thenReturn(mockProgram(programId));
 
     // when
     siglusRequisitionService.approveRequisition(requisitionId, request, response);
@@ -1754,6 +2244,7 @@ public class SiglusRequisitionServiceTest {
     regimenOrderable.setQuantity(100.0);
     regimenOrderable.setRegimenCode("1alt2");
     regimenOrderable.setOrderableCode("08S40");
+    regimenOrderable.setMappingKey("1");
     return regimenOrderable;
   }
 
@@ -1894,6 +2385,15 @@ public class SiglusRequisitionServiceTest {
   private FacilityDto mockFacilityDto(UUID id) {
     FacilityDto facilityDto = new FacilityDto();
     facilityDto.setId(id);
+    return facilityDto;
+  }
+
+  private FacilityDto mockFacilityDto2(UUID id) {
+    FacilityDto facilityDto = new FacilityDto();
+    facilityDto.setId(id);
+    FacilityTypeDto facilityTypeDto = new FacilityTypeDto();
+    facilityTypeDto.setCode("DPM");
+    facilityDto.setType(facilityTypeDto);
     return facilityDto;
   }
 
@@ -2046,6 +2546,26 @@ public class SiglusRequisitionServiceTest {
     return requisition;
   }
 
+  private Requisition createRequisition2() {
+    RequisitionLineItem lineItem = new RequisitionLineItemDataBuilder()
+        .withId(requisitionLineItemId)
+        .withOrderable(orderableId, 1L)
+        .build();
+    Requisition requisition = new Requisition();
+    requisition.setId(requisitionId);
+    requisition.setEmergency(false);
+    requisition.setProgramId(programId);
+    requisition.setFacilityId(facilityId);
+    requisition.setRequisitionLineItems(Lists.newArrayList(lineItem));
+    requisition.setTemplate(createTemplate2());
+    requisition.setProcessingPeriodId(processingPeriodId);
+    Map<String, Object> extraData = new HashMap<>();
+    extraData.put("actualStartDate", "2020-01-23");
+    extraData.put("actualEndDate", "2020-01-30");
+    requisition.setExtraData(extraData);
+    return requisition;
+  }
+
   private Requisition createMockRequisition() {
     RequisitionLineItem lineItem = new RequisitionLineItemDataBuilder()
         .withId(requisitionLineItemId)
@@ -2090,6 +2610,28 @@ public class SiglusRequisitionServiceTest {
     requisitionV2Dto.setStatus(RequisitionStatus.AUTHORIZED);
     requisitionV2Dto.setId(requisitionId);
     requisitionV2Dto.setReportOnly(false);
+    return requisitionV2Dto;
+  }
+
+  private RequisitionV2Dto createRequisitionV2Dto2() {
+    Set<VersionObjectReferenceDto> products = new HashSet<>();
+    products.add(productVersionObjectReference1);
+    products.add(productVersionObjectReference2);
+
+    RequisitionV2Dto requisitionV2Dto = new RequisitionV2Dto();
+    ObjectReferenceDto facility = new ObjectReferenceDto(facilityId);
+    requisitionV2Dto.setFacility(facility);
+    ObjectReferenceDto program = new ObjectReferenceDto(programId);
+    requisitionV2Dto.setProgram(program);
+    requisitionV2Dto.setEmergency(false);
+    requisitionV2Dto.setAvailableProducts(products);
+    requisitionV2Dto.setTemplate(createTemplateDto());
+    requisitionV2Dto.setId(requisitionId);
+
+    RequisitionLineItemV2Dto requisitionLineItemV2Dto = new RequisitionLineItemV2Dto();
+    List<RequisitionLineItemV2Dto> requisitionLineItemV2Dtos = new ArrayList<>();
+    requisitionLineItemV2Dtos.add(requisitionLineItemV2Dto);
+    requisitionV2Dto.setRequisitionLineItems(requisitionLineItemV2Dtos);
     return requisitionV2Dto;
   }
 
@@ -2215,8 +2757,22 @@ public class SiglusRequisitionServiceTest {
         .withPopulateStockOnHandFromStockCards(true)
         .withColumn(SUGGESTED_QUANTITY_COLUMN, "SQ", SourceType.CALCULATED, option,
             newHashSet(SourceType.CALCULATED))
+        .withColumn(ESTIMATED_QUANTITY, "EQ", SourceType.CALCULATED, option, newHashSet(SourceType.CALCULATED))
+        .withColumn(REQUESTED_QUANTITY, "RQ", SourceType.STOCK_CARDS, option, newHashSet(SourceType.STOCK_CARDS))
         .build();
 
+  }
+
+  private RequisitionTemplate createTemplate2() {
+    AvailableRequisitionColumnOption option = new AvailableRequisitionColumnOption();
+    option.setOptionName("cmm");
+    return baseTemplateBuilder()
+        .withNumberOfPeriodsToAverage(3)
+        .withPopulateStockOnHandFromStockCards(true)
+        .withColumn(SUGGESTED_QUANTITY_COLUMN, "SQ", SourceType.CALCULATED, option,
+            newHashSet(SourceType.CALCULATED))
+        .withColumn(ESTIMATED_QUANTITY, "EQ", SourceType.CALCULATED, option, newHashSet(SourceType.CALCULATED))
+        .build();
   }
 
   private RequisitionTemplateDataBuilder baseTemplateBuilder() {

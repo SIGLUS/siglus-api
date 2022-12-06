@@ -63,7 +63,6 @@ import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPa
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.RegimenLineItems.COLUMN_NAME_COMMUNITY;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.RegimenLineItems.COLUMN_NAME_PATIENT;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.TestConsumptionLineItems.SERVICE_APES;
-import static org.siglus.siglusapi.service.SiglusRequisitionService.ESTIMATED_QUANTITY;
 import static org.springframework.util.CollectionUtils.isEmpty;
 
 import java.time.YearMonth;
@@ -87,6 +86,7 @@ import javax.persistence.EntityNotFoundException;
 import javax.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.CollectionUtils;
 import org.openlmis.referencedata.domain.Code;
 import org.openlmis.referencedata.domain.ProcessingPeriod;
 import org.openlmis.referencedata.dto.BaseDto;
@@ -185,7 +185,6 @@ import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.util.SupportedProgramsHelper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.CollectionUtils;
 import org.springframework.validation.annotation.Validated;
 
 @Service
@@ -525,7 +524,7 @@ public class RequisitionCreateService {
     dto.setProcessingPeriod(new ObjectReferenceDto(requisition.getProcessingPeriodId(), "", PROCESSING_PERIODS));
     dto.setProgram(new ObjectReferenceDto(requisition.getProgramId(), "", PROGRAMS));
     List<RequisitionLineItem> requisitionLineItems = requisition.getRequisitionLineItems();
-    if (!CollectionUtils.isEmpty(requisitionLineItems)) {
+    if (CollectionUtils.isNotEmpty(requisitionLineItems)) {
       List<RequisitionLineItemV2Dto> requisitionLineItemV2Dtos = requisitionLineItems.stream().map(
           this::requisitionLineItemToRequisitionLineItemV2Dto).collect(Collectors.toList());
       dto.setRequisitionLineItems(requisitionLineItemV2Dtos);
@@ -539,16 +538,16 @@ public class RequisitionCreateService {
       updateRegimenLineItems(requisitionDto, programId, request);
       updateRegimenSummaryLineItems(requisitionDto, request);
       updateMmiaPatientLineItems(requisitionDto, request);
-      siglusRequisitionService.calcEstimatedQuantityForMmia(requisitionDto, extensions, ESTIMATED_QUANTITY);
+      siglusRequisitionService.calcEstimatedQuantityForMmia(requisitionDto, extensions);
     } else if (MALARIA_PROGRAM_CODE.equals(programCode)) {
       updateUsageInformationLineItems(requisitionDto, request);
     } else if (RAPIDTEST_PROGRAM_CODE.equals(programCode)) {
       updateTestConsumptionLineItems(requisitionDto, request);
-      siglusRequisitionService.calcEstimatedQuantityForMmit(requisitionDto, extensions, ESTIMATED_QUANTITY);
+      siglusRequisitionService.calcEstimatedQuantityForMmit(requisitionDto, extensions);
     } else if (MTB_PROGRAM_CODE.equals(programCode)) {
       updateMmtbPatientLineItems(requisitionDto, request);
       updateAgeGroupLineItems(requisitionDto, request);
-      siglusRequisitionService.calcEstimatedQuantityForMmtb(requisitionDto, extensions, ESTIMATED_QUANTITY);
+      siglusRequisitionService.calcEstimatedQuantityForMmtb(requisitionDto, extensions);
     }
     siglusUsageReportService.saveUsageReport(requisitionDto, dto);
     requisitionLineItemExtensionRepository.save(extensions);
