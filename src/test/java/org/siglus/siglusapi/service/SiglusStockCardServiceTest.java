@@ -181,12 +181,14 @@ public class SiglusStockCardServiceTest {
             .builder()
             .stockOnHand(200)
             .reason(credit)
+            .stockAdjustments(Collections.emptyList())
             .build();
     physcical1.setId(lineId1);
     StockCardLineItemDto physcical2 = StockCardLineItemDto
             .builder()
             .stockOnHand(500)
             .reason(credit)
+            .stockAdjustments(Collections.emptyList())
             .build();
     physcical2.setId(lineId2);
     List<StockCardLineItemDto> merged = siglusStockCardService.mergePhysicalInventoryLineItems(
