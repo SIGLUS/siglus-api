@@ -1512,7 +1512,7 @@ public class SiglusRequisitionServiceTest {
     siglusRequisitionService.calcRequestedQuantityDraft(siglusRequisitionDto, requisitionDraft);
     // then
     assertEquals(1, requisitionDraft.getLineItems().size());
-    assertEquals(Integer.valueOf(0), requisitionDraft.getLineItems().get(0).getEstimatedQuantity());
+    assertEquals(Integer.valueOf(0), requisitionDraft.getLineItems().get(0).getRequestedQuantity());
   }
 
   //  @Test

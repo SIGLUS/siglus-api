@@ -823,7 +823,8 @@ public class SiglusRequisitionService {
 
     if (template.isColumnDisplayed(ESTIMATED_QUANTITY) && template.isColumnCalculated(ESTIMATED_QUANTITY)) {
       calcEstimatedQuantityDraft(requisitionDto, requisitionDraft);
-    } else if (template.isColumnDisplayed(REQUESTED_QUANTITY) && template.isColumnStockBased(REQUESTED_QUANTITY)) {
+    }
+    if (template.isColumnDisplayed(REQUESTED_QUANTITY) && template.isColumnStockBased(REQUESTED_QUANTITY)) {
       calcRequestedQuantityDraft(requisitionDto, requisitionDraft);
     }
     log.info("save requisition draft extension: {}", requisitionDraft);
@@ -854,7 +855,7 @@ public class SiglusRequisitionService {
     List<RequisitionLineItemDraft> lineItemDrafts = requisitionDraft.getLineItems();
     lineItemDrafts.forEach(lineItemDraft -> {
       if (lineItemDraft.getRequisitionLineItemId() == null) {
-        lineItemDraft.setEstimatedQuantity(0);
+        lineItemDraft.setRequestedQuantity(0);
       }
     });
     Map<String, Integer> mappingKeyToPatientNumber = getMappingKeyToPatientNumberForMmtb(siglusRequisitionDto);
@@ -869,13 +870,13 @@ public class SiglusRequisitionService {
     Map<UUID, String> orderableIdToCode = getOrderableIdToCode(lineItems);
     lineItemDrafts.forEach(lineItemDraft -> {
       if (lineItemDraft.getRequisitionLineItemId() != null) {
-        Integer estimatedQuantity = getQuantityByLineItem(idToLineItems.get(lineItemDraft.getRequisitionLineItemId()),
+        Integer requestedQuantity = getQuantityByLineItem(idToLineItems.get(lineItemDraft.getRequisitionLineItemId()),
             orderableCodeToRegimenOrderables,
             orderableIdToCode,
             regimenCodeToPatientNumber,
             DEFAULT_CORRECTION_FACTOR,
             REQUESTED_QUANTITY_FACTOR);
-        lineItemDraft.setEstimatedQuantity(estimatedQuantity);
+        lineItemDraft.setRequestedQuantity(requestedQuantity);
       }
     });
   }
@@ -892,7 +893,7 @@ public class SiglusRequisitionService {
     List<RequisitionLineItemDraft> lineItemDrafts = requisitionDraft.getLineItems();
     lineItemDrafts.forEach(lineItemDraft -> {
       if (lineItemDraft.getRequisitionLineItemId() == null) {
-        lineItemDraft.setEstimatedQuantity(0);
+        lineItemDraft.setRequestedQuantity(0);
       }
     });
 
@@ -908,13 +909,13 @@ public class SiglusRequisitionService {
     Map<UUID, String> orderableIdToCode = getOrderableIdToCode(lineItems);
     lineItemDrafts.forEach(lineItemDraft -> {
       if (lineItemDraft.getRequisitionLineItemId() != null) {
-        Integer estimatedQuantity = getQuantityByLineItem(idToLineItems.get(lineItemDraft.getRequisitionLineItemId()),
+        Integer requestedQuantity = getQuantityByLineItem(idToLineItems.get(lineItemDraft.getRequisitionLineItemId()),
             orderableCodeToRegimenOrderables,
             orderableIdToCode,
             regimenCodeToPatientNumber,
             correctionFactorForMmia,
             REQUESTED_QUANTITY_FACTOR);
-        lineItemDraft.setEstimatedQuantity(estimatedQuantity);
+        lineItemDraft.setRequestedQuantity(requestedQuantity);
       }
     });
   }
@@ -931,7 +932,7 @@ public class SiglusRequisitionService {
     List<RequisitionLineItemDraft> lineItemDrafts = requisitionDraft.getLineItems();
     lineItemDrafts.forEach(lineItemDraft -> {
       if (lineItemDraft.getRequisitionLineItemId() == null) {
-        lineItemDraft.setEstimatedQuantity(0);
+        lineItemDraft.setRequestedQuantity(0);
       }
     });
 
@@ -947,13 +948,13 @@ public class SiglusRequisitionService {
     Map<UUID, String> orderableIdToCode = getOrderableIdToCode(lineItems);
     lineItemDrafts.forEach(lineItemDraft -> {
       if (lineItemDraft.getRequisitionLineItemId() != null) {
-        Integer estimatedQuantity = getQuantityByLineItem(idToLineItems.get(lineItemDraft.getRequisitionLineItemId()),
+        Integer requestedQuantity = getQuantityByLineItem(idToLineItems.get(lineItemDraft.getRequisitionLineItemId()),
             orderableCodeToRegimenOrderables,
             orderableIdToCode,
             regimenCodeToPatientNumber,
             DEFAULT_CORRECTION_FACTOR,
             REQUESTED_QUANTITY_FACTOR);
-        lineItemDraft.setEstimatedQuantity(estimatedQuantity);
+        lineItemDraft.setRequestedQuantity(requestedQuantity);
       }
     });
   }
