@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.dto;
 
+import java.math.BigDecimal;
 import java.util.Map;
 import java.util.UUID;
 import lombok.Builder;
@@ -35,4 +36,5 @@ public class ProofOfDeliverParameter {
   Map<UUID, UUID> podIdToRequisitionIdMap;
   Map<UUID, String> facilityIdTofacilityCodeMap;
   Map<UUID, ShipmentsExtension> shipmenIdToShipmentsExtensionMap;
+  Map<UUID, BigDecimal> productIdToPriceMap;
 }
