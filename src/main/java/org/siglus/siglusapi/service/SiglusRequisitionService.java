@@ -1389,11 +1389,13 @@ public class SiglusRequisitionService {
   double getCorrectionFactorForMmia(Map<String, Integer> regimenCodeToPatientNumber,
       List<PatientGroupDto> patientGroupDtos) {
     Integer totalPatients = regimenCodeToPatientNumber.values().stream().reduce(Integer::sum).orElse(0);
-    Integer totalPatientsInTreatment = 0;
+    int totalPatientsInTreatment = 0;
     for (PatientGroupDto patientGroupDto : patientGroupDtos) {
       if (MMIA_SECTIONS.contains(patientGroupDto.getName())) {
         Map<String, PatientColumnDto> columns = patientGroupDto.getColumns();
-        totalPatientsInTreatment += columns.get(MMIA_COLUMN_TOTAL).getValue();
+        Integer patients = columns.get(MMIA_COLUMN_TOTAL).getValue();
+        patients = Optional.ofNullable(patients).orElse(0);
+        totalPatientsInTreatment += patients;
       }
     }
     totalPatientsInTreatment = Math.max(1, totalPatientsInTreatment);
