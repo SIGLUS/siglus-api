@@ -25,7 +25,10 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.siglus.siglusapi.service.fc.FcVariables.LAST_UPDATED_AT;
 import static org.siglus.siglusapi.service.fc.FcVariables.START_DATE;
+import static org.siglus.siglusapi.util.SiglusDateHelper.DATE_MONTH_YEAR;
+import static org.siglus.siglusapi.util.SiglusDateHelper.getFormatDate;
 
+import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -79,6 +82,7 @@ import org.siglus.siglusapi.localmachine.Machine;
 import org.siglus.siglusapi.localmachine.event.fc.issuevoucher.FcIssueVoucherEmitter;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.repository.ShipmentsExtensionRepository;
+import org.siglus.siglusapi.service.SiglusLotService;
 import org.siglus.siglusapi.service.SiglusOrderService;
 import org.siglus.siglusapi.service.SiglusShipmentDraftService;
 import org.siglus.siglusapi.service.SiglusShipmentService;
@@ -135,6 +139,9 @@ public class FcIssueVoucherServiceTest {
 
   @Mock
   private RequisitionService requisitionService;
+
+  @Mock
+  private SiglusLotService siglusLotService;
 
   @Mock
   private SiglusSimulateUserAuthHelper simulateUser;
@@ -308,7 +315,8 @@ public class FcIssueVoucherServiceTest {
     when(siglusShipmentService.createSubOrderAndShipmentForFc(shipmentCaptor.capture()))
         .thenReturn(shipmentDto);
     LotDto lotDto = getLotDto(lotId);
-    when(lotReferenceDataService.getLots(any())).thenReturn(Collections.singletonList(lotDto));
+    when(siglusLotService.createNewLotOrReturnExisted(any(), any(), any(), any())).thenReturn(lotDto);
+    when(lotReferenceDataService.getLots(any())).thenReturn(Collections.singletonList(getSavedLotDto(lotDto)));
     when(machine.isOnlineWeb()).thenReturn(true);
     when(localMachineHelper.isLocalMachine(facilityId)).thenReturn(true);
 
@@ -377,7 +385,8 @@ public class FcIssueVoucherServiceTest {
     when(siglusShipmentService.createSubOrderAndShipmentForFc(shipmentCaptor.capture()))
         .thenReturn(shipmentDto);
     LotDto lotDto = getLotDto(lotId);
-    when(lotReferenceDataService.getLots(any())).thenReturn(Collections.singletonList(lotDto));
+    when(siglusLotService.createNewLotOrReturnExisted(any(), any(), any(), any())).thenReturn(lotDto);
+    when(lotReferenceDataService.getLots(any())).thenReturn(Collections.singletonList(getSavedLotDto(lotDto)));
 
     // when
     FcIntegrationResultDto result = service.processData(Collections.singletonList(issueVoucherDto), START_DATE,
@@ -434,8 +443,9 @@ public class FcIssueVoucherServiceTest {
     when(shipmentsExtensionRepository.save(any(ShipmentsExtension.class))).thenReturn(shipmentsExtension);
     when(siglusShipmentService.createSubOrderAndShipmentForFc(shipmentCaptor.capture()))
         .thenReturn(shipmentDto);
-    when(lotReferenceDataService.getLots(any())).thenReturn(
-        Collections.singletonList(getLotDto(lotId)));
+    LotDto lotDto = getLotDto(lotId);
+    when(siglusLotService.createNewLotOrReturnExisted(any(), any(), any(), any())).thenReturn(lotDto);
+    when(lotReferenceDataService.getLots(any())).thenReturn(Collections.singletonList(getSavedLotDto(lotDto)));
     Requisition requisition = new Requisition();
     when(requisitionRepository.findOne(requisitionV2Dto.getId())).thenReturn(requisition);
     org.openlmis.requisition.dto.OrderDto orderRequisitionDto =
@@ -507,7 +517,16 @@ public class FcIssueVoucherServiceTest {
     LotDto lotDto = new LotDto();
     lotDto.setId(lotId);
     lotDto.setLotCode("M18361");
+    lotDto.setExpirationDate(LocalDate.now());
     return lotDto;
+  }
+
+  private LotDto getSavedLotDto(LotDto lotDto) {
+    LotDto savedLotDto = new LotDto();
+    savedLotDto.setId(lotDto.getId());
+    savedLotDto.setLotCode(lotDto.getLotCode() + "-" + getFormatDate(lotDto.getExpirationDate(), DATE_MONTH_YEAR));
+    savedLotDto.setExpirationDate(lotDto.getExpirationDate());
+    return savedLotDto;
   }
 
   private RequisitionExtension getRequisitionExtension() {

@@ -18,6 +18,7 @@ package org.siglus.siglusapi.service;
 import static java.util.stream.Collectors.toMap;
 import static org.openlmis.stockmanagement.i18n.MessageKeys.ERROR_EVENT_DEBIT_QUANTITY_EXCEED_SOH;
 import static org.siglus.siglusapi.constant.FieldConstants.SEPARATOR;
+import static org.siglus.siglusapi.constant.LocationConstants.VIRTUAL_LOCATION_CODE;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -223,9 +224,13 @@ public class CalculatedStocksOnHandByLocationService {
     if (!isPhysicalInventory) {
       List<CalculatedStockOnHandByLocation> allSohByLocations = calculatedStockOnHandByLocationRepository
               .findPreviousLocationStockOnHandsTillNow(stockCardIds, date);
+
       Set<String> keysForToSaveList = toSaveList.stream().map(this::getUniqueKey).collect(Collectors.toSet());
 
       allSohByLocations.forEach(sohByLocation -> {
+        if (VIRTUAL_LOCATION_CODE.equals(sohByLocation.getLocationCode())) {
+          return;
+        }
         if (!keysForToSaveList.contains(getUniqueKey(sohByLocation))) {
           updatedAllSohByLocations.add(sohByLocation);
         }

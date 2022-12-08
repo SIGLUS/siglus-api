@@ -15,7 +15,7 @@
 
 package org.siglus.siglusapi.dto;
 
-import java.util.List;
+import java.time.LocalDate;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -25,7 +25,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class FcProofOfDeliveryProductDto {
+public class FcProofOfDeliveryLineItem {
 
   private String productCode;
 
@@ -33,15 +33,25 @@ public class FcProofOfDeliveryProductDto {
 
   private String productDescription;
 
-  private List<RealProgramDto> realPorgrams;
-
   private String lotCode;
 
-  private Integer acceptedQuantity;
+  private LocalDate expiringDate;
 
-  private Integer rejectedQuantity;
+  private Long orderedQuantity;
 
-  private String rejectedReason;
+  private Long partialFulfilled;
+
+  private Integer suppliedQuantity;
+
+  private Double price;
+
+  private Double value;
+
+  private Integer receivedQuantity;
+
+  private Integer difference;
+
+  private String adjustmentReason;
 
   private String notes;
 }

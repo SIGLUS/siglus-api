@@ -25,6 +25,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Collections;
 import java.util.HashMap;
@@ -39,6 +40,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.fulfillment.domain.Order;
+import org.openlmis.fulfillment.domain.OrderLineItem;
 import org.openlmis.fulfillment.domain.ProofOfDelivery;
 import org.openlmis.fulfillment.domain.ProofOfDeliveryLineItem;
 import org.openlmis.fulfillment.domain.ProofOfDeliveryStatus;
@@ -63,6 +65,7 @@ import org.siglus.common.domain.RequisitionTemplateExtension;
 import org.siglus.common.repository.OrderExternalRepository;
 import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
 import org.siglus.siglusapi.constant.PaginationConstants;
+import org.siglus.siglusapi.domain.OrderLineItemExtension;
 import org.siglus.siglusapi.domain.PatientLineItem;
 import org.siglus.siglusapi.domain.ProgramOrderablesExtension;
 import org.siglus.siglusapi.domain.ProgramRealProgram;
@@ -73,7 +76,7 @@ import org.siglus.siglusapi.domain.UsageInformationLineItem;
 import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.FacilityTypeDto;
 import org.siglus.siglusapi.dto.FcProofOfDeliveryDto;
-import org.siglus.siglusapi.dto.FcProofOfDeliveryProductDto;
+import org.siglus.siglusapi.dto.FcProofOfDeliveryLineItem;
 import org.siglus.siglusapi.dto.FcRequisitionDto;
 import org.siglus.siglusapi.dto.LotDto;
 import org.siglus.siglusapi.dto.RegimenDto;
@@ -82,8 +85,10 @@ import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 import org.siglus.siglusapi.dto.SiglusUsageTemplateDto;
 import org.siglus.siglusapi.dto.UsageTemplateColumnDto;
 import org.siglus.siglusapi.dto.UsageTemplateSectionDto;
+import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.PatientLineItemRepository;
 import org.siglus.siglusapi.repository.ProgramOrderablesExtensionRepository;
+import org.siglus.siglusapi.repository.ProgramOrderablesRepository;
 import org.siglus.siglusapi.repository.ProgramRealProgramRepository;
 import org.siglus.siglusapi.repository.RequisitionLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.ShipmentsExtensionRepository;
@@ -92,6 +97,7 @@ import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.repository.SupervisoryNodeRepository;
 import org.siglus.siglusapi.repository.TestConsumptionLineItemRepository;
 import org.siglus.siglusapi.repository.UsageInformationLineItemRepository;
+import org.siglus.siglusapi.repository.dto.ProgramOrderableDto;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
@@ -179,6 +185,12 @@ public class SiglusFcIntegrationServiceTest {
   @Mock
   private TestConsumptionLineItemRepository testConsumptionLineItemRepository;
 
+  @Mock
+  private OrderLineItemExtensionRepository orderLineItemExtensionRepository;
+
+  @Mock
+  private ProgramOrderablesRepository programOrderableRepository;
+
   private final UUID dpmFacilityTypeId = UUID.randomUUID();
 
   private final UUID dpmSupervisoryNodeId = UUID.randomUUID();
@@ -210,6 +222,8 @@ public class SiglusFcIntegrationServiceTest {
   private final UUID lotId = UUID.randomUUID();
 
   private final UUID rejectionReasonId = UUID.randomUUID();
+
+  private final UUID orderLineItemId = UUID.randomUUID();
 
   private final UUID realProgramId = UUID.randomUUID();
 
@@ -265,6 +279,8 @@ public class SiglusFcIntegrationServiceTest {
 
   private final String lotCode = "Lot-123";
 
+  private final Long orderedQuantity = 120L;
+
   private final LocalDate receivedDate = LocalDate.of(2020, 9, 1);
 
   private final Pageable pageable = new PageRequest(PaginationConstants.DEFAULT_PAGE_NUMBER,
@@ -285,7 +301,9 @@ public class SiglusFcIntegrationServiceTest {
     mockPatientInfo();
     mockUsageInfo();
     mockTestConsumption();
-    mockOrderableInfo();
+    mockOrderableDtoInfo();
+    mockOrderLineItemIdToPartialFulfilledMap();
+    mockProductIdToPriceMap();
     mockProgramOrderableExtensionInfo();
     mockTemplateInfo(true);
     mockRegimenInfo();
@@ -427,13 +445,13 @@ public class SiglusFcIntegrationServiceTest {
     assertEquals(deliveredBy, pod.getDeliveredBy());
     assertEquals(receivedDate, pod.getReceivedDate());
     assertEquals(receivedBy, pod.getReceivedBy());
-    List<FcProofOfDeliveryProductDto> products = pod.getProducts();
+    List<FcProofOfDeliveryLineItem> products = pod.getPodLineItems();
     assertEquals(1, products.size());
-    FcProofOfDeliveryProductDto product = products.get(0);
-    assertEquals(quantityAccepted, product.getAcceptedQuantity());
-    assertEquals(quantityRejected, product.getRejectedQuantity());
+    FcProofOfDeliveryLineItem product = products.get(0);
+    assertEquals(quantityAccepted, product.getReceivedQuantity());
+    assertEquals(quantityRejected, product.getDifference());
     assertEquals(lotCode, product.getLotCode());
-    assertEquals(reasonName, product.getRejectedReason());
+    assertEquals(reasonName, product.getAdjustmentReason());
   }
 
   private void mockSupervisoryNodeInfo() {
@@ -551,7 +569,7 @@ public class SiglusFcIntegrationServiceTest {
     when(testConsumptionLineItemRepository.findByRequisitionId(any())).thenReturn(newArrayList(lineItem));
   }
 
-  private void mockOrderableInfo() {
+  private void mockOrderableDtoInfo() {
     OrderableDto orderableDto = new OrderableDto();
     orderableDto.setProductCode(productCode);
     orderableDto.setFullProductName(productName);
@@ -639,7 +657,33 @@ public class SiglusFcIntegrationServiceTest {
     Order order = new Order();
     order.setId(orderId);
     order.setExternalId(externalId);
+    order.setOrderLineItems(newArrayList(mockOrderLineItem()));
     return order;
+  }
+
+  private OrderLineItem mockOrderLineItem() {
+    OrderLineItem orderLineItem = new OrderLineItem();
+    orderLineItem.setId(orderLineItemId);
+    orderLineItem.setOrderable(new org.openlmis.fulfillment.domain.VersionEntityReference(orderableId, 1L));
+    orderLineItem.setOrderedQuantity(orderedQuantity);
+    return orderLineItem;
+  }
+
+  private void mockOrderLineItemIdToPartialFulfilledMap() {
+    OrderLineItemExtension orderLineItemExtension = new OrderLineItemExtension();
+    orderLineItemExtension.setOrderLineItemId(orderLineItemId);
+    orderLineItemExtension.setPartialFulfilledQuantity(100L);
+    when(orderLineItemExtensionRepository.findByOrderLineItemIdIn(any())).thenReturn(
+        newArrayList(orderLineItemExtension));
+  }
+
+  private void mockProductIdToPriceMap() {
+    ProgramOrderableDto programOrderableDto = ProgramOrderableDto.builder()
+        .orderableId(orderableId)
+        .price(BigDecimal.valueOf(100.00))
+        .build();
+    when(programOrderableRepository.findAllMaxVersionProgramOrderableDtos()).thenReturn(
+        newArrayList(programOrderableDto));
   }
 
   private ProofOfDeliveryLineItem mockProofOfDeliveryLineItem() {

@@ -114,6 +114,27 @@ public class SiglusLotService {
     return lotDtos;
   }
 
+  public LotDto createNewLotOrReturnExisted(UUID facilityId, String tradeItemId, String lotCode,
+      LocalDate expirationDate) {
+    if (null == tradeItemId) {
+      throw new ValidationMessageException(new Message(ERROR_TRADE_ITEM_IS_EMPTY));
+    }
+    LotDto existedLot = findExistedLot(lotCode, tradeItemId);
+    if (existedLot == null) {
+      LotDto lotDto = new LotDto();
+      lotDto.setId(Lot.of(lotCode, expirationDate).getUUid(UUID.fromString(tradeItemId)));
+      lotDto.setTradeItemId(UUID.fromString(tradeItemId));
+      lotDto.setManufactureDate(dateHelper.getCurrentDate());
+      lotDto.setExpirationDate(expirationDate);
+      lotDto.setActive(true);
+      lotDto.setLotCode(lotCode);
+      return lotReferenceDataService.saveLot(lotDto);
+    }
+    lotConflictService.handleLotConflict(facilityId, lotCode, existedLot.getId(), expirationDate,
+        existedLot.getExpirationDate());
+    return existedLot;
+  }
+
   private UUID getFacilityId(StockEventDto eventDto) {
     if (eventDto.getFacilityId() != null) {
       return eventDto.getFacilityId();
@@ -133,32 +154,9 @@ public class SiglusLotService {
       // already done or nothing we can do since lot info is missing
       return;
     }
-    UUID lotId = createNewLotOrReturnExisted(facilityId, orderable, eventLineItem.getLotCode(),
+    UUID lotId = createNewLotOrReturnExisted(facilityId, orderable.getTradeItemIdentifier(), eventLineItem.getLotCode(),
         eventLineItem.getExpirationDate()).getId();
     eventLineItem.setLotId(lotId);
-  }
-
-
-  private LotDto createNewLotOrReturnExisted(UUID facilityId, OrderableDto orderable, String lotCode,
-      LocalDate expirationDate) {
-    String tradeItemId = orderable.getTradeItemIdentifier();
-    if (null == tradeItemId) {
-      throw new ValidationMessageException(new Message(ERROR_TRADE_ITEM_IS_EMPTY));
-    }
-    LotDto existedLot = findExistedLot(lotCode, tradeItemId);
-    if (existedLot == null) {
-      LotDto lotDto = new LotDto();
-      lotDto.setId(Lot.of(lotCode, expirationDate).getUUid(UUID.fromString(tradeItemId)));
-      lotDto.setTradeItemId(UUID.fromString(tradeItemId));
-      lotDto.setManufactureDate(dateHelper.getCurrentDate());
-      lotDto.setExpirationDate(expirationDate);
-      lotDto.setActive(true);
-      lotDto.setLotCode(lotCode);
-      return lotReferenceDataService.saveLot(lotDto);
-    }
-    lotConflictService.handleLotConflict(facilityId, lotCode, existedLot.getId(), expirationDate,
-        existedLot.getExpirationDate());
-    return existedLot;
   }
 
   private LotDto findExistedLot(String lotCode, String tradeItemId) {
