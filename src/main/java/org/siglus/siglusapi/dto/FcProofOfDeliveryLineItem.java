@@ -34,8 +34,6 @@ public class FcProofOfDeliveryLineItem {
 
   private String productDescription;
 
-  private List<RealProgramDto> realPorgrams;
-
   private String lotCode;
 
   private LocalDate expiringDate;

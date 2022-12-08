@@ -21,7 +21,6 @@ import java.util.UUID;
 import lombok.Builder;
 import lombok.Data;
 import org.openlmis.referencedata.dto.OrderableDto;
-import org.siglus.siglusapi.domain.ProgramOrderablesExtension;
 import org.siglus.siglusapi.domain.ShipmentsExtension;
 
 @Data
@@ -30,7 +29,6 @@ public class ProofOfDeliverParameter {
 
   Map<UUID, String> requisitionIdToRequisitionNumberMap;
   Map<UUID, OrderableDto> orderableIdToOrderableMap;
-  Map<UUID, ProgramOrderablesExtension> orderableIdToProgramMap;
   Map<UUID, LotDto> lotIdToLotMap;
   Map<UUID, String> reasonIdToReasonMap;
   Map<UUID, UUID> podIdToRequisitionIdMap;

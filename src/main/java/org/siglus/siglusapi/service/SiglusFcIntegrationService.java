@@ -22,7 +22,7 @@ import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
 import static org.apache.commons.lang3.StringUtils.removeEnd;
 import static org.apache.commons.lang3.StringUtils.removeStart;
-import static org.siglus.siglusapi.constant.FacilityTypeConstants.DPM;
+import static org.siglus.siglusapi.constant.FacilityTypeConstants.getTopLevelTypes;
 import static org.siglus.siglusapi.constant.FieldConstants.VALUE;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.TestConsumptionLineItems.TOTAL;
 
@@ -247,7 +247,7 @@ public class SiglusFcIntegrationService {
   public Page<FcProofOfDeliveryDto> searchProofOfDelivery(LocalDate date, Pageable pageable) {
     List<FacilityDto> facilityDtos = siglusFacilityReferenceDataService.findAll();
     Set<UUID> dpmRequestingFacilityIds = facilityDtos.stream()
-        .filter(facilityDto -> DPM.equals(facilityDto.getType().getCode()))
+        .filter(facilityDto -> getTopLevelTypes().contains(facilityDto.getType().getCode()))
         .map(FacilityDto::getId)
         .collect(toSet());
     Map<UUID, String> facilityIdToFacilityCodeMap = facilityDtos
@@ -303,10 +303,6 @@ public class SiglusFcIntegrationService {
         .findByIds(orderableIds)
         .stream()
         .collect(toMap(OrderableDto::getId, Function.identity()));
-    Map<UUID, ProgramOrderablesExtension> orderableIdToProgramMap =
-        programOrderablesExtensionRepository.findAllByOrderableIdIn(orderableIds)
-            .stream()
-            .collect(toMap(ProgramOrderablesExtension::getOrderableId, Function.identity()));
     Map<UUID, LotDto> lotIdToLotMap = siglusLotReferenceDataService.findAll()
         .stream().collect(toMap(LotDto::getId, Function.identity()));
     Map<UUID, String> reasonIdToReasonMap = stockCardLineItemReasonRepository
@@ -320,7 +316,6 @@ public class SiglusFcIntegrationService {
     ProofOfDeliverParameter proofOfDeliverParameter = ProofOfDeliverParameter.builder()
         .requisitionIdToRequisitionNumberMap(requisitionIdToRequisitionNumberMap)
         .orderableIdToOrderableMap(orderableIdToOrderableMap)
-        .orderableIdToProgramMap(orderableIdToProgramMap)
         .lotIdToLotMap(lotIdToLotMap)
         .reasonIdToReasonMap(reasonIdToReasonMap)
         .podIdToRequisitionIdMap(podIdToRequisitionIdMap)
@@ -370,7 +365,6 @@ public class SiglusFcIntegrationService {
         .stream()
         .map(lineItem -> buildProductDto(lineItem,
             proofOfDeliverParameter.getOrderableIdToOrderableMap(),
-            proofOfDeliverParameter.getOrderableIdToProgramMap(),
             proofOfDeliverParameter.getLotIdToLotMap(),
             proofOfDeliverParameter.getReasonIdToReasonMap(),
             productIdToOrderedQuantityMap,
@@ -393,30 +387,24 @@ public class SiglusFcIntegrationService {
 
   private FcProofOfDeliveryLineItem buildProductDto(ProofOfDeliveryLineItem lineItem,
       Map<UUID, OrderableDto> orderableMap,
-      Map<UUID, ProgramOrderablesExtension> programMap,
       Map<UUID, LotDto> lotMap,
       Map<UUID, String> reasonMap,
       Map<UUID, Long> productIdToOrderedQuantityMap,
       Map<UUID, Long> productIdToPartialFulfilledMap,
       Map<UUID, BigDecimal> productIdToPriceMap) {
     OrderableDto orderableDto = orderableMap.get(lineItem.getOrderable().getId());
-    ProgramOrderablesExtension extension = programMap.get(orderableDto.getId());
-    RealProgramDto program =
-        new RealProgramDto(extension.getRealProgramCode(), extension.getRealProgramName());
 
     return FcProofOfDeliveryLineItem.builder()
         .productCode(orderableDto.getProductCode())
         .productName(orderableDto.getFullProductName())
         .productDescription(orderableDto.getDescription())
-        .realPorgrams(newArrayList(program))
         .lotCode(lotMap.get(lineItem.getLotId()).getLotCode())
         .expiringDate(lotMap.get(lineItem.getLotId()).getExpirationDate())
         .orderedQuantity(productIdToOrderedQuantityMap.get(orderableDto.getId()))
         .partialFulfilled(productIdToPartialFulfilledMap.get(orderableDto.getId()))
         .suppliedQuantity(lineItem.getQuantityAccepted() + lineItem.getQuantityRejected())
-        .price(productIdToPriceMap.get(orderableDto.getId()).doubleValue())
-        .value((lineItem.getQuantityAccepted() + lineItem.getQuantityRejected()) * productIdToPriceMap.get(
-            orderableDto.getId()).doubleValue())
+        .price(getPrice(orderableDto, productIdToPriceMap))
+        .value(calculateValue(lineItem, getPrice(orderableDto, productIdToPriceMap)))
         .receivedQuantity(lineItem.getQuantityAccepted())
         .difference(lineItem.getQuantityRejected())
         .adjustmentReason(reasonMap.get(lineItem.getRejectionReasonId()))
@@ -425,6 +413,14 @@ public class SiglusFcIntegrationService {
 
   }
 
+  private Double getPrice(OrderableDto orderableDto, Map<UUID, BigDecimal> productIdToPriceMap) {
+    return productIdToPriceMap.get(orderableDto.getId()) == null ? null
+        : productIdToPriceMap.get(orderableDto.getId()).doubleValue();
+  }
+
+  private Double calculateValue(ProofOfDeliveryLineItem lineItem, Double price) {
+    return price == null ? null : (lineItem.getQuantityAccepted() + lineItem.getQuantityRejected()) * price;
+  }
 
   private FcRequisitionDto buildDto(Requisition requisition, Set<UUID> fcSupervisoryNodeIds,
       Map<UUID, ProgramRealProgram> realProgramMap) {
