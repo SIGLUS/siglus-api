@@ -18,12 +18,14 @@ package org.siglus.siglusapi.service.fc;
 import static org.siglus.siglusapi.constant.FcConstants.ISSUE_VOUCHER_API;
 import static org.siglus.siglusapi.constant.FieldConstants.TRADE_ITEM;
 import static org.siglus.siglusapi.dto.fc.FcIntegrationResultDto.buildResult;
+import static org.siglus.siglusapi.util.SiglusDateHelper.DATE_MONTH_YEAR;
+import static org.siglus.siglusapi.util.SiglusDateHelper.getFormatDate;
 
-import com.google.common.collect.Maps;
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -64,7 +66,6 @@ import org.siglus.siglusapi.dto.LotDto;
 import org.siglus.siglusapi.dto.LotSearchParams;
 import org.siglus.siglusapi.dto.SiglusOrderDto;
 import org.siglus.siglusapi.dto.UserDto;
-import org.siglus.siglusapi.dto.android.Lot;
 import org.siglus.siglusapi.dto.fc.FcIntegrationResultBuildDto;
 import org.siglus.siglusapi.dto.fc.FcIntegrationResultDto;
 import org.siglus.siglusapi.dto.fc.IssueVoucherDto;
@@ -74,6 +75,7 @@ import org.siglus.siglusapi.localmachine.Machine;
 import org.siglus.siglusapi.localmachine.event.fc.issuevoucher.FcIssueVoucherEmitter;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.repository.ShipmentsExtensionRepository;
+import org.siglus.siglusapi.service.SiglusLotService;
 import org.siglus.siglusapi.service.SiglusOrderService;
 import org.siglus.siglusapi.service.SiglusShipmentDraftService;
 import org.siglus.siglusapi.service.SiglusShipmentService;
@@ -115,11 +117,14 @@ public class FcIssueVoucherService implements ProcessDataService {
   private final RequisitionStatusProcessor requisitionStatusProcessor;
   private final OrderDtoBuilder orderDtoBuilder;
   private final OrderFulfillmentService orderFulfillmentService;
+  private final SiglusLotService siglusLotService;
   private final FcIssueVoucherEmitter fcIssueVoucherEmitter;
   private final Machine machine;
   private final LocalMachineHelper localMachineHelper;
 
   private final List<String> issueVoucherErrors = new ArrayList<>();
+
+  private UUID currentSupplierFacilityID;
 
   @Override
   public FcIntegrationResultDto processData(List<? extends ResponseBaseDto> issueVouchers, String startDate,
@@ -233,6 +238,7 @@ public class FcIssueVoucherService implements ProcessDataService {
     List<org.siglus.siglusapi.dto.FacilityDto> clientCodeList =
         siglusFacilityReferenceDataService.getFacilityByCode(clientCode).getContent();
     fcDataValidate.validateExistFacility(clientCodeList);
+    currentSupplierFacilityID = clientCodeList.get(0).getId();
   }
 
   private FacilityDto getWareHouseFacility(IssueVoucherDto issueVoucherDto) {
@@ -350,7 +356,7 @@ public class FcIssueVoucherService implements ProcessDataService {
 
   private OrderLineItem getOrderLineItems(List<OrderLineItem> lineItems, UUID productId) {
     return lineItems.stream().filter(orderLineItem ->
-        orderLineItem.getOrderable().getId().equals(productId))
+            orderLineItem.getOrderable().getId().equals(productId))
         .findFirst()
         .orElse(null);
   }
@@ -472,12 +478,17 @@ public class FcIssueVoucherService implements ProcessDataService {
   }
 
   private UUID generateLotId(Map<String, String> identifiers, ProductDto productDto) {
-    if (identifiers == null) {
-      identifiers = Maps.newHashMap();
-    }
-    UUID uuidIdentifier = UUID.fromString(identifiers.get(TRADE_ITEM));
-    return Lot.of(productDto.getBatch(), LocalDate.parse(SiglusDateHelper.formatDate(productDto.getExpiryDate())))
-        .getUUid(uuidIdentifier);
+    LocalDate expirationDate = LocalDate.parse(SiglusDateHelper.formatDate(productDto.getExpiryDate()));
+    String lotCode = productDto.getBatch() + "-" + getFormatDate(expirationDate, DATE_MONTH_YEAR);
+    String tradeItemId = identifiers.get(TRADE_ITEM);
+    return siglusLotService.createNewLotOrReturnExisted(currentSupplierFacilityID, tradeItemId, lotCode, expirationDate)
+        .getId();
+
+  }
+
+  private String formatLotCode(String lotCode, Date expiryDate) {
+    LocalDate expirationDate = LocalDate.parse(SiglusDateHelper.formatDate(expiryDate));
+    return lotCode + "-" + getFormatDate(expirationDate, DATE_MONTH_YEAR);
   }
 
   private List<ShipmentLineItemDto> getShipmentLineItems(List<ShipmentLineItemDto> draftLineItems,
@@ -502,8 +513,8 @@ public class FcIssueVoucherService implements ProcessDataService {
   private ProductDto getProductDto(ApprovedProductDto productDto, LotDto lotDto,
       List<ProductDto> products) {
     return products.stream().filter(dto ->
-        dto.getFnmCode().equals(productDto.getOrderable().getProductCode())
-            && dto.getBatch().equals(lotDto.getLotCode()))
+            dto.getFnmCode().equals(productDto.getOrderable().getProductCode())
+                && formatLotCode(dto.getBatch(), dto.getExpiryDate()).equals(lotDto.getLotCode()))
         .findFirst()
         .orElse(null);
   }
