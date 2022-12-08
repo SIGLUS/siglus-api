@@ -124,7 +124,7 @@ public class FcIssueVoucherService implements ProcessDataService {
 
   private final List<String> issueVoucherErrors = new ArrayList<>();
 
-  private UUID currentSupplierFacilityID;
+  private UUID currentSupplierFacilityId;
 
   @Override
   public FcIntegrationResultDto processData(List<? extends ResponseBaseDto> issueVouchers, String startDate,
@@ -238,7 +238,7 @@ public class FcIssueVoucherService implements ProcessDataService {
     List<org.siglus.siglusapi.dto.FacilityDto> clientCodeList =
         siglusFacilityReferenceDataService.getFacilityByCode(clientCode).getContent();
     fcDataValidate.validateExistFacility(clientCodeList);
-    currentSupplierFacilityID = clientCodeList.get(0).getId();
+    currentSupplierFacilityId = clientCodeList.get(0).getId();
   }
 
   private FacilityDto getWareHouseFacility(IssueVoucherDto issueVoucherDto) {
@@ -479,9 +479,9 @@ public class FcIssueVoucherService implements ProcessDataService {
 
   private UUID generateLotId(Map<String, String> identifiers, ProductDto productDto) {
     LocalDate expirationDate = LocalDate.parse(SiglusDateHelper.formatDate(productDto.getExpiryDate()));
-    String lotCode = productDto.getBatch() + "-" + getFormatDate(expirationDate, DATE_MONTH_YEAR);
+    String lotCode = formatLotCode(productDto.getBatch(), productDto.getExpiryDate());
     String tradeItemId = identifiers.get(TRADE_ITEM);
-    return siglusLotService.createNewLotOrReturnExisted(currentSupplierFacilityID, tradeItemId, lotCode, expirationDate)
+    return siglusLotService.createNewLotOrReturnExisted(currentSupplierFacilityId, tradeItemId, lotCode, expirationDate)
         .getId();
 
   }
