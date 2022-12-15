@@ -63,14 +63,12 @@ public class SiglusLotService {
   private final LotRepository lotRepository;
 
   /**
-   * reason for create a new transaction:
-   * Running this method in the super transaction will cause 'stockmanagement.error.event.lot.not.exist' execption.
-   * detail steps：
-   * 1. method createStockEventForOneProgram do something
-   * 2. method createAndFillLotId insert a new lot, with new uuid(This method)
-   * 3. method createStockEventForOneProgram call siglusCreateStockEvent and in stockEventProcessor.process build
-   * context. When building context, it start a http request /api/lots/ to getLotsByIds(which beyond the super
-   * transaction scope, so the http must see the change in step 2)
+   * reason for create a new transaction: Running this method in the super transaction will cause
+   * 'stockmanagement.error.event.lot.not.exist' execption. detail steps： 1. method createStockEventForOneProgram do
+   * something 2. method createAndFillLotId insert a new lot, with new uuid(This method) 3. method
+   * createStockEventForOneProgram call siglusCreateStockEvent and in stockEventProcessor.process build context. When
+   * building context, it start a http request /api/lots/ to getLotsByIds(which beyond the super transaction scope, so
+   * the http must see the change in step 2)
    */
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   public void createAndFillLotId(StockEventDto eventDto) {
@@ -150,9 +148,12 @@ public class SiglusLotService {
 
   private void fillLotIdIfNull(UUID facilityId, OrderableDto orderable,
       StockEventLineItemDto eventLineItem) {
-    if (eventLineItem.getLotId() != null || isBlank(eventLineItem.getLotCode())) {
+    if (eventLineItem.getLotId() != null) {
       // already done or nothing we can do since lot info is missing
       return;
+    }
+    if (isBlank(eventLineItem.getLotCode())) {
+      throw new ValidationMessageException("siglusapi.error.stockManagement.lotcode.cannot.null.or.cannot.empty");
     }
     UUID lotId = createNewLotOrReturnExisted(facilityId, orderable.getTradeItemIdentifier(), eventLineItem.getLotCode(),
         eventLineItem.getExpirationDate()).getId();
