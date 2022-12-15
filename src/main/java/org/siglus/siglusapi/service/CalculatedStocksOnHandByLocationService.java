@@ -303,9 +303,22 @@ public class CalculatedStocksOnHandByLocationService {
 
     StockCardLineItemExtension extension = lineItemIdToExtension.get(lineItem.getId());
     StockCard stockCard = lineItem.getStockCard();
-    Integer previousSoh = stockCardIdAndLocationCodeToPreviousStockOnHandMap.get(stockCard.getId()
-            + extension.getLocationCode());
-    previousSoh = previousSoh == null ? 0 : previousSoh;
+    // TODO handle adjustment with multiple line on same location,
+    //  BUT can't handle multiple occurredDate
+    Integer previousSoh;
+
+    Optional<CalculatedStockOnHandByLocation> existed = toSaveList.stream().filter(soh ->
+                    stockCard.getId().equals(soh.getStockCardId())
+                            && extension.getLocationCode().equals(soh.getLocationCode()))
+            .findFirst();
+    if (existed.isPresent()) {
+      previousSoh = existed.get().getStockOnHand();
+    } else {
+      previousSoh = stockCardIdAndLocationCodeToPreviousStockOnHandMap.get(stockCard.getId()
+              + extension.getLocationCode());
+      previousSoh = previousSoh == null ? 0 : previousSoh;
+    }
+
 
     List<StockCardLineItem> followingLineItems = getFollowingLineItems(stockCardIdToLineItems,
             lineItemIdToExtension, stockCard, lineItem);
@@ -333,19 +346,44 @@ public class CalculatedStocksOnHandByLocationService {
       Integer calculatedStockOnHand = calculateStockOnHand(item, previousSoh);
       LocalDate itemOccurredDate = item.getOccurredDate();
       if ((!itemOccurredDate.equals(previousOccurredDate)) && (previousItem != null)) {
-        toSaveForThisLocation.add(buildSoh(lineItemIdToExtension, previousItem, previousSoh, stockCard,
-                extension.getLocationCode(), extension.getArea()));
+        CalculatedStockOnHandByLocation built = buildSoh(lineItemIdToExtension, previousItem, previousSoh, stockCard,
+                extension.getLocationCode(), extension.getArea());
+        toSaveForThisLocation.add(built);
       }
       previousSoh = calculatedStockOnHand;
       previousItem = item;
       previousOccurredDate = itemOccurredDate;
     }
     if (previousItem != null) {
-      toSaveForThisLocation.add(buildSoh(lineItemIdToExtension, previousItem, previousSoh, stockCard,
-              extension.getLocationCode(), extension.getArea()));
+      CalculatedStockOnHandByLocation built = buildSoh(lineItemIdToExtension, previousItem, previousSoh, stockCard,
+              extension.getLocationCode(), extension.getArea());
+      toSaveForThisLocation.add(built);
     }
 
-    toSaveList.addAll(toSaveForThisLocation);
+    addUniqueCalculatedStockOnHandByLocation(toSaveList, toSaveForThisLocation);
+  }
+
+  private void addUniqueCalculatedStockOnHandByLocation(
+          List<CalculatedStockOnHandByLocation> toSaveList,
+          List<CalculatedStockOnHandByLocation> toSaveForThisLocation) {
+    toSaveForThisLocation.stream().forEach(soh -> {
+      Integer foundIndex = null;
+      for (int i = 0; i < toSaveList.size(); i++) {
+        CalculatedStockOnHandByLocation existed = toSaveList.get(i);
+        if (soh.getStockCardId().equals(existed.getStockCardId())
+                && soh.getLocationCode().equals(existed.getLocationCode())
+                && soh.getOccurredDate().equals(existed.getOccurredDate())) {
+          foundIndex = i;
+          break;
+        }
+      }
+      // if found, then replace
+      if (foundIndex == null) {
+        toSaveList.add(soh);
+      } else {
+        toSaveList.set(foundIndex, soh);
+      }
+    });
   }
 
   private StockCardLineItem convertMovementToStockCardLineItem(StockCardLocationMovementLineItem movement,
