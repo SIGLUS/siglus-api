@@ -172,7 +172,7 @@ public class TracerDrugReportService {
       LocalDate beginDate,
       LocalDate endDate) {
     productLotSohDtos.sort(Comparator.comparing(ProductLotSohDto::getOccurredDate));
-    cmms.sort(Comparator.comparing(ProductCmm::getPeriodEnd));
+    cmms.sort(Comparator.comparing(ProductCmm::getPeriodBegin));
     final List<TracerDrugPersistentData> tracerDrugPersistentData = new LinkedList<>();
     final CalculationTable calculationTable = new CalculationTable(facilityCode);
     final MondayIterator mondayIterator = new MondayIterator(beginDate, endDate);
@@ -189,7 +189,7 @@ public class TracerDrugReportService {
       }
       for (; currentCmmIdx < cmms.size(); currentCmmIdx++) {
         ProductCmm productCmm = cmms.get(currentCmmIdx);
-        if (productCmm.getPeriodEnd().isAfter(checkpoint)) {
+        if (productCmm.getPeriodBegin().isAfter(checkpoint)) {
           break;
         }
         calculationTable.updateWith(productCmm);
