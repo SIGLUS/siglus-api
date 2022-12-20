@@ -37,7 +37,7 @@ import lombok.Data;
               columns = {
                 @ColumnResult(name = "facilitycode", type = String.class),
                 @ColumnResult(name = "productcode", type = String.class),
-                @ColumnResult(name = "periodend", type = LocalDate.class),
+                @ColumnResult(name = "periodbegin", type = LocalDate.class),
                 @ColumnResult(name = "cmm", type = Double.class),
               }))
 })
@@ -70,6 +70,6 @@ import lombok.Data;
 public class ProductCmm {
   private String facilityCode;
   private String productCode;
-  private LocalDate periodEnd;
+  private LocalDate periodBegin;
   private Double cmm;
 }

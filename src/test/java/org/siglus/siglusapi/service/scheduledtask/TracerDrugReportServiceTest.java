@@ -192,21 +192,21 @@ public class TracerDrugReportServiceTest {
         ProductCmm.builder()
             .facilityCode(hf001)
             .productCode(product1)
-            .periodEnd(LocalDate.parse(startDate).minusDays(1))
+            .periodBegin(LocalDate.parse(startDate).minusDays(1))
             .cmm(10.31)
             .build();
     ProductCmm cmm1 =
         ProductCmm.builder()
             .facilityCode(hf001)
             .productCode(product1)
-            .periodEnd(LocalDate.parse("2022-11-08"))
+            .periodBegin(LocalDate.parse("2022-11-08"))
             .cmm(11.08)
             .build();
     ProductCmm cmm2 =
         ProductCmm.builder()
             .facilityCode(hf001)
             .productCode(product1)
-            .periodEnd(LocalDate.parse("2022-11-17"))
+            .periodBegin(LocalDate.parse("2022-11-17"))
             .cmm(11.17)
             .build();
     given(tracerDrugRepository.getLastTracerDrugCmmTillDate(startDate, facilityCodes))
