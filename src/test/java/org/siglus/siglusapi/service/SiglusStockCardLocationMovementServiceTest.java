@@ -18,25 +18,34 @@ package org.siglus.siglusapi.service;
 import static com.google.common.collect.Lists.newArrayList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.siglus.siglusapi.constant.LocationConstants.VIRTUAL_LOCATION_CODE;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_MOVEMENT_DRAFT_NOT_FOUND;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_MOVEMENT_QUANTITY_LESS_THAN_STOCK_ON_HAND;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_MOVEMENT_QUANTITY_MORE_THAN_STOCK_ON_HAND;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_CARD_NOT_FOUND;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
@@ -48,7 +57,6 @@ import org.openlmis.stockmanagement.dto.referencedata.LotDto;
 import org.openlmis.stockmanagement.dto.referencedata.OrderableDto;
 import org.openlmis.stockmanagement.dto.referencedata.ProgramDto;
 import org.openlmis.stockmanagement.repository.StockCardRepository;
-import org.siglus.siglusapi.constant.LocationConstants;
 import org.siglus.siglusapi.domain.CalculatedStockOnHandByLocation;
 import org.siglus.siglusapi.domain.StockCardLocationMovementDraft;
 import org.siglus.siglusapi.domain.StockCardLocationMovementLineItem;
@@ -101,6 +109,9 @@ public class SiglusStockCardLocationMovementServiceTest {
 
   @Mock
   private SiglusStockCardService siglusStockCardService;
+
+  @Captor
+  private ArgumentCaptor<List<UUID>> argumentCaptor;
 
   private final UUID allProgramId = UUID.randomUUID();
   private final UUID programId = UUID.randomUUID();
@@ -211,6 +222,56 @@ public class SiglusStockCardLocationMovementServiceTest {
   }
 
   @Test
+  public void shouldDeleteAllPreviousEmptyVirtualSohByLocationWhenMovement() {
+    // given
+    StockCard stockCard = new StockCard();
+    stockCard.setId(stockCardId);
+    when(stockCardRepository.findByFacilityIdIn(facilityId)).thenReturn(Arrays.asList(stockCard));
+
+    UUID sohId1 = UUID.randomUUID();
+    CalculatedStockOnHandByLocation soh1 = CalculatedStockOnHandByLocation
+            .builder()
+            .stockOnHand(0)
+            .stockCardId(stockCardId)
+            .locationCode(VIRTUAL_LOCATION_CODE)
+            .occurredDate(Date.from(localDate.atStartOfDay(ZoneId.systemDefault()).toInstant()))
+            .build();
+    soh1.setId(sohId1);
+    UUID sohId2 = UUID.randomUUID();
+    CalculatedStockOnHandByLocation soh2 = CalculatedStockOnHandByLocation
+            .builder()
+            .stockOnHand(100)
+            .stockCardId(stockCardId)
+            .locationCode(VIRTUAL_LOCATION_CODE)
+            .occurredDate(Date.from(localDate.minusDays(10).atStartOfDay(ZoneId.systemDefault()).toInstant()))
+            .build();
+    soh2.setId(sohId2);
+
+    UUID sohId3 = UUID.randomUUID();
+    CalculatedStockOnHandByLocation soh3 = CalculatedStockOnHandByLocation
+            .builder()
+            .stockOnHand(100)
+            .stockCardId(stockCardId)
+            .locationCode(locationCode)
+            .occurredDate(Date.from(localDate.minusDays(10).atStartOfDay(ZoneId.systemDefault()).toInstant()))
+            .build();
+    soh3.setId(sohId3);
+
+    when(calculatedStockOnHandByLocationRepository.findByStockCardIdIn(Arrays.asList(stockCardId)))
+            .thenReturn(Arrays.asList(soh1, soh2));
+
+    // when
+    service.deleteEmptySohVirtualLocation(facilityId);
+
+    // then
+    verify(calculatedStockOnHandByLocationRepository).deleteAllByIdIn(argumentCaptor.capture());
+    List<UUID> toBeDeletedCalculatedSohByLocationIds = argumentCaptor.getValue();
+    assertEquals(2, toBeDeletedCalculatedSohByLocationIds.size());
+    assertTrue(toBeDeletedCalculatedSohByLocationIds.contains(sohId1));
+    assertTrue(toBeDeletedCalculatedSohByLocationIds.contains(sohId2));
+  }
+
+  @Test
   public void shouldThrowExceptionWhenQuantityLessThanStockOnHandInLocationManagement() {
     // then
     exception.expect(BusinessDataException.class);
@@ -222,7 +283,7 @@ public class SiglusStockCardLocationMovementServiceTest {
     when(stockCardRepository.findByFacilityIdIn(facilityId)).thenReturn(Collections.singletonList(stockCard));
     CalculatedStockOnHandByLocation calculatedStockOnHandByLocation = CalculatedStockOnHandByLocation
         .builder()
-        .locationCode(LocationConstants.VIRTUAL_LOCATION_CODE)
+        .locationCode(VIRTUAL_LOCATION_CODE)
         .stockOnHand(10)
         .build();
     when(calculatedStockOnHandByLocationRepository.findLatestLocationSohByStockCardIds(
