@@ -111,7 +111,7 @@ public class SiglusStockCardLocationMovementService {
     List<UUID> stockCardIds = stockCardRepository.findByFacilityIdIn(facilityId).stream()
         .map(BaseEntity::getId).collect(Collectors.toList());
     List<CalculatedStockOnHandByLocation> allSohByLocations =
-            calculatedStockOnHandByLocationRepository.findByStockCardIdIn(stockCardIds);
+            calculatedStockOnHandByLocationRepository.findAllByStockCardIds(stockCardIds);
     Set<UUID> emptyVirtualStockCardIds = allSohByLocations.stream().filter(
         e -> e.getStockOnHand() == 0
             && Objects.equals(e.getLocationCode(), LocationConstants.VIRTUAL_LOCATION_CODE))
