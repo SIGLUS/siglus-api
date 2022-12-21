@@ -34,6 +34,11 @@ import org.springframework.data.repository.query.Param;
 public interface CalculatedStockOnHandByLocationRepository extends JpaRepository<CalculatedStockOnHandByLocation, UUID>,
     JpaSpecificationExecutor<CalculatedStockOnHandByLocation> {
 
+  @Query(value = "select * from siglusintegration.calculated_stocks_on_hand_by_location c "
+          + "where c.stockcardid in :stockCardIds", nativeQuery = true)
+  List<CalculatedStockOnHandByLocation> findAllByStockCardIds(
+          @Param("stockCardIds") Collection<UUID> stockCardIds);
+
   @Query(name = "LotLocationSoh.findLocationSoh", nativeQuery = true)
   List<LotLocationSohDto> getLocationSoh(@Param("lotIds") Iterable<UUID> lotIds, @Param("facilityId") UUID facilityId);
 

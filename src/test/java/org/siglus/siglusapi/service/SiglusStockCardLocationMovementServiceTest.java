@@ -257,7 +257,7 @@ public class SiglusStockCardLocationMovementServiceTest {
             .build();
     soh3.setId(sohId3);
 
-    when(calculatedStockOnHandByLocationRepository.findByStockCardIdIn(Arrays.asList(stockCardId)))
+    when(calculatedStockOnHandByLocationRepository.findAllByStockCardIds(Arrays.asList(stockCardId)))
             .thenReturn(Arrays.asList(soh1, soh2));
 
     // when
