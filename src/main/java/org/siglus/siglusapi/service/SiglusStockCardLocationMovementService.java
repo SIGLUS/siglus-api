@@ -104,16 +104,22 @@ public class SiglusStockCardLocationMovementService {
     movementLineItemRepository.save(movementLineItems);
     deleteMovementDraft(movementDto);
     calculatedStocksOnHandByLocationService.calculateStockOnHandByLocationForMovement(movementLineItems);
-    deleteEmptySohVirtualLocaton(movementDto.getFacilityId());
+    deleteEmptySohVirtualLocation(movementDto.getFacilityId());
   }
 
-  private void deleteEmptySohVirtualLocaton(UUID facilityId) {
+  void deleteEmptySohVirtualLocation(UUID facilityId) {
     List<UUID> stockCardIds = stockCardRepository.findByFacilityIdIn(facilityId).stream()
         .map(BaseEntity::getId).collect(Collectors.toList());
-    List<UUID> toBeDeletedCalculatedSohByLocationIds =
-        calculatedStockOnHandByLocationRepository.findByStockCardIdIn(stockCardIds).stream()
+    List<CalculatedStockOnHandByLocation> allSohByLocations =
+            calculatedStockOnHandByLocationRepository.findAllByStockCardIds(stockCardIds);
+    Set<UUID> emptyVirtualStockCardIds = allSohByLocations.stream().filter(
+        e -> e.getStockOnHand() == 0
+            && Objects.equals(e.getLocationCode(), LocationConstants.VIRTUAL_LOCATION_CODE))
+        .map(CalculatedStockOnHandByLocation::getStockCardId).collect(Collectors.toSet());
+
+    List<UUID> toBeDeletedCalculatedSohByLocationIds = allSohByLocations.stream()
             .filter(
-                e -> e.getStockOnHand() == 0
+                e -> emptyVirtualStockCardIds.contains(e.getStockCardId())
                     && Objects.equals(e.getLocationCode(), LocationConstants.VIRTUAL_LOCATION_CODE))
             .map(org.siglus.common.domain.BaseEntity::getId).collect(Collectors.toList());
     if (!toBeDeletedCalculatedSohByLocationIds.isEmpty()) {

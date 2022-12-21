@@ -41,10 +41,9 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.referencedata.dto.OrderableDto;
 import org.openlmis.stockmanagement.domain.card.StockCard;
-import org.openlmis.stockmanagement.domain.event.CalculatedStockOnHand;
-import org.openlmis.stockmanagement.repository.CalculatedStockOnHandRepository;
 import org.openlmis.stockmanagement.repository.StockCardRepository;
 import org.siglus.siglusapi.constant.LocationConstants;
+import org.siglus.siglusapi.domain.CalculatedStockOnHandByLocation;
 import org.siglus.siglusapi.domain.StockCardLocationMovementDraft;
 import org.siglus.siglusapi.domain.StockCardLocationMovementLineItem;
 import org.siglus.siglusapi.dto.LotDto;
@@ -52,6 +51,7 @@ import org.siglus.siglusapi.dto.StockCardLocationMovementDraftDto;
 import org.siglus.siglusapi.dto.StockCardLocationMovementDraftLineItemDto;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.exception.ValidationMessageException;
+import org.siglus.siglusapi.repository.CalculatedStockOnHandByLocationRepository;
 import org.siglus.siglusapi.repository.StockCardLocationMovementDraftRepository;
 import org.siglus.siglusapi.repository.StockCardLocationMovementLineItemRepository;
 import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
@@ -98,10 +98,10 @@ public class SiglusStockCardLocationMovementDraftServiceTest {
   private SiglusOrderableService siglusOrderableService;
 
   @Mock
-  private CalculatedStockOnHandRepository calculatedStockOnHandRepository;
+  private SiglusLotReferenceDataService siglusLotReferenceDataService;
 
   @Mock
-  private SiglusLotReferenceDataService siglusLotReferenceDataService;
+  private CalculatedStockOnHandByLocationRepository calculatedStockOnHandByLocationRepository;
   private final UUID programId = UUID.randomUUID();
   private final UUID facilityId = UUID.randomUUID();
   private final UUID movementDraftId = UUID.randomUUID();
@@ -235,21 +235,14 @@ public class SiglusStockCardLocationMovementDraftServiceTest {
         .destLocationCode(LocationConstants.VIRTUAL_LOCATION_CODE)
         .quantity(quantity)
         .build();
-    StockCardLocationMovementLineItem movementLineItem2 = StockCardLocationMovementLineItem
-        .builder()
-        .stockCardId(stockCardId2)
-        .srcLocationCode("22A05")
-        .destLocationCode("22A06")
-        .quantity(0)
-        .build();
 
     when(stockCardLocationMovementLineItemRepository.findLatestByStockCardId(any()))
-        .thenReturn(Arrays.asList(movementLineItem1, movementLineItem2));
-    CalculatedStockOnHand calculatedStockOnHand1 = new CalculatedStockOnHand();
-    CalculatedStockOnHand calculatedStockOnHand2 = new CalculatedStockOnHand();
+        .thenReturn(Arrays.asList(movementLineItem1));
+    CalculatedStockOnHandByLocation calculatedStockOnHand1 = new CalculatedStockOnHandByLocation();
+    CalculatedStockOnHandByLocation calculatedStockOnHand2 = new CalculatedStockOnHandByLocation();
     calculatedStockOnHand1.setStockOnHand(quantity);
     calculatedStockOnHand2.setStockOnHand(0);
-    when(calculatedStockOnHandRepository.findLatestStockOnHands(any(), any())).thenReturn(
+    when(calculatedStockOnHandByLocationRepository.findPreviousLocationStockOnHandsTillNow(any(), any())).thenReturn(
         Arrays.asList(calculatedStockOnHand1, calculatedStockOnHand2)
     );
 
