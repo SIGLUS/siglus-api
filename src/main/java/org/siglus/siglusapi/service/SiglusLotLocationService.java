@@ -208,7 +208,7 @@ public class SiglusLotLocationService {
       if (locationCode.equals(LocationConstants.VIRTUAL_LOCATION_CODE) && !needInitiallyMoveProduct) {
         return;
       }
-      List<LotsDto> lotDtoList = getLotsDtos(locationPairs, stockCardIdToStockCard);
+      List<LotsDto> lotDtoList = getLotsDtos(locationPairs, stockCardIdToStockCard, needInitiallyMoveProduct);
       locationLotsDtos.add(LocationLotsDto.builder()
           .locationCode(locationCode)
           .area(locationPairs.get(0).getSecond().getArea())
@@ -318,7 +318,7 @@ public class SiglusLotLocationService {
   }
 
   private List<LotsDto> getLotsDtos(List<Pair<UUID, CalculatedStockOnHandByLocation>> locationPairs,
-      Map<UUID, StockCard> stockCardIdToStockCard) {
+      Map<UUID, StockCard> stockCardIdToStockCard, boolean needInitiallyMoveProduct) {
     List<UUID> lotIds = locationPairs.stream()
         .map(Pair::getFirst)
         .map(stockCardIdToStockCard::get)
@@ -336,7 +336,7 @@ public class SiglusLotLocationService {
       if (null != lotId) {
         lot = idToLot.get(lotId);
       }
-      if (lot != null && !lot.isActive()) {
+      if (lot != null && !lot.isActive() && !needInitiallyMoveProduct) {
         return;
       }
       lotDtoList.add(LotsDto.builder()
