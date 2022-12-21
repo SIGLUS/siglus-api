@@ -51,7 +51,7 @@ public class PublicationPreparer {
     PostgresConnectorConfig connectorConfig = new PostgresConnectorConfig(config);
     RelationalTableFilters tableFilter = connectorConfig.getTableFilters();
     try (PostgresConnection conn = getConn(connectorConfig)) {
-      conn.setAutoCommit(false);
+      conn.setAutoCommit(true);
       Set<TableId> capturedTableIds = getCapturedTableIds(tableFilter, conn);
       Set<TableId> existingPublicationTables = getExistingPublicationTables(conn);
       Collection<TableId> toAdd = subtract(capturedTableIds, existingPublicationTables);
@@ -60,6 +60,7 @@ public class PublicationPreparer {
         log.info("drop slot before create publication");
         conn.dropReplicationSlot(DEFAULT_SLOT_NAME);
       }
+      conn.setAutoCommit(false);
       updatePublication(toAdd, sqlToUpdatePublication, conn);
       Collection<TableId> toRemove = subtract(existingPublicationTables, capturedTableIds);
       updatePublication(toRemove, ALTER_PUBLICATION_DROP_TABLE, conn);
