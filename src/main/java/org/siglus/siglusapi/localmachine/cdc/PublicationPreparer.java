@@ -16,6 +16,7 @@
 package org.siglus.siglusapi.localmachine.cdc;
 
 import static io.debezium.connector.postgresql.connection.ReplicationConnection.Builder.DEFAULT_PUBLICATION_NAME;
+import static io.debezium.connector.postgresql.connection.ReplicationConnection.Builder.DEFAULT_SLOT_NAME;
 import static java.lang.String.format;
 import static org.apache.commons.collections4.CollectionUtils.subtract;
 
@@ -55,6 +56,10 @@ public class PublicationPreparer {
       Set<TableId> existingPublicationTables = getExistingPublicationTables(conn);
       Collection<TableId> toAdd = subtract(capturedTableIds, existingPublicationTables);
       String sqlToUpdatePublication = getSqlToUpdatePublication(existingPublicationTables);
+      if (CREATE_PUBLICATION.equals(sqlToUpdatePublication)) {
+        log.info("drop slot before create publication");
+        conn.dropReplicationSlot(DEFAULT_SLOT_NAME);
+      }
       updatePublication(toAdd, sqlToUpdatePublication, conn);
       Collection<TableId> toRemove = subtract(existingPublicationTables, capturedTableIds);
       updatePublication(toRemove, ALTER_PUBLICATION_DROP_TABLE, conn);
