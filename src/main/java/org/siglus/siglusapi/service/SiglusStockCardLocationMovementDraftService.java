@@ -18,7 +18,8 @@ package org.siglus.siglusapi.service;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_MOVEMENT_DRAFT_EXISTS;
 
 import com.google.common.collect.Maps;
-import java.time.ZonedDateTime;
+
+import java.time.LocalDate;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -31,9 +32,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.openlmis.referencedata.dto.OrderableDto;
 import org.openlmis.stockmanagement.domain.card.StockCard;
-import org.openlmis.stockmanagement.domain.event.CalculatedStockOnHand;
 import org.openlmis.stockmanagement.repository.CalculatedStockOnHandRepository;
 import org.openlmis.stockmanagement.repository.StockCardRepository;
+import org.siglus.siglusapi.domain.CalculatedStockOnHandByLocation;
 import org.siglus.siglusapi.domain.StockCardLocationMovementDraft;
 import org.siglus.siglusapi.domain.StockCardLocationMovementDraftLineItem;
 import org.siglus.siglusapi.domain.StockCardLocationMovementLineItem;
@@ -42,6 +43,7 @@ import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.dto.QueryOrderableSearchParams;
 import org.siglus.siglusapi.dto.StockCardLocationMovementDraftDto;
 import org.siglus.siglusapi.exception.ValidationMessageException;
+import org.siglus.siglusapi.repository.CalculatedStockOnHandByLocationRepository;
 import org.siglus.siglusapi.repository.StockCardLocationMovementDraftRepository;
 import org.siglus.siglusapi.repository.StockCardLocationMovementLineItemRepository;
 import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
@@ -71,6 +73,8 @@ public class SiglusStockCardLocationMovementDraftService {
   private final SiglusOrderableService siglusOrderableService;
   private final SiglusLotReferenceDataService siglusLotReferenceDataService;
   private final CalculatedStockOnHandRepository calculatedStockOnHandRepository;
+
+  private final CalculatedStockOnHandByLocationRepository calculatedStockOnHandByLocationRepository;
 
   @Transactional
   public StockCardLocationMovementDraftDto createEmptyMovementDraft(
@@ -116,20 +120,15 @@ public class SiglusStockCardLocationMovementDraftService {
 
     List<UUID> stockCardIds = stockCardRepository.findByFacilityIdIn(facilityId)
         .stream().map(StockCard::getId).collect(Collectors.toList());
-    List<UUID> hasSohStockCardIds = calculatedStockOnHandRepository.findLatestStockOnHands(
-            stockCardIds, ZonedDateTime.now()).stream().filter(e -> e.getStockOnHand() != 0)
-        .map(CalculatedStockOnHand::getStockCardId).collect(Collectors.toList());
+    Set<UUID> hasSohStockCardIds = calculatedStockOnHandByLocationRepository.findPreviousLocationStockOnHandsTillNow(
+            stockCardIds, LocalDate.now()).stream().filter(e -> e.getStockOnHand() != 0)
+        .map(CalculatedStockOnHandByLocation::getStockCardId).collect(Collectors.toSet());
 
     List<StockCardLocationMovementLineItem> previousStockCardLocationMovementLineItemList =
         stockCardLocationMovementLineItemRepository.findLatestByStockCardId(hasSohStockCardIds);
 
-    List<StockCardLocationMovementLineItem> virtualLocationMovementLineItem =
-        previousStockCardLocationMovementLineItemList.stream()
-            .filter(e -> e.getQuantity() != 0)
-            .collect(Collectors.toList());
-
     List<StockCardLocationMovementDraftLineItem> stockCardLocationMovementDraftLineItemList =
-        getStockCardLocationMovementDraftLineItem(facilityId, virtualLocationMovementLineItem);
+        getStockCardLocationMovementDraftLineItem(facilityId, previousStockCardLocationMovementLineItemList);
 
     StockCardLocationMovementDraft stockMovementDraft = StockCardLocationMovementDraft
         .createMovementDraft(movementDraftDto);
