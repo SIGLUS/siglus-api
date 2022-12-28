@@ -208,9 +208,7 @@ public class CalculatedStocksOnHandByLocationService {
             .findByOccurredDateAndStockCardIdIn(date, stockCardIds);
     Map<UUID, UUID> stockCardIdToId = calculatedStockOnHands
             .stream()
-            .collect(Collectors.toMap(soh -> soh.getStockCardId() == null
-                            ? soh.getStockCard().getId() : soh.getStockCardId(),
-                    CalculatedStockOnHand::getId, (c1, c2) -> c1));
+            .collect(Collectors.toMap(this::getStockCardId, CalculatedStockOnHand::getId, (c1, c2) -> c1));
     toSaveList.forEach(location ->
             location.setCalculatedStocksOnHandId(stockCardIdToId.get(location.getStockCardId())));
     log.info(String.format("save CalculatedStocksOnHandLocations %s", toSaveList.size()));
@@ -251,8 +249,7 @@ public class CalculatedStocksOnHandByLocationService {
                 .sum();
         CalculatedStockOnHand found = calculatedStockOnHands
                 .stream()
-                .filter(soh -> stockCardId.equals(
-                        soh.getStockCardId() == null ? soh.getStockCard().getId() : soh.getStockCardId()))
+                .filter(soh -> stockCardId.equals(getStockCardId(soh)))
                 .findFirst()
                 .orElseThrow(() -> new EntityNotFoundException(
                         "CalculatedStockOnHand not found with stockCardId " + stockCardId));
@@ -262,6 +259,10 @@ public class CalculatedStocksOnHandByLocationService {
       }
     }
 
+  }
+
+  private UUID getStockCardId(CalculatedStockOnHand soh) {
+    return soh.getStockCardId() == null ? soh.getStockCard().getId() : soh.getStockCardId();
   }
 
   private Map<UUID, StockCardLineItemExtension> buildExtensionMap(List<StockCardLineItem> lineItems) {
