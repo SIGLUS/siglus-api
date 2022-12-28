@@ -41,6 +41,7 @@ public class NotificationService {
   private final NotificationRepository notificationRepository;
   private final OrderExternalRepository orderExternalRepository;
   private final RequisitionRepository requisitionRepository;
+  private static final String NOTI_SEND_FAILED = "Notification send failed, msg = ";
 
   public void postInternalApproval(UUID userId, BasicRequisitionDto requisition, UUID notifySupervisoryNodeId) {
     try {
@@ -50,7 +51,7 @@ public class NotificationService {
         notification.setNotifySupervisoryNodeId(notifySupervisoryNodeId);
       });
     } catch (Exception e) {
-      log.error("Notification send failed, msg = " + e.getMessage(), e);
+      log.error(NOTI_SEND_FAILED + e.getMessage(), e);
     }
   }
 
@@ -62,7 +63,7 @@ public class NotificationService {
         notification.setType(NotificationType.TODO);
       });
     } catch (Exception e) {
-      log.error("Notification send failed, msg = " + e.getMessage(), e);
+      log.error(NOTI_SEND_FAILED + e.getMessage(), e);
     }
   }
 
@@ -97,7 +98,7 @@ public class NotificationService {
       log.info("confirm shipment notification for supplier facility: {}", supplierNotification);
       save(userId, supplierNotification);
     } catch (Exception e) {
-      log.error("Notification send failed, msg = " + e.getMessage(), e);
+      log.error(NOTI_SEND_FAILED + e.getMessage(), e);
     }
   }
 
@@ -116,7 +117,7 @@ public class NotificationService {
       log.info("confirm pod notification: {}", notification);
       save(userId, notification);
     } catch (Exception e) {
-      log.error("Notification send failed, msg = " + e.getMessage(), e);
+      log.error(NOTI_SEND_FAILED + e.getMessage(), e);
     }
   }
 
