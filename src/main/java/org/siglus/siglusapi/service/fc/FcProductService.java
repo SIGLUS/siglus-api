@@ -33,6 +33,7 @@ import java.math.RoundingMode;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -432,9 +433,8 @@ public class FcProductService implements ProcessDataService {
       return null;
     }
     ProductPriceDto productPriceDto = productPrices.stream()
-        .sorted((p1, p2) -> -p1.getPriceDate().compareTo(p2.getPriceDate()))
-        .findFirst()
-        .orElse(null);
+        .max(Comparator.comparing(ProductPriceDto::getPriceDate))
+        .get();
     return Money.of(CurrencyUnit.USD, productPriceDto.getProductPrice(), RoundingMode.HALF_UP);
   }
 
