@@ -230,8 +230,7 @@ public class CalculatedStocksOnHandByLocationService {
       allSohByLocations.forEach(sohByLocation -> {
         if (VIRTUAL_LOCATION_CODE.equals(sohByLocation.getLocationCode())) {
           return;
-        }
-        if (!keysForToSaveList.contains(getUniqueKey(sohByLocation))) {
+        } else if (!keysForToSaveList.contains(getUniqueKey(sohByLocation))) {
           updatedAllSohByLocations.add(sohByLocation);
         }
       });
