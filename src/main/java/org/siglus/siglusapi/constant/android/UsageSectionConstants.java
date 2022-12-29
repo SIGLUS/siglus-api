@@ -112,8 +112,9 @@ public class UsageSectionConstants {
     public static final String COLUMN_NAME_COMMUNITY = "community";
   }
 
-  @NoArgsConstructor
   public static class MmiaPatientLineItems {
+    private MmiaPatientLineItems() {
+    }
 
     public static final String TABLE_DISPENSED = "table_dispensed";
     public static final String TABLE_DISPENSED_KEY = "table_dispensed_key";

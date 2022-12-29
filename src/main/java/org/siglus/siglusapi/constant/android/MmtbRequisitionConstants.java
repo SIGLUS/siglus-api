@@ -17,16 +17,19 @@ package org.siglus.siglusapi.constant.android;
 
 import java.util.Set;
 import javax.persistence.EntityNotFoundException;
-import lombok.NoArgsConstructor;
 import org.javers.common.collections.Sets;
 import org.springframework.data.util.Pair;
 
-@NoArgsConstructor
 @SuppressWarnings("PMD.AvoidDuplicateLiterals")
 public class MmtbRequisitionConstants {
 
-  @NoArgsConstructor
+  private MmtbRequisitionConstants() {
+  }
+
   public static class MmtbPatientSection {
+
+    private MmtbPatientSection() {
+    }
 
     private static final String NEW_COLUMN_0 = "newColumn0";
     private static final String NEW_COLUMN_1 = "newColumn1";
@@ -197,8 +200,9 @@ public class MmtbRequisitionConstants {
     }
   }
 
-  @NoArgsConstructor
   public static class MmtbAgeGroupSection {
+    private MmtbAgeGroupSection() {
+    }
 
     // table 1: Faixas Etarias
     private static final Pair<String, String> PAIR_TABLE_1 = Pair.of("table_age_group_header_key", "group");
