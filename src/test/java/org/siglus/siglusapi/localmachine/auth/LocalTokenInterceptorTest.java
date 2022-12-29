@@ -69,6 +69,6 @@ public class LocalTokenInterceptorTest {
     // then
     assertThat(request.getHeaders()).containsKey(CommonConstants.VERSION);
     assertThat(request.getHeaders()).containsKey(CommonConstants.ACCESS_TOKEN);
-    assertThat(request.getHeaders().containsKey(CommonConstants.DEVICE_INFO));
+    assertThat(request.getHeaders()).containsKey(CommonConstants.DEVICE_INFO);
   }
 }
