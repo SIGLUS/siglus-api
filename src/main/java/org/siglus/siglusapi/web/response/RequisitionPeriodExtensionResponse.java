@@ -22,5 +22,5 @@ import org.openlmis.requisition.dto.RequisitionPeriodDto;
 @Data
 public class RequisitionPeriodExtensionResponse extends RequisitionPeriodDto {
 
-  private Map<String, Object> requisitionExtraData;
+  private transient Map<String, Object> requisitionExtraData;
 }
