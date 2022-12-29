@@ -124,9 +124,7 @@ public class SiglusLotLocationService {
           .stream()
           .map(this::getLocationKey)
           .collect(Collectors.toSet());
-      dtos.forEach(dto -> {
-        dto.setIsEmpty(!noEmptyLocationKeys.contains(getLocationKey(dto)));
-      });
+      dtos.forEach(dto -> dto.setIsEmpty(!noEmptyLocationKeys.contains(getLocationKey(dto))));
     }
     return dtos;
   }
@@ -300,7 +298,7 @@ public class SiglusLotLocationService {
     return
         !Objects.isNull(stockCardLineItems)
             && stockCardLineItems.stream()
-            .filter(o -> o.getOccurredDate().isAfter(LocalDate.now().minusDays(days + 1)))
+            .filter(o -> o.getOccurredDate().isAfter(LocalDate.now().minusDays(days + 1L)))
             .anyMatch(o -> o.getQuantity() != 0);
   }
 
