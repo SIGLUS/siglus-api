@@ -32,6 +32,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class HistoricalDataReportController {
 
   private final HistoricalDataPersistentService historicalDataPersistentService;
+  private static final String REFRESH_BEGIN = "refresh begin";
 
   /**
    * will delete all data and insert again
@@ -40,7 +41,7 @@ public class HistoricalDataReportController {
   @Guarded
   public ResponseEntity<String> refresh() {
     historicalDataPersistentService.refreshHistoricalDataReport();
-    return ResponseEntity.ok("refresh begin");
+    return ResponseEntity.ok(REFRESH_BEGIN);
   }
 
   /**
@@ -50,7 +51,7 @@ public class HistoricalDataReportController {
   @Guarded
   public ResponseEntity<String> updateAll() {
     historicalDataPersistentService.updateAllFacilityHistoricalData();
-    return ResponseEntity.ok("refresh begin");
+    return ResponseEntity.ok(REFRESH_BEGIN);
   }
 
   /**
@@ -60,6 +61,6 @@ public class HistoricalDataReportController {
   @Guarded
   public ResponseEntity<String> update(@RequestBody List<HistoricalDataRequest> requests) {
     historicalDataPersistentService.updateHistoricalDataByFacility(requests);
-    return ResponseEntity.ok("refresh begin");
+    return ResponseEntity.ok(REFRESH_BEGIN);
   }
 }
