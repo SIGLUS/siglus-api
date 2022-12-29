@@ -205,13 +205,13 @@ public class MmtbRequisitionConstants {
     }
 
     // table 1: Faixas Etarias
-    private static final Pair<String, String> PAIR_TABLE_1 = Pair.of("table_age_group_header_key", "group");
+    // private static final Pair<String, String> PAIR_TABLE_1 = Pair.of("table_age_group_header_key", "group");
     private static final Pair<String, String> PAIR_TABLE_1_COLUMN_1 = Pair.of(
         "table_age_group_header_key_treatment", "treatment");
     private static final Pair<String, String> PAIR_TABLE_1_COLUMN_2 = Pair.of(
         "table_age_group_header_key_prophylaxis", "prophylaxis");
     // table 2: Service
-    private static final Pair<String, String> PAIR_TABLE_2 = Pair.of("table_age_group_service_key", "service");
+    // private static final Pair<String, String> PAIR_TABLE_2 = Pair.of("table_age_group_service_key", "service");
     private static final Pair<String, String> PAIR_TABLE_2_COLUMN_1 = Pair.of(
         "table_age_group_service_key_adult", "adultos");
     private static final Pair<String, String> PAIR_TABLE_2_COLUMN_2 = Pair.of(
