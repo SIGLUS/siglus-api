@@ -105,6 +105,7 @@ public class StockManagementRepository extends BaseNativeRepository {
   private static final String ORDERABLE_ROOT =
       "(select distinct on (id) * from referencedata.orderables order by id, versionnumber desc) o";
   private static final String LOT_ROOT = "referencedata.lots l";
+  private static final String STOCK_ON_HAND = "stockonhand";
 
   public PeriodOfProductMovements getAllProductMovementsForSync(@Nonnull UUID facilityId, @Nonnull LocalDate since) {
     requireNonNull(facilityId);
@@ -174,7 +175,7 @@ public class StockManagementRepository extends BaseNativeRepository {
     List<StockOnHandByLotDto> result = executeQuery(sql, parameters,
         ((rs, rowNum) -> StockOnHandByLotDto.builder()
             .orderableId(readUuid(rs, "orderableid"))
-            .stockOnHand(readAsInt(rs, "stockonhand"))
+            .stockOnHand(readAsInt(rs, STOCK_ON_HAND))
             .build()
         )
     );
@@ -378,7 +379,7 @@ public class StockManagementRepository extends BaseNativeRepository {
   private RowMapper<CalculatedStockOnHand> calculatedStockOnHandExtractor(StockCard stockCard) {
     return (rs, i) -> {
       CalculatedStockOnHand stockOnHand = CalculatedStockOnHand
-          .of(stockCard, InventoryDetail.of(readAsInt(rs, "stockonhand"), readEventTime(rs)));
+          .of(stockCard, InventoryDetail.of(readAsInt(rs, STOCK_ON_HAND), readEventTime(rs)));
       stockOnHand.setId(readId(rs));
       return stockOnHand;
     };
@@ -424,7 +425,7 @@ public class StockManagementRepository extends BaseNativeRepository {
         ((rs, i) -> ProductLotStock.builder()
             .code(readProductLotCode(rs))
             .productName(readAsString(rs, "productname"))
-            .stockQuantity(readAsInt(rs, "stockonhand"))
+            .stockQuantity(readAsInt(rs, STOCK_ON_HAND))
             .eventTime(readEventTime(rs))
             .expirationDate(readAsDate(rs, "expirationdate"))
             .build()

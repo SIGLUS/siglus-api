@@ -25,11 +25,14 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 @SuppressWarnings({"checkstyle:LineLength", "PMD.AvoidDuplicateLiterals"})
 public class LotManagementRepository {
+  private static final String WHERE_LOT_ID_IS_NOT_NULL = "        WHERE lotid IS NOT NULL)\n";
+  private static final String AND_ID_NOT_IN = "    AND id NOT IN (\n";
+  private static final String SELECT_LOT_ID = "        SELECT lotid\n ";
 
   // set expired lots which are expired and SOH = 0 in all facilities for more than 6 months to inactive
   private static final String UPDATE_SQL = "UPDATE referencedata.lots SET active = FALSE\n"
       + "WHERE id IN (\n"
-      + "        SELECT lotid\n "
+      + SELECT_LOT_ID
       + "        FROM (\n"
       + "            SELECT l.id lotid, l.lotcode, l.expirationdate, sum(csoh.stockonhand) totalstockonhand\n"
       + "            FROM referencedata.lots l\n"
@@ -45,19 +48,19 @@ public class LotManagementRepository {
 
   private static final String SQL_FROM = "FROM referencedata.lots\n"
       + "WHERE id NOT IN (\n"
-      + "        SELECT lotid\n "
+      + SELECT_LOT_ID
       + "        FROM stockmanagement.stock_cards\n"
-      + "        WHERE lotid IS NOT NULL)\n"
-      + "    AND id NOT IN (\n"
-      + "        SELECT lotid\n"
+      + WHERE_LOT_ID_IS_NOT_NULL
+      + AND_ID_NOT_IN
+      + SELECT_LOT_ID
       + "        FROM stockmanagement.physical_inventory_line_items\n"
-      + "        WHERE lotid IS NOT NULL)\n"
-      + "    AND id NOT IN (\n"
-      + "        SELECT lotid\n"
+      + WHERE_LOT_ID_IS_NOT_NULL
+      + AND_ID_NOT_IN
+      + SELECT_LOT_ID
       + "        FROM fulfillment.shipment_line_items\n"
-      + "        WHERE lotid IS NOT NULL)\n"
-      + "    AND id NOT IN (\n"
-      + "        SELECT lotid\n"
+      + WHERE_LOT_ID_IS_NOT_NULL
+      + AND_ID_NOT_IN
+      + SELECT_LOT_ID
       + "        FROM fulfillment.proof_of_delivery_line_items\n"
       + "        WHERE lotid IS NOT NULL)";
 
