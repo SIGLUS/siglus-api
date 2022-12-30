@@ -220,13 +220,18 @@ public class SiglusStockCardService {
     if (!androidHelper.isAndroid()) {
       addCreateInventory(calculateNewLineItemDtos, stockCards);
     }
-    List<StockCardLineItemDto> reasonFilter = calculateNewLineItemDtos.stream().peek(dto -> {
+    List<StockCardLineItemDto> reasonFilter = filterStockCardLineItemDto(calculateNewLineItemDtos);
+
+    return createStockCardDto(stockCardDtos, reasonFilter, byLot);
+  }
+
+  private List<StockCardLineItemDto> filterStockCardLineItemDto(List<StockCardLineItemDto> calculateNewLineItemDtos) {
+    calculateNewLineItemDtos.forEach(dto -> {
       if (dto.getSource() != null || dto.getDestination() != null) {
         dto.setReason(null);
       }
-    }).collect(Collectors.toList());
-
-    return createStockCardDto(stockCardDtos, reasonFilter, byLot);
+    });
+    return calculateNewLineItemDtos;
   }
 
   private StockCardDto findAggregateStockCards(List<StockCard> stockCards, boolean byLot) {
@@ -248,11 +253,7 @@ public class SiglusStockCardService {
     if (!androidHelper.isAndroid()) {
       addCreateInventory(calculateNewLineItemDtos, stockCards);
     }
-    List<StockCardLineItemDto> reasonFilter = calculateNewLineItemDtos.stream().peek(dto -> {
-      if (dto.getSource() != null || dto.getDestination() != null) {
-        dto.setReason(null);
-      }
-    }).collect(Collectors.toList());
+    List<StockCardLineItemDto> reasonFilter = filterStockCardLineItemDto(calculateNewLineItemDtos);
 
     return createStockCardDto(stockCardDtos, reasonFilter, byLot);
   }

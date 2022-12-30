@@ -176,19 +176,6 @@ public class CalculatedStocksOnHandByLocationService {
     saveAll(toSaveList, eventDto.isPhysicalInventory(), false);
   }
 
-  private List<StockCard> getStockCardsFromStockEvent(StockEventDto eventDto) {
-    UUID facilityId = eventDto.getFacilityId();
-    List<StockEventLineItemDto> lineItemDtos = eventDto.getLineItems();
-    Set<String> orderableLotIdPairs = lineItemDtos.stream()
-            .map(this::getOrderableLotIdPair)
-            .collect(Collectors.toSet());
-    if (orderableLotIdPairs.isEmpty()) {
-      return Collections.emptyList();
-    }
-    return siglusStockCardRepository.findByFacilityIdAndOrderableLotIdPairs(
-            facilityId, orderableLotIdPairs);
-  }
-
   private String getOrderableLotIdPair(StockEventLineItemDto eventLineItemDto) {
     return eventLineItemDto.getOrderableId().toString()
         + Optional.ofNullable(eventLineItemDto.getLotId()).map(UUID::toString).orElse("");
