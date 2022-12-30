@@ -68,8 +68,8 @@ public class DbSchemaReader extends PostgresSchema {
   }
 
   @SneakyThrows
-  protected DbSchemaReader refresh(
-      PostgresConnection connection, boolean printReplicaIdentityInfo) {
+  @Override
+  protected DbSchemaReader refresh(PostgresConnection connection, boolean printReplicaIdentityInfo) {
     super.refresh(connection, printReplicaIdentityInfo);
     return this;
   }
