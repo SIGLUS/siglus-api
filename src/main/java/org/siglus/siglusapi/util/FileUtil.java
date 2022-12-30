@@ -25,6 +25,9 @@ import java.util.zip.ZipOutputStream;
 
 public class FileUtil {
 
+  private FileUtil() {
+  }
+
   public static void write(List<File> files, ZipOutputStream zipOutputStream) throws IOException {
     byte[] buffer = new byte[8 * 1024];
     for (File srcFile : files) {

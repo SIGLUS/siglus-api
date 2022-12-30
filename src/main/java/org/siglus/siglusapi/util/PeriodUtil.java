@@ -25,6 +25,9 @@ import org.siglus.siglusapi.exception.BusinessDataException;
 
 public class PeriodUtil {
 
+  private PeriodUtil() {
+  }
+
   public static ProcessingPeriod getPeriodDateIn(List<ProcessingPeriod> processingPeriods, LocalDate localDate) {
     return processingPeriods.stream().filter(period -> isDateInPeriod(period, localDate)).findFirst()
         .orElseThrow(() -> new BusinessDataException(new Message(ERROR_NO_PERIOD_MATCH)));
