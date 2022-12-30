@@ -19,6 +19,9 @@ public class ErrorFormatter {
   private static final String SIGLUS_PACKAGE_PREFIX = "org.siglus.siglusapi";
   private static final String OPENLMIS_PACKAGE_PREFIX = "org.openlmis";
 
+  private ErrorFormatter() {
+  }
+
   public static String getRootStackTrace(Throwable t) {
     if (t.getCause() != null) {
       getRootStackTrace(t.getCause());
