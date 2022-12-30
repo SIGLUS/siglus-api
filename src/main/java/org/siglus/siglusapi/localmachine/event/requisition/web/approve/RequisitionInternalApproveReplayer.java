@@ -36,10 +36,6 @@ import org.openlmis.requisition.domain.requisition.StatusChange;
 import org.openlmis.requisition.domain.requisition.StatusMessage;
 import org.openlmis.requisition.domain.requisition.VersionEntityReference;
 import org.openlmis.requisition.dto.ApprovedProductDto;
-import org.openlmis.requisition.dto.BasicProcessingPeriodDto;
-import org.openlmis.requisition.dto.BasicProgramDto;
-import org.openlmis.requisition.dto.BasicRequisitionDto;
-import org.openlmis.requisition.dto.MinimalFacilityDto;
 import org.openlmis.requisition.service.RequisitionService;
 import org.openlmis.requisition.service.referencedata.ApproveProductsAggregator;
 import org.siglus.siglusapi.domain.AgeGroupLineItem;
@@ -64,6 +60,7 @@ import org.siglus.siglusapi.repository.RequisitionLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.repository.TestConsumptionLineItemRepository;
 import org.siglus.siglusapi.repository.UsageInformationLineItemRepository;
+import org.siglus.siglusapi.service.android.RequisitionCreateService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
@@ -85,6 +82,7 @@ public class RequisitionInternalApproveReplayer {
   private final RegimenSummaryLineItemRepository regimenSummaryLineItemRepository;
   private final KitUsageLineItemRepository kitUsageRepository;
   private final RequisitionService requisitionService;
+  private final RequisitionCreateService requisitionCreateService;
   private final NotificationService notificationService;
 
   @EventListener(classes = {RequisitionInternalApprovedEvent.class})
@@ -141,7 +139,7 @@ public class RequisitionInternalApproveReplayer {
         .findFirst().orElseThrow(IllegalStateException::new)
         .getAuthorId();
     notificationService.postInternalApproval(internalApprovalAuthorId,
-        buildBaseRequisitionDto(requisition), requisition.getSupervisoryNodeId());
+        requisitionCreateService.buildBaseRequisitionDto(requisition), requisition.getSupervisoryNodeId());
   }
 
   private void saveStatusChanges(Requisition requisition, List<StatusChange> statusChanges) {
@@ -166,23 +164,6 @@ public class RequisitionInternalApproveReplayer {
       regimenSummaryLineItemRepository.deleteByRequisitionId(requisitionId);
       kitUsageRepository.deleteByRequisitionId(requisitionId);
     }
-  }
-
-  public BasicRequisitionDto buildBaseRequisitionDto(Requisition requisition) {
-    BasicRequisitionDto basicRequisitionDto = new BasicRequisitionDto();
-    basicRequisitionDto.setId(requisition.getId());
-    basicRequisitionDto.setStatus(requisition.getStatus());
-    MinimalFacilityDto facility = new MinimalFacilityDto();
-    facility.setId(requisition.getFacilityId());
-    basicRequisitionDto.setFacility(facility);
-    BasicProgramDto program = new BasicProgramDto();
-    program.setId(requisition.getProgramId());
-    basicRequisitionDto.setProgram(program);
-    basicRequisitionDto.setEmergency(requisition.getEmergency());
-    BasicProcessingPeriodDto processingPeriod = new BasicProcessingPeriodDto();
-    processingPeriod.setId(requisition.getProcessingPeriodId());
-    basicRequisitionDto.setProcessingPeriod(processingPeriod);
-    return basicRequisitionDto;
   }
 
   private void buildRequisitionApprovedProduct(Requisition requisition, UUID homeFacilityId, UUID programId) {

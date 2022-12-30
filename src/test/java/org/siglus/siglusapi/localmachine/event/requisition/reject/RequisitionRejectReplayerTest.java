@@ -34,11 +34,11 @@ import org.openlmis.requisition.service.referencedata.SupervisoryNodeReferenceDa
 import org.siglus.siglusapi.domain.RequisitionExtension;
 import org.siglus.siglusapi.localmachine.event.EventCommonService;
 import org.siglus.siglusapi.localmachine.event.NotificationService;
-import org.siglus.siglusapi.localmachine.event.requisition.web.approve.RequisitionInternalApproveReplayer;
 import org.siglus.siglusapi.localmachine.event.requisition.web.reject.RequisitionRejectEvent;
 import org.siglus.siglusapi.localmachine.event.requisition.web.reject.RequisitionRejectReplayer;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.service.SiglusRequisitionService;
+import org.siglus.siglusapi.service.android.RequisitionCreateService;
 import org.siglus.siglusapi.web.android.FileBasedTest;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -60,8 +60,7 @@ public class RequisitionRejectReplayerTest extends FileBasedTest {
   @Mock
   private SiglusRequisitionService siglusRequisitionService;
   @Mock
-  private RequisitionInternalApproveReplayer requisitionInternalApproveReplayer;
-
+  private RequisitionCreateService requisitionCreateService;
   private final UUID userId = UUID.randomUUID();
 
   @Test
