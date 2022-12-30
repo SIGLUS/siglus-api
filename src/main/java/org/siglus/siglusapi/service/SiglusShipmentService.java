@@ -248,7 +248,7 @@ public class SiglusShipmentService {
     return subOrderLineItems;
   }
 
-  private void calculateSubOrderPartialFulfilledValue(Map<UUID, List<Importer>> groupShipment,
+  public void calculateSubOrderPartialFulfilledValue(Map<UUID, List<Importer>> groupShipment,
       List<OrderLineItemDto> subOrderLineItems, OrderLineItemDto dto) {
     dto.setId(null);
     if (groupShipment.containsKey(dto.getOrderable().getId())) {
