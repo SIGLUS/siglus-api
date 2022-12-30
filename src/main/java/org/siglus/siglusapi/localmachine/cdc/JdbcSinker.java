@@ -53,10 +53,10 @@ public class JdbcSinker {
   }
 
   private JdbcSinkTask initJdbcSinkTask() {
-    JdbcSinkTask jdbcSinkTask = new JdbcSinkTask();
-    jdbcSinkTask.initialize(context);
-    jdbcSinkTask.start(sinkConfig);
-    return jdbcSinkTask;
+    JdbcSinkTask jst = new JdbcSinkTask();
+    jst.initialize(context);
+    jst.start(sinkConfig);
+    return jst;
   }
 
   public void sink(Collection<TableChangeEvent> events) {
