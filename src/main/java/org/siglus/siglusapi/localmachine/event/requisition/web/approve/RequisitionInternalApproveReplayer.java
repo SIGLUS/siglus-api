@@ -168,7 +168,7 @@ public class RequisitionInternalApproveReplayer {
     }
   }
 
-  private BasicRequisitionDto buildBaseRequisitionDto(Requisition requisition) {
+  public BasicRequisitionDto buildBaseRequisitionDto(Requisition requisition) {
     BasicRequisitionDto basicRequisitionDto = new BasicRequisitionDto();
     basicRequisitionDto.setId(requisition.getId());
     basicRequisitionDto.setStatus(requisition.getStatus());

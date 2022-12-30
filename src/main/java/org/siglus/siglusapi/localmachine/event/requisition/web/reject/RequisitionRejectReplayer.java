@@ -21,10 +21,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.openlmis.requisition.domain.requisition.Requisition;
-import org.openlmis.requisition.dto.BasicProcessingPeriodDto;
-import org.openlmis.requisition.dto.BasicProgramDto;
-import org.openlmis.requisition.dto.BasicRequisitionDto;
-import org.openlmis.requisition.dto.MinimalFacilityDto;
 import org.openlmis.requisition.dto.OrderableDto;
 import org.openlmis.requisition.dto.VersionIdentityDto;
 import org.openlmis.requisition.repository.RequisitionRepository;
@@ -32,6 +28,7 @@ import org.openlmis.requisition.service.referencedata.SupervisoryNodeReferenceDa
 import org.siglus.siglusapi.domain.RequisitionExtension;
 import org.siglus.siglusapi.localmachine.event.EventCommonService;
 import org.siglus.siglusapi.localmachine.event.NotificationService;
+import org.siglus.siglusapi.localmachine.event.requisition.web.approve.RequisitionInternalApproveReplayer;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.service.SiglusRequisitionService;
 import org.springframework.context.event.EventListener;
@@ -48,6 +45,7 @@ public class RequisitionRejectReplayer {
   private final NotificationService notificationService;
   private final SupervisoryNodeReferenceDataService supervisoryNodeReferenceDataService;
   private final SiglusRequisitionService siglusRequisitionService;
+  private final RequisitionInternalApproveReplayer requisitionInternalApproveReplayer;
 
   @EventListener(classes = {RequisitionRejectEvent.class})
   public void replay(RequisitionRejectEvent event) {
@@ -73,29 +71,13 @@ public class RequisitionRejectReplayer {
     requisitionRepository.saveAndFlush(requisition);
 
     siglusRequisitionService.revertRequisition(requisitionId);
-    notificationService.postReject(event.getUserId(), buildBaseRequisitionDto(requisition));
+    notificationService.postReject(event.getUserId(),
+        requisitionInternalApproveReplayer.buildBaseRequisitionDto(requisition));
   }
 
   private void resetSupervisoryNodeId(Requisition requisition) {
     UUID supervisoryNode = supervisoryNodeReferenceDataService.findSupervisoryNode(requisition.getProgramId(),
         requisition.getFacilityId()).getId();
     requisition.setSupervisoryNodeId(supervisoryNode);
-  }
-
-  private BasicRequisitionDto buildBaseRequisitionDto(Requisition requisition) {
-    BasicRequisitionDto basicRequisitionDto = new BasicRequisitionDto();
-    basicRequisitionDto.setId(requisition.getId());
-    basicRequisitionDto.setStatus(requisition.getStatus());
-    MinimalFacilityDto facility = new MinimalFacilityDto();
-    facility.setId(requisition.getFacilityId());
-    basicRequisitionDto.setFacility(facility);
-    BasicProgramDto program = new BasicProgramDto();
-    program.setId(requisition.getProgramId());
-    basicRequisitionDto.setProgram(program);
-    basicRequisitionDto.setEmergency(requisition.getEmergency());
-    BasicProcessingPeriodDto processingPeriod = new BasicProcessingPeriodDto();
-    processingPeriod.setId(requisition.getProcessingPeriodId());
-    basicRequisitionDto.setProcessingPeriod(processingPeriod);
-    return basicRequisitionDto;
   }
 }

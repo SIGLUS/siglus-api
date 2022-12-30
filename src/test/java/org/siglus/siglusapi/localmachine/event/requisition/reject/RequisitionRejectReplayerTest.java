@@ -34,6 +34,7 @@ import org.openlmis.requisition.service.referencedata.SupervisoryNodeReferenceDa
 import org.siglus.siglusapi.domain.RequisitionExtension;
 import org.siglus.siglusapi.localmachine.event.EventCommonService;
 import org.siglus.siglusapi.localmachine.event.NotificationService;
+import org.siglus.siglusapi.localmachine.event.requisition.web.approve.RequisitionInternalApproveReplayer;
 import org.siglus.siglusapi.localmachine.event.requisition.web.reject.RequisitionRejectEvent;
 import org.siglus.siglusapi.localmachine.event.requisition.web.reject.RequisitionRejectReplayer;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
@@ -58,6 +59,8 @@ public class RequisitionRejectReplayerTest extends FileBasedTest {
   private SupervisoryNodeReferenceDataService supervisoryNodeReferenceDataService;
   @Mock
   private SiglusRequisitionService siglusRequisitionService;
+  @Mock
+  private RequisitionInternalApproveReplayer requisitionInternalApproveReplayer;
 
   private final UUID userId = UUID.randomUUID();
 
