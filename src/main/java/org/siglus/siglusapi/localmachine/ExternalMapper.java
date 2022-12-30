@@ -25,6 +25,7 @@ import org.springframework.stereotype.Component;
 public class ExternalMapper {
 
   private final PayloadSerializer payloadSerializer;
+  private final ExternalEventDtoMapper externalEventDtoMapper;
 
   public ExternalEventDto map(Event event) {
     return ExternalEventDto.builder()
@@ -35,12 +36,7 @@ public class ExternalMapper {
 
   @SneakyThrows
   public Event map(ExternalEventDto externalEventDto) {
-    Event event = externalEventDto.getEvent();
-    Object payload = event.getPayload();
-    Class<?> payloadClass = payloadSerializer.getPayloadClass(externalEventDto.getPayloadClassName());
-    Object originPayload = PayloadSerializer.LOCALMACHINE_EVENT_OBJECT_MAPPER.convertValue(payload, payloadClass);
-    event.setPayload(originPayload);
-    return event;
+    return externalEventDtoMapper.map(externalEventDto);
   }
 
 }
