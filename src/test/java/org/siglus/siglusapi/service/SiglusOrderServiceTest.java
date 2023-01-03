@@ -231,7 +231,7 @@ public class SiglusOrderServiceTest {
   private final LocalDate now = LocalDate.now();
   private final String orderCode = "ORDER-CODE";
   private final UUID periodId1 = UUID.randomUUID();
-  private final LocalDate processPeriodEndDate = LocalDate.of(2022, LocalDate.now().getMonthValue() - 1, 25);
+  private final LocalDate processPeriodEndDate = LocalDate.of(2022, LocalDate.now().getMonthValue(), 25);
 
   private final List<UUID> periodIds = Lists.newArrayList(
       UUID.randomUUID(),
