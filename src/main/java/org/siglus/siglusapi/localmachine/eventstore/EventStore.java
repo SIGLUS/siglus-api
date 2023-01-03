@@ -171,6 +171,7 @@ public class EventStore {
     }
   }
 
+  @Transactional
   public List<Event> excludeExisted(List<Event> events) {
     if (events.isEmpty()) {
       return events;
