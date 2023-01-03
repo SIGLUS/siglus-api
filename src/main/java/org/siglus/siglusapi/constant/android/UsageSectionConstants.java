@@ -15,11 +15,11 @@
 
 package org.siglus.siglusapi.constant.android;
 
-import lombok.NoArgsConstructor;
-
-@NoArgsConstructor
 @SuppressWarnings("PMD.AvoidDuplicateLiterals")
 public class UsageSectionConstants {
+
+  private UsageSectionConstants() {
+  }
 
   public static final String QUERY_REQUISITIONS_UNDER_HIGH_LEVEL =
       "  (select r.id from requisition.requisitions r "
@@ -89,15 +89,19 @@ public class UsageSectionConstants {
           + "      )"
           + " ) ";
 
-  @NoArgsConstructor
   public static class ConsultationNumberLineItems {
+
+    private ConsultationNumberLineItems() {
+    }
 
     public static final String GROUP_NAME = "number";
     public static final String COLUMN_NAME = "consultationNumber";
   }
 
-  @NoArgsConstructor
   public static class KitUsageLineItems {
+
+    private KitUsageLineItems() {
+    }
 
     public static final String COLLECTION_KIT_OPENED = "kitOpened";
     public static final String COLLECTION_KIT_RECEIVED = "kitReceived";
@@ -105,14 +109,17 @@ public class UsageSectionConstants {
     public static final String SERVICE_HF = "HF";
   }
 
-  @NoArgsConstructor
   public static class RegimenLineItems {
+
+    private RegimenLineItems() {
+    }
 
     public static final String COLUMN_NAME_PATIENT = "patients";
     public static final String COLUMN_NAME_COMMUNITY = "community";
   }
 
   public static class MmiaPatientLineItems {
+
     private MmiaPatientLineItems() {
     }
 
@@ -197,8 +204,10 @@ public class UsageSectionConstants {
     public static final String KEY_REGIME_3LINES_3 = "key_regime_3lines_3";
   }
 
-  @NoArgsConstructor
   public static class UsageInformationLineItems {
+
+    private UsageInformationLineItems() {
+    }
 
     public static final String SERVICE_TOTAL = "total";
     public static final String SERVICE_CHW = "newColumn0";
@@ -207,8 +216,10 @@ public class UsageSectionConstants {
     public static final String TREATMENTS_ATTENDED = "treatmentsAttended";
   }
 
-  @NoArgsConstructor
   public static class TestConsumptionLineItems {
+
+    private TestConsumptionLineItems() {
+    }
 
     public static final String TOTAL = "total";
     public static final String NEW_COLUMN_0 = "newColumn0";
