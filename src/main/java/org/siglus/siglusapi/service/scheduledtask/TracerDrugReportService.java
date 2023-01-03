@@ -107,7 +107,7 @@ public class TracerDrugReportService {
   @Async
   public void refreshTracerDrugPersistentData(String startDate, String endDate) {
     log.info("tracer drug persistentData refresh. start = " + System.currentTimeMillis());
-    List<String> facilityCodes =  facilityRepository.findAllFacilityCodes();
+    List<String> facilityCodes = facilityRepository.findAllFacilityCodes();
     refreshTracerDrugPersistentDataByFacilities(startDate, endDate, facilityCodes);
     log.info("tracer drug persistentData  refresh. end = " + System.currentTimeMillis());
   }
@@ -450,6 +450,7 @@ public class TracerDrugReportService {
   }
 
   static class CalculationTable {
+
     private final HashMap<String, HashMap<String, Integer>> productCodeToLotSoh = new HashMap<>();
     private final HashMap<String, Double> productCodeToCmm = new HashMap<>();
     private LocalDate checkpoint;
@@ -467,9 +468,7 @@ public class TracerDrugReportService {
 
     public void updateWith(ProductLotSohDto productLotSoh) {
       String productCode = productLotSoh.getProductCode();
-      if (!productCodeToLotSoh.containsKey(productCode)) {
-        productCodeToLotSoh.put(productCode, new HashMap<>());
-      }
+      productCodeToLotSoh.computeIfAbsent(productCode, key -> new HashMap<>());
       HashMap<String, Integer> lotIdToSoh = productCodeToLotSoh.get(productCode);
       lotIdToSoh.put(productLotSoh.getLotId(), productLotSoh.getStockOnHand());
     }
@@ -497,6 +496,7 @@ public class TracerDrugReportService {
   }
 
   static class MondayIterator implements Iterator<LocalDate> {
+
     private final LocalDate inclusiveEndDate;
     private LocalDate next;
 
