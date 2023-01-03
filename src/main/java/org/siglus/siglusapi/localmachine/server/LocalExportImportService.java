@@ -92,7 +92,6 @@ public class LocalExportImportService {
   public void exportEvents(HttpServletResponse response) {
     String zipName = getZipName();
     File directory = prepareDirectory();
-    FileInputStream fileInputStream = null;
     try {
       List<File> files = generateFilesForPeeringFacilities();
       if (CollectionUtils.isEmpty(files)) {
@@ -101,14 +100,11 @@ public class LocalExportImportService {
       }
       File zipFile = generateZipFile(zipName, files);
       setResponseAttribute(response, zipName);
-      fileInputStream = new FileInputStream(zipFile);
+      FileInputStream fileInputStream = new FileInputStream(zipFile);
       IOUtils.copy(fileInputStream, response.getOutputStream());
       response.flushBuffer();
     } finally {
       FileUtils.deleteDirectory(directory);
-      if (fileInputStream != null) {
-        fileInputStream.close();
-      }
     }
   }
 
