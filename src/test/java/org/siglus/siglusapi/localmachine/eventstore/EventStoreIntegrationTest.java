@@ -43,7 +43,7 @@ public class EventStoreIntegrationTest extends LocalMachineIntegrationTest {
     eventRecordRepository.deleteAll();
   }
 
-  @Ignore
+  @Ignore("ignore this test")
   @Test
   public void canFindLeafEventInGroup() {
     // given
