@@ -112,8 +112,7 @@ public class OnlineWebMasterDataEventReplayerTest {
     verify(siglusCacheService).invalidateCache();
   }
 
-  // TODO: 2022/11/30 remove ignore after MasterDataEventEmitter.doNotClearCacheTableNames has data
-  @Ignore
+  @Ignore("remove ignore after MasterDataEventEmitter.doNotClearCacheTableNames has data")
   @Test
   public void shouldNotClearCacheWhenReplayGivenNeedClearTableEvent() {
     // given
