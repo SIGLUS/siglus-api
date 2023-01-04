@@ -40,19 +40,17 @@ public class PatientLineItemsRequest {
 
   @NotNull
   private List<PatientLineItemColumnRequest> columns;
-  
+
   public static PatientLineItemsRequest from(PatientGroupDto patientGroupDto) {
     List<PatientLineItemColumnRequest> columns = newArrayList();
     String tableValue = patientGroupDto.getName();
     String tableKey = MmtbPatientSection.getTableKeyByValue(tableValue);
     Map<String, PatientColumnDto> columnNameToPatientColumn = patientGroupDto.getColumns();
-    columnNameToPatientColumn.forEach((columnValue, patientColumn) -> {
-      columns.add(PatientLineItemColumnRequest.builder()
-          .tableName(tableKey)
-          .name(MmtbPatientSection.getColumnKeyByValue(tableValue, columnValue))
-          .value(patientColumn.getValue())
-          .build());
-    });
+    columnNameToPatientColumn.forEach((columnValue, patientColumn) -> columns.add(PatientLineItemColumnRequest.builder()
+        .tableName(tableKey)
+        .name(MmtbPatientSection.getColumnKeyByValue(tableValue, columnValue))
+        .value(patientColumn.getValue())
+        .build()));
     return PatientLineItemsRequest.builder()
         .name(tableKey)
         .columns(columns)
