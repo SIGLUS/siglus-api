@@ -19,6 +19,7 @@ import javax.persistence.Entity;
 import javax.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -30,6 +31,7 @@ import org.siglus.common.domain.BaseEntity;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
+@EqualsAndHashCode(callSuper = true)
 @Table(name = "custom_products_regimens", schema = "siglusintegration")
 public class CustomProductsRegimens extends BaseEntity {
 
