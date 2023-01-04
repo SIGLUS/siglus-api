@@ -87,6 +87,7 @@ import javax.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang.BooleanUtils;
 import org.openlmis.referencedata.domain.Code;
 import org.openlmis.referencedata.domain.ProcessingPeriod;
 import org.openlmis.referencedata.dto.BaseDto;
@@ -304,7 +305,7 @@ public class RequisitionCreateService {
   }
 
   private void checkPermission(Supplier<ValidationResult> supplier) {
-    if (EventPublisher.isReplaying.get()) {
+    if (BooleanUtils.isTrue(EventPublisher.isReplaying.get())) {
       return;
     }
     supplier.get().throwExceptionIfHasErrors();
@@ -373,7 +374,7 @@ public class RequisitionCreateService {
 
   private UUID getPeriodId(RequisitionCreateRequest request) {
     YearMonth month = request.getActualStartDate().query(YearMonth::from);
-    if (request.getEmergency()) {
+    if (BooleanUtils.isTrue(request.getEmergency())) {
       month = month.minusMonths(1);
     }
     return processingPeriodRepository.findPeriodByCodeAndMonth(SCHEDULE_CODE, month)

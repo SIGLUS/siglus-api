@@ -21,6 +21,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang.BooleanUtils;
 import org.siglus.siglusapi.dto.enums.EventCategoryEnum;
 import org.siglus.siglusapi.localmachine.agent.ErrorHandler;
 import org.siglus.siglusapi.localmachine.agent.SyncRecordService;
@@ -93,7 +94,7 @@ public class EventPublisher {
   }
 
   void doEmit(Event event) {
-    if (isReplaying.get()) {
+    if (BooleanUtils.isTrue(isReplaying.get())) {
       throw new IllegalStateException("emit event when replaying is not allowed");
     }
     // the event is created by me, so local replayed should be true, otherwise it will be replayed

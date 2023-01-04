@@ -29,6 +29,7 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang.BooleanUtils;
 import org.openlmis.referencedata.domain.BaseEntity;
 import org.openlmis.referencedata.domain.FacilityType;
 import org.openlmis.referencedata.domain.FacilityTypeApprovedProduct;
@@ -156,9 +157,9 @@ public class FcFacilityTypeService implements ProcessDataService {
       FacilityTypeDto existed = codeToFacilityType.get(current.getCode());
       log.info("[FC facilityType] update facilityType, existed: {}, current: {}", existed, current);
 
-      if (existed.getActive() && !FcUtil.isActive(current.getStatus())) {
+      if (BooleanUtils.isTrue(existed.getActive()) && !FcUtil.isActive(current.getStatus())) {
         needDeletedFacilityTypeId.add(existed.getId());
-      } else if (!existed.getActive() && FcUtil.isActive(current.getStatus())) {
+      } else if (BooleanUtils.isFalse(existed.getActive()) && FcUtil.isActive(current.getStatus())) {
         needCreatedFacilityTypeId.add(existed.getId());
       }
 

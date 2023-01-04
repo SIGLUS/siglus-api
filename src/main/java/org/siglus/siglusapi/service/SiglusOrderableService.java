@@ -38,6 +38,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang.BooleanUtils;
 import org.openlmis.referencedata.domain.Orderable;
 import org.openlmis.referencedata.dto.DispensableDto;
 import org.openlmis.referencedata.dto.OrderableDto;
@@ -290,7 +291,7 @@ public class SiglusOrderableService {
     List<CalculatedStockOnHand> sohForOrderable = calculatedStockOnHandRepository.findLatestStockOnHands(
         allStockCardIds, ZonedDateTime.now());
     List<UUID> stockCardIds;
-    if (isRequestAll) {
+    if (BooleanUtils.isTrue(isRequestAll)) {
       stockCardIds = sohForOrderable.stream()
           .map(CalculatedStockOnHand::getStockCardId)
           .collect(Collectors.toList());

@@ -28,6 +28,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.BooleanUtils;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.localmachine.CommonConstants;
@@ -61,7 +62,7 @@ public class LocalTokenInterceptor implements ClientHttpRequestInterceptor {
   @Override
   public ClientHttpResponse intercept(
       HttpRequest request, byte[] body, ClientHttpRequestExecution execution) throws IOException {
-    if (acceptFunc.apply(request)) {
+    if (BooleanUtils.isTrue(acceptFunc.apply(request))) {
       HttpHeaders headers = request.getHeaders();
       attachHeaders(headers);
     }

@@ -38,6 +38,7 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang.BooleanUtils;
 import org.openlmis.requisition.dto.ReasonType;
 import org.openlmis.stockmanagement.domain.BaseEntity;
 import org.openlmis.stockmanagement.domain.card.StockCard;
@@ -85,7 +86,7 @@ public class SiglusStockCardLocationMovementService {
 
   public InitialMoveProductFieldDto canInitialMoveProduct(UUID facilityId) {
 
-    if (!administrationsService.getFacility(facilityId).getEnableLocationManagement()) {
+    if (BooleanUtils.isFalse(administrationsService.getFacility(facilityId).getEnableLocationManagement())) {
       return new InitialMoveProductFieldDto(false);
     }
     List<UUID> stockCardIds = stockCardRepository.findByFacilityIdIn(facilityId)
@@ -111,17 +112,16 @@ public class SiglusStockCardLocationMovementService {
     List<UUID> stockCardIds = stockCardRepository.findByFacilityIdIn(facilityId).stream()
         .map(BaseEntity::getId).collect(Collectors.toList());
     List<CalculatedStockOnHandByLocation> allSohByLocations =
-            calculatedStockOnHandByLocationRepository.findAllByStockCardIds(stockCardIds);
+        calculatedStockOnHandByLocationRepository.findAllByStockCardIds(stockCardIds);
     Set<UUID> emptyVirtualStockCardIds = allSohByLocations.stream().filter(
-        e -> e.getStockOnHand() == 0
-            && Objects.equals(e.getLocationCode(), LocationConstants.VIRTUAL_LOCATION_CODE))
+        e -> e.getStockOnHand() == 0 && Objects.equals(e.getLocationCode(), LocationConstants.VIRTUAL_LOCATION_CODE))
         .map(CalculatedStockOnHandByLocation::getStockCardId).collect(Collectors.toSet());
 
     List<UUID> toBeDeletedCalculatedSohByLocationIds = allSohByLocations.stream()
-            .filter(
-                e -> emptyVirtualStockCardIds.contains(e.getStockCardId())
-                    && Objects.equals(e.getLocationCode(), LocationConstants.VIRTUAL_LOCATION_CODE))
-            .map(org.siglus.common.domain.BaseEntity::getId).collect(Collectors.toList());
+        .filter(
+            e -> emptyVirtualStockCardIds.contains(e.getStockCardId())
+                && Objects.equals(e.getLocationCode(), LocationConstants.VIRTUAL_LOCATION_CODE))
+        .map(org.siglus.common.domain.BaseEntity::getId).collect(Collectors.toList());
     if (!toBeDeletedCalculatedSohByLocationIds.isEmpty()) {
       calculatedStockOnHandByLocationRepository.deleteAllByIdIn(toBeDeletedCalculatedSohByLocationIds);
       log.info("virtual location calculation has been deleted  size : {} ",
