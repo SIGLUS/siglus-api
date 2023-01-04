@@ -290,7 +290,7 @@ public class SiglusAdministrationsService {
     if (Objects.isNull(facilityExtension)) {
       return Boolean.FALSE;
     }
-    if (facilityExtension.getIsLocalMachine()) {
+    if (BooleanUtils.isTrue(facilityExtension.getIsLocalMachine())) {
       AgentInfo agentInfo = agentInfoRepository.findFirstByFacilityId(facilityExtension.getFacilityId());
       return Objects.nonNull(agentInfo);
     }
@@ -381,11 +381,11 @@ public class SiglusAdministrationsService {
       facilityDeviceDto.setVersion(appInfo.getVersionCode());
     }
     if (facilityExtension != null) {
-      if (facilityExtension.getIsAndroid()) {
+      if (BooleanUtils.isTrue(facilityExtension.getIsAndroid())) {
         facilityDeviceDto.setDeviceType(FacilityDeviceTypeEnum.ANDROID);
         return facilityDeviceDto;
       }
-      if (facilityExtension.getIsLocalMachine()) {
+      if (BooleanUtils.isTrue(facilityExtension.getIsLocalMachine())) {
         facilityDeviceDto.setDeviceType(FacilityDeviceTypeEnum.LOCAL_MACHINE);
         return facilityDeviceDto;
       }
@@ -595,10 +595,10 @@ public class SiglusAdministrationsService {
     if (Objects.isNull(facilityExtension)) {
       return FacilityDeviceTypeEnum.WEB;
     }
-    if (facilityExtension.getIsLocalMachine()) {
+    if (BooleanUtils.isTrue(facilityExtension.getIsLocalMachine())) {
       return FacilityDeviceTypeEnum.LOCAL_MACHINE;
     }
-    if (facilityExtension.getIsAndroid()) {
+    if (BooleanUtils.isTrue(facilityExtension.getIsAndroid())) {
       return FacilityDeviceTypeEnum.ANDROID;
     }
     return FacilityDeviceTypeEnum.WEB;
