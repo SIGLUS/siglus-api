@@ -392,7 +392,7 @@ public class OrderFulfillmentSyncedReplayer {
   private void nullIds(ShipmentDto shipmentDto) {
     shipmentDto.setId(null);
     if (shipmentDto.lineItems() != null) {
-      shipmentDto.lineItems().forEach((l) -> l.setId(null));
+      shipmentDto.lineItems().forEach(l -> l.setId(null));
     }
   }
 
