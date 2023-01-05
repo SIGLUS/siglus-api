@@ -169,7 +169,7 @@ public class LocalExportImportService {
     Map<UUID, String> facilityIdToName = getFacilityIdToName(homeFacilityId, receiverIdToEvents);
 
     return receiverIdToEvents.entrySet().stream()
-        .map((it) -> generateFilesForOneReceiver(
+        .map(it -> generateFilesForOneReceiver(
             workingDir, homeFacilityId, facilityIdToName, it.getKey(), it.getValue()))
         .flatMap(Collection::stream)
         .collect(Collectors.toList());

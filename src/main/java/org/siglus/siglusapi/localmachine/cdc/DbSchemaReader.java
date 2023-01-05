@@ -48,7 +48,7 @@ public class DbSchemaReader extends PostgresSchema {
       databaseCharset = tempConnection.getDatabaseCharset();
     }
     final PostgresValueConverterBuilder valueConverterBuilder =
-        (typeRegistry) -> PostgresValueConverter.of(connectorConfig, databaseCharset, typeRegistry);
+        typeRegistry -> PostgresValueConverter.of(connectorConfig, databaseCharset, typeRegistry);
     PostgresConnection jdbcConnection =
         new PostgresConnection(
             connectorConfig.getJdbcConfig(),
