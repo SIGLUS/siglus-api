@@ -218,8 +218,8 @@ public class SiglusRequisitionService {
   @Value("${service.url}")
   private String serviceUrl;
   public static final String SUGGESTED_QUANTITY_COLUMN = "suggestedQuantity";
-  public static final List<String> MMIA_SECTIONS = Lists.newArrayList(NEW_SECTION_2, NEW_SECTION_3, NEW_SECTION_4);
-  public static final List<String> CALC_PROGRAM_CODE = Lists.newArrayList(MTB_PROGRAM_CODE, RAPIDTEST_PROGRAM_CODE,
+  protected static final List<String> MMIA_SECTIONS = Lists.newArrayList(NEW_SECTION_2, NEW_SECTION_3, NEW_SECTION_4);
+  protected static final List<String> CALC_PROGRAM_CODE = Lists.newArrayList(MTB_PROGRAM_CODE, RAPIDTEST_PROGRAM_CODE,
       TARV_PROGRAM_CODE);
   public static final String MMIA_COLUMN_TOTAL = "total";
   public static final String ESTIMATED_QUANTITY = "estimatedQuantity";

@@ -27,7 +27,7 @@ public class EventReader implements AutoCloseable {
 
   private final EntryReader entryReader;
   private final ExternalEventDtoMapper mapper;
-  private final ObjectMapper objectMapper = LOCALMACHINE_EVENT_OBJECT_MAPPER;
+  private static final ObjectMapper objectMapper = LOCALMACHINE_EVENT_OBJECT_MAPPER;
 
   public EventReader(EntryReader entryReader, ExternalEventDtoMapper mapper) {
     this.entryReader = entryReader;
