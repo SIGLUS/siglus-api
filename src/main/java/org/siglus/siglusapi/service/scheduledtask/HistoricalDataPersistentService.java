@@ -20,13 +20,13 @@ import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.CollectionUtils;
 import org.siglus.siglusapi.repository.HistoricalDataRepository;
 import org.siglus.siglusapi.repository.dto.FacilityLastRequisitionTimeDto;
 import org.siglus.siglusapi.web.request.HistoricalDataRequest;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.ObjectUtils;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -59,7 +59,7 @@ public class HistoricalDataPersistentService {
 
   public void updateHistoricalData(List<HistoricalDataRequest> requests) {
     List<FacilityLastRequisitionTimeDto> facilityLatestRequisitionDateList;
-    if (ObjectUtils.isEmpty(requests) || requests.size() == 0) {
+    if (CollectionUtils.isEmpty(requests)) {
       facilityLatestRequisitionDateList = historicalDataRepository.getFacilityLatestRequisitionDate();
       for (FacilityLastRequisitionTimeDto facilityLastRequisitionTimeDto : facilityLatestRequisitionDateList) {
         LocalDate startDate = facilityLastRequisitionTimeDto.getLastRequisitionDate() == null ? LocalDate.of(1970, 1, 1)

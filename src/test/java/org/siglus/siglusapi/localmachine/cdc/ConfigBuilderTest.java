@@ -20,9 +20,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.Test;
 
 public class ConfigBuilderTest {
+
   @Test
   public void shouldSetCustomPostgresDialectWhenGetSinkConfig() {
-    assertThat(new ConfigBuilder().sinkConfig().get("dialect.name")).isEqualTo("PostgresDialect");
+    assertThat(new ConfigBuilder().sinkConfig()).containsEntry("dialect.name", "PostgresDialect");
   }
 
   @Test
@@ -33,9 +34,7 @@ public class ConfigBuilderTest {
             "jdbc:postgresql://localhost:5432/open_lmis?stringtype=unspecified",
             "username",
             "password");
-    assertThat(configBuilder.debeziumConfigBuilder().build().asMap().get("snapshot.mode"))
-        .isEqualTo("never");
-    assertThat(configBuilder.debeziumConfigBuilder().build().asMap().get("database.hostname"))
-        .isEqualTo("localhost");
+    assertThat(configBuilder.debeziumConfigBuilder().build().asMap()).containsEntry("snapshot.mode", "never");
+    assertThat(configBuilder.debeziumConfigBuilder().build().asMap()).containsEntry("database.hostname", "localhost");
   }
 }

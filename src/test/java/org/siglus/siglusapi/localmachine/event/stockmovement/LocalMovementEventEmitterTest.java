@@ -50,6 +50,6 @@ public class LocalMovementEventEmitterTest {
     emitter.on(anyList());
 
     // then
-    assertThat(emitter.acceptedTables().length).isGreaterThan(0);
+    assertThat(emitter.acceptedTables().length).isPositive();
   }
 }

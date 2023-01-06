@@ -407,7 +407,7 @@ public class FcProductService implements ProcessDataService {
   }
 
   private String getOriginProductCategory(OrderableDto existed) {
-    if (existed.getPrograms() != null && existed.getPrograms().size() > 0) {
+    if (existed.getPrograms() != null && !CollectionUtils.isEmpty(existed.getPrograms())) {
       ProgramOrderableDto existedProgramOrderableDto = (ProgramOrderableDto) existed.getPrograms().toArray()[0];
       return existedProgramOrderableDto.getOrderableCategoryDisplayName();
     }

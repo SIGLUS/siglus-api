@@ -78,10 +78,10 @@ public class CdcScraperTest {
         .filter(it -> criticalConfigKeys.contains(it.getKey())).collect(
             Collectors.toMap(Entry::getKey, Entry::getValue));
     // then
-    assertThat(configSnap.get("name")).isEqualTo("local-scraper");
-    assertThat(configSnap.get("plugin.name")).isEqualTo("pgoutput");
-    assertThat(configSnap.get("connector.class")).isEqualTo("io.debezium.connector.postgresql.PostgresConnector");
-    assertThat(configSnap.get("snapshot.mode")).isEqualTo("never");
+    assertThat(configSnap).containsEntry("name", "local-scraper");
+    assertThat(configSnap).containsEntry("plugin.name", "pgoutput");
+    assertThat(configSnap).containsEntry("connector.class", "io.debezium.connector.postgresql.PostgresConnector");
+    assertThat(configSnap).containsEntry("snapshot.mode", "never");
   }
 
   @Test
@@ -118,7 +118,9 @@ public class CdcScraperTest {
     cdcScraper.handleChangeEvent(changeEvent);
     // then
     CdcRecord cdcRecord = cdcScraper.dispatchQueue.peekLast();
-    assertThat(cdcRecord.getPayload().get("name")).isEqualTo("name value");
+    assertThat(cdcRecord).isNotNull();
+    assertThat(cdcRecord.getPayload()).isNotEmpty();
+    assertThat(cdcRecord.getPayload()).containsEntry("name", "name value");
   }
 
   @Test
