@@ -48,6 +48,6 @@ public class MeCreateRequisitionServiceTest {
     // when
     UUID createdRequisitionId = meCreateRequisitionService.createRequisition(request);
     // then
-    assertThat(createdRequisitionId.equals(requisitionId)).isTrue();
+    assertThat(createdRequisitionId).isEqualTo(requisitionId);
   }
 }
