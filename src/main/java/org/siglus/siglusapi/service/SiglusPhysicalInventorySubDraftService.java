@@ -19,6 +19,7 @@ import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_INVENTORY_CONFLICT_SUB
 
 import com.google.common.collect.Lists;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -127,7 +128,7 @@ public class SiglusPhysicalInventorySubDraftService {
             .groupByProductCode(allInitialInventoryLineItems);
     List<List<List<PhysicalInventoryLineItemDto>>> groupList = CustomListSortHelper.averageAssign(lists, splitNum);
     List<PhysicalInventoryLineItemDto> originalInitialInventoryLineItems = groupList.get(number - 1)
-            .stream().flatMap(list -> list.stream()).collect(Collectors.toList());
+            .stream().flatMap(Collection::stream).collect(Collectors.toList());
 
     // existing lines for other darft
     List<PhysicalInventoryLineItemsExtension> existingExtensions = lineItemsExtensionRepository
