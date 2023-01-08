@@ -115,7 +115,7 @@ public class OnlineWebMasterDataEventEmitterTest {
         .emitMasterDataEvent(any(MasterDataTableChangeEvent.class), eq(facilityId2));
     verify(eventPublisher, times(1))
         .emitMasterDataEvent(any(MasterDataTableChangeEvent.class), eq(null));
-    assertThat(emitter.acceptedTables().length).isPositive();
+    assertThat(emitter.acceptedTables()).isNotEmpty();
   }
 
   private List<User> generateUsers() {

@@ -48,10 +48,15 @@ import org.mockito.runners.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 @SuppressWarnings({"PMD.AvoidDuplicateLiterals"})
 public class CdcScraperTest {
-  @Mock private CdcDispatcher cdcDispatcher;
-  @Mock private ConfigBuilder configBuilder;
-  @Mock private PublicationPreparer publicationPreparer;
-  @InjectMocks private CdcScraper cdcScraper;
+
+  @Mock
+  private CdcDispatcher cdcDispatcher;
+  @Mock
+  private ConfigBuilder configBuilder;
+  @Mock
+  private PublicationPreparer publicationPreparer;
+  @InjectMocks
+  private CdcScraper cdcScraper;
 
   @Before
   public void setup() {
@@ -68,9 +73,9 @@ public class CdcScraperTest {
     given(configBuilder.debeziumConfigBuilder())
         .willReturn(
             new ConfigBuilder(
-                    "jdbc:postgresql://localhost:5432/open_lmis?stringtype=unspecified",
-                    "username",
-                    "password")
+                "jdbc:postgresql://localhost:5432/open_lmis?stringtype=unspecified",
+                "username",
+                "password")
                 .debeziumConfigBuilder());
     List<String> criticalConfigKeys = Arrays.asList("name", "plugin.name", "connector.class", "snapshot.mode");
     // when
@@ -78,10 +83,10 @@ public class CdcScraperTest {
         .filter(it -> criticalConfigKeys.contains(it.getKey())).collect(
             Collectors.toMap(Entry::getKey, Entry::getValue));
     // then
-    assertThat(configSnap).containsEntry("name", "local-scraper");
-    assertThat(configSnap).containsEntry("plugin.name", "pgoutput");
-    assertThat(configSnap).containsEntry("connector.class", "io.debezium.connector.postgresql.PostgresConnector");
-    assertThat(configSnap).containsEntry("snapshot.mode", "never");
+    assertThat(configSnap).containsEntry("name", "local-scraper")
+        .containsEntry("plugin.name", "pgoutput")
+        .containsEntry("connector.class", "io.debezium.connector.postgresql.PostgresConnector")
+        .containsEntry("snapshot.mode", "never");
   }
 
   @Test
