@@ -432,10 +432,10 @@ public class FcProductService implements ProcessDataService {
     if (CollectionUtils.isEmpty(productPrices)) {
       return null;
     }
-    ProductPriceDto productPriceDto = productPrices.stream()
-        .max(Comparator.comparing(ProductPriceDto::getPriceDate))
-        .get();
-    return Money.of(CurrencyUnit.USD, productPriceDto.getProductPrice(), RoundingMode.HALF_UP);
+    Optional<ProductPriceDto> productPriceDto = productPrices.stream()
+        .max(Comparator.comparing(ProductPriceDto::getPriceDate));
+    return productPriceDto.map(priceDto -> Money.of(CurrencyUnit.USD, priceDto.getProductPrice(), RoundingMode.HALF_UP))
+        .orElse(null);
   }
 
   private boolean isDifferentProductStatus(OrderableDto existed, ProductInfoDto current) {
