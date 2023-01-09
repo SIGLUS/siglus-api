@@ -45,6 +45,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.money.CurrencyUnit;
 import org.joda.money.Money;
@@ -85,7 +86,6 @@ import org.siglus.siglusapi.util.FcUtil;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
 
 @Service
 @Slf4j
@@ -407,7 +407,7 @@ public class FcProductService implements ProcessDataService {
   }
 
   private String getOriginProductCategory(OrderableDto existed) {
-    if (existed.getPrograms() != null && !CollectionUtils.isEmpty(existed.getPrograms())) {
+    if (existed.getPrograms() != null && CollectionUtils.isNotEmpty(existed.getPrograms())) {
       ProgramOrderableDto existedProgramOrderableDto = (ProgramOrderableDto) existed.getPrograms().toArray()[0];
       return existedProgramOrderableDto.getOrderableCategoryDisplayName();
     }

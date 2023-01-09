@@ -17,9 +17,11 @@ package org.siglus.siglusapi.web.response;
 
 import java.util.Map;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.openlmis.requisition.dto.RequisitionPeriodDto;
 
 @Data
+@EqualsAndHashCode(callSuper = true)
 public class RequisitionPeriodExtensionResponse extends RequisitionPeriodDto {
 
   private transient Map<String, Object> requisitionExtraData;
