@@ -29,6 +29,7 @@ import static org.siglus.siglusapi.i18n.MessageKeys.SHIPMENT_ORDER_STATUS_INVALI
 
 import com.google.common.collect.Lists;
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -68,6 +69,7 @@ import org.openlmis.fulfillment.web.util.OrderDto;
 import org.openlmis.fulfillment.web.util.OrderLineItemDto;
 import org.openlmis.fulfillment.web.util.OrderObjectReferenceDto;
 import org.openlmis.fulfillment.web.util.VersionObjectReferenceDto;
+import org.openlmis.requisition.service.RequisitionService;
 import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
 import org.openlmis.stockmanagement.repository.StockCardLineItemRepository;
@@ -156,6 +158,9 @@ public class SiglusShipmentServiceTest {
 
   @Mock
   private ProcessingPeriodExtensionRepository processingPeriodExtensionRepository;
+
+  @Mock
+  private RequisitionService requisitionService;
 
   private final UUID orderId = UUID.randomUUID();
 
@@ -508,6 +513,9 @@ public class SiglusShipmentServiceTest {
     ShipmentExtensionRequest shipmentExtensionRequest = createShipmentExtensionRequest();
     when(processingPeriodExtensionRepository.findByProcessingPeriodId(processingPeriodId))
         .thenReturn(processingPeriodExtension);
+    YearMonth yearMonth = YearMonth.of(LocalDate.now().getYear(), LocalDate.now().getMonth().plus(1));
+    when(requisitionService.calculateFulfillOrderYearMonth(processingPeriodExtension))
+            .thenReturn(Arrays.asList(yearMonth));
 
     //when
     siglusShipmentService.checkFulfillOrderExpired(shipmentExtensionRequest);
