@@ -23,6 +23,8 @@ import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_REQUISITION_EXPIRED;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_REQUISITION_NOT_FOUND;
 
 import java.time.LocalDate;
+import java.time.YearMonth;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import junit.framework.TestCase;
@@ -39,6 +41,7 @@ import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.dto.ProcessingPeriodDto;
 import org.openlmis.requisition.dto.ReleasableRequisitionBatchDto;
 import org.openlmis.requisition.dto.ReleasableRequisitionDto;
+import org.openlmis.requisition.service.RequisitionService;
 import org.openlmis.requisition.web.BatchRequisitionController;
 import org.siglus.common.domain.ProcessingPeriodExtension;
 import org.siglus.common.repository.ProcessingPeriodExtensionRepository;
@@ -70,6 +73,9 @@ public class BatchReleaseRequisitionServiceTest extends TestCase {
 
   @Mock
   private SiglusOrderService siglusOrderService;
+
+  @Mock
+  private RequisitionService requisitionService;
 
   private final UUID requisitionId1 = UUID.randomUUID();
   private final UUID requisitionId2 = UUID.randomUUID();
@@ -159,6 +165,10 @@ public class BatchReleaseRequisitionServiceTest extends TestCase {
     //given
     ProcessingPeriodExtension processingPeriodExtension = new ProcessingPeriodExtension();
     processingPeriodExtension.setSubmitEndDate(LocalDate.now());
+
+    YearMonth yearMonth = YearMonth.of(LocalDate.now().getYear(), LocalDate.now().getMonth());
+    when(requisitionService.calculateFulfillOrderYearMonth(processingPeriodExtension))
+            .thenReturn(Arrays.asList(yearMonth));
 
     when(siglusOrderService.calculateFulfillOrderMonth(processingPeriodExtension))
         .thenReturn(Lists.asList(LocalDate.now().getMonth()));

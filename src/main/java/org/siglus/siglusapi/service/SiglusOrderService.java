@@ -39,6 +39,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.Month;
+import java.time.YearMonth;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -54,6 +55,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
@@ -358,25 +360,40 @@ public class SiglusOrderService {
     if (processingPeriodExtension == null) {
       throw new NotFoundException(ERROR_PERIOD_NOT_FOUND);
     }
-    processExpiredFulfillOrders(programIdToMap, processingPeriodExtension);
+    processExpiredFulfillOrders(programIdToMap);
     return fulfillOrderDtos;
   }
 
-  private void processExpiredFulfillOrders(Map<UUID, List<FulfillOrderDto>> programIdToMap,
-      ProcessingPeriodExtension processingPeriodExtension) {
+  private void processExpiredFulfillOrders(Map<UUID, List<FulfillOrderDto>> programIdToMap) {
     programIdToMap.keySet().forEach(key -> {
       List<FulfillOrderDto> fulfillOrderDtos = programIdToMap.get(key);
       FulfillOrderDto latestFulfillOrderDto = fulfillOrderDtos.get(0);
       UUID supplyingFacilityId = latestFulfillOrderDto.getBasicOrder().getSupplyingFacility().getId();
       UUID programId = latestFulfillOrderDto.getBasicOrder().getProgram().getId();
-      List<Month> calculatedFulfillOrderMonth = calculateFulfillOrderMonth(processingPeriodExtension);
+
       List<Order> orders = siglusOrdersRepository
           .findBySupplyingFacilityIdAndProgramIdAndStatusIn(supplyingFacilityId, programId, Lists
               .newArrayList(OrderStatus.SHIPPED, OrderStatus.FULFILLING, OrderStatus.PARTIALLY_FULFILLED,
                   OrderStatus.RECEIVED));
+
+      Set<UUID> periodIds = fulfillOrderDtos.stream()
+              .map(orderDto -> orderDto.getBasicOrder().getProcessingPeriod().getId())
+              .collect(toSet());
+      Map<UUID, ProcessingPeriodExtension> processingPeriodIdToExtension = processingPeriodExtensionRepository
+              .findByProcessingPeriodIdIn(periodIds).stream()
+              .collect(Collectors.toMap(ProcessingPeriodExtension::getProcessingPeriodId, Function.identity()));
+
       List<FulfillOrderDto> filteredFulfillOrderDtos = fulfillOrderDtos.stream()
-          .filter(fulfillOrderDto -> calculatedFulfillOrderMonth
-              .contains(fulfillOrderDto.getBasicOrder().getProcessingPeriod().getEndDate().getMonth()))
+          .filter(fulfillOrderDto -> {
+            ProcessingPeriodDto period = fulfillOrderDto.getBasicOrder().getProcessingPeriod();
+            UUID processingPeriodId = period.getId();
+            ProcessingPeriodExtension processingPeriodExtension = processingPeriodIdToExtension.get(processingPeriodId);
+
+            List<YearMonth> calculatedFulfillOrderMonth = requisitionService
+                    .calculateFulfillOrderYearMonth(processingPeriodExtension);
+            YearMonth orderYearMonth = YearMonth.of(period.getEndDate().getYear(), period.getEndDate().getMonth());
+            return calculatedFulfillOrderMonth.contains(orderYearMonth);
+          })
           .collect(toList());
 
       if (orders.isEmpty()) {

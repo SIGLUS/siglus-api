@@ -38,6 +38,7 @@ import com.google.common.collect.Sets;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -231,7 +232,8 @@ public class SiglusOrderServiceTest {
   private final LocalDate now = LocalDate.now();
   private final String orderCode = "ORDER-CODE";
   private final UUID periodId1 = UUID.randomUUID();
-  private final LocalDate processPeriodEndDate = LocalDate.of(2022, LocalDate.now().getMonthValue(), 25);
+  private final LocalDate processPeriodEndDate = LocalDate.of(
+          LocalDate.now().getYear(), LocalDate.now().getMonthValue(), 25);
 
   private final List<UUID> periodIds = Lists.newArrayList(
       UUID.randomUUID(),
@@ -522,10 +524,17 @@ public class SiglusOrderServiceTest {
     basicOrderDto.setSupplyingFacility(facilityDto);
 
     ProcessingPeriodExtension processingPeriodExtension = new ProcessingPeriodExtension();
+    processingPeriodExtension.setProcessingPeriodId(periodId1);
     processingPeriodExtension.setSubmitStartDate(LocalDate.now());
     processingPeriodExtension.setSubmitEndDate(LocalDate.now());
 
+    YearMonth yearMonth = YearMonth.of(LocalDate.now().getYear(), LocalDate.now().getMonth());
+
+    when(requisitionService.calculateFulfillOrderYearMonth(processingPeriodExtension))
+            .thenReturn(Arrays.asList(yearMonth));
     when(processingPeriodExtensionRepository.findByProcessingPeriodId(periodId1)).thenReturn(processingPeriodExtension);
+    when(processingPeriodExtensionRepository.findByProcessingPeriodIdIn(Sets.newHashSet(periodId1)))
+            .thenReturn(Arrays.asList(processingPeriodExtension));
     when(orderService.searchOrdersForFulfillPage(any(), any())).thenReturn(page);
     List<BasicOrderDto> returnList = Collections.singletonList(basicOrderDto);
     when(basicOrderDtoBuilder.build(list)).thenReturn(returnList);
