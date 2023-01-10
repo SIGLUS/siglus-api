@@ -69,7 +69,7 @@ public class SiglusSimulateUserAuthHelperTest {
     simulateUserAuth.simulateNewUserThenRollbackAuth(userId, notification2,
         notification -> notification.setType(NotificationType.TODO));
     // then
-    Assert.assertEquals(notification2.getType(), NotificationType.TODO);
+    Assert.assertEquals(NotificationType.TODO, notification2.getType());
     Assert.assertEquals(SecurityContextHolder.getContext().getAuthentication(), authentication);
   }
 }

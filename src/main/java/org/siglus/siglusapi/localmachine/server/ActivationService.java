@@ -26,6 +26,7 @@ import java.util.Base64.Decoder;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.BooleanUtils;
 import org.openlmis.referencedata.domain.Facility;
 import org.openlmis.referencedata.repository.FacilityRepository;
 import org.siglus.siglusapi.dto.Message;
@@ -70,7 +71,7 @@ public class ActivationService {
                 localActivationRequest.getActivationCode())
             .orElseThrow(
                 () -> new BusinessDataException(new Message(ERROR_INVALID_ACTIVATION_CODE)));
-    if (activationCode.isUsed()) {
+    if (BooleanUtils.isTrue(activationCode.isUsed())) {
       throw new BusinessDataException(new Message(ERROR_ACTIVATION_CODE_USED_ALREADY));
     }
     activationCode.isUsed(Boolean.TRUE);

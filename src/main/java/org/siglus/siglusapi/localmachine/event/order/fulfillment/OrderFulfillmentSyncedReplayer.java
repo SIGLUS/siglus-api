@@ -392,7 +392,7 @@ public class OrderFulfillmentSyncedReplayer {
   private void nullIds(ShipmentDto shipmentDto) {
     shipmentDto.setId(null);
     if (shipmentDto.lineItems() != null) {
-      shipmentDto.lineItems().forEach((l) -> l.setId(null));
+      shipmentDto.lineItems().forEach(l -> l.setId(null));
     }
   }
 
@@ -503,11 +503,6 @@ public class OrderFulfillmentSyncedReplayer {
     lineItemExtensionRepository.save(extensions);
   }
 
-  private String replaceLast(String text, String regex, String replacement) {
-    return text.replaceFirst("(?s)(.*)" + regex, "$1" + replacement);
-  }
-
-
   private void updateExistOrderForSubOrder(UUID orderId,
       UUID externalId, String orderCode, OrderStatus orderStatus) {
     Order originOrder = siglusOrdersRepository.findOne(orderId);
@@ -532,34 +527,9 @@ public class OrderFulfillmentSyncedReplayer {
     for (OrderLineItemDto dto : orderLineItems) {
       if (!skippedOrderLineItemIds.contains(dto.getId())
           && dto.getOrderedQuantity() != null && dto.getOrderedQuantity() > 0) {
-        calculateSubOrderPartialFulfilledValue(groupShipment, subOrderLineItems, dto);
+        siglusShipmentService.calculateSubOrderPartialFulfilledValue(groupShipment, subOrderLineItems, dto);
       }
     }
     return subOrderLineItems;
-  }
-
-  private void calculateSubOrderPartialFulfilledValue(Map<UUID, List<ShipmentLineItem.Importer>> groupShipment,
-      List<OrderLineItemDto> subOrderLineItems, OrderLineItemDto dto) {
-    dto.setId(null);
-    if (groupShipment.containsKey(dto.getOrderable().getId())) {
-      Long shippedValue = getShippedValue(groupShipment, dto.getOrderable().getId());
-      if (dto.getPartialFulfilledQuantity() + shippedValue < dto.getOrderedQuantity()) {
-        Long partialFulfilledQuantity = dto.getPartialFulfilledQuantity() + shippedValue;
-        dto.setPartialFulfilledQuantity(partialFulfilledQuantity);
-        subOrderLineItems.add(dto);
-      }
-    } else {
-      subOrderLineItems.add(dto);
-    }
-  }
-
-  private Long getShippedValue(Map<UUID, List<ShipmentLineItem.Importer>> groupShipment,
-      UUID orderableId) {
-    List<ShipmentLineItem.Importer> shipments = groupShipment.get(orderableId);
-    Long shipmentValue = 0L;
-    for (ShipmentLineItem.Importer shipment : shipments) {
-      shipmentValue += shipment.getQuantityShipped();
-    }
-    return shipmentValue;
   }
 }

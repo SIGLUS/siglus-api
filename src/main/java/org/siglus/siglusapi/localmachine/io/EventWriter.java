@@ -27,7 +27,7 @@ public class EventWriter implements AutoCloseable {
 
   private final EntryWriter entryWriter;
   private final ExternalEventDtoMapper mapper;
-  private final ObjectMapper objectMapper = LOCALMACHINE_EVENT_OBJECT_MAPPER;
+  private static final ObjectMapper objectMapper = LOCALMACHINE_EVENT_OBJECT_MAPPER;
 
   public EventWriter(EntryWriter entryWriter, ExternalEventDtoMapper mapper) {
     this.entryWriter = entryWriter;

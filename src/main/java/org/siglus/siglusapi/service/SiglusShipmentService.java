@@ -25,7 +25,7 @@ import static org.siglus.siglusapi.util.LocationUtil.getIfNonNull;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
-import java.time.Month;
+import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -43,6 +43,7 @@ import org.openlmis.fulfillment.domain.ProofOfDelivery;
 import org.openlmis.fulfillment.domain.ShipmentLineItem;
 import org.openlmis.fulfillment.domain.ShipmentLineItem.Importer;
 import org.openlmis.fulfillment.repository.OrderRepository;
+import org.openlmis.fulfillment.service.referencedata.ProcessingPeriodDto;
 import org.openlmis.fulfillment.web.OrderController;
 import org.openlmis.fulfillment.web.shipment.LocationDto;
 import org.openlmis.fulfillment.web.shipment.ShipmentController;
@@ -51,6 +52,7 @@ import org.openlmis.fulfillment.web.shipment.ShipmentLineItemDto;
 import org.openlmis.fulfillment.web.util.OrderDto;
 import org.openlmis.fulfillment.web.util.OrderLineItemDto;
 import org.openlmis.fulfillment.web.util.OrderObjectReferenceDto;
+import org.openlmis.requisition.service.RequisitionService;
 import org.siglus.common.domain.ProcessingPeriodExtension;
 import org.siglus.common.repository.ProcessingPeriodExtensionRepository;
 import org.siglus.siglusapi.constant.FieldConstants;
@@ -94,6 +96,8 @@ public class SiglusShipmentService {
 
   private final ProcessingPeriodExtensionRepository processingPeriodExtensionRepository;
 
+  private final RequisitionService requisitionService;
+
   @Transactional
   public ShipmentDto createOrderAndShipment(boolean isSubOrder, ShipmentExtensionRequest shipmentExtensionRequest) {
     ShipmentDto shipmentDto = createOrderAndConfirmShipment(isSubOrder,
@@ -103,17 +107,17 @@ public class SiglusShipmentService {
   }
 
   public void checkFulfillOrderExpired(ShipmentExtensionRequest shipmentExtensionRequest) {
-    Month currentOrderFulfillMonth = shipmentExtensionRequest.getShipment().getOrder().getProcessingPeriod()
-        .getEndDate().getMonth();
-    UUID processingPeriodId = shipmentExtensionRequest.getShipment().getOrder().getProcessingPeriod().getId();
+    ProcessingPeriodDto period = shipmentExtensionRequest.getShipment().getOrder().getProcessingPeriod();
+    YearMonth orderYearMonth = YearMonth.of(period.getEndDate().getYear(), period.getEndDate().getMonth());
+    UUID processingPeriodId = period.getId();
     ProcessingPeriodExtension processingPeriodExtension = processingPeriodExtensionRepository
         .findByProcessingPeriodId(processingPeriodId);
     if (processingPeriodExtension == null) {
       throw new NotFoundException(ERROR_PERIOD_NOT_FOUND);
     }
-    List<Month> calculatedFulfillOrderMonth = siglusOrderService
-        .calculateFulfillOrderMonth(processingPeriodExtension);
-    if (!calculatedFulfillOrderMonth.contains(currentOrderFulfillMonth)) {
+    List<YearMonth> calculatedFulfillOrderMonth = requisitionService
+        .calculateFulfillOrderYearMonth(processingPeriodExtension);
+    if (!calculatedFulfillOrderMonth.contains(orderYearMonth)) {
       throw new BusinessDataException(new Message(ERROR_ORDER_EXPIRED));
     }
   }
@@ -248,7 +252,7 @@ public class SiglusShipmentService {
     return subOrderLineItems;
   }
 
-  private void calculateSubOrderPartialFulfilledValue(Map<UUID, List<Importer>> groupShipment,
+  public void calculateSubOrderPartialFulfilledValue(Map<UUID, List<Importer>> groupShipment,
       List<OrderLineItemDto> subOrderLineItems, OrderLineItemDto dto) {
     dto.setId(null);
     if (groupShipment.containsKey(dto.getOrderable().getId())) {

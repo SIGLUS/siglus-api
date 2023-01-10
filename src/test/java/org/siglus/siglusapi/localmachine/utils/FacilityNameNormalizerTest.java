@@ -30,12 +30,12 @@ public class FacilityNameNormalizerTest {
 
   @Test
   public void shouldReturnOriginNameWhenNormalizeGivenEmptyName() {
-    assertThat(FacilityNameNormalizer.normalize("")).isEqualTo("");
+    assertThat(FacilityNameNormalizer.normalize("")).isEmpty();
   }
 
   @Test
   public void shouldReturnOriginNameWhenNormalizeGivenNullName() {
-    assertThat(FacilityNameNormalizer.normalize(null)).isEqualTo(null);
+    assertThat(FacilityNameNormalizer.normalize(null)).isNull();
   }
 
   @Test

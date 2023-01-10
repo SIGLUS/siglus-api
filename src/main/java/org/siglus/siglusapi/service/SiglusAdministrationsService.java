@@ -283,38 +283,14 @@ public class SiglusAdministrationsService {
       return;
     }
     List<StockCard> stockCardList = stockCardRepository.findByFacilityIdIn(facilityId);
-    List<StockCard> stockCardsWithEmptyLotId = stockCardList.stream().filter(stockCard -> null == stockCard.getLotId())
-        .collect(Collectors.toList());
-    List<UUID> orderableIdsWithEmptyLotId = stockCardsWithEmptyLotId.stream().map(StockCard::getOrderableId)
-        .collect(Collectors.toList());
-    List<Orderable> orderables = Lists.newArrayList();
-    if (CollectionUtils.isNotEmpty(orderableIdsWithEmptyLotId)) {
-      orderables = orderableRepository.findLatestByIds(orderableIdsWithEmptyLotId);
-    }
-    List<UUID> orderableIdsNoKit = orderables.stream()
-        .filter(orderable -> !KitConstants.isKit(orderable.getProductCode().toString()))
-        .map(Orderable::getId).collect(Collectors.toList());
-    List<StockCard> stockCards = stockCardsWithEmptyLotId.stream()
-        .filter(stockCard -> orderableIdsNoKit.contains(stockCard.getOrderableId())).collect(Collectors.toList());
-    List<UUID> stockCardIds = stockCards.stream().map(StockCard::getId).collect(Collectors.toList());
-    log.info("delete on stockCardLineItem when upgrade to web, stockCardId: {}", stockCardIds);
-    stockCardLineItemRepository.deleteByStockCardIdIn(stockCardIds);
-    log.info("delete on calculatedStockOnHand when upgrade to web, facilityId: {}", facilityId);
-    Set<UUID> orderableIds = stockCards.stream().map(StockCard::getOrderableId).collect(Collectors.toSet());
-    if (CollectionUtils.isNotEmpty(orderableIds)) {
-      calculatedStockOnHandRepository.deleteByFacilityIdAndOrderableIds(facilityId, orderableIds);
-    }
-    log.info("delete on stockCardExtension when upgrade to web, stockCardId: {}", stockCardIds);
-    stockCardExtensionRepository.deleteByStockCardIdIn(stockCardIds);
-    log.info("delete on stockCard when upgrade to web, stockCardId: {}", stockCardIds);
-    stockCardRepository.deleteByIdIn(stockCardIds);
+    clearData(facilityId, stockCardList);
   }
 
   private boolean isActiveLocalMachine(FacilityExtension facilityExtension) {
     if (Objects.isNull(facilityExtension)) {
       return Boolean.FALSE;
     }
-    if (facilityExtension.getIsLocalMachine()) {
+    if (BooleanUtils.isTrue(facilityExtension.getIsLocalMachine())) {
       AgentInfo agentInfo = agentInfoRepository.findFirstByFacilityId(facilityExtension.getFacilityId());
       return Objects.nonNull(agentInfo);
     }
@@ -405,11 +381,11 @@ public class SiglusAdministrationsService {
       facilityDeviceDto.setVersion(appInfo.getVersionCode());
     }
     if (facilityExtension != null) {
-      if (facilityExtension.getIsAndroid()) {
+      if (BooleanUtils.isTrue(facilityExtension.getIsAndroid())) {
         facilityDeviceDto.setDeviceType(FacilityDeviceTypeEnum.ANDROID);
         return facilityDeviceDto;
       }
-      if (facilityExtension.getIsLocalMachine()) {
+      if (BooleanUtils.isTrue(facilityExtension.getIsLocalMachine())) {
         facilityDeviceDto.setDeviceType(FacilityDeviceTypeEnum.LOCAL_MACHINE);
         return facilityDeviceDto;
       }
@@ -448,33 +424,37 @@ public class SiglusAdministrationsService {
     facilityExtensionRepository.save(facilityExtension);
     List<StockCard> stockCardList = stockCardRepository.findByFacilityIdIn(facilityId);
     if (facilityDevice.getDeviceType() == FacilityDeviceTypeEnum.ANDROID && CollectionUtils.isNotEmpty(stockCardList)) {
-      List<StockCard> stockCardsWithEmptyLotId = stockCardList.stream()
-          .filter(stockCard -> null == stockCard.getLotId())
-          .collect(Collectors.toList());
-      List<UUID> orderableIdsWithEmptyLotId = stockCardsWithEmptyLotId.stream().map(StockCard::getOrderableId)
-          .collect(Collectors.toList());
-      List<Orderable> orderables = Lists.newArrayList();
-      if (CollectionUtils.isNotEmpty(orderableIdsWithEmptyLotId)) {
-        orderables = orderableRepository.findLatestByIds(orderableIdsWithEmptyLotId);
-      }
-      List<UUID> orderableIdsNoKit = orderables.stream()
-          .filter(orderable -> !KitConstants.isKit(orderable.getProductCode().toString()))
-          .map(Orderable::getId).collect(Collectors.toList());
-      List<StockCard> stockCards = stockCardsWithEmptyLotId.stream()
-          .filter(stockCard -> orderableIdsNoKit.contains(stockCard.getOrderableId())).collect(Collectors.toList());
-      List<UUID> stockCardIds = stockCards.stream().map(StockCard::getId).collect(Collectors.toList());
-      log.info("delete on stockCardLineItem when upgrade to web, stockCardId: {}", stockCardIds);
-      stockCardLineItemRepository.deleteByStockCardIdIn(stockCardIds);
-      log.info("delete on calculatedStockOnHand when upgrade to web, facilityId: {}", facilityId);
-      Set<UUID> orderableIds = stockCards.stream().map(StockCard::getOrderableId).collect(Collectors.toSet());
-      if (CollectionUtils.isNotEmpty(orderableIds)) {
-        calculatedStockOnHandRepository.deleteByFacilityIdAndOrderableIds(facilityId, orderableIds);
-      }
-      log.info("delete on stockCardExtension when upgrade to web, stockCardId: {}", stockCardIds);
-      stockCardExtensionRepository.deleteByStockCardIdIn(stockCardIds);
-      log.info("delete on stockCard when upgrade to web, stockCardId: {}", stockCardIds);
-      stockCardRepository.deleteByIdIn(stockCardIds);
+      clearData(facilityId, stockCardList);
     }
+  }
+
+  private void clearData(UUID facilityId, List<StockCard> stockCardList) {
+    List<StockCard> stockCardsWithEmptyLotId = stockCardList.stream()
+        .filter(stockCard -> null == stockCard.getLotId())
+        .collect(Collectors.toList());
+    List<UUID> orderableIdsWithEmptyLotId = stockCardsWithEmptyLotId.stream().map(StockCard::getOrderableId)
+        .collect(Collectors.toList());
+    List<Orderable> orderables = Lists.newArrayList();
+    if (CollectionUtils.isNotEmpty(orderableIdsWithEmptyLotId)) {
+      orderables = orderableRepository.findLatestByIds(orderableIdsWithEmptyLotId);
+    }
+    List<UUID> orderableIdsNoKit = orderables.stream()
+        .filter(orderable -> !KitConstants.isKit(orderable.getProductCode().toString()))
+        .map(Orderable::getId).collect(Collectors.toList());
+    List<StockCard> stockCards = stockCardsWithEmptyLotId.stream()
+        .filter(stockCard -> orderableIdsNoKit.contains(stockCard.getOrderableId())).collect(Collectors.toList());
+    List<UUID> stockCardIds = stockCards.stream().map(StockCard::getId).collect(Collectors.toList());
+    log.info("delete on stockCardLineItem when upgrade to web, stockCardId: {}", stockCardIds);
+    stockCardLineItemRepository.deleteByStockCardIdIn(stockCardIds);
+    log.info("delete on calculatedStockOnHand when upgrade to web, facilityId: {}", facilityId);
+    Set<UUID> orderableIds = stockCards.stream().map(StockCard::getOrderableId).collect(Collectors.toSet());
+    if (CollectionUtils.isNotEmpty(orderableIds)) {
+      calculatedStockOnHandRepository.deleteByFacilityIdAndOrderableIds(facilityId, orderableIds);
+    }
+    log.info("delete on stockCardExtension when upgrade to web, stockCardId: {}", stockCardIds);
+    stockCardExtensionRepository.deleteByStockCardIdIn(stockCardIds);
+    log.info("delete on stockCard when upgrade to web, stockCardId: {}", stockCardIds);
+    stockCardRepository.deleteByIdIn(stockCardIds);
   }
 
   @Transactional
@@ -615,10 +595,10 @@ public class SiglusAdministrationsService {
     if (Objects.isNull(facilityExtension)) {
       return FacilityDeviceTypeEnum.WEB;
     }
-    if (facilityExtension.getIsLocalMachine()) {
+    if (BooleanUtils.isTrue(facilityExtension.getIsLocalMachine())) {
       return FacilityDeviceTypeEnum.LOCAL_MACHINE;
     }
-    if (facilityExtension.getIsAndroid()) {
+    if (BooleanUtils.isTrue(facilityExtension.getIsAndroid())) {
       return FacilityDeviceTypeEnum.ANDROID;
     }
     return FacilityDeviceTypeEnum.WEB;

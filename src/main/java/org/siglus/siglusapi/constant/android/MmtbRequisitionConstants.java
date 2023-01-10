@@ -17,101 +17,112 @@ package org.siglus.siglusapi.constant.android;
 
 import java.util.Set;
 import javax.persistence.EntityNotFoundException;
-import lombok.NoArgsConstructor;
 import org.javers.common.collections.Sets;
 import org.springframework.data.util.Pair;
 
-@NoArgsConstructor
 @SuppressWarnings("PMD.AvoidDuplicateLiterals")
 public class MmtbRequisitionConstants {
 
-  @NoArgsConstructor
+  private MmtbRequisitionConstants() {
+  }
+
   public static class MmtbPatientSection {
+
+    private MmtbPatientSection() {
+    }
+
+    private static final String NEW_COLUMN_0 = "newColumn0";
+    private static final String NEW_COLUMN_1 = "newColumn1";
+    private static final String NEW_COLUMN_2 = "newColumn2";
+    private static final String NEW_COLUMN_3 = "newColumn3";
+    private static final String NEW_COLUMN_4 = "newColumn4";
+    private static final String NEW_COLUMN_6 = "newColumn6";
+    private static final String TOTAL = "total";
 
     // table 1: Fases de Tratamento (Adulto)
     private static final Pair<String, String> PAIR_TABLE_1 = Pair.of("table_treatment_adult_key", "newSection3");
     private static final Pair<String, String> PAIR_TABLE_1_COLUMN_1 = Pair.of(
         "table_treatment_adult_key_sensitive_intensive", "new");
     private static final Pair<String, String> PAIR_TABLE_1_COLUMN_2 = Pair.of(
-        "table_treatment_adult_key_sensitive_maintenance", "newColumn6");
+        "table_treatment_adult_key_sensitive_maintenance", NEW_COLUMN_6);
     private static final Pair<String, String> PAIR_TABLE_1_COLUMN_3 = Pair.of(
-        "table_treatment_adult_key_mr_induction", "newColumn0");
+        "table_treatment_adult_key_mr_induction", NEW_COLUMN_0);
     private static final Pair<String, String> PAIR_TABLE_1_COLUMN_4 = Pair.of(
-        "table_treatment_adult_key_mr_intensive", "newColumn1");
+        "table_treatment_adult_key_mr_intensive", NEW_COLUMN_1);
     private static final Pair<String, String> PAIR_TABLE_1_COLUMN_5 = Pair.of(
-        "table_treatment_adult_key_mr_maintenance", "newColumn2");
+        "table_treatment_adult_key_mr_maintenance", NEW_COLUMN_2);
     private static final Pair<String, String> PAIR_TABLE_1_COLUMN_6 = Pair.of(
-        "table_treatment_adult_key_xr_induction", "newColumn3");
+        "table_treatment_adult_key_xr_induction", NEW_COLUMN_3);
     private static final Pair<String, String> PAIR_TABLE_1_COLUMN_7 = Pair.of(
-        "table_treatment_adult_key_xr_maintenance", "newColumn4");
+        "table_treatment_adult_key_xr_maintenance", NEW_COLUMN_4);
     // table 2: Fases de Tratamento (Pediatrico)
     private static final Pair<String, String> PAIR_TABLE_2 = Pair.of("table_treatment_pediatric_key", "newSection4");
     private static final Pair<String, String> PAIR_TABLE_2_COLUMN_1 = Pair.of(
         "table_treatment_pediatric_key_sensitive_intensive", "new");
     private static final Pair<String, String> PAIR_TABLE_2_COLUMN_2 = Pair.of(
-        "table_treatment_pediatric_key_sensitive_maintenance", "newColumn6");
+        "table_treatment_pediatric_key_sensitive_maintenance", NEW_COLUMN_6);
     private static final Pair<String, String> PAIR_TABLE_2_COLUMN_3 = Pair.of(
-        "table_treatment_pediatric_key_mr_induction", "newColumn0");
+        "table_treatment_pediatric_key_mr_induction", NEW_COLUMN_0);
     private static final Pair<String, String> PAIR_TABLE_2_COLUMN_4 = Pair.of(
-        "table_treatment_pediatric_key_mr_intensive", "newColumn1");
+        "table_treatment_pediatric_key_mr_intensive", NEW_COLUMN_1);
     private static final Pair<String, String> PAIR_TABLE_2_COLUMN_5 = Pair.of(
-        "table_treatment_pediatric_key_mr_maintenance", "newColumn2");
+        "table_treatment_pediatric_key_mr_maintenance", NEW_COLUMN_2);
     private static final Pair<String, String> PAIR_TABLE_2_COLUMN_6 = Pair.of(
-        "table_treatment_pediatric_key_xr_maintenance", "newColumn3");
+        "table_treatment_pediatric_key_xr_maintenance", NEW_COLUMN_3);
     private static final Pair<String, String> PAIR_TABLE_2_COLUMN_7 = Pair.of(
-        "table_treatment_pediatric_key_xr_intensive", "newColumn4");
+        "table_treatment_pediatric_key_xr_intensive", NEW_COLUMN_4);
     // table 3: PUs e Farmácia Ambulatório
     private static final Pair<String, String> PAIR_TABLE_3 = Pair.of("table_pharmacy_product_key", "newSection2");
     private static final Pair<String, String> PAIR_TABLE_3_COLUMN_1 = Pair.of(
         "table_pharmacy_product_key_isoniazida_100_mg", "new");
     private static final Pair<String, String> PAIR_TABLE_3_COLUMN_2 = Pair.of(
-        "table_pharmacy_product_key_isoniazida_300_mg", "newColumn0");
+        "table_pharmacy_product_key_isoniazida_300_mg", NEW_COLUMN_0);
     private static final Pair<String, String> PAIR_TABLE_3_COLUMN_3 = Pair.of(
-        "table_pharmacy_product_key_levofloxacina_100_mg", "newColumn1");
+        "table_pharmacy_product_key_levofloxacina_100_mg", NEW_COLUMN_1);
     private static final Pair<String, String> PAIR_TABLE_3_COLUMN_4 = Pair.of(
-        "table_pharmacy_product_key_levofloxacina_250_mg", "newColumn2");
+        "table_pharmacy_product_key_levofloxacina_250_mg", NEW_COLUMN_2);
     private static final Pair<String, String> PAIR_TABLE_3_COLUMN_5 = Pair.of(
-        "table_pharmacy_product_key_rifapentina_300_mg_isoniazida_300_mg", "newColumn3");
+        "table_pharmacy_product_key_rifapentina_300_mg_isoniazida_300_mg", NEW_COLUMN_3);
     private static final Pair<String, String> PAIR_TABLE_3_COLUMN_6 = Pair.of(
-        "table_pharmacy_product_key_rifapentina_150_mg", "newColumn4");
+        "table_pharmacy_product_key_rifapentina_150_mg", NEW_COLUMN_4);
     private static final Pair<String, String> PAIR_TABLE_3_COLUMN_7 = Pair.of(
         "table_pharmacy_product_key_piridoxina_25_mg", "newColumn5");
     private static final Pair<String, String> PAIR_TABLE_3_COLUMN_8 = Pair.of(
-        "table_pharmacy_product_key_piridoxina_50_mg", "newColumn6");
+        "table_pharmacy_product_key_piridoxina_50_mg", NEW_COLUMN_6);
     // table 4: Pacientes Novos no Sector da TB
     private static final Pair<String, String> PAIR_TABLE_4 = Pair.of("table_new_patients_key", "patientType");
     private static final Pair<String, String> PAIR_TABLE_4_COLUMN_1 = Pair.of(
         "table_new_patients_key_new_adult_sensitive", "new");
     private static final Pair<String, String> PAIR_TABLE_4_COLUMN_2 = Pair.of(
-        "table_new_patients_key_new_adult_mr", "newColumn0");
+        "table_new_patients_key_new_adult_mr", NEW_COLUMN_0);
     private static final Pair<String, String> PAIR_TABLE_4_COLUMN_3 = Pair.of(
-        "table_new_patients_key_new_adult_xr", "newColumn1");
+        "table_new_patients_key_new_adult_xr", NEW_COLUMN_1);
     private static final Pair<String, String> PAIR_TABLE_4_COLUMN_4 = Pair.of(
-        "table_new_patients_key_new_child_sensitive", "newColumn2");
+        "table_new_patients_key_new_child_sensitive", NEW_COLUMN_2);
     private static final Pair<String, String> PAIR_TABLE_4_COLUMN_5 = Pair.of(
-        "table_new_patients_key_new_child_mr", "newColumn3");
+        "table_new_patients_key_new_child_mr", NEW_COLUMN_3);
     private static final Pair<String, String> PAIR_TABLE_4_COLUMN_6 = Pair.of(
-        "table_new_patients_key_new_child_xr", "newColumn4");
+        "table_new_patients_key_new_child_xr", NEW_COLUMN_4);
     private static final Pair<String, String> PAIR_TABLE_4_COLUMN_7 = Pair.of(
-        "table_new_patients_key_total", "total");
+        "table_new_patients_key_total", TOTAL);
     // table 5: Seguimento Profilaxias (Pus e Farmácia Pública)
     private static final Pair<String, String> PAIR_TABLE_5 = Pair.of("table_prophylaxis_key", "newSection0");
     private static final Pair<String, String> PAIR_TABLE_5_COLUMN_1 = Pair.of(
         "table_prophylaxis_key_initial", "new");
     private static final Pair<String, String> PAIR_TABLE_5_COLUMN_2 = Pair.of(
-        "table_prophylaxis_key_continuous_maintenance", "newColumn0");
+        "table_prophylaxis_key_continuous_maintenance", NEW_COLUMN_0);
     private static final Pair<String, String> PAIR_TABLE_5_COLUMN_3 = Pair.of(
-        "table_prophylaxis_key_final_last_dismissal", "newColumn1");
+        "table_prophylaxis_key_final_last_dismissal", NEW_COLUMN_1);
     private static final Pair<String, String> PAIR_TABLE_5_COLUMN_4 = Pair.of(
-        "table_prophylaxis_key_total", "total");
+        "table_prophylaxis_key_total", TOTAL);
     // table 6: Tipo de Dispensa dos Profilacticos
     private static final Pair<String, String> PAIR_TABLE_6 = Pair.of("table_prophylactics_key", "newSection1");
     private static final Pair<String, String> PAIR_TABLE_6_COLUMN_1 = Pair.of(
         "table_prophylactics_key_monthly", "new");
     private static final Pair<String, String> PAIR_TABLE_6_COLUMN_2 = Pair.of(
-        "table_prophylactics_key_trimenstral", "newColumn0");
+        "table_prophylactics_key_trimenstral", NEW_COLUMN_0);
     private static final Pair<String, String> PAIR_TABLE_6_COLUMN_3 = Pair.of(
-        "table_prophylactics_key_total", "total");
+        "table_prophylactics_key_total", TOTAL);
     private static final Set<Pair<String, String>> MMTB_PATIENT_TABLES = Sets.asSet(
         PAIR_TABLE_1, PAIR_TABLE_2, PAIR_TABLE_3, PAIR_TABLE_4, PAIR_TABLE_5, PAIR_TABLE_6
     );
@@ -189,17 +200,16 @@ public class MmtbRequisitionConstants {
     }
   }
 
-  @NoArgsConstructor
   public static class MmtbAgeGroupSection {
+    private MmtbAgeGroupSection() {
+    }
 
     // table 1: Faixas Etarias
-    private static final Pair<String, String> PAIR_TABLE_1 = Pair.of("table_age_group_header_key", "group");
     private static final Pair<String, String> PAIR_TABLE_1_COLUMN_1 = Pair.of(
         "table_age_group_header_key_treatment", "treatment");
     private static final Pair<String, String> PAIR_TABLE_1_COLUMN_2 = Pair.of(
         "table_age_group_header_key_prophylaxis", "prophylaxis");
     // table 2: Service
-    private static final Pair<String, String> PAIR_TABLE_2 = Pair.of("table_age_group_service_key", "service");
     private static final Pair<String, String> PAIR_TABLE_2_COLUMN_1 = Pair.of(
         "table_age_group_service_key_adult", "adultos");
     private static final Pair<String, String> PAIR_TABLE_2_COLUMN_2 = Pair.of(

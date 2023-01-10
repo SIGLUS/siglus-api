@@ -40,7 +40,7 @@ public class CustomCellWriteHandler implements CellWriteHandler {
   private int[][] colorArrays;
   private boolean paintForLegenda;
 
-  public static final Map<Integer, Short> colorMarkToColorMap = new HashMap<>();
+  protected static final Map<Integer, Short> colorMarkToColorMap = new HashMap<>();
 
   static {
     colorMarkToColorMap.put(RED_MARK, IndexedColors.CORAL.getIndex());

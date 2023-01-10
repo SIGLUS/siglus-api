@@ -33,6 +33,7 @@ import java.math.RoundingMode;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -44,6 +45,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.money.CurrencyUnit;
 import org.joda.money.Money;
@@ -84,7 +86,6 @@ import org.siglus.siglusapi.util.FcUtil;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
 
 @Service
 @Slf4j
@@ -406,7 +407,7 @@ public class FcProductService implements ProcessDataService {
   }
 
   private String getOriginProductCategory(OrderableDto existed) {
-    if (existed.getPrograms() != null && existed.getPrograms().size() > 0) {
+    if (existed.getPrograms() != null && CollectionUtils.isNotEmpty(existed.getPrograms())) {
       ProgramOrderableDto existedProgramOrderableDto = (ProgramOrderableDto) existed.getPrograms().toArray()[0];
       return existedProgramOrderableDto.getOrderableCategoryDisplayName();
     }
@@ -431,11 +432,10 @@ public class FcProductService implements ProcessDataService {
     if (CollectionUtils.isEmpty(productPrices)) {
       return null;
     }
-    ProductPriceDto productPriceDto = productPrices.stream()
-        .sorted((p1, p2) -> -p1.getPriceDate().compareTo(p2.getPriceDate()))
-        .findFirst()
+    Optional<ProductPriceDto> productPriceDto = productPrices.stream()
+        .max(Comparator.comparing(ProductPriceDto::getPriceDate));
+    return productPriceDto.map(priceDto -> Money.of(CurrencyUnit.USD, priceDto.getProductPrice(), RoundingMode.HALF_UP))
         .orElse(null);
-    return Money.of(CurrencyUnit.USD, productPriceDto.getProductPrice(), RoundingMode.HALF_UP);
   }
 
   private boolean isDifferentProductStatus(OrderableDto existed, ProductInfoDto current) {

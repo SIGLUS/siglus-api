@@ -68,7 +68,7 @@ public class EventResourcePackerTest {
     // when
     int remaining = packer.writeEventAndGetRemainingCapacity(rawEvents.get(0));
     // then
-    assertThat(remaining).isLessThan(0);
+    assertThat(remaining).isNegative();
   }
 
   @Test(expected = OutOfCapacityException.class)
@@ -79,6 +79,6 @@ public class EventResourcePackerTest {
     // when
     int remaining = packer.writeEventAndGetRemainingCapacity(rawEvents.get(1));
     // then
-    assertThat(remaining).isLessThan(0);
+    assertThat(remaining).isNegative();
   }
 }

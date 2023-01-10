@@ -205,7 +205,7 @@ public class SiglusLotServiceTest {
     // when
     List<LotDto> lotList = siglusLotService.getLotList(ids);
     // then
-    assertEquals(lotList.size(), 1);
+    assertEquals(1, lotList.size());
   }
 
   private OrderableDto createOrderable(UUID orderableId, UUID tradeItemId) {

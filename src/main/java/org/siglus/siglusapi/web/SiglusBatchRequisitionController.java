@@ -17,6 +17,7 @@ package org.siglus.siglusapi.web;
 
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang.BooleanUtils;
 import org.openlmis.requisition.dto.ReleasableRequisitionBatchDto;
 import org.openlmis.requisition.dto.RequisitionsProcessingStatusDto;
 import org.siglus.siglusapi.localmachine.event.requisition.web.release.RequisitionReleaseEmitter;
@@ -61,7 +62,7 @@ public class SiglusBatchRequisitionController {
         .getRequisitionsProcessingStatusDtoResponse(releaseDto);
     RequisitionsProcessingStatusDto body = responseEntity.getBody();
     body.getRequisitionDtos().forEach(notificationService::postConvertToOrder);
-    if (!releaseDto.getCreateOrder()) {
+    if (BooleanUtils.isFalse(releaseDto.getCreateOrder())) {
       UUID authorId = siglusAuthenticationHelper.getCurrentUser().getId();
       releaseDto.getRequisitionsToRelease().forEach(releasableRequisition ->
           requisitionReleaseEmitter.emit(releasableRequisition, authorId));
