@@ -18,7 +18,8 @@ package org.siglus.siglusapi.service;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_REQUISITION_EXPIRED;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_REQUISITION_NOT_FOUND;
 
-import java.time.Month;
+import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -30,6 +31,7 @@ import org.openlmis.requisition.dto.ProcessingPeriodDto;
 import org.openlmis.requisition.dto.ReleasableRequisitionBatchDto;
 import org.openlmis.requisition.dto.ReleasableRequisitionDto;
 import org.openlmis.requisition.dto.RequisitionsProcessingStatusDto;
+import org.openlmis.requisition.service.RequisitionService;
 import org.openlmis.requisition.web.BatchRequisitionController;
 import org.siglus.common.domain.ProcessingPeriodExtension;
 import org.siglus.common.repository.ProcessingPeriodExtensionRepository;
@@ -47,6 +49,7 @@ import org.springframework.stereotype.Component;
 @SuppressWarnings("unchecked")
 public class BatchReleaseRequisitionService {
 
+  private final RequisitionService requisitionService;
   private final SiglusRequisitionRepository siglusRequisitionRepository;
 
   private final SiglusProcessingPeriodReferenceDataService siglusProcessingPeriodReferenceDataService;
@@ -78,8 +81,12 @@ public class BatchReleaseRequisitionService {
     UUID processingPeriodId = requisition.getProcessingPeriodId();
     ProcessingPeriodExtension processingPeriodExtension = processingPeriodExtensionRepository
         .findByProcessingPeriodId(processingPeriodId);
-    List<Month> calculatedFulfillOrderMonth = siglusOrderService.calculateFulfillOrderMonth(processingPeriodExtension);
-    if (!calculatedFulfillOrderMonth.contains(processingPeriodExtension.getSubmitEndDate().getMonth())) {
+    List<YearMonth> calculatedFulfillOrderMonth = requisitionService
+            .calculateFulfillOrderYearMonth(processingPeriodExtension);
+
+    LocalDate submitEndDate = processingPeriodExtension.getSubmitEndDate();
+    YearMonth requisitionYearMonth = YearMonth.of(submitEndDate.getYear(), submitEndDate.getMonth());
+    if (!calculatedFulfillOrderMonth.contains(requisitionYearMonth)) {
       throw new BusinessDataException(new Message(ERROR_REQUISITION_EXPIRED));
     }
 

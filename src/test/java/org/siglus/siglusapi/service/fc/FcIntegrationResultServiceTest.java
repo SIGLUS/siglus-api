@@ -105,7 +105,7 @@ public class FcIntegrationResultServiceTest {
 
 
   @Test
-  @Ignore
+  @Ignore("ignore this test")
   public void shouldGetDefaultDateWhenResultNotExisted() {
     // given
     when(fcIntegrationResultRepository.findTopByApiAndFinalSuccessOrderByLastUpdatedAtDesc(anyString(),
@@ -119,7 +119,7 @@ public class FcIntegrationResultServiceTest {
   }
 
   @Test
-  @Ignore
+  @Ignore("ignore this test")
   public void shouldGetDefaultPeroidWhenResultNotExisted() {
     // given
     when(fcIntegrationResultRepository.findTopByApiAndFinalSuccessOrderByLastUpdatedAtDesc(anyString(),

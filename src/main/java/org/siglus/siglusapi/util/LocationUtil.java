@@ -21,6 +21,9 @@ import org.openlmis.fulfillment.web.shipment.LocationDto;
 
 public class LocationUtil {
 
+  private LocationUtil() {
+  }
+
   public static String getIfNonNull(Function<LocationDto, String> function, LocationDto locationDto) {
     if (Objects.isNull(locationDto)) {
       return null;

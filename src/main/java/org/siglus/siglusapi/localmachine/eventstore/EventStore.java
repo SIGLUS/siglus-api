@@ -171,6 +171,7 @@ public class EventStore {
     }
   }
 
+  @Transactional
   public List<Event> excludeExisted(List<Event> events) {
     if (events.isEmpty()) {
       return events;
@@ -227,7 +228,7 @@ public class EventStore {
   }
 
   @Transactional
-  public LinkedList<MasterDataEventRecord> getMasterDataRecords(Long offset, UUID facilityId, int limit) {
+  public List<MasterDataEventRecord> getMasterDataRecords(Long offset, UUID facilityId, int limit) {
     LinkedList<MasterDataEventRecord> bufferedMasterDataRecords = new LinkedList<>();
     Spliterator<MasterDataEventRecord> spliterator =
         masterDataEventRecordRepository

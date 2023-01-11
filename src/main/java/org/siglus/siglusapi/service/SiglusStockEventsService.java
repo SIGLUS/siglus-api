@@ -135,12 +135,15 @@ public class SiglusStockEventsService {
   }
 
   private Set<UUID> getProgramIds(StockEventDto eventDto) {
-    if (!isAllProgram(eventDto)) {
-      eventDto.getLineItems().forEach(item -> item.setProgramId(eventDto.getProgramId()));
-    }
     UUID viaProgramId = siglusProgramService.getProgramByCode(VIA_PROGRAM_CODE)
         .orElseThrow(() -> new NotFoundException("VIA program not found"))
         .getId();
+    if (!isAllProgram(eventDto)) {
+      eventDto.getLineItems().forEach(item -> {
+        String programCode = siglusProgramService.getProgram(eventDto.getProgramId()).getCode();
+        item.setProgramId(MMC_PROGRAM_CODE.equals(programCode) ? viaProgramId : eventDto.getProgramId());
+      });
+    }
     return eventDto.getLineItems().stream()
         .map(StockEventLineItemDto::getProgramId)
         .map(programId -> {
@@ -223,6 +226,11 @@ public class SiglusStockEventsService {
     addStockCardLineItemDocumentNumber(eventDto, stockEventId);
     Set<UUID> orderableIds = eventDto.getLineItems().stream()
         .map(StockEventLineItemDto::getOrderableId)
+        .collect(Collectors.toSet());
+    Set<String> archiveOrderableIds = archiveProductService.searchArchivedProductsByFacilityId(
+        eventDto.getFacilityId());
+    orderableIds = orderableIds.stream()
+        .filter(orderableId -> archiveOrderableIds.contains(orderableId.toString()))
         .collect(Collectors.toSet());
     archiveProductService.activateProducts(eventDto.getFacilityId(), orderableIds);
   }

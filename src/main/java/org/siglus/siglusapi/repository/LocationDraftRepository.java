@@ -54,8 +54,6 @@ public class LocationDraftRepository extends BaseNativeRepository {
   public void deleteFacilityRelatedDrafts(UUID facilityId) {
     Lists.newArrayList(SQL_1, SQL_2, SQL_3, SQL_4, SQL_5, SQL_6, SQL_7, SQL_8, SQL_9, SQL_10, SQL_11, SQL_12, SQL_13,
             SQL_13_1, SQL_14, SQL_15, SQL_16, SQL_17, SQL_18, SQL_19)
-        .forEach(sql -> {
-          jdbc.update(sql, facilityId);
-        });
+        .forEach(sql -> jdbc.update(sql, facilityId));
   }
 }

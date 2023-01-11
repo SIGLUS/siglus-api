@@ -20,6 +20,7 @@ import java.util.Objects;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang.BooleanUtils;
 import org.siglus.siglusapi.domain.FacilityExtension;
 import org.siglus.siglusapi.localmachine.Machine;
 import org.siglus.siglusapi.localmachine.cdc.JdbcSinker;
@@ -81,7 +82,7 @@ public class MasterDataEventReplayer {
         }
         Boolean toBeUpdatedLocalManagement =
             escapeNullBoolean((Boolean) rowChangeEvent.getValues().get(indexOfLocationManagement));
-        if (locationManagement != toBeUpdatedLocalManagement) {
+        if (BooleanUtils.isTrue(locationManagement != toBeUpdatedLocalManagement)) {
           toggledLocationManagement = true;
           locationManagement = toBeUpdatedLocalManagement;
         }

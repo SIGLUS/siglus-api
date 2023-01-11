@@ -24,6 +24,9 @@ import org.siglus.siglusapi.dto.SimpleRequisitionDto;
 
 public class RequisitionUtil {
 
+  private RequisitionUtil() {
+  }
+
   public static Map<String, Object> getRequisitionExtraData(SimpleRequisitionDto simpleRequisitionDto) {
     if (Objects.isNull(simpleRequisitionDto) || StringUtils.isBlank(simpleRequisitionDto.getExtraData())) {
       return null;

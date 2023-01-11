@@ -169,7 +169,7 @@ public class LocalExportImportService {
     Map<UUID, String> facilityIdToName = getFacilityIdToName(homeFacilityId, receiverIdToEvents);
 
     return receiverIdToEvents.entrySet().stream()
-        .map((it) -> generateFilesForOneReceiver(
+        .map(it -> generateFilesForOneReceiver(
             workingDir, homeFacilityId, facilityIdToName, it.getKey(), it.getValue()))
         .flatMap(Collection::stream)
         .collect(Collectors.toList());
@@ -196,36 +196,41 @@ public class LocalExportImportService {
     String firstFileName = getFileName(workingDir, facilityIdToName.get(homeFacilityId),
         facilityIdToName.get(receiverId), "");
     EventFile eventFile = new EventFile(capacityBytes, firstFileName, externalEventDtoMapper);
-    for (int i = 0; i < events.size(); i++) {
-      try {
-        int remaining = eventFile.writeEventAndGetRemainingCapacity(events.get(i));
-        if (remaining > 0) {
-          continue;
+    try {
+      for (int i = 0; i < events.size(); i++) {
+        try {
+          int remaining = eventFile.writeEventAndGetRemainingCapacity(events.get(i));
+          if (remaining > 0) {
+            continue;
+          }
+          // finalize current file, which is full now
+          files.add(eventFile);
+          // prepare next file
+          boolean needContinue = events.size() > (i + 1);
+          if (needContinue) {
+            String nextFileSuffix = PART_FILE_SUFFIX + (files.size() + 1);
+            String newFileName = getFileName(workingDir, facilityIdToName.get(homeFacilityId),
+                    facilityIdToName.get(receiverId), nextFileSuffix);
+            eventFile.close();
+            eventFile = new EventFile(capacityBytes, newFileName, externalEventDtoMapper);
+          }
+        } catch (IOException e) {
+          log.error("error when generate files, facility:{}, err:{}", homeFacilityId, e);
+          throw new BusinessDataException(e, new Message("fail to generate files"));
         }
-        // finalize current file, which is full now
-        files.add(eventFile);
-        // prepare next file
-        boolean needContinue = events.size() > (i + 1);
-        if (needContinue) {
-          String nextFileSuffix = PART_FILE_SUFFIX + (files.size() + 1);
-          String newFileName = getFileName(workingDir, facilityIdToName.get(homeFacilityId),
-              facilityIdToName.get(receiverId), nextFileSuffix);
-          eventFile = new EventFile(capacityBytes, newFileName, externalEventDtoMapper);
-        }
-      } catch (IOException e) {
-        log.error("error when generate files, facility:{}, err:{}", homeFacilityId, e);
-        throw new BusinessDataException(e, new Message("fail to generate files"));
       }
+      if (eventFile.getCount() > 0) {
+        files.add(eventFile);
+      }
+      boolean hasMultiParts = files.size() > 1;
+      if (hasMultiParts) {
+        // rename the first file to xxx_part1.dat
+        files.get(0).renameTo(firstFileName.replace(FILE_SUFFIX, PART_1_FILE_SUFFIX));
+      }
+      return files.stream().map(EventFile::getFile).collect(Collectors.toList());
+    } finally {
+      eventFile.close();
     }
-    if (eventFile.getCount() > 0) {
-      files.add(eventFile);
-    }
-    boolean hasMultiParts = files.size() > 1;
-    if (hasMultiParts) {
-      // rename the first file to xxx_part1.dat
-      files.get(0).renameTo(firstFileName.replace(FILE_SUFFIX, PART_1_FILE_SUFFIX));
-    }
-    return files.stream().map(EventFile::getFile).collect(Collectors.toList());
   }
 
   private Set<UUID> getFacilityIds(UUID homeFacilityId, Map<UUID, List<Event>> receiverIdToEvents) {

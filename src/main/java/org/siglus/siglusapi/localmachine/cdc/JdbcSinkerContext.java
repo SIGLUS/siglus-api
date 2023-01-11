@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.localmachine.cdc;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import org.apache.kafka.common.TopicPartition;
@@ -38,7 +39,7 @@ public class JdbcSinkerContext implements SinkTaskContext {
 
   @Override
   public Set<TopicPartition> assignment() {
-    return null;
+    return Collections.emptySet();
   }
 
   @Override

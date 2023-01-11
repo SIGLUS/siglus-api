@@ -38,6 +38,7 @@ import org.siglus.siglusapi.localmachine.event.requisition.web.reject.Requisitio
 import org.siglus.siglusapi.localmachine.event.requisition.web.reject.RequisitionRejectReplayer;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.service.SiglusRequisitionService;
+import org.siglus.siglusapi.service.android.RequisitionCreateService;
 import org.siglus.siglusapi.web.android.FileBasedTest;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -58,7 +59,8 @@ public class RequisitionRejectReplayerTest extends FileBasedTest {
   private SupervisoryNodeReferenceDataService supervisoryNodeReferenceDataService;
   @Mock
   private SiglusRequisitionService siglusRequisitionService;
-
+  @Mock
+  private RequisitionCreateService requisitionCreateService;
   private final UUID userId = UUID.randomUUID();
 
   @Test

@@ -32,6 +32,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.BooleanUtils;
 import org.openlmis.referencedata.domain.ProcessingPeriod;
 import org.siglus.siglusapi.domain.RequisitionExtension;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
@@ -70,7 +71,8 @@ public class SiglusRequisitionExtensionService {
     String prefix;
     switch (programCode) {
       case VIA_PROGRAM_CODE:
-        prefix = emergency ? RequisitionPrefixEnum.REM.toString() : RequisitionPrefixEnum.RNO.toString();
+        prefix = BooleanUtils.isTrue(emergency)
+            ? RequisitionPrefixEnum.REM.toString() : RequisitionPrefixEnum.RNO.toString();
         break;
       case MTB_PROGRAM_CODE:
         prefix = RequisitionPrefixEnum.MTB.toString();

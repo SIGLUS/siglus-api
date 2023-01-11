@@ -462,7 +462,7 @@ public class FcProductServiceTest {
   }
 
   @Test
-  @Ignore
+  @Ignore("ignore this test")
   public void shouldSetChildrenEmptyWhenUpdateOrderableGivenProductIsNotKit() {
     OrderableDto orderableDto = new OrderableDto();
     orderableDto.setExtraData(new HashMap<>());
