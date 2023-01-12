@@ -72,7 +72,8 @@ public final class StockCardCreateContext {
     this.reasons = reasons.stream().collect(toMap(NameBindToProgram::of, v -> v.getReason().getId()));
     this.sources = sources.stream().collect(toMap(NameBindToProgram::of, v -> v.getNode().getId()));
     this.destinations = destinations.stream().collect(toMap(NameBindToProgram::of, v -> v.getNode().getId()));
-    this.approvedProducts = approvedProducts.stream().collect(toMap(BasicOrderableDto::getProductCode, identity()));
+    this.approvedProducts = approvedProducts.stream()
+        .collect(toMap(BasicOrderableDto::getProductCode, identity(), (a, b) -> b));
     this.allProductMovements = allProductMovements;
   }
 
