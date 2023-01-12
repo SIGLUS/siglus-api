@@ -27,15 +27,13 @@ public class MovementSql {
   public static final String LOCALMACHINE_EVENTS = "localmachine.events";
 
   public static final String LOCALMACHINE_EVENTS_QUERY =
-      "select * from localmachine.events where receiverid = '@@' "
-          + "and (localreplayed is true or receiversynced  is true)";
+      "select * from localmachine.events where receiverid = '@@' or senderid = '@@' ";
 
   public static final String LOCALMACHINE_EVENT_PAYLOAD = "localmachine.event_payload";
 
   public static final String LOCALMACHINE_EVENT_PAYLOAD_QUERY =
       "select * from localmachine.event_payload where eventid in "
-          + " (select id from localmachine.events where receiverid = '@@' "
-          + " and (localreplayed is true or receiversynced is true))";
+          + " (select id from localmachine.events where receiverid = '@@' or senderid = '@@')";
 
   private static final String WHERE_ID_IN_STOCK_CARD =
       "where stockcardid in (select id from stockmanagement.stock_cards where facilityid = '@@')";
