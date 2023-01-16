@@ -100,8 +100,7 @@ public class FcProductMapper {
 
   public Set<ProgramOrderableDto> getProgramOrderablesFrom(ProductInfoDto product,
       Map<String, CustomProductsRegimens> codeToCustomProductsRegimens) {
-    if (product.getAreas() == null || product.getAreas().isEmpty() || !FcUtil.isActive(
-        product.getStatus())) {
+    if (product.getAreas() == null || product.getAreas().isEmpty()) {
       return emptySet();
     }
     Set<String> programCodes = getProgramCodes(product);
