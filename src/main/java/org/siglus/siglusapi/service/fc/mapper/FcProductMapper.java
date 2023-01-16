@@ -138,7 +138,6 @@ public class FcProductMapper {
         .collect(Collectors.toMap(AreaDto::getAreaCode, Function.identity(),
             (value1, value2) -> shouldNotUpdate(value1, value2) ? value1 : value2));
     return timeMapAreaDto.values().stream()
-        .filter(areaDto -> FcUtil.isActive(areaDto.getStatus()))
         .filter(areaDto -> Objects.nonNull(realProgramCodeToEntityMap.get(areaDto.getAreaCode())))
         .map(areaDto -> realProgramCodeToEntityMap.get(areaDto.getAreaCode()).getProgramCode())
         .collect(Collectors.toSet());
