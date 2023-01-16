@@ -497,8 +497,10 @@ public class MeService {
       productLine.setLots(lotLines);
     });
     PodExtension podExtension = podExtensionRepository.findByPodId(pod.getId());
-    podResponse.setConferredBy(podExtension.getConferredBy());
-    podResponse.setPreparedBy(podExtension.getPreparedBy());
+    if (podExtension != null) {
+      podResponse.setConferredBy(podExtension.getConferredBy());
+      podResponse.setPreparedBy(podExtension.getPreparedBy());
+    }
     return podResponse;
   }
 
