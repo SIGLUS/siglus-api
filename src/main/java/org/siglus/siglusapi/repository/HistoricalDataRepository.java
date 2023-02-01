@@ -88,7 +88,7 @@ public interface HistoricalDataRepository extends
       + "  o.code as productcode,\n"
       + "  o.fullproductname as productname,\n"
       + "  rli.beginningbalance as initialstock,\n"
-      + "  rli.adjustedconsumption as consumptions,\n"
+      + "  rli.totalconsumedquantity as consumptions,\n"
       + "  rli.totalreceivedquantity as entries,\n"
       + "  rli.totallossesandadjustments as adjustments,\n"
       + "  rli.stockonhand as closestock,\n"
