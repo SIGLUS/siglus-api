@@ -316,7 +316,7 @@ public class RequisitionCreateService {
         .stream()
         .collect(
             toMap(Function.identity(),
-                supportProgramId -> requisitionService.getApprovedProductsWithoutAdditional(facilityId,
+                supportProgramId -> requisitionService.getApprovedProducts(facilityId,
                         supportProgramId)
                     .stream()
                     .map(product -> product.getOrderable().getProductCode())
