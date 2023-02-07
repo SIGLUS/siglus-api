@@ -316,7 +316,7 @@ public class RequisitionCreateService {
         .stream()
         .collect(
             toMap(Function.identity(),
-                supportProgramId -> requisitionService.getApprovedProductsWithoutAdditional(facilityId,
+                supportProgramId -> requisitionService.getApprovedProducts(facilityId,
                         supportProgramId)
                     .stream()
                     .map(product -> product.getOrderable().getProductCode())
@@ -507,7 +507,7 @@ public class RequisitionCreateService {
   }
 
   private void buildRequisitionApprovedProduct(Requisition requisition, UUID homeFacilityId, UUID programId) {
-    List<ApprovedProductDto> approvedProductDtos = requisitionService.getApprovedProductsWithoutAdditional(
+    List<ApprovedProductDto> approvedProductDtos = requisitionService.getApprovedProducts(
         homeFacilityId, programId);
     ApproveProductsAggregator aggregator = new ApproveProductsAggregator(approvedProductDtos, programId);
     Set<ApprovedProductReference> availableProductIdentities = aggregator.getApprovedProductReferences();
