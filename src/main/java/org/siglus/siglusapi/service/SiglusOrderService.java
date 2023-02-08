@@ -411,8 +411,11 @@ public class SiglusOrderService {
     processingPeriodDtos.sort((o1, o2) -> o2.getEndDate().compareTo(o1.getEndDate()));
     LocalDate latestOrderPeriodEndDate = processingPeriodDtos.get(0).getEndDate();
     filteredFulfillOrderDtos.forEach(dto -> {
-      if (dto.getBasicOrder().getProcessingPeriod().getEndDate().getMonthValue() >= latestOrderPeriodEndDate
-          .getMonthValue()) {
+      YearMonth yearMonth = YearMonth.of(dto.getBasicOrder().getProcessingPeriod().getEndDate().getYear(),
+              dto.getBasicOrder().getProcessingPeriod().getEndDate().getMonth());
+      YearMonth latestOrderYearMonth = YearMonth.of(latestOrderPeriodEndDate.getYear(),
+              latestOrderPeriodEndDate.getMonth());
+      if (yearMonth.isAfter(latestOrderYearMonth) || yearMonth.equals(latestOrderYearMonth)) {
         dto.setExpired(false);
         LocalDate requisitionPeriodEndDate = dto.getBasicOrder().getProcessingPeriod().getEndDate();
         if (requisitionPeriodEndDate.isAfter(latestOrderPeriodEndDate)) {
