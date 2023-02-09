@@ -371,7 +371,7 @@ public class TracerDrugReportService {
   private List<RequisitionGeographicZonesDto> getAllAuthorizedFacility() {
     List<RequisitionGeographicZonesDto> requisitionGeographicZones = tracerDrugRepository
         .getAllRequisitionGeographicZones();
-    if (authenticationHelper.isTheCurrentUserAdmin() || authenticationHelper.isTheCurrentUserCanViewAllReports()) {
+    if (authenticationHelper.isTheCurrentUserAdmin() || authenticationHelper.isTheCurrentUserReportViewer()) {
       return requisitionGeographicZones;
     }
     String level = authenticationHelper.getFacilityGeographicZoneLevel();

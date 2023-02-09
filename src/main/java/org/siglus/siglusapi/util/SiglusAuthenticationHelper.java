@@ -138,7 +138,7 @@ public class SiglusAuthenticationHelper {
     return roleAssignmentIds.contains(UUID.fromString(roleAdminId));
   }
 
-  public boolean isTheCurrentUserCanViewAllReports() {
+  public boolean isTheCurrentUserReportViewer() {
     Set<UUID> roleAssignmentIds = getCurrentUser().getRoleAssignments().stream()
         .map(RoleAssignmentDto::getRoleId).collect(Collectors.toSet());
     return roleAssignmentIds.contains(UUID.fromString(roleReportViewerId));

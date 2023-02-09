@@ -87,7 +87,7 @@ public class MetabaseDashboardService {
 
     Integer dashboardId = getDashboardIdByDashboardName(dashboardName);
     if (authenticationHelper.isTheCurrentUserAdmin()
-        || authenticationHelper.isTheCurrentUserCanViewAllReports()) {
+        || authenticationHelper.isTheCurrentUserReportViewer()) {
       return String.format(METABASE_PAYLOAD_TEMPLATE, dashboardId, "");
     }
     FacilityDto facility = siglusFacilityReferenceDataService
