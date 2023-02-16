@@ -102,6 +102,12 @@ public class RequisitionValidStartDateValidator implements
         .filter(req -> programCode.equals(programDataService.findOne(req.getProgramId()).getCode()))
         .findFirst()
         .orElse(null);
+
+    ProcessingPeriodExtension periodExtension = periodExtensionRepository.findByProcessingPeriodId(period.getId());
+    if (LocalDate.now().isBefore(periodExtension.getSubmitStartDate())) {
+      actualContext.addExpressionVariable(IS_PERIOD_CANNOT_SUBMIT_YET, true);
+      return false;
+    }
     if (isFirstRequisition(lastRequisition, reportRestartDate)) {
       return true;
     }
@@ -117,12 +123,6 @@ public class RequisitionValidStartDateValidator implements
     ProcessingPeriod lastPeriod = periodRepository.findOne(lastRequisition.getProcessingPeriodId());
     if (isNotConsecutive(lastEndDate, value.getActualStartDate(), lastPeriod, period)) {
       actualContext.addExpressionVariable(IS_SUBMITTED_PERIOD_INVALID, true);
-      return false;
-    }
-
-    ProcessingPeriodExtension periodExtension = periodExtensionRepository.findByProcessingPeriodId(period.getId());
-    if (LocalDate.now().isBefore(periodExtension.getSubmitStartDate())) {
-      actualContext.addExpressionVariable(IS_PERIOD_CANNOT_SUBMIT_YET, true);
       return false;
     }
     return true;
