@@ -6,7 +6,7 @@ pipeline {
     }
     environment {
         IMAGE_REPO = "siglusdevops/siglusapi"
-        SERVICE_NAME = "siglusapi"
+        IMAGE_TAG = sh(script: '''tag=${BRANCH_NAME}-$(git rev-parse HEAD); echo ${tag}''', returnStdout: true).trim()
     }
     stages {
         stage('Build') {
@@ -20,7 +20,6 @@ pipeline {
         stage('Push Image') {
             steps {
                 sh '''
-                    IMAGE_TAG=${BRANCH_NAME}-$(git rev-parse HEAD)
                     IMAGE_NAME=${IMAGE_REPO}:${IMAGE_TAG}
                     docker build -t ${IMAGE_NAME} .
                     docker push ${IMAGE_NAME}
@@ -39,7 +38,7 @@ pipeline {
                 branch 'master'
             }
             steps {
-                deploy "dev"
+                deploy ("dev", env.IMAGE_TAG)
             }
         }
         stage('Deploy To QA') {
@@ -47,7 +46,7 @@ pipeline {
                 branch 'showcase'
             }
             steps {
-                deploy "qa"
+                deploy ("qa", env.IMAGE_TAG)
             }
         }
         stage('Deploy To UAT') {
@@ -55,7 +54,7 @@ pipeline {
                 branch 'release'
             }
             steps {
-                deploy "uat"
+                deploy ("uat", env.IMAGE_TAG)
             }
         }
     }
