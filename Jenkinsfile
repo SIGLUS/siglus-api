@@ -64,5 +64,7 @@ pipeline {
 def deploy(app_env, image_tag) {
     build job: 'deploy_siglus_api_manually',
           wait: true,
-          parameters: [string(name: 'IMAGE_TAG', value: String.valueOf(image_tag)),string(name: 'ENV', value: String.valueOf(app_env))]
+          parameters: [
+              [$class: 'StringParameterValue', name: 'ENV', value: app_env],
+              [$class: 'StringParameterValue', name: 'IMAGE_TAG', value: image_tag]]
 }
