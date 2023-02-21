@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.openlmis.requisition.domain.requisition.Requisition;
@@ -41,38 +42,25 @@ import org.siglus.common.repository.ArchivedProductRepository;
 import org.siglus.siglusapi.domain.StockManagementDraft;
 import org.siglus.siglusapi.domain.StockManagementDraftLineItem;
 import org.siglus.siglusapi.repository.StockManagementDraftRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Slf4j
 @SuppressWarnings({"PMD.TooManyMethods"})
+@RequiredArgsConstructor
 public class SiglusArchiveProductService {
 
-  @Autowired
-  private CalculatedStockOnHandService calculatedStockOnHandService;
-
-  @Autowired
-  private SiglusUnpackService unpackService;
-
-  @Autowired
-  private SiglusPhysicalInventoryService siglusPhysicalInventoryService;
-
-  @Autowired
-  private SiglusOrderableService siglusOrderableService;
-
-  @Autowired
-  private StockCardRepository stockCardRepository;
-
-  @Autowired
-  private ArchivedProductRepository archivedProductRepository;
-
-  @Autowired
-  private StockManagementDraftRepository stockManagementDraftRepository;
-
-  @Autowired
-  private RequisitionRepository requisitionRepository;
+  private final CalculatedStockOnHandService calculatedStockOnHandService;
+  private final SiglusUnpackService unpackService;
+  private final SiglusOrderableService siglusOrderableService;
+  private final StockCardRepository stockCardRepository;
+  private final ArchivedProductRepository archivedProductRepository;
+  private final StockManagementDraftRepository stockManagementDraftRepository;
+  private final RequisitionRepository requisitionRepository;
+  @Lazy
+  private final SiglusPhysicalInventoryService siglusPhysicalInventoryService;
 
   @Transactional
   public void archiveProduct(UUID facilityId, UUID orderableId) {
