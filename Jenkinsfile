@@ -62,6 +62,11 @@ pipeline {
 
 
 def deploy(app_env, image_tag) {
+    withEnv(["IMAGE_TAG=$image_tag","APP_ENV=$app_env"]) {
+        sh '''
+            echo "trigger downstream pipeline with: ENV=${APP_ENV},IMAGE_TAG=${IMAGE_TAG}"
+        '''
+    }
     build job: 'deploy_siglus_api_manually',
           wait: true,
           parameters: [
