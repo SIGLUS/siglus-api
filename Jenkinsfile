@@ -1,7 +1,7 @@
 pipeline {
     agent { label 'docker'}
     options {
-        buildDiscarder(logRotator(numToKeepStr: '50'))
+        buildDiscarder(logRotator(numToKeepStr: '10'))
         timestamps ()
     }
     environment {
