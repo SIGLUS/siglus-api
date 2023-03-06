@@ -51,7 +51,10 @@ public class LineItemDetail {
     }
     UUID programId = stockCard.getProgramId();
     String reason = request.getReasonName();
-    UUID sourceId = newSourceId == null ? type.getSourceId(programId, reason) : newSourceId;
+    UUID sourceId = type.getSourceId(programId, reason);
+    if (type == MovementType.RECEIVE && newSourceId != null) {
+      sourceId = newSourceId;
+    }
     UUID destinationId = type.getDestinationId(programId, reason);
     UUID reasonId = type.getAdjustmentReasonId(programId, reason);
     if (type == MovementType.RECEIVE) {
