@@ -288,7 +288,7 @@ public class StockCardCreateService {
         stockCard.getProgramId(), stockCard.getFacilityId());
     for (ValidSourceDestinationDto source : sourcesForOneProgram) {
       Node node = source.getNode();
-      if (node.isRefDataFacility()) {
+      if (node != null && node.isRefDataFacility()) {
         return node.getId();
       }
     }
