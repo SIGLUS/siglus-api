@@ -15,10 +15,13 @@
 
 package org.siglus.siglusapi.service;
 
+import static org.siglus.siglusapi.constant.FieldConstants.DOT;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -53,6 +56,8 @@ public class SiglusValidSourceDestinationService {
   private final NodeRepository nodeRepository;
   private final FacilityRepository facilityRepository;
   private final AndroidHelper androidHelper;
+
+  private Map<String, Collection<ValidSourceDestinationDto>> cacheKeyToValidSourceDestinationDto = new HashMap<>();
 
   public Collection<ValidSourceDestinationDto> findSourcesForOneProgram(UUID programId, UUID facilityId) {
     Set<UUID> programIds = new HashSet<>();
@@ -128,9 +133,13 @@ public class SiglusValidSourceDestinationService {
     if (CollectionUtils.isEmpty(facilityIds)) {
       return Collections.emptyList();
     }
+    String cacheKey = generateCacheKey(facilityIds, programId);
+    if (cacheKeyToValidSourceDestinationDto.containsKey(cacheKey)) {
+      return cacheKeyToValidSourceDestinationDto.get(cacheKey);
+    }
     List<Node> nodes = nodeRepository.findByReferenceIdIn(facilityIds);
     List<Facility> facilities = facilityRepository.findByIdIn(facilityIds);
-    return nodes.stream().map(node -> {
+    Collection<ValidSourceDestinationDto> validSourceDestinationDtos = nodes.stream().map(node -> {
       ValidSourceDestinationDto dto = new ValidSourceDestinationDto();
       dto.setNode(node);
       dto.setProgramId(programId);
@@ -139,6 +148,15 @@ public class SiglusValidSourceDestinationService {
       dto.setName(facilityName);
       return dto;
     }).collect(Collectors.toList());
+    cacheKeyToValidSourceDestinationDto.put(cacheKey, validSourceDestinationDtos);
+    return validSourceDestinationDtos;
+  }
+
+  private String generateCacheKey(List<UUID> facilityIds, UUID programId) {
+    StringBuilder builder = new StringBuilder();
+    facilityIds.forEach(id -> builder.append(id).append(DOT));
+    builder.append(programId.toString());
+    return builder.toString();
   }
 
   private Map<UUID, List<UUID>> mapProgramIdToMemberFacilities(UUID facilityId, Set<UUID> supportedPrograms) {
