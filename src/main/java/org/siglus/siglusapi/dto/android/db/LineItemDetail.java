@@ -42,7 +42,7 @@ public class LineItemDetail {
   private final boolean isInitInventory;
 
   public static LineItemDetail of(StockEvent stockEvent, StockCard stockCard, MovementType type,
-      StockCardAdjustment request, boolean isInit) {
+      StockCardAdjustment request, boolean isInit, UUID newSourceId) {
     Integer quantity;
     if (type == MovementType.PHYSICAL_INVENTORY) {
       quantity = request.getStockOnHand();
@@ -52,6 +52,9 @@ public class LineItemDetail {
     UUID programId = stockCard.getProgramId();
     String reason = request.getReasonName();
     UUID sourceId = type.getSourceId(programId, reason);
+    if (type == MovementType.RECEIVE && newSourceId != null) {
+      sourceId = newSourceId;
+    }
     UUID destinationId = type.getDestinationId(programId, reason);
     UUID reasonId = type.getAdjustmentReasonId(programId, reason);
     if (type == MovementType.RECEIVE) {

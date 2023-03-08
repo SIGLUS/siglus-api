@@ -44,6 +44,8 @@ import org.openlmis.requisition.dto.OrderableDto;
 import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.service.RequisitionService;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
+import org.openlmis.stockmanagement.domain.sourcedestination.Node;
+import org.openlmis.stockmanagement.dto.ValidSourceDestinationDto;
 import org.siglus.siglusapi.dto.LotDto;
 import org.siglus.siglusapi.dto.android.EventTime;
 import org.siglus.siglusapi.dto.android.EventTimeContainer;
@@ -78,6 +80,7 @@ import org.siglus.siglusapi.dto.android.request.StockCardLotEventRequest;
 import org.siglus.siglusapi.dto.android.sequence.PerformanceSequence;
 import org.siglus.siglusapi.repository.StockManagementRepository;
 import org.siglus.siglusapi.service.LotConflictService;
+import org.siglus.siglusapi.service.SiglusValidSourceDestinationService;
 import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.util.SupportedProgramsHelper;
@@ -99,6 +102,7 @@ public class StockCardCreateService {
   private final RequisitionService requisitionService;
   private final LotConflictService lotConflictService;
   private final SiglusLotReferenceDataService siglusLotReferenceDataService;
+  private final SiglusValidSourceDestinationService validSourceDestinationService;
 
   @Transactional
   @Validated(PerformanceSequence.class)
@@ -110,7 +114,7 @@ public class StockCardCreateService {
       @ProductConsistentWithAllLots(groups = SelfCheckGroup.class)
       @LotStockConsistentWithExisted(groups = DatabaseCheckGroup.class)
       @ProductMovementConsistentWithExisted(groups = DatabaseCheckGroup.class)
-          List<StockCardCreateRequest> requests,
+      List<StockCardCreateRequest> requests,
       Profiler profiler
   ) {
     profiler.setLogger(log);
@@ -260,7 +264,7 @@ public class StockCardCreateService {
           toAdjustments(request).forEach(adjustment -> {
             StockCard stockCard = getStockCard(request, adjustment, stockEvent, context);
             LineItemDetail lineDetail = LineItemDetail
-                .of(stockEvent, stockCard, type, adjustment, request.isInitInventory());
+                .of(stockEvent, stockCard, type, adjustment, request.isInitInventory(), getNewSourceId(stockCard));
             StockEventLineItem eventLine = StockEventLineItem.of(lineDetail);
             context.eventLineItems.add(eventLine);
             StockCardLineItem stockCardLine = StockCardLineItem.of(lineDetail);
@@ -277,6 +281,18 @@ public class StockCardCreateService {
                 .addAll(PhysicalInventoryLineAdjustment.of(inventoryLine, eventLineId, stockCardLineId));
           });
         });
+  }
+
+  private UUID getNewSourceId(StockCard stockCard) {
+    Collection<ValidSourceDestinationDto> sourcesForOneProgram = validSourceDestinationService.findSourcesForOneProgram(
+        stockCard.getProgramId(), stockCard.getFacilityId());
+    for (ValidSourceDestinationDto source : sourcesForOneProgram) {
+      Node node = source.getNode();
+      if (node != null && node.isRefDataFacility()) {
+        return node.getId();
+      }
+    }
+    return null;
   }
 
   private List<? extends StockCardAdjustment> toAdjustments(StockCardCreateRequest request) {
