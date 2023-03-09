@@ -29,6 +29,7 @@ import lombok.Setter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.BooleanUtils;
+import org.apache.kafka.common.errors.NetworkException;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.localmachine.CommonConstants;
@@ -73,7 +74,7 @@ public class LocalTokenInterceptor implements ClientHttpRequestInterceptor {
       return httpResponse;
     } catch (IOException e) {
       machine.setConnectedOnlineWeb(false);
-      throw new BusinessDataException(e, new Message(ERROR_NETWORK_ERROR));
+      throw new NetworkException(ERROR_NETWORK_ERROR, e);
     }
   }
 

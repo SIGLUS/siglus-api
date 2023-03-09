@@ -85,10 +85,10 @@ public class CdcScraper {
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   public void handleChangeEvent(RecordChangeEvent<SourceRecord> sourceRecordRecordChangeEvent) {
     SourceRecord sourceRecord = sourceRecordRecordChangeEvent.record();
-    log.debug("receive record:{}", sourceRecord);
+    log.info("receive record:{}", sourceRecord);
     Struct sourceRecordChangeValue = (Struct) sourceRecord.value();
     if (Objects.isNull(sourceRecordChangeValue)) {
-      log.debug("receive null source record value");
+      log.info("receive null source record value");
       return;
     }
     Operation operation = Operation.forCode((String) sourceRecordChangeValue.get(OPERATION));
@@ -97,7 +97,7 @@ public class CdcScraper {
     }
     Map<String, Object> payload = extractPayload(sourceRecordChangeValue, operation);
     CdcRecord cdcRecord = buildCdcRecord(sourceRecord, operation, payload);
-    log.debug("save cdc record: {} with operation: {}", payload, operation.name());
+    log.info("save cdc record: {} with operation: {}", payload, operation.name());
     dispatchQueue.put(cdcRecord);
   }
 
