@@ -100,7 +100,7 @@ public class LocalMachineRequestFilter extends OncePerRequestFilter {
       long cost = System.currentTimeMillis() - startTime;
       String url = request.getRequestURL().toString();
       if (!url.endsWith("/health")) {
-        log.info("[localmachine] {} - {} cost:{}", request.getMethod(), url, cost);
+        log.info("[localmachine] {} - {} cost: {}ms", request.getMethod(), url, cost);
       }
     }
   }

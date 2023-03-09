@@ -28,6 +28,7 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.kafka.common.errors.NetworkException;
 import org.siglus.siglusapi.localmachine.Ack;
 import org.siglus.siglusapi.localmachine.Event;
 import org.siglus.siglusapi.localmachine.EventImporter;
@@ -64,6 +65,8 @@ public class SyncService {
     Set<Ack> downloadedAcks = new HashSet<>();
     try {
       downloadedAcks = webClient.exchangeAcks(notShippedAcks);
+    } catch (NetworkException ne) {
+      log.error("fail to download ack with network exception", ne);
     } catch (Exception e) {
       log.error("fail to download ack", e);
       List<UUID> eventIds = notShippedAcks.stream().map(Ack::getEventId).collect(Collectors.toList());
@@ -73,6 +76,8 @@ public class SyncService {
     localEventStore.confirmEventsByAcks(downloadedAcks);
     try {
       webClient.confirmAcks(downloadedAcks);
+    } catch (NetworkException ne) {
+      log.error("fail to upload ack with network exception", ne);
     } catch (Exception e) {
       log.error("fail to upload ack", e);
       List<UUID> eventIds = downloadedAcks.stream().map(Ack::getEventId).collect(Collectors.toList());
@@ -87,6 +92,8 @@ public class SyncService {
       if (!hasNewMasterData) {
         pullPeeringEvents();
       }
+    } catch (NetworkException ne) {
+      log.error("fail to pull events with network exception", ne);
     } catch (Exception e) {
       log.error("fail to pull events", e);
       errorHandler.storeErrorRecord(e, ErrorType.SYNC_DOWN);
@@ -129,8 +136,10 @@ public class SyncService {
         return;
       }
       pushAsEventResource(PUSH_CAPACITY_BYTES_PER_REQUEST, workingQueue, events);
+    } catch (NetworkException ne) {
+      log.error("fail to push events with network exception", ne);
     } catch (Throwable e) {
-      log.error("push event failed", e);
+      log.error("fail to push events", e);
       List<UUID> eventIds = workingQueue.stream().map(Event::getId).collect(Collectors.toList());
       errorHandler.storeErrorRecord(eventIds, e, ErrorType.SYNC_UP);
     }
