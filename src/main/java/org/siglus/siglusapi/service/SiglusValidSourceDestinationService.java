@@ -16,6 +16,13 @@
 package org.siglus.siglusapi.service;
 
 import static org.siglus.siglusapi.constant.FieldConstants.DOT;
+import static org.siglus.siglusapi.constant.HcConstants.HCB_FACILITY_CODE;
+import static org.siglus.siglusapi.constant.HcConstants.HCB_SERVICES;
+import static org.siglus.siglusapi.constant.HcConstants.HCM_FACILITY_CODE;
+import static org.siglus.siglusapi.constant.HcConstants.HCM_SERVICES;
+import static org.siglus.siglusapi.constant.HcConstants.HCN_FACILITY_CODE;
+import static org.siglus.siglusapi.constant.HcConstants.HCQ_FACILITY_CODE;
+import static org.siglus.siglusapi.constant.HcConstants.HCQ_SERVICES;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -40,6 +47,7 @@ import org.siglus.siglusapi.dto.android.enumeration.Destination;
 import org.siglus.siglusapi.dto.android.enumeration.Source;
 import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.repository.RequisitionGroupMembersRepository;
+import org.siglus.siglusapi.repository.SiglusFacilityRepository;
 import org.siglus.siglusapi.service.client.ValidSourceDestinationStockManagementService;
 import org.siglus.siglusapi.util.AndroidHelper;
 import org.siglus.siglusapi.util.SupportedProgramsHelper;
@@ -56,6 +64,7 @@ public class SiglusValidSourceDestinationService {
   private final NodeRepository nodeRepository;
   private final FacilityRepository facilityRepository;
   private final AndroidHelper androidHelper;
+  private final SiglusFacilityRepository siglusFacilityRepository;
 
   private Map<String, Collection<ValidSourceDestinationDto>> cacheKeyToValidSourceDestinationDto = new HashMap<>();
 
@@ -125,7 +134,27 @@ public class SiglusValidSourceDestinationService {
     Collection<ValidSourceDestinationDto> allDestinations = new ArrayList<>();
     allDestinations.addAll(facilityDestinations);
     allDestinations.addAll(commonDestinations);
-    return allDestinations;
+    return filterDestinationsForHcFacility(allDestinations, facilityId);
+  }
+
+  private Collection<ValidSourceDestinationDto> filterDestinationsForHcFacility(
+      Collection<ValidSourceDestinationDto> allDestinations, UUID facilityId) {
+    Facility facility = siglusFacilityRepository.findOne(facilityId);
+    switch (facility.getCode()) {
+      case HCM_FACILITY_CODE:
+        return allDestinations.stream().filter(item -> HCM_SERVICES.contains(item.getName()))
+            .collect(Collectors.toList());
+      case HCB_FACILITY_CODE:
+        return allDestinations.stream().filter(item -> HCB_SERVICES.contains(item.getName()))
+            .collect(Collectors.toList());
+      case HCN_FACILITY_CODE:
+        return Collections.emptyList();
+      case HCQ_FACILITY_CODE:
+        return allDestinations.stream().filter(item -> HCQ_SERVICES.contains(item.getName()))
+            .collect(Collectors.toList());
+      default:
+        return allDestinations;
+    }
   }
 
   private Collection<ValidSourceDestinationDto> getSourceDestinationsByFacilityIds(List<UUID> facilityIds,

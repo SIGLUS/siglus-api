@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.service;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.BDDMockito.given;
@@ -23,6 +24,9 @@ import static org.mockito.Matchers.anyList;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.siglus.siglusapi.constant.HcConstants.HCM_FACILITY_CODE;
+import static org.siglus.siglusapi.constant.HcConstants.HCN_FACILITY_CODE;
+import static org.siglus.siglusapi.constant.HcConstants.HCQ_FACILITY_CODE;
 
 import com.google.common.collect.Sets;
 import java.util.Arrays;
@@ -48,6 +52,7 @@ import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.FacilityTypeDto;
 import org.siglus.siglusapi.dto.RequisitionGroupMembersDto;
 import org.siglus.siglusapi.repository.RequisitionGroupMembersRepository;
+import org.siglus.siglusapi.repository.SiglusFacilityRepository;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.service.client.ValidSourceDestinationStockManagementService;
 import org.siglus.siglusapi.util.AndroidHelper;
@@ -79,6 +84,9 @@ public class SiglusValidSourceDestinationServiceTest {
 
   @Mock
   private FacilityRepository facilityRepository;
+
+  @Mock
+  private SiglusFacilityRepository siglusFacilityRepository;
 
   private final UUID programId = UUID.randomUUID();
 
@@ -113,6 +121,8 @@ public class SiglusValidSourceDestinationServiceTest {
 
   @Test
   public void shouldCallGetValidDestinationsWhenFindDestinations() {
+    when(siglusFacilityRepository.findOne(facilityId)).thenReturn(buildMockFacility(HCM_FACILITY_CODE));
+
     siglusValidSourceDestinationService.findDestinationsForOneProgram(programId, facilityId);
 
     verify(validSourceDestinationStockManagementService).getValidDestinations(programId, facilityId);
@@ -122,6 +132,7 @@ public class SiglusValidSourceDestinationServiceTest {
   public void shouldCallGetValidDestinationsMultipleTimesWhenFindDestinationsForAllProducts() {
     when(supportedProgramsHelper.findHomeFacilitySupportedProgramIds())
         .thenReturn(Sets.newHashSet(UUID.randomUUID(), UUID.randomUUID()));
+    when(siglusFacilityRepository.findOne(facilityId)).thenReturn(buildMockFacility(HCQ_FACILITY_CODE));
 
     siglusValidSourceDestinationService.findDestinationsForAllPrograms(facilityId);
 
@@ -148,6 +159,9 @@ public class SiglusValidSourceDestinationServiceTest {
 
   @Test
   public void shouldGetDestinationWhenFacilityInRequisitionGroup() {
+    // given
+    when(siglusFacilityRepository.findOne(facilityId)).thenReturn(buildMockFacility("HF0003"));
+
     // when
     List<String> destinationNameList = siglusValidSourceDestinationService.findDestinationsForAllPrograms(facilityId)
         .stream()
@@ -167,6 +181,7 @@ public class SiglusValidSourceDestinationServiceTest {
     // given
     when(facilityReferenceDataService.findOne(facilityId))
         .thenReturn(buildFacilityDtoByFacilityIdAndTypeCode(facilityId, FacilityTypeConstants.DPM));
+    when(siglusFacilityRepository.findOne(facilityId)).thenReturn(buildMockFacility("HF0001"));
 
     // when
     List<String> destinationNameList = siglusValidSourceDestinationService.findDestinationsForAllPrograms(facilityId)
@@ -176,6 +191,32 @@ public class SiglusValidSourceDestinationServiceTest {
 
     // then
     assertTrue(destinationNameList.contains(destinationName));
+  }
+
+  @Test
+  public void shouldGetEmptyListWhenFacilityIsHcn() {
+    // given
+    when(facilityReferenceDataService.findOne(facilityId))
+        .thenReturn(buildFacilityDtoByFacilityIdAndTypeCode(facilityId, FacilityTypeConstants.DPM));
+    when(siglusFacilityRepository.findOne(facilityId)).thenReturn(buildMockFacility(HCN_FACILITY_CODE));
+
+    // when
+    List<String> destinationNameList = siglusValidSourceDestinationService.findDestinationsForAllPrograms(facilityId)
+        .stream()
+        .map(ValidSourceDestinationDto::getName)
+        .collect(Collectors.toList());
+
+    // then
+    assertEquals(0, destinationNameList.size());
+  }
+
+  private Facility buildMockFacility(String facilityCode) {
+    Facility facility = new Facility();
+    facility.setId(facilityId);
+    facility.setCode(facilityCode);
+    facility.setActive(Boolean.TRUE);
+    facility.setEnabled(Boolean.TRUE);
+    return facility;
   }
 
   private void createDestinationData() {
