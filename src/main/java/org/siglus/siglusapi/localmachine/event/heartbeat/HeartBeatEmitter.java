@@ -17,10 +17,12 @@ package org.siglus.siglusapi.localmachine.event.heartbeat;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import javax.annotation.PostConstruct;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.siglus.siglusapi.localmachine.cdc.CdcListener;
+import org.siglus.siglusapi.localmachine.cdc.CdcOffsetBackingRepository;
 import org.siglus.siglusapi.localmachine.cdc.CdcRecord;
 import org.siglus.siglusapi.localmachine.domain.CdcHeartBeat;
 import org.siglus.siglusapi.repository.CdcHeartBeatRepository;
@@ -35,26 +37,44 @@ import org.springframework.util.CollectionUtils;
 @RequiredArgsConstructor
 @Slf4j
 public class HeartBeatEmitter implements CdcListener {
-  private static final int MAX_MINUTES_BEHIND = 3;
+  private static final int MAX_MINUTES_BEHIND_LAST_HEART_BEAT = 3;
+  private static final int MAX_MINUTES_BEHIND_STARTED = 10;
   private LocalDateTime lastHeartBeatTime;
+  private LocalDateTime startTime;
 
   private final CdcHeartBeatRepository cdcHeartBeatRepository;
+  private final CdcOffsetBackingRepository cdcOffsetBackingRepository;
   private final ApplicationContext context;
+
+
+  @PostConstruct
+  private void init() {
+    startTime = LocalDateTime.now();
+  }
 
   @Scheduled(fixedRate = 60 * 1000)
   public void emit() {
     List<CdcHeartBeat> heartBeats = cdcHeartBeatRepository.findAll();
+    CdcHeartBeat cdcHeartBeat;
     if (CollectionUtils.isEmpty(heartBeats)) {
-      CdcHeartBeat cdcHeartBeat = new CdcHeartBeat(LocalDateTime.now());
-      cdcHeartBeatRepository.save(cdcHeartBeat);
+      cdcHeartBeat = new CdcHeartBeat(LocalDateTime.now());
     } else {
-      CdcHeartBeat cdcHeartBeat = heartBeats.get(0);
+      cdcHeartBeat = heartBeats.get(0);
       cdcHeartBeat.setUpdatedTime(LocalDateTime.now());
     }
+    cdcHeartBeatRepository.save(cdcHeartBeat);
 
     if (lastHeartBeatTime != null
-            && lastHeartBeatTime.plusMinutes(MAX_MINUTES_BEHIND).isBefore(LocalDateTime.now())) {
+            && lastHeartBeatTime.plusMinutes(MAX_MINUTES_BEHIND_LAST_HEART_BEAT).isBefore(LocalDateTime.now())) {
       log.info("2 cdcHeartBeat lost");
+      cdcHeartBeatRepository.deleteDebeziumSlot();
+      System.exit(SpringApplication.exit(context));
+    }
+
+    if (lastHeartBeatTime == null
+            && startTime.plusMinutes(MAX_MINUTES_BEHIND_STARTED).isBefore(LocalDateTime.now())) {
+      log.info("debezium not working");
+      cdcOffsetBackingRepository.deleteAll();
       cdcHeartBeatRepository.deleteDebeziumSlot();
       System.exit(SpringApplication.exit(context));
     }
