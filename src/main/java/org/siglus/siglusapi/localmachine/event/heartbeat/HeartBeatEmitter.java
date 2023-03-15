@@ -66,14 +66,14 @@ public class HeartBeatEmitter implements CdcListener {
 
     if (lastHeartBeatTime != null
             && lastHeartBeatTime.plusMinutes(MAX_MINUTES_BEHIND_LAST_HEART_BEAT).isBefore(LocalDateTime.now())) {
-      log.info("2 cdcHeartBeat lost");
+      log.error("2 cdcHeartBeat lost, drop debezium slot and publication, exit process");
       cdcHeartBeatRepository.deleteDebeziumSlot();
       System.exit(SpringApplication.exit(context));
     }
 
     if (lastHeartBeatTime == null
             && startTime.plusMinutes(MAX_MINUTES_BEHIND_STARTED).isBefore(LocalDateTime.now())) {
-      log.info("debezium not working");
+      log.error("debezium not working, drop cdc_offset_backing, drop debezium slot and publication, exit process");
       cdcOffsetBackingRepository.deleteAll();
       cdcHeartBeatRepository.deleteDebeziumSlot();
       System.exit(SpringApplication.exit(context));
