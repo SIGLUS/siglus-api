@@ -91,6 +91,7 @@ import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.dto.VersionObjectReferenceDto;
 import org.openlmis.requisition.service.RequisitionService;
 import org.openlmis.requisition.service.referencedata.ApproveProductsAggregator;
+import org.openlmis.requisition.service.referencedata.ApprovedProductReferenceDataService;
 import org.openlmis.requisition.web.RequisitionController;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2Dto;
 import org.siglus.common.domain.OrderExternal;
@@ -222,6 +223,9 @@ public class SiglusOrderService {
 
   @Autowired
   private SiglusFacilityReferenceDataService facilityReferenceDataService;
+
+  @Autowired
+  private ApprovedProductReferenceDataService approvedProductReferenceDataService;
 
   @Autowired
   private SiglusFacilityRepository siglusFacilityRepository;
@@ -1054,14 +1058,14 @@ public class SiglusOrderService {
 
     UUID approverFacilityId = orderDto.getCreatedBy().getHomeFacilityId();
     UUID userHomeFacilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
-    // 10+ seconds cost when call following requisitionService.getApproveProduct
     UUID programId = requisition.getProgramId();
-    List<ApprovedProductDto> approverProducts = requisitionService.getApprovedProducts(approverFacilityId, programId);
+    List<ApprovedProductDto> approverProducts = approvedProductReferenceDataService.getApprovedProducts(
+        approverFacilityId, programId);
     List<ApprovedProductDto> userProducts;
     if (approverFacilityId.equals(userHomeFacilityId)) {
       userProducts = approverProducts;
     } else {
-      userProducts = requisitionService.getApprovedProducts(userHomeFacilityId, programId);
+      userProducts = approvedProductReferenceDataService.getApprovedProducts(userHomeFacilityId, programId);
     }
     Set<UUID> approverOrderableIds = getOrderableIds(approverProducts, programId);
     Set<UUID> userOrderableIds;
