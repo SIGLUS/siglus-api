@@ -29,6 +29,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 
 @Component
 @RequiredArgsConstructor
@@ -42,9 +43,21 @@ public class HeartBeatEmitter implements CdcListener {
 
   @Scheduled(fixedRate = 60 * 1000)
   public void emit() {
-    CdcHeartBeat cdcHeartBeat = new CdcHeartBeat(LocalDateTime.now());
-    cdcHeartBeatRepository.save(cdcHeartBeat);
-    lastHeartBeatTime = cdcHeartBeat.getCreatedTime();
+    List<CdcHeartBeat> heartBeats = cdcHeartBeatRepository.findAll();
+    if (CollectionUtils.isEmpty(heartBeats)) {
+      CdcHeartBeat cdcHeartBeat = new CdcHeartBeat(LocalDateTime.now());
+      cdcHeartBeatRepository.save(cdcHeartBeat);
+    } else {
+      CdcHeartBeat cdcHeartBeat = heartBeats.get(0);
+      cdcHeartBeat.setUpdatedTime(LocalDateTime.now());
+    }
+
+    if (lastHeartBeatTime != null
+            && lastHeartBeatTime.plusMinutes(MAX_MINUTES_BEHIND).isBefore(LocalDateTime.now())) {
+      log.info("2 cdcHeartBeat lost");
+      cdcHeartBeatRepository.deleteDebeziumSlot();
+      System.exit(SpringApplication.exit(context));
+    }
   }
 
   @Override
@@ -57,9 +70,6 @@ public class HeartBeatEmitter implements CdcListener {
   @Transactional
   @Override
   public void on(List<CdcRecord> records) {
-    if (lastHeartBeatTime.plusMinutes(MAX_MINUTES_BEHIND).isBefore(LocalDateTime.now())) {
-      cdcHeartBeatRepository.deleteDebeziumSlot();
-      System.exit(SpringApplication.exit(context));
-    }
+    lastHeartBeatTime = LocalDateTime.now();
   }
 }

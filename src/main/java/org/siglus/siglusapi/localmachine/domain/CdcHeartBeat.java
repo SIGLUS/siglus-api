@@ -34,6 +34,6 @@ import org.siglus.common.domain.BaseEntity;
 @NoArgsConstructor
 @Table(name = "cdc_heart_beat", schema = "localmachine")
 public class CdcHeartBeat extends BaseEntity {
-  @Column(name = "createdtime")
-  private LocalDateTime createdTime;
+  @Column(name = "updatedTime")
+  private LocalDateTime updatedTime;
 }

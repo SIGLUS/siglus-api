@@ -5,5 +5,5 @@
 CREATE TABLE localmachine.cdc_heart_beat
 (
     id            UUID PRIMARY KEY,
-    createdtime   TIMESTAMP WITH TIME ZONE NOT NULL
+    updatedTime   TIMESTAMP WITH TIME ZONE NOT NULL
 );
