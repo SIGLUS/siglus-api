@@ -88,23 +88,6 @@ public class FcScheduleService {
   private final StringRedisTemplate redisTemplate;
   private final FcIntegrationChangesRepository fcIntegrationChangesRepository;
 
-
-  @Scheduled(cron = "${fc.cmm.cron}", zone = TIME_ZONE_ID)
-  @Transactional
-  public void syncCmmsScheduler() {
-    String redisKey = "syncCmms";
-    processTask(redisKey,
-        () -> syncCmms(LocalDate.now().format(DateTimeFormatter.ofPattern(DATE_FORMAT))));
-  }
-
-  @Scheduled(cron = "${fc.cp.cron}", zone = TIME_ZONE_ID)
-  @Transactional
-  public void syncCpsScheduler() {
-    String redisKey = "syncCps";
-    processTask(redisKey,
-        () -> syncCps(LocalDate.now().format(DateTimeFormatter.ofPattern(DATE_FORMAT))));
-  }
-
   @Scheduled(cron = "${fc.receiptplan.cron}", zone = TIME_ZONE_ID)
   @Transactional
   public void syncReceiptPlansScheduler() {
@@ -115,7 +98,6 @@ public class FcScheduleService {
           lastUpdatedAt.format(getFormatter(RECEIPT_PLAN_API)));
     });
   }
-
 
   @Scheduled(cron = "${fc.issuevoucher.cron}", zone = TIME_ZONE_ID)
   @Transactional
