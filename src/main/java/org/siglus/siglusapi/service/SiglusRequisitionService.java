@@ -1766,8 +1766,10 @@ public class SiglusRequisitionService {
             (RequisitionLineItemV2Dto) lineItem);
         if (itemExtension != null) {
           RequisitionLineItemV2Dto lineItemV2Dto = (RequisitionLineItemV2Dto) lineItem;
+          if (itemExtension.getSuggestedQuantity() == null) {
+            lineItemV2Dto.setSuggestedQuantity(lineItemV2Dto.getRequestedQuantity());
+          }
           lineItemV2Dto.setAuthorizedQuantity(itemExtension.getAuthorizedQuantity());
-          lineItemV2Dto.setSuggestedQuantity(lineItemV2Dto.getRequestedQuantity());
           lineItemV2Dto.setEstimatedQuantity(itemExtension.getEstimatedQuantity());
           lineItemV2Dto.setExpirationDate(itemExtension.getExpirationDate());
         }
