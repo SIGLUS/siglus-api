@@ -1769,7 +1769,7 @@ public class SiglusRequisitionService {
           if (itemExtension.getSuggestedQuantity() == null) {
             lineItemV2Dto.setSuggestedQuantity(lineItemV2Dto.getRequestedQuantity());
           } else {
-            lineItemV2Dto.setSuggestedQuantity(lineItemV2Dto.getSuggestedQuantity());
+            lineItemV2Dto.setSuggestedQuantity(itemExtension.getSuggestedQuantity());
           }
           lineItemV2Dto.setAuthorizedQuantity(itemExtension.getAuthorizedQuantity());
           lineItemV2Dto.setEstimatedQuantity(itemExtension.getEstimatedQuantity());
