@@ -314,6 +314,7 @@ public class FcProductService implements ProcessDataService {
         .getProgramOrderablesFrom(product, codeToCustomProductsRegimens);
   }
 
+  @SuppressWarnings("PMD.CyclomaticComplexity")
   private FcIntegrationChanges getUpdatedOrderable(OrderableDto existed, ProductInfoDto current) {
     boolean isSame = true;
     StringBuilder updateContent = new StringBuilder();
