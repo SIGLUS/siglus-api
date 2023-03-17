@@ -1960,7 +1960,7 @@ public class SiglusRequisitionServiceTest {
     double correctionFactorForMmia = siglusRequisitionService.getCorrectionFactorForMmia(regimenCodeToPatientNumber,
         newArrayList(patientGroupDto));
     // then
-    assertEquals(10.0, correctionFactorForMmia, 0.0);
+    assertEquals(0.1, correctionFactorForMmia, 0.0);
   }
 
   @Test
@@ -1979,7 +1979,7 @@ public class SiglusRequisitionServiceTest {
     double correctionFactorForMmia = siglusRequisitionService.getCorrectionFactorForMmia(regimenCodeToPatientNumber,
         newArrayList(patientGroupDto));
     // then
-    assertEquals(100.0, correctionFactorForMmia, 0.0);
+    assertEquals(0.01, correctionFactorForMmia, 0.0);
   }
 
   @Test

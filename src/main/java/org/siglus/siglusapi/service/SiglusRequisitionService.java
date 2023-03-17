@@ -1399,7 +1399,7 @@ public class SiglusRequisitionService {
       }
     }
     totalPatientsInTreatment = Math.max(1, totalPatientsInTreatment);
-    return totalPatients * 1.0 / totalPatientsInTreatment;
+    return totalPatientsInTreatment * 1.0 / totalPatients;
   }
 
   Map<String, Integer> getRegimenCodeToPatientNumberForMmia(SiglusRequisitionDto siglusRequisitionDto) {
