@@ -15,6 +15,10 @@
 
 package org.siglus.siglusapi.dto.android.enumeration;
 
+import static org.siglus.siglusapi.constant.FacilityTypeConstants.AI;
+import static org.siglus.siglusapi.constant.FacilityTypeConstants.DDM;
+import static org.siglus.siglusapi.constant.FacilityTypeConstants.DPM;
+
 import java.util.UUID;
 import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.service.android.context.StockCardCreateContextHolder;
@@ -47,7 +51,19 @@ public enum MovementType {
   RECEIVE() {
     @Override
     public String getReason(String sourceName, Integer adjustment) {
-      return Source.findByName(sourceName).map(Enum::name)
+      String newSourceName = sourceName;
+      if (Source.UNPACK_FROM_KIT.name().equals(sourceName)) {
+        newSourceName = Source.UNPACK_FROM_KIT.getName();
+      } else if (sourceName.contains(DDM)) {
+        newSourceName = Source.DISTRICT_DDM.getName();
+      } else if (sourceName.contains(DPM)) {
+        newSourceName = Source.PROVINCE_DPM.getName();
+      } else if (sourceName.contains(AI)) {
+        newSourceName = Source.INTERMEDIATE_WAREHOUSE.getName();
+      } else {
+        newSourceName = Source.PROVINCE_DPM.getName();
+      }
+      return Source.findByName(newSourceName).map(Enum::name)
           .orElseThrow(() -> new NotFoundException(NO_SUCH_SOURCE + sourceName));
     }
 
