@@ -318,6 +318,11 @@ public class FcProductService implements ProcessDataService {
     boolean isSame = true;
     StringBuilder updateContent = new StringBuilder();
     StringBuilder originContent = new StringBuilder();
+    if (Boolean.FALSE.equals(existed.getExtraData().get(ACTIVE))
+        && Boolean.FALSE.equals(FcUtil.isActive(current.getStatus()))) {
+      log.info("[FC product] existed and current product are both inactive, ignore");
+      return null;
+    }
     if (!StringUtils.equals(existed.getDescription(), current.getDescription())) {
       log.info("[FC product] description different, existed: {}, current: {}",
           existed.getDescription(),
