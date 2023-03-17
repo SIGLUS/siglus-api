@@ -319,8 +319,7 @@ public class FcProductService implements ProcessDataService {
     boolean isSame = true;
     StringBuilder updateContent = new StringBuilder();
     StringBuilder originContent = new StringBuilder();
-    if (Boolean.FALSE.equals(existed.getExtraData().get(ACTIVE))
-        && Boolean.FALSE.equals(FcUtil.isActive(current.getStatus()))) {
+    if (isBothInactive(existed, current)) {
       log.info("[FC product] existed and current product are both inactive, ignore");
       return null;
     }
@@ -394,6 +393,14 @@ public class FcProductService implements ProcessDataService {
     return FcUtil.buildUpdateFcIntegrationChanges(PRODUCT_API, existed.getProductCode(),
         updateContent.toString(),
         originContent.toString(), isUpdateProgram);
+  }
+
+  private boolean isBothInactive(OrderableDto existed, ProductInfoDto current) {
+    boolean bothInactive = Boolean.FALSE.equals(existed.getExtraData().get(ACTIVE))
+        && Boolean.FALSE.equals(FcUtil.isActive(current.getStatus()));
+    boolean bothWithoutProgram = (existed.getPrograms() == null || existed.getPrograms().isEmpty())
+        && (current.getAreas() == null || current.getAreas().isEmpty());
+    return bothInactive || bothWithoutProgram;
   }
 
   private boolean isDifferentProductCategory(OrderableDto existed, ProductInfoDto current) {
