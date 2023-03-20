@@ -24,8 +24,9 @@ public class HcConstants {
   public static final String HCB_FACILITY_CODE = "01070100";
   public static final String HCN_FACILITY_CODE = "01030100";
   public static final String HCQ_FACILITY_CODE = "01040125";
+  private static final String COMMON_SERVICE_OUTROS = "Outros";
 
-  // 51 services
+  // 51 services + 1
   public static final Set<String> HCM_SERVICES = Sets.asSet("Bloco operatorio central", "Bloco operatorio SUR",
       "Cirurgia I", "Cirurgia II", "Cirurgia III", "Cirurgia pediatrica", "Departamento de Cirurgia",
       "Departamento de Ginecologia", "Departamento de Medicina", "Departamento de Ortopedia",
@@ -37,9 +38,10 @@ public class HcConstants {
       "Pediatria Isolamento (infecto contagiosa)", "Pequenas Cirurgias SUR", "Preparacoes Galenicas", "Psiquiatria",
       "Radiologia", "Servico de Anatomia Patologica", "Servico de cardiologia", "Servico de Dermatologia",
       "Servico de Esterilizacao", "Servico de Estomatologia", "Servico de Fisioterapia", "Servico de Lavandaria",
-      "Servico de Oncologia", "Servico de reanimacao-UCI", "Servicos HCM", "Traumatologia", "Unidade da DOR");
+      "Servico de Oncologia", "Servico de reanimacao-UCI", "Servicos HCM", "Traumatologia", "Unidade da DOR",
+      COMMON_SERVICE_OUTROS);
 
-  // 64 services
+  // 64 services + 1
   public static final Set<String> HCB_SERVICES = Sets.asSet("Bloco operatorio", "Departamento de Cirurgia (Cir 1 e 2)",
       "Departamento das Medicinas", "Departamento de Ortopedia", "Departamento de Pediatria",
       "Departamento das Pediatrias (UCIP, Latentes e Isolamentos)", "Farmacia geral (Publico)", "Farmacia de Urgencia",
@@ -55,9 +57,9 @@ public class HcConstants {
       "Departamento de Oftalmologia", "Laboratorio de Anatomia Patologica", "Morgue", "CERPIJ", "Incineradora",
       "Servico de Manutencao", "Farmacia das Enfermarias", "Medicina IV (Enf Modelo)", "Servicos de Urologia",
       "Oftalmologia Internamento", "Tisiologia", "Hospital de Dia Pediatrico", "SAAJ",
-      "Servico de Urgencia de Pediatria (SUP)", "Servico de Obstetricia", "Sala de Partos");
+      "Servico de Urgencia de Pediatria (SUP)", "Servico de Obstetricia", "Sala de Partos", COMMON_SERVICE_OUTROS);
 
-  // 50 services
+  // 50 services + 1
   public static final Set<String> HCQ_SERVICES = Sets.asSet("Bloco operatorio", "Cirurgia I", "Cirurgia II",
       "Ginecologia e Obstetricia", "Pediatria I", "Pediatria II", "Exames Especializados", "Farmacia geral",
       "Laboratorio", "Medicina I", "Medicina II", "Medicina Legal", "Ortopedia", "Otorrino", "Pequena Cirurgia",
@@ -66,5 +68,8 @@ public class HcConstants {
       "Banco de Sangue", "Consultas Externas", "Consulta do Trabalhador", "Ortoprotesia", "Oftalmologia",
       "Casa Mortoaria", "Manutencao", "Servico de Urgencia de Pediatria", "Direccao", "Servicos Gerais", "Neonatologia",
       "Accao Social", "Aprovisionamento", "Rouparia", "UCI", "Maternidade", "UTAO", "Clinica especial",
-      "Quarentena de Psicotropico", "Sand Nutricao", "M.M. Cirurgico", "Gabinete de Covid19");
+      "Quarentena de Psicotropico", "Sand Nutricao", "M.M. Cirurgico", "Gabinete de Covid19", COMMON_SERVICE_OUTROS);
+
+  // +1
+  public static final Set<String> HCN_SERVICES = Sets.asSet(COMMON_SERVICE_OUTROS);
 }

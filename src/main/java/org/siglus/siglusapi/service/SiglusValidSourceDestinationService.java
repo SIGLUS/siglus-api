@@ -21,6 +21,7 @@ import static org.siglus.siglusapi.constant.HcConstants.HCB_SERVICES;
 import static org.siglus.siglusapi.constant.HcConstants.HCM_FACILITY_CODE;
 import static org.siglus.siglusapi.constant.HcConstants.HCM_SERVICES;
 import static org.siglus.siglusapi.constant.HcConstants.HCN_FACILITY_CODE;
+import static org.siglus.siglusapi.constant.HcConstants.HCN_SERVICES;
 import static org.siglus.siglusapi.constant.HcConstants.HCQ_FACILITY_CODE;
 import static org.siglus.siglusapi.constant.HcConstants.HCQ_SERVICES;
 
@@ -148,7 +149,8 @@ public class SiglusValidSourceDestinationService {
         return allDestinations.stream().filter(item -> HCB_SERVICES.contains(item.getName()))
             .collect(Collectors.toList());
       case HCN_FACILITY_CODE:
-        return Collections.emptyList();
+        return allDestinations.stream().filter(item -> HCN_SERVICES.contains(item.getName()))
+            .collect(Collectors.toList());
       case HCQ_FACILITY_CODE:
         return allDestinations.stream().filter(item -> HCQ_SERVICES.contains(item.getName()))
             .collect(Collectors.toList());
