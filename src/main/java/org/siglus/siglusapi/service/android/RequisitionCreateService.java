@@ -687,10 +687,13 @@ public class RequisitionCreateService {
         .setValue(section2TotalValue + section3TotalValue + section4TotalValue);
 
     PatientGroupDto patientGroupDtoSection7 = patientNameToPatientGroupDto.get(NEW_SECTION_7);
-    float adjustmentValue = Float.valueOf(patientGroupDtoSection6.getColumns().get(TOTAL_COLUMN).getValue())
-        / Float.valueOf(patientGroupDtoSection5.getColumns().get(TOTAL_COLUMN).getValue());
-    patientGroupDtoSection7.getColumns().get(NEW_COLUMN)
-        .setValue(Float.isInfinite(adjustmentValue) ? 0 : Math.round(adjustmentValue));
+    if (patientGroupDtoSection5.getColumns().get(TOTAL_COLUMN).getValue() == 0) {
+      patientGroupDtoSection7.getColumns().get(NEW_COLUMN).setValue(0);
+    } else {
+      patientGroupDtoSection7.getColumns().get(NEW_COLUMN)
+          .setValue(Math.round(Float.valueOf(patientGroupDtoSection6.getColumns().get(TOTAL_COLUMN).getValue())
+              / Float.valueOf(patientGroupDtoSection5.getColumns().get(TOTAL_COLUMN).getValue())));
+    }
   }
 
   private void calculatePatientDispensedTotalBySection(PatientGroupDto patientGroupDtoSection,
