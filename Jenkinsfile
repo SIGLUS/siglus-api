@@ -43,18 +43,10 @@ pipeline {
         }
         stage('Deploy To QA') {
             when {
-                branch 'showcase'
-            }
-            steps {
-                deploy ("qa", env.IMAGE_TAG)
-            }
-        }
-        stage('Deploy To UAT') {
-            when {
                 branch 'release'
             }
             steps {
-                deploy ("uat", env.IMAGE_TAG)
+                deploy ("qa", env.IMAGE_TAG)
             }
         }
     }
