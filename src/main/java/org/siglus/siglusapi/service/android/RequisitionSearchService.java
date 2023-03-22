@@ -460,7 +460,7 @@ public class RequisitionSearchService {
           .authorizedQuantity(itemExtension == null ? null : itemExtension.getAuthorizedQuantity())
           .productCode(lineItem.getOrderableIdentity() == null ? null
               : orderableIdToCode.get(lineItem.getOrderableIdentity().getId()))
-          .expirationDate(itemExtension.getExpirationDate())
+          .expirationDate(itemExtension == null ? null : itemExtension.getExpirationDate())
           .totalLossesAndAdjustments(lineItem.getTotalLossesAndAdjustments())
           .build();
       requisitionLineItemRequestList.add(lineItemRequest);
