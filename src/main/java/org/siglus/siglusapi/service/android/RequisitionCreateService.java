@@ -88,6 +88,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.BooleanUtils;
+import org.apache.commons.lang.StringUtils;
 import org.openlmis.referencedata.domain.Code;
 import org.openlmis.referencedata.domain.ProcessingPeriod;
 import org.openlmis.referencedata.dto.BaseDto;
@@ -888,14 +889,26 @@ public class RequisitionCreateService {
     if (isEmpty(request.getUsageInformationLineItems())) {
       return;
     }
-    List<UsageInformationLineItemRequest> usageInformationLineItemRequests = request.getUsageInformationLineItems();
-    List<UsageInformationLineItem> usageInformationLineItems = usageInformationLineItemRequests.stream()
-        .map(t -> buildUsageInfos(requisitionDto.getId(), t))
+    List<UsageInformationLineItem> emptyValueLineItems = UsageInformationLineItem.from(
+        requisitionDto.getUsageInformationLineItems(), requisitionDto.getId());
+    List<UsageInformationLineItem> requestLineItems = request.getUsageInformationLineItems().stream()
+        .map(item -> buildUsageInfos(requisitionDto.getId(), item))
         .flatMap(Collection::stream)
         .collect(Collectors.toList());
-    List<UsageInformationServiceDto> usageInformationServiceDtos = UsageInformationServiceDto
-        .from(usageInformationLineItems);
-    requisitionDto.setUsageInformationLineItems(usageInformationServiceDtos);
+
+    List<UsageInformationLineItem> updatedLineItems = new ArrayList<>();
+    emptyValueLineItems.forEach(item -> {
+      requestLineItems.forEach(requestLineItem -> {
+        if (StringUtils.equals(requestLineItem.getService(), item.getService())
+            && StringUtils.equals(requestLineItem.getInformation(), item.getInformation())
+            && requestLineItem.getRequisitionId().equals(item.getRequisitionId())
+            && requestLineItem.getOrderableId().equals(item.getOrderableId())) {
+          item.setValue(requestLineItem.getValue());
+        }
+      });
+      updatedLineItems.add(item);
+    });
+    requisitionDto.setUsageInformationLineItems(UsageInformationServiceDto.from(updatedLineItems));
   }
 
   private List<UsageInformationLineItem> buildUsageInfos(UUID requisitionId,
