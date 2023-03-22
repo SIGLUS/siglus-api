@@ -64,8 +64,6 @@ public class StockManagementDraft extends BaseEntity {
   private String operator;
   private PhysicalInventorySubDraftEnum status;
   private Integer draftNumber;
-  private UUID destinationId;
-  private String documentNumber;
 
   @LazyCollection(FALSE)
   @OneToMany(cascade = ALL, mappedBy = "stockManagementDraft", orphanRemoval = true)
