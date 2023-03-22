@@ -107,6 +107,7 @@ import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 import org.siglus.siglusapi.dto.TestConsumptionOutcomeDto;
 import org.siglus.siglusapi.dto.TestConsumptionProjectDto;
 import org.siglus.siglusapi.dto.TestConsumptionServiceDto;
+import org.siglus.siglusapi.dto.UsageInformationInformationDto;
 import org.siglus.siglusapi.dto.UsageInformationOrderableDto;
 import org.siglus.siglusapi.dto.UsageInformationServiceDto;
 import org.siglus.siglusapi.dto.UserDto;
@@ -513,6 +514,7 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
         .thenReturn(Collections.singleton(malariaProgramId));
     when(siglusRequisitionExtensionService.buildRequisitionExtension(requisitionId, false, facilityId,
         malariaProgramId, endDate)).thenReturn(requisitionExtension);
+    when(siglusUsageReportService.initiateUsageReport(any())).thenReturn(buildMalariaSiglusRequisitionDto());
 
     // when
     service.createRequisition(buildMlRequisitionCreateRequest());
@@ -877,6 +879,13 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     return requisitionDto;
   }
 
+  private SiglusRequisitionDto buildMalariaSiglusRequisitionDto() {
+    SiglusRequisitionDto requisitionDto = new SiglusRequisitionDto();
+    requisitionDto.setId(requisitionId);
+    requisitionDto.setUsageInformationLineItems(buildUsageInformationLineItemDto());
+    return requisitionDto;
+  }
+
   private List<Regimen> buildRegimenDto() {
     Regimen regimen = new Regimen();
     regimen.setId(regimenId);
@@ -916,6 +925,45 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     totalSummaryLineDto.setName(total);
     totalSummaryLineDto.setColumns(totalColumns);
     return Arrays.asList(dtoNewColumn0, dtoNewColumn1, dtoLinhas, totalSummaryLineDto);
+  }
+
+  private List<UsageInformationServiceDto> buildUsageInformationLineItemDto() {
+    Map<String, UsageInformationInformationDto> informations = new HashMap<>();
+    Map<UUID, UsageInformationOrderableDto> orderables = new HashMap<>();
+    UsageInformationOrderableDto usageInformationOrderableDto = UsageInformationOrderableDto.builder().value(1).build();
+    orderables.put(malariaOrderableId, usageInformationOrderableDto);
+    UsageInformationInformationDto usageInformationInformationDto = new UsageInformationInformationDto();
+    usageInformationInformationDto.setOrderables(orderables);
+    informations.put("existentStock", usageInformationInformationDto);
+    UsageInformationServiceDto usageInformationServiceDto = new UsageInformationServiceDto();
+    usageInformationServiceDto.setInformations(informations);
+    usageInformationServiceDto.setService("HF");
+
+    Map<String, UsageInformationInformationDto> informations2 = new HashMap<>();
+    Map<UUID, UsageInformationOrderableDto> orderables2 = new HashMap<>();
+    UsageInformationOrderableDto usageInformationOrderableDto2 = UsageInformationOrderableDto.builder().value(2)
+        .build();
+    orderables2.put(malariaOrderableId, usageInformationOrderableDto2);
+    UsageInformationInformationDto usageInformationInformationDto2 = new UsageInformationInformationDto();
+    usageInformationInformationDto2.setOrderables(orderables2);
+    informations2.put("existentStock", usageInformationInformationDto2);
+    UsageInformationServiceDto usageInformationServiceDto2 = new UsageInformationServiceDto();
+    usageInformationServiceDto2.setInformations(informations2);
+    usageInformationServiceDto2.setService("newColumn0");
+
+    Map<String, UsageInformationInformationDto> informations3 = new HashMap<>();
+    Map<UUID, UsageInformationOrderableDto> orderables3 = new HashMap<>();
+    UsageInformationOrderableDto usageInformationOrderableDto3 = UsageInformationOrderableDto.builder().value(3)
+        .build();
+    orderables3.put(malariaOrderableId, usageInformationOrderableDto3);
+    UsageInformationInformationDto usageInformationInformationDto3 = new UsageInformationInformationDto();
+    usageInformationInformationDto3.setOrderables(orderables3);
+    informations3.put("existentStock", usageInformationInformationDto3);
+    UsageInformationServiceDto usageInformationServiceDto3 = new UsageInformationServiceDto();
+    usageInformationServiceDto3.setInformations(informations3);
+    usageInformationServiceDto3.setService("total");
+
+    return Arrays.asList(usageInformationServiceDto, usageInformationServiceDto2, usageInformationServiceDto3);
   }
 
   private List<PatientGroupDto> buildMmtbPatientGroupDto() {

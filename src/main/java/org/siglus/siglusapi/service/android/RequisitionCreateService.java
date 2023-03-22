@@ -901,7 +901,6 @@ public class RequisitionCreateService {
       requestLineItems.forEach(requestLineItem -> {
         if (StringUtils.equals(requestLineItem.getService(), item.getService())
             && StringUtils.equals(requestLineItem.getInformation(), item.getInformation())
-            && requestLineItem.getRequisitionId().equals(item.getRequisitionId())
             && requestLineItem.getOrderableId().equals(item.getOrderableId())) {
           item.setValue(requestLineItem.getValue());
         }
