@@ -52,4 +52,8 @@ public class MergedLineItemDto {
 
   @JsonFormat(shape = STRING)
   private LocalDate occurredDate;
+
+  private String documentNumber;
+  private UUID destinationId;
+  private UUID sourceId;
 }
