@@ -89,6 +89,11 @@ public class SiglusStockManagementDraftWithoutLocationController {
     return stockManagementDraftService.findStockManagementInitialDraft(programId, draftType);
   }
 
+  @GetMapping("/initial/{initialDraftId}")
+  public void getInitialDraftById(@PathVariable UUID initialDraftId) {
+    stockManagementDraftService.getInitialDraftById(initialDraftId);
+  }
+
   @DeleteMapping("/initial/{initialDraftId}")
   @ResponseStatus(NO_CONTENT)
   public void deleteInitialDraft(@PathVariable UUID initialDraftId) {

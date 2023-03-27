@@ -368,6 +368,8 @@ public class SiglusStockManagementDraftServiceTest {
     StockManagementInitialDraft foundInitialDraft = StockManagementInitialDraft.builder()
         .draftType(issueDraft)
         .destinationId(destinationId)
+        .facilityId(facilityId)
+        .draftType(issueDraft)
         .build();
     ArrayList<StockManagementInitialDraft> stockManagementInitialDrafts = newArrayList(
         foundInitialDraft);
