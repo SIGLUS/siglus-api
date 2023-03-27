@@ -20,8 +20,6 @@ import static java.util.stream.Collectors.toList;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.UUID;
-
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -36,9 +34,6 @@ import org.springframework.beans.BeanUtils;
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 public class StockManagementDraftDto extends StockManagementDraftBaseDto {
-
-  private UUID sourceDestinationId;
-  private String documentNumber;
 
   private List<StockManagementDraftLineItemDto> lineItems;
 

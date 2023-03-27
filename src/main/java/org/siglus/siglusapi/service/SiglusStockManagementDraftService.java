@@ -319,11 +319,9 @@ public class SiglusStockManagementDraftService {
     initialDraftDtoResponse.setCanMergeOrDeleteSubDrafts(canMergeOrDeleteSubDrafts);
     String draftType = initialDraftDto.getDraftType();
     if (FieldConstants.ISSUE.equals(draftType) || FieldConstants.ISSUE_WITH_LOCATION.equals(draftType)) {
-      if (savedInitialDraft.getDestinationId() != null) {
-        String destinationName = findDestinationName(savedInitialDraft.getDestinationId(),
-                savedInitialDraft.getFacilityId());
-        initialDraftDtoResponse.setDestinationName(destinationName);
-      }
+      String destinationName = findDestinationName(savedInitialDraft.getDestinationId(),
+          savedInitialDraft.getFacilityId());
+      initialDraftDtoResponse.setDestinationName(destinationName);
       return initialDraftDtoResponse;
     } else if (FieldConstants.RECEIVE.equals(draftType) || FieldConstants.RECEIVE_WITH_LOCATION.equals(draftType)) {
       String sourceName = findSourceName(savedInitialDraft.getSourceId(), savedInitialDraft.getFacilityId());
@@ -347,10 +345,8 @@ public class SiglusStockManagementDraftService {
     if (initialDraft != null) {
       StockManagementInitialDraftDto stockManagementInitialDraftDto = StockManagementInitialDraftDto.from(initialDraft);
       if (draftType.equals(FieldConstants.ISSUE) || draftType.equals(FieldConstants.ISSUE_WITH_LOCATION)) {
-        if (initialDraft.getDestinationId() != null) {
-          String destinationName = findDestinationName(initialDraft.getDestinationId(), facilityId);
-          stockManagementInitialDraftDto.setDestinationName(destinationName);
-        }
+        String destinationName = findDestinationName(initialDraft.getDestinationId(), facilityId);
+        stockManagementInitialDraftDto.setDestinationName(destinationName);
       } else if (draftType.equals(FieldConstants.RECEIVE) || draftType.equals(FieldConstants.RECEIVE_WITH_LOCATION)) {
         String sourceName = findSourceName(initialDraft.getSourceId(), initialDraft.getFacilityId());
         stockManagementInitialDraftDto.setSourceName(sourceName);
