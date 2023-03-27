@@ -110,7 +110,7 @@ public class SiglusStockManagementDraftWithLocationController {
   }
 
   @GetMapping("/initialDraft")
-  public StockManagementInitialDraftDto searchInitialDrafts(
+  public List<StockManagementInitialDraftDto> searchInitialDrafts(
       @RequestParam UUID programId,
       @RequestParam String draftType) {
     return stockManagementDraftService.findStockManagementInitialDraft(programId, draftType);

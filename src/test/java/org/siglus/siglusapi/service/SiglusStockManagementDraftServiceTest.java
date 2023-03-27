@@ -25,7 +25,6 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_DRAFT_EXISTS;
-import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_INITIAL_DRAFT_EXISTS;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_SUB_DRAFTS_MORE_THAN_TEN;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_SUB_DRAFT_EMPTY;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_SUB_DRAFT_NOT_ALL_SUBMITTED;
@@ -38,6 +37,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+
+import org.apache.commons.collections.CollectionUtils;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -383,10 +384,10 @@ public class SiglusStockManagementDraftServiceTest {
     when(siglusValidSourceDestinationService.findDestinationsForAllPrograms(facilityId))
         .thenReturn(validSourceDestinationDtos);
 
-    StockManagementInitialDraftDto stockManagementInitialDraft = siglusStockManagementDraftService
+    List<StockManagementInitialDraftDto> initialDrafts = siglusStockManagementDraftService
         .findStockManagementInitialDraft(programId, issueDraft);
 
-    assertThat(stockManagementInitialDraft.getDestinationName()).isEqualTo("issue-location");
+    assertThat(initialDrafts.get(0).getDestinationName()).isEqualTo("issue-location");
   }
 
   @Test
@@ -401,13 +402,10 @@ public class SiglusStockManagementDraftServiceTest {
         .findByProgramIdAndFacilityIdAndDraftType(programId, facilityId, "issue"))
         .thenReturn(Collections.emptyList());
 
-    StockManagementInitialDraftDto initialDraft = siglusStockManagementDraftService
+    List<StockManagementInitialDraftDto> initialDrafts = siglusStockManagementDraftService
         .findStockManagementInitialDraft(programId, issueDraft);
 
-    assertThat(initialDraft.getDestinationName()).isNull();
-    assertThat(initialDraft.getFacilityId()).isNull();
-    assertThat(initialDraft.getDraftType()).isNull();
-    assertThat(initialDraft.getProgramId()).isNull();
+    assertTrue(CollectionUtils.isEmpty(initialDrafts));
   }
 
   @Test
@@ -472,25 +470,6 @@ public class SiglusStockManagementDraftServiceTest {
         .thenReturn(Collections.emptyList());
 
     assertThat(initialReturnedDraftDto.getProgramId()).isEqualTo(programId);
-  }
-
-  @Test
-  public void shouldThrowExceptionWhenCreateInitialDraftExists() {
-    exception.expect(BusinessDataException.class);
-    exception.expectMessage(containsString(ERROR_STOCK_MANAGEMENT_INITIAL_DRAFT_EXISTS));
-
-    StockManagementInitialDraft initialDraft = StockManagementInitialDraft.builder()
-        .facilityId(facilityId)
-        .programId(programId)
-        .draftType(issueDraft)
-        .documentNumber("document-number").build();
-
-    when(stockManagementInitialDraftsRepository
-        .findByProgramIdAndFacilityIdAndDraftType(programId, facilityId, issueDraft))
-        .thenReturn(newArrayList(initialDraft));
-    doNothing().when(operatePermissionService).checkPermission(facilityId);
-
-    siglusStockManagementDraftService.createInitialDraft(initialDraftDto);
   }
 
   @Test

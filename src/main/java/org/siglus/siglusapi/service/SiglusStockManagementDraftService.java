@@ -305,9 +305,6 @@ public class SiglusStockManagementDraftService {
     operatePermissionService.checkPermission(initialDraftDto.getFacilityId());
     stockManagementDraftValidator.validateInitialDraft(initialDraftDto);
 
-    checkIfInitialDraftExists(initialDraftDto.getProgramId(), initialDraftDto.getFacilityId(),
-        initialDraftDto.getDraftType());
-
     StockManagementInitialDraft initialDraft = StockManagementInitialDraft
         .createInitialDraft(initialDraftDto);
 
@@ -331,7 +328,7 @@ public class SiglusStockManagementDraftService {
     return new StockManagementInitialDraftDto();
   }
 
-  public StockManagementInitialDraftDto findStockManagementInitialDraft(
+  public List<StockManagementInitialDraftDto> findStockManagementInitialDraft(
       UUID programId, String draftType) {
     UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
     operatePermissionService.checkPermission(facilityId);
@@ -341,20 +338,22 @@ public class SiglusStockManagementDraftService {
     boolean canMergeOrDeleteSubDrafts = authenticationHelper.isTheCurrentUserCanMergeOrDeleteSubDrafts();
     List<StockManagementInitialDraft> initialDrafts = stockManagementInitialDraftsRepository
         .findByProgramIdAndFacilityIdAndDraftType(programId, facilityId, draftType);
-    StockManagementInitialDraft initialDraft = initialDrafts.stream().findFirst().orElse(null);
-    if (initialDraft != null) {
-      StockManagementInitialDraftDto stockManagementInitialDraftDto = StockManagementInitialDraftDto.from(initialDraft);
-      if (draftType.equals(FieldConstants.ISSUE) || draftType.equals(FieldConstants.ISSUE_WITH_LOCATION)) {
-        String destinationName = findDestinationName(initialDraft.getDestinationId(), facilityId);
-        stockManagementInitialDraftDto.setDestinationName(destinationName);
-      } else if (draftType.equals(FieldConstants.RECEIVE) || draftType.equals(FieldConstants.RECEIVE_WITH_LOCATION)) {
-        String sourceName = findSourceName(initialDraft.getSourceId(), initialDraft.getFacilityId());
-        stockManagementInitialDraftDto.setSourceName(sourceName);
-      }
-      stockManagementInitialDraftDto.setCanMergeOrDeleteSubDrafts(canMergeOrDeleteSubDrafts);
-      return stockManagementInitialDraftDto;
+    if (CollectionUtils.isNotEmpty(initialDrafts)) {
+      return initialDrafts.stream().map(initialDraft -> {
+        StockManagementInitialDraftDto stockManagementInitialDraftDto =
+            StockManagementInitialDraftDto.from(initialDraft);
+        if (draftType.equals(FieldConstants.ISSUE) || draftType.equals(FieldConstants.ISSUE_WITH_LOCATION)) {
+          String destinationName = findDestinationName(initialDraft.getDestinationId(), facilityId);
+          stockManagementInitialDraftDto.setDestinationName(destinationName);
+        } else if (draftType.equals(FieldConstants.RECEIVE) || draftType.equals(FieldConstants.RECEIVE_WITH_LOCATION)) {
+          String sourceName = findSourceName(initialDraft.getSourceId(), initialDraft.getFacilityId());
+          stockManagementInitialDraftDto.setSourceName(sourceName);
+        }
+        stockManagementInitialDraftDto.setCanMergeOrDeleteSubDrafts(canMergeOrDeleteSubDrafts);
+        return stockManagementInitialDraftDto;
+      }).collect(toList());
     }
-    return new StockManagementInitialDraftDto();
+    return Collections.emptyList();
   }
 
   private String findSourceName(UUID sourceNodeId, UUID facilityId) {
