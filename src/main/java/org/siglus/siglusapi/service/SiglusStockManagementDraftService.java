@@ -518,9 +518,6 @@ public class SiglusStockManagementDraftService {
               .occurredDate(lineItem.getOccurredDate())
               .quantity(lineItem.getQuantity())
               .lotCode(lineItem.getLotCode())
-              .sourceId(lineItem.getSourceId())
-              .destinationId(lineItem.getDestinationId())
-              .documentNumber(lineItem.getDocumentNumber())
               .build()).collect(toList());
       mergedLineItemDtos.addAll(subDraftLineItemDto);
     });
