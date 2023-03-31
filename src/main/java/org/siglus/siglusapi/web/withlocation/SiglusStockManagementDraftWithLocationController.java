@@ -116,6 +116,11 @@ public class SiglusStockManagementDraftWithLocationController {
     return stockManagementDraftService.findStockManagementInitialDraft(programId, draftType);
   }
 
+  @GetMapping("/initialDraft/{initialDraftId}")
+  public StockManagementInitialDraftDto getInitialDraftById(@PathVariable UUID initialDraftId) {
+    return stockManagementDraftService.getInitialDraftById(initialDraftId);
+  }
+
   @PostMapping("/initialDraft")
   @ResponseStatus(CREATED)
   public StockManagementInitialDraftDto initialDraft(
