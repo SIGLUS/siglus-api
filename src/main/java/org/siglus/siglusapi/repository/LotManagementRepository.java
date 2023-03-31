@@ -44,7 +44,8 @@ public class LotManagementRepository {
       + "        WHERE result.totalstockonhand = 0)";
 
   private static final String SQL_FROM = "FROM referencedata.lots\n"
-      + "WHERE id NOT IN (\n"
+      + "WHERE active = false\n"
+      + "    AND id NOT IN (\n"
       + "        SELECT lotid\n "
       + "        FROM stockmanagement.stock_cards\n"
       + "        WHERE lotid IS NOT NULL)\n"
@@ -65,7 +66,7 @@ public class LotManagementRepository {
   private static final String INSERT_SQL = "INSERT INTO siglusintegration.expired_lots_backup (id, lotcode, expirationdate, manufacturedate, tradeitemid, active) "
       + "(SELECT id, lotcode, expirationdate, manufacturedate, tradeitemid, active " + SQL_FROM + ") ON CONFLICT DO NOTHING";
 
-  // clear lots which are not used by any facility
+  // clear lots which are not used by any facility, and status is inactive
   private static final String DELETE_SQL = "DELETE " + SQL_FROM;
 
   private final JdbcTemplate jdbc;
