@@ -214,6 +214,9 @@ public class SiglusAdministrationsService {
     }
 
     log.info("The facility extension info has changed; facilityId: {}", facilityId);
+    if (facilityExtension.getEnableLocationManagement() == null) {
+      facilityExtension.setEnableLocationManagement(false);
+    }
     facilityExtensionRepository.save(facilityExtension);
     return getFacilityInfo(siglusFacilityDto.getId());
   }
