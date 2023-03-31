@@ -60,6 +60,7 @@ import org.openlmis.stockmanagement.service.StockEventProcessor;
 import org.siglus.siglusapi.domain.FacilityLocations;
 import org.siglus.siglusapi.domain.StockCardExtension;
 import org.siglus.siglusapi.domain.StockCardLineItemExtension;
+import org.siglus.siglusapi.domain.StockEventProductRequested;
 import org.siglus.siglusapi.domain.StockManagementDraft;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.dto.StockEventForMultiUserDto;
@@ -71,6 +72,7 @@ import org.siglus.siglusapi.repository.CalculatedStockOnHandByLocationRepository
 import org.siglus.siglusapi.repository.FacilityLocationsRepository;
 import org.siglus.siglusapi.repository.StockCardExtensionRepository;
 import org.siglus.siglusapi.repository.StockCardLineItemExtensionRepository;
+import org.siglus.siglusapi.repository.StockEventProductRequestedRepository;
 import org.siglus.siglusapi.repository.StockManagementDraftRepository;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.validator.ActiveDraftValidator;
@@ -102,6 +104,7 @@ public class SiglusStockEventsService {
   private final CalculatedStockOnHandByLocationRepository calculatedStockOnHandByLocationRepository;
   private final CalculatedStocksOnHandByLocationService calculatedStocksOnHandByLocationService;
   private final SiglusProgramService siglusProgramService;
+  private final StockEventProductRequestedRepository stockEventProductRequestedRepository;
   @Value("${stockmanagement.kit.unpack.destination.nodeId}")
   private UUID unpackKitDestinationNodeId;
 
@@ -216,6 +219,27 @@ public class SiglusStockEventsService {
     eventDto.setLineItems(lineItems);
     UUID stockEventId = stockEventProcessor.process(eventDto);
     enhanceStockCard(eventDto, stockEventId, isByLocation);
+    saveStockEventProductRequested(stockEventId, eventDto);
+  }
+
+  private void saveStockEventProductRequested(UUID stockEventId, StockEventDto eventDto) {
+    List<StockEventLineItemDto> lineItemsWithRequestedQuantity = eventDto.getLineItems().stream()
+        .filter(lineItem -> lineItem.getRequestedQuantity() != null).collect(Collectors.toList());
+    if (CollectionUtils.isNotEmpty(lineItemsWithRequestedQuantity)) {
+      Map<UUID, List<StockEventLineItemDto>> orderableIdToLineItems =
+          lineItemsWithRequestedQuantity.stream().collect(Collectors.groupingBy(StockEventLineItemDto::getOrderableId));
+      List<StockEventProductRequested> requestedList = orderableIdToLineItems.entrySet().stream().map((entry) -> {
+        Integer sum = entry.getValue().stream()
+            .map(StockEventLineItemDto::getRequestedQuantity).reduce(Integer::sum).orElse(0);
+        return StockEventProductRequested
+            .builder()
+            .stockeventId(stockEventId)
+            .orderableId(entry.getKey())
+            .requestedQuantity(sum)
+            .build();
+      }).collect(Collectors.toList());
+      stockEventProductRequestedRepository.save(requestedList);
+    }
   }
 
   private void enhanceStockCard(StockEventDto eventDto, UUID stockEventId, boolean isByLocation) {
