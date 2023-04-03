@@ -717,6 +717,14 @@ traits:
           responses:
             200:
               description: GET initial draft with location
+
+        /{initialDraftId}:
+          get:
+            is: [ secured ]
+            responses:
+              200:
+                description: GET initial draft with location by id
+
         post:
           is: [ secured ]
           responses:
