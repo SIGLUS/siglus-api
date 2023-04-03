@@ -59,12 +59,12 @@ public class StocksOnHand {
         .distinct()
         .collect(toList());
     List<ProductLotStock> lotStocks = allLotStocks.stream().filter(s -> s.getCode().isLot()).collect(toList());
-    this.lots = lotStocks.stream().collect(toMap(ProductLotStock::getCode, ProductLotStock::getLot));
+    this.lots = lotStocks.stream().collect(toMap(ProductLotStock::getCode, ProductLotStock::getLot, (c1, c2) -> c1));
     List<ProductLotStock> noStocks = allLotStocks.stream()
         .filter(s -> !s.getCode().isLot() && !KitConstants.isKit(s.getCode().getProductCode()))
         .collect(toList());
     this.lotInventories = lotStocks.stream()
-        .collect(toMap(ProductLotStock::getCode, ProductLotStock::getInventoryDetail));
+        .collect(toMap(ProductLotStock::getCode, ProductLotStock::getInventoryDetail, (c1, c2) -> c1));
     for (Iterator<ProductLotStock> iterator = noStocks.iterator(); iterator.hasNext(); ) {
       ProductLotStock noStock = iterator.next();
       String productCode = noStock.getCode().getProductCode();
@@ -110,13 +110,14 @@ public class StocksOnHand {
   }
 
   public Map<ProductLotCode, Integer> getLotInventories() {
-    return allLotCodes.stream().collect(toMap(Function.identity(), c -> findInventory(c).getStockQuantity()));
+    return allLotCodes.stream().collect(toMap(Function.identity(), c -> findInventory(c).getStockQuantity(),
+        (i1, i2) -> i1));
   }
 
   public Map<ProductLotCode, InventoryDetail> getLotInventoriesByProduct(String productCode) {
     return allLotCodes.stream()
         .filter(c -> c.getProductCode().equals(productCode))
-        .collect(toMap(Function.identity(), this::findInventory));
+        .collect(toMap(Function.identity(), this::findInventory, (i1, i2) -> i1));
   }
 
   public Integer getStockQuantityByProduct(String productCode) {
