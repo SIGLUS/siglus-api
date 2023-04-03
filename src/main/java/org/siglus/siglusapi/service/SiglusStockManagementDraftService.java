@@ -531,6 +531,7 @@ public class SiglusStockManagementDraftService {
               .orderableId(lineItem.getOrderableId())
               .occurredDate(lineItem.getOccurredDate())
               .quantity(lineItem.getQuantity())
+              .requestedQuantity(lineItem.getRequestedQuantity())
               .lotCode(lineItem.getLotCode())
               .build()).collect(toList());
       mergedLineItemDtos.addAll(subDraftLineItemDto);
@@ -551,6 +552,7 @@ public class SiglusStockManagementDraftService {
               .orderableId(lineItem.getOrderableId())
               .occurredDate(lineItem.getOccurredDate())
               .quantity(lineItem.getQuantity())
+              .requestedQuantity(lineItem.getRequestedQuantity())
               .lotCode(lineItem.getLotCode())
               .stockOnHand(lineItem.getStockOnHand())
               .locationCode(lineItem.getLocationCode())
