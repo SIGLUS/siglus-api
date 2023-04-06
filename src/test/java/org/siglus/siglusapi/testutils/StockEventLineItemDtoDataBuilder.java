@@ -64,7 +64,7 @@ public class StockEventLineItemDtoDataBuilder {
     noSourceAndDestination();
     // [SIGLUS change start]
     // [change reason]: StockEventLineItems can have different documentationNo and programId.
-    return new StockEventLineItemDto(orderableId, lotId, quantity, extraData, occurredDate, reasonId,
+    return new StockEventLineItemDto(orderableId, lotId, quantity, null, extraData, occurredDate, reasonId,
         reasonFreeText, sourceId, sourceFreeText, destinationId, destinationFreeText,
         stockAdjustments, documentationNo, programId, null, null, id);
     // [SIGLUS change end]
@@ -76,7 +76,7 @@ public class StockEventLineItemDtoDataBuilder {
   public StockEventLineItemDto build() {
     // [SIGLUS change start]
     // [change reason]: StockEventLineItems can have different documentationNo and programId.
-    return new StockEventLineItemDto(orderableId, lotId, quantity, extraData, occurredDate, reasonId,
+    return new StockEventLineItemDto(orderableId, lotId, quantity, null, extraData, occurredDate, reasonId,
         reasonFreeText, sourceId, sourceFreeText, destinationId, destinationFreeText,
         stockAdjustments, documentationNo, programId, null, null, id);
     // [SIGLUS change end]

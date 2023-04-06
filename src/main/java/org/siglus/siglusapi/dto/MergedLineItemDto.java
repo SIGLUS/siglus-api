@@ -50,6 +50,8 @@ public class MergedLineItemDto {
 
   private Integer quantity;
 
+  private Integer requestedQuantity;
+
   @JsonFormat(shape = STRING)
   private LocalDate occurredDate;
 }

@@ -52,6 +52,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -71,11 +72,14 @@ import org.openlmis.referencedata.domain.Orderable;
 import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.requisition.dto.OrderableDto;
 import org.openlmis.requisition.service.RequisitionService;
+import org.openlmis.stockmanagement.domain.card.StockCard;
+import org.openlmis.stockmanagement.domain.event.CalculatedStockOnHand;
 import org.openlmis.stockmanagement.domain.physicalinventory.PhysicalInventory;
 import org.openlmis.stockmanagement.dto.ObjectReferenceDto;
 import org.openlmis.stockmanagement.dto.PhysicalInventoryDto;
 import org.openlmis.stockmanagement.dto.PhysicalInventoryLineItemDto;
 import org.openlmis.stockmanagement.exception.PermissionMessageException;
+import org.openlmis.stockmanagement.repository.CalculatedStockOnHandRepository;
 import org.openlmis.stockmanagement.repository.PhysicalInventoriesRepository;
 import org.openlmis.stockmanagement.repository.StockCardRepository;
 import org.openlmis.stockmanagement.service.PermissionService;
@@ -182,6 +186,9 @@ public class SiglusPhysicalInventoryServiceTest {
 
   @Mock
   private SiglusOrderableService siglusOrderableService;
+
+  @Mock
+  private CalculatedStockOnHandRepository calculatedStockOnHandRepository;
 
   private final UUID facilityId = UUID.randomUUID();
 
@@ -1029,6 +1036,7 @@ public class SiglusPhysicalInventoryServiceTest {
     // when
     SiglusPhysicalInventoryDto actualPhysicalInventoryDto = siglusPhysicalInventoryService
         .getSubLocationPhysicalInventoryDtoBySubDraftId(subDraftIds, false);
+    actualPhysicalInventoryDto.setLineItems(physicalInventoryLineItemDtos);
 
     // then
     assertEquals(siglusPhysicalInventoryDto, actualPhysicalInventoryDto);
@@ -1128,7 +1136,7 @@ public class SiglusPhysicalInventoryServiceTest {
     // when
     PhysicalInventoryDto actualPhysicalInventoryDto = siglusPhysicalInventoryService
         .getSubPhysicalInventoryDtoBySubDraftId(subDraftIds);
-
+    actualPhysicalInventoryDto.setLineItems(physicalInventoryLineItemDtos);
     // then
     assertEquals(physicalInventoryDto, actualPhysicalInventoryDto);
   }
@@ -1380,4 +1388,42 @@ public class SiglusPhysicalInventoryServiceTest {
     return physicalInventoryExtension;
   }
 
+  @Test
+  public void shouldFilterLineItemSohNotZero() {
+    // given
+    Map<String, String> extraData = new HashMap<>();
+    extraData.put("stockCardId", stockCardId.toString());
+    CalculatedStockOnHand calculatedStockOnHand = mockCalculatedStockOnHand();
+    PhysicalInventoryLineItemDto lineItemDto1 = PhysicalInventoryLineItemDto.builder().locationCode("11A11")
+        .orderableId(UUID.randomUUID()).build();
+    PhysicalInventoryLineItemDto lineItemDto2 = PhysicalInventoryLineItemDto.builder().locationCode("11A11")
+        .orderableId(UUID.randomUUID()).build();
+    PhysicalInventoryLineItemDto lineItemDto3 = PhysicalInventoryLineItemDto.builder().extraData(extraData).build();
+
+    List<PhysicalInventoryLineItemDto> lineItemDtos = Arrays.asList(lineItemDto1, lineItemDto2, lineItemDto3);
+
+    // when
+    when(calculatedStockOnHandRepository.findLatestStockOnHands(any(), any()))
+        .thenReturn(Lists.newArrayList(calculatedStockOnHand));
+    List<PhysicalInventoryLineItemDto> newLineItemDtos = siglusPhysicalInventoryService.filterLineItemSohNotZero(
+        lineItemDtos);
+    // then
+    assertEquals(newLineItemDtos.size(), 1);
+  }
+
+  private CalculatedStockOnHand mockCalculatedStockOnHand() {
+    CalculatedStockOnHand calculatedStockOnHand = new CalculatedStockOnHand();
+    calculatedStockOnHand.setStockOnHand(10);
+    calculatedStockOnHand.setStockCard(mockStockCard());
+    calculatedStockOnHand.setStockCardId(stockCardId);
+    return calculatedStockOnHand;
+  }
+
+  private StockCard mockStockCard() {
+    StockCard stockCard = new StockCard();
+    stockCard.setId(stockCardId);
+    stockCard.setFacilityId(facilityId);
+    stockCard.setOrderableId(orderableId);
+    return stockCard;
+  }
 }

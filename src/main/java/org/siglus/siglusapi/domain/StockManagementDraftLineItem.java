@@ -63,6 +63,7 @@ public class StockManagementDraftLineItem extends BaseEntity {
   private String lotCode;
   private String documentNumber;
   private Integer quantity;
+  private Integer requestedQuantity;
   private UUID destinationId;
   private String destinationFreeText;
   private UUID sourceId;

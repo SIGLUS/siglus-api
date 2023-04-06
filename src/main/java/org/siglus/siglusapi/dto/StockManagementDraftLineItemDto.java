@@ -44,6 +44,7 @@ public class StockManagementDraftLineItemDto implements VvmApplicable {
   private LocalDate expirationDate;
   private String documentNumber;
   private Integer quantity;
+  private Integer requestedQuantity;
   private UUID destinationId;
   private String destinationFreeText;
   private UUID sourceId;

@@ -195,7 +195,7 @@ public class SiglusStockCardLocationMovementServiceTest {
     stockCard.setId(stockCardId);
     movementDraft.setId(movementDraftId);
     when(siglusStockCardRepository
-        .findByFacilityIdAndProgramIdAndOrderableIdAndLotId(facilityId, programId, orderableId, lotId))
+        .findByFacilityIdAndOrderableIdAndLotId(facilityId, orderableId, lotId))
         .thenReturn(newArrayList(stockCard));
     when(siglusStockCardRepository.findByFacilityIdAndOrderableId(facilityId, orderableId))
         .thenReturn(newArrayList(stockCard));
@@ -300,7 +300,7 @@ public class SiglusStockCardLocationMovementServiceTest {
     exception.expectMessage(containsString(ERROR_STOCK_CARD_NOT_FOUND));
 
     when(siglusStockCardRepository
-        .findByFacilityIdAndProgramIdAndOrderableIdAndLotId(facilityId, programId, orderableId, lotId))
+        .findByFacilityIdAndOrderableIdAndLotId(facilityId, orderableId, lotId))
         .thenReturn(Collections.emptyList());
 
     service.createMovementLineItems(movementDto1);
@@ -312,7 +312,7 @@ public class SiglusStockCardLocationMovementServiceTest {
     exception.expectMessage(containsString(ERROR_MOVEMENT_DRAFT_NOT_FOUND));
 
     when(siglusStockCardRepository
-        .findByFacilityIdAndProgramIdAndOrderableIdAndLotId(facilityId, programId, orderableId, lotId))
+        .findByFacilityIdAndOrderableIdAndLotId(facilityId, orderableId, lotId))
         .thenReturn(newArrayList(stockCard));
     when(movementLineItemRepository.save(newArrayList(lineItem))).thenReturn(newArrayList(lineItem));
     when(movementDraftRepository.findByProgramIdAndFacilityId(programId, facilityId))
