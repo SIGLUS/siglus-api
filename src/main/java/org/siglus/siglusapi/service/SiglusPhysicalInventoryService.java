@@ -102,6 +102,7 @@ import org.siglus.siglusapi.repository.PhysicalInventorySubDraftRepository;
 import org.siglus.siglusapi.repository.SiglusStockCardRepository;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.util.CustomListSortHelper;
+import org.siglus.siglusapi.util.LocalMachineHelper;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.util.SupportedProgramsHelper;
 import org.springframework.beans.BeanUtils;
@@ -137,6 +138,8 @@ public class SiglusPhysicalInventoryService {
   private final SiglusOrderableService siglusOrderableService;
 
   private final SiglusArchiveProductService archiveProductService;
+
+  private final LocalMachineHelper localMachineHelper;
 
   @Transactional
   public PhysicalInventoryDto createAndSplitNewDraftForAllPrograms(PhysicalInventoryDto physicalInventoryDto,
@@ -951,8 +954,10 @@ public class SiglusPhysicalInventoryService {
       boolean initialPhysicalInventory, boolean withLocation) {
     List<PhysicalInventoryLineItemDto> physicalInventoryLineItems;
     if (initialPhysicalInventory) {
-      physicalInventoryLineItems = withLocation ? Collections.emptyList() : buildInitialInventoryLineItems(
-          Collections.singleton(physicalInventoryDto.getProgramId()), physicalInventoryDto.getFacilityId());
+      physicalInventoryLineItems = withLocation || localMachineHelper.isLocalMachine()
+          ? Collections.emptyList() :
+          buildInitialInventoryLineItems(Collections.singleton(physicalInventoryDto.getProgramId()),
+              physicalInventoryDto.getFacilityId());
     } else {
       physicalInventoryLineItems = withLocation ? buildPhysicalInventoryLineItemsWithLocation(physicalInventoryDto)
           : buildPhysicalInventoryLineItems(physicalInventoryDto);
