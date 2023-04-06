@@ -1029,7 +1029,6 @@ public class SiglusPhysicalInventoryServiceTest {
     // when
     SiglusPhysicalInventoryDto actualPhysicalInventoryDto = siglusPhysicalInventoryService
         .getSubLocationPhysicalInventoryDtoBySubDraftId(subDraftIds, false);
-    actualPhysicalInventoryDto.setLineItems(physicalInventoryLineItemDtos);
 
     // then
     assertEquals(siglusPhysicalInventoryDto, actualPhysicalInventoryDto);
@@ -1129,7 +1128,7 @@ public class SiglusPhysicalInventoryServiceTest {
     // when
     PhysicalInventoryDto actualPhysicalInventoryDto = siglusPhysicalInventoryService
         .getSubPhysicalInventoryDtoBySubDraftId(subDraftIds);
-    actualPhysicalInventoryDto.setLineItems(physicalInventoryLineItemDtos);
+
     // then
     assertEquals(physicalInventoryDto, actualPhysicalInventoryDto);
   }

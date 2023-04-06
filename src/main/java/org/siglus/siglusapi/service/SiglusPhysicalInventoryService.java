@@ -40,7 +40,6 @@ import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_SPLIT_NUM_TOO_LARGE;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -66,12 +65,10 @@ import org.openlmis.referencedata.dto.OrderableDto;
 import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.requisition.service.RequisitionService;
 import org.openlmis.stockmanagement.domain.card.StockCard;
-import org.openlmis.stockmanagement.domain.event.CalculatedStockOnHand;
 import org.openlmis.stockmanagement.domain.physicalinventory.PhysicalInventory;
 import org.openlmis.stockmanagement.dto.PhysicalInventoryDto;
 import org.openlmis.stockmanagement.dto.PhysicalInventoryLineItemDto;
 import org.openlmis.stockmanagement.exception.PermissionMessageException;
-import org.openlmis.stockmanagement.repository.CalculatedStockOnHandRepository;
 import org.openlmis.stockmanagement.repository.PhysicalInventoriesRepository;
 import org.openlmis.stockmanagement.repository.StockCardRepository;
 import org.openlmis.stockmanagement.web.PhysicalInventoryController;
@@ -141,7 +138,6 @@ public class SiglusPhysicalInventoryService {
   private final SiglusOrderableService siglusOrderableService;
 
   private final SiglusArchiveProductService archiveProductService;
-  private final CalculatedStockOnHandRepository calculatedStockOnHandRepository;
 
   private final LocalMachineHelper localMachineHelper;
 
@@ -266,27 +262,9 @@ public class SiglusPhysicalInventoryService {
     UUID programId = subDraftIds.size() > 1 ? ALL_PRODUCTS_PROGRAM_ID : physicalInventory.getProgramId();
     UUID physicalInventoryId = subDraftIds.size() > 1 ? ALL_PRODUCTS_UUID : physicalInventory.getId();
     physicalInventory.setId(physicalInventoryId);
-    physicalInventory.setProgramId(programId);
-    sortedSubPhysicalInventoryLineItemList = filterLineItemSohNotZero(sortedSubPhysicalInventoryLineItemList);
     physicalInventory.setLineItems(sortedSubPhysicalInventoryLineItemList);
+    physicalInventory.setProgramId(programId);
     return physicalInventory;
-  }
-
-  private List<PhysicalInventoryLineItemDto> filterLineItemSohNotZero(
-      List<PhysicalInventoryLineItemDto> sortedSubPhysicalInventoryLineItemList) {
-    List<PhysicalInventoryLineItemDto> lineItemDtos = new ArrayList<>();
-    sortedSubPhysicalInventoryLineItemList.forEach(item -> {
-      if (item.getExtraData() != null && item.getExtraData().containsKey(STOCK_CARD_ID)) {
-        String stockCardId = item.getExtraData().get(STOCK_CARD_ID);
-        List<CalculatedStockOnHand> latestStockOnHands = calculatedStockOnHandRepository.findLatestStockOnHands(
-            Collections.singletonList(UUID.fromString(stockCardId)),
-            ZonedDateTime.now());
-        if (CollectionUtils.isNotEmpty(latestStockOnHands) && latestStockOnHands.get(0).getStockOnHand() != 0) {
-          lineItemDtos.add(item);
-        }
-      }
-    });
-    return lineItemDtos;
   }
 
   public SiglusPhysicalInventoryDto getSubLocationPhysicalInventoryDtoBySubDraftId(
@@ -317,9 +295,8 @@ public class SiglusPhysicalInventoryService {
     UUID programId = subDraftIds.size() > 1 ? ALL_PRODUCTS_PROGRAM_ID : physicalInventory.getProgramId();
     UUID physicalInventoryId = subDraftIds.size() > 1 ? ALL_PRODUCTS_UUID : physicalInventory.getId();
     physicalInventory.setId(physicalInventoryId);
-    physicalInventory.setProgramId(programId);
-    sortedSubPhysicalInventoryLineItemList = filterLineItemSohNotZero(sortedSubPhysicalInventoryLineItemList);
     physicalInventory.setLineItems(sortedSubPhysicalInventoryLineItemList);
+    physicalInventory.setProgramId(programId);
     return physicalInventory;
   }
 
