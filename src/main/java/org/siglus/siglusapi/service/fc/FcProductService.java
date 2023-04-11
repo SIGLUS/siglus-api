@@ -415,6 +415,11 @@ public class FcProductService implements ProcessDataService {
     if (customProductsRegimensByCode != null) {
       return customProductsRegimensByCode.getCategoryType();
     }
+    if (current.getCategoryCode() != null
+        && categoryCodeToEntityMap.get(current.getCategoryCode()) == null) {
+      log.info(current.toString());
+      log.info("current.getCategoryCode: " + current.getCategoryCode());
+    }
     return current.getCategoryCode() == null
         ? "Default" : categoryCodeToEntityMap.get(current.getCategoryCode()).getDisplayName();
   }
