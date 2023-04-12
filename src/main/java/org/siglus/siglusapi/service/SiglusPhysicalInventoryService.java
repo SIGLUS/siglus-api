@@ -275,17 +275,18 @@ public class SiglusPhysicalInventoryService {
   public List<PhysicalInventoryLineItemDto> filterLineItemSohNotZero(
       List<PhysicalInventoryLineItemDto> sortedSubPhysicalInventoryLineItemList) {
     List<PhysicalInventoryLineItemDto> lineItemDtos = new ArrayList<>();
-    sortedSubPhysicalInventoryLineItemList.forEach(item -> {
+    for (PhysicalInventoryLineItemDto item : sortedSubPhysicalInventoryLineItemList) {
       if (item.getExtraData() != null && item.getExtraData().containsKey(STOCK_CARD_ID)) {
         String stockCardId = item.getExtraData().get(STOCK_CARD_ID);
         List<CalculatedStockOnHand> latestStockOnHands = calculatedStockOnHandRepository.findLatestStockOnHands(
             Collections.singletonList(UUID.fromString(stockCardId)),
             ZonedDateTime.now());
-        if (CollectionUtils.isNotEmpty(latestStockOnHands) && latestStockOnHands.get(0).getStockOnHand() != 0) {
-          lineItemDtos.add(item);
+        if (CollectionUtils.isNotEmpty(latestStockOnHands) && latestStockOnHands.get(0).getStockOnHand() == 0) {
+          continue;
         }
+        lineItemDtos.add(item);
       }
-    });
+    }
     return lineItemDtos;
   }
 
