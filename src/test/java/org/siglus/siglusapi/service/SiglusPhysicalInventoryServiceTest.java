@@ -1408,7 +1408,7 @@ public class SiglusPhysicalInventoryServiceTest {
     List<PhysicalInventoryLineItemDto> newLineItemDtos = siglusPhysicalInventoryService.filterLineItemSohNotZero(
         lineItemDtos);
     // then
-    assertEquals(newLineItemDtos.size(), 1);
+    assertEquals(newLineItemDtos.size(), 3);
   }
 
   private CalculatedStockOnHand mockCalculatedStockOnHand() {

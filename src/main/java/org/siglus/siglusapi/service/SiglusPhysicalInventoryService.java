@@ -276,15 +276,16 @@ public class SiglusPhysicalInventoryService {
       List<PhysicalInventoryLineItemDto> sortedSubPhysicalInventoryLineItemList) {
     List<PhysicalInventoryLineItemDto> lineItemDtos = new ArrayList<>();
     for (PhysicalInventoryLineItemDto item : sortedSubPhysicalInventoryLineItemList) {
-      if (item.getExtraData() != null && item.getExtraData().containsKey(STOCK_CARD_ID)) {
+      if (item.getExtraData() == null) {
+        lineItemDtos.add(item);
+      } else if (item.getExtraData() != null && item.getExtraData().containsKey(STOCK_CARD_ID)) {
         String stockCardId = item.getExtraData().get(STOCK_CARD_ID);
         List<CalculatedStockOnHand> latestStockOnHands = calculatedStockOnHandRepository.findLatestStockOnHands(
             Collections.singletonList(UUID.fromString(stockCardId)),
             ZonedDateTime.now());
-        if (CollectionUtils.isNotEmpty(latestStockOnHands) && latestStockOnHands.get(0).getStockOnHand() == 0) {
-          continue;
+        if (CollectionUtils.isNotEmpty(latestStockOnHands) && latestStockOnHands.get(0).getStockOnHand() != 0) {
+          lineItemDtos.add(item);
         }
-        lineItemDtos.add(item);
       }
     }
     return lineItemDtos;
@@ -926,7 +927,7 @@ public class SiglusPhysicalInventoryService {
     UUID programId = physicalInventoryDto.getProgramId();
     UUID facilityId = physicalInventoryDto.getFacilityId();
     List<StockCard> stockCards = siglusStockCardRepository.findByFacilityIdAndProgramId(
-            facilityId, programId);
+        facilityId, programId);
     Map<UUID, StockCard> stockCardIdMap = stockCards.stream()
         .collect(Collectors.toMap(StockCard::getId, Function.identity()));
     if (CollectionUtils.isEmpty(stockCardIdMap.keySet())) {
