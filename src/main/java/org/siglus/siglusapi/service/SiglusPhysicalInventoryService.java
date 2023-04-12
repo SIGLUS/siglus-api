@@ -278,6 +278,8 @@ public class SiglusPhysicalInventoryService {
     for (PhysicalInventoryLineItemDto item : sortedSubPhysicalInventoryLineItemList) {
       if (item.getExtraData() == null) {
         lineItemDtos.add(item);
+      } else if (item.getExtraData() != null && !item.getExtraData().containsKey(STOCK_CARD_ID)) {
+        lineItemDtos.add(item);
       } else if (item.getExtraData() != null && item.getExtraData().containsKey(STOCK_CARD_ID)) {
         String stockCardId = item.getExtraData().get(STOCK_CARD_ID);
         List<CalculatedStockOnHand> latestStockOnHands = calculatedStockOnHandRepository.findLatestStockOnHands(
