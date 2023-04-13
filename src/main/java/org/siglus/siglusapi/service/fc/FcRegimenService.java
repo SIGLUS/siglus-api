@@ -208,8 +208,7 @@ public class FcRegimenService implements ProcessDataService {
       Map<String, CustomProductsRegimens> codeToCustomProductsRegimens) {
     CustomProductsRegimens customProductsRegimensByCode = codeToCustomProductsRegimens.get(dto.getCode());
     if (null != customProductsRegimensByCode) {
-      return codeToCategoryMap.get("Adult".equals(customProductsRegimensByCode.getCategoryType())
-          ? "ADULTS" : customProductsRegimensByCode.getCategoryType().toUpperCase());
+      return codeToCategoryMap.get(customProductsRegimensByCode.getCategoryType());
     }
     return getRegimenCategory(dto, codeToCategoryMap);
   }
