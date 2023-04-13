@@ -57,9 +57,10 @@ public class FcProductMapper {
     this.categoryCodeToEntityMap = categoryCodeToEntityMap;
     categoryDisplayNameToCode.put("Default", "DEFAULT");
     categoryDisplayNameToCode.put("Other", "11");
-    categoryDisplayNameToCode.put("Adult", "12");
-    categoryDisplayNameToCode.put("Children", "13");
+    categoryDisplayNameToCode.put("Adulto", "001");
+    categoryDisplayNameToCode.put("Pediátrico", "002");
     categoryDisplayNameToCode.put("Solution", "14");
+    categoryDisplayNameToCode.put("Genérico", "003");
   }
 
   static OrderableDisplayCategoryDto getOrderableDisplayCategoryDtoFromCustomProductsRegimens(
