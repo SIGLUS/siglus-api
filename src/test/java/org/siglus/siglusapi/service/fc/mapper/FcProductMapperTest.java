@@ -93,7 +93,7 @@ public class FcProductMapperTest {
 
     Set<ProgramOrderableDto> programOrderableDtos =
         new FcProductMapper(null, null,
-            null).getProgramOrderablesFrom(productInfo, codeToCustomProductsRegimens);
+            null, null).getProgramOrderablesFrom(productInfo, codeToCustomProductsRegimens);
 
     assertThat(programOrderableDtos).isEmpty();
   }
@@ -103,7 +103,7 @@ public class FcProductMapperTest {
     ProductInfoDto productInfo = ProductInfoDto.builder().areas(emptyList()).status("inActivo").build();
 
     Set<ProgramOrderableDto> programOrderableDtos =
-        new FcProductMapper(null, null, null)
+        new FcProductMapper(null, null, null, null)
             .getProgramOrderablesFrom(productInfo, codeToCustomProductsRegimens);
 
     assertThat(programOrderableDtos).isEmpty();

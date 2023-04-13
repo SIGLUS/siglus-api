@@ -56,6 +56,8 @@ import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.openlmis.referencedata.domain.Code;
+import org.openlmis.referencedata.domain.OrderableDisplayCategory;
 import org.openlmis.referencedata.dto.OrderableChildDto;
 import org.openlmis.referencedata.dto.OrderableDto;
 import org.openlmis.referencedata.dto.ProgramOrderableDto;
@@ -78,6 +80,7 @@ import org.siglus.siglusapi.repository.BasicProductCodeRepository;
 import org.siglus.siglusapi.repository.CustomProductsRegimensRepository;
 import org.siglus.siglusapi.repository.ProgramOrderablesExtensionRepository;
 import org.siglus.siglusapi.repository.ProgramRealProgramRepository;
+import org.siglus.siglusapi.repository.SiglusOrderableDisplayCategoriesRepository;
 import org.siglus.siglusapi.service.SiglusOrderableService;
 import org.siglus.siglusapi.service.client.OrderableDisplayCategoryReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusFacilityTypeApprovedProductReferenceDataService;
@@ -131,6 +134,9 @@ public class FcProductServiceTest {
 
   @Mock
   private OrderableDisplayCategoryReferenceDataService categoryRefDataService;
+
+  @Mock
+  private SiglusOrderableDisplayCategoriesRepository orderableDisplayCategoriesRepository;
 
   @Mock
   private BasicProductCodeRepository basicProductCodeRepository;
@@ -210,6 +216,9 @@ public class FcProductServiceTest {
     categoryDto.setDisplayName(displayName);
     categoryDto.setDisplayOrder(displayOrder);
     when(categoryRefDataService.findAll()).thenReturn(newArrayList(categoryDto));
+
+    OrderableDisplayCategory orderableDisplayCategory = OrderableDisplayCategory.createNew(Code.code("category"));
+    when(orderableDisplayCategoriesRepository.findAll()).thenReturn(newArrayList(orderableDisplayCategory));
 
     BasicProductCode basicProductCode = new BasicProductCode();
     basicProductCode.setProductCode(fnm);

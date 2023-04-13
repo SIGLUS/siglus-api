@@ -35,7 +35,7 @@ public class FcConstants {
   public static final String GEOGRAPHIC_ZONE_API = "/region/regions";
 
   public static final String STATUS_ACTIVE = "Activo";
-  public static final String DEFAULT_REGIMEN_CATEGORY_CODE = "DEFAULT";
+  public static final String DEFAULT_REGIMEN_CATEGORY_NAME = "Default";
 
   public static final String DATE_FORMAT = "yyyyMMdd";
   public static final String MONTH_FORMAT = "MM-yyyy";

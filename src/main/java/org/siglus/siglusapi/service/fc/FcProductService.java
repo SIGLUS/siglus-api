@@ -17,6 +17,7 @@ package org.siglus.siglusapi.service.fc;
 
 import static com.google.common.collect.Maps.newHashMap;
 import static com.google.common.collect.Sets.newHashSet;
+import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
 import static org.siglus.siglusapi.constant.CacheConstants.SIGLUS_APPROVED_PRODUCTS;
 import static org.siglus.siglusapi.constant.CacheConstants.SIGLUS_APPROVED_PRODUCTS_BY_ORDERABLES;
@@ -75,6 +76,7 @@ import org.siglus.siglusapi.repository.BasicProductCodeRepository;
 import org.siglus.siglusapi.repository.CustomProductsRegimensRepository;
 import org.siglus.siglusapi.repository.ProgramOrderablesExtensionRepository;
 import org.siglus.siglusapi.repository.ProgramRealProgramRepository;
+import org.siglus.siglusapi.repository.SiglusOrderableDisplayCategoriesRepository;
 import org.siglus.siglusapi.service.SiglusOrderableService;
 import org.siglus.siglusapi.service.client.OrderableDisplayCategoryReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusFacilityTypeApprovedProductReferenceDataService;
@@ -104,6 +106,8 @@ public class FcProductService implements ProcessDataService {
   private final ProgramOrderablesExtensionRepository programOrderablesExtensionRepository;
   private final BasicProductCodeRepository basicProductCodeRepository;
 
+  private final SiglusOrderableDisplayCategoriesRepository orderableDisplayCategoriesRepository;
+
   private final CustomProductsRegimensRepository customProductsRegimensRepository;
 
   private final CacheManager cacheManager;
@@ -117,6 +121,8 @@ public class FcProductService implements ProcessDataService {
   private Map<UUID, String> programIdToCodeMap;
 
   private Map<String, OrderableDisplayCategoryDto> categoryCodeToEntityMap;
+
+  private Map<String, String> categoryDisplayNameToCodeMap;
 
   private Set<String> basicProductCodes;
 
@@ -264,6 +270,8 @@ public class FcProductService implements ProcessDataService {
         .collect(Collectors.toMap(OrderableDisplayCategoryDto::getCode, Function.identity()));
     basicProductCodes = basicProductCodeRepository.findAll().stream()
         .map(BasicProductCode::getProductCode).collect(toSet());
+    categoryDisplayNameToCodeMap = orderableDisplayCategoriesRepository.findAll().stream()
+        .collect(toMap(odc -> odc.getOrderedDisplayValue().getDisplayName(), odc -> odc.getCode().toString()));
   }
 
   private OrderableDto createOrderable(ProductInfoDto product) {
@@ -310,7 +318,7 @@ public class FcProductService implements ProcessDataService {
 
   private Set<ProgramOrderableDto> buildProgramOrderableDtos(ProductInfoDto product) {
     return new FcProductMapper(
-        realProgramCodeToEntityMap, programCodeToIdMap, categoryCodeToEntityMap)
+        realProgramCodeToEntityMap, programCodeToIdMap, categoryCodeToEntityMap, categoryDisplayNameToCodeMap)
         .getProgramOrderablesFrom(product, codeToCustomProductsRegimens);
   }
 

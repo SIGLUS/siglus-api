@@ -15,7 +15,6 @@
 
 package org.siglus.siglusapi.service.fc.mapper;
 
-import static com.google.common.collect.Maps.newHashMap;
 import static java.util.Collections.emptySet;
 import static java.util.Collections.singleton;
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
@@ -46,30 +45,27 @@ public class FcProductMapper {
 
   private final Map<String, OrderableDisplayCategoryDto> categoryCodeToEntityMap;
 
-  private static final Map<String, String> categoryDisplayNameToCode = newHashMap();
+  private final Map<String, String> categoryDisplayNameToCodeMap;
 
   public FcProductMapper(
       Map<String, ProgramRealProgram> realProgramCodeToEntityMap,
       Map<String, UUID> programCodeToIdMap,
-      Map<String, OrderableDisplayCategoryDto> categoryCodeToEntityMap) {
+      Map<String, OrderableDisplayCategoryDto> categoryCodeToEntityMap,
+      Map<String, String> categoryDisplayNameToCodeMap) {
     this.realProgramCodeToEntityMap = realProgramCodeToEntityMap;
     this.programCodeToIdMap = programCodeToIdMap;
     this.categoryCodeToEntityMap = categoryCodeToEntityMap;
-    categoryDisplayNameToCode.put("Default", "DEFAULT");
-    categoryDisplayNameToCode.put("Other", "11");
-    categoryDisplayNameToCode.put("Adult", "12");
-    categoryDisplayNameToCode.put("Children", "13");
-    categoryDisplayNameToCode.put("Solution", "14");
+    this.categoryDisplayNameToCodeMap = categoryDisplayNameToCodeMap;
   }
 
-  static OrderableDisplayCategoryDto getOrderableDisplayCategoryDtoFromCustomProductsRegimens(
+  OrderableDisplayCategoryDto getOrderableDisplayCategoryDtoFromCustomProductsRegimens(
       ProductInfoDto product,
       Map<String, OrderableDisplayCategoryDto> categoryCodeToEntityMap,
       Map<String, CustomProductsRegimens> codeToCustomProductsRegimens) {
     CustomProductsRegimens customProductsRegimens = codeToCustomProductsRegimens.get(product.getFnm());
     if (customProductsRegimens != null) {
       String categoryType = customProductsRegimens.getCategoryType();
-      return categoryCodeToEntityMap.get(categoryDisplayNameToCode.get(categoryType));
+      return categoryCodeToEntityMap.get(categoryDisplayNameToCodeMap.get(categoryType));
     }
     return getOrderableDisplayCategoryDto(product, categoryCodeToEntityMap);
   }

@@ -16,7 +16,7 @@
 package org.siglus.siglusapi.service.fc;
 
 import static com.google.common.collect.Maps.newHashMap;
-import static org.siglus.siglusapi.constant.FcConstants.DEFAULT_REGIMEN_CATEGORY_CODE;
+import static org.siglus.siglusapi.constant.FcConstants.DEFAULT_REGIMEN_CATEGORY_NAME;
 import static org.siglus.siglusapi.constant.FcConstants.REGIMEN_API;
 import static org.siglus.siglusapi.dto.fc.FcIntegrationResultDto.buildResult;
 
@@ -90,8 +90,8 @@ public class FcRegimenService implements ProcessDataService {
       AtomicInteger maxRegimenDisplayOrder = new AtomicInteger(allRegimens.stream()
           .mapToInt(Regimen::getDisplayOrder).max().orElse(0));
       List<RegimenCategory> allCategories = regimenCategoryRepository.findAll();
-      Map<String, RegimenCategory> regimenCategoryCodeToCategory = allCategories.stream()
-          .collect(Collectors.toMap(RegimenCategory::getCode, Function.identity()));
+      Map<String, RegimenCategory> nameToRegimenCategory = allCategories.stream()
+          .collect(Collectors.toMap(RegimenCategory::getName, Function.identity()));
       maxRegimenCategoryDisplayOrder = allCategories.stream()
           .mapToInt(RegimenCategory::getDisplayOrder).max().orElse(0);
       Set<Regimen> regimensToUpdate = new HashSet<>();
@@ -117,7 +117,7 @@ public class FcRegimenService implements ProcessDataService {
           log.info("[FC regimen] create regimen: {}", current);
           regimensToUpdate.add(Regimen.from(current, realProgramId, programId,
               getRegimenCategoryFromCustomProductsRegimensRepository(current,
-                  regimenCategoryCodeToCategory, codeToCustomProductsRegimens),
+                  nameToRegimenCategory, codeToCustomProductsRegimens),
               maxRegimenDisplayOrder.incrementAndGet()));
           createCounter.getAndIncrement();
           FcIntegrationChanges createChanges = FcUtil
@@ -127,7 +127,7 @@ public class FcRegimenService implements ProcessDataService {
           FcIntegrationChanges updateChanges = getUpdatedRegimen(existed, current, realProgram.getId(), programId);
           if (updateChanges != null) {
             log.info("[FC regimen] update regimen, existed: {}, current: {}", existed, current);
-            regimensToUpdate.add(merge(existed, current, realProgramId, programId, regimenCategoryCodeToCategory));
+            regimensToUpdate.add(merge(existed, current, realProgramId, programId, nameToRegimenCategory));
             updateCounter.getAndIncrement();
             fcIntegrationChangesList.add(updateChanges);
           } else {
@@ -204,23 +204,22 @@ public class FcRegimenService implements ProcessDataService {
   }
 
   private RegimenCategory getRegimenCategoryFromCustomProductsRegimensRepository(RegimenDto dto,
-      Map<String, RegimenCategory> codeToCategoryMap,
+      Map<String, RegimenCategory> nameToRegimenCategory,
       Map<String, CustomProductsRegimens> codeToCustomProductsRegimens) {
     CustomProductsRegimens customProductsRegimensByCode = codeToCustomProductsRegimens.get(dto.getCode());
     if (null != customProductsRegimensByCode) {
-      return codeToCategoryMap.get("Adult".equals(customProductsRegimensByCode.getCategoryType())
-          ? "ADULTS" : customProductsRegimensByCode.getCategoryType().toUpperCase());
+      return nameToRegimenCategory.get(customProductsRegimensByCode.getCategoryType());
     }
-    return getRegimenCategory(dto, codeToCategoryMap);
+    return getRegimenCategory(dto, nameToRegimenCategory);
   }
 
   private RegimenCategory getRegimenCategory(RegimenDto dto,
-      Map<String, RegimenCategory> codeToCategoryMap) {
+      Map<String, RegimenCategory> nameToRegimenCategory) {
     if (dto.getCategoryCode() == null) {
       // return default category
-      return codeToCategoryMap.get(DEFAULT_REGIMEN_CATEGORY_CODE);
+      return nameToRegimenCategory.get(DEFAULT_REGIMEN_CATEGORY_NAME);
     }
-    RegimenCategory dbCategory = codeToCategoryMap.get(dto.getCategoryCode());
+    RegimenCategory dbCategory = nameToRegimenCategory.get(dto.getCategoryDescription());
     if (dbCategory == null) {
       return RegimenCategory
           .builder()
