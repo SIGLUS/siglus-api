@@ -1329,7 +1329,7 @@ public class SiglusRequisitionService {
 
     List<Orderable> orderables = new ArrayList<>();
     if (!orderableIds.isEmpty()) {
-      orderables = orderableRepository.findAllByIds(orderableIds);
+      orderables = orderableRepository.findLatestByIds(orderableIds);
     }
 
     return orderables.stream()

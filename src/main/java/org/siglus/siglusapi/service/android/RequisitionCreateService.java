@@ -251,7 +251,6 @@ public class RequisitionCreateService {
         .orElseThrow(() -> InvalidProgramCodeException.requisition(programCode));
     UUID homeFacilityId = user.getHomeFacilityId();
     checkPermission(() -> permissionService.canInitRequisition(programId, homeFacilityId));
-    checkSupportedProducts(homeFacilityId, programId, request);
     Requisition newRequisition = RequisitionBuilder.newRequisition(homeFacilityId, programId, request.getEmergency());
     newRequisition.setTemplate(getRequisitionTemplate(programId, homeFacilityId));
     newRequisition.setStatus(RequisitionStatus.INITIATED);
