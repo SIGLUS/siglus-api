@@ -95,7 +95,6 @@ import org.siglus.common.repository.ProgramAdditionalOrderableRepository;
 import org.siglus.siglusapi.domain.AppInfo;
 import org.siglus.siglusapi.domain.HfCmm;
 import org.siglus.siglusapi.domain.PodRequestBackup;
-import org.siglus.siglusapi.domain.ProgramOrderablesExtension;
 import org.siglus.siglusapi.domain.RequisitionRequestBackup;
 import org.siglus.siglusapi.domain.ResyncInfo;
 import org.siglus.siglusapi.domain.SiglusReportType;
@@ -127,7 +126,6 @@ import org.siglus.siglusapi.exception.OrderNotFoundException;
 import org.siglus.siglusapi.repository.AppInfoRepository;
 import org.siglus.siglusapi.repository.FacilityCmmsRepository;
 import org.siglus.siglusapi.repository.PodRequestBackupRepository;
-import org.siglus.siglusapi.repository.ProgramOrderablesExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionRequestBackupRepository;
 import org.siglus.siglusapi.repository.ResyncInfoRepository;
 import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
@@ -271,8 +269,6 @@ public class MeServiceTest {
   private ResyncInfoRepository resyncInfoRepository;
 
   @Mock
-  private ProgramOrderablesExtensionRepository programOrderablesExtensionRepository;
-  @Mock
   private SiglusValidReasonAssignmentService validReasonAssignmentService;
 
   @Mock
@@ -376,9 +372,6 @@ public class MeServiceTest {
     when(programsHelper.findHomeFacilitySupportedProgramIds()).thenReturn(ImmutableSet.of(programId1, programId2));
     when(orderableDataService.searchOrderables(any(), any(), any()))
         .thenReturn(new PageImpl<>(asList(mockOrderable1(), mockOrderable2(), mockOrderable3())));
-    when(programOrderablesExtensionRepository.findAllByOrderableIdIn(any()))
-        .thenReturn(asList(mockProgramOrderableExtension1(), mockProgramOrderableExtension2(),
-            mockProgramOrderableExtension3()));
     when(requisitionService.getApprovedProductsWithoutAdditional(facilityId, programId1))
         .thenReturn(asList(mockApprovedProduct1(), mockApprovedProduct2()));
     when(requisitionService.getApprovedProductsWithoutAdditional(facilityId, programId2))
@@ -913,7 +906,6 @@ public class MeServiceTest {
     assertFalse(product.getIsHiv());
     assertFalse(product.getIsNos());
     assertEquals(oldTime.toInstant(), product.getLastUpdated());
-    assertTrue(product.getShowInReport());
   }
 
   private void assertProduct2(ProductResponse product) {
@@ -936,7 +928,6 @@ public class MeServiceTest {
     assertFalse(product.getIsHiv());
     assertFalse(product.getIsNos());
     assertEquals(latestTime.toInstant(), product.getLastUpdated());
-    assertFalse(product.getShowInReport());
   }
 
   private void assertProduct3(ProductResponse product) {
@@ -956,7 +947,6 @@ public class MeServiceTest {
     assertFalse(product.getIsHiv());
     assertFalse(product.getIsNos());
     assertEquals(latestTime.toInstant(), product.getLastUpdated());
-    assertTrue(product.getShowInReport());
   }
 
   private LotDto mockLotDto(String lotCode, UUID lotId, UUID tradeItemId) {
@@ -965,27 +955,6 @@ public class MeServiceTest {
     lotDto.setId(lotId);
     lotDto.setTradeItemId(tradeItemId);
     return lotDto;
-  }
-
-  private ProgramOrderablesExtension mockProgramOrderableExtension1() {
-    return ProgramOrderablesExtension.builder()
-        .orderableId(productId1)
-        .showInReport(true)
-        .build();
-  }
-
-  private ProgramOrderablesExtension mockProgramOrderableExtension2() {
-    return ProgramOrderablesExtension.builder()
-        .orderableId(productId2)
-        .showInReport(false)
-        .build();
-  }
-
-  private ProgramOrderablesExtension mockProgramOrderableExtension3() {
-    return ProgramOrderablesExtension.builder()
-        .orderableId(productId3)
-        .showInReport(true)
-        .build();
   }
 
   private org.openlmis.referencedata.dto.OrderableDto mockOrderable1() {

@@ -15,7 +15,6 @@
 
 package org.siglus.siglusapi.service.android;
 
-import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
@@ -30,7 +29,6 @@ import java.time.chrono.ChronoZonedDateTime;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -72,7 +70,6 @@ import org.siglus.siglusapi.domain.AppInfo;
 import org.siglus.siglusapi.domain.HfCmm;
 import org.siglus.siglusapi.domain.PodExtension;
 import org.siglus.siglusapi.domain.PodRequestBackup;
-import org.siglus.siglusapi.domain.ProgramOrderablesExtension;
 import org.siglus.siglusapi.domain.RequisitionRequestBackup;
 import org.siglus.siglusapi.domain.ResyncInfo;
 import org.siglus.siglusapi.domain.SiglusReportType;
@@ -110,7 +107,6 @@ import org.siglus.siglusapi.repository.FacilityCmmsRepository;
 import org.siglus.siglusapi.repository.LotNativeRepository;
 import org.siglus.siglusapi.repository.PodExtensionRepository;
 import org.siglus.siglusapi.repository.PodRequestBackupRepository;
-import org.siglus.siglusapi.repository.ProgramOrderablesExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionRequestBackupRepository;
 import org.siglus.siglusapi.repository.ResyncInfoRepository;
 import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
@@ -194,8 +190,6 @@ public class MeService {
   private final PodExtensionRepository podExtensionRepository;
   private final MeCreateRequisitionService meCreateRequisitionService;
   private final AndroidProofOfDeliverySyncedEmitter proofOfDeliverySyncedEmitter;
-
-  private final ProgramOrderablesExtensionRepository programOrderablesExtensionRepository;
 
   public FacilityResponse getCurrentFacility() {
     FacilityDto facilityDto = getCurrentFacilityInfo();
@@ -288,21 +282,9 @@ public class MeService {
           return dto;
         })
         .collect(toList());
-
-    Set<UUID> orderableIds = approvedProducts.stream()
-        .filter(p -> filterByLastUpdated(p, lastSyncTime))
-        .map(OrderableDto::getId)
-        .collect(Collectors.toSet());
-
-    Map<UUID, Boolean> orderableIdToShowInReport = buildShowInReportFlag(orderableIds);
-
     List<ProductResponse> filteredProducts = approvedProducts.stream()
         .filter(p -> filterByLastUpdated(p, lastSyncTime))
-        .map(orderable -> {
-          ProductResponse productResponse = mapper.toResponse(orderable, allProducts, productIdToAdditionalProgramCode);
-          productResponse.setShowInReport(orderableIdToShowInReport.getOrDefault(orderable.getId(), Boolean.FALSE));
-          return productResponse;
-        })
+        .map(orderable -> mapper.toResponse(orderable, allProducts, productIdToAdditionalProgramCode))
         .collect(toList());
     syncResponse.setProducts(filteredProducts);
     filteredProducts.stream()
@@ -311,21 +293,6 @@ public class MeService {
         .max()
         .ifPresent(syncResponse::setLastSyncTime);
     return syncResponse;
-  }
-
-  private Map<UUID, Boolean> buildShowInReportFlag(Set<UUID> orderableIds) {
-    Map<UUID, Boolean> orderableIdToShowInReport = new HashMap<>();
-    List<ProgramOrderablesExtension> allExtensions = programOrderablesExtensionRepository
-        .findAllByOrderableIdIn(orderableIds);
-    Map<UUID, List<ProgramOrderablesExtension>> orderableIdToExtensions = allExtensions.stream()
-        .collect(groupingBy(ProgramOrderablesExtension::getOrderableId));
-
-    orderableIdToExtensions.entrySet().forEach(entry -> {
-      Boolean showInReport = entry.getValue().stream().map(ProgramOrderablesExtension::getShowInReport)
-          .findFirst().orElse(Boolean.FALSE);
-      orderableIdToShowInReport.put(entry.getKey(), showInReport);
-    });
-    return orderableIdToShowInReport;
   }
 
   public CreateStockCardResponse createStockCards(List<StockCardCreateRequest> requests) {
