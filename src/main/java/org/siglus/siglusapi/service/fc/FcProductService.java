@@ -229,6 +229,15 @@ public class FcProductService implements ProcessDataService {
     Set<ProgramOrderablesExtension> extensions =
         getProgramOrderablesExtensionsForOneProduct(product, orderableId,
             realProgramCodeToEntityMap);
+    Set<UUID> orderableIds = programOrderablesExtensionRepository.findAll().stream()
+        .map(ProgramOrderablesExtension::getOrderableId).collect(toSet());
+    for (ProgramOrderablesExtension extension : extensions) {
+      if (orderableIds.contains(extension.getOrderableId())) {
+        ProgramOrderablesExtension programOrderablesExtension = programOrderablesExtensionRepository
+            .findAllByOrderableId(orderableId).get(0);
+        extension.setId(programOrderablesExtension.getId());
+      }
+    }
     programOrderablesExtensionRepository.save(extensions);
   }
 
