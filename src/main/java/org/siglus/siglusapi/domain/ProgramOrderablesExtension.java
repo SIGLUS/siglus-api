@@ -43,4 +43,6 @@ public class ProgramOrderablesExtension extends BaseEntity {
   private String realProgramCode;
 
   private String realProgramName;
+
+  private Boolean showInReport;
 }
