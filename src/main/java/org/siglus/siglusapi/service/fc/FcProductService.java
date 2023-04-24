@@ -114,7 +114,7 @@ public class FcProductService implements ProcessDataService {
 
   private static final String SYSTEM_DEFAULT_MANUFACTURER = "Mozambique";
 
-  private static final String DEFAULT_program_orderable_extension_UNIT = "each";
+  private static final String DEFAULT_UNIT = "each";
 
   private Map<String, ProgramRealProgram> realProgramCodeToEntityMap;
 
@@ -235,7 +235,7 @@ public class FcProductService implements ProcessDataService {
         .map(ProgramOrderablesExtension::getOrderableId).collect(toSet());
     for (ProgramOrderablesExtension extension : extensions) {
       if (extension.getUnit() == null) {
-        extension.setUnit(DEFAULT_program_orderable_extension_UNIT);
+        extension.setUnit(DEFAULT_UNIT);
       }
       if (orderableIds.contains(extension.getOrderableId())) {
         ProgramOrderablesExtension programOrderablesExtension = programOrderablesExtensionRepository
