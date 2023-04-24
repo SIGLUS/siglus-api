@@ -792,7 +792,7 @@ public class SiglusRequisitionServiceTest {
     RegimenOrderable regimenOrderable = mockRegimenOrderable();
     when(regimenOrderableRepository.findByMappingKeyIn(newHashSet("1"))).thenReturn(newHashSet(regimenOrderable));
     Orderable orderable = new Orderable();
-    when(orderableRepository.findAllByIds(newHashSet(orderableId))).thenReturn(newArrayList(orderable));
+    when(orderableRepository.findLatestByIds(newHashSet(orderableId))).thenReturn(newArrayList(orderable));
 
     SiglusRequisitionDto updatedDto = new SiglusRequisitionDto();
     BeanUtils.copyProperties(requisitionV2Dto, updatedDto);
@@ -1256,7 +1256,7 @@ public class SiglusRequisitionServiceTest {
     RegimenOrderable regimenOrderable = mockRegimenOrderable();
     when(regimenOrderableRepository.findByMappingKeyIn(newHashSet("1"))).thenReturn(newHashSet(regimenOrderable));
     Orderable orderable = new Orderable();
-    when(orderableRepository.findAllByIds(newHashSet(orderableId))).thenReturn(newArrayList(orderable));
+    when(orderableRepository.findLatestByIds(newHashSet(orderableId))).thenReturn(newArrayList(orderable));
 
     // when
     SiglusRequisitionDto requisitionDto = siglusRequisitionService.updateRequisition(
