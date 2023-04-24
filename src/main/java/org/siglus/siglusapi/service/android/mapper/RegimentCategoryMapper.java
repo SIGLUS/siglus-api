@@ -18,7 +18,6 @@ package org.siglus.siglusapi.service.android.mapper;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Named;
-import org.siglus.siglusapi.domain.Regimen;
 import org.siglus.siglusapi.domain.RegimenCategory;
 import org.siglus.siglusapi.dto.android.response.RegimenCategoryResponse;
 
