@@ -15,9 +15,13 @@
 
 package org.siglus.siglusapi.dto.android.response;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 
 @Data
+@Builder
+@AllArgsConstructor
 public class RegimenCategoryResponse {
 
   private String code;

@@ -23,6 +23,8 @@ import org.mapstruct.Mapping;
 import org.mapstruct.Named;
 import org.openlmis.requisition.dto.ProgramDto;
 import org.siglus.siglusapi.domain.Regimen;
+import org.siglus.siglusapi.domain.RegimenCategory;
+import org.siglus.siglusapi.dto.android.response.RegimenCategoryResponse;
 import org.siglus.siglusapi.dto.android.response.RegimenResponse;
 
 @Mapper(componentModel = "spring", uses = RegimentCategoryMapper.class)
@@ -30,8 +32,32 @@ public interface RegimentMapper {
 
   @Mapping(target = "programCode", source = "programId", qualifiedByName = "toProgramCode")
   @Mapping(target = "programName", source = "programId", qualifiedByName = "toProgramName")
-  @Mapping(target = "category", source = "regimenCategory")
+  @Mapping(target = "category", source = "regimenCategory", qualifiedByName = "toRegimenCategoryResponse")
   RegimenResponse toResponse(Regimen domain, @Context Map<UUID, ProgramDto> allPrograms);
+
+  @Named("toRegimenCategoryResponse")
+  default RegimenCategoryResponse toRegimenCategoryResponse(RegimenCategory regimenCategory) {
+    switch (regimenCategory.getName()) {
+      case "Adulto":
+        return RegimenCategoryResponse.builder()
+            .name(regimenCategory.getName())
+            .code("Adults")
+            .displayOrder(regimenCategory.getDisplayOrder())
+            .build();
+      case "Criança":
+        return RegimenCategoryResponse.builder()
+            .name(regimenCategory.getName())
+            .code("Paediatrics")
+            .displayOrder(regimenCategory.getDisplayOrder())
+            .build();
+      default:
+        return RegimenCategoryResponse.builder()
+            .name(regimenCategory.getName())
+            .code("Default")
+            .displayOrder(regimenCategory.getDisplayOrder())
+            .build();
+    }
+  }
 
 
   @Named("toProgramCode")

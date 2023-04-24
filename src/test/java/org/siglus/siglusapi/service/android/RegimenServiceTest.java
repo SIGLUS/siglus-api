@@ -118,7 +118,7 @@ public class RegimenServiceTest {
     assertEquals("program name 1", regimen1.getProgramName());
     RegimenCategoryResponse category1 = regimen1.getCategory();
     assertNotNull(category1);
-    assertEquals("category code 1", category1.getCode());
+    assertEquals("Default", category1.getCode());
     assertEquals("category name 1", category1.getName());
     assertEquals(1, (int) category1.getDisplayOrder());
 
@@ -132,7 +132,7 @@ public class RegimenServiceTest {
     assertEquals("program name 2", regimen2.getProgramName());
     RegimenCategoryResponse category2 = regimen2.getCategory();
     assertNotNull(category2);
-    assertEquals("category code 2", category2.getCode());
+    assertEquals("Default", category2.getCode());
     assertEquals("category name 2", category2.getName());
     assertEquals(2, (int) category2.getDisplayOrder());
   }
