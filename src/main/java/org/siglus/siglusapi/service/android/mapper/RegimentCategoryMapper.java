@@ -16,12 +16,42 @@
 package org.siglus.siglusapi.service.android.mapper;
 
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.Named;
+import org.siglus.siglusapi.domain.Regimen;
 import org.siglus.siglusapi.domain.RegimenCategory;
 import org.siglus.siglusapi.dto.android.response.RegimenCategoryResponse;
 
 @Mapper(componentModel = "spring")
 public interface RegimentCategoryMapper {
 
+  @Mapping(target = ".", source = ".", qualifiedByName = "toRegimenCategoryResponse")
   RegimenCategoryResponse toResponse(RegimenCategory domain);
+
+  @Named("toRegimenCategoryResponse")
+  default RegimenCategoryResponse toRegimenCategoryResponse(Regimen domain) {
+    RegimenCategory regimenCategory = domain.getRegimenCategory();
+
+    switch (regimenCategory.getName()) {
+      case "Adulto":
+        return RegimenCategoryResponse.builder()
+            .name(regimenCategory.getName())
+            .code("Adults")
+            .displayOrder(regimenCategory.getDisplayOrder())
+            .build();
+      case "Criança":
+        return RegimenCategoryResponse.builder()
+            .name(regimenCategory.getName())
+            .code("Paediatrics")
+            .displayOrder(regimenCategory.getDisplayOrder())
+            .build();
+      default:
+        return RegimenCategoryResponse.builder()
+            .name(regimenCategory.getName())
+            .code("Default")
+            .displayOrder(regimenCategory.getDisplayOrder())
+            .build();
+    }
+  }
 
 }

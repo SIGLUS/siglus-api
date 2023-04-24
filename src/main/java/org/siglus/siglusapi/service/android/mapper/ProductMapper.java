@@ -64,8 +64,19 @@ public interface ProductMapper {
 
   @Named("getCategory")
   default String getCategory(OrderableDto domain) {
-    return domain.getPrograms().stream().findFirst()
-        .orElseThrow(IllegalStateException::new).getOrderableCategoryDisplayName();
+    return convertOrderableCategory(domain.getPrograms().stream().findFirst()
+        .orElseThrow(IllegalStateException::new).getOrderableCategoryDisplayName());
+  }
+
+  default String convertOrderableCategory(String original) {
+    switch (original) {
+      case "Adulto":
+        return "Adult";
+      case "Pediátrico":
+        return "Children";
+      default:
+        return original;
+    }
   }
 
   @Named("getLastUpdated")
