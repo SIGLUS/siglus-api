@@ -29,8 +29,7 @@ public interface RegimentCategoryMapper {
   RegimenCategoryResponse toResponse(RegimenCategory domain);
 
   @Named("toRegimenCategoryResponse")
-  default RegimenCategoryResponse toRegimenCategoryResponse(Regimen domain) {
-    RegimenCategory regimenCategory = domain.getRegimenCategory();
+  default RegimenCategoryResponse toRegimenCategoryResponse(RegimenCategory regimenCategory) {
 
     switch (regimenCategory.getName()) {
       case "Adulto":
