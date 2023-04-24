@@ -69,6 +69,9 @@ public interface ProductMapper {
   }
 
   default String convertOrderableCategory(String original) {
+    if (original == null) {
+      return "Default";
+    }
     switch (original) {
       case "Adulto":
         return "Adult";
