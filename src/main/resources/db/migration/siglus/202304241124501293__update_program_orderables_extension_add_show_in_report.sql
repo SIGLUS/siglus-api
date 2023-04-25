@@ -3,5 +3,5 @@
 -- Migrations should NOT BE EDITED. Add a new migration to apply changes.
 
 ALTER TABLE siglusintegration.program_orderables_extension
-    ADD COLUMN reportName CHARACTER VARYING(255),
+    ADD COLUMN showInReport BOOLEAN DEFAULT False,
     ADD COLUMN unit CHARACTER VARYING(255);

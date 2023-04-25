@@ -42,6 +42,6 @@ public class ProductResponse {
   private Boolean isHiv;
   private Instant lastUpdated;
   private BigDecimal pricePerPack;
-  private String reportName;
+  private Boolean showInReport;
   private String unit;
 }

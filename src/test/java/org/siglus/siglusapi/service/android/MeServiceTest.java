@@ -913,7 +913,7 @@ public class MeServiceTest {
     assertFalse(product.getIsHiv());
     assertFalse(product.getIsNos());
     assertEquals(oldTime.toInstant(), product.getLastUpdated());
-    assertEquals("MMIA", product.getReportName());
+    assertTrue(product.getShowInReport());
     assertEquals("comp", product.getUnit());
   }
 
@@ -937,7 +937,7 @@ public class MeServiceTest {
     assertFalse(product.getIsHiv());
     assertFalse(product.getIsNos());
     assertEquals(latestTime.toInstant(), product.getLastUpdated());
-    assertEquals("MMIT", product.getReportName());
+    assertFalse(product.getShowInReport());
     assertEquals("each", product.getUnit());
   }
 
@@ -958,7 +958,7 @@ public class MeServiceTest {
     assertFalse(product.getIsHiv());
     assertFalse(product.getIsNos());
     assertEquals(latestTime.toInstant(), product.getLastUpdated());
-    assertEquals("VIA", product.getReportName());
+    assertTrue(product.getShowInReport());
     assertEquals("pack", product.getUnit());
   }
 
@@ -973,7 +973,7 @@ public class MeServiceTest {
   private ProgramOrderablesExtension mockProgramOrderableExtension1() {
     return ProgramOrderablesExtension.builder()
         .orderableId(productId1)
-        .reportName("MMIA")
+        .showInReport(true)
         .unit("comp")
         .build();
   }
@@ -981,7 +981,7 @@ public class MeServiceTest {
   private ProgramOrderablesExtension mockProgramOrderableExtension2() {
     return ProgramOrderablesExtension.builder()
         .orderableId(productId2)
-        .reportName("MMIT")
+        .showInReport(false)
         .unit("each")
         .build();
   }
@@ -989,7 +989,7 @@ public class MeServiceTest {
   private ProgramOrderablesExtension mockProgramOrderableExtension3() {
     return ProgramOrderablesExtension.builder()
         .orderableId(productId3)
-        .reportName("VIA")
+        .showInReport(true)
         .unit("pack")
         .build();
   }

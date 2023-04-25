@@ -303,7 +303,7 @@ public class MeService {
           ProductResponse productResponse = mapper.toResponse(orderable, allProducts, productIdToAdditionalProgramCode);
           ProgramOrderablesExtension extension = orderableIdToProgramOrderablesExtension.get(orderable.getId());
           if (extension != null) {
-            productResponse.setReportName(extension.getReportName());
+            productResponse.setShowInReport(extension.getShowInReport());
             productResponse.setUnit(extension.getUnit());
           }
           return productResponse;
