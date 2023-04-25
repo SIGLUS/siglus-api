@@ -32,6 +32,7 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.joda.money.Money;
+import org.siglus.common.serializer.MoneySerializer;
 import org.siglus.siglusapi.localmachine.EventPayload;
 import org.siglus.siglusapi.localmachine.utils.MoneyDeserializer;
 import org.springframework.beans.factory.config.BeanDefinition;
@@ -55,6 +56,7 @@ public class PayloadSerializer {
     LOCALMACHINE_EVENT_OBJECT_MAPPER.configure(
         DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     SimpleModule module = new SimpleModule();
+    module.addSerializer(Money.class, new MoneySerializer());
     module.addDeserializer(Money.class, new MoneyDeserializer());
     LOCALMACHINE_EVENT_OBJECT_MAPPER.registerModule(module);
   }
