@@ -18,12 +18,14 @@ package org.siglus.siglusapi.localmachine.utils;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.BaseJsonNode;
 import com.fasterxml.jackson.databind.node.DoubleNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.IOException;
+import java.math.BigDecimal;
 import org.apache.commons.lang3.StringUtils;
+import org.joda.money.CurrencyUnit;
 import org.joda.money.Money;
 
 public class MoneyDeserializer extends JsonDeserializer<Money> {
@@ -34,24 +36,23 @@ public class MoneyDeserializer extends JsonDeserializer<Money> {
 
   @Override
   public Money deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException {
-    String currencyCode = null;
     ObjectMapper mapper = (ObjectMapper) jp.getCodec();
-    ObjectNode root = mapper.readTree(jp);
-    DoubleNode amountNode = (DoubleNode) root.findValue(AMOUNT);
+    BaseJsonNode root = mapper.readTree(jp);
+    DoubleNode amountNode = null;
+    if (root instanceof ObjectNode) {
+      amountNode = (DoubleNode) root.findValue(AMOUNT);
+    } else if (root instanceof DoubleNode) {
+      amountNode = (DoubleNode) root;
+    }
     String amount = null;
     if (null != amountNode) {
       amount = amountNode.asText();
     }
-    JsonNode currencyUnitNode = root.get(CURRENCY_UNIT);
-    if (currencyUnitNode != null) {
-      JsonNode currencyCodeNode = currencyUnitNode.get(CURRENCY_CODE);
-      if (currencyCodeNode != null) {
-        currencyCode = currencyCodeNode.textValue();
-      }
-    }
-    if (StringUtils.isBlank(amount) || StringUtils.isBlank(currencyCode)) {
+    if (StringUtils.isBlank(amount)) {
       return null;
     }
-    return Money.parse(currencyCode + " " + amount);
+    // convert the string amount to BigDecimal type to avoid using scientific notation
+    BigDecimal amountValue = new BigDecimal(amount);
+    return Money.of(CurrencyUnit.USD, amountValue);
   }
 }

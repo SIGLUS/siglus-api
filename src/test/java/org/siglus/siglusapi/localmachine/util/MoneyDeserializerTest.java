@@ -15,6 +15,9 @@
 
 package org.siglus.siglusapi.localmachine.util;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -27,6 +30,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.siglus.common.serializer.MoneySerializer;
 import org.siglus.siglusapi.localmachine.utils.MoneyDeserializer;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -36,10 +40,13 @@ public class MoneyDeserializerTest {
   @InjectMocks
   private MoneyDeserializer moneyDeserializer;
 
+  @InjectMocks
+  private MoneySerializer moneySerializer;
+
   @Test
   public void shouldSuccessWhenEmitWithJson() throws IOException {
+    // given
     moneyDeserializer = new MoneyDeserializer();
-
     ObjectMapper objectMapper = new ObjectMapper();
     objectMapper.registerModule(new JavaTimeModule());
     objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
@@ -48,16 +55,43 @@ public class MoneyDeserializerTest {
     SimpleModule module = new SimpleModule();
     module.addDeserializer(Money.class, moneyDeserializer);
     objectMapper.registerModule(module);
-    Money money = Money.of(CurrencyUnit.USD, 100);
+    Money money = Money.of(CurrencyUnit.USD, 13165200.35);
     String json = objectMapper.writeValueAsString(money);
+
     // when
-    objectMapper.readValue(json, Money.class);
+    Money result = objectMapper.readValue(json, Money.class);
+
+    // then
+    assertEquals(result, money);
   }
 
   @Test
-  public void shouldSuccessWhenEmitWithEmptyJson() throws IOException {
+  public void shouldSuccessWhenEmitWithJsonWithSerializer() throws IOException {
+    // given
     moneyDeserializer = new MoneyDeserializer();
+    ObjectMapper objectMapper = new ObjectMapper();
+    objectMapper.registerModule(new JavaTimeModule());
+    objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+    objectMapper.configure(
+        DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    SimpleModule module = new SimpleModule();
+    module.addSerializer(Money.class, moneySerializer);
+    module.addDeserializer(Money.class, moneyDeserializer);
+    objectMapper.registerModule(module);
+    Money money = Money.of(CurrencyUnit.USD, 9876543210987.35);
+    String json = objectMapper.writeValueAsString(money);
 
+    // when
+    Money result = objectMapper.readValue(json, Money.class);
+
+    // then
+    assertEquals(result, money);
+  }
+
+  @Test
+  public void shouldReturnNullWhenEmitWithEmptyJson() throws IOException {
+    // given
+    moneyDeserializer = new MoneyDeserializer();
     ObjectMapper objectMapper = new ObjectMapper();
     objectMapper.registerModule(new JavaTimeModule());
     objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
@@ -66,8 +100,12 @@ public class MoneyDeserializerTest {
     SimpleModule module = new SimpleModule();
     module.addDeserializer(Money.class, moneyDeserializer);
     objectMapper.registerModule(module);
+
     // when
-    objectMapper.readValue("{}", Money.class);
+    Money result = objectMapper.readValue("{}", Money.class);
+
+    // then
+    assertNull(result);
   }
 
 
