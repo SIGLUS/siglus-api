@@ -244,6 +244,7 @@ public class SiglusProcessingPeriodService {
     List<UUID> currentPeriodIds = periodService.getCurrentPeriods(program, facility)
         .stream().map(ProcessingPeriodDto::getId).collect(Collectors.toList());
     List<RequisitionPeriodDto> requisitionPeriods = new ArrayList<>();
+    LocalDate maxEndDate = LocalDate.of(1, 1, 1);
 
     // TODO Optimization
     for (ProcessingPeriodDto period : periods) {
@@ -264,6 +265,8 @@ public class SiglusProcessingPeriodService {
         RequisitionPeriodDto requisitionPeriod = RequisitionPeriodDto.newInstance(period);
         requisitionPeriods.add(requisitionPeriod);
         if (!requisitions.isEmpty()) {
+          LocalDate endDate = requisitionPeriod.getEndDate();
+          maxEndDate = maxEndDate.isAfter(endDate) ? maxEndDate : endDate;
           if (preAuthorizeRequisitions.isEmpty()) {
             requisitionPeriods.remove(requisitionPeriod);
           } else {
@@ -271,6 +274,13 @@ public class SiglusProcessingPeriodService {
             requisitionPeriod.setRequisitionStatus(preAuthorizeRequisitions.get(0).getStatus());
           }
         }
+      }
+    }
+
+    for (RequisitionPeriodDto requisitionPeriod : requisitionPeriods) {
+      LocalDate endDate = requisitionPeriod.getEndDate();
+      if (maxEndDate.isAfter(endDate)) {
+        requisitionPeriods.remove(requisitionPeriod);
       }
     }
 
