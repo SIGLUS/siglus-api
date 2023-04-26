@@ -233,6 +233,7 @@ public class SiglusProcessingPeriodService {
   }
 
   // get periods for initiate
+  @SuppressWarnings("PMD.CyclomaticComplexity")
   private Collection<RequisitionPeriodDto> getRequisitionPeriods(UUID program, UUID facility, boolean emergency) {
     ProgramDto programDto = siglusProgramService.getProgram(program);
     if (emergency && !ProgramConstants.VIA_PROGRAM_CODE.equals(programDto.getCode())) {
