@@ -245,7 +245,7 @@ public class SiglusProcessingPeriodService {
     List<UUID> currentPeriodIds = periodService.getCurrentPeriods(program, facility)
         .stream().map(ProcessingPeriodDto::getId).collect(Collectors.toList());
     List<RequisitionPeriodDto> requisitionPeriods = new ArrayList<>();
-    LocalDate maxEndDate = LocalDate.of(1, 1, 1);
+    LocalDate maxEndDate = LocalDate.of(2000, 1, 1);
 
     // TODO Optimization
     for (ProcessingPeriodDto period : periods) {
@@ -280,7 +280,7 @@ public class SiglusProcessingPeriodService {
 
     for (RequisitionPeriodDto requisitionPeriod : requisitionPeriods) {
       LocalDate endDate = requisitionPeriod.getEndDate();
-      if (maxEndDate.isAfter(endDate)) {
+      if (endDate.isBefore(maxEndDate)) {
         requisitionPeriods.remove(requisitionPeriod);
       }
     }
