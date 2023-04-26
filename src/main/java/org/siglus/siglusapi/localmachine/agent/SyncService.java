@@ -103,8 +103,8 @@ public class SyncService {
   private void pullPeeringEvents() {
     List<Event> events;
     events = webClient.exportPeeringEvents();
+    log.info("pull events, got {}", events.size());
     if (CollectionUtils.isEmpty(events)) {
-      log.info("pull events got empty");
       syncRecordService.storeLastSyncRecord();
     }
     events.forEach(it -> it.setOnlineWebSynced(true));
