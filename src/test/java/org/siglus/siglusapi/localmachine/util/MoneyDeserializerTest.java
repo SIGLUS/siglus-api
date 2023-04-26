@@ -50,8 +50,7 @@ public class MoneyDeserializerTest {
     ObjectMapper objectMapper = new ObjectMapper();
     objectMapper.registerModule(new JavaTimeModule());
     objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-    objectMapper.configure(
-        DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     SimpleModule module = new SimpleModule();
     module.addDeserializer(Money.class, moneyDeserializer);
     objectMapper.registerModule(module);
@@ -72,8 +71,7 @@ public class MoneyDeserializerTest {
     ObjectMapper objectMapper = new ObjectMapper();
     objectMapper.registerModule(new JavaTimeModule());
     objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-    objectMapper.configure(
-        DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     SimpleModule module = new SimpleModule();
     module.addSerializer(Money.class, moneySerializer);
     module.addDeserializer(Money.class, moneyDeserializer);
@@ -95,9 +93,28 @@ public class MoneyDeserializerTest {
     ObjectMapper objectMapper = new ObjectMapper();
     objectMapper.registerModule(new JavaTimeModule());
     objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-    objectMapper.configure(
-        DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     SimpleModule module = new SimpleModule();
+    module.addDeserializer(Money.class, moneyDeserializer);
+    objectMapper.registerModule(module);
+
+    // when
+    Money result = objectMapper.readValue("{}", Money.class);
+
+    // then
+    assertNull(result);
+  }
+
+  @Test
+  public void shouldReturnNullWhenEmitWithEmptyJsonWithSerializer() throws IOException {
+    // given
+    moneyDeserializer = new MoneyDeserializer();
+    ObjectMapper objectMapper = new ObjectMapper();
+    objectMapper.registerModule(new JavaTimeModule());
+    objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+    objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    SimpleModule module = new SimpleModule();
+    module.addSerializer(Money.class, moneySerializer);
     module.addDeserializer(Money.class, moneyDeserializer);
     objectMapper.registerModule(module);
 

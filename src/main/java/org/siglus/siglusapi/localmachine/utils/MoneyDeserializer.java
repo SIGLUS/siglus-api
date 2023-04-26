@@ -31,8 +31,6 @@ import org.joda.money.Money;
 public class MoneyDeserializer extends JsonDeserializer<Money> {
 
   public static final String AMOUNT = "amount";
-  public static final String CURRENCY_UNIT = "currencyUnit";
-  public static final String CURRENCY_CODE = "currencyCode";
 
   @Override
   public Money deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException {

@@ -233,6 +233,7 @@ public class SiglusProcessingPeriodService {
   }
 
   // get periods for initiate
+  @SuppressWarnings("PMD.CyclomaticComplexity")
   private Collection<RequisitionPeriodDto> getRequisitionPeriods(UUID program, UUID facility, boolean emergency) {
     ProgramDto programDto = siglusProgramService.getProgram(program);
     if (emergency && !ProgramConstants.VIA_PROGRAM_CODE.equals(programDto.getCode())) {
@@ -244,6 +245,7 @@ public class SiglusProcessingPeriodService {
     List<UUID> currentPeriodIds = periodService.getCurrentPeriods(program, facility)
         .stream().map(ProcessingPeriodDto::getId).collect(Collectors.toList());
     List<RequisitionPeriodDto> requisitionPeriods = new ArrayList<>();
+    LocalDate maxEndDate = LocalDate.of(2000, 1, 1);
 
     // TODO Optimization
     for (ProcessingPeriodDto period : periods) {
@@ -264,6 +266,8 @@ public class SiglusProcessingPeriodService {
         RequisitionPeriodDto requisitionPeriod = RequisitionPeriodDto.newInstance(period);
         requisitionPeriods.add(requisitionPeriod);
         if (!requisitions.isEmpty()) {
+          LocalDate endDate = requisitionPeriod.getEndDate();
+          maxEndDate = maxEndDate.isAfter(endDate) ? maxEndDate : endDate;
           if (preAuthorizeRequisitions.isEmpty()) {
             requisitionPeriods.remove(requisitionPeriod);
           } else {
@@ -271,6 +275,13 @@ public class SiglusProcessingPeriodService {
             requisitionPeriod.setRequisitionStatus(preAuthorizeRequisitions.get(0).getStatus());
           }
         }
+      }
+    }
+
+    for (RequisitionPeriodDto requisitionPeriod : requisitionPeriods) {
+      LocalDate endDate = requisitionPeriod.getEndDate();
+      if (endDate.isBefore(maxEndDate)) {
+        requisitionPeriods.remove(requisitionPeriod);
       }
     }
 
