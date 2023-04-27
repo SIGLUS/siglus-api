@@ -15,9 +15,14 @@
 
 package org.siglus.siglusapi.localmachine.eventstore;
 
+import static org.mockito.Matchers.anyListOf;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.powermock.api.mockito.PowerMockito.when;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import org.junit.Test;
@@ -45,25 +50,24 @@ public class EventBackupTaskTest {
   private EventPayloadRepository eventPayloadRepository;
 
   @Test
-  public void shouldSuccessWhenNothingToArchive() {
+  public void shouldNotBackupWhenNothingToArchive() {
     // given
-    final EventRecord event = new EventRecord();
-    event.setPayload(new byte[] {0, 1, 2});
-    event.setArchived(true);
-    event.setId(UUID.randomUUID());
-    final List<EventRecord> list = new ArrayList<>();
-    list.add(event);
-    when(eventRecordRepository.findByArchived(false)).thenReturn(list);
-    when(agentInfoRepository.count()).thenReturn(1000L);
+    when(eventRecordRepository
+        .findFirst10ByArchivedFalseAndReceiverSyncedTrueAndOnlineWebSyncedTrueAndLocalReplayedTrue())
+        .thenReturn(Collections.emptyList());
+
     // when
     eventBackupTask.run();
+
+    // then
+    verify(eventPayloadRepository, never()).delete(anyListOf(EventPayload.class));
   }
 
   @Test
-  public void shouldSuccessWhenNeedArchiveForOnlineWeb() {
+  public void shouldBackupWhenNeedArchiveForOnlineWeb() {
     // given
     final EventRecord event = new EventRecord();
-    event.setPayload(new byte[] {0, 1, 2});
+    event.setPayload(new byte[]{0, 1, 2});
     event.setArchived(true);
     event.setId(UUID.randomUUID());
     event.setOnlineWebSynced(true);
@@ -71,27 +75,16 @@ public class EventBackupTaskTest {
     event.setLocalReplayed(true);
     final List<EventRecord> list = new ArrayList<>();
     list.add(event);
-    when(eventRecordRepository.findByArchived(false)).thenReturn(list);
-    when(agentInfoRepository.count()).thenReturn(1000L);
-    // when
-    eventBackupTask.run();
-  }
+    when(eventRecordRepository
+        .findFirst10ByArchivedFalseAndReceiverSyncedTrueAndOnlineWebSyncedTrueAndLocalReplayedTrue())
+        .thenReturn(list)
+        .thenReturn(list)
+        .thenReturn(Collections.emptyList());
 
-  @Test
-  public void shouldSuccessWhenNeedArchiveForLocalmachine() {
-    // given
-    final EventRecord event = new EventRecord();
-    event.setPayload(new byte[] {0, 1, 2});
-    event.setArchived(true);
-    event.setId(UUID.randomUUID());
-    event.setOnlineWebSynced(true);
-    event.setReceiverSynced(true);
-    event.setLocalReplayed(true);
-    final List<EventRecord> list = new ArrayList<>();
-    list.add(event);
-    when(eventRecordRepository.findByArchived(false)).thenReturn(list);
-    when(agentInfoRepository.count()).thenReturn(1L);
     // when
     eventBackupTask.run();
+
+    // then
+    verify(eventPayloadRepository, times(2)).delete(anyListOf(EventPayload.class));
   }
 }
