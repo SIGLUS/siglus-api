@@ -16,7 +16,6 @@
 package org.siglus.siglusapi.localmachine;
 
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,7 +26,6 @@ import org.siglus.siglusapi.localmachine.eventstore.EventRecord;
 import org.siglus.siglusapi.localmachine.eventstore.EventRecordRepository;
 import org.siglus.siglusapi.localmachine.eventstore.backup.EventPayloadBackup;
 import org.siglus.siglusapi.localmachine.eventstore.backup.EventPayloadBackupRepository;
-import org.siglus.siglusapi.localmachine.repository.AgentInfoRepository;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,7 +34,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @Slf4j
 public class EventBackupTask {
-  private final AgentInfoRepository agentInfoRepository;
+
   private final EventRecordRepository eventRecordRepository;
   private final EventPayloadBackupRepository eventPayloadBackupRepository;
   private final EventPayloadRepository eventPayloadRepository;
@@ -45,29 +43,29 @@ public class EventBackupTask {
   @SchedulerLock(name = "localmachine_archive_event")
   @Transactional
   public void run() {
-    log.info("start archiving event consumed.");
-    List<EventRecord> eventRecords = eventRecordRepository.findByArchived(false);
-    if (CollectionUtils.isEmpty(eventRecords)) {
-      return;
-    }
-    Set<EventRecord> archiveEventRecords;
-    archiveEventRecords = eventRecords.stream()
-        .filter(item -> item.isReceiverSynced() && item.isOnlineWebSynced() && item.isLocalReplayed())
-        .collect(Collectors.toSet());
-    if (archiveEventRecords.isEmpty()) {
-      return;
-    }
-    List<EventPayloadBackup> backups = archiveEventRecords.stream()
-        .map(item -> new EventPayloadBackup(item.getId(), item.getPayload()))
-        .collect(Collectors.toList());
-    eventPayloadBackupRepository.save(backups);
+    log.info("start archiving events ...");
+    boolean hasMoreRecords = true;
+    while (hasMoreRecords) {
+      List<EventRecord> archiveEventRecords = eventRecordRepository
+          .findFirst10ByArchivedFalseAndReceiverSyncedTrueAndOnlineWebSyncedTrueAndLocalReplayedTrue();
+      if (CollectionUtils.isEmpty(archiveEventRecords)) {
+        hasMoreRecords = false;
+      } else {
+        List<EventPayloadBackup> backups = archiveEventRecords.stream()
+            .map(item -> new EventPayloadBackup(item.getId(), item.getPayload()))
+            .collect(Collectors.toList());
+        eventPayloadBackupRepository.save(backups);
 
-    List<org.siglus.siglusapi.localmachine.eventstore.EventPayload> payloads = archiveEventRecords.stream()
-        .map(item -> new org.siglus.siglusapi.localmachine.eventstore.EventPayload(item.getId(), item.getPayload()))
-        .collect(Collectors.toList());
-    eventPayloadRepository.delete(payloads);
+        List<org.siglus.siglusapi.localmachine.eventstore.EventPayload> payloads = archiveEventRecords.stream()
+            .map(item -> new org.siglus.siglusapi.localmachine.eventstore.EventPayload(item.getId(), item.getPayload()))
+            .collect(Collectors.toList());
+        eventPayloadRepository.delete(payloads);
 
-    archiveEventRecords.forEach(item -> item.setArchived(true));
-    eventRecordRepository.save(archiveEventRecords);
+        archiveEventRecords.forEach(item -> item.setArchived(true));
+        eventRecordRepository.save(archiveEventRecords);
+        log.info("archived 10 events.");
+      }
+    }
+    log.info("finish archived events.");
   }
 }
