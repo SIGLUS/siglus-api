@@ -53,7 +53,7 @@ public class EventBackupTaskTest {
   public void shouldNotBackupWhenNothingToArchive() {
     // given
     when(eventRecordRepository
-        .findFirst10ByArchivedFalseAndReceiverSyncedTrueAndOnlineWebSyncedTrueAndLocalReplayedTrue())
+        .findFirst100ByArchivedFalseAndReceiverSyncedTrueAndOnlineWebSyncedTrueAndLocalReplayedTrue())
         .thenReturn(Collections.emptyList());
 
     // when
@@ -76,7 +76,7 @@ public class EventBackupTaskTest {
     final List<EventRecord> list = new ArrayList<>();
     list.add(event);
     when(eventRecordRepository
-        .findFirst10ByArchivedFalseAndReceiverSyncedTrueAndOnlineWebSyncedTrueAndLocalReplayedTrue())
+        .findFirst100ByArchivedFalseAndReceiverSyncedTrueAndOnlineWebSyncedTrueAndLocalReplayedTrue())
         .thenReturn(list)
         .thenReturn(list)
         .thenReturn(Collections.emptyList());

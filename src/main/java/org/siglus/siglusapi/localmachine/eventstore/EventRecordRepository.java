@@ -71,7 +71,7 @@ public interface EventRecordRepository extends JpaRepository<EventRecord, UUID>,
       nativeQuery = true)
   List<EventRecord> findEventsForReceiver(@Param("receiverId") UUID receiverId, @Param("limit") int limit);
 
-  List<EventRecord> findFirst10ByArchivedFalseAndReceiverSyncedTrueAndOnlineWebSyncedTrueAndLocalReplayedTrue();
+  List<EventRecord> findFirst100ByArchivedFalseAndReceiverSyncedTrueAndOnlineWebSyncedTrueAndLocalReplayedTrue();
 
   @Query(value = "select cast(id as varchar) \n"
       + "from localmachine.events e \n"
