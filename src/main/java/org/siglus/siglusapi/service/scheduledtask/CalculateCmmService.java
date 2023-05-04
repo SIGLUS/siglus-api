@@ -205,6 +205,9 @@ public class CalculateCmmService {
     Map<LocalDate, List<StockOnHandDto>> periodStartDateToSohDtos = Maps.newHashMap();
     sohDtos.forEach(sohDto -> {
       ProcessingPeriod period = PeriodUtil.getPeriodDateInDefaultNull(periods, sohDto.getOccurredDate());
+      if (period == null) {
+        return;
+      }
       if (Objects.isNull(periodStartDateToSohDtos.get(period.getStartDate()))) {
         periodStartDateToSohDtos.put(period.getStartDate(), Lists.newArrayList(sohDto));
         return;
