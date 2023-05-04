@@ -28,7 +28,6 @@ import org.siglus.siglusapi.localmachine.eventstore.backup.EventPayloadBackup;
 import org.siglus.siglusapi.localmachine.eventstore.backup.EventPayloadBackupRepository;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @RequiredArgsConstructor
 @Service
@@ -46,7 +45,7 @@ public class EventBackupTask {
     boolean hasMoreRecords = true;
     while (hasMoreRecords) {
       List<EventRecord> archiveEventRecords = eventRecordRepository
-          .findFirst10ByArchivedFalseAndReceiverSyncedTrueAndOnlineWebSyncedTrueAndLocalReplayedTrue();
+          .findFirst100ByArchivedFalseAndReceiverSyncedTrueAndOnlineWebSyncedTrueAndLocalReplayedTrue();
       if (CollectionUtils.isEmpty(archiveEventRecords)) {
         hasMoreRecords = false;
       } else {
@@ -62,7 +61,7 @@ public class EventBackupTask {
 
         archiveEventRecords.forEach(item -> item.setArchived(true));
         eventRecordRepository.save(archiveEventRecords);
-        log.info("archived 10 events.");
+        log.info("archived 100 events.");
       }
     }
     log.info("finish archived events.");
