@@ -41,7 +41,6 @@ public class EventBackupTask {
 
   @Scheduled(cron = "${event.archive.cron}", zone = "${time.zoneId}")
   @SchedulerLock(name = "localmachine_archive_event")
-  @Transactional
   public void run() {
     log.info("start archiving events ...");
     boolean hasMoreRecords = true;
