@@ -16,6 +16,7 @@
 package org.siglus.siglusapi.localmachine;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -53,10 +54,9 @@ public class EventBackupTask {
             .map(item -> new EventPayloadBackup(item.getId(), item.getPayload()))
             .collect(Collectors.toList());
         eventPayloadBackupRepository.save(backups);
-        archiveEventRecords.forEach(event -> {
-          event.setArchived(true);
-          eventPayloadRepository.delete(event.getId());
-        });
+        archiveEventRecords.forEach(event -> event.setArchived(true));
+        List<UUID> eventIds = archiveEventRecords.stream().map(EventRecord::getId).collect(Collectors.toList());
+        eventPayloadRepository.deleteByEventIdIn(eventIds);
         eventRecordRepository.save(archiveEventRecords);
         log.info("archived 100 events.");
       }

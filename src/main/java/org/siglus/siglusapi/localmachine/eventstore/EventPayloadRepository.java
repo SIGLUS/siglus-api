@@ -15,9 +15,15 @@
 
 package org.siglus.siglusapi.localmachine.eventstore;
 
+import java.util.List;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 
 public interface EventPayloadRepository extends JpaRepository<EventPayload, UUID> {
+
+  @Transactional
+  void deleteByEventIdIn(@Param("eventId") List<UUID> eventIds);
 
 }
