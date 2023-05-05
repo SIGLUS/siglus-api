@@ -15,15 +15,17 @@
 
 package org.siglus.siglusapi.localmachine.eventstore;
 
-import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import org.springframework.transaction.annotation.Transactional;
 
 public interface EventPayloadRepository extends JpaRepository<EventPayload, UUID> {
 
-  @Transactional
-  void deleteByEventIdIn(@Param("eventId") List<UUID> eventIds);
+  @Modifying
+  @Query(value = "DELETE FROM localmachine.event_payload WHERE eventid IN :eventIds", nativeQuery = true)
+  void deleteByEventIds(@Param("eventIds") Set<UUID> eventIds);
 
 }
