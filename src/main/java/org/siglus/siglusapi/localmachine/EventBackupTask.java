@@ -30,6 +30,7 @@ import org.siglus.siglusapi.localmachine.eventstore.backup.EventPayloadBackup;
 import org.siglus.siglusapi.localmachine.eventstore.backup.EventPayloadBackupRepository;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @RequiredArgsConstructor
 @Service
@@ -42,6 +43,7 @@ public class EventBackupTask {
 
   @Scheduled(cron = "${event.archive.cron}", zone = "${time.zoneId}")
   @SchedulerLock(name = "localmachine_archive_event")
+  @Transactional
   public void run() {
     log.info("start archiving events ...");
     boolean hasMoreRecords = true;
