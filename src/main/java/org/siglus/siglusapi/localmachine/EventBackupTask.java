@@ -23,14 +23,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.apache.commons.collections.CollectionUtils;
-import org.siglus.siglusapi.localmachine.eventstore.EventPayloadRepository;
 import org.siglus.siglusapi.localmachine.eventstore.EventRecord;
 import org.siglus.siglusapi.localmachine.eventstore.EventRecordRepository;
 import org.siglus.siglusapi.localmachine.eventstore.backup.EventPayloadBackup;
 import org.siglus.siglusapi.localmachine.eventstore.backup.EventPayloadBackupRepository;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @RequiredArgsConstructor
 @Service
@@ -39,11 +37,10 @@ public class EventBackupTask {
 
   private final EventRecordRepository eventRecordRepository;
   private final EventPayloadBackupRepository eventPayloadBackupRepository;
-  private final EventPayloadRepository eventPayloadRepository;
+  private final EventBackupDeleteTask eventBackupDeleteTask;
 
   @Scheduled(cron = "${event.archive.cron}", zone = "${time.zoneId}")
   @SchedulerLock(name = "localmachine_archive_event")
-  @Transactional
   public void run() {
     log.info("start archiving events ...");
     boolean hasMoreRecords = true;
@@ -59,11 +56,12 @@ public class EventBackupTask {
         eventPayloadBackupRepository.save(backups);
         archiveEventRecords.forEach(event -> event.setArchived(true));
         Set<UUID> eventIds = archiveEventRecords.stream().map(EventRecord::getId).collect(Collectors.toSet());
-        eventPayloadRepository.deleteByEventIds(eventIds);
+        eventBackupDeleteTask.delete(eventIds);
         eventRecordRepository.save(archiveEventRecords);
         log.info("archived 100 events.");
       }
     }
     log.info("finish archived events.");
   }
+
 }

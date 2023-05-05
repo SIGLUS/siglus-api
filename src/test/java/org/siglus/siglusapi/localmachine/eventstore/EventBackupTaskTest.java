@@ -30,9 +30,9 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.siglus.siglusapi.localmachine.EventBackupDeleteTask;
 import org.siglus.siglusapi.localmachine.EventBackupTask;
 import org.siglus.siglusapi.localmachine.eventstore.backup.EventPayloadBackupRepository;
-import org.siglus.siglusapi.localmachine.repository.AgentInfoRepository;
 
 @RunWith(MockitoJUnitRunner.class)
 @SuppressWarnings({"PMD.UnusedPrivateField"})
@@ -43,11 +43,9 @@ public class EventBackupTaskTest {
   @Mock
   private EventRecordRepository eventRecordRepository;
   @Mock
-  private AgentInfoRepository agentInfoRepository;
-  @Mock
   private EventPayloadBackupRepository eventRecordBackupRepository;
   @Mock
-  private EventPayloadRepository eventPayloadRepository;
+  private EventBackupDeleteTask eventBackupDeleteTask;
 
   @Test
   public void shouldNotBackupWhenNothingToArchive() {
@@ -60,7 +58,7 @@ public class EventBackupTaskTest {
     eventBackupTask.run();
 
     // then
-    verify(eventPayloadRepository, never()).deleteByEventIds(anySetOf(UUID.class));
+    verify(eventBackupDeleteTask, never()).delete(anySetOf(UUID.class));
   }
 
   @Test
@@ -85,6 +83,6 @@ public class EventBackupTaskTest {
     eventBackupTask.run();
 
     // then
-    verify(eventPayloadRepository, times(2)).deleteByEventIds(anySetOf(UUID.class));
+    verify(eventBackupDeleteTask, times(2)).delete(anySetOf(UUID.class));
   }
 }
