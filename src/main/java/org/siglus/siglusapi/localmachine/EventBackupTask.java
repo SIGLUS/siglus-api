@@ -53,13 +53,10 @@ public class EventBackupTask {
             .map(item -> new EventPayloadBackup(item.getId(), item.getPayload()))
             .collect(Collectors.toList());
         eventPayloadBackupRepository.save(backups);
-
-        List<org.siglus.siglusapi.localmachine.eventstore.EventPayload> payloads = archiveEventRecords.stream()
-            .map(item -> new org.siglus.siglusapi.localmachine.eventstore.EventPayload(item.getId(), item.getPayload()))
-            .collect(Collectors.toList());
-        eventPayloadRepository.delete(payloads);
-
-        archiveEventRecords.forEach(item -> item.setArchived(true));
+        archiveEventRecords.forEach(event -> {
+          event.setArchived(true);
+          eventPayloadRepository.delete(event.getId());
+        });
         eventRecordRepository.save(archiveEventRecords);
         log.info("archived 100 events.");
       }

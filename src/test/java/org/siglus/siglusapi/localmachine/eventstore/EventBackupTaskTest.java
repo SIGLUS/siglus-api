@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.localmachine.eventstore;
 
+import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyListOf;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -85,6 +86,6 @@ public class EventBackupTaskTest {
     eventBackupTask.run();
 
     // then
-    verify(eventPayloadRepository, times(2)).delete(anyListOf(EventPayload.class));
+    verify(eventPayloadRepository, times(2)).delete(any(UUID.class));
   }
 }
