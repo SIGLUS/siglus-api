@@ -16,12 +16,13 @@
 package org.siglus.siglusapi.localmachine;
 
 import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.apache.commons.collections.CollectionUtils;
-import org.siglus.siglusapi.localmachine.eventstore.EventPayloadRepository;
 import org.siglus.siglusapi.localmachine.eventstore.EventRecord;
 import org.siglus.siglusapi.localmachine.eventstore.EventRecordRepository;
 import org.siglus.siglusapi.localmachine.eventstore.backup.EventPayloadBackup;
@@ -36,7 +37,7 @@ public class EventBackupTask {
 
   private final EventRecordRepository eventRecordRepository;
   private final EventPayloadBackupRepository eventPayloadBackupRepository;
-  private final EventPayloadRepository eventPayloadRepository;
+  private final EventBackupDeleteTask eventBackupDeleteTask;
 
   @Scheduled(cron = "${event.archive.cron}", zone = "${time.zoneId}")
   @SchedulerLock(name = "localmachine_archive_event")
@@ -53,17 +54,14 @@ public class EventBackupTask {
             .map(item -> new EventPayloadBackup(item.getId(), item.getPayload()))
             .collect(Collectors.toList());
         eventPayloadBackupRepository.save(backups);
-
-        List<org.siglus.siglusapi.localmachine.eventstore.EventPayload> payloads = archiveEventRecords.stream()
-            .map(item -> new org.siglus.siglusapi.localmachine.eventstore.EventPayload(item.getId(), item.getPayload()))
-            .collect(Collectors.toList());
-        eventPayloadRepository.delete(payloads);
-
-        archiveEventRecords.forEach(item -> item.setArchived(true));
+        archiveEventRecords.forEach(event -> event.setArchived(true));
+        Set<UUID> eventIds = archiveEventRecords.stream().map(EventRecord::getId).collect(Collectors.toSet());
+        eventBackupDeleteTask.delete(eventIds);
         eventRecordRepository.save(archiveEventRecords);
         log.info("archived 100 events.");
       }
     }
     log.info("finish archived events.");
   }
+
 }

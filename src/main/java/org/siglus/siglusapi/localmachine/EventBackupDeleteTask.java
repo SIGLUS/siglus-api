@@ -13,19 +13,24 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.localmachine.eventstore;
+package org.siglus.siglusapi.localmachine;
 
 import java.util.Set;
 import java.util.UUID;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
+import lombok.RequiredArgsConstructor;
+import org.siglus.siglusapi.localmachine.eventstore.EventPayloadRepository;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-public interface EventPayloadRepository extends JpaRepository<EventPayload, UUID> {
+@RequiredArgsConstructor
+@Service
+public class EventBackupDeleteTask {
 
-  @Modifying
-  @Query(value = "DELETE FROM localmachine.event_payload WHERE eventid IN :eventIds", nativeQuery = true)
-  void deleteByEventIds(@Param("eventIds") Set<UUID> eventIds);
+  private final EventPayloadRepository eventPayloadRepository;
+
+  @Transactional
+  public void delete(Set<UUID> eventIds) {
+    eventPayloadRepository.deleteByEventIds(eventIds);
+  }
 
 }

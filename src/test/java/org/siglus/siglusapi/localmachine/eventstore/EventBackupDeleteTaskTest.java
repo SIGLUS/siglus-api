@@ -15,17 +15,29 @@
 
 package org.siglus.siglusapi.localmachine.eventstore;
 
-import java.util.Set;
+import static org.mockito.Matchers.anySetOf;
+import static org.mockito.Mockito.verify;
+
 import java.util.UUID;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
+import org.javers.common.collections.Sets;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 
-public interface EventPayloadRepository extends JpaRepository<EventPayload, UUID> {
+@RunWith(MockitoJUnitRunner.class)
+public class EventBackupDeleteTaskTest {
 
-  @Modifying
-  @Query(value = "DELETE FROM localmachine.event_payload WHERE eventid IN :eventIds", nativeQuery = true)
-  void deleteByEventIds(@Param("eventIds") Set<UUID> eventIds);
+  @Mock
+  private EventPayloadRepository eventPayloadRepository;
 
+  @Test
+  public void shouldNotBackupWhenNothingToArchive() {
+
+    // when
+    eventPayloadRepository.deleteByEventIds(Sets.asSet(UUID.randomUUID(), UUID.randomUUID()));
+
+    // then
+    verify(eventPayloadRepository).deleteByEventIds(anySetOf(UUID.class));
+  }
 }
