@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -278,10 +279,12 @@ public class SiglusProcessingPeriodService {
       }
     }
 
-    for (RequisitionPeriodDto requisitionPeriod : requisitionPeriods) {
+    Iterator<RequisitionPeriodDto> iterator = requisitionPeriods.iterator();
+    while (iterator.hasNext()) {
+      RequisitionPeriodDto requisitionPeriod = iterator.next();
       LocalDate endDate = requisitionPeriod.getEndDate();
       if (endDate.isBefore(maxEndDate)) {
-        requisitionPeriods.remove(requisitionPeriod);
+        iterator.remove();
       }
     }
 
