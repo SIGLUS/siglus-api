@@ -17,7 +17,6 @@ package org.siglus.siglusapi.localmachine.eventstore;
 
 import static org.mockito.Matchers.anySetOf;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.powermock.api.mockito.PowerMockito.when;
 
