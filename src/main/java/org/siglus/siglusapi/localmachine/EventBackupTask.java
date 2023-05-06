@@ -15,8 +15,9 @@
 
 package org.siglus.siglusapi.localmachine;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -44,6 +45,7 @@ public class EventBackupTask {
   public void run() {
     log.info("start archiving events ...");
     boolean hasMoreRecords = true;
+    List<UUID> archiveEventIds = new ArrayList<>(Collections.emptySet());
     while (hasMoreRecords) {
       List<EventRecord> archiveEventRecords = eventRecordRepository
           .findFirst100ByArchivedFalseAndReceiverSyncedTrueAndOnlineWebSyncedTrueAndLocalReplayedTrue();
@@ -55,12 +57,25 @@ public class EventBackupTask {
             .collect(Collectors.toList());
         eventPayloadBackupRepository.save(backups);
         archiveEventRecords.forEach(event -> event.setArchived(true));
-        Set<UUID> eventIds = archiveEventRecords.stream().map(EventRecord::getId).collect(Collectors.toSet());
-        eventBackupDeleteTask.delete(eventIds);
+        archiveEventIds.addAll(archiveEventRecords.stream().map(EventRecord::getId).collect(Collectors.toSet()));
         eventRecordRepository.save(archiveEventRecords);
         log.info("archived 100 events.");
       }
     }
+
+    log.info("delete event_payload, total: {}", archiveEventIds.size());
+    if (!archiveEventIds.isEmpty()) {
+      int batchSize = 100;
+      List<List<UUID>> archiveEventBatches = new ArrayList<>();
+      for (int i = 0; i < archiveEventIds.size(); i += batchSize) {
+        archiveEventBatches.add(archiveEventIds.subList(i, Math.min(i + batchSize, archiveEventIds.size())));
+      }
+      for (List<UUID> batch : archiveEventBatches) {
+        log.info("delete event_payload, batch size: {}", batch.size());
+        eventBackupDeleteTask.delete(batch);
+      }
+    }
+
     log.info("finish archived events.");
   }
 

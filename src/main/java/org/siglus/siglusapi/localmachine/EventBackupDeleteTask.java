@@ -15,7 +15,7 @@
 
 package org.siglus.siglusapi.localmachine;
 
-import java.util.Set;
+import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.siglus.siglusapi.localmachine.eventstore.EventPayloadRepository;
@@ -29,7 +29,7 @@ public class EventBackupDeleteTask {
   private final EventPayloadRepository eventPayloadRepository;
 
   @Transactional
-  public void delete(Set<UUID> eventIds) {
+  public void delete(List<UUID> eventIds) {
     eventPayloadRepository.deleteByEventIds(eventIds);
   }
 
