@@ -83,6 +83,6 @@ public class EventBackupTaskTest {
     eventBackupTask.run();
 
     // then
-    verify(eventBackupDeleteTask, times(2)).delete(anySetOf(UUID.class));
+    verify(eventBackupDeleteTask).delete(anySetOf(UUID.class));
   }
 }
