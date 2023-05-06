@@ -15,7 +15,7 @@
 
 package org.siglus.siglusapi.localmachine.eventstore;
 
-import static org.mockito.Matchers.anySetOf;
+import static org.mockito.Matchers.anyListOf;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.powermock.api.mockito.PowerMockito.when;
@@ -57,7 +57,7 @@ public class EventBackupTaskTest {
     eventBackupTask.run();
 
     // then
-    verify(eventBackupDeleteTask, never()).delete(anySetOf(UUID.class));
+    verify(eventBackupDeleteTask, never()).delete(anyListOf(UUID.class));
   }
 
   @Test
@@ -82,6 +82,6 @@ public class EventBackupTaskTest {
     eventBackupTask.run();
 
     // then
-    verify(eventBackupDeleteTask).delete(anySetOf(UUID.class));
+    verify(eventBackupDeleteTask).delete(anyListOf(UUID.class));
   }
 }

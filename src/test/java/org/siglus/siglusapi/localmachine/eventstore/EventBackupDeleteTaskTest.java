@@ -15,11 +15,11 @@
 
 package org.siglus.siglusapi.localmachine.eventstore;
 
-import static org.mockito.Matchers.anySetOf;
+import static org.mockito.Matchers.anyListOf;
 import static org.mockito.Mockito.verify;
 
+import java.util.Arrays;
 import java.util.UUID;
-import org.javers.common.collections.Sets;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -35,9 +35,9 @@ public class EventBackupDeleteTaskTest {
   public void shouldNotBackupWhenNothingToArchive() {
 
     // when
-    eventPayloadRepository.deleteByEventIds(Sets.asSet(UUID.randomUUID(), UUID.randomUUID()));
+    eventPayloadRepository.deleteByEventIds(Arrays.asList(UUID.randomUUID(), UUID.randomUUID()));
 
     // then
-    verify(eventPayloadRepository).deleteByEventIds(anySetOf(UUID.class));
+    verify(eventPayloadRepository).deleteByEventIds(anyListOf(UUID.class));
   }
 }

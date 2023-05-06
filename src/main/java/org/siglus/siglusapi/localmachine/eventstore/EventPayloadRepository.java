@@ -15,7 +15,7 @@
 
 package org.siglus.siglusapi.localmachine.eventstore;
 
-import java.util.Set;
+import java.util.List;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -26,6 +26,6 @@ public interface EventPayloadRepository extends JpaRepository<EventPayload, UUID
 
   @Modifying
   @Query(value = "DELETE FROM localmachine.event_payload WHERE eventid IN :eventIds", nativeQuery = true)
-  void deleteByEventIds(@Param("eventIds") Set<UUID> eventIds);
+  void deleteByEventIds(@Param("eventIds") List<UUID> eventIds);
 
 }
