@@ -42,6 +42,7 @@ import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.service.client.SiglusProcessingPeriodReferenceDataService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 @Component
 @RequiredArgsConstructor
@@ -60,6 +61,7 @@ public class BatchReleaseRequisitionService {
 
   private final ProcessingPeriodExtensionRepository processingPeriodExtensionRepository;
 
+  @Transactional
   public ResponseEntity<RequisitionsProcessingStatusDto> getRequisitionsProcessingStatusDtoResponse(
       ReleasableRequisitionBatchDto releaseDto) {
     if (Boolean.FALSE.equals(releaseDto.getCreateOrder())) {

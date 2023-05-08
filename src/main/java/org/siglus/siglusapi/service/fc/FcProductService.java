@@ -61,7 +61,7 @@ import org.openlmis.stockmanagement.util.RequestParameters;
 import org.siglus.siglusapi.domain.BasicProductCode;
 import org.siglus.siglusapi.domain.CustomProductsRegimens;
 import org.siglus.siglusapi.domain.FcIntegrationChanges;
-import org.siglus.siglusapi.domain.ProgramOrderablesExtension;
+import org.siglus.common.domain.ProgramOrderablesExtension;
 import org.siglus.siglusapi.domain.ProgramRealProgram;
 import org.siglus.siglusapi.dto.ApprovedProductDto;
 import org.siglus.siglusapi.dto.FacilityTypeDto;

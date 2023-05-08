@@ -67,6 +67,29 @@ public class NotificationService {
     }
   }
 
+  public void postConvertToOrder(UUID userId, UUID supplierFacilityId, Order order) {
+    try {
+      OrderExternal external = orderExternalRepository.findOne(order.getExternalId());
+      UUID requisitionId = external == null ? order.getExternalId() : external.getRequisitionId();
+      Requisition requisition = requisitionRepository.findOne(requisitionId);
+
+      Notification notification = new Notification();
+      notification.setRefId(order.getId());
+      notification.setFacilityId(supplierFacilityId);
+      notification.setProgramId(requisition.getProgramId());
+      notification.setEmergency(requisition.getEmergency());
+      notification.setStatus(NotificationStatus.ORDERED);
+      notification.setType(NotificationType.TODO);
+      notification.setProcessingPeriodId(order.getProcessingPeriodId());
+      notification.setRequestingFacilityId(requisition.getFacilityId());
+      log.info("requisition convert to order notification: {}", notification);
+
+      save(userId, notification);
+    } catch (Exception e) {
+      log.error(NOTI_SEND_FAILED + e.getMessage(), e);
+    }
+  }
+
 
   public void postFulfillment(UUID userId, UUID proofOfDeliveryId, Order order) {
     try {
