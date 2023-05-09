@@ -25,7 +25,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -66,6 +65,7 @@ public class FcRegimenService implements ProcessDataService {
   private final CustomProductsRegimensRepository customProductsRegimensRepository;
 
   private final Map<String, CustomProductsRegimens> codeToCustomProductsRegimens = newHashMap();
+  private final Map<String, String> regimenCategoryNameToCode = newHashMap();
 
   @Override
   public FcIntegrationResultDto processData(List<? extends ResponseBaseDto> regimens, String startDate,
@@ -80,6 +80,8 @@ public class FcRegimenService implements ProcessDataService {
     AtomicInteger sameCounter = new AtomicInteger();
     List<FcIntegrationChanges> fcIntegrationChangesList = new ArrayList<>();
     try {
+      List<CustomProductsRegimens> customProductsRegimens = customProductsRegimensRepository.findAll();
+      customProductsRegimens.forEach(item -> codeToCustomProductsRegimens.put(item.getCode(), item));
       Map<String, ProgramRealProgram> realProgramCodeToProgram = programRealProgramRepository.findAll()
           .stream().collect(Collectors.toMap(ProgramRealProgram::getRealProgramCode, Function.identity()));
       Map<String, UUID> programCodeToId = programRefDataService.findAll()
@@ -96,8 +98,7 @@ public class FcRegimenService implements ProcessDataService {
           .mapToInt(RegimenCategory::getDisplayOrder).max().orElse(0);
       Set<Regimen> regimensToUpdate = new HashSet<>();
 
-      List<CustomProductsRegimens> customProductsRegimens = customProductsRegimensRepository.findAll();
-      customProductsRegimens.forEach(item -> codeToCustomProductsRegimens.put(item.getCode(), item));
+      allCategories.forEach(item -> regimenCategoryNameToCode.put(item.getName(), item.getCode()));
 
       regimens.forEach(item -> {
         RegimenDto current = (RegimenDto) item;
@@ -184,8 +185,7 @@ public class FcRegimenService implements ProcessDataService {
   private String getCurrentRegimenCategoryCode(RegimenDto current) {
     CustomProductsRegimens customProductsRegimens = codeToCustomProductsRegimens.get(current.getCode());
     if (null != customProductsRegimens) {
-      return Objects.equals(customProductsRegimens.getCategoryType(), "Adult")
-          ? "ADULTS" : customProductsRegimens.getCategoryType();
+      return regimenCategoryNameToCode.get(customProductsRegimens.getCategoryType());
     }
     return current.getCategoryCode() == null ? "DEFAULT" : current.getCategoryCode();
   }
