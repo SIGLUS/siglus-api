@@ -40,6 +40,7 @@ import static org.siglus.siglusapi.constant.FieldConstants.IS_TRACER;
 import static org.siglus.siglusapi.service.fc.FcVariables.LAST_UPDATED_AT;
 import static org.siglus.siglusapi.service.fc.FcVariables.START_DATE;
 
+import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -79,6 +80,7 @@ import org.siglus.siglusapi.dto.fc.ResponseBaseDto;
 import org.siglus.siglusapi.repository.BasicProductCodeRepository;
 import org.siglus.siglusapi.repository.CustomProductsRegimensRepository;
 import org.siglus.siglusapi.repository.ProgramOrderablesExtensionRepository;
+import org.siglus.siglusapi.repository.ProgramOrderablesRepository;
 import org.siglus.siglusapi.repository.ProgramRealProgramRepository;
 import org.siglus.siglusapi.repository.SiglusOrderableDisplayCategoriesRepository;
 import org.siglus.siglusapi.service.SiglusOrderableService;
@@ -103,7 +105,7 @@ public class FcProductServiceTest {
   private ArgumentCaptor<ApprovedProductDto> approvedProductCaptor;
 
   @Captor
-  private ArgumentCaptor<Set<ProgramOrderablesExtension>> extensionCaptor;
+  private ArgumentCaptor<ProgramOrderablesExtension> extensionCaptor;
 
   @InjectMocks
   private FcProductService fcProductService;
@@ -146,6 +148,9 @@ public class FcProductServiceTest {
 
   @Mock
   private CustomProductsRegimensRepository customProductsRegimensRepository;
+
+  @Mock
+  private ProgramOrderablesRepository programOrderablesRepository;
 
   private final Pageable pageable = new PageRequest(0, Integer.MAX_VALUE);
 
@@ -292,8 +297,7 @@ public class FcProductServiceTest {
     assertEquals(programId, approvedProductDto.getProgram().getId());
 
     verify(programOrderablesExtensionRepository).save(extensionCaptor.capture());
-    ProgramOrderablesExtension extension = extensionCaptor.getValue().stream().findFirst()
-        .orElse(new ProgramOrderablesExtension());
+    ProgramOrderablesExtension extension = extensionCaptor.getValue();
     assertEquals(orderableId, extension.getOrderableId());
     assertEquals(programCode, extension.getProgramCode());
     assertEquals(programName, extension.getProgramName());
@@ -328,6 +332,10 @@ public class FcProductServiceTest {
         .thenReturn(Pagination.getPage(newArrayList(approvedProductDto), pageable, 1));
     givenChildrenOrderableDto();
     ProductInfoDto product = buildProductInfoDto();
+    org.siglus.siglusapi.repository.dto.ProgramOrderableDto programOrderableDto1 =
+        new org.siglus.siglusapi.repository.dto.ProgramOrderableDto(orderableId, programId, new BigDecimal(100));
+    when(programOrderablesRepository.findAllMaxVersionProgramOrderableDtos()).thenReturn(
+        newArrayList(programOrderableDto1));
     // when
     fcProductService.processData(newArrayList(product), START_DATE, LAST_UPDATED_AT);
 
@@ -351,8 +359,7 @@ public class FcProductServiceTest {
     });
 
     verify(programOrderablesExtensionRepository).save(extensionCaptor.capture());
-    ProgramOrderablesExtension extension = extensionCaptor.getValue().stream().findFirst()
-        .orElse(new ProgramOrderablesExtension());
+    ProgramOrderablesExtension extension = extensionCaptor.getValue();
     assertEquals(orderableId, extension.getOrderableId());
     assertEquals(programCode, extension.getProgramCode());
     assertEquals(programName, extension.getProgramName());
