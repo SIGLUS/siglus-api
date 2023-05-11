@@ -57,6 +57,7 @@ import org.siglus.common.repository.ProgramAdditionalOrderableRepository;
 import org.siglus.common.repository.ProgramOrderableRepository;
 import org.siglus.siglusapi.constant.PaginationConstants;
 import org.siglus.siglusapi.domain.DispensableAttributes;
+import org.siglus.siglusapi.domain.ProgramOrderablesExtension;
 import org.siglus.siglusapi.domain.StockManagementDraft;
 import org.siglus.siglusapi.domain.StockManagementDraftLineItem;
 import org.siglus.siglusapi.dto.AvailableOrderablesDto;
@@ -354,7 +355,7 @@ public class SiglusOrderableService {
   public List<ProgramOrderablesExtensionDto> findAllByProgramCode(String programCode) {
     return programOrderablesExtensionRepository.findAllByProgramCode(programCode)
         .stream()
-        .map(extension -> ProgramOrderablesExtensionDto.from(extension))
+        .map(extension -> ProgramOrderablesExtension.toDto(extension))
         .collect(Collectors.toList());
   }
 

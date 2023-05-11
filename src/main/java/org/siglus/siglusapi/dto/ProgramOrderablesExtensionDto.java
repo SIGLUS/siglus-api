@@ -20,12 +20,8 @@ import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.experimental.SuperBuilder;
-import org.siglus.siglusapi.domain.ProgramOrderablesExtension;
-import org.springframework.beans.BeanUtils;
 
 @Data
-@SuperBuilder
 @AllArgsConstructor
 @NoArgsConstructor
 public class ProgramOrderablesExtensionDto {
@@ -42,10 +38,4 @@ public class ProgramOrderablesExtensionDto {
   private Boolean showInReport;
 
   private String unit;
-
-  public static ProgramOrderablesExtensionDto from(ProgramOrderablesExtension extension) {
-    ProgramOrderablesExtensionDto dto = new ProgramOrderablesExtensionDto();
-    BeanUtils.copyProperties(extension, dto);
-    return dto;
-  }
 }
