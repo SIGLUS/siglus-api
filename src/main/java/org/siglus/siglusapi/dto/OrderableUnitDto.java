@@ -18,24 +18,23 @@ package org.siglus.siglusapi.dto;
 import java.util.UUID;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.siglus.siglusapi.domain.ProgramOrderablesExtension;
 
 @Data
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class ProgramOrderablesExtensionDto {
+public class OrderableUnitDto {
   private UUID orderableId;
-
-  private String programCode;
-
-  private String programName;
-
-  private String realProgramCode;
-
-  private String realProgramName;
-
-  private Boolean showInReport;
-
   private String unit;
+
+  public static OrderableUnitDto from(ProgramOrderablesExtension extension) {
+    return OrderableUnitDto.builder()
+        .orderableId(extension.getOrderableId())
+        .unit(extension.getUnit())
+        .build();
+  }
 }

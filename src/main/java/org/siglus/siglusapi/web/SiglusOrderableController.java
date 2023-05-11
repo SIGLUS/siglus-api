@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.openlmis.referencedata.dto.OrderableDto;
 import org.siglus.siglusapi.dto.AvailableOrderablesDto;
-import org.siglus.siglusapi.dto.ProgramOrderablesExtensionDto;
+import org.siglus.siglusapi.dto.OrderableUnitDto;
 import org.siglus.siglusapi.dto.QueryOrderableSearchParams;
 import org.siglus.siglusapi.dto.SimplifyOrderablesDto;
 import org.siglus.siglusapi.repository.dto.ProgramOrderableDto;
@@ -87,7 +87,7 @@ public class SiglusOrderableController {
 
 
   @GetMapping("/unit")
-  public List<ProgramOrderablesExtensionDto> getUnitByOrderableIds(@RequestParam String programCode) {
+  public List<OrderableUnitDto> getUnitByOrderableIds(@RequestParam String programCode) {
     return orderableService.findAllByProgramCode(programCode);
   }
 

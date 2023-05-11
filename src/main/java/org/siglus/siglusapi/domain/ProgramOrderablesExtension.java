@@ -24,8 +24,6 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.siglus.common.domain.BaseEntity;
-import org.siglus.siglusapi.dto.ProgramOrderablesExtensionDto;
-import org.springframework.beans.BeanUtils;
 
 @Entity
 @Data
@@ -49,10 +47,4 @@ public class ProgramOrderablesExtension extends BaseEntity {
   private Boolean showInReport;
 
   private String unit;
-
-  public static ProgramOrderablesExtensionDto toDto(ProgramOrderablesExtension extension) {
-    ProgramOrderablesExtensionDto dto = new ProgramOrderablesExtensionDto();
-    BeanUtils.copyProperties(extension, dto);
-    return dto;
-  }
 }
