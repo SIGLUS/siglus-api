@@ -61,12 +61,14 @@ import org.siglus.siglusapi.domain.StockManagementDraft;
 import org.siglus.siglusapi.domain.StockManagementDraftLineItem;
 import org.siglus.siglusapi.dto.AvailableOrderablesDto;
 import org.siglus.siglusapi.dto.OrderableExpirationDateDto;
+import org.siglus.siglusapi.dto.ProgramOrderablesExtensionDto;
 import org.siglus.siglusapi.dto.QueryOrderableSearchParams;
 import org.siglus.siglusapi.dto.SimplifyOrderablesDto;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.repository.DispensableAttributesRepository;
 import org.siglus.siglusapi.repository.OrderableRepository;
+import org.siglus.siglusapi.repository.ProgramOrderablesExtensionRepository;
 import org.siglus.siglusapi.repository.ProgramOrderablesRepository;
 import org.siglus.siglusapi.repository.SiglusOrderableRepository;
 import org.siglus.siglusapi.repository.StockManagementDraftRepository;
@@ -99,6 +101,7 @@ public class SiglusOrderableService {
   private final DispensableAttributesRepository dispensableAttributesRepository;
   private final ApprovedProductReferenceDataService approvedProductReferenceDataService;
   private final ProgramOrderableRepository programOrderableRepository;
+  private final ProgramOrderablesExtensionRepository programOrderablesExtensionRepository;
   private final SiglusProgramService programService;
   private final SupportedProgramsHelper supportedProgramsHelper;
 
@@ -346,6 +349,14 @@ public class SiglusOrderableService {
     });
     return availableOrderablesDtos.stream().sorted(comparing(AvailableOrderablesDto::getFullProductName)).collect(
         Collectors.toList());
+  }
+
+  public List<ProgramOrderablesExtensionDto> getUnitByOrderableIds(List<UUID> orderableIds) {
+    Set<UUID> idSet = orderableIds.stream().collect(Collectors.toSet());
+    return programOrderablesExtensionRepository.findAllByOrderableIdIn(idSet)
+        .stream()
+        .map(extension -> ProgramOrderablesExtensionDto.from(extension))
+        .collect(Collectors.toList());
   }
 
   private Set<UUID> getExistOrderablesIdByDraftId(UUID draftId) {

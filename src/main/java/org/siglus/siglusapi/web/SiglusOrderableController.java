@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.openlmis.referencedata.dto.OrderableDto;
 import org.siglus.siglusapi.dto.AvailableOrderablesDto;
+import org.siglus.siglusapi.dto.ProgramOrderablesExtensionDto;
 import org.siglus.siglusapi.dto.QueryOrderableSearchParams;
 import org.siglus.siglusapi.dto.SimplifyOrderablesDto;
 import org.siglus.siglusapi.repository.dto.ProgramOrderableDto;
@@ -33,6 +34,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -82,6 +84,12 @@ public class SiglusOrderableController {
   public List<SimplifyOrderablesDto> getOrderablesDropDownList(@RequestParam(required = false) UUID draftId) {
 
     return orderableService.searchOrderablesDropDownList(draftId);
+  }
+
+
+  @GetMapping("/unit")
+  public List<ProgramOrderablesExtensionDto>  getUnitByOrderableIds(@RequestBody List<UUID> orderableIds) {
+    return orderableService.getUnitByOrderableIds(orderableIds);
   }
 
 }
