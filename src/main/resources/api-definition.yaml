@@ -1125,6 +1125,16 @@ traits:
             body:
               application/json:
 
+    /orderables/unit:
+      displayName: Get orderables unit list
+      post:
+        is: [ secured ]
+        description: Get orderables unit list
+        responses:
+          200:
+            body:
+              application/json:
+
     /validDestinations:
       get:
         is: [ secured ]
