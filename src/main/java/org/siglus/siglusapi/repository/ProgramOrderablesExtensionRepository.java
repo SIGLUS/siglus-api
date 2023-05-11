@@ -30,6 +30,8 @@ public interface ProgramOrderablesExtensionRepository extends JpaRepository<Prog
 
   List<ProgramOrderablesExtension> findAllByOrderableIdIn(Set<UUID> orderableIds);
 
+  List<ProgramOrderablesExtension> findAllByProgramCode(String programCode);
+
   @Modifying
   @Query(value = "delete from siglusintegration.program_orderables_extension where orderableid = :orderableId",
       nativeQuery = true)

@@ -351,9 +351,8 @@ public class SiglusOrderableService {
         Collectors.toList());
   }
 
-  public List<ProgramOrderablesExtensionDto> getUnitByOrderableIds(List<UUID> orderableIds) {
-    Set<UUID> idSet = orderableIds.stream().collect(Collectors.toSet());
-    return programOrderablesExtensionRepository.findAllByOrderableIdIn(idSet)
+  public List<ProgramOrderablesExtensionDto> findAllByProgramCode(String programCode) {
+    return programOrderablesExtensionRepository.findAllByProgramCode(programCode)
         .stream()
         .map(extension -> ProgramOrderablesExtensionDto.from(extension))
         .collect(Collectors.toList());

@@ -1127,7 +1127,7 @@ traits:
 
     /orderables/unit:
       displayName: Get orderables unit list
-      post:
+      get:
         is: [ secured ]
         description: Get orderables unit list
         responses:
