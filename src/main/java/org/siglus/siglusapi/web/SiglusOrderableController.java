@@ -23,7 +23,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.openlmis.referencedata.dto.OrderableDto;
-import org.siglus.siglusapi.domain.ProgramOrderablesExtension;
+import org.siglus.common.domain.ProgramOrderablesExtension;
 import org.siglus.siglusapi.dto.AvailableOrderablesDto;
 import org.siglus.siglusapi.dto.QueryOrderableSearchParams;
 import org.siglus.siglusapi.dto.SimplifyOrderablesDto;

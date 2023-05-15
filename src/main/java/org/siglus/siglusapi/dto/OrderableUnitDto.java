@@ -21,7 +21,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.siglus.siglusapi.domain.ProgramOrderablesExtension;
+import org.siglus.common.domain.ProgramOrderablesExtension;
 
 @Data
 @Builder
