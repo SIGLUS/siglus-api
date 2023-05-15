@@ -52,7 +52,6 @@ import org.openlmis.stockmanagement.util.Message;
 import org.openlmis.stockmanagement.web.Pagination;
 import org.siglus.common.constant.KitConstants;
 import org.siglus.common.domain.ProgramAdditionalOrderable;
-import org.siglus.common.domain.ProgramOrderablesExtension;
 import org.siglus.common.repository.ArchivedProductRepository;
 import org.siglus.common.repository.ProgramAdditionalOrderableRepository;
 import org.siglus.common.repository.ProgramOrderableRepository;
@@ -63,6 +62,7 @@ import org.siglus.siglusapi.domain.StockManagementDraft;
 import org.siglus.siglusapi.domain.StockManagementDraftLineItem;
 import org.siglus.siglusapi.dto.AvailableOrderablesDto;
 import org.siglus.siglusapi.dto.OrderableExpirationDateDto;
+import org.siglus.siglusapi.dto.ProgramOrderablesExtensionDto;
 import org.siglus.siglusapi.dto.QueryOrderableSearchParams;
 import org.siglus.siglusapi.dto.SimplifyOrderablesDto;
 import org.siglus.siglusapi.dto.UserDto;
@@ -351,10 +351,10 @@ public class SiglusOrderableService {
         Collectors.toList());
   }
 
-  // TODO java.lang.ClassCastException: org.siglus.common.domain.ProgramOrderablesExtension
-  //  cannot be cast to org.siglus.siglusapi.domain.ProgramOrderablesExtension
-  public List<ProgramOrderablesExtension> findAllByProgramCode(String programCode) {
-    return programOrderablesExtensionRepository.findAllByProgramCode(programCode);
+  public List<ProgramOrderablesExtensionDto> findAllByProgramCode(String programCode) {
+    return programOrderablesExtensionRepository.findAllByProgramCode(programCode).stream()
+        .map(extension -> ProgramOrderablesExtensionDto.from(extension))
+        .collect(Collectors.toList());
   }
 
   private Set<UUID> getExistOrderablesIdByDraftId(UUID draftId) {
