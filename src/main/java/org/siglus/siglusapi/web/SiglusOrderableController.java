@@ -87,7 +87,7 @@ public class SiglusOrderableController {
 
 
   @GetMapping("/unit")
-  public List<ProgramOrderablesExtensionDto> getUnitByOrderableIds(@RequestParam String programCode) {
+  public List<ProgramOrderablesExtensionDto> findAllByProgramCode(@RequestParam String programCode) {
     return orderableService.findAllByProgramCode(programCode);
   }
 

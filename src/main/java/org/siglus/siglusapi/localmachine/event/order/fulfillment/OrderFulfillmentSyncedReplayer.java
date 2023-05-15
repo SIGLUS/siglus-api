@@ -127,25 +127,29 @@ public class OrderFulfillmentSyncedReplayer {
   }
 
   public void doReplay(OrderFulfillmentSyncedEvent event) {
-    Order order = null;
+    Order order;
     simulateUserAuthHelper.simulateNewUserAuth(event.getFulfillUserId());
     createLotsIfNotExist(event.getShippedLotList());
 
     if (event.isNeedConvertToOrder()) {
       RequisitionExtension requisitionExtension = requisitionExtensionRepository.findByRequisitionNumber(
           event.getConvertToOrderRequest().getRequisitionNumber());
-      // reset requisition id
-      event.getShipmentExtensionRequest()
-          .getShipment().getOrder().setExternalId(requisitionExtension.getRequisitionId());
-      event.getConvertToOrderRequest().getFirstOrder().setExternalId(requisitionExtension.getRequisitionId());
       Requisition requisition = requisitionRepository.findOne(requisitionExtension.getRequisitionId());
       if (!RequisitionStatus.RELEASED.equals(requisition.getStatus())) {
+        // reset requisition id
+        event.getShipmentExtensionRequest()
+            .getShipment().getOrder().setExternalId(requisitionExtension.getRequisitionId());
+        event.getConvertToOrderRequest().getFirstOrder().setExternalId(requisitionExtension.getRequisitionId());
         finalApprove(requisition, requisitionExtension, event);
         order = convertToOrder(event, requisition);
+      } else {
+        Order orderOrigin =
+            siglusOrdersRepository
+                .findByOrderCode(event.getShipmentExtensionRequest().getShipment().getOrder().getOrderCode());
+        order = updateOrderLineItems(event.getShipmentExtensionRequest().getShipment().getOrder(), orderOrigin);
+        order.setExternalId(orderOrigin.getExternalId());
       }
-    }
-    
-    if (order == null) {
+    } else {
       Order orderOrigin =
           siglusOrdersRepository
               .findByOrderCode(event.getShipmentExtensionRequest().getShipment().getOrder().getOrderCode());

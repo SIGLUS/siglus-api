@@ -80,7 +80,7 @@ public class RequisitionConvertToOrderReplayer {
     finalApprove(requisition, requisitionExtension, event);
 
     Order order = convertToOrder(event, requisition);
-
+    log.info("save requisition convert to order, orderId:{}", order.getId());
     siglusOrdersRepository.saveAndFlush(order);
 
     notificationService.postConvertToOrder(event.getConvertToOrderUserId(),
