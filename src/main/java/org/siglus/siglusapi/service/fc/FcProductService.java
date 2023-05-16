@@ -115,8 +115,6 @@ public class FcProductService implements ProcessDataService {
 
   private static final String SYSTEM_DEFAULT_MANUFACTURER = "Mozambique";
 
-  private static final String DEFAULT_UNIT = "each";
-
   private Map<String, ProgramRealProgram> realProgramCodeToEntityMap;
 
   private Map<String, UUID> programCodeToIdMap;
@@ -185,7 +183,7 @@ public class FcProductService implements ProcessDataService {
           OrderableDto orderableDto = createOrderable(current);
           createFtap(orderableDto);
           orderableIdToProgramId.put(orderableDto.getId(),
-              ((ProgramOrderableDto) orderableDto.getPrograms().toArray()[0]).getProgramId());
+              orderableDto.getPrograms().stream().findFirst().orElse(new ProgramOrderableDto()).getProgramId());
           createProgramOrderablesExtension(current, orderableDto.getId());
           createCounter.getAndIncrement();
           FcIntegrationChanges createChanges = FcUtil
@@ -233,13 +231,18 @@ public class FcProductService implements ProcessDataService {
   }
 
   private void createProgramOrderablesExtension(ProductInfoDto product, UUID orderableId) {
-    programOrderablesExtensionRepository.deleteByOrderableId(orderableId);
     Set<ProgramOrderablesExtension> extensions =
         getProgramOrderablesExtensionsForOneProduct(product, orderableId,
             realProgramCodeToEntityMap);
+    List<ProgramOrderablesExtension> extensionList = programOrderablesExtensionRepository.findAllByOrderableId(
+        orderableId);
     for (ProgramOrderablesExtension extension : extensions) {
       if (orderableIdToProgramId.containsKey(orderableId)
           && orderableIdToProgramId.get(orderableId).equals(programCodeToIdMap.get(extension.getProgramCode()))) {
+        ProgramOrderablesExtension item = extensionList.stream().findFirst().orElse(new ProgramOrderablesExtension());
+        extension.setId(item.getId());
+        extension.setShowInReport(item.getShowInReport());
+        extension.setUnit(item.getUnit());
         programOrderablesExtensionRepository.save(extension);
         break;
       }
