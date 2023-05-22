@@ -167,7 +167,7 @@ public class RequisitionInternalApproveReplayer {
   }
 
   private void buildRequisitionApprovedProduct(Requisition requisition, UUID homeFacilityId, UUID programId) {
-    List<ApprovedProductDto> approvedProductDtos = requisitionService.getApprovedProducts(homeFacilityId, programId);
+    List<ApprovedProductDto> approvedProductDtos = requisitionService.getAllApprovedProducts(homeFacilityId, programId);
     ApproveProductsAggregator aggregator = new ApproveProductsAggregator(approvedProductDtos, programId);
     Set<ApprovedProductReference> availableProductIdentities = aggregator.getApprovedProductReferences();
     requisition.setAvailableProducts(availableProductIdentities);
