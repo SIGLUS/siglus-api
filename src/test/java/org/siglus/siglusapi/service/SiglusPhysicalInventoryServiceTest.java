@@ -43,6 +43,8 @@ import static org.siglus.siglusapi.constant.FieldConstants.SINGLE_PROGRAM;
 import static org.siglus.siglusapi.constant.FieldConstants.STOCK_CARD_ID;
 import static org.siglus.siglusapi.constant.FieldConstants.VM_STATUS;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
+import static org.siglus.siglusapi.constant.ProgramConstants.MMC_PROGRAM_CODE;
+import static org.siglus.siglusapi.constant.ProgramConstants.VIA_PROGRAM_CODE;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_NOT_ACCEPTABLE;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_PERMISSION_NOT_SUPPORTED;
 
@@ -70,6 +72,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.referencedata.domain.Orderable;
 import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.requisition.dto.OrderableDto;
+import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.service.RequisitionService;
 import org.openlmis.stockmanagement.domain.physicalinventory.PhysicalInventory;
 import org.openlmis.stockmanagement.dto.ObjectReferenceDto;
@@ -182,6 +185,9 @@ public class SiglusPhysicalInventoryServiceTest {
 
   @Mock
   private SiglusOrderableService siglusOrderableService;
+
+  @Mock
+  private SiglusProgramService siglusProgramService;
 
   private final UUID facilityId = UUID.randomUUID();
 
@@ -784,6 +790,10 @@ public class SiglusPhysicalInventoryServiceTest {
     when(authenticationHelper.getCurrentUser()).thenReturn(userDto);
     when(physicalInventoriesRepository.findByProgramIdAndFacilityIdAndIsDraft(any(), eq(facilityId), eq(true)))
         .thenReturn(Collections.emptyList());
+    ProgramDto programDto = new ProgramDto();
+    programDto.setCode(VIA_PROGRAM_CODE);
+    programDto.setId(programId);
+    when(siglusProgramService.getProgram(programId)).thenReturn(programDto);
     FacilityDto facilityDto = new FacilityDto();
     FacilityTypeDto typeDto = new FacilityTypeDto();
     typeDto.setCode("DDM");
@@ -924,6 +934,10 @@ public class SiglusPhysicalInventoryServiceTest {
         .lineItems(Collections.singletonList(expectedPhysicalInventoryLineItem))
         .build();
     when(inventoryController.getPhysicalInventory(physicalInventoryIdOne)).thenReturn(expectedPhysicalInventoryDto);
+    ProgramDto programDto = new ProgramDto();
+    programDto.setCode(VIA_PROGRAM_CODE);
+    programDto.setId(programId);
+    when(siglusProgramService.getProgram(programId)).thenReturn(programDto);
     org.openlmis.referencedata.dto.OrderableDto orderableDto1 = new org.openlmis.referencedata.dto.OrderableDto();
     orderableDto1.setId(orderableId);
     orderableDto1.setProductCode("22A01");
