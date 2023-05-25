@@ -907,12 +907,12 @@ public class SiglusPhysicalInventoryService {
     List<StockCardSummaryV2Dto> summaryV2Dtos = siglusStockCardSummariesService.findSiglusStockCard(
         parameters, Collections.emptyList(), pageable, false).getContent();
     if (MMC_PROGRAM_CODE.equals(programCode)) {
-      Set<UUID> approvedProductIds = requisitionService.getAllApprovedProducts(physicalInventoryDto.getFacilityId(),
+      Set<UUID> approvedMmcProductIds = requisitionService.getAllApprovedProducts(physicalInventoryDto.getFacilityId(),
           physicalInventoryDto.getProgramId()).stream()
           .map(approvedProductDto -> approvedProductDto.getOrderable().getId())
           .collect(Collectors.toSet());
       summaryV2Dtos = summaryV2Dtos.stream()
-          .filter(stockCardSummaryV2Dto -> approvedProductIds.contains(stockCardSummaryV2Dto.getOrderable().getId()))
+          .filter(stockCardSummaryV2Dto -> approvedMmcProductIds.contains(stockCardSummaryV2Dto.getOrderable().getId()))
           .collect(Collectors.toList());
     }
 
