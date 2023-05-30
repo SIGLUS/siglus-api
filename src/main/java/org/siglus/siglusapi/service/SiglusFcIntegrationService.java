@@ -545,16 +545,19 @@ public class SiglusFcIntegrationService {
         .collect(Collectors.toSet());
     if (CollectionUtils.isNotEmpty(lineItemIds)) {
       List<FcRequisitionLineItemDto> products = newArrayList();
-      Map<UUID, Integer> authorizedQuantityMap = lineItemExtensionRepository
-          .findLineItems(lineItemIds).stream().collect(toMap(
+      List<RequisitionLineItemExtension> extensions = lineItemExtensionRepository.findLineItems(lineItemIds);
+      Map<UUID, Integer> authorizedQuantityMap = extensions.stream().collect(toMap(
               RequisitionLineItemExtension::getRequisitionLineItemId, lineItemExtension ->
                   Optional.ofNullable(lineItemExtension.getAuthorizedQuantity()).orElse(0)));
+      Map<UUID, Integer> requestedQuantityMap = extensions.stream().collect(toMap(
+          RequisitionLineItemExtension::getRequisitionLineItemId, lineItemExtension ->
+              Optional.ofNullable(lineItemExtension.getSuggestedQuantity()).orElse(0)));
       boolean duringApproval = fcRequisitionDto.getStatus().duringApproval();
       lineItems.forEach(lineItem -> {
         if (duringApproval) {
           lineItem.setApprovedQuantity(null);
         }
-        products.add(buildLineItemDto(lineItem, authorizedQuantityMap));
+        products.add(buildLineItemDto(lineItem, authorizedQuantityMap, requestedQuantityMap));
       });
       fcRequisitionDto.setProducts(products);
     }
@@ -594,7 +597,7 @@ public class SiglusFcIntegrationService {
   }
 
   private FcRequisitionLineItemDto buildLineItemDto(RequisitionLineItem lineItem,
-      Map<UUID, Integer> authorizedQuantityMap) {
+      Map<UUID, Integer> authorizedQuantityMap, Map<UUID, Integer> requestedQuantityMap) {
     FcRequisitionLineItemDto fcLineItem = new FcRequisitionLineItemDto();
     BeanUtils.copyProperties(lineItem, fcLineItem);
     fcLineItem.setProductCode(orderableIdToInfoMap.get(lineItem.getOrderable().getId()).get("code"));
@@ -606,8 +609,9 @@ public class SiglusFcIntegrationService {
             realPrograms.add(new RealProgramDto(orderablesExtension.getRealProgramCode(),
                 orderablesExtension.getRealProgramName())));
     fcLineItem.setRealPrograms(realPrograms);
-    fcLineItem.setRequestedQuantity(fcLineItem.getRequestedQuantity() == null ? 0 : fcLineItem.getRequestedQuantity());
     fcLineItem.setAuthorizedQuantity(authorizedQuantityMap.get(lineItem.getId()));
+    Integer requestedQuantity = requestedQuantityMap.get(lineItem.getId());
+    fcLineItem.setRequestedQuantity(requestedQuantity == null ? 0 : requestedQuantity);
     return fcLineItem;
   }
 
