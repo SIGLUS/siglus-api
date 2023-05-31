@@ -22,6 +22,11 @@ import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
 import static org.apache.commons.lang3.StringUtils.removeEnd;
 import static org.apache.commons.lang3.StringUtils.removeStart;
+import static org.openlmis.requisition.domain.requisition.Requisition.AI;
+import static org.openlmis.requisition.domain.requisition.Requisition.DPM;
+import static org.siglus.common.constant.ProgramConstants.MTB_PROGRAM_CODE;
+import static org.siglus.common.constant.ProgramConstants.RAPIDTEST_PROGRAM_CODE;
+import static org.siglus.common.constant.ProgramConstants.TARV_PROGRAM_CODE;
 import static org.siglus.siglusapi.constant.FacilityTypeConstants.getTopLevelTypes;
 import static org.siglus.siglusapi.constant.FieldConstants.VALUE;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.TestConsumptionLineItems.TOTAL;
@@ -29,6 +34,7 @@ import static org.siglus.siglusapi.constant.android.UsageSectionConstants.TestCo
 import com.google.common.collect.ImmutableMap;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -539,6 +545,13 @@ public class SiglusFcIntegrationService {
     fcRequisitionDto.setRegimens(regimens);
   }
 
+  private boolean shouldSwapRequestedQuantity(FcRequisitionDto fcRequisitionDto) {
+    String facilityTypeCode = fcRequisitionDto.getRequestingFacilityCode();
+    String programCode = fcRequisitionDto.getProgramCode();
+    return Arrays.asList(DPM, AI).contains(facilityTypeCode)
+        && Arrays.asList(MTB_PROGRAM_CODE, TARV_PROGRAM_CODE, RAPIDTEST_PROGRAM_CODE).contains(programCode);
+  }
+
   private void setProductInfo(List<RequisitionLineItem> lineItems,
       FcRequisitionDto fcRequisitionDto) {
     Set<UUID> lineItemIds = lineItems.stream().map(RequisitionLineItem::getId)
@@ -557,7 +570,7 @@ public class SiglusFcIntegrationService {
         if (duringApproval) {
           lineItem.setApprovedQuantity(null);
         }
-        products.add(buildLineItemDto(lineItem, authorizedQuantityMap, requestedQuantityMap));
+        products.add(buildLineItemDto(lineItem, authorizedQuantityMap, requestedQuantityMap, fcRequisitionDto));
       });
       fcRequisitionDto.setProducts(products);
     }
@@ -597,7 +610,9 @@ public class SiglusFcIntegrationService {
   }
 
   private FcRequisitionLineItemDto buildLineItemDto(RequisitionLineItem lineItem,
-      Map<UUID, Integer> authorizedQuantityMap, Map<UUID, Integer> requestedQuantityMap) {
+      Map<UUID, Integer> authorizedQuantityMap,
+      Map<UUID, Integer> requestedQuantityMap,
+      FcRequisitionDto fcRequisitionDto) {
     FcRequisitionLineItemDto fcLineItem = new FcRequisitionLineItemDto();
     BeanUtils.copyProperties(lineItem, fcLineItem);
     fcLineItem.setProductCode(orderableIdToInfoMap.get(lineItem.getOrderable().getId()).get("code"));
@@ -610,8 +625,13 @@ public class SiglusFcIntegrationService {
                 orderablesExtension.getRealProgramName())));
     fcLineItem.setRealPrograms(realPrograms);
     fcLineItem.setAuthorizedQuantity(authorizedQuantityMap.get(lineItem.getId()));
-    Integer requestedQuantity = requestedQuantityMap.get(lineItem.getId());
-    fcLineItem.setRequestedQuantity(requestedQuantity == null ? 0 : requestedQuantity);
+    if (shouldSwapRequestedQuantity(fcRequisitionDto)) {
+      Integer requestedQuantity = requestedQuantityMap.get(lineItem.getId());
+      fcLineItem.setRequestedQuantity(requestedQuantity == null ? 0 : requestedQuantity);
+    } else {
+      fcLineItem.setRequestedQuantity(fcLineItem.getRequestedQuantity() == null
+          ? 0 : fcLineItem.getRequestedQuantity());
+    }
     return fcLineItem;
   }
 
