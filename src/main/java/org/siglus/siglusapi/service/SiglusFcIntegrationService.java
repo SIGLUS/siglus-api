@@ -24,6 +24,7 @@ import static org.apache.commons.lang3.StringUtils.removeEnd;
 import static org.apache.commons.lang3.StringUtils.removeStart;
 import static org.openlmis.requisition.domain.requisition.Requisition.AI;
 import static org.openlmis.requisition.domain.requisition.Requisition.DPM;
+import static org.openlmis.requisition.domain.requisition.Requisition.HC;
 import static org.siglus.common.constant.ProgramConstants.MTB_PROGRAM_CODE;
 import static org.siglus.common.constant.ProgramConstants.RAPIDTEST_PROGRAM_CODE;
 import static org.siglus.common.constant.ProgramConstants.TARV_PROGRAM_CODE;
@@ -546,9 +547,9 @@ public class SiglusFcIntegrationService {
   }
 
   private boolean shouldSwapRequestedQuantity(FcRequisitionDto fcRequisitionDto) {
-    String facilityTypeCode = fcRequisitionDto.getRequestingFacilityCode();
+    String facilityTypeCode = fcRequisitionDto.getRequestingFacilityType();
     String programCode = fcRequisitionDto.getProgramCode();
-    return Arrays.asList(DPM, AI).contains(facilityTypeCode)
+    return Arrays.asList(DPM, AI, HC).contains(facilityTypeCode)
         && Arrays.asList(MTB_PROGRAM_CODE, TARV_PROGRAM_CODE, RAPIDTEST_PROGRAM_CODE).contains(programCode);
   }
 
