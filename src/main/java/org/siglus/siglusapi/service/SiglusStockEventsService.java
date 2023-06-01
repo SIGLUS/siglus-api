@@ -156,12 +156,13 @@ public class SiglusStockEventsService {
   }
 
   private Set<UUID> getProgramIdsForPhysicalInventory(StockEventDto eventDto) {
+    Set<UUID> programIds = eventDto.getLineItems().stream()
+        .map(StockEventLineItemDto::getProgramId)
+        .collect(Collectors.toSet());
     if (!isAllProgram(eventDto)) {
       setItemProgramIdFromMmcToVia(eventDto);
     }
-    return eventDto.getLineItems().stream()
-        .map(StockEventLineItemDto::getProgramId)
-        .collect(Collectors.toSet());
+    return programIds;
   }
 
   private void setItemProgramIdFromMmcToVia(StockEventDto eventDto) {
