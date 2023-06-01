@@ -117,6 +117,9 @@ public class SiglusLotService {
     if (null == tradeItemId) {
       throw new ValidationMessageException(new Message(ERROR_TRADE_ITEM_IS_EMPTY));
     }
+    if (lotCode != null) {
+      lotCode = lotCode.toUpperCase();
+    }
     LotDto existedLot = findExistedLot(lotCode, tradeItemId);
     if (existedLot == null) {
       LotDto lotDto = new LotDto();

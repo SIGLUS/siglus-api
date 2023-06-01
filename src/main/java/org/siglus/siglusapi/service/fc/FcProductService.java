@@ -58,10 +58,11 @@ import org.openlmis.requisition.dto.BasicProgramDto;
 import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
 import org.openlmis.stockmanagement.util.RequestParameters;
+import org.siglus.common.domain.ProgramOrderablesExtension;
+import org.siglus.common.repository.ProgramOrderablesExtensionRepository;
 import org.siglus.siglusapi.domain.BasicProductCode;
 import org.siglus.siglusapi.domain.CustomProductsRegimens;
 import org.siglus.siglusapi.domain.FcIntegrationChanges;
-import org.siglus.siglusapi.domain.ProgramOrderablesExtension;
 import org.siglus.siglusapi.domain.ProgramRealProgram;
 import org.siglus.siglusapi.dto.ApprovedProductDto;
 import org.siglus.siglusapi.dto.FacilityTypeDto;
@@ -74,7 +75,7 @@ import org.siglus.siglusapi.dto.fc.ProductPriceDto;
 import org.siglus.siglusapi.dto.fc.ResponseBaseDto;
 import org.siglus.siglusapi.repository.BasicProductCodeRepository;
 import org.siglus.siglusapi.repository.CustomProductsRegimensRepository;
-import org.siglus.siglusapi.repository.ProgramOrderablesExtensionRepository;
+import org.siglus.siglusapi.repository.ProgramOrderablesRepository;
 import org.siglus.siglusapi.repository.ProgramRealProgramRepository;
 import org.siglus.siglusapi.repository.SiglusOrderableDisplayCategoriesRepository;
 import org.siglus.siglusapi.service.SiglusOrderableService;
@@ -128,6 +129,9 @@ public class FcProductService implements ProcessDataService {
 
   private final Map<String, CustomProductsRegimens> codeToCustomProductsRegimens = newHashMap();
 
+  private final ProgramOrderablesRepository programOrderablesRepository;
+  private Map<UUID, UUID> orderableIdToProgramId;
+
   @Override
   public FcIntegrationResultDto processData(List<? extends ResponseBaseDto> products,
       String startDate,
@@ -165,12 +169,12 @@ public class FcProductService implements ProcessDataService {
             if (updateChanges.isUpdateProgram()) {
               updateFtap(orderableDto);
             }
-            createProgramOrderablesExtension(current, orderableDto.getId());
             updateCounter.getAndIncrement();
             fcIntegrationChangesList.add(updateChanges);
           } else {
             sameCounter.getAndIncrement();
           }
+          createProgramOrderablesExtension(current, existed.getId());
         } else if (FcUtil.isNotMatchedCode(current.getFnm())) {
           errorCodes.add(current.getFnm());
           errorCounter.getAndIncrement();
@@ -178,6 +182,8 @@ public class FcProductService implements ProcessDataService {
           log.info("[FC product] create: {}", current);
           OrderableDto orderableDto = createOrderable(current);
           createFtap(orderableDto);
+          orderableIdToProgramId.put(orderableDto.getId(),
+              orderableDto.getPrograms().stream().findFirst().orElse(new ProgramOrderableDto()).getProgramId());
           createProgramOrderablesExtension(current, orderableDto.getId());
           createCounter.getAndIncrement();
           FcIntegrationChanges createChanges = FcUtil
@@ -225,11 +231,22 @@ public class FcProductService implements ProcessDataService {
   }
 
   private void createProgramOrderablesExtension(ProductInfoDto product, UUID orderableId) {
-    programOrderablesExtensionRepository.deleteByOrderableId(orderableId);
     Set<ProgramOrderablesExtension> extensions =
         getProgramOrderablesExtensionsForOneProduct(product, orderableId,
             realProgramCodeToEntityMap);
-    programOrderablesExtensionRepository.save(extensions);
+    List<ProgramOrderablesExtension> extensionList = programOrderablesExtensionRepository.findAllByOrderableId(
+        orderableId);
+    for (ProgramOrderablesExtension extension : extensions) {
+      if (orderableIdToProgramId.containsKey(orderableId)
+          && orderableIdToProgramId.get(orderableId).equals(programCodeToIdMap.get(extension.getProgramCode()))) {
+        ProgramOrderablesExtension item = extensionList.stream().findFirst().orElse(new ProgramOrderablesExtension());
+        extension.setId(item.getId());
+        extension.setShowInReport(item.getShowInReport());
+        extension.setUnit(item.getUnit());
+        programOrderablesExtensionRepository.save(extension);
+        break;
+      }
+    }
   }
 
   Set<ProgramOrderablesExtension> getProgramOrderablesExtensionsForOneProduct(
@@ -272,6 +289,9 @@ public class FcProductService implements ProcessDataService {
         .map(BasicProductCode::getProductCode).collect(toSet());
     categoryDisplayNameToCodeMap = orderableDisplayCategoriesRepository.findAll().stream()
         .collect(toMap(odc -> odc.getOrderedDisplayValue().getDisplayName(), odc -> odc.getCode().toString()));
+    orderableIdToProgramId = programOrderablesRepository.findAllMaxVersionProgramOrderableDtos().stream()
+        .collect(toMap(org.siglus.siglusapi.repository.dto.ProgramOrderableDto::getOrderableId,
+            org.siglus.siglusapi.repository.dto.ProgramOrderableDto::getProgramId));
   }
 
   private OrderableDto createOrderable(ProductInfoDto product) {

@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.service.android;
 
+import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
@@ -29,6 +30,7 @@ import java.time.chrono.ChronoZonedDateTime;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -63,7 +65,9 @@ import org.openlmis.requisition.service.referencedata.ProgramReferenceDataServic
 import org.openlmis.stockmanagement.domain.reason.StockCardLineItemReason;
 import org.openlmis.stockmanagement.dto.ValidReasonAssignmentDto;
 import org.siglus.common.domain.ProgramAdditionalOrderable;
+import org.siglus.common.domain.ProgramOrderablesExtension;
 import org.siglus.common.repository.ProgramAdditionalOrderableRepository;
+import org.siglus.common.repository.ProgramOrderablesExtensionRepository;
 import org.siglus.siglusapi.constant.PaginationConstants;
 import org.siglus.siglusapi.constant.PodConstants;
 import org.siglus.siglusapi.domain.AppInfo;
@@ -191,6 +195,8 @@ public class MeService {
   private final MeCreateRequisitionService meCreateRequisitionService;
   private final AndroidProofOfDeliverySyncedEmitter proofOfDeliverySyncedEmitter;
 
+  private final ProgramOrderablesExtensionRepository programOrderablesExtensionRepository;
+
   public FacilityResponse getCurrentFacility() {
     FacilityDto facilityDto = getCurrentFacilityInfo();
     List<SupportedProgramDto> programs = facilityDto.getSupportedPrograms();
@@ -282,9 +288,26 @@ public class MeService {
           return dto;
         })
         .collect(toList());
+
+    Set<UUID> orderableIds = approvedProducts.stream()
+        .filter(p -> filterByLastUpdated(p, lastSyncTime))
+        .map(OrderableDto::getId)
+        .collect(Collectors.toSet());
+
+    Map<UUID, ProgramOrderablesExtension> orderableIdToProgramOrderablesExtension
+        = buildOrderableIdToExtensionMap(orderableIds);
+
     List<ProductResponse> filteredProducts = approvedProducts.stream()
         .filter(p -> filterByLastUpdated(p, lastSyncTime))
-        .map(orderable -> mapper.toResponse(orderable, allProducts, productIdToAdditionalProgramCode))
+        .map(orderable -> {
+          ProductResponse productResponse = mapper.toResponse(orderable, allProducts, productIdToAdditionalProgramCode);
+          ProgramOrderablesExtension extension = orderableIdToProgramOrderablesExtension.get(orderable.getId());
+          if (extension != null) {
+            productResponse.setShowInReport(extension.getShowInReport());
+            productResponse.setUnit(extension.getUnit());
+          }
+          return productResponse;
+        })
         .collect(toList());
     syncResponse.setProducts(filteredProducts);
     filteredProducts.stream()
@@ -293,6 +316,20 @@ public class MeService {
         .max()
         .ifPresent(syncResponse::setLastSyncTime);
     return syncResponse;
+  }
+
+  private Map<UUID, ProgramOrderablesExtension> buildOrderableIdToExtensionMap(Set<UUID> orderableIds) {
+    Map<UUID, ProgramOrderablesExtension> orderableIdToProgramOrderablesExtension = new HashMap<>();
+    List<ProgramOrderablesExtension> allExtensions = programOrderablesExtensionRepository
+        .findAllByOrderableIdIn(orderableIds);
+    Map<UUID, List<ProgramOrderablesExtension>> orderableIdToExtensions = allExtensions.stream()
+        .collect(groupingBy(ProgramOrderablesExtension::getOrderableId));
+
+    orderableIdToExtensions.entrySet().forEach(entry -> {
+      ProgramOrderablesExtension extension = entry.getValue().stream().findFirst().orElse(null);
+      orderableIdToProgramOrderablesExtension.put(entry.getKey(), extension);
+    });
+    return orderableIdToProgramOrderablesExtension;
   }
 
   public CreateStockCardResponse createStockCards(List<StockCardCreateRequest> requests) {
