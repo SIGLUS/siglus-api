@@ -377,9 +377,10 @@ public class OrderFulfillmentSyncedReplayer {
     return createShipment(shipmentDto, fulfillUserId, shipped);
   }
 
-  private Shipment createShipment(ShipmentDto shipmentDto, UUID fulfillUserId, Order shippedOrder) {
+  public Shipment createShipment(ShipmentDto shipmentDto, UUID fulfillUserId, Order shippedOrder) {
     nullIds(shipmentDto);
     shipmentDto.setShipDetails(new CreationDetails(fulfillUserId, ZonedDateTime.now()));
+    fillEmptyQuantityShipped(shipmentDto);
     shipmentService.mergeShipmentLineItems(shipmentDto);
     Shipment shipment = Shipment.newInstance(shipmentDto, shippedOrder);
 
@@ -387,6 +388,15 @@ public class OrderFulfillmentSyncedReplayer {
     ProofOfDelivery proofOfDelivery = ProofOfDelivery.newInstance(saved);
     this.proofOfDeliveryRepository.saveAndFlush(proofOfDelivery);
     return saved;
+  }
+
+  private void fillEmptyQuantityShipped(ShipmentDto shipmentDto) {
+    List<ShipmentLineItemDto> lineItemDtos = shipmentDto.lineItems();
+    lineItemDtos.forEach(lineItem -> {
+      if (lineItem.getQuantityShipped() == null) {
+        lineItem.setQuantityShipped(0L);
+      }
+    });
   }
 
   private void nullIds(ShipmentDto shipmentDto) {

@@ -15,13 +15,16 @@
 
 package org.siglus.siglusapi.localmachine.event.order;
 
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.verify;
 import static org.powermock.api.mockito.PowerMockito.when;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.Function;
@@ -29,6 +32,8 @@ import java.util.stream.Collectors;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
@@ -37,6 +42,8 @@ import org.openlmis.fulfillment.domain.ProofOfDelivery;
 import org.openlmis.fulfillment.domain.Shipment;
 import org.openlmis.fulfillment.repository.ProofOfDeliveryRepository;
 import org.openlmis.fulfillment.service.ShipmentService;
+import org.openlmis.fulfillment.web.shipment.ShipmentDto;
+import org.openlmis.fulfillment.web.shipment.ShipmentLineItemDto;
 import org.openlmis.fulfillment.web.util.OrderDto;
 import org.openlmis.fulfillment.web.util.OrderDtoBuilder;
 import org.openlmis.requisition.domain.RequisitionTemplate;
@@ -119,6 +126,11 @@ public class OrderFulfillmentSyncedReplayerTest extends FileBasedTest {
   @Mock
   private ShipmentService shipmentService;
 
+  @Captor
+  private ArgumentCaptor<Shipment> argumentCaptor;
+
+  private final UUID shipmentId = UUID.randomUUID();
+  private final UUID userId = UUID.randomUUID();
   private final UUID requisitionId = UUID.randomUUID();
   private final UUID facilityId = UUID.randomUUID();
   private final UUID orderableId = UUID.randomUUID();
@@ -204,6 +216,25 @@ public class OrderFulfillmentSyncedReplayerTest extends FileBasedTest {
     event.setShippedLotList(list);
     // when
     orderFulfillmentSyncedReplayer.replay(event);
+  }
+
+  @Test
+  public void shouldSaveShipmentSuccessWhenQuantityShippedIsNull() {
+    // given
+    Order shippedOrder = new Order();
+    ShipmentDto shipmentDto = new ShipmentDto();
+    shipmentDto.setId(shipmentId);
+    ShipmentLineItemDto lineItemDto = new ShipmentLineItemDto();
+    shipmentDto.setLineItems(Arrays.asList(lineItemDto));
+
+    // when
+    orderFulfillmentSyncedReplayer.createShipment(shipmentDto, userId, shippedOrder);
+
+    // then
+    verify(siglusShipmentRepository).saveAndFlush(argumentCaptor.capture());
+    Shipment saved = argumentCaptor.getValue();
+    assertEquals(1, saved.getLineItems().size());
+    assertEquals(Long.valueOf(0L), saved.getLineItems().get(0).getQuantityShipped());
   }
 
   private void resetStatusMessageRequest(OrderFulfillmentSyncedEvent event) {
