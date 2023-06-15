@@ -616,6 +616,9 @@ public class SiglusFcIntegrationService {
       FcRequisitionDto fcRequisitionDto) {
     FcRequisitionLineItemDto fcLineItem = new FcRequisitionLineItemDto();
     BeanUtils.copyProperties(lineItem, fcLineItem);
+    if (lineItem.getTotalLossesAndAdjustments() == null) {
+      fcLineItem.setTotalLossesAndAdjustments(0);
+    }
     fcLineItem.setProductCode(orderableIdToInfoMap.get(lineItem.getOrderable().getId()).get("code"));
     fcLineItem.setProductName(orderableIdToInfoMap.get(lineItem.getOrderable().getId()).get("name"));
     fcLineItem.setProductDescription(orderableIdToInfoMap.get(lineItem.getOrderable().getId()).get("description"));
