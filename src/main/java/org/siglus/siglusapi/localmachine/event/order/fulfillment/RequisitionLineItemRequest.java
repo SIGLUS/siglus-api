@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.localmachine.event.order.fulfillment;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -23,6 +24,7 @@ import lombok.NoArgsConstructor;
 import org.joda.money.Money;
 import org.openlmis.requisition.domain.requisition.VersionEntityReference;
 import org.siglus.common.serializer.MoneySerializer;
+import org.siglus.siglusapi.localmachine.utils.MoneyDeserializer;
 
 @Data
 @Builder
@@ -46,6 +48,7 @@ public class RequisitionLineItemRequest {
   private Long packsToShip;
   private Boolean skipped;
   @JsonSerialize(using = MoneySerializer.class)
+  @JsonDeserialize(using = MoneyDeserializer.class)
   private Money totalCost;
   private Integer numberOfNewPatientsAdded;
   private Integer additionalQuantityRequired;
