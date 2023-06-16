@@ -90,8 +90,10 @@ import org.openlmis.stockmanagement.dto.ValidReasonAssignmentDto;
 import org.openlmis.stockmanagement.dto.referencedata.VersionObjectReferenceDto;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.CanFulfillForMeEntryDto;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2Dto;
+import org.siglus.common.domain.ProgramOrderablesExtension;
 import org.siglus.common.repository.ArchivedProductRepository;
 import org.siglus.common.repository.ProgramAdditionalOrderableRepository;
+import org.siglus.common.repository.ProgramOrderablesExtensionRepository;
 import org.siglus.siglusapi.domain.AppInfo;
 import org.siglus.siglusapi.domain.HfCmm;
 import org.siglus.siglusapi.domain.PodRequestBackup;
@@ -269,6 +271,8 @@ public class MeServiceTest {
   private ResyncInfoRepository resyncInfoRepository;
 
   @Mock
+  private ProgramOrderablesExtensionRepository programOrderablesExtensionRepository;
+  @Mock
   private SiglusValidReasonAssignmentService validReasonAssignmentService;
 
   @Mock
@@ -372,6 +376,9 @@ public class MeServiceTest {
     when(programsHelper.findHomeFacilitySupportedProgramIds()).thenReturn(ImmutableSet.of(programId1, programId2));
     when(orderableDataService.searchOrderables(any(), any(), any()))
         .thenReturn(new PageImpl<>(asList(mockOrderable1(), mockOrderable2(), mockOrderable3())));
+    when(programOrderablesExtensionRepository.findAllByOrderableIdIn(any()))
+        .thenReturn(asList(mockProgramOrderableExtension1(), mockProgramOrderableExtension2(),
+            mockProgramOrderableExtension3()));
     when(requisitionService.getApprovedProductsWithoutAdditional(facilityId, programId1))
         .thenReturn(asList(mockApprovedProduct1(), mockApprovedProduct2()));
     when(requisitionService.getApprovedProductsWithoutAdditional(facilityId, programId2))
@@ -906,6 +913,8 @@ public class MeServiceTest {
     assertFalse(product.getIsHiv());
     assertFalse(product.getIsNos());
     assertEquals(oldTime.toInstant(), product.getLastUpdated());
+    assertTrue(product.getShowInReport());
+    assertEquals("comp", product.getUnit());
   }
 
   private void assertProduct2(ProductResponse product) {
@@ -928,6 +937,8 @@ public class MeServiceTest {
     assertFalse(product.getIsHiv());
     assertFalse(product.getIsNos());
     assertEquals(latestTime.toInstant(), product.getLastUpdated());
+    assertFalse(product.getShowInReport());
+    assertEquals("each", product.getUnit());
   }
 
   private void assertProduct3(ProductResponse product) {
@@ -947,6 +958,8 @@ public class MeServiceTest {
     assertFalse(product.getIsHiv());
     assertFalse(product.getIsNos());
     assertEquals(latestTime.toInstant(), product.getLastUpdated());
+    assertTrue(product.getShowInReport());
+    assertEquals("pack", product.getUnit());
   }
 
   private LotDto mockLotDto(String lotCode, UUID lotId, UUID tradeItemId) {
@@ -955,6 +968,30 @@ public class MeServiceTest {
     lotDto.setId(lotId);
     lotDto.setTradeItemId(tradeItemId);
     return lotDto;
+  }
+
+  private ProgramOrderablesExtension mockProgramOrderableExtension1() {
+    return ProgramOrderablesExtension.builder()
+        .orderableId(productId1)
+        .showInReport(true)
+        .unit("comp")
+        .build();
+  }
+
+  private ProgramOrderablesExtension mockProgramOrderableExtension2() {
+    return ProgramOrderablesExtension.builder()
+        .orderableId(productId2)
+        .showInReport(false)
+        .unit("each")
+        .build();
+  }
+
+  private ProgramOrderablesExtension mockProgramOrderableExtension3() {
+    return ProgramOrderablesExtension.builder()
+        .orderableId(productId3)
+        .showInReport(true)
+        .unit("pack")
+        .build();
   }
 
   private org.openlmis.referencedata.dto.OrderableDto mockOrderable1() {

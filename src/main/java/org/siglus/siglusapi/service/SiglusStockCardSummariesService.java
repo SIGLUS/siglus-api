@@ -20,10 +20,14 @@ import static com.google.common.collect.Sets.newHashSet;
 import static org.openlmis.stockmanagement.service.PermissionService.STOCK_CARDS_VIEW;
 import static org.openlmis.stockmanagement.service.PermissionService.STOCK_INVENTORIES_EDIT;
 import static org.siglus.siglusapi.constant.FieldConstants.FACILITY_ID;
+import static org.siglus.siglusapi.constant.FieldConstants.PROGRAM_ID;
+import static org.siglus.siglusapi.constant.FieldConstants.PROVINCE;
 import static org.siglus.siglusapi.constant.FieldConstants.RIGHT_NAME;
 import static org.siglus.siglusapi.constant.PaginationConstants.DEFAULT_PAGE_NUMBER;
 import static org.siglus.siglusapi.constant.PaginationConstants.NO_PAGINATION;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
+import static org.siglus.siglusapi.constant.ProgramConstants.MMC_PROGRAM_CODE;
+import static org.siglus.siglusapi.constant.ProgramConstants.VIA_PROGRAM_CODE;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_PERMISSION_NOT_SUPPORTED;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_ID_NOT_FOUND;
 import static org.siglus.siglusapi.i18n.PermissionMessageKeys.ERROR_NO_FOLLOWING_PERMISSION;
@@ -50,6 +54,7 @@ import org.openlmis.referencedata.repository.OrderableRepository;
 import org.openlmis.referencedata.service.LotSearchParams;
 import org.openlmis.referencedata.web.LotController;
 import org.openlmis.requisition.service.PermissionService;
+import org.openlmis.requisition.service.RequisitionService;
 import org.openlmis.requisition.service.referencedata.PermissionStringDto;
 import org.openlmis.requisition.utils.Pagination;
 import org.openlmis.stockmanagement.dto.ObjectReferenceDto;
@@ -75,6 +80,7 @@ import org.siglus.siglusapi.dto.StockCardDetailsWithLocationDto;
 import org.siglus.siglusapi.dto.StockCardSummaryDto;
 import org.siglus.siglusapi.dto.StockCardSummaryWithLocationDto;
 import org.siglus.siglusapi.dto.UserDto;
+import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.repository.CalculatedStockOnHandByLocationRepository;
 import org.siglus.siglusapi.repository.PhysicalInventoryLineItemsExtensionRepository;
 import org.siglus.siglusapi.repository.PhysicalInventorySubDraftRepository;
@@ -114,6 +120,8 @@ public class SiglusStockCardSummariesService {
   private final OrderableRepository orderableRepository;
   private final LotController lotController;
   private final CalculatedStockOnHandByLocationRepository calculatedStockOnHandByLocationRepository;
+  private final SiglusProgramService siglusProgramService;
+  private final RequisitionService requisitionService;
 
   public List<org.openlmis.referencedata.dto.LotDto> getLotsDataByOrderableIds(List<UUID> orderableIds) {
     if (CollectionUtils.isEmpty(orderableIds)) {
@@ -441,7 +449,53 @@ public class SiglusStockCardSummariesService {
 
   private List<StockCardSummaryV2Dto> getStockCardSummaryV2Dtos(MultiValueMap<String, String> parameters,
       List<UUID> subDraftIds, UUID draftId, Pageable pageable) {
-    return searchStockCardSummaryV2Dtos(parameters, subDraftIds, draftId, pageable, false).getContent();
+    List<StockCardSummaryV2Dto> summaryV2Dtos;
+    String programCode = siglusProgramService.getProgram(getId(PROGRAM_ID, parameters)).getCode();
+    if (MMC_PROGRAM_CODE.equals(programCode)) {
+      summaryV2Dtos = getMmcStockSummaryV2Dtos(parameters, subDraftIds, draftId, pageable);
+    } else if (VIA_PROGRAM_CODE.equals(programCode) && PROVINCE.equals(
+        authenticationHelper.getFacilityGeographicZoneLevel())) {
+      summaryV2Dtos = getViaStockSummaryV2DtosWithoutMmc(parameters, subDraftIds, draftId, pageable);
+    } else {
+      summaryV2Dtos = searchStockCardSummaryV2Dtos(parameters, subDraftIds, draftId, pageable, false).getContent();
+    }
+    return summaryV2Dtos;
+  }
+
+  private List<StockCardSummaryV2Dto> getMmcStockSummaryV2Dtos(MultiValueMap<String, String> parameters,
+      List<UUID> subDraftIds, UUID draftId, Pageable pageable) {
+    UUID viaProgramId = siglusProgramService.getProgramByCode(VIA_PROGRAM_CODE)
+        .orElseThrow(() -> new NotFoundException("VIA program not found"))
+        .getId();
+    UUID mmcProgramId = siglusProgramService.getProgramByCode(MMC_PROGRAM_CODE)
+        .orElseThrow(() -> new NotFoundException("MMC program not found"))
+        .getId();
+    parameters.set(PROGRAM_ID, String.valueOf(viaProgramId));
+    List<StockCardSummaryV2Dto> summaryV2Dtos = searchStockCardSummaryV2Dtos(parameters, subDraftIds, draftId, pageable,
+        false).getContent();
+    Set<UUID> approvedMmcProductIds = requisitionService.getAllApprovedProducts(getId(FACILITY_ID, parameters),
+            mmcProgramId).stream()
+        .map(approvedProductDto -> approvedProductDto.getOrderable().getId())
+        .collect(Collectors.toSet());
+    return summaryV2Dtos.stream()
+        .filter(stockCardSummaryV2Dto -> approvedMmcProductIds.contains(stockCardSummaryV2Dto.getOrderable().getId()))
+        .collect(Collectors.toList());
+  }
+
+  private List<StockCardSummaryV2Dto> getViaStockSummaryV2DtosWithoutMmc(MultiValueMap<String, String> parameters,
+      List<UUID> subDraftIds, UUID draftId, Pageable pageable) {
+    UUID mmcProgramId = siglusProgramService.getProgramByCode(MMC_PROGRAM_CODE)
+        .orElseThrow(() -> new NotFoundException("MMC program not found"))
+        .getId();
+    Set<UUID> approvedMmcProductIds = requisitionService.getAllApprovedProducts(getId(FACILITY_ID, parameters),
+            mmcProgramId).stream()
+        .map(approvedProductDto -> approvedProductDto.getOrderable().getId())
+        .collect(Collectors.toSet());
+    List<StockCardSummaryV2Dto> summaryV2Dtos = searchStockCardSummaryV2Dtos(parameters, subDraftIds, draftId, pageable,
+        false).getContent();
+    return summaryV2Dtos.stream()
+        .filter(stockCardSummaryV2Dto -> !approvedMmcProductIds.contains(stockCardSummaryV2Dto.getOrderable().getId()))
+        .collect(Collectors.toList());
   }
 
   private List<StockCardSummaryV2Dto> getStockCardSummaryV2DtosWithLocation(MultiValueMap<String, String> parameters,

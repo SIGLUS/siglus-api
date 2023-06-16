@@ -107,6 +107,7 @@ public class SiglusStockEventsService {
   private final StockEventProductRequestedRepository stockEventProductRequestedRepository;
   @Value("${stockmanagement.kit.unpack.destination.nodeId}")
   private UUID unpackKitDestinationNodeId;
+  private UUID viaProgramId;
 
   @Transactional
   public void processStockEventForMultiUser(StockEventForMultiUserDto stockEventForMultiUserDto, boolean isByLocation) {
@@ -119,11 +120,15 @@ public class SiglusStockEventsService {
   public void processStockEvent(StockEventDto eventDto, boolean isByLocation) {
     setUserId(eventDto);
     siglusLotService.createAndFillLotId(eventDto);
-    Set<UUID> programIds = getProgramIds(eventDto);
     List<StockEventDto> stockEventDtoByPrograms;
+    viaProgramId = siglusProgramService.getProgramByCode(VIA_PROGRAM_CODE)
+        .orElseThrow(() -> new NotFoundException("VIA program not found"))
+        .getId();
     if (eventDto.isPhysicalInventory()) {
+      Set<UUID> programIds = getProgramIdsForPhysicalInventory(eventDto);
       stockEventDtoByPrograms = getStockEventsWhenDoPhysicalInventory(eventDto, programIds);
     } else {
+      Set<UUID> programIds = getProgramIds(eventDto);
       stockEventDtoByPrograms = getStockEventsWhenDoStockMovements(eventDto, programIds);
     }
     if (eventDto.isAdjustment() && isByLocation) {
@@ -138,14 +143,8 @@ public class SiglusStockEventsService {
   }
 
   private Set<UUID> getProgramIds(StockEventDto eventDto) {
-    UUID viaProgramId = siglusProgramService.getProgramByCode(VIA_PROGRAM_CODE)
-        .orElseThrow(() -> new NotFoundException("VIA program not found"))
-        .getId();
     if (!isAllProgram(eventDto)) {
-      eventDto.getLineItems().forEach(item -> {
-        String programCode = siglusProgramService.getProgram(eventDto.getProgramId()).getCode();
-        item.setProgramId(MMC_PROGRAM_CODE.equals(programCode) ? viaProgramId : eventDto.getProgramId());
-      });
+      setItemProgramIdFromMmcToVia(eventDto);
     }
     return eventDto.getLineItems().stream()
         .map(StockEventLineItemDto::getProgramId)
@@ -154,6 +153,23 @@ public class SiglusStockEventsService {
           return MMC_PROGRAM_CODE.equals(programCode) ? viaProgramId : programId;
         })
         .collect(Collectors.toSet());
+  }
+
+  private Set<UUID> getProgramIdsForPhysicalInventory(StockEventDto eventDto) {
+    Set<UUID> programIds = eventDto.getLineItems().stream()
+        .map(StockEventLineItemDto::getProgramId)
+        .collect(Collectors.toSet());
+    if (!isAllProgram(eventDto)) {
+      setItemProgramIdFromMmcToVia(eventDto);
+    }
+    return programIds;
+  }
+
+  private void setItemProgramIdFromMmcToVia(StockEventDto eventDto) {
+    eventDto.getLineItems().forEach(item -> {
+      String programCode = siglusProgramService.getProgram(eventDto.getProgramId()).getCode();
+      item.setProgramId(MMC_PROGRAM_CODE.equals(programCode) ? viaProgramId : eventDto.getProgramId());
+    });
   }
 
   private void deleteDraft(StockEventDto eventDto) {
@@ -179,7 +195,15 @@ public class SiglusStockEventsService {
     if (CollectionUtils.isEmpty(inventories)) {
       throw new ValidationMessageException("stockmanagement.error.physicalInventory.isSubmitted");
     }
-    return inventories.stream().map(StockEventDto::fromPhysicalInventoryDto).collect(Collectors.toList());
+    return inventories.stream()
+        .map(StockEventDto::fromPhysicalInventoryDto)
+        .map(stockEventDto -> {
+          if (MMC_PROGRAM_CODE.equals(siglusProgramService.getProgram(stockEventDto.getProgramId()).getCode())) {
+            stockEventDto.setProgramId(viaProgramId);
+          }
+          return stockEventDto;
+        })
+        .collect(Collectors.toList());
   }
 
   private List<StockEventDto> getStockEventsWhenDoStockMovements(StockEventDto eventDto, Set<UUID> programIds) {
@@ -228,7 +252,7 @@ public class SiglusStockEventsService {
     if (CollectionUtils.isNotEmpty(lineItemsWithRequestedQuantity)) {
       Map<UUID, List<StockEventLineItemDto>> orderableIdToLineItems =
           lineItemsWithRequestedQuantity.stream().collect(Collectors.groupingBy(StockEventLineItemDto::getOrderableId));
-      List<StockEventProductRequested> requestedList = orderableIdToLineItems.entrySet().stream().map((entry) -> {
+      List<StockEventProductRequested> requestedList = orderableIdToLineItems.entrySet().stream().map(entry -> {
         Integer sum = entry.getValue().stream()
             .map(StockEventLineItemDto::getRequestedQuantity).reduce(Integer::sum).orElse(0);
         return StockEventProductRequested

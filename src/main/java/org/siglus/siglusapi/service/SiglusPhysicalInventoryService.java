@@ -33,6 +33,8 @@ import static org.siglus.siglusapi.constant.FieldConstants.VM_STATUS;
 import static org.siglus.siglusapi.constant.LocationConstants.VIRTUAL_LOCATION_CODE;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_UUID;
+import static org.siglus.siglusapi.constant.ProgramConstants.MMC_PROGRAM_CODE;
+import static org.siglus.siglusapi.constant.ProgramConstants.VIA_PROGRAM_CODE;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_INVENTORY_CONFLICT_DRAFT;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_NOT_ACCEPTABLE;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_PERMISSION_NOT_SUPPORTED;
@@ -91,6 +93,7 @@ import org.siglus.siglusapi.dto.SubDraftDto;
 import org.siglus.siglusapi.dto.enums.LocationManagementOption;
 import org.siglus.siglusapi.dto.enums.PhysicalInventorySubDraftEnum;
 import org.siglus.siglusapi.exception.BusinessDataException;
+import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.CalculatedStockOnHandByLocationRepository;
 import org.siglus.siglusapi.repository.FacilityLocationsRepository;
@@ -136,6 +139,8 @@ public class SiglusPhysicalInventoryService {
   private final FacilityLocationsRepository facilityLocationsRepository;
   private final PhysicalInventoryEmptyLocationLineItemRepository physicalInventoryEmptyLocationLineItemRepository;
   private final SiglusOrderableService siglusOrderableService;
+
+  private final SiglusProgramService siglusProgramService;
 
   private final SiglusArchiveProductService archiveProductService;
 
@@ -885,14 +890,31 @@ public class SiglusPhysicalInventoryService {
   private List<PhysicalInventoryLineItemDto> buildPhysicalInventoryLineItems(
       PhysicalInventoryDto physicalInventoryDto) {
     MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+    String programCode = siglusProgramService.getProgram(physicalInventoryDto.getProgramId()).getCode();
+    if (MMC_PROGRAM_CODE.equals(programCode)) {
+      UUID viaProgramId = siglusProgramService.getProgramByCode(VIA_PROGRAM_CODE)
+          .orElseThrow(() -> new NotFoundException("VIA program not found"))
+          .getId();
+      parameters.set(PROGRAM_ID, String.valueOf(viaProgramId));
+    } else {
+      parameters.set(PROGRAM_ID, String.valueOf(physicalInventoryDto.getProgramId()));
+    }
     parameters.set(FACILITY_ID, String.valueOf(physicalInventoryDto.getFacilityId()));
-    parameters.set(PROGRAM_ID, String.valueOf(physicalInventoryDto.getProgramId()));
     parameters.set(RIGHT_NAME, STOCK_INVENTORIES_EDIT);
     parameters.set(EXCLUDE_ARCHIVED, Boolean.TRUE.toString());
     Pageable pageable = new PageRequest(0, Integer.MAX_VALUE);
 
     List<StockCardSummaryV2Dto> summaryV2Dtos = siglusStockCardSummariesService.findSiglusStockCard(
         parameters, Collections.emptyList(), pageable, false).getContent();
+    if (MMC_PROGRAM_CODE.equals(programCode)) {
+      Set<UUID> approvedMmcProductIds = requisitionService.getAllApprovedProducts(physicalInventoryDto.getFacilityId(),
+          physicalInventoryDto.getProgramId()).stream()
+          .map(approvedProductDto -> approvedProductDto.getOrderable().getId())
+          .collect(Collectors.toSet());
+      summaryV2Dtos = summaryV2Dtos.stream()
+          .filter(stockCardSummaryV2Dto -> approvedMmcProductIds.contains(stockCardSummaryV2Dto.getOrderable().getId()))
+          .collect(Collectors.toList());
+    }
 
     return convertSummaryV2DtosToLineItems(summaryV2Dtos, physicalInventoryDto.getProgramId());
   }

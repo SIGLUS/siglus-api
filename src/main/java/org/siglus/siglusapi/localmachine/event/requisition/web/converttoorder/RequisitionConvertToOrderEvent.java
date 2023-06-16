@@ -13,34 +13,24 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.domain;
+package org.siglus.siglusapi.localmachine.event.requisition.web.converttoorder;
 
 import java.util.UUID;
-import javax.persistence.Entity;
-import javax.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import org.siglus.common.domain.BaseEntity;
+import org.siglus.siglusapi.localmachine.EventPayload;
+import org.siglus.siglusapi.localmachine.event.order.fulfillment.ConvertToOrderRequest;
 
-@Entity
 @Data
 @Builder
-@EqualsAndHashCode(of = {"orderableId", "programCode", "realProgramCode"}, callSuper = false)
+@EventPayload
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "program_orderables_extension", schema = "siglusintegration")
-public class ProgramOrderablesExtension extends BaseEntity {
-
-  private UUID orderableId;
-
-  private String programCode;
-
-  private String programName;
-
-  private String realProgramCode;
-
-  private String realProgramName;
+public class RequisitionConvertToOrderEvent {
+  private UUID convertToOrderUserId;
+  private UUID supplierFacilityId;
+  private UUID finalApproveUserId;
+  private ConvertToOrderRequest convertToOrderRequest;
 }

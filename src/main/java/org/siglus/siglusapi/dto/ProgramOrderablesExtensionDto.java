@@ -13,25 +13,39 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.repository;
+package org.siglus.siglusapi.dto;
 
-import java.util.List;
-import java.util.Set;
 import java.util.UUID;
-import org.siglus.siglusapi.domain.ProgramOrderablesExtension;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 
-public interface ProgramOrderablesExtensionRepository extends JpaRepository<ProgramOrderablesExtension, UUID> {
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
+import org.siglus.common.domain.ProgramOrderablesExtension;
+import org.springframework.beans.BeanUtils;
 
-  List<ProgramOrderablesExtension> findAllByOrderableId(UUID orderableId);
+@Data
+@SuperBuilder
+@AllArgsConstructor
+@NoArgsConstructor
+public class ProgramOrderablesExtensionDto {
+  private UUID orderableId;
 
-  List<ProgramOrderablesExtension> findAllByOrderableIdIn(Set<UUID> orderableIds);
+  private String programCode;
 
-  @Modifying
-  @Query(value = "delete from siglusintegration.program_orderables_extension where orderableid = :orderableId",
-      nativeQuery = true)
-  void deleteByOrderableId(@Param("orderableId") UUID orderableId);
+  private String programName;
+
+  private String realProgramCode;
+
+  private String realProgramName;
+
+  private Boolean showInReport;
+
+  private String unit;
+
+  public static ProgramOrderablesExtensionDto from(ProgramOrderablesExtension extension) {
+    ProgramOrderablesExtensionDto dto = new ProgramOrderablesExtensionDto();
+    BeanUtils.copyProperties(extension, dto);
+    return dto;
+  }
 }

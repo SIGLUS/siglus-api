@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.openlmis.referencedata.dto.OrderableDto;
 import org.siglus.siglusapi.dto.AvailableOrderablesDto;
+import org.siglus.siglusapi.dto.ProgramOrderablesExtensionDto;
 import org.siglus.siglusapi.dto.QueryOrderableSearchParams;
 import org.siglus.siglusapi.dto.SimplifyOrderablesDto;
 import org.siglus.siglusapi.repository.dto.ProgramOrderableDto;
@@ -82,6 +83,12 @@ public class SiglusOrderableController {
   public List<SimplifyOrderablesDto> getOrderablesDropDownList(@RequestParam(required = false) UUID draftId) {
 
     return orderableService.searchOrderablesDropDownList(draftId);
+  }
+
+
+  @GetMapping("/unit")
+  public List<ProgramOrderablesExtensionDto> findAllByProgramCode(@RequestParam String programCode) {
+    return orderableService.findAllByProgramCode(programCode);
   }
 
 }

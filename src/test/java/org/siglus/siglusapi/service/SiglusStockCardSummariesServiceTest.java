@@ -27,6 +27,7 @@ import static org.siglus.siglusapi.constant.FieldConstants.ORDERABLE_ID;
 import static org.siglus.siglusapi.constant.FieldConstants.RIGHT_NAME;
 import static org.siglus.siglusapi.constant.PaginationConstants.DEFAULT_PAGE_NUMBER;
 import static org.siglus.siglusapi.constant.PaginationConstants.NO_PAGINATION;
+import static org.siglus.siglusapi.constant.ProgramConstants.TARV_PROGRAM_CODE;
 
 import com.google.common.collect.Lists;
 import java.util.ArrayList;
@@ -47,11 +48,13 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.referencedata.domain.Orderable;
 import org.openlmis.referencedata.repository.OrderableRepository;
 import org.openlmis.referencedata.web.LotController;
+import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.service.PermissionService;
 import org.openlmis.requisition.service.referencedata.PermissionStringDto;
 import org.openlmis.requisition.service.referencedata.PermissionStrings;
 import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.dto.referencedata.OrderableDto;
+
 import org.openlmis.stockmanagement.dto.referencedata.VersionObjectReferenceDto;
 import org.openlmis.stockmanagement.service.StockCardSummaries;
 import org.openlmis.stockmanagement.service.StockCardSummariesService;
@@ -138,6 +141,9 @@ public class SiglusStockCardSummariesServiceTest {
 
   @InjectMocks
   private SiglusStockCardSummariesService service;
+
+  @Mock
+  private SiglusProgramService programService;
 
   private final UUID userId = UUID.randomUUID();
   private final UUID facilityId = UUID.randomUUID();
@@ -397,6 +403,9 @@ public class SiglusStockCardSummariesServiceTest {
     Page<org.openlmis.referencedata.dto.OrderableDto> page = Pagination.getPage(newArrayList(orderableDto));
     when(siglusOrderableService.searchOrderables(searchParams, pageable, facilityId))
         .thenReturn(page);
+    ProgramDto programDto = new ProgramDto();
+    programDto.setCode(TARV_PROGRAM_CODE);
+    when(programService.getProgram(programId)).thenReturn(programDto);
 
     List<List<StockCardDetailsDto>> stockCardDetailsDtoByGroup = service
         .getStockCardDetailsDtoByGroup(getProgramsParms(), null, subDraftId, pageable);

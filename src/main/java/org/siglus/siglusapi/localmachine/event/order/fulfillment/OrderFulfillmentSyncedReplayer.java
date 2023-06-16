@@ -130,18 +130,25 @@ public class OrderFulfillmentSyncedReplayer {
     Order order;
     simulateUserAuthHelper.simulateNewUserAuth(event.getFulfillUserId());
     createLotsIfNotExist(event.getShippedLotList());
+
     if (event.isNeedConvertToOrder()) {
       RequisitionExtension requisitionExtension = requisitionExtensionRepository.findByRequisitionNumber(
           event.getConvertToOrderRequest().getRequisitionNumber());
-      // reset requisition id
-      event.getShipmentExtensionRequest()
-          .getShipment().getOrder().setExternalId(requisitionExtension.getRequisitionId());
-      event.getConvertToOrderRequest().getFirstOrder().setExternalId(requisitionExtension.getRequisitionId());
       Requisition requisition = requisitionRepository.findOne(requisitionExtension.getRequisitionId());
-
-      finalApprove(requisition, requisitionExtension, event);
-
-      order = convertToOrder(event, requisition);
+      if (!RequisitionStatus.RELEASED.equals(requisition.getStatus())) {
+        // reset requisition id
+        event.getShipmentExtensionRequest()
+            .getShipment().getOrder().setExternalId(requisitionExtension.getRequisitionId());
+        event.getConvertToOrderRequest().getFirstOrder().setExternalId(requisitionExtension.getRequisitionId());
+        finalApprove(requisition, requisitionExtension, event);
+        order = convertToOrder(event, requisition);
+      } else {
+        Order orderOrigin =
+            siglusOrdersRepository
+                .findByOrderCode(event.getShipmentExtensionRequest().getShipment().getOrder().getOrderCode());
+        order = updateOrderLineItems(event.getShipmentExtensionRequest().getShipment().getOrder(), orderOrigin);
+        order.setExternalId(orderOrigin.getExternalId());
+      }
     } else {
       Order orderOrigin =
           siglusOrdersRepository
@@ -149,6 +156,7 @@ public class OrderFulfillmentSyncedReplayer {
       order = updateOrderLineItems(event.getShipmentExtensionRequest().getShipment().getOrder(), orderOrigin);
       order.setExternalId(orderOrigin.getExternalId());
     }
+    
     // pre handle
     Set<UUID> skippedOrderableIds = getSkippedOrderLineItemIds(event.getShipmentExtensionRequest().getShipment());
     removeSkippedOrderLineItems(skippedOrderableIds, order, event);
