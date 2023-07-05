@@ -72,8 +72,8 @@ public class CalculateCmmServiceTest {
   private final UUID facilityId = UUID.randomUUID();
   private final String orderableCode = "orderable code";
   private final String facilityCode = "facility Code";
-  private final LocalDate now = LocalDate.now();
-  private final LocalDate oneYearAgo = now.minusMonths(11);
+  private final LocalDate now = LocalDate.of(2023, 3, 21);
+  private final LocalDate oneYearAgo = LocalDate.of(2022, 12, 21);
   private final LocalDate periodStartDate = LocalDate.of(2022, 11, 21);
 
   @Before
@@ -119,8 +119,7 @@ public class CalculateCmmServiceTest {
     calculateCmmService.calculateAllWebCmm(LocalDate.of(oneYearAgo.getYear(), 8, 21));
 
     // then
-    // verify(facilityCmmsRepository, times(0)).save(anyList());
-    verify(facilityCmmsRepository, times(1)).save(anyList());
+    verify(facilityCmmsRepository, times(0)).save(anyList());
   }
 
   @Test
