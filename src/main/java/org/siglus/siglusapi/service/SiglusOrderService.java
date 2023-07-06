@@ -857,11 +857,15 @@ public class SiglusOrderService {
         .map(Requisition::getFacilityId).collect(Collectors.toSet());
     List<UUID> noApprovedRequisitionFacilityIds = clientFacilityIds.stream()
         .filter(e -> !hasApprovedRequisitionFacilityIds.contains(e)).collect(Collectors.toList());
-
+    List<UUID> periodIds = getPreviousThreePeriodIds(periods);
+    if (CollectionUtils.isEmpty(noApprovedRequisitionFacilityIds)
+        || CollectionUtils.isEmpty(periodIds)) {
+      return Collections.emptyList();
+    }
     return siglusRequisitionRepository.findRequisitionsByOrderInfo(
         noApprovedRequisitionFacilityIds,
         order.getProgramId(),
-        getPreviousThreePeriodIds(periods),
+        periodIds,
         order.getEmergency(),
         REQUISITION_STATUS_AFTER_FINAL_APPROVED);
   }
