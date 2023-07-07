@@ -18,6 +18,8 @@ package org.siglus.siglusapi.dto.android.response;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -29,6 +31,7 @@ import lombok.NoArgsConstructor;
 @Builder
 public class SiglusStockMovementItemResponse {
 
+  private UUID id;
   private Integer movementQuantity;
 
   private String type;
@@ -46,6 +49,8 @@ public class SiglusStockMovementItemResponse {
   private String documentNumber;
 
   private String reason;
+
+  private String reasonCode;
 
   private Integer requested;
 

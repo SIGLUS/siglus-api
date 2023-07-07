@@ -22,6 +22,8 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
 
+import java.util.UUID;
+
 @EqualsAndHashCode
 @ToString
 @Builder
@@ -29,6 +31,7 @@ import lombok.ToString;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class LotMovement {
 
+  private final UUID id;
   private final Lot lot;
   private final MovementDetail movementDetail;
   private final Integer stockQuantity;

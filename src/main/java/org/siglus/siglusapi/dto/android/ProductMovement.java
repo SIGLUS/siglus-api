@@ -18,6 +18,7 @@ package org.siglus.siglusapi.dto.android;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 import javax.annotation.Nullable;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -34,6 +35,7 @@ import lombok.ToString;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class ProductMovement implements EventTimeContainer {
 
+  private final UUID id;
   private final String productCode;
   private final EventTime eventTime;
   private final Integer requestedQuantity;
