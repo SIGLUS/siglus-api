@@ -387,6 +387,7 @@ public class StockManagementRepository extends BaseNativeRepository {
 
   private RowMapper<ProductLotMovement> buildProductLotMovementFromResult() {
     return (rs, i) -> ProductLotMovement.builder()
+        .id(UUID.fromString(rs.getString("id")))
         .code(readProductLotCode(rs))
         .eventTime(readEventTime(rs))
         .movementDetail(readMovementDetail(rs))
@@ -514,7 +515,8 @@ public class StockManagementRepository extends BaseNativeRepository {
   private String generateMovementQuery(@Nonnull UUID facilityId, @Nonnull MapSqlParameterSource parameters,
       @Nullable LocalDate since, @Nullable LocalDate at, @Nonnull Set<UUID> orderableIds, Instant syncSince,
       Instant syncTill) {
-    String select = "SELECT o.code AS productcode, "
+    String select = "SELECT root.id AS id," +
+        "o.code AS productcode, "
         + "l.lotcode, "
         + "root.occurreddate, "
         + "root.extradata :: json ->> 'originEventTime' as recordedat, "
@@ -533,7 +535,9 @@ public class StockManagementRepository extends BaseNativeRepository {
         + "root.processeddate, "
         + "l.expirationdate, "
         + "srcfac.name AS srcfacname, "
+        + "srcfac.code AS srcfaccode, "
         + "destfac.name AS destfacname, "
+        + "destfac.code AS destfaccode, "
         + "root.sourcefreetext ,"
         + "root.destinationfreetext ";
     String root = "stockmanagement.stock_card_line_items root";
@@ -615,6 +619,7 @@ public class StockManagementRepository extends BaseNativeRepository {
     movementBuilder.signature(anyLot.getSignature());
     movementBuilder.sourcefreetext(anyLot.sourceFreeText);
     movementBuilder.destinationfreetext(anyLot.destinationFreeText);
+    movementBuilder.id(UUID.randomUUID());
     return movementBuilder.build();
   }
 
@@ -632,6 +637,7 @@ public class StockManagementRepository extends BaseNativeRepository {
     Integer stockQuantity = lotInventories.get(movement.getCode());
     lotInventories.put(movement.getCode(), stockQuantity - movementDetail.getAdjustment());
     return LotMovement.builder()
+        .id(movement.getId())
         .lot(movement.getLot())
         .movementDetail(movementDetail)
         .stockQuantity(stockQuantity)
@@ -645,6 +651,8 @@ public class StockManagementRepository extends BaseNativeRepository {
   @Builder
   @AllArgsConstructor(access = AccessLevel.PRIVATE)
   private static class ProductLotMovement implements EventTimeContainer {
+
+    private UUID id;
 
     private final ProductLotCode code;
 
