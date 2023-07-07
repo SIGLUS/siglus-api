@@ -37,22 +37,34 @@ public class MovementDetail {
   @Nullable
   private final String reason;
 
+  @Nullable
+  private String reasonCode;
+
   public MovementDetail(Integer adjustment, MovementType type, @Nullable String reason) {
     this.adjustment = adjustment;
     this.type = type;
     this.reason = reason;
   }
 
+  public MovementDetail(Integer adjustment, MovementType type, @Nullable String reason, @Nullable String reasonCode) {
+    this.adjustment = adjustment;
+    this.type = type;
+    this.reason = reason;
+    this.reasonCode = reasonCode;
+  }
+
   @SuppressWarnings("java:S107")
   @Builder(access = AccessLevel.PUBLIC)
   private static MovementDetail of(Integer unsignedAdjustment, String sourceName, String sourceFacilityName,
-      String destinationName, String destinationFacilityName, String adjustmentReason, String adjustmentReasonType,
-      Integer unsignedInventoryAdjustment, String inventoryReason, String inventoryReasonType,
+      String sourceFacilityCode, String destinationName, String destinationFacilityName, String destinationFacilityCode,
+      String adjustmentReason, String adjustmentReasonType, Integer unsignedInventoryAdjustment,
+      String inventoryReason, String inventoryReasonType,
       boolean isInitInventory) {
     if (sourceName != null || sourceFacilityName != null) {
-      return receive(unsignedAdjustment, sourceName != null ? sourceName : sourceFacilityName);
+      return receive(unsignedAdjustment, sourceName != null ? sourceName : sourceFacilityName, sourceFacilityCode);
     } else if (destinationName != null || destinationFacilityName != null) {
-      return issue(-unsignedAdjustment, destinationName != null ? destinationName : destinationFacilityName);
+      return issue(-unsignedAdjustment, destinationName != null ? destinationName : destinationFacilityName,
+          destinationFacilityCode);
     } else if (adjustmentReason != null) {
       return adjustment(unsignedAdjustment, adjustmentReason, adjustmentReasonType);
     } else if (inventoryReason != null) {
@@ -79,12 +91,12 @@ public class MovementDetail {
     return new MovementDetail(mergedAdjustment, type, mergedReason);
   }
 
-  private static MovementDetail receive(Integer adjustment, String reason) {
-    return new MovementDetail(adjustment, MovementType.RECEIVE, reason);
+  private static MovementDetail receive(Integer adjustment, String reason, String reasonCode) {
+    return new MovementDetail(adjustment, MovementType.RECEIVE, reason, reasonCode);
   }
 
-  private static MovementDetail issue(Integer adjustment, String reason) {
-    return new MovementDetail(adjustment, MovementType.ISSUE, reason);
+  private static MovementDetail issue(Integer adjustment, String reason, String reasonCode) {
+    return new MovementDetail(adjustment, MovementType.ISSUE, reason, reasonCode);
   }
 
   private static MovementDetail adjustment(int unsignedAdjustment, String reason, String reasonType) {

@@ -15,14 +15,14 @@
 
 package org.siglus.siglusapi.dto.android;
 
+import java.util.UUID;
+
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
-
-import java.util.UUID;
 
 @EqualsAndHashCode
 @ToString

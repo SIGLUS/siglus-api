@@ -453,8 +453,10 @@ public class StockManagementRepository extends BaseNativeRepository {
         .unsignedAdjustment(readAsInt(rs, "quantity"))
         .sourceName(readAsString(rs, "srcname"))
         .sourceFacilityName(readAsString(rs, "srcfacname"))
+        .sourceFacilityCode(readAsString(rs, "srcfaccode"))
         .destinationName(readAsString(rs, "destname"))
         .destinationFacilityName(readAsString(rs, "destfacname"))
+        .destinationFacilityCode(readAsString(rs, "destfaccode"))
         .adjustmentReason(readAsString(rs, "adjustreason"))
         .adjustmentReasonType(readAsString(rs, "adjustreasontype"))
         .inventoryReason(readAsString(rs, "inventoryreason"))
@@ -515,8 +517,8 @@ public class StockManagementRepository extends BaseNativeRepository {
   private String generateMovementQuery(@Nonnull UUID facilityId, @Nonnull MapSqlParameterSource parameters,
       @Nullable LocalDate since, @Nullable LocalDate at, @Nonnull Set<UUID> orderableIds, Instant syncSince,
       Instant syncTill) {
-    String select = "SELECT root.id AS id," +
-        "o.code AS productcode, "
+    String select = "SELECT root.id AS id,"
+        + "o.code AS productcode, "
         + "l.lotcode, "
         + "root.occurreddate, "
         + "root.extradata :: json ->> 'originEventTime' as recordedat, "

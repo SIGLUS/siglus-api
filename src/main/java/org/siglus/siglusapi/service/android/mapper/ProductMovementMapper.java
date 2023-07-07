@@ -76,6 +76,7 @@ public interface ProductMovementMapper {
 
   @Mapping(target = ".", source = "movementDetail")
   @Mapping(target = "reason", source = "movementDetail", qualifiedByName = "getReason")
+  @Mapping(target = "reasonCode", source = "movementDetail", qualifiedByName = "getReasonCode")
   @Mapping(target = "movementQuantity", source = "movementDetail.adjustment")
   @Mapping(target = "stockOnHand", source = "stockQuantity")
   @Mapping(target = "requested", source = "requestedQuantity")
@@ -88,6 +89,7 @@ public interface ProductMovementMapper {
 
   @Mapping(target = "quantity", source = "movementDetail.adjustment")
   @Mapping(target = "reason", source = "movementDetail", qualifiedByName = "getReason")
+  @Mapping(target = "reasonCode", source = "movementDetail", qualifiedByName = "getReasonCode")
   @Mapping(target = "stockOnHand", source = "stockQuantity")
   @Mapping(target = "lotCode", source = "lot.code")
   @Mapping(target = "expirationDate", source = "lot.expirationDate")
@@ -97,6 +99,11 @@ public interface ProductMovementMapper {
   @Named("getReason")
   default String getReason(MovementDetail movementDetail, @Context Function<MovementDetail, String> reasonMapper) {
     return reasonMapper.apply(movementDetail);
+  }
+
+  @Named("getReasonCode")
+  default String getReasonCode(MovementDetail movementDetail) {
+    return movementDetail.getReasonCode();
   }
 
   @Named("getStockOnHand")

@@ -7,6 +7,7 @@
           "stockOnHand": 27,
           "stockMovementItems": [
             {
+              "id": null,
               "movementQuantity": 10,
               "type": "ISSUE",
               "stockOnHand": 10,
@@ -16,10 +17,13 @@
               "occurredDate": "2021-10-01",
               "documentNumber": null,
               "reason": "MATERNITY",
+              "reasonCode": null,
               "requested": null,
               "lotMovementItems": [
                 {
+                  "id": null,
                   "reason": "MATERNITY",
+                  "reasonCode": null,
                   "lotCode": "lot1",
                   "expirationDate": "2023-12-31",
                   "quantity": 10,
@@ -28,6 +32,7 @@
               ]
             },
             {
+              "id": null,
               "movementQuantity": 10,
               "type": "RECEIVE",
               "stockOnHand": 10,
@@ -37,10 +42,13 @@
               "occurredDate": "2021-10-01",
               "documentNumber": null,
               "reason": "DISTRICT_DDM",
+              "reasonCode": null,
               "requested": null,
               "lotMovementItems": [
                 {
+                  "id": null,
                   "reason": "DISTRICT_DDM",
+                  "reasonCode": null,
                   "lotCode": "lot1",
                   "expirationDate": "2023-12-31",
                   "quantity": 10,
@@ -81,6 +89,7 @@
           "stockOnHand": 10,
           "stockMovementItems": [
             {
+              "id": null,
               "movementQuantity": 10,
               "type": "RECEIVE",
               "stockOnHand": 10,
@@ -90,6 +99,7 @@
               "occurredDate": "2021-10-31",
               "documentNumber": null,
               "reason": "DISTRICT_DDM",
+              "reasonCode": null,
               "requested": null,
               "lotMovementItems": []
             }
