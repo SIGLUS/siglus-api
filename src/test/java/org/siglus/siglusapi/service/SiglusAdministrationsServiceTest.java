@@ -36,7 +36,6 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
 import javax.servlet.http.HttpServletResponse;
@@ -608,7 +607,7 @@ public class SiglusAdministrationsServiceTest {
 
     // then
     verify(calculatedStockOnHandRepository, times(0))
-        .deleteByFacilityIdAndOrderableIds(facilityId, new HashSet<>());
+        .deleteByStockCardIds(new ArrayList<>());
     verify(stockCardLineItemRepository, times(0)).deleteByStockCardIdIn(Lists.newArrayList());
     verify(stockCardRepository, times(0)).deleteByIdIn(Lists.newArrayList());
   }
@@ -628,7 +627,7 @@ public class SiglusAdministrationsServiceTest {
 
     // then
     verify(calculatedStockOnHandRepository, times(1))
-        .deleteByFacilityIdAndOrderableIds(facilityId, Collections.singleton(orderableId));
+        .deleteByStockCardIds(Lists.newArrayList(stockCardId));
     verify(stockCardLineItemRepository, times(1))
         .deleteByStockCardIdIn(Lists.newArrayList(stockCardId));
     verify(stockCardRepository, times(1))

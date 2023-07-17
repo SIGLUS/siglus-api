@@ -452,7 +452,7 @@ public class SiglusAdministrationsService {
     log.info("delete on calculatedStockOnHand when upgrade to web, facilityId: {}", facilityId);
     Set<UUID> orderableIds = stockCards.stream().map(StockCard::getOrderableId).collect(Collectors.toSet());
     if (CollectionUtils.isNotEmpty(orderableIds)) {
-      calculatedStockOnHandRepository.deleteByFacilityIdAndOrderableIds(facilityId, orderableIds);
+      calculatedStockOnHandRepository.deleteByStockCardIds(stockCardIds);
     }
     log.info("delete on stockCardExtension when upgrade to web, stockCardId: {}", stockCardIds);
     stockCardExtensionRepository.deleteByStockCardIdIn(stockCardIds);
