@@ -17,7 +17,6 @@ package org.siglus.siglusapi.localmachine.cdc;
 
 import io.debezium.data.Envelope.Operation;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -30,10 +29,6 @@ public class CdcRecordMapper {
 
   // todo: schema version using the latest flyway version? checksum of table schema
   private String schemaVersion = "todo";
-
-  public List<TableChangeEvent> buildAlreadyGroupedEvents(List<CdcRecord> records) {
-    return Collections.singletonList(buildChangeEvent(records));
-  }
 
   public List<TableChangeEvent> buildEvents(List<CdcRecord> records) {
     return records.stream()

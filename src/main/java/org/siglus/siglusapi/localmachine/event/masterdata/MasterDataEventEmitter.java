@@ -15,17 +15,13 @@
 
 package org.siglus.siglusapi.localmachine.event.masterdata;
 
-import io.debezium.data.Envelope.Operation;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 import java.util.stream.Collectors;
 import jersey.repackaged.com.google.common.collect.Sets;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.openlmis.referencedata.domain.User;
 import org.openlmis.referencedata.repository.UserRepository;
 import org.siglus.siglusapi.localmachine.EventPublisher;
 import org.siglus.siglusapi.localmachine.cdc.CdcListener;
@@ -138,8 +134,7 @@ public class MasterDataEventEmitter implements CdcListener {
   @Transactional
   @Override
   public void on(List<CdcRecord> records) {
-    emitNeedNotMarkFacilityEvent(records);
-    emitNeedMarkFacilityEvent(records);
+    emitMasterDataEvent(records);
     evictIncompatibleMasterDataSnapshots(records);
   }
 
@@ -158,34 +153,8 @@ public class MasterDataEventEmitter implements CdcListener {
     }
   }
 
-  private void emitNeedNotMarkFacilityEvent(List<CdcRecord> records) {
-    List<CdcRecord> notNeedMarkFacilityRecords = records.stream()
-        .filter(cdcRecord -> !isNeedMarkFacilityTable(cdcRecord))
-        .collect(Collectors.toList());
-    eventPublisher.emitMasterDataEvent(
-        new MasterDataTableChangeEvent(cdcRecordMapper.buildEvents(notNeedMarkFacilityRecords)), null);
+  private void emitMasterDataEvent(List<CdcRecord> records) {
+    eventPublisher.emitMasterDataEvent(new MasterDataTableChangeEvent(cdcRecordMapper.buildEvents(records)), null);
   }
 
-  private void emitNeedMarkFacilityEvent(List<CdcRecord> records) {
-    Map<UUID, List<CdcRecord>> userIdToRecords = filterNeedMarkFacilityRecords(records);
-    if (!userIdToRecords.isEmpty()) {
-      Map<UUID, UUID> userIdToFacilityId = userRepository.findAll().stream()
-          .filter(user -> user.getHomeFacilityId() != null)
-          .collect(Collectors.toMap(User::getId, User::getHomeFacilityId));
-      userIdToRecords.forEach((userId, cdcRecord) ->
-          eventPublisher.emitMasterDataEvent(
-              new MasterDataTableChangeEvent(cdcRecordMapper.buildAlreadyGroupedEvents(cdcRecord)),
-              userIdToFacilityId.get(userId)));
-    }
-  }
-
-  private Map<UUID, List<CdcRecord>> filterNeedMarkFacilityRecords(List<CdcRecord> records) {
-    return records.stream()
-        .filter(this::isNeedMarkFacilityTable)
-        .collect(Collectors.groupingBy(cdcRecord -> UUID.fromString(cdcRecord.getPayload().get(USER_ID).toString())));
-  }
-
-  private boolean isNeedMarkFacilityTable(CdcRecord cdcRecord) {
-    return !Operation.DELETE.code().equals(cdcRecord.getOperationCode()) && REFERENCE_DATA.equals(cdcRecord.getSchema());
-  }
 }

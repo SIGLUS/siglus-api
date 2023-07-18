@@ -106,15 +106,10 @@ public class OnlineWebMasterDataEventEmitterTest {
     emitter.on(Arrays.asList(cdcRecord1, cdcRecord2, cdcRecord3, cdcRecord4));
 
     // then
-    verify(cdcRecordMapper, times(1)).buildAlreadyGroupedEvents(Collections.singletonList(cdcRecord3));
-    verify(cdcRecordMapper, times(1)).buildAlreadyGroupedEvents(Collections.singletonList(cdcRecord4));
-    verify(cdcRecordMapper, times(1)).buildEvents(Arrays.asList(cdcRecord1, cdcRecord2));
-    verify(eventPublisher, times(1))
-        .emitMasterDataEvent(any(MasterDataTableChangeEvent.class), eq(facilityId1));
-    verify(eventPublisher, times(1))
-        .emitMasterDataEvent(any(MasterDataTableChangeEvent.class), eq(facilityId2));
-    verify(eventPublisher, times(1))
-        .emitMasterDataEvent(any(MasterDataTableChangeEvent.class), eq(null));
+    verify(cdcRecordMapper, times(1)).buildEvents(Arrays.asList(cdcRecord1, cdcRecord2, cdcRecord3, cdcRecord4));
+    verify(eventPublisher, times(1)).emitMasterDataEvent(any(MasterDataTableChangeEvent.class), eq(null));
+    verify(eventPublisher, times(1)).emitMasterDataEvent(any(MasterDataTableChangeEvent.class), eq(null));
+    verify(eventPublisher, times(1)).emitMasterDataEvent(any(MasterDataTableChangeEvent.class), eq(null));
     assertThat(emitter.acceptedTables()).isNotEmpty();
   }
 
