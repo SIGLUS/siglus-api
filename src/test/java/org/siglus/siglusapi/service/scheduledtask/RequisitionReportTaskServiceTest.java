@@ -150,6 +150,7 @@ public class RequisitionReportTaskServiceTest {
     reportType.setFacilityId(facilityId);
     reportType.setProgramCode(programCode);
     reportType.setStartDate(LocalDate.MIN);
+    reportType.setActive(true);
     List<SiglusReportType> facilityReportTypeList = new ArrayList<>();
     facilityReportTypeList.add(reportType);
     when(reportTypeRepository.findByFacilityId(facilityId)).thenReturn(facilityReportTypeList);
@@ -179,6 +180,44 @@ public class RequisitionReportTaskServiceTest {
 
     // then
     verify(notSubmittedMonthlyRequisitionsRepository).save(any(List.class));
+
+  }
+
+  @Test
+  public void shouldNotSaveWhenReportTypeIsInactive() {
+    // given
+
+    SiglusReportType reportType = new SiglusReportType();
+    reportType.setFacilityId(facilityId);
+    reportType.setProgramCode(programCode);
+    reportType.setStartDate(LocalDate.MIN);
+    reportType.setActive(false);
+    List<SiglusReportType> facilityReportTypeList = new ArrayList<>();
+    facilityReportTypeList.add(reportType);
+    when(reportTypeRepository.findByFacilityId(facilityId)).thenReturn(facilityReportTypeList);
+
+    ProcessingPeriodDto item = new ProcessingPeriodDto();
+    item.setId(periodExtensionId);
+    item.setStartDate(LocalDate.of(2022, 1, 1));
+    item.setEndDate(LocalDate.of(2022, 1, 30));
+    item.setSubmitStartDate(LocalDate.of(2022, 1, 20));
+    item.setSubmitEndDate(LocalDate.of(2022, 1, 25));
+    final List<ProcessingPeriodDto> coll = new ArrayList<>();
+    coll.add(item);
+    when(siglusProcessingPeriodService.fillProcessingPeriodWithExtension(coll)).thenReturn(coll);
+    when(periodService.searchByProgramAndFacility(programId, facilityId)).thenReturn(coll);
+
+    when(facilityNativeRepository.findFirstStockCardGroupByFacility()).thenReturn(
+            getFacillityStockCardDateDto(2021, 1, 10));
+
+    when(monthlyRequisitionsRepository.findAll()).thenReturn(new ArrayList<>());
+
+    // when
+    requisitionReportTaskService.refresh();
+
+    // then
+
+    verify(notSubmittedMonthlyRequisitionsRepository, times(0)).save(any(List.class));
 
   }
 

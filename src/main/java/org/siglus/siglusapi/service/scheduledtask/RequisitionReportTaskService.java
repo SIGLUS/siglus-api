@@ -140,7 +140,8 @@ public class RequisitionReportTaskService {
             facilityInfo.getFacilityId()));
         continue;
       }
-      if (!reportType.get().getActive()) {
+      boolean isActive = reportType.map(SiglusReportType::getActive).orElse(false);
+      if (!isActive) {
         log.info(String.format("reportType is inactive, programCode=%s, facilityId=%s", programCode,
                 facilityInfo.getFacilityId()));
         continue;
