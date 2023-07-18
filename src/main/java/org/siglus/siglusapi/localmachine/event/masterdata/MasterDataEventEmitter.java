@@ -186,7 +186,6 @@ public class MasterDataEventEmitter implements CdcListener {
   }
 
   private boolean isNeedMarkFacilityTable(CdcRecord cdcRecord) {
-    return !Operation.DELETE.code().equals(cdcRecord.getOperationCode()) && REFERENCE_DATA.equals(cdcRecord.getSchema())
-        && RIGHT_ASSIGNMENTS.equals(cdcRecord.getTable());
+    return !Operation.DELETE.code().equals(cdcRecord.getOperationCode()) && REFERENCE_DATA.equals(cdcRecord.getSchema());
   }
 }
