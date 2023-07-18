@@ -140,6 +140,11 @@ public class RequisitionReportTaskService {
             facilityInfo.getFacilityId()));
         continue;
       }
+      if (!reportType.get().getActive()) {
+        log.info(String.format("reportType is inactive, programCode=%s, facilityId=%s", programCode,
+                facilityInfo.getFacilityId()));
+        continue;
+      }
       List<NotSubmittedMonthlyRequisitions> programNotSubmitRequisitions =
           getPeriodNotSubmitRequisitions(facilityInfo, programDto, dataWrapper);
       notSubmitList.addAll(programNotSubmitRequisitions);
