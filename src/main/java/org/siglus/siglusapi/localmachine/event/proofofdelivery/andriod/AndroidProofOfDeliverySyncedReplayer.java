@@ -37,6 +37,7 @@ public class AndroidProofOfDeliverySyncedReplayer {
       meService.confirmPod(event.getRequest());
     } catch (Exception e) {
       log.error(e.getMessage(), e);
+      throw e;
     }
   }
 }
