@@ -34,7 +34,7 @@ public class AndroidProofOfDeliverySyncedReplayer {
   public void replay(AndroidProofOfDeliverySyncedEvent event) {
     try {
       simulateUserAuthHelper.simulateNewUserAuth(event.getUserId());
-      meService.confirmPod(event.getRequest());
+      meService.confirmPod(event.getRequest(), true);
     } catch (Exception e) {
       log.error(e.getMessage(), e);
       throw e;

@@ -231,7 +231,7 @@ public class SiglusMeControllerTest {
     controller.confirmPod(podRequest);
 
     // then
-    verify(service).confirmPod(podRequest);
+    verify(service).confirmPod(podRequest, false);
   }
 
   @Test

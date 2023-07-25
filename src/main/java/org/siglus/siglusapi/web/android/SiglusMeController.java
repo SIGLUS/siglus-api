@@ -132,7 +132,7 @@ public class SiglusMeController {
 
   @PatchMapping("/facility/pod")
   public PodResponse confirmPod(@RequestBody @Valid PodRequest podRequest) {
-    return service.confirmPod(podRequest);
+    return service.confirmPod(podRequest, false);
   }
 
   @PostMapping("/app-info")

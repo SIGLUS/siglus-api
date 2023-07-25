@@ -456,7 +456,7 @@ public class MeService {
         .collect(toList());
   }
 
-  public PodResponse confirmPod(PodRequest podRequest) {
+  public PodResponse confirmPod(PodRequest podRequest, boolean isReplay) {
     Profiler profiler = new Profiler("confirmPod");
     profiler.setLogger(log);
     try {
@@ -490,8 +490,11 @@ public class MeService {
         podConfirmService.confirmPod(podRequest, toUpdate, podResponse);
         log.info("Pod orderCode: {} has originNumber {},backup request", podRequest.getOrderCode(),
             podRequest.getOriginNumber());
-        proofOfDeliverySyncedEmitter.emit(podRequest, toUpdate.getShipment().getOrder().getExternalId(),
-            toUpdate.getSupplyingFacilityId());
+        // only emit in online web
+        if (!isReplay) {
+          proofOfDeliverySyncedEmitter.emit(podRequest, toUpdate.getShipment().getOrder().getExternalId(),
+              toUpdate.getSupplyingFacilityId());
+        }
         log.info("andrioid Pod confirmed synced successfully, orderCode : {}", podRequest.getOrderCode());
         profiler.start("get response");
         return getPodByOrderCode(podRequest.getOrderCode());

@@ -801,7 +801,7 @@ public class MeServiceTest {
     when(podBackupRepository.findOneByHash(syncHash)).thenReturn(null);
 
     // when
-    service.confirmPod(podRequest);
+    service.confirmPod(podRequest, true);
 
     // then
     verify(podBackupRepository, times(1)).save(any(PodRequestBackup.class));
