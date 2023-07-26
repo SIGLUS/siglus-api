@@ -121,21 +121,12 @@ public class FcReceiptPlanService implements ProcessDataService {
         updateRequisition((ReceiptPlanDto) receiptPlan, userDto);
       }
       if (!CollectionUtils.isEmpty(receiptPlanErrors)) {
-        log.info("[FC receiptPlan] receiptPlanErrors size {}",
-            receiptPlanErrors.size());
-        if (receiptPlanErrors.size() > 0) {
-          log.info("[FC receiptPlan] receiptPlanErrors error {}",
-              receiptPlanErrors.get(0));
-        }
-        log.info("[FC receiptPlan] receiptPlanErrors error2 {}",
-            receiptPlanErrors.stream().collect(Collectors.joining("******")));
         finalSuccess = false;
       }
       ignoreCounter = receiptPlans.size() - receiptPlanDtoList.size();
       duplicatedCounter = receiptPlanDtoList.size() - needCreateReceiptPlans.size();
     } catch (Exception e) {
       log.error("[FC receiptPlan] process data error", e);
-      log.info("[FC receiptPlan] receiptPlanErrors error3");
       finalSuccess = false;
     }
     log.info("[FC receiptPlan] process data create: {}, update: {}, same: {}",
