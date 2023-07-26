@@ -33,20 +33,12 @@ pipeline {
                 '''
             }
         }
-        stage('Deploy To dev') {
+        stage('Deploy To Dev') {
             when {
                 branch 'master'
             }
             steps {
                 deploy ("dev", env.IMAGE_TAG)
-            }
-        }
-        stage('Deploy To QA') {
-            when {
-                branch 'release'
-            }
-            steps {
-                deploy ("qa", env.IMAGE_TAG)
             }
         }
     }
