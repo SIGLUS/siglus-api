@@ -102,7 +102,6 @@ public class FcReceiptPlanService implements ProcessDataService {
     int duplicatedCounter = 0;
     try {
       receiptPlanErrors.clear();
-      // receiptPlans, fc response
       List<? extends ResponseBaseDto> receiptPlanDtoList = receiptPlans.stream()
           .distinct()
           .filter(this::isRequisitionNumberExisted)
@@ -139,21 +138,13 @@ public class FcReceiptPlanService implements ProcessDataService {
         new FcIntegrationResultBuildDto(RECEIPT_PLAN_API, receiptPlans, startDate,
             previousLastUpdatedAt, finalSuccess, createCounter, 0, errorMessage, null));
   }
-  /*
-   * "requisitionNumber":"MIT.03100101.2304.03","clientName":"DPM MAPUTO PROVINCIA","lastUpdatedAt":"2023-05-26T11:29:39Z","clientCode":"03100101","receiptPlanNumber":"A.05.2023.D.01711","distributionPlanNumber":"01.2023.00756"
-   * "requisitionNumber":"MIA.03100101.2304.03","clientName":"DPM MAPUTO PROVINCIA","lastUpdatedAt":"2023-05-29T12:12:21Z","clientCode":"03100101","receiptPlanNumber":"A.05.2023.D.01723"
-   * "requisitionNumber":"MIA.03100101.2304.03","clientName":"DPM MAPUTO PROVINCIA","lastUpdatedAt":"2023-05-31T14:07:52Z","clientCode":"03100101","receiptPlanNumber":"A.05.2023.D.01747"
-   * "requisitionNumber":"MIA.03100101.2304.03","clientName":"DPM MAPUTO PROVINCIA","lastUpdatedAt":"2023-06-15T10:15:43Z","clientCode":"03100101","receiptPlanNumber":"A.05.2023.D.01938"
-   * "requisitionNumber":"MIA.03100101.2304.03","clientName":"DPM MAPUTO PROVINCIA","lastUpdatedAt":"2023-06-15T10:17:53Z","clientCode":"03100101","receiptPlanNumber":"A.05.2023.D.01939"
-   * "requisitionNumber":"MIT.03100101.2304.03","clientName":"DPM MAPUTO PROVINCIA","lastUpdatedAt":"2023-07-24T14:18:38Z","clientCode":"03100101","receiptPlanNumber":"A.05.2023.D.02379"
-   * */
+
   public void updateRequisition(ReceiptPlanDto receiptPlanDto, UserDto userDto) {
     try {
       RequisitionExtension extension = requisitionExtensionRepository.findByRequisitionNumber(
           receiptPlanDto.getRequisitionNumber());
       UUID requisitionId = extension.getRequisitionId();
       SiglusRequisitionDto requisitionDto = siglusRequisitionService.searchRequisitionForFc(requisitionId);
-      // TODO
       if (operatePermissionService.isEditable(requisitionDto)) {
         List<RequisitionLineItemV2Dto> requisitionLineItems =
             requisitionDto
@@ -203,7 +194,7 @@ public class FcReceiptPlanService implements ProcessDataService {
   }
 
   private Map<String, OrderableDto> getApprovedProductsMap(UserDto userDto, RequisitionV2Dto dto) {
-    return requisitionService.getAllApprovedProducts(userDto.getHomeFacilityId(), dto.getProgramId())
+    return requisitionService.getApprovedProducts(userDto.getHomeFacilityId(), dto.getProgramId())
         .stream()
         .map(ApprovedProductDto::getOrderable)
         .collect(Collectors.toMap(OrderableDto::getProductCode, orderableDto -> orderableDto));
