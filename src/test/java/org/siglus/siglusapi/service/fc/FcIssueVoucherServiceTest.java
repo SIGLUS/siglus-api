@@ -273,7 +273,7 @@ public class FcIssueVoucherServiceTest {
         .thenReturn(requisitionV2Dto);
     OrderableDto orderableDto = getOrderableDto();
     ApprovedProductDto approvedProductDto = getApprovedProductDto(orderableDto);
-    when(requisitionService.getApprovedProducts(userDto.getHomeFacilityId(), requisitionV2Dto.getProgramId()))
+    when(requisitionService.getAllApprovedProducts(userDto.getHomeFacilityId(), requisitionV2Dto.getProgramId()))
         .thenReturn(Collections.singletonList(approvedProductDto));
     OrderExternal orderExternal = new OrderExternal();
     orderExternal.setId(UUID.randomUUID());
@@ -346,7 +346,7 @@ public class FcIssueVoucherServiceTest {
         .thenReturn(requisitionV2Dto);
     OrderableDto orderableDto = getOrderableDto();
     ApprovedProductDto approvedProductDto = getApprovedProductDto(orderableDto);
-    when(requisitionService.getApprovedProducts(userDto.getHomeFacilityId(), requisitionV2Dto.getProgramId()))
+    when(requisitionService.getAllApprovedProducts(userDto.getHomeFacilityId(), requisitionV2Dto.getProgramId()))
         .thenReturn(Collections.singletonList(approvedProductDto));
     OrderExternal orderExternal = new OrderExternal();
     orderExternal.setId(UUID.randomUUID());
@@ -413,7 +413,7 @@ public class FcIssueVoucherServiceTest {
         .thenReturn(requisitionV2Dto);
     OrderableDto orderableDto = getOrderableDto();
     ApprovedProductDto approvedProductDto = getApprovedProductDto(orderableDto);
-    when(requisitionService.getApprovedProducts(userDto.getHomeFacilityId(), requisitionV2Dto.getProgramId()))
+    when(requisitionService.getAllApprovedProducts(userDto.getHomeFacilityId(), requisitionV2Dto.getProgramId()))
         .thenReturn(Collections.singletonList(approvedProductDto));
     when(orderExternalRepository.findByRequisitionId(requisitionV2Dto.getId())).thenReturn(
         Collections.emptyList());

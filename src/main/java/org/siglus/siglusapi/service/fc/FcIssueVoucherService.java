@@ -196,8 +196,8 @@ public class FcIssueVoucherService implements ProcessDataService {
         issueVoucherErrors.add("requisition status is error" + SPLIT + issueVoucherDto.getIssueVoucherNumber());
         return;
       }
-      List<ApprovedProductDto> approvedProductDtos = requisitionService.getAllApprovedProducts(userDto.getHomeFacilityId(),
-          requisitionV2Dto.getProgramId());
+      List<ApprovedProductDto> approvedProductDtos = requisitionService
+          .getAllApprovedProducts(userDto.getHomeFacilityId(), requisitionV2Dto.getProgramId());
       Map<String, ApprovedProductDto> approvedProductsMap = getApprovedProductsMap(approvedProductDtos);
       List<ProductDto> existProducts = getExistProducts(issueVoucherDto, approvedProductsMap);
       if (!CollectionUtils.isEmpty(existProducts)) {

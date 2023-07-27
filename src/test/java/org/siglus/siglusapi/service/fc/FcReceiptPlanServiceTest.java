@@ -282,7 +282,7 @@ public class FcReceiptPlanServiceTest {
     orderableDto.setId(orderableId);
     ApprovedProductDto approvedProduct = new ApprovedProductDto();
     approvedProduct.setOrderable(orderableDto);
-    when(requisitionService.getApprovedProducts(any(), any())).thenReturn(singletonList(approvedProduct));
+    when(requisitionService.getAllApprovedProducts(any(), any())).thenReturn(singletonList(approvedProduct));
     Requisition requisition = new Requisition();
     when(requisitionRepository.findOne(requisitionId)).thenReturn(requisition);
     StatusChange statusChange = new StatusChange();
@@ -344,7 +344,7 @@ public class FcReceiptPlanServiceTest {
     OrderableDto orderableDto = new OrderableDto();
     ApprovedProductDto approvedProduct = new ApprovedProductDto();
     approvedProduct.setOrderable(orderableDto);
-    when(requisitionService.getApprovedProducts(any(), any())).thenReturn(singletonList(approvedProduct));
+    when(requisitionService.getAllApprovedProducts(any(), any())).thenReturn(singletonList(approvedProduct));
     SiglusRequisitionLineItemDto lineItem = new SiglusRequisitionLineItemDto(requisitionLineItem, null);
     List<SiglusRequisitionLineItemDto> lineItems = newArrayList(lineItem);
     when(siglusRequisitionService.createRequisitionLineItem(any(), any())).thenReturn(lineItems);
