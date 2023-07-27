@@ -194,7 +194,7 @@ public class FcReceiptPlanService implements ProcessDataService {
   }
 
   private Map<String, OrderableDto> getApprovedProductsMap(UserDto userDto, RequisitionV2Dto dto) {
-    return requisitionService.getApprovedProducts(userDto.getHomeFacilityId(), dto.getProgramId())
+    return requisitionService.getAllApprovedProducts(userDto.getHomeFacilityId(), dto.getProgramId())
         .stream()
         .map(ApprovedProductDto::getOrderable)
         .collect(Collectors.toMap(OrderableDto::getProductCode, orderableDto -> orderableDto));
