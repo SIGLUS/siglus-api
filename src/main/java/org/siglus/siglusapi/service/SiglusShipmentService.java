@@ -19,6 +19,7 @@ import static java.util.stream.Collectors.toSet;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_ORDER_EXPIRED;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_PERIOD_NOT_FOUND;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_SUB_ORDER_LINE_ITEM;
+import static org.siglus.siglusapi.i18n.MessageKeys.SHIPMENT_LINE_ITEMS_INVALID;
 import static org.siglus.siglusapi.i18n.MessageKeys.SHIPMENT_ORDER_STATUS_INVALID;
 import static org.siglus.siglusapi.util.LocationUtil.getIfNonNull;
 
@@ -28,6 +29,7 @@ import com.google.common.collect.Multimap;
 import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -119,6 +121,17 @@ public class SiglusShipmentService {
         .calculateFulfillOrderYearMonth(processingPeriodExtension);
     if (!calculatedFulfillOrderMonth.contains(orderYearMonth)) {
       throw new BusinessDataException(new Message(ERROR_ORDER_EXPIRED));
+    }
+  }
+
+  public void validShipmentLineItemsDuplicated(ShipmentExtensionRequest shipmentExtensionRequest) {
+    List<ShipmentLineItemDto> shipmentLineItems = shipmentExtensionRequest.getShipment().lineItems();
+    Set<String> orderableLotIds = new HashSet<>();
+    boolean isOrderableLotIdDuplicated = !shipmentLineItems.stream()
+            .map(item -> item.getOrderable().getId() + "-" + item.getLotId())
+            .allMatch(orderableLotIds::add);
+    if (isOrderableLotIdDuplicated) {
+      throw new ValidationMessageException(new Message(SHIPMENT_LINE_ITEMS_INVALID));
     }
   }
 
