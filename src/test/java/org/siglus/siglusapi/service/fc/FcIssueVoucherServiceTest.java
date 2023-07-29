@@ -48,6 +48,7 @@ import org.mockito.Spy;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.fulfillment.domain.Order;
 import org.openlmis.fulfillment.repository.OrderRepository;
+import org.openlmis.fulfillment.web.OrderController;
 import org.openlmis.fulfillment.web.shipment.ShipmentDto;
 import org.openlmis.fulfillment.web.shipment.ShipmentLineItemDto;
 import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftDto;
@@ -56,13 +57,13 @@ import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.requisition.dto.ObjectReferenceDto;
-import org.openlmis.requisition.dto.OrderDto;
 import org.openlmis.requisition.dto.OrderableDto;
+import org.openlmis.requisition.dto.ProcessingPeriodDto;
+import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.repository.RequisitionRepository;
 import org.openlmis.requisition.service.RequisitionService;
 import org.openlmis.requisition.service.RequisitionStatusProcessor;
-import org.openlmis.requisition.service.fulfillment.OrderFulfillmentService;
 import org.openlmis.requisition.utils.Pagination;
 import org.openlmis.requisition.web.OrderDtoBuilder;
 import org.openlmis.stockmanagement.domain.sourcedestination.Node;
@@ -155,8 +156,6 @@ public class FcIssueVoucherServiceTest {
   @Mock
   private OrderDtoBuilder orderDtoBuilder;
 
-  @Mock
-  private OrderFulfillmentService orderFulfillmentService;
 
   @Mock
   private LocalMachineHelper localMachineHelper;
@@ -174,7 +173,10 @@ public class FcIssueVoucherServiceTest {
   private ArgumentCaptor<Requisition> requisitionCaptor;
 
   @Captor
-  private ArgumentCaptor<List<OrderDto>> orderListCaptor;
+  private ArgumentCaptor<List<org.openlmis.fulfillment.web.util.OrderDto>> orderListCaptor;
+
+  @Mock
+  private OrderController orderController;
 
   private UserDto userDto;
 
@@ -448,8 +450,7 @@ public class FcIssueVoucherServiceTest {
     when(lotReferenceDataService.getLots(any())).thenReturn(Collections.singletonList(getSavedLotDto(lotDto)));
     Requisition requisition = new Requisition();
     when(requisitionRepository.findOne(requisitionV2Dto.getId())).thenReturn(requisition);
-    org.openlmis.requisition.dto.OrderDto orderRequisitionDto =
-        new org.openlmis.requisition.dto.OrderDto();
+    org.openlmis.requisition.dto.OrderDto orderRequisitionDto = getMockOrderDto();
     when(orderDtoBuilder.build(any(), any())).thenReturn(orderRequisitionDto);
 
     // when
@@ -459,12 +460,26 @@ public class FcIssueVoucherServiceTest {
     // then
     assertNotNull(result);
     verify(simulateUser).simulateUserAuth(any());
-    verify(orderFulfillmentService).create(orderListCaptor.capture());
+    verify(orderController).batchCreateOrders(orderListCaptor.capture(), any());
     verify(requisitionStatusProcessor).statusChange(requisitionCaptor.capture(), any());
-    OrderDto saveOrderDto = orderListCaptor.getValue().get(0);
+    org.openlmis.fulfillment.web.util.OrderDto saveOrderDto = orderListCaptor.getValue().get(0);
     assertEquals(Long.valueOf(4), saveOrderDto.getOrderLineItems().get(0).getOrderedQuantity());
     ShipmentDto shipmentDto1 = shipmentCaptor.getValue();
     assertEquals(Long.valueOf(2), shipmentDto1.getLineItems().get(0).getQuantityShipped());
+  }
+
+  private org.openlmis.requisition.dto.OrderDto getMockOrderDto() {
+    org.openlmis.requisition.dto.OrderDto orderRequisitionDto =
+        new org.openlmis.requisition.dto.OrderDto();
+    org.openlmis.requisition.dto.FacilityDto facilityDto = new org.openlmis.requisition.dto.FacilityDto();
+    orderRequisitionDto.setFacility(facilityDto);
+    orderRequisitionDto.setReceivingFacility(facilityDto);
+    orderRequisitionDto.setSupplyingFacility(facilityDto);
+    orderRequisitionDto.setProcessingPeriod(new ProcessingPeriodDto());
+    orderRequisitionDto.setProgram(new ProgramDto());
+    orderRequisitionDto.setCreatedBy(new org.openlmis.requisition.dto.UserDto());
+    orderRequisitionDto.setLastUpdater(new ObjectReferenceDto());
+    return orderRequisitionDto;
   }
 
   @Test

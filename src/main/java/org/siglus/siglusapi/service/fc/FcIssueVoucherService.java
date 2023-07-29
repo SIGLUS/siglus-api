@@ -21,6 +21,7 @@ import static org.siglus.siglusapi.dto.fc.FcIntegrationResultDto.buildResult;
 import static org.siglus.siglusapi.util.SiglusDateHelper.DATE_MONTH_YEAR;
 import static org.siglus.siglusapi.util.SiglusDateHelper.getFormatDate;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -39,6 +40,7 @@ import org.openlmis.fulfillment.domain.Order;
 import org.openlmis.fulfillment.domain.OrderLineItem;
 import org.openlmis.fulfillment.domain.VersionEntityReference;
 import org.openlmis.fulfillment.repository.OrderRepository;
+import org.openlmis.fulfillment.web.OrderController;
 import org.openlmis.fulfillment.web.shipment.ShipmentDto;
 import org.openlmis.fulfillment.web.shipment.ShipmentLineItemDto;
 import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftDto;
@@ -89,6 +91,8 @@ import org.siglus.siglusapi.util.SiglusSimulateUserAuthHelper;
 import org.siglus.siglusapi.validator.FcValidate;
 import org.springframework.beans.BeanUtils;
 import org.springframework.context.i18n.LocaleContextHolder;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -122,9 +126,12 @@ public class FcIssueVoucherService implements ProcessDataService {
   private final Machine machine;
   private final LocalMachineHelper localMachineHelper;
 
+  private final OrderController orderController;
+
   private final List<String> issueVoucherErrors = new ArrayList<>();
 
   private UUID currentSupplierFacilityId;
+
 
   @Override
   public FcIntegrationResultDto processData(List<? extends ResponseBaseDto> issueVouchers, String startDate,
@@ -137,9 +144,11 @@ public class FcIssueVoucherService implements ProcessDataService {
     int createCounter = 0;
     int ignoreCounter = 0;
     int duplicatedCounter = 0;
+    String errorMessage = "";
+    List<? extends ResponseBaseDto> issueVoucherList = new ArrayList<>();
     try {
       issueVoucherErrors.clear();
-      List<? extends ResponseBaseDto> issueVoucherList = issueVouchers.stream()
+      issueVoucherList = issueVouchers.stream()
           .distinct()
           .filter(this::isRequisitionNumberExisted)
           .collect(Collectors.toList());
@@ -156,19 +165,25 @@ public class FcIssueVoucherService implements ProcessDataService {
         }
       }
       if (!CollectionUtils.isEmpty(issueVoucherErrors)) {
+        log.error("[FC issueVoucher] issueVoucherErrors: {}",
+            issueVoucherErrors.stream().collect(Collectors.joining(";")));
         finalSuccess = false;
       }
       ignoreCounter = issueVouchers.size() - issueVoucherList.size();
     } catch (Exception e) {
-      log.error("[FC issueVoucher] process data error", e);
+      log.error("[FC issueVoucher] process data error {}", e.toString());
+      issueVoucherErrors.add(e.toString());
       finalSuccess = false;
     }
     log.info("[FC issueVoucher] process data create: {}, update: {}, same: {}",
         createCounter, 0, issueVouchers.size() - createCounter);
-    String errorMessage = String.format("fc integration not exist our system count: %d and duplicated count %d",
+    log.info("[FC issueVoucher] fc integration not exist our system count: {} and duplicated count {}",
         ignoreCounter, duplicatedCounter);
+    if (!finalSuccess) {
+      errorMessage = issueVoucherErrors.stream().collect(Collectors.joining(";"));
+    }
     return buildResult(
-        new FcIntegrationResultBuildDto(ISSUE_VOUCHER_API, issueVouchers, startDate, previousLastUpdatedAt,
+        new FcIntegrationResultBuildDto(ISSUE_VOUCHER_API, issueVoucherList, startDate, previousLastUpdatedAt,
             finalSuccess, createCounter, 0, errorMessage, null));
   }
 
@@ -227,7 +242,7 @@ public class FcIssueVoucherService implements ProcessDataService {
     } catch (FcDataException e) {
       issueVoucherErrors.add(e.getMessage() + SPLIT + issueVoucherDto.getIssueVoucherNumber());
     } catch (Exception e) {
-      log.error("[FC] issue voucher: {}, exception: {}", issueVoucherDto, e);
+      log.error("[FC] issue voucher: {}, exception: {}", issueVoucherDto, e.toString());
       throw e;
     }
   }
@@ -533,7 +548,66 @@ public class FcIssueVoucherService implements ProcessDataService {
     List<OrderLineItem> items = getOrderLineItems(existProductDtos, approveProductMap, new Order());
     order.setOrderLineItems(convertToOrderLineItemDto(approvedProductDtos, items));
     order.setCreatedDate(issueVoucherDto.getShippingDate());
-    orderFulfillmentService.create(Collections.singletonList(order));
+    orderController.batchCreateOrders(Collections.singletonList(convertOrderDto(order)),
+        (OAuth2Authentication) SecurityContextHolder.getContext().getAuthentication());
+  }
+
+  private org.openlmis.fulfillment.web.util.OrderDto convertOrderDto(org.openlmis.requisition.dto.OrderDto o) {
+    org.openlmis.fulfillment.web.util.OrderDto order = new OrderDto();
+    BeanUtils.copyProperties(o, order);
+    order.setExternalId(o.getExternalId());
+    order.setEmergency(o.getEmergency());
+    org.openlmis.fulfillment.service.referencedata.FacilityDto newFacilityDto =
+        new org.openlmis.fulfillment.service.referencedata.FacilityDto();
+    BeanUtils.copyProperties(o.getFacility(), newFacilityDto);
+    order.setFacility(newFacilityDto);
+    org.openlmis.fulfillment.service.referencedata.ProcessingPeriodDto newProcessingPeriodDto =
+        new org.openlmis.fulfillment.service.referencedata.ProcessingPeriodDto();
+    BeanUtils.copyProperties(o.getProcessingPeriod(), newProcessingPeriodDto);
+    order.setProcessingPeriod(newProcessingPeriodDto);
+    order.setQuotedCost(BigDecimal.ZERO);
+    org.openlmis.fulfillment.service.referencedata.FacilityDto newReceivingFacilityDto =
+        new org.openlmis.fulfillment.service.referencedata.FacilityDto();
+    BeanUtils.copyProperties(o.getReceivingFacility(), newReceivingFacilityDto);
+    order.setReceivingFacility(newReceivingFacilityDto);
+    org.openlmis.fulfillment.service.referencedata.FacilityDto newRequestingFacilityDto =
+        new org.openlmis.fulfillment.service.referencedata.FacilityDto();
+    BeanUtils.copyProperties(o.getReceivingFacility(), newRequestingFacilityDto);
+    order.setRequestingFacility(newRequestingFacilityDto);
+    org.openlmis.fulfillment.service.referencedata.FacilityDto newSupplyingFacilityDto =
+        new org.openlmis.fulfillment.service.referencedata.FacilityDto();
+    BeanUtils.copyProperties(o.getSupplyingFacility(), newSupplyingFacilityDto);
+    order.setSupplyingFacility(newSupplyingFacilityDto);
+    org.openlmis.fulfillment.service.referencedata.ProgramDto newProgramDto =
+        new org.openlmis.fulfillment.service.referencedata.ProgramDto();
+    BeanUtils.copyProperties(o.getProgram(), newProgramDto);
+    order.setProgram(newProgramDto);
+    List<org.openlmis.fulfillment.web.util.OrderLineItemDto> orderLineItems = o.getOrderLineItems()
+        .stream()
+        .map(lineItem -> {
+          org.openlmis.fulfillment.web.util.OrderLineItemDto newLine =
+              new org.openlmis.fulfillment.web.util.OrderLineItemDto();
+          BeanUtils.copyProperties(lineItem, newLine);
+          org.openlmis.fulfillment.service.referencedata.OrderableDto newOrderable =
+              new org.openlmis.fulfillment.service.referencedata.OrderableDto();
+          BeanUtils.copyProperties(lineItem.getOrderable(), newOrderable);
+          org.openlmis.fulfillment.web.util.MetadataDto newMeta =
+              new org.openlmis.fulfillment.web.util.MetadataDto();
+          BeanUtils.copyProperties(lineItem.getOrderable().getMeta(), newMeta);
+          newOrderable.setMeta(newMeta);
+          newLine.setOrderable(newOrderable);
+          return newLine;
+        })
+        .collect(Collectors.toList());
+    order.setOrderLineItems(orderLineItems);
+    order.setStatusChanges(new ArrayList<>());
+    order.setStatusMessages(new ArrayList<>());
+    order.setUpdaterId(o.getLastUpdater().getId());
+    org.openlmis.fulfillment.service.referencedata.UserDto newUser =
+        new org.openlmis.fulfillment.service.referencedata.UserDto();
+    BeanUtils.copyProperties(o.getCreatedBy(), newUser);
+    order.setCreatedBy(newUser);
+    return order;
   }
 
   private List<org.openlmis.requisition.dto.OrderLineItemDto> convertToOrderLineItemDto(

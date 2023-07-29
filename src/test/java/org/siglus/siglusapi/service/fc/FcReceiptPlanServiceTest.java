@@ -49,6 +49,7 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.referencedata.domain.Facility;
 import org.openlmis.requisition.domain.requisition.Requisition;
+import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.domain.requisition.StatusChange;
 import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.requisition.dto.BasicRequisitionTemplateColumnDto;
@@ -259,6 +260,7 @@ public class FcReceiptPlanServiceTest {
 
     SiglusRequisitionDto requisitionDto = mock(SiglusRequisitionDto.class);
     when(requisitionDto.getTemplate()).thenReturn(template);
+    when(requisitionDto.getStatus()).thenReturn(RequisitionStatus.IN_APPROVAL);
     UUID facilityId = UUID.randomUUID();
     when(requisitionDto.getFacilityId()).thenReturn(facilityId);
 

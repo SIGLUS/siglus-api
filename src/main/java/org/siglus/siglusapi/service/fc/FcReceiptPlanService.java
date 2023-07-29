@@ -100,9 +100,11 @@ public class FcReceiptPlanService implements ProcessDataService {
     int createCounter = 0;
     int ignoreCounter = 0;
     int duplicatedCounter = 0;
+    String errorMessage = "";
+    List<? extends ResponseBaseDto> receiptPlanDtoList = new ArrayList<>();
     try {
       receiptPlanErrors.clear();
-      List<? extends ResponseBaseDto> receiptPlanDtoList = receiptPlans.stream()
+      receiptPlanDtoList = receiptPlans.stream()
           .distinct()
           .filter(this::isRequisitionNumberExisted)
           .collect(Collectors.toList());
@@ -121,21 +123,26 @@ public class FcReceiptPlanService implements ProcessDataService {
         updateRequisition((ReceiptPlanDto) receiptPlan, userDto);
       }
       if (!CollectionUtils.isEmpty(receiptPlanErrors)) {
+        log.error("[FC receiptPlan] receiptPlanErrors: {}",
+            receiptPlanErrors.stream().collect(Collectors.joining(";")));
         finalSuccess = false;
       }
       ignoreCounter = receiptPlans.size() - receiptPlanDtoList.size();
       duplicatedCounter = receiptPlanDtoList.size() - needCreateReceiptPlans.size();
     } catch (Exception e) {
       log.error("[FC receiptPlan] process data error", e);
+      receiptPlanErrors.add(e.toString());
       finalSuccess = false;
     }
     log.info("[FC receiptPlan] process data create: {}, update: {}, same: {}",
         createCounter, 0, receiptPlans.size() - createCounter);
-    String errorMessage = String.format(
-        "fc integration not exist our system count: %d and duplicated count %d",
+    log.info("[FC receiptPlan] fc integration not exist our system count: {} and duplicated count {}",
         ignoreCounter, duplicatedCounter);
+    if (!finalSuccess) {
+      errorMessage = receiptPlanErrors.stream().collect(Collectors.joining(";"));
+    }
     return buildResult(
-        new FcIntegrationResultBuildDto(RECEIPT_PLAN_API, receiptPlans, startDate,
+        new FcIntegrationResultBuildDto(RECEIPT_PLAN_API, receiptPlanDtoList, startDate,
             previousLastUpdatedAt, finalSuccess, createCounter, 0, errorMessage, null));
   }
 
@@ -145,6 +152,9 @@ public class FcReceiptPlanService implements ProcessDataService {
           receiptPlanDto.getRequisitionNumber());
       UUID requisitionId = extension.getRequisitionId();
       SiglusRequisitionDto requisitionDto = siglusRequisitionService.searchRequisitionForFc(requisitionId);
+      if (requisitionDto.getStatus().isApproved()) {
+        return;
+      }
       if (operatePermissionService.isEditable(requisitionDto)) {
         List<RequisitionLineItemV2Dto> requisitionLineItems =
             requisitionDto
@@ -168,7 +178,7 @@ public class FcReceiptPlanService implements ProcessDataService {
               extension.getRealRequisitionNumber());
         }
       } else {
-        receiptPlanErrors.add("requisition is not editable: " + receiptPlanDto.getReceiptPlanNumber());
+        receiptPlanErrors.add("requisition is not editable: " + requisitionDto.getRequisitionNumber());
       }
     } catch (FcDataException e) {
       receiptPlanErrors.add(e.getMessage() + ": " + receiptPlanDto.getReceiptPlanNumber());
