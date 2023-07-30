@@ -1063,13 +1063,15 @@ public class SiglusOrderService {
     UUID approverFacilityId = orderDto.getCreatedBy().getHomeFacilityId();
     UUID userHomeFacilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
     UUID programId = requisition.getProgramId();
-    List<ApprovedProductDto> approverProducts = approvedProductReferenceDataService.getApprovedProducts(
+    // TODO Ask boyu why change
+    //  Why previous NOT working?, why this change works, NO orderableIds in later fetch getApprovedProductsWithIds() request
+    List<ApprovedProductDto> approverProducts = requisitionService.getAllApprovedProducts(
         approverFacilityId, programId);
     List<ApprovedProductDto> userProducts;
     if (approverFacilityId.equals(userHomeFacilityId)) {
       userProducts = approverProducts;
     } else {
-      userProducts = approvedProductReferenceDataService.getApprovedProducts(userHomeFacilityId, programId);
+      userProducts = requisitionService.getAllApprovedProducts(userHomeFacilityId, programId);
     }
     Set<UUID> approverOrderableIds = getOrderableIds(approverProducts, programId);
     Set<UUID> userOrderableIds;

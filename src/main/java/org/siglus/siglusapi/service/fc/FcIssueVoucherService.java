@@ -458,7 +458,7 @@ public class FcIssueVoucherService implements ProcessDataService {
       Map<String, List<ProductDto>> productMaps) {
     List<ShipmentLineItemDto> shipmentLineItemDtos = getShipmentDraftLineItems(approvedProductDtoMaps, productMaps);
     OrderObjectReferenceDto orderObjectReferenceDto = new OrderObjectReferenceDto(orderDto.getOrder().getId());
-    BeanUtils.copyProperties(orderDto, orderObjectReferenceDto);
+    BeanUtils.copyProperties(orderDto.getOrder(), orderObjectReferenceDto);
     ShipmentDraftDto draftDto = new ShipmentDraftDto();
     draftDto.setOrder(orderObjectReferenceDto);
     draftDto.setLineItems(shipmentLineItemDtos);
