@@ -1064,7 +1064,6 @@ public class SiglusOrderService {
     UUID userHomeFacilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
     UUID programId = requisition.getProgramId();
     // TODO Ask boyu why change
-    //  Why previous NOT working?, why this change works, NO orderableIds in later fetch getApprovedProductsWithIds() request
     List<ApprovedProductDto> approverProducts = requisitionService.getAllApprovedProducts(
         approverFacilityId, programId);
     List<ApprovedProductDto> userProducts;
