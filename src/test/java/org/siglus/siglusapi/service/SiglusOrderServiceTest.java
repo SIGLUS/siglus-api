@@ -280,10 +280,11 @@ public class SiglusOrderServiceTest {
     requisition.setEmergency(false);
     when(requisitionController.findRequisition(any(), any())).thenReturn(requisition);
     when(authenticationHelper.getCurrentUser()).thenReturn(createUser(userId, userHomeFacilityId));
-    when(requisitionService.getAllApprovedProducts(approverFacilityId, programId)).thenReturn(
+    when(approvedProductReferenceDataService.getApprovedProducts(approverFacilityId, programId)).thenReturn(
         createApprovedProducts());
-    when(requisitionService.getAllApprovedProducts(userHomeFacilityId, programId))
+    when(approvedProductReferenceDataService.getApprovedProducts(userHomeFacilityId, programId))
         .thenReturn(createUserApprovedProducts());
+
     when(siglusArchiveProductService.searchArchivedProductsByFacilityId(any())).thenReturn(createArchivedProducts());
     when(siglusStockCardSummariesService.searchStockCardSummaryV2Dtos(any(), any(), any(), any(), any(Boolean.class)))
         .thenReturn(createSummaryPage());
@@ -323,8 +324,8 @@ public class SiglusOrderServiceTest {
     ApprovedProductDto productDto1 = createApprovedProductDto(orderableId1);
     ApprovedProductDto productDto2 = createApprovedProductDto(orderableId2);
     List<ApprovedProductDto> list = Arrays.asList(productDto1, productDto2);
-    when(requisitionService.getAllApprovedProducts(approverFacilityId, programId)).thenReturn(list);
-    when(requisitionService.getAllApprovedProducts(userHomeFacilityId, programId))
+    when(approvedProductReferenceDataService.getApprovedProducts(approverFacilityId, programId)).thenReturn(list);
+    when(approvedProductReferenceDataService.getApprovedProducts(userHomeFacilityId, programId))
         .thenReturn(createUserApprovedProducts());
     when(siglusArchiveProductService.searchArchivedProductsByFacilityId(any()))
         .thenReturn(Collections.emptySet());

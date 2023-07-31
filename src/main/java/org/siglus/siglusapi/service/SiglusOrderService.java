@@ -91,6 +91,7 @@ import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.dto.VersionObjectReferenceDto;
 import org.openlmis.requisition.service.RequisitionService;
 import org.openlmis.requisition.service.referencedata.ApproveProductsAggregator;
+import org.openlmis.requisition.service.referencedata.ApprovedProductReferenceDataService;
 import org.openlmis.requisition.web.RequisitionController;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2Dto;
 import org.siglus.common.domain.OrderExternal;
@@ -222,6 +223,9 @@ public class SiglusOrderService {
 
   @Autowired
   private SiglusFacilityReferenceDataService facilityReferenceDataService;
+
+  @Autowired
+  private ApprovedProductReferenceDataService approvedProductReferenceDataService;
 
   @Autowired
   private SiglusFacilityRepository siglusFacilityRepository;
@@ -485,7 +489,7 @@ public class SiglusOrderService {
 
   public SiglusOrderDto searchOrderById(UUID orderId) {
     OrderDto orderDto = orderController.getOrder(orderId, null);
-    return extendOrderDto(orderDto);
+    return extendOrderDto(orderDto, false);
   }
 
   public SiglusOrderDto searchOrderByIdWithoutProducts(UUID orderId) {
@@ -496,7 +500,7 @@ public class SiglusOrderService {
   public SiglusOrderDto searchOrderByIdForMultiWareHouseSupply(UUID orderId) {
     Order order = orderRepository.findOne(orderId);
     OrderDto orderDto = orderDtoBuilder.build(order);
-    return extendOrderDto(orderDto);
+    return extendOrderDto(orderDto, true);
   }
 
   // manually fill no-id lineItem
@@ -932,15 +936,15 @@ public class SiglusOrderService {
     return currentPeriod.getId();
   }
 
-  private SiglusOrderDto extendOrderDto(OrderDto orderDto) {
-    return doExtendOrderDto(orderDto, true);
+  private SiglusOrderDto extendOrderDto(OrderDto orderDto, boolean isFcRequest) {
+    return doExtendOrderDto(orderDto, true, isFcRequest);
   }
 
   private SiglusOrderDto extendOrderDtoWithoutProducts(OrderDto orderDto) {
-    return doExtendOrderDto(orderDto, false);
+    return doExtendOrderDto(orderDto, false, false);
   }
 
-  private SiglusOrderDto doExtendOrderDto(OrderDto orderDto, boolean withAvailableProducts) {
+  private SiglusOrderDto doExtendOrderDto(OrderDto orderDto, boolean withAvailableProducts, boolean isFcRequest) {
     //totalDispensingUnits not present in lineitem of previous OrderFulfillmentService
     setOrderLineItemExtension(orderDto);
     Requisition requisition = getRequisitionByOrder(orderDto);
@@ -949,7 +953,7 @@ public class SiglusOrderService {
     orderDto.setActualEndDate(requisition.getActualEndDate());
     SiglusOrderDto order = SiglusOrderDto.builder().order(orderDto).build();
     if (withAvailableProducts) {
-      order.setAvailableProducts(getAllUserAvailableProductAggregator(orderDto));
+      order.setAvailableProducts(getAllUserAvailableProductAggregator(orderDto, isFcRequest));
     }
     setIfIsKit(order);
     return order;
@@ -1053,20 +1057,27 @@ public class SiglusOrderService {
     lineItemExtensionRepository.save(extensions);
   }
 
-  private Set<VersionObjectReferenceDto> getAllUserAvailableProductAggregator(OrderDto orderDto) {
+  private Set<VersionObjectReferenceDto> getAllUserAvailableProductAggregator(OrderDto orderDto, boolean isFcRequest) {
     Requisition requisition = getRequisitionByOrder(orderDto);
 
     UUID approverFacilityId = orderDto.getCreatedBy().getHomeFacilityId();
     UUID userHomeFacilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
     UUID programId = requisition.getProgramId();
-    // TODO Ask boyu why change
-    List<ApprovedProductDto> approverProducts = requisitionService.getAllApprovedProducts(
-        approverFacilityId, programId);
+    List<ApprovedProductDto> approverProducts;
+    if (isFcRequest) {
+      approverProducts = requisitionService.getAllApprovedProducts(
+          approverFacilityId, programId);
+    } else {
+      approverProducts = approvedProductReferenceDataService.getApprovedProducts(
+          approverFacilityId, programId);
+    }
     List<ApprovedProductDto> userProducts;
     if (approverFacilityId.equals(userHomeFacilityId)) {
       userProducts = approverProducts;
-    } else {
+    } else if (isFcRequest) {
       userProducts = requisitionService.getAllApprovedProducts(userHomeFacilityId, programId);
+    } else {
+      userProducts = approvedProductReferenceDataService.getApprovedProducts(userHomeFacilityId, programId);
     }
     Set<UUID> approverOrderableIds = getOrderableIds(approverProducts, programId);
     Set<UUID> userOrderableIds;
