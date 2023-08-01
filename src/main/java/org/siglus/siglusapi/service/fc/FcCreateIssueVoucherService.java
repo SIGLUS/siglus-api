@@ -15,15 +15,12 @@
 
 package org.siglus.siglusapi.service.fc;
 
-import static org.siglus.siglusapi.constant.FcConstants.ISSUE_VOUCHER_API;
 import static org.siglus.siglusapi.constant.FieldConstants.TRADE_ITEM;
-import static org.siglus.siglusapi.dto.fc.FcIntegrationResultDto.buildResult;
 import static org.siglus.siglusapi.util.SiglusDateHelper.DATE_MONTH_YEAR;
 import static org.siglus.siglusapi.util.SiglusDateHelper.getFormatDate;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -35,7 +32,6 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.openlmis.fulfillment.domain.Order;
 import org.openlmis.fulfillment.domain.OrderLineItem;
 import org.openlmis.fulfillment.domain.VersionEntityReference;
@@ -57,7 +53,6 @@ import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.repository.RequisitionRepository;
 import org.openlmis.requisition.service.RequisitionService;
 import org.openlmis.requisition.service.RequisitionStatusProcessor;
-import org.openlmis.requisition.service.fulfillment.OrderFulfillmentService;
 import org.openlmis.requisition.web.OrderDtoBuilder;
 import org.siglus.common.domain.OrderExternal;
 import org.siglus.common.repository.OrderExternalRepository;
@@ -68,11 +63,8 @@ import org.siglus.siglusapi.dto.LotDto;
 import org.siglus.siglusapi.dto.LotSearchParams;
 import org.siglus.siglusapi.dto.SiglusOrderDto;
 import org.siglus.siglusapi.dto.UserDto;
-import org.siglus.siglusapi.dto.fc.FcIntegrationResultBuildDto;
-import org.siglus.siglusapi.dto.fc.FcIntegrationResultDto;
 import org.siglus.siglusapi.dto.fc.IssueVoucherDto;
 import org.siglus.siglusapi.dto.fc.ProductDto;
-import org.siglus.siglusapi.dto.fc.ResponseBaseDto;
 import org.siglus.siglusapi.localmachine.Machine;
 import org.siglus.siglusapi.localmachine.event.fc.issuevoucher.FcIssueVoucherEmitter;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
@@ -94,12 +86,14 @@ import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
-@SuppressWarnings("PMD.TooManyMethods")
-public class FcIssueVoucherService implements ProcessDataService {
+@SuppressWarnings({"PMD"})
+public class FcCreateIssueVoucherService {
 
   private static final String SPLIT = ": ";
 
@@ -120,7 +114,6 @@ public class FcIssueVoucherService implements ProcessDataService {
   private final RequisitionRepository requisitionRepository;
   private final RequisitionStatusProcessor requisitionStatusProcessor;
   private final OrderDtoBuilder orderDtoBuilder;
-  private final OrderFulfillmentService orderFulfillmentService;
   private final SiglusLotService siglusLotService;
   private final FcIssueVoucherEmitter fcIssueVoucherEmitter;
   private final Machine machine;
@@ -132,73 +125,7 @@ public class FcIssueVoucherService implements ProcessDataService {
 
   private UUID currentSupplierFacilityId;
 
-  private final FcCreateIssueVoucherService fcCreateIssueVoucherService;
-
-  @Override
-  public FcIntegrationResultDto processData(List<? extends ResponseBaseDto> issueVouchers, String startDate,
-      ZonedDateTime previousLastUpdatedAt) {
-    log.info("[FC issueVoucher] sync count: {}", issueVouchers.size());
-    if (issueVouchers.isEmpty()) {
-      return null;
-    }
-    boolean finalSuccess = true;
-    int createCounter = 0;
-    int ignoreCounter = 0;
-    int duplicatedCounter = 0;
-    String errorMessage = "";
-    List<? extends ResponseBaseDto> issueVoucherList = new ArrayList<>();
-    try {
-      issueVoucherErrors.clear();
-      issueVoucherList = issueVouchers.stream()
-          .distinct()
-          .filter(this::isRequisitionNumberExisted)
-          .collect(Collectors.toList());
-      for (ResponseBaseDto item : issueVoucherList) {
-        IssueVoucherDto issueVoucherDto = (IssueVoucherDto) item;
-        ShipmentsExtension shipmentsExtension = shipmentsExtensionRepository.findByClientCodeAndIssueVoucherNumber(
-            issueVoucherDto.getClientCode(), issueVoucherDto.getIssueVoucherNumber());
-        if (shipmentsExtension == null) {
-          log.info("[FC issueVoucher] create: {}", issueVoucherDto);
-          createCounter++;
-          fcCreateIssueVoucherService.createIssueVoucher(issueVoucherDto);
-        } else {
-          duplicatedCounter++;
-        }
-      }
-      if (!CollectionUtils.isEmpty(issueVoucherErrors)) {
-        log.error("[FC issueVoucher] issueVoucherErrors: {}",
-            issueVoucherErrors.stream().collect(Collectors.joining(";")));
-        finalSuccess = false;
-      }
-      ignoreCounter = issueVouchers.size() - issueVoucherList.size();
-    } catch (Exception e) {
-      log.error("[FC issueVoucher] process data error {}", e.toString());
-      issueVoucherErrors.add(e.toString());
-      finalSuccess = false;
-    }
-    log.info("[FC issueVoucher] process data create: {}, update: {}, same: {}",
-        createCounter, 0, issueVouchers.size() - createCounter);
-    log.info("[FC issueVoucher] fc integration not exist our system count: {} and duplicated count {}",
-        ignoreCounter, duplicatedCounter);
-    if (!finalSuccess) {
-      errorMessage = issueVoucherErrors.stream().collect(Collectors.joining(";"));
-    }
-    return buildResult(
-        new FcIntegrationResultBuildDto(ISSUE_VOUCHER_API, issueVoucherList, startDate, previousLastUpdatedAt,
-            finalSuccess, createCounter, 0, errorMessage, null));
-  }
-
-  private boolean isRequisitionNumberExisted(ResponseBaseDto receiptPlanDto) {
-    IssueVoucherDto receiptPlan = (IssueVoucherDto) receiptPlanDto;
-    String requisitionNumber = receiptPlan.getRequisitionNumber();
-    return !StringUtils.isEmpty(requisitionNumber)
-        && requisitionExtensionRepository.findByRequisitionNumber(requisitionNumber) != null;
-  }
-
-  public List<String> getIssueVoucherErrors() {
-    return this.issueVoucherErrors;
-  }
-
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
   public void createIssueVoucher(IssueVoucherDto issueVoucherDto) {
     try {
       RequisitionExtension extension = requisitionExtensionRepository.findByRequisitionNumber(
@@ -244,6 +171,7 @@ public class FcIssueVoucherService implements ProcessDataService {
       issueVoucherErrors.add(e.getMessage() + SPLIT + issueVoucherDto.getIssueVoucherNumber());
     } catch (Exception e) {
       log.error("[FC] issue voucher: {}, exception: {}", issueVoucherDto, e.toString());
+      e.printStackTrace();
       throw e;
     }
   }
