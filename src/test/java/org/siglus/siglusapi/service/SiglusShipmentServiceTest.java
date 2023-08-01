@@ -515,12 +515,52 @@ public class SiglusShipmentServiceTest {
         .thenReturn(processingPeriodExtension);
     YearMonth yearMonth = YearMonth.of(LocalDate.now().getYear(), LocalDate.now().getMonth().plus(1));
     when(requisitionService.calculateFulfillOrderYearMonth(processingPeriodExtension))
-            .thenReturn(Arrays.asList(yearMonth));
+        .thenReturn(Arrays.asList(yearMonth));
 
     //when
     siglusShipmentService.checkFulfillOrderExpired(shipmentExtensionRequest);
   }
 
+  @Test(expected = ValidationMessageException.class)
+  public void shouldThrowValidationMessageExceptionWhenLineItemDuplicated() {
+    // given
+    UUID orderableId = UUID.randomUUID();
+    OrderableDto orderableDto = new OrderableDto();
+    orderableDto.setId(orderableId);
+    ShipmentLineItemDto shipmentLineItemDto1 = new ShipmentLineItemDto();
+    shipmentLineItemDto1.setOrderable(orderableDto);
+    ShipmentLineItemDto shipmentLineItemDto2 = new ShipmentLineItemDto();
+    shipmentLineItemDto2.setOrderable(orderableDto);
+    UUID lotId1 = UUID.randomUUID();
+    shipmentLineItemDto1.setLotId(lotId1);
+    shipmentLineItemDto2.setLotId(lotId1);
+    ShipmentExtensionRequest shipmentExtensionRequest = createShipmentExtensionRequest();
+    shipmentExtensionRequest.getShipment().setLineItems(new ArrayList<>());
+    shipmentExtensionRequest.getShipment().lineItems().add(shipmentLineItemDto1);
+    shipmentExtensionRequest.getShipment().lineItems().add(shipmentLineItemDto2);
+
+    // when
+    siglusShipmentService.validShipmentLineItemsDuplicated(shipmentExtensionRequest);
+  }
+
+  @Test(expected = ValidationMessageException.class)
+  public void shouldThrowValidationMessageExceptionWhenLineItemDuplicatedWithoutLot() {
+    // given
+    UUID orderableId = UUID.randomUUID();
+    OrderableDto orderableDto = new OrderableDto();
+    orderableDto.setId(orderableId);
+    ShipmentLineItemDto shipmentLineItemDto1 = new ShipmentLineItemDto();
+    shipmentLineItemDto1.setOrderable(orderableDto);
+    ShipmentLineItemDto shipmentLineItemDto2 = new ShipmentLineItemDto();
+    shipmentLineItemDto2.setOrderable(orderableDto);
+    ShipmentExtensionRequest shipmentExtensionRequest = createShipmentExtensionRequest();
+    shipmentExtensionRequest.getShipment().setLineItems(new ArrayList<>());
+    shipmentExtensionRequest.getShipment().lineItems().add(shipmentLineItemDto1);
+    shipmentExtensionRequest.getShipment().lineItems().add(shipmentLineItemDto2);
+
+    // when
+    siglusShipmentService.validShipmentLineItemsDuplicated(shipmentExtensionRequest);
+  }
 
   private ShipmentExtensionRequest createShipmentExtensionRequest() {
     OrderObjectReferenceDto order = new OrderObjectReferenceDto();

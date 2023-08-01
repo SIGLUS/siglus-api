@@ -31,7 +31,9 @@ public class MeCreateRequisitionService {
   @Transactional
   public UUID createRequisition(RequisitionCreateRequest request) {
     UUID requisitionId = requisitionCreateService.createRequisition(request);
-    androidRequisitionSyncedEmitter.emit(request, requisitionId);
+    if (requisitionId != null) {
+      androidRequisitionSyncedEmitter.emit(request, requisitionId);
+    }
     return requisitionId;
   }
 }

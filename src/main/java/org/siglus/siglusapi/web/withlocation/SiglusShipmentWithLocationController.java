@@ -47,8 +47,9 @@ public class SiglusShipmentWithLocationController {
   @Transactional
   public void confirmShipmentByLocation(@RequestParam(name = "isSubOrder", required = false, defaultValue = "false")
       boolean isSubOrder, @RequestBody ShipmentExtensionRequest shipmentExtensionRequest) {
-    byte[] reqBytes = PayloadSerializer.LOCALMACHINE_EVENT_OBJECT_MAPPER.writeValueAsBytes(shipmentExtensionRequest);
     siglusShipmentService.checkFulfillOrderExpired(shipmentExtensionRequest);
+    siglusShipmentService.validShipmentLineItemsDuplicated(shipmentExtensionRequest);
+    byte[] reqBytes = PayloadSerializer.LOCALMACHINE_EVENT_OBJECT_MAPPER.writeValueAsBytes(shipmentExtensionRequest);
     ShipmentDto shipmentByLocation = siglusShipmentService.createOrderAndShipmentByLocation(isSubOrder,
         shipmentExtensionRequest);
     notificationService.postConfirmShipment(shipmentByLocation);

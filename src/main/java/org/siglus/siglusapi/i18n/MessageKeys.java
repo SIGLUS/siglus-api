@@ -55,6 +55,7 @@ public abstract class MessageKeys {
 
   // shipment
   public static final String SHIPMENT_ORDER_STATUS_INVALID = join(ERROR_PREFIX, SHIPMENT, ORDER, "status", INVALID);
+  public static final String SHIPMENT_LINE_ITEMS_INVALID = join(ERROR_PREFIX, SHIPMENT, ORDER, "line items", INVALID);
 
   // facility
   public static final String ERROR_EVENT_FACILITY_INVALID = EVENT_ERROR_PREFIX + ".facilityId.invalid";
