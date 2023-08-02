@@ -98,7 +98,7 @@ import org.springframework.stereotype.Service;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-@SuppressWarnings("PMD.TooManyMethods")
+@SuppressWarnings({"PMD"})
 public class FcIssueVoucherService implements ProcessDataService {
 
   private static final String SPLIT = ": ";
@@ -159,8 +159,8 @@ public class FcIssueVoucherService implements ProcessDataService {
             issueVoucherDto.getClientCode(), issueVoucherDto.getIssueVoucherNumber());
         if (shipmentsExtension == null) {
           log.info("[FC issueVoucher] create: {}", issueVoucherDto);
-          createCounter++;
           fcCreateIssueVoucherService.createIssueVoucher(issueVoucherDto, issueVoucherErrors);
+          createCounter++;
         } else {
           duplicatedCounter++;
         }
@@ -174,6 +174,7 @@ public class FcIssueVoucherService implements ProcessDataService {
     } catch (Exception e) {
       log.error("[FC issueVoucher] process data error {}", e.toString());
       issueVoucherErrors.add(e.toString());
+      e.printStackTrace();
       finalSuccess = false;
     }
     log.info("[FC issueVoucher] process data create: {}, update: {}, same: {}",
