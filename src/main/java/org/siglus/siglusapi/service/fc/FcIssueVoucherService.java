@@ -160,7 +160,7 @@ public class FcIssueVoucherService implements ProcessDataService {
         if (shipmentsExtension == null) {
           log.info("[FC issueVoucher] create: {}", issueVoucherDto);
           createCounter++;
-          fcCreateIssueVoucherService.createIssueVoucher(issueVoucherDto);
+          fcCreateIssueVoucherService.createIssueVoucher(issueVoucherDto, issueVoucherErrors);
         } else {
           duplicatedCounter++;
         }

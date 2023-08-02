@@ -121,12 +121,10 @@ public class FcCreateIssueVoucherService {
 
   private final OrderController orderController;
 
-  private final List<String> issueVoucherErrors = new ArrayList<>();
-
   private UUID currentSupplierFacilityId;
 
   @Transactional(propagation = Propagation.REQUIRES_NEW)
-  public void createIssueVoucher(IssueVoucherDto issueVoucherDto) {
+  public void createIssueVoucher(IssueVoucherDto issueVoucherDto, List<String> issueVoucherErrors) {
     try {
       RequisitionExtension extension = requisitionExtensionRepository.findByRequisitionNumber(
           issueVoucherDto.getRequisitionNumber());
