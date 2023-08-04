@@ -241,7 +241,7 @@ public class FcProductService implements ProcessDataService {
           && orderableIdToProgramId.get(orderableId).equals(programCodeToIdMap.get(extension.getProgramCode()))) {
         ProgramOrderablesExtension item = extensionList.stream().findFirst().orElse(new ProgramOrderablesExtension());
         extension.setId(item.getId());
-        extension.setShowInReport(item.getShowInReport());
+        extension.setShowInReport(Optional.ofNullable(item.getShowInReport()).orElse(Boolean.FALSE));
         extension.setUnit(item.getUnit());
         programOrderablesExtensionRepository.save(extension);
         break;
