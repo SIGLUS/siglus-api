@@ -128,7 +128,12 @@ public class SiglusShipmentService {
     List<ShipmentLineItemDto> shipmentLineItems = shipmentExtensionRequest.getShipment().lineItems();
     Set<String> orderableLotIds = new HashSet<>();
     boolean isOrderableLotIdDuplicated = !shipmentLineItems.stream()
-            .map(item -> item.getOrderable().getId() + "-" + item.getLotId())
+            .map(item -> {
+              if (item.getLocation() != null && item.getLocation().getLocationCode() != null) {
+                return item.getOrderable().getId() + "-" + item.getLotId() + "-" + item.getLocation().getLocationCode();
+              }
+              return item.getOrderable().getId() + "-" + item.getLotId();
+            })
             .allMatch(orderableLotIds::add);
     if (isOrderableLotIdDuplicated) {
       throw new ValidationMessageException(new Message(SHIPMENT_LINE_ITEMS_INVALID));
