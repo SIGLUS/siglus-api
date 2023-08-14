@@ -64,6 +64,7 @@ public class SyncService {
     Set<Ack> notShippedAcks = localEventStore.getNotShippedAcks();
     Set<Ack> downloadedAcks = new HashSet<>();
     try {
+      log.info("exchange Acks to web online,notShippedAcks: {}", notShippedAcks.size());
       downloadedAcks = webClient.exchangeAcks(notShippedAcks);
     } catch (NetworkException ne) {
       log.error("fail to download ack with network exception", ne);
@@ -135,6 +136,7 @@ public class SyncService {
       if (isEmpty(events)) {
         return;
       }
+      log.info("push local events to web online, events: {}", events.size());
       pushAsEventResource(PUSH_CAPACITY_BYTES_PER_REQUEST, workingQueue, events);
     } catch (NetworkException ne) {
       log.error("fail to push events with network exception", ne);

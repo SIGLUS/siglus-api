@@ -16,7 +16,6 @@
 package org.siglus.siglusapi.localmachine;
 
 import java.time.ZonedDateTime;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -47,22 +46,20 @@ public class LocalEventImporter extends EventImporter {
       return;
     }
     final long offset = this.eventStore.getCurrentMasterDataOffset();
-    List<Event> masterDataToSync = new LinkedList<>();
     long newOffset = offset;
     for (Event it: events) {
       if (it.getLocalSequenceNumber() <= offset) {
         continue;
       }
       it.setSyncedTime(ZonedDateTime.now());
-      masterDataToSync.add(it);
       newOffset = Math.max(it.getLocalSequenceNumber(), newOffset);
-    }
-    try {
-      replayer.playNonGroupEvents(masterDataToSync);
-      log.info("update local master data offset from {} to {}", offset, newOffset);
-      eventStore.updateLocalMasterDataOffset(newOffset);
-    } catch (InterruptedException | TimeoutException e) {
-      log.warn("fail to replay master data due to retryable reason, err:{}", e.getMessage());
+      try {
+        replayer.playMasterDataEvent(it);
+        log.info("update local master data offset to {}", newOffset);
+        eventStore.updateLocalMasterDataOffset(newOffset);
+      } catch (InterruptedException | TimeoutException e) {
+        log.warn("fail to replay master data due to retryable reason, err:{}", e.getMessage());
+      }
     }
   }
 

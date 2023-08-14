@@ -73,6 +73,10 @@ public class EventPublisher {
 
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   public void publishEvent(Event event) {
+    publishEventWithinTransaction(event);
+  }
+
+  public void publishEventWithinTransaction(Event event) {
     if (event.isLocalReplayed()) {
       log.info("event {} is relayed already locally, skip", event.getId());
       return;

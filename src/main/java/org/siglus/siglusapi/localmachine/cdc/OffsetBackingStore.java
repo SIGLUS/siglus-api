@@ -79,7 +79,6 @@ public class OffsetBackingStore extends MemoryOffsetBackingStore {
   @SneakyThrows
   @Override
   protected void save() {
-    log.info("save offset");
     ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
     try (ObjectOutputStream os = new ObjectOutputStream(byteArrayOutputStream)) {
       Map<byte[], byte[]> raw = new HashMap<>();

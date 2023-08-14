@@ -44,6 +44,7 @@ public class EventReplayer {
 
   private static final String DEFAULT_REPLAY_LOCK = "lock.replay.default";
   private static final String DEFAULT_REPLAY_GROUP_LOCK = "lock.replay.group.default.";
+  private static final String DEFAULT_REPLAY_MASTER_DATA_LOCK = "lock.replay.master.data.default.";
   private static final int TIMEOUT_MILLIS = 1000;
   private final EventPublisher eventPublisher;
   private final EventStore eventStore;
@@ -145,6 +146,18 @@ public class EventReplayer {
     final List<Event> eventsForReplaying = sortEventsByLocalSequence(events);
     try (AutoClosableLock lock = lockFactory.waitLock(DEFAULT_REPLAY_LOCK, TIMEOUT_MILLIS)) {
       lock.ifPresent(() -> eventsForReplaying.forEach(eventPublisher::publishEvent));
+      if (!lock.isPresent()) {
+        throw new TimeoutException();
+      }
+    }
+  }
+
+  void playMasterDataEvent(Event event) throws TimeoutException, InterruptedException {
+    if (event == null) {
+      return;
+    }
+    try (AutoClosableLock lock = lockFactory.waitLock(DEFAULT_REPLAY_MASTER_DATA_LOCK, TIMEOUT_MILLIS)) {
+      lock.ifPresent(() -> eventPublisher.publishEventWithinTransaction(event));
       if (!lock.isPresent()) {
         throw new TimeoutException();
       }
