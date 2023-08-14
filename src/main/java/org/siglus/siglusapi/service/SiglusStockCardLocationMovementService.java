@@ -42,12 +42,15 @@ import org.apache.commons.lang.BooleanUtils;
 import org.openlmis.requisition.dto.ReasonType;
 import org.openlmis.stockmanagement.domain.BaseEntity;
 import org.openlmis.stockmanagement.domain.card.StockCard;
-import org.openlmis.stockmanagement.dto.StockCardDto;
 import org.openlmis.stockmanagement.dto.referencedata.FacilityDto;
 import org.openlmis.stockmanagement.dto.referencedata.LotDto;
 import org.openlmis.stockmanagement.dto.referencedata.OrderableDto;
 import org.openlmis.stockmanagement.dto.referencedata.ProgramDto;
 import org.openlmis.stockmanagement.repository.StockCardRepository;
+import org.openlmis.stockmanagement.service.referencedata.FacilityReferenceDataService;
+import org.openlmis.stockmanagement.service.referencedata.LotReferenceDataService;
+import org.openlmis.stockmanagement.service.referencedata.OrderableReferenceDataService;
+import org.openlmis.stockmanagement.service.referencedata.ProgramReferenceDataService;
 import org.siglus.siglusapi.constant.LocationConstants;
 import org.siglus.siglusapi.domain.CalculatedStockOnHandByLocation;
 import org.siglus.siglusapi.domain.StockCardLocationMovementDraft;
@@ -83,6 +86,14 @@ public class SiglusStockCardLocationMovementService {
   private final CalculatedStockOnHandByLocationRepository calculatedStockOnHandByLocationRepository;
   private final SiglusStockCardService siglusStockCardService;
   private final SiglusAdministrationsService administrationsService;
+
+  private final FacilityReferenceDataService facilityReferenceDataService;
+
+  private final OrderableReferenceDataService orderableReferenceDataService;
+
+  private final ProgramReferenceDataService programReferenceDataService;
+
+  private final LotReferenceDataService lotReferenceDataService;
 
   public InitialMoveProductFieldDto canInitialMoveProduct(UUID facilityId) {
 
@@ -209,11 +220,11 @@ public class SiglusStockCardLocationMovementService {
     initialLineItemDto.setOccurredDate(firstLineItem.getOccurredDate());
     locationMovementLineItemDtos.add(initialLineItemDto);
 
-    StockCardDto stockCardDto = siglusStockCardService.findStockCardById(stockCardId);
-    FacilityDto facility = stockCardDto.getFacility();
-    OrderableDto orderable = stockCardDto.getOrderable();
-    ProgramDto program = stockCardDto.getProgram();
-    LotDto lot = stockCardDto.getLot();
+    StockCard stockCard = stockCardRepository.getOne(stockCardId);
+    FacilityDto facility = facilityReferenceDataService.findOne(stockCard.getFacilityId());
+    OrderableDto orderable = orderableReferenceDataService.findOne(stockCard.getOrderableId());
+    ProgramDto program = programReferenceDataService.findOne(stockCard.getProgramId());
+    LotDto lot = lotReferenceDataService.findOne(stockCard.getLotId());
     return LocationMovementDto.builder()
         .facilityName(facility.getName())
         .productName(orderable.getFullProductName())

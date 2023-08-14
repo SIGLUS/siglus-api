@@ -57,6 +57,10 @@ import org.openlmis.stockmanagement.dto.referencedata.LotDto;
 import org.openlmis.stockmanagement.dto.referencedata.OrderableDto;
 import org.openlmis.stockmanagement.dto.referencedata.ProgramDto;
 import org.openlmis.stockmanagement.repository.StockCardRepository;
+import org.openlmis.stockmanagement.service.referencedata.FacilityReferenceDataService;
+import org.openlmis.stockmanagement.service.referencedata.LotReferenceDataService;
+import org.openlmis.stockmanagement.service.referencedata.OrderableReferenceDataService;
+import org.openlmis.stockmanagement.service.referencedata.ProgramReferenceDataService;
 import org.siglus.siglusapi.domain.CalculatedStockOnHandByLocation;
 import org.siglus.siglusapi.domain.StockCardLocationMovementDraft;
 import org.siglus.siglusapi.domain.StockCardLocationMovementLineItem;
@@ -109,6 +113,18 @@ public class SiglusStockCardLocationMovementServiceTest {
 
   @Mock
   private SiglusStockCardService siglusStockCardService;
+
+  @Mock
+  private FacilityReferenceDataService facilityReferenceDataService;
+
+  @Mock
+  private OrderableReferenceDataService orderableReferenceDataService;
+
+  @Mock
+  private ProgramReferenceDataService programReferenceDataService;
+
+  @Mock
+  private LotReferenceDataService lotReferenceDataService;
 
   @Captor
   private ArgumentCaptor<List<UUID>> argumentCaptor;
@@ -328,6 +344,12 @@ public class SiglusStockCardLocationMovementServiceTest {
         locationMovementLineItemDtos);
     when(calculatedStockOnHandByLocationRepository.getProductLocationMovement(stockCardId, locationCode)).thenReturn(
         locationMovementLineItemDtos);
+
+    when(stockCardRepository.getOne(stockCardId)).thenReturn(createStockCard());
+    when(facilityReferenceDataService.findOne(facilityId)).thenReturn(createFacilityDto());
+    when(programReferenceDataService.findOne(programId)).thenReturn(createProgramDto());
+    when(orderableReferenceDataService.findOne(orderableId)).thenReturn(createOrderableDto());
+    when(lotReferenceDataService.findOne(lotId)).thenReturn(createLotDto());
     when(siglusStockCardService.findStockCardById(stockCardId)).thenReturn(createStockCardDto());
     when(calculatedStockOnHandByLocationRepository.findRecentlySohByStockCardIdAndLocationCode(stockCardId,
         locationCode)).thenReturn(
@@ -403,5 +425,37 @@ public class SiglusStockCardLocationMovementServiceTest {
         .dispensable(dispensableDto).build();
     return StockCardDto.builder().lot(lotDto).orderable(orderableDto).facility(facilityDto)
         .program(programDto).build();
+  }
+
+  private StockCard createStockCard() {
+    return StockCard.builder()
+        .facilityId(facilityId)
+        .programId(programId)
+        .orderableId(orderableId)
+        .lotId(lotId)
+        .build();
+  }
+
+  private FacilityDto createFacilityDto() {
+    return FacilityDto.builder().name("facility").build();
+  }
+
+  private ProgramDto createProgramDto() {
+    return ProgramDto.builder().id(programId).name("via").build();
+  }
+
+  private OrderableDto createOrderableDto() {
+    DispensableDto dispensableDto = new DispensableDto();
+    dispensableDto.setDisplayUnit("each");
+    return OrderableDto.builder()
+        .id(orderableId)
+        .fullProductName("product")
+        .productCode("aaaddd")
+        .dispensable(dispensableDto)
+        .build();
+  }
+
+  private LotDto createLotDto() {
+    return LotDto.builder().lotCode("lotcode").build();
   }
 }
