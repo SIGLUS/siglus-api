@@ -57,6 +57,7 @@ import org.openlmis.stockmanagement.dto.referencedata.FacilityDto;
 import org.openlmis.stockmanagement.dto.referencedata.OrderableDto;
 import org.openlmis.stockmanagement.dto.referencedata.UserDto;
 import org.openlmis.stockmanagement.repository.CalculatedStockOnHandRepository;
+import org.openlmis.stockmanagement.service.StockCardService;
 import org.openlmis.stockmanagement.util.AuthenticationHelper;
 import org.siglus.siglusapi.domain.StockCardExtension;
 import org.siglus.siglusapi.dto.LotLocationSohDto;
@@ -110,6 +111,9 @@ public class SiglusStockCardServiceTest {
 
   @Mock
   private CalculatedStockOnHandByLocationRepository calculatedStockOnHandByLocationRepository;
+
+  @Mock
+  private StockCardService stockCardService;
 
   @InjectMocks
   private SiglusStockCardService siglusStockCardService;
@@ -182,6 +186,7 @@ public class SiglusStockCardServiceTest {
             .stockOnHand(200)
             .reason(credit)
             .stockAdjustments(Collections.emptyList())
+            .lineItem(source1)
             .build();
     physcical1.setId(lineId1);
     StockCardLineItemDto physcical2 = StockCardLineItemDto
@@ -189,6 +194,7 @@ public class SiglusStockCardServiceTest {
             .stockOnHand(500)
             .reason(credit)
             .stockAdjustments(Collections.emptyList())
+            .lineItem(source2)
             .build();
     physcical2.setId(lineId2);
     List<StockCardLineItemDto> merged = siglusStockCardService.mergePhysicalInventoryLineItems(
@@ -229,6 +235,8 @@ public class SiglusStockCardServiceTest {
     when(stockCardExtensionRepository.findByStockCardId(stockCardOne.getId()))
         .thenReturn(stockCardExtensionOne);
     when(stockCardStockManagementService.getStockCard(stockCardOne.getId()))
+        .thenReturn(getFromStockCard(stockCardOne));
+    when(stockCardService.findStockCardById(stockCardOne.getId(), true))
         .thenReturn(getFromStockCard(stockCardOne));
     LotLocationSohDto locationSohDto =
         LotLocationSohDto.builder().lotId(stockCardOne.getLotId()).locationCode("AA031").stockOnHand(1).build();
@@ -488,6 +496,7 @@ public class SiglusStockCardServiceTest {
       if (stockCardLineItem.getSource() != null) {
         lineItemDto.setSource(new FacilityDto());
       }
+      lineItemDto.setLineItem(stockCardLineItem);
       return lineItemDto;
     }).collect(Collectors.toList()));
     return dto;

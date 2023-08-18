@@ -49,6 +49,7 @@ import org.openlmis.stockmanagement.dto.StockCardLineItemDto;
 import org.openlmis.stockmanagement.dto.StockCardLineItemReasonDto;
 import org.openlmis.stockmanagement.dto.referencedata.OrderableDto;
 import org.openlmis.stockmanagement.repository.CalculatedStockOnHandRepository;
+import org.openlmis.stockmanagement.service.StockCardService;
 import org.openlmis.stockmanagement.util.AuthenticationHelper;
 import org.siglus.siglusapi.domain.StockCardExtension;
 import org.siglus.siglusapi.dto.FacilityDto;
@@ -63,6 +64,7 @@ import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusStockManagementService;
 import org.siglus.siglusapi.util.AndroidHelper;
 import org.siglus.siglusapi.util.SiglusDateHelper;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -72,6 +74,7 @@ public class SiglusStockCardService {
   private final SiglusStockCardRepository stockCardRepository;
 
   private final SiglusStockManagementService stockCardStockManagementService;
+  private final StockCardService stockCardService;
 
   private final AuthenticationHelper authenticationHelper;
 
@@ -145,7 +148,11 @@ public class SiglusStockCardService {
       if (lineitemSource != null) {
         lineItem.setProcessedDate(lineitemSource.getProcessedDate());
         lineItem.setQuantity(lineitemSource.getQuantity());
-        lineItem.setQuantityWithSign(lineitemSource.getQuantityWithSign());
+        if (lineitemSource.isPhysicalInventory()) {
+          lineItem.setQuantityWithSign(lineitemSource.getQuantity());
+        } else {
+          lineItem.setQuantityWithSign(lineitemSource.getQuantityWithSign());
+        }
         lineItem.setStockCard(lineitemSource.getStockCard());
       }
     });
@@ -153,8 +160,7 @@ public class SiglusStockCardService {
     List<StockCardLineItemDto> merged = new ArrayList<>();
     List<StockCardLineItemDto> physicalInventoryLineItems = new ArrayList<>();
     for (StockCardLineItemDto lineItem : lineItemDtos) {
-      if (lineItem.getReason() != null
-              && lineItem.getReason().getReasonCategory() == PHYSICAL_INVENTORY) {
+      if (lineItem.getLineItem().isPhysicalInventory()) {
         physicalInventoryLineItems.add(lineItem);
       } else {
         merged.add(lineItem);
@@ -192,7 +198,7 @@ public class SiglusStockCardService {
 
     int prevSoH = 0;
     for (StockCardLineItemDto lineItem : merged) {
-      if (lineItem.getReason() != null && lineItem.getReason().getReasonCategory() == PHYSICAL_INVENTORY) {
+      if (lineItem.getLineItem().isPhysicalInventory()) {
         lineItem.setStockOnHand(lineItem.getQuantity());
       } else {
         lineItem.setStockOnHand(prevSoH + lineItem.getQuantityWithSign());
@@ -210,8 +216,28 @@ public class SiglusStockCardService {
       stockCard.getLineItems()
               .forEach(stockCardLineItem ->
                       lineItemsSource.put(stockCardLineItem.getId(), stockCardLineItem));
-      StockCardDto stockCardDto = stockCardStockManagementService.getStockCard(stockCard.getId());
+      StockCardDto stockCardDto = stockCardService.findStockCardById(stockCard.getId(), true);
       if (stockCardDto != null) {
+        stockCardDto.getLineItems().forEach(lineItemDto -> {
+          StockCardLineItem lineItem = lineItemDto.getLineItem();
+          if (lineItem == null) {
+            return;
+          }
+          BeanUtils.copyProperties(lineItem, lineItemDto, "stockAdjustments", "reason");
+          List<PhysicalInventoryLineItemAdjustmentDto> adjustmentDtos = lineItem
+              .getStockAdjustments()
+              .stream()
+              .map(adjustment -> {
+                PhysicalInventoryLineItemAdjustmentDto dto = new PhysicalInventoryLineItemAdjustmentDto();
+                dto.setQuantity(adjustment.getQuantity());
+                dto.setReason(StockCardLineItemReasonDto.newInstance(adjustment.getReason()));
+                return dto;
+              }).collect(Collectors.toList());
+          lineItemDto.setStockAdjustments(adjustmentDtos);
+          if (lineItem.getReason() != null) {
+            lineItemDto.setReason(StockCardLineItemReasonDto.newInstance(lineItem.getReason()));
+          }
+        });
         stockCardDto.setLineItems(mergePhysicalInventoryLineItems(stockCardDto.getLineItems(), lineItemsSource));
         stockCardDtos.add(stockCardDto);
         calculateNewLineItemDtos.addAll(stockCardDto.getLineItems());
