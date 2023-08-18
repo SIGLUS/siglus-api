@@ -15,7 +15,6 @@
 
 package org.siglus.siglusapi.service;
 
-import static org.openlmis.stockmanagement.domain.reason.ReasonCategory.PHYSICAL_INVENTORY;
 import static org.siglus.siglusapi.dto.StockCardLineItemDtoComparators.byOccurredDate;
 import static org.siglus.siglusapi.dto.StockCardLineItemDtoComparators.byProcessedDate;
 import static org.siglus.siglusapi.dto.StockCardLineItemDtoComparators.byReasonPriority;
