@@ -31,6 +31,7 @@ import org.openlmis.requisition.web.RequisitionController;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionLineItemDto;
 import org.siglus.siglusapi.localmachine.event.requisition.web.approve.RequisitionInternalApproveEmitter;
+import org.siglus.siglusapi.localmachine.event.requisition.web.finalapprove.RequisitionFinalApproveEmitter;
 import org.siglus.siglusapi.localmachine.event.requisition.web.reject.RequisitionRejectEmitter;
 import org.siglus.siglusapi.localmachine.event.requisition.web.release.RequisitionReleaseEmitter;
 import org.siglus.siglusapi.service.SiglusNotificationService;
@@ -66,6 +67,7 @@ public class SiglusRequisitionController {
   private final SiglusNotificationService notificationService;
   private final AuthenticationHelper authenticationHelper;
   private final RequisitionInternalApproveEmitter requisitionInternalApproveEmitter;
+  private final RequisitionFinalApproveEmitter requisitionFinalApproveEmitter;
   private final RequisitionReleaseEmitter requisitionReleaseEmitter;
   private final RequisitionRejectEmitter requisitionRejectEmitter;
 
@@ -133,6 +135,9 @@ public class SiglusRequisitionController {
     notificationService.postApprove(basicRequisitionDto);
     if (basicRequisitionDto.getStatus() == RequisitionStatus.IN_APPROVAL) {
       requisitionInternalApproveEmitter.emit(requisitionId);
+    }
+    if (basicRequisitionDto.getStatus() == RequisitionStatus.APPROVED) {
+      requisitionFinalApproveEmitter.emit(requisitionId);
     }
     if (basicRequisitionDto.getStatus() == RequisitionStatus.RELEASED_WITHOUT_ORDER) {
       UUID userId = authenticationHelper.getCurrentUser().getId();

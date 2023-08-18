@@ -67,6 +67,19 @@ public class NotificationService {
     }
   }
 
+  public void postFinalApproval(UUID userId, BasicRequisitionDto requisition, UUID notifySupervisoryNodeId) {
+    try {
+      saveNotificationFromRequisition(userId, requisition, notification -> {
+        notification.setType(NotificationType.TODO);
+        notification.setStatus(NotificationStatus.APPROVED);
+        notification.setNotifySupervisoryNodeId(notifySupervisoryNodeId);
+      });
+    } catch (Exception e) {
+      log.error(NOTI_SEND_FAILED + e.getMessage(), e);
+    }
+  }
+
+
   public void postConvertToOrder(UUID userId, UUID supplierFacilityId, Order order) {
     try {
       OrderExternal external = orderExternalRepository.findOne(order.getExternalId());

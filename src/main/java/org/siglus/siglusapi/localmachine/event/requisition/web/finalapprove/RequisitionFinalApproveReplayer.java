@@ -13,7 +13,7 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.localmachine.event.requisition.web.converttoorder;
+package org.siglus.siglusapi.localmachine.event.requisition.web.finalapprove;
 
 import static java.util.stream.Collectors.toMap;
 
@@ -39,8 +39,10 @@ import org.siglus.siglusapi.domain.RequisitionExtension;
 import org.siglus.siglusapi.localmachine.event.EventCommonService;
 import org.siglus.siglusapi.localmachine.event.NotificationService;
 import org.siglus.siglusapi.localmachine.event.order.fulfillment.StatusMessageRequest;
+import org.siglus.siglusapi.localmachine.event.requisition.web.converttoorder.RequisitionConvertToOrderEvent;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.repository.SiglusOrdersRepository;
+import org.siglus.siglusapi.service.android.RequisitionCreateService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
@@ -48,48 +50,42 @@ import org.springframework.stereotype.Service;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class RequisitionConvertToOrderReplayer {
+public class RequisitionFinalApproveReplayer {
   private final SiglusOrdersRepository siglusOrdersRepository;
   private final RequisitionExtensionRepository requisitionExtensionRepository;
   private final RequisitionRepository requisitionRepository;
   private final EventCommonService eventCommonService;
   private final NotificationService notificationService;
+  private final RequisitionCreateService requisitionCreateService;
 
-  @EventListener(value = {RequisitionConvertToOrderEvent.class})
-  public void replay(RequisitionConvertToOrderEvent event) {
+  @EventListener(value = {RequisitionFinalApproveEvent.class})
+  public void replay(RequisitionFinalApproveEvent event) {
     try {
-      log.info("start replay convert to order requisition number= "
-          + event.getConvertToOrderRequest().getRequisitionNumber());
+      log.info("start replay final approve requisition number= "
+          + event.getRequisitionNumber());
       doReplay(event);
-      log.info("end replay convert to order requisition number = "
-          + event.getConvertToOrderRequest().getRequisitionNumber());
+      log.info("end replay final approve requisition number = "
+          + event.getRequisitionNumber());
     } catch (Exception e) {
-      log.error("fail to replay fulfill order event, msg = " + e.getMessage(), e);
+      log.error("fail to replay final approve requisition event, msg = " + e.getMessage(), e);
       log.error(e.getMessage(), e);
       throw e;
     }
   }
 
-  public void doReplay(RequisitionConvertToOrderEvent event) {
+  public void doReplay(RequisitionFinalApproveEvent event) {
     RequisitionExtension requisitionExtension = requisitionExtensionRepository.findByRequisitionNumber(
-        event.getConvertToOrderRequest().getRequisitionNumber());
-    // reset requisition id
-    event.getConvertToOrderRequest().getFirstOrder().setExternalId(requisitionExtension.getRequisitionId());
+        event.getRequisitionNumber());
     Requisition requisition = requisitionRepository.findOne(requisitionExtension.getRequisitionId());
-    if (RequisitionStatus.IN_APPROVAL.equals(requisition.getStatus())) {
-      finalApprove(requisition, requisitionExtension, event);
-    }
 
-    Order order = convertToOrder(event, requisition);
-    log.info("save requisition convert to order, orderId:{}", order.getId());
-    siglusOrdersRepository.saveAndFlush(order);
+    finalApprove(requisition, requisitionExtension, event);
 
-    notificationService.postConvertToOrder(event.getConvertToOrderUserId(),
-        event.getSupplierFacilityId(), order);
+    notificationService.postFinalApproval(event.getFinalApproveUserId(),
+        requisitionCreateService.buildBaseRequisitionDto(requisition), event.getFinalApproveSupervisoryNodeId());
   }
 
   private void finalApprove(Requisition requisition, RequisitionExtension requisitionExtension,
-                RequisitionConvertToOrderEvent event) {
+                            RequisitionFinalApproveEvent event) {
     resetApprovedQuantity(requisition, event);
 
     // do approve
@@ -98,25 +94,26 @@ public class RequisitionConvertToOrderReplayer {
 
     StatusChange finalApprovedStatusChange = requisition.getStatusChanges().stream().filter(item ->
         item.getStatus() == RequisitionStatus.APPROVED).findFirst().orElseThrow(IllegalStateException::new);
-    resetFinalApproveStatusMessage(requisition, event.getConvertToOrderRequest().getFinalApproveStatusMessage(),
+    resetFinalApproveStatusMessage(requisition, event.getFinalApproveStatusMessage(),
         finalApprovedStatusChange);
 
-    finalApprovedStatusChange.setSupervisoryNodeId(event.getConvertToOrderRequest().getFinalApproveSupervisoryNodeId());
+    finalApprovedStatusChange.setSupervisoryNodeId(event.getFinalApproveSupervisoryNodeId());
+    log.info("save requisition final approve, requisitionId:{}", requisition.getId());
     requisitionRepository.saveAndFlush(requisition);
 
     requisitionExtension.setIsApprovedByInternal(false);
     requisitionExtensionRepository.saveAndFlush(requisitionExtension);
   }
 
-  private void resetApprovedQuantity(Requisition requisition, RequisitionConvertToOrderEvent event) {
-    if (CollectionUtils.isEmpty(event.getConvertToOrderRequest().getRequisitionLineItems())) {
+  private void resetApprovedQuantity(Requisition requisition, RequisitionFinalApproveEvent event) {
+    if (CollectionUtils.isEmpty(event.getRequisitionLineItems())) {
       return;
     }
     Map<VersionEntityReference, RequisitionLineItem> requisitionLineItemMap =
         requisition.getRequisitionLineItems().stream().collect(toMap(RequisitionLineItem::getOrderable,
         Function.identity()));
     List<RequisitionLineItem> newLineItems = new ArrayList<>();
-    event.getConvertToOrderRequest().getRequisitionLineItems().forEach(item -> {
+    event.getRequisitionLineItems().forEach(item -> {
       RequisitionLineItem requisitionLineItem = requisitionLineItemMap.get(item.getOrderable());
       if (requisitionLineItem != null) {
         requisitionLineItem.setApprovedQuantity(item.getApprovedQuantity());
