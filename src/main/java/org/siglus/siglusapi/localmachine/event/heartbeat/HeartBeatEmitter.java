@@ -18,7 +18,6 @@ package org.siglus.siglusapi.localmachine.event.heartbeat;
 import java.time.LocalDateTime;
 import java.util.List;
 import javax.annotation.PostConstruct;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.siglus.siglusapi.localmachine.cdc.CdcListener;
