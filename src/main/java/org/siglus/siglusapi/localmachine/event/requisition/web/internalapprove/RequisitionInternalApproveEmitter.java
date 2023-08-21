@@ -13,7 +13,7 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.localmachine.event.requisition.web.approve;
+package org.siglus.siglusapi.localmachine.event.requisition.web.internalapprove;
 
 import static org.siglus.siglusapi.dto.enums.EventCategoryEnum.REQUISITION_INTERNAL_APPROVED;
 
@@ -60,21 +60,21 @@ public class RequisitionInternalApproveEmitter {
   private final EventPublisher eventPublisher;
   private final EventCommonService baseEventCommonService;
 
-  public RequisitionInternalApprovedEvent emit(UUID requisitionId) {
-    RequisitionInternalApprovedEvent event = getEvent(requisitionId);
+  public RequisitionInternalApproveEvent emit(UUID requisitionId) {
+    RequisitionInternalApproveEvent event = getEvent(requisitionId);
     eventPublisher.emitGroupEvent(getGroupId(event),
         baseEventCommonService.getReceiverId(event.getRequisition().getFacilityId(),
             event.getRequisition().getProgramId()), event, REQUISITION_INTERNAL_APPROVED);
     return event;
   }
 
-  public RequisitionInternalApprovedEvent getEvent(UUID requisitionId) {
+  public RequisitionInternalApproveEvent getEvent(UUID requisitionId) {
     log.info("get event of requisition internal approve, id = " + requisitionId);
     Requisition requisition = requisitionRepository.findOne(requisitionId);
     if (requisition == null) {
       throw new IllegalStateException("no requisition found, id = " + requisitionId);
     }
-    RequisitionInternalApprovedEvent event = new RequisitionInternalApprovedEvent();
+    RequisitionInternalApproveEvent event = new RequisitionInternalApproveEvent();
     event.setRequisition(requisition);
 
     RequisitionExtension requisitionExtension = requisitionExtensionRepository.findByRequisitionId(requisitionId);
@@ -94,12 +94,12 @@ public class RequisitionInternalApproveEmitter {
     return event;
   }
 
-  private String getGroupId(RequisitionInternalApprovedEvent event) {
+  private String getGroupId(RequisitionInternalApproveEvent event) {
     RequisitionExtension requisitionExtension = event.getRequisitionExtension();
     return requisitionExtension.getRealRequisitionNumber();
   }
 
-  private void buildRequisitionUsage(UUID id, RequisitionInternalApprovedEvent event) {
+  private void buildRequisitionUsage(UUID id, RequisitionInternalApproveEvent event) {
     event.setAgeGroupLineItemRequisitionUsage(ageGroupLineItemRepository.findByRequisitionId(id));
     event.setConsultationNumberLineItemRequisitionUsage(consultationNumberLineItemRepository.findByRequisitionId(id));
     event.setPatientLineItemRequisitionUsage(patientLineItemRepository.findByRequisitionId(id));

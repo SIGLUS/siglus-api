@@ -41,8 +41,8 @@ import org.siglus.siglusapi.dto.RequisitionGroupMembersDto;
 import org.siglus.siglusapi.localmachine.EventPayloadCheckUtils;
 import org.siglus.siglusapi.localmachine.EventPublisher;
 import org.siglus.siglusapi.localmachine.event.EventCommonService;
-import org.siglus.siglusapi.localmachine.event.requisition.web.approve.RequisitionInternalApproveEmitter;
-import org.siglus.siglusapi.localmachine.event.requisition.web.approve.RequisitionInternalApprovedEvent;
+import org.siglus.siglusapi.localmachine.event.requisition.web.internalapprove.RequisitionInternalApproveEmitter;
+import org.siglus.siglusapi.localmachine.event.requisition.web.internalapprove.RequisitionInternalApproveEvent;
 import org.siglus.siglusapi.repository.AgeGroupLineItemRepository;
 import org.siglus.siglusapi.repository.ConsultationNumberLineItemRepository;
 import org.siglus.siglusapi.repository.KitUsageLineItemRepository;
@@ -142,16 +142,16 @@ public class RequisitionInternalApproveEmitterTest {
   @Test
   public void shouldSerializeSuccessWhenEmit() {
     // when
-    RequisitionInternalApprovedEvent emitted = requisitionInternalApproveEmitter.emit(requisitionId);
+    RequisitionInternalApproveEvent emitted = requisitionInternalApproveEmitter.emit(requisitionId);
     int count = EventPayloadCheckUtils.checkEventSerializeChanges(emitted,
-        RequisitionInternalApprovedEvent.class);
+        RequisitionInternalApproveEvent.class);
     // then
     assertThat(count).isZero();
   }
 
   public void shouldGetNonNullEvent() {
     // when
-    RequisitionInternalApprovedEvent event = requisitionInternalApproveEmitter.getEvent(requisitionId);
+    RequisitionInternalApproveEvent event = requisitionInternalApproveEmitter.getEvent(requisitionId);
     // then
     assertThat(event).isNotNull();
   }

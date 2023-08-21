@@ -13,7 +13,7 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.localmachine.event.requisition.web.approve;
+package org.siglus.siglusapi.localmachine.event.requisition.web.internalapprove;
 
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toMap;
@@ -85,8 +85,8 @@ public class RequisitionInternalApproveReplayer {
   private final RequisitionCreateService requisitionCreateService;
   private final NotificationService notificationService;
 
-  @EventListener(classes = {RequisitionInternalApprovedEvent.class})
-  public void replay(RequisitionInternalApprovedEvent event) {
+  @EventListener(classes = {RequisitionInternalApproveEvent.class})
+  public void replay(RequisitionInternalApproveEvent event) {
     try {
       log.info("start replay requisitionId = " + event.getRequisition().getId());
       doReplay(event);
@@ -97,7 +97,7 @@ public class RequisitionInternalApproveReplayer {
     }
   }
 
-  public void doReplay(RequisitionInternalApprovedEvent event) {
+  public void doReplay(RequisitionInternalApproveEvent event) {
     // if this is a rejected requisition, then delete requisition before replaying
     deleteIfExistRequisition(event);
     Requisition newRequisition = RequisitionBuilder.newRequisition(event.getRequisition().getFacilityId(),
@@ -147,7 +147,7 @@ public class RequisitionInternalApproveReplayer {
     statusChanges.forEach(statusChange -> buildStatusChanges(requisition, statusChange));
   }
 
-  private void deleteIfExistRequisition(RequisitionInternalApprovedEvent event) {
+  private void deleteIfExistRequisition(RequisitionInternalApproveEvent event) {
     RequisitionExtension requisitionExtension = requisitionExtensionRepository.findByRequisitionNumber(
         event.getRequisitionExtension().getRealRequisitionNumber());
     if (requisitionExtension != null) {
@@ -174,7 +174,7 @@ public class RequisitionInternalApproveReplayer {
   }
 
   private void buildRequisitionUsageSections(Requisition requisition,
-      RequisitionInternalApprovedEvent event) {
+      RequisitionInternalApproveEvent event) {
     buildAgeGroupLineItem(requisition, event);
     buildConsultationNumberLineItem(requisition, event);
     buildPatientLineItem(requisition, event);
@@ -185,7 +185,7 @@ public class RequisitionInternalApproveReplayer {
     buildKitUsage(requisition, event);
   }
 
-  private void buildKitUsage(Requisition requisition, RequisitionInternalApprovedEvent event) {
+  private void buildKitUsage(Requisition requisition, RequisitionInternalApproveEvent event) {
     if (CollectionUtils.isEmpty(event.getKitUsageLineItemRequisitionUsage())) {
       return;
     }
@@ -199,7 +199,7 @@ public class RequisitionInternalApproveReplayer {
     kitUsageRepository.save(list);
   }
 
-  private void buildRegimenSummaryLineItem(Requisition requisition, RequisitionInternalApprovedEvent event) {
+  private void buildRegimenSummaryLineItem(Requisition requisition, RequisitionInternalApproveEvent event) {
     if (CollectionUtils.isEmpty(event.getRegimenSummaryLineItemRequisitionUsage())) {
       return;
     }
@@ -213,7 +213,7 @@ public class RequisitionInternalApproveReplayer {
     regimenSummaryLineItemRepository.save(list);
   }
 
-  private void buildRegimenLineItem(Requisition requisition, RequisitionInternalApprovedEvent event) {
+  private void buildRegimenLineItem(Requisition requisition, RequisitionInternalApproveEvent event) {
     if (CollectionUtils.isEmpty(event.getRegimenLineItemRequisitionUsage())) {
       return;
     }
@@ -228,7 +228,7 @@ public class RequisitionInternalApproveReplayer {
   }
 
   private void buildUsageInformationLineItem(Requisition requisition,
-      RequisitionInternalApprovedEvent event) {
+      RequisitionInternalApproveEvent event) {
     if (CollectionUtils.isEmpty(event.getUsageInformationLineItemRequisitionUsage())) {
       return;
     }
@@ -242,7 +242,7 @@ public class RequisitionInternalApproveReplayer {
     usageInformationLineItemRepository.save(list);
   }
 
-  private void buildTestConsumptionLineItem(Requisition requisition, RequisitionInternalApprovedEvent event) {
+  private void buildTestConsumptionLineItem(Requisition requisition, RequisitionInternalApproveEvent event) {
     if (CollectionUtils.isEmpty(event.getTestConsumptionLineItemRequisitionUsage())) {
       return;
     }
@@ -256,7 +256,7 @@ public class RequisitionInternalApproveReplayer {
     testConsumptionLineItemRepository.save(list);
   }
 
-  private void buildPatientLineItem(Requisition requisition, RequisitionInternalApprovedEvent event) {
+  private void buildPatientLineItem(Requisition requisition, RequisitionInternalApproveEvent event) {
     if (CollectionUtils.isEmpty(event.getPatientLineItemRequisitionUsage())) {
       return;
     }
@@ -271,7 +271,7 @@ public class RequisitionInternalApproveReplayer {
   }
 
   private void buildConsultationNumberLineItem(Requisition requisition,
-      RequisitionInternalApprovedEvent event) {
+      RequisitionInternalApproveEvent event) {
     if (CollectionUtils.isEmpty(event.getConsultationNumberLineItemRequisitionUsage())) {
       return;
     }
@@ -285,7 +285,7 @@ public class RequisitionInternalApproveReplayer {
     consultationNumberLineItemRepository.save(list);
   }
 
-  private void buildAgeGroupLineItem(Requisition requisition, RequisitionInternalApprovedEvent event) {
+  private void buildAgeGroupLineItem(Requisition requisition, RequisitionInternalApproveEvent event) {
     if (CollectionUtils.isEmpty(event.getAgeGroupLineItemRequisitionUsage())) {
       return;
     }
@@ -299,7 +299,7 @@ public class RequisitionInternalApproveReplayer {
     ageGroupLineItemRepository.save(list);
   }
 
-  private void buildRequisitionExtension(RequisitionInternalApprovedEvent event, Requisition requisition) {
+  private void buildRequisitionExtension(RequisitionInternalApproveEvent event, Requisition requisition) {
     RequisitionExtension requisitionExtension = new RequisitionExtension();
     requisitionExtension.setRequisitionId(requisition.getId());
     requisitionExtension.setRequisitionNumber(event.getRequisitionExtension().getRequisitionNumber());
