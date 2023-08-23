@@ -77,6 +77,10 @@ public class RequisitionFinalApproveReplayer {
         event.getRequisitionNumber());
     Requisition requisition = requisitionRepository.findOne(requisitionExtension.getRequisitionId());
 
+    if (requisition.getStatus().isApproved()) {
+      return;
+    }
+
     finalApprove(requisition, requisitionExtension, event);
 
     notificationService.postFinalApproval(event.getFinalApproveUserId(),

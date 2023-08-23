@@ -101,7 +101,8 @@ public class OnlineWebController {
   @GetMapping("/peeringEvents")
   public EventsResponse exportPeeringEvents(MachineToken machineToken) {
     List<ExternalEventDto> eventForReceiver =
-        eventStore.getEventsForReceiver(machineToken.getFacilityId()).stream()
+        onlineWebService.filterFinalApproveEventForOldVersion(
+        eventStore.getEventsForReceiver(machineToken.getFacilityId())).stream()
             .map(externalEventDtoMapper::map)
             .collect(Collectors.toList());
     return EventsResponse.builder()

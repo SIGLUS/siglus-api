@@ -15,6 +15,8 @@
 
 package org.siglus.siglusapi.localmachine.server;
 
+import static org.siglus.siglusapi.dto.enums.EventCategoryEnum.REQUISITION_FINAL_APPROVED;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -39,9 +41,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.maven.artifact.versioning.ComparableVersion;
+import org.openlmis.referencedata.domain.Facility;
+import org.openlmis.referencedata.repository.FacilityRepository;
+import org.siglus.siglusapi.domain.AppInfo;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.exception.FileOperationException;
 import org.siglus.siglusapi.exception.UnableGetLockException;
+import org.siglus.siglusapi.localmachine.Event;
 import org.siglus.siglusapi.localmachine.ShedLockFactory;
 import org.siglus.siglusapi.localmachine.ShedLockFactory.AutoClosableLock;
 import org.siglus.siglusapi.localmachine.eventstore.MasterDataEventRecord;
@@ -53,6 +60,7 @@ import org.siglus.siglusapi.localmachine.repository.MovementSql;
 import org.siglus.siglusapi.localmachine.repository.RequisitionOrderSql;
 import org.siglus.siglusapi.localmachine.repository.TableCopyRepository;
 import org.siglus.siglusapi.localmachine.webapi.ResyncMasterDataResponse;
+import org.siglus.siglusapi.repository.AppInfoRepository;
 import org.siglus.siglusapi.service.SiglusAdministrationsService;
 import org.siglus.siglusapi.util.FileUtil;
 import org.siglus.siglusapi.util.S3FileHandler;
@@ -66,10 +74,13 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 public class OnlineWebService {
 
+  static final String FINAL_APPROVE_VERSION = "2.0.11";
   private static final long ZERO = 0L;
   private final TableCopyRepository tableCopyRepository;
   private final MasterDataEventRecordRepository masterDataEventRecordRepository;
   private final MasterDataOffsetRepository masterDataOffsetRepository;
+  private final AppInfoRepository appInfoRepository;
+  private final FacilityRepository facilityRepository;
   private final S3FileHandler s3FileHandler;
   private final ShedLockFactory lockFactory;
   private final Map<String, String> tableNameToMasterSql = MasterDataSql.getMasterDataSqlMap();
@@ -170,6 +181,24 @@ public class OnlineWebService {
       log.error("facilityId {} delete directory fail,{}", homeFacilityId, e);
       throw new FileOperationException(e, new Message(homeFacilityId + " flush zip file to response fail"));
     }
+  }
+
+  public List<Event> filterFinalApproveEventForOldVersion(List<Event> events) {
+    if (org.apache.commons.collections.CollectionUtils.isNotEmpty(events)) {
+      UUID receiverId = events.get(0).getReceiverId();
+      Facility facility = facilityRepository.findOne(receiverId);
+      AppInfo appInfo = appInfoRepository.findByFacilityCode(facility.getCode());
+      ComparableVersion version = new ComparableVersion(appInfo.getVersionCode());
+      ComparableVersion finalApproveVersion = new ComparableVersion(FINAL_APPROVE_VERSION);
+      // filter final approve event when LM version < 2.0.11
+      if (version.compareTo(finalApproveVersion) < 0) {
+        return events
+            .stream()
+            .filter(event -> !REQUISITION_FINAL_APPROVED.name().equals(event.getCategory()))
+            .collect(Collectors.toList());
+      }
+    }
+    return events;
   }
 
   void deleteMasterDataSnapshots(List<MasterDataEventRecord> snapshotRecordsForDeletion) {
