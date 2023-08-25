@@ -16,6 +16,7 @@
 package org.siglus.siglusapi.dto.android;
 
 import java.util.UUID;
+
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
