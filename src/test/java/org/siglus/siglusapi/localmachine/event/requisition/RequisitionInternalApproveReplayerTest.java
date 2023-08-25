@@ -39,8 +39,8 @@ import org.openlmis.requisition.service.RequisitionService;
 import org.siglus.siglusapi.domain.RequisitionExtension;
 import org.siglus.siglusapi.localmachine.EventPublisher;
 import org.siglus.siglusapi.localmachine.event.NotificationService;
-import org.siglus.siglusapi.localmachine.event.requisition.web.internalapprove.RequisitionInternalApproveReplayer;
-import org.siglus.siglusapi.localmachine.event.requisition.web.internalapprove.RequisitionInternalApproveEvent;
+import org.siglus.siglusapi.localmachine.event.requisition.web.approve.RequisitionInternalApproveReplayer;
+import org.siglus.siglusapi.localmachine.event.requisition.web.approve.RequisitionInternalApprovedEvent;
 import org.siglus.siglusapi.repository.AgeGroupLineItemRepository;
 import org.siglus.siglusapi.repository.ConsultationNumberLineItemRepository;
 import org.siglus.siglusapi.repository.KitUsageLineItemRepository;
@@ -105,7 +105,7 @@ public class RequisitionInternalApproveReplayerTest {
   @Test
   public void shouldDoReplaySuccess() {
     // given
-    final RequisitionInternalApproveEvent event = new RequisitionInternalApproveEvent();
+    final RequisitionInternalApprovedEvent event = new RequisitionInternalApprovedEvent();
     final List<RequisitionLineItem> lineItems = new ArrayList<>();
     final RequisitionLineItem lineItem1 = new RequisitionLineItem();
     lineItem1.setId(UUID.randomUUID());
