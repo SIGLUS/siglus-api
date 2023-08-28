@@ -54,6 +54,15 @@ public class EventPublisher {
     doEmit(event);
   }
 
+  public void emitGroupEventForConvertToOrderEvent(
+      String groupId, UUID receiverId, Object payload, EventCategoryEnum category) {
+    Optional<UUID> lastEventIdInGroup = eventStore.getLastNoFinalApproveEventIdInGroup(groupId);
+    UUID parentId = lastEventIdInGroup.orElse(null);
+    Event.EventBuilder eventBuilder = baseEventBuilder(groupId, parentId, receiverId, payload, category);
+    Event event = eventBuilder.build();
+    doEmit(event);
+  }
+
   public void emitNonGroupEvent(Object payload, EventCategoryEnum category) {
     Event.EventBuilder eventBuilder = baseEventBuilder(null, null, null, payload, category);
     Event event = eventBuilder.build();

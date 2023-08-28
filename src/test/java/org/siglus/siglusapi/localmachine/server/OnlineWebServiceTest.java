@@ -26,6 +26,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.siglus.siglusapi.dto.enums.EventCategoryEnum.REQUISITION_FINAL_APPROVED;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -48,6 +49,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.internal.verification.VerificationModeFactory;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.openlmis.referencedata.domain.Facility;
+import org.openlmis.referencedata.repository.FacilityRepository;
+import org.siglus.siglusapi.domain.AppInfo;
+import org.siglus.siglusapi.localmachine.Event;
 import org.siglus.siglusapi.localmachine.ShedLockFactory;
 import org.siglus.siglusapi.localmachine.ShedLockFactory.AutoClosableLock;
 import org.siglus.siglusapi.localmachine.eventstore.MasterDataEventRecord;
@@ -59,6 +64,7 @@ import org.siglus.siglusapi.localmachine.repository.MovementSql;
 import org.siglus.siglusapi.localmachine.repository.RequisitionOrderSql;
 import org.siglus.siglusapi.localmachine.repository.TableCopyRepository;
 import org.siglus.siglusapi.localmachine.webapi.ResyncMasterDataResponse;
+import org.siglus.siglusapi.repository.AppInfoRepository;
 import org.siglus.siglusapi.service.SiglusAdministrationsService;
 import org.siglus.siglusapi.util.S3FileHandler;
 import org.springframework.mock.web.MockHttpServletResponse;
@@ -85,10 +91,17 @@ public class OnlineWebServiceTest {
   @Mock
   private SiglusAdministrationsService administrationsService;
 
+  @Mock
+  private AppInfoRepository appInfoRepository;
+
+  @Mock
+  private FacilityRepository facilityRepository;
+
   @InjectMocks
   private OnlineWebService onlineWebService;
 
   private static final UUID facilityId = UUID.randomUUID();
+  private static final String facilityCode = "01100206";
 
   @Test
   public void shouldReturnMinOneOfSnapshotIdOrMinimumOffsetWhenGetMinimumOffset() {
@@ -194,6 +207,71 @@ public class OnlineWebServiceTest {
         .copyMasterDateToFile(any(), eq(MasterDataSql.getMasterDataSqlMap()), eq(null));
     verify(masterDataEventRecordRepository, times(1)).save(any(MasterDataEventRecord.class));
     verify(masterDataOffsetRepository, times(1)).save(any(MasterDataOffset.class));
+  }
+
+  @Test
+  public void shouldReturnFinalApproveEventWhenVersionIsEqual2011() {
+    // given
+    Event e = Event.builder().category(REQUISITION_FINAL_APPROVED.name()).receiverId(facilityId).build();
+    when(facilityRepository.findOne(facilityId)).thenReturn(mockFacility());
+    when(appInfoRepository.findByFacilityCode(facilityCode)).thenReturn(mockAppInfo("2.0.11"));
+    // when
+    List<Event> results = onlineWebService.filterFinalApproveEventForOldVersion(Arrays.asList(e));
+
+    // then
+    assertEquals(results.size(), 1);
+  }
+
+  @Test
+  public void shouldReturnFinalApproveEventWhenVersionIsAfter2011() {
+    // given
+    Event e = Event.builder().category(REQUISITION_FINAL_APPROVED.name()).receiverId(facilityId).build();
+    when(facilityRepository.findOne(facilityId)).thenReturn(mockFacility());
+    when(appInfoRepository.findByFacilityCode(facilityCode)).thenReturn(mockAppInfo("2.0.12"));
+    // when
+    List<Event> results = onlineWebService.filterFinalApproveEventForOldVersion(Arrays.asList(e));
+
+    // then
+    assertEquals(results.size(), 1);
+  }
+
+  @Test
+  public void shouldReturnFinalApproveEventWhenVersionIs210() {
+    // given
+    Event e = Event.builder().category(REQUISITION_FINAL_APPROVED.name()).receiverId(facilityId).build();
+    when(facilityRepository.findOne(facilityId)).thenReturn(mockFacility());
+    when(appInfoRepository.findByFacilityCode(facilityCode)).thenReturn(mockAppInfo("2.1.0"));
+    // when
+    List<Event> results = onlineWebService.filterFinalApproveEventForOldVersion(Arrays.asList(e));
+
+    // then
+    assertEquals(results.size(), 1);
+  }
+
+  @Test
+  public void shouldNotReturnFinalApproveEventWhenVersionIsBefore2011() {
+    // given
+    Event e = Event.builder().category(REQUISITION_FINAL_APPROVED.name()).receiverId(facilityId).build();
+    when(facilityRepository.findOne(facilityId)).thenReturn(mockFacility());
+    when(appInfoRepository.findByFacilityCode(facilityCode)).thenReturn(mockAppInfo("2.0.6"));
+    // when
+    List<Event> results = onlineWebService.filterFinalApproveEventForOldVersion(Arrays.asList(e));
+
+    // then
+    assertEquals(results.size(), 0);
+  }
+
+  private Facility mockFacility() {
+    Facility facility = new Facility();
+    facility.setCode(facilityCode);
+    return facility;
+  }
+
+  private AppInfo mockAppInfo(String version) {
+    return AppInfo.builder()
+        .facilityCode(facilityCode)
+        .versionCode(version)
+        .build();
   }
 
   private void writeDataToFile(File file) throws IOException {

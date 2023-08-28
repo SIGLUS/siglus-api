@@ -83,4 +83,9 @@ public interface EventRecordRepository extends JpaRepository<EventRecord, UUID>,
   @Query(value = "select cast(id as varchar) as id from localmachine.events "
       + " where groupid=:groupId order by syncedtime desc limit 1", nativeQuery = true)
   Optional<String> findLastEventIdGroupId(@Param("groupId") String groupId);
+
+  @Query(value = "select cast(id as varchar) as id from localmachine.events "
+      + " where category != 'REQUISITION_FINAL_APPROVED' and groupid=:groupId order by syncedtime desc limit 1",
+      nativeQuery = true)
+  Optional<String> findLastNoFinalApproveEventIdGroupId(@Param("groupId") String groupId);
 }

@@ -54,7 +54,9 @@ public class RequisitionConvertToOrderEmitter {
 
   public RequisitionConvertToOrderEvent emit(ReleasableRequisitionDto releasableRequisitionDto, UUID authorId) {
     RequisitionConvertToOrderEvent event = getConvertToOrderEvent(releasableRequisitionDto, authorId);
-    eventPublisher.emitGroupEvent(eventCommonService.getGroupId(releasableRequisitionDto.getRequisitionId()),
+    // ignore final approve event
+    eventPublisher.emitGroupEventForConvertToOrderEvent(
+        eventCommonService.getGroupId(releasableRequisitionDto.getRequisitionId()),
         getReceiverId(releasableRequisitionDto.getRequisitionId()), event, REQUISITION_CONVERT_TO_ORDER);
 
     return event;

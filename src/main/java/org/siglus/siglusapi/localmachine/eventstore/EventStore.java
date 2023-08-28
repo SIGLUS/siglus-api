@@ -260,6 +260,10 @@ public class EventStore {
     return repository.findLastEventIdGroupId(groupId).map(UUID::fromString);
   }
 
+  public Optional<UUID> getLastNoFinalApproveEventIdInGroup(String groupId) {
+    return repository.findLastNoFinalApproveEventIdGroupId(groupId).map(UUID::fromString);
+  }
+
   boolean filterMasterDataEventRecord(MasterDataEventRecord eventRecord, UUID facilityId) {
     boolean isSharedIncrementalRecord =
         eventRecord.getFacilityId() == null && eventRecord.getSnapshotVersion() == null;
