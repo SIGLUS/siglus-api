@@ -18,9 +18,16 @@ package org.siglus.siglusapi.repository;
 import java.util.UUID;
 import org.siglus.siglusapi.domain.StockCardRequestBackup;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
 
 public interface StockCardRequestBackupRepository extends JpaRepository<StockCardRequestBackup, UUID> {
 
   StockCardRequestBackup findOneByHash(String hash);
 
+  @Modifying
+  @Query(value = "delete from siglusintegration.stock_card_request_backup "
+      + "where createddate < (now() - interval '1 month')",
+      nativeQuery = true)
+  void clearStockCardRequestBackupOneMonthBefore();
 }

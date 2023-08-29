@@ -17,7 +17,14 @@ package org.siglus.siglusapi.localmachine.eventstore.backup;
 
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
 
 public interface EventPayloadBackupRepository extends JpaRepository<EventPayloadBackup, UUID> {
 
+  @Modifying
+  @Query(value = "delete from localmachine.event_payload_backup "
+      + "where eventid in (select id from localmachine.events e where e.occurredtime < (now() - interval '1 month'));",
+      nativeQuery = true)
+  void clearEventPayloadBackupOneMonthBefore();
 }
