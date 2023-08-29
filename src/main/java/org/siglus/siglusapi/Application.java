@@ -17,14 +17,20 @@ package org.siglus.siglusapi;
 
 import static net.javacrumbs.shedlock.spring.annotation.EnableSchedulerLock.InterceptMode.PROXY_SCHEDULER;
 
-import com.google.gson.internal.bind.TypeAdapters;
 import java.lang.reflect.Field;
+import java.lang.reflect.Type;
 import java.time.Clock;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.Collection;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.stream.Stream;
 import javax.annotation.PostConstruct;
 import javax.validation.Validator;
 import javax.validation.executable.ExecutableValidator;
@@ -35,16 +41,20 @@ import org.apache.camel.ProducerTemplate;
 import org.apache.camel.impl.DefaultCamelContext;
 import org.apache.commons.lang3.reflect.FieldUtils;
 import org.hibernate.validator.messageinterpolation.ResourceBundleMessageInterpolator;
+import org.javers.core.Changes;
 import org.javers.core.Javers;
-import org.javers.core.MappingStyle;
-import org.javers.core.diff.ListCompareAlgorithm;
-import org.javers.hibernate.integration.HibernateUnproxyObjectAccessHook;
-import org.javers.repository.sql.ConnectionProvider;
-import org.javers.repository.sql.DialectName;
-import org.javers.repository.sql.JaversSqlRepository;
-import org.javers.repository.sql.SqlRepositoryBuilder;
-import org.javers.spring.boot.sql.JaversSqlProperties;
-import org.javers.spring.jpa.TransactionalJaversBuilder;
+import org.javers.core.changelog.ChangeProcessor;
+import org.javers.core.commit.Commit;
+import org.javers.core.diff.Change;
+import org.javers.core.diff.Diff;
+import org.javers.core.diff.changetype.PropertyChange;
+import org.javers.core.json.JsonConverter;
+import org.javers.core.metamodel.object.CdoSnapshot;
+import org.javers.core.metamodel.property.Property;
+import org.javers.core.metamodel.type.JaversType;
+import org.javers.repository.jql.GlobalIdDTO;
+import org.javers.repository.jql.JqlQuery;
+import org.javers.shadow.Shadow;
 import org.openlmis.referencedata.validate.ProcessingPeriodValidator;
 import org.openlmis.referencedata.validate.RequisitionGroupValidator;
 import org.openlmis.referencedata.web.csv.processor.FormatCommodityType;
@@ -55,7 +65,6 @@ import org.siglus.siglusapi.config.CustomBeanNameGenerator;
 import org.siglus.siglusapi.i18n.ExposedMessageSourceImpl;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.validator.SiglusMessageInterpolator;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.BeanDefinition;
@@ -81,7 +90,6 @@ import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.retry.annotation.EnableRetry;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
-import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 import org.springframework.validation.beanvalidation.MessageSourceResourceBundleLocator;
 import org.springframework.web.client.RestTemplate;
@@ -98,7 +106,7 @@ import org.springframework.web.servlet.i18n.CookieLocaleResolver;
 @EnableAspectJAutoProxy
 @EnableScheduling
 @EnableRetry
-@SuppressWarnings({"PMD.TooManyMethods"})
+@SuppressWarnings({"PMD.TooManyMethods", "PMD.CyclomaticComplexity"})
 // Don't change the interceptMode, since it's not compatible with current version of spring-aop
 @EnableSchedulerLock(defaultLockAtMostFor = "PT5M", interceptMode = PROXY_SCHEDULER)
 public class Application {
@@ -116,15 +124,6 @@ public class Application {
 
   @Value("${defaultLocale}")
   private Locale locale;
-
-  @Autowired
-  private DialectName dialectName;
-
-  @Autowired
-  private JaversSqlProperties javersProperties;
-
-  @Value("${spring.jpa.properties.hibernate.default_schema}")
-  private String preferredSchema;
 
   @Value("${time.zoneId}")
   private String timeZoneId;
@@ -202,30 +201,104 @@ public class Application {
   }
 
   @Bean
-  public Javers javersProvider(ConnectionProvider connectionProvider,
-      PlatformTransactionManager transactionManager) {
-    JaversSqlRepository sqlRepository = SqlRepositoryBuilder
-        .sqlRepository()
-        .withConnectionProvider(connectionProvider)
-        .withDialect(dialectName)
-        .withSchema(preferredSchema)
-        .build();
-    return TransactionalJaversBuilder
-        .javers()
-        .withTxManager(transactionManager)
-        .registerJaversRepository(sqlRepository)
-        .withObjectAccessHook(new HibernateUnproxyObjectAccessHook())
-        .withListCompareAlgorithm(ListCompareAlgorithm.valueOf(javersProperties.getAlgorithm().toUpperCase()))
-        .withMappingStyle(MappingStyle.valueOf(javersProperties.getMappingStyle().toUpperCase()))
-        .withNewObjectsSnapshot(javersProperties.isNewObjectSnapshot())
-        .withPrettyPrint(javersProperties.isPrettyPrint())
-        .withTypeSafeValues(javersProperties.isTypeSafeValues())
-        .withPackagesToScan(javersProperties.getPackagesToScan())
-        .registerValueGsonTypeAdapter(double.class, TypeAdapters.DOUBLE)
-        .registerValueGsonTypeAdapter(Double.class, TypeAdapters.DOUBLE)
-        .registerValueGsonTypeAdapter(float.class, TypeAdapters.FLOAT)
-        .registerValueGsonTypeAdapter(Float.class, TypeAdapters.FLOAT)
-        .build();
+  public Javers javersProvider() {
+    // return Dummy Javers, not write any data to DB
+    return new Javers() {
+      @Override
+      public Commit commit(String author, Object currentVersion) {
+        return null;
+      }
+
+      @Override
+      public Commit commit(String author, Object currentVersion, Map<String, String> commitProperties) {
+        return null;
+      }
+
+      @Override
+      public Commit commitShallowDelete(String author, Object deleted) {
+        return null;
+      }
+
+      @Override
+      public Commit commitShallowDelete(String author, Object deleted, Map<String, String> commitProperties) {
+        return null;
+      }
+
+      @Override
+      public Commit commitShallowDeleteById(String author, GlobalIdDTO globalId) {
+        return null;
+      }
+
+      @Override
+      public Commit commitShallowDeleteById(String author, GlobalIdDTO globalId, Map<String, String> commitProperties) {
+        return null;
+      }
+
+      @Override
+      public Diff compare(Object oldVersion, Object currentVersion) {
+        return null;
+      }
+
+      @Override
+      public <T> Diff compareCollections(Collection<T> oldVersion, Collection<T> currentVersion, Class<T> itemClass) {
+        return null;
+      }
+
+      @Override
+      public Diff initial(Object newDomainObject) {
+        return null;
+      }
+
+      @Override
+      public <T> List<Shadow<T>> findShadows(JqlQuery query) {
+        return null;
+      }
+
+      @Override
+      public <T> Stream<Shadow<T>> findShadowsAndStream(JqlQuery query) {
+        return null;
+      }
+
+      @Override
+      public Changes findChanges(JqlQuery query) {
+        return null;
+      }
+
+      @Override
+      public List<CdoSnapshot> findSnapshots(JqlQuery query) {
+        return null;
+      }
+
+      @Override
+      public Optional<CdoSnapshot> getLatestSnapshot(Object localId, Class entity) {
+        return Optional.empty();
+      }
+
+      @Override
+      public Optional<CdoSnapshot> getHistoricalSnapshot(Object localId, Class entity, LocalDateTime effectiveDate) {
+        return Optional.empty();
+      }
+
+      @Override
+      public JsonConverter getJsonConverter() {
+        return null;
+      }
+
+      @Override
+      public <T> T processChangeList(List<Change> changes, ChangeProcessor<T> changeProcessor) {
+        return null;
+      }
+
+      @Override
+      public <T extends JaversType> T getTypeMapping(Type userType) {
+        return null;
+      }
+
+      @Override
+      public Property getProperty(PropertyChange propertyChange) {
+        return null;
+      }
+    };
   }
 
   @Bean
