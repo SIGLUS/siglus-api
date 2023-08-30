@@ -22,6 +22,7 @@ import org.siglus.siglusapi.localmachine.eventstore.backup.EventPayloadBackupRep
 import org.siglus.siglusapi.repository.StockCardRequestBackupRepository;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @RequiredArgsConstructor
 @Service
@@ -34,6 +35,7 @@ public class ClearBackupDataTask {
 
   @Scheduled(cron = "${clear.backup.data.cron}", zone = "${time.zoneId}")
   @SchedulerLock(name = "clear_backup_data_task")
+  @Transactional
   public void clear() {
     log.info("clear EventPayloadBackup data 1 month before");
     eventPayloadBackupRepository.clearEventPayloadBackupOneMonthBefore();
