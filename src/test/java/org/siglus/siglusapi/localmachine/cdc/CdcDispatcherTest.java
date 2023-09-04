@@ -30,11 +30,12 @@ public class CdcDispatcherTest {
   @Test
   public void shouldDispatchRecordsToListenerWhenDispatchAll() {
     // given
+    CdcRecordRepository cdcRecordRepository = mock(CdcRecordRepository.class);
     CdcRecord cdcRecord = CdcRecord.builder().id(1L).schema("schema").table("table1").build();
     List<CdcRecord> cdcRecords = Collections.singletonList(cdcRecord);
     CdcListener cdcListener = mock(CdcListener.class);
     given(cdcListener.acceptedTables()).willReturn(new String[] {"schema.table1", "schema.table2"});
-    CdcDispatcher cdcDispatcher = new CdcDispatcher(Collections.singletonList(cdcListener));
+    CdcDispatcher cdcDispatcher = new CdcDispatcher(Collections.singletonList(cdcListener), cdcRecordRepository);
     // when
     cdcDispatcher.doDispatch(cdcRecords);
     // then

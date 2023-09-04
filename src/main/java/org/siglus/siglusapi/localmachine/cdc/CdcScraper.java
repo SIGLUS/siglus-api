@@ -41,6 +41,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import lombok.SneakyThrows;
@@ -48,6 +49,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.connect.data.Field;
 import org.apache.kafka.connect.data.Struct;
 import org.apache.kafka.connect.source.SourceRecord;
+import org.siglus.siglusapi.localmachine.Machine;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -57,9 +59,14 @@ import org.springframework.transaction.annotation.Transactional;
 @SuppressWarnings("PMD.UnusedPrivateField")
 public class CdcScraper {
 
+  static final long DUMMY_TX_ID = -1;
   private static final int DISPATCH_BUFFER_CAPACITY = 10240;
+  private final AtomicLong currentTxId = new AtomicLong(DUMMY_TX_ID);
+  private final Machine machine;
+  private final CdcRecordRepository cdcRecordRepository;
   final LinkedList<CdcRecord> dispatchBuffer = new LinkedList<>();
-  final BlockingDeque<CdcRecord> dispatchQueue = new LinkedBlockingDeque<>(DISPATCH_BUFFER_CAPACITY);
+  final BlockingDeque<CdcRecord> dispatchQueueForOnlineWeb = new LinkedBlockingDeque<>(DISPATCH_BUFFER_CAPACITY);
+  final BlockingDeque<Long> dispatchQueueForLocalMachine = new LinkedBlockingDeque<>();
   private final ExecutorService executor = Executors.newSingleThreadExecutor();
   private final ExecutorService dispatchExecutor = Executors.newSingleThreadExecutor();
   private final CdcDispatcher cdcDispatcher;
@@ -71,10 +78,14 @@ public class CdcScraper {
   private final OffsetBackingStoreWrapper offsetBackingStoreWrapper;
 
   public CdcScraper(
+      Machine machine,
+      CdcRecordRepository cdcRecordRepository,
       CdcDispatcher cdcDispatcher,
       ConfigBuilder baseConfig,
       PublicationPreparer publicationPreparer,
       OffsetBackingStoreWrapper offsetBackingStoreWrapper) {
+    this.machine = machine;
+    this.cdcRecordRepository = cdcRecordRepository;
     this.cdcDispatcher = cdcDispatcher;
     this.baseConfig = baseConfig;
     this.offsetBackingStoreWrapper = offsetBackingStoreWrapper;
@@ -97,7 +108,20 @@ public class CdcScraper {
     Map<String, Object> payload = extractPayload(sourceRecordChangeValue, operation);
     CdcRecord cdcRecord = buildCdcRecord(sourceRecord, operation, payload);
     log.info("receive cdc record: {}, payload: {} operation: {}", sourceRecord, payload, operation.name());
-    dispatchQueue.put(cdcRecord);
+    if (machine.isOnlineWeb()) {
+      dispatchQueueForOnlineWeb.put(cdcRecord);
+    } else {
+      cdcRecordRepository.save(cdcRecord);
+      mayNeedToDispatch(cdcRecord.getTxId());
+    }
+  }
+
+  void mayNeedToDispatch(Long txId) throws InterruptedException {
+    long previousTxId = currentTxId.getAndSet(txId);
+    boolean previousTxEnded = previousTxId != txId;
+    if (previousTxEnded) {
+      dispatchQueueForLocalMachine.put(previousTxId);
+    }
   }
 
   private Map<String, Object> extractPayload(Struct sourceRecordChangeValue, Operation operation) {
@@ -164,7 +188,11 @@ public class CdcScraper {
             .notifying(this::handleChangeEvent)
             .build();
     this.executor.execute(debeziumEngine);
-    this.dispatchExecutor.execute(this::dispatching);
+    if (machine.isOnlineWeb()) {
+      this.dispatchExecutor.execute(this::dispatchingForOnlineWeb);
+    } else {
+      this.dispatchExecutor.execute(this::dispatchingForLocalMachine);
+    }
   }
 
   @PreDestroy
@@ -182,14 +210,14 @@ public class CdcScraper {
     }
   }
 
-  private void dispatching() {
+  private void dispatchingForOnlineWeb() {
     while (true) {
       try {
-        CdcRecord currenRecord = dispatchQueue.poll(30, TimeUnit.SECONDS);
+        CdcRecord currenRecord = dispatchQueueForOnlineWeb.poll(30, TimeUnit.SECONDS);
         doDispatch(currenRecord);
       } catch (InterruptedException e) {
         log.warn("dispatching task interrupted, continue to flush buff");
-        doDispatch(null);
+        doDispatch((CdcRecord) null);
         Thread.currentThread().interrupt();
         return;
       } catch (Throwable e) {
@@ -197,6 +225,23 @@ public class CdcScraper {
       }
     }
   }
+
+  private void dispatchingForLocalMachine() {
+    while (true) {
+      try {
+        Long txId = dispatchQueueForLocalMachine.poll(1, TimeUnit.MINUTES);
+        doDispatch(txId);
+      } catch (InterruptedException e) {
+        log.warn("dispatching task interrupted, continue to flush buff");
+        doDispatch((Long) null);
+        Thread.currentThread().interrupt();
+        return;
+      } catch (Throwable e) {
+        log.error("got error when dispatching, err:", e);
+      }
+    }
+  }
+
 
   @VisibleForTesting
   void doDispatch(CdcRecord current) {
@@ -218,4 +263,20 @@ public class CdcScraper {
     }
     dispatchBuffer.addLast(current);
   }
+
+  @VisibleForTesting
+  void doDispatch(Long txId) {
+    if (Objects.isNull(txId)) {
+      // timeout
+      cdcDispatcher.dispatchAll();
+      return;
+    }
+    if (DUMMY_TX_ID == txId) {
+      cdcDispatcher.dispatchAll();
+      return;
+    }
+    cdcDispatcher.dispatchByTxId(txId);
+  }
+
+
 }

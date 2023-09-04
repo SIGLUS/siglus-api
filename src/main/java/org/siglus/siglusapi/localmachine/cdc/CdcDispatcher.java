@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.localmachine.cdc;
 
+import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -25,14 +26,17 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Component
 public class CdcDispatcher {
 
   private final Map<String, List<CdcListener>> tableIdToListeners = new LinkedHashMap<>();
+  private final CdcRecordRepository cdcRecordRepository;
 
-  public CdcDispatcher(List<CdcListener> cdcListeners) {
+  public CdcDispatcher(List<CdcListener> cdcListeners, CdcRecordRepository cdcRecordRepository) {
+    this.cdcRecordRepository = cdcRecordRepository;
     cdcListeners.forEach(
         it ->
             Arrays.stream(it.acceptedTables())
@@ -63,5 +67,32 @@ public class CdcDispatcher {
                 cdcListener.on(value);
               }
             });
+  }
+
+  @Transactional
+  public synchronized void dispatchByTxId(Long txId) {
+    // todo: get distribute lock to dispatch
+    List<CdcRecord> cdcRecords = cdcRecordRepository.findCdcRecordByTxIdOrderById(txId);
+    cdcRecords.stream()
+            .collect(Collectors.groupingBy(CdcRecord::tableId, LinkedHashMap::new, Collectors.toList()))
+            .forEach(
+                (key, value) -> {
+                    List<CdcListener> listeners =
+                        tableIdToListeners.getOrDefault(key, Collections.emptyList());
+                    if (listeners.isEmpty()) {
+                      log.warn("no listeners for table id: {}", key);
+                    }
+                    for (CdcListener cdcListener : listeners) {
+                      cdcListener.on(value);
+                    }
+                    cdcRecordRepository.deleteInBatch(value);
+                });
+  }
+
+  @Transactional
+  public void dispatchAll() {
+    cdcRecordRepository.allTxIds().stream()
+        .map(BigInteger::longValue)
+        .forEach(this::dispatchByTxId);
   }
 }

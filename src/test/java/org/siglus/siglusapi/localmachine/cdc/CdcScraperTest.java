@@ -23,6 +23,7 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import com.google.common.collect.ImmutableMap;
 import io.debezium.data.Envelope.FieldName;
@@ -44,6 +45,7 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.siglus.siglusapi.localmachine.Machine;
 
 @RunWith(MockitoJUnitRunner.class)
 @SuppressWarnings({"PMD.AvoidDuplicateLiterals"})
@@ -55,15 +57,18 @@ public class CdcScraperTest {
   private ConfigBuilder configBuilder;
   @Mock
   private PublicationPreparer publicationPreparer;
+  @Mock
+  public Machine machine;
   @InjectMocks
   private CdcScraper cdcScraper;
 
   @Before
   public void setup() {
+    when(machine.isOnlineWeb()).thenReturn(true);
     given(configBuilder.sinkConfig()).willCallRealMethod();
     doNothing().when(publicationPreparer).prepare(any());
     doNothing().when(cdcDispatcher).doDispatch(any());
-    cdcScraper.dispatchQueue.clear();
+    cdcScraper.dispatchQueueForOnlineWeb.clear();
     cdcScraper.dispatchBuffer.clear();
   }
 
@@ -102,7 +107,7 @@ public class CdcScraperTest {
     // when
     cdcScraper.handleChangeEvent(changeEvent);
     // then
-    assertThat(cdcScraper.dispatchQueue.isEmpty()).isTrue();
+    assertThat(cdcScraper.dispatchQueueForOnlineWeb.isEmpty()).isTrue();
   }
 
   @Test
@@ -112,7 +117,7 @@ public class CdcScraperTest {
     // when
     cdcScraper.handleChangeEvent(changeEvent);
     // then
-    assertThat(cdcScraper.dispatchQueue.isEmpty()).isTrue();
+    assertThat(cdcScraper.dispatchQueueForOnlineWeb.isEmpty()).isTrue();
   }
 
   @Test
@@ -122,7 +127,7 @@ public class CdcScraperTest {
     // when
     cdcScraper.handleChangeEvent(changeEvent);
     // then
-    CdcRecord cdcRecord = cdcScraper.dispatchQueue.peekLast();
+    CdcRecord cdcRecord = cdcScraper.dispatchQueueForOnlineWeb.peekLast();
     assertThat(cdcRecord).isNotNull();
     assertThat(cdcRecord.getPayload()).isNotEmpty();
     assertThat(cdcRecord.getPayload()).containsEntry("name", "name value");
@@ -155,7 +160,7 @@ public class CdcScraperTest {
     // given
     cdcScraper.dispatchBuffer.clear();
     // when
-    cdcScraper.doDispatch(null);
+    cdcScraper.doDispatch((CdcRecord) null);
     // then
     verify(cdcDispatcher, times(0)).doDispatch(anyListOf(CdcRecord.class));
   }
@@ -166,7 +171,7 @@ public class CdcScraperTest {
     long txId = 1L;
     cdcScraper.dispatchBuffer.add(CdcRecord.builder().txId(txId).build());
     // when
-    cdcScraper.doDispatch(null);
+    cdcScraper.doDispatch((CdcRecord) null);
     // then
     verify(cdcDispatcher, times(1)).doDispatch(anyListOf(CdcRecord.class));
   }
