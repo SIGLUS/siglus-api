@@ -80,7 +80,7 @@ public class CdcDispatcher {
                   cdcListener.on(records);
                 }
                 cdcRecordRepository.deleteInBatch(records);
-        });
+            });
   }
 
   @Transactional

@@ -30,8 +30,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.siglus.siglusapi.localmachine.EventBackupDeleteTask;
-import org.siglus.siglusapi.scheduledtask.EventBackupTask;
 import org.siglus.siglusapi.localmachine.eventstore.backup.EventPayloadBackupRepository;
+import org.siglus.siglusapi.scheduledtask.EventBackupTask;
 
 @RunWith(MockitoJUnitRunner.class)
 @SuppressWarnings({"PMD.UnusedPrivateField"})

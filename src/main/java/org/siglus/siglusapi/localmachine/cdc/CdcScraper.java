@@ -242,7 +242,6 @@ public class CdcScraper {
     }
   }
 
-
   @VisibleForTesting
   void doDispatch(CdcRecord current) {
     boolean timeoutOccurs = Objects.isNull(current);

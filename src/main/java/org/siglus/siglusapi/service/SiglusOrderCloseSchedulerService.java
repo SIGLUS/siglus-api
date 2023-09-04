@@ -126,8 +126,8 @@ public class SiglusOrderCloseSchedulerService {
     return currentPeriodIdToExtension;
   }
 
-
-  private ProcessingPeriodDto getProcessingPeriod(List<ProcessingPeriodDto> periodDtos, ProcessingPeriodDto nextPeriod) {
+  private ProcessingPeriodDto getProcessingPeriod(List<ProcessingPeriodDto> periodDtos,
+      ProcessingPeriodDto nextPeriod) {
     List<ProcessingPeriodDto> currentPeriods = periodDtos.stream()
         .filter(periodDto ->
             periodDto.getProcessingSchedule().getId().equals(nextPeriod.getProcessingSchedule().getId())
