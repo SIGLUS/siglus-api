@@ -267,7 +267,7 @@ public class CdcScraper {
   @VisibleForTesting
   void doDispatch(Long txId) {
     if (Objects.isNull(txId)) {
-      // timeout
+      // shutdown local machine
       cdcDispatcher.dispatchAll();
       return;
     }

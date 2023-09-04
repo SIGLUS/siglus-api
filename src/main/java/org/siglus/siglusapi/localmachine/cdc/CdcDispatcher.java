@@ -38,15 +38,12 @@ public class CdcDispatcher {
   public CdcDispatcher(List<CdcListener> cdcListeners, CdcRecordRepository cdcRecordRepository) {
     this.cdcRecordRepository = cdcRecordRepository;
     cdcListeners.forEach(
-        it ->
-            Arrays.stream(it.acceptedTables())
-                .forEach(
-                    tableId -> {
-                      List<CdcListener> listeners =
-                          tableIdToListeners.getOrDefault(tableId, new LinkedList<>());
-                      listeners.add(it);
-                      tableIdToListeners.put(tableId, listeners);
-                    }));
+        it -> Arrays.stream(it.acceptedTables()).forEach(
+            tableId -> {
+              List<CdcListener> listeners = tableIdToListeners.getOrDefault(tableId, new LinkedList<>());
+              listeners.add(it);
+              tableIdToListeners.put(tableId, listeners);
+            }));
   }
 
   public Set<String> getTablesForCapture() {
@@ -57,36 +54,33 @@ public class CdcDispatcher {
     cdcRecords.stream()
         .collect(Collectors.groupingBy(CdcRecord::tableId, LinkedHashMap::new, Collectors.toList()))
         .forEach(
-            (key, value) -> {
-              List<CdcListener> listeners =
-                  tableIdToListeners.getOrDefault(key, Collections.emptyList());
+            (tableId, records) -> {
+              List<CdcListener> listeners = tableIdToListeners.getOrDefault(tableId, Collections.emptyList());
               if (listeners.isEmpty()) {
-                log.warn("no listeners for table id: {}", key);
+                log.warn("no listeners for table id: {}", tableId);
               }
               for (CdcListener cdcListener : listeners) {
-                cdcListener.on(value);
+                cdcListener.on(records);
               }
             });
   }
 
   @Transactional
   public synchronized void dispatchByTxId(Long txId) {
-    // todo: get distribute lock to dispatch
     List<CdcRecord> cdcRecords = cdcRecordRepository.findCdcRecordByTxIdOrderById(txId);
     cdcRecords.stream()
-            .collect(Collectors.groupingBy(CdcRecord::tableId, LinkedHashMap::new, Collectors.toList()))
-            .forEach(
-                (key, value) -> {
-                    List<CdcListener> listeners =
-                        tableIdToListeners.getOrDefault(key, Collections.emptyList());
-                    if (listeners.isEmpty()) {
-                      log.warn("no listeners for table id: {}", key);
-                    }
-                    for (CdcListener cdcListener : listeners) {
-                      cdcListener.on(value);
-                    }
-                    cdcRecordRepository.deleteInBatch(value);
-                });
+        .collect(Collectors.groupingBy(CdcRecord::tableId, LinkedHashMap::new, Collectors.toList()))
+        .forEach(
+            (tableId, records) -> {
+                List<CdcListener> listeners = tableIdToListeners.getOrDefault(tableId, Collections.emptyList());
+                if (listeners.isEmpty()) {
+                  log.warn("no listeners for table id: {}", tableId);
+                }
+                for (CdcListener cdcListener : listeners) {
+                  cdcListener.on(records);
+                }
+                cdcRecordRepository.deleteInBatch(records);
+        });
   }
 
   @Transactional
