@@ -13,7 +13,7 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.localmachine;
+package org.siglus.siglusapi.scheduledtask;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -24,6 +24,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.apache.commons.collections.CollectionUtils;
+import org.siglus.siglusapi.localmachine.EventBackupDeleteTask;
 import org.siglus.siglusapi.localmachine.eventstore.EventRecord;
 import org.siglus.siglusapi.localmachine.eventstore.EventRecordRepository;
 import org.siglus.siglusapi.localmachine.eventstore.backup.EventPayloadBackup;
