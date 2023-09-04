@@ -229,7 +229,7 @@ public class CdcScraper {
   private void dispatchingForLocalMachine() {
     while (true) {
       try {
-        Long txId = dispatchQueueForLocalMachine.poll(1, TimeUnit.MINUTES);
+        Long txId = dispatchQueueForLocalMachine.poll(30, TimeUnit.SECONDS);
         doDispatch(txId);
       } catch (InterruptedException e) {
         log.warn("dispatching task interrupted, continue to flush buff");
