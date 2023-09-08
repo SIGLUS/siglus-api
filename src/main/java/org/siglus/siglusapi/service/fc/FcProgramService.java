@@ -102,15 +102,15 @@ public class FcProgramService implements ProcessDataService {
     if (!existed.getRealProgramName().equals(current.getDescription())) {
       log.info("[FC program] name different, existed: {}, current: {}", existed.getRealProgramName(),
           current.getDescription());
-      updateContent.append("name=").append(current.getDescription()).append("; ");
-      originContent.append("name=").append(existed.getRealProgramName()).append("; ");
+      updateContent.append("name=").append(current.getDescription()).append('\n');
+      originContent.append("name=").append(existed.getRealProgramName()).append('\n');
       isSame = false;
     }
     if (!existed.getActive().equals(FcUtil.isActive(current.getStatus()))) {
       existed.setActive(FcUtil.isActive(current.getStatus()));
       log.info("[FC program] status different, existed: {}, current: {}", existed.getActive(), current.getStatus());
-      updateContent.append("status=").append(FcUtil.isActive(current.getStatus())).append("; ");
-      originContent.append("status=").append(existed.getActive()).append("; ");
+      updateContent.append("status=").append(FcUtil.isActive(current.getStatus())).append('\n');
+      originContent.append("status=").append(existed.getActive()).append('\n');
       isSame = false;
     }
     if (isSame) {

@@ -131,13 +131,13 @@ public class FcFacilityTypeService implements ProcessDataService {
     StringBuilder updateContent = new StringBuilder();
     StringBuilder originContent = new StringBuilder();
     if (!facilityTypeDto.getName().equals(typeDto.getDescription())) {
-      updateContent.append("name=").append(typeDto.getDescription()).append("; ");
-      originContent.append("name=").append(facilityTypeDto.getName()).append("; ");
+      updateContent.append("name=").append(typeDto.getDescription()).append('\n');
+      originContent.append("name=").append(facilityTypeDto.getName()).append('\n');
       isSame = false;
     }
     if (!facilityTypeDto.getActive().equals(FcUtil.isActive(typeDto.getStatus()))) {
-      updateContent.append("status=").append(FcUtil.isActive(typeDto.getStatus())).append("; ");
-      originContent.append("status=").append(facilityTypeDto.getActive()).append("; ");
+      updateContent.append("status=").append(FcUtil.isActive(typeDto.getStatus())).append('\n');
+      originContent.append("status=").append(facilityTypeDto.getActive()).append('\n');
       isSame = false;
     }
     if (isSame) {

@@ -229,40 +229,40 @@ public class FcFacilityService implements ProcessDataService {
     StringBuilder updateContent = new StringBuilder();
     StringBuilder originContent = new StringBuilder();
     if (!fcFacilityDto.getName().equals(originDto.getName())) {
-      updateContent.append("name=").append(fcFacilityDto.getName()).append("; ");
-      originContent.append("name=").append(originDto.getName()).append("; ");
+      updateContent.append("name=").append(fcFacilityDto.getName()).append('\n');
+      originContent.append("name=").append(originDto.getName()).append('\n');
       isSame = false;
     }
 
     if (!fcFacilityDto.getDescription().equals(originDto.getDescription())) {
-      updateContent.append("description=").append(fcFacilityDto.getDescription()).append("; ");
-      originContent.append("description=").append(originDto.getDescription()).append("; ");
+      updateContent.append("description=").append(fcFacilityDto.getDescription()).append('\n');
+      originContent.append("description=").append(originDto.getDescription()).append('\n');
       isSame = false;
     }
 
     if (!fcFacilityDto.getDistrictCode().equals(originDto.getGeographicZone().getCode())) {
-      updateContent.append("districtCode=").append(fcFacilityDto.getDistrictCode()).append("; ");
-      originContent.append("districtCode=").append(originDto.getGeographicZone().getCode()).append("; ");
+      updateContent.append("districtCode=").append(fcFacilityDto.getDistrictCode()).append('\n');
+      originContent.append("districtCode=").append(originDto.getGeographicZone().getCode()).append('\n');
       isSame = false;
     }
 
     if (!fcFacilityDto.getClientTypeCode().equals(originDto.getType().getCode())) {
-      updateContent.append("clientTypeCode=").append(fcFacilityDto.getClientTypeCode()).append("; ");
-      originContent.append("clientTypeCode=").append(originDto.getType().getCode()).append("; ");
+      updateContent.append("clientTypeCode=").append(fcFacilityDto.getClientTypeCode()).append('\n');
+      originContent.append("clientTypeCode=").append(originDto.getType().getCode()).append('\n');
       isSame = false;
     }
 
     if (!originDto.getActive().equals(FcUtil.isActive(fcFacilityDto.getStatus()))) {
-      updateContent.append("status=").append(fcFacilityDto.getStatus()).append("; ");
-      originContent.append("status=").append(originDto.getActive()).append("; ");
+      updateContent.append("status=").append(fcFacilityDto.getStatus()).append('\n');
+      originContent.append("status=").append(originDto.getActive()).append('\n');
       isSame = false;
     }
     Set<String> originCodes = originDto.getSupportedPrograms().stream()
         .map(SupportedProgramDto::getCode)
         .collect(Collectors.toSet());
     if (!Sets.difference(codes, originCodes).isEmpty()) {
-      updateContent.append("programCodes=").append(codes).append("; ");
-      originContent.append("programCodes=").append(originCodes).append("; ");
+      updateContent.append("programCodes=").append(codes).append('\n');
+      originContent.append("programCodes=").append(originCodes).append('\n');
       isSame = false;
     }
     if (isSame) {

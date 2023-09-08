@@ -111,20 +111,20 @@ public class FcGeographicZoneService implements ProcessDataService {
     StringBuilder updateContent = new StringBuilder();
     StringBuilder originContent = new StringBuilder();
     if (!currentZone.getName().equals(originZone.getName())) {
-      updateContent.append("name=").append(currentZone.getName()).append("; ");
-      originContent.append("name=").append(originZone.getName()).append("; ");
+      updateContent.append("name=").append(currentZone.getName()).append('\n');
+      originContent.append("name=").append(originZone.getName()).append('\n');
       isSame = false;
     }
     if (!currentZone.getLevel().equals(originZone.getLevel())) {
-      updateContent.append("level=").append(currentZone.getLevel()).append("; ");
-      originContent.append("level=").append(originZone.getLevel()).append("; ");
+      updateContent.append("level=").append(currentZone.getLevel()).append('\n');
+      originContent.append("level=").append(originZone.getLevel()).append('\n');
       isSame = false;
     }
     if (isDifferentParentZone(currentZone, originZone)) {
       updateContent.append("parentZone=")
-          .append(currentZone.getParent() == null ? "" : currentZone.getParent().getCode()).append("; ");
+          .append(currentZone.getParent() == null ? "" : currentZone.getParent().getCode()).append('\n');
       originContent.append("parentZone=")
-          .append(originZone.getParent() == null ? "" : originZone.getParent().getCode()).append("; ");
+          .append(originZone.getParent() == null ? "" : originZone.getParent().getCode()).append('\n');
       isSame = false;
     }
     if (isSame) {

@@ -154,24 +154,24 @@ public class FcRegimenService implements ProcessDataService {
     StringBuilder updateContent = new StringBuilder();
     StringBuilder originContent = new StringBuilder();
     if (!existed.getName().equals(current.getDescription())) {
-      updateContent.append("name=").append(current.getDescription()).append("; ");
-      originContent.append("name=").append(existed.getName()).append("; ");
+      updateContent.append("name=").append(current.getDescription()).append('\n');
+      originContent.append("name=").append(existed.getName()).append('\n');
       isSame = false;
     }
     if (!existed.getProgramId().equals(programId)) {
-      updateContent.append("programId=").append(programId).append("; ");
-      originContent.append("programId=").append(existed.getProgramId()).append("; ");
+      updateContent.append("programId=").append(programId).append('\n');
+      originContent.append("programId=").append(existed.getProgramId()).append('\n');
       isSame = false;
     }
     if (!existed.getRealProgramId().equals(realProgramId)) {
-      updateContent.append("realProgramId=").append(realProgramId).append("; ");
-      originContent.append("realProgramId=").append(existed.getRealProgramId()).append("; ");
+      updateContent.append("realProgramId=").append(realProgramId).append('\n');
+      originContent.append("realProgramId=").append(existed.getRealProgramId()).append('\n');
       isSame = false;
     }
     if (!isCategoryEquivalent(existed, current)) {
-      updateContent.append("category=").append(getCurrentRegimenCategoryCode(current)).append("; ");
+      updateContent.append("category=").append(getCurrentRegimenCategoryCode(current)).append('\n');
       originContent.append("category=")
-          .append(existed.getRegimenCategory() == null ? null : existed.getRegimenCategory().getCode()).append("; ");
+          .append(existed.getRegimenCategory() == null ? null : existed.getRegimenCategory().getCode()).append('\n');
       isSame = false;
     }
 
