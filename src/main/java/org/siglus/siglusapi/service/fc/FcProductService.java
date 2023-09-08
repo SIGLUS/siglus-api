@@ -303,8 +303,7 @@ public class FcProductService implements ProcessDataService {
     newOrderable.setNetContent(1L);
     newOrderable.setRoundToZero(false);
     newOrderable.setDispensable(Dispensable.createNew("each"));
-    Map<String, Object> extraData = createOrderableExtraData(product, newOrderable.getProductCode(),
-        basicProductCodes);
+    Map<String, Object> extraData = createOrderableExtraData(product, newOrderable.getProductCode(), basicProductCodes);
     newOrderable.setExtraData(extraData);
     newOrderable.setTradeItemIdentifier(createTradeItem());
     newOrderable.setPrograms(buildProgramOrderableDtos(product));
@@ -329,8 +328,7 @@ public class FcProductService implements ProcessDataService {
   OrderableDto updateOrderable(OrderableDto existed, ProductInfoDto current) {
     existed.setDescription(current.getDescription());
     existed.setFullProductName(current.getFullDescription());
-    Map<String, Object> extraData = createOrderableExtraData(current, existed.getProductCode(),
-        basicProductCodes);
+    Map<String, Object> extraData = createOrderableExtraData(current, existed.getProductCode(), basicProductCodes);
     existed.setExtraData(extraData);
     existed.setPrograms(buildProgramOrderableDtos(current));
     return orderableReferenceDataService.update(existed);
@@ -351,45 +349,41 @@ public class FcProductService implements ProcessDataService {
       log.info("[FC product] existed and current product are both inactive, ignore");
       return null;
     }
-    if (!StringUtils.equals(existed.getDescription(), current.getDescription())) {
+    if (!StringUtils.equals(StringUtils.trimToEmpty(existed.getDescription()),
+        StringUtils.trimToEmpty(current.getDescription()))) {
       log.info("[FC product] description different, existed: {}, current: {}",
-          existed.getDescription(),
-          current.getDescription());
-      updateContent.append("description=").append(current.getDescription()).append("; ");
-      originContent.append("description=").append(existed.getDescription()).append("; ");
+          existed.getDescription(), current.getDescription());
+      updateContent.append("description=").append(current.getDescription()).append('\n');
+      originContent.append("description=").append(existed.getDescription()).append('\n');
       isSame = false;
     }
     if (!StringUtils.equals(existed.getFullProductName(), current.getFullDescription())) {
       log.info("[FC product] name different, existed: {}, current: {}",
-          existed.getFullProductName(),
-          current.getFullDescription());
-      updateContent.append("productName=").append(current.getFullDescription()).append("; ");
-      originContent.append("productName=").append(existed.getFullProductName()).append("; ");
+          existed.getFullProductName(), current.getFullDescription());
+      updateContent.append("productName=").append(current.getFullDescription()).append('\n');
+      originContent.append("productName=").append(existed.getFullProductName()).append('\n');
       isSame = false;
     }
     if (isDifferentProductStatus(existed, current)) {
       log.info("[FC product] status different, existed: {}, current: {}",
-          existed.getExtraData().get(ACTIVE),
-          current.getStatus());
-      updateContent.append("status=").append(current.getStatus()).append("; ");
-      originContent.append("status=").append(existed.getExtraData().get(ACTIVE)).append("; ");
+          existed.getExtraData().get(ACTIVE), current.getStatus());
+      updateContent.append("status=").append(current.getStatus()).append('\n');
+      originContent.append("status=").append(existed.getExtraData().get(ACTIVE)).append('\n');
       isSame = false;
     }
     if (isDifferentProductTracer(existed, current)) {
-      Object existedIsTracer =
-          existed.getExtraData() == null ? null : existed.getExtraData().get(IS_TRACER);
-      log.info("[FC product] isTracer different, existed: {}, current: {}", existedIsTracer,
-          current.getIsSentinel());
-      updateContent.append("isTracer=").append(current.getIsSentinel()).append("; ");
-      originContent.append("isTracer=").append(existedIsTracer).append("; ");
+      Object existedIsTracer = existed.getExtraData() == null ? null : existed.getExtraData().get(IS_TRACER);
+      log.info("[FC product] isTracer different, existed: {}, current: {}", existedIsTracer, current.getIsSentinel());
+      updateContent.append("isTracer=").append(current.getIsSentinel()).append('\n');
+      originContent.append("isTracer=").append(existedIsTracer).append('\n');
       isSame = false;
     }
     boolean isUpdateProgram = false;
     if (isDifferentProgramOrderable(existed, current)) {
       log.info("[FC product] program different, existed: {}, current: {}",
           programsToString(existed.getPrograms()), current.getAreas());
-      updateContent.append("program=").append(current.getAreas()).append("; ");
-      originContent.append("program=").append(programsToString(existed.getPrograms())).append("; ");
+      updateContent.append("program=").append(current.getAreas()).append('\n');
+      originContent.append("program=").append(programsToString(existed.getPrograms())).append('\n');
       isSame = false;
       isUpdateProgram = true;
     }
@@ -399,8 +393,8 @@ public class FcProductService implements ProcessDataService {
       String currentProductCategory = getCurrentProductCategory(current);
       log.info("[FC product] productCategory different, existed: {}, current: {}",
           originProductCategory, currentProductCategory);
-      updateContent.append("productCategory=").append(currentProductCategory).append("; ");
-      originContent.append("productCategory=").append(originProductCategory).append("; ");
+      updateContent.append("productCategory=").append(currentProductCategory).append('\n');
+      originContent.append("productCategory=").append(originProductCategory).append('\n');
       isSame = false;
       isUpdateProgram = true;
     }
@@ -408,10 +402,8 @@ public class FcProductService implements ProcessDataService {
     if (isDifferentProductPrice(existed, current)) {
       log.info("[FC product] productPrice different, existed: {}, current: {}",
           getOriginProductPrice(existed.getPrograms()), getCurrentProductPrice(current.getPrice()));
-      updateContent.append("productPrice=")
-          .append(getCurrentProductPrice(current.getPrice())).append("; ");
-      originContent.append("productPrice=").append(getOriginProductPrice(existed.getPrograms()))
-          .append("; ");
+      updateContent.append("productPrice=").append(getCurrentProductPrice(current.getPrice())).append('\n');
+      originContent.append("productPrice=").append(getOriginProductPrice(existed.getPrograms())).append('\n');
       isSame = false;
     }
 
@@ -419,8 +411,7 @@ public class FcProductService implements ProcessDataService {
       return null;
     }
     return FcUtil.buildUpdateFcIntegrationChanges(PRODUCT_API, existed.getProductCode(),
-        updateContent.toString(),
-        originContent.toString(), isUpdateProgram);
+        updateContent.toString(), originContent.toString(), isUpdateProgram);
   }
 
   private boolean isBothInactive(OrderableDto existed, ProductInfoDto current) {
