@@ -25,6 +25,8 @@ import static org.siglus.siglusapi.constant.FieldConstants.FACILITY_ID;
 import static org.siglus.siglusapi.constant.FieldConstants.NON_EMPTY_ONLY;
 import static org.siglus.siglusapi.constant.FieldConstants.PROGRAM_ID;
 import static org.siglus.siglusapi.constant.FieldConstants.RIGHT_NAME;
+import static org.siglus.siglusapi.constant.PaginationConstants.DEFAULT_PAGE_NUMBER;
+import static org.siglus.siglusapi.constant.PaginationConstants.NO_PAGINATION;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_NO_PERIOD_MATCH;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_ORDER_NOT_EXIST;
@@ -242,6 +244,9 @@ public class SiglusOrderService {
   @Autowired
   private SiglusOrdersRepository siglusOrdersRepository;
 
+  @Autowired
+  private SiglusOrderCloseSchedulerService siglusOrderCloseSchedulerService;
+
   private static final String SLASH = "/";
 
   private static final List<String> REQUISITION_STATUS_AFTER_FINAL_APPROVED = Lists.newArrayList(
@@ -355,7 +360,7 @@ public class SiglusOrderService {
     return new PageImpl<>(processedFulfillOrderDtos, pageable, orders.getTotalElements());
   }
 
-  private List<FulfillOrderDto> processExpiredFulfillOrder(List<FulfillOrderDto> fulfillOrderDtos) {
+  public List<FulfillOrderDto> processExpiredFulfillOrder(List<FulfillOrderDto> fulfillOrderDtos) {
     Map<UUID, List<FulfillOrderDto>> programIdToMap = fulfillOrderDtos.stream()
         .collect(Collectors.groupingBy(fulfillOrderDto -> fulfillOrderDto.getBasicOrder().getProgram().getId()));
     UUID processingPeriodId = fulfillOrderDtos.get(0).getBasicOrder().getProcessingPeriod().getId();
@@ -451,6 +456,15 @@ public class SiglusOrderService {
     log.info("manually close the fulfill order with order id: {}", fulfillOrderId);
     order.setStatus(OrderStatus.CLOSED);
     siglusOrdersRepository.save(order);
+  }
+
+  public void batchCloseExpiredOrder() {
+    OrderSearchParams params = new OrderSearchParams();
+    params.setStatus(Sets.newHashSet(OrderStatus.FULFILLING.name(),
+        OrderStatus.ORDERED.name(), OrderStatus.PARTIALLY_FULFILLED.name()));
+    Pageable pageable = new PageRequest(DEFAULT_PAGE_NUMBER, NO_PAGINATION);
+    Page<Order> orderPage = orderService.searchOrdersForFulfillPage(params, pageable);
+    siglusOrderCloseSchedulerService.batchProcessExpiredOrders(orderPage.getContent());
   }
 
   public OrderStatusDto searchOrderStatusById(UUID orderId) {

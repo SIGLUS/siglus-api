@@ -106,6 +106,12 @@ public class SiglusOrderController {
     siglusOrderService.closeExpiredOrder(orderId);
   }
 
+  @PostMapping("/batchClose")
+  @ResponseStatus(NO_CONTENT)
+  public void batchCloseOrders() {
+    siglusOrderService.batchCloseExpiredOrder();
+  }
+
   @GetMapping("/{id}/status")
   public OrderStatusDto getOrderStatus(@PathVariable("id") UUID orderId) {
     return siglusOrderService.searchOrderStatusById(orderId);

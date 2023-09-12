@@ -15,6 +15,8 @@
 
 package org.siglus.siglusapi.service;
 
+import static java.util.stream.Collectors.toList;
+
 import com.google.common.collect.Lists;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -31,6 +33,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.openlmis.fulfillment.domain.Order;
 import org.openlmis.fulfillment.repository.OrderRepository;
+import org.openlmis.fulfillment.web.util.BasicOrderDto;
+import org.openlmis.fulfillment.web.util.BasicOrderDtoBuilder;
 import org.openlmis.requisition.dto.ProcessingPeriodDto;
 import org.openlmis.stockmanagement.dto.referencedata.FacilityDto;
 import org.openlmis.stockmanagement.service.referencedata.FacilityReferenceDataService;
@@ -38,6 +42,7 @@ import org.siglus.common.domain.OrderExternal;
 import org.siglus.common.domain.ProcessingPeriodExtension;
 import org.siglus.common.repository.OrderExternalRepository;
 import org.siglus.common.repository.ProcessingPeriodExtensionRepository;
+import org.siglus.siglusapi.dto.FulfillOrderDto;
 import org.siglus.siglusapi.service.client.SiglusProcessingPeriodReferenceDataService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
@@ -58,29 +63,58 @@ public class SiglusOrderCloseSchedulerService {
   private final ProcessingPeriodExtensionRepository periodExtensionRepository;
   private final FacilityReferenceDataService facilityReferenceDataService;
 
+  private final BasicOrderDtoBuilder basicOrderDtoBuilder;
+
   @Value("${time.zoneId}")
   private String timeZoneId;
 
   @Value("${fc.facilityTypeId}")
   private UUID fcFacilityTypeId;
 
-  @Scheduled(cron = "${fulfillment.close.cron}", zone = "${time.zoneId}")
+  //@Scheduled(cron = "${fulfillment.close.cron}", zone = "${time.zoneId}")
   public void closeFulfillmentIfCurrentDateIsAfterNextPeriodEndDate() {
     List<Order> orders = getCanFulfillOrder();
     HashMap<UUID, ProcessingPeriodDto> currentPeriodIdToNextPeriod = getCurrentPeriodIdToNextPeriod(orders);
     log.info("close order: get next processing period map: {}", currentPeriodIdToNextPeriod);
     if (!CollectionUtils.isEmpty(currentPeriodIdToNextPeriod.values())) {
       List<Order> needClosedOrders = getNeedClosedOrders(orders, currentPeriodIdToNextPeriod);
-      log.info("close order: get need close order : {}", needClosedOrders);
-      List<CompletableFuture<Void>> futures = Lists.newArrayList();
-      for (Order order : needClosedOrders) {
-        CompletableFuture<Void> future = CompletableFuture.runAsync(
-            () -> orderService.revertOrderToCloseStatus(order), executorService);
-        futures.add(future);
-      }
-      futures.forEach(CompletableFuture::join);
-      log.info("close order: close all orders");
+      closeOrders(needClosedOrders);
     }
+  }
+
+  @Scheduled(cron = "${fulfillment.close.cron}", zone = "${time.zoneId}")
+  public void batchCloseExpiredOrder() {
+    List<Order> orders = getCanFulfillOrder();
+    batchProcessExpiredOrders(orders);
+  }
+
+  public void batchProcessExpiredOrders(List<Order> orders) {
+    List<BasicOrderDto> dtos = basicOrderDtoBuilder.build(orders);
+    List<FulfillOrderDto> fulfillOrderDtos = dtos.stream()
+        .map(basicOrderDto -> FulfillOrderDto.builder().basicOrder(basicOrderDto).build())
+        .collect(toList());
+    List<FulfillOrderDto> processedFulfillOrderDtos = orderService.processExpiredFulfillOrder(fulfillOrderDtos);
+    Set<UUID> expiredOrderIds = processedFulfillOrderDtos
+        .stream()
+        .filter(dto -> dto.isExpired())
+        .map(dto -> dto.getBasicOrder().getId())
+        .collect(Collectors.toSet());
+
+    List<Order> needClosedOrders = orders.stream()
+        .filter(o -> expiredOrderIds.contains(o.getId())).collect(toList());
+    closeOrders(needClosedOrders);
+  }
+
+  private void closeOrders(List<Order> needClosedOrders) {
+    log.info("close order: get need close order : {}", needClosedOrders);
+    List<CompletableFuture<Void>> futures = Lists.newArrayList();
+    for (Order order : needClosedOrders) {
+      CompletableFuture<Void> future = CompletableFuture.runAsync(
+          () -> orderService.revertOrderToCloseStatus(order), executorService);
+      futures.add(future);
+    }
+    futures.forEach(CompletableFuture::join);
+    log.info("close order: close all orders");
   }
 
   private List<Order> getCanFulfillOrder() {
