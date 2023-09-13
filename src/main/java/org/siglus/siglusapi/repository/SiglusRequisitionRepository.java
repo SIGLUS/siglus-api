@@ -24,6 +24,7 @@ import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.siglus.siglusapi.repository.dto.RequisitionOrderDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -108,6 +109,9 @@ public interface SiglusRequisitionRepository extends JpaRepository<Requisition, 
       @Param("programId") UUID programId,
       @Param("status") RequisitionStatus status
   );
+
+  @EntityGraph(value = "requisition-statusChange-graph")
+  Set<Requisition> findAllByStatus(RequisitionStatus status);
 
   void deleteById(UUID id);
 

@@ -121,6 +121,7 @@ import org.siglus.siglusapi.repository.dto.RequisitionOrderDto;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusProcessingPeriodReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
+import org.siglus.siglusapi.service.scheduledtask.SiglusOrderCloseSchedulerService;
 import org.siglus.siglusapi.util.PeriodUtil;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.web.response.BasicOrderExtensionResponse;
@@ -493,7 +494,7 @@ public class SiglusOrderService {
     return false;
   }
 
-  void revertOrderToCloseStatus(Order order) {
+  public void revertOrderToCloseStatus(Order order) {
     draftService.deleteOrderLineItemAndInitialedExtension(order);
     log.info("close order: close order id: {}", order.getId());
     order.setStatus(OrderStatus.CLOSED);
