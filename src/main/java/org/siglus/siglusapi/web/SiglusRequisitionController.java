@@ -15,17 +15,22 @@
 
 package org.siglus.siglusapi.web;
 
+import static org.siglus.siglusapi.constant.PaginationConstants.DEFAULT_PAGE_NUMBER;
+import static org.siglus.siglusapi.constant.PaginationConstants.NO_PAGINATION;
+
 import java.util.List;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.dto.BasicRequisitionDto;
 import org.openlmis.requisition.dto.FacilityDto;
 import org.openlmis.requisition.dto.ReleasableRequisitionDto;
 import org.openlmis.requisition.dto.RequisitionWithSupplyingDepotsDto;
+import org.openlmis.requisition.service.RequisitionService;
 import org.openlmis.requisition.utils.AuthenticationHelper;
 import org.openlmis.requisition.web.RequisitionController;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
@@ -37,8 +42,10 @@ import org.siglus.siglusapi.localmachine.event.requisition.web.release.Requisiti
 import org.siglus.siglusapi.service.SiglusNotificationService;
 import org.siglus.siglusapi.service.SiglusProcessingPeriodService;
 import org.siglus.siglusapi.service.SiglusRequisitionService;
+import org.siglus.siglusapi.service.scheduledtask.SiglusRequisitionAutoCloseService;
 import org.siglus.siglusapi.web.response.RequisitionPeriodExtensionResponse;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.transaction.annotation.Transactional;
@@ -63,6 +70,8 @@ public class SiglusRequisitionController {
 
   private final RequisitionController requisitionController;
   private final SiglusRequisitionService siglusRequisitionService;
+  private final RequisitionService requisitionService;
+  private final SiglusRequisitionAutoCloseService siglusRequisitionAutoCloseService;
   private final SiglusProcessingPeriodService siglusProcessingPeriodService;
   private final SiglusNotificationService notificationService;
   private final AuthenticationHelper authenticationHelper;
@@ -196,6 +205,17 @@ public class SiglusRequisitionController {
       Pageable pageable) {
     return requisitionController.requisitionsForApproval(programId, facilityId, pageable);
   }
+
+  @PostMapping("/closeRequisitionsForApproval")
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  public void closeRequisitionsForApproval() {
+    Pageable pageable = new PageRequest(DEFAULT_PAGE_NUMBER, NO_PAGINATION);
+    org.openlmis.requisition.dto.UserDto currentUser = authenticationHelper.getCurrentUser();
+    Page<Requisition> approvalRequisitions = requisitionService
+        .getRequisitionsForApproval(currentUser, null, null, pageable);
+    siglusRequisitionAutoCloseService.closeOldRequisitions(approvalRequisitions.getContent());
+  }
+
 
   @GetMapping("/requisitionsForConvertToOrder")
   public Page<RequisitionWithSupplyingDepotsDto> searchRequisitionsForApprovalList(

@@ -29,7 +29,7 @@ import org.siglus.siglusapi.localmachine.event.requisition.web.converttoorder.Re
 import org.siglus.siglusapi.localmachine.event.requisition.web.release.RequisitionReleaseEmitter;
 import org.siglus.siglusapi.service.BatchReleaseRequisitionService;
 import org.siglus.siglusapi.service.SiglusNotificationService;
-import org.siglus.siglusapi.service.scheduledtask.SiglusRequisitionReleaseWithoutOrderService;
+import org.siglus.siglusapi.service.scheduledtask.SiglusRequisitionAutoCloseService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -61,7 +61,7 @@ public class SiglusBatchRequisitionController {
 
   private final SiglusRequisitionController siglusRequisitionController;
 
-  private final SiglusRequisitionReleaseWithoutOrderService siglusRequisitionReleaseWithoutOrderService;
+  private final SiglusRequisitionAutoCloseService siglusRequisitionAutoCloseService;
 
   /**
    * why we redo this api? to support #245?<br> we refactor the
@@ -97,7 +97,7 @@ public class SiglusBatchRequisitionController {
     Pageable pageable = new PageRequest(DEFAULT_PAGE_NUMBER, NO_PAGINATION);
     Page<RequisitionWithSupplyingDepotsDto> dtoPage = siglusRequisitionController
         .searchRequisitionsForApprovalList(null, null, pageable);
-    siglusRequisitionReleaseWithoutOrderService
+    siglusRequisitionAutoCloseService
         .closeExpiredRequisitionWithSupplyingDepotsDtos(dtoPage.getContent());
   }
 }

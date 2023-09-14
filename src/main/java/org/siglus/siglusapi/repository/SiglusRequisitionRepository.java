@@ -113,6 +113,9 @@ public interface SiglusRequisitionRepository extends JpaRepository<Requisition, 
   @EntityGraph(value = "requisition-statusChange-graph")
   Set<Requisition> findAllByStatus(RequisitionStatus status);
 
+
+  Set<Requisition> findAllByStatusIn(Set<RequisitionStatus> statusSet);
+
   void deleteById(UUID id);
 
 }
