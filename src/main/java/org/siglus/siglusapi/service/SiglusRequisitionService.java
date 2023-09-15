@@ -42,6 +42,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.google.common.collect.Table;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -85,6 +86,8 @@ import org.openlmis.requisition.dto.FacilityDto;
 import org.openlmis.requisition.dto.MetadataDto;
 import org.openlmis.requisition.dto.OrderableDto;
 import org.openlmis.requisition.dto.ProgramDto;
+import org.openlmis.requisition.dto.ReleasableRequisitionBatchDto;
+import org.openlmis.requisition.dto.ReleasableRequisitionDto;
 import org.openlmis.requisition.dto.RequisitionGroupDto;
 import org.openlmis.requisition.dto.RequisitionLineItemV2Dto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
@@ -147,6 +150,8 @@ import org.siglus.siglusapi.dto.SimpleRequisitionDto;
 import org.siglus.siglusapi.dto.TestConsumptionOutcomeDto;
 import org.siglus.siglusapi.dto.TestConsumptionProjectDto;
 import org.siglus.siglusapi.dto.TestConsumptionServiceDto;
+import org.siglus.siglusapi.localmachine.event.requisition.web.finalapprove.RequisitionFinalApproveEmitter;
+import org.siglus.siglusapi.localmachine.event.requisition.web.release.RequisitionReleaseEmitter;
 import org.siglus.siglusapi.repository.FacilityExtensionRepository;
 import org.siglus.siglusapi.repository.NotSubmittedMonthlyRequisitionsRepository;
 import org.siglus.siglusapi.repository.OrderableRepository;
@@ -157,9 +162,11 @@ import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionLineItemRepository;
 import org.siglus.siglusapi.repository.RequisitionNativeSqlRepository;
+import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
 import org.siglus.siglusapi.service.fc.FcCmmCpService;
 import org.siglus.siglusapi.util.OperatePermissionService;
+import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.util.SupportedProgramsHelper;
 import org.slf4j.profiler.Profiler;
 import org.springframework.beans.BeanUtils;
@@ -228,6 +235,16 @@ public class SiglusRequisitionService {
   private final ProgramRepository programRepository;
   private final RegimenOrderableRepository regimenOrderableRepository;
   private final RequisitionLineItemRepository requisitionLineItemRepository;
+
+  private final RequisitionReleaseEmitter requisitionReleaseEmitter;
+
+  private final BatchReleaseRequisitionService batchReleaseRequisitionService;
+
+  private final SiglusRequisitionRepository siglusRequisitionRepository;
+
+  private final RequisitionFinalApproveEmitter requisitionFinalApproveEmitter;
+
+  private final SiglusAuthenticationHelper authHelper;
   private final Map<String, BiConsumer<SiglusRequisitionDto, Set<RequisitionLineItem>>> programToRequestedQuantity =
       ImmutableMap.<String, BiConsumer<SiglusRequisitionDto, Set<RequisitionLineItem>>>builder()
           .put(MTB_PROGRAM_CODE, this::calcRequestedQuantityForMmtb)
@@ -254,6 +271,59 @@ public class SiglusRequisitionService {
           .put(TARV_PROGRAM_CODE, this::calcEstimatedQuantityForMmia)
           .build();
 
+
+  @Transactional
+  public void approveAndReleaseWithoutOrder(Requisition requisition,
+                                             Table<UUID, UUID, UUID> programSupervisoryNodeFacilities) {
+    log.info("auto close requisition id: {}", requisition.getId());
+    requisition.getRequisitionLineItems().forEach(lineItem -> lineItem.setApprovedQuantity(0));
+    siglusRequisitionRepository.save(requisition);
+    approveRequisition(requisition.getId(), null, null);
+
+    org.siglus.siglusapi.dto.UserDto author = authHelper.getCurrentUser();
+
+    if (RequisitionStatus.APPROVED.equals(requisition.getStatus())) {
+      requisitionFinalApproveEmitter.emit(requisition.getId());
+      ReleasableRequisitionDto releasableRequisitionDto = new ReleasableRequisitionDto();
+      releasableRequisitionDto.setRequisitionId(requisition.getId());
+      releasableRequisitionDto.setSupplyingDepotId(programSupervisoryNodeFacilities
+          .get(requisition.getProgramId(), requisition.getSupervisoryNodeId()));
+
+      ReleasableRequisitionBatchDto releasableRequisitionBatchDto = new ReleasableRequisitionBatchDto();
+      releasableRequisitionBatchDto.setCreateOrder(false);
+      releasableRequisitionBatchDto.setRequisitionsToRelease(Arrays.asList(releasableRequisitionDto));
+      // release without order
+      batchReleaseRequisitionService
+          .getRequisitionsProcessingStatusDtoResponse(releasableRequisitionBatchDto);
+      requisitionReleaseEmitter.emit(releasableRequisitionDto, author == null ? null : author.getId());
+    } else if (RequisitionStatus.RELEASED_WITHOUT_ORDER.equals(requisition.getStatus())) {
+      ReleasableRequisitionDto releasableRequisitionDto = new ReleasableRequisitionDto();
+      releasableRequisitionDto.setRequisitionId(requisition.getId());
+      releasableRequisitionDto.setSupplyingDepotId(programSupervisoryNodeFacilities
+          .get(requisition.getProgramId(), requisition.getSupervisoryNodeId()));
+      requisitionReleaseEmitter.emit(releasableRequisitionDto, author == null ? null : author.getId());
+    }
+  }
+
+  @Transactional
+  public void releaseWithoutOrder(RequisitionWithSupplyingDepotsDto requisitionDto) {
+    ReleasableRequisitionDto releasableRequisitionDto = new ReleasableRequisitionDto();
+    releasableRequisitionDto.setRequisitionId(requisitionDto.getRequisition().getId());
+    List<FacilityDto> supplyingDepots = requisitionDto.getSupplyingDepots();
+    if (CollectionUtils.isNotEmpty(supplyingDepots)) {
+      releasableRequisitionDto.setSupplyingDepotId(supplyingDepots.get(0).getId());
+    }
+    log.info("auto close requisition id: {}", releasableRequisitionDto.getRequisitionId());
+    ReleasableRequisitionBatchDto releasableRequisitionBatchDto = new ReleasableRequisitionBatchDto();
+    releasableRequisitionBatchDto.setCreateOrder(false);
+    releasableRequisitionBatchDto.setRequisitionsToRelease(Arrays.asList(releasableRequisitionDto));
+
+    org.siglus.siglusapi.dto.UserDto author = authHelper.getCurrentUser();
+    // release without order
+    batchReleaseRequisitionService
+        .getRequisitionsProcessingStatusDtoResponse(releasableRequisitionBatchDto);
+    requisitionReleaseEmitter.emit(releasableRequisitionDto, author == null ? null : author.getId());
+  }
 
   @Transactional
   public SiglusRequisitionDto updateRequisition(UUID requisitionId, SiglusRequisitionDto requisitionDto,

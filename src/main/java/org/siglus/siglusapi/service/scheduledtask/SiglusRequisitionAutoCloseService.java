@@ -18,7 +18,6 @@ package org.siglus.siglusapi.service.scheduledtask;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -30,7 +29,6 @@ import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections.CollectionUtils;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.dto.BaseDto;
@@ -38,8 +36,6 @@ import org.openlmis.requisition.dto.BasicRequisitionDto;
 import org.openlmis.requisition.dto.FacilityDto;
 import org.openlmis.requisition.dto.ProcessingPeriodDto;
 import org.openlmis.requisition.dto.ProgramDto;
-import org.openlmis.requisition.dto.ReleasableRequisitionBatchDto;
-import org.openlmis.requisition.dto.ReleasableRequisitionDto;
 import org.openlmis.requisition.dto.RequisitionWithSupplyingDepotsDto;
 import org.openlmis.requisition.dto.SupplyLineDto;
 import org.openlmis.requisition.service.RequestParameters;
@@ -50,10 +46,8 @@ import org.openlmis.requisition.service.referencedata.ProgramReferenceDataServic
 import org.openlmis.requisition.service.referencedata.SupplyLineReferenceDataService;
 import org.openlmis.requisition.web.BasicRequisitionDtoBuilder;
 import org.siglus.siglusapi.constant.FieldConstants;
-import org.siglus.siglusapi.localmachine.event.requisition.web.finalapprove.RequisitionFinalApproveEmitter;
-import org.siglus.siglusapi.localmachine.event.requisition.web.release.RequisitionReleaseEmitter;
+import org.siglus.siglusapi.localmachine.Machine;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
-import org.siglus.siglusapi.service.BatchReleaseRequisitionService;
 import org.siglus.siglusapi.service.SiglusRequisitionService;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -76,16 +70,15 @@ public class SiglusRequisitionAutoCloseService {
 
   private final SupplyLineReferenceDataService supplyLineReferenceDataService;
 
-  private final RequisitionReleaseEmitter requisitionReleaseEmitter;
-
-  private final BatchReleaseRequisitionService batchReleaseRequisitionService;
-
   private final PeriodReferenceDataService periodReferenceDataService;
 
-  private final RequisitionFinalApproveEmitter requisitionFinalApproveEmitter;
+  private final Machine machine;
 
   @Scheduled(cron = "${requisition.close.inapproval.cron}", zone = "${time.zoneId}")
   public void closeOldInApprovalRequisition() {
+    if (machine.isOnlineWeb()) {
+      return;
+    }
     Set<Requisition> requisitions = siglusRequisitionRepository
         .findAllByStatusIn(RequisitionStatus.getPostApproveStatus());
     closeOldRequisitions(requisitions);
@@ -107,39 +100,8 @@ public class SiglusRequisitionAutoCloseService {
     });
     log.info("auto close requisition start");
     toCloseRequisitions.forEach(requisition ->
-        approveAndReleaseWithoutOrder(requisition, programSupervisoryNodeFacilities));
+        siglusRequisitionService.approveAndReleaseWithoutOrder(requisition, programSupervisoryNodeFacilities));
     log.info("auto close requisition end");
-  }
-
-
-  private void approveAndReleaseWithoutOrder(Requisition requisition,
-                                             Table<UUID, UUID, UUID> programSupervisoryNodeFacilities) {
-    log.info("auto close requisition id: {}", requisition.getId());
-    requisition.getRequisitionLineItems().forEach(lineItem -> lineItem.setApprovedQuantity(0));
-    siglusRequisitionRepository.save(requisition);
-    siglusRequisitionService.approveRequisition(requisition.getId(), null, null);
-
-    if (RequisitionStatus.APPROVED.equals(requisition.getStatus())) {
-      requisitionFinalApproveEmitter.emit(requisition.getId());
-      ReleasableRequisitionDto releasableRequisitionDto = new ReleasableRequisitionDto();
-      releasableRequisitionDto.setRequisitionId(requisition.getId());
-      releasableRequisitionDto.setSupplyingDepotId(programSupervisoryNodeFacilities
-          .get(requisition.getProgramId(), requisition.getSupervisoryNodeId()));
-
-      ReleasableRequisitionBatchDto releasableRequisitionBatchDto = new ReleasableRequisitionBatchDto();
-      releasableRequisitionBatchDto.setCreateOrder(false);
-      releasableRequisitionBatchDto.setRequisitionsToRelease(Arrays.asList(releasableRequisitionDto));
-      // release without order
-      batchReleaseRequisitionService
-          .getRequisitionsProcessingStatusDtoResponse(releasableRequisitionBatchDto);
-      requisitionReleaseEmitter.emit(releasableRequisitionDto, null);
-    } else if (RequisitionStatus.RELEASED_WITHOUT_ORDER.equals(requisition.getStatus())) {
-      ReleasableRequisitionDto releasableRequisitionDto = new ReleasableRequisitionDto();
-      releasableRequisitionDto.setRequisitionId(requisition.getId());
-      releasableRequisitionDto.setSupplyingDepotId(programSupervisoryNodeFacilities
-          .get(requisition.getProgramId(), requisition.getSupervisoryNodeId()));
-      requisitionReleaseEmitter.emit(releasableRequisitionDto, null);
-    }
   }
 
   private boolean needCloseRequisition(Requisition requisition, List<Requisition> group) {
@@ -161,6 +123,9 @@ public class SiglusRequisitionAutoCloseService {
 
   @Scheduled(cron = "${requisition.close.approved.cron}", zone = "${time.zoneId}")
   public void releaseWithoutOrderForExpiredRequisition() {
+    if (machine.isOnlineWeb()) {
+      return;
+    }
     Set<Requisition> requisitions = siglusRequisitionRepository.findAllByStatus(RequisitionStatus.APPROVED);
     List<RequisitionWithSupplyingDepotsDto> dtos = convertToRequisitionWithSupplyingDepotsDto(requisitions);
 
@@ -175,23 +140,7 @@ public class SiglusRequisitionAutoCloseService {
     log.info("auto close requisition start");
     processedRequisitionDto
         .stream().filter(r -> r.isExpired())
-        .forEach(requisitionDto -> {
-          ReleasableRequisitionDto releasableRequisitionDto = new ReleasableRequisitionDto();
-          releasableRequisitionDto.setRequisitionId(requisitionDto.getRequisition().getId());
-          List<FacilityDto> supplyingDepots = requisitionDto.getSupplyingDepots();
-          if (CollectionUtils.isNotEmpty(supplyingDepots)) {
-            releasableRequisitionDto.setSupplyingDepotId(supplyingDepots.get(0).getId());
-          }
-          log.info("auto close requisition id: {}", releasableRequisitionDto.getRequisitionId());
-          ReleasableRequisitionBatchDto releasableRequisitionBatchDto = new ReleasableRequisitionBatchDto();
-          releasableRequisitionBatchDto.setCreateOrder(false);
-          releasableRequisitionBatchDto.setRequisitionsToRelease(Arrays.asList(releasableRequisitionDto));
-          // release without order
-          batchReleaseRequisitionService
-              .getRequisitionsProcessingStatusDtoResponse(releasableRequisitionBatchDto);
-          // TODO no auth id in auto close
-          requisitionReleaseEmitter.emit(releasableRequisitionDto, null);
-        });
+        .forEach(requisitionDto -> siglusRequisitionService.releaseWithoutOrder(requisitionDto));
     log.info("auto close requisition end");
   }
 
