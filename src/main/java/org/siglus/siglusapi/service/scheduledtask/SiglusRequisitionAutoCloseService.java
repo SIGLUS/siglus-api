@@ -114,8 +114,19 @@ public class SiglusRequisitionAutoCloseService {
     Map<UUID, ProcessingPeriodDto> idToPeriod = periodDtos.stream()
         .collect(Collectors.toMap(ProcessingPeriodDto::getId, Function.identity()));
     ProcessingPeriodDto currentPeriod = idToPeriod.get(requisition.getProcessingPeriodId());
+    if (currentPeriod == null) {
+      log.info("ProcessingPeriodDto notFound requisitionId {}, periodId {}",
+          requisition.getId(), requisition.getProcessingPeriodId());
+    }
     return group.stream().anyMatch(r -> {
       ProcessingPeriodDto period = idToPeriod.get(r.getProcessingPeriodId());
+      if (period == null) {
+        log.info("ProcessingPeriodDto notFound requisitionId {}, periodId {}",
+            r.getId(), r.getProcessingPeriodId());
+      }
+      if (period == null || currentPeriod == null) {
+        return false;
+      }
       return period.getEndDate().isAfter(currentPeriod.getEndDate())
             && RequisitionStatus.getPostApproveStatus().contains(r.getStatus());
     });
