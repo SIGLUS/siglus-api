@@ -100,6 +100,10 @@ public class SiglusRequisitionAutoCloseService {
     });
     log.info("auto close requisition start");
     toCloseRequisitions.forEach(requisition ->
+        requisition.getRequisitionLineItems().forEach(lineItem -> lineItem.setApprovedQuantity(0))
+    );
+    siglusRequisitionRepository.save(toCloseRequisitions);
+    toCloseRequisitions.forEach(requisition ->
         siglusRequisitionService.approveAndReleaseWithoutOrder(requisition, programSupervisoryNodeFacilities));
     log.info("auto close requisition end");
   }

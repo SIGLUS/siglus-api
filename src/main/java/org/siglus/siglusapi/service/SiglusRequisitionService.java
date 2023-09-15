@@ -276,8 +276,6 @@ public class SiglusRequisitionService {
   public void approveAndReleaseWithoutOrder(Requisition requisition,
                                              Table<UUID, UUID, UUID> programSupervisoryNodeFacilities) {
     log.info("auto close requisition id: {}", requisition.getId());
-    requisition.getRequisitionLineItems().forEach(lineItem -> lineItem.setApprovedQuantity(0));
-    siglusRequisitionRepository.save(requisition);
     approveRequisition(requisition.getId(), null, null);
 
     org.siglus.siglusapi.dto.UserDto author = authHelper.getCurrentUser();
