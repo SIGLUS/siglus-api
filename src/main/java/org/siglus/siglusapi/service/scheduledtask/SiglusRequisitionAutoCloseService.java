@@ -18,6 +18,7 @@ package org.siglus.siglusapi.service.scheduledtask;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -39,25 +40,23 @@ import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.dto.RequisitionWithSupplyingDepotsDto;
 import org.openlmis.requisition.dto.SupplyLineDto;
 import org.openlmis.requisition.service.RequestParameters;
-import org.openlmis.requisition.service.RequisitionService;
 import org.openlmis.requisition.service.referencedata.FacilityReferenceDataService;
 import org.openlmis.requisition.service.referencedata.PeriodReferenceDataService;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
 import org.openlmis.requisition.service.referencedata.SupplyLineReferenceDataService;
 import org.openlmis.requisition.web.BasicRequisitionDtoBuilder;
 import org.siglus.siglusapi.constant.FieldConstants;
-import org.siglus.siglusapi.localmachine.Machine;
+import org.siglus.siglusapi.dto.ExtraDataSignatureDto;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.service.SiglusRequisitionService;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
 public class SiglusRequisitionAutoCloseService {
-
-  private final RequisitionService requisitionService;
+  public static final String SIGNATURE = "signature";
+  public static final String AUTO_CLOSE = "AUTO_CLOSE";
   private final SiglusRequisitionService siglusRequisitionService;
 
   private final SiglusRequisitionRepository siglusRequisitionRepository;
@@ -72,21 +71,9 @@ public class SiglusRequisitionAutoCloseService {
 
   private final PeriodReferenceDataService periodReferenceDataService;
 
-  private final Machine machine;
-
-  @Scheduled(cron = "${requisition.close.inapproval.cron}", zone = "${time.zoneId}")
-  public void closeOldInApprovalRequisition() {
-    if (machine.isOnlineWeb()) {
-      return;
-    }
-    Set<Requisition> requisitions = siglusRequisitionRepository
-        .findAllByStatusIn(RequisitionStatus.getPostApproveStatus());
-    closeOldRequisitions(requisitions);
-  }
-
   public void closeOldRequisitions(Collection<Requisition> requisitions) {
     Map<String, List<Requisition>> requisitionsMap = requisitions.stream()
-        .collect(Collectors.groupingBy(r -> buildForGroupKey(r)));
+        .collect(Collectors.groupingBy(this::buildForGroupKey));
     Set<Requisition> toCloseRequisitions = requisitions.stream()
         .filter(requisition -> RequisitionStatus.IN_APPROVAL.equals(requisition.getStatus()))
         .filter(requisition -> needCloseRequisition(requisition, requisitionsMap.get(buildForGroupKey(requisition))))
@@ -99,67 +86,36 @@ public class SiglusRequisitionAutoCloseService {
             supplyLineDto.getSupervisoryNode().getId(), supplyLineDto.getSupplyingFacility().getId());
     });
     log.info("auto close requisition start");
-    toCloseRequisitions.forEach(requisition ->
-        requisition.getRequisitionLineItems().forEach(lineItem -> lineItem.setApprovedQuantity(0))
-    );
+    toCloseRequisitions.forEach(requisition -> {
+      requisition.getRequisitionLineItems().forEach(lineItem -> lineItem.setApprovedQuantity(0));
+      Map<String, Object> extraData = requisition.getExtraData();
+      ExtraDataSignatureDto signatureDto = (ExtraDataSignatureDto) extraData.get(SIGNATURE);
+      List<String> approves = Arrays.asList(signatureDto.getApprove());
+      approves.add(AUTO_CLOSE);
+      signatureDto.setApprove(approves.toArray(new String[0]));
+      extraData.put(SIGNATURE, signatureDto);
+      requisition.setExtraData(extraData);
+    });
     siglusRequisitionRepository.save(toCloseRequisitions);
     toCloseRequisitions.forEach(requisition ->
         siglusRequisitionService.approveAndReleaseWithoutOrder(requisition, programSupervisoryNodeFacilities));
     log.info("auto close requisition end");
   }
 
-  private boolean needCloseRequisition(Requisition requisition, List<Requisition> group) {
-    Collection<ProcessingPeriodDto> periodDtos = periodReferenceDataService
-        .searchByProgramAndFacility(requisition.getProgramId(), requisition.getFacilityId());
-    Map<UUID, ProcessingPeriodDto> idToPeriod = periodDtos.stream()
-        .collect(Collectors.toMap(ProcessingPeriodDto::getId, Function.identity()));
-    ProcessingPeriodDto currentPeriod = idToPeriod.get(requisition.getProcessingPeriodId());
-    if (currentPeriod == null) {
-      log.info("ProcessingPeriodDto notFound requisitionId {}, periodId {}",
-          requisition.getId(), requisition.getProcessingPeriodId());
-    }
-    return group.stream().anyMatch(r -> {
-      ProcessingPeriodDto period = idToPeriod.get(r.getProcessingPeriodId());
-      if (period == null) {
-        log.info("ProcessingPeriodDto notFound requisitionId {}, periodId {}",
-            r.getId(), r.getProcessingPeriodId());
-      }
-      if (period == null || currentPeriod == null) {
-        return false;
-      }
-      return period.getEndDate().isAfter(currentPeriod.getEndDate())
-            && RequisitionStatus.getPostApproveStatus().contains(r.getStatus());
-    });
-  }
-
   private String buildForGroupKey(Requisition requisition) {
     return requisition.getFacilityId() + FieldConstants.SEPARATOR + requisition.getProgramId();
-  }
-
-  @Scheduled(cron = "${requisition.close.approved.cron}", zone = "${time.zoneId}")
-  public void releaseWithoutOrderForExpiredRequisition() {
-    if (machine.isOnlineWeb()) {
-      return;
-    }
-    Set<Requisition> requisitions = siglusRequisitionRepository.findAllByStatus(RequisitionStatus.APPROVED);
-    List<RequisitionWithSupplyingDepotsDto> dtos = convertToRequisitionWithSupplyingDepotsDto(requisitions);
-
-    List<RequisitionWithSupplyingDepotsDto> processedRequisitionDto =
-        requisitionService.processExpiredRequisition(dtos);
-
-    closeExpiredRequisitionWithSupplyingDepotsDtos(processedRequisitionDto);
   }
 
   public void closeExpiredRequisitionWithSupplyingDepotsDtos(
       List<RequisitionWithSupplyingDepotsDto> processedRequisitionDto) {
     log.info("auto close requisition start");
     processedRequisitionDto
-        .stream().filter(r -> r.isExpired())
-        .forEach(requisitionDto -> siglusRequisitionService.releaseWithoutOrder(requisitionDto));
+        .stream().filter(RequisitionWithSupplyingDepotsDto::isExpired)
+        .forEach(siglusRequisitionService::releaseWithoutOrder);
     log.info("auto close requisition end");
   }
 
-  private List<RequisitionWithSupplyingDepotsDto> convertToRequisitionWithSupplyingDepotsDto(
+  public List<RequisitionWithSupplyingDepotsDto> convertToRequisitionWithSupplyingDepotsDto(
       Set<Requisition> requisitions) {
     Set<UUID> programIds = requisitions.stream().map(Requisition::getProgramId).collect(Collectors.toSet());
     Map<UUID, ProgramDto> idToProgramDto = programReferenceDataService.search(programIds)
@@ -182,8 +138,31 @@ public class SiglusRequisitionAutoCloseService {
       BasicRequisitionDto requisitionDto = this.basicRequisitionDtoBuilder.build(requisition,
           idToFacilityDto.get(requisition.getFacilityId()), idToProgramDto.get(requisition.getProgramId()));
       return new RequisitionWithSupplyingDepotsDto(requisitionDto,
-        Collections.singletonList(idToFacilityDto.get(
-            programSupervisoryNodeFacilities.get(requisition.getProgramId(), requisition.getSupervisoryNodeId()))));
+          Collections.singletonList(idToFacilityDto.get(
+              programSupervisoryNodeFacilities.get(requisition.getProgramId(), requisition.getSupervisoryNodeId()))));
     }).collect(Collectors.toList());
   }
+
+  public boolean needCloseRequisition(Requisition requisition, List<Requisition> groupedRequisitions) {
+    Collection<ProcessingPeriodDto> periodDtos = periodReferenceDataService
+        .searchByProgramAndFacility(requisition.getProgramId(), requisition.getFacilityId());
+    Map<UUID, ProcessingPeriodDto> idToPeriod = periodDtos.stream()
+        .collect(Collectors.toMap(ProcessingPeriodDto::getId, Function.identity()));
+    ProcessingPeriodDto currentPeriod = idToPeriod.get(requisition.getProcessingPeriodId());
+    if (currentPeriod == null) {
+      log.info("ProcessingPeriodDto notFound requisitionId {}, periodId {}",
+          requisition.getId(), requisition.getProcessingPeriodId());
+    }
+    return groupedRequisitions.stream().anyMatch(r -> {
+      ProcessingPeriodDto targetPeriod = idToPeriod.get(r.getProcessingPeriodId());
+      if (targetPeriod == null || currentPeriod == null) {
+        log.info("ProcessingPeriodDto notFound requisitionId {}, periodId {}",
+            r.getId(), r.getProcessingPeriodId());
+        return false;
+      }
+      return targetPeriod.getEndDate().isAfter(currentPeriod.getEndDate())
+            && RequisitionStatus.getAfterInApprovalStatus().contains(r.getStatus());
+    });
+  }
+
 }

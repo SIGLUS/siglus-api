@@ -109,7 +109,7 @@ public class SiglusOrderController {
   @PostMapping("/batchClose")
   @ResponseStatus(NO_CONTENT)
   public void batchCloseOrders() {
-    siglusOrderService.batchCloseExpiredOrder();
+    siglusOrderService.batchCloseExpiredOrders();
   }
 
   @GetMapping("/{id}/status")

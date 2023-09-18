@@ -459,7 +459,7 @@ public class SiglusOrderService {
     siglusOrdersRepository.save(order);
   }
 
-  public void batchCloseExpiredOrder() {
+  public void batchCloseExpiredOrders() {
     OrderSearchParams params = new OrderSearchParams();
     params.setStatus(Sets.newHashSet(OrderStatus.FULFILLING.name(),
         OrderStatus.ORDERED.name(), OrderStatus.PARTIALLY_FULFILLED.name()));
