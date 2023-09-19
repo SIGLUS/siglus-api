@@ -19,6 +19,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.InetAddress;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.UUID;
@@ -30,6 +31,7 @@ import org.siglus.siglusapi.localmachine.domain.BackupDatabaseRecord;
 import org.siglus.siglusapi.localmachine.repository.BackupDatabaseRecordRepository;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.util.S3FileHandler;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -41,34 +43,48 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class BackupLocalMachineDatabaseTask {
 
-  private static final int BACKUP_DURATION_DAYS = 7;
+  private static final int BACKUP_DURATION_DAYS = 1;
+  private static final String UNDERSCORE = "_";
+  private static final String FOLDER = "localmachine-dbdump/";
 
   private final Machine machine;
   private final BackupDatabaseRecordRepository backupDatabaseRecordRepository;
   private final S3FileHandler s3FileHandler;
   private final SiglusFacilityReferenceDataService facilityReferenceDataService;
 
-  @Scheduled(cron = "0 */5 * * * ?", zone = "${time.zoneId}")
+  @Value("${machine.db.docker.container}")
+  private String dbDockerContainer;
+
+  @Scheduled(cron = "${localmachine.backup.database.cron}", zone = "${time.zoneId}")
   @Transactional
   public void backupDatabase() {
+    if (!isInternetAvailable()) {
+      log.info("Internet not available");
+      return;
+    }
     UUID facilityId = machine.getLocalFacilityId();
-    FacilityDto facilityDto = facilityReferenceDataService.findOne(facilityId);
     BackupDatabaseRecord backupRecord = backupDatabaseRecordRepository.findTopByFacilityIdOrderByLastBackupTimeDesc(
         facilityId);
-    if (backupRecord == null ||
-        backupRecord.getLastBackupTime().plusDays(BACKUP_DURATION_DAYS).isBefore(LocalDateTime.now())) {
-      DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
-      String dbDumpFile =
-          facilityDto.getCode() + "_" + facilityDto.getName() + "_" + LocalDateTime.now().format(formatter) + ".sql.gz";
+    if (backupRecord == null
+        || backupRecord.getLastBackupTime().plusDays(BACKUP_DURATION_DAYS).isBefore(LocalDateTime.now())) {
+      DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
+      FacilityDto facilityDto = facilityReferenceDataService.findOne(facilityId);
+      String dbDumpFile = facilityDto.getCode() + UNDERSCORE
+          + facilityDto.getName().replaceAll("\\s+", UNDERSCORE) + UNDERSCORE
+          + LocalDateTime.now().format(formatter) + ".sql.gz";
       if (dumpDatabaseAndUploadToS3(dbDumpFile)) {
         if (backupRecord == null) {
           backupRecord = new BackupDatabaseRecord();
           backupRecord.setFacilityId(facilityId);
           backupRecord.setFacilityCode(facilityDto.getCode());
           backupRecord.setFacilityName(facilityDto.getName());
+        } else {
+          log.info("delete BackupDatabaseRecord on S3: {}", backupRecord.getBackupFile());
+          s3FileHandler.deleteFileFromS3(FOLDER + backupRecord.getBackupFile());
         }
         backupRecord.setBackupFile(dbDumpFile);
         backupRecord.setLastBackupTime(LocalDateTime.now());
+        log.info("save BackupDatabaseRecord on S3: {}", backupRecord);
         backupDatabaseRecordRepository.save(backupRecord);
       }
     }
@@ -76,9 +92,11 @@ public class BackupLocalMachineDatabaseTask {
 
   private boolean dumpDatabaseAndUploadToS3(String dbDumpFile) {
     try {
+      log.info("start dumping {}", dbDumpFile);
       ProcessBuilder dumpProcessBuilder = new ProcessBuilder("bash", "-c",
-          "docker exec simam-db-1 /bin/sh -c 'pg_dump -h localhost -U postgres open_lmis "
-              + "> /tmp/simam-db.sql && gzip -f /tmp/simam-db.sql' && docker cp simam-db-1:/tmp/simam-db.sql.gz /tmp/"
+          "docker exec " + dbDockerContainer + " /bin/sh -c 'pg_dump -h localhost -U postgres open_lmis "
+              + "> /tmp/simam-db.sql && gzip -f /tmp/simam-db.sql' && docker cp " + dbDockerContainer
+              + ":/tmp/simam-db.sql.gz /tmp/"
               + dbDumpFile);
       dumpProcessBuilder.redirectErrorStream(true);
       Process dumpProcess = dumpProcessBuilder.start();
@@ -86,7 +104,8 @@ public class BackupLocalMachineDatabaseTask {
         printStream(dumpProcess.getInputStream());
         return false;
       }
-      s3FileHandler.uploadFileToS3("/tmp/" + dbDumpFile, "localmachine-dbdump/" + dbDumpFile);
+      log.info("upload {} to S3", dbDumpFile);
+      s3FileHandler.uploadFileToS3("/tmp/" + dbDumpFile, FOLDER + dbDumpFile);
       return true;
     } catch (Exception e) {
       log.error(e.getMessage());
@@ -99,6 +118,16 @@ public class BackupLocalMachineDatabaseTask {
     String line;
     while ((line = reader.readLine()) != null) {
       log.error(line);
+    }
+  }
+
+  private boolean isInternetAvailable() {
+    try {
+      InetAddress address = InetAddress.getByName("simam.cmam.gov.mz");
+      return address.isReachable(2000);
+    } catch (Exception e) {
+      log.error(e.getMessage());
+      return false;
     }
   }
 }
