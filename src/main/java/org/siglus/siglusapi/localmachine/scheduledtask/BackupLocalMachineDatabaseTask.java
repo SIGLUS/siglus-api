@@ -58,8 +58,11 @@ public class BackupLocalMachineDatabaseTask {
   private final ErrorRecordRepository errorRecordsRepository;
   private final ErrorPayloadRepository errorPayloadRepository;
 
-  @Value("${machine.db.docker.container}")
-  private String dbDockerContainer;
+  @Value("${spring.datasource.username}")
+  private String dbUsername;
+
+  @Value("${spring.datasource.password}")
+  private String dbPassword;
 
   @Scheduled(cron = "${localmachine.backup.database.cron}", zone = "${time.zoneId}")
   @Transactional
@@ -146,12 +149,9 @@ public class BackupLocalMachineDatabaseTask {
   private boolean dumpDatabaseAndUploadToS3(String dbDumpFile) {
     try {
       log.info("dump LM DB file {}", dbDumpFile);
-      ProcessBuilder dumpProcessBuilder = new ProcessBuilder("bash", "-c",
-          "docker exec " + dbDockerContainer + " /bin/sh -c 'pg_dump -h localhost -U postgres open_lmis "
-              + "> /tmp/simam-db.sql && gzip -f /tmp/simam-db.sql' && docker cp " + dbDockerContainer
-              + ":/tmp/simam-db.sql.gz /tmp/"
-              + dbDumpFile);
-      dumpProcessBuilder.redirectErrorStream(true);
+      String dumpCommand = "pg_dump -h db -U " + dbUsername + " open_lmis | gzip > /tmp/" + dbDumpFile;
+      ProcessBuilder dumpProcessBuilder = new ProcessBuilder("/bin/bash", "-c", dumpCommand);
+      dumpProcessBuilder.environment().put("PGPASSWORD", dbPassword);
       Process dumpProcess = dumpProcessBuilder.start();
       if (dumpProcess.waitFor() != 0) {
         printStream(dumpProcess.getInputStream());
