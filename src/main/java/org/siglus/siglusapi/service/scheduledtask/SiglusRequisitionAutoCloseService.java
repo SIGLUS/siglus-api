@@ -19,9 +19,10 @@ import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -47,7 +48,6 @@ import org.openlmis.requisition.service.referencedata.ProgramReferenceDataServic
 import org.openlmis.requisition.service.referencedata.SupplyLineReferenceDataService;
 import org.openlmis.requisition.web.BasicRequisitionDtoBuilder;
 import org.siglus.siglusapi.constant.FieldConstants;
-import org.siglus.siglusapi.dto.ExtraDataSignatureDto;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.service.SiglusRequisitionService;
 import org.springframework.stereotype.Service;
@@ -56,7 +56,8 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @RequiredArgsConstructor
 public class SiglusRequisitionAutoCloseService {
-  public static final String SIGNATURE = "signature";
+  public static final String SIGNATURE = "signaure";
+  public static final String APPROVE = "approve";
   public static final String AUTO_CLOSE = "AUTO_CLOSE";
   private final SiglusRequisitionService siglusRequisitionService;
 
@@ -89,19 +90,19 @@ public class SiglusRequisitionAutoCloseService {
     log.info("auto close requisition start");
     toCloseRequisitions.forEach(requisition -> {
       requisition.getRequisitionLineItems().forEach(lineItem -> lineItem.setApprovedQuantity(0));
-      Map<String, Object> extraData = requisition.getExtraData();
-      ExtraDataSignatureDto signatureDto = (ExtraDataSignatureDto) extraData.get(SIGNATURE);
+      Map<String, Object> extraData = new HashMap<String, Object>(requisition.getExtraData());
+      LinkedHashMap signatureDto = (LinkedHashMap) extraData.get(SIGNATURE);
       if (signatureDto == null) {
-        signatureDto = new ExtraDataSignatureDto();
+        signatureDto = new LinkedHashMap();
       }
       List<String> approves;
-      if (signatureDto.getApprove() == null) {
+      if (signatureDto.get(APPROVE) == null) {
         approves = new ArrayList<>();
       } else {
-        approves = Arrays.asList(signatureDto.getApprove());
+        approves = (ArrayList) signatureDto.get(APPROVE);
       }
       approves.add(AUTO_CLOSE);
-      signatureDto.setApprove(approves.toArray(new String[0]));
+      signatureDto.put(APPROVE, approves.toArray(new String[0]));
       extraData.put(SIGNATURE, signatureDto);
       requisition.setExtraData(extraData);
     });
