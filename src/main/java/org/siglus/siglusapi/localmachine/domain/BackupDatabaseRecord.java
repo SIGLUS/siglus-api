@@ -46,6 +46,12 @@ public class BackupDatabaseRecord extends BaseEntity {
   @Column(name = "backupfile")
   private String backupFile;
 
+  @Column(name = "haserror")
+  private Boolean hasError;
+
+  @Column(name = "errormessage")
+  private String errorMessage;
+
   @Column(name = "lastbackuptime")
   private LocalDateTime lastBackupTime;
 }

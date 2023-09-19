@@ -21,6 +21,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface BackupDatabaseRecordRepository extends JpaRepository<BackupDatabaseRecord, UUID> {
 
-  BackupDatabaseRecord findTopByFacilityIdOrderByLastBackupTimeDesc(UUID facilityId);
+  BackupDatabaseRecord findTopByFacilityId(UUID facilityId);
 
 }

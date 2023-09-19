@@ -28,7 +28,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.localmachine.Machine;
 import org.siglus.siglusapi.localmachine.domain.BackupDatabaseRecord;
+import org.siglus.siglusapi.localmachine.domain.ErrorRecord;
 import org.siglus.siglusapi.localmachine.repository.BackupDatabaseRecordRepository;
+import org.siglus.siglusapi.localmachine.repository.ErrorRecordRepository;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.util.S3FileHandler;
 import org.springframework.beans.factory.annotation.Value;
@@ -51,6 +53,7 @@ public class BackupLocalMachineDatabaseTask {
   private final BackupDatabaseRecordRepository backupDatabaseRecordRepository;
   private final S3FileHandler s3FileHandler;
   private final SiglusFacilityReferenceDataService facilityReferenceDataService;
+  private final ErrorRecordRepository errorRecordsRepository;
 
   @Value("${machine.db.docker.container}")
   private String dbDockerContainer;
@@ -62,13 +65,29 @@ public class BackupLocalMachineDatabaseTask {
       log.info("Internet not available");
       return;
     }
+
     UUID facilityId = machine.getLocalFacilityId();
-    BackupDatabaseRecord backupRecord = backupDatabaseRecordRepository.findTopByFacilityIdOrderByLastBackupTimeDesc(
-        facilityId);
+    BackupDatabaseRecord backupRecord = backupDatabaseRecordRepository.findTopByFacilityId(facilityId);
+    ErrorRecord lastErrorRecord = errorRecordsRepository.findLastErrorRecord();
+    FacilityDto facilityDto = facilityReferenceDataService.findOne(facilityId);
+
+    if (lastErrorRecord == null) {
+      log.info("No error record");
+      if (backupRecord == null) {
+        backupRecord = new BackupDatabaseRecord();
+        backupRecord.setFacilityId(facilityId);
+        backupRecord.setFacilityCode(facilityDto.getCode());
+        backupRecord.setFacilityName(facilityDto.getName());
+      }
+      backupRecord.setHasError(false);
+      backupRecord.setErrorMessage(null);
+      backupDatabaseRecordRepository.save(backupRecord);
+      return;
+    }
+
     if (backupRecord == null
         || backupRecord.getLastBackupTime().plusDays(BACKUP_DURATION_DAYS).isBefore(LocalDateTime.now())) {
       DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
-      FacilityDto facilityDto = facilityReferenceDataService.findOne(facilityId);
       String dbDumpFile = facilityDto.getCode() + UNDERSCORE
           + facilityDto.getName().replaceAll("\\s+", UNDERSCORE) + UNDERSCORE
           + LocalDateTime.now().format(formatter) + ".sql.gz";
@@ -84,6 +103,8 @@ public class BackupLocalMachineDatabaseTask {
         }
         backupRecord.setBackupFile(dbDumpFile);
         backupRecord.setLastBackupTime(LocalDateTime.now());
+        backupRecord.setHasError(true);
+        backupRecord.setErrorMessage(lastErrorRecord.toString());
         log.info("save BackupDatabaseRecord on S3: {}", backupRecord);
         backupDatabaseRecordRepository.save(backupRecord);
       }
