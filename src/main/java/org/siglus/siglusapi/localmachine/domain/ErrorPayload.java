@@ -56,4 +56,15 @@ public class ErrorPayload extends BaseEntity {
   @Column(name = "detailmessage")
   private String detailMessage;
 
+  @Override
+  public String toString() {
+    return "ErrorPayload {"
+        + "id=" + getId()
+        + ", errorName='" + errorName + '\''
+        + ", rootStackTrace='" + rootStackTrace + '\''
+        + ", eventId=" + eventId
+        + ", messageKey='" + messageKey + '\''
+        + ", detailMessage='" + detailMessage + '\'' + '}';
+  }
+
 }

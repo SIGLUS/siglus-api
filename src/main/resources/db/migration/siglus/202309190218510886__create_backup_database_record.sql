@@ -5,11 +5,12 @@
 CREATE TABLE localmachine.backup_database_record
 (
     id             UUID PRIMARY KEY,
-    facilityid     UUID UNIQUE              NOT NULL,
-    facilitycode   VARCHAR(255)             NOT NULL,
-    facilityname   VARCHAR(255)             NOT NULL,
-    backupfile     VARCHAR(255)             NOT NULL,
-    haserror       BOOLEAN                  NOT NULL DEFAULT FALSE,
+    facilityid     UUID UNIQUE  NOT NULL,
+    facilitycode   VARCHAR(255) NOT NULL,
+    facilityname   VARCHAR(255) NOT NULL,
+    health         BOOLEAN      NOT NULL    DEFAULT TRUE,
     errormessage   TEXT,
-    lastbackuptime TIMESTAMP WITH TIME ZONE NOT NULL
+    backupfile     VARCHAR(255),
+    backuptime     TIMESTAMP WITH TIME ZONE,
+    lastupdatetime TIMESTAMP WITH TIME ZONE DEFAULT now()
 );

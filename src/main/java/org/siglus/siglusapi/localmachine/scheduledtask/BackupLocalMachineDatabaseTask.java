@@ -28,8 +28,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.localmachine.Machine;
 import org.siglus.siglusapi.localmachine.domain.BackupDatabaseRecord;
+import org.siglus.siglusapi.localmachine.domain.ErrorPayload;
 import org.siglus.siglusapi.localmachine.domain.ErrorRecord;
 import org.siglus.siglusapi.localmachine.repository.BackupDatabaseRecordRepository;
+import org.siglus.siglusapi.localmachine.repository.ErrorPayloadRepository;
 import org.siglus.siglusapi.localmachine.repository.ErrorRecordRepository;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.util.S3FileHandler;
@@ -54,6 +56,7 @@ public class BackupLocalMachineDatabaseTask {
   private final S3FileHandler s3FileHandler;
   private final SiglusFacilityReferenceDataService facilityReferenceDataService;
   private final ErrorRecordRepository errorRecordsRepository;
+  private final ErrorPayloadRepository errorPayloadRepository;
 
   @Value("${machine.db.docker.container}")
   private String dbDockerContainer;
@@ -70,15 +73,19 @@ public class BackupLocalMachineDatabaseTask {
     BackupDatabaseRecord backupRecord = getOrCreateBackupRecord(facilityId, facilityDto);
     ErrorRecord lastErrorRecord = errorRecordsRepository.findLastErrorRecord();
     if (lastErrorRecord == null) {
-      log.info("No error record");
-      removeErrorFromBackupRecord(backupRecord);
+      log.info("Health, no error record");
+      updateBackupRecordWithoutError(backupRecord);
       return;
     }
     if (shouldBackupDatabase(backupRecord)) {
       String dbDumpFile = generateDbDumpFileName(facilityDto);
       if (dumpDatabaseAndUploadToS3(dbDumpFile)) {
-        updateBackupRecordWithNewBackup(backupRecord, dbDumpFile, lastErrorRecord);
+        log.info("Not health, updateBackupRecordWithError, need to update dbDumpFile");
+        updateBackupRecordWithError(backupRecord, lastErrorRecord, dbDumpFile);
       }
+    } else {
+      log.info("Not health, refreshErrorMessage, no need to update dbDumpFile");
+      refreshErrorMessage(backupRecord, lastErrorRecord);
     }
   }
 
@@ -93,16 +100,40 @@ public class BackupLocalMachineDatabaseTask {
     return backupRecord;
   }
 
-  private void removeErrorFromBackupRecord(BackupDatabaseRecord backupRecord) {
-    backupRecord.setHasError(false);
+  private void updateBackupRecordWithoutError(BackupDatabaseRecord backupRecord) {
+    backupRecord.setHealth(true);
     backupRecord.setErrorMessage(null);
-    log.info("remove error flag for {}", backupRecord.getFacilityName());
+    backupRecord.setLastUpdateTime(LocalDateTime.now());
+    log.info("save BackupDatabaseRecord without error: {}", backupRecord);
+    backupDatabaseRecordRepository.save(backupRecord);
+  }
+
+  private void updateBackupRecordWithError(BackupDatabaseRecord backupRecord, ErrorRecord lastErrorRecord,
+      String backupFile) {
+    if (backupRecord.getBackupFile() != null) {
+      log.info("delete backup file on S3: {}", backupRecord.getBackupFile());
+      s3FileHandler.deleteFileFromS3(FOLDER + backupRecord.getBackupFile());
+    }
+    backupRecord.setBackupFile(backupFile);
+    backupRecord.setBackupTime(LocalDateTime.now());
+    backupRecord.setHealth(false);
+    refreshErrorMessage(backupRecord, lastErrorRecord);
+  }
+
+  private void refreshErrorMessage(BackupDatabaseRecord backupRecord, ErrorRecord lastErrorRecord) {
+    ErrorPayload errorPayload = errorPayloadRepository.findOne(lastErrorRecord.getErrorPayload().getId());
+    if (errorPayload == null) {
+      return;
+    }
+    backupRecord.setErrorMessage(lastErrorRecord.getType().name() + " error. " + '\'' + errorPayload);
+    log.info("save BackupDatabaseRecord with error: {}", backupRecord);
     backupDatabaseRecordRepository.save(backupRecord);
   }
 
   private boolean shouldBackupDatabase(BackupDatabaseRecord backupRecord) {
     return backupRecord == null
-        || backupRecord.getLastBackupTime().plusDays(BACKUP_DURATION_DAYS).isBefore(LocalDateTime.now());
+        || backupRecord.getBackupTime() == null
+        || backupRecord.getBackupTime().plusDays(BACKUP_DURATION_DAYS).isBefore(LocalDateTime.now());
   }
 
   private String generateDbDumpFileName(FacilityDto facilityDto) {
@@ -112,23 +143,9 @@ public class BackupLocalMachineDatabaseTask {
         + LocalDateTime.now().format(formatter) + ".sql.gz";
   }
 
-  private void updateBackupRecordWithNewBackup(BackupDatabaseRecord backupRecord, String dbDumpFile,
-      ErrorRecord lastErrorRecord) {
-    if (backupRecord.getBackupFile() != null) {
-      log.info("delete backup file on S3: {}", backupRecord.getBackupFile());
-      s3FileHandler.deleteFileFromS3(FOLDER + backupRecord.getBackupFile());
-    }
-    backupRecord.setBackupFile(dbDumpFile);
-    backupRecord.setLastBackupTime(LocalDateTime.now());
-    backupRecord.setHasError(true);
-    backupRecord.setErrorMessage(lastErrorRecord.toString());
-    log.info("save BackupDatabaseRecord: {}", backupRecord);
-    backupDatabaseRecordRepository.save(backupRecord);
-  }
-
   private boolean dumpDatabaseAndUploadToS3(String dbDumpFile) {
     try {
-      log.info("start dumping {}", dbDumpFile);
+      log.info("dump LM DB file {}", dbDumpFile);
       ProcessBuilder dumpProcessBuilder = new ProcessBuilder("bash", "-c",
           "docker exec " + dbDockerContainer + " /bin/sh -c 'pg_dump -h localhost -U postgres open_lmis "
               + "> /tmp/simam-db.sql && gzip -f /tmp/simam-db.sql' && docker cp " + dbDockerContainer

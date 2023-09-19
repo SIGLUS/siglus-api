@@ -19,18 +19,22 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EntityListeners;
 import javax.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.siglus.common.domain.BaseEntity;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @Entity
 @Data
 @EqualsAndHashCode(callSuper = true)
 @AllArgsConstructor
 @NoArgsConstructor
+@EntityListeners(AuditingEntityListener.class)
 @Table(name = "backup_database_record", schema = "localmachine")
 public class BackupDatabaseRecord extends BaseEntity {
 
@@ -43,15 +47,19 @@ public class BackupDatabaseRecord extends BaseEntity {
   @Column(name = "facilityname")
   private String facilityName;
 
-  @Column(name = "backupfile")
-  private String backupFile;
-
-  @Column(name = "haserror")
-  private Boolean hasError;
+  @Column(name = "health")
+  private Boolean health;
 
   @Column(name = "errormessage")
   private String errorMessage;
 
-  @Column(name = "lastbackuptime")
-  private LocalDateTime lastBackupTime;
+  @Column(name = "backupfile")
+  private String backupFile;
+
+  @Column(name = "backuptime")
+  private LocalDateTime backupTime;
+
+  @LastModifiedDate
+  @Column(name = "lastupdatetime")
+  private LocalDateTime lastUpdateTime;
 }
