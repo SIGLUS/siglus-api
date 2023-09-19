@@ -18,6 +18,7 @@ package org.siglus.siglusapi.service.scheduledtask;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -90,7 +91,15 @@ public class SiglusRequisitionAutoCloseService {
       requisition.getRequisitionLineItems().forEach(lineItem -> lineItem.setApprovedQuantity(0));
       Map<String, Object> extraData = requisition.getExtraData();
       ExtraDataSignatureDto signatureDto = (ExtraDataSignatureDto) extraData.get(SIGNATURE);
-      List<String> approves = Arrays.asList(signatureDto.getApprove());
+      if (signatureDto == null) {
+        signatureDto = new ExtraDataSignatureDto();
+      }
+      List<String> approves;
+      if (signatureDto.getApprove() == null) {
+        approves = new ArrayList<>();
+      } else {
+        approves = Arrays.asList(signatureDto.getApprove());
+      }
       approves.add(AUTO_CLOSE);
       signatureDto.setApprove(approves.toArray(new String[0]));
       extraData.put(SIGNATURE, signatureDto);
