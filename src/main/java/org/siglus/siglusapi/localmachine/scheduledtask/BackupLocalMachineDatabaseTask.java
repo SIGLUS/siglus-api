@@ -20,7 +20,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.InetAddress;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.UUID;
@@ -72,10 +71,11 @@ public class BackupLocalMachineDatabaseTask {
   @Scheduled(cron = "${localmachine.backup.database.cron}", zone = "${time.zoneId}")
   @Transactional
   public void backupDatabase() {
-    if (!isInternetAvailable()) {
+    if (!machine.isConnectedOnlineWeb()) {
       log.info("Internet not available");
       return;
     }
+    log.info("Internet available, start backup LM DB dump");
     UUID facilityId = machine.getLocalFacilityId();
     FacilityDto facilityDto = facilityReferenceDataService.findOne(facilityId);
     BackupDatabaseRecord backupRecord = getOrCreateBackupRecord(facilityId, facilityDto);
@@ -188,13 +188,4 @@ public class BackupLocalMachineDatabaseTask {
     }
   }
 
-  private boolean isInternetAvailable() {
-    try {
-      InetAddress address = InetAddress.getByName("simam.cmam.gov.mz");
-      return address.isReachable(2000);
-    } catch (Exception e) {
-      log.error(e.getMessage());
-      return false;
-    }
-  }
 }
