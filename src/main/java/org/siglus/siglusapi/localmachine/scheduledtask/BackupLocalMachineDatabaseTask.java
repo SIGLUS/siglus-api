@@ -23,7 +23,6 @@ import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -53,7 +52,6 @@ public class BackupLocalMachineDatabaseTask {
   private static final int BACKUP_DURATION_DAYS = 1;
   private static final String UNDERSCORE = "_";
   private static final String S3_FOLDER = "localmachine-dbdump/";
-  private static final String LOCAL_FOLDER = "/tmp/dbdump/";
 
   private final Machine machine;
   private final BackupDatabaseRecordRepository backupDatabaseRecordRepository;
@@ -67,6 +65,9 @@ public class BackupLocalMachineDatabaseTask {
 
   @Value("${spring.datasource.password}")
   private String dbPassword;
+
+  @Value("${machine.dbdump.path}")
+  private String MACHINE_DBDUMP_PATH;
 
   @Scheduled(cron = "${localmachine.backup.database.cron}", zone = "${time.zoneId}")
   @Transactional
@@ -153,12 +154,12 @@ public class BackupLocalMachineDatabaseTask {
   private boolean dumpDatabaseAndUploadToS3(String dbDumpFile) {
     try {
       log.info("dump LM DB file {}", dbDumpFile);
-      File localDirectory = new File(LOCAL_FOLDER);
+      File localDirectory = new File(MACHINE_DBDUMP_PATH);
       boolean mkdirs = localDirectory.mkdirs();
       if (!mkdirs) {
-        log.error("make dir failed: {}", LOCAL_FOLDER);
+        log.info("dir existed: {}", MACHINE_DBDUMP_PATH);
       }
-      String dumpCommand = "pg_dump -h db -U " + dbUsername + " open_lmis | gzip > " + LOCAL_FOLDER + dbDumpFile;
+      String dumpCommand = "pg_dump -h db -U " + dbUsername + " open_lmis | gzip > " + MACHINE_DBDUMP_PATH + dbDumpFile;
       ProcessBuilder dumpProcessBuilder = new ProcessBuilder("/bin/bash", "-c", dumpCommand);
       dumpProcessBuilder.environment().put("PGPASSWORD", dbPassword);
       Process dumpProcess = dumpProcessBuilder.start();
@@ -167,13 +168,12 @@ public class BackupLocalMachineDatabaseTask {
         return false;
       }
       log.info("upload {} to S3", dbDumpFile);
-      s3FileHandler.uploadFileToS3(LOCAL_FOLDER + dbDumpFile, S3_FOLDER + dbDumpFile);
-      log.info("delete local dbdump folder {}", LOCAL_FOLDER);
+      s3FileHandler.uploadFileToS3(MACHINE_DBDUMP_PATH + dbDumpFile, S3_FOLDER + dbDumpFile);
+      log.info("delete local dbdump folder {}", MACHINE_DBDUMP_PATH);
       FileUtils.deleteDirectory(localDirectory);
       return true;
     } catch (Exception e) {
-      log.error(e.getMessage());
-      log.error(Arrays.toString(e.getStackTrace()));
+      log.error("Exception occurred", e);
       return false;
     }
   }
