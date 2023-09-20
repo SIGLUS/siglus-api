@@ -51,8 +51,11 @@ public class Synchronizer {
         log.warn("[sync] fail to get lock, cancel this round");
         return;
       }
+      log.info("[LM] start sync down");
       syncService.pull();
+      log.info("[LM] start exchange acks");
       syncService.exchangeAcks();
+      log.info("[LM] start sync up");
       syncService.push();
     } catch (InterruptedException e) {
       log.error("sync thread is interrupted", e);

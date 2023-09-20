@@ -76,6 +76,7 @@ public class BackupLocalMachineDatabaseTask {
       log.info("Internet not available");
       return;
     }
+    log.info("Internet available, start check");
     UUID facilityId = machine.getLocalFacilityId();
     FacilityDto facilityDto = facilityReferenceDataService.findOne(facilityId);
     BackupDatabaseRecord backupRecord = getOrCreateBackupRecord(facilityId, facilityDto);
@@ -134,6 +135,7 @@ public class BackupLocalMachineDatabaseTask {
       return;
     }
     backupRecord.setErrorMessage(lastErrorRecord.getType().name() + " error. " + '\'' + errorPayload);
+    backupRecord.setLastUpdateTime(LocalDateTime.now());
     log.info("save BackupDatabaseRecord with error: {}", backupRecord);
     backupDatabaseRecordRepository.save(backupRecord);
   }
