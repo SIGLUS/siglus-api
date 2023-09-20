@@ -67,7 +67,7 @@ public class BackupLocalMachineDatabaseTask {
   private String dbPassword;
 
   @Value("${machine.dbdump.path}")
-  private String MACHINE_DBDUMP_PATH;
+  private String machineDbdumpPath;
 
   @Scheduled(cron = "${localmachine.backup.database.cron}", zone = "${time.zoneId}")
   @Transactional
@@ -154,12 +154,14 @@ public class BackupLocalMachineDatabaseTask {
   private boolean dumpDatabaseAndUploadToS3(String dbDumpFile) {
     try {
       log.info("dump LM DB file {}", dbDumpFile);
-      File localDirectory = new File(MACHINE_DBDUMP_PATH);
+      File localDirectory = new File(machineDbdumpPath);
+      log.info("delete local dbdump folder if exists {}", machineDbdumpPath);
+      FileUtils.deleteDirectory(localDirectory);
       boolean mkdirs = localDirectory.mkdirs();
       if (!mkdirs) {
-        log.info("dir existed: {}", MACHINE_DBDUMP_PATH);
+        log.info("mkdir failed: {}", machineDbdumpPath);
       }
-      String dumpCommand = "pg_dump -h db -U " + dbUsername + " open_lmis | gzip > " + MACHINE_DBDUMP_PATH + dbDumpFile;
+      String dumpCommand = "pg_dump -h db -U " + dbUsername + " open_lmis | gzip > " + machineDbdumpPath + dbDumpFile;
       ProcessBuilder dumpProcessBuilder = new ProcessBuilder("/bin/bash", "-c", dumpCommand);
       dumpProcessBuilder.environment().put("PGPASSWORD", dbPassword);
       Process dumpProcess = dumpProcessBuilder.start();
@@ -168,8 +170,8 @@ public class BackupLocalMachineDatabaseTask {
         return false;
       }
       log.info("upload {} to S3", dbDumpFile);
-      s3FileHandler.uploadFileToS3(MACHINE_DBDUMP_PATH + dbDumpFile, S3_FOLDER + dbDumpFile);
-      log.info("delete local dbdump folder {}", MACHINE_DBDUMP_PATH);
+      s3FileHandler.uploadFileToS3(machineDbdumpPath + dbDumpFile, S3_FOLDER + dbDumpFile);
+      log.info("delete local dbdump folder {}", machineDbdumpPath);
       FileUtils.deleteDirectory(localDirectory);
       return true;
     } catch (Exception e) {
