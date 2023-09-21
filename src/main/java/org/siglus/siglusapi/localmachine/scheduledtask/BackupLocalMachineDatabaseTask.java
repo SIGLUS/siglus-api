@@ -49,7 +49,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class BackupLocalMachineDatabaseTask {
 
-  private static final int BACKUP_DURATION_DAYS = 1;
+  private static final int BACKUP_DURATION_DAYS = 7;
   private static final String UNDERSCORE = "_";
   private static final String S3_FOLDER = "localmachine-dbdump/";
 
