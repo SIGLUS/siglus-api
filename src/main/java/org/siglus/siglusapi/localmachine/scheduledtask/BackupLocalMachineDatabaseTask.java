@@ -112,6 +112,8 @@ public class BackupLocalMachineDatabaseTask {
   private void updateBackupRecordWithHealth(BackupDatabaseRecord backupRecord) {
     backupRecord.setHealth(true);
     backupRecord.setErrorMessage(null);
+    backupRecord.setBackupFile(null);
+    backupRecord.setBackupTime(null);
     backupRecord.setLastUpdateTime(LocalDateTime.now());
     log.info("save BackupDatabaseRecord without error: {}", backupRecord);
     backupDatabaseRecordRepository.save(backupRecord);
