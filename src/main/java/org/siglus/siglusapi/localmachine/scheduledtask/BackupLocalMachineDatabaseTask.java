@@ -83,7 +83,7 @@ public class BackupLocalMachineDatabaseTask {
     ErrorRecord lastErrorRecord = errorRecordsRepository.findLastErrorRecord();
     if (lastErrorRecord == null) {
       log.info("Health, no error record");
-      updateBackupRecordWithoutError(backupRecord);
+      updateBackupRecordWithHealth(backupRecord);
       return;
     }
     if (shouldBackupDatabase(backupRecord)) {
@@ -93,8 +93,8 @@ public class BackupLocalMachineDatabaseTask {
         updateBackupRecordWithError(backupRecord, lastErrorRecord, dbDumpFile);
       }
     } else {
-      log.info("Not health, refreshErrorMessage, no need to update dbDumpFile");
-      refreshErrorMessage(backupRecord, lastErrorRecord);
+      log.info("Not health, refreshBackupRecordWithError, no need to update dbDumpFile");
+      refreshBackupRecordWithError(backupRecord, lastErrorRecord);
     }
   }
 
@@ -109,7 +109,7 @@ public class BackupLocalMachineDatabaseTask {
     return backupRecord;
   }
 
-  private void updateBackupRecordWithoutError(BackupDatabaseRecord backupRecord) {
+  private void updateBackupRecordWithHealth(BackupDatabaseRecord backupRecord) {
     backupRecord.setHealth(true);
     backupRecord.setErrorMessage(null);
     backupRecord.setLastUpdateTime(LocalDateTime.now());
@@ -125,15 +125,15 @@ public class BackupLocalMachineDatabaseTask {
     }
     backupRecord.setBackupFile(backupFile);
     backupRecord.setBackupTime(LocalDateTime.now());
-    backupRecord.setHealth(false);
-    refreshErrorMessage(backupRecord, lastErrorRecord);
+    refreshBackupRecordWithError(backupRecord, lastErrorRecord);
   }
 
-  private void refreshErrorMessage(BackupDatabaseRecord backupRecord, ErrorRecord lastErrorRecord) {
+  private void refreshBackupRecordWithError(BackupDatabaseRecord backupRecord, ErrorRecord lastErrorRecord) {
     ErrorPayload errorPayload = errorPayloadRepository.findOne(lastErrorRecord.getErrorPayload().getId());
     if (errorPayload == null) {
       return;
     }
+    backupRecord.setHealth(false);
     backupRecord.setErrorMessage(lastErrorRecord.getType().name() + " error. " + '\'' + errorPayload);
     backupRecord.setLastUpdateTime(LocalDateTime.now());
     log.info("save BackupDatabaseRecord with error: {}", backupRecord);
