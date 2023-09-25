@@ -15,6 +15,8 @@
 
 package org.siglus.siglusapi.repository;
 
+import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import org.openlmis.fulfillment.domain.Shipment;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -22,4 +24,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface SiglusShipmentRepository extends JpaRepository<Shipment, UUID> {
 
   Shipment findShipmentByOrderId(UUID orderId);
+
+  List<Shipment> findAllByOrderIdIn(Set<UUID> orderIds);
 }

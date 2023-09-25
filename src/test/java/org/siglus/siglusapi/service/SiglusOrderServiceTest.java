@@ -114,6 +114,7 @@ import org.siglus.siglusapi.repository.OrderableRepository;
 import org.siglus.siglusapi.repository.SiglusFacilityRepository;
 import org.siglus.siglusapi.repository.SiglusOrdersRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
+import org.siglus.siglusapi.repository.SiglusShipmentRepository;
 import org.siglus.siglusapi.repository.StockManagementRepository;
 import org.siglus.siglusapi.repository.dto.OrderSuggestedQuantityDto;
 import org.siglus.siglusapi.repository.dto.RequisitionOrderDto;
@@ -212,6 +213,9 @@ public class SiglusOrderServiceTest {
   @Mock
   private StockManagementRepository stockManagementRepository;
 
+  @Mock
+  private SiglusShipmentRepository siglusShipmentRepository;
+
   @Rule
   public ExpectedException exception = ExpectedException.none();
 
@@ -268,6 +272,7 @@ public class SiglusOrderServiceTest {
     ReflectionTestUtils.setField(siglusOrderService, "timeZoneId", "UTC");
     ReflectionTestUtils.setField(siglusOrderService, "fcFacilityTypeId",
         facilityTypeId);
+    when(siglusShipmentRepository.findAllByOrderIdIn(any())).thenReturn(Collections.emptyList());
   }
 
   @Test

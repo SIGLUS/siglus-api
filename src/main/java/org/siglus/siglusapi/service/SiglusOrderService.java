@@ -65,6 +65,8 @@ import org.apache.commons.collections.CollectionUtils;
 import org.openlmis.fulfillment.domain.Order;
 import org.openlmis.fulfillment.domain.OrderLineItem;
 import org.openlmis.fulfillment.domain.OrderStatus;
+import org.openlmis.fulfillment.domain.Shipment;
+import org.openlmis.fulfillment.domain.ShipmentLineItem;
 import org.openlmis.fulfillment.repository.OrderRepository;
 import org.openlmis.fulfillment.service.OrderSearchParams;
 import org.openlmis.fulfillment.service.OrderService;
@@ -115,6 +117,7 @@ import org.siglus.siglusapi.repository.SiglusFacilityRepository;
 import org.siglus.siglusapi.repository.SiglusLocalIssueVoucherRepository;
 import org.siglus.siglusapi.repository.SiglusOrdersRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
+import org.siglus.siglusapi.repository.SiglusShipmentRepository;
 import org.siglus.siglusapi.repository.StockManagementRepository;
 import org.siglus.siglusapi.repository.dto.OrderSuggestedQuantityDto;
 import org.siglus.siglusapi.repository.dto.RequisitionOrderDto;
@@ -247,6 +250,9 @@ public class SiglusOrderService {
 
   @Autowired
   private SiglusOrderCloseSchedulerService siglusOrderCloseSchedulerService;
+
+  @Autowired
+  private SiglusShipmentRepository siglusShipmentRepository;
 
   private static final String SLASH = "/";
 
@@ -962,6 +968,7 @@ public class SiglusOrderService {
   private SiglusOrderDto doExtendOrderDto(OrderDto orderDto, boolean withAvailableProducts, boolean isFcRequest) {
     //totalDispensingUnits not present in lineitem of previous OrderFulfillmentService
     setOrderLineItemExtension(orderDto);
+    fillPartialFulfillQuantity(orderDto);
     Requisition requisition = getRequisitionByOrder(orderDto);
     orderDto.setRequisitionNumber(siglusRequisitionExtensionService.formatRequisitionNumber(requisition.getId()));
     orderDto.setActualStartDate(requisition.getActualStartDate());
@@ -972,6 +979,36 @@ public class SiglusOrderService {
     }
     setIfIsKit(order);
     return order;
+  }
+
+  private void fillPartialFulfillQuantity(OrderDto orderDto) {
+    UUID externalId = orderDto.getExternalId();
+    OrderExternal external = orderExternalRepository.findOne(externalId);
+    UUID requisitionId = external == null ? externalId : external.getRequisitionId();
+    List<OrderExternal> externals = orderExternalRepository.findByRequisitionId(requisitionId);
+    Set<UUID> externalIds = externals.stream().map(OrderExternal::getId).collect(toSet());
+    List<Order> orders = siglusOrdersRepository.findAllByExternalIdIn(externalIds);
+    Set<UUID> orderIds = orders.stream().map(Order::getId).collect(toSet());
+    List<Shipment> shipments = siglusShipmentRepository.findAllByOrderIdIn(orderIds);
+    if (CollectionUtils.isEmpty(shipments)) {
+      return;
+    }
+    Map<UUID, Long> orderableIdToPartialFulfillQuantity = new HashMap<>();
+    Map<UUID, List<ShipmentLineItem>> orderableIdToItems = shipments
+        .stream().map(Shipment::getLineItems)
+        .flatMap(Collection::stream)
+        .collect(Collectors.groupingBy(ShipmentLineItem::getOrderableId));
+    orderableIdToItems.entrySet().stream().forEach(entry -> {
+      Long sum = entry.getValue().stream()
+          .map(ShipmentLineItem::getQuantityShipped).reduce(Long::sum).orElse(0L);
+      orderableIdToPartialFulfillQuantity.put(entry.getKey(), sum);
+    });
+    orderDto.orderLineItems().forEach(lineItem -> {
+      UUID orderableId = lineItem.getOrderableIdentity().getId();
+      if (orderableIdToPartialFulfillQuantity.containsKey(orderableId)) {
+        lineItem.setPartialFulfilledQuantity(orderableIdToPartialFulfillQuantity.get(orderableId));
+      }
+    });
   }
 
   private void setIfIsKit(SiglusOrderDto siglusOrderDto) {
