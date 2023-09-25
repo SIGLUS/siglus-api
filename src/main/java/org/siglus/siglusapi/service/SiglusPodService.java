@@ -392,7 +392,7 @@ public class SiglusPodService {
 
     StatusChange requisitionStatusChange = requisitionStatusChangeRepository.findByRequisitionId(realRequisitionId)
         .stream()
-        .filter(e -> RequisitionStatus.RELEASED == e.getStatus()).findFirst().orElse(null);
+        .filter(e -> RequisitionStatus.IN_APPROVAL == e.getStatus()).findFirst().orElse(null);
     response.setRequisitionDate(
         Objects.nonNull(requisitionStatusChange) ? requisitionStatusChange.getCreatedDate() : null);
   }
