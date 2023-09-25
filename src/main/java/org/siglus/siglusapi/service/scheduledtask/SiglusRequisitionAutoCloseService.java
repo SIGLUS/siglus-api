@@ -48,6 +48,7 @@ import org.openlmis.requisition.service.referencedata.ProgramReferenceDataServic
 import org.openlmis.requisition.service.referencedata.SupplyLineReferenceDataService;
 import org.openlmis.requisition.web.BasicRequisitionDtoBuilder;
 import org.siglus.siglusapi.constant.FieldConstants;
+import org.siglus.siglusapi.localmachine.Machine;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.service.SiglusRequisitionService;
 import org.springframework.stereotype.Service;
@@ -73,10 +74,14 @@ public class SiglusRequisitionAutoCloseService {
 
   private final PeriodReferenceDataService periodReferenceDataService;
 
+  private final Machine machine;
+
   public void closeOldRequisitions(Collection<Requisition> requisitions) {
     Map<String, List<Requisition>> requisitionsMap = requisitions.stream()
         .collect(Collectors.groupingBy(this::buildForGroupKey));
+    UUID facilityId = machine.getLocalFacilityId();
     Set<Requisition> toCloseRequisitions = requisitions.stream()
+        .filter(requisition -> !facilityId.equals(requisition.getFacilityId()))
         .filter(requisition -> RequisitionStatus.IN_APPROVAL.equals(requisition.getStatus()))
         .filter(requisition -> needCloseRequisition(requisition, requisitionsMap.get(buildForGroupKey(requisition))))
         .collect(Collectors.toSet());
@@ -119,8 +124,11 @@ public class SiglusRequisitionAutoCloseService {
   public void closeExpiredRequisitionWithSupplyingDepotsDtos(
       List<RequisitionWithSupplyingDepotsDto> processedRequisitionDto) {
     log.info("auto close requisition start");
+    UUID facilityId = machine.getLocalFacilityId();
     processedRequisitionDto
-        .stream().filter(RequisitionWithSupplyingDepotsDto::isExpired)
+        .stream()
+        .filter(RequisitionWithSupplyingDepotsDto::isExpired)
+        .filter(requisition -> !facilityId.equals(requisition.getRequisition().getFacility().getId()))
         .forEach(siglusRequisitionService::releaseWithoutOrder);
     log.info("auto close requisition end");
   }
