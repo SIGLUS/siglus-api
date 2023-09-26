@@ -13,23 +13,20 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.dto.enums;
+package org.siglus.siglusapi.localmachine.event.backupdatabase;
 
-public enum EventCategoryEnum {
+import lombok.RequiredArgsConstructor;
+import org.siglus.siglusapi.localmachine.cdc.JdbcSinker;
+import org.springframework.context.event.EventListener;
+import org.springframework.stereotype.Component;
 
-  REQUISITION_INTERNAL_APPROVED,
-  REQUISITION_FINAL_APPROVED,
-  REQUISITION_REJECTED,
-  RELEASED_WITHOUT_ORDER,
-  REQUISITION_CONVERT_TO_ORDER,
-  ORDER_FULFILLED,
-  POD_CONFIRMED,
-  MASTER_DATA,
-  STOCK_MOVEMENT,
-  CMM,
-  ANDROID_REQUISITION_INTERNAL_APPROVED,
-  ANDROID_POD_CONFIRMED,
-  FC_ISSUE_VOUCHER,
-  FC_RECEIPT_PLAN,
-  BACKUP_DATABASE
+@Component
+@RequiredArgsConstructor
+public class BackupDatabaseEventReplayer {
+  private final JdbcSinker jdbcSinker;
+
+  @EventListener(classes = {BackupDatabaseEvent.class})
+  public void replay(BackupDatabaseEvent backupDatabaseEvent) {
+    jdbcSinker.sink(backupDatabaseEvent.getTableChangeEvents());
+  }
 }

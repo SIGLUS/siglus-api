@@ -13,9 +13,9 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.localmachine.event.stockmovement;
+package org.siglus.siglusapi.localmachine.event.backupdatabase;
 
-import static org.siglus.siglusapi.dto.enums.EventCategoryEnum.STOCK_MOVEMENT;
+import static org.siglus.siglusapi.dto.enums.EventCategoryEnum.BACKUP_DATABASE;
 
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -30,7 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Component
 @RequiredArgsConstructor
 @Profile("localmachine")
-public class LocalMovementEventEmitter implements CdcListener {
+public class BackupDatabaseEventEmitter implements CdcListener {
 
   private final EventPublisher eventPublisher;
   private final CdcRecordMapper cdcRecordMapper;
@@ -38,28 +38,13 @@ public class LocalMovementEventEmitter implements CdcListener {
   @Override
   public String[] acceptedTables() {
     return new String[]{
-        "stockmanagement.stock_events",
-        "stockmanagement.stock_event_line_items",
-        "stockmanagement.stock_cards",
-        "stockmanagement.stock_card_line_items",
-        "stockmanagement.physical_inventories",
-        "stockmanagement.physical_inventory_line_items",
-        "stockmanagement.calculated_stocks_on_hand",
-        "stockmanagement.physical_inventory_line_item_adjustments",
-        "siglusintegration.stock_card_extension",
-        "siglusintegration.physical_inventory_line_items_extension",
-        "siglusintegration.stock_card_line_items_by_location",
-        "siglusintegration.calculated_stocks_on_hand_by_location",
-        "siglusintegration.stock_card_location_movement_line_items",
-        "referencedata.lots",
-        "siglusintegration.archived_products",
-        "siglusintegration.stock_event_product_requested"
+        "localmachine.backup_database_record"
     };
   }
 
   @Transactional
   @Override
   public void on(List<CdcRecord> records) {
-    eventPublisher.emitNonGroupEvent(new LocalMovementEvent(cdcRecordMapper.buildEvents(records)), STOCK_MOVEMENT);
+    eventPublisher.emitNonGroupEvent(new BackupDatabaseEvent(cdcRecordMapper.buildEvents(records)), BACKUP_DATABASE);
   }
 }
