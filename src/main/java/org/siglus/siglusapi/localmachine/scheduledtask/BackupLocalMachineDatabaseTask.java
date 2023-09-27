@@ -27,6 +27,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.localmachine.Machine;
 import org.siglus.siglusapi.localmachine.domain.BackupDatabaseRecord;
@@ -80,21 +81,35 @@ public class BackupLocalMachineDatabaseTask {
     UUID facilityId = machine.getLocalFacilityId();
     FacilityDto facilityDto = facilityReferenceDataService.findOne(facilityId);
     BackupDatabaseRecord backupRecord = getOrCreateBackupRecord(facilityId, facilityDto);
-    ErrorRecord lastErrorRecord = errorRecordsRepository.findLastErrorRecord();
-    if (lastErrorRecord == null) {
-      log.info("Health, no error record");
-      updateBackupRecordWithHealth(backupRecord);
+    ErrorRecord errorRecord = errorRecordsRepository.findLastErrorRecord();
+    if (errorRecord == null) {
+      handleNoErrorRecord(backupRecord);
       return;
     }
+    handleErrorRecord(backupRecord, facilityDto, errorRecord);
+  }
+
+  private void handleNoErrorRecord(BackupDatabaseRecord backupRecord) {
+    log.info("Health, no error record");
+    deletePreviousBackupFileFromS3(backupRecord);
+    updateBackupRecordWithoutError(backupRecord);
+  }
+
+  private void handleErrorRecord(BackupDatabaseRecord backupRecord, FacilityDto facilityDto,
+      ErrorRecord lastErrorRecord) {
+    log.info("Not health, has error record");
     if (shouldBackupDatabase(backupRecord)) {
+      log.info("Need to backup database");
       String dbDumpFile = generateDbDumpFileName(facilityDto);
       if (dumpDatabaseAndUploadToS3(dbDumpFile)) {
-        log.info("Not health, updateBackupRecordWithError, need to update dbDumpFile");
-        updateBackupRecordWithError(backupRecord, lastErrorRecord, dbDumpFile);
+        deletePreviousBackupFileFromS3(backupRecord);
+        backupRecord.setBackupFile(dbDumpFile);
+        backupRecord.setBackupTime(LocalDateTime.now());
+        updateBackupRecordWithError(backupRecord, lastErrorRecord);
       }
     } else {
-      log.info("Not health, refreshBackupRecordWithError, no need to update dbDumpFile");
-      refreshBackupRecordWithError(backupRecord, lastErrorRecord);
+      log.info("No need to backup database");
+      updateBackupRecordWithError(backupRecord, lastErrorRecord);
     }
   }
 
@@ -109,7 +124,7 @@ public class BackupLocalMachineDatabaseTask {
     return backupRecord;
   }
 
-  private void updateBackupRecordWithHealth(BackupDatabaseRecord backupRecord) {
+  private void updateBackupRecordWithoutError(BackupDatabaseRecord backupRecord) {
     backupRecord.setHealth(true);
     backupRecord.setErrorMessage(null);
     backupRecord.setBackupFile(null);
@@ -119,33 +134,28 @@ public class BackupLocalMachineDatabaseTask {
     backupDatabaseRecordRepository.save(backupRecord);
   }
 
-  private void updateBackupRecordWithError(BackupDatabaseRecord backupRecord, ErrorRecord lastErrorRecord,
-      String backupFile) {
-    if (backupRecord.getBackupFile() != null) {
-      log.info("delete backup file on S3: {}", backupRecord.getBackupFile());
-      s3FileHandler.deleteFileFromS3(S3_FOLDER + backupRecord.getBackupFile());
-    }
-    backupRecord.setBackupFile(backupFile);
-    backupRecord.setBackupTime(LocalDateTime.now());
-    refreshBackupRecordWithError(backupRecord, lastErrorRecord);
-  }
-
-  private void refreshBackupRecordWithError(BackupDatabaseRecord backupRecord, ErrorRecord lastErrorRecord) {
+  private void updateBackupRecordWithError(BackupDatabaseRecord backupRecord, ErrorRecord lastErrorRecord) {
     ErrorPayload errorPayload = errorPayloadRepository.findOne(lastErrorRecord.getErrorPayload().getId());
-    if (errorPayload == null) {
-      return;
+    if (errorPayload != null) {
+      backupRecord.setErrorMessage(lastErrorRecord.getType().name() + " error. " + '\'' + errorPayload);
     }
     backupRecord.setHealth(false);
-    backupRecord.setErrorMessage(lastErrorRecord.getType().name() + " error. " + '\'' + errorPayload);
     backupRecord.setLastUpdateTime(LocalDateTime.now());
     log.info("save BackupDatabaseRecord with error: {}", backupRecord);
     backupDatabaseRecordRepository.save(backupRecord);
   }
 
+  private void deletePreviousBackupFileFromS3(BackupDatabaseRecord backupRecord) {
+    if (!StringUtils.isEmpty(backupRecord.getBackupFile())) {
+      log.info("delete backup file on S3: {}", backupRecord.getBackupFile());
+      s3FileHandler.deleteFileFromS3(S3_FOLDER + backupRecord.getBackupFile());
+    }
+  }
+
   private boolean shouldBackupDatabase(BackupDatabaseRecord backupRecord) {
     return backupRecord == null
         || backupRecord.getBackupTime() == null
-        || backupRecord.getBackupTime().plusDays(BACKUP_DURATION_DAYS).isBefore(LocalDateTime.now());
+        || LocalDateTime.now().isAfter(backupRecord.getBackupTime().plusDays(BACKUP_DURATION_DAYS));
   }
 
   private String generateDbDumpFileName(FacilityDto facilityDto) {
