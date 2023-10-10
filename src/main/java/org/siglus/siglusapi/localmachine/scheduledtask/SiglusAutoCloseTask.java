@@ -13,7 +13,7 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.service.scheduledtask;
+package org.siglus.siglusapi.localmachine.scheduledtask;
 
 import java.util.List;
 import java.util.Set;
@@ -24,15 +24,15 @@ import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.dto.RequisitionWithSupplyingDepotsDto;
 import org.openlmis.requisition.service.RequisitionService;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
+import org.siglus.siglusapi.service.scheduledtask.SiglusRequisitionAutoCloseService;
 import org.springframework.context.annotation.Profile;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 @Profile({"localmachine"})
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class SiglusAutoCloseTaskService {
+public class SiglusAutoCloseTask {
 
   private final SiglusRequisitionAutoCloseService siglusRequisitionAutoCloseService;
 
@@ -40,14 +40,14 @@ public class SiglusAutoCloseTaskService {
 
   private final RequisitionService requisitionService;
 
-  @Scheduled(cron = "${requisition.close.inapproval.cron}", zone = "${time.zoneId}")
+  //@Scheduled(cron = "${requisition.close.inapproval.cron}", zone = "${time.zoneId}")
   public void closeOldInApprovalRequisition() {
     Set<Requisition> requisitions = siglusRequisitionRepository
         .findAllByStatusIn(RequisitionStatus.getAfterInApprovalStatus());
     siglusRequisitionAutoCloseService.closeOldRequisitions(requisitions);
   }
 
-  @Scheduled(cron = "${requisition.close.approved.cron}", zone = "${time.zoneId}")
+  //@Scheduled(cron = "${requisition.close.approved.cron}", zone = "${time.zoneId}")
   public void releaseWithoutOrderForExpiredRequisition() {
     Set<Requisition> requisitions = siglusRequisitionRepository.findAllByStatus(RequisitionStatus.APPROVED);
     List<RequisitionWithSupplyingDepotsDto> dtos =
