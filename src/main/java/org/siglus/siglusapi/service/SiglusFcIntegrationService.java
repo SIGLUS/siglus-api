@@ -73,6 +73,7 @@ import org.siglus.common.repository.ProgramOrderablesExtensionRepository;
 import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
 import org.siglus.siglusapi.constant.FacilityTypeConstants;
 import org.siglus.siglusapi.constant.ProgramConstants;
+import org.siglus.siglusapi.domain.AgeGroupLineItem;
 import org.siglus.siglusapi.domain.OrderLineItemExtension;
 import org.siglus.siglusapi.domain.PatientLineItem;
 import org.siglus.siglusapi.domain.ProgramRealProgram;
@@ -98,11 +99,14 @@ import org.siglus.siglusapi.dto.android.PeriodOfProductMovements;
 import org.siglus.siglusapi.dto.android.StocksOnHand;
 import org.siglus.siglusapi.dto.android.enumeration.MmiaPatientTableColumnKeyValue;
 import org.siglus.siglusapi.dto.android.enumeration.MmiaPatientTableKeyValue;
+import org.siglus.siglusapi.dto.android.enumeration.MmtbPatientTableColumnKeyValue;
+import org.siglus.siglusapi.dto.android.enumeration.MmtbPatientTableKeyValue;
 import org.siglus.siglusapi.dto.android.enumeration.TestProject;
 import org.siglus.siglusapi.dto.android.enumeration.TestService;
 import org.siglus.siglusapi.dto.fc.FacilityStockMovementResponse;
 import org.siglus.siglusapi.dto.fc.FacilityStockOnHandResponse;
 import org.siglus.siglusapi.dto.fc.ProductStockOnHandResponse;
+import org.siglus.siglusapi.repository.AgeGroupLineItemRepository;
 import org.siglus.siglusapi.repository.FacilityNativeRepository;
 import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.PatientLineItemRepository;
@@ -171,6 +175,8 @@ public class SiglusFcIntegrationService {
 
   private final PatientLineItemRepository patientLineItemRepository;
   private final SiglusOrderableService siglusOrderableService;
+
+  private final AgeGroupLineItemRepository ageGroupLineItemRepository;
 
   @Value("${dpm.facilityTypeId}")
   private UUID dpmFacilityTypeId;
@@ -465,6 +471,35 @@ public class SiglusFcIntegrationService {
             patientLineItems.add(patientInfoMap);
           });
       fcRequisitionDto.setPatientLineItems(patientLineItems);
+    } else if (ProgramConstants.MTB_PROGRAM_CODE.equals(fcRequisitionDto.getProgramCode())) {
+
+      List<PatientLineItem> lineItems = patientLineItemRepository.findByRequisitionId(requisition.getId());
+      List<Map<String, Object>> patientLineItems = newArrayList();
+      lineItems.stream()
+          .filter(lineItem -> !StringUtils.isEmpty(MmtbPatientTableKeyValue.findKeyByValue(lineItem.getGroup()))
+              && !StringUtils.isEmpty(MmtbPatientTableColumnKeyValue.valueOf(lineItem.getGroup().toUpperCase())
+              .findKeyByValue(lineItem.getColumn())))
+          .forEach(lineItem -> {
+            Map<String, Object> patientInfoMap = newHashMap();
+            patientInfoMap.put("groupName",
+                removePrefixAndSuffix(MmtbPatientTableKeyValue.findKeyByValue(lineItem.getGroup())));
+            patientInfoMap.put("columnName", removePrefixAndSuffix(
+                MmtbPatientTableColumnKeyValue.valueOf(lineItem.getGroup().toUpperCase())
+                    .findKeyByValue(lineItem.getColumn())));
+            patientInfoMap.put(VALUE, lineItem.getValue());
+            patientLineItems.add(patientInfoMap);
+          });
+
+      List<AgeGroupLineItem> ageGroupLineItems = ageGroupLineItemRepository.findByRequisitionId(
+          requisition.getId());
+      ageGroupLineItems.forEach(lineItem -> {
+        Map<String, Object> patientInfoMap = newHashMap();
+        patientInfoMap.put("groupName", "age_" + lineItem.getGroup());
+        patientInfoMap.put("columnName", lineItem.getService());
+        patientInfoMap.put(VALUE, lineItem.getValue());
+        patientLineItems.add(patientInfoMap);
+        fcRequisitionDto.setPatientLineItems(patientLineItems);
+      });
     }
   }
 
@@ -648,5 +683,4 @@ public class SiglusFcIntegrationService {
     String temp = removeStart(s, "table_");
     return removeEnd(temp, "_key");
   }
-
 }
