@@ -248,7 +248,7 @@ public class FcCreateIssueVoucherService {
       orderDto.setSupplyingFacility(fulfillFacilityDto);
       OrderObjectReferenceDto dto = new OrderObjectReferenceDto(orderDto.getId());
       BeanUtils.copyProperties(orderDto, dto);
-      orderDto.setCreatedDate(issueVoucherDto.getShippingDate());
+      orderDto.setCreatedDate(issueVoucherDto.getIssueDate());
       Iterable<BasicOrderDto> orderDtos = siglusOrderService.createSubOrder(dto,
           getOrderLineItemsDtoInIssue(productMaps, approveProductDtos));
       if (orderDtos.iterator().hasNext()) {
@@ -281,7 +281,7 @@ public class FcCreateIssueVoucherService {
     });
     canFulfillOrder.setSupplyingFacilityId(supplyFacility.getId());
     canFulfillOrder.setOrderLineItems(existLineItems);
-    canFulfillOrder.setCreatedDate(issueVoucherDto.getShippingDate());
+    canFulfillOrder.setCreatedDate(issueVoucherDto.getIssueDate());
     log.info("[FC] save fc order: {}", canFulfillOrder);
     orderRepository.save(canFulfillOrder);
     return canFulfillOrder.getId();
@@ -474,7 +474,7 @@ public class FcCreateIssueVoucherService {
     org.openlmis.requisition.dto.OrderDto order = orderDtoBuilder.build(loadedRequisition, user);
     List<OrderLineItem> items = getOrderLineItems(existProductDtos, approveProductMap, new Order());
     order.setOrderLineItems(convertToOrderLineItemDto(approvedProductDtos, items));
-    order.setCreatedDate(issueVoucherDto.getShippingDate());
+    order.setCreatedDate(issueVoucherDto.getIssueDate());
     orderController.batchCreateOrders(Collections.singletonList(convertOrderDto(order)),
         (OAuth2Authentication) SecurityContextHolder.getContext().getAuthentication());
   }

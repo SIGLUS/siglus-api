@@ -52,4 +52,6 @@ public class IssueVoucherDto extends ResponseBaseDto {
 
   private List<ProductDto> products;
 
+  private ZonedDateTime issueDate;
+
 }

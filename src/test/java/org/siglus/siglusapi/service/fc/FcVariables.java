@@ -27,4 +27,7 @@ public class FcVariables {
 
   public static final ZonedDateTime LAST_UPDATED_AT = ZonedDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneId.systemDefault());
 
+  public static final ZonedDateTime ISSUED_DATE = ZonedDateTime.of(2023, 10, 1, 0, 0, 0, 0, ZoneId.systemDefault());
+
+
 }

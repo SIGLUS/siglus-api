@@ -23,6 +23,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.siglus.siglusapi.service.fc.FcVariables.ISSUED_DATE;
 import static org.siglus.siglusapi.service.fc.FcVariables.LAST_UPDATED_AT;
 import static org.siglus.siglusapi.service.fc.FcVariables.START_DATE;
 import static org.siglus.siglusapi.util.SiglusDateHelper.DATE_MONTH_YEAR;
@@ -469,6 +470,7 @@ public class FcIssueVoucherServiceTest {
     verify(requisitionStatusProcessor).statusChange(requisitionCaptor.capture(), any());
     org.openlmis.fulfillment.web.util.OrderDto saveOrderDto = orderListCaptor.getValue().get(0);
     assertEquals(Long.valueOf(4), saveOrderDto.getOrderLineItems().get(0).getOrderedQuantity());
+    assertEquals(ISSUED_DATE, saveOrderDto.getCreatedDate());
     ShipmentDto shipmentDto1 = shipmentCaptor.getValue();
     assertEquals(Long.valueOf(2), shipmentDto1.getLineItems().get(0).getQuantityShipped());
   }
@@ -561,6 +563,7 @@ public class FcIssueVoucherServiceTest {
     issueVoucherDto.setClientCode("04030101");
     issueVoucherDto.setRequisitionNumber("RNR-NO010906120000192");
     issueVoucherDto.setShippingDate(ZonedDateTime.now());
+    issueVoucherDto.setIssueDate(ISSUED_DATE);
     ProductDto productDto = new ProductDto();
     productDto.setApprovedQuantity(100);
     productDto.setShippedQuantity(50);
