@@ -293,6 +293,8 @@ public class FcCreateIssueVoucherService {
     convertRequisitionToOrder(v2Dto, supplyFacility, convertToRequisitionUserDto(userDto),
         existProductDtos, approvedProductDtos, approveProductMap, issueVoucherDto);
     Order order = orderRepository.findByExternalId(v2Dto.getId());
+    order.setCreatedDate(issueVoucherDto.getIssueDate());
+    orderRepository.save(order);
     return order.getId();
   }
 
