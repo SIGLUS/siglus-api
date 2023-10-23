@@ -322,8 +322,8 @@ public class FcIssueVoucherService implements ProcessDataService {
       BeanUtils.copyProperties(supplyFacility, fulfillFacilityDto);
       orderDto.setSupplyingFacility(fulfillFacilityDto);
       OrderObjectReferenceDto dto = new OrderObjectReferenceDto(orderDto.getId());
-      BeanUtils.copyProperties(orderDto, dto);
       orderDto.setCreatedDate(issueVoucherDto.getIssueDate());
+      BeanUtils.copyProperties(orderDto, dto);
       Iterable<BasicOrderDto> orderDtos = siglusOrderService.createSubOrder(dto,
           getOrderLineItemsDtoInIssue(productMaps, approveProductDtos));
       if (orderDtos.iterator().hasNext()) {
