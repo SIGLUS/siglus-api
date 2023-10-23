@@ -1071,6 +1071,7 @@ public class SiglusOrderService {
     newOrder.setOrderLineItems(orderLineItemDtos);
     newOrder.setStatus(OrderStatus.ORDERED);
     newOrder.setStatusMessages(Collections.emptyList());
+    newOrder.setCreatedDate(order.getCreatedDate());
     Iterable<BasicOrderDto> orderDtos = orderController.batchCreateOrders(Collections.singletonList(newOrder),
         (OAuth2Authentication) SecurityContextHolder.getContext().getAuthentication());
     if (orderDtos.iterator().hasNext()) {
