@@ -1456,7 +1456,7 @@ public class SiglusRequisitionService {
 
   double getCorrectionFactorForMmia(Map<String, Integer> regimenCodeToPatientNumber,
       List<PatientGroupDto> patientGroupDtos) {
-    Integer totalPatients = regimenCodeToPatientNumber.values().stream().reduce(Integer::sum).orElse(0);
+    int totalPatients = regimenCodeToPatientNumber.values().stream().reduce(Integer::sum).orElse(0);
     int totalPatientsInTreatment = 0;
     for (PatientGroupDto patientGroupDto : patientGroupDtos) {
       if (MMIA_SECTIONS.contains(patientGroupDto.getName())) {
@@ -1466,8 +1466,11 @@ public class SiglusRequisitionService {
         totalPatientsInTreatment += patients;
       }
     }
-    totalPatientsInTreatment = Math.max(1, totalPatientsInTreatment);
-    return totalPatients * 1.0 / totalPatientsInTreatment;
+
+    if (totalPatients == 0 || totalPatientsInTreatment == 0) {
+      return 1;
+    }
+    return totalPatientsInTreatment * 1.0 / totalPatients;
   }
 
   Map<String, Integer> getRegimenCodeToPatientNumberForMmia(SiglusRequisitionDto siglusRequisitionDto) {
