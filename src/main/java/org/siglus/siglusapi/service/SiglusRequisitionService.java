@@ -33,9 +33,13 @@ import static org.siglus.common.constant.KitConstants.US_KITS;
 import static org.siglus.siglusapi.constant.ProgramConstants.MTB_PROGRAM_CODE;
 import static org.siglus.siglusapi.constant.ProgramConstants.RAPIDTEST_PROGRAM_CODE;
 import static org.siglus.siglusapi.constant.ProgramConstants.TARV_PROGRAM_CODE;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_COLUMN;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_COLUMN_1;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_COLUMN_4;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_SECTION_2;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_SECTION_3;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_SECTION_4;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.TOTAL_COLUMN;
 import static org.siglus.siglusapi.util.RequisitionUtil.getRequisitionExtraData;
 
 import com.google.common.collect.ImmutableMap;
@@ -150,6 +154,7 @@ import org.siglus.siglusapi.dto.SimpleRequisitionDto;
 import org.siglus.siglusapi.dto.TestConsumptionOutcomeDto;
 import org.siglus.siglusapi.dto.TestConsumptionProjectDto;
 import org.siglus.siglusapi.dto.TestConsumptionServiceDto;
+import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.localmachine.event.requisition.web.finalapprove.RequisitionFinalApproveEmitter;
 import org.siglus.siglusapi.localmachine.event.requisition.web.release.RequisitionReleaseEmitter;
 import org.siglus.siglusapi.repository.FacilityExtensionRepository;
@@ -390,8 +395,7 @@ public class SiglusRequisitionService {
     if (CollectionUtils.isNotEmpty(regimenCodeToPatientNumber.keySet())) {
       regimenOrderables = regimenOrderableRepository.findByRegimenCodeIn(regimenCodeToPatientNumber.keySet());
     }
-    double correctionFactorForMmia = getCorrectionFactorForMmia(regimenCodeToPatientNumber,
-        siglusRequisitionDto.getPatientLineItems());
+    double correctionFactorForMmia = getCorrectionFactorForMmia(siglusRequisitionDto.getPatientLineItems());
     Map<String, List<RegimenOrderable>> orderableCodeToRegimenOrderables =
         getOrderableCodeToRegimenOrderables(regimenOrderables);
     Map<UUID, String> orderableIdToCode = getOrderableIdToCode(lineItems);
@@ -995,8 +999,7 @@ public class SiglusRequisitionService {
     if (CollectionUtils.isNotEmpty(regimenCodeToPatientNumber.keySet())) {
       regimenOrderables = regimenOrderableRepository.findByRegimenCodeIn(regimenCodeToPatientNumber.keySet());
     }
-    double correctionFactorForMmia = getCorrectionFactorForMmia(regimenCodeToPatientNumber,
-        siglusRequisitionDto.getPatientLineItems());
+    double correctionFactorForMmia = getCorrectionFactorForMmia(siglusRequisitionDto.getPatientLineItems());
     Map<String, List<RegimenOrderable>> orderableCodeToRegimenOrderables =
         getOrderableCodeToRegimenOrderables(regimenOrderables);
     Map<UUID, String> orderableIdToCode = getOrderableIdToCode(lineItems);
@@ -1080,8 +1083,7 @@ public class SiglusRequisitionService {
     if (CollectionUtils.isNotEmpty(regimenCodeToPatientNumber.keySet())) {
       regimenOrderables = regimenOrderableRepository.findByRegimenCodeIn(regimenCodeToPatientNumber.keySet());
     }
-    double correctionFactorForMmia = getCorrectionFactorForMmia(regimenCodeToPatientNumber,
-        siglusRequisitionDto.getPatientLineItems());
+    double correctionFactorForMmia = getCorrectionFactorForMmia(siglusRequisitionDto.getPatientLineItems());
     Map<String, List<RegimenOrderable>> orderableCodeToRegimenOrderables =
         getOrderableCodeToRegimenOrderables(regimenOrderables);
     Map<UUID, String> orderableIdToCode = getOrderableIdToCode(lineItems);
@@ -1251,8 +1253,7 @@ public class SiglusRequisitionService {
     if (CollectionUtils.isNotEmpty(regimenCodeToPatientNumber.keySet())) {
       regimenOrderables = regimenOrderableRepository.findByRegimenCodeIn(regimenCodeToPatientNumber.keySet());
     }
-    double correctionFactorForMmia = getCorrectionFactorForMmia(regimenCodeToPatientNumber,
-        siglusRequisitionDto.getPatientLineItems());
+    double correctionFactorForMmia = getCorrectionFactorForMmia(siglusRequisitionDto.getPatientLineItems());
     Map<String, List<RegimenOrderable>> orderableCodeToRegimenOrderables =
         getOrderableCodeToRegimenOrderables(regimenOrderables);
     Map<UUID, String> orderableIdToCode = getOrderableIdToCode(lineItems);
@@ -1454,23 +1455,27 @@ public class SiglusRequisitionService {
     return mappingKeyToPatientNumber;
   }
 
-  double getCorrectionFactorForMmia(Map<String, Integer> regimenCodeToPatientNumber,
-      List<PatientGroupDto> patientGroupDtos) {
-    int totalPatients = regimenCodeToPatientNumber.values().stream().reduce(Integer::sum).orElse(0);
-    int totalPatientsInTreatment = 0;
-    for (PatientGroupDto patientGroupDto : patientGroupDtos) {
-      if (MMIA_SECTIONS.contains(patientGroupDto.getName())) {
-        Map<String, PatientColumnDto> columns = patientGroupDto.getColumns();
-        Integer patients = columns.get(MMIA_COLUMN_TOTAL).getValue();
-        patients = Optional.ofNullable(patients).orElse(0);
-        totalPatientsInTreatment += patients;
-      }
-    }
+  double getCorrectionFactorForMmia(List<PatientGroupDto> patientGroupDtos) {
+    PatientGroupDto dsGroup = patientGroupDtos.stream()
+            .filter(p -> NEW_SECTION_2.equals(p.getName())).findFirst()
+            .orElseThrow(() -> new NotFoundException(NEW_SECTION_2 + " not found"));
+    PatientGroupDto dtGroup = patientGroupDtos.stream()
+            .filter(p -> NEW_SECTION_3.equals(p.getName())).findFirst()
+            .orElseThrow(() -> new NotFoundException(NEW_SECTION_3 + " not found"));
+    PatientGroupDto dmGroup = patientGroupDtos.stream()
+            .filter(p -> NEW_SECTION_4.equals(p.getName())).findFirst()
+            .orElseThrow(() -> new NotFoundException(NEW_SECTION_4 + " not found"));
+    int totalPatients = dsGroup.getColumns().get(TOTAL_COLUMN).getValue()
+            + dtGroup.getColumns().get(TOTAL_COLUMN).getValue()
+            + dmGroup.getColumns().get(TOTAL_COLUMN).getValue();
+    int totalPatientsInThisMonth = dsGroup.getColumns().get(NEW_COLUMN_4).getValue()
+            + dtGroup.getColumns().get(NEW_COLUMN_1).getValue()
+            + dmGroup.getColumns().get(NEW_COLUMN).getValue();
 
-    if (totalPatients == 0 || totalPatientsInTreatment == 0) {
+    if (totalPatients == 0 || totalPatientsInThisMonth == 0) {
       return 1;
     }
-    return totalPatientsInTreatment * 1.0 / totalPatients;
+    return totalPatients * 1.0 / totalPatientsInThisMonth;
   }
 
   Map<String, Integer> getRegimenCodeToPatientNumberForMmia(SiglusRequisitionDto siglusRequisitionDto) {
