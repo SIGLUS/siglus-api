@@ -49,6 +49,13 @@ import static org.openlmis.requisition.domain.requisition.RequisitionStatus.SUBM
 import static org.openlmis.requisition.i18n.MessageKeys.ERROR_NO_FOLLOWING_PERMISSION;
 import static org.openlmis.requisition.service.PermissionService.REQUISITION_AUTHORIZE;
 import static org.openlmis.requisition.service.PermissionService.REQUISITION_CREATE;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_COLUMN;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_COLUMN_1;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_COLUMN_4;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_SECTION_2;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_SECTION_3;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_SECTION_4;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.TOTAL_COLUMN;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -1567,13 +1574,13 @@ public class SiglusRequisitionServiceTest {
   }
 
   @Test
-  @Ignore
   public void shouldCalcEstimatedQuantityDraftForMmia() {
     // given
     RequisitionLineItemV2Dto lineItem1 = new RequisitionLineItemV2Dto();
     List<RequisitionLineItemV2Dto> lineItems = new ArrayList<>();
     lineItems.add(lineItem1);
     siglusRequisitionDto.setRequisitionLineItems(lineItems);
+    siglusRequisitionDto.setPatientLineItems(mockPatientGroupDtoList());
 
     RequisitionDraft requisitionDraft = getRequisitionDraft2(requisitionId);
     // when
@@ -1583,13 +1590,13 @@ public class SiglusRequisitionServiceTest {
   }
 
   @Test
-  @Ignore
   public void shouldCalcRequestedQuantityDraftForMmia() {
     // given
     RequisitionLineItemV2Dto lineItem1 = new RequisitionLineItemV2Dto();
     List<RequisitionLineItemV2Dto> lineItems = new ArrayList<>();
     lineItems.add(lineItem1);
     siglusRequisitionDto.setRequisitionLineItems(lineItems);
+    siglusRequisitionDto.setPatientLineItems(mockPatientGroupDtoList());
 
     RequisitionDraft requisitionDraft = getRequisitionDraft2(requisitionId);
     // when
@@ -1659,13 +1666,13 @@ public class SiglusRequisitionServiceTest {
   }
 
   @Test
-  @Ignore
   public void shouldCalcEstimatedQuantityForMmia() {
     // given
     RequisitionLineItemV2Dto lineItem1 = new RequisitionLineItemV2Dto();
     List<RequisitionLineItemV2Dto> lineItems = new ArrayList<>();
     lineItems.add(lineItem1);
     siglusRequisitionDto.setRequisitionLineItems(lineItems);
+    siglusRequisitionDto.setPatientLineItems(mockPatientGroupDtoList());
 
     List<RequisitionLineItemExtension> extensions = new ArrayList<>();
     // when
@@ -1705,7 +1712,6 @@ public class SiglusRequisitionServiceTest {
   }
 
   @Test
-  @Ignore
   public void shouldCalcRequestedQuantityForMmia() {
     // given
     RequisitionLineItemV2Dto lineItem1 = new RequisitionLineItemV2Dto();
@@ -1718,6 +1724,7 @@ public class SiglusRequisitionServiceTest {
     List<RequisitionLineItemV2Dto> lineItems = new ArrayList<>();
     lineItems.add(lineItem1);
     siglusRequisitionDto.setRequisitionLineItems(lineItems);
+    siglusRequisitionDto.setPatientLineItems(mockPatientGroupDtoList());
 
     Set<RequisitionLineItem> requisitionLineItems = new HashSet<>();
     // when
@@ -1950,22 +1957,12 @@ public class SiglusRequisitionServiceTest {
   }
 
   @Test
-  @Ignore
   public void shouldGetCorrectionFactorForMmia() {
-    RequisitionLineItemV2Dto lineItemV2Dto = new RequisitionLineItemV2Dto();
-    OrderableDto productDto = new OrderableDto();
-    productDto.setId(orderableId);
-    lineItemV2Dto.setId(requisitionLineItemId);
-    lineItemV2Dto.setOrderable(productDto);
-    RegimenOrderable regimenOrderable = mockRegimenOrderable();
-    when(regimenOrderableRepository.findByMappingKeyIn(newHashSet("1"))).thenReturn(newHashSet(regimenOrderable));
-    Map<String, Integer> regimenCodeToPatientNumber = new HashMap<>();
-    regimenCodeToPatientNumber.put(regimenOrderable.getRegimenCode(), 100);
-    PatientGroupDto patientGroupDto = mockPatientGroupDto2();
+    List<PatientGroupDto> patientGroupDtos = mockPatientGroupDtoList();
     // when
-    double correctionFactorForMmia = siglusRequisitionService.getCorrectionFactorForMmia(newArrayList(patientGroupDto));
+    double correctionFactorForMmia = siglusRequisitionService.getCorrectionFactorForMmia(patientGroupDtos);
     // then
-    assertEquals(0.1, correctionFactorForMmia, 0.0);
+    assertEquals(1.69, correctionFactorForMmia, 0.01);
   }
 
   @Test
@@ -1988,7 +1985,6 @@ public class SiglusRequisitionServiceTest {
   }
 
   @Test
-  @Ignore
   public void shouldGetRegimenCodeToPatientNumberForMmia() {
     // given
     siglusRequisitionDto = new SiglusRequisitionDto();
@@ -2000,6 +1996,7 @@ public class SiglusRequisitionServiceTest {
     columns.put("patients", regimenColumnDto);
     regimenLineDto.setColumns(columns);
     siglusRequisitionDto.setRegimenLineItems(newArrayList(regimenLineDto));
+    siglusRequisitionDto.setPatientLineItems(mockPatientGroupDtoList());
     // when
     Map<String, Integer> regimenCodeToPatientNumberForMmia = siglusRequisitionService.getRegimenCodeToPatientNumberForMmia(
         siglusRequisitionDto);
@@ -2008,7 +2005,6 @@ public class SiglusRequisitionServiceTest {
   }
 
   @Test
-  @Ignore
   public void shouldGetRegimenCodeToPatientNumberForMmia2() {
     // given
     siglusRequisitionDto = new SiglusRequisitionDto();
@@ -2019,6 +2015,7 @@ public class SiglusRequisitionServiceTest {
     columns.put("patients", regimenColumnDto);
     regimenLineDto.setColumns(columns);
     siglusRequisitionDto.setRegimenLineItems(newArrayList(regimenLineDto));
+    siglusRequisitionDto.setPatientLineItems(mockPatientGroupDtoList());
     // when
     Map<String, Integer> regimenCodeToPatientNumberForMmia = siglusRequisitionService.getRegimenCodeToPatientNumberForMmia(
         siglusRequisitionDto);
@@ -2089,6 +2086,35 @@ public class SiglusRequisitionServiceTest {
     Set<FacilityDto> set = siglusRequisitionService.mergeSets(set1, set2);
     // then
     assertEquals(0, set.size());
+  }
+
+  private List<PatientGroupDto> mockPatientGroupDtoList() {
+    List<PatientGroupDto> groupDtoList = new ArrayList<>();
+    Map<String, PatientColumnDto> dsColumns = new HashMap<>();
+    PatientColumnDto dsTotalColumn = new PatientColumnDto(null, TOTAL_COLUMN, 0);
+    dsColumns.put(TOTAL_COLUMN, dsTotalColumn);
+    PatientColumnDto ds4Column = new PatientColumnDto(null, NEW_COLUMN_4, 0);
+    dsColumns.put(NEW_COLUMN_4, ds4Column);
+    PatientGroupDto dsGroup = new PatientGroupDto(NEW_SECTION_2, dsColumns);
+    groupDtoList.add(dsGroup);
+
+    Map<String, PatientColumnDto> dtColumns = new HashMap<>();
+    PatientColumnDto dtTotalColumn = new PatientColumnDto(null, TOTAL_COLUMN, 300);
+    dtColumns.put(TOTAL_COLUMN, dtTotalColumn);
+    PatientColumnDto dt1Column = new PatientColumnDto(null, NEW_COLUMN_1, 92);
+    dtColumns.put(NEW_COLUMN_1, dt1Column);
+    PatientGroupDto dtGroup = new PatientGroupDto(NEW_SECTION_3, dtColumns);
+    groupDtoList.add(dtGroup);
+
+    Map<String, PatientColumnDto> dmColumns = new HashMap<>();
+    PatientColumnDto dmTotalColumn = new PatientColumnDto(null, TOTAL_COLUMN, 208);
+    dmColumns.put(TOTAL_COLUMN, dmTotalColumn);
+    PatientColumnDto dmColumn = new PatientColumnDto(null, NEW_COLUMN, 208);
+    dmColumns.put(NEW_COLUMN, dmColumn);
+    PatientGroupDto dmGroup = new PatientGroupDto(NEW_SECTION_4, dmColumns);
+    groupDtoList.add(dmGroup);
+
+    return groupDtoList;
   }
 
   private SiglusRequisitionDto convert(RequisitionV2Dto requisitionV2Dto) {
