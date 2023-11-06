@@ -396,6 +396,7 @@ public class SiglusRequisitionService {
       regimenOrderables = regimenOrderableRepository.findByRegimenCodeIn(regimenCodeToPatientNumber.keySet());
     }
     double correctionFactorForMmia = getCorrectionFactorForMmia(siglusRequisitionDto.getPatientLineItems());
+    log.info("calcRequestedQuantityForMmia: {}", correctionFactorForMmia);
     Map<String, List<RegimenOrderable>> orderableCodeToRegimenOrderables =
         getOrderableCodeToRegimenOrderables(regimenOrderables);
     Map<UUID, String> orderableIdToCode = getOrderableIdToCode(lineItems);
@@ -1068,8 +1069,6 @@ public class SiglusRequisitionService {
     lineItems = lineItems.stream()
         .filter(baseRequisitionLineItemDto -> baseRequisitionLineItemDto.getId() != null)
         .collect(toList());
-    Map<UUID, BaseRequisitionLineItemDto> idToLineItems = lineItems.stream()
-        .collect(toMap(BaseDto::getId, Function.identity()));
 
     List<RequisitionLineItemDraft> lineItemDrafts = requisitionDraft.getLineItems();
     lineItemDrafts.forEach(lineItemDraft -> {
@@ -1084,9 +1083,12 @@ public class SiglusRequisitionService {
       regimenOrderables = regimenOrderableRepository.findByRegimenCodeIn(regimenCodeToPatientNumber.keySet());
     }
     double correctionFactorForMmia = getCorrectionFactorForMmia(siglusRequisitionDto.getPatientLineItems());
+    log.info("calcEstimatedQuantityDraftForMmia: {}", correctionFactorForMmia);
     Map<String, List<RegimenOrderable>> orderableCodeToRegimenOrderables =
         getOrderableCodeToRegimenOrderables(regimenOrderables);
     Map<UUID, String> orderableIdToCode = getOrderableIdToCode(lineItems);
+    Map<UUID, BaseRequisitionLineItemDto> idToLineItems = lineItems.stream()
+            .collect(toMap(BaseDto::getId, Function.identity()));
     lineItemDrafts.forEach(lineItemDraft -> {
       if (lineItemDraft.getRequisitionLineItemId() != null) {
         Integer estimatedQuantity = getQuantityByLineItem(idToLineItems.get(lineItemDraft.getRequisitionLineItemId()),
@@ -1239,8 +1241,6 @@ public class SiglusRequisitionService {
     lineItems = lineItems.stream()
         .filter(baseRequisitionLineItemDto -> baseRequisitionLineItemDto.getId() != null)
         .collect(toList());
-    Map<UUID, BaseRequisitionLineItemDto> idToLineItems = lineItems.stream()
-        .collect(toMap(BaseDto::getId, Function.identity()));
 
     extensions.forEach(extension -> {
       if (extension.getId() == null) {
@@ -1254,9 +1254,12 @@ public class SiglusRequisitionService {
       regimenOrderables = regimenOrderableRepository.findByRegimenCodeIn(regimenCodeToPatientNumber.keySet());
     }
     double correctionFactorForMmia = getCorrectionFactorForMmia(siglusRequisitionDto.getPatientLineItems());
+    log.info("calcEstimatedQuantityForMmia: {}", correctionFactorForMmia);
     Map<String, List<RegimenOrderable>> orderableCodeToRegimenOrderables =
         getOrderableCodeToRegimenOrderables(regimenOrderables);
     Map<UUID, String> orderableIdToCode = getOrderableIdToCode(lineItems);
+    Map<UUID, BaseRequisitionLineItemDto> idToLineItems = lineItems.stream()
+            .collect(toMap(BaseDto::getId, Function.identity()));
     extensions.forEach(extension -> {
       if (extension.getId() != null) {
         Integer estimatedQuantity = getQuantityByLineItem(idToLineItems.get(extension.getRequisitionLineItemId()),
