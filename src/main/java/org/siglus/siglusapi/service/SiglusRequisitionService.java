@@ -35,7 +35,7 @@ import static org.siglus.siglusapi.constant.ProgramConstants.RAPIDTEST_PROGRAM_C
 import static org.siglus.siglusapi.constant.ProgramConstants.TARV_PROGRAM_CODE;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_COLUMN;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_COLUMN_1;
-import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_COLUMN_4;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_COLUMN_3;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_SECTION_2;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_SECTION_3;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_SECTION_4;
@@ -1471,7 +1471,7 @@ public class SiglusRequisitionService {
     int totalPatients = dsGroup.getColumns().get(TOTAL_COLUMN).getValue()
             + dtGroup.getColumns().get(TOTAL_COLUMN).getValue()
             + dmGroup.getColumns().get(TOTAL_COLUMN).getValue();
-    int totalPatientsInThisMonth = dsGroup.getColumns().get(NEW_COLUMN_4).getValue()
+    int totalPatientsInThisMonth = dsGroup.getColumns().get(NEW_COLUMN_3).getValue()
             + dtGroup.getColumns().get(NEW_COLUMN_1).getValue()
             + dmGroup.getColumns().get(NEW_COLUMN).getValue();
 
