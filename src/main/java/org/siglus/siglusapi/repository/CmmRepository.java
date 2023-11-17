@@ -32,7 +32,7 @@ public interface CmmRepository extends JpaRepository<CmmDomain, UUID> {
   List<CmmDomain> findAllByFacilityCodeAndProductCodeInAndQueryDate(String facilityCode,
       Collection<String> productCode, String queryDate);
 
-  @Query(value = "select facilitytype, orderableid, cmm from dashboard.vw_stock_status "
+  @Query(value = "select facilitytype, CAST(orderableid as varchar) orderableid, cmm from dashboard.vw_stock_status "
           + "where facilityid = :facilityId", nativeQuery = true)
   List<StockStatusCmm> findAllByFacilityId(@Param("facilityId") UUID facilityId);
 }

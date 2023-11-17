@@ -424,8 +424,8 @@ public class SiglusRequisitionService {
     if (CollectionUtils.isNotEmpty(stockStatusCmms)) {
       String facilityType = stockStatusCmms.get(0).getFacilityType();
       if (getTopLevelTypes().contains(facilityType)) {
-        Map<UUID, Double> orderableIdToCmm = stockStatusCmms.stream()
-                .collect(toMap(StockStatusCmm::getOrderableId, StockStatusCmm::getCmm));
+        Map<UUID, Double> orderableIdToCmm = stockStatusCmms.stream().collect(
+                toMap(stockStatusCmm -> UUID.fromString(stockStatusCmm.getOrderableId()), StockStatusCmm::getCmm));
         requisitionDto.getRequisitionLineItems().forEach(lineItem -> {
           RequisitionLineItemV2Dto lineItemV2Dto = (RequisitionLineItemV2Dto) lineItem;
           Double cmm = orderableIdToCmm.getOrDefault(lineItemV2Dto.getOrderable().getId(), 0.0);

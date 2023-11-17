@@ -15,12 +15,10 @@
 
 package org.siglus.siglusapi.dto.android.db;
 
-import java.util.UUID;
-
 public interface StockStatusCmm {
   String getFacilityType();
 
-  UUID getOrderableId();
+  String getOrderableId();
 
   Double getCmm();
 }
