@@ -19,7 +19,10 @@ import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 import org.siglus.siglusapi.domain.CmmDomain;
+import org.siglus.siglusapi.dto.android.db.StockStatusCmm;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface CmmRepository extends JpaRepository<CmmDomain, UUID> {
 
@@ -28,4 +31,8 @@ public interface CmmRepository extends JpaRepository<CmmDomain, UUID> {
 
   List<CmmDomain> findAllByFacilityCodeAndProductCodeInAndQueryDate(String facilityCode,
       Collection<String> productCode, String queryDate);
+
+  @Query(value = "select facilitytype, orderableid, cmm from dashboard.vw_stock_status "
+          + "where facilityid = :facilityId", nativeQuery = true)
+  List<StockStatusCmm> findAllByFacilityId(@Param("facilityId") UUID facilityId);
 }

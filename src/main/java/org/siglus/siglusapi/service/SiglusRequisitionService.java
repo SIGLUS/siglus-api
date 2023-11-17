@@ -30,6 +30,7 @@ import static org.openlmis.requisition.i18n.MessageKeys.ERROR_ID_MISMATCH;
 import static org.openlmis.requisition.web.QueryRequisitionSearchParams.REQUISITION_STATUS;
 import static org.siglus.common.constant.KitConstants.APE_KITS;
 import static org.siglus.common.constant.KitConstants.US_KITS;
+import static org.siglus.siglusapi.constant.FacilityTypeConstants.getTopLevelTypes;
 import static org.siglus.siglusapi.constant.ProgramConstants.MTB_PROGRAM_CODE;
 import static org.siglus.siglusapi.constant.ProgramConstants.RAPIDTEST_PROGRAM_CODE;
 import static org.siglus.siglusapi.constant.ProgramConstants.TARV_PROGRAM_CODE;
@@ -154,9 +155,11 @@ import org.siglus.siglusapi.dto.SimpleRequisitionDto;
 import org.siglus.siglusapi.dto.TestConsumptionOutcomeDto;
 import org.siglus.siglusapi.dto.TestConsumptionProjectDto;
 import org.siglus.siglusapi.dto.TestConsumptionServiceDto;
+import org.siglus.siglusapi.dto.android.db.StockStatusCmm;
 import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.localmachine.event.requisition.web.finalapprove.RequisitionFinalApproveEmitter;
 import org.siglus.siglusapi.localmachine.event.requisition.web.release.RequisitionReleaseEmitter;
+import org.siglus.siglusapi.repository.CmmRepository;
 import org.siglus.siglusapi.repository.FacilityExtensionRepository;
 import org.siglus.siglusapi.repository.NotSubmittedMonthlyRequisitionsRepository;
 import org.siglus.siglusapi.repository.OrderableRepository;
@@ -223,6 +226,7 @@ public class SiglusRequisitionService {
   private final SiglusGeneratedNumberService siglusGeneratedNumberService;
   private final ProcessingPeriodRepository processingPeriodRepository;
   private final RequisitionNativeSqlRepository requisitionNativeSqlRepository;
+  private final CmmRepository cmmRepository;
   public static final double DEFAULT_CORRECTION_FACTOR = 1.0;
   public static final int ESTIMATED_QUANTITY_FACTOR = 3;
   public static final int REQUESTED_QUANTITY_FACTOR = 1;
@@ -413,6 +417,27 @@ public class SiglusRequisitionService {
         requisitionLineItems.add(lineItemDtoToEntity(lineItem));
       }
     });
+  }
+
+  public void calcEstimatedQuantityToRequest(RequisitionV2Dto requisitionDto) {
+    List<StockStatusCmm> stockStatusCmms = cmmRepository.findAllByFacilityId(requisitionDto.getFacilityId());
+    if (CollectionUtils.isNotEmpty(stockStatusCmms)) {
+      String facilityType = stockStatusCmms.get(0).getFacilityType();
+      if (getTopLevelTypes().contains(facilityType)) {
+        Map<UUID, Double> orderableIdToCmm = stockStatusCmms.stream()
+                .collect(toMap(StockStatusCmm::getOrderableId, StockStatusCmm::getCmm));
+        requisitionDto.getRequisitionLineItems().forEach(lineItem -> {
+          RequisitionLineItemV2Dto lineItemV2Dto = (RequisitionLineItemV2Dto) lineItem;
+          Double cmm = orderableIdToCmm.getOrDefault(lineItemV2Dto.getOrderable().getId(), 0.0);
+          Integer estimatedQuantityToRequest = (int) (cmm * 5) - lineItem.getStockOnHand();
+          if (estimatedQuantityToRequest > 0) {
+            lineItemV2Dto.setEstimatedQuantityToRequest(estimatedQuantityToRequest);
+          } else {
+            lineItemV2Dto.setEstimatedQuantityToRequest(0);
+          }
+        });
+      }
+    }
   }
 
   public void calcRequestedQuantityForMmit(SiglusRequisitionDto siglusRequisitionDto,
@@ -625,6 +650,7 @@ public class SiglusRequisitionService {
     setAvailableProductsForApprovePage(siglusRequisitionDto);
     setApprovedByInternal(requisitionId, siglusRequisitionDto);
     siglusRequisitionDto.setRequisitionNumber(siglusRequisitionExtensionService.formatRequisitionNumber(requisitionId));
+    calcEstimatedQuantityToRequest(requisitionDto);
     return setIsFinalApproval(siglusRequisitionDto);
   }
 
