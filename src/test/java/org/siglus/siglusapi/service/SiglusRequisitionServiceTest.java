@@ -179,7 +179,7 @@ import org.siglus.siglusapi.dto.TestConsumptionOutcomeDto;
 import org.siglus.siglusapi.dto.TestConsumptionProjectDto;
 import org.siglus.siglusapi.dto.TestConsumptionServiceDto;
 import org.siglus.siglusapi.i18n.MessageService;
-import org.siglus.siglusapi.repository.CmmRepository;
+import org.siglus.siglusapi.repository.FacilityCmmsRepository;
 import org.siglus.siglusapi.repository.FacilityExtensionRepository;
 import org.siglus.siglusapi.repository.NotSubmittedMonthlyRequisitionsRepository;
 import org.siglus.siglusapi.repository.OrderableRepository;
@@ -362,7 +362,7 @@ public class SiglusRequisitionServiceTest {
   private RequisitionNativeSqlRepository requisitionNativeSqlRepository;
 
   @Mock
-  private CmmRepository cmmRepository;
+  private FacilityCmmsRepository facilityCmmsRepository;
 
   //  private final UUID programId = UUID.randomUUID();
   private final UUID programId = UUID.fromString("10845cb9-d365-4aaa-badd-b4fa39c6a26a");

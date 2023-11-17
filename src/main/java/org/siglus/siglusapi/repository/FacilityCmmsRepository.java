@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.UUID;
 import org.siglus.siglusapi.domain.HfCmm;
 import org.siglus.siglusapi.dto.HfCmmCountDto;
+import org.siglus.siglusapi.dto.android.db.StockStatusCmm;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -47,4 +48,12 @@ public interface FacilityCmmsRepository extends JpaRepository<HfCmm, UUID> {
   @Query(name = "HfCmm.findOneHfCmmCountDto", nativeQuery = true)
   List<HfCmmCountDto> findOneFacilityCmmCountDtos(@Param("periodStartDates") List<LocalDate> periodStartDates,
       @Param("facilityCode") String facilityCode);
+
+  @Query(value = "SELECT DISTINCT ON (hc.facilitycode, hc.productcode) "
+          + "hc.facilitycode, "
+          + "hc.productcode, "
+          + "first_value(hc.cmm) OVER (PARTITION BY hc.facilitycode, hc.productcode ORDER BY hc.periodend DESC) AS cmm "
+          + "FROM "
+          + "siglusintegration.hf_cmms hc where facilitycode = :facilityCode", nativeQuery = true)
+  List<StockStatusCmm> findStockStatusCmmByFacilityCode(@Param("facilityCode") String facilityCode);
 }

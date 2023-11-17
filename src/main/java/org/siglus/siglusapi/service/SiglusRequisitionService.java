@@ -159,7 +159,7 @@ import org.siglus.siglusapi.dto.android.db.StockStatusCmm;
 import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.localmachine.event.requisition.web.finalapprove.RequisitionFinalApproveEmitter;
 import org.siglus.siglusapi.localmachine.event.requisition.web.release.RequisitionReleaseEmitter;
-import org.siglus.siglusapi.repository.CmmRepository;
+import org.siglus.siglusapi.repository.FacilityCmmsRepository;
 import org.siglus.siglusapi.repository.FacilityExtensionRepository;
 import org.siglus.siglusapi.repository.NotSubmittedMonthlyRequisitionsRepository;
 import org.siglus.siglusapi.repository.OrderableRepository;
@@ -226,7 +226,7 @@ public class SiglusRequisitionService {
   private final SiglusGeneratedNumberService siglusGeneratedNumberService;
   private final ProcessingPeriodRepository processingPeriodRepository;
   private final RequisitionNativeSqlRepository requisitionNativeSqlRepository;
-  private final CmmRepository cmmRepository;
+  private final FacilityCmmsRepository facilityCmmsRepository;
   public static final double DEFAULT_CORRECTION_FACTOR = 1.0;
   public static final int ESTIMATED_QUANTITY_FACTOR = 3;
   public static final int REQUESTED_QUANTITY_FACTOR = 1;
@@ -420,15 +420,17 @@ public class SiglusRequisitionService {
   }
 
   public void calcEstimatedQuantityToRequest(RequisitionV2Dto requisitionDto) {
-    List<StockStatusCmm> stockStatusCmms = cmmRepository.findAllByFacilityId(requisitionDto.getFacilityId());
-    if (CollectionUtils.isNotEmpty(stockStatusCmms)) {
-      String facilityType = stockStatusCmms.get(0).getFacilityType();
-      if (getTopLevelTypes().contains(facilityType)) {
-        Map<UUID, Double> orderableIdToCmm = stockStatusCmms.stream().collect(
-                toMap(stockStatusCmm -> UUID.fromString(stockStatusCmm.getOrderableId()), StockStatusCmm::getCmm));
+    FacilityDto facilityDto = facilityReferenceDataService.findOne(requisitionDto.getFacilityId());
+    if ((facilityDto != null) && getTopLevelTypes().contains(facilityDto.getType().getCode())) {
+      List<StockStatusCmm> stockStatusCmms = facilityCmmsRepository
+              .findStockStatusCmmByFacilityCode(facilityDto.getCode());
+      if (CollectionUtils.isNotEmpty(stockStatusCmms)) {
+        Map<String, Double> productCodeToCmm = stockStatusCmms.stream().collect(
+                toMap(StockStatusCmm::getProductCode, StockStatusCmm::getCmm));
+        Map<UUID, String> orderableIdToCode = siglusOrderableService.getAllProductIdToCode();
         requisitionDto.getRequisitionLineItems().forEach(lineItem -> {
           RequisitionLineItemV2Dto lineItemV2Dto = (RequisitionLineItemV2Dto) lineItem;
-          Double cmm = orderableIdToCmm.getOrDefault(lineItemV2Dto.getOrderable().getId(), 0.0);
+          Double cmm = productCodeToCmm.getOrDefault(orderableIdToCode.get(lineItemV2Dto.getOrderable().getId()), 0.0);
           Integer estimatedQuantityToRequest = (int) (cmm * 5) - lineItem.getStockOnHand();
           if (estimatedQuantityToRequest > 0) {
             lineItemV2Dto.setEstimatedQuantityToRequest(estimatedQuantityToRequest);

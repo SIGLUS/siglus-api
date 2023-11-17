@@ -16,9 +16,9 @@
 package org.siglus.siglusapi.dto.android.db;
 
 public interface StockStatusCmm {
-  String getFacilityType();
+  String getFacilityCode();
 
-  String getOrderableId();
+  String getProductCode();
 
   Double getCmm();
 }
