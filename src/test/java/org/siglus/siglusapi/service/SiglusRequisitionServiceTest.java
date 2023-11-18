@@ -49,6 +49,7 @@ import static org.openlmis.requisition.domain.requisition.RequisitionStatus.SUBM
 import static org.openlmis.requisition.i18n.MessageKeys.ERROR_NO_FOLLOWING_PERMISSION;
 import static org.openlmis.requisition.service.PermissionService.REQUISITION_AUTHORIZE;
 import static org.openlmis.requisition.service.PermissionService.REQUISITION_CREATE;
+import static org.siglus.siglusapi.constant.ProgramConstants.VIA_PROGRAM_CODE;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_COLUMN;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_COLUMN_1;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_COLUMN_3;
@@ -67,6 +68,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
@@ -491,6 +493,7 @@ public class SiglusRequisitionServiceTest {
   public void prepare() {
     siglusRequisitionDto = new SiglusRequisitionDto();
     BeanUtils.copyProperties(requisitionV2Dto, siglusRequisitionDto);
+    when(siglusProgramService.getProgramByCode(VIA_PROGRAM_CODE)).thenReturn(Optional.of(createProgramDto()));
     when(siglusUsageReportService.searchUsageReport(any())).thenReturn(siglusRequisitionDto);
     when(siglusRequisitionRequisitionService.searchRequisition(requisitionId)).thenReturn(requisitionV2Dto);
     when(requisitionV2Controller.getRequisition(requisitionId, response)).thenReturn(requisitionV2Dto);

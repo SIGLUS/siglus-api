@@ -34,6 +34,7 @@ import static org.siglus.siglusapi.constant.FacilityTypeConstants.getTopLevelTyp
 import static org.siglus.siglusapi.constant.ProgramConstants.MTB_PROGRAM_CODE;
 import static org.siglus.siglusapi.constant.ProgramConstants.RAPIDTEST_PROGRAM_CODE;
 import static org.siglus.siglusapi.constant.ProgramConstants.TARV_PROGRAM_CODE;
+import static org.siglus.siglusapi.constant.ProgramConstants.VIA_PROGRAM_CODE;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_COLUMN;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_COLUMN_1;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_COLUMN_3;
@@ -254,6 +255,8 @@ public class SiglusRequisitionService {
   private final RequisitionFinalApproveEmitter requisitionFinalApproveEmitter;
 
   private final SiglusAuthenticationHelper authHelper;
+
+  private final SiglusProgramService siglusProgramService;
   private final Map<String, BiConsumer<SiglusRequisitionDto, Set<RequisitionLineItem>>> programToRequestedQuantity =
       ImmutableMap.<String, BiConsumer<SiglusRequisitionDto, Set<RequisitionLineItem>>>builder()
           .put(MTB_PROGRAM_CODE, this::calcRequestedQuantityForMmtb)
@@ -420,24 +423,30 @@ public class SiglusRequisitionService {
   }
 
   public void calcEstimatedQuantityToRequest(RequisitionV2Dto requisitionDto) {
-    FacilityDto facilityDto = facilityReferenceDataService.findOne(requisitionDto.getFacilityId());
-    if ((facilityDto != null) && getTopLevelTypes().contains(facilityDto.getType().getCode())) {
-      List<StockStatusCmm> stockStatusCmms = facilityCmmsRepository
-              .findStockStatusCmmByFacilityCode(facilityDto.getCode());
-      if (CollectionUtils.isNotEmpty(stockStatusCmms)) {
-        Map<String, Double> productCodeToCmm = stockStatusCmms.stream().collect(
-                toMap(StockStatusCmm::getProductCode, StockStatusCmm::getCmm));
-        Map<UUID, String> orderableIdToCode = siglusOrderableService.getAllProductIdToCode();
-        requisitionDto.getRequisitionLineItems().forEach(lineItem -> {
-          RequisitionLineItemV2Dto lineItemV2Dto = (RequisitionLineItemV2Dto) lineItem;
-          Double cmm = productCodeToCmm.getOrDefault(orderableIdToCode.get(lineItemV2Dto.getOrderable().getId()), 0.0);
-          Integer estimatedQuantityToRequest = (int) (cmm * 5) - lineItem.getStockOnHand();
-          if (estimatedQuantityToRequest > 0) {
-            lineItemV2Dto.setEstimatedQuantityToRequest(estimatedQuantityToRequest);
-          } else {
-            lineItemV2Dto.setEstimatedQuantityToRequest(0);
-          }
-        });
+    UUID viaProgramId = siglusProgramService.getProgramByCode(VIA_PROGRAM_CODE)
+            .orElseThrow(() -> new NotFoundException("VIA program not found"))
+            .getId();
+    if (viaProgramId.equals(requisitionDto.getProgramId())) {
+      FacilityDto facilityDto = facilityReferenceDataService.findOne(requisitionDto.getFacilityId());
+      if ((facilityDto != null) && getTopLevelTypes().contains(facilityDto.getType().getCode())) {
+        List<StockStatusCmm> stockStatusCmms = facilityCmmsRepository
+                .findStockStatusCmmByFacilityCode(facilityDto.getCode());
+        if (CollectionUtils.isNotEmpty(stockStatusCmms)) {
+          Map<String, Double> productCodeToCmm = stockStatusCmms.stream().collect(
+                  toMap(StockStatusCmm::getProductCode, StockStatusCmm::getCmm));
+          Map<UUID, String> orderableIdToCode = siglusOrderableService.getAllProductIdToCode();
+          requisitionDto.getRequisitionLineItems().forEach(lineItem -> {
+            RequisitionLineItemV2Dto lineItemV2Dto = (RequisitionLineItemV2Dto) lineItem;
+            Double cmm = productCodeToCmm
+                    .getOrDefault(orderableIdToCode.get(lineItemV2Dto.getOrderable().getId()), 0.0);
+            Integer estimatedQuantityToRequest = (int) (cmm * 5) - lineItem.getStockOnHand();
+            if (estimatedQuantityToRequest > 0) {
+              lineItemV2Dto.setEstimatedQuantityToRequest(estimatedQuantityToRequest);
+            } else {
+              lineItemV2Dto.setEstimatedQuantityToRequest(0);
+            }
+          });
+        }
       }
     }
   }
