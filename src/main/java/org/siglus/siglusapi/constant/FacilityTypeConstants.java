@@ -50,6 +50,8 @@ public class FacilityTypeConstants {
 
   public static final String AI = "AI";
 
+  public static final String ODF = "ODF";
+
   public static final String AC = "AC";
 
   public static final String CENTRAL = "Central";
@@ -59,7 +61,7 @@ public class FacilityTypeConstants {
   }
 
   public static Set<String> getTopLevelTypes() {
-    return Stream.of(DPM, AI, HC).collect(Collectors.toSet());
+    return Stream.of(DPM, AI, HC, ODF).collect(Collectors.toSet());
   }
 
   public static Set<String> getVirtualFacilityTypes() {

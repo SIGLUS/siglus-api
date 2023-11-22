@@ -25,6 +25,7 @@ import static org.siglus.common.constant.ProgramConstants.MALARIA_PROGRAM_CODE;
 import static org.siglus.common.constant.ProgramConstants.MTB_PROGRAM_CODE;
 import static org.siglus.common.constant.ProgramConstants.RAPIDTEST_PROGRAM_CODE;
 import static org.siglus.common.constant.ProgramConstants.TARV_PROGRAM_CODE;
+import static org.siglus.siglusapi.constant.FacilityTypeConstants.ODF;
 import static org.siglus.siglusapi.constant.FieldConstants.CONSUMED;
 
 import java.time.LocalDate;
@@ -189,7 +190,7 @@ public class SiglusUsageReportService {
 
   public boolean isSupplyFacilityType(UUID facilityId) {
     String facilityTypeCode = facilityReferenceDataService.findOne(facilityId).getType().getCode();
-    return Arrays.asList(DPM, AI).contains(facilityTypeCode);
+    return Arrays.asList(DPM, AI, ODF).contains(facilityTypeCode);
   }
 
   private void updateKitUsageLineItem(SiglusRequisitionDto requisitionDto, SiglusRequisitionDto updatedDto) {
