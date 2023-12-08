@@ -1505,12 +1505,22 @@ public class SiglusRequisitionService {
     PatientGroupDto dmGroup = patientGroupDtos.stream()
             .filter(p -> NEW_SECTION_4.equals(p.getName())).findFirst()
             .orElseThrow(() -> new NotFoundException(NEW_SECTION_4 + " not found"));
-    int totalPatients = dsGroup.getColumns().get(TOTAL_COLUMN).getValue()
-            + dtGroup.getColumns().get(TOTAL_COLUMN).getValue()
-            + dmGroup.getColumns().get(TOTAL_COLUMN).getValue();
-    int totalPatientsInThisMonth = dsGroup.getColumns().get(NEW_COLUMN_3).getValue()
-            + dtGroup.getColumns().get(NEW_COLUMN_1).getValue()
-            + dmGroup.getColumns().get(NEW_COLUMN).getValue();
+
+    Integer dsTotal = dsGroup.getColumns().get(TOTAL_COLUMN).getValue();
+    Integer dtTotal = dtGroup.getColumns().get(TOTAL_COLUMN).getValue();
+    Integer dmTotal = dmGroup.getColumns().get(TOTAL_COLUMN).getValue();
+    if (dsTotal == null || dtTotal == null || dmTotal == null) {
+      return 1;
+    }
+    int totalPatients = dsTotal + dtTotal + dmTotal;
+
+    Integer dsColumn3 = dsGroup.getColumns().get(NEW_COLUMN_3).getValue();
+    Integer dtColumn1 = dtGroup.getColumns().get(NEW_COLUMN_1).getValue();
+    Integer dmColumn = dmGroup.getColumns().get(NEW_COLUMN).getValue();
+    if (dsColumn3 == null || dtColumn1 == null || dmColumn == null) {
+      return 1;
+    }
+    int totalPatientsInThisMonth = dsColumn3 + dtColumn1 + dmColumn;
 
     if (totalPatients == 0 || totalPatientsInThisMonth == 0) {
       return 1;
