@@ -18,8 +18,10 @@ package org.siglus.siglusapi.service.client;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -100,14 +102,14 @@ public class SiglusLotReferenceDataService extends BaseReferenceDataService<LotD
     if (org.apache.commons.collections.CollectionUtils.isEmpty(lotDtos)) {
       return;
     }
-    final List<org.openlmis.referencedata.dto.LotDto> lotDtoRequests = new ArrayList<>();
+    final Set<org.openlmis.referencedata.dto.LotDto> lotDtoRequests = new HashSet<>();
     lotDtos.forEach(lotDto -> {
       final org.openlmis.referencedata.dto.LotDto lotDtoRequestItem = new org.openlmis.referencedata.dto.LotDto();
       BeanUtils.copyProperties(lotDto, lotDtoRequestItem);
 
       lotDtoRequests.add(lotDtoRequestItem);
     });
-    lotController.batchCreateNewLot(lotDtoRequests);
+    lotController.batchCreateNewLot(new ArrayList<>(lotDtoRequests));
   }
 
   public List<LotDto> findByIds(Collection<UUID> ids) {
