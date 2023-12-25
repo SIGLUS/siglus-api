@@ -92,7 +92,7 @@ public class CalculateCmmServiceTest {
     when(siglusFacilityRepository.findAllWebFacility()).thenReturn(buildMockFacilities());
 
     // when
-    calculateCmmService.calculateAllWebCmm(null);
+    calculateCmmService.calculateAllWebCmm(now);
 
     // then
     verify(facilityCmmsRepository).save(anyList());
@@ -130,7 +130,7 @@ public class CalculateCmmServiceTest {
         buildMockHfCmmCountDtos());
 
     // when
-    calculateCmmService.calculateOneFacilityCmm(null, facilityId);
+    calculateCmmService.calculateOneFacilityCmm(now, facilityId);
 
     // then
     verify(facilityCmmsRepository).save(anyList());
