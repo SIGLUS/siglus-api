@@ -248,6 +248,7 @@ public class FcCreateIssueVoucherService {
       orderDto.setSupplyingFacility(fulfillFacilityDto);
       OrderObjectReferenceDto dto = new OrderObjectReferenceDto(orderDto.getId());
       orderDto.setCreatedDate(issueVoucherDto.getIssueDate());
+      orderDto.setOrderCode(issueVoucherDto.getIssueVoucherNumber());
       BeanUtils.copyProperties(orderDto, dto);
       Iterable<BasicOrderDto> orderDtos = siglusOrderService.createSubOrder(dto,
           getOrderLineItemsDtoInIssue(productMaps, approveProductDtos));
@@ -282,6 +283,7 @@ public class FcCreateIssueVoucherService {
     canFulfillOrder.setSupplyingFacilityId(supplyFacility.getId());
     canFulfillOrder.setOrderLineItems(existLineItems);
     canFulfillOrder.setCreatedDate(issueVoucherDto.getIssueDate());
+    canFulfillOrder.setOrderCode(issueVoucherDto.getIssueVoucherNumber());
     log.info("[FC] save fc order: {}", canFulfillOrder);
     orderRepository.save(canFulfillOrder);
     return canFulfillOrder.getId();
@@ -294,6 +296,7 @@ public class FcCreateIssueVoucherService {
         existProductDtos, approvedProductDtos, approveProductMap, issueVoucherDto);
     Order order = orderRepository.findByExternalId(v2Dto.getId());
     order.setCreatedDate(issueVoucherDto.getIssueDate());
+    order.setOrderCode(issueVoucherDto.getIssueVoucherNumber());
     orderRepository.save(order);
     return order.getId();
   }
@@ -477,6 +480,7 @@ public class FcCreateIssueVoucherService {
     List<OrderLineItem> items = getOrderLineItems(existProductDtos, approveProductMap, new Order());
     order.setOrderLineItems(convertToOrderLineItemDto(approvedProductDtos, items));
     order.setCreatedDate(issueVoucherDto.getIssueDate());
+    order.setOrderCode(issueVoucherDto.getIssueVoucherNumber());
     orderController.batchCreateOrders(Collections.singletonList(convertOrderDto(order)),
         (OAuth2Authentication) SecurityContextHolder.getContext().getAuthentication());
   }

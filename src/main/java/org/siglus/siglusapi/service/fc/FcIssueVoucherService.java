@@ -323,6 +323,7 @@ public class FcIssueVoucherService implements ProcessDataService {
       orderDto.setSupplyingFacility(fulfillFacilityDto);
       OrderObjectReferenceDto dto = new OrderObjectReferenceDto(orderDto.getId());
       orderDto.setCreatedDate(issueVoucherDto.getIssueDate());
+      orderDto.setOrderCode(issueVoucherDto.getIssueVoucherNumber());
       BeanUtils.copyProperties(orderDto, dto);
       Iterable<BasicOrderDto> orderDtos = siglusOrderService.createSubOrder(dto,
           getOrderLineItemsDtoInIssue(productMaps, approveProductDtos));
@@ -357,6 +358,7 @@ public class FcIssueVoucherService implements ProcessDataService {
     canFulfillOrder.setSupplyingFacilityId(supplyFacility.getId());
     canFulfillOrder.setOrderLineItems(existLineItems);
     canFulfillOrder.setCreatedDate(issueVoucherDto.getIssueDate());
+    canFulfillOrder.setOrderCode(issueVoucherDto.getIssueVoucherNumber());
     log.info("[FC] save fc order: {}", canFulfillOrder);
     orderRepository.save(canFulfillOrder);
     return canFulfillOrder.getId();
@@ -550,6 +552,7 @@ public class FcIssueVoucherService implements ProcessDataService {
     List<OrderLineItem> items = getOrderLineItems(existProductDtos, approveProductMap, new Order());
     order.setOrderLineItems(convertToOrderLineItemDto(approvedProductDtos, items));
     order.setCreatedDate(issueVoucherDto.getIssueDate());
+    order.setOrderCode(issueVoucherDto.getIssueVoucherNumber());
     orderController.batchCreateOrders(Collections.singletonList(convertOrderDto(order)),
         (OAuth2Authentication) SecurityContextHolder.getContext().getAuthentication());
   }
