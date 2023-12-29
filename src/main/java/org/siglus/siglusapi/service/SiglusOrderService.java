@@ -104,6 +104,7 @@ import org.siglus.common.repository.OrderExternalRepository;
 import org.siglus.common.repository.ProcessingPeriodExtensionRepository;
 import org.siglus.siglusapi.domain.LocalIssueVoucher;
 import org.siglus.siglusapi.domain.OrderLineItemExtension;
+import org.siglus.siglusapi.domain.ShipmentsExtension;
 import org.siglus.siglusapi.dto.FulfillOrderDto;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.dto.OrderStatusDto;
@@ -113,6 +114,7 @@ import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.OrderableRepository;
 import org.siglus.siglusapi.repository.PodSubDraftRepository;
+import org.siglus.siglusapi.repository.ShipmentsExtensionRepository;
 import org.siglus.siglusapi.repository.SiglusFacilityRepository;
 import org.siglus.siglusapi.repository.SiglusLocalIssueVoucherRepository;
 import org.siglus.siglusapi.repository.SiglusOrdersRepository;
@@ -254,6 +256,9 @@ public class SiglusOrderService {
   @Autowired
   private SiglusShipmentRepository siglusShipmentRepository;
 
+  @Autowired
+  private ShipmentsExtensionRepository shipmentsExtensionRepository;
+
   private static final String SLASH = "/";
 
   private static final List<String> REQUISITION_STATUS_AFTER_FINAL_APPROVED = Lists.newArrayList(
@@ -311,9 +316,29 @@ public class SiglusOrderService {
       response.setCanCreateLocalIssueVoucher(isConsistent);
       response.setCanDeleteLocalIssueVoucher(canDeleteLocalIssueVoucher);
     }
+    setIssueVoucherNumber(basicOrderExtensionResponses);
     Sort orders = new Sort("local", "status", "createdDate");
     PageRequest pageRequest = new PageRequest(pageable.getPageNumber(), pageable.getPageSize(), orders);
     return new PageImpl<>(basicOrderExtensionResponses, pageRequest, basicOrderDtoPage.getTotalElements());
+  }
+
+  private void setIssueVoucherNumber(List<BasicOrderExtensionResponse> orderExtensionResponses) {
+    Set<UUID> orderIds = orderExtensionResponses.stream().map(BasicOrderExtensionResponse::getId).collect(toSet());
+    List<Shipment> shipments = siglusShipmentRepository.findAllByOrderIdIn(orderIds);
+    Set<UUID> shipmentIds = shipments.stream().map(Shipment::getId).collect(toSet());
+    Map<UUID, String> shipmenIdToIssueVoucherNumberMap =
+            shipmentsExtensionRepository.findByShipmentIdIn(shipmentIds).stream()
+                    .collect(toMap(ShipmentsExtension::getShipmentId, ShipmentsExtension::getIssueVoucherNumber));
+
+    for (BasicOrderExtensionResponse response : orderExtensionResponses) {
+      Optional<Shipment> optional = shipments.stream()
+              .filter(shipment -> response.getId().equals(shipment.getOrder().getId())).findFirst();
+      if (optional.isPresent()) {
+        UUID shipmentId = optional.get().getId();
+        response.setIssueVoucherNumber(shipmenIdToIssueVoucherNumberMap.get(shipmentId));
+      }
+    }
+
   }
 
   private List<BasicOrderExtensionResponse> getElectronicBasicOrderExtensionResponses(

@@ -28,4 +28,6 @@ public class BasicOrderExtensionResponse extends BasicOrderDto {
   private boolean canDeleteLocalIssueVoucher;
 
   private boolean hasSubDraft;
+
+  private String issueVoucherNumber;
 }
