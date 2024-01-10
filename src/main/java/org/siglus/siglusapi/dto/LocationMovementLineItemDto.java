@@ -82,6 +82,7 @@ import lombok.Data;
             + "    when pilia.id is null and phi.id is not null then 0\n"
             + "    else scli.quantity\n"
             + "  end as quantity ,\n"
+            + "  scli.quantity as lineItemQuantity,\n"
             + "  scli.occurreddate ,\n"
             + "  scli.processeddate ,\n"
             + "  scli.signature\n"
@@ -145,6 +146,7 @@ import lombok.Data;
             + "end as area,\n"
             + "null as documentnumber,\n"
             + "sclmli.quantity ,\n"
+            + "sclmli.quantity as lineItemQuantity,\n"
             + "sclmli.occurreddate ,\n"
             + "sclmli.processeddate ,\n"
             + "sclmli.signature\n"
@@ -171,6 +173,7 @@ import lombok.Data;
                     @ColumnResult(name = "area", type = String.class),
                     @ColumnResult(name = "documentNumber", type = String.class),
                     @ColumnResult(name = "quantity", type = Integer.class),
+                    @ColumnResult(name = "lineItemQuantity", type = Integer.class),
                     @ColumnResult(name = "occurredDate", type = LocalDate.class),
                     @ColumnResult(name = "processedDate", type = ZonedDateTime.class),
                     @ColumnResult(name = "signature", type = String.class)
@@ -191,13 +194,14 @@ public class LocationMovementLineItemDto {
   private String area;
   private String documentNumber;
   private Integer quantity;
+  private Integer lineItemQuantity;
   private LocalDate occurredDate;
   private ZonedDateTime processedDate;
   private String signature;
   private Integer soh;
 
   public LocationMovementLineItemDto(String adjustment, String source, String destination, String reasonCategory,
-      String reasonType, String locationCode, String area, String documentNumber, Integer quantity,
+      String reasonType, String locationCode, String area, String documentNumber, Integer quantity, Integer lineItemQuantity,
       LocalDate occurredDate, ZonedDateTime processedDate, String signature) {
     this.adjustment = adjustment;
     this.source = source;
@@ -208,6 +212,7 @@ public class LocationMovementLineItemDto {
     this.area = area;
     this.documentNumber = documentNumber;
     this.quantity = quantity;
+    this.lineItemQuantity = lineItemQuantity;
     this.occurredDate = occurredDate;
     this.processedDate = processedDate;
     this.signature = signature;

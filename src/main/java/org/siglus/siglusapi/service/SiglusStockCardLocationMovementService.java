@@ -167,7 +167,8 @@ public class SiglusStockCardLocationMovementService {
       locationMovementLineItemDto.setQuantity(Math.abs(locationMovementLineItemDto.getQuantity()));
       switch (locationMovementLineItemDto.getReasonCategory()) {
         case INVENTORY:
-          soh += quantity;
+          soh = locationMovementLineItemDto.getLineItemQuantity();
+          locationMovementLineItemDto.setQuantity(locationMovementLineItemDto.getLineItemQuantity());
           break;
         case CAPITAL_ISSUE:
           soh -= quantity;
