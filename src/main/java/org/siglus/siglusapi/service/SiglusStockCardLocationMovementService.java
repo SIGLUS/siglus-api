@@ -159,38 +159,39 @@ public class SiglusStockCardLocationMovementService {
       productLocationMovement.addAll(stockMovementWithLocation);
     }
     List<LocationMovementLineItemDto> locationMovementLineItemDtos = productLocationMovement.stream()
-        .sorted(Comparator.comparing(LocationMovementLineItemDto::getProcessedDate).reversed()).collect(
+        .sorted(Comparator.comparing(LocationMovementLineItemDto::getProcessedDate)).collect(
             Collectors.toList());
-    Integer latestSoh = calculatedStockOnHandByLocationRepository.findRecentlySohByStockCardIdAndLocationCode(
-        stockCardId, locationCode).orElse(0);
-    Integer soh = latestSoh;
+    Integer soh = 0;
     for (LocationMovementLineItemDto locationMovementLineItemDto : locationMovementLineItemDtos) {
       Integer quantity = locationMovementLineItemDto.getQuantity();
-      locationMovementLineItemDto.setSoh(soh);
       locationMovementLineItemDto.setQuantity(Math.abs(locationMovementLineItemDto.getQuantity()));
       switch (locationMovementLineItemDto.getReasonCategory()) {
         case INVENTORY:
-          soh -= quantity;
-          break;
-        case CAPITAL_ISSUE:
           soh += quantity;
           break;
-        case CAPITAL_RECEIVE:
+        case CAPITAL_ISSUE:
           soh -= quantity;
+          break;
+        case CAPITAL_RECEIVE:
+          soh += quantity;
           break;
         case CAPITAL_ADJUSTMENT:
           if (locationMovementLineItemDto.getReasonType().equals(ReasonType.DEBIT.name())) {
-            soh += quantity;
+            soh -= quantity;
           }
           if (locationMovementLineItemDto.getReasonType().equals(ReasonType.CREDIT.name())) {
-            soh -= quantity;
+            soh += quantity;
           }
           break;
         default:
           break;
       }
+      locationMovementLineItemDto.setSoh(soh);
     }
+    Collections.reverse(locationMovementLineItemDtos);
     resetFirstMovementQuantity(locationMovementLineItemDtos);
+    Integer latestSoh = calculatedStockOnHandByLocationRepository.findRecentlySohByStockCardIdAndLocationCode(
+            stockCardId, locationCode).orElse(0);
     return createLocationMovmentDto(locationMovementLineItemDtos, stockCardId, latestSoh, locationCode);
   }
 
