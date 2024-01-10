@@ -366,6 +366,7 @@ public class SiglusStockCardLocationMovementServiceTest {
     locationMovementLineItemDto1.setLocationCode("BA01B");
     locationMovementLineItemDto1.setArea("Armazem Princip1");
     locationMovementLineItemDto1.setQuantity(5);
+    locationMovementLineItemDto1.setLineItemQuantity(5);
     locationMovementLineItemDto1.setOccurredDate(LocalDate.of(2022, 8, 30));
     locationMovementLineItemDto1.setProcessedDate(ZonedDateTime.now());
     locationMovementLineItemDto1.setSoh(10);
@@ -376,6 +377,7 @@ public class SiglusStockCardLocationMovementServiceTest {
     locationMovementLineItemDto2.setLocationCode("BA098");
     locationMovementLineItemDto2.setArea("Armazem Prncipal");
     locationMovementLineItemDto2.setQuantity(5);
+    locationMovementLineItemDto2.setLineItemQuantity(5);
     locationMovementLineItemDto2.setOccurredDate(LocalDate.of(2022, 8, 30));
     locationMovementLineItemDto2.setProcessedDate(ZonedDateTime.now());
     locationMovementLineItemDto2.setSoh(10);
@@ -384,6 +386,7 @@ public class SiglusStockCardLocationMovementServiceTest {
     locationMovementLineItemDto3.setLocationCode("BA01D");
     locationMovementLineItemDto3.setArea("Armazem Principal");
     locationMovementLineItemDto3.setQuantity(5);
+    locationMovementLineItemDto3.setLineItemQuantity(10);
     locationMovementLineItemDto3.setOccurredDate(LocalDate.of(2022, 8, 30));
     locationMovementLineItemDto3.setProcessedDate(ZonedDateTime.now());
     locationMovementLineItemDto3.setSoh(10);
@@ -393,6 +396,7 @@ public class SiglusStockCardLocationMovementServiceTest {
     locationMovementLineItemDto4.setLocationCode("BA01D");
     locationMovementLineItemDto4.setArea("Armazem Principal");
     locationMovementLineItemDto4.setQuantity(5);
+    locationMovementLineItemDto4.setLineItemQuantity(5);
     locationMovementLineItemDto4.setOccurredDate(LocalDate.of(2022, 8, 30));
     locationMovementLineItemDto4.setProcessedDate(ZonedDateTime.now());
     locationMovementLineItemDto4.setSoh(10);
@@ -402,6 +406,7 @@ public class SiglusStockCardLocationMovementServiceTest {
     locationMovementLineItemDto5.setLocationCode("BA01D");
     locationMovementLineItemDto5.setArea("Armazem Principal");
     locationMovementLineItemDto5.setQuantity(5);
+    locationMovementLineItemDto5.setLineItemQuantity(5);
     locationMovementLineItemDto5.setOccurredDate(LocalDate.of(2022, 8, 30));
     locationMovementLineItemDto5.setProcessedDate(ZonedDateTime.now());
     locationMovementLineItemDto5.setSoh(10);

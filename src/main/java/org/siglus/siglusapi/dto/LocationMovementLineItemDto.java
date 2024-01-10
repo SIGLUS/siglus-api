@@ -201,8 +201,8 @@ public class LocationMovementLineItemDto {
   private Integer soh;
 
   public LocationMovementLineItemDto(String adjustment, String source, String destination, String reasonCategory,
-      String reasonType, String locationCode, String area, String documentNumber, Integer quantity, Integer lineItemQuantity,
-      LocalDate occurredDate, ZonedDateTime processedDate, String signature) {
+      String reasonType, String locationCode, String area, String documentNumber, Integer quantity,
+      Integer lineItemQuantity, LocalDate occurredDate, ZonedDateTime processedDate, String signature) {
     this.adjustment = adjustment;
     this.source = source;
     this.destination = destination;
