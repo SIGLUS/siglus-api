@@ -46,6 +46,7 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.openlmis.fulfillment.domain.BaseEntity;
 import org.openlmis.fulfillment.domain.ProofOfDelivery;
@@ -137,6 +138,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @SuppressWarnings("PMD.TooManyMethods")
@@ -248,6 +250,7 @@ public class SiglusFcIntegrationService {
     FacilityStockOnHandResponse response = new FacilityStockOnHandResponse();
     response.setCode(facility.getCode());
     response.setName(facility.getName());
+    log.info("toStockOnHandResponse facility id: {}", facility.getId());
     StocksOnHand stocksOnHand = stockManagementRepository.getStockOnHand(facility.getId(), at);
     List<ProductStockOnHandResponse> products = lotOnHandMapper.toResponses(stocksOnHand).stream()
         .filter(resp -> !resp.getLots().isEmpty() || KitConstants.isKit(resp.getProductCode()))
