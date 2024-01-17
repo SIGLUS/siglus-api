@@ -300,6 +300,7 @@ public class RequisitionReportTaskService {
       List<FacillityStockCardDateDto> firstStockCardGroupByFacility
           = facilityNativeRepository.findFirstStockCardGroupByFacility();
       firstStockCardGroupByFacility.addAll(findMalariaFacilityStockCardDate(allProgramDto));
+      firstStockCardGroupByFacility.addAll(findMmcFacilityStockCardDate(allProgramDto));
       return firstStockCardGroupByFacility;
     }
 
@@ -320,6 +321,28 @@ public class RequisitionReportTaskService {
           facilityNativeRepository.findMalariaFirstStockCardGroupByFacility(malariaAdditionalOrderableIds,
               viaProgram.get().getId());
       result.forEach(facilityStockCardDateDto -> facilityStockCardDateDto.setProgramId(malariaProgram.get().getId()));
+      return result;
+    }
+
+    private List<FacillityStockCardDateDto> findMmcFacilityStockCardDate(List<ProgramDto> allProgramDto) {
+      Optional<ProgramDto> mmcProgram =
+              allProgramDto.stream()
+                      .filter(item -> ProgramConstants.MMC_PROGRAM_CODE.equals(item.getCode())).findFirst();
+      Optional<ProgramDto> viaProgram =
+              allProgramDto.stream().filter(item -> ProgramConstants.VIA_PROGRAM_CODE.equals(item.getCode()))
+                      .findFirst();
+      if (!mmcProgram.isPresent() || !viaProgram.isPresent()) {
+        return new ArrayList<>();
+      }
+      Set<UUID> mmcAdditionalOrderableIds =
+              siglusProgramAdditionalOrderableService.searchAdditionalOrderables(mmcProgram.get().getId())
+                      .stream().map(ProgramAdditionalOrderableDto::getAdditionalOrderableId)
+                              .collect(Collectors.toSet());
+
+      List<FacillityStockCardDateDto> result =
+              facilityNativeRepository.findMalariaFirstStockCardGroupByFacility(mmcAdditionalOrderableIds,
+                      viaProgram.get().getId());
+      result.forEach(facilityStockCardDateDto -> facilityStockCardDateDto.setProgramId(mmcProgram.get().getId()));
       return result;
     }
   }
