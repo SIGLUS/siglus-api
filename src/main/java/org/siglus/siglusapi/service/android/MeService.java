@@ -284,15 +284,6 @@ public class MeService {
         .flatMap(Collection::stream)
         .map(orderable -> {
           OrderableDto dto = allProducts.get(orderable.getId());
-          if (dto == null) {
-            log.info("dto == null id: {}", orderable.getId());
-          }
-          if (dto.getExtraData() == null) {
-            log.info("dto.getExtraData() == null id: {}", orderable.getId());
-          }
-          if (orderable.getExtraData() == null) {
-            log.info("orderable.getExtraData() == null id: {}", orderable.getId());
-          }
           dto.getExtraData().put(KEY_PROGRAM_CODE, orderable.getExtraData().get(KEY_PROGRAM_CODE));
           return dto;
         })
