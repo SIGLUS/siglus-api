@@ -15,6 +15,9 @@
 
 package org.siglus.siglusapi.web;
 
+import java.math.BigInteger;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftDto;
@@ -47,5 +50,11 @@ public class SiglusShipmentDraftController {
   @ResponseStatus(HttpStatus.NO_CONTENT)
   public void deleteShipmentDraft(@PathVariable UUID id) {
     siglusShipmentDraftService.deleteShipmentDraft(id);
+  }
+
+  @PostMapping("/reserved")
+  @ResponseBody
+  public Map<UUID, BigInteger> reservedCount(@RequestBody List<UUID> lotIds) {
+    return siglusShipmentDraftService.reservedCount(lotIds);
   }
 }

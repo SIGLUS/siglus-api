@@ -20,6 +20,7 @@ import static java.util.stream.Collectors.toMap;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -44,6 +45,7 @@ import org.siglus.siglusapi.domain.ShipmentDraftLineItemsExtension;
 import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.OrderLineItemRepository;
 import org.siglus.siglusapi.repository.ShipmentDraftLineItemsExtensionRepository;
+import org.siglus.siglusapi.repository.ShipmentDraftLineItemsRepository;
 import org.siglus.siglusapi.service.client.SiglusShipmentDraftFulfillmentService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.Page;
@@ -63,6 +65,8 @@ public class SiglusShipmentDraftService {
   private final OrderRepository orderRepository;
   private final SiglusOrderService siglusOrderService;
   private final ShipmentDraftLineItemsExtensionRepository shipmentDraftLineItemsExtensionRepository;
+
+  private final ShipmentDraftLineItemsRepository shipmentDraftLineItemsRepository;
 
   @Transactional
   public ShipmentDraftDto createShipmentDraft(ShipmentDraftDto draftDto) {
@@ -133,6 +137,15 @@ public class SiglusShipmentDraftService {
     Set<OrderLineItemExtension> addedLineItemExtensions = deleteAddedLineItemsInExtension(
         extensions);
     initialedExtension(extensions, addedLineItemExtensions);
+  }
+
+  public Map<UUID, BigInteger> reservedCount(List<UUID> lotIds) {
+    if (lotIds.isEmpty()) {
+      return new HashMap<>();
+    }
+    return shipmentDraftLineItemsRepository.reservedCount(lotIds)
+            .stream()
+            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
   }
 
   private Order getDraftOrder(UUID draftId) {

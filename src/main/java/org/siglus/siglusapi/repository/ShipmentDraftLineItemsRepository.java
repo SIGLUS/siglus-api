@@ -15,12 +15,22 @@
 
 package org.siglus.siglusapi.repository;
 
+import java.math.BigInteger;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.openlmis.fulfillment.domain.ShipmentDraftLineItem;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface ShipmentDraftLineItemsRepository extends JpaRepository<ShipmentDraftLineItem, UUID> {
 
   List<ShipmentDraftLineItem> findByOrderableIdIn(List<UUID> orderableId);
+
+  @Query(value = "SELECT CAST(t.lotid AS varchar), SUM(t.quantityshipped) "
+          + "FROM fulfillment.shipment_draft_line_items t"
+          + "WHERE t.lotid IN :lotIds GROUP BY t.lotid",
+          nativeQuery = true)
+  List<Map.Entry<UUID, BigInteger>> reservedCount(@Param("lotIds") List<UUID> lotIds);
 }
