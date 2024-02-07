@@ -185,7 +185,7 @@ public class SiglusPhysicalInventoryService {
   }
 
   public DraftListDto getSubDraftListForAllPrograms(UUID facility, Boolean isDraft) {
-    Set<UUID> supportedPrograms = supportedProgramsHelper.findHomeFacilitySupportedProgramIds();
+    Set<UUID> supportedPrograms = getSupportedPrograms();
     List<PhysicalInventorySubDraft> allProductSubDraftList = new LinkedList<>();
     supportedPrograms.forEach(programId -> {
       List<PhysicalInventoryDto> physicalInventoryDtoList = getPhysicalInventoryDtos(programId, facility, isDraft);
@@ -504,7 +504,7 @@ public class SiglusPhysicalInventoryService {
   public List<PhysicalInventoryDto> getPhysicalInventoryDtosForAllPrograms(UUID facilityId, Boolean isDraft,
       boolean isByLocation) {
     try {
-      Set<UUID> supportedPrograms = supportedProgramsHelper.findHomeFacilitySupportedProgramIds();
+      Set<UUID> supportedPrograms = getSupportedPrograms();
       if (CollectionUtils.isEmpty(supportedPrograms)) {
         throw new PermissionMessageException(
             new org.openlmis.stockmanagement.util.Message(ERROR_PROGRAM_NOT_SUPPORTED, ALL_PRODUCTS_PROGRAM_ID));
@@ -626,9 +626,8 @@ public class SiglusPhysicalInventoryService {
   }
 
   private void createEmptySubDraft(Integer spiltNum, PhysicalInventoryDto physicalInventoryDto) {
-
     if (physicalInventoryDto.getProgramId().equals(ALL_PRODUCTS_PROGRAM_ID)) {
-      Set<UUID> supportedPrograms = supportedProgramsHelper.findHomeFacilitySupportedProgramIds();
+      Set<UUID> supportedPrograms = getSupportedPrograms();
       supportedPrograms.forEach(programId -> {
         UUID physicalInventoryId = UUID.fromString(physicalInventoriesRepository
             .findIdByProgramIdAndFacilityIdAndIsDraft(programId, physicalInventoryDto.getFacilityId(), true));
@@ -822,7 +821,7 @@ public class SiglusPhysicalInventoryService {
   }
 
   private List<UUID> getSupportPhysicalInventoryIds(UUID facilityId) {
-    Set<UUID> supportedPrograms = supportedProgramsHelper.findHomeFacilitySupportedProgramIds();
+    Set<UUID> supportedPrograms = getSupportedPrograms();
     return supportedPrograms.stream().map(programId ->
             UUID.fromString(physicalInventoriesRepository.findIdByProgramIdAndFacilityIdAndIsDraft(
                 programId, facilityId, true)))
@@ -952,10 +951,25 @@ public class SiglusPhysicalInventoryService {
     return inventoryController.createEmptyPhysicalInventory(physicalInventoryDto);
   }
 
+  // should ignore MMC for ALL, since MMC items already included in VIA
+  private Set<UUID> getSupportedPrograms() {
+    Set<UUID> supportedPrograms = supportedProgramsHelper.findHomeFacilitySupportedProgramIds();
+    UUID viaProgramId = siglusProgramService.getProgramByCode(VIA_PROGRAM_CODE)
+            .orElseThrow(() -> new NotFoundException("VIA program not found"))
+            .getId();
+    UUID mmcProgramId = siglusProgramService.getProgramByCode(MMC_PROGRAM_CODE)
+            .orElseThrow(() -> new NotFoundException("MMC program not found"))
+            .getId();
+    if (supportedPrograms.contains(viaProgramId)) {
+      supportedPrograms.remove(mmcProgramId);
+    }
+    return supportedPrograms;
+  }
   private void buildPhysicalInventoryLineItemsForAllPrograms(PhysicalInventoryDto allProductPhysicalInventoryDto,
       boolean initialPhysicalInventory, boolean withLocation) {
-    Set<UUID> supportedPrograms = supportedProgramsHelper.findHomeFacilitySupportedProgramIds();
+    Set<UUID> supportedPrograms = getSupportedPrograms();
     List<PhysicalInventoryLineItemDto> allProductLineItemDtoList = new LinkedList<>();
+
     for (UUID programId : supportedPrograms) {
       List<PhysicalInventoryDto> physicalInventoryDtos = getPhysicalInventoryDtos(programId,
           allProductPhysicalInventoryDto.getFacilityId(), true);
@@ -1096,7 +1110,7 @@ public class SiglusPhysicalInventoryService {
 
   @VisibleForTesting
   PhysicalInventoryDto createNewDraftForAllPrograms(PhysicalInventoryDto dto, LocationManagementOption locationOption) {
-    Set<UUID> supportedPrograms = supportedProgramsHelper.findHomeFacilitySupportedProgramIds();
+    Set<UUID> supportedPrograms = getSupportedPrograms();
     List<PhysicalInventoryDto> inventories = supportedPrograms
         .stream()
         .map(supportedVirtualProgram -> {
