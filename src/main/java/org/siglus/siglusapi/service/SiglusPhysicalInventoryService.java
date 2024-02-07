@@ -550,6 +550,15 @@ public class SiglusPhysicalInventoryService {
     PhysicalInventory latest = physicalInventoriesRepository
         .findTopByProgramIdAndFacilityIdAndIsDraftOrderByOccurredDateDesc(programId, facilityId, false);
     if (latest == null) {
+      UUID mmcProgramId = siglusProgramService.getProgramByCode(MMC_PROGRAM_CODE)
+              .orElseThrow(() -> new NotFoundException("MMC program not found"))
+              .getId();
+      if (mmcProgramId.equals(programId)) {
+        UUID viaProgramId = siglusProgramService.getProgramByCode(VIA_PROGRAM_CODE)
+                .orElseThrow(() -> new NotFoundException("VIA program not found"))
+                .getId();
+        return findLatestPhysicalInventory(facilityId, viaProgramId);
+      }
       return null;
     }
     return PhysicalInventoryDto.builder()
