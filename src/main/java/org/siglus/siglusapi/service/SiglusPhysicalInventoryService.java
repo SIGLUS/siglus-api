@@ -965,6 +965,7 @@ public class SiglusPhysicalInventoryService {
     }
     return supportedPrograms;
   }
+
   private void buildPhysicalInventoryLineItemsForAllPrograms(PhysicalInventoryDto allProductPhysicalInventoryDto,
       boolean initialPhysicalInventory, boolean withLocation) {
     Set<UUID> supportedPrograms = getSupportedPrograms();

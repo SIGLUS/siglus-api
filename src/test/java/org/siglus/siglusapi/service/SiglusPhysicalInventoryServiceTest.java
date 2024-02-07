@@ -43,6 +43,7 @@ import static org.siglus.siglusapi.constant.FieldConstants.SINGLE_PROGRAM;
 import static org.siglus.siglusapi.constant.FieldConstants.STOCK_CARD_ID;
 import static org.siglus.siglusapi.constant.FieldConstants.VM_STATUS;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
+import static org.siglus.siglusapi.constant.ProgramConstants.MMC_PROGRAM_CODE;
 import static org.siglus.siglusapi.constant.ProgramConstants.VIA_PROGRAM_CODE;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_NOT_ACCEPTABLE;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_PERMISSION_NOT_SUPPORTED;
@@ -198,6 +199,10 @@ public class SiglusPhysicalInventoryServiceTest {
 
   private final UUID programIdTwo = UUID.randomUUID();
 
+  private final UUID programIdThree = UUID.randomUUID();
+
+  private final UUID programIdFour = UUID.randomUUID();
+
   private final UUID inventoryOne = UUID.randomUUID();
 
   private final UUID inventoryTwo = UUID.randomUUID();
@@ -227,6 +232,8 @@ public class SiglusPhysicalInventoryServiceTest {
   @Test
   public void shouldCallV3MultipleTimesWhenCreateNewDraftForAllProducts() {
     // given
+    mockGetViaMmcProgram();
+
     when(supportedProgramsHelper.findHomeFacilitySupportedProgramIds())
         .thenReturn(Sets.newHashSet(programIdOne, programIdTwo));
     when(inventoryController.createEmptyPhysicalInventory(any())).thenAnswer(i -> i.getArguments()[0]);
@@ -256,6 +263,7 @@ public class SiglusPhysicalInventoryServiceTest {
   @Test
   public void shouldCallV3MultipleTimesWhenSaveDraftForAllProducts() {
     // given
+    mockGetViaMmcProgram();
     PhysicalInventoryLineItemDto lineItemDtoOne = PhysicalInventoryLineItemDto.builder()
         .programId(programIdOne)
         .build();
@@ -476,9 +484,19 @@ public class SiglusPhysicalInventoryServiceTest {
     verify(inventoryController).getPhysicalInventory(id);
   }
 
+  private void mockGetViaMmcProgram() {
+    ProgramDto viaDto = new ProgramDto();
+    viaDto.setId(programIdThree);
+    when(siglusProgramService.getProgramByCode(VIA_PROGRAM_CODE)).thenReturn(Optional.of(viaDto));
+    ProgramDto mmcDto = new ProgramDto();
+    mmcDto.setId(programIdFour);
+    when(siglusProgramService.getProgramByCode(MMC_PROGRAM_CODE)).thenReturn(Optional.of(mmcDto));
+  }
+
   @Test
   public void shouldCallV3MultipleTimesWhenGetPhysicalInventoryForAllProducts() {
     // given
+    mockGetViaMmcProgram();
     when(supportedProgramsHelper.findHomeFacilitySupportedProgramIds())
         .thenReturn(Sets.newHashSet(programIdOne, programIdTwo));
     when(inventoryController.searchPhysicalInventory(any(), any(),
@@ -500,6 +518,8 @@ public class SiglusPhysicalInventoryServiceTest {
   @Test
   public void shouldSaveExtensionTextWhenSaveDraftForAllProducts() {
     // given
+    mockGetViaMmcProgram();
+
     PhysicalInventoryLineItemDto lineItemDtoOne = PhysicalInventoryLineItemDto.builder()
         .orderableId(orderableId)
         .programId(programIdOne)
@@ -544,6 +564,8 @@ public class SiglusPhysicalInventoryServiceTest {
   @Test
   public void shouldGetExtensionTextWhenGetPhysicalInventoryForAllProducts() {
     // given
+    mockGetViaMmcProgram();
+
     when(supportedProgramsHelper.findHomeFacilitySupportedProgramIds())
         .thenReturn(Sets.newHashSet(programIdOne));
     UUID lineItemId1 = UUID.randomUUID();
@@ -614,6 +636,7 @@ public class SiglusPhysicalInventoryServiceTest {
   @Test
   public void shouldThrowExceptionWhenGetDtosForAllProductsIfsupportedProgramsIsEmpty() {
     // then
+    mockGetViaMmcProgram();
     exception.expect(PermissionMessageException.class);
     exception.expectMessage(containsString(ERROR_PERMISSION_NOT_SUPPORTED));
 
@@ -810,6 +833,8 @@ public class SiglusPhysicalInventoryServiceTest {
     exception.expect(IllegalArgumentException.class);
     exception.expectMessage(containsString("there is not draft exists for program"));
     // given
+    mockGetViaMmcProgram();
+
     PhysicalInventoryDto physicalInventoryDto = PhysicalInventoryDto.builder().id(physicalInventoryIdOne)
         .programId(ALL_PRODUCTS_PROGRAM_ID).facilityId(facilityId).lineItems(Collections.emptyList()).build();
     when(inventoryController.createEmptyPhysicalInventory(physicalInventoryDto))
@@ -1154,6 +1179,8 @@ public class SiglusPhysicalInventoryServiceTest {
     exception.expectMessage(containsString("there is no subDraft for any record"));
 
     // given
+    mockGetViaMmcProgram();
+
     Set<UUID> supportedPrograms = new HashSet<>();
     supportedPrograms.add(programIdOne);
     supportedPrograms.add(programIdTwo);
@@ -1271,7 +1298,7 @@ public class SiglusPhysicalInventoryServiceTest {
   @Test
   public void shouldReturnPhysicalInventoryIdsWhenProgramIdIsAllProductProgramId() {
     // given
-
+    mockGetViaMmcProgram();
     Set<UUID> programIds = new HashSet<>();
     programIds.add(programIdOne);
     programIds.add(programIdTwo);
