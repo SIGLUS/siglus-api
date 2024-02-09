@@ -497,6 +497,7 @@ public class SiglusRequisitionServiceTest {
     when(siglusUsageReportService.searchUsageReport(any())).thenReturn(siglusRequisitionDto);
     when(siglusRequisitionRequisitionService.searchRequisition(requisitionId)).thenReturn(requisitionV2Dto);
     when(requisitionV2Controller.getRequisition(requisitionId, response)).thenReturn(requisitionV2Dto);
+    when(requisitionV2Controller.getRequisition(requisitionId, null)).thenReturn(requisitionV2Dto);
     when(requisitionTemplateExtensionRepository.findByRequisitionTemplateId(templateId))
         .thenReturn(createTemplateExtension());
     when(requisitionController.getProfiler(profilerName, requisitionId)).thenReturn(profiler);
