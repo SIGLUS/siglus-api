@@ -557,7 +557,7 @@ public class SiglusRequisitionService {
     UserDto userDto = authenticationHelper.getCurrentUser();
     FacilityDto userFacility = requisitionController.findFacility(userDto.getHomeFacilityId(), profiler);
 
-    BasicRequisitionTemplateDto template = requisitionV2Controller.getRequisition(requisitionId, response)
+    BasicRequisitionTemplateDto template = requisitionV2Controller.getRequisition(requisitionId, null)
         .getTemplate();
     List<RequisitionLineItem> lineItemList = createLineItemWhenAddProduct(requisition, template, program, facility,
         orderableIds, userFacility);
