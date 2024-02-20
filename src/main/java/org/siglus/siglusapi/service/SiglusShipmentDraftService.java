@@ -32,7 +32,6 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.tuple.Triple;
 import org.openlmis.fulfillment.domain.Order;
 import org.openlmis.fulfillment.domain.OrderLineItem;
 import org.openlmis.fulfillment.domain.ShipmentLineItem.Importer;
@@ -42,6 +41,7 @@ import org.openlmis.fulfillment.web.shipment.ShipmentLineItemDto;
 import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftController;
 import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftDto;
 import org.openlmis.fulfillment.web.util.OrderLineItemDto;
+import org.organicdesign.fp.tuple.Tuple3;
 import org.siglus.siglusapi.domain.OrderLineItemExtension;
 import org.siglus.siglusapi.domain.ShipmentDraftLineItemsExtension;
 import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
@@ -149,18 +149,18 @@ public class SiglusShipmentDraftService {
           UUID programId, UUID shipmentDraftId, List<ShipmentLineItemDto> lineItems) {
     UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
     List<StockCardReservedDto> allReserved = reservedCount(facilityId, programId, shipmentDraftId);
-    Map<Triple<UUID, Integer, UUID>, BigInteger> reservedMap = new HashMap<>();
+    Map<Tuple3<UUID, Integer, UUID>, BigInteger> reservedMap = new HashMap<>();
     for (StockCardReservedDto dto: allReserved) {
       reservedMap.put(
-              Triple.of(dto.getOrderableId(), dto.getOrderableVersionNumber(), dto.getLotId()), dto.getReserved());
+              Tuple3.of(dto.getOrderableId(), dto.getOrderableVersionNumber(), dto.getLotId()), dto.getReserved());
     }
     return lineItems.stream().map(item -> {
-      Triple<UUID, Integer, UUID> key = Triple.of(item.getOrderable().getId(),
+      Tuple3<UUID, Integer, UUID> key = Tuple3.of(item.getOrderable().getId(),
               item.getOrderable().getVersionNumber().intValue(), item.getLotId());
       StockCardReservedDto itemReservedDto = StockCardReservedDto.builder()
-              .orderableId(key.getLeft())
-              .orderableVersionNumber(key.getMiddle())
-              .lotId(key.getRight())
+              .orderableId(key._1())
+              .orderableVersionNumber(key._2())
+              .lotId(key._3())
               .build();
       if (reservedMap.containsKey(key)) {
         itemReservedDto.setReserved(reservedMap.get(key));
