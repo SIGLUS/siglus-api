@@ -20,6 +20,7 @@ import static java.util.stream.Collectors.toMap;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
+
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -31,6 +32,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.Triple;
 import org.openlmis.fulfillment.domain.Order;
 import org.openlmis.fulfillment.domain.OrderLineItem;
 import org.openlmis.fulfillment.domain.ShipmentLineItem.Importer;
@@ -46,7 +48,9 @@ import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.OrderLineItemRepository;
 import org.siglus.siglusapi.repository.ShipmentDraftLineItemsExtensionRepository;
 import org.siglus.siglusapi.repository.ShipmentDraftLineItemsRepository;
+import org.siglus.siglusapi.repository.dto.StockCardReservedDto;
 import org.siglus.siglusapi.service.client.SiglusShipmentDraftFulfillmentService;
+import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
@@ -67,6 +71,8 @@ public class SiglusShipmentDraftService {
   private final ShipmentDraftLineItemsExtensionRepository shipmentDraftLineItemsExtensionRepository;
 
   private final ShipmentDraftLineItemsRepository shipmentDraftLineItemsRepository;
+
+  private final SiglusAuthenticationHelper authenticationHelper;
 
   @Transactional
   public ShipmentDraftDto createShipmentDraft(ShipmentDraftDto draftDto) {
@@ -139,13 +145,40 @@ public class SiglusShipmentDraftService {
     initialedExtension(extensions, addedLineItemExtensions);
   }
 
-  public Map<UUID, BigInteger> reservedCount(List<UUID> lotIds) {
-    if (lotIds.isEmpty()) {
-      return new HashMap<>();
+  public List<StockCardReservedDto> reservedCount(
+          UUID programId, UUID shipmentDraftId, List<ShipmentLineItemDto> lineItems) {
+    UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
+    List<StockCardReservedDto> allReserved = reservedCount(facilityId, programId, shipmentDraftId);
+    Map<Triple<UUID, Integer, UUID>, BigInteger> reservedMap = new HashMap<>();
+    for (StockCardReservedDto dto: allReserved) {
+      reservedMap.put(
+              Triple.of(dto.getOrderableId(), dto.getOrderableVersionNumber(), dto.getLotId()), dto.getReserved());
     }
-    return shipmentDraftLineItemsRepository.reservedCount(lotIds)
-            .stream()
-            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    return lineItems.stream().map(item -> {
+      Triple<UUID, Integer, UUID> key = Triple.of(item.getOrderable().getId(),
+              item.getOrderable().getVersionNumber().intValue(), item.getLotId());
+      StockCardReservedDto itemReservedDto = StockCardReservedDto.builder()
+              .orderableId(key.getLeft())
+              .orderableVersionNumber(key.getMiddle())
+              .lotId(key.getRight())
+              .build();
+      if (reservedMap.containsKey(key)) {
+        itemReservedDto.setReserved(reservedMap.get(key));
+      } else {
+        itemReservedDto.setReserved(BigInteger.valueOf(0));
+      }
+      return itemReservedDto;
+    }).collect(Collectors.toList());
+  }
+
+  public List<StockCardReservedDto> reservedCount(UUID facilityId, UUID programId, UUID shipmentDraftId) {
+    List<StockCardReservedDto> reservedDtos;
+    if (shipmentDraftId == null) {
+      reservedDtos = shipmentDraftLineItemsRepository.reservedCount(facilityId, programId);
+    } else {
+      reservedDtos = shipmentDraftLineItemsRepository.reservedCount(facilityId, programId, shipmentDraftId);
+    }
+    return reservedDtos;
   }
 
   private Order getDraftOrder(UUID draftId) {
