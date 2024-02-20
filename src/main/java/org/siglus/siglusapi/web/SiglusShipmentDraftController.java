@@ -15,13 +15,13 @@
 
 package org.siglus.siglusapi.web;
 
-import java.math.BigInteger;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftDto;
+import org.siglus.siglusapi.repository.dto.StockCardReservedDto;
 import org.siglus.siglusapi.service.SiglusShipmentDraftService;
+import org.siglus.siglusapi.web.request.ShipmentReservedRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -54,7 +54,8 @@ public class SiglusShipmentDraftController {
 
   @PostMapping("/reserved")
   @ResponseBody
-  public Map<UUID, BigInteger> reservedCount(@RequestBody List<UUID> lotIds) {
-    return siglusShipmentDraftService.reservedCount(lotIds);
+  public List<StockCardReservedDto> reservedCount(@RequestBody ShipmentReservedRequest request) {
+    return siglusShipmentDraftService.reservedCount(request.getProgramId(),
+            request.getShipmentDraftId(), request.getLineItems());
   }
 }

@@ -140,6 +140,15 @@ public class SiglusShipmentService {
     }
   }
 
+  public void checkStockOnHand(ShipmentExtensionRequest shipmentExtensionRequest) {
+    // TODO
+    // get available soh
+    // StockCardSummariesV2SearchParams v2SearchParams = new StockCardSummariesV2SearchParams();
+    // StockCardSummaries summaries = stockCardSummariesService.findStockCards(v2SearchParams);
+    // get reserved soh
+    //    shipmentDraftService.reservedCount(shipmentExtensionRequest.getShipment().getOrder().getId(), );
+  }
+
   @Transactional
   public ShipmentDto createOrderAndShipmentByLocation(boolean isSubOrder,
       ShipmentExtensionRequest shipmentExtensionRequest) {
