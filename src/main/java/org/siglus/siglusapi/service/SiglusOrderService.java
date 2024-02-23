@@ -1039,6 +1039,8 @@ public class SiglusOrderService {
   private void setIfIsKit(SiglusOrderDto siglusOrderDto) {
     List<UUID> orderableIds = siglusOrderDto.getOrder().orderLineItems().stream()
         .map(orderableDto -> orderableDto.getOrderable().getId()).collect(Collectors.toList());
+    log.info("siglusOrderDto orderId: {}", siglusOrderDto.getOrder().getId());
+    log.info("siglusOrderDto orderableIds size: {}", orderableIds.size());
     List<Orderable> orderables = orderableRepository.findLatestByIds(orderableIds);
     Map<UUID, Boolean> orderableToIsKitMap = new HashMap<>();
     orderables.forEach(orderable ->
