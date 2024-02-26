@@ -20,7 +20,10 @@ import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.siglus.siglusapi.dto.RequisitionGroupMembersDto;
+import org.siglus.siglusapi.exception.InvalidReasonException;
+import org.siglus.siglusapi.repository.dto.LotStockDto;
 import org.siglus.siglusapi.service.SiglusFacilityService;
+import org.siglus.siglusapi.service.SiglusLotService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -34,9 +37,20 @@ public class SiglusFacilityController {
 
   private final SiglusFacilityService siglusFacilityService;
 
+  private final SiglusLotService siglusLotService;
+
   @GetMapping("/{id}/requisitionGroup")
   public List<RequisitionGroupMembersDto> searchFacilityRequisitionGroup(@PathVariable UUID id,
       @RequestParam Set<UUID> programIds) {
     return siglusFacilityService.searchFacilityRequisitionGroup(id, programIds);
+  }
+
+  @GetMapping("/{id}/lots")
+  public List<LotStockDto> searchExpiredLots(@PathVariable("id") UUID id,
+                                             @RequestParam Boolean expired) {
+    if (!expired) {
+      throw new InvalidReasonException("un-support param 'expired = false'");
+    }
+    return siglusLotService.getExpiredLots(id);
   }
 }
