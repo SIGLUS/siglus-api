@@ -616,6 +616,12 @@ traits:
           responses:
             200:
               description: GET specific facility's requisition group
+      /{id}/lots:
+        get:
+          is: [ secured ]
+          responses:
+            200:
+              description: GET specific facility's lots with param
 
     /localIssueVouchers:
       post:
