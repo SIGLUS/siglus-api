@@ -21,6 +21,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.anySet;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -38,6 +40,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.fulfillment.domain.Order;
 import org.openlmis.fulfillment.domain.OrderLineItem;
@@ -65,6 +68,7 @@ public class SiglusShipmentDraftServiceTest {
   @Captor
   private ArgumentCaptor<List<OrderLineItemExtension>> lineItemExtensionsArgumentCaptor;
 
+  @Spy
   @InjectMocks
   private SiglusShipmentDraftService siglusShipmentDraftService;
 
@@ -134,6 +138,7 @@ public class SiglusShipmentDraftServiceTest {
     when(lineItemExtensionRepository.findByOrderLineItemIdIn(newHashSet(lineItemId)))
         .thenReturn(newArrayList(extension));
     when(siglusOrderService.updateOrderLineItems(draftDto)).thenReturn(newHashSet(lineItemId));
+    doNothing().when(siglusShipmentDraftService).checkStockOnHandQuantity(any(), any());
 
     // when
     siglusShipmentDraftService.updateShipmentDraft(draftId, draftDto);
@@ -163,6 +168,7 @@ public class SiglusShipmentDraftServiceTest {
     when(lineItemExtensionRepository.findByOrderLineItemIdIn(newHashSet(lineItemId)))
         .thenReturn(newArrayList());
     when(siglusOrderService.updateOrderLineItems(draftDto)).thenReturn(newHashSet(lineItemId));
+    doNothing().when(siglusShipmentDraftService).checkStockOnHandQuantity(any(), any());
 
     // when
     siglusShipmentDraftService.updateShipmentDraft(draftId, draftDto);
@@ -304,6 +310,7 @@ public class SiglusShipmentDraftServiceTest {
         1L);
     shipmentLineItemDto.setOrderable(orderable);
     draftDto.setLineItems(newArrayList(shipmentLineItemDto));
+    doNothing().when(siglusShipmentDraftService).checkStockOnHandQuantity(any(), any());
     when(draftController.updateShipmentDraft(draftId, draftDto))
         .thenReturn(draftDto);
     OrderLineItemExtension extension = OrderLineItemExtension.builder()

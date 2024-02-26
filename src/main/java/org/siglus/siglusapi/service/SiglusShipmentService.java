@@ -27,7 +27,6 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 
-import java.math.BigInteger;
 import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -58,12 +57,6 @@ import org.openlmis.fulfillment.web.util.OrderDto;
 import org.openlmis.fulfillment.web.util.OrderLineItemDto;
 import org.openlmis.fulfillment.web.util.OrderObjectReferenceDto;
 import org.openlmis.requisition.service.RequisitionService;
-import org.openlmis.stockmanagement.domain.card.StockCard;
-import org.openlmis.stockmanagement.service.StockCardSummaries;
-import org.openlmis.stockmanagement.service.StockCardSummariesService;
-import org.openlmis.stockmanagement.service.StockCardSummariesV2SearchParams;
-import org.organicdesign.fp.tuple.Tuple2;
-import org.organicdesign.fp.tuple.Tuple3;
 import org.siglus.common.domain.ProcessingPeriodExtension;
 import org.siglus.common.repository.ProcessingPeriodExtensionRepository;
 import org.siglus.siglusapi.constant.FieldConstants;
@@ -78,7 +71,6 @@ import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.PodExtensionRepository;
 import org.siglus.siglusapi.repository.ShipmentLineItemsExtensionRepository;
 import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
-import org.siglus.siglusapi.repository.dto.StockCardReservedDto;
 import org.siglus.siglusapi.service.client.SiglusShipmentDraftFulfillmentService;
 import org.siglus.siglusapi.web.request.ShipmentExtensionRequest;
 import org.springframework.beans.BeanUtils;
@@ -111,8 +103,6 @@ public class SiglusShipmentService {
   private final ProcessingPeriodExtensionRepository processingPeriodExtensionRepository;
 
   private final RequisitionService requisitionService;
-
-  private final StockCardSummariesService stockCardSummariesService;
 
   private final SiglusShipmentDraftService shipmentDraftService;
 
@@ -159,53 +149,16 @@ public class SiglusShipmentService {
   }
 
   public void checkStockOnHandQuantity(ShipmentExtensionRequest shipmentExtensionRequest) {
-    // get available soh
-    StockCardSummariesV2SearchParams v2SearchParams = new StockCardSummariesV2SearchParams();
-    v2SearchParams.setFacilityId(shipmentExtensionRequest.getShipment().getOrder().getSupplyingFacility().getId());
-    v2SearchParams.setProgramId(shipmentExtensionRequest.getShipment().getOrder().getProgram().getId());
-    StockCardSummaries summaries = stockCardSummariesService.findStockCards(v2SearchParams);
-    // get reserved soh
+    ShipmentDraftDto dto = new ShipmentDraftDto();
+    dto.setLineItems(shipmentExtensionRequest.getShipment().lineItems());
+    dto.setOrder(shipmentExtensionRequest.getShipment().getOrder());
     Page<ShipmentDraftDto> shipmentDrafts = shipmentDraftFulfillmentService
             .getShipmentDraftByOrderId(shipmentExtensionRequest.getShipment().getOrder().getId());
     UUID shipmentDraftId = null;
     if (shipmentDrafts.getSize() > 0) {
       shipmentDraftId = shipmentDrafts.getContent().get(0).getId();
     }
-    List<StockCardReservedDto> reservedDtos = shipmentDraftService
-        .reservedCount(v2SearchParams.getFacilityId(), v2SearchParams.getProgramId(), shipmentDraftId);
-    // check soh
-    if (canNotFullFillShipmentQuantity(summaries, reservedDtos, shipmentExtensionRequest)) {
-      throw new ValidationMessageException(new Message(SHIPMENT_LINE_ITEMS_INVALID));
-    }
-  }
-
-  private boolean canNotFullFillShipmentQuantity(StockCardSummaries summaries,
-                                              List<StockCardReservedDto> reservedDtos,
-                                              ShipmentExtensionRequest shipmentExtensionRequest) {
-    Map<Tuple2<UUID, UUID>, Integer> sohMap = summaries.getStockCardsForFulfillOrderables()
-            .stream().collect(Collectors.toMap(
-              summary -> Tuple2.of(summary.getOrderableId(), summary.getLotId()),
-              StockCard::getStockOnHand
-            ));
-    Map<Tuple3<UUID, Integer, UUID>, BigInteger> reservedMap = reservedDtos
-            .stream().collect(Collectors.toMap(
-              dto -> Tuple3.of(dto.getOrderableId(), dto.getOrderableVersionNumber(), dto.getLotId()),
-              StockCardReservedDto::getReserved
-            ));
-    return shipmentExtensionRequest.getShipment().lineItems().stream().anyMatch(item -> {
-      int soh = 0;
-      Tuple2<UUID, UUID> sohKey = Tuple2.of(item.getOrderable().getId(), item.getLotId());
-      if (sohMap.containsKey(sohKey)) {
-        soh = sohMap.get(sohKey);
-      }
-      int reserved = 0;
-      Tuple3<UUID, Integer, UUID> reservedKey =
-          Tuple3.of(item.getOrderable().getId(), item.getOrderable().getVersionNumber().intValue(), item.getLotId());
-      if (reservedMap.containsKey(reservedKey)) {
-        reserved = reservedMap.get(reservedKey).intValue();
-      }
-      return soh - reserved < item.getQuantityShipped().intValue();
-    });
+    shipmentDraftService.checkStockOnHandQuantity(shipmentDraftId, dto);
   }
 
   @Transactional

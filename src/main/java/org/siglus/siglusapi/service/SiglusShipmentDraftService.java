@@ -17,6 +17,7 @@ package org.siglus.siglusapi.service;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static java.util.stream.Collectors.toMap;
+import static org.siglus.siglusapi.i18n.MessageKeys.SHIPMENT_LINE_ITEMS_INVALID;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
@@ -41,9 +42,16 @@ import org.openlmis.fulfillment.web.shipment.ShipmentLineItemDto;
 import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftController;
 import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftDto;
 import org.openlmis.fulfillment.web.util.OrderLineItemDto;
+import org.openlmis.stockmanagement.domain.card.StockCard;
+import org.openlmis.stockmanagement.service.StockCardSummaries;
+import org.openlmis.stockmanagement.service.StockCardSummariesService;
+import org.openlmis.stockmanagement.service.StockCardSummariesV2SearchParams;
+import org.organicdesign.fp.tuple.Tuple2;
 import org.organicdesign.fp.tuple.Tuple3;
 import org.siglus.siglusapi.domain.OrderLineItemExtension;
 import org.siglus.siglusapi.domain.ShipmentDraftLineItemsExtension;
+import org.siglus.siglusapi.dto.Message;
+import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.OrderLineItemRepository;
 import org.siglus.siglusapi.repository.ShipmentDraftLineItemsExtensionRepository;
@@ -74,13 +82,17 @@ public class SiglusShipmentDraftService {
 
   private final SiglusAuthenticationHelper authenticationHelper;
 
+  private final StockCardSummariesService stockCardSummariesService;
+
   @Transactional
   public ShipmentDraftDto createShipmentDraft(ShipmentDraftDto draftDto) {
+    checkStockOnHandQuantity(null, draftDto);
     return draftController.createShipmentDraft(draftDto);
   }
 
   @Transactional
   public ShipmentDraftDto updateShipmentDraft(UUID id, ShipmentDraftDto draftDto) {
+    checkStockOnHandQuantity(id, draftDto);
     updateOrderLineItemsWithExtension(draftDto);
     return draftController.updateShipmentDraft(id, draftDto);
   }
@@ -98,6 +110,7 @@ public class SiglusShipmentDraftService {
 
   @Transactional
   public ShipmentDraftDto updateShipmentDraftByLocation(UUID shipmentDraftId, ShipmentDraftDto draftDto) {
+    checkStockOnHandQuantity(shipmentDraftId, draftDto);
     Multimap<String, ShipmentLineItemDto> uniqueKeyMap = ArrayListMultimap.create();
     draftDto.lineItems().forEach(shipmentLineItemDto -> {
       if (shipmentLineItemDto.getLotId() == null && shipmentLineItemDto.getId() != null) {
@@ -148,7 +161,7 @@ public class SiglusShipmentDraftService {
   public List<StockCardReservedDto> reservedCount(
           UUID programId, UUID shipmentDraftId, List<ShipmentLineItemDto> lineItems) {
     UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
-    List<StockCardReservedDto> allReserved = reservedCount(facilityId, programId, shipmentDraftId);
+    List<StockCardReservedDto> allReserved = queryReservedCount(facilityId, programId, shipmentDraftId);
     Map<Tuple3<UUID, Integer, UUID>, BigInteger> reservedMap = new HashMap<>();
     for (StockCardReservedDto dto: allReserved) {
       reservedMap.put(
@@ -171,7 +184,22 @@ public class SiglusShipmentDraftService {
     }).collect(Collectors.toList());
   }
 
-  public List<StockCardReservedDto> reservedCount(UUID facilityId, UUID programId, UUID shipmentDraftId) {
+  public void checkStockOnHandQuantity(UUID shipmentDraftId, ShipmentDraftDto draftDto) {
+    // get available soh
+    StockCardSummariesV2SearchParams v2SearchParams = new StockCardSummariesV2SearchParams();
+    v2SearchParams.setFacilityId(draftDto.getOrder().getSupplyingFacility().getId());
+    v2SearchParams.setProgramId(draftDto.getOrder().getProgram().getId());
+    StockCardSummaries summaries = stockCardSummariesService.findStockCards(v2SearchParams);
+    // get reserved soh
+    List<StockCardReservedDto> reservedDtos =
+            queryReservedCount(v2SearchParams.getFacilityId(), v2SearchParams.getProgramId(), shipmentDraftId);
+    // check soh
+    if (canNotFullFillShipmentQuantity(summaries, reservedDtos, draftDto)) {
+      throw new ValidationMessageException(new Message(SHIPMENT_LINE_ITEMS_INVALID));
+    }
+  }
+
+  private List<StockCardReservedDto> queryReservedCount(UUID facilityId, UUID programId, UUID shipmentDraftId) {
     List<StockCardReservedDto> reservedDtos;
     if (shipmentDraftId == null) {
       reservedDtos = shipmentDraftLineItemsRepository.reservedCount(facilityId, programId);
@@ -179,6 +207,36 @@ public class SiglusShipmentDraftService {
       reservedDtos = shipmentDraftLineItemsRepository.reservedCount(facilityId, programId, shipmentDraftId);
     }
     return reservedDtos;
+  }
+
+  private boolean canNotFullFillShipmentQuantity(StockCardSummaries summaries,
+                                                 List<StockCardReservedDto> reservedDtos,
+                                                 ShipmentDraftDto draftDto) {
+    Map<Tuple2<UUID, UUID>, Integer> sohMap = summaries.getStockCardsForFulfillOrderables()
+        .stream().collect(Collectors.toMap(
+          summary -> Tuple2.of(summary.getOrderableId(), summary.getLotId()),
+          StockCard::getStockOnHand
+        ));
+    Map<Tuple3<UUID, Integer, UUID>, BigInteger> reservedMap = reservedDtos
+        .stream().collect(Collectors.toMap(
+          dto -> Tuple3.of(dto.getOrderableId(), dto.getOrderableVersionNumber(), dto.getLotId()),
+          StockCardReservedDto::getReserved
+        ));
+    return draftDto.lineItems().stream().anyMatch(item -> {
+      int soh = 0;
+      Tuple2<UUID, UUID> sohKey = Tuple2.of(item.getOrderable().getId(), item.getLotId());
+      if (sohMap.containsKey(sohKey)) {
+        soh = sohMap.get(sohKey);
+      }
+      int reserved = 0;
+      Tuple3<UUID, Integer, UUID> reservedKey = Tuple3.of(item.getOrderable().getId(),
+                      item.getOrderable().getVersionNumber().intValue(),
+                      item.getLotId());
+      if (reservedMap.containsKey(reservedKey)) {
+        reserved = reservedMap.get(reservedKey).intValue();
+      }
+      return soh - reserved < item.getQuantityShipped().intValue();
+    });
   }
 
   private Order getDraftOrder(UUID draftId) {
