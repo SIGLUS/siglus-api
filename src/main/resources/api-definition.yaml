@@ -3184,7 +3184,35 @@ traits:
             body:
               application/json:
                 schema: localizedMessagepickPackInfo
-
+    /orders/{id}/reservedQuantity:
+      uriParameters:
+        id:
+          displayName: id
+          type: string
+          required: true
+          repeat: false
+      get:
+        is: [ secured ]
+        description: get reserved quantity by order
+        responses:
+          200:
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+                schema: StockCardReservedDto
+          403:
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+                schema: localizedMessage
+          404:
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+                schema: localizedMessage
 
     /orders/createLineItem:
       post:
