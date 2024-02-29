@@ -67,6 +67,7 @@ import org.openlmis.stockmanagement.util.Message;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.CanFulfillForMeEntryDto;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummariesV2DtoBuilder;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2Dto;
+import org.organicdesign.fp.tuple.Tuple2;
 import org.siglus.common.repository.ProgramOrderableRepository;
 import org.siglus.siglusapi.domain.PhysicalInventoryLineItemsExtension;
 import org.siglus.siglusapi.domain.PhysicalInventorySubDraft;
@@ -85,6 +86,7 @@ import org.siglus.siglusapi.repository.CalculatedStockOnHandByLocationRepository
 import org.siglus.siglusapi.repository.PhysicalInventoryLineItemsExtensionRepository;
 import org.siglus.siglusapi.repository.PhysicalInventorySubDraftRepository;
 import org.siglus.siglusapi.repository.StockManagementDraftRepository;
+import org.siglus.siglusapi.repository.dto.StockCardReservedDto;
 import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
 import org.siglus.siglusapi.util.FormatHelper;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
@@ -122,6 +124,7 @@ public class SiglusStockCardSummariesService {
   private final CalculatedStockOnHandByLocationRepository calculatedStockOnHandByLocationRepository;
   private final SiglusProgramService siglusProgramService;
   private final RequisitionService requisitionService;
+  private final SiglusShipmentDraftService siglusShipmentDraftService;
 
   public List<org.openlmis.referencedata.dto.LotDto> getLotsDataByOrderableIds(List<UUID> orderableIds) {
     if (CollectionUtils.isEmpty(orderableIds)) {
@@ -393,8 +396,10 @@ public class SiglusStockCardSummariesService {
     UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
     List<OrderableDto> orderableDtos = getOrderableDtos(pageable, orderableIds, facilityId);
     List<LotDto> lotDtos = getLotDtos(canFulfillForMeEntryDtos);
+    Map<Tuple2<UUID, UUID>, Integer> reservedMap =
+            getStockCardReservedMap(facilityId, getId(PROGRAM_ID, parameters), draftId);
 
-    return combineResponse(stockCardSummaryV2Dtos, orderableDtos, lotDtos);
+    return combineResponse(stockCardSummaryV2Dtos, orderableDtos, lotDtos, reservedMap);
   }
 
   public List<StockCardSummaryWithLocationDto> getStockCardSummaryWithLocationDtos(
@@ -504,7 +509,7 @@ public class SiglusStockCardSummariesService {
   }
 
   private List<StockCardSummaryDto> combineResponse(List<StockCardSummaryV2Dto> stockCardSummaryV2Dtos,
-      List<OrderableDto> orderableDtos, List<LotDto> lotDtos) {
+      List<OrderableDto> orderableDtos, List<LotDto> lotDtos, Map<Tuple2<UUID, UUID>, Integer> reservedMap) {
     List<StockCardSummaryDto> stockCardSummaryDtos = new ArrayList<>();
 
     stockCardSummaryV2Dtos.forEach(stockCardSummaryV2Dto -> {
@@ -522,6 +527,9 @@ public class SiglusStockCardSummariesService {
             .stockOnHand(canFulfillForMeEntryDto.getStockOnHand())
             .processedDate(canFulfillForMeEntryDto.getProcessedDate())
             .stockCard(canFulfillForMeEntryDto.getStockCard())
+            .reservedStock(reservedMap.getOrDefault(
+                    Tuple2.of(canFulfillForMeEntryDto.getOrderable().getId(), canFulfillForMeEntryDto.getLot().getId()),
+                    0))
             .build();
         stockCardDetailsDtos.add(fulfill);
       });
@@ -605,5 +613,15 @@ public class SiglusStockCardSummariesService {
     stockCardSummaryDtos.forEach(stockCardSummaryDto ->
         stockCardDetailsDtos.addAll(stockCardSummaryDto.getStockCardDetails()));
     return stockCardDetailsDtos;
+  }
+
+  private Map<Tuple2<UUID, UUID>, Integer> getStockCardReservedMap(
+          UUID facilityId, UUID programId, UUID shipmentDraftId) {
+    List<StockCardReservedDto> stockCardReservedDtos =
+            siglusShipmentDraftService.reservedCount(facilityId, programId, shipmentDraftId, null);
+    return stockCardReservedDtos
+            .stream()
+            .collect(Collectors.toMap(item -> Tuple2.of(item.getOrderableId(), item.getLotId()),
+                    StockCardReservedDto::getReserved));
   }
 }
