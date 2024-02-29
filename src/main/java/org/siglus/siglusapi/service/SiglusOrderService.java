@@ -665,7 +665,8 @@ public class SiglusOrderService {
     Order order = getOrder(orderId);
     ShipmentDraftDto shipmentDraftDto = siglusShipmentDraftFulfillmentService.getShipmentDraftByOrderId(orderId)
             .getContent().get(0);
-    return draftService.reservedCount(order.getProgramId(), shipmentDraftDto.getId(), shipmentDraftDto.lineItems());
+    return draftService.reservedCount(order.getSupplyingFacilityId(), order.getProgramId(),
+            shipmentDraftDto.getId(), shipmentDraftDto.lineItems());
   }
 
   private Map<UUID, BigDecimal> getOrderableIdToSuggestedQuantity(Order order, List<ProcessingPeriod> periods) {

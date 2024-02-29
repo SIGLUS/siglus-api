@@ -15,7 +15,6 @@
 
 package org.siglus.siglusapi.repository.dto;
 
-import java.math.BigInteger;
 import java.util.UUID;
 import javax.persistence.ColumnResult;
 import javax.persistence.ConstructorResult;
@@ -66,7 +65,7 @@ import lombok.Data;
                         @ColumnResult(name = "orderableId", type = UUID.class),
                         @ColumnResult(name = "orderableVersionNumber", type = Integer.class),
                         @ColumnResult(name = "lotId", type = UUID.class),
-                        @ColumnResult(name = "reserved", type = BigInteger.class),
+                        @ColumnResult(name = "reserved", type = Integer.class),
                 }
         )
 )
@@ -78,5 +77,5 @@ public class StockCardReservedDto {
   private UUID orderableId;
   private Integer orderableVersionNumber;
   private UUID lotId;
-  private BigInteger reserved;
+  private Integer reserved;
 }

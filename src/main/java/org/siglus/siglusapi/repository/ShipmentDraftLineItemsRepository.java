@@ -30,7 +30,7 @@ public interface ShipmentDraftLineItemsRepository extends JpaRepository<Shipment
   @Query(name = "StockCard.queryStockCardReservedDto", nativeQuery = true)
   List<StockCardReservedDto> reservedCount(@Param("facilityId") UUID facilityId, @Param("programId") UUID programId);
 
-  @Query(name = "StockCard.queryStockCardReservedDto", nativeQuery = true)
+  @Query(name = "StockCard.queryStockCardReservedExcludeDto", nativeQuery = true)
   List<StockCardReservedDto> reservedCount(@Param("facilityId") UUID facilityId, @Param("programId") UUID programId,
                                            @Param("shipmentDraftId") UUID shipmentDraftId);
 }

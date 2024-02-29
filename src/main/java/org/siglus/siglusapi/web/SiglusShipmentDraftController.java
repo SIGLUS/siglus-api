@@ -15,13 +15,10 @@
 
 package org.siglus.siglusapi.web;
 
-import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftDto;
-import org.siglus.siglusapi.repository.dto.StockCardReservedDto;
 import org.siglus.siglusapi.service.SiglusShipmentDraftService;
-import org.siglus.siglusapi.web.request.ShipmentReservedRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -50,12 +47,5 @@ public class SiglusShipmentDraftController {
   @ResponseStatus(HttpStatus.NO_CONTENT)
   public void deleteShipmentDraft(@PathVariable UUID id) {
     siglusShipmentDraftService.deleteShipmentDraft(id);
-  }
-
-  @PostMapping("/reserved")
-  @ResponseBody
-  public List<StockCardReservedDto> reservedCount(@RequestBody ShipmentReservedRequest request) {
-    return siglusShipmentDraftService.reservedCount(request.getProgramId(),
-            request.getShipmentDraftId(), request.getLineItems());
   }
 }

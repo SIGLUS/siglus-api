@@ -22,7 +22,6 @@ import static org.siglus.siglusapi.i18n.MessageKeys.SHIPMENT_LINE_ITEMS_INVALID;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -58,7 +57,6 @@ import org.siglus.siglusapi.repository.ShipmentDraftLineItemsExtensionRepository
 import org.siglus.siglusapi.repository.ShipmentDraftLineItemsRepository;
 import org.siglus.siglusapi.repository.dto.StockCardReservedDto;
 import org.siglus.siglusapi.service.client.SiglusShipmentDraftFulfillmentService;
-import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
@@ -79,8 +77,6 @@ public class SiglusShipmentDraftService {
   private final ShipmentDraftLineItemsExtensionRepository shipmentDraftLineItemsExtensionRepository;
 
   private final ShipmentDraftLineItemsRepository shipmentDraftLineItemsRepository;
-
-  private final SiglusAuthenticationHelper authenticationHelper;
 
   private final StockCardSummariesService stockCardSummariesService;
 
@@ -158,29 +154,26 @@ public class SiglusShipmentDraftService {
     initialedExtension(extensions, addedLineItemExtensions);
   }
 
-  public List<StockCardReservedDto> reservedCount(
+  public List<StockCardReservedDto> reservedCount(UUID facilityId,
           UUID programId, UUID shipmentDraftId, List<ShipmentLineItemDto> lineItems) {
-    UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
     List<StockCardReservedDto> allReserved = queryReservedCount(facilityId, programId, shipmentDraftId);
-    Map<Tuple3<UUID, Integer, UUID>, BigInteger> reservedMap = new HashMap<>();
-    for (StockCardReservedDto dto: allReserved) {
-      reservedMap.put(
-              Tuple3.of(dto.getOrderableId(), dto.getOrderableVersionNumber(), dto.getLotId()), dto.getReserved());
+    if (lineItems == null || lineItems.isEmpty()) {
+      return allReserved;
     }
+    Map<Tuple3<UUID, Integer, UUID>, Integer> reservedMap = allReserved
+            .stream()
+            .collect(Collectors.toMap(
+                item -> Tuple3.of(item.getOrderableId(), item.getOrderableVersionNumber(), item.getLotId()),
+                StockCardReservedDto::getReserved));
     return lineItems.stream().map(item -> {
       Tuple3<UUID, Integer, UUID> key = Tuple3.of(item.getOrderable().getId(),
               item.getOrderable().getVersionNumber().intValue(), item.getLotId());
-      StockCardReservedDto itemReservedDto = StockCardReservedDto.builder()
+      return StockCardReservedDto.builder()
               .orderableId(key._1())
               .orderableVersionNumber(key._2())
               .lotId(key._3())
+              .reserved(reservedMap.getOrDefault(key, 0))
               .build();
-      if (reservedMap.containsKey(key)) {
-        itemReservedDto.setReserved(reservedMap.get(key));
-      } else {
-        itemReservedDto.setReserved(BigInteger.valueOf(0));
-      }
-      return itemReservedDto;
     }).collect(Collectors.toList());
   }
 
@@ -217,24 +210,18 @@ public class SiglusShipmentDraftService {
           summary -> Tuple2.of(summary.getOrderableId(), summary.getLotId()),
           StockCard::getStockOnHand
         ));
-    Map<Tuple3<UUID, Integer, UUID>, BigInteger> reservedMap = reservedDtos
+    Map<Tuple3<UUID, Integer, UUID>, Integer> reservedMap = reservedDtos
         .stream().collect(Collectors.toMap(
           dto -> Tuple3.of(dto.getOrderableId(), dto.getOrderableVersionNumber(), dto.getLotId()),
           StockCardReservedDto::getReserved
         ));
     return draftDto.lineItems().stream().anyMatch(item -> {
-      int soh = 0;
       Tuple2<UUID, UUID> sohKey = Tuple2.of(item.getOrderable().getId(), item.getLotId());
-      if (sohMap.containsKey(sohKey)) {
-        soh = sohMap.get(sohKey);
-      }
-      int reserved = 0;
+      int soh = sohMap.getOrDefault(sohKey, 0);
       Tuple3<UUID, Integer, UUID> reservedKey = Tuple3.of(item.getOrderable().getId(),
                       item.getOrderable().getVersionNumber().intValue(),
                       item.getLotId());
-      if (reservedMap.containsKey(reservedKey)) {
-        reserved = reservedMap.get(reservedKey).intValue();
-      }
+      int reserved = reservedMap.getOrDefault(reservedKey, 0);
       return soh - reserved < item.getQuantityShipped().intValue();
     });
   }
