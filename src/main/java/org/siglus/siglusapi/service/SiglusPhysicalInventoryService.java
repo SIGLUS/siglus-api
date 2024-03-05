@@ -547,28 +547,46 @@ public class SiglusPhysicalInventoryService {
   }
 
   public PhysicalInventoryDto findLatestPhysicalInventory(UUID facilityId, UUID programId) {
+    UUID mmcProgramId = siglusProgramService.getProgramByCode(MMC_PROGRAM_CODE)
+            .orElseThrow(() -> new NotFoundException("MMC program not found"))
+            .getId();
     PhysicalInventory latest = physicalInventoriesRepository
-        .findTopByProgramIdAndFacilityIdAndIsDraftOrderByOccurredDateDesc(programId, facilityId, false);
-    if (latest == null) {
-      UUID mmcProgramId = siglusProgramService.getProgramByCode(MMC_PROGRAM_CODE)
-              .orElseThrow(() -> new NotFoundException("MMC program not found"))
+            .findTopByProgramIdAndFacilityIdAndIsDraftOrderByOccurredDateDesc(programId, facilityId, false);
+    if (mmcProgramId.equals(programId)) {
+      UUID viaProgramId = siglusProgramService.getProgramByCode(VIA_PROGRAM_CODE)
+              .orElseThrow(() -> new NotFoundException("VIA program not found"))
               .getId();
-      if (mmcProgramId.equals(programId)) {
-        UUID viaProgramId = siglusProgramService.getProgramByCode(VIA_PROGRAM_CODE)
-                .orElseThrow(() -> new NotFoundException("VIA program not found"))
-                .getId();
+
+      if (latest == null) {
         return findLatestPhysicalInventory(facilityId, viaProgramId);
+      } else {
+        PhysicalInventory latestForVia = physicalInventoriesRepository
+                .findTopByProgramIdAndFacilityIdAndIsDraftOrderByOccurredDateDesc(viaProgramId, facilityId, false);
+        if (latestForVia != null && latestForVia.getOccurredDate().isAfter(latest.getOccurredDate())) {
+          return PhysicalInventoryDto.builder()
+                  .programId(latestForVia.getProgramId())
+                  .facilityId(latestForVia.getFacilityId())
+                  .isDraft(latestForVia.getIsDraft())
+                  .occurredDate(latestForVia.getOccurredDate())
+                  .documentNumber(latestForVia.getDocumentNumber())
+                  .signature(latestForVia.getSignature())
+                  .build();
+        }
       }
+
+    }
+
+    if (latest == null) {
       return null;
     }
     return PhysicalInventoryDto.builder()
-        .programId(latest.getProgramId())
-        .facilityId(latest.getFacilityId())
-        .isDraft(latest.getIsDraft())
-        .occurredDate(latest.getOccurredDate())
-        .documentNumber(latest.getDocumentNumber())
-        .signature(latest.getSignature())
-        .build();
+            .programId(latest.getProgramId())
+            .facilityId(latest.getFacilityId())
+            .isDraft(latest.getIsDraft())
+            .occurredDate(latest.getOccurredDate())
+            .documentNumber(latest.getDocumentNumber())
+            .signature(latest.getSignature())
+            .build();
   }
 
   public InitialInventoryFieldDto canInitialInventory(UUID facility) {

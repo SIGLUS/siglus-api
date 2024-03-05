@@ -670,6 +670,7 @@ public class SiglusPhysicalInventoryServiceTest {
   @Test
   public void shouldReturnLatestPhysicalInventoryWhenFindLatestPhysicalInventory() {
     // given
+    mockGetViaMmcProgram();
     PhysicalInventory physicalInventory1 = new PhysicalInventory();
     physicalInventory1.setOccurredDate(LocalDate.of(2020, 6, 10));
     PhysicalInventory physicalInventory2 = new PhysicalInventory();
