@@ -24,14 +24,16 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections4.CollectionUtils;
 import org.openlmis.fulfillment.domain.Order;
 import org.openlmis.fulfillment.domain.OrderLineItem;
 import org.openlmis.fulfillment.domain.VersionEntityReference;
@@ -62,6 +64,7 @@ import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.LotDto;
 import org.siglus.siglusapi.dto.LotSearchParams;
 import org.siglus.siglusapi.dto.SiglusOrderDto;
+import org.siglus.siglusapi.dto.SupportedProgramDto;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.dto.fc.IssueVoucherDto;
 import org.siglus.siglusapi.dto.fc.ProductDto;
@@ -121,6 +124,8 @@ public class FcCreateIssueVoucherService {
 
   private final OrderController orderController;
 
+  private final SiglusDateHelper dateHelper;
+
   private UUID currentSupplierFacilityId;
 
   @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -137,8 +142,35 @@ public class FcCreateIssueVoucherService {
         issueVoucherErrors.add("requisition status is error" + SPLIT + issueVoucherDto.getIssueVoucherNumber());
         return;
       }
-      List<ApprovedProductDto> approvedProductDtos = requisitionService
-          .getAllApprovedProducts(userDto.getHomeFacilityId(), requisitionV2Dto.getProgramId());
+      List<ApprovedProductDto> approvedProductDtos = new ArrayList<>();
+      if (currentSupplierFacilityId != null) {
+        FacilityDto facilityDto = siglusFacilityReferenceDataService.findOne(currentSupplierFacilityId);
+        if (facilityDto != null) {
+          List<SupportedProgramDto> supportedProgramDtos = facilityDto.getSupportedPrograms().stream()
+              .filter(supportedProgramDto -> {
+                LocalDate supportStartDate = supportedProgramDto.getSupportStartDate();
+                return supportedProgramDto.isProgramActive()
+                    && supportedProgramDto.isSupportActive()
+                    && supportStartDate.isBefore(dateHelper.getCurrentDate());
+              })
+              .collect(Collectors.toList());
+          List<UUID> programIds = supportedProgramDtos.stream()
+              .map(SupportedProgramDto::getId)
+              .collect(Collectors.toList());
+          Set<String> productCodes = new HashSet<>();
+          for (UUID programId : programIds) {
+            List<ApprovedProductDto> additionalProducts = requisitionService.getAllApprovedProducts(
+                userDto.getHomeFacilityId(), programId);
+            for (ApprovedProductDto additionalProduct : additionalProducts) {
+              String productCode = additionalProduct.getOrderable().getProductCode();
+              if (!productCodes.contains(productCode)) {
+                approvedProductDtos.add(additionalProduct);
+                productCodes.add(productCode);
+              }
+            }
+          }
+        }
+      }
       Map<String, ApprovedProductDto> approvedProductsMap = getApprovedProductsMap(approvedProductDtos);
       List<ProductDto> existProducts = getExistProducts(issueVoucherDto, approvedProductsMap);
       if (!CollectionUtils.isEmpty(existProducts)) {
