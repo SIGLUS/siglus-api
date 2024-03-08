@@ -28,29 +28,36 @@ import lombok.Builder;
 import lombok.Data;
 
 @NamedNativeQuery(
-        name = "StockCard.queryExpiredLotStockDtoByFacility",
-        query = "select sc_1.programid, p.\"name\", p.code, sc_1.orderableid, o.fullproductname, "
-                + " o.code AS productCode, sc_1.lotid, el.lotcode, cs_1.stockonhand, el.expirationdate "
-                + "from ( "
-                + "  select sc.lotid, sc.id, sc.orderableid, sc.programid from stockmanagement.stock_cards sc "
-                + "  where sc.facilityid = :facilityId and sc.lotid is not null ) sc_1 "
-                + "join ( "
-                + "  select l.id, l.lotcode, l.expirationdate from referencedata.lots l "
-                + "  where l.expirationdate < current_date ) el on el.id = sc_1.lotid "
-                + "left join referencedata.orderables o on o.id = sc_1.orderableid "
-                + "left join referencedata.programs p on p.id  = sc_1.programid "
-                + "left join ( "
-                + "  SELECT cs.stockcardid, cs.stockonhand, cs.row_number "
-                + "  FROM ( SELECT csoh.stockcardid, csoh.stockonhand, csoh.occurreddate, "
-                + "           row_number() OVER (PARTITION BY csoh.stockcardid ORDER BY csoh.occurreddate DESC) "
-                + "              AS row_number "
-                + "         FROM stockmanagement.calculated_stocks_on_hand csoh"
-                + "         where csoh.stockcardid in ("
-                + "             select sc1.id from stockmanagement.stock_cards sc1  "
-                + "             where sc1.facilityid = :facilityId and sc1.lotid is not null ) ) cs "
-                + "  WHERE cs.row_number = 1) cs_1 on sc_1.id = cs_1.stockcardid "
-                + ";",
-        resultSetMapping = "StockCard.LotStockDto")
+    name = "StockCard.queryExpiredLotStockDtoByFacility",
+    query = "select sc.id, sc.programid,p.\"name\", p.code, sc.orderableid, o.fullproductname, o.code, sc.lotid, "
+            + "l.lotcode, soh.stockonhand, l.expirationdate "
+            + "from stockmanagement.stock_cards sc "
+            + "left join referencedata.programs p on sc.programid = p.id "
+            + "left join "
+            + "( "
+            + "  select distinct on(id) id, fullproductname, code, versionnumber "
+            + "  from referencedata.orderables "
+            + "  order by id, versionnumber desc "
+            + ") o on sc.orderableid = o.id "
+            + "left join referencedata.lots l on sc.lotid = l.id "
+            + "left join "
+            + "( "
+            + "  select distinct on(tsoh.stockcardid) tsoh.id, tsoh.stockcardid, tsoh.stockonhand, tsoh.processeddate "
+            + "  from  "
+            + "  ( "
+            + "    select * from stockmanagement.calculated_stocks_on_hand "
+            + "    where stockcardid in "
+            + "    ( "
+            + "      select distinct sc.id from stockmanagement.stock_cards sc  "
+            + "      left join referencedata.lots l on sc.lotid = l.id "
+            + "      where sc.facilityid = :facilityid and l.expirationdate < current_date "
+            + "    ) "
+            + "  ) tsoh "
+            + "  order by tsoh.stockcardid, tsoh.processeddate desc "
+            + ") soh on sc.id = soh.stockcardid "
+            + "where sc.lotid is not null and sc.facilityid = :facilityid and l.expirationdate < current_date "
+            + ";",
+    resultSetMapping = "StockCard.LotStockDto")
 
 @MappedSuperclass
 @SqlResultSetMapping(
