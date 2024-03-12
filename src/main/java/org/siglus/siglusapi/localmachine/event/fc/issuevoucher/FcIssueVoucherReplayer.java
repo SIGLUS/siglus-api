@@ -15,9 +15,12 @@
 
 package org.siglus.siglusapi.localmachine.event.fc.issuevoucher;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.siglus.siglusapi.service.fc.FcIssueVoucherService;
+import org.siglus.siglusapi.service.fc.FcCreateIssueVoucherService;
 import org.siglus.siglusapi.util.SiglusSimulateUserAuthHelper;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
@@ -30,9 +33,11 @@ import org.springframework.stereotype.Component;
 @Profile("localmachine")
 public class FcIssueVoucherReplayer {
 
-  private final FcIssueVoucherService fcIssueVoucherService;
+  private final FcCreateIssueVoucherService fcIssueVoucherService;
 
   private final SiglusSimulateUserAuthHelper siglusSimulateUserAuthHelper;
+
+  private final List<String> issueVoucherErrors = new ArrayList<>();
 
   @EventListener(classes = {FcIssueVoucherEvent.class})
   public void replay(FcIssueVoucherEvent event) {
@@ -51,7 +56,8 @@ public class FcIssueVoucherReplayer {
   private void doReplay(FcIssueVoucherEvent event) {
     OAuth2Authentication originAuth = siglusSimulateUserAuthHelper.simulateNewUserBefore();
     try {
-      fcIssueVoucherService.createIssueVoucher(event.getIssueVoucherDto());
+      issueVoucherErrors.clear();
+      fcIssueVoucherService.createIssueVoucher(event.getIssueVoucherDto(), issueVoucherErrors);
     } finally {
       siglusSimulateUserAuthHelper.simulateNewUserAfter(originAuth);
     }
