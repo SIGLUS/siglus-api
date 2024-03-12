@@ -20,13 +20,16 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.siglus.siglusapi.dto.fc.IssueVoucherDto;
-import org.siglus.siglusapi.service.fc.FcIssueVoucherService;
+import org.siglus.siglusapi.service.fc.FcCreateIssueVoucherService;
 import org.siglus.siglusapi.util.SiglusSimulateUserAuthHelper;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -36,7 +39,7 @@ public class FcIssueVoucherReplayerTest {
   private FcIssueVoucherReplayer replayer;
 
   @Mock
-  private FcIssueVoucherService fcIssueVoucherService;
+  private FcCreateIssueVoucherService fcIssueVoucherService;
 
   @Mock
   private SiglusSimulateUserAuthHelper simulateUserAuthHelper;
@@ -49,11 +52,11 @@ public class FcIssueVoucherReplayerTest {
     IssueVoucherDto issueVoucherDto = new IssueVoucherDto();
     FcIssueVoucherEvent event = new FcIssueVoucherEvent();
     event.setIssueVoucherDto(issueVoucherDto);
-
+    List<String> issueVoucherErrors = new ArrayList<>();
     // when
     replayer.replay(event);
 
     // then
-    verify(fcIssueVoucherService, times(1)).createIssueVoucher(issueVoucherDto);
+    verify(fcIssueVoucherService, times(1)).createIssueVoucher(issueVoucherDto, issueVoucherErrors);
   }
 }
