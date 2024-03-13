@@ -30,7 +30,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import lombok.RequiredArgsConstructor;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.openlmis.fulfillment.domain.Order;
 import org.openlmis.fulfillment.domain.OrderLineItem;
@@ -58,6 +59,7 @@ import org.siglus.siglusapi.repository.ShipmentDraftLineItemsRepository;
 import org.siglus.siglusapi.repository.dto.StockCardReservedDto;
 import org.siglus.siglusapi.service.client.SiglusShipmentDraftFulfillmentService;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -65,20 +67,29 @@ import org.springframework.util.CollectionUtils;
 
 @Service
 @Slf4j
-@RequiredArgsConstructor
+@AllArgsConstructor
+@NoArgsConstructor
 public class SiglusShipmentDraftService {
 
-  private final SiglusShipmentDraftFulfillmentService siglusShipmentDraftFulfillmentService;
-  private final ShipmentDraftController draftController;
-  private final OrderLineItemExtensionRepository lineItemExtensionRepository;
-  private final OrderLineItemRepository orderLineItemRepository;
-  private final OrderRepository orderRepository;
-  private final SiglusOrderService siglusOrderService;
-  private final ShipmentDraftLineItemsExtensionRepository shipmentDraftLineItemsExtensionRepository;
+  @Autowired
+  private SiglusShipmentDraftFulfillmentService siglusShipmentDraftFulfillmentService;
+  @Autowired
+  private ShipmentDraftController draftController;
+  @Autowired
+  private OrderLineItemExtensionRepository lineItemExtensionRepository;
+  @Autowired
+  private OrderLineItemRepository orderLineItemRepository;
+  @Autowired
+  private OrderRepository orderRepository;
+  @Autowired
+  private SiglusOrderService siglusOrderService;
+  @Autowired
+  private ShipmentDraftLineItemsExtensionRepository shipmentDraftLineItemsExtensionRepository;
+  @Autowired
+  private ShipmentDraftLineItemsRepository shipmentDraftLineItemsRepository;
 
-  private final ShipmentDraftLineItemsRepository shipmentDraftLineItemsRepository;
-
-  private final StockCardSummariesService stockCardSummariesService;
+  @Autowired
+  private StockCardSummariesService stockCardSummariesService;
 
   @Transactional
   public ShipmentDraftDto createShipmentDraft(ShipmentDraftDto draftDto) {

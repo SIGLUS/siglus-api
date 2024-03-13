@@ -45,7 +45,8 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import lombok.RequiredArgsConstructor;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.openlmis.referencedata.domain.Orderable;
@@ -90,6 +91,7 @@ import org.siglus.siglusapi.repository.dto.StockCardReservedDto;
 import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
 import org.siglus.siglusapi.util.FormatHelper;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -100,31 +102,49 @@ import org.springframework.util.ObjectUtils;
 
 @Service
 @Slf4j
+@AllArgsConstructor
+@NoArgsConstructor
 @SuppressWarnings({"PMD"})
-@RequiredArgsConstructor
 public class SiglusStockCardSummariesService {
 
   private static final String PROGRAM_ID = "programId";
   private static final String EXCLUDE_ARCHIVED = "excludeArchived";
   private static final String ARCHIVED_ONLY = "archivedOnly";
   private static final String NON_EMPTY_ONLY = "nonEmptyOnly";
-  private final SiglusAuthenticationHelper authenticationHelper;
-  private final PermissionService permissionService;
-  private final SiglusArchiveProductService archiveProductService;
-  private final StockCardSummariesService stockCardSummariesService;
-  private final StockCardSummariesV2DtoBuilder stockCardSummariesV2DtoBuilder;
-  private final ProgramOrderableRepository programOrderableRepository;
-  private final PhysicalInventorySubDraftRepository physicalInventorySubDraftRepository;
-  private final PhysicalInventoryLineItemsExtensionRepository lineItemsExtensionRepository;
-  private final StockManagementDraftRepository stockManagementDraftRepository;
-  private final SiglusLotReferenceDataService siglusLotReferenceDataService;
-  private final SiglusOrderableService siglusOrderableService;
-  private final OrderableRepository orderableRepository;
-  private final LotController lotController;
-  private final CalculatedStockOnHandByLocationRepository calculatedStockOnHandByLocationRepository;
-  private final SiglusProgramService siglusProgramService;
-  private final RequisitionService requisitionService;
-  private final SiglusShipmentDraftService siglusShipmentDraftService;
+  @Autowired
+  private SiglusAuthenticationHelper authenticationHelper;
+  @Autowired
+  private PermissionService permissionService;
+  @Autowired
+  private SiglusArchiveProductService archiveProductService;
+  @Autowired
+  private StockCardSummariesService stockCardSummariesService;
+  @Autowired
+  private StockCardSummariesV2DtoBuilder stockCardSummariesV2DtoBuilder;
+  @Autowired
+  private ProgramOrderableRepository programOrderableRepository;
+  @Autowired
+  private PhysicalInventorySubDraftRepository physicalInventorySubDraftRepository;
+  @Autowired
+  private PhysicalInventoryLineItemsExtensionRepository lineItemsExtensionRepository;
+  @Autowired
+  private StockManagementDraftRepository stockManagementDraftRepository;
+  @Autowired
+  private SiglusLotReferenceDataService siglusLotReferenceDataService;
+  @Autowired
+  private SiglusOrderableService siglusOrderableService;
+  @Autowired
+  private  OrderableRepository orderableRepository;
+  @Autowired
+  private LotController lotController;
+  @Autowired
+  private CalculatedStockOnHandByLocationRepository calculatedStockOnHandByLocationRepository;
+  @Autowired
+  private SiglusProgramService siglusProgramService;
+  @Autowired
+  private RequisitionService requisitionService;
+  @Autowired
+  private SiglusShipmentDraftService siglusShipmentDraftService;
 
   public List<org.openlmis.referencedata.dto.LotDto> getLotsDataByOrderableIds(List<UUID> orderableIds) {
     if (CollectionUtils.isEmpty(orderableIds)) {
