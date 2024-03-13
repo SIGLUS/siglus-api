@@ -438,6 +438,8 @@ public class SiglusStockCardSummariesService {
       lotIds.add(UUID.randomUUID());
     }
     List<LotLocationSohDto> locationSoh = calculatedStockOnHandByLocationRepository.getLocationSoh(lotIds, facilityId);
+    Map<Tuple2<UUID, UUID>, Integer> reservedMap =
+            getStockCardReservedMap(facilityId, getId(PROGRAM_ID, parameters), draftId);
     return combineResponse(stockCardSummaryV2Dtos, orderableDtos, lotDtos, locationSoh);
   }
 
@@ -547,9 +549,7 @@ public class SiglusStockCardSummariesService {
             .stockOnHand(canFulfillForMeEntryDto.getStockOnHand())
             .processedDate(canFulfillForMeEntryDto.getProcessedDate())
             .stockCard(canFulfillForMeEntryDto.getStockCard())
-            .reservedStock(reservedMap.getOrDefault(
-                    Tuple2.of(canFulfillForMeEntryDto.getOrderable().getId(), canFulfillForMeEntryDto.getLot().getId()),
-                    0))
+            .reservedStock(getReservedStockForFulfill(canFulfillForMeEntryDto, reservedMap))
             .build();
         stockCardDetailsDtos.add(fulfill);
       });
@@ -596,6 +596,12 @@ public class SiglusStockCardSummariesService {
     return stockCardSummaryDtos;
   }
 
+  private int getReservedStockForFulfill(CanFulfillForMeEntryDto dto, Map<Tuple2<UUID, UUID>, Integer> reservedMap) {
+    if (dto == null || dto.getOrderable() == null || dto.getLot() == null) {
+      return 0;
+    }
+    return reservedMap.getOrDefault(Tuple2.of(dto.getOrderable().getId(), dto.getLot().getId()), 0);
+  }
 
   private OrderableDto getOrderableFromObjectReference(List<OrderableDto> orderableDtos,
       ObjectReferenceDto objectReferenceDto) {
