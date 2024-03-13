@@ -75,7 +75,9 @@ import org.openlmis.referencedata.domain.Orderable;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.domain.requisition.StatusChange;
+import org.openlmis.requisition.dto.ProgramOrderableDto;
 import org.openlmis.requisition.repository.StatusChangeRepository;
+import org.openlmis.requisition.service.referencedata.OrderableReferenceDataService;
 import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
 import org.openlmis.stockmanagement.repository.StockCardLineItemRepository;
@@ -203,6 +205,9 @@ public class SiglusPodServiceTest {
 
   @Mock
   private SiglusStockEventsService stockEventsService;
+
+  @Mock
+  private OrderableReferenceDataService orderableReferenceDataService;
 
   private final UUID externalId = UUID.randomUUID();
   private final UUID orderableId = UUID.randomUUID();
@@ -704,6 +709,8 @@ public class SiglusPodServiceTest {
     when(podSubDraftRepository.findAll(example)).thenReturn(buildMockSubDraftsAllSubmitted());
     PodExtensionRequest request = buildPodExtensionRequest();
     ProofOfDeliveryDto dto = request.getPodDto();
+    when(proofOfDeliveryRepository.findOne(podId)).thenReturn(buildMockProofOfDelivery());
+    when(orderableReferenceDataService.findByIdentities(any())).thenReturn(Lists.newArrayList(buildOrderableDto()));
     when(fulfillmentService.searchProofOfDelivery(any(), any())).thenReturn(dto);
     when(podController.updateProofOfDelivery(podId, dto, null, false)).thenReturn(dto);
     when(proofOfDeliveryEmitter.emit(podId)).thenReturn(new ProofOfDeliveryEvent());
@@ -725,6 +732,8 @@ public class SiglusPodServiceTest {
     when(authenticationHelper.isTheCurrentUserCanMergeOrDeleteSubDrafts()).thenReturn(Boolean.TRUE);
     Example<PodSubDraft> example = Example.of(PodSubDraft.builder().podId(podId).build());
     when(podSubDraftRepository.findAll(example)).thenReturn(buildMockSubDraftsAllSubmitted());
+    when(proofOfDeliveryRepository.findOne(podId)).thenReturn(buildMockProofOfDelivery());
+    when(orderableReferenceDataService.findByIdentities(any())).thenReturn(Lists.newArrayList(buildOrderableDto()));
     PodExtensionRequest request = buildPodExtensionRequest();
     ProofOfDeliveryDto dto = request.getPodDto();
     when(fulfillmentService.searchProofOfDelivery(any(), any())).thenReturn(dto);
@@ -749,6 +758,8 @@ public class SiglusPodServiceTest {
     when(authenticationHelper.isTheCurrentUserCanMergeOrDeleteSubDrafts()).thenReturn(Boolean.TRUE);
     Example<PodSubDraft> example = Example.of(PodSubDraft.builder().podId(podId).build());
     when(podSubDraftRepository.findAll(example)).thenReturn(buildMockSubDraftsAllSubmitted());
+    when(proofOfDeliveryRepository.findOne(podId)).thenReturn(buildMockProofOfDelivery());
+    when(orderableReferenceDataService.findByIdentities(any())).thenReturn(Lists.newArrayList(buildOrderableDto()));
     PodExtensionRequest request = buildPodExtensionRequestWithPodTwoLineItems();
     ProofOfDeliveryDto dto = request.getPodDto();
     when(fulfillmentService.searchProofOfDelivery(any(), any())).thenReturn(dto);
@@ -1454,7 +1465,9 @@ public class SiglusPodServiceTest {
     orderable.setId(orderableId);
     orderable.setVersionNumber(1L);
     ShipmentLineItem shipmentLineItem = new ShipmentLineItem(orderable, 10L, null);
-    Shipment shipment = new Shipment(new Order(), null, notes,
+    Order order = new Order();
+    order.setProgramId(programId);
+    Shipment shipment = new Shipment(order, null, notes,
         Lists.newArrayList(shipmentLineItem), null);
     ProofOfDeliveryLineItem proofOfDeliveryLineItem = new ProofOfDeliveryLineItem(orderable, lotId, 10,
         null, 0, null, notes);
@@ -1499,5 +1512,15 @@ public class SiglusPodServiceTest {
     return org.openlmis.stockmanagement.dto.StockEventDto.builder()
         .lineItems(newArrayList(lineItemDto1))
         .programId(ALL_PRODUCTS_PROGRAM_ID).build();
+  }
+
+
+  private org.openlmis.requisition.dto.OrderableDto buildOrderableDto() {
+    org.openlmis.requisition.dto.OrderableDto orderableDto = new org.openlmis.requisition.dto.OrderableDto();
+    orderableDto.setId(orderableId);
+    ProgramOrderableDto programOrderableDto = new ProgramOrderableDto();
+    programOrderableDto.setProgramId(programId);
+    orderableDto.setPrograms(Sets.newHashSet(programOrderableDto));
+    return orderableDto;
   }
 }
