@@ -139,6 +139,9 @@ public class SiglusStockCardSummariesServiceTest {
   @Mock
   private LotController lotController;
 
+  @Mock
+  private SiglusShipmentDraftService siglusShipmentDraftService;
+
   @InjectMocks
   private SiglusStockCardSummariesService service;
 
@@ -406,6 +409,8 @@ public class SiglusStockCardSummariesServiceTest {
     ProgramDto programDto = new ProgramDto();
     programDto.setCode(TARV_PROGRAM_CODE);
     when(programService.getProgram(programId)).thenReturn(programDto);
+    when(siglusShipmentDraftService.reservedCount(facilityId, programId, initialDraftId, null))
+            .thenReturn(new ArrayList<>());
 
     List<List<StockCardDetailsDto>> stockCardDetailsDtoByGroup = service
         .getStockCardDetailsDtoByGroup(getProgramsParms(), null, subDraftId, pageable);

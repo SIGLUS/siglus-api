@@ -13,36 +13,24 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.dto;
+package org.siglus.siglusapi.web.request;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonFormat.Shape;
-import java.time.LocalDate;
-import java.time.ZonedDateTime;
-import lombok.AllArgsConstructor;
+import java.util.List;
+import java.util.UUID;
+import javax.validation.constraints.NotNull;
+
 import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.experimental.SuperBuilder;
-import org.openlmis.referencedata.dto.OrderableDto;
-import org.openlmis.stockmanagement.dto.ObjectReferenceDto;
+import org.hibernate.validator.constraints.NotEmpty;
+import org.openlmis.fulfillment.web.shipment.ShipmentLineItemDto;
 
 @Data
-@AllArgsConstructor
-@NoArgsConstructor
-@SuperBuilder
-public class StockCardDetailsDto {
+public class ShipmentReservedRequest {
 
-  private ObjectReferenceDto stockCard;
-  private OrderableDto orderable;
-  private LotDto lot;
-  private Integer stockOnHand;
-  private Integer reservedStock;
-  @JsonFormat(
-      shape = Shape.STRING
-  )
-  private LocalDate occurredDate;
-  @JsonFormat(
-      shape = Shape.STRING
-  )
-  private ZonedDateTime processedDate;
+  private UUID shipmentDraftId;
+
+  private UUID programId;
+
+  @NotNull
+  @NotEmpty
+  private List<ShipmentLineItemDto> lineItems;
 }
