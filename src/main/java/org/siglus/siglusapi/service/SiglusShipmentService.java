@@ -26,7 +26,6 @@ import static org.siglus.siglusapi.util.LocationUtil.getIfNonNull;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
-
 import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -52,7 +51,6 @@ import org.openlmis.fulfillment.web.shipment.LocationDto;
 import org.openlmis.fulfillment.web.shipment.ShipmentController;
 import org.openlmis.fulfillment.web.shipment.ShipmentDto;
 import org.openlmis.fulfillment.web.shipment.ShipmentLineItemDto;
-import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftDto;
 import org.openlmis.fulfillment.web.util.OrderDto;
 import org.openlmis.fulfillment.web.util.OrderLineItemDto;
 import org.openlmis.fulfillment.web.util.OrderObjectReferenceDto;
@@ -71,10 +69,8 @@ import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.PodExtensionRepository;
 import org.siglus.siglusapi.repository.ShipmentLineItemsExtensionRepository;
 import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
-import org.siglus.siglusapi.service.client.SiglusShipmentDraftFulfillmentService;
 import org.siglus.siglusapi.web.request.ShipmentExtensionRequest;
 import org.springframework.beans.BeanUtils;
-import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -103,10 +99,6 @@ public class SiglusShipmentService {
   private final ProcessingPeriodExtensionRepository processingPeriodExtensionRepository;
 
   private final RequisitionService requisitionService;
-
-  private final SiglusShipmentDraftService shipmentDraftService;
-
-  private final SiglusShipmentDraftFulfillmentService shipmentDraftFulfillmentService;
 
   @Transactional
   public ShipmentDto createOrderAndShipment(boolean isSubOrder, ShipmentExtensionRequest shipmentExtensionRequest) {
@@ -146,19 +138,6 @@ public class SiglusShipmentService {
     if (isOrderableLotIdDuplicated) {
       throw new ValidationMessageException(new Message(SHIPMENT_LINE_ITEMS_INVALID));
     }
-  }
-
-  public void checkStockOnHandQuantity(ShipmentExtensionRequest shipmentExtensionRequest) {
-    ShipmentDraftDto dto = new ShipmentDraftDto();
-    dto.setLineItems(shipmentExtensionRequest.getShipment().lineItems());
-    dto.setOrder(shipmentExtensionRequest.getShipment().getOrder());
-    Page<ShipmentDraftDto> shipmentDrafts = shipmentDraftFulfillmentService
-            .getShipmentDraftByOrderId(shipmentExtensionRequest.getShipment().getOrder().getId());
-    UUID shipmentDraftId = null;
-    if (shipmentDrafts.getSize() > 0) {
-      shipmentDraftId = shipmentDrafts.getContent().get(0).getId();
-    }
-    shipmentDraftService.checkStockOnHandQuantity(shipmentDraftId, dto);
   }
 
   @Transactional
@@ -309,7 +288,7 @@ public class SiglusShipmentService {
   private Long getShippedValue(Map<UUID, List<ShipmentLineItem.Importer>> groupShipment,
       UUID orderableId) {
     List<ShipmentLineItem.Importer> shipments = groupShipment.get(orderableId);
-    Long shipmentValue = 0L;
+    Long shipmentValue = Long.valueOf(0);
     for (ShipmentLineItem.Importer shipment : shipments) {
       shipmentValue += shipment.getQuantityShipped();
     }

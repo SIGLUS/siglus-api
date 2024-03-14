@@ -36,7 +36,6 @@ public class StockCardDetailsDto {
   private OrderableDto orderable;
   private LotDto lot;
   private Integer stockOnHand;
-  private Integer reservedStock;
   @JsonFormat(
       shape = Shape.STRING
   )

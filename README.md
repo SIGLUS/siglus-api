@@ -20,8 +20,6 @@ Independent Services where each Gradle build produces 1 Service.
 To help work with these Services, we use Docker to develop, build and 
 publish these.
 
-Note: If building failed with error `> Task :npm_run_runApiHtmlConverter FAILED`, please try run `./gradlew --stop` and retry.
-
 ## Environment variables
 
 The following environment variables are common to our services. They can be set either directly in compose files for images or provided as an environment file. See [docker-compose.yml](https://raw.githubusercontent.com/OpenLMIS/openlmis-ref-distro/master/docker-compose.yml) in the reference distribution for example usage. Also take a look at the sample [.env file](https://raw.githubusercontent.com/OpenLMIS/openlmis-config/master/.env) we provide. 

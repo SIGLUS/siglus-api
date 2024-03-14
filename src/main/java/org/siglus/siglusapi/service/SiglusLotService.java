@@ -41,8 +41,6 @@ import org.siglus.siglusapi.dto.LotSearchParams;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.dto.android.Lot;
 import org.siglus.siglusapi.exception.ValidationMessageException;
-import org.siglus.siglusapi.repository.SiglusLotRepository;
-import org.siglus.siglusapi.repository.dto.LotStockDto;
 import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
@@ -63,7 +61,6 @@ public class SiglusLotService {
   private final SiglusLotReferenceDataService lotReferenceDataService;
   private final LotConflictService lotConflictService;
   private final LotRepository lotRepository;
-  private final SiglusLotRepository siglusLotRepository;
 
   /**
    * reason for create a new transaction: Running this method in the super transaction will cause
@@ -137,10 +134,6 @@ public class SiglusLotService {
     lotConflictService.handleLotConflict(facilityId, lotCode, existedLot.getId(), expirationDate,
         existedLot.getExpirationDate());
     return existedLot;
-  }
-
-  public List<LotStockDto> getExpiredLots(UUID facilityId) {
-    return siglusLotRepository.queryExpiredLots(facilityId);
   }
 
   private UUID getFacilityId(StockEventDto eventDto) {

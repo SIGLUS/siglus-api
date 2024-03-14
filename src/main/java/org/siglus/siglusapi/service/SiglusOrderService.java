@@ -123,11 +123,9 @@ import org.siglus.siglusapi.repository.SiglusShipmentRepository;
 import org.siglus.siglusapi.repository.StockManagementRepository;
 import org.siglus.siglusapi.repository.dto.OrderSuggestedQuantityDto;
 import org.siglus.siglusapi.repository.dto.RequisitionOrderDto;
-import org.siglus.siglusapi.repository.dto.StockCardReservedDto;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusProcessingPeriodReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
-import org.siglus.siglusapi.service.client.SiglusShipmentDraftFulfillmentService;
 import org.siglus.siglusapi.service.scheduledtask.SiglusOrderCloseSchedulerService;
 import org.siglus.siglusapi.util.PeriodUtil;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
@@ -260,9 +258,6 @@ public class SiglusOrderService {
 
   @Autowired
   private ShipmentsExtensionRepository shipmentsExtensionRepository;
-
-  @Autowired
-  private SiglusShipmentDraftFulfillmentService siglusShipmentDraftFulfillmentService;
 
   private static final String SLASH = "/";
 
@@ -659,14 +654,6 @@ public class SiglusOrderService {
   public String increaseOrderNumber(String orderNumber) {
     String[] split = orderNumber.split(SLASH);
     return String.format("%s%02d", split[0] + SLASH, (Integer.parseInt(split[1]) + 1));
-  }
-
-  public List<StockCardReservedDto> getOrderReservedQuantity(UUID orderId) {
-    Order order = getOrder(orderId);
-    ShipmentDraftDto shipmentDraftDto = siglusShipmentDraftFulfillmentService.getShipmentDraftByOrderId(orderId)
-            .getContent().get(0);
-    return draftService.reservedCount(order.getSupplyingFacilityId(), order.getProgramId(),
-            shipmentDraftDto.getId(), shipmentDraftDto.lineItems());
   }
 
   private Map<UUID, BigDecimal> getOrderableIdToSuggestedQuantity(Order order, List<ProcessingPeriod> periods) {

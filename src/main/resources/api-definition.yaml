@@ -616,12 +616,6 @@ traits:
           responses:
             200:
               description: GET specific facility's requisition group
-      /{id}/lots:
-        get:
-          is: [ secured ]
-          responses:
-            200:
-              description: GET specific facility's lots with param
 
     /localIssueVouchers:
       post:
@@ -3184,35 +3178,7 @@ traits:
             body:
               application/json:
                 schema: localizedMessagepickPackInfo
-    /orders/{id}/reservedQuantity:
-      uriParameters:
-        id:
-          displayName: id
-          type: string
-          required: true
-          repeat: false
-      get:
-        is: [ secured ]
-        description: get reserved quantity by order
-        responses:
-          200:
-            headers:
-              Keep-Alive:
-            body:
-              application/json:
-                schema: StockCardReservedDto
-          403:
-            headers:
-              Keep-Alive:
-            body:
-              application/json:
-                schema: localizedMessage
-          404:
-            headers:
-              Keep-Alive:
-            body:
-              application/json:
-                schema: localizedMessage
+
 
     /orders/createLineItem:
       post:
