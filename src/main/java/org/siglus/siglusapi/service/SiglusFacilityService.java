@@ -23,9 +23,13 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.openlmis.referencedata.domain.Facility;
+import org.siglus.siglusapi.dto.Message;
+import org.siglus.siglusapi.dto.RemovedLotDto;
 import org.siglus.siglusapi.dto.RequisitionGroupMembersDto;
+import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.repository.RequisitionGroupMembersRepository;
 import org.siglus.siglusapi.repository.SiglusFacilityRepository;
+import org.siglus.siglusapi.util.FacilityConfigHelper;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -35,6 +39,8 @@ public class SiglusFacilityService {
 
   private final RequisitionGroupMembersRepository requisitionGroupMembersRepository;
   private final SiglusFacilityRepository siglusFacilityRepository;
+  private final FacilityConfigHelper facilityConfigHelper;
+  private final SiglusLotService siglusLotService;
 
   public List<RequisitionGroupMembersDto> searchFacilityRequisitionGroup(UUID id, Set<UUID> programIds) {
     return requisitionGroupMembersRepository.findParentFacilityByRequisitionGroup(id, programIds);
@@ -43,5 +49,14 @@ public class SiglusFacilityService {
   public Map<UUID, String> getFacilityIdToName(Set<UUID> facilityIds) {
     return siglusFacilityRepository.findFacilityBasicInfoByIds(facilityIds).stream()
         .collect(Collectors.toMap(Facility::getId, Facility::getName));
+  }
+
+  public void removeExpiredLots(UUID facilityId, List<RemovedLotDto> lots) {
+    boolean hasLocation = facilityConfigHelper.isLocationManagementEnabled(facilityId);
+    if (hasLocation && lots.stream().anyMatch(RemovedLotDto::hasLocation)) {
+      throw new BusinessDataException(Message.createFromMessageKeyStr("Missing Location"));
+    }
+    lots.forEach(lot -> lot.setFacilityId(facilityId));
+    siglusLotService.removeExpiredLots(lots, hasLocation);
   }
 }

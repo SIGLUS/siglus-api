@@ -39,8 +39,11 @@ import org.openlmis.stockmanagement.dto.StockEventLineItemDto;
 import org.siglus.siglusapi.dto.LotDto;
 import org.siglus.siglusapi.dto.LotSearchParams;
 import org.siglus.siglusapi.dto.Message;
+import org.siglus.siglusapi.dto.RemovedLotDto;
 import org.siglus.siglusapi.dto.android.Lot;
+import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
+import org.siglus.siglusapi.repository.CalculatedStockOnHandByLocationRepository;
 import org.siglus.siglusapi.repository.SiglusLotRepository;
 import org.siglus.siglusapi.repository.dto.LotStockDto;
 import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
@@ -64,6 +67,8 @@ public class SiglusLotService {
   private final LotConflictService lotConflictService;
   private final LotRepository lotRepository;
   private final SiglusLotRepository siglusLotRepository;
+  private final CalculatedStockOnHandByLocationRepository calculatedStockOnHandByLocationRepository;
+  private final SiglusStockEventsService stockEventsService;
 
   /**
    * reason for create a new transaction: Running this method in the super transaction will cause
@@ -141,6 +146,16 @@ public class SiglusLotService {
 
   public List<LotStockDto> getExpiredLots(UUID facilityId) {
     return siglusLotRepository.queryExpiredLots(facilityId);
+  }
+
+  public void removeExpiredLots(List<RemovedLotDto> lots, boolean hasLocation) {
+    // check whether the lots expired
+    List<UUID> stockCardIds = lots.stream().map(RemovedLotDto::getStockCardId).collect(Collectors.toList());
+    if (siglusLotRepository.existsNotExpiredLotsByStockCardIds(stockCardIds)) {
+      throw new BusinessDataException(Message.createFromMessageKeyStr("exists not expired lots"));
+    }
+    // check quantity is smaller or equal than soh
+    // send stock event to remove expired lots
   }
 
   private UUID getFacilityId(StockEventDto eventDto) {

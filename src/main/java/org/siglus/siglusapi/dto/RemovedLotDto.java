@@ -13,22 +13,32 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.repository;
+package org.siglus.siglusapi.dto;
 
-import java.util.List;
 import java.util.UUID;
+import javax.validation.constraints.NotNull;
 
-import org.openlmis.referencedata.domain.Lot;
-import org.siglus.siglusapi.repository.dto.LotStockDto;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.checkerframework.checker.index.qual.Positive;
 
-public interface SiglusLotRepository extends JpaRepository<Lot, UUID>  {
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class RemovedLotDto {
+  @NotNull
+  private UUID stockCardId;
+  private UUID facilityId;
+  private UUID programId;
+  private UUID orderableId;
+  private UUID lotId;
+  @Positive
+  private int quantity;
+  private String locationCode;
+  private String area;
 
-  @Query(name = "StockCard.queryExpiredLotStockDtoByFacility", nativeQuery = true)
-  List<LotStockDto> queryExpiredLots(@Param("facilityId") UUID facilityId);
-
-  @Query("SELECT EXISTS (SELECT 1 FROM referencedata.lots l WHERE l.id IN (:ids) AND l.dateColumnName > current_date)")
-  boolean existsNotExpiredLotsByStockCardIds(List<UUID> ids);
+  public Boolean hasLocation() {
+    return locationCode != null && area != null;
+  }
 }
