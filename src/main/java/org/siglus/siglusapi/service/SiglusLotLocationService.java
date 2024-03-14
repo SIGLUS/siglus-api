@@ -53,6 +53,7 @@ import org.siglus.siglusapi.domain.FacilityLocations;
 import org.siglus.siglusapi.domain.OrderableIdentifiers;
 import org.siglus.siglusapi.dto.FacilityLocationsDto;
 import org.siglus.siglusapi.dto.LocationLotsDto;
+import org.siglus.siglusapi.dto.LocationStatusDto;
 import org.siglus.siglusapi.dto.LotsDto;
 import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.repository.CalculatedStockOnHandByLocationRepository;
@@ -354,5 +355,12 @@ public class SiglusLotLocationService {
         .area(location.getArea())
         .locationCode(location.getLocationCode())
         .build()).collect(Collectors.toList());
+  }
+
+  public List<LocationStatusDto> searchLocationStatus(UUID facilityId) {
+    if (facilityId == null) {
+      return new ArrayList<>();
+    }
+    return calculatedStockOnHandByLocationRepository.findLocationStatusByFacilityId(facilityId);
   }
 }

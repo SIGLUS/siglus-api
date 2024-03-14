@@ -622,6 +622,14 @@ traits:
           responses:
             200:
               description: GET specific facility's lots with param
+      /{id}/locations:
+        get:
+          is: [ secured ]
+          body:
+            application/json:
+          responses:
+            200:
+              description: GET success
 
     /localIssueVouchers:
       post:

@@ -19,11 +19,13 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.siglus.siglusapi.dto.LocationStatusDto;
 import org.siglus.siglusapi.dto.RemovedLotDto;
 import org.siglus.siglusapi.dto.RequisitionGroupMembersDto;
 import org.siglus.siglusapi.exception.InvalidReasonException;
 import org.siglus.siglusapi.repository.dto.LotStockDto;
 import org.siglus.siglusapi.service.SiglusFacilityService;
+import org.siglus.siglusapi.service.SiglusLotLocationService;
 import org.siglus.siglusapi.service.SiglusLotService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -41,6 +43,8 @@ public class SiglusFacilityController {
   private final SiglusFacilityService siglusFacilityService;
 
   private final SiglusLotService siglusLotService;
+
+  private final SiglusLotLocationService lotLocationService;
 
   @GetMapping("/{id}/requisitionGroup")
   public List<RequisitionGroupMembersDto> searchFacilityRequisitionGroup(@PathVariable UUID id,
@@ -61,5 +65,10 @@ public class SiglusFacilityController {
   public void removeExpiredLots(@PathVariable("id") UUID id,
                                 @RequestBody List<RemovedLotDto> dtos) {
     siglusFacilityService.removeExpiredLots(id, dtos);
+  }
+
+  @GetMapping("/{id}/locations")
+  public List<LocationStatusDto> searchLocationStatus(@PathVariable UUID id) {
+    return lotLocationService.searchLocationStatus(id);
   }
 }
