@@ -98,6 +98,11 @@ public class SiglusShipmentDraftService {
   }
 
   @Transactional
+  public ShipmentDraftDto createShipmentDraftWithoutCheck(ShipmentDraftDto draftDto) {
+    return draftController.createShipmentDraft(draftDto);
+  }
+
+  @Transactional
   public ShipmentDraftDto updateShipmentDraft(UUID id, ShipmentDraftDto draftDto) {
     checkStockOnHandQuantity(id, draftDto);
     updateOrderLineItemsWithExtension(draftDto);
