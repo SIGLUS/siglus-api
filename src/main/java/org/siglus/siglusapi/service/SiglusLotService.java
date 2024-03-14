@@ -29,7 +29,9 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import lombok.RequiredArgsConstructor;
+
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.openlmis.referencedata.dto.OrderableDto;
@@ -41,34 +43,39 @@ import org.siglus.siglusapi.dto.LotSearchParams;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.dto.RemovedLotDto;
 import org.siglus.siglusapi.dto.android.Lot;
-import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
-import org.siglus.siglusapi.repository.CalculatedStockOnHandByLocationRepository;
 import org.siglus.siglusapi.repository.SiglusLotRepository;
 import org.siglus.siglusapi.repository.dto.LotStockDto;
 import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.util.SiglusDateHelper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Slf4j
-@RequiredArgsConstructor
+@AllArgsConstructor
+@NoArgsConstructor
 public class SiglusLotService {
 
   public static final int SIZE = 50;
-  private final SiglusOrderableReferenceDataService orderableReferenceDataService;
-  private final SiglusAuthenticationHelper authenticationHelper;
-  private final SiglusDateHelper dateHelper;
-  private final SiglusLotReferenceDataService lotReferenceDataService;
-  private final LotConflictService lotConflictService;
-  private final LotRepository lotRepository;
-  private final SiglusLotRepository siglusLotRepository;
-  private final CalculatedStockOnHandByLocationRepository calculatedStockOnHandByLocationRepository;
-  private final SiglusStockEventsService stockEventsService;
+  @Autowired
+  private SiglusOrderableReferenceDataService orderableReferenceDataService;
+  @Autowired
+  private SiglusAuthenticationHelper authenticationHelper;
+  @Autowired
+  private SiglusDateHelper dateHelper;
+  @Autowired
+  private SiglusLotReferenceDataService lotReferenceDataService;
+  @Autowired
+  private LotConflictService lotConflictService;
+  @Autowired
+  private LotRepository lotRepository;
+  @Autowired
+  private SiglusLotRepository siglusLotRepository;
 
   /**
    * reason for create a new transaction: Running this method in the super transaction will cause
@@ -150,10 +157,10 @@ public class SiglusLotService {
 
   public void removeExpiredLots(List<RemovedLotDto> lots, boolean hasLocation) {
     // check whether the lots expired
-    List<UUID> stockCardIds = lots.stream().map(RemovedLotDto::getStockCardId).collect(Collectors.toList());
-    if (siglusLotRepository.existsNotExpiredLotsByStockCardIds(stockCardIds)) {
-      throw new BusinessDataException(Message.createFromMessageKeyStr("exists not expired lots"));
-    }
+    //    List<UUID> stockCardIds = lots.stream().map(RemovedLotDto::getStockCardId).collect(Collectors.toList());
+    //    if (siglusLotRepository.existsNotExpiredLotsByStockCardIds(stockCardIds)) {
+    //      throw new BusinessDataException(Message.createFromMessageKeyStr("exists not expired lots"));
+    //    }
     // check quantity is smaller or equal than soh
     // send stock event to remove expired lots
   }
