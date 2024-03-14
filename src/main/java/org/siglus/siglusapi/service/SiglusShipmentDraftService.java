@@ -87,7 +87,6 @@ public class SiglusShipmentDraftService {
   private ShipmentDraftLineItemsExtensionRepository shipmentDraftLineItemsExtensionRepository;
   @Autowired
   private ShipmentDraftLineItemsRepository shipmentDraftLineItemsRepository;
-
   @Autowired
   private StockCardSummariesService stockCardSummariesService;
 
@@ -194,6 +193,9 @@ public class SiglusShipmentDraftService {
   }
 
   public void checkStockOnHandQuantity(UUID shipmentDraftId, ShipmentDraftDto draftDto) {
+    if (draftDto.getLineItems().isEmpty()) {
+      return;
+    }
     // get available soh
     StockCardSummariesV2SearchParams v2SearchParams = new StockCardSummariesV2SearchParams();
     v2SearchParams.setFacilityId(draftDto.getOrder().getSupplyingFacility().getId());

@@ -32,9 +32,13 @@ import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_PERMISSION_NOT_SUPPORT
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_ID_NOT_FOUND;
 import static org.siglus.siglusapi.i18n.PermissionMessageKeys.ERROR_NO_FOLLOWING_PERMISSION;
 
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -45,6 +49,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -68,7 +73,6 @@ import org.openlmis.stockmanagement.util.Message;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.CanFulfillForMeEntryDto;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummariesV2DtoBuilder;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2Dto;
-import org.organicdesign.fp.tuple.Tuple2;
 import org.siglus.common.repository.ProgramOrderableRepository;
 import org.siglus.siglusapi.domain.PhysicalInventoryLineItemsExtension;
 import org.siglus.siglusapi.domain.PhysicalInventorySubDraft;
@@ -416,7 +420,7 @@ public class SiglusStockCardSummariesService {
     UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
     List<OrderableDto> orderableDtos = getOrderableDtos(pageable, orderableIds, facilityId);
     List<LotDto> lotDtos = getLotDtos(canFulfillForMeEntryDtos);
-    Map<Tuple2<UUID, UUID>, Integer> reservedMap =
+    Map<String, Integer> reservedMap =
             getStockCardReservedMap(facilityId, getId(PROGRAM_ID, parameters), draftId);
 
     return combineResponse(stockCardSummaryV2Dtos, orderableDtos, lotDtos, reservedMap);
@@ -438,9 +442,9 @@ public class SiglusStockCardSummariesService {
       lotIds.add(UUID.randomUUID());
     }
     List<LotLocationSohDto> locationSoh = calculatedStockOnHandByLocationRepository.getLocationSoh(lotIds, facilityId);
-    Map<Tuple2<UUID, UUID>, Integer> reservedMap =
+    Map<String, Integer> reservedMap =
             getStockCardReservedMap(facilityId, getId(PROGRAM_ID, parameters), draftId);
-    return combineResponse(stockCardSummaryV2Dtos, orderableDtos, lotDtos, locationSoh);
+    return combineResponse(stockCardSummaryV2Dtos, orderableDtos, lotDtos, locationSoh, reservedMap);
   }
 
   private List<LotDto> getLotDtos(List<CanFulfillForMeEntryDto> canFulfillForMeEntryDtos) {
@@ -531,7 +535,7 @@ public class SiglusStockCardSummariesService {
   }
 
   private List<StockCardSummaryDto> combineResponse(List<StockCardSummaryV2Dto> stockCardSummaryV2Dtos,
-      List<OrderableDto> orderableDtos, List<LotDto> lotDtos, Map<Tuple2<UUID, UUID>, Integer> reservedMap) {
+      List<OrderableDto> orderableDtos, List<LotDto> lotDtos, Map<String, Integer> reservedMap) {
     List<StockCardSummaryDto> stockCardSummaryDtos = new ArrayList<>();
 
     stockCardSummaryV2Dtos.forEach(stockCardSummaryV2Dto -> {
@@ -560,7 +564,8 @@ public class SiglusStockCardSummariesService {
   }
 
   private List<StockCardSummaryWithLocationDto> combineResponse(List<StockCardSummaryV2Dto> stockCardSummaryV2Dtos,
-      List<OrderableDto> orderableDtos, List<LotDto> lotDtos, List<LotLocationSohDto> lotLocationSohDtoList) {
+      List<OrderableDto> orderableDtos, List<LotDto> lotDtos, List<LotLocationSohDto> lotLocationSohDtoList,
+                                                                Map<String, Integer> reservedMap) {
     List<StockCardSummaryWithLocationDto> stockCardSummaryDtos = new ArrayList<>();
     Map<String, List<LotLocationSohDto>> lotLocationMaps = lotLocationSohDtoList.stream()
         .collect(Collectors.groupingBy(LotLocationSohDto::getIdentify));
@@ -587,6 +592,10 @@ public class SiglusStockCardSummariesService {
           if (ObjectUtils.isEmpty(fulfill.getLot())) {
             fulfill.setLotLocationSohDtoList(lotLocationMaps.get(fulfill.getOrderable().getId().toString()));
           }
+          if (!ObjectUtils.isEmpty(fulfill.getLotLocationSohDtoList())) {
+            fulfill.getLotLocationSohDtoList().forEach(
+                dto -> dto.setReservedStock(getReservedStockForFulfill(dto, reservedMap)));
+          }
           stockCardDetailsDtos.add(fulfill);
         }
       });
@@ -596,11 +605,18 @@ public class SiglusStockCardSummariesService {
     return stockCardSummaryDtos;
   }
 
-  private int getReservedStockForFulfill(CanFulfillForMeEntryDto dto, Map<Tuple2<UUID, UUID>, Integer> reservedMap) {
+  private int getReservedStockForFulfill(CanFulfillForMeEntryDto dto, Map<String, Integer> reservedMap) {
     if (dto == null || dto.getOrderable() == null || dto.getLot() == null) {
       return 0;
     }
-    return reservedMap.getOrDefault(Tuple2.of(dto.getOrderable().getId(), dto.getLot().getId()), 0);
+    String key = buildStockCardReservedMapKey(dto.getOrderable().getId(), dto.getLot().getId(), null, null);
+    return reservedMap.getOrDefault(key, 0);
+  }
+
+  private int getReservedStockForFulfill(LotLocationSohDto dto, Map<String, Integer> reservedMap) {
+    String key = buildStockCardReservedMapKey(
+            dto.getOrderableId(), dto.getLotId(), dto.getArea(), dto.getLocationCode());
+    return reservedMap.getOrDefault(key, 0);
   }
 
   private OrderableDto getOrderableFromObjectReference(List<OrderableDto> orderableDtos,
@@ -641,13 +657,37 @@ public class SiglusStockCardSummariesService {
     return stockCardDetailsDtos;
   }
 
-  private Map<Tuple2<UUID, UUID>, Integer> getStockCardReservedMap(
+  private Map<String, Integer> getStockCardReservedMap(
           UUID facilityId, UUID programId, UUID shipmentDraftId) {
     List<StockCardReservedDto> stockCardReservedDtos =
             siglusShipmentDraftService.reservedCount(facilityId, programId, shipmentDraftId, null);
-    return stockCardReservedDtos
-            .stream()
-            .collect(Collectors.toMap(item -> Tuple2.of(item.getOrderableId(), item.getLotId()),
-                    StockCardReservedDto::getReserved));
+    Multimap<String, StockCardReservedDto> reservedMap = ArrayListMultimap.create();
+    stockCardReservedDtos.forEach(dto -> {
+      String uniqueKey = buildStockCardReservedMapKey(
+              dto.getOrderableId(), dto.getLotId(), dto.getArea(), dto.getLocationCode());
+      reservedMap.put(uniqueKey, dto);
+    });
+    Map<String, Integer> result = new HashMap<>();
+    reservedMap.asMap().forEach((key, values) -> {
+      result.put(key, values.stream().mapToInt(StockCardReservedDto::getReserved).sum());
+    });
+    return result;
+  }
+
+  private String buildStockCardReservedMapKey(UUID orderableId, UUID lotId, String area, String locationCode) {
+    if (orderableId == null || lotId == null) {
+      return null;
+    }
+    StringBuilder sb = new StringBuilder();
+    sb.append(orderableId);
+    sb.append("_");
+    sb.append(lotId);
+    if (area != null && locationCode != null) {
+      sb.append("_");
+      sb.append(area);
+      sb.append("_");
+      sb.append(locationCode);
+    }
+    return sb.toString();
   }
 }

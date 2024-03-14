@@ -28,32 +28,38 @@ import lombok.Builder;
 import lombok.Data;
 
 @NamedNativeQueries({
-        @NamedNativeQuery(
-                name = "StockCard.queryStockCardReservedDto",
-                query = "SELECT orderableid AS orderableId, orderableversionnumber AS orderableVersionNumber, "
-                        + "  lotid AS lotId, SUM(quantityshipped) AS reserved "
-                        + "FROM fulfillment.shipment_draft_line_items sdli "
-                        + "WHERE sdli.shipmentdraftid IN ( "
-                        + "       SELECT sd.id "
-                        + "       FROM fulfillment.shipment_drafts sd "
-                        + "       LEFT JOIN fulfillment.orders o on o.id = sd.orderid "
-                        + "       WHERE o.facilityid = :facilityId and o.programid = :programId) "
-                        + "GROUP BY orderableid, orderableversionnumber, lotid;",
-                resultSetMapping = "StockCard.StockCardReservedDto"),
+    @NamedNativeQuery(
+        name = "StockCard.queryStockCardReservedDto",
+        query = "SELECT sdli.orderableid AS orderableId, sdli.orderableversionnumber AS orderableVersionNumber, "
+                + "  sdli.lotid AS lotId, sdli.quantityshipped AS reserved, "
+                + "  sdlie.area AS area, sdlie.locationcode AS locationCode "
+                + "FROM fulfillment.shipment_draft_line_items sdli "
+                + "LEFT JOIN siglusintegration.shipment_draft_line_items_extension sdlie "
+                + "       ON sdli.id = sdlie.shipmentdraftlineitemid "
+                + "WHERE sdli.shipmentdraftid IN ( "
+                + "       SELECT sd.id "
+                + "       FROM fulfillment.shipment_drafts sd "
+                + "       LEFT JOIN fulfillment.orders o on o.id = sd.orderid "
+                + "       WHERE o.facilityid = :facilityId and o.programid = :programId) "
+                + ";",
+        resultSetMapping = "StockCard.StockCardReservedDto"),
 
-        @NamedNativeQuery(
-                name = "StockCard.queryStockCardReservedExcludeDto",
-                query = "SELECT orderableid AS orderableId, orderableversionnumber AS orderableVersionNumber, "
-                        + "  lotid AS lotId, SUM(quantityshipped) AS reserved "
-                        + "FROM fulfillment.shipment_draft_line_items sdli "
-                        + "WHERE sdli.shipmentdraftid IN ( "
-                        + "       SELECT sd.id "
-                        + "       FROM fulfillment.shipment_drafts sd "
-                        + "       LEFT JOIN fulfillment.orders o on o.id = sd.orderid "
-                        + "       WHERE o.facilityid = :facilityId and o.programid = :programId "
-                        + "             and sd.id != :shipmentDraftId) "
-                        + "GROUP BY orderableid, orderableversionnumber, lotid;",
-                resultSetMapping = "StockCard.StockCardReservedDto")
+    @NamedNativeQuery(
+        name = "StockCard.queryStockCardReservedExcludeDto",
+        query = "SELECT sdli.orderableid AS orderableId, sdli.orderableversionnumber AS orderableVersionNumber, "
+                + "  sdli.lotid AS lotId, sdli.quantityshipped AS reserved, "
+                + "  sdlie.area AS area, sdlie.locationcode AS locationCode "
+                + "FROM fulfillment.shipment_draft_line_items sdli "
+                + "LEFT JOIN siglusintegration.shipment_draft_line_items_extension sdlie "
+                + "       ON sdli.id = sdlie.shipmentdraftlineitemid "
+                + "WHERE sdli.shipmentdraftid IN ( "
+                + "       SELECT sd.id "
+                + "       FROM fulfillment.shipment_drafts sd "
+                + "       LEFT JOIN fulfillment.orders o on o.id = sd.orderid "
+                + "       WHERE o.facilityid = :facilityId and o.programid = :programId "
+                + "             and sd.id != :shipmentDraftId) "
+                + ";",
+        resultSetMapping = "StockCard.StockCardReservedDto")
 })
 
 @MappedSuperclass
@@ -66,6 +72,8 @@ import lombok.Data;
                         @ColumnResult(name = "orderableVersionNumber", type = Integer.class),
                         @ColumnResult(name = "lotId", type = UUID.class),
                         @ColumnResult(name = "reserved", type = Integer.class),
+                        @ColumnResult(name = "area", type = String.class),
+                        @ColumnResult(name = "locationCode", type = String.class),
                 }
         )
 )
@@ -78,4 +86,6 @@ public class StockCardReservedDto {
   private Integer orderableVersionNumber;
   private UUID lotId;
   private Integer reserved;
+  private String area;
+  private String locationCode;
 }

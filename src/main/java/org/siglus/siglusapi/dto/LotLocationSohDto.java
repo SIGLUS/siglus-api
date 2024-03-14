@@ -137,5 +137,7 @@ public class LotLocationSohDto {
 
   private Integer stockOnHand;
 
+  private Integer reservedStock;
+
   private LocalDate lastUpdate;
 }
