@@ -17,7 +17,6 @@ package org.siglus.siglusapi.service;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static java.util.stream.Collectors.toMap;
-import static org.siglus.siglusapi.i18n.MessageKeys.SHIPMENT_LINE_ITEMS_INVALID;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
@@ -45,13 +44,10 @@ import org.openlmis.fulfillment.web.util.OrderLineItemDto;
 import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.service.StockCardSummaries;
 import org.openlmis.stockmanagement.service.StockCardSummariesService;
-import org.openlmis.stockmanagement.service.StockCardSummariesV2SearchParams;
 import org.organicdesign.fp.tuple.Tuple2;
 import org.organicdesign.fp.tuple.Tuple3;
 import org.siglus.siglusapi.domain.OrderLineItemExtension;
 import org.siglus.siglusapi.domain.ShipmentDraftLineItemsExtension;
-import org.siglus.siglusapi.dto.Message;
-import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.OrderLineItemRepository;
 import org.siglus.siglusapi.repository.ShipmentDraftLineItemsExtensionRepository;
@@ -193,21 +189,22 @@ public class SiglusShipmentDraftService {
   }
 
   public void checkStockOnHandQuantity(UUID shipmentDraftId, ShipmentDraftDto draftDto) {
-    if (draftDto.getLineItems().isEmpty()) {
-      return;
-    }
-    // get available soh
-    StockCardSummariesV2SearchParams v2SearchParams = new StockCardSummariesV2SearchParams();
-    v2SearchParams.setFacilityId(draftDto.getOrder().getSupplyingFacility().getId());
-    v2SearchParams.setProgramId(draftDto.getOrder().getProgram().getId());
-    StockCardSummaries summaries = stockCardSummariesService.findStockCards(v2SearchParams);
-    // get reserved soh
-    List<StockCardReservedDto> reservedDtos =
-            queryReservedCount(v2SearchParams.getFacilityId(), v2SearchParams.getProgramId(), shipmentDraftId);
-    // check soh
-    if (canNotFullFillShipmentQuantity(summaries, reservedDtos, draftDto)) {
-      throw new ValidationMessageException(new Message(SHIPMENT_LINE_ITEMS_INVALID));
-    }
+    // TODO
+  //    if (draftDto.getLineItems().isEmpty()) {
+  //      return;
+  //    }
+  //    // get available soh
+  //    StockCardSummariesV2SearchParams v2SearchParams = new StockCardSummariesV2SearchParams();
+  //    v2SearchParams.setFacilityId(draftDto.getOrder().getSupplyingFacility().getId());
+  //    v2SearchParams.setProgramId(draftDto.getOrder().getProgram().getId());
+  //    StockCardSummaries summaries = stockCardSummariesService.findStockCards(v2SearchParams);
+  //    // get reserved soh
+  //    List<StockCardReservedDto> reservedDtos =
+  //            queryReservedCount(v2SearchParams.getFacilityId(), v2SearchParams.getProgramId(), shipmentDraftId);
+  //    // check soh
+  //    if (canNotFullFillShipmentQuantity(summaries, reservedDtos, draftDto)) {
+  //      throw new ValidationMessageException(new Message(SHIPMENT_LINE_ITEMS_INVALID));
+  //    }
   }
 
   private List<StockCardReservedDto> queryReservedCount(UUID facilityId, UUID programId, UUID shipmentDraftId) {
