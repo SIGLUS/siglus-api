@@ -20,7 +20,6 @@ import static com.google.common.collect.Sets.newHashSet;
 import static org.openlmis.stockmanagement.service.PermissionService.STOCK_CARDS_VIEW;
 import static org.openlmis.stockmanagement.service.PermissionService.STOCK_INVENTORIES_EDIT;
 import static org.siglus.siglusapi.constant.FieldConstants.FACILITY_ID;
-import static org.siglus.siglusapi.constant.FieldConstants.PROGRAM_ID;
 import static org.siglus.siglusapi.constant.FieldConstants.PROVINCE;
 import static org.siglus.siglusapi.constant.FieldConstants.RIGHT_NAME;
 import static org.siglus.siglusapi.constant.PaginationConstants.DEFAULT_PAGE_NUMBER;
@@ -63,6 +62,7 @@ import org.openlmis.requisition.service.PermissionService;
 import org.openlmis.requisition.service.RequisitionService;
 import org.openlmis.requisition.service.referencedata.PermissionStringDto;
 import org.openlmis.requisition.utils.Pagination;
+import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.dto.ObjectReferenceDto;
 import org.openlmis.stockmanagement.exception.PermissionMessageException;
 import org.openlmis.stockmanagement.exception.ResourceNotFoundException;
@@ -74,6 +74,7 @@ import org.openlmis.stockmanagement.web.stockcardsummariesv2.CanFulfillForMeEntr
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummariesV2DtoBuilder;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2Dto;
 import org.siglus.common.repository.ProgramOrderableRepository;
+import org.siglus.siglusapi.domain.CalculatedStockOnHandByLocation;
 import org.siglus.siglusapi.domain.PhysicalInventoryLineItemsExtension;
 import org.siglus.siglusapi.domain.PhysicalInventorySubDraft;
 import org.siglus.siglusapi.domain.StockManagementDraft;
@@ -88,10 +89,12 @@ import org.siglus.siglusapi.dto.StockCardSummaryWithLocationDto;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.repository.CalculatedStockOnHandByLocationRepository;
+import org.siglus.siglusapi.repository.CalculatedStockOnHandRepository;
 import org.siglus.siglusapi.repository.PhysicalInventoryLineItemsExtensionRepository;
 import org.siglus.siglusapi.repository.PhysicalInventorySubDraftRepository;
 import org.siglus.siglusapi.repository.StockManagementDraftRepository;
 import org.siglus.siglusapi.repository.dto.StockCardReservedDto;
+import org.siglus.siglusapi.repository.dto.StockCardStockDto;
 import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
 import org.siglus.siglusapi.util.FormatHelper;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
@@ -143,6 +146,8 @@ public class SiglusStockCardSummariesService {
   private LotController lotController;
   @Autowired
   private CalculatedStockOnHandByLocationRepository calculatedStockOnHandByLocationRepository;
+  @Autowired
+  private CalculatedStockOnHandRepository calculatedStockOnHandRepository;
   @Autowired
   private SiglusProgramService siglusProgramService;
   @Autowired
@@ -609,12 +614,12 @@ public class SiglusStockCardSummariesService {
     if (dto == null || dto.getOrderable() == null || dto.getLot() == null) {
       return 0;
     }
-    String key = buildStockCardReservedMapKey(dto.getOrderable().getId(), dto.getLot().getId(), null, null);
+    String key = FormatHelper.buildStockCardUniqueKey(dto.getOrderable().getId(), dto.getLot().getId(), null, null);
     return reservedMap.getOrDefault(key, 0);
   }
 
   private int getReservedStockForFulfill(LotLocationSohDto dto, Map<String, Integer> reservedMap) {
-    String key = buildStockCardReservedMapKey(
+    String key = FormatHelper.buildStockCardUniqueKey(
             dto.getOrderableId(), dto.getLotId(), dto.getArea(), dto.getLocationCode());
     return reservedMap.getOrDefault(key, 0);
   }
@@ -663,7 +668,7 @@ public class SiglusStockCardSummariesService {
             siglusShipmentDraftService.reservedCount(facilityId, programId, shipmentDraftId, null);
     Multimap<String, StockCardReservedDto> reservedMap = ArrayListMultimap.create();
     stockCardReservedDtos.forEach(dto -> {
-      String uniqueKey = buildStockCardReservedMapKey(
+      String uniqueKey = FormatHelper.buildStockCardUniqueKey(
               dto.getOrderableId(), dto.getLotId(), dto.getArea(), dto.getLocationCode());
       reservedMap.put(uniqueKey, dto);
     });
@@ -674,20 +679,31 @@ public class SiglusStockCardSummariesService {
     return result;
   }
 
-  private String buildStockCardReservedMapKey(UUID orderableId, UUID lotId, String area, String locationCode) {
-    if (orderableId == null || lotId == null) {
-      return null;
+  public List<StockCardStockDto> getLatestStockOnHand(List<StockCard> stockCards, boolean hasLocation) {
+    if (stockCards.isEmpty()) {
+      return newArrayList();
     }
-    StringBuilder sb = new StringBuilder();
-    sb.append(orderableId);
-    sb.append("_");
-    sb.append(lotId);
-    if (area != null && locationCode != null) {
-      sb.append("_");
-      sb.append(area);
-      sb.append("_");
-      sb.append(locationCode);
+    Map<UUID, StockCard> stockCardMap = stockCards.stream()
+            .collect(Collectors.toMap(StockCard::getId, stockCard -> stockCard));
+    List<StockCardStockDto> sohs = getLatestStockOnHandByIds(stockCardMap.keySet(), hasLocation);
+    sohs.forEach(item -> {
+      StockCard stockCard = stockCardMap.get(item.getStockCardId());
+      item.setOrderableId(stockCard.getOrderableId());
+      item.setLotId(stockCard.getLotId());
+    });
+    return sohs;
+  }
+
+  public List<StockCardStockDto> getLatestStockOnHandByIds(Collection<UUID> stockCardIds, boolean hasLocation) {
+    List<StockCardStockDto> sohs;
+    if (hasLocation) {
+      sohs = calculatedStockOnHandByLocationRepository.findRecentlyLocationSohByStockCardIds(stockCardIds)
+              .stream()
+              .map(CalculatedStockOnHandByLocation::toStockCardStockDto)
+              .collect(Collectors.toList());
+    } else {
+      sohs = calculatedStockOnHandRepository.findRecentlySohByStockCardIds(stockCardIds);
     }
-    return sb.toString();
+    return sohs;
   }
 }

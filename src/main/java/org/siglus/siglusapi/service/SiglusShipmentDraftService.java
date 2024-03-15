@@ -17,6 +17,7 @@ package org.siglus.siglusapi.service;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static java.util.stream.Collectors.toMap;
+import static org.siglus.siglusapi.i18n.MessageKeys.SHIPMENT_LINE_ITEMS_INVALID;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
@@ -42,18 +43,21 @@ import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftController;
 import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftDto;
 import org.openlmis.fulfillment.web.util.OrderLineItemDto;
 import org.openlmis.stockmanagement.domain.card.StockCard;
-import org.openlmis.stockmanagement.service.StockCardSummaries;
-import org.openlmis.stockmanagement.service.StockCardSummariesService;
-import org.organicdesign.fp.tuple.Tuple2;
 import org.organicdesign.fp.tuple.Tuple3;
 import org.siglus.siglusapi.domain.OrderLineItemExtension;
 import org.siglus.siglusapi.domain.ShipmentDraftLineItemsExtension;
+import org.siglus.siglusapi.dto.Message;
+import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.OrderLineItemRepository;
 import org.siglus.siglusapi.repository.ShipmentDraftLineItemsExtensionRepository;
 import org.siglus.siglusapi.repository.ShipmentDraftLineItemsRepository;
+import org.siglus.siglusapi.repository.SiglusStockCardRepository;
 import org.siglus.siglusapi.repository.dto.StockCardReservedDto;
+import org.siglus.siglusapi.repository.dto.StockCardStockDto;
 import org.siglus.siglusapi.service.client.SiglusShipmentDraftFulfillmentService;
+import org.siglus.siglusapi.util.FacilityConfigHelper;
+import org.siglus.siglusapi.util.FormatHelper;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -84,7 +88,11 @@ public class SiglusShipmentDraftService {
   @Autowired
   private ShipmentDraftLineItemsRepository shipmentDraftLineItemsRepository;
   @Autowired
-  private StockCardSummariesService stockCardSummariesService;
+  private SiglusStockCardSummariesService siglusStockCardSummariesService;
+  @Autowired
+  private FacilityConfigHelper facilityConfigHelper;
+  @Autowired
+  private SiglusStockCardRepository siglusStockCardRepository;
 
   @Transactional
   public ShipmentDraftDto createShipmentDraft(ShipmentDraftDto draftDto) {
@@ -189,22 +197,29 @@ public class SiglusShipmentDraftService {
   }
 
   public void checkStockOnHandQuantity(UUID shipmentDraftId, ShipmentDraftDto draftDto) {
-    // TODO
-  //    if (draftDto.getLineItems().isEmpty()) {
-  //      return;
-  //    }
-  //    // get available soh
-  //    StockCardSummariesV2SearchParams v2SearchParams = new StockCardSummariesV2SearchParams();
-  //    v2SearchParams.setFacilityId(draftDto.getOrder().getSupplyingFacility().getId());
-  //    v2SearchParams.setProgramId(draftDto.getOrder().getProgram().getId());
-  //    StockCardSummaries summaries = stockCardSummariesService.findStockCards(v2SearchParams);
-  //    // get reserved soh
-  //    List<StockCardReservedDto> reservedDtos =
-  //            queryReservedCount(v2SearchParams.getFacilityId(), v2SearchParams.getProgramId(), shipmentDraftId);
-  //    // check soh
-  //    if (canNotFullFillShipmentQuantity(summaries, reservedDtos, draftDto)) {
-  //      throw new ValidationMessageException(new Message(SHIPMENT_LINE_ITEMS_INVALID));
-  //    }
+    if (draftDto.getLineItems().isEmpty()) {
+      return;
+    }
+    UUID facilityId = draftDto.getOrder().getSupplyingFacility().getId();
+    UUID programId = draftDto.getOrder().getProgram().getId();
+    Set<String> orderableLotIdPairs = draftDto.lineItems().stream()
+            .map(item -> item.getOrderable().getId().toString() + item.getLot().getId().toString())
+            .collect(Collectors.toSet());
+    if (orderableLotIdPairs.isEmpty()) {
+      return;
+    }
+    List<StockCard> stockCards = siglusStockCardRepository.findByFacilityIdAndOrderableLotIdPairs(
+                    facilityId, orderableLotIdPairs);
+    boolean hasLocation = facilityConfigHelper.isLocationManagementEnabled(facilityId);
+    // get available soh
+    List<StockCardStockDto> sohDtos =
+            siglusStockCardSummariesService.getLatestStockOnHand(stockCards, hasLocation);
+    // get reserved soh
+    List<StockCardReservedDto> reservedDtos = queryReservedCount(facilityId, programId, shipmentDraftId);
+    // check soh
+    if (canNotFullFillShipmentQuantity(sohDtos, reservedDtos, draftDto)) {
+      throw new ValidationMessageException(new Message(SHIPMENT_LINE_ITEMS_INVALID));
+    }
   }
 
   private List<StockCardReservedDto> queryReservedCount(UUID facilityId, UUID programId, UUID shipmentDraftId) {
@@ -217,26 +232,28 @@ public class SiglusShipmentDraftService {
     return reservedDtos;
   }
 
-  private boolean canNotFullFillShipmentQuantity(StockCardSummaries summaries,
+  private boolean canNotFullFillShipmentQuantity(List<StockCardStockDto> sohDtos,
                                                  List<StockCardReservedDto> reservedDtos,
                                                  ShipmentDraftDto draftDto) {
-    Map<Tuple2<UUID, UUID>, Integer> sohMap = summaries.getStockCardsForFulfillOrderables()
+    Map<String, Integer> sohMap = sohDtos.stream().collect(Collectors.toMap(
+        dto -> FormatHelper.buildStockCardUniqueKey(
+                dto.getOrderableId(), dto.getLotId(), dto.getArea(), dto.getLocationCode()),
+        StockCardStockDto::getStockOnHand
+    ));
+    Map<String, Integer> reservedMap = reservedDtos
         .stream().collect(Collectors.toMap(
-          summary -> Tuple2.of(summary.getOrderableId(), summary.getLotId()),
-          StockCard::getStockOnHand
-        ));
-    Map<Tuple3<UUID, Integer, UUID>, Integer> reservedMap = reservedDtos
-        .stream().collect(Collectors.toMap(
-          dto -> Tuple3.of(dto.getOrderableId(), dto.getOrderableVersionNumber(), dto.getLotId()),
+          dto -> FormatHelper.buildStockCardUniqueKey(
+                  dto.getOrderableId(), dto.getLotId(), dto.getArea(), dto.getLocationCode()),
           StockCardReservedDto::getReserved
         ));
     return draftDto.lineItems().stream().anyMatch(item -> {
-      Tuple2<UUID, UUID> sohKey = Tuple2.of(item.getOrderable().getId(), item.getLotId());
-      int soh = sohMap.getOrDefault(sohKey, 0);
-      Tuple3<UUID, Integer, UUID> reservedKey = Tuple3.of(item.getOrderable().getId(),
-                      item.getOrderable().getVersionNumber().intValue(),
-                      item.getLotId());
-      int reserved = reservedMap.getOrDefault(reservedKey, 0);
+      String key = FormatHelper.buildStockCardUniqueKey(
+              item.getOrderable().getId(), item.getLot().getId(),
+              item.getLocation() == null ? null : item.getLocation().getArea(),
+              item.getLocation() == null ? null : item.getLocation().getLocationCode()
+      );
+      int soh = sohMap.getOrDefault(key, 0);
+      int reserved = reservedMap.getOrDefault(key, 0);
       return soh - reserved < item.getQuantityShipped().intValue();
     });
   }

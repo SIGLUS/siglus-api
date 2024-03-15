@@ -15,22 +15,19 @@
 
 package org.siglus.siglusapi.repository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
-import org.openlmis.referencedata.domain.Lot;
-import org.siglus.siglusapi.repository.dto.LotStockDto;
+import org.openlmis.stockmanagement.domain.event.CalculatedStockOnHand;
+import org.siglus.siglusapi.repository.dto.StockCardStockDto;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-public interface SiglusLotRepository extends JpaRepository<Lot, UUID>  {
+public interface CalculatedStockOnHandRepository extends JpaRepository<CalculatedStockOnHand, UUID> {
 
-  @Query(name = "StockCard.queryExpiredLotStockDtoByFacility", nativeQuery = true)
-  List<LotStockDto> queryExpiredLots(@Param("facilityId") UUID facilityId);
-
-  @Query(value = "SELECT EXISTS (SELECT 1 FROM referencedata.lots l "
-               + "WHERE l.id IN (:ids) AND l.dateColumnName > current_date)",
-          nativeQuery = true)
-  boolean existsNotExpiredLotsByIds(List<UUID> ids);
+  @Query(name = "StockCard.queryStockCardStockDtoById", nativeQuery = true)
+  List<StockCardStockDto> findRecentlySohByStockCardIds(
+          @Param("stockCardIds") Collection<UUID> stockCardIds);
 }

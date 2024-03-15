@@ -43,9 +43,11 @@ import org.siglus.siglusapi.dto.LotSearchParams;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.dto.RemovedLotDto;
 import org.siglus.siglusapi.dto.android.Lot;
+import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.SiglusLotRepository;
 import org.siglus.siglusapi.repository.dto.LotStockDto;
+import org.siglus.siglusapi.repository.dto.StockCardStockDto;
 import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
@@ -76,6 +78,8 @@ public class SiglusLotService {
   private LotRepository lotRepository;
   @Autowired
   private SiglusLotRepository siglusLotRepository;
+  @Autowired
+  private SiglusStockCardSummariesService siglusStockCardSummariesService;
 
   /**
    * reason for create a new transaction: Running this method in the super transaction will cause
@@ -157,12 +161,19 @@ public class SiglusLotService {
 
   public void removeExpiredLots(List<RemovedLotDto> lots, boolean hasLocation) {
     // check whether the lots expired
-    //    List<UUID> stockCardIds = lots.stream().map(RemovedLotDto::getStockCardId).collect(Collectors.toList());
-    //    if (siglusLotRepository.existsNotExpiredLotsByStockCardIds(stockCardIds)) {
-    //      throw new BusinessDataException(Message.createFromMessageKeyStr("exists not expired lots"));
-    //    }
+    List<UUID> lotIds = lots.stream().map(RemovedLotDto::getLotId).collect(Collectors.toList());
+    if (siglusLotRepository.existsNotExpiredLotsByIds(lotIds)) {
+      throw new BusinessDataException(Message.createFromMessageKeyStr("exists not expired lots"));
+    }
     // check quantity is smaller or equal than soh
+    Map<UUID, Integer> stockMap = siglusStockCardSummariesService.getLatestStockOnHandByIds(
+        lots.stream().map(RemovedLotDto::getStockCardId).collect(Collectors.toList()), hasLocation)
+            .stream().collect(Collectors.toMap(StockCardStockDto::getStockCardId, StockCardStockDto::getStockOnHand));
+    if (lots.stream().anyMatch(lot -> lot.getQuantity() > stockMap.getOrDefault(lot.getStockCardId(), 0))) {
+      throw new BusinessDataException(Message.createFromMessageKeyStr("not have enough soh"));
+    }
     // send stock event to remove expired lots
+    // TODO
   }
 
   private UUID getFacilityId(StockEventDto eventDto) {

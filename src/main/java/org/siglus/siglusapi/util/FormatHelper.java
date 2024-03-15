@@ -40,4 +40,13 @@ public final class FormatHelper {
     }
   }
 
+  public static String buildStockCardUniqueKey(UUID orderableId, UUID lotId, String area, String locationCode) {
+    if (orderableId == null || lotId == null) {
+      return null;
+    }
+    if (area != null && locationCode != null) {
+      return orderableId + "_" + lotId + "_" + area + "_" + locationCode;
+    }
+    return orderableId + "_" + lotId;
+  }
 }
