@@ -43,7 +43,7 @@ repositories {
 
 // NOTE: do NOT use implementation, otherwise the SpringBoot won't pack the dependencies into the fat jar
 dependencies {
-    compile 'org.openlmis:siglus-api-extension:2.0.31'
+    compile 'org.openlmis:siglus-api-extension:2.0.28'
     compile 'org.springframework.boot:spring-boot-starter-web'
     compile 'org.springframework.boot:spring-boot-starter-data-rest'
     compile 'org.springframework.boot:spring-boot-starter-data-jpa'
@@ -279,7 +279,7 @@ jacocoTestCoverageVerification {
             limit {
                 counter = 'BRANCH'
                 value = 'COVEREDRATIO'
-                minimum = 0.61
+                minimum = 0.62
             }
         }
     }

@@ -41,7 +41,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.Builder;
 import lombok.Data;
@@ -54,7 +53,6 @@ import org.openlmis.fulfillment.domain.ProofOfDeliveryLineItem;
 import org.openlmis.fulfillment.domain.ProofOfDeliveryLineItem.Importer;
 import org.openlmis.fulfillment.domain.ProofOfDeliveryStatus;
 import org.openlmis.fulfillment.repository.ProofOfDeliveryRepository;
-import org.openlmis.fulfillment.service.stockmanagement.StockEventStockManagementService;
 import org.openlmis.fulfillment.web.ProofOfDeliveryController;
 import org.openlmis.fulfillment.web.shipment.ShipmentLineItemDto;
 import org.openlmis.fulfillment.web.util.OrderObjectReferenceDto;
@@ -65,13 +63,7 @@ import org.openlmis.fulfillment.web.util.StockEventBuilder;
 import org.openlmis.referencedata.domain.Orderable;
 import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.domain.requisition.StatusChange;
-import org.openlmis.requisition.domain.requisition.VersionEntityReference;
-import org.openlmis.requisition.dto.BasicOrderableDto;
-import org.openlmis.requisition.dto.OrderableDto;
-import org.openlmis.requisition.dto.ProgramOrderableDto;
-import org.openlmis.requisition.dto.VersionIdentityDto;
 import org.openlmis.requisition.repository.StatusChangeRepository;
-import org.openlmis.requisition.service.referencedata.OrderableReferenceDataService;
 import org.openlmis.stockmanagement.dto.StockEventDto;
 import org.openlmis.stockmanagement.dto.StockEventLineItemDto;
 import org.siglus.common.domain.OrderExternal;
@@ -155,9 +147,6 @@ public class SiglusPodService {
   private final StockEventBuilder stockEventBuilder;
   private final ProofOfDeliveryEmitter proofOfDeliveryEmitter;
   private final SiglusStockEventsService stockEventsService;
-  private final OrderableReferenceDataService orderableReferenceDataService;
-  private final StockEventStockManagementService stockEventStockManagementService;
-
 
   private static final String FILE_NAME_PREFIX = "OF.";
   private static final String FILE_NAME_PREFIX_EMERGENCY = FILE_NAME_PREFIX + "REM.";
@@ -331,80 +320,14 @@ public class SiglusPodService {
     savePodExtension(request);
     deleteSubDraftAndLineExtensionBySubDraftIds(subDrafts.stream().map(PodSubDraft::getId).collect(Collectors.toSet()));
 
-    ProofOfDeliveryDto requestPodDto = request.getPodDto();
-    ProofOfDelivery pod = proofOfDeliveryRepository.findOne(podId);
-    Map<VersionIdentityDto, OrderableDto> orderableDtoMap = getOrderableDtoMap(requestPodDto);
-    Map<UUID, List<ProofOfDeliveryLineItem.Importer>> programIdToLineItems = new HashMap<>();
-    requestPodDto.getLineItems().forEach(lineItem -> {
-      VersionIdentityDto versionEntityDto = new VersionIdentityDto();
-      versionEntityDto.setId(lineItem.getOrderableIdentity().getId());
-      versionEntityDto.setVersionNumber(lineItem.getOrderableIdentity().getVersionNumber());
-      OrderableDto orderableDto = orderableDtoMap.get(versionEntityDto);
-      ProgramOrderableDto programOrderableDto = orderableDto.getPrograms().stream().findFirst()
-              .orElseThrow(() -> new IllegalArgumentException("can't find program "
-                      + orderableDto.getProductCode()));
-      UUID programId = programOrderableDto.getProgramId();
-      if (programIdToLineItems.containsKey(programId)) {
-        programIdToLineItems.get(programId).add(lineItem);
-      } else {
-        List<ProofOfDeliveryLineItem.Importer> items = new ArrayList<>();
-        items.add(lineItem);
-        programIdToLineItems.put(programId, items);
-      }
-    });
-
-    ProofOfDeliveryDto podDto;
-    // handle MultiProgramProducts
-    if (requestPodDto.getLineItems().size() != programIdToLineItems.get(pod.getProgramId()).size()) {
-      ProofOfDeliveryDto filteredPodDto = new ProofOfDeliveryDto();
-      BeanUtils.copyProperties(requestPodDto, filteredPodDto);
-      filteredPodDto.setLineItems(convertToLineItemDtos(programIdToLineItems.get(pod.getProgramId())));
-      podDto = podController.updateProofOfDelivery(
-              podId, filteredPodDto, authentication, false);
-
-      for (UUID programId : programIdToLineItems.keySet()) {
-        if (!programId.equals(pod.getProgramId())) {
-          ProofOfDeliveryDto mock = new ProofOfDeliveryDto(
-                  "",
-                  podDto.getShipment(),
-                  podDto.getStatus(),
-                  convertToLineItemDtos(programIdToLineItems.get(programId)),
-                  podDto.getReceivedBy(),
-                  podDto.getDeliveredBy(),
-                  podDto.getReceivedDate()
-          );
-          ProofOfDelivery updatedPod = ProofOfDelivery.newInstance(mock);
-          org.openlmis.fulfillment.web.stockmanagement.StockEventDto stockEventDto = stockEventBuilder
-                  .fromProofOfDelivery(updatedPod, programId, pod.getShipment().getOrder().getOrderCode());
-          stockEventStockManagementService.submit(stockEventDto);
-        }
-      }
-    } else {
-      podDto = podController.updateProofOfDelivery(
-              podId, requestPodDto, authentication, false);
-    }
+    ProofOfDeliveryDto podDto = podController.updateProofOfDelivery(
+        podId, request.getPodDto(), authentication, false);
     if (podDto.getStatus() == ProofOfDeliveryStatus.CONFIRMED) {
       notificationService.postConfirmPod(request.getPodDto());
       proofOfDeliveryEmitter.emit(request.getPodDto().getId());
     }
     return podDto;
   }
-
-  public Map<VersionIdentityDto, OrderableDto> getOrderableDtoMap(ProofOfDeliveryDto proofOfDeliveryDto) {
-    if (CollectionUtils.isEmpty(proofOfDeliveryDto.getLineItems())) {
-      return new HashMap<>();
-    }
-    Set<VersionEntityReference> orderables = proofOfDeliveryDto.getLineItems().stream()
-            .map(lineItem -> {
-              VersionEntityReference versionEntityReference = new VersionEntityReference();
-              versionEntityReference.setId(lineItem.getOrderableIdentity().getId());
-              versionEntityReference.setVersionNumber(lineItem.getOrderableIdentity().getVersionNumber());
-              return versionEntityReference;
-            }).collect(Collectors.toSet());
-    return orderableReferenceDataService.findByIdentities(orderables).stream()
-            .collect(Collectors.toMap(BasicOrderableDto::getIdentity, Function.identity()));
-  }
-
 
   @Transactional
   public void submitSubDraftsWithLocation(UUID podId, PodWithLocationRequest request,
