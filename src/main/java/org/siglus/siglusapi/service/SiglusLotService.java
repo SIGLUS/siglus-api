@@ -38,14 +38,17 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.openlmis.referencedata.dto.OrderableDto;
 import org.openlmis.referencedata.repository.LotRepository;
+import org.openlmis.stockmanagement.domain.reason.StockCardLineItemReason;
 import org.openlmis.stockmanagement.dto.StockEventDto;
 import org.openlmis.stockmanagement.dto.StockEventLineItemDto;
+import org.openlmis.stockmanagement.repository.StockCardLineItemReasonRepository;
 import org.organicdesign.fp.tuple.Tuple2;
 import org.siglus.siglusapi.dto.LotDto;
 import org.siglus.siglusapi.dto.LotSearchParams;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.dto.RemovedLotDto;
 import org.siglus.siglusapi.dto.android.Lot;
+import org.siglus.siglusapi.dto.android.enumeration.AdjustmentReason;
 import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.SiglusLotRepository;
@@ -59,6 +62,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.ObjectUtils;
 
 @Service
 @Slf4j
@@ -85,6 +89,8 @@ public class SiglusLotService {
   private SiglusStockCardSummariesService siglusStockCardSummariesService;
   @Autowired
   private SiglusStockEventsService siglusStockEventsService;
+  @Autowired
+  private StockCardLineItemReasonRepository stockCardLineItemReasonRepository;
 
   /**
    * reason for create a new transaction: Running this method in the super transaction will cause
@@ -219,19 +225,23 @@ public class SiglusLotService {
   }
 
   private List<StockEventDto> buildDiscardStockEventDtos(List<RemovedLotDto> lots) {
+    StockCardLineItemReason reason =
+            stockCardLineItemReasonRepository.findByName(AdjustmentReason.EXPIRED_DISCARD.getName());
+    if (ObjectUtils.isEmpty(reason)) {
+      throw new BusinessDataException(
+              Message.createFromMessageKeyStr("Missing discard expired lots reason"));
+    }
     Multimap<Tuple2<UUID, UUID>, RemovedLotDto> facilityWithProgramMap = ArrayListMultimap.create();
     lots.forEach(lot -> {
       Tuple2<UUID, UUID> key = Tuple2.of(lot.getFacilityId(), lot.getProgramId());
       facilityWithProgramMap.put(key, lot);
     });
-    // TODO get reason ID
-    UUID reasonId = UUID.randomUUID();
     List<StockEventDto> eventDtos = new ArrayList<>();
     facilityWithProgramMap.asMap().forEach((key, values) -> eventDtos.add(StockEventDto.builder()
         .facilityId(key._1())
         .programId(key._2())
         .lineItems(values.stream()
-               .map(item -> item.toStockEventLineItemDto(reasonId)).collect(Collectors.toList()))
+               .map(item -> item.toStockEventLineItemDto(reason.getId())).collect(Collectors.toList()))
         .userId(authenticationHelper.getCurrentUser().getId())
         .build()));
     return eventDtos;
