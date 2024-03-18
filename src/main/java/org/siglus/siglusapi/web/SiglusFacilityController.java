@@ -19,8 +19,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.siglus.siglusapi.dto.FacilityRemovedLotDto;
 import org.siglus.siglusapi.dto.LocationStatusDto;
-import org.siglus.siglusapi.dto.RemovedLotDto;
 import org.siglus.siglusapi.dto.RequisitionGroupMembersDto;
 import org.siglus.siglusapi.exception.InvalidReasonException;
 import org.siglus.siglusapi.repository.dto.LotStockDto;
@@ -63,7 +63,7 @@ public class SiglusFacilityController {
 
   @PostMapping("/{id}/lots/expired/remove")
   public void removeExpiredLots(@PathVariable("id") UUID id,
-                                @RequestBody List<RemovedLotDto> dtos) {
+                                @RequestBody List<FacilityRemovedLotDto> dtos) {
     siglusFacilityService.removeExpiredLots(id, dtos);
   }
 

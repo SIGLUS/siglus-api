@@ -38,7 +38,8 @@ public enum AdjustmentReason {
   RETURN_FROM_QUARANTINE("Retorno da quarentena, no caso de se confirmar a qualidade do produto"),
   RETURN_TO_SUPPLIER("Devolver ao armazém do fornecedor"),
   RECEIVE("Receive"),
-  ISSUE("Issue");
+  ISSUE("Issue"),
+  EXPIRED_DISCARD("Discard expired");
 
   private final String name;
 

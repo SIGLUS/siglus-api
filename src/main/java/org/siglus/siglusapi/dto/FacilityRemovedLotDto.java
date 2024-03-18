@@ -19,42 +19,22 @@ import java.util.UUID;
 import javax.validation.constraints.NotNull;
 
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.checkerframework.checker.index.qual.Positive;
-import org.openlmis.stockmanagement.dto.StockEventLineItemDto;
 
 @Data
-@Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class RemovedLotDto {
+public class FacilityRemovedLotDto {
   @NotNull
   private UUID stockCardId;
-  @NotNull
-  private UUID facilityId;
-  @NotNull
-  private UUID programId;
-  @NotNull
-  private UUID orderableId;
-  @NotNull
-  private UUID lotId;
   @Positive
   private int quantity;
   private String locationCode;
   private String area;
 
-  public StockEventLineItemDto toStockEventLineItemDto(UUID reasonId) {
-    return StockEventLineItemDto.builder()
-            .reasonId(reasonId)
-            .sourceId(facilityId)
-            .destinationId(facilityId)
-            .orderableId(orderableId)
-            .lotId(lotId)
-            .area(area)
-            .quantity(-quantity)
-            .locationCode(locationCode)
-            .build();
+  public Boolean hasLocation() {
+    return locationCode != null && area != null;
   }
 }

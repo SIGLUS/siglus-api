@@ -20,7 +20,9 @@ import static org.apache.commons.lang.StringUtils.isBlank;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_LOT_ID_AND_CODE_SHOULD_EMPTY;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_TRADE_ITEM_IS_EMPTY;
 
+import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Multimap;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -38,6 +40,7 @@ import org.openlmis.referencedata.dto.OrderableDto;
 import org.openlmis.referencedata.repository.LotRepository;
 import org.openlmis.stockmanagement.dto.StockEventDto;
 import org.openlmis.stockmanagement.dto.StockEventLineItemDto;
+import org.organicdesign.fp.tuple.Tuple2;
 import org.siglus.siglusapi.dto.LotDto;
 import org.siglus.siglusapi.dto.LotSearchParams;
 import org.siglus.siglusapi.dto.Message;
@@ -80,6 +83,8 @@ public class SiglusLotService {
   private SiglusLotRepository siglusLotRepository;
   @Autowired
   private SiglusStockCardSummariesService siglusStockCardSummariesService;
+  @Autowired
+  private SiglusStockEventsService siglusStockEventsService;
 
   /**
    * reason for create a new transaction: Running this method in the super transaction will cause
@@ -173,7 +178,9 @@ public class SiglusLotService {
       throw new BusinessDataException(Message.createFromMessageKeyStr("not have enough soh"));
     }
     // send stock event to remove expired lots
-    // TODO
+    buildDiscardStockEventDtos(lots).forEach(
+        stockEventDto -> siglusStockEventsService.processStockEvent(stockEventDto, hasLocation)
+    );
   }
 
   private UUID getFacilityId(StockEventDto eventDto) {
@@ -211,5 +218,22 @@ public class SiglusLotService {
     return existedLots.stream().filter(lotDto -> lotDto.getLotCode().equals(lotCode)).findFirst().orElse(null);
   }
 
-
+  private List<StockEventDto> buildDiscardStockEventDtos(List<RemovedLotDto> lots) {
+    Multimap<Tuple2<UUID, UUID>, RemovedLotDto> facilityWithProgramMap = ArrayListMultimap.create();
+    lots.forEach(lot -> {
+      Tuple2<UUID, UUID> key = Tuple2.of(lot.getFacilityId(), lot.getProgramId());
+      facilityWithProgramMap.put(key, lot);
+    });
+    // TODO get reason ID
+    UUID reasonId = UUID.randomUUID();
+    List<StockEventDto> eventDtos = new ArrayList<>();
+    facilityWithProgramMap.asMap().forEach((key, values) -> eventDtos.add(StockEventDto.builder()
+        .facilityId(key._1())
+        .programId(key._2())
+        .lineItems(values.stream()
+               .map(item -> item.toStockEventLineItemDto(reasonId)).collect(Collectors.toList()))
+        .userId(authenticationHelper.getCurrentUser().getId())
+        .build()));
+    return eventDtos;
+  }
 }

@@ -20,9 +20,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import lombok.RequiredArgsConstructor;
+
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.openlmis.referencedata.domain.Facility;
+import org.openlmis.stockmanagement.domain.card.StockCard;
+import org.siglus.siglusapi.dto.FacilityRemovedLotDto;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.dto.RemovedLotDto;
 import org.siglus.siglusapi.dto.RequisitionGroupMembersDto;
@@ -30,17 +34,25 @@ import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.repository.RequisitionGroupMembersRepository;
 import org.siglus.siglusapi.repository.SiglusFacilityRepository;
 import org.siglus.siglusapi.util.FacilityConfigHelper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ObjectUtils;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
+@AllArgsConstructor
+@NoArgsConstructor
 public class SiglusFacilityService {
-
-  private final RequisitionGroupMembersRepository requisitionGroupMembersRepository;
-  private final SiglusFacilityRepository siglusFacilityRepository;
-  private final FacilityConfigHelper facilityConfigHelper;
-  private final SiglusLotService siglusLotService;
+  @Autowired
+  private RequisitionGroupMembersRepository requisitionGroupMembersRepository;
+  @Autowired
+  private SiglusFacilityRepository siglusFacilityRepository;
+  @Autowired
+  private FacilityConfigHelper facilityConfigHelper;
+  @Autowired
+  private SiglusLotService siglusLotService;
+  @Autowired
+  private SiglusStockCardService siglusStockCardService;
 
   public List<RequisitionGroupMembersDto> searchFacilityRequisitionGroup(UUID id, Set<UUID> programIds) {
     return requisitionGroupMembersRepository.findParentFacilityByRequisitionGroup(id, programIds);
@@ -51,12 +63,36 @@ public class SiglusFacilityService {
         .collect(Collectors.toMap(Facility::getId, Facility::getName));
   }
 
-  public void removeExpiredLots(UUID facilityId, List<RemovedLotDto> lots) {
+  public void removeExpiredLots(UUID facilityId, List<FacilityRemovedLotDto> lots) {
+    if (ObjectUtils.isEmpty(lots)) {
+      return;
+    }
     boolean hasLocation = facilityConfigHelper.isLocationManagementEnabled(facilityId);
-    if (hasLocation && lots.stream().anyMatch(RemovedLotDto::hasLocation)) {
+    if (hasLocation && lots.stream().anyMatch(FacilityRemovedLotDto::hasLocation)) {
       throw new BusinessDataException(Message.createFromMessageKeyStr("Missing Location"));
     }
-    lots.forEach(lot -> lot.setFacilityId(facilityId));
-    siglusLotService.removeExpiredLots(lots, hasLocation);
+    List<UUID> stockCardIds = lots.stream().map(FacilityRemovedLotDto::getStockCardId).collect(Collectors.toList());
+    Map<UUID, StockCard> stockCardMap = siglusStockCardService.findStockCardByIds(stockCardIds)
+         .stream().collect(Collectors.toMap(StockCard::getId, stockCard -> stockCard));
+    List<RemovedLotDto> removedLotDtos = lots.stream().map(lot -> {
+      StockCard stockCard = stockCardMap.getOrDefault(lot.getStockCardId(), null);
+      if (stockCard == null) {
+        throw new BusinessDataException(Message.createFromMessageKeyStr(
+                "stock card id doesn't exist " + lot.getStockCardId()));
+      }
+      if (stockCard.getFacilityId() != facilityId) {
+        throw new BusinessDataException(Message.createFromMessageKeyStr(
+                "stock card id:" + lot.getStockCardId() + " doesn't belong to facility:" + facilityId));
+      }
+      return RemovedLotDto.builder().facilityId(stockCard.getFacilityId())
+              .programId(stockCard.getProgramId())
+              .orderableId(stockCard.getOrderableId())
+              .lotId(stockCard.getLotId())
+              .area(lot.getArea())
+              .locationCode(lot.getLocationCode())
+              .quantity(lot.getQuantity())
+              .build();
+    }).collect(Collectors.toList());
+    siglusLotService.removeExpiredLots(removedLotDtos, hasLocation);
   }
 }
