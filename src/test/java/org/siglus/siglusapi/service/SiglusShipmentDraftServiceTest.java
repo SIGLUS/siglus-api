@@ -20,6 +20,8 @@ import static com.google.common.collect.Sets.newHashSet;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anySet;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doNothing;
@@ -28,11 +30,14 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.google.common.collect.Lists;
+
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -45,21 +50,31 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.fulfillment.domain.Order;
 import org.openlmis.fulfillment.domain.OrderLineItem;
 import org.openlmis.fulfillment.repository.OrderRepository;
+import org.openlmis.fulfillment.service.referencedata.FacilityDto;
+import org.openlmis.fulfillment.service.referencedata.ProgramDto;
 import org.openlmis.fulfillment.web.shipment.LocationDto;
 import org.openlmis.fulfillment.web.shipment.ShipmentLineItemDto;
 import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftController;
 import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftDto;
+import org.openlmis.fulfillment.web.util.ObjectReferenceDto;
 import org.openlmis.fulfillment.web.util.OrderLineItemDto;
 import org.openlmis.fulfillment.web.util.OrderObjectReferenceDto;
 import org.openlmis.fulfillment.web.util.VersionObjectReferenceDto;
+import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.siglus.siglusapi.domain.FacilityLocations;
 import org.siglus.siglusapi.domain.OrderLineItemExtension;
 import org.siglus.siglusapi.domain.ShipmentDraftLineItemsExtension;
+import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.FacilityLocationsRepository;
 import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.OrderLineItemRepository;
 import org.siglus.siglusapi.repository.ShipmentDraftLineItemsExtensionRepository;
+import org.siglus.siglusapi.repository.ShipmentDraftLineItemsRepository;
+import org.siglus.siglusapi.repository.SiglusStockCardRepository;
+import org.siglus.siglusapi.repository.dto.StockCardReservedDto;
+import org.siglus.siglusapi.repository.dto.StockCardStockDto;
 import org.siglus.siglusapi.service.client.SiglusShipmentDraftFulfillmentService;
+import org.siglus.siglusapi.util.FacilityConfigHelper;
 import org.springframework.data.domain.PageImpl;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -95,6 +110,18 @@ public class SiglusShipmentDraftServiceTest {
 
   @Mock
   private FacilityLocationsRepository locationManagementRepository;
+
+  @Mock
+  private SiglusStockCardRepository siglusStockCardRepository;
+
+  @Mock
+  private FacilityConfigHelper facilityConfigHelper;
+
+  @Mock
+  private SiglusStockCardSummariesService siglusStockCardSummariesService;
+
+  @Mock
+  private ShipmentDraftLineItemsRepository shipmentDraftLineItemsRepository;
 
   private final UUID draftId = UUID.randomUUID();
 
@@ -373,5 +400,149 @@ public class SiglusShipmentDraftServiceTest {
     // then
     verify(shipmentDraftLineItemsByLocationRepository, times(1))
         .deleteByShipmentDraftLineItemIdIn(Lists.newArrayList(shipmentLineItemDto.getId()));
+  }
+
+  @Test
+  public void shouldSuccessWhenCheckStockOnHandQuantityGivenShipmentDraftHasNotItems() {
+    ShipmentDraftDto draftDto = buildShipmentDraftDto();
+    try {
+      siglusShipmentDraftService.checkStockOnHandQuantity(UUID.randomUUID(), draftDto);
+    } catch (Exception e) {
+      fail("Unexpected exception: " + e.getMessage());
+    }
+  }
+
+  @Test(expected = ValidationMessageException.class)
+  public void shouldThrowExceptionWhenCheckStockOnHandQuantityGivenHaveNotEnoughSoh() {
+    ShipmentLineItemDto lineItemDto = new ShipmentLineItemDto();
+    VersionObjectReferenceDto orderable = new VersionObjectReferenceDto(orderableId, null, null, 1L);
+    lineItemDto.setOrderable(orderable);
+    ObjectReferenceDto lot = new ObjectReferenceDto(UUID.randomUUID());
+    lineItemDto.setLot(lot);
+    lineItemDto.setQuantityShipped(10L);
+    ShipmentDraftDto draftDto = buildShipmentDraftDto();
+    draftDto.setLineItems(newArrayList(lineItemDto));
+    StockCard stockCard = StockCard.builder()
+        .facilityId(draftDto.getOrder().getSupplyingFacility().getId())
+        .programId(draftDto.getOrder().getProgram().getId())
+        .orderableId(orderableId)
+        .lotId(lot.getId())
+        .build();
+    when(siglusStockCardRepository.findByFacilityIdAndOrderableLotIdPairs(any(), any()))
+        .thenReturn(newArrayList(stockCard));
+    when(facilityConfigHelper.isLocationManagementEnabled(draftDto.getOrder().getSupplyingFacility().getId()))
+        .thenReturn(false);
+    StockCardStockDto stockDto = StockCardStockDto.builder()
+        .orderableId(orderableId)
+        .lotId(lot.getId())
+        .stockOnHand(10)
+        .build();
+    when(siglusStockCardSummariesService.getLatestStockOnHand(any(), anyBoolean()))
+        .thenReturn(newArrayList(stockDto));
+    StockCardReservedDto reservedDto = StockCardReservedDto.builder()
+        .orderableId(orderableId)
+        .lotId(lot.getId())
+        .reserved(5)
+        .build();
+    when(shipmentDraftLineItemsRepository.reservedCount(any(), any(), any()))
+        .thenReturn(newArrayList(reservedDto));
+
+    siglusShipmentDraftService.checkStockOnHandQuantity(UUID.randomUUID(), draftDto);
+  }
+
+  @Test
+  public void shouldNotThrowExceptionWhenCheckStockOnHandQuantityGivenEnoughSoh() {
+    ShipmentLineItemDto lineItemDto = new ShipmentLineItemDto();
+    VersionObjectReferenceDto orderable = new VersionObjectReferenceDto(orderableId, null, null, 1L);
+    lineItemDto.setOrderable(orderable);
+    ObjectReferenceDto lot = new ObjectReferenceDto(UUID.randomUUID());
+    lineItemDto.setLot(lot);
+    lineItemDto.setQuantityShipped(5L);
+    ShipmentDraftDto draftDto = buildShipmentDraftDto();
+    draftDto.setLineItems(newArrayList(lineItemDto));
+    StockCard stockCard = StockCard.builder()
+        .facilityId(draftDto.getOrder().getSupplyingFacility().getId())
+        .programId(draftDto.getOrder().getProgram().getId())
+        .orderableId(orderableId)
+        .lotId(lot.getId())
+        .build();
+    when(siglusStockCardRepository.findByFacilityIdAndOrderableLotIdPairs(any(), any()))
+        .thenReturn(newArrayList(stockCard));
+    when(facilityConfigHelper.isLocationManagementEnabled(draftDto.getOrder().getSupplyingFacility().getId()))
+        .thenReturn(false);
+    StockCardStockDto stockDto = StockCardStockDto.builder()
+        .orderableId(orderableId)
+        .lotId(lot.getId())
+        .stockOnHand(10)
+        .build();
+    when(siglusStockCardSummariesService.getLatestStockOnHand(any(), anyBoolean()))
+        .thenReturn(newArrayList(stockDto));
+    StockCardReservedDto reservedDto = StockCardReservedDto.builder()
+        .orderableId(orderableId)
+        .lotId(lot.getId())
+        .reserved(5)
+        .build();
+    when(shipmentDraftLineItemsRepository.reservedCount(any(), any(), any()))
+        .thenReturn(newArrayList(reservedDto));
+
+    siglusShipmentDraftService.checkStockOnHandQuantity(UUID.randomUUID(), draftDto);
+  }
+
+  @Test
+  public void shouldNotThrowExceptionWhenCheckStockOnHandQuantityGivenEnoughSohWithLocation() {
+    ShipmentLineItemDto lineItemDto = new ShipmentLineItemDto();
+    VersionObjectReferenceDto orderable = new VersionObjectReferenceDto(orderableId, null, null, 1L);
+    lineItemDto.setOrderable(orderable);
+    ObjectReferenceDto lot = new ObjectReferenceDto(UUID.randomUUID());
+    lineItemDto.setLot(lot);
+    lineItemDto.setQuantityShipped(5L);
+    lineItemDto.setLocation(LocationDto.builder().area(area).locationCode(locationCode).build());
+    ShipmentDraftDto draftDto = buildShipmentDraftDto();
+    draftDto.setLineItems(newArrayList(lineItemDto));
+    StockCard stockCard = StockCard.builder()
+        .facilityId(draftDto.getOrder().getSupplyingFacility().getId())
+        .programId(draftDto.getOrder().getProgram().getId())
+        .orderableId(orderableId)
+        .lotId(lot.getId())
+        .build();
+    when(siglusStockCardRepository.findByFacilityIdAndOrderableLotIdPairs(any(), any()))
+        .thenReturn(newArrayList(stockCard));
+    when(facilityConfigHelper.isLocationManagementEnabled(draftDto.getOrder().getSupplyingFacility().getId()))
+        .thenReturn(false);
+    StockCardStockDto stockDto = StockCardStockDto.builder()
+        .orderableId(orderableId)
+        .lotId(lot.getId())
+        .stockOnHand(10)
+        .area(area)
+        .locationCode(locationCode)
+        .build();
+    when(siglusStockCardSummariesService.getLatestStockOnHand(any(), anyBoolean()))
+        .thenReturn(newArrayList(stockDto));
+    StockCardReservedDto reservedDto = StockCardReservedDto.builder()
+        .orderableId(orderableId)
+        .lotId(lot.getId())
+        .reserved(5)
+        .area(area)
+        .locationCode(locationCode)
+        .build();
+    when(shipmentDraftLineItemsRepository.reservedCount(any(), any(), any()))
+        .thenReturn(newArrayList(reservedDto));
+
+    siglusShipmentDraftService.checkStockOnHandQuantity(UUID.randomUUID(), draftDto);
+  }
+
+  private ShipmentDraftDto buildShipmentDraftDto() {
+    OrderObjectReferenceDto order = new OrderObjectReferenceDto(orderId);
+    order.setOrderLineItems(newArrayList());
+    FacilityDto facilityDto = new FacilityDto();
+    facilityDto.setId(UUID.randomUUID());
+    order.setSupplyingFacility(facilityDto);
+    ProgramDto programDto = new ProgramDto();
+    programDto.setId(UUID.randomUUID());
+    order.setProgram(programDto);
+    ShipmentDraftDto draftDto = new ShipmentDraftDto();
+    draftDto.setOrder(order);
+    draftDto.setLineItems(new ArrayList<>());
+    return draftDto;
   }
 }

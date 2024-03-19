@@ -197,9 +197,6 @@ public class SiglusShipmentDraftService {
   }
 
   public void checkStockOnHandQuantity(UUID shipmentDraftId, ShipmentDraftDto draftDto) {
-    if (draftDto.getLineItems().isEmpty()) {
-      return;
-    }
     UUID facilityId = draftDto.getOrder().getSupplyingFacility().getId();
     UUID programId = draftDto.getOrder().getProgram().getId();
     Set<String> orderableLotIdPairs = draftDto.lineItems().stream()
