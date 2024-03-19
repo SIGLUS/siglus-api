@@ -8,7 +8,7 @@ case when
 	gz.province is null then gz.district
 	else gz.province
 	end as province
-, gz.district, f.name as "facility name", concat(u.firstname, ' ', u.lastname) as name, u.username, ucd.email
+, gz.district, f.name as facilityname, concat(u.firstname, ' ', u.lastname) as name, u.username, ucd.email
 from referencedata.users u
 left join notification.user_contact_details ucd on u.id = ucd.referencedatauserid
 left join referencedata.facilities f on u.homefacilityid = f.id
@@ -22,7 +22,7 @@ left join
 ) gz on f.geographiczoneid = gz.id
 where homefacilityid is not null
 union
-select null as province, null as district, null as "facility name",
+select null as province, null as district, null as facilityname,
 concat(firstname, ' ', lastname) as name, username, ucd.email
 from referencedata.users u
 left join notification.user_contact_details ucd on u.id = ucd.referencedatauserid
