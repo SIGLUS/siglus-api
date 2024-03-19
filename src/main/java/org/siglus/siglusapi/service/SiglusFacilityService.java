@@ -68,8 +68,11 @@ public class SiglusFacilityService {
       return;
     }
     boolean hasLocation = facilityConfigHelper.isLocationManagementEnabled(facilityId);
-    if (hasLocation && lots.stream().allMatch(FacilityRemovedLotDto::hasLocation)) {
+    if (hasLocation && lots.stream().anyMatch(lot -> !lot.hasLocation())) {
       throw new BusinessDataException(Message.createFromMessageKeyStr("Missing Location"));
+    }
+    if (!hasLocation && lots.stream().anyMatch(FacilityRemovedLotDto::hasLocation)) {
+      throw new BusinessDataException(Message.createFromMessageKeyStr("should not have Location"));
     }
     List<UUID> stockCardIds = lots.stream().map(FacilityRemovedLotDto::getStockCardId).collect(Collectors.toList());
     Map<UUID, StockCard> stockCardMap = siglusStockCardService.findStockCardByIds(stockCardIds)

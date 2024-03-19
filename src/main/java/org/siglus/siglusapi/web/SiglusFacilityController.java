@@ -16,10 +16,10 @@
 package org.siglus.siglusapi.web;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
-import org.siglus.siglusapi.dto.FacilityRemovedLotDto;
 import org.siglus.siglusapi.dto.LocationStatusDto;
 import org.siglus.siglusapi.dto.RequisitionGroupMembersDto;
 import org.siglus.siglusapi.exception.InvalidReasonException;
@@ -27,6 +27,7 @@ import org.siglus.siglusapi.repository.dto.LotStockDto;
 import org.siglus.siglusapi.service.SiglusFacilityService;
 import org.siglus.siglusapi.service.SiglusLotLocationService;
 import org.siglus.siglusapi.service.SiglusLotService;
+import org.siglus.siglusapi.web.request.RemoveLotsRequest;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -61,10 +62,12 @@ public class SiglusFacilityController {
     return siglusLotService.getExpiredLots(id);
   }
 
-  @PostMapping("/{id}/lots/expired/remove")
+  @PostMapping("/{id}/lots/remove")
   public void removeExpiredLots(@PathVariable("id") UUID id,
-                                @RequestBody List<FacilityRemovedLotDto> dtos) {
-    siglusFacilityService.removeExpiredLots(id, dtos);
+                                @RequestBody RemoveLotsRequest request) {
+    if (Objects.equals(request.getLotType(), RemoveLotsRequest.EXPIRED)) {
+      siglusFacilityService.removeExpiredLots(id, request.getDtos());
+    }
   }
 
   @GetMapping("/{id}/locations")

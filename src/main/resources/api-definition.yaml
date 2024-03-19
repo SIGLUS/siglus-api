@@ -622,6 +622,12 @@ traits:
           responses:
             200:
               description: GET specific facility's lots with param
+        /remove:
+          post:
+            is: [ secured ]
+            responses:
+              200:
+                description: remove lots
       /{id}/locations:
         get:
           is: [ secured ]
