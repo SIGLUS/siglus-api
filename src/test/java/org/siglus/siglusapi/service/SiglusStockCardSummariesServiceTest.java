@@ -458,7 +458,7 @@ public class SiglusStockCardSummariesServiceTest {
     when(calculatedStockOnHandByLocationRepository.getLocationSoh(newArrayList(facilityId), facilityId)).thenReturn(
         newArrayList(locationSohDto));
     List<StockCardSummaryWithLocationDto> stockCardSummaryWithLocationDtos =
-        service.getStockCardSummaryWithLocationDtos(getProgramsParms(), subDraftId, pageable);
+        service.getStockCardSummaryWithLocationDtos(getProgramsParms(), subDraftId, pageable, null);
     assertEquals(1, stockCardSummaryWithLocationDtos.size());
     assertEquals(1, stockCardSummaryWithLocationDtos.get(0).getStockCardDetails().size());
   }

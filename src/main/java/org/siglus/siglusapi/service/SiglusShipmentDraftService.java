@@ -23,6 +23,7 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -35,8 +36,10 @@ import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.openlmis.fulfillment.domain.Order;
 import org.openlmis.fulfillment.domain.OrderLineItem;
+import org.openlmis.fulfillment.domain.ShipmentDraft;
 import org.openlmis.fulfillment.domain.ShipmentLineItem.Importer;
 import org.openlmis.fulfillment.repository.OrderRepository;
+import org.openlmis.fulfillment.repository.ShipmentDraftRepository;
 import org.openlmis.fulfillment.web.shipment.LocationDto;
 import org.openlmis.fulfillment.web.shipment.ShipmentLineItemDto;
 import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftController;
@@ -64,6 +67,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.ObjectUtils;
 
 @Service
 @Slf4j
@@ -93,6 +97,8 @@ public class SiglusShipmentDraftService {
   private FacilityConfigHelper facilityConfigHelper;
   @Autowired
   private SiglusStockCardRepository siglusStockCardRepository;
+  @Autowired
+  private ShipmentDraftRepository shipmentDraftRepository;
 
   @Transactional
   public ShipmentDraftDto createShipmentDraft(ShipmentDraftDto draftDto) {
@@ -253,6 +259,17 @@ public class SiglusShipmentDraftService {
       int reserved = reservedMap.getOrDefault(key, 0);
       return soh - reserved < item.getQuantityShipped().intValue();
     });
+  }
+
+  public UUID getDraftIdByOrderId(UUID orderId) {
+    if (orderId == null) {
+      return null;
+    }
+    Collection<ShipmentDraft> drafts = shipmentDraftRepository.findByOrder(new Order(orderId));
+    if (ObjectUtils.isEmpty(drafts)) {
+      return null;
+    }
+    return drafts.stream().findFirst().get().getId();
   }
 
   private Order getDraftOrder(UUID draftId) {

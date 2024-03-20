@@ -408,13 +408,13 @@ public class SiglusStockCardSummariesService {
       List<UUID> subDraftIds, UUID draftId, Pageable pageable) {
 
     List<StockCardSummaryDto> stockCardSummaryDtos = getStockCardSummaryDtos(parameters,
-        subDraftIds, draftId, pageable);
+        subDraftIds, draftId, pageable, null);
 
     return getFulfillForMe(stockCardSummaryDtos);
   }
 
   public List<StockCardSummaryDto> getStockCardSummaryDtos(MultiValueMap<String, String> parameters,
-      List<UUID> subDraftIds, UUID draftId, Pageable pageable) {
+      List<UUID> subDraftIds, UUID draftId, Pageable pageable, UUID orderId) {
     List<StockCardSummaryV2Dto> stockCardSummaryV2Dtos = getStockCardSummaryV2Dtos(parameters, subDraftIds, draftId,
         pageable);
 
@@ -425,14 +425,16 @@ public class SiglusStockCardSummariesService {
     UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
     List<OrderableDto> orderableDtos = getOrderableDtos(pageable, orderableIds, facilityId);
     List<LotDto> lotDtos = getLotDtos(canFulfillForMeEntryDtos);
+
+    UUID shipmentDraftId = siglusShipmentDraftService.getDraftIdByOrderId(orderId);
     Map<String, Integer> reservedMap =
-            getStockCardReservedMap(facilityId, getId(PROGRAM_ID, parameters), draftId);
+            getStockCardReservedMap(facilityId, getId(PROGRAM_ID, parameters), shipmentDraftId);
 
     return combineResponse(stockCardSummaryV2Dtos, orderableDtos, lotDtos, reservedMap);
   }
 
   public List<StockCardSummaryWithLocationDto> getStockCardSummaryWithLocationDtos(
-      MultiValueMap<String, String> parameters, UUID draftId, Pageable pageable) {
+      MultiValueMap<String, String> parameters, UUID draftId, Pageable pageable, UUID orderId) {
     List<StockCardSummaryV2Dto> stockCardSummaryV2Dtos =
         getStockCardSummaryV2DtosWithLocation(parameters, new ArrayList<>(), draftId, pageable);
     List<UUID> orderableIds = new ArrayList<>();
@@ -447,8 +449,10 @@ public class SiglusStockCardSummariesService {
       lotIds.add(UUID.randomUUID());
     }
     List<LotLocationSohDto> locationSoh = calculatedStockOnHandByLocationRepository.getLocationSoh(lotIds, facilityId);
+
+    UUID shipmentDraftId = siglusShipmentDraftService.getDraftIdByOrderId(orderId);
     Map<String, Integer> reservedMap =
-            getStockCardReservedMap(facilityId, getId(PROGRAM_ID, parameters), draftId);
+            getStockCardReservedMap(facilityId, getId(PROGRAM_ID, parameters), shipmentDraftId);
     return combineResponse(stockCardSummaryV2Dtos, orderableDtos, lotDtos, locationSoh, reservedMap);
   }
 
