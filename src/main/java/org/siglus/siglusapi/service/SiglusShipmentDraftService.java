@@ -206,8 +206,9 @@ public class SiglusShipmentDraftService {
     UUID facilityId = draftDto.getOrder().getSupplyingFacility().getId();
     UUID programId = draftDto.getOrder().getProgram().getId();
     Set<String> orderableLotIdPairs = draftDto.lineItems().stream()
-            .map(item -> item.getOrderable().getId().toString() + item.getLot().getId().toString())
-            .collect(Collectors.toSet());
+        .filter(item -> (item.getOrderable() != null) && (item.getLot() != null))
+        .map(item -> item.getOrderable().getId().toString() + item.getLot().getId().toString())
+        .collect(Collectors.toSet());
     if (orderableLotIdPairs.isEmpty()) {
       return;
     }
