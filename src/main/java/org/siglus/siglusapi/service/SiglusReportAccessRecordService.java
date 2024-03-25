@@ -18,8 +18,6 @@ package org.siglus.siglusapi.service;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
-import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.siglus.siglusapi.domain.ReportAccessRecord;
@@ -33,8 +31,6 @@ import org.springframework.util.ObjectUtils;
 
 @Slf4j
 @Service
-@AllArgsConstructor
-@NoArgsConstructor
 public class SiglusReportAccessRecordService {
 
   @Autowired

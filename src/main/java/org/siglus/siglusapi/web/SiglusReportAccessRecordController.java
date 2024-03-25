@@ -17,8 +17,6 @@ package org.siglus.siglusapi.web;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
 import org.siglus.siglusapi.dto.enums.ReportNameEnum;
 import org.siglus.siglusapi.service.SiglusReportAccessRecordService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,8 +26,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-@AllArgsConstructor
-@NoArgsConstructor
 @RestController
 @RequestMapping("/api/siglusapi/reports/records")
 @Validated
