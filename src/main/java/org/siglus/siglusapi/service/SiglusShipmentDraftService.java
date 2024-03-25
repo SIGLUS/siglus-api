@@ -221,7 +221,7 @@ public class SiglusShipmentDraftService {
     // get reserved soh
     List<StockCardReservedDto> reservedDtos = queryReservedCount(facilityId, programId, shipmentDraftId);
     // check soh
-    if (canNotFullFillShipmentQuantity(sohDtos, reservedDtos, draftDto)) {
+    if (canNotFulfillShipmentQuantity(sohDtos, reservedDtos, draftDto)) {
       throw new ValidationMessageException(new Message(SHIPMENT_LINE_ITEMS_INVALID));
     }
   }
@@ -236,9 +236,9 @@ public class SiglusShipmentDraftService {
     return reservedDtos;
   }
 
-  private boolean canNotFullFillShipmentQuantity(List<StockCardStockDto> sohDtos,
-                                                 List<StockCardReservedDto> reservedDtos,
-                                                 ShipmentDraftDto draftDto) {
+  private boolean canNotFulfillShipmentQuantity(List<StockCardStockDto> sohDtos,
+                                                List<StockCardReservedDto> reservedDtos,
+                                                ShipmentDraftDto draftDto) {
     Map<String, Integer> sohMap = sohDtos.stream().collect(Collectors.toMap(
         dto -> FormatHelper.buildStockCardUniqueKey(
                 dto.getOrderableId(), dto.getLotId(), dto.getArea(), dto.getLocationCode()),
@@ -250,16 +250,17 @@ public class SiglusShipmentDraftService {
                   dto.getOrderableId(), dto.getLotId(), dto.getArea(), dto.getLocationCode()),
           StockCardReservedDto::getReserved
         ));
-    return draftDto.lineItems().stream().anyMatch(item -> {
-      String key = FormatHelper.buildStockCardUniqueKey(
+    return draftDto.lineItems().stream()
+        .filter(item -> (item.getOrderable() != null) && (item.getLot() != null))
+        .anyMatch(item -> {
+          String key = FormatHelper.buildStockCardUniqueKey(
               item.getOrderable().getId(), item.getLot().getId(),
               item.getLocation() == null ? null : item.getLocation().getArea(),
-              item.getLocation() == null ? null : item.getLocation().getLocationCode()
-      );
-      int soh = sohMap.getOrDefault(key, 0);
-      int reserved = reservedMap.getOrDefault(key, 0);
-      return soh - reserved < item.getQuantityShipped().intValue();
-    });
+              item.getLocation() == null ? null : item.getLocation().getLocationCode());
+          int soh = sohMap.getOrDefault(key, 0);
+          int reserved = reservedMap.getOrDefault(key, 0);
+          return soh - reserved < item.getQuantityShipped().intValue();
+        });
   }
 
   public UUID getDraftIdByOrderId(UUID orderId) {
