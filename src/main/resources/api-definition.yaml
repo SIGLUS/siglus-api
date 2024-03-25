@@ -4491,3 +4491,9 @@ traits:
         responses:
           200:
             description: get current machine type
+    /reports/records:
+      post:
+        is: [ secured ]
+        responses:
+          200:
+            description: record user access reports
