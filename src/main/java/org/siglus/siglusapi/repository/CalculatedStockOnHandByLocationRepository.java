@@ -41,7 +41,8 @@ public interface CalculatedStockOnHandByLocationRepository extends JpaRepository
       @Param("stockCardIds") Collection<UUID> stockCardIds);
 
   @Query(name = "LotLocationSoh.findLocationSoh", nativeQuery = true)
-  List<LotLocationSohDto> getLocationSoh(@Param("lotIds") Iterable<UUID> lotIds, @Param("facilityId") UUID facilityId);
+  List<LotLocationSohDto> getLocationSoh(
+      @Param("lotIds") Collection<UUID> lotIds, @Param("facilityId") UUID facilityId);
 
   @Query(name = "LotLocationSoh.findLocationSohByStockCard", nativeQuery = true)
   List<LotLocationSohDto> getLocationSohByStockCard(@Param("stockCardId") UUID stockCardId);

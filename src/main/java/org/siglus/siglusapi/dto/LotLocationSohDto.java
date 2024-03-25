@@ -113,9 +113,7 @@ import lombok.Data;
                     @ColumnResult(name = "locationcode", type = String.class),
                     @ColumnResult(name = "area", type = String.class),
                     @ColumnResult(name = "stockonhand", type = Integer.class),
-                    @ColumnResult(name = "lastUpdate", type = LocalDate.class)
-
-
+                    @ColumnResult(name = "lastupdate", type = LocalDate.class),
                 }
             )
         }
@@ -137,7 +135,19 @@ public class LotLocationSohDto {
 
   private Integer stockOnHand;
 
-  private Integer reservedStock;
-
   private LocalDate lastUpdate;
+
+  @Builder.Default
+  private Integer reservedStock = 0;
+
+  public LotLocationSohDto(String identify, UUID orderableId, UUID lotId,
+                           String locationCode, String area, Integer stockOnHand, LocalDate lastUpdate) {
+    this.identify = identify;
+    this.orderableId = orderableId;
+    this.lotId = lotId;
+    this.locationCode = locationCode;
+    this.area = area;
+    this.stockOnHand = stockOnHand;
+    this.lastUpdate = lastUpdate;
+  }
 }
