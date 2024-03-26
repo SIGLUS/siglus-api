@@ -409,7 +409,7 @@ public class SiglusStockCardSummariesServiceTest {
     ProgramDto programDto = new ProgramDto();
     programDto.setCode(TARV_PROGRAM_CODE);
     when(programService.getProgram(programId)).thenReturn(programDto);
-    when(siglusShipmentDraftService.reservedCount(facilityId, programId, initialDraftId, null))
+    when(siglusShipmentDraftService.reservedCount(facilityId, initialDraftId, null))
             .thenReturn(new ArrayList<>());
 
     List<List<StockCardDetailsDto>> stockCardDetailsDtoByGroup = service

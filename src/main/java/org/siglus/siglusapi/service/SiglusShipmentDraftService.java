@@ -180,9 +180,9 @@ public class SiglusShipmentDraftService {
   }
 
   public List<StockCardReservedDto> reservedCount(UUID facilityId,
-          UUID programId, UUID shipmentDraftId, List<ShipmentLineItemDto> lineItems) {
-    List<StockCardReservedDto> allReserved = queryReservedCount(facilityId, programId, shipmentDraftId);
-    if (lineItems == null || lineItems.isEmpty()) {
+          UUID shipmentDraftId, List<ShipmentLineItemDto> lineItems) {
+    List<StockCardReservedDto> allReserved = queryReservedCount(facilityId, shipmentDraftId);
+    if (ObjectUtils.isEmpty(lineItems)) {
       return allReserved;
     }
     Map<Tuple3<UUID, Integer, UUID>, Integer> reservedMap = allReserved
@@ -204,7 +204,6 @@ public class SiglusShipmentDraftService {
 
   public void checkStockOnHandQuantity(UUID shipmentDraftId, ShipmentDraftDto draftDto) {
     UUID facilityId = draftDto.getOrder().getSupplyingFacility().getId();
-    UUID programId = draftDto.getOrder().getProgram().getId();
     Set<String> orderableLotIdPairs = draftDto.lineItems().stream()
         .filter(item -> (item.getOrderable() != null) && (item.getLot() != null))
         .map(item -> item.getOrderable().getId().toString() + item.getLot().getId().toString())
@@ -219,19 +218,19 @@ public class SiglusShipmentDraftService {
     List<StockCardStockDto> sohDtos =
             siglusStockCardSummariesService.getLatestStockOnHand(stockCards, hasLocation);
     // get reserved soh
-    List<StockCardReservedDto> reservedDtos = queryReservedCount(facilityId, programId, shipmentDraftId);
+    List<StockCardReservedDto> reservedDtos = queryReservedCount(facilityId, shipmentDraftId);
     // check soh
     if (canNotFulfillShipmentQuantity(sohDtos, reservedDtos, draftDto)) {
       throw new ValidationMessageException(new Message(SHIPMENT_LINE_ITEMS_INVALID));
     }
   }
 
-  private List<StockCardReservedDto> queryReservedCount(UUID facilityId, UUID programId, UUID shipmentDraftId) {
+  private List<StockCardReservedDto> queryReservedCount(UUID facilityId, UUID shipmentDraftId) {
     List<StockCardReservedDto> reservedDtos;
     if (shipmentDraftId == null) {
-      reservedDtos = shipmentDraftLineItemsRepository.reservedCount(facilityId, programId);
+      reservedDtos = shipmentDraftLineItemsRepository.reservedCount(facilityId);
     } else {
-      reservedDtos = shipmentDraftLineItemsRepository.reservedCount(facilityId, programId, shipmentDraftId);
+      reservedDtos = shipmentDraftLineItemsRepository.reservedCount(facilityId, shipmentDraftId);
     }
     return reservedDtos;
   }

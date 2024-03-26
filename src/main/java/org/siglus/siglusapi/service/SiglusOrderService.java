@@ -665,7 +665,7 @@ public class SiglusOrderService {
     Order order = getOrder(orderId);
     ShipmentDraftDto shipmentDraftDto = siglusShipmentDraftFulfillmentService.getShipmentDraftByOrderId(orderId)
             .getContent().get(0);
-    return draftService.reservedCount(order.getSupplyingFacilityId(), order.getProgramId(),
+    return draftService.reservedCount(order.getSupplyingFacilityId(),
             shipmentDraftDto.getId(), shipmentDraftDto.lineItems());
   }
 
@@ -694,7 +694,7 @@ public class SiglusOrderService {
     return order.getProcessingPeriodId().equals(getCurrentPeriodIdByFulfillDate(periods, LocalDate.now()));
   }
 
-  private Order getOrder(UUID orderId) {
+  public Order getOrder(UUID orderId) {
     Order order = orderRepository.findOne(orderId);
     if (Objects.isNull(order)) {
       throw new NotFoundException(ERROR_ORDER_NOT_EXIST);

@@ -40,7 +40,7 @@ import lombok.Data;
                 + "       SELECT sd.id "
                 + "       FROM fulfillment.shipment_drafts sd "
                 + "       LEFT JOIN fulfillment.orders o on o.id = sd.orderid "
-                + "       WHERE o.supplyingfacilityid = :facilityId and o.programid = :programId) "
+                + "       WHERE o.supplyingfacilityid = :facilityId) "
                 + ";",
         resultSetMapping = "StockCard.StockCardReservedDto"),
 
@@ -56,8 +56,7 @@ import lombok.Data;
                 + "       SELECT sd.id "
                 + "       FROM fulfillment.shipment_drafts sd "
                 + "       LEFT JOIN fulfillment.orders o on o.id = sd.orderid "
-                + "       WHERE o.supplyingfacilityid = :facilityId and o.programid = :programId "
-                + "             and sd.id != :shipmentDraftId) "
+                + "       WHERE o.supplyingfacilityid = :facilityId and sd.id != :shipmentDraftId) "
                 + ";",
         resultSetMapping = "StockCard.StockCardReservedDto")
 })

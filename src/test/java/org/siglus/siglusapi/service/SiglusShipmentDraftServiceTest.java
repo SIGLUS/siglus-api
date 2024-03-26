@@ -444,7 +444,7 @@ public class SiglusShipmentDraftServiceTest {
         .lotId(lot.getId())
         .reserved(5)
         .build();
-    when(shipmentDraftLineItemsRepository.reservedCount(any(), any(), any()))
+    when(shipmentDraftLineItemsRepository.reservedCount(any(), any()))
         .thenReturn(newArrayList(reservedDto));
 
     siglusShipmentDraftService.checkStockOnHandQuantity(UUID.randomUUID(), draftDto);
@@ -482,7 +482,7 @@ public class SiglusShipmentDraftServiceTest {
         .lotId(lot.getId())
         .reserved(5)
         .build();
-    when(shipmentDraftLineItemsRepository.reservedCount(any(), any(), any()))
+    when(shipmentDraftLineItemsRepository.reservedCount(any(), any()))
         .thenReturn(newArrayList(reservedDto));
 
     siglusShipmentDraftService.checkStockOnHandQuantity(UUID.randomUUID(), draftDto);
@@ -525,7 +525,7 @@ public class SiglusShipmentDraftServiceTest {
         .area(area)
         .locationCode(locationCode)
         .build();
-    when(shipmentDraftLineItemsRepository.reservedCount(any(), any(), any()))
+    when(shipmentDraftLineItemsRepository.reservedCount(any(), any()))
         .thenReturn(newArrayList(reservedDto));
 
     siglusShipmentDraftService.checkStockOnHandQuantity(UUID.randomUUID(), draftDto);

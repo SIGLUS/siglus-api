@@ -425,10 +425,8 @@ public class SiglusStockCardSummariesService {
     UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
     List<OrderableDto> orderableDtos = getOrderableDtos(pageable, orderableIds, facilityId);
     List<LotDto> lotDtos = getLotDtos(canFulfillForMeEntryDtos);
-
     UUID shipmentDraftId = siglusShipmentDraftService.getDraftIdByOrderId(orderId);
-    Map<String, Integer> reservedMap =
-            getStockCardReservedMap(facilityId, getId(PROGRAM_ID, parameters), shipmentDraftId);
+    Map<String, Integer> reservedMap = getStockCardReservedMap(facilityId, shipmentDraftId);
 
     return combineResponse(stockCardSummaryV2Dtos, orderableDtos, lotDtos, reservedMap);
   }
@@ -451,8 +449,7 @@ public class SiglusStockCardSummariesService {
     List<LotLocationSohDto> locationSoh = calculatedStockOnHandByLocationRepository.getLocationSoh(lotIds, facilityId);
 
     UUID shipmentDraftId = siglusShipmentDraftService.getDraftIdByOrderId(orderId);
-    Map<String, Integer> reservedMap =
-            getStockCardReservedMap(facilityId, getId(PROGRAM_ID, parameters), shipmentDraftId);
+    Map<String, Integer> reservedMap = getStockCardReservedMap(facilityId, shipmentDraftId);
     return combineResponse(stockCardSummaryV2Dtos, orderableDtos, lotDtos, locationSoh, reservedMap);
   }
 
@@ -667,9 +664,9 @@ public class SiglusStockCardSummariesService {
   }
 
   private Map<String, Integer> getStockCardReservedMap(
-          UUID facilityId, UUID programId, UUID shipmentDraftId) {
+          UUID facilityId, UUID shipmentDraftId) {
     List<StockCardReservedDto> stockCardReservedDtos =
-            siglusShipmentDraftService.reservedCount(facilityId, programId, shipmentDraftId, null);
+            siglusShipmentDraftService.reservedCount(facilityId, shipmentDraftId, null);
     Multimap<String, StockCardReservedDto> reservedMap = ArrayListMultimap.create();
     stockCardReservedDtos.forEach(dto -> {
       String uniqueKey = FormatHelper.buildStockCardUniqueKey(
