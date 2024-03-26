@@ -341,6 +341,7 @@ public class SiglusOrderService {
       if (optional.isPresent()) {
         UUID shipmentId = optional.get().getId();
         response.setIssueVoucherNumber(shipmenIdToIssueVoucherNumberMap.get(shipmentId));
+        response.setShipDate(optional.get().getShippedDate());
       }
     }
 

@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.web.response;
 
+import java.time.ZonedDateTime;
 import lombok.Data;
 import org.openlmis.fulfillment.web.util.BasicOrderDto;
 
@@ -30,4 +31,6 @@ public class BasicOrderExtensionResponse extends BasicOrderDto {
   private boolean hasSubDraft;
 
   private String issueVoucherNumber;
+
+  private ZonedDateTime shipDate;
 }
