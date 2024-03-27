@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.UUID;
 import org.siglus.siglusapi.domain.ReportAccessRecord;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -33,4 +34,8 @@ public interface SiglusReportAccessRecordRepository extends JpaRepository<Report
       @Param("reportName") String reportName,
       @Param("accessDate") LocalDate accessDate);
 
+  @Modifying
+  @Query(value = "delete from siglusintegration.report_access_record "
+      + "where accessdate < :expiredDate", nativeQuery = true)
+  void clearExpiredRecords(@Param("expiredDate") LocalDate expiredDate);
 }
