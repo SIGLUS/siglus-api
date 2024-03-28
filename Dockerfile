@@ -1,4 +1,4 @@
-FROM alpine:3.18
+FROM alpine:3
 
 COPY servicebase/package.json /package.json
 COPY servicebase/run.sh /run.sh
