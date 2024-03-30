@@ -50,6 +50,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.collect.Table;
 import java.time.LocalDate;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -126,7 +127,10 @@ import org.openlmis.requisition.utils.Message;
 import org.openlmis.requisition.web.QueryRequisitionSearchParams;
 import org.openlmis.requisition.web.RequisitionController;
 import org.openlmis.requisition.web.RequisitionV2Controller;
+import org.openlmis.stockmanagement.domain.card.StockCard;
+import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
 import org.openlmis.stockmanagement.exception.PermissionMessageException;
+import org.openlmis.stockmanagement.repository.StockCardRepository;
 import org.siglus.common.domain.RequisitionTemplateExtension;
 import org.siglus.common.dto.RequisitionTemplateExtensionDto;
 import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
@@ -257,6 +261,7 @@ public class SiglusRequisitionService {
   private final SiglusAuthenticationHelper authHelper;
 
   private final SiglusProgramService siglusProgramService;
+  private final StockCardRepository stockCardRepository;
   private final Map<String, BiConsumer<SiglusRequisitionDto, Set<RequisitionLineItem>>> programToRequestedQuantity =
       ImmutableMap.<String, BiConsumer<SiglusRequisitionDto, Set<RequisitionLineItem>>>builder()
           .put(MTB_PROGRAM_CODE, this::calcRequestedQuantityForMmtb)
@@ -353,6 +358,7 @@ public class SiglusRequisitionService {
       String physicalInventoryDateStr, HttpServletRequest request, HttpServletResponse response) {
     RequisitionV2Dto v2Dto = requisitionV2Controller.initiate(programId, facilityId, suggestedPeriod, emergency,
         physicalInventoryDateStr, request, response);
+    processStockMovementAfterTheDateSubmitted(v2Dto);
     SiglusRequisitionDto siglusRequisitionDto = siglusUsageReportService.initiateUsageReport(v2Dto);
 
     RequisitionTemplate template = requisitionRepository.findOne(siglusRequisitionDto.getId()).getTemplate();
@@ -371,6 +377,79 @@ public class SiglusRequisitionService {
         programId, v2Dto.getProcessingPeriodId());
     return siglusRequisitionDto;
   }
+
+  public void processStockMovementAfterTheDateSubmitted(RequisitionV2Dto v2Dto) {
+    Requisition mock = new Requisition();
+    if (v2Dto.getProcessingPeriod() == null) {
+      return;
+    }
+    mock.setProcessingPeriodId(v2Dto.getProcessingPeriod().getId());
+    mock.setFacilityId(v2Dto.getFacilityId());
+    mock.setProgramId(v2Dto.getProgramId());
+    Requisition previousRegularRequisition;
+    // TODO what if emergency requisition?
+    previousRegularRequisition = requisitionService.getPreviousRegularRequisition(mock);
+
+    if (previousRegularRequisition == null) {
+      return;
+    }
+
+    LocalDate previousSubmitDate = previousRegularRequisition.getActualEndDate();
+    ZonedDateTime previousCreateTime = previousRegularRequisition.getCreatedDate();
+
+    Set<UUID> orderableIds = v2Dto.getAvailableProducts().stream().map(BaseDto::getId).collect(toSet());
+    List<StockCard> stockCards = stockCardRepository.findByOrderableIdInAndFacilityId(orderableIds,
+            v2Dto.getFacilityId());
+
+    Map<UUID, List<StockCardLineItem>> orderableIdToLineItems = new HashMap<>();
+    stockCards.forEach(stockCard -> {
+      UUID orderableId = stockCard.getOrderableId();
+      List<StockCardLineItem> items = stockCard.getLineItems().stream().filter(item ->
+              previousSubmitDate.equals(item.getOccurredDate())
+                      && previousCreateTime.isBefore(item.getProcessedDate())).collect(toList());
+      if (!items.isEmpty()) {
+        if (orderableIdToLineItems.containsKey(stockCard.getOrderableId())) {
+          orderableIdToLineItems.get(orderableId).addAll(items);
+        } else {
+          orderableIdToLineItems.put(orderableId, items);
+        }
+      }
+    });
+
+    Map<UUID, Integer> orderableIdToAdditonalIssue = new HashMap<>();
+    Map<UUID, Integer> orderableIdToAdditonalReceive = new HashMap<>();
+    orderableIdToLineItems.forEach((orderableId, lineItems) -> {
+      // TODO check issue logic correct?
+      Integer totalIssue = lineItems.stream()
+              .filter(lineItem -> !lineItem.isPhysicalInventory())
+              .filter(lineItem -> !lineItem.isPositive())
+              .map(StockCardLineItem::getQuantity)
+              .reduce(Integer::sum).orElse(0);
+
+      Integer totalReceive = lineItems.stream()
+              .filter(lineItem -> !lineItem.isPhysicalInventory())
+              .filter(lineItem -> lineItem.isPositive())
+              .map(StockCardLineItem::getQuantity)
+              .reduce(Integer::sum).orElse(0);
+
+      orderableIdToAdditonalIssue.put(orderableId, totalIssue);
+      orderableIdToAdditonalReceive.put(orderableId, totalReceive);
+    });
+
+    Set<UUID> requisitionLinItemIds = v2Dto.getLineItems().stream()
+            .filter(lineItem -> orderableIdToLineItems.containsKey(lineItem.getOrderableIdentity().getId()))
+            .map(BaseDto::getId).collect(toSet());
+    Set<RequisitionLineItem> requisitionLineItems = requisitionLineItemRepository.findAllById(requisitionLinItemIds);
+    requisitionLineItems.forEach(lineItem -> {
+      UUID orderableId = lineItem.getOrderable().getId();
+      lineItem.setTotalReceivedQuantity(lineItem.getTotalReceivedQuantity()
+              + orderableIdToAdditonalReceive.getOrDefault(orderableId, 0));
+      lineItem.setTotalConsumedQuantity(lineItem.getTotalConsumedQuantity()
+              + orderableIdToAdditonalIssue.getOrDefault(orderableId, 0));
+    });
+    requisitionLineItemRepository.save(requisitionLineItems);
+  }
+
 
   public void calcRequestedQuantity(SiglusRequisitionDto siglusRequisitionDto) {
     Set<UUID> lineItemIds = siglusRequisitionDto.getLineItems().stream()
