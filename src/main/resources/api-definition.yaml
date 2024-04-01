@@ -4497,3 +4497,9 @@ traits:
         responses:
           200:
             description: record user access reports
+    /geographicInfo:
+      get:
+        is: [ secured ]
+        responses:
+          200:
+            description: get geographic Info
