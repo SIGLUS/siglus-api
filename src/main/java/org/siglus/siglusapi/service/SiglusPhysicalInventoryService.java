@@ -490,6 +490,17 @@ public class SiglusPhysicalInventoryService {
     return Collections.emptyList();
   }
 
+  public List<SiglusPhysicalInventoryDto> getLocationPhysicalInventoryDtosForProductsForOneProgram(
+      UUID programId, UUID facilityId, Boolean isDraft, boolean isByLocation) {
+    List<PhysicalInventoryDto> dtos =
+        getPhysicalInventoryDtosForProductsForOneProgram(programId, facilityId, isDraft, isByLocation);
+    if (dtos.isEmpty()) {
+      return Collections.emptyList();
+    }
+    PhysicalInventoryDto physicalInventoryDto = dtos.get(0);
+    return Collections.singletonList(fillLocationOption(physicalInventoryDto));
+  }
+
   public List<SiglusPhysicalInventoryDto> getLocationPhysicalInventoryDtosForAllPrograms(
       UUID facilityId, Boolean isDraft, boolean isByLocation) {
     List<PhysicalInventoryDto> physicalInventoryDtosForAllPrograms = getPhysicalInventoryDtosForAllPrograms(facilityId,

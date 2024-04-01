@@ -68,7 +68,7 @@ public class SiglusPhysicalInventoryWithLocationController {
       @RequestParam(required = false) Boolean isDraft,
       @RequestParam(required = false) boolean isByLocation) {
     return siglusPhysicalInventoryService
-        .getLocationPhysicalInventoryDtosForAllPrograms(facility, isDraft, isByLocation);
+        .getLocationPhysicalInventoryDtosForProductsForOneProgram(program, facility, isDraft, isByLocation);
   }
 
   @GetMapping("/subDraft")
