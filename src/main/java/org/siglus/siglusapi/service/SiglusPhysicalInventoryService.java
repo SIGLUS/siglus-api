@@ -115,6 +115,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.util.ObjectUtils;
 
 @Service
 @Slf4j
@@ -305,28 +306,26 @@ public class SiglusPhysicalInventoryService {
     return physicalInventory;
   }
 
-  public PhysicalInventoryValidationDto checkConflictForOneProgram(UUID facility) {
+  public PhysicalInventoryValidationDto checkConflictForOneProgram(UUID facility, UUID program, UUID draft) {
     Set<UUID> supportedPrograms = supportedProgramsHelper.findHomeFacilitySupportedProgramIds();
-    if (CollectionUtils.isEmpty(supportedPrograms)) {
+    if (CollectionUtils.isEmpty(supportedPrograms) || !supportedPrograms.contains(program)) {
       throw new PermissionMessageException(new org.openlmis.stockmanagement.util.Message(ERROR_PROGRAM_NOT_SUPPORTED));
     }
-
-    List<Boolean> draftCreateByALlProduct = Lists.newArrayList();
-    supportedPrograms.forEach(supportedProgramId -> {
-      List<PhysicalInventory> programHaveDraft = physicalInventoriesRepository
-          .findByProgramIdAndFacilityIdAndIsDraft(supportedProgramId, facility, true);
+    List<PhysicalInventory> programHaveDraft = physicalInventoriesRepository
+        .findByProgramIdAndFacilityIdAndIsDraft(program, facility, true);
+    if (ObjectUtils.isEmpty(draft)) {
       if (CollectionUtils.isNotEmpty(programHaveDraft)) {
-        List<PhysicalInventoryExtension> programWithDraftList = physicalInventoryExtensionRepository
-            .findByPhysicalInventoryId(programHaveDraft.get(0).getId());
-        if (CollectionUtils.isNotEmpty(programWithDraftList) && ALL_PROGRAM.equals(programWithDraftList.get(0)
-            .getCategory())) {
-          draftCreateByALlProduct.add(true);
-        }
+        return buildPhysicalInventoryValidationDto(false, Lists.newArrayList(program));
       }
-    });
-
-    if (CollectionUtils.isNotEmpty(draftCreateByALlProduct) && draftCreateByALlProduct.contains(true)) {
-      return buildPhysicalInventoryValidationDto(false, Lists.newArrayList(ALL_PRODUCTS_UUID));
+    } else {
+      if (programHaveDraft.size() != 1) {
+        return buildPhysicalInventoryValidationDto(false, Lists.newArrayList(program));
+      }
+      PhysicalInventory physicalInventory = programHaveDraft.get(0);
+      if (!physicalInventory.getId().equals(draft)) {
+        throw new BusinessDataException(
+            Message.createFromMessageKeyStr("facility, program and draft mismatch"));
+      }
     }
     return buildPhysicalInventoryValidationDto(true, Lists.newArrayList());
   }

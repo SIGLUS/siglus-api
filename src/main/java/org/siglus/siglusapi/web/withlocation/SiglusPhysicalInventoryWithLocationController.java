@@ -57,8 +57,8 @@ public class SiglusPhysicalInventoryWithLocationController {
       @RequestParam(required = false) boolean initialPhysicalInventory,
       @RequestParam(name = "locationManagementOption") String optionString,
       @RequestParam(required = false) boolean isByLocation) {
-    return siglusPhysicalInventoryService.createAndSplitNewDraftForAllPrograms(dto, splitNum,
-        initialPhysicalInventory, optionString, isByLocation);
+    return siglusPhysicalInventoryService.createAndSpiltNewDraftForOneProgram(
+        dto, splitNum, optionString, isByLocation);
   }
 
   @GetMapping

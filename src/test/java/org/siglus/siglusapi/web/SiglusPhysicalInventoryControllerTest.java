@@ -144,16 +144,16 @@ public class SiglusPhysicalInventoryControllerTest {
 
   @Test
   public void shouldConflictIfOtherProgramHaveDraft() {
-    controller.checkPhysicalInventoryConflict(ALL_PRODUCTS_PROGRAM_ID, facilityId);
+    controller.checkPhysicalInventoryConflict(ALL_PRODUCTS_PROGRAM_ID, facilityId, null);
 
     verify(siglusPhysicalInventoryService).checkConflictForAllPrograms(facilityId);
   }
 
   @Test
   public void shouldConflictWithAllProductsWhenAllProductsHaveDraft() {
-    controller.checkPhysicalInventoryConflict(programId, facilityId);
+    controller.checkPhysicalInventoryConflict(programId, facilityId, null);
 
-    verify(siglusPhysicalInventoryService).checkConflictForOneProgram(facilityId);
+    verify(siglusPhysicalInventoryService).checkConflictForOneProgram(facilityId, programId, null);
   }
 
   @Test

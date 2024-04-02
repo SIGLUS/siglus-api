@@ -1208,7 +1208,7 @@ public class SiglusPhysicalInventoryServiceTest {
   public void shouldGetExceptionWhenConflictForOneProgram() {
     exception.expect(PermissionMessageException.class);
     exception.expectMessage("stockmanagement.error.authorization.program.not.supported");
-    siglusPhysicalInventoryService.checkConflictForOneProgram(facilityId);
+    siglusPhysicalInventoryService.checkConflictForOneProgram(facilityId, programId, null);
   }
 
   @Test
@@ -1268,7 +1268,7 @@ public class SiglusPhysicalInventoryServiceTest {
 
     // when
     PhysicalInventoryValidationDto physicalInventoryValidationDto = siglusPhysicalInventoryService
-        .checkConflictForOneProgram(facilityId);
+        .checkConflictForOneProgram(facilityId, programIdOne, null);
 
     // then
     assertFalse(physicalInventoryValidationDto.isCanStartInventory());
@@ -1290,7 +1290,7 @@ public class SiglusPhysicalInventoryServiceTest {
 
     // when
     PhysicalInventoryValidationDto physicalInventoryValidationDto = siglusPhysicalInventoryService
-        .checkConflictForOneProgram(facilityId);
+        .checkConflictForOneProgram(facilityId, programIdOne, physicalInventory.getId());
 
     // then
     assertTrue(physicalInventoryValidationDto.isCanStartInventory());

@@ -75,8 +75,8 @@ public class SiglusPhysicalInventoryWithLocationControllerTest {
     controller.createEmptyPhysicalInventoryWithLocationOption(
         physicalInventoryDto, 2, true, optionString, isByLocation);
     // then
-    verify(siglusPhysicalInventoryService).createAndSplitNewDraftForAllPrograms(
-        physicalInventoryDto, 2, true, optionString, isByLocation);
+    verify(siglusPhysicalInventoryService).createAndSpiltNewDraftForOneProgram(
+        physicalInventoryDto, 2, optionString, isByLocation);
   }
 
   @Test
