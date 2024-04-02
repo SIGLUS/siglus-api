@@ -4503,3 +4503,10 @@ traits:
         responses:
           200:
             description: get geographic Info
+    /user:
+      /reportView:
+        get:
+          is: [ secured ]
+          responses:
+            200:
+              description: get geographic Info

@@ -13,20 +13,26 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.repository;
+package org.siglus.siglusapi.web;
 
 import java.util.List;
-import java.util.Set;
-import java.util.UUID;
-import org.openlmis.referencedata.domain.GeographicZone;
 import org.siglus.siglusapi.dto.GeographicInfoDto;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
+import org.siglus.siglusapi.service.SiglusUserReportViewService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-public interface SiglusGeographicInfoRepository extends JpaRepository<GeographicZone, UUID> {
+@RestController
+@RequestMapping("/api/siglusapi/user/reportView")
+public class SiglusUserReportViewController {
 
-  @Query(name = "GeographicInfo.getGeographicInfo", nativeQuery = true)
-  List<GeographicInfoDto> getGeographicInfo();
+  @Autowired
+  private SiglusUserReportViewService siglusUserReportViewService;
 
-  Set<GeographicZone> findAllByIdIn(Set<UUID> ids);
+  @GetMapping
+  public List<GeographicInfoDto> getReportViewGeographicInfo() {
+    return siglusUserReportViewService.getReportViewGeographicInfo();
+  }
+
 }

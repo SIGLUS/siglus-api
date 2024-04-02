@@ -16,17 +16,11 @@
 package org.siglus.siglusapi.repository;
 
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
-import org.openlmis.referencedata.domain.GeographicZone;
-import org.siglus.siglusapi.dto.GeographicInfoDto;
+import org.siglus.siglusapi.domain.UserReportView;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
 
-public interface SiglusGeographicInfoRepository extends JpaRepository<GeographicZone, UUID> {
+public interface SiglusUserReportViewRepository extends JpaRepository<UserReportView, UUID> {
 
-  @Query(name = "GeographicInfo.getGeographicInfo", nativeQuery = true)
-  List<GeographicInfoDto> getGeographicInfo();
-
-  Set<GeographicZone> findAllByIdIn(Set<UUID> ids);
+  List<UserReportView> findAllByUserId(UUID userId);
 }

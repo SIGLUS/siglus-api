@@ -13,20 +13,28 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.repository;
+package org.siglus.siglusapi.domain;
 
-import java.util.List;
-import java.util.Set;
 import java.util.UUID;
-import org.openlmis.referencedata.domain.GeographicZone;
-import org.siglus.siglusapi.dto.GeographicInfoDto;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
+import javax.persistence.Entity;
+import javax.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import org.siglus.common.domain.BaseEntity;
 
-public interface SiglusGeographicInfoRepository extends JpaRepository<GeographicZone, UUID> {
+@Entity
+@Data
+@Builder
+@EqualsAndHashCode(callSuper = true)
+@AllArgsConstructor
+@NoArgsConstructor
+@Table(name = "user_report_view", schema = "siglusintegration")
+public class UserReportView extends BaseEntity {
 
-  @Query(name = "GeographicInfo.getGeographicInfo", nativeQuery = true)
-  List<GeographicInfoDto> getGeographicInfo();
-
-  Set<GeographicZone> findAllByIdIn(Set<UUID> ids);
+  private UUID userId;
+  private UUID provinceId;
+  private UUID districtId;
 }
