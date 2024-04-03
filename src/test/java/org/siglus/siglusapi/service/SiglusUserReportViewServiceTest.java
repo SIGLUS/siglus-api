@@ -15,10 +15,13 @@
 
 package org.siglus.siglusapi.service;
 
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.google.common.collect.Lists;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -30,13 +33,19 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.referencedata.domain.GeographicZone;
+import org.openlmis.requisition.dto.RoleAssignmentDto;
 import org.siglus.siglusapi.domain.UserReportView;
 import org.siglus.siglusapi.dto.GeographicInfoDto;
+import org.siglus.siglusapi.dto.UserDto;
+import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.repository.SiglusGeographicInfoRepository;
 import org.siglus.siglusapi.repository.SiglusUserReportViewRepository;
+import org.siglus.siglusapi.service.client.SiglusUserReferenceDataService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
+import org.springframework.test.util.ReflectionTestUtils;
 
 @RunWith(MockitoJUnitRunner.class)
 public class SiglusUserReportViewServiceTest {
@@ -53,42 +62,97 @@ public class SiglusUserReportViewServiceTest {
   @Mock
   private SiglusAuthenticationHelper siglusAuthenticationHelper;
 
+  @Mock
+  private SiglusUserReferenceDataService userService;
+
+  private final String roleReportViewerId = "a598b9b4-1dd8-11ed-84e1-acde48001122";
+
   @Before
   public void prepare() {
+    MockitoAnnotations.initMocks(this);
+    ReflectionTestUtils.setField(siglusUserReportViewService, "roleReportViewerId",
+        "a598b9b4-1dd8-11ed-84e1-acde48001122");
   }
 
-  @Test
-  public void shouldReturnNullWhenUserIsNotPresent() {
+  @Test(expected = BusinessDataException.class)
+  public void shouldThrowErrorWhenCurrentUserIsNotPresent() {
     // given
     when(siglusAuthenticationHelper.getCurrentUserId()).thenReturn(Optional.empty());
 
     // when
-    List<GeographicInfoDto> geographicInfo = siglusUserReportViewService.getReportViewGeographicInfo();
-
-    // then
-    Assert.assertEquals(geographicInfo, Lists.newArrayList());
+    siglusUserReportViewService.getReportViewGeographicInfo(UUID.randomUUID());
   }
 
-  @Test
-  public void shouldReturnNullWhenUserIsNotReportViewUser() {
+  @Test(expected = BusinessDataException.class)
+  public void shouldThrowErrorWhenCurrentUserIsNotAdmin() {
     // given
-    UUID userId = UUID.randomUUID();
-    when(siglusAuthenticationHelper.getCurrentUserId()).thenReturn(Optional.of(userId));
-    when(siglusAuthenticationHelper.isTheCurrentUserReportViewer()).thenReturn(false);
+    UUID currentUserId = UUID.randomUUID();
+    when(siglusAuthenticationHelper.getCurrentUserId()).thenReturn(Optional.of(currentUserId));
+    when(siglusAuthenticationHelper.isTheCurrentUserAdmin()).thenReturn(false);
 
     // when
-    List<GeographicInfoDto> geographicInfo = siglusUserReportViewService.getReportViewGeographicInfo();
+    siglusUserReportViewService.getReportViewGeographicInfo(UUID.randomUUID());
+  }
 
-    // then
-    Assert.assertEquals(geographicInfo, Lists.newArrayList());
+  @Test(expected = BusinessDataException.class)
+  public void shouldThrowErrorWhenUserIdIsNull() {
+    // given
+    UUID currentUserId = UUID.randomUUID();
+    when(siglusAuthenticationHelper.getCurrentUserId()).thenReturn(Optional.of(currentUserId));
+    when(siglusAuthenticationHelper.isTheCurrentUserAdmin()).thenReturn(true);
+
+    // when
+    siglusUserReportViewService.getReportViewGeographicInfo(null);
+  }
+
+  @Test(expected = BusinessDataException.class)
+  public void shouldThrowErrorWhenUserNotFound() {
+    // given
+    UUID currentUserId = UUID.randomUUID();
+    when(siglusAuthenticationHelper.getCurrentUserId()).thenReturn(Optional.of(currentUserId));
+    when(siglusAuthenticationHelper.isTheCurrentUserAdmin()).thenReturn(true);
+    UUID userId = UUID.randomUUID();
+    when(userService.findOne(userId)).thenReturn(null);
+
+    // when
+    siglusUserReportViewService.getReportViewGeographicInfo(userId);
+  }
+
+  @Test(expected = BusinessDataException.class)
+  public void shouldThrowErrorWhenUserNotReportViewer() {
+    // given
+    UUID currentUserId = UUID.randomUUID();
+    when(siglusAuthenticationHelper.getCurrentUserId()).thenReturn(Optional.of(currentUserId));
+    when(siglusAuthenticationHelper.isTheCurrentUserAdmin()).thenReturn(true);
+    UUID userId = UUID.randomUUID();
+    UserDto userDto = new UserDto();
+    userDto.setId(userId);
+    RoleAssignmentDto roleAssignmentDto = new RoleAssignmentDto();
+    roleAssignmentDto.setRoleId(UUID.randomUUID());
+    Set<RoleAssignmentDto> roleAssignmentDtos = new HashSet<>();
+    roleAssignmentDtos.add(roleAssignmentDto);
+    userDto.setRoleAssignments(roleAssignmentDtos);
+    when(userService.findOne(userId)).thenReturn(userDto);
+    // when
+    siglusUserReportViewService.getReportViewGeographicInfo(userId);
   }
 
   @Test
-  public void shouldReturnGeographicInfoDtoWhenUserReportViewIsNotNull() {
+  public void shouldReturnGeographicInfoDtoWhenUserCheckIsRight() {
     // given
+    UUID currentUserId = UUID.randomUUID();
+    when(siglusAuthenticationHelper.getCurrentUserId()).thenReturn(Optional.of(currentUserId));
+    when(siglusAuthenticationHelper.isTheCurrentUserAdmin()).thenReturn(true);
     UUID userId = UUID.randomUUID();
-    when(siglusAuthenticationHelper.getCurrentUserId()).thenReturn(Optional.of(userId));
-    when(siglusAuthenticationHelper.isTheCurrentUserReportViewer()).thenReturn(true);
+    UserDto userDto = new UserDto();
+    userDto.setId(userId);
+    RoleAssignmentDto roleAssignmentDto = new RoleAssignmentDto();
+    roleAssignmentDto.setRoleId(UUID.fromString(roleReportViewerId));
+    Set<RoleAssignmentDto> roleAssignmentDtos = new HashSet<>();
+    roleAssignmentDtos.add(roleAssignmentDto);
+    userDto.setRoleAssignments(roleAssignmentDtos);
+    when(userService.findOne(userId)).thenReturn(userDto);
+
     UUID provinceId = UUID.randomUUID();
     UUID districtId = UUID.randomUUID();
     UserReportView build1 = UserReportView.builder()
@@ -119,7 +183,7 @@ public class SiglusUserReportViewServiceTest {
     when(siglusGeographicInfoRepository.findAllByIdIn(districtIds)).thenReturn(districts);
 
     // when
-    List<GeographicInfoDto> geographicInfos = siglusUserReportViewService.getReportViewGeographicInfo();
+    List<GeographicInfoDto> geographicInfos = siglusUserReportViewService.getReportViewGeographicInfo(userId);
 
     // then
     GeographicInfoDto provinceDto = GeographicInfoDto.builder()
@@ -132,5 +196,45 @@ public class SiglusUserReportViewServiceTest {
         .build();
     List<GeographicInfoDto> geographicInfoDtos = Arrays.asList(provinceDto, districtDto);
     Assert.assertEquals(geographicInfos.size(), geographicInfoDtos.size());
+  }
+
+  @Test
+  public void shouldSaveUserReportViewWhenUserAndGeographicInfoRight() {
+    // given
+    UUID currentUserId = UUID.randomUUID();
+    when(siglusAuthenticationHelper.getCurrentUserId()).thenReturn(Optional.of(currentUserId));
+    when(siglusAuthenticationHelper.isTheCurrentUserAdmin()).thenReturn(true);
+    UUID userId = UUID.randomUUID();
+    UserDto userDto = new UserDto();
+    userDto.setId(userId);
+    RoleAssignmentDto roleAssignmentDto = new RoleAssignmentDto();
+    roleAssignmentDto.setRoleId(UUID.fromString(roleReportViewerId));
+    Set<RoleAssignmentDto> roleAssignmentDtos = new HashSet<>();
+    roleAssignmentDtos.add(roleAssignmentDto);
+    userDto.setRoleAssignments(roleAssignmentDtos);
+    when(userService.findOne(userId)).thenReturn(userDto);
+
+    UUID provinceId = UUID.randomUUID();
+    UUID districtId = UUID.randomUUID();
+    GeographicInfoDto geographicInfoDto = GeographicInfoDto.builder()
+        .provinceId(provinceId)
+        .districtId(districtId)
+        .build();
+    when(siglusGeographicInfoRepository.getGeographicInfo()).thenReturn(Collections.singletonList(geographicInfoDto));
+    List<GeographicInfoDto> geographicInfoDtos = new ArrayList<>();
+    GeographicInfoDto geographicInfoDto1 = GeographicInfoDto.builder()
+        .provinceId(provinceId)
+        .build();
+    GeographicInfoDto geographicInfoDto2 = GeographicInfoDto.builder()
+        .districtId(districtId)
+        .build();
+    geographicInfoDtos.add(geographicInfoDto1);
+    geographicInfoDtos.add(geographicInfoDto2);
+
+    // when
+    siglusUserReportViewService.saveReportViewGeographicInfo(userId, geographicInfoDtos);
+
+    // then
+    verify(siglusUserReportViewRepository, times(1)).deleteAllByUserId(userId);
   }
 }

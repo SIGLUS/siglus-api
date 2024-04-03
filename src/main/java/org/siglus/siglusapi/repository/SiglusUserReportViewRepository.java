@@ -23,4 +23,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface SiglusUserReportViewRepository extends JpaRepository<UserReportView, UUID> {
 
   List<UserReportView> findAllByUserId(UUID userId);
+
+  void deleteAllByUserId(UUID userId);
 }

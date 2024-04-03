@@ -16,23 +16,32 @@
 package org.siglus.siglusapi.web;
 
 import java.util.List;
+import java.util.UUID;
 import org.siglus.siglusapi.dto.GeographicInfoDto;
 import org.siglus.siglusapi.service.SiglusUserReportViewService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/siglusapi/user/reportView")
+@RequestMapping("/api/siglusapi/users/{id}/reportView")
 public class SiglusUserReportViewController {
 
   @Autowired
   private SiglusUserReportViewService siglusUserReportViewService;
 
   @GetMapping
-  public List<GeographicInfoDto> getReportViewGeographicInfo() {
-    return siglusUserReportViewService.getReportViewGeographicInfo();
+  public List<GeographicInfoDto> getReportViewGeographicInfo(@PathVariable("id") UUID id) {
+    return siglusUserReportViewService.getReportViewGeographicInfo(id);
   }
 
+  @PostMapping
+  public void saveReportViewGeographicInfo(@PathVariable("id") UUID id,
+      @RequestBody List<GeographicInfoDto> geographicInfoDtos) {
+    siglusUserReportViewService.saveReportViewGeographicInfo(id, geographicInfoDtos);
+  }
 }
