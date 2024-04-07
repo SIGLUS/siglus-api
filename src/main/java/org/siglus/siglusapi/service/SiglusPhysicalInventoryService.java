@@ -298,10 +298,6 @@ public class SiglusPhysicalInventoryService {
     SiglusPhysicalInventoryDto physicalInventory = fillLocationOption(
         getPhysicalInventoryBySubDraftId(subDraftIds.get(0)));
 
-    UUID programId = subDraftIds.size() > 1 ? ALL_PRODUCTS_PROGRAM_ID : physicalInventory.getProgramId();
-    UUID physicalInventoryId = subDraftIds.size() > 1 ? ALL_PRODUCTS_UUID : physicalInventory.getId();
-    physicalInventory.setId(physicalInventoryId);
-    physicalInventory.setProgramId(programId);
     physicalInventory.setLineItems(sortedSubPhysicalInventoryLineItemList);
     return physicalInventory;
   }
