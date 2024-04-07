@@ -859,9 +859,11 @@ public class SiglusPhysicalInventoryService {
 
   private List<UUID> getSupportPhysicalInventoryIds(UUID facilityId) {
     Set<UUID> supportedPrograms = getSupportedPrograms();
-    return supportedPrograms.stream().map(programId ->
-            UUID.fromString(physicalInventoriesRepository.findIdByProgramIdAndFacilityIdAndIsDraft(
-                programId, facilityId, true)))
+    return supportedPrograms.stream()
+        .map(programId ->
+            physicalInventoriesRepository.findIdByProgramIdAndFacilityIdAndIsDraft(programId, facilityId, true))
+        .filter(Objects::nonNull)
+        .map(UUID::fromString)
         .collect(Collectors.toList());
   }
 

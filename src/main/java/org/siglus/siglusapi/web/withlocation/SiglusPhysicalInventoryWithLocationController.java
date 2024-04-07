@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.web.withlocation;
 
+import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
 import static org.springframework.http.HttpStatus.CREATED;
 import static org.springframework.http.HttpStatus.NO_CONTENT;
 
@@ -67,8 +68,13 @@ public class SiglusPhysicalInventoryWithLocationController {
       @RequestParam UUID facility,
       @RequestParam(required = false) Boolean isDraft,
       @RequestParam(required = false) boolean isByLocation) {
-    return siglusPhysicalInventoryService
-        .getLocationPhysicalInventoryDtosForProductsForOneProgram(program, facility, isDraft, isByLocation);
+    if (ALL_PRODUCTS_PROGRAM_ID.equals(program)) {
+      return siglusPhysicalInventoryService
+          .getLocationPhysicalInventoryDtosForAllPrograms(facility, isDraft, isByLocation);
+    } else {
+      return siglusPhysicalInventoryService
+          .getLocationPhysicalInventoryDtosForProductsForOneProgram(program, facility, isDraft, isByLocation);
+    }
   }
 
   @GetMapping("/subDraft")
@@ -107,7 +113,11 @@ public class SiglusPhysicalInventoryWithLocationController {
   public DraftListDto searchSubDraftList(@RequestParam UUID program,
       @RequestParam UUID facility,
       @RequestParam(required = false) Boolean isDraft) {
-    return siglusPhysicalInventoryService.getSubDraftListForAllPrograms(facility, isDraft);
+    if (ALL_PRODUCTS_PROGRAM_ID.equals(program)) {
+      return siglusPhysicalInventoryService.getSubDraftListForAllPrograms(facility, isDraft);
+    } else {
+      return siglusPhysicalInventoryService.getSubDraftListForOneProgram(program, facility, isDraft);
+    }
   }
 
 }
