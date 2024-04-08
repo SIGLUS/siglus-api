@@ -58,6 +58,10 @@ public class SiglusPhysicalInventoryWithLocationController {
       @RequestParam(required = false) boolean initialPhysicalInventory,
       @RequestParam(name = "locationManagementOption") String optionString,
       @RequestParam(required = false) boolean isByLocation) {
+    if (ALL_PRODUCTS_PROGRAM_ID.equals(dto.getProgramId())) {
+      return siglusPhysicalInventoryService.createAndSplitNewDraftForAllPrograms(dto, splitNum,
+          initialPhysicalInventory, optionString, isByLocation);
+    }
     return siglusPhysicalInventoryService.createAndSpiltNewDraftForOneProgram(
         dto, splitNum, optionString, isByLocation);
   }
@@ -71,10 +75,9 @@ public class SiglusPhysicalInventoryWithLocationController {
     if (ALL_PRODUCTS_PROGRAM_ID.equals(program)) {
       return siglusPhysicalInventoryService
           .getLocationPhysicalInventoryDtosForAllPrograms(facility, isDraft, isByLocation);
-    } else {
-      return siglusPhysicalInventoryService
-          .getLocationPhysicalInventoryDtosForProductsForOneProgram(program, facility, isDraft, isByLocation);
     }
+    return siglusPhysicalInventoryService
+        .getLocationPhysicalInventoryDtosForProductsForOneProgram(program, facility, isDraft, isByLocation);
   }
 
   @GetMapping("/subDraft")
@@ -115,9 +118,8 @@ public class SiglusPhysicalInventoryWithLocationController {
       @RequestParam(required = false) Boolean isDraft) {
     if (ALL_PRODUCTS_PROGRAM_ID.equals(program)) {
       return siglusPhysicalInventoryService.getSubDraftListForAllPrograms(facility, isDraft);
-    } else {
-      return siglusPhysicalInventoryService.getSubDraftListForOneProgram(program, facility, isDraft);
     }
+    return siglusPhysicalInventoryService.getSubDraftListForOneProgram(program, facility, isDraft);
   }
 
 }
