@@ -357,4 +357,37 @@ public class SiglusUserReportViewServiceTest {
     // when
     siglusUserReportViewService.saveReportViewGeographicInfo(userId, Collections.singletonList(dto2));
   }
+
+  @Test(expected = BusinessDataException.class)
+  public void shouldThrowErrorWhenProvinceIdNotExistInDb() {
+    // given
+    UUID currentUserId = UUID.randomUUID();
+    when(siglusAuthenticationHelper.getCurrentUserId()).thenReturn(Optional.of(currentUserId));
+    when(siglusAuthenticationHelper.isTheCurrentUserAdmin()).thenReturn(true);
+    UUID userId = UUID.randomUUID();
+    UserDto userDto = new UserDto();
+    userDto.setId(userId);
+    RoleAssignmentDto roleAssignmentDto = new RoleAssignmentDto();
+    roleAssignmentDto.setRoleId(UUID.fromString(roleReportViewerId));
+    Set<RoleAssignmentDto> roleAssignmentDtos = new HashSet<>();
+    roleAssignmentDtos.add(roleAssignmentDto);
+    userDto.setRoleAssignments(roleAssignmentDtos);
+    when(userService.findOne(userId)).thenReturn(userDto);
+
+    UUID provinceId1 = UUID.randomUUID();
+    UUID provinceId2 = UUID.randomUUID();
+    UUID districtId1 = UUID.randomUUID();
+    GeographicInfoDto dto1 = GeographicInfoDto.builder()
+        .provinceId(provinceId1)
+        .districtId(districtId1)
+        .build();
+    GeographicInfoDto dto2 = GeographicInfoDto.builder()
+        .provinceId(provinceId2)
+        .districtId(districtId1)
+        .build();
+    when(siglusGeographicInfoRepository.getGeographicInfo()).thenReturn(Collections.singletonList(dto1));
+
+    // when
+    siglusUserReportViewService.saveReportViewGeographicInfo(userId, Collections.singletonList(dto2));
+  }
 }

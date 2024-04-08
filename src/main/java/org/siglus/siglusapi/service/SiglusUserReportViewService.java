@@ -77,11 +77,9 @@ public class SiglusUserReportViewService {
     }
     Set<UUID> provinceIds = userReportViews.stream()
         .map(UserReportView::getProvinceId)
-        .filter(provinceId -> !ObjectUtils.isEmpty(provinceId))
         .collect(Collectors.toSet());
     Set<UUID> districtIds = userReportViews.stream()
         .map(UserReportView::getDistrictId)
-        .filter(districtId -> !ObjectUtils.isEmpty(districtId))
         .collect(Collectors.toSet());
     Map<UUID, String> provinceIdToNameMap = siglusGeographicInfoRepository.findAllByIdIn(provinceIds).stream()
         .collect(Collectors.toMap(GeographicZone::getId, GeographicZone::getName));
@@ -167,7 +165,8 @@ public class SiglusUserReportViewService {
         throw new BusinessDataException(new Message(ERROR_USER_REPORT_VIEW_GEOGRAPHIC_INFO_INVALID));
       }
       Set<UUID> provinceDistrictIds = allProvinceIdToDistrictIds.get(geographicInfoDto.getProvinceId());
-      if (!provinceDistrictIds.contains(geographicInfoDto.getDistrictId())) {
+      if (!allProvinceIdToDistrictIds.containsKey(geographicInfoDto.getProvinceId())
+          || !provinceDistrictIds.contains(geographicInfoDto.getDistrictId())) {
         throw new BusinessDataException(new Message(ERROR_USER_REPORT_VIEW_GEOGRAPHIC_INFO_INVALID));
       }
     }
