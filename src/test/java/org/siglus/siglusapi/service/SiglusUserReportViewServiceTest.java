@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.service;
 
+import static org.mockito.Matchers.anySet;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -66,6 +67,7 @@ public class SiglusUserReportViewServiceTest {
   private SiglusUserReferenceDataService userService;
 
   private final String roleReportViewerId = "a598b9b4-1dd8-11ed-84e1-acde48001122";
+  private static final UUID ALL_GEOGRAPHIC_UUID = UUID.fromString("00000000-0000-0000-0000-000000000000");
 
   @Before
   public void prepare() {
@@ -199,7 +201,74 @@ public class SiglusUserReportViewServiceTest {
   }
 
   @Test
+  public void shouldReturnAllGeographicInfoDtoWhenNoRecordInDb() {
+    // given
+    UUID currentUserId = UUID.randomUUID();
+    when(siglusAuthenticationHelper.getCurrentUserId()).thenReturn(Optional.of(currentUserId));
+    when(siglusAuthenticationHelper.isTheCurrentUserAdmin()).thenReturn(true);
+    UUID userId = UUID.randomUUID();
+    UserDto userDto = new UserDto();
+    userDto.setId(userId);
+    RoleAssignmentDto roleAssignmentDto = new RoleAssignmentDto();
+    roleAssignmentDto.setRoleId(UUID.fromString(roleReportViewerId));
+    Set<RoleAssignmentDto> roleAssignmentDtos = new HashSet<>();
+    roleAssignmentDtos.add(roleAssignmentDto);
+    userDto.setRoleAssignments(roleAssignmentDtos);
+    when(userService.findOne(userId)).thenReturn(userDto);
+
+    when(siglusUserReportViewRepository.findAllByUserId(userId)).thenReturn(new ArrayList<>());
+
+    // when
+    List<GeographicInfoDto> geographicInfos = siglusUserReportViewService.getReportViewGeographicInfo(userId);
+
+    // then
+    Assert.assertEquals(geographicInfos.size(), 1);
+    Assert.assertEquals(geographicInfos.get(0).getProvinceId(), ALL_GEOGRAPHIC_UUID);
+    Assert.assertEquals(geographicInfos.get(0).getDistrictId(), ALL_GEOGRAPHIC_UUID);
+  }
+
+  @Test
   public void shouldSaveUserReportViewWhenUserAndGeographicInfoRight() {
+    // given
+    UUID currentUserId = UUID.randomUUID();
+    when(siglusAuthenticationHelper.getCurrentUserId()).thenReturn(Optional.of(currentUserId));
+    when(siglusAuthenticationHelper.isTheCurrentUserAdmin()).thenReturn(true);
+    UUID userId = UUID.randomUUID();
+    UserDto userDto = new UserDto();
+    userDto.setId(userId);
+    RoleAssignmentDto roleAssignmentDto = new RoleAssignmentDto();
+    roleAssignmentDto.setRoleId(UUID.fromString(roleReportViewerId));
+    Set<RoleAssignmentDto> roleAssignmentDtos = new HashSet<>();
+    roleAssignmentDtos.add(roleAssignmentDto);
+    userDto.setRoleAssignments(roleAssignmentDtos);
+    when(userService.findOne(userId)).thenReturn(userDto);
+
+    UUID provinceId = UUID.randomUUID();
+    UUID districtId = UUID.randomUUID();
+    GeographicInfoDto dto1 = GeographicInfoDto.builder()
+        .provinceId(provinceId)
+        .districtId(districtId)
+        .build();
+    GeographicInfoDto dto2 = GeographicInfoDto.builder()
+        .provinceId(ALL_GEOGRAPHIC_UUID)
+        .districtId(ALL_GEOGRAPHIC_UUID)
+        .build();
+    GeographicInfoDto dto3 = GeographicInfoDto.builder()
+        .provinceId(provinceId)
+        .districtId(ALL_GEOGRAPHIC_UUID)
+        .build();
+    when(siglusGeographicInfoRepository.getGeographicInfo()).thenReturn(Arrays.asList(dto1, dto2, dto3));
+
+    // when
+    siglusUserReportViewService.saveReportViewGeographicInfo(userId, Arrays.asList(dto1, dto2, dto3));
+
+    // then
+    verify(siglusUserReportViewRepository, times(1)).deleteAllByUserId(userId);
+    verify(siglusUserReportViewRepository, times(1)).save(anySet());
+  }
+
+  @Test
+  public void shouldDeleteUserReportViewWhenGeographicInfoDtosIsEmpty() {
     // given
     UUID currentUserId = UUID.randomUUID();
     when(siglusAuthenticationHelper.getCurrentUserId()).thenReturn(Optional.of(currentUserId));
@@ -221,20 +290,71 @@ public class SiglusUserReportViewServiceTest {
         .districtId(districtId)
         .build();
     when(siglusGeographicInfoRepository.getGeographicInfo()).thenReturn(Collections.singletonList(geographicInfoDto));
-    List<GeographicInfoDto> geographicInfoDtos = new ArrayList<>();
-    GeographicInfoDto geographicInfoDto1 = GeographicInfoDto.builder()
-        .provinceId(provinceId)
-        .build();
-    GeographicInfoDto geographicInfoDto2 = GeographicInfoDto.builder()
-        .districtId(districtId)
-        .build();
-    geographicInfoDtos.add(geographicInfoDto1);
-    geographicInfoDtos.add(geographicInfoDto2);
 
     // when
-    siglusUserReportViewService.saveReportViewGeographicInfo(userId, geographicInfoDtos);
+    siglusUserReportViewService.saveReportViewGeographicInfo(userId, new ArrayList<>());
 
     // then
     verify(siglusUserReportViewRepository, times(1)).deleteAllByUserId(userId);
+    verify(siglusUserReportViewRepository, times(0)).save(anySet());
+  }
+
+  @Test(expected = BusinessDataException.class)
+  public void shouldThrowErrorWhenProvinceIdIsNotAllAndDistrictIdIsAll() {
+    // given
+    UUID currentUserId = UUID.randomUUID();
+    when(siglusAuthenticationHelper.getCurrentUserId()).thenReturn(Optional.of(currentUserId));
+    when(siglusAuthenticationHelper.isTheCurrentUserAdmin()).thenReturn(true);
+    UUID userId = UUID.randomUUID();
+    UserDto userDto = new UserDto();
+    userDto.setId(userId);
+    RoleAssignmentDto roleAssignmentDto = new RoleAssignmentDto();
+    roleAssignmentDto.setRoleId(UUID.fromString(roleReportViewerId));
+    Set<RoleAssignmentDto> roleAssignmentDtos = new HashSet<>();
+    roleAssignmentDtos.add(roleAssignmentDto);
+    userDto.setRoleAssignments(roleAssignmentDtos);
+    when(userService.findOne(userId)).thenReturn(userDto);
+
+    GeographicInfoDto geographicInfoDto = GeographicInfoDto.builder()
+        .provinceId(ALL_GEOGRAPHIC_UUID)
+        .districtId(UUID.randomUUID())
+        .build();
+    when(siglusGeographicInfoRepository.getGeographicInfo()).thenReturn(Collections.singletonList(geographicInfoDto));
+
+    // when
+    siglusUserReportViewService.saveReportViewGeographicInfo(userId, Collections.singletonList(geographicInfoDto));
+  }
+
+  @Test(expected = BusinessDataException.class)
+  public void shouldThrowErrorWhenProvinceNotContainsDistrictId() {
+    // given
+    UUID currentUserId = UUID.randomUUID();
+    when(siglusAuthenticationHelper.getCurrentUserId()).thenReturn(Optional.of(currentUserId));
+    when(siglusAuthenticationHelper.isTheCurrentUserAdmin()).thenReturn(true);
+    UUID userId = UUID.randomUUID();
+    UserDto userDto = new UserDto();
+    userDto.setId(userId);
+    RoleAssignmentDto roleAssignmentDto = new RoleAssignmentDto();
+    roleAssignmentDto.setRoleId(UUID.fromString(roleReportViewerId));
+    Set<RoleAssignmentDto> roleAssignmentDtos = new HashSet<>();
+    roleAssignmentDtos.add(roleAssignmentDto);
+    userDto.setRoleAssignments(roleAssignmentDtos);
+    when(userService.findOne(userId)).thenReturn(userDto);
+
+    UUID provinceId1 = UUID.randomUUID();
+    UUID districtId1 = UUID.randomUUID();
+    UUID districtId2 = UUID.randomUUID();
+    GeographicInfoDto dto1 = GeographicInfoDto.builder()
+        .provinceId(provinceId1)
+        .districtId(districtId1)
+        .build();
+    GeographicInfoDto dto2 = GeographicInfoDto.builder()
+        .provinceId(provinceId1)
+        .districtId(districtId2)
+        .build();
+    when(siglusGeographicInfoRepository.getGeographicInfo()).thenReturn(Collections.singletonList(dto1));
+
+    // when
+    siglusUserReportViewService.saveReportViewGeographicInfo(userId, Collections.singletonList(dto2));
   }
 }

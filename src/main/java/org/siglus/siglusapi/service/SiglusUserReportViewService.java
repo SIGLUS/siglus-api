@@ -20,6 +20,9 @@ import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_USER_NOT_FOUND;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_USER_NOT_REPORT_VIEWER_USER;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_USER_REPORT_VIEW_GEOGRAPHIC_INFO_INVALID;
 
+import ca.uhn.fhir.util.ObjectUtil;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -27,6 +30,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.openlmis.referencedata.domain.GeographicZone;
 import org.openlmis.requisition.dto.RoleAssignmentDto;
 import org.siglus.siglusapi.domain.UserReportView;
@@ -59,9 +63,18 @@ public class SiglusUserReportViewService {
   @Value("${role.report.viewer.id}")
   private String roleReportViewerId;
 
+  private static final UUID ALL_GEOGRAPHIC_UUID = UUID.fromString("00000000-0000-0000-0000-000000000000");
+
   public List<GeographicInfoDto> getReportViewGeographicInfo(UUID userId) {
     checkUser(userId);
     List<UserReportView> userReportViews = siglusUserReportViewRepository.findAllByUserId(userId);
+    if (CollectionUtils.isEmpty(userReportViews)) {
+      return Collections.singletonList(
+          GeographicInfoDto.builder()
+              .provinceId(ALL_GEOGRAPHIC_UUID)
+              .districtId(ALL_GEOGRAPHIC_UUID)
+              .build());
+    }
     Set<UUID> provinceIds = userReportViews.stream()
         .map(UserReportView::getProvinceId)
         .filter(provinceId -> !ObjectUtils.isEmpty(provinceId))
@@ -106,38 +119,55 @@ public class SiglusUserReportViewService {
   @Transactional
   public void saveReportViewGeographicInfo(UUID userId, List<GeographicInfoDto> geographicInfoDtos) {
     checkUser(userId);
-    List<GeographicInfoDto> geographicInfos = siglusGeographicInfoRepository.getGeographicInfo();
-    Set<UUID> provinceIds = geographicInfos.stream().map(GeographicInfoDto::getProvinceId).collect(Collectors.toSet());
-    Set<UUID> districtIds = geographicInfos.stream().map(GeographicInfoDto::getDistrictId).collect(Collectors.toSet());
-    checkGeographicInfoDto(geographicInfoDtos, provinceIds, districtIds);
-    List<UserReportView> userReportViews = geographicInfoDtos.stream().map(geographicInfoDto -> UserReportView.builder()
-        .userId(userId)
-        .provinceId(geographicInfoDto.getProvinceId())
-        .districtId(geographicInfoDto.getDistrictId())
-        .build()).collect(Collectors.toList());
+    if (CollectionUtils.isEmpty(geographicInfoDtos)) {
+      siglusUserReportViewRepository.deleteAllByUserId(userId);
+      return;
+    }
+    List<GeographicInfoDto> allGeographicInfos = siglusGeographicInfoRepository.getGeographicInfo();
+    Map<UUID, Set<UUID>> allProvinceIdToDistrictIds = allGeographicInfos.stream()
+        .collect(Collectors.groupingBy(GeographicInfoDto::getProvinceId,
+            Collectors.mapping(GeographicInfoDto::getDistrictId, Collectors.toSet())));
+    checkGeographicInfoDto(geographicInfoDtos, allProvinceIdToDistrictIds);
+
+    Map<UUID, Set<UUID>> newProvinceIdToDistrictIds = geographicInfoDtos.stream()
+        .collect(Collectors.groupingBy(GeographicInfoDto::getProvinceId,
+            Collectors.mapping(GeographicInfoDto::getDistrictId, Collectors.toSet())));
+    List<UserReportView> userReportViews = new ArrayList<>();
+    newProvinceIdToDistrictIds.keySet()
+        .forEach(provinceId -> {
+          Set<UUID> districtIds = newProvinceIdToDistrictIds.get(provinceId);
+          List<UserReportView> viewList = districtIds.stream()
+              .map(districtId -> UserReportView.builder()
+                  .userId(userId)
+                  .provinceId(provinceId)
+                  .districtId(districtId)
+                  .build()
+              ).collect(Collectors.toList());
+          userReportViews.addAll(viewList);
+        });
     siglusUserReportViewRepository.deleteAllByUserId(userId);
+    siglusUserReportViewRepository.flush();
     siglusUserReportViewRepository.save(userReportViews);
   }
 
   @SuppressWarnings("PMD.CyclomaticComplexity")
-  private void checkGeographicInfoDto(List<GeographicInfoDto> geographicInfoDtos, Set<UUID> provinceIds,
-      Set<UUID> districtIds) {
+  private void checkGeographicInfoDto(List<GeographicInfoDto> geographicInfoDtos,
+      Map<UUID, Set<UUID>> allProvinceIdToDistrictIds) {
     for (GeographicInfoDto geographicInfoDto : geographicInfoDtos) {
-      if (!ObjectUtils.isEmpty(geographicInfoDto.getDistrictId())
-          && !ObjectUtils.isEmpty(geographicInfoDto.getProvinceId())) {
+      if (ObjectUtil.equals(geographicInfoDto.getProvinceId(), ALL_GEOGRAPHIC_UUID)
+          && ObjectUtil.equals(geographicInfoDto.getDistrictId(), ALL_GEOGRAPHIC_UUID)) {
+        continue;
+      }
+      if (!ObjectUtil.equals(geographicInfoDto.getProvinceId(), ALL_GEOGRAPHIC_UUID)
+          && ObjectUtil.equals(geographicInfoDto.getDistrictId(), ALL_GEOGRAPHIC_UUID)) {
+        continue;
+      }
+      if (ObjectUtil.equals(geographicInfoDto.getProvinceId(), ALL_GEOGRAPHIC_UUID)
+          && !ObjectUtil.equals(geographicInfoDto.getDistrictId(), ALL_GEOGRAPHIC_UUID)) {
         throw new BusinessDataException(new Message(ERROR_USER_REPORT_VIEW_GEOGRAPHIC_INFO_INVALID));
       }
-      if (ObjectUtils.isEmpty(geographicInfoDto.getDistrictId())
-          && ObjectUtils.isEmpty(geographicInfoDto.getProvinceId())
-          && geographicInfoDtos.size() > 1) {
-        throw new BusinessDataException(new Message(ERROR_USER_REPORT_VIEW_GEOGRAPHIC_INFO_INVALID));
-      }
-      if (!ObjectUtils.isEmpty(geographicInfoDto.getProvinceId())
-          && !provinceIds.contains(geographicInfoDto.getProvinceId())) {
-        throw new BusinessDataException(new Message(ERROR_USER_REPORT_VIEW_GEOGRAPHIC_INFO_INVALID));
-      }
-      if (!ObjectUtils.isEmpty(geographicInfoDto.getDistrictId())
-          && !districtIds.contains(geographicInfoDto.getDistrictId())) {
+      Set<UUID> provinceDistrictIds = allProvinceIdToDistrictIds.get(geographicInfoDto.getProvinceId());
+      if (!provinceDistrictIds.contains(geographicInfoDto.getDistrictId())) {
         throw new BusinessDataException(new Message(ERROR_USER_REPORT_VIEW_GEOGRAPHIC_INFO_INVALID));
       }
     }

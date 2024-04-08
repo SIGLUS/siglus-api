@@ -21,6 +21,7 @@ import javax.persistence.ConstructorResult;
 import javax.persistence.MappedSuperclass;
 import javax.persistence.NamedNativeQuery;
 import javax.persistence.SqlResultSetMapping;
+import javax.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -57,8 +58,10 @@ import lombok.NoArgsConstructor;
 @Builder
 public class GeographicInfoDto {
 
+  @NotNull
   private UUID provinceId;
   private String provinceName;
+  @NotNull
   private UUID districtId;
   private String districtName;
 }
