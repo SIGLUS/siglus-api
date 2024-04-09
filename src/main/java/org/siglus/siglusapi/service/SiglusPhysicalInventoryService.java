@@ -306,28 +306,24 @@ public class SiglusPhysicalInventoryService {
     return physicalInventory;
   }
 
-  public PhysicalInventoryValidationDto checkConflictForOneProgram(UUID facility, UUID program, UUID draft) {
+  public PhysicalInventoryValidationDto checkConflictForOneProgram(UUID facility, UUID program) {
     Set<UUID> supportedPrograms = supportedProgramsHelper.findHomeFacilitySupportedProgramIds();
     if (CollectionUtils.isEmpty(supportedPrograms) || !supportedPrograms.contains(program)) {
       throw new PermissionMessageException(new org.openlmis.stockmanagement.util.Message(ERROR_PROGRAM_NOT_SUPPORTED));
     }
     List<PhysicalInventory> programHaveDraft = physicalInventoriesRepository
         .findByProgramIdAndFacilityIdAndIsDraft(program, facility, true);
-    if (ObjectUtils.isEmpty(draft)) {
-      if (CollectionUtils.isNotEmpty(programHaveDraft)) {
-        return buildPhysicalInventoryValidationDto(false, Lists.newArrayList(program));
-      }
-    } else {
-      if (programHaveDraft.size() != 1) {
-        return buildPhysicalInventoryValidationDto(false, Lists.newArrayList(program));
-      }
-      PhysicalInventory physicalInventory = programHaveDraft.get(0);
-      if (!physicalInventory.getId().equals(draft)) {
-        throw new BusinessDataException(
-            Message.createFromMessageKeyStr("facility, program and draft mismatch"));
-      }
+    if (ObjectUtils.isEmpty(programHaveDraft)) {
+      return buildPhysicalInventoryValidationDto(true, Lists.newArrayList(program));
     }
-    return buildPhysicalInventoryValidationDto(true, Lists.newArrayList());
+    PhysicalInventory physicalInventory = programHaveDraft.get(0);
+    List<PhysicalInventoryExtension> physicalInventoryExtension =
+        physicalInventoryExtensionRepository.findByPhysicalInventoryId(physicalInventory.getId());
+    if (!ObjectUtils.isEmpty(physicalInventory)
+        && physicalInventoryExtension.get(0).getCategory().equals(ALL_PROGRAM)) {
+      return buildPhysicalInventoryValidationDto(false, Lists.newArrayList(ALL_PRODUCTS_PROGRAM_ID));
+    }
+    return buildPhysicalInventoryValidationDto(false, Lists.newArrayList(program));
   }
 
   public List<List<PhysicalInventoryLineItemDto>> groupByProductCode(List<PhysicalInventoryLineItemDto> lineItemDtos) {
