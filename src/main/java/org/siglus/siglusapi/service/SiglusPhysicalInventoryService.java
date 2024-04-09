@@ -470,6 +470,7 @@ public class SiglusPhysicalInventoryService {
       Boolean isDraft, boolean isByLocation) {
     Set<UUID> supportedPrograms = Collections.singleton(programId);
     List<PhysicalInventoryDto> inventories = fetchPhysicalInventories(supportedPrograms, facilityId, isDraft);
+    inventories = filterPhysicalInventories(inventories, false);
     if (CollectionUtils.isNotEmpty(inventories)) {
       List<UUID> updatePhysicalInventoryIds =
           inventories
@@ -520,6 +521,7 @@ public class SiglusPhysicalInventoryService {
             new org.openlmis.stockmanagement.util.Message(ERROR_PROGRAM_NOT_SUPPORTED, ALL_PRODUCTS_PROGRAM_ID));
       }
       List<PhysicalInventoryDto> inventories = fetchPhysicalInventories(supportedPrograms, facilityId, isDraft);
+      inventories = filterPhysicalInventories(inventories, true);
       if (CollectionUtils.isNotEmpty(inventories)) {
         List<UUID> updatePhysicalInventoryIds =
             inventories
@@ -1146,6 +1148,19 @@ public class SiglusPhysicalInventoryService {
         .map(it -> getPhysicalInventoryDtos(it, facilityId, isDraft))
         .flatMap(Collection::stream)
         .collect(Collectors.toList());
+  }
+
+  private List<PhysicalInventoryDto> filterPhysicalInventories(
+      List<PhysicalInventoryDto> physicalInventoryDtos, Boolean isAllProgram) {
+    String category = isAllProgram ? ALL_PROGRAM : SINGLE_PROGRAM;
+    return physicalInventoryDtos.stream().filter(dto -> {
+      List<PhysicalInventoryExtension> extensionList =
+          physicalInventoryExtensionRepository.findByPhysicalInventoryId(dto.getId());
+      if (!ObjectUtils.isEmpty(extensionList)) {
+        return extensionList.get(0).getCategory().equals(category);
+      }
+      return false;
+    }).collect(Collectors.toList());
   }
 
   @VisibleForTesting

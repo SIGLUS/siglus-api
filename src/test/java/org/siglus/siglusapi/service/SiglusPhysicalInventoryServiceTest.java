@@ -601,6 +601,9 @@ public class SiglusPhysicalInventoryServiceTest {
         .build();
     when(lineItemsExtensionRepository.findByPhysicalInventoryIdIn(
         Arrays.asList(inventoryOne))).thenReturn(Arrays.asList(extensionOne));
+    List<PhysicalInventoryExtension> physicalInventoryExtensions = Collections.singletonList(
+        PhysicalInventoryExtension.builder().category(ALL_PROGRAM).build());
+    when(physicalInventoryExtensionRepository.findByPhysicalInventoryId(any())).thenReturn(physicalInventoryExtensions);
 
     // when
     PhysicalInventoryDto dto = siglusPhysicalInventoryService
@@ -614,6 +617,8 @@ public class SiglusPhysicalInventoryServiceTest {
   @Test
   public void shouldSplicingDataWhenGetPhysicalInventoryDtosForProductsInOneProgramAndThereIsMappingInventories() {
     // given
+    List<PhysicalInventoryExtension> physicalInventoryExtensions = Collections.singletonList(
+        PhysicalInventoryExtension.builder().category(SINGLE_PROGRAM).build());
     List<PhysicalInventoryLineItemDto> physicalInventoryLineItemDtos = Collections.singletonList(
         PhysicalInventoryLineItemDto.builder().build());
     List<PhysicalInventoryDto> inventories = Collections.singletonList(
@@ -623,6 +628,7 @@ public class SiglusPhysicalInventoryServiceTest {
     doNothing().when(physicalInventoryService).checkPermission(programId, facilityId);
     when(inventoryController.searchPhysicalInventory(programId, facilityId, true))
         .thenReturn(makeResponseEntity(inventories));
+    when(physicalInventoryExtensionRepository.findByPhysicalInventoryId(any())).thenReturn(physicalInventoryExtensions);
     when(lineItemsExtensionRepository.findByPhysicalInventoryIdIn(any())).thenReturn(extensions);
 
     // when
@@ -1062,7 +1068,7 @@ public class SiglusPhysicalInventoryServiceTest {
     when(orderableRepository.findLatestById(orderableId)).thenReturn(Optional.of(new Orderable()));
     List<UUID> subDraftIds = Collections.singletonList(subDraftIdOne);
     PhysicalInventoryExtension extension = PhysicalInventoryExtension.builder()
-        .locationOption(LocationManagementOption.BY_PRODUCT).build();
+        .locationOption(LocationManagementOption.BY_PRODUCT).category(SINGLE_PROGRAM).build();
     when(physicalInventoryExtensionRepository.findByPhysicalInventoryId(physicalInventoryIdOne))
         .thenReturn(Collections.singletonList(extension));
     // when
@@ -1164,6 +1170,9 @@ public class SiglusPhysicalInventoryServiceTest {
     when(lineItemsExtensionRepository.findByPhysicalInventoryId(physicalInventoryIdOne))
         .thenReturn(Collections.singletonList(physicalInventoryLineItemsExtension));
     when(orderableRepository.findLatestById(orderableId)).thenReturn(Optional.of(new Orderable()));
+    List<PhysicalInventoryExtension> physicalInventoryExtensions = Collections.singletonList(
+        PhysicalInventoryExtension.builder().category(SINGLE_PROGRAM).build());
+    when(physicalInventoryExtensionRepository.findByPhysicalInventoryId(any())).thenReturn(physicalInventoryExtensions);
     List<UUID> subDraftIds = Collections.singletonList(subDraftIdOne);
     // when
     PhysicalInventoryDto actualPhysicalInventoryDto = siglusPhysicalInventoryService
