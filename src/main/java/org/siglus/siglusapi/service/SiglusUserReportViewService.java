@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.service;
 
+import static org.siglus.siglusapi.constant.FieldConstants.ALL_GEOGRAPHIC_UUID;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_CURRENT_USER_NOT_ADMIN_USER;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_USER_NOT_FOUND;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_USER_NOT_REPORT_VIEWER_USER;
@@ -62,8 +63,6 @@ public class SiglusUserReportViewService {
   private SiglusUserReferenceDataService userService;
   @Value("${role.report.viewer.id}")
   private String roleReportViewerId;
-
-  private static final UUID ALL_GEOGRAPHIC_UUID = UUID.fromString("00000000-0000-0000-0000-000000000000");
 
   public List<GeographicInfoDto> getReportViewGeographicInfo(UUID userId) {
     checkUser(userId);

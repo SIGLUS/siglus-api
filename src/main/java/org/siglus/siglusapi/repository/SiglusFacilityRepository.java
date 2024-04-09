@@ -19,6 +19,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 import org.openlmis.referencedata.domain.Facility;
+import org.siglus.siglusapi.dto.FacilityGeographicInfoDto;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -64,4 +65,7 @@ public interface SiglusFacilityRepository extends JpaRepository<Facility, UUID>,
           "select distinct code from referencedata.facilities where active=true and enabled=true",
       nativeQuery = true)
   List<String> findAllFacilityCodes();
+
+  @Query(name = "FacilityGeographicInfo.getAllFacilityGeographicInfo", nativeQuery = true)
+  List<FacilityGeographicInfoDto> getAllFacilityGeographicInfo();
 }
