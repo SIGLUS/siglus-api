@@ -153,7 +153,7 @@ public class SiglusPhysicalInventoryControllerTest {
   public void shouldConflictWithAllProductsWhenAllProductsHaveDraft() {
     controller.checkPhysicalInventoryConflict(programId, facilityId, null);
 
-    verify(siglusPhysicalInventoryService).checkConflictForOneProgram(facilityId, programId);
+    verify(siglusPhysicalInventoryService).checkConflictForOneProgram(facilityId, programId, null);
   }
 
   @Test

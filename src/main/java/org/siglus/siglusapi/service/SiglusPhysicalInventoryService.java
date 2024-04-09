@@ -306,7 +306,7 @@ public class SiglusPhysicalInventoryService {
     return physicalInventory;
   }
 
-  public PhysicalInventoryValidationDto checkConflictForOneProgram(UUID facility, UUID program) {
+  public PhysicalInventoryValidationDto checkConflictForOneProgram(UUID facility, UUID program, UUID draft) {
     Set<UUID> supportedPrograms = supportedProgramsHelper.findHomeFacilitySupportedProgramIds();
     if (CollectionUtils.isEmpty(supportedPrograms) || !supportedPrograms.contains(program)) {
       throw new PermissionMessageException(new org.openlmis.stockmanagement.util.Message(ERROR_PROGRAM_NOT_SUPPORTED));
@@ -317,9 +317,12 @@ public class SiglusPhysicalInventoryService {
       return buildPhysicalInventoryValidationDto(true, Lists.newArrayList(program));
     }
     PhysicalInventory physicalInventory = programHaveDraft.get(0);
+    if (!ObjectUtils.isEmpty(draft) && physicalInventory.getId().equals(draft)) {
+      return buildPhysicalInventoryValidationDto(true, Lists.newArrayList(program));
+    }
     List<PhysicalInventoryExtension> physicalInventoryExtension =
         physicalInventoryExtensionRepository.findByPhysicalInventoryId(physicalInventory.getId());
-    if (!ObjectUtils.isEmpty(physicalInventory)
+    if (!ObjectUtils.isEmpty(physicalInventoryExtension)
         && physicalInventoryExtension.get(0).getCategory().equals(ALL_PROGRAM)) {
       return buildPhysicalInventoryValidationDto(false, Lists.newArrayList(ALL_PRODUCTS_PROGRAM_ID));
     }
@@ -637,8 +640,8 @@ public class SiglusPhysicalInventoryService {
   private PhysicalInventoryDto getPhysicalInventoryBySubDraftId(UUID subDraftId) {
     PhysicalInventorySubDraft subDraft = physicalInventorySubDraftRepository.findFirstById(subDraftId);
     PhysicalInventoryDto physicalInventory = getPhysicalInventory(subDraft.getPhysicalInventoryId());
-    return getPhysicalInventoryDtosForProductsForOneProgram(
-        physicalInventory.getProgramId(), physicalInventory.getFacilityId(), true, false).get(0);
+    return getPhysicalInventoryDtos(physicalInventory.getProgramId(), physicalInventory.getFacilityId(), true)
+        .get(0);
   }
 
   private List<PhysicalInventoryLineItemDto> getSubPhysicalInventoryLineItemListBySubDraftIds(List<UUID> subDraftIds) {

@@ -107,7 +107,7 @@ public class SiglusPhysicalInventoryController {
     if (ALL_PRODUCTS_UUID.equals(program)) {
       return siglusPhysicalInventoryService.checkConflictForAllPrograms(facility);
     }
-    return siglusPhysicalInventoryService.checkConflictForOneProgram(facility, program);
+    return siglusPhysicalInventoryService.checkConflictForOneProgram(facility, program, draft);
   }
 
   @GetMapping("/draftList")
