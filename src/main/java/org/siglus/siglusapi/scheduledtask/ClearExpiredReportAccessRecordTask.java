@@ -21,6 +21,7 @@ import org.siglus.siglusapi.repository.SiglusReportAccessRecordRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Slf4j
@@ -30,6 +31,7 @@ public class ClearExpiredReportAccessRecordTask {
   private SiglusReportAccessRecordRepository siglusReportAccessRecordRepository;
 
   @Scheduled(cron = "${clear.expired.report.access.record.cron}", zone = "${time.zoneId}")
+  @Transactional
   public void clear() {
     log.info("clear expired report access record start");
     siglusReportAccessRecordRepository.clearExpiredRecords(LocalDate.now().minusYears(1));
