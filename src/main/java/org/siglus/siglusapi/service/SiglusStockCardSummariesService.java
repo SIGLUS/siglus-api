@@ -22,8 +22,6 @@ import static org.openlmis.stockmanagement.service.PermissionService.STOCK_INVEN
 import static org.siglus.siglusapi.constant.FieldConstants.FACILITY_ID;
 import static org.siglus.siglusapi.constant.FieldConstants.PROVINCE;
 import static org.siglus.siglusapi.constant.FieldConstants.RIGHT_NAME;
-import static org.siglus.siglusapi.constant.PaginationConstants.DEFAULT_PAGE_NUMBER;
-import static org.siglus.siglusapi.constant.PaginationConstants.NO_PAGINATION;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
 import static org.siglus.siglusapi.constant.ProgramConstants.MMC_PROGRAM_CODE;
 import static org.siglus.siglusapi.constant.ProgramConstants.VIA_PROGRAM_CODE;
@@ -53,11 +51,7 @@ import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
-import org.openlmis.referencedata.domain.Orderable;
 import org.openlmis.referencedata.dto.OrderableDto;
-import org.openlmis.referencedata.repository.OrderableRepository;
-import org.openlmis.referencedata.service.LotSearchParams;
-import org.openlmis.referencedata.web.LotController;
 import org.openlmis.requisition.service.PermissionService;
 import org.openlmis.requisition.service.RequisitionService;
 import org.openlmis.requisition.service.referencedata.PermissionStringDto;
@@ -66,6 +60,7 @@ import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.dto.ObjectReferenceDto;
 import org.openlmis.stockmanagement.exception.PermissionMessageException;
 import org.openlmis.stockmanagement.exception.ResourceNotFoundException;
+import org.openlmis.stockmanagement.repository.StockCardRepository;
 import org.openlmis.stockmanagement.service.StockCardSummaries;
 import org.openlmis.stockmanagement.service.StockCardSummariesService;
 import org.openlmis.stockmanagement.service.StockCardSummariesV2SearchParams;
@@ -141,10 +136,6 @@ public class SiglusStockCardSummariesService {
   @Autowired
   private SiglusOrderableService siglusOrderableService;
   @Autowired
-  private  OrderableRepository orderableRepository;
-  @Autowired
-  private LotController lotController;
-  @Autowired
   private CalculatedStockOnHandByLocationRepository calculatedStockOnHandByLocationRepository;
   @Autowired
   private CalculatedStockOnHandRepository calculatedStockOnHandRepository;
@@ -154,22 +145,31 @@ public class SiglusStockCardSummariesService {
   private RequisitionService requisitionService;
   @Autowired
   private SiglusShipmentDraftService siglusShipmentDraftService;
+  @Autowired
+  private StockCardRepository stockCardRepository;
+  @Autowired
+  private SiglusLotService siglusLotService;
 
   public List<org.openlmis.referencedata.dto.LotDto> getLotsDataByOrderableIds(List<UUID> orderableIds) {
     if (CollectionUtils.isEmpty(orderableIds)) {
       return Collections.emptyList();
     }
-    Page<Orderable> orderablePage = orderableRepository.findAllLatestByIds(orderableIds,
-        new PageRequest(DEFAULT_PAGE_NUMBER, NO_PAGINATION));
-    Set<UUID> tradeItemIds = orderablePage.getContent()
-        .stream()
-        .map(Orderable::getTradeItemIdentifier)
-        .map(UUID::fromString)
-        .collect(Collectors.toSet());
-    LotSearchParams requestParams = new LotSearchParams(null, new ArrayList<>(tradeItemIds), null, null);
-
-    List<org.openlmis.referencedata.dto.LotDto> lotDtos = lotController.getLots(requestParams, null).getContent();
-    return lotDtos.stream().filter(org.openlmis.referencedata.dto.LotDto::isActive).collect(Collectors.toList());
+    UserDto currentUser = authenticationHelper.getCurrentUser();
+    UUID facilityId = currentUser.getHomeFacilityId();
+    List<UUID> lotIds = stockCardRepository.findByOrderableIdInAndFacilityId(orderableIds, facilityId)
+        .stream().map(StockCard::getLotId)
+        .filter(lotId -> !ObjectUtils.isEmpty(lotId))
+        .collect(Collectors.toList());
+    return siglusLotService.getLotList(lotIds)
+        .stream().filter(LotDto::isActive)
+        .map(lot -> {
+          org.openlmis.referencedata.dto.LotDto dto =
+              new org.openlmis.referencedata.dto.LotDto(lot.getLotCode(), true,
+                  lot.getTradeItemId(), lot.getExpirationDate(), lot.getManufactureDate());
+          dto.setId(lot.getId());
+          return dto;
+        })
+        .collect(Collectors.toList());
   }
 
   public Page<StockCardSummaryV2Dto> findSiglusStockCard(
