@@ -24,6 +24,7 @@ import static org.siglus.siglusapi.constant.FieldConstants.ALL_PROGRAM;
 import static org.siglus.siglusapi.constant.FieldConstants.EXCLUDE_ARCHIVED;
 import static org.siglus.siglusapi.constant.FieldConstants.FACILITY_ID;
 import static org.siglus.siglusapi.constant.FieldConstants.IS_BASIC;
+import static org.siglus.siglusapi.constant.FieldConstants.LOCATION;
 import static org.siglus.siglusapi.constant.FieldConstants.PROGRAM_ID;
 import static org.siglus.siglusapi.constant.FieldConstants.RIGHT_NAME;
 import static org.siglus.siglusapi.constant.FieldConstants.SEPARATOR;
@@ -63,6 +64,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.openlmis.referencedata.domain.Orderable;
 import org.openlmis.referencedata.dto.OrderableDto;
 import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.requisition.service.RequisitionService;
@@ -252,58 +254,39 @@ public class SiglusPhysicalInventoryService {
         .collect(Collectors.toList());
   }
 
-  public PhysicalInventoryDto getSubPhysicalInventoryDtoBySubDraftId(List<UUID> subDraftIds) {
+  public SiglusPhysicalInventoryDto getPhysicalInventoryDtoBySubDraftIds(List<UUID> subDraftIds) {
     if (CollectionUtils.isEmpty(subDraftIds)) {
       throw new IllegalArgumentException("empty subDraftIds");
     }
-    List<PhysicalInventoryLineItemDto> subPhysicalInventoryLineItemDtoList =
-        getSubPhysicalInventoryLineItemListBySubDraftIds(subDraftIds);
-    List<PhysicalInventoryLineItemDto> sortedSubPhysicalInventoryLineItemList = subPhysicalInventoryLineItemDtoList
-        .stream().sorted(Comparator.comparing(o -> String.valueOf(
-            orderableRepository.findLatestById(o.getOrderableId())
-                .orElseThrow(IllegalArgumentException::new)
-                .getProductCode()))).collect(Collectors.toList());
-    PhysicalInventoryDto physicalInventory = getPhysicalInventoryBySubDraftId(subDraftIds.get(0));
+    List<PhysicalInventoryDto> physicalInventoryDtos =
+        subDraftIds.stream().map(this::getPhysicalInventoryBySubDraftId).collect(Collectors.toList());
+    List<PhysicalInventoryLineItemDto> lineItemDtos = physicalInventoryDtos.stream()
+        .flatMap(dto -> dto.getLineItems().stream())
+        .collect(Collectors.toList());
+    SiglusPhysicalInventoryDto siglusPhysicalInventoryDto = fillLocationOption(physicalInventoryDtos.get(0));
 
-    UUID programId = subDraftIds.size() > 1 ? ALL_PRODUCTS_PROGRAM_ID : physicalInventory.getProgramId();
-    UUID physicalInventoryId = subDraftIds.size() > 1 ? ALL_PRODUCTS_UUID : physicalInventory.getId();
-    physicalInventory.setId(physicalInventoryId);
-    physicalInventory.setProgramId(programId);
-    physicalInventory.setLineItems(sortedSubPhysicalInventoryLineItemList);
-    return physicalInventory;
-  }
-
-  public SiglusPhysicalInventoryDto getSubLocationPhysicalInventoryDtoBySubDraftId(
-      List<UUID> subDraftIds, boolean isByLocation) {
-    if (CollectionUtils.isEmpty(subDraftIds)) {
-      throw new IllegalArgumentException("empty subDraftIds");
-    }
-    List<PhysicalInventoryLineItemDto> subPhysicalInventoryLineItemDtoList =
-        getSubPhysicalInventoryLineItemListBySubDraftIds(subDraftIds);
-    List<PhysicalInventoryLineItemDto> sortedSubPhysicalInventoryLineItemList;
-    if (isByLocation) {
-      subPhysicalInventoryLineItemDtoList.addAll(findEmptyLocationsBySubDraftIds(subDraftIds));
-      sortedSubPhysicalInventoryLineItemList = subPhysicalInventoryLineItemDtoList
-          .stream()
-          .sorted(Comparator.comparing(PhysicalInventoryLineItemDto::getLocationCode))
+    List<PhysicalInventoryLineItemDto> sortedLineItems;
+    if (LOCATION.equals(siglusPhysicalInventoryDto.getLocationOption())) {
+      sortedLineItems = lineItemDtos
+          .stream().sorted(Comparator.comparing(PhysicalInventoryLineItemDto::getLocationCode))
           .collect(Collectors.toList());
     } else {
-      sortedSubPhysicalInventoryLineItemList = subPhysicalInventoryLineItemDtoList
-          .stream().sorted(Comparator.comparing(
-              o -> String.valueOf(
-                  orderableRepository.findLatestById(o.getOrderableId()).orElseThrow(IllegalArgumentException::new)
-                      .getProductCode()))).collect(Collectors.toList());
+      List<UUID> orderableIds = lineItemDtos.stream()
+          .map(PhysicalInventoryLineItemDto::getOrderableId)
+          .collect(Collectors.toList());
+      Map<UUID, String> codeMap = orderableRepository.findLatestByIds(orderableIds).stream()
+          .collect(Collectors.toMap(Orderable::getId, dto -> dto.getProductCode().toString()));
+      sortedLineItems = lineItemDtos
+          .stream().sorted(Comparator.comparing(o -> codeMap.getOrDefault(o.getOrderableId(), "")))
+          .collect(Collectors.toList());
     }
 
-    SiglusPhysicalInventoryDto physicalInventory = fillLocationOption(
-        getPhysicalInventoryBySubDraftId(subDraftIds.get(0)));
-
-    UUID programId = subDraftIds.size() > 1 ? ALL_PRODUCTS_PROGRAM_ID : physicalInventory.getProgramId();
-    UUID physicalInventoryId = subDraftIds.size() > 1 ? ALL_PRODUCTS_UUID : physicalInventory.getId();
-    physicalInventory.setId(physicalInventoryId);
-    physicalInventory.setProgramId(programId);
-    physicalInventory.setLineItems(sortedSubPhysicalInventoryLineItemList);
-    return physicalInventory;
+    UUID programId = subDraftIds.size() > 1 ? ALL_PRODUCTS_PROGRAM_ID : siglusPhysicalInventoryDto.getProgramId();
+    UUID physicalInventoryId = subDraftIds.size() > 1 ? ALL_PRODUCTS_UUID : siglusPhysicalInventoryDto.getId();
+    siglusPhysicalInventoryDto.setId(physicalInventoryId);
+    siglusPhysicalInventoryDto.setProgramId(programId);
+    siglusPhysicalInventoryDto.setLineItems(sortedLineItems);
+    return siglusPhysicalInventoryDto;
   }
 
   public PhysicalInventoryValidationDto checkConflictForOneProgram(UUID facility, UUID program, UUID draft) {
@@ -640,27 +623,7 @@ public class SiglusPhysicalInventoryService {
   private PhysicalInventoryDto getPhysicalInventoryBySubDraftId(UUID subDraftId) {
     PhysicalInventorySubDraft subDraft = physicalInventorySubDraftRepository.findFirstById(subDraftId);
     PhysicalInventoryDto physicalInventory = getPhysicalInventory(subDraft.getPhysicalInventoryId());
-    return getPhysicalInventoryDtos(physicalInventory.getProgramId(), physicalInventory.getFacilityId(), true)
-        .get(0);
-  }
-
-  private List<PhysicalInventoryLineItemDto> getSubPhysicalInventoryLineItemListBySubDraftIds(List<UUID> subDraftIds) {
-    List<PhysicalInventoryLineItemDto> allSubPhysicalInventoryLineItemDtoList = new LinkedList<>();
-    subDraftIds.forEach(subDraftId -> {
-      PhysicalInventoryDto physicalInventoryDto = getPhysicalInventoryBySubDraftId(subDraftId);
-      if (physicalInventoryDto == null) {
-        return;
-      }
-      List<PhysicalInventoryLineItemsExtension> extensions = lineItemsExtensionRepository
-          .findByPhysicalInventoryId(physicalInventoryDto.getId());
-      List<PhysicalInventoryLineItemDto> subPhysicalInventoryLineItemDtoLists = physicalInventoryDto.getLineItems()
-          .stream().filter(lineItem -> {
-            PhysicalInventoryLineItemsExtension extension = getExtension(extensions, lineItem);
-            return extension != null && subDraftId.equals(extension.getSubDraftId());
-          }).collect(Collectors.toList());
-      allSubPhysicalInventoryLineItemDtoList.addAll(subPhysicalInventoryLineItemDtoLists);
-    });
-    return allSubPhysicalInventoryLineItemDtoList;
+    return fillInventoryLineItemsExtension(physicalInventory);
   }
 
   private void createEmptySubDraft(Integer spiltNum, PhysicalInventoryDto physicalInventoryDto) {
@@ -1345,6 +1308,14 @@ public class SiglusPhysicalInventoryService {
     resultInventory.setId(inventories.get(0).getId());
     resultInventory.setProgramId(inventories.get(0).getProgramId());
     return resultInventory;
+  }
+
+  private PhysicalInventoryDto fillInventoryLineItemsExtension(PhysicalInventoryDto inventoryDto) {
+    List<PhysicalInventoryLineItemsExtension> extensions =
+        lineItemsExtensionRepository.findByPhysicalInventoryId(inventoryDto.getId());
+    PhysicalInventoryDto dto = getResultInventory(Collections.singletonList(inventoryDto), extensions);
+    inventoryDto.setLineItems(dto.getLineItems());
+    return inventoryDto;
   }
 
   private PhysicalInventoryDto getResultInventoryForAllPrograms(List<PhysicalInventoryDto> inventories,

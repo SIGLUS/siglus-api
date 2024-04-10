@@ -1017,7 +1017,7 @@ public class SiglusPhysicalInventoryServiceTest {
     List<UUID> subDraftIds = Collections.emptyList();
 
     // when
-    siglusPhysicalInventoryService.getSubPhysicalInventoryDtoBySubDraftId(subDraftIds);
+    siglusPhysicalInventoryService.getPhysicalInventoryDtoBySubDraftIds(subDraftIds);
   }
 
   @Test
@@ -1073,7 +1073,7 @@ public class SiglusPhysicalInventoryServiceTest {
         .thenReturn(Collections.singletonList(extension));
     // when
     SiglusPhysicalInventoryDto actualPhysicalInventoryDto = siglusPhysicalInventoryService
-        .getSubLocationPhysicalInventoryDtoBySubDraftId(subDraftIds, false);
+        .getPhysicalInventoryDtoBySubDraftIds(subDraftIds);
     actualPhysicalInventoryDto.setLineItems(physicalInventoryLineItemDtos);
 
     // then
@@ -1176,10 +1176,13 @@ public class SiglusPhysicalInventoryServiceTest {
     List<UUID> subDraftIds = Collections.singletonList(subDraftIdOne);
     // when
     PhysicalInventoryDto actualPhysicalInventoryDto = siglusPhysicalInventoryService
-        .getSubPhysicalInventoryDtoBySubDraftId(subDraftIds);
+        .getPhysicalInventoryDtoBySubDraftIds(subDraftIds);
     actualPhysicalInventoryDto.setLineItems(physicalInventoryLineItemDtos);
     // then
-    assertEquals(physicalInventoryDto, actualPhysicalInventoryDto);
+    assertEquals(physicalInventoryDto.getProgramId(), actualPhysicalInventoryDto.getProgramId());
+    assertEquals(physicalInventoryDto.getFacilityId(), actualPhysicalInventoryDto.getFacilityId());
+    assertEquals(physicalInventoryDto.getId(), actualPhysicalInventoryDto.getId());
+    assertEquals(physicalInventoryDto.getLineItems(), actualPhysicalInventoryDto.getLineItems());
   }
 
   @Test
