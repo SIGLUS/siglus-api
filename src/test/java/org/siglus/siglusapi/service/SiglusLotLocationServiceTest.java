@@ -18,6 +18,7 @@ package org.siglus.siglusapi.service;
 import static com.google.common.collect.Lists.newArrayList;
 import static java.util.Arrays.asList;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyList;
 import static org.mockito.Mockito.when;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_LOCATIONS_BY_FACILITY_NOT_FOUND;
 
@@ -104,6 +105,9 @@ public class SiglusLotLocationServiceTest extends TestCase {
 
   @Mock
   private OrderableIdentifiersRepository orderableIdentifiersRepository;
+
+  @Mock
+  private SiglusLotService siglusLotService;
 
   private final UUID facilityId = UUID.randomUUID();
 
@@ -198,12 +202,12 @@ public class SiglusLotLocationServiceTest extends TestCase {
         .thenReturn(Arrays.asList(sohLocation1, sohLocation2));
     when(stockCardLocationMovementService.canInitialMoveProduct(facilityId)).thenReturn(
         new InitialMoveProductFieldDto(false));
-    LotDto lotDto1 = new LotDto();
+    org.siglus.siglusapi.dto.LotDto lotDto1 = new org.siglus.siglusapi.dto.LotDto();
     lotDto1.setId(lotId1);
     lotDto1.setExpirationDate(LocalDate.of(2022, 3, 22));
     lotDto1.setActive(true);
     lotDto1.setLotCode(lotCode);
-    when(lotController.getLots(any(), any())).thenReturn(new PageImpl<>(asList(lotDto1)));
+    when(siglusLotService.getLotList(anyList())).thenReturn(Collections.singletonList(lotDto1));
 
     LotsDto lot1 = LotsDto.builder().lotCode(lotCode).lotId(lotId1).expirationDate(lotDto1.getExpirationDate())
         .orderableId(orderableId)
@@ -242,12 +246,12 @@ public class SiglusLotLocationServiceTest extends TestCase {
         .thenReturn(Arrays.asList(sohLocation1, sohLocation2));
     when(stockCardLocationMovementService.canInitialMoveProduct(facilityId)).thenReturn(
         new InitialMoveProductFieldDto(false));
-    LotDto lotDto1 = new LotDto();
+    org.siglus.siglusapi.dto.LotDto lotDto1 = new org.siglus.siglusapi.dto.LotDto();
     lotDto1.setId(lotId1);
     lotDto1.setExpirationDate(LocalDate.of(2022, 3, 22));
     lotDto1.setActive(false);
     lotDto1.setLotCode(lotCode);
-    when(lotController.getLots(any(), any())).thenReturn(new PageImpl<>(Collections.singletonList(lotDto1)));
+    when(siglusLotService.getLotList(anyList())).thenReturn(Collections.singletonList(lotDto1));
     LocationLotsDto lotLocation1 = LocationLotsDto.builder().locationCode(locationCode1).area(area1)
         .lots(Collections.emptyList()).build();
     LocationLotsDto lotLocation2 = LocationLotsDto.builder().locationCode(locationCode2).area(area2)
@@ -281,12 +285,12 @@ public class SiglusLotLocationServiceTest extends TestCase {
     when(stockCardLocationMovementService.canInitialMoveProduct(facilityId)).thenReturn(
         new InitialMoveProductFieldDto(false));
 
-    LotDto lot = new LotDto();
+    org.siglus.siglusapi.dto.LotDto lot = new org.siglus.siglusapi.dto.LotDto();
     lot.setId(lotId2);
     lot.setExpirationDate(LocalDate.of(2022, 3, 22));
     lot.setActive(true);
     lot.setLotCode(lotCode);
-    when(lotController.getLots(any(), any())).thenReturn(new PageImpl<>(Collections.singletonList(lot)));
+    when(siglusLotService.getLotList(anyList())).thenReturn(Collections.singletonList(lot));
 
     when(facilityNativeRepository.findFacilityProgramPeriodScheduleByFacilityId(facilityId)).thenReturn(
         Arrays.asList(
@@ -365,13 +369,13 @@ public class SiglusLotLocationServiceTest extends TestCase {
     when(stockCardLocationMovementService.canInitialMoveProduct(facilityId)).thenReturn(
         new InitialMoveProductFieldDto(false));
     UUID tradeLineItemId = UUID.randomUUID();
-    LotDto lotDto1 = new LotDto();
+    org.siglus.siglusapi.dto.LotDto lotDto1 = new org.siglus.siglusapi.dto.LotDto();
     lotDto1.setId(lotId1);
     lotDto1.setTradeItemId(tradeLineItemId);
     lotDto1.setExpirationDate(LocalDate.of(2022, 3, 22));
     lotDto1.setActive(false);
     lotDto1.setLotCode(lotCode);
-    when(lotController.getLots(any(), any())).thenReturn(new PageImpl<>(Collections.singletonList(lotDto1)));
+    when(siglusLotService.getLotList(anyList())).thenReturn(Collections.singletonList(lotDto1));
     LocationLotsDto lotLocation1 = LocationLotsDto.builder().locationCode(locationCode1).area(area1)
         .lots(Collections.emptyList()).build();
     LocationLotsDto lotLocation2 = LocationLotsDto.builder().locationCode(locationCode2).area(area2)
@@ -386,8 +390,15 @@ public class SiglusLotLocationServiceTest extends TestCase {
     LocationLotsDto lotLocation3 = LocationLotsDto.builder().lots(Collections.singletonList(lotsDto)).build();
     List<LocationLotsDto> expectedLocationLotsDtos = Arrays.asList(lotLocation2, lotLocation1, lotLocation3);
 
+    LotDto lotDto2 = new LotDto();
+    lotDto2.setId(lotId1);
+    lotDto2.setTradeItemId(tradeLineItemId);
+    lotDto2.setExpirationDate(LocalDate.of(2022, 3, 22));
+    lotDto2.setActive(false);
+    lotDto2.setLotCode(lotCode);
+    when(lotController.getLots(any(), any())).thenReturn(new PageImpl<>(Collections.singletonList(lotDto2)));
     when(siglusStockCardSummariesService.getLotsDataByOrderableIds(any())).thenReturn(
-        Collections.singletonList(lotDto1));
+        Collections.singletonList(lotDto2));
     when(orderableIdentifiersRepository
         .findByKeyAndValueIn(FieldConstants.TRADE_ITEM, Collections.singletonList(tradeLineItemId.toString())))
         .thenReturn(Collections.singletonList(OrderableIdentifiers

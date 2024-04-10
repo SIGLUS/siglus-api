@@ -31,6 +31,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
@@ -122,24 +123,20 @@ public class SiglusLotService {
 
   public List<LotDto> getLotList(List<UUID> lotIds) {
     List<UUID> nonNullLotIds = lotIds.stream().filter(Objects::nonNull).collect(Collectors.toList());
-    List<LotDto> lotDtos = new ArrayList<>();
-    List<List<UUID>> partitionList = Lists.partition(nonNullLotIds, SIZE);
-    partitionList.forEach(list -> {
-      Iterable<org.openlmis.referencedata.domain.Lot> lots = lotRepository.findAll(list);
-      lots.forEach(lot -> {
-            LotDto lotDto = LotDto.builder()
-                .lotCode(lot.getLotCode())
-                .expirationDate(lot.getExpirationDate())
-                .tradeItemId(lot.getTradeItem().getId())
-                .manufactureDate(lot.getManufactureDate())
-                .active(lot.isActive())
-                .build();
-            lotDto.setId(lot.getId());
-            lotDtos.add(lotDto);
-          }
-      );
-    });
-    return lotDtos;
+    Iterable<org.openlmis.referencedata.domain.Lot> lots = lotRepository.findAll(nonNullLotIds);
+    return StreamSupport.stream(lots.spliterator(), false)
+        .map(lot -> {
+          LotDto lotDto = LotDto.builder()
+                  .lotCode(lot.getLotCode())
+                  .expirationDate(lot.getExpirationDate())
+                  .tradeItemId(lot.getTradeItem().getId())
+                  .manufactureDate(lot.getManufactureDate())
+                  .active(lot.isActive())
+                  .build();
+          lotDto.setId(lot.getId());
+          return lotDto;
+          })
+        .collect(Collectors.toList());
   }
 
   public LotDto createNewLotOrReturnExisted(UUID facilityId, String tradeItemId, String lotCode,

@@ -33,9 +33,9 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.openlmis.referencedata.domain.Code;
+import org.openlmis.referencedata.dto.BaseDto;
 import org.openlmis.referencedata.dto.LotDto;
 import org.openlmis.referencedata.service.LotSearchParams;
 import org.openlmis.referencedata.web.LotController;
@@ -63,25 +63,38 @@ import org.siglus.siglusapi.repository.OrderableIdentifiersRepository;
 import org.siglus.siglusapi.repository.SiglusStockCardLineItemRepository;
 import org.siglus.siglusapi.repository.dto.FacilityProgramPeriodScheduleDto;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ObjectUtils;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class SiglusLotLocationService {
-
-  private final SiglusAuthenticationHelper authenticationHelper;
-  private final StockCardRepository stockCardRepository;
-  private final FacilityLocationsRepository facilityLocationsRepository;
-  private final CalculatedStockOnHandByLocationRepository calculatedStockOnHandByLocationRepository;
-  private final FacilityNativeRepository facilityNativeRepository;
-  private final CalculatedStockOnHandRepository calculatedStockOnHandRepository;
-  private final SiglusStockCardLocationMovementService stockCardLocationMovementService;
-  private final LotController lotController;
-  private final SiglusStockCardLineItemRepository siglusStockCardLineItemRepository;
-  private final SiglusStockCardSummariesService siglusStockCardSummariesService;
-  private final OrderableIdentifiersRepository orderableIdentifiersRepository;
+  @Autowired
+  private SiglusAuthenticationHelper authenticationHelper;
+  @Autowired
+  private StockCardRepository stockCardRepository;
+  @Autowired
+  private FacilityLocationsRepository facilityLocationsRepository;
+  @Autowired
+  private CalculatedStockOnHandByLocationRepository calculatedStockOnHandByLocationRepository;
+  @Autowired
+  private FacilityNativeRepository facilityNativeRepository;
+  @Autowired
+  private CalculatedStockOnHandRepository calculatedStockOnHandRepository;
+  @Autowired
+  private SiglusStockCardLocationMovementService stockCardLocationMovementService;
+  @Autowired
+  private LotController lotController;
+  @Autowired
+  private SiglusStockCardLineItemRepository siglusStockCardLineItemRepository;
+  @Autowired
+  private SiglusStockCardSummariesService siglusStockCardSummariesService;
+  @Autowired
+  private OrderableIdentifiersRepository orderableIdentifiersRepository;
+  @Autowired
+  private SiglusLotService siglusLotService;
 
   public List<LocationLotsDto> searchLotLocationDtos(List<UUID> orderableIds, boolean extraData, boolean isAdjustment,
       boolean returnNoMovementLots) {
@@ -198,6 +211,12 @@ public class SiglusLotLocationService {
       return Collections.emptyList();
     }
     Map<UUID, StockCard> stockCardIdToStockCard = Maps.uniqueIndex(stockCardList, StockCard::getId);
+    Set<UUID> lotIds = stockCardList.stream().map(StockCard::getLotId)
+        .filter(lotId -> !ObjectUtils.isEmpty(lotId))
+        .collect(Collectors.toSet());
+    Map<UUID, org.siglus.siglusapi.dto.LotDto> lotMap = siglusLotService.getLotList(new ArrayList<>(lotIds))
+        .stream().collect(Collectors.toMap(BaseDto::getId, lotDto -> lotDto));
+
     boolean needInitiallyMoveProduct = stockCardLocationMovementService.canInitialMoveProduct(facilityId)
         .isNeedInitiallyMoveProduct();
     Map<String, List<Pair<UUID, CalculatedStockOnHandByLocation>>> locationCodeToLotLocationPairs =
@@ -207,7 +226,7 @@ public class SiglusLotLocationService {
       if (locationCode.equals(LocationConstants.VIRTUAL_LOCATION_CODE) && !needInitiallyMoveProduct) {
         return;
       }
-      List<LotsDto> lotDtoList = getLotsDtos(locationPairs, stockCardIdToStockCard, needInitiallyMoveProduct);
+      List<LotsDto> lotDtoList = getLotsDtos(locationPairs, stockCardIdToStockCard, needInitiallyMoveProduct, lotMap);
       locationLotsDtos.add(LocationLotsDto.builder()
           .locationCode(locationCode)
           .area(locationPairs.get(0).getSecond().getArea())
@@ -317,21 +336,13 @@ public class SiglusLotLocationService {
   }
 
   private List<LotsDto> getLotsDtos(List<Pair<UUID, CalculatedStockOnHandByLocation>> locationPairs,
-      Map<UUID, StockCard> stockCardIdToStockCard, boolean needInitiallyMoveProduct) {
-    List<UUID> lotIds = locationPairs.stream()
-        .map(Pair::getFirst)
-        .map(stockCardIdToStockCard::get)
-        .map(StockCard::getLotId)
-        .collect(Collectors.toList());
-    LotSearchParams requestParams = new LotSearchParams(null, null, null, lotIds);
-    List<LotDto> lots = lotController.getLots(requestParams, null).getContent();
-    Map<UUID, LotDto> idToLot = lots.stream().collect(Collectors.toMap(LotDto::getId, Function.identity()));
-
+      Map<UUID, StockCard> stockCardIdToStockCard, boolean needInitiallyMoveProduct,
+      Map<UUID, org.siglus.siglusapi.dto.LotDto> idToLot) {
     List<LotsDto> lotDtoList = new LinkedList<>();
     locationPairs.forEach(locationPair -> {
       StockCard stockCard = stockCardIdToStockCard.get(locationPair.getFirst());
       UUID lotId = stockCard.getLotId();
-      LotDto lot = null;
+      org.siglus.siglusapi.dto.LotDto lot = null;
       if (null != lotId) {
         lot = idToLot.get(lotId);
       }
