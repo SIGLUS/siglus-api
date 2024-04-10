@@ -39,7 +39,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
@@ -76,35 +75,53 @@ import org.siglus.siglusapi.repository.StockEventProductRequestedRepository;
 import org.siglus.siglusapi.repository.StockManagementDraftRepository;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.validator.ActiveDraftValidator;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Slf4j
-@RequiredArgsConstructor
 @SuppressWarnings({"PMD.TooManyMethods"})
 public class SiglusStockEventsService {
-
-  private final SiglusPhysicalInventoryService siglusPhysicalInventoryService;
-  private final SiglusStockManagementDraftService stockManagementDraftService;
-  private final StockCardRepository stockCardRepository;
-  private final StockCardExtensionRepository stockCardExtensionRepository;
-  private final StockCardLineItemRepository stockCardLineItemRepository;
-  private final StockEventsRepository stockEventsRepository;
-  private final StockEventProcessor stockEventProcessor;
-  private final SiglusArchiveProductService archiveProductService;
-  private final SiglusAuthenticationHelper authenticationHelper;
-  private final StockManagementDraftRepository stockManagementDraftRepository;
-  private final ActiveDraftValidator draftValidator;
-  private final StockCardLineItemExtensionRepository stockCardLineItemExtensionRepository;
-  private final SiglusLotService siglusLotService;
-  private final FacilityLocationsRepository facilityLocationsRepository;
-  private final StockCardLineItemReasonRepository stockCardLineItemReasonRepository;
-  private final CalculatedStockOnHandByLocationRepository calculatedStockOnHandByLocationRepository;
-  private final CalculatedStocksOnHandByLocationService calculatedStocksOnHandByLocationService;
-  private final SiglusProgramService siglusProgramService;
-  private final StockEventProductRequestedRepository stockEventProductRequestedRepository;
+  @Autowired
+  private SiglusPhysicalInventoryService siglusPhysicalInventoryService;
+  @Autowired
+  private SiglusStockManagementDraftService stockManagementDraftService;
+  @Autowired
+  private StockCardRepository stockCardRepository;
+  @Autowired
+  private StockCardExtensionRepository stockCardExtensionRepository;
+  @Autowired
+  private StockCardLineItemRepository stockCardLineItemRepository;
+  @Autowired
+  private StockEventsRepository stockEventsRepository;
+  @Autowired
+  private StockEventProcessor stockEventProcessor;
+  @Autowired
+  private SiglusArchiveProductService archiveProductService;
+  @Autowired
+  private SiglusAuthenticationHelper authenticationHelper;
+  @Autowired
+  private StockManagementDraftRepository stockManagementDraftRepository;
+  @Autowired
+  private ActiveDraftValidator draftValidator;
+  @Autowired
+  private StockCardLineItemExtensionRepository stockCardLineItemExtensionRepository;
+  @Autowired
+  private SiglusLotService siglusLotService;
+  @Autowired
+  private FacilityLocationsRepository facilityLocationsRepository;
+  @Autowired
+  private StockCardLineItemReasonRepository stockCardLineItemReasonRepository;
+  @Autowired
+  private CalculatedStockOnHandByLocationRepository calculatedStockOnHandByLocationRepository;
+  @Autowired
+  private CalculatedStocksOnHandByLocationService calculatedStocksOnHandByLocationService;
+  @Autowired
+  private SiglusProgramService siglusProgramService;
+  @Autowired
+  private StockEventProductRequestedRepository stockEventProductRequestedRepository;
   @Value("${stockmanagement.kit.unpack.destination.nodeId}")
   private UUID unpackKitDestinationNodeId;
   private UUID viaProgramId;

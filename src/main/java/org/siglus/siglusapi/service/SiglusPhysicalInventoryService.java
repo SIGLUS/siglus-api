@@ -60,7 +60,6 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -111,6 +110,7 @@ import org.siglus.siglusapi.util.LocalMachineHelper;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.util.SupportedProgramsHelper;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -121,33 +121,49 @@ import org.springframework.util.ObjectUtils;
 
 @Service
 @Slf4j
-@RequiredArgsConstructor
 @SuppressWarnings({"PMD.TooManyMethods", "PMD.PreserveStackTrace"})
 public class SiglusPhysicalInventoryService {
 
-  private final PhysicalInventoriesRepository physicalInventoriesRepository;
-  private final StockCardRepository stockCardRepository;
-  private final SupportedProgramsHelper supportedProgramsHelper;
-  private final PhysicalInventoryLineItemsExtensionRepository lineItemsExtensionRepository;
-  private final PhysicalInventoryController inventoryController;
-  private final SiglusFacilityReferenceDataService facilityReferenceDataService;
-  private final OrderableRepository orderableRepository;
-  private final RequisitionService requisitionService;
-  private final PhysicalInventorySubDraftRepository physicalInventorySubDraftRepository;
-  private final SiglusStockCardSummariesService siglusStockCardSummariesService;
-  private final SiglusAuthenticationHelper authenticationHelper;
-  private final PhysicalInventoryExtensionRepository physicalInventoryExtensionRepository;
-  private final CalculatedStockOnHandByLocationRepository calculatedStockOnHandByLocationRepository;
-  private final SiglusStockCardRepository siglusStockCardRepository;
-  private final FacilityLocationsRepository facilityLocationsRepository;
-  private final PhysicalInventoryEmptyLocationLineItemRepository physicalInventoryEmptyLocationLineItemRepository;
-  private final SiglusOrderableService siglusOrderableService;
-
-  private final SiglusProgramService siglusProgramService;
-
-  private final SiglusArchiveProductService archiveProductService;
-
-  private final LocalMachineHelper localMachineHelper;
+  @Autowired
+  private PhysicalInventoriesRepository physicalInventoriesRepository;
+  @Autowired
+  private StockCardRepository stockCardRepository;
+  @Autowired
+  private SupportedProgramsHelper supportedProgramsHelper;
+  @Autowired
+  private PhysicalInventoryLineItemsExtensionRepository lineItemsExtensionRepository;
+  @Autowired
+  private PhysicalInventoryController inventoryController;
+  @Autowired
+  private SiglusFacilityReferenceDataService facilityReferenceDataService;
+  @Autowired
+  private OrderableRepository orderableRepository;
+  @Autowired
+  private RequisitionService requisitionService;
+  @Autowired
+  private PhysicalInventorySubDraftRepository physicalInventorySubDraftRepository;
+  @Autowired
+  private SiglusStockCardSummariesService siglusStockCardSummariesService;
+  @Autowired
+  private SiglusAuthenticationHelper authenticationHelper;
+  @Autowired
+  private PhysicalInventoryExtensionRepository physicalInventoryExtensionRepository;
+  @Autowired
+  private CalculatedStockOnHandByLocationRepository calculatedStockOnHandByLocationRepository;
+  @Autowired
+  private SiglusStockCardRepository siglusStockCardRepository;
+  @Autowired
+  private FacilityLocationsRepository facilityLocationsRepository;
+  @Autowired
+  private PhysicalInventoryEmptyLocationLineItemRepository physicalInventoryEmptyLocationLineItemRepository;
+  @Autowired
+  private SiglusOrderableService siglusOrderableService;
+  @Autowired
+  private SiglusProgramService siglusProgramService;
+  @Autowired
+  private SiglusArchiveProductService archiveProductService;
+  @Autowired
+  private LocalMachineHelper localMachineHelper;
 
   @Transactional
   public PhysicalInventoryDto createAndSplitNewDraftForAllPrograms(PhysicalInventoryDto physicalInventoryDto,

@@ -32,8 +32,6 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.openlmis.referencedata.dto.OrderableDto;
@@ -66,11 +64,7 @@ import org.springframework.util.ObjectUtils;
 
 @Service
 @Slf4j
-@AllArgsConstructor
-@NoArgsConstructor
 public class SiglusLotService {
-
-  public static final int SIZE = 50;
   @Autowired
   private SiglusOrderableReferenceDataService orderableReferenceDataService;
   @Autowired

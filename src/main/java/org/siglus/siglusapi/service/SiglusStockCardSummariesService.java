@@ -47,8 +47,6 @@ import java.util.UUID;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.openlmis.referencedata.dto.OrderableDto;
@@ -104,8 +102,6 @@ import org.springframework.util.ObjectUtils;
 
 @Service
 @Slf4j
-@AllArgsConstructor
-@NoArgsConstructor
 @SuppressWarnings({"PMD"})
 public class SiglusStockCardSummariesService {
 
