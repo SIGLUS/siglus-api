@@ -63,7 +63,7 @@ public class FieldConstants {
   public static final String PHYSICAL_INVENTORY = "PHYSICAL_INVENTORY";
   public static final String ZONEID = "zoneId";
   public static final String SINGLE_PROGRAM = "SINGLE";
-  public static final String  ALL_PROGRAM = "ALL";
+  public static final String ALL_PROGRAM = "ALL";
   public static final String EXCEL_CONTENT_TYPE = "application/vnd.ms-excel";
   public static final String TRACER_DRUG_INFORMATION = "Informações_sobre_medicamento_rastreadores_";
   public static final String SUBTITLE = "legenda";
@@ -102,7 +102,9 @@ public class FieldConstants {
   public static final String METABASE_PAYLOAD_TEMPLATE = "{\"resource\": {\"dashboard\": %d},\"params\": {%s}}";
   public static final String METABASE_PART_URL = "/embed/dashboard/";
   public static final String METABASE_EXTENSION_URL =
-      "#bordered=false&titled=true&hide_parameters=facility_code,district_facility_code,province_facility_code";
+      "#bordered=false&titled=true"
+          + "&hide_parameters=facility_code,district_facility_code,province_facility_code,district_code";
+  public static final String DISTRICT_CODE = "district_code";
   public static final String JWT_TOKEN_HEADER_PARAM_NAME = "typ";
   public static final String JWT_TOKEN_HEADER_PARAM_VALUE = "JWT";
   public static final String UNPACK_KIT_TYPE = "UNPACK_KIT";

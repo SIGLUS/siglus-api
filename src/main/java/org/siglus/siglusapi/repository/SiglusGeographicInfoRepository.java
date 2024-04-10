@@ -29,4 +29,6 @@ public interface SiglusGeographicInfoRepository extends JpaRepository<Geographic
   List<GeographicInfoDto> getGeographicInfo();
 
   Set<GeographicZone> findAllByIdIn(Set<UUID> ids);
+
+  Set<GeographicZone> findAllByParentIdIn(Set<UUID> ids);
 }

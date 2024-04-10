@@ -32,15 +32,15 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.openlmis.referencedata.domain.GeographicZone;
 import org.openlmis.requisition.dto.RoleAssignmentDto;
 import org.siglus.siglusapi.domain.MetaBaseConfig;
 import org.siglus.siglusapi.domain.UserReportView;
 import org.siglus.siglusapi.dto.FacilityDto;
-import org.siglus.siglusapi.dto.FacilityGeographicInfoDto;
 import org.siglus.siglusapi.dto.FacilityTypeDto;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.repository.MetabaseDashboardRepository;
-import org.siglus.siglusapi.repository.SiglusFacilityRepository;
+import org.siglus.siglusapi.repository.SiglusGeographicInfoRepository;
 import org.siglus.siglusapi.repository.SiglusUserReportViewRepository;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
@@ -76,7 +76,7 @@ public class MetabaseDashboardServiceTest {
   @Mock
   private SiglusUserReportViewRepository siglusUserReportViewRepository;
   @Mock
-  private SiglusFacilityRepository siglusFacilityRepository;
+  private SiglusGeographicInfoRepository siglusGeographicInfoRepository;
 
   @Before
   public void setUp() {
@@ -211,13 +211,13 @@ public class MetabaseDashboardServiceTest {
         .build();
     when(siglusUserReportViewRepository.findAllByUserId(any())).thenReturn(
         Collections.singletonList(dto));
-    FacilityGeographicInfoDto facilityGeographicInfoDto = FacilityGeographicInfoDto.builder()
-        .provinceId(provinceId)
-        .districtId(districtId)
-        .facilityCode(facilityCode)
-        .build();
-    when(siglusFacilityRepository.getAllFacilityGeographicInfo()).thenReturn(
-        Collections.singletonList(facilityGeographicInfoDto));
+    HashSet<UUID> districtIds = new HashSet<>();
+    districtIds.add(districtId);
+    GeographicZone geographicZone = new GeographicZone();
+    geographicZone.setCode("code");
+    Set<GeographicZone> geographicZones = new HashSet<>();
+    geographicZones.add(geographicZone);
+    when(siglusGeographicInfoRepository.findAllByIdIn(districtIds)).thenReturn(geographicZones);
 
     when(metabaseDashboardRepository.findByDashboardName(any()))
         .thenReturn(Optional.of(MetaBaseConfig.builder().dashboardId(1).build()));
@@ -227,7 +227,7 @@ public class MetabaseDashboardServiceTest {
     // when
     String payload = siglusMetabaseDashboardService.getPayloadByDashboardName(anyString());
     // then
-    assertEquals(String.format("{\"resource\":{\"dashboard\":%d},\"params\":{%s}}", 1, "\"facility_code\":[\"10000\"]"),
+    assertEquals(String.format("{\"resource\":{\"dashboard\":%d},\"params\":{%s}}", 1, "\"district_code\":[\"code\"]"),
         payload);
   }
 

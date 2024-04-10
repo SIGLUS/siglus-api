@@ -16,6 +16,7 @@
 package org.siglus.siglusapi.service;
 
 import static org.siglus.siglusapi.constant.FieldConstants.ALL_GEOGRAPHIC_UUID;
+import static org.siglus.siglusapi.constant.FieldConstants.DISTRICT_CODE;
 import static org.siglus.siglusapi.constant.FieldConstants.JWT_TOKEN_HEADER_PARAM_NAME;
 import static org.siglus.siglusapi.constant.FieldConstants.JWT_TOKEN_HEADER_PARAM_VALUE;
 import static org.siglus.siglusapi.constant.FieldConstants.METABASE_EXTENSION_URL;
@@ -34,6 +35,7 @@ import java.sql.Date;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -41,15 +43,15 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.openlmis.referencedata.domain.GeographicZone;
 import org.siglus.siglusapi.domain.FacilityLevel;
 import org.siglus.siglusapi.domain.UserReportView;
 import org.siglus.siglusapi.dto.FacilityDto;
-import org.siglus.siglusapi.dto.FacilityGeographicInfoDto;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.dto.MetabaseUrlDto;
 import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.repository.MetabaseDashboardRepository;
-import org.siglus.siglusapi.repository.SiglusFacilityRepository;
+import org.siglus.siglusapi.repository.SiglusGeographicInfoRepository;
 import org.siglus.siglusapi.repository.SiglusUserReportViewRepository;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
@@ -68,9 +70,9 @@ public class MetabaseDashboardService {
   @Autowired
   private MetabaseDashboardRepository metabaseDashboardRepository;
   @Autowired
-  private SiglusFacilityRepository siglusFacilityRepository;
-  @Autowired
   private SiglusUserReportViewRepository siglusUserReportViewRepository;
+  @Autowired
+  private SiglusGeographicInfoRepository siglusGeographicInfoRepository;
 
   @Value("${metabase.secret.key}")
   private String metabaseSecretKey;
@@ -146,6 +148,7 @@ public class MetabaseDashboardService {
     if (reportList.size() >= 1) {
       return paramMap;
     }
+
     Set<UUID> provinceIds = userReportViews.stream()
         .filter(userReportView -> ObjectUtil.equals(userReportView.getDistrictId(), ALL_GEOGRAPHIC_UUID))
         .map(UserReportView::getProvinceId)
@@ -153,16 +156,17 @@ public class MetabaseDashboardService {
     Set<UUID> districtIds = userReportViews.stream()
         .map(UserReportView::getDistrictId)
         .collect(Collectors.toSet());
-
-    List<FacilityGeographicInfoDto> allFacilityGeographicInfos =
-        siglusFacilityRepository.getAllFacilityGeographicInfo();
-    Set<String> facilityCodes = allFacilityGeographicInfos.stream()
-        .filter(infoDto ->
-            provinceIds.contains(infoDto.getProvinceId()) || districtIds.contains(infoDto.getDistrictId()))
-        .map(FacilityGeographicInfoDto::getFacilityCode)
+    Set<String> districtCodesUnderProvince = siglusGeographicInfoRepository.findAllByParentIdIn(provinceIds).stream()
+        .map(GeographicZone::getCode)
+        .collect(Collectors.toSet());
+    Set<String> districtCodesAlone = siglusGeographicInfoRepository.findAllByIdIn(districtIds).stream()
+        .map(GeographicZone::getCode)
         .collect(Collectors.toSet());
 
-    paramMap.put(FacilityLevel.SITE.getMetabaseRequestParamKey(), facilityCodes);
+    Set<String> districtCodes = new HashSet<>();
+    districtCodes.addAll(districtCodesUnderProvince);
+    districtCodes.addAll(districtCodesAlone);
+    paramMap.put(DISTRICT_CODE, districtCodes);
     return paramMap;
   }
 
