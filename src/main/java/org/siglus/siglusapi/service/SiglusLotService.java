@@ -21,7 +21,6 @@ import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_LOT_ID_AND_CODE_SHOULD
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_TRADE_ITEM_IS_EMPTY;
 
 import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -135,7 +134,7 @@ public class SiglusLotService {
                   .build();
           lotDto.setId(lot.getId());
           return lotDto;
-          })
+        })
         .collect(Collectors.toList());
   }
 

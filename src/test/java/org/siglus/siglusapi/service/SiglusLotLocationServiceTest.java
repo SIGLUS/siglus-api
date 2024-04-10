@@ -16,7 +16,6 @@
 package org.siglus.siglusapi.service;
 
 import static com.google.common.collect.Lists.newArrayList;
-import static java.util.Arrays.asList;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyList;
 import static org.mockito.Mockito.when;
@@ -388,8 +387,7 @@ public class SiglusLotLocationServiceTest extends TestCase {
         .expirationDate(LocalDate.of(2022, 3, 22))
         .build();
     LocationLotsDto lotLocation3 = LocationLotsDto.builder().lots(Collections.singletonList(lotsDto)).build();
-    List<LocationLotsDto> expectedLocationLotsDtos = Arrays.asList(lotLocation2, lotLocation1, lotLocation3);
-
+    final List<LocationLotsDto> expectedLocationLotsDtos = Arrays.asList(lotLocation2, lotLocation1, lotLocation3);
     LotDto lotDto2 = new LotDto();
     lotDto2.setId(lotId1);
     lotDto2.setTradeItemId(tradeLineItemId);
