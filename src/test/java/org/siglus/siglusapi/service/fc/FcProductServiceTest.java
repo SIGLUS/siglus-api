@@ -27,6 +27,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -62,6 +63,7 @@ import org.openlmis.referencedata.domain.OrderableDisplayCategory;
 import org.openlmis.referencedata.dto.OrderableChildDto;
 import org.openlmis.referencedata.dto.OrderableDto;
 import org.openlmis.referencedata.dto.ProgramOrderableDto;
+import org.openlmis.referencedata.web.OrderableController;
 import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
 import org.openlmis.stockmanagement.web.Pagination;
@@ -93,6 +95,8 @@ import org.springframework.cache.CacheManager;
 import org.springframework.cache.concurrent.ConcurrentMapCache;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BeanPropertyBindingResult;
 
 @RunWith(MockitoJUnitRunner.class)
 @SuppressWarnings("PMD.TooManyMethods")
@@ -151,6 +155,9 @@ public class FcProductServiceTest {
 
   @Mock
   private ProgramOrderablesRepository programOrderablesRepository;
+
+  @Mock
+  private OrderableController orderableController;
 
   private final Pageable pageable = new PageRequest(0, Integer.MAX_VALUE);
 
@@ -336,11 +343,15 @@ public class FcProductServiceTest {
         new org.siglus.siglusapi.repository.dto.ProgramOrderableDto(orderableId, programId, new BigDecimal(100));
     when(programOrderablesRepository.findAllMaxVersionProgramOrderableDtos()).thenReturn(
         newArrayList(programOrderableDto1));
+    when(orderableController.update(orderableId, orderableDto,
+            new BeanPropertyBindingResult(orderableDto, "OrderableDto")))
+            .thenReturn(ResponseEntity.ok().body(orderableDto));
     // when
     fcProductService.processData(newArrayList(product), START_DATE, LAST_UPDATED_AT);
 
     // then
-    verify(orderableReferenceDataService).update(orderableCaptor.capture());
+    verify(orderableController).update(eq(orderableId), orderableCaptor.capture(),
+            eq(new BeanPropertyBindingResult(orderableDto, "OrderableDto")));
     OrderableDto orderableToUpdate = orderableCaptor.getValue();
     assertEquals(description, orderableToUpdate.getDescription());
     assertEquals(fullDescription, orderableToUpdate.getFullProductName());

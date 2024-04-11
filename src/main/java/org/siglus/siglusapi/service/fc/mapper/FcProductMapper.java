@@ -18,6 +18,7 @@ package org.siglus.siglusapi.service.fc.mapper;
 import static java.util.Collections.emptySet;
 import static java.util.Collections.singleton;
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
+import static org.siglus.siglusapi.constant.FcConstants.STATUS_ACTIVE;
 
 import java.util.Comparator;
 import java.util.List;
@@ -130,6 +131,7 @@ public class FcProductMapper {
     List<AreaDto> areaDtos = product.getAreas();
     areaDtos.sort(Comparator.comparing(AreaDto::getLastUpdatedAt));
     Map<String, AreaDto> timeMapAreaDto = areaDtos.stream()
+        .filter(areaDto -> STATUS_ACTIVE.equals(areaDto.getStatus()))
         .collect(Collectors.toMap(AreaDto::getAreaCode, Function.identity(),
             (value1, value2) -> shouldNotUpdate(value1, value2) ? value1 : value2));
     return timeMapAreaDto.values().stream()
