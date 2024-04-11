@@ -191,7 +191,7 @@ public class SiglusPhysicalInventoryService {
     if (!canPhysicalInventory(physicalInventoryDto.getFacilityId())) {
       throw new ValidationMessageException(new Message(ERROR_NOT_ACCEPTABLE));
     }
-    PhysicalInventoryDto physicalInventory = createNewDraft(physicalInventoryDto);
+    PhysicalInventoryDto physicalInventory = createNewDraft(physicalInventoryDto, isByLocation);
 
     PhysicalInventoryExtension physicalInventoryExtension = buildPhysicalInventoryExtension(
         physicalInventory, false, option);
@@ -960,9 +960,9 @@ public class SiglusPhysicalInventoryService {
     return convertCalculatedStockOnHandByLocationToLineItems(activeSohByLocations, stockCardIdMap, programId);
   }
 
-  private PhysicalInventoryDto createNewDraft(PhysicalInventoryDto physicalInventoryDto) {
+  private PhysicalInventoryDto createNewDraft(PhysicalInventoryDto physicalInventoryDto, boolean isByLocation) {
     List<PhysicalInventoryDto> physicalInventory = getPhysicalInventoryDtosForProductsForOneProgram(
-        physicalInventoryDto.getProgramId(), physicalInventoryDto.getFacilityId(), true, false);
+        physicalInventoryDto.getProgramId(), physicalInventoryDto.getFacilityId(), true, isByLocation);
     if (CollectionUtils.isNotEmpty(physicalInventory)) {
       throw new BusinessDataException(new Message(ERROR_INVENTORY_CONFLICT_DRAFT), null);
     }
@@ -1151,7 +1151,7 @@ public class SiglusPhysicalInventoryService {
           PhysicalInventoryDto copy = new PhysicalInventoryDto();
           BeanUtils.copyProperties(dto, copy);
           copy.setProgramId(supportedVirtualProgram);
-          return createNewDraft(copy);
+          return createNewDraft(copy, LocationManagementOption.BY_LOCATION.equals(locationOption));
         }).collect(Collectors.toList());
     if (CollectionUtils.isNotEmpty(inventories)) {
       inventories.forEach(eachInventory -> {

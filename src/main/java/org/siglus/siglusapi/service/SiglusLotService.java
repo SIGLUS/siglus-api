@@ -115,7 +115,7 @@ public class SiglusLotService {
   }
 
   public List<LotDto> getLotList(List<UUID> lotIds) {
-    List<UUID> nonNullLotIds = lotIds.stream().filter(Objects::nonNull).collect(Collectors.toList());
+    List<UUID> nonNullLotIds = lotIds.stream().filter(Objects::nonNull).distinct().collect(Collectors.toList());
     Iterable<org.openlmis.referencedata.domain.Lot> lots = lotRepository.findAll(nonNullLotIds);
     return StreamSupport.stream(lots.spliterator(), false)
         .map(lot -> {
