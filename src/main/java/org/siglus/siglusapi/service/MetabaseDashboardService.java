@@ -16,7 +16,7 @@
 package org.siglus.siglusapi.service;
 
 import static org.siglus.siglusapi.constant.FieldConstants.ALL_GEOGRAPHIC_UUID;
-import static org.siglus.siglusapi.constant.FieldConstants.DISTRICT_CODE;
+import static org.siglus.siglusapi.constant.FieldConstants.DISTRICT_LOWER_CASE;
 import static org.siglus.siglusapi.constant.FieldConstants.JWT_TOKEN_HEADER_PARAM_NAME;
 import static org.siglus.siglusapi.constant.FieldConstants.JWT_TOKEN_HEADER_PARAM_VALUE;
 import static org.siglus.siglusapi.constant.FieldConstants.METABASE_EXTENSION_URL;
@@ -156,17 +156,17 @@ public class MetabaseDashboardService {
     Set<UUID> districtIds = userReportViews.stream()
         .map(UserReportView::getDistrictId)
         .collect(Collectors.toSet());
-    Set<String> districtCodesUnderProvince = siglusGeographicInfoRepository.findAllByParentIdIn(provinceIds).stream()
-        .map(GeographicZone::getCode)
+    Set<String> districtNamesUnderProvince = siglusGeographicInfoRepository.findAllByParentIdIn(provinceIds).stream()
+        .map(GeographicZone::getName)
         .collect(Collectors.toSet());
-    Set<String> districtCodesAlone = siglusGeographicInfoRepository.findAllByIdIn(districtIds).stream()
-        .map(GeographicZone::getCode)
+    Set<String> districtNamesAlone = siglusGeographicInfoRepository.findAllByIdIn(districtIds).stream()
+        .map(GeographicZone::getName)
         .collect(Collectors.toSet());
 
-    Set<String> districtCodes = new HashSet<>();
-    districtCodes.addAll(districtCodesUnderProvince);
-    districtCodes.addAll(districtCodesAlone);
-    paramMap.put(DISTRICT_CODE, districtCodes);
+    Set<String> districtNames = new HashSet<>();
+    districtNames.addAll(districtNamesUnderProvince);
+    districtNames.addAll(districtNamesAlone);
+    paramMap.put(DISTRICT_LOWER_CASE, districtNames);
     return paramMap;
   }
 

@@ -214,7 +214,7 @@ public class MetabaseDashboardServiceTest {
     HashSet<UUID> districtIds = new HashSet<>();
     districtIds.add(districtId);
     GeographicZone geographicZone = new GeographicZone();
-    geographicZone.setCode("code");
+    geographicZone.setName("name");
     Set<GeographicZone> geographicZones = new HashSet<>();
     geographicZones.add(geographicZone);
     when(siglusGeographicInfoRepository.findAllByIdIn(districtIds)).thenReturn(geographicZones);
@@ -227,7 +227,7 @@ public class MetabaseDashboardServiceTest {
     // when
     String payload = siglusMetabaseDashboardService.getPayloadByDashboardName(anyString());
     // then
-    assertEquals(String.format("{\"resource\":{\"dashboard\":%d},\"params\":{%s}}", 1, "\"district_code\":[\"code\"]"),
+    assertEquals(String.format("{\"resource\":{\"dashboard\":%d},\"params\":{%s}}", 1, "\"district\":[\"name\"]"),
         payload);
   }
 

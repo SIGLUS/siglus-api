@@ -103,8 +103,8 @@ public class FieldConstants {
   public static final String METABASE_PART_URL = "/embed/dashboard/";
   public static final String METABASE_EXTENSION_URL =
       "#bordered=false&titled=true"
-          + "&hide_parameters=facility_code,district_facility_code,province_facility_code,district_code";
-  public static final String DISTRICT_CODE = "district_code";
+          + "&hide_parameters=facility_code,district_facility_code,province_facility_code,district";
+  public static final String DISTRICT_LOWER_CASE = "district";
   public static final String JWT_TOKEN_HEADER_PARAM_NAME = "typ";
   public static final String JWT_TOKEN_HEADER_PARAM_VALUE = "JWT";
   public static final String UNPACK_KIT_TYPE = "UNPACK_KIT";
