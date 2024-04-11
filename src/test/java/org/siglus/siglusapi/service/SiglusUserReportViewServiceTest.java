@@ -120,25 +120,6 @@ public class SiglusUserReportViewServiceTest {
     siglusUserReportViewService.getReportViewGeographicInfo(userId);
   }
 
-  @Test(expected = BusinessDataException.class)
-  public void shouldThrowErrorWhenUserNotReportViewer() {
-    // given
-    UUID currentUserId = UUID.randomUUID();
-    when(siglusAuthenticationHelper.getCurrentUserId()).thenReturn(Optional.of(currentUserId));
-    when(siglusAuthenticationHelper.isTheCurrentUserAdmin()).thenReturn(true);
-    UUID userId = UUID.randomUUID();
-    UserDto userDto = new UserDto();
-    userDto.setId(userId);
-    RoleAssignmentDto roleAssignmentDto = new RoleAssignmentDto();
-    roleAssignmentDto.setRoleId(UUID.randomUUID());
-    Set<RoleAssignmentDto> roleAssignmentDtos = new HashSet<>();
-    roleAssignmentDtos.add(roleAssignmentDto);
-    userDto.setRoleAssignments(roleAssignmentDtos);
-    when(userService.findOne(userId)).thenReturn(userDto);
-    // when
-    siglusUserReportViewService.getReportViewGeographicInfo(userId);
-  }
-
   @Test
   public void shouldReturnGeographicInfoDtoWhenUserCheckIsRight() {
     // given

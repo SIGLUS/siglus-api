@@ -33,7 +33,6 @@ import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.openlmis.referencedata.domain.GeographicZone;
-import org.openlmis.requisition.dto.RoleAssignmentDto;
 import org.siglus.siglusapi.domain.UserReportView;
 import org.siglus.siglusapi.dto.GeographicInfoDto;
 import org.siglus.siglusapi.dto.Message;
@@ -105,11 +104,6 @@ public class SiglusUserReportViewService {
     UserDto userDto = userService.findOne(userId);
     if (ObjectUtils.isEmpty(userDto)) {
       throw new BusinessDataException(new Message(ERROR_USER_NOT_FOUND));
-    }
-    Set<UUID> roleIds = userDto.getRoleAssignments().stream().map(RoleAssignmentDto::getRoleId)
-        .collect(Collectors.toSet());
-    if (!roleIds.contains(UUID.fromString(roleReportViewerId))) {
-      throw new BusinessDataException(new Message(ERROR_USER_NOT_REPORT_VIEWER_USER));
     }
   }
 
