@@ -21,12 +21,15 @@ import static org.springframework.http.HttpStatus.NO_CONTENT;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
+
 import lombok.extern.slf4j.Slf4j;
 import org.openlmis.stockmanagement.dto.PhysicalInventoryDto;
 import org.siglus.siglusapi.dto.DraftListDto;
 import org.siglus.siglusapi.dto.PhysicalInventorySubDraftDto;
 import org.siglus.siglusapi.dto.SiglusPhysicalInventoryDto;
 import org.siglus.siglusapi.dto.enums.PhysicalInventorySubDraftEnum;
+import org.siglus.siglusapi.repository.dto.SiglusPhysicalInventoryBriefDto;
 import org.siglus.siglusapi.service.SiglusPhysicalInventoryService;
 import org.siglus.siglusapi.service.SiglusPhysicalInventorySubDraftService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -72,12 +75,17 @@ public class SiglusPhysicalInventoryWithLocationController {
       @RequestParam UUID facility,
       @RequestParam(required = false) Boolean isDraft,
       @RequestParam(required = false) boolean isByLocation) {
+    List<SiglusPhysicalInventoryBriefDto> physicalInventories;
     if (ALL_PRODUCTS_PROGRAM_ID.equals(program)) {
-      return siglusPhysicalInventoryService
-          .getLocationPhysicalInventoryDtosForAllPrograms(facility, isDraft, isByLocation);
+      physicalInventories = siglusPhysicalInventoryService
+          .getLocationPhysicalInventoryDtosForAllPrograms(facility, isDraft);
+    } else {
+      physicalInventories = siglusPhysicalInventoryService
+          .getLocationPhysicalInventoryDtosForProductsForOneProgram(program, facility, isDraft, isByLocation);
     }
-    return siglusPhysicalInventoryService
-        .getLocationPhysicalInventoryDtosForProductsForOneProgram(program, facility, isDraft, isByLocation);
+    return physicalInventories.stream()
+        .map(SiglusPhysicalInventoryBriefDto::toSiglusPhysicalInventoryDto)
+        .collect(Collectors.toList());
   }
 
   @GetMapping("/subDraft")

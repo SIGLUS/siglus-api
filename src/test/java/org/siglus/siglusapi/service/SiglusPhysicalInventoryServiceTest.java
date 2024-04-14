@@ -109,6 +109,8 @@ import org.siglus.siglusapi.repository.PhysicalInventoryEmptyLocationLineItemRep
 import org.siglus.siglusapi.repository.PhysicalInventoryExtensionRepository;
 import org.siglus.siglusapi.repository.PhysicalInventoryLineItemsExtensionRepository;
 import org.siglus.siglusapi.repository.PhysicalInventorySubDraftRepository;
+import org.siglus.siglusapi.repository.SiglusPhysicalInventoryRepository;
+import org.siglus.siglusapi.repository.dto.SiglusPhysicalInventoryBriefDto;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.util.SupportedProgramsHelper;
@@ -188,6 +190,9 @@ public class SiglusPhysicalInventoryServiceTest {
 
   @Mock
   private SiglusProgramService siglusProgramService;
+
+  @Mock
+  private SiglusPhysicalInventoryRepository siglusPhysicalInventoryRepository;
 
   private final UUID facilityId = UUID.randomUUID();
 
@@ -1226,15 +1231,10 @@ public class SiglusPhysicalInventoryServiceTest {
   @Test
   public void shouldGetConflictWhenClickAllProductWhileOneProgramHaveDraft() {
     // given
-    PhysicalInventory physicalInventory = mockPhysicalInventory();
-    programIsDraft.add(physicalInventory);
-    PhysicalInventoryExtension physicalInventoryExtension = mockPhysicalInventoryExtensionSingleProgram();
     HashSet<UUID> supportedPrograms = Sets.newHashSet(programIdOne);
     when(supportedProgramsHelper.findHomeFacilitySupportedProgramIds()).thenReturn(supportedPrograms);
-    when(physicalInventoriesRepository.findByProgramIdAndFacilityIdAndIsDraft(
-        programIdOne, facilityId, true)).thenReturn(programIsDraft);
-    when(physicalInventoryExtensionRepository.findByPhysicalInventoryId(physicalInventoryIdOne))
-        .thenReturn(Lists.newArrayList(physicalInventoryExtension));
+    when(siglusPhysicalInventoryRepository.queryForOneProgram(facilityId, programIdOne, true))
+        .thenReturn(newArrayList(new SiglusPhysicalInventoryBriefDto()));
 
     // when
     PhysicalInventoryValidationDto physicalInventoryValidationDto = siglusPhysicalInventoryService
@@ -1267,16 +1267,11 @@ public class SiglusPhysicalInventoryServiceTest {
   @Test
   public void shouldGetConflictWhenClickOneProgramWhileAllProductHaveDraft() {
     // given
-    PhysicalInventory physicalInventory = mockPhysicalInventory();
-    programIsDraft.add(physicalInventory);
     HashSet<UUID> supportedPrograms = Sets.newHashSet(programIdOne);
-    PhysicalInventoryExtension physicalInventoryExtension = mockPhysicalInventoryExtensionAllProduct();
     when(supportedProgramsHelper.findHomeFacilitySupportedProgramIds()).thenReturn(
         supportedPrograms);
-    when(physicalInventoriesRepository.findByProgramIdAndFacilityIdAndIsDraft(
-        programIdOne, facilityId, true)).thenReturn(programIsDraft);
-    when(physicalInventoryExtensionRepository.findByPhysicalInventoryId(physicalInventoryIdOne))
-        .thenReturn(Lists.newArrayList(physicalInventoryExtension));
+    when(siglusPhysicalInventoryRepository.queryForAllProgram(facilityId, true))
+        .thenReturn(newArrayList(new SiglusPhysicalInventoryBriefDto()));
 
     // when
     PhysicalInventoryValidationDto physicalInventoryValidationDto = siglusPhysicalInventoryService
