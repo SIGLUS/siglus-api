@@ -21,7 +21,6 @@ import static org.springframework.http.HttpStatus.NO_CONTENT;
 
 import java.util.List;
 import java.util.UUID;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.openlmis.stockmanagement.dto.PhysicalInventoryDto;
 import org.siglus.siglusapi.dto.DraftListDto;
@@ -30,6 +29,7 @@ import org.siglus.siglusapi.dto.SiglusPhysicalInventoryDto;
 import org.siglus.siglusapi.dto.enums.PhysicalInventorySubDraftEnum;
 import org.siglus.siglusapi.service.SiglusPhysicalInventoryService;
 import org.siglus.siglusapi.service.SiglusPhysicalInventorySubDraftService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -42,12 +42,12 @@ import org.springframework.web.bind.annotation.RestController;
 
 @Slf4j
 @RestController
-@RequiredArgsConstructor
 @RequestMapping("/api/siglusapi/location/physicalInventories")
 public class SiglusPhysicalInventoryWithLocationController {
-
-  private final SiglusPhysicalInventoryService siglusPhysicalInventoryService;
-  private final SiglusPhysicalInventorySubDraftService siglusPhysicalInventorySubDraftService;
+  @Autowired
+  private SiglusPhysicalInventoryService siglusPhysicalInventoryService;
+  @Autowired
+  private SiglusPhysicalInventorySubDraftService siglusPhysicalInventorySubDraftService;
 
 
   @PostMapping()

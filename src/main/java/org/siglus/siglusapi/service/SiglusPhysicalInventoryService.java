@@ -40,6 +40,7 @@ import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_INVENTORY_CONFLICT_DRA
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_NOT_ACCEPTABLE;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_PERMISSION_NOT_SUPPORTED;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_SPLIT_NUM_TOO_LARGE;
+import static org.siglus.siglusapi.util.ComparorUtil.distinctByKey;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
@@ -278,6 +279,8 @@ public class SiglusPhysicalInventoryService {
         subDraftIds.stream().map(this::getPhysicalInventoryBySubDraftId).collect(Collectors.toList());
     List<PhysicalInventoryLineItemDto> lineItemDtos = physicalInventoryDtos.stream()
         .flatMap(dto -> dto.getLineItems().stream())
+        .filter(distinctByKey(dto -> dto.getLocationCode() == null
+            ? dto.getLotId().toString() : dto.getLocationCode() + dto.getLotId()))
         .collect(Collectors.toList());
     SiglusPhysicalInventoryDto siglusPhysicalInventoryDto = fillLocationOption(physicalInventoryDtos.get(0));
 
