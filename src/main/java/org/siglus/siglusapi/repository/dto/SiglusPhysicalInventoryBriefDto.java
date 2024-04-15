@@ -53,7 +53,7 @@ import org.siglus.siglusapi.dto.SiglusPhysicalInventoryDto;
             + "from stockmanagement.physical_inventories pi "
             + "left join siglusintegration.physical_inventories_extension pie "
             + "       on pi.id  = pie.physicalinventoryid "
-            + "where pi.facilityid = :facilityId and pi.isdraft = :isDraft and pie.category != 'ALL' "
+            + "where pi.facilityid = :facilityId and pi.isdraft = :isDraft and pie.category = 'SINGLE' "
             + "      and pi.programid = :programId "
             + ";",
         resultSetMapping = "PhysicalInventory.SiglusPhysicalInventoryBriefDto")

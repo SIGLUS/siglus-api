@@ -214,21 +214,14 @@ public class SiglusPhysicalInventoryService {
   }
 
   public DraftListDto getSubDraftListForAllPrograms(UUID facility, Boolean isDraft) {
-    Set<UUID> supportedPrograms = getSupportedPrograms();
-    List<PhysicalInventorySubDraft> allProductSubDraftList = new LinkedList<>();
-    supportedPrograms.forEach(programId -> {
-      List<PhysicalInventoryDto> physicalInventoryDtoList = getPhysicalInventoryDtos(programId, facility, isDraft);
-      List<UUID> physicalInventoryIds = physicalInventoryDtoList
-          .stream()
-          .map(PhysicalInventoryDto::getId)
-          .collect(Collectors.toList());
-      List<PhysicalInventorySubDraft> subDraftList = physicalInventorySubDraftRepository.findByPhysicalInventoryIdIn(
-          physicalInventoryIds);
-      allProductSubDraftList.addAll(subDraftList);
-    });
-    if (CollectionUtils.isEmpty(allProductSubDraftList)) {
+    List<UUID> physicalInventoryIds =
+        siglusPhysicalInventoryRepository.queryForAllProgram(facility, isDraft)
+            .stream().map(SiglusPhysicalInventoryBriefDto::getId).collect(Collectors.toList());
+    if (CollectionUtils.isEmpty(physicalInventoryIds)) {
       throw new IllegalArgumentException("there is no subDraft for any record");
     }
+    List<PhysicalInventorySubDraft> allProductSubDraftList =
+        physicalInventorySubDraftRepository.findByPhysicalInventoryIdIn(physicalInventoryIds);
     return DraftListDto
         .builder()
         .physicalInventoryId(ALL_PRODUCTS_UUID)
@@ -350,9 +343,11 @@ public class SiglusPhysicalInventoryService {
   }
 
   public DraftListDto getSubDraftListForOneProgram(UUID program, UUID facility, Boolean isDraft) {
-    List<PhysicalInventoryDto> physicalInventoryDtoList = getPhysicalInventoryDtos(program, facility, isDraft);
-    if (CollectionUtils.isNotEmpty(physicalInventoryDtoList)) {
-      UUID physicalInventoryId = physicalInventoryDtoList.get(0).getId();
+    List<UUID> physicalInventoryIds =
+        siglusPhysicalInventoryRepository.queryForOneProgram(facility, program, isDraft)
+            .stream().map(SiglusPhysicalInventoryBriefDto::getId).collect(Collectors.toList());
+    if (CollectionUtils.isNotEmpty(physicalInventoryIds)) {
+      UUID physicalInventoryId = physicalInventoryIds.get(0);
       List<PhysicalInventorySubDraft> physicalInventorySubDraftList = physicalInventorySubDraftRepository
           .findByPhysicalInventoryId(physicalInventoryId);
       if (CollectionUtils.isEmpty(physicalInventorySubDraftList)) {

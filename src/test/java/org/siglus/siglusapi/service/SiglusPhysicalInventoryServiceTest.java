@@ -719,15 +719,15 @@ public class SiglusPhysicalInventoryServiceTest {
   public void shouldGetSubDraftListWhenThereIsSubDraft() {
     // given
     doNothing().when(physicalInventoryService).checkPermission(programIdOne, facilityId);
-    when(inventoryController
-        .searchPhysicalInventory(programIdOne, facilityId, true))
-        .thenReturn(makeResponseEntity(Collections.singletonList(PhysicalInventoryDto
+    when(siglusPhysicalInventoryRepository
+        .queryForOneProgram(facilityId, programIdOne, true))
+        .thenReturn(Collections.singletonList(SiglusPhysicalInventoryBriefDto
             .builder()
             .programId(programIdOne)
             .facilityId(facilityId)
             .isDraft(true)
             .id(physicalInventoryIdOne)
-            .build())));
+            .build()));
 
     PhysicalInventorySubDraft physicalInventorySubDraft = PhysicalInventorySubDraft
         .builder()
@@ -765,7 +765,7 @@ public class SiglusPhysicalInventoryServiceTest {
   @Test
   public void shouldGetSubDraftListInOneProgramWhenSubDraftExists() {
     // given
-    PhysicalInventoryDto physicalInventoryDto = PhysicalInventoryDto.builder().id(id).build();
+    SiglusPhysicalInventoryBriefDto briefDto = SiglusPhysicalInventoryBriefDto.builder().id(id).build();
     PhysicalInventorySubDraft physicalInventorySubDraft = PhysicalInventorySubDraft
         .builder()
         .num(1)
@@ -775,9 +775,9 @@ public class SiglusPhysicalInventoryServiceTest {
     List<SubDraftDto> expectedSubDraftDtoList = Collections.singletonList(
         SubDraftDto.builder().groupNum(1).status(PhysicalInventorySubDraftEnum.NOT_YET_STARTED)
             .subDraftId(Collections.singletonList(subDraftIdOne)).build());
-    when(inventoryController
-        .searchPhysicalInventory(programId, facilityId, true))
-        .thenReturn(makeResponseEntity(Collections.singletonList(physicalInventoryDto)));
+    when(siglusPhysicalInventoryRepository
+        .queryForOneProgram(facilityId, programId, true))
+        .thenReturn(Collections.singletonList(briefDto));
     DraftListDto expectedDraftList = DraftListDto.builder()
         .physicalInventoryId(id)
         .subDrafts(expectedSubDraftDtoList)
@@ -1206,9 +1206,6 @@ public class SiglusPhysicalInventoryServiceTest {
         .findHomeFacilitySupportedProgramIds()).thenReturn(supportedPrograms);
     doNothing().when(physicalInventoryService).checkPermission(programIdOne, facilityId);
     doNothing().when(physicalInventoryService).checkPermission(programIdTwo, facilityId);
-    when(inventoryController.searchPhysicalInventory(any(), any(),
-        anyBoolean()))
-        .thenReturn(makeResponseEntity(Collections.emptyList()));
 
     // when
     siglusPhysicalInventoryService.getSubDraftListForAllPrograms(facilityId, true);
