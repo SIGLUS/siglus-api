@@ -25,6 +25,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.openlmis.stockmanagement.dto.PhysicalInventoryDto;
 import org.siglus.siglusapi.dto.PhysicalInventorySubDraftDto;
+import org.siglus.siglusapi.dto.SiglusPhysicalInventoryHistoryDto;
 import org.siglus.siglusapi.dto.enums.PhysicalInventorySubDraftEnum;
 import org.siglus.siglusapi.service.SiglusPhysicalInventoryService;
 import org.siglus.siglusapi.service.SiglusPhysicalInventorySubDraftService;
@@ -87,4 +88,8 @@ public class SiglusPhysicalInventoryWithoutLocationController {
         PhysicalInventorySubDraftEnum.SUBMITTED, false);
   }
 
+  @GetMapping("/histories")
+  public List<SiglusPhysicalInventoryHistoryDto> searchPhysicalInventoryHistories() {
+    return siglusPhysicalInventoryService.searchPhysicalInventoryHistories();
+  }
 }

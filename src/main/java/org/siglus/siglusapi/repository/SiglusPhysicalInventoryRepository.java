@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.UUID;
 
 import org.openlmis.stockmanagement.domain.physicalinventory.PhysicalInventory;
+import org.siglus.siglusapi.dto.SiglusPhysicalInventoryHistoryDto;
 import org.siglus.siglusapi.repository.dto.SiglusPhysicalInventoryBriefDto;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.PagingAndSortingRepository;
@@ -33,4 +34,7 @@ public interface SiglusPhysicalInventoryRepository extends PagingAndSortingRepos
   @Query(name = "PhysicalInventory.queryForOneProgram", nativeQuery = true)
   List<SiglusPhysicalInventoryBriefDto> queryForOneProgram(
       @Param("facilityId") UUID facilityId, @Param("programId") UUID programId, @Param("isDraft") boolean isDraft);
+
+  @Query(name = "PhysicalInventoryHistory.queryPhysicalInventoryHistory", nativeQuery = true)
+  List<SiglusPhysicalInventoryHistoryDto> queryPhysicalInventoryHistory(@Param("facilityId") UUID facilityId);
 }

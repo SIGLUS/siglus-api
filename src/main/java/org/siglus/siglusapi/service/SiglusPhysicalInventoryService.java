@@ -92,7 +92,9 @@ import org.siglus.siglusapi.dto.PhysicalInventoryLineItemExtensionDto;
 import org.siglus.siglusapi.dto.PhysicalInventorySubDraftLineItemsExtensionDto;
 import org.siglus.siglusapi.dto.PhysicalInventoryValidationDto;
 import org.siglus.siglusapi.dto.SiglusPhysicalInventoryDto;
+import org.siglus.siglusapi.dto.SiglusPhysicalInventoryHistoryDto;
 import org.siglus.siglusapi.dto.SubDraftDto;
+import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.dto.enums.LocationManagementOption;
 import org.siglus.siglusapi.dto.enums.PhysicalInventorySubDraftEnum;
 import org.siglus.siglusapi.exception.BusinessDataException;
@@ -548,29 +550,29 @@ public class SiglusPhysicalInventoryService {
 
   public PhysicalInventoryDto findLatestPhysicalInventory(UUID facilityId, UUID programId) {
     UUID mmcProgramId = siglusProgramService.getProgramByCode(MMC_PROGRAM_CODE)
-            .orElseThrow(() -> new NotFoundException("MMC program not found"))
-            .getId();
+        .orElseThrow(() -> new NotFoundException("MMC program not found"))
+        .getId();
     PhysicalInventory latest = physicalInventoriesRepository
-            .findTopByProgramIdAndFacilityIdAndIsDraftOrderByOccurredDateDesc(programId, facilityId, false);
+        .findTopByProgramIdAndFacilityIdAndIsDraftOrderByOccurredDateDesc(programId, facilityId, false);
     if (mmcProgramId.equals(programId)) {
       UUID viaProgramId = siglusProgramService.getProgramByCode(VIA_PROGRAM_CODE)
-              .orElseThrow(() -> new NotFoundException("VIA program not found"))
-              .getId();
+          .orElseThrow(() -> new NotFoundException("VIA program not found"))
+          .getId();
 
       if (latest == null) {
         return findLatestPhysicalInventory(facilityId, viaProgramId);
       } else {
         PhysicalInventory latestForVia = physicalInventoriesRepository
-                .findTopByProgramIdAndFacilityIdAndIsDraftOrderByOccurredDateDesc(viaProgramId, facilityId, false);
+            .findTopByProgramIdAndFacilityIdAndIsDraftOrderByOccurredDateDesc(viaProgramId, facilityId, false);
         if (latestForVia != null && latestForVia.getOccurredDate().isAfter(latest.getOccurredDate())) {
           return PhysicalInventoryDto.builder()
-                  .programId(latestForVia.getProgramId())
-                  .facilityId(latestForVia.getFacilityId())
-                  .isDraft(latestForVia.getIsDraft())
-                  .occurredDate(latestForVia.getOccurredDate())
-                  .documentNumber(latestForVia.getDocumentNumber())
-                  .signature(latestForVia.getSignature())
-                  .build();
+              .programId(latestForVia.getProgramId())
+              .facilityId(latestForVia.getFacilityId())
+              .isDraft(latestForVia.getIsDraft())
+              .occurredDate(latestForVia.getOccurredDate())
+              .documentNumber(latestForVia.getDocumentNumber())
+              .signature(latestForVia.getSignature())
+              .build();
         }
       }
 
@@ -580,13 +582,13 @@ public class SiglusPhysicalInventoryService {
       return null;
     }
     return PhysicalInventoryDto.builder()
-            .programId(latest.getProgramId())
-            .facilityId(latest.getFacilityId())
-            .isDraft(latest.getIsDraft())
-            .occurredDate(latest.getOccurredDate())
-            .documentNumber(latest.getDocumentNumber())
-            .signature(latest.getSignature())
-            .build();
+        .programId(latest.getProgramId())
+        .facilityId(latest.getFacilityId())
+        .isDraft(latest.getIsDraft())
+        .occurredDate(latest.getOccurredDate())
+        .documentNumber(latest.getDocumentNumber())
+        .signature(latest.getSignature())
+        .build();
   }
 
   public InitialInventoryFieldDto canInitialInventory(UUID facility) {
@@ -916,7 +918,7 @@ public class SiglusPhysicalInventoryService {
         parameters, Collections.emptyList(), pageable, false).getContent();
     if (MMC_PROGRAM_CODE.equals(programCode)) {
       Set<UUID> approvedMmcProductIds = requisitionService.getAllApprovedProducts(physicalInventoryDto.getFacilityId(),
-          physicalInventoryDto.getProgramId()).stream()
+              physicalInventoryDto.getProgramId()).stream()
           .map(approvedProductDto -> approvedProductDto.getOrderable().getId())
           .collect(Collectors.toSet());
       summaryV2Dtos = summaryV2Dtos.stream()
@@ -964,11 +966,11 @@ public class SiglusPhysicalInventoryService {
   private Set<UUID> getSupportedPrograms() {
     Set<UUID> supportedPrograms = supportedProgramsHelper.findHomeFacilitySupportedProgramIds();
     UUID viaProgramId = siglusProgramService.getProgramByCode(VIA_PROGRAM_CODE)
-            .orElseThrow(() -> new NotFoundException("VIA program not found"))
-            .getId();
+        .orElseThrow(() -> new NotFoundException("VIA program not found"))
+        .getId();
     UUID mmcProgramId = siglusProgramService.getProgramByCode(MMC_PROGRAM_CODE)
-            .orElseThrow(() -> new NotFoundException("MMC program not found"))
-            .getId();
+        .orElseThrow(() -> new NotFoundException("MMC program not found"))
+        .getId();
     if (supportedPrograms.contains(viaProgramId)) {
       supportedPrograms.remove(mmcProgramId);
     }
@@ -1403,5 +1405,13 @@ public class SiglusPhysicalInventoryService {
         .canStartInventory(canStartInventory)
         .containDraftProgramsList(conflictProgramIdList)
         .build();
+  }
+
+  public List<SiglusPhysicalInventoryHistoryDto> searchPhysicalInventoryHistories() {
+    UserDto currentUser = authenticationHelper.getCurrentUser();
+    if (ObjectUtils.isEmpty(currentUser) || ObjectUtils.isEmpty(currentUser.getHomeFacilityId())) {
+      return new ArrayList<>();
+    }
+    return siglusPhysicalInventoryRepository.queryPhysicalInventoryHistory(currentUser.getHomeFacilityId());
   }
 }
