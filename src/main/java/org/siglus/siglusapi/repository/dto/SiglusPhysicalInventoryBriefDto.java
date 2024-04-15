@@ -31,6 +31,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.siglus.siglusapi.dto.SiglusPhysicalInventoryDto;
+import org.siglus.siglusapi.dto.enums.LocationManagementOption;
 
 @NamedNativeQueries({
     @NamedNativeQuery(
@@ -96,6 +97,10 @@ public class SiglusPhysicalInventoryBriefDto {
   private String category;
   private String locationOption;
 
+  public LocationManagementOption getLocationOption() {
+    return LocationManagementOption.valueOf(locationOption);
+  }
+
   public SiglusPhysicalInventoryDto toSiglusPhysicalInventoryDto() {
     SiglusPhysicalInventoryDto dto = new SiglusPhysicalInventoryDto();
     dto.setId(id);
@@ -105,7 +110,7 @@ public class SiglusPhysicalInventoryBriefDto {
     dto.setSignature(signature);
     dto.setDocumentNumber(documentNumber);
     dto.setIsDraft(isDraft);
-    dto.setLocationOption(locationOption);
+    dto.setLocationOption(getLocationOption().getValue());
     return dto;
   }
 }
