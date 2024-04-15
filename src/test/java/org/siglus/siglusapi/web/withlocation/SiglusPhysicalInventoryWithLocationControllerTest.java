@@ -59,11 +59,9 @@ public class SiglusPhysicalInventoryWithLocationControllerTest {
   public void shouldCallGetForAllProductsWhenSearchIfProgramIsAllProducts() {
     // when
     UUID programId = UUID.randomUUID();
-    controller.searchPhysicalInventories(programId, facilityId,
-        isDraft, isByLocation);
+    controller.searchPhysicalInventories(programId, facilityId, isDraft, isByLocation);
     // then
-    verify(siglusPhysicalInventoryService).getLocationPhysicalInventoryDtosForProductsForOneProgram(programId,
-        facilityId, isDraft, isByLocation);
+    verify(siglusPhysicalInventoryService).getPhysicalInventoryBriefDtos(facilityId, programId, isDraft);
   }
 
   @Test

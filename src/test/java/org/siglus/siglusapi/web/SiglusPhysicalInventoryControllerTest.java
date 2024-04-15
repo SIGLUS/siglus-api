@@ -56,15 +56,14 @@ public class SiglusPhysicalInventoryControllerTest {
   public void shouldCallGetForAllProductsWhenSearchIfProgramIsAllProducts() {
     controller.searchPhysicalInventories(ALL_PRODUCTS_PROGRAM_ID, facilityId, isDraft);
 
-    verify(siglusPhysicalInventoryService).getPhysicalInventoryDtosForAllPrograms(facilityId, isDraft, false);
+    verify(siglusPhysicalInventoryService).getPhysicalInventoryBriefDtos(facilityId, ALL_PRODUCTS_PROGRAM_ID, isDraft);
   }
 
   @Test
   public void shouldCallGetPhysicalInventoryDtosWhenSearchIfProgramIsNotAllProducts() {
     controller.searchPhysicalInventories(programId, facilityId, isDraft);
 
-    verify(siglusPhysicalInventoryService)
-        .getPhysicalInventoryDtosForProductsForOneProgram(programId, facilityId, isDraft, false);
+    verify(siglusPhysicalInventoryService).getPhysicalInventoryBriefDtos(facilityId, programId, isDraft);
   }
 
   @Test

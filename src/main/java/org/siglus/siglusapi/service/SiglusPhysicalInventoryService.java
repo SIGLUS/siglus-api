@@ -61,6 +61,7 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import javax.validation.ValidationException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -189,6 +190,10 @@ public class SiglusPhysicalInventoryService {
   @Transactional
   public PhysicalInventoryDto createAndSpiltNewDraftForOneProgram(PhysicalInventoryDto physicalInventoryDto,
       Integer splitNum, String optionString, boolean isByLocation) {
+    if (ObjectUtils.isEmpty(physicalInventoryDto.getFacilityId())
+        || ObjectUtils.isEmpty(physicalInventoryDto.getProgramId())) {
+      throw new ValidationException("Incorrect facility id or program id");
+    }
     LocationManagementOption option = null;
     if (StringUtils.isNotEmpty(optionString)) {
       option = LocationManagementOption.fromString(optionString);
@@ -489,14 +494,15 @@ public class SiglusPhysicalInventoryService {
     return Collections.emptyList();
   }
 
-  public List<SiglusPhysicalInventoryBriefDto> getLocationPhysicalInventoryDtosForProductsForOneProgram(
-      UUID programId, UUID facilityId, Boolean isDraft, boolean isByLocation) {
-    return siglusPhysicalInventoryRepository.queryForOneProgram(facilityId, programId, isDraft);
-  }
-
-  public List<SiglusPhysicalInventoryBriefDto> getLocationPhysicalInventoryDtosForAllPrograms(
-      UUID facilityId, Boolean isDraft) {
-    return siglusPhysicalInventoryRepository.queryForAllProgram(facilityId, isDraft);
+  public List<SiglusPhysicalInventoryBriefDto> getPhysicalInventoryBriefDtos(
+      UUID facilityId, UUID programId, Boolean isDraft) {
+    List<SiglusPhysicalInventoryBriefDto> physicalInventories;
+    if (ALL_PRODUCTS_PROGRAM_ID.equals(programId)) {
+      physicalInventories = siglusPhysicalInventoryRepository.queryForAllProgram(facilityId, isDraft);
+    } else {
+      physicalInventories = siglusPhysicalInventoryRepository.queryForOneProgram(facilityId, programId, isDraft);
+    }
+    return physicalInventories;
   }
 
   public List<PhysicalInventoryDto> getPhysicalInventoryDtosForAllPrograms(UUID facilityId, Boolean isDraft,

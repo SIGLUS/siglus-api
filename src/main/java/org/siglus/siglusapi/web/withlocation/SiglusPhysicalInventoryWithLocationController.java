@@ -75,15 +75,8 @@ public class SiglusPhysicalInventoryWithLocationController {
       @RequestParam UUID facility,
       @RequestParam(required = false) Boolean isDraft,
       @RequestParam(required = false) boolean isByLocation) {
-    List<SiglusPhysicalInventoryBriefDto> physicalInventories;
-    if (ALL_PRODUCTS_PROGRAM_ID.equals(program)) {
-      physicalInventories = siglusPhysicalInventoryService
-          .getLocationPhysicalInventoryDtosForAllPrograms(facility, isDraft);
-    } else {
-      physicalInventories = siglusPhysicalInventoryService
-          .getLocationPhysicalInventoryDtosForProductsForOneProgram(program, facility, isDraft, isByLocation);
-    }
-    return physicalInventories.stream()
+    return siglusPhysicalInventoryService.getPhysicalInventoryBriefDtos(facility, program, isDraft)
+        .stream()
         .map(SiglusPhysicalInventoryBriefDto::toSiglusPhysicalInventoryDto)
         .collect(Collectors.toList());
   }
