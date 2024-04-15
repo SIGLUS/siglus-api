@@ -23,6 +23,7 @@ import static org.siglus.siglusapi.constant.CacheConstants.SIGLUS_APPROVED_PRODU
 import static org.siglus.siglusapi.constant.CacheConstants.SIGLUS_APPROVED_PRODUCTS_BY_ORDERABLES;
 import static org.siglus.siglusapi.constant.CacheConstants.SIGLUS_ORDERABLES;
 import static org.siglus.siglusapi.constant.FcConstants.PRODUCT_API;
+import static org.siglus.siglusapi.constant.FcConstants.STATUS_ACTIVE;
 import static org.siglus.siglusapi.constant.FieldConstants.ACTIVE;
 import static org.siglus.siglusapi.constant.FieldConstants.IS_BASIC;
 import static org.siglus.siglusapi.constant.FieldConstants.IS_TRACER;
@@ -53,6 +54,7 @@ import org.joda.money.Money;
 import org.openlmis.referencedata.domain.Dispensable;
 import org.openlmis.referencedata.dto.OrderableDto;
 import org.openlmis.referencedata.dto.ProgramOrderableDto;
+import org.openlmis.referencedata.web.OrderableController;
 import org.openlmis.requisition.dto.BaseDto;
 import org.openlmis.requisition.dto.BasicProgramDto;
 import org.openlmis.requisition.dto.ProgramDto;
@@ -89,6 +91,7 @@ import org.siglus.siglusapi.util.FcUtil;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Service;
+import org.springframework.validation.BeanPropertyBindingResult;
 
 @Service
 @Slf4j
@@ -112,6 +115,7 @@ public class FcProductService implements ProcessDataService {
   private final CustomProductsRegimensRepository customProductsRegimensRepository;
 
   private final CacheManager cacheManager;
+  private final OrderableController orderableController;
 
   private static final String SYSTEM_DEFAULT_MANUFACTURER = "Mozambique";
 
@@ -247,6 +251,10 @@ public class FcProductService implements ProcessDataService {
         break;
       }
     }
+
+    if (CollectionUtils.isEmpty(extensions) && CollectionUtils.isNotEmpty(extensionList)) {
+      programOrderablesExtensionRepository.delete(extensionList);
+    }
   }
 
   Set<ProgramOrderablesExtension> getProgramOrderablesExtensionsForOneProduct(
@@ -256,6 +264,8 @@ public class FcProductService implements ProcessDataService {
     Set<ProgramOrderablesExtension> extensions = newHashSet();
     product
         .getAreas()
+        .stream()
+        .filter(areaDto -> STATUS_ACTIVE.equals(areaDto.getStatus()))
         .forEach(
             areaDto -> {
               ProgramRealProgram programRealProgram =
@@ -331,7 +341,8 @@ public class FcProductService implements ProcessDataService {
     Map<String, Object> extraData = createOrderableExtraData(current, existed.getProductCode(), basicProductCodes);
     existed.setExtraData(extraData);
     existed.setPrograms(buildProgramOrderableDtos(current));
-    return orderableReferenceDataService.update(existed);
+    return orderableController.update(existed.getId(), existed,
+            new BeanPropertyBindingResult(existed, "OrderableDto")).getBody();
   }
 
   private Set<ProgramOrderableDto> buildProgramOrderableDtos(ProductInfoDto product) {
