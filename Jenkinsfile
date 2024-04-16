@@ -41,9 +41,16 @@ pipeline {
                 deploy ("dev", env.IMAGE_TAG)
             }
         }
+        stage('Deploy To QA') {
+            when {
+                branch 'showcase'
+            }
+            steps {
+                deploy ("qa", env.IMAGE_TAG)
+            }
+        }
     }
 }
-
 
 def deploy(app_env, image_tag) {
     withEnv(["IMAGE_TAG=$image_tag","APP_ENV=$app_env"]) {
