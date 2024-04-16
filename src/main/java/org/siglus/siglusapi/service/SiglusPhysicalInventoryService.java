@@ -93,6 +93,7 @@ import org.siglus.siglusapi.dto.PhysicalInventorySubDraftLineItemsExtensionDto;
 import org.siglus.siglusapi.dto.PhysicalInventoryValidationDto;
 import org.siglus.siglusapi.dto.SiglusPhysicalInventoryDto;
 import org.siglus.siglusapi.dto.SiglusPhysicalInventoryHistoryDto;
+import org.siglus.siglusapi.dto.SiglusPhysicalInventoryHistoryLineItemDto;
 import org.siglus.siglusapi.dto.SubDraftDto;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.dto.enums.LocationManagementOption;
@@ -1412,6 +1413,17 @@ public class SiglusPhysicalInventoryService {
     if (ObjectUtils.isEmpty(currentUser) || ObjectUtils.isEmpty(currentUser.getHomeFacilityId())) {
       return new ArrayList<>();
     }
-    return siglusPhysicalInventoryRepository.queryPhysicalInventoryHistory(currentUser.getHomeFacilityId());
+    return siglusPhysicalInventoryRepository.queryPhysicalInventoryHistories(currentUser.getHomeFacilityId());
+  }
+
+  public List<SiglusPhysicalInventoryHistoryLineItemDto> searchPhysicalInventoryHistoriesLineItem(
+      UUID physicalInventoryId) {
+    UserDto currentUser = authenticationHelper.getCurrentUser();
+    if (ObjectUtils.isEmpty(currentUser)
+        || ObjectUtils.isEmpty(currentUser.getHomeFacilityId())
+        || ObjectUtils.isEmpty(physicalInventoryId)) {
+      return new ArrayList<>();
+    }
+    return siglusPhysicalInventoryRepository.queryPhysicalInventoryHistoriesLineItem(physicalInventoryId);
   }
 }

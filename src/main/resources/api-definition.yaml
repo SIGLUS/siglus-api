@@ -4515,3 +4515,15 @@ traits:
           responses:
             200:
               description: save geographic Info
+    /physicalInventories/histories:
+      get:
+        is: [ secured ]
+        responses:
+          200:
+            description: get physical inventory histories
+      /{physicalInventoryId}:
+        get:
+          is: [ secured ]
+          responses:
+            200:
+              description: get physical inventory histories line items
