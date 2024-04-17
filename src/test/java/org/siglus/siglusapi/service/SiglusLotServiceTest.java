@@ -63,6 +63,7 @@ import org.siglus.siglusapi.repository.dto.StockCardStockDto;
 import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
 import org.siglus.siglusapi.testutils.StockEventLineItemDtoDataBuilder;
+import org.siglus.siglusapi.util.FacilityConfigHelper;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.util.SiglusDateHelper;
 
@@ -98,6 +99,9 @@ public class SiglusLotServiceTest {
 
   @Mock
   private StockCardLineItemReasonRepository stockCardLineItemReasonRepository;
+
+  @Mock
+  private FacilityConfigHelper facilityConfigHelper;
 
   @Rule
   public ExpectedException exception = ExpectedException.none();
@@ -230,6 +234,26 @@ public class SiglusLotServiceTest {
     List<LotDto> lotList = siglusLotService.getLotList(ids);
     // then
     assertEquals(1, lotList.size());
+  }
+
+  @Test
+  public void shouldCallQueryExpiredLotsWithLocationGivenFacilityIsLocationEnabled() {
+    UUID facilityId = UUID.randomUUID();
+    when(facilityConfigHelper.isLocationManagementEnabled(facilityId)).thenReturn(true);
+
+    siglusLotService.getExpiredLots(facilityId);
+
+    verify(siglusLotRepository, Mockito.times(1)).queryExpiredLotsWithLocation(facilityId);
+  }
+
+  @Test
+  public void shouldCallQueryExpiredLotsGivenFacilityIsNotLocationEnabled() {
+    UUID facilityId = UUID.randomUUID();
+    when(facilityConfigHelper.isLocationManagementEnabled(facilityId)).thenReturn(false);
+
+    siglusLotService.getExpiredLots(facilityId);
+
+    verify(siglusLotRepository, Mockito.times(1)).queryExpiredLots(facilityId);
   }
 
   @Test(expected = BusinessDataException.class)

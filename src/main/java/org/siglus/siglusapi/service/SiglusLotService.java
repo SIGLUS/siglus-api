@@ -54,6 +54,7 @@ import org.siglus.siglusapi.repository.dto.LotStockDto;
 import org.siglus.siglusapi.repository.dto.StockCardStockDto;
 import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
+import org.siglus.siglusapi.util.FacilityConfigHelper;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.util.SiglusDateHelper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -85,6 +86,9 @@ public class SiglusLotService {
   private SiglusStockEventsService siglusStockEventsService;
   @Autowired
   private StockCardLineItemReasonRepository stockCardLineItemReasonRepository;
+
+  @Autowired
+  private FacilityConfigHelper facilityConfigHelper;
 
   /**
    * reason for create a new transaction: Running this method in the super transaction will cause
@@ -157,6 +161,9 @@ public class SiglusLotService {
   }
 
   public List<LotStockDto> getExpiredLots(UUID facilityId) {
+    if (facilityConfigHelper.isLocationManagementEnabled(facilityId)) {
+      return siglusLotRepository.queryExpiredLotsWithLocation(facilityId);
+    }
     return siglusLotRepository.queryExpiredLots(facilityId);
   }
 

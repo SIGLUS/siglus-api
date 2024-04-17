@@ -29,6 +29,9 @@ public interface SiglusLotRepository extends JpaRepository<Lot, UUID>  {
   @Query(name = "StockCard.queryExpiredLotStockDtoByFacility", nativeQuery = true)
   List<LotStockDto> queryExpiredLots(@Param("facilityId") UUID facilityId);
 
+  @Query(name = "StockCard.queryExpiredLotStockDtoByFacilityWithLocation", nativeQuery = true)
+  List<LotStockDto> queryExpiredLotsWithLocation(@Param("facilityId") UUID facilityId);
+
   @Query(value = "SELECT EXISTS (SELECT 1 FROM referencedata.lots l "
                + "WHERE l.id IN (:ids) AND l.dateColumnName > current_date)",
           nativeQuery = true)
