@@ -102,6 +102,7 @@ public class MetabaseDashboardServiceTest {
   public void shouldReturnProvinceParamsInPayloadWhenAccountRoleIsDpm() {
     // given
     when(authenticationHelper.getCurrentUser()).thenReturn(uesrDto);
+    uesrDto.setHomeFacilityId(UUID.randomUUID());
     when(authenticationHelper.isTheCurrentUserAdmin()).thenReturn(false);
     when(metabaseDashboardRepository.findByDashboardName(any())).thenReturn(
         Optional.of(MetaBaseConfig.builder().dashboardId(1).build()));
@@ -119,6 +120,7 @@ public class MetabaseDashboardServiceTest {
   public void shouldReturnDistrictParamsInPayloadWhenAccountRoleIsDdm() {
     // given
     when(authenticationHelper.getCurrentUser()).thenReturn(uesrDto);
+    uesrDto.setHomeFacilityId(UUID.randomUUID());
     when(authenticationHelper.isTheCurrentUserAdmin()).thenReturn(false);
     when(metabaseDashboardRepository.findByDashboardName(any())).thenReturn(
         Optional.of(MetaBaseConfig.builder().dashboardId(1).build()));
@@ -137,6 +139,7 @@ public class MetabaseDashboardServiceTest {
   public void shouldReturnFacilityParamsInPayloadWhenAccountRoleIsOthers() {
     // given
     when(authenticationHelper.getCurrentUser()).thenReturn(uesrDto);
+    uesrDto.setHomeFacilityId(UUID.randomUUID());
     when(authenticationHelper.isTheCurrentUserAdmin()).thenReturn(false);
     when(metabaseDashboardRepository.findByDashboardName(any())).thenReturn(
         Optional.of(MetaBaseConfig.builder().dashboardId(1).build()));
