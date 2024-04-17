@@ -24,6 +24,7 @@ import static org.siglus.siglusapi.constant.FieldConstants.METABASE_PARAM_TEMPLA
 import static org.siglus.siglusapi.constant.FieldConstants.METABASE_PART_URL;
 import static org.siglus.siglusapi.constant.FieldConstants.METABASE_PAYLOAD_TEMPLATE;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_USER_NOT_FOUND;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_USER_NOT_REPORT_VIEW_AUTHORITY;
 
 import ca.uhn.fhir.util.ObjectUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -58,6 +59,7 @@ import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ObjectUtils;
 
 @Slf4j
 @Service
@@ -124,8 +126,12 @@ public class MetabaseDashboardService {
         log.error("there is IO Wrong occured in write metabase payload");
       }
     }
+    UUID homeFacilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
+    if (ObjectUtils.isEmpty(homeFacilityId)) {
+      throw new BusinessDataException(new Message(ERROR_USER_NOT_REPORT_VIEW_AUTHORITY));
+    }
     FacilityDto facility = siglusFacilityReferenceDataService
-        .findOne(authenticationHelper.getCurrentUser().getHomeFacilityId());
+        .findOne(homeFacilityId);
 
     String requestParam = getRequestParamByFacility(facility);
 
