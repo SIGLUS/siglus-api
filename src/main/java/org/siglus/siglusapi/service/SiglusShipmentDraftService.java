@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -232,7 +233,7 @@ public class SiglusShipmentDraftService {
     } else {
       reservedDtos = shipmentDraftLineItemsRepository.reservedCount(facilityId, shipmentDraftId);
     }
-    return reservedDtos;
+    return reservedDtos.stream().distinct().collect(Collectors.toList());
   }
 
   private boolean canNotFulfillShipmentQuantity(List<StockCardStockDto> sohDtos,
