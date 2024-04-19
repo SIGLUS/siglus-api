@@ -83,6 +83,7 @@ import org.siglus.siglusapi.domain.CalculatedStockOnHandByLocation;
 import org.siglus.siglusapi.domain.FacilityLocations;
 import org.siglus.siglusapi.domain.PhysicalInventoryEmptyLocationLineItem;
 import org.siglus.siglusapi.domain.PhysicalInventoryExtension;
+import org.siglus.siglusapi.domain.PhysicalInventoryHistory;
 import org.siglus.siglusapi.domain.PhysicalInventoryLineItemsExtension;
 import org.siglus.siglusapi.domain.PhysicalInventorySubDraft;
 import org.siglus.siglusapi.dto.DraftListDto;
@@ -92,10 +93,7 @@ import org.siglus.siglusapi.dto.PhysicalInventoryLineItemExtensionDto;
 import org.siglus.siglusapi.dto.PhysicalInventorySubDraftLineItemsExtensionDto;
 import org.siglus.siglusapi.dto.PhysicalInventoryValidationDto;
 import org.siglus.siglusapi.dto.SiglusPhysicalInventoryDto;
-import org.siglus.siglusapi.dto.SiglusPhysicalInventoryHistoryDto;
-import org.siglus.siglusapi.dto.SiglusPhysicalInventoryHistoryLineItemDto;
 import org.siglus.siglusapi.dto.SubDraftDto;
-import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.dto.enums.LocationManagementOption;
 import org.siglus.siglusapi.dto.enums.PhysicalInventorySubDraftEnum;
 import org.siglus.siglusapi.exception.BusinessDataException;
@@ -106,6 +104,7 @@ import org.siglus.siglusapi.repository.FacilityLocationsRepository;
 import org.siglus.siglusapi.repository.OrderableRepository;
 import org.siglus.siglusapi.repository.PhysicalInventoryEmptyLocationLineItemRepository;
 import org.siglus.siglusapi.repository.PhysicalInventoryExtensionRepository;
+import org.siglus.siglusapi.repository.PhysicalInventoryHistoryRepository;
 import org.siglus.siglusapi.repository.PhysicalInventoryLineItemsExtensionRepository;
 import org.siglus.siglusapi.repository.PhysicalInventorySubDraftRepository;
 import org.siglus.siglusapi.repository.SiglusPhysicalInventoryRepository;
@@ -155,6 +154,8 @@ public class SiglusPhysicalInventoryService {
   private SiglusAuthenticationHelper authenticationHelper;
   @Autowired
   private PhysicalInventoryExtensionRepository physicalInventoryExtensionRepository;
+  @Autowired
+  private PhysicalInventoryHistoryRepository physicalInventoryHistoryRepository;
   @Autowired
   private CalculatedStockOnHandByLocationRepository calculatedStockOnHandByLocationRepository;
   @Autowired
@@ -209,7 +210,10 @@ public class SiglusPhysicalInventoryService {
     PhysicalInventoryExtension physicalInventoryExtension = buildPhysicalInventoryExtension(
         physicalInventory, false, option);
     log.info("physical inventory extension input for one program: {}", physicalInventoryExtension);
-    physicalInventoryExtensionRepository.save(physicalInventoryExtension);
+    physicalInventoryExtension = physicalInventoryExtensionRepository.save(physicalInventoryExtension);
+    PhysicalInventoryHistory physicalInventoryHistory = buildPhysicalInventoryHistory(physicalInventory,
+        physicalInventoryExtension, UUID.randomUUID());
+    physicalInventoryHistoryRepository.save(physicalInventoryHistory);
 
     physicalInventory = buildPhysicalInventoryLineItemsForOneProgram(physicalInventory, false, option != null);
     splitPhysicalInventory(physicalInventory, splitNum, isByLocation);
@@ -1147,11 +1151,15 @@ public class SiglusPhysicalInventoryService {
           return createNewDraft(copy, LocationManagementOption.BY_LOCATION.equals(locationOption));
         }).collect(Collectors.toList());
     if (CollectionUtils.isNotEmpty(inventories)) {
+      UUID groupId = UUID.randomUUID();
       inventories.forEach(eachInventory -> {
         PhysicalInventoryExtension physicalInventoryExtension = buildPhysicalInventoryExtension(
             eachInventory, true, locationOption);
         log.info("physical inventory extension input for all product: {}", physicalInventoryExtension);
-        physicalInventoryExtensionRepository.save(physicalInventoryExtension);
+        physicalInventoryExtension = physicalInventoryExtensionRepository.save(physicalInventoryExtension);
+        PhysicalInventoryHistory physicalInventoryHistory = buildPhysicalInventoryHistory(eachInventory,
+            physicalInventoryExtension, groupId);
+        physicalInventoryHistoryRepository.save(physicalInventoryHistory);
       });
       return getResultInventoryForAllPrograms(inventories, emptyList());
     }
@@ -1399,6 +1407,16 @@ public class SiglusPhysicalInventoryService {
         .build();
   }
 
+  private PhysicalInventoryHistory buildPhysicalInventoryHistory(PhysicalInventoryDto dto,
+      PhysicalInventoryExtension extension, UUID groupId) {
+    return PhysicalInventoryHistory
+        .builder()
+        .facilityId(dto.getFacilityId())
+        .physicalInventoryExtensionId(extension.getId())
+        .groupId(groupId)
+        .build();
+  }
+
   private PhysicalInventoryValidationDto buildPhysicalInventoryValidationDto(
       boolean canStartInventory, List<UUID> conflictProgramIdList) {
     return PhysicalInventoryValidationDto
@@ -1406,24 +1424,5 @@ public class SiglusPhysicalInventoryService {
         .canStartInventory(canStartInventory)
         .containDraftProgramsList(conflictProgramIdList)
         .build();
-  }
-
-  public List<SiglusPhysicalInventoryHistoryDto> searchPhysicalInventoryHistories() {
-    UserDto currentUser = authenticationHelper.getCurrentUser();
-    if (ObjectUtils.isEmpty(currentUser) || ObjectUtils.isEmpty(currentUser.getHomeFacilityId())) {
-      return new ArrayList<>();
-    }
-    return siglusPhysicalInventoryRepository.queryPhysicalInventoryHistories(currentUser.getHomeFacilityId());
-  }
-
-  public List<SiglusPhysicalInventoryHistoryLineItemDto> searchPhysicalInventoryHistoriesLineItem(
-      UUID physicalInventoryId) {
-    UserDto currentUser = authenticationHelper.getCurrentUser();
-    if (ObjectUtils.isEmpty(currentUser)
-        || ObjectUtils.isEmpty(currentUser.getHomeFacilityId())
-        || ObjectUtils.isEmpty(physicalInventoryId)) {
-      return new ArrayList<>();
-    }
-    return siglusPhysicalInventoryRepository.queryPhysicalInventoryHistoriesLineItem(physicalInventoryId);
   }
 }

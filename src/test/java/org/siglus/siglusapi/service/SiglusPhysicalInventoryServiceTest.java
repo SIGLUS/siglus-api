@@ -107,6 +107,7 @@ import org.siglus.siglusapi.repository.FacilityLocationsRepository;
 import org.siglus.siglusapi.repository.OrderableRepository;
 import org.siglus.siglusapi.repository.PhysicalInventoryEmptyLocationLineItemRepository;
 import org.siglus.siglusapi.repository.PhysicalInventoryExtensionRepository;
+import org.siglus.siglusapi.repository.PhysicalInventoryHistoryRepository;
 import org.siglus.siglusapi.repository.PhysicalInventoryLineItemsExtensionRepository;
 import org.siglus.siglusapi.repository.PhysicalInventorySubDraftRepository;
 import org.siglus.siglusapi.repository.SiglusPhysicalInventoryRepository;
@@ -172,6 +173,8 @@ public class SiglusPhysicalInventoryServiceTest {
 
   @Mock
   private PhysicalInventoryExtensionRepository physicalInventoryExtensionRepository;
+  @Mock
+  private PhysicalInventoryHistoryRepository physicalInventoryHistoryRepository;
 
   @Mock
   private SiglusStockCardSummariesService siglusStockCardSummariesService;
@@ -252,14 +255,14 @@ public class SiglusPhysicalInventoryServiceTest {
         .thenReturn(Collections.emptyList());
     PhysicalInventoryDto physicalInventoryDto = PhysicalInventoryDto.builder()
         .programId(ALL_PRODUCTS_PROGRAM_ID).build();
+    when(physicalInventoryExtensionRepository.save(any(PhysicalInventoryExtension.class)))
+        .thenReturn(new PhysicalInventoryExtension());
     PhysicalInventoryDto actualCalled1 = PhysicalInventoryDto.builder()
         .programId(programIdOne).build();
     PhysicalInventoryDto actualCalled2 = PhysicalInventoryDto.builder()
         .programId(programIdTwo).build();
-
     // when
     siglusPhysicalInventoryService.createNewDraftForAllPrograms(physicalInventoryDto, null);
-
     // then
     verify(inventoryController, times(1)).createEmptyPhysicalInventory(actualCalled1);
     verify(inventoryController, times(1)).createEmptyPhysicalInventory(actualCalled2);
@@ -834,6 +837,8 @@ public class SiglusPhysicalInventoryServiceTest {
     facilityDto.setType(typeDto);
     when(stockCardRepository.countByFacilityId(facilityId)).thenReturn(1);
     when(facilityReferenceDataService.findOne(facilityId)).thenReturn(facilityDto);
+    when(physicalInventoryExtensionRepository.save(any(PhysicalInventoryExtension.class)))
+        .thenReturn(new PhysicalInventoryExtension());
 
     // when
     siglusPhysicalInventoryService.createAndSpiltNewDraftForOneProgram(physicalInventoryDto, 3, null, false);
@@ -869,6 +874,8 @@ public class SiglusPhysicalInventoryServiceTest {
     facilityDto.setType(typeDto);
     when(stockCardRepository.countByFacilityId(facilityId)).thenReturn(1);
     when(facilityReferenceDataService.findOne(facilityId)).thenReturn(facilityDto);
+    when(physicalInventoryExtensionRepository.save(any(PhysicalInventoryExtension.class)))
+        .thenReturn(new PhysicalInventoryExtension());
 
     // when
     siglusPhysicalInventoryService.createAndSplitNewDraftForAllPrograms(
@@ -979,6 +986,8 @@ public class SiglusPhysicalInventoryServiceTest {
     orderableDto1.setProductCode("22A01");
     List<org.openlmis.referencedata.dto.OrderableDto> orderableDtos = singletonList(orderableDto1);
     when(siglusOrderableService.getAllProducts()).thenReturn(orderableDtos);
+    when(physicalInventoryExtensionRepository.save(any(PhysicalInventoryExtension.class)))
+        .thenReturn(new PhysicalInventoryExtension());
 
     // when
     PhysicalInventoryDto returnedPhysicalInventoryDto = siglusPhysicalInventoryService

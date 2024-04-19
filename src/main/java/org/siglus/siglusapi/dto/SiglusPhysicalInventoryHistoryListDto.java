@@ -15,25 +15,32 @@
 
 package org.siglus.siglusapi.dto;
 
+import static org.siglus.siglusapi.constant.FieldConstants.ALL_PROGRAM;
+
 import java.time.LocalDate;
+import java.util.List;
+import java.util.Map.Entry;
+import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
 @Builder
-public class SiglusPhysicalInventoryHistoryLineItemDto {
+public class SiglusPhysicalInventoryHistoryListDto {
 
-  private String productCode;
-  private String productName;
-  private String lotCode;
-  private LocalDate expiryDate;
-  private Integer currentStock;
-  private String reasons;
-  private Integer reasonQuantity;
-  private String comments;
+  private UUID groupId;
+  private String programName;
+  private LocalDate completedDate;
+
+  public static SiglusPhysicalInventoryHistoryListDto from(Entry<UUID, List<SiglusPhysicalInventoryHistoryDto>> entry) {
+    return SiglusPhysicalInventoryHistoryListDto.builder()
+        .groupId(entry.getKey())
+        .programName(entry.getValue().size() > 1 ? ALL_PROGRAM : entry.getValue().get(0).getProgramName())
+        .completedDate(entry.getValue().get(0).getCompletedDate())
+        .build();
+  }
 }

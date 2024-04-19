@@ -13,27 +13,28 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.dto;
+package org.siglus.siglusapi.domain;
 
-import java.time.LocalDate;
+import java.util.UUID;
+import javax.persistence.Entity;
+import javax.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.siglus.common.domain.BaseEntity;
 
-
-@AllArgsConstructor
-@NoArgsConstructor
+@Entity
 @Data
 @Builder
-public class SiglusPhysicalInventoryHistoryLineItemDto {
+@EqualsAndHashCode(callSuper = true)
+@AllArgsConstructor
+@NoArgsConstructor
+@Table(name = "physical_inventories_histories", schema = "siglusintegration")
+public class PhysicalInventoryHistory extends BaseEntity {
 
-  private String productCode;
-  private String productName;
-  private String lotCode;
-  private LocalDate expiryDate;
-  private Integer currentStock;
-  private String reasons;
-  private Integer reasonQuantity;
-  private String comments;
+  private UUID facilityId;
+  private UUID physicalInventoryExtensionId;
+  private UUID groupId;
 }

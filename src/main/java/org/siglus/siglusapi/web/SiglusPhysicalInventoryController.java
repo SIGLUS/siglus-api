@@ -28,7 +28,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.openlmis.stockmanagement.dto.PhysicalInventoryDto;
 import org.siglus.siglusapi.dto.DraftListDto;
 import org.siglus.siglusapi.dto.PhysicalInventoryValidationDto;
+import org.siglus.siglusapi.dto.SiglusPhysicalInventoryHistoryLineItemDto;
+import org.siglus.siglusapi.dto.SiglusPhysicalInventoryHistoryListDto;
 import org.siglus.siglusapi.repository.dto.SiglusPhysicalInventoryBriefDto;
+import org.siglus.siglusapi.service.SiglusPhysicalInventoryHistoryService;
 import org.siglus.siglusapi.service.SiglusPhysicalInventoryService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -49,6 +52,7 @@ public class SiglusPhysicalInventoryController {
 
   private final SiglusPhysicalInventoryService siglusPhysicalInventoryService;
   private final SiglusAuthenticationHelper authenticationHelper;
+  private final SiglusPhysicalInventoryHistoryService siglusPhysicalInventoryHistoryService;
 
   @GetMapping
   public List<PhysicalInventoryDto> searchPhysicalInventories(
@@ -119,5 +123,16 @@ public class SiglusPhysicalInventoryController {
       return siglusPhysicalInventoryService.getSubDraftListForAllPrograms(facility, isDraft);
     }
     return siglusPhysicalInventoryService.getSubDraftListForOneProgram(program, facility, isDraft);
+  }
+
+  @GetMapping("/histories")
+  public List<SiglusPhysicalInventoryHistoryListDto> searchPhysicalInventoryHistories() {
+    return siglusPhysicalInventoryHistoryService.searchPhysicalInventoryHistories();
+  }
+
+  @GetMapping("/histories/{groupId}")
+  public List<SiglusPhysicalInventoryHistoryLineItemDto> searchPhysicalInventoryHistoriesLineItem(
+      @PathVariable("groupId") UUID groupId) {
+    return siglusPhysicalInventoryHistoryService.searchPhysicalInventoryHistoriesLineItem(groupId);
   }
 }

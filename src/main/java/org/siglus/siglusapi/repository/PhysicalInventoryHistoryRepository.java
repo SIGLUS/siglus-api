@@ -16,27 +16,15 @@
 package org.siglus.siglusapi.repository;
 
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
-
-import org.openlmis.referencedata.domain.Lot;
-import org.siglus.siglusapi.repository.dto.LotStockDto;
+import org.siglus.siglusapi.domain.PhysicalInventoryHistory;
+import org.siglus.siglusapi.dto.SiglusPhysicalInventoryHistoryDto;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-public interface SiglusLotRepository extends JpaRepository<Lot, UUID> {
+public interface PhysicalInventoryHistoryRepository extends JpaRepository<PhysicalInventoryHistory, UUID> {
 
-  @Query(name = "StockCard.queryExpiredLotStockDtoByFacility", nativeQuery = true)
-  List<LotStockDto> queryExpiredLots(@Param("facilityId") UUID facilityId);
-
-  @Query(name = "StockCard.queryExpiredLotStockDtoByFacilityWithLocation", nativeQuery = true)
-  List<LotStockDto> queryExpiredLotsWithLocation(@Param("facilityId") UUID facilityId);
-
-  @Query(value = "SELECT EXISTS (SELECT 1 FROM referencedata.lots l "
-      + "WHERE l.id IN (:ids) AND l.dateColumnName > current_date)",
-      nativeQuery = true)
-  boolean existsNotExpiredLotsByIds(List<UUID> ids);
-
-  List<Lot> findAllByIdIn(Set<UUID> ids);
+  @Query(name = "PhysicalInventoryHistory.queryPhysicalInventoryHistory", nativeQuery = true)
+  List<SiglusPhysicalInventoryHistoryDto> queryPhysicalInventoryHistories(@Param("facilityId") UUID facilityId);
 }
