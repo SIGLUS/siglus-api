@@ -37,4 +37,5 @@ public class PhysicalInventoryHistory extends BaseEntity {
   private UUID facilityId;
   private UUID physicalInventoryExtensionId;
   private UUID groupId;
+  private String lineItemData;
 }

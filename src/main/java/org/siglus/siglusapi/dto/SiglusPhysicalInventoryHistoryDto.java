@@ -30,18 +30,16 @@ import lombok.NoArgsConstructor;
 @NamedNativeQuery(
     name = "PhysicalInventoryHistory.queryPhysicalInventoryHistory",
     query = "select "
-        + "pih.id as physicalinventoryhistoryid, "
         + "pih.groupid, "
-        + "pih.physicalinventoryextensionid, "
-        + "pie.physicalinventoryid, "
         + "p.name as programname, "
         + "pi.occurreddate as completeddate "
+        + "pih.lineItemData "
         + "from siglusintegration.physical_inventories_histories pih "
         + "left join siglusintegration.physical_inventories_extension pie on pih.physicalinventoryextensionid = pie.id "
         + "left join stockmanagement.physical_inventories pi on pie.physicalinventoryid = pi.id "
         + "left join referencedata.programs p on pi.programid = p.id "
         + "where pih.facilityid = :facilityId and pi.isdraft = 'false' "
-        + "order by pi.occurreddate desc, p.name ",
+        + "order by pi.occurreddate desc ",
     resultSetMapping = "PhysicalInventoryHistory.SiglusPhysicalInventoryHistoryDto")
 
 @MappedSuperclass
@@ -50,12 +48,10 @@ import lombok.NoArgsConstructor;
     classes = @ConstructorResult(
         targetClass = SiglusPhysicalInventoryHistoryDto.class,
         columns = {
-            @ColumnResult(name = "physicalInventoryHistoryId", type = UUID.class),
             @ColumnResult(name = "groupId", type = UUID.class),
-            @ColumnResult(name = "physicalInventoryExtensionId", type = UUID.class),
-            @ColumnResult(name = "physicalInventoryId", type = UUID.class),
             @ColumnResult(name = "programName", type = String.class),
             @ColumnResult(name = "completedDate", type = LocalDate.class),
+            @ColumnResult(name = "lineItemData", type = String.class),
         }
     )
 )
@@ -66,10 +62,8 @@ import lombok.NoArgsConstructor;
 @Builder
 public class SiglusPhysicalInventoryHistoryDto {
 
-  private UUID physicalInventoryHistoryId;
   private UUID groupId;
-  private UUID physicalInventoryExtensionId;
-  private UUID physicalInventoryId;
   private String programName;
   private LocalDate completedDate;
+  private String lineItemData;
 }

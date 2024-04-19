@@ -35,12 +35,14 @@ public class SiglusPhysicalInventoryHistoryListDto {
   private UUID groupId;
   private String programName;
   private LocalDate completedDate;
+  private String lineItemData;
 
   public static SiglusPhysicalInventoryHistoryListDto from(Entry<UUID, List<SiglusPhysicalInventoryHistoryDto>> entry) {
     return SiglusPhysicalInventoryHistoryListDto.builder()
         .groupId(entry.getKey())
         .programName(entry.getValue().size() > 1 ? ALL_PROGRAM : entry.getValue().get(0).getProgramName())
         .completedDate(entry.getValue().get(0).getCompletedDate())
+        .lineItemData(entry.getValue().get(0).getLineItemData())
         .build();
   }
 }

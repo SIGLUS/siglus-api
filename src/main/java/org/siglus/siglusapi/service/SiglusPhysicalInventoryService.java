@@ -1414,6 +1414,7 @@ public class SiglusPhysicalInventoryService {
         .facilityId(dto.getFacilityId())
         .physicalInventoryExtensionId(extension.getId())
         .groupId(groupId)
+        .lineItemData("")
         .build();
   }
 
