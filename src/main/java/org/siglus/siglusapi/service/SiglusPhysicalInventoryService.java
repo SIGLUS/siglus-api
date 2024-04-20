@@ -84,7 +84,6 @@ import org.siglus.siglusapi.domain.CalculatedStockOnHandByLocation;
 import org.siglus.siglusapi.domain.FacilityLocations;
 import org.siglus.siglusapi.domain.PhysicalInventoryEmptyLocationLineItem;
 import org.siglus.siglusapi.domain.PhysicalInventoryExtension;
-import org.siglus.siglusapi.domain.PhysicalInventoryHistory;
 import org.siglus.siglusapi.domain.PhysicalInventoryLineItemsExtension;
 import org.siglus.siglusapi.domain.PhysicalInventorySubDraft;
 import org.siglus.siglusapi.dto.DraftListDto;
@@ -642,7 +641,7 @@ public class SiglusPhysicalInventoryService {
               ? null
               : fullFillPhysicalInventoryLineItemDtoExtension(dto, physicalInventory.getProgramId(), extension);
         }
-      ).filter(Objects::nonNull).collect(Collectors.toList());
+    ).filter(Objects::nonNull).collect(Collectors.toList());
     physicalInventory.setLineItems(itemDtos);
     return physicalInventory;
   }
@@ -1404,17 +1403,6 @@ public class SiglusPhysicalInventoryService {
         .physicalInventoryId(physicalInventoryDto.getId())
         .category(isForAllProgram ? ALL_PROGRAM : SINGLE_PROGRAM)
         .locationOption(locationOption)
-        .build();
-  }
-
-  private PhysicalInventoryHistory buildPhysicalInventoryHistory(PhysicalInventoryDto dto,
-      PhysicalInventoryExtension extension, UUID groupId) {
-    return PhysicalInventoryHistory
-        .builder()
-        .facilityId(dto.getFacilityId())
-        .physicalInventoryExtensionId(extension.getId())
-        .groupId(groupId)
-        .lineItemData("")
         .build();
   }
 

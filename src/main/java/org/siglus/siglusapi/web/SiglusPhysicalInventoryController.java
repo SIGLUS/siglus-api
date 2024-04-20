@@ -28,7 +28,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.openlmis.stockmanagement.dto.PhysicalInventoryDto;
 import org.siglus.siglusapi.dto.DraftListDto;
 import org.siglus.siglusapi.dto.PhysicalInventoryValidationDto;
-import org.siglus.siglusapi.dto.SiglusPhysicalInventoryHistoryListDto;
+import org.siglus.siglusapi.dto.SiglusPhysicalInventoryHistoryDto;
 import org.siglus.siglusapi.repository.dto.SiglusPhysicalInventoryBriefDto;
 import org.siglus.siglusapi.service.SiglusPhysicalInventoryHistoryService;
 import org.siglus.siglusapi.service.SiglusPhysicalInventoryService;
@@ -125,7 +125,12 @@ public class SiglusPhysicalInventoryController {
   }
 
   @GetMapping("/histories")
-  public List<SiglusPhysicalInventoryHistoryListDto> searchPhysicalInventoryHistories() {
+  public List<SiglusPhysicalInventoryHistoryDto> searchPhysicalInventoryHistories() {
     return siglusPhysicalInventoryHistoryService.searchPhysicalInventoryHistories();
+  }
+
+  @GetMapping("/histories/{groupId}")
+  public String searchPhysicalInventoryHistoryData(@PathVariable("groupId") UUID groupId) {
+    return siglusPhysicalInventoryHistoryService.searchPhysicalInventoryHistoryData(groupId);
   }
 }

@@ -32,8 +32,8 @@ import lombok.NoArgsConstructor;
     query = "select "
         + "pih.groupid, "
         + "p.name as programname, "
-        + "pi.occurreddate as completeddate "
-        + "pih.lineItemData "
+        + "pi.occurreddate as completeddate, "
+        + "pih.historydata "
         + "from siglusintegration.physical_inventories_histories pih "
         + "left join siglusintegration.physical_inventories_extension pie on pih.physicalinventoryextensionid = pie.id "
         + "left join stockmanagement.physical_inventories pi on pie.physicalinventoryid = pi.id "
@@ -51,7 +51,7 @@ import lombok.NoArgsConstructor;
             @ColumnResult(name = "groupId", type = UUID.class),
             @ColumnResult(name = "programName", type = String.class),
             @ColumnResult(name = "completedDate", type = LocalDate.class),
-            @ColumnResult(name = "lineItemData", type = String.class),
+            @ColumnResult(name = "historyData", type = String.class),
         }
     )
 )
@@ -65,5 +65,5 @@ public class SiglusPhysicalInventoryHistoryDto {
   private UUID groupId;
   private String programName;
   private LocalDate completedDate;
-  private String lineItemData;
+  private String historyData;
 }

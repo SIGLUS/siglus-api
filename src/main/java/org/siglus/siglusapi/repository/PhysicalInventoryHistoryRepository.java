@@ -27,4 +27,7 @@ public interface PhysicalInventoryHistoryRepository extends JpaRepository<Physic
 
   @Query(name = "PhysicalInventoryHistory.queryPhysicalInventoryHistory", nativeQuery = true)
   List<SiglusPhysicalInventoryHistoryDto> queryPhysicalInventoryHistories(@Param("facilityId") UUID facilityId);
+
+  List<PhysicalInventoryHistory> findAllByFacilityIdAndGroupId(@Param("facilityId") UUID facilityId,
+      @Param("groupId") UUID groupId);
 }

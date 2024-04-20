@@ -18,11 +18,12 @@ package org.siglus.siglusapi.service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import org.siglus.siglusapi.domain.PhysicalInventoryHistory;
 import org.siglus.siglusapi.dto.SiglusPhysicalInventoryHistoryDto;
-import org.siglus.siglusapi.dto.SiglusPhysicalInventoryHistoryListDto;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.repository.PhysicalInventoryHistoryRepository;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
@@ -39,7 +40,7 @@ public class SiglusPhysicalInventoryHistoryService {
   @Autowired
   private PhysicalInventoryHistoryRepository physicalInventoryHistoryRepository;
 
-  public List<SiglusPhysicalInventoryHistoryListDto> searchPhysicalInventoryHistories() {
+  public List<SiglusPhysicalInventoryHistoryDto> searchPhysicalInventoryHistories() {
     UserDto currentUser = authenticationHelper.getCurrentUser();
     if (ObjectUtils.isEmpty(currentUser) || ObjectUtils.isEmpty(currentUser.getHomeFacilityId())) {
       return new ArrayList<>();
@@ -50,7 +51,26 @@ public class SiglusPhysicalInventoryHistoryService {
         .stream()
         .collect(Collectors.groupingBy(SiglusPhysicalInventoryHistoryDto::getGroupId));
     return groupIdToHistoryDtosMap.entrySet().stream()
-        .map(SiglusPhysicalInventoryHistoryListDto::from)
+        .map(entry -> SiglusPhysicalInventoryHistoryDto.builder()
+            .groupId(entry.getKey())
+            .programName(entry.getValue().stream().findFirst().get().getProgramName())
+            .completedDate(entry.getValue().stream().findFirst().get().getCompletedDate())
+            .build())
         .collect(Collectors.toList());
+  }
+
+  public String searchPhysicalInventoryHistoryData(UUID groupId) {
+    UserDto currentUser = authenticationHelper.getCurrentUser();
+    if (ObjectUtils.isEmpty(currentUser)
+        || ObjectUtils.isEmpty(currentUser.getHomeFacilityId())
+        || ObjectUtils.isEmpty(groupId)) {
+      return "";
+    }
+    UUID facilityId = currentUser.getHomeFacilityId();
+    Optional<PhysicalInventoryHistory> historyOptional = physicalInventoryHistoryRepository
+        .findAllByFacilityIdAndGroupId(facilityId, groupId)
+        .stream()
+        .findFirst();
+    return historyOptional.orElseGet(PhysicalInventoryHistory::new).getHistoryData();
   }
 }
