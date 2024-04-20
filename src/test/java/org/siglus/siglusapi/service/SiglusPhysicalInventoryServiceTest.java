@@ -1185,13 +1185,13 @@ public class SiglusPhysicalInventoryServiceTest {
         .thenReturn(Collections.singletonList(physicalInventoryLineItemsExtension));
     when(orderableRepository.findLatestById(orderableId)).thenReturn(Optional.of(new Orderable()));
     List<PhysicalInventoryExtension> physicalInventoryExtensions = Collections.singletonList(
-        PhysicalInventoryExtension.builder().category(SINGLE_PROGRAM).build());
+        PhysicalInventoryExtension.builder()
+            .category(SINGLE_PROGRAM).locationOption(LocationManagementOption.BY_PRODUCT).build());
     when(physicalInventoryExtensionRepository.findByPhysicalInventoryId(any())).thenReturn(physicalInventoryExtensions);
     List<UUID> subDraftIds = Collections.singletonList(subDraftIdOne);
     // when
     PhysicalInventoryDto actualPhysicalInventoryDto = siglusPhysicalInventoryService
         .getPhysicalInventoryDtoBySubDraftIds(subDraftIds);
-    actualPhysicalInventoryDto.setLineItems(physicalInventoryLineItemDtos);
     // then
     assertEquals(physicalInventoryDto.getProgramId(), actualPhysicalInventoryDto.getProgramId());
     assertEquals(physicalInventoryDto.getFacilityId(), actualPhysicalInventoryDto.getFacilityId());
