@@ -282,7 +282,9 @@ public class SiglusPhysicalInventoryService {
     boolean isAllProgram = false;
     if (CollectionUtils.isNotEmpty(extensions)) {
       PhysicalInventoryExtension extension = extensions.get(0);
-      siglusPhysicalInventoryDto.setLocationOption(extensions.get(0).getLocationOption().getValue());
+      if (!ObjectUtils.isEmpty(extension.getLocationOption())) {
+        siglusPhysicalInventoryDto.setLocationOption(extension.getLocationOption().getValue());
+      }
       isAllProgram = ALL_PROGRAM.equals(extension.getCategory());
     }
     List<PhysicalInventoryLineItemDto> lineItemDtos = physicalInventoryDtos.stream()

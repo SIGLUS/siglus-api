@@ -32,6 +32,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.siglus.siglusapi.dto.SiglusPhysicalInventoryDto;
 import org.siglus.siglusapi.dto.enums.LocationManagementOption;
+import org.springframework.util.ObjectUtils;
 
 @NamedNativeQueries({
     @NamedNativeQuery(
@@ -98,6 +99,9 @@ public class SiglusPhysicalInventoryBriefDto {
   private String locationOption;
 
   public LocationManagementOption getLocationOption() {
+    if (locationOption == null) {
+      return null;
+    }
     return LocationManagementOption.valueOf(locationOption);
   }
 
@@ -110,7 +114,10 @@ public class SiglusPhysicalInventoryBriefDto {
     dto.setSignature(signature);
     dto.setDocumentNumber(documentNumber);
     dto.setIsDraft(isDraft);
-    dto.setLocationOption(getLocationOption().getValue());
+    LocationManagementOption locationOption = getLocationOption();
+    if (!ObjectUtils.isEmpty(locationOption)) {
+      dto.setLocationOption(locationOption.getValue());
+    }
     return dto;
   }
 }
