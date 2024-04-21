@@ -205,9 +205,9 @@ public class SiglusStockCardSummariesService {
         }
       }
     }
-    if (!withLocation && CollectionUtils.isNotEmpty(subDraftIds)) {
-      summaryV2Dtos = filterBySubDraftIds(summaryV2Dtos, subDraftIds);
-    }
+    //    if (CollectionUtils.isNotEmpty(subDraftIds)) {
+    //      summaryV2Dtos = filterBySubDraftIds(summaryV2Dtos, subDraftIds);
+    //    }
     return Pagination.getPage(summaryV2Dtos, pageable);
   }
 
