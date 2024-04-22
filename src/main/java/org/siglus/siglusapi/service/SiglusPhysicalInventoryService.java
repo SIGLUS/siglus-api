@@ -288,8 +288,7 @@ public class SiglusPhysicalInventoryService {
     }
     List<PhysicalInventoryLineItemDto> lineItemDtos = physicalInventoryDtos.stream()
         .map(PhysicalInventoryDto::getLineItems).flatMap(List::stream)
-        .filter(distinctByKey(dto -> dto.getLocationCode() == null
-            ? dto.getLotId().toString() : dto.getLocationCode() + dto.getLotId()))
+        .filter(distinctByKey(this::getUniqueKeyWithLocation))
         .collect(Collectors.toList());
 
     List<PhysicalInventoryLineItemDto> sortedLineItems;
