@@ -31,6 +31,7 @@ import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_SUB_D
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_SUB_DRAFT_EMPTY;
 
 import com.google.common.collect.Maps;
+import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -57,6 +58,7 @@ import org.openlmis.stockmanagement.repository.StockCardRepository;
 import org.openlmis.stockmanagement.repository.StockEventsRepository;
 import org.openlmis.stockmanagement.service.StockEventProcessor;
 import org.siglus.siglusapi.domain.FacilityLocations;
+import org.siglus.siglusapi.domain.PhysicalInventoryHistory;
 import org.siglus.siglusapi.domain.StockCardExtension;
 import org.siglus.siglusapi.domain.StockCardLineItemExtension;
 import org.siglus.siglusapi.domain.StockEventProductRequested;
@@ -69,6 +71,7 @@ import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.CalculatedStockOnHandByLocationRepository;
 import org.siglus.siglusapi.repository.FacilityLocationsRepository;
+import org.siglus.siglusapi.repository.PhysicalInventoryHistoryRepository;
 import org.siglus.siglusapi.repository.StockCardExtensionRepository;
 import org.siglus.siglusapi.repository.StockCardLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.StockEventProductRequestedRepository;
@@ -84,6 +87,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @SuppressWarnings({"PMD.TooManyMethods"})
 public class SiglusStockEventsService {
+
   @Autowired
   private SiglusPhysicalInventoryService siglusPhysicalInventoryService;
   @Autowired
@@ -122,6 +126,8 @@ public class SiglusStockEventsService {
   private SiglusProgramService siglusProgramService;
   @Autowired
   private StockEventProductRequestedRepository stockEventProductRequestedRepository;
+  @Autowired
+  private PhysicalInventoryHistoryRepository physicalInventoryHistoryRepository;
   @Value("${stockmanagement.kit.unpack.destination.nodeId}")
   private UUID unpackKitDestinationNodeId;
   private UUID viaProgramId;
@@ -152,11 +158,22 @@ public class SiglusStockEventsService {
       validateAdjustmentLocationAndQuantity(eventDto);
     }
     createStockEvent(eventDto, stockEventDtoByPrograms, isByLocation);
+    savePhysicalInventoryHistory(eventDto);
     deleteDraft(eventDto);
 
     if (isByLocation) {
       calculatedStocksOnHandByLocationService.calculateStockOnHandByLocation(eventDto);
     }
+  }
+
+  private void savePhysicalInventoryHistory(StockEventDto eventDto) {
+    PhysicalInventoryHistory history = PhysicalInventoryHistory.builder()
+        .facilityId(eventDto.getFacilityId())
+        .programId(eventDto.getProgramId())
+        .completedDate(LocalDate.now())
+        .historyData(eventDto.getHistoryData())
+        .build();
+    physicalInventoryHistoryRepository.save(history);
   }
 
   private Set<UUID> getProgramIds(StockEventDto eventDto) {

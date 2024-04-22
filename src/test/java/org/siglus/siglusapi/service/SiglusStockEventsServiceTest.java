@@ -75,6 +75,7 @@ import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.CalculatedStockOnHandByLocationRepository;
 import org.siglus.siglusapi.repository.FacilityLocationsRepository;
+import org.siglus.siglusapi.repository.PhysicalInventoryHistoryRepository;
 import org.siglus.siglusapi.repository.StockCardExtensionRepository;
 import org.siglus.siglusapi.repository.StockCardLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.StockManagementDraftRepository;
@@ -157,6 +158,9 @@ public class SiglusStockEventsServiceTest {
 
   @Mock
   private CalculatedStockOnHandByLocationRepository calculatedStockOnHandByLocationRepository;
+
+  @Mock
+  private PhysicalInventoryHistoryRepository physicalInventoryHistoryRepository;
 
   @Mock
   private SiglusProgramService siglusProgramService;
