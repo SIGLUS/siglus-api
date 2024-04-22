@@ -17,7 +17,6 @@ package org.siglus.siglusapi.service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -46,31 +45,20 @@ public class SiglusPhysicalInventoryHistoryService {
       return new ArrayList<>();
     }
     UUID facilityId = currentUser.getHomeFacilityId();
-    Map<UUID, List<SiglusPhysicalInventoryHistoryDto>> groupIdToHistoryDtosMap = physicalInventoryHistoryRepository
-        .queryPhysicalInventoryHistories(facilityId)
-        .stream()
-        .collect(Collectors.groupingBy(SiglusPhysicalInventoryHistoryDto::getGroupId));
-    return groupIdToHistoryDtosMap.entrySet().stream()
-        .map(entry -> SiglusPhysicalInventoryHistoryDto.builder()
-            .groupId(entry.getKey())
-            .programName(entry.getValue().stream().findFirst().get().getProgramName())
-            .completedDate(entry.getValue().stream().findFirst().get().getCompletedDate())
-            .build())
-        .collect(Collectors.toList());
+    List<SiglusPhysicalInventoryHistoryDto> historyDtos = physicalInventoryHistoryRepository
+        .queryPhysicalInventoryHistories(facilityId);
+    historyDtos.forEach(historyDto -> historyDto.setHistoryData(null));
+    return historyDtos;
   }
 
-  public String searchPhysicalInventoryHistoryData(UUID groupId) {
+  public String searchPhysicalInventoryHistoryData(UUID id) {
     UserDto currentUser = authenticationHelper.getCurrentUser();
     if (ObjectUtils.isEmpty(currentUser)
         || ObjectUtils.isEmpty(currentUser.getHomeFacilityId())
-        || ObjectUtils.isEmpty(groupId)) {
+        || ObjectUtils.isEmpty(id)) {
       return "";
     }
-    UUID facilityId = currentUser.getHomeFacilityId();
-    Optional<PhysicalInventoryHistory> historyOptional = physicalInventoryHistoryRepository
-        .findAllByFacilityIdAndGroupId(facilityId, groupId)
-        .stream()
-        .findFirst();
+    Optional<PhysicalInventoryHistory> historyOptional = physicalInventoryHistoryRepository.findById(id);
     return historyOptional.orElseGet(PhysicalInventoryHistory::new).getHistoryData();
   }
 }

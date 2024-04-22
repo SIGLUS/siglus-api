@@ -15,7 +15,10 @@
 
 package org.siglus.siglusapi.domain;
 
+import java.time.LocalDate;
+import java.time.ZonedDateTime;
 import java.util.UUID;
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -24,6 +27,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.siglus.common.domain.BaseEntity;
+import org.springframework.data.annotation.LastModifiedDate;
 
 @Entity
 @Data
@@ -35,7 +39,10 @@ import org.siglus.common.domain.BaseEntity;
 public class PhysicalInventoryHistory extends BaseEntity {
 
   private UUID facilityId;
-  private UUID physicalInventoryExtensionId;
-  private UUID groupId;
+  private UUID programId;
+  @Column(columnDefinition = "jsonb")
   private String historyData;
+  private LocalDate completedDate;
+  @LastModifiedDate
+  private ZonedDateTime processDate;
 }

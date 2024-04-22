@@ -16,6 +16,7 @@
 package org.siglus.siglusapi.repository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.siglus.siglusapi.domain.PhysicalInventoryHistory;
 import org.siglus.siglusapi.dto.SiglusPhysicalInventoryHistoryDto;
@@ -28,6 +29,5 @@ public interface PhysicalInventoryHistoryRepository extends JpaRepository<Physic
   @Query(name = "PhysicalInventoryHistory.queryPhysicalInventoryHistory", nativeQuery = true)
   List<SiglusPhysicalInventoryHistoryDto> queryPhysicalInventoryHistories(@Param("facilityId") UUID facilityId);
 
-  List<PhysicalInventoryHistory> findAllByFacilityIdAndGroupId(@Param("facilityId") UUID facilityId,
-      @Param("groupId") UUID groupId);
+  Optional<PhysicalInventoryHistory> findById(@Param("id") UUID id);
 }

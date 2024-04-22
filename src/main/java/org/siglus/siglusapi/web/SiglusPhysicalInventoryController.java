@@ -129,8 +129,8 @@ public class SiglusPhysicalInventoryController {
     return siglusPhysicalInventoryHistoryService.searchPhysicalInventoryHistories();
   }
 
-  @GetMapping("/histories/{groupId}")
-  public String searchPhysicalInventoryHistoryData(@PathVariable("groupId") UUID groupId) {
-    return siglusPhysicalInventoryHistoryService.searchPhysicalInventoryHistoryData(groupId);
+  @GetMapping("/histories/{id}")
+  public String searchPhysicalInventoryHistoryData(@PathVariable("id") UUID id) {
+    return siglusPhysicalInventoryHistoryService.searchPhysicalInventoryHistoryData(id);
   }
 }

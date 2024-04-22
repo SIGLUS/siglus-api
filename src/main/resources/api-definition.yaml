@@ -4521,7 +4521,7 @@ traits:
         responses:
           200:
             description: get physical inventory histories
-      /{groupId}:
+      /{id}:
         get:
           is: [ secured ]
           responses:
