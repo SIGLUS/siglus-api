@@ -483,10 +483,8 @@ public class SiglusStockEventsServiceTest {
         .programId(ALL_PRODUCTS_PROGRAM_ID).build();
     when(stockManagementDraftService.findStockManagementDraft(any(), any(), any())).thenReturn(
         Collections.singletonList(new StockManagementDraftDto()));
-
     when(siglusPhysicalInventoryService.getPhysicalInventoryDtos(any(), any(), any()))
         .thenReturn(Collections.singletonList(new PhysicalInventoryDto()));
-
     // when
     siglusStockEventsService.processStockEvent(eventDto, false);
     // then
@@ -494,4 +492,25 @@ public class SiglusStockEventsServiceTest {
         .save(any(PhysicalInventoryHistory.class));
   }
 
+  @Test
+  public void shouldNotSavePhysicalInventoryHistoryWhenNotSubmitPhysicalInventory() {
+    // given
+    StockEventLineItemDto lineItemDto1 = new StockEventLineItemDtoDataBuilder().buildForAdjustment();
+    lineItemDto1.setOrderableId(orderableId1);
+    lineItemDto1.setReasonId(UUID.randomUUID());
+    lineItemDto1.setSourceId(null);
+    lineItemDto1.setDestinationId(null);
+    StockEventDto eventDto = StockEventDto.builder()
+        .lineItems(newArrayList(lineItemDto1))
+        .programId(ALL_PRODUCTS_PROGRAM_ID).build();
+    when(stockManagementDraftService.findStockManagementDraft(any(), any(), any())).thenReturn(
+        Collections.singletonList(new StockManagementDraftDto()));
+    when(siglusPhysicalInventoryService.getPhysicalInventoryDtos(any(), any(), any()))
+        .thenReturn(Collections.singletonList(new PhysicalInventoryDto()));
+    // when
+    siglusStockEventsService.processStockEvent(eventDto, false);
+    // then
+    verify(physicalInventoryHistoryRepository, times(0))
+        .save(any(PhysicalInventoryHistory.class));
+  }
 }
