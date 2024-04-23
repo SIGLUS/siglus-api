@@ -44,10 +44,7 @@ public class SiglusPhysicalInventoryHistoryService {
       return new ArrayList<>();
     }
     UUID facilityId = currentUser.getHomeFacilityId();
-    List<SiglusPhysicalInventoryHistoryDto> historyDtos = physicalInventoryHistoryRepository
-        .queryPhysicalInventoryHistories(facilityId);
-    historyDtos.forEach(historyDto -> historyDto.setHistoryData(null));
-    return historyDtos;
+    return physicalInventoryHistoryRepository.queryPhysicalInventoryHistories(facilityId);
   }
 
   public String searchPhysicalInventoryHistoryData(UUID id) {

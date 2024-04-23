@@ -158,7 +158,9 @@ public class SiglusStockEventsService {
       validateAdjustmentLocationAndQuantity(eventDto);
     }
     createStockEvent(eventDto, stockEventDtoByPrograms, isByLocation);
-    savePhysicalInventoryHistory(eventDto);
+    if (eventDto.isPhysicalInventory()) {
+      savePhysicalInventoryHistory(eventDto);
+    }
     deleteDraft(eventDto);
 
     if (isByLocation) {

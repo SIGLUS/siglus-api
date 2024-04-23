@@ -32,8 +32,7 @@ import lombok.NoArgsConstructor;
     query = "select "
         + "pih.id, "
         + "p.name as programname, "
-        + "pih.completeddate, "
-        + "pih.historydata "
+        + "pih.completeddate "
         + "from siglusintegration.physical_inventories_histories pih "
         + "left join referencedata.programs p on pih.programid = p.id "
         + "where pih.facilityid = :facilityId "
@@ -49,7 +48,6 @@ import lombok.NoArgsConstructor;
             @ColumnResult(name = "id", type = UUID.class),
             @ColumnResult(name = "programName", type = String.class),
             @ColumnResult(name = "completedDate", type = LocalDate.class),
-            @ColumnResult(name = "historyData", type = String.class),
         }
     )
 )
@@ -63,5 +61,4 @@ public class SiglusPhysicalInventoryHistoryDto {
   private UUID id;
   private String programName;
   private LocalDate completedDate;
-  private String historyData;
 }
