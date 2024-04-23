@@ -448,6 +448,9 @@ public class SiglusRequisitionService {
     Set<UUID> requisitionLinItemIds = v2Dto.getLineItems().stream()
             .filter(lineItem -> orderableIdToLineItems.containsKey(lineItem.getOrderableIdentity().getId()))
             .map(BaseDto::getId).collect(toSet());
+    if (CollectionUtils.isEmpty(requisitionLinItemIds)) {
+      return;
+    }
     Set<RequisitionLineItem> requisitionLineItems = requisitionLineItemRepository.findAllById(requisitionLinItemIds);
     requisitionLineItems.forEach(lineItem -> {
       UUID orderableId = lineItem.getOrderable().getId();
