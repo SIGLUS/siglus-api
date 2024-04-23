@@ -31,7 +31,10 @@ import lombok.NoArgsConstructor;
     name = "PhysicalInventoryHistory.queryPhysicalInventoryHistory",
     query = "select "
         + "pih.id, "
-        + "p.name as programname, "
+        + "case when "
+        + "  pih.programid = '00000000-0000-0000-0000-000000000000' then 'ALL' "
+        + "else p.name "
+        + "end as programname, "
         + "pih.completeddate "
         + "from siglusintegration.physical_inventories_histories pih "
         + "left join referencedata.programs p on pih.programid = p.id "
