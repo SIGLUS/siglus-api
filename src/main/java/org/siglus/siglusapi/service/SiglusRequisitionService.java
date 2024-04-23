@@ -379,6 +379,9 @@ public class SiglusRequisitionService {
   }
 
   public void processStockMovementAfterTheDateSubmitted(RequisitionV2Dto v2Dto) {
+    if (Boolean.TRUE.equals(v2Dto.getEmergency())) {
+      return;
+    }
     Requisition mock = new Requisition();
     if (v2Dto.getProcessingPeriod() == null) {
       return;
@@ -387,17 +390,24 @@ public class SiglusRequisitionService {
     mock.setFacilityId(v2Dto.getFacilityId());
     mock.setProgramId(v2Dto.getProgramId());
     Requisition previousRegularRequisition;
-    // TODO what if emergency requisition?
+
     previousRegularRequisition = requisitionService.getPreviousRegularRequisition(mock);
 
     if (previousRegularRequisition == null) {
       return;
     }
 
+    // TODO when problem happens, the inventory date & requisition create date must be the same date
+    // if inventory date before the create date, then the end date is inventory date,
+    // then all movement at that date will be included,  so no problem here!!!
     LocalDate previousSubmitDate = previousRegularRequisition.getActualEndDate();
     ZonedDateTime previousCreateTime = previousRegularRequisition.getCreatedDate();
 
-    Set<UUID> orderableIds = v2Dto.getAvailableProducts().stream().map(BaseDto::getId).collect(toSet());
+    Set<UUID> orderableIds = v2Dto.getLineItems().stream().map(lineItem ->
+            lineItem.getOrderableIdentity().getId()).collect(toSet());
+    if (CollectionUtils.isEmpty(orderableIds)) {
+      return;
+    }
     List<StockCard> stockCards = stockCardRepository.findByOrderableIdInAndFacilityId(orderableIds,
             v2Dto.getFacilityId());
 
@@ -419,7 +429,6 @@ public class SiglusRequisitionService {
     Map<UUID, Integer> orderableIdToAdditonalIssue = new HashMap<>();
     Map<UUID, Integer> orderableIdToAdditonalReceive = new HashMap<>();
     orderableIdToLineItems.forEach((orderableId, lineItems) -> {
-      // TODO check issue logic correct?
       Integer totalIssue = lineItems.stream()
               .filter(lineItem -> !lineItem.isPhysicalInventory())
               .filter(lineItem -> !lineItem.isPositive())
@@ -442,6 +451,8 @@ public class SiglusRequisitionService {
     Set<RequisitionLineItem> requisitionLineItems = requisitionLineItemRepository.findAllById(requisitionLinItemIds);
     requisitionLineItems.forEach(lineItem -> {
       UUID orderableId = lineItem.getOrderable().getId();
+      // TODO what about the initial inventory should change?
+      //  Since the SOH is by date in calculated SOH, so we need to add back???
       lineItem.setTotalReceivedQuantity(lineItem.getTotalReceivedQuantity()
               + orderableIdToAdditonalReceive.getOrDefault(orderableId, 0));
       lineItem.setTotalConsumedQuantity(lineItem.getTotalConsumedQuantity()
