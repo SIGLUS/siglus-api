@@ -661,13 +661,13 @@ public class SiglusPhysicalInventoryServiceTest {
   @Test
   public void shouldReturnDistinctOccurredDatesWhenFindPhysicalInventoryDates() {
     // given
-    PhysicalInventory physicalInventory1 = new PhysicalInventory();
+    SiglusPhysicalInventoryBriefDto physicalInventory1 = new SiglusPhysicalInventoryBriefDto();
     physicalInventory1.setOccurredDate(LocalDate.of(2020, 6, 10));
-    PhysicalInventory physicalInventory2 = new PhysicalInventory();
+    SiglusPhysicalInventoryBriefDto physicalInventory2 = new SiglusPhysicalInventoryBriefDto();
     physicalInventory2.setOccurredDate(LocalDate.of(2020, 6, 13));
-    PhysicalInventory physicalInventory3 = new PhysicalInventory();
+    SiglusPhysicalInventoryBriefDto physicalInventory3 = new SiglusPhysicalInventoryBriefDto();
     physicalInventory3.setOccurredDate(LocalDate.of(2020, 6, 10));
-    when(physicalInventoriesRepository.findByProgramIdAndFacilityIdAndStartDateAndEndDate(programId,
+    when(siglusPhysicalInventoryRepository.findByProgramIdAndFacilityIdAndStartDateAndEndDate(programId,
         facilityId, startDate, endDate))
         .thenReturn(newArrayList(physicalInventory1, physicalInventory2, physicalInventory3));
 

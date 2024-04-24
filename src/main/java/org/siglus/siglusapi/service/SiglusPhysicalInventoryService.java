@@ -553,8 +553,8 @@ public class SiglusPhysicalInventoryService {
   public Set<String> findPhysicalInventoryDates(UUID programId, UUID facility,
       String startDate,
       String endDate) {
-    List<PhysicalInventory> physicalInventories =
-        physicalInventoriesRepository.findByProgramIdAndFacilityIdAndStartDateAndEndDate(programId,
+    List<SiglusPhysicalInventoryBriefDto> physicalInventories =
+        siglusPhysicalInventoryRepository.findByProgramIdAndFacilityIdAndStartDateAndEndDate(programId,
             facility, startDate, endDate);
     return physicalInventories
         .stream()

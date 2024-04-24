@@ -34,6 +34,7 @@ import org.siglus.siglusapi.dto.SiglusPhysicalInventoryDto;
 import org.siglus.siglusapi.dto.enums.LocationManagementOption;
 import org.springframework.util.ObjectUtils;
 
+@SuppressWarnings("PMD.AvoidDuplicateLiterals")
 @NamedNativeQueries({
     @NamedNativeQuery(
         name = "PhysicalInventory.queryForAllProgram",
@@ -57,6 +58,19 @@ import org.springframework.util.ObjectUtils;
             + "       on pi.id  = pie.physicalinventoryid "
             + "where pi.facilityid = :facilityId and pi.isdraft = :isDraft and pie.category = 'SINGLE' "
             + "      and pi.programid = :programId "
+            + ";",
+        resultSetMapping = "PhysicalInventory.SiglusPhysicalInventoryBriefDto"),
+
+    @NamedNativeQuery(
+        name = "PhysicalInventory.findByProgramIdAndFacilityIdAndStartDateAndEndDate",
+        query = "SELECT pi.id as id, pi.programid as programId, pi.facilityid as facilityId,  "
+            + "  pi.occurreddate as occurredDate, pi.signature as signature, pi.documentnumber as documentNumber, "
+            + "  pi.isdraft as isDraft, pie.category as category, pie.locationoption as locationOption "
+            + "from stockmanagement.physical_inventories pi "
+            + "left join siglusintegration.physical_inventories_extension pie "
+            + "       on pi.id  = pie.physicalinventoryid "
+            + "where pi.facilityid = :facilityId and pi.programid = :programId "
+            + "      and pi.occurreddate >= :startDate and pi.occurreddate <= :endDate "
             + ";",
         resultSetMapping = "PhysicalInventory.SiglusPhysicalInventoryBriefDto")
 })

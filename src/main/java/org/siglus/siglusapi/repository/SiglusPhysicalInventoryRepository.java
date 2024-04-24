@@ -35,5 +35,11 @@ public interface SiglusPhysicalInventoryRepository extends PagingAndSortingRepos
   List<SiglusPhysicalInventoryBriefDto> queryForOneProgram(
       @Param("facilityId") UUID facilityId, @Param("programId") UUID programId, @Param("isDraft") boolean isDraft);
 
+  @Query(name = "PhysicalInventory.findByProgramIdAndFacilityIdAndStartDateAndEndDate", nativeQuery = true)
+  List<SiglusPhysicalInventoryBriefDto> findByProgramIdAndFacilityIdAndStartDateAndEndDate(
+      @Param("facilityId") UUID facilityId, @Param("programId") UUID programId,
+      @Param("startDate") String startDate, @Param("endDate") String endDate);
+
+
   List<PhysicalInventory> findAllByIdIn(Set<UUID> ids);
 }
