@@ -49,7 +49,6 @@ public class RemovedLotDto {
   public StockEventLineItemDto toStockEventLineItemDto(UUID reasonId) {
     return StockEventLineItemDto.builder()
             .reasonId(reasonId)
-            .destinationId(facilityId)
             .orderableId(orderableId)
             .lotId(lotId)
             .area(area)
