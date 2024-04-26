@@ -20,6 +20,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import org.siglus.siglusapi.domain.CalculatedStockOnHandByLocation;
 import org.siglus.siglusapi.dto.LocationMovementLineItemDto;
@@ -140,6 +141,12 @@ public interface CalculatedStockOnHandByLocationRepository extends JpaRepository
   void deleteAllByStockCardIdAndEqualOccurredDateAndLocationCodes(@Param("stockCardId") UUID stockCardId,
       @Param("occurredDate") Date occurredDate,
       @Param("locationCode") String locationCode);
+
+  @Modifying
+  @Query(value = "delete from siglusintegration.calculated_stocks_on_hand_by_location "
+      + "where concat(cast(stockcardid as varchar), concat(cast(occurreddate as varchar), locationcode)) in :pairs",
+      nativeQuery = true)
+  void deleteAllByStockCardIdAndEqualOccurredDateAndLocationCodePairs(@Param("pairs") Set<String> deletedPairs);
 
   @Query(name = "LocationMovement.getStockMovementWithLocation", nativeQuery = true)
   List<LocationMovementLineItemDto> getStockMovementWithLocation(@Param("stockCardId") UUID stockCardId,
