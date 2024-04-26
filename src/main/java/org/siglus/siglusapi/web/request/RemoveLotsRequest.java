@@ -16,6 +16,7 @@
 package org.siglus.siglusapi.web.request;
 
 import java.util.List;
+import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
 import lombok.Data;
@@ -28,5 +29,6 @@ public class RemoveLotsRequest {
   @NotNull
   private String lotType = EXPIRED;
   @NotEmpty
-  private List<FacilityRemovedLotDto> dtos;
+  @Valid
+  private List<FacilityRemovedLotDto> lots;
 }

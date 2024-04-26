@@ -83,7 +83,7 @@ public class SiglusFacilityService {
         throw new BusinessDataException(Message.createFromMessageKeyStr(
                 "stock card id doesn't exist " + lot.getStockCardId()));
       }
-      if (stockCard.getFacilityId() != facilityId) {
+      if (!stockCard.getFacilityId().equals(facilityId)) {
         throw new BusinessDataException(Message.createFromMessageKeyStr(
                 "stock card id:" + lot.getStockCardId() + " doesn't belong to facility:" + facilityId));
       }
@@ -94,6 +94,7 @@ public class SiglusFacilityService {
               .area(lot.getArea())
               .locationCode(lot.getLocationCode())
               .quantity(lot.getQuantity())
+              .stockCardId(stockCard.getId())
               .build();
     }).collect(Collectors.toList());
     siglusLotService.removeExpiredLots(removedLotDtos, hasLocation);

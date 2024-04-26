@@ -222,8 +222,8 @@ public class SiglusLotService {
   }
 
   private List<StockEventDto> buildDiscardStockEventDtos(List<RemovedLotDto> lots) {
-    StockCardLineItemReason reason =
-            stockCardLineItemReasonRepository.findByName(AdjustmentReason.EXPIRED_DISCARD.getName());
+    StockCardLineItemReason reason = stockCardLineItemReasonRepository.findByName(
+                AdjustmentReason.EXPIRED_RETURN_TO_SUPPLIER_AND_DISCARD.getName());
     if (ObjectUtils.isEmpty(reason)) {
       throw new BusinessDataException(
               Message.createFromMessageKeyStr("Missing discard expired lots reason"));

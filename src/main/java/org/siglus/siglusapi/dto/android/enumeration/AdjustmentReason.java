@@ -39,7 +39,8 @@ public enum AdjustmentReason {
   RETURN_TO_SUPPLIER("Devolver ao armazém do fornecedor"),
   RECEIVE("Receive"),
   ISSUE("Issue"),
-  EXPIRED_DISCARD("Fora do prazo de validade");
+  EXPIRED_DISCARD("Fora do prazo de validade"),
+  EXPIRED_RETURN_TO_SUPPLIER_AND_DISCARD("Transferência de produtos expirados");
 
   private final String name;
 

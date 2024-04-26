@@ -16,12 +16,12 @@
 package org.siglus.siglusapi.dto;
 
 import java.util.UUID;
+import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.checkerframework.checker.index.qual.Positive;
 
 @Data
 @AllArgsConstructor
@@ -29,7 +29,7 @@ import org.checkerframework.checker.index.qual.Positive;
 public class FacilityRemovedLotDto {
   @NotNull
   private UUID stockCardId;
-  @Positive
+  @Min(1)
   private int quantity;
   private String locationCode;
   private String area;

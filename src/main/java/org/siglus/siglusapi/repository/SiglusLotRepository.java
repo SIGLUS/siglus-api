@@ -33,10 +33,10 @@ public interface SiglusLotRepository extends JpaRepository<Lot, UUID> {
   @Query(name = "StockCard.queryExpiredLotStockDtoByFacilityWithLocation", nativeQuery = true)
   List<LotStockDto> queryExpiredLotsWithLocation(@Param("facilityId") UUID facilityId);
 
-  @Query(value = "SELECT EXISTS (SELECT 1 FROM referencedata.lots l "
-      + "WHERE l.id IN (:ids) AND l.dateColumnName > current_date)",
+  @Query(value = "SELECT CASE WHEN (COUNT(*) > 0) THEN true ELSE false END "
+      + "FROM referencedata.lots l WHERE l.id IN (:ids) AND l.expirationdate > current_date",
       nativeQuery = true)
-  boolean existsNotExpiredLotsByIds(List<UUID> ids);
+  boolean existsNotExpiredLotsByIds(@Param("ids") List<UUID> ids);
 
   List<Lot> findAllByIdIn(Set<UUID> ids);
 }

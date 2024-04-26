@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.dto;
 
+import java.time.LocalDate;
 import java.util.UUID;
 import javax.validation.constraints.NotNull;
 
@@ -48,13 +49,13 @@ public class RemovedLotDto {
   public StockEventLineItemDto toStockEventLineItemDto(UUID reasonId) {
     return StockEventLineItemDto.builder()
             .reasonId(reasonId)
-            .sourceId(facilityId)
             .destinationId(facilityId)
             .orderableId(orderableId)
             .lotId(lotId)
             .area(area)
-            .quantity(-quantity)
+            .quantity(quantity)
             .locationCode(locationCode)
+            .occurredDate(LocalDate.now())
             .build();
   }
 }

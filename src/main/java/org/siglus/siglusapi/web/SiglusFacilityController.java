@@ -28,6 +28,7 @@ import org.siglus.siglusapi.service.SiglusFacilityService;
 import org.siglus.siglusapi.service.SiglusLotLocationService;
 import org.siglus.siglusapi.service.SiglusLotService;
 import org.siglus.siglusapi.web.request.RemoveLotsRequest;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -64,10 +65,12 @@ public class SiglusFacilityController {
 
   @PostMapping("/{id}/lots/remove")
   public void removeExpiredLots(@PathVariable("id") UUID id,
-                                @RequestBody RemoveLotsRequest request) {
+                                @Validated @RequestBody RemoveLotsRequest request) {
     if (Objects.equals(request.getLotType(), RemoveLotsRequest.EXPIRED)) {
-      siglusFacilityService.removeExpiredLots(id, request.getDtos());
+      siglusFacilityService.removeExpiredLots(id, request.getLots());
+      return;
     }
+    throw new InvalidReasonException("un-support lotType: " + request.getLotType());
   }
 
   @GetMapping("/{id}/locations")
