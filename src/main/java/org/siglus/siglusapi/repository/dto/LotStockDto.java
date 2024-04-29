@@ -31,9 +31,9 @@ import lombok.Data;
 @NamedNativeQueries({
     @NamedNativeQuery(
         name = "StockCard.queryExpiredLotStockDtoByFacility",
-        query = "select sc.id as stockCardId, sc.programid,p.\"name\", p.code, sc.orderableid, o.fullproductname, "
-            + "  o.code as productCode, sc.lotid, l.lotcode, soh.stockonhand, l.expirationdate, "
-            + "  null as area, null as locationcode "
+        query = "select sc.id as stockCardId, sc.programid,p.\"name\", p.code, sc.orderableid, "
+            + "  o.fullproductname as productName, o.code as productCode, sc.lotid, l.lotcode, "
+            + "  soh.stockonhand, l.expirationdate, null as area, null as locationcode "
             + "from stockmanagement.stock_cards sc "
             + "left join referencedata.programs p on sc.programid = p.id "
             + "left join ( "
@@ -57,9 +57,9 @@ import lombok.Data;
 
     @NamedNativeQuery(
         name = "StockCard.queryExpiredLotStockDtoByFacilityWithLocation",
-        query = "select sc.id as stockCardId, sc.programid,p.\"name\", p.code, sc.orderableid, o.fullproductname, "
-            + "o.code as productCode, sc.lotid, l.lotcode, soh.stockonhand, l.expirationdate, "
-            + "soh.area, soh.locationcode "
+        query = "select sc.id as stockCardId, sc.programid,p.\"name\", p.code, sc.orderableid, "
+            + " o.fullproductname as productName, o.code as productCode, sc.lotid, l.lotcode, "
+            + " soh.stockonhand, l.expirationdate, soh.area, soh.locationcode "
             + "from stockmanagement.stock_cards sc "
             + "left join referencedata.programs p on sc.programid = p.id "
             + "left join ( "
@@ -93,7 +93,7 @@ import lombok.Data;
                     @ColumnResult(name = "name", type = String.class),
                     @ColumnResult(name = "code", type = String.class),
                     @ColumnResult(name = "orderableid", type = UUID.class),
-                    @ColumnResult(name = "fullproductname", type = String.class),
+                    @ColumnResult(name = "productName", type = String.class),
                     @ColumnResult(name = "productCode", type = String.class),
                     @ColumnResult(name = "lotid", type = UUID.class),
                     @ColumnResult(name = "lotcode", type = String.class),
@@ -114,7 +114,7 @@ public class LotStockDto {
   private String programName;
   private String programCode;
   private UUID orderableId;
-  private String fullProductName;
+  private String productName;
   private String productCode;
   private UUID lotId;
   private String lotCode;
