@@ -1282,7 +1282,10 @@ public class SiglusPhysicalInventoryService {
         .filter(extension -> !uniqueKeys.contains(extension.getPhysicalInventoryLineItemId()))
         .collect(Collectors.toList());
     if (CollectionUtils.isNotEmpty(needDeleteLineItemsExtensions)) {
-      lineItemsExtensionRepository.deleteInBatch(needDeleteLineItemsExtensions);
+      lineItemsExtensionRepository.deleteByPhysicalInventoryLineItemIdIn(
+          needDeleteLineItemsExtensions.stream()
+              .map(PhysicalInventoryLineItemsExtension::getPhysicalInventoryLineItemId)
+              .collect(Collectors.toList()));
     }
 
     log.info("save physical inventory extension, size: {}", updateExtensions.size());

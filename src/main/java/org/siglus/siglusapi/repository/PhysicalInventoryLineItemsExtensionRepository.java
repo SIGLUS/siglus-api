@@ -21,6 +21,7 @@ import java.util.Optional;
 import java.util.UUID;
 import org.siglus.siglusapi.domain.PhysicalInventoryLineItemsExtension;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.transaction.annotation.Transactional;
 
 public interface PhysicalInventoryLineItemsExtensionRepository extends
@@ -44,4 +45,7 @@ public interface PhysicalInventoryLineItemsExtensionRepository extends
   void deleteBySubDraftId(UUID subDraftId);
 
   List<PhysicalInventoryLineItemsExtension> findBySubDraftIdIn(List<UUID> subDraftUuids);
+
+  @Modifying
+  void deleteByPhysicalInventoryLineItemIdIn(Collection<UUID> ids);
 }
