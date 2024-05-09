@@ -40,7 +40,6 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -84,6 +83,7 @@ import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
 import org.siglus.siglusapi.service.client.SiglusShipmentDraftFulfillmentService;
 import org.siglus.siglusapi.web.request.ShipmentExtensionRequest;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -123,7 +123,8 @@ public class SiglusShipmentService {
 
   private final SiglusLotRepository siglusLotRepository;
 
-  private static final double FEFO_INDEX = 0.75;
+  @Value("${shipment.fefo.index}")
+  private double fefoIndex;
 
   @Transactional
   public ShipmentDto createOrderAndShipment(boolean isSubOrder, ShipmentExtensionRequest shipmentExtensionRequest) {
@@ -211,21 +212,20 @@ public class SiglusShipmentService {
       return false;
     }
     Map<UUID, List<SiglusFefoDto>> orderableIdToFefoDtoSortedMap = buildOrderableIdToFefoDtoSortedMap(shipmentDto);
-    AtomicReference<Long> totalQuantityActualFefo = new AtomicReference<>(0L);
-    AtomicReference<Long> totalQuantityShipped = new AtomicReference<>(0L);
     setQuantitySuggestedAndActualFefo(orderableIdToFefoDtoSortedMap);
-    orderableIdToFefoDtoSortedMap.forEach((key, fefoDtos) -> {
-      totalQuantityShipped.updateAndGet(v -> v + fefoDtos.stream()
-          .mapToLong(SiglusFefoDto::getQuantityShipped)
-          .sum());
-      totalQuantityActualFefo.updateAndGet(v -> v + fefoDtos.stream()
-          .mapToLong(SiglusFefoDto::getQuantityActualFefo)
-          .sum());
-    });
-    if (totalQuantityShipped.get() == 0L) {
+    List<SiglusFefoDto> siglusFefoDtos = orderableIdToFefoDtoSortedMap.values().stream()
+        .flatMap(List::stream)
+        .collect(Collectors.toList());
+    long totalQuantityShipped = siglusFefoDtos.stream()
+        .mapToLong(SiglusFefoDto::getQuantityShipped)
+        .sum();
+    long totalQuantityActualFefo = siglusFefoDtos.stream()
+        .mapToLong(SiglusFefoDto::getQuantityActualFefo)
+        .sum();
+    if (totalQuantityShipped == 0L) {
       throw new BusinessDataException(new Message(ERROR_USER_CAN_NOT_CONFIRM_SHIPMENT));
     }
-    return (double) totalQuantityActualFefo.get() / totalQuantityShipped.get() > FEFO_INDEX;
+    return (double) totalQuantityActualFefo / totalQuantityShipped > fefoIndex;
   }
 
   private void setQuantitySuggestedAndActualFefo(Map<UUID, List<SiglusFefoDto>> orderableIdToFefoDtoSortedMap) {
@@ -234,14 +234,14 @@ public class SiglusShipmentService {
       long totalQuantityShippedByOrderable = fefoDtos.stream()
           .mapToLong(SiglusFefoDto::getQuantityShipped)
           .sum();
-      for (int i = 0; i < fefoDtos.size(); i++) {
-        SiglusFefoDto dto = fefoDtos.get(i);
-        if (i == 0) {
+      for (int suggestedQuantityIndex = 0; suggestedQuantityIndex < fefoDtos.size(); suggestedQuantityIndex++) {
+        SiglusFefoDto dto = fefoDtos.get(suggestedQuantityIndex);
+        if (suggestedQuantityIndex == 0) {
           dto.setQuantitySuggested(dto.getStockOnHand());
         } else {
           long quantity = 0;
-          for (int j = 0; j < i; j++) {
-            quantity += fefoDtos.get(j).getStockOnHand();
+          for (int stockOnHandIndex = 0; stockOnHandIndex < suggestedQuantityIndex; stockOnHandIndex++) {
+            quantity += fefoDtos.get(stockOnHandIndex).getStockOnHand();
           }
           dto.setQuantitySuggested(totalQuantityShippedByOrderable - quantity);
         }
