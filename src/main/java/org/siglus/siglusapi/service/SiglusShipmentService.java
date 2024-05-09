@@ -207,7 +207,7 @@ public class SiglusShipmentService {
     shipmentsExtensionRepository.save(shipmentsExtension);
   }
 
-  private boolean calcIsFefo(ShipmentDto shipmentDto) {
+  public boolean calcIsFefo(ShipmentDto shipmentDto) {
     if (CollectionUtils.isEmpty(shipmentDto.lineItems())) {
       return false;
     }
