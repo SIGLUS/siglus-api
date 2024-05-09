@@ -13,32 +13,40 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.domain;
+package org.siglus.siglusapi.dto;
 
+import java.time.LocalDate;
+import java.util.Map;
 import java.util.UUID;
-import javax.persistence.Entity;
-import javax.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import org.siglus.common.domain.BaseEntity;
+import org.openlmis.fulfillment.web.shipment.ShipmentLineItemDto;
 
-@Entity
 @Data
-@Builder
-@EqualsAndHashCode(callSuper = true)
-@AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "shipments_extension", schema = "siglusintegration")
-public class ShipmentsExtension extends BaseEntity {
+@AllArgsConstructor
+@Builder
+public class SiglusFefoDto {
 
-  private UUID shipmentId;
+  private UUID orderableId;
+  private UUID lotId;
+  private LocalDate expirationDate;
+  private Long stockOnHand;
+  private Long quantityShipped;
+  private Long quantitySuggested;
+  private Long quantityActualFefo;
 
-  private String issueVoucherNumber;
+  public static SiglusFefoDto from(ShipmentLineItemDto lineItemDto, Map<UUID, LocalDate> lotIdToExpiredDateMap) {
 
-  private String clientCode;
-
-  private boolean isFefo;
+    return SiglusFefoDto.builder()
+        .orderableId(lineItemDto.getOrderable().getId())
+        .lotId(lineItemDto.getLot().getId())
+        .expirationDate(lotIdToExpiredDateMap.get(lineItemDto.getLot().getId()))
+        .stockOnHand(lineItemDto.getStockOnHand())
+        .quantityShipped(lineItemDto.getQuantityShipped())
+        .build();
+  }
 }
+

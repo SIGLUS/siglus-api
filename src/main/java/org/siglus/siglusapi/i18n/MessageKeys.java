@@ -240,6 +240,7 @@ public abstract class MessageKeys {
   public static final String ERROR_CURRENT_USER_NOT_ADMIN_USER = ERROR_PREFIX + ".current.user.not.admin.user";
   public static final String ERROR_USER_NOT_REPORT_VIEWER_USER = ERROR_PREFIX + ".user.not.report.viewer.user";
   public static final String ERROR_USER_NOT_REPORT_VIEW_AUTHORITY = ERROR_PREFIX + ".user.not.report.view.authority";
+  public static final String ERROR_USER_CAN_NOT_CONFIRM_SHIPMENT = ERROR_PREFIX + ".user.can.not.confirm.shipment";
 
   protected MessageKeys() {
     throw new UnsupportedOperationException();
