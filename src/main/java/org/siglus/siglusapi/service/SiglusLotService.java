@@ -234,13 +234,19 @@ public class SiglusLotService {
       facilityWithProgramMap.put(key, lot);
     });
     List<StockEventDto> eventDtos = new ArrayList<>();
-    facilityWithProgramMap.asMap().forEach((key, values) -> eventDtos.add(StockEventDto.builder()
-        .facilityId(key._1())
-        .programId(key._2())
-        .lineItems(values.stream()
-               .map(item -> item.toStockEventLineItemDto(reason.getId())).collect(Collectors.toList()))
-        .userId(authenticationHelper.getCurrentUser().getId())
-        .build()));
+    facilityWithProgramMap.asMap().forEach((key, values) -> {
+      RemovedLotDto dto = values.stream().findFirst().get();
+      eventDtos.add(StockEventDto.builder()
+          .facilityId(key._1())
+          .programId(key._2())
+          .lineItems(values.stream()
+              .map(item -> item.toStockEventLineItemDto(reason.getId())).collect(Collectors.toList()))
+          .userId(authenticationHelper.getCurrentUser().getId())
+          .signature(dto.getSignature())
+          .documentNumber(dto.getDocumentNumber())
+          .build());
+    });
+
     return eventDtos;
   }
 }

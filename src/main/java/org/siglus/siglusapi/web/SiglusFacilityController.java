@@ -67,7 +67,8 @@ public class SiglusFacilityController {
   public void removeExpiredLots(@PathVariable("id") UUID id,
                                 @Validated @RequestBody RemoveLotsRequest request) {
     if (Objects.equals(request.getLotType(), RemoveLotsRequest.EXPIRED)) {
-      siglusFacilityService.removeExpiredLots(id, request.getLots());
+      siglusFacilityService.removeExpiredLots(id,
+          request.getLots(), request.getSignature(), request.getDocumentNumber());
       return;
     }
     throw new InvalidReasonException("un-support lotType: " + request.getLotType());

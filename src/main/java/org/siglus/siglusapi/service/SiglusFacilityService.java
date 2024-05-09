@@ -63,7 +63,8 @@ public class SiglusFacilityService {
         .collect(Collectors.toMap(Facility::getId, Facility::getName));
   }
 
-  public void removeExpiredLots(UUID facilityId, List<FacilityRemovedLotDto> lots) {
+  public void removeExpiredLots(UUID facilityId, List<FacilityRemovedLotDto> lots,
+      String signature, String documentNumber) {
     if (ObjectUtils.isEmpty(lots)) {
       return;
     }
@@ -95,6 +96,8 @@ public class SiglusFacilityService {
               .locationCode(lot.getLocationCode())
               .quantity(lot.getQuantity())
               .stockCardId(stockCard.getId())
+              .signature(signature)
+              .documentNumber(documentNumber)
               .build();
     }).collect(Collectors.toList());
     siglusLotService.removeExpiredLots(removedLotDtos, hasLocation);

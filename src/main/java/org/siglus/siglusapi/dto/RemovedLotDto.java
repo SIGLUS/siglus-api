@@ -45,6 +45,10 @@ public class RemovedLotDto {
   private int quantity;
   private String locationCode;
   private String area;
+  @NotNull
+  private String signature;
+  @NotNull
+  private String documentNumber;
 
   public StockEventLineItemDto toStockEventLineItemDto(UUID reasonId) {
     return StockEventLineItemDto.builder()

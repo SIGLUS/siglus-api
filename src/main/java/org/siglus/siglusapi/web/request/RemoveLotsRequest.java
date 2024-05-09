@@ -31,4 +31,8 @@ public class RemoveLotsRequest {
   @NotEmpty
   @Valid
   private List<FacilityRemovedLotDto> lots;
+  @NotNull
+  private String signature;
+  @NotNull
+  private String documentNumber;
 }

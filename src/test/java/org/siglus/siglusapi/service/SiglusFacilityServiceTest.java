@@ -50,7 +50,7 @@ public class SiglusFacilityServiceTest {
   @Test
   public void shouldSuccessWhenRemoveExpiredLotsGivenLotsIsEmpty() {
     try {
-      siglusFacilityService.removeExpiredLots(UUID.randomUUID(), new ArrayList<>());
+      siglusFacilityService.removeExpiredLots(UUID.randomUUID(), new ArrayList<>(), "", "");
     } catch (Exception e) {
       fail("Unexpected exception: " + e.getMessage());
     }
@@ -62,7 +62,7 @@ public class SiglusFacilityServiceTest {
     List<FacilityRemovedLotDto> lots = new ArrayList<>();
     lots.add(buildFacilityRemovedLotDtoWithoutLocation());
 
-    siglusFacilityService.removeExpiredLots(UUID.randomUUID(), lots);
+    siglusFacilityService.removeExpiredLots(UUID.randomUUID(), lots, "", "");
   }
 
   @Test(expected = BusinessDataException.class)
@@ -71,7 +71,7 @@ public class SiglusFacilityServiceTest {
     List<FacilityRemovedLotDto> lots = new ArrayList<>();
     lots.add(buildFacilityRemovedLotDtoWithLocation());
 
-    siglusFacilityService.removeExpiredLots(UUID.randomUUID(), lots);
+    siglusFacilityService.removeExpiredLots(UUID.randomUUID(), lots, "", "");
   }
 
   @Test(expected = BusinessDataException.class)
@@ -81,7 +81,7 @@ public class SiglusFacilityServiceTest {
     lots.add(buildFacilityRemovedLotDtoWithoutLocation());
     Mockito.when(siglusStockCardService.findStockCardByIds(any())).thenReturn(new ArrayList<>());
 
-    siglusFacilityService.removeExpiredLots(UUID.randomUUID(), lots);
+    siglusFacilityService.removeExpiredLots(UUID.randomUUID(), lots, "", "");
   }
 
   @Test(expected = BusinessDataException.class)
@@ -96,7 +96,7 @@ public class SiglusFacilityServiceTest {
     stockCards.add(stockCard);
     Mockito.when(siglusStockCardService.findStockCardByIds(any())).thenReturn(stockCards);
 
-    siglusFacilityService.removeExpiredLots(UUID.randomUUID(), lots);
+    siglusFacilityService.removeExpiredLots(UUID.randomUUID(), lots, "", "");
   }
 
   @Test
@@ -113,7 +113,7 @@ public class SiglusFacilityServiceTest {
     Mockito.when(siglusStockCardService.findStockCardByIds(any())).thenReturn(stockCards);
     Mockito.doNothing().when(siglusLotService).removeExpiredLots(anyList(), anyBoolean());
 
-    siglusFacilityService.removeExpiredLots(facilityId, lots);
+    siglusFacilityService.removeExpiredLots(facilityId, lots, "", "");
 
     Mockito.verify(siglusLotService, Mockito.times(1)).removeExpiredLots(anyList(), anyBoolean());
   }
