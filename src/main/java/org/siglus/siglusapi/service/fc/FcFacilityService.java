@@ -16,6 +16,7 @@
 package org.siglus.siglusapi.service.fc;
 
 import static com.google.common.collect.Lists.newArrayList;
+import static org.siglus.siglusapi.constant.FacilityTypeConstants.getSupportMmcTypes;
 import static org.siglus.siglusapi.constant.FcConstants.FACILITY_API;
 import static org.siglus.siglusapi.dto.fc.FcIntegrationResultDto.buildResult;
 
@@ -186,6 +187,10 @@ public class FcFacilityService implements ProcessDataService {
         .map(fcAreaDto -> {
           String code = fcAreaDto.getAreaCode();
           if (code.equalsIgnoreCase(ProgramConstants.MALARIA_PROGRAM_CODE)) {
+            return code;
+          }
+          if (code.equalsIgnoreCase(ProgramConstants.MMC_PROGRAM_CODE)
+                  && getSupportMmcTypes().contains(fcFacilityDto.getClientTypeCode())) {
             return code;
           }
           return codeToRealProgramMap.containsKey(code) ? codeToRealProgramMap.get(code).getProgramCode() : null;
