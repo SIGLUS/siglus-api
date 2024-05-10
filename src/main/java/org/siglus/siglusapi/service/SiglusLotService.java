@@ -47,6 +47,7 @@ import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.dto.RemovedLotDto;
 import org.siglus.siglusapi.dto.android.Lot;
 import org.siglus.siglusapi.dto.android.enumeration.AdjustmentReason;
+import org.siglus.siglusapi.dto.android.enumeration.MovementType;
 import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.SiglusLotRepository;
@@ -242,6 +243,7 @@ public class SiglusLotService {
           .lineItems(values.stream()
               .map(item -> item.toStockEventLineItemDto(reason.getId())).collect(Collectors.toList()))
           .userId(authenticationHelper.getCurrentUser().getId())
+          .type(MovementType.ADJUSTMENT.toString())
           .signature(dto.getSignature())
           .documentNumber(dto.getDocumentNumber())
           .build());
