@@ -31,6 +31,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import javax.validation.ValidationException;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -203,9 +204,14 @@ public class SiglusShipmentDraftService {
   }
 
   public void checkStockOnHandQuantity(UUID shipmentDraftId, ShipmentDraftDto draftDto) {
+    // check quantityShipped
+    if (draftDto.getLineItems().stream()
+        .anyMatch(item -> item.getQuantityShipped() != null && item.getQuantityShipped() < 0)) {
+      throw new ValidationException(SHIPMENT_LINE_ITEMS_INVALID);
+    }
     UUID facilityId = draftDto.getOrder().getSupplyingFacility().getId();
     Set<String> orderableLotIdPairs = draftDto.lineItems().stream()
-        .filter(item -> (item.getOrderable() != null) && (item.getLot() != null))
+        .filter(item -> (item.getOrderable() != null) && (item.getLot() != null) && (item.getQuantityShipped() != null))
         .map(item -> item.getOrderable().getId().toString() + item.getLot().getId().toString())
         .collect(Collectors.toSet());
     if (orderableLotIdPairs.isEmpty()) {
@@ -250,7 +256,7 @@ public class SiglusShipmentDraftService {
           StockCardReservedDto::getReserved
         ));
     return draftDto.lineItems().stream()
-        .filter(item -> (item.getOrderable() != null) && (item.getLot() != null))
+        .filter(item -> (item.getOrderable() != null) && (item.getLot() != null) && (item.getQuantityShipped() != null))
         .anyMatch(item -> {
           String key = FormatHelper.buildStockCardUniqueKey(
               item.getOrderable().getId(), item.getLot().getId(),

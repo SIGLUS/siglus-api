@@ -41,6 +41,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import javax.validation.ValidationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.openlmis.fulfillment.domain.Order;
@@ -168,6 +169,10 @@ public class SiglusShipmentService {
   }
 
   public void checkStockOnHandQuantity(ShipmentExtensionRequest shipmentExtensionRequest) {
+    if (shipmentExtensionRequest.getShipment().getLineItems().stream()
+        .anyMatch(item -> item.getQuantityShipped() == null || item.getQuantityShipped() < 0)) {
+      throw new ValidationException(SHIPMENT_LINE_ITEMS_INVALID);
+    }
     ShipmentDraftDto dto = new ShipmentDraftDto();
     dto.setLineItems(shipmentExtensionRequest.getShipment().lineItems());
     dto.setOrder(shipmentExtensionRequest.getShipment().getOrder());
