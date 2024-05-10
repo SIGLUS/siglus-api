@@ -68,4 +68,8 @@ public class FacilityTypeConstants {
     return Stream.of(CENTRAL, AC).collect(Collectors.toSet());
   }
 
+  public static Set<String> getSupportMmcTypes() {
+    return Stream.of(DPM, AI, HC, ODF, CENTRAL, AC).collect(Collectors.toSet());
+  }
+
 }
