@@ -44,7 +44,8 @@ public class WebApiCheckAspect {
   private final FacilityConfigHelper facilityConfigHelper;
   private final Machine machine;
 
-  @Pointcut("within(org.siglus.siglusapi.web..*) && !within(org.siglus.siglusapi.web.android.*) &&"
+  @Pointcut("within(org.siglus.siglusapi.web..*) && !within(org.siglus.siglusapi.web.android.*) && "
+      + "!within(org.siglus.siglusapi.web.SiglusReportAccessRecordController) && "
       + "(@annotation(org.springframework.web.bind.annotation.PostMapping) "
       + "|| @annotation(org.springframework.web.bind.annotation.PutMapping) "
       + "|| @annotation(org.springframework.web.bind.annotation.PatchMapping) "

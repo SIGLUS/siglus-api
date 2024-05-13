@@ -95,6 +95,9 @@ public class SiglusUserReportViewService {
 
   private void checkUser(UUID userId) {
     Optional<UUID> userIdOptional = siglusAuthenticationHelper.getCurrentUserId();
+    if (userIdOptional.isPresent() && userIdOptional.get().equals(userId)) {
+      return;
+    }
     if (!userIdOptional.isPresent() || !siglusAuthenticationHelper.isTheCurrentUserAdmin()) {
       throw new BusinessDataException(new Message(ERROR_CURRENT_USER_NOT_ADMIN_USER));
     }
