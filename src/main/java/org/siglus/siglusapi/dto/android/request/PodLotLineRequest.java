@@ -20,8 +20,6 @@ import lombok.Data;
 
 @Data
 public class PodLotLineRequest {
-  private static String OLD_RECEIVED_LESS_QUANTITIES_THAN_EXPECTED_REASON = "Recebido a menos";
-  private static String NEW_RECEIVED_LESS_QUANTITIES_THAN_EXPECTED_REASON = "Quantidade recebida a menos (no lote)";
 
   private LotBasicRequest lot;
 
@@ -35,10 +33,4 @@ public class PodLotLineRequest {
 
   private String notes;
 
-  public String getRejectedReason() {
-    if (OLD_RECEIVED_LESS_QUANTITIES_THAN_EXPECTED_REASON.equals(rejectedReason)) {
-      return NEW_RECEIVED_LESS_QUANTITIES_THAN_EXPECTED_REASON;
-    }
-    return rejectedReason;
-  }
 }
