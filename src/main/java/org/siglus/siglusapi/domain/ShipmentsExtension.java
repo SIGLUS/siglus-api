@@ -40,5 +40,5 @@ public class ShipmentsExtension extends BaseEntity {
 
   private String clientCode;
 
-  private boolean isFefo;
+  private Boolean isFefo;
 }
