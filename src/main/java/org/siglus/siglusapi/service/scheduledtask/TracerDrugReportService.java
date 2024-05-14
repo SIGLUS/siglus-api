@@ -48,6 +48,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -55,6 +56,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.NoSuchElementException;
 import java.util.Objects;
+import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -83,6 +85,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.ObjectUtils;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -232,18 +235,20 @@ public class TracerDrugReportService {
 
   public void getTracerDrugExcel(HttpServletResponse response,
       String productCode,
-      String districtCode,
-      String provinceCode,
+      List<String> districtCodeList,
       String startDate,
       String endDate) throws IOException {
 
     ExcelWriter excelWriter = EasyExcelFactory.write(response.getOutputStream()).build();
 
-    List<String> requisitionFacilityCodes = getRequisitionFacilityCode(districtCode, provinceCode);
+    List<String> requisitionFacilityCodes = getRequisitionFacilityCode(districtCodeList);
 
-    List<TracerDrugExcelDto> tracerDrugExcelInfo = tracerDrugRepository.getTracerDrugExcelInfo(startDate,
-        endDate,
-        productCode, requisitionFacilityCodes);
+    List<TracerDrugExcelDto> tracerDrugExcelInfo = new ArrayList<>();
+    if (!ObjectUtils.isEmpty(requisitionFacilityCodes)) {
+      tracerDrugExcelInfo = tracerDrugRepository.getTracerDrugExcelInfo(startDate,
+          endDate,
+          productCode, requisitionFacilityCodes);
+    }
 
     Map<String, List<TracerDrugExcelDto>> tracerDrugMap = tracerDrugExcelInfo.stream()
         .collect(Collectors.groupingBy(o -> getUniqueKey(o.getFacilityCode(), o.getProductCode())));
@@ -314,6 +319,14 @@ public class TracerDrugReportService {
     }
     return allAuthorizedFacility.stream()
         .filter(o -> Objects.equals(o.getDistrictCode(), districtCode))
+        .map(RequisitionGeographicZonesDto::getFacilityCode)
+        .collect(Collectors.toList());
+  }
+
+  public List<String> getRequisitionFacilityCode(List<String> districtCodeList) {
+    Set<String> districtCodeSet = new HashSet<>(districtCodeList);
+    List<RequisitionGeographicZonesDto> allAuthorizedFacility = getAllAuthorizedFacility();
+    return allAuthorizedFacility.stream().filter(item -> districtCodeSet.contains(item.getDistrictCode()))
         .map(RequisitionGeographicZonesDto::getFacilityCode)
         .collect(Collectors.toList());
   }

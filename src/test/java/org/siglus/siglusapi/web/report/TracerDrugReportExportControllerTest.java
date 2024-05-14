@@ -16,10 +16,12 @@
 package org.siglus.siglusapi.web.report;
 
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
+import java.io.IOException;
 import java.util.Collections;
+import javax.servlet.http.HttpServletResponse;
 import junit.framework.TestCase;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -27,12 +29,14 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.siglus.siglusapi.service.scheduledtask.TracerDrugReportService;
+import org.siglus.siglusapi.web.report.request.ExportTracerDrugReportExcelRequest;
+import org.springframework.test.util.ReflectionTestUtils;
 
 @RunWith(MockitoJUnitRunner.class)
-public class TracerDrugReportControllerTest extends TestCase {
+public class TracerDrugReportExportControllerTest extends TestCase {
 
   @InjectMocks
-  private TracerDrugReportController tracerDrugReportController;
+  private TracerDrugReportExportController tracerDrugReportController;
 
   @Mock
   private TracerDrugReportService tracerDrugReportService;
@@ -41,46 +45,25 @@ public class TracerDrugReportControllerTest extends TestCase {
   private final String endDate = "2023-01-01";
 
   @Test
-  public void shouldCallServiceWhenGetTracerDrugExportDto() {
+  public void shouldCallServiceWhenRefreshBetweenSpecifyDateAndByFacility() throws IOException {
     // given
-    when(tracerDrugReportService.getTracerDrugExportDto()).thenReturn(null);
-    // when
-    tracerDrugReportController.getTracerDrugExportDto();
-    // then
-    verify(tracerDrugReportService).getTracerDrugExportDto();
-  }
-
-  @Test
-  public void shouldCallServiceWhenOnlyRefreshBetweenSpecifyDate() {
-    // given
-    doNothing().when(tracerDrugReportService).refreshTracerDrugPersistentData(startDate, endDate);
-    // when
-    tracerDrugReportController.refresh(startDate, endDate);
-    // then
-    verify(tracerDrugReportService).refreshTracerDrugPersistentData(startDate, endDate);
-  }
-
-  @Test
-  public void shouldCallServiceWhenInitialize() {
-    // given
-    doNothing().when(tracerDrugReportService).initializeTracerDrugPersistentData();
-    // when
-    tracerDrugReportController.initialize();
-    // then
-    verify(tracerDrugReportService).initializeTracerDrugPersistentData();
-  }
-
-  @Test
-  public void shouldCallServiceWhenGetTracerDrugExcel() {
-    // given
-    String facilityCode = "HF001";
+    ReflectionTestUtils.setField(
+        tracerDrugReportController, "dateUrlFormat", "yyyy_MM_dd_HH_mm_ss.SSS");
+    ExportTracerDrugReportExcelRequest request = new ExportTracerDrugReportExcelRequest();
+    request.setProductCode("22A05");
+    String districtCode = "0102";
+    request.setDistrictList(Collections.singletonList(districtCode));
+    request.setEndDate(endDate);
+    request.setStartDate(startDate);
+    HttpServletResponse response = mock(HttpServletResponse.class);
     doNothing()
         .when(tracerDrugReportService)
-        .refreshTracerDrugPersistentDataByFacility(Collections.singletonList(facilityCode), startDate, endDate);
+        .getTracerDrugExcel(response, request.getProductCode(), request.getDistrictList(), startDate, endDate);
     // when
-    tracerDrugReportController.refreshByFacility(Collections.singletonList(facilityCode), startDate, endDate);
+    tracerDrugReportController.getTracerDrugExcel(response, request);
     // then
     verify(tracerDrugReportService)
-        .refreshTracerDrugPersistentDataByFacility(Collections.singletonList(facilityCode), startDate, endDate);
+        .getTracerDrugExcel(response, request.getProductCode(), request.getDistrictList(), startDate, endDate);
   }
+
 }

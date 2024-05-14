@@ -46,6 +46,7 @@ public class WebApiCheckAspect {
 
   @Pointcut("within(org.siglus.siglusapi.web..*) && !within(org.siglus.siglusapi.web.android.*) && "
       + "!within(org.siglus.siglusapi.web.SiglusReportAccessRecordController) && "
+      + "!within(org.siglus.siglusapi.web.report.TracerDrugReportExportController) && "
       + "(@annotation(org.springframework.web.bind.annotation.PostMapping) "
       + "|| @annotation(org.springframework.web.bind.annotation.PutMapping) "
       + "|| @annotation(org.springframework.web.bind.annotation.PatchMapping) "
