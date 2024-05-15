@@ -165,16 +165,16 @@ public class FcProductService implements ProcessDataService {
           FcIntegrationChanges updateChanges = getUpdatedOrderable(existed, current);
           if (updateChanges != null) {
             log.info("[FC product] update, existed: {}, current: {}", existed, current);
-            OrderableDto orderableDto = updateOrderable(existed, current);
-            if (updateChanges.isUpdateProgram()) {
-              updateFtap(orderableDto);
-            }
+            //OrderableDto orderableDto = updateOrderable(existed, current);
+            //if (updateChanges.isUpdateProgram()) {
+            //  updateFtap(orderableDto);
+            //}
             updateCounter.getAndIncrement();
             fcIntegrationChangesList.add(updateChanges);
           } else {
             sameCounter.getAndIncrement();
           }
-          createProgramOrderablesExtension(current, existed.getId());
+          //createProgramOrderablesExtension(current, existed.getId());
         } else if (FcUtil.isNotMatchedCode(current.getFnm())) {
           errorCodes.add(current.getFnm());
           errorCounter.getAndIncrement();
