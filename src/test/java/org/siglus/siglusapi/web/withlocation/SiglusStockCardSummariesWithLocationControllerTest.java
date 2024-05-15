@@ -57,10 +57,10 @@ public class SiglusStockCardSummariesWithLocationControllerTest {
 
   @Test
   public void shouldCallServiceAndBuilderWhenSearchStockCardSummaries() {
-    controller.getStockCardSummaryDtos(parameters, draftId, pageable);
+    controller.getStockCardSummaryDtos(parameters, draftId, null, pageable);
 
     verify(siglusStockCardSummariesService)
-        .getStockCardSummaryWithLocationDtos(parameters, draftId, pageable);
+        .getStockCardSummaryWithLocationDtos(parameters, draftId, pageable, null);
   }
 
   @Test

@@ -56,15 +56,14 @@ public class SiglusPhysicalInventoryControllerTest {
   public void shouldCallGetForAllProductsWhenSearchIfProgramIsAllProducts() {
     controller.searchPhysicalInventories(ALL_PRODUCTS_PROGRAM_ID, facilityId, isDraft);
 
-    verify(siglusPhysicalInventoryService).getPhysicalInventoryDtosForAllPrograms(facilityId, isDraft, false);
+    verify(siglusPhysicalInventoryService).getPhysicalInventoryBriefDtos(facilityId, ALL_PRODUCTS_PROGRAM_ID, isDraft);
   }
 
   @Test
   public void shouldCallGetPhysicalInventoryDtosWhenSearchIfProgramIsNotAllProducts() {
     controller.searchPhysicalInventories(programId, facilityId, isDraft);
 
-    verify(siglusPhysicalInventoryService)
-        .getPhysicalInventoryDtosForProductsForOneProgram(programId, facilityId, isDraft, false);
+    verify(siglusPhysicalInventoryService).getPhysicalInventoryBriefDtos(facilityId, programId, isDraft);
   }
 
   @Test
@@ -144,16 +143,16 @@ public class SiglusPhysicalInventoryControllerTest {
 
   @Test
   public void shouldConflictIfOtherProgramHaveDraft() {
-    controller.checkPhysicalInventoryConflict(ALL_PRODUCTS_PROGRAM_ID, facilityId);
+    controller.checkPhysicalInventoryConflict(ALL_PRODUCTS_PROGRAM_ID, facilityId, null);
 
-    verify(siglusPhysicalInventoryService).checkConflictForAllPrograms(facilityId);
+    verify(siglusPhysicalInventoryService).checkConflictForAllPrograms(facilityId, null);
   }
 
   @Test
   public void shouldConflictWithAllProductsWhenAllProductsHaveDraft() {
-    controller.checkPhysicalInventoryConflict(programId, facilityId);
+    controller.checkPhysicalInventoryConflict(programId, facilityId, null);
 
-    verify(siglusPhysicalInventoryService).checkConflictForOneProgram(facilityId);
+    verify(siglusPhysicalInventoryService).checkConflictForOneProgram(facilityId, programId, null);
   }
 
   @Test

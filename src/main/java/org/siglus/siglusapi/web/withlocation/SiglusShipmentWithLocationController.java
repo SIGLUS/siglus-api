@@ -49,6 +49,7 @@ public class SiglusShipmentWithLocationController {
       boolean isSubOrder, @RequestBody ShipmentExtensionRequest shipmentExtensionRequest) {
     siglusShipmentService.checkFulfillOrderExpired(shipmentExtensionRequest);
     siglusShipmentService.validShipmentLineItemsDuplicated(shipmentExtensionRequest);
+    siglusShipmentService.checkStockOnHandQuantity(shipmentExtensionRequest);
     byte[] reqBytes = PayloadSerializer.LOCALMACHINE_EVENT_OBJECT_MAPPER.writeValueAsBytes(shipmentExtensionRequest);
     ShipmentDto shipmentByLocation = siglusShipmentService.createOrderAndShipmentByLocation(isSubOrder,
         shipmentExtensionRequest);

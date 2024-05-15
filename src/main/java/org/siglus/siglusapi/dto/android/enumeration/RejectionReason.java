@@ -24,9 +24,11 @@ import lombok.RequiredArgsConstructor;
 @Getter
 public enum RejectionReason {
   DAMAGED("Danificado/quebrado/derramado"),
-  INSUFFICIENT("Recebido a menos"),
+  INSUFFICIENT("Quantidade recebida a menos (no lote)"),
   EXPIRED("Fora do prazo de validade"),
-  UNEATABLE("Impróprio para o consumo");
+  UNEATABLE("Impróprio para o consumo"),
+  EXCESS("Quantidade recebida a mais (no lote)"),
+  LOT_NOT_SPECIFIED("Lote não especificado na Guia de Remessa");
 
   private final String name;
 

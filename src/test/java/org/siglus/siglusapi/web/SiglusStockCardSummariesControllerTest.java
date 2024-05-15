@@ -59,9 +59,9 @@ public class SiglusStockCardSummariesControllerTest {
 
   @Test
   public void shouldCallServiceWhenGetStockCardDetailsDtos() {
-    controller.getStockCardSummaryDtos(parameters, Collections.emptyList(), draftId, pageable);
+    controller.getStockCardSummaryDtos(parameters, Collections.emptyList(), draftId, null, pageable);
 
-    verify(service).getStockCardSummaryDtos(parameters, Collections.emptyList(), draftId, pageable);
+    verify(service).getStockCardSummaryDtos(parameters, Collections.emptyList(), draftId, pageable, null);
   }
 
 }

@@ -26,6 +26,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.siglus.common.domain.BaseEntity;
+import org.siglus.siglusapi.repository.dto.StockCardStockDto;
 
 @Entity
 @Data
@@ -54,4 +55,12 @@ public class CalculatedStockOnHandByLocation extends BaseEntity {
   @Column(name = "area")
   private String area;
 
+  public StockCardStockDto toStockCardStockDto() {
+    return StockCardStockDto.builder()
+            .stockCardId(stockCardId)
+            .stockOnHand(stockOnHand)
+            .locationCode(locationCode)
+            .area(area)
+            .build();
+  }
 }

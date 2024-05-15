@@ -23,22 +23,24 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @Getter
 public enum AdjustmentReason {
-  CUSTOMER_RETURN("Devolução dos clientes (US e Depósitos Beneficiários)"),
+  CUSTOMER_RETURN("Devolução Dentro do prazo de validade dos clientes (US e Depósitos Beneficiários)"),
   DAMAGED("Danificado no depósito"),
   DONATION("Doações ao Depósito"),
   EXPIRED_RETURN_FROM_CUSTOMER("Devolução de expirados (US e Depósitos Beneficiários)"),
-  EXPIRED_RETURN_TO_SUPPLIER("Devolução de expirados quarentena (ou depósito fornecedor)"),
+  EXPIRED_RETURN_TO_SUPPLIER("Devolução de expirados para Depósito fornecedor"),
   INVENTORY_NEGATIVE(
-      "Correcção de inventário, no caso do stock em falta (stock é inferior ao existente na ficha de stock)"),
+      "Correcção de inventário, no caso do stock inferior (stock é inferior ao existente na ficha de stock)"),
   INVENTORY_POSITIVE(
-      "Correcção de inventário, no caso do stock em excesso (stock é superior ao existente na ficha de stock)"),
+      "Correcção de inventário, no caso do stock Superior (stock é Superior ao existente na ficha de stock)"),
   LOANS_DEPOSIT("Empréstimos (para todos níveis) que dão saída do depósito"),
   LOANS_RECEIVED("Empréstimos (de todos os níveis) que dão entrada no depósito"),
   PROD_DEFECTIVE("Saída para quarentena, no caso de problemas relativos a qualidade"),
-  RETURN_FROM_QUARANTINE("Retorno da quarentena, no caso de se confirmar a qualidade do produto"),
-  RETURN_TO_SUPPLIER("Devolver ao armazém do fornecedor"),
+  RETURN_FROM_QUARANTINE("Da quarentena para Depósito, no caso de se confirmar a qualidade do produto"),
+  RETURN_TO_SUPPLIER("Devolução Dentro do prazo de validade ao Depósito fornecedor"),
   RECEIVE("Receive"),
-  ISSUE("Issue");
+  ISSUE("Issue"),
+  EXPIRED_DISCARD("Fora do prazo de validade"),
+  EXPIRED_RETURN_TO_SUPPLIER_AND_DISCARD("Transferência de produtos expirados");
 
   private final String name;
 

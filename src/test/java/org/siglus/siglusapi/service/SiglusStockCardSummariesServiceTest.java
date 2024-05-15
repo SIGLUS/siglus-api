@@ -26,14 +26,12 @@ import static org.siglus.siglusapi.constant.FieldConstants.FACILITY_ID;
 import static org.siglus.siglusapi.constant.FieldConstants.ORDERABLE_ID;
 import static org.siglus.siglusapi.constant.FieldConstants.RIGHT_NAME;
 import static org.siglus.siglusapi.constant.PaginationConstants.DEFAULT_PAGE_NUMBER;
-import static org.siglus.siglusapi.constant.PaginationConstants.NO_PAGINATION;
 import static org.siglus.siglusapi.constant.ProgramConstants.TARV_PROGRAM_CODE;
 
 import com.google.common.collect.Lists;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -45,9 +43,6 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.openlmis.referencedata.domain.Orderable;
-import org.openlmis.referencedata.repository.OrderableRepository;
-import org.openlmis.referencedata.web.LotController;
 import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.service.PermissionService;
 import org.openlmis.requisition.service.referencedata.PermissionStringDto;
@@ -56,6 +51,7 @@ import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.dto.referencedata.OrderableDto;
 
 import org.openlmis.stockmanagement.dto.referencedata.VersionObjectReferenceDto;
+import org.openlmis.stockmanagement.repository.StockCardRepository;
 import org.openlmis.stockmanagement.service.StockCardSummaries;
 import org.openlmis.stockmanagement.service.StockCardSummariesService;
 import org.openlmis.stockmanagement.service.StockCardSummariesV2SearchParams;
@@ -134,16 +130,19 @@ public class SiglusStockCardSummariesServiceTest {
   private CalculatedStockOnHandByLocationRepository calculatedStockOnHandByLocationRepository;
 
   @Mock
-  private OrderableRepository orderableRepository;
-
-  @Mock
-  private LotController lotController;
+  private SiglusShipmentDraftService siglusShipmentDraftService;
 
   @InjectMocks
   private SiglusStockCardSummariesService service;
 
   @Mock
   private SiglusProgramService programService;
+
+  @Mock
+  private SiglusLotService siglusLotService;
+
+  @Mock
+  private StockCardRepository stockCardRepository;
 
   private final UUID userId = UUID.randomUUID();
   private final UUID facilityId = UUID.randomUUID();
@@ -178,24 +177,16 @@ public class SiglusStockCardSummariesServiceTest {
   @Test
   public void shouldFilterInactiveLotWhenGetLotsDataByOrderableIds() {
     // given
-    Map<String, String> identifiers = new HashMap<>();
-    identifiers.put("tradeItem", UUID.randomUUID().toString());
-    Orderable orderable1 = new Orderable();
-    orderable1.setIdentifiers(identifiers);
-    Orderable orderable2 = new Orderable();
-    orderable2.setIdentifiers(identifiers);
-    Page<Orderable> orderablePage = Pagination.getPage(newArrayList(orderable1, orderable1));
+    UUID lotId1 = UUID.randomUUID();
+    UUID lotId2 = UUID.randomUUID();
+    StockCard stockCard1 = StockCard.builder().facilityId(facilityId).orderableId(orderableId).lotId(lotId1).build();
+    StockCard stockCard2 = StockCard.builder().facilityId(facilityId).orderableId(orderableId).lotId(lotId2).build();
     List<UUID> orderableIds = newArrayList(orderableId, orderableId2);
-    when(orderableRepository.findAllLatestByIds(orderableIds, new PageRequest(DEFAULT_PAGE_NUMBER, NO_PAGINATION)))
-        .thenReturn(orderablePage);
-    org.openlmis.referencedata.dto.LotDto lotDto1 = new org.openlmis.referencedata.dto.LotDto();
-    lotDto1.setLotCode("lot1");
-    lotDto1.setActive(true);
-    org.openlmis.referencedata.dto.LotDto lotDto2 = new org.openlmis.referencedata.dto.LotDto();
-    lotDto2.setLotCode("lot2");
-    lotDto2.setActive(false);
-    Page<org.openlmis.referencedata.dto.LotDto> lotPage = Pagination.getPage(newArrayList(lotDto1, lotDto2));
-    when(lotController.getLots(any(), any())).thenReturn(lotPage);
+    when(stockCardRepository.findByOrderableIdInAndFacilityId(orderableIds, facilityId))
+        .thenReturn(newArrayList(stockCard1, stockCard2));
+    LotDto lotDto1 = LotDto.builder().lotCode("lot1").active(true).build();
+    LotDto lotDto2 = LotDto.builder().lotCode("lot2").active(false).build();
+    when(siglusLotService.getLotList(newArrayList(lotId1, lotId2))).thenReturn(newArrayList(lotDto1, lotDto2));
 
     // when
     List<org.openlmis.referencedata.dto.LotDto> lots = service.getLotsDataByOrderableIds(orderableIds);
@@ -406,6 +397,8 @@ public class SiglusStockCardSummariesServiceTest {
     ProgramDto programDto = new ProgramDto();
     programDto.setCode(TARV_PROGRAM_CODE);
     when(programService.getProgram(programId)).thenReturn(programDto);
+    when(siglusShipmentDraftService.reservedCount(facilityId, initialDraftId, null))
+            .thenReturn(new ArrayList<>());
 
     List<List<StockCardDetailsDto>> stockCardDetailsDtoByGroup = service
         .getStockCardDetailsDtoByGroup(getProgramsParms(), null, subDraftId, pageable);
@@ -453,7 +446,7 @@ public class SiglusStockCardSummariesServiceTest {
     when(calculatedStockOnHandByLocationRepository.getLocationSoh(newArrayList(facilityId), facilityId)).thenReturn(
         newArrayList(locationSohDto));
     List<StockCardSummaryWithLocationDto> stockCardSummaryWithLocationDtos =
-        service.getStockCardSummaryWithLocationDtos(getProgramsParms(), subDraftId, pageable);
+        service.getStockCardSummaryWithLocationDtos(getProgramsParms(), subDraftId, pageable, null);
     assertEquals(1, stockCardSummaryWithLocationDtos.size());
     assertEquals(1, stockCardSummaryWithLocationDtos.get(0).getStockCardDetails().size());
   }

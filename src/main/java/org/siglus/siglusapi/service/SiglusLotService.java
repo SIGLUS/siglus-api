@@ -20,7 +20,8 @@ import static org.apache.commons.lang.StringUtils.isBlank;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_LOT_ID_AND_CODE_SHOULD_EMPTY;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_TRADE_ITEM_IS_EMPTY;
 
-import com.google.common.collect.Lists;
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,38 +30,66 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import lombok.RequiredArgsConstructor;
+import java.util.stream.StreamSupport;
+
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.openlmis.referencedata.dto.OrderableDto;
 import org.openlmis.referencedata.repository.LotRepository;
+import org.openlmis.stockmanagement.domain.reason.StockCardLineItemReason;
 import org.openlmis.stockmanagement.dto.StockEventDto;
 import org.openlmis.stockmanagement.dto.StockEventLineItemDto;
+import org.openlmis.stockmanagement.repository.StockCardLineItemReasonRepository;
+import org.organicdesign.fp.tuple.Tuple2;
 import org.siglus.siglusapi.dto.LotDto;
 import org.siglus.siglusapi.dto.LotSearchParams;
 import org.siglus.siglusapi.dto.Message;
+import org.siglus.siglusapi.dto.RemovedLotDto;
 import org.siglus.siglusapi.dto.android.Lot;
+import org.siglus.siglusapi.dto.android.enumeration.AdjustmentReason;
+import org.siglus.siglusapi.dto.android.enumeration.MovementType;
+import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
+import org.siglus.siglusapi.repository.SiglusLotRepository;
+import org.siglus.siglusapi.repository.dto.LotStockDto;
+import org.siglus.siglusapi.repository.dto.StockCardStockDto;
 import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
+import org.siglus.siglusapi.util.FacilityConfigHelper;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.util.SiglusDateHelper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.ObjectUtils;
 
 @Service
 @Slf4j
-@RequiredArgsConstructor
 public class SiglusLotService {
+  @Autowired
+  private SiglusOrderableReferenceDataService orderableReferenceDataService;
+  @Autowired
+  private SiglusAuthenticationHelper authenticationHelper;
+  @Autowired
+  private SiglusDateHelper dateHelper;
+  @Autowired
+  private SiglusLotReferenceDataService lotReferenceDataService;
+  @Autowired
+  private LotConflictService lotConflictService;
+  @Autowired
+  private LotRepository lotRepository;
+  @Autowired
+  private SiglusLotRepository siglusLotRepository;
+  @Autowired
+  private SiglusStockCardSummariesService siglusStockCardSummariesService;
+  @Autowired
+  private SiglusStockEventsService siglusStockEventsService;
+  @Autowired
+  private StockCardLineItemReasonRepository stockCardLineItemReasonRepository;
 
-  public static final int SIZE = 50;
-  private final SiglusOrderableReferenceDataService orderableReferenceDataService;
-  private final SiglusAuthenticationHelper authenticationHelper;
-  private final SiglusDateHelper dateHelper;
-  private final SiglusLotReferenceDataService lotReferenceDataService;
-  private final LotConflictService lotConflictService;
-  private final LotRepository lotRepository;
+  @Autowired
+  private FacilityConfigHelper facilityConfigHelper;
 
   /**
    * reason for create a new transaction: Running this method in the super transaction will cause
@@ -91,25 +120,21 @@ public class SiglusLotService {
   }
 
   public List<LotDto> getLotList(List<UUID> lotIds) {
-    List<UUID> nonNullLotIds = lotIds.stream().filter(Objects::nonNull).collect(Collectors.toList());
-    List<LotDto> lotDtos = new ArrayList<>();
-    List<List<UUID>> partitionList = Lists.partition(nonNullLotIds, SIZE);
-    partitionList.forEach(list -> {
-      Iterable<org.openlmis.referencedata.domain.Lot> lots = lotRepository.findAll(list);
-      lots.forEach(lot -> {
-            LotDto lotDto = LotDto.builder()
-                .lotCode(lot.getLotCode())
-                .expirationDate(lot.getExpirationDate())
-                .tradeItemId(lot.getTradeItem().getId())
-                .manufactureDate(lot.getManufactureDate())
-                .active(lot.isActive())
-                .build();
-            lotDto.setId(lot.getId());
-            lotDtos.add(lotDto);
-          }
-      );
-    });
-    return lotDtos;
+    List<UUID> nonNullLotIds = lotIds.stream().filter(Objects::nonNull).distinct().collect(Collectors.toList());
+    Iterable<org.openlmis.referencedata.domain.Lot> lots = lotRepository.findAll(nonNullLotIds);
+    return StreamSupport.stream(lots.spliterator(), false)
+        .map(lot -> {
+          LotDto lotDto = LotDto.builder()
+                  .lotCode(lot.getLotCode())
+                  .expirationDate(lot.getExpirationDate())
+                  .tradeItemId(lot.getTradeItem().getId())
+                  .manufactureDate(lot.getManufactureDate())
+                  .active(lot.isActive())
+                  .build();
+          lotDto.setId(lot.getId());
+          return lotDto;
+        })
+        .collect(Collectors.toList());
   }
 
   public LotDto createNewLotOrReturnExisted(UUID facilityId, String tradeItemId, String lotCode,
@@ -134,6 +159,32 @@ public class SiglusLotService {
     lotConflictService.handleLotConflict(facilityId, lotCode, existedLot.getId(), expirationDate,
         existedLot.getExpirationDate());
     return existedLot;
+  }
+
+  public List<LotStockDto> getExpiredLots(UUID facilityId) {
+    if (facilityConfigHelper.isLocationManagementEnabled(facilityId)) {
+      return siglusLotRepository.queryExpiredLotsWithLocation(facilityId);
+    }
+    return siglusLotRepository.queryExpiredLots(facilityId);
+  }
+
+  public void removeExpiredLots(List<RemovedLotDto> lots, boolean hasLocation) {
+    // check whether the lots expired
+    List<UUID> lotIds = lots.stream().map(RemovedLotDto::getLotId).collect(Collectors.toList());
+    if (siglusLotRepository.existsNotExpiredLotsByIds(lotIds)) {
+      throw new BusinessDataException(Message.createFromMessageKeyStr("exists not expired lots"));
+    }
+    // check quantity is smaller or equal than soh
+    Map<UUID, Integer> stockMap = siglusStockCardSummariesService.getLatestStockOnHandByIds(
+        lots.stream().map(RemovedLotDto::getStockCardId).collect(Collectors.toList()), hasLocation)
+            .stream().collect(Collectors.toMap(StockCardStockDto::getStockCardId, StockCardStockDto::getStockOnHand));
+    if (lots.stream().anyMatch(lot -> lot.getQuantity() > stockMap.getOrDefault(lot.getStockCardId(), 0))) {
+      throw new BusinessDataException(Message.createFromMessageKeyStr("not have enough soh"));
+    }
+    // send stock event to remove expired lots
+    buildDiscardStockEventDtos(lots).forEach(
+        stockEventDto -> siglusStockEventsService.processStockEvent(stockEventDto, hasLocation)
+    );
   }
 
   private UUID getFacilityId(StockEventDto eventDto) {
@@ -171,5 +222,33 @@ public class SiglusLotService {
     return existedLots.stream().filter(lotDto -> lotDto.getLotCode().equals(lotCode)).findFirst().orElse(null);
   }
 
+  private List<StockEventDto> buildDiscardStockEventDtos(List<RemovedLotDto> lots) {
+    StockCardLineItemReason reason = stockCardLineItemReasonRepository.findByName(
+                AdjustmentReason.EXPIRED_RETURN_TO_SUPPLIER_AND_DISCARD.getName());
+    if (ObjectUtils.isEmpty(reason)) {
+      throw new BusinessDataException(
+              Message.createFromMessageKeyStr("Missing discard expired lots reason"));
+    }
+    Multimap<Tuple2<UUID, UUID>, RemovedLotDto> facilityWithProgramMap = ArrayListMultimap.create();
+    lots.forEach(lot -> {
+      Tuple2<UUID, UUID> key = Tuple2.of(lot.getFacilityId(), lot.getProgramId());
+      facilityWithProgramMap.put(key, lot);
+    });
+    List<StockEventDto> eventDtos = new ArrayList<>();
+    facilityWithProgramMap.asMap().forEach((key, values) -> {
+      RemovedLotDto dto = values.stream().findFirst().get();
+      eventDtos.add(StockEventDto.builder()
+          .facilityId(key._1())
+          .programId(key._2())
+          .lineItems(values.stream()
+              .map(item -> item.toStockEventLineItemDto(reason.getId())).collect(Collectors.toList()))
+          .userId(authenticationHelper.getCurrentUser().getId())
+          .type(MovementType.ADJUSTMENT.toString())
+          .signature(dto.getSignature())
+          .documentNumber(dto.getDocumentNumber())
+          .build());
+    });
 
+    return eventDtos;
+  }
 }

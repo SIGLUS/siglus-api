@@ -616,6 +616,26 @@ traits:
           responses:
             200:
               description: GET specific facility's requisition group
+      /{id}/lots:
+        get:
+          is: [ secured ]
+          responses:
+            200:
+              description: GET specific facility's lots with param
+        /remove:
+          post:
+            is: [ secured ]
+            responses:
+              200:
+                description: remove lots
+      /{id}/locations:
+        get:
+          is: [ secured ]
+          body:
+            application/json:
+          responses:
+            200:
+              description: GET success
 
     /localIssueVouchers:
       post:
@@ -3178,7 +3198,35 @@ traits:
             body:
               application/json:
                 schema: localizedMessagepickPackInfo
-
+    /orders/{id}/reservedQuantity:
+      uriParameters:
+        id:
+          displayName: id
+          type: string
+          required: true
+          repeat: false
+      get:
+        is: [ secured ]
+        description: get reserved quantity by order
+        responses:
+          200:
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+                schema: StockCardReservedDto
+          403:
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+                schema: localizedMessage
+          404:
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+                schema: localizedMessage
 
     /orders/createLineItem:
       post:
@@ -4443,3 +4491,39 @@ traits:
         responses:
           200:
             description: get current machine type
+    /reports/records:
+      post:
+        is: [ secured ]
+        responses:
+          200:
+            description: record user access reports
+    /geographicInfo:
+      get:
+        is: [ secured ]
+        responses:
+          200:
+            description: get geographic Info
+    /users/{id}:
+      /reportView:
+        get:
+          is: [ secured ]
+          responses:
+            200:
+              description: get geographic Info
+        post:
+          is: [ secured ]
+          responses:
+            200:
+              description: save geographic Info
+    /physicalInventories/histories:
+      get:
+        is: [ secured ]
+        responses:
+          200:
+            description: get physical inventory histories
+      /{id}:
+        get:
+          is: [ secured ]
+          responses:
+            200:
+              description: get physical inventory history data

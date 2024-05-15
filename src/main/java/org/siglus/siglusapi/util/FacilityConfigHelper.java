@@ -15,6 +15,8 @@
 
 package org.siglus.siglusapi.util;
 
+import java.util.UUID;
+
 import lombok.RequiredArgsConstructor;
 import org.siglus.siglusapi.domain.FacilityExtension;
 import org.siglus.siglusapi.dto.UserDto;
@@ -34,7 +36,7 @@ public class FacilityConfigHelper {
       // trusted-client
       return false;
     }
-    return !isLocationManagementEnabled(currentUser);
+    return !isLocationManagementEnabled(currentUser.getHomeFacilityId());
   }
 
 
@@ -44,11 +46,11 @@ public class FacilityConfigHelper {
       // trusted-client
       return false;
     }
-    return isLocationManagementEnabled(currentUser);
+    return isLocationManagementEnabled(currentUser.getHomeFacilityId());
   }
 
-  private boolean isLocationManagementEnabled(UserDto currentUser) {
-    FacilityExtension facilityExtension = facilityExtensionRepository.findByFacilityId(currentUser.getHomeFacilityId());
+  public boolean isLocationManagementEnabled(UUID facilityId) {
+    FacilityExtension facilityExtension = facilityExtensionRepository.findByFacilityId(facilityId);
     if (facilityExtension == null || facilityExtension.getEnableLocationManagement() == null) {
       return false;
     }

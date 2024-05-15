@@ -21,13 +21,13 @@ import static org.springframework.http.HttpStatus.NO_CONTENT;
 
 import java.util.List;
 import java.util.UUID;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.openlmis.stockmanagement.dto.PhysicalInventoryDto;
 import org.siglus.siglusapi.dto.PhysicalInventorySubDraftDto;
 import org.siglus.siglusapi.dto.enums.PhysicalInventorySubDraftEnum;
 import org.siglus.siglusapi.service.SiglusPhysicalInventoryService;
 import org.siglus.siglusapi.service.SiglusPhysicalInventorySubDraftService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -41,11 +41,12 @@ import org.springframework.web.bind.annotation.RestController;
 @Slf4j
 @RestController
 @RequestMapping("/api/siglusapi/physicalInventories")
-@RequiredArgsConstructor
 public class SiglusPhysicalInventoryWithoutLocationController {
 
-  private final SiglusPhysicalInventoryService siglusPhysicalInventoryService;
-  private final SiglusPhysicalInventorySubDraftService siglusPhysicalInventorySubDraftService;
+  @Autowired
+  private SiglusPhysicalInventoryService siglusPhysicalInventoryService;
+  @Autowired
+  private SiglusPhysicalInventorySubDraftService siglusPhysicalInventorySubDraftService;
 
   @PostMapping
   @ResponseStatus(CREATED)
@@ -63,7 +64,7 @@ public class SiglusPhysicalInventoryWithoutLocationController {
 
   @GetMapping("/subDraft")
   public PhysicalInventoryDto searchSubDraftPhysicalInventory(@RequestParam List<UUID> subDraftIds) {
-    return siglusPhysicalInventoryService.getSubPhysicalInventoryDtoBySubDraftId(subDraftIds);
+    return siglusPhysicalInventoryService.getPhysicalInventoryDtoBySubDraftIds(subDraftIds);
   }
 
   @PutMapping("/subDraft")
@@ -86,5 +87,4 @@ public class SiglusPhysicalInventoryWithoutLocationController {
     siglusPhysicalInventorySubDraftService.updateSubDrafts(dto.getSubDraftIds(), dto,
         PhysicalInventorySubDraftEnum.SUBMITTED, false);
   }
-
 }

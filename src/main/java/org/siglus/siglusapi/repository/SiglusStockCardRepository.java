@@ -56,6 +56,13 @@ public interface SiglusStockCardRepository extends JpaRepository<StockCard, UUID
       @Param("facilityId") UUID facilityId,
       @Param("pairs") Set<String> orderableLotIdPairs);
 
+  @Query(value = "select * from stockmanagement.stock_cards where facilityid=:facilityId "
+      + "and concat(cast(programid as varchar), concat(cast(orderableid as varchar),cast(lotid as varchar))) in :pairs",
+      nativeQuery = true)
+  List<StockCard> findByFacilityIdAndProgramOrderableLotIdPairs(
+      @Param("facilityId") UUID facilityId,
+      @Param("pairs") Set<String> programOrderableLotIdPairs);
+
   @Query(name = "StockCard.findStockOnHandDto", nativeQuery = true)
   List<StockOnHandDto> findStockCardDtos(@Param("facilityId") UUID facilityId, @Param("startDate") LocalDate startDate,
       @Param("endDate") LocalDate endDate);

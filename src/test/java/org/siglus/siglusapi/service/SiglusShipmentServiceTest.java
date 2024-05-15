@@ -18,6 +18,7 @@ package org.siglus.siglusapi.service;
 import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Sets.newHashSet;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
@@ -65,10 +66,12 @@ import org.openlmis.fulfillment.web.shipment.LocationDto;
 import org.openlmis.fulfillment.web.shipment.ShipmentController;
 import org.openlmis.fulfillment.web.shipment.ShipmentDto;
 import org.openlmis.fulfillment.web.shipment.ShipmentLineItemDto;
+import org.openlmis.fulfillment.web.util.ObjectReferenceDto;
 import org.openlmis.fulfillment.web.util.OrderDto;
 import org.openlmis.fulfillment.web.util.OrderLineItemDto;
 import org.openlmis.fulfillment.web.util.OrderObjectReferenceDto;
 import org.openlmis.fulfillment.web.util.VersionObjectReferenceDto;
+import org.openlmis.referencedata.domain.Lot;
 import org.openlmis.requisition.service.RequisitionService;
 import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
@@ -86,13 +89,16 @@ import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.PodExtensionRepository;
 import org.siglus.siglusapi.repository.ShipmentLineItemsExtensionRepository;
+import org.siglus.siglusapi.repository.ShipmentsExtensionRepository;
+import org.siglus.siglusapi.repository.SiglusLotRepository;
 import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
 import org.siglus.siglusapi.repository.SiglusStockCardRepository;
 import org.siglus.siglusapi.repository.StockCardLineItemExtensionRepository;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.web.request.ShipmentExtensionRequest;
+import org.springframework.test.util.ReflectionTestUtils;
 
-@SuppressWarnings("PMD.TooManyMethods")
+@SuppressWarnings({"PMD.TooManyMethods", "PMD.UnusedPrivateField"})
 @RunWith(MockitoJUnitRunner.class)
 public class SiglusShipmentServiceTest {
 
@@ -162,6 +168,12 @@ public class SiglusShipmentServiceTest {
   @Mock
   private RequisitionService requisitionService;
 
+  @Mock
+  private ShipmentsExtensionRepository shipmentsExtensionRepository;
+
+  @Mock
+  private SiglusLotRepository siglusLotRepository;
+
   private final UUID orderId = UUID.randomUUID();
 
   private final UUID orderableId = UUID.randomUUID();
@@ -173,6 +185,7 @@ public class SiglusShipmentServiceTest {
   private final UUID processingPeriodId = UUID.randomUUID();
 
   private final UUID lotId = UUID.randomUUID();
+  private final UUID lotId2 = UUID.randomUUID();
 
   private final UUID podId = UUID.randomUUID();
 
@@ -193,6 +206,9 @@ public class SiglusShipmentServiceTest {
     when(orderController.getOrder(any(UUID.class), any())).thenReturn(order);
     when(siglusOrderService.needCloseOrder(any()))
         .thenReturn(false);
+
+    ReflectionTestUtils.setField(siglusShipmentService, "fefoIndex",
+        0.75);
   }
 
   @Test(expected = ValidationMessageException.class)
@@ -262,6 +278,9 @@ public class SiglusShipmentServiceTest {
     orderDto.setOrderLineItems(newArrayList(lineItemDto));
     ShipmentLineItemDto shipmentLineItemDto = new ShipmentLineItemDto();
     shipmentLineItemDto.setOrderable(orderableDto);
+    shipmentLineItemDto.setStockOnHand(5L);
+    shipmentLineItemDto.setQuantityShipped(5L);
+    shipmentLineItemDto.setLot(new ObjectReferenceDto(lotId));
     ShipmentDto shipmentDto = new ShipmentDto();
     shipmentDto.setOrder(orderDto);
     shipmentDto.setLineItems(newArrayList(shipmentLineItemDto));
@@ -274,6 +293,10 @@ public class SiglusShipmentServiceTest {
     lineItem.setOrderable(new VersionEntityReference(orderableId, 1L));
     Order order = new Order();
     order.setOrderLineItems(newArrayList(lineItem));
+    Lot lot = new Lot();
+    lot.setId(lotId);
+    lot.setExpirationDate(LocalDate.now());
+    when(siglusLotRepository.findAllByIdIn(newHashSet(lotId))).thenReturn(newArrayList(lot));
     when(orderRepository.findOne(orderId)).thenReturn(order);
     OrderLineItemExtension orderLineItemExtension = OrderLineItemExtension.builder()
         .orderLineItemId(lineItemId).build();
@@ -311,6 +334,9 @@ public class SiglusShipmentServiceTest {
     orderDto.setOrderLineItems(newArrayList(lineItemDto));
     ShipmentLineItemDto shipmentLineItemDto = new ShipmentLineItemDto();
     shipmentLineItemDto.setOrderable(orderableDto);
+    shipmentLineItemDto.setQuantityShipped(5L);
+    shipmentLineItemDto.setStockOnHand(5L);
+    shipmentLineItemDto.setLot(new OrderObjectReferenceDto(UUID.randomUUID()));
     ShipmentDto shipmentDto = new ShipmentDto();
     shipmentDto.setOrder(orderDto);
     shipmentDto.setLineItems(newArrayList(shipmentLineItemDto));
@@ -344,6 +370,13 @@ public class SiglusShipmentServiceTest {
   @Test
   public void shouldCreateSubOrderWhenLineItemShippedQualityLessOrderQuality() {
     // given
+    Lot lot1 = new Lot();
+    lot1.setId(lotId);
+    lot1.setExpirationDate(LocalDate.now());
+    Lot lot2 = new Lot();
+    lot2.setId(lotId2);
+    lot2.setExpirationDate(LocalDate.now().plusDays(1));
+    when(siglusLotRepository.findAllByIdIn(newHashSet(lotId, lotId2))).thenReturn(newArrayList(lot1, lot2));
     ShipmentDto shipmentDto = createShipmentDto();
     ShipmentExtensionRequest shipmentExtensionRequest = new ShipmentExtensionRequest();
     shipmentExtensionRequest.setShipment(shipmentDto);
@@ -423,8 +456,14 @@ public class SiglusShipmentServiceTest {
 
   @Test
   public void shouldCreateSubOrderWhenLineItemOrderQualityGreaterThan0AndShipmentEmpty() {
+    Lot lot1 = new Lot();
+    lot1.setId(lotId);
+    lot1.setExpirationDate(LocalDate.now());
+    Lot lot2 = new Lot();
+    lot2.setId(lotId2);
+    lot2.setExpirationDate(LocalDate.now().plusDays(1));
+    when(siglusLotRepository.findAllByIdIn(newHashSet(lotId, lotId2))).thenReturn(newArrayList(lot1, lot2));
     ShipmentDto shipmentDto = createShipmentDto();
-    shipmentDto.setLineItems(new ArrayList<>());
     ShipmentExtensionRequest shipmentExtensionRequest = new ShipmentExtensionRequest();
     shipmentExtensionRequest.setShipment(shipmentDto);
     shipmentExtensionRequest.setConferredBy(conferredBy);
@@ -447,7 +486,7 @@ public class SiglusShipmentServiceTest {
         orderLineItemDtoArgumentCaptor.capture());
     List<OrderLineItemDto> lineItemDtos = orderLineItemDtoArgumentCaptor.getValue();
     assertEquals(1, lineItemDtos.size());
-    assertEquals(Long.valueOf(0), lineItemDtos.get(0).getPartialFulfilledQuantity());
+    assertEquals(Long.valueOf(10), lineItemDtos.get(0).getPartialFulfilledQuantity());
     assertEquals(Long.valueOf(40), lineItemDtos.get(0).getOrderedQuantity());
   }
 
@@ -464,6 +503,9 @@ public class SiglusShipmentServiceTest {
     locationDto.setLocationCode("ABC");
     locationDto.setArea("QAZ");
     shipmentLineItem.setLocation(locationDto);
+    shipmentLineItem.setQuantityShipped(5L);
+    shipmentLineItem.setStockOnHand(5L);
+    shipmentLineItem.setLot(new OrderObjectReferenceDto(UUID.randomUUID()));
     ShipmentDto shipmentDto = createShipmentDto();
     shipmentDto.setLineItems(Lists.newArrayList(shipmentLineItem));
     Order order = new Order();
@@ -562,6 +604,95 @@ public class SiglusShipmentServiceTest {
     siglusShipmentService.validShipmentLineItemsDuplicated(shipmentExtensionRequest);
   }
 
+  @Test
+  public void shouldCalcFefoIsTrue() {
+    // given
+    VersionObjectReferenceDto orderReferenceDto = new VersionObjectReferenceDto(orderableId,
+        "", "", 1L);
+    ShipmentLineItemDto shipmentLineItem1 = new ShipmentLineItemDto();
+    shipmentLineItem1.setOrderable(orderReferenceDto);
+    shipmentLineItem1.setQuantityShipped(50L);
+    shipmentLineItem1.setStockOnHand(100L);
+    shipmentLineItem1.setLot(new ObjectReferenceDto(lotId));
+    ShipmentLineItemDto shipmentLineItem2 = new ShipmentLineItemDto();
+    shipmentLineItem2.setOrderable(orderReferenceDto);
+    shipmentLineItem2.setQuantityShipped(5L);
+    shipmentLineItem2.setStockOnHand(100L);
+    shipmentLineItem2.setLot(new ObjectReferenceDto(lotId2));
+    ShipmentDto shipmentDto = new ShipmentDto();
+    shipmentDto.setLineItems(Arrays.asList(shipmentLineItem1, shipmentLineItem2));
+    Lot lot1 = new Lot();
+    lot1.setId(lotId);
+    lot1.setExpirationDate(LocalDate.now());
+    Lot lot2 = new Lot();
+    lot2.setId(lotId2);
+    lot2.setExpirationDate(LocalDate.now().plusDays(1));
+    when(siglusLotRepository.findAllByIdIn(newHashSet(lotId, lotId2))).thenReturn(newArrayList(lot1, lot2));
+    // when
+
+    // then
+    assertTrue(siglusShipmentService.calcIsFefo(shipmentDto));
+  }
+
+  @Test
+  public void shouldCalcFefoIsFalse() {
+    // given
+    VersionObjectReferenceDto orderReferenceDto = new VersionObjectReferenceDto(orderableId,
+        "", "", 1L);
+    ShipmentLineItemDto shipmentLineItem1 = new ShipmentLineItemDto();
+    shipmentLineItem1.setOrderable(orderReferenceDto);
+    shipmentLineItem1.setQuantityShipped(5L);
+    shipmentLineItem1.setStockOnHand(100L);
+    shipmentLineItem1.setLot(new ObjectReferenceDto(lotId));
+    ShipmentLineItemDto shipmentLineItem2 = new ShipmentLineItemDto();
+    shipmentLineItem2.setOrderable(orderReferenceDto);
+    shipmentLineItem2.setQuantityShipped(50L);
+    shipmentLineItem2.setStockOnHand(100L);
+    shipmentLineItem2.setLot(new ObjectReferenceDto(lotId2));
+    ShipmentDto shipmentDto = new ShipmentDto();
+    shipmentDto.setLineItems(Arrays.asList(shipmentLineItem1, shipmentLineItem2));
+    Lot lot1 = new Lot();
+    lot1.setId(lotId);
+    lot1.setExpirationDate(LocalDate.now());
+    Lot lot2 = new Lot();
+    lot2.setId(lotId2);
+    lot2.setExpirationDate(LocalDate.now().plusDays(1));
+    when(siglusLotRepository.findAllByIdIn(newHashSet(lotId, lotId2))).thenReturn(newArrayList(lot1, lot2));
+    // when
+
+    // then
+    assertFalse(siglusShipmentService.calcIsFefo(shipmentDto));
+  }
+
+  @Test(expected = BusinessDataException.class)
+  public void shouldThrowExceptionWhenShippedQuantityIsZero() {
+    // given
+    VersionObjectReferenceDto orderReferenceDto = new VersionObjectReferenceDto(orderableId,
+        "", "", 1L);
+    ShipmentLineItemDto shipmentLineItem1 = new ShipmentLineItemDto();
+    shipmentLineItem1.setOrderable(orderReferenceDto);
+    shipmentLineItem1.setQuantityShipped(0L);
+    shipmentLineItem1.setStockOnHand(100L);
+    shipmentLineItem1.setLot(new ObjectReferenceDto(lotId));
+    ShipmentLineItemDto shipmentLineItem2 = new ShipmentLineItemDto();
+    shipmentLineItem2.setOrderable(orderReferenceDto);
+    shipmentLineItem2.setQuantityShipped(0L);
+    shipmentLineItem2.setStockOnHand(100L);
+    shipmentLineItem2.setLot(new ObjectReferenceDto(lotId2));
+    ShipmentDto shipmentDto = new ShipmentDto();
+    shipmentDto.setLineItems(Arrays.asList(shipmentLineItem1, shipmentLineItem2));
+    Lot lot1 = new Lot();
+    lot1.setId(lotId);
+    lot1.setExpirationDate(LocalDate.now());
+    Lot lot2 = new Lot();
+    lot2.setId(lotId2);
+    lot2.setExpirationDate(LocalDate.now().plusDays(1));
+    when(siglusLotRepository.findAllByIdIn(newHashSet(lotId, lotId2))).thenReturn(newArrayList(lot1, lot2));
+    // when
+    siglusShipmentService.calcIsFefo(shipmentDto);
+    // then
+  }
+
   private ShipmentExtensionRequest createShipmentExtensionRequest() {
     OrderObjectReferenceDto order = new OrderObjectReferenceDto();
     ProcessingPeriodDto processingPeriodDto = new ProcessingPeriodDto();
@@ -590,9 +721,13 @@ public class SiglusShipmentServiceTest {
     ShipmentLineItemDto shipmentLineItem1 = new ShipmentLineItemDto();
     shipmentLineItem1.setOrderable(orderReferenceDto);
     shipmentLineItem1.setQuantityShipped(5L);
+    shipmentLineItem1.setStockOnHand(5L);
+    shipmentLineItem1.setLot(new ObjectReferenceDto(lotId));
     ShipmentLineItemDto shipmentLineItem2 = new ShipmentLineItemDto();
     shipmentLineItem2.setOrderable(orderReferenceDto);
     shipmentLineItem2.setQuantityShipped(5L);
+    shipmentLineItem2.setStockOnHand(5L);
+    shipmentLineItem2.setLot(new ObjectReferenceDto(lotId2));
     shipmentDto.setLineItems(Arrays.asList(shipmentLineItem1, shipmentLineItem2));
     return shipmentDto;
   }
@@ -617,6 +752,7 @@ public class SiglusShipmentServiceTest {
     ShipmentLineItemDto shipmentLineItem = new ShipmentLineItemDto();
     shipmentLineItem.setOrderable(orderReferenceDto);
     shipmentLineItem.setQuantityShipped(5L);
+    shipmentLineItem.setStockOnHand(5L);
     shipmentLineItem.setLotId(lotId);
     LocationDto locationDto = new LocationDto();
     locationDto.setLocationCode("AA25A");

@@ -22,6 +22,8 @@ import java.util.List;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.openlmis.requisition.domain.requisition.Requisition;
@@ -50,6 +52,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.MultiValueMap;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -65,6 +68,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Slf4j
 @RequestMapping("/api/siglusapi/requisitions")
 @RequiredArgsConstructor
+@Validated
 @SuppressWarnings("PMD.TooManyMethods")
 public class SiglusRequisitionController {
 
@@ -192,8 +196,8 @@ public class SiglusRequisitionController {
 
   @GetMapping("/periodsForInitiate")
   public List<RequisitionPeriodExtensionResponse> searchProcessingPeriodIds(
-      @RequestParam(value = "programId") UUID programId,
-      @RequestParam(value = "facilityId") UUID facilityId,
+      @RequestParam(value = "programId") @NotNull @Valid UUID programId,
+      @RequestParam(value = "facilityId") @NotNull @Valid UUID facilityId,
       @RequestParam(value = "emergency") boolean emergency) {
     return siglusProcessingPeriodService.getRequisitionPeriodExtensionResponses(programId, facilityId, emergency);
   }

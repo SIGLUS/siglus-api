@@ -20,6 +20,8 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.when;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
@@ -30,12 +32,16 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.openlmis.referencedata.domain.GeographicZone;
 import org.openlmis.requisition.dto.RoleAssignmentDto;
 import org.siglus.siglusapi.domain.MetaBaseConfig;
+import org.siglus.siglusapi.domain.UserReportView;
 import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.FacilityTypeDto;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.repository.MetabaseDashboardRepository;
+import org.siglus.siglusapi.repository.SiglusGeographicInfoRepository;
+import org.siglus.siglusapi.repository.SiglusUserReportViewRepository;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 
@@ -65,7 +71,12 @@ public class MetabaseDashboardServiceTest {
   private final FacilityTypeDto facilityTypeDto = new FacilityTypeDto();
 
   private final String payloadTemplate = "{\"resource\": {\"dashboard\": %d},\"params\": {%s}}";
-
+  private final String facilityCode = "10000";
+  private static final UUID ALL_GEOGRAPHIC_UUID = UUID.fromString("00000000-0000-0000-0000-000000000000");
+  @Mock
+  private SiglusUserReportViewRepository siglusUserReportViewRepository;
+  @Mock
+  private SiglusGeographicInfoRepository siglusGeographicInfoRepository;
 
   @Before
   public void setUp() {
@@ -91,12 +102,13 @@ public class MetabaseDashboardServiceTest {
   public void shouldReturnProvinceParamsInPayloadWhenAccountRoleIsDpm() {
     // given
     when(authenticationHelper.getCurrentUser()).thenReturn(uesrDto);
+    uesrDto.setHomeFacilityId(UUID.randomUUID());
     when(authenticationHelper.isTheCurrentUserAdmin()).thenReturn(false);
     when(metabaseDashboardRepository.findByDashboardName(any())).thenReturn(
         Optional.of(MetaBaseConfig.builder().dashboardId(1).build()));
     facilityTypeDto.setCode("DPM");
     when(siglusFacilityReferenceDataService.findOne((UUID) any())).thenReturn(FacilityDto.builder()
-        .type(facilityTypeDto).code("10000").build());
+        .type(facilityTypeDto).code(facilityCode).build());
     when(authenticationHelper.getFacilityGeographicZoneLevel()).thenReturn("PROVINCE");
     // when
     String payload = siglusMetabaseDashboardService.getPayloadByDashboardName(anyString());
@@ -108,12 +120,13 @@ public class MetabaseDashboardServiceTest {
   public void shouldReturnDistrictParamsInPayloadWhenAccountRoleIsDdm() {
     // given
     when(authenticationHelper.getCurrentUser()).thenReturn(uesrDto);
+    uesrDto.setHomeFacilityId(UUID.randomUUID());
     when(authenticationHelper.isTheCurrentUserAdmin()).thenReturn(false);
     when(metabaseDashboardRepository.findByDashboardName(any())).thenReturn(
         Optional.of(MetaBaseConfig.builder().dashboardId(1).build()));
     facilityTypeDto.setCode("DDM");
     when(siglusFacilityReferenceDataService.findOne((UUID) any())).thenReturn(FacilityDto.builder()
-        .type(facilityTypeDto).code("10000").build());
+        .type(facilityTypeDto).code(facilityCode).build());
     when(authenticationHelper.getFacilityGeographicZoneLevel()).thenReturn("DISTRICT");
     // when
     String payload = siglusMetabaseDashboardService.getPayloadByDashboardName(anyString());
@@ -126,17 +139,99 @@ public class MetabaseDashboardServiceTest {
   public void shouldReturnFacilityParamsInPayloadWhenAccountRoleIsOthers() {
     // given
     when(authenticationHelper.getCurrentUser()).thenReturn(uesrDto);
+    uesrDto.setHomeFacilityId(UUID.randomUUID());
     when(authenticationHelper.isTheCurrentUserAdmin()).thenReturn(false);
     when(metabaseDashboardRepository.findByDashboardName(any())).thenReturn(
         Optional.of(MetaBaseConfig.builder().dashboardId(1).build()));
     facilityTypeDto.setCode("CS");
     when(siglusFacilityReferenceDataService.findOne((UUID) any())).thenReturn(FacilityDto.builder()
-        .type(facilityTypeDto).code("10000").build());
+        .type(facilityTypeDto).code(facilityCode).build());
     when(authenticationHelper.getFacilityGeographicZoneLevel()).thenReturn("SITE");
     // when
     String payload = siglusMetabaseDashboardService.getPayloadByDashboardName(anyString());
     // then
     assertEquals(String.format(payloadTemplate, 1, "\"facility_code\": \"10000\""), payload);
+  }
+
+  @Test
+  public void shouldReturnEmptyParamMapWhenGeographicInfoIsEmpty() {
+    // given
+    when(authenticationHelper.getCurrentUser()).thenReturn(uesrDto);
+    when(authenticationHelper.isTheCurrentUserAdmin()).thenReturn(false);
+    when(authenticationHelper.isTheCurrentUserReportViewer()).thenReturn(true);
+    when(authenticationHelper.getCurrentUserId()).thenReturn(Optional.of(UUID.randomUUID()));
+    when(siglusUserReportViewRepository.findAllByUserId(any())).thenReturn(new ArrayList<>());
+    when(metabaseDashboardRepository.findByDashboardName(any()))
+        .thenReturn(Optional.of(MetaBaseConfig.builder().dashboardId(1).build()));
+    facilityTypeDto.setCode("CS");
+    when(siglusFacilityReferenceDataService.findOne((UUID) any())).thenReturn(FacilityDto.builder()
+        .type(facilityTypeDto).code(facilityCode).build());
+    // when
+    String payload = siglusMetabaseDashboardService.getPayloadByDashboardName(anyString());
+    // then
+    assertEquals(String.format("{\"resource\":{\"dashboard\":%d},\"params\":{%s}}", 1, ""),
+        payload);
+  }
+
+  @Test
+  public void shouldReturnEmptyParamMapWhenHasAllReportItem() {
+    // given
+    when(authenticationHelper.getCurrentUser()).thenReturn(uesrDto);
+    when(authenticationHelper.isTheCurrentUserAdmin()).thenReturn(false);
+    when(authenticationHelper.isTheCurrentUserReportViewer()).thenReturn(true);
+    when(authenticationHelper.getCurrentUserId()).thenReturn(Optional.of(UUID.randomUUID()));
+    UserReportView dto = UserReportView.builder()
+        .provinceId(ALL_GEOGRAPHIC_UUID)
+        .districtId(ALL_GEOGRAPHIC_UUID)
+        .build();
+    when(siglusUserReportViewRepository.findAllByUserId(any())).thenReturn(
+        Collections.singletonList(dto));
+
+    when(metabaseDashboardRepository.findByDashboardName(any()))
+        .thenReturn(Optional.of(MetaBaseConfig.builder().dashboardId(1).build()));
+    facilityTypeDto.setCode("CS");
+    when(siglusFacilityReferenceDataService.findOne((UUID) any())).thenReturn(FacilityDto.builder()
+        .type(facilityTypeDto).code(facilityCode).build());
+    // when
+    String payload = siglusMetabaseDashboardService.getPayloadByDashboardName(anyString());
+    // then
+    assertEquals(String.format("{\"resource\":{\"dashboard\":%d},\"params\":{%s}}", 1, ""),
+        payload);
+  }
+
+  @Test
+  public void shouldReturnParamMapWhenHasPartialReportItem() {
+    // given
+    when(authenticationHelper.getCurrentUser()).thenReturn(uesrDto);
+    when(authenticationHelper.isTheCurrentUserAdmin()).thenReturn(false);
+    when(authenticationHelper.isTheCurrentUserReportViewer()).thenReturn(true);
+    when(authenticationHelper.getCurrentUserId()).thenReturn(Optional.of(UUID.randomUUID()));
+    UUID provinceId = UUID.randomUUID();
+    UUID districtId = UUID.randomUUID();
+    UserReportView dto = UserReportView.builder()
+        .provinceId(provinceId)
+        .districtId(districtId)
+        .build();
+    when(siglusUserReportViewRepository.findAllByUserId(any())).thenReturn(
+        Collections.singletonList(dto));
+    HashSet<UUID> districtIds = new HashSet<>();
+    districtIds.add(districtId);
+    GeographicZone geographicZone = new GeographicZone();
+    geographicZone.setName("name");
+    Set<GeographicZone> geographicZones = new HashSet<>();
+    geographicZones.add(geographicZone);
+    when(siglusGeographicInfoRepository.findAllByIdIn(districtIds)).thenReturn(geographicZones);
+
+    when(metabaseDashboardRepository.findByDashboardName(any()))
+        .thenReturn(Optional.of(MetaBaseConfig.builder().dashboardId(1).build()));
+    facilityTypeDto.setCode("CS");
+    when(siglusFacilityReferenceDataService.findOne((UUID) any())).thenReturn(FacilityDto.builder()
+        .type(facilityTypeDto).code(facilityCode).build());
+    // when
+    String payload = siglusMetabaseDashboardService.getPayloadByDashboardName(anyString());
+    // then
+    assertEquals(String.format("{\"resource\":{\"dashboard\":%d},\"params\":{%s}}", 1, "\"district\":[\"name\"]"),
+        payload);
   }
 
 }

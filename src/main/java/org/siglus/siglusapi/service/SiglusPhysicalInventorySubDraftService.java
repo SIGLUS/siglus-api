@@ -32,7 +32,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.openlmis.referencedata.dto.OrderableDto;
@@ -53,22 +52,28 @@ import org.siglus.siglusapi.repository.PhysicalInventorySubDraftRepository;
 import org.siglus.siglusapi.util.CustomListSortHelper;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 @SuppressWarnings({"PMD"})
 public class SiglusPhysicalInventorySubDraftService {
-
-  private final SiglusStockCardSummariesService siglusStockCardSummariesService;
-  private final SiglusOrderableService siglusOrderableService;
-  private final PhysicalInventorySubDraftRepository physicalInventorySubDraftRepository;
-  private final SiglusPhysicalInventoryService siglusPhysicalInventoryService;
-  private final PhysicalInventoryLineItemsExtensionRepository lineItemsExtensionRepository;
-  private final SiglusAuthenticationHelper authenticationHelper;
-  private final PhysicalInventoryEmptyLocationLineItemRepository physicalInventoryEmptyLocationLineItemRepository;
+  @Autowired
+  private SiglusStockCardSummariesService siglusStockCardSummariesService;
+  @Autowired
+  private SiglusOrderableService siglusOrderableService;
+  @Autowired
+  private PhysicalInventorySubDraftRepository physicalInventorySubDraftRepository;
+  @Autowired
+  private SiglusPhysicalInventoryService siglusPhysicalInventoryService;
+  @Autowired
+  private PhysicalInventoryLineItemsExtensionRepository lineItemsExtensionRepository;
+  @Autowired
+  private SiglusAuthenticationHelper authenticationHelper;
+  @Autowired
+  private PhysicalInventoryEmptyLocationLineItemRepository physicalInventoryEmptyLocationLineItemRepository;
   public static final String DRAFT = "Draft ";
 
   @Transactional
@@ -269,7 +274,7 @@ public class SiglusPhysicalInventorySubDraftService {
         .collect(Collectors.groupingBy(PhysicalInventoryLineItemDto::getProgramId));
 
     for (UUID physicalInventoryId : physicalInventoryIds) {
-      PhysicalInventoryDto physicalInventoryDto = siglusPhysicalInventoryService.getFullPhysicalInventoryDto(
+      PhysicalInventoryDto physicalInventoryDto = siglusPhysicalInventoryService.getPhysicalInventory(
           physicalInventoryId);
       UUID subDraftId = physicalInventorySubDraftMap.get(physicalInventoryId);
 

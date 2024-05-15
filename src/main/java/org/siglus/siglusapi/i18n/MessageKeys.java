@@ -235,6 +235,14 @@ public abstract class MessageKeys {
   // s3
   public static final String ERROR_FILE_NOT_FOUND = ERROR_PREFIX + ".fileNotFound";
 
+  public static final String ERROR_USER_REPORT_VIEW_GEOGRAPHIC_INFO_INVALID =
+      ERROR_PREFIX + ".user.report.view.geographic.info.invalid";
+  public static final String ERROR_CURRENT_USER_NOT_ADMIN_USER = ERROR_PREFIX + ".current.user.not.admin.user";
+  public static final String ERROR_USER_NOT_REPORT_VIEWER_USER = ERROR_PREFIX + ".user.not.report.viewer.user";
+  public static final String ERROR_USER_NOT_REPORT_VIEW_AUTHORITY = ERROR_PREFIX + ".user.not.report.view.authority";
+  public static final String ERROR_USER_CAN_NOT_CONFIRM_SHIPMENT = ERROR_PREFIX + ".user.can.not.confirm.shipment";
+  public static final String ERROR_WRONG_CLIENT_FACILITY = ERROR_PREFIX + ".wrong.client.facility";
+
   protected MessageKeys() {
     throw new UnsupportedOperationException();
   }

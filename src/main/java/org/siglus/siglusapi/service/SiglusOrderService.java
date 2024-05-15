@@ -123,9 +123,11 @@ import org.siglus.siglusapi.repository.SiglusShipmentRepository;
 import org.siglus.siglusapi.repository.StockManagementRepository;
 import org.siglus.siglusapi.repository.dto.OrderSuggestedQuantityDto;
 import org.siglus.siglusapi.repository.dto.RequisitionOrderDto;
+import org.siglus.siglusapi.repository.dto.StockCardReservedDto;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusProcessingPeriodReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
+import org.siglus.siglusapi.service.client.SiglusShipmentDraftFulfillmentService;
 import org.siglus.siglusapi.service.scheduledtask.SiglusOrderCloseSchedulerService;
 import org.siglus.siglusapi.util.PeriodUtil;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
@@ -258,6 +260,9 @@ public class SiglusOrderService {
 
   @Autowired
   private ShipmentsExtensionRepository shipmentsExtensionRepository;
+
+  @Autowired
+  private SiglusShipmentDraftFulfillmentService siglusShipmentDraftFulfillmentService;
 
   private static final String SLASH = "/";
 
@@ -657,6 +662,14 @@ public class SiglusOrderService {
     return String.format("%s%02d", split[0] + SLASH, (Integer.parseInt(split[1]) + 1));
   }
 
+  public List<StockCardReservedDto> getOrderReservedQuantity(UUID orderId) {
+    Order order = getOrder(orderId);
+    ShipmentDraftDto shipmentDraftDto = siglusShipmentDraftFulfillmentService.getShipmentDraftByOrderId(orderId)
+            .getContent().get(0);
+    return draftService.reservedCount(order.getSupplyingFacilityId(),
+            shipmentDraftDto.getId(), shipmentDraftDto.lineItems());
+  }
+
   private Map<UUID, BigDecimal> getOrderableIdToSuggestedQuantity(Order order, List<ProcessingPeriod> periods) {
     return ORDER_STATUS_AFTER_START_FULFILL.contains(order.getStatus())
         ? getOrderableIdToSuggestedQuantityFromDb(order)
@@ -682,7 +695,7 @@ public class SiglusOrderService {
     return order.getProcessingPeriodId().equals(getCurrentPeriodIdByFulfillDate(periods, LocalDate.now()));
   }
 
-  private Order getOrder(UUID orderId) {
+  public Order getOrder(UUID orderId) {
     Order order = orderRepository.findOne(orderId);
     if (Objects.isNull(order)) {
       throw new NotFoundException(ERROR_ORDER_NOT_EXIST);
@@ -1040,6 +1053,8 @@ public class SiglusOrderService {
   private void setIfIsKit(SiglusOrderDto siglusOrderDto) {
     List<UUID> orderableIds = siglusOrderDto.getOrder().orderLineItems().stream()
         .map(orderableDto -> orderableDto.getOrderable().getId()).collect(Collectors.toList());
+    log.info("siglusOrderDto id: {}, lineItems size: {}", siglusOrderDto.getOrder().getId(),
+            siglusOrderDto.getOrder().orderLineItems().size());
     List<Orderable> orderables = orderableRepository.findLatestByIds(orderableIds);
     Map<UUID, Boolean> orderableToIsKitMap = new HashMap<>();
     orderables.forEach(orderable ->
