@@ -62,6 +62,18 @@ import org.springframework.util.ObjectUtils;
         resultSetMapping = "PhysicalInventory.SiglusPhysicalInventoryBriefDto"),
 
     @NamedNativeQuery(
+        name = "PhysicalInventory.queryAllDraftByFacility",
+        query = "SELECT pi.id as id, pi.programid as programId, pi.facilityid as facilityId, "
+            + "  pi.occurreddate as occurredDate, pi.signature as signature, pi.documentnumber as documentNumber, "
+            + "  pi.isdraft as isDraft, pie.category as category, pie.locationoption as locationOption "
+            + "from stockmanagement.physical_inventories pi "
+            + "left join siglusintegration.physical_inventories_extension pie "
+            + "       on pi.id  = pie.physicalinventoryid "
+            + "where pi.facilityid = :facilityId and pi.isdraft = true and pie.category in ('ALL', 'SINGLE') "
+            + ";",
+        resultSetMapping = "PhysicalInventory.SiglusPhysicalInventoryBriefDto"),
+
+    @NamedNativeQuery(
         name = "PhysicalInventory.findByProgramIdAndFacilityIdAndStartDateAndEndDate",
         query = "SELECT pi.id as id, pi.programid as programId, pi.facilityid as facilityId,  "
             + "  pi.occurreddate as occurredDate, pi.signature as signature, pi.documentnumber as documentNumber, "

@@ -25,6 +25,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.repository.query.Param;
 
+@SuppressWarnings({"PMD.AvoidDuplicateLiterals"})
 public interface SiglusPhysicalInventoryRepository extends PagingAndSortingRepository<PhysicalInventory, UUID> {
 
   @Query(name = "PhysicalInventory.queryForAllProgram", nativeQuery = true)
@@ -39,6 +40,10 @@ public interface SiglusPhysicalInventoryRepository extends PagingAndSortingRepos
   List<SiglusPhysicalInventoryBriefDto> findByProgramIdAndFacilityIdAndStartDateAndEndDate(
       @Param("facilityId") UUID facilityId, @Param("programId") UUID programId,
       @Param("startDate") String startDate, @Param("endDate") String endDate);
+
+  @Query(name = "PhysicalInventory.queryAllDraftByFacility", nativeQuery = true)
+  List<SiglusPhysicalInventoryBriefDto> queryAllDraftByFacility(
+      @Param("facilityId") UUID facilityId);
 
 
   List<PhysicalInventory> findAllByIdIn(Set<UUID> ids);

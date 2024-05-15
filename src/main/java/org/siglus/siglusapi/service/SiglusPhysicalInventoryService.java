@@ -178,6 +178,11 @@ public class SiglusPhysicalInventoryService {
     if (!canInitialOrPhysicalInventory(physicalInventoryDto.getFacilityId(), initialPhysicalInventory)) {
       throw new ValidationMessageException(new Message(ERROR_NOT_ACCEPTABLE));
     }
+    PhysicalInventoryValidationDto validationDto =
+        checkConflictForAllPrograms(physicalInventoryDto.getFacilityId(), null);
+    if (!validationDto.isCanStartInventory()) {
+      throw new ValidationMessageException(new Message(ERROR_INVENTORY_CONFLICT_DRAFT));
+    }
     LocationManagementOption option = null;
     if (StringUtils.isNotEmpty(optionString)) {
       option = LocationManagementOption.fromString(optionString);
@@ -202,7 +207,12 @@ public class SiglusPhysicalInventoryService {
     if (!canPhysicalInventory(physicalInventoryDto.getFacilityId())) {
       throw new ValidationMessageException(new Message(ERROR_NOT_ACCEPTABLE));
     }
-    PhysicalInventoryDto physicalInventory = createNewDraft(physicalInventoryDto, isByLocation);
+    PhysicalInventoryValidationDto validationDto =
+        checkConflictForOneProgram(physicalInventoryDto.getFacilityId(), physicalInventoryDto.getProgramId(), null);
+    if (!validationDto.isCanStartInventory()) {
+      throw new ValidationMessageException(new Message(ERROR_INVENTORY_CONFLICT_DRAFT));
+    }
+    PhysicalInventoryDto physicalInventory = createNewDraft(physicalInventoryDto);
 
     PhysicalInventoryExtension physicalInventoryExtension = buildPhysicalInventoryExtension(
         physicalInventory, false, option);
@@ -232,25 +242,30 @@ public class SiglusPhysicalInventoryService {
         .build();
   }
 
-  public PhysicalInventoryValidationDto checkConflictForAllPrograms(UUID facility) {
+  public PhysicalInventoryValidationDto checkConflictForAllPrograms(UUID facility, UUID draft) {
     Set<UUID> supportedPrograms = supportedProgramsHelper.findHomeFacilitySupportedProgramIds();
     if (CollectionUtils.isEmpty(supportedPrograms)) {
       throw new PermissionMessageException(new org.openlmis.stockmanagement.util.Message(ERROR_PROGRAM_NOT_SUPPORTED));
     }
-
-    List<UUID> conflictProgramIdList = Lists.newArrayList();
-    supportedPrograms.forEach(supportedProgramId -> {
-      List<SiglusPhysicalInventoryBriefDto> draftDtos =
-          siglusPhysicalInventoryRepository.queryForOneProgram(facility, supportedProgramId, true);
-      if (CollectionUtils.isNotEmpty(draftDtos)) {
-        conflictProgramIdList.add(supportedProgramId);
-      }
-    });
-
-    if (CollectionUtils.isNotEmpty(conflictProgramIdList)) {
-      return buildPhysicalInventoryValidationDto(false, conflictProgramIdList);
+    List<SiglusPhysicalInventoryBriefDto> draftDtos =
+        siglusPhysicalInventoryRepository.queryAllDraftByFacility(facility);
+    Set<UUID> conflictProgramIdList = new HashSet<>();
+    if (CollectionUtils.isNotEmpty(draftDtos)) {
+      draftDtos.forEach(dto -> {
+        if (ALL_PROGRAM.equals(dto.getCategory())) {
+          if (ObjectUtils.isEmpty(draft)) {
+            conflictProgramIdList.add(ALL_PRODUCTS_PROGRAM_ID);
+          }
+        } else {
+          conflictProgramIdList.add(dto.getProgramId());
+        }
+      });
     }
-    return buildPhysicalInventoryValidationDto(true, Lists.newArrayList());
+    if (ObjectUtils.isEmpty(conflictProgramIdList)) {
+      return buildPhysicalInventoryValidationDto(true, Lists.newArrayList());
+    } else {
+      return buildPhysicalInventoryValidationDto(false, new ArrayList<>(conflictProgramIdList));
+    }
   }
 
   public List<PhysicalInventoryLineItemDto> buildInitialInventoryLineItems(
@@ -322,19 +337,15 @@ public class SiglusPhysicalInventoryService {
     }
 
     List<SiglusPhysicalInventoryBriefDto> allDraftDtos
-        = siglusPhysicalInventoryRepository.queryForAllProgram(facility, true);
-    if (!ObjectUtils.isEmpty(allDraftDtos)) {
+        = siglusPhysicalInventoryRepository.queryAllDraftByFacility(facility);
+    if (allDraftDtos.stream().anyMatch(draftDto -> ALL_PROGRAM.equals(draftDto.getCategory()))) {
       return buildPhysicalInventoryValidationDto(false, Lists.newArrayList(ALL_PRODUCTS_PROGRAM_ID));
     }
-    List<SiglusPhysicalInventoryBriefDto> oneProgramDraftDtos =
-        siglusPhysicalInventoryRepository.queryForOneProgram(facility, program, true);
-    if (ObjectUtils.isEmpty(oneProgramDraftDtos)) {
-      return buildPhysicalInventoryValidationDto(true, Lists.newArrayList(program));
+    if (allDraftDtos.stream().anyMatch(draftDto ->
+        program.equals(draftDto.getProgramId()) && !draftDto.getId().equals(draft))) {
+      return buildPhysicalInventoryValidationDto(false, Lists.newArrayList(program));
     }
-    if (oneProgramDraftDtos.get(0).getId().equals(draft)) {
-      return buildPhysicalInventoryValidationDto(true, Lists.newArrayList(program));
-    }
-    return buildPhysicalInventoryValidationDto(false, Lists.newArrayList(program));
+    return buildPhysicalInventoryValidationDto(true, Lists.newArrayList(program));
   }
 
   public List<List<PhysicalInventoryLineItemDto>> groupByProductCode(List<PhysicalInventoryLineItemDto> lineItemDtos) {
@@ -967,12 +978,7 @@ public class SiglusPhysicalInventoryService {
     return convertCalculatedStockOnHandByLocationToLineItems(activeSohByLocations, stockCardIdMap, programId);
   }
 
-  private PhysicalInventoryDto createNewDraft(PhysicalInventoryDto physicalInventoryDto, boolean isByLocation) {
-    List<PhysicalInventoryDto> physicalInventory = getPhysicalInventoryDtosForProductsForOneProgram(
-        physicalInventoryDto.getProgramId(), physicalInventoryDto.getFacilityId(), true, isByLocation);
-    if (CollectionUtils.isNotEmpty(physicalInventory)) {
-      throw new BusinessDataException(new Message(ERROR_INVENTORY_CONFLICT_DRAFT), null);
-    }
+  private PhysicalInventoryDto createNewDraft(PhysicalInventoryDto physicalInventoryDto) {
     log.info("create empty physical inventory: {}", physicalInventoryDto);
     return inventoryController.createEmptyPhysicalInventory(physicalInventoryDto);
   }
@@ -1158,7 +1164,7 @@ public class SiglusPhysicalInventoryService {
           PhysicalInventoryDto copy = new PhysicalInventoryDto();
           BeanUtils.copyProperties(dto, copy);
           copy.setProgramId(supportedVirtualProgram);
-          return createNewDraft(copy, LocationManagementOption.BY_LOCATION.equals(locationOption));
+          return createNewDraft(copy);
         }).collect(Collectors.toList());
     if (CollectionUtils.isNotEmpty(inventories)) {
       inventories.forEach(eachInventory -> {

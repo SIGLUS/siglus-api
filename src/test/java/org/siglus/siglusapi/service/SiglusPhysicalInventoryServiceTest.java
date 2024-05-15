@@ -839,6 +839,8 @@ public class SiglusPhysicalInventoryServiceTest {
     when(facilityReferenceDataService.findOne(facilityId)).thenReturn(facilityDto);
     when(physicalInventoryExtensionRepository.save(any(PhysicalInventoryExtension.class)))
         .thenReturn(new PhysicalInventoryExtension());
+    when(supportedProgramsHelper
+        .findHomeFacilitySupportedProgramIds()).thenReturn(Collections.singleton(programId));
 
     // when
     siglusPhysicalInventoryService.createAndSpiltNewDraftForOneProgram(physicalInventoryDto, 3, null, false);
@@ -988,6 +990,8 @@ public class SiglusPhysicalInventoryServiceTest {
     when(siglusOrderableService.getAllProducts()).thenReturn(orderableDtos);
     when(physicalInventoryExtensionRepository.save(any(PhysicalInventoryExtension.class)))
         .thenReturn(new PhysicalInventoryExtension());
+    when(supportedProgramsHelper
+        .findHomeFacilitySupportedProgramIds()).thenReturn(Collections.singleton(programId));
 
     // when
     PhysicalInventoryDto returnedPhysicalInventoryDto = siglusPhysicalInventoryService
@@ -1224,7 +1228,7 @@ public class SiglusPhysicalInventoryServiceTest {
   public void shouldGetExceptionWhenConflictForAllProduct() {
     exception.expect(PermissionMessageException.class);
     exception.expectMessage("stockmanagement.error.authorization.program.not.supported");
-    siglusPhysicalInventoryService.checkConflictForAllPrograms(facilityId);
+    siglusPhysicalInventoryService.checkConflictForAllPrograms(facilityId, null);
   }
 
   @Test
@@ -1239,12 +1243,15 @@ public class SiglusPhysicalInventoryServiceTest {
     // given
     HashSet<UUID> supportedPrograms = Sets.newHashSet(programIdOne);
     when(supportedProgramsHelper.findHomeFacilitySupportedProgramIds()).thenReturn(supportedPrograms);
-    when(siglusPhysicalInventoryRepository.queryForOneProgram(facilityId, programIdOne, true))
-        .thenReturn(newArrayList(new SiglusPhysicalInventoryBriefDto()));
+    when(siglusPhysicalInventoryRepository.queryAllDraftByFacility(facilityId))
+        .thenReturn(newArrayList(SiglusPhysicalInventoryBriefDto.builder()
+            .category(SINGLE_PROGRAM)
+            .programId(programIdOne)
+            .build()));
 
     // when
     PhysicalInventoryValidationDto physicalInventoryValidationDto = siglusPhysicalInventoryService
-        .checkConflictForAllPrograms(facilityId);
+        .checkConflictForAllPrograms(facilityId, null);
     // then
     assertFalse(physicalInventoryValidationDto.isCanStartInventory());
   }
@@ -1264,7 +1271,7 @@ public class SiglusPhysicalInventoryServiceTest {
 
     // when
     PhysicalInventoryValidationDto physicalInventoryValidationDto = siglusPhysicalInventoryService
-        .checkConflictForAllPrograms(facilityId);
+        .checkConflictForAllPrograms(facilityId, null);
 
     // then
     assertTrue(physicalInventoryValidationDto.isCanStartInventory());
@@ -1276,8 +1283,10 @@ public class SiglusPhysicalInventoryServiceTest {
     HashSet<UUID> supportedPrograms = Sets.newHashSet(programIdOne);
     when(supportedProgramsHelper.findHomeFacilitySupportedProgramIds()).thenReturn(
         supportedPrograms);
-    when(siglusPhysicalInventoryRepository.queryForAllProgram(facilityId, true))
-        .thenReturn(newArrayList(new SiglusPhysicalInventoryBriefDto()));
+    when(siglusPhysicalInventoryRepository.queryAllDraftByFacility(facilityId))
+        .thenReturn(newArrayList(SiglusPhysicalInventoryBriefDto.builder()
+            .category(ALL_PROGRAM)
+            .build()));
 
     // when
     PhysicalInventoryValidationDto physicalInventoryValidationDto = siglusPhysicalInventoryService
