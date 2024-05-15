@@ -26,6 +26,7 @@ import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -58,23 +59,26 @@ import org.openlmis.requisition.service.PeriodService;
 import org.openlmis.requisition.service.PermissionService;
 import org.openlmis.requisition.service.RequisitionService;
 import org.openlmis.requisition.service.referencedata.PermissionStrings;
-import org.openlmis.requisition.utils.AuthenticationHelper;
 import org.openlmis.stockmanagement.repository.StockCardRepository;
 import org.openlmis.stockmanagement.util.PageImplRepresentation;
 import org.siglus.common.domain.ProcessingPeriodExtension;
 import org.siglus.common.repository.ProcessingPeriodExtensionRepository;
 import org.siglus.siglusapi.domain.SiglusReportType;
 import org.siglus.siglusapi.dto.SimpleRequisitionDto;
+import org.siglus.siglusapi.dto.UserDto;
+import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.repository.FacilityNativeRepository;
 import org.siglus.siglusapi.repository.ProcessingPeriodRepository;
 import org.siglus.siglusapi.repository.RequisitionNativeSqlRepository;
 import org.siglus.siglusapi.repository.SiglusReportTypeRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.repository.SiglusStockCardLineItemRepository;
+import org.siglus.siglusapi.repository.SupervisoryNodeRepository;
 import org.siglus.siglusapi.repository.dto.FacillityStockCardDateDto;
 import org.siglus.siglusapi.service.client.SiglusProcessingPeriodReferenceDataService;
 import org.siglus.siglusapi.testutils.ProcessingPeriodDtoDataBuilder;
 import org.siglus.siglusapi.testutils.RequisitionLineItemDataBuilder;
+import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.validator.SiglusProcessingPeriodValidator;
 import org.siglus.siglusapi.web.response.RequisitionPeriodExtensionResponse;
 import org.springframework.beans.BeanUtils;
@@ -98,7 +102,7 @@ public class SiglusProcessingPeriodServiceTest {
   private SiglusProcessingPeriodValidator siglusProcessingPeriodValidator;
 
   @Mock
-  private AuthenticationHelper authenticationHelper;
+  private SiglusAuthenticationHelper authenticationHelper;
 
   @Mock
   private PermissionService permissionService;
@@ -132,6 +136,9 @@ public class SiglusProcessingPeriodServiceTest {
 
   @Mock
   private SiglusProgramAdditionalOrderableService siglusProgramAdditionalOrderableService;
+
+  @Mock
+  private SupervisoryNodeRepository supervisoryNodeRepository;
 
   @Mock
   private FacilityNativeRepository facilityNativeRepository;
@@ -254,6 +261,9 @@ public class SiglusProcessingPeriodServiceTest {
   @Test
   public void shouldGetProcessingPeriodsForInitiateOfRegualrRequisition() {
     setupReportType();
+    UserDto userDto = new UserDto();
+    userDto.setHomeFacilityId(facilityId);
+    when(authenticationHelper.getCurrentUser()).thenReturn(userDto);
     Collection<ProcessingPeriodDto> periods = new ArrayList<>();
     periods.add(periodDto);
     when(periodService.searchByProgramAndFacility(programId, facilityId)).thenReturn(periods);
@@ -328,6 +338,9 @@ public class SiglusProcessingPeriodServiceTest {
     ProgramDto programDto = new ProgramDto();
     programDto.setCode("VC");
     when(siglusProgramService.getProgram(programId)).thenReturn(programDto);
+    UserDto userDto = new UserDto();
+    userDto.setHomeFacilityId(facilityId);
+    when(authenticationHelper.getCurrentUser()).thenReturn(userDto);
     //when
     List<RequisitionPeriodExtensionResponse> response =
         siglusProcessingPeriodService.getRequisitionPeriodExtensionResponses(programId, facilityId, true);
@@ -377,6 +390,9 @@ public class SiglusProcessingPeriodServiceTest {
     ProgramDto programDto = new ProgramDto();
     programDto.setCode("VC");
     when(siglusProgramService.getProgram(programId)).thenReturn(programDto);
+    UserDto userDto = new UserDto();
+    userDto.setHomeFacilityId(facilityId);
+    when(authenticationHelper.getCurrentUser()).thenReturn(userDto);
     //when
     List<RequisitionPeriodExtensionResponse> response =
         siglusProcessingPeriodService.getRequisitionPeriodExtensionResponses(programId, facilityId, true)
@@ -391,6 +407,9 @@ public class SiglusProcessingPeriodServiceTest {
   public void shouldGetProcessingPeriodsForEmergencyRequisitionWhenOnlyHaveOnePeriods() {
     //given
     setupReportType();
+    UserDto userDto = new UserDto();
+    userDto.setHomeFacilityId(facilityId);
+    when(authenticationHelper.getCurrentUser()).thenReturn(userDto);
     List<ProcessingPeriodDto> periods = new ArrayList<>();
     periods.add(periodDto);
     when(periodService.getCurrentPeriods(programId, facilityId)).thenReturn(periods);
@@ -429,7 +448,6 @@ public class SiglusProcessingPeriodServiceTest {
     requisitionPeriod.setCurrentPeriodRegularRequisitionAuthorized(true);
     RequisitionPeriodExtensionResponse expectedResponse = convertToRequisitionPeriodExtensionResponse(
         requisitionPeriod);
-
     //when
     Collection<RequisitionPeriodExtensionResponse> actualResponseList =
         siglusProcessingPeriodService.getRequisitionPeriodExtensionResponses(programId, facilityId, true);
@@ -460,6 +478,9 @@ public class SiglusProcessingPeriodServiceTest {
     when(permissionService.canAuthorizeRequisition(any()))
         .thenReturn(ValidationResult.success());
     when(requisitionNativeSqlRepository.findSimpleRequisitionDto(any())).thenReturn(buildSimpleRequisitionDtos());
+    UserDto userDto = new UserDto();
+    userDto.setHomeFacilityId(facilityId);
+    when(authenticationHelper.getCurrentUser()).thenReturn(userDto);
 
     List<RequisitionPeriodExtensionResponse> actualResponseLists =
         siglusProcessingPeriodService.getRequisitionPeriodExtensionResponses(programId, facilityId, false);
@@ -539,6 +560,9 @@ public class SiglusProcessingPeriodServiceTest {
   public void shouldReturnNullWhenProgramNotViaAndEmergency() {
     ProgramDto programDto = new ProgramDto();
     programDto.setCode("RT");
+    UserDto userDto = new UserDto();
+    userDto.setHomeFacilityId(facilityId);
+    when(authenticationHelper.getCurrentUser()).thenReturn(userDto);
     when(siglusProgramService.getProgram(programId)).thenReturn(programDto);
     Collection<RequisitionPeriodExtensionResponse> response =
         siglusProcessingPeriodService.getRequisitionPeriodExtensionResponses(programId, facilityId, true);
@@ -552,6 +576,20 @@ public class SiglusProcessingPeriodServiceTest {
 
     // then
     verify(processingPeriodRepository).getUpToNowMonthlyPeriods(any(LocalDate.class));
+  }
+
+  @Test(expected = BusinessDataException.class)
+  public void shouldThrowErrorWhenClientFacilityIdWrong() {
+    // given
+    UserDto userDto = new UserDto();
+    UUID clientFacilityId2 = UUID.randomUUID();
+    userDto.setHomeFacilityId(facilityId);
+    when(authenticationHelper.getCurrentUser()).thenReturn(userDto);
+    when(supervisoryNodeRepository.findAllClientFacilityIdsBySupplyFacilityIdAndProgramId(facilityId, programId))
+        .thenReturn(Sets.newHashSet(clientFacilityId2));
+    // when
+    UUID clientFacilityId = UUID.randomUUID();
+    siglusProcessingPeriodService.getRequisitionPeriodExtensionResponses(programId, clientFacilityId, false);
   }
 }
 

@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.service;
 
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_WRONG_CLIENT_FACILITY;
 import static org.siglus.siglusapi.util.RequisitionUtil.getRequisitionExtraData;
 
 import java.time.LocalDate;
@@ -42,13 +43,17 @@ import org.openlmis.requisition.service.referencedata.PeriodReferenceDataService
 import org.siglus.common.domain.ProcessingPeriodExtension;
 import org.siglus.common.repository.ProcessingPeriodExtensionRepository;
 import org.siglus.siglusapi.constant.ProgramConstants;
+import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.dto.ProcessingPeriodSearchParams;
 import org.siglus.siglusapi.dto.SimpleRequisitionDto;
+import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.repository.ProcessingPeriodRepository;
 import org.siglus.siglusapi.repository.RequisitionNativeSqlRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
+import org.siglus.siglusapi.repository.SupervisoryNodeRepository;
 import org.siglus.siglusapi.service.client.SiglusProcessingPeriodReferenceDataService;
+import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.validator.SiglusProcessingPeriodValidator;
 import org.siglus.siglusapi.web.response.RequisitionPeriodExtensionResponse;
 import org.springframework.beans.BeanUtils;
@@ -58,6 +63,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.MultiValueMap;
+import org.springframework.util.ObjectUtils;
 
 @Service
 public class SiglusProcessingPeriodService {
@@ -94,6 +100,12 @@ public class SiglusProcessingPeriodService {
 
   @Autowired
   private ProcessingPeriodRepository processingPeriodRepository;
+
+  @Autowired
+  private SiglusAuthenticationHelper authenticationHelper;
+
+  @Autowired
+  private SupervisoryNodeRepository supervisoryNodeRepository;
 
   public LocalDate getPreviousPeriodStartDateSinceInitiate(String programCode, UUID facilityId) {
     ProgramDto program = siglusProgramService.getProgramByCode(programCode)
@@ -198,6 +210,10 @@ public class SiglusProcessingPeriodService {
 
   public List<RequisitionPeriodExtensionResponse> getRequisitionPeriodExtensionResponses(UUID program, UUID facility,
       boolean emergency) {
+    UUID homeFacilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
+    if (!ObjectUtils.isEmpty(homeFacilityId) && !homeFacilityId.equals(facility)) {
+      checkRequisitionGroup(homeFacilityId, facility, program);
+    }
     Collection<RequisitionPeriodDto> requisitionPeriodDtos = getRequisitionPeriods(program, facility, emergency);
     if (CollectionUtils.isEmpty(requisitionPeriodDtos)) {
       return requisitionPeriodDtos.stream().map(this::convertToRequisitionPeriodExtensionResponse)
@@ -211,6 +227,15 @@ public class SiglusProcessingPeriodService {
     return requisitionPeriodDtos.stream()
         .map(dto -> buildRequisitionPeriodExtensionResponse(dto, requisitionIdToSimpleRequisition))
         .collect(Collectors.toList());
+  }
+
+  private void checkRequisitionGroup(UUID supplyFacilityId, UUID clientFacilityId, UUID programId) {
+    Set<UUID> clientFacilityIds = supervisoryNodeRepository.findAllClientFacilityIdsBySupplyFacilityIdAndProgramId(
+        supplyFacilityId,
+        programId);
+    if (!clientFacilityIds.contains(clientFacilityId)) {
+      throw new BusinessDataException(new Message(ERROR_WRONG_CLIENT_FACILITY));
+    }
   }
 
   public RequisitionPeriodExtensionResponse buildRequisitionPeriodExtensionResponse(RequisitionPeriodDto dto,
