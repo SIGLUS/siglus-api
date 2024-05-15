@@ -56,6 +56,7 @@ import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
 import org.openlmis.stockmanagement.domain.event.StockEvent;
 import org.openlmis.stockmanagement.domain.reason.ReasonType;
 import org.openlmis.stockmanagement.domain.reason.StockCardLineItemReason;
+import org.openlmis.stockmanagement.dto.PhysicalInventoryDto;
 import org.openlmis.stockmanagement.dto.StockEventDto;
 import org.openlmis.stockmanagement.dto.StockEventLineItemDto;
 import org.openlmis.stockmanagement.repository.StockCardLineItemReasonRepository;
@@ -65,6 +66,7 @@ import org.openlmis.stockmanagement.repository.StockEventsRepository;
 import org.openlmis.stockmanagement.service.StockEventProcessor;
 import org.siglus.siglusapi.constant.FieldConstants;
 import org.siglus.siglusapi.domain.FacilityLocations;
+import org.siglus.siglusapi.domain.PhysicalInventoryHistory;
 import org.siglus.siglusapi.domain.StockCardExtension;
 import org.siglus.siglusapi.domain.StockManagementDraft;
 import org.siglus.siglusapi.dto.LotDto;
@@ -75,6 +77,7 @@ import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.CalculatedStockOnHandByLocationRepository;
 import org.siglus.siglusapi.repository.FacilityLocationsRepository;
+import org.siglus.siglusapi.repository.PhysicalInventoryHistoryRepository;
 import org.siglus.siglusapi.repository.StockCardExtensionRepository;
 import org.siglus.siglusapi.repository.StockCardLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.StockManagementDraftRepository;
@@ -157,6 +160,9 @@ public class SiglusStockEventsServiceTest {
 
   @Mock
   private CalculatedStockOnHandByLocationRepository calculatedStockOnHandByLocationRepository;
+
+  @Mock
+  private PhysicalInventoryHistoryRepository physicalInventoryHistoryRepository;
 
   @Mock
   private SiglusProgramService siglusProgramService;
@@ -464,6 +470,47 @@ public class SiglusStockEventsServiceTest {
         .of(FieldConstants.LOT_CODE, "lotCode", FieldConstants.EXPIRATION_DATE, "2020-06-16");
   }
 
+  @Test
+  public void shouldSavePhysicalInventoryHistoryWhenSubmitPhysicalInventory() {
+    // given
+    StockEventLineItemDto lineItemDto1 = new StockEventLineItemDtoDataBuilder().buildForAdjustment();
+    lineItemDto1.setOrderableId(orderableId1);
+    lineItemDto1.setReasonId(null);
+    lineItemDto1.setSourceId(null);
+    lineItemDto1.setDestinationId(null);
+    StockEventDto eventDto = StockEventDto.builder()
+        .lineItems(newArrayList(lineItemDto1))
+        .programId(ALL_PRODUCTS_PROGRAM_ID).build();
+    when(stockManagementDraftService.findStockManagementDraft(any(), any(), any())).thenReturn(
+        Collections.singletonList(new StockManagementDraftDto()));
+    when(siglusPhysicalInventoryService.getPhysicalInventoryDtos(any(), any(), any()))
+        .thenReturn(Collections.singletonList(new PhysicalInventoryDto()));
+    // when
+    siglusStockEventsService.processStockEvent(eventDto, false);
+    // then
+    verify(physicalInventoryHistoryRepository, times(1))
+        .save(any(PhysicalInventoryHistory.class));
+  }
 
-
+  @Test
+  public void shouldNotSavePhysicalInventoryHistoryWhenNotSubmitPhysicalInventory() {
+    // given
+    StockEventLineItemDto lineItemDto1 = new StockEventLineItemDtoDataBuilder().buildForAdjustment();
+    lineItemDto1.setOrderableId(orderableId1);
+    lineItemDto1.setReasonId(UUID.randomUUID());
+    lineItemDto1.setSourceId(null);
+    lineItemDto1.setDestinationId(null);
+    StockEventDto eventDto = StockEventDto.builder()
+        .lineItems(newArrayList(lineItemDto1))
+        .programId(ALL_PRODUCTS_PROGRAM_ID).build();
+    when(stockManagementDraftService.findStockManagementDraft(any(), any(), any())).thenReturn(
+        Collections.singletonList(new StockManagementDraftDto()));
+    when(siglusPhysicalInventoryService.getPhysicalInventoryDtos(any(), any(), any()))
+        .thenReturn(Collections.singletonList(new PhysicalInventoryDto()));
+    // when
+    siglusStockEventsService.processStockEvent(eventDto, false);
+    // then
+    verify(physicalInventoryHistoryRepository, times(0))
+        .save(any(PhysicalInventoryHistory.class));
+  }
 }

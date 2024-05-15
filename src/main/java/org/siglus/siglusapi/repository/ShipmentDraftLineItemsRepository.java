@@ -18,9 +18,19 @@ package org.siglus.siglusapi.repository;
 import java.util.List;
 import java.util.UUID;
 import org.openlmis.fulfillment.domain.ShipmentDraftLineItem;
+import org.siglus.siglusapi.repository.dto.StockCardReservedDto;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface ShipmentDraftLineItemsRepository extends JpaRepository<ShipmentDraftLineItem, UUID> {
 
   List<ShipmentDraftLineItem> findByOrderableIdIn(List<UUID> orderableId);
+
+  @Query(name = "StockCard.queryStockCardReservedDto", nativeQuery = true)
+  List<StockCardReservedDto> reservedCount(@Param("facilityId") UUID facilityId);
+
+  @Query(name = "StockCard.queryStockCardReservedExcludeDto", nativeQuery = true)
+  List<StockCardReservedDto> reservedCount(@Param("facilityId") UUID facilityId,
+                                           @Param("shipmentDraftId") UUID shipmentDraftId);
 }

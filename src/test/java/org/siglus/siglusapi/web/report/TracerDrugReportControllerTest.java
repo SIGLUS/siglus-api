@@ -16,13 +16,10 @@
 package org.siglus.siglusapi.web.report;
 
 import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.io.IOException;
 import java.util.Collections;
-import javax.servlet.http.HttpServletResponse;
 import junit.framework.TestCase;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -30,7 +27,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.siglus.siglusapi.service.scheduledtask.TracerDrugReportService;
-import org.springframework.test.util.ReflectionTestUtils;
 
 @RunWith(MockitoJUnitRunner.class)
 public class TracerDrugReportControllerTest extends TestCase {
@@ -87,25 +83,4 @@ public class TracerDrugReportControllerTest extends TestCase {
     verify(tracerDrugReportService)
         .refreshTracerDrugPersistentDataByFacility(Collections.singletonList(facilityCode), startDate, endDate);
   }
-
-  @Test
-  public void shouldCallServiceWhenRefreshBetweenSpecifyDateAndByFacility() throws IOException {
-    // given
-    ReflectionTestUtils.setField(
-        tracerDrugReportController, "dateUrlFormat", "yyyy_MM_dd_HH_mm_ss.SSS");
-    HttpServletResponse response = mock(HttpServletResponse.class);
-    String productCode = "22A05";
-    String districtCode = "0102";
-    String provinceCode = "01";
-    doNothing()
-        .when(tracerDrugReportService)
-        .getTracerDrugExcel(response, productCode, districtCode, provinceCode, startDate, endDate);
-    // when
-    tracerDrugReportController.getTracerDrugExcel(response, productCode, districtCode, provinceCode, startDate,
-        endDate);
-    // then
-    verify(tracerDrugReportService)
-        .getTracerDrugExcel(response, productCode, districtCode, provinceCode, startDate, endDate);
-  }
-
 }

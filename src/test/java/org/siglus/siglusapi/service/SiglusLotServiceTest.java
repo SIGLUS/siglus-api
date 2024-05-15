@@ -21,6 +21,11 @@ import static com.google.common.collect.Sets.newHashSet;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyBoolean;
+import static org.mockito.Matchers.anyList;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_LOT_ID_AND_CODE_SHOULD_EMPTY;
 
@@ -36,21 +41,29 @@ import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.referencedata.domain.Lot;
 import org.openlmis.referencedata.domain.TradeItem;
 import org.openlmis.referencedata.dto.OrderableChildDto;
 import org.openlmis.referencedata.dto.OrderableDto;
 import org.openlmis.referencedata.repository.LotRepository;
+import org.openlmis.stockmanagement.domain.reason.StockCardLineItemReason;
 import org.openlmis.stockmanagement.dto.StockEventDto;
 import org.openlmis.stockmanagement.dto.StockEventLineItemDto;
+import org.openlmis.stockmanagement.repository.StockCardLineItemReasonRepository;
 import org.siglus.siglusapi.constant.FieldConstants;
 import org.siglus.siglusapi.dto.LotDto;
+import org.siglus.siglusapi.dto.RemovedLotDto;
 import org.siglus.siglusapi.dto.UserDto;
+import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
+import org.siglus.siglusapi.repository.SiglusLotRepository;
+import org.siglus.siglusapi.repository.dto.StockCardStockDto;
 import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
 import org.siglus.siglusapi.testutils.StockEventLineItemDtoDataBuilder;
+import org.siglus.siglusapi.util.FacilityConfigHelper;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.util.SiglusDateHelper;
 
@@ -74,6 +87,21 @@ public class SiglusLotServiceTest {
 
   @Mock
   private LotRepository lotRepository;
+
+  @Mock
+  private SiglusLotRepository siglusLotRepository;
+
+  @Mock
+  private SiglusStockCardSummariesService siglusStockCardSummariesService;
+
+  @Mock
+  private SiglusStockEventsService siglusStockEventsService;
+
+  @Mock
+  private StockCardLineItemReasonRepository stockCardLineItemReasonRepository;
+
+  @Mock
+  private FacilityConfigHelper facilityConfigHelper;
 
   @Rule
   public ExpectedException exception = ExpectedException.none();
@@ -208,6 +236,94 @@ public class SiglusLotServiceTest {
     assertEquals(1, lotList.size());
   }
 
+  @Test
+  public void shouldCallQueryExpiredLotsWithLocationGivenFacilityIsLocationEnabled() {
+    UUID facilityId = UUID.randomUUID();
+    when(facilityConfigHelper.isLocationManagementEnabled(facilityId)).thenReturn(true);
+
+    siglusLotService.getExpiredLots(facilityId);
+
+    verify(siglusLotRepository, Mockito.times(1)).queryExpiredLotsWithLocation(facilityId);
+  }
+
+  @Test
+  public void shouldCallQueryExpiredLotsGivenFacilityIsNotLocationEnabled() {
+    UUID facilityId = UUID.randomUUID();
+    when(facilityConfigHelper.isLocationManagementEnabled(facilityId)).thenReturn(false);
+
+    siglusLotService.getExpiredLots(facilityId);
+
+    verify(siglusLotRepository, Mockito.times(1)).queryExpiredLots(facilityId);
+  }
+
+  @Test(expected = BusinessDataException.class)
+  public void shouldThrowExceptionWhenRemoveExpiredLotsGivenLotIsNotExpired() {
+    when(siglusLotRepository.existsNotExpiredLotsByIds(anyList())).thenReturn(true);
+
+    siglusLotService.removeExpiredLots(new ArrayList<>(), false);
+  }
+
+  @Test(expected = BusinessDataException.class)
+  public void shouldThrowExceptionWhenRemoveExpiredLotsGivenLotQuantityBiggerThanSoh() {
+    RemovedLotDto lot = buildRemovedLotDto(UUID.randomUUID(), UUID.randomUUID(), 10);
+    List<RemovedLotDto> lots = new ArrayList<>();
+    lots.add(lot);
+    List<StockCardStockDto> stockCardStockDtos = new ArrayList<>();
+    StockCardStockDto stockDto = StockCardStockDto.builder()
+        .stockOnHand(5)
+        .stockCardId(lot.getStockCardId())
+        .build();
+    stockCardStockDtos.add(stockDto);
+    when(siglusLotRepository.existsNotExpiredLotsByIds(anyList())).thenReturn(false);
+    when(siglusStockCardSummariesService.getLatestStockOnHandByIds(anyList(), anyBoolean()))
+        .thenReturn(stockCardStockDtos);
+
+    siglusLotService.removeExpiredLots(lots, false);
+  }
+
+  @Test(expected = BusinessDataException.class)
+  public void shouldThrowExceptionWhenRemoveExpiredLotsWhenCanNotGetExpiredDiscardReason() {
+    RemovedLotDto lot = buildRemovedLotDto(UUID.randomUUID(), UUID.randomUUID(), 10);
+    List<RemovedLotDto> lots = new ArrayList<>();
+    lots.add(lot);
+    List<StockCardStockDto> stockCardStockDtos = new ArrayList<>();
+    StockCardStockDto stockDto = StockCardStockDto.builder()
+        .stockOnHand(10)
+        .stockCardId(lot.getStockCardId())
+        .build();
+    stockCardStockDtos.add(stockDto);
+    when(siglusLotRepository.existsNotExpiredLotsByIds(anyList())).thenReturn(false);
+    when(siglusStockCardSummariesService.getLatestStockOnHandByIds(anyList(), anyBoolean()))
+        .thenReturn(stockCardStockDtos);
+    when(stockCardLineItemReasonRepository.findByName(anyString())).thenReturn(null);
+
+    siglusLotService.removeExpiredLots(lots, false);
+  }
+
+  @Test
+  public void shouldSendStockEventWhenRemoveExpiredLots() {
+    RemovedLotDto lot = buildRemovedLotDto(UUID.randomUUID(), UUID.randomUUID(), 10);
+    List<RemovedLotDto> lots = new ArrayList<>();
+    lots.add(lot);
+    List<StockCardStockDto> stockCardStockDtos = new ArrayList<>();
+    StockCardStockDto stockDto = StockCardStockDto.builder()
+        .stockOnHand(10)
+        .stockCardId(lot.getStockCardId())
+        .build();
+    stockCardStockDtos.add(stockDto);
+    when(siglusLotRepository.existsNotExpiredLotsByIds(anyList())).thenReturn(false);
+    when(siglusStockCardSummariesService.getLatestStockOnHandByIds(anyList(), anyBoolean()))
+        .thenReturn(stockCardStockDtos);
+    StockCardLineItemReason reason = new StockCardLineItemReason();
+    reason.setId(UUID.randomUUID());
+    when(stockCardLineItemReasonRepository.findByName(anyString())).thenReturn(reason);
+    doNothing().when(siglusStockEventsService).processStockEvent(any(), anyBoolean());
+
+    siglusLotService.removeExpiredLots(lots, false);
+
+    verify(siglusStockEventsService, Mockito.times(1)).processStockEvent(any(), anyBoolean());
+  }
+
   private OrderableDto createOrderable(UUID orderableId, UUID tradeItemId) {
     OrderableDto orderableDto = new OrderableDto();
     orderableDto.setId(orderableId);
@@ -218,4 +334,14 @@ public class SiglusLotServiceTest {
     return orderableDto;
   }
 
+  private RemovedLotDto buildRemovedLotDto(UUID facilityId, UUID programId, int quantity) {
+    return RemovedLotDto.builder()
+        .stockCardId(UUID.randomUUID())
+        .facilityId(facilityId)
+        .programId(programId)
+        .orderableId(UUID.randomUUID())
+        .lotId(UUID.randomUUID())
+        .quantity(quantity)
+        .build();
+  }
 }

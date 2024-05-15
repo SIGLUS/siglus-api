@@ -15,18 +15,22 @@
 
 package org.siglus.siglusapi.web;
 
-import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_UUID;
 import static org.springframework.http.HttpStatus.NO_CONTENT;
 
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.openlmis.stockmanagement.dto.PhysicalInventoryDto;
 import org.siglus.siglusapi.dto.DraftListDto;
 import org.siglus.siglusapi.dto.PhysicalInventoryValidationDto;
+import org.siglus.siglusapi.dto.SiglusPhysicalInventoryHistoryDto;
+import org.siglus.siglusapi.repository.dto.SiglusPhysicalInventoryBriefDto;
+import org.siglus.siglusapi.service.SiglusPhysicalInventoryHistoryService;
 import org.siglus.siglusapi.service.SiglusPhysicalInventoryService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -47,16 +51,16 @@ public class SiglusPhysicalInventoryController {
 
   private final SiglusPhysicalInventoryService siglusPhysicalInventoryService;
   private final SiglusAuthenticationHelper authenticationHelper;
+  private final SiglusPhysicalInventoryHistoryService siglusPhysicalInventoryHistoryService;
 
   @GetMapping
   public List<PhysicalInventoryDto> searchPhysicalInventories(
       @RequestParam UUID program, @RequestParam UUID facility,
       @RequestParam(required = false) Boolean isDraft) {
-    if (ALL_PRODUCTS_PROGRAM_ID.equals(program)) {
-      return siglusPhysicalInventoryService.getPhysicalInventoryDtosForAllPrograms(facility, isDraft, false);
-    }
-    return siglusPhysicalInventoryService.getPhysicalInventoryDtosForProductsForOneProgram(program, facility, isDraft,
-        false);
+    return siglusPhysicalInventoryService.getPhysicalInventoryBriefDtos(facility, program, isDraft)
+        .stream()
+        .map(SiglusPhysicalInventoryBriefDto::toSiglusPhysicalInventoryDto)
+        .collect(Collectors.toList());
   }
 
   @GetMapping("/{id}")
@@ -103,11 +107,11 @@ public class SiglusPhysicalInventoryController {
 
   @GetMapping("/conflict")
   public PhysicalInventoryValidationDto checkPhysicalInventoryConflict(@RequestParam UUID program,
-      @RequestParam UUID facility) {
+      @RequestParam UUID facility, @RequestParam(required = false) UUID draft) {
     if (ALL_PRODUCTS_UUID.equals(program)) {
-      return siglusPhysicalInventoryService.checkConflictForAllPrograms(facility);
+      return siglusPhysicalInventoryService.checkConflictForAllPrograms(facility, draft);
     }
-    return siglusPhysicalInventoryService.checkConflictForOneProgram(facility);
+    return siglusPhysicalInventoryService.checkConflictForOneProgram(facility, program, draft);
   }
 
   @GetMapping("/draftList")
@@ -118,5 +122,15 @@ public class SiglusPhysicalInventoryController {
       return siglusPhysicalInventoryService.getSubDraftListForAllPrograms(facility, isDraft);
     }
     return siglusPhysicalInventoryService.getSubDraftListForOneProgram(program, facility, isDraft);
+  }
+
+  @GetMapping("/histories")
+  public List<SiglusPhysicalInventoryHistoryDto> searchPhysicalInventoryHistories() {
+    return siglusPhysicalInventoryHistoryService.searchPhysicalInventoryHistories();
+  }
+
+  @GetMapping("/histories/{id}")
+  public String searchPhysicalInventoryHistoryData(@PathVariable("id") UUID id) {
+    return siglusPhysicalInventoryHistoryService.searchPhysicalInventoryHistoryData(id);
   }
 }

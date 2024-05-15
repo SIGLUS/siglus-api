@@ -31,6 +31,7 @@ import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_SUB_D
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_SUB_DRAFT_EMPTY;
 
 import com.google.common.collect.Maps;
+import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -39,7 +40,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
@@ -58,6 +58,7 @@ import org.openlmis.stockmanagement.repository.StockCardRepository;
 import org.openlmis.stockmanagement.repository.StockEventsRepository;
 import org.openlmis.stockmanagement.service.StockEventProcessor;
 import org.siglus.siglusapi.domain.FacilityLocations;
+import org.siglus.siglusapi.domain.PhysicalInventoryHistory;
 import org.siglus.siglusapi.domain.StockCardExtension;
 import org.siglus.siglusapi.domain.StockCardLineItemExtension;
 import org.siglus.siglusapi.domain.StockEventProductRequested;
@@ -70,41 +71,63 @@ import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.CalculatedStockOnHandByLocationRepository;
 import org.siglus.siglusapi.repository.FacilityLocationsRepository;
+import org.siglus.siglusapi.repository.PhysicalInventoryHistoryRepository;
 import org.siglus.siglusapi.repository.StockCardExtensionRepository;
 import org.siglus.siglusapi.repository.StockCardLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.StockEventProductRequestedRepository;
 import org.siglus.siglusapi.repository.StockManagementDraftRepository;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.validator.ActiveDraftValidator;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Slf4j
-@RequiredArgsConstructor
 @SuppressWarnings({"PMD.TooManyMethods"})
 public class SiglusStockEventsService {
 
-  private final SiglusPhysicalInventoryService siglusPhysicalInventoryService;
-  private final SiglusStockManagementDraftService stockManagementDraftService;
-  private final StockCardRepository stockCardRepository;
-  private final StockCardExtensionRepository stockCardExtensionRepository;
-  private final StockCardLineItemRepository stockCardLineItemRepository;
-  private final StockEventsRepository stockEventsRepository;
-  private final StockEventProcessor stockEventProcessor;
-  private final SiglusArchiveProductService archiveProductService;
-  private final SiglusAuthenticationHelper authenticationHelper;
-  private final StockManagementDraftRepository stockManagementDraftRepository;
-  private final ActiveDraftValidator draftValidator;
-  private final StockCardLineItemExtensionRepository stockCardLineItemExtensionRepository;
-  private final SiglusLotService siglusLotService;
-  private final FacilityLocationsRepository facilityLocationsRepository;
-  private final StockCardLineItemReasonRepository stockCardLineItemReasonRepository;
-  private final CalculatedStockOnHandByLocationRepository calculatedStockOnHandByLocationRepository;
-  private final CalculatedStocksOnHandByLocationService calculatedStocksOnHandByLocationService;
-  private final SiglusProgramService siglusProgramService;
-  private final StockEventProductRequestedRepository stockEventProductRequestedRepository;
+  @Autowired
+  private SiglusPhysicalInventoryService siglusPhysicalInventoryService;
+  @Autowired
+  private SiglusStockManagementDraftService stockManagementDraftService;
+  @Autowired
+  private StockCardRepository stockCardRepository;
+  @Autowired
+  private StockCardExtensionRepository stockCardExtensionRepository;
+  @Autowired
+  private StockCardLineItemRepository stockCardLineItemRepository;
+  @Autowired
+  private StockEventsRepository stockEventsRepository;
+  @Autowired
+  private StockEventProcessor stockEventProcessor;
+  @Autowired
+  private SiglusArchiveProductService archiveProductService;
+  @Autowired
+  private SiglusAuthenticationHelper authenticationHelper;
+  @Autowired
+  private StockManagementDraftRepository stockManagementDraftRepository;
+  @Autowired
+  private ActiveDraftValidator draftValidator;
+  @Autowired
+  private StockCardLineItemExtensionRepository stockCardLineItemExtensionRepository;
+  @Autowired
+  private SiglusLotService siglusLotService;
+  @Autowired
+  private FacilityLocationsRepository facilityLocationsRepository;
+  @Autowired
+  private StockCardLineItemReasonRepository stockCardLineItemReasonRepository;
+  @Autowired
+  private CalculatedStockOnHandByLocationRepository calculatedStockOnHandByLocationRepository;
+  @Autowired
+  private CalculatedStocksOnHandByLocationService calculatedStocksOnHandByLocationService;
+  @Autowired
+  private SiglusProgramService siglusProgramService;
+  @Autowired
+  private StockEventProductRequestedRepository stockEventProductRequestedRepository;
+  @Autowired
+  private PhysicalInventoryHistoryRepository physicalInventoryHistoryRepository;
   @Value("${stockmanagement.kit.unpack.destination.nodeId}")
   private UUID unpackKitDestinationNodeId;
   private UUID viaProgramId;
@@ -135,11 +158,24 @@ public class SiglusStockEventsService {
       validateAdjustmentLocationAndQuantity(eventDto);
     }
     createStockEvent(eventDto, stockEventDtoByPrograms, isByLocation);
+    if (eventDto.isPhysicalInventory()) {
+      savePhysicalInventoryHistory(eventDto);
+    }
     deleteDraft(eventDto);
 
     if (isByLocation) {
       calculatedStocksOnHandByLocationService.calculateStockOnHandByLocation(eventDto);
     }
+  }
+
+  private void savePhysicalInventoryHistory(StockEventDto eventDto) {
+    PhysicalInventoryHistory history = PhysicalInventoryHistory.builder()
+        .facilityId(eventDto.getFacilityId())
+        .programId(eventDto.getProgramId())
+        .completedDate(LocalDate.now())
+        .historyData(eventDto.getHistoryData())
+        .build();
+    physicalInventoryHistoryRepository.save(history);
   }
 
   private Set<UUID> getProgramIds(StockEventDto eventDto) {

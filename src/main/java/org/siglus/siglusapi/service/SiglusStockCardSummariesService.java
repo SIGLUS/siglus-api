@@ -20,11 +20,8 @@ import static com.google.common.collect.Sets.newHashSet;
 import static org.openlmis.stockmanagement.service.PermissionService.STOCK_CARDS_VIEW;
 import static org.openlmis.stockmanagement.service.PermissionService.STOCK_INVENTORIES_EDIT;
 import static org.siglus.siglusapi.constant.FieldConstants.FACILITY_ID;
-import static org.siglus.siglusapi.constant.FieldConstants.PROGRAM_ID;
 import static org.siglus.siglusapi.constant.FieldConstants.PROVINCE;
 import static org.siglus.siglusapi.constant.FieldConstants.RIGHT_NAME;
-import static org.siglus.siglusapi.constant.PaginationConstants.DEFAULT_PAGE_NUMBER;
-import static org.siglus.siglusapi.constant.PaginationConstants.NO_PAGINATION;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
 import static org.siglus.siglusapi.constant.ProgramConstants.MMC_PROGRAM_CODE;
 import static org.siglus.siglusapi.constant.ProgramConstants.VIA_PROGRAM_CODE;
@@ -32,9 +29,13 @@ import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_PERMISSION_NOT_SUPPORT
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_ID_NOT_FOUND;
 import static org.siglus.siglusapi.i18n.PermissionMessageKeys.ERROR_NO_FOLLOWING_PERMISSION;
 
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -45,21 +46,19 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import lombok.RequiredArgsConstructor;
+
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
-import org.openlmis.referencedata.domain.Orderable;
 import org.openlmis.referencedata.dto.OrderableDto;
-import org.openlmis.referencedata.repository.OrderableRepository;
-import org.openlmis.referencedata.service.LotSearchParams;
-import org.openlmis.referencedata.web.LotController;
 import org.openlmis.requisition.service.PermissionService;
 import org.openlmis.requisition.service.RequisitionService;
 import org.openlmis.requisition.service.referencedata.PermissionStringDto;
 import org.openlmis.requisition.utils.Pagination;
+import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.dto.ObjectReferenceDto;
 import org.openlmis.stockmanagement.exception.PermissionMessageException;
 import org.openlmis.stockmanagement.exception.ResourceNotFoundException;
+import org.openlmis.stockmanagement.repository.StockCardRepository;
 import org.openlmis.stockmanagement.service.StockCardSummaries;
 import org.openlmis.stockmanagement.service.StockCardSummariesService;
 import org.openlmis.stockmanagement.service.StockCardSummariesV2SearchParams;
@@ -68,6 +67,7 @@ import org.openlmis.stockmanagement.web.stockcardsummariesv2.CanFulfillForMeEntr
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummariesV2DtoBuilder;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2Dto;
 import org.siglus.common.repository.ProgramOrderableRepository;
+import org.siglus.siglusapi.domain.CalculatedStockOnHandByLocation;
 import org.siglus.siglusapi.domain.PhysicalInventoryLineItemsExtension;
 import org.siglus.siglusapi.domain.PhysicalInventorySubDraft;
 import org.siglus.siglusapi.domain.StockManagementDraft;
@@ -82,12 +82,16 @@ import org.siglus.siglusapi.dto.StockCardSummaryWithLocationDto;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.repository.CalculatedStockOnHandByLocationRepository;
+import org.siglus.siglusapi.repository.CalculatedStockOnHandRepository;
 import org.siglus.siglusapi.repository.PhysicalInventoryLineItemsExtensionRepository;
 import org.siglus.siglusapi.repository.PhysicalInventorySubDraftRepository;
 import org.siglus.siglusapi.repository.StockManagementDraftRepository;
+import org.siglus.siglusapi.repository.dto.StockCardReservedDto;
+import org.siglus.siglusapi.repository.dto.StockCardStockDto;
 import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
 import org.siglus.siglusapi.util.FormatHelper;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -99,45 +103,69 @@ import org.springframework.util.ObjectUtils;
 @Service
 @Slf4j
 @SuppressWarnings({"PMD"})
-@RequiredArgsConstructor
 public class SiglusStockCardSummariesService {
 
   private static final String PROGRAM_ID = "programId";
   private static final String EXCLUDE_ARCHIVED = "excludeArchived";
   private static final String ARCHIVED_ONLY = "archivedOnly";
   private static final String NON_EMPTY_ONLY = "nonEmptyOnly";
-  private final SiglusAuthenticationHelper authenticationHelper;
-  private final PermissionService permissionService;
-  private final SiglusArchiveProductService archiveProductService;
-  private final StockCardSummariesService stockCardSummariesService;
-  private final StockCardSummariesV2DtoBuilder stockCardSummariesV2DtoBuilder;
-  private final ProgramOrderableRepository programOrderableRepository;
-  private final PhysicalInventorySubDraftRepository physicalInventorySubDraftRepository;
-  private final PhysicalInventoryLineItemsExtensionRepository lineItemsExtensionRepository;
-  private final StockManagementDraftRepository stockManagementDraftRepository;
-  private final SiglusLotReferenceDataService siglusLotReferenceDataService;
-  private final SiglusOrderableService siglusOrderableService;
-  private final OrderableRepository orderableRepository;
-  private final LotController lotController;
-  private final CalculatedStockOnHandByLocationRepository calculatedStockOnHandByLocationRepository;
-  private final SiglusProgramService siglusProgramService;
-  private final RequisitionService requisitionService;
+  @Autowired
+  private SiglusAuthenticationHelper authenticationHelper;
+  @Autowired
+  private PermissionService permissionService;
+  @Autowired
+  private SiglusArchiveProductService archiveProductService;
+  @Autowired
+  private StockCardSummariesService stockCardSummariesService;
+  @Autowired
+  private StockCardSummariesV2DtoBuilder stockCardSummariesV2DtoBuilder;
+  @Autowired
+  private ProgramOrderableRepository programOrderableRepository;
+  @Autowired
+  private PhysicalInventorySubDraftRepository physicalInventorySubDraftRepository;
+  @Autowired
+  private PhysicalInventoryLineItemsExtensionRepository lineItemsExtensionRepository;
+  @Autowired
+  private StockManagementDraftRepository stockManagementDraftRepository;
+  @Autowired
+  private SiglusLotReferenceDataService siglusLotReferenceDataService;
+  @Autowired
+  private SiglusOrderableService siglusOrderableService;
+  @Autowired
+  private CalculatedStockOnHandByLocationRepository calculatedStockOnHandByLocationRepository;
+  @Autowired
+  private CalculatedStockOnHandRepository calculatedStockOnHandRepository;
+  @Autowired
+  private SiglusProgramService siglusProgramService;
+  @Autowired
+  private RequisitionService requisitionService;
+  @Autowired
+  private SiglusShipmentDraftService siglusShipmentDraftService;
+  @Autowired
+  private StockCardRepository stockCardRepository;
+  @Autowired
+  private SiglusLotService siglusLotService;
 
   public List<org.openlmis.referencedata.dto.LotDto> getLotsDataByOrderableIds(List<UUID> orderableIds) {
     if (CollectionUtils.isEmpty(orderableIds)) {
       return Collections.emptyList();
     }
-    Page<Orderable> orderablePage = orderableRepository.findAllLatestByIds(orderableIds,
-        new PageRequest(DEFAULT_PAGE_NUMBER, NO_PAGINATION));
-    Set<UUID> tradeItemIds = orderablePage.getContent()
-        .stream()
-        .map(Orderable::getTradeItemIdentifier)
-        .map(UUID::fromString)
-        .collect(Collectors.toSet());
-    LotSearchParams requestParams = new LotSearchParams(null, new ArrayList<>(tradeItemIds), null, null);
-
-    List<org.openlmis.referencedata.dto.LotDto> lotDtos = lotController.getLots(requestParams, null).getContent();
-    return lotDtos.stream().filter(org.openlmis.referencedata.dto.LotDto::isActive).collect(Collectors.toList());
+    UserDto currentUser = authenticationHelper.getCurrentUser();
+    UUID facilityId = currentUser.getHomeFacilityId();
+    List<UUID> lotIds = stockCardRepository.findByOrderableIdInAndFacilityId(orderableIds, facilityId)
+        .stream().map(StockCard::getLotId)
+        .filter(lotId -> !ObjectUtils.isEmpty(lotId))
+        .collect(Collectors.toList());
+    return siglusLotService.getLotList(lotIds)
+        .stream().filter(LotDto::isActive)
+        .map(lot -> {
+          org.openlmis.referencedata.dto.LotDto dto =
+              new org.openlmis.referencedata.dto.LotDto(lot.getLotCode(), true,
+                  lot.getTradeItemId(), lot.getExpirationDate(), lot.getManufactureDate());
+          dto.setId(lot.getId());
+          return dto;
+        })
+        .collect(Collectors.toList());
   }
 
   public Page<StockCardSummaryV2Dto> findSiglusStockCard(
@@ -177,9 +205,9 @@ public class SiglusStockCardSummariesService {
         }
       }
     }
-    if (!withLocation && CollectionUtils.isNotEmpty(subDraftIds)) {
-      summaryV2Dtos = filterBySubDraftIds(summaryV2Dtos, subDraftIds);
-    }
+    //    if (CollectionUtils.isNotEmpty(subDraftIds)) {
+    //      summaryV2Dtos = filterBySubDraftIds(summaryV2Dtos, subDraftIds);
+    //    }
     return Pagination.getPage(summaryV2Dtos, pageable);
   }
 
@@ -376,13 +404,13 @@ public class SiglusStockCardSummariesService {
       List<UUID> subDraftIds, UUID draftId, Pageable pageable) {
 
     List<StockCardSummaryDto> stockCardSummaryDtos = getStockCardSummaryDtos(parameters,
-        subDraftIds, draftId, pageable);
+        subDraftIds, draftId, pageable, null);
 
     return getFulfillForMe(stockCardSummaryDtos);
   }
 
   public List<StockCardSummaryDto> getStockCardSummaryDtos(MultiValueMap<String, String> parameters,
-      List<UUID> subDraftIds, UUID draftId, Pageable pageable) {
+      List<UUID> subDraftIds, UUID draftId, Pageable pageable, UUID orderId) {
     List<StockCardSummaryV2Dto> stockCardSummaryV2Dtos = getStockCardSummaryV2Dtos(parameters, subDraftIds, draftId,
         pageable);
 
@@ -393,12 +421,14 @@ public class SiglusStockCardSummariesService {
     UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
     List<OrderableDto> orderableDtos = getOrderableDtos(pageable, orderableIds, facilityId);
     List<LotDto> lotDtos = getLotDtos(canFulfillForMeEntryDtos);
+    UUID shipmentDraftId = siglusShipmentDraftService.getDraftIdByOrderId(orderId);
+    Map<String, Integer> reservedMap = getStockCardReservedMap(facilityId, shipmentDraftId);
 
-    return combineResponse(stockCardSummaryV2Dtos, orderableDtos, lotDtos);
+    return combineResponse(stockCardSummaryV2Dtos, orderableDtos, lotDtos, reservedMap);
   }
 
   public List<StockCardSummaryWithLocationDto> getStockCardSummaryWithLocationDtos(
-      MultiValueMap<String, String> parameters, UUID draftId, Pageable pageable) {
+      MultiValueMap<String, String> parameters, UUID draftId, Pageable pageable, UUID orderId) {
     List<StockCardSummaryV2Dto> stockCardSummaryV2Dtos =
         getStockCardSummaryV2DtosWithLocation(parameters, new ArrayList<>(), draftId, pageable);
     List<UUID> orderableIds = new ArrayList<>();
@@ -413,7 +443,10 @@ public class SiglusStockCardSummariesService {
       lotIds.add(UUID.randomUUID());
     }
     List<LotLocationSohDto> locationSoh = calculatedStockOnHandByLocationRepository.getLocationSoh(lotIds, facilityId);
-    return combineResponse(stockCardSummaryV2Dtos, orderableDtos, lotDtos, locationSoh);
+
+    UUID shipmentDraftId = siglusShipmentDraftService.getDraftIdByOrderId(orderId);
+    Map<String, Integer> reservedMap = getStockCardReservedMap(facilityId, shipmentDraftId);
+    return combineResponse(stockCardSummaryV2Dtos, orderableDtos, lotDtos, locationSoh, reservedMap);
   }
 
   private List<LotDto> getLotDtos(List<CanFulfillForMeEntryDto> canFulfillForMeEntryDtos) {
@@ -504,7 +537,7 @@ public class SiglusStockCardSummariesService {
   }
 
   private List<StockCardSummaryDto> combineResponse(List<StockCardSummaryV2Dto> stockCardSummaryV2Dtos,
-      List<OrderableDto> orderableDtos, List<LotDto> lotDtos) {
+      List<OrderableDto> orderableDtos, List<LotDto> lotDtos, Map<String, Integer> reservedMap) {
     List<StockCardSummaryDto> stockCardSummaryDtos = new ArrayList<>();
 
     stockCardSummaryV2Dtos.forEach(stockCardSummaryV2Dto -> {
@@ -522,6 +555,7 @@ public class SiglusStockCardSummariesService {
             .stockOnHand(canFulfillForMeEntryDto.getStockOnHand())
             .processedDate(canFulfillForMeEntryDto.getProcessedDate())
             .stockCard(canFulfillForMeEntryDto.getStockCard())
+            .reservedStock(getReservedStockForFulfill(canFulfillForMeEntryDto, reservedMap))
             .build();
         stockCardDetailsDtos.add(fulfill);
       });
@@ -532,7 +566,8 @@ public class SiglusStockCardSummariesService {
   }
 
   private List<StockCardSummaryWithLocationDto> combineResponse(List<StockCardSummaryV2Dto> stockCardSummaryV2Dtos,
-      List<OrderableDto> orderableDtos, List<LotDto> lotDtos, List<LotLocationSohDto> lotLocationSohDtoList) {
+      List<OrderableDto> orderableDtos, List<LotDto> lotDtos, List<LotLocationSohDto> lotLocationSohDtoList,
+                                                                Map<String, Integer> reservedMap) {
     List<StockCardSummaryWithLocationDto> stockCardSummaryDtos = new ArrayList<>();
     Map<String, List<LotLocationSohDto>> lotLocationMaps = lotLocationSohDtoList.stream()
         .collect(Collectors.groupingBy(LotLocationSohDto::getIdentify));
@@ -559,6 +594,10 @@ public class SiglusStockCardSummariesService {
           if (ObjectUtils.isEmpty(fulfill.getLot())) {
             fulfill.setLotLocationSohDtoList(lotLocationMaps.get(fulfill.getOrderable().getId().toString()));
           }
+          if (!ObjectUtils.isEmpty(fulfill.getLotLocationSohDtoList())) {
+            fulfill.getLotLocationSohDtoList().forEach(
+                dto -> dto.setReservedStock(getReservedStockForFulfill(dto, reservedMap)));
+          }
           stockCardDetailsDtos.add(fulfill);
         }
       });
@@ -568,6 +607,19 @@ public class SiglusStockCardSummariesService {
     return stockCardSummaryDtos;
   }
 
+  private int getReservedStockForFulfill(CanFulfillForMeEntryDto dto, Map<String, Integer> reservedMap) {
+    if (dto == null || dto.getOrderable() == null || dto.getLot() == null) {
+      return 0;
+    }
+    String key = FormatHelper.buildStockCardUniqueKey(dto.getOrderable().getId(), dto.getLot().getId(), null, null);
+    return reservedMap.getOrDefault(key, 0);
+  }
+
+  private int getReservedStockForFulfill(LotLocationSohDto dto, Map<String, Integer> reservedMap) {
+    String key = FormatHelper.buildStockCardUniqueKey(
+            dto.getOrderableId(), dto.getLotId(), dto.getArea(), dto.getLocationCode());
+    return reservedMap.getOrDefault(key, 0);
+  }
 
   private OrderableDto getOrderableFromObjectReference(List<OrderableDto> orderableDtos,
       ObjectReferenceDto objectReferenceDto) {
@@ -605,5 +657,50 @@ public class SiglusStockCardSummariesService {
     stockCardSummaryDtos.forEach(stockCardSummaryDto ->
         stockCardDetailsDtos.addAll(stockCardSummaryDto.getStockCardDetails()));
     return stockCardDetailsDtos;
+  }
+
+  private Map<String, Integer> getStockCardReservedMap(
+          UUID facilityId, UUID shipmentDraftId) {
+    List<StockCardReservedDto> stockCardReservedDtos =
+            siglusShipmentDraftService.reservedCount(facilityId, shipmentDraftId, null);
+    Multimap<String, StockCardReservedDto> reservedMap = ArrayListMultimap.create();
+    stockCardReservedDtos.forEach(dto -> {
+      String uniqueKey = FormatHelper.buildStockCardUniqueKey(
+              dto.getOrderableId(), dto.getLotId(), dto.getArea(), dto.getLocationCode());
+      reservedMap.put(uniqueKey, dto);
+    });
+    Map<String, Integer> result = new HashMap<>();
+    reservedMap.asMap().forEach((key, values) -> {
+      result.put(key, values.stream().mapToInt(StockCardReservedDto::getReserved).sum());
+    });
+    return result;
+  }
+
+  public List<StockCardStockDto> getLatestStockOnHand(List<StockCard> stockCards, boolean hasLocation) {
+    if (stockCards.isEmpty()) {
+      return newArrayList();
+    }
+    Map<UUID, StockCard> stockCardMap = stockCards.stream()
+            .collect(Collectors.toMap(StockCard::getId, stockCard -> stockCard));
+    List<StockCardStockDto> sohs = getLatestStockOnHandByIds(stockCardMap.keySet(), hasLocation);
+    sohs.forEach(item -> {
+      StockCard stockCard = stockCardMap.get(item.getStockCardId());
+      item.setOrderableId(stockCard.getOrderableId());
+      item.setLotId(stockCard.getLotId());
+    });
+    return sohs;
+  }
+
+  public List<StockCardStockDto> getLatestStockOnHandByIds(Collection<UUID> stockCardIds, boolean hasLocation) {
+    List<StockCardStockDto> sohs;
+    if (hasLocation) {
+      sohs = calculatedStockOnHandByLocationRepository.findRecentlyLocationSohByStockCardIds(stockCardIds)
+              .stream()
+              .map(CalculatedStockOnHandByLocation::toStockCardStockDto)
+              .collect(Collectors.toList());
+    } else {
+      sohs = calculatedStockOnHandRepository.findRecentlySohByStockCardIds(stockCardIds);
+    }
+    return sohs;
   }
 }

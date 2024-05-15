@@ -423,7 +423,7 @@ public class FcCreateIssueVoucherService {
     ShipmentDraftDto draftDto = new ShipmentDraftDto();
     draftDto.setOrder(orderObjectReferenceDto);
     draftDto.setLineItems(shipmentLineItemDtos);
-    return shipmentDraftService.createShipmentDraft(draftDto);
+    return shipmentDraftService.createShipmentDraftWithoutCheck(draftDto);
   }
 
   private List<ShipmentLineItemDto> getShipmentDraftLineItems(

@@ -140,6 +140,10 @@ public class SiglusStockCardService {
     return aggregateStockCards;
   }
 
+  public List<StockCard> findStockCardByIds(List<UUID> stockCardIds) {
+    return stockCardRepository.findAll(stockCardIds);
+  }
+
   public List<StockCardLineItemDto> mergePhysicalInventoryLineItems(List<StockCardLineItemDto> lineItemDtos,
                                                                     Map<UUID, StockCardLineItem> lineItemsSource) {
     lineItemDtos.forEach(lineItem -> {

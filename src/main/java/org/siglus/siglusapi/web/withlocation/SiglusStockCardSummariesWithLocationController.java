@@ -27,6 +27,7 @@ import org.siglus.siglusapi.dto.StockCardSummaryWithLocationDto;
 import org.siglus.siglusapi.service.SiglusStockCardLocationMovementService;
 import org.siglus.siglusapi.service.SiglusStockCardService;
 import org.siglus.siglusapi.service.SiglusStockCardSummariesService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -42,11 +43,12 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/siglusapi/stockCardSummariesWithLocation")
 public class SiglusStockCardSummariesWithLocationController {
 
-  private final SiglusStockCardSummariesService siglusStockCardSummariesService;
-
-  private final SiglusStockCardService siglusStockCardService;
-
-  private final SiglusStockCardLocationMovementService siglusStockCardLocationMovementService;
+  @Autowired
+  private SiglusStockCardSummariesService siglusStockCardSummariesService;
+  @Autowired
+  private SiglusStockCardService siglusStockCardService;
+  @Autowired
+  private SiglusStockCardLocationMovementService siglusStockCardLocationMovementService;
 
   @GetMapping
   public Page<StockCardSummaryV2Dto> searchStockCardSummaries(
@@ -58,20 +60,13 @@ public class SiglusStockCardSummariesWithLocationController {
         .searchStockCardSummaryV2Dtos(parameters, subDraftIds, draftId, pageable, true);
   }
 
-  public SiglusStockCardSummariesWithLocationController(SiglusStockCardSummariesService siglusStockCardSummariesService,
-      SiglusStockCardService siglusStockCardService,
-      SiglusStockCardLocationMovementService siglusStockCardLocationMovementService) {
-    this.siglusStockCardSummariesService = siglusStockCardSummariesService;
-    this.siglusStockCardService = siglusStockCardService;
-    this.siglusStockCardLocationMovementService = siglusStockCardLocationMovementService;
-  }
-
   @GetMapping("/integration/summary")
   public List<StockCardSummaryWithLocationDto> getStockCardSummaryDtos(
       @RequestParam MultiValueMap<String, String> parameters,
       @RequestParam(required = false) UUID draftId,
+      @RequestParam(required = false) UUID orderId,
       @PageableDefault(size = Integer.MAX_VALUE) Pageable pageable) {
-    return siglusStockCardSummariesService.getStockCardSummaryWithLocationDtos(parameters, draftId, pageable);
+    return siglusStockCardSummariesService.getStockCardSummaryWithLocationDtos(parameters, draftId, pageable, orderId);
   }
 
   @GetMapping("/stockCard/{stockCardId}")

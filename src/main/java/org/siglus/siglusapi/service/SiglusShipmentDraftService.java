@@ -17,10 +17,13 @@ package org.siglus.siglusapi.service;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static java.util.stream.Collectors.toMap;
+import static org.siglus.siglusapi.i18n.MessageKeys.SHIPMENT_LINE_ITEMS_INVALID;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
+
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -28,49 +31,90 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import lombok.RequiredArgsConstructor;
+import javax.validation.ValidationException;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.openlmis.fulfillment.domain.Order;
 import org.openlmis.fulfillment.domain.OrderLineItem;
+import org.openlmis.fulfillment.domain.ShipmentDraft;
 import org.openlmis.fulfillment.domain.ShipmentLineItem.Importer;
 import org.openlmis.fulfillment.repository.OrderRepository;
+import org.openlmis.fulfillment.repository.ShipmentDraftRepository;
 import org.openlmis.fulfillment.web.shipment.LocationDto;
 import org.openlmis.fulfillment.web.shipment.ShipmentLineItemDto;
 import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftController;
 import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftDto;
 import org.openlmis.fulfillment.web.util.OrderLineItemDto;
+import org.openlmis.stockmanagement.domain.card.StockCard;
+import org.organicdesign.fp.tuple.Tuple3;
 import org.siglus.siglusapi.domain.OrderLineItemExtension;
 import org.siglus.siglusapi.domain.ShipmentDraftLineItemsExtension;
+import org.siglus.siglusapi.dto.Message;
+import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.OrderLineItemRepository;
 import org.siglus.siglusapi.repository.ShipmentDraftLineItemsExtensionRepository;
+import org.siglus.siglusapi.repository.ShipmentDraftLineItemsRepository;
+import org.siglus.siglusapi.repository.SiglusStockCardRepository;
+import org.siglus.siglusapi.repository.dto.StockCardReservedDto;
+import org.siglus.siglusapi.repository.dto.StockCardStockDto;
 import org.siglus.siglusapi.service.client.SiglusShipmentDraftFulfillmentService;
+import org.siglus.siglusapi.util.FacilityConfigHelper;
+import org.siglus.siglusapi.util.FormatHelper;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.ObjectUtils;
 
 @Service
 @Slf4j
-@RequiredArgsConstructor
+@AllArgsConstructor
+@NoArgsConstructor
 public class SiglusShipmentDraftService {
 
-  private final SiglusShipmentDraftFulfillmentService siglusShipmentDraftFulfillmentService;
-  private final ShipmentDraftController draftController;
-  private final OrderLineItemExtensionRepository lineItemExtensionRepository;
-  private final OrderLineItemRepository orderLineItemRepository;
-  private final OrderRepository orderRepository;
-  private final SiglusOrderService siglusOrderService;
-  private final ShipmentDraftLineItemsExtensionRepository shipmentDraftLineItemsExtensionRepository;
+  @Autowired
+  private SiglusShipmentDraftFulfillmentService siglusShipmentDraftFulfillmentService;
+  @Autowired
+  private ShipmentDraftController draftController;
+  @Autowired
+  private OrderLineItemExtensionRepository lineItemExtensionRepository;
+  @Autowired
+  private OrderLineItemRepository orderLineItemRepository;
+  @Autowired
+  private OrderRepository orderRepository;
+  @Autowired
+  private SiglusOrderService siglusOrderService;
+  @Autowired
+  private ShipmentDraftLineItemsExtensionRepository shipmentDraftLineItemsExtensionRepository;
+  @Autowired
+  private ShipmentDraftLineItemsRepository shipmentDraftLineItemsRepository;
+  @Autowired
+  private SiglusStockCardSummariesService siglusStockCardSummariesService;
+  @Autowired
+  private FacilityConfigHelper facilityConfigHelper;
+  @Autowired
+  private SiglusStockCardRepository siglusStockCardRepository;
+  @Autowired
+  private ShipmentDraftRepository shipmentDraftRepository;
 
   @Transactional
   public ShipmentDraftDto createShipmentDraft(ShipmentDraftDto draftDto) {
+    checkStockOnHandQuantity(null, draftDto);
+    return draftController.createShipmentDraft(draftDto);
+  }
+
+  @Transactional
+  public ShipmentDraftDto createShipmentDraftWithoutCheck(ShipmentDraftDto draftDto) {
     return draftController.createShipmentDraft(draftDto);
   }
 
   @Transactional
   public ShipmentDraftDto updateShipmentDraft(UUID id, ShipmentDraftDto draftDto) {
+    checkStockOnHandQuantity(id, draftDto);
     updateOrderLineItemsWithExtension(draftDto);
     return draftController.updateShipmentDraft(id, draftDto);
   }
@@ -88,6 +132,7 @@ public class SiglusShipmentDraftService {
 
   @Transactional
   public ShipmentDraftDto updateShipmentDraftByLocation(UUID shipmentDraftId, ShipmentDraftDto draftDto) {
+    checkStockOnHandQuantity(shipmentDraftId, draftDto);
     Multimap<String, ShipmentLineItemDto> uniqueKeyMap = ArrayListMultimap.create();
     draftDto.lineItems().forEach(shipmentLineItemDto -> {
       if (shipmentLineItemDto.getLotId() == null && shipmentLineItemDto.getId() != null) {
@@ -133,6 +178,105 @@ public class SiglusShipmentDraftService {
     Set<OrderLineItemExtension> addedLineItemExtensions = deleteAddedLineItemsInExtension(
         extensions);
     initialedExtension(extensions, addedLineItemExtensions);
+  }
+
+  public List<StockCardReservedDto> reservedCount(UUID facilityId,
+          UUID shipmentDraftId, List<ShipmentLineItemDto> lineItems) {
+    List<StockCardReservedDto> allReserved = queryReservedCount(facilityId, shipmentDraftId);
+    if (ObjectUtils.isEmpty(lineItems)) {
+      return allReserved;
+    }
+    Map<Tuple3<UUID, Integer, UUID>, Integer> reservedMap = allReserved
+            .stream()
+            .collect(Collectors.toMap(
+                item -> Tuple3.of(item.getOrderableId(), item.getOrderableVersionNumber(), item.getLotId()),
+                StockCardReservedDto::getReserved));
+    return lineItems.stream().map(item -> {
+      Tuple3<UUID, Integer, UUID> key = Tuple3.of(item.getOrderable().getId(),
+              item.getOrderable().getVersionNumber().intValue(), item.getLotId());
+      return StockCardReservedDto.builder()
+              .orderableId(key._1())
+              .orderableVersionNumber(key._2())
+              .lotId(key._3())
+              .reserved(reservedMap.getOrDefault(key, 0))
+              .build();
+    }).collect(Collectors.toList());
+  }
+
+  public void checkStockOnHandQuantity(UUID shipmentDraftId, ShipmentDraftDto draftDto) {
+    // check quantityShipped
+    if (draftDto.getLineItems().stream()
+        .anyMatch(item -> item.getQuantityShipped() != null && item.getQuantityShipped() < 0)) {
+      throw new ValidationException(SHIPMENT_LINE_ITEMS_INVALID);
+    }
+    UUID facilityId = draftDto.getOrder().getSupplyingFacility().getId();
+    Set<String> orderableLotIdPairs = draftDto.lineItems().stream()
+        .filter(item -> (item.getOrderable() != null) && (item.getLot() != null) && (item.getQuantityShipped() != null))
+        .map(item -> item.getOrderable().getId().toString() + item.getLot().getId().toString())
+        .collect(Collectors.toSet());
+    if (orderableLotIdPairs.isEmpty()) {
+      return;
+    }
+    List<StockCard> stockCards = siglusStockCardRepository.findByFacilityIdAndOrderableLotIdPairs(
+                    facilityId, orderableLotIdPairs);
+    boolean hasLocation = facilityConfigHelper.isLocationManagementEnabled(facilityId);
+    // get available soh
+    List<StockCardStockDto> sohDtos =
+            siglusStockCardSummariesService.getLatestStockOnHand(stockCards, hasLocation);
+    // get reserved soh
+    List<StockCardReservedDto> reservedDtos = queryReservedCount(facilityId, shipmentDraftId);
+    // check soh
+    if (canNotFulfillShipmentQuantity(sohDtos, reservedDtos, draftDto)) {
+      throw new ValidationMessageException(new Message(SHIPMENT_LINE_ITEMS_INVALID));
+    }
+  }
+
+  private List<StockCardReservedDto> queryReservedCount(UUID facilityId, UUID shipmentDraftId) {
+    List<StockCardReservedDto> reservedDtos;
+    if (shipmentDraftId == null) {
+      reservedDtos = shipmentDraftLineItemsRepository.reservedCount(facilityId);
+    } else {
+      reservedDtos = shipmentDraftLineItemsRepository.reservedCount(facilityId, shipmentDraftId);
+    }
+    return reservedDtos.stream().distinct().collect(Collectors.toList());
+  }
+
+  private boolean canNotFulfillShipmentQuantity(List<StockCardStockDto> sohDtos,
+                                                List<StockCardReservedDto> reservedDtos,
+                                                ShipmentDraftDto draftDto) {
+    Map<String, Integer> sohMap = sohDtos.stream().collect(Collectors.toMap(
+        dto -> FormatHelper.buildStockCardUniqueKey(
+                dto.getOrderableId(), dto.getLotId(), dto.getArea(), dto.getLocationCode()),
+        StockCardStockDto::getStockOnHand
+    ));
+    Map<String, Integer> reservedMap = reservedDtos
+        .stream().collect(Collectors.toMap(
+          dto -> FormatHelper.buildStockCardUniqueKey(
+                  dto.getOrderableId(), dto.getLotId(), dto.getArea(), dto.getLocationCode()),
+          StockCardReservedDto::getReserved
+        ));
+    return draftDto.lineItems().stream()
+        .filter(item -> (item.getOrderable() != null) && (item.getLot() != null) && (item.getQuantityShipped() != null))
+        .anyMatch(item -> {
+          String key = FormatHelper.buildStockCardUniqueKey(
+              item.getOrderable().getId(), item.getLot().getId(),
+              item.getLocation() == null ? null : item.getLocation().getArea(),
+              item.getLocation() == null ? null : item.getLocation().getLocationCode());
+          int soh = sohMap.getOrDefault(key, 0);
+          int reserved = reservedMap.getOrDefault(key, 0);
+          return soh - reserved < item.getQuantityShipped().intValue();
+        });
+  }
+
+  public UUID getDraftIdByOrderId(UUID orderId) {
+    if (orderId == null) {
+      return null;
+    }
+    Collection<ShipmentDraft> drafts = shipmentDraftRepository.findByOrder(new Order(orderId));
+    if (ObjectUtils.isEmpty(drafts)) {
+      return null;
+    }
+    return drafts.stream().findFirst().get().getId();
   }
 
   private Order getDraftOrder(UUID draftId) {
