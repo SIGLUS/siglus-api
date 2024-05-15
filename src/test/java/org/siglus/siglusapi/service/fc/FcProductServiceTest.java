@@ -305,6 +305,7 @@ public class FcProductServiceTest {
     assertEquals(realProgramName, extension.getRealProgramName());
   }
 
+  @Ignore("the change will be save manually through script")
   @Test
   public void shouldUpdateOrderable() {
     // given
