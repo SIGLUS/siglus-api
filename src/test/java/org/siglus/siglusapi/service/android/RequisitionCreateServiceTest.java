@@ -1093,6 +1093,14 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     groupDtoNewSection3.setName("newSection3");
     groupDtoNewSection3.setColumns(newSection3);
 
+    Map<String, PatientColumnDto> newSection9 = new HashMap<>();
+    newSection9.put(newColumn0, new PatientColumnDto());
+    newSection9.put(newColumn1, new PatientColumnDto());
+    newSection9.put(total, new PatientColumnDto());
+    PatientGroupDto groupDtoNewSection9 = new PatientGroupDto();
+    groupDtoNewSection9.setName("newSection9");
+    groupDtoNewSection9.setColumns(newSection9);
+
     Map<String, PatientColumnDto> newSection4 = new HashMap<>();
     newSection4.put(newColumn, new PatientColumnDto());
     newSection4.put(total, new PatientColumnDto());
@@ -1104,6 +1112,7 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     newSection5.put(newColumn, new PatientColumnDto());
     newSection5.put(newColumn0, new PatientColumnDto());
     newSection5.put(newColumn1, new PatientColumnDto());
+    newSection5.put(newColumn2, new PatientColumnDto());
     newSection5.put(total, new PatientColumnDto());
     PatientGroupDto groupDtoNewSection5 = new PatientGroupDto();
     groupDtoNewSection5.setName("newSection5");
@@ -1113,6 +1122,7 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     newSection6.put(newColumn, new PatientColumnDto());
     newSection6.put(newColumn0, new PatientColumnDto());
     newSection6.put(newColumn1, new PatientColumnDto());
+    newSection6.put(newColumn2, new PatientColumnDto());
     newSection6.put(total, new PatientColumnDto());
     PatientGroupDto groupDtoNewSection6 = new PatientGroupDto();
     groupDtoNewSection6.setName("newSection6");
@@ -1142,7 +1152,8 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     groupDtoNewSection8.setColumns(newSection8);
     return Arrays
         .asList(groupDtoNewSection0, groupDtoNewSection1, groupDtoNewSection2, groupDtoNewSection3, groupDtoNewSection4,
-            groupDtoNewSection5, groupDtoNewSection6, groupDtoNewSection7, groupDtoPatientType, groupDtoNewSection8);
+            groupDtoNewSection5, groupDtoNewSection6, groupDtoNewSection7, groupDtoPatientType, groupDtoNewSection8,
+            groupDtoNewSection9);
   }
 
   private RequisitionCreateRequest buildMlRequisitionCreateRequest() {

@@ -299,6 +299,7 @@ public class UsageSectionConstants {
     public static final String NEW_SECTION_6 = "newSection6";
     public static final String NEW_SECTION_7 = "newSection7";
     public static final String NEW_SECTION_8 = "newSection8";
+    public static final String NEW_SECTION_9 = "newSection9";
 
     // MMIA Patient data section: 7 tables, last 3 tables will be auto calculated
     public static final String TABLE_ARVT_KEY = "table_arvt_key"; // table 1: "patientType" section
@@ -307,6 +308,7 @@ public class UsageSectionConstants {
     public static final String TABLE_TOTAL_KEY = "table_total_key"; // table 4: "newSection8" section
     public static final String TABLE_DISPENSED_DS_KEY = "table_dispensed_ds_key"; // table 5: "newSection2" section
     public static final String TABLE_DISPENSED_DT_KEY = "table_dispensed_dt_key"; // table 6: "newSection3" section
+    public static final String TABLE_DISPENSED_DB_KEY = "table_dispensed_db_key"; // table 6: "newSection9" section
     public static final String TABLE_DISPENSED_DM_KEY = "table_dispensed_dm_key"; // table 7: "newSection4" section
 
     // MMIA Patient data section table 1: Tipo de doentes em TARV
@@ -345,11 +347,15 @@ public class UsageSectionConstants {
     public static final String DISPENSED_DT1 = "dispensed_dt1";
     public static final String DISPENSED_DT = "dispensed_dt";
 
+    public static final String DISPENSED_DB_COLUMN_LAST_MONTH = "dispensed_db1";
+    public static final String DISPENSED_DB_COLUMN_THIS_MONTH = "dispensed_db";
+
     // MMIA Patient data section table 7: Tipo de dispensa - Dispensa Mensal(DM)
     public static final String DISPENSED_DM = "dispensed_dm";
 
     public static final String CONTAIN_DS = "ds";
     public static final String CONTAIN_DT = "dt";
+    public static final String CONTAIN_DB = "db";
     public static final String CONTAIN_DM = "dm";
 
     public static final String KEY_REGIME_3LINES_1 = "key_regime_3lines_1";

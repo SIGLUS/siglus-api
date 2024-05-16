@@ -41,6 +41,7 @@ import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPa
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_SECTION_2;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_SECTION_3;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_SECTION_4;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_SECTION_9;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.TOTAL_COLUMN;
 import static org.siglus.siglusapi.util.RequisitionUtil.getRequisitionExtraData;
 
@@ -193,7 +194,7 @@ import org.springframework.util.MultiValueMap;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-@SuppressWarnings("PMD.TooManyMethods")
+@SuppressWarnings({"PMD.TooManyMethods", "PMD.AvoidDuplicateLiterals"})
 public class SiglusRequisitionService {
 
   private final RequisitionV2Controller requisitionV2Controller;
@@ -1590,30 +1591,35 @@ public class SiglusRequisitionService {
 
   double getCorrectionFactorForMmia(List<PatientGroupDto> patientGroupDtos) {
     PatientGroupDto dsGroup = patientGroupDtos.stream()
-            .filter(p -> NEW_SECTION_2.equals(p.getName())).findFirst()
-            .orElseThrow(() -> new NotFoundException(NEW_SECTION_2 + " not found"));
+        .filter(p -> NEW_SECTION_2.equals(p.getName())).findFirst()
+        .orElseThrow(() -> new NotFoundException(NEW_SECTION_2 + " not found"));
     PatientGroupDto dtGroup = patientGroupDtos.stream()
-            .filter(p -> NEW_SECTION_3.equals(p.getName())).findFirst()
-            .orElseThrow(() -> new NotFoundException(NEW_SECTION_3 + " not found"));
+        .filter(p -> NEW_SECTION_3.equals(p.getName())).findFirst()
+        .orElseThrow(() -> new NotFoundException(NEW_SECTION_3 + " not found"));
+    PatientGroupDto dbGroup = patientGroupDtos.stream()
+        .filter(p -> NEW_SECTION_9.equals(p.getName())).findFirst()
+        .orElseThrow(() -> new NotFoundException(NEW_SECTION_4 + " not found"));
     PatientGroupDto dmGroup = patientGroupDtos.stream()
-            .filter(p -> NEW_SECTION_4.equals(p.getName())).findFirst()
-            .orElseThrow(() -> new NotFoundException(NEW_SECTION_4 + " not found"));
+        .filter(p -> NEW_SECTION_4.equals(p.getName())).findFirst()
+        .orElseThrow(() -> new NotFoundException(NEW_SECTION_4 + " not found"));
 
     Integer dsTotal = dsGroup.getColumns().get(TOTAL_COLUMN).getValue();
     Integer dtTotal = dtGroup.getColumns().get(TOTAL_COLUMN).getValue();
+    Integer dbTotal = dbGroup.getColumns().get(TOTAL_COLUMN).getValue();
     Integer dmTotal = dmGroup.getColumns().get(TOTAL_COLUMN).getValue();
-    if (dsTotal == null || dtTotal == null || dmTotal == null) {
+    if (dsTotal == null || dtTotal == null || dmTotal == null || dbTotal == null) {
       return 1;
     }
-    int totalPatients = dsTotal + dtTotal + dmTotal;
+    int totalPatients = dsTotal + dtTotal + dbTotal + dmTotal;
 
     Integer dsColumn3 = dsGroup.getColumns().get(NEW_COLUMN_3).getValue();
     Integer dtColumn1 = dtGroup.getColumns().get(NEW_COLUMN_1).getValue();
+    Integer dbThisMonth = dbGroup.getColumns().get(NEW_COLUMN_1).getValue();
     Integer dmColumn = dmGroup.getColumns().get(NEW_COLUMN).getValue();
     if (dsColumn3 == null || dtColumn1 == null || dmColumn == null) {
       return 1;
     }
-    int totalPatientsInThisMonth = dsColumn3 + dtColumn1 + dmColumn;
+    int totalPatientsInThisMonth = dsColumn3 + dtColumn1 + dbThisMonth + dmColumn;
 
     if (totalPatients == 0 || totalPatientsInThisMonth == 0) {
       return 1;

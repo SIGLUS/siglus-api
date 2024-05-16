@@ -51,11 +51,13 @@ import static org.openlmis.requisition.service.PermissionService.REQUISITION_AUT
 import static org.openlmis.requisition.service.PermissionService.REQUISITION_CREATE;
 import static org.siglus.siglusapi.constant.ProgramConstants.VIA_PROGRAM_CODE;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_COLUMN;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_COLUMN_0;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_COLUMN_1;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_COLUMN_3;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_SECTION_2;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_SECTION_3;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_SECTION_4;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_SECTION_9;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.TOTAL_COLUMN;
 
 import com.google.common.collect.ImmutableMap;
@@ -1970,7 +1972,7 @@ public class SiglusRequisitionServiceTest {
     // when
     double correctionFactorForMmia = siglusRequisitionService.getCorrectionFactorForMmia(patientGroupDtos);
     // then
-    assertEquals(1.69, correctionFactorForMmia, 0.01);
+    assertEquals(1.61, correctionFactorForMmia, 0.01);
   }
 
   @Test
@@ -2113,6 +2115,16 @@ public class SiglusRequisitionServiceTest {
     dtColumns.put(NEW_COLUMN_1, dt1Column);
     PatientGroupDto dtGroup = new PatientGroupDto(NEW_SECTION_3, dtColumns);
     groupDtoList.add(dtGroup);
+
+    Map<String, PatientColumnDto> dbColumns = new HashMap<>();
+    PatientColumnDto dbTotalColumn = new PatientColumnDto(null, TOTAL_COLUMN, 300);
+    dbColumns.put(TOTAL_COLUMN, dbTotalColumn);
+    PatientColumnDto dbThisMonthColumn = new PatientColumnDto(null, NEW_COLUMN_1, 100);
+    dbColumns.put(NEW_COLUMN_1, dbThisMonthColumn);
+    PatientColumnDto dbLastMonthColumn = new PatientColumnDto(null, NEW_COLUMN_0, 200);
+    dbColumns.put(NEW_COLUMN_1, dbLastMonthColumn);
+    PatientGroupDto dbGroup = new PatientGroupDto(NEW_SECTION_9, dbColumns);
+    groupDtoList.add(dbGroup);
 
     Map<String, PatientColumnDto> dmColumns = new HashMap<>();
     PatientColumnDto dmTotalColumn = new PatientColumnDto(null, TOTAL_COLUMN, 208);

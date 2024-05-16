@@ -99,6 +99,19 @@ public enum MmiaPatientTableColumnKeyValue {
       return MmiaPatientTable7.findValueByKey(key);
     }
   },
+
+  NEWSECTION9() {
+    @Override
+    public String findKeyByValue(String columnName) {
+      return MmiaPatientDispensedDbTable.findKeyByValue(columnName);
+    }
+
+    @Override
+    public String findValueByKey(String key) {
+      return MmiaPatientDispensedDbTable.findValueByKey(key);
+    }
+  },
+
   TABLE_ARVT_KEY() {
     @Override
     public String findKeyByValue(String columnName) {
@@ -163,6 +176,17 @@ public enum MmiaPatientTableColumnKeyValue {
     @Override
     public String findValueByKey(String key) {
       return MmiaPatientTable6.findValueByKey(key);
+    }
+  },
+  TABLE_DISPENSED_DB_KEY() {
+    @Override
+    public String findKeyByValue(String columnName) {
+      return MmiaPatientDispensedDbTable.findKeyByValue(columnName);
+    }
+
+    @Override
+    public String findValueByKey(String key) {
+      return MmiaPatientDispensedDbTable.findValueByKey(key);
     }
   },
   TABLE_DISPENSED_DM_KEY() {

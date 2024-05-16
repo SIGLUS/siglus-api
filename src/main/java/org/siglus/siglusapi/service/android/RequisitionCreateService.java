@@ -42,12 +42,14 @@ import static org.siglus.siglusapi.constant.android.UsageSectionConstants.KitUsa
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.KitUsageLineItems.COLLECTION_KIT_RECEIVED;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.KitUsageLineItems.SERVICE_CHW;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.KitUsageLineItems.SERVICE_HF;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.CONTAIN_DB;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.CONTAIN_DM;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.CONTAIN_DS;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.CONTAIN_DT;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_COLUMN;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_COLUMN_0;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_COLUMN_1;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_COLUMN_2;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_COLUMN_4;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_SECTION_2;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_SECTION_3;
@@ -55,6 +57,8 @@ import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPa
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_SECTION_5;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_SECTION_6;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_SECTION_7;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_SECTION_9;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.TABLE_DISPENSED_DB_KEY;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.TABLE_DISPENSED_DM_KEY;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.TABLE_DISPENSED_DS_KEY;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.TABLE_DISPENSED_DT_KEY;
@@ -193,7 +197,7 @@ import org.springframework.validation.annotation.Validated;
 @RequiredArgsConstructor
 @Slf4j
 @Validated
-@SuppressWarnings("PMD.TooManyMethods")
+@SuppressWarnings({"PMD.TooManyMethods", "PMD.CyclomaticComplexity"})
 public class RequisitionCreateService {
 
   private final SiglusAuthenticationHelper authHelper;
@@ -628,18 +632,22 @@ public class RequisitionCreateService {
     if (dispensed != null) {
       List<PatientLineItemColumnRequest> dsList = new ArrayList<>();
       List<PatientLineItemColumnRequest> dtList = new ArrayList<>();
+      List<PatientLineItemColumnRequest> dbList = new ArrayList<>();
       List<PatientLineItemColumnRequest> dmList = new ArrayList<>();
       dispensed.getColumns().forEach(v -> {
         if (v.getName().contains(CONTAIN_DS)) {
           dsList.add(v);
         } else if (v.getName().contains(CONTAIN_DT)) {
           dtList.add(v);
+        } else if (v.getName().contains(CONTAIN_DB)) {
+          dbList.add(v);
         } else if (v.getName().contains(CONTAIN_DM)) {
           dmList.add(v);
         }
       });
       patientLineItemsRequests.add(new PatientLineItemsRequest(TABLE_DISPENSED_DS_KEY, dsList));
       patientLineItemsRequests.add(new PatientLineItemsRequest(TABLE_DISPENSED_DT_KEY, dtList));
+      patientLineItemsRequests.add(new PatientLineItemsRequest(TABLE_DISPENSED_DB_KEY, dbList));
       patientLineItemsRequests.add(new PatientLineItemsRequest(TABLE_DISPENSED_DM_KEY, dmList));
       patientLineItemsRequests.remove(dispensed);
     }
@@ -669,6 +677,8 @@ public class RequisitionCreateService {
         NEW_SECTION_3);
     calculatePatientDispensedTotalBySection(patientNameToPatientGroupDto.get(NEW_SECTION_4), patientGroupDtoSection5,
         NEW_SECTION_4);
+    calculatePatientDispensedTotalBySection(patientNameToPatientGroupDto.get(NEW_SECTION_9), patientGroupDtoSection5,
+        NEW_SECTION_9);
 
     PatientGroupDto patientGroupDtoSection6 = patientNameToPatientGroupDto.get(NEW_SECTION_6);
     Integer section2TotalValue = patientNameToPatientGroupDto.get(NEW_SECTION_2).getColumns().get(TOTAL_COLUMN)
@@ -677,12 +687,15 @@ public class RequisitionCreateService {
         .getValue();
     Integer section4TotalValue = patientNameToPatientGroupDto.get(NEW_SECTION_4).getColumns().get(TOTAL_COLUMN)
         .getValue();
+    Integer sectionDbTotalValue = patientNameToPatientGroupDto.get(NEW_SECTION_9).getColumns().get(TOTAL_COLUMN)
+        .getValue();
 
     patientGroupDtoSection6.getColumns().get(NEW_COLUMN).setValue(section2TotalValue);
     patientGroupDtoSection6.getColumns().get(NEW_COLUMN_0).setValue(section3TotalValue);
     patientGroupDtoSection6.getColumns().get(NEW_COLUMN_1).setValue(section4TotalValue);
+    patientGroupDtoSection6.getColumns().get(NEW_COLUMN_2).setValue(sectionDbTotalValue);
     patientGroupDtoSection6.getColumns().get(TOTAL_COLUMN)
-        .setValue(section2TotalValue + section3TotalValue + section4TotalValue);
+        .setValue(section2TotalValue + section3TotalValue + section4TotalValue + sectionDbTotalValue);
 
     PatientGroupDto patientGroupDtoSection7 = patientNameToPatientGroupDto.get(NEW_SECTION_7);
     if (patientGroupDtoSection5.getColumns().get(TOTAL_COLUMN).getValue() == 0) {
@@ -716,6 +729,9 @@ public class RequisitionCreateService {
         section5TotalDto.setValue(section5TotalDto.getValue() + updateValue);
       } else if (NEW_SECTION_4.equals(sectionKey) && NEW_COLUMN.equals(k)) {
         patientGroupDtoSection5.getColumns().get(NEW_COLUMN_1).setValue(updateValue);
+        section5TotalDto.setValue(section5TotalDto.getValue() + updateValue);
+      } else if (NEW_SECTION_9.equals(sectionKey) && NEW_COLUMN_1.equals(k)) {
+        patientGroupDtoSection5.getColumns().get(NEW_COLUMN_2).setValue(updateValue);
         section5TotalDto.setValue(section5TotalDto.getValue() + updateValue);
       }
     });

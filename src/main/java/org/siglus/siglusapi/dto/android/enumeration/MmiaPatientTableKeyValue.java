@@ -21,8 +21,10 @@ import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPa
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_SECTION_3;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_SECTION_4;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_SECTION_8;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_SECTION_9;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.PATIENT_TYPE;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.TABLE_ARVT_KEY;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.TABLE_DISPENSED_DB_KEY;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.TABLE_DISPENSED_DM_KEY;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.TABLE_DISPENSED_DS_KEY;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.TABLE_DISPENSED_DT_KEY;
@@ -43,6 +45,7 @@ public enum MmiaPatientTableKeyValue {
   TOTAL_KEY(TABLE_TOTAL_KEY, NEW_SECTION_8),
   DISPENSED_DS_KEY(TABLE_DISPENSED_DS_KEY, NEW_SECTION_2),
   DISPENSED_DT_KEY(TABLE_DISPENSED_DT_KEY, NEW_SECTION_3),
+  DISPENSED_DB_KEY(TABLE_DISPENSED_DB_KEY, NEW_SECTION_9),
   DISPENSED_DM_KEY(TABLE_DISPENSED_DM_KEY, NEW_SECTION_4);
 
   private final String key;
