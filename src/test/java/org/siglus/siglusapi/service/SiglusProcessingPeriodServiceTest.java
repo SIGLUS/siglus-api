@@ -47,6 +47,7 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.openlmis.referencedata.domain.Facility;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.RequisitionLineItem;
 import org.openlmis.requisition.domain.requisition.RequisitionStatus;
@@ -70,10 +71,10 @@ import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.repository.FacilityNativeRepository;
 import org.siglus.siglusapi.repository.ProcessingPeriodRepository;
 import org.siglus.siglusapi.repository.RequisitionNativeSqlRepository;
+import org.siglus.siglusapi.repository.SiglusFacilityRepository;
 import org.siglus.siglusapi.repository.SiglusReportTypeRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.repository.SiglusStockCardLineItemRepository;
-import org.siglus.siglusapi.repository.SupervisoryNodeRepository;
 import org.siglus.siglusapi.repository.dto.FacillityStockCardDateDto;
 import org.siglus.siglusapi.service.client.SiglusProcessingPeriodReferenceDataService;
 import org.siglus.siglusapi.testutils.ProcessingPeriodDtoDataBuilder;
@@ -138,7 +139,7 @@ public class SiglusProcessingPeriodServiceTest {
   private SiglusProgramAdditionalOrderableService siglusProgramAdditionalOrderableService;
 
   @Mock
-  private SupervisoryNodeRepository supervisoryNodeRepository;
+  private SiglusFacilityRepository siglusFacilityRepository;
 
   @Mock
   private FacilityNativeRepository facilityNativeRepository;
@@ -585,8 +586,10 @@ public class SiglusProcessingPeriodServiceTest {
     UUID clientFacilityId2 = UUID.randomUUID();
     userDto.setHomeFacilityId(facilityId);
     when(authenticationHelper.getCurrentUser()).thenReturn(userDto);
-    when(supervisoryNodeRepository.findAllClientFacilityIdsBySupplyFacilityIdAndProgramId(facilityId, programId))
-        .thenReturn(Sets.newHashSet(clientFacilityId2));
+    Facility facility = new Facility();
+    facility.setId(clientFacilityId2);
+    when(siglusFacilityRepository.findAllClientFacilityIdsBySupplyFacilityIdAndProgramId(facilityId, programId))
+        .thenReturn(Sets.newHashSet(facility));
     // when
     UUID clientFacilityId = UUID.randomUUID();
     siglusProcessingPeriodService.getRequisitionPeriodExtensionResponses(programId, clientFacilityId, false);

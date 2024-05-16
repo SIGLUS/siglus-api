@@ -30,6 +30,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.apache.commons.collections.CollectionUtils;
+import org.openlmis.referencedata.domain.Facility;
 import org.openlmis.referencedata.domain.ProcessingPeriod;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.RequisitionStatus;
@@ -50,8 +51,8 @@ import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.repository.ProcessingPeriodRepository;
 import org.siglus.siglusapi.repository.RequisitionNativeSqlRepository;
+import org.siglus.siglusapi.repository.SiglusFacilityRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
-import org.siglus.siglusapi.repository.SupervisoryNodeRepository;
 import org.siglus.siglusapi.service.client.SiglusProcessingPeriodReferenceDataService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.validator.SiglusProcessingPeriodValidator;
@@ -105,7 +106,7 @@ public class SiglusProcessingPeriodService {
   private SiglusAuthenticationHelper authenticationHelper;
 
   @Autowired
-  private SupervisoryNodeRepository supervisoryNodeRepository;
+  private SiglusFacilityRepository siglusFacilityRepository;
 
   public LocalDate getPreviousPeriodStartDateSinceInitiate(String programCode, UUID facilityId) {
     ProgramDto program = siglusProgramService.getProgramByCode(programCode)
@@ -230,9 +231,10 @@ public class SiglusProcessingPeriodService {
   }
 
   private void checkRequisitionGroup(UUID supplyFacilityId, UUID clientFacilityId, UUID programId) {
-    Set<UUID> clientFacilityIds = supervisoryNodeRepository.findAllClientFacilityIdsBySupplyFacilityIdAndProgramId(
-        supplyFacilityId,
-        programId);
+    Set<UUID> clientFacilityIds = siglusFacilityRepository.findAllClientFacilityIdsBySupplyFacilityIdAndProgramId(
+            supplyFacilityId, programId).stream()
+        .map(Facility::getId)
+        .collect(Collectors.toSet());
     if (!clientFacilityIds.contains(clientFacilityId)) {
       throw new BusinessDataException(new Message(ERROR_WRONG_CLIENT_FACILITY));
     }

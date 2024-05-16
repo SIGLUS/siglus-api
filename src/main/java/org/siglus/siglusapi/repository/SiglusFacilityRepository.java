@@ -17,6 +17,7 @@ package org.siglus.siglusapi.repository;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import org.openlmis.referencedata.domain.Facility;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -64,4 +65,27 @@ public interface SiglusFacilityRepository extends JpaRepository<Facility, UUID>,
           "select distinct code from referencedata.facilities where active=true and enabled=true",
       nativeQuery = true)
   List<String> findAllFacilityCodes();
+
+  @Query(value = "select "
+      + "f.* "
+      + "from referencedata.supervisory_nodes sn "
+      + "left join referencedata.requisition_groups rg on sn.id = rg.supervisorynodeid "
+      + "left join referencedata.requisition_group_members rgm on rg.id = rgm.requisitiongroupid "
+      + "left join referencedata.facilities f on rgm.facilityid = f.id "
+      + "where sn.facilityid = :supplyFacilityId "
+      + "and sn.parentid is not null "
+      + "and split_part(sn.code, '.', 4) in "
+      + "( "
+      + "  select "
+      + "  case "
+      + "    when m.reportname = 'Malaria' then 'AL' "
+      + "    when m.reportname = 'Requisição Balancete' then 'VIA' "
+      + "  else m.reportname "
+      + "  end as reportcode "
+      + "  from referencedata.programs p "
+      + "  left join siglusintegration.program_report_name_mapping m on p.id = m.programid "
+      + "  where m.programid = :programId "
+      + ")", nativeQuery = true)
+  Set<Facility> findAllClientFacilityIdsBySupplyFacilityIdAndProgramId(@Param("supplyFacilityId") UUID supplyFacilityId,
+      @Param("programId") UUID programId);
 }
