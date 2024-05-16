@@ -307,6 +307,7 @@ public class RequisitionInternalApproveReplayer {
     requisitionExtension.setFacilityId(event.getRequisitionExtension().getFacilityId());
     requisitionExtension.setActualStartDate(event.getRequisitionExtension().getActualStartDate());
     requisitionExtension.setRequisitionNumberPrefix(event.getRequisitionExtension().getRequisitionNumberPrefix());
+    requisitionExtension.setCreatedByFacilityId(event.getRequisitionExtension().getCreatedByFacilityId());
 
     requisitionExtensionRepository.save(requisitionExtension);
   }

@@ -43,9 +43,11 @@ import org.openlmis.requisition.dto.ProgramDto;
 import org.siglus.siglusapi.domain.RequisitionExtension;
 import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
+import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.repository.ProcessingPeriodRepository;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
+import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 
 @RunWith(MockitoJUnitRunner.class)
 public class SiglusRequisitionExtensionServiceTest {
@@ -71,6 +73,9 @@ public class SiglusRequisitionExtensionServiceTest {
   private ProcessingPeriodRepository processingPeriodRepository;
 
   @Mock
+  private SiglusAuthenticationHelper authenticationHelper;
+
+  @Mock
   private SiglusProgramService siglusProgramService;
 
   private final UUID requisitionId = UUID.randomUUID();
@@ -89,6 +94,7 @@ public class SiglusRequisitionExtensionServiceTest {
     siglusRequisitionDto.setFacility(new ObjectReferenceDto(facilityId));
     siglusRequisitionDto.setProgram(new ObjectReferenceDto(programId));
     when(processingPeriodRepository.findOneById(siglusRequisitionDto.getProcessingPeriodId())).thenReturn(period);
+    when(authenticationHelper.getCurrentUser()).thenReturn(any(UserDto.class));
   }
 
   @Test

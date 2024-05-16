@@ -27,6 +27,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -36,10 +37,12 @@ import org.apache.commons.lang.BooleanUtils;
 import org.openlmis.referencedata.domain.ProcessingPeriod;
 import org.siglus.siglusapi.domain.RequisitionExtension;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
+import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.dto.enums.RequisitionPrefixEnum;
 import org.siglus.siglusapi.repository.ProcessingPeriodRepository;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
+import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -52,6 +55,7 @@ public class SiglusRequisitionExtensionService {
   private final RequisitionExtensionRepository requisitionExtensionRepository;
   private final ProcessingPeriodRepository processingPeriodRepository;
   private final SiglusProgramService siglusProgramService;
+  private final SiglusAuthenticationHelper authenticationHelper;
 
   public RequisitionExtension createRequisitionExtension(SiglusRequisitionDto siglusRequisitionDto) {
     ProcessingPeriod period = processingPeriodRepository.findOneById(siglusRequisitionDto.getProcessingPeriodId());
@@ -98,6 +102,8 @@ public class SiglusRequisitionExtensionService {
         .requisitionNumberPrefix(prefix + DOT + facilityCode + DOT + yearMonth + DOT)
         .requisitionNumber(consequentialNumber)
         .facilityId(facilityId)
+        .createdByFacilityId(
+            Optional.ofNullable(authenticationHelper.getCurrentUser()).orElse(new UserDto()).getHomeFacilityId())
         .build();
   }
 
