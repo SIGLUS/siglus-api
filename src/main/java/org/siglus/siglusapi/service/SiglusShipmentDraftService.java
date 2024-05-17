@@ -253,7 +253,8 @@ public class SiglusShipmentDraftService {
         .stream().collect(Collectors.toMap(
           dto -> FormatHelper.buildStockCardUniqueKey(
                   dto.getOrderableId(), dto.getLotId(), dto.getArea(), dto.getLocationCode()),
-          StockCardReservedDto::getReserved
+          StockCardReservedDto::getReserved,
+            Integer::sum
         ));
     return draftDto.lineItems().stream()
         .filter(item -> (item.getOrderable() != null) && (item.getLot() != null) && (item.getQuantityShipped() != null))
