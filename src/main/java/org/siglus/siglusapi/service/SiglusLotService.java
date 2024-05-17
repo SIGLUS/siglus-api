@@ -67,6 +67,7 @@ import org.springframework.util.ObjectUtils;
 @Service
 @Slf4j
 public class SiglusLotService {
+
   @Autowired
   private SiglusOrderableReferenceDataService orderableReferenceDataService;
   @Autowired
@@ -125,12 +126,12 @@ public class SiglusLotService {
     return StreamSupport.stream(lots.spliterator(), false)
         .map(lot -> {
           LotDto lotDto = LotDto.builder()
-                  .lotCode(lot.getLotCode())
-                  .expirationDate(lot.getExpirationDate())
-                  .tradeItemId(lot.getTradeItem().getId())
-                  .manufactureDate(lot.getManufactureDate())
-                  .active(lot.isActive())
-                  .build();
+              .lotCode(lot.getLotCode())
+              .expirationDate(lot.getExpirationDate())
+              .tradeItemId(lot.getTradeItem().getId())
+              .manufactureDate(lot.getManufactureDate())
+              .active(lot.isActive())
+              .build();
           lotDto.setId(lot.getId());
           return lotDto;
         })
@@ -174,13 +175,26 @@ public class SiglusLotService {
     if (siglusLotRepository.existsNotExpiredLotsByIds(lotIds)) {
       throw new BusinessDataException(Message.createFromMessageKeyStr("exists not expired lots"));
     }
+
     // check quantity is smaller or equal than soh
-    Map<UUID, Integer> stockMap = siglusStockCardSummariesService.getLatestStockOnHandByIds(
-        lots.stream().map(RemovedLotDto::getStockCardId).collect(Collectors.toList()), hasLocation)
-            .stream().collect(Collectors.toMap(StockCardStockDto::getStockCardId, StockCardStockDto::getStockOnHand));
-    if (lots.stream().anyMatch(lot -> lot.getQuantity() > stockMap.getOrDefault(lot.getStockCardId(), 0))) {
-      throw new BusinessDataException(Message.createFromMessageKeyStr("not have enough soh"));
+    List<StockCardStockDto> stockCardStockDtos = siglusStockCardSummariesService.getLatestStockOnHandByIds(
+        lots.stream().map(RemovedLotDto::getStockCardId).collect(Collectors.toList()), hasLocation);
+    if (hasLocation) {
+      Map<String, Integer> stockCardIdLocationCodeToSohMap = stockCardStockDtos.stream()
+          .collect(Collectors.toMap(e -> e.getStockCardId().toString() + e.getLocationCode(),
+              StockCardStockDto::getStockOnHand));
+      if (lots.stream().anyMatch(lot -> lot.getQuantity() > stockCardIdLocationCodeToSohMap.getOrDefault(
+          lot.getStockCardId().toString() + lot.getLocationCode(), 0))) {
+        throw new BusinessDataException(Message.createFromMessageKeyStr("not have enough soh"));
+      }
+    } else {
+      Map<UUID, Integer> stockMap = stockCardStockDtos.stream()
+          .collect(Collectors.toMap(StockCardStockDto::getStockCardId, StockCardStockDto::getStockOnHand));
+      if (lots.stream().anyMatch(lot -> lot.getQuantity() > stockMap.getOrDefault(lot.getStockCardId(), 0))) {
+        throw new BusinessDataException(Message.createFromMessageKeyStr("not have enough soh"));
+      }
     }
+
     // send stock event to remove expired lots
     buildDiscardStockEventDtos(lots).forEach(
         stockEventDto -> siglusStockEventsService.processStockEvent(stockEventDto, hasLocation)
@@ -224,10 +238,10 @@ public class SiglusLotService {
 
   private List<StockEventDto> buildDiscardStockEventDtos(List<RemovedLotDto> lots) {
     StockCardLineItemReason reason = stockCardLineItemReasonRepository.findByName(
-                AdjustmentReason.EXPIRED_RETURN_TO_SUPPLIER_AND_DISCARD.getName());
+        AdjustmentReason.EXPIRED_RETURN_TO_SUPPLIER_AND_DISCARD.getName());
     if (ObjectUtils.isEmpty(reason)) {
       throw new BusinessDataException(
-              Message.createFromMessageKeyStr("Missing discard expired lots reason"));
+          Message.createFromMessageKeyStr("Missing discard expired lots reason"));
     }
     Multimap<Tuple2<UUID, UUID>, RemovedLotDto> facilityWithProgramMap = ArrayListMultimap.create();
     lots.forEach(lot -> {

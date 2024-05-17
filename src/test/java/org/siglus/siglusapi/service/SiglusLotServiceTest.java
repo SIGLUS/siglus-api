@@ -324,6 +324,42 @@ public class SiglusLotServiceTest {
     verify(siglusStockEventsService, Mockito.times(1)).processStockEvent(any(), anyBoolean());
   }
 
+  @Test
+  public void shouldSendStockEventWhenRemoveExpiredLotsWithLocation() {
+    RemovedLotDto lot = buildRemovedLotDto(UUID.randomUUID(), UUID.randomUUID(), 10);
+    lot.setLocationCode("code1");
+    RemovedLotDto lot2 = buildRemovedLotDto(UUID.randomUUID(), UUID.randomUUID(), 20);
+    lot2.setStockCardId(lot.getStockCardId());
+    lot2.setLocationCode("code2");
+    List<RemovedLotDto> lots = new ArrayList<>();
+    lots.add(lot);
+    lots.add(lot2);
+    List<StockCardStockDto> stockCardStockDtos = new ArrayList<>();
+    StockCardStockDto stockDto = StockCardStockDto.builder()
+        .stockOnHand(10)
+        .stockCardId(lot.getStockCardId())
+        .locationCode(lot.getLocationCode())
+        .build();
+    StockCardStockDto stockDto2 = StockCardStockDto.builder()
+        .stockOnHand(20)
+        .stockCardId(lot2.getStockCardId())
+        .locationCode(lot2.getLocationCode())
+        .build();
+    stockCardStockDtos.add(stockDto);
+    stockCardStockDtos.add(stockDto2);
+    when(siglusLotRepository.existsNotExpiredLotsByIds(anyList())).thenReturn(false);
+    when(siglusStockCardSummariesService.getLatestStockOnHandByIds(anyList(), anyBoolean()))
+        .thenReturn(stockCardStockDtos);
+    StockCardLineItemReason reason = new StockCardLineItemReason();
+    reason.setId(UUID.randomUUID());
+    when(stockCardLineItemReasonRepository.findByName(anyString())).thenReturn(reason);
+    doNothing().when(siglusStockEventsService).processStockEvent(any(), anyBoolean());
+
+    siglusLotService.removeExpiredLots(lots, true);
+
+    verify(siglusStockEventsService, Mockito.times(2)).processStockEvent(any(), anyBoolean());
+  }
+
   private OrderableDto createOrderable(UUID orderableId, UUID tradeItemId) {
     OrderableDto orderableDto = new OrderableDto();
     orderableDto.setId(orderableId);
