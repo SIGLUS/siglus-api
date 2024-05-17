@@ -194,7 +194,7 @@ import org.springframework.util.MultiValueMap;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-@SuppressWarnings({"PMD.TooManyMethods", "PMD.AvoidDuplicateLiterals"})
+@SuppressWarnings({"PMD.TooManyMethods", "PMD.AvoidDuplicateLiterals", "PMD.CyclomaticComplexity"})
 public class SiglusRequisitionService {
 
   private final RequisitionV2Controller requisitionV2Controller;
@@ -1607,8 +1607,11 @@ public class SiglusRequisitionService {
     Integer dtTotal = dtGroup.getColumns().get(TOTAL_COLUMN).getValue();
     Integer dbTotal = dbGroup.getColumns().get(TOTAL_COLUMN).getValue();
     Integer dmTotal = dmGroup.getColumns().get(TOTAL_COLUMN).getValue();
-    if (dsTotal == null || dtTotal == null || dmTotal == null || dbTotal == null) {
+    if (dsTotal == null || dtTotal == null || dmTotal == null) {
       return 1;
+    }
+    if (dbTotal == null) {
+      dbTotal = 0;
     }
     int totalPatients = dsTotal + dtTotal + dbTotal + dmTotal;
 
@@ -1618,6 +1621,9 @@ public class SiglusRequisitionService {
     Integer dmColumn = dmGroup.getColumns().get(NEW_COLUMN).getValue();
     if (dsColumn3 == null || dtColumn1 == null || dmColumn == null) {
       return 1;
+    }
+    if (dbThisMonth == null) {
+      dbThisMonth = 0;
     }
     int totalPatientsInThisMonth = dsColumn3 + dtColumn1 + dbThisMonth + dmColumn;
 

@@ -717,7 +717,7 @@ public class RequisitionCreateService {
       if (TOTAL_COLUMN.equals(k)) {
         return;
       }
-      int updateValue = v.getValue();
+      int updateValue = v.getValue() == null ? 0 : v.getValue();
       int totalValue = sectionTotalDto.getValue();
       sectionTotalDto.setValue(totalValue + updateValue);
       PatientColumnDto section5TotalDto = patientGroupDtoSection5.getColumns().get(TOTAL_COLUMN);
