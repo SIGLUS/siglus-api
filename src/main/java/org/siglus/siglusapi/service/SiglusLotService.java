@@ -179,20 +179,13 @@ public class SiglusLotService {
     // check quantity is smaller or equal than soh
     List<StockCardStockDto> stockCardStockDtos = siglusStockCardSummariesService.getLatestStockOnHandByIds(
         lots.stream().map(RemovedLotDto::getStockCardId).collect(Collectors.toList()), hasLocation);
-    if (hasLocation) {
-      Map<String, Integer> stockCardIdLocationCodeToSohMap = stockCardStockDtos.stream()
-          .collect(Collectors.toMap(e -> e.getStockCardId().toString() + e.getLocationCode(),
-              StockCardStockDto::getStockOnHand));
-      if (lots.stream().anyMatch(lot -> lot.getQuantity() > stockCardIdLocationCodeToSohMap.getOrDefault(
-          lot.getStockCardId().toString() + lot.getLocationCode(), 0))) {
-        throw new BusinessDataException(Message.createFromMessageKeyStr("not have enough soh"));
-      }
-    } else {
-      Map<UUID, Integer> stockMap = stockCardStockDtos.stream()
-          .collect(Collectors.toMap(StockCardStockDto::getStockCardId, StockCardStockDto::getStockOnHand));
-      if (lots.stream().anyMatch(lot -> lot.getQuantity() > stockMap.getOrDefault(lot.getStockCardId(), 0))) {
-        throw new BusinessDataException(Message.createFromMessageKeyStr("not have enough soh"));
-      }
+
+    Map<String, Integer> stockCardIdLocationCodeToSohMap = stockCardStockDtos.stream()
+        .collect(Collectors.toMap(e -> e.getStockCardId().toString() + e.getLocationCode(),
+            StockCardStockDto::getStockOnHand));
+    if (lots.stream().anyMatch(lot -> lot.getQuantity() > stockCardIdLocationCodeToSohMap.getOrDefault(
+        lot.getStockCardId().toString() + lot.getLocationCode(), 0))) {
+      throw new BusinessDataException(Message.createFromMessageKeyStr("not have enough soh"));
     }
 
     // send stock event to remove expired lots
