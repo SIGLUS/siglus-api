@@ -29,26 +29,4 @@ public interface SupervisoryNodeRepository extends JpaRepository<SupervisoryNode
   Set<SupervisoryNode> findAllByFacilityTypeId(@Param("facilityTypeId") UUID facilityTypeId);
 
   Set<SupervisoryNode> findAllByFacilityId(UUID facilityId);
-
-  @Query(value = "select "
-      + "cast(rgm.facilityid as varchar) as cilentfacilityid "
-      + "from referencedata.supervisory_nodes sn "
-      + "left join referencedata.requisition_groups rg on sn.id = rg.supervisorynodeid "
-      + "left join referencedata.requisition_group_members rgm on rg.id = rgm.requisitiongroupid "
-      + "where sn.facilityid = :supplyFacilityId "
-      + "and sn.parentid is not null "
-      + "and split_part(sn.code, '.', 4) in "
-      + "( "
-      + "  select "
-      + "  case "
-      + "    when m.reportname = 'Malaria' then 'AL' "
-      + "    when m.reportname = 'Requisição Balancete' then 'VIA' "
-      + "  else m.reportname "
-      + "  end as reportcode "
-      + "  from referencedata.programs p "
-      + "  left join siglusintegration.program_report_name_mapping m on p.id = m.programid "
-      + "  where programid = :programId "
-      + ")", nativeQuery = true)
-  Set<String> findAllClientFacilityIdsBySupplyFacilityIdAndProgramId(@Param("supplyFacilityId") UUID supplyFacilityId,
-      @Param("programId") UUID programId);
 }

@@ -26,7 +26,6 @@ import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -50,6 +49,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.RequisitionLineItem;
 import org.openlmis.requisition.domain.requisition.RequisitionStatus;
+import org.openlmis.requisition.dto.FacilityDto;
 import org.openlmis.requisition.dto.ProcessingPeriodDto;
 import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.dto.RequisitionPeriodDto;
@@ -73,7 +73,6 @@ import org.siglus.siglusapi.repository.RequisitionNativeSqlRepository;
 import org.siglus.siglusapi.repository.SiglusReportTypeRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.repository.SiglusStockCardLineItemRepository;
-import org.siglus.siglusapi.repository.SupervisoryNodeRepository;
 import org.siglus.siglusapi.repository.dto.FacillityStockCardDateDto;
 import org.siglus.siglusapi.service.client.SiglusProcessingPeriodReferenceDataService;
 import org.siglus.siglusapi.testutils.ProcessingPeriodDtoDataBuilder;
@@ -138,7 +137,7 @@ public class SiglusProcessingPeriodServiceTest {
   private SiglusProgramAdditionalOrderableService siglusProgramAdditionalOrderableService;
 
   @Mock
-  private SupervisoryNodeRepository supervisoryNodeRepository;
+  private SiglusRequisitionService siglusRequisitionService;
 
   @Mock
   private FacilityNativeRepository facilityNativeRepository;
@@ -585,8 +584,9 @@ public class SiglusProcessingPeriodServiceTest {
     UUID clientFacilityId2 = UUID.randomUUID();
     userDto.setHomeFacilityId(facilityId);
     when(authenticationHelper.getCurrentUser()).thenReturn(userDto);
-    when(supervisoryNodeRepository.findAllClientFacilityIdsBySupplyFacilityIdAndProgramId(facilityId, programId))
-        .thenReturn(Sets.newHashSet(clientFacilityId2.toString()));
+    FacilityDto facilityDto = new FacilityDto();
+    facilityDto.setId(clientFacilityId2);
+    when(siglusRequisitionService.searchFacilitiesForView()).thenReturn(Lists.newArrayList(facilityDto));
     // when
     UUID clientFacilityId = UUID.randomUUID();
     siglusProcessingPeriodService.getRequisitionPeriodExtensionResponses(programId, clientFacilityId, false);

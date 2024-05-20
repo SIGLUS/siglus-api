@@ -33,6 +33,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.openlmis.referencedata.domain.ProcessingPeriod;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.RequisitionStatus;
+import org.openlmis.requisition.dto.FacilityDto;
 import org.openlmis.requisition.dto.ProcessingPeriodDto;
 import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.dto.RequisitionPeriodDto;
@@ -51,7 +52,6 @@ import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.repository.ProcessingPeriodRepository;
 import org.siglus.siglusapi.repository.RequisitionNativeSqlRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
-import org.siglus.siglusapi.repository.SupervisoryNodeRepository;
 import org.siglus.siglusapi.service.client.SiglusProcessingPeriodReferenceDataService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.validator.SiglusProcessingPeriodValidator;
@@ -105,7 +105,7 @@ public class SiglusProcessingPeriodService {
   private SiglusAuthenticationHelper authenticationHelper;
 
   @Autowired
-  private SupervisoryNodeRepository supervisoryNodeRepository;
+  private SiglusRequisitionService siglusRequisitionService;
 
   public LocalDate getPreviousPeriodStartDateSinceInitiate(String programCode, UUID facilityId) {
     ProgramDto program = siglusProgramService.getProgramByCode(programCode)
@@ -212,7 +212,7 @@ public class SiglusProcessingPeriodService {
       boolean emergency) {
     UUID homeFacilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
     if (!ObjectUtils.isEmpty(homeFacilityId) && !homeFacilityId.equals(facility)) {
-      checkRequisitionGroup(homeFacilityId, facility, program);
+      checkClientFacilityId(facility);
     }
     Collection<RequisitionPeriodDto> requisitionPeriodDtos = getRequisitionPeriods(program, facility, emergency);
     if (CollectionUtils.isEmpty(requisitionPeriodDtos)) {
@@ -229,10 +229,11 @@ public class SiglusProcessingPeriodService {
         .collect(Collectors.toList());
   }
 
-  private void checkRequisitionGroup(UUID supplyFacilityId, UUID clientFacilityId, UUID programId) {
-    Set<String> clientFacilityIds = supervisoryNodeRepository.findAllClientFacilityIdsBySupplyFacilityIdAndProgramId(
-            supplyFacilityId, programId);
-    if (!clientFacilityIds.contains(clientFacilityId.toString())) {
+  private void checkClientFacilityId(UUID clientFacilityId) {
+    Set<UUID> clientFacilityIds = siglusRequisitionService.searchFacilitiesForView().stream()
+        .map(FacilityDto::getId)
+        .collect(Collectors.toSet());
+    if (!clientFacilityIds.contains(clientFacilityId)) {
       throw new BusinessDataException(new Message(ERROR_WRONG_CLIENT_FACILITY));
     }
   }
