@@ -274,7 +274,7 @@ public class SiglusPhysicalInventorySubDraftService {
         .collect(Collectors.groupingBy(PhysicalInventoryLineItemDto::getProgramId));
 
     for (UUID physicalInventoryId : physicalInventoryIds) {
-      PhysicalInventoryDto physicalInventoryDto = siglusPhysicalInventoryService.getPhysicalInventory(
+      PhysicalInventoryDto physicalInventoryDto = siglusPhysicalInventoryService.getFullPhysicalInventoryDto(
           physicalInventoryId);
       UUID subDraftId = physicalInventorySubDraftMap.get(physicalInventoryId);
 

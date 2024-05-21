@@ -198,7 +198,7 @@ public class SiglusPhysicalInventorySubDraftServiceTest {
         .lineItems(Lists.newArrayList(lineItemDtoOne))
         .build();
 
-    when(siglusPhysicalInventoryService.getPhysicalInventory(any())).thenReturn(
+    when(siglusPhysicalInventoryService.getFullPhysicalInventoryDto(any())).thenReturn(
         oldPhysicalInventoryDto);
 
     PhysicalInventoryDto physicalInventoryDto = PhysicalInventoryDto.builder()
@@ -211,7 +211,7 @@ public class SiglusPhysicalInventorySubDraftServiceTest {
     siglusPhysicalInventorySubDraftService.updateSubDrafts(subDraftIds, physicalInventoryDto,
         PhysicalInventorySubDraftEnum.DRAFT, false);
     // then
-    verify(siglusPhysicalInventoryService, times(2)).getPhysicalInventory(any());
+    verify(siglusPhysicalInventoryService, times(2)).getFullPhysicalInventoryDto(any());
   }
 
 
@@ -484,7 +484,7 @@ public class SiglusPhysicalInventorySubDraftServiceTest {
         .lineItems(Lists.newArrayList(lineItemDtoOne))
         .build();
 
-    when(siglusPhysicalInventoryService.getPhysicalInventory(any())).thenReturn(
+    when(siglusPhysicalInventoryService.getFullPhysicalInventoryDto(any())).thenReturn(
         oldPhysicalInventoryDto);
     List<UUID> subDraftIds = Lists.newArrayList(subDraftId);
 
