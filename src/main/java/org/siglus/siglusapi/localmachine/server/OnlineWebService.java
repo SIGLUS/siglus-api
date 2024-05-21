@@ -64,6 +64,7 @@ import org.siglus.siglusapi.repository.AppInfoRepository;
 import org.siglus.siglusapi.service.SiglusAdministrationsService;
 import org.siglus.siglusapi.util.FileUtil;
 import org.siglus.siglusapi.util.S3FileHandler;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
@@ -76,13 +77,20 @@ public class OnlineWebService {
 
   static final String FINAL_APPROVE_VERSION = "2.0.11";
   private static final long ZERO = 0L;
-  private final TableCopyRepository tableCopyRepository;
-  private final MasterDataEventRecordRepository masterDataEventRecordRepository;
-  private final MasterDataOffsetRepository masterDataOffsetRepository;
-  private final AppInfoRepository appInfoRepository;
-  private final FacilityRepository facilityRepository;
-  private final S3FileHandler s3FileHandler;
-  private final ShedLockFactory lockFactory;
+  @Autowired
+  private TableCopyRepository tableCopyRepository;
+  @Autowired
+  private MasterDataEventRecordRepository masterDataEventRecordRepository;
+  @Autowired
+  private MasterDataOffsetRepository masterDataOffsetRepository;
+  @Autowired
+  private AppInfoRepository appInfoRepository;
+  @Autowired
+  private FacilityRepository facilityRepository;
+  @Autowired
+  private S3FileHandler s3FileHandler;
+  @Autowired
+  private ShedLockFactory lockFactory;
   private final Map<String, String> tableNameToMasterSql = MasterDataSql.getMasterDataSqlMap();
   private final Map<String, String> tableNameToMovementSql = MovementSql.getMovementSql();
   private final Map<String, String> tableNameToRequisitionOrderSql = RequisitionOrderSql.getRequisitionOrderSql();
@@ -94,7 +102,8 @@ public class OnlineWebService {
   private final SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmssSSS");
   @Value("${resync.zip.export.path}")
   private String zipExportPath;
-  private final SiglusAdministrationsService administrationsService;
+  @Autowired
+  private SiglusAdministrationsService administrationsService;
 
   @Transactional
   public void cleanIncrementalMasterData() {

@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,7 +34,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class CdcDispatcher {
 
   private final Map<String, List<CdcListener>> tableIdToListeners = new LinkedHashMap<>();
-  private final CdcRecordRepository cdcRecordRepository;
+  @Autowired
+  private CdcRecordRepository cdcRecordRepository;
 
   public CdcDispatcher(List<CdcListener> cdcListeners, CdcRecordRepository cdcRecordRepository) {
     this.cdcRecordRepository = cdcRecordRepository;

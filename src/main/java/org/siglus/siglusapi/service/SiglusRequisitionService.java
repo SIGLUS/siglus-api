@@ -184,6 +184,7 @@ import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.util.SupportedProgramsHelper;
 import org.slf4j.profiler.Profiler;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -197,42 +198,78 @@ import org.springframework.util.MultiValueMap;
 @SuppressWarnings({"PMD.TooManyMethods", "PMD.AvoidDuplicateLiterals", "PMD.CyclomaticComplexity"})
 public class SiglusRequisitionService {
 
-  private final RequisitionV2Controller requisitionV2Controller;
-  private final RequisitionController requisitionController;
-  private final RequisitionService requisitionService;
-  private final PermissionService permissionService;
-  private final SiglusOrderableService siglusOrderableService;
-  private final SiglusRequisitionRequisitionService siglusRequisitionRequisitionService;
-  private final SiglusArchiveProductService archiveProductService;
-  private final RequisitionTemplateExtensionRepository requisitionTemplateExtensionRepository;
-  private final RequisitionLineItemExtensionRepository lineItemExtensionRepository;
-  private final FacilityTypeApprovedProductReferenceDataService facilityTypeApprovedProductReferenceDataService;
-  private final RequisitionRepository requisitionRepository;
-  private final AuthenticationHelper authenticationHelper;
-  private final SiglusUsageReportService siglusUsageReportService;
-  private final RequisitionDraftRepository draftRepository;
-  private final OperatePermissionService operatePermissionService;
-  private final RightReferenceDataService rightReferenceDataService;
-  private final RoleReferenceDataService roleReferenceDataService;
-  private final SupervisoryNodeReferenceDataService supervisoryNodeReferenceDataService;
-  private final RequisitionGroupReferenceDataService requisitionGroupReferenceDataService;
-  private final SiglusNotificationService notificationService;
-  private final FacilityReferenceDataService facilityReferenceDataService;
-  private final SiglusRequisitionExtensionService siglusRequisitionExtensionService;
-  private final RegimenDataProcessor regimenDataProcessor;
-  private final RequisitionExtensionRepository requisitionExtensionRepository;
-  private final FacilityExtensionRepository facilityExtensionRepository;
-  private final FcCmmCpService fcCmmCpService;
-  private final SiglusFilterAddProductForEmergencyService filterProductService;
-  private final SupportedProgramsHelper supportedProgramsHelper;
-  private final NotSubmittedMonthlyRequisitionsRepository notSubmittedMonthlyRequisitionsRepository;
-  private final HttpServletResponse response;
-  private final StockCardRangeSummaryStockManagementService stockCardRangeSummaryStockManagementService;
-  private final StockManagementRepository stockManagementRepository;
-  private final SiglusGeneratedNumberService siglusGeneratedNumberService;
-  private final ProcessingPeriodRepository processingPeriodRepository;
-  private final RequisitionNativeSqlRepository requisitionNativeSqlRepository;
-  private final FacilityCmmsRepository facilityCmmsRepository;
+  @Autowired
+  private RequisitionV2Controller requisitionV2Controller;
+  @Autowired
+  private RequisitionController requisitionController;
+  @Autowired
+  private RequisitionService requisitionService;
+  @Autowired
+  private PermissionService permissionService;
+  @Autowired
+  private SiglusOrderableService siglusOrderableService;
+  @Autowired
+  private SiglusRequisitionRequisitionService siglusRequisitionRequisitionService;
+  @Autowired
+  private SiglusArchiveProductService archiveProductService;
+  @Autowired
+  private RequisitionTemplateExtensionRepository requisitionTemplateExtensionRepository;
+  @Autowired
+  private RequisitionLineItemExtensionRepository lineItemExtensionRepository;
+  @Autowired
+  private FacilityTypeApprovedProductReferenceDataService facilityTypeApprovedProductReferenceDataService;
+  @Autowired
+  private RequisitionRepository requisitionRepository;
+  @Autowired
+  private AuthenticationHelper authenticationHelper;
+  @Autowired
+  private SiglusUsageReportService siglusUsageReportService;
+  @Autowired
+  private RequisitionDraftRepository draftRepository;
+  @Autowired
+  private OperatePermissionService operatePermissionService;
+  @Autowired
+  private RightReferenceDataService rightReferenceDataService;
+  @Autowired
+  private RoleReferenceDataService roleReferenceDataService;
+  @Autowired
+  private SupervisoryNodeReferenceDataService supervisoryNodeReferenceDataService;
+  @Autowired
+  private RequisitionGroupReferenceDataService requisitionGroupReferenceDataService;
+  @Autowired
+  private SiglusNotificationService notificationService;
+  @Autowired
+  private FacilityReferenceDataService facilityReferenceDataService;
+  @Autowired
+  private SiglusRequisitionExtensionService siglusRequisitionExtensionService;
+  @Autowired
+  private RegimenDataProcessor regimenDataProcessor;
+  @Autowired
+  private RequisitionExtensionRepository requisitionExtensionRepository;
+  @Autowired
+  private FacilityExtensionRepository facilityExtensionRepository;
+  @Autowired
+  private FcCmmCpService fcCmmCpService;
+  @Autowired
+  private SiglusFilterAddProductForEmergencyService filterProductService;
+  @Autowired
+  private SupportedProgramsHelper supportedProgramsHelper;
+  @Autowired
+  private NotSubmittedMonthlyRequisitionsRepository notSubmittedMonthlyRequisitionsRepository;
+  @Autowired
+  private HttpServletResponse response;
+  @Autowired
+  private StockCardRangeSummaryStockManagementService stockCardRangeSummaryStockManagementService;
+  @Autowired
+  private StockManagementRepository stockManagementRepository;
+  @Autowired
+  private SiglusGeneratedNumberService siglusGeneratedNumberService;
+  @Autowired
+  private ProcessingPeriodRepository processingPeriodRepository;
+  @Autowired
+  private RequisitionNativeSqlRepository requisitionNativeSqlRepository;
+  @Autowired
+  private FacilityCmmsRepository facilityCmmsRepository;
   public static final double DEFAULT_CORRECTION_FACTOR = 1.0;
   public static final int ESTIMATED_QUANTITY_FACTOR = 3;
   public static final int REQUESTED_QUANTITY_FACTOR = 1;
@@ -246,23 +283,28 @@ public class SiglusRequisitionService {
   public static final String MMIA_COLUMN_TOTAL = "total";
   public static final String ESTIMATED_QUANTITY = "estimatedQuantity";
   public static final String REQUESTED_QUANTITY = "requestedQuantity";
-  private final OrderableRepository orderableRepository;
-  private final ProgramRepository programRepository;
-  private final RegimenOrderableRepository regimenOrderableRepository;
-  private final RequisitionLineItemRepository requisitionLineItemRepository;
-
-  private final RequisitionReleaseEmitter requisitionReleaseEmitter;
-
-  private final BatchReleaseRequisitionService batchReleaseRequisitionService;
-
-  private final SiglusRequisitionRepository siglusRequisitionRepository;
-
-  private final RequisitionFinalApproveEmitter requisitionFinalApproveEmitter;
-
-  private final SiglusAuthenticationHelper authHelper;
-
-  private final SiglusProgramService siglusProgramService;
-  private final StockCardRepository stockCardRepository;
+  @Autowired
+  private OrderableRepository orderableRepository;
+  @Autowired
+  private ProgramRepository programRepository;
+  @Autowired
+  private RegimenOrderableRepository regimenOrderableRepository;
+  @Autowired
+  private RequisitionLineItemRepository requisitionLineItemRepository;
+  @Autowired
+  private RequisitionReleaseEmitter requisitionReleaseEmitter;
+  @Autowired
+  private BatchReleaseRequisitionService batchReleaseRequisitionService;
+  @Autowired
+  private SiglusRequisitionRepository siglusRequisitionRepository;
+  @Autowired
+  private RequisitionFinalApproveEmitter requisitionFinalApproveEmitter;
+  @Autowired
+  private SiglusAuthenticationHelper authHelper;
+  @Autowired
+  private SiglusProgramService siglusProgramService;
+  @Autowired
+  private StockCardRepository stockCardRepository;
   private final Map<String, BiConsumer<SiglusRequisitionDto, Set<RequisitionLineItem>>> programToRequestedQuantity =
       ImmutableMap.<String, BiConsumer<SiglusRequisitionDto, Set<RequisitionLineItem>>>builder()
           .put(MTB_PROGRAM_CODE, this::calcRequestedQuantityForMmtb)
@@ -292,7 +334,7 @@ public class SiglusRequisitionService {
 
   @Transactional
   public void approveAndReleaseWithoutOrder(Requisition requisition,
-                                             Table<UUID, UUID, UUID> programSupervisoryNodeFacilities) {
+      Table<UUID, UUID, UUID> programSupervisoryNodeFacilities) {
     log.info("auto close requisition id: {}", requisition.getId());
     approveRequisition(requisition.getId(), null, null);
 
@@ -405,19 +447,19 @@ public class SiglusRequisitionService {
     ZonedDateTime previousCreateTime = previousRegularRequisition.getCreatedDate();
 
     Set<UUID> orderableIds = v2Dto.getLineItems().stream().map(lineItem ->
-            lineItem.getOrderableIdentity().getId()).collect(toSet());
+        lineItem.getOrderableIdentity().getId()).collect(toSet());
     if (CollectionUtils.isEmpty(orderableIds)) {
       return;
     }
     List<StockCard> stockCards = stockCardRepository.findByOrderableIdInAndFacilityId(orderableIds,
-            v2Dto.getFacilityId());
+        v2Dto.getFacilityId());
 
     Map<UUID, List<StockCardLineItem>> orderableIdToLineItems = new HashMap<>();
     stockCards.forEach(stockCard -> {
       UUID orderableId = stockCard.getOrderableId();
       List<StockCardLineItem> items = stockCard.getLineItems().stream().filter(item ->
-              previousSubmitDate.equals(item.getOccurredDate())
-                      && previousCreateTime.isBefore(item.getProcessedDate())).collect(toList());
+          previousSubmitDate.equals(item.getOccurredDate())
+              && previousCreateTime.isBefore(item.getProcessedDate())).collect(toList());
       if (!items.isEmpty()) {
         if (orderableIdToLineItems.containsKey(stockCard.getOrderableId())) {
           orderableIdToLineItems.get(orderableId).addAll(items);
@@ -431,24 +473,24 @@ public class SiglusRequisitionService {
     Map<UUID, Integer> orderableIdToAdditonalReceive = new HashMap<>();
     orderableIdToLineItems.forEach((orderableId, lineItems) -> {
       Integer totalIssue = lineItems.stream()
-              .filter(lineItem -> !lineItem.isPhysicalInventory())
-              .filter(lineItem -> !lineItem.isPositive())
-              .map(StockCardLineItem::getQuantity)
-              .reduce(Integer::sum).orElse(0);
+          .filter(lineItem -> !lineItem.isPhysicalInventory())
+          .filter(lineItem -> !lineItem.isPositive())
+          .map(StockCardLineItem::getQuantity)
+          .reduce(Integer::sum).orElse(0);
 
       Integer totalReceive = lineItems.stream()
-              .filter(lineItem -> !lineItem.isPhysicalInventory())
-              .filter(lineItem -> lineItem.isPositive())
-              .map(StockCardLineItem::getQuantity)
-              .reduce(Integer::sum).orElse(0);
+          .filter(lineItem -> !lineItem.isPhysicalInventory())
+          .filter(lineItem -> lineItem.isPositive())
+          .map(StockCardLineItem::getQuantity)
+          .reduce(Integer::sum).orElse(0);
 
       orderableIdToAdditonalIssue.put(orderableId, totalIssue);
       orderableIdToAdditonalReceive.put(orderableId, totalReceive);
     });
 
     Set<UUID> requisitionLinItemIds = v2Dto.getLineItems().stream()
-            .filter(lineItem -> orderableIdToLineItems.containsKey(lineItem.getOrderableIdentity().getId()))
-            .map(BaseDto::getId).collect(toSet());
+        .filter(lineItem -> orderableIdToLineItems.containsKey(lineItem.getOrderableIdentity().getId()))
+        .map(BaseDto::getId).collect(toSet());
     if (CollectionUtils.isEmpty(requisitionLinItemIds)) {
       return;
     }
@@ -458,9 +500,9 @@ public class SiglusRequisitionService {
       // TODO what about the initial inventory should change?
       //  Since the SOH is by date in calculated SOH, so we need to add back???
       lineItem.setTotalReceivedQuantity(lineItem.getTotalReceivedQuantity()
-              + orderableIdToAdditonalReceive.getOrDefault(orderableId, 0));
+          + orderableIdToAdditonalReceive.getOrDefault(orderableId, 0));
       lineItem.setTotalConsumedQuantity(lineItem.getTotalConsumedQuantity()
-              + orderableIdToAdditonalIssue.getOrDefault(orderableId, 0));
+          + orderableIdToAdditonalIssue.getOrDefault(orderableId, 0));
     });
     requisitionLineItemRepository.save(requisitionLineItems);
   }
@@ -518,21 +560,21 @@ public class SiglusRequisitionService {
 
   public void calcEstimatedQuantityToRequest(RequisitionV2Dto requisitionDto) {
     UUID viaProgramId = siglusProgramService.getProgramByCode(VIA_PROGRAM_CODE)
-            .orElseThrow(() -> new NotFoundException("VIA program not found"))
-            .getId();
+        .orElseThrow(() -> new NotFoundException("VIA program not found"))
+        .getId();
     if (viaProgramId.equals(requisitionDto.getProgramId())) {
       FacilityDto facilityDto = facilityReferenceDataService.findOne(requisitionDto.getFacilityId());
       if ((facilityDto != null) && getTopLevelTypes().contains(facilityDto.getType().getCode())) {
         List<StockStatusCmm> stockStatusCmms = facilityCmmsRepository
-                .findStockStatusCmmByFacilityCode(facilityDto.getCode());
+            .findStockStatusCmmByFacilityCode(facilityDto.getCode());
         if (CollectionUtils.isNotEmpty(stockStatusCmms)) {
           Map<String, Double> productCodeToCmm = stockStatusCmms.stream().collect(
-                  toMap(StockStatusCmm::getProductCode, StockStatusCmm::getCmm));
+              toMap(StockStatusCmm::getProductCode, StockStatusCmm::getCmm));
           Map<UUID, String> orderableIdToCode = siglusOrderableService.getAllProductIdToCode();
           requisitionDto.getRequisitionLineItems().forEach(lineItem -> {
             RequisitionLineItemV2Dto lineItemV2Dto = (RequisitionLineItemV2Dto) lineItem;
             Double cmm = productCodeToCmm
-                    .getOrDefault(orderableIdToCode.get(lineItemV2Dto.getOrderable().getId()), 0.0);
+                .getOrDefault(orderableIdToCode.get(lineItemV2Dto.getOrderable().getId()), 0.0);
             Integer estimatedQuantityToRequest = (int) (cmm * 5) - lineItem.getStockOnHand();
             if (estimatedQuantityToRequest > 0) {
               lineItemV2Dto.setEstimatedQuantityToRequest(estimatedQuantityToRequest);
@@ -1219,7 +1261,7 @@ public class SiglusRequisitionService {
         getOrderableCodeToRegimenOrderables(regimenOrderables);
     Map<UUID, String> orderableIdToCode = getOrderableIdToCode(lineItems);
     Map<UUID, BaseRequisitionLineItemDto> idToLineItems = lineItems.stream()
-            .collect(toMap(BaseDto::getId, Function.identity()));
+        .collect(toMap(BaseDto::getId, Function.identity()));
     lineItemDrafts.forEach(lineItemDraft -> {
       if (lineItemDraft.getRequisitionLineItemId() != null) {
         Integer estimatedQuantity = getQuantityByLineItem(idToLineItems.get(lineItemDraft.getRequisitionLineItemId()),
@@ -1390,7 +1432,7 @@ public class SiglusRequisitionService {
         getOrderableCodeToRegimenOrderables(regimenOrderables);
     Map<UUID, String> orderableIdToCode = getOrderableIdToCode(lineItems);
     Map<UUID, BaseRequisitionLineItemDto> idToLineItems = lineItems.stream()
-            .collect(toMap(BaseDto::getId, Function.identity()));
+        .collect(toMap(BaseDto::getId, Function.identity()));
     extensions.forEach(extension -> {
       if (extension.getId() != null) {
         Integer estimatedQuantity = getQuantityByLineItem(idToLineItems.get(extension.getRequisitionLineItemId()),

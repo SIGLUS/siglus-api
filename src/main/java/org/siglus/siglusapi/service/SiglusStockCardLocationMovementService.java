@@ -69,6 +69,7 @@ import org.siglus.siglusapi.repository.SiglusStockCardRepository;
 import org.siglus.siglusapi.repository.StockCardLocationMovementDraftRepository;
 import org.siglus.siglusapi.repository.StockCardLocationMovementLineItemRepository;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -77,23 +78,32 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class SiglusStockCardLocationMovementService {
 
-  private final StockCardLocationMovementLineItemRepository movementLineItemRepository;
-  private final StockCardLocationMovementDraftRepository movementDraftRepository;
-  private final SiglusStockCardRepository siglusStockCardRepository;
-  private final StockCardRepository stockCardRepository;
-  private final CalculatedStocksOnHandByLocationService calculatedStocksOnHandByLocationService;
-  private final SiglusAuthenticationHelper authenticationHelper;
-  private final CalculatedStockOnHandByLocationRepository calculatedStockOnHandByLocationRepository;
-  private final SiglusStockCardService siglusStockCardService;
-  private final SiglusAdministrationsService administrationsService;
-
-  private final FacilityReferenceDataService facilityReferenceDataService;
-
-  private final OrderableReferenceDataService orderableReferenceDataService;
-
-  private final ProgramReferenceDataService programReferenceDataService;
-
-  private final LotReferenceDataService lotReferenceDataService;
+  @Autowired
+  private StockCardLocationMovementLineItemRepository movementLineItemRepository;
+  @Autowired
+  private StockCardLocationMovementDraftRepository movementDraftRepository;
+  @Autowired
+  private SiglusStockCardRepository siglusStockCardRepository;
+  @Autowired
+  private StockCardRepository stockCardRepository;
+  @Autowired
+  private CalculatedStocksOnHandByLocationService calculatedStocksOnHandByLocationService;
+  @Autowired
+  private SiglusAuthenticationHelper authenticationHelper;
+  @Autowired
+  private CalculatedStockOnHandByLocationRepository calculatedStockOnHandByLocationRepository;
+  @Autowired
+  private SiglusStockCardService siglusStockCardService;
+  @Autowired
+  private SiglusAdministrationsService administrationsService;
+  @Autowired
+  private FacilityReferenceDataService facilityReferenceDataService;
+  @Autowired
+  private OrderableReferenceDataService orderableReferenceDataService;
+  @Autowired
+  private ProgramReferenceDataService programReferenceDataService;
+  @Autowired
+  private LotReferenceDataService lotReferenceDataService;
 
   public InitialMoveProductFieldDto canInitialMoveProduct(UUID facilityId) {
 
@@ -192,7 +202,7 @@ public class SiglusStockCardLocationMovementService {
     Collections.reverse(locationMovementLineItemDtos);
     resetFirstMovementQuantity(locationMovementLineItemDtos);
     Integer latestSoh = calculatedStockOnHandByLocationRepository.findRecentlySohByStockCardIdAndLocationCode(
-            stockCardId, locationCode).orElse(0);
+        stockCardId, locationCode).orElse(0);
     return createLocationMovmentDto(locationMovementLineItemDtos, stockCardId, latestSoh, locationCode);
   }
 
@@ -250,7 +260,7 @@ public class SiglusStockCardLocationMovementService {
       List<StockCard> stockCards = Boolean.TRUE.equals(lineItemDto.getIsKit()) ? siglusStockCardRepository
           .findByFacilityIdAndOrderableId(movementDto.getFacilityId(), lineItemDto.getOrderableId())
           : siglusStockCardRepository.findByFacilityIdAndOrderableIdAndLotId(movementDto.getFacilityId(),
-          lineItemDto.getOrderableId(), lineItemDto.getLotId());
+              lineItemDto.getOrderableId(), lineItemDto.getLotId());
       if (stockCards.isEmpty()) {
         throw new NotFoundException(ERROR_STOCK_CARD_NOT_FOUND);
       }

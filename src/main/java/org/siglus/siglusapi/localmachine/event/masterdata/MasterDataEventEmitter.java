@@ -28,6 +28,7 @@ import org.siglus.siglusapi.localmachine.cdc.CdcListener;
 import org.siglus.siglusapi.localmachine.cdc.CdcRecord;
 import org.siglus.siglusapi.localmachine.cdc.CdcRecordMapper;
 import org.siglus.siglusapi.localmachine.server.OnlineWebService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,10 +39,14 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 public class MasterDataEventEmitter implements CdcListener {
 
-  private final OnlineWebService onlineWebService;
-  private final EventPublisher eventPublisher;
-  private final CdcRecordMapper cdcRecordMapper;
-  private final UserRepository userRepository;
+  @Autowired
+  private OnlineWebService onlineWebService;
+  @Autowired
+  private EventPublisher eventPublisher;
+  @Autowired
+  private CdcRecordMapper cdcRecordMapper;
+  @Autowired
+  private UserRepository userRepository;
   private static final String USER_ID = "userid";
   private static final String REFERENCE_DATA = "referencedata";
   private static final String RIGHT_ASSIGNMENTS = "right_assignments";

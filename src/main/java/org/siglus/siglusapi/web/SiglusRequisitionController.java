@@ -46,6 +46,7 @@ import org.siglus.siglusapi.service.SiglusProcessingPeriodService;
 import org.siglus.siglusapi.service.SiglusRequisitionService;
 import org.siglus.siglusapi.service.scheduledtask.SiglusRequisitionAutoCloseService;
 import org.siglus.siglusapi.web.response.RequisitionPeriodExtensionResponse;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -72,17 +73,28 @@ import org.springframework.web.bind.annotation.RestController;
 @SuppressWarnings("PMD.TooManyMethods")
 public class SiglusRequisitionController {
 
-  private final RequisitionController requisitionController;
-  private final SiglusRequisitionService siglusRequisitionService;
-  private final RequisitionService requisitionService;
-  private final SiglusRequisitionAutoCloseService siglusRequisitionAutoCloseService;
-  private final SiglusProcessingPeriodService siglusProcessingPeriodService;
-  private final SiglusNotificationService notificationService;
-  private final AuthenticationHelper authenticationHelper;
-  private final RequisitionInternalApproveEmitter requisitionInternalApproveEmitter;
-  private final RequisitionFinalApproveEmitter requisitionFinalApproveEmitter;
-  private final RequisitionReleaseEmitter requisitionReleaseEmitter;
-  private final RequisitionRejectEmitter requisitionRejectEmitter;
+  @Autowired
+  private RequisitionController requisitionController;
+  @Autowired
+  private SiglusRequisitionService siglusRequisitionService;
+  @Autowired
+  private RequisitionService requisitionService;
+  @Autowired
+  private SiglusRequisitionAutoCloseService siglusRequisitionAutoCloseService;
+  @Autowired
+  private SiglusProcessingPeriodService siglusProcessingPeriodService;
+  @Autowired
+  private SiglusNotificationService notificationService;
+  @Autowired
+  private AuthenticationHelper authenticationHelper;
+  @Autowired
+  private RequisitionInternalApproveEmitter requisitionInternalApproveEmitter;
+  @Autowired
+  private RequisitionFinalApproveEmitter requisitionFinalApproveEmitter;
+  @Autowired
+  private RequisitionReleaseEmitter requisitionReleaseEmitter;
+  @Autowired
+  private RequisitionRejectEmitter requisitionRejectEmitter;
 
   @PostMapping("/initiate")
   @ResponseStatus(HttpStatus.CREATED)
@@ -91,7 +103,7 @@ public class SiglusRequisitionController {
       @RequestParam(value = "suggestedPeriod") UUID suggestedPeriod,
       @RequestParam(value = "emergency") boolean emergency,
       @RequestParam(value = "physicalInventoryDate", required = false)
-          String physicalInventoryDateStr,
+      String physicalInventoryDateStr,
       HttpServletRequest request, HttpServletResponse response) {
     return siglusRequisitionService.initiate(programId, facilityId, suggestedPeriod, emergency,
         physicalInventoryDateStr, request, response);
@@ -164,9 +176,9 @@ public class SiglusRequisitionController {
 
   /**
    * why we redo this api? for bug card #228, change dependency:
-   * {@linkplain org.openlmis.requisition.domain.requisition.Requisition#reject(Map,
-   * UUID)}  method} requisition.reject->updateConsumptions(products)-> {@linkplain
-   * org.openlmis.requisition.domain.requisition.Requisition#filterLineItems(Boolean, Boolean, Map)} method}
+   * {@linkplain org.openlmis.requisition.domain.requisition.Requisition#reject(Map, UUID)}  method}
+   * requisition.reject->updateConsumptions(products)->
+   * {@linkplain org.openlmis.requisition.domain.requisition.Requisition#filterLineItems(Boolean, Boolean, Map)} method}
    * getNonSkippedFullSupplyRequisitionLineItems->filterLineItems
    */
   @PutMapping("/{id}/reject")

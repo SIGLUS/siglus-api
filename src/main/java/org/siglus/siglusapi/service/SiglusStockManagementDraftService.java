@@ -58,6 +58,7 @@ import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.validator.ActiveDraftValidator;
 import org.siglus.siglusapi.validator.StockManagementDraftValidator;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -67,16 +68,26 @@ import org.springframework.transaction.annotation.Transactional;
 @SuppressWarnings("PMD.TooManyMethods")
 public class SiglusStockManagementDraftService {
 
-  private final ActiveDraftValidator draftValidator;
-  private final StockManagementDraftRepository stockManagementDraftRepository;
-  private final StockManagementInitialDraftsRepository stockManagementInitialDraftsRepository;
-  private final StockManagementDraftValidator stockManagementDraftValidator;
-  private final SiglusStockCardService stockCardService;
-  private final SiglusValidSourceDestinationService validSourceDestinationService;
-  private final OperatePermissionService operatePermissionService;
-  private final SiglusAuthenticationHelper authenticationHelper;
-  private final ConflictOrderableInSubDraftsService conflictOrderableInSubDraftsService;
-  private final SiglusLotLocationService lotLocationService;
+  @Autowired
+  private ActiveDraftValidator draftValidator;
+  @Autowired
+  private StockManagementDraftRepository stockManagementDraftRepository;
+  @Autowired
+  private StockManagementInitialDraftsRepository stockManagementInitialDraftsRepository;
+  @Autowired
+  private StockManagementDraftValidator stockManagementDraftValidator;
+  @Autowired
+  private SiglusStockCardService stockCardService;
+  @Autowired
+  private SiglusValidSourceDestinationService validSourceDestinationService;
+  @Autowired
+  private OperatePermissionService operatePermissionService;
+  @Autowired
+  private SiglusAuthenticationHelper authenticationHelper;
+  @Autowired
+  private ConflictOrderableInSubDraftsService conflictOrderableInSubDraftsService;
+  @Autowired
+  private SiglusLotLocationService lotLocationService;
 
   private static final Integer DRAFTS_LIMITATION = 10;
   private static final Integer DRAFTS_INCREMENT = 1;

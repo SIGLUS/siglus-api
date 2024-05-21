@@ -100,6 +100,7 @@ import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.validator.CsvValidator;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
@@ -114,27 +115,48 @@ import org.springframework.web.multipart.MultipartFile;
 @RequiredArgsConstructor
 public class SiglusAdministrationsService {
 
-  private final AppInfoRepository appInfoRepository;
-  private final FacilityController facilityController;
-  private final SiglusFacilityReferenceDataService siglusFacilityReferenceDataService;
-  private final FacilityExtensionRepository facilityExtensionRepository;
-  private final FacilityLocationsRepository facilityLocationsRepository;
-  private final StockCardRepository stockCardRepository;
-  private final CsvValidator csvValidator;
-  private final SiglusReportTypeRepository siglusReportTypeRepository;
-  private final StockCardLocationMovementLineItemRepository stockCardLocationMovementLineItemRepository;
-  private final SiglusProcessingPeriodService siglusProcessingPeriodService;
-  private final CalculatedStockOnHandRepository calculatedStockOnHandRepository;
-  private final CalculatedStockOnHandByLocationRepository calculatedStocksOnHandLocationsRepository;
-  private final OrderableRepository orderableRepository;
-  private final StockCardLineItemRepository stockCardLineItemRepository;
-  private final StockCardExtensionRepository stockCardExtensionRepository;
-  private final SiglusAuthenticationHelper authenticationHelper;
-  private final LocationDraftRepository locationDraftRepository;
-  private final AgentInfoRepository agentInfoRepository;
-  private final ActivationCodeRepository activationCodeRepository;
-  private final LocalActivationService localActivationService;
-  private final Machine machine;
+  @Autowired
+  private AppInfoRepository appInfoRepository;
+  @Autowired
+  private FacilityController facilityController;
+  @Autowired
+  private SiglusFacilityReferenceDataService siglusFacilityReferenceDataService;
+  @Autowired
+  private FacilityExtensionRepository facilityExtensionRepository;
+  @Autowired
+  private FacilityLocationsRepository facilityLocationsRepository;
+  @Autowired
+  private StockCardRepository stockCardRepository;
+  @Autowired
+  private CsvValidator csvValidator;
+  @Autowired
+  private SiglusReportTypeRepository siglusReportTypeRepository;
+  @Autowired
+  private StockCardLocationMovementLineItemRepository stockCardLocationMovementLineItemRepository;
+  @Autowired
+  private SiglusProcessingPeriodService siglusProcessingPeriodService;
+  @Autowired
+  private CalculatedStockOnHandRepository calculatedStockOnHandRepository;
+  @Autowired
+  private CalculatedStockOnHandByLocationRepository calculatedStocksOnHandLocationsRepository;
+  @Autowired
+  private OrderableRepository orderableRepository;
+  @Autowired
+  private StockCardLineItemRepository stockCardLineItemRepository;
+  @Autowired
+  private StockCardExtensionRepository stockCardExtensionRepository;
+  @Autowired
+  private SiglusAuthenticationHelper authenticationHelper;
+  @Autowired
+  private LocationDraftRepository locationDraftRepository;
+  @Autowired
+  private AgentInfoRepository agentInfoRepository;
+  @Autowired
+  private ActivationCodeRepository activationCodeRepository;
+  @Autowired
+  private LocalActivationService localActivationService;
+  @Autowired
+  private Machine machine;
   private static final String LOCATION_MANAGEMENT_TAB = "locationManagement";
   private static final String CSV_SUFFIX = ".csv";
   private static final String CONTENT_TYPE = "application/force-download";
