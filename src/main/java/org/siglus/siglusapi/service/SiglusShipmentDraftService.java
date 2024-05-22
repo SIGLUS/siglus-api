@@ -47,7 +47,6 @@ import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftController;
 import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftDto;
 import org.openlmis.fulfillment.web.util.OrderLineItemDto;
 import org.openlmis.stockmanagement.domain.card.StockCard;
-import org.organicdesign.fp.tuple.Tuple3;
 import org.siglus.siglusapi.domain.OrderLineItemExtension;
 import org.siglus.siglusapi.domain.ShipmentDraftLineItemsExtension;
 import org.siglus.siglusapi.dto.Message;
@@ -180,25 +179,45 @@ public class SiglusShipmentDraftService {
     initialedExtension(extensions, addedLineItemExtensions);
   }
 
+  private String buildStockCardReservedDtoUniqueKey(StockCardReservedDto dto) {
+    return buildUniqueKeyForReserved(dto.getOrderableId(), dto.getOrderableVersionNumber(),
+        dto.getLotId(), dto.getLocationCode());
+  }
+
+  private String buildShipmentLineItemDtoUniqueKey(ShipmentLineItemDto dto) {
+    String locationCode = dto.getLocation() == null ? null : dto.getLocation().getLocationCode();
+    return buildUniqueKeyForReserved(dto.getOrderable().getId(), dto.getOrderable().getVersionNumber().intValue(),
+        dto.getLotId(), locationCode);
+  }
+
+  private static String buildUniqueKeyForReserved(UUID orderableId, Integer orderableVersionNumber,
+                                       UUID lotId, String locationCode) {
+    List<String> items = new ArrayList<>();
+    items.add(orderableId.toString());
+    items.add(orderableVersionNumber == null ? "" : String.valueOf(orderableVersionNumber));
+    items.add(lotId == null ? "" : lotId.toString());
+    items.add(locationCode == null ? "" : locationCode);
+    return String.join("_", items);
+  }
+
   public List<StockCardReservedDto> reservedCount(UUID facilityId,
           UUID shipmentDraftId, List<ShipmentLineItemDto> lineItems) {
     List<StockCardReservedDto> allReserved = queryReservedCount(facilityId, shipmentDraftId);
     if (ObjectUtils.isEmpty(lineItems)) {
       return allReserved;
     }
-    Map<Tuple3<UUID, Integer, UUID>, Integer> reservedMap = allReserved
+    Map<String, Integer> reservedMap = allReserved
             .stream()
-            .collect(Collectors.toMap(
-                item -> Tuple3.of(item.getOrderableId(), item.getOrderableVersionNumber(), item.getLotId()),
-                StockCardReservedDto::getReserved));
+            .collect(Collectors.toMap(this::buildStockCardReservedDtoUniqueKey, StockCardReservedDto::getReserved));
     return lineItems.stream().map(item -> {
-      Tuple3<UUID, Integer, UUID> key = Tuple3.of(item.getOrderable().getId(),
-              item.getOrderable().getVersionNumber().intValue(), item.getLotId());
+      String key = buildShipmentLineItemDtoUniqueKey(item);
       return StockCardReservedDto.builder()
-              .orderableId(key._1())
-              .orderableVersionNumber(key._2())
-              .lotId(key._3())
+              .orderableId(item.getOrderable().getId())
+              .orderableVersionNumber(item.getOrderable().getVersionNumber().intValue())
+              .lotId(item.getLotId())
               .reserved(reservedMap.getOrDefault(key, 0))
+              .locationCode(item.getLocation() == null ? null : item.getLocation().getLocationCode())
+              .area(item.getLocation() == null ? null : item.getLocation().getArea())
               .build();
     }).collect(Collectors.toList());
   }

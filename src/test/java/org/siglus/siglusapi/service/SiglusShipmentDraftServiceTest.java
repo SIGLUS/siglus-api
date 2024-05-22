@@ -531,6 +531,42 @@ public class SiglusShipmentDraftServiceTest {
     siglusShipmentDraftService.checkStockOnHandQuantity(UUID.randomUUID(), draftDto);
   }
 
+  @Test
+  public void shouldGetReservedCountSuccess() {
+    UUID facilityId = UUID.randomUUID();
+    UUID shipmentDraftId = UUID.randomUUID();
+    UUID lotId = UUID.randomUUID();
+    StockCardReservedDto reservedDto = StockCardReservedDto.builder()
+        .orderableId(orderableId)
+        .orderableVersionNumber(1)
+        .lotId(lotId)
+        .reserved(3)
+        .area(area)
+        .locationCode(locationCode)
+        .build();
+    when(shipmentDraftLineItemsRepository.reservedCount(facilityId, shipmentDraftId))
+        .thenReturn(newArrayList(reservedDto));
+    ShipmentLineItemDto lineItemDto = new ShipmentLineItemDto();
+    VersionObjectReferenceDto product = new VersionObjectReferenceDto(orderableId, null, null, 1L);
+    lineItemDto.setOrderable(product);
+    ObjectReferenceDto lot = new ObjectReferenceDto(lotId);
+    lineItemDto.setLot(lot);
+    lineItemDto.setQuantityShipped(5L);
+    lineItemDto.setLocation(LocationDto.builder().area(area).locationCode(locationCode).build());
+    List<ShipmentLineItemDto> lineItems = newArrayList(lineItemDto);
+
+    List<StockCardReservedDto> reservedDtos = siglusShipmentDraftService.reservedCount(facilityId,
+        shipmentDraftId, lineItems);
+
+    assertEquals(reservedDtos.size(), 1);
+    StockCardReservedDto dto = reservedDtos.get(0);
+    assertEquals(dto.getReserved().intValue(), 3);
+    assertEquals(dto.getOrderableId(), orderableId);
+    assertEquals(dto.getLotId(), lotId);
+    assertEquals(dto.getArea(), area);
+    assertEquals(dto.getLocationCode(), locationCode);
+  }
+
   private ShipmentDraftDto buildShipmentDraftDto() {
     OrderObjectReferenceDto order = new OrderObjectReferenceDto(orderId);
     order.setOrderLineItems(newArrayList());
