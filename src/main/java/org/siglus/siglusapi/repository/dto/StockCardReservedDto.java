@@ -31,7 +31,7 @@ import lombok.Data;
     @NamedNativeQuery(
         name = "StockCard.queryStockCardReservedDto",
         query = "SELECT sdli.orderableid AS orderableId, sdli.orderableversionnumber AS orderableVersionNumber, "
-                + "  sdli.lotid AS lotId, sdli.quantityshipped AS reserved, "
+                + "  sdli.lotid AS lotId, COALESCE(sdlie.quantityshipped, sdli.quantityshipped) AS reserved, "
                 + "  sdlie.area AS area, sdlie.locationcode AS locationCode "
                 + "FROM fulfillment.shipment_draft_line_items sdli "
                 + "LEFT JOIN siglusintegration.shipment_draft_line_items_extension sdlie "
@@ -47,7 +47,7 @@ import lombok.Data;
     @NamedNativeQuery(
         name = "StockCard.queryStockCardReservedExcludeDto",
         query = "SELECT sdli.orderableid AS orderableId, sdli.orderableversionnumber AS orderableVersionNumber, "
-                + "  sdli.lotid AS lotId, sdli.quantityshipped AS reserved, "
+                + "  sdli.lotid AS lotId, COALESCE(sdlie.quantityshipped, sdli.quantityshipped) AS reserved, "
                 + "  sdlie.area AS area, sdlie.locationcode AS locationCode "
                 + "FROM fulfillment.shipment_draft_line_items sdli "
                 + "LEFT JOIN siglusintegration.shipment_draft_line_items_extension sdlie "

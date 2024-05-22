@@ -29,13 +29,9 @@ import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_PERMISSION_NOT_SUPPORT
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_ID_NOT_FOUND;
 import static org.siglus.siglusapi.i18n.PermissionMessageKeys.ERROR_NO_FOLLOWING_PERMISSION;
 
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.Multimap;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -663,17 +659,11 @@ public class SiglusStockCardSummariesService {
           UUID facilityId, UUID shipmentDraftId) {
     List<StockCardReservedDto> stockCardReservedDtos =
             siglusShipmentDraftService.reservedCount(facilityId, shipmentDraftId, null);
-    Multimap<String, StockCardReservedDto> reservedMap = ArrayListMultimap.create();
-    stockCardReservedDtos.forEach(dto -> {
-      String uniqueKey = FormatHelper.buildStockCardUniqueKey(
-              dto.getOrderableId(), dto.getLotId(), dto.getArea(), dto.getLocationCode());
-      reservedMap.put(uniqueKey, dto);
-    });
-    Map<String, Integer> result = new HashMap<>();
-    reservedMap.asMap().forEach((key, values) -> {
-      result.put(key, values.stream().mapToInt(StockCardReservedDto::getReserved).sum());
-    });
-    return result;
+    return stockCardReservedDtos
+        .stream()
+        .collect(Collectors.toMap(dto -> FormatHelper.buildStockCardUniqueKey(
+                dto.getOrderableId(), dto.getLotId(), dto.getArea(), dto.getLocationCode()),
+            StockCardReservedDto::getReserved));
   }
 
   public List<StockCardStockDto> getLatestStockOnHand(List<StockCard> stockCards, boolean hasLocation) {
