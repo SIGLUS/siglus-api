@@ -30,10 +30,10 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.apache.commons.collections.CollectionUtils;
+import org.openlmis.referencedata.domain.Facility;
 import org.openlmis.referencedata.domain.ProcessingPeriod;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.RequisitionStatus;
-import org.openlmis.requisition.dto.FacilityDto;
 import org.openlmis.requisition.dto.ProcessingPeriodDto;
 import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.dto.RequisitionPeriodDto;
@@ -105,7 +105,7 @@ public class SiglusProcessingPeriodService {
   private SiglusAuthenticationHelper authenticationHelper;
 
   @Autowired
-  private SiglusRequisitionService siglusRequisitionService;
+  private SiglusFacilityService siglusFacilityService;
 
   public LocalDate getPreviousPeriodStartDateSinceInitiate(String programCode, UUID facilityId) {
     ProgramDto program = siglusProgramService.getProgramByCode(programCode)
@@ -212,7 +212,7 @@ public class SiglusProcessingPeriodService {
       boolean emergency) {
     UUID homeFacilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
     if (!ObjectUtils.isEmpty(homeFacilityId) && !homeFacilityId.equals(facility)) {
-      checkClientFacilityId(facility);
+      checkClientFacilityId(homeFacilityId, facility, program);
     }
     Collection<RequisitionPeriodDto> requisitionPeriodDtos = getRequisitionPeriods(program, facility, emergency);
     if (CollectionUtils.isEmpty(requisitionPeriodDtos)) {
@@ -229,9 +229,9 @@ public class SiglusProcessingPeriodService {
         .collect(Collectors.toList());
   }
 
-  private void checkClientFacilityId(UUID clientFacilityId) {
-    Set<UUID> clientFacilityIds = siglusRequisitionService.searchFacilitiesForView().stream()
-        .map(FacilityDto::getId)
+  private void checkClientFacilityId(UUID supplyFacilityId, UUID clientFacilityId, UUID programId) {
+    Set<UUID> clientFacilityIds = siglusFacilityService.getAllClientFacilities(supplyFacilityId, programId).stream()
+        .map(Facility::getId)
         .collect(Collectors.toSet());
     if (!clientFacilityIds.contains(clientFacilityId)) {
       throw new BusinessDataException(new Message(ERROR_WRONG_CLIENT_FACILITY));

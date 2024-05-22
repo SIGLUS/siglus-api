@@ -19,6 +19,7 @@ import static org.siglus.siglusapi.constant.PaginationConstants.DEFAULT_PAGE_NUM
 import static org.siglus.siglusapi.constant.PaginationConstants.NO_PAGINATION;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -26,6 +27,7 @@ import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.openlmis.referencedata.domain.Facility;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.dto.BasicRequisitionDto;
@@ -41,6 +43,7 @@ import org.siglus.siglusapi.localmachine.event.requisition.web.approve.Requisiti
 import org.siglus.siglusapi.localmachine.event.requisition.web.finalapprove.RequisitionFinalApproveEmitter;
 import org.siglus.siglusapi.localmachine.event.requisition.web.reject.RequisitionRejectEmitter;
 import org.siglus.siglusapi.localmachine.event.requisition.web.release.RequisitionReleaseEmitter;
+import org.siglus.siglusapi.service.SiglusFacilityService;
 import org.siglus.siglusapi.service.SiglusNotificationService;
 import org.siglus.siglusapi.service.SiglusProcessingPeriodService;
 import org.siglus.siglusapi.service.SiglusRequisitionService;
@@ -95,6 +98,8 @@ public class SiglusRequisitionController {
   private RequisitionReleaseEmitter requisitionReleaseEmitter;
   @Autowired
   private RequisitionRejectEmitter requisitionRejectEmitter;
+  @Autowired
+  private SiglusFacilityService siglusFacilityService;
 
   @PostMapping("/initiate")
   @ResponseStatus(HttpStatus.CREATED)
@@ -249,6 +254,14 @@ public class SiglusRequisitionController {
   @GetMapping("/facilitiesForView")
   public List<FacilityDto> getFacilitiesForView() {
     return siglusRequisitionService.searchFacilitiesForView();
+  }
+
+  @GetMapping("/clientFacilities")
+  public Set<Facility> getAllClientFacilities(
+      @RequestParam(value = "facilityId") @NotNull @Valid UUID facilityId,
+      @RequestParam(value = "programId") @NotNull @Valid UUID programId
+  ) {
+    return siglusFacilityService.getAllClientFacilities(facilityId, programId);
   }
 
 }

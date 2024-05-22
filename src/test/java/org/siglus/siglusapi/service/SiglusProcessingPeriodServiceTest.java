@@ -26,6 +26,7 @@ import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -46,10 +47,10 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.openlmis.referencedata.domain.Facility;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.RequisitionLineItem;
 import org.openlmis.requisition.domain.requisition.RequisitionStatus;
-import org.openlmis.requisition.dto.FacilityDto;
 import org.openlmis.requisition.dto.ProcessingPeriodDto;
 import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.dto.RequisitionPeriodDto;
@@ -137,7 +138,7 @@ public class SiglusProcessingPeriodServiceTest {
   private SiglusProgramAdditionalOrderableService siglusProgramAdditionalOrderableService;
 
   @Mock
-  private SiglusRequisitionService siglusRequisitionService;
+  private SiglusFacilityService siglusFacilityService;
 
   @Mock
   private FacilityNativeRepository facilityNativeRepository;
@@ -584,9 +585,10 @@ public class SiglusProcessingPeriodServiceTest {
     UUID clientFacilityId2 = UUID.randomUUID();
     userDto.setHomeFacilityId(facilityId);
     when(authenticationHelper.getCurrentUser()).thenReturn(userDto);
-    FacilityDto facilityDto = new FacilityDto();
-    facilityDto.setId(clientFacilityId2);
-    when(siglusRequisitionService.searchFacilitiesForView()).thenReturn(Lists.newArrayList(facilityDto));
+    Facility facility = new Facility();
+    facility.setId(clientFacilityId2);
+    when(siglusFacilityService.getAllClientFacilities(facilityId, programId))
+        .thenReturn(Sets.newHashSet(facility));
     // when
     UUID clientFacilityId = UUID.randomUUID();
     siglusProcessingPeriodService.getRequisitionPeriodExtensionResponses(programId, clientFacilityId, false);

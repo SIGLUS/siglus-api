@@ -25,6 +25,7 @@ import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.openlmis.referencedata.domain.Facility;
+import org.openlmis.referencedata.repository.FacilityRepository;
 import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.siglus.siglusapi.dto.FacilityRemovedLotDto;
 import org.siglus.siglusapi.dto.Message;
@@ -43,6 +44,7 @@ import org.springframework.util.ObjectUtils;
 @AllArgsConstructor
 @NoArgsConstructor
 public class SiglusFacilityService {
+
   @Autowired
   private RequisitionGroupMembersRepository requisitionGroupMembersRepository;
   @Autowired
@@ -53,6 +55,8 @@ public class SiglusFacilityService {
   private SiglusLotService siglusLotService;
   @Autowired
   private SiglusStockCardService siglusStockCardService;
+  @Autowired
+  private FacilityRepository facilityRepository;
 
   public List<RequisitionGroupMembersDto> searchFacilityRequisitionGroup(UUID id, Set<UUID> programIds) {
     return requisitionGroupMembersRepository.findParentFacilityByRequisitionGroup(id, programIds);
@@ -77,29 +81,33 @@ public class SiglusFacilityService {
     }
     List<UUID> stockCardIds = lots.stream().map(FacilityRemovedLotDto::getStockCardId).collect(Collectors.toList());
     Map<UUID, StockCard> stockCardMap = siglusStockCardService.findStockCardByIds(stockCardIds)
-         .stream().collect(Collectors.toMap(StockCard::getId, stockCard -> stockCard));
+        .stream().collect(Collectors.toMap(StockCard::getId, stockCard -> stockCard));
     List<RemovedLotDto> removedLotDtos = lots.stream().map(lot -> {
       StockCard stockCard = stockCardMap.getOrDefault(lot.getStockCardId(), null);
       if (stockCard == null) {
         throw new BusinessDataException(Message.createFromMessageKeyStr(
-                "stock card id doesn't exist " + lot.getStockCardId()));
+            "stock card id doesn't exist " + lot.getStockCardId()));
       }
       if (!stockCard.getFacilityId().equals(facilityId)) {
         throw new BusinessDataException(Message.createFromMessageKeyStr(
-                "stock card id:" + lot.getStockCardId() + " doesn't belong to facility:" + facilityId));
+            "stock card id:" + lot.getStockCardId() + " doesn't belong to facility:" + facilityId));
       }
       return RemovedLotDto.builder().facilityId(stockCard.getFacilityId())
-              .programId(stockCard.getProgramId())
-              .orderableId(stockCard.getOrderableId())
-              .lotId(stockCard.getLotId())
-              .area(lot.getArea())
-              .locationCode(lot.getLocationCode())
-              .quantity(lot.getQuantity())
-              .stockCardId(stockCard.getId())
-              .signature(signature)
-              .documentNumber(documentNumber)
-              .build();
+          .programId(stockCard.getProgramId())
+          .orderableId(stockCard.getOrderableId())
+          .lotId(stockCard.getLotId())
+          .area(lot.getArea())
+          .locationCode(lot.getLocationCode())
+          .quantity(lot.getQuantity())
+          .stockCardId(stockCard.getId())
+          .signature(signature)
+          .documentNumber(documentNumber)
+          .build();
     }).collect(Collectors.toList());
     siglusLotService.removeExpiredLots(removedLotDtos, hasLocation);
+  }
+
+  public Set<Facility> getAllClientFacilities(UUID supplyFacilityId, UUID programId) {
+    return facilityRepository.findAllClientFacilityIdsBySupplyFacilityIdAndProgramId(supplyFacilityId, programId);
   }
 }
