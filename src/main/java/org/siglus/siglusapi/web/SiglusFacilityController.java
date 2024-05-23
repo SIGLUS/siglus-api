@@ -19,7 +19,10 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
+import org.openlmis.referencedata.domain.Facility;
 import org.siglus.siglusapi.dto.LocationStatusDto;
 import org.siglus.siglusapi.dto.RequisitionGroupMembersDto;
 import org.siglus.siglusapi.exception.InvalidReasonException;
@@ -56,7 +59,7 @@ public class SiglusFacilityController {
 
   @GetMapping("/{id}/lots")
   public List<LotStockDto> searchExpiredLots(@PathVariable("id") UUID id,
-                                             @RequestParam Boolean expired) {
+      @RequestParam Boolean expired) {
     if (!expired) {
       throw new InvalidReasonException("un-support param 'expired = false'");
     }
@@ -65,7 +68,7 @@ public class SiglusFacilityController {
 
   @PostMapping("/{id}/lots/remove")
   public void removeExpiredLots(@PathVariable("id") UUID id,
-                                @Validated @RequestBody RemoveLotsRequest request) {
+      @Validated @RequestBody RemoveLotsRequest request) {
     if (Objects.equals(request.getLotType(), RemoveLotsRequest.EXPIRED)) {
       siglusFacilityService.removeExpiredLots(id,
           request.getLots(), request.getSignature(), request.getDocumentNumber());
@@ -77,5 +80,13 @@ public class SiglusFacilityController {
   @GetMapping("/{id}/locations")
   public List<LocationStatusDto> searchLocationStatus(@PathVariable UUID id) {
     return lotLocationService.searchLocationStatus(id);
+  }
+
+  @GetMapping("/{id}/clients")
+  public Set<Facility> getAllClientFacilities(
+      @PathVariable(value = "id") UUID facilityId,
+      @RequestParam(value = "programId") @NotNull @Valid UUID programId
+  ) {
+    return siglusFacilityService.getAllClientFacilities(facilityId, programId);
   }
 }
