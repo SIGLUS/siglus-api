@@ -636,6 +636,14 @@ traits:
           responses:
             200:
               description: GET success
+      /{id}/clients:
+        get:
+          is: [ secured ]
+          body:
+            application/json:
+          responses:
+            200:
+              description: GET success
 
     /localIssueVouchers:
       post:
