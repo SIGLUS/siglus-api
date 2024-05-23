@@ -22,7 +22,9 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import org.openlmis.requisition.domain.RequisitionTemplate;
 import org.openlmis.requisition.dto.RequisitionTemplateDto;
+import org.openlmis.requisition.repository.RequisitionTemplateRepository;
 import org.siglus.common.domain.RequisitionTemplateExtension;
 import org.siglus.common.dto.RequisitionTemplateExtensionDto;
 import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
@@ -36,6 +38,7 @@ import org.siglus.siglusapi.repository.AvailableUsageColumnRepository;
 import org.siglus.siglusapi.repository.AvailableUsageColumnSectionRepository;
 import org.siglus.siglusapi.repository.UsageTemplateColumnSectionRepository;
 import org.siglus.siglusapi.service.client.RequisitionTemplateRequisitionService;
+import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -49,6 +52,12 @@ public class SiglusRequisitionTemplateService {
 
   @Autowired
   private RequisitionTemplateExtensionRepository requisitionTemplateExtensionRepository;
+
+  @Autowired
+  private SiglusFacilityReferenceDataService siglusFacilityReferenceDataService;
+
+  @Autowired
+  private RequisitionTemplateRepository requisitionTemplateRepository;
 
   @Autowired
   AvailableUsageColumnSectionRepository availableUsageColumnSectionRepository;
@@ -85,6 +94,15 @@ public class SiglusRequisitionTemplateService {
       });
     }
     return setUsageTemplateDto(templateDto, usageTemplateColumns);
+  }
+
+  public RequisitionTemplate getRequisitionTemplate(UUID programId, UUID facilityId) {
+    UUID facilityTypeId = siglusFacilityReferenceDataService.findOne(facilityId).getType().getId();
+    RequisitionTemplate template = requisitionTemplateRepository.findTemplate(programId, facilityTypeId);
+    RequisitionTemplateExtension templateExtension = requisitionTemplateExtensionRepository
+        .findByRequisitionTemplateId(template.getId());
+    template.setTemplateExtension(templateExtension);
+    return template;
   }
 
   @Transactional

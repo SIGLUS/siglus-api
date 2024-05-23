@@ -28,6 +28,9 @@ import static org.openlmis.requisition.domain.requisition.RequisitionStatus.RELE
 import static org.openlmis.requisition.domain.requisition.RequisitionStatus.SUBMITTED;
 import static org.openlmis.requisition.i18n.MessageKeys.ERROR_ID_MISMATCH;
 import static org.openlmis.requisition.web.QueryRequisitionSearchParams.REQUISITION_STATUS;
+import static org.openlmis.requisition.web.ResourceNames.FACILITIES;
+import static org.openlmis.requisition.web.ResourceNames.PROCESSING_PERIODS;
+import static org.openlmis.requisition.web.ResourceNames.PROGRAMS;
 import static org.siglus.common.constant.KitConstants.APE_KITS;
 import static org.siglus.common.constant.KitConstants.US_KITS;
 import static org.siglus.siglusapi.constant.FacilityTypeConstants.getTopLevelTypes;
@@ -92,6 +95,7 @@ import org.openlmis.requisition.dto.BasicRequisitionTemplateColumnDto;
 import org.openlmis.requisition.dto.BasicRequisitionTemplateDto;
 import org.openlmis.requisition.dto.FacilityDto;
 import org.openlmis.requisition.dto.MetadataDto;
+import org.openlmis.requisition.dto.ObjectReferenceDto;
 import org.openlmis.requisition.dto.OrderableDto;
 import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.dto.ReleasableRequisitionBatchDto;
@@ -214,6 +218,8 @@ public class SiglusRequisitionService {
   private SiglusArchiveProductService archiveProductService;
   @Autowired
   private RequisitionTemplateExtensionRepository requisitionTemplateExtensionRepository;
+  @Autowired
+  private SiglusRequisitionTemplateService siglusRequisitionTemplateService;
   @Autowired
   private RequisitionLineItemExtensionRepository lineItemExtensionRepository;
   @Autowired
@@ -418,6 +424,19 @@ public class SiglusRequisitionService {
     saveLineItemExtensions(lineItems);
     notSubmittedMonthlyRequisitionsRepository.deleteByFacilityIdAndProgramIdAndProcessingPeriodId(facilityId,
         programId, v2Dto.getProcessingPeriodId());
+    return siglusRequisitionDto;
+  }
+
+  public SiglusRequisitionDto buildDraftForRegular(UUID facilityId, UUID suggestedPeriod, UUID programId) {
+    SiglusRequisitionDto siglusRequisitionDto = new SiglusRequisitionDto();
+    // TODO not finished
+    RequisitionTemplate template = siglusRequisitionTemplateService.getRequisitionTemplate(programId, facilityId);
+    BasicRequisitionTemplateDto templateDto = BasicRequisitionTemplateDto.newInstance(template);
+    templateDto.setExtension(RequisitionTemplateExtensionDto.from(template.getTemplateExtension()));
+    siglusRequisitionDto.setTemplate(templateDto);
+    siglusRequisitionDto.setFacility(new ObjectReferenceDto(facilityId, "", FACILITIES));
+    siglusRequisitionDto.setProcessingPeriod(new ObjectReferenceDto(suggestedPeriod, "", PROCESSING_PERIODS));
+    siglusRequisitionDto.setProgram(new ObjectReferenceDto(programId, "", PROGRAMS));
     return siglusRequisitionDto;
   }
 

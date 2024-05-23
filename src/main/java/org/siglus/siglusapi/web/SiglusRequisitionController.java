@@ -70,7 +70,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/siglusapi/requisitions")
 @RequiredArgsConstructor
 @Validated
-@SuppressWarnings("PMD.TooManyMethods")
+@SuppressWarnings({"PMD.TooManyMethods", "PMD.AvoidDuplicateLiterals"})
 public class SiglusRequisitionController {
 
   @Autowired
@@ -107,6 +107,14 @@ public class SiglusRequisitionController {
       HttpServletRequest request, HttpServletResponse response) {
     return siglusRequisitionService.initiate(programId, facilityId, suggestedPeriod, emergency,
         physicalInventoryDateStr, request, response);
+  }
+
+  @GetMapping("/draft")
+  public SiglusRequisitionDto buildDraftForRegular(
+      @RequestParam(value = "program") @Valid @NotNull UUID programId,
+      @RequestParam(value = "facility") @Valid @NotNull UUID facilityId,
+      @RequestParam(value = "period") @Valid @NotNull UUID periodId) {
+    return siglusRequisitionService.buildDraftForRegular(facilityId, periodId, programId);
   }
 
   @GetMapping("/{id}")

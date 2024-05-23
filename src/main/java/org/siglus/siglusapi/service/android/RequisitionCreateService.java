@@ -97,7 +97,6 @@ import org.openlmis.referencedata.domain.Code;
 import org.openlmis.referencedata.domain.ProcessingPeriod;
 import org.openlmis.referencedata.dto.BaseDto;
 import org.openlmis.referencedata.dto.OrderableDto;
-import org.openlmis.requisition.domain.RequisitionTemplate;
 import org.openlmis.requisition.domain.requisition.ApprovedProductReference;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.RequisitionBuilder;
@@ -118,15 +117,12 @@ import org.openlmis.requisition.dto.SupervisoryNodeDto;
 import org.openlmis.requisition.dto.VersionObjectReferenceDto;
 import org.openlmis.requisition.errorhandling.ValidationResult;
 import org.openlmis.requisition.repository.RequisitionRepository;
-import org.openlmis.requisition.repository.RequisitionTemplateRepository;
 import org.openlmis.requisition.service.PermissionService;
 import org.openlmis.requisition.service.RequisitionService;
 import org.openlmis.requisition.service.referencedata.ApproveProductsAggregator;
 import org.openlmis.requisition.service.referencedata.SupervisoryNodeReferenceDataService;
-import org.siglus.common.domain.RequisitionTemplateExtension;
 import org.siglus.common.dto.ProgramAdditionalOrderableDto;
 import org.siglus.common.dto.RequisitionTemplateExtensionDto;
-import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
 import org.siglus.siglusapi.constant.ProgramConstants;
 import org.siglus.siglusapi.constant.android.MmtbRequisitionConstants.MmtbAgeGroupSection;
 import org.siglus.siglusapi.constant.android.MmtbRequisitionConstants.MmtbPatientSection;
@@ -185,8 +181,8 @@ import org.siglus.siglusapi.service.SiglusProgramAdditionalOrderableService;
 import org.siglus.siglusapi.service.SiglusProgramService;
 import org.siglus.siglusapi.service.SiglusRequisitionExtensionService;
 import org.siglus.siglusapi.service.SiglusRequisitionService;
+import org.siglus.siglusapi.service.SiglusRequisitionTemplateService;
 import org.siglus.siglusapi.service.SiglusUsageReportService;
-import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.util.SupportedProgramsHelper;
 import org.springframework.stereotype.Service;
@@ -209,7 +205,6 @@ public class RequisitionCreateService {
   private final SiglusUsageReportService siglusUsageReportService;
   private final PermissionService permissionService;
   private final RequisitionLineItemExtensionRepository requisitionLineItemExtensionRepository;
-  private final RequisitionTemplateExtensionRepository requisitionTemplateExtensionRepository;
   private final RequisitionRepository requisitionRepository;
   private final ProcessingPeriodRepository processingPeriodRepository;
   private final RequisitionExtensionRepository requisitionExtensionRepository;
@@ -217,8 +212,7 @@ public class RequisitionCreateService {
   private final SyncUpHashRepository syncUpHashRepository;
   private final SupportedProgramsHelper supportedProgramsHelper;
   private final SiglusProgramAdditionalOrderableService additionalOrderableService;
-  private final SiglusFacilityReferenceDataService siglusFacilityReferenceDataService;
-  private final RequisitionTemplateRepository requisitionTemplateRepository;
+  private final SiglusRequisitionTemplateService siglusRequisitionTemplateService;
   private final SiglusNotificationService siglusNotificationService;
   private final SiglusRequisitionService siglusRequisitionService;
 
@@ -256,7 +250,7 @@ public class RequisitionCreateService {
     UUID homeFacilityId = user.getHomeFacilityId();
     checkPermission(() -> permissionService.canInitRequisition(programId, homeFacilityId));
     Requisition newRequisition = RequisitionBuilder.newRequisition(homeFacilityId, programId, request.getEmergency());
-    newRequisition.setTemplate(getRequisitionTemplate(programId, homeFacilityId));
+    newRequisition.setTemplate(siglusRequisitionTemplateService.getRequisitionTemplate(programId, homeFacilityId));
     newRequisition.setStatus(RequisitionStatus.INITIATED);
     newRequisition.setProcessingPeriodId(getPeriodId(request));
     newRequisition.setNumberOfMonthsInPeriod(1);
@@ -384,15 +378,6 @@ public class RequisitionCreateService {
     return processingPeriodRepository.findPeriodByCodeAndMonth(SCHEDULE_CODE, month)
         .map(ProcessingPeriod::getId)
         .orElseThrow(EntityNotFoundException::new);
-  }
-
-  private RequisitionTemplate getRequisitionTemplate(UUID programId, UUID facilityId) {
-    UUID facilityTypeId = siglusFacilityReferenceDataService.findOne(facilityId).getType().getId();
-    RequisitionTemplate template = requisitionTemplateRepository.findTemplate(programId, facilityTypeId);
-    RequisitionTemplateExtension templateExtension = requisitionTemplateExtensionRepository
-        .findByRequisitionTemplateId(template.getId());
-    template.setTemplateExtension(templateExtension);
-    return template;
   }
 
   private void buildRequisitionExtension(Requisition requisition, RequisitionCreateRequest request) {

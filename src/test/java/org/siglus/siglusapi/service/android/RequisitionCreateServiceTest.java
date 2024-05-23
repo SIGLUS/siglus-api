@@ -130,6 +130,7 @@ import org.siglus.siglusapi.service.SiglusProgramAdditionalOrderableService;
 import org.siglus.siglusapi.service.SiglusProgramService;
 import org.siglus.siglusapi.service.SiglusRequisitionExtensionService;
 import org.siglus.siglusapi.service.SiglusRequisitionService;
+import org.siglus.siglusapi.service.SiglusRequisitionTemplateService;
 import org.siglus.siglusapi.service.SiglusUsageReportService;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
@@ -211,6 +212,9 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
 
   @Mock
   private SiglusRequisitionService siglusRequisitionService;
+
+  @Mock
+  private SiglusRequisitionTemplateService siglusRequisitionTemplateService;
 
   // private SiglusRequisitionDto siglusRequisitionDto = buildSiglusRequisitionDto();
 
@@ -299,6 +303,7 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     RequisitionTemplate template = new RequisitionTemplate();
     template.setId(viaTemplateId);
     when(requisitionTemplateService.findTemplateById(viaTemplateId)).thenReturn(template);
+    when(siglusRequisitionTemplateService.getRequisitionTemplate(viaProgramId, facilityId)).thenReturn(template);
     OrderableDto orderableDto = new OrderableDto();
     orderableDto.setId(viaOrderableId);
     orderableDto.setProductCode(vcProductCode);
