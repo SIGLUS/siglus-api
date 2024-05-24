@@ -607,13 +607,13 @@ public class SiglusStockCardSummariesService {
     if (dto == null || dto.getOrderable() == null || dto.getLot() == null) {
       return 0;
     }
-    String key = FormatHelper.buildStockCardUniqueKey(dto.getOrderable().getId(), dto.getLot().getId(), null, null);
+    String key = FormatHelper.buildStockCardUniqueKey(dto.getOrderable().getId(), dto.getLot().getId(), null);
     return reservedMap.getOrDefault(key, 0);
   }
 
   private int getReservedStockForFulfill(LotLocationSohDto dto, Map<String, Integer> reservedMap) {
     String key = FormatHelper.buildStockCardUniqueKey(
-            dto.getOrderableId(), dto.getLotId(), dto.getArea(), dto.getLocationCode());
+            dto.getOrderableId(), dto.getLotId(), dto.getLocationCode());
     return reservedMap.getOrDefault(key, 0);
   }
 
@@ -662,7 +662,7 @@ public class SiglusStockCardSummariesService {
     return stockCardReservedDtos
         .stream()
         .collect(Collectors.toMap(dto -> FormatHelper.buildStockCardUniqueKey(
-                dto.getOrderableId(), dto.getLotId(), dto.getArea(), dto.getLocationCode()),
+                dto.getOrderableId(), dto.getLotId(), dto.getLocationCode()),
             StockCardReservedDto::getReserved));
   }
 

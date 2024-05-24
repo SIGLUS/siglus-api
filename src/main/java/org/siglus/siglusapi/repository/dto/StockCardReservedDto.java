@@ -30,9 +30,12 @@ import lombok.Data;
 @NamedNativeQueries({
     @NamedNativeQuery(
         name = "StockCard.queryStockCardReservedDto",
-        query = "SELECT sdli.orderableid AS orderableId, sdli.orderableversionnumber AS orderableVersionNumber, "
-                + "  sdli.lotid AS lotId, COALESCE(sdlie.quantityshipped, sdli.quantityshipped) AS reserved, "
-                + "  sdlie.area AS area, sdlie.locationcode AS locationCode "
+        query = "SELECT reservedTable.orderableId, reservedTable.orderableVersionNumber, reservedTable.lotId, "
+                + " reservedTable.locationCode, "
+                + " SUM(reservedTable.quantityshipped) AS reserved FROM ( "
+                + "SELECT sdli.orderableid AS orderableId, sdli.orderableversionnumber AS orderableVersionNumber, "
+                + "  sdli.lotid AS lotId, COALESCE(sdlie.quantityshipped, sdli.quantityshipped) AS quantityshipped, "
+                + "  sdlie.locationcode AS locationCode "
                 + "FROM fulfillment.shipment_draft_line_items sdli "
                 + "LEFT JOIN siglusintegration.shipment_draft_line_items_extension sdlie "
                 + "       ON sdli.id = sdlie.shipmentdraftlineitemid "
@@ -41,14 +44,20 @@ import lombok.Data;
                 + "       FROM fulfillment.shipment_drafts sd "
                 + "       LEFT JOIN fulfillment.orders o on o.id = sd.orderid "
                 + "       WHERE o.supplyingfacilityid = :facilityId AND o.status != 'CLOSED') "
-                + ";",
+                + ") reservedTable "
+                + "WHERE reservedTable.quantityshipped > 0 "
+                + "GROUP BY reservedTable.orderableId, reservedTable.orderableVersionNumber, reservedTable.lotId, "
+                + "         reservedTable.locationCode;",
         resultSetMapping = "StockCard.StockCardReservedDto"),
 
     @NamedNativeQuery(
         name = "StockCard.queryStockCardReservedExcludeDto",
-        query = "SELECT sdli.orderableid AS orderableId, sdli.orderableversionnumber AS orderableVersionNumber, "
-                + "  sdli.lotid AS lotId, COALESCE(sdlie.quantityshipped, sdli.quantityshipped) AS reserved, "
-                + "  sdlie.area AS area, sdlie.locationcode AS locationCode "
+        query = "SELECT reservedTable.orderableId, reservedTable.orderableVersionNumber, reservedTable.lotId, "
+                + " reservedTable.locationCode, "
+                + " SUM(reservedTable.quantityshipped) AS reserved FROM ( "
+                + "SELECT sdli.orderableid AS orderableId, sdli.orderableversionnumber AS orderableVersionNumber, "
+                + "  sdli.lotid AS lotId, COALESCE(sdlie.quantityshipped, sdli.quantityshipped) AS quantityshipped, "
+                + "  sdlie.locationcode AS locationCode "
                 + "FROM fulfillment.shipment_draft_line_items sdli "
                 + "LEFT JOIN siglusintegration.shipment_draft_line_items_extension sdlie "
                 + "       ON sdli.id = sdlie.shipmentdraftlineitemid "
@@ -58,7 +67,10 @@ import lombok.Data;
                 + "       LEFT JOIN fulfillment.orders o on o.id = sd.orderid "
                 + "       WHERE o.supplyingfacilityid = :facilityId and sd.id != :shipmentDraftId "
                 + "             AND o.status != 'CLOSED') "
-                + ";",
+                + ") reservedTable "
+                + "WHERE reservedTable.quantityshipped > 0 "
+                + "GROUP BY reservedTable.orderableId, reservedTable.orderableVersionNumber, reservedTable.lotId, "
+                + "         reservedTable.locationCode;",
         resultSetMapping = "StockCard.StockCardReservedDto")
 })
 
@@ -72,7 +84,6 @@ import lombok.Data;
                         @ColumnResult(name = "orderableVersionNumber", type = Integer.class),
                         @ColumnResult(name = "lotId", type = UUID.class),
                         @ColumnResult(name = "reserved", type = Integer.class),
-                        @ColumnResult(name = "area", type = String.class),
                         @ColumnResult(name = "locationCode", type = String.class),
                 }
         )
@@ -86,6 +97,5 @@ public class StockCardReservedDto {
   private Integer orderableVersionNumber;
   private UUID lotId;
   private Integer reserved;
-  private String area;
   private String locationCode;
 }

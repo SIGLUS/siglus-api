@@ -40,13 +40,12 @@ public final class FormatHelper {
     }
   }
 
-  public static String buildStockCardUniqueKey(UUID orderableId, UUID lotId, String area, String locationCode) {
+  public static String buildStockCardUniqueKey(UUID orderableId, UUID lotId, String locationCode) {
     if (orderableId == null) {
       return null;
     }
     return orderableId.toString()
         + (lotId == null ? "_" : lotId)
-        + (area == null ? "_" : area)
         + (locationCode == null ? "_" : locationCode);
   }
 }

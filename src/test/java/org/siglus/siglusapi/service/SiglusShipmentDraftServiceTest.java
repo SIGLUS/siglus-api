@@ -522,7 +522,6 @@ public class SiglusShipmentDraftServiceTest {
         .orderableId(orderableId)
         .lotId(lot.getId())
         .reserved(5)
-        .area(area)
         .locationCode(locationCode)
         .build();
     when(shipmentDraftLineItemsRepository.reservedCount(any(), any()))
@@ -541,7 +540,6 @@ public class SiglusShipmentDraftServiceTest {
         .orderableVersionNumber(1)
         .lotId(lotId)
         .reserved(3)
-        .area(area)
         .locationCode(locationCode)
         .build();
     when(shipmentDraftLineItemsRepository.reservedCount(facilityId, shipmentDraftId))
@@ -563,7 +561,6 @@ public class SiglusShipmentDraftServiceTest {
     assertEquals(dto.getReserved().intValue(), 3);
     assertEquals(dto.getOrderableId(), orderableId);
     assertEquals(dto.getLotId(), lotId);
-    assertEquals(dto.getArea(), area);
     assertEquals(dto.getLocationCode(), locationCode);
   }
 

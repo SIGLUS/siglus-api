@@ -217,7 +217,6 @@ public class SiglusShipmentDraftService {
               .lotId(item.getLotId())
               .reserved(reservedMap.getOrDefault(key, 0))
               .locationCode(item.getLocation() == null ? null : item.getLocation().getLocationCode())
-              .area(item.getLocation() == null ? null : item.getLocation().getArea())
               .build();
     }).collect(Collectors.toList());
   }
@@ -257,7 +256,7 @@ public class SiglusShipmentDraftService {
     } else {
       reservedDtos = shipmentDraftLineItemsRepository.reservedCount(facilityId, shipmentDraftId);
     }
-    return reservedDtos.stream().distinct().collect(Collectors.toList());
+    return reservedDtos;
   }
 
   private boolean canNotFulfillShipmentQuantity(List<StockCardStockDto> sohDtos,
@@ -265,13 +264,13 @@ public class SiglusShipmentDraftService {
                                                 ShipmentDraftDto draftDto) {
     Map<String, Integer> sohMap = sohDtos.stream().collect(Collectors.toMap(
         dto -> FormatHelper.buildStockCardUniqueKey(
-                dto.getOrderableId(), dto.getLotId(), dto.getArea(), dto.getLocationCode()),
+                dto.getOrderableId(), dto.getLotId(), dto.getLocationCode()),
         StockCardStockDto::getStockOnHand
     ));
     Map<String, Integer> reservedMap = reservedDtos
         .stream().collect(Collectors.toMap(
           dto -> FormatHelper.buildStockCardUniqueKey(
-                  dto.getOrderableId(), dto.getLotId(), dto.getArea(), dto.getLocationCode()),
+                  dto.getOrderableId(), dto.getLotId(), dto.getLocationCode()),
           StockCardReservedDto::getReserved,
             Integer::sum
         ));
@@ -280,7 +279,6 @@ public class SiglusShipmentDraftService {
         .anyMatch(item -> {
           String key = FormatHelper.buildStockCardUniqueKey(
               item.getOrderable().getId(), item.getLot().getId(),
-              item.getLocation() == null ? null : item.getLocation().getArea(),
               item.getLocation() == null ? null : item.getLocation().getLocationCode());
           int soh = sohMap.getOrDefault(key, 0);
           int reserved = reservedMap.getOrDefault(key, 0);
