@@ -2528,13 +2528,14 @@ traits:
           "500":
 
     /requisitions/draft:
-      get:
+      post:
         is: [ secured ]
+        description: Initiate requisition draft without saving.
         body:
           application/json:
         responses:
           200:
-            description: GET success
+            description: get draft success
 
     /requisitions/initiate:
       post:

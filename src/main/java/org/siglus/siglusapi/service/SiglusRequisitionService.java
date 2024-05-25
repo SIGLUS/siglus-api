@@ -28,9 +28,6 @@ import static org.openlmis.requisition.domain.requisition.RequisitionStatus.RELE
 import static org.openlmis.requisition.domain.requisition.RequisitionStatus.SUBMITTED;
 import static org.openlmis.requisition.i18n.MessageKeys.ERROR_ID_MISMATCH;
 import static org.openlmis.requisition.web.QueryRequisitionSearchParams.REQUISITION_STATUS;
-import static org.openlmis.requisition.web.ResourceNames.FACILITIES;
-import static org.openlmis.requisition.web.ResourceNames.PROCESSING_PERIODS;
-import static org.openlmis.requisition.web.ResourceNames.PROGRAMS;
 import static org.siglus.common.constant.KitConstants.APE_KITS;
 import static org.siglus.common.constant.KitConstants.US_KITS;
 import static org.siglus.siglusapi.constant.FacilityTypeConstants.getTopLevelTypes;
@@ -95,7 +92,6 @@ import org.openlmis.requisition.dto.BasicRequisitionTemplateColumnDto;
 import org.openlmis.requisition.dto.BasicRequisitionTemplateDto;
 import org.openlmis.requisition.dto.FacilityDto;
 import org.openlmis.requisition.dto.MetadataDto;
-import org.openlmis.requisition.dto.ObjectReferenceDto;
 import org.openlmis.requisition.dto.OrderableDto;
 import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.dto.ReleasableRequisitionBatchDto;
@@ -167,6 +163,7 @@ import org.siglus.siglusapi.dto.TestConsumptionProjectDto;
 import org.siglus.siglusapi.dto.TestConsumptionServiceDto;
 import org.siglus.siglusapi.dto.android.db.StockStatusCmm;
 import org.siglus.siglusapi.exception.NotFoundException;
+import org.siglus.siglusapi.exception.RequisitionBuildDraftException;
 import org.siglus.siglusapi.localmachine.event.requisition.web.finalapprove.RequisitionFinalApproveEmitter;
 import org.siglus.siglusapi.localmachine.event.requisition.web.release.RequisitionReleaseEmitter;
 import org.siglus.siglusapi.repository.FacilityCmmsRepository;
@@ -427,17 +424,21 @@ public class SiglusRequisitionService {
     return siglusRequisitionDto;
   }
 
-  public SiglusRequisitionDto buildDraftForRegular(UUID facilityId, UUID suggestedPeriod, UUID programId) {
-    SiglusRequisitionDto siglusRequisitionDto = new SiglusRequisitionDto();
-    // TODO not finished
-    RequisitionTemplate template = siglusRequisitionTemplateService.getRequisitionTemplate(programId, facilityId);
-    BasicRequisitionTemplateDto templateDto = BasicRequisitionTemplateDto.newInstance(template);
-    templateDto.setExtension(RequisitionTemplateExtensionDto.from(template.getTemplateExtension()));
-    siglusRequisitionDto.setTemplate(templateDto);
-    siglusRequisitionDto.setFacility(new ObjectReferenceDto(facilityId, "", FACILITIES));
-    siglusRequisitionDto.setProcessingPeriod(new ObjectReferenceDto(suggestedPeriod, "", PROCESSING_PERIODS));
-    siglusRequisitionDto.setProgram(new ObjectReferenceDto(programId, "", PROGRAMS));
-    return siglusRequisitionDto;
+  @Transactional
+  public void buildDraftForRegular(UUID facilityId, UUID periodId, UUID programId,
+                                                   HttpServletRequest request, HttpServletResponse response) {
+    RequisitionV2Dto v2Dto = requisitionV2Controller.initiate(programId, facilityId, periodId, false,
+        null, request, response);
+    SiglusRequisitionDto siglusRequisitionDto = siglusUsageReportService.initiateUsageReport(v2Dto);
+
+    RequisitionTemplate template = requisitionRepository.findOne(siglusRequisitionDto.getId()).getTemplate();
+    if (template.isColumnDisplayed(REQUESTED_QUANTITY) && template.isColumnStockBased(REQUESTED_QUANTITY)
+        && siglusRequisitionDto.getStatus().isSubmittable()) {
+      calcRequestedQuantity(siglusRequisitionDto);
+    }
+    initiateRequisitionNumber(siglusRequisitionDto);
+
+    throw new RequisitionBuildDraftException(siglusRequisitionDto);
   }
 
   public void processStockMovementAfterTheDateSubmitted(RequisitionV2Dto v2Dto) {

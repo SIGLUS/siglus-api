@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.web;
 
+import static com.google.common.collect.Lists.newArrayList;
 import static org.siglus.siglusapi.constant.PaginationConstants.DEFAULT_PAGE_NUMBER;
 import static org.siglus.siglusapi.constant.PaginationConstants.NO_PAGINATION;
 
@@ -37,6 +38,7 @@ import org.openlmis.requisition.utils.AuthenticationHelper;
 import org.openlmis.requisition.web.RequisitionController;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionLineItemDto;
+import org.siglus.siglusapi.exception.RequisitionBuildDraftException;
 import org.siglus.siglusapi.localmachine.event.requisition.web.approve.RequisitionInternalApproveEmitter;
 import org.siglus.siglusapi.localmachine.event.requisition.web.finalapprove.RequisitionFinalApproveEmitter;
 import org.siglus.siglusapi.localmachine.event.requisition.web.reject.RequisitionRejectEmitter;
@@ -45,6 +47,7 @@ import org.siglus.siglusapi.service.SiglusNotificationService;
 import org.siglus.siglusapi.service.SiglusProcessingPeriodService;
 import org.siglus.siglusapi.service.SiglusRequisitionService;
 import org.siglus.siglusapi.service.scheduledtask.SiglusRequisitionAutoCloseService;
+import org.siglus.siglusapi.web.request.BuildRequisitionDraftRequest;
 import org.siglus.siglusapi.web.response.RequisitionPeriodExtensionResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -109,12 +112,20 @@ public class SiglusRequisitionController {
         physicalInventoryDateStr, request, response);
   }
 
-  @GetMapping("/draft")
+  @PostMapping("/draft")
   public SiglusRequisitionDto buildDraftForRegular(
-      @RequestParam(value = "program") @Valid @NotNull UUID programId,
-      @RequestParam(value = "facility") @Valid @NotNull UUID facilityId,
-      @RequestParam(value = "period") @Valid @NotNull UUID periodId) {
-    return siglusRequisitionService.buildDraftForRegular(facilityId, periodId, programId);
+      @RequestBody BuildRequisitionDraftRequest buildRequisitionDraftRequest,
+      HttpServletRequest request, HttpServletResponse response) {
+    SiglusRequisitionDto draft = null;
+    try {
+      siglusRequisitionService.buildDraftForRegular(buildRequisitionDraftRequest.getFacilityId(),
+          buildRequisitionDraftRequest.getPeriodId(), buildRequisitionDraftRequest.getProgramId(), request, response);
+    } catch (RequisitionBuildDraftException exception) {
+      draft = exception.getDraft();
+    }
+    draft.setId(null);
+    draft.setRegimenLineItems(newArrayList());
+    return draft;
   }
 
   @GetMapping("/{id}")
