@@ -124,7 +124,7 @@ public class SiglusRequisitionController {
       draft = exception.getDraft();
     }
     draft.setId(null);
-    draft.setRegimenLineItems(newArrayList());
+    draft.setRequisitionLineItems(newArrayList());
     return draft;
   }
 
