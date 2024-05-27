@@ -753,12 +753,6 @@ public class SiglusPodService {
         uniqueKeyToAcceptedQuantity.put(key, lineItem.getQuantityAccepted());
       }
     });
-
-    uniqueKeyToAcceptedQuantity.forEach((key, acceptedQuantity) -> {
-      if (acceptedQuantity > uniqueKeyToShippedQuantity.get(key)) {
-        throw new BusinessDataException(new Message(ERROR_PERMISSION_NOT_SUPPORTED), podDto.getId());
-      }
-    });
   }
 
   private String buildForQuantityShippedKey(UUID orderableId, UUID lotId) {

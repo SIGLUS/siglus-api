@@ -918,18 +918,6 @@ public class SiglusPodServiceTest {
     assertEquals(area, podSubDraftWithLocation.getPodLineItemLocation().get(0).getArea());
   }
 
-  @Test(expected = BusinessDataException.class)
-  public void shouldThrowBusinessExceptionWhenQuantityAcceptedGreaterThanQuantityShipped() {
-    // given
-    UpdatePodSubDraftWithLocationRequest request = new UpdatePodSubDraftWithLocationRequest();
-    request.setPodDto(buildPodDto(100));
-    request.setOperateType(OperateTypeEnum.SUBMIT);
-    request.setPodLineItemLocation(Lists.newArrayList(buildMockPodLineItemWithLocationDto()));
-
-    // when
-    service.updateSubDraftWithLocation(request, subDraftId);
-  }
-
   @Test
   public void shouldUpdateSubDraftWithLocation() {
     // given
