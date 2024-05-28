@@ -92,6 +92,9 @@ public class SiglusLotService {
   @Autowired
   private FacilityConfigHelper facilityConfigHelper;
 
+  @Autowired
+  private SiglusArchiveProductService siglusArchiveProductService;
+
   /**
    * reason for create a new transaction: Running this method in the super transaction will cause
    * 'stockmanagement.error.event.lot.not.exist' execption. detail steps： 1. method createStockEventForOneProgram do
@@ -163,10 +166,19 @@ public class SiglusLotService {
   }
 
   public List<LotStockDto> getExpiredLots(UUID facilityId) {
+    List<LotStockDto> expiredLots;
     if (facilityConfigHelper.isLocationManagementEnabled(facilityId)) {
-      return siglusLotRepository.queryExpiredLotsWithLocation(facilityId);
+      expiredLots = siglusLotRepository.queryExpiredLotsWithLocation(facilityId);
+    } else {
+      expiredLots = siglusLotRepository.queryExpiredLots(facilityId);
     }
-    return siglusLotRepository.queryExpiredLots(facilityId);
+    if (ObjectUtils.isEmpty(expiredLots)) {
+      return expiredLots;
+    }
+    Set<String> archivedProducts = siglusArchiveProductService.searchArchivedProductsByFacilityId(facilityId);
+    return expiredLots.stream()
+        .filter(lot -> !archivedProducts.contains(lot.getOrderableId().toString()))
+        .collect(Collectors.toList());
   }
 
   public void removeExpiredLots(List<RemovedLotDto> lots, boolean hasLocation) {

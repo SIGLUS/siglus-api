@@ -59,6 +59,7 @@ import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.SiglusLotRepository;
+import org.siglus.siglusapi.repository.dto.LotStockDto;
 import org.siglus.siglusapi.repository.dto.StockCardStockDto;
 import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
@@ -102,6 +103,9 @@ public class SiglusLotServiceTest {
 
   @Mock
   private FacilityConfigHelper facilityConfigHelper;
+
+  @Mock
+  private SiglusArchiveProductService siglusArchiveProductService;
 
   @Rule
   public ExpectedException exception = ExpectedException.none();
@@ -240,6 +244,7 @@ public class SiglusLotServiceTest {
   public void shouldCallQueryExpiredLotsWithLocationGivenFacilityIsLocationEnabled() {
     UUID facilityId = UUID.randomUUID();
     when(facilityConfigHelper.isLocationManagementEnabled(facilityId)).thenReturn(true);
+    when(siglusArchiveProductService.searchArchivedProductsByFacilityId(facilityId)).thenReturn(newHashSet());
 
     siglusLotService.getExpiredLots(facilityId);
 
@@ -250,10 +255,42 @@ public class SiglusLotServiceTest {
   public void shouldCallQueryExpiredLotsGivenFacilityIsNotLocationEnabled() {
     UUID facilityId = UUID.randomUUID();
     when(facilityConfigHelper.isLocationManagementEnabled(facilityId)).thenReturn(false);
+    when(siglusArchiveProductService.searchArchivedProductsByFacilityId(facilityId)).thenReturn(newHashSet());
 
     siglusLotService.getExpiredLots(facilityId);
 
     verify(siglusLotRepository, Mockito.times(1)).queryExpiredLots(facilityId);
+  }
+
+  @Test
+  public void shouldNotCallArchiveProductServiceGivenNoExpiredLotExist() {
+    UUID facilityId = UUID.randomUUID();
+    when(facilityConfigHelper.isLocationManagementEnabled(facilityId)).thenReturn(false);
+    when(siglusLotRepository.queryExpiredLots(facilityId)).thenReturn(newArrayList());
+
+    siglusLotService.getExpiredLots(facilityId);
+
+    verify(siglusArchiveProductService, Mockito.times(0)).searchArchivedProductsByFacilityId(facilityId);
+  }
+
+  @Test
+  public void shouldRemoveArchivedProductsWhenGetExpiredLots() {
+    UUID facilityId = UUID.randomUUID();
+    LotStockDto dto1 = LotStockDto.builder()
+        .orderableId(UUID.randomUUID())
+        .build();
+    LotStockDto dto2 = LotStockDto.builder()
+        .orderableId(UUID.randomUUID())
+        .build();
+    when(facilityConfigHelper.isLocationManagementEnabled(facilityId)).thenReturn(false);
+    when(siglusLotRepository.queryExpiredLots(facilityId)).thenReturn(newArrayList(dto1, dto2));
+    when(siglusArchiveProductService.searchArchivedProductsByFacilityId(facilityId))
+        .thenReturn(newHashSet(dto2.getOrderableId().toString()));
+
+    List<LotStockDto> result = siglusLotService.getExpiredLots(facilityId);
+
+    assertEquals(result.size(), 1);
+    assertEquals(result.get(0).getOrderableId(), dto1.getOrderableId());
   }
 
   @Test(expected = BusinessDataException.class)
