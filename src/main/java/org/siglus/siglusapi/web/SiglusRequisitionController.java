@@ -16,6 +16,7 @@
 package org.siglus.siglusapi.web;
 
 import static com.google.common.collect.Lists.newArrayList;
+import static org.siglus.siglusapi.constant.FieldConstants.REQUISITION_DRAFT_UUID;
 import static org.siglus.siglusapi.constant.PaginationConstants.DEFAULT_PAGE_NUMBER;
 import static org.siglus.siglusapi.constant.PaginationConstants.NO_PAGINATION;
 
@@ -123,7 +124,7 @@ public class SiglusRequisitionController {
     } catch (RequisitionBuildDraftException exception) {
       draft = exception.getDraft();
     }
-    draft.setId(null);
+    draft.setId(REQUISITION_DRAFT_UUID);
     draft.setRequisitionLineItems(newArrayList());
     return draft;
   }
