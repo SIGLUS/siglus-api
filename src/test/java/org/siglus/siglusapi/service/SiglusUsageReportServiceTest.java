@@ -58,6 +58,7 @@ import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.dto.VersionIdentityDto;
 import org.openlmis.requisition.dto.stockmanagement.StockCardRangeSummaryDto;
 import org.openlmis.requisition.service.PeriodService;
+import org.openlmis.requisition.service.PermissionService;
 import org.openlmis.requisition.service.stockmanagement.StockCardRangeSummaryStockManagementService;
 import org.siglus.common.domain.ProgramAdditionalOrderable;
 import org.siglus.common.dto.RequisitionTemplateExtensionDto;
@@ -109,6 +110,9 @@ public class SiglusUsageReportServiceTest {
 
   @Mock
   private PeriodService periodService;
+
+  @Mock
+  private PermissionService permissionService;
 
   @Mock
   private ProgramOrderableRepository programOrderableRepository;

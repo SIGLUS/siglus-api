@@ -87,11 +87,14 @@ import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.requisition.dto.BaseDto;
 import org.openlmis.requisition.dto.BaseRequisitionDto;
 import org.openlmis.requisition.dto.BaseRequisitionLineItemDto;
+import org.openlmis.requisition.dto.BasicProcessingPeriodDto;
+import org.openlmis.requisition.dto.BasicProgramDto;
 import org.openlmis.requisition.dto.BasicRequisitionDto;
 import org.openlmis.requisition.dto.BasicRequisitionTemplateColumnDto;
 import org.openlmis.requisition.dto.BasicRequisitionTemplateDto;
 import org.openlmis.requisition.dto.FacilityDto;
 import org.openlmis.requisition.dto.MetadataDto;
+import org.openlmis.requisition.dto.MinimalFacilityDto;
 import org.openlmis.requisition.dto.OrderableDto;
 import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.dto.ReleasableRequisitionBatchDto;
@@ -426,7 +429,7 @@ public class SiglusRequisitionService {
 
   @Transactional
   public void buildDraftForRegular(UUID facilityId, UUID periodId, UUID programId,
-                                                   HttpServletRequest request, HttpServletResponse response) {
+      HttpServletRequest request, HttpServletResponse response) {
     RequisitionV2Dto v2Dto = requisitionV2Controller.initiate(programId, facilityId, periodId, false,
         null, request, response);
     SiglusRequisitionDto siglusRequisitionDto = siglusUsageReportService.initiateUsageReport(v2Dto);
@@ -2207,5 +2210,51 @@ public class SiglusRequisitionService {
     } else if ("cmm".equals(column.getOption().getOptionName())) {
       fcCmmCpService.initiateSuggestedQuantityByCmm(lineItems, facilityId, processingPeriodId);
     }
+  }
+
+  @Transactional
+  public BasicRequisitionDto createClientRequisition(
+      UUID facilityId,
+      SiglusRequisitionDto requisitionDto,
+      HttpServletRequest request,
+      HttpServletResponse response) {
+    if (RequisitionStatus.INITIATED.equals(requisitionDto.getStatus())) {
+      SiglusRequisitionDto initiateRequisition = initiate(requisitionDto.getProgramId(), facilityId,
+          requisitionDto.getProcessingPeriodId(), false, null, request, response);
+      UUID requisitionId = initiateRequisition.getId();
+      requisitionDto.setId(requisitionId);
+    }
+
+    SiglusRequisitionDto siglusRequisitionDto = updateRequisition(requisitionDto.getId(), requisitionDto, request,
+        response);
+    RequisitionExtension requisitionExtension = requisitionExtensionRepository.findByRequisitionId(
+        requisitionDto.getId());
+    if (requisitionExtension == null) {
+      requisitionExtension = new RequisitionExtension();
+    }
+    activateArchivedProducts(requisitionDto.getId(), facilityId);
+    BasicRequisitionDto approveRequisitionDto = buildBasicRequisitionDto(siglusRequisitionDto);
+    requisitionExtension.setIsApprovedByInternal(true);
+    requisitionExtensionRepository.save(requisitionExtension);
+    notificationService.postApprove(approveRequisitionDto);
+
+    return approveRequisitionDto;
+  }
+
+  private BasicRequisitionDto buildBasicRequisitionDto(SiglusRequisitionDto siglusRequisitionDto) {
+    BasicRequisitionDto basicRequisitionDto = new BasicRequisitionDto();
+    basicRequisitionDto.setId(siglusRequisitionDto.getId());
+    basicRequisitionDto.setStatus(siglusRequisitionDto.getStatus());
+    MinimalFacilityDto minimalFacilityDto = new MinimalFacilityDto();
+    minimalFacilityDto.setId(siglusRequisitionDto.getFacilityId());
+    basicRequisitionDto.setFacility(minimalFacilityDto);
+    BasicProgramDto basicProgramDto = new BasicProgramDto();
+    basicProgramDto.setId(siglusRequisitionDto.getProgramId());
+    basicRequisitionDto.setProgram(basicProgramDto);
+    basicRequisitionDto.setEmergency(siglusRequisitionDto.getEmergency());
+    BasicProcessingPeriodDto basicProcessingPeriodDto = new BasicProcessingPeriodDto();
+    basicProcessingPeriodDto.setId(siglusRequisitionDto.getProcessingPeriodId());
+    basicRequisitionDto.setProcessingPeriod(basicProcessingPeriodDto);
+    return basicRequisitionDto;
   }
 }

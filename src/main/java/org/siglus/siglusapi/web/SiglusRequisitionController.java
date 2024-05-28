@@ -194,6 +194,16 @@ public class SiglusRequisitionController {
     return basicRequisitionDto;
   }
 
+  @PostMapping("/clients/{id}")
+  public BasicRequisitionDto createClientRequisition(
+      @PathVariable(value = "id") UUID facilityId,
+      @RequestBody SiglusRequisitionDto requisitionDto,
+      HttpServletRequest request,
+      HttpServletResponse response) {
+    return siglusRequisitionService.createClientRequisition(facilityId, requisitionDto, request, response);
+  }
+
+
   /**
    * why we redo this api? for bug card #228, change dependency:
    * {@linkplain org.openlmis.requisition.domain.requisition.Requisition#reject(Map, UUID)}  method}

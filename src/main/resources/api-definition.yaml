@@ -2919,6 +2919,20 @@ traits:
             body:
               application/json:
                 schema: facilityList
+    /requisitions/clients/{id}:
+      uriParameters:
+        id:
+          displayName: id
+          type: string
+          required: true
+          repeat: false
+      post:
+        is: [ secured, idempotent ]
+        body:
+          application/json:
+        responses:
+            200:
+              description: create requisitions for client facilities
 
     /orders:
       get:

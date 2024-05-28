@@ -43,6 +43,7 @@ import static org.openlmis.requisition.domain.requisition.RequisitionStatus.APPR
 import static org.openlmis.requisition.domain.requisition.RequisitionStatus.AUTHORIZED;
 import static org.openlmis.requisition.domain.requisition.RequisitionStatus.INITIATED;
 import static org.openlmis.requisition.domain.requisition.RequisitionStatus.IN_APPROVAL;
+import static org.openlmis.requisition.domain.requisition.RequisitionStatus.REJECTED;
 import static org.openlmis.requisition.domain.requisition.RequisitionStatus.RELEASED;
 import static org.openlmis.requisition.domain.requisition.RequisitionStatus.RELEASED_WITHOUT_ORDER;
 import static org.openlmis.requisition.domain.requisition.RequisitionStatus.SUBMITTED;
@@ -94,6 +95,7 @@ import org.openlmis.referencedata.domain.Code;
 import org.openlmis.referencedata.domain.Orderable;
 import org.openlmis.referencedata.domain.ProcessingPeriod;
 import org.openlmis.referencedata.domain.Program;
+import org.openlmis.referencedata.repository.FacilityRepository;
 import org.openlmis.referencedata.repository.ProgramRepository;
 import org.openlmis.requisition.domain.AvailableRequisitionColumnOption;
 import org.openlmis.requisition.domain.RequisitionTemplate;
@@ -376,6 +378,9 @@ public class SiglusRequisitionServiceTest {
   private ProgramRepository programRepository;
   @Mock
   private RegimenOrderableRepository regimenOrderableRepository;
+
+  @Mock
+  private FacilityRepository facilityRepository;
 
   private final UUID facilityId = UUID.randomUUID();
 
@@ -2376,6 +2381,84 @@ public class SiglusRequisitionServiceTest {
     assertNotNull(actualResponse.getContent().get(0).getRequisition().getExtraData());
   }
 
+  @Test
+  public void shouldCreateClientRequisitionWhenStatusIsInitiated() {
+    // given
+    // initiated
+    RequisitionV2Dto requisitionV2Dto1 = createInitiatedRequisitionV2Dto();
+    SiglusRequisitionDto siglusRequisitionDto1 = new SiglusRequisitionDto();
+    BeanUtils.copyProperties(requisitionV2Dto1, siglusRequisitionDto1);
+    HttpServletRequest httpServletRequest = new MockHttpServletRequest();
+    HttpServletResponse httpServletResponse = new MockHttpServletResponse();
+    when(requisitionV2Controller.initiate(siglusRequisitionDto1.getProgramId(), siglusRequisitionDto1.getFacilityId(),
+        siglusRequisitionDto1.getProcessingPeriodId(), false, null, httpServletRequest,
+        httpServletResponse)).thenReturn(requisitionV2Dto1);
+    when(siglusUsageReportService.initiateUsageReport(requisitionV2Dto1)).thenReturn(siglusRequisitionDto1);
+    Requisition requisition1 = createRequisition();
+    requisition1.setId(requisitionV2Dto1.getId());
+    when(requisitionRepository.findOne(requisitionV2Dto1.getId())).thenReturn(requisition1);
+    Program program1 = new Program(siglusRequisitionDto1.getProgramId());
+    Code code = new Code("code");
+    program1.setCode(code);
+    when(programRepository.findOne(siglusRequisitionDto1.getProgramId())).thenReturn(program1);
+
+    // updated
+    requisitionV2Dto1.setStatus(IN_APPROVAL);
+    when(requisitionV2Controller.updateRequisition(siglusRequisitionDto1.getId(), siglusRequisitionDto1,
+        httpServletRequest, httpServletResponse)).thenReturn(requisitionV2Dto1);
+    siglusRequisitionDto1.setStatus(IN_APPROVAL);
+    when(siglusUsageReportService.saveUsageReport(siglusRequisitionDto1, requisitionV2Dto1)).thenReturn(
+        siglusRequisitionDto1);
+
+    // when
+    BasicRequisitionDto basicRequisitionDto = siglusRequisitionService.createClientRequisition(
+        siglusRequisitionDto1.getFacilityId(),
+        siglusRequisitionDto1,
+        httpServletRequest,
+        httpServletResponse);
+    // then
+    assertEquals(IN_APPROVAL, basicRequisitionDto.getStatus());
+  }
+
+  @Test
+  public void shouldCreateClientRequisitionWhenStatusIsRejected() {
+    // given
+    // initiated
+    RequisitionV2Dto requisitionV2Dto1 = createRejectedRequisitionV2Dto();
+    SiglusRequisitionDto siglusRequisitionDto1 = new SiglusRequisitionDto();
+    BeanUtils.copyProperties(requisitionV2Dto1, siglusRequisitionDto1);
+    HttpServletRequest httpServletRequest = new MockHttpServletRequest();
+    HttpServletResponse httpServletResponse = new MockHttpServletResponse();
+    when(requisitionV2Controller.initiate(siglusRequisitionDto1.getProgramId(), siglusRequisitionDto1.getFacilityId(),
+        siglusRequisitionDto1.getProcessingPeriodId(), false, null, httpServletRequest,
+        httpServletResponse)).thenReturn(requisitionV2Dto1);
+    when(siglusUsageReportService.initiateUsageReport(requisitionV2Dto1)).thenReturn(siglusRequisitionDto1);
+    Requisition requisition1 = createRequisition();
+    requisition1.setId(requisitionV2Dto1.getId());
+    when(requisitionRepository.findOne(requisitionV2Dto1.getId())).thenReturn(requisition1);
+    Program program1 = new Program(siglusRequisitionDto1.getProgramId());
+    Code code = new Code("code");
+    program1.setCode(code);
+    when(programRepository.findOne(siglusRequisitionDto1.getProgramId())).thenReturn(program1);
+
+    // updated
+    requisitionV2Dto1.setStatus(IN_APPROVAL);
+    when(requisitionV2Controller.updateRequisition(siglusRequisitionDto1.getId(), siglusRequisitionDto1,
+        httpServletRequest, httpServletResponse)).thenReturn(requisitionV2Dto1);
+    siglusRequisitionDto1.setStatus(IN_APPROVAL);
+    when(siglusUsageReportService.saveUsageReport(siglusRequisitionDto1, requisitionV2Dto1)).thenReturn(
+        siglusRequisitionDto1);
+
+    // when
+    BasicRequisitionDto basicRequisitionDto = siglusRequisitionService.createClientRequisition(
+        siglusRequisitionDto1.getFacilityId(),
+        siglusRequisitionDto1,
+        httpServletRequest,
+        httpServletResponse);
+    // then
+    assertEquals(IN_APPROVAL, basicRequisitionDto.getStatus());
+  }
+
   private List<RequisitionWithSupplyingDepotsDto> buildRequisitionWithSupplyingDepotsDtos() {
     BasicRequisitionDto requisitionDto = new BasicRequisitionDto();
     requisitionDto.setId(requisitionId);
@@ -2746,6 +2829,52 @@ public class SiglusRequisitionServiceTest {
 
   private VersionObjectReferenceDto createVersionObjectReferenceDto(UUID id, Long version) {
     return new VersionObjectReferenceDto(id, null, "orderables", version);
+  }
+
+  private RequisitionV2Dto createInitiatedRequisitionV2Dto() {
+    Set<VersionObjectReferenceDto> products = new HashSet<>();
+    products.add(productVersionObjectReference1);
+    products.add(productVersionObjectReference2);
+
+    RequisitionV2Dto requisitionV2Dto = new RequisitionV2Dto();
+    ObjectReferenceDto facility = new ObjectReferenceDto(facilityId);
+    requisitionV2Dto.setFacility(facility);
+    ObjectReferenceDto program = new ObjectReferenceDto(programId);
+    requisitionV2Dto.setProgram(program);
+    requisitionV2Dto.setEmergency(false);
+    requisitionV2Dto.setAvailableProducts(products);
+    requisitionV2Dto.setTemplate(createTemplateDto());
+    requisitionV2Dto.setStatus(INITIATED);
+    UUID requisitionId1 = UUID.randomUUID();
+    requisitionV2Dto.setId(requisitionId1);
+    requisitionV2Dto.setReportOnly(false);
+    ObjectReferenceDto processingPeriod = new ObjectReferenceDto();
+    processingPeriod.setId(UUID.randomUUID());
+    requisitionV2Dto.setProcessingPeriod(processingPeriod);
+    return requisitionV2Dto;
+  }
+
+  private RequisitionV2Dto createRejectedRequisitionV2Dto() {
+    Set<VersionObjectReferenceDto> products = new HashSet<>();
+    products.add(productVersionObjectReference1);
+    products.add(productVersionObjectReference2);
+
+    RequisitionV2Dto requisitionV2Dto = new RequisitionV2Dto();
+    ObjectReferenceDto facility = new ObjectReferenceDto(facilityId);
+    requisitionV2Dto.setFacility(facility);
+    ObjectReferenceDto program = new ObjectReferenceDto(programId);
+    requisitionV2Dto.setProgram(program);
+    requisitionV2Dto.setEmergency(false);
+    requisitionV2Dto.setAvailableProducts(products);
+    requisitionV2Dto.setTemplate(createTemplateDto());
+    requisitionV2Dto.setStatus(REJECTED);
+    UUID requisitionId1 = UUID.randomUUID();
+    requisitionV2Dto.setId(requisitionId1);
+    requisitionV2Dto.setReportOnly(false);
+    ObjectReferenceDto processingPeriod = new ObjectReferenceDto();
+    processingPeriod.setId(UUID.randomUUID());
+    requisitionV2Dto.setProcessingPeriod(processingPeriod);
+    return requisitionV2Dto;
   }
 
   private RequisitionV2Dto createRequisitionV2Dto() {

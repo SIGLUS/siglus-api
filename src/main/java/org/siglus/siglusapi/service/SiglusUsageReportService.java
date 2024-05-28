@@ -50,6 +50,7 @@ import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.dto.VersionIdentityDto;
 import org.openlmis.requisition.dto.stockmanagement.StockCardRangeSummaryDto;
 import org.openlmis.requisition.service.PeriodService;
+import org.openlmis.requisition.service.PermissionService;
 import org.openlmis.requisition.service.referencedata.FacilityReferenceDataService;
 import org.openlmis.requisition.service.stockmanagement.StockCardRangeSummaryStockManagementService;
 import org.openlmis.stockmanagement.exception.ValidationMessageException;
@@ -117,6 +118,9 @@ public class SiglusUsageReportService {
   @Autowired
   RequisitionExtensionRepository requisitionExtensionRepository;
 
+  @Autowired
+  private PermissionService permissionService;
+
   public SiglusRequisitionDto searchUsageReport(RequisitionV2Dto requisitionV2Dto) {
     SiglusRequisitionDto siglusRequisitionDto = SiglusRequisitionDto.from(requisitionV2Dto);
     usageReportDataProcessors.forEach(processor -> processor.get(siglusRequisitionDto));
@@ -161,7 +165,9 @@ public class SiglusUsageReportService {
     if (templateColumnSections.isEmpty()) {
       return siglusRequisitionDto;
     }
-    usageReportDataProcessors.forEach(processor -> processor.initiate(siglusRequisitionDto, templateColumnSections));
+    if (!permissionService.isClientRequisition(requisitionV2Dto.getFacilityId(), requisitionV2Dto.getProgramId())) {
+      usageReportDataProcessors.forEach(processor -> processor.initiate(siglusRequisitionDto, templateColumnSections));
+    }
     updateKitUsage(requisitionV2Dto, templateColumnSections, siglusRequisitionDto);
     buildUsageTemplateDto(siglusRequisitionDto, templateColumnSections);
     return siglusRequisitionDto;
