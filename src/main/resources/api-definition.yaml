@@ -1799,6 +1799,25 @@ traits:
           200:
             description: return archived products.
 
+    /approvedProducts:
+      get:
+        is: [ secured ]
+        description: Get approved products.
+        queryParameters:
+          facilityId:
+            required: true
+            description: facility id
+            repeat: false
+            type: string
+          programId:
+            required: true
+            description: program id
+            repeat: false
+            type: string
+        responses:
+          200:
+            description: return approved products.
+
     /stockCards/orderable:
       get:
         is: [ secured ]

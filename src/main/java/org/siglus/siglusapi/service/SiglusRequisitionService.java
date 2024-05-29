@@ -31,6 +31,7 @@ import static org.openlmis.requisition.web.QueryRequisitionSearchParams.REQUISIT
 import static org.siglus.common.constant.KitConstants.APE_KITS;
 import static org.siglus.common.constant.KitConstants.US_KITS;
 import static org.siglus.siglusapi.constant.FacilityTypeConstants.getTopLevelTypes;
+import static org.siglus.siglusapi.constant.FieldConstants.REQUISITION_DRAFT_UUID;
 import static org.siglus.siglusapi.constant.ProgramConstants.MTB_PROGRAM_CODE;
 import static org.siglus.siglusapi.constant.ProgramConstants.RAPIDTEST_PROGRAM_CODE;
 import static org.siglus.siglusapi.constant.ProgramConstants.TARV_PROGRAM_CODE;
@@ -440,7 +441,10 @@ public class SiglusRequisitionService {
       calcRequestedQuantity(siglusRequisitionDto);
     }
     initiateRequisitionNumber(siglusRequisitionDto);
-
+    // set default datas
+    siglusRequisitionDto.setId(REQUISITION_DRAFT_UUID);
+    siglusRequisitionDto.setRequisitionLineItems(newArrayList());
+    siglusRequisitionDto.getExtraData().put("signaure", "");
     throw new RequisitionBuildDraftException(siglusRequisitionDto);
   }
 
