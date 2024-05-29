@@ -2393,7 +2393,7 @@ public class SiglusRequisitionServiceTest {
     when(requisitionV2Controller.initiate(siglusRequisitionDto1.getProgramId(), siglusRequisitionDto1.getFacilityId(),
         siglusRequisitionDto1.getProcessingPeriodId(), false, null, httpServletRequest,
         httpServletResponse)).thenReturn(requisitionV2Dto1);
-    when(siglusUsageReportService.initiateUsageReport(requisitionV2Dto1)).thenReturn(siglusRequisitionDto1);
+    when(siglusUsageReportService.initiateUsageReportForClient(requisitionV2Dto1)).thenReturn(siglusRequisitionDto1);
     Requisition requisition1 = createRequisition();
     requisition1.setId(requisitionV2Dto1.getId());
     when(requisitionRepository.findOne(requisitionV2Dto1.getId())).thenReturn(requisition1);
@@ -2403,17 +2403,22 @@ public class SiglusRequisitionServiceTest {
     when(programRepository.findOne(siglusRequisitionDto1.getProgramId())).thenReturn(program1);
 
     // updated
+    RequisitionV2Dto requisitionV2Dto2 = createInitiatedRequisitionV2Dto();
+    SiglusRequisitionDto siglusRequisitionDto2 = new SiglusRequisitionDto();
+    BeanUtils.copyProperties(requisitionV2Dto2, siglusRequisitionDto2);
+    siglusRequisitionDto2.setId(siglusRequisitionDto1.getId());
+    siglusRequisitionDto2.setProcessingPeriod(siglusRequisitionDto1.getProcessingPeriod());
     requisitionV2Dto1.setStatus(IN_APPROVAL);
-    when(requisitionV2Controller.updateRequisition(siglusRequisitionDto1.getId(), siglusRequisitionDto1,
+    when(requisitionV2Controller.updateRequisition(siglusRequisitionDto1.getId(), siglusRequisitionDto2,
         httpServletRequest, httpServletResponse)).thenReturn(requisitionV2Dto1);
     siglusRequisitionDto1.setStatus(IN_APPROVAL);
-    when(siglusUsageReportService.saveUsageReport(siglusRequisitionDto1, requisitionV2Dto1)).thenReturn(
+    when(siglusUsageReportService.saveUsageReport(siglusRequisitionDto2, requisitionV2Dto1)).thenReturn(
         siglusRequisitionDto1);
 
     // when
     BasicRequisitionDto basicRequisitionDto = siglusRequisitionService.createClientRequisition(
-        siglusRequisitionDto1.getFacilityId(),
-        siglusRequisitionDto1,
+        siglusRequisitionDto2.getFacilityId(),
+        siglusRequisitionDto2,
         httpServletRequest,
         httpServletResponse);
     // then

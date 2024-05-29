@@ -429,6 +429,37 @@ public class SiglusRequisitionService {
   }
 
   @Transactional
+  public SiglusRequisitionDto initiateForClient(
+      UUID programId,
+      UUID facilityId,
+      UUID suggestedPeriod,
+      boolean emergency,
+      String physicalInventoryDateStr,
+      HttpServletRequest request,
+      HttpServletResponse response) {
+    RequisitionV2Dto v2Dto = requisitionV2Controller.initiate(programId, facilityId, suggestedPeriod, emergency,
+        physicalInventoryDateStr, request, response);
+    processStockMovementAfterTheDateSubmitted(v2Dto);
+    SiglusRequisitionDto siglusRequisitionDto = siglusUsageReportService.initiateUsageReportForClient(v2Dto);
+
+    RequisitionTemplate template = requisitionRepository.findOne(siglusRequisitionDto.getId()).getTemplate();
+    if (template.isColumnDisplayed(REQUESTED_QUANTITY) && template.isColumnStockBased(REQUESTED_QUANTITY)
+        && siglusRequisitionDto.getStatus().isSubmittable()) {
+      calcRequestedQuantity(siglusRequisitionDto);
+    }
+
+    initiateRequisitionNumber(siglusRequisitionDto);
+    List<BaseRequisitionLineItemDto> lineItems = siglusRequisitionDto.getLineItems();
+    initiateExpirationDate(lineItems, facilityId);
+    initiateSuggestedQuantity(lineItems, facilityId, siglusRequisitionDto.getProcessingPeriodId(),
+        siglusRequisitionDto.getProgramId(), siglusRequisitionDto.getTemplate());
+    saveLineItemExtensions(lineItems);
+    notSubmittedMonthlyRequisitionsRepository.deleteByFacilityIdAndProgramIdAndProcessingPeriodId(facilityId,
+        programId, v2Dto.getProcessingPeriodId());
+    return siglusRequisitionDto;
+  }
+
+  @Transactional
   public void buildDraftForRegular(UUID facilityId, UUID periodId, UUID programId,
       HttpServletRequest request, HttpServletResponse response) {
     RequisitionV2Dto v2Dto = requisitionV2Controller.initiate(programId, facilityId, periodId, false,
@@ -2223,7 +2254,7 @@ public class SiglusRequisitionService {
       HttpServletRequest request,
       HttpServletResponse response) {
     if (RequisitionStatus.INITIATED.equals(requisitionDto.getStatus())) {
-      SiglusRequisitionDto initiateRequisition = initiate(requisitionDto.getProgramId(), facilityId,
+      SiglusRequisitionDto initiateRequisition = initiateForClient(requisitionDto.getProgramId(), facilityId,
           requisitionDto.getProcessingPeriodId(), false, null, request, response);
       UUID requisitionId = initiateRequisition.getId();
       requisitionDto.setId(requisitionId);

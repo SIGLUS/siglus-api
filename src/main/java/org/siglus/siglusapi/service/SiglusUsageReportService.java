@@ -77,7 +77,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 @Slf4j
-@SuppressWarnings("PMD.TooManyMethods")
+@SuppressWarnings({"PMD.TooManyMethods", "PMD.UnusedPrivateField"})
 public class SiglusUsageReportService {
 
   static final String KIT_COLLECTION = "collection";
@@ -165,8 +165,18 @@ public class SiglusUsageReportService {
     if (templateColumnSections.isEmpty()) {
       return siglusRequisitionDto;
     }
-    if (!permissionService.isClientRequisition(requisitionV2Dto.getFacilityId(), requisitionV2Dto.getProgramId())) {
-      usageReportDataProcessors.forEach(processor -> processor.initiate(siglusRequisitionDto, templateColumnSections));
+    usageReportDataProcessors.forEach(processor -> processor.initiate(siglusRequisitionDto, templateColumnSections));
+    updateKitUsage(requisitionV2Dto, templateColumnSections, siglusRequisitionDto);
+    buildUsageTemplateDto(siglusRequisitionDto, templateColumnSections);
+    return siglusRequisitionDto;
+  }
+
+  public SiglusRequisitionDto initiateUsageReportForClient(RequisitionV2Dto requisitionV2Dto) {
+    List<UsageTemplateColumnSection> templateColumnSections =
+        columnSectionRepository.findByRequisitionTemplateId(requisitionV2Dto.getTemplate().getId());
+    SiglusRequisitionDto siglusRequisitionDto = SiglusRequisitionDto.from(requisitionV2Dto);
+    if (templateColumnSections.isEmpty()) {
+      return siglusRequisitionDto;
     }
     updateKitUsage(requisitionV2Dto, templateColumnSections, siglusRequisitionDto);
     buildUsageTemplateDto(siglusRequisitionDto, templateColumnSections);
