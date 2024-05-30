@@ -17,12 +17,15 @@ package org.siglus.siglusapi.dto.validator;
 
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -37,6 +40,7 @@ import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
 import org.siglus.siglusapi.domain.UsageCategory;
 import org.siglus.siglusapi.domain.UsageTemplateColumn;
 import org.siglus.siglusapi.domain.UsageTemplateColumnSection;
+import org.siglus.siglusapi.dto.PatientGroupDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 import org.siglus.siglusapi.dto.UsageGroupDto;
 import org.siglus.siglusapi.repository.UsageTemplateColumnSectionRepository;
@@ -54,6 +58,7 @@ import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
  * </ul>
  * </p>
  */
+@SuppressWarnings("PMD.CyclomaticComplexity")
 @RequiredArgsConstructor
 @Slf4j
 public abstract class UsageLineItemValidator<A extends Annotation, G extends UsageGroupDto<C>, C>
@@ -70,6 +75,10 @@ public abstract class UsageLineItemValidator<A extends Annotation, G extends Usa
   private final UsageCategory usageCategory;
 
   private final String propertyPath;
+
+  private final Set<String> uncheckGroupName = new HashSet<>(
+      Arrays.asList("newSection9", "newSection5", "newSection6")
+  );
 
   @Override
   public void initialize(A constraintAnnotation) {
@@ -148,6 +157,9 @@ public abstract class UsageLineItemValidator<A extends Annotation, G extends Usa
   private boolean validateGroup(G uploadedGroup,
       UsageTemplateColumnSection storedGroup, HibernateConstraintValidatorContext context,
       String groupName, int groupIndex) {
+    if ((uploadedGroup == null || uploadedGroup instanceof PatientGroupDto) && uncheckGroupName.contains(groupName)) {
+      return true;
+    }
     if (uploadedGroup == null) {
       context
           .addExpressionVariable(GROUP_NAME, groupName)

@@ -1696,34 +1696,39 @@ public class SiglusRequisitionService {
     PatientGroupDto dtGroup = patientGroupDtos.stream()
         .filter(p -> NEW_SECTION_3.equals(p.getName())).findFirst()
         .orElseThrow(() -> new NotFoundException(NEW_SECTION_3 + " not found"));
-    PatientGroupDto dbGroup = patientGroupDtos.stream()
-        .filter(p -> NEW_SECTION_9.equals(p.getName())).findFirst()
-        .orElseThrow(() -> new NotFoundException(NEW_SECTION_4 + " not found"));
+    Optional<PatientGroupDto> dbGroup = patientGroupDtos.stream()
+        .filter(p -> NEW_SECTION_9.equals(p.getName())).findFirst();
     PatientGroupDto dmGroup = patientGroupDtos.stream()
         .filter(p -> NEW_SECTION_4.equals(p.getName())).findFirst()
         .orElseThrow(() -> new NotFoundException(NEW_SECTION_4 + " not found"));
 
     Integer dsTotal = dsGroup.getColumns().get(TOTAL_COLUMN).getValue();
     Integer dtTotal = dtGroup.getColumns().get(TOTAL_COLUMN).getValue();
-    Integer dbTotal = dbGroup.getColumns().get(TOTAL_COLUMN).getValue();
+    Integer dbTotal = 0;
+    if (dbGroup.isPresent()) {
+      PatientColumnDto column = dbGroup.get().getColumns().get(TOTAL_COLUMN);
+      if (column != null) {
+        dbTotal = column.getValue();
+      }
+    }
     Integer dmTotal = dmGroup.getColumns().get(TOTAL_COLUMN).getValue();
     if (dsTotal == null || dtTotal == null || dmTotal == null) {
       return 1;
-    }
-    if (dbTotal == null) {
-      dbTotal = 0;
     }
     int totalPatients = dsTotal + dtTotal + dbTotal + dmTotal;
 
     Integer dsColumn3 = dsGroup.getColumns().get(NEW_COLUMN_3).getValue();
     Integer dtColumn1 = dtGroup.getColumns().get(NEW_COLUMN_1).getValue();
-    Integer dbThisMonth = dbGroup.getColumns().get(NEW_COLUMN_1).getValue();
+    Integer dbThisMonth = 0;
+    if (dbGroup.isPresent()) {
+      PatientColumnDto column = dbGroup.get().getColumns().get(NEW_COLUMN_1);
+      if (column != null) {
+        dbThisMonth = column.getValue();
+      }
+    }
     Integer dmColumn = dmGroup.getColumns().get(NEW_COLUMN).getValue();
     if (dsColumn3 == null || dtColumn1 == null || dmColumn == null) {
       return 1;
-    }
-    if (dbThisMonth == null) {
-      dbThisMonth = 0;
     }
     int totalPatientsInThisMonth = dsColumn3 + dtColumn1 + dbThisMonth + dmColumn;
 
