@@ -50,7 +50,6 @@ import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.dto.VersionIdentityDto;
 import org.openlmis.requisition.dto.stockmanagement.StockCardRangeSummaryDto;
 import org.openlmis.requisition.service.PeriodService;
-import org.openlmis.requisition.service.PermissionService;
 import org.openlmis.requisition.service.referencedata.FacilityReferenceDataService;
 import org.openlmis.requisition.service.stockmanagement.StockCardRangeSummaryStockManagementService;
 import org.openlmis.stockmanagement.exception.ValidationMessageException;
@@ -77,7 +76,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 @Slf4j
-@SuppressWarnings({"PMD.TooManyMethods", "PMD.UnusedPrivateField"})
+@SuppressWarnings("PMD.TooManyMethods")
 public class SiglusUsageReportService {
 
   static final String KIT_COLLECTION = "collection";
@@ -117,9 +116,6 @@ public class SiglusUsageReportService {
 
   @Autowired
   RequisitionExtensionRepository requisitionExtensionRepository;
-
-  @Autowired
-  private PermissionService permissionService;
 
   public SiglusRequisitionDto searchUsageReport(RequisitionV2Dto requisitionV2Dto) {
     SiglusRequisitionDto siglusRequisitionDto = SiglusRequisitionDto.from(requisitionV2Dto);
