@@ -557,9 +557,13 @@ public class SiglusRequisitionService {
       UUID orderableId = lineItem.getOrderable().getId();
       // TODO what about the initial inventory should change?
       //  Since the SOH is by date in calculated SOH, so we need to add back???
-      lineItem.setTotalReceivedQuantity(lineItem.getTotalReceivedQuantity()
+      int totalTotalReceivedQuantity = lineItem.getTotalReceivedQuantity() == null
+          ? 0 : lineItem.getTotalReceivedQuantity();
+      lineItem.setTotalReceivedQuantity(totalTotalReceivedQuantity
           + orderableIdToAdditonalReceive.getOrDefault(orderableId, 0));
-      lineItem.setTotalConsumedQuantity(lineItem.getTotalConsumedQuantity()
+      int totalConsumedQuantity = lineItem.getTotalConsumedQuantity() == null
+          ? 0 : lineItem.getTotalConsumedQuantity();
+      lineItem.setTotalConsumedQuantity(totalConsumedQuantity
           + orderableIdToAdditonalIssue.getOrDefault(orderableId, 0));
     });
     requisitionLineItemRepository.save(requisitionLineItems);
