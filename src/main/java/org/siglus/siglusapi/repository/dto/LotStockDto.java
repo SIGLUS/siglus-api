@@ -28,6 +28,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 
+@SuppressWarnings("PMD.AvoidDuplicateLiterals")
 @NamedNativeQueries({
     @NamedNativeQuery(
         name = "StockCard.queryExpiredLotStockDtoByFacility",
@@ -43,7 +44,7 @@ import lombok.Data;
             + ") o on sc.orderableid = o.id "
             + "left join referencedata.lots l on sc.lotid = l.id "
             + "left join (select distinct on(tsoh.stockcardid) "
-            + "            tsoh.id, tsoh.stockcardid, tsoh.stockonhand, tsoh.processeddate "
+            + "            tsoh.id, tsoh.stockcardid, tsoh.stockonhand, tsoh.occurreddate "
             + "          from (select * from stockmanagement.calculated_stocks_on_hand "
             + "          where stockcardid in ( select distinct sc.id from stockmanagement.stock_cards sc  "
             + "                                   left join referencedata.lots l on sc.lotid = l.id "
@@ -69,7 +70,7 @@ import lombok.Data;
             + ") o on sc.orderableid = o.id "
             + "left join referencedata.lots l on sc.lotid = l.id "
             + "left join (select distinct on(tsoh.stockcardid, tsoh.locationcode) tsoh.id, tsoh.stockcardid, "
-            + "             tsoh.stockonhand, tsoh.processeddate, tsoh.area, tsoh.locationcode "
+            + "             tsoh.stockonhand, tsoh.occurreddate, tsoh.area, tsoh.locationcode "
             + "           from (select * from siglusintegration.calculated_stocks_on_hand_by_location "
             + "                 where stockcardid in ( select distinct sc.id from stockmanagement.stock_cards sc  "
             + "                                   left join referencedata.lots l on sc.lotid = l.id "
@@ -78,6 +79,52 @@ import lombok.Data;
             + "        ) soh on sc.id = soh.stockcardid "
             + "where sc.lotid is not null and sc.facilityid = :facilityId and l.expirationdate < current_date "
             + "      and soh.stockonhand > 0 "
+            + ";",
+        resultSetMapping = "StockCard.LotStockDto"),
+
+    @NamedNativeQuery(
+        name = "StockCard.queryLotStockDtoByStockCardIds",
+        query = "select sc.id as stockCardId, sc.programid,p.\"name\", p.code, sc.orderableid, "
+            + "  o.fullproductname as productName, o.code as productCode, sc.lotid, l.lotcode, "
+            + "  soh.stockonhand, l.expirationdate, null as area, null as locationcode "
+            + "from stockmanagement.stock_cards sc "
+            + "left join referencedata.programs p on sc.programid = p.id "
+            + "left join ( "
+            + "  select distinct on(id) id, fullproductname, code, versionnumber "
+            + "  from referencedata.orderables "
+            + "  order by id, versionnumber desc "
+            + ") o on sc.orderableid = o.id "
+            + "left join referencedata.lots l on sc.lotid = l.id "
+            + "left join (select distinct on(tsoh.stockcardid) "
+            + "            tsoh.id, tsoh.stockcardid, tsoh.stockonhand, tsoh.occurreddate "
+            + "          from (select * from stockmanagement.calculated_stocks_on_hand "
+            + "          where stockcardid in :stockcardIds "
+            + "           ) tsoh order by tsoh.stockcardid, tsoh.occurreddate desc "
+            + "       ) soh on sc.id = soh.stockcardid "
+            + "where sc.lotid is not null and sc.id in :stockcardIds "
+            + ";",
+        resultSetMapping = "StockCard.LotStockDto"),
+
+    @NamedNativeQuery(
+        name = "StockCard.queryLotStockDtoByStockCardIdsWithLocation",
+        query = "select sc.id as stockCardId, sc.programid,p.\"name\", p.code, sc.orderableid, "
+            + " o.fullproductname as productName, o.code as productCode, sc.lotid, l.lotcode, "
+            + " soh.stockonhand, l.expirationdate, soh.area, soh.locationcode "
+            + "from stockmanagement.stock_cards sc "
+            + "left join referencedata.programs p on sc.programid = p.id "
+            + "left join ( "
+            + "  select distinct on(id) id, fullproductname, code, versionnumber "
+            + "  from referencedata.orderables "
+            + "  order by id, versionnumber desc "
+            + ") o on sc.orderableid = o.id "
+            + "left join referencedata.lots l on sc.lotid = l.id "
+            + "left join (select distinct on(tsoh.stockcardid, tsoh.locationcode) tsoh.id, tsoh.stockcardid, "
+            + "             tsoh.stockonhand, tsoh.occurreddate, tsoh.area, tsoh.locationcode "
+            + "           from (select * from siglusintegration.calculated_stocks_on_hand_by_location "
+            + "                 where stockcardid in :stockcardIds "
+            + "           ) tsoh order by tsoh.stockcardid, tsoh.locationcode, tsoh.occurreddate desc "
+            + "        ) soh on sc.id = soh.stockcardid "
+            + "where sc.lotid is not null and sc.id in :stockcardIds "
             + ";",
         resultSetMapping = "StockCard.LotStockDto"),
 })

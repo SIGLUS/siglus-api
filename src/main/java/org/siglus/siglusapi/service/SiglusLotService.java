@@ -16,6 +16,7 @@
 package org.siglus.siglusapi.service;
 
 import static java.util.Collections.singletonList;
+import static org.apache.commons.compress.utils.Lists.newArrayList;
 import static org.apache.commons.lang.StringUtils.isBlank;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_LOT_ID_AND_CODE_SHOULD_EMPTY;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_TRADE_ITEM_IS_EMPTY;
@@ -24,6 +25,7 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -94,6 +96,9 @@ public class SiglusLotService {
 
   @Autowired
   private SiglusArchiveProductService siglusArchiveProductService;
+
+  @Autowired
+  private SiglusStockCardService siglusStockCardService;
 
   /**
    * reason for create a new transaction: Running this method in the super transaction will cause
@@ -179,6 +184,20 @@ public class SiglusLotService {
     return expiredLots.stream()
         .filter(lot -> !archivedProducts.contains(lot.getOrderableId().toString()))
         .collect(Collectors.toList());
+  }
+
+  public List<LotStockDto> getLotsByOrderables(UUID facilityId, Collection<UUID> orderableIds) {
+    List<UUID> stockCardIds = siglusStockCardService.findStockCardIdByFacilityAndOrderables(facilityId, orderableIds);
+    if (ObjectUtils.isEmpty(stockCardIds)) {
+      return newArrayList();
+    }
+    List<LotStockDto> lotStockDtos;
+    if (facilityConfigHelper.isLocationManagementEnabled(facilityId)) {
+      lotStockDtos = siglusLotRepository.queryLotStockDtoByStockCardIdsWithLocation(stockCardIds);
+    } else {
+      lotStockDtos = siglusLotRepository.queryLotStockDtoByStockCardIds(stockCardIds);
+    }
+    return lotStockDtos;
   }
 
   public void removeExpiredLots(List<RemovedLotDto> lots, boolean hasLocation) {

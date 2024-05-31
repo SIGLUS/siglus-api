@@ -16,6 +16,7 @@
 package org.siglus.siglusapi.repository;
 
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -66,4 +67,10 @@ public interface SiglusStockCardRepository extends JpaRepository<StockCard, UUID
   @Query(name = "StockCard.findStockOnHandDto", nativeQuery = true)
   List<StockOnHandDto> findStockCardDtos(@Param("facilityId") UUID facilityId, @Param("startDate") LocalDate startDate,
       @Param("endDate") LocalDate endDate);
+
+  @Query(value = "select cast(id as varchar) from stockmanagement.stock_cards "
+      + "where facilityid = :facilityId and orderableid in :orderableIds ",
+      nativeQuery = true)
+  List<String> findStockCardIdByFacilityAndOrderables(@Param("facilityId") UUID facilityId,
+                                                     @Param("orderableIds") Collection<UUID> orderableIds);
 }

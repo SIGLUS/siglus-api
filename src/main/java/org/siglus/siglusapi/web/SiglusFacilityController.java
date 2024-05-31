@@ -20,6 +20,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import javax.validation.Valid;
+import javax.validation.ValidationException;
 import javax.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.openlmis.referencedata.domain.Facility;
@@ -31,6 +32,7 @@ import org.siglus.siglusapi.service.SiglusFacilityService;
 import org.siglus.siglusapi.service.SiglusLotLocationService;
 import org.siglus.siglusapi.service.SiglusLotService;
 import org.siglus.siglusapi.web.request.RemoveLotsRequest;
+import org.springframework.util.ObjectUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -58,12 +60,16 @@ public class SiglusFacilityController {
   }
 
   @GetMapping("/{id}/lots")
-  public List<LotStockDto> searchExpiredLots(@PathVariable("id") UUID id,
-      @RequestParam Boolean expired) {
-    if (!expired) {
-      throw new InvalidReasonException("un-support param 'expired = false'");
+  public List<LotStockDto> searchLots(@PathVariable("id") UUID id,
+                                      @RequestParam(required = false) Boolean expired,
+                                      @RequestParam(required = false) Set<UUID> orderableIds) {
+    if (!ObjectUtils.isEmpty(expired) && expired) {
+      return siglusLotService.getExpiredLots(id);
     }
-    return siglusLotService.getExpiredLots(id);
+    if (!ObjectUtils.isEmpty(orderableIds)) {
+      return siglusLotService.getLotsByOrderables(id, orderableIds);
+    }
+    throw new ValidationException("missing parameters to query lots");
   }
 
   @PostMapping("/{id}/lots/remove")

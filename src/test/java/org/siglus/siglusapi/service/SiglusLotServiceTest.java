@@ -106,6 +106,8 @@ public class SiglusLotServiceTest {
 
   @Mock
   private SiglusArchiveProductService siglusArchiveProductService;
+  @Mock
+  private SiglusStockCardService siglusStockCardService;
 
   @Rule
   public ExpectedException exception = ExpectedException.none();
@@ -395,6 +397,47 @@ public class SiglusLotServiceTest {
     siglusLotService.removeExpiredLots(lots, true);
 
     verify(siglusStockEventsService, Mockito.times(2)).processStockEvent(any(), anyBoolean());
+  }
+
+  @Test
+  public void shouldGetEmptyLotsGivenFacilityWithoutStockCards() {
+    UUID facilityId = UUID.randomUUID();
+    List<UUID> orderableIds = newArrayList(UUID.randomUUID(), UUID.randomUUID());
+    when(siglusStockCardService.findStockCardIdByFacilityAndOrderables(facilityId, orderableIds))
+        .thenReturn(newArrayList());
+
+    List<LotStockDto> lots = siglusLotService.getLotsByOrderables(facilityId, orderableIds);
+
+    assertEquals(0, lots.size());
+  }
+
+  @Test
+  public void shouldGetLotsGivenFacilityWithoutLocation() {
+    UUID facilityId = UUID.randomUUID();
+    List<UUID> orderableIds = newArrayList(UUID.randomUUID(), UUID.randomUUID());
+    List<UUID> stockCardIds = newArrayList(UUID.randomUUID(), UUID.randomUUID());
+    when(siglusStockCardService.findStockCardIdByFacilityAndOrderables(facilityId, orderableIds))
+        .thenReturn(stockCardIds);
+    when(facilityConfigHelper.isLocationManagementEnabled(facilityId)).thenReturn(false);
+
+    siglusLotService.getLotsByOrderables(facilityId, orderableIds);
+
+    verify(siglusLotRepository, Mockito.times(1)).queryLotStockDtoByStockCardIds(stockCardIds);
+  }
+
+  @Test
+  public void shouldGetLotsGivenFacilityWithLocation() {
+    UUID facilityId = UUID.randomUUID();
+    List<UUID> orderableIds = newArrayList(UUID.randomUUID(), UUID.randomUUID());
+    List<UUID> stockCardIds = newArrayList(UUID.randomUUID(), UUID.randomUUID());
+    when(siglusStockCardService.findStockCardIdByFacilityAndOrderables(facilityId, orderableIds))
+        .thenReturn(stockCardIds);
+    when(facilityConfigHelper.isLocationManagementEnabled(facilityId)).thenReturn(true);
+
+    siglusLotService.getLotsByOrderables(facilityId, orderableIds);
+
+    verify(siglusLotRepository, Mockito.times(1))
+        .queryLotStockDtoByStockCardIdsWithLocation(stockCardIds);
   }
 
   private OrderableDto createOrderable(UUID orderableId, UUID tradeItemId) {

@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.repository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -39,4 +40,10 @@ public interface SiglusLotRepository extends JpaRepository<Lot, UUID> {
   boolean existsNotExpiredLotsByIds(@Param("ids") List<UUID> ids);
 
   List<Lot> findAllByIdIn(Set<UUID> ids);
+
+  @Query(name = "StockCard.queryLotStockDtoByStockCardIds", nativeQuery = true)
+  List<LotStockDto> queryLotStockDtoByStockCardIds(@Param("stockcardIds") Collection<UUID> stockcardIds);
+
+  @Query(name = "StockCard.queryLotStockDtoByStockCardIdsWithLocation", nativeQuery = true)
+  List<LotStockDto> queryLotStockDtoByStockCardIdsWithLocation(@Param("stockcardIds") Collection<UUID> stockcardIds);
 }

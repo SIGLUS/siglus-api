@@ -435,6 +435,34 @@ public class SiglusStockCardServiceTest {
     assertEquals(1, movementByProduct.getLineItems().size());
   }
 
+  @Test
+  public void shouldGetEmptyListWhenSearchStockCardsGivenFacilityIsNull() {
+    List<UUID> result = siglusStockCardService.findStockCardIdByFacilityAndOrderables(null,
+        Collections.singletonList(UUID.randomUUID()));
+
+    assertEquals(0, result.size());
+  }
+
+  @Test
+  public void shouldGetEmptyListWhenSearchStockCardsGivenOrderableIdsIsEmpty() {
+    List<UUID> result = siglusStockCardService.findStockCardIdByFacilityAndOrderables(UUID.randomUUID(),
+        newArrayList());
+
+    assertEquals(0, result.size());
+  }
+
+  @Test
+  public void shouldGetStockCardIdsSuccessWhenGivenFacilityAndOrderableIds() {
+    UUID facilityId = UUID.randomUUID();
+    List<UUID> orderableIds = Collections.singletonList(UUID.randomUUID());
+    when(stockCardRepository.findStockCardIdByFacilityAndOrderables(facilityId, orderableIds))
+        .thenReturn(newArrayList(UUID.randomUUID().toString(), UUID.randomUUID().toString()));
+
+    List<UUID> result = siglusStockCardService.findStockCardIdByFacilityAndOrderables(facilityId, orderableIds);
+
+    assertEquals(2, result.size());
+  }
+
   private StockCard createStockCardOne() {
     StockCardLineItem lineItem1 = new StockCardLineItemDataBuilder()
         .withOccurredDateNextDay()

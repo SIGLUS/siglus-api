@@ -333,7 +333,8 @@ public class SiglusOrderService {
     Set<UUID> shipmentIds = shipments.stream().map(Shipment::getId).collect(toSet());
     Map<UUID, String> shipmenIdToIssueVoucherNumberMap =
             shipmentsExtensionRepository.findByShipmentIdIn(shipmentIds).stream()
-                    .collect(toMap(ShipmentsExtension::getShipmentId, ShipmentsExtension::getIssueVoucherNumber));
+                .filter(shipmentsExtension -> shipmentsExtension.getIssueVoucherNumber() != null)
+                .collect(toMap(ShipmentsExtension::getShipmentId, ShipmentsExtension::getIssueVoucherNumber));
 
     for (BasicOrderExtensionResponse response : orderExtensionResponses) {
       Optional<Shipment> optional = shipments.stream()

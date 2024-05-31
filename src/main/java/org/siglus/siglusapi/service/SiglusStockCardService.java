@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.service;
 
+import static org.apache.commons.compress.utils.Lists.newArrayList;
 import static org.siglus.siglusapi.dto.StockCardLineItemDtoComparators.byOccurredDate;
 import static org.siglus.siglusapi.dto.StockCardLineItemDtoComparators.byProcessedDate;
 import static org.siglus.siglusapi.dto.StockCardLineItemDtoComparators.byReasonPriority;
@@ -65,6 +66,7 @@ import org.siglus.siglusapi.util.AndroidHelper;
 import org.siglus.siglusapi.util.SiglusDateHelper;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ObjectUtils;
 
 @Service
 @RequiredArgsConstructor
@@ -422,5 +424,13 @@ public class SiglusStockCardService {
         .inKit(inKit)
         .programId(programDto.getId())
         .build();
+  }
+
+  public List<UUID> findStockCardIdByFacilityAndOrderables(UUID facilityId, Collection<UUID> orderableIds) {
+    if (ObjectUtils.isEmpty(orderableIds) || ObjectUtils.isEmpty(facilityId)) {
+      return newArrayList();
+    }
+    return stockCardRepository.findStockCardIdByFacilityAndOrderables(facilityId, orderableIds)
+        .stream().map(UUID::fromString).collect(Collectors.toList());
   }
 }
