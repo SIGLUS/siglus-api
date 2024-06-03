@@ -1711,7 +1711,7 @@ public class SiglusRequisitionService {
     Integer dbTotal = 0;
     if (dbGroup.isPresent()) {
       PatientColumnDto column = dbGroup.get().getColumns().get(TOTAL_COLUMN);
-      if (column != null) {
+      if (column != null && column.getValue() != null) {
         dbTotal = column.getValue();
       }
     }
@@ -1726,7 +1726,7 @@ public class SiglusRequisitionService {
     Integer dbThisMonth = 0;
     if (dbGroup.isPresent()) {
       PatientColumnDto column = dbGroup.get().getColumns().get(NEW_COLUMN_1);
-      if (column != null) {
+      if (column != null && column.getValue() != null) {
         dbThisMonth = column.getValue();
       }
     }
