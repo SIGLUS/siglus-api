@@ -196,7 +196,12 @@ public class SiglusRequisitionController {
       @RequestBody SiglusRequisitionDto requisitionDto,
       HttpServletRequest request,
       HttpServletResponse response) {
-    return siglusRequisitionService.createClientRequisition(facilityId, requisitionDto, request, response);
+    BasicRequisitionDto basicRequisitionDto = siglusRequisitionService.createClientRequisition(facilityId,
+        requisitionDto, request, response);
+    if (basicRequisitionDto.getStatus() == RequisitionStatus.IN_APPROVAL) {
+      requisitionInternalApproveEmitter.emitForClient(basicRequisitionDto.getId());
+    }
+    return basicRequisitionDto;
   }
 
 

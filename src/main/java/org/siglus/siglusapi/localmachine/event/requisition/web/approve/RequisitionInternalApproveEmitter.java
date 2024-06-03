@@ -16,6 +16,7 @@
 package org.siglus.siglusapi.localmachine.event.requisition.web.approve;
 
 import static org.siglus.siglusapi.dto.enums.EventCategoryEnum.REQUISITION_INTERNAL_APPROVED;
+import static org.siglus.siglusapi.dto.enums.EventCategoryEnum.REQUISITION_INTERNAL_APPROVED_FOR_CLIENT;
 
 import java.util.List;
 import java.util.UUID;
@@ -46,6 +47,7 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class RequisitionInternalApproveEmitter {
+
   private final RequisitionRepository requisitionRepository;
   private final RequisitionExtensionRepository requisitionExtensionRepository;
   private final RequisitionLineItemExtensionRepository requisitionLineItemExtensionRepository;
@@ -65,6 +67,13 @@ public class RequisitionInternalApproveEmitter {
     eventPublisher.emitGroupEvent(getGroupId(event),
         baseEventCommonService.getReceiverId(event.getRequisition().getFacilityId(),
             event.getRequisition().getProgramId()), event, REQUISITION_INTERNAL_APPROVED);
+    return event;
+  }
+
+  public RequisitionInternalApprovedEvent emitForClient(UUID requisitionId) {
+    RequisitionInternalApprovedEvent event = getEvent(requisitionId);
+    eventPublisher.emitGroupEvent(getGroupId(event), event.getRequisition().getFacilityId(), event,
+        REQUISITION_INTERNAL_APPROVED_FOR_CLIENT);
     return event;
   }
 
