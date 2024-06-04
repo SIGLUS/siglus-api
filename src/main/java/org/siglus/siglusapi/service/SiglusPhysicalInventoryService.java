@@ -315,11 +315,14 @@ public class SiglusPhysicalInventoryService {
       List<UUID> orderableIds = lineItemDtos.stream()
           .map(PhysicalInventoryLineItemDto::getOrderableId)
           .collect(Collectors.toList());
-      Map<UUID, String> codeMap = orderableRepository.findLatestByIds(orderableIds).stream()
-          .collect(Collectors.toMap(Orderable::getId, dto -> dto.getProductCode().toString()));
-      sortedLineItems = lineItemDtos
-          .stream().sorted(Comparator.comparing(o -> codeMap.getOrDefault(o.getOrderableId(), "")))
-          .collect(Collectors.toList());
+      sortedLineItems = new ArrayList<>();
+      if (!ObjectUtils.isEmpty(orderableIds)) {
+        Map<UUID, String> codeMap = orderableRepository.findLatestByIds(orderableIds).stream()
+            .collect(Collectors.toMap(Orderable::getId, dto -> dto.getProductCode().toString()));
+        sortedLineItems = lineItemDtos
+            .stream().sorted(Comparator.comparing(o -> codeMap.getOrDefault(o.getOrderableId(), "")))
+            .collect(Collectors.toList());
+      }
     }
 
     UUID programId = isAllProgram ? ALL_PRODUCTS_PROGRAM_ID : siglusPhysicalInventoryDto.getProgramId();
