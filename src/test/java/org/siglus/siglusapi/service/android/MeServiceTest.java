@@ -103,6 +103,7 @@ import org.siglus.siglusapi.domain.SiglusReportType;
 import org.siglus.siglusapi.domain.StockCardRequestBackup;
 import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.FacilityTypeDto;
+import org.siglus.siglusapi.dto.GeographicProvinceDistrictDto;
 import org.siglus.siglusapi.dto.LotDto;
 import org.siglus.siglusapi.dto.SiglusOrderDto;
 import org.siglus.siglusapi.dto.SupportedProgramDto;
@@ -130,6 +131,7 @@ import org.siglus.siglusapi.repository.FacilityCmmsRepository;
 import org.siglus.siglusapi.repository.PodRequestBackupRepository;
 import org.siglus.siglusapi.repository.RequisitionRequestBackupRepository;
 import org.siglus.siglusapi.repository.ResyncInfoRepository;
+import org.siglus.siglusapi.repository.SiglusGeographicInfoRepository;
 import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
 import org.siglus.siglusapi.repository.SiglusReportTypeRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
@@ -284,6 +286,9 @@ public class MeServiceTest {
   @Mock
   private MeCreateRequisitionService meCreateRequisitionService;
 
+  @Mock
+  private SiglusGeographicInfoRepository siglusGeographicInfoRepository;
+
   @Autowired
   private ProductMapper mapper;
 
@@ -398,12 +403,21 @@ public class MeServiceTest {
     facilityDto.setName("facilityName");
     facilityDto.setSupportedPrograms(programDtos);
     when(facilityReferenceDataService.findOne(facilityId)).thenReturn(facilityDto);
+    GeographicProvinceDistrictDto geographicDto = GeographicProvinceDistrictDto.builder()
+        .provinceCode("provinceCode")
+        .provinceName("provinceName")
+        .districtCode("districtCode")
+        .districtName("districtName")
+        .build();
+    when(siglusGeographicInfoRepository.getGeographicProvinceDistrictInfo(facilityDto.getCode()))
+        .thenReturn(geographicDto);
 
     // when
     FacilityResponse response = service.getCurrentFacility();
 
     // then
     assertEquals(programDtos.get(0).getCode(), response.getSupportedPrograms().get(0).getCode());
+    assertEquals(geographicDto.getProvinceCode(), response.getProvinceCode());
   }
 
   @Test
@@ -420,6 +434,14 @@ public class MeServiceTest {
         .thenReturn(reportTypes);
     List<Requisition> requisitions = mockProgramRnr().map(Collections::singletonList).orElse(emptyList());
     when(requisitionRepository.findLatestRequisitionsByFacilityId(facilityId)).thenReturn(requisitions);
+    GeographicProvinceDistrictDto geographicDto = GeographicProvinceDistrictDto.builder()
+        .provinceCode("provinceCode")
+        .provinceName("provinceName")
+        .districtCode("districtCode")
+        .districtName("districtName")
+        .build();
+    when(siglusGeographicInfoRepository.getGeographicProvinceDistrictInfo(facilityDto.getCode()))
+        .thenReturn(geographicDto);
 
     // when
     FacilityResponse response = service.getCurrentFacility();
@@ -435,6 +457,7 @@ public class MeServiceTest {
     assertEquals(reportTypes.get(1).getStartDate(), actualReportTypes.get(1).getSupportStartDate());
     assertEquals(reportTypes.get(1).getProgramCode(), actualReportTypes.get(1).getProgramCode());
     assertNull(actualReportTypes.get(1).getLastReportDate());
+    assertEquals(geographicDto.getProvinceCode(), response.getProvinceCode());
   }
 
   @Test

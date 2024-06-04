@@ -79,6 +79,7 @@ import org.siglus.siglusapi.domain.ResyncInfo;
 import org.siglus.siglusapi.domain.SiglusReportType;
 import org.siglus.siglusapi.domain.StockCardRequestBackup;
 import org.siglus.siglusapi.dto.FacilityDto;
+import org.siglus.siglusapi.dto.GeographicProvinceDistrictDto;
 import org.siglus.siglusapi.dto.QueryOrderableSearchParams;
 import org.siglus.siglusapi.dto.SiglusOrderDto;
 import org.siglus.siglusapi.dto.SupportedProgramDto;
@@ -113,6 +114,7 @@ import org.siglus.siglusapi.repository.PodExtensionRepository;
 import org.siglus.siglusapi.repository.PodRequestBackupRepository;
 import org.siglus.siglusapi.repository.RequisitionRequestBackupRepository;
 import org.siglus.siglusapi.repository.ResyncInfoRepository;
+import org.siglus.siglusapi.repository.SiglusGeographicInfoRepository;
 import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
 import org.siglus.siglusapi.repository.SiglusReportTypeRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
@@ -197,6 +199,8 @@ public class MeService {
 
   private final ProgramOrderablesExtensionRepository programOrderablesExtensionRepository;
 
+  private final SiglusGeographicInfoRepository siglusGeographicInfoRepository;
+
   public FacilityResponse getCurrentFacility() {
     FacilityDto facilityDto = getCurrentFacilityInfo();
     List<SupportedProgramDto> programs = facilityDto.getSupportedPrograms();
@@ -208,12 +212,18 @@ public class MeService {
             .supportStartDate(program.getSupportStartDate())
             .build()
     ).collect(toList());
+    GeographicProvinceDistrictDto geographicInfo = siglusGeographicInfoRepository
+        .getGeographicProvinceDistrictInfo(facilityDto.getCode());
     return FacilityResponse.builder()
         .code(facilityDto.getCode())
         .name(facilityDto.getName())
         .supportedPrograms(programResponses)
         .isAndroid(androidHelper.isAndroid())
         .supportedReportTypes(findSupportReportTypes(facilityDto.getId(), programs))
+        .provinceCode(geographicInfo.getProvinceCode())
+        .provinceName(geographicInfo.getProvinceName())
+        .districtCode(geographicInfo.getDistrictCode())
+        .districtName(geographicInfo.getDistrictName())
         .build();
   }
 

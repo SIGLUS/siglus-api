@@ -20,8 +20,10 @@ import java.util.Set;
 import java.util.UUID;
 import org.openlmis.referencedata.domain.GeographicZone;
 import org.siglus.siglusapi.dto.GeographicInfoDto;
+import org.siglus.siglusapi.dto.GeographicProvinceDistrictDto;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface SiglusGeographicInfoRepository extends JpaRepository<GeographicZone, UUID> {
 
@@ -31,4 +33,7 @@ public interface SiglusGeographicInfoRepository extends JpaRepository<Geographic
   Set<GeographicZone> findAllByIdIn(Set<UUID> ids);
 
   Set<GeographicZone> findAllByParentIdIn(Set<UUID> ids);
+
+  @Query(name = "GeographicInfo.getGeographicProvinceDistrictInfo", nativeQuery = true)
+  GeographicProvinceDistrictDto getGeographicProvinceDistrictInfo(@Param("facilityCode") String facilityCode);
 }

@@ -32,4 +32,9 @@ public class FacilityResponse {
   private Boolean isAndroid;
 
   private List<ReportTypeResponse> supportedReportTypes;
+
+  private String provinceCode;
+  private String provinceName;
+  private String districtCode;
+  private String districtName;
 }
