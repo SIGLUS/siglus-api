@@ -860,6 +860,7 @@ public class SiglusRequisitionService {
     setApprovedByInternal(requisitionId, siglusRequisitionDto);
     siglusRequisitionDto.setRequisitionNumber(siglusRequisitionExtensionService.formatRequisitionNumber(requisitionId));
     calcEstimatedQuantityToRequest(requisitionDto);
+    setIsCreateForClient(requisitionId, siglusRequisitionDto);
     return setIsFinalApproval(siglusRequisitionDto);
   }
 
@@ -869,6 +870,17 @@ public class SiglusRequisitionService {
 
   public SiglusRequisitionDto searchRequisitionForFc(UUID requisitionId) {
     return searchRequisition(requisitionId, null);
+  }
+
+  private void setIsCreateForClient(UUID requisitionId, SiglusRequisitionDto siglusRequisitionDto) {
+    RequisitionExtension requisitionExtension = requisitionExtensionRepository.findByRequisitionId(requisitionId);
+    if (requisitionExtension == null
+        || requisitionExtension.getCreatedByFacilityId() == null
+        || Objects.equals(requisitionExtension.getCreatedByFacilityId(), siglusRequisitionDto.getFacilityId())) {
+      siglusRequisitionDto.setIsCreateForClient(Boolean.FALSE);
+    } else {
+      siglusRequisitionDto.setIsCreateForClient(Boolean.TRUE);
+    }
   }
 
   private Set<UUID> getRequisitionIds(List<RequisitionWithSupplyingDepotsDto> dtos) {

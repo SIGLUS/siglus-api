@@ -52,6 +52,7 @@ public class SiglusRequisitionDto extends RequisitionV2Dto {
   private transient List<AgeGroupServiceDto> ageGroupLineItems = newArrayList();
   private transient SiglusUsageTemplateDto usageTemplate;
   private String requisitionNumber;
+  private Boolean isCreateForClient;
 
   public static SiglusRequisitionDto from(RequisitionV2Dto v2Dto) {
     SiglusRequisitionDto dto = new SiglusRequisitionDto();
