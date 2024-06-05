@@ -262,8 +262,8 @@ public class OrderFulfillmentSyncedReplayer {
 
     Set<String> pair = notExistedLotIds.stream().map(lotDto ->
             lotDto.getLotCode() + lotDto.getTradeItemId().toString()).collect(toSet());
-    List<Lot> historicalLots = lotRepository.findLotCodeAndTradeItemIdPairs(pair);
-    if (CollectionUtils.isNotEmpty(historicalLots)) {
+    if (CollectionUtils.isNotEmpty(pair)) {
+      List<Lot> historicalLots = lotRepository.findLotCodeAndTradeItemIdPairs(pair);
       List<LotDto> notExistedNoHistoricalLots = new ArrayList<>();
       notExistedLotIds.forEach(lotDto -> {
         Optional<Lot> existed = historicalLots.stream().filter(lot ->
