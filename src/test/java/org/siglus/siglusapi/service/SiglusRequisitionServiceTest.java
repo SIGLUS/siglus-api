@@ -196,6 +196,7 @@ import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionLineItemRepository;
 import org.siglus.siglusapi.repository.RequisitionNativeSqlRepository;
+import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
 import org.siglus.siglusapi.testutils.IdealStockAmountDtoDataBuilder;
 import org.siglus.siglusapi.testutils.RequisitionLineItemDataBuilder;
@@ -397,6 +398,9 @@ public class SiglusRequisitionServiceTest {
   private OrderableRepository orderableRepository;
   @Mock
   private RequisitionLineItemRepository requisitionLineItemRepository;
+
+  @Mock
+  private SiglusRequisitionRepository siglusRequisitionRepository;
 
   private final UUID orderableId2 = UUID.randomUUID();
 
@@ -760,6 +764,22 @@ public class SiglusRequisitionServiceTest {
     verify(lineItemExtensionRepository).delete(singletonList(extension));
     verify(siglusUsageReportService).deleteUsageReport(requisitionId);
     verify(siglusRequisitionExtensionService).deleteRequisitionExtension(requisitionId);
+  }
+
+  @Test
+  public void shouldCallSiglusRequisitionRepositoryDeleteByIdWhenDeleteRequisitionForClient() {
+    // given
+    when(requisitionRepository.findOne(requisitionId)).thenReturn(createRequisition());
+    RequisitionExtension requisitionExtension = new RequisitionExtension();
+    requisitionExtension.setRequisitionId(requisitionId);
+    requisitionExtension.setCreatedByFacilityId(UUID.randomUUID());
+    when(siglusRequisitionExtensionService.deleteRequisitionExtension(requisitionId)).thenReturn(requisitionExtension);
+
+    // when
+    siglusRequisitionService.deleteRequisition(requisitionId);
+
+    // then
+    verify(siglusRequisitionRepository).deleteById(requisitionId);
   }
 
   @Test

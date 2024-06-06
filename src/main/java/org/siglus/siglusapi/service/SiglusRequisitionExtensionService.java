@@ -128,13 +128,14 @@ public class SiglusRequisitionExtensionService {
   }
 
 
-  public void deleteRequisitionExtension(UUID requisitionId) {
+  public RequisitionExtension deleteRequisitionExtension(UUID requisitionId) {
     RequisitionExtension requisitionExtension = requisitionExtensionRepository.findByRequisitionId(requisitionId);
     if (null == requisitionExtension) {
-      return;
+      return null;
     }
     log.info("delete requisition extension by requisition id: {}", requisitionId);
     requisitionExtensionRepository.delete(requisitionExtension);
+    return requisitionExtension;
   }
 
 }

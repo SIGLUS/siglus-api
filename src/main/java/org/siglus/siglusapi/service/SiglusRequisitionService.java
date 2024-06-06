@@ -1878,8 +1878,14 @@ public class SiglusRequisitionService {
     revertGeneratedNumber(requisition);
     deleteSiglusDraft(requisitionId);
     siglusUsageReportService.deleteUsageReport(requisitionId);
-    siglusRequisitionExtensionService.deleteRequisitionExtension(requisitionId);
-    siglusRequisitionRequisitionService.deleteRequisition(requisitionId);
+    RequisitionExtension requisitionExtension =
+        siglusRequisitionExtensionService.deleteRequisitionExtension(requisitionId);
+    if (requisitionExtension != null
+        && !requisitionExtension.getCreatedByFacilityId().equals(requisition.getFacilityId())) {
+      siglusRequisitionRepository.deleteById(requisitionId);
+    } else {
+      siglusRequisitionRequisitionService.deleteRequisition(requisitionId);
+    }
     notificationService.postDelete(requisitionId);
   }
 
