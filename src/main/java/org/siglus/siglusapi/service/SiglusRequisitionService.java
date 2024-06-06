@@ -2311,6 +2311,7 @@ public class SiglusRequisitionService {
     BasicProcessingPeriodDto basicProcessingPeriodDto = new BasicProcessingPeriodDto();
     basicProcessingPeriodDto.setId(siglusRequisitionDto.getProcessingPeriodId());
     basicRequisitionDto.setProcessingPeriod(basicProcessingPeriodDto);
+    basicRequisitionDto.setStatusChanges(siglusRequisitionDto.getStatusChanges());
     return basicRequisitionDto;
   }
 }
