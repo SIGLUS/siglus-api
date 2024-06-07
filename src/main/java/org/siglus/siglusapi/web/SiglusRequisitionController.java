@@ -19,6 +19,7 @@ import static org.siglus.siglusapi.constant.PaginationConstants.DEFAULT_PAGE_NUM
 import static org.siglus.siglusapi.constant.PaginationConstants.NO_PAGINATION;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -35,13 +36,16 @@ import org.openlmis.requisition.dto.RequisitionWithSupplyingDepotsDto;
 import org.openlmis.requisition.service.RequisitionService;
 import org.openlmis.requisition.utils.AuthenticationHelper;
 import org.openlmis.requisition.web.RequisitionController;
+import org.siglus.siglusapi.domain.RequisitionExtension;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionLineItemDto;
 import org.siglus.siglusapi.exception.RequisitionBuildDraftException;
 import org.siglus.siglusapi.localmachine.event.requisition.web.approve.RequisitionInternalApproveEmitter;
+import org.siglus.siglusapi.localmachine.event.requisition.web.createforclient.RequisitionCreateForClientEmitter;
 import org.siglus.siglusapi.localmachine.event.requisition.web.finalapprove.RequisitionFinalApproveEmitter;
 import org.siglus.siglusapi.localmachine.event.requisition.web.reject.RequisitionRejectEmitter;
 import org.siglus.siglusapi.localmachine.event.requisition.web.release.RequisitionReleaseEmitter;
+import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.service.SiglusNotificationService;
 import org.siglus.siglusapi.service.SiglusProcessingPeriodService;
 import org.siglus.siglusapi.service.SiglusRequisitionService;
@@ -97,6 +101,10 @@ public class SiglusRequisitionController {
   private RequisitionReleaseEmitter requisitionReleaseEmitter;
   @Autowired
   private RequisitionRejectEmitter requisitionRejectEmitter;
+  @Autowired
+  private RequisitionExtensionRepository requisitionExtensionRepository;
+  @Autowired
+  private RequisitionCreateForClientEmitter requisitionCreateForClientEmitter;
 
   @PostMapping("/initiate")
   @ResponseStatus(HttpStatus.CREATED)
@@ -178,7 +186,12 @@ public class SiglusRequisitionController {
       requisitionInternalApproveEmitter.emit(requisitionId);
     }
     if (basicRequisitionDto.getStatus() == RequisitionStatus.APPROVED) {
-      requisitionFinalApproveEmitter.emit(requisitionId);
+      RequisitionExtension requisitionExtension = requisitionExtensionRepository.findByRequisitionId(requisitionId);
+      if (!Objects.equals(requisitionExtension.getFacilityId(), requisitionExtension.getCreatedByFacilityId())) {
+        requisitionCreateForClientEmitter.emit(requisitionId);
+      } else {
+        requisitionFinalApproveEmitter.emit(requisitionId);
+      }
     }
     if (basicRequisitionDto.getStatus() == RequisitionStatus.RELEASED_WITHOUT_ORDER) {
       UUID userId = authenticationHelper.getCurrentUser().getId();
@@ -197,12 +210,8 @@ public class SiglusRequisitionController {
       @RequestBody SiglusRequisitionDto requisitionDto,
       HttpServletRequest request,
       HttpServletResponse response) {
-    BasicRequisitionDto basicRequisitionDto = siglusRequisitionService.createClientRequisition(facilityId,
+    return siglusRequisitionService.createClientRequisition(facilityId,
         requisitionDto, request, response);
-    if (basicRequisitionDto.getStatus() == RequisitionStatus.IN_APPROVAL) {
-      requisitionInternalApproveEmitter.emitForClient(basicRequisitionDto.getId());
-    }
-    return basicRequisitionDto;
   }
 
 

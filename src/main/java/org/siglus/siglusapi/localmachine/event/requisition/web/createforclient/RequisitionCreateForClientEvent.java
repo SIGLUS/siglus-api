@@ -13,25 +13,23 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.dto.enums;
+package org.siglus.siglusapi.localmachine.event.requisition.web.createforclient;
 
-public enum EventCategoryEnum {
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.siglus.siglusapi.localmachine.EventPayload;
+import org.siglus.siglusapi.localmachine.event.requisition.web.approve.RequisitionInternalApprovedEvent;
+import org.siglus.siglusapi.localmachine.event.requisition.web.finalapprove.RequisitionFinalApproveEvent;
 
-  REQUISITION_INTERNAL_APPROVED,
-  REQUISITION_INTERNAL_APPROVED_FOR_CLIENT,
-  REQUISITION_CREATE_FOR_CLIENT,
-  REQUISITION_FINAL_APPROVED,
-  REQUISITION_REJECTED,
-  RELEASED_WITHOUT_ORDER,
-  REQUISITION_CONVERT_TO_ORDER,
-  ORDER_FULFILLED,
-  POD_CONFIRMED,
-  MASTER_DATA,
-  STOCK_MOVEMENT,
-  CMM,
-  ANDROID_REQUISITION_INTERNAL_APPROVED,
-  ANDROID_POD_CONFIRMED,
-  FC_ISSUE_VOUCHER,
-  FC_RECEIPT_PLAN,
-  BACKUP_DATABASE
+@Data
+@Builder
+@EventPayload
+@AllArgsConstructor
+@NoArgsConstructor
+public class RequisitionCreateForClientEvent {
+
+  private RequisitionInternalApprovedEvent requisitionInternalApprovedEvent;
+  private RequisitionFinalApproveEvent requisitionFinalApproveEvent;
 }

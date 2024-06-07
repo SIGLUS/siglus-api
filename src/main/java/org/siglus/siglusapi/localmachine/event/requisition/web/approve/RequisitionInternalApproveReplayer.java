@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -98,8 +99,19 @@ public class RequisitionInternalApproveReplayer {
   }
 
   public void doReplay(RequisitionInternalApprovedEvent event) {
-    // if this is a rejected requisition, then delete requisition before replaying
-    deleteIfExistRequisition(event);
+    // if supplier has created the same period requisition for client, then supplier doesn't need to replay this event
+    RequisitionExtension requisitionExtension = requisitionExtensionRepository
+        .findByRequisitionNumber(event.getRequisitionExtension().getRealRequisitionNumber());
+    if (!Objects.equals(requisitionExtension.getFacilityId(), requisitionExtension.getCreatedByFacilityId())) {
+      return;
+    } else {
+      // if this is a rejected requisition, then delete requisition before replaying
+      deleteIfExistRequisition(requisitionExtension);
+    }
+    doReplayForRequisitionInternalApprovedEvent(event);
+  }
+
+  public void doReplayForRequisitionInternalApprovedEvent(RequisitionInternalApprovedEvent event) {
     Requisition newRequisition = RequisitionBuilder.newRequisition(event.getRequisition().getFacilityId(),
         event.getRequisition().getProgramId(), event.getRequisition().getEmergency());
     newRequisition.setTemplate(event.getRequisition().getTemplate());
@@ -147,9 +159,7 @@ public class RequisitionInternalApproveReplayer {
     statusChanges.forEach(statusChange -> buildStatusChanges(requisition, statusChange));
   }
 
-  private void deleteIfExistRequisition(RequisitionInternalApprovedEvent event) {
-    RequisitionExtension requisitionExtension = requisitionExtensionRepository.findByRequisitionNumber(
-        event.getRequisitionExtension().getRealRequisitionNumber());
+  public void deleteIfExistRequisition(RequisitionExtension requisitionExtension) {
     if (requisitionExtension != null) {
       UUID requisitionId = requisitionExtension.getRequisitionId();
       requisitionRepository.deleteById(requisitionId);
