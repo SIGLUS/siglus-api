@@ -28,6 +28,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.openlmis.referencedata.domain.ProcessingPeriod;
 import org.openlmis.requisition.domain.requisition.ApprovedProductReference;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.RequisitionBuilder;
@@ -41,6 +42,7 @@ import org.openlmis.requisition.service.RequisitionService;
 import org.openlmis.requisition.service.referencedata.ApproveProductsAggregator;
 import org.siglus.siglusapi.domain.AgeGroupLineItem;
 import org.siglus.siglusapi.domain.ConsultationNumberLineItem;
+import org.siglus.siglusapi.domain.GeneratedNumber;
 import org.siglus.siglusapi.domain.KitUsageLineItem;
 import org.siglus.siglusapi.domain.PatientLineItem;
 import org.siglus.siglusapi.domain.RegimenLineItem;
@@ -52,8 +54,10 @@ import org.siglus.siglusapi.domain.UsageInformationLineItem;
 import org.siglus.siglusapi.localmachine.event.NotificationService;
 import org.siglus.siglusapi.repository.AgeGroupLineItemRepository;
 import org.siglus.siglusapi.repository.ConsultationNumberLineItemRepository;
+import org.siglus.siglusapi.repository.GeneratedNumberRepository;
 import org.siglus.siglusapi.repository.KitUsageLineItemRepository;
 import org.siglus.siglusapi.repository.PatientLineItemRepository;
+import org.siglus.siglusapi.repository.ProcessingPeriodRepository;
 import org.siglus.siglusapi.repository.RegimenLineItemRepository;
 import org.siglus.siglusapi.repository.RegimenSummaryLineItemRepository;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
@@ -85,6 +89,8 @@ public class RequisitionInternalApproveReplayer {
   private final RequisitionService requisitionService;
   private final RequisitionCreateService requisitionCreateService;
   private final NotificationService notificationService;
+  private final GeneratedNumberRepository generatedNumberRepository;
+  private final ProcessingPeriodRepository processingPeriodRepository;
 
   @EventListener(classes = {RequisitionInternalApprovedEvent.class})
   public void replay(RequisitionInternalApprovedEvent event) {
@@ -109,10 +115,11 @@ public class RequisitionInternalApproveReplayer {
       // if this is a rejected requisition, then delete requisition before replaying
       deleteIfExistRequisition(requisitionExtension);
     }
-    doReplayForRequisitionInternalApprovedEvent(event);
+    doReplayForRequisitionInternalApprovedEvent(event, false);
   }
 
-  public void doReplayForRequisitionInternalApprovedEvent(RequisitionInternalApprovedEvent event) {
+  public void doReplayForRequisitionInternalApprovedEvent(RequisitionInternalApprovedEvent event,
+      boolean isCreateForClient) {
     Requisition newRequisition = RequisitionBuilder.newRequisition(event.getRequisition().getFacilityId(),
         event.getRequisition().getProgramId(), event.getRequisition().getEmergency());
     newRequisition.setTemplate(event.getRequisition().getTemplate());
@@ -136,6 +143,9 @@ public class RequisitionInternalApproveReplayer {
         + "%s", requisition.getId(), event.getRequisition().getId()));
 
     buildRequisitionExtension(event, requisition);
+    if (isCreateForClient) {
+      updateRequisitionNumberForClient(event, requisition);
+    }
 
     Map<UUID, UUID> lineItemIdToOrderableId = event.getRequisition().getRequisitionLineItems().stream()
         .collect(toMap(RequisitionLineItem::getId, item -> item.getOrderable().getId()));
@@ -321,6 +331,27 @@ public class RequisitionInternalApproveReplayer {
     requisitionExtension.setCreatedByFacilityId(event.getRequisitionExtension().getCreatedByFacilityId());
 
     requisitionExtensionRepository.save(requisitionExtension);
+  }
+
+  private void updateRequisitionNumberForClient(RequisitionInternalApprovedEvent event, Requisition requisition) {
+    ProcessingPeriod period = processingPeriodRepository.findOneById(requisition.getProcessingPeriodId());
+    GeneratedNumber generatedNumber = generatedNumberRepository.findByFacilityIdAndProgramIdAndYearAndEmergency(
+        requisition.getFacilityId(),
+        requisition.getProgramId(),
+        period.getEndDate().getYear(),
+        requisition.getEmergency());
+    if (generatedNumber == null) {
+      generatedNumber = GeneratedNumber.builder()
+          .facilityId(requisition.getFacilityId())
+          .programId(requisition.getProgramId())
+          .year(period.getEndDate().getYear())
+          .emergency(requisition.getEmergency())
+          .number(1)
+          .build();
+    } else {
+      generatedNumber.setNumber(event.getRequisitionExtension().getRequisitionNumber());
+    }
+    generatedNumberRepository.save(generatedNumber);
   }
 
   private void buildStatusChanges(Requisition requisition, StatusChange eventStatusChange) {

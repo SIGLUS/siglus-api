@@ -53,6 +53,7 @@ public class RequisitionCreateForClientReplayer {
     // if client has created the same period requisition, then delete it,
     // make supplier created requisition for client as the correct
     internalApproveReplayer.deleteIfExistRequisition(requisitionExtension);
-    internalApproveReplayer.doReplayForRequisitionInternalApprovedEvent(event.getRequisitionInternalApprovedEvent());
+    internalApproveReplayer.doReplayForRequisitionInternalApprovedEvent(event.getRequisitionInternalApprovedEvent(),
+        true);
   }
 }
