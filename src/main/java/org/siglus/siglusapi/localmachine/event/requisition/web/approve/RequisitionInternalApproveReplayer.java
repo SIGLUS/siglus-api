@@ -123,7 +123,11 @@ public class RequisitionInternalApproveReplayer {
     Requisition newRequisition = RequisitionBuilder.newRequisition(event.getRequisition().getFacilityId(),
         event.getRequisition().getProgramId(), event.getRequisition().getEmergency());
     newRequisition.setTemplate(event.getRequisition().getTemplate());
-    newRequisition.setStatus(event.getRequisition().getStatus());
+    if (isCreateForClient) {
+      newRequisition.setStatus(RequisitionStatus.IN_APPROVAL);
+    } else {
+      newRequisition.setStatus(event.getRequisition().getStatus());
+    }
     newRequisition.setProcessingPeriodId(event.getRequisition().getProcessingPeriodId());
     newRequisition.setNumberOfMonthsInPeriod(event.getRequisition().getNumberOfMonthsInPeriod());
     newRequisition.setDraftStatusMessage(event.getRequisition().getDraftStatusMessage());
@@ -174,6 +178,7 @@ public class RequisitionInternalApproveReplayer {
     if (requisitionExtension != null) {
       UUID requisitionId = requisitionExtension.getRequisitionId();
       requisitionRepository.deleteById(requisitionId);
+      requisitionRepository.flush();
       requisitionExtensionRepository.deleteByRequisitionId(requisitionId);
       requisitionLineItemExtensionRepository.deleteByRequisitionId(requisitionId);
       ageGroupLineItemRepository.deleteByRequisitionId(requisitionId);
