@@ -50,11 +50,11 @@ public class RequisitionCreateForClientReplayer {
   public void doReplay(RequisitionCreateForClientEvent event) {
     RequisitionExtension requisitionExtension = requisitionExtensionRepository.findByRequisitionNumber(
         event.getRequisitionInternalApprovedEvent().getRequisitionExtension().getRealRequisitionNumber());
-    // if client has created the same period requisition,
-    // then delete it, and with supplier created requisition for client be as the criterion
+    // if client has created the same period requisition, then delete it,
+    // make supplier created requisition for client as the correct
     internalApproveReplayer.deleteIfExistRequisition(requisitionExtension);
-
-    internalApproveReplayer.doReplayForRequisitionInternalApprovedEvent(event.getRequisitionInternalApprovedEvent());
+    internalApproveReplayer.doReplayForRequisitionInternalApprovedEvent(event.getRequisitionInternalApprovedEvent(),
+        true);
     finalApproveReplayer.doReplay(event.getRequisitionFinalApproveEvent());
   }
 }

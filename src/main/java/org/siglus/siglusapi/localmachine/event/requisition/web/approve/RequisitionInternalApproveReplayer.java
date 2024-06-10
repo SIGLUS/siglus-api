@@ -28,6 +28,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.openlmis.referencedata.domain.ProcessingPeriod;
 import org.openlmis.requisition.domain.requisition.ApprovedProductReference;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.RequisitionBuilder;
@@ -54,6 +55,7 @@ import org.siglus.siglusapi.repository.AgeGroupLineItemRepository;
 import org.siglus.siglusapi.repository.ConsultationNumberLineItemRepository;
 import org.siglus.siglusapi.repository.KitUsageLineItemRepository;
 import org.siglus.siglusapi.repository.PatientLineItemRepository;
+import org.siglus.siglusapi.repository.ProcessingPeriodRepository;
 import org.siglus.siglusapi.repository.RegimenLineItemRepository;
 import org.siglus.siglusapi.repository.RegimenSummaryLineItemRepository;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
@@ -61,6 +63,7 @@ import org.siglus.siglusapi.repository.RequisitionLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.repository.TestConsumptionLineItemRepository;
 import org.siglus.siglusapi.repository.UsageInformationLineItemRepository;
+import org.siglus.siglusapi.service.SiglusRequisitionExtensionService;
 import org.siglus.siglusapi.service.android.RequisitionCreateService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.context.event.EventListener;
@@ -85,6 +88,8 @@ public class RequisitionInternalApproveReplayer {
   private final RequisitionService requisitionService;
   private final RequisitionCreateService requisitionCreateService;
   private final NotificationService notificationService;
+  private final SiglusRequisitionExtensionService siglusRequisitionExtensionService;
+  private final ProcessingPeriodRepository processingPeriodRepository;
 
   @EventListener(classes = {RequisitionInternalApprovedEvent.class})
   public void replay(RequisitionInternalApprovedEvent event) {
@@ -102,16 +107,18 @@ public class RequisitionInternalApproveReplayer {
     // if supplier has created the same period requisition for client, then supplier doesn't need to replay this event
     RequisitionExtension requisitionExtension = requisitionExtensionRepository
         .findByRequisitionNumber(event.getRequisitionExtension().getRealRequisitionNumber());
-    if (!Objects.equals(requisitionExtension.getFacilityId(), requisitionExtension.getCreatedByFacilityId())) {
+    if (requisitionExtension != null
+        && !Objects.equals(requisitionExtension.getFacilityId(), requisitionExtension.getCreatedByFacilityId())) {
       return;
     } else {
       // if this is a rejected requisition, then delete requisition before replaying
       deleteIfExistRequisition(requisitionExtension);
     }
-    doReplayForRequisitionInternalApprovedEvent(event);
+    doReplayForRequisitionInternalApprovedEvent(event, false);
   }
 
-  public void doReplayForRequisitionInternalApprovedEvent(RequisitionInternalApprovedEvent event) {
+  public void doReplayForRequisitionInternalApprovedEvent(RequisitionInternalApprovedEvent event,
+      boolean isCreatedForClient) {
     Requisition newRequisition = RequisitionBuilder.newRequisition(event.getRequisition().getFacilityId(),
         event.getRequisition().getProgramId(), event.getRequisition().getEmergency());
     newRequisition.setTemplate(event.getRequisition().getTemplate());
@@ -134,7 +141,11 @@ public class RequisitionInternalApproveReplayer {
     log.info(String.format("replay requisition internal approve event, new requisition id: %s, event requisition id: "
         + "%s", requisition.getId(), event.getRequisition().getId()));
 
-    buildRequisitionExtension(event, requisition);
+    if (isCreatedForClient) {
+      buildRequisitionExtensionForClient(event, requisition);
+    } else {
+      buildRequisitionExtension(event, requisition);
+    }
 
     Map<UUID, UUID> lineItemIdToOrderableId = event.getRequisition().getRequisitionLineItems().stream()
         .collect(toMap(RequisitionLineItem::getId, item -> item.getOrderable().getId()));
@@ -319,6 +330,21 @@ public class RequisitionInternalApproveReplayer {
     requisitionExtension.setRequisitionNumberPrefix(event.getRequisitionExtension().getRequisitionNumberPrefix());
     requisitionExtension.setCreatedByFacilityId(event.getRequisitionExtension().getCreatedByFacilityId());
 
+    requisitionExtensionRepository.save(requisitionExtension);
+  }
+
+  private void buildRequisitionExtensionForClient(RequisitionInternalApprovedEvent event, Requisition requisition) {
+    ProcessingPeriod period = processingPeriodRepository.findOneById(requisition.getProcessingPeriodId());
+    RequisitionExtension requisitionExtension = siglusRequisitionExtensionService.buildRequisitionExtension(
+        requisition.getId(),
+        requisition.getEmergency(),
+        requisition.getFacilityId(),
+        requisition.getProgramId(),
+        period.getEndDate());
+
+    requisitionExtension.setIsApprovedByInternal(event.getRequisitionExtension().getIsApprovedByInternal());
+    requisitionExtension.setActualStartDate(event.getRequisitionExtension().getActualStartDate());
+    requisitionExtension.setCreatedByFacilityId(event.getRequisitionExtension().getCreatedByFacilityId());
     requisitionExtensionRepository.save(requisitionExtension);
   }
 
