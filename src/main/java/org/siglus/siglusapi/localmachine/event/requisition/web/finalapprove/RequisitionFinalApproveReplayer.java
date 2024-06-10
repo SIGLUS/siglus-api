@@ -76,6 +76,7 @@ public class RequisitionFinalApproveReplayer {
   public void doReplay(RequisitionFinalApproveEvent event) {
     RequisitionExtension requisitionExtension = requisitionExtensionRepository.findByRequisitionNumber(
         event.getRequisitionNumber());
+    log.info("final approve replayer find the requisitionExtension:{}", requisitionExtension);
     Requisition requisition = requisitionRepository.findOne(requisitionExtension.getRequisitionId());
 
     if (requisition.getStatus().isApproved()) {

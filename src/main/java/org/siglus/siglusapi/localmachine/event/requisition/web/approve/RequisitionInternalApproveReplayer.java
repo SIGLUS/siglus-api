@@ -345,7 +345,7 @@ public class RequisitionInternalApproveReplayer {
     requisitionExtension.setIsApprovedByInternal(event.getRequisitionExtension().getIsApprovedByInternal());
     requisitionExtension.setActualStartDate(event.getRequisitionExtension().getActualStartDate());
     requisitionExtension.setCreatedByFacilityId(event.getRequisitionExtension().getCreatedByFacilityId());
-    requisitionExtensionRepository.save(requisitionExtension);
+    requisitionExtensionRepository.saveAndFlush(requisitionExtension);
   }
 
   private void buildStatusChanges(Requisition requisition, StatusChange eventStatusChange) {
