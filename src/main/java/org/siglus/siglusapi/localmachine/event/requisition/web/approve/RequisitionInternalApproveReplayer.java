@@ -123,11 +123,7 @@ public class RequisitionInternalApproveReplayer {
     Requisition newRequisition = RequisitionBuilder.newRequisition(event.getRequisition().getFacilityId(),
         event.getRequisition().getProgramId(), event.getRequisition().getEmergency());
     newRequisition.setTemplate(event.getRequisition().getTemplate());
-    if (isCreateForClient) {
-      newRequisition.setStatus(RequisitionStatus.IN_APPROVAL);
-    } else {
-      newRequisition.setStatus(event.getRequisition().getStatus());
-    }
+    newRequisition.setStatus(event.getRequisition().getStatus());
     newRequisition.setProcessingPeriodId(event.getRequisition().getProcessingPeriodId());
     newRequisition.setNumberOfMonthsInPeriod(event.getRequisition().getNumberOfMonthsInPeriod());
     newRequisition.setDraftStatusMessage(event.getRequisition().getDraftStatusMessage());
@@ -180,15 +176,25 @@ public class RequisitionInternalApproveReplayer {
       requisitionRepository.deleteById(requisitionId);
       requisitionRepository.flush();
       requisitionExtensionRepository.deleteByRequisitionId(requisitionId);
+      requisitionExtensionRepository.flush();
       requisitionLineItemExtensionRepository.deleteByRequisitionId(requisitionId);
+      requisitionLineItemExtensionRepository.flush();
       ageGroupLineItemRepository.deleteByRequisitionId(requisitionId);
+      ageGroupLineItemRepository.flush();
       consultationNumberLineItemRepository.deleteByRequisitionId(requisitionId);
+      consultationNumberLineItemRepository.flush();
       usageInformationLineItemRepository.deleteByRequisitionId(requisitionId);
+      usageInformationLineItemRepository.flush();
       patientLineItemRepository.deleteByRequisitionId(requisitionId);
+      patientLineItemRepository.flush();
       testConsumptionLineItemRepository.deleteByRequisitionId(requisitionId);
+      testConsumptionLineItemRepository.flush();
       regimenLineItemRepository.deleteByRequisitionId(requisitionId);
+      regimenLineItemRepository.flush();
       regimenSummaryLineItemRepository.deleteByRequisitionId(requisitionId);
+      regimenSummaryLineItemRepository.flush();
       kitUsageRepository.deleteByRequisitionId(requisitionId);
+      kitUsageRepository.flush();
     }
   }
 
@@ -335,7 +341,7 @@ public class RequisitionInternalApproveReplayer {
     requisitionExtension.setRequisitionNumberPrefix(event.getRequisitionExtension().getRequisitionNumberPrefix());
     requisitionExtension.setCreatedByFacilityId(event.getRequisitionExtension().getCreatedByFacilityId());
 
-    requisitionExtensionRepository.save(requisitionExtension);
+    requisitionExtensionRepository.saveAndFlush(requisitionExtension);
   }
 
   private void updateRequisitionNumberForClient(RequisitionInternalApprovedEvent event, Requisition requisition) {
@@ -356,7 +362,7 @@ public class RequisitionInternalApproveReplayer {
     } else {
       generatedNumber.setNumber(event.getRequisitionExtension().getRequisitionNumber());
     }
-    generatedNumberRepository.save(generatedNumber);
+    generatedNumberRepository.saveAndFlush(generatedNumber);
   }
 
   private void buildStatusChanges(Requisition requisition, StatusChange eventStatusChange) {

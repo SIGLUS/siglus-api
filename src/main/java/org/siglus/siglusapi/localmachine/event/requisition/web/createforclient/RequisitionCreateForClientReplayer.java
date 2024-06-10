@@ -56,6 +56,6 @@ public class RequisitionCreateForClientReplayer {
     internalApproveReplayer.deleteIfExistRequisition(requisitionExtension);
     internalApproveReplayer.doReplayForRequisitionInternalApprovedEvent(event.getRequisitionInternalApprovedEvent(),
         true);
-    finalApproveReplayer.doReplay(event.getRequisitionFinalApproveEvent());
+    finalApproveReplayer.doReplayForRequisitionFinalApproveEvent(event.getRequisitionFinalApproveEvent());
   }
 }

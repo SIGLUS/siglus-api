@@ -76,7 +76,6 @@ public class RequisitionFinalApproveReplayer {
   public void doReplay(RequisitionFinalApproveEvent event) {
     RequisitionExtension requisitionExtension = requisitionExtensionRepository.findByRequisitionNumber(
         event.getRequisitionNumber());
-    log.info("final approve replayer find the requisitionExtension:{}", requisitionExtension);
     Requisition requisition = requisitionRepository.findOne(requisitionExtension.getRequisitionId());
 
     if (requisition.getStatus().isApproved()) {
@@ -85,6 +84,16 @@ public class RequisitionFinalApproveReplayer {
 
     finalApprove(requisition, requisitionExtension, event);
 
+    notificationService.postFinalApproval(event.getFinalApproveUserId(),
+        requisitionCreateService.buildBaseRequisitionDto(requisition), event.getFinalApproveSupervisoryNodeId());
+  }
+
+  public void doReplayForRequisitionFinalApproveEvent(RequisitionFinalApproveEvent event) {
+    RequisitionExtension requisitionExtension = requisitionExtensionRepository.findByRequisitionNumber(
+        event.getRequisitionNumber());
+    log.info("final approve replayer find the requisitionExtension:{}", requisitionExtension);
+    Requisition requisition = requisitionRepository.findOne(requisitionExtension.getRequisitionId());
+    finalApprove(requisition, requisitionExtension, event);
     notificationService.postFinalApproval(event.getFinalApproveUserId(),
         requisitionCreateService.buildBaseRequisitionDto(requisition), event.getFinalApproveSupervisoryNodeId());
   }
