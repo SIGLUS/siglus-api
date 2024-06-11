@@ -89,40 +89,8 @@ public class RequisitionFinalApproveReplayer {
         requisitionCreateService.buildBaseRequisitionDto(requisition), event.getFinalApproveSupervisoryNodeId());
   }
 
-  public void doReplayForRequisitionFinalApproveEvent(RequisitionFinalApproveEvent event) {
-    RequisitionExtension requisitionExtension = requisitionExtensionRepository.findByRequisitionNumber(
-        event.getRequisitionNumber());
-    log.info("final approve replayer find the requisitionExtension:{}", requisitionExtension);
-    Requisition requisition = requisitionRepository.findOne(requisitionExtension.getRequisitionId());
-
-    StatusChange approvedStatus = requisition.getStatusChanges().stream()
-        .filter(statusChange -> statusChange.getStatus() == RequisitionStatus.APPROVED).findFirst().get();
-    requisition.getStatusChanges().remove(approvedStatus);
-    resetApprovedQuantity(requisition, event);
-
-    // do approve
-    requisition.approve(null, eventCommonService.getOrderableDtoMap(requisition), Collections.emptyList(),
-        event.getFinalApproveUserId());
-
-    StatusChange finalApprovedStatusChange = requisition.getStatusChanges().stream().filter(item ->
-        item.getStatus() == RequisitionStatus.APPROVED).findFirst().orElseThrow(IllegalStateException::new);
-    finalApprovedStatusChange.setId(approvedStatus.getId());
-    resetFinalApproveStatusMessage(requisition, event.getFinalApproveStatusMessage(),
-        finalApprovedStatusChange);
-
-    finalApprovedStatusChange.setSupervisoryNodeId(event.getFinalApproveSupervisoryNodeId());
-    log.info("save requisition final approve, requisitionId:{}", requisition.getId());
-    requisitionRepository.saveAndFlush(requisition);
-
-    requisitionExtension.setIsApprovedByInternal(false);
-    requisitionExtensionRepository.saveAndFlush(requisitionExtension);
-
-    notificationService.postFinalApproval(event.getFinalApproveUserId(),
-        requisitionCreateService.buildBaseRequisitionDto(requisition), event.getFinalApproveSupervisoryNodeId());
-  }
-
   private void finalApprove(Requisition requisition, RequisitionExtension requisitionExtension,
-                            RequisitionFinalApproveEvent event) {
+      RequisitionFinalApproveEvent event) {
     resetApprovedQuantity(requisition, event);
 
     // do approve
