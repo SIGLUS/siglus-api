@@ -84,6 +84,7 @@ import org.siglus.siglusapi.domain.PodExtension;
 import org.siglus.siglusapi.domain.PodLineItemsByLocation;
 import org.siglus.siglusapi.domain.PodLineItemsExtension;
 import org.siglus.siglusapi.domain.PodSubDraft;
+import org.siglus.siglusapi.domain.PodSubDraftLineItem;
 import org.siglus.siglusapi.domain.PodSubDraftLineItemsByLocation;
 import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.GeographicLevelDto;
@@ -101,6 +102,7 @@ import org.siglus.siglusapi.repository.PodExtensionRepository;
 import org.siglus.siglusapi.repository.PodLineItemsByLocationRepository;
 import org.siglus.siglusapi.repository.PodLineItemsExtensionRepository;
 import org.siglus.siglusapi.repository.PodLineItemsRepository;
+import org.siglus.siglusapi.repository.PodSubDraftLineItemRepository;
 import org.siglus.siglusapi.repository.PodSubDraftLineItemsByLocationRepository;
 import org.siglus.siglusapi.repository.PodSubDraftRepository;
 import org.siglus.siglusapi.repository.SiglusOrdersRepository;
@@ -203,6 +205,9 @@ public class SiglusPodServiceTest {
 
   @Mock
   private SiglusStockEventsService stockEventsService;
+
+  @Mock
+  private PodSubDraftLineItemRepository podSubDraftLineItemRepository;
 
   private final UUID externalId = UUID.randomUUID();
   private final UUID orderableId = UUID.randomUUID();
@@ -1022,6 +1027,69 @@ public class SiglusPodServiceTest {
 
     // then
     verify(podLineItemsByLocationRepository, times(1)).save(any(List.class));
+  }
+
+  @Test
+  public void shouldCreatePodSubDraftLineItemSuccess() {
+    when(podSubDraftRepository.findOne(subDraftId)).thenReturn(buildMockSubDraftNotYetStarted());
+    when(podLineItemsExtensionRepository.findByPodLineItemId(lineItemId1))
+        .thenReturn(PodLineItemsExtension.builder().podLineItemId(lineItemId1)
+            .subDraftId(subDraftId).build());
+    when(podLineItemsRepository.findOne(lineItemId1)).thenReturn(buildMockPodLineItems().get(0));
+
+    service.createPodSubDraftLineItem(podId, subDraftId, lineItemId1);
+
+    verify(podSubDraftLineItemRepository, times(1)).save(any(PodSubDraftLineItem.class));
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void shouldThrowExceptionWhenCreatePodSubDraftLineItemGivenSubDraftIdAndLineItemIdMismatch() {
+    UUID podLineItemId = UUID.randomUUID();
+    when(podSubDraftRepository.findOne(subDraftId)).thenReturn(buildMockSubDraftNotYetStarted());
+    when(podLineItemsExtensionRepository.findByPodLineItemId(podLineItemId))
+        .thenReturn(PodLineItemsExtension.builder().podLineItemId(podLineItemId)
+            .subDraftId(UUID.randomUUID()).build());
+
+    service.createPodSubDraftLineItem(podId, subDraftId, podLineItemId);
+  }
+
+  @Test(expected = BusinessDataException.class)
+  public void shouldThrowExceptionWhenCreatePodSubDraftLineItemGivenSubDraftIdAndPodIdMismatch() {
+    when(podSubDraftRepository.findOne(subDraftId)).thenReturn(buildMockSubDraftNotYetStarted());
+
+    service.createPodSubDraftLineItem(UUID.randomUUID(), subDraftId, UUID.randomUUID());
+  }
+
+  @Test(expected = BusinessDataException.class)
+  public void shouldThrowExceptionWhenCreatePodSubDraftLineItemGivenSubDraftStatusIsSubmitted() {
+    when(podSubDraftRepository.findOne(subDraftId)).thenReturn(buildMockSubDraftSubmitted());
+
+    service.deletePodSubDraftLineItem(UUID.randomUUID(), subDraftId, UUID.randomUUID());
+  }
+
+  @Test
+  public void shouldDeletePodSubDraftLineItemSuccess() {
+    UUID subLineItemId = UUID.randomUUID();
+    when(podSubDraftRepository.findOne(subDraftId)).thenReturn(buildMockSubDraftNotYetStarted());
+    doNothing().when(podSubDraftLineItemRepository).delete(subLineItemId);
+
+    service.deletePodSubDraftLineItem(podId, subDraftId, subLineItemId);
+
+    verify(podSubDraftLineItemRepository, times(1)).delete(subLineItemId);
+  }
+
+  @Test(expected = BusinessDataException.class)
+  public void shouldThrowExceptionWhenDeletePodSubDraftLineItemGivenSubDraftIdAndPodIdMismatch() {
+    when(podSubDraftRepository.findOne(subDraftId)).thenReturn(buildMockSubDraftNotYetStarted());
+
+    service.deletePodSubDraftLineItem(UUID.randomUUID(), subDraftId, UUID.randomUUID());
+  }
+
+  @Test(expected = BusinessDataException.class)
+  public void shouldThrowExceptionWhenDeletePodSubDraftLineItemGivenSubDraftStatusIsSubmitted() {
+    when(podSubDraftRepository.findOne(subDraftId)).thenReturn(buildMockSubDraftSubmitted());
+
+    service.deletePodSubDraftLineItem(UUID.randomUUID(), subDraftId, UUID.randomUUID());
   }
 
   private void mockPodExtensionQuery() {

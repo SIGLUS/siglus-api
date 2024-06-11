@@ -15,26 +15,11 @@
 
 package org.siglus.siglusapi.repository;
 
-import java.util.List;
 import java.util.UUID;
-import org.siglus.siglusapi.domain.PodLineItemsExtension;
+import org.siglus.siglusapi.domain.PodSubDraftLineItem;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 
-public interface PodLineItemsExtensionRepository extends JpaRepository<PodLineItemsExtension, UUID> {
-
-  @Modifying
-  @Query(value = "delete from siglusintegration.pod_line_items_extension where subdraftid in (:subDraftIds);",
-      nativeQuery = true)
-  void deleteAllBySubDraftIds(@Param("subDraftIds") Iterable<UUID> subDraftIds);
-
-  @Query(value = "select * from siglusintegration.pod_line_items_extension where subdraftid in (:subDraftIds);",
-      nativeQuery = true)
-  List<PodLineItemsExtension> findAllBySubDraftIds(@Param("subDraftIds") Iterable<UUID> subDraftIds);
-
-  void deleteAllBySubDraftId(UUID subDraftId);
-
-  PodLineItemsExtension findByPodLineItemId(UUID podLineItemId);
+@Repository
+public interface PodSubDraftLineItemRepository extends JpaRepository<PodSubDraftLineItem, UUID> {
 }

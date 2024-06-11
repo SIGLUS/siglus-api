@@ -72,6 +72,7 @@ import org.siglus.siglusapi.domain.PodExtension;
 import org.siglus.siglusapi.domain.PodLineItemsByLocation;
 import org.siglus.siglusapi.domain.PodLineItemsExtension;
 import org.siglus.siglusapi.domain.PodSubDraft;
+import org.siglus.siglusapi.domain.PodSubDraftLineItem;
 import org.siglus.siglusapi.domain.PodSubDraftLineItemsByLocation;
 import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.GeographicZoneDto;
@@ -88,6 +89,7 @@ import org.siglus.siglusapi.repository.PodExtensionRepository;
 import org.siglus.siglusapi.repository.PodLineItemsByLocationRepository;
 import org.siglus.siglusapi.repository.PodLineItemsExtensionRepository;
 import org.siglus.siglusapi.repository.PodLineItemsRepository;
+import org.siglus.siglusapi.repository.PodSubDraftLineItemRepository;
 import org.siglus.siglusapi.repository.PodSubDraftLineItemsByLocationRepository;
 import org.siglus.siglusapi.repository.PodSubDraftRepository;
 import org.siglus.siglusapi.repository.SiglusOrdersRepository;
@@ -139,7 +141,6 @@ public class SiglusPodService {
   private final SiglusRequisitionRepository siglusRequisitionRepository;
   private final SiglusFacilityReferenceDataService siglusFacilityReferenceDataService;
   private final StatusChangeRepository requisitionStatusChangeRepository;
-  private final SiglusRequisitionExtensionService requisitionExtensionService;
   private final PodExtensionRepository podExtensionRepository;
   private final PodLineItemsByLocationRepository podLineItemsByLocationRepository;
   private final PodSubDraftLineItemsByLocationRepository podSubDraftLineItemsByLocationRepository;
@@ -147,6 +148,7 @@ public class SiglusPodService {
   private final StockEventBuilder stockEventBuilder;
   private final ProofOfDeliveryEmitter proofOfDeliveryEmitter;
   private final SiglusStockEventsService stockEventsService;
+  private final PodSubDraftLineItemRepository podSubDraftLineItemRepository;
 
   private static final String FILE_NAME_PREFIX = "OF.";
   private static final String FILE_NAME_PREFIX_EMERGENCY = FILE_NAME_PREFIX + "REM.";
@@ -386,9 +388,32 @@ public class SiglusPodService {
     return response;
   }
 
+  @Transactional
+  public PodSubDraftLineItem createPodSubDraftLineItem(UUID podId, UUID subDraftId, UUID podLineItemId) {
+    PodSubDraft subDraft = checkIfPodIdAndSubDraftIdMatch(podId, subDraftId);
+    checkIfCanOperate(subDraft);
+    PodLineItemsExtension lineItemExtension = podLineItemsExtensionRepository.findByPodLineItemId(podLineItemId);
+    if (!lineItemExtension.getSubDraftId().equals(subDraftId)) {
+      throw new IllegalArgumentException("subDraftId and podLineItemId mismatch");
+    }
+    ProofOfDeliveryLineItem lineItem = podLineItemsRepository.findOne(podLineItemId);
+    PodSubDraftLineItem subDraftLineItem = PodSubDraftLineItem.builder()
+        .orderable(lineItem.getOrderable())
+        .podSubDraftId(lineItemExtension.getSubDraftId())
+        .build();
+    return podSubDraftLineItemRepository.save(subDraftLineItem);
+  }
+
+  @Transactional
+  public void deletePodSubDraftLineItem(UUID podId, UUID subDraftId, UUID podSubDraftLineItemId) {
+    PodSubDraft subDraft = checkIfPodIdAndSubDraftIdMatch(podId, subDraftId);
+    checkIfCanOperate(subDraft);
+    podSubDraftLineItemRepository.delete(podSubDraftLineItemId);
+  }
+
   private void setRequisitionInfo(PodPrintInfoResponse response, UUID realRequisitionId) {
     response.setRequisitionId(realRequisitionId);
-    response.setRequisitionNum(requisitionExtensionService.formatRequisitionNumber(realRequisitionId));
+    response.setRequisitionNum(siglusRequisitionExtensionService.formatRequisitionNumber(realRequisitionId));
 
     StatusChange requisitionStatusChange = requisitionStatusChangeRepository.findByRequisitionId(realRequisitionId)
         .stream()
@@ -616,11 +641,12 @@ public class SiglusPodService {
     return podLineItemsExtensions.stream().map(PodLineItemsExtension::getPodLineItemId).collect(Collectors.toSet());
   }
 
-  private void checkIfPodIdAndSubDraftIdMatch(UUID podId, UUID subDraftId) {
+  private PodSubDraft checkIfPodIdAndSubDraftIdMatch(UUID podId, UUID subDraftId) {
     PodSubDraft podSubDraft = getPodSubDraft(subDraftId);
     if (!podSubDraft.getPodId().equals(podId)) {
       throw new BusinessDataException(new Message(ERROR_POD_ID_SUB_DRAFT_ID_NOT_MATCH), subDraftId);
     }
+    return podSubDraft;
   }
 
   private boolean isAllSubDraftsSubmitted(List<PodSubDraft> subDraftList) {

@@ -22,12 +22,15 @@ import java.util.UUID;
 import javax.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.openlmis.fulfillment.web.util.ProofOfDeliveryDto;
+import org.siglus.siglusapi.domain.PodSubDraftLineItem;
 import org.siglus.siglusapi.service.SiglusPodService;
 import org.siglus.siglusapi.util.MovementDateValidator;
+import org.siglus.siglusapi.web.request.CreatePodSubDraftLineItemRequest;
 import org.siglus.siglusapi.web.request.PodExtensionRequest;
 import org.siglus.siglusapi.web.request.UpdatePodSubDraftRequest;
 import org.siglus.siglusapi.web.response.PodExtensionResponse;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -42,6 +45,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/siglusapi/proofsOfDelivery")
 @AllArgsConstructor
+@SuppressWarnings("PMD.AvoidDuplicateLiterals")
 public class SiglusPodWithoutLocationController {
   private final SiglusPodService siglusPodService;
   private final MovementDateValidator movementDateValidator;
@@ -85,5 +89,20 @@ public class SiglusPodWithoutLocationController {
   @ResponseStatus(NO_CONTENT)
   public void deleteSubDraft(@PathVariable("id") UUID podId, @PathVariable("subDraftId") UUID subDraftId) {
     siglusPodService.deleteSubDraft(podId, subDraftId);
+  }
+
+  @PostMapping("/{id}/subDrafts/{subDraftId}/lineItems")
+  public PodSubDraftLineItem createPodSubDraftLineItem(@PathVariable("id") UUID podId,
+      @PathVariable("subDraftId") UUID subDraftId,
+      @Validated @RequestBody CreatePodSubDraftLineItemRequest request) {
+    return siglusPodService.createPodSubDraftLineItem(podId, subDraftId, request.getPodLineItemId());
+  }
+
+  @DeleteMapping("/{id}/subDrafts/{subDraftId}/lineItems/{lineItemId}")
+  @ResponseStatus(NO_CONTENT)
+  public void deletePodSubDraftLineItem(@PathVariable("id") UUID podId,
+      @PathVariable("subDraftId") UUID subDraftId,
+      @PathVariable("lineItemId") UUID lineItemId) {
+    siglusPodService.deletePodSubDraftLineItem(podId, subDraftId, lineItemId);
   }
 }

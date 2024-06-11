@@ -20,17 +20,21 @@ import static org.springframework.http.HttpStatus.NO_CONTENT;
 import java.util.UUID;
 import javax.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.siglus.siglusapi.domain.PodSubDraftLineItem;
 import org.siglus.siglusapi.dto.PodWithLocationDto;
 import org.siglus.siglusapi.service.SiglusPodService;
 import org.siglus.siglusapi.util.MovementDateValidator;
+import org.siglus.siglusapi.web.request.CreatePodSubDraftLineItemRequest;
 import org.siglus.siglusapi.web.request.PodWithLocationRequest;
 import org.siglus.siglusapi.web.request.UpdatePodSubDraftWithLocationRequest;
 import org.siglus.siglusapi.web.response.ProofOfDeliveryWithLocationResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -40,6 +44,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/siglusapi/proofsOfDeliveryWithLocation")
 @RequiredArgsConstructor
+@SuppressWarnings("PMD.AvoidDuplicateLiterals")
 public class SiglusPodWithLocationController {
   private final SiglusPodService siglusPodService;
   private final MovementDateValidator movementDateValidator;
@@ -86,5 +91,20 @@ public class SiglusPodWithLocationController {
   @GetMapping("/{id}")
   public ProofOfDeliveryWithLocationResponse viewPodWithLocation(@PathVariable("id") UUID podId) {
     return siglusPodService.getPodExtensionResponseWithLocation(podId);
+  }
+
+  @PostMapping("/{id}/subDrafts/{subDraftId}/lineItems")
+  public PodSubDraftLineItem createPodSubDraftLineItem(@PathVariable("id") UUID podId,
+      @PathVariable("subDraftId") UUID subDraftId,
+      @Validated @RequestBody CreatePodSubDraftLineItemRequest request) {
+    return siglusPodService.createPodSubDraftLineItem(podId, subDraftId, request.getPodLineItemId());
+  }
+
+  @DeleteMapping("/{id}/subDrafts/{subDraftId}/lineItems/{lineItemId}")
+  @ResponseStatus(NO_CONTENT)
+  public void deletePodSubDraftLineItem(@PathVariable("id") UUID podId,
+                                        @PathVariable("subDraftId") UUID subDraftId,
+                                        @PathVariable("lineItemId") UUID lineItemId) {
+    siglusPodService.deletePodSubDraftLineItem(podId, subDraftId, lineItemId);
   }
 }

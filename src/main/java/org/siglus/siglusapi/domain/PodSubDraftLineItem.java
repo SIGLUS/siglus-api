@@ -15,13 +15,25 @@
 
 package org.siglus.siglusapi.domain;
 
+import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
+import javax.persistence.AttributeOverride;
+import javax.persistence.AttributeOverrides;
+import javax.persistence.Column;
+import javax.persistence.Convert;
+import javax.persistence.Embedded;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.Table;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.openlmis.fulfillment.domain.VersionEntityReference;
+import org.openlmis.fulfillment.domain.naming.VvmStatus;
 import org.siglus.common.domain.BaseEntity;
 
 @Entity
@@ -32,11 +44,35 @@ import org.siglus.common.domain.BaseEntity;
 @Table(name = "pod_sub_draft_line_items", schema = "siglusintegration")
 public class PodSubDraftLineItem extends BaseEntity {
 
+  @AttributeOverrides({
+      @AttributeOverride(name = "id", column = @Column(name = "orderableid")),
+      @AttributeOverride(name = "versionNumber", column = @Column(name = "orderableversionnumber"))
+  })
+  @Embedded
+  private VersionEntityReference orderable;
+
   private UUID podSubDraftId;
 
   private Integer quantityAccepted;
 
-  private UUID orderableId;
-
   private UUID lotId;
+
+  @Enumerated(EnumType.STRING)
+  private VvmStatus vvmStatus;
+
+  private Boolean useVvm;
+
+  private Integer quantityRejected;
+
+  private UUID rejectionReasonId;
+
+  private String notes;
+
+  private String lotCode;
+
+  private LocalDate expirationDate;
+
+  @Column(name = "locations", columnDefinition = "jsonb")
+  @Convert(converter = PodSubDraftLineItemLocationsConverter.class)
+  private List<PodSubDraftLineItemLocation> locations;
 }
