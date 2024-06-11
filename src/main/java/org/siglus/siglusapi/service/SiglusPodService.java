@@ -755,6 +755,7 @@ public class SiglusPodService {
     resetLineItems(lineItemIds, proofOfDeliveryDto);
 
     updateSubDraftStatusAndOperator(podSubDraft, PodSubDraftStatusEnum.NOT_YET_STARTED);
+    podSubDraftLineItemRepository.deleteByPodSubDraftId(subDraftId);
   }
 
   private void validateQuantity(ProofOfDeliveryDto podDto, OperateTypeEnum operateType) {
@@ -800,6 +801,7 @@ public class SiglusPodService {
     Set<UUID> lineItemIds = findLineItemsIdsByPodId(podId, subDraftIds);
     resetLineItems(lineItemIds, proofOfDeliveryDto);
     deleteSubDraftAndLineExtensionBySubDraftIds(subDraftIds);
+    podSubDraftLineItemRepository.deleteByPodSubDraftIdIn(new ArrayList<>(subDraftIds));
   }
 
   private Set<UUID> findLineItemsIdsByPodId(UUID podId, Set<UUID> subDraftIds) {

@@ -15,6 +15,8 @@
 
 package org.siglus.siglusapi.repository;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 import org.siglus.siglusapi.domain.PodSubDraftLineItem;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -22,4 +24,8 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface PodSubDraftLineItemRepository extends JpaRepository<PodSubDraftLineItem, UUID> {
+
+  void deleteByPodSubDraftId(UUID podSubDraftId);
+
+  void deleteByPodSubDraftIdIn(List<UUID> podSubDraftIds);
 }

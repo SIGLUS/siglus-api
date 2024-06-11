@@ -3928,6 +3928,120 @@ traits:
             body:
               application/json:
                 schema: localizedMessage
+    /proofsOfDeliveryWithLocation/{id}/subDrafts/{subDraftId}/lineItems/{lineItemId}:
+      displayName: Proof Of Delivery - sub draft - line items
+      uriParameters:
+        id:
+          displayName: proofOfDeliveryId
+          type: string
+          required: true
+          repeat: false
+        subDraftId:
+          displayName: subDraftId
+          type: string
+          required: true
+          repeat: false
+        lineItemId:
+          displayName: lineItemId
+          type: string
+          required: true
+          repeat: false
+      delete:
+        is: [ secured ]
+        description: Delete proof of delivery line item
+        responses:
+          204:
+            description: Sub draft with location deleted.
+    /proofsOfDeliveryWithLocation/{id}/subDrafts/{subDraftId}/lineItems:
+      displayName: Proof Of Delivery - sub draft - line items
+      uriParameters:
+        id:
+          displayName: proofOfDeliveryId
+          type: string
+          required: true
+          repeat: false
+        subDraftId:
+          displayName: subDraftId
+          type: string
+          required: true
+          repeat: false
+      post:
+        is: [ secured ]
+        description: >
+          add a sub draft line item for line item
+        responses:
+          200:
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+          400:
+            body:
+              application/json:
+                schema: badRequestResponse
+          404:
+          403:
+            body:
+              application/json:
+                schema: localizedMessage
+
+    /proofsOfDelivery/{id}/subDrafts/{subDraftId}/lineItems/{lineItemId}:
+      displayName: Proof Of Delivery - sub draft - line items
+      uriParameters:
+        id:
+          displayName: proofOfDeliveryId
+          type: string
+          required: true
+          repeat: false
+        subDraftId:
+          displayName: subDraftId
+          type: string
+          required: true
+          repeat: false
+        lineItemId:
+          displayName: lineItemId
+          type: string
+          required: true
+          repeat: false
+      delete:
+        is: [ secured ]
+        description: Delete proof of delivery line item
+        responses:
+          204:
+            description: Sub draft with location deleted.
+    /proofsOfDelivery/{id}/subDrafts/{subDraftId}/lineItems:
+      displayName: Proof Of Delivery - sub draft - line items
+      uriParameters:
+        id:
+          displayName: proofOfDeliveryId
+          type: string
+          required: true
+          repeat: false
+        subDraftId:
+          displayName: subDraftId
+          type: string
+          required: true
+          repeat: false
+      post:
+        is: [ secured ]
+        description: >
+          add a sub draft line item for line item
+        responses:
+          200:
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+          400:
+            body:
+              application/json:
+                schema: badRequestResponse
+          404:
+          403:
+            body:
+              application/json:
+                schema: localizedMessage
+
     /integration:
       /stockMovements:
         displayName: Get Stock Movements
