@@ -51,6 +51,7 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @RequiredArgsConstructor
 public class RequisitionFinalApproveReplayer {
+
   private final SiglusOrdersRepository siglusOrdersRepository;
   private final RequisitionExtensionRepository requisitionExtensionRepository;
   private final RequisitionRepository requisitionRepository;
@@ -93,7 +94,29 @@ public class RequisitionFinalApproveReplayer {
         event.getRequisitionNumber());
     log.info("final approve replayer find the requisitionExtension:{}", requisitionExtension);
     Requisition requisition = requisitionRepository.findOne(requisitionExtension.getRequisitionId());
-    finalApprove(requisition, requisitionExtension, event);
+
+    StatusChange approvedStatus = requisition.getStatusChanges().stream()
+        .filter(statusChange -> statusChange.getStatus() == RequisitionStatus.APPROVED).findFirst().get();
+    requisition.getStatusChanges().remove(approvedStatus);
+    resetApprovedQuantity(requisition, event);
+
+    // do approve
+    requisition.approve(null, eventCommonService.getOrderableDtoMap(requisition), Collections.emptyList(),
+        event.getFinalApproveUserId());
+
+    StatusChange finalApprovedStatusChange = requisition.getStatusChanges().stream().filter(item ->
+        item.getStatus() == RequisitionStatus.APPROVED).findFirst().orElseThrow(IllegalStateException::new);
+    finalApprovedStatusChange.setId(approvedStatus.getId());
+    resetFinalApproveStatusMessage(requisition, event.getFinalApproveStatusMessage(),
+        finalApprovedStatusChange);
+
+    finalApprovedStatusChange.setSupervisoryNodeId(event.getFinalApproveSupervisoryNodeId());
+    log.info("save requisition final approve, requisitionId:{}", requisition.getId());
+    requisitionRepository.saveAndFlush(requisition);
+
+    requisitionExtension.setIsApprovedByInternal(false);
+    requisitionExtensionRepository.saveAndFlush(requisitionExtension);
+
     notificationService.postFinalApproval(event.getFinalApproveUserId(),
         requisitionCreateService.buildBaseRequisitionDto(requisition), event.getFinalApproveSupervisoryNodeId());
   }
@@ -125,7 +148,7 @@ public class RequisitionFinalApproveReplayer {
     }
     Map<VersionEntityReference, RequisitionLineItem> requisitionLineItemMap =
         requisition.getRequisitionLineItems().stream().collect(toMap(RequisitionLineItem::getOrderable,
-        Function.identity()));
+            Function.identity()));
     List<RequisitionLineItem> newLineItems = new ArrayList<>();
     event.getRequisitionLineItems().forEach(item -> {
       RequisitionLineItem requisitionLineItem = requisitionLineItemMap.get(item.getOrderable());
@@ -158,7 +181,7 @@ public class RequisitionFinalApproveReplayer {
   }
 
   private void resetFinalApproveStatusMessage(Requisition requisition, StatusMessageRequest statusMessageRequest,
-                        StatusChange finalApprovedStatusChange) {
+      StatusChange finalApprovedStatusChange) {
     if (statusMessageRequest == null) {
       return;
     }
