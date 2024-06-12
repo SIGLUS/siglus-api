@@ -100,15 +100,21 @@ public class RequisitionInternalApproveReplayer {
 
   public void doReplay(RequisitionInternalApprovedEvent event) {
     // if supplier has created the same period requisition for client, then supplier doesn't need to replay this event
-    RequisitionExtension requisitionExtension = requisitionExtensionRepository
-        .findByRequisitionNumber(event.getRequisitionExtension().getRealRequisitionNumber());
-    if (requisitionExtension != null
-        && !Objects.equals(requisitionExtension.getFacilityId(), requisitionExtension.getCreatedByFacilityId())) {
-      return;
-    } else {
+    Requisition requisition = requisitionRepository.findOneByFacilityIdAndProgramIdAndProcessingPeriodId(
+        event.getRequisition().getFacilityId(),
+        event.getRequisition().getProgramId(),
+        event.getRequisition().getProcessingPeriodId());
+    if (requisition != null) {
+      RequisitionExtension requisitionExtension = requisitionExtensionRepository
+          .findByRequisitionId(requisition.getId());
+      if (requisitionExtension != null
+          && !Objects.equals(requisitionExtension.getFacilityId(), requisitionExtension.getCreatedByFacilityId())) {
+        return;
+      }
       // if this is a rejected requisition, then delete requisition before replaying
-      deleteIfExistRequisition(requisitionExtension);
+      deleteIfExistRequisition(requisition);
     }
+
     doReplayForRequisitionInternalApprovedEvent(event);
   }
 
@@ -160,9 +166,9 @@ public class RequisitionInternalApproveReplayer {
     statusChanges.forEach(statusChange -> buildStatusChanges(requisition, statusChange));
   }
 
-  public void deleteIfExistRequisition(RequisitionExtension requisitionExtension) {
-    if (requisitionExtension != null) {
-      UUID requisitionId = requisitionExtension.getRequisitionId();
+  public void deleteIfExistRequisition(Requisition requisition) {
+    if (requisition != null) {
+      UUID requisitionId = requisition.getId();
       requisitionRepository.deleteById(requisitionId);
       requisitionRepository.flush();
       requisitionExtensionRepository.deleteByRequisitionId(requisitionId);

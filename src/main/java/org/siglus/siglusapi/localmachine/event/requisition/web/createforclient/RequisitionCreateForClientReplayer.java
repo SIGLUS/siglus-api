@@ -111,12 +111,14 @@ public class RequisitionCreateForClientReplayer {
   }
 
   public void doReplay(RequisitionCreateForClientEvent event) {
-    RequisitionExtension requisitionExtension = requisitionExtensionRepository.findByRequisitionNumber(
-        event.getRequisitionInternalApprovedEvent().getRequisitionExtension().getRealRequisitionNumber());
+    RequisitionInternalApprovedEvent internalApprovedEvent = event.getRequisitionInternalApprovedEvent();
+    Requisition requisition = requisitionRepository.findOneByFacilityIdAndProgramIdAndProcessingPeriodId(
+        internalApprovedEvent.getRequisition().getFacilityId(),
+        internalApprovedEvent.getRequisition().getProgramId(),
+        internalApprovedEvent.getRequisition().getProcessingPeriodId());
     // if client has created the same period requisition, then delete it,
     // make supplier created requisition for client as the correct
-    log.info("replay RequisitionCreateForClientEvent requisitionExtension:{}", requisitionExtension);
-    deleteIfExistRequisition(requisitionExtension);
+    deleteIfExistRequisition(requisition);
     doReplayForCreateForClientEvent(event.getRequisitionInternalApprovedEvent(),
         event.getRequisitionFinalApproveEvent());
   }
@@ -179,9 +181,9 @@ public class RequisitionCreateForClientReplayer {
     statusChanges.forEach(statusChange -> buildStatusChanges(requisition, statusChange));
   }
 
-  public void deleteIfExistRequisition(RequisitionExtension requisitionExtension) {
-    if (requisitionExtension != null) {
-      UUID requisitionId = requisitionExtension.getRequisitionId();
+  public void deleteIfExistRequisition(Requisition requisition) {
+    if (requisition != null) {
+      UUID requisitionId = requisition.getId();
       requisitionRepository.deleteById(requisitionId);
       requisitionRepository.flush();
       requisitionExtensionRepository.deleteByRequisitionId(requisitionId);

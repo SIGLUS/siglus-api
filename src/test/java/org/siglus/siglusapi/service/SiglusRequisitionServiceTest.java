@@ -185,18 +185,26 @@ import org.siglus.siglusapi.dto.TestConsumptionOutcomeDto;
 import org.siglus.siglusapi.dto.TestConsumptionProjectDto;
 import org.siglus.siglusapi.dto.TestConsumptionServiceDto;
 import org.siglus.siglusapi.i18n.MessageService;
+import org.siglus.siglusapi.repository.AgeGroupLineItemRepository;
+import org.siglus.siglusapi.repository.ConsultationNumberLineItemRepository;
 import org.siglus.siglusapi.repository.FacilityCmmsRepository;
 import org.siglus.siglusapi.repository.FacilityExtensionRepository;
+import org.siglus.siglusapi.repository.KitUsageLineItemRepository;
 import org.siglus.siglusapi.repository.NotSubmittedMonthlyRequisitionsRepository;
 import org.siglus.siglusapi.repository.OrderableRepository;
+import org.siglus.siglusapi.repository.PatientLineItemRepository;
 import org.siglus.siglusapi.repository.ProcessingPeriodRepository;
+import org.siglus.siglusapi.repository.RegimenLineItemRepository;
 import org.siglus.siglusapi.repository.RegimenOrderableRepository;
+import org.siglus.siglusapi.repository.RegimenSummaryLineItemRepository;
 import org.siglus.siglusapi.repository.RequisitionDraftRepository;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionLineItemRepository;
 import org.siglus.siglusapi.repository.RequisitionNativeSqlRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
+import org.siglus.siglusapi.repository.TestConsumptionLineItemRepository;
+import org.siglus.siglusapi.repository.UsageInformationLineItemRepository;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
 import org.siglus.siglusapi.testutils.IdealStockAmountDtoDataBuilder;
 import org.siglus.siglusapi.testutils.RequisitionLineItemDataBuilder;
@@ -370,6 +378,25 @@ public class SiglusRequisitionServiceTest {
 
   @Mock
   private FacilityCmmsRepository facilityCmmsRepository;
+
+  @Mock
+  private RequisitionLineItemExtensionRepository requisitionLineItemExtensionRepository;
+  @Mock
+  private AgeGroupLineItemRepository ageGroupLineItemRepository;
+  @Mock
+  private ConsultationNumberLineItemRepository consultationNumberLineItemRepository;
+  @Mock
+  private UsageInformationLineItemRepository usageInformationLineItemRepository;
+  @Mock
+  private PatientLineItemRepository patientLineItemRepository;
+  @Mock
+  private TestConsumptionLineItemRepository testConsumptionLineItemRepository;
+  @Mock
+  private RegimenLineItemRepository regimenLineItemRepository;
+  @Mock
+  private RegimenSummaryLineItemRepository regimenSummaryLineItemRepository;
+  @Mock
+  private KitUsageLineItemRepository kitUsageRepository;
 
   //  private final UUID programId = UUID.randomUUID();
   private final UUID programId = UUID.fromString("10845cb9-d365-4aaa-badd-b4fa39c6a26a");

@@ -170,18 +170,26 @@ import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.exception.RequisitionBuildDraftException;
 import org.siglus.siglusapi.localmachine.event.requisition.web.finalapprove.RequisitionFinalApproveEmitter;
 import org.siglus.siglusapi.localmachine.event.requisition.web.release.RequisitionReleaseEmitter;
+import org.siglus.siglusapi.repository.AgeGroupLineItemRepository;
+import org.siglus.siglusapi.repository.ConsultationNumberLineItemRepository;
 import org.siglus.siglusapi.repository.FacilityCmmsRepository;
 import org.siglus.siglusapi.repository.FacilityExtensionRepository;
+import org.siglus.siglusapi.repository.KitUsageLineItemRepository;
 import org.siglus.siglusapi.repository.NotSubmittedMonthlyRequisitionsRepository;
 import org.siglus.siglusapi.repository.OrderableRepository;
+import org.siglus.siglusapi.repository.PatientLineItemRepository;
 import org.siglus.siglusapi.repository.ProcessingPeriodRepository;
+import org.siglus.siglusapi.repository.RegimenLineItemRepository;
 import org.siglus.siglusapi.repository.RegimenOrderableRepository;
+import org.siglus.siglusapi.repository.RegimenSummaryLineItemRepository;
 import org.siglus.siglusapi.repository.RequisitionDraftRepository;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionLineItemRepository;
 import org.siglus.siglusapi.repository.RequisitionNativeSqlRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
+import org.siglus.siglusapi.repository.TestConsumptionLineItemRepository;
+import org.siglus.siglusapi.repository.UsageInformationLineItemRepository;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
 import org.siglus.siglusapi.service.fc.FcCmmCpService;
 import org.siglus.siglusapi.util.OperatePermissionService;
@@ -277,6 +285,24 @@ public class SiglusRequisitionService {
   private RequisitionNativeSqlRepository requisitionNativeSqlRepository;
   @Autowired
   private FacilityCmmsRepository facilityCmmsRepository;
+  @Autowired
+  private RequisitionLineItemExtensionRepository requisitionLineItemExtensionRepository;
+  @Autowired
+  private AgeGroupLineItemRepository ageGroupLineItemRepository;
+  @Autowired
+  private ConsultationNumberLineItemRepository consultationNumberLineItemRepository;
+  @Autowired
+  private UsageInformationLineItemRepository usageInformationLineItemRepository;
+  @Autowired
+  private PatientLineItemRepository patientLineItemRepository;
+  @Autowired
+  private TestConsumptionLineItemRepository testConsumptionLineItemRepository;
+  @Autowired
+  private RegimenLineItemRepository regimenLineItemRepository;
+  @Autowired
+  private RegimenSummaryLineItemRepository regimenSummaryLineItemRepository;
+  @Autowired
+  private KitUsageLineItemRepository kitUsageRepository;
   public static final double DEFAULT_CORRECTION_FACTOR = 1.0;
   public static final int ESTIMATED_QUANTITY_FACTOR = 3;
   public static final int REQUESTED_QUANTITY_FACTOR = 1;
@@ -1883,6 +1909,16 @@ public class SiglusRequisitionService {
     if (requisitionExtension != null
         && !requisitionExtension.getCreatedByFacilityId().equals(requisition.getFacilityId())) {
       siglusRequisitionRepository.deleteById(requisitionId);
+      requisitionExtensionRepository.deleteByRequisitionId(requisitionId);
+      requisitionLineItemExtensionRepository.deleteByRequisitionId(requisitionId);
+      ageGroupLineItemRepository.deleteByRequisitionId(requisitionId);
+      consultationNumberLineItemRepository.deleteByRequisitionId(requisitionId);
+      usageInformationLineItemRepository.deleteByRequisitionId(requisitionId);
+      patientLineItemRepository.deleteByRequisitionId(requisitionId);
+      testConsumptionLineItemRepository.deleteByRequisitionId(requisitionId);
+      regimenLineItemRepository.deleteByRequisitionId(requisitionId);
+      regimenSummaryLineItemRepository.deleteByRequisitionId(requisitionId);
+      kitUsageRepository.deleteByRequisitionId(requisitionId);
     } else {
       siglusRequisitionRequisitionService.deleteRequisition(requisitionId);
     }

@@ -110,6 +110,15 @@ public interface SiglusRequisitionRepository extends JpaRepository<Requisition, 
       @Param("status") RequisitionStatus status
   );
 
+  @Query(value = "select r.* from requisition.requisitions r "
+      + "where r.facilityid = :facilityId "
+      + "and r.programid = :programId "
+      + "and r.processingperiodid = :processingPeriodId ", nativeQuery = true)
+  Requisition findOneByFacilityIdAndProgramIdAndProcessingPeriodId(
+      @Param("facilityId") UUID facilityId,
+      @Param("programId") UUID programId,
+      @Param("processingPeriodId") UUID processingPeriodId);
+
   @EntityGraph(value = "requisition-statusChange-graph")
   Set<Requisition> findAllByStatus(RequisitionStatus status);
 
