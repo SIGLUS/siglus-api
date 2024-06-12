@@ -117,12 +117,12 @@ public class RequisitionCreateForClientReplayer {
     // make supplier created requisition for client as the correct
     log.info("replay RequisitionCreateForClientEvent requisitionExtension:{}", requisitionExtension);
     deleteIfExistRequisition(requisitionExtension);
-    doReplayForCreateForClientEvent(event.getRequisitionInternalApprovedEvent(), true,
+    doReplayForCreateForClientEvent(event.getRequisitionInternalApprovedEvent(),
         event.getRequisitionFinalApproveEvent());
   }
 
   public void doReplayForCreateForClientEvent(RequisitionInternalApprovedEvent internalApprovedEvent,
-      boolean isCreateForClient, RequisitionFinalApproveEvent finalApproveEvent) {
+      RequisitionFinalApproveEvent finalApproveEvent) {
     Requisition newRequisition = RequisitionBuilder.newRequisition(
         internalApprovedEvent.getRequisition().getFacilityId(),
         internalApprovedEvent.getRequisition().getProgramId(), internalApprovedEvent.getRequisition().getEmergency());
@@ -156,9 +156,7 @@ public class RequisitionCreateForClientReplayer {
             + "%s", requisition.getId(), internalApprovedEvent.getRequisition().getId()));
 
     buildRequisitionExtension(internalApprovedEvent, requisition);
-    if (isCreateForClient) {
-      updateRequisitionNumberForClient(internalApprovedEvent, requisition);
-    }
+    updateRequisitionNumberForClient(internalApprovedEvent, requisition);
 
     Map<UUID, UUID> lineItemIdToOrderableId = internalApprovedEvent.getRequisition().getRequisitionLineItems().stream()
         .collect(toMap(RequisitionLineItem::getId, item -> item.getOrderable().getId()));

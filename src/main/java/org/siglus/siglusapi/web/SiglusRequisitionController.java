@@ -204,7 +204,6 @@ public class SiglusRequisitionController {
   }
 
   @PostMapping("/clients/{id}")
-  @Transactional
   public BasicRequisitionDto createClientRequisition(
       @PathVariable(value = "id") UUID facilityId,
       @RequestBody SiglusRequisitionDto requisitionDto,
