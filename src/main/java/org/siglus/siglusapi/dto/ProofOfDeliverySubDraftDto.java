@@ -13,22 +13,25 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.web.request;
+package org.siglus.siglusapi.dto;
 
+import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
 import javax.validation.constraints.NotNull;
 import lombok.Data;
-import org.openlmis.fulfillment.web.util.ProofOfDeliveryDto;
-import org.siglus.siglusapi.dto.PodLineItemWithLocationDto;
+import org.openlmis.fulfillment.domain.ProofOfDeliveryStatus;
+import org.openlmis.fulfillment.web.util.ShipmentObjectReferenceDto;
+
 
 @Data
-public class UpdatePodSubDraftWithLocationRequest {
-
+public class ProofOfDeliverySubDraftDto {
   @NotNull
-  private ProofOfDeliveryDto podDto;
-
-  @NotNull
-  private OperateTypeEnum operateType;
-
-  private List<PodLineItemWithLocationDto> podLineItemLocation;
+  private UUID id;
+  private ShipmentObjectReferenceDto shipment;
+  private ProofOfDeliveryStatus status;
+  private List<ProofOfDeliverySubDraftLineItemDto> lineItems;
+  private String receivedBy;
+  private String deliveredBy;
+  private LocalDate receivedDate;
 }

@@ -25,7 +25,7 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.siglus.siglusapi.service.SiglusPodService;
 import org.siglus.siglusapi.web.request.OperateTypeEnum;
-import org.siglus.siglusapi.web.request.UpdatePodSubDraftWithLocationRequest;
+import org.siglus.siglusapi.web.request.UpdatePodSubDraftRequest;
 
 @RunWith(MockitoJUnitRunner.class)
 public class SiglusPodWithLocationControllerTest {
@@ -67,7 +67,7 @@ public class SiglusPodWithLocationControllerTest {
     // given
     UUID subDraftId = UUID.randomUUID();
     UUID podId = UUID.randomUUID();
-    UpdatePodSubDraftWithLocationRequest request = buildForRequest(OperateTypeEnum.SAVE);
+    UpdatePodSubDraftRequest request = buildForRequest(OperateTypeEnum.SAVE);
 
     // when
     controller.updateSubDraftWithLocation(podId, subDraftId, request);
@@ -81,7 +81,7 @@ public class SiglusPodWithLocationControllerTest {
     // given
     UUID subDraftId = UUID.randomUUID();
     UUID podId = UUID.randomUUID();
-    UpdatePodSubDraftWithLocationRequest request = buildForRequest(OperateTypeEnum.SUBMIT);
+    UpdatePodSubDraftRequest request = buildForRequest(OperateTypeEnum.SUBMIT);
 
     // when
     controller.updateSubDraftWithLocation(podId, subDraftId, request);
@@ -126,8 +126,8 @@ public class SiglusPodWithLocationControllerTest {
     verify(proofOfDeliveryService).getPodExtensionResponseWithLocation(podId);
   }
 
-  private UpdatePodSubDraftWithLocationRequest buildForRequest(OperateTypeEnum operateType) {
-    UpdatePodSubDraftWithLocationRequest request = new UpdatePodSubDraftWithLocationRequest();
+  private UpdatePodSubDraftRequest buildForRequest(OperateTypeEnum operateType) {
+    UpdatePodSubDraftRequest request = new UpdatePodSubDraftRequest();
     request.setOperateType(operateType);
     return request;
   }

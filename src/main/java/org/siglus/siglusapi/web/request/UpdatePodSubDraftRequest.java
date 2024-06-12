@@ -15,16 +15,20 @@
 
 package org.siglus.siglusapi.web.request;
 
+import java.util.List;
 import javax.validation.constraints.NotNull;
 import lombok.Data;
-import org.openlmis.fulfillment.web.util.ProofOfDeliveryDto;
+import org.siglus.siglusapi.dto.PodLineItemWithLocationDto;
+import org.siglus.siglusapi.dto.ProofOfDeliverySubDraftDto;
 
 @Data
 public class UpdatePodSubDraftRequest {
 
   @NotNull
-  private ProofOfDeliveryDto podDto;
+  private ProofOfDeliverySubDraftDto podDto;
 
   @NotNull
   private OperateTypeEnum operateType;
+
+  private List<PodLineItemWithLocationDto> podLineItemLocation;
 }

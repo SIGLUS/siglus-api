@@ -54,11 +54,9 @@ import org.openlmis.fulfillment.domain.ProofOfDeliveryLineItem.Importer;
 import org.openlmis.fulfillment.domain.ProofOfDeliveryStatus;
 import org.openlmis.fulfillment.repository.ProofOfDeliveryRepository;
 import org.openlmis.fulfillment.web.ProofOfDeliveryController;
-import org.openlmis.fulfillment.web.shipment.ShipmentLineItemDto;
 import org.openlmis.fulfillment.web.util.OrderObjectReferenceDto;
 import org.openlmis.fulfillment.web.util.ProofOfDeliveryDto;
 import org.openlmis.fulfillment.web.util.ProofOfDeliveryLineItemDto;
-import org.openlmis.fulfillment.web.util.ShipmentObjectReferenceDto;
 import org.openlmis.fulfillment.web.util.StockEventBuilder;
 import org.openlmis.referencedata.domain.Orderable;
 import org.openlmis.requisition.domain.requisition.RequisitionStatus;
@@ -73,12 +71,15 @@ import org.siglus.siglusapi.domain.PodLineItemsByLocation;
 import org.siglus.siglusapi.domain.PodLineItemsExtension;
 import org.siglus.siglusapi.domain.PodSubDraft;
 import org.siglus.siglusapi.domain.PodSubDraftLineItem;
+import org.siglus.siglusapi.domain.PodSubDraftLineItemLocation;
 import org.siglus.siglusapi.domain.PodSubDraftLineItemsByLocation;
 import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.GeographicZoneDto;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.dto.PodLineItemWithLocationDto;
 import org.siglus.siglusapi.dto.PodWithLocationDto;
+import org.siglus.siglusapi.dto.ProofOfDeliverySubDraftDto;
+import org.siglus.siglusapi.dto.ProofOfDeliverySubDraftLineItemDto;
 import org.siglus.siglusapi.dto.enums.PodSubDraftStatusEnum;
 import org.siglus.siglusapi.exception.AuthenticationException;
 import org.siglus.siglusapi.exception.BusinessDataException;
@@ -105,7 +106,6 @@ import org.siglus.siglusapi.web.request.OperateTypeEnum;
 import org.siglus.siglusapi.web.request.PodExtensionRequest;
 import org.siglus.siglusapi.web.request.PodWithLocationRequest;
 import org.siglus.siglusapi.web.request.UpdatePodSubDraftRequest;
-import org.siglus.siglusapi.web.request.UpdatePodSubDraftWithLocationRequest;
 import org.siglus.siglusapi.web.response.PodExtensionResponse;
 import org.siglus.siglusapi.web.response.PodPrintInfoResponse;
 import org.siglus.siglusapi.web.response.PodPrintInfoResponse.LineItemInfo;
@@ -249,14 +249,12 @@ public class SiglusPodService {
 
   @Transactional
   public void updateSubDraft(UpdatePodSubDraftRequest request, UUID subDraftId) {
-    updatePodSubDraft(subDraftId, request.getPodDto(), request.getOperateType());
+    updatePodSubDraft(subDraftId, request.getOperateType(), request.getPodDto(), null);
   }
 
   @Transactional
-  public void updateSubDraftWithLocation(UpdatePodSubDraftWithLocationRequest request, UUID subDraftId) {
-    validateQuantity(request.getPodDto(), request.getOperateType());
-    updatePodSubDraft(subDraftId, request.getPodDto(), request.getOperateType());
-    updatePodSubDraftLocation(request.getPodLineItemLocation());
+  public void updateSubDraftWithLocation(UpdatePodSubDraftRequest request, UUID subDraftId) {
+    updatePodSubDraft(subDraftId, request.getOperateType(), request.getPodDto(), request.getPodLineItemLocation());
   }
 
   @Transactional
@@ -583,6 +581,30 @@ public class SiglusPodService {
     return toBeUpdatedLineItems;
   }
 
+  private List<ProofOfDeliveryLineItem> updateDraftLineItems(List<ProofOfDeliverySubDraftLineItemDto> draftLineItems,
+      List<ProofOfDeliveryLineItem> lineItems, PodSubDraftStatusEnum subDraftStatus) {
+    Map<UUID, ProofOfDeliverySubDraftLineItemDto> draftLineItemDtoMap = draftLineItems.stream()
+        .collect(Collectors.toMap(ProofOfDeliverySubDraftLineItemDto::getId, e -> e));
+    ProofOfDeliveryLineItem resetItem = new ProofOfDeliveryLineItem(null,
+        null, null, null, null, null, null);
+    lineItems.forEach(lineItem -> {
+      if (PodSubDraftStatusEnum.NOT_YET_STARTED == subDraftStatus) {
+        lineItem.updateFrom(resetItem);
+      } else {
+        ProofOfDeliverySubDraftLineItemDto draftLineItem = draftLineItemDtoMap.getOrDefault(lineItem.getId(), null);
+        if (ObjectUtils.isEmpty(draftLineItem)) {
+          lineItem.updateFrom(resetItem);
+        } else {
+          ProofOfDeliveryLineItem updatedItem = new ProofOfDeliveryLineItem(null,
+              null, draftLineItem.getQuantityAccepted(), null,
+              draftLineItem.getQuantityRejected(), draftLineItem.getRejectionReasonId(), draftLineItem.getNotes());
+          lineItem.updateFrom(updatedItem);
+        }
+      }
+    });
+    return lineItems;
+  }
+
   private ProofOfDeliveryLineItem buildToBeUpdatedLineItem(ProofOfDeliveryLineItem lineItem,
       ProofOfDeliveryLineItemDto lineItemDto) {
     ProofOfDeliveryLineItem toBeUpdatedLineItem = new ProofOfDeliveryLineItem(lineItem.getOrderable(),
@@ -732,18 +754,49 @@ public class SiglusPodService {
     deleteAndUpdateSubDraftLineItemsWithLocation(podLineItemLocationList);
   }
 
-  private void updatePodSubDraft(UUID subDraftId, ProofOfDeliveryDto podDto, OperateTypeEnum operateType) {
+  private void updatePodSubDraft(UUID subDraftId, OperateTypeEnum operateType,
+      ProofOfDeliverySubDraftDto draftDto, List<PodLineItemWithLocationDto> draftLocations) {
     PodSubDraft podSubDraft = getPodSubDraft(subDraftId);
     checkIfCanOperate(podSubDraft);
-    Set<UUID> lineItemIds = getPodLineItemIdsBySubDraftId(subDraftId);
-    List<ProofOfDeliveryLineItem> lineItems = podLineItemsRepository.findAll(lineItemIds);
-
-    List<ProofOfDeliveryLineItem> toBeUpdatedLineItems = buildToBeUpdatedLineItems(
-        podDto, lineItems, PodSubDraftStatusEnum.getPodSubDraftEnum(operateType));
-    log.info("update ProofOfDeliveryLineItem list, subDraftId:{}, lineItemIds:{}", subDraftId, lineItemIds);
+    Set<UUID> podLineItemIds = getPodLineItemIdsBySubDraftId(subDraftId);
+    List<ProofOfDeliveryLineItem> podLineItems = podLineItemsRepository.findAll(podLineItemIds);
+    // update pod line items
+    List<ProofOfDeliverySubDraftLineItemDto> draftLineItems = draftDto.getLineItems();
+    List<ProofOfDeliverySubDraftLineItemDto> podLineItemDrafts = draftLineItems.stream()
+        .filter(item -> podLineItemIds.contains(item.getId())).collect(Collectors.toList());
+    List<ProofOfDeliveryLineItem> toBeUpdatedLineItems = updateDraftLineItems(
+        podLineItemDrafts, podLineItems, PodSubDraftStatusEnum.getPodSubDraftEnum(operateType));
     podLineItemsRepository.save(toBeUpdatedLineItems);
+    List<PodLineItemWithLocationDto> podLineItemLocations = new ArrayList<>();
+    if (!ObjectUtils.isEmpty(draftLocations)) {
+      podLineItemLocations = draftLocations.stream()
+          .filter(location -> podLineItemIds.contains(location.getPodLineItemId())).collect(Collectors.toList());
+      draftLocations.removeAll(podLineItemLocations);
+    }
+    updatePodSubDraftLocation(podLineItemLocations);
 
+    // update sub draft line items
+    draftLineItems.removeAll(podLineItemDrafts);
+    if (!ObjectUtils.isEmpty(draftLineItems)) {
+      updateSubDraftLineItem(draftLineItems, draftLocations);
+    }
+
+    // update sub draft
     updateSubDraftStatusAndOperator(podSubDraft, PodSubDraftStatusEnum.getPodSubDraftEnum(operateType));
+  }
+
+  private void updateSubDraftLineItem(List<ProofOfDeliverySubDraftLineItemDto> lineItems,
+                                      List<PodLineItemWithLocationDto> locations) {
+    Map<UUID, List<PodLineItemWithLocationDto>> locationMap = locations.stream()
+        .collect(Collectors.groupingBy(PodLineItemWithLocationDto::getPodLineItemId));
+    List<PodSubDraftLineItem> draftLineItems = lineItems.stream().map(
+        item -> {
+          List<PodSubDraftLineItemLocation> itemLocations = locationMap.getOrDefault(item.getId(), new ArrayList<>())
+              .stream().map(PodLineItemWithLocationDto::toItemLocation).collect(Collectors.toList());
+          return item.toDraftLineItem(itemLocations);
+        }
+    ).collect(Collectors.toList());
+    podSubDraftLineItemRepository.save(draftLineItems);
   }
 
   private void deletePodSubDraft(UUID podId, UUID subDraftId) {
@@ -756,34 +809,6 @@ public class SiglusPodService {
 
     updateSubDraftStatusAndOperator(podSubDraft, PodSubDraftStatusEnum.NOT_YET_STARTED);
     podSubDraftLineItemRepository.deleteByPodSubDraftId(subDraftId);
-  }
-
-  private void validateQuantity(ProofOfDeliveryDto podDto, OperateTypeEnum operateType) {
-    if (OperateTypeEnum.SAVE.equals(operateType)) {
-      return;
-    }
-    ShipmentObjectReferenceDto shipment = podDto.getShipment();
-    List<ShipmentLineItemDto> shipmentLineItems = shipment.getLineItems();
-    Map<String, Integer> uniqueKeyToShippedQuantity = new HashMap<>();
-    shipmentLineItems.forEach(shipmentLineItem -> {
-      String key = buildForQuantityShippedKey(shipmentLineItem.getOrderable().getId(), shipmentLineItem.getLotId());
-      uniqueKeyToShippedQuantity.put(key, shipmentLineItem.getQuantityShipped().intValue());
-    });
-
-    Map<String, Integer> uniqueKeyToAcceptedQuantity = new HashMap<>();
-    List<Importer> lineItems = podDto.getLineItems();
-    lineItems.forEach(lineItem -> {
-      String key = buildForQuantityShippedKey(lineItem.getOrderableIdentity().getId(), lineItem.getLotId());
-      if (uniqueKeyToAcceptedQuantity.containsKey(key)) {
-        uniqueKeyToAcceptedQuantity.put(key, uniqueKeyToAcceptedQuantity.get(key) + lineItem.getQuantityAccepted());
-      } else {
-        uniqueKeyToAcceptedQuantity.put(key, lineItem.getQuantityAccepted());
-      }
-    });
-  }
-
-  private String buildForQuantityShippedKey(UUID orderableId, UUID lotId) {
-    return orderableId + "&" + lotId;
   }
 
   private ProofOfDeliveryDto getPodSubDraftDto(UUID podId, UUID subDraftId, Set<String> expand) {
@@ -817,6 +842,7 @@ public class SiglusPodService {
         .filter(Objects::nonNull).collect(Collectors.toSet());
     log.info("delete location info when submit all drafts, pod line item id: {}", subDraftsLineItemIds);
     podSubDraftLineItemsByLocationRepository.deleteByPodLineItemIdIn(subDraftsLineItemIds);
+    podSubDraftLineItemRepository.flush();
     List<PodSubDraftLineItemsByLocation> draftLineItemsByLocations = Lists.newArrayList();
     podLineItemLocation.forEach(location -> {
       PodSubDraftLineItemsByLocation draftLineItemsByLocation = PodSubDraftLineItemsByLocation

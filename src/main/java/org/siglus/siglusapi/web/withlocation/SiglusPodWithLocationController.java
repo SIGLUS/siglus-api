@@ -26,7 +26,7 @@ import org.siglus.siglusapi.service.SiglusPodService;
 import org.siglus.siglusapi.util.MovementDateValidator;
 import org.siglus.siglusapi.web.request.CreatePodSubDraftLineItemRequest;
 import org.siglus.siglusapi.web.request.PodWithLocationRequest;
-import org.siglus.siglusapi.web.request.UpdatePodSubDraftWithLocationRequest;
+import org.siglus.siglusapi.web.request.UpdatePodSubDraftRequest;
 import org.siglus.siglusapi.web.response.ProofOfDeliveryWithLocationResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
@@ -65,7 +65,7 @@ public class SiglusPodWithLocationController {
   @PutMapping("/{id}/subDrafts/{subDraftId}")
   @ResponseStatus(NO_CONTENT)
   public void updateSubDraftWithLocation(@PathVariable("id") UUID podId, @PathVariable("subDraftId") UUID subDraftId,
-      @Valid @RequestBody UpdatePodSubDraftWithLocationRequest request) {
+      @Valid @RequestBody UpdatePodSubDraftRequest request) {
     siglusPodService.updateSubDraftWithLocation(request, subDraftId);
   }
 

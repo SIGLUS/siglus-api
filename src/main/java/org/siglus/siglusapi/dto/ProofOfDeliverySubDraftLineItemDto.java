@@ -15,26 +15,39 @@
 
 package org.siglus.siglusapi.dto;
 
+import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
+import javax.validation.constraints.NotNull;
 import lombok.Data;
+import org.openlmis.fulfillment.domain.naming.VvmStatus;
+import org.openlmis.fulfillment.web.util.ObjectReferenceDto;
+import org.openlmis.fulfillment.web.util.VersionObjectReferenceDto;
+import org.siglus.siglusapi.domain.PodSubDraftLineItem;
 import org.siglus.siglusapi.domain.PodSubDraftLineItemLocation;
 
 @Data
-public class PodLineItemWithLocationDto {
-
-  private UUID podLineItemId;
-
-  private String locationCode;
-
-  private String area;
-
+public class ProofOfDeliverySubDraftLineItemDto {
+  @NotNull
+  private UUID id;
+  @NotNull
+  private VersionObjectReferenceDto orderable;
+  private ObjectReferenceDto lot;
   private Integer quantityAccepted;
+  private Boolean useVvm;
+  private VvmStatus vvmStatus;
+  private Integer quantityRejected;
+  private UUID rejectionReasonId;
+  private String notes;
 
-  public PodSubDraftLineItemLocation toItemLocation() {
-    return PodSubDraftLineItemLocation.builder()
-        .locationCode(locationCode)
-        .area(area)
-        .quantityAccepted(quantityAccepted)
+  private String lotCode;
+  private LocalDate expirationDate;
+  private List<PodSubDraftLineItemLocation> locations;
+
+  public PodSubDraftLineItem toDraftLineItem(List<PodSubDraftLineItemLocation> locations) {
+    // TODO not finished
+    return PodSubDraftLineItem.builder()
+        .locations(locations)
         .build();
   }
 }
