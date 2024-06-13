@@ -15,8 +15,6 @@
 
 package org.siglus.siglusapi.web.withoutlocation;
 
-import static org.springframework.http.HttpStatus.NO_CONTENT;
-
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -44,7 +42,6 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -58,7 +55,6 @@ public class SiglusPodWithoutLocationController {
   private final SiglusAuthenticationHelper authenticationHelper;
 
   @DeleteMapping("/{id}/subDrafts")
-  @ResponseStatus(NO_CONTENT)
   public void deleteSubDrafts(@PathVariable("id") UUID podId) {
     siglusPodService.resetSubDrafts(podId);
   }
@@ -86,14 +82,12 @@ public class SiglusPodWithoutLocationController {
   }
 
   @PutMapping("/{id}/subDrafts/{subDraftId}")
-  @ResponseStatus(NO_CONTENT)
   public void updateSubDraft(@PathVariable("id") UUID podId, @PathVariable("subDraftId") UUID subDraftId,
       @Valid @RequestBody UpdatePodSubDraftRequest request) {
     siglusPodService.updateSubDraft(request, subDraftId);
   }
 
   @DeleteMapping("/{id}/subDrafts/{subDraftId}")
-  @ResponseStatus(NO_CONTENT)
   public void deleteSubDraft(@PathVariable("id") UUID podId, @PathVariable("subDraftId") UUID subDraftId) {
     siglusPodService.deleteSubDraft(podId, subDraftId);
   }
@@ -114,7 +108,6 @@ public class SiglusPodWithoutLocationController {
   }
 
   @DeleteMapping("/{id}/subDrafts/{subDraftId}/lineItems/{lineItemId}")
-  @ResponseStatus(NO_CONTENT)
   public void deletePodSubDraftLineItem(@PathVariable("id") UUID podId,
       @PathVariable("subDraftId") UUID subDraftId,
       @PathVariable("lineItemId") UUID lineItemId) {

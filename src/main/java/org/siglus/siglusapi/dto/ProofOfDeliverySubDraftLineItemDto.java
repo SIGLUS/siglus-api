@@ -84,6 +84,7 @@ public class ProofOfDeliverySubDraftLineItemDto {
       lot = new ObjectReferenceDto(item.getLotId());
     }
     return ProofOfDeliverySubDraftLineItemDto.builder()
+        .id(item.getId())
         .orderable(orderable)
         .lot(lot)
         .quantityAccepted(item.getQuantityAccepted())

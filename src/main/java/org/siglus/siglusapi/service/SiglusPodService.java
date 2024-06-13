@@ -518,7 +518,14 @@ public class SiglusPodService {
   public void deletePodSubDraftLineItem(UUID podId, UUID subDraftId, UUID podSubDraftLineItemId) {
     PodSubDraft subDraft = checkIfPodIdAndSubDraftIdMatch(podId, subDraftId);
     checkIfCanOperate(subDraft);
-    podSubDraftLineItemRepository.delete(podSubDraftLineItemId);
+    PodSubDraftLineItem draftLineItem = podSubDraftLineItemRepository.findOne(podSubDraftLineItemId);
+    if (ObjectUtils.isEmpty(draftLineItem)) {
+      throw new IllegalArgumentException("podLineItemId is wrong.");
+    }
+    if (!subDraftId.equals(draftLineItem.getPodSubDraftId())) {
+      throw new IllegalArgumentException("subDraftId and podLineItemId mismatch.");
+    }
+    podSubDraftLineItemRepository.delete(draftLineItem);
   }
 
   private void setRequisitionInfo(PodPrintInfoResponse response, UUID realRequisitionId) {

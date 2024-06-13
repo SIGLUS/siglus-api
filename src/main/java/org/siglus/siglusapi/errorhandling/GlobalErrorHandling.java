@@ -49,6 +49,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.ObjectUtils;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -130,6 +131,17 @@ public class GlobalErrorHandling implements ProblemHandling {
   @ExceptionHandler
   public ResponseEntity<Problem> handleValidationException(ValidationException exception, NativeWebRequest request) {
     String detail = String.format("%s Caused by %s", exception.getMessage(), exception.getCause());
+    ThrowableProblem problem = prepare(exception, BAD_REQUEST, DEFAULT_TYPE).withDetail(detail).build();
+    return create(exception, problem, request);
+  }
+
+  @ExceptionHandler
+  public ResponseEntity<Problem> handleValidationException(IllegalArgumentException exception,
+                                                           NativeWebRequest request) {
+    String detail = exception.getMessage();
+    if (!ObjectUtils.isEmpty(exception.getCause())) {
+      detail =  String.format("%s Caused by %s", exception.getMessage(), exception.getCause());
+    }
     ThrowableProblem problem = prepare(exception, BAD_REQUEST, DEFAULT_TYPE).withDetail(detail).build();
     return create(exception, problem, request);
   }

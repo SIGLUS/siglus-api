@@ -15,8 +15,6 @@
 
 package org.siglus.siglusapi.web.withlocation;
 
-import static org.springframework.http.HttpStatus.NO_CONTENT;
-
 import java.util.List;
 import java.util.UUID;
 import javax.validation.Valid;
@@ -65,20 +63,17 @@ public class SiglusPodWithLocationController {
   }
 
   @DeleteMapping("/{id}/subDrafts/{subDraftId}")
-  @ResponseStatus(NO_CONTENT)
   public void deleteSubDraftWithLocation(@PathVariable("id") UUID podId, @PathVariable("subDraftId") UUID subDraftId) {
     siglusPodService.deleteSubDraftWithLocation(podId, subDraftId);
   }
 
   @PutMapping("/{id}/subDrafts/{subDraftId}")
-  @ResponseStatus(NO_CONTENT)
   public void updateSubDraftWithLocation(@PathVariable("id") UUID podId, @PathVariable("subDraftId") UUID subDraftId,
       @Valid @RequestBody UpdatePodSubDraftRequest request) {
     siglusPodService.updateSubDraftWithLocation(request, subDraftId);
   }
 
   @DeleteMapping("/{id}/subDrafts")
-  @ResponseStatus(NO_CONTENT)
   public void deleteSubDraftsWithLocation(@PathVariable("id") UUID podId) {
     siglusPodService.resetSubDraftsWithLocation(podId);
   }
@@ -117,7 +112,6 @@ public class SiglusPodWithLocationController {
   }
 
   @DeleteMapping("/{id}/subDrafts/{subDraftId}/lineItems/{lineItemId}")
-  @ResponseStatus(NO_CONTENT)
   public void deletePodSubDraftLineItem(@PathVariable("id") UUID podId,
                                         @PathVariable("subDraftId") UUID subDraftId,
                                         @PathVariable("lineItemId") UUID lineItemId) {

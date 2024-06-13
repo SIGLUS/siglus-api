@@ -1092,12 +1092,15 @@ public class SiglusPodServiceTest {
   @Test
   public void shouldDeletePodSubDraftLineItemSuccess() {
     UUID subLineItemId = UUID.randomUUID();
+    PodSubDraftLineItem subLineItem = PodSubDraftLineItem.builder().podSubDraftId(subDraftId).build();
+    subLineItem.setId(subLineItemId);
     when(podSubDraftRepository.findOne(subDraftId)).thenReturn(buildMockSubDraftNotYetStarted());
-    doNothing().when(podSubDraftLineItemRepository).delete(subLineItemId);
+    when(podSubDraftLineItemRepository.findOne(subLineItemId)).thenReturn(subLineItem);
+    doNothing().when(podSubDraftLineItemRepository).delete(subLineItem);
 
     service.deletePodSubDraftLineItem(podId, subDraftId, subLineItemId);
 
-    verify(podSubDraftLineItemRepository, times(1)).delete(subLineItemId);
+    verify(podSubDraftLineItemRepository, times(1)).delete(subLineItem);
   }
 
   @Test(expected = BusinessDataException.class)
@@ -1112,6 +1115,26 @@ public class SiglusPodServiceTest {
     when(podSubDraftRepository.findOne(subDraftId)).thenReturn(buildMockSubDraftSubmitted());
 
     service.deletePodSubDraftLineItem(UUID.randomUUID(), subDraftId, UUID.randomUUID());
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void shouldThrowExceptionWhenDeletePodSubDraftLineItemGivenSubDraftIdAndLineItemIdMismatch() {
+    UUID subLineItemId = UUID.randomUUID();
+    PodSubDraftLineItem subLineItem = PodSubDraftLineItem.builder().podSubDraftId(UUID.randomUUID()).build();
+    subLineItem.setId(subLineItemId);
+    when(podSubDraftRepository.findOne(subDraftId)).thenReturn(buildMockSubDraftNotYetStarted());
+    when(podSubDraftLineItemRepository.findOne(subLineItemId)).thenReturn(subLineItem);
+
+    service.deletePodSubDraftLineItem(podId, subDraftId, subLineItemId);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void shouldThrowExceptionWhenDeletePodSubDraftLineItemGivenLineItemIdIsWrong() {
+    UUID subLineItemId = UUID.randomUUID();
+    when(podSubDraftRepository.findOne(subDraftId)).thenReturn(buildMockSubDraftNotYetStarted());
+    when(podSubDraftLineItemRepository.findOne(subLineItemId)).thenReturn(null);
+
+    service.deletePodSubDraftLineItem(podId, subDraftId, subLineItemId);
   }
 
   private void mockPodExtensionQuery() {
