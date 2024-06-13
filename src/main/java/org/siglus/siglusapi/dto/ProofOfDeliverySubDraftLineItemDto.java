@@ -32,11 +32,9 @@ import org.openlmis.fulfillment.domain.naming.VvmStatus;
 import org.openlmis.fulfillment.web.util.ObjectReferenceDto;
 import org.openlmis.fulfillment.web.util.ProofOfDeliveryLineItemDto;
 import org.openlmis.fulfillment.web.util.VersionObjectReferenceDto;
-import org.openlmis.stockmanagement.dto.StockEventLineItemDto;
 import org.siglus.siglusapi.domain.PodLineItemsByLocation;
 import org.siglus.siglusapi.domain.PodSubDraftLineItem;
 import org.siglus.siglusapi.domain.PodSubDraftLineItemLocation;
-import org.springframework.beans.BeanUtils;
 import org.springframework.util.ObjectUtils;
 
 @Data

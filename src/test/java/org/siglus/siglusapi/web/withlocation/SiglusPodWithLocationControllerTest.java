@@ -15,17 +15,30 @@
 
 package org.siglus.siglusapi.web.withlocation;
 
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
+import java.util.ArrayList;
 import java.util.UUID;
+
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.openlmis.fulfillment.domain.VersionEntityReference;
+import org.siglus.siglusapi.domain.PodSubDraftLineItem;
+import org.siglus.siglusapi.dto.UserDto;
+import org.siglus.siglusapi.service.SiglusLotService;
 import org.siglus.siglusapi.service.SiglusPodService;
+import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
+import org.siglus.siglusapi.web.request.CreatePodSubDraftLineItemRequest;
 import org.siglus.siglusapi.web.request.OperateTypeEnum;
 import org.siglus.siglusapi.web.request.UpdatePodSubDraftRequest;
+import org.siglus.siglusapi.web.response.CreatePodSubDraftLineItemResponse;
 
 @RunWith(MockitoJUnitRunner.class)
 public class SiglusPodWithLocationControllerTest {
@@ -35,6 +48,18 @@ public class SiglusPodWithLocationControllerTest {
 
   @Mock
   private SiglusPodService proofOfDeliveryService;
+  @Mock
+  private SiglusLotService siglusLotService;
+  @Mock
+  private SiglusAuthenticationHelper authenticationHelper;
+
+  @Before
+  public void prepare() {
+    UserDto user = new UserDto();
+    user.setId(UUID.randomUUID());
+    user.setHomeFacilityId(UUID.randomUUID());
+    when(authenticationHelper.getCurrentUser()).thenReturn(user);
+  }
 
   @Test
   public void shouldGetPodSubDraftWithLocation() {
@@ -99,7 +124,7 @@ public class SiglusPodWithLocationControllerTest {
     controller.deleteSubDraftsWithLocation(podId);
 
     // then
-    verify(proofOfDeliveryService).deleteSubDraftsWithLocation(podId);
+    verify(proofOfDeliveryService).resetSubDraftsWithLocation(podId);
   }
 
   @Test
@@ -124,6 +149,38 @@ public class SiglusPodWithLocationControllerTest {
 
     // then
     verify(proofOfDeliveryService).getPodExtensionResponseWithLocation(podId);
+  }
+
+  @Test
+  public void shouldCreatePodSubDraftLineItemSuccess() {
+    final UUID podId = UUID.randomUUID();
+    final UUID subDraftId = UUID.randomUUID();
+    CreatePodSubDraftLineItemRequest request = new CreatePodSubDraftLineItemRequest();
+    request.setPodLineItemId(UUID.randomUUID());
+    when(siglusLotService.getLotsByOrderable(any(), any())).thenReturn(new ArrayList<>());
+    PodSubDraftLineItem item = PodSubDraftLineItem.builder()
+        .orderable(new VersionEntityReference(UUID.randomUUID(), 1L))
+        .build();
+    item.setId(UUID.randomUUID());
+    when(proofOfDeliveryService.createPodSubDraftLineItem(podId, subDraftId, request.getPodLineItemId()))
+        .thenReturn(item);
+
+    CreatePodSubDraftLineItemResponse response = controller.createPodSubDraftLineItem(podId, subDraftId, request);
+
+    assertEquals(item.getId(), response.getId());
+    assertEquals(item.getOrderable(), response.getOrderable());
+    assertEquals(0, response.getLots().size());
+  }
+
+  @Test
+  public void shouldDeletePodSubDraftLineItem() {
+    UUID podId = UUID.randomUUID();
+    UUID subDraftId = UUID.randomUUID();
+    UUID lineItemId = UUID.randomUUID();
+
+    controller.deletePodSubDraftLineItem(podId, subDraftId, lineItemId);
+
+    verify(proofOfDeliveryService).deletePodSubDraftLineItem(podId, subDraftId, lineItemId);
   }
 
   private UpdatePodSubDraftRequest buildForRequest(OperateTypeEnum operateType) {

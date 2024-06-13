@@ -186,7 +186,7 @@ public class SiglusLotService {
         .collect(Collectors.toList());
   }
 
-  public List<LotStockDto> getLotsByOrderables(UUID facilityId, Collection<UUID> orderableIds) {
+  public List<LotStockDto> getLotStocksByOrderables(UUID facilityId, Collection<UUID> orderableIds) {
     List<UUID> stockCardIds = siglusStockCardService.findStockCardIdByFacilityAndOrderables(facilityId, orderableIds);
     if (ObjectUtils.isEmpty(stockCardIds)) {
       return newArrayList();
@@ -198,6 +198,11 @@ public class SiglusLotService {
       lotStockDtos = siglusLotRepository.queryLotStockDtoByStockCardIds(stockCardIds);
     }
     return lotStockDtos;
+  }
+
+  public List<LotDto> getLotsByOrderable(UUID facilityId, UUID orderableId) {
+    List<UUID> lotIds = siglusStockCardService.findLotIdsByFacilityAndOrderable(facilityId, orderableId);
+    return getLotList(lotIds);
   }
 
   public void removeExpiredLots(List<RemovedLotDto> lots, boolean hasLocation) {

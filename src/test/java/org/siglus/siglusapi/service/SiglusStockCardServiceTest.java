@@ -142,6 +142,7 @@ public class SiglusStockCardServiceTest {
   @Before
   public void prepare() {
     facilityId = UUID.randomUUID();
+    lotId = UUID.randomUUID();
     UserDto userDto = new UserDto();
     homefacilityId = UUID.randomUUID();
     programId = UUID.randomUUID();
@@ -461,6 +462,19 @@ public class SiglusStockCardServiceTest {
     List<UUID> result = siglusStockCardService.findStockCardIdByFacilityAndOrderables(facilityId, orderableIds);
 
     assertEquals(2, result.size());
+  }
+
+  @Test
+  public void shouldGetLotIdsSuccessWhenGivenFacilityAndOrderableId() {
+    UUID facilityId = UUID.randomUUID();
+    UUID orderableId = UUID.randomUUID();
+    when(stockCardRepository.findByFacilityIdAndOrderableId(facilityId, orderableId))
+        .thenReturn(newArrayList(createStockCardOne()));
+
+    List<UUID> result = siglusStockCardService.findLotIdsByFacilityAndOrderable(facilityId, orderableId);
+
+    assertEquals(1, result.size());
+    assertEquals(lotId, result.get(0));
   }
 
   private StockCard createStockCardOne() {

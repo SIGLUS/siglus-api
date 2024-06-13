@@ -30,6 +30,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -432,5 +433,10 @@ public class SiglusStockCardService {
     }
     return stockCardRepository.findStockCardIdByFacilityAndOrderables(facilityId, orderableIds)
         .stream().map(UUID::fromString).collect(Collectors.toList());
+  }
+
+  public List<UUID> findLotIdsByFacilityAndOrderable(UUID facilityId, UUID orderableId) {
+    List<StockCard> stockCards = stockCardRepository.findByFacilityIdAndOrderableId(facilityId, orderableId);
+    return stockCards.stream().map(StockCard::getLotId).filter(Objects::nonNull).collect(Collectors.toList());
   }
 }

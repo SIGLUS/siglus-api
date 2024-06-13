@@ -280,16 +280,16 @@ public class SiglusPodService {
   }
 
   @Transactional
-  public void deleteSubDrafts(UUID podId) {
-    deletePodSubDrafts(podId);
+  public void resetSubDrafts(UUID podId) {
+    resetPodSubDrafts(podId);
   }
 
   @Transactional
-  public void deleteSubDraftsWithLocation(UUID podId) {
+  public void resetSubDraftsWithLocation(UUID podId) {
     Set<UUID> podLineItemIds = findLineItemsIdsByPodId(podId, Collections.emptySet());
     log.info("delete all sub drafts with location, pod line items id: {}", podLineItemIds);
     podSubDraftLineItemsByLocationRepository.deleteByPodLineItemIdIn(podLineItemIds);
-    deletePodSubDrafts(podId);
+    resetPodSubDrafts(podId);
   }
 
   public PodSubDraftsMergedResponse mergeSubDrafts(UUID podId, Set<String> expand) {
@@ -950,7 +950,7 @@ public class SiglusPodService {
     return draftDto;
   }
 
-  private void deletePodSubDrafts(UUID podId) {
+  private void resetPodSubDrafts(UUID podId) {
     checkAuth();
     Set<UUID> subDraftIds = getPodSubDraftsByPodId(podId).stream().map(PodSubDraft::getId).collect(Collectors.toSet());
     ProofOfDeliveryDto proofOfDeliveryDto = getPodDtoByPodId(podId);

@@ -67,7 +67,7 @@ public class SiglusFacilityController {
       return siglusLotService.getExpiredLots(id);
     }
     if (!ObjectUtils.isEmpty(orderableIds)) {
-      return siglusLotService.getLotsByOrderables(id, orderableIds);
+      return siglusLotService.getLotStocksByOrderables(id, orderableIds);
     }
     throw new ValidationException("missing parameters to query lots");
   }

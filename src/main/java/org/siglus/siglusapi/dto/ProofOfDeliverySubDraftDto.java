@@ -18,8 +18,6 @@ package org.siglus.siglusapi.dto;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -54,7 +52,7 @@ public class ProofOfDeliverySubDraftDto {
     List<ProofOfDeliverySubDraftLineItemDto> items = null;
     if (!ObjectUtils.isEmpty(dto.getLineItems())) {
       items = dto.getLineItems().stream()
-          .map(item -> ProofOfDeliverySubDraftLineItemDto.from((ProofOfDeliveryLineItemDto)item))
+          .map(item -> ProofOfDeliverySubDraftLineItemDto.from((ProofOfDeliveryLineItemDto) item))
           .collect(Collectors.toList());
     }
     return ProofOfDeliverySubDraftDto.builder()

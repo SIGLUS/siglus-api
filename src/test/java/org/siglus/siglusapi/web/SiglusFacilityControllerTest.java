@@ -62,7 +62,7 @@ public class SiglusFacilityControllerTest {
 
     siglusFacilityController.searchLots(facilityId, null, orderableIds);
 
-    verify(siglusLotService, Mockito.times(1)).getLotsByOrderables(facilityId, orderableIds);
+    verify(siglusLotService, Mockito.times(1)).getLotStocksByOrderables(facilityId, orderableIds);
   }
 
   @Test(expected = ValidationException.class)

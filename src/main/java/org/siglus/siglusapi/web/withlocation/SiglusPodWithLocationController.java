@@ -17,16 +17,21 @@ package org.siglus.siglusapi.web.withlocation;
 
 import static org.springframework.http.HttpStatus.NO_CONTENT;
 
+import java.util.List;
 import java.util.UUID;
 import javax.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.siglus.siglusapi.domain.PodSubDraftLineItem;
+import org.siglus.siglusapi.dto.LotDto;
 import org.siglus.siglusapi.dto.ProofOfDeliverySubDraftWithLocationDto;
+import org.siglus.siglusapi.service.SiglusLotService;
 import org.siglus.siglusapi.service.SiglusPodService;
 import org.siglus.siglusapi.util.MovementDateValidator;
+import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.web.request.CreatePodSubDraftLineItemRequest;
 import org.siglus.siglusapi.web.request.SubmitPodSubDraftsRequest;
 import org.siglus.siglusapi.web.request.UpdatePodSubDraftRequest;
+import org.siglus.siglusapi.web.response.CreatePodSubDraftLineItemResponse;
 import org.siglus.siglusapi.web.response.PodSubDraftsMergedResponse;
 import org.siglus.siglusapi.web.response.ProofOfDeliveryWithLocationResponse;
 import org.springframework.http.HttpStatus;
@@ -48,12 +53,14 @@ import org.springframework.web.bind.annotation.RestController;
 @SuppressWarnings("PMD.AvoidDuplicateLiterals")
 public class SiglusPodWithLocationController {
   private final SiglusPodService siglusPodService;
+  private final SiglusLotService siglusLotService;
   private final MovementDateValidator movementDateValidator;
+  private final SiglusAuthenticationHelper authenticationHelper;
 
   @ResponseStatus(HttpStatus.OK)
   @GetMapping("/{id}/subDrafts/{subDraftId}")
   public ProofOfDeliverySubDraftWithLocationDto getPodSubDraftWithLocation(@PathVariable("id") UUID podId,
-                                                                           @PathVariable("subDraftId") UUID subDraftId) {
+      @PathVariable("subDraftId") UUID subDraftId) {
     return siglusPodService.getPodSubDraftWithLocation(podId, subDraftId);
   }
 
@@ -73,7 +80,7 @@ public class SiglusPodWithLocationController {
   @DeleteMapping("/{id}/subDrafts")
   @ResponseStatus(NO_CONTENT)
   public void deleteSubDraftsWithLocation(@PathVariable("id") UUID podId) {
-    siglusPodService.deleteSubDraftsWithLocation(podId);
+    siglusPodService.resetSubDraftsWithLocation(podId);
   }
 
   @GetMapping("/{id}/subDrafts/merge")
@@ -82,8 +89,8 @@ public class SiglusPodWithLocationController {
   }
 
   @PutMapping("/{id}")
-  public void submitSubDraftsWithLocation(@PathVariable("id") UUID podId, @RequestBody SubmitPodSubDraftsRequest request,
-      OAuth2Authentication authentication) {
+  public void submitSubDraftsWithLocation(@PathVariable("id") UUID podId,
+      @RequestBody SubmitPodSubDraftsRequest request, OAuth2Authentication authentication) {
     movementDateValidator.validateMovementDate(request.getPodDto().getReceivedDate(),
         request.getPodDto().getShipment().getOrder().getReceivingFacility().getId());
     siglusPodService.submitSubDrafts(podId, request, authentication, true);
@@ -95,10 +102,18 @@ public class SiglusPodWithLocationController {
   }
 
   @PostMapping("/{id}/subDrafts/{subDraftId}/lineItems")
-  public PodSubDraftLineItem createPodSubDraftLineItem(@PathVariable("id") UUID podId,
+  public CreatePodSubDraftLineItemResponse createPodSubDraftLineItem(@PathVariable("id") UUID podId,
       @PathVariable("subDraftId") UUID subDraftId,
       @Validated @RequestBody CreatePodSubDraftLineItemRequest request) {
-    return siglusPodService.createPodSubDraftLineItem(podId, subDraftId, request.getPodLineItemId());
+    UUID homeFacilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
+    PodSubDraftLineItem draftLineItem = siglusPodService.createPodSubDraftLineItem(podId,
+        subDraftId, request.getPodLineItemId());
+    List<LotDto> lots = siglusLotService.getLotsByOrderable(homeFacilityId, draftLineItem.getOrderable().getId());
+    return CreatePodSubDraftLineItemResponse.builder()
+        .id(draftLineItem.getId())
+        .orderable(draftLineItem.getOrderable())
+        .lots(lots)
+        .build();
   }
 
   @DeleteMapping("/{id}/subDrafts/{subDraftId}/lineItems/{lineItemId}")

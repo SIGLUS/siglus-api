@@ -605,7 +605,7 @@ public class SiglusPodServiceTest {
         buildMockPodLineItemsExtensions());
 
     // when
-    service.deleteSubDrafts(podId);
+    service.resetSubDrafts(podId);
 
     // then
     verify(podLineItemsRepository).save(any(List.class));
@@ -619,7 +619,7 @@ public class SiglusPodServiceTest {
     when(authenticationHelper.isTheCurrentUserCanMergeOrDeleteSubDrafts()).thenReturn(Boolean.FALSE);
 
     // when
-    service.deleteSubDrafts(podId);
+    service.resetSubDrafts(podId);
   }
 
   @Test(expected = NotFoundException.class)
@@ -630,7 +630,7 @@ public class SiglusPodServiceTest {
     when(podSubDraftRepository.findAll(example)).thenReturn(null);
 
     // when
-    service.deleteSubDrafts(podId);
+    service.resetSubDrafts(podId);
   }
 
   @Test(expected = NotFoundException.class)
@@ -642,7 +642,7 @@ public class SiglusPodServiceTest {
     when(fulfillmentService.searchProofOfDelivery(any(), any())).thenReturn(null);
 
     // when
-    service.deleteSubDrafts(podId);
+    service.resetSubDrafts(podId);
   }
 
   @Test
@@ -989,7 +989,7 @@ public class SiglusPodServiceTest {
         buildMockPodLineItemsExtensions());
 
     // when
-    service.deleteSubDraftsWithLocation(podId);
+    service.resetSubDraftsWithLocation(podId);
 
     // then
     verify(podLineItemsRepository).save(any(List.class));
