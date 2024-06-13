@@ -21,14 +21,10 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.openlmis.requisition.domain.requisition.Requisition;
-import org.siglus.siglusapi.domain.SyncUpHash;
-import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.exception.InvalidProgramCodeException;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
-import org.siglus.siglusapi.repository.SyncUpHashRepository;
 import org.siglus.siglusapi.service.SiglusProgramService;
 import org.siglus.siglusapi.service.android.RequisitionCreateService;
-import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.util.SiglusSimulateUserAuthHelper;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
@@ -44,8 +40,6 @@ public class AndroidRequisitionSyncedReplayer {
   private final RequisitionCreateService requisitionCreateService;
   private final SiglusRequisitionRepository requisitionRepository;
   private final SiglusProgramService siglusProgramService;
-  private final SiglusAuthenticationHelper authHelper;
-  private final SyncUpHashRepository syncUpHashRepository;
 
   @EventListener(value = {AndroidRequisitionSyncedEvent.class})
   public void replay(AndroidRequisitionSyncedEvent event) {
@@ -55,8 +49,6 @@ public class AndroidRequisitionSyncedReplayer {
       Requisition existRequisition = findExistRequisition(event);
       if (existRequisition == null) {
         requisitionCreateService.createRequisition(event.getRequest());
-      } else {
-        saveSyncUpHash(event, existRequisition);
       }
     } catch (Exception e) {
       log.error(e.getMessage(), e);
@@ -64,17 +56,6 @@ public class AndroidRequisitionSyncedReplayer {
     } finally {
       currentEvent.remove();
     }
-  }
-
-  private void saveSyncUpHash(AndroidRequisitionSyncedEvent event, Requisition existRequisition) {
-    UserDto user = authHelper.getCurrentUser();
-    String syncUpHash = event.getRequest().getSyncUpHash(user);
-    SyncUpHash syncUpHashDomain = SyncUpHash.builder()
-        .hash(syncUpHash)
-        .type("Requisition")
-        .referenceId(existRequisition.getId())
-        .build();
-    syncUpHashRepository.save(syncUpHashDomain);
   }
 
   private Requisition findExistRequisition(AndroidRequisitionSyncedEvent event) {

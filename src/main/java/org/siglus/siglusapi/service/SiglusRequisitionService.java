@@ -51,6 +51,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.collect.Table;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -152,6 +153,7 @@ import org.siglus.siglusapi.domain.RequisitionDraft;
 import org.siglus.siglusapi.domain.RequisitionExtension;
 import org.siglus.siglusapi.domain.RequisitionLineItemDraft;
 import org.siglus.siglusapi.domain.RequisitionLineItemExtension;
+import org.siglus.siglusapi.domain.SyncUpHash;
 import org.siglus.siglusapi.domain.TestConsumptionLineItemDraft;
 import org.siglus.siglusapi.domain.UsageInformationLineItemDraft;
 import org.siglus.siglusapi.dto.OrderableExpirationDateDto;
@@ -188,10 +190,12 @@ import org.siglus.siglusapi.repository.RequisitionLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionLineItemRepository;
 import org.siglus.siglusapi.repository.RequisitionNativeSqlRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
+import org.siglus.siglusapi.repository.SyncUpHashRepository;
 import org.siglus.siglusapi.repository.TestConsumptionLineItemRepository;
 import org.siglus.siglusapi.repository.UsageInformationLineItemRepository;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
 import org.siglus.siglusapi.service.fc.FcCmmCpService;
+import org.siglus.siglusapi.util.HashEncoder;
 import org.siglus.siglusapi.util.OperatePermissionService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.util.SupportedProgramsHelper;
@@ -338,6 +342,8 @@ public class SiglusRequisitionService {
   private SiglusProgramService siglusProgramService;
   @Autowired
   private StockCardRepository stockCardRepository;
+  @Autowired
+  private SyncUpHashRepository syncUpHashRepository;
   private final Map<String, BiConsumer<SiglusRequisitionDto, Set<RequisitionLineItem>>> programToRequestedQuantity =
       ImmutableMap.<String, BiConsumer<SiglusRequisitionDto, Set<RequisitionLineItem>>>builder()
           .put(MTB_PROGRAM_CODE, this::calcRequestedQuantityForMmtb)
@@ -2336,7 +2342,30 @@ public class SiglusRequisitionService {
     requisitionExtensionRepository.save(requisitionExtension);
     notificationService.postApprove(approveRequisitionDto);
 
+    FacilityExtension facilityExtension = facilityExtensionRepository.findByFacilityId(facilityId);
+    if (facilityExtension != null && facilityExtension.getIsAndroid()) {
+      saveSyncUpHash(siglusRequisitionDto);
+    }
+
     return approveRequisitionDto;
+  }
+
+  private void saveSyncUpHash(SiglusRequisitionDto siglusRequisitionDto) {
+    org.siglus.siglusapi.dto.UserDto user = authHelper.getCurrentUser();
+    String syncUpHash = HashEncoder.hash(
+        siglusRequisitionDto.getActualStartDate().toString()
+            + siglusRequisitionDto.getActualEndDate()
+            + Instant.now()
+            + user.getId()
+            + user.getHomeFacilityId()
+            + programRepository.findOne(siglusRequisitionDto.getProgramId()).getCode()
+            + siglusRequisitionDto.getEmergency());
+    SyncUpHash syncUpHashDomain = SyncUpHash.builder()
+        .hash(syncUpHash)
+        .type("Requisition")
+        .referenceId(siglusRequisitionDto.getId())
+        .build();
+    syncUpHashRepository.save(syncUpHashDomain);
   }
 
   private BasicRequisitionDto buildBasicRequisitionDto(SiglusRequisitionDto siglusRequisitionDto) {
