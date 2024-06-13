@@ -21,14 +21,15 @@ import java.util.Set;
 import java.util.UUID;
 import javax.validation.Valid;
 import lombok.AllArgsConstructor;
-import org.openlmis.fulfillment.web.util.ProofOfDeliveryDto;
 import org.siglus.siglusapi.domain.PodSubDraftLineItem;
+import org.siglus.siglusapi.dto.ProofOfDeliverySubDraftDto;
 import org.siglus.siglusapi.service.SiglusPodService;
 import org.siglus.siglusapi.util.MovementDateValidator;
 import org.siglus.siglusapi.web.request.CreatePodSubDraftLineItemRequest;
-import org.siglus.siglusapi.web.request.PodExtensionRequest;
+import org.siglus.siglusapi.web.request.SubmitPodSubDraftsRequest;
 import org.siglus.siglusapi.web.request.UpdatePodSubDraftRequest;
 import org.siglus.siglusapi.web.response.PodExtensionResponse;
+import org.siglus.siglusapi.web.response.PodSubDraftsMergedResponse;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -57,24 +58,24 @@ public class SiglusPodWithoutLocationController {
   }
 
   @PostMapping("/{id}/subDrafts/merge")
-  public PodExtensionResponse mergeSubDrafts(@PathVariable("id") UUID podId,
-      @RequestParam Set<String> expand) {
+  public PodSubDraftsMergedResponse mergeSubDrafts(@PathVariable("id") UUID podId,
+                                                   @RequestParam Set<String> expand) {
     return siglusPodService.mergeSubDrafts(podId, expand);
   }
 
   @PostMapping("/{id}/subDrafts/submit")
-  public ProofOfDeliveryDto submitSubDrafts(@PathVariable("id") UUID podId,
-      @RequestBody PodExtensionRequest request,
+  public ProofOfDeliverySubDraftDto submitSubDrafts(@PathVariable("id") UUID podId,
+      @RequestBody SubmitPodSubDraftsRequest request,
       OAuth2Authentication authentication) {
     movementDateValidator.validateMovementDate(request.getPodDto().getReceivedDate(),
         request.getPodDto().getShipment().getOrder().getReceivingFacility().getId());
-    return siglusPodService.submitSubDrafts(podId, request, authentication);
+    return siglusPodService.submitSubDrafts(podId, request, authentication, false);
   }
 
   @GetMapping("/{id}/subDrafts/{subDraftId}")
-  public ProofOfDeliveryDto getSubDraftDetail(@PathVariable("id") UUID podId,
-      @PathVariable("subDraftId") UUID subDraftId,
-      @RequestParam Set<String> expand) {
+  public ProofOfDeliverySubDraftDto getSubDraftDetail(@PathVariable("id") UUID podId,
+                                                      @PathVariable("subDraftId") UUID subDraftId,
+                                                      @RequestParam Set<String> expand) {
     return siglusPodService.getSubDraftDetail(podId, subDraftId, expand);
   }
 

@@ -15,33 +15,18 @@
 
 package org.siglus.siglusapi.dto;
 
-import java.util.UUID;
+import java.util.List;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.siglus.siglusapi.domain.PodSubDraftLineItemLocation;
 
 @Data
 @Builder
-@NoArgsConstructor
 @AllArgsConstructor
-public class PodLineItemWithLocationDto {
-
-  private UUID podLineItemId;
-
-  private String locationCode;
-
-  private String area;
-
-  private Integer quantityAccepted;
-
-  public PodSubDraftLineItemLocation toItemLocation() {
-    return PodSubDraftLineItemLocation.builder()
-        .locationCode(locationCode)
-        .area(area)
-        .quantityAccepted(quantityAccepted)
-        .build();
-  }
+@NoArgsConstructor
+public class ProofOfDeliverySubDraftWithLocationDto {
+  private ProofOfDeliverySubDraftDto podDto;
+  private List<PodLineItemWithLocationDto> podLineItemLocation;
 }

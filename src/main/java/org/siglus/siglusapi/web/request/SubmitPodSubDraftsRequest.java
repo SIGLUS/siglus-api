@@ -13,35 +13,19 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.dto;
+package org.siglus.siglusapi.web.request;
 
-import java.util.UUID;
-
-import lombok.AllArgsConstructor;
-import lombok.Builder;
+import java.util.List;
+import javax.validation.constraints.NotNull;
 import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.siglus.siglusapi.domain.PodSubDraftLineItemLocation;
+import org.siglus.siglusapi.dto.PodLineItemWithLocationDto;
+import org.siglus.siglusapi.dto.ProofOfDeliverySubDraftDto;
 
 @Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class PodLineItemWithLocationDto {
-
-  private UUID podLineItemId;
-
-  private String locationCode;
-
-  private String area;
-
-  private Integer quantityAccepted;
-
-  public PodSubDraftLineItemLocation toItemLocation() {
-    return PodSubDraftLineItemLocation.builder()
-        .locationCode(locationCode)
-        .area(area)
-        .quantityAccepted(quantityAccepted)
-        .build();
-  }
+public class SubmitPodSubDraftsRequest {
+  @NotNull
+  private ProofOfDeliverySubDraftDto podDto;
+  private List<PodLineItemWithLocationDto> podLineItemLocation;
+  private String preparedBy;
+  private String conferredBy;
 }

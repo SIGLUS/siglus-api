@@ -27,4 +27,8 @@ public interface PodSubDraftLineItemRepository extends JpaRepository<PodSubDraft
   void deleteByPodSubDraftId(UUID podSubDraftId);
 
   void deleteByPodSubDraftIdIn(List<UUID> podSubDraftIds);
+
+  List<PodSubDraftLineItem> findAllByPodSubDraftId(UUID podSubDraftId);
+
+  List<PodSubDraftLineItem> findAllByPodSubDraftIdIn(List<UUID> podSubDraftIds);
 }

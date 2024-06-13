@@ -91,9 +91,9 @@ import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.GeographicLevelDto;
 import org.siglus.siglusapi.dto.GeographicZoneDto;
 import org.siglus.siglusapi.dto.PodLineItemWithLocationDto;
-import org.siglus.siglusapi.dto.PodWithLocationDto;
 import org.siglus.siglusapi.dto.ProofOfDeliverySubDraftDto;
 import org.siglus.siglusapi.dto.ProofOfDeliverySubDraftLineItemDto;
+import org.siglus.siglusapi.dto.ProofOfDeliverySubDraftWithLocationDto;
 import org.siglus.siglusapi.dto.enums.PodSubDraftStatusEnum;
 import org.siglus.siglusapi.exception.AuthenticationException;
 import org.siglus.siglusapi.exception.BusinessDataException;
@@ -121,12 +121,13 @@ import org.siglus.siglusapi.web.request.CreatePodSubDraftRequest;
 import org.siglus.siglusapi.web.request.OperateTypeEnum;
 import org.siglus.siglusapi.web.request.PodExtensionRequest;
 import org.siglus.siglusapi.web.request.PodWithLocationRequest;
+import org.siglus.siglusapi.web.request.SubmitPodSubDraftsRequest;
 import org.siglus.siglusapi.web.request.UpdatePodSubDraftRequest;
 import org.siglus.siglusapi.web.response.PodExtensionResponse;
 import org.siglus.siglusapi.web.response.PodPrintInfoResponse;
+import org.siglus.siglusapi.web.response.PodSubDraftsMergedResponse;
 import org.siglus.siglusapi.web.response.PodSubDraftsSummaryResponse;
 import org.siglus.siglusapi.web.response.PodSubDraftsSummaryResponse.SubDraftInfo;
-import org.siglus.siglusapi.web.response.ProofOfDeliveryWithLocationResponse;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.Example;
 
@@ -450,7 +451,7 @@ public class SiglusPodServiceTest {
     when(podLineItemsExtensionRepository.findAll(example)).thenReturn(buildMockPodLineItemsExtensions());
 
     // when
-    ProofOfDeliveryDto subDraftDetail = service.getSubDraftDetail(podId, subDraftId, defaultExpands);
+    ProofOfDeliverySubDraftDto subDraftDetail = service.getSubDraftDetail(podId, subDraftId, defaultExpands);
 
     // then
     assertEquals(1, subDraftDetail.getLineItems().size());
@@ -650,14 +651,15 @@ public class SiglusPodServiceTest {
     when(authenticationHelper.isTheCurrentUserCanMergeOrDeleteSubDrafts()).thenReturn(Boolean.TRUE);
     Example<PodSubDraft> example = Example.of(PodSubDraft.builder().podId(podId).build());
     when(podSubDraftRepository.findAll(example)).thenReturn(buildMockSubDraftsAllSubmitted());
-    when(fulfillmentService.searchProofOfDelivery(any(), any())).thenReturn(buildMockPodDtoWithNoLineItems());
-    ProofOfDeliveryDto expectedResponse = buildMockPodDtoWithNoLineItems();
+    when(fulfillmentService.searchProofOfDelivery(any(), any())).thenReturn(buildMockPodDtoWithOneLineItem());
     when(podExtensionRepository.findOne(
         Example.of(PodExtension.builder().podId(podId).build()))).thenReturn(
         new PodExtension());
     // when
-    PodExtensionResponse actualResponse = service.mergeSubDrafts(podId, defaultExpands);
-    assertEquals(expectedResponse, actualResponse.getPodDto());
+    PodSubDraftsMergedResponse actualResponse = service.mergeSubDrafts(podId, defaultExpands);
+
+    assertEquals(podId, actualResponse.getPodDto().getId());
+    assertEquals(1, actualResponse.getPodDto().getLineItems().size());
   }
 
   @Test(expected = AuthenticationException.class)
@@ -709,17 +711,18 @@ public class SiglusPodServiceTest {
     when(authenticationHelper.isTheCurrentUserCanMergeOrDeleteSubDrafts()).thenReturn(Boolean.TRUE);
     Example<PodSubDraft> example = Example.of(PodSubDraft.builder().podId(podId).build());
     when(podSubDraftRepository.findAll(example)).thenReturn(buildMockSubDraftsAllSubmitted());
-    PodExtensionRequest request = buildPodExtensionRequest();
-    ProofOfDeliveryDto dto = request.getPodDto();
+    SubmitPodSubDraftsRequest request = buildSubmitPodSubDraftRequest();
+    request.getPodDto().setId(podId);
+    ProofOfDeliveryDto dto = request.getPodDto().to();
     when(fulfillmentService.searchProofOfDelivery(any(), any())).thenReturn(dto);
     when(podController.updateProofOfDelivery(podId, dto, null, false)).thenReturn(dto);
     when(proofOfDeliveryEmitter.emit(podId)).thenReturn(new ProofOfDeliveryEvent());
+    when(proofOfDeliveryRepository.findOne(podId)).thenReturn(buildMockProofOfDelivery());
 
     // when
-    ProofOfDeliveryDto actualResponse = service.submitSubDrafts(podId, request, null);
+    service.submitSubDrafts(podId, request, null, false);
 
     // then
-    assertEquals(dto, actualResponse);
     verify(podController).updateProofOfDelivery(any(), any(), any(), any());
     verify(podSubDraftRepository).deleteAllByIds(any(List.class));
     verify(podLineItemsExtensionRepository).deleteAllBySubDraftIds(any(List.class));
@@ -732,18 +735,19 @@ public class SiglusPodServiceTest {
     when(authenticationHelper.isTheCurrentUserCanMergeOrDeleteSubDrafts()).thenReturn(Boolean.TRUE);
     Example<PodSubDraft> example = Example.of(PodSubDraft.builder().podId(podId).build());
     when(podSubDraftRepository.findAll(example)).thenReturn(buildMockSubDraftsAllSubmitted());
-    PodExtensionRequest request = buildPodExtensionRequest();
-    ProofOfDeliveryDto dto = request.getPodDto();
+    SubmitPodSubDraftsRequest request = buildSubmitPodSubDraftRequest();
+    request.getPodDto().setId(podId);
+    ProofOfDeliveryDto dto = request.getPodDto().to();
     when(fulfillmentService.searchProofOfDelivery(any(), any())).thenReturn(dto);
     when(podController.updateProofOfDelivery(podId, dto, null, false)).thenReturn(dto);
+    when(proofOfDeliveryRepository.findOne(podId)).thenReturn(buildMockProofOfDelivery());
     mockPodExtensionQuery();
     when(proofOfDeliveryEmitter.emit(podId)).thenReturn(new ProofOfDeliveryEvent());
 
     // when
-    ProofOfDeliveryDto actualResponse = service.submitSubDrafts(podId, request, null);
+    service.submitSubDrafts(podId, request, null, false);
 
     // then
-    assertEquals(dto, actualResponse);
     verify(podController).updateProofOfDelivery(any(), any(), any(), any());
     verify(podSubDraftRepository).deleteAllByIds(any(List.class));
     verify(podLineItemsExtensionRepository).deleteAllBySubDraftIds(any(List.class));
@@ -756,41 +760,47 @@ public class SiglusPodServiceTest {
     when(authenticationHelper.isTheCurrentUserCanMergeOrDeleteSubDrafts()).thenReturn(Boolean.TRUE);
     Example<PodSubDraft> example = Example.of(PodSubDraft.builder().podId(podId).build());
     when(podSubDraftRepository.findAll(example)).thenReturn(buildMockSubDraftsAllSubmitted());
-    PodExtensionRequest request = buildPodExtensionRequestWithPodTwoLineItems();
-    ProofOfDeliveryDto dto = request.getPodDto();
+    SubmitPodSubDraftsRequest request = buildSubmitPodSubDraftRequest();
+    request.getPodDto().setId(podId);
+    ProofOfDeliveryDto dto = request.getPodDto().to();
+    dto.setStatus(ProofOfDeliveryStatus.INITIATED);
     when(fulfillmentService.searchProofOfDelivery(any(), any())).thenReturn(dto);
-    when(podController.updateProofOfDelivery(podId, dto, null, false)).thenReturn(dto);
+    when(podController.updateProofOfDelivery(any(), any(), any(), any())).thenReturn(dto);
+    when(proofOfDeliveryRepository.findOne(podId)).thenReturn(buildMockProofOfDelivery());
     when(proofOfDeliveryEmitter.emit(podId)).thenReturn(new ProofOfDeliveryEvent());
 
     // when
-    ProofOfDeliveryDto actualResponse = service.submitSubDrafts(podId, request, null);
+    service.submitSubDrafts(podId, request, null, false);
 
     // then
-    assertEquals(dto, actualResponse);
     verify(podController).updateProofOfDelivery(any(), any(), any(), any());
     verify(podSubDraftRepository).deleteAllByIds(any(List.class));
     verify(podLineItemsExtensionRepository).deleteAllBySubDraftIds(any(List.class));
-    verify(notificationService, times(0)).postConfirmPod(dto);
+    verify(notificationService, times(0)).postConfirmPod(any());
   }
 
   @Test(expected = AuthenticationException.class)
   public void shouldThrowWhenSubmitSubDraftsWithNoPermission() {
     // given
+    SubmitPodSubDraftsRequest request = buildSubmitPodSubDraftRequest();
+    request.getPodDto().setId(podId);
     when(authenticationHelper.isTheCurrentUserCanMergeOrDeleteSubDrafts()).thenReturn(Boolean.FALSE);
 
     // when
-    service.submitSubDrafts(podId, buildPodExtensionRequest(), null);
+    service.submitSubDrafts(podId, request, null, false);
   }
 
   @Test(expected = NotFoundException.class)
   public void shouldThrowWhenSubmitSubDraftsWithSubDraftsNotExist() {
     // given
+    SubmitPodSubDraftsRequest request = buildSubmitPodSubDraftRequest();
+    request.getPodDto().setId(podId);
     when(authenticationHelper.isTheCurrentUserCanMergeOrDeleteSubDrafts()).thenReturn(Boolean.TRUE);
     Example<PodSubDraft> example = Example.of(PodSubDraft.builder().podId(podId).build());
     when(podSubDraftRepository.findAll(example)).thenReturn(null);
 
     // when
-    service.submitSubDrafts(podId, buildPodExtensionRequest(), null);
+    service.submitSubDrafts(podId, request, null, false);
   }
 
   @Test
@@ -918,7 +928,8 @@ public class SiglusPodServiceTest {
     when(podSubDraftLineItemsByLocationRepository.findByPodLineItemIdIn(Lists.newArrayList(lineItemId1)))
         .thenReturn(Lists.newArrayList(buildMockPodSubDraftLineItemsByLocation()));
     // when
-    PodWithLocationDto podSubDraftWithLocation = service.getPodSubDraftWithLocation(podId, subDraftId);
+    ProofOfDeliverySubDraftWithLocationDto podSubDraftWithLocation =
+        service.getPodSubDraftWithLocation(podId, subDraftId);
 
     // then
     assertEquals(locationCode, podSubDraftWithLocation.getPodLineItemLocation().get(0).getLocationCode());
@@ -998,10 +1009,17 @@ public class SiglusPodServiceTest {
         .thenReturn(Lists.newArrayList(buildMockPodSubDraftLineItemsByLocation()));
 
     // when
-    ProofOfDeliveryWithLocationResponse mergedSubDraftWithLocation = service.getMergedSubDraftWithLocation(podId);
+    PodSubDraftsMergedResponse mergedSubDraftWithLocation = service.getMergedSubDraftWithLocation(podId);
 
     // then
     assertEquals(mergedSubDraftWithLocation.getPodLineItemLocation().get(0).getLocationCode(), locationCode);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void shouldThrewIllegalArgumentExceptionWhenPodIdMismatch() {
+    SubmitPodSubDraftsRequest request = buildSubmitPodSubDraftRequest();
+
+    service.submitSubDrafts(podId, request, null, true);
   }
 
   @Test
@@ -1010,8 +1028,9 @@ public class SiglusPodServiceTest {
     when(authenticationHelper.isTheCurrentUserCanMergeOrDeleteSubDrafts()).thenReturn(Boolean.TRUE);
     Example<PodSubDraft> example = Example.of(PodSubDraft.builder().podId(podId).build());
     when(podSubDraftRepository.findAll(example)).thenReturn(buildMockSubDraftsAllSubmitted());
-    PodExtensionRequest request = buildPodExtensionRequest();
-    ProofOfDeliveryDto dto = request.getPodDto();
+    SubmitPodSubDraftsRequest request = buildSubmitPodSubDraftRequest();
+    request.getPodDto().setId(podId);
+    ProofOfDeliveryDto dto = request.getPodDto().to();
     when(fulfillmentService.searchProofOfDelivery(any(), any())).thenReturn(dto);
     ProofOfDelivery proofOfDelivery = buildMockProofOfDelivery();
     when(proofOfDeliveryRepository.findOne(podId)).thenReturn(proofOfDelivery);
@@ -1024,8 +1043,9 @@ public class SiglusPodServiceTest {
         .thenReturn(com.google.common.collect.Lists.newArrayList(buildStockCardLineItem()));
     doNothing().when(stockEventsService).processStockEvent(buildStockManagementStockEvent(), false);
 
+
     // when
-    service.submitSubDraftsWithLocation(podId, buildMockPodWithLocationRequest(), null);
+    service.submitSubDrafts(podId, request, null, true);
 
     // then
     verify(podLineItemsByLocationRepository, times(1)).save(any(List.class));
@@ -1454,6 +1474,13 @@ public class SiglusPodServiceTest {
     podSubDraftLineItemsByLocation.setArea(area);
     podSubDraftLineItemsByLocation.setQuantityAccepted(10);
     return podSubDraftLineItemsByLocation;
+  }
+
+  private SubmitPodSubDraftsRequest buildSubmitPodSubDraftRequest() {
+    SubmitPodSubDraftsRequest request = new SubmitPodSubDraftsRequest();
+    request.setPodDto(buildPodDraftDto(3));
+    request.setPodLineItemLocation(Lists.newArrayList(buildMockPodLineItemWithLocationDto()));
+    return request;
   }
 
   private ProofOfDeliverySubDraftDto buildPodDraftDto(Integer quantityAccpeted) {

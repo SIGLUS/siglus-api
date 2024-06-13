@@ -16,17 +16,33 @@
 package org.siglus.siglusapi.dto;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import javax.validation.constraints.NotNull;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.openlmis.fulfillment.domain.ProofOfDeliveryLineItem;
+import org.openlmis.fulfillment.domain.VersionEntityReference;
 import org.openlmis.fulfillment.domain.naming.VvmStatus;
 import org.openlmis.fulfillment.web.util.ObjectReferenceDto;
+import org.openlmis.fulfillment.web.util.ProofOfDeliveryLineItemDto;
 import org.openlmis.fulfillment.web.util.VersionObjectReferenceDto;
+import org.openlmis.stockmanagement.dto.StockEventLineItemDto;
+import org.siglus.siglusapi.domain.PodLineItemsByLocation;
 import org.siglus.siglusapi.domain.PodSubDraftLineItem;
 import org.siglus.siglusapi.domain.PodSubDraftLineItemLocation;
+import org.springframework.beans.BeanUtils;
+import org.springframework.util.ObjectUtils;
 
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class ProofOfDeliverySubDraftLineItemDto {
   @NotNull
   private UUID id;
@@ -43,11 +59,99 @@ public class ProofOfDeliverySubDraftLineItemDto {
   private String lotCode;
   private LocalDate expirationDate;
   private List<PodSubDraftLineItemLocation> locations;
+  private boolean added;
 
   public PodSubDraftLineItem toDraftLineItem(List<PodSubDraftLineItemLocation> locations) {
-    // TODO not finished
+    VersionEntityReference orderableRef = new VersionEntityReference(orderable.getId(), orderable.getVersionNumber());
     return PodSubDraftLineItem.builder()
+        .orderable(orderableRef)
+        .lotId(lot == null ? null : lot.getId())
+        .quantityAccepted(quantityAccepted)
+        .useVvm(useVvm)
+        .vvmStatus(vvmStatus)
+        .quantityRejected(quantityRejected)
+        .rejectionReasonId(rejectionReasonId)
+        .notes(notes)
+        .lotCode(lotCode)
+        .expirationDate(expirationDate)
         .locations(locations)
         .build();
+  }
+
+  public static ProofOfDeliverySubDraftLineItemDto fromDraftLineItem(PodSubDraftLineItem item) {
+    VersionObjectReferenceDto orderable = new VersionObjectReferenceDto(item.getOrderable().getId(),
+        null, null, item.getOrderable().getVersionNumber());
+    ObjectReferenceDto lot = null;
+    if (!ObjectUtils.isEmpty(item.getLotId())) {
+      lot = new ObjectReferenceDto(item.getLotId());
+    }
+    return ProofOfDeliverySubDraftLineItemDto.builder()
+        .orderable(orderable)
+        .lot(lot)
+        .quantityAccepted(item.getQuantityAccepted())
+        .useVvm(item.getUseVvm())
+        .vvmStatus(item.getVvmStatus())
+        .quantityRejected(item.getQuantityRejected())
+        .rejectionReasonId(item.getRejectionReasonId())
+        .notes(item.getNotes())
+        .lotCode(item.getLotCode())
+        .expirationDate(item.getExpirationDate())
+        .locations(item.getLocations())
+        .build();
+  }
+
+  public static ProofOfDeliverySubDraftLineItemDto from(ProofOfDeliveryLineItemDto dto) {
+    return ProofOfDeliverySubDraftLineItemDto.builder()
+        .id(dto.getId())
+        .orderable(dto.getOrderable())
+        .lot(dto.getLot())
+        .quantityAccepted(dto.getQuantityAccepted())
+        .useVvm(dto.getUseVvm())
+        .vvmStatus(dto.getVvmStatus())
+        .quantityRejected(dto.getQuantityRejected())
+        .rejectionReasonId(dto.getRejectionReasonId())
+        .notes(dto.getNotes())
+        .build();
+  }
+
+  public ProofOfDeliveryLineItemDto to() {
+    ProofOfDeliveryLineItemDto dto = new ProofOfDeliveryLineItemDto(null, orderable, lot, quantityAccepted,
+        useVvm, vvmStatus, quantityRejected, rejectionReasonId, notes);
+    dto.setId(id);
+    return dto;
+  }
+
+  public ProofOfDeliveryLineItem toPodLineItem() {
+    VersionEntityReference orderableRef = new VersionEntityReference(orderable.getId(), orderable.getVersionNumber());
+    return new ProofOfDeliveryLineItem(orderableRef, lot.getId(),
+        quantityAccepted, vvmStatus, quantityRejected, rejectionReasonId, notes);
+  }
+
+  public List<PodLineItemWithLocationDto> getLocationDtos() {
+    if (ObjectUtils.isEmpty(locations)) {
+      return new ArrayList<>();
+    }
+    return locations.stream().map(
+        location -> PodLineItemWithLocationDto.builder()
+            .podLineItemId(id)
+            .locationCode(location.getLocationCode())
+            .area(location.getArea())
+            .quantityAccepted(location.getQuantityAccepted())
+            .build()
+    ).collect(Collectors.toList());
+  }
+
+  public List<PodLineItemsByLocation> toLineItemByLocation() {
+    if (ObjectUtils.isEmpty(locations)) {
+      return new ArrayList<>();
+    }
+    return locations.stream().map(
+        location -> PodLineItemsByLocation.builder()
+            .podLineItemId(id)
+            .locationCode(location.getLocationCode())
+            .area(location.getArea())
+            .quantityAccepted(location.getQuantityAccepted())
+            .build()
+    ).collect(Collectors.toList());
   }
 }

@@ -21,12 +21,13 @@ import java.util.UUID;
 import javax.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.siglus.siglusapi.domain.PodSubDraftLineItem;
-import org.siglus.siglusapi.dto.PodWithLocationDto;
+import org.siglus.siglusapi.dto.ProofOfDeliverySubDraftWithLocationDto;
 import org.siglus.siglusapi.service.SiglusPodService;
 import org.siglus.siglusapi.util.MovementDateValidator;
 import org.siglus.siglusapi.web.request.CreatePodSubDraftLineItemRequest;
-import org.siglus.siglusapi.web.request.PodWithLocationRequest;
+import org.siglus.siglusapi.web.request.SubmitPodSubDraftsRequest;
 import org.siglus.siglusapi.web.request.UpdatePodSubDraftRequest;
+import org.siglus.siglusapi.web.response.PodSubDraftsMergedResponse;
 import org.siglus.siglusapi.web.response.ProofOfDeliveryWithLocationResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
@@ -51,8 +52,8 @@ public class SiglusPodWithLocationController {
 
   @ResponseStatus(HttpStatus.OK)
   @GetMapping("/{id}/subDrafts/{subDraftId}")
-  public PodWithLocationDto getPodSubDraftWithLocation(@PathVariable("id") UUID podId,
-      @PathVariable("subDraftId") UUID subDraftId) {
+  public ProofOfDeliverySubDraftWithLocationDto getPodSubDraftWithLocation(@PathVariable("id") UUID podId,
+                                                                           @PathVariable("subDraftId") UUID subDraftId) {
     return siglusPodService.getPodSubDraftWithLocation(podId, subDraftId);
   }
 
@@ -76,16 +77,16 @@ public class SiglusPodWithLocationController {
   }
 
   @GetMapping("/{id}/subDrafts/merge")
-  public ProofOfDeliveryWithLocationResponse getMergedSubDraftWithLocation(@PathVariable("id") UUID podId) {
+  public PodSubDraftsMergedResponse getMergedSubDraftWithLocation(@PathVariable("id") UUID podId) {
     return siglusPodService.getMergedSubDraftWithLocation(podId);
   }
 
   @PutMapping("/{id}")
-  public void submitSubDraftsWithLocation(@PathVariable("id") UUID podId, @RequestBody PodWithLocationRequest request,
+  public void submitSubDraftsWithLocation(@PathVariable("id") UUID podId, @RequestBody SubmitPodSubDraftsRequest request,
       OAuth2Authentication authentication) {
     movementDateValidator.validateMovementDate(request.getPodDto().getReceivedDate(),
         request.getPodDto().getShipment().getOrder().getReceivingFacility().getId());
-    siglusPodService.submitSubDraftsWithLocation(podId, request, authentication);
+    siglusPodService.submitSubDrafts(podId, request, authentication, true);
   }
 
   @GetMapping("/{id}")

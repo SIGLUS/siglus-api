@@ -16,15 +16,30 @@
 package org.siglus.siglusapi.dto;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import javax.validation.constraints.NotNull;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.openlmis.fulfillment.domain.ProofOfDeliveryStatus;
+import org.openlmis.fulfillment.web.util.ProofOfDeliveryDto;
+import org.openlmis.fulfillment.web.util.ProofOfDeliveryLineItemDto;
 import org.openlmis.fulfillment.web.util.ShipmentObjectReferenceDto;
+import org.springframework.util.ObjectUtils;
 
 
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class ProofOfDeliverySubDraftDto {
   @NotNull
   private UUID id;
@@ -34,4 +49,39 @@ public class ProofOfDeliverySubDraftDto {
   private String receivedBy;
   private String deliveredBy;
   private LocalDate receivedDate;
+
+  public static ProofOfDeliverySubDraftDto from(ProofOfDeliveryDto dto) {
+    List<ProofOfDeliverySubDraftLineItemDto> items = null;
+    if (!ObjectUtils.isEmpty(dto.getLineItems())) {
+      items = dto.getLineItems().stream()
+          .map(item -> ProofOfDeliverySubDraftLineItemDto.from((ProofOfDeliveryLineItemDto)item))
+          .collect(Collectors.toList());
+    }
+    return ProofOfDeliverySubDraftDto.builder()
+        .id(dto.getId())
+        .shipment(dto.getShipment())
+        .status(dto.getStatus())
+        .receivedBy(dto.getReceivedBy())
+        .deliveredBy(dto.getDeliveredBy())
+        .receivedDate(dto.getReceivedDate())
+        .lineItems(items)
+        .build();
+  }
+
+  public ProofOfDeliveryDto to() {
+    List<ProofOfDeliveryLineItemDto> lineItemDtos = lineItems.stream()
+        .map(ProofOfDeliverySubDraftLineItemDto::to).collect(Collectors.toList());
+    ProofOfDeliveryDto dto = new ProofOfDeliveryDto(null, shipment, status,
+        lineItemDtos, receivedBy, deliveredBy, receivedDate);
+    dto.setId(id);
+    return dto;
+  }
+
+  public List<PodLineItemWithLocationDto> getLineItemLocations() {
+    if (ObjectUtils.isEmpty(lineItems)) {
+      return new ArrayList<>();
+    }
+    return lineItems.stream().map(ProofOfDeliverySubDraftLineItemDto::getLocationDtos)
+        .flatMap(Collection::stream).collect(Collectors.toList());
+  }
 }
