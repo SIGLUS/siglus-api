@@ -17,9 +17,18 @@ package org.siglus.siglusapi.localmachine.event.requisition.andriod;
 
 import com.google.common.annotations.VisibleForTesting;
 import java.util.Optional;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.openlmis.requisition.domain.requisition.Requisition;
+import org.siglus.siglusapi.domain.SyncUpHash;
+import org.siglus.siglusapi.dto.UserDto;
+import org.siglus.siglusapi.exception.InvalidProgramCodeException;
+import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
+import org.siglus.siglusapi.repository.SyncUpHashRepository;
+import org.siglus.siglusapi.service.SiglusProgramService;
 import org.siglus.siglusapi.service.android.RequisitionCreateService;
+import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.util.SiglusSimulateUserAuthHelper;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
@@ -28,23 +37,56 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @RequiredArgsConstructor
 public class AndroidRequisitionSyncedReplayer {
+
   @VisibleForTesting
   public static final ThreadLocal<AndroidRequisitionSyncedEvent> currentEvent = ThreadLocal.withInitial(() -> null);
   private final SiglusSimulateUserAuthHelper simulateUserAuthHelper;
   private final RequisitionCreateService requisitionCreateService;
+  private final SiglusRequisitionRepository requisitionRepository;
+  private final SiglusProgramService siglusProgramService;
+  private final SiglusAuthenticationHelper authHelper;
+  private final SyncUpHashRepository syncUpHashRepository;
 
   @EventListener(value = {AndroidRequisitionSyncedEvent.class})
   public void replay(AndroidRequisitionSyncedEvent event) {
     currentEvent.set(event);
     try {
       simulateUserAuthHelper.simulateNewUserAuth(event.getUserId());
-      requisitionCreateService.createRequisition(event.getRequest());
+      Requisition existRequisition = findExistRequisition(event);
+      if (existRequisition == null) {
+        requisitionCreateService.createRequisition(event.getRequest());
+      } else {
+        saveSyncUpHash(event, existRequisition);
+      }
     } catch (Exception e) {
       log.error(e.getMessage(), e);
       throw e;
     } finally {
       currentEvent.remove();
     }
+  }
+
+  private void saveSyncUpHash(AndroidRequisitionSyncedEvent event, Requisition existRequisition) {
+    UserDto user = authHelper.getCurrentUser();
+    String syncUpHash = event.getRequest().getSyncUpHash(user);
+    SyncUpHash syncUpHashDomain = SyncUpHash.builder()
+        .hash(syncUpHash)
+        .type("Requisition")
+        .referenceId(existRequisition.getId())
+        .build();
+    syncUpHashRepository.save(syncUpHashDomain);
+  }
+
+  private Requisition findExistRequisition(AndroidRequisitionSyncedEvent event) {
+    String programCode = event.getRequest().getProgramCode();
+    UUID programId = siglusProgramService.getProgramByCode(programCode)
+        .map(org.openlmis.requisition.dto.BaseDto::getId)
+        .orElseThrow(() -> InvalidProgramCodeException.requisition(programCode));
+    UUID processingPeriodId = requisitionCreateService.getPeriodId(event.getRequest());
+    return requisitionRepository.findOneByFacilityIdAndProgramIdAndProcessingPeriodId(
+        event.getFacilityId(),
+        programId,
+        processingPeriodId);
   }
 
   public static Optional<AndroidRequisitionSyncedEvent> getCurrentEvent() {

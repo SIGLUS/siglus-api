@@ -370,7 +370,7 @@ public class RequisitionCreateService {
     requisition.getStatusChanges().add(StatusChange.newStatusChange(requisition, authorId));
   }
 
-  private UUID getPeriodId(RequisitionCreateRequest request) {
+  public UUID getPeriodId(RequisitionCreateRequest request) {
     YearMonth month = request.getActualStartDate().query(YearMonth::from);
     if (BooleanUtils.isTrue(request.getEmergency())) {
       month = month.minusMonths(1);
