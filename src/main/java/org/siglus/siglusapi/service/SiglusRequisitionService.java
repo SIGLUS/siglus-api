@@ -2322,6 +2322,15 @@ public class SiglusRequisitionService {
       SiglusRequisitionDto requisitionDto,
       HttpServletRequest request,
       HttpServletResponse response) {
+    Requisition existRequisition = siglusRequisitionRepository.findOneByFacilityIdAndProgramIdAndProcessingPeriodId(
+        requisitionDto.getFacilityId(),
+        requisitionDto.getProgramId(),
+        requisitionDto.getProcessingPeriodId());
+    if (existRequisition != null) {
+      throw new ValidationMessageException("requisition.error.validation.dateModifiedMismatch",
+          existRequisition.getId());
+    }
+
     if (RequisitionStatus.INITIATED.equals(requisitionDto.getStatus())) {
       SiglusRequisitionDto initiateRequisition = initiateForClient(requisitionDto.getProgramId(), facilityId,
           requisitionDto.getProcessingPeriodId(), false, null, request, response);
