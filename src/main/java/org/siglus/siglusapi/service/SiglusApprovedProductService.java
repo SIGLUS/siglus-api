@@ -16,11 +16,19 @@
 package org.siglus.siglusapi.service;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
+
 import org.openlmis.requisition.dto.ApprovedProductDto;
+import org.openlmis.requisition.dto.DispensableDto;
 import org.openlmis.requisition.service.RequisitionService;
+import org.siglus.common.domain.ProgramOrderablesExtension;
+import org.siglus.common.repository.ProgramOrderablesExtensionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ObjectUtils;
 
 @Service
 public class SiglusApprovedProductService {
@@ -28,7 +36,26 @@ public class SiglusApprovedProductService {
   @Autowired
   private RequisitionService requisitionService;
 
+  @Autowired
+  private ProgramOrderablesExtensionRepository programOrderablesExtensionRepository;
+
   public List<ApprovedProductDto> getApprovedProducts(UUID facilityId, UUID programId) {
-    return requisitionService.getApprovedProducts(facilityId, programId);
+    List<ApprovedProductDto> approvedProducts = requisitionService.getApprovedProducts(facilityId, programId);
+    Set<UUID> orderableIds = approvedProducts.stream()
+        .map(product -> product.getOrderable().getId()).collect(Collectors.toSet());
+    if (!ObjectUtils.isEmpty(orderableIds)) {
+      Map<UUID, ProgramOrderablesExtension> extensionMap =
+          programOrderablesExtensionRepository.findAllByOrderableIdIn(orderableIds)
+              .stream().collect(Collectors.toMap(ProgramOrderablesExtension::getOrderableId, item -> item));
+      approvedProducts.forEach(
+          product -> {
+            ProgramOrderablesExtension extension = extensionMap.get(product.getOrderable().getId());
+            if (!ObjectUtils.isEmpty(extension)) {
+              product.getOrderable().setDispensable(new DispensableDto(extension.getUnit(), extension.getUnit()));
+            }
+          }
+      );
+    }
+    return approvedProducts;
   }
 }
