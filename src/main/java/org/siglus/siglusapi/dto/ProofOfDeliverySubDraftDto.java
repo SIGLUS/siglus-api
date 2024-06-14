@@ -19,6 +19,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.validation.constraints.NotNull;
@@ -31,6 +32,7 @@ import org.openlmis.fulfillment.domain.ProofOfDeliveryStatus;
 import org.openlmis.fulfillment.web.util.ProofOfDeliveryDto;
 import org.openlmis.fulfillment.web.util.ProofOfDeliveryLineItemDto;
 import org.openlmis.fulfillment.web.util.ShipmentObjectReferenceDto;
+import org.siglus.siglusapi.domain.PodLineItemsExtension;
 import org.springframework.util.ObjectUtils;
 
 
@@ -48,11 +50,34 @@ public class ProofOfDeliverySubDraftDto {
   private String deliveredBy;
   private LocalDate receivedDate;
 
-  public static ProofOfDeliverySubDraftDto from(ProofOfDeliveryDto dto) {
+  public static ProofOfDeliverySubDraftDto from(ProofOfDeliveryDto dto, List<PodLineItemsExtension> extensions) {
+    List<ProofOfDeliverySubDraftLineItemDto> items = null;
+    if (!ObjectUtils.isEmpty(dto.getLineItems())) {
+      Map<UUID, PodLineItemsExtension> extensionMap = extensions.stream()
+          .collect(Collectors.toMap(PodLineItemsExtension::getId, extension -> extension));
+      items = dto.getLineItems().stream()
+          .map(item -> {
+            PodLineItemsExtension extension = extensionMap.get(item.getId());
+            UUID subDraftId = ObjectUtils.isEmpty(extension) ? null : extension.getSubDraftId();
+            return ProofOfDeliverySubDraftLineItemDto.from((ProofOfDeliveryLineItemDto) item, subDraftId);
+          }).collect(Collectors.toList());
+    }
+    return ProofOfDeliverySubDraftDto.builder()
+        .id(dto.getId())
+        .shipment(dto.getShipment())
+        .status(dto.getStatus())
+        .receivedBy(dto.getReceivedBy())
+        .deliveredBy(dto.getDeliveredBy())
+        .receivedDate(dto.getReceivedDate())
+        .lineItems(items)
+        .build();
+  }
+
+  public static ProofOfDeliverySubDraftDto from(ProofOfDeliveryDto dto, UUID subDraftId) {
     List<ProofOfDeliverySubDraftLineItemDto> items = null;
     if (!ObjectUtils.isEmpty(dto.getLineItems())) {
       items = dto.getLineItems().stream()
-          .map(item -> ProofOfDeliverySubDraftLineItemDto.from((ProofOfDeliveryLineItemDto) item))
+          .map(item -> ProofOfDeliverySubDraftLineItemDto.from((ProofOfDeliveryLineItemDto) item, subDraftId))
           .collect(Collectors.toList());
     }
     return ProofOfDeliverySubDraftDto.builder()

@@ -58,6 +58,7 @@ public class ProofOfDeliverySubDraftLineItemDto {
   private LocalDate expirationDate;
   private List<PodSubDraftLineItemLocation> locations;
   private boolean added;
+  private UUID subDraftId;
 
   public PodSubDraftLineItem toDraftLineItem(List<PodSubDraftLineItemLocation> locations) {
     VersionEntityReference orderableRef = new VersionEntityReference(orderable.getId(), orderable.getVersionNumber());
@@ -73,6 +74,7 @@ public class ProofOfDeliverySubDraftLineItemDto {
         .lotCode(lotCode)
         .expirationDate(expirationDate)
         .locations(locations)
+        .podSubDraftId(subDraftId)
         .build();
   }
 
@@ -85,6 +87,7 @@ public class ProofOfDeliverySubDraftLineItemDto {
     }
     return ProofOfDeliverySubDraftLineItemDto.builder()
         .id(item.getId())
+        .subDraftId(item.getPodSubDraftId())
         .orderable(orderable)
         .lot(lot)
         .quantityAccepted(item.getQuantityAccepted())
@@ -99,7 +102,7 @@ public class ProofOfDeliverySubDraftLineItemDto {
         .build();
   }
 
-  public static ProofOfDeliverySubDraftLineItemDto from(ProofOfDeliveryLineItemDto dto) {
+  public static ProofOfDeliverySubDraftLineItemDto from(ProofOfDeliveryLineItemDto dto, UUID subDraftId) {
     return ProofOfDeliverySubDraftLineItemDto.builder()
         .id(dto.getId())
         .orderable(dto.getOrderable())
@@ -110,6 +113,7 @@ public class ProofOfDeliverySubDraftLineItemDto {
         .quantityRejected(dto.getQuantityRejected())
         .rejectionReasonId(dto.getRejectionReasonId())
         .notes(dto.getNotes())
+        .subDraftId(subDraftId)
         .build();
   }
 

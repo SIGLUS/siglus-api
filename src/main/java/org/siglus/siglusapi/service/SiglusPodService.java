@@ -937,7 +937,7 @@ public class SiglusPodService {
     ProofOfDeliveryDto dto = getExpandedPodDtoById(podId, expand);
     List<ProofOfDeliveryLineItemDto> currentSubDraftLineItems = getCurrentSubDraftPodLineItemDtos(subDraftId, dto);
     dto.setLineItems(currentSubDraftLineItems);
-    ProofOfDeliverySubDraftDto draftDto = ProofOfDeliverySubDraftDto.from(dto);
+    ProofOfDeliverySubDraftDto draftDto = ProofOfDeliverySubDraftDto.from(dto, subDraftId);
     List<ProofOfDeliverySubDraftLineItemDto> addedDraftLineItemDtos =
         podSubDraftLineItemRepository.findAllByPodSubDraftId(subDraftId)
             .stream().map(ProofOfDeliverySubDraftLineItemDto::fromDraftLineItem)
@@ -949,7 +949,8 @@ public class SiglusPodService {
 
   private ProofOfDeliverySubDraftDto getPodSubDraftsDto(UUID podId, List<UUID> subDraftIds, Set<String> expand) {
     ProofOfDeliveryDto dto = getExpandedPodDtoById(podId, expand);
-    ProofOfDeliverySubDraftDto draftDto = ProofOfDeliverySubDraftDto.from(dto);
+    List<PodLineItemsExtension> extensions = podLineItemsExtensionRepository.findAllBySubDraftIds(subDraftIds);
+    ProofOfDeliverySubDraftDto draftDto = ProofOfDeliverySubDraftDto.from(dto, extensions);
     List<ProofOfDeliverySubDraftLineItemDto> addedDraftLineItemDtos =
         podSubDraftLineItemRepository.findAllByPodSubDraftIdIn(subDraftIds)
             .stream().map(ProofOfDeliverySubDraftLineItemDto::fromDraftLineItem)
@@ -1026,31 +1027,6 @@ public class SiglusPodService {
       podLineItemWithLocationDtos.add(podLineItemWithLocationDto);
     });
     return podLineItemWithLocationDtos;
-  }
-
-  private void submitPodSubDraftsWithLocation(List<PodLineItemWithLocationDto> podLineItemLocationList) {
-    deleteSubDraftAndSaveLineItemsWithLocation(podLineItemLocationList);
-  }
-
-  private void deleteSubDraftAndSaveLineItemsWithLocation(List<PodLineItemWithLocationDto> podLineItemLocationList) {
-    Set<UUID> lineItemIds = podLineItemLocationList.stream().map(PodLineItemWithLocationDto::getPodLineItemId)
-        .collect(Collectors.toSet());
-    log.info("delete podSubDraftLineItemsByLocation when submit sub draft; line item ids: {}", lineItemIds);
-    podSubDraftLineItemsByLocationRepository.deleteByPodLineItemIdIn(lineItemIds);
-
-    List<PodLineItemsByLocation> podLineItemsByLocationList = Lists.newArrayList();
-    podLineItemLocationList.forEach(lineItemWithLocation -> {
-      PodLineItemsByLocation lineItemsByLocation = PodLineItemsByLocation
-          .builder()
-          .podLineItemId(lineItemWithLocation.getPodLineItemId())
-          .locationCode(lineItemWithLocation.getLocationCode())
-          .area(lineItemWithLocation.getArea())
-          .quantityAccepted(lineItemWithLocation.getQuantityAccepted())
-          .build();
-      podLineItemsByLocationList.add(lineItemsByLocation);
-    });
-    log.info("save podLineItemsByLocation when submit sub draft; size: {}", podLineItemsByLocationList.size());
-    podLineItemsByLocationRepository.save(podLineItemsByLocationList);
   }
 
   public ProofOfDeliveryWithLocationResponse getPodWithLocation(ProofOfDeliveryDto podDto) {
