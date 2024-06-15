@@ -784,11 +784,15 @@ public class SiglusPhysicalInventoryService {
   @VisibleForTesting
   List<PhysicalInventoryLineItemDto> getPhysicalInventoryEmptyLocationLineItemDtos(
       UUID facilityId, List<PhysicalInventoryLineItemDto> lineItems) {
+    Set<String> existLocationSet = lineItems.stream()
+        .map(PhysicalInventoryLineItemDto::getLocationCode).collect(Collectors.toSet());
     List<FacilityLocations> locations = facilityLocationsRepository.findByFacilityId(facilityId);
-    return locations.stream().filter(location -> lineItems.stream()
-            .noneMatch(lineItem -> lineItem.getLocationCode().equals(location.getLocationCode())))
-        .map(location -> PhysicalInventoryLineItemDto.builder().locationCode(location.getLocationCode())
-            .area(location.getArea()).build()).collect(Collectors.toList());
+    return locations.stream().filter(location -> !existLocationSet.contains(location.getLocationCode()))
+        .map(location -> PhysicalInventoryLineItemDto.builder()
+            .locationCode(location.getLocationCode())
+            .area(location.getArea())
+            .build())
+        .collect(Collectors.toList());
   }
 
   @VisibleForTesting
