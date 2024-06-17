@@ -19,9 +19,11 @@ import static org.openlmis.requisition.domain.requisition.RequisitionStatus.AUTH
 import static org.openlmis.requisition.domain.requisition.RequisitionStatus.INITIATED;
 import static org.openlmis.requisition.domain.requisition.RequisitionStatus.SUBMITTED;
 import static org.siglus.siglusapi.constant.android.AndroidConstants.SCHEDULE_CODE;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_REQUISITION_SUPPLIER_FACILITY_CREATED;
 
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.util.Objects;
 import java.util.UUID;
 import javax.persistence.EntityNotFoundException;
 import javax.validation.ConstraintValidator;
@@ -32,17 +34,24 @@ import org.hibernate.validator.constraintvalidation.HibernateConstraintValidator
 import org.openlmis.referencedata.domain.ProcessingPeriod;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.RequisitionStatus;
+import org.openlmis.requisition.dto.BaseDto;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
 import org.siglus.common.domain.ProcessingPeriodExtension;
 import org.siglus.common.repository.ProcessingPeriodExtensionRepository;
+import org.siglus.siglusapi.domain.RequisitionExtension;
 import org.siglus.siglusapi.domain.SiglusReportType;
+import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.dto.android.constraint.RequisitionValidStartDate;
 import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
+import org.siglus.siglusapi.exception.InvalidProgramCodeException;
+import org.siglus.siglusapi.exception.RequisitionAlreadyCreatedBySupplierFacilityException;
 import org.siglus.siglusapi.repository.ProcessingPeriodRepository;
+import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.repository.SiglusReportTypeRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.repository.SyncUpHashRepository;
+import org.siglus.siglusapi.service.SiglusProgramService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 
 @SuppressWarnings("PMD.CyclomaticComplexity")
@@ -53,8 +62,10 @@ public class RequisitionValidStartDateValidator implements
 
   private final SiglusAuthenticationHelper authHelper;
   private final ProgramReferenceDataService programDataService;
+  private final SiglusProgramService siglusProgramService;
   private final SiglusReportTypeRepository reportTypeRepository;
   private final SiglusRequisitionRepository requisitionRepository;
+  private final RequisitionExtensionRepository requisitionExtensionRepository;
   private final ProcessingPeriodRepository periodRepository;
   private final ProcessingPeriodExtensionRepository periodExtensionRepository;
   private final SyncUpHashRepository syncUpHashRepository;
@@ -120,6 +131,22 @@ public class RequisitionValidStartDateValidator implements
     if (lastEndDate.isBefore(oneYearAgo) && value.getActualStartDate().isAfter(lastEndDate)) {
       return true;
     }
+    // if supplier facility have created requisition for android client, then shouldn't call the create method again
+    UUID programId = siglusProgramService.getProgramByCode(programCode)
+        .map(BaseDto::getId)
+        .orElseThrow(() -> InvalidProgramCodeException.requisition(programCode));
+    Requisition existRequisition = requisitionRepository.findOneByFacilityIdAndProgramIdAndProcessingPeriodId(
+        homeFacilityId, programId, period.getId());
+    if (existRequisition != null) {
+      RequisitionExtension requisitionExtension = requisitionExtensionRepository.findByRequisitionId(
+          existRequisition.getId());
+      if (requisitionExtension != null
+          && !Objects.equals(requisitionExtension.getCreatedByFacilityId(), requisitionExtension.getFacilityId())) {
+        throw new RequisitionAlreadyCreatedBySupplierFacilityException(
+            new Message(ERROR_REQUISITION_SUPPLIER_FACILITY_CREATED));
+      }
+    }
+
     ProcessingPeriod lastPeriod = periodRepository.findOne(lastRequisition.getProcessingPeriodId());
     if (isNotConsecutive(lastEndDate, value.getActualStartDate(), lastPeriod, period)) {
       actualContext.addExpressionVariable(IS_SUBMITTED_PERIOD_INVALID, true);

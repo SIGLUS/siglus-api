@@ -69,10 +69,12 @@ import org.siglus.siglusapi.dto.android.sequence.PerformanceSequence;
 import org.siglus.siglusapi.dto.android.validator.RequisitionValidReStartDateValidator;
 import org.siglus.siglusapi.dto.android.validator.RequisitionValidStartDateValidator;
 import org.siglus.siglusapi.repository.ProcessingPeriodRepository;
+import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionRequestBackupRepository;
 import org.siglus.siglusapi.repository.SiglusReportTypeRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.repository.SyncUpHashRepository;
+import org.siglus.siglusapi.service.SiglusProgramService;
 import org.siglus.siglusapi.service.android.RequisitionCreateService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 
@@ -91,6 +93,10 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
   private SiglusAuthenticationHelper authHelper;
   @Mock
   private SiglusReportTypeRepository reportTypeRepo;
+  @Mock
+  private SiglusProgramService siglusProgramService;
+  @Mock
+  private RequisitionExtensionRepository requisitionExtensionRepository;
   @Mock
   private SiglusRequisitionRepository requisitionRepo;
   @Mock
@@ -213,6 +219,10 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
       throws Exception {
     // given
     mockFacilityId(facilityId);
+    ProgramDto programDto = new ProgramDto();
+    programDto.setId(UUID.randomUUID());
+    programDto.setCode("code");
+    when(siglusProgramService.getProgramByCode(anyString())).thenReturn(Optional.of(programDto));
     Object param = parseParam("validStartDate.json");
 
     // when
@@ -263,9 +273,13 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
       throws Exception {
     // given
     mockFacilityId(facilityId);
+    ProgramDto programDto = new ProgramDto();
+    programDto.setId(UUID.randomUUID());
+    programDto.setCode("code");
     Object param = parseParam("actualStartDateBeforeLastActualEnd.json");
 
     // when
+    when(siglusProgramService.getProgramByCode(anyString())).thenReturn(Optional.of(programDto));
     Map<String, String> violations = executeValidation(param);
 
     // then
@@ -285,10 +299,13 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
     YearMonth yearMonth = YearMonth.of(localDate.getYear(), localDate.getMonth());
     mockStatic(YearMonth.class);
     when(YearMonth.now()).thenReturn(yearMonth);
-
+    ProgramDto programDto = new ProgramDto();
+    programDto.setId(UUID.randomUUID());
+    programDto.setCode("code");
     Object param = parseParam("actualStartDateAfterLastActualEnd.json");
 
     // when
+    when(siglusProgramService.getProgramByCode(anyString())).thenReturn(Optional.of(programDto));
     Map<String, String> violations = executeValidation(param);
 
     // then
@@ -328,9 +345,13 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
         .thenReturn(Optional.of(reportType));
     mockFacilityId(facilityId);
     when(req1.getActualEndDate()).thenReturn(LocalDate.of(2013, 6, 20));
+    ProgramDto programDto = new ProgramDto();
+    programDto.setId(UUID.randomUUID());
+    programDto.setCode("code");
     Object param = parseParam("actualStartDateBeforeLastEnd.json");
 
     // when
+    when(siglusProgramService.getProgramByCode(anyString())).thenReturn(Optional.of(programDto));
     Map<String, String> violations = executeValidation(param);
 
     // then
@@ -360,9 +381,13 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
       throws Exception {
     // given
     mockFacilityId(restartedFacilityId);
+    ProgramDto programDto = new ProgramDto();
+    programDto.setId(UUID.randomUUID());
+    programDto.setCode("code");
     Object param = parseParam("actualStartDateAfterLastActualEnd.json");
 
     // when
+    when(siglusProgramService.getProgramByCode(anyString())).thenReturn(Optional.of(programDto));
     Map<String, String> violations = executeValidation(param);
 
     // then
@@ -375,9 +400,13 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
     // given
     when(req1.getActualEndDate()).thenReturn(LocalDate.of(2021, 4, 20));
     mockFacilityId(facilityId);
+    ProgramDto programDto = new ProgramDto();
+    programDto.setId(UUID.randomUUID());
+    programDto.setCode("code");
     Object param = parseParam("periodApr.json");
 
     // when
+    when(siglusProgramService.getProgramByCode(anyString())).thenReturn(Optional.of(programDto));
     Map<String, String> violations = executeValidation(param);
 
     // then
@@ -394,9 +423,13 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
     // given
     when(req1.getActualEndDate()).thenReturn(LocalDate.of(2021, 5, 20));
     mockFacilityId(facilityId);
+    ProgramDto programDto = new ProgramDto();
+    programDto.setId(UUID.randomUUID());
+    programDto.setCode("code");
     Object param = parseParam("periodMay.json");
 
     // when
+    when(siglusProgramService.getProgramByCode(anyString())).thenReturn(Optional.of(programDto));
     Map<String, String> violations = executeValidation(param);
 
     // then
@@ -416,9 +449,13 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
     when(periodRepo.findPeriodByCodeAndMonth(any(), eq(YearMonth.of(2021, 7)))).thenReturn(Optional.of(periodForJul));
     when(req1.getActualEndDate()).thenReturn(LocalDate.of(2021, 7, 20));
     mockFacilityId(facilityId);
+    ProgramDto programDto = new ProgramDto();
+    programDto.setId(UUID.randomUUID());
+    programDto.setCode("code");
     Object param = parseParam("periodJul.json");
 
     // when
+    when(siglusProgramService.getProgramByCode(anyString())).thenReturn(Optional.of(programDto));
     Map<String, String> violations = executeValidation(param);
 
     // then
@@ -566,7 +603,8 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
     public <T extends ConstraintValidator<?, ?>> T getInstance(Class<T> key) {
       if (key == RequisitionValidStartDateValidator.class) {
         return (T) new RequisitionValidStartDateValidator(authHelper,
-            programDataService, reportTypeRepo, requisitionRepo, periodRepo, periodExtensionRepo, syncUpHashRepository);
+            programDataService, siglusProgramService, reportTypeRepo, requisitionRepo, requisitionExtensionRepository,
+            periodRepo, periodExtensionRepo, syncUpHashRepository);
       } else if (key == RequisitionValidReStartDateValidator.class) {
         return (T) new RequisitionValidReStartDateValidator(authHelper, reportTypeRepo, syncUpHashRepository);
       }

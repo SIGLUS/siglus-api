@@ -19,6 +19,7 @@ import static java.util.stream.Collectors.toList;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_VALIDATION_FAIL;
 import static org.zalando.problem.Problem.DEFAULT_TYPE;
 import static org.zalando.problem.Status.BAD_REQUEST;
+import static org.zalando.problem.Status.CONFLICT;
 
 import java.net.URI;
 import java.util.Collection;
@@ -41,6 +42,7 @@ import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.exception.BaseMessageException;
 import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.OrderNotFoundException;
+import org.siglus.siglusapi.exception.RequisitionAlreadyCreatedBySupplierFacilityException;
 import org.siglus.siglusapi.exception.UnsupportedProductsException;
 import org.siglus.siglusapi.i18n.ExposedMessageSource;
 import org.siglus.siglusapi.i18n.MessageKeys;
@@ -137,10 +139,10 @@ public class GlobalErrorHandling implements ProblemHandling {
 
   @ExceptionHandler
   public ResponseEntity<Problem> handleValidationException(IllegalArgumentException exception,
-                                                           NativeWebRequest request) {
+      NativeWebRequest request) {
     String detail = exception.getMessage();
     if (!ObjectUtils.isEmpty(exception.getCause())) {
-      detail =  String.format("%s Caused by %s", exception.getMessage(), exception.getCause());
+      detail = String.format("%s Caused by %s", exception.getMessage(), exception.getCause());
     }
     ThrowableProblem problem = prepare(exception, BAD_REQUEST, DEFAULT_TYPE).withDetail(detail).build();
     return create(exception, problem, request);
@@ -178,6 +180,15 @@ public class GlobalErrorHandling implements ProblemHandling {
     ThrowableProblem problem = prepare(exception)
         .with("productCodes", exception.getProductCodes())
         .build();
+    return create(exception, problem, request);
+  }
+
+  @ExceptionHandler
+  public ResponseEntity<Problem> handleValidationMessageException(
+      RequisitionAlreadyCreatedBySupplierFacilityException exception,
+      NativeWebRequest request) {
+    String detail = String.format("%s Caused by %s", exception.getMessage(), exception.getCause());
+    ThrowableProblem problem = prepare(exception, CONFLICT, DEFAULT_TYPE).withDetail(detail).build();
     return create(exception, problem, request);
   }
 

@@ -242,6 +242,8 @@ public abstract class MessageKeys {
   public static final String ERROR_USER_NOT_REPORT_VIEW_AUTHORITY = ERROR_PREFIX + ".user.not.report.view.authority";
   public static final String ERROR_USER_CAN_NOT_CONFIRM_SHIPMENT = ERROR_PREFIX + ".user.can.not.confirm.shipment";
   public static final String ERROR_WRONG_CLIENT_FACILITY = ERROR_PREFIX + ".wrong.client.facility";
+  public static final String ERROR_REQUISITION_SUPPLIER_FACILITY_CREATED =
+      ERROR_PREFIX + ".requisition.supplier.facility.created";
 
   protected MessageKeys() {
     throw new UnsupportedOperationException();
