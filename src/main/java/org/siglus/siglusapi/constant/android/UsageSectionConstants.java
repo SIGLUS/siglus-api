@@ -395,6 +395,8 @@ public class UsageSectionConstants {
     public static final String PROJECT_UNJUSTIFIED = "unjustified";
     public static final String SERVICE_HF = "HF";
     public static final String SERVICE_APES = "APES";
+    public static final String PROJECT_POSITIVE_HIV = "positive_hiv";
+    public static final String PROJECT_POSITIVE_SIFILIS = "positive_sifilis";
   }
 
 }

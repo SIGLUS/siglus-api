@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import org.siglus.siglusapi.constant.android.UsageSectionConstants;
 import org.siglus.siglusapi.domain.TestConsumptionLineItem;
 import org.siglus.siglusapi.domain.UsageCategory;
 import org.siglus.siglusapi.domain.UsageTemplateColumn;
@@ -159,12 +160,30 @@ public class TestConsumptionDataProcessor implements UsageReportDataProcessor {
             continue;
           }
 
-          testConsumptionLineItems.add(TestConsumptionLineItem.builder()
-              .requisitionId(siglusRequisitionDto.getId())
-              .outcome(templateOutcomeColumn.getName())
-              .project(templateProjectColumn.getName())
-              .service(templateServiceColumn.getName())
-              .build());
+          // split positive column to hiv and sifilis positive
+          if (UsageSectionConstants.TestConsumptionLineItems.NEW_COLUMN_3.equals(templateProjectColumn.getName())
+              && UsageSectionConstants.TestConsumptionLineItems.PROJECT_POSITIVE
+              .equals(templateOutcomeColumn.getName())) {
+            testConsumptionLineItems.add(TestConsumptionLineItem.builder()
+                .requisitionId(siglusRequisitionDto.getId())
+                .outcome(UsageSectionConstants.TestConsumptionLineItems.PROJECT_POSITIVE_HIV)
+                .project(templateProjectColumn.getName())
+                .service(templateServiceColumn.getName())
+                .build());
+            testConsumptionLineItems.add(TestConsumptionLineItem.builder()
+                .requisitionId(siglusRequisitionDto.getId())
+                .outcome(UsageSectionConstants.TestConsumptionLineItems.PROJECT_POSITIVE_SIFILIS)
+                .project(templateProjectColumn.getName())
+                .service(templateServiceColumn.getName())
+                .build());
+          } else {
+            testConsumptionLineItems.add(TestConsumptionLineItem.builder()
+                .requisitionId(siglusRequisitionDto.getId())
+                .outcome(templateOutcomeColumn.getName())
+                .project(templateProjectColumn.getName())
+                .service(templateServiceColumn.getName())
+                .build());
+          }
 
         }
       }
