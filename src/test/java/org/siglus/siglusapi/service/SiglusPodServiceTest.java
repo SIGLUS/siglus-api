@@ -1065,6 +1065,15 @@ public class SiglusPodServiceTest {
   }
 
   @Test(expected = IllegalArgumentException.class)
+  public void shouldThrowExceptionWhenCreatePodSubDraftLineItemGivenPodLineItemIdIsError() {
+    UUID podLineItemId = UUID.randomUUID();
+    when(podSubDraftRepository.findOne(subDraftId)).thenReturn(buildMockSubDraftNotYetStarted());
+    when(podLineItemsExtensionRepository.findByPodLineItemId(podLineItemId)).thenReturn(null);
+
+    service.createPodSubDraftLineItem(podId, subDraftId, podLineItemId);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
   public void shouldThrowExceptionWhenCreatePodSubDraftLineItemGivenSubDraftIdAndLineItemIdMismatch() {
     UUID podLineItemId = UUID.randomUUID();
     when(podSubDraftRepository.findOne(subDraftId)).thenReturn(buildMockSubDraftNotYetStarted());

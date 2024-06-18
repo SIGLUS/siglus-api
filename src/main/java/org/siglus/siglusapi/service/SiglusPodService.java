@@ -505,6 +505,9 @@ public class SiglusPodService {
     PodSubDraft subDraft = checkIfPodIdAndSubDraftIdMatch(podId, subDraftId);
     checkIfCanOperate(subDraft);
     PodLineItemsExtension lineItemExtension = podLineItemsExtensionRepository.findByPodLineItemId(podLineItemId);
+    if (ObjectUtils.isEmpty(lineItemExtension)) {
+      throw new IllegalArgumentException("podLineItemId not exist");
+    }
     if (!lineItemExtension.getSubDraftId().equals(subDraftId)) {
       throw new IllegalArgumentException("subDraftId and podLineItemId mismatch");
     }
