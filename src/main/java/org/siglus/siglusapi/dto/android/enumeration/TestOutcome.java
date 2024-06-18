@@ -17,6 +17,8 @@ package org.siglus.siglusapi.dto.android.enumeration;
 
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.TestConsumptionLineItems.PROJECT_CONSUMO;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.TestConsumptionLineItems.PROJECT_POSITIVE;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.TestConsumptionLineItems.PROJECT_POSITIVE_HIV;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.TestConsumptionLineItems.PROJECT_POSITIVE_SYPHILIS;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.TestConsumptionLineItems.PROJECT_UNJUSTIFIED;
 
 import java.util.Arrays;
@@ -28,8 +30,8 @@ import lombok.RequiredArgsConstructor;
 public enum TestOutcome {
   CONSUME(PROJECT_CONSUMO),
   POSITIVE(PROJECT_POSITIVE),
-  POSITIVE_HIV(PROJECT_POSITIVE),
-  POSITIVE_SYPHILIS(PROJECT_POSITIVE),
+  POSITIVEHIV(PROJECT_POSITIVE_HIV),
+  POSITIVESYPHILIS(PROJECT_POSITIVE_SYPHILIS),
   UNJUSTIFIED(PROJECT_UNJUSTIFIED);
 
   private final String value;
