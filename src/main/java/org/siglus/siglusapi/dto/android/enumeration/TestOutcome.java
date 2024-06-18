@@ -28,6 +28,8 @@ import lombok.RequiredArgsConstructor;
 public enum TestOutcome {
   CONSUME(PROJECT_CONSUMO),
   POSITIVE(PROJECT_POSITIVE),
+  POSITIVE_HIV(PROJECT_POSITIVE),
+  POSITIVE_SYPHILIS(PROJECT_POSITIVE),
   UNJUSTIFIED(PROJECT_UNJUSTIFIED);
 
   private final String value;

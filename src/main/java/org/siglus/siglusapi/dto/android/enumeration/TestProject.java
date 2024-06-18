@@ -18,6 +18,10 @@ package org.siglus.siglusapi.dto.android.enumeration;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.TestConsumptionLineItems.NEW_COLUMN_0;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.TestConsumptionLineItems.NEW_COLUMN_1;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.TestConsumptionLineItems.NEW_COLUMN_2;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.TestConsumptionLineItems.NEW_COLUMN_3;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.TestConsumptionLineItems.NEW_COLUMN_4;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.TestConsumptionLineItems.NEW_COLUMN_5;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.TestConsumptionLineItems.NEW_COLUMN_6;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.TestConsumptionLineItems.PROJECT_HIVDETERMINE;
 
 import java.util.Arrays;
@@ -30,7 +34,11 @@ public enum TestProject {
   HIVDETERMINE(PROJECT_HIVDETERMINE),
   HIVUNIGOLD(NEW_COLUMN_0),
   SYPHILLIS(NEW_COLUMN_1),
-  MALARIA(NEW_COLUMN_2);
+  MALARIA(NEW_COLUMN_2),
+  DUOTESTEHIVSIFILIS(NEW_COLUMN_3),
+  HEPATITEBTESTES(NEW_COLUMN_4),
+  TDRORALDEHIV(NEW_COLUMN_5),
+  NEWTEST(NEW_COLUMN_6);
 
   private final String value;
 

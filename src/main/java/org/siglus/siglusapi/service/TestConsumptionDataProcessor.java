@@ -172,7 +172,7 @@ public class TestConsumptionDataProcessor implements UsageReportDataProcessor {
                 .build());
             testConsumptionLineItems.add(TestConsumptionLineItem.builder()
                 .requisitionId(siglusRequisitionDto.getId())
-                .outcome(UsageSectionConstants.TestConsumptionLineItems.PROJECT_POSITIVE_SIFILIS)
+                .outcome(UsageSectionConstants.TestConsumptionLineItems.PROJECT_POSITIVE_SYPHILIS)
                 .project(templateProjectColumn.getName())
                 .service(templateServiceColumn.getName())
                 .build());
