@@ -183,7 +183,7 @@ public class GlobalErrorHandling implements ProblemHandling {
     return create(exception, problem, request);
   }
 
-  @ExceptionHandler
+  @ExceptionHandler(RequisitionAlreadyCreatedBySupplierFacilityException.class)
   public ResponseEntity<Problem> handleValidationMessageException(
       RequisitionAlreadyCreatedBySupplierFacilityException exception,
       NativeWebRequest request) {

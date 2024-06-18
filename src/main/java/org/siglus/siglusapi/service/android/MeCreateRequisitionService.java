@@ -18,6 +18,7 @@ package org.siglus.siglusapi.service.android;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
+import org.siglus.siglusapi.exception.RequisitionAlreadyCreatedBySupplierFacilityException;
 import org.siglus.siglusapi.localmachine.event.requisition.andriod.AndroidRequisitionSyncedEmitter;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,12 +26,21 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 @Service
 public class MeCreateRequisitionService {
+
   private final RequisitionCreateService requisitionCreateService;
   private final AndroidRequisitionSyncedEmitter androidRequisitionSyncedEmitter;
 
   @Transactional
   public UUID createRequisition(RequisitionCreateRequest request) {
-    UUID requisitionId = requisitionCreateService.createRequisition(request);
+    UUID requisitionId;
+    try {
+      requisitionId = requisitionCreateService.createRequisition(request);
+    } catch (Exception e) {
+      if (e.getCause() instanceof RequisitionAlreadyCreatedBySupplierFacilityException) {
+        throw (RequisitionAlreadyCreatedBySupplierFacilityException) e.getCause();
+      }
+      throw e;
+    }
     if (requisitionId != null) {
       androidRequisitionSyncedEmitter.emit(request, requisitionId);
     }
