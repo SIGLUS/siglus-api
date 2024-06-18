@@ -106,6 +106,7 @@ public class SiglusPodWithLocationController {
     List<LotDto> lots = siglusLotService.getLotsByOrderable(homeFacilityId, draftLineItem.getOrderable().getId());
     return CreatePodSubDraftLineItemResponse.builder()
         .id(draftLineItem.getId())
+        .subDraftId(subDraftId)
         .orderable(draftLineItem.getOrderable())
         .lots(lots)
         .build();

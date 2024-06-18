@@ -30,6 +30,7 @@ import org.siglus.siglusapi.dto.LotDto;
 @AllArgsConstructor
 public class CreatePodSubDraftLineItemResponse {
   private UUID id;
+  private UUID subDraftId;
   private VersionEntityReference orderable;
   private List<LotDto> lots;
 }
