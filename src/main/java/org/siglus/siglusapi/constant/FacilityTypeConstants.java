@@ -72,4 +72,15 @@ public class FacilityTypeConstants {
     return Stream.of(DPM, AI, HC, ODF, CENTRAL, AC).collect(Collectors.toSet());
   }
 
+  public static Set<String> getFirstLevelTypes() {
+    return Stream.of(CS, PS, OUTROS, HM, HR, HPSIQ, HP, HD, HG).collect(Collectors.toSet());
+  }
+
+  public static Set<String> getSecondLevelTypes() {
+    return Stream.of(DDM).collect(Collectors.toSet());
+  }
+
+  public static Set<String> getThirdLevelTypes() {
+    return Stream.of(DPM, AI, HC).collect(Collectors.toSet());
+  }
 }

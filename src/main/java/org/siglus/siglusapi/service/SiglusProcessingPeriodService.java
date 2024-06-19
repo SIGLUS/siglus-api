@@ -19,6 +19,7 @@ import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_WRONG_CLIENT_FACILITY;
 import static org.siglus.siglusapi.util.RequisitionUtil.getRequisitionExtraData;
 
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -43,6 +44,7 @@ import org.openlmis.requisition.service.PermissionService;
 import org.openlmis.requisition.service.referencedata.PeriodReferenceDataService;
 import org.siglus.common.domain.ProcessingPeriodExtension;
 import org.siglus.common.repository.ProcessingPeriodExtensionRepository;
+import org.siglus.siglusapi.constant.FacilityTypeConstants;
 import org.siglus.siglusapi.constant.ProgramConstants;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.dto.ProcessingPeriodSearchParams;
@@ -51,6 +53,7 @@ import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.repository.ProcessingPeriodRepository;
 import org.siglus.siglusapi.repository.RequisitionNativeSqlRepository;
+import org.siglus.siglusapi.repository.SiglusFacilityRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.service.client.SiglusProcessingPeriodReferenceDataService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
@@ -106,6 +109,9 @@ public class SiglusProcessingPeriodService {
 
   @Autowired
   private SiglusFacilityService siglusFacilityService;
+
+  @Autowired
+  private SiglusFacilityRepository siglusFacilityRepository;
 
   public LocalDate getPreviousPeriodStartDateSinceInitiate(String programCode, UUID facilityId) {
     ProgramDto program = siglusProgramService.getProgramByCode(programCode)
@@ -352,6 +358,8 @@ public class SiglusProcessingPeriodService {
     }
     Set<String> statusSet = RequisitionStatus.getAfterAuthorizedStatus().stream().map(Enum::name)
         .collect(Collectors.toSet());
+    requisitionPeriods.forEach(requisitionPeriodDto ->
+        changeEmergencyRequisitionSubmitStartAndEndDate(facility, requisitionPeriodDto));
     if (CollectionUtils.isNotEmpty(requisitionPeriods)
         && CollectionUtils.isNotEmpty(siglusRequisitionRepository.searchAfterAuthorizedRequisitions(
         facility, program, period.getId(), Boolean.FALSE, statusSet))) {
@@ -359,6 +367,29 @@ public class SiglusProcessingPeriodService {
       requisitionPeriods.forEach(requisitionPeriodDto ->
           requisitionPeriodDto.setCurrentPeriodRegularRequisitionAuthorized(true));
     }
+  }
+
+  private void changeEmergencyRequisitionSubmitStartAndEndDate(UUID facility,
+      RequisitionPeriodDto requisitionPeriodDto) {
+    String facilityTypeCode = siglusFacilityRepository.findOne(facility).getType().getCode();
+    Set<String> firstLevelTypes = FacilityTypeConstants.getFirstLevelTypes();
+    Set<String> secondLevelTypes = FacilityTypeConstants.getSecondLevelTypes();
+    Set<String> thirdLevelTypes = FacilityTypeConstants.getThirdLevelTypes();
+    LocalDate submitStartDate = requisitionPeriodDto.getSubmitStartDate();
+    LocalDate submitEndDate = requisitionPeriodDto.getSubmitEndDate();
+    YearMonth yearMonth = YearMonth.from(submitStartDate).plusMonths(1);
+    if (firstLevelTypes.contains(facilityTypeCode)) {
+      submitStartDate = LocalDate.of(yearMonth.getYear(), yearMonth.getMonthValue(), 11);
+      submitEndDate = LocalDate.of(yearMonth.getYear(), yearMonth.getMonthValue(), 17);
+    } else if (secondLevelTypes.contains(facilityTypeCode)) {
+      submitStartDate = LocalDate.of(yearMonth.getYear(), yearMonth.getMonthValue(), 11);
+      submitEndDate = LocalDate.of(yearMonth.getYear(), yearMonth.getMonthValue(), 24);
+    } else if (thirdLevelTypes.contains(facilityTypeCode)) {
+      submitStartDate = LocalDate.of(submitStartDate.getYear(), submitStartDate.getMonthValue(), 16);
+      submitEndDate = LocalDate.of(yearMonth.getYear(), yearMonth.getMonthValue(), 30);
+    }
+    requisitionPeriodDto.setSubmitStartDate(submitStartDate);
+    requisitionPeriodDto.setSubmitEndDate(submitEndDate);
   }
 
   private void getFirstPreAuthorizeRequisition(List<Requisition> preAuthorizeRequisitions,
