@@ -766,12 +766,17 @@ public class RequisitionCreateService {
   private void buildTestOutcomeValue(TestConsumptionLineItemRequest testRequest,
       Map<String, Map<String, TestConsumptionProjectDto>> serviceToTestProjectDto) {
     if (!SERVICE_APES.equals(testRequest.getService())) {
-      TestConsumptionOutcomeDto totalOutcomeDto = serviceToTestProjectDto.get(UsageInformationLineItems.SERVICE_TOTAL)
-          .get(TestProject.valueOf(testRequest.getTestProject()).getValue())
-          .getOutcomes()
-          .get(TestOutcome.valueOf(testRequest.getTestOutcome()).getValue());
-      int totalValue = totalOutcomeDto.getValue() == null ? 0 : totalOutcomeDto.getValue();
-      totalOutcomeDto.setValue(totalValue + testRequest.getValue());
+      try {
+        TestConsumptionOutcomeDto totalOutcomeDto = serviceToTestProjectDto.get(UsageInformationLineItems.SERVICE_TOTAL)
+            .get(TestProject.valueOf(testRequest.getTestProject()).getValue())
+            .getOutcomes()
+            .get(TestOutcome.valueOf(testRequest.getTestOutcome()).getValue());
+        int totalValue = totalOutcomeDto.getValue() == null ? 0 : totalOutcomeDto.getValue();
+        totalOutcomeDto.setValue(totalValue + testRequest.getValue());
+      } catch (NullPointerException e) {
+        log.error(testRequest.toString());
+        throw e;
+      }
     }
     serviceToTestProjectDto.get(TestService.valueOf(testRequest.getService()).getValue())
         .get(TestProject.valueOf(testRequest.getTestProject()).getValue())
