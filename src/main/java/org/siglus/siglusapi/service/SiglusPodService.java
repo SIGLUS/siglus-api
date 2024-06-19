@@ -35,6 +35,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -911,8 +912,13 @@ public class SiglusPodService {
 
   private void updateSubDraftLineItem(List<ProofOfDeliverySubDraftLineItemDto> lineItems,
                                       List<PodLineItemWithLocationDto> locations) {
-    Map<UUID, List<PodLineItemWithLocationDto>> locationMap = locations.stream()
-        .collect(Collectors.groupingBy(PodLineItemWithLocationDto::getPodLineItemId));
+    Map<UUID, List<PodLineItemWithLocationDto>> locationMap;
+    if (!ObjectUtils.isEmpty(locations)) {
+      locationMap = locations.stream()
+          .collect(Collectors.groupingBy(PodLineItemWithLocationDto::getPodLineItemId));
+    } else {
+      locationMap = new HashMap<>();
+    }
     List<PodSubDraftLineItem> draftLineItems = lineItems.stream().map(
         item -> {
           List<PodSubDraftLineItemLocation> itemLocations = locationMap.getOrDefault(item.getId(), new ArrayList<>())
