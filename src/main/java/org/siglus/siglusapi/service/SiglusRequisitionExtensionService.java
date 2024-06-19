@@ -62,6 +62,7 @@ public class SiglusRequisitionExtensionService {
     RequisitionExtension requisitionExtension = buildRequisitionExtension(siglusRequisitionDto.getId(),
         siglusRequisitionDto.getEmergency(), siglusRequisitionDto.getFacilityId(),
         siglusRequisitionDto.getProgramId(), period.getEndDate());
+    requisitionExtension.setActualStartDate(siglusRequisitionDto.getActualStartDate());
     log.info("save requisition extension: {}", requisitionExtension);
     return requisitionExtensionRepository.save(requisitionExtension);
   }
