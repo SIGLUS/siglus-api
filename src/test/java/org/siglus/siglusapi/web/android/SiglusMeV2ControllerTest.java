@@ -15,25 +15,30 @@
 
 package org.siglus.siglusapi.web.android;
 
-import lombok.extern.slf4j.Slf4j;
-import org.siglus.siglusapi.dto.android.response.RequisitionResponse;
+import static org.mockito.Mockito.verify;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 import org.siglus.siglusapi.service.android.MeService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
 
-@Slf4j
-@RestController
-@RequestMapping("/api/siglusapi/v2/android/me")
-public class SiglusMeV2Controller {
+@RunWith(MockitoJUnitRunner.class)
+public class SiglusMeV2ControllerTest {
 
-  @Autowired
+  @InjectMocks
+  private SiglusMeV2Controller controller;
+
+  @Mock
   private MeService service;
 
-  @GetMapping("/facility/requisitions")
-  public RequisitionResponse getRequisitionResponse(@RequestParam(value = "startDate") String startDate) {
-    return service.getRequisitionResponse(startDate);
+  @Test
+  public void shouldGetRequisitionsSuccess() {
+    String startDate = "2024-04-01";
+
+    controller.getRequisitionResponse(startDate);
+
+    verify(service).getRequisitionResponse(startDate);
   }
 }

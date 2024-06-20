@@ -4614,6 +4614,24 @@ traits:
             responses:
               204:
                 description: Save current user ResyncInfo
+    /v2:
+      /android/me/facility:
+        /requisitions:
+          displayName: get requisition
+          get:
+            is: [ secured ]
+            queryParameters:
+              startDate:
+                displayName: start date
+                type: string
+                required: true
+                repeat: false
+            responses:
+              200:
+                body:
+                  application/json:
+                    schema: androidRequisitionResponse
+
     /cmms/init:
       displayName: calculate all web facility cmms
       post:
