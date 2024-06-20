@@ -20,7 +20,10 @@ import static org.springframework.http.HttpStatus.NO_CONTENT;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
@@ -29,12 +32,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.hibernate.validator.constraints.NotEmpty;
 import org.siglus.siglusapi.constant.android.AndroidConstants;
 import org.siglus.siglusapi.domain.AppInfo;
+import org.siglus.siglusapi.dto.android.enumeration.TestProject;
 import org.siglus.siglusapi.dto.android.request.AndroidHeader;
 import org.siglus.siglusapi.dto.android.request.HfCmmDto;
 import org.siglus.siglusapi.dto.android.request.PodRequest;
 import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
 import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
 import org.siglus.siglusapi.dto.android.request.StockCardDeleteRequest;
+import org.siglus.siglusapi.dto.android.request.TestConsumptionLineItemRequest;
 import org.siglus.siglusapi.dto.android.response.CreateStockCardResponse;
 import org.siglus.siglusapi.dto.android.response.FacilityProductMovementsResponse;
 import org.siglus.siglusapi.dto.android.response.FacilityResponse;
@@ -120,7 +125,8 @@ public class SiglusMeController {
 
   @GetMapping("/facility/requisitions")
   public RequisitionResponse getRequisitionResponse(@RequestParam(value = "startDate") String startDate) {
-    return service.getRequisitionResponse(startDate);
+    RequisitionResponse response = service.getRequisitionResponse(startDate);
+    return convertRequisitionResponseToV1(response);
   }
 
   @GetMapping("/facility/pods")
@@ -148,5 +154,27 @@ public class SiglusMeController {
   public void processResyncInfo(HttpServletRequest httpServletRequest) {
     AndroidHeader header = AndroidConstants.getAndroidHeader(httpServletRequest);
     service.processResyncInfo(header);
+  }
+
+  /**
+   * Old Android version can't parser V2 response, so it needs convert V2 to V1 for it
+   * New Android version uses /api/v2/siglusapi/android/me to instead
+   *
+   * @param response RequisitionResponse
+   * @return RequisitionResponse
+   */
+  private RequisitionResponse convertRequisitionResponseToV1(RequisitionResponse response) {
+    Set<String> v2TestProjects = new HashSet<>();
+    v2TestProjects.add(TestProject.DUOTESTEHIVSIFILIS.name());
+    v2TestProjects.add(TestProject.HEPATITEBTESTES.name());
+    v2TestProjects.add(TestProject.TDRORALDEHIV.name());
+    v2TestProjects.add(TestProject.NEWTEST.name());
+    response.getRequisitionResponseList().forEach(requisition -> {
+      List<TestConsumptionLineItemRequest> testConsumptions = requisition.getTestConsumptionLineItems().stream()
+          .filter(lineItem -> !v2TestProjects.contains(lineItem.getTestProject()))
+          .collect(Collectors.toList());
+      requisition.setTestConsumptionLineItems(testConsumptions);
+    });
+    return response;
   }
 }
