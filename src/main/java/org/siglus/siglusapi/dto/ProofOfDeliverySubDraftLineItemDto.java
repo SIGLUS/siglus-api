@@ -15,7 +15,6 @@
 
 package org.siglus.siglusapi.dto;
 
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -29,7 +28,6 @@ import lombok.NoArgsConstructor;
 import org.openlmis.fulfillment.domain.ProofOfDeliveryLineItem;
 import org.openlmis.fulfillment.domain.VersionEntityReference;
 import org.openlmis.fulfillment.domain.naming.VvmStatus;
-import org.openlmis.fulfillment.web.util.ObjectReferenceDto;
 import org.openlmis.fulfillment.web.util.ProofOfDeliveryLineItemDto;
 import org.openlmis.fulfillment.web.util.VersionObjectReferenceDto;
 import org.siglus.siglusapi.domain.PodLineItemsByLocation;
@@ -46,7 +44,7 @@ public class ProofOfDeliverySubDraftLineItemDto {
   private UUID id;
   @NotNull
   private VersionObjectReferenceDto orderable;
-  private ObjectReferenceDto lot;
+  private LotReferenceDto lot;
   private Integer quantityAccepted;
   private Boolean useVvm;
   private VvmStatus vvmStatus;
@@ -54,15 +52,13 @@ public class ProofOfDeliverySubDraftLineItemDto {
   private UUID rejectionReasonId;
   private String notes;
 
-  private String lotCode;
-  private LocalDate expirationDate;
   private List<PodSubDraftLineItemLocation> locations;
   private boolean added;
   private UUID subDraftId;
 
   public PodSubDraftLineItem toDraftLineItem(List<PodSubDraftLineItemLocation> locations) {
     VersionEntityReference orderableRef = new VersionEntityReference(orderable.getId(), orderable.getVersionNumber());
-    return PodSubDraftLineItem.builder()
+    PodSubDraftLineItem item = PodSubDraftLineItem.builder()
         .orderable(orderableRef)
         .lotId(lot == null ? null : lot.getId())
         .quantityAccepted(quantityAccepted)
@@ -71,20 +67,23 @@ public class ProofOfDeliverySubDraftLineItemDto {
         .quantityRejected(quantityRejected)
         .rejectionReasonId(rejectionReasonId)
         .notes(notes)
-        .lotCode(lotCode)
-        .expirationDate(expirationDate)
+        .lotCode(lot == null ? null : lot.getLotCode())
+        .expirationDate(lot == null ? null : lot.getExpirationDate())
         .locations(locations)
         .podSubDraftId(subDraftId)
         .build();
+    item.setId(id);
+    return item;
   }
 
   public static ProofOfDeliverySubDraftLineItemDto fromDraftLineItem(PodSubDraftLineItem item) {
     VersionObjectReferenceDto orderable = new VersionObjectReferenceDto(item.getOrderable().getId(),
         null, null, item.getOrderable().getVersionNumber());
-    ObjectReferenceDto lot = null;
-    if (!ObjectUtils.isEmpty(item.getLotId())) {
-      lot = new ObjectReferenceDto(item.getLotId());
-    }
+    LotReferenceDto lot = LotReferenceDto.builder()
+        .id(item.getLotId())
+        .lotCode(item.getLotCode())
+        .expirationDate(item.getExpirationDate())
+        .build();
     return ProofOfDeliverySubDraftLineItemDto.builder()
         .id(item.getId())
         .subDraftId(item.getPodSubDraftId())
@@ -96,8 +95,6 @@ public class ProofOfDeliverySubDraftLineItemDto {
         .quantityRejected(item.getQuantityRejected())
         .rejectionReasonId(item.getRejectionReasonId())
         .notes(item.getNotes())
-        .lotCode(item.getLotCode())
-        .expirationDate(item.getExpirationDate())
         .locations(item.getLocations())
         .build();
   }
@@ -106,7 +103,7 @@ public class ProofOfDeliverySubDraftLineItemDto {
     return ProofOfDeliverySubDraftLineItemDto.builder()
         .id(dto.getId())
         .orderable(dto.getOrderable())
-        .lot(dto.getLot())
+        .lot(LotReferenceDto.from(dto.getLot()))
         .quantityAccepted(dto.getQuantityAccepted())
         .useVvm(dto.getUseVvm())
         .vvmStatus(dto.getVvmStatus())
@@ -118,8 +115,8 @@ public class ProofOfDeliverySubDraftLineItemDto {
   }
 
   public ProofOfDeliveryLineItemDto to() {
-    ProofOfDeliveryLineItemDto dto = new ProofOfDeliveryLineItemDto(null, orderable, lot, quantityAccepted,
-        useVvm, vvmStatus, quantityRejected, rejectionReasonId, notes);
+    ProofOfDeliveryLineItemDto dto = new ProofOfDeliveryLineItemDto(null, orderable,
+        lot.toObjectReferenceDto(), quantityAccepted, useVvm, vvmStatus, quantityRejected, rejectionReasonId, notes);
     dto.setId(id);
     return dto;
   }

@@ -55,7 +55,6 @@ import org.openlmis.fulfillment.domain.ProofOfDeliveryLineItem.Importer;
 import org.openlmis.fulfillment.domain.ProofOfDeliveryStatus;
 import org.openlmis.fulfillment.repository.ProofOfDeliveryRepository;
 import org.openlmis.fulfillment.web.ProofOfDeliveryController;
-import org.openlmis.fulfillment.web.util.ObjectReferenceDto;
 import org.openlmis.fulfillment.web.util.OrderObjectReferenceDto;
 import org.openlmis.fulfillment.web.util.ProofOfDeliveryDto;
 import org.openlmis.fulfillment.web.util.ProofOfDeliveryLineItemDto;
@@ -79,6 +78,7 @@ import org.siglus.siglusapi.domain.PodSubDraftLineItemsByLocation;
 import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.GeographicZoneDto;
 import org.siglus.siglusapi.dto.LotDto;
+import org.siglus.siglusapi.dto.LotReferenceDto;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.dto.PodLineItemWithLocationDto;
 import org.siglus.siglusapi.dto.ProofOfDeliverySubDraftDto;
@@ -333,9 +333,9 @@ public class SiglusPodService {
     checkAuth();
     List<PodSubDraft> subDrafts = checkIfSubDraftsSubmitted(podId);
     mergeLocationsToLot(request);
-    deletePodSubDrafts(subDrafts);
+    Set<UUID> existedPodLineItemIds = deletePodSubDrafts(subDrafts);
 
-    createAddedLots(request.getPodDto());
+    createAddedLots(request.getPodDto(), existedPodLineItemIds);
     ProofOfDelivery pod = proofOfDeliveryRepository.findOne(podId);
     createAddedPodLineItems(pod, request);
 
@@ -349,21 +349,26 @@ public class SiglusPodService {
       stockEventsService.processStockEvent(stockEventDto, true);
     }
     if (podDto.getStatus() == ProofOfDeliveryStatus.CONFIRMED) {
-      notificationService.postConfirmPod(podDto);
+      notificationService.postConfirmPod(podId, pod.getShipment().getOrder());
       proofOfDeliveryEmitter.emit(request.getPodDto().getId());
     }
     return request.getPodDto();
   }
 
-  private void deletePodSubDrafts(List<PodSubDraft> subDrafts) {
+  private Set<UUID> deletePodSubDrafts(List<PodSubDraft> subDrafts) {
     List<UUID> subDraftIds = subDrafts.stream().map(PodSubDraft::getId).collect(Collectors.toList());
     List<PodLineItemsExtension> extensions = podLineItemsExtensionRepository.findAllBySubDraftIds(subDraftIds);
     Set<UUID> lineItemIds = extensions.stream().map(PodLineItemsExtension::getPodLineItemId)
         .collect(Collectors.toSet());
     podSubDraftLineItemsByLocationRepository.deleteByPodLineItemIdIn(lineItemIds);
+    podSubDraftLineItemsByLocationRepository.flush();
     podSubDraftLineItemRepository.deleteByPodSubDraftIdIn(subDraftIds);
+    podSubDraftLineItemRepository.flush();
     podLineItemsExtensionRepository.deleteAllBySubDraftIds(subDraftIds);
+    podLineItemsExtensionRepository.flush();
     podSubDraftRepository.deleteAllByIds(subDraftIds);
+    podSubDraftRepository.flush();
+    return lineItemIds;
   }
 
   private void mergeLocationsToLot(SubmitPodSubDraftsRequest request) {
@@ -384,19 +389,18 @@ public class SiglusPodService {
     );
   }
 
-  private void createAddedLots(ProofOfDeliverySubDraftDto podDto) {
+  private void createAddedLots(ProofOfDeliverySubDraftDto podDto, Set<UUID> existedPodLineItemIds) {
     if (ObjectUtils.isEmpty(podDto.getLineItems())) {
       return;
     }
     List<ProofOfDeliverySubDraftLineItemDto> addedLineItemDto = podDto.getLineItems().stream()
-        .filter(ProofOfDeliverySubDraftLineItemDto::isAdded)
-        .filter(itemDto -> !(itemDto.getLot() == null || itemDto.getLot().getId() == null))
+        .filter(itemDto -> !existedPodLineItemIds.contains(itemDto.getId()) && itemDto.getLot().getId() == null)
         .collect(Collectors.toList());
     if (ObjectUtils.isEmpty(addedLineItemDto)) {
       return;
     }
     if (addedLineItemDto.stream().anyMatch(item -> item.getOrderable() == null || item.getOrderable().getId() == null
-        || item.getLotCode() == null || item.getExpirationDate() == null)) {
+        || item.getLot().getLotCode() == null || item.getLot().getExpirationDate() == null)) {
       throw new ValidationMessageException("missing lot info");
     }
     Set<UUID> orderableIds = addedLineItemDto.stream().map(item -> item.getOrderable().getId())
@@ -410,8 +414,8 @@ public class SiglusPodService {
         throw new NotFoundException("Orderable not find: " + item.getOrderable().getId());
       }
       LotDto lotDto = siglusLotService.createNewLotOrReturnExisted(homeFacilityId,
-          orderableDto.getTradeItemIdentifier(), item.getLotCode(), item.getExpirationDate());
-      item.setLot(new ObjectReferenceDto(lotDto.getId()));
+          orderableDto.getTradeItemIdentifier(), item.getLot().getLotCode(), item.getLot().getExpirationDate());
+      item.setLot(LotReferenceDto.builder().id(lotDto.getId()).build());
     });
   }
 
@@ -422,16 +426,18 @@ public class SiglusPodService {
     List<ProofOfDeliverySubDraftLineItemDto> draftLineItems = request.getPodDto().getLineItems();
     List<ProofOfDeliverySubDraftLineItemDto> podLineItemDrafts = draftLineItems.stream()
         .filter(item -> podLineItemIds.contains(item.getId())).collect(Collectors.toList());
-    List<ProofOfDeliveryLineItem> toBeUpdatedLineItems = updateDraftLineItems(
-        podLineItemDrafts, podLineItems, PodSubDraftStatusEnum.SUBMITTED);
-    podLineItemsRepository.save(toBeUpdatedLineItems);
+    updateDraftLineItems(podLineItemDrafts, podLineItems, PodSubDraftStatusEnum.SUBMITTED);
     // create pod line items
     List<ProofOfDeliverySubDraftLineItemDto> addedDraftLineItemDtos = draftLineItems.stream()
         .filter(item -> !podLineItemIds.contains(item.getId()))
         .collect(Collectors.toList());
-    List<ProofOfDeliveryLineItem> addedPodLineItems = podLineItemsRepository.save(addedDraftLineItemDtos.stream()
-        .map(ProofOfDeliverySubDraftLineItemDto::toPodLineItem).collect(Collectors.toList()));
-    Map<String, ProofOfDeliveryLineItem> lineItemMap = addedPodLineItems.stream()
+    List<ProofOfDeliveryLineItem> addedDraftLineItems = addedDraftLineItemDtos.stream()
+        .map(ProofOfDeliverySubDraftLineItemDto::toPodLineItem).collect(Collectors.toList());
+    // save
+    pod.getLineItems().addAll(addedDraftLineItems);
+    ProofOfDelivery updatedPod = proofOfDeliveryRepository.save(pod);
+
+    Map<String, ProofOfDeliveryLineItem> lineItemMap = updatedPod.getLineItems().stream()
         .collect(Collectors.toMap(item ->
             buildUniqueKey(item.getOrderable().getId(), item.getOrderable().getVersionNumber(), item.getLotId()),
             item -> item));
@@ -503,8 +509,7 @@ public class SiglusPodService {
 
   @Transactional
   public PodSubDraftLineItem createPodSubDraftLineItem(UUID podId, UUID subDraftId, UUID podLineItemId) {
-    PodSubDraft subDraft = checkIfPodIdAndSubDraftIdMatch(podId, subDraftId);
-    checkIfCanOperate(subDraft);
+    checkIfPodIdAndSubDraftIdMatch(podId, subDraftId);
     PodLineItemsExtension lineItemExtension = podLineItemsExtensionRepository.findByPodLineItemId(podLineItemId);
     if (ObjectUtils.isEmpty(lineItemExtension)) {
       throw new IllegalArgumentException("podLineItemId not exist");
@@ -522,8 +527,7 @@ public class SiglusPodService {
 
   @Transactional
   public void deletePodSubDraftLineItem(UUID podId, UUID subDraftId, UUID podSubDraftLineItemId) {
-    PodSubDraft subDraft = checkIfPodIdAndSubDraftIdMatch(podId, subDraftId);
-    checkIfCanOperate(subDraft);
+    checkIfPodIdAndSubDraftIdMatch(podId, subDraftId);
     PodSubDraftLineItem draftLineItem = podSubDraftLineItemRepository.findOne(podSubDraftLineItemId);
     if (ObjectUtils.isEmpty(draftLineItem)) {
       throw new IllegalArgumentException("podLineItemId is wrong.");

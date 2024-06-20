@@ -54,7 +54,7 @@ public class ProofOfDeliverySubDraftDto {
     List<ProofOfDeliverySubDraftLineItemDto> items = null;
     if (!ObjectUtils.isEmpty(dto.getLineItems())) {
       Map<UUID, PodLineItemsExtension> extensionMap = extensions.stream()
-          .collect(Collectors.toMap(PodLineItemsExtension::getId, extension -> extension));
+          .collect(Collectors.toMap(PodLineItemsExtension::getPodLineItemId, extension -> extension));
       items = dto.getLineItems().stream()
           .map(item -> {
             PodLineItemsExtension extension = extensionMap.get(item.getId());

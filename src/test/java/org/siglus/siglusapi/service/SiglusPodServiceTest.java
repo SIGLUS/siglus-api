@@ -90,6 +90,7 @@ import org.siglus.siglusapi.domain.PodSubDraftLineItemsByLocation;
 import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.GeographicLevelDto;
 import org.siglus.siglusapi.dto.GeographicZoneDto;
+import org.siglus.siglusapi.dto.LotReferenceDto;
 import org.siglus.siglusapi.dto.PodLineItemWithLocationDto;
 import org.siglus.siglusapi.dto.ProofOfDeliverySubDraftDto;
 import org.siglus.siglusapi.dto.ProofOfDeliverySubDraftLineItemDto;
@@ -718,6 +719,8 @@ public class SiglusPodServiceTest {
     when(podController.updateProofOfDelivery(podId, dto, null, false)).thenReturn(dto);
     when(proofOfDeliveryEmitter.emit(podId)).thenReturn(new ProofOfDeliveryEvent());
     when(proofOfDeliveryRepository.findOne(podId)).thenReturn(buildMockProofOfDelivery());
+    ProofOfDelivery proofOfDelivery = buildMockProofOfDelivery();
+    when(proofOfDeliveryRepository.save(any(ProofOfDelivery.class))).thenReturn(proofOfDelivery);
 
     // when
     service.submitSubDrafts(podId, request, null, false);
@@ -726,7 +729,7 @@ public class SiglusPodServiceTest {
     verify(podController).updateProofOfDelivery(any(), any(), any(), any());
     verify(podSubDraftRepository).deleteAllByIds(any(List.class));
     verify(podLineItemsExtensionRepository).deleteAllBySubDraftIds(any(List.class));
-    verify(notificationService).postConfirmPod(dto);
+    verify(notificationService).postConfirmPod(podId, proofOfDelivery.getShipment().getOrder());
   }
 
   @Test
@@ -741,6 +744,8 @@ public class SiglusPodServiceTest {
     when(fulfillmentService.searchProofOfDelivery(any(), any())).thenReturn(dto);
     when(podController.updateProofOfDelivery(podId, dto, null, false)).thenReturn(dto);
     when(proofOfDeliveryRepository.findOne(podId)).thenReturn(buildMockProofOfDelivery());
+    ProofOfDelivery proofOfDelivery = buildMockProofOfDelivery();
+    when(proofOfDeliveryRepository.save(any(ProofOfDelivery.class))).thenReturn(proofOfDelivery);
     mockPodExtensionQuery();
     when(proofOfDeliveryEmitter.emit(podId)).thenReturn(new ProofOfDeliveryEvent());
 
@@ -751,7 +756,7 @@ public class SiglusPodServiceTest {
     verify(podController).updateProofOfDelivery(any(), any(), any(), any());
     verify(podSubDraftRepository).deleteAllByIds(any(List.class));
     verify(podLineItemsExtensionRepository).deleteAllBySubDraftIds(any(List.class));
-    verify(notificationService).postConfirmPod(dto);
+    verify(notificationService).postConfirmPod(podId, proofOfDelivery.getShipment().getOrder());
   }
 
   @Test
@@ -767,6 +772,8 @@ public class SiglusPodServiceTest {
     when(fulfillmentService.searchProofOfDelivery(any(), any())).thenReturn(dto);
     when(podController.updateProofOfDelivery(any(), any(), any(), any())).thenReturn(dto);
     when(proofOfDeliveryRepository.findOne(podId)).thenReturn(buildMockProofOfDelivery());
+    ProofOfDelivery proofOfDelivery = buildMockProofOfDelivery();
+    when(proofOfDeliveryRepository.save(any(ProofOfDelivery.class))).thenReturn(proofOfDelivery);
     when(proofOfDeliveryEmitter.emit(podId)).thenReturn(new ProofOfDeliveryEvent());
 
     // when
@@ -1034,6 +1041,7 @@ public class SiglusPodServiceTest {
     when(fulfillmentService.searchProofOfDelivery(any(), any())).thenReturn(dto);
     ProofOfDelivery proofOfDelivery = buildMockProofOfDelivery();
     when(proofOfDeliveryRepository.findOne(podId)).thenReturn(proofOfDelivery);
+    when(proofOfDeliveryRepository.save(any(ProofOfDelivery.class))).thenReturn(proofOfDelivery);
     StockEventDto stockEventDto = buildMockStockEventDto();
     when(stockEventBuilder.fromProofOfDelivery(any())).thenReturn(stockEventDto);
     when(podController.updateProofOfDelivery(any(), any(), any(), any())).thenReturn(dto);
@@ -1533,7 +1541,7 @@ public class SiglusPodServiceTest {
     ProofOfDeliverySubDraftLineItemDto draftLineItemDto = new ProofOfDeliverySubDraftLineItemDto();
     draftLineItemDto.setId(lineItemId1);
     draftLineItemDto.setOrderable(new VersionObjectReferenceDto(orderableId, serviceUrl, resourceName, 1L));
-    draftLineItemDto.setLot(new ObjectReferenceDto(lotId, serviceUrl, resourceName));
+    draftLineItemDto.setLot(LotReferenceDto.builder().id(lotId).build());
     draftLineItemDto.setQuantityAccepted(quantityAccpeted);
     draftLineItemDto.setUseVvm(false);
     draftLineItemDto.setVvmStatus(null);
