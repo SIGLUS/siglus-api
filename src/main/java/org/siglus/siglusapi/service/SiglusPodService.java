@@ -416,6 +416,7 @@ public class SiglusPodService {
       LotDto lotDto = siglusLotService.createNewLotOrReturnExisted(homeFacilityId,
           orderableDto.getTradeItemIdentifier(), item.getLot().getLotCode(), item.getLot().getExpirationDate());
       item.setLot(LotReferenceDto.builder().id(lotDto.getId()).build());
+      item.getOrderable().setVersionNumber(orderableDto.getMeta().getVersionNumber());
     });
   }
 
@@ -441,13 +442,14 @@ public class SiglusPodService {
         .collect(Collectors.toMap(item ->
             buildUniqueKey(item.getOrderable().getId(), item.getOrderable().getVersionNumber(), item.getLotId()),
             item -> item));
-    addedDraftLineItemDtos.forEach(
+    draftLineItems.forEach(
         draftLineItem -> {
           String key = buildUniqueKey(draftLineItem.getOrderable().getId(),
               draftLineItem.getOrderable().getVersionNumber(),
               draftLineItem.getLot().getId());
           ProofOfDeliveryLineItem podLineItem = lineItemMap.get(key);
           draftLineItem.setId(podLineItem.getId());
+          draftLineItem.getOrderable().setVersionNumber(podLineItem.getOrderable().getVersionNumber());
         }
     );
   }
