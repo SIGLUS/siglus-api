@@ -27,6 +27,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -348,12 +349,13 @@ public class SiglusProcessingPeriodService {
       List<Requisition> preAuthorizeRequisitions,
       ProcessingPeriodDto period, UUID program, UUID facility
   ) {
+    UUID previousPeriodId = periodService.findPreviousPeriod(currentPeriodIds.stream().findFirst().get()).getId();
     if (!preAuthorizeRequisitions.isEmpty()) {
       RequisitionPeriodDto requisitionPeriod = RequisitionPeriodDto.newInstance(period);
       requisitionPeriods.add(requisitionPeriod);
       getFirstPreAuthorizeRequisition(preAuthorizeRequisitions, requisitionPeriod);
     }
-    if (CollectionUtils.isEmpty(requisitionPeriods) && currentPeriodIds.contains(period.getId())) {
+    if (CollectionUtils.isEmpty(requisitionPeriods) && Objects.equals(previousPeriodId, period.getId())) {
       requisitionPeriods.add(RequisitionPeriodDto.newInstance(period));
     }
     Set<String> statusSet = RequisitionStatus.getAfterAuthorizedStatus().stream().map(Enum::name)
@@ -362,7 +364,7 @@ public class SiglusProcessingPeriodService {
         changeEmergencyRequisitionSubmitStartAndEndDate(facility, requisitionPeriodDto));
     if (CollectionUtils.isNotEmpty(requisitionPeriods)
         && CollectionUtils.isNotEmpty(siglusRequisitionRepository.searchAfterAuthorizedRequisitions(
-        facility, program, period.getId(), Boolean.FALSE, statusSet))) {
+        facility, program, previousPeriodId, Boolean.FALSE, statusSet))) {
       // for emergency, requisitionPeriods only have one element
       requisitionPeriods.forEach(requisitionPeriodDto ->
           requisitionPeriodDto.setCurrentPeriodRegularRequisitionAuthorized(true));

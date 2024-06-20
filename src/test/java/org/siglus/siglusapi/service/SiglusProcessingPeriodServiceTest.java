@@ -352,7 +352,14 @@ public class SiglusProcessingPeriodServiceTest {
     facilityType.setCode("DDM");
     facility.setType(facilityType);
     when(siglusFacilityRepository.findOne(facilityId)).thenReturn(facility);
-
+    UUID previousPeriodId = UUID.randomUUID();
+    ProcessingPeriodDto previousProcessingPeriodDto = new ProcessingPeriodDto();
+    previousProcessingPeriodDto.setId(previousPeriodId);
+    when(periodService.findPreviousPeriod(periodDto.getId())).thenReturn(previousProcessingPeriodDto);
+    when(siglusRequisitionRepository.searchAfterAuthorizedRequisitions(facilityId, programId,
+        previousPeriodId, false, newHashSet(AUTHORIZED, IN_APPROVAL, APPROVED,
+            RELEASED, RELEASED_WITHOUT_ORDER)))
+        .thenReturn(authorizedRequisitions);
     //when
     List<RequisitionPeriodExtensionResponse> response =
         siglusProcessingPeriodService.getRequisitionPeriodExtensionResponses(programId, facilityId, true);
@@ -413,7 +420,14 @@ public class SiglusProcessingPeriodServiceTest {
     facilityType.setCode("DPM");
     facility.setType(facilityType);
     when(siglusFacilityRepository.findOne(facilityId)).thenReturn(facility);
-
+    UUID previousPeriodId = UUID.randomUUID();
+    ProcessingPeriodDto previousProcessingPeriodDto = new ProcessingPeriodDto();
+    previousProcessingPeriodDto.setId(previousPeriodId);
+    when(periodService.findPreviousPeriod(periodDto.getId())).thenReturn(previousProcessingPeriodDto);
+    when(siglusRequisitionRepository.searchAfterAuthorizedRequisitions(facilityId, programId,
+        previousPeriodId, false, newHashSet(AUTHORIZED, IN_APPROVAL, APPROVED,
+            RELEASED, RELEASED_WITHOUT_ORDER)))
+        .thenReturn(authorizedRequisitions);
     //when
     List<RequisitionPeriodExtensionResponse> response =
         siglusProcessingPeriodService.getRequisitionPeriodExtensionResponses(programId, facilityId, true);
@@ -477,6 +491,14 @@ public class SiglusProcessingPeriodServiceTest {
     facilityType.setCode("CS");
     facility.setType(facilityType);
     when(siglusFacilityRepository.findOne(facilityId)).thenReturn(facility);
+    UUID previousPeriodId = UUID.randomUUID();
+    ProcessingPeriodDto previousProcessingPeriodDto = new ProcessingPeriodDto();
+    previousProcessingPeriodDto.setId(previousPeriodId);
+    when(periodService.findPreviousPeriod(periodDto.getId())).thenReturn(previousProcessingPeriodDto);
+    when(siglusRequisitionRepository.searchAfterAuthorizedRequisitions(facilityId, programId,
+        previousPeriodId, false, newHashSet(AUTHORIZED, IN_APPROVAL, APPROVED,
+            RELEASED, RELEASED_WITHOUT_ORDER)))
+        .thenReturn(authorizedRequisitions);
     //when
     Collection<RequisitionPeriodExtensionResponse> actualResponseList =
         siglusProcessingPeriodService.getRequisitionPeriodExtensionResponses(programId, facilityId, true);
