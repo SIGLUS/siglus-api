@@ -661,14 +661,6 @@ public class SiglusPodService {
     return subDrafts;
   }
 
-  private void deleteSubDraftAndLineExtensionBySubDraftIds(Set<UUID> subDraftIds) {
-    log.info("delete proof of delivery line item extension, subDraftIds:{}", subDraftIds);
-    podLineItemsExtensionRepository.deleteAllBySubDraftIds(subDraftIds);
-
-    log.info("delete proof of delivery sub draft, subDraftIds:{}", subDraftIds);
-    podSubDraftRepository.deleteAllByIds(subDraftIds);
-  }
-
   private void resetLineItems(Set<UUID> lineItemIds, ProofOfDeliveryDto podDto) {
     List<ProofOfDeliveryLineItem> lineItems = podLineItemsRepository.findAll(lineItemIds);
     List<ProofOfDeliveryLineItem> toBeUpdatedLineItems = buildToBeUpdatedLineItems(podDto, lineItems,
@@ -981,8 +973,12 @@ public class SiglusPodService {
     ProofOfDeliveryDto proofOfDeliveryDto = getPodDtoByPodId(podId);
     Set<UUID> lineItemIds = findLineItemsIdsByPodId(podId, subDraftIds);
     resetLineItems(lineItemIds, proofOfDeliveryDto);
-    deleteSubDraftAndLineExtensionBySubDraftIds(subDraftIds);
+    log.info("delete proof of delivery line item extension, subDraftIds:{}", subDraftIds);
+    podLineItemsExtensionRepository.deleteAllBySubDraftIds(subDraftIds);
     podSubDraftLineItemRepository.deleteByPodSubDraftIdIn(new ArrayList<>(subDraftIds));
+    podSubDraftLineItemRepository.flush();
+    log.info("delete proof of delivery sub draft, subDraftIds:{}", subDraftIds);
+    podSubDraftRepository.deleteAllByIds(subDraftIds);
   }
 
   private Set<UUID> findLineItemsIdsByPodId(UUID podId, Set<UUID> subDraftIds) {
