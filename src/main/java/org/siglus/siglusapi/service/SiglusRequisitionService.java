@@ -320,6 +320,8 @@ public class SiglusRequisitionService {
   public static final String MMIA_COLUMN_TOTAL = "total";
   public static final String ESTIMATED_QUANTITY = "estimatedQuantity";
   public static final String REQUESTED_QUANTITY = "requestedQuantity";
+  public static final String MMIT_TEMPLATE_HC = "MMIT Template - HC";
+  public static final String MMIT_TEMPLATE_CS_PS_HOSPITAL = "MMIT Template - CS/PS/Hospital";
   @Autowired
   private OrderableRepository orderableRepository;
   @Autowired
@@ -454,6 +456,10 @@ public class SiglusRequisitionService {
     initiateExpirationDate(lineItems, facilityId);
     initiateSuggestedQuantity(lineItems, facilityId, siglusRequisitionDto.getProcessingPeriodId(),
         siglusRequisitionDto.getProgramId(), siglusRequisitionDto.getTemplate());
+    // reset data for (MMIT Template - CS/PS/Hospital and MMIT Template - HC)
+    if (MMIT_TEMPLATE_HC.equals(template.getName()) || MMIT_TEMPLATE_CS_PS_HOSPITAL.equals(template.getName())) {
+      requisitionLineItemRepository.resetTotalLossesAndAdjustmentsByRequisitionId(v2Dto.getId());
+    }
     saveLineItemExtensions(lineItems);
     notSubmittedMonthlyRequisitionsRepository.deleteByFacilityIdAndProgramIdAndProcessingPeriodId(facilityId,
         programId, v2Dto.getProcessingPeriodId());

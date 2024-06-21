@@ -19,6 +19,7 @@ import java.util.Set;
 import java.util.UUID;
 import org.openlmis.requisition.domain.requisition.RequisitionLineItem;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -28,4 +29,9 @@ public interface RequisitionLineItemRepository extends JpaRepository<Requisition
   @Query(value = "select * from requisition.requisition_line_items "
       + "where id in :ids ", nativeQuery = true)
   Set<RequisitionLineItem> findAllById(@Param("ids") Iterable<UUID> ids);
+
+  @Modifying
+  @Query(value = "update requisition.requisition_line_items set totallossesandadjustments = null "
+      + "where requisitionid = :requisitionId ", nativeQuery = true)
+  void resetTotalLossesAndAdjustmentsByRequisitionId(@Param("requisitionId") UUID requisitionId);
 }
