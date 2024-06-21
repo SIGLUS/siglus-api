@@ -290,6 +290,9 @@ public class SiglusProcessingPeriodService {
           requisitions);
 
       if (emergency) {
+        if (requisitions.size() >= 2) {
+          continue;
+        }
         processingEmergencyRequisitionPeriod(requisitionPeriods, currentPeriodIds,
             preAuthorizeRequisitions, period, program, facility);
         if (!requisitionPeriods.isEmpty()) {
