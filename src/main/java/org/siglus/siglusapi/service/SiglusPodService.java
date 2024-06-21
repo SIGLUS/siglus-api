@@ -449,7 +449,6 @@ public class SiglusPodService {
               draftLineItem.getLot().getId());
           ProofOfDeliveryLineItem podLineItem = lineItemMap.get(key);
           draftLineItem.setId(podLineItem.getId());
-          draftLineItem.getOrderable().setVersionNumber(podLineItem.getOrderable().getVersionNumber());
         }
     );
   }
@@ -718,6 +717,9 @@ public class SiglusPodService {
         if (ObjectUtils.isEmpty(draftLineItem)) {
           lineItem.updateFrom(resetItem);
         } else {
+          if (!ObjectUtils.isEmpty(draftLineItem.getOrderable())) {
+            draftLineItem.getOrderable().setVersionNumber(lineItem.getOrderable().getVersionNumber());
+          }
           ProofOfDeliveryLineItem updatedItem = new ProofOfDeliveryLineItem(null,
               null, draftLineItem.getQuantityAccepted(), null,
               draftLineItem.getQuantityRejected(), draftLineItem.getRejectionReasonId(), draftLineItem.getNotes());

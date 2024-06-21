@@ -1492,8 +1492,9 @@ public class SiglusPodServiceTest {
   }
 
   private List<ProofOfDeliveryLineItem> buildMockPodLineItems() {
-    ProofOfDeliveryLineItem lineItem = new ProofOfDeliveryLineItem(null, UUID.randomUUID(), 10, null, 0,
-        UUID.randomUUID(), notes);
+    VersionEntityReference orderable = new VersionEntityReference(orderableId, 0L);
+    ProofOfDeliveryLineItem lineItem = new ProofOfDeliveryLineItem(orderable, UUID.randomUUID(),
+        10, null, 0, UUID.randomUUID(), notes);
     lineItem.setId(lineItemId1);
     return Lists.newArrayList(lineItem);
   }
