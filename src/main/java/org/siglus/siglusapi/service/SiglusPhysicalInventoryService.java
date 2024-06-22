@@ -353,7 +353,7 @@ public class SiglusPhysicalInventoryService {
       Map<UUID, Orderable> orderableMap = orderableRepository.findLatestByIds(orderrableIds)
           .stream().collect(Collectors.toMap(Orderable::getId, orderable -> orderable));
       lineItemDtos.forEach(lineItemDto -> {
-        Orderable orderable = orderableMap.get(lineItemDto.getLotId());
+        Orderable orderable = orderableMap.get(lineItemDto.getOrderableId());
         if (!ObjectUtils.isEmpty(orderable)) {
           lineItemDto.setProductCode(orderable.getProductCode().toString());
           lineItemDto.setProductName(orderable.getFullProductName());
