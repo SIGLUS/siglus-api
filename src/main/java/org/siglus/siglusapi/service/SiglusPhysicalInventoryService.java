@@ -26,7 +26,6 @@ import static org.siglus.siglusapi.constant.FieldConstants.ALL_PROGRAM;
 import static org.siglus.siglusapi.constant.FieldConstants.EXCLUDE_ARCHIVED;
 import static org.siglus.siglusapi.constant.FieldConstants.FACILITY_ID;
 import static org.siglus.siglusapi.constant.FieldConstants.IS_BASIC;
-import static org.siglus.siglusapi.constant.FieldConstants.LOCATION;
 import static org.siglus.siglusapi.constant.FieldConstants.PROGRAM_ID;
 import static org.siglus.siglusapi.constant.FieldConstants.RIGHT_NAME;
 import static org.siglus.siglusapi.constant.FieldConstants.SEPARATOR;
@@ -45,7 +44,6 @@ import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_SPLIT_NUM_TOO_LARGE;
 import static org.siglus.siglusapi.util.ComparorUtil.distinctByKey;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.Lists;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -90,6 +88,7 @@ import org.siglus.siglusapi.domain.PhysicalInventoryLineItemsExtension;
 import org.siglus.siglusapi.domain.PhysicalInventorySubDraft;
 import org.siglus.siglusapi.dto.DraftListDto;
 import org.siglus.siglusapi.dto.InitialInventoryFieldDto;
+import org.siglus.siglusapi.dto.LotDto;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.dto.PhysicalInventoryLineItemExtensionDto;
 import org.siglus.siglusapi.dto.PhysicalInventorySubDraftLineItemsExtensionDto;
@@ -111,8 +110,10 @@ import org.siglus.siglusapi.repository.PhysicalInventorySubDraftRepository;
 import org.siglus.siglusapi.repository.SiglusPhysicalInventoryRepository;
 import org.siglus.siglusapi.repository.SiglusStockCardRepository;
 import org.siglus.siglusapi.repository.dto.SiglusPhysicalInventoryBriefDto;
+import org.siglus.siglusapi.repository.dto.StockCardStockDto;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.util.CustomListSortHelper;
+import org.siglus.siglusapi.util.FacilityConfigHelper;
 import org.siglus.siglusapi.util.LocalMachineHelper;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.util.SupportedProgramsHelper;
@@ -128,7 +129,7 @@ import org.springframework.util.ObjectUtils;
 
 @Service
 @Slf4j
-@SuppressWarnings({"PMD.TooManyMethods", "PMD.PreserveStackTrace"})
+@SuppressWarnings({"PMD.TooManyMethods", "PMD.PreserveStackTrace", "PMD.CyclomaticComplexity"})
 public class SiglusPhysicalInventoryService {
 
   @Autowired
@@ -166,6 +167,8 @@ public class SiglusPhysicalInventoryService {
   @Autowired
   private SiglusOrderableService siglusOrderableService;
   @Autowired
+  private SiglusLotService siglusLotService;
+  @Autowired
   private SiglusProgramService siglusProgramService;
   @Autowired
   private SiglusArchiveProductService archiveProductService;
@@ -173,6 +176,8 @@ public class SiglusPhysicalInventoryService {
   private LocalMachineHelper localMachineHelper;
   @Autowired
   private SiglusPhysicalInventoryRepository siglusPhysicalInventoryRepository;
+  @Autowired
+  private FacilityConfigHelper facilityConfigHelper;
 
   @Transactional
   public PhysicalInventoryDto createAndSplitNewDraftForAllPrograms(PhysicalInventoryDto physicalInventoryDto,
@@ -308,31 +313,77 @@ public class SiglusPhysicalInventoryService {
         .filter(distinctByKey(this::getUniqueKeyWithLocation))
         .collect(Collectors.toList());
 
-    List<PhysicalInventoryLineItemDto> sortedLineItems;
-    if (LOCATION.equals(siglusPhysicalInventoryDto.getLocationOption())) {
-      sortedLineItems = lineItemDtos
-          .stream().sorted(Comparator.comparing(PhysicalInventoryLineItemDto::getLocationCode))
-          .collect(Collectors.toList());
-    } else {
-      List<UUID> orderableIds = lineItemDtos.stream()
-          .map(PhysicalInventoryLineItemDto::getOrderableId)
-          .collect(Collectors.toList());
-      sortedLineItems = new ArrayList<>();
-      if (!ObjectUtils.isEmpty(orderableIds)) {
-        Map<UUID, String> codeMap = orderableRepository.findLatestByIds(orderableIds).stream()
-            .collect(Collectors.toMap(Orderable::getId, dto -> dto.getProductCode().toString()));
-        sortedLineItems = lineItemDtos
-            .stream().sorted(Comparator.comparing(o -> codeMap.getOrDefault(o.getOrderableId(), "")))
-            .collect(Collectors.toList());
-      }
-    }
+    boolean withLocation = facilityConfigHelper.isLocationManagementEnabled(siglusPhysicalInventoryDto.getFacilityId());
+    fillPhysicalInventoryLineItemDto(lineItemDtos, withLocation);
 
     UUID programId = isAllProgram ? ALL_PRODUCTS_PROGRAM_ID : siglusPhysicalInventoryDto.getProgramId();
     UUID physicalInventoryId = isAllProgram ? ALL_PRODUCTS_UUID : siglusPhysicalInventoryDto.getId();
     siglusPhysicalInventoryDto.setId(physicalInventoryId);
     siglusPhysicalInventoryDto.setProgramId(programId);
-    siglusPhysicalInventoryDto.setLineItems(sortedLineItems);
+    siglusPhysicalInventoryDto.setLineItems(lineItemDtos);
     return siglusPhysicalInventoryDto;
+  }
+
+  private void fillPhysicalInventoryLineItemDto(List<PhysicalInventoryLineItemDto> lineItemDtos, boolean withLocation) {
+    fillPhysicalInventoryLineItemDtoLot(lineItemDtos);
+    fillPhysicalInventoryLineItemDtoOrderable(lineItemDtos);
+    fillPhysicalInventoryLineItemDtoSoh(lineItemDtos, withLocation);
+  }
+
+  private void fillPhysicalInventoryLineItemDtoLot(List<PhysicalInventoryLineItemDto> lineItemDtos) {
+    List<UUID> lotIds = lineItemDtos.stream()
+        .map(PhysicalInventoryLineItemDto::getLotId).distinct().collect(Collectors.toList());
+    if (!ObjectUtils.isEmpty(lotIds)) {
+      Map<UUID, LotDto> lotDtoMap = siglusLotService.getLotList(lotIds)
+          .stream().collect(Collectors.toMap(LotDto::getId, lotDto -> lotDto));
+      lineItemDtos.forEach(lineItemDto -> {
+        LotDto lotDto = lotDtoMap.get(lineItemDto.getLotId());
+        if (!ObjectUtils.isEmpty(lotDto)) {
+          lineItemDto.setLotCode(lotDto.getLotCode());
+          lineItemDto.setExpirationDate(lotDto.getExpirationDate());
+        }
+      });
+    }
+  }
+
+  private void fillPhysicalInventoryLineItemDtoOrderable(List<PhysicalInventoryLineItemDto> lineItemDtos) {
+    List<UUID> orderrableIds = lineItemDtos.stream()
+        .map(PhysicalInventoryLineItemDto::getOrderableId).distinct().collect(Collectors.toList());
+    if (!ObjectUtils.isEmpty(orderrableIds)) {
+      Map<UUID, Orderable> orderableMap = orderableRepository.findLatestByIds(orderrableIds)
+          .stream().collect(Collectors.toMap(Orderable::getId, orderable -> orderable));
+      lineItemDtos.forEach(lineItemDto -> {
+        Orderable orderable = orderableMap.get(lineItemDto.getLotId());
+        if (!ObjectUtils.isEmpty(orderable)) {
+          lineItemDto.setProductCode(orderable.getProductCode().toString());
+          lineItemDto.setProductName(orderable.getFullProductName());
+        }
+      });
+    }
+  }
+
+  private void fillPhysicalInventoryLineItemDtoSoh(List<PhysicalInventoryLineItemDto> lineItemDtos,
+                                                   boolean withLocation) {
+    Set<UUID> stockCardIds = lineItemDtos.stream().map(PhysicalInventoryLineItemDto::getExtraData)
+        .filter(Objects::nonNull)
+        .map(extraMap -> extraMap.get(STOCK_CARD_ID))
+        .filter(Objects::nonNull)
+        .map(UUID::fromString)
+        .collect(Collectors.toSet());
+    Map<String, StockCardStockDto> sohMap =
+        siglusStockCardSummariesService.getLatestStockOnHandByIds(stockCardIds, withLocation)
+            .stream().collect(Collectors.toMap(soh ->
+                getUniqueStockCardKeyWithLocation(soh.getStockCardId(), soh.getLocationCode()), soh -> soh));
+    lineItemDtos.forEach(lineItemDto -> {
+      String key = getUniqueStockCardKeyWithLocation(lineItemDto);
+      if (ObjectUtils.isEmpty(key)) {
+        return;
+      }
+      StockCardStockDto stock = sohMap.get(key);
+      if (!ObjectUtils.isEmpty(stock)) {
+        lineItemDto.setStockOnHand(stock.getStockOnHand());
+      }
+    });
   }
 
   public PhysicalInventoryValidationDto checkConflictForOneProgram(UUID facility, UUID program, UUID draft) {
@@ -739,7 +790,7 @@ public class SiglusPhysicalInventoryService {
       return;
     }
     UUID facilityId = physicalInventory.getFacilityId();
-    List<UUID> updatePhysicalInventoryIds = getPhysicalInventoryIds(physicalInventory, facilityId);
+    final List<UUID> updatePhysicalInventoryIds = getPhysicalInventoryIds(physicalInventory, facilityId);
 
     List<PhysicalInventoryLineItemDto> lineItems = physicalInventory.getLineItems();
 
@@ -1322,6 +1373,22 @@ public class SiglusPhysicalInventoryService {
   private String getUniqueKeyWithLocation(PhysicalInventorySubDraftLineItemsExtensionDto lineItemsExtensionDto) {
     return getString(lineItemsExtensionDto.getOrderableId()) + SEPARATOR + getString(lineItemsExtensionDto.getLotId())
         + SEPARATOR + getString(lineItemsExtensionDto.getLocationCode());
+  }
+
+  private String getUniqueStockCardKeyWithLocation(UUID stockCardId, String location) {
+    return getString(stockCardId) + SEPARATOR + getString(location);
+  }
+
+  private String getUniqueStockCardKeyWithLocation(PhysicalInventoryLineItemDto dto) {
+    Map<String, String> extraData = dto.getExtraData();
+    if (ObjectUtils.isEmpty(extraData)) {
+      return null;
+    }
+    String stockCardId = extraData.get(STOCK_CARD_ID);
+    if (ObjectUtils.isEmpty(stockCardId)) {
+      return null;
+    }
+    return getUniqueStockCardKeyWithLocation(UUID.fromString(stockCardId), dto.getLocationCode());
   }
 
   private PhysicalInventoryLineItemsExtension getExtension(

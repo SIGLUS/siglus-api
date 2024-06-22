@@ -114,6 +114,7 @@ import org.siglus.siglusapi.repository.PhysicalInventorySubDraftRepository;
 import org.siglus.siglusapi.repository.SiglusPhysicalInventoryRepository;
 import org.siglus.siglusapi.repository.dto.SiglusPhysicalInventoryBriefDto;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
+import org.siglus.siglusapi.util.FacilityConfigHelper;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.util.SupportedProgramsHelper;
 import org.springframework.beans.BeanUtils;
@@ -197,6 +198,8 @@ public class SiglusPhysicalInventoryServiceTest {
 
   @Mock
   private SiglusPhysicalInventoryRepository siglusPhysicalInventoryRepository;
+  @Mock
+  private FacilityConfigHelper facilityConfigHelper;
 
   private final UUID facilityId = UUID.randomUUID();
 
@@ -939,8 +942,6 @@ public class SiglusPhysicalInventoryServiceTest {
         .facilityId(facilityId).programId(programId).build();
     when(inventoryController.createEmptyPhysicalInventory(physicalInventoryDto))
         .thenReturn(createdPhysicalInventoryDto);
-//    when(physicalInventorySubDraftRepository.findByPhysicalInventoryId(physicalInventoryIdOne)).thenReturn(
-//        emptyList());
 
     PhysicalInventorySubDraft physicalInventorySubDraft = PhysicalInventorySubDraft
         .builder().physicalInventoryId(physicalInventoryIdOne).build();
@@ -1092,6 +1093,7 @@ public class SiglusPhysicalInventoryServiceTest {
         .locationOption(LocationManagementOption.BY_PRODUCT).category(SINGLE_PROGRAM).build();
     when(physicalInventoryExtensionRepository.findByPhysicalInventoryId(physicalInventoryIdOne))
         .thenReturn(Collections.singletonList(extension));
+    when(facilityConfigHelper.isStockManagement()).thenReturn(true);
     // when
     SiglusPhysicalInventoryDto actualPhysicalInventoryDto = siglusPhysicalInventoryService
         .getPhysicalInventoryDtoBySubDraftIds(subDraftIds);
@@ -1196,6 +1198,7 @@ public class SiglusPhysicalInventoryServiceTest {
             .category(SINGLE_PROGRAM).locationOption(LocationManagementOption.BY_PRODUCT).build());
     when(physicalInventoryExtensionRepository.findByPhysicalInventoryId(any())).thenReturn(physicalInventoryExtensions);
     List<UUID> subDraftIds = Collections.singletonList(subDraftIdOne);
+    when(facilityConfigHelper.isStockManagement()).thenReturn(false);
     // when
     PhysicalInventoryDto actualPhysicalInventoryDto = siglusPhysicalInventoryService
         .getPhysicalInventoryDtoBySubDraftIds(subDraftIds);
