@@ -26,6 +26,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
+import static org.mockito.Matchers.anyList;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.times;
@@ -820,7 +821,7 @@ public class SiglusPhysicalInventoryServiceTest {
     when(siglusStockCardSummariesService.findSiglusStockCard(
         parameters, Collections.emptyList(), new PageRequest(0, Integer.MAX_VALUE), false))
         .thenReturn(new PageImpl<>(summaryV2Dtos, new PageRequest(0, Integer.MAX_VALUE), 0));
-    when(physicalInventorySubDraftRepository.findByPhysicalInventoryId(physicalInventoryIdOne))
+    when(physicalInventorySubDraftRepository.findByPhysicalInventoryIdIn(anyList()))
         .thenReturn(Collections.singletonList(PhysicalInventorySubDraft.builder().build()));
     UserDto userDto = new UserDto();
     userDto.setHomeFacilityId(facilityId);
@@ -938,8 +939,8 @@ public class SiglusPhysicalInventoryServiceTest {
         .facilityId(facilityId).programId(programId).build();
     when(inventoryController.createEmptyPhysicalInventory(physicalInventoryDto))
         .thenReturn(createdPhysicalInventoryDto);
-    when(physicalInventorySubDraftRepository.findByPhysicalInventoryId(physicalInventoryIdOne)).thenReturn(
-        emptyList());
+//    when(physicalInventorySubDraftRepository.findByPhysicalInventoryId(physicalInventoryIdOne)).thenReturn(
+//        emptyList());
 
     PhysicalInventorySubDraft physicalInventorySubDraft = PhysicalInventorySubDraft
         .builder().physicalInventoryId(physicalInventoryIdOne).build();
@@ -947,7 +948,9 @@ public class SiglusPhysicalInventoryServiceTest {
     physicalInventorySubDraft.setNum(1);
     when(physicalInventorySubDraftRepository
         .findByPhysicalInventoryIdIn(Collections.singletonList(physicalInventoryIdOne))).thenReturn(
-        Collections.singletonList(physicalInventorySubDraft));
+        emptyList());
+    when(physicalInventorySubDraftRepository.save(anyList()))
+        .thenReturn(Collections.singletonList(physicalInventorySubDraft));
 
     Orderable orderable = new Orderable();
     orderable.setFullProductName("fakeProductName");
