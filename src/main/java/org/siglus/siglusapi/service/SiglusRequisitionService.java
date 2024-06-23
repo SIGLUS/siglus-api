@@ -74,6 +74,7 @@ import javax.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
+import org.openlmis.fulfillment.domain.Order;
 import org.openlmis.referencedata.domain.Orderable;
 import org.openlmis.referencedata.domain.ProcessingPeriod;
 import org.openlmis.referencedata.repository.ProgramRepository;
@@ -139,6 +140,7 @@ import org.openlmis.stockmanagement.exception.PermissionMessageException;
 import org.openlmis.stockmanagement.repository.StockCardRepository;
 import org.siglus.common.domain.RequisitionTemplateExtension;
 import org.siglus.common.dto.RequisitionTemplateExtensionDto;
+import org.siglus.common.repository.OrderExternalRepository;
 import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
 import org.siglus.common.repository.StockManagementRepository;
 import org.siglus.siglusapi.constant.FieldConstants;
@@ -189,6 +191,7 @@ import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionLineItemRepository;
 import org.siglus.siglusapi.repository.RequisitionNativeSqlRepository;
+import org.siglus.siglusapi.repository.SiglusOrdersRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.repository.SyncUpHashRepository;
 import org.siglus.siglusapi.repository.TestConsumptionLineItemRepository;
@@ -346,6 +349,11 @@ public class SiglusRequisitionService {
   private StockCardRepository stockCardRepository;
   @Autowired
   private SyncUpHashRepository syncUpHashRepository;
+  @Autowired
+  private OrderExternalRepository orderExternalRepository;
+  @Autowired
+  private SiglusOrdersRepository siglusOrdersRepository;
+
   private final Map<String, BiConsumer<SiglusRequisitionDto, Set<RequisitionLineItem>>> programToRequestedQuantity =
       ImmutableMap.<String, BiConsumer<SiglusRequisitionDto, Set<RequisitionLineItem>>>builder()
           .put(MTB_PROGRAM_CODE, this::calcRequestedQuantityForMmtb)
@@ -888,6 +896,21 @@ public class SiglusRequisitionService {
 
   private SiglusRequisitionDto searchRequisition(UUID requisitionId, HttpServletResponse response) {
     RequisitionV2Dto requisitionDto = requisitionV2Controller.getRequisition(requisitionId, response);
+
+    if (requisitionDto.getEmergency()) {
+      Requisition regularRequisition = siglusRequisitionRepository.findOneByFacilityIdAndProgramIdAndProcessingPeriodId(
+          requisitionDto.getFacilityId(), requisitionDto.getProgramId(), requisitionDto.getProcessingPeriodId());
+      Set<UUID> regularFulFilledOrderableIds = getRegularFulFilledOrderableIds(regularRequisition);
+      Set<UUID> regularRequestedOrderableIds = regularRequisition.getRequisitionLineItems().stream()
+          .map(item -> item.getOrderable().getId()).collect(toSet());
+
+      Set<VersionObjectReferenceDto> availableProducts = requisitionDto.getAvailableProducts().stream()
+          .filter(product -> !regularRequestedOrderableIds.contains(product.getId())
+              || regularFulFilledOrderableIds.contains(product.getId()))
+          .collect(toSet());
+      requisitionDto.setAvailableProducts(availableProducts);
+    }
+
     setLineItemExtension(requisitionDto);
     RequisitionTemplateExtension extension = setTemplateExtension(requisitionDto);
     filterKits(requisitionDto);
@@ -904,6 +927,29 @@ public class SiglusRequisitionService {
 
   public SiglusRequisitionDto searchRequisition(UUID requisitionId) {
     return searchRequisition(requisitionId, response);
+  }
+
+  private Set<UUID> getRegularFulFilledOrderableIds(Requisition regularRequisition) {
+    Map<UUID, Integer> orderableIdToRequestQuantityMap = regularRequisition.getRequisitionLineItems().stream()
+        .collect(toMap(item -> item.getOrderable().getId(), RequisitionLineItem::getRequestedQuantity));
+    Map<UUID, Long> orderableIdToFulfillQuantityMap = new HashMap<>();
+    Set<UUID> orderExternalIds = orderExternalRepository
+        .findOrderExternalIdByRequisitionId(regularRequisition.getId()).stream()
+        .map(UUID::fromString).collect(toSet());
+    orderExternalIds.add(regularRequisition.getId());
+    List<Order> orders = siglusOrdersRepository.findAllByExternalIdIn(orderExternalIds);
+    orders.forEach(order ->
+        order.getOrderLineItems().forEach(item ->
+            orderableIdToFulfillQuantityMap.put(item.getOrderable().getId(),
+                orderableIdToFulfillQuantityMap.getOrDefault(item.getOrderable().getId(), 0L)
+                    + item.getOrderedQuantity()
+            ))
+    );
+    return orderableIdToRequestQuantityMap.keySet().stream()
+        .filter(orderableId ->
+            orderableIdToFulfillQuantityMap.getOrDefault(orderableId, 0L)
+                >= orderableIdToRequestQuantityMap.get(orderableId))
+        .collect(toSet());
   }
 
   public SiglusRequisitionDto searchRequisitionForFc(UUID requisitionId) {

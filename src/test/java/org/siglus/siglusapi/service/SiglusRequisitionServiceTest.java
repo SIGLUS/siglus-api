@@ -202,6 +202,7 @@ import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionLineItemRepository;
 import org.siglus.siglusapi.repository.RequisitionNativeSqlRepository;
+import org.siglus.siglusapi.repository.SiglusOrdersRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.repository.TestConsumptionLineItemRepository;
 import org.siglus.siglusapi.repository.UsageInformationLineItemRepository;
@@ -526,6 +527,9 @@ public class SiglusRequisitionServiceTest {
 
   @Mock
   private HttpServletResponse response;
+
+  @Mock
+  private SiglusOrdersRepository siglusOrdersRepository;
 
   @Before
   public void prepare() {
@@ -2712,6 +2716,10 @@ public class SiglusRequisitionServiceTest {
     newV2Req.setAvailableProducts(products);
     newV2Req.setTemplate(createTemplateDto());
     when(siglusRequisitionRequisitionService.searchRequisition(requisitionId)).thenReturn(newV2Req);
+    Requisition regularRequisition = createRequisition();
+    when(siglusRequisitionRepository.findOneByFacilityIdAndProgramIdAndProcessingPeriodId(newV2Req.getFacilityId(),
+        newV2Req.getProgramId(), newV2Req.getProcessingPeriodId())).thenReturn(regularRequisition);
+
     when(requisitionV2Controller.getRequisition(requisitionId, response)).thenReturn(newV2Req);
     when(requisitionService.validateCanApproveRequisition(any(), any()))
         .thenReturn(ValidationResult.failedValidation("skip method"));

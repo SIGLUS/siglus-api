@@ -113,7 +113,8 @@ public interface SiglusRequisitionRepository extends JpaRepository<Requisition, 
   @Query(value = "select r.* from requisition.requisitions r "
       + "where r.facilityid = :facilityId "
       + "and r.programid = :programId "
-      + "and r.processingperiodid = :processingPeriodId ", nativeQuery = true)
+      + "and r.processingperiodid = :processingPeriodId "
+      + "and r.emergency = false", nativeQuery = true)
   Requisition findOneByFacilityIdAndProgramIdAndProcessingPeriodId(
       @Param("facilityId") UUID facilityId,
       @Param("programId") UUID programId,
