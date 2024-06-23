@@ -27,7 +27,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -290,10 +289,10 @@ public class SiglusProcessingPeriodService {
           requisitions);
 
       if (emergency) {
-        if (requisitions.size() >= 2) {
+        if (requisitions.size() - preAuthorizeRequisitions.size() >= 2) {
           continue;
         }
-        processingEmergencyRequisitionPeriod(requisitionPeriods, currentPeriodIds,
+        processingRemainningEmergencyRequisitionPeriod(requisitionPeriods, currentPeriodIds,
             preAuthorizeRequisitions, period, program, facility);
         if (!requisitionPeriods.isEmpty()) {
           break;
@@ -314,6 +313,10 @@ public class SiglusProcessingPeriodService {
       }
     }
 
+    if (emergency && requisitionPeriods.isEmpty()) {
+      processingNewCreatedEmergencyRequisitionPeriod(program, facility, currentPeriodIds, requisitionPeriods);
+    }
+
     Iterator<RequisitionPeriodDto> iterator = requisitionPeriods.iterator();
     while (iterator.hasNext()) {
       RequisitionPeriodDto requisitionPeriod = iterator.next();
@@ -324,6 +327,92 @@ public class SiglusProcessingPeriodService {
     }
 
     return limitFirstPeriodToOneYear(requisitionPeriods, periods);
+  }
+
+  private void processingNewCreatedEmergencyRequisitionPeriod(UUID program, UUID facility, List<UUID> currentPeriodIds,
+      List<RequisitionPeriodDto> requisitionPeriods) {
+    LocalDate currentDate = LocalDate.now();
+    ProcessingPeriodDto currentPeriod = periodService.getPeriod(currentPeriodIds.get(0));
+    String facilityTypeCode = siglusFacilityRepository.findOne(facility).getType().getCode();
+    Set<String> firstLevelTypes = FacilityTypeConstants.getFirstLevelTypes();
+    Set<String> secondLevelTypes = FacilityTypeConstants.getSecondLevelTypes();
+    Set<String> thirdLevelTypes = FacilityTypeConstants.getThirdLevelTypes();
+    Set<String> statusSet = RequisitionStatus.getAfterAuthorizedStatus().stream().map(Enum::name)
+        .collect(Collectors.toSet());
+    if (firstLevelTypes.contains(facilityTypeCode)) {
+      // if current period: 5.21-6.20 June
+      // when today is 5.21, the emergency show the May period
+      // when today is 6.10, the emergency show the May period
+      // when today is 6.11, the emergency show the May period
+      // when today is 6.17, the emergency show the May period
+      // when today is 6.18, the emergency show the June period
+      // when today is 6.20, the emergency show the June period
+      // when today is 6.21, then the current period: 6.21-7.20 July, the emergency still show the June period
+      // when today is 7.11, the current period: 6.21-7.20 July, the emergency should still show the june period
+      // when today is 7.18, the current period: 6.21-7.20 July, the emergency should show the July period
+      if (currentDate.isBefore(
+          LocalDate.of(currentPeriod.getEndDate().getYear(), currentPeriod.getEndDate().getMonth(), 18))) {
+        ProcessingPeriodDto previousPeriod = periodService.findPreviousPeriod(currentPeriod.getId());
+        processEmergencyList(program, facility, requisitionPeriods, statusSet, previousPeriod, facilityTypeCode);
+      } else {
+        processEmergencyList(program, facility, requisitionPeriods, statusSet, currentPeriod, facilityTypeCode);
+      }
+    } else if (secondLevelTypes.contains(facilityTypeCode)) {
+      if (currentDate.isBefore(
+          LocalDate.of(currentPeriod.getEndDate().getYear(), currentPeriod.getEndDate().getMonth(), 25))) {
+        ProcessingPeriodDto previousPeriod = periodService.findPreviousPeriod(currentPeriod.getId());
+        processEmergencyList(program, facility, requisitionPeriods, statusSet, previousPeriod, facilityTypeCode);
+      } else {
+        processEmergencyList(program, facility, requisitionPeriods, statusSet, currentPeriod, facilityTypeCode);
+      }
+    } else if (thirdLevelTypes.contains(facilityTypeCode)) {
+      YearMonth yearMonth = YearMonth.from(currentPeriod.getEndDate()).minusMonths(1);
+      if (currentDate.isBefore(LocalDate.of(yearMonth.getYear(), yearMonth.getMonth(), 30))
+          || currentDate.equals(LocalDate.of(yearMonth.getYear(), yearMonth.getMonth(), 30))) {
+        ProcessingPeriodDto previousPeriod = periodService.findPreviousPeriod(currentPeriod.getId());
+        processEmergencyList(program, facility, requisitionPeriods, statusSet, previousPeriod, facilityTypeCode);
+      } else {
+        processEmergencyList(program, facility, requisitionPeriods, statusSet, currentPeriod, facilityTypeCode);
+      }
+    }
+  }
+
+  private void processEmergencyList(UUID program, UUID facility, List<RequisitionPeriodDto> requisitionPeriods,
+      Set<String> statusSet, ProcessingPeriodDto periodDto, String facilityTypeCode) {
+    List<Requisition> requisitions = requisitionRepository.searchRequisitions(
+        periodDto.getId(), facility, program, Boolean.TRUE);
+    if (requisitions.size() < 2) {
+      setSubmitStartAndEndDate(periodDto, facilityTypeCode);
+      requisitionPeriods.add(RequisitionPeriodDto.newInstance(periodDto));
+      if (CollectionUtils.isNotEmpty(siglusRequisitionRepository.searchAfterAuthorizedRequisitions(
+          facility, program, periodDto.getId(), Boolean.FALSE, statusSet))) {
+        // for emergency, requisitionPeriods only have one element
+        requisitionPeriods.forEach(requisitionPeriodDto ->
+            requisitionPeriodDto.setCurrentPeriodRegularRequisitionAuthorized(true));
+      }
+    }
+  }
+
+  private void setSubmitStartAndEndDate(ProcessingPeriodDto periodDto, String facilityTypeCode) {
+    Set<String> firstLevelTypes = FacilityTypeConstants.getFirstLevelTypes();
+    Set<String> secondLevelTypes = FacilityTypeConstants.getSecondLevelTypes();
+    Set<String> thirdLevelTypes = FacilityTypeConstants.getThirdLevelTypes();
+    LocalDate submitStartDate = null;
+    LocalDate submitEndDate = null;
+    YearMonth yearMonth = YearMonth.from(periodDto.getEndDate()).plusMonths(1);
+    if (firstLevelTypes.contains(facilityTypeCode)) {
+      submitStartDate = LocalDate.of(yearMonth.getYear(), yearMonth.getMonthValue(), 11);
+      submitEndDate = LocalDate.of(yearMonth.getYear(), yearMonth.getMonthValue(), 17);
+    } else if (secondLevelTypes.contains(facilityTypeCode)) {
+      submitStartDate = LocalDate.of(yearMonth.getYear(), yearMonth.getMonthValue(), 11);
+      submitEndDate = LocalDate.of(yearMonth.getYear(), yearMonth.getMonthValue(), 24);
+    } else if (thirdLevelTypes.contains(facilityTypeCode)) {
+      submitStartDate = LocalDate.of(yearMonth.getYear(), yearMonth.getMonthValue(), 16);
+      yearMonth = yearMonth.plusMonths(1);
+      submitEndDate = LocalDate.of(yearMonth.getYear(), yearMonth.getMonthValue(), 30);
+    }
+    periodDto.setSubmitStartDate(submitStartDate);
+    periodDto.setSubmitEndDate(submitEndDate);
   }
 
   private List<RequisitionPeriodDto> limitFirstPeriodToOneYear(List<RequisitionPeriodDto> requisitionPeriods,
@@ -346,55 +435,30 @@ public class SiglusProcessingPeriodService {
         .collect(Collectors.toList());
   }
 
-  private void processingEmergencyRequisitionPeriod(
+  private void processingRemainningEmergencyRequisitionPeriod(
       List<RequisitionPeriodDto> requisitionPeriods,
       List<UUID> currentPeriodIds,
       List<Requisition> preAuthorizeRequisitions,
       ProcessingPeriodDto period, UUID program, UUID facility
   ) {
-    UUID previousPeriodId = periodService.findPreviousPeriod(currentPeriodIds.stream().findFirst().get()).getId();
     if (!preAuthorizeRequisitions.isEmpty()) {
       RequisitionPeriodDto requisitionPeriod = RequisitionPeriodDto.newInstance(period);
       requisitionPeriods.add(requisitionPeriod);
       getFirstPreAuthorizeRequisition(preAuthorizeRequisitions, requisitionPeriod);
     }
-    if (CollectionUtils.isEmpty(requisitionPeriods) && Objects.equals(previousPeriodId, period.getId())) {
-      requisitionPeriods.add(RequisitionPeriodDto.newInstance(period));
-    }
     Set<String> statusSet = RequisitionStatus.getAfterAuthorizedStatus().stream().map(Enum::name)
         .collect(Collectors.toSet());
-    requisitionPeriods.forEach(requisitionPeriodDto ->
-        changeEmergencyRequisitionSubmitStartAndEndDate(facility, requisitionPeriodDto));
-    if (CollectionUtils.isNotEmpty(requisitionPeriods)
-        && CollectionUtils.isNotEmpty(siglusRequisitionRepository.searchAfterAuthorizedRequisitions(
-        facility, program, previousPeriodId, Boolean.FALSE, statusSet))) {
-      // for emergency, requisitionPeriods only have one element
-      requisitionPeriods.forEach(requisitionPeriodDto ->
-          requisitionPeriodDto.setCurrentPeriodRegularRequisitionAuthorized(true));
+    if (CollectionUtils.isNotEmpty(requisitionPeriods)) {
+      String facilityTypeCode = siglusFacilityRepository.findOne(facility).getType().getCode();
+      requisitionPeriods.forEach(
+          requisitionPeriodDto -> setSubmitStartAndEndDate(requisitionPeriodDto, facilityTypeCode));
+      if (CollectionUtils.isNotEmpty(siglusRequisitionRepository.searchAfterAuthorizedRequisitions(
+          facility, program, period.getId(), Boolean.FALSE, statusSet))) {
+        // for emergency, requisitionPeriods only have one element
+        requisitionPeriods.forEach(requisitionPeriodDto ->
+            requisitionPeriodDto.setCurrentPeriodRegularRequisitionAuthorized(true));
+      }
     }
-  }
-
-  private void changeEmergencyRequisitionSubmitStartAndEndDate(UUID facility,
-      RequisitionPeriodDto requisitionPeriodDto) {
-    String facilityTypeCode = siglusFacilityRepository.findOne(facility).getType().getCode();
-    Set<String> firstLevelTypes = FacilityTypeConstants.getFirstLevelTypes();
-    Set<String> secondLevelTypes = FacilityTypeConstants.getSecondLevelTypes();
-    Set<String> thirdLevelTypes = FacilityTypeConstants.getThirdLevelTypes();
-    LocalDate submitStartDate = requisitionPeriodDto.getSubmitStartDate();
-    LocalDate submitEndDate = requisitionPeriodDto.getSubmitEndDate();
-    YearMonth yearMonth = YearMonth.from(submitStartDate).plusMonths(1);
-    if (firstLevelTypes.contains(facilityTypeCode)) {
-      submitStartDate = LocalDate.of(yearMonth.getYear(), yearMonth.getMonthValue(), 11);
-      submitEndDate = LocalDate.of(yearMonth.getYear(), yearMonth.getMonthValue(), 17);
-    } else if (secondLevelTypes.contains(facilityTypeCode)) {
-      submitStartDate = LocalDate.of(yearMonth.getYear(), yearMonth.getMonthValue(), 11);
-      submitEndDate = LocalDate.of(yearMonth.getYear(), yearMonth.getMonthValue(), 24);
-    } else if (thirdLevelTypes.contains(facilityTypeCode)) {
-      submitStartDate = LocalDate.of(submitStartDate.getYear(), submitStartDate.getMonthValue(), 16);
-      submitEndDate = LocalDate.of(yearMonth.getYear(), yearMonth.getMonthValue(), 30);
-    }
-    requisitionPeriodDto.setSubmitStartDate(submitStartDate);
-    requisitionPeriodDto.setSubmitEndDate(submitEndDate);
   }
 
   private void getFirstPreAuthorizeRequisition(List<Requisition> preAuthorizeRequisitions,
