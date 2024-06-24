@@ -945,10 +945,10 @@ public class SiglusRequisitionService {
                     + item.getOrderedQuantity()
             ))
     );
-    return orderableIdToRequestQuantityMap.keySet().stream()
+    return orderableIdToFulfillQuantityMap.keySet().stream()
         .filter(orderableId ->
-            orderableIdToFulfillQuantityMap.getOrDefault(orderableId, 0L)
-                >= orderableIdToRequestQuantityMap.get(orderableId))
+            orderableIdToFulfillQuantityMap.get(orderableId)
+                >= orderableIdToRequestQuantityMap.getOrDefault(orderableId, 0))
         .collect(toSet());
   }
 
