@@ -22,6 +22,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -35,6 +36,7 @@ import org.siglus.siglusapi.domain.AppInfo;
 import org.siglus.siglusapi.dto.android.enumeration.TestProject;
 import org.siglus.siglusapi.dto.android.request.AndroidHeader;
 import org.siglus.siglusapi.dto.android.request.HfCmmDto;
+import org.siglus.siglusapi.dto.android.request.PatientLineItemColumnRequest;
 import org.siglus.siglusapi.dto.android.request.PodRequest;
 import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
 import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
@@ -170,10 +172,18 @@ public class SiglusMeController {
     v2TestProjects.add(TestProject.TDRORALDEHIV.name());
     v2TestProjects.add(TestProject.NEWTEST.name());
     response.getRequisitionResponseList().forEach(requisition -> {
+      // TestConsumptionLineItems
       List<TestConsumptionLineItemRequest> testConsumptions = requisition.getTestConsumptionLineItems().stream()
           .filter(lineItem -> !v2TestProjects.contains(lineItem.getTestProject()))
           .collect(Collectors.toList());
       requisition.setTestConsumptionLineItems(testConsumptions);
+      // patientLineItemsRequest
+      requisition.getPatientLineItems().forEach(patientLineItemsRequest -> {
+        List<PatientLineItemColumnRequest> filterColumns = patientLineItemsRequest.getColumns()
+            .stream().filter(columnRequest -> Objects.nonNull(columnRequest.getValue()))
+            .collect(Collectors.toList());
+        patientLineItemsRequest.setColumns(filterColumns);
+      });
     });
     return response;
   }
