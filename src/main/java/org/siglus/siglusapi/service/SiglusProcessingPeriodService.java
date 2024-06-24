@@ -113,6 +113,8 @@ public class SiglusProcessingPeriodService {
   @Autowired
   private SiglusFacilityRepository siglusFacilityRepository;
 
+  public static final Integer MAX_COUNT_EMERGENCY_REQUISITION = 2;
+
   public LocalDate getPreviousPeriodStartDateSinceInitiate(String programCode, UUID facilityId) {
     ProgramDto program = siglusProgramService.getProgramByCode(programCode)
         .orElseThrow(() -> new NotFoundException("Program code" + programCode + " Not Found"));
@@ -289,7 +291,7 @@ public class SiglusProcessingPeriodService {
           requisitions);
 
       if (emergency) {
-        if (requisitions.size() - preAuthorizeRequisitions.size() >= 2) {
+        if (requisitions.size() > MAX_COUNT_EMERGENCY_REQUISITION) {
           continue;
         }
         processingRemainningEmergencyRequisitionPeriod(requisitionPeriods, currentPeriodIds,
@@ -381,7 +383,7 @@ public class SiglusProcessingPeriodService {
       Set<String> statusSet, ProcessingPeriodDto periodDto, String facilityTypeCode) {
     List<Requisition> requisitions = requisitionRepository.searchRequisitions(
         periodDto.getId(), facility, program, Boolean.TRUE);
-    if (requisitions.size() < 2) {
+    if (requisitions.size() < MAX_COUNT_EMERGENCY_REQUISITION) {
       setSubmitStartAndEndDate(periodDto, facilityTypeCode);
       requisitionPeriods.add(RequisitionPeriodDto.newInstance(periodDto));
       if (CollectionUtils.isNotEmpty(siglusRequisitionRepository.searchAfterAuthorizedRequisitions(
