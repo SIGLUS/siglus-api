@@ -2709,6 +2709,16 @@ traits:
               body:
                 application/json:
 
+      /export:
+        displayName: export requisition to excel
+        get:
+          is: [ secured ]
+          body:
+            application/vnd.ms-excel:
+          responses:
+            200:
+              description: success
+
     /requisitions/periodsForInitiate:
       get:
         is: [ secured ]

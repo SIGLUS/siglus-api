@@ -15,9 +15,16 @@
 
 package org.siglus.siglusapi.web;
 
+import static org.siglus.siglusapi.constant.FieldConstants.ATTACHMENT_FILENAME;
+import static org.siglus.siglusapi.constant.FieldConstants.EXCEL_CONTENT_TYPE;
+import static org.siglus.siglusapi.constant.FieldConstants.UTF_8;
+import static org.siglus.siglusapi.constant.FieldConstants.XLSX_SUFFIX;
 import static org.siglus.siglusapi.constant.PaginationConstants.DEFAULT_PAGE_NUMBER;
 import static org.siglus.siglusapi.constant.PaginationConstants.NO_PAGINATION;
+import static org.springframework.http.HttpHeaders.CONTENT_DISPOSITION;
 
+import java.io.IOException;
+import java.net.URLEncoder;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -48,6 +55,7 @@ import org.siglus.siglusapi.localmachine.event.requisition.web.release.Requisiti
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.service.SiglusNotificationService;
 import org.siglus.siglusapi.service.SiglusProcessingPeriodService;
+import org.siglus.siglusapi.service.SiglusRequisitionExportService;
 import org.siglus.siglusapi.service.SiglusRequisitionService;
 import org.siglus.siglusapi.service.scheduledtask.SiglusRequisitionAutoCloseService;
 import org.siglus.siglusapi.web.request.BuildRequisitionDraftRequest;
@@ -105,6 +113,8 @@ public class SiglusRequisitionController {
   private RequisitionExtensionRepository requisitionExtensionRepository;
   @Autowired
   private RequisitionCreateForClientEmitter requisitionCreateForClientEmitter;
+  @Autowired
+  private SiglusRequisitionExportService siglusRequisitionExportService;
 
   @PostMapping("/initiate")
   @ResponseStatus(HttpStatus.CREATED)
@@ -289,5 +299,14 @@ public class SiglusRequisitionController {
   @GetMapping("/facilitiesForView")
   public List<FacilityDto> getFacilitiesForView() {
     return siglusRequisitionService.searchFacilitiesForView();
+  }
+
+  @GetMapping("/{id}/export")
+  public void exportExcel(@PathVariable("id") UUID requisitionId, HttpServletResponse response) throws IOException {
+    response.setContentType(EXCEL_CONTENT_TYPE);
+    response.setCharacterEncoding(UTF_8);
+    String exportFileName = siglusRequisitionExportService.exportExcel(requisitionId, response);
+    String fileName = URLEncoder.encode(exportFileName, UTF_8);
+    response.setHeader(CONTENT_DISPOSITION, ATTACHMENT_FILENAME + fileName + XLSX_SUFFIX);
   }
 }
