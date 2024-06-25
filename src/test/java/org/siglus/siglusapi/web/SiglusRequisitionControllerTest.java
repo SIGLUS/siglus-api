@@ -17,10 +17,12 @@ package org.siglus.siglusapi.web;
 
 import static org.apache.commons.lang3.RandomUtils.nextBoolean;
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -44,8 +46,10 @@ import org.siglus.siglusapi.localmachine.event.requisition.web.reject.Requisitio
 import org.siglus.siglusapi.localmachine.event.requisition.web.release.RequisitionReleaseEmitter;
 import org.siglus.siglusapi.service.SiglusNotificationService;
 import org.siglus.siglusapi.service.SiglusProcessingPeriodService;
+import org.siglus.siglusapi.service.SiglusRequisitionExportService;
 import org.siglus.siglusapi.service.SiglusRequisitionService;
 import org.springframework.data.domain.Pageable;
+import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
@@ -85,6 +89,9 @@ public class SiglusRequisitionControllerTest {
 
   @Mock
   private RequisitionReleaseEmitter requisitionReleaseEmitter;
+
+  @Mock
+  private SiglusRequisitionExportService siglusRequisitionExportService;
 
   private UUID uuid;
 
@@ -285,4 +292,14 @@ public class SiglusRequisitionControllerTest {
     verify(siglusRequisitionService).deleteRequisition(requisitionId);
   }
 
+  @Test
+  public void shouldSuccessWhenExportExcel() throws IOException {
+    UUID requisitionId = UUID.randomUUID();
+    MockHttpServletResponse response = new MockHttpServletResponse();
+    doNothing().when(siglusRequisitionExportService).exportExcel(requisitionId, response);
+
+    siglusRequisitionController.exportExcel(requisitionId, response);
+
+    verify(siglusRequisitionExportService).exportExcel(requisitionId, response);
+  }
 }

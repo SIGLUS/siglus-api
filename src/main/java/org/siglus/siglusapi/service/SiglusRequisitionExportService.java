@@ -15,10 +15,31 @@
 
 package org.siglus.siglusapi.service;
 
+import static org.siglus.siglusapi.constant.FieldConstants.ATTACHMENT_FILENAME;
+import static org.siglus.siglusapi.constant.FieldConstants.EXCEL_CONTENT_TYPE;
+import static org.siglus.siglusapi.constant.FieldConstants.UTF_8;
+import static org.siglus.siglusapi.constant.FieldConstants.XLSX_SUFFIX;
+import static org.springframework.http.HttpHeaders.CONTENT_DISPOSITION;
+
+import com.alibaba.excel.EasyExcelFactory;
+import com.alibaba.excel.ExcelWriter;
+
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import javax.servlet.http.HttpServletResponse;
+
 import lombok.extern.slf4j.Slf4j;
+import org.openlmis.requisition.domain.requisition.RequisitionStatus;
+import org.openlmis.requisition.dto.ProgramDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
+import org.siglus.siglusapi.service.export.IRequisitionReportService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -28,11 +49,53 @@ public class SiglusRequisitionExportService {
 
   @Autowired
   private SiglusRequisitionService siglusRequisitionService;
+  @Autowired
+  private SiglusProgramService siglusProgramService;
 
-  public String exportExcel(UUID requisitionId, HttpServletResponse response) {
+  @Autowired
+  private List<IRequisitionReportService> reportServices;
+
+  private final Set<RequisitionStatus> supportedStatus = new HashSet<>(Arrays.asList(
+      RequisitionStatus.APPROVED,
+      RequisitionStatus.RELEASED,
+      RequisitionStatus.RELEASED_WITHOUT_ORDER));
+
+  public void exportExcel(UUID requisitionId, HttpServletResponse response) throws IOException {
     SiglusRequisitionDto requisition = siglusRequisitionService.searchRequisition(requisitionId);
-    log.info(requisition.getRequisitionNumber());
-    // TODO
-    return "temp";
+    if (!supportedStatus.contains(requisition.getStatus())) {
+      throw new IllegalArgumentException("unsupported requisition status");
+    }
+    ProgramDto program = siglusProgramService.getProgram(requisition.getProgramId());
+    IRequisitionReportService reportService = getReportServiceByProgramCode(program.getCode());
+    updateResponseHeader(response, requisition);
+
+    try (ExcelWriter excelWriter = EasyExcelFactory
+        .write(response.getOutputStream())
+        .withTemplate(reportService.getTemplateFile())
+        .build()) {
+      reportService.generateReport(requisition, excelWriter);
+      excelWriter.finish();
+    } catch (IOException e) {
+      log.error("generate excel error with requisition. " + requisitionId);
+      throw e;
+    }
+  }
+
+  private void updateResponseHeader(HttpServletResponse response, SiglusRequisitionDto requisition)
+      throws UnsupportedEncodingException {
+    response.setContentType(EXCEL_CONTENT_TYPE);
+    response.setCharacterEncoding(UTF_8);
+    String fileName = URLEncoder.encode(requisition.getRequisitionNumber(), UTF_8);
+    response.setHeader(CONTENT_DISPOSITION, ATTACHMENT_FILENAME + fileName + XLSX_SUFFIX);
+  }
+
+  private IRequisitionReportService getReportServiceByProgramCode(String programCode) {
+    Optional<IRequisitionReportService> reportService = reportServices.stream()
+        .filter(service -> service.supportedProgramCodes().contains(programCode))
+        .findFirst();
+    if (reportService.isPresent()) {
+      return reportService.get();
+    }
+    throw new IllegalArgumentException("unsupported program: " + programCode);
   }
 }
