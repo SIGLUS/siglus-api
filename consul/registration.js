@@ -49,7 +49,7 @@ function ServiceConsulRegistrator(host, port) {
   self.host = host;
   self.port = port;
   self.attempts = 10;
-  self.attemptTimeout = 500;
+  self.attemptTimeout = 6000; // Increased timeout
 
   self.registerService = function(serviceData) {
     return registerServiceBase(serviceData, 'PUT');
@@ -90,32 +90,37 @@ function ServiceConsulRegistrator(host, port) {
   }
 
   function registerResourcesBase(serviceData, resourceArray, mode) {
+    const BATCH_SIZE = 10; // Batch size for registering resources
     var settings = [];
     var data = [];
 
-    // Prepare settings and data for requests
-    resourceArray.forEach(function(resource) {
-      var setting = {
-        host: self.host,
-        port: self.port,
-        path: '/v1/kv/resources' + resource,
-        method: mode
+    for (var i = 0; i < resourceArray.length; i += BATCH_SIZE) {
+      var batch = resourceArray.slice(i, i + BATCH_SIZE);
+      batch.forEach(function(resource) {
+        var setting = {
+          host: self.host,
+          port: self.port,
+          path: '/v1/kv/resources' + resource,
+          method: mode
+        };
+        settings.push(setting);
+        data.push(serviceData.Name);
+      });
+
+      for (var attempt = 0; attempt < self.attempts; attempt++) {
+        var responses = awaitRequests(settings, data);
+        var success = !responses.some(function(response) {
+          return response.statusCode !== 200;
+        });
+
+        if (success) {
+          break;
+        }
+
+        sleep(self.attemptTimeout);
       }
-
-      settings.push(setting);
-      data.push(serviceData.Name);
-    });
-
-    // Send all requests at once
-    for (var i = 0; i < self.attempts; i++) {
-      var responses = awaitRequests(settings, data);
-      var success = !responses.some(function(response) { return response.statusCode !== 200 });
-
-      if (success) {
-        break;
-      }
-
-      sleep(self.attemptTimeout);
+      settings = [];
+      data = [];
     }
   }
 
