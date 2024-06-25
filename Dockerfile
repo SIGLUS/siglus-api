@@ -10,7 +10,7 @@ RUN chmod +x run.sh \
   && apk add nodejs \
   && apk add npm \
   && apk add openjdk8 \
-  && apk add --no-cache freetype \
+  && apk add --no-cache freetype fontconfig \
   && apk add postgresql-client \
   && apk add postgresql \
   && apk add dmidecode \
