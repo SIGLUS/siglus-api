@@ -51,6 +51,7 @@ import org.siglus.siglusapi.domain.OrderableIdentifiers;
 import org.siglus.siglusapi.dto.FacilityLocationsDto;
 import org.siglus.siglusapi.dto.InitialMoveProductFieldDto;
 import org.siglus.siglusapi.dto.LocationLotsDto;
+import org.siglus.siglusapi.dto.LocationStatusDto;
 import org.siglus.siglusapi.dto.LotsDto;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.exception.NotFoundException;
@@ -413,4 +414,18 @@ public class SiglusLotLocationServiceTest extends TestCase {
     assertEquals(expectedLocationLotsDtos, locationLotsDtos);
   }
 
+
+  @Test
+  public void shouldSuccessWhenSearchLocationStatus() {
+    LocationStatusDto statusDto = LocationStatusDto.builder()
+        .locationStatus("empty")
+        .locationCode("1234")
+        .build();
+    when(calculatedStockOnHandByLocationRepository.findLocationStatusByFacilityId(facilityId))
+        .thenReturn(Collections.singletonList(statusDto));
+
+    List<LocationStatusDto> result = service.searchLocationStatus(facilityId);
+
+    assertEquals(statusDto, result.get(0));
+  }
 }
