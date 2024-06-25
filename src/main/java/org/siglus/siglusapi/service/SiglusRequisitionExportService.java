@@ -51,7 +51,6 @@ public class SiglusRequisitionExportService {
   private SiglusRequisitionService siglusRequisitionService;
   @Autowired
   private SiglusProgramService siglusProgramService;
-
   @Autowired
   private List<IRequisitionReportService> reportServices;
 

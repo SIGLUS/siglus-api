@@ -96,7 +96,7 @@ public class SiglusRequisitionExportServiceTest {
   }
 
   @Test
-  public void shouldReturnFileNameWhenGenerateExcelSuccess() throws IOException {
+  public void shouldGenerateExcelSuccess() throws IOException {
     UUID requisitionId = UUID.randomUUID();
     SiglusRequisitionDto dto = new SiglusRequisitionDto();
     dto.setId(requisitionId);
