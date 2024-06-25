@@ -10,7 +10,6 @@ RUN chmod +x run.sh \
   && apk add nodejs \
   && apk add npm \
   && apk add openjdk8 \
-  && apk add --update ttf-dejavu && rm -rf /var/cache/apk/* \
   && apk add postgresql-client \
   && apk add postgresql \
   && apk add dmidecode \
