@@ -45,7 +45,7 @@ public class MtbRequisitionReportServiceService implements IRequisitionReportSer
 
   @Override
   public String getTemplateFile() throws IOException {
-    Resource resource = resourceLoader.getResource("classpath:static/requisition/MTB_pt.xlsx");
+    Resource resource = resourceLoader.getResource("classpath:/static/requisition/MTB_pt.xlsx");
     return resource.getFile().getAbsolutePath();
   }
 

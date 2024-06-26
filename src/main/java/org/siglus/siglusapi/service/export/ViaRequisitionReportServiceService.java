@@ -47,7 +47,7 @@ public class ViaRequisitionReportServiceService implements IRequisitionReportSer
 
   @Override
   public String getTemplateFile() throws IOException {
-    Resource resource = resourceLoader.getResource("classpath:static/requisition/VIA_pt.xlsx");
+    Resource resource = resourceLoader.getResource("classpath:/static/requisition/VIA_pt.xlsx");
     return resource.getFile().getAbsolutePath();
   }
 

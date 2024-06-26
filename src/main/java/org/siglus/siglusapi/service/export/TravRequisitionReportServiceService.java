@@ -46,7 +46,7 @@ public class TravRequisitionReportServiceService implements IRequisitionReportSe
 
   @Override
   public String getTemplateFile() throws IOException {
-    Resource resource = resourceLoader.getResource("classpath:static/requisition/TRAV_pt.xlsx");
+    Resource resource = resourceLoader.getResource("classpath:/static/requisition/TRAV_pt.xlsx");
     return resource.getFile().getAbsolutePath();
   }
 

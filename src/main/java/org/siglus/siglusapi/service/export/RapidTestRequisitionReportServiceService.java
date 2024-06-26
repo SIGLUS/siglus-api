@@ -46,7 +46,7 @@ public class RapidTestRequisitionReportServiceService implements IRequisitionRep
 
   @Override
   public String getTemplateFile() throws IOException {
-    Resource resource = resourceLoader.getResource("classpath:static/requisition/tests_pt.xlsx");
+    Resource resource = resourceLoader.getResource("classpath:/static/requisition/tests_pt.xlsx");
     return resource.getFile().getAbsolutePath();
   }
 
