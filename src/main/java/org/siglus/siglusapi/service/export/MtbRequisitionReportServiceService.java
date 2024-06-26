@@ -18,11 +18,16 @@ package org.siglus.siglusapi.service.export;
 import static com.google.common.collect.Lists.newArrayList;
 
 import com.alibaba.excel.ExcelWriter;
+
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import org.siglus.siglusapi.constant.ProgramConstants;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -30,14 +35,18 @@ import org.springframework.stereotype.Service;
 public class MtbRequisitionReportServiceService implements IRequisitionReportService {
   private final Set<String> supportedProgramSet = new HashSet<>(newArrayList(ProgramConstants.MTB_PROGRAM_CODE));
 
+  @Autowired
+  private ResourceLoader resourceLoader;
+
   @Override
   public Set<String> supportedProgramCodes() {
     return supportedProgramSet;
   }
 
   @Override
-  public String getTemplateFile() {
-    return "src/main/resources/static/requisition/MTB_pt.xlsx";
+  public String getTemplateFile() throws IOException {
+    Resource resource = resourceLoader.getResource("classpath:static/requisition/MTB_pt.xlsx");
+    return resource.getFile().getAbsolutePath();
   }
 
   @Override

@@ -13,7 +13,7 @@ pipeline {
             steps {
                 sh '''
                     docker run --rm -v `pwd`:/app -w /app --network=host amazoncorretto:8u342-alpine3.16 sh -c \
-                    "apk add npm && ./gradlew clean build"
+                    "apk add npm freetype ttf-dejavu fontconfig && ./gradlew clean build"
                 '''
             }
         }

@@ -16,6 +16,8 @@
 package org.siglus.siglusapi.service.export;
 
 import com.alibaba.excel.ExcelWriter;
+
+import java.io.IOException;
 import java.util.Set;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 
@@ -23,7 +25,7 @@ public interface IRequisitionReportService {
 
   Set<String> supportedProgramCodes();
 
-  String getTemplateFile();
+  String getTemplateFile() throws IOException;
 
   void generateReport(SiglusRequisitionDto requisition, ExcelWriter excelWriter);
 }

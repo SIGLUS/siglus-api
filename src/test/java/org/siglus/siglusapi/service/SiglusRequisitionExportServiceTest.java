@@ -59,7 +59,7 @@ public class SiglusRequisitionExportServiceTest {
   private IRequisitionReportService mtbRequisitionReportServiceService;
 
   @Before
-  public void setUp() {
+  public void setUp() throws IOException {
     when(mtbRequisitionReportServiceService.supportedProgramCodes())
         .thenReturn(new HashSet<>(newArrayList(ProgramConstants.MTB_PROGRAM_CODE)));
     when(mtbRequisitionReportServiceService.getTemplateFile())

@@ -13,8 +13,6 @@ RUN chmod +x run.sh \
   && apk add postgresql-client \
   && apk add postgresql \
   && apk add dmidecode \
-  && apk add --no-cache freetype \
-  && apk add --no-cache ttf-dejavu fontconfig \
   && npm install
 
 COPY build/libs/*.jar /service.jar
