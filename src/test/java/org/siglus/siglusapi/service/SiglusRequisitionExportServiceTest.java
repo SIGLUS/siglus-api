@@ -22,6 +22,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
@@ -62,8 +63,10 @@ public class SiglusRequisitionExportServiceTest {
   public void setUp() throws IOException {
     when(mtbRequisitionReportServiceService.supportedProgramCodes())
         .thenReturn(new HashSet<>(newArrayList(ProgramConstants.MTB_PROGRAM_CODE)));
+    InputStream inputStream = SiglusRequisitionExportServiceTest.class
+        .getResourceAsStream("src/main/resources/static/requisition/MTB_pt.xlsx");
     when(mtbRequisitionReportServiceService.getTemplateFile())
-        .thenReturn("src/main/resources/static/requisition/MTB_pt.xlsx");
+        .thenReturn(inputStream);
     doNothing().when(mtbRequisitionReportServiceService).generateReport(any(), any());
     when(reportServices.stream()).thenReturn(Stream.of(mtbRequisitionReportServiceService));
   }
