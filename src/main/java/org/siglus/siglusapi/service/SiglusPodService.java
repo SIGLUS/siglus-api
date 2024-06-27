@@ -394,7 +394,7 @@ public class SiglusPodService {
       return;
     }
     List<ProofOfDeliverySubDraftLineItemDto> addedLineItemDto = podDto.getLineItems().stream()
-        .filter(itemDto -> !existedPodLineItemIds.contains(itemDto.getId()) && itemDto.getLot().getId() == null)
+        .filter(itemDto -> !existedPodLineItemIds.contains(itemDto.getId()))
         .collect(Collectors.toList());
     if (ObjectUtils.isEmpty(addedLineItemDto)) {
       return;

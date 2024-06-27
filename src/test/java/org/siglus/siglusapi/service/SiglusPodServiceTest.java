@@ -721,6 +721,8 @@ public class SiglusPodServiceTest {
     when(proofOfDeliveryRepository.findOne(podId)).thenReturn(buildMockProofOfDelivery());
     ProofOfDelivery proofOfDelivery = buildMockProofOfDelivery();
     when(proofOfDeliveryRepository.save(any(ProofOfDelivery.class))).thenReturn(proofOfDelivery);
+    when(podLineItemsExtensionRepository.findAllBySubDraftIds(any()))
+        .thenReturn(buildMockPodLineItemsExtensions());
 
     // when
     service.submitSubDrafts(podId, request, null, false);
@@ -747,6 +749,8 @@ public class SiglusPodServiceTest {
     ProofOfDelivery proofOfDelivery = buildMockProofOfDelivery();
     when(proofOfDeliveryRepository.save(any(ProofOfDelivery.class))).thenReturn(proofOfDelivery);
     mockPodExtensionQuery();
+    when(podLineItemsExtensionRepository.findAllBySubDraftIds(any()))
+        .thenReturn(buildMockPodLineItemsExtensions());
     when(proofOfDeliveryEmitter.emit(podId)).thenReturn(new ProofOfDeliveryEvent());
 
     // when
@@ -774,6 +778,8 @@ public class SiglusPodServiceTest {
     when(proofOfDeliveryRepository.findOne(podId)).thenReturn(buildMockProofOfDelivery());
     ProofOfDelivery proofOfDelivery = buildMockProofOfDelivery();
     when(proofOfDeliveryRepository.save(any(ProofOfDelivery.class))).thenReturn(proofOfDelivery);
+    when(podLineItemsExtensionRepository.findAllBySubDraftIds(any()))
+        .thenReturn(buildMockPodLineItemsExtensions());
     when(proofOfDeliveryEmitter.emit(podId)).thenReturn(new ProofOfDeliveryEvent());
 
     // when
@@ -1049,8 +1055,9 @@ public class SiglusPodServiceTest {
         .thenReturn(Lists.newArrayList(buildStockCard()));
     when(stockCardLineItemRepository.findLatestByStockCardIds(any()))
         .thenReturn(com.google.common.collect.Lists.newArrayList(buildStockCardLineItem()));
+    when(podLineItemsExtensionRepository.findAllBySubDraftIds(any()))
+        .thenReturn(buildMockPodLineItemsExtensions());
     doNothing().when(stockEventsService).processStockEvent(buildStockManagementStockEvent(), false);
-
 
     // when
     service.submitSubDrafts(podId, request, null, true);
@@ -1542,7 +1549,8 @@ public class SiglusPodServiceTest {
     ProofOfDeliverySubDraftLineItemDto draftLineItemDto = new ProofOfDeliverySubDraftLineItemDto();
     draftLineItemDto.setId(lineItemId1);
     draftLineItemDto.setOrderable(new VersionObjectReferenceDto(orderableId, serviceUrl, resourceName, 1L));
-    draftLineItemDto.setLot(LotReferenceDto.builder().id(lotId).build());
+    draftLineItemDto.setLot(LotReferenceDto.builder()
+        .id(lotId).lotCode(lotCode).expirationDate(LocalDate.now()).build());
     draftLineItemDto.setQuantityAccepted(quantityAccpeted);
     draftLineItemDto.setUseVvm(false);
     draftLineItemDto.setVvmStatus(null);
