@@ -17,20 +17,59 @@ package org.siglus.siglusapi.service.export;
 
 import static com.google.common.collect.Lists.newArrayList;
 
+import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.ExcelWriter;
-
+import com.alibaba.excel.write.metadata.WriteSheet;
+import com.alibaba.excel.write.metadata.fill.FillConfig;
+import com.alibaba.excel.write.metadata.fill.FillWrapper;
 import java.io.InputStream;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import org.openlmis.referencedata.domain.Facility;
+import org.openlmis.requisition.domain.requisition.VersionEntityReference;
+import org.openlmis.requisition.dto.BaseRequisitionLineItemDto;
+import org.openlmis.requisition.dto.BasicOrderableDto;
+import org.openlmis.requisition.dto.OrderableDto;
+import org.openlmis.requisition.dto.ProcessingPeriodDto;
+import org.openlmis.requisition.dto.VersionIdentityDto;
+import org.openlmis.requisition.service.referencedata.OrderableReferenceDataService;
 import org.siglus.siglusapi.constant.ProgramConstants;
+import org.siglus.siglusapi.dto.AgeGroupLineItemDto;
+import org.siglus.siglusapi.dto.AgeGroupServiceDto;
+import org.siglus.siglusapi.dto.GeographicProvinceDistrictDto;
+import org.siglus.siglusapi.dto.PatientColumnDto;
+import org.siglus.siglusapi.dto.PatientGroupDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
+import org.siglus.siglusapi.repository.SiglusFacilityRepository;
+import org.siglus.siglusapi.repository.SiglusGeographicInfoRepository;
+import org.siglus.siglusapi.service.SiglusProcessingPeriodService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
 public class MtbRequisitionReportServiceService implements IRequisitionReportService {
+
   private final Set<String> supportedProgramSet = new HashSet<>(newArrayList(ProgramConstants.MTB_PROGRAM_CODE));
+  @Autowired
+  private SiglusGeographicInfoRepository siglusGeographicInfoRepository;
+  @Autowired
+  private SiglusFacilityRepository siglusFacilityRepository;
+  @Autowired
+  private SiglusProcessingPeriodService siglusProcessingPeriodService;
+  @Autowired
+  private OrderableReferenceDataService orderableReferenceDataService;
 
   @Override
   public Set<String> supportedProgramCodes() {
@@ -44,6 +83,91 @@ public class MtbRequisitionReportServiceService implements IRequisitionReportSer
 
   @Override
   public void generateReport(SiglusRequisitionDto requisition, ExcelWriter excelWriter) {
+    WriteSheet writeSheet = EasyExcel.writerSheet().build();
+    fillTopContent(requisition, excelWriter, writeSheet);
+    fillProductListContent(requisition, excelWriter, writeSheet);
+    fillPatientContent(requisition, excelWriter, writeSheet);
+    fillBottomContent(requisition, excelWriter, writeSheet);
+  }
 
+  private void fillTopContent(SiglusRequisitionDto requisition, ExcelWriter excelWriter, WriteSheet writeSheet) {
+    Map<String, Object> topContent = new HashMap<>();
+    UUID facilityId = requisition.getFacilityId();
+    Facility facility = siglusFacilityRepository.findOne(facilityId);
+    GeographicProvinceDistrictDto geographic = siglusGeographicInfoRepository
+        .getGeographicProvinceDistrictInfo(facility.getCode());
+    topContent.put("provinceName", geographic.getProvinceName());
+    topContent.put("districtName", geographic.getDistrictName());
+    topContent.put("facilityName", facility.getName());
+    UUID processingPeriodId = requisition.getProcessingPeriodId();
+    ProcessingPeriodDto processingPeriodDto = siglusProcessingPeriodService.getProcessingPeriodDto(processingPeriodId);
+    topContent.put("year", processingPeriodDto.getEndDate().getYear());
+    topContent.put("month", processingPeriodDto.getEndDate().format(DateTimeFormatter.ofPattern("MMM",
+        new Locale("pt", "PT"))));
+    excelWriter.fill(topContent, writeSheet);
+  }
+
+  private void fillProductListContent(SiglusRequisitionDto requisition, ExcelWriter excelWriter,
+      WriteSheet writeSheet) {
+    List<BaseRequisitionLineItemDto> lineItems = requisition.getLineItems();
+    Set<VersionEntityReference> versionEntityReferences = lineItems.stream().map(lineItemDto -> {
+      VersionIdentityDto orderableIdentity = lineItemDto.getOrderableIdentity();
+      return new VersionEntityReference(orderableIdentity.getId(),
+          orderableIdentity.getVersionNumber());
+    }).collect(Collectors.toSet());
+    Map<UUID, OrderableDto> orderableIdToOrderableDtoMap = orderableReferenceDataService
+        .findByIdentities(versionEntityReferences).stream()
+        .collect(Collectors.toMap(BasicOrderableDto::getId, Function.identity()));
+    FillConfig fillConfig = FillConfig.builder().forceNewRow(Boolean.TRUE).build();
+    List<Map<String, Object>> productContents = new ArrayList<>();
+    lineItems.forEach(lineItem -> {
+      Map<String, Object> productContent = new HashMap<>();
+      UUID orderableId = lineItem.getOrderableIdentity().getId();
+      OrderableDto orderableDto = orderableIdToOrderableDtoMap.get(orderableId);
+      productContent.put("productName", orderableDto.getFullProductName());
+      productContent.put("productUnit", orderableDto.getDispensable().getDisplayUnit());
+      productContent.put("productInitialStock", lineItem.getBeginningBalance());
+      productContent.put("productEntries", lineItem.getTotalReceivedQuantity());
+      productContent.put("productIssues", lineItem.getTotalConsumedQuantity());
+      productContent.put("productAdjustments", lineItem.getTotalLossesAndAdjustments());
+      productContent.put("productInventory", lineItem.getStockOnHand());
+      LocalDate expirationDate = lineItem.getExpirationDate();
+      productContent.put("productExpireDate", expirationDate == null ? "" : expirationDate.toString());
+      productContents.add(productContent);
+    });
+    excelWriter.fill(new FillWrapper("productLineItem", productContents), fillConfig, writeSheet);
+  }
+
+  private void fillBottomContent(SiglusRequisitionDto requisition, ExcelWriter excelWriter, WriteSheet writeSheet) {
+    Map<String, Object> bottomContent = new HashMap<>();
+    bottomContent.put("createdDate",
+        requisition.getCreatedDate().toLocalDate()
+            .format(DateTimeFormatter.ofPattern("dd MMM yyyy", new Locale("pt", "PT"))));
+    Map<String, Object> extraDataMap = requisition.getExtraData();
+    Map<String, Object> signature = (Map<String, Object>) extraDataMap.get("signaure");
+    bottomContent.put("authorize", signature.get("authorize"));
+    List<String> approves = (List<String>) signature.get("approve");
+    bottomContent.put("approve", approves.get(0));
+    excelWriter.fill(bottomContent, writeSheet);
+  }
+
+  private void fillPatientContent(SiglusRequisitionDto requisition, ExcelWriter excelWriter, WriteSheet writeSheet) {
+    Map<String, Object> patientContent = new HashMap<>();
+    List<PatientGroupDto> patientLineItems = requisition.getPatientLineItems();
+    patientLineItems.forEach(patientGroupDto -> {
+      Map<String, PatientColumnDto> columnMap = patientGroupDto.getColumns();
+      columnMap.keySet().forEach(columnKey ->
+          patientContent.put(patientGroupDto.getName() + columnKey, columnMap.get(columnKey).getValue()));
+    });
+    excelWriter.fill(patientContent, writeSheet);
+
+    Map<String, Object> ageContent = new HashMap<>();
+    List<AgeGroupServiceDto> ageGroupLineItems = requisition.getAgeGroupLineItems();
+    ageGroupLineItems.forEach(ageGroupServiceDto -> {
+      Map<String, AgeGroupLineItemDto> columnMap = ageGroupServiceDto.getColumns();
+      columnMap.keySet().forEach(columnKey ->
+          ageContent.put(ageGroupServiceDto.getService() + columnKey, columnMap.get(columnKey).getValue()));
+    });
+    excelWriter.fill(ageContent, writeSheet);
   }
 }
