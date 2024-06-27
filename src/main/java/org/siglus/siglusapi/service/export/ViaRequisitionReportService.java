@@ -177,8 +177,8 @@ public class ViaRequisitionReportService implements IRequisitionReportService {
           product.setDifference(lineItem.getStockOnHand() - theoreticalSum);
           int theoreticalRequest = 2 * lineItem.getTotalConsumedQuantity() - lineItem.getStockOnHand();
           product.setTheoreticalRequest(Math.min(theoreticalRequest, 0));
-          product.setQuantityRequested(lineItem.getRequestedQuantity());
-          product.setQuantityApproved(lineItem.getAuthorizedQuantity());
+          product.setQuantityRequested(getQuantity(lineItem.getRequestedQuantity()));
+          product.setQuantityApproved(getQuantity(lineItem.getAuthorizedQuantity()));
           return product;
         })
         .sorted((productA, productB) -> String.CASE_INSENSITIVE_ORDER.compare(productA.name, productB.name))
@@ -195,6 +195,10 @@ public class ViaRequisitionReportService implements IRequisitionReportService {
 
   private String getCheckedStr(Boolean checked) {
     return checked ? "☑" : "☐";
+  }
+
+  private int getQuantity(Integer value) {
+    return ObjectUtils.isEmpty(value) ? 0 : value;
   }
 
   @Data
