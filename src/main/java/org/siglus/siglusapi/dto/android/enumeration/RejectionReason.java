@@ -28,7 +28,8 @@ public enum RejectionReason {
   EXPIRED("Fora do prazo de validade"),
   UNEATABLE("Impróprio para o consumo"),
   EXCESS("Quantidade recebida a mais (no lote)"),
-  LOT_NOT_SPECIFIED("Lote não especificado na Guia de Remessa");
+  LOT_NOT_SPECIFIED("Lote não especificado na Guia de Remessa"),
+  INCORRECT_BATCH("Lote Incorreto");
 
   private final String name;
 
