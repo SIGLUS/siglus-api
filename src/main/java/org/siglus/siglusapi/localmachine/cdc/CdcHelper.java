@@ -13,17 +13,31 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
+
 package org.siglus.siglusapi.localmachine.cdc;
 
-import java.math.BigInteger;
 import java.util.List;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
 
-public interface CdcRecordRepository extends JpaRepository<CdcRecord, Long> {
+import lombok.extern.slf4j.Slf4j;
 
-  @Query(value = "select distinct txid from localmachine.cdc_records", nativeQuery = true)
-  List<BigInteger> allTxIds();
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
-  List<CdcRecord> findCdcRecordByTxIdOrderById(Long txId);
+@Slf4j
+@Component
+public class CdcHelper {
+  private final CdcRecordRepository cdcRecordRepository;
+
+  public CdcHelper(CdcRecordRepository cdcRecordRepository) {
+    this.cdcRecordRepository = cdcRecordRepository;
+  }
+
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
+  public synchronized void dispatchSubList(List<CdcRecord> subList, List<CdcListener> listeners) {
+    for (CdcListener cdcListener : listeners) {
+      cdcListener.on(subList);
+    }
+    cdcRecordRepository.deleteInBatch(subList);
+  }
 }
