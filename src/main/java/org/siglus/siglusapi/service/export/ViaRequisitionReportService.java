@@ -40,6 +40,7 @@ import org.openlmis.referencedata.dto.BaseDto;
 import org.openlmis.referencedata.dto.OrderableDto;
 import org.openlmis.requisition.domain.StatusLogEntry;
 import org.openlmis.requisition.domain.requisition.RequisitionStatus;
+import org.openlmis.requisition.dto.BaseRequisitionLineItemDto;
 import org.openlmis.requisition.dto.ProcessingPeriodDto;
 import org.openlmis.requisition.dto.RequisitionLineItemV2Dto;
 import org.siglus.siglusapi.constant.ProgramConstants;
@@ -161,25 +162,8 @@ public class ViaRequisitionReportService implements IRequisitionReportService {
         .stream().collect(Collectors.toMap(BaseDto::getId, dto -> dto));
     return requisition.getLineItems().stream()
         .map(lineItem -> {
-          ViaProduct product = new ViaProduct();
           OrderableDto orderable = orderableDtoMap.get(((RequisitionLineItemV2Dto) lineItem).getOrderable().getId());
-          if (!ObjectUtils.isEmpty(orderable)) {
-            product.setCode(orderable.getProductCode());
-            product.setName(orderable.getFullProductName());
-          }
-          product.setInitialAmount(lineItem.getBeginningBalance());
-          product.setSumEntries(lineItem.getTotalReceivedQuantity());
-          product.setSumIssues(lineItem.getTotalConsumedQuantity());
-          Integer theoreticalSum = lineItem.getBeginningBalance() + lineItem.getTotalReceivedQuantity()
-              - lineItem.getTotalConsumedQuantity();
-          product.setTheoreticalSum(theoreticalSum);
-          product.setInventoryStock(lineItem.getStockOnHand());
-          product.setDifference(lineItem.getStockOnHand() - theoreticalSum);
-          int theoreticalRequest = 2 * lineItem.getTotalConsumedQuantity() - lineItem.getStockOnHand();
-          product.setTheoreticalRequest(Math.min(theoreticalRequest, 0));
-          product.setQuantityRequested(getQuantity(lineItem.getRequestedQuantity()));
-          product.setQuantityApproved(getQuantity(lineItem.getAuthorizedQuantity()));
-          return product;
+          return ViaProduct.from(lineItem, orderable);
         })
         .sorted((productA, productB) -> String.CASE_INSENSITIVE_ORDER.compare(productA.name, productB.name))
         .collect(Collectors.toList());
@@ -197,10 +181,6 @@ public class ViaRequisitionReportService implements IRequisitionReportService {
     return checked ? "☑" : "☐";
   }
 
-  private int getQuantity(Integer value) {
-    return ObjectUtils.isEmpty(value) ? 0 : value;
-  }
-
   @Data
   public static class ViaProduct {
     private String code;
@@ -215,5 +195,30 @@ public class ViaRequisitionReportService implements IRequisitionReportService {
     private Integer theoreticalRequest;
     private Integer quantityRequested;
     private Integer quantityApproved;
+
+    public static ViaProduct from(BaseRequisitionLineItemDto lineItem, OrderableDto orderable) {
+      ViaProduct product = new ViaProduct();
+      if (!ObjectUtils.isEmpty(orderable)) {
+        product.setCode(orderable.getProductCode());
+        product.setName(orderable.getFullProductName());
+      }
+      product.setInitialAmount(lineItem.getBeginningBalance());
+      product.setSumEntries(lineItem.getTotalReceivedQuantity());
+      product.setSumIssues(lineItem.getTotalConsumedQuantity());
+      Integer theoreticalSum = lineItem.getBeginningBalance() + lineItem.getTotalReceivedQuantity()
+          - lineItem.getTotalConsumedQuantity();
+      product.setTheoreticalSum(theoreticalSum);
+      product.setInventoryStock(lineItem.getStockOnHand());
+      product.setDifference(lineItem.getStockOnHand() - theoreticalSum);
+      int theoreticalRequest = 2 * lineItem.getTotalConsumedQuantity() - lineItem.getStockOnHand();
+      product.setTheoreticalRequest(Math.min(theoreticalRequest, 0));
+      product.setQuantityRequested(getQuantity(lineItem.getRequestedQuantity()));
+      product.setQuantityApproved(getQuantity(lineItem.getAuthorizedQuantity()));
+      return product;
+    }
+
+    private static int getQuantity(Integer value) {
+      return ObjectUtils.isEmpty(value) ? 0 : value;
+    }
   }
 }
