@@ -931,6 +931,7 @@ public class SiglusRequisitionService {
 
   private Set<UUID> getRegularFulFilledOrderableIds(Requisition regularRequisition) {
     Map<UUID, Integer> orderableIdToRequestQuantityMap = regularRequisition.getRequisitionLineItems().stream()
+        .peek(item -> log.info(item.getOrderable().toString() + "  quantity: " + item.getRequestedQuantity()))
         .collect(toMap(item -> item.getOrderable().getId(), RequisitionLineItem::getRequestedQuantity));
     Map<UUID, Long> orderableIdToFulfillQuantityMap = new HashMap<>();
     Set<UUID> orderExternalIds = orderExternalRepository
