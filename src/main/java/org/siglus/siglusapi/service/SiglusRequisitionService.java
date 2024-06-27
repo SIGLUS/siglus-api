@@ -211,6 +211,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.MultiValueMap;
+import org.springframework.util.ObjectUtils;
 
 @Service
 @Slf4j
@@ -931,8 +932,8 @@ public class SiglusRequisitionService {
 
   private Set<UUID> getRegularFulFilledOrderableIds(Requisition regularRequisition) {
     Map<UUID, Integer> orderableIdToRequestQuantityMap = regularRequisition.getRequisitionLineItems().stream()
-        .peek(item -> log.info(item.getOrderable().toString() + "  quantity: " + item.getRequestedQuantity()))
-        .collect(toMap(item -> item.getOrderable().getId(), RequisitionLineItem::getRequestedQuantity));
+        .collect(toMap(item -> item.getOrderable().getId(),
+            item -> ObjectUtils.isEmpty(item.getRequestedQuantity()) ? 0 : item.getRequestedQuantity()));
     Map<UUID, Long> orderableIdToFulfillQuantityMap = new HashMap<>();
     Set<UUID> orderExternalIds = orderExternalRepository
         .findOrderExternalIdByRequisitionId(regularRequisition.getId()).stream()
