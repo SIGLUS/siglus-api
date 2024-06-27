@@ -58,7 +58,7 @@ import org.springframework.util.ObjectUtils;
 @Slf4j
 @Service
 @SuppressWarnings("PMD.CyclomaticComplexity")
-public class ViaRequisitionReportServiceService implements IRequisitionReportService {
+public class ViaRequisitionReportService implements IRequisitionReportService {
 
   private final Set<String> supportedProgramSet = new HashSet<>(
       newArrayList(ProgramConstants.VIA_PROGRAM_CODE, ProgramConstants.MMC_PROGRAM_CODE));
@@ -178,7 +178,7 @@ public class ViaRequisitionReportServiceService implements IRequisitionReportSer
           int theoreticalRequest = 2 * lineItem.getTotalConsumedQuantity() - lineItem.getStockOnHand();
           product.setTheoreticalRequest(Math.min(theoreticalRequest, 0));
           product.setQuantityRequested(lineItem.getRequestedQuantity());
-          product.setQuantityApproved(lineItem.getApprovedQuantity());
+          product.setQuantityApproved(lineItem.getAuthorizedQuantity());
           return product;
         })
         .sorted((productA, productB) -> String.CASE_INSENSITIVE_ORDER.compare(productA.name, productB.name))
