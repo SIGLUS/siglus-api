@@ -17,10 +17,15 @@ package org.siglus.siglusapi.web.withoutlocation;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 import org.junit.Before;
@@ -30,13 +35,21 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.fulfillment.domain.VersionEntityReference;
+import org.openlmis.fulfillment.service.referencedata.FacilityDto;
+import org.openlmis.fulfillment.web.util.OrderObjectReferenceDto;
+import org.openlmis.fulfillment.web.util.ShipmentObjectReferenceDto;
 import org.siglus.siglusapi.domain.PodSubDraftLineItem;
+import org.siglus.siglusapi.dto.ProofOfDeliverySubDraftDto;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.service.SiglusLotService;
 import org.siglus.siglusapi.service.SiglusPodService;
+import org.siglus.siglusapi.util.MovementDateValidator;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.web.request.CreatePodSubDraftLineItemRequest;
+import org.siglus.siglusapi.web.request.SubmitPodSubDraftsRequest;
+import org.siglus.siglusapi.web.request.UpdatePodSubDraftRequest;
 import org.siglus.siglusapi.web.response.CreatePodSubDraftLineItemResponse;
+import org.springframework.security.oauth2.provider.OAuth2Authentication;
 
 @RunWith(MockitoJUnitRunner.class)
 public class SiglusPodWithoutLocationControllerTest {
@@ -50,6 +63,8 @@ public class SiglusPodWithoutLocationControllerTest {
   private SiglusLotService siglusLotService;
   @Mock
   private SiglusAuthenticationHelper authenticationHelper;
+  @Mock
+  private MovementDateValidator movementDateValidator;
 
   @Before
   public void prepare() {
@@ -101,5 +116,68 @@ public class SiglusPodWithoutLocationControllerTest {
     controller.deletePodSubDraftLineItem(podId, subDraftId, lineItemId);
 
     verify(proofOfDeliveryService).deletePodSubDraftLineItem(podId, subDraftId, lineItemId);
+  }
+
+  @Test
+  public void shouldMergeSubDrafts() {
+    UUID podId = UUID.randomUUID();
+    Set<String> expand = new HashSet<>();
+
+    controller.mergeSubDrafts(podId, expand);
+
+    verify(proofOfDeliveryService).mergeSubDrafts(podId, expand);
+  }
+
+  @Test
+  public void shouldSubmitSubDrafts() {
+    doNothing().when(movementDateValidator).validateMovementDate(any(), any());
+    ProofOfDeliverySubDraftDto draftDto = new ProofOfDeliverySubDraftDto();
+    draftDto.setReceivedDate(LocalDate.now());
+    FacilityDto facilityDto = new FacilityDto();
+    facilityDto.setId(UUID.randomUUID());
+    OrderObjectReferenceDto orderDto = new OrderObjectReferenceDto();
+    orderDto.setReceivingFacility(facilityDto);
+    ShipmentObjectReferenceDto shipmentDto = new ShipmentObjectReferenceDto(orderDto, null, null, null, null, null);
+    draftDto.setShipment(shipmentDto);
+    SubmitPodSubDraftsRequest request = new SubmitPodSubDraftsRequest();
+    request.setPodDto(draftDto);
+    UUID podId = UUID.randomUUID();
+    OAuth2Authentication authentication = mock(OAuth2Authentication.class);
+
+    controller.submitSubDrafts(podId, request, authentication);
+
+    verify(proofOfDeliveryService).submitSubDrafts(podId, request, authentication, false);
+  }
+
+  @Test
+  public void shouldGetSubDraftDetail() {
+    UUID podId = UUID.randomUUID();
+    UUID subDraftId = UUID.randomUUID();
+    Set<String> expand = new HashSet<>();
+
+    controller.getSubDraftDetail(podId, subDraftId, expand);
+
+    verify(proofOfDeliveryService).getSubDraftDetail(podId, subDraftId, expand);
+  }
+
+  @Test
+  public void shouldUpdateSubDraft() {
+    UUID podId = UUID.randomUUID();
+    UUID subDraftId = UUID.randomUUID();
+    UpdatePodSubDraftRequest request = new UpdatePodSubDraftRequest();
+
+    controller.updateSubDraft(podId, subDraftId, request);
+
+    verify(proofOfDeliveryService).updateSubDraft(request, subDraftId);
+  }
+
+  @Test
+  public void shouldDeleteSubDraft() {
+    UUID podId = UUID.randomUUID();
+    UUID subDraftId = UUID.randomUUID();
+
+    controller.deleteSubDraft(podId, subDraftId);
+
+    verify(proofOfDeliveryService).deleteSubDraft(podId, subDraftId);
   }
 }

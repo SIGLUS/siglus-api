@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.web.android;
 
+import static com.google.common.collect.Lists.newArrayList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
 import static org.mockito.Matchers.any;
@@ -26,6 +27,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
@@ -36,10 +38,15 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.siglus.siglusapi.constant.android.AndroidConstants;
 import org.siglus.siglusapi.domain.AppInfo;
+import org.siglus.siglusapi.dto.android.enumeration.TestProject;
 import org.siglus.siglusapi.dto.android.request.AndroidHeader;
 import org.siglus.siglusapi.dto.android.request.HfCmmDto;
+import org.siglus.siglusapi.dto.android.request.PatientLineItemColumnRequest;
+import org.siglus.siglusapi.dto.android.request.PatientLineItemsRequest;
 import org.siglus.siglusapi.dto.android.request.PodRequest;
 import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
+import org.siglus.siglusapi.dto.android.request.StockCardDeleteRequest;
+import org.siglus.siglusapi.dto.android.request.TestConsumptionLineItemRequest;
 import org.siglus.siglusapi.dto.android.response.FacilityProductMovementsResponse;
 import org.siglus.siglusapi.dto.android.response.FacilityResponse;
 import org.siglus.siglusapi.dto.android.response.ProductSyncResponse;
@@ -198,6 +205,15 @@ public class SiglusMeControllerTest {
   }
 
   @Test
+  public void shouldCallDeleteAdditionalOrderable() {
+    List<StockCardDeleteRequest> requests = new ArrayList<>();
+
+    controller.deleteAdditionalOrderable(requests);
+
+    verify(service).deleteStockCardByProduct(requests);
+  }
+
+  @Test
   public void shouldCallServiceWhenCreateRequisition() {
     // given
     RequisitionCreateRequest requisitionRequest = new RequisitionCreateRequest();
@@ -212,13 +228,29 @@ public class SiglusMeControllerTest {
   @Test
   public void shouldCallServiceWhenGetRequisition() {
     // given
+    PatientLineItemColumnRequest columnRequest = new PatientLineItemColumnRequest();
+    columnRequest.setName("12345");
+    PatientLineItemsRequest patientLineItemsRequest = new PatientLineItemsRequest();
+    patientLineItemsRequest.setColumns(Collections.singletonList(columnRequest));
+    RequisitionCreateRequest request = new RequisitionCreateRequest();
+    request.setPatientLineItems(Collections.singletonList(patientLineItemsRequest));
+
+    TestConsumptionLineItemRequest testConsumptionLineItemRequest1 = new TestConsumptionLineItemRequest();
+    testConsumptionLineItemRequest1.setTestProject(TestProject.NEWTEST.name());
+    TestConsumptionLineItemRequest testConsumptionLineItemRequest2 = new TestConsumptionLineItemRequest();
+    testConsumptionLineItemRequest2.setTestProject(TestProject.HIVUNIGOLD.name());
+    request.setTestConsumptionLineItems(newArrayList(testConsumptionLineItemRequest1, testConsumptionLineItemRequest2));
+    RequisitionResponse requisitionResponse = new RequisitionResponse();
+    requisitionResponse.setRequisitionResponseList(Collections.singletonList(request));
     when(service.getRequisitionResponse("2021-06-01")).thenReturn(requisitionResponse);
 
     // when
-    RequisitionResponse requisitionResponse = controller.getRequisitionResponse("2021-06-01");
+    RequisitionResponse result = controller.getRequisitionResponse("2021-06-01");
 
     // then
-    assertSame(requisitionResponse, this.requisitionResponse);
+    assertSame(1, result.getRequisitionResponseList().get(0).getPatientLineItems().size());
+    assertSame(0, result.getRequisitionResponseList().get(0).getPatientLineItems().get(0).getColumns().size());
+    assertSame(1, result.getRequisitionResponseList().get(0).getTestConsumptionLineItems().size());
     verify(service).getRequisitionResponse("2021-06-01");
   }
 

@@ -17,6 +17,7 @@ package org.siglus.siglusapi.web;
 
 import static org.mockito.Mockito.verify;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -27,9 +28,11 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.siglus.siglusapi.exception.InvalidReasonException;
 import org.siglus.siglusapi.service.SiglusFacilityService;
 import org.siglus.siglusapi.service.SiglusLotLocationService;
 import org.siglus.siglusapi.service.SiglusLotService;
+import org.siglus.siglusapi.web.request.RemoveLotsRequest;
 
 @SuppressWarnings({"PMD.UnusedPrivateField"})
 @RunWith(MockitoJUnitRunner.class)
@@ -70,5 +73,59 @@ public class SiglusFacilityControllerTest {
     UUID facilityId = UUID.randomUUID();
 
     siglusFacilityController.searchLots(facilityId, null, null);
+  }
+
+  @Test
+  public void shouldSuccessWhenSearchFacilityRequisitionGroup() {
+    UUID facilityId = UUID.randomUUID();
+    Set<UUID> programs = Collections.singleton(UUID.randomUUID());
+
+    siglusFacilityController.searchFacilityRequisitionGroup(facilityId, programs);
+
+    verify(siglusFacilityService).searchFacilityRequisitionGroup(facilityId, programs);
+  }
+
+  @Test
+  public void shouldSuccessWhenSearchLocationStatus() {
+    UUID facilityId = UUID.randomUUID();
+
+    siglusFacilityController.searchLocationStatus(facilityId);
+
+    verify(lotLocationService).searchLocationStatus(facilityId);
+  }
+
+  @Test
+  public void shouldSuccessWhenGetAllClientFacilities() {
+    UUID facilityId = UUID.randomUUID();
+    UUID programId = UUID.randomUUID();
+
+    siglusFacilityController.getAllClientFacilities(facilityId, programId);
+
+    verify(siglusFacilityService).getAllClientFacilities(facilityId, programId);
+  }
+
+  @Test
+  public void shouldSuccessWhenRemoveExpiredLots() {
+    RemoveLotsRequest request = new RemoveLotsRequest();
+    request.setLotType(RemoveLotsRequest.EXPIRED);
+    request.setSignature("signature");
+    request.setDocumentNumber("documentNumber");
+    UUID facilityId = UUID.randomUUID();
+
+    siglusFacilityController.removeExpiredLots(facilityId, request);
+
+    verify(siglusFacilityService).removeExpiredLots(facilityId,
+        request.getLots(), request.getSignature(), request.getDocumentNumber());
+  }
+
+  @Test(expected = InvalidReasonException.class)
+  public void shouldThrowExceptionWhenRemoveExpiredLotsDoesNotSupport() {
+    RemoveLotsRequest request = new RemoveLotsRequest();
+    request.setLotType("TEST");
+    request.setSignature("signature");
+    request.setDocumentNumber("documentNumber");
+    UUID facilityId = UUID.randomUUID();
+
+    siglusFacilityController.removeExpiredLots(facilityId, request);
   }
 }
