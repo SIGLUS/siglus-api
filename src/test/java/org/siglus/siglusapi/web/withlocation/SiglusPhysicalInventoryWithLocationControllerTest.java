@@ -18,6 +18,7 @@ package org.siglus.siglusapi.web.withlocation;
 import static org.mockito.Mockito.verify;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
 
+import java.util.List;
 import java.util.UUID;
 import org.assertj.core.util.Lists;
 import org.junit.Test;
@@ -78,6 +79,19 @@ public class SiglusPhysicalInventoryWithLocationControllerTest {
   }
 
   @Test
+  public void shouldCallCreateWithLocationOptionForOneProgram() {
+    UUID programId = UUID.randomUUID();
+    PhysicalInventoryDto physicalInventoryDto = PhysicalInventoryDto.builder()
+        .programId(programId).build();
+    // when
+    controller.createEmptyPhysicalInventoryWithLocationOption(
+        physicalInventoryDto, 2, true, optionString, isByLocation);
+    // then
+    verify(siglusPhysicalInventoryService).createAndSpiltNewDraftForOneProgram(
+        physicalInventoryDto, 2, optionString, isByLocation);
+  }
+
+  @Test
   public void shouldCallUpdateSubDraftsBySubDraftIdsWhenUpdateSubDrafts() {
     // given
     PhysicalInventorySubDraftDto physicalInventoryDto = new PhysicalInventorySubDraftDto();
@@ -108,6 +122,15 @@ public class SiglusPhysicalInventoryWithLocationControllerTest {
   }
 
   @Test
+  public void shouldCallGetSubDraftListForOneProgram() {
+    UUID programId = UUID.randomUUID();
+    // when
+    controller.searchSubDraftList(programId, facilityId, isDraft);
+    // then
+    verify(siglusPhysicalInventoryService).getSubDraftListForOneProgram(programId, facilityId, isDraft);
+  }
+
+  @Test
   public void shouldCallDeleteSubDraftsBySubDraftIdsWhenDeleteSubDrafts() {
     // when
     controller.deleteSubDrafts(Boolean.FALSE, Lists.newArrayList(subDraftId), isByLocation);
@@ -116,5 +139,12 @@ public class SiglusPhysicalInventoryWithLocationControllerTest {
         Lists.newArrayList(subDraftId), Boolean.FALSE, isByLocation);
   }
 
+  @Test
+  public void shouldCallSearchSubDraftPhysicalInventory() {
+    List<UUID> draftIds = Lists.newArrayList(subDraftId);
 
+    controller.searchSubDraftPhysicalInventory(draftIds, isByLocation);
+
+    verify(siglusPhysicalInventoryService).getPhysicalInventoryDtoBySubDraftIds(draftIds);
+  }
 }
