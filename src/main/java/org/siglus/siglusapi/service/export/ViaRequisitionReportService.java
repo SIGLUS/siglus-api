@@ -207,10 +207,10 @@ public class ViaRequisitionReportService implements IRequisitionReportService {
       product.setSumIssues(lineItem.getTotalConsumedQuantity());
       Integer theoreticalSum = lineItem.getBeginningBalance() + lineItem.getTotalReceivedQuantity()
           - lineItem.getTotalConsumedQuantity();
-      theoreticalSum = Math.max(theoreticalSum, 0);
-      product.setTheoreticalSum(theoreticalSum);
+      product.setTheoreticalSum(Math.max(theoreticalSum, 0));
       product.setInventoryStock(lineItem.getStockOnHand());
-      product.setDifference(lineItem.getStockOnHand() - theoreticalSum);
+      Integer difference = lineItem.getStockOnHand() - theoreticalSum;
+      product.setDifference(difference);
       Integer theoreticalRequest = lineItem.getEstimatedQuantityToRequest();
       if (ObjectUtils.isEmpty(theoreticalRequest)) {
         theoreticalRequest = 2 * lineItem.getTotalConsumedQuantity() - lineItem.getStockOnHand();
