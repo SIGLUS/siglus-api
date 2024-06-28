@@ -33,17 +33,14 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.openlmis.referencedata.domain.Facility;
-import org.openlmis.requisition.domain.requisition.VersionEntityReference;
+import org.openlmis.referencedata.domain.Orderable;
 import org.openlmis.requisition.dto.BaseRequisitionLineItemDto;
-import org.openlmis.requisition.dto.BasicOrderableDto;
-import org.openlmis.requisition.dto.OrderableDto;
 import org.openlmis.requisition.dto.ProcessingPeriodDto;
-import org.openlmis.requisition.dto.VersionIdentityDto;
-import org.openlmis.requisition.service.referencedata.OrderableReferenceDataService;
+import org.siglus.common.domain.ProgramOrderablesExtension;
+import org.siglus.common.repository.ProgramOrderablesExtensionRepository;
 import org.siglus.siglusapi.constant.ProgramConstants;
 import org.siglus.siglusapi.dto.AgeGroupLineItemDto;
 import org.siglus.siglusapi.dto.AgeGroupServiceDto;
@@ -51,6 +48,7 @@ import org.siglus.siglusapi.dto.GeographicProvinceDistrictDto;
 import org.siglus.siglusapi.dto.PatientColumnDto;
 import org.siglus.siglusapi.dto.PatientGroupDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
+import org.siglus.siglusapi.repository.OrderableRepository;
 import org.siglus.siglusapi.repository.SiglusFacilityRepository;
 import org.siglus.siglusapi.repository.SiglusGeographicInfoRepository;
 import org.siglus.siglusapi.service.SiglusProcessingPeriodService;
@@ -69,7 +67,10 @@ public class MtbRequisitionReportServiceService implements IRequisitionReportSer
   @Autowired
   private SiglusProcessingPeriodService siglusProcessingPeriodService;
   @Autowired
-  private OrderableReferenceDataService orderableReferenceDataService;
+  private ProgramOrderablesExtensionRepository programOrderablesExtensionRepository;
+  @Autowired
+  private OrderableRepository orderableRepository;
+
 
   @Override
   public Set<String> supportedProgramCodes() {
@@ -102,7 +103,7 @@ public class MtbRequisitionReportServiceService implements IRequisitionReportSer
     UUID processingPeriodId = requisition.getProcessingPeriodId();
     ProcessingPeriodDto processingPeriodDto = siglusProcessingPeriodService.getProcessingPeriodDto(processingPeriodId);
     topContent.put("year", processingPeriodDto.getEndDate().getYear());
-    topContent.put("month", processingPeriodDto.getEndDate().format(DateTimeFormatter.ofPattern("MMM",
+    topContent.put("month", processingPeriodDto.getEndDate().format(DateTimeFormatter.ofPattern("MMMM",
         new Locale("pt", "PT"))));
     excelWriter.fill(topContent, writeSheet);
   }
@@ -110,22 +111,21 @@ public class MtbRequisitionReportServiceService implements IRequisitionReportSer
   private void fillProductListContent(SiglusRequisitionDto requisition, ExcelWriter excelWriter,
       WriteSheet writeSheet) {
     List<BaseRequisitionLineItemDto> lineItems = requisition.getLineItems();
-    Set<VersionEntityReference> versionEntityReferences = lineItems.stream().map(lineItemDto -> {
-      VersionIdentityDto orderableIdentity = lineItemDto.getOrderableIdentity();
-      return new VersionEntityReference(orderableIdentity.getId(),
-          orderableIdentity.getVersionNumber());
-    }).collect(Collectors.toSet());
-    Map<UUID, OrderableDto> orderableIdToOrderableDtoMap = orderableReferenceDataService
-        .findByIdentities(versionEntityReferences).stream()
-        .collect(Collectors.toMap(BasicOrderableDto::getId, Function.identity()));
+    Set<UUID> orderableIds = lineItems.stream().map(lineItem -> lineItem.getOrderableIdentity().getId())
+        .collect(Collectors.toSet());
+    Map<UUID, String> orderableIdToNameMap = orderableRepository.findLatestByIds(orderableIds).stream()
+        .collect(Collectors.toMap(Orderable::getId, Orderable::getFullProductName));
+    Map<UUID, String> orderableIdToUnitMap = programOrderablesExtensionRepository
+        .findAllByProgramCode(ProgramConstants.MTB_PROGRAM_CODE).stream()
+        .collect(Collectors.toMap(ProgramOrderablesExtension::getOrderableId,
+            extension -> extension.getUnit() == null ? "" : extension.getUnit()));
     FillConfig fillConfig = FillConfig.builder().forceNewRow(Boolean.TRUE).build();
     List<Map<String, Object>> productContents = new ArrayList<>();
     lineItems.forEach(lineItem -> {
       Map<String, Object> productContent = new HashMap<>();
       UUID orderableId = lineItem.getOrderableIdentity().getId();
-      OrderableDto orderableDto = orderableIdToOrderableDtoMap.get(orderableId);
-      productContent.put("productName", orderableDto.getFullProductName());
-      productContent.put("productUnit", orderableDto.getDispensable().getDisplayUnit());
+      productContent.put("productName", orderableIdToNameMap.getOrDefault(orderableId, ""));
+      productContent.put("productUnit", orderableIdToUnitMap.getOrDefault(orderableId, ""));
       productContent.put("productInitialStock", lineItem.getBeginningBalance());
       productContent.put("productEntries", lineItem.getTotalReceivedQuantity());
       productContent.put("productIssues", lineItem.getTotalConsumedQuantity());
@@ -142,7 +142,7 @@ public class MtbRequisitionReportServiceService implements IRequisitionReportSer
     Map<String, Object> bottomContent = new HashMap<>();
     bottomContent.put("createdDate",
         requisition.getCreatedDate().toLocalDate()
-            .format(DateTimeFormatter.ofPattern("dd MMM yyyy", new Locale("pt", "PT"))));
+            .format(DateTimeFormatter.ofPattern("dd MMMM yyyy", new Locale("pt", "PT"))));
     Map<String, Object> extraDataMap = requisition.getExtraData();
     Map<String, Object> signature = (Map<String, Object>) extraDataMap.get("signaure");
     bottomContent.put("authorize", signature.get("authorize"));

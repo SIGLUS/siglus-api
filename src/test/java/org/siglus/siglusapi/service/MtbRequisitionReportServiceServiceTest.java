@@ -34,21 +34,23 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.openlmis.referencedata.domain.Code;
 import org.openlmis.referencedata.domain.Facility;
+import org.openlmis.referencedata.domain.Orderable;
 import org.openlmis.requisition.domain.requisition.RequisitionStatus;
-import org.openlmis.requisition.domain.requisition.VersionEntityReference;
-import org.openlmis.requisition.dto.DispensableDto;
 import org.openlmis.requisition.dto.ObjectReferenceDto;
 import org.openlmis.requisition.dto.OrderableDto;
 import org.openlmis.requisition.dto.ProcessingPeriodDto;
 import org.openlmis.requisition.dto.RequisitionLineItemV2Dto;
-import org.openlmis.requisition.service.referencedata.OrderableReferenceDataService;
+import org.siglus.common.domain.ProgramOrderablesExtension;
+import org.siglus.common.repository.ProgramOrderablesExtensionRepository;
 import org.siglus.siglusapi.dto.AgeGroupLineItemDto;
 import org.siglus.siglusapi.dto.AgeGroupServiceDto;
 import org.siglus.siglusapi.dto.GeographicProvinceDistrictDto;
 import org.siglus.siglusapi.dto.PatientColumnDto;
 import org.siglus.siglusapi.dto.PatientGroupDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
+import org.siglus.siglusapi.repository.OrderableRepository;
 import org.siglus.siglusapi.repository.SiglusFacilityRepository;
 import org.siglus.siglusapi.repository.SiglusGeographicInfoRepository;
 import org.siglus.siglusapi.service.export.MtbRequisitionReportServiceService;
@@ -66,7 +68,9 @@ public class MtbRequisitionReportServiceServiceTest {
   @Mock
   private SiglusProcessingPeriodService siglusProcessingPeriodService;
   @Mock
-  private OrderableReferenceDataService orderableReferenceDataService;
+  private ProgramOrderablesExtensionRepository programOrderablesExtensionRepository;
+  @Mock
+  private OrderableRepository orderableRepository;
   @Mock
   private ExcelWriter excelWriter;
 
@@ -88,9 +92,6 @@ public class MtbRequisitionReportServiceServiceTest {
     UUID orderableId = UUID.randomUUID();
     OrderableDto orderableDto = new OrderableDto();
     orderableDto.setId(orderableId);
-    DispensableDto dispensableDto = new DispensableDto();
-    dispensableDto.setDisplayUnit("unit");
-    orderableDto.setDispensable(dispensableDto);
     RequisitionLineItemV2Dto requisitionLineItemV2Dto = new RequisitionLineItemV2Dto();
     requisitionLineItemV2Dto.setOrderable(orderableDto);
     List<RequisitionLineItemV2Dto> requisitionLineItemV2Dtos = new ArrayList<>();
@@ -137,10 +138,14 @@ public class MtbRequisitionReportServiceServiceTest {
     processingPeriodDto.setId(processingPeriodId);
     processingPeriodDto.setEndDate(LocalDate.now());
     when(siglusProcessingPeriodService.getProcessingPeriodDto(processingPeriodId)).thenReturn(processingPeriodDto);
-    VersionEntityReference versionEntityReference = new VersionEntityReference();
-    versionEntityReference.setId(orderableId);
-    when(orderableReferenceDataService.findByIdentities(Sets.newHashSet(versionEntityReference))).thenReturn(
-        Lists.newArrayList(orderableDto));
+    Orderable orderable =
+        new Orderable(Code.code("productCode"), null, 0, 0, Boolean.FALSE, orderableId, 0L);
+    orderable.setFullProductName("productName");
+    when(orderableRepository.findLatestByIds(Sets.newHashSet(orderableId))).thenReturn(Lists.newArrayList(orderable));
+    ProgramOrderablesExtension extension = new ProgramOrderablesExtension();
+    extension.setOrderableId(orderableId);
+    extension.setProgramCode("TB");
+    when(programOrderablesExtensionRepository.findAllByProgramCode("TB")).thenReturn(Lists.newArrayList(extension));
 
     // when
     mtbRequisitionReportServiceService.generateReport(dto, excelWriter);
@@ -148,7 +153,8 @@ public class MtbRequisitionReportServiceServiceTest {
     // then
     verify(siglusGeographicInfoRepository).getGeographicProvinceDistrictInfo(any());
     verify(siglusProcessingPeriodService).getProcessingPeriodDto(any());
-    verify(orderableReferenceDataService).findByIdentities(any());
+    verify(orderableRepository).findLatestByIds(any());
+    verify(programOrderablesExtensionRepository).findAllByProgramCode(any());
     verify(siglusFacilityRepository).findOne(any(UUID.class));
   }
 }
