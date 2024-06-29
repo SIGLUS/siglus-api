@@ -52,11 +52,13 @@ import org.openlmis.stockmanagement.service.PhysicalInventoryService;
 import org.openlmis.stockmanagement.web.PhysicalInventoryController;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.CanFulfillForMeEntryDto;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2Dto;
+import org.siglus.siglusapi.domain.PhysicalInventoryEmptyLocationLineItem;
 import org.siglus.siglusapi.domain.PhysicalInventoryLineItemsExtension;
 import org.siglus.siglusapi.domain.PhysicalInventorySubDraft;
 import org.siglus.siglusapi.dto.enums.PhysicalInventorySubDraftEnum;
 import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.repository.OrderableRepository;
+import org.siglus.siglusapi.repository.PhysicalInventoryEmptyLocationLineItemRepository;
 import org.siglus.siglusapi.repository.PhysicalInventoryLineItemsExtensionRepository;
 import org.siglus.siglusapi.repository.PhysicalInventorySubDraftRepository;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
@@ -112,8 +114,8 @@ public class SiglusPhysicalInventorySubDraftServiceTest {
   private PhysicalInventorySubDraftRepository physicalInventorySubDraftRepository;
   @Mock
   private SiglusPhysicalInventoryService siglusPhysicalInventoryService;
-
-
+  @Mock
+  private PhysicalInventoryEmptyLocationLineItemRepository physicalInventoryEmptyLocationLineItemRepository;
   @Mock
   private SiglusStockCardSummariesService siglusStockCardSummariesService;
 
@@ -167,7 +169,7 @@ public class SiglusPhysicalInventorySubDraftServiceTest {
 
     // when
     siglusPhysicalInventorySubDraftService.updateSubDrafts(subDraftIds, physicalInventoryDto,
-        PhysicalInventorySubDraftEnum.DRAFT, false);
+        PhysicalInventorySubDraftEnum.DRAFT, true);
     verify(physicalInventorySubDraftRepository, times(2)).findAll(any(List.class));
   }
 
@@ -442,7 +444,23 @@ public class SiglusPhysicalInventorySubDraftServiceTest {
     // when
     siglusPhysicalInventorySubDraftService.deleteSubDrafts(subDraftIds, Boolean.FALSE, false);
     verify(physicalInventorySubDraftRepository).findAll(any(List.class));
+  }
 
+  @Test
+  public void shouldResetLocationWhenDeleteSubDraftByLocation() {
+    when(supportedProgramsHelper.findHomeFacilitySupportedProgramIds())
+        .thenReturn(Sets.newHashSet(UUID.randomUUID(), UUID.randomUUID()));
+    List<UUID> subDraftIds = Lists.newArrayList(subDraftId);
+    when(physicalInventorySubDraftRepository.findAll(subDraftIds)).thenReturn(new ArrayList<>());
+    PhysicalInventoryEmptyLocationLineItem locationLineItem = new PhysicalInventoryEmptyLocationLineItem();
+    locationLineItem.setSkipped(true);
+    locationLineItem.setHasProduct(true);
+    when(physicalInventoryEmptyLocationLineItemRepository.findBySubDraftIdIn(subDraftIds))
+        .thenReturn(Lists.newArrayList(locationLineItem));
+
+    siglusPhysicalInventorySubDraftService.deleteSubDrafts(subDraftIds, Boolean.FALSE, true);
+
+    verify(physicalInventoryEmptyLocationLineItemRepository).save(any(List.class));
   }
 
   @Test

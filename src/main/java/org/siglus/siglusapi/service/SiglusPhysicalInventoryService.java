@@ -1466,7 +1466,8 @@ public class SiglusPhysicalInventoryService {
     return stockCardRepository.countByFacilityId(facility) == 0;
   }
 
-  private boolean canInitialOrPhysicalInventory(UUID facilityId, boolean initialPhysicalInventory) {
+  @VisibleForTesting
+  boolean canInitialOrPhysicalInventory(UUID facilityId, boolean initialPhysicalInventory) {
     boolean virtualFacility = isVirtualFacility(facilityId);
     boolean emptyStockCardCount = isStockCardCountEmpty(facilityId);
     return (!virtualFacility && emptyStockCardCount && initialPhysicalInventory)

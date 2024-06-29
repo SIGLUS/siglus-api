@@ -662,8 +662,8 @@ public class SiglusPodService {
 
   private void resetLineItems(Set<UUID> lineItemIds, ProofOfDeliveryDto podDto) {
     List<ProofOfDeliveryLineItem> lineItems = podLineItemsRepository.findAll(lineItemIds);
-    List<ProofOfDeliveryLineItem> toBeUpdatedLineItems = buildToBeUpdatedLineItems(podDto, lineItems,
-        PodSubDraftStatusEnum.NOT_YET_STARTED);
+    List<ProofOfDeliveryLineItem> toBeUpdatedLineItems = lineItems.stream()
+        .map(this::buildResetLineItem).collect(Collectors.toList());
     log.info("update ProofOfDeliveryLineItem list, podIdd:{}, lineItemIds:{}", podDto.getId(),
         lineItemIds);
     podLineItemsRepository.save(toBeUpdatedLineItems);
@@ -682,25 +682,6 @@ public class SiglusPodService {
     if (PodSubDraftStatusEnum.SUBMITTED == podSubDraft.getStatus()) {
       throw new BusinessDataException(new Message(ERROR_CANNOT_OPERATE_WHEN_SUB_DRAFT_SUBMITTED), podSubDraft.getId());
     }
-  }
-
-  private List<ProofOfDeliveryLineItem> buildToBeUpdatedLineItems(ProofOfDeliveryDto proofOfDeliveryDto,
-      List<ProofOfDeliveryLineItem> lineItems, PodSubDraftStatusEnum subDraftStatus) {
-    Map<UUID, ProofOfDeliveryLineItemDto> idToLineItemDto = convertToLineItemDtos(
-        proofOfDeliveryDto.getLineItems()).stream()
-        .collect(Collectors.toMap(ProofOfDeliveryLineItemDto::getId, e -> e));
-    List<ProofOfDeliveryLineItem> toBeUpdatedLineItems = Lists.newArrayListWithExpectedSize(lineItems.size());
-    lineItems.forEach(lineItem -> {
-      ProofOfDeliveryLineItemDto lineItemDto = idToLineItemDto.get(lineItem.getId());
-      ProofOfDeliveryLineItem toBeUpdatedLineItem;
-      if (PodSubDraftStatusEnum.NOT_YET_STARTED == subDraftStatus) {
-        toBeUpdatedLineItem = buildResetLineItem(lineItem);
-      } else {
-        toBeUpdatedLineItem = buildToBeUpdatedLineItem(lineItem, lineItemDto);
-      }
-      toBeUpdatedLineItems.add(toBeUpdatedLineItem);
-    });
-    return toBeUpdatedLineItems;
   }
 
   private List<ProofOfDeliveryLineItem> updateDraftLineItems(List<ProofOfDeliverySubDraftLineItemDto> draftLineItems,
@@ -728,15 +709,6 @@ public class SiglusPodService {
       }
     });
     return lineItems;
-  }
-
-  private ProofOfDeliveryLineItem buildToBeUpdatedLineItem(ProofOfDeliveryLineItem lineItem,
-      ProofOfDeliveryLineItemDto lineItemDto) {
-    ProofOfDeliveryLineItem toBeUpdatedLineItem = new ProofOfDeliveryLineItem(lineItem.getOrderable(),
-        lineItem.getLotId(), lineItemDto.getQuantityAccepted(), null,
-        lineItemDto.getQuantityRejected(), lineItemDto.getRejectionReasonId(), lineItemDto.getNotes());
-    toBeUpdatedLineItem.setId(lineItem.getId());
-    return toBeUpdatedLineItem;
   }
 
   private ProofOfDeliveryLineItem buildResetLineItem(ProofOfDeliveryLineItem lineItem) {

@@ -29,6 +29,7 @@ import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyList;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -69,6 +70,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.referencedata.domain.Orderable;
 import org.openlmis.requisition.dto.ApprovedProductDto;
@@ -137,6 +139,7 @@ public class SiglusPhysicalInventoryServiceTest {
   @Rule
   public ExpectedException exception = ExpectedException.none();
 
+  @Spy
   @InjectMocks
   private SiglusPhysicalInventoryService siglusPhysicalInventoryService;
 
@@ -885,7 +888,7 @@ public class SiglusPhysicalInventoryServiceTest {
 
     // when
     siglusPhysicalInventoryService.createAndSplitNewDraftForAllPrograms(
-        physicalInventoryDto, 3, false, null, false);
+        physicalInventoryDto, 3, false, "product", false);
   }
 
   @Test
@@ -1025,9 +1028,22 @@ public class SiglusPhysicalInventoryServiceTest {
         .programId(programId).build();
 
     // when
-    siglusPhysicalInventoryService.createAndSplitNewDraftForAllPrograms(physicalInventoryDto, 3, true, null, false);
+    siglusPhysicalInventoryService.createAndSplitNewDraftForAllPrograms(physicalInventoryDto,
+        3, true, "product", false);
   }
 
+  @Test(expected = ValidationMessageException.class)
+  public void shouldThrowExceptionWhenNewDraftForAllProgramsGivenCanNotStartInventory() {
+    doReturn(true)
+        .when(siglusPhysicalInventoryService).canInitialOrPhysicalInventory(facilityId, false);
+    doReturn(PhysicalInventoryValidationDto.builder().canStartInventory(false).build())
+        .when(siglusPhysicalInventoryService).checkConflictForAllPrograms(any(), any());
+    PhysicalInventoryDto physicalInventoryDto = PhysicalInventoryDto.builder().facilityId(facilityId)
+        .programId(programId).build();
+
+    siglusPhysicalInventoryService.createAndSplitNewDraftForAllPrograms(physicalInventoryDto,
+        3, false, "product", false);
+  }
 
   @Test
   public void shouldThrowExceptionWhenSubDraftIdsIsEmpty() {
@@ -1263,6 +1279,24 @@ public class SiglusPhysicalInventoryServiceTest {
   }
 
   @Test
+  public void shouldGetConflictWhenClickAllProductWhileAllProgramHaveDraft() {
+    // given
+    HashSet<UUID> supportedPrograms = Sets.newHashSet(programIdOne);
+    when(supportedProgramsHelper.findHomeFacilitySupportedProgramIds()).thenReturn(supportedPrograms);
+    when(siglusPhysicalInventoryRepository.queryAllDraftByFacility(facilityId))
+        .thenReturn(newArrayList(SiglusPhysicalInventoryBriefDto.builder()
+            .category(ALL_PROGRAM)
+            .programId(programIdOne)
+            .build()));
+
+    // when
+    PhysicalInventoryValidationDto physicalInventoryValidationDto = siglusPhysicalInventoryService
+        .checkConflictForAllPrograms(facilityId, null);
+    // then
+    assertFalse(physicalInventoryValidationDto.isCanStartInventory());
+  }
+
+  @Test
   public void shouldNotGetConflictWhenClickAllProductWhileNoProgramHaveDraft() {
     // given
     PhysicalInventory physicalInventory = mockPhysicalInventory();
@@ -1448,5 +1482,30 @@ public class SiglusPhysicalInventoryServiceTest {
     physicalInventoryExtension.setPhysicalInventoryId(physicalInventoryIdOne);
     physicalInventoryExtension.setCategory(ALL_PROGRAM);
     return physicalInventoryExtension;
+  }
+
+  private PhysicalInventoryDto mockPhysicalInventoryDto() {
+    UUID lineItemId1 = UUID.randomUUID();
+    PhysicalInventoryLineItemDto lineItemDtoOne = PhysicalInventoryLineItemDto.builder()
+        .id(lineItemId1)
+        .lotId(null)
+        .orderableId(orderableId)
+        .programId(programIdOne)
+        .build();
+    UUID lineItemId2 = UUID.randomUUID();
+    UUID orderableIdTwo = UUID.randomUUID();
+    PhysicalInventoryLineItemDto lineItemDtoTwo = PhysicalInventoryLineItemDto.builder()
+        .id(lineItemId2)
+        .lotId(null)
+        .orderableId(orderableIdTwo)
+        .programId(programIdOne)
+        .build();
+    PhysicalInventoryDto physicalInventoryDto = PhysicalInventoryDto.builder()
+        .id(inventoryOne)
+        .programId(programIdOne)
+        .lineItems(newArrayList(lineItemDtoOne, lineItemDtoTwo))
+        .facilityId(facilityId)
+        .build();
+    return physicalInventoryDto;
   }
 }

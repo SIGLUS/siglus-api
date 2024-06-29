@@ -26,6 +26,7 @@ import static org.mockito.Matchers.anyCollection;
 import static org.mockito.Matchers.anyList;
 import static org.mockito.Matchers.anySet;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -35,6 +36,7 @@ import com.google.common.collect.Sets;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
@@ -48,6 +50,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.fulfillment.domain.Order;
 import org.openlmis.fulfillment.domain.ProofOfDelivery;
@@ -90,11 +93,13 @@ import org.siglus.siglusapi.domain.PodSubDraftLineItemsByLocation;
 import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.GeographicLevelDto;
 import org.siglus.siglusapi.dto.GeographicZoneDto;
+import org.siglus.siglusapi.dto.LotDto;
 import org.siglus.siglusapi.dto.LotReferenceDto;
 import org.siglus.siglusapi.dto.PodLineItemWithLocationDto;
 import org.siglus.siglusapi.dto.ProofOfDeliverySubDraftDto;
 import org.siglus.siglusapi.dto.ProofOfDeliverySubDraftLineItemDto;
 import org.siglus.siglusapi.dto.ProofOfDeliverySubDraftWithLocationDto;
+import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.dto.enums.PodSubDraftStatusEnum;
 import org.siglus.siglusapi.exception.AuthenticationException;
 import org.siglus.siglusapi.exception.BusinessDataException;
@@ -115,6 +120,7 @@ import org.siglus.siglusapi.repository.SiglusStockCardRepository;
 import org.siglus.siglusapi.repository.dto.OrderDto;
 import org.siglus.siglusapi.repository.dto.PodLineItemDto;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
+import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusPodFulfillmentService;
 import org.siglus.siglusapi.testutils.StockEventLineItemDtoDataBuilder;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
@@ -129,12 +135,14 @@ import org.siglus.siglusapi.web.response.PodPrintInfoResponse;
 import org.siglus.siglusapi.web.response.PodSubDraftsMergedResponse;
 import org.siglus.siglusapi.web.response.PodSubDraftsSummaryResponse;
 import org.siglus.siglusapi.web.response.PodSubDraftsSummaryResponse.SubDraftInfo;
+import org.siglus.siglusapi.web.response.ProofOfDeliveryWithLocationResponse;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.Example;
 
 @RunWith(MockitoJUnitRunner.class)
 public class SiglusPodServiceTest {
 
+  @Spy
   @InjectMocks
   private SiglusPodService service;
 
@@ -212,6 +220,12 @@ public class SiglusPodServiceTest {
 
   @Mock
   private PodSubDraftLineItemRepository podSubDraftLineItemRepository;
+
+  @Mock
+  private SiglusOrderableReferenceDataService siglusOrderableReferenceDataService;
+
+  @Mock
+  private SiglusLotService siglusLotService;
 
   private final UUID externalId = UUID.randomUUID();
   private final UUID orderableId = UUID.randomUUID();
@@ -735,6 +749,84 @@ public class SiglusPodServiceTest {
   }
 
   @Test
+  public void shouldCreatedLotWhenSubmitSubDraft() {
+    when(authenticationHelper.isTheCurrentUserCanMergeOrDeleteSubDrafts()).thenReturn(Boolean.TRUE);
+    Example<PodSubDraft> example = Example.of(PodSubDraft.builder().podId(podId).build());
+    when(podSubDraftRepository.findAll(example)).thenReturn(buildMockSubDraftsAllSubmitted());
+    SubmitPodSubDraftsRequest request = buildSubmitPodSubDraftRequest();
+    ProofOfDeliverySubDraftLineItemDto draftLineItemDto2 = buildPodDraftLineItemDto(3);
+    draftLineItemDto2.setId(UUID.randomUUID());
+    PodLineItemWithLocationDto podLineItemWithLocationDto = buildMockPodLineItemWithLocationDto();
+    podLineItemWithLocationDto.setPodLineItemId(draftLineItemDto2.getId());
+    request.getPodLineItemLocation().add(podLineItemWithLocationDto);
+    ProofOfDeliverySubDraftLineItemDto draftLineItemDto1 = buildPodDraftLineItemDto(3);
+    request.getPodDto().setLineItems(newArrayList(draftLineItemDto1, draftLineItemDto2));
+    request.getPodDto().setId(podId);
+    ProofOfDeliveryDto dto = request.getPodDto().to();
+    when(fulfillmentService.searchProofOfDelivery(any(), any())).thenReturn(dto);
+    when(podController.updateProofOfDelivery(any(), any(), any(), any())).thenReturn(dto);
+    when(proofOfDeliveryEmitter.emit(podId)).thenReturn(new ProofOfDeliveryEvent());
+    when(proofOfDeliveryRepository.findOne(podId)).thenReturn(buildMockProofOfDelivery());
+    VersionEntityReference orderable = new VersionEntityReference();
+    orderable.setId(UUID.randomUUID());
+    orderable.setVersionNumber(1L);
+    ProofOfDeliveryLineItem podLineItem = new ProofOfDeliveryLineItem(orderable, lotId, 10,
+        null, 0, null, notes);
+    ProofOfDelivery proofOfDelivery = buildMockProofOfDelivery();
+    proofOfDelivery.getLineItems().add(podLineItem);
+    when(proofOfDeliveryRepository.save(any(ProofOfDelivery.class))).thenReturn(proofOfDelivery);
+    when(podLineItemsExtensionRepository.findAllBySubDraftIds(any()))
+        .thenReturn(buildMockPodLineItemsExtensions());
+    when(authenticationHelper.getCurrentUser()).thenReturn(mockUserDto());
+    org.openlmis.referencedata.dto.OrderableDto orderableDto = new org.openlmis.referencedata.dto.OrderableDto();
+    orderableDto.setId(orderableId);
+    orderableDto.setProductCode(productCode);
+    orderableDto.getMeta().setVersionNumber(1L);
+    when(siglusOrderableReferenceDataService.findByIds(anyCollection()))
+        .thenReturn(newArrayList(orderableDto));
+    LotDto lotDto = new LotDto();
+    lotDto.setId(lotId);
+    when(siglusLotService.createNewLotOrReturnExisted(any(), any(), any(), any()))
+        .thenReturn(lotDto);
+
+    // when
+    service.submitSubDrafts(podId, request, null, false);
+
+    verify(siglusLotService).createNewLotOrReturnExisted(any(), any(), any(), any());
+  }
+
+  @Test(expected = NotFoundException.class)
+  public void shouldThrowExceptionWhenSubmitSubDraftGivenErrorOrderableId() {
+    when(authenticationHelper.isTheCurrentUserCanMergeOrDeleteSubDrafts()).thenReturn(Boolean.TRUE);
+    Example<PodSubDraft> example = Example.of(PodSubDraft.builder().podId(podId).build());
+    when(podSubDraftRepository.findAll(example)).thenReturn(buildMockSubDraftsAllSubmitted());
+    ProofOfDeliverySubDraftLineItemDto draftLineItemDto2 = buildPodDraftLineItemDto(3);
+    draftLineItemDto2.setId(UUID.randomUUID());
+    draftLineItemDto2.setOrderable(new VersionObjectReferenceDto(UUID.randomUUID(), serviceUrl, resourceName, 1L));
+    PodLineItemWithLocationDto podLineItemWithLocationDto = buildMockPodLineItemWithLocationDto();
+    podLineItemWithLocationDto.setPodLineItemId(draftLineItemDto2.getId());
+    SubmitPodSubDraftsRequest request = buildSubmitPodSubDraftRequest();
+    request.getPodLineItemLocation().add(podLineItemWithLocationDto);
+    ProofOfDeliverySubDraftLineItemDto draftLineItemDto1 = buildPodDraftLineItemDto(3);
+    request.getPodDto().setLineItems(newArrayList(draftLineItemDto1, draftLineItemDto2));
+    request.getPodDto().setId(podId);
+    ProofOfDeliveryDto dto = request.getPodDto().to();
+    when(fulfillmentService.searchProofOfDelivery(any(), any())).thenReturn(dto);
+    when(podController.updateProofOfDelivery(podId, dto, null, false)).thenReturn(dto);
+    when(proofOfDeliveryEmitter.emit(podId)).thenReturn(new ProofOfDeliveryEvent());
+    when(proofOfDeliveryRepository.findOne(podId)).thenReturn(buildMockProofOfDelivery());
+    ProofOfDelivery proofOfDelivery = buildMockProofOfDelivery();
+    when(proofOfDeliveryRepository.save(any(ProofOfDelivery.class))).thenReturn(proofOfDelivery);
+    when(podLineItemsExtensionRepository.findAllBySubDraftIds(any()))
+        .thenReturn(buildMockPodLineItemsExtensions());
+    when(authenticationHelper.getCurrentUser()).thenReturn(mockUserDto());
+    when(siglusOrderableReferenceDataService.findByIds(anyCollection())).thenReturn(new ArrayList());
+
+    // when
+    service.submitSubDrafts(podId, request, null, false);
+  }
+
+  @Test
   public void shouldReturnWhenSubmitSubDraftsWithPodExtensionNull() {
     // given
     when(authenticationHelper.isTheCurrentUserCanMergeOrDeleteSubDrafts()).thenReturn(Boolean.TRUE);
@@ -1159,6 +1251,20 @@ public class SiglusPodServiceTest {
     when(podSubDraftLineItemRepository.findOne(subLineItemId)).thenReturn(null);
 
     service.deletePodSubDraftLineItem(podId, subDraftId, subLineItemId);
+  }
+
+  @Test
+  public void shouldSuccessWhenGetPodExtensionResponseWithLocation() {
+    Set<String> expand = Collections.singleton("shipment.order");
+    ProofOfDeliveryDto proofOfDeliveryDto = buildMockPodDtoWithOneLineItem();
+    doReturn(proofOfDeliveryDto).when(service).getExpandedPodDtoById(podId, expand);
+    mockPodExtensionQuery();
+    when(podLineItemsByLocationRepository.findByPodLineItemIdIn(Lists.newArrayList(lineItemId1)))
+        .thenReturn(Lists.newArrayList(buildMockPodLineItemsByLocation()));
+
+    ProofOfDeliveryWithLocationResponse result = service.getPodExtensionResponseWithLocation(podId);
+
+    assertEquals(1, result.getPodLineItemLocation().size());
   }
 
   private void mockPodExtensionQuery() {
@@ -1661,5 +1767,12 @@ public class SiglusPodServiceTest {
     return org.openlmis.stockmanagement.dto.StockEventDto.builder()
         .lineItems(newArrayList(lineItemDto1))
         .programId(ALL_PRODUCTS_PROGRAM_ID).build();
+  }
+
+  private UserDto mockUserDto() {
+    UserDto userDto = new UserDto();
+    userDto.setId(userId);
+    userDto.setHomeFacilityId(facilityId);
+    return userDto;
   }
 }
