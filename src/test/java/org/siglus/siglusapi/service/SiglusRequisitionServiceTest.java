@@ -76,6 +76,7 @@ import java.util.Set;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -184,6 +185,7 @@ import org.siglus.siglusapi.dto.SimpleRequisitionDto;
 import org.siglus.siglusapi.dto.TestConsumptionOutcomeDto;
 import org.siglus.siglusapi.dto.TestConsumptionProjectDto;
 import org.siglus.siglusapi.dto.TestConsumptionServiceDto;
+import org.siglus.siglusapi.exception.RequisitionBuildDraftException;
 import org.siglus.siglusapi.i18n.MessageService;
 import org.siglus.siglusapi.repository.AgeGroupLineItemRepository;
 import org.siglus.siglusapi.repository.ConsultationNumberLineItemRepository;
@@ -2152,6 +2154,26 @@ public class SiglusRequisitionServiceTest {
     Set<FacilityDto> set = siglusRequisitionService.mergeSets(set1, set2);
     // then
     assertEquals(0, set.size());
+  }
+
+  @Test(expected = RequisitionBuildDraftException.class)
+  public void shouldThrowExceptionWhenBuildDraftForRegular() {
+    RequisitionV2Dto requisitionV2Dto1 = createInitiatedRequisitionV2Dto();
+    SiglusRequisitionDto siglusRequisitionDto1 = new SiglusRequisitionDto();
+    BeanUtils.copyProperties(requisitionV2Dto1, siglusRequisitionDto1);
+    siglusRequisitionDto1.setExtraData(new HashMap<>());
+    HttpServletRequest httpServletRequest = new MockHttpServletRequest();
+    HttpServletResponse httpServletResponse = new MockHttpServletResponse();
+    when(requisitionV2Controller.initiate(siglusRequisitionDto1.getProgramId(), siglusRequisitionDto1.getFacilityId(),
+        siglusRequisitionDto1.getProcessingPeriodId(), false, null, httpServletRequest,
+        httpServletResponse)).thenReturn(requisitionV2Dto1);
+    when(siglusUsageReportService.initiateUsageReport(any())).thenReturn(siglusRequisitionDto1);
+    when(requisitionRepository.findOne(any(UUID.class))).thenReturn(requisition);
+    when(siglusRequisitionExtensionService.formatRequisitionNumber(requisitionId)).thenReturn(REQUISITION_NUMBER);
+    when(programRepository.findOne(programId)).thenReturn(mockProgram2(programId));
+
+    siglusRequisitionService.buildDraftForRegular(siglusRequisitionDto1.getFacilityId(),
+        siglusRequisitionDto1.getProcessingPeriodId(), siglusRequisitionDto1.getProgramId(), request, response);
   }
 
   private List<PatientGroupDto> mockPatientGroupDtoList() {
