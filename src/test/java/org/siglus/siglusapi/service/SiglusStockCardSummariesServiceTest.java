@@ -21,6 +21,7 @@ import static org.hibernate.validator.internal.util.CollectionHelper.asSet;
 import static org.hibernate.validator.internal.util.CollectionHelper.newHashSet;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.siglus.siglusapi.constant.FieldConstants.FACILITY_ID;
 import static org.siglus.siglusapi.constant.FieldConstants.ORDERABLE_ID;
@@ -59,6 +60,7 @@ import org.openlmis.stockmanagement.web.Pagination;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummariesV2DtoBuilder;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2Dto;
 import org.siglus.common.repository.ProgramOrderableRepository;
+import org.siglus.siglusapi.domain.CalculatedStockOnHandByLocation;
 import org.siglus.siglusapi.domain.PhysicalInventorySubDraft;
 import org.siglus.siglusapi.domain.StockManagementDraft;
 import org.siglus.siglusapi.domain.StockManagementDraftLineItem;
@@ -69,9 +71,11 @@ import org.siglus.siglusapi.dto.StockCardDetailsDto;
 import org.siglus.siglusapi.dto.StockCardSummaryWithLocationDto;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.repository.CalculatedStockOnHandByLocationRepository;
+import org.siglus.siglusapi.repository.CalculatedStockOnHandRepository;
 import org.siglus.siglusapi.repository.PhysicalInventoryLineItemsExtensionRepository;
 import org.siglus.siglusapi.repository.PhysicalInventorySubDraftRepository;
 import org.siglus.siglusapi.repository.StockManagementDraftRepository;
+import org.siglus.siglusapi.repository.dto.StockCardStockDto;
 import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusStockCardStockManagementService;
 import org.siglus.siglusapi.testutils.CanFulfillForMeEntryDtoDataBuilder;
@@ -128,6 +132,8 @@ public class SiglusStockCardSummariesServiceTest {
 
   @Mock
   private CalculatedStockOnHandByLocationRepository calculatedStockOnHandByLocationRepository;
+  @Mock
+  private CalculatedStockOnHandRepository calculatedStockOnHandRepository;
 
   @Mock
   private SiglusShipmentDraftService siglusShipmentDraftService;
@@ -449,6 +455,34 @@ public class SiglusStockCardSummariesServiceTest {
         service.getStockCardSummaryWithLocationDtos(getProgramsParms(), subDraftId, pageable, null);
     assertEquals(1, stockCardSummaryWithLocationDtos.size());
     assertEquals(1, stockCardSummaryWithLocationDtos.get(0).getStockCardDetails().size());
+  }
+
+  @Test
+  public void shouldSuccessWhenGetLatestStockOnHandGivenWithLocation() {
+    CalculatedStockOnHandByLocation sohByLocation = new CalculatedStockOnHandByLocation();
+    StockCard stockCard = new StockCard();
+    stockCard.setId(UUID.randomUUID());
+    sohByLocation.setStockCardId(stockCard.getId());
+    when(calculatedStockOnHandByLocationRepository.findRecentlyLocationSohByStockCardIds(any()))
+        .thenReturn(Collections.singletonList(sohByLocation));
+
+    service.getLatestStockOnHand(Collections.singletonList(stockCard), true);
+
+    verify(calculatedStockOnHandByLocationRepository).findRecentlyLocationSohByStockCardIds(any());
+  }
+
+  @Test
+  public void shouldSuccessWhenGetLatestStockOnHandGivenWithoutLocation() {
+    StockCard stockCard = new StockCard();
+    stockCard.setId(UUID.randomUUID());
+    StockCardStockDto dto = new StockCardStockDto();
+    dto.setStockCardId(stockCard.getId());
+    when(calculatedStockOnHandRepository.findRecentlySohByStockCardIds(any()))
+        .thenReturn(Collections.singletonList(dto));
+
+    service.getLatestStockOnHand(Collections.singletonList(stockCard), false);
+
+    verify(calculatedStockOnHandRepository).findRecentlySohByStockCardIds(any());
   }
 
   private StockCardSummaryV2Dto createSummaryV2Dto(UUID orderableId, Integer stockOnHand) {

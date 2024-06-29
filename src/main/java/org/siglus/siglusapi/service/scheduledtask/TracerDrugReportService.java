@@ -323,7 +323,7 @@ public class TracerDrugReportService {
         .collect(Collectors.toList());
   }
 
-  public List<String> getRequisitionFacilityCode(List<String> districtCodeList) {
+  private List<String> getRequisitionFacilityCode(List<String> districtCodeList) {
     Set<String> districtCodeSet = new HashSet<>(districtCodeList);
     List<RequisitionGeographicZonesDto> allAuthorizedFacility = getAllAuthorizedFacility();
     return allAuthorizedFacility.stream().filter(item -> districtCodeSet.contains(item.getDistrictCode()))

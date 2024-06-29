@@ -71,6 +71,7 @@ import org.openlmis.fulfillment.service.referencedata.UserDto;
 import org.openlmis.fulfillment.util.AuthenticationHelper;
 import org.openlmis.fulfillment.util.Pagination;
 import org.openlmis.fulfillment.web.OrderController;
+import org.openlmis.fulfillment.web.shipment.ShipmentLineItemDto;
 import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftDto;
 import org.openlmis.fulfillment.web.util.BasicOrderDto;
 import org.openlmis.fulfillment.web.util.BasicOrderDtoBuilder;
@@ -120,10 +121,12 @@ import org.siglus.siglusapi.repository.dto.OrderSuggestedQuantityDto;
 import org.siglus.siglusapi.repository.dto.RequisitionOrderDto;
 import org.siglus.siglusapi.service.client.SiglusProcessingPeriodReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
+import org.siglus.siglusapi.service.client.SiglusShipmentDraftFulfillmentService;
 import org.siglus.siglusapi.web.response.OrderPickPackResponse;
 import org.siglus.siglusapi.web.response.OrderSuggestedQuantityResponse;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -215,6 +218,9 @@ public class SiglusOrderServiceTest {
 
   @Mock
   private SiglusShipmentRepository siglusShipmentRepository;
+
+  @Mock
+  private SiglusShipmentDraftFulfillmentService siglusShipmentDraftFulfillmentService;
 
   @Rule
   public ExpectedException exception = ExpectedException.none();
@@ -1202,6 +1208,24 @@ public class SiglusOrderServiceTest {
         .supplierFacility(supplyingFacilityName)
         .build();
     assertEquals(expectResponse, actualResponse);
+  }
+
+  @Test
+  public void shouldGetOrderReservedQuantity() {
+    when(orderRepository.findOne(orderId)).thenReturn(buildMockOrderWithCurrentPeriodIdAndStatusFulfilling());
+    ShipmentLineItemDto shipmentLineItemDto = new ShipmentLineItemDto();
+    shipmentLineItemDto.setId(lineItemId);
+    shipmentLineItemDto.setQuantityShipped(10L);
+    ShipmentDraftDto draftDto = new ShipmentDraftDto();
+    draftDto.setLineItems(newArrayList(shipmentLineItemDto));
+    OrderObjectReferenceDto orderDto = new OrderObjectReferenceDto(orderId);
+    draftDto.setOrder(orderDto);
+    when(siglusShipmentDraftFulfillmentService.getShipmentDraftByOrderId(orderId))
+        .thenReturn(new PageImpl<>(newArrayList(draftDto)));
+
+    siglusOrderService.getOrderReservedQuantity(orderId);
+
+    verify(draftService).reservedCount(any(), any(), any());
   }
 
   private List<Facility> buildMockFacilities() {

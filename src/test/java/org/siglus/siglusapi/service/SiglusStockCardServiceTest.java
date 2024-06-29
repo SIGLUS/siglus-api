@@ -477,6 +477,17 @@ public class SiglusStockCardServiceTest {
     assertEquals(lotId, result.get(0));
   }
 
+  @Test
+  public void shouldFindStockCardByIds() {
+    List<UUID> stockCardIds = Collections.singletonList(UUID.randomUUID());
+    when(stockCardRepository.findAll(stockCardIds))
+        .thenReturn(Collections.singletonList(createStockCardOne()));
+
+    List<StockCard> stockCards = siglusStockCardService.findStockCardByIds(stockCardIds);
+
+    assertEquals(1, stockCards.size());
+  }
+
   private StockCard createStockCardOne() {
     StockCardLineItem lineItem1 = new StockCardLineItemDataBuilder()
         .withOccurredDateNextDay()
