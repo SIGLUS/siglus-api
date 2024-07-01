@@ -37,6 +37,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -53,6 +54,7 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.RequisitionLineItem;
 import org.openlmis.requisition.domain.requisition.RequisitionLineItem.Importer;
+import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.dto.BaseDto;
 import org.openlmis.requisition.dto.ProcessingPeriodDto;
 import org.openlmis.requisition.dto.ProgramDto;
@@ -147,8 +149,8 @@ public class RequisitionSearchService {
       UUID periodId = getPeriodId(processingPeriods, dto.getRequisitionStartDate());
       Requisition requisition = siglusRequisitionRepository.findOneByFacilityIdAndProgramIdAndProcessingPeriodId(
           facilityId, programMap.get(dto.getProgramCode()).getId(), periodId);
-      if (!ObjectUtils.isEmpty(requisition)) {
-        dto.setStatus(requisition.getStatus());
+      if (!ObjectUtils.isEmpty(requisition) && !skippedStatus(requisition.getStatus())) {
+        dto.setStatus(convertStatusForAndroid(requisition.getStatus()));
       }
     });
     return requisitionDtos;
@@ -197,7 +199,7 @@ public class RequisitionSearchService {
         extension -> {
           RequisitionV2Dto requisitionV2Dto = siglusRequisitionRequisitionService
               .searchRequisition(extension.getRequisitionId());
-          if (!requisitionV2Dto.getStatus().isAuthorized()) {
+          if (skippedStatus(requisitionV2Dto.getStatus())) {
             return;
           }
           UUID requisitionId = requisitionV2Dto.getId();
@@ -215,7 +217,7 @@ public class RequisitionSearchService {
               .testConsumptionLineItems(getLineItems(requisitionId, requisitionIdToTestConsumptionLines))
               .ageGroupLineItems((getLineItems(requisitionId, requisitionIdToAgeGroupLines)))
               .comments(requisitionV2Dto.getDraftStatusMessage())
-              .status(requisitionV2Dto.getStatus())
+              .status(convertStatusForAndroid(requisitionV2Dto.getStatus()))
               .build();
           setTimeAndSignature(requisitionCreateRequest, requisitionV2Dto);
           requisitionCreateRequests.add(requisitionCreateRequest);
@@ -515,6 +517,29 @@ public class RequisitionSearchService {
 
     });
     return requisitionLineItemRequestList;
+  }
+
+  private boolean skippedStatus(RequisitionStatus status) {
+    Set<RequisitionStatus> unSkippedStatus = EnumSet.of(
+        RequisitionStatus.AUTHORIZED,
+        RequisitionStatus.IN_APPROVAL,
+        RequisitionStatus.APPROVED,
+        RequisitionStatus.RELEASED,
+        RequisitionStatus.RELEASED_WITHOUT_ORDER,
+        RequisitionStatus.REJECTED);
+    return !unSkippedStatus.contains(status);
+  }
+
+  private RequisitionStatus convertStatusForAndroid(RequisitionStatus status) {
+    switch (status) {
+      case REJECTED:
+      case RELEASED_WITHOUT_ORDER:
+        return RequisitionStatus.APPROVED;
+      case AUTHORIZED:
+        return RequisitionStatus.IN_APPROVAL;
+      default:
+        return status;
+    }
   }
 }
 

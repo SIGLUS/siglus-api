@@ -24,6 +24,7 @@ import static org.siglus.siglusapi.constant.FieldConstants.TOTAL;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.ConsultationNumberLineItems.COLUMN_NAME;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.ConsultationNumberLineItems.GROUP_NAME;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -40,13 +41,17 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.dto.BasicRequisitionTemplateDto;
 import org.openlmis.requisition.dto.ObjectReferenceDto;
+import org.openlmis.requisition.dto.ProcessingPeriodDto;
 import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.dto.RequisitionLineItemV2Dto;
+import org.openlmis.requisition.dto.RequisitionPeriodDto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.dto.VersionObjectReferenceDto;
+import org.openlmis.requisition.service.PeriodService;
 import org.siglus.siglusapi.constant.android.UsageSectionConstants.TestConsumptionLineItems;
 import org.siglus.siglusapi.domain.AgeGroupLineItem;
 import org.siglus.siglusapi.domain.ConsultationNumberLineItem;
@@ -61,6 +66,8 @@ import org.siglus.siglusapi.domain.UsageInformationLineItem;
 import org.siglus.siglusapi.dto.ExtraDataSignatureDto;
 import org.siglus.siglusapi.dto.PatientColumnDto;
 import org.siglus.siglusapi.dto.PatientGroupDto;
+import org.siglus.siglusapi.dto.SupportedProgramDto;
+import org.siglus.siglusapi.dto.android.RequisitionStatusDto;
 import org.siglus.siglusapi.dto.android.enumeration.TestOutcome;
 import org.siglus.siglusapi.dto.android.request.PatientLineItemColumnRequest;
 import org.siglus.siglusapi.dto.android.request.PatientLineItemsRequest;
@@ -79,6 +86,7 @@ import org.siglus.siglusapi.repository.RegimenRepository;
 import org.siglus.siglusapi.repository.RegimenSummaryLineItemRepository;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionLineItemExtensionRepository;
+import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.repository.TestConsumptionLineItemRepository;
 import org.siglus.siglusapi.repository.UsageInformationLineItemRepository;
 import org.siglus.siglusapi.service.SiglusProgramService;
@@ -133,6 +141,11 @@ public class RequisitionSearchServiceTest {
   @Mock
   private PatientLineItemMapper patientLineItemMapper;
 
+  @Mock
+  private PeriodService periodService;
+  @Mock
+  private SiglusRequisitionRepository siglusRequisitionRepository;
+
   private final UUID programId = UUID.randomUUID();
   private final UUID programIdMmia = UUID.randomUUID();
   private final UUID programIdMalaria = UUID.randomUUID();
@@ -170,6 +183,68 @@ public class RequisitionSearchServiceTest {
     createGetMalariaRequisitionData();
     createGetRapidTestRequisitionData();
     createGetMmtbRequisitionData();
+  }
+
+  @Test
+  public void showGetRegularRequisitionsStatusIsNullGivenRequisitionsStatusNotSupportByAndroid() {
+    SupportedProgramDto programDto = new SupportedProgramDto();
+    programDto.setId(UUID.randomUUID());
+    programDto.setCode("TR");
+    Map<String, SupportedProgramDto> programMap = new HashMap<>();
+    programMap.put(programDto.getCode(), programDto);
+    ProcessingPeriodDto periodDto = new RequisitionPeriodDto();
+    periodDto.setId(UUID.randomUUID());
+    periodDto.setStartDate(LocalDate.of(2024, 5, 1));
+    UUID facilityId = UUID.randomUUID();
+    when(periodService.searchByProgramAndFacility(programDto.getId(), facilityId))
+        .thenReturn(Collections.singletonList(periodDto));
+    RequisitionStatusDto requisitionStatusDto = new RequisitionStatusDto();
+    requisitionStatusDto.setId("this-is-id");
+    requisitionStatusDto.setProgramCode(programDto.getCode());
+    requisitionStatusDto.setStartDate("2024-05-05");
+    Requisition requisition = new Requisition();
+    requisition.setStatus(RequisitionStatus.SUBMITTED);
+    when(siglusRequisitionRepository
+        .findOneByFacilityIdAndProgramIdAndProcessingPeriodId(facilityId, programDto.getId(), periodDto.getId()))
+        .thenReturn(requisition);
+    List<RequisitionStatusDto> requisitionDtos = Collections.singletonList(requisitionStatusDto);
+
+    List<RequisitionStatusDto> requisitionsStatus =
+        service.getRegularRequisitionsStatus(facilityId, requisitionDtos, programMap);
+
+    assertEquals(1, requisitionsStatus.size());
+    assertNull(requisitionsStatus.get(0).getStatus());
+  }
+
+  @Test
+  public void showGetRegularRequisitionsStatusGivenRequisitionsStatusSupportByAndroid() {
+    SupportedProgramDto programDto = new SupportedProgramDto();
+    programDto.setId(UUID.randomUUID());
+    programDto.setCode("TR");
+    Map<String, SupportedProgramDto> programMap = new HashMap<>();
+    programMap.put(programDto.getCode(), programDto);
+    ProcessingPeriodDto periodDto = new RequisitionPeriodDto();
+    periodDto.setId(UUID.randomUUID());
+    periodDto.setStartDate(LocalDate.of(2024, 5, 1));
+    UUID facilityId = UUID.randomUUID();
+    when(periodService.searchByProgramAndFacility(programDto.getId(), facilityId))
+        .thenReturn(Collections.singletonList(periodDto));
+    RequisitionStatusDto requisitionStatusDto = new RequisitionStatusDto();
+    requisitionStatusDto.setId("this-is-id");
+    requisitionStatusDto.setProgramCode(programDto.getCode());
+    requisitionStatusDto.setStartDate("2024-05-05");
+    Requisition requisition = new Requisition();
+    requisition.setStatus(RequisitionStatus.REJECTED);
+    when(siglusRequisitionRepository
+        .findOneByFacilityIdAndProgramIdAndProcessingPeriodId(facilityId, programDto.getId(), periodDto.getId()))
+        .thenReturn(requisition);
+    List<RequisitionStatusDto> requisitionDtos = Collections.singletonList(requisitionStatusDto);
+
+    List<RequisitionStatusDto> requisitionsStatus =
+        service.getRegularRequisitionsStatus(facilityId, requisitionDtos, programMap);
+
+    assertEquals(1, requisitionsStatus.size());
+    assertEquals(RequisitionStatus.APPROVED, requisitionsStatus.get(0).getStatus());
   }
 
   @Test
