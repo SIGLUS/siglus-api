@@ -4481,6 +4481,16 @@ traits:
                     application/json:
                       schema: androidRequisitionResponse
 
+            /status:
+              post:
+                is: [ secured ]
+                body:
+                  application/json:
+                    schema: List<RequisitionStatusDto>
+                responses:
+                  200:
+                    description: get requisition status success
+
           /pods:
             get:
               is: [ secured ]

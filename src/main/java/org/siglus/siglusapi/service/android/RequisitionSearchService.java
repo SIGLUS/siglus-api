@@ -35,12 +35,14 @@ import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPa
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
@@ -48,10 +50,14 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.RequisitionLineItem;
 import org.openlmis.requisition.domain.requisition.RequisitionLineItem.Importer;
+import org.openlmis.requisition.dto.BaseDto;
+import org.openlmis.requisition.dto.ProcessingPeriodDto;
 import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
+import org.openlmis.requisition.service.PeriodService;
 import org.siglus.siglusapi.constant.FieldConstants;
 import org.siglus.siglusapi.constant.android.UsageSectionConstants.UsageInformationLineItems;
 import org.siglus.siglusapi.domain.AgeGroupLineItem;
@@ -70,8 +76,10 @@ import org.siglus.siglusapi.dto.ExtraDataSignatureDto;
 import org.siglus.siglusapi.dto.PatientColumnDto;
 import org.siglus.siglusapi.dto.PatientGroupDto;
 import org.siglus.siglusapi.dto.RegimenDto;
+import org.siglus.siglusapi.dto.SupportedProgramDto;
 import org.siglus.siglusapi.dto.UsageInformationInformationDto;
 import org.siglus.siglusapi.dto.UsageInformationServiceDto;
+import org.siglus.siglusapi.dto.android.RequisitionStatusDto;
 import org.siglus.siglusapi.dto.android.enumeration.MmiaPatientTableColumnKeyValue;
 import org.siglus.siglusapi.dto.android.enumeration.MmiaPatientTableKeyValue;
 import org.siglus.siglusapi.dto.android.enumeration.TestOutcome;
@@ -96,6 +104,7 @@ import org.siglus.siglusapi.repository.RegimenRepository;
 import org.siglus.siglusapi.repository.RegimenSummaryLineItemRepository;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionLineItemExtensionRepository;
+import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.repository.TestConsumptionLineItemRepository;
 import org.siglus.siglusapi.repository.UsageInformationLineItemRepository;
 import org.siglus.siglusapi.service.SiglusProgramService;
@@ -103,6 +112,7 @@ import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
 import org.siglus.siglusapi.service.mapper.ConsultationNumberLineItemMapper;
 import org.siglus.siglusapi.service.mapper.PatientLineItemMapper;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
 @Service
@@ -112,7 +122,9 @@ import org.springframework.util.StringUtils;
 public class RequisitionSearchService {
 
   private final SiglusProgramService siglusProgramService;
+  private final PeriodService periodService;
   private final SiglusRequisitionRequisitionService siglusRequisitionRequisitionService;
+  private final SiglusRequisitionRepository siglusRequisitionRepository;
   private final RequisitionLineItemExtensionRepository requisitionLineItemExtensionRepository;
   private final RequisitionExtensionRepository requisitionExtensionRepository;
   private final RegimenLineItemRepository regimenLineItemRepository;
@@ -125,6 +137,41 @@ public class RequisitionSearchService {
   private final AgeGroupLineItemRepository ageGroupLineItemRepository;
   private final PatientLineItemMapper patientLineItemMapper;
   private final ConsultationNumberLineItemMapper consultationNumberLineItemMapper;
+
+  public List<RequisitionStatusDto> getRegularRequisitionsStatus(
+      UUID facilityId, List<RequisitionStatusDto> requisitionDtos, Map<String, SupportedProgramDto> programMap) {
+    Map<String, Collection<ProcessingPeriodDto>> periodMapByProgram =
+        getPeriodMapByProgram(facilityId, requisitionDtos, programMap);
+    requisitionDtos.forEach(dto -> {
+      Collection<ProcessingPeriodDto> processingPeriods = periodMapByProgram.get(dto.getProgramCode());
+      UUID periodId = getPeriodId(processingPeriods, dto.getRequisitionStartDate());
+      Requisition requisition = siglusRequisitionRepository.findOneByFacilityIdAndProgramIdAndProcessingPeriodId(
+          facilityId, programMap.get(dto.getProgramCode()).getId(), periodId);
+      if (!ObjectUtils.isEmpty(requisition)) {
+        dto.setStatus(requisition.getStatus());
+      }
+    });
+    return requisitionDtos;
+  }
+
+  private Map<String, Collection<ProcessingPeriodDto>> getPeriodMapByProgram(UUID facilityId,
+      List<RequisitionStatusDto> requisitions, Map<String, SupportedProgramDto> programMap) {
+    Set<String> programCodes = requisitions.stream()
+        .map(RequisitionStatusDto::getProgramCode).collect(Collectors.toSet());
+    return programCodes.stream().collect(Collectors.toMap(
+        programCode -> programCode,
+        programCode -> periodService.searchByProgramAndFacility(programMap.get(programCode).getId(), facilityId)
+    ));
+  }
+
+  private UUID getPeriodId(Collection<ProcessingPeriodDto> periodDtos, LocalDate startDate) {
+    Optional<ProcessingPeriodDto> period = periodDtos.stream().filter(periodDto -> {
+      LocalDate periodStartDate = periodDto.getStartDate();
+      return periodStartDate.getYear() == startDate.getYear()
+          && periodStartDate.getMonthValue() == startDate.getMonthValue();
+    }).findFirst();
+    return period.map(BaseDto::getId).orElse(null);
+  }
 
   public RequisitionResponse getRequisitionResponseByFacilityIdAndDate(UUID facilityId, String startDate,
       Map<UUID, String> orderableIdToCode) {
@@ -168,6 +215,7 @@ public class RequisitionSearchService {
               .testConsumptionLineItems(getLineItems(requisitionId, requisitionIdToTestConsumptionLines))
               .ageGroupLineItems((getLineItems(requisitionId, requisitionIdToAgeGroupLines)))
               .comments(requisitionV2Dto.getDraftStatusMessage())
+              .status(requisitionV2Dto.getStatus())
               .build();
           setTimeAndSignature(requisitionCreateRequest, requisitionV2Dto);
           requisitionCreateRequests.add(requisitionCreateRequest);

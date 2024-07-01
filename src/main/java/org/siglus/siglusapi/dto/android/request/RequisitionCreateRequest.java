@@ -28,6 +28,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.validator.constraints.NotBlank;
 import org.hibernate.validator.constraints.NotEmpty;
+import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.dto.android.constraint.RequisitionValidDataSection;
 import org.siglus.siglusapi.dto.android.constraint.RequisitionValidEndDate;
@@ -73,6 +74,8 @@ public class RequisitionCreateRequest {
   private Integer consultationNumber;
 
   private String comments;
+
+  private RequisitionStatus status;
 
   @Valid
   private List<RegimenLineItemRequest> regimenLineItems;

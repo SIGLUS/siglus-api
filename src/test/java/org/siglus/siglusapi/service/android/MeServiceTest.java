@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.service.android;
 
+import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Sets.newHashSet;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
@@ -109,6 +110,7 @@ import org.siglus.siglusapi.dto.SiglusOrderDto;
 import org.siglus.siglusapi.dto.SupportedProgramDto;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.dto.android.InvalidProduct;
+import org.siglus.siglusapi.dto.android.RequisitionStatusDto;
 import org.siglus.siglusapi.dto.android.ValidatedStockCards;
 import org.siglus.siglusapi.dto.android.request.AndroidHeader;
 import org.siglus.siglusapi.dto.android.request.HfCmmDto;
@@ -829,6 +831,40 @@ public class MeServiceTest {
     // then
     verify(podBackupRepository, times(1)).save(any(PodRequestBackup.class));
 
+  }
+
+  @Test
+  public void shouldGetRegularRequisitionStatus() {
+    mockAuth();
+    SupportedProgramDto supportedProgramDto = SupportedProgramDto.builder().programActive(true).supportActive(true)
+        .code("programCode").build();
+    SupportedProgramDto supportedProgramDto1 = SupportedProgramDto.builder().programActive(false).supportActive(true)
+        .code("programCode_1").build();
+    when(programsHelper.findHomeFacilitySupportedPrograms())
+        .thenReturn(newArrayList(supportedProgramDto, supportedProgramDto1));
+    RequisitionStatusDto dto = new RequisitionStatusDto();
+    dto.setProgramCode("programCode");
+    List<RequisitionStatusDto> requisitionStatusDtos = Collections.singletonList(dto);
+
+    service.getRegularRequisitionStatus(requisitionStatusDtos);
+
+    verify(requisitionSearchService).getRegularRequisitionsStatus(any(), any(), any());
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void shouldThrowExceptionWhenGetRegularRequisitionStatusGivenUnSupportProgramCode() {
+    mockAuth();
+    SupportedProgramDto supportedProgramDto = SupportedProgramDto.builder().programActive(true).supportActive(true)
+        .code("programCode").build();
+    SupportedProgramDto supportedProgramDto1 = SupportedProgramDto.builder().programActive(false).supportActive(true)
+        .code("programCode_1").build();
+    when(programsHelper.findHomeFacilitySupportedPrograms())
+        .thenReturn(newArrayList(supportedProgramDto, supportedProgramDto1));
+    RequisitionStatusDto dto = new RequisitionStatusDto();
+    dto.setProgramCode("programCode_2");
+    List<RequisitionStatusDto> requisitionStatusDtos = Collections.singletonList(dto);
+
+    service.getRegularRequisitionStatus(requisitionStatusDtos);
   }
 
   private List<StockCardCreateRequest> buildStockCardCreateRequests() {

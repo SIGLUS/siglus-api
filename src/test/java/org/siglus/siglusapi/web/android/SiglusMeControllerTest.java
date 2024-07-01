@@ -29,6 +29,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -38,6 +40,7 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.siglus.siglusapi.constant.android.AndroidConstants;
 import org.siglus.siglusapi.domain.AppInfo;
+import org.siglus.siglusapi.dto.android.RequisitionStatusDto;
 import org.siglus.siglusapi.dto.android.enumeration.TestProject;
 import org.siglus.siglusapi.dto.android.request.AndroidHeader;
 import org.siglus.siglusapi.dto.android.request.HfCmmDto;
@@ -276,6 +279,16 @@ public class SiglusMeControllerTest {
 
     // then
     verify(service).getProofsOfDeliveryWithFilter(since, false);
+  }
+
+  @Test
+  public void shouldCallGetRequisitionStatus() {
+    RequisitionStatusDto requisitionStatusDto = new RequisitionStatusDto();
+    requisitionStatusDto.setId(UUID.randomUUID().toString());
+
+    controller.getRegularRequisitionStatusResponse(Collections.singletonList(requisitionStatusDto));
+
+    verify(service).getRegularRequisitionStatus(any());
   }
 
   private List<HfCmmDto> mockFacilityCmms() {

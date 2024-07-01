@@ -16,6 +16,7 @@
 package org.siglus.siglusapi.service;
 
 import static org.siglus.siglusapi.constant.CacheConstants.CACHE_KEY_GENERATOR;
+import static org.siglus.siglusapi.constant.CacheConstants.SIGLUS_ALL_PROGRAMS;
 import static org.siglus.siglusapi.constant.CacheConstants.SIGLUS_PROGRAM;
 import static org.siglus.siglusapi.constant.CacheConstants.SIGLUS_PROGRAMS;
 import static org.siglus.siglusapi.constant.CacheConstants.SIGLUS_PROGRAM_BY_CODE;
@@ -61,6 +62,11 @@ public class SiglusProgramService {
   @Cacheable(value = SIGLUS_PROGRAM_BY_CODE, keyGenerator = CACHE_KEY_GENERATOR)
   public Optional<ProgramDto> getProgramByCode(String code) {
     return programRefDataService.findAll().stream().filter(programDto -> programDto.getCode().equals(code)).findAny();
+  }
+
+  @Cacheable(value = SIGLUS_ALL_PROGRAMS, keyGenerator = CACHE_KEY_GENERATOR)
+  public List<ProgramDto> getAllPrograms() {
+    return programRefDataService.findAll();
   }
 
   private ProgramDto getAllProgramDto() {

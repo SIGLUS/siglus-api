@@ -28,11 +28,14 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
+import javax.validation.constraints.Size;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.validator.constraints.NotEmpty;
 import org.siglus.siglusapi.constant.android.AndroidConstants;
 import org.siglus.siglusapi.domain.AppInfo;
+import org.siglus.siglusapi.dto.android.RequisitionStatusDto;
 import org.siglus.siglusapi.dto.android.enumeration.TestProject;
 import org.siglus.siglusapi.dto.android.request.AndroidHeader;
 import org.siglus.siglusapi.dto.android.request.HfCmmDto;
@@ -129,6 +132,12 @@ public class SiglusMeController {
   public RequisitionResponse getRequisitionResponse(@RequestParam(value = "startDate") String startDate) {
     RequisitionResponse response = service.getRequisitionResponse(startDate);
     return convertRequisitionResponseToV1(response);
+  }
+
+  @PostMapping("/facility/requisitions/status")
+  public List<RequisitionStatusDto> getRegularRequisitionStatusResponse(
+      @RequestBody @Size(min = 1) List<RequisitionStatusDto> request) {
+    return service.getRegularRequisitionStatus(request);
   }
 
   @GetMapping("/facility/pods")

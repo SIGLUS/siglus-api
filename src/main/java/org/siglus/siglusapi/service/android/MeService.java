@@ -85,6 +85,7 @@ import org.siglus.siglusapi.dto.SiglusOrderDto;
 import org.siglus.siglusapi.dto.SupportedProgramDto;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.dto.android.EventTime;
+import org.siglus.siglusapi.dto.android.RequisitionStatusDto;
 import org.siglus.siglusapi.dto.android.ValidatedStockCards;
 import org.siglus.siglusapi.dto.android.request.AndroidHeader;
 import org.siglus.siglusapi.dto.android.request.HfCmmDto;
@@ -147,6 +148,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
 @Service
@@ -400,6 +402,18 @@ public class MeService {
     Map<UUID, String> orderableIdToCode = getOrderableIdToCode(getAllApprovedProducts());
     return requisitionSearchService
         .getRequisitionResponseByFacilityIdAndDate(facilityId, startDate, orderableIdToCode);
+  }
+
+  public List<RequisitionStatusDto> getRegularRequisitionStatus(List<RequisitionStatusDto> requisitions) {
+    UUID facilityId = authHelper.getCurrentUser().getHomeFacilityId();
+    Map<String, SupportedProgramDto> programDtoMap = programsHelper.findHomeFacilitySupportedPrograms()
+        .stream().collect(toMap(SupportedProgramDto::getCode, dto -> dto));
+    requisitions.forEach(requisition -> {
+      if (ObjectUtils.isEmpty(programDtoMap.get(requisition.getProgramCode()))) {
+        throw new IllegalArgumentException("un-support program code: " + requisition.getProgramCode());
+      }
+    });
+    return requisitionSearchService.getRegularRequisitionsStatus(facilityId, requisitions, programDtoMap);
   }
 
   @SuppressWarnings("PMD.PreserveStackTrace")

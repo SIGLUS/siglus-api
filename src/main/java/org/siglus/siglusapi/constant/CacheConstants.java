@@ -31,6 +31,8 @@ public class CacheConstants {
 
   public static final String SIGLUS_PROGRAMS = "siglus-programs";
 
+  public static final String SIGLUS_ALL_PROGRAMS = "siglus-all-programs";
+
   public static final String SIGLUS_PROGRAM = "siglus-program";
 
   public static final String SIGLUS_PROGRAM_BY_CODE = "siglus-program-by-code";
