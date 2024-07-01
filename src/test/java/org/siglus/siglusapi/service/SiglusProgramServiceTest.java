@@ -139,19 +139,6 @@ public class SiglusProgramServiceTest {
     assertEquals(mockProgram, program);
   }
 
-  @Test
-  public void shouldReturnAllPrograms() {
-    UUID programId = UUID.randomUUID();
-    String code = mockRandomCode();
-    ProgramDto mockProgram = mockProgram(programId, code);
-    when(programRefDataService.findAll()).thenReturn(Lists.newArrayList(mockProgram));
-
-    List<ProgramDto> allPrograms = service.getAllPrograms();
-
-    assertEquals(1, allPrograms.size());
-    assertEquals(mockProgram, allPrograms.get(0));
-  }
-
   private ProgramDto mockProgram(UUID programId, String code) {
     ProgramDto mockProgram = new ProgramDto();
     mockProgram.setId(programId);

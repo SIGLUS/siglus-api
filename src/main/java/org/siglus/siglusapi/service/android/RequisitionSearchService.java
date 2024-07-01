@@ -526,12 +526,14 @@ public class RequisitionSearchService {
         RequisitionStatus.APPROVED,
         RequisitionStatus.RELEASED,
         RequisitionStatus.RELEASED_WITHOUT_ORDER,
-        RequisitionStatus.REJECTED);
+        RequisitionStatus.REJECTED,
+        RequisitionStatus.SKIPPED);
     return !unSkippedStatus.contains(status);
   }
 
   private RequisitionStatus convertStatusForAndroid(RequisitionStatus status) {
     switch (status) {
+      case SKIPPED:
       case RELEASED:
       case RELEASED_WITHOUT_ORDER:
         return RequisitionStatus.APPROVED;
