@@ -244,7 +244,7 @@ public class RequisitionSearchServiceTest {
         service.getRegularRequisitionsStatus(facilityId, requisitionDtos, programMap);
 
     assertEquals(1, requisitionsStatus.size());
-    assertEquals(RequisitionStatus.APPROVED, requisitionsStatus.get(0).getStatus());
+    assertEquals(RequisitionStatus.REJECTED, requisitionsStatus.get(0).getStatus());
   }
 
   @Test

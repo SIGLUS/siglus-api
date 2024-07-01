@@ -532,7 +532,7 @@ public class RequisitionSearchService {
 
   private RequisitionStatus convertStatusForAndroid(RequisitionStatus status) {
     switch (status) {
-      case REJECTED:
+      case RELEASED:
       case RELEASED_WITHOUT_ORDER:
         return RequisitionStatus.APPROVED;
       case AUTHORIZED:
