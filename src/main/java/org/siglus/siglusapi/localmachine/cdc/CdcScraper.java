@@ -111,7 +111,7 @@ public class CdcScraper {
     if (machine.isOnlineWeb()) {
       dispatchQueueForOnlineWeb.put(cdcRecord);
     } else {
-      cdcRecordRepository.save(cdcRecord);
+      cdcRecordRepository.saveAndFlush(cdcRecord);
       mayNeedToDispatch(cdcRecord.getTxId());
     }
   }
