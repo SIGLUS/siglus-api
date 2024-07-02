@@ -164,7 +164,6 @@ import org.siglus.common.repository.OrderableKitRepository;
 import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
 import org.siglus.common.repository.StockManagementRepository;
 import org.siglus.common.util.SimulateAuthenticationHelper;
-import org.siglus.siglusapi.domain.FacilityExtension;
 import org.siglus.siglusapi.domain.KitUsageLineItemDraft;
 import org.siglus.siglusapi.domain.RegimenOrderable;
 import org.siglus.siglusapi.domain.RequisitionDraft;
@@ -1168,18 +1167,6 @@ public class SiglusRequisitionServiceTest {
     assertEquals(false, lineItemCaptor.getSkipped());
     assertNull(lineItemCaptor.getApprovedQuantity());
     verify(notificationService).postReject(dto);
-  }
-
-  @Test(expected = org.openlmis.stockmanagement.exception.PermissionMessageException.class)
-  public void shouldThrowExceptionWhenRejectRequisitionByAndroidFacility() {
-    // given
-    UUID requisitionId = UUID.randomUUID();
-    FacilityExtension facilityExtension = new FacilityExtension();
-    facilityExtension.setIsAndroid(true);
-    when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(facilityExtension);
-
-    // when
-    siglusRequisitionService.rejectRequisition(requisitionId, request, response);
   }
 
   @Test

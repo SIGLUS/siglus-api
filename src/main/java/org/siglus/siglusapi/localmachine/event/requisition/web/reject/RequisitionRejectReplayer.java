@@ -68,9 +68,9 @@ public class RequisitionRejectReplayer {
     requisition.reject(orderableDtoMap, event.getUserId());
     resetSupervisoryNodeId(requisition);
     requisition.setDraftStatusMessage(StringUtils.EMPTY);
+    siglusRequisitionService.revertRequisition(requisitionId, requisition);
     requisitionRepository.saveAndFlush(requisition);
 
-    siglusRequisitionService.revertRequisition(requisitionId);
     notificationService.postReject(event.getUserId(),
         requisitionCreateService.buildBaseRequisitionDto(requisition));
   }

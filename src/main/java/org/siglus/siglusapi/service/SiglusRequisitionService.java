@@ -136,7 +136,6 @@ import org.openlmis.requisition.web.RequisitionController;
 import org.openlmis.requisition.web.RequisitionV2Controller;
 import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
-import org.openlmis.stockmanagement.exception.PermissionMessageException;
 import org.openlmis.stockmanagement.repository.StockCardRepository;
 import org.siglus.common.domain.RequisitionTemplateExtension;
 import org.siglus.common.dto.RequisitionTemplateExtensionDto;
@@ -235,8 +234,6 @@ public class SiglusRequisitionService {
   private SiglusArchiveProductService archiveProductService;
   @Autowired
   private RequisitionTemplateExtensionRepository requisitionTemplateExtensionRepository;
-  @Autowired
-  private SiglusRequisitionTemplateService siglusRequisitionTemplateService;
   @Autowired
   private RequisitionLineItemExtensionRepository lineItemExtensionRepository;
   @Autowired
@@ -843,9 +840,8 @@ public class SiglusRequisitionService {
   @Transactional
   public BasicRequisitionDto rejectRequisition(UUID requisitionId, HttpServletRequest request,
       HttpServletResponse response) {
-    verifyIsAndroidFacilityRequisition(requisitionId);
     BasicRequisitionDto dto = requisitionController.rejectRequisition(requisitionId, request, response);
-    revertRequisition(requisitionId);
+    revertRequisition(requisitionId, null);
     notificationService.postReject(dto);
     return dto;
   }
@@ -975,18 +971,6 @@ public class SiglusRequisitionService {
     return requisitionIds;
   }
 
-  private void verifyIsAndroidFacilityRequisition(UUID requisitionId) {
-    Profiler profiler = requisitionController.getProfiler("GET_REQUISITION", requisitionId);
-    Requisition requisition = requisitionController.findRequisition(requisitionId, profiler);
-    if (requisition != null) {
-      FacilityExtension facilityExtension = facilityExtensionRepository.findByFacilityId(requisition.getFacilityId());
-      if (facilityExtension != null && facilityExtension.getIsAndroid()) {
-        throw new PermissionMessageException(
-            new org.openlmis.stockmanagement.util.Message("siglusapi.error.noPermission.reject.android.requisition"));
-      }
-    }
-  }
-
   private void setApprovedByInternal(UUID requisitionId, SiglusRequisitionDto siglusRequisitionDto) {
     RequisitionExtension requisitionExtension = requisitionExtensionRepository.findByRequisitionId(requisitionId);
     siglusRequisitionDto.setIsApprovedByInternal(null != requisitionExtension
@@ -994,14 +978,17 @@ public class SiglusRequisitionService {
         && requisitionExtension.getIsApprovedByInternal());
   }
 
-  public void revertRequisition(UUID requisitionId) {
-    revertRequisitionLineItem(requisitionId);
-    revertRequisitionLineItemExtension(requisitionId);
+  public void revertRequisition(UUID requisitionId, Requisition requisition) {
+    Requisition revert = requisition;
+    if (ObjectUtils.isEmpty(requisition)) {
+      revert = requisitionRepository.findOne(requisitionId);
+    }
+    revertRequisitionLineItem(revert);
+    revertRequisitionLineItemExtension(revert);
     deleteSiglusDraft(requisitionId);
   }
 
-  private void revertRequisitionLineItem(UUID requisitionId) {
-    Requisition requisition = requisitionRepository.findOne(requisitionId);
+  private void revertRequisitionLineItem(Requisition requisition) {
     requisition.getRequisitionLineItems().forEach(requisitionLineItem -> {
       requisitionLineItem.setApprovedQuantity(null);
       requisitionLineItem.setRemarks(null);
@@ -1010,8 +997,7 @@ public class SiglusRequisitionService {
     requisitionRepository.save(requisition);
   }
 
-  private void revertRequisitionLineItemExtension(UUID requisitionId) {
-    Requisition requisition = requisitionRepository.findOne(requisitionId);
+  private void revertRequisitionLineItemExtension(Requisition requisition) {
     List<UUID> ids = findLineItemIds(requisition);
     List<RequisitionLineItemExtension> extensions =
         ids.isEmpty() ? newArrayList() : lineItemExtensionRepository.findLineItems(ids);
