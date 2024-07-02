@@ -157,6 +157,7 @@ import org.openlmis.requisition.utils.AuthenticationHelper;
 import org.openlmis.requisition.web.QueryRequisitionSearchParams;
 import org.openlmis.requisition.web.RequisitionController;
 import org.openlmis.requisition.web.RequisitionV2Controller;
+import org.openlmis.stockmanagement.exception.PermissionMessageException;
 import org.openlmis.stockmanagement.web.Pagination;
 import org.siglus.common.domain.RequisitionTemplateExtension;
 import org.siglus.common.repository.OrderExternalRepository;
@@ -164,6 +165,7 @@ import org.siglus.common.repository.OrderableKitRepository;
 import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
 import org.siglus.common.repository.StockManagementRepository;
 import org.siglus.common.util.SimulateAuthenticationHelper;
+import org.siglus.siglusapi.domain.FacilityExtension;
 import org.siglus.siglusapi.domain.KitUsageLineItemDraft;
 import org.siglus.siglusapi.domain.RegimenOrderable;
 import org.siglus.siglusapi.domain.RequisitionDraft;
@@ -1145,6 +1147,7 @@ public class SiglusRequisitionServiceTest {
     // given
     UUID requisitionId = UUID.randomUUID();
     BasicRequisitionDto dto = new BasicRequisitionDto();
+    dto.setEmergency(false);
     when(requisitionController.rejectRequisition(requisitionId, request, response)).thenReturn(dto);
     RequisitionLineItem lineItem = new RequisitionLineItem();
     lineItem.setId(requisitionLineItemId);
@@ -1167,6 +1170,22 @@ public class SiglusRequisitionServiceTest {
     assertEquals(false, lineItemCaptor.getSkipped());
     assertNull(lineItemCaptor.getApprovedQuantity());
     verify(notificationService).postReject(dto);
+  }
+
+  @Test(expected = PermissionMessageException.class)
+  public void shouldTrowExceptionWhenRejectRequisitionGivenRequisitionIsEmergency() {
+    MinimalFacilityDto facilityDto = new MinimalFacilityDto();
+    facilityDto.setId(UUID.randomUUID());
+    BasicRequisitionDto dto = new BasicRequisitionDto();
+    dto.setFacility(facilityDto);
+    dto.setEmergency(true);
+    UUID requisitionId = UUID.randomUUID();
+    when(requisitionController.rejectRequisition(requisitionId, request, response)).thenReturn(dto);
+    FacilityExtension facilityExtension = new FacilityExtension();
+    facilityExtension.setIsAndroid(true);
+    when(facilityExtensionRepository.findByFacilityId(facilityDto.getId())).thenReturn(facilityExtension);
+
+    siglusRequisitionService.rejectRequisition(requisitionId, request, response);
   }
 
   @Test

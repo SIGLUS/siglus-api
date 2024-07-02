@@ -68,6 +68,7 @@ import org.openlmis.requisition.domain.RequisitionTemplate;
 import org.openlmis.requisition.domain.requisition.ApprovedProductReference;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.RequisitionLineItem;
+import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.domain.requisition.VersionEntityReference;
 import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.requisition.dto.MetadataDto;
@@ -123,6 +124,7 @@ import org.siglus.siglusapi.repository.RegimenOrderableRepository;
 import org.siglus.siglusapi.repository.RegimenRepository;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionLineItemExtensionRepository;
+import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.repository.SyncUpHashRepository;
 import org.siglus.siglusapi.service.SiglusNotificationService;
 import org.siglus.siglusapi.service.SiglusOrderableService;
@@ -215,6 +217,9 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
 
   @Mock
   private SiglusRequisitionTemplateService siglusRequisitionTemplateService;
+
+  @Mock
+  private SiglusRequisitionRepository siglusRequisitionRepository;
 
   // private SiglusRequisitionDto siglusRequisitionDto = buildSiglusRequisitionDto();
 
@@ -402,6 +407,8 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     when(permissionService.canSubmitRequisition(any(Requisition.class))).thenReturn(success);
     when(permissionService.canAuthorizeRequisition(any(Requisition.class))).thenReturn(success);
     when(permissionService.canApproveRequisition(any(Requisition.class))).thenReturn(success);
+    when(siglusRequisitionRepository.findOneByFacilityIdAndProgramIdAndProcessingPeriodId(any(), any(), any()))
+        .thenReturn(null);
 
     // when
     service.createRequisition(buildRequisitionCreateRequest());
@@ -416,6 +423,8 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     when(permissionService.canSubmitRequisition(any(Requisition.class))).thenReturn(fail);
     when(permissionService.canAuthorizeRequisition(any(Requisition.class))).thenReturn(success);
     when(permissionService.canApproveRequisition(any(Requisition.class))).thenReturn(success);
+    when(siglusRequisitionRepository.findOneByFacilityIdAndProgramIdAndProcessingPeriodId(any(), any(), any()))
+        .thenReturn(null);
 
     // when
     service.createRequisition(buildRequisitionCreateRequest());
@@ -430,6 +439,8 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     when(permissionService.canSubmitRequisition(any(Requisition.class))).thenReturn(success);
     when(permissionService.canAuthorizeRequisition(any(Requisition.class))).thenReturn(fail);
     when(permissionService.canApproveRequisition(any(Requisition.class))).thenReturn(success);
+    when(siglusRequisitionRepository.findOneByFacilityIdAndProgramIdAndProcessingPeriodId(any(), any(), any()))
+        .thenReturn(null);
 
     // when
     service.createRequisition(buildRequisitionCreateRequest());
@@ -444,6 +455,8 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     when(permissionService.canSubmitRequisition(any(Requisition.class))).thenReturn(success);
     when(permissionService.canAuthorizeRequisition(any(Requisition.class))).thenReturn(success);
     when(permissionService.canApproveRequisition(any(Requisition.class))).thenReturn(fail);
+    when(siglusRequisitionRepository.findOneByFacilityIdAndProgramIdAndProcessingPeriodId(any(), any(), any()))
+        .thenReturn(null);
 
     // when
     service.createRequisition(buildRequisitionCreateRequest());
@@ -457,6 +470,8 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     when(permissionService.canSubmitRequisition(any(Requisition.class))).thenReturn(success);
     when(permissionService.canAuthorizeRequisition(any(Requisition.class))).thenReturn(success);
     when(permissionService.canApproveRequisition(any(Requisition.class))).thenReturn(success);
+    when(siglusRequisitionRepository.findOneByFacilityIdAndProgramIdAndProcessingPeriodId(any(), any(), any()))
+        .thenReturn(null);
 
     // when
     service.createRequisition(buildRequisitionCreateRequest());
@@ -504,6 +519,11 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     when(permissionService.canSubmitRequisition(any(Requisition.class))).thenReturn(success);
     when(permissionService.canAuthorizeRequisition(any(Requisition.class))).thenReturn(success);
     when(permissionService.canApproveRequisition(any(Requisition.class))).thenReturn(success);
+    Requisition rejectedRequisition = new Requisition();
+    rejectedRequisition.setId(UUID.randomUUID());
+    rejectedRequisition.setStatus(RequisitionStatus.REJECTED);
+    when(siglusRequisitionRepository.findOneByFacilityIdAndProgramIdAndProcessingPeriodId(any(), any(), any()))
+        .thenReturn(rejectedRequisition);
 
     ApprovedProductDto productDto = createApprovedProductDto(malariaOrderableId, mlProductCode);
     when(requisitionService.getApprovedProducts(facilityId, malariaProgramId)).thenReturn(
@@ -539,6 +559,8 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     when(permissionService.canSubmitRequisition(any(Requisition.class))).thenReturn(success);
     when(permissionService.canAuthorizeRequisition(any(Requisition.class))).thenReturn(success);
     when(permissionService.canApproveRequisition(any(Requisition.class))).thenReturn(success);
+    when(siglusRequisitionRepository.findOneByFacilityIdAndProgramIdAndProcessingPeriodId(any(), any(), any()))
+        .thenReturn(null);
     ApprovedProductDto productDto = createApprovedProductDto(mmiaOrderableId, mmiaProductCode);
     when(requisitionService.getApprovedProducts(facilityId, mmiaProgramId)).thenReturn(
         singletonList(productDto));
@@ -593,6 +615,8 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     when(permissionService.canSubmitRequisition(any(Requisition.class))).thenReturn(success);
     when(permissionService.canAuthorizeRequisition(any(Requisition.class))).thenReturn(success);
     when(permissionService.canApproveRequisition(any(Requisition.class))).thenReturn(success);
+    when(siglusRequisitionRepository.findOneByFacilityIdAndProgramIdAndProcessingPeriodId(any(), any(), any()))
+        .thenReturn(null);
     ApprovedProductDto productDto = createApprovedProductDto(rapidTestOrderableId, rapidTestProductCode);
     when(requisitionService.getApprovedProducts(facilityId, rapidTestProgramId)).thenReturn(
         singletonList(productDto));
@@ -638,6 +662,8 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     when(permissionService.canSubmitRequisition(any(Requisition.class))).thenReturn(success);
     when(permissionService.canAuthorizeRequisition(any(Requisition.class))).thenReturn(success);
     when(permissionService.canApproveRequisition(any(Requisition.class))).thenReturn(success);
+    when(siglusRequisitionRepository.findOneByFacilityIdAndProgramIdAndProcessingPeriodId(any(), any(), any()))
+        .thenReturn(null);
     ApprovedProductDto productDto = createApprovedProductDto(mmtbOrderableId, mmtbProductCode);
     when(requisitionService.getApprovedProducts(facilityId, mmtbProgramId)).thenReturn(
         singletonList(productDto));

@@ -136,6 +136,7 @@ import org.openlmis.requisition.web.RequisitionController;
 import org.openlmis.requisition.web.RequisitionV2Controller;
 import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
+import org.openlmis.stockmanagement.exception.PermissionMessageException;
 import org.openlmis.stockmanagement.repository.StockCardRepository;
 import org.siglus.common.domain.RequisitionTemplateExtension;
 import org.siglus.common.dto.RequisitionTemplateExtensionDto;
@@ -841,6 +842,9 @@ public class SiglusRequisitionService {
   public BasicRequisitionDto rejectRequisition(UUID requisitionId, HttpServletRequest request,
       HttpServletResponse response) {
     BasicRequisitionDto dto = requisitionController.rejectRequisition(requisitionId, request, response);
+    if (dto.getEmergency()) {
+      verifyIsAndroidFacilityRequisition(dto);
+    }
     revertRequisition(requisitionId, null);
     notificationService.postReject(dto);
     return dto;
@@ -969,6 +973,17 @@ public class SiglusRequisitionService {
     Set<UUID> requisitionIds = Sets.newHashSet();
     dtos.forEach(dto -> requisitionIds.add(dto.getRequisition().getId()));
     return requisitionIds;
+  }
+
+  private void verifyIsAndroidFacilityRequisition(BasicRequisitionDto requisitionDto) {
+    if (requisitionDto != null && requisitionDto.getFacility() != null) {
+      FacilityExtension facilityExtension =
+          facilityExtensionRepository.findByFacilityId(requisitionDto.getFacility().getId());
+      if (facilityExtension != null && facilityExtension.getIsAndroid()) {
+        throw new PermissionMessageException(
+            new org.openlmis.stockmanagement.util.Message("siglusapi.error.noPermission.reject.android.requisition"));
+      }
+    }
   }
 
   private void setApprovedByInternal(UUID requisitionId, SiglusRequisitionDto siglusRequisitionDto) {

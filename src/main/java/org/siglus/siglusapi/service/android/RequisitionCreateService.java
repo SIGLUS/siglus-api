@@ -174,6 +174,7 @@ import org.siglus.siglusapi.repository.ProcessingPeriodRepository;
 import org.siglus.siglusapi.repository.RegimenRepository;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionLineItemExtensionRepository;
+import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.repository.SyncUpHashRepository;
 import org.siglus.siglusapi.service.SiglusNotificationService;
 import org.siglus.siglusapi.service.SiglusOrderableService;
@@ -187,6 +188,7 @@ import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.util.SupportedProgramsHelper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.ObjectUtils;
 import org.springframework.validation.annotation.Validated;
 
 @Service
@@ -198,6 +200,7 @@ public class RequisitionCreateService {
 
   private final SiglusAuthenticationHelper authHelper;
   private final RequisitionService requisitionService;
+  private final SiglusRequisitionRepository siglusRequisitionRepository;
   private final SiglusProgramService siglusProgramService;
   private final SiglusOrderableService siglusOrderableService;
   private final SiglusRequisitionExtensionService siglusRequisitionExtensionService;
@@ -248,11 +251,20 @@ public class RequisitionCreateService {
     UUID programId = siglusProgramService.getProgramByCode(programCode).map(org.openlmis.requisition.dto.BaseDto::getId)
         .orElseThrow(() -> InvalidProgramCodeException.requisition(programCode));
     UUID homeFacilityId = user.getHomeFacilityId();
+    UUID periodId = getPeriodId(request);
+    UUID requisitionId = null;
+    if (!request.getEmergency()) {
+      Requisition rejectedRegularRequisition = getRejectedRegularRequisition(homeFacilityId, programId, periodId);
+      if (!ObjectUtils.isEmpty(rejectedRegularRequisition)) {
+        requisitionId = rejectedRegularRequisition.getId();
+      }
+    }
     checkPermission(() -> permissionService.canInitRequisition(programId, homeFacilityId));
     Requisition newRequisition = RequisitionBuilder.newRequisition(homeFacilityId, programId, request.getEmergency());
+    newRequisition.setId(requisitionId);
     newRequisition.setTemplate(siglusRequisitionTemplateService.getRequisitionTemplate(programId, homeFacilityId));
     newRequisition.setStatus(RequisitionStatus.INITIATED);
-    newRequisition.setProcessingPeriodId(getPeriodId(request));
+    newRequisition.setProcessingPeriodId(periodId);
     newRequisition.setNumberOfMonthsInPeriod(1);
     newRequisition.setDraftStatusMessage(request.getComments());
     newRequisition.setReportOnly(ProgramConstants.MALARIA_PROGRAM_CODE.equals(programCode));
@@ -268,6 +280,15 @@ public class RequisitionCreateService {
     buildRequisitionUsageSections(requisition, request, programId, programCode, extensions);
 
     return requisition;
+  }
+
+  private Requisition getRejectedRegularRequisition(UUID facilityId, UUID programId, UUID periodId) {
+    Requisition requisition = siglusRequisitionRepository.findOneByFacilityIdAndProgramIdAndProcessingPeriodId(
+        facilityId, programId, periodId);
+    if (!ObjectUtils.isEmpty(requisition) && requisition.getStatus() == RequisitionStatus.REJECTED) {
+      return requisition;
+    }
+    return null;
   }
 
   private Requisition submitRequisition(Requisition requisition, UUID authorId) {
