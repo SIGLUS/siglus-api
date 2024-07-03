@@ -1989,6 +1989,33 @@ public class SiglusRequisitionService {
     notificationService.postDelete(requisitionId);
   }
 
+  public void deleteRequisitionWithoutNotification(Requisition requisition) {
+    UUID requisitionId = requisition.getId();
+    deleteExtensionForRequisition(requisition);
+    deleteSiglusDraft(requisitionId);
+    siglusUsageReportService.deleteUsageReport(requisitionId);
+    requisitionExtensionRepository.deleteByRequisitionId(requisitionId);
+    requisitionExtensionRepository.flush();
+    requisitionLineItemExtensionRepository.deleteByRequisitionId(requisitionId);
+    requisitionLineItemExtensionRepository.flush();
+    ageGroupLineItemRepository.deleteByRequisitionId(requisitionId);
+    ageGroupLineItemRepository.flush();
+    consultationNumberLineItemRepository.deleteByRequisitionId(requisitionId);
+    consultationNumberLineItemRepository.flush();
+    usageInformationLineItemRepository.deleteByRequisitionId(requisitionId);
+    usageInformationLineItemRepository.flush();
+    patientLineItemRepository.deleteByRequisitionId(requisitionId);
+    patientLineItemRepository.flush();
+    testConsumptionLineItemRepository.deleteByRequisitionId(requisitionId);
+    testConsumptionLineItemRepository.flush();
+    regimenLineItemRepository.deleteByRequisitionId(requisitionId);
+    regimenLineItemRepository.flush();
+    regimenSummaryLineItemRepository.deleteByRequisitionId(requisitionId);
+    regimenSummaryLineItemRepository.flush();
+    siglusRequisitionRepository.deleteById(requisitionId);
+    siglusRequisitionRepository.flush();
+  }
+
   private List<RequisitionV2Dto> getPreviousEmergencyRequisition(BaseRequisitionDto requisition) {
     return siglusRequisitionRequisitionService.getPreviousEmergencyRequisition(from(requisition));
   }

@@ -252,16 +252,14 @@ public class RequisitionCreateService {
         .orElseThrow(() -> InvalidProgramCodeException.requisition(programCode));
     UUID homeFacilityId = user.getHomeFacilityId();
     UUID periodId = getPeriodId(request);
-    UUID requisitionId = null;
+    checkPermission(() -> permissionService.canInitRequisition(programId, homeFacilityId));
     if (!request.getEmergency()) {
       Requisition rejectedRegularRequisition = getRejectedRegularRequisition(homeFacilityId, programId, periodId);
       if (!ObjectUtils.isEmpty(rejectedRegularRequisition)) {
-        requisitionId = rejectedRegularRequisition.getId();
+        siglusRequisitionService.deleteRequisitionWithoutNotification(rejectedRegularRequisition);
       }
     }
-    checkPermission(() -> permissionService.canInitRequisition(programId, homeFacilityId));
     Requisition newRequisition = RequisitionBuilder.newRequisition(homeFacilityId, programId, request.getEmergency());
-    newRequisition.setId(requisitionId);
     newRequisition.setTemplate(siglusRequisitionTemplateService.getRequisitionTemplate(programId, homeFacilityId));
     newRequisition.setStatus(RequisitionStatus.INITIATED);
     newRequisition.setProcessingPeriodId(periodId);

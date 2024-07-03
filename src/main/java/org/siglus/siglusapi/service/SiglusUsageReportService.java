@@ -134,6 +134,7 @@ public class SiglusUsageReportService {
     if (!items.isEmpty()) {
       log.info("delete kit requisition line item: {}", items);
       kitUsageRepository.delete(items);
+      kitUsageRepository.flush();
     }
   }
 
