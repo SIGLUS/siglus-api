@@ -223,11 +223,11 @@ public class TarvRequisitionReportService implements IRequisitionReportService {
         patientContent.put("totalMeses", getPatientGroupDtoValue(columns.get(NEW_COLUMN_0)));
       } else if (NEW_SECTION_2.equals(name)) {
         patientContent.put("DS5mes", getPatientGroupDtoValue(columns.get(NEW_COLUMN)));
-        patientContent.put("DS4mes", getPatientGroupDtoValue(columns.get(NEW_COLUMN_4)));
-        patientContent.put("DS3mes", getPatientGroupDtoValue(columns.get(NEW_COLUMN_0)));
-        patientContent.put("DS2mes", getPatientGroupDtoValue(columns.get(NEW_COLUMN_1)));
-        patientContent.put("DS1mes", getPatientGroupDtoValue(columns.get(NEW_COLUMN_2)));
-        Integer newColumn3 = getPatientGroupDtoValue(columns.get(NEW_COLUMN_3));
+        patientContent.put("DS4mes", getPatientGroupDtoValue(columns.get(NEW_COLUMN_0)));
+        patientContent.put("DS3mes", getPatientGroupDtoValue(columns.get(NEW_COLUMN_1)));
+        patientContent.put("DS2mes", getPatientGroupDtoValue(columns.get(NEW_COLUMN_2)));
+        patientContent.put("DS1mes", getPatientGroupDtoValue(columns.get(NEW_COLUMN_3)));
+        Integer newColumn3 = getPatientGroupDtoValue(columns.get(NEW_COLUMN_4));
         total0mes += newColumn3;
         patientContent.put("DS0mes", newColumn3);
         Integer total = getPatientGroupDtoValue(columns.get(TOTAL_COLUMN));
