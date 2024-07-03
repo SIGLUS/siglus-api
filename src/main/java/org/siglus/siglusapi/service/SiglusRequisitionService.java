@@ -841,6 +841,9 @@ public class SiglusRequisitionService {
   @Transactional
   public BasicRequisitionDto rejectRequisition(UUID requisitionId, HttpServletRequest request,
       HttpServletResponse response) {
+    if (createdForClient(requisitionId)) {
+      throw new IllegalArgumentException("can not reject a requisition created by supplier : " + requisitionId);
+    }
     BasicRequisitionDto dto = requisitionController.rejectRequisition(requisitionId, request, response);
     if (dto.getEmergency()) {
       verifyIsAndroidFacilityRequisition(dto);
@@ -2448,5 +2451,11 @@ public class SiglusRequisitionService {
     basicRequisitionDto.setProcessingPeriod(basicProcessingPeriodDto);
     basicRequisitionDto.setStatusChanges(siglusRequisitionDto.getStatusChanges());
     return basicRequisitionDto;
+  }
+
+  private boolean createdForClient(UUID requisitionId) {
+    RequisitionExtension requisitionExtension = requisitionExtensionRepository.findByRequisitionId(requisitionId);
+    return requisitionExtension != null
+        && !Objects.equals(requisitionExtension.getCreatedByFacilityId(), requisitionExtension.getFacilityId());
   }
 }
