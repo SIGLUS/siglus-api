@@ -817,6 +817,24 @@ public class SiglusRequisitionServiceTest {
   }
 
   @Test
+  public void shouldNotCallNotificationWhenDeleteRequisition() {
+    // given
+    Requisition requisition = createRequisition();
+    RequisitionLineItemExtension extension = new RequisitionLineItemExtension();
+    extension.setId(UUID.randomUUID());
+    when(lineItemExtensionRepository.findLineItems(singletonList(any(UUID.class))))
+        .thenReturn(singletonList(extension));
+
+    // when
+    siglusRequisitionService.deleteRequisitionWithoutNotification(requisition);
+
+    // then
+    verify(siglusRequisitionRepository).deleteById(requisitionId);
+    verify(lineItemExtensionRepository).delete(singletonList(extension));
+    verify(notificationService, times(0)).postDelete(any());
+  }
+
+  @Test
   public void shouldUpdateRequisitionWhenUpdateRequisition() {
     // given
     HttpServletRequest httpServletRequest = new MockHttpServletRequest();
