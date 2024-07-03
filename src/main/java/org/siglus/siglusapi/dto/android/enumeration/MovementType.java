@@ -29,7 +29,7 @@ public enum MovementType {
   PHYSICAL_INVENTORY() {
     @Override
     public String getReason(String reasonName, Integer adjustment) {
-      if (INVENTORY.equals(reasonName)) {
+      if (INVENTORY.equals(reasonName.trim())) {
         return INVENTORY;
       }
       if (adjustment < 0) {
@@ -43,7 +43,7 @@ public enum MovementType {
 
     @Override
     public UUID getInventoryReasonId(UUID programId, String reason) {
-      return StockCardCreateContextHolder.getContext().findReasonId(programId, reason)
+      return StockCardCreateContextHolder.getContext().findReasonId(programId, reason.trim())
           .orElseThrow(() -> new NotFoundException(NO_SUCH_REASON + reason));
     }
   },
@@ -52,7 +52,7 @@ public enum MovementType {
     @Override
     public String getReason(String sourceName, Integer adjustment) {
       String newSourceName = sourceName;
-      if (Source.UNPACK_FROM_KIT.name().equals(sourceName)) {
+      if (Source.UNPACK_FROM_KIT.name().equals(sourceName.trim())) {
         newSourceName = Source.UNPACK_FROM_KIT.getName();
       } else if (sourceName.contains(DDM)) {
         newSourceName = Source.DISTRICT_DDM.getName();
@@ -69,7 +69,7 @@ public enum MovementType {
 
     @Override
     public UUID getSourceId(UUID programId, String source) {
-      return StockCardCreateContextHolder.getContext().findSourceId(programId, source)
+      return StockCardCreateContextHolder.getContext().findSourceId(programId, source.trim())
           .orElseThrow(() -> new NotFoundException(NO_SUCH_SOURCE + source));
     }
 
@@ -78,13 +78,13 @@ public enum MovementType {
   ISSUE() {
     @Override
     public String getReason(String destinationName, Integer adjustment) {
-      return Destination.findByName(destinationName).map(Enum::name)
+      return Destination.findByName(destinationName.trim()).map(Enum::name)
           .orElseThrow(() -> new NotFoundException(NO_SUCH_DESTINATION + destinationName));
     }
 
     @Override
     public UUID getDestinationId(UUID programId, String destination) {
-      return StockCardCreateContextHolder.getContext().findDestinationId(programId, destination)
+      return StockCardCreateContextHolder.getContext().findDestinationId(programId, destination.trim())
           .orElseThrow(() -> new NotFoundException(NO_SUCH_DESTINATION + destination));
     }
 
@@ -93,13 +93,13 @@ public enum MovementType {
   ADJUSTMENT() {
     @Override
     public String getReason(String reasonName, Integer adjustment) {
-      return AdjustmentReason.findByName(reasonName).map(Enum::name)
+      return AdjustmentReason.findByName(reasonName.trim()).map(Enum::name)
           .orElseThrow(() -> new NotFoundException(NO_SUCH_REASON + reasonName));
     }
 
     @Override
     public UUID getAdjustmentReasonId(UUID programId, String reason) {
-      return StockCardCreateContextHolder.getContext().findReasonId(programId, reason)
+      return StockCardCreateContextHolder.getContext().findReasonId(programId, reason.trim())
           .orElseThrow(() -> new NotFoundException(NO_SUCH_REASON + reason));
     }
 
