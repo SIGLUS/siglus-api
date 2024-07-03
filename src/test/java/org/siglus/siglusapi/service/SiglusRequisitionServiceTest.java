@@ -1146,6 +1146,7 @@ public class SiglusRequisitionServiceTest {
   public void shouldRevertRequisitionWhenReject() {
     // given
     UUID requisitionId = UUID.randomUUID();
+    when(requisitionExtensionRepository.findByRequisitionId(requisitionId)).thenReturn(null);
     BasicRequisitionDto dto = new BasicRequisitionDto();
     dto.setEmergency(false);
     when(requisitionController.rejectRequisition(requisitionId, request, response)).thenReturn(dto);
@@ -1156,8 +1157,12 @@ public class SiglusRequisitionServiceTest {
     lineItem.setRemarks("123");
     lineItem.setSkipped(true);
     Requisition requisition = new Requisition();
+    requisition.setId(requisitionId);
     requisition.setRequisitionLineItems(singletonList(lineItem));
     when(requisitionRepository.findOne(requisitionId)).thenReturn(requisition);
+    FacilityExtension facilityExtension = new FacilityExtension();
+    facilityExtension.setIsAndroid(false);
+    when(facilityExtensionRepository.findByFacilityId(facilityDto.getId())).thenReturn(facilityExtension);
 
     // when
     siglusRequisitionService.rejectRequisition(requisitionId, request, response);
@@ -1174,6 +1179,7 @@ public class SiglusRequisitionServiceTest {
 
   @Test(expected = PermissionMessageException.class)
   public void shouldTrowExceptionWhenRejectRequisitionGivenRequisitionIsEmergency() {
+    when(requisitionExtensionRepository.findByRequisitionId(requisitionId)).thenReturn(null);
     MinimalFacilityDto facilityDto = new MinimalFacilityDto();
     facilityDto.setId(UUID.randomUUID());
     BasicRequisitionDto dto = new BasicRequisitionDto();
@@ -1184,6 +1190,16 @@ public class SiglusRequisitionServiceTest {
     FacilityExtension facilityExtension = new FacilityExtension();
     facilityExtension.setIsAndroid(true);
     when(facilityExtensionRepository.findByFacilityId(facilityDto.getId())).thenReturn(facilityExtension);
+
+    siglusRequisitionService.rejectRequisition(requisitionId, request, response);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void shouldThrowExceptionWhenRequisitionCreatedBySupplier() {
+    RequisitionExtension requisitionExtension = new RequisitionExtension();
+    requisitionExtension.setFacilityId(UUID.randomUUID());
+    requisitionExtension.setCreatedByFacilityId(UUID.randomUUID());
+    when(requisitionExtensionRepository.findByRequisitionId(requisitionId)).thenReturn(requisitionExtension);
 
     siglusRequisitionService.rejectRequisition(requisitionId, request, response);
   }
