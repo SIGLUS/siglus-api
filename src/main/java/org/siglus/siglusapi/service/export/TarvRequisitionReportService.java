@@ -32,6 +32,7 @@ import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPa
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_SECTION_8;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_SECTION_9;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.PATIENT_TYPE;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.STLINHAS;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.TOTAL_COLUMN;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.RegimenLineItems.COLUMN_NAME_COMMUNITY;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.RegimenLineItems.COLUMN_NAME_PATIENT;
@@ -387,21 +388,21 @@ public class TarvRequisitionReportService implements IRequisitionReportService {
         .orElseThrow(() -> new NotFoundException("total regimen Not Found"));
     Map<String, RegimenColumnDto> totalRegimenMap = totalRegimen.getColumns();
     regimenMap.put("totalRegimenCommunity", getRegimenColumnDtoValue(totalRegimenMap.get(COLUMN_NAME_COMMUNITY)));
-    regimenMap.put("totalRegimenPatients", getRegimenColumnDtoValue(totalRegimenMap.get("patients")));
+    regimenMap.put("totalRegimenPatients", getRegimenColumnDtoValue(totalRegimenMap.get(COLUMN_NAME_PATIENT)));
 
     List<RegimenSummaryLineDto> regimenSummaryLineItems = requisition.getRegimenSummaryLineItems();
     regimenSummaryLineItems.forEach(lineItem -> {
       Map<String, RegimenColumnDto> columns = lineItem.getColumns();
-      if ("1stLinhas".equals(lineItem.getName())) {
+      if (STLINHAS.equals(lineItem.getName())) {
         regimenMap.put("1stLinhasCommunity", getRegimenColumnDtoValue(columns.get(COLUMN_NAME_COMMUNITY)));
         regimenMap.put("1stLinhasPatients", getRegimenColumnDtoValue(columns.get(COLUMN_NAME_PATIENT)));
-      } else if ("newColumn0".equals(lineItem.getName())) {
+      } else if (NEW_COLUMN_0.equals(lineItem.getName())) {
         regimenMap.put("2ndLinhasCommunity", getRegimenColumnDtoValue(columns.get(COLUMN_NAME_COMMUNITY)));
         regimenMap.put("2ndLinhasPatients", getRegimenColumnDtoValue(columns.get(COLUMN_NAME_PATIENT)));
-      } else if ("newColumn1".equals(lineItem.getName())) {
+      } else if (NEW_COLUMN_1.equals(lineItem.getName())) {
         regimenMap.put("3rdLinhasCommunity", getRegimenColumnDtoValue(columns.get(COLUMN_NAME_COMMUNITY)));
         regimenMap.put("3rdLinhasPatients", getRegimenColumnDtoValue(columns.get(COLUMN_NAME_PATIENT)));
-      } else if ("total".equals(lineItem.getName())) {
+      } else if (TOTAL_COLUMN.equals(lineItem.getName())) {
         regimenMap.put("totalLinhasCommunity", getRegimenColumnDtoValue(columns.get(COLUMN_NAME_COMMUNITY)));
         regimenMap.put("totalLinhasPatients", getRegimenColumnDtoValue(columns.get(COLUMN_NAME_PATIENT)));
       }
