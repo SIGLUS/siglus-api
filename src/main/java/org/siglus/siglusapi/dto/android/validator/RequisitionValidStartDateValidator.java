@@ -53,6 +53,7 @@ import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.repository.SyncUpHashRepository;
 import org.siglus.siglusapi.service.SiglusProgramService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
+import org.springframework.util.ObjectUtils;
 
 @SuppressWarnings("PMD.CyclomaticComplexity")
 @RequiredArgsConstructor
@@ -107,6 +108,10 @@ public class RequisitionValidStartDateValidator implements
       actualContext.addExpressionVariable(IS_CONFIGURE_PERIOD_INVALID, true);
       return false;
     }
+    Requisition existRequisition = checkRequisitionCreatedBySupplier(homeFacilityId, programCode, period.getId());
+    if (!ObjectUtils.isEmpty(existRequisition) && existRequisition.getStatus() == RequisitionStatus.REJECTED) {
+      return true;
+    }
     Requisition lastRequisition = requisitionRepository
         .findLatestRequisitionsByFacilityId(homeFacilityId)
         .stream()
@@ -131,12 +136,20 @@ public class RequisitionValidStartDateValidator implements
     if (lastEndDate.isBefore(oneYearAgo) && value.getActualStartDate().isAfter(lastEndDate)) {
       return true;
     }
-    // if supplier facility have created requisition for android client, then shouldn't call the create method again
+    ProcessingPeriod lastPeriod = periodRepository.findOne(lastRequisition.getProcessingPeriodId());
+    if (isNotConsecutive(lastEndDate, value.getActualStartDate(), lastPeriod, period)) {
+      actualContext.addExpressionVariable(IS_SUBMITTED_PERIOD_INVALID, true);
+      return false;
+    }
+    return true;
+  }
+
+  private Requisition checkRequisitionCreatedBySupplier(UUID homeFacilityId, String programCode, UUID periodId) {
     UUID programId = siglusProgramService.getProgramByCode(programCode)
         .map(BaseDto::getId)
         .orElseThrow(() -> InvalidProgramCodeException.requisition(programCode));
     Requisition existRequisition = requisitionRepository.findOneByFacilityIdAndProgramIdAndProcessingPeriodId(
-        homeFacilityId, programId, period.getId());
+        homeFacilityId, programId, periodId);
     if (existRequisition != null) {
       RequisitionExtension requisitionExtension = requisitionExtensionRepository.findByRequisitionId(
           existRequisition.getId());
@@ -146,13 +159,7 @@ public class RequisitionValidStartDateValidator implements
             new Message(ERROR_REQUISITION_SUPPLIER_FACILITY_CREATED));
       }
     }
-
-    ProcessingPeriod lastPeriod = periodRepository.findOne(lastRequisition.getProcessingPeriodId());
-    if (isNotConsecutive(lastEndDate, value.getActualStartDate(), lastPeriod, period)) {
-      actualContext.addExpressionVariable(IS_SUBMITTED_PERIOD_INVALID, true);
-      return false;
-    }
-    return true;
+    return existRequisition;
   }
 
   private boolean isNotConsecutive(LocalDate lastEndDate, LocalDate submitActualStartDate,

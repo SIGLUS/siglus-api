@@ -55,12 +55,14 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.openlmis.referencedata.domain.ProcessingPeriod;
 import org.openlmis.requisition.domain.requisition.Requisition;
+import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.siglus.common.domain.ProcessingPeriodExtension;
 import org.siglus.common.repository.ProcessingPeriodExtensionRepository;
+import org.siglus.siglusapi.domain.RequisitionExtension;
 import org.siglus.siglusapi.domain.SiglusReportType;
 import org.siglus.siglusapi.domain.SyncUpHash;
 import org.siglus.siglusapi.dto.UserDto;
@@ -258,6 +260,7 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
     ProcessingPeriod period1 = mock(ProcessingPeriod.class);
     when(period1.getEndDate()).thenReturn(LocalDate.of(2021, 4, 20));
     when(periodRepo.findOne(req1.getProcessingPeriodId())).thenReturn(period1);
+    mockExistRequisition();
     mockFacilityId(facilityId);
     Object param = parseParam("actualStartDateEqualToReportRestartDate.json");
 
@@ -324,6 +327,7 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
     when(reportType.getStartDate()).thenReturn(LocalDate.of(1999, 3, 1));
     when(reportTypeRepo.findOneByFacilityIdAndProgramCodeAndActiveIsTrue(any(), eq("VC")))
         .thenReturn(Optional.of(reportType));
+    mockExistRequisition();
     mockFacilityId(facilityId);
     when(req1.getActualEndDate()).thenReturn(LocalDate.of(2013, 6, 20));
     Object param = parseParam("actualStartDateAfterLastActualEnd.json");
@@ -365,14 +369,49 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
   @Test
   public void shouldReturnViolationWhenValidateCreateRequisitionGivenNewFacility()
       throws Exception {
-    // given
+    mockExistRequisition();
     mockFacilityId(newFacilityId);
     Object param = parseParam("actualStartDateAfterLastActualEnd.json");
 
-    // when
     Map<String, String> violations = executeValidation(param);
 
-    // then
+    assertEquals(0, violations.size());
+  }
+
+  @Test
+  public void shouldReturnViolationWhenValidateCreateRequisitionGivenExistRejectRequisition()
+      throws Exception {
+    mockProgram();
+    when(requisitionExtensionRepository.findByRequisitionId(any())).thenReturn(null);
+    Requisition requisition = new Requisition();
+    requisition.setId(UUID.randomUUID());
+    requisition.setStatus(RequisitionStatus.REJECTED);
+    when(requisitionRepo.findOneByFacilityIdAndProgramIdAndProcessingPeriodId(any(), any(), any()))
+        .thenReturn(requisition);
+    mockFacilityId(newFacilityId);
+    Object param = parseParam("actualStartDateAfterLastActualEnd.json");
+
+    Map<String, String> violations = executeValidation(param);
+
+    assertEquals(0, violations.size());
+  }
+
+  @Test(expected = ValidationException.class)
+  public void shouldTrowExceptionWhenValidateCreateRequisitionGivenExistRequisitionCreatedBySupplier()
+      throws Exception {
+    mockProgram();
+    RequisitionExtension requisitionExtension = new RequisitionExtension();
+    requisitionExtension.setCreatedByFacilityId(UUID.randomUUID());
+    requisitionExtension.setFacilityId(UUID.randomUUID());
+    when(requisitionExtensionRepository.findByRequisitionId(any())).thenReturn(requisitionExtension);
+    Requisition requisition = new Requisition();
+    when(requisitionRepo.findOneByFacilityIdAndProgramIdAndProcessingPeriodId(any(), any(), any()))
+        .thenReturn(requisition);
+    mockFacilityId(newFacilityId);
+    Object param = parseParam("actualStartDateAfterLastActualEnd.json");
+
+    Map<String, String> violations = executeValidation(param);
+
     assertEquals(0, violations.size());
   }
 
@@ -625,4 +664,16 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
     return periodExtension;
   }
 
+  private void mockExistRequisition() {
+    mockProgram();
+    when(requisitionRepo.findOneByFacilityIdAndProgramIdAndProcessingPeriodId(any(), any(), any()))
+        .thenReturn(null);
+  }
+
+  private void mockProgram() {
+    ProgramDto programDto = new ProgramDto();
+    programDto.setId(UUID.randomUUID());
+    programDto.setCode("code");
+    when(siglusProgramService.getProgramByCode(anyString())).thenReturn(Optional.of(programDto));
+  }
 }
