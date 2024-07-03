@@ -29,7 +29,7 @@ public class TravRequisitionReportServiceServiceTest {
 
   @Test
   public void shouldGetSupportProgramCodeIsTrav() {
-    TravRequisitionReportServiceService service = new TravRequisitionReportServiceService();
+    TarvRequisitionReportService service = new TarvRequisitionReportService();
     Set<String> result = service.supportedProgramCodes();
     assertEquals(1, result.size());
     assertTrue(result.contains(ProgramConstants.TARV_PROGRAM_CODE));
