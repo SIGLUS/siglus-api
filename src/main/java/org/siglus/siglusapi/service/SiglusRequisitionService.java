@@ -963,12 +963,10 @@ public class SiglusRequisitionService {
 
   private void setIsCreateForClient(UUID requisitionId, SiglusRequisitionDto siglusRequisitionDto) {
     RequisitionExtension requisitionExtension = requisitionExtensionRepository.findByRequisitionId(requisitionId);
-    if (requisitionExtension == null
-        || requisitionExtension.getCreatedByFacilityId() == null
-        || Objects.equals(requisitionExtension.getCreatedByFacilityId(), siglusRequisitionDto.getFacilityId())) {
-      siglusRequisitionDto.setIsCreateForClient(Boolean.FALSE);
-    } else {
+    if (requisitionExtension != null && requisitionExtension.createdBySupplier()) {
       siglusRequisitionDto.setIsCreateForClient(Boolean.TRUE);
+    } else {
+      siglusRequisitionDto.setIsCreateForClient(Boolean.FALSE);
     }
   }
 
@@ -1970,8 +1968,7 @@ public class SiglusRequisitionService {
     siglusUsageReportService.deleteUsageReport(requisitionId);
     RequisitionExtension requisitionExtension =
         siglusRequisitionExtensionService.deleteRequisitionExtension(requisitionId);
-    if (requisitionExtension != null
-        && !requisitionExtension.getCreatedByFacilityId().equals(requisition.getFacilityId())) {
+    if (requisitionExtension != null && requisitionExtension.createdBySupplier()) {
       siglusRequisitionRepository.deleteById(requisitionId);
       requisitionExtensionRepository.deleteByRequisitionId(requisitionId);
       requisitionLineItemExtensionRepository.deleteByRequisitionId(requisitionId);

@@ -16,6 +16,7 @@
 package org.siglus.siglusapi.domain;
 
 import java.time.LocalDate;
+import java.util.Objects;
 import java.util.UUID;
 import javax.persistence.Entity;
 import javax.persistence.Table;
@@ -25,6 +26,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.siglus.common.domain.BaseEntity;
+import org.springframework.util.ObjectUtils;
 
 @Entity
 @Data
@@ -51,5 +53,9 @@ public class RequisitionExtension extends BaseEntity {
 
   public String getRealRequisitionNumber() {
     return String.format("%s%02d", requisitionNumberPrefix, requisitionNumber);
+  }
+
+  public boolean createdBySupplier() {
+    return !ObjectUtils.isEmpty(createdByFacilityId) && !Objects.equals(createdByFacilityId, facilityId);
   }
 }
