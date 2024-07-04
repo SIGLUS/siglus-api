@@ -13,12 +13,15 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.service;
+package org.siglus.siglusapi.service.export;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.TestConsumptionLineItems.PROJECT_CONSUMO;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.TestConsumptionLineItems.PROJECT_HIVDETERMINE;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.TestConsumptionLineItems.SERVICE_HF;
 
 import com.alibaba.excel.ExcelWriter;
 import com.alibaba.excel.context.WriteContext;
@@ -31,9 +34,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.junit.Test;
@@ -46,16 +47,11 @@ import org.openlmis.referencedata.domain.Code;
 import org.openlmis.referencedata.domain.Facility;
 import org.openlmis.referencedata.domain.Orderable;
 import org.openlmis.requisition.domain.requisition.RequisitionStatus;
-import org.openlmis.requisition.domain.requisition.VersionEntityReference;
 import org.openlmis.requisition.dto.ObjectReferenceDto;
 import org.openlmis.requisition.dto.OrderableDto;
 import org.openlmis.requisition.dto.ProcessingPeriodDto;
 import org.openlmis.requisition.dto.ProgramOrderableDto;
 import org.openlmis.requisition.dto.RequisitionLineItemV2Dto;
-import org.openlmis.requisition.dto.VersionIdentityDto;
-import org.openlmis.requisition.service.referencedata.OrderableReferenceDataService;
-import org.siglus.common.domain.ProgramOrderablesExtension;
-import org.siglus.common.repository.ProgramOrderablesExtensionRepository;
 import org.siglus.siglusapi.dto.AgeGroupLineItemDto;
 import org.siglus.siglusapi.dto.AgeGroupServiceDto;
 import org.siglus.siglusapi.dto.GeographicProvinceDistrictDto;
@@ -64,16 +60,19 @@ import org.siglus.siglusapi.dto.PatientGroupDto;
 import org.siglus.siglusapi.dto.RegimenColumnDto;
 import org.siglus.siglusapi.dto.RegimenLineDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
+import org.siglus.siglusapi.dto.TestConsumptionOutcomeDto;
+import org.siglus.siglusapi.dto.TestConsumptionProjectDto;
+import org.siglus.siglusapi.dto.TestConsumptionServiceDto;
 import org.siglus.siglusapi.repository.OrderableRepository;
 import org.siglus.siglusapi.repository.SiglusFacilityRepository;
 import org.siglus.siglusapi.repository.SiglusGeographicInfoRepository;
-import org.siglus.siglusapi.service.export.TarvRequisitionReportService;
+import org.siglus.siglusapi.service.SiglusProcessingPeriodService;
 
 @RunWith(MockitoJUnitRunner.class)
-public class TarvRequisitionReportServiceTest {
+public class RapidTestRequisitionReportServiceTest {
 
   @InjectMocks
-  private TarvRequisitionReportService tarvRequisitionReportService;
+  private RapidTestRequisitionReportService rapidTestRequisitionReportService;
 
   @Mock
   private SiglusGeographicInfoRepository siglusGeographicInfoRepository;
@@ -82,16 +81,12 @@ public class TarvRequisitionReportServiceTest {
   @Mock
   private SiglusProcessingPeriodService siglusProcessingPeriodService;
   @Mock
-  private ProgramOrderablesExtensionRepository programOrderablesExtensionRepository;
-  @Mock
   private OrderableRepository orderableRepository;
-  @Mock
-  private OrderableReferenceDataService orderableReferenceDataService;
   @Mock
   private ExcelWriter excelWriter;
 
   @Test
-  public void shouldGenerateExcelSuccessForTarv() {
+  public void shouldGenerateExcelSuccessForTr() {
     // given
     UUID requisitionId = UUID.randomUUID();
     SiglusRequisitionDto dto = new SiglusRequisitionDto();
@@ -169,17 +164,12 @@ public class TarvRequisitionReportServiceTest {
         new Orderable(Code.code("productCode"), null, 0, 0, Boolean.FALSE, orderableId, 0L);
     orderable.setFullProductName("productName");
     when(orderableRepository.findLatestByIds(Sets.newHashSet(orderableId))).thenReturn(Lists.newArrayList(orderable));
-    ProgramOrderablesExtension extension = new ProgramOrderablesExtension();
-    extension.setOrderableId(orderableId);
-    extension.setProgramCode("TB");
-    when(programOrderablesExtensionRepository.findAllByProgramCode("TB")).thenReturn(Lists.newArrayList(extension));
     WriteContext writeContext = Mockito.mock(WriteContext.class);
     when(excelWriter.writeContext()).thenReturn(writeContext);
     WriteSheetHolder writeSheetHolder = mock(WriteSheetHolder.class);
     when(writeContext.writeSheetHolder()).thenReturn(writeSheetHolder);
     Sheet sheet = mock(Sheet.class);
     when(writeSheetHolder.getCachedSheet()).thenReturn(sheet);
-
     for (int i = 20; i <= 58; i++) {
       Row row = mock(Row.class);
       when(sheet.getRow(i)).thenReturn(row);
@@ -189,22 +179,26 @@ public class TarvRequisitionReportServiceTest {
       when(sheet.getRow(i)).thenReturn(row);
     }
 
-    Set<VersionEntityReference> versionEntityReferences = dto.getLineItems().stream().map(lineItemDto -> {
-      VersionIdentityDto orderableIdentity = lineItemDto.getOrderableIdentity();
-      return new VersionEntityReference(orderableIdentity.getId(),
-          orderableIdentity.getVersionNumber());
-    }).collect(Collectors.toSet());
-    when(orderableReferenceDataService.findByIdentities(versionEntityReferences)).thenReturn(
-        Lists.newArrayList(orderableDto));
-
+    TestConsumptionServiceDto testConsumptionServiceDto = new TestConsumptionServiceDto();
+    testConsumptionServiceDto.setService(SERVICE_HF);
+    TestConsumptionProjectDto testConsumptionProjectDto = new TestConsumptionProjectDto();
+    testConsumptionProjectDto.setProject(PROJECT_HIVDETERMINE);
+    Map<String, TestConsumptionOutcomeDto> outcomes = new HashMap<>();
+    TestConsumptionOutcomeDto testConsumptionOutcomeDto = new TestConsumptionOutcomeDto();
+    testConsumptionOutcomeDto.setValue(10);
+    outcomes.put(PROJECT_CONSUMO, testConsumptionOutcomeDto);
+    testConsumptionProjectDto.setOutcomes(outcomes);
+    Map<String, TestConsumptionProjectDto> projects = new HashMap<>();
+    projects.put(PROJECT_HIVDETERMINE, testConsumptionProjectDto);
+    testConsumptionServiceDto.setProjects(projects);
+    dto.setTestConsumptionLineItems(Lists.newArrayList(testConsumptionServiceDto));
     // when
-    tarvRequisitionReportService.generateReport(dto, excelWriter);
+    rapidTestRequisitionReportService.generateReport(dto, excelWriter);
 
     // then
     verify(siglusGeographicInfoRepository).getGeographicProvinceDistrictInfo(any());
     verify(siglusProcessingPeriodService).getProcessingPeriodDto(any());
     verify(orderableRepository).findLatestByIds(any());
-    verify(programOrderablesExtensionRepository).findAllByProgramCode(any());
     verify(siglusFacilityRepository).findOne(any(UUID.class));
   }
 }

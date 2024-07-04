@@ -29,7 +29,7 @@ public class RapidTestRequisitionReportServiceServiceTest {
 
   @Test
   public void shouldGetSupportProgramCodeIsRapidTest() {
-    RapidTestRequisitionReportServiceService service = new RapidTestRequisitionReportServiceService();
+    RapidTestRequisitionReportService service = new RapidTestRequisitionReportService();
     Set<String> result = service.supportedProgramCodes();
     assertEquals(1, result.size());
     assertTrue(result.contains(ProgramConstants.RAPIDTEST_PROGRAM_CODE));
