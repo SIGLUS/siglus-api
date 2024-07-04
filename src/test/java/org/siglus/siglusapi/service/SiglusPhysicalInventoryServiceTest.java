@@ -1462,6 +1462,27 @@ public class SiglusPhysicalInventoryServiceTest {
 
   }
 
+  @Test
+  public void shouldGetFullPhysicalInventoryDto() {
+    UUID lineItemId1 = UUID.randomUUID();
+    UUID lineItemId2 = UUID.randomUUID();
+    when(inventoryController.getPhysicalInventory(inventoryOne))
+        .thenReturn(mockPhysicalInventoryDto(lineItemId1, lineItemId2));
+    PhysicalInventoryLineItemsExtension extensionOne = PhysicalInventoryLineItemsExtension.builder()
+        .physicalInventoryLineItemId(lineItemId1)
+        .lotId(null)
+        .orderableId(orderableId)
+        .reasonFreeText("extension")
+        .build();
+    when(lineItemsExtensionRepository.findByPhysicalInventoryIdIn(
+        Arrays.asList(inventoryOne))).thenReturn(Arrays.asList(extensionOne));
+
+    PhysicalInventoryDto inventoryDto = siglusPhysicalInventoryService.getFullPhysicalInventoryDto(inventoryOne);
+
+    assertEquals(inventoryOne, inventoryDto.getId());
+    assertEquals(programIdOne, inventoryDto.getProgramId());
+  }
+
   private PhysicalInventory mockPhysicalInventory() {
     PhysicalInventory physicalInventory = new PhysicalInventory();
     physicalInventory.setId(physicalInventoryIdOne);
@@ -1484,15 +1505,13 @@ public class SiglusPhysicalInventoryServiceTest {
     return physicalInventoryExtension;
   }
 
-  private PhysicalInventoryDto mockPhysicalInventoryDto() {
-    UUID lineItemId1 = UUID.randomUUID();
+  private PhysicalInventoryDto mockPhysicalInventoryDto(UUID lineItemId1, UUID lineItemId2) {
     PhysicalInventoryLineItemDto lineItemDtoOne = PhysicalInventoryLineItemDto.builder()
         .id(lineItemId1)
         .lotId(null)
         .orderableId(orderableId)
         .programId(programIdOne)
         .build();
-    UUID lineItemId2 = UUID.randomUUID();
     UUID orderableIdTwo = UUID.randomUUID();
     PhysicalInventoryLineItemDto lineItemDtoTwo = PhysicalInventoryLineItemDto.builder()
         .id(lineItemId2)
