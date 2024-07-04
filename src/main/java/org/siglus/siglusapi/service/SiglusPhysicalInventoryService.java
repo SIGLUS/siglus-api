@@ -315,6 +315,8 @@ public class SiglusPhysicalInventoryService {
 
     boolean withLocation = facilityConfigHelper.isLocationManagementEnabled(siglusPhysicalInventoryDto.getFacilityId());
     fillPhysicalInventoryLineItemDto(lineItemDtos, withLocation);
+    List<PhysicalInventoryLineItemDto> emptyLocationLineItems = findEmptyLocationsBySubDraftIds(subDraftIds);
+    lineItemDtos.addAll(emptyLocationLineItems);
 
     UUID programId = isAllProgram ? ALL_PRODUCTS_PROGRAM_ID : siglusPhysicalInventoryDto.getProgramId();
     UUID physicalInventoryId = isAllProgram ? ALL_PRODUCTS_UUID : siglusPhysicalInventoryDto.getId();
@@ -442,6 +444,7 @@ public class SiglusPhysicalInventoryService {
     return DraftListDto.builder().build();
   }
 
+  @Transactional
   public PhysicalInventoryDto saveDraftForProductsForOneProgram(PhysicalInventoryDto dto) {
     saveDraft(dto, dto.getId());
     PhysicalInventoryDto afterSavedDto = getPhysicalInventory(dto.getId());
@@ -466,6 +469,7 @@ public class SiglusPhysicalInventoryService {
     return null;
   }
 
+  @Transactional
   public PhysicalInventoryDto saveDraftForAllPrograms(PhysicalInventoryDto dto) {
     deletePhysicalInventoryDraftForAllPrograms(dto.getFacilityId());
     createNewDraftForAllPrograms(dto, null);
@@ -499,21 +503,24 @@ public class SiglusPhysicalInventoryService {
     }
   }
 
-  public void deletePhysicalInventoryDraft(UUID id) {
-    inventoryController.deletePhysicalInventory(id);
-    physicalInventorySubDraftRepository.deletePhysicalInventorySubDraftsByPhysicalInventoryId(id);
-    List<UUID> subDraftIds = physicalInventorySubDraftRepository.findByPhysicalInventoryId(id)
+  @Transactional
+  public void deletePhysicalInventoryDraft(UUID physicalInventoryId) {
+    List<UUID> subDraftIds = physicalInventorySubDraftRepository.findByPhysicalInventoryId(physicalInventoryId)
         .stream()
         .map(BaseEntity::getId)
         .collect(Collectors.toList());
     physicalInventoryEmptyLocationLineItemRepository
         .deletePhysicalInventoryEmptyLocationLineItemsBySubDraftIdIn(subDraftIds);
+    physicalInventoryEmptyLocationLineItemRepository.flush();
+    physicalInventorySubDraftRepository.deletePhysicalInventorySubDraftsByPhysicalInventoryId(physicalInventoryId);
+    inventoryController.deletePhysicalInventory(physicalInventoryId);
   }
 
   public void deletePhysicalInventoryDraftForOneProgram(UUID facilityId, UUID programId) {
     doDeletePhysicalInventoryForProductInOneProgram(facilityId, programId);
   }
 
+  @Transactional
   public void deletePhysicalInventoryDraftForAllPrograms(UUID facilityId) {
     doDeletePhysicalInventoryForAllPrograms(facilityId);
   }
@@ -731,9 +738,9 @@ public class SiglusPhysicalInventoryService {
           "Has already begun the physical inventory : " + physicalInventoryIds);
     }
 
-    List<PhysicalInventorySubDraft> subDrafts = physicalInventoryIds.stream().map(
-        physicalInventoryId -> IntStream.rangeClosed(1, spiltNum).mapToObj(
-            splitIndex -> PhysicalInventorySubDraft.builder()
+    List<PhysicalInventorySubDraft> subDrafts = physicalInventoryIds.stream()
+        .map(physicalInventoryId -> IntStream.rangeClosed(1, spiltNum)
+            .mapToObj(splitIndex -> PhysicalInventorySubDraft.builder()
                 .physicalInventoryId(physicalInventoryId)
                 .num(splitIndex)
                 .status(PhysicalInventorySubDraftEnum.NOT_YET_STARTED)
@@ -778,11 +785,11 @@ public class SiglusPhysicalInventoryService {
 
   private void splitPhysicalInventory(PhysicalInventoryDto dto, Integer splitNum, boolean isByLocation) {
     List<PhysicalInventorySubDraft> subDrafts = createEmptySubDraft(splitNum, dto);
-    spiltLineItem(dto, subDrafts, isByLocation);
+    spiltLineItem(dto, splitNum, subDrafts, isByLocation);
   }
 
   @VisibleForTesting
-  void spiltLineItem(PhysicalInventoryDto physicalInventory,
+  void spiltLineItem(PhysicalInventoryDto physicalInventory, Integer splitNum,
                      List<PhysicalInventorySubDraft> subDrafts, boolean isByLocation) {
     if (physicalInventory == null
         || physicalInventory.getLineItems() == null
@@ -805,12 +812,12 @@ public class SiglusPhysicalInventoryService {
         ? groupByLocationCode(lineItems)
         : groupByProductCode(lineItems);
 
-    if (lists.size() < subDrafts.size()) {
+    if (lists.size() < splitNum) {
       throw new BusinessDataException(new Message(ERROR_SPLIT_NUM_TOO_LARGE));
     }
     // Grouping
     List<List<List<PhysicalInventoryLineItemDto>>> groupList =
-        CustomListSortHelper.averageAssign(lists, subDrafts.size());
+        CustomListSortHelper.averageAssign(lists, splitNum);
 
     if (isByLocation && physicalInventory.getProgramId().equals(ALL_PRODUCTS_PROGRAM_ID)) {
       associateEmptyLocation(subDrafts, groupList);
@@ -1242,18 +1249,14 @@ public class SiglusPhysicalInventoryService {
   }
 
   private void doDeletePhysicalInventoryCore(UUID facilityId, UUID programId) {
-    String physicalInventoryId = physicalInventoriesRepository.findIdByProgramIdAndFacilityIdAndIsDraft(
+    String physicalInventoryIdStr = physicalInventoriesRepository.findIdByProgramIdAndFacilityIdAndIsDraft(
         programId, facilityId, Boolean.TRUE);
-    if (physicalInventoryId == null) {
+    if (StringUtils.isEmpty(physicalInventoryIdStr)) {
       return;
     }
-    List<UUID> physicalInventoryIdList = new ArrayList<>(
-        Collections.singleton(UUID.fromString(physicalInventoryId)))
-        .stream()
-        .filter(Objects::nonNull)
-        .collect(Collectors.toList());
-    physicalInventoryIdList.forEach(this::deletePhysicalInventoryDraft);
-    lineItemsExtensionRepository.deleteByPhysicalInventoryIdIn(physicalInventoryIdList);
+    UUID physicalInventoryId = UUID.fromString(physicalInventoryIdStr);
+    deletePhysicalInventoryDraft(physicalInventoryId);
+    lineItemsExtensionRepository.deleteByPhysicalInventoryIdIn(Collections.singletonList(physicalInventoryId));
   }
 
   private void doDeletePhysicalInventoryForAllPrograms(UUID facilityId) {
