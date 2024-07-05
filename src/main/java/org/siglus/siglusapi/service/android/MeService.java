@@ -308,6 +308,7 @@ public class MeService {
             productResponse.setShowInReport(extension.getShowInReport());
             productResponse.setUnit(extension.getUnit());
           }
+          productResponse.setProgramCode(programOrderable.getProgram().getCode().toString());
           productResponse.setActive(programOrderable.isActive());
           return productResponse;
         })

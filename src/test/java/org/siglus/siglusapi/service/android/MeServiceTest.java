@@ -1019,6 +1019,7 @@ public class MeServiceTest {
 
   private ProgramOrderable mockProgramOrderable1() {
     Program program = new Program(supportProgramId1);
+    program.setCode(new Code("program code 1"));
     Orderable orderable = new Orderable(new Code(productCode1),
         null, 1, 3, true, productId1, 1L);
     orderable.setLastUpdated(oldTime);
@@ -1027,6 +1028,7 @@ public class MeServiceTest {
 
   private ProgramOrderable mockProgramOrderable2() {
     Program program = new Program(supportProgramId1);
+    program.setCode(new Code("program code 1"));
     Orderable orderable = new Orderable(new Code(productCode2),
         null, 1, 3, true, productId2, 1L);
     orderable.setLastUpdated(latestTime);
@@ -1035,6 +1037,7 @@ public class MeServiceTest {
 
   private ProgramOrderable mockProgramOrderable3() {
     Program program = new Program(supportProgramId2);
+    program.setCode(new Code("program code 2"));
     Orderable orderable = new Orderable(new Code(productCode3),
         null, 1, 3, true, productId3, 1L);
     orderable.setLastUpdated(latestTime);
