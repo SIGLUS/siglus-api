@@ -480,6 +480,7 @@ public class MeService {
         .collect(toList());
   }
 
+  @Transactional
   public PodResponse confirmPod(PodRequest podRequest, boolean isReplay) {
     Profiler profiler = new Profiler("confirmPod");
     profiler.setLogger(log);
