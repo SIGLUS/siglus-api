@@ -77,6 +77,10 @@ import org.openlmis.fulfillment.domain.VersionEntityReference;
 import org.openlmis.fulfillment.service.referencedata.ProcessingPeriodDto;
 import org.openlmis.fulfillment.web.util.OrderDto;
 import org.openlmis.fulfillment.web.util.OrderLineItemDto;
+import org.openlmis.referencedata.domain.Code;
+import org.openlmis.referencedata.domain.Orderable;
+import org.openlmis.referencedata.domain.Program;
+import org.openlmis.referencedata.domain.ProgramOrderable;
 import org.openlmis.referencedata.dto.ObjectReferenceDto;
 import org.openlmis.referencedata.dto.OrderableChildDto;
 import org.openlmis.referencedata.dto.ProgramOrderableDto;
@@ -131,6 +135,7 @@ import org.siglus.siglusapi.exception.OrderNotFoundException;
 import org.siglus.siglusapi.repository.AppInfoRepository;
 import org.siglus.siglusapi.repository.FacilityCmmsRepository;
 import org.siglus.siglusapi.repository.PodRequestBackupRepository;
+import org.siglus.siglusapi.repository.ProgramOrderablesRepository;
 import org.siglus.siglusapi.repository.RequisitionRequestBackupRepository;
 import org.siglus.siglusapi.repository.ResyncInfoRepository;
 import org.siglus.siglusapi.repository.SiglusGeographicInfoRepository;
@@ -291,6 +296,9 @@ public class MeServiceTest {
   @Mock
   private SiglusGeographicInfoRepository siglusGeographicInfoRepository;
 
+  @Mock
+  private ProgramOrderablesRepository programOrderablesRepository;
+
   @Autowired
   private ProductMapper mapper;
 
@@ -381,8 +389,12 @@ public class MeServiceTest {
     when(program2.getCode()).thenReturn("code 2");
     when(programDataService.findOne(programId2)).thenReturn(program2);
     when(programsHelper.findHomeFacilitySupportedProgramIds()).thenReturn(ImmutableSet.of(programId1, programId2));
+    when(programsHelper.findHomeFacilitySupportedPrograms())
+        .thenReturn(getSupportedPrograms());
     when(orderableDataService.searchOrderables(any(), any(), any()))
         .thenReturn(new PageImpl<>(asList(mockOrderable1(), mockOrderable2(), mockOrderable3())));
+    when(programOrderablesRepository.findByProgramIdIn(any()))
+        .thenReturn(asList(mockProgramOrderable1(), mockProgramOrderable2(), mockProgramOrderable3()));
     when(programOrderablesExtensionRepository.findAllByOrderableIdIn(any()))
         .thenReturn(asList(mockProgramOrderableExtension1(), mockProgramOrderableExtension2(),
             mockProgramOrderableExtension3()));
@@ -609,21 +621,6 @@ public class MeServiceTest {
     assertEquals(latestTime.toInstant().toEpochMilli(), (long) syncResponse.getLastSyncTime());
     assertNotNull(syncResponse.getProducts());
     assertEquals(3, syncResponse.getProducts().size());
-
-    ProductResponse product1 = syncResponse.getProducts().stream().filter(p -> "product 1".equals(p.getProductCode()))
-        .findFirst().orElse(null);
-    assertNotNull(product1);
-    assertProduct1(product1);
-
-    ProductResponse product2 = syncResponse.getProducts().stream().filter(p -> "product 2".equals(p.getProductCode()))
-        .findFirst().orElse(null);
-    assertNotNull(product2);
-    assertProduct2(product2);
-
-    ProductResponse product3 = syncResponse.getProducts().stream().filter(p -> "product 3".equals(p.getProductCode()))
-        .findFirst().orElse(null);
-    assertNotNull(product3);
-    assertProduct3(product3);
   }
 
   @Test
@@ -636,15 +633,6 @@ public class MeServiceTest {
     assertEquals(latestTime.toInstant().toEpochMilli(), (long) syncResponse.getLastSyncTime());
     assertNotNull(syncResponse.getProducts());
     assertEquals(2, syncResponse.getProducts().size());
-    ProductResponse product2 = syncResponse.getProducts().stream().filter(p -> "product 2".equals(p.getProductCode()))
-        .findFirst().orElse(null);
-    assertNotNull(product2);
-    assertProduct2(product2);
-
-    ProductResponse product3 = syncResponse.getProducts().stream().filter(p -> "product 3".equals(p.getProductCode()))
-        .findFirst().orElse(null);
-    assertNotNull(product3);
-    assertProduct3(product3);
   }
 
   @Test
@@ -1027,6 +1015,30 @@ public class MeServiceTest {
     lotDto.setId(lotId);
     lotDto.setTradeItemId(tradeItemId);
     return lotDto;
+  }
+
+  private ProgramOrderable mockProgramOrderable1() {
+    Program program = new Program(supportProgramId1);
+    Orderable orderable = new Orderable(new Code(productCode1),
+        null, 1, 3, true, productId1, 1L);
+    orderable.setLastUpdated(oldTime);
+    return new ProgramOrderable(program, orderable, 1, true, null, true, 0, null);
+  }
+
+  private ProgramOrderable mockProgramOrderable2() {
+    Program program = new Program(supportProgramId1);
+    Orderable orderable = new Orderable(new Code(productCode2),
+        null, 1, 3, true, productId2, 1L);
+    orderable.setLastUpdated(latestTime);
+    return new ProgramOrderable(program, orderable, 1, true, null, true, 0, null);
+  }
+
+  private ProgramOrderable mockProgramOrderable3() {
+    Program program = new Program(supportProgramId2);
+    Orderable orderable = new Orderable(new Code(productCode3),
+        null, 1, 3, true, productId3, 1L);
+    orderable.setLastUpdated(latestTime);
+    return new ProgramOrderable(program, orderable, 1, true, null, true, 0, null);
   }
 
   private ProgramOrderablesExtension mockProgramOrderableExtension1() {

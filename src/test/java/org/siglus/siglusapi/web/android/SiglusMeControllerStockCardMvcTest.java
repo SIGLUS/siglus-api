@@ -72,6 +72,7 @@ import org.openlmis.stockmanagement.dto.ValidSourceDestinationDto;
 import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.FacilityTypeDto;
 import org.siglus.siglusapi.dto.LotDto;
+import org.siglus.siglusapi.dto.SupportedProgramDto;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.dto.android.EventTime;
 import org.siglus.siglusapi.dto.android.Lot;
@@ -367,6 +368,14 @@ public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
     program2.setId(programId2);
     program2.setCode("program 2");
     when(programDataService.findOne(eq(programId2))).thenReturn(program2);
+    SupportedProgramDto supportedProgramDto1 = new SupportedProgramDto();
+    supportedProgramDto1.setId(programId1);
+    supportedProgramDto1.setCode("program 1");
+    SupportedProgramDto supportedProgramDto2 = new SupportedProgramDto();
+    supportedProgramDto2.setId(programId2);
+    supportedProgramDto2.setCode("program 2");
+    when(programsHelper.findHomeFacilitySupportedPrograms())
+        .thenReturn(asList(supportedProgramDto1, supportedProgramDto2));
   }
 
   private void mockApprovedProducts() {

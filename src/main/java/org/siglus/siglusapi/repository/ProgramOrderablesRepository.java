@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.repository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 import org.openlmis.referencedata.domain.ProgramOrderable;
@@ -26,4 +27,6 @@ public interface ProgramOrderablesRepository extends JpaRepository<ProgramOrdera
 
   @Query(name = "ProgramOrderable.findProgramOrderableDto", nativeQuery = true)
   List<ProgramOrderableDto> findAllMaxVersionProgramOrderableDtos();
+
+  List<ProgramOrderable> findByProgramIdIn(Collection<UUID> programIds);
 }
