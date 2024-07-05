@@ -305,7 +305,7 @@ public class MeService {
               mapper.toResponse(orderableDto, allProducts, productIdToAdditionalProgramCode);
           ProgramOrderablesExtension extension = orderableIdToProgramOrderablesExtension.get(programOrderable.getId());
           if (extension != null) {
-            productResponse.setShowInReport(extension.getShowInReport());
+            productResponse.setShowInReport(extension.getShowInReport() != null && extension.getShowInReport());
             productResponse.setUnit(extension.getUnit());
           }
           productResponse.setProgramCode(programOrderable.getProgram().getCode().toString());
