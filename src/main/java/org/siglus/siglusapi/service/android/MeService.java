@@ -307,6 +307,8 @@ public class MeService {
           if (extension != null) {
             productResponse.setShowInReport(extension.getShowInReport() != null && extension.getShowInReport());
             productResponse.setUnit(extension.getUnit());
+          } else {
+            productResponse.setShowInReport(false);
           }
           productResponse.setProgramCode(programOrderable.getProgram().getCode().toString());
           productResponse.setActive(programOrderable.isActive());
