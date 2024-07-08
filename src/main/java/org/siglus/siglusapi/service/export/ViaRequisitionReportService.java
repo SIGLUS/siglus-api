@@ -37,7 +37,6 @@ import java.util.stream.Collectors;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.openlmis.referencedata.dto.OrderableDto;
 import org.openlmis.requisition.domain.StatusLogEntry;
 import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.dto.BaseRequisitionLineItemDto;
@@ -49,9 +48,10 @@ import org.siglus.siglusapi.dto.FacilitySearchResultDto;
 import org.siglus.siglusapi.dto.KitUsageLineItemDto;
 import org.siglus.siglusapi.dto.KitUsageServiceLineItemDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
+import org.siglus.siglusapi.repository.dto.OrderableVersionDto;
 import org.siglus.siglusapi.service.SiglusAdministrationsService;
+import org.siglus.siglusapi.service.SiglusOrderableService;
 import org.siglus.siglusapi.service.SiglusProcessingPeriodService;
-import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
@@ -71,7 +71,7 @@ public class ViaRequisitionReportService implements IRequisitionReportService {
   private SiglusProcessingPeriodService periodService;
 
   @Autowired
-  private SiglusOrderableReferenceDataService orderableReferenceDataService;
+  private SiglusOrderableService siglusOrderableService;
 
   @Override
   public Set<String> supportedProgramCodes() {
@@ -154,16 +154,16 @@ public class ViaRequisitionReportService implements IRequisitionReportService {
   }
 
   private List<ViaProduct> buildProducts(SiglusRequisitionDto requisition) {
-    List<UUID> orderableIds = requisition.getLineItems().stream()
+    Set<UUID> orderableIds = requisition.getLineItems().stream()
         .filter(item -> item instanceof RequisitionLineItemV2Dto)
         .map(item -> ((RequisitionLineItemV2Dto) item).getOrderable().getId())
-        .collect(Collectors.toList());
-    Map<String, OrderableDto> orderableDtoMap = orderableReferenceDataService.findByIds(orderableIds)
+        .collect(Collectors.toSet());
+    Map<String, OrderableVersionDto> orderableDtoMap = siglusOrderableService.findByIds(orderableIds)
         .stream()
         .collect(Collectors.toMap(this::buildOrderableKey, dto -> dto));
     return requisition.getLineItems().stream()
         .map(lineItem -> {
-          OrderableDto orderable = orderableDtoMap.get(buildOrderableKey((RequisitionLineItemV2Dto) lineItem));
+          OrderableVersionDto orderable = orderableDtoMap.get(buildOrderableKey((RequisitionLineItemV2Dto) lineItem));
           if (ObjectUtils.isEmpty(orderable)) {
             log.error("requisition line item : " + lineItem.getId()
                 + " does not set correct orderable: " + lineItem.getOrderableIdentity());
@@ -188,8 +188,8 @@ public class ViaRequisitionReportService implements IRequisitionReportService {
     return checked ? "☑" : "☐";
   }
 
-  private String buildOrderableKey(OrderableDto dto) {
-    return buildOrderableKey(dto.getId(), dto.getMeta().getVersionNumber());
+  private String buildOrderableKey(OrderableVersionDto dto) {
+    return buildOrderableKey(dto.getId(), dto.getVersionNumber());
   }
 
   private String buildOrderableKey(RequisitionLineItemV2Dto dto) {
@@ -216,7 +216,7 @@ public class ViaRequisitionReportService implements IRequisitionReportService {
     private Integer quantityRequested;
     private Integer quantityApproved;
 
-    public static ViaProduct from(BaseRequisitionLineItemDto lineItem, OrderableDto orderable) {
+    public static ViaProduct from(BaseRequisitionLineItemDto lineItem, OrderableVersionDto orderable) {
       ViaProduct product = new ViaProduct();
       product.setCode(orderable.getProductCode());
       product.setName(orderable.getFullProductName());

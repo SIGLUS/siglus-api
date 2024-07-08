@@ -2241,7 +2241,7 @@ public class SiglusRequisitionService {
         .map(Importer::getId)
         .collect(Collectors.toList());
     if (!lineItemsId.isEmpty()) {
-      log.info("find line item extension: {}", lineItemsId);
+      // log.info("find line item extension: {}", lineItemsId);
       List<RequisitionLineItemExtension> lineItemExtension = lineItemExtensionRepository.findLineItems(lineItemsId);
       lineItems.forEach(lineItem -> {
         RequisitionLineItemExtension itemExtension = findLineItemExtension(lineItemExtension,

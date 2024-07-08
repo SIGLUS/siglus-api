@@ -27,6 +27,7 @@ import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT
 import com.google.common.collect.Lists;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -72,6 +73,7 @@ import org.siglus.siglusapi.repository.OrderableRepository;
 import org.siglus.siglusapi.repository.ProgramOrderablesRepository;
 import org.siglus.siglusapi.repository.SiglusOrderableRepository;
 import org.siglus.siglusapi.repository.StockManagementDraftRepository;
+import org.siglus.siglusapi.repository.dto.OrderableVersionDto;
 import org.siglus.siglusapi.repository.dto.ProgramOrderableDto;
 import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
@@ -83,6 +85,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.util.ObjectUtils;
 
 @Service
 @RequiredArgsConstructor
@@ -375,4 +378,10 @@ public class SiglusOrderableService {
         .collect(Collectors.toSet());
   }
 
+  public List<OrderableVersionDto> findByIds(Collection<UUID> ids) {
+    if (ObjectUtils.isEmpty(ids)) {
+      return new ArrayList<>();
+    }
+    return siglusOrderableRepository.findOrderablesByIds(ids);
+  }
 }

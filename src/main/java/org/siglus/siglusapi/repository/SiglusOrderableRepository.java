@@ -20,6 +20,7 @@ import java.util.UUID;
 import org.openlmis.referencedata.domain.Orderable;
 import org.openlmis.referencedata.domain.VersionIdentity;
 import org.siglus.siglusapi.dto.OrderableExpirationDateDto;
+import org.siglus.siglusapi.repository.dto.OrderableVersionDto;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -31,4 +32,6 @@ public interface SiglusOrderableRepository extends
   List<OrderableExpirationDateDto> findExpirationDate(@Param("ids") Iterable<UUID> ids,
       @Param("facilityId") UUID facilityId);
 
+  @Query(name = "Orderable.findOrderablesByIds", nativeQuery = true)
+  List<OrderableVersionDto> findOrderablesByIds(@Param("ids") Iterable<UUID> ids);
 }
