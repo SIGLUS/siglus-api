@@ -20,7 +20,6 @@ import static org.siglus.siglusapi.constant.PaginationConstants.NO_PAGINATION;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Objects;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -191,7 +190,7 @@ public class SiglusRequisitionController {
     }
     if (basicRequisitionDto.getStatus() == RequisitionStatus.APPROVED) {
       RequisitionExtension requisitionExtension = requisitionExtensionRepository.findByRequisitionId(requisitionId);
-      if (!Objects.equals(requisitionExtension.getFacilityId(), requisitionExtension.getCreatedByFacilityId())) {
+      if (requisitionExtension != null && requisitionExtension.createdBySupplier()) {
         requisitionCreateForClientEmitter.emit(requisitionId);
       } else {
         requisitionFinalApproveEmitter.emit(requisitionId);

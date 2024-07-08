@@ -23,7 +23,6 @@ import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_REQUISITION_SUPPLIER_F
 
 import java.time.LocalDate;
 import java.time.YearMonth;
-import java.util.Objects;
 import java.util.UUID;
 import javax.persistence.EntityNotFoundException;
 import javax.validation.ConstraintValidator;
@@ -153,8 +152,7 @@ public class RequisitionValidStartDateValidator implements
     if (existRequisition != null) {
       RequisitionExtension requisitionExtension = requisitionExtensionRepository.findByRequisitionId(
           existRequisition.getId());
-      if (requisitionExtension != null
-          && !Objects.equals(requisitionExtension.getCreatedByFacilityId(), requisitionExtension.getFacilityId())) {
+      if (requisitionExtension != null && requisitionExtension.createdBySupplier()) {
         throw new RequisitionAlreadyCreatedBySupplierFacilityException(
             new Message(ERROR_REQUISITION_SUPPLIER_FACILITY_CREATED));
       }

@@ -34,7 +34,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.openlmis.referencedata.dto.OrderableDto;
 import org.openlmis.requisition.dto.ObjectReferenceDto;
 import org.openlmis.requisition.dto.ProcessingPeriodDto;
 import org.openlmis.requisition.dto.RequisitionLineItemV2Dto;
@@ -44,9 +43,10 @@ import org.siglus.siglusapi.constant.ProgramConstants;
 import org.siglus.siglusapi.dto.FacilitySearchResultDto;
 import org.siglus.siglusapi.dto.GeographicZoneDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
+import org.siglus.siglusapi.repository.dto.OrderableVersionDto;
 import org.siglus.siglusapi.service.SiglusAdministrationsService;
+import org.siglus.siglusapi.service.SiglusOrderableService;
 import org.siglus.siglusapi.service.SiglusProcessingPeriodService;
-import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ViaRequisitionReportServiceTest {
@@ -61,7 +61,7 @@ public class ViaRequisitionReportServiceTest {
   private SiglusProcessingPeriodService periodService;
 
   @Mock
-  private SiglusOrderableReferenceDataService orderableReferenceDataService;
+  private SiglusOrderableService siglusOrderableService;
 
   private UUID orderableId = UUID.randomUUID();
   private UUID facilityId = UUID.randomUUID();
@@ -84,7 +84,7 @@ public class ViaRequisitionReportServiceTest {
     when(administrationsService.getFacility(facilityId)).thenReturn(buildFacility());
     SiglusRequisitionDto requisitionDto = buildRequisition();
     when(periodService.getProcessingPeriodDto(periodId)).thenReturn(buildPeriod());
-    when(orderableReferenceDataService.findByIds(Collections.singletonList(orderableId)))
+    when(siglusOrderableService.findByIds(Collections.singletonList(orderableId)))
         .thenReturn(Collections.singletonList(buildOrderable()));
 
     service.generateReport(requisitionDto, excelWriter);
@@ -110,8 +110,8 @@ public class ViaRequisitionReportServiceTest {
     return lineItemV2Dto;
   }
 
-  private OrderableDto buildOrderable() {
-    OrderableDto orderableDto = new OrderableDto();
+  private OrderableVersionDto buildOrderable() {
+    OrderableVersionDto orderableDto = new OrderableVersionDto();
     orderableDto.setId(orderableId);
     orderableDto.setProductCode("productCode");
     orderableDto.setFullProductName("full product name");

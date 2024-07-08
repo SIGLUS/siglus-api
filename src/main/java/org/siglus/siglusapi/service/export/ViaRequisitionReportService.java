@@ -30,14 +30,13 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.openlmis.referencedata.dto.BaseDto;
-import org.openlmis.referencedata.dto.OrderableDto;
 import org.openlmis.requisition.domain.StatusLogEntry;
 import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.dto.BaseRequisitionLineItemDto;
@@ -49,9 +48,10 @@ import org.siglus.siglusapi.dto.FacilitySearchResultDto;
 import org.siglus.siglusapi.dto.KitUsageLineItemDto;
 import org.siglus.siglusapi.dto.KitUsageServiceLineItemDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
+import org.siglus.siglusapi.repository.dto.OrderableVersionDto;
 import org.siglus.siglusapi.service.SiglusAdministrationsService;
+import org.siglus.siglusapi.service.SiglusOrderableService;
 import org.siglus.siglusapi.service.SiglusProcessingPeriodService;
-import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
@@ -71,7 +71,7 @@ public class ViaRequisitionReportService implements IRequisitionReportService {
   private SiglusProcessingPeriodService periodService;
 
   @Autowired
-  private SiglusOrderableReferenceDataService orderableReferenceDataService;
+  private SiglusOrderableService siglusOrderableService;
 
   @Override
   public Set<String> supportedProgramCodes() {
@@ -154,17 +154,24 @@ public class ViaRequisitionReportService implements IRequisitionReportService {
   }
 
   private List<ViaProduct> buildProducts(SiglusRequisitionDto requisition) {
-    List<UUID> orderableIds = requisition.getLineItems().stream()
+    Set<UUID> orderableIds = requisition.getLineItems().stream()
         .filter(item -> item instanceof RequisitionLineItemV2Dto)
         .map(item -> ((RequisitionLineItemV2Dto) item).getOrderable().getId())
-        .collect(Collectors.toList());
-    Map<UUID, OrderableDto> orderableDtoMap = orderableReferenceDataService.findByIds(orderableIds)
-        .stream().collect(Collectors.toMap(BaseDto::getId, dto -> dto));
+        .collect(Collectors.toSet());
+    Map<String, OrderableVersionDto> orderableDtoMap = siglusOrderableService.findByIds(orderableIds)
+        .stream()
+        .collect(Collectors.toMap(this::buildOrderableKey, dto -> dto));
     return requisition.getLineItems().stream()
         .map(lineItem -> {
-          OrderableDto orderable = orderableDtoMap.get(((RequisitionLineItemV2Dto) lineItem).getOrderable().getId());
+          OrderableVersionDto orderable = orderableDtoMap.get(buildOrderableKey((RequisitionLineItemV2Dto) lineItem));
+          if (ObjectUtils.isEmpty(orderable)) {
+            log.error("requisition line item : " + lineItem.getId()
+                + " does not set correct orderable: " + lineItem.getOrderableIdentity());
+            return null;
+          }
           return ViaProduct.from(lineItem, orderable);
         })
+        .filter(Objects::nonNull)
         .sorted((productA, productB) -> String.CASE_INSENSITIVE_ORDER.compare(productA.name, productB.name))
         .collect(Collectors.toList());
   }
@@ -179,6 +186,19 @@ public class ViaRequisitionReportService implements IRequisitionReportService {
 
   private String getCheckedStr(Boolean checked) {
     return checked ? "☑" : "☐";
+  }
+
+  private String buildOrderableKey(OrderableVersionDto dto) {
+    return buildOrderableKey(dto.getId(), dto.getVersionNumber());
+  }
+
+  private String buildOrderableKey(RequisitionLineItemV2Dto dto) {
+    return buildOrderableKey(dto.getOrderable().getId(), dto.getOrderable().getVersionNumber());
+  }
+
+  private String buildOrderableKey(UUID orderableId, Long versionNumber) {
+    String versionStr = versionNumber == null ? "null" : versionNumber.toString();
+    return orderableId.toString() + "_" + versionStr;
   }
 
   @Data
@@ -196,12 +216,10 @@ public class ViaRequisitionReportService implements IRequisitionReportService {
     private Integer quantityRequested;
     private Integer quantityApproved;
 
-    public static ViaProduct from(BaseRequisitionLineItemDto lineItem, OrderableDto orderable) {
+    public static ViaProduct from(BaseRequisitionLineItemDto lineItem, OrderableVersionDto orderable) {
       ViaProduct product = new ViaProduct();
-      if (!ObjectUtils.isEmpty(orderable)) {
-        product.setCode(orderable.getProductCode());
-        product.setName(orderable.getFullProductName());
-      }
+      product.setCode(orderable.getProductCode());
+      product.setName(orderable.getFullProductName());
       product.setInitialAmount(lineItem.getBeginningBalance());
       product.setSumEntries(lineItem.getTotalReceivedQuantity());
       product.setSumIssues(lineItem.getTotalConsumedQuantity());

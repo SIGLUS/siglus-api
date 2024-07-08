@@ -48,6 +48,17 @@ public class LotDto extends BaseDto {
   private LocalDate expirationDate;
   private LocalDate manufactureDate;
 
+  public org.openlmis.stockmanagement.dto.referencedata.LotDto toReferenceDto() {
+    return org.openlmis.stockmanagement.dto.referencedata.LotDto.builder()
+        .id(getId())
+        .lotCode(lotCode)
+        .active(active)
+        .expirationDate(expirationDate)
+        .manufactureDate(manufactureDate)
+        .tradeItemId(tradeItemId)
+        .build();
+  }
+
   public static LotDto convert(ProductLot productLot) {
     LotDto lotDto = LotDto.builder()
         .lotCode(productLot.getLot().getCode())

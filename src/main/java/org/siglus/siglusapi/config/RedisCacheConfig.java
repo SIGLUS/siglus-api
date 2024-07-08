@@ -32,7 +32,9 @@ public class RedisCacheConfig {
   @Bean
   @Profile("!no-cache")
   public CacheManager cacheManager(RedisTemplate<Object, Object> redisTemplate) {
-    return new RedisCacheManager(redisTemplate, Collections.emptyList(), true);
+    RedisCacheManager redisCacheManager = new RedisCacheManager(redisTemplate, Collections.emptyList(), true);
+    redisCacheManager.setDefaultExpiration(24 * 60 * 60);
+    return redisCacheManager;
   }
 
   @Bean

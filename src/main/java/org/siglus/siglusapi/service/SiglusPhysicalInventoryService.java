@@ -115,6 +115,7 @@ import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.util.CustomListSortHelper;
 import org.siglus.siglusapi.util.FacilityConfigHelper;
 import org.siglus.siglusapi.util.LocalMachineHelper;
+import org.siglus.siglusapi.util.OrderableUtil;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.util.SupportedProgramsHelper;
 import org.springframework.beans.BeanUtils;
@@ -341,8 +342,7 @@ public class SiglusPhysicalInventoryService {
       lineItemDtos.forEach(lineItemDto -> {
         LotDto lotDto = lotDtoMap.get(lineItemDto.getLotId());
         if (!ObjectUtils.isEmpty(lotDto)) {
-          lineItemDto.setLotCode(lotDto.getLotCode());
-          lineItemDto.setExpirationDate(lotDto.getExpirationDate());
+          lineItemDto.setLot(lotDto.toReferenceDto());
         }
       });
     }
@@ -357,8 +357,7 @@ public class SiglusPhysicalInventoryService {
       lineItemDtos.forEach(lineItemDto -> {
         Orderable orderable = orderableMap.get(lineItemDto.getOrderableId());
         if (!ObjectUtils.isEmpty(orderable)) {
-          lineItemDto.setProductCode(orderable.getProductCode().toString());
-          lineItemDto.setProductName(orderable.getFullProductName());
+          lineItemDto.setOrderable(OrderableUtil.convert(orderable));
         }
       });
     }

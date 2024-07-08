@@ -22,7 +22,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -107,8 +106,7 @@ public class RequisitionInternalApproveReplayer {
     if (requisition != null) {
       RequisitionExtension requisitionExtension = requisitionExtensionRepository
           .findByRequisitionId(requisition.getId());
-      if (requisitionExtension != null
-          && !Objects.equals(requisitionExtension.getFacilityId(), requisitionExtension.getCreatedByFacilityId())) {
+      if (requisitionExtension != null && requisitionExtension.createdBySupplier()) {
         return;
       }
       // if this is a rejected requisition, then delete requisition before replaying

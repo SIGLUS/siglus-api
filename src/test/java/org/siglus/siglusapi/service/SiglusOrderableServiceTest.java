@@ -74,6 +74,7 @@ import org.siglus.siglusapi.repository.OrderableRepository;
 import org.siglus.siglusapi.repository.ProgramOrderablesRepository;
 import org.siglus.siglusapi.repository.SiglusOrderableRepository;
 import org.siglus.siglusapi.repository.StockManagementDraftRepository;
+import org.siglus.siglusapi.repository.dto.OrderableVersionDto;
 import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.util.SupportedProgramsHelper;
@@ -537,6 +538,24 @@ public class SiglusOrderableServiceTest {
 
     // then
     assertEquals(expectedSimplifyOrderablesDtos, simplifyOrderablesDtos);
+  }
+
+  @Test
+  public void shouldGetEmptyListWhenFindByIdsGivenIdsIsEmpty() {
+    List<OrderableVersionDto> orderables = siglusOrderableService.findByIds(new ArrayList<>());
+
+    assertEquals(0, orderables.size());
+  }
+
+  @Test
+  public void shouldGetOrderablesWhenFindByIdsGivenIdsIsNotEmpty() {
+    Set<UUID> ids = Collections.singleton(UUID.randomUUID());
+    when(siglusOrderableRepository.findOrderablesByIds(ids))
+        .thenReturn(Collections.singletonList(new OrderableVersionDto()));
+
+    List<OrderableVersionDto> orderables = siglusOrderableService.findByIds(ids);
+
+    assertEquals(1, orderables.size());
   }
 
   private List<OrderableDto> buildMockOrderableDtos() {
