@@ -36,7 +36,6 @@ import java.util.stream.Collectors;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.openlmis.referencedata.dto.BaseDto;
 import org.openlmis.referencedata.dto.OrderableDto;
 import org.openlmis.requisition.domain.StatusLogEntry;
 import org.openlmis.requisition.domain.requisition.RequisitionStatus;
@@ -158,11 +157,12 @@ public class ViaRequisitionReportService implements IRequisitionReportService {
         .filter(item -> item instanceof RequisitionLineItemV2Dto)
         .map(item -> ((RequisitionLineItemV2Dto) item).getOrderable().getId())
         .collect(Collectors.toList());
-    Map<UUID, OrderableDto> orderableDtoMap = orderableReferenceDataService.findByIds(orderableIds)
-        .stream().collect(Collectors.toMap(BaseDto::getId, dto -> dto));
+    Map<String, OrderableDto> orderableDtoMap = orderableReferenceDataService.findByIds(orderableIds)
+        .stream()
+        .collect(Collectors.toMap(this::buildOrderableKey, dto -> dto));
     return requisition.getLineItems().stream()
         .map(lineItem -> {
-          OrderableDto orderable = orderableDtoMap.get(((RequisitionLineItemV2Dto) lineItem).getOrderable().getId());
+          OrderableDto orderable = orderableDtoMap.get(buildOrderableKey((RequisitionLineItemV2Dto) lineItem));
           return ViaProduct.from(lineItem, orderable);
         })
         .sorted((productA, productB) -> String.CASE_INSENSITIVE_ORDER.compare(productA.name, productB.name))
@@ -179,6 +179,19 @@ public class ViaRequisitionReportService implements IRequisitionReportService {
 
   private String getCheckedStr(Boolean checked) {
     return checked ? "☑" : "☐";
+  }
+
+  private String buildOrderableKey(OrderableDto dto) {
+    return buildOrderableKey(dto.getId(), dto.getMeta().getVersionNumber());
+  }
+
+  private String buildOrderableKey(RequisitionLineItemV2Dto dto) {
+    return buildOrderableKey(dto.getOrderable().getId(), dto.getOrderable().getVersionNumber());
+  }
+
+  private String buildOrderableKey(UUID orderableId, Long versionNumber) {
+    String versionStr = versionNumber == null ? "null" : versionNumber.toString();
+    return orderableId.toString() + "_" + versionStr;
   }
 
   @Data
