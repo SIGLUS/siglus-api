@@ -52,6 +52,8 @@ import org.openlmis.requisition.dto.OrderableDto;
 import org.openlmis.requisition.dto.ProcessingPeriodDto;
 import org.openlmis.requisition.dto.ProgramOrderableDto;
 import org.openlmis.requisition.dto.RequisitionLineItemV2Dto;
+import org.openlmis.requisition.dto.StatusChangeDto;
+import org.openlmis.requisition.dto.StatusMessageDto;
 import org.siglus.siglusapi.dto.AgeGroupLineItemDto;
 import org.siglus.siglusapi.dto.AgeGroupServiceDto;
 import org.siglus.siglusapi.dto.GeographicProvinceDistrictDto;
@@ -146,6 +148,11 @@ public class RapidTestRequisitionReportServiceTest {
     totalRegimenMap.put("community", regimenColumnDto);
     totalRegimen.setColumns(totalRegimenMap);
     dto.setRegimenLineItems(Lists.newArrayList(totalRegimen));
+    StatusChangeDto statusChangeDto = new StatusChangeDto();
+    StatusMessageDto statusMessageDto = new StatusMessageDto();
+    statusMessageDto.setBody("comment");
+    statusChangeDto.setStatusMessageDto(statusMessageDto);
+    dto.setStatusHistory(Lists.newArrayList(statusChangeDto));
 
     Facility facility = new Facility();
     facility.setId(facilityId);

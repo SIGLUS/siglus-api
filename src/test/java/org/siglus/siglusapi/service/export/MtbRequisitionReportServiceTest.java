@@ -13,7 +13,7 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.service;
+package org.siglus.siglusapi.service.export;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.verify;
@@ -42,6 +42,8 @@ import org.openlmis.requisition.dto.ObjectReferenceDto;
 import org.openlmis.requisition.dto.OrderableDto;
 import org.openlmis.requisition.dto.ProcessingPeriodDto;
 import org.openlmis.requisition.dto.RequisitionLineItemV2Dto;
+import org.openlmis.requisition.dto.StatusChangeDto;
+import org.openlmis.requisition.dto.StatusMessageDto;
 import org.siglus.common.domain.ProgramOrderablesExtension;
 import org.siglus.common.repository.ProgramOrderablesExtensionRepository;
 import org.siglus.siglusapi.dto.AgeGroupLineItemDto;
@@ -53,10 +55,11 @@ import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 import org.siglus.siglusapi.repository.OrderableRepository;
 import org.siglus.siglusapi.repository.SiglusFacilityRepository;
 import org.siglus.siglusapi.repository.SiglusGeographicInfoRepository;
+import org.siglus.siglusapi.service.SiglusProcessingPeriodService;
 import org.siglus.siglusapi.service.export.MtbRequisitionReportServiceService;
 
 @RunWith(MockitoJUnitRunner.class)
-public class MtbRequisitionReportServiceServiceTest {
+public class MtbRequisitionReportServiceTest {
 
   @InjectMocks
   private MtbRequisitionReportServiceService mtbRequisitionReportServiceService;
@@ -124,6 +127,11 @@ public class MtbRequisitionReportServiceServiceTest {
     List<AgeGroupServiceDto> ageGroupLineItems = new ArrayList<>();
     ageGroupLineItems.add(ageGroupServiceDto);
     dto.setAgeGroupLineItems(ageGroupLineItems);
+    StatusChangeDto statusChangeDto = new StatusChangeDto();
+    StatusMessageDto statusMessageDto = new StatusMessageDto();
+    statusMessageDto.setBody("comment");
+    statusChangeDto.setStatusMessageDto(statusMessageDto);
+    dto.setStatusHistory(Lists.newArrayList(statusChangeDto));
 
     Facility facility = new Facility();
     facility.setId(facilityId);
