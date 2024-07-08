@@ -54,6 +54,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
@@ -70,6 +71,8 @@ import org.openlmis.requisition.domain.requisition.VersionEntityReference;
 import org.openlmis.requisition.dto.BaseRequisitionLineItemDto;
 import org.openlmis.requisition.dto.BasicOrderableDto;
 import org.openlmis.requisition.dto.ProcessingPeriodDto;
+import org.openlmis.requisition.dto.StatusChangeDto;
+import org.openlmis.requisition.dto.StatusMessageDto;
 import org.openlmis.requisition.dto.VersionIdentityDto;
 import org.openlmis.requisition.service.referencedata.OrderableReferenceDataService;
 import org.siglus.common.domain.ProgramOrderablesExtension;
@@ -154,7 +157,7 @@ public class TarvRequisitionReportService implements IRequisitionReportService {
     // regimenList
     mergeCell(adultFirstRow, adultLastRow, 1, 1, sheet);
     mergeCell(childrenFirstRow, childrenLastRow, 1, 1, sheet);
-    // patientList
+    // Tipo de doentes em TARV
     mergeCell(adultFirstRow, adultFirstRow, 6, 8, sheet);
     mergeCell(adultFirstRow + 1, adultFirstRow + 1, 6, 8, sheet);
     mergeCell(adultFirstRow + 2, adultFirstRow + 2, 6, 8, sheet);
@@ -279,6 +282,15 @@ public class TarvRequisitionReportService implements IRequisitionReportService {
     patientContent.put("total0mes", total0mes);
     patientContent.put("totalTotal", totalTotal);
     patientContent.put("Ajuste", total0mes == 0 ? "0.00" : String.format("%.2f", (double) totalTotal / total0mes));
+    List<StatusChangeDto> statusHistory = requisition.getStatusHistory();
+    StringBuilder stringBuilder = new StringBuilder();
+    statusHistory.forEach(statusChangeDto -> {
+      String comment = Optional.ofNullable(statusChangeDto.getStatusMessageDto())
+          .orElse(new StatusMessageDto())
+          .getBody();
+      stringBuilder.append(comment == null ? "" : comment);
+    });
+    patientContent.put("comment", stringBuilder.toString());
     excelWriter.fill(patientContent, writeSheet);
   }
 
@@ -305,11 +317,11 @@ public class TarvRequisitionReportService implements IRequisitionReportService {
     int regimenSize = requisition.getRegimenLineItems().size();
     int sourceStartRow =
         4 + requisition.getLineItems().size() + 2 * (orderableCategories.size() - 1) + 2 + regimenSize + 13;
-    int sourceEndRow = sourceStartRow + 38;
-    CellRangeAddress sourceRange = CellRangeAddress.valueOf("G" + sourceStartRow + ":L" + sourceEndRow);
+    int sourceEndRow = sourceStartRow + 38 + 2;
+    CellRangeAddress sourceRange = CellRangeAddress.valueOf("B" + sourceStartRow + ":G" + sourceEndRow);
 
     int targetStartRow = 4 + requisition.getLineItems().size() + 2 * (orderableCategories.size() - 1) + 2;
-    int targetEndRow = targetStartRow + 38;
+    int targetEndRow = targetStartRow + 38 + 2;
     CellRangeAddress targetRange = CellRangeAddress.valueOf("G" + targetStartRow + ":L" + targetEndRow);
 
     Sheet sheet = excelWriter.writeContext().writeSheetHolder().getCachedSheet();
@@ -321,6 +333,9 @@ public class TarvRequisitionReportService implements IRequisitionReportService {
       }
 
       for (int colIndex = sourceRange.getFirstColumn(); colIndex <= sourceRange.getLastColumn(); colIndex++) {
+        if (sourceRow == null) {
+          continue;
+        }
         Cell sourceCell = sourceRow.getCell(colIndex);
         Cell targetCell = targetRow.createCell(colIndex + targetRange.getFirstColumn() - sourceRange.getFirstColumn());
 
