@@ -931,7 +931,7 @@ public class SiglusOrderService {
         REQUISITION_STATUS_AFTER_FINAL_APPROVED);
   }
 
-  private UUID getRequisitionId(UUID externalId) {
+  public UUID getRequisitionId(UUID externalId) {
     OrderExternal orderExternal = orderExternalRepository.findOne(externalId);
     return Objects.isNull(orderExternal) ? externalId : orderExternal.getRequisitionId();
   }

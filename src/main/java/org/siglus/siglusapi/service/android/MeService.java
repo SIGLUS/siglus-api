@@ -42,12 +42,14 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNullableByDefault;
 import javax.persistence.EntityManager;
+import javax.persistence.EntityNotFoundException;
 import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.Session;
 import org.openlmis.fulfillment.domain.BaseEntity;
+import org.openlmis.fulfillment.domain.Order;
 import org.openlmis.fulfillment.domain.OrderStatus;
 import org.openlmis.fulfillment.domain.ProofOfDelivery;
 import org.openlmis.fulfillment.domain.Shipment;
@@ -73,6 +75,7 @@ import org.siglus.siglusapi.domain.AppInfo;
 import org.siglus.siglusapi.domain.HfCmm;
 import org.siglus.siglusapi.domain.PodExtension;
 import org.siglus.siglusapi.domain.PodRequestBackup;
+import org.siglus.siglusapi.domain.RequisitionExtension;
 import org.siglus.siglusapi.domain.RequisitionRequestBackup;
 import org.siglus.siglusapi.domain.ResyncInfo;
 import org.siglus.siglusapi.domain.SiglusReportType;
@@ -113,9 +116,11 @@ import org.siglus.siglusapi.repository.LotNativeRepository;
 import org.siglus.siglusapi.repository.PodExtensionRepository;
 import org.siglus.siglusapi.repository.PodRequestBackupRepository;
 import org.siglus.siglusapi.repository.ProgramOrderablesRepository;
+import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionRequestBackupRepository;
 import org.siglus.siglusapi.repository.ResyncInfoRepository;
 import org.siglus.siglusapi.repository.SiglusGeographicInfoRepository;
+import org.siglus.siglusapi.repository.SiglusOrdersRepository;
 import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
 import org.siglus.siglusapi.repository.SiglusReportTypeRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
@@ -202,6 +207,8 @@ public class MeService {
   private final ProgramOrderablesExtensionRepository programOrderablesExtensionRepository;
 
   private final SiglusGeographicInfoRepository siglusGeographicInfoRepository;
+  private final SiglusOrdersRepository siglusOrdersRepository;
+  private final RequisitionExtensionRepository requisitionExtensionRepository;
 
   public FacilityResponse getCurrentFacility() {
     FacilityDto facilityDto = getCurrentFacilityInfo();
@@ -451,7 +458,18 @@ public class MeService {
     FacilityDto homeFacility = ContextHolder.getContext(CurrentUserContext.class).getHomeFacility();
     UUID homeFacilityId = homeFacility.getId();
     if (shippedOnly) {
-      pods = podRepo.findAllByFacilitySince(homeFacilityId, since, orderCode, OrderStatus.SHIPPED);
+      Order order = Optional.ofNullable(siglusOrdersRepository.findByOrderCode(orderCode))
+          .orElseThrow(() -> new EntityNotFoundException("order not found"));
+      UUID externalId = order.getExternalId();
+      UUID requisitionId = orderService.getRequisitionId(externalId);
+      RequisitionExtension requisitionExtension = requisitionExtensionRepository.findByRequisitionId(requisitionId);
+      if (requisitionExtension != null
+          && requisitionExtension.getCreatedByFacilityId() != null
+          && !Objects.equals(requisitionExtension.getCreatedByFacilityId(), requisitionExtension.getFacilityId())) {
+        pods = podRepo.findAllByFacilitySince(homeFacilityId, since, orderCode, OrderStatus.RECEIVED);
+      } else {
+        pods = podRepo.findAllByFacilitySince(homeFacilityId, since, orderCode, OrderStatus.SHIPPED);
+      }
     } else {
       pods = podRepo
           .findAllByFacilitySince(homeFacilityId, since, orderCode, OrderStatus.SHIPPED, OrderStatus.RECEIVED);
@@ -578,7 +596,7 @@ public class MeService {
   }
 
   private List<org.openlmis.requisition.dto.OrderableDto> getProgramProducts(UUID homeFacilityId,
-                                                                             SupportedProgramDto program) {
+      SupportedProgramDto program) {
     return requisitionService.getApprovedProductsWithoutAdditional(homeFacilityId, program.getId()).stream()
         .map(ApprovedProductDto::getOrderable)
         .map(orderable -> {

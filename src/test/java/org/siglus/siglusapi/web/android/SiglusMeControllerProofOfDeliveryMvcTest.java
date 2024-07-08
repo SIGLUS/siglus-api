@@ -74,6 +74,8 @@ import org.siglus.siglusapi.dto.android.Lot;
 import org.siglus.siglusapi.dto.android.db.ProductLot;
 import org.siglus.siglusapi.repository.LotNativeRepository;
 import org.siglus.siglusapi.repository.PodExtensionRepository;
+import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
+import org.siglus.siglusapi.repository.SiglusOrdersRepository;
 import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
 import org.siglus.siglusapi.service.LotConflictService;
 import org.siglus.siglusapi.service.SiglusOrderService;
@@ -146,6 +148,10 @@ public class SiglusMeControllerProofOfDeliveryMvcTest extends FileBasedTest {
   private SiglusValidReasonAssignmentService validReasonAssignmentService;
   @Mock
   private PodExtensionRepository podExtensionRepository;
+  @Mock
+  private SiglusOrdersRepository siglusOrdersRepository;
+  @Mock
+  private RequisitionExtensionRepository requisitionExtensionRepository;
 
   @Captor
   private ArgumentCaptor<UUID> facilityIdCaptor;
@@ -290,6 +296,7 @@ public class SiglusMeControllerProofOfDeliveryMvcTest extends FileBasedTest {
         .characterEncoding("utf-8");
     when(podExtensionRepository.findByPodId(any()))
         .thenReturn(new PodExtension());
+    when(siglusOrdersRepository.findByOrderCode(any())).thenReturn(new Order());
 
     // when
     ResultActions resultActions = mockMvc.perform(request).andDo(print());
@@ -342,6 +349,7 @@ public class SiglusMeControllerProofOfDeliveryMvcTest extends FileBasedTest {
         .characterEncoding("utf-8");
     when(podExtensionRepository.findByPodId(any()))
         .thenReturn(new PodExtension());
+    when(siglusOrdersRepository.findByOrderCode(any())).thenReturn(new Order());
 
     // when
     ResultActions resultActions = mockMvc.perform(request).andDo(print());
