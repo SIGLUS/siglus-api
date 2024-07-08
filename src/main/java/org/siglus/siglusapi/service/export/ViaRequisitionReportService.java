@@ -30,6 +30,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -163,8 +164,14 @@ public class ViaRequisitionReportService implements IRequisitionReportService {
     return requisition.getLineItems().stream()
         .map(lineItem -> {
           OrderableDto orderable = orderableDtoMap.get(buildOrderableKey((RequisitionLineItemV2Dto) lineItem));
+          if (ObjectUtils.isEmpty(orderable)) {
+            log.error("requisition line item : " + lineItem.getId()
+                + " does not set correct orderable: " + lineItem.getOrderableIdentity());
+            return null;
+          }
           return ViaProduct.from(lineItem, orderable);
         })
+        .filter(Objects::nonNull)
         .sorted((productA, productB) -> String.CASE_INSENSITIVE_ORDER.compare(productA.name, productB.name))
         .collect(Collectors.toList());
   }
@@ -211,10 +218,8 @@ public class ViaRequisitionReportService implements IRequisitionReportService {
 
     public static ViaProduct from(BaseRequisitionLineItemDto lineItem, OrderableDto orderable) {
       ViaProduct product = new ViaProduct();
-      if (!ObjectUtils.isEmpty(orderable)) {
-        product.setCode(orderable.getProductCode());
-        product.setName(orderable.getFullProductName());
-      }
+      product.setCode(orderable.getProductCode());
+      product.setName(orderable.getFullProductName());
       product.setInitialAmount(lineItem.getBeginningBalance());
       product.setSumEntries(lineItem.getTotalReceivedQuantity());
       product.setSumIssues(lineItem.getTotalConsumedQuantity());
