@@ -1163,8 +1163,9 @@ public class SiglusRequisitionServiceTest {
   @Test
   public void shouldRevertRequisitionWhenReject() {
     // given
+    RequisitionExtension extension = new RequisitionExtension();
     UUID requisitionId = UUID.randomUUID();
-    when(requisitionExtensionRepository.findByRequisitionId(requisitionId)).thenReturn(null);
+    when(requisitionExtensionRepository.findByRequisitionId(requisitionId)).thenReturn(extension);
     BasicRequisitionDto dto = new BasicRequisitionDto();
     dto.setEmergency(false);
     when(requisitionController.rejectRequisition(requisitionId, request, response)).thenReturn(dto);
@@ -1197,13 +1198,15 @@ public class SiglusRequisitionServiceTest {
 
   @Test(expected = PermissionMessageException.class)
   public void shouldTrowExceptionWhenRejectRequisitionGivenRequisitionIsEmergency() {
-    when(requisitionExtensionRepository.findByRequisitionId(requisitionId)).thenReturn(null);
+    RequisitionExtension extension = new RequisitionExtension();
+    UUID requisitionId = UUID.randomUUID();
+    when(requisitionExtensionRepository.findByRequisitionId(requisitionId)).thenReturn(extension);
     MinimalFacilityDto facilityDto = new MinimalFacilityDto();
     facilityDto.setId(UUID.randomUUID());
     BasicRequisitionDto dto = new BasicRequisitionDto();
     dto.setFacility(facilityDto);
     dto.setEmergency(true);
-    UUID requisitionId = UUID.randomUUID();
+
     when(requisitionController.rejectRequisition(requisitionId, request, response)).thenReturn(dto);
     FacilityExtension facilityExtension = new FacilityExtension();
     facilityExtension.setIsAndroid(true);

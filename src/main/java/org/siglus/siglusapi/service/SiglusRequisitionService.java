@@ -2479,7 +2479,6 @@ public class SiglusRequisitionService {
 
   private boolean createdForClient(UUID requisitionId) {
     RequisitionExtension requisitionExtension = requisitionExtensionRepository.findByRequisitionId(requisitionId);
-    return requisitionExtension != null
-        && !Objects.equals(requisitionExtension.getCreatedByFacilityId(), requisitionExtension.getFacilityId());
+    return requisitionExtension.createdBySupplier();
   }
 }
