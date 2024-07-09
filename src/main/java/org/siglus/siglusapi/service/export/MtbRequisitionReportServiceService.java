@@ -31,6 +31,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -39,6 +40,8 @@ import org.openlmis.referencedata.domain.Facility;
 import org.openlmis.referencedata.domain.Orderable;
 import org.openlmis.requisition.dto.BaseRequisitionLineItemDto;
 import org.openlmis.requisition.dto.ProcessingPeriodDto;
+import org.openlmis.requisition.dto.StatusChangeDto;
+import org.openlmis.requisition.dto.StatusMessageDto;
 import org.siglus.common.domain.ProgramOrderablesExtension;
 import org.siglus.common.repository.ProgramOrderablesExtensionRepository;
 import org.siglus.siglusapi.constant.ProgramConstants;
@@ -148,6 +151,15 @@ public class MtbRequisitionReportServiceService implements IRequisitionReportSer
     bottomContent.put("authorize", signature.get("authorize"));
     List<String> approves = (List<String>) signature.get("approve");
     bottomContent.put("approve", approves.get(0));
+    List<StatusChangeDto> statusHistory = requisition.getStatusHistory();
+    StringBuilder stringBuilder = new StringBuilder();
+    statusHistory.forEach(statusChangeDto -> {
+      String comment = Optional.ofNullable(statusChangeDto.getStatusMessageDto())
+          .orElse(new StatusMessageDto())
+          .getBody();
+      stringBuilder.append(comment == null ? "" : comment);
+    });
+    bottomContent.put("comment", stringBuilder.toString());
     excelWriter.fill(bottomContent, writeSheet);
   }
 

@@ -52,6 +52,8 @@ import org.openlmis.requisition.dto.OrderableDto;
 import org.openlmis.requisition.dto.ProcessingPeriodDto;
 import org.openlmis.requisition.dto.ProgramOrderableDto;
 import org.openlmis.requisition.dto.RequisitionLineItemV2Dto;
+import org.openlmis.requisition.dto.StatusChangeDto;
+import org.openlmis.requisition.dto.StatusMessageDto;
 import org.openlmis.requisition.dto.VersionIdentityDto;
 import org.openlmis.requisition.service.referencedata.OrderableReferenceDataService;
 import org.siglus.common.domain.ProgramOrderablesExtension;
@@ -152,6 +154,11 @@ public class TarvRequisitionReportServiceTest {
     totalRegimenMap.put("community", regimenColumnDto);
     totalRegimen.setColumns(totalRegimenMap);
     dto.setRegimenLineItems(Lists.newArrayList(totalRegimen));
+    StatusChangeDto statusChangeDto = new StatusChangeDto();
+    StatusMessageDto statusMessageDto = new StatusMessageDto();
+    statusMessageDto.setBody("comment");
+    statusChangeDto.setStatusMessageDto(statusMessageDto);
+    dto.setStatusHistory(Lists.newArrayList(statusChangeDto));
 
     Facility facility = new Facility();
     facility.setId(facilityId);
