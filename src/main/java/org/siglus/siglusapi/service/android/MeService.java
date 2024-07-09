@@ -458,14 +458,7 @@ public class MeService {
     FacilityDto homeFacility = ContextHolder.getContext(CurrentUserContext.class).getHomeFacility();
     UUID homeFacilityId = homeFacility.getId();
     if (shippedOnly) {
-      Order order = Optional.ofNullable(siglusOrdersRepository.findByOrderCode(orderCode))
-          .orElseThrow(() -> new EntityNotFoundException("order not found"));
-      UUID externalId = order.getExternalId();
-      UUID requisitionId = orderService.getRequisitionId(externalId);
-      RequisitionExtension requisitionExtension = requisitionExtensionRepository.findByRequisitionId(requisitionId);
-      if (requisitionExtension != null
-          && requisitionExtension.getCreatedByFacilityId() != null
-          && !Objects.equals(requisitionExtension.getCreatedByFacilityId(), requisitionExtension.getFacilityId())) {
+      if (orderCode != null && isCreateForClient(orderCode)) {
         pods = podRepo.findAllByFacilitySince(homeFacilityId, since, orderCode, OrderStatus.RECEIVED);
       } else {
         pods = podRepo.findAllByFacilitySince(homeFacilityId, since, orderCode, OrderStatus.SHIPPED);
@@ -490,6 +483,15 @@ public class MeService {
     return pods.stream()
         .map(pod -> toPodResponse(pod, orderIdToOrder, reasonIdToName, orderIdToRequisition))
         .collect(toList());
+  }
+
+  private boolean isCreateForClient(String orderCode) {
+    Order order = Optional.ofNullable(siglusOrdersRepository.findByOrderCode(orderCode))
+        .orElseThrow(() -> new EntityNotFoundException("order not found"));
+    UUID externalId = order.getExternalId();
+    UUID requisitionId = orderService.getRequisitionId(externalId);
+    RequisitionExtension requisitionExtension = requisitionExtensionRepository.findByRequisitionId(requisitionId);
+    return requisitionExtension.createdBySupplier();
   }
 
   @Transactional
