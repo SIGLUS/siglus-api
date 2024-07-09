@@ -302,12 +302,12 @@ public class TarvRequisitionReportService implements IRequisitionReportService {
     Map<String, Object> bottomContent = new HashMap<>();
     bottomContent.put("createdDate",
         requisition.getCreatedDate().toLocalDate()
-            .format(DateTimeFormatter.ofPattern("dd MMMM yyyy", new Locale("pt", "PT"))));
+            .format(DateTimeFormatter.ofPattern("dd MMMM yyyy", new Locale("pt", "MZ"))));
     Map<String, Object> extraDataMap = requisition.getExtraData();
     Map<String, Object> signature = (Map<String, Object>) extraDataMap.get("signaure");
     bottomContent.put("authorize", signature.get("authorize"));
     List<String> approves = (List<String>) signature.get("approve");
-    bottomContent.put("approve", approves.get(0));
+    bottomContent.put("approve", String.join(",", approves));
     excelWriter.fill(bottomContent, writeSheet);
   }
 
@@ -510,7 +510,7 @@ public class TarvRequisitionReportService implements IRequisitionReportService {
     ProcessingPeriodDto processingPeriodDto = siglusProcessingPeriodService.getProcessingPeriodDto(processingPeriodId);
     topContent.put("year", processingPeriodDto.getEndDate().getYear());
     topContent.put("month", processingPeriodDto.getEndDate().format(DateTimeFormatter.ofPattern("MMMM",
-        new Locale("pt", "PT"))));
+        new Locale("pt", "MZ"))));
     excelWriter.fill(topContent, writeSheet);
   }
 
