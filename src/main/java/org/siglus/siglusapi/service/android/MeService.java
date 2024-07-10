@@ -33,7 +33,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -55,8 +54,9 @@ import org.openlmis.fulfillment.domain.ProofOfDelivery;
 import org.openlmis.fulfillment.domain.Shipment;
 import org.openlmis.fulfillment.domain.ShipmentLineItem;
 import org.openlmis.fulfillment.web.util.OrderDto;
-import org.openlmis.referencedata.domain.Orderable;
 import org.openlmis.referencedata.domain.ProgramOrderable;
+import org.openlmis.referencedata.dto.BaseDto;
+import org.openlmis.referencedata.dto.MetadataDto;
 import org.openlmis.referencedata.dto.OrderableDto;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.dto.ApprovedProductDto;
@@ -291,37 +291,47 @@ public class MeService {
     UUID homeFacilityId = authHelper.getCurrentUser().getHomeFacilityId();
     Map<UUID, OrderableDto> allProducts = getAllProducts(homeFacilityId).stream()
         .collect(toMap(OrderableDto::getId, Function.identity()));
-    List<ProgramOrderable> programOrderables = programOrderablesRepository.findByProgramIdIn(programMap.keySet())
-        .stream()
-        .filter(p -> filterByLastUpdated(p.getProduct(), lastSyncTime))
+    List<OrderableDto> needSyncProducts = programMap.values().stream()
+        .map(program -> getProgramProducts(homeFacilityId, program))
+        .flatMap(Collection::stream)
+        .map(orderable -> {
+          OrderableDto dto = allProducts.get(orderable.getId());
+          dto.getExtraData().put(KEY_PROGRAM_CODE, orderable.getExtraData().get(KEY_PROGRAM_CODE));
+          return dto;
+        })
+        .filter(p -> filterByLastUpdated(p, lastSyncTime))
         .collect(toList());
+
     Map<UUID, String> productIdToAdditionalProgramCode = additionalProductRepo.findAll().stream()
         .filter(p -> programMap.get(p.getProgramId()) != null)
         .collect(toMap(ProgramAdditionalOrderable::getAdditionalOrderableId,
             p -> programMap.get(p.getProgramId()).getCode()));
     Map<UUID, ProgramOrderablesExtension> orderableIdToProgramOrderablesExtension
-        = buildOrderableIdToExtensionMap(programOrderables);
+        = buildOrderableIdToExtensionMap(needSyncProducts);
 
-    List<ProductResponse> filteredProducts = programOrderables.stream()
-        .map(programOrderable -> {
-          OrderableDto orderableDto = allProducts.get(programOrderable.getProduct().getId());
-          if (ObjectUtils.isEmpty(orderableDto)) {
-            return null;
-          }
+    Map<UUID, ProgramOrderable> programOrderableMap = programOrderablesRepository.findByProgramIdIn(programMap.keySet())
+        .stream()
+        .filter(distinctByKey(programOrderable -> programOrderable.getProduct().getId()))
+        .collect(toMap(programOrderable -> programOrderable.getProduct().getId(), Function.identity()));
+
+    List<ProductResponse> filteredProducts = needSyncProducts.stream()
+        .map(orderableDto -> {
           ProductResponse productResponse =
               mapper.toResponse(orderableDto, allProducts, productIdToAdditionalProgramCode);
-          ProgramOrderablesExtension extension = orderableIdToProgramOrderablesExtension.get(programOrderable.getId());
+          ProgramOrderablesExtension extension = orderableIdToProgramOrderablesExtension.get(orderableDto.getId());
           if (extension != null) {
             productResponse.setShowInReport(extension.getShowInReport() != null && extension.getShowInReport());
             productResponse.setUnit(extension.getUnit());
           } else {
             productResponse.setShowInReport(false);
           }
-          productResponse.setProgramCode(programOrderable.getProgram().getCode().toString());
-          productResponse.setActive(programOrderable.isActive());
+          ProgramOrderable programOrderable = programOrderableMap.get(orderableDto.getId());
+          if (programOrderable != null) {
+            productResponse.setProgramCode(programOrderable.getProgram().getCode().toString());
+            productResponse.setActive(programOrderable.isActive());
+          }
           return productResponse;
         })
-        .filter(Objects::nonNull)
         .filter(ProductResponse::getActive)
         .collect(toList());
     syncResponse.setProducts(filteredProducts);
@@ -334,9 +344,9 @@ public class MeService {
   }
 
   private Map<UUID, ProgramOrderablesExtension> buildOrderableIdToExtensionMap(
-      List<ProgramOrderable> programOrderables) {
-    Set<UUID> orderableIds = programOrderables.stream()
-        .map(programOrderable -> programOrderable.getProduct().getId())
+      List<OrderableDto> orderableDtos) {
+    Set<UUID> orderableIds = orderableDtos.stream()
+        .map(BaseDto::getId)
         .collect(Collectors.toSet());
     List<ProgramOrderablesExtension> allExtensions = programOrderablesExtensionRepository
         .findAllByOrderableIdIn(orderableIds);
@@ -608,12 +618,13 @@ public class MeService {
         .collect(toList());
   }
 
-  private boolean filterByLastUpdated(Orderable approvedProduct, Instant lastSyncTime) {
+  private boolean filterByLastUpdated(OrderableDto approvedProduct, Instant lastSyncTime) {
     if (lastSyncTime == null) {
       return true;
     }
     return Optional.of(approvedProduct)
-        .map(Orderable::getLastUpdated)
+        .map(OrderableDto::getMeta)
+        .map(MetadataDto::getLastUpdated)
         .map(ChronoZonedDateTime::toInstant)
         .map(lastUpdated -> lastUpdated.isAfter(lastSyncTime))
         .orElse(true);

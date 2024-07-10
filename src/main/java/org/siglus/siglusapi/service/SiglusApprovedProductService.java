@@ -15,8 +15,14 @@
 
 package org.siglus.siglusapi.service;
 
+import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
+
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -26,6 +32,8 @@ import org.openlmis.requisition.dto.DispensableDto;
 import org.openlmis.requisition.service.RequisitionService;
 import org.siglus.common.domain.ProgramOrderablesExtension;
 import org.siglus.common.repository.ProgramOrderablesExtensionRepository;
+import org.siglus.siglusapi.dto.SupportedProgramDto;
+import org.siglus.siglusapi.util.SupportedProgramsHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
@@ -34,13 +42,26 @@ import org.springframework.util.ObjectUtils;
 public class SiglusApprovedProductService {
 
   @Autowired
+  private SupportedProgramsHelper supportedProgramsHelper;
+
+  @Autowired
   private RequisitionService requisitionService;
 
   @Autowired
   private ProgramOrderablesExtensionRepository programOrderablesExtensionRepository;
 
   public List<ApprovedProductDto> getApprovedProducts(UUID facilityId, UUID programId) {
-    List<ApprovedProductDto> approvedProducts = requisitionService.getApprovedProducts(facilityId, programId);
+    List<SupportedProgramDto> supportedPrograms = supportedProgramsHelper.findHomeFacilitySupportedPrograms();
+    if (!ALL_PRODUCTS_PROGRAM_ID.equals(programId)) {
+      Optional<SupportedProgramDto> programDto = supportedPrograms.stream()
+          .filter(program -> Objects.equals(program.getId(), programId)).findFirst();
+      if (programDto.isPresent()) {
+        supportedPrograms = Collections.singletonList(programDto.get());
+      } else {
+        throw new IllegalArgumentException("unsupported program: " + programId);
+      }
+    }
+    List<ApprovedProductDto> approvedProducts = getApprovedProducts(facilityId, supportedPrograms);
     Set<UUID> orderableIds = approvedProducts.stream()
         .map(product -> product.getOrderable().getId()).collect(Collectors.toSet());
     if (!ObjectUtils.isEmpty(orderableIds)) {
@@ -57,5 +78,12 @@ public class SiglusApprovedProductService {
       );
     }
     return approvedProducts;
+  }
+
+  private List<ApprovedProductDto> getApprovedProducts(UUID facilityId, List<SupportedProgramDto> supportedPrograms) {
+    return supportedPrograms.stream().map(programDto ->
+            requisitionService.getApprovedProducts(facilityId, programDto.getId()))
+        .flatMap(Collection::stream)
+        .collect(Collectors.toList());
   }
 }
