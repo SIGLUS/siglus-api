@@ -378,12 +378,12 @@ public class MeServiceTest {
     String latestTimeStr = "2021-05-31T09:08:35.004Z";
     latestTime = Instant.parse(latestTimeStr).atZone(ZoneId.systemDefault());
 
-    UUID programId1 = UUID.randomUUID();
+    UUID programId1 = supportProgramId1;
     ProgramDto program1 = mock(ProgramDto.class);
     when(program1.getId()).thenReturn(programId1);
     when(program1.getCode()).thenReturn("code 1");
     when(programDataService.findOne(programId1)).thenReturn(program1);
-    UUID programId2 = UUID.randomUUID();
+    UUID programId2 = supportProgramId2;
     ProgramDto program2 = mock(ProgramDto.class);
     when(program2.getId()).thenReturn(programId2);
     when(program2.getCode()).thenReturn("code 2");
