@@ -1817,6 +1817,24 @@ traits:
         responses:
           200:
             description: return approved products.
+      /brief:
+        get:
+          is: [ secured ]
+          description: Get approved products brief.
+          queryParameters:
+            facilityId:
+              required: true
+              description: facility id
+              repeat: false
+              type: string
+            programId:
+              required: true
+              description: program id
+              repeat: false
+              type: string
+          responses:
+            200:
+              description: return approved products brief.
 
     /stockCards/orderable:
       get:
