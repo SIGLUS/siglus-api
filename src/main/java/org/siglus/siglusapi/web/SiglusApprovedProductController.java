@@ -41,7 +41,7 @@ public class SiglusApprovedProductController {
     return siglusApprovedProductService.getApprovedProducts(facilityId, programId);
   }
 
-  @GetMapping("/brif")
+  @GetMapping("/brief")
   public List<ApprovedProductResponse> approvedProductResponse(@RequestParam UUID facilityId,
                                                                @RequestParam UUID programId) {
     return siglusApprovedProductService.getApprovedProducts(facilityId, programId)
