@@ -341,7 +341,8 @@ public class FcProductServiceTest {
     givenChildrenOrderableDto();
     ProductInfoDto product = buildProductInfoDto();
     org.siglus.siglusapi.repository.dto.ProgramOrderableDto programOrderableDto1 =
-        new org.siglus.siglusapi.repository.dto.ProgramOrderableDto(orderableId, programId, new BigDecimal(100));
+        new org.siglus.siglusapi.repository.dto.ProgramOrderableDto(orderableId,
+            programId, new BigDecimal(100), true);
     when(programOrderablesRepository.findAllMaxVersionProgramOrderableDtos()).thenReturn(
         newArrayList(programOrderableDto1));
     when(orderableController.update(orderableId, orderableDto,

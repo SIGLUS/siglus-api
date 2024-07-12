@@ -45,6 +45,8 @@ import static org.siglus.siglusapi.constant.FieldConstants.TRADE_ITEM;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+
+import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -83,7 +85,7 @@ import org.openlmis.referencedata.domain.Program;
 import org.openlmis.referencedata.domain.ProgramOrderable;
 import org.openlmis.referencedata.dto.ObjectReferenceDto;
 import org.openlmis.referencedata.dto.OrderableChildDto;
-import org.openlmis.referencedata.dto.ProgramOrderableDto;
+import org.openlmis.referencedata.repository.ProgramRepository;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.requisition.dto.OrderableDto;
@@ -143,6 +145,7 @@ import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
 import org.siglus.siglusapi.repository.SiglusReportTypeRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.repository.StockCardRequestBackupRepository;
+import org.siglus.siglusapi.repository.dto.ProgramOrderableDto;
 import org.siglus.siglusapi.service.SiglusArchiveProductService;
 import org.siglus.siglusapi.service.SiglusOrderService;
 import org.siglus.siglusapi.service.SiglusOrderableService;
@@ -299,6 +302,9 @@ public class MeServiceTest {
   @Mock
   private ProgramOrderablesRepository programOrderablesRepository;
 
+  @Mock
+  private ProgramRepository programRepository;
+
   @Autowired
   private ProductMapper mapper;
 
@@ -381,13 +387,20 @@ public class MeServiceTest {
     UUID programId1 = supportProgramId1;
     ProgramDto program1 = mock(ProgramDto.class);
     when(program1.getId()).thenReturn(programId1);
-    when(program1.getCode()).thenReturn("code 1");
+    when(program1.getCode()).thenReturn(productCode1);
     when(programDataService.findOne(programId1)).thenReturn(program1);
     UUID programId2 = supportProgramId2;
     ProgramDto program2 = mock(ProgramDto.class);
     when(program2.getId()).thenReturn(programId2);
-    when(program2.getCode()).thenReturn("code 2");
+    when(program2.getCode()).thenReturn(productCode2);
     when(programDataService.findOne(programId2)).thenReturn(program2);
+    Program programOrigin1 = mock(Program.class);
+    when(programOrigin1.getId()).thenReturn(supportProgramId1);
+    when(programOrigin1.getCode()).thenReturn(new Code(productCode1));
+    Program programOrigin2 = mock(Program.class);
+    when(programOrigin2.getId()).thenReturn(supportProgramId2);
+    when(programOrigin2.getCode()).thenReturn(new Code(productCode2));
+    when(programRepository.findAll()).thenReturn(asList(programOrigin1, programOrigin2));
     when(programsHelper.findHomeFacilitySupportedProgramIds()).thenReturn(ImmutableSet.of(programId1, programId2));
     when(programsHelper.findHomeFacilitySupportedPrograms())
         .thenReturn(getSupportedPrograms());
@@ -395,6 +408,9 @@ public class MeServiceTest {
         .thenReturn(new PageImpl<>(asList(mockOrderable1(), mockOrderable2(), mockOrderable3())));
     when(programOrderablesRepository.findByProgramIdIn(any()))
         .thenReturn(asList(mockProgramOrderable1(), mockProgramOrderable2(), mockProgramOrderable3()));
+    when(programOrderablesRepository.findAllMaxVersionProgramOrderableDtos())
+        .thenReturn(asList(from(mockProgramOrderable1()), from(mockProgramOrderable2()),
+            from(mockProgramOrderable2())));
     when(programOrderablesExtensionRepository.findAllByOrderableIdIn(any()))
         .thenReturn(asList(mockProgramOrderableExtension1(), mockProgramOrderableExtension2(),
             mockProgramOrderableExtension3()));
@@ -952,7 +968,7 @@ public class MeServiceTest {
     assertEquals(1L, (long) product.getNetContent());
     assertEquals(3L, (long) product.getPackRoundingThreshold());
     assertTrue(product.getRoundToZero());
-    assertEquals("code 1", product.getProgramCode());
+    assertEquals(productCode1, product.getProgramCode());
     assertEquals("Default", product.getCategory());
     assertFalse(product.getIsKit());
     assertEquals(0, product.getChildren().size());
@@ -973,7 +989,7 @@ public class MeServiceTest {
     assertEquals(2L, (long) product.getNetContent());
     assertEquals(5L, (long) product.getPackRoundingThreshold());
     assertTrue(product.getRoundToZero());
-    assertEquals("code 1", product.getProgramCode());
+    assertEquals(productCode1, product.getProgramCode());
     assertEquals("12", product.getCategory());
     assertTrue(product.getIsKit());
     assertEquals(1, product.getChildren().size());
@@ -997,7 +1013,7 @@ public class MeServiceTest {
     assertEquals(2L, (long) product.getNetContent());
     assertEquals(5L, (long) product.getPackRoundingThreshold());
     assertFalse(product.getRoundToZero());
-    assertEquals("code 2", product.getProgramCode());
+    assertEquals(productCode2, product.getProgramCode());
     assertEquals("13", product.getCategory());
     assertFalse(product.getIsKit());
     assertEquals(0, product.getChildren().size());
@@ -1015,6 +1031,11 @@ public class MeServiceTest {
     lotDto.setId(lotId);
     lotDto.setTradeItemId(tradeItemId);
     return lotDto;
+  }
+
+  private ProgramOrderableDto from(ProgramOrderable orderable) {
+    return new ProgramOrderableDto(orderable.getProduct().getId(), orderable.getProgram().getId(),
+        new BigDecimal("1.0"), orderable.isActive());
   }
 
   private ProgramOrderable mockProgramOrderable1() {
@@ -1083,7 +1104,8 @@ public class MeServiceTest {
     orderable.setChildren(emptySet());
     orderable.setExtraData(new HashMap<>());
     orderable.getMeta().setLastUpdated(oldTime);
-    ProgramOrderableDto programOrderableDto = new ProgramOrderableDto();
+    org.openlmis.referencedata.dto.ProgramOrderableDto programOrderableDto =
+        new org.openlmis.referencedata.dto.ProgramOrderableDto();
     programOrderableDto.setOrderableCategoryDisplayName("Default");
     orderable.setPrograms(singleton(programOrderableDto));
     return orderable;
@@ -1123,7 +1145,8 @@ public class MeServiceTest {
     orderable.getChildren().add(child);
     orderable.setExtraData(new HashMap<>());
     orderable.getMeta().setLastUpdated(latestTime);
-    ProgramOrderableDto programOrderableDto = new ProgramOrderableDto();
+    org.openlmis.referencedata.dto.ProgramOrderableDto programOrderableDto =
+        new org.openlmis.referencedata.dto.ProgramOrderableDto();
     programOrderableDto.setOrderableCategoryDisplayName("12");
     orderable.setPrograms(singleton(programOrderableDto));
     return orderable;
@@ -1161,7 +1184,8 @@ public class MeServiceTest {
     orderable.getExtraData().put("active", "false");
     orderable.getExtraData().put("isBasic", "true");
     orderable.getMeta().setLastUpdated(latestTime);
-    ProgramOrderableDto programOrderableDto = new ProgramOrderableDto();
+    org.openlmis.referencedata.dto.ProgramOrderableDto programOrderableDto =
+        new org.openlmis.referencedata.dto.ProgramOrderableDto();
     programOrderableDto.setOrderableCategoryDisplayName("13");
     orderable.setPrograms(singleton(programOrderableDto));
     return orderable;
