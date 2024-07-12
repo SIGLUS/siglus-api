@@ -75,6 +75,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.openlmis.fulfillment.domain.Order;
+import org.openlmis.fulfillment.domain.OrderStatus;
 import org.openlmis.referencedata.domain.Orderable;
 import org.openlmis.referencedata.domain.ProcessingPeriod;
 import org.openlmis.referencedata.repository.ProgramRepository;
@@ -942,7 +943,11 @@ public class SiglusRequisitionService {
         .findOrderExternalIdByRequisitionId(regularRequisition.getId()).stream()
         .map(UUID::fromString).collect(toSet());
     orderExternalIds.add(regularRequisition.getId());
-    List<Order> orders = siglusOrdersRepository.findAllByExternalIdIn(orderExternalIds);
+    Set<String> orderStatus = Sets.newHashSet(OrderStatus.TRANSFER_FAILED.toString(), OrderStatus.SHIPPED.toString(),
+        OrderStatus.RECEIVED.toString(), OrderStatus.IN_ROUTE.toString(), OrderStatus.READY_TO_PACK.toString());
+    List<Order> orders = siglusOrdersRepository.findAllByExternalIdIn(orderExternalIds).stream()
+        .filter(order -> orderStatus.contains(order.getStatus().toString()))
+        .collect(toList());
     orders.forEach(order ->
         order.getOrderLineItems().forEach(item ->
             orderableIdToFulfillQuantityMap.put(item.getOrderable().getId(),
