@@ -25,9 +25,11 @@ import com.google.common.collect.Multimap;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
@@ -49,10 +51,13 @@ import org.openlmis.fulfillment.service.ShipmentService;
 import org.openlmis.fulfillment.web.shipment.LocationDto;
 import org.openlmis.fulfillment.web.shipment.ShipmentDto;
 import org.openlmis.fulfillment.web.shipment.ShipmentLineItemDto;
+import org.openlmis.fulfillment.web.util.ObjectReferenceDto;
 import org.openlmis.fulfillment.web.util.OrderDto;
 import org.openlmis.fulfillment.web.util.OrderDtoBuilder;
 import org.openlmis.fulfillment.web.util.OrderLineItemDto;
 import org.openlmis.fulfillment.web.util.OrderObjectReferenceDto;
+import org.openlmis.referencedata.domain.Lot;
+import org.openlmis.referencedata.repository.LotRepository;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.RequisitionLineItem;
 import org.openlmis.requisition.domain.requisition.RequisitionStatus;
@@ -110,6 +115,7 @@ public class OrderFulfillmentSyncedReplayer {
   private final SiglusLotService siglusLotService;
   private final SiglusOrderService siglusOrderService;
   private final ShipmentService shipmentService;
+  private final LotRepository lotRepository;
 
   @EventListener(value = {OrderFulfillmentSyncedEvent.class})
   public void replay(OrderFulfillmentSyncedEvent event) {
@@ -129,7 +135,26 @@ public class OrderFulfillmentSyncedReplayer {
   public void doReplay(OrderFulfillmentSyncedEvent event) {
     Order order;
     simulateUserAuthHelper.simulateNewUserAuth(event.getFulfillUserId());
-    createLotsIfNotExist(event.getShippedLotList());
+    // replace the lot id with the old lot in LM here in ShipmentExtensionRequest.shipment
+    Map<UUID, UUID> newIdToOldIdMap = new HashMap<>();
+    createLotsIfNotExist(event.getShippedLotList(), newIdToOldIdMap);
+    if (!newIdToOldIdMap.isEmpty()) {
+      List<ShipmentLineItemDto> updatedLineItems = new ArrayList<>();
+      ShipmentDto shipmentDto = event.getShipmentExtensionRequest().getShipment();
+      shipmentDto.getLineItems().forEach(lineItem -> {
+        if (newIdToOldIdMap.containsKey(lineItem.getLotId())) {
+          ShipmentLineItemDto copy = new ShipmentLineItemDto();
+          BeanUtils.copyProperties(lineItem, copy);
+          copy.setLotId(newIdToOldIdMap.get(lineItem.getLotId()));
+          copy.setLot(new ObjectReferenceDto(newIdToOldIdMap.get(lineItem.getLotId())));
+          updatedLineItems.add(copy);
+        } else {
+          updatedLineItems.add((ShipmentLineItemDto) lineItem);
+        }
+      });
+      shipmentDto.setLineItems(updatedLineItems);
+    }
+
 
     if (event.isNeedConvertToOrder()) {
       RequisitionExtension requisitionExtension = requisitionExtensionRepository.findByRequisitionNumber(
@@ -228,14 +253,36 @@ public class OrderFulfillmentSyncedReplayer {
     });
   }
 
-  private void createLotsIfNotExist(List<LotDto> shippedLotList) {
+  private void createLotsIfNotExist(List<LotDto> shippedLotList, Map<UUID, UUID> newIdToOldIdMap) {
     List<UUID> lotIds = shippedLotList.stream().map(LotDto::getId).collect(Collectors.toList());
     List<LotDto> lotList = siglusLotService.getLotList(lotIds);
     List<UUID> existedLotIds = lotList.stream().map(LotDto::getId).collect(Collectors.toList());
     List<LotDto> notExistedLotIds =
         shippedLotList.stream().filter(item -> !existedLotIds.contains(item.getId())).collect(Collectors.toList());
-    log.info("create lots, size = " + notExistedLotIds.size());
-    lotReferenceDataService.batchSaveLot(notExistedLotIds);
+
+    Set<String> pair = notExistedLotIds.stream().map(lotDto ->
+            lotDto.getLotCode() + lotDto.getTradeItemId().toString()).collect(toSet());
+    if (CollectionUtils.isNotEmpty(pair)) {
+      List<Lot> historicalLots = lotRepository.findLotCodeAndTradeItemIdPairs(pair);
+      List<LotDto> notExistedNoHistoricalLots = new ArrayList<>();
+      notExistedLotIds.forEach(lotDto -> {
+        Optional<Lot> existed = historicalLots.stream().filter(lot ->
+                        lot.getLotCode().equals(lotDto.getLotCode())
+                                && lot.getTradeItem().getId().equals(lotDto.getTradeItemId()))
+                .findFirst();
+        if (existed.isPresent() && !existed.get().getId().equals(lotDto.getId())) {
+          newIdToOldIdMap.put(lotDto.getId(), existed.get().getId());
+        } else {
+          notExistedNoHistoricalLots.add(lotDto);
+        }
+      });
+
+      log.info("create lots, size = " + notExistedNoHistoricalLots.size());
+      lotReferenceDataService.batchSaveLot(notExistedNoHistoricalLots);
+    } else {
+      log.info("create lots, size = " + notExistedLotIds.size());
+      lotReferenceDataService.batchSaveLot(notExistedLotIds);
+    }
   }
 
   private void resetFinalApproveStatusMessage(Requisition requisition, StatusMessageRequest statusMessageRequest,

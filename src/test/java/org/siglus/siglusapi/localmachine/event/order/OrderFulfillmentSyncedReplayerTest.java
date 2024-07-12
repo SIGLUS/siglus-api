@@ -46,6 +46,7 @@ import org.openlmis.fulfillment.web.shipment.ShipmentDto;
 import org.openlmis.fulfillment.web.shipment.ShipmentLineItemDto;
 import org.openlmis.fulfillment.web.util.OrderDto;
 import org.openlmis.fulfillment.web.util.OrderDtoBuilder;
+import org.openlmis.referencedata.repository.LotRepository;
 import org.openlmis.requisition.domain.RequisitionTemplate;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.RequisitionBuilder;
@@ -126,6 +127,9 @@ public class OrderFulfillmentSyncedReplayerTest extends FileBasedTest {
   @Mock
   private ShipmentService shipmentService;
 
+  @Mock
+  private LotRepository lotRepository;
+
   @Captor
   private ArgumentCaptor<Shipment> argumentCaptor;
 
@@ -135,6 +139,8 @@ public class OrderFulfillmentSyncedReplayerTest extends FileBasedTest {
   private final UUID facilityId = UUID.randomUUID();
   private final UUID orderableId = UUID.randomUUID();
   private final UUID programId = UUID.fromString("a24f19a8-3743-4a1a-a919-e8f97b5719ad");
+
+  private final UUID tradeItemId = UUID.randomUUID();
 
   @Before
   public void setup() throws IOException {
@@ -186,9 +192,7 @@ public class OrderFulfillmentSyncedReplayerTest extends FileBasedTest {
     String jsonRequest = readFromFile("request1.json");
     OrderFulfillmentSyncedEvent event = objectMapper.readValue(jsonRequest, OrderFulfillmentSyncedEvent.class);
     resetStatusMessageRequest(event);
-    List<LotDto> list = new ArrayList<>();
-    list.add(new LotDto());
-    event.setShippedLotList(list);
+    event.setShippedLotList(mockLotList());
     // when
     orderFulfillmentSyncedReplayer.replay(event);
   }
@@ -211,9 +215,7 @@ public class OrderFulfillmentSyncedReplayerTest extends FileBasedTest {
     ObjectMapper objectMapper = PayloadSerializer.LOCALMACHINE_EVENT_OBJECT_MAPPER;
     String jsonRequest = readFromFile("request2.json");
     OrderFulfillmentSyncedEvent event = objectMapper.readValue(jsonRequest, OrderFulfillmentSyncedEvent.class);
-    List<LotDto> list = new ArrayList<>();
-    list.add(new LotDto());
-    event.setShippedLotList(list);
+    event.setShippedLotList(mockLotList());
     // when
     orderFulfillmentSyncedReplayer.replay(event);
   }
@@ -241,5 +243,14 @@ public class OrderFulfillmentSyncedReplayerTest extends FileBasedTest {
     StatusMessageRequest statusMessageRequest = new StatusMessageRequest();
     statusMessageRequest.setBody("this is a comment");
     event.getConvertToOrderRequest().setFinalApproveStatusMessage(statusMessageRequest);
+  }
+
+  private List<LotDto> mockLotList() {
+    List<LotDto> list = new ArrayList<>();
+    LotDto lotDto = new LotDto();
+    lotDto.setTradeItemId(tradeItemId);
+    lotDto.setLotCode("MOCK");
+    list.add(lotDto);
+    return list;
   }
 }

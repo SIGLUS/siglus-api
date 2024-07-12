@@ -16,6 +16,7 @@
 package org.siglus.siglusapi.localmachine.cdc;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -34,11 +35,14 @@ import org.springframework.transaction.annotation.Transactional;
 public class CdcDispatcher {
 
   private final Map<String, List<CdcListener>> tableIdToListeners = new LinkedHashMap<>();
-  @Autowired
-  private CdcRecordRepository cdcRecordRepository;
+  private final CdcRecordRepository cdcRecordRepository;
+  private final CdcHelper cdcHelper;
+
+  private static final int MAX_RECORD_SIZE = 1000;
 
   public CdcDispatcher(List<CdcListener> cdcListeners, CdcRecordRepository cdcRecordRepository) {
     this.cdcRecordRepository = cdcRecordRepository;
+    this.cdcHelper = new CdcHelper(cdcRecordRepository);
     cdcListeners.forEach(
         it -> Arrays.stream(it.acceptedTables()).forEach(
             tableId -> {
@@ -78,10 +82,20 @@ public class CdcDispatcher {
                 if (listeners.isEmpty()) {
                   log.warn("no listeners for table id: {}", tableId);
                 }
-                for (CdcListener cdcListener : listeners) {
-                  cdcListener.on(records);
+                if (records.size() > MAX_RECORD_SIZE) {
+                  List<List<CdcRecord>> subLists = new ArrayList<>();
+                  for (int i = 0; i < records.size(); i += MAX_RECORD_SIZE) {
+                    subLists.add(records.subList(i, Math.min(i + MAX_RECORD_SIZE, records.size())));
+                  }
+                  subLists.forEach(subList -> {
+                    cdcHelper.dispatchSubList(subList, listeners);
+                  });
+                } else {
+                  for (CdcListener cdcListener : listeners) {
+                    cdcListener.on(records);
+                  }
+                  cdcRecordRepository.deleteInBatch(records);
                 }
-                cdcRecordRepository.deleteInBatch(records);
             });
   }
 
