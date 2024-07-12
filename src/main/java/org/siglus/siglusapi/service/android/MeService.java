@@ -126,7 +126,6 @@ import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
 import org.siglus.siglusapi.repository.SiglusReportTypeRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.repository.StockCardRequestBackupRepository;
-import org.siglus.siglusapi.repository.dto.ProgramOrderableDto;
 import org.siglus.siglusapi.service.LotConflictService;
 import org.siglus.siglusapi.service.SiglusArchiveProductService;
 import org.siglus.siglusapi.service.SiglusOrderService;
@@ -165,6 +164,7 @@ import org.springframework.util.StringUtils;
 public class MeService {
 
   static final String KEY_PROGRAM_CODE = "programCode";
+  static final String KEY_PRODUCT_ACTIVE = "productActive";
 
   private final SiglusFacilityReferenceDataService facilityReferenceDataService;
   private final SiglusArchiveProductService siglusArchiveProductService;
@@ -294,11 +294,11 @@ public class MeService {
     Map<UUID, OrderableDto> allProducts = getAllProducts(homeFacilityId).stream()
         .collect(toMap(OrderableDto::getId, Function.identity()));
     List<OrderableDto> needSyncProducts = programOrderablesRepository.findAllMaxVersionProgramOrderableDtos().stream()
-        .filter(ProgramOrderableDto::isActive)
         .map(programOrderableDto -> {
           OrderableDto dto = allProducts.get(programOrderableDto.getOrderableId());
           Program program = programMap.get(programOrderableDto.getProgramId());
           dto.getExtraData().put(KEY_PROGRAM_CODE, program.getCode().toString());
+          dto.getExtraData().put(KEY_PRODUCT_ACTIVE, programOrderableDto.isActive());
           return dto;
         })
         .filter(p -> filterByLastUpdated(p, lastSyncTime))
@@ -313,7 +313,6 @@ public class MeService {
     List<ProductResponse> filteredProducts = needSyncProducts.stream()
         .map(orderableDto -> orderableToProductResponse(orderableDto,
             allProducts, productIdToAdditionalProgramCode, orderableIdToProgramOrderablesExtension))
-        .filter(ProductResponse::getActive)
         .collect(toList());
     syncResponse.setProducts(filteredProducts);
     filteredProducts.stream()
@@ -777,7 +776,7 @@ public class MeService {
     ProductResponse productResponse =
         mapper.toResponse(orderableDto, allProducts, productIdToAdditionalProgramCode);
     productResponse.setProgramCode(orderableDto.getExtraData().get(KEY_PROGRAM_CODE).toString());
-    productResponse.setActive(true);
+    productResponse.setActive((Boolean) orderableDto.getExtraData().get(KEY_PRODUCT_ACTIVE));
     ProgramOrderablesExtension extension = orderableIdToProgramOrderablesExtension.get(orderableDto.getId());
     if (extension != null) {
       productResponse.setShowInReport(extension.getShowInReport() != null && extension.getShowInReport());
