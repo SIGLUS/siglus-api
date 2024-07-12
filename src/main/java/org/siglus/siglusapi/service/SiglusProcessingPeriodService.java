@@ -19,7 +19,6 @@ import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_WRONG_CLIENT_FACILITY;
 import static org.siglus.siglusapi.util.RequisitionUtil.getRequisitionExtraData;
 
 import java.time.LocalDate;
-import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -368,14 +367,8 @@ public class SiglusProcessingPeriodService {
         processEmergencyList(program, facility, requisitionPeriods, statusSet, currentPeriod, facilityTypeCode);
       }
     } else if (thirdLevelTypes.contains(facilityTypeCode)) {
-      YearMonth yearMonth = YearMonth.from(currentPeriod.getEndDate()).minusMonths(1);
-      if (currentDate.isBefore(LocalDate.of(yearMonth.getYear(), yearMonth.getMonth(), 30))
-          || currentDate.equals(LocalDate.of(yearMonth.getYear(), yearMonth.getMonth(), 30))) {
-        ProcessingPeriodDto previousPeriod = periodService.findPreviousPeriod(currentPeriod.getId());
-        processEmergencyList(program, facility, requisitionPeriods, statusSet, previousPeriod, facilityTypeCode);
-      } else {
-        processEmergencyList(program, facility, requisitionPeriods, statusSet, currentPeriod, facilityTypeCode);
-      }
+      ProcessingPeriodDto previousPeriod = periodService.findPreviousPeriod(currentPeriod.getId());
+      processEmergencyList(program, facility, requisitionPeriods, statusSet, previousPeriod, facilityTypeCode);
     }
   }
 
@@ -396,23 +389,10 @@ public class SiglusProcessingPeriodService {
   }
 
   private void setSubmitStartAndEndDate(ProcessingPeriodDto periodDto, String facilityTypeCode) {
-    Set<String> firstLevelTypes = FacilityTypeConstants.getFirstLevelTypes();
-    Set<String> secondLevelTypes = FacilityTypeConstants.getSecondLevelTypes();
-    Set<String> thirdLevelTypes = FacilityTypeConstants.getThirdLevelTypes();
     LocalDate submitStartDate = null;
     LocalDate submitEndDate = null;
-    YearMonth yearMonth = YearMonth.from(periodDto.getEndDate()).plusMonths(1);
-    if (firstLevelTypes.contains(facilityTypeCode)) {
-      submitStartDate = LocalDate.of(yearMonth.getYear(), yearMonth.getMonthValue(), 11);
-      submitEndDate = LocalDate.of(yearMonth.getYear(), yearMonth.getMonthValue(), 17);
-    } else if (secondLevelTypes.contains(facilityTypeCode)) {
-      submitStartDate = LocalDate.of(yearMonth.getYear(), yearMonth.getMonthValue(), 11);
-      submitEndDate = LocalDate.of(yearMonth.getYear(), yearMonth.getMonthValue(), 24);
-    } else if (thirdLevelTypes.contains(facilityTypeCode)) {
-      submitStartDate = LocalDate.of(yearMonth.getYear(), yearMonth.getMonthValue(), 16);
-      yearMonth = yearMonth.plusMonths(1);
-      submitEndDate = LocalDate.of(yearMonth.getYear(), yearMonth.getMonthValue(), 30);
-    }
+    submitStartDate = LocalDate.of(periodDto.getEndDate().getYear(), periodDto.getEndDate().getMonthValue(), 10);
+    submitEndDate = LocalDate.of(periodDto.getEndDate().getYear(), periodDto.getEndDate().getMonthValue(), 30);
     periodDto.setSubmitStartDate(submitStartDate);
     periodDto.setSubmitEndDate(submitEndDate);
   }
