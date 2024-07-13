@@ -179,6 +179,8 @@ public class SiglusPhysicalInventoryService {
   private SiglusPhysicalInventoryRepository siglusPhysicalInventoryRepository;
   @Autowired
   private FacilityConfigHelper facilityConfigHelper;
+  @Autowired
+  private SiglusPhysicalInventorySubDraftService physicalInventorySubDraftService;
 
   @Transactional
   public PhysicalInventoryDto createAndSplitNewDraftForAllPrograms(PhysicalInventoryDto physicalInventoryDto,
@@ -324,6 +326,7 @@ public class SiglusPhysicalInventoryService {
     siglusPhysicalInventoryDto.setId(physicalInventoryId);
     siglusPhysicalInventoryDto.setProgramId(programId);
     siglusPhysicalInventoryDto.setLineItems(lineItemDtos);
+    physicalInventorySubDraftService.extractLineItemExtraData(siglusPhysicalInventoryDto);
     return siglusPhysicalInventoryDto;
   }
 

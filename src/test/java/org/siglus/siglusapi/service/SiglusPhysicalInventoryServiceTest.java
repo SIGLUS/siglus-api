@@ -62,6 +62,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -203,6 +205,8 @@ public class SiglusPhysicalInventoryServiceTest {
   private SiglusPhysicalInventoryRepository siglusPhysicalInventoryRepository;
   @Mock
   private FacilityConfigHelper facilityConfigHelper;
+  @Mock
+  private SiglusPhysicalInventorySubDraftService physicalInventorySubDraftService;
 
   private final UUID facilityId = UUID.randomUUID();
 
@@ -243,6 +247,11 @@ public class SiglusPhysicalInventoryServiceTest {
   private final UUID lotId = UUID.randomUUID();
 
   private final List<PhysicalInventory> programIsDraft = new ArrayList<>();
+
+  @Before
+  public void setup() {
+    doNothing().when(physicalInventorySubDraftService).extractLineItemExtraData(any());
+  }
 
   @Test
   public void shouldCallV3MultipleTimesWhenCreateNewDraftForAllProducts() {
