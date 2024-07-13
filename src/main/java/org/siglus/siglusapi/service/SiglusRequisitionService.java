@@ -905,6 +905,9 @@ public class SiglusRequisitionService {
     if (requisitionDto.getEmergency()) {
       Requisition regularRequisition = siglusRequisitionRepository.findOneByFacilityIdAndProgramIdAndProcessingPeriodId(
           requisitionDto.getFacilityId(), requisitionDto.getProgramId(), requisitionDto.getProcessingPeriodId());
+      if (regularRequisition == null) {
+        throw new NotFoundException("Requisition not found");
+      }
       Set<UUID> regularFulFilledOrderableIds = getRegularFulFilledOrderableIds(regularRequisition);
       Set<UUID> regularRequestedOrderableIds = regularRequisition.getRequisitionLineItems().stream()
           .map(item -> item.getOrderable().getId()).collect(toSet());
