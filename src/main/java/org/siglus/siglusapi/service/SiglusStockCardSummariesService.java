@@ -667,9 +667,6 @@ public class SiglusStockCardSummariesService {
   }
 
   public List<StockCardStockDto> getLatestStockOnHand(List<StockCard> stockCards, boolean hasLocation) {
-    if (stockCards.isEmpty()) {
-      return newArrayList();
-    }
     Map<UUID, StockCard> stockCardMap = stockCards.stream()
             .collect(Collectors.toMap(StockCard::getId, stockCard -> stockCard));
     List<StockCardStockDto> sohs = getLatestStockOnHandByIds(stockCardMap.keySet(), hasLocation);
@@ -682,6 +679,9 @@ public class SiglusStockCardSummariesService {
   }
 
   public List<StockCardStockDto> getLatestStockOnHandByIds(Collection<UUID> stockCardIds, boolean hasLocation) {
+    if (ObjectUtils.isEmpty(stockCardIds)) {
+      return new ArrayList<>();
+    }
     List<StockCardStockDto> sohs;
     if (hasLocation) {
       sohs = calculatedStockOnHandByLocationRepository.findRecentlyLocationSohByStockCardIds(stockCardIds)
