@@ -1539,6 +1539,15 @@ public class SiglusRequisitionService {
     RequisitionDraft draft = null;
     if (requisitionDto == null) {
       RequisitionV2Dto dto = siglusRequisitionRequisitionService.searchRequisition(requisitionId);
+
+      Requisition requisition = siglusRequisitionRepository.findOneByFacilityIdAndProgramIdAndProcessingPeriodId(
+          dto.getFacilityId(), dto.getProgramId(), dto.getProcessingPeriodId());
+      if (requisition != null
+          && !dto.getEmergency()
+          && !Objects.equals(requisition.getId(), requisitionId)) {
+        throw new IllegalStateException("requisition already existed");
+      }
+
       requisitionDto = SiglusRequisitionDto.from(dto);
       draft = draftRepository.findByRequisitionId(requisitionDto.getId());
       if (draft != null) {
