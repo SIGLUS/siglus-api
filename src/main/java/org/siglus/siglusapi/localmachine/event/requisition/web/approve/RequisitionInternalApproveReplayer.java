@@ -110,7 +110,10 @@ public class RequisitionInternalApproveReplayer {
         return;
       }
       // if this is a rejected requisition, then delete requisition before replaying
-      deleteIfExistRequisition(requisition);
+      // if replay the emergency requisition, doesn't need to delete the existed regular requisition
+      if (!event.getRequisition().getEmergency()) {
+        deleteIfExistRequisition(requisition);
+      }
     }
 
     doReplayForRequisitionInternalApprovedEvent(event);
