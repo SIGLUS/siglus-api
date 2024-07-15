@@ -21,21 +21,35 @@ import java.util.UUID;
 import javax.persistence.ColumnResult;
 import javax.persistence.ConstructorResult;
 import javax.persistence.MappedSuperclass;
+import javax.persistence.NamedNativeQueries;
 import javax.persistence.NamedNativeQuery;
 import javax.persistence.SqlResultSetMapping;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 
-@NamedNativeQuery(
-    name = "ProgramOrderable.findProgramOrderableDto",
-    query = "select * \n"
-        + "from referencedata.program_orderables\n"
-        + "where (orderableid, orderableversionnumber) in\n"
-        + "   (select orderableid, MAX(orderableversionnumber)\n"
-        + "   from referencedata.program_orderables\n"
-        + "   group by orderableid)",
-    resultSetMapping = "ProgramOrderable.ProgramOrderableDto")
+@NamedNativeQueries({
+    @NamedNativeQuery(
+        name = "ProgramOrderable.findProgramOrderableDto",
+        query = "select * \n"
+            + "from referencedata.program_orderables\n"
+            + "where (orderableid, orderableversionnumber) in\n"
+            + "   (select orderableid, MAX(orderableversionnumber)\n"
+            + "   from referencedata.program_orderables\n"
+            + "   group by orderableid)",
+        resultSetMapping = "ProgramOrderable.ProgramOrderableDto"),
+
+    @NamedNativeQuery(
+        name = "ProgramOrderable.findMaxVersionByOrderableIds",
+        query = "select * "
+            + "from referencedata.program_orderables "
+            + "where (orderableid, orderableversionnumber) in "
+            + "   (select orderableid, MAX(orderableversionnumber) "
+            + "   from referencedata.program_orderables "
+            + "   where orderableid in :orderableIds "
+            + "   group by orderableid)",
+        resultSetMapping = "ProgramOrderable.ProgramOrderableDto")
+})
 
 @MappedSuperclass
 @SqlResultSetMapping(

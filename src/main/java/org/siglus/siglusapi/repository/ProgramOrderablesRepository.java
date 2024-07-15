@@ -22,6 +22,7 @@ import org.openlmis.referencedata.domain.ProgramOrderable;
 import org.siglus.siglusapi.repository.dto.ProgramOrderableDto;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface ProgramOrderablesRepository extends JpaRepository<ProgramOrderable, UUID> {
 
@@ -29,4 +30,8 @@ public interface ProgramOrderablesRepository extends JpaRepository<ProgramOrdera
   List<ProgramOrderableDto> findAllMaxVersionProgramOrderableDtos();
 
   List<ProgramOrderable> findByProgramIdIn(Collection<UUID> programIds);
+
+  @Query(name = "ProgramOrderable.findMaxVersionByOrderableIds", nativeQuery = true)
+  List<ProgramOrderableDto> findMaxVersionProgramOrderableDtosByOrderableIds(
+      @Param("orderableIds")Collection<UUID> orderableIds);
 }

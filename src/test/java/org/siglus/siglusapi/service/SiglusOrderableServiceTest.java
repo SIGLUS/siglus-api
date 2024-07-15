@@ -558,6 +558,15 @@ public class SiglusOrderableServiceTest {
     assertEquals(1, orderables.size());
   }
 
+  @Test
+  public void shouldSuccessWhenFindProgramOrderablesMaxVersionByOrderableIds() {
+    Set<UUID> ids = Collections.singleton(UUID.randomUUID());
+
+    siglusOrderableService.findProgramOrderablesMaxVersionByOrderableIds(ids);
+
+    verify(programOrderablesRepository).findMaxVersionProgramOrderableDtosByOrderableIds(ids);
+  }
+
   private List<OrderableDto> buildMockOrderableDtos() {
     OrderableDto orderableDto = new OrderableDto();
     orderableDto.setId(orderableId);
