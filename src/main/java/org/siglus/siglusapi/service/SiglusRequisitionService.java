@@ -949,10 +949,10 @@ public class SiglusRequisitionService {
         .findOrderExternalIdByRequisitionId(regularRequisition.getId()).stream()
         .map(UUID::fromString).collect(toSet());
     orderExternalIds.add(regularRequisition.getId());
-    Set<String> orderStatus = Sets.newHashSet(OrderStatus.TRANSFER_FAILED.toString(), OrderStatus.SHIPPED.toString(),
-        OrderStatus.RECEIVED.toString(), OrderStatus.IN_ROUTE.toString(), OrderStatus.READY_TO_PACK.toString());
+    Set<OrderStatus> orderStatus = Sets.newHashSet(OrderStatus.TRANSFER_FAILED, OrderStatus.SHIPPED,
+        OrderStatus.RECEIVED, OrderStatus.IN_ROUTE, OrderStatus.READY_TO_PACK);
     List<Order> orders = siglusOrdersRepository.findAllByExternalIdIn(orderExternalIds).stream()
-        .filter(order -> orderStatus.contains(order.getStatus().toString()))
+        .filter(order -> orderStatus.contains(order.getStatus()))
         .collect(toList());
     orders.forEach(order ->
         order.getOrderLineItems().forEach(item ->
