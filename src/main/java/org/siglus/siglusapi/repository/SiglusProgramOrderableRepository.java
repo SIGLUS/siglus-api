@@ -24,7 +24,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-public interface ProgramOrderablesRepository extends JpaRepository<ProgramOrderable, UUID> {
+public interface SiglusProgramOrderableRepository extends JpaRepository<ProgramOrderable, UUID> {
 
   @Query(name = "ProgramOrderable.findProgramOrderableDto", nativeQuery = true)
   List<ProgramOrderableDto> findAllMaxVersionProgramOrderableDtos();

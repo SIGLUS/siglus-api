@@ -70,8 +70,8 @@ import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.repository.DispensableAttributesRepository;
 import org.siglus.siglusapi.repository.OrderableRepository;
-import org.siglus.siglusapi.repository.ProgramOrderablesRepository;
 import org.siglus.siglusapi.repository.SiglusOrderableRepository;
+import org.siglus.siglusapi.repository.SiglusProgramOrderableRepository;
 import org.siglus.siglusapi.repository.StockManagementDraftRepository;
 import org.siglus.siglusapi.repository.dto.OrderableVersionDto;
 import org.siglus.siglusapi.repository.dto.ProgramOrderableDto;
@@ -96,7 +96,7 @@ public class SiglusOrderableService {
   private final ProgramAdditionalOrderableRepository programAdditionalOrderableRepository;
   private final ArchivedProductRepository archivedProductRepository;
   private final StockManagementDraftRepository stockManagementDraftRepository;
-  private final ProgramOrderablesRepository programOrderablesRepository;
+  private final SiglusProgramOrderableRepository siglusProgramOrderableRepository;
   private final SiglusAuthenticationHelper authenticationHelper;
   private final StockCardRepository stockCardRepository;
   private final CalculatedStockOnHandRepository calculatedStockOnHandRepository;
@@ -287,7 +287,7 @@ public class SiglusOrderableService {
 
   @Cacheable(value = SIGLUS_PROGRAM_ORDERABLES, keyGenerator = CACHE_KEY_GENERATOR)
   public List<ProgramOrderableDto> getAllProgramOrderableDtos() {
-    return programOrderablesRepository.findAllMaxVersionProgramOrderableDtos();
+    return siglusProgramOrderableRepository.findAllMaxVersionProgramOrderableDtos();
   }
 
   public List<AvailableOrderablesDto> getAvailableOrderablesByFacility(Boolean isRequestAll, UUID draftId) {
@@ -322,7 +322,8 @@ public class SiglusOrderableService {
 
     Set<UUID> orderableIds = satisfiedStockCards.stream().map(StockCard::getOrderableId).collect(Collectors.toSet());
     List<Orderable> orderables = orderableRepository.findLatestByIds(orderableIds);
-    List<ProgramOrderableDto> programOrderables = programOrderablesRepository.findAllMaxVersionProgramOrderableDtos();
+    List<ProgramOrderableDto> programOrderables = siglusProgramOrderableRepository
+        .findAllMaxVersionProgramOrderableDtos();
     Map<UUID, UUID> orderableIdToProgramIdMap = programOrderables.stream()
         .filter(programOrderable -> orderableIds.contains(programOrderable.getOrderableId()))
         .collect(Collectors.toMap(ProgramOrderableDto::getOrderableId, ProgramOrderableDto::getProgramId));
@@ -386,6 +387,6 @@ public class SiglusOrderableService {
   }
 
   public List<ProgramOrderableDto> findProgramOrderablesMaxVersionByOrderableIds(Collection<UUID> orderableIds) {
-    return programOrderablesRepository.findMaxVersionProgramOrderableDtosByOrderableIds(orderableIds);
+    return siglusProgramOrderableRepository.findMaxVersionProgramOrderableDtosByOrderableIds(orderableIds);
   }
 }

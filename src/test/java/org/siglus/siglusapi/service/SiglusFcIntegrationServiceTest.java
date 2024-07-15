@@ -88,10 +88,10 @@ import org.siglus.siglusapi.dto.UsageTemplateColumnDto;
 import org.siglus.siglusapi.dto.UsageTemplateSectionDto;
 import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.PatientLineItemRepository;
-import org.siglus.siglusapi.repository.ProgramOrderablesRepository;
 import org.siglus.siglusapi.repository.ProgramRealProgramRepository;
 import org.siglus.siglusapi.repository.RequisitionLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.ShipmentsExtensionRepository;
+import org.siglus.siglusapi.repository.SiglusProgramOrderableRepository;
 import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.repository.SupervisoryNodeRepository;
@@ -189,7 +189,7 @@ public class SiglusFcIntegrationServiceTest {
   private OrderLineItemExtensionRepository orderLineItemExtensionRepository;
 
   @Mock
-  private ProgramOrderablesRepository programOrderableRepository;
+  private SiglusProgramOrderableRepository programOrderableRepository;
 
   private final UUID dpmFacilityTypeId = UUID.randomUUID();
 

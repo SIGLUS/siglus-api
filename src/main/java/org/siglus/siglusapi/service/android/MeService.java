@@ -116,12 +116,12 @@ import org.siglus.siglusapi.repository.FacilityCmmsRepository;
 import org.siglus.siglusapi.repository.LotNativeRepository;
 import org.siglus.siglusapi.repository.PodExtensionRepository;
 import org.siglus.siglusapi.repository.PodRequestBackupRepository;
-import org.siglus.siglusapi.repository.ProgramOrderablesRepository;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionRequestBackupRepository;
 import org.siglus.siglusapi.repository.ResyncInfoRepository;
 import org.siglus.siglusapi.repository.SiglusGeographicInfoRepository;
 import org.siglus.siglusapi.repository.SiglusOrdersRepository;
+import org.siglus.siglusapi.repository.SiglusProgramOrderableRepository;
 import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
 import org.siglus.siglusapi.repository.SiglusReportTypeRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
@@ -205,7 +205,7 @@ public class MeService {
   private final PodExtensionRepository podExtensionRepository;
   private final MeCreateRequisitionService meCreateRequisitionService;
   private final AndroidProofOfDeliverySyncedEmitter proofOfDeliverySyncedEmitter;
-  private final ProgramOrderablesRepository programOrderablesRepository;
+  private final SiglusProgramOrderableRepository siglusProgramOrderableRepository;
   private final ProgramOrderablesExtensionRepository programOrderablesExtensionRepository;
   private final ProgramRepository programRepository;
   private final SiglusGeographicInfoRepository siglusGeographicInfoRepository;
@@ -293,7 +293,9 @@ public class MeService {
     UUID homeFacilityId = authHelper.getCurrentUser().getHomeFacilityId();
     Map<UUID, OrderableDto> allProducts = getAllProducts(homeFacilityId).stream()
         .collect(toMap(OrderableDto::getId, Function.identity()));
-    List<OrderableDto> needSyncProducts = programOrderablesRepository.findAllMaxVersionProgramOrderableDtos().stream()
+    List<OrderableDto> needSyncProducts = siglusProgramOrderableRepository
+        .findAllMaxVersionProgramOrderableDtos()
+        .stream()
         .map(programOrderableDto -> {
           OrderableDto dto = allProducts.get(programOrderableDto.getOrderableId());
           Program program = programMap.get(programOrderableDto.getProgramId());

@@ -77,9 +77,9 @@ import org.siglus.siglusapi.dto.fc.ProductPriceDto;
 import org.siglus.siglusapi.dto.fc.ResponseBaseDto;
 import org.siglus.siglusapi.repository.BasicProductCodeRepository;
 import org.siglus.siglusapi.repository.CustomProductsRegimensRepository;
-import org.siglus.siglusapi.repository.ProgramOrderablesRepository;
 import org.siglus.siglusapi.repository.ProgramRealProgramRepository;
 import org.siglus.siglusapi.repository.SiglusOrderableDisplayCategoriesRepository;
+import org.siglus.siglusapi.repository.SiglusProgramOrderableRepository;
 import org.siglus.siglusapi.service.SiglusOrderableService;
 import org.siglus.siglusapi.service.client.OrderableDisplayCategoryReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusFacilityTypeApprovedProductReferenceDataService;
@@ -133,7 +133,7 @@ public class FcProductService implements ProcessDataService {
 
   private final Map<String, CustomProductsRegimens> codeToCustomProductsRegimens = newHashMap();
 
-  private final ProgramOrderablesRepository programOrderablesRepository;
+  private final SiglusProgramOrderableRepository siglusProgramOrderableRepository;
   private Map<UUID, UUID> orderableIdToProgramId;
 
   @Override
@@ -299,7 +299,7 @@ public class FcProductService implements ProcessDataService {
         .map(BasicProductCode::getProductCode).collect(toSet());
     categoryDisplayNameToCodeMap = orderableDisplayCategoriesRepository.findAll().stream()
         .collect(toMap(odc -> odc.getOrderedDisplayValue().getDisplayName(), odc -> odc.getCode().toString()));
-    orderableIdToProgramId = programOrderablesRepository.findAllMaxVersionProgramOrderableDtos().stream()
+    orderableIdToProgramId = siglusProgramOrderableRepository.findAllMaxVersionProgramOrderableDtos().stream()
         .collect(toMap(org.siglus.siglusapi.repository.dto.ProgramOrderableDto::getOrderableId,
             org.siglus.siglusapi.repository.dto.ProgramOrderableDto::getProgramId));
   }

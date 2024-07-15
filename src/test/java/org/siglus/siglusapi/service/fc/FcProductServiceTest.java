@@ -82,9 +82,9 @@ import org.siglus.siglusapi.dto.fc.ProductInfoDto;
 import org.siglus.siglusapi.dto.fc.ResponseBaseDto;
 import org.siglus.siglusapi.repository.BasicProductCodeRepository;
 import org.siglus.siglusapi.repository.CustomProductsRegimensRepository;
-import org.siglus.siglusapi.repository.ProgramOrderablesRepository;
 import org.siglus.siglusapi.repository.ProgramRealProgramRepository;
 import org.siglus.siglusapi.repository.SiglusOrderableDisplayCategoriesRepository;
+import org.siglus.siglusapi.repository.SiglusProgramOrderableRepository;
 import org.siglus.siglusapi.service.SiglusOrderableService;
 import org.siglus.siglusapi.service.client.OrderableDisplayCategoryReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusFacilityTypeApprovedProductReferenceDataService;
@@ -154,7 +154,7 @@ public class FcProductServiceTest {
   private CustomProductsRegimensRepository customProductsRegimensRepository;
 
   @Mock
-  private ProgramOrderablesRepository programOrderablesRepository;
+  private SiglusProgramOrderableRepository siglusProgramOrderableRepository;
 
   @Mock
   private OrderableController orderableController;
@@ -343,7 +343,7 @@ public class FcProductServiceTest {
     org.siglus.siglusapi.repository.dto.ProgramOrderableDto programOrderableDto1 =
         new org.siglus.siglusapi.repository.dto.ProgramOrderableDto(orderableId,
             programId, new BigDecimal(100), true);
-    when(programOrderablesRepository.findAllMaxVersionProgramOrderableDtos()).thenReturn(
+    when(siglusProgramOrderableRepository.findAllMaxVersionProgramOrderableDtos()).thenReturn(
         newArrayList(programOrderableDto1));
     when(orderableController.update(orderableId, orderableDto,
             new BeanPropertyBindingResult(orderableDto, "OrderableDto")))

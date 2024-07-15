@@ -137,10 +137,10 @@ import org.siglus.siglusapi.exception.OrderNotFoundException;
 import org.siglus.siglusapi.repository.AppInfoRepository;
 import org.siglus.siglusapi.repository.FacilityCmmsRepository;
 import org.siglus.siglusapi.repository.PodRequestBackupRepository;
-import org.siglus.siglusapi.repository.ProgramOrderablesRepository;
 import org.siglus.siglusapi.repository.RequisitionRequestBackupRepository;
 import org.siglus.siglusapi.repository.ResyncInfoRepository;
 import org.siglus.siglusapi.repository.SiglusGeographicInfoRepository;
+import org.siglus.siglusapi.repository.SiglusProgramOrderableRepository;
 import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
 import org.siglus.siglusapi.repository.SiglusReportTypeRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
@@ -300,7 +300,7 @@ public class MeServiceTest {
   private SiglusGeographicInfoRepository siglusGeographicInfoRepository;
 
   @Mock
-  private ProgramOrderablesRepository programOrderablesRepository;
+  private SiglusProgramOrderableRepository siglusProgramOrderableRepository;
 
   @Mock
   private ProgramRepository programRepository;
@@ -406,9 +406,9 @@ public class MeServiceTest {
         .thenReturn(getSupportedPrograms());
     when(orderableDataService.searchOrderables(any(), any(), any()))
         .thenReturn(new PageImpl<>(asList(mockOrderable1(), mockOrderable2(), mockOrderable3())));
-    when(programOrderablesRepository.findByProgramIdIn(any()))
+    when(siglusProgramOrderableRepository.findByProgramIdIn(any()))
         .thenReturn(asList(mockProgramOrderable1(), mockProgramOrderable2(), mockProgramOrderable3()));
-    when(programOrderablesRepository.findAllMaxVersionProgramOrderableDtos())
+    when(siglusProgramOrderableRepository.findAllMaxVersionProgramOrderableDtos())
         .thenReturn(asList(from(mockProgramOrderable1()), from(mockProgramOrderable2()),
             from(mockProgramOrderable2())));
     when(programOrderablesExtensionRepository.findAllByOrderableIdIn(any()))

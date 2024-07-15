@@ -112,10 +112,10 @@ import org.siglus.siglusapi.repository.AgeGroupLineItemRepository;
 import org.siglus.siglusapi.repository.FacilityNativeRepository;
 import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.PatientLineItemRepository;
-import org.siglus.siglusapi.repository.ProgramOrderablesRepository;
 import org.siglus.siglusapi.repository.ProgramRealProgramRepository;
 import org.siglus.siglusapi.repository.RequisitionLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.ShipmentsExtensionRepository;
+import org.siglus.siglusapi.repository.SiglusProgramOrderableRepository;
 import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.repository.StockManagementRepository;
@@ -155,7 +155,7 @@ public class SiglusFcIntegrationService {
   private final SiglusOrderableReferenceDataService orderableReferenceDataService;
   private final ProgramOrderablesExtensionRepository programOrderablesExtensionRepository;
   private final RequisitionLineItemExtensionRepository lineItemExtensionRepository;
-  private final ProgramOrderablesRepository programOrderablesRepository;
+  private final SiglusProgramOrderableRepository siglusProgramOrderableRepository;
   private final OrderLineItemExtensionRepository orderLineItemExtensionRepository;
   private final RequisitionTemplateExtensionRepository requisitionTemplateExtensionRepository;
   private final SiglusUsageReportService siglusUsageReportService;
@@ -324,7 +324,7 @@ public class SiglusFcIntegrationService {
     Map<UUID, String> reasonIdToReasonMap = stockCardLineItemReasonRepository
         .findByReasonTypeIn(newArrayList(ReasonType.DEBIT))
         .stream().collect(toMap(StockCardLineItemReason::getId, StockCardLineItemReason::getName));
-    Map<UUID, BigDecimal> productIdToPriceMap = programOrderablesRepository.findAllMaxVersionProgramOrderableDtos()
+    Map<UUID, BigDecimal> productIdToPriceMap = siglusProgramOrderableRepository.findAllMaxVersionProgramOrderableDtos()
         .stream()
         .filter(programOrderableDto -> programOrderableDto.getPrice() != null)
         .collect(toMap(ProgramOrderableDto::getOrderableId, ProgramOrderableDto::getPrice));

@@ -71,8 +71,8 @@ import org.siglus.siglusapi.dto.SimplifyOrderablesDto;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.repository.DispensableAttributesRepository;
 import org.siglus.siglusapi.repository.OrderableRepository;
-import org.siglus.siglusapi.repository.ProgramOrderablesRepository;
 import org.siglus.siglusapi.repository.SiglusOrderableRepository;
+import org.siglus.siglusapi.repository.SiglusProgramOrderableRepository;
 import org.siglus.siglusapi.repository.StockManagementDraftRepository;
 import org.siglus.siglusapi.repository.dto.OrderableVersionDto;
 import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
@@ -112,7 +112,7 @@ public class SiglusOrderableServiceTest {
   private QueryOrderableSearchParams searchParams;
 
   @Mock
-  private ProgramOrderablesRepository programOrderablesRepository;
+  private SiglusProgramOrderableRepository siglusProgramOrderableRepository;
 
   @Mock
   private SiglusAuthenticationHelper authenticationHelper;
@@ -348,13 +348,13 @@ public class SiglusOrderableServiceTest {
   @Test
   public void shouldGetAllProgramOrderables() {
     // given
-    when(programOrderablesRepository.findAllMaxVersionProgramOrderableDtos()).thenReturn(Lists.newArrayList());
+    when(siglusProgramOrderableRepository.findAllMaxVersionProgramOrderableDtos()).thenReturn(Lists.newArrayList());
 
     // when
     siglusOrderableService.getAllProgramOrderableDtos();
 
     // then
-    verify(programOrderablesRepository, times(1)).findAllMaxVersionProgramOrderableDtos();
+    verify(siglusProgramOrderableRepository, times(1)).findAllMaxVersionProgramOrderableDtos();
   }
 
   @Test
@@ -379,7 +379,7 @@ public class SiglusOrderableServiceTest {
         calculatedStockOnHand1, calculatedStockOnHand2
     ));
     when(orderableRepository.findLatestByIds(Lists.newArrayList(orderableId))).thenReturn(buildMockOrderables());
-    when(programOrderablesRepository.findAllMaxVersionProgramOrderableDtos()).thenReturn(Lists.newArrayList());
+    when(siglusProgramOrderableRepository.findAllMaxVersionProgramOrderableDtos()).thenReturn(Lists.newArrayList());
     when(dispensableAttributesRepository.findAll(Lists.newArrayList(dispensableId)))
         .thenReturn(Lists.newArrayList(buildMockDispensable()));
 
@@ -564,7 +564,7 @@ public class SiglusOrderableServiceTest {
 
     siglusOrderableService.findProgramOrderablesMaxVersionByOrderableIds(ids);
 
-    verify(programOrderablesRepository).findMaxVersionProgramOrderableDtosByOrderableIds(ids);
+    verify(siglusProgramOrderableRepository).findMaxVersionProgramOrderableDtosByOrderableIds(ids);
   }
 
   private List<OrderableDto> buildMockOrderableDtos() {
