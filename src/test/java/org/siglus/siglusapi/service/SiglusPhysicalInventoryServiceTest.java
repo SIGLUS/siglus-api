@@ -62,6 +62,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -115,6 +117,7 @@ import org.siglus.siglusapi.repository.PhysicalInventoryLineItemsExtensionReposi
 import org.siglus.siglusapi.repository.PhysicalInventorySubDraftRepository;
 import org.siglus.siglusapi.repository.SiglusPhysicalInventoryRepository;
 import org.siglus.siglusapi.repository.dto.SiglusPhysicalInventoryBriefDto;
+import org.siglus.siglusapi.repository.dto.StockCardStockDto;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.util.FacilityConfigHelper;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
@@ -203,6 +206,8 @@ public class SiglusPhysicalInventoryServiceTest {
   private SiglusPhysicalInventoryRepository siglusPhysicalInventoryRepository;
   @Mock
   private FacilityConfigHelper facilityConfigHelper;
+  @Mock
+  private SiglusPhysicalInventorySubDraftService physicalInventorySubDraftService;
 
   private final UUID facilityId = UUID.randomUUID();
 
@@ -243,6 +248,11 @@ public class SiglusPhysicalInventoryServiceTest {
   private final UUID lotId = UUID.randomUUID();
 
   private final List<PhysicalInventory> programIsDraft = new ArrayList<>();
+
+  @Before
+  public void setup() {
+    doNothing().when(physicalInventorySubDraftService).extractLineItemExtraData(any());
+  }
 
   @Test
   public void shouldCallV3MultipleTimesWhenCreateNewDraftForAllProducts() {
@@ -971,10 +981,16 @@ public class SiglusPhysicalInventoryServiceTest {
     Map<String, String> expectedExtraData = newHashMap();
     expectedExtraData.put(VM_STATUS, null);
     expectedExtraData.put(STOCK_CARD_ID, String.valueOf(stockCardId));
+    StockCardStockDto stockCardStockDto = new StockCardStockDto();
+    stockCardStockDto.setStockCardId(stockCardId);
+    stockCardStockDto.setStockOnHand(10);
+    when(siglusStockCardSummariesService.getLatestStockOnHandByIds(anyList(), anyBoolean()))
+        .thenReturn(Collections.singletonList(stockCardStockDto));
     PhysicalInventoryLineItemDto expectedPhysicalInventoryLineItem = PhysicalInventoryLineItemDto
         .builder()
         .programId(programId)
         .orderableId(orderableId)
+        .stockOnHand(10)
         .lotId(lotId)
         .extraData(expectedExtraData)
         .stockAdjustments(emptyList())

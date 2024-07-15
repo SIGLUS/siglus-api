@@ -179,6 +179,8 @@ public class SiglusPhysicalInventoryService {
   private SiglusPhysicalInventoryRepository siglusPhysicalInventoryRepository;
   @Autowired
   private FacilityConfigHelper facilityConfigHelper;
+  @Autowired
+  private SiglusPhysicalInventorySubDraftService physicalInventorySubDraftService;
 
   @Transactional
   public PhysicalInventoryDto createAndSplitNewDraftForAllPrograms(PhysicalInventoryDto physicalInventoryDto,
@@ -324,6 +326,7 @@ public class SiglusPhysicalInventoryService {
     siglusPhysicalInventoryDto.setId(physicalInventoryId);
     siglusPhysicalInventoryDto.setProgramId(programId);
     siglusPhysicalInventoryDto.setLineItems(lineItemDtos);
+    physicalInventorySubDraftService.extractLineItemExtraData(siglusPhysicalInventoryDto);
     return siglusPhysicalInventoryDto;
   }
 
@@ -1094,6 +1097,7 @@ public class SiglusPhysicalInventoryService {
     } else {
       physicalInventoryLineItems = withLocation ? buildPhysicalInventoryLineItemsWithLocation(physicalInventoryDto)
           : buildPhysicalInventoryLineItems(physicalInventoryDto);
+      filterLineItemSohBiggerThanZero(physicalInventoryLineItems, withLocation);
     }
 
     PhysicalInventoryDto toBeSavedPhysicalInventoryDto = PhysicalInventoryDto
@@ -1108,6 +1112,13 @@ public class SiglusPhysicalInventoryService {
       return saveDraftForProductsForOneProgram(toBeSavedPhysicalInventoryDto);
     }
     return toBeSavedPhysicalInventoryDto;
+  }
+
+  private void filterLineItemSohBiggerThanZero(List<PhysicalInventoryLineItemDto> physicalInventoryLineItems,
+                                               boolean withLocation) {
+    fillPhysicalInventoryLineItemDtoSoh(physicalInventoryLineItems, withLocation);
+    physicalInventoryLineItems.removeIf(lineItemDto ->
+        lineItemDto.getStockOnHand() == null || lineItemDto.getStockOnHand() <= 0);
   }
 
   private PhysicalInventoryDto saveDraft(PhysicalInventoryDto dto, UUID id) {

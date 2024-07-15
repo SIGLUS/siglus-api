@@ -16,6 +16,8 @@
 package org.siglus.siglusapi.service;
 
 import static org.hamcrest.Matchers.containsString;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -25,8 +27,10 @@ import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_INVENTORY_CONFLICT_SUB
 import com.google.common.collect.Sets;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -514,5 +518,24 @@ public class SiglusPhysicalInventorySubDraftServiceTest {
     siglusPhysicalInventorySubDraftService.updateSubDrafts(subDraftIds, physicalInventoryDto,
         PhysicalInventorySubDraftEnum.DRAFT, false);
     verify(physicalInventorySubDraftRepository, times(2)).findAll(any(List.class));
+  }
+
+  @Test
+  public void shouldExtractLotWhenExtractLineItemExtraData() {
+    Map<String, String> extraData = new HashMap<>();
+    extraData.put("lotCode", "123456789");
+    extraData.put("expirationDate", "2024-05-05");
+    PhysicalInventoryLineItemDto lineItemDtoOne = PhysicalInventoryLineItemDto.builder().build();
+    lineItemDtoOne.setExtraData(extraData);
+    PhysicalInventoryDto physicalInventoryDto = PhysicalInventoryDto.builder()
+        .id(id)
+        .lineItems(Lists.newArrayList(lineItemDtoOne))
+        .build();
+
+    siglusPhysicalInventorySubDraftService.extractLineItemExtraData(physicalInventoryDto);
+
+    assertNotNull(physicalInventoryDto.getLineItems().get(0));
+    assertEquals("123456789", physicalInventoryDto.getLineItems().get(0).getLot().getLotCode());
+    assertEquals("2024-05-05", physicalInventoryDto.getLineItems().get(0).getLot().getExpirationDate().toString());
   }
 }

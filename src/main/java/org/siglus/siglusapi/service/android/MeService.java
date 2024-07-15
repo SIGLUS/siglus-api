@@ -54,10 +54,11 @@ import org.openlmis.fulfillment.domain.ProofOfDelivery;
 import org.openlmis.fulfillment.domain.Shipment;
 import org.openlmis.fulfillment.domain.ShipmentLineItem;
 import org.openlmis.fulfillment.web.util.OrderDto;
-import org.openlmis.referencedata.domain.ProgramOrderable;
+import org.openlmis.referencedata.domain.Program;
 import org.openlmis.referencedata.dto.BaseDto;
 import org.openlmis.referencedata.dto.MetadataDto;
 import org.openlmis.referencedata.dto.OrderableDto;
+import org.openlmis.referencedata.repository.ProgramRepository;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.requisition.dto.BasicOrderableDto;
@@ -163,6 +164,7 @@ import org.springframework.util.StringUtils;
 public class MeService {
 
   static final String KEY_PROGRAM_CODE = "programCode";
+  static final String KEY_PRODUCT_ACTIVE = "productActive";
 
   private final SiglusFacilityReferenceDataService facilityReferenceDataService;
   private final SiglusArchiveProductService siglusArchiveProductService;
@@ -205,7 +207,7 @@ public class MeService {
   private final AndroidProofOfDeliverySyncedEmitter proofOfDeliverySyncedEmitter;
   private final ProgramOrderablesRepository programOrderablesRepository;
   private final ProgramOrderablesExtensionRepository programOrderablesExtensionRepository;
-
+  private final ProgramRepository programRepository;
   private final SiglusGeographicInfoRepository siglusGeographicInfoRepository;
   private final SiglusOrdersRepository siglusOrdersRepository;
   private final RequisitionExtensionRepository requisitionExtensionRepository;
@@ -285,54 +287,32 @@ public class MeService {
     if (lastSyncTime != null) {
       syncResponse.setLastSyncTime(lastSyncTime.toEpochMilli());
     }
-    Map<UUID, SupportedProgramDto> programMap = programsHelper.findHomeFacilitySupportedPrograms()
-        .stream().collect(toMap(SupportedProgramDto::getId, Function.identity()));
 
+    Map<UUID, Program> programMap = programRepository.findAll()
+        .stream().collect(toMap(Program::getId, Function.identity()));
     UUID homeFacilityId = authHelper.getCurrentUser().getHomeFacilityId();
     Map<UUID, OrderableDto> allProducts = getAllProducts(homeFacilityId).stream()
         .collect(toMap(OrderableDto::getId, Function.identity()));
-    List<OrderableDto> needSyncProducts = programMap.values().stream()
-        .map(program -> getProgramProducts(homeFacilityId, program))
-        .flatMap(Collection::stream)
-        .map(orderable -> {
-          OrderableDto dto = allProducts.get(orderable.getId());
-          dto.getExtraData().put(KEY_PROGRAM_CODE, orderable.getExtraData().get(KEY_PROGRAM_CODE));
+    List<OrderableDto> needSyncProducts = programOrderablesRepository.findAllMaxVersionProgramOrderableDtos().stream()
+        .map(programOrderableDto -> {
+          OrderableDto dto = allProducts.get(programOrderableDto.getOrderableId());
+          Program program = programMap.get(programOrderableDto.getProgramId());
+          dto.getExtraData().put(KEY_PROGRAM_CODE, program.getCode().toString());
+          dto.getExtraData().put(KEY_PRODUCT_ACTIVE, programOrderableDto.isActive());
           return dto;
         })
         .filter(p -> filterByLastUpdated(p, lastSyncTime))
         .collect(toList());
 
     Map<UUID, String> productIdToAdditionalProgramCode = additionalProductRepo.findAll().stream()
-        .filter(p -> programMap.get(p.getProgramId()) != null)
         .collect(toMap(ProgramAdditionalOrderable::getAdditionalOrderableId,
-            p -> programMap.get(p.getProgramId()).getCode()));
+            p -> programMap.get(p.getProgramId()).getCode().toString()));
     Map<UUID, ProgramOrderablesExtension> orderableIdToProgramOrderablesExtension
         = buildOrderableIdToExtensionMap(needSyncProducts);
 
-    Map<UUID, ProgramOrderable> programOrderableMap = programOrderablesRepository.findByProgramIdIn(programMap.keySet())
-        .stream()
-        .filter(distinctByKey(programOrderable -> programOrderable.getProduct().getId()))
-        .collect(toMap(programOrderable -> programOrderable.getProduct().getId(), Function.identity()));
-
     List<ProductResponse> filteredProducts = needSyncProducts.stream()
-        .map(orderableDto -> {
-          ProductResponse productResponse =
-              mapper.toResponse(orderableDto, allProducts, productIdToAdditionalProgramCode);
-          ProgramOrderablesExtension extension = orderableIdToProgramOrderablesExtension.get(orderableDto.getId());
-          if (extension != null) {
-            productResponse.setShowInReport(extension.getShowInReport() != null && extension.getShowInReport());
-            productResponse.setUnit(extension.getUnit());
-          } else {
-            productResponse.setShowInReport(false);
-          }
-          ProgramOrderable programOrderable = programOrderableMap.get(orderableDto.getId());
-          if (programOrderable != null) {
-            productResponse.setProgramCode(programOrderable.getProgram().getCode().toString());
-            productResponse.setActive(programOrderable.isActive());
-          }
-          return productResponse;
-        })
-        .filter(ProductResponse::getActive)
+        .map(orderableDto -> orderableToProductResponse(orderableDto,
+            allProducts, productIdToAdditionalProgramCode, orderableIdToProgramOrderablesExtension))
         .collect(toList());
     syncResponse.setProducts(filteredProducts);
     filteredProducts.stream()
@@ -787,5 +767,23 @@ public class MeService {
             .collect(toList());
     resp.setProductMovements(movementsOfApprovedProduct);
     return resp;
+  }
+
+  private ProductResponse orderableToProductResponse(OrderableDto orderableDto,
+      Map<UUID, OrderableDto> allProducts,
+      Map<UUID, String> productIdToAdditionalProgramCode,
+      Map<UUID, ProgramOrderablesExtension> orderableIdToProgramOrderablesExtension) {
+    ProductResponse productResponse =
+        mapper.toResponse(orderableDto, allProducts, productIdToAdditionalProgramCode);
+    productResponse.setProgramCode(orderableDto.getExtraData().get(KEY_PROGRAM_CODE).toString());
+    productResponse.setActive((Boolean) orderableDto.getExtraData().get(KEY_PRODUCT_ACTIVE));
+    ProgramOrderablesExtension extension = orderableIdToProgramOrderablesExtension.get(orderableDto.getId());
+    if (extension != null) {
+      productResponse.setShowInReport(extension.getShowInReport() != null && extension.getShowInReport());
+      productResponse.setUnit(extension.getUnit());
+    } else {
+      productResponse.setShowInReport(false);
+    }
+    return productResponse;
   }
 }

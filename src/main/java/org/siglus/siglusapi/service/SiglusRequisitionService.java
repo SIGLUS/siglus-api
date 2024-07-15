@@ -75,6 +75,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.openlmis.fulfillment.domain.Order;
+import org.openlmis.fulfillment.domain.OrderStatus;
 import org.openlmis.referencedata.domain.Orderable;
 import org.openlmis.referencedata.domain.ProcessingPeriod;
 import org.openlmis.referencedata.repository.ProgramRepository;
@@ -904,6 +905,9 @@ public class SiglusRequisitionService {
     if (requisitionDto.getEmergency()) {
       Requisition regularRequisition = siglusRequisitionRepository.findOneByFacilityIdAndProgramIdAndProcessingPeriodId(
           requisitionDto.getFacilityId(), requisitionDto.getProgramId(), requisitionDto.getProcessingPeriodId());
+      if (regularRequisition == null) {
+        throw new NotFoundException("Requisition not found");
+      }
       Set<UUID> regularFulFilledOrderableIds = getRegularFulFilledOrderableIds(regularRequisition);
       Set<UUID> regularRequestedOrderableIds = regularRequisition.getRequisitionLineItems().stream()
           .map(item -> item.getOrderable().getId()).collect(toSet());
@@ -942,7 +946,11 @@ public class SiglusRequisitionService {
         .findOrderExternalIdByRequisitionId(regularRequisition.getId()).stream()
         .map(UUID::fromString).collect(toSet());
     orderExternalIds.add(regularRequisition.getId());
-    List<Order> orders = siglusOrdersRepository.findAllByExternalIdIn(orderExternalIds);
+    Set<String> orderStatus = Sets.newHashSet(OrderStatus.TRANSFER_FAILED.toString(), OrderStatus.SHIPPED.toString(),
+        OrderStatus.RECEIVED.toString(), OrderStatus.IN_ROUTE.toString(), OrderStatus.READY_TO_PACK.toString());
+    List<Order> orders = siglusOrdersRepository.findAllByExternalIdIn(orderExternalIds).stream()
+        .filter(order -> orderStatus.contains(order.getStatus().toString()))
+        .collect(toList());
     orders.forEach(order ->
         order.getOrderLineItems().forEach(item ->
             orderableIdToFulfillQuantityMap.put(item.getOrderable().getId(),
@@ -1531,6 +1539,15 @@ public class SiglusRequisitionService {
     RequisitionDraft draft = null;
     if (requisitionDto == null) {
       RequisitionV2Dto dto = siglusRequisitionRequisitionService.searchRequisition(requisitionId);
+
+      Requisition requisition = siglusRequisitionRepository.findOneByFacilityIdAndProgramIdAndProcessingPeriodId(
+          dto.getFacilityId(), dto.getProgramId(), dto.getProcessingPeriodId());
+      if (requisition != null
+          && !dto.getEmergency()
+          && !Objects.equals(requisition.getId(), requisitionId)) {
+        throw new IllegalStateException("requisition already existed");
+      }
+
       requisitionDto = SiglusRequisitionDto.from(dto);
       draft = draftRepository.findByRequisitionId(requisitionDto.getId());
       if (draft != null) {

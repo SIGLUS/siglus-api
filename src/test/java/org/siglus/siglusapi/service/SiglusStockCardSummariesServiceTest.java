@@ -485,6 +485,13 @@ public class SiglusStockCardSummariesServiceTest {
     verify(calculatedStockOnHandRepository).findRecentlySohByStockCardIds(any());
   }
 
+  @Test
+  public void shouldGetEmptyListWhenGetLatestStockOnHandGivenStorkCardsIsEmpty() {
+    List<StockCardStockDto> latestStockOnHand = service.getLatestStockOnHand(Collections.emptyList(), false);
+
+    assertEquals(0, latestStockOnHand.size());
+  }
+
   private StockCardSummaryV2Dto createSummaryV2Dto(UUID orderableId, Integer stockOnHand) {
     StockCard stockCard = StockCard.builder()
         .stockOnHand(stockOnHand)

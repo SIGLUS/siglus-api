@@ -18,6 +18,8 @@ package org.siglus.siglusapi.service;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_INVENTORY_CONFLICT_SUB_DRAFT;
 
 import com.google.common.collect.Lists;
+
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -37,6 +39,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.openlmis.referencedata.dto.OrderableDto;
 import org.openlmis.stockmanagement.dto.PhysicalInventoryDto;
 import org.openlmis.stockmanagement.dto.PhysicalInventoryLineItemDto;
+import org.openlmis.stockmanagement.dto.referencedata.LotDto;
 import org.siglus.siglusapi.domain.PhysicalInventoryEmptyLocationLineItem;
 import org.siglus.siglusapi.domain.PhysicalInventoryLineItemsExtension;
 import org.siglus.siglusapi.domain.PhysicalInventorySubDraft;
@@ -61,8 +64,6 @@ import org.springframework.transaction.annotation.Transactional;
 @SuppressWarnings({"PMD"})
 public class SiglusPhysicalInventorySubDraftService {
   @Autowired
-  private SiglusStockCardSummariesService siglusStockCardSummariesService;
-  @Autowired
   private SiglusOrderableService siglusOrderableService;
   @Autowired
   private PhysicalInventorySubDraftRepository physicalInventorySubDraftRepository;
@@ -74,7 +75,10 @@ public class SiglusPhysicalInventorySubDraftService {
   private SiglusAuthenticationHelper authenticationHelper;
   @Autowired
   private PhysicalInventoryEmptyLocationLineItemRepository physicalInventoryEmptyLocationLineItemRepository;
+
   public static final String DRAFT = "Draft ";
+  private static final String LOT_CODE_KEY = "lotCode";
+  private static final String EXPIRATION_DATE_KEY = "expirationDate";
 
   @Transactional
   public void deleteSubDrafts(List<UUID> subDraftIds, boolean initialPhysicalInventory, boolean isByLocation) {
@@ -218,6 +222,7 @@ public class SiglusPhysicalInventorySubDraftService {
   @Transactional
   public void updateSubDrafts(List<UUID> subDraftIds, PhysicalInventoryDto physicalInventoryDto,
       PhysicalInventorySubDraftEnum status, boolean isByLocation) {
+    buildLineItemExtraData(physicalInventoryDto);
     if (isByLocation) {
       updateEmptyLocationLineItem(subDraftIds, physicalInventoryDto);
     }
@@ -385,5 +390,37 @@ public class SiglusPhysicalInventorySubDraftService {
         draftConflictDto.setConflictWith(DRAFT + num);
       }
     }
+  }
+
+  private void buildLineItemExtraData(PhysicalInventoryDto physicalInventoryDto) {
+    physicalInventoryDto.getLineItems().forEach(
+        lineItemDto -> {
+          if (lineItemDto.getLotId() == null && lineItemDto.getLot() != null) {
+            lineItemDto.getExtraData().put(LOT_CODE_KEY, lineItemDto.getLot().getLotCode());
+            lineItemDto.getExtraData().put(EXPIRATION_DATE_KEY, lineItemDto.getLot().getExpirationDate().toString());
+          }
+        }
+    );
+  }
+
+  public void extractLineItemExtraData(PhysicalInventoryDto physicalInventoryDto) {
+    physicalInventoryDto.getLineItems().forEach(
+        lineItemDto -> {
+          if (lineItemDto.getLotId() == null) {
+            String lotCode = lineItemDto.getExtraData().get(LOT_CODE_KEY);
+            String expiredDateStr = lineItemDto.getExtraData().get(EXPIRATION_DATE_KEY);
+            if (lotCode != null || expiredDateStr != null) {
+              LotDto lotDto = new LotDto();
+              lotDto.setLotCode(lotCode);
+              if (expiredDateStr != null) {
+                lotDto.setExpirationDate(LocalDate.parse(expiredDateStr));
+              }
+              lineItemDto.setLot(lotDto);
+            }
+            lineItemDto.getExtraData().remove(LOT_CODE_KEY);
+            lineItemDto.getExtraData().remove(EXPIRATION_DATE_KEY);
+          }
+        }
+    );
   }
 }
