@@ -384,4 +384,8 @@ public class SiglusOrderableService {
     }
     return siglusOrderableRepository.findOrderablesByIds(ids);
   }
+
+  public List<ProgramOrderableDto> findProgramOrderablesMaxVersionByOrderableIds(Collection<UUID> orderableIds) {
+    return programOrderablesRepository.findMaxVersionProgramOrderableDtosByOrderableIds(orderableIds);
+  }
 }

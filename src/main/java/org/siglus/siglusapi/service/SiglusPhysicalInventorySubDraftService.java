@@ -23,6 +23,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -52,12 +53,14 @@ import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.repository.PhysicalInventoryEmptyLocationLineItemRepository;
 import org.siglus.siglusapi.repository.PhysicalInventoryLineItemsExtensionRepository;
 import org.siglus.siglusapi.repository.PhysicalInventorySubDraftRepository;
+import org.siglus.siglusapi.repository.dto.ProgramOrderableDto;
 import org.siglus.siglusapi.util.CustomListSortHelper;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.ObjectUtils;
 
 @Service
 @Slf4j
@@ -393,20 +396,48 @@ public class SiglusPhysicalInventorySubDraftService {
   }
 
   private void buildLineItemExtraData(PhysicalInventoryDto physicalInventoryDto) {
+    Map<UUID, ProgramOrderableDto> addedOrderablesMap = getAddedOrderablesInfo(physicalInventoryDto);
     physicalInventoryDto.getLineItems().forEach(
         lineItemDto -> {
-          if (lineItemDto.getLotId() == null && lineItemDto.getLot() != null) {
-            lineItemDto.getExtraData().put(LOT_CODE_KEY, lineItemDto.getLot().getLotCode());
-            lineItemDto.getExtraData().put(EXPIRATION_DATE_KEY, lineItemDto.getLot().getExpirationDate().toString());
+          // fill extra data and lot id
+          if (lineItemDto.getExtraData() == null) {
+            lineItemDto.setExtraData(new HashMap<>());
+          }
+          if (lineItemDto.getLot() != null) {
+            if (lineItemDto.getLot().getId() == null) {
+              lineItemDto.getExtraData().put(LOT_CODE_KEY, lineItemDto.getLot().getLotCode());
+              lineItemDto.getExtraData().put(EXPIRATION_DATE_KEY, lineItemDto.getLot().getExpirationDate().toString());
+            } else {
+              lineItemDto.setLotId(lineItemDto.getLot().getId());
+            }
+          }
+          // fill program id
+          if (lineItemDto.getProgramId() == null && lineItemDto.getOrderableId() != null) {
+            ProgramOrderableDto programOrderable = addedOrderablesMap.get(lineItemDto.getOrderableId());
+            if (programOrderable != null) {
+              lineItemDto.setProgramId(programOrderable.getProgramId());
+            }
           }
         }
     );
   }
 
+  private Map<UUID, ProgramOrderableDto> getAddedOrderablesInfo(PhysicalInventoryDto physicalInventoryDto) {
+    List<UUID> addedOrderables = physicalInventoryDto.getLineItems()
+        .stream().filter(lineItemDto -> Objects.isNull(lineItemDto.getProgramId()))
+        .map(PhysicalInventoryLineItemDto::getOrderableId)
+        .collect(Collectors.toList());
+    if (ObjectUtils.isEmpty(addedOrderables)) {
+      return new HashMap<>();
+    }
+    return siglusOrderableService.findProgramOrderablesMaxVersionByOrderableIds(addedOrderables)
+        .stream().collect(Collectors.toMap(ProgramOrderableDto::getOrderableId, Function.identity()));
+  }
+
   public void extractLineItemExtraData(PhysicalInventoryDto physicalInventoryDto) {
     physicalInventoryDto.getLineItems().forEach(
         lineItemDto -> {
-          if (lineItemDto.getLotId() == null) {
+          if (lineItemDto.getLotId() == null && lineItemDto.getExtraData() != null) {
             String lotCode = lineItemDto.getExtraData().get(LOT_CODE_KEY);
             String expiredDateStr = lineItemDto.getExtraData().get(EXPIRATION_DATE_KEY);
             if (lotCode != null || expiredDateStr != null) {
