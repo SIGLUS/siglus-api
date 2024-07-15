@@ -905,18 +905,9 @@ public class SiglusRequisitionService {
     if (requisitionDto.getEmergency()) {
       Requisition regularRequisition = siglusRequisitionRepository.findOneByFacilityIdAndProgramIdAndProcessingPeriodId(
           requisitionDto.getFacilityId(), requisitionDto.getProgramId(), requisitionDto.getProcessingPeriodId());
-      if (regularRequisition == null) {
-        throw new NotFoundException("Requisition not found");
+      if (regularRequisition != null) {
+        setAvailableProducts(requisitionDto, regularRequisition);
       }
-      Set<UUID> regularFulFilledOrderableIds = getRegularFulFilledOrderableIds(regularRequisition);
-      Set<UUID> regularRequestedOrderableIds = regularRequisition.getRequisitionLineItems().stream()
-          .map(item -> item.getOrderable().getId()).collect(toSet());
-
-      Set<VersionObjectReferenceDto> availableProducts = requisitionDto.getAvailableProducts().stream()
-          .filter(product -> !regularRequestedOrderableIds.contains(product.getId())
-              || regularFulFilledOrderableIds.contains(product.getId()))
-          .collect(toSet());
-      requisitionDto.setAvailableProducts(availableProducts);
     }
 
     setLineItemExtension(requisitionDto);
@@ -935,6 +926,18 @@ public class SiglusRequisitionService {
 
   public SiglusRequisitionDto searchRequisition(UUID requisitionId) {
     return searchRequisition(requisitionId, response);
+  }
+
+  private void setAvailableProducts(RequisitionV2Dto requisitionDto, Requisition regularRequisition) {
+    Set<UUID> regularFulFilledOrderableIds = getRegularFulFilledOrderableIds(regularRequisition);
+    Set<UUID> regularRequestedOrderableIds = regularRequisition.getRequisitionLineItems().stream()
+        .map(item -> item.getOrderable().getId()).collect(toSet());
+
+    Set<VersionObjectReferenceDto> availableProducts = requisitionDto.getAvailableProducts().stream()
+        .filter(product -> !regularRequestedOrderableIds.contains(product.getId())
+            || regularFulFilledOrderableIds.contains(product.getId()))
+        .collect(toSet());
+    requisitionDto.setAvailableProducts(availableProducts);
   }
 
   private Set<UUID> getRegularFulFilledOrderableIds(Requisition regularRequisition) {
