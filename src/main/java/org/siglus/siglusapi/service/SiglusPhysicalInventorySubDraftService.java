@@ -85,23 +85,17 @@ public class SiglusPhysicalInventorySubDraftService {
 
   @Transactional
   public void deleteSubDrafts(List<UUID> subDraftIds, boolean initialPhysicalInventory, boolean isByLocation) {
-    log.info("deleteSubDrafts, subDraftIds=" + subDraftIds);
-    try {
-      List<PhysicalInventorySubDraft> physicalInventorySubDrafts = updateSubDraftsStatus(subDraftIds,
-          PhysicalInventorySubDraftEnum.NOT_YET_STARTED, true);
-      doDelete(physicalInventorySubDrafts, subDraftIds, initialPhysicalInventory);
-      if (isByLocation) {
-        List<PhysicalInventoryEmptyLocationLineItem> emptyLocationLineItems
-            = physicalInventoryEmptyLocationLineItemRepository.findBySubDraftIdIn(subDraftIds);
-        emptyLocationLineItems.forEach(e -> {
-          e.setHasProduct(false);
-          e.setSkipped(false);
-        });
-        physicalInventoryEmptyLocationLineItemRepository.save(emptyLocationLineItems);
-      }
-    } catch (Exception e) {
-      log.error(e.getMessage(), e);
-      throw e;
+    List<PhysicalInventorySubDraft> physicalInventorySubDrafts = updateSubDraftsStatus(subDraftIds,
+        PhysicalInventorySubDraftEnum.NOT_YET_STARTED, true);
+    doDelete(physicalInventorySubDrafts, subDraftIds, initialPhysicalInventory);
+    if (isByLocation) {
+      List<PhysicalInventoryEmptyLocationLineItem> emptyLocationLineItems
+          = physicalInventoryEmptyLocationLineItemRepository.findBySubDraftIdIn(subDraftIds);
+      emptyLocationLineItems.forEach(e -> {
+        e.setHasProduct(false);
+        e.setSkipped(false);
+      });
+      physicalInventoryEmptyLocationLineItemRepository.save(emptyLocationLineItems);
     }
   }
 

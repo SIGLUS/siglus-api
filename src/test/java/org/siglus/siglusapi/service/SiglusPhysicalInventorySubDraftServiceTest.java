@@ -467,6 +467,21 @@ public class SiglusPhysicalInventorySubDraftServiceTest {
     verify(physicalInventoryEmptyLocationLineItemRepository).save(any(List.class));
   }
 
+  @Test(expected = IllegalStateException.class)
+  public void shouldThrowExceptionWhenDeleteSubDraftsGivenStatusIsSubmitted() {
+    when(supportedProgramsHelper.findHomeFacilitySupportedProgramIds())
+        .thenReturn(Sets.newHashSet(UUID.randomUUID(), UUID.randomUUID()));
+    PhysicalInventorySubDraft subDraft1 = PhysicalInventorySubDraft.builder()
+        .physicalInventoryId(physicalInventoryId1).num(1)
+        .status(PhysicalInventorySubDraftEnum.SUBMITTED)
+        .build();
+    subDraft1.setId(UUID.randomUUID());
+    List<UUID> subDraftIds = Lists.newArrayList(subDraftId);
+    when(physicalInventorySubDraftRepository.findAll(subDraftIds)).thenReturn(Collections.singletonList(subDraft1));
+
+    siglusPhysicalInventorySubDraftService.deleteSubDrafts(subDraftIds, Boolean.FALSE, true);
+  }
+
   @Test
   public void shouldRemoveProductWithDeleteProductWhenUpdateSubDrafts() {
     // given
