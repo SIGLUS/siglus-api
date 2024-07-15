@@ -395,9 +395,13 @@ public class SiglusPhysicalInventorySubDraftService {
   private void buildLineItemExtraData(PhysicalInventoryDto physicalInventoryDto) {
     physicalInventoryDto.getLineItems().forEach(
         lineItemDto -> {
-          if (lineItemDto.getLotId() == null && lineItemDto.getLot() != null) {
-            lineItemDto.getExtraData().put(LOT_CODE_KEY, lineItemDto.getLot().getLotCode());
-            lineItemDto.getExtraData().put(EXPIRATION_DATE_KEY, lineItemDto.getLot().getExpirationDate().toString());
+          if (lineItemDto.getLot() != null) {
+            if (lineItemDto.getLot().getId() == null) {
+              lineItemDto.getExtraData().put(LOT_CODE_KEY, lineItemDto.getLot().getLotCode());
+              lineItemDto.getExtraData().put(EXPIRATION_DATE_KEY, lineItemDto.getLot().getExpirationDate().toString());
+            } else {
+              lineItemDto.setLotId(lineItemDto.getLot().getId());
+            }
           }
         }
     );
