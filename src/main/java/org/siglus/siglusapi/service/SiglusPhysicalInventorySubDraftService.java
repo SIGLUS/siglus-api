@@ -410,7 +410,7 @@ public class SiglusPhysicalInventorySubDraftService {
   public void extractLineItemExtraData(PhysicalInventoryDto physicalInventoryDto) {
     physicalInventoryDto.getLineItems().forEach(
         lineItemDto -> {
-          if (lineItemDto.getLotId() == null) {
+          if (lineItemDto.getLotId() == null && lineItemDto.getExtraData() != null) {
             String lotCode = lineItemDto.getExtraData().get(LOT_CODE_KEY);
             String expiredDateStr = lineItemDto.getExtraData().get(EXPIRATION_DATE_KEY);
             if (lotCode != null || expiredDateStr != null) {
