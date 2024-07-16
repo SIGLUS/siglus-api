@@ -7,9 +7,8 @@ DELETE FROM siglusintegration.usage_sections_maps;
 DELETE FROM siglusintegration.requisition_template_extension;
 DELETE FROM requisition.columns_maps;
 DELETE FROM requisition.requisition_template_assignments;
-DELETE FROM requisition.requisition_templates;
 
-INSERT INTO "requisition"."requisition_templates"("id","createddate","modifieddate","numberofperiodstoaverage","populatestockonhandfromstockcards","archived","name")
+INSERT INTO requisition.requisition_templates("id","createddate","modifieddate","numberofperiodstoaverage","populatestockonhandfromstockcards","archived","name")
 VALUES
     (E'5443a5b6-f695-467c-a23c-e12df50beac2',E'2022-08-08 08:56:14.443+00',E'2024-07-12 06:19:18.166373+00',3,TRUE,FALSE,E'Malaria Template - CS/PS/Hospital'),
     (E'fe386d97-941a-43bd-8ce0-f13867c7dd2d',E'2022-08-08 08:56:14.443+00',E'2024-07-12 06:19:18.166373+00',3,TRUE,FALSE,E'Malaria Template - DPM/AI'),
@@ -25,7 +24,8 @@ VALUES
     (E'6870b0d0-7cab-4870-a8a4-3ef07f194cc1',E'2022-08-08 08:56:14.443+00',E'2024-07-12 06:19:18.166373+00',3,TRUE,FALSE,E'MMTB Template - DPM/AI'),
     (E'c3f54e3e-2fff-449b-a870-08b6ad7b7b32',E'2022-08-08 08:56:14.443+00',E'2024-07-12 06:19:18.166373+00',3,TRUE,FALSE,E'MMTB Template - HC'),
     (E'1507c5be-a3ca-49e5-afb6-b4a7817f790c',E'2021-07-15 04:47:39.095+00',E'2024-07-12 06:19:18.166373+00',3,TRUE,FALSE,E'VIA Template - CS/PS/Hospital/DDM'),
-    (E'83e3f7d0-6519-42de-a36a-2dd96ac9f405',E'2022-08-08 08:56:14.443+00',E'2024-07-12 06:19:18.166373+00',3,TRUE,FALSE,E'VIA Template - DPM/AI/HC');
+    (E'83e3f7d0-6519-42de-a36a-2dd96ac9f405',E'2022-08-08 08:56:14.443+00',E'2024-07-12 06:19:18.166373+00',3,TRUE,FALSE,E'VIA Template - DPM/AI/HC')
+ON CONFLICT DO NOTHING;
 
 INSERT INTO requisition.requisition_template_assignments (id,programid,facilitytypeid,templateid) VALUES
     ('2a23d294-22f1-11ef-9e35-acde48001122','a6257d40-58c5-11ed-b15f-acde48001122','b6069fa4-cfad-11e9-9398-0242ac130008','0ee42452-58cc-11ed-ba04-acde48001122'),
