@@ -19,7 +19,6 @@ import static org.hamcrest.Matchers.containsString;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyCollection;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -66,8 +65,6 @@ import org.siglus.siglusapi.repository.OrderableRepository;
 import org.siglus.siglusapi.repository.PhysicalInventoryEmptyLocationLineItemRepository;
 import org.siglus.siglusapi.repository.PhysicalInventoryLineItemsExtensionRepository;
 import org.siglus.siglusapi.repository.PhysicalInventorySubDraftRepository;
-import org.siglus.siglusapi.repository.SiglusOrderableDisplayCategoriesRepository;
-import org.siglus.siglusapi.repository.SiglusProgramOrderableRepository;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.util.SupportedProgramsHelper;
@@ -125,10 +122,6 @@ public class SiglusPhysicalInventorySubDraftServiceTest {
   private PhysicalInventoryEmptyLocationLineItemRepository physicalInventoryEmptyLocationLineItemRepository;
   @Mock
   private SiglusStockCardSummariesService siglusStockCardSummariesService;
-  @Mock
-  private SiglusOrderableDisplayCategoriesRepository orderableDisplayCategoriesRepository;
-  @Mock
-  private SiglusProgramOrderableRepository siglusProgramOrderableRepository;
 
   private final UUID facilityId = UUID.randomUUID();
 
@@ -544,9 +537,6 @@ public class SiglusPhysicalInventorySubDraftServiceTest {
 
   @Test
   public void shouldExtractLotWhenExtractLineItemExtraData() {
-    when(orderableDisplayCategoriesRepository.findAll()).thenReturn(new ArrayList<>());
-    when(siglusProgramOrderableRepository.findMaxVersionProgramOrderableDtosByOrderableIds(anyCollection()))
-        .thenReturn(new ArrayList());
     Map<String, String> extraData = new HashMap<>();
     extraData.put("lotCode", "123456789");
     extraData.put("expirationDate", "2024-05-05");

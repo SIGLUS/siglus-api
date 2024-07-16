@@ -16,7 +16,6 @@
 package org.siglus.siglusapi.service;
 
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_INVENTORY_CONFLICT_SUB_DRAFT;
-import static org.siglus.siglusapi.util.ComparorUtil.distinctByKey;
 
 import com.google.common.collect.Lists;
 
@@ -38,7 +37,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
-import org.openlmis.referencedata.domain.OrderableDisplayCategory;
 import org.openlmis.referencedata.dto.OrderableDto;
 import org.openlmis.stockmanagement.dto.PhysicalInventoryDto;
 import org.openlmis.stockmanagement.dto.PhysicalInventoryLineItemDto;
@@ -55,8 +53,6 @@ import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.repository.PhysicalInventoryEmptyLocationLineItemRepository;
 import org.siglus.siglusapi.repository.PhysicalInventoryLineItemsExtensionRepository;
 import org.siglus.siglusapi.repository.PhysicalInventorySubDraftRepository;
-import org.siglus.siglusapi.repository.SiglusOrderableDisplayCategoriesRepository;
-import org.siglus.siglusapi.repository.SiglusProgramOrderableRepository;
 import org.siglus.siglusapi.repository.dto.ProgramOrderableDto;
 import org.siglus.siglusapi.util.CustomListSortHelper;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
@@ -70,7 +66,6 @@ import org.springframework.util.ObjectUtils;
 @Slf4j
 @SuppressWarnings({"PMD"})
 public class SiglusPhysicalInventorySubDraftService {
-  private static final String ORDERABLE_CATEGORY_DISPLAY_NAME = "orderableCategoryDisplayName";
   @Autowired
   private SiglusOrderableService siglusOrderableService;
   @Autowired
@@ -83,10 +78,6 @@ public class SiglusPhysicalInventorySubDraftService {
   private SiglusAuthenticationHelper authenticationHelper;
   @Autowired
   private PhysicalInventoryEmptyLocationLineItemRepository physicalInventoryEmptyLocationLineItemRepository;
-  @Autowired
-  private SiglusProgramOrderableRepository siglusProgramOrderableRepository;
-  @Autowired
-  private SiglusOrderableDisplayCategoriesRepository orderableDisplayCategoriesRepository;
 
   public static final String DRAFT = "Draft ";
   private static final String LOT_CODE_KEY = "lotCode";
@@ -453,32 +444,6 @@ public class SiglusPhysicalInventorySubDraftService {
             }
             lineItemDto.getExtraData().remove(LOT_CODE_KEY);
             lineItemDto.getExtraData().remove(EXPIRATION_DATE_KEY);
-          }
-        }
-    );
-    fillOrderableCategories(physicalInventoryDto);
-  }
-
-  private void fillOrderableCategories(PhysicalInventoryDto physicalInventoryDto) {
-    Map<UUID, String> displayMap = orderableDisplayCategoriesRepository.findAll().stream()
-        .collect(Collectors.toMap(OrderableDisplayCategory::getId,
-            category -> category.getOrderedDisplayValue().getDisplayName()));
-    List<UUID> orderableIds = physicalInventoryDto.getLineItems()
-        .stream().map(PhysicalInventoryLineItemDto::getOrderableId).distinct().collect(Collectors.toList());
-    Map<UUID, ProgramOrderableDto> programOrderableMap =
-        siglusProgramOrderableRepository.findMaxVersionProgramOrderableDtosByOrderableIds(orderableIds)
-            .stream()
-            .filter(distinctByKey(ProgramOrderableDto::getOrderableId))
-            .collect(Collectors.toMap(ProgramOrderableDto::getOrderableId, Function.identity()));
-    physicalInventoryDto.getLineItems().forEach(
-        lineItem -> {
-          ProgramOrderableDto programOrderableDto = programOrderableMap.get(lineItem.getOrderableId());
-          if (programOrderableDto != null) {
-            String category = displayMap.get(programOrderableDto.getOrderableDisplayCategoryId());
-            if (lineItem.getOrderable().getExtraData() == null) {
-              lineItem.getOrderable().setExtraData(new HashMap<>());
-            }
-            lineItem.getOrderable().getExtraData().put(ORDERABLE_CATEGORY_DISPLAY_NAME, category);
           }
         }
     );
