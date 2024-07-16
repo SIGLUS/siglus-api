@@ -66,7 +66,7 @@ import javax.validation.ValidationException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.openlmis.referencedata.domain.Orderable;
+import org.openlmis.referencedata.domain.ProgramOrderable;
 import org.openlmis.referencedata.dto.OrderableDto;
 import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.requisition.service.RequisitionService;
@@ -102,12 +102,12 @@ import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.CalculatedStockOnHandByLocationRepository;
 import org.siglus.siglusapi.repository.FacilityLocationsRepository;
-import org.siglus.siglusapi.repository.OrderableRepository;
 import org.siglus.siglusapi.repository.PhysicalInventoryEmptyLocationLineItemRepository;
 import org.siglus.siglusapi.repository.PhysicalInventoryExtensionRepository;
 import org.siglus.siglusapi.repository.PhysicalInventoryLineItemsExtensionRepository;
 import org.siglus.siglusapi.repository.PhysicalInventorySubDraftRepository;
 import org.siglus.siglusapi.repository.SiglusPhysicalInventoryRepository;
+import org.siglus.siglusapi.repository.SiglusProgramOrderableRepository;
 import org.siglus.siglusapi.repository.SiglusStockCardRepository;
 import org.siglus.siglusapi.repository.dto.SiglusPhysicalInventoryBriefDto;
 import org.siglus.siglusapi.repository.dto.StockCardStockDto;
@@ -132,6 +132,7 @@ import org.springframework.util.ObjectUtils;
 @Slf4j
 @SuppressWarnings({"PMD.TooManyMethods", "PMD.PreserveStackTrace", "PMD.CyclomaticComplexity"})
 public class SiglusPhysicalInventoryService {
+  private static final String ORDERABLE_CATEGORY_DISPLAY_NAME = "orderableCategoryDisplayName";
 
   @Autowired
   private PhysicalInventoriesRepository physicalInventoriesRepository;
@@ -145,8 +146,6 @@ public class SiglusPhysicalInventoryService {
   private PhysicalInventoryController inventoryController;
   @Autowired
   private SiglusFacilityReferenceDataService facilityReferenceDataService;
-  @Autowired
-  private OrderableRepository orderableRepository;
   @Autowired
   private RequisitionService requisitionService;
   @Autowired
@@ -181,6 +180,8 @@ public class SiglusPhysicalInventoryService {
   private FacilityConfigHelper facilityConfigHelper;
   @Autowired
   private SiglusPhysicalInventorySubDraftService physicalInventorySubDraftService;
+  @Autowired
+  private SiglusProgramOrderableRepository siglusProgramOrderableRepository;
 
   @Transactional
   public PhysicalInventoryDto createAndSplitNewDraftForAllPrograms(PhysicalInventoryDto physicalInventoryDto,
@@ -355,12 +356,20 @@ public class SiglusPhysicalInventoryService {
     List<UUID> orderrableIds = lineItemDtos.stream()
         .map(PhysicalInventoryLineItemDto::getOrderableId).distinct().collect(Collectors.toList());
     if (!ObjectUtils.isEmpty(orderrableIds)) {
-      Map<UUID, Orderable> orderableMap = orderableRepository.findLatestByIds(orderrableIds)
-          .stream().collect(Collectors.toMap(Orderable::getId, orderable -> orderable));
+      Map<UUID, ProgramOrderable> optionalMap = siglusProgramOrderableRepository.findByOrderableIdIn(orderrableIds)
+          .stream()
+          .collect(Collectors.toMap(programOrderable -> programOrderable.getProduct().getId(), Function.identity()));
       lineItemDtos.forEach(lineItemDto -> {
-        Orderable orderable = orderableMap.get(lineItemDto.getOrderableId());
-        if (!ObjectUtils.isEmpty(orderable)) {
-          lineItemDto.setOrderable(OrderableUtil.convert(orderable));
+        ProgramOrderable programOrderable = optionalMap.get(lineItemDto.getOrderableId());
+        if (programOrderable != null) {
+          org.openlmis.stockmanagement.dto.referencedata.OrderableDto orderableDto =
+              OrderableUtil.convert(programOrderable.getProduct());
+          if (orderableDto.getExtraData() == null) {
+            orderableDto.setExtraData(new HashMap<>());
+          }
+          orderableDto.getExtraData().put(ORDERABLE_CATEGORY_DISPLAY_NAME,
+              programOrderable.getOrderableDisplayCategory().getOrderedDisplayValue().getDisplayName());
+          lineItemDto.setOrderable(orderableDto);
         }
       });
     }
