@@ -1035,7 +1035,7 @@ public class MeServiceTest {
 
   private ProgramOrderableDto from(ProgramOrderable orderable) {
     return new ProgramOrderableDto(orderable.getProduct().getId(), orderable.getProgram().getId(),
-        new BigDecimal("1.0"), orderable.isActive());
+        new BigDecimal("1.0"), orderable.isActive(), UUID.randomUUID());
   }
 
   private ProgramOrderable mockProgramOrderable1() {

@@ -61,6 +61,7 @@ import lombok.Data;
             @ColumnResult(name = "programid", type = UUID.class),
             @ColumnResult(name = "priceperpack", type = BigDecimal.class),
             @ColumnResult(name = "active", type = Boolean.class),
+            @ColumnResult(name = "orderabledisplaycategoryid", type = UUID.class),
         }
     )
 )
@@ -69,9 +70,9 @@ import lombok.Data;
 @Builder
 @AllArgsConstructor
 public class ProgramOrderableDto implements Serializable {
-
   private UUID orderableId;
   private UUID programId;
   private BigDecimal price;
   private boolean active;
+  private UUID orderableDisplayCategoryId;
 }
