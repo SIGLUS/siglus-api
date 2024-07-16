@@ -207,6 +207,7 @@ import org.siglus.siglusapi.repository.RequisitionLineItemRepository;
 import org.siglus.siglusapi.repository.RequisitionNativeSqlRepository;
 import org.siglus.siglusapi.repository.SiglusOrdersRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
+import org.siglus.siglusapi.repository.SiglusShipmentRepository;
 import org.siglus.siglusapi.repository.TestConsumptionLineItemRepository;
 import org.siglus.siglusapi.repository.UsageInformationLineItemRepository;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
@@ -432,6 +433,9 @@ public class SiglusRequisitionServiceTest {
 
   @Mock
   private SiglusRequisitionRepository siglusRequisitionRepository;
+
+  @Mock
+  private SiglusShipmentRepository siglusShipmentRepository;
 
   private final UUID orderableId2 = UUID.randomUUID();
 

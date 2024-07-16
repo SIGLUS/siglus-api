@@ -74,8 +74,8 @@ import javax.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
-import org.openlmis.fulfillment.domain.Order;
 import org.openlmis.fulfillment.domain.OrderStatus;
+import org.openlmis.fulfillment.domain.Shipment;
 import org.openlmis.referencedata.domain.Orderable;
 import org.openlmis.referencedata.domain.ProcessingPeriod;
 import org.openlmis.referencedata.repository.ProgramRepository;
@@ -194,6 +194,7 @@ import org.siglus.siglusapi.repository.RequisitionLineItemRepository;
 import org.siglus.siglusapi.repository.RequisitionNativeSqlRepository;
 import org.siglus.siglusapi.repository.SiglusOrdersRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
+import org.siglus.siglusapi.repository.SiglusShipmentRepository;
 import org.siglus.siglusapi.repository.SyncUpHashRepository;
 import org.siglus.siglusapi.repository.TestConsumptionLineItemRepository;
 import org.siglus.siglusapi.repository.UsageInformationLineItemRepository;
@@ -353,7 +354,8 @@ public class SiglusRequisitionService {
   private OrderExternalRepository orderExternalRepository;
   @Autowired
   private SiglusOrdersRepository siglusOrdersRepository;
-
+  @Autowired
+  private SiglusShipmentRepository siglusShipmentRepository;
   private final Map<String, BiConsumer<SiglusRequisitionDto, Set<RequisitionLineItem>>> programToRequestedQuantity =
       ImmutableMap.<String, BiConsumer<SiglusRequisitionDto, Set<RequisitionLineItem>>>builder()
           .put(MTB_PROGRAM_CODE, this::calcRequestedQuantityForMmtb)
@@ -951,15 +953,18 @@ public class SiglusRequisitionService {
     orderExternalIds.add(regularRequisition.getId());
     Set<OrderStatus> orderStatus = Sets.newHashSet(OrderStatus.TRANSFER_FAILED, OrderStatus.SHIPPED,
         OrderStatus.RECEIVED, OrderStatus.IN_ROUTE, OrderStatus.READY_TO_PACK);
-    List<Order> orders = siglusOrdersRepository.findAllByExternalIdIn(orderExternalIds).stream()
+    Set<UUID> orderIds = siglusOrdersRepository.findAllByExternalIdIn(orderExternalIds).stream()
         .filter(order -> orderStatus.contains(order.getStatus()))
-        .collect(toList());
-    orders.forEach(order ->
-        order.getOrderLineItems().forEach(item ->
-            orderableIdToFulfillQuantityMap.put(item.getOrderable().getId(),
-                orderableIdToFulfillQuantityMap.getOrDefault(item.getOrderable().getId(), 0L)
-                    + item.getOrderedQuantity()
-            ))
+        .map(org.openlmis.fulfillment.domain.BaseEntity::getId)
+        .collect(toSet());
+    List<Shipment> shipments = siglusShipmentRepository.findAllByOrderIdIn(orderIds);
+    shipments.forEach(shipment ->
+        shipment.getLineItems().forEach(shipmentLineItem -> {
+          UUID orderableId = shipmentLineItem.getOrderableId();
+          orderableIdToFulfillQuantityMap.put(orderableId,
+              orderableIdToFulfillQuantityMap.getOrDefault(orderableId, 0L)
+                  + shipmentLineItem.getQuantityShipped());
+        })
     );
     return orderableIdToFulfillQuantityMap.keySet().stream()
         .filter(orderableId ->
