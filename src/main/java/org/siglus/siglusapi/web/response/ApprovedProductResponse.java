@@ -15,7 +15,9 @@
 
 package org.siglus.siglusapi.web.response;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.Data;
@@ -24,6 +26,7 @@ import org.openlmis.requisition.dto.DispensableDto;
 import org.openlmis.requisition.dto.OrderableDto;
 import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.dto.ProgramOrderableDto;
+import org.springframework.util.ObjectUtils;
 
 @Data
 public class ApprovedProductResponse {
@@ -41,19 +44,24 @@ public class ApprovedProductResponse {
 
   @Data
   public static class ApprovedOrderableDto {
+    public static final String EXTRA_DATA_ORDERABLE_CATEGORY_DISPLAY_NAME = "orderableCategoryDisplayName";
     private UUID id;
     private String productCode;
     private String fullProductName;
     private DispensableDto dispensable;
-    private List<ApprovedProgramOrderableDto> programs;
+    private Map<String, String> extraData = new HashMap<>();
 
     public ApprovedOrderableDto(OrderableDto dto) {
       id = dto.getId();
       productCode = dto.getProductCode();
       fullProductName = dto.getFullProductName();
       dispensable = dto.getDispensable();
-      if (dto.getPrograms() != null) {
-        programs = dto.getPrograms().stream().map(ApprovedProgramOrderableDto::new).collect(Collectors.toList());
+      if (!ObjectUtils.isEmpty(dto.getPrograms())) {
+        List<String> categoryNames = dto.getPrograms().stream()
+            .map(ProgramOrderableDto::getOrderableCategoryDisplayName).collect(Collectors.toList());
+        if (ObjectUtils.isEmpty(categoryNames)) {
+          extraData.put(EXTRA_DATA_ORDERABLE_CATEGORY_DISPLAY_NAME, categoryNames.get(0));
+        }
       }
     }
   }
@@ -70,15 +78,6 @@ public class ApprovedProductResponse {
       code = dto.getCode();
       name = dto.getName();
       active = dto.getActive();
-    }
-  }
-
-  @Data
-  public static class ApprovedProgramOrderableDto {
-    private String orderableCategoryDisplayName;
-
-    public ApprovedProgramOrderableDto(ProgramOrderableDto dto) {
-      orderableCategoryDisplayName = dto.getOrderableCategoryDisplayName();
     }
   }
 }
