@@ -17,6 +17,7 @@ package org.siglus.siglusapi.service;
 
 import static com.google.common.collect.Sets.newHashSet;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
@@ -367,7 +368,7 @@ public class SiglusProcessingPeriodServiceTest {
     //then
     assertEquals(1, response.size());
     // assertEquals("perPeriod", response.get(0).getName());
-    // assertEquals(LocalDate.of(2020, 7, 24), response.get(0).getSubmitEndDate());
+    assertEquals(LocalDate.of(2020, 7, 24), response.get(0).getSubmitEndDate());
   }
 
   @Test
@@ -435,8 +436,8 @@ public class SiglusProcessingPeriodServiceTest {
     //then
     assertEquals(1, response.size());
     // assertEquals(periodDto.getName(), response.get(0).getName());
-    // assertEquals(LocalDate.of(2020, 7, 16), response.get(0).getSubmitStartDate());
-    // assertEquals(LocalDate.of(2020, 8, 30), response.get(0).getSubmitEndDate());
+    assertEquals(LocalDate.of(2020, 7, 16), response.get(0).getSubmitStartDate());
+    assertEquals(LocalDate.of(2020, 8, 30), response.get(0).getSubmitEndDate());
   }
 
   @Test
@@ -505,7 +506,7 @@ public class SiglusProcessingPeriodServiceTest {
 
     //then
     assertEquals(1, actualResponseList.size());
-    // assertFalse(actualResponseList.contains(expectedResponse));
+    assertFalse(actualResponseList.contains(expectedResponse));
   }
 
   @Test
