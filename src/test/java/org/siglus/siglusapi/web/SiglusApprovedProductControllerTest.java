@@ -49,8 +49,8 @@ public class SiglusApprovedProductControllerTest {
     UUID facilityId = UUID.randomUUID();
     UUID programId = UUID.randomUUID();
 
-    controller.approvedProductResponse(facilityId, programId);
+    controller.approvedProductResponse(facilityId, programId, true);
 
-    verify(service).getApprovedProductsForFacility(facilityId, programId);
+    verify(service).getApprovedProductsForFacility(facilityId, programId, true);
   }
 }

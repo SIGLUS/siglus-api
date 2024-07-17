@@ -32,6 +32,7 @@ import org.openlmis.referencedata.domain.ProgramOrderable;
 import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.requisition.dto.DispensableDto;
 import org.openlmis.requisition.service.RequisitionService;
+import org.siglus.common.constant.KitConstants;
 import org.siglus.common.domain.ProgramOrderablesExtension;
 import org.siglus.common.repository.ProgramOrderablesExtensionRepository;
 import org.siglus.siglusapi.dto.ProgramProductDto;
@@ -89,7 +90,7 @@ public class SiglusApprovedProductService {
         .collect(Collectors.toList());
   }
 
-  public List<ProgramProductDto> getApprovedProductsForFacility(UUID facilityId, UUID programId) {
+  public List<ProgramProductDto> getApprovedProductsForFacility(UUID facilityId, UUID programId, boolean excludeKit) {
     List<SupportedProgramDto> programDtos = getAndCheckProgram(programId);
     Set<UUID> archivedProductSet = archiveProductService.searchArchivedProductsByFacilityId(facilityId)
         .stream().map(UUID::fromString).collect(Collectors.toSet());
@@ -98,6 +99,8 @@ public class SiglusApprovedProductService {
         siglusProgramOrderableRepository.findMaxVersionOrderableByProgramIds(programIds)
             .stream()
             .filter(programOrderable -> !archivedProductSet.contains(programOrderable.getProduct().getId()))
+            .filter(programOrderable ->
+                !(excludeKit && KitConstants.isKit(programOrderable.getProduct().getProductCode().toString())))
             .collect(Collectors.toList());
     Set<UUID> orderableIds = programOrderables.stream()
         .map(product -> product.getProduct().getId()).collect(Collectors.toSet());

@@ -155,7 +155,7 @@ public class SiglusApprovedProductServiceTest {
         .thenReturn(Collections.singletonList(programOrderablesExtension));
 
     List<ProgramProductDto> approvedProductsForFacility =
-        service.getApprovedProductsForFacility(facilityId, supportProgramId1);
+        service.getApprovedProductsForFacility(facilityId, supportProgramId1, false);
 
     assertEquals(1, approvedProductsForFacility.size());
   }

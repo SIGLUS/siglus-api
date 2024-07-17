@@ -43,7 +43,8 @@ public class SiglusApprovedProductController {
 
   @GetMapping("/brief")
   public List<ProgramProductDto> approvedProductResponse(@RequestParam UUID facilityId,
-                                                         @RequestParam UUID programId) {
-    return siglusApprovedProductService.getApprovedProductsForFacility(facilityId, programId);
+                                                         @RequestParam UUID programId,
+                                                         @RequestParam(required = false) boolean excludeKit) {
+    return siglusApprovedProductService.getApprovedProductsForFacility(facilityId, programId, excludeKit);
   }
 }
