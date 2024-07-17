@@ -418,9 +418,10 @@ public class SiglusPhysicalInventorySubDraftService {
 
   private Map<UUID, ProgramOrderableDto> getAddedOrderablesInfo(PhysicalInventoryDto physicalInventoryDto) {
     List<UUID> addedOrderables = physicalInventoryDto.getLineItems()
-        .stream().filter(lineItemDto -> Objects.isNull(lineItemDto.getProgramId()))
+        .stream()
+        .filter(lineItemDto ->
+            Objects.nonNull(lineItemDto.getOrderableId()) && Objects.isNull(lineItemDto.getProgramId()))
         .map(PhysicalInventoryLineItemDto::getOrderableId)
-        .filter(Objects::nonNull)
         .collect(Collectors.toList());
     if (ObjectUtils.isEmpty(addedOrderables)) {
       return new HashMap<>();
