@@ -8,73 +8,11 @@ DELETE FROM siglusintegration.requisition_template_extension;
 DELETE FROM requisition.columns_maps;
 DELETE FROM requisition.requisition_template_assignments;
 
-INSERT INTO "siglusintegration"."available_usage_column_sections"("id","name","label","displayorder","category") VALUES
-    (E'0d3b5adc-e767-49a1-8ed7-7b2a92f82d7f',E'outcome',E'Test Outcome',1,E'RAPIDTESTCONSUMPTION'),
-    (E'28cbdef0-318b-4b34-a4c3-9d1b5bb74d15',E'service',E'Services',2,E'RAPIDTESTCONSUMPTION'),
-    (E'43fa95ae-fcfb-11ec-b939-0242ac120002',E'group',E'Faixas Etarias',0,E'AGEGROUP'),
-    (E'76a4a700-fcfc-11ec-b939-0242ac120002',E'service',E'Services',1,E'AGEGROUP'),
-    (E'91deacfc-1f06-4052-a7d2-0c78a1642043',E'regimen',E'Regimen',0,E'REGIMEN'),
-    (E'97230a23-f47b-4115-86fc-f91760b7b439',E'project',E'Test Project',0,E'RAPIDTESTCONSUMPTION'),
-    (E'bbf232b4-4b07-4a8e-a22c-1607995b01cd',E'patientType',E'Type of Patient',0,E'PATIENT'),
-    (E'bcd979a4-1967-4258-a5be-b04f82c4c62c',E'number',E'Consultation Number',0,E'CONSULTATIONNUMBER'),
-    (E'bce979a4-1829-9287-1827-b04f86c4c72a',E'service',E'Services',1,E'USAGEINFORMATION'),
-    (E'bce979a4-1876-4259-9102-b04f86c4c72c',E'information',E'Product Usage Information',0,E'USAGEINFORMATION'),
-    (E'bce979a4-1957-4259-a5bb-b04f86c4c72a',E'service',E'Services',1,E'KITUSAGE'),
-    (E'bce979a4-1957-4259-a5bb-b04f86c4c72c',E'collection',E'KIT data collection',0,E'KITUSAGE'),
-    (E'e2cd8d9e-22e9-4ea4-a61c-e3bd603d02cb',E'summary',E'Summary',1,E'REGIMEN')
-ON CONFLICT DO NOTHING;
-
-INSERT INTO "siglusintegration"."available_usage_columns"("id","canbechangedbyuser","canchangeorder","columntype","definition","indicator","isdisplayrequired","label","mandatory","name","supportstag","sectionid","sources","displayorder") VALUES
-    (E'04065445-3aaf-4928-b329-8454964b62f8',FALSE,TRUE,E'NUMERIC',E'record the number of patients in community pharmacy',E'RE',FALSE,E'Farmácia Comunitária',FALSE,E'community',FALSE,E'91deacfc-1f06-4052-a7d2-0c78a1642043',E'USER_INPUT',3),
-    (E'07a70f2b-451c-401a-b8ca-75e56baeb91c',FALSE,FALSE,E'NUMERIC',E'record the number of new patients',E'PD',TRUE,E'Novos',FALSE,E'new',FALSE,E'bbf232b4-4b07-4a8e-a22c-1607995b01cd',E'USER_INPUT',0),
-    (E'09e5d451-0ffe-43df-ae00-2f15f2a3681b',FALSE,TRUE,E'NUMERIC',E'record the total number of each column',E'SV',TRUE,E'Total',FALSE,E'total',FALSE,E'28cbdef0-318b-4b34-a4c3-9d1b5bb74d15',E'USER_INPUT|CALCULATED',1),
-    (E'13263196-fcff-11ec-b939-0242ac120002',FALSE,FALSE,E'NUMERIC',E'Adults',E'SV',TRUE,E'Adultos',FALSE,E'adultos',FALSE,E'76a4a700-fcfc-11ec-b939-0242ac120002',E'USER_INPUT',0),
-    (E'1326342a-fcff-11ec-b939-0242ac120002',FALSE,FALSE,E'NUMERIC',E'Child < 25 kg',E'SV',TRUE,E'Criança < 25Kg',FALSE,E'criança < 25Kg',FALSE,E'76a4a700-fcfc-11ec-b939-0242ac120002',E'USER_INPUT',1),
-    (E'1a44bc23-b652-4a72-b74b-98210d44101c',FALSE,FALSE,E'NUMERIC',E'record the number of patients',E'RE',TRUE,E'Total doentes',FALSE,E'patients',FALSE,E'91deacfc-1f06-4052-a7d2-0c78a1642043',E'USER_INPUT',2),
-    (E'23c0ecc1-9182-7161-99f2-241a3f8360d6',FALSE,FALSE,E'NUMERIC',E'record the quantity of patients for each treatment by products',E'PU',TRUE,E'N Tratamentos atendidos neste mês',FALSE,E'treatmentsAttended',FALSE,E'bce979a4-1876-4259-9102-b04f86c4c72c',E'USER_INPUT',0),
-    (E'23c0ecc1-f58e-41e4-99f2-241a3f8360d6',FALSE,FALSE,E'NUMERIC',E'record the quantity of how many KIT received',E'KD',TRUE,E'No. de Kits Recebidos',FALSE,E'kitReceived',TRUE,E'bce979a4-1957-4259-a5bb-b04f86c4c72c',E'USER_INPUT|STOCK_CARDS',0),
-    (E'23c0edc1-9382-7161-99f2-241a3e8360c6',FALSE,FALSE,E'NUMERIC',E'record the number of consultations performed in this period',E'CN',TRUE,E'Nº de Consultas Externas Realizadas',FALSE,E'consultationNumber',FALSE,E'bcd979a4-1967-4258-a5be-b04f82c4c62c',E'USER_INPUT',0),
-    (E'28cbdef0-318b-4b34-a4c3-9d1b5bb74d15',FALSE,FALSE,E'NUMERIC',E'record the test data for HIV Determine',E'TP',TRUE,E'HIV Determine',FALSE,E'hivDetermine',FALSE,E'97230a23-f47b-4115-86fc-f91760b7b439',E'',0),
-    (E'379692a8-12f4-4c35-868a-9b6055c8fa8e',FALSE,TRUE,E'NUMERIC',E'record the related test outcomes for APES',E'SV',FALSE,E'APES',FALSE,E'APES',FALSE,E'28cbdef0-318b-4b34-a4c3-9d1b5bb74d15',E'USER_INPUT',2),
-    (E'55353f84-d5a1-4a60-985e-ec3c04212575',FALSE,FALSE,E'TEXT',E'display the name of each regimen',E'RE',TRUE,E'Regimes Terapeuticos',FALSE,E'regiment',FALSE,E'91deacfc-1f06-4052-a7d2-0c78a1642043',E'REFERENCE_DATA',1),
-    (E'676665ea-ba70-4742-b4d3-c512e7a9f389',FALSE,TRUE,E'NUMERIC',E'Count the total number in the second part of the regimen section',E'SU',TRUE,E'Total',FALSE,E'total',FALSE,E'e2cd8d9e-22e9-4ea4-a61c-e3bd603d02cb',E'CALCULATED|USER_INPUT',1),
-    (E'73a20c66-c0f5-45d3-8268-336198296e33',FALSE,FALSE,E'NUMERIC',E'display on the second part of the regimen section as the first lines',E'SU',TRUE,E'1st linhas',FALSE,E'1stLinhas',FALSE,E'e2cd8d9e-22e9-4ea4-a61c-e3bd603d02cb',E'USER_INPUT',0),
-    (E'743a0575-6d00-4ff0-89a6-1a76de1c1714',FALSE,FALSE,E'NUMERIC',E'record the consumo quantity for each test project',E'TO',TRUE,E'Consumo',FALSE,E'consumo',FALSE,E'0d3b5adc-e767-49a1-8ed7-7b2a92f82d7f',E'USER_INPUT',0),
-    (E'86ca8cea-9281-9281-8dc8-ec5f6ff60ec4',FALSE,TRUE,E'NUMERIC',E'record the SOH of the product',E'PU',FALSE,E'Stock Existente no Final do Período',FALSE,E'existentStock',FALSE,E'bce979a4-1876-4259-9102-b04f86c4c72c',E'USER_INPUT',1),
-    (E'86ca8cea-94c2-4d50-8dc8-ec5f6ff60ec4',FALSE,TRUE,E'NUMERIC',E'record the quantity of how many KIT opened and issued',E'KD',FALSE,E'Nº de Kits Abertos e Enviados',FALSE,E'kitOpened',TRUE,E'bce979a4-1957-4259-a5bb-b04f86c4c72c',E'USER_INPUT|STOCK_CARDS',1),
-    (E'95227492-2874-2836-8fa0-dd5b5cef3e8e',FALSE,TRUE,E'NUMERIC',E'record the total number of each column',E'SV',TRUE,E'Total',FALSE,E'total',TRUE,E'bce979a4-1829-9287-1827-b04f86c4c72a',E'USER_INPUT|CALCULATED',1),
-    (E'95227492-c394-4f7e-8fa0-dd5b5cef3e8e',FALSE,TRUE,E'NUMERIC',E'record the quantity of KIT data in CHW',E'SV',FALSE,E'CHW',FALSE,E'CHW',FALSE,E'bce979a4-1957-4259-a5bb-b04f86c4c72a',E'USER_INPUT',1),
-    (E'95327492-2874-3836-8fa0-dd2b5ced3e8c',FALSE,TRUE,E'NUMERIC',E'record the total number',E'CN',FALSE,E'Total',FALSE,E'total',TRUE,E'bcd979a4-1967-4258-a5be-b04f82c4c62c',E'USER_INPUT|CALCULATED',1),
-    (E'9a384fee-fcfe-11ec-b939-0242ac120002',FALSE,FALSE,E'NUMERIC',E'record the quantity of patients for each age group in treatment',E'PU',TRUE,E'Tratamento',FALSE,E'treatment',FALSE,E'43fa95ae-fcfb-11ec-b939-0242ac120002',E'USER_INPUT',0),
-    (E'a4d2a594-fcfe-11ec-b939-0242ac120002',FALSE,FALSE,E'NUMERIC',E'record the quantity of patients for each age group in prophylaxis',E'PU',TRUE,E'Profilaxia',FALSE,E'prophylaxis',FALSE,E'43fa95ae-fcfb-11ec-b939-0242ac120002',E'USER_INPUT',1),
-    (E'becae41f-1436-4f67-87ac-dece0b97d417',FALSE,FALSE,E'NUMERIC',E'record the positive test outcome quantity for each test project',E'TO',FALSE,E'Positive',FALSE,E'positive',FALSE,E'0d3b5adc-e767-49a1-8ed7-7b2a92f82d7f',E'USER_INPUT',1),
-    (E'c1092b36-fd01-11ec-b939-0242ac120002',FALSE,FALSE,E'NUMERIC',E'Child > 25 kg',E'SV',TRUE,E'Criança > 25Kg',FALSE,E'criança > 25Kg',FALSE,E'76a4a700-fcfc-11ec-b939-0242ac120002',E'USER_INPUT',2),
-    (E'c280a232-a39e-4ea9-850b-7bb9fcc2d848',FALSE,FALSE,E'NUMERIC',E'record the test outcome for my facility',E'SV',TRUE,E'HF',FALSE,E'HF',FALSE,E'28cbdef0-318b-4b34-a4c3-9d1b5bb74d15',E'USER_INPUT',0),
-    (E'c47396fe-381a-49a2-887e-ce25c80b0875',FALSE,FALSE,E'TEXT',E'display the code of each regimen',E'RE',FALSE,E'Código',FALSE,E'code',FALSE,E'91deacfc-1f06-4052-a7d2-0c78a1642043',E'REFERENCE_DATA',0),
-    (E'cbee99e4-1827-0291-ab4f-783d61ac80a6',FALSE,FALSE,E'NUMERIC',E'record the product usage information for my facility',E'SV',TRUE,E'HF',FALSE,E'HF',FALSE,E'bce979a4-1829-9287-1827-b04f86c4c72a',E'USER_INPUT',0),
-    (E'cbee99e4-f100-4f9e-ab4f-783d61ac80a6',FALSE,FALSE,E'NUMERIC',E'record the quantity of KIT data in my facility',E'SV',TRUE,E'HF',FALSE,E'HF',FALSE,E'bce979a4-1957-4259-a5bb-b04f86c4c72a',E'',0),
-    (E'f51371a4-ba6f-4119-9a0e-1a588fa5df21',FALSE,TRUE,E'NUMERIC',E'record the total number of this group',E'PD',FALSE,E'Total',FALSE,E'total',FALSE,E'bbf232b4-4b07-4a8e-a22c-1607995b01cd',E'USER_INPUT|CALCULATED',1),
-    (E'fe6e0f40-f47b-41e2-be57-8064876d75f6',FALSE,FALSE,E'NUMERIC',E'record the unjustified test outcome quantity for each test project',E'TO',FALSE,E'Unjustified',FALSE,E'unjustified',FALSE,E'0d3b5adc-e767-49a1-8ed7-7b2a92f82d7f',E'USER_INPUT',2)
-ON CONFLICT DO NOTHING;
-
-INSERT INTO requisition.requisition_templates("id","createddate","modifieddate","numberofperiodstoaverage","populatestockonhandfromstockcards","archived","name")
-VALUES
-    (E'5443a5b6-f695-467c-a23c-e12df50beac2',E'2022-08-08 08:56:14.443+00',E'2024-07-12 06:19:18.166373+00',3,TRUE,FALSE,E'Malaria Template - CS/PS/Hospital'),
-    (E'fe386d97-941a-43bd-8ce0-f13867c7dd2d',E'2022-08-08 08:56:14.443+00',E'2024-07-12 06:19:18.166373+00',3,TRUE,FALSE,E'Malaria Template - DPM/AI'),
-    (E'effd36a5-d65f-4f84-ae28-a5d669afd6cb',E'2022-08-08 08:56:14.443+00',E'2024-07-12 06:19:18.166373+00',3,TRUE,FALSE,E'Malaria Template - HC'),
-    (E'0ee42452-58cc-11ed-ba04-acde48001122',E'2022-08-08 08:56:14.443+00',E'2024-07-12 06:19:18.166373+00',3,TRUE,FALSE,E'MMC Template - DPM/AI/HC'),
-    (E'682f36cd-890c-4d17-9c4f-641feb14f768',E'2021-03-01 09:16:07.859+00',E'2024-07-12 06:19:18.166373+00',3,TRUE,FALSE,E'MMIA Template - CS/PS/Hospital'),
-    (E'f88c2057-5514-43da-854b-1da5869e5a6b',E'2022-08-08 08:56:14.443+00',E'2024-07-12 06:19:18.166373+00',3,TRUE,FALSE,E'MMIA Template - DPM/AI'),
-    (E'5dcd95fa-971d-49e4-98e7-cebfb6f11c56',E'2022-08-08 08:56:14.443+00',E'2024-07-12 06:19:18.166373+00',3,TRUE,FALSE,E'MMIA Template - HC'),
-    (E'51ceba02-2a39-457e-a7bb-992c1372eb90',E'2021-04-15 02:56:45.98+00',E'2024-07-12 06:19:18.166373+00',3,TRUE,FALSE,E'MMIT Template - CS/PS/Hospital'),
-    (E'79b68ab1-648e-11ed-a392-acde48001122',E'2022-08-08 08:56:14.443+00',E'2024-07-12 06:19:18.166373+00',3,TRUE,FALSE,E'MMIT Template - DPM/AI'),
-    (E'6ae1309e-92ee-445e-833a-6b696982d4c5',E'2022-08-08 08:56:14.443+00',E'2024-07-12 06:19:18.166373+00',3,TRUE,FALSE,E'MMIT Template - HC'),
-    (E'2d165cc4-4e6b-4738-84be-78bd77ebfa6b',E'2022-07-25 07:35:21.467+00',E'2024-07-12 06:19:18.166373+00',3,TRUE,FALSE,E'MMTB Template - CS/PS/Hospital'),
-    (E'6870b0d0-7cab-4870-a8a4-3ef07f194cc1',E'2022-08-08 08:56:14.443+00',E'2024-07-12 06:19:18.166373+00',3,TRUE,FALSE,E'MMTB Template - DPM/AI'),
-    (E'c3f54e3e-2fff-449b-a870-08b6ad7b7b32',E'2022-08-08 08:56:14.443+00',E'2024-07-12 06:19:18.166373+00',3,TRUE,FALSE,E'MMTB Template - HC'),
-    (E'1507c5be-a3ca-49e5-afb6-b4a7817f790c',E'2021-07-15 04:47:39.095+00',E'2024-07-12 06:19:18.166373+00',3,TRUE,FALSE,E'VIA Template - CS/PS/Hospital/DDM'),
-    (E'83e3f7d0-6519-42de-a36a-2dd96ac9f405',E'2022-08-08 08:56:14.443+00',E'2024-07-12 06:19:18.166373+00',3,TRUE,FALSE,E'VIA Template - DPM/AI/HC')
-ON CONFLICT DO NOTHING;
+ALTER TABLE siglusintegration.usage_columns_maps DISABLE TRIGGER ALL;
+ALTER TABLE siglusintegration.usage_sections_maps DISABLE TRIGGER ALL;
+ALTER TABLE siglusintegration.requisition_template_extension DISABLE TRIGGER ALL;
+ALTER TABLE requisition.columns_maps DISABLE TRIGGER ALL;
+ALTER TABLE requisition.requisition_template_assignments DISABLE TRIGGER ALL;
 
 INSERT INTO requisition.requisition_template_assignments (id,programid,facilitytypeid,templateid) VALUES
     ('2a23d294-22f1-11ef-9e35-acde48001122','a6257d40-58c5-11ed-b15f-acde48001122','b6069fa4-cfad-11e9-9398-0242ac130008','0ee42452-58cc-11ed-ba04-acde48001122'),
@@ -1626,3 +1564,8 @@ INSERT INTO requisition.columns_maps (requisitiontemplateid,requisitioncolumnid,
     ('83e3f7d0-6519-42de-a36a-2dd96ac9f405','d36a84f9-1a81-45df-1921-60adccd0a31e','Date of the lot  which will be expired first since today',31,'EX',false,'Expiration','expirationDate',NULL,1,'expirationDate',NULL),
     ('83e3f7d0-6519-42de-a36a-2dd96ac9f405','89113ec3-40e9-4d81-9516-b56adba7f8cd','Average consumption over a specified number of periods/months. Quantified in dispensing units.',32,'P',false,'Consumo Médio','averageConsumption',NULL,3,'averageConsumption',NULL);
 
+ALTER TABLE siglusintegration.usage_columns_maps ENABLE TRIGGER ALL;
+ALTER TABLE siglusintegration.usage_sections_maps ENABLE TRIGGER ALL;
+ALTER TABLE siglusintegration.requisition_template_extension ENABLE TRIGGER ALL;
+ALTER TABLE requisition.columns_maps ENABLE TRIGGER ALL;
+ALTER TABLE requisition.requisition_template_assignments ENABLE TRIGGER ALL;
