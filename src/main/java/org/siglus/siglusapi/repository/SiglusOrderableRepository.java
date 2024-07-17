@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.repository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 import org.openlmis.referencedata.domain.Orderable;
@@ -35,5 +36,5 @@ public interface SiglusOrderableRepository extends
   @Query(name = "Orderable.findOrderablesByIds", nativeQuery = true)
   List<OrderableVersionDto> findOrderablesByIds(@Param("ids") Iterable<UUID> ids);
 
-  List<Orderable> findByProductCodeCodeIn(List<String> productCodes);
+  List<Orderable> findByProductCodeCodeIn(Collection<String> codes);
 }

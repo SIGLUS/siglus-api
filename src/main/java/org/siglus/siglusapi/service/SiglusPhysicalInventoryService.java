@@ -66,7 +66,6 @@ import javax.validation.ValidationException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.openlmis.referencedata.domain.Orderable;
 import org.openlmis.referencedata.domain.ProgramOrderable;
 import org.openlmis.referencedata.dto.OrderableDto;
 import org.openlmis.requisition.dto.ApprovedProductDto;
@@ -1133,8 +1132,7 @@ public class SiglusPhysicalInventoryService {
   }
 
   private void removeAllKitsOrderables(List<PhysicalInventoryLineItemDto> physicalInventoryLineItems) {
-    Set<UUID> kitSet = siglusOrderableService.findAllKitsOrderables()
-        .stream().map(Orderable::getId).collect(Collectors.toSet());
+    Set<UUID> kitSet = siglusOrderableService.findAllKitOrderableIds();
     physicalInventoryLineItems.removeIf(lineItemDto -> kitSet.contains(lineItemDto.getOrderableId()));
   }
 
