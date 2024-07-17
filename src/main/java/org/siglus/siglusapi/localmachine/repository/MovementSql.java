@@ -209,6 +209,11 @@ public class MovementSql {
   public static final String HF_CMMS_QUERY =
       "select * from siglusintegration.hf_cmms " + WHERE_FACILITYCODE_IN_FACILITY;
 
+  public static final String PHYSICAL_INVENTORIES_HISTORIES = "siglusintegration.physical_inventories_histories";
+
+  public static final String PHYSICAL_INVENTORIES_HISTORIES_QUERY =
+      "select * from siglusintegration.physical_inventories_histories where facilityid = '@@'";
+
   public static Map<String, String> getMovementSql() {
     Map<String, String> movementSql = new HashMap<>();
     movementSql.put(LOTS, LOTS_QUERY);
@@ -249,6 +254,7 @@ public class MovementSql {
     movementSql.put(CMMS, CMMS_QUERY);
     movementSql.put(CPS, CPS_QUERY);
     movementSql.put(HF_CMMS, HF_CMMS_QUERY);
+    movementSql.put(PHYSICAL_INVENTORIES_HISTORIES, PHYSICAL_INVENTORIES_HISTORIES_QUERY);
 
     return movementSql;
   }
