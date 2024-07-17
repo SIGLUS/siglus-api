@@ -66,6 +66,7 @@ import javax.validation.ValidationException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.openlmis.referencedata.domain.Orderable;
 import org.openlmis.referencedata.domain.ProgramOrderable;
 import org.openlmis.referencedata.dto.OrderableDto;
 import org.openlmis.requisition.dto.ApprovedProductDto;
@@ -1108,6 +1109,7 @@ public class SiglusPhysicalInventoryService {
           : buildPhysicalInventoryLineItems(physicalInventoryDto);
       filterLineItemSohBiggerThanZero(physicalInventoryLineItems, withLocation);
     }
+    removeAllKitsOrderables(physicalInventoryLineItems);
 
     PhysicalInventoryDto toBeSavedPhysicalInventoryDto = PhysicalInventoryDto
         .builder()
@@ -1128,6 +1130,12 @@ public class SiglusPhysicalInventoryService {
     fillPhysicalInventoryLineItemDtoSoh(physicalInventoryLineItems, withLocation);
     physicalInventoryLineItems.removeIf(lineItemDto ->
         lineItemDto.getStockOnHand() == null || lineItemDto.getStockOnHand() <= 0);
+  }
+
+  private void removeAllKitsOrderables(List<PhysicalInventoryLineItemDto> physicalInventoryLineItems) {
+    Set<UUID> kitSet = siglusOrderableService.findAllKitsOrderables()
+        .stream().map(Orderable::getId).collect(Collectors.toSet());
+    physicalInventoryLineItems.removeIf(lineItemDto -> kitSet.contains(lineItemDto.getOrderableId()));
   }
 
   private PhysicalInventoryDto saveDraft(PhysicalInventoryDto dto, UUID id) {

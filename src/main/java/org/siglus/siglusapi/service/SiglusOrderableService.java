@@ -17,6 +17,7 @@ package org.siglus.siglusapi.service;
 
 import static java.util.Comparator.comparing;
 import static org.siglus.siglusapi.constant.CacheConstants.CACHE_KEY_GENERATOR;
+import static org.siglus.siglusapi.constant.CacheConstants.SIGLUS_KIT_ORDERABLES;
 import static org.siglus.siglusapi.constant.CacheConstants.SIGLUS_PROGRAM_ORDERABLES;
 import static org.siglus.siglusapi.constant.FieldConstants.CODE;
 import static org.siglus.siglusapi.constant.FieldConstants.FULL_PRODUCT_NAME;
@@ -388,5 +389,10 @@ public class SiglusOrderableService {
 
   public List<ProgramOrderableDto> findProgramOrderablesMaxVersionByOrderableIds(Collection<UUID> orderableIds) {
     return siglusProgramOrderableRepository.findMaxVersionProgramOrderableDtosByOrderableIds(orderableIds);
+  }
+
+  @Cacheable(value = SIGLUS_KIT_ORDERABLES, keyGenerator = CACHE_KEY_GENERATOR)
+  public List<Orderable> findAllKitsOrderables() {
+    return siglusOrderableRepository.findByProductCodeCodeIn(KitConstants.ALL_KITS);
   }
 }
