@@ -18,6 +18,7 @@ package org.siglus.siglusapi.service;
 import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Maps.newHashMap;
 import static java.util.Collections.emptyList;
+import static java.util.Collections.emptySet;
 import static java.util.Collections.singletonList;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.Assert.assertEquals;
@@ -33,14 +34,9 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.openlmis.stockmanagement.service.PermissionService.STOCK_INVENTORIES_EDIT;
 import static org.siglus.siglusapi.constant.FacilityTypeConstants.CENTRAL;
 import static org.siglus.siglusapi.constant.FieldConstants.ALL_PROGRAM;
-import static org.siglus.siglusapi.constant.FieldConstants.EXCLUDE_ARCHIVED;
-import static org.siglus.siglusapi.constant.FieldConstants.FACILITY_ID;
 import static org.siglus.siglusapi.constant.FieldConstants.IS_BASIC;
-import static org.siglus.siglusapi.constant.FieldConstants.PROGRAM_ID;
-import static org.siglus.siglusapi.constant.FieldConstants.RIGHT_NAME;
 import static org.siglus.siglusapi.constant.FieldConstants.SINGLE_PROGRAM;
 import static org.siglus.siglusapi.constant.FieldConstants.STOCK_CARD_ID;
 import static org.siglus.siglusapi.constant.FieldConstants.VM_STATUS;
@@ -79,6 +75,7 @@ import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.requisition.dto.OrderableDto;
 import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.service.RequisitionService;
+import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.domain.physicalinventory.PhysicalInventory;
 import org.openlmis.stockmanagement.dto.ObjectReferenceDto;
 import org.openlmis.stockmanagement.dto.PhysicalInventoryDto;
@@ -89,8 +86,6 @@ import org.openlmis.stockmanagement.repository.StockCardRepository;
 import org.openlmis.stockmanagement.service.PermissionService;
 import org.openlmis.stockmanagement.service.PhysicalInventoryService;
 import org.openlmis.stockmanagement.web.PhysicalInventoryController;
-import org.openlmis.stockmanagement.web.stockcardsummariesv2.CanFulfillForMeEntryDto;
-import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2Dto;
 import org.siglus.siglusapi.domain.FacilityLocations;
 import org.siglus.siglusapi.domain.PhysicalInventoryEmptyLocationLineItem;
 import org.siglus.siglusapi.domain.PhysicalInventoryExtension;
@@ -116,6 +111,7 @@ import org.siglus.siglusapi.repository.PhysicalInventoryHistoryRepository;
 import org.siglus.siglusapi.repository.PhysicalInventoryLineItemsExtensionRepository;
 import org.siglus.siglusapi.repository.PhysicalInventorySubDraftRepository;
 import org.siglus.siglusapi.repository.SiglusPhysicalInventoryRepository;
+import org.siglus.siglusapi.repository.SiglusStockCardRepository;
 import org.siglus.siglusapi.repository.dto.SiglusPhysicalInventoryBriefDto;
 import org.siglus.siglusapi.repository.dto.StockCardStockDto;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
@@ -123,13 +119,8 @@ import org.siglus.siglusapi.util.FacilityConfigHelper;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.util.SupportedProgramsHelper;
 import org.springframework.beans.BeanUtils;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
 
 @RunWith(MockitoJUnitRunner.class)
 @SuppressWarnings({"PMD.TooManyMethods", "PMD.UnusedPrivateField", "PMD.AvoidDuplicateLiterals"})
@@ -208,6 +199,10 @@ public class SiglusPhysicalInventoryServiceTest {
   private FacilityConfigHelper facilityConfigHelper;
   @Mock
   private SiglusPhysicalInventorySubDraftService physicalInventorySubDraftService;
+  @Mock
+  private SiglusStockCardRepository siglusStockCardRepository;
+  @Mock
+  private SiglusArchiveProductService archiveProductService;
 
   private final UUID facilityId = UUID.randomUUID();
 
@@ -823,20 +818,11 @@ public class SiglusPhysicalInventoryServiceTest {
     // given
     PhysicalInventoryDto physicalInventoryDto = PhysicalInventoryDto.builder().id(physicalInventoryIdOne)
         .programId(programId).facilityId(facilityId).lineItems(Collections.emptyList()).build();
-    MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
-    parameters.set(FACILITY_ID, String.valueOf(physicalInventoryDto.getFacilityId()));
-    parameters.set(PROGRAM_ID, String.valueOf(physicalInventoryDto.getProgramId()));
-    parameters.set(RIGHT_NAME, STOCK_INVENTORIES_EDIT);
-    parameters.set(EXCLUDE_ARCHIVED, Boolean.TRUE.toString());
-    List<StockCardSummaryV2Dto> summaryV2Dtos = Collections.emptyList();
     when(inventoryController.createEmptyPhysicalInventory(physicalInventoryDto))
         .thenReturn(physicalInventoryDto);
     when(inventoryController.searchPhysicalInventory(any(), any(),
         anyBoolean()))
         .thenReturn(makeResponseEntity(Collections.emptyList()));
-    when(siglusStockCardSummariesService.findSiglusStockCard(
-        parameters, Collections.emptyList(), new PageRequest(0, Integer.MAX_VALUE), false))
-        .thenReturn(new PageImpl<>(summaryV2Dtos, new PageRequest(0, Integer.MAX_VALUE), 0));
     when(physicalInventorySubDraftRepository.findByPhysicalInventoryIdIn(anyList()))
         .thenReturn(Collections.singletonList(PhysicalInventorySubDraft.builder().build()));
     UserDto userDto = new UserDto();
@@ -852,6 +838,7 @@ public class SiglusPhysicalInventoryServiceTest {
     FacilityTypeDto typeDto = new FacilityTypeDto();
     typeDto.setCode("DDM");
     facilityDto.setType(typeDto);
+    when(siglusStockCardRepository.findByFacilityIdAndProgramId(any(), any())).thenReturn(new ArrayList<>());
     when(stockCardRepository.countByFacilityId(facilityId)).thenReturn(1);
     when(facilityReferenceDataService.findOne(facilityId)).thenReturn(facilityDto);
     when(physicalInventoryExtensionRepository.save(any(PhysicalInventoryExtension.class)))
@@ -932,25 +919,19 @@ public class SiglusPhysicalInventoryServiceTest {
     stockCradReferenceDto.setId(stockCardId);
     ObjectReferenceDto lotReferenceDto = new ObjectReferenceDto();
     lotReferenceDto.setId(lotId);
-    CanFulfillForMeEntryDto canFulfillForMeEntryDtos = new CanFulfillForMeEntryDto();
-    canFulfillForMeEntryDtos.setOrderable(orderableReferenceDto);
-    canFulfillForMeEntryDtos.setStockCard(stockCradReferenceDto);
-    canFulfillForMeEntryDtos.setLot(lotReferenceDto);
-    StockCardSummaryV2Dto stockCardSummaryV2Dto = new StockCardSummaryV2Dto();
-    stockCardSummaryV2Dto.setCanFulfillForMe(Collections.singleton(canFulfillForMeEntryDtos));
-    MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+
+    StockCard stockCard = new StockCard();
+    stockCard.setId(stockCardId);
+    stockCard.setLotId(lotId);
+    stockCard.setOrderableId(orderableId);
+    stockCard.setFacilityId(facilityId);
+    stockCard.setProgramId(programId);
+    when(siglusStockCardRepository.findByFacilityIdAndProgramId(any(), any()))
+        .thenReturn(Collections.singletonList(stockCard));
+    when(archiveProductService.searchArchivedProductsByFacilityId(any())).thenReturn(emptySet());
     PhysicalInventoryDto physicalInventoryDto = PhysicalInventoryDto.builder()
         .facilityId(facilityId)
         .programId(programId).build();
-    parameters.set(FACILITY_ID, String.valueOf(physicalInventoryDto.getFacilityId()));
-    parameters.set(PROGRAM_ID, String.valueOf(physicalInventoryDto.getProgramId()));
-    parameters.set(RIGHT_NAME, STOCK_INVENTORIES_EDIT);
-    parameters.set(EXCLUDE_ARCHIVED, Boolean.TRUE.toString());
-    Pageable pageable = new PageRequest(0, Integer.MAX_VALUE);
-    when(siglusStockCardSummariesService.findSiglusStockCard(
-        parameters, emptyList(), pageable, false)).thenReturn(
-        (new PageImpl<>(Collections.singletonList(stockCardSummaryV2Dto), new PageRequest(0, Integer.MAX_VALUE), 0)));
-
     PhysicalInventoryDto createdPhysicalInventoryDto = PhysicalInventoryDto.builder().id(physicalInventoryIdOne)
         .facilityId(facilityId).programId(programId).build();
     when(inventoryController.createEmptyPhysicalInventory(physicalInventoryDto))
