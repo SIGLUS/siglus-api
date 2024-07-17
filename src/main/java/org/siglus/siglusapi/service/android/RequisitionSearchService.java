@@ -195,11 +195,19 @@ public class RequisitionSearchService {
     Map<UUID, List<AgeGroupLineItemRequest>> requisitionIdToAgeGroupLines = buildToAgeGroupLineRequestsMap(
         requisitionIds);
     List<RequisitionCreateRequest> requisitionCreateRequests = new ArrayList<>();
+    Set<UUID> createdBySupplierRequisitionIds = requisitionExtensions.stream()
+        .filter(RequisitionExtension::createdBySupplier)
+        .map(RequisitionExtension::getRequisitionId)
+        .collect(Collectors.toSet());
     requisitionExtensions.forEach(
         extension -> {
           RequisitionV2Dto requisitionV2Dto = siglusRequisitionRequisitionService
               .searchRequisition(extension.getRequisitionId());
           if (skippedStatus(requisitionV2Dto.getStatus())) {
+            return;
+          }
+          if (createdBySupplierRequisitionIds.contains(extension.getRequisitionId())
+              && !requisitionV2Dto.getStatus().isApproved()) {
             return;
           }
           UUID requisitionId = requisitionV2Dto.getId();
