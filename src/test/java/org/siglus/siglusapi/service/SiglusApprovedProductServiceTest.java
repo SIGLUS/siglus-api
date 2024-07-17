@@ -17,6 +17,7 @@ package org.siglus.siglusapi.service;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static java.util.Arrays.asList;
+import static java.util.Collections.emptySet;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.times;
@@ -24,15 +25,22 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
+import org.joda.money.CurrencyUnit;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.openlmis.referencedata.domain.Code;
+import org.openlmis.referencedata.domain.Orderable;
+import org.openlmis.referencedata.domain.OrderableDisplayCategory;
+import org.openlmis.referencedata.domain.Program;
+import org.openlmis.referencedata.domain.ProgramOrderable;
 import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.requisition.dto.DispensableDto;
 import org.openlmis.requisition.dto.OrderableDto;
@@ -40,9 +48,12 @@ import org.openlmis.requisition.service.RequisitionService;
 import org.powermock.api.mockito.PowerMockito;
 import org.siglus.common.domain.ProgramOrderablesExtension;
 import org.siglus.common.repository.ProgramOrderablesExtensionRepository;
+import org.siglus.siglusapi.dto.ProgramProductDto;
 import org.siglus.siglusapi.dto.SupportedProgramDto;
+import org.siglus.siglusapi.repository.SiglusProgramOrderableRepository;
 import org.siglus.siglusapi.util.SupportedProgramsHelper;
 
+@SuppressWarnings("PMD.AvoidDuplicateLiterals")
 @RunWith(MockitoJUnitRunner.class)
 public class SiglusApprovedProductServiceTest {
 
@@ -57,6 +68,12 @@ public class SiglusApprovedProductServiceTest {
 
   @Mock
   private SupportedProgramsHelper programsHelper;
+
+  @Mock
+  private SiglusArchiveProductService archiveProductService;
+
+  @Mock
+  private SiglusProgramOrderableRepository siglusProgramOrderableRepository;
 
   private final UUID supportProgramId1 = UUID.randomUUID();
   private final UUID supportProgramId2 = UUID.randomUUID();
@@ -125,6 +142,24 @@ public class SiglusApprovedProductServiceTest {
     verify(requisitionService, times(1)).getApprovedProducts(facilityId, supportProgramId2);
   }
 
+  @Test
+  public void shouldGetApprovedProductsForFacility() {
+    UUID facilityId = UUID.randomUUID();
+    when(archiveProductService.searchArchivedProductsByFacilityId(facilityId)).thenReturn(emptySet());
+    UUID orderableId = UUID.randomUUID();
+    ProgramOrderable programOrderable = buildProgramOrderable(orderableId, "Unit_1");
+    when(siglusProgramOrderableRepository.findMaxVersionOrderableByProgramIds(any()))
+        .thenReturn(Collections.singletonList(programOrderable));
+    ProgramOrderablesExtension programOrderablesExtension = buildProgramOrderablesExtension(orderableId, "Unit_2");
+    when(programOrderablesExtensionRepository.findAllByOrderableIdIn(any()))
+        .thenReturn(Collections.singletonList(programOrderablesExtension));
+
+    List<ProgramProductDto> approvedProductsForFacility =
+        service.getApprovedProductsForFacility(facilityId, supportProgramId1);
+
+    assertEquals(1, approvedProductsForFacility.size());
+  }
+
   private ApprovedProductDto buildApprovedProductDto(UUID orderableId, String unit) {
     ApprovedProductDto approvedProductDto = new ApprovedProductDto();
     approvedProductDto.setOrderable(buildOrderableDto(orderableId, unit));
@@ -137,6 +172,21 @@ public class SiglusApprovedProductServiceTest {
     DispensableDto dispensable = new DispensableDto(unit, unit);
     orderableDto.setDispensable(dispensable);
     return orderableDto;
+  }
+
+  private ProgramOrderable buildProgramOrderable(UUID orderableId, String unit) {
+    ProgramOrderable programOrderable = new ProgramOrderable();
+    programOrderable.setId(UUID.randomUUID());
+    Program program = new Program(supportProgramId1);
+    program.setActive(true);
+    program.setCode(new Code("VC"));
+    program.setName("Via Clássica");
+    programOrderable.setProgram(program);
+    Orderable orderable = new Orderable(new Code("product code"),
+        null, 1, 3, true, orderableId, 1L);
+    programOrderable.setProduct(orderable);
+    OrderableDisplayCategory category = OrderableDisplayCategory.createNew(new Code("category"));
+    return ProgramOrderable.createNew(program, category, orderable, CurrencyUnit.USD);
   }
 
   private ProgramOrderablesExtension buildProgramOrderablesExtension(UUID orderableId, String unit) {

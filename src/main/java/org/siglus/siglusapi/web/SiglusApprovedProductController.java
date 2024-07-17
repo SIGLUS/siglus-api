@@ -17,11 +17,10 @@ package org.siglus.siglusapi.web;
 
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import org.openlmis.requisition.dto.ApprovedProductDto;
+import org.siglus.siglusapi.dto.ProgramProductDto;
 import org.siglus.siglusapi.service.SiglusApprovedProductService;
-import org.siglus.siglusapi.web.response.ApprovedProductResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -35,6 +34,7 @@ public class SiglusApprovedProductController {
   @Autowired
   private SiglusApprovedProductService siglusApprovedProductService;
 
+  @Deprecated
   @GetMapping
   public List<ApprovedProductDto> approvedProductDtos(@RequestParam UUID facilityId,
                                                       @RequestParam UUID programId) {
@@ -42,10 +42,8 @@ public class SiglusApprovedProductController {
   }
 
   @GetMapping("/brief")
-  public List<ApprovedProductResponse> approvedProductResponse(@RequestParam UUID facilityId,
-                                                               @RequestParam UUID programId) {
-    return siglusApprovedProductService.getApprovedProducts(facilityId, programId)
-        .stream().map(ApprovedProductResponse::new).collect(Collectors.toList());
+  public List<ProgramProductDto> approvedProductResponse(@RequestParam UUID facilityId,
+                                                         @RequestParam UUID programId) {
+    return siglusApprovedProductService.getApprovedProductsForFacility(facilityId, programId);
   }
-
 }
