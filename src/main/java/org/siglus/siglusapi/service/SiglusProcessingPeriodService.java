@@ -407,7 +407,6 @@ public class SiglusProcessingPeriodService {
     log.info("start date ==========> " + startDate);
     LocalDate endDate = periodDto.getSubmitEndDate().plusDays(1);
     log.info("end date ==========> " + endDate);
-    log.info("isCurrentDateBetweenSubmitDuration ==========> " + (now.isAfter(startDate) && now.isBefore(endDate)));
     return now.isAfter(startDate) && now.isBefore(endDate);
   }
 
@@ -472,7 +471,7 @@ public class SiglusProcessingPeriodService {
           requisitionPeriodDto -> setSubmitStartAndEndDate(requisitionPeriodDto, facilityTypeCode));
       if (CollectionUtils.isNotEmpty(siglusRequisitionRepository.searchAfterAuthorizedRequisitions(
           facility, program, period.getId(), Boolean.FALSE, statusSet))
-          && isCurrentDateBetweenSubmitDuration(period)
+          && isCurrentDateBetweenSubmitDuration(requisitionPeriods.get(0))
       ) {
         // for emergency, requisitionPeriods only have one element
         requisitionPeriods.forEach(requisitionPeriodDto ->
