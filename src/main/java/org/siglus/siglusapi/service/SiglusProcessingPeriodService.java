@@ -59,6 +59,8 @@ import org.siglus.siglusapi.service.client.SiglusProcessingPeriodReferenceDataSe
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.validator.SiglusProcessingPeriodValidator;
 import org.siglus.siglusapi.web.response.RequisitionPeriodExtensionResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -71,6 +73,7 @@ import org.springframework.util.ObjectUtils;
 @Service
 public class SiglusProcessingPeriodService {
 
+  private static final Logger log = LoggerFactory.getLogger(SiglusProcessingPeriodService.class);
   @Autowired
   private SiglusProcessingPeriodReferenceDataService siglusProcessingPeriodReferenceDataService;
 
@@ -399,8 +402,13 @@ public class SiglusProcessingPeriodService {
 
   public boolean isCurrentDateBetweenSubmitDuration(ProcessingPeriodDto periodDto) {
     LocalDate now = LocalDate.now();
-    return now.isAfter(periodDto.getSubmitStartDate().minusDays(1))
-        && now.isBefore(periodDto.getSubmitEndDate().plusDays(1));
+    log.info("now date ==========> " + now);
+    LocalDate startDate = periodDto.getSubmitStartDate().minusDays(1);
+    log.info("start date ==========> " + startDate);
+    LocalDate endDate = periodDto.getSubmitEndDate().plusDays(1);
+    log.info("end date ==========> " + endDate);
+    log.info("isCurrentDateBetweenSubmitDuration ==========> " + (now.isAfter(startDate) && now.isBefore(endDate)));
+    return now.isAfter(startDate) && now.isBefore(endDate);
   }
 
   private void setSubmitStartAndEndDate(ProcessingPeriodDto periodDto, String facilityTypeCode) {
