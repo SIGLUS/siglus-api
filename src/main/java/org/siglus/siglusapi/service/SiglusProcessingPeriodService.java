@@ -59,8 +59,6 @@ import org.siglus.siglusapi.service.client.SiglusProcessingPeriodReferenceDataSe
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.validator.SiglusProcessingPeriodValidator;
 import org.siglus.siglusapi.web.response.RequisitionPeriodExtensionResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -73,7 +71,6 @@ import org.springframework.util.ObjectUtils;
 @Service
 public class SiglusProcessingPeriodService {
 
-  private static final Logger log = LoggerFactory.getLogger(SiglusProcessingPeriodService.class);
   @Autowired
   private SiglusProcessingPeriodReferenceDataService siglusProcessingPeriodReferenceDataService;
 
@@ -390,24 +387,12 @@ public class SiglusProcessingPeriodService {
       setSubmitStartAndEndDate(periodDto, facilityTypeCode);
       requisitionPeriods.add(RequisitionPeriodDto.newInstance(periodDto));
       if (CollectionUtils.isNotEmpty(siglusRequisitionRepository.searchAfterAuthorizedRequisitions(
-          facility, program, periodDto.getId(), Boolean.FALSE, statusSet))
-          && isCurrentDateBetweenSubmitDuration(periodDto)
-      ) {
+          facility, program, periodDto.getId(), Boolean.FALSE, statusSet))) {
         // for emergency, requisitionPeriods only have one element
         requisitionPeriods.forEach(requisitionPeriodDto ->
             requisitionPeriodDto.setCurrentPeriodRegularRequisitionAuthorized(true));
       }
     }
-  }
-
-  public boolean isCurrentDateBetweenSubmitDuration(ProcessingPeriodDto periodDto) {
-    LocalDate now = LocalDate.now();
-    log.info("now date ==========> " + now);
-    LocalDate startDate = periodDto.getSubmitStartDate().minusDays(1);
-    log.info("start date ==========> " + startDate);
-    LocalDate endDate = periodDto.getSubmitEndDate().plusDays(1);
-    log.info("end date ==========> " + endDate);
-    return now.isAfter(startDate) && now.isBefore(endDate);
   }
 
   private void setSubmitStartAndEndDate(ProcessingPeriodDto periodDto, String facilityTypeCode) {
@@ -470,9 +455,7 @@ public class SiglusProcessingPeriodService {
       requisitionPeriods.forEach(
           requisitionPeriodDto -> setSubmitStartAndEndDate(requisitionPeriodDto, facilityTypeCode));
       if (CollectionUtils.isNotEmpty(siglusRequisitionRepository.searchAfterAuthorizedRequisitions(
-          facility, program, period.getId(), Boolean.FALSE, statusSet))
-          && isCurrentDateBetweenSubmitDuration(requisitionPeriods.get(0))
-      ) {
+          facility, program, period.getId(), Boolean.FALSE, statusSet))) {
         // for emergency, requisitionPeriods only have one element
         requisitionPeriods.forEach(requisitionPeriodDto ->
             requisitionPeriodDto.setCurrentPeriodRegularRequisitionAuthorized(true));

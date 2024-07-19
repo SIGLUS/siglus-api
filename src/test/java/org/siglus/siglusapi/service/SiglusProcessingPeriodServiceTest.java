@@ -17,7 +17,6 @@ package org.siglus.siglusapi.service;
 
 import static com.google.common.collect.Sets.newHashSet;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
@@ -506,7 +505,7 @@ public class SiglusProcessingPeriodServiceTest {
 
     //then
     assertEquals(1, actualResponseList.size());
-    assertFalse(actualResponseList.contains(expectedResponse));
+    assertTrue(actualResponseList.contains(expectedResponse));
   }
 
   @Test
