@@ -41,14 +41,12 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNullableByDefault;
 import javax.persistence.EntityManager;
-import javax.persistence.EntityNotFoundException;
 import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.Session;
 import org.openlmis.fulfillment.domain.BaseEntity;
-import org.openlmis.fulfillment.domain.Order;
 import org.openlmis.fulfillment.domain.OrderStatus;
 import org.openlmis.fulfillment.domain.ProofOfDelivery;
 import org.openlmis.fulfillment.domain.Shipment;
@@ -63,7 +61,6 @@ import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.requisition.dto.BasicOrderableDto;
 import org.openlmis.requisition.service.RequisitionService;
-import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
 import org.openlmis.stockmanagement.domain.reason.StockCardLineItemReason;
 import org.openlmis.stockmanagement.dto.ValidReasonAssignmentDto;
 import org.siglus.common.domain.ProgramAdditionalOrderable;
@@ -76,7 +73,6 @@ import org.siglus.siglusapi.domain.AppInfo;
 import org.siglus.siglusapi.domain.HfCmm;
 import org.siglus.siglusapi.domain.PodExtension;
 import org.siglus.siglusapi.domain.PodRequestBackup;
-import org.siglus.siglusapi.domain.RequisitionExtension;
 import org.siglus.siglusapi.domain.RequisitionRequestBackup;
 import org.siglus.siglusapi.domain.ResyncInfo;
 import org.siglus.siglusapi.domain.SiglusReportType;
@@ -116,11 +112,9 @@ import org.siglus.siglusapi.repository.FacilityCmmsRepository;
 import org.siglus.siglusapi.repository.LotNativeRepository;
 import org.siglus.siglusapi.repository.PodExtensionRepository;
 import org.siglus.siglusapi.repository.PodRequestBackupRepository;
-import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionRequestBackupRepository;
 import org.siglus.siglusapi.repository.ResyncInfoRepository;
 import org.siglus.siglusapi.repository.SiglusGeographicInfoRepository;
-import org.siglus.siglusapi.repository.SiglusOrdersRepository;
 import org.siglus.siglusapi.repository.SiglusProgramOrderableRepository;
 import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
 import org.siglus.siglusapi.repository.SiglusReportTypeRepository;
@@ -173,7 +167,6 @@ public class MeService {
   private final SiglusAuthenticationHelper authHelper;
   private final SupportedProgramsHelper programsHelper;
   private final ProgramAdditionalOrderableRepository additionalProductRepo;
-  private final ProgramReferenceDataService programDataService;
   private final AppInfoRepository appInfoRepository;
   private final ProductMapper mapper;
   private final FacilityCmmsRepository facilityCmmsRepository;
@@ -209,8 +202,6 @@ public class MeService {
   private final ProgramOrderablesExtensionRepository programOrderablesExtensionRepository;
   private final ProgramRepository programRepository;
   private final SiglusGeographicInfoRepository siglusGeographicInfoRepository;
-  private final SiglusOrdersRepository siglusOrdersRepository;
-  private final RequisitionExtensionRepository requisitionExtensionRepository;
 
   public FacilityResponse getCurrentFacility() {
     FacilityDto facilityDto = getCurrentFacilityInfo();
@@ -450,11 +441,7 @@ public class MeService {
     FacilityDto homeFacility = ContextHolder.getContext(CurrentUserContext.class).getHomeFacility();
     UUID homeFacilityId = homeFacility.getId();
     if (shippedOnly) {
-      if (orderCode != null && isCreateForClient(orderCode)) {
-        pods = podRepo.findAllByFacilitySince(homeFacilityId, since, orderCode, OrderStatus.RECEIVED);
-      } else {
-        pods = podRepo.findAllByFacilitySince(homeFacilityId, since, orderCode, OrderStatus.SHIPPED);
-      }
+      pods = podRepo.findAllByFacilitySince(homeFacilityId, since, orderCode, OrderStatus.SHIPPED);
     } else {
       pods = podRepo
           .findAllByFacilitySince(homeFacilityId, since, orderCode, OrderStatus.SHIPPED, OrderStatus.RECEIVED);
@@ -475,15 +462,6 @@ public class MeService {
     return pods.stream()
         .map(pod -> toPodResponse(pod, orderIdToOrder, reasonIdToName, orderIdToRequisition))
         .collect(toList());
-  }
-
-  private boolean isCreateForClient(String orderCode) {
-    Order order = Optional.ofNullable(siglusOrdersRepository.findByOrderCode(orderCode))
-        .orElseThrow(() -> new EntityNotFoundException("order not found"));
-    UUID externalId = order.getExternalId();
-    UUID requisitionId = orderService.getRequisitionId(externalId);
-    RequisitionExtension requisitionExtension = requisitionExtensionRepository.findByRequisitionId(requisitionId);
-    return requisitionExtension.createdBySupplier();
   }
 
   @Transactional
