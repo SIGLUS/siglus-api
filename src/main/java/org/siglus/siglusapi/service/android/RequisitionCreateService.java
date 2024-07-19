@@ -253,13 +253,16 @@ public class RequisitionCreateService {
     UUID homeFacilityId = user.getHomeFacilityId();
     UUID periodId = getPeriodId(request);
     checkPermission(() -> permissionService.canInitRequisition(programId, homeFacilityId));
+    ZonedDateTime requisitionCreatedDate = null;
     if (!request.getEmergency()) {
       Requisition rejectedRegularRequisition = getRejectedRegularRequisition(homeFacilityId, programId, periodId);
       if (!ObjectUtils.isEmpty(rejectedRegularRequisition)) {
+        requisitionCreatedDate = rejectedRegularRequisition.getCreatedDate();
         siglusRequisitionService.deleteRequisitionWithoutNotification(rejectedRegularRequisition);
       }
     }
     Requisition newRequisition = RequisitionBuilder.newRequisition(homeFacilityId, programId, request.getEmergency());
+    newRequisition.setCreatedDate(requisitionCreatedDate);
     newRequisition.setTemplate(siglusRequisitionTemplateService.getRequisitionTemplate(programId, homeFacilityId));
     newRequisition.setStatus(RequisitionStatus.INITIATED);
     newRequisition.setProcessingPeriodId(periodId);
