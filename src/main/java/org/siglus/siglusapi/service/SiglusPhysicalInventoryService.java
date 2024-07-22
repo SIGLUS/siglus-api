@@ -510,6 +510,7 @@ public class SiglusPhysicalInventoryService {
         .deletePhysicalInventoryEmptyLocationLineItemsBySubDraftIdIn(subDraftIds);
     physicalInventoryEmptyLocationLineItemRepository.flush();
     physicalInventorySubDraftRepository.deletePhysicalInventorySubDraftsByPhysicalInventoryId(physicalInventoryId);
+    physicalInventorySubDraftRepository.flush();
     inventoryController.deletePhysicalInventory(physicalInventoryId);
   }
 

@@ -161,11 +161,10 @@ public class SiglusStockEventsService {
     if (eventDto.isPhysicalInventory()) {
       savePhysicalInventoryHistory(eventDto);
     }
-    deleteDraft(eventDto);
-
     if (isByLocation) {
       calculatedStocksOnHandByLocationService.calculateStockOnHandByLocation(eventDto);
     }
+    deleteDraft(eventDto);
   }
 
   private void savePhysicalInventoryHistory(StockEventDto eventDto) {

@@ -22,7 +22,6 @@ import org.openlmis.stockmanagement.dto.StockEventDto;
 import org.siglus.siglusapi.dto.StockEventForMultiUserDto;
 import org.siglus.siglusapi.service.SiglusStockEventsService;
 import org.siglus.siglusapi.util.MovementDateValidator;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -38,14 +37,12 @@ public class SiglusStockEventsWithLocationController {
   private final MovementDateValidator movementDateValidator;
 
   @PostMapping("/location")
-  @Transactional
   @ResponseStatus(CREATED)
   public void createStockEventWithLocation(@RequestBody StockEventDto eventDto) {
     stockEventsService.processStockEvent(eventDto, true);
   }
 
   @PostMapping("/multiUserWithLocation")
-  @Transactional
   @ResponseStatus(CREATED)
   public void createStockEventForMultiUserWithLocation(
       @RequestBody StockEventForMultiUserDto stockEventForMultiUserDto) {
