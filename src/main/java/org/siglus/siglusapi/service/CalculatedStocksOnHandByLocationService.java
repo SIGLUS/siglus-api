@@ -255,13 +255,11 @@ public class CalculatedStocksOnHandByLocationService {
   }
 
   private Map<UUID, StockCardLineItemExtension> buildExtensionMap(List<StockCardLineItem> lineItems) {
-    List<UUID> ids = lineItems.stream().map(StockCardLineItem::getId).collect(Collectors.toList());
-    List<StockCardLineItemExtension> extensions = stockCardLineItemExtensionRepository
-        .findAllByStockCardLineItemIdIn(ids);
-    return extensions.stream().collect(Collectors.toMap(
-        StockCardLineItemExtension::getStockCardLineItemId, Function.identity()));
+    Set<UUID> ids = lineItems.stream().map(StockCardLineItem::getId).collect(Collectors.toSet());
+    return stockCardLineItemExtensionRepository.findAll().stream()
+        .filter(extension -> ids.contains(extension.getStockCardLineItemId()))
+        .collect(Collectors.toMap(StockCardLineItemExtension::getStockCardLineItemId, Function.identity()));
   }
-
 
   private void deleteFollowingStockOnHands(List<StockCardLineItem> allLineItems,
       Map<UUID, StockCardLineItemExtension> lineItemIdToExtension,
