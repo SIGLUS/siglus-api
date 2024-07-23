@@ -17,6 +17,7 @@ package org.siglus.siglusapi.service;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Maps.newHashMap;
+import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptySet;
 import static java.util.Collections.singletonList;
@@ -99,6 +100,7 @@ import org.siglus.siglusapi.dto.PhysicalInventorySubDraftLineItemsExtensionDto;
 import org.siglus.siglusapi.dto.PhysicalInventoryValidationDto;
 import org.siglus.siglusapi.dto.SiglusPhysicalInventoryDto;
 import org.siglus.siglusapi.dto.SubDraftDto;
+import org.siglus.siglusapi.dto.SupportedProgramDto;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.dto.enums.LocationManagementOption;
 import org.siglus.siglusapi.dto.enums.PhysicalInventorySubDraftEnum;
@@ -253,9 +255,8 @@ public class SiglusPhysicalInventoryServiceTest {
   public void shouldCallV3MultipleTimesWhenCreateNewDraftForAllProducts() {
     // given
     mockGetViaMmcProgram();
-
-    when(supportedProgramsHelper.findHomeFacilitySupportedProgramIds())
-        .thenReturn(Sets.newHashSet(programIdOne, programIdTwo));
+    when(supportedProgramsHelper.findHomeFacilitySupportedPrograms())
+        .thenReturn(getSupportedPrograms());
     when(inventoryController.createEmptyPhysicalInventory(any())).thenAnswer(i -> i.getArguments()[0]);
     when(inventoryController.searchPhysicalInventory(any(), any(),
         anyBoolean()))
@@ -517,8 +518,8 @@ public class SiglusPhysicalInventoryServiceTest {
   public void shouldCallV3MultipleTimesWhenGetPhysicalInventoryForAllProducts() {
     // given
     mockGetViaMmcProgram();
-    when(supportedProgramsHelper.findHomeFacilitySupportedProgramIds())
-        .thenReturn(Sets.newHashSet(programIdOne, programIdTwo));
+    when(supportedProgramsHelper.findHomeFacilitySupportedPrograms())
+        .thenReturn(getSupportedPrograms());
     when(inventoryController.searchPhysicalInventory(any(), any(),
         anyBoolean()))
         .thenReturn(makeResponseEntity(newArrayList(PhysicalInventoryDto.builder()
@@ -588,6 +589,8 @@ public class SiglusPhysicalInventoryServiceTest {
 
     when(supportedProgramsHelper.findHomeFacilitySupportedProgramIds())
         .thenReturn(Sets.newHashSet(programIdOne));
+    when(supportedProgramsHelper.findHomeFacilitySupportedPrograms())
+        .thenReturn(getSupportedPrograms());
     UUID lineItemId1 = UUID.randomUUID();
     PhysicalInventoryLineItemDto lineItemDtoOne = PhysicalInventoryLineItemDto.builder()
         .id(lineItemId1)
@@ -609,8 +612,7 @@ public class SiglusPhysicalInventoryServiceTest {
         .lineItems(newArrayList(lineItemDtoOne, lineItemDtoTwo))
         .facilityId(facilityId)
         .build();
-    when(inventoryController.searchPhysicalInventory(programIdOne, facilityId,
-        true))
+    when(inventoryController.searchPhysicalInventory(any(), any(), anyBoolean()))
         .thenReturn(makeResponseEntity(newArrayList(physicalInventoryDto)));
     when(siglusPhysicalInventoryService.getPhysicalInventory(inventoryOne)).thenReturn(physicalInventoryDto);
     PhysicalInventoryLineItemsExtension extensionOne = PhysicalInventoryLineItemsExtension.builder()
@@ -619,8 +621,7 @@ public class SiglusPhysicalInventoryServiceTest {
         .orderableId(orderableId)
         .reasonFreeText("extension")
         .build();
-    when(lineItemsExtensionRepository.findByPhysicalInventoryIdIn(
-        Arrays.asList(inventoryOne))).thenReturn(Arrays.asList(extensionOne));
+    when(lineItemsExtensionRepository.findByPhysicalInventoryIdIn(anyList())).thenReturn(Arrays.asList(extensionOne));
     List<PhysicalInventoryExtension> physicalInventoryExtensions = Collections.singletonList(
         PhysicalInventoryExtension.builder().category(ALL_PROGRAM).build());
     when(physicalInventoryExtensionRepository.findByPhysicalInventoryId(any())).thenReturn(physicalInventoryExtensions);
@@ -860,13 +861,15 @@ public class SiglusPhysicalInventoryServiceTest {
 
     PhysicalInventoryDto physicalInventoryDto = PhysicalInventoryDto.builder().id(physicalInventoryIdOne)
         .programId(ALL_PRODUCTS_PROGRAM_ID).facilityId(facilityId).lineItems(Collections.emptyList()).build();
-    when(inventoryController.createEmptyPhysicalInventory(physicalInventoryDto))
+    when(inventoryController.createEmptyPhysicalInventory(any()))
         .thenReturn(physicalInventoryDto);
     when(supportedProgramsHelper
         .findHomeFacilitySupportedProgramIds()).thenReturn(Collections.singleton(ALL_PRODUCTS_PROGRAM_ID));
+    when(supportedProgramsHelper.findHomeFacilitySupportedPrograms())
+        .thenReturn(getSupportedPrograms());
     doNothing().when(physicalInventoryService).checkPermission(ALL_PRODUCTS_PROGRAM_ID, facilityId);
     when(inventoryController
-        .searchPhysicalInventory(ALL_PRODUCTS_PROGRAM_ID, facilityId, true))
+        .searchPhysicalInventory(any(), any(), anyBoolean()))
         .thenReturn(makeResponseEntity(Collections.emptyList()));
     UserDto userDto = new UserDto();
     userDto.setHomeFacilityId(facilityId);
@@ -1359,11 +1362,8 @@ public class SiglusPhysicalInventoryServiceTest {
   public void shouldReturnPhysicalInventoryIdsWhenProgramIdIsAllProductProgramId() {
     // given
     mockGetViaMmcProgram();
-    Set<UUID> programIds = new HashSet<>();
-    programIds.add(programIdOne);
-    programIds.add(programIdTwo);
-    when(supportedProgramsHelper
-        .findHomeFacilitySupportedProgramIds()).thenReturn(programIds);
+    when(supportedProgramsHelper.findHomeFacilitySupportedPrograms())
+        .thenReturn(getSupportedPrograms());
     when(physicalInventoriesRepository.findIdByProgramIdAndFacilityIdAndIsDraft(
         programIdOne, facilityId, true)).thenReturn(String.valueOf(physicalInventoryIdOne));
     when(physicalInventoriesRepository.findIdByProgramIdAndFacilityIdAndIsDraft(
@@ -1523,5 +1523,29 @@ public class SiglusPhysicalInventoryServiceTest {
         .facilityId(facilityId)
         .build();
     return physicalInventoryDto;
+  }
+
+  private List<SupportedProgramDto> getSupportedPrograms() {
+    SupportedProgramDto supportedProgram1 = SupportedProgramDto.builder()
+        .id(programIdOne)
+        .code("VC")
+        .name("Via Clássica")
+        .description("description")
+        .programActive(true)
+        .supportActive(true)
+        .supportLocallyFulfilled(true)
+        .supportStartDate(LocalDate.now())
+        .build();
+    SupportedProgramDto supportedProgram2 = SupportedProgramDto.builder()
+        .id(programIdTwo)
+        .code("T")
+        .name("TARV")
+        .description("description")
+        .programActive(true)
+        .supportActive(true)
+        .supportLocallyFulfilled(true)
+        .supportStartDate(LocalDate.now())
+        .build();
+    return asList(supportedProgram1, supportedProgram2);
   }
 }

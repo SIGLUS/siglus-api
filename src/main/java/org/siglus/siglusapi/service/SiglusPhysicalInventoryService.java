@@ -74,6 +74,7 @@ import org.openlmis.stockmanagement.repository.PhysicalInventoriesRepository;
 import org.openlmis.stockmanagement.repository.StockCardRepository;
 import org.openlmis.stockmanagement.web.PhysicalInventoryController;
 import org.siglus.common.domain.BaseEntity;
+import org.siglus.common.domain.ProgramOrderablesExtension;
 import org.siglus.siglusapi.domain.FacilityLocations;
 import org.siglus.siglusapi.domain.PhysicalInventoryEmptyLocationLineItem;
 import org.siglus.siglusapi.domain.PhysicalInventoryExtension;
@@ -88,6 +89,7 @@ import org.siglus.siglusapi.dto.PhysicalInventorySubDraftLineItemsExtensionDto;
 import org.siglus.siglusapi.dto.PhysicalInventoryValidationDto;
 import org.siglus.siglusapi.dto.SiglusPhysicalInventoryDto;
 import org.siglus.siglusapi.dto.SubDraftDto;
+import org.siglus.siglusapi.dto.SupportedProgramDto;
 import org.siglus.siglusapi.dto.enums.LocationManagementOption;
 import org.siglus.siglusapi.dto.enums.PhysicalInventorySubDraftEnum;
 import org.siglus.siglusapi.exception.BusinessDataException;
@@ -100,6 +102,7 @@ import org.siglus.siglusapi.repository.PhysicalInventoryLineItemsExtensionReposi
 import org.siglus.siglusapi.repository.PhysicalInventorySubDraftRepository;
 import org.siglus.siglusapi.repository.SiglusPhysicalInventoryRepository;
 import org.siglus.siglusapi.repository.SiglusProgramOrderableRepository;
+import org.siglus.siglusapi.repository.SiglusProgramOrderablesExtensionRepository;
 import org.siglus.siglusapi.repository.SiglusStockCardRepository;
 import org.siglus.siglusapi.repository.dto.SiglusPhysicalInventoryBriefDto;
 import org.siglus.siglusapi.repository.dto.StockCardStockDto;
@@ -168,6 +171,8 @@ public class SiglusPhysicalInventoryService {
   private SiglusPhysicalInventorySubDraftService physicalInventorySubDraftService;
   @Autowired
   private SiglusProgramOrderableRepository siglusProgramOrderableRepository;
+  @Autowired
+  private SiglusProgramOrderablesExtensionRepository siglusProgramOrderablesExtensionRepository;
 
   @Transactional
   public PhysicalInventoryDto createAndSplitNewDraftForAllPrograms(PhysicalInventoryDto physicalInventoryDto,
@@ -210,7 +215,6 @@ public class SiglusPhysicalInventoryService {
       throw new ValidationMessageException(new Message(ERROR_INVENTORY_CONFLICT_DRAFT));
     }
     PhysicalInventoryDto physicalInventory = createNewDraft(physicalInventoryDto);
-
     PhysicalInventoryExtension physicalInventoryExtension = buildPhysicalInventoryExtension(
         physicalInventory, false, option);
     log.info("physical inventory extension input for one program: {}", physicalInventoryExtension);
@@ -964,10 +968,7 @@ public class SiglusPhysicalInventoryService {
       PhysicalInventoryDto physicalInventoryDto, boolean withLocation) {
     UUID programId = physicalInventoryDto.getProgramId();
     UUID facilityId = physicalInventoryDto.getFacilityId();
-    List<StockCard> stockCards = siglusStockCardRepository.findByFacilityIdAndProgramId(
-        facilityId, programId);
-    Map<UUID, StockCard> stockCardIdMap = stockCards.stream()
-        .collect(Collectors.toMap(StockCard::getId, Function.identity()));
+    Map<UUID, StockCard> stockCardIdMap = findStockCardMapByProgram(facilityId, programId);
     if (CollectionUtils.isEmpty(stockCardIdMap.keySet())) {
       return Collections.emptyList();
     }
@@ -988,17 +989,46 @@ public class SiglusPhysicalInventoryService {
 
   // should ignore MMC for ALL, since MMC items already included in VIA
   private Set<UUID> getSupportedPrograms() {
-    Set<UUID> supportedPrograms = supportedProgramsHelper.findHomeFacilitySupportedProgramIds();
-    UUID viaProgramId = siglusProgramService.getProgramByCode(VIA_PROGRAM_CODE)
-        .orElseThrow(() -> new NotFoundException("VIA program not found"))
-        .getId();
-    UUID mmcProgramId = siglusProgramService.getProgramByCode(MMC_PROGRAM_CODE)
-        .orElseThrow(() -> new NotFoundException("MMC program not found"))
-        .getId();
-    if (supportedPrograms.contains(viaProgramId)) {
-      supportedPrograms.remove(mmcProgramId);
+    Map<String, SupportedProgramDto> programDtoMap = supportedProgramsHelper.findHomeFacilitySupportedPrograms()
+        .stream().collect(Collectors.toMap(SupportedProgramDto::getCode, Function.identity()));
+    if (programDtoMap.containsKey(VIA_PROGRAM_CODE)) {
+      programDtoMap.remove(MMC_PROGRAM_CODE);
     }
-    return supportedPrograms;
+    return programDtoMap.values().stream().map(SupportedProgramDto::getId).collect(Collectors.toSet());
+  }
+
+  private Map<UUID, StockCard> findStockCardMapByProgram(UUID facilityId, UUID programId) {
+    Map<String, SupportedProgramDto> programDtoMap = supportedProgramsHelper.findHomeFacilitySupportedPrograms()
+        .stream().collect(Collectors.toMap(SupportedProgramDto::getCode, Function.identity()));
+    boolean isMmc = isMmcProgram(programId, programDtoMap);
+    List<StockCard> stockCards;
+    if (isMmc) {
+      UUID viaProgramId = getViaProgramId(programDtoMap);
+      stockCards = siglusStockCardRepository.findByFacilityIdAndProgramId(facilityId, viaProgramId);
+      Set<UUID> mmcOrderableIdSet = siglusProgramOrderablesExtensionRepository.findByRealProgramCode(MMC_PROGRAM_CODE)
+          .stream().map(ProgramOrderablesExtension::getOrderableId).collect(Collectors.toSet());
+      stockCards.removeIf(stockCard -> !mmcOrderableIdSet.contains(stockCard.getOrderableId()));
+    } else {
+      stockCards = siglusStockCardRepository.findByFacilityIdAndProgramId(facilityId, programId);
+    }
+    return stockCards.stream()
+        .collect(Collectors.toMap(StockCard::getId, Function.identity()));
+  }
+
+  private boolean isMmcProgram(UUID programId, Map<String, SupportedProgramDto> programDtoMap) {
+    SupportedProgramDto mmcProgramDto = programDtoMap.get(MMC_PROGRAM_CODE);
+    if (mmcProgramDto != null) {
+      return mmcProgramDto.getId().equals(programId);
+    }
+    return false;
+  }
+
+  private UUID getViaProgramId(Map<String, SupportedProgramDto> programDtoMap) {
+    SupportedProgramDto supportedProgramDto = programDtoMap.get(VIA_PROGRAM_CODE);
+    if (supportedProgramDto != null) {
+      return supportedProgramDto.getId();
+    }
+    throw new IllegalArgumentException("un supported program code " + VIA_PROGRAM_CODE);
   }
 
   private void buildPhysicalInventoryLineItemsForAllPrograms(PhysicalInventoryDto allProductPhysicalInventoryDto,
