@@ -100,6 +100,9 @@ public class SiglusProcessingPeriodServiceTest {
   private ProcessingPeriodExtensionRepository processingPeriodExtensionRepository;
 
   @Mock
+  private SiglusProcessingPeriodExtensionService siglusProcessingPeriodExtensionService;
+
+  @Mock
   private SiglusProcessingPeriodValidator siglusProcessingPeriodValidator;
 
   @Mock
@@ -162,6 +165,8 @@ public class SiglusProcessingPeriodServiceTest {
   private final ProcessingPeriodDto fullDto = builder.buildFullDto();
   private final ProcessingPeriodDto periodDto = builder.buildDto();
   private final ProcessingPeriodExtension extension = builder.buildExtenstion();
+  private final ProcessingPeriodDto prePeriodDto = builder.buildPerDto();
+  private final ProcessingPeriodExtension preExtension = builder.buildPreExtenstion();
 
   private final UUID processingScheduleId = UUID.randomUUID();
   private final int page = 0;
@@ -218,7 +223,7 @@ public class SiglusProcessingPeriodServiceTest {
     when(siglusProcessingPeriodReferenceDataService.searchProcessingPeriods(
         processingScheduleId, null, null, null, null,
         Collections.emptySet(), pageRequest)).thenReturn(pageImpl);
-    when(processingPeriodExtensionRepository.findAll()).thenReturn(extensions);
+    when(siglusProcessingPeriodExtensionService.findAll()).thenReturn(extensions);
 
     Page<ProcessingPeriodDto> response = siglusProcessingPeriodService
         .getAllProcessingPeriods(map, pageRequest);
@@ -226,7 +231,6 @@ public class SiglusProcessingPeriodServiceTest {
     verify(siglusProcessingPeriodReferenceDataService)
         .searchProcessingPeriods(processingScheduleId, null,
             null, null, null, Collections.emptySet(), pageRequest);
-    verify(processingPeriodExtensionRepository).findAll();
     assertEquals(response.getContent().get(0), fullDto);
   }
 
@@ -274,6 +278,7 @@ public class SiglusProcessingPeriodServiceTest {
     List<ProcessingPeriodExtension> extensions = new ArrayList<>();
     extensions.add(extension);
     when(processingPeriodExtensionRepository.findAll()).thenReturn(extensions);
+    when(siglusProcessingPeriodExtensionService.findAll()).thenReturn(extensions);
 
     List<Requisition> requisitions = new ArrayList<>();
     requisitions.add(createRequisition(requisitionId, RequisitionStatus.INITIATED, false));
@@ -303,15 +308,18 @@ public class SiglusProcessingPeriodServiceTest {
   public void shouldGetProcessingPeriodsForEmergencyRequisitionWhenHaveProcessForPrePeriod() {
     //given
     setupReportType();
-    ProcessingPeriodDto prePeriodDto = builder.buildPerDto();
-    prePeriodDto.setSubmitStartDate(this.fullDto.getSubmitStartDate());
-    prePeriodDto.setSubmitEndDate(this.fullDto.getSubmitEndDate());
+    extension.setSubmitStartDate(LocalDate.now().minusDays(3));
+    extension.setSubmitEndDate(LocalDate.now().minusDays(7));
+    preExtension.setSubmitStartDate(LocalDate.now().minusDays(23));
+    preExtension.setSubmitEndDate(LocalDate.now().minusDays(13));
     when(periodService.getCurrentPeriods(programId, facilityId))
         .thenReturn(Arrays.asList(periodDto));
     when(periodService.searchByProgramAndFacility(programId, facilityId))
         .thenReturn(Arrays.asList(prePeriodDto, periodDto));
     when(processingPeriodExtensionRepository.findAll())
-        .thenReturn(Arrays.asList(builder.buildPreExtenstion(), extension));
+        .thenReturn(Arrays.asList(preExtension, extension));
+    when(siglusProcessingPeriodExtensionService.findAll())
+        .thenReturn(Arrays.asList(preExtension, extension));
 
     List<Requisition> requisitions = new ArrayList<>();
     requisitions.add(createRequisition(requisitionId, RequisitionStatus.INITIATED, true));
@@ -352,12 +360,9 @@ public class SiglusProcessingPeriodServiceTest {
     facilityType.setCode("DDM");
     facility.setType(facilityType);
     when(siglusFacilityRepository.findOne(facilityId)).thenReturn(facility);
-    UUID previousPeriodId = UUID.randomUUID();
-    ProcessingPeriodDto previousProcessingPeriodDto = new ProcessingPeriodDto();
-    previousProcessingPeriodDto.setId(previousPeriodId);
-    when(periodService.findPreviousPeriod(periodDto.getId())).thenReturn(previousProcessingPeriodDto);
+    when(periodService.findPreviousPeriod(periodDto.getId())).thenReturn(prePeriodDto);
     when(siglusRequisitionRepository.searchAfterAuthorizedRequisitions(facilityId, programId,
-        previousPeriodId, false, newHashSet(AUTHORIZED, IN_APPROVAL, APPROVED,
+        prePeriodDto.getId(), false, newHashSet(AUTHORIZED, IN_APPROVAL, APPROVED,
             RELEASED, RELEASED_WITHOUT_ORDER)))
         .thenReturn(authorizedRequisitions);
     //when
@@ -374,16 +379,18 @@ public class SiglusProcessingPeriodServiceTest {
   public void shouldGetProcessingPeriodsForEmergencyRequisitionWhenEmptyForPrePeriod() {
     //given
     setupReportType();
-    ProcessingPeriodDto prePeriodDto = builder.buildPerDto();
-    prePeriodDto.setSubmitStartDate(this.fullDto.getSubmitStartDate());
-    prePeriodDto.setSubmitEndDate(this.fullDto.getSubmitEndDate());
-    prePeriodDto.setId(UUID.randomUUID());
+    extension.setSubmitStartDate(LocalDate.now().minusDays(3));
+    extension.setSubmitEndDate(LocalDate.now().minusDays(7));
+    preExtension.setSubmitStartDate(LocalDate.now().minusDays(23));
+    preExtension.setSubmitEndDate(LocalDate.now().minusDays(13));
     when(periodService.getCurrentPeriods(programId, facilityId))
         .thenReturn(Arrays.asList(periodDto));
     when(periodService.searchByProgramAndFacility(programId, facilityId))
         .thenReturn(Arrays.asList(prePeriodDto, periodDto));
     when(processingPeriodExtensionRepository.findAll())
-        .thenReturn(Arrays.asList(builder.buildPreExtenstion(), extension));
+        .thenReturn(Arrays.asList(preExtension, extension));
+    when(siglusProcessingPeriodExtensionService.findAll())
+        .thenReturn(Arrays.asList(preExtension, extension));
 
     List<Requisition> requisitions = new ArrayList<>();
     requisitions.add(createRequisition(requisitionId, RequisitionStatus.INITIATED,
@@ -420,12 +427,9 @@ public class SiglusProcessingPeriodServiceTest {
     facilityType.setCode("DPM");
     facility.setType(facilityType);
     when(siglusFacilityRepository.findOne(facilityId)).thenReturn(facility);
-    UUID previousPeriodId = UUID.randomUUID();
-    ProcessingPeriodDto previousProcessingPeriodDto = new ProcessingPeriodDto();
-    previousProcessingPeriodDto.setId(previousPeriodId);
-    when(periodService.findPreviousPeriod(periodDto.getId())).thenReturn(previousProcessingPeriodDto);
+    when(periodService.findPreviousPeriod(periodDto.getId())).thenReturn(prePeriodDto);
     when(siglusRequisitionRepository.searchAfterAuthorizedRequisitions(facilityId, programId,
-        previousPeriodId, false, newHashSet(AUTHORIZED, IN_APPROVAL, APPROVED,
+        prePeriodDto.getId(), false, newHashSet(AUTHORIZED, IN_APPROVAL, APPROVED,
             RELEASED, RELEASED_WITHOUT_ORDER)))
         .thenReturn(authorizedRequisitions);
     //when
@@ -434,7 +438,6 @@ public class SiglusProcessingPeriodServiceTest {
 
     //then
     assertEquals(1, response.size());
-    // assertEquals(periodDto.getName(), response.get(0).getName());
     assertEquals(LocalDate.of(2020, 7, 16), response.get(0).getSubmitStartDate());
     assertEquals(LocalDate.of(2020, 8, 30), response.get(0).getSubmitEndDate());
   }
@@ -446,14 +449,24 @@ public class SiglusProcessingPeriodServiceTest {
     UserDto userDto = new UserDto();
     userDto.setHomeFacilityId(facilityId);
     when(authenticationHelper.getCurrentUser()).thenReturn(userDto);
+    extension.setSubmitStartDate(LocalDate.now().minusDays(3));
+    extension.setSubmitEndDate(LocalDate.now().minusDays(7));
+    preExtension.setSubmitStartDate(LocalDate.now().minusDays(23));
+    preExtension.setSubmitEndDate(LocalDate.now().minusDays(13));
+    when(periodService.findPreviousPeriod(periodDto.getId())).thenReturn(prePeriodDto);
+    List<ProcessingPeriodDto> currentPeriods = new ArrayList<>();
+    currentPeriods.add(periodDto);
+    when(periodService.getCurrentPeriods(programId, facilityId)).thenReturn(currentPeriods);
     List<ProcessingPeriodDto> periods = new ArrayList<>();
     periods.add(periodDto);
-    when(periodService.getCurrentPeriods(programId, facilityId)).thenReturn(periods);
+    periods.add(prePeriodDto);
     when(periodService.searchByProgramAndFacility(programId, facilityId)).thenReturn(periods);
 
     List<ProcessingPeriodExtension> extensions = new ArrayList<>();
     extensions.add(extension);
+    extensions.add(preExtension);
     when(processingPeriodExtensionRepository.findAll()).thenReturn(extensions);
+    when(siglusProcessingPeriodExtensionService.findAll()).thenReturn(extensions);
 
     List<Requisition> requisitions = new ArrayList<>();
     requisitions.add(createRequisition(requisitionId, RequisitionStatus.INITIATED, true));
@@ -491,12 +504,8 @@ public class SiglusProcessingPeriodServiceTest {
     facilityType.setCode("CS");
     facility.setType(facilityType);
     when(siglusFacilityRepository.findOne(facilityId)).thenReturn(facility);
-    UUID previousPeriodId = UUID.randomUUID();
-    ProcessingPeriodDto previousProcessingPeriodDto = new ProcessingPeriodDto();
-    previousProcessingPeriodDto.setId(previousPeriodId);
-    when(periodService.findPreviousPeriod(periodDto.getId())).thenReturn(previousProcessingPeriodDto);
     when(siglusRequisitionRepository.searchAfterAuthorizedRequisitions(facilityId, programId,
-        previousPeriodId, false, newHashSet(AUTHORIZED, IN_APPROVAL, APPROVED,
+        prePeriodDto.getId(), false, newHashSet(AUTHORIZED, IN_APPROVAL, APPROVED,
             RELEASED, RELEASED_WITHOUT_ORDER)))
         .thenReturn(authorizedRequisitions);
     //when
@@ -505,7 +514,9 @@ public class SiglusProcessingPeriodServiceTest {
 
     //then
     assertEquals(1, actualResponseList.size());
-    assertTrue(actualResponseList.contains(expectedResponse));
+    RequisitionPeriodExtensionResponse response = actualResponseList.stream().findFirst().get();
+    assertEquals(LocalDate.of(2020, 7, 11), response.getSubmitStartDate());
+    assertEquals(LocalDate.of(2020, 7, 17), response.getSubmitEndDate());
   }
 
   @Test

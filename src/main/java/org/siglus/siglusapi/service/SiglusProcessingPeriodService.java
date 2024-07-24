@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.apache.commons.collections.CollectionUtils;
 import org.openlmis.referencedata.domain.Facility;
@@ -76,6 +77,9 @@ public class SiglusProcessingPeriodService {
 
   @Autowired
   private ProcessingPeriodExtensionRepository processingPeriodExtensionRepository;
+
+  @Autowired
+  private SiglusProcessingPeriodExtensionService siglusProcessingPeriodExtensionService;
 
   @Autowired
   private SiglusProcessingPeriodValidator siglusProcessingPeriodValidator;
@@ -158,8 +162,7 @@ public class SiglusProcessingPeriodService {
     processingPeriodExtension.setSubmitStartDate(periodDto.getSubmitStartDate());
     processingPeriodExtension.setSubmitEndDate(periodDto.getSubmitEndDate());
     processingPeriodExtension.setProcessingPeriodId(savedDto.getId());
-    ProcessingPeriodExtension extension = processingPeriodExtensionRepository
-        .save(processingPeriodExtension);
+    ProcessingPeriodExtension extension = processingPeriodExtensionRepository.save(processingPeriodExtension);
 
     return combine(savedDto, extension);
   }
@@ -178,7 +181,7 @@ public class SiglusProcessingPeriodService {
             params.getIds(),
             pageable
         );
-    List<ProcessingPeriodExtension> extensions = processingPeriodExtensionRepository.findAll();
+    List<ProcessingPeriodExtension> extensions = siglusProcessingPeriodExtensionService.findAll();
 
     Map<UUID, ProcessingPeriodExtension> map = new HashMap<>();
     extensions.forEach(extension -> map.put(extension.getProcessingPeriodId(), extension));
@@ -267,17 +270,17 @@ public class SiglusProcessingPeriodService {
   }
 
   // get periods for initiate
-  @SuppressWarnings("PMD.CyclomaticComplexity")
   private Collection<RequisitionPeriodDto> getRequisitionPeriods(UUID program, UUID facility, boolean emergency) {
-    ProgramDto programDto = siglusProgramService.getProgram(program);
-    if (emergency && !ProgramConstants.VIA_PROGRAM_CODE.equals(programDto.getCode())) {
-      return new ArrayList<>();
-    }
+    return emergency
+        ? getEmergencyRequisitionPeriods(program, facility)
+        : getRegularRequisitionPeriods(program, facility);
+  }
+
+  @SuppressWarnings("PMD.CyclomaticComplexity")
+  private List<RequisitionPeriodDto> getRegularRequisitionPeriods(UUID program, UUID facility) {
     Collection<ProcessingPeriodDto> periods = fillProcessingPeriodWithExtension(
         periodService.searchByProgramAndFacility(program, facility));
 
-    List<UUID> currentPeriodIds = periodService.getCurrentPeriods(program, facility)
-        .stream().map(ProcessingPeriodDto::getId).collect(Collectors.toList());
     List<RequisitionPeriodDto> requisitionPeriods = new ArrayList<>();
     LocalDate maxEndDate = LocalDate.of(2000, 1, 1);
 
@@ -285,38 +288,23 @@ public class SiglusProcessingPeriodService {
     for (ProcessingPeriodDto period : periods) {
 
       List<Requisition> requisitions = requisitionRepository.searchRequisitions(
-          period.getId(), facility, program, emergency);
+          period.getId(), facility, program, false);
 
       List<Requisition> preAuthorizeRequisitions = getPreAuthorizedRequisitions(program, facility,
           requisitions);
 
-      if (emergency) {
-        if (requisitions.size() > MAX_COUNT_EMERGENCY_REQUISITION) {
-          continue;
-        }
-        processingRemainningEmergencyRequisitionPeriod(requisitionPeriods, currentPeriodIds,
-            preAuthorizeRequisitions, period, program, facility);
-        if (!requisitionPeriods.isEmpty()) {
-          break;
-        }
-      } else {
-        RequisitionPeriodDto requisitionPeriod = RequisitionPeriodDto.newInstance(period);
-        requisitionPeriods.add(requisitionPeriod);
-        if (!requisitions.isEmpty()) {
-          LocalDate endDate = requisitionPeriod.getEndDate();
-          maxEndDate = maxEndDate.isAfter(endDate) ? maxEndDate : endDate;
-          if (preAuthorizeRequisitions.isEmpty()) {
-            requisitionPeriods.remove(requisitionPeriod);
-          } else {
-            requisitionPeriod.setRequisitionId(preAuthorizeRequisitions.get(0).getId());
-            requisitionPeriod.setRequisitionStatus(preAuthorizeRequisitions.get(0).getStatus());
-          }
+      RequisitionPeriodDto requisitionPeriod = RequisitionPeriodDto.newInstance(period);
+      requisitionPeriods.add(requisitionPeriod);
+      if (!requisitions.isEmpty()) {
+        LocalDate endDate = requisitionPeriod.getEndDate();
+        maxEndDate = maxEndDate.isAfter(endDate) ? maxEndDate : endDate;
+        if (preAuthorizeRequisitions.isEmpty()) {
+          requisitionPeriods.remove(requisitionPeriod);
+        } else {
+          requisitionPeriod.setRequisitionId(preAuthorizeRequisitions.get(0).getId());
+          requisitionPeriod.setRequisitionStatus(preAuthorizeRequisitions.get(0).getStatus());
         }
       }
-    }
-
-    if (emergency && requisitionPeriods.isEmpty()) {
-      processingNewCreatedEmergencyRequisitionPeriod(program, facility, currentPeriodIds, requisitionPeriods);
     }
 
     Iterator<RequisitionPeriodDto> iterator = requisitionPeriods.iterator();
@@ -331,56 +319,47 @@ public class SiglusProcessingPeriodService {
     return limitFirstPeriodToOneYear(requisitionPeriods, periods);
   }
 
-  private void processingNewCreatedEmergencyRequisitionPeriod(UUID program, UUID facility, List<UUID> currentPeriodIds,
-      List<RequisitionPeriodDto> requisitionPeriods) {
+  private List<RequisitionPeriodDto> getEmergencyRequisitionPeriods(UUID program, UUID facility) {
+    ProgramDto programDto = siglusProgramService.getProgram(program);
+    if (!ProgramConstants.VIA_PROGRAM_CODE.equals(programDto.getCode())) {
+      return new ArrayList<>();
+    }
+    Collection<ProcessingPeriodDto> periodDtos = periodService.searchByProgramAndFacility(program, facility);
+    Map<UUID, ProcessingPeriodDto> periodDtoMap = fillProcessingPeriodWithExtension(periodDtos)
+        .stream().collect(Collectors.toMap(ProcessingPeriodDto::getId, Function.identity()));
+    List<ProcessingPeriodDto> currentPeriods = periodService.getCurrentPeriods(program, facility);
+    if (ObjectUtils.isEmpty(currentPeriods)) {
+      return new ArrayList<>();
+    }
+    ProcessingPeriodDto periodDto = periodDtoMap.get(currentPeriods.get(0).getId());
     LocalDate currentDate = LocalDate.now();
-    ProcessingPeriodDto currentPeriod = periodService.getPeriod(currentPeriodIds.get(0));
-    String facilityTypeCode = siglusFacilityRepository.findOne(facility).getType().getCode();
-    Set<String> firstLevelTypes = FacilityTypeConstants.getFirstLevelTypes();
-    Set<String> secondLevelTypes = FacilityTypeConstants.getSecondLevelTypes();
-    Set<String> thirdLevelTypes = FacilityTypeConstants.getThirdLevelTypes();
-    Set<String> statusSet = RequisitionStatus.getAfterAuthorizedStatus().stream().map(Enum::name)
-        .collect(Collectors.toSet());
-    if (firstLevelTypes.contains(facilityTypeCode)) {
-      // if current period: 5.21-6.20 June
-      // when today is 5.21, the emergency show the May period
-      // when today is 6.10, the emergency show the May period
-      // when today is 6.11, the emergency show the May period
-      // when today is 6.17, the emergency show the May period
-      // when today is 6.18, the emergency show the June period
-      // when today is 6.20, the emergency show the June period
-      // when today is 6.21, then the current period: 6.21-7.20 July, the emergency still show the June period
-      // when today is 7.11, the current period: 6.21-7.20 July, the emergency should still show the june period
-      // when today is 7.18, the current period: 6.21-7.20 July, the emergency should show the July period
-      if (currentDate.isBefore(
-          LocalDate.of(currentPeriod.getEndDate().getYear(), currentPeriod.getEndDate().getMonth(), 18))) {
-        ProcessingPeriodDto previousPeriod = periodService.findPreviousPeriod(currentPeriod.getId());
-        processEmergencyList(program, facility, requisitionPeriods, statusSet, previousPeriod, facilityTypeCode);
-      } else {
-        processEmergencyList(program, facility, requisitionPeriods, statusSet, currentPeriod, facilityTypeCode);
+    ProcessingPeriodDto findPeriod = null;
+    while (findPeriod == null) {
+      ProcessingPeriodDto previousPeriodDto = periodService.findPreviousPeriod(periodDto.getId());
+      ProcessingPeriodDto previousPeriod = periodDtoMap.get(previousPeriodDto.getId());
+      if (previousPeriod == null) {
+        return new ArrayList<>();
       }
-    } else if (secondLevelTypes.contains(facilityTypeCode)) {
-      if (currentDate.isBefore(
-          LocalDate.of(currentPeriod.getEndDate().getYear(), currentPeriod.getEndDate().getMonth(), 25))) {
-        ProcessingPeriodDto previousPeriod = periodService.findPreviousPeriod(currentPeriod.getId());
-        processEmergencyList(program, facility, requisitionPeriods, statusSet, previousPeriod, facilityTypeCode);
+      if (currentDate.isAfter(previousPeriod.getSubmitEndDate())) {
+        findPeriod = previousPeriod;
       } else {
-        processEmergencyList(program, facility, requisitionPeriods, statusSet, currentPeriod, facilityTypeCode);
-      }
-    } else if (thirdLevelTypes.contains(facilityTypeCode)) {
-      YearMonth yearMonth = YearMonth.from(currentPeriod.getEndDate()).minusMonths(1);
-      if (currentDate.isBefore(LocalDate.of(yearMonth.getYear(), yearMonth.getMonth(), 30))
-          || currentDate.equals(LocalDate.of(yearMonth.getYear(), yearMonth.getMonth(), 30))) {
-        ProcessingPeriodDto previousPeriod = periodService.findPreviousPeriod(currentPeriod.getId());
-        processEmergencyList(program, facility, requisitionPeriods, statusSet, previousPeriod, facilityTypeCode);
-      } else {
-        processEmergencyList(program, facility, requisitionPeriods, statusSet, currentPeriod, facilityTypeCode);
+        periodDto = previousPeriod;
       }
     }
+    List<RequisitionPeriodDto> requisitionPeriods = new ArrayList<>();
+    processingNewCreatedEmergencyRequisitionPeriod(program, facility, findPeriod, requisitionPeriods);
+    if (ObjectUtils.isEmpty(requisitionPeriods)) {
+      // if the emergency requisitions have been submitted, then return the next period
+      processingNewCreatedEmergencyRequisitionPeriod(program, facility, periodDto, requisitionPeriods);
+    }
+    return requisitionPeriods;
   }
 
-  private void processEmergencyList(UUID program, UUID facility, List<RequisitionPeriodDto> requisitionPeriods,
-      Set<String> statusSet, ProcessingPeriodDto periodDto, String facilityTypeCode) {
+  private void processingNewCreatedEmergencyRequisitionPeriod(UUID program, UUID facility,
+      ProcessingPeriodDto periodDto, List<RequisitionPeriodDto> requisitionPeriods) {
+    String facilityTypeCode = siglusFacilityRepository.findOne(facility).getType().getCode();
+    Set<String> statusSet = RequisitionStatus.getAfterAuthorizedStatus().stream().map(Enum::name)
+        .collect(Collectors.toSet());
     List<Requisition> requisitions = requisitionRepository.searchRequisitions(
         periodDto.getId(), facility, program, Boolean.TRUE);
     if (requisitions.size() < MAX_COUNT_EMERGENCY_REQUISITION) {
@@ -474,7 +453,7 @@ public class SiglusProcessingPeriodService {
 
   public Collection<ProcessingPeriodDto> fillProcessingPeriodWithExtension(
       Collection<ProcessingPeriodDto> periods) {
-    List<ProcessingPeriodExtension> extensions = processingPeriodExtensionRepository.findAll();
+    List<ProcessingPeriodExtension> extensions = siglusProcessingPeriodExtensionService.findAll();
 
     Map<UUID, ProcessingPeriodExtension> map = new HashMap<>();
     extensions.forEach(extension -> map.put(extension.getProcessingPeriodId(), extension));
@@ -506,5 +485,4 @@ public class SiglusProcessingPeriodService {
     }
     return preAuthorizeRequisitions;
   }
-
 }

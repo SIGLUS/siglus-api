@@ -43,6 +43,7 @@ public class ProcessingPeriodDtoDataBuilder implements DtoDataBuilder<Processing
   private String description;
   private Integer durationInMonths;
   private Map<String, String> extraData;
+  private UUID preId = UUID.randomUUID();
 
   /**
    * Creates builder for creating new instance of {@link ProcessingPeriodDto}.
@@ -123,13 +124,13 @@ public class ProcessingPeriodDtoDataBuilder implements DtoDataBuilder<Processing
   }
 
   public ProcessingPeriodDto buildPerDto() {
-    return new ProcessingPeriodDto(UUID.randomUUID(), "perPeriod", preStartDate, preEndDate,
+    return new ProcessingPeriodDto(preId, "perPeriod", preStartDate, preEndDate,
         processingSchedule, description, durationInMonths, extraData);
   }
 
   public ProcessingPeriodExtension buildPreExtenstion() {
     ProcessingPeriodExtension extension = new ProcessingPeriodExtension();
-    extension.setProcessingPeriodId(id);
+    extension.setProcessingPeriodId(preId);
     extension.setSubmitStartDate(preSubmitStartDate);
     extension.setSubmitEndDate(preSubmitEndDate);
     return extension;

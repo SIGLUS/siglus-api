@@ -50,4 +50,6 @@ public class CacheConstants {
   public static final String SIGLUS_REQUISITION_GROUPS = "siglus-requisition-groups";
 
   public static final String SIGLUS_KIT_ORDERABLE_IDS = "siglus-kit-orderable-ids";
+
+  public static final String SIGLUS_PROCESSING_PERIOD_EXTENSION = "siglus-processing-period-extension";
 }
