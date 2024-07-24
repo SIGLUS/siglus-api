@@ -348,10 +348,10 @@ public class SiglusProcessingPeriodService {
     }
     List<RequisitionPeriodDto> requisitionPeriods = new ArrayList<>();
     processingNewCreatedEmergencyRequisitionPeriod(program, facility, findPeriod, requisitionPeriods);
-    if (ObjectUtils.isEmpty(requisitionPeriods)) {
-      // if the emergency requisitions have been submitted, then return the next period
-      processingNewCreatedEmergencyRequisitionPeriod(program, facility, periodDto, requisitionPeriods);
-    }
+    //    if (ObjectUtils.isEmpty(requisitionPeriods)) {
+    //      // if the emergency requisitions have been submitted, then return the next period
+    //      processingNewCreatedEmergencyRequisitionPeriod(program, facility, periodDto, requisitionPeriods);
+    //    }
     return requisitionPeriods;
   }
 
