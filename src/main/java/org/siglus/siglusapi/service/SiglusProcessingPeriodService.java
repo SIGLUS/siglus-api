@@ -427,7 +427,7 @@ public class SiglusProcessingPeriodService {
       submitEndDate = LocalDate.of(yearMonth.getYear(), yearMonth.getMonthValue(), 17);
     } else if (secondLevelTypes.contains(facilityTypeCode)) {
       submitStartDate = LocalDate.of(yearMonth.getYear(), yearMonth.getMonthValue(), 11);
-      submitEndDate = LocalDate.of(yearMonth.getYear(), yearMonth.getMonthValue(), 24);
+      submitEndDate = LocalDate.of(yearMonth.getYear(), yearMonth.getMonthValue(), 30);
     } else if (thirdLevelTypes.contains(facilityTypeCode)) {
       submitStartDate = LocalDate.of(yearMonth.getYear(), yearMonth.getMonthValue(), 16);
       yearMonth = yearMonth.plusMonths(1);
