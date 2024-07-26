@@ -16,6 +16,7 @@
 package org.siglus.siglusapi.repository;
 
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -128,4 +129,8 @@ public interface SiglusRequisitionRepository extends JpaRepository<Requisition, 
 
   void deleteById(UUID id);
 
+  List<Requisition> findByFacilityIdAndProgramIdAndEmergency(UUID facilityId, UUID programId, boolean emergency);
+
+  List<Requisition> findByFacilityIdAndProgramIdAndEmergencyAndStatusIn(
+      UUID facilityId, UUID programId, Boolean emergency, Collection<RequisitionStatus> status);
 }

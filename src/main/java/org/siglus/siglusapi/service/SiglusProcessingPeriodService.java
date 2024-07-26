@@ -24,7 +24,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -32,6 +31,8 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.openlmis.referencedata.domain.Facility;
 import org.openlmis.referencedata.domain.ProcessingPeriod;
@@ -70,6 +71,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.ObjectUtils;
 
+@Slf4j
 @Service
 public class SiglusProcessingPeriodService {
 
@@ -118,7 +120,8 @@ public class SiglusProcessingPeriodService {
   @Autowired
   private SiglusFacilityRepository siglusFacilityRepository;
 
-  public static final Integer MAX_COUNT_EMERGENCY_REQUISITION = 2;
+  public static final int MAX_COUNT_EMERGENCY_REQUISITION = 2;
+  public static final int MAX_COUNT_REGULAR_REQUISITION = 14;
 
   public LocalDate getPreviousPeriodStartDateSinceInitiate(String programCode, UUID facilityId) {
     ProgramDto program = siglusProgramService.getProgramByCode(programCode)
@@ -197,14 +200,14 @@ public class SiglusProcessingPeriodService {
 
   public ProcessingPeriodDto getProcessingPeriodDto(UUID periodId) {
     ProcessingPeriodDto dto = siglusProcessingPeriodReferenceDataService.findOne(periodId);
-    return getProcessingPeriodbyOpenLmisPeroid(dto);
+    return getProcessingPeriodByOpenLmisPeriod(dto);
   }
 
   public List<ProcessingPeriod> getUpToNowMonthlyPeriods() {
     return processingPeriodRepository.getUpToNowMonthlyPeriods(LocalDate.now());
   }
 
-  public ProcessingPeriodDto getProcessingPeriodbyOpenLmisPeroid(ProcessingPeriodDto dto) {
+  public ProcessingPeriodDto getProcessingPeriodByOpenLmisPeriod(ProcessingPeriodDto dto) {
     ProcessingPeriodExtension extension = processingPeriodExtensionRepository
         .findByProcessingPeriodId(dto.getId());
 
@@ -270,77 +273,74 @@ public class SiglusProcessingPeriodService {
     return response;
   }
 
-  private List<RequisitionPeriodDto> getRequisitionPeriods(UUID program, UUID facilityId, boolean emergency) {
+  private List<RequisitionPeriodDto> getRequisitionPeriods(UUID programId, UUID facilityId, boolean emergency) {
     Facility facility = siglusFacilityRepository.findOne(facilityId);
+    ProgramDto program = siglusProgramService.getProgram(programId);
     return emergency
         ? getEmergencyRequisitionPeriods(program, facility)
         : getRegularRequisitionPeriods(program, facility.getId());
   }
 
-  private List<RequisitionPeriodDto> getRegularRequisitionPeriods(UUID program, UUID facility) {
+  private List<RequisitionPeriodDto> getRegularRequisitionPeriods(ProgramDto program, UUID facility) {
     Collection<ProcessingPeriodDto> periods = fillProcessingPeriodWithExtension(
-        periodService.searchByProgramAndFacility(program, facility));
+        periodService.searchByProgramAndFacility(program.getId(), facility));
+    List<ProcessingPeriodDto> sortedPeriods = periods.stream()
+        .sorted(Comparator.comparing(ProcessingPeriodDto::getStartDate)).collect(Collectors.toList());
 
     List<RequisitionPeriodDto> requisitionPeriods = new ArrayList<>();
-    LocalDate maxEndDate = LocalDate.of(2000, 1, 1);
+    Map<UUID, Requisition> existedRequisitions =
+        siglusRequisitionRepository.findByFacilityIdAndProgramIdAndEmergency(facility, program.getId(), false)
+            .stream()
+            .collect(Collectors.toMap(Requisition::getProcessingPeriodId, Function.identity()));
 
-    // TODO Optimization
-    for (ProcessingPeriodDto period : periods) {
-
-      List<Requisition> requisitions = requisitionRepository.searchRequisitions(
-          period.getId(), facility, program, false);
-
-      List<Requisition> preAuthorizeRequisitions = getPreAuthorizedRequisitions(program, facility,
-          requisitions);
-
-      RequisitionPeriodDto requisitionPeriod = RequisitionPeriodDto.newInstance(period);
-      requisitionPeriods.add(requisitionPeriod);
-      if (!requisitions.isEmpty()) {
-        LocalDate endDate = requisitionPeriod.getEndDate();
-        maxEndDate = maxEndDate.isAfter(endDate) ? maxEndDate : endDate;
-        if (preAuthorizeRequisitions.isEmpty()) {
-          requisitionPeriods.remove(requisitionPeriod);
-        } else {
-          requisitionPeriod.setRequisitionId(preAuthorizeRequisitions.get(0).getId());
-          requisitionPeriod.setRequisitionStatus(preAuthorizeRequisitions.get(0).getStatus());
-        }
+    boolean canInit = permissionService.canInitRequisition(program.getId(), facility).isSuccess();
+    boolean canAuthorize = canAuthorizeRequisition(program.getId(), facility);
+    for (ProcessingPeriodDto period : sortedPeriods) {
+      Requisition requisition = existedRequisitions.get(period.getId());
+      if (requisition == null) {
+        requisitionPeriods.add(RequisitionPeriodDto.newInstance(period));
+      } else if (showRegularRequisition(requisition, canInit, canAuthorize)) {
+        RequisitionPeriodDto requisitionPeriodDto = RequisitionPeriodDto.newInstance(period);
+        requisitionPeriodDto.setRequisitionId(requisition.getId());
+        requisitionPeriodDto.setRequisitionStatus(requisition.getStatus());
+        requisitionPeriods.add(requisitionPeriodDto);
+      }
+      if (requisitionPeriods.size() > MAX_COUNT_REGULAR_REQUISITION) {
+        break;
       }
     }
-
-    Iterator<RequisitionPeriodDto> iterator = requisitionPeriods.iterator();
-    while (iterator.hasNext()) {
-      RequisitionPeriodDto requisitionPeriod = iterator.next();
-      LocalDate endDate = requisitionPeriod.getEndDate();
-      if (endDate.isBefore(maxEndDate)) {
-        iterator.remove();
-      }
-    }
-
-    return limitFirstPeriodToOneYear(requisitionPeriods, periods);
+    return requisitionPeriods;
   }
 
-  private List<RequisitionPeriodDto> getEmergencyRequisitionPeriods(UUID program, Facility facility) {
-    ProgramDto programDto = siglusProgramService.getProgram(program);
-    if (!ProgramConstants.VIA_PROGRAM_CODE.equals(programDto.getCode())) {
+  private boolean showRegularRequisition(Requisition requisition, boolean canInit, boolean canAuthorize) {
+    return (requisition.getStatus().isSubmittable() && (canInit || canAuthorize))
+        || (requisition.getStatus() == RequisitionStatus.SUBMITTED && canAuthorize);
+  }
+
+  private List<RequisitionPeriodDto> getEmergencyRequisitionPeriods(ProgramDto program, Facility facility) {
+    if (!ProgramConstants.VIA_PROGRAM_CODE.equals(program.getCode())) {
       return new ArrayList<>();
     }
-    Collection<ProcessingPeriodDto> periodDtos = periodService.searchByProgramAndFacility(program, facility.getId());
+    Collection<ProcessingPeriodDto> periodDtos =
+        periodService.searchByProgramAndFacility(program.getId(), facility.getId());
     Map<UUID, ProcessingPeriodDto> periodDtoMap = fillProcessingPeriodWithExtension(periodDtos)
         .stream().collect(Collectors.toMap(ProcessingPeriodDto::getId, Function.identity()));
     List<RequisitionPeriodDto> submittedRequisitionPeriod =
-        getSubmittedRequisitionPeriod(program, facility, true, periodDtoMap);
+        getEmergencyProcessingRequisitionPeriod(program.getId(), facility, periodDtoMap);
 
-    ProcessingPeriodDto emergencyPeriodDto = findEmergencyRequisitionPeriod(program, facility.getId(), periodDtoMap);
+    ProcessingPeriodDto emergencyPeriodDto =
+        findEmergencyRequisitionPeriod(program.getId(), facility.getId(), periodDtoMap);
     if (ObjectUtils.isEmpty(emergencyPeriodDto)) {
       return submittedRequisitionPeriod;
     }
-    if (!regularRequisitionIsAuthorized(program, facility.getId(), emergencyPeriodDto)) {
+    if (!regularRequisitionIsAuthorized(program.getId(), facility.getId(), emergencyPeriodDto)) {
       RequisitionPeriodDto requisitionPeriodDto = buildEmergencyRequisitionPeriod(emergencyPeriodDto, facility);
       requisitionPeriodDto.setCurrentPeriodRegularRequisitionAuthorized(false);
       submittedRequisitionPeriod.add(requisitionPeriodDto);
       return submittedRequisitionPeriod;
     }
-    RequisitionPeriodDto requisitionPeriod = processEmergencyRequisitionPeriod(program, facility, emergencyPeriodDto);
+    RequisitionPeriodDto requisitionPeriod =
+        processEmergencyRequisitionPeriod(program.getId(), facility, emergencyPeriodDto);
     if (requisitionPeriod != null && submittedRequisitionPeriod.stream()
           .noneMatch(submitted -> submitted.getId().equals(requisitionPeriod.getId()))) {
       submittedRequisitionPeriod.add(requisitionPeriod);
@@ -401,8 +401,8 @@ public class SiglusProcessingPeriodService {
   }
 
   private RequisitionPeriodDto buildEmergencyRequisitionPeriod(ProcessingPeriodDto periodDto, Facility facility) {
-    setSubmitStartAndEndDate(periodDto, facility.getType().getCode());
     RequisitionPeriodDto requisitionPeriodDto = RequisitionPeriodDto.newInstance(periodDto);
+    setSubmitStartAndEndDate(requisitionPeriodDto, facility.getType().getCode());
     requisitionPeriodDto.setCurrentPeriodRegularRequisitionAuthorized(true);
     return requisitionPeriodDto;
   }
@@ -435,26 +435,6 @@ public class SiglusProcessingPeriodService {
     }
     periodDto.setSubmitStartDate(submitStartDate);
     periodDto.setSubmitEndDate(submitEndDate);
-  }
-
-  private List<RequisitionPeriodDto> limitFirstPeriodToOneYear(List<RequisitionPeriodDto> requisitionPeriods,
-      Collection<ProcessingPeriodDto> periods) {
-    int limitPeriodNumber = 14;
-    if (periods.size() < limitPeriodNumber + 1) {
-      return requisitionPeriods;
-    }
-    List<ProcessingPeriodDto> periodDtos = new ArrayList<>(periods);
-    LocalDate limitPeriodStartDate = periodDtos.get(periodDtos.size() - (limitPeriodNumber + 1)).getStartDate();
-    LocalDate limitPeriodEndDate = periodDtos.get(periodDtos.size() - (limitPeriodNumber + 1)).getEndDate();
-
-    List<RequisitionPeriodDto> requisitionPeriodDtos = requisitionPeriods.subList(
-        Math.max(requisitionPeriods.size() - limitPeriodNumber, 0),
-        requisitionPeriods.size());
-
-    return requisitionPeriodDtos.stream()
-        .filter(requisitionPeriodDto -> requisitionPeriodDto.getStartDate().isAfter(limitPeriodStartDate)
-            && requisitionPeriodDto.getEndDate().isAfter(limitPeriodEndDate))
-        .collect(Collectors.toList());
   }
 
   public Collection<ProcessingPeriodDto> fillProcessingPeriodWithExtension(
@@ -496,24 +476,21 @@ public class SiglusProcessingPeriodService {
     return permissionService.canAuthorizeRequisition(dummy).isSuccess();
   }
 
-  private List<RequisitionPeriodDto> getSubmittedRequisitionPeriod(UUID programId, Facility facility, boolean emergency,
-                                                                   Map<UUID, ProcessingPeriodDto> periodDtoMap) {
-    if (!canAuthorizeRequisition(programId, facility.getId())) {
-      return new ArrayList<>();
+  private List<RequisitionPeriodDto> getEmergencyProcessingRequisitionPeriod(UUID programId, Facility facility,
+      Map<UUID, ProcessingPeriodDto> periodDtoMap) {
+    List<RequisitionStatus> status = new ArrayList<>();
+    status.add(RequisitionStatus.INITIATED);
+    if (canAuthorizeRequisition(programId, facility.getId())) {
+      status.add(RequisitionStatus.SUBMITTED);
     }
-    List<Requisition> submittedRequisition = getSubmittedRequisition(programId, facility.getId(), emergency);
-    return submittedRequisition.stream().map(requisition -> {
-      ProcessingPeriodDto processingPeriodDto = periodDtoMap.get(requisition.getProcessingPeriodId());
-      return buildEmergencyRequisitionPeriod(processingPeriodDto, facility, requisition);
-    })
-        .collect(Collectors.toList());
-  }
-
-  private List<Requisition> getSubmittedRequisition(UUID programId, UUID facilityId, boolean emergency) {
-    return siglusRequisitionRepository
-        .findByFacilityIdAndProgramIdAndStatus(facilityId, programId, RequisitionStatus.SUBMITTED)
-        .stream()
-        .filter(requisition -> requisition.getEmergency() == emergency)
+    List<Requisition> submittedRequisition = siglusRequisitionRepository
+        .findByFacilityIdAndProgramIdAndEmergencyAndStatusIn(facility.getId(), programId, true, status);
+    return submittedRequisition.stream()
+        .sorted(Comparator.comparing(Requisition::getCreatedDate))
+        .map(requisition -> {
+          ProcessingPeriodDto processingPeriodDto = periodDtoMap.get(requisition.getProcessingPeriodId());
+          return buildEmergencyRequisitionPeriod(processingPeriodDto, facility, requisition);
+        })
         .collect(Collectors.toList());
   }
 }
