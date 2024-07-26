@@ -331,6 +331,9 @@ public class SiglusProcessingPeriodService {
       return Collections.singletonList(requisitionPeriodDto);
     }
     RequisitionPeriodDto requisitionPeriod = processEmergencyRequisitionPeriod(program, facility, emergencyPeriodDto);
+    if (requisitionPeriod == null) {
+      return new ArrayList<>();
+    }
     return Collections.singletonList(requisitionPeriod);
   }
 
