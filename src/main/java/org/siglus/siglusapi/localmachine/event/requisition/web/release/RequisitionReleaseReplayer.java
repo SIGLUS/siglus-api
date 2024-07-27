@@ -19,6 +19,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.openlmis.requisition.domain.requisition.Requisition;
+import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.repository.RequisitionRepository;
 import org.siglus.siglusapi.domain.RequisitionExtension;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
@@ -50,6 +51,8 @@ public class RequisitionReleaseReplayer {
         requisitionReleaseEvent.getRequisitionNumber());
     UUID requisitionId = requisitionExtension.getRequisitionId();
     Requisition requisition = requisitionRepository.findOne(requisitionId);
-    requisition.releaseWithoutOrder(requisitionReleaseEvent.getAuthorId());
+    if (!RequisitionStatus.RELEASED_WITHOUT_ORDER.equals(requisition.getStatus())) {
+      requisition.releaseWithoutOrder(requisitionReleaseEvent.getAuthorId());
+    }
   }
 }
