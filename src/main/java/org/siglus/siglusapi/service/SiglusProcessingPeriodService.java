@@ -355,10 +355,16 @@ public class SiglusProcessingPeriodService {
       return null;
     }
     ProcessingPeriodDto periodDto = periodDtoMap.get(currentPeriods.get(0).getId());
+    if (periodDto == null) {
+      return null;
+    }
     LocalDate currentDate = LocalDate.now();
     ProcessingPeriodDto findPeriod = null;
     while (findPeriod == null) {
       ProcessingPeriodDto previousPeriodDto = periodService.findPreviousPeriod(periodDto.getId());
+      if (previousPeriodDto == null) {
+        return null;
+      }
       ProcessingPeriodDto previousPeriod = periodDtoMap.get(previousPeriodDto.getId());
       if (previousPeriod == null) {
         return null;
@@ -427,7 +433,7 @@ public class SiglusProcessingPeriodService {
       submitEndDate = LocalDate.of(yearMonth.getYear(), yearMonth.getMonthValue(), 17);
     } else if (secondLevelTypes.contains(facilityTypeCode)) {
       submitStartDate = LocalDate.of(yearMonth.getYear(), yearMonth.getMonthValue(), 11);
-      submitEndDate = LocalDate.of(yearMonth.getYear(), yearMonth.getMonthValue(), 30);
+      submitEndDate = LocalDate.of(yearMonth.getYear(), yearMonth.getMonthValue(), 24);
     } else if (thirdLevelTypes.contains(facilityTypeCode)) {
       submitStartDate = LocalDate.of(yearMonth.getYear(), yearMonth.getMonthValue(), 16);
       yearMonth = yearMonth.plusMonths(1);
@@ -450,23 +456,6 @@ public class SiglusProcessingPeriodService {
     });
 
     return periods;
-  }
-
-  private List<Requisition> getPreAuthorizedRequisitions(UUID program, UUID facility,
-      List<Requisition> requisitions) {
-    List<Requisition> preAuthorizeRequisitions = new ArrayList<>();
-    if (permissionService.canInitRequisition(program, facility).isSuccess()) {
-      preAuthorizeRequisitions.addAll(requisitions.stream()
-          .filter(requisition -> requisition.getStatus().isSubmittable())
-          .collect(Collectors.toList()));
-    }
-
-    if (canAuthorizeRequisition(program, facility)) {
-      preAuthorizeRequisitions.addAll(requisitions.stream()
-          .filter(requisition -> requisition.getStatus().isPreAuthorize())
-          .collect(Collectors.toList()));
-    }
-    return preAuthorizeRequisitions;
   }
 
   private boolean canAuthorizeRequisition(UUID program, UUID facility) {

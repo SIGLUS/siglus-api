@@ -17,6 +17,8 @@ package org.siglus.siglusapi.service;
 
 import static com.google.common.collect.Sets.newHashSet;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -54,7 +56,6 @@ import org.openlmis.requisition.service.PeriodService;
 import org.openlmis.requisition.service.PermissionService;
 import org.openlmis.requisition.service.RequisitionService;
 import org.openlmis.requisition.service.referencedata.PermissionStrings;
-import org.openlmis.stockmanagement.repository.StockCardRepository;
 import org.openlmis.stockmanagement.util.PageImplRepresentation;
 import org.siglus.common.domain.ProcessingPeriodExtension;
 import org.siglus.common.repository.ProcessingPeriodExtensionRepository;
@@ -68,7 +69,6 @@ import org.siglus.siglusapi.repository.RequisitionNativeSqlRepository;
 import org.siglus.siglusapi.repository.SiglusFacilityRepository;
 import org.siglus.siglusapi.repository.SiglusReportTypeRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
-import org.siglus.siglusapi.repository.SiglusStockCardLineItemRepository;
 import org.siglus.siglusapi.repository.dto.FacillityStockCardDateDto;
 import org.siglus.siglusapi.service.client.SiglusProcessingPeriodReferenceDataService;
 import org.siglus.siglusapi.testutils.ProcessingPeriodDtoDataBuilder;
@@ -125,15 +125,6 @@ public class SiglusProcessingPeriodServiceTest {
 
   @Mock
   private SiglusReportTypeRepository reportTypeRepository;
-
-  @Mock
-  private StockCardRepository stockCardRepository;
-
-  @Mock
-  private SiglusStockCardLineItemRepository siglusStockCardLineItemRepository;
-
-  @Mock
-  private SiglusProgramAdditionalOrderableService siglusProgramAdditionalOrderableService;
 
   @Mock
   private SiglusFacilityService siglusFacilityService;
@@ -260,14 +251,15 @@ public class SiglusProcessingPeriodServiceTest {
   }
 
   @Test
-  public void shouldGetProcessingPeriodsForInitiateOfRegualrRequisition() {
+  public void shouldGetProcessingPeriodsForInitiateOfRegularRequisition() {
     setupReportType();
+    mockFacility(facilityId, "DDM");
     UserDto userDto = new UserDto();
     userDto.setHomeFacilityId(facilityId);
     when(authenticationHelper.getCurrentUser()).thenReturn(userDto);
     Collection<ProcessingPeriodDto> periods = new ArrayList<>();
     periods.add(periodDto);
-    when(periodService.searchByProgramAndFacility(programId, facilityId)).thenReturn(periods);
+    when(periodService.searchByProgramAndFacility(any(), any())).thenReturn(periods);
 
     List<ProcessingPeriodExtension> extensions = new ArrayList<>();
     extensions.add(extension);
@@ -276,7 +268,7 @@ public class SiglusProcessingPeriodServiceTest {
 
     List<Requisition> requisitions = new ArrayList<>();
     requisitions.add(createRequisition(requisitionId, RequisitionStatus.INITIATED, false));
-    when(requisitionRepository.searchRequisitions(periodDto.getId(), facilityId, programId, false))
+    when(siglusRequisitionRepository.findByFacilityIdAndProgramIdAndEmergency(facilityId, programId, false))
         .thenReturn(requisitions);
 
     when(permissionService.canInitRequisition(programId, facilityId))
@@ -285,17 +277,16 @@ public class SiglusProcessingPeriodServiceTest {
         .thenReturn(ValidationResult.success());
     when(requisitionNativeSqlRepository.findSimpleRequisitionDto(any())).thenReturn(buildEmptySimpleRequisitionDtos());
 
+    Collection<RequisitionPeriodExtensionResponse> actualResponseLists =
+        siglusProcessingPeriodService.getRequisitionPeriodExtensionResponses(programId, facilityId, false);
+
+    assertEquals(1, actualResponseLists.size());
     RequisitionPeriodDto requisitionPeriod = RequisitionPeriodDto.newInstance(fullDto);
     requisitionPeriod.setRequisitionId(requisitionId);
     requisitionPeriod.setRequisitionStatus(RequisitionStatus.INITIATED);
-    //    RequisitionPeriodExtensionResponse expectedResponse = convertToRequisitionPeriodExtensionResponse(
-    //        requisitionPeriod);
-
-    //    Collection<RequisitionPeriodExtensionResponse> actualResponseLists =
-    //        siglusProcessingPeriodService.getRequisitionPeriodExtensionResponses(programId, facilityId, false);
-    //
-    //    assertEquals(1, actualResponseLists.size());
-    //    assertTrue(actualResponseLists.contains(expectedResponse));
+    RequisitionPeriodExtensionResponse expectedResponse = convertToRequisitionPeriodExtensionResponse(
+        requisitionPeriod);
+    assertTrue(actualResponseLists.contains(expectedResponse));
   }
 
   @Test
@@ -306,9 +297,9 @@ public class SiglusProcessingPeriodServiceTest {
     extension.setSubmitEndDate(LocalDate.now().minusDays(7));
     preExtension.setSubmitStartDate(LocalDate.now().minusDays(23));
     preExtension.setSubmitEndDate(LocalDate.now().minusDays(13));
-    when(periodService.getCurrentPeriods(programId, facilityId))
+    when(periodService.getCurrentPeriods(any(), any()))
         .thenReturn(Arrays.asList(periodDto));
-    when(periodService.searchByProgramAndFacility(programId, facilityId))
+    when(periodService.searchByProgramAndFacility(any(), any()))
         .thenReturn(Arrays.asList(prePeriodDto, periodDto));
     when(processingPeriodExtensionRepository.findAll())
         .thenReturn(Arrays.asList(preExtension, extension));
@@ -334,28 +325,22 @@ public class SiglusProcessingPeriodServiceTest {
         false));
     when(requisitionRepository.searchRequisitions(prePeriodDto.getId(), facilityId, programId, false))
         .thenReturn(authorizedRequisitions);
-    ProgramDto programDto = new ProgramDto();
-    programDto.setCode("VC");
-    when(siglusProgramService.getProgram(programId)).thenReturn(programDto);
+    mockProgram(programId, "VC");
     UserDto userDto = new UserDto();
     userDto.setHomeFacilityId(facilityId);
     when(authenticationHelper.getCurrentUser()).thenReturn(userDto);
 
-    Facility facility = new Facility();
-    FacilityType facilityType = new FacilityType();
-    facilityType.setCode("DDM");
-    facility.setType(facilityType);
-    when(siglusFacilityRepository.findOne(facilityId)).thenReturn(facility);
+    mockFacility(facilityId, "DDM");
     when(periodService.findPreviousPeriod(periodDto.getId())).thenReturn(prePeriodDto);
 
     //when
-    //    List<RequisitionPeriodExtensionResponse> response =
-    //        siglusProcessingPeriodService.getRequisitionPeriodExtensionResponses(programId, facilityId, true);
+    List<RequisitionPeriodExtensionResponse> response =
+        siglusProcessingPeriodService.getRequisitionPeriodExtensionResponses(programId, facilityId, true);
 
     //then
-    // assertEquals(1, response.size());
-    // assertEquals("perPeriod", response.get(0).getName());
-    // assertEquals(LocalDate.of(2020, 7, 24), response.get(0).getSubmitEndDate());
+    assertEquals(1, response.size());
+    assertEquals("perPeriod", response.get(0).getName());
+    assertEquals(LocalDate.of(2020, 7, 24), response.get(0).getSubmitEndDate());
   }
 
   @Test
@@ -366,9 +351,9 @@ public class SiglusProcessingPeriodServiceTest {
     extension.setSubmitEndDate(LocalDate.now().minusDays(7));
     preExtension.setSubmitStartDate(LocalDate.now().minusDays(23));
     preExtension.setSubmitEndDate(LocalDate.now().minusDays(13));
-    when(periodService.getCurrentPeriods(programId, facilityId))
+    when(periodService.getCurrentPeriods(any(), any()))
         .thenReturn(Arrays.asList(periodDto));
-    when(periodService.searchByProgramAndFacility(programId, facilityId))
+    when(periodService.searchByProgramAndFacility(any(), any()))
         .thenReturn(Arrays.asList(prePeriodDto, periodDto));
     when(processingPeriodExtensionRepository.findAll())
         .thenReturn(Arrays.asList(preExtension, extension));
@@ -393,30 +378,24 @@ public class SiglusProcessingPeriodServiceTest {
         false));
     when(requisitionRepository.searchRequisitions(prePeriodDto.getId(), facilityId, programId, false))
         .thenReturn(authorizedRequisitions);
-    ProgramDto programDto = new ProgramDto();
-    programDto.setCode("VC");
-    when(siglusProgramService.getProgram(programId)).thenReturn(programDto);
+    mockProgram(programId, "VC");
     UserDto userDto = new UserDto();
     userDto.setHomeFacilityId(facilityId);
     when(authenticationHelper.getCurrentUser()).thenReturn(userDto);
-    Facility facility = new Facility();
-    FacilityType facilityType = new FacilityType();
-    facilityType.setCode("DPM");
-    facility.setType(facilityType);
-    when(siglusFacilityRepository.findOne(facilityId)).thenReturn(facility);
+    mockFacility(facilityId, "DPM");
     when(periodService.findPreviousPeriod(periodDto.getId())).thenReturn(prePeriodDto);
     when(siglusRequisitionRepository.searchAfterAuthorizedRequisitions(facilityId, programId,
         prePeriodDto.getId(), false, newHashSet(AUTHORIZED, IN_APPROVAL, APPROVED,
             RELEASED, RELEASED_WITHOUT_ORDER)))
         .thenReturn(authorizedRequisitions);
     //when
-    //    List<RequisitionPeriodExtensionResponse> response =
-    //        siglusProcessingPeriodService.getRequisitionPeriodExtensionResponses(programId, facilityId, true);
+    List<RequisitionPeriodExtensionResponse> response =
+        siglusProcessingPeriodService.getRequisitionPeriodExtensionResponses(programId, facilityId, true);
 
     //then
-    //    assertEquals(1, response.size());
-    //    assertEquals(LocalDate.of(2020, 7, 16), response.get(0).getSubmitStartDate());
-    //    assertEquals(LocalDate.of(2020, 8, 30), response.get(0).getSubmitEndDate());
+    assertEquals(1, response.size());
+    assertEquals(LocalDate.of(2020, 7, 16), response.get(0).getSubmitStartDate());
+    assertEquals(LocalDate.of(2020, 8, 30), response.get(0).getSubmitEndDate());
   }
 
   @Test
@@ -433,11 +412,11 @@ public class SiglusProcessingPeriodServiceTest {
     when(periodService.findPreviousPeriod(periodDto.getId())).thenReturn(prePeriodDto);
     List<ProcessingPeriodDto> currentPeriods = new ArrayList<>();
     currentPeriods.add(periodDto);
-    when(periodService.getCurrentPeriods(programId, facilityId)).thenReturn(currentPeriods);
+    when(periodService.getCurrentPeriods(any(), any())).thenReturn(currentPeriods);
     List<ProcessingPeriodDto> periods = new ArrayList<>();
     periods.add(periodDto);
     periods.add(prePeriodDto);
-    when(periodService.searchByProgramAndFacility(programId, facilityId)).thenReturn(periods);
+    when(periodService.searchByProgramAndFacility(any(), any())).thenReturn(periods);
 
     List<ProcessingPeriodExtension> extensions = new ArrayList<>();
     extensions.add(extension);
@@ -460,9 +439,7 @@ public class SiglusProcessingPeriodServiceTest {
         false));
     when(requisitionRepository.searchRequisitions(prePeriodDto.getId(), facilityId, programId, false))
         .thenReturn(authorizedRequisitions);
-    ProgramDto programDto = new ProgramDto();
-    programDto.setCode("VC");
-    when(siglusProgramService.getProgram(programId)).thenReturn(programDto);
+    mockProgram(programId, "VC");
     when(requisitionNativeSqlRepository.findSimpleRequisitionDto(any())).thenReturn(
         buildSimpleRequisitionDtosWithExtraDataEmpty());
 
@@ -474,29 +451,26 @@ public class SiglusProcessingPeriodServiceTest {
         requisitionPeriod);
     expectedResponse.setSubmitStartDate(LocalDate.of(2020, 7, 11));
     expectedResponse.setSubmitEndDate(LocalDate.of(2020, 7, 17));
-    Facility facility = new Facility();
-    FacilityType facilityType = new FacilityType();
-    facilityType.setCode("CS");
-    facility.setType(facilityType);
-    when(siglusFacilityRepository.findOne(facilityId)).thenReturn(facility);
+    mockFacility(facilityId, "CS");
 
     //when
-    //    Collection<RequisitionPeriodExtensionResponse> actualResponseList =
-    //        siglusProcessingPeriodService.getRequisitionPeriodExtensionResponses(programId, facilityId, true);
+    Collection<RequisitionPeriodExtensionResponse> actualResponseList =
+        siglusProcessingPeriodService.getRequisitionPeriodExtensionResponses(programId, facilityId, true);
 
     //then
-    //    assertEquals(1, actualResponseList.size());
-    //    RequisitionPeriodExtensionResponse response = actualResponseList.stream().findFirst().get();
-    //    assertEquals(LocalDate.of(2020, 7, 11), response.getSubmitStartDate());
-    //    assertEquals(LocalDate.of(2020, 7, 17), response.getSubmitEndDate());
+    assertEquals(1, actualResponseList.size());
+    RequisitionPeriodExtensionResponse response = actualResponseList.stream().findFirst().get();
+    assertEquals(LocalDate.of(2020, 7, 11), response.getSubmitStartDate());
+    assertEquals(LocalDate.of(2020, 7, 17), response.getSubmitEndDate());
   }
 
   @Test
   public void shouldReturnWithRequisitionResponseWhenAfterInitialed() {
     setupReportType();
+    mockFacility(facilityId, "DDM");
     Collection<ProcessingPeriodDto> periods = new ArrayList<>();
     periods.add(periodDto);
-    when(periodService.searchByProgramAndFacility(programId, facilityId)).thenReturn(periods);
+    when(periodService.searchByProgramAndFacility(any(), any())).thenReturn(periods);
 
     List<ProcessingPeriodExtension> extensions = new ArrayList<>();
     extensions.add(extension);
@@ -504,7 +478,7 @@ public class SiglusProcessingPeriodServiceTest {
 
     List<Requisition> requisitions = new ArrayList<>();
     requisitions.add(createRequisition(requisitionId, RequisitionStatus.INITIATED, false));
-    when(requisitionRepository.searchRequisitions(periodDto.getId(), facilityId, programId, false))
+    when(siglusRequisitionRepository.findByFacilityIdAndProgramIdAndEmergency(facilityId, programId, false))
         .thenReturn(requisitions);
 
     when(permissionService.canInitRequisition(programId, facilityId))
@@ -516,11 +490,11 @@ public class SiglusProcessingPeriodServiceTest {
     userDto.setHomeFacilityId(facilityId);
     when(authenticationHelper.getCurrentUser()).thenReturn(userDto);
 
-    //    List<RequisitionPeriodExtensionResponse> actualResponseLists =
-    //        siglusProcessingPeriodService.getRequisitionPeriodExtensionResponses(programId, facilityId, false);
-    //
-    //    assertEquals(1, actualResponseLists.size());
-    //    assertNotNull(actualResponseLists.get(0).getRequisitionExtraData());
+    List<RequisitionPeriodExtensionResponse> actualResponseLists =
+        siglusProcessingPeriodService.getRequisitionPeriodExtensionResponses(programId, facilityId, false);
+
+    assertEquals(1, actualResponseLists.size());
+    assertNotNull(actualResponseLists.get(0).getRequisitionExtraData());
   }
 
   private List<SimpleRequisitionDto> buildEmptySimpleRequisitionDtos() {
@@ -558,6 +532,7 @@ public class SiglusProcessingPeriodServiceTest {
     requisition.setId(requisitionId);
     requisition.setProgramId(programId);
     requisition.setFacilityId(facilityId);
+    requisition.setProcessingPeriodId(periodDto.getId());
     requisition.setRequisitionLineItems(Lists.newArrayList(lineItem));
     requisition.setStatus(status);
     requisition.setEmergency(isEmergency);
@@ -567,12 +542,9 @@ public class SiglusProcessingPeriodServiceTest {
 
   private void setupReportType() {
     String programCode = "TARV";
-    ProgramDto programDto = mock(ProgramDto.class);
     SiglusReportType reportType = mock(SiglusReportType.class);
     when(reportType.getStartDate()).thenReturn(LocalDate.of(2020, 1, 1));
-    when(programDto.getId()).thenReturn(programId);
-    when(programDto.getCode()).thenReturn(programCode);
-    when(siglusProgramService.getProgram(programId)).thenReturn(programDto);
+    mockProgram(programId, programCode);
     when(reportTypeRepository.findOneByFacilityIdAndProgramCodeAndActiveIsTrue(facilityId, programCode))
         .thenReturn(Optional.of(reportType));
 
@@ -592,7 +564,7 @@ public class SiglusProcessingPeriodServiceTest {
     UserDto userDto = new UserDto();
     userDto.setHomeFacilityId(facilityId);
     when(authenticationHelper.getCurrentUser()).thenReturn(userDto);
-    when(siglusProgramService.getProgram(programId)).thenReturn(programDto);
+    mockProgram(programId, "RT");
     Collection<RequisitionPeriodExtensionResponse> response =
         siglusProcessingPeriodService.getRequisitionPeriodExtensionResponses(programId, facilityId, true);
     assertEquals(new ArrayList<>(), response);
@@ -621,6 +593,24 @@ public class SiglusProcessingPeriodServiceTest {
     // when
     UUID clientFacilityId = UUID.randomUUID();
     siglusProcessingPeriodService.getRequisitionPeriodExtensionResponses(programId, clientFacilityId, false);
+  }
+
+  private ProgramDto mockProgram(UUID programId, String programCode) {
+    ProgramDto programDto = new ProgramDto();
+    programDto.setId(programId);
+    programDto.setCode(programCode);
+    when(siglusProgramService.getProgram(programId)).thenReturn(programDto);
+    return programDto;
+  }
+
+  private Facility mockFacility(UUID facilityId, String facilityCode) {
+    Facility facility = new Facility();
+    facility.setId(facilityId);
+    FacilityType facilityType = new FacilityType();
+    facilityType.setCode(facilityCode);
+    facility.setType(facilityType);
+    when(siglusFacilityRepository.findOne(facilityId)).thenReturn(facility);
+    return facility;
   }
 }
 
