@@ -210,7 +210,7 @@ public class OrderFulfillmentSyncedReplayer {
     List<OrderLineItem> lineItemsOrigin = CollectionUtils.isEmpty(orderOrigin.getOrderLineItems())
         ? new ArrayList<>() : orderOrigin.getOrderLineItems();
     orderLineItemDtos.stream()
-        .filter(orderLineItemDto -> orderLineItemDto.getId() == null)
+        .filter(orderLineItemDto -> orderLineItemDto.getId() == null || orderLineItemDto.isAdded())
         .filter(orderLineItemDto -> !orderLineItemDto.isSkipped())
         .map(OrderLineItem::newInstance)
         .forEach(orderLineItem -> {
