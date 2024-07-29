@@ -72,8 +72,9 @@ AS WITH temp_malaria_product_code AS (
             LEFT JOIN dashboard.vw_calculated_stocks_on_hand csoh ON csoh.stockcardid = sc.id
             LEFT JOIN ( SELECT DISTINCT ON (hc_1.facilitycode, hc_1.productcode) hc_1.facilitycode,
                                                                                  hc_1.productcode,
-                                                                                 first_value(hc_1.cmm) OVER (PARTITION BY hc_1.facilitycode, hc_1.productcode ORDER BY hc_1.periodend DESC) AS cmm
-                        FROM siglusintegration.hf_cmms hc_1) hc ON hc.facilitycode::text = f.code AND hc.productcode::text = o.code::text
+                                                                                 hc_1.cmm
+                        FROM siglusintegration.hf_cmms hc_1
+                        ORDER BY hc_1.facilitycode, hc_1.productcode, hc_1.periodend DESC) hc ON hc.facilitycode::text = f.code AND hc.productcode::text = o.code::text
             LEFT JOIN dashboard.vw_facility_supplier vfs ON vfs.facilitycode = f.code
             LEFT JOIN referencedata.facility_types ft ON f.typeid = ft.id
             LEFT JOIN referencedata.programs p ON p.id = sc.programid;

@@ -81,10 +81,11 @@ AS WITH temp_malaria_product_code AS (
             LEFT JOIN referencedata.geographic_zones gz ON gz.id = f.geographiczoneid
             LEFT JOIN referencedata.geographic_zones gz_prov ON gz_prov.id = gz.parentid
             LEFT JOIN dashboard.vw_facility_supplier vfs ON vfs.facilitycode = f.code
-            LEFT JOIN ( SELECT DISTINCT ON (hc.facilitycode, hc.productcode) hc.facilitycode,
-                                                                             hc.productcode,
-                                                                             first_value(hc.cmm) OVER (PARTITION BY hc.facilitycode, hc.productcode ORDER BY hc.periodend DESC) AS cmm
-                        FROM siglusintegration.hf_cmms hc) h ON h.facilitycode::text = f.code AND h.productcode::text = o.code::text
+            LEFT JOIN ( SELECT DISTINCT ON (hc_1.facilitycode, hc_1.productcode) hc_1.facilitycode,
+                                                                                 hc_1.productcode,
+                                                                                 hc_1.cmm
+                        FROM siglusintegration.hf_cmms hc_1
+                        ORDER BY hc_1.facilitycode, hc_1.productcode, hc_1.periodend DESC) h ON h.facilitycode::text = f.code AND h.productcode::text = o.code::text
             LEFT JOIN ( SELECT DISTINCT ON (po_1.orderableid)
                             po_1.priceperpack,
                             po_1.orderableid
