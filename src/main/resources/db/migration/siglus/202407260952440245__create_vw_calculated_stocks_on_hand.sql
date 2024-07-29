@@ -9,7 +9,8 @@ SELECT DISTINCT ON (calculated_stocks_on_hand.stockcardid) uuid_generate_v4() AS
     calculated_stocks_on_hand.stockonhand,
     calculated_stocks_on_hand.occurreddate,
     calculated_stocks_on_hand.stockcardid,
-    calculated_stocks_on_hand.processeddate
+    calculated_stocks_on_hand.processeddate,
+    now() as operatetime
 FROM stockmanagement.calculated_stocks_on_hand
 ORDER BY calculated_stocks_on_hand.stockcardid, calculated_stocks_on_hand.occurreddate DESC;
 
