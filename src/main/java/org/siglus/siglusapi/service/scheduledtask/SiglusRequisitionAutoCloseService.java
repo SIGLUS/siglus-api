@@ -48,9 +48,9 @@ import org.openlmis.requisition.service.referencedata.ProgramReferenceDataServic
 import org.openlmis.requisition.service.referencedata.SupplyLineReferenceDataService;
 import org.openlmis.requisition.web.BasicRequisitionDtoBuilder;
 import org.siglus.siglusapi.constant.FieldConstants;
-import org.siglus.siglusapi.localmachine.Machine;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.service.SiglusRequisitionService;
+import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -74,12 +74,12 @@ public class SiglusRequisitionAutoCloseService {
 
   private final PeriodReferenceDataService periodReferenceDataService;
 
-  private final Machine machine;
+  private final SiglusAuthenticationHelper authenticationHelper;
 
   public void closeOldRequisitions(Collection<Requisition> requisitions) {
     Map<String, List<Requisition>> requisitionsMap = requisitions.stream()
         .collect(Collectors.groupingBy(this::buildForGroupKey));
-    UUID facilityId = machine.getLocalFacilityId();
+    UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
     Set<Requisition> toCloseRequisitions = requisitions.stream()
         .filter(requisition -> !facilityId.equals(requisition.getFacilityId()))
         .filter(requisition -> RequisitionStatus.IN_APPROVAL.equals(requisition.getStatus()))
@@ -124,7 +124,7 @@ public class SiglusRequisitionAutoCloseService {
   public void closeExpiredRequisitionWithSupplyingDepotsDtos(
       List<RequisitionWithSupplyingDepotsDto> processedRequisitionDto) {
     log.info("auto close requisition start");
-    UUID facilityId = machine.getLocalFacilityId();
+    UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
     processedRequisitionDto
         .stream()
         .filter(RequisitionWithSupplyingDepotsDto::isExpired)
