@@ -19,19 +19,31 @@ import java.util.UUID;
 import javax.persistence.ColumnResult;
 import javax.persistence.ConstructorResult;
 import javax.persistence.MappedSuperclass;
+import javax.persistence.NamedNativeQueries;
 import javax.persistence.NamedNativeQuery;
 import javax.persistence.SqlResultSetMapping;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@NamedNativeQuery(
-    name = "Orderable.findOrderablesByIds",
-    query = "select  o.id as id, o.versionnumber as versionNumber, "
-        + " o.code as productCode, o.fullproductname as fullProductName "
-        + "from referencedata.orderables o "
-        + "where o.id in (:ids)",
-    resultSetMapping = "Orderable.OrderableVersionDto")
+@NamedNativeQueries({
+    @NamedNativeQuery(
+        name = "Orderable.findOrderablesByIds",
+        query = "select  o.id as id, o.versionnumber as versionNumber, "
+            + " o.code as productCode, o.fullproductname as fullProductName "
+            + "from referencedata.orderables o "
+            + "where o.id in (:ids)",
+        resultSetMapping = "Orderable.OrderableVersionDto"),
+
+    @NamedNativeQuery(
+        name = "Orderable.findLatestOrderablesByIds",
+        query = "select distinct on (o.id) o.id as id, o.versionnumber as versionNumber, "
+            + " o.code as productCode, o.fullproductname as fullProductName "
+            + "from referencedata.orderables o "
+            + "where o.id in (:ids) order by o.id, o.versionnumber desc",
+        resultSetMapping = "Orderable.OrderableVersionDto")
+})
+
 
 @MappedSuperclass
 @SqlResultSetMapping(

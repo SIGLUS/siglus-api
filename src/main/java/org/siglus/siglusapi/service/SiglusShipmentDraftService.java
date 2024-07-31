@@ -518,7 +518,7 @@ public class SiglusShipmentDraftService {
         .map(lineItem -> lineItem.getOrderableIdentity().getId()).collect(Collectors.toSet());
     Map<String, Integer> reservedMap = getReservedMap(supplyFacility, shipmentDraftDto);
     Map<String, StockCardStockDto> latestSohMap = getLatestSohMap(supplyFacility, orderableSet, withLocation);
-    Map<UUID, OrderableVersionDto> orderableMap = siglusOrderableService.findByIds(orderableSet)
+    Map<UUID, OrderableVersionDto> orderableMap = siglusOrderableService.findLatestVersionByIds(orderableSet)
         .stream().collect(toMap(OrderableVersionDto::getId, Function.identity()));
     Map<UUID, LotDto> lotMap = getLotsMap(shipmentDraftDto.lineItems());
 
@@ -556,7 +556,8 @@ public class SiglusShipmentDraftService {
   }
 
   private Map<UUID, LotDto> getLotsMap(List<ShipmentLineItemDto> lineItemDtos) {
-    List<UUID> lotIds = lineItemDtos.stream().map(ShipmentLineItemDto::getLotId).collect(Collectors.toList());
+    List<UUID> lotIds = lineItemDtos.stream().map(ShipmentLineItemDto::getLotId)
+        .distinct().collect(Collectors.toList());
     return siglusLotService.getLotList(lotIds).stream().collect(toMap(LotDto::getId, Function.identity()));
   }
 

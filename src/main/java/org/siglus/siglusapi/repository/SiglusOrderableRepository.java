@@ -36,5 +36,8 @@ public interface SiglusOrderableRepository extends
   @Query(name = "Orderable.findOrderablesByIds", nativeQuery = true)
   List<OrderableVersionDto> findOrderablesByIds(@Param("ids") Iterable<UUID> ids);
 
+  @Query(name = "Orderable.findLatestOrderablesByIds", nativeQuery = true)
+  List<OrderableVersionDto> findLatestOrderablesByIds(@Param("ids") Iterable<UUID> ids);
+
   List<Orderable> findByProductCodeCodeIn(Collection<String> codes);
 }

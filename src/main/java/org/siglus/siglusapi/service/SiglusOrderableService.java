@@ -387,6 +387,13 @@ public class SiglusOrderableService {
     return siglusOrderableRepository.findOrderablesByIds(ids);
   }
 
+  public List<OrderableVersionDto> findLatestVersionByIds(Collection<UUID> ids) {
+    if (ObjectUtils.isEmpty(ids)) {
+      return new ArrayList<>();
+    }
+    return siglusOrderableRepository.findLatestOrderablesByIds(ids);
+  }
+
   public List<ProgramOrderableDto> findProgramOrderablesMaxVersionByOrderableIds(Collection<UUID> orderableIds) {
     return siglusProgramOrderableRepository.findMaxVersionProgramOrderableDtosByOrderableIds(orderableIds);
   }

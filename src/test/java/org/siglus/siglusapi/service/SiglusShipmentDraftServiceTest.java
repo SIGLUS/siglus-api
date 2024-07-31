@@ -653,7 +653,7 @@ public class SiglusShipmentDraftServiceTest {
     when(shipmentDraftLineItemsRepository.reservedCount(any(), any())).thenReturn(newArrayList());
     OrderableVersionDto orderableVersionDto = new OrderableVersionDto();
     orderableVersionDto.setId(orderableId);
-    when(siglusOrderableService.findByIds(any())).thenReturn(newArrayList(orderableVersionDto));
+    when(siglusOrderableService.findLatestVersionByIds(any())).thenReturn(newArrayList(orderableVersionDto));
     LotDto lotDto = new LotDto();
     lotDto.setId(lotId);
     when(siglusLotService.getLotList(any())).thenReturn(newArrayList(lotDto));
@@ -753,7 +753,8 @@ public class SiglusShipmentDraftServiceTest {
     orderable2.setId(orderableId2);
     OrderableVersionDto orderable3 = new OrderableVersionDto();
     orderable3.setId(orderableId3);
-    when(siglusOrderableService.findByIds(any())).thenReturn(newArrayList(orderable1, orderable2, orderable3));
+    when(siglusOrderableService.findLatestVersionByIds(any()))
+        .thenReturn(newArrayList(orderable1, orderable2, orderable3));
   }
 
   private void mockLots(UUID lotId1, UUID lotId2, UUID lotId3) {
