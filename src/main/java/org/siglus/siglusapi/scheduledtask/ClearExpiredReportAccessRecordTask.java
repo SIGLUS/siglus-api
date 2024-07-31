@@ -18,17 +18,21 @@ package org.siglus.siglusapi.scheduledtask;
 import java.time.LocalDate;
 import lombok.extern.slf4j.Slf4j;
 import org.siglus.siglusapi.repository.SiglusReportAccessRecordRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Profile("!localmachine")
 @Service
 @Slf4j
 public class ClearExpiredReportAccessRecordTask {
 
-  @Autowired
-  private SiglusReportAccessRecordRepository siglusReportAccessRecordRepository;
+  private final SiglusReportAccessRecordRepository siglusReportAccessRecordRepository;
+
+  public ClearExpiredReportAccessRecordTask(SiglusReportAccessRecordRepository siglusReportAccessRecordRepository) {
+    this.siglusReportAccessRecordRepository = siglusReportAccessRecordRepository;
+  }
 
   @Scheduled(cron = "${clear.expired.report.access.record.cron}", zone = "${time.zoneId}")
   @Transactional

@@ -49,11 +49,13 @@ import org.siglus.siglusapi.repository.FcIntegrationChangesRepository;
 import org.siglus.siglusapi.service.client.SiglusIssueVoucherService;
 import org.siglus.siglusapi.service.client.SiglusReceiptPlanService;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Profile("!localmachine")
 @Service
 @Slf4j
 @RequiredArgsConstructor

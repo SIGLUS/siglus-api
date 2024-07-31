@@ -40,14 +40,14 @@ public class SiglusAutoCloseTask {
 
   private final RequisitionService requisitionService;
 
-  //@Scheduled(cron = "${requisition.close.inapproval.cron}", zone = "${time.zoneId}")
+  // @Scheduled(cron = "${requisition.close.inapproval.cron}", zone = "${time.zoneId}")
   public void closeOldInApprovalRequisition() {
     Set<Requisition> requisitions = siglusRequisitionRepository
         .findAllByStatusIn(RequisitionStatus.getAfterInApprovalStatus());
     siglusRequisitionAutoCloseService.closeOldRequisitions(requisitions);
   }
 
-  //@Scheduled(cron = "${requisition.close.approved.cron}", zone = "${time.zoneId}")
+  // @Scheduled(cron = "${requisition.close.approved.cron}", zone = "${time.zoneId}")
   public void releaseWithoutOrderForExpiredRequisition() {
     Set<Requisition> requisitions = siglusRequisitionRepository.findAllByStatus(RequisitionStatus.APPROVED);
     List<RequisitionWithSupplyingDepotsDto> dtos =
