@@ -50,6 +50,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ObjectUtils;
 
 @Service
 @Slf4j
@@ -90,6 +91,9 @@ public class SiglusOrderCloseSchedulerService {
   }
 
   public void batchProcessExpiredOrders(List<Order> orders) {
+    if (ObjectUtils.isEmpty(orders)) {
+      return;
+    }
     List<BasicOrderDto> dtos = basicOrderDtoBuilder.build(orders);
     List<FulfillOrderDto> fulfillOrderDtos = dtos.stream()
         .map(basicOrderDto -> FulfillOrderDto.builder().basicOrder(basicOrderDto).build())
