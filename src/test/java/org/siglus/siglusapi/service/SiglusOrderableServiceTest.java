@@ -559,6 +559,24 @@ public class SiglusOrderableServiceTest {
   }
 
   @Test
+  public void shouldGetEmptyListWhenFindLatestVersionByIdsGivenIdsIsEmpty() {
+    List<OrderableVersionDto> orderables = siglusOrderableService.findLatestVersionByIds(new ArrayList<>());
+
+    assertEquals(0, orderables.size());
+  }
+
+  @Test
+  public void shouldGetOrderablesWhenFindLatestVersionByIdsGivenIdsIsNotEmpty() {
+    Set<UUID> ids = Collections.singleton(UUID.randomUUID());
+    when(siglusOrderableRepository.findLatestOrderablesByIds(ids))
+        .thenReturn(Collections.singletonList(new OrderableVersionDto()));
+
+    List<OrderableVersionDto> orderables = siglusOrderableService.findLatestVersionByIds(ids);
+
+    assertEquals(1, orderables.size());
+  }
+
+  @Test
   public void shouldSuccessWhenFindProgramOrderablesMaxVersionByOrderableIds() {
     Set<UUID> ids = Collections.singleton(UUID.randomUUID());
 
