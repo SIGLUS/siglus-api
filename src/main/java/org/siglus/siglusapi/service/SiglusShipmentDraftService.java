@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.validation.ValidationException;
 import lombok.AllArgsConstructor;
@@ -49,13 +50,17 @@ import org.openlmis.fulfillment.web.util.OrderLineItemDto;
 import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.siglus.siglusapi.domain.OrderLineItemExtension;
 import org.siglus.siglusapi.domain.ShipmentDraftLineItemsExtension;
+import org.siglus.siglusapi.dto.LotDto;
 import org.siglus.siglusapi.dto.Message;
+import org.siglus.siglusapi.dto.SiglusShipmentDraftDto;
+import org.siglus.siglusapi.dto.SiglusShipmentDraftLineItemDto;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.OrderLineItemRepository;
 import org.siglus.siglusapi.repository.ShipmentDraftLineItemsExtensionRepository;
 import org.siglus.siglusapi.repository.ShipmentDraftLineItemsRepository;
 import org.siglus.siglusapi.repository.SiglusStockCardRepository;
+import org.siglus.siglusapi.repository.dto.OrderableVersionDto;
 import org.siglus.siglusapi.repository.dto.StockCardReservedDto;
 import org.siglus.siglusapi.repository.dto.StockCardStockDto;
 import org.siglus.siglusapi.service.client.SiglusShipmentDraftFulfillmentService;
@@ -98,7 +103,13 @@ public class SiglusShipmentDraftService {
   @Autowired
   private SiglusStockCardRepository siglusStockCardRepository;
   @Autowired
+  private SiglusStockCardService siglusStockCardService;
+  @Autowired
   private ShipmentDraftRepository shipmentDraftRepository;
+  @Autowired
+  private SiglusOrderableService siglusOrderableService;
+  @Autowired
+  private SiglusLotService siglusLotService;
 
   @Transactional
   public ShipmentDraftDto createShipmentDraft(ShipmentDraftDto draftDto) {
@@ -122,6 +133,19 @@ public class SiglusShipmentDraftService {
   public void deleteShipmentDraft(UUID id) {
     deleteOrderLineItemAndInitialedExtension(getDraftOrder(id));
     draftController.deleteShipmentDraft(id);
+  }
+
+  public SiglusShipmentDraftDto getShipmentDraft(UUID id) {
+    ShipmentDraftDto shipmentDraftDto = siglusShipmentDraftFulfillmentService.searchShipmentDraft(id);
+    return convertFromShipmentDraftDto(shipmentDraftDto);
+  }
+
+  public List<SiglusShipmentDraftDto> getShipmentDraftByOrderId(UUID orderId) {
+    Page<ShipmentDraftDto> shipmentDraftDto = siglusShipmentDraftFulfillmentService.getShipmentDraftByOrderId(orderId);
+    if (CollectionUtils.isEmpty(shipmentDraftDto.getContent())) {
+      return Collections.emptyList();
+    }
+    return Collections.singletonList(convertFromShipmentDraftDto(shipmentDraftDto.getContent().get(0)));
   }
 
   public ShipmentDraftDto getShipmentDraftByLocation(UUID orderId) {
@@ -475,5 +499,108 @@ public class SiglusShipmentDraftService {
 
   private long getQuantity(Long value) {
     return value == null ? 0 : value;
+  }
+
+  private SiglusShipmentDraftDto convertFromShipmentDraftDto(ShipmentDraftDto shipmentDraftDto) {
+    SiglusShipmentDraftDto dto = new SiglusShipmentDraftDto();
+    dto.setId(shipmentDraftDto.getId());
+    dto.setNotes(shipmentDraftDto.getNotes());
+    Order order = orderRepository.findOne(shipmentDraftDto.getOrder().getId());
+    UUID supplyFacility = order.getSupplyingFacilityId();
+    boolean withLocation = facilityConfigHelper.isLocationManagementEnabled(supplyFacility);
+    if (withLocation) {
+      fulfillShipmentDraftLineItem(shipmentDraftDto.lineItems());
+    }
+    Set<UUID> orderableSet = shipmentDraftDto.getLineItems().stream()
+        .map(lineItem -> lineItem.getOrderableIdentity().getId()).collect(Collectors.toSet());
+    Map<String, Integer> reservedMap = getReservedMap(supplyFacility, shipmentDraftDto);
+    Map<String, StockCardStockDto> latestSohMap = getLatestSohMap(supplyFacility, orderableSet, withLocation);
+    Map<UUID, OrderableVersionDto> orderableMap = siglusOrderableService.findByIds(orderableSet)
+        .stream().collect(toMap(OrderableVersionDto::getId, Function.identity()));
+    Map<UUID, LotDto> lotMap = getLotsMap(shipmentDraftDto.lineItems());
+
+    List<SiglusShipmentDraftLineItemDto> lineItems =
+        buildShipmentDraftLineItemDtos(shipmentDraftDto.lineItems(), reservedMap, latestSohMap, orderableMap, lotMap);
+    dto.setLineItems(lineItems);
+    return dto;
+  }
+
+  private Map<String, StockCardStockDto> getLatestSohMap(UUID supplyFacility,
+                                                         Set<UUID> orderableSet, boolean withLocation) {
+    List<UUID> stockCardIds =
+        siglusStockCardService.findStockCardIdByFacilityAndOrderables(supplyFacility, orderableSet);
+    Map<UUID, StockCard> stockCardMap = siglusStockCardService.findStockCardByIds(stockCardIds)
+        .stream().collect(toMap(StockCard::getId, Function.identity()));
+    return siglusStockCardSummariesService.getLatestStockOnHandByIds(
+            stockCardIds, withLocation).stream()
+        .peek(dto -> {
+          StockCard stockCard = stockCardMap.get(dto.getStockCardId());
+          dto.setLotId(stockCard.getLotId());
+          dto.setOrderableId(stockCard.getOrderableId());
+        })
+        .collect(toMap(dto -> FormatHelper.buildStockCardUniqueKey(
+                dto.getOrderableId(), dto.getLotId(), dto.getLocationCode()),
+            Function.identity()));
+  }
+
+  private Map<String, Integer> getReservedMap(UUID supplyFacility, ShipmentDraftDto shipmentDraftDto) {
+    return reservedCount(
+        supplyFacility, shipmentDraftDto.getId(), shipmentDraftDto.lineItems())
+        .stream()
+        .collect(toMap(reservedDto -> FormatHelper.buildStockCardUniqueKey(
+                reservedDto.getOrderableId(), reservedDto.getLotId(), reservedDto.getLocationCode()),
+            StockCardReservedDto::getReserved));
+  }
+
+  private Map<UUID, LotDto> getLotsMap(List<ShipmentLineItemDto> lineItemDtos) {
+    List<UUID> lotIds = lineItemDtos.stream().map(ShipmentLineItemDto::getLotId).collect(Collectors.toList());
+    return siglusLotService.getLotList(lotIds).stream().collect(toMap(LotDto::getId, Function.identity()));
+  }
+
+  private void fulfillShipmentDraftLineItem(List<ShipmentLineItemDto> lineItems) {
+    List<UUID> lineItemIds = lineItems.stream().map(ShipmentLineItemDto::getId).collect(Collectors.toList());
+    Map<UUID, ShipmentDraftLineItemsExtension> extensionMap = shipmentDraftLineItemsExtensionRepository
+        .findByShipmentDraftLineItemIdIn(lineItemIds).stream()
+        .collect(toMap(ShipmentDraftLineItemsExtension::getShipmentDraftLineItemId, Function.identity()));
+    lineItems.forEach(lineItem -> {
+      ShipmentDraftLineItemsExtension extension = extensionMap.get(lineItem.getId());
+      if (extension != null) {
+        LocationDto locationDto = LocationDto
+            .builder()
+            .locationCode(extension.getLocationCode())
+            .area(extension.getArea())
+            .build();
+        lineItem.setLocation(locationDto);
+        lineItem.setQuantityShipped(extension.getQuantityShipped() == null
+            ? null : extension.getQuantityShipped().longValue());
+      }
+    });
+  }
+
+  private List<SiglusShipmentDraftLineItemDto> buildShipmentDraftLineItemDtos(
+      List<ShipmentLineItemDto> lineItemDtos,
+      Map<String, Integer> reservedMap,
+      Map<String, StockCardStockDto> latestSohMap,
+      Map<UUID, OrderableVersionDto> orderableMap,
+      Map<UUID, LotDto> lotMap) {
+    return lineItemDtos.stream().map(
+        dto -> {
+          SiglusShipmentDraftLineItemDto itemDto = SiglusShipmentDraftLineItemDto.from(dto);
+          itemDto.setOrderable(orderableMap.get(dto.getOrderable().getId()));
+          String location = dto.getLocation() == null ? null : dto.getLocation().getLocationCode();
+          String key = FormatHelper.buildStockCardUniqueKey(dto.getOrderable().getId(), dto.getLotId(), location);
+          StockCardStockDto stockCardStockDto = latestSohMap.get(key);
+          if (stockCardStockDto != null) {
+            itemDto.setStockCardId(stockCardStockDto.getStockCardId());
+            if (stockCardStockDto.getStockOnHand() != null) {
+              itemDto.setStockOnHand(Long.valueOf(stockCardStockDto.getStockOnHand()));
+            }
+          }
+          itemDto.setReservedStock(reservedMap.get(key));
+          itemDto.setLot(lotMap.get(dto.getLotId()));
+          return itemDto;
+        })
+        .filter(dto -> dto.getStockOnHand() != null && dto.getStockOnHand() > 0)
+        .collect(Collectors.toList());
   }
 }

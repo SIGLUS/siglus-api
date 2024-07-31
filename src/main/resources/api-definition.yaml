@@ -3411,6 +3411,23 @@ traits:
             body:
               application/json:
                 schema: localizedMessage
+      get:
+        is: [ secured ]
+        description: get shipment drafts
+        responses:
+          200:
+            body:
+              application/json:
+                schema: siglusShipmentDraftDto
+          400:
+            body:
+              application/json:
+                schema: badRequestResponse
+          404:
+          403:
+            body:
+              application/json:
+                schema: localizedMessage
       /{id}:
         uriParameters:
           id:
@@ -3418,6 +3435,23 @@ traits:
             type: string
             required: true
             repeat: false
+        get:
+          is: [ secured ]
+          description: get shipment draft
+          responses:
+            200:
+              body:
+                application/json:
+                  schema: siglusShipmentDraftDto
+            400:
+              body:
+                application/json:
+                  schema: badRequestResponse
+            404:
+            403:
+              body:
+                application/json:
+                  schema: localizedMessage
         put:
           is: [ secured ]
           description: Create or update shipment draft. This endpoint requires SHIPMENT_EDIT right.
