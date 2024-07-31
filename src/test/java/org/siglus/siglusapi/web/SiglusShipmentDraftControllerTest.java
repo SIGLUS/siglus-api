@@ -55,4 +55,21 @@ public class SiglusShipmentDraftControllerTest {
     // then
     verify(siglusShipmentDraftService).deleteShipmentDraft(draftId);
   }
+
+  @Test
+  public void shouldGetShipmentDraftWhenGetShipmentDraft() {
+    controller.getShipmentDraft(draftId);
+
+    // then
+    verify(siglusShipmentDraftService).getShipmentDraft(draftId);
+  }
+
+  @Test
+  public void shouldCallGetShipmentDraftsByOrderIdWhenGetShipmentDrafts() {
+    UUID orderId = UUID.randomUUID();
+    controller.getShipmentDrafts(orderId);
+
+    // then
+    verify(siglusShipmentDraftService).getShipmentDraftByOrderId(orderId);
+  }
 }

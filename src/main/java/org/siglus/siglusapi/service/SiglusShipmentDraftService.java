@@ -505,6 +505,9 @@ public class SiglusShipmentDraftService {
     SiglusShipmentDraftDto dto = new SiglusShipmentDraftDto();
     dto.setId(shipmentDraftDto.getId());
     dto.setNotes(shipmentDraftDto.getNotes());
+    if (ObjectUtils.isEmpty(shipmentDraftDto.getLineItems())) {
+      return dto;
+    }
     Order order = orderRepository.findOne(shipmentDraftDto.getOrder().getId());
     UUID supplyFacility = order.getSupplyingFacilityId();
     boolean withLocation = facilityConfigHelper.isLocationManagementEnabled(supplyFacility);
