@@ -15,6 +15,9 @@
 
 package org.siglus.siglusapi.service.scheduledtask;
 
+import static org.siglus.siglusapi.constant.PaginationConstants.DEFAULT_PAGE_NUMBER;
+import static org.siglus.siglusapi.constant.PaginationConstants.NO_PAGINATION;
+
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
 
@@ -51,7 +54,11 @@ import org.siglus.siglusapi.constant.FieldConstants;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.service.SiglusRequisitionService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Slf4j
@@ -119,6 +126,14 @@ public class SiglusRequisitionAutoCloseService {
 
   private String buildForGroupKey(Requisition requisition) {
     return requisition.getFacilityId() + FieldConstants.SEPARATOR + requisition.getProgramId();
+  }
+
+  @Transactional
+  public void batchCloseRequisitions() {
+    Pageable pageable = new PageRequest(DEFAULT_PAGE_NUMBER, NO_PAGINATION);
+    Page<RequisitionWithSupplyingDepotsDto> dtoPage =
+        siglusRequisitionService.getRequisitionsForConvertToOrder(null, null, pageable);
+    closeExpiredRequisitionWithSupplyingDepotsDtos(dtoPage.getContent());
   }
 
   public void closeExpiredRequisitionWithSupplyingDepotsDtos(

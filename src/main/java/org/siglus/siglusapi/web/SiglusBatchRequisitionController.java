@@ -15,15 +15,12 @@
 
 package org.siglus.siglusapi.web;
 
-import static org.siglus.siglusapi.constant.PaginationConstants.DEFAULT_PAGE_NUMBER;
-import static org.siglus.siglusapi.constant.PaginationConstants.NO_PAGINATION;
 import static org.springframework.http.HttpStatus.NO_CONTENT;
 
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang.BooleanUtils;
 import org.openlmis.requisition.dto.ReleasableRequisitionBatchDto;
-import org.openlmis.requisition.dto.RequisitionWithSupplyingDepotsDto;
 import org.openlmis.requisition.dto.RequisitionsProcessingStatusDto;
 import org.siglus.siglusapi.localmachine.event.requisition.web.converttoorder.RequisitionConvertToOrderEmitter;
 import org.siglus.siglusapi.localmachine.event.requisition.web.release.RequisitionReleaseEmitter;
@@ -31,9 +28,6 @@ import org.siglus.siglusapi.service.BatchReleaseRequisitionService;
 import org.siglus.siglusapi.service.SiglusNotificationService;
 import org.siglus.siglusapi.service.scheduledtask.SiglusRequisitionAutoCloseService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
@@ -58,8 +52,6 @@ public class SiglusBatchRequisitionController {
   private final RequisitionConvertToOrderEmitter requisitionConvertToOrderEmitter;
 
   private final SiglusAuthenticationHelper siglusAuthenticationHelper;
-
-  private final SiglusRequisitionController siglusRequisitionController;
 
   private final SiglusRequisitionAutoCloseService siglusRequisitionAutoCloseService;
 
@@ -92,12 +84,7 @@ public class SiglusBatchRequisitionController {
   @PostMapping("/batchClose")
   @ResponseStatus(NO_CONTENT)
   @ResponseBody
-  @Transactional
   public void batchCloseRequisitions() {
-    Pageable pageable = new PageRequest(DEFAULT_PAGE_NUMBER, NO_PAGINATION);
-    Page<RequisitionWithSupplyingDepotsDto> dtoPage = siglusRequisitionController
-        .searchRequisitionsForApprovalList(null, null, pageable);
-    siglusRequisitionAutoCloseService
-        .closeExpiredRequisitionWithSupplyingDepotsDtos(dtoPage.getContent());
+    siglusRequisitionAutoCloseService.batchCloseRequisitions();
   }
 }

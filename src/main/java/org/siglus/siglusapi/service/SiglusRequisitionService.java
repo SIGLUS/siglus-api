@@ -211,6 +211,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.ObjectUtils;
@@ -414,7 +415,7 @@ public class SiglusRequisitionService {
     }
   }
 
-  @Transactional
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
   public void releaseWithoutOrder(RequisitionWithSupplyingDepotsDto requisitionDto) {
     ReleasableRequisitionDto releasableRequisitionDto = new ReleasableRequisitionDto();
     releasableRequisitionDto.setRequisitionId(requisitionDto.getRequisition().getId());
