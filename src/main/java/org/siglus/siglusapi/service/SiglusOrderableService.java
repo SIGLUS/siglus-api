@@ -32,6 +32,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -54,6 +55,7 @@ import org.openlmis.stockmanagement.util.Message;
 import org.openlmis.stockmanagement.web.Pagination;
 import org.siglus.common.constant.KitConstants;
 import org.siglus.common.domain.ProgramAdditionalOrderable;
+import org.siglus.common.domain.ProgramOrderablesExtension;
 import org.siglus.common.repository.ArchivedProductRepository;
 import org.siglus.common.repository.ProgramAdditionalOrderableRepository;
 import org.siglus.common.repository.ProgramOrderableRepository;
@@ -66,6 +68,7 @@ import org.siglus.siglusapi.dto.AvailableOrderablesDto;
 import org.siglus.siglusapi.dto.OrderableExpirationDateDto;
 import org.siglus.siglusapi.dto.ProgramOrderablesExtensionDto;
 import org.siglus.siglusapi.dto.QueryOrderableSearchParams;
+import org.siglus.siglusapi.dto.SiglusOrderableDto;
 import org.siglus.siglusapi.dto.SimplifyOrderablesDto;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.exception.NotFoundException;
@@ -402,5 +405,30 @@ public class SiglusOrderableService {
   public Set<UUID> findAllKitOrderableIds() {
     return siglusOrderableRepository.findByProductCodeCodeIn(KitConstants.ALL_KITS)
         .stream().map(Orderable::getId).collect(Collectors.toSet());
+  }
+
+  public List<SiglusOrderableDto> findByOrderableIds(Collection<UUID> orderableIds) {
+    if (ObjectUtils.isEmpty(orderableIds)) {
+      return new ArrayList<>();
+    }
+    Set<UUID> orderableSet = new HashSet<>(orderableIds);
+    Map<UUID, String> unitMap = programOrderablesExtensionRepository.findAllByOrderableIdIn(orderableSet).stream()
+        .collect(Collectors.toMap(ProgramOrderablesExtension::getOrderableId, ProgramOrderablesExtension::getUnit));
+    return findLatestVersionByIds(orderableSet).stream().map(
+        orderable -> {
+          String unit = unitMap.get(orderable.getId());
+          DispensableDto dispensableDto = null;
+          if (unit != null) {
+            dispensableDto = new DispensableDto(unit, "", "", unit);
+          }
+          SiglusOrderableDto dto = new SiglusOrderableDto();
+          dto.setId(orderable.getId());
+          dto.setFullProductName(orderable.getFullProductName());
+          dto.setProductCode(orderable.getProductCode());
+          dto.setVersionNumber(orderable.getVersionNumber());
+          dto.setDispensable(dispensableDto);
+          return dto;
+        })
+        .collect(Collectors.toList());
   }
 }

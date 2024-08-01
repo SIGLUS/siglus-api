@@ -90,6 +90,7 @@ import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.domain.requisition.VersionEntityReference;
 import org.openlmis.requisition.dto.ApprovedProductDto;
+import org.openlmis.requisition.dto.BaseDto;
 import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.dto.VersionObjectReferenceDto;
@@ -109,6 +110,8 @@ import org.siglus.siglusapi.dto.FulfillOrderDto;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.dto.OrderStatusDto;
 import org.siglus.siglusapi.dto.SiglusOrderDto;
+import org.siglus.siglusapi.dto.SiglusOrderWithOrderableDto;
+import org.siglus.siglusapi.dto.SiglusOrderableDto;
 import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
@@ -263,6 +266,9 @@ public class SiglusOrderService {
 
   @Autowired
   private SiglusShipmentDraftFulfillmentService siglusShipmentDraftFulfillmentService;
+
+  @Autowired
+  private SiglusOrderableService siglusOrderableService;
 
   private static final String SLASH = "/";
 
@@ -538,6 +544,16 @@ public class SiglusOrderService {
     order.setStatus(OrderStatus.CLOSED);
     log.info("save closed order: {}", order);
     orderRepository.save(order);
+  }
+
+  public SiglusOrderWithOrderableDto searchOrderWithOrderableDto(UUID orderId) {
+    SiglusOrderDto orderDto = searchOrderById(orderId);
+    List<UUID> orderableIds = orderDto.getAvailableProducts().stream().map(BaseDto::getId).collect(toList());
+    List<SiglusOrderableDto> orderablesDtos = siglusOrderableService.findByOrderableIds(orderableIds);
+    return SiglusOrderWithOrderableDto.builder()
+        .availableProducts(orderablesDtos)
+        .order(orderDto.getOrder())
+        .build();
   }
 
   public SiglusOrderDto searchOrderById(UUID orderId) {

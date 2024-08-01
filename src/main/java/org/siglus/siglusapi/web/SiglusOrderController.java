@@ -28,7 +28,7 @@ import org.openlmis.fulfillment.web.util.BasicOrderDto;
 import org.openlmis.fulfillment.web.util.OrderDto;
 import org.siglus.siglusapi.dto.FulfillOrderDto;
 import org.siglus.siglusapi.dto.OrderStatusDto;
-import org.siglus.siglusapi.dto.SiglusOrderDto;
+import org.siglus.siglusapi.dto.SiglusOrderWithOrderableDto;
 import org.siglus.siglusapi.repository.dto.StockCardReservedDto;
 import org.siglus.siglusapi.service.SiglusOrderService;
 import org.siglus.siglusapi.web.response.BasicOrderExtensionResponse;
@@ -119,8 +119,8 @@ public class SiglusOrderController {
   }
 
   @GetMapping("/{id}")
-  public SiglusOrderDto getOrder(@PathVariable("id") UUID orderId) {
-    return siglusOrderService.searchOrderById(orderId);
+  public SiglusOrderWithOrderableDto getOrder(@PathVariable("id") UUID orderId) {
+    return siglusOrderService.searchOrderWithOrderableDto(orderId);
   }
 
   @GetMapping("/{id}/suggestedQuantity")
