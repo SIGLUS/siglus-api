@@ -188,6 +188,8 @@ public class SiglusShipmentService {
   @Transactional
   public ShipmentDto createOrderAndShipmentByLocation(boolean isSubOrder,
       ShipmentExtensionRequest shipmentExtensionRequest) {
+    shipmentDraftService.deleteShipmentDraftLineItemsExtensionByOrderId(
+        shipmentExtensionRequest.getShipment().getOrder().getId());
     List<ShipmentLineItemDto> shipmentLineItemDtos = shipmentExtensionRequest.getShipment().lineItems();
     Multimap<String, ShipmentLineItemDto> uniqueKeyMap = ArrayListMultimap.create();
     shipmentLineItemDtos.forEach(shipmentLineItemDto -> {

@@ -337,11 +337,11 @@ public class SiglusShipmentDraftService {
     if (orderId == null) {
       return null;
     }
-    Collection<ShipmentDraft> drafts = shipmentDraftRepository.findByOrder(new Order(orderId));
+    List<ShipmentDraft> drafts = new ArrayList<>(shipmentDraftRepository.findByOrder(new Order(orderId)));
     if (ObjectUtils.isEmpty(drafts)) {
       return null;
     }
-    return drafts.stream().findFirst().get().getId();
+    return drafts.get(0).getId();
   }
 
   private Order getDraftOrder(UUID draftId) {
@@ -434,14 +434,26 @@ public class SiglusShipmentDraftService {
     return addedExtension;
   }
 
-  private void deleteShipmentDraftLineItemsExtension(UUID shipmentDraftId) {
-    ShipmentDraftDto shipmentDraft = draftController.getShipmentDraft(shipmentDraftId, Collections.emptySet());
+  private void deleteShipmentDraftLineItemsExtension(ShipmentDraftDto shipmentDraft) {
     List<UUID> shipmentDraftLineItemIds = shipmentDraft.getLineItems()
         .stream()
         .map(Importer::getId)
         .collect(Collectors.toList());
     shipmentDraftLineItemsExtensionRepository.deleteByShipmentDraftLineItemIdIn(shipmentDraftLineItemIds);
     shipmentDraftLineItemsExtensionRepository.flush();
+  }
+
+  private void deleteShipmentDraftLineItemsExtension(UUID shipmentDraftId) {
+    ShipmentDraftDto shipmentDraft = draftController.getShipmentDraft(shipmentDraftId, Collections.emptySet());
+    deleteShipmentDraftLineItemsExtension(shipmentDraft);
+  }
+
+  public void deleteShipmentDraftLineItemsExtensionByOrderId(UUID orderId) {
+    Page<ShipmentDraftDto> shipmentDraftDto = siglusShipmentDraftFulfillmentService.getShipmentDraftByOrderId(orderId);
+    if (CollectionUtils.isEmpty(shipmentDraftDto.getContent())) {
+      return;
+    }
+    deleteShipmentDraftLineItemsExtension(shipmentDraftDto.getContent().get(0));
   }
 
   private void saveShipmentDraftLineItemsExtension(ShipmentDraftDto shipmentDraftDto) {

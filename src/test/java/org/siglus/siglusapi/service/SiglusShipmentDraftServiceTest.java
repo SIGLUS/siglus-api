@@ -20,6 +20,7 @@ import static com.google.common.collect.Sets.newHashSet;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.anyBoolean;
@@ -48,10 +49,14 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.openlmis.fulfillment.domain.Identifiable;
 import org.openlmis.fulfillment.domain.Order;
 import org.openlmis.fulfillment.domain.OrderLineItem;
 import org.openlmis.fulfillment.domain.OrderStatus;
+import org.openlmis.fulfillment.domain.ShipmentDraft;
+import org.openlmis.fulfillment.domain.ShipmentLineItem;
 import org.openlmis.fulfillment.repository.OrderRepository;
+import org.openlmis.fulfillment.repository.ShipmentDraftRepository;
 import org.openlmis.fulfillment.service.referencedata.FacilityDto;
 import org.openlmis.fulfillment.service.referencedata.OrderableDto;
 import org.openlmis.fulfillment.service.referencedata.ProgramDto;
@@ -141,6 +146,9 @@ public class SiglusShipmentDraftServiceTest {
 
   @Mock
   private SiglusStockCardService siglusStockCardService;
+
+  @Mock
+  private ShipmentDraftRepository shipmentDraftRepository;
 
   private final UUID draftId = UUID.randomUUID();
 
@@ -755,6 +763,32 @@ public class SiglusShipmentDraftServiceTest {
     assertEquals(1, drafts.size());
   }
 
+  @Test
+  public void shouldReturnNullWhenGetDraftIdByOrderIdGivenOrderIdIsNull() {
+    UUID result = siglusShipmentDraftService.getDraftIdByOrderId(null);
+    assertNull(result);
+  }
+
+  @Test
+  public void shouldReturnEmptyListWhenGetDraftIdByOrderIdGivenDraftNotExist() {
+    UUID orderId = UUID.randomUUID();
+    when(shipmentDraftRepository.findByOrder(new Order(orderId))).thenReturn(new ArrayList<>());
+
+    UUID result = siglusShipmentDraftService.getDraftIdByOrderId(orderId);
+    assertNull(result);
+  }
+
+  @Test
+  public void shouldReturnDraftIdWhenGetDraftIdByOrderIdGivenDraftExists() {
+    ShipmentDraftImporter testDto = new ShipmentDraftImporter();
+    ShipmentDraft draft = ShipmentDraft.newInstance(testDto);
+    UUID orderId = UUID.randomUUID();
+    when(shipmentDraftRepository.findByOrder(new Order(orderId))).thenReturn(Collections.singletonList(draft));
+
+    UUID result = siglusShipmentDraftService.getDraftIdByOrderId(orderId);
+    assertNotNull(result);
+  }
+
   private ShipmentDraftDto buildShipmentDraftDto() {
     OrderObjectReferenceDto order = new OrderObjectReferenceDto(orderId);
     order.setOrderLineItems(newArrayList());
@@ -814,5 +848,27 @@ public class SiglusShipmentDraftServiceTest {
     LotDto lotDto3 = new LotDto();
     lotDto3.setId(lotId3);
     when(siglusLotService.getLotList(any())).thenReturn(newArrayList(lotDto1, lotDto2, lotDto3));
+  }
+
+  static class ShipmentDraftImporter implements ShipmentDraft.Importer {
+    @Override
+    public UUID getId() {
+      return UUID.randomUUID();
+    }
+
+    @Override
+    public Identifiable getOrder() {
+      return new ObjectReferenceDto(UUID.randomUUID());
+    }
+
+    @Override
+    public String getNotes() {
+      return "";
+    }
+
+    @Override
+    public List<ShipmentLineItem.Importer> getLineItems() {
+      return Collections.emptyList();
+    }
   }
 }
