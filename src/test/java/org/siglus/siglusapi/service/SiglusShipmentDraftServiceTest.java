@@ -203,7 +203,7 @@ public class SiglusShipmentDraftServiceTest {
     order.setId(orderId);
     when(orderRepository.findOne(orderId)).thenReturn(order);
     when(facilityConfigHelper.isLocationManagementEnabled(facilityDto.getId()))
-        .thenReturn(false);
+        .thenReturn(true);
     StockCard stockCard1 = new StockCard();
     stockCard1.setId(stockCardId);
     stockCard1.setLotId(lotId);
