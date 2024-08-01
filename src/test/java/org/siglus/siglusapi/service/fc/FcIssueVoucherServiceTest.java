@@ -313,7 +313,7 @@ public class FcIssueVoucherServiceTest {
     shipmentLineItemDto.setLotId(lotId);
     ShipmentDraftDto shipmentDraftDto = new ShipmentDraftDto();
     shipmentDraftDto.setLineItems(Collections.singletonList(shipmentLineItemDto));
-    when(shipmentDraftService.createShipmentDraft(any())).thenReturn(shipmentDraftDto);
+    when(shipmentDraftService.createShipmentDraft(any(ShipmentDraftDto.class))).thenReturn(shipmentDraftDto);
     ShipmentDto shipmentDto = new ShipmentDto();
     shipmentDto.setId(UUID.randomUUID());
     ShipmentsExtension shipmentsExtension = new ShipmentsExtension();
@@ -384,7 +384,7 @@ public class FcIssueVoucherServiceTest {
     shipmentLineItemDto.setLotId(lotId);
     ShipmentDraftDto shipmentDraftDto = new ShipmentDraftDto();
     shipmentDraftDto.setLineItems(Collections.singletonList(shipmentLineItemDto));
-    when(shipmentDraftService.createShipmentDraft(any())).thenReturn(shipmentDraftDto);
+    when(shipmentDraftService.createShipmentDraft(any(ShipmentDraftDto.class))).thenReturn(shipmentDraftDto);
     ShipmentDto shipmentDto = new ShipmentDto();
     shipmentDto.setId(UUID.randomUUID());
     ShipmentsExtension shipmentsExtension = new ShipmentsExtension();
@@ -444,7 +444,7 @@ public class FcIssueVoucherServiceTest {
     shipmentLineItemDto.setLotId(lotId);
     ShipmentDraftDto shipmentDraftDto = new ShipmentDraftDto();
     shipmentDraftDto.setLineItems(Collections.singletonList(shipmentLineItemDto));
-    when(shipmentDraftService.createShipmentDraft(any())).thenReturn(shipmentDraftDto);
+    when(shipmentDraftService.createShipmentDraft(any(ShipmentDraftDto.class))).thenReturn(shipmentDraftDto);
     ShipmentDto shipmentDto = new ShipmentDto();
     shipmentDto.setId(UUID.randomUUID());
     ShipmentsExtension shipmentsExtension = new ShipmentsExtension();

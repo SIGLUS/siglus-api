@@ -43,8 +43,9 @@ public class SiglusShipmentDraftController {
   @PostMapping
   @ResponseStatus(HttpStatus.CREATED)
   @ResponseBody
-  public ShipmentDraftDto createShipmentDraft(@RequestBody ShipmentDraftDto draftDto) {
-    return siglusShipmentDraftService.createShipmentDraft(draftDto);
+  public SiglusShipmentDraftDto createShipmentDraft(@RequestBody ShipmentDraftDto draftDto) {
+    // CreateShipmentDraftRequest
+    return siglusShipmentDraftService.createShipmentDraft(draftDto.getOrder().getId());
   }
 
   @DeleteMapping("/{id}")

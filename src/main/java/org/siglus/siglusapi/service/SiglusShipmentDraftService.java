@@ -46,12 +46,17 @@ import org.openlmis.fulfillment.web.shipment.LocationDto;
 import org.openlmis.fulfillment.web.shipment.ShipmentLineItemDto;
 import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftController;
 import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftDto;
+import org.openlmis.fulfillment.web.util.ObjectReferenceDto;
+import org.openlmis.fulfillment.web.util.OrderDto;
 import org.openlmis.fulfillment.web.util.OrderLineItemDto;
+import org.openlmis.fulfillment.web.util.OrderObjectReferenceDto;
+import org.openlmis.fulfillment.web.util.VersionObjectReferenceDto;
 import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.siglus.siglusapi.domain.OrderLineItemExtension;
 import org.siglus.siglusapi.domain.ShipmentDraftLineItemsExtension;
 import org.siglus.siglusapi.dto.LotDto;
 import org.siglus.siglusapi.dto.Message;
+import org.siglus.siglusapi.dto.SiglusOrderDto;
 import org.siglus.siglusapi.dto.SiglusShipmentDraftDto;
 import org.siglus.siglusapi.dto.SiglusShipmentDraftLineItemDto;
 import org.siglus.siglusapi.exception.ValidationMessageException;
@@ -110,6 +115,17 @@ public class SiglusShipmentDraftService {
   private SiglusOrderableService siglusOrderableService;
   @Autowired
   private SiglusLotService siglusLotService;
+
+  @Transactional
+  public SiglusShipmentDraftDto createShipmentDraft(UUID orderId) {
+    SiglusOrderDto orderDto = siglusOrderService.searchOrderByIdWithoutProducts(orderId);
+    if (!orderDto.canStartFulfillment()) {
+      throw new IllegalArgumentException("order id : " + orderId + " can't start fulfillment");
+    }
+    ShipmentDraftDto draftDto = createShipmentDraftForOrder(orderDto.getOrder());
+    ShipmentDraftDto savedDraftDto = draftController.createShipmentDraft(draftDto);
+    return convertFromShipmentDraftDto(savedDraftDto);
+  }
 
   @Transactional
   public ShipmentDraftDto createShipmentDraft(ShipmentDraftDto draftDto) {
@@ -530,12 +546,10 @@ public class SiglusShipmentDraftService {
 
   private Map<String, StockCardStockDto> getLatestSohMap(UUID supplyFacility,
                                                          Set<UUID> orderableSet, boolean withLocation) {
-    List<UUID> stockCardIds =
-        siglusStockCardService.findStockCardIdByFacilityAndOrderables(supplyFacility, orderableSet);
-    Map<UUID, StockCard> stockCardMap = siglusStockCardService.findStockCardByIds(stockCardIds)
+    Map<UUID, StockCard> stockCardMap = siglusStockCardService.findStockCardsByFacilityAndOrderables(
+        supplyFacility, orderableSet)
         .stream().collect(toMap(StockCard::getId, Function.identity()));
-    return siglusStockCardSummariesService.getLatestStockOnHandByIds(
-            stockCardIds, withLocation).stream()
+    return siglusStockCardSummariesService.getLatestStockOnHandByIds(stockCardMap.keySet(), withLocation).stream()
         .peek(dto -> {
           StockCard stockCard = stockCardMap.get(dto.getStockCardId());
           dto.setLotId(stockCard.getLotId());
@@ -606,5 +620,43 @@ public class SiglusShipmentDraftService {
         })
         .filter(dto -> dto.getStockOnHand() != null && dto.getStockOnHand() > 0)
         .collect(Collectors.toList());
+  }
+
+  private ShipmentDraftDto createShipmentDraftForOrder(OrderDto order) {
+    UUID supplyFacility = order.getSupplyingFacility().getId();
+    boolean withLocation = facilityConfigHelper.isLocationManagementEnabled(supplyFacility);
+    Set<UUID> orderableIdSet = order.orderLineItems().stream()
+        .map(lineItem -> lineItem.getOrderableIdentity().getId()).collect(Collectors.toSet());
+    Map<String, StockCardStockDto> latestSohMap = getLatestSohMap(supplyFacility, orderableIdSet, withLocation);
+    Map<UUID, List<StockCardStockDto>> orderableGroup = latestSohMap.values().stream()
+        .collect(Collectors.groupingBy(StockCardStockDto::getOrderableId));
+    List<ShipmentLineItemDto> draftLineItems = order.orderLineItems().stream().map(
+        orderLineItemDto -> createShipmentDraftLineItemDtos(orderLineItemDto, orderableGroup)
+        )
+        .flatMap(Collection::stream).collect(Collectors.toList());
+    OrderObjectReferenceDto orderObjectReferenceDto = new OrderObjectReferenceDto(order.getId());
+    BeanUtils.copyProperties(order, orderObjectReferenceDto);
+    return new ShipmentDraftDto(null, null, orderObjectReferenceDto, null, draftLineItems);
+  }
+
+  private List<ShipmentLineItemDto> createShipmentDraftLineItemDtos(OrderLineItemDto orderLineItem,
+      Map<UUID, List<StockCardStockDto>> orderableGroup) {
+    List<StockCardStockDto> stockCardStockDtos = orderableGroup.get(orderLineItem.getOrderable().getId());
+    if (ObjectUtils.isEmpty(stockCardStockDtos)) {
+      return Collections.emptyList();
+    }
+    return stockCardStockDtos.stream().filter(dto -> dto.getStockOnHand() != null && dto.getStockOnHand() > 0)
+        .map(dto -> {
+          VersionObjectReferenceDto orderDto =
+              new VersionObjectReferenceDto(orderLineItem.getOrderable().getId(), null, null,
+                  orderLineItem.getOrderable().getVersionNumber());
+          ObjectReferenceDto lotDto = new ObjectReferenceDto(dto.getLotId());
+          LocationDto locationDto = null;
+          if (dto.getArea() != null && dto.getLocationCode() != null) {
+            locationDto = new LocationDto(dto.getArea(), dto.getLocationCode());
+          }
+          return new ShipmentLineItemDto(null, null, orderDto, lotDto, locationDto,
+              dto.getStockOnHand().longValue(), 0L, null);
+        }).collect(Collectors.toList());
   }
 }

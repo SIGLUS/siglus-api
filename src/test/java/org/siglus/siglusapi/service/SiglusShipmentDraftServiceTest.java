@@ -50,14 +50,17 @@ import org.mockito.Spy;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.fulfillment.domain.Order;
 import org.openlmis.fulfillment.domain.OrderLineItem;
+import org.openlmis.fulfillment.domain.OrderStatus;
 import org.openlmis.fulfillment.repository.OrderRepository;
 import org.openlmis.fulfillment.service.referencedata.FacilityDto;
+import org.openlmis.fulfillment.service.referencedata.OrderableDto;
 import org.openlmis.fulfillment.service.referencedata.ProgramDto;
 import org.openlmis.fulfillment.web.shipment.LocationDto;
 import org.openlmis.fulfillment.web.shipment.ShipmentLineItemDto;
 import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftController;
 import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftDto;
 import org.openlmis.fulfillment.web.util.ObjectReferenceDto;
+import org.openlmis.fulfillment.web.util.OrderDto;
 import org.openlmis.fulfillment.web.util.OrderLineItemDto;
 import org.openlmis.fulfillment.web.util.OrderObjectReferenceDto;
 import org.openlmis.fulfillment.web.util.VersionObjectReferenceDto;
@@ -66,6 +69,7 @@ import org.siglus.siglusapi.domain.FacilityLocations;
 import org.siglus.siglusapi.domain.OrderLineItemExtension;
 import org.siglus.siglusapi.domain.ShipmentDraftLineItemsExtension;
 import org.siglus.siglusapi.dto.LotDto;
+import org.siglus.siglusapi.dto.SiglusOrderDto;
 import org.siglus.siglusapi.dto.SiglusShipmentDraftDto;
 import org.siglus.siglusapi.dto.SiglusShipmentDraftLineItemDto;
 import org.siglus.siglusapi.exception.ValidationMessageException;
@@ -80,6 +84,7 @@ import org.siglus.siglusapi.repository.dto.StockCardReservedDto;
 import org.siglus.siglusapi.repository.dto.StockCardStockDto;
 import org.siglus.siglusapi.service.client.SiglusShipmentDraftFulfillmentService;
 import org.siglus.siglusapi.util.FacilityConfigHelper;
+import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.PageImpl;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -162,6 +167,78 @@ public class SiglusShipmentDraftServiceTest {
     List<ShipmentLineItemDto> shipmentLineItemDtos = Collections.singletonList(lineItemDto);
     shipmentDraft.setLineItems(shipmentLineItemDtos);
     when(draftController.getShipmentDraft(draftId, Collections.emptySet())).thenReturn(shipmentDraft);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void shouldThrowExceptionWhenCreateShipmentDraftGivenOrderCanNotStartFulfillment() {
+    SiglusOrderDto siglusOrderDto = new SiglusOrderDto();
+    OrderDto orderDto = new OrderDto();
+    siglusOrderDto.setOrder(orderDto);
+    orderDto.setId(orderId);
+    orderDto.setStatus(OrderStatus.FULFILLING);
+    when(siglusOrderService.searchOrderByIdWithoutProducts(orderId)).thenReturn(siglusOrderDto);
+
+    siglusShipmentDraftService.createShipmentDraft(orderId);
+  }
+
+  @Test
+  public void shouldCreateShipmentDraftGivenOrderCanStartFulfillment() {
+    SiglusOrderDto siglusOrderDto = new SiglusOrderDto();
+    OrderDto orderDto = new OrderDto();
+    siglusOrderDto.setOrder(orderDto);
+    orderDto.setId(orderId);
+    orderDto.setStatus(OrderStatus.ORDERED);
+    FacilityDto facilityDto = new FacilityDto();
+    orderDto.setSupplyingFacility(facilityDto);
+    facilityDto.setId(UUID.randomUUID());
+    OrderLineItemDto orderLineItemDto = new OrderLineItemDto();
+    orderDto.setOrderLineItems(Collections.singletonList(orderLineItemDto));
+    orderLineItemDto.setId(lineItemId);
+    OrderableDto orderableDto = new OrderableDto();
+    orderableDto.setId(orderableId);
+    orderableDto.getMeta().setVersionNumber(1L);
+    orderLineItemDto.setOrderable(orderableDto);
+    when(siglusOrderService.searchOrderByIdWithoutProducts(orderId)).thenReturn(siglusOrderDto);
+    Order order = new Order();
+    order.setId(orderId);
+    when(orderRepository.findOne(orderId)).thenReturn(order);
+    when(facilityConfigHelper.isLocationManagementEnabled(facilityDto.getId()))
+        .thenReturn(false);
+    StockCard stockCard1 = new StockCard();
+    stockCard1.setId(stockCardId);
+    stockCard1.setLotId(lotId);
+    stockCard1.setOrderableId(orderableId);
+    when(siglusStockCardService.findStockCardsByFacilityAndOrderables(any(), any()))
+        .thenReturn(newArrayList(stockCard1));
+    StockCardStockDto stockDto1 = StockCardStockDto.builder()
+        .stockCardId(stockCardId)
+        .orderableId(orderableId)
+        .lotId(lotId)
+        .stockOnHand(10)
+        .build();
+    when(siglusStockCardSummariesService.getLatestStockOnHandByIds(any(), anyBoolean()))
+        .thenReturn(newArrayList(stockDto1));
+    ShipmentLineItemDto lineItemDto = new ShipmentLineItemDto();
+    lineItemDto.setId(lineItemId);
+    lineItemDto.setLotId(lotId);
+    lineItemDto.setOrderable(orderableDto);
+    OrderObjectReferenceDto orderObjectReferenceDto = new OrderObjectReferenceDto(orderDto.getId());
+    BeanUtils.copyProperties(orderDto, orderObjectReferenceDto);
+    ShipmentDraftDto draftDto = new ShipmentDraftDto(null, null, orderObjectReferenceDto,
+        null, Collections.singletonList(lineItemDto));
+    when(draftController.createShipmentDraft(any())).thenReturn(draftDto);
+    OrderableVersionDto orderableVersionDto = new OrderableVersionDto();
+    orderableVersionDto.setId(orderableId);
+    orderableVersionDto.setVersionNumber(1L);
+    when(siglusOrderableService.findLatestVersionByIds(any())).thenReturn(newArrayList(orderableVersionDto));
+    LotDto lotDto = new LotDto();
+    lotDto.setId(lotId);
+    when(siglusLotService.getLotList(any())).thenReturn(newArrayList(lotDto));
+
+    SiglusShipmentDraftDto shipmentDraft = siglusShipmentDraftService.createShipmentDraft(orderId);
+
+    assertNotNull(shipmentDraft);
+    assertEquals(1, shipmentDraft.getLineItems().size());
   }
 
   @Test
@@ -612,9 +689,8 @@ public class SiglusShipmentDraftServiceTest {
     stockCard2.setId(stockCardId2);
     stockCard2.setLotId(lotId2);
     stockCard2.setOrderableId(orderableId2);
-    when(siglusStockCardService.findStockCardIdByFacilityAndOrderables(any(), any()))
-        .thenReturn(newArrayList(stockCardId, stockCardId2));
-    when(siglusStockCardService.findStockCardByIds(any())).thenReturn(newArrayList(stockCard1, stockCard2));
+    when(siglusStockCardService.findStockCardsByFacilityAndOrderables(any(), any()))
+        .thenReturn(newArrayList(stockCard1, stockCard2));
     StockCardStockDto stockDto1 = StockCardStockDto.builder()
         .stockCardId(stockCardId)
         .orderableId(orderableId1)
@@ -657,13 +733,12 @@ public class SiglusShipmentDraftServiceTest {
     LotDto lotDto = new LotDto();
     lotDto.setId(lotId);
     when(siglusLotService.getLotList(any())).thenReturn(newArrayList(lotDto));
-    when(siglusStockCardService.findStockCardIdByFacilityAndOrderables(any(), any()))
-        .thenReturn(newArrayList(stockCardId));
     StockCard stockCard = new StockCard();
     stockCard.setId(stockCardId);
     stockCard.setLotId(lotId);
     stockCard.setOrderableId(orderableId);
-    when(siglusStockCardService.findStockCardByIds(any())).thenReturn(newArrayList(stockCard));
+    when(siglusStockCardService.findStockCardsByFacilityAndOrderables(any(), any()))
+        .thenReturn(newArrayList(stockCard));
     StockCardStockDto stockDto = StockCardStockDto.builder()
         .stockCardId(stockCardId)
         .orderableId(orderableId)

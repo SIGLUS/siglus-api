@@ -439,4 +439,11 @@ public class SiglusStockCardService {
     List<StockCard> stockCards = stockCardRepository.findByFacilityIdAndOrderableId(facilityId, orderableId);
     return stockCards.stream().map(StockCard::getLotId).filter(Objects::nonNull).collect(Collectors.toList());
   }
+
+  public List<StockCard> findStockCardsByFacilityAndOrderables(UUID facilityId, Collection<UUID> orderableIds) {
+    if (ObjectUtils.isEmpty(orderableIds) || ObjectUtils.isEmpty(facilityId)) {
+      return newArrayList();
+    }
+    return stockCardRepository.findByFacilityIdAndOrderableIdIn(facilityId, orderableIds);
+  }
 }

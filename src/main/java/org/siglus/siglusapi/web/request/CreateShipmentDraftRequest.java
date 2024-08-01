@@ -13,29 +13,14 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.dto;
+package org.siglus.siglusapi.web.request;
 
-import java.util.Set;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
+import java.util.UUID;
+import javax.validation.constraints.NotNull;
 import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.openlmis.fulfillment.domain.OrderStatus;
-import org.openlmis.fulfillment.web.util.OrderDto;
-import org.openlmis.requisition.dto.VersionObjectReferenceDto;
 
 @Data
-@AllArgsConstructor
-@NoArgsConstructor
-@Builder
-public class SiglusOrderDto {
-
-  private OrderDto order;
-
-  private Set<VersionObjectReferenceDto> availableProducts;
-
-  public boolean canStartFulfillment() {
-    return OrderStatus.ORDERED == order.getStatus()
-        || OrderStatus.PARTIALLY_FULFILLED.equals(order.getStatus());
-  }
+public class CreateShipmentDraftRequest {
+  @NotNull
+  private UUID orderId;
 }

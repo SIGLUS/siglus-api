@@ -73,4 +73,6 @@ public interface SiglusStockCardRepository extends JpaRepository<StockCard, UUID
       nativeQuery = true)
   List<String> findStockCardIdByFacilityAndOrderables(@Param("facilityId") UUID facilityId,
                                                      @Param("orderableIds") Collection<UUID> orderableIds);
+
+  List<StockCard> findByFacilityIdAndOrderableIdIn(UUID facilityId, Collection<UUID> orderableIds);
 }
