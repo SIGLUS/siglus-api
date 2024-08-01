@@ -141,13 +141,23 @@ public class SiglusShipmentDraftService {
   @Transactional
   public ShipmentDraftDto updateShipmentDraft(UUID id, ShipmentDraftDto draftDto) {
     checkStockOnHandQuantity(id, draftDto);
+    boolean hasLocation =
+        facilityConfigHelper.isLocationManagementEnabled(draftDto.getOrder().getSupplyingFacility().getId());
+    if (hasLocation) {
+      return updateShipmentDraftByLocation(id, draftDto);
+    }
     updateOrderLineItemsWithExtension(draftDto);
     return draftController.updateShipmentDraft(id, draftDto);
   }
 
   @Transactional
   public void deleteShipmentDraft(UUID id) {
-    deleteOrderLineItemAndInitialedExtension(getDraftOrder(id));
+    Order draftOrder = getDraftOrder(id);
+    deleteOrderLineItemAndInitialedExtension(draftOrder);
+    boolean hasLocation = facilityConfigHelper.isLocationManagementEnabled(draftOrder.getSupplyingFacilityId());
+    if (hasLocation) {
+      deleteShipmentDraftLineItemsExtension(id);
+    }
     draftController.deleteShipmentDraft(id);
   }
 
@@ -164,14 +174,7 @@ public class SiglusShipmentDraftService {
     return Collections.singletonList(convertFromShipmentDraftDto(shipmentDraftDto.getContent().get(0)));
   }
 
-  public ShipmentDraftDto getShipmentDraftByLocation(UUID orderId) {
-    Page<ShipmentDraftDto> shipmentDraftDto = siglusShipmentDraftFulfillmentService.getShipmentDraftByOrderId(orderId);
-    return fulfillShipmentDraftByLocation(shipmentDraftDto.getContent().get(0));
-  }
-
-  @Transactional
-  public ShipmentDraftDto updateShipmentDraftByLocation(UUID shipmentDraftId, ShipmentDraftDto draftDto) {
-    checkStockOnHandQuantity(shipmentDraftId, draftDto);
+  private ShipmentDraftDto updateShipmentDraftByLocation(UUID shipmentDraftId, ShipmentDraftDto draftDto) {
     Multimap<String, ShipmentLineItemDto> uniqueKeyMap = ArrayListMultimap.create();
     draftDto.lineItems().forEach(shipmentLineItemDto -> {
       if (shipmentLineItemDto.getLotId() == null && shipmentLineItemDto.getId() != null) {
@@ -201,13 +204,6 @@ public class SiglusShipmentDraftService {
       return shipmentLineItemDto.getOrderable().getId().toString();
     }
     return shipmentLineItemDto.getLot().getId() + "&" + shipmentLineItemDto.getOrderable().getId();
-  }
-
-  @Transactional
-  public void deleteShipmentDraftByLocation(UUID shipmentDraftId) {
-    deleteOrderLineItemAndInitialedExtension(getDraftOrder(shipmentDraftId));
-    deleteShipmentDraftLineItemsExtension(shipmentDraftId);
-    draftController.deleteShipmentDraft(shipmentDraftId);
   }
 
   public void deleteOrderLineItemAndInitialedExtension(Order order) {
@@ -461,7 +457,6 @@ public class SiglusShipmentDraftService {
         .stream()
         .map(Importer::getId)
         .collect(Collectors.toList());
-    log.info("delete shipmentDraftLineItemsExtension, shipmentDraftId: {}", shipmentDraftId);
     shipmentDraftLineItemsExtensionRepository.deleteByShipmentDraftLineItemIdIn(shipmentDraftLineItemIds);
   }
 

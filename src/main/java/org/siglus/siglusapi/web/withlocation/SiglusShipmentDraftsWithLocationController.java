@@ -15,11 +15,14 @@
 
 package org.siglus.siglusapi.web.withlocation;
 
+import java.util.List;
 import java.util.UUID;
 import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftDto;
+import org.siglus.siglusapi.dto.SiglusShipmentDraftDto;
 import org.siglus.siglusapi.service.SiglusShipmentDraftService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.util.ObjectUtils;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -36,19 +39,23 @@ public class SiglusShipmentDraftsWithLocationController {
   private SiglusShipmentDraftService siglusShipmentDraftService;
 
   @GetMapping("/{id}")
-  public ShipmentDraftDto getShipmentDraftByLocation(@PathVariable UUID id) {
-    return siglusShipmentDraftService.getShipmentDraftByLocation(id);
+  public SiglusShipmentDraftDto getShipmentDraftByLocation(@PathVariable UUID id) {
+    List<SiglusShipmentDraftDto> drafts = siglusShipmentDraftService.getShipmentDraftByOrderId(id);
+    if (ObjectUtils.isEmpty(drafts)) {
+      throw new IllegalArgumentException("No shipment draft found with order id: " + id);
+    }
+    return drafts.get(0);
   }
 
   @PutMapping("/{id}")
   public ShipmentDraftDto updateShipmentDraftByLocation(@PathVariable UUID id,
       @RequestBody ShipmentDraftDto draftDto) {
-    return siglusShipmentDraftService.updateShipmentDraftByLocation(id, draftDto);
+    return siglusShipmentDraftService.updateShipmentDraft(id, draftDto);
   }
 
   @DeleteMapping("/{id}")
   @ResponseStatus(HttpStatus.NO_CONTENT)
   public void deleteShipmentDraftByLocation(@PathVariable UUID id) {
-    siglusShipmentDraftService.deleteShipmentDraftByLocation(id);
+    siglusShipmentDraftService.deleteShipmentDraft(id);
   }
 }

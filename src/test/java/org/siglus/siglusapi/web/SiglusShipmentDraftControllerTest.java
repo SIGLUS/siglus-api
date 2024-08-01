@@ -77,4 +77,16 @@ public class SiglusShipmentDraftControllerTest {
     // then
     verify(siglusShipmentDraftService).getShipmentDraftByOrderId(orderId);
   }
+
+  @Test
+  public void shouldCallServiceWhenUpdateShipmentDraft() {
+    // given
+    ShipmentDraftDto draftDto = new ShipmentDraftDto();
+
+    // when
+    controller.updateShipmentDraft(draftId, draftDto);
+
+    // then
+    verify(siglusShipmentDraftService).updateShipmentDraft(draftId, draftDto);
+  }
 }

@@ -16,7 +16,9 @@
 package org.siglus.siglusapi.web.withlocation;
 
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
+import java.util.Collections;
 import java.util.UUID;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -24,7 +26,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftDto;
-import org.siglus.siglusapi.localmachine.event.order.fulfillment.OrderFulfillmentSyncedEmitter;
+import org.siglus.siglusapi.dto.SiglusShipmentDraftDto;
 import org.siglus.siglusapi.service.SiglusShipmentDraftService;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -35,18 +37,25 @@ public class SiglusShipmentDraftsWithLocationControllerTest {
 
   @Mock
   private SiglusShipmentDraftService siglusShipmentDraftService;
-  @Mock
-  private OrderFulfillmentSyncedEmitter orderFulfillmentSyncedEmitter;
 
   private final UUID draftId = UUID.randomUUID();
 
   @Test
   public void shouldGetShipmentDraftByLocation() {
+    when(siglusShipmentDraftService.getShipmentDraftByOrderId(draftId))
+        .thenReturn(Collections.singletonList(new SiglusShipmentDraftDto()));
     // when
     siglusShipmentDraftsWithLocationController.getShipmentDraftByLocation(draftId);
 
     // then
-    verify(siglusShipmentDraftService).getShipmentDraftByLocation(draftId);
+    verify(siglusShipmentDraftService).getShipmentDraftByOrderId(draftId);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void shouldThrowIllegalArgumentExceptionWhenGetShipmentDraftByLocation() {
+    when(siglusShipmentDraftService.getShipmentDraftByOrderId(UUID.randomUUID())).thenReturn(Collections.emptyList());
+
+    siglusShipmentDraftsWithLocationController.getShipmentDraftByLocation(draftId);
   }
 
   @Test
@@ -58,7 +67,7 @@ public class SiglusShipmentDraftsWithLocationControllerTest {
     siglusShipmentDraftsWithLocationController.updateShipmentDraftByLocation(draftId, draftDto);
 
     // then
-    verify(siglusShipmentDraftService).updateShipmentDraftByLocation(draftId, draftDto);
+    verify(siglusShipmentDraftService).updateShipmentDraft(draftId, draftDto);
   }
 
   @Test
@@ -67,6 +76,6 @@ public class SiglusShipmentDraftsWithLocationControllerTest {
     siglusShipmentDraftsWithLocationController.deleteShipmentDraftByLocation(draftId);
 
     // then
-    verify(siglusShipmentDraftService).deleteShipmentDraftByLocation(draftId);
+    verify(siglusShipmentDraftService).deleteShipmentDraft(draftId);
   }
 }
