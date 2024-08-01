@@ -28,6 +28,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
@@ -84,7 +85,6 @@ import org.springframework.util.ObjectUtils;
 @AllArgsConstructor
 @NoArgsConstructor
 public class SiglusShipmentDraftService {
-
   @Autowired
   private SiglusShipmentDraftFulfillmentService siglusShipmentDraftFulfillmentService;
   @Autowired
@@ -124,6 +124,12 @@ public class SiglusShipmentDraftService {
     }
     ShipmentDraftDto draftDto = createShipmentDraftForOrder(orderDto.getOrder());
     ShipmentDraftDto savedDraftDto = draftController.createShipmentDraft(draftDto);
+    boolean hasLocation =
+        facilityConfigHelper.isLocationManagementEnabled(orderDto.getOrder().getSupplyingFacility().getId());
+    if (hasLocation) {
+      fillLocationForCreatedShipmentDraft(savedDraftDto, draftDto);
+      saveShipmentDraftLineItemsExtension(savedDraftDto);
+    }
     return convertFromShipmentDraftDto(savedDraftDto);
   }
 
@@ -141,12 +147,12 @@ public class SiglusShipmentDraftService {
   @Transactional
   public ShipmentDraftDto updateShipmentDraft(UUID id, ShipmentDraftDto draftDto) {
     checkStockOnHandQuantity(id, draftDto);
+    updateOrderLineItemsWithExtension(draftDto);
     boolean hasLocation =
         facilityConfigHelper.isLocationManagementEnabled(draftDto.getOrder().getSupplyingFacility().getId());
     if (hasLocation) {
       return updateShipmentDraftByLocation(id, draftDto);
     }
-    updateOrderLineItemsWithExtension(draftDto);
     return draftController.updateShipmentDraft(id, draftDto);
   }
 
@@ -175,27 +181,32 @@ public class SiglusShipmentDraftService {
   }
 
   private ShipmentDraftDto updateShipmentDraftByLocation(UUID shipmentDraftId, ShipmentDraftDto draftDto) {
-    Multimap<String, ShipmentLineItemDto> uniqueKeyMap = ArrayListMultimap.create();
+    Map<UUID, ShipmentLineItemDto> originMap = new HashMap<>();
+    Multimap<String, ShipmentLineItemDto> addedMap = ArrayListMultimap.create();
     draftDto.lineItems().forEach(shipmentLineItemDto -> {
       if (shipmentLineItemDto.getLotId() == null && shipmentLineItemDto.getId() != null) {
         shipmentLineItemDto.setId(null);
       }
-      String uniqueKey = buildUniqueKey(shipmentLineItemDto);
-      uniqueKeyMap.put(uniqueKey, shipmentLineItemDto);
-    });
-    updateOrderLineItemsWithExtension(draftDto);
-    ShipmentDraftDto shipmentDraftDtoAfterMerge = mergeShipmentDraftLineItems(draftDto);
-    ShipmentDraftDto updatedShipmentDraftDto = draftController.updateShipmentDraft(shipmentDraftId,
-        shipmentDraftDtoAfterMerge);
-    updatedShipmentDraftDto.lineItems().forEach(lineItemDto -> {
-      String newKey = buildUniqueKey(lineItemDto);
-      List<ShipmentLineItemDto> shipmentLineItemDtos = (List<ShipmentLineItemDto>) uniqueKeyMap.get(newKey);
-      if (!CollectionUtils.isEmpty(shipmentLineItemDtos)) {
-        shipmentLineItemDtos.forEach(m -> m.setId(lineItemDto.getId()));
+      if (shipmentLineItemDto.getId() != null) {
+        originMap.put(shipmentLineItemDto.getId(), shipmentLineItemDto);
+      } else {
+        String uniqueKey = buildUniqueKey(shipmentLineItemDto);
+        addedMap.put(uniqueKey, shipmentLineItemDto);
       }
     });
-    draftDto.setLineItems(new ArrayList<>(uniqueKeyMap.values()));
-    updateShipmentDraftLineItemsExtension(draftDto);
+    deleteShipmentDraftLineItemsExtension(shipmentDraftId);
+    ShipmentDraftDto updatedShipmentDraftDto = draftController.updateShipmentDraft(shipmentDraftId, draftDto);
+    updatedShipmentDraftDto.lineItems().forEach(lineItemDto -> {
+      if (!originMap.containsKey(lineItemDto.getId())) {
+        String newKey = buildUniqueKey(lineItemDto);
+        Optional<ShipmentLineItemDto> find = addedMap.get(newKey).stream().findFirst();
+        if (find.isPresent()) {
+          addedMap.remove(newKey, find.get());
+          find.get().setId(lineItemDto.getId());
+        }
+      }
+    });
+    saveShipmentDraftLineItemsExtension(draftDto);
     return draftDto;
   }
 
@@ -423,34 +434,6 @@ public class SiglusShipmentDraftService {
     return addedExtension;
   }
 
-  private ShipmentDraftDto fulfillShipmentDraftByLocation(ShipmentDraftDto shipmentDraftDto) {
-    List<ShipmentLineItemDto> shipmentLineItemDtos = shipmentDraftDto.lineItems();
-    List<UUID> lineItemIds = shipmentLineItemDtos.stream().map(ShipmentLineItemDto::getId).collect(Collectors.toList());
-    List<ShipmentDraftLineItemsExtension> lineItemsExtensionList = shipmentDraftLineItemsExtensionRepository
-        .findByShipmentDraftLineItemIdIn(lineItemIds);
-    List<ShipmentLineItemDto> lineItems = new ArrayList<>();
-    shipmentLineItemDtos.forEach(shipmentLineItemDto -> {
-      UUID shipmentDraftLineItemId = shipmentLineItemDto.getId();
-      lineItemsExtensionList.forEach(lineItemExtension -> {
-        if (lineItemExtension.getShipmentDraftLineItemId().equals(shipmentDraftLineItemId)) {
-          ShipmentLineItemDto lineItemDto = new ShipmentLineItemDto();
-          BeanUtils.copyProperties(shipmentLineItemDto, lineItemDto);
-          LocationDto locationDto = LocationDto
-              .builder()
-              .locationCode(lineItemExtension.getLocationCode())
-              .area(lineItemExtension.getArea())
-              .build();
-          lineItemDto.setLocation(locationDto);
-          lineItemDto.setQuantityShipped(lineItemExtension.getQuantityShipped() == null
-              ? null : lineItemExtension.getQuantityShipped().longValue());
-          lineItems.add(lineItemDto);
-        }
-      });
-    });
-    shipmentDraftDto.setLineItems(lineItems);
-    return shipmentDraftDto;
-  }
-
   private void deleteShipmentDraftLineItemsExtension(UUID shipmentDraftId) {
     ShipmentDraftDto shipmentDraft = draftController.getShipmentDraft(shipmentDraftId, Collections.emptySet());
     List<UUID> shipmentDraftLineItemIds = shipmentDraft.getLineItems()
@@ -458,11 +441,10 @@ public class SiglusShipmentDraftService {
         .map(Importer::getId)
         .collect(Collectors.toList());
     shipmentDraftLineItemsExtensionRepository.deleteByShipmentDraftLineItemIdIn(shipmentDraftLineItemIds);
+    shipmentDraftLineItemsExtensionRepository.flush();
   }
 
-  private void updateShipmentDraftLineItemsExtension(ShipmentDraftDto shipmentDraftDto) {
-    deleteShipmentDraftLineItemsExtension(shipmentDraftDto.getId());
-
+  private void saveShipmentDraftLineItemsExtension(ShipmentDraftDto shipmentDraftDto) {
     List<ShipmentLineItemDto> lineItemDtos = shipmentDraftDto.lineItems();
     List<ShipmentDraftLineItemsExtension> shipmentDraftLineItemsByLocationList = lineItemDtos.stream()
         .map(lineItemDto -> ShipmentDraftLineItemsExtension.builder()
@@ -473,43 +455,7 @@ public class SiglusShipmentDraftService {
                 lineItemDto.getQuantityShipped() == null ? null : lineItemDto.getQuantityShipped().intValue())
             .build())
         .collect(Collectors.toList());
-    log.info("save shipmentDraftLineItemsExtension, shipmentDraftDto: {}", shipmentDraftDto);
     shipmentDraftLineItemsExtensionRepository.save(shipmentDraftLineItemsByLocationList);
-  }
-
-  private ShipmentDraftDto mergeShipmentDraftLineItems(ShipmentDraftDto shipmentDraftDto) {
-    List<ShipmentLineItemDto> newLineItemDtos = new ArrayList<>();
-    shipmentDraftDto.lineItems().forEach(lineItem -> {
-      ShipmentLineItemDto shipmentLineItemDto = new ShipmentLineItemDto();
-      BeanUtils.copyProperties(lineItem, shipmentLineItemDto);
-      newLineItemDtos.add(shipmentLineItemDto);
-    });
-    Map<String, ShipmentLineItemDto> uniqueKeyToShipmentDto = new HashMap<>();
-    newLineItemDtos.forEach(shipmentLineItem -> {
-      String key = buildUniqueKey(shipmentLineItem);
-      if (uniqueKeyToShipmentDto.containsKey(key)) {
-        ShipmentLineItemDto shipmentLineItemDto = uniqueKeyToShipmentDto.get(key);
-        Long quantityShipped = getQuantity(shipmentLineItem.getQuantityShipped())
-            + getQuantity(shipmentLineItemDto.getQuantityShipped());
-        if (null != shipmentLineItemDto.getId()) {
-          shipmentLineItemDto.setQuantityShipped(quantityShipped);
-          uniqueKeyToShipmentDto.put(key, shipmentLineItemDto);
-        } else {
-          shipmentLineItem.setQuantityShipped(quantityShipped);
-          uniqueKeyToShipmentDto.put(key, shipmentLineItem);
-        }
-      } else {
-        uniqueKeyToShipmentDto.put(key, shipmentLineItem);
-      }
-    });
-    ShipmentDraftDto shipmentDraftDtoAfterMerge = new ShipmentDraftDto();
-    BeanUtils.copyProperties(shipmentDraftDto, shipmentDraftDtoAfterMerge);
-    shipmentDraftDtoAfterMerge.setLineItems(new ArrayList<>(uniqueKeyToShipmentDto.values()));
-    return shipmentDraftDtoAfterMerge;
-  }
-
-  private long getQuantity(Long value) {
-    return value == null ? 0 : value;
   }
 
   private SiglusShipmentDraftDto convertFromShipmentDraftDto(ShipmentDraftDto shipmentDraftDto) {
@@ -653,5 +599,26 @@ public class SiglusShipmentDraftService {
           return new ShipmentLineItemDto(null, null, orderDto, lotDto, locationDto,
               dto.getStockOnHand().longValue(), 0L, null);
         }).collect(Collectors.toList());
+  }
+
+  /**
+   * the location data will lose after save the draft, so need to get it back.
+   */
+  private void fillLocationForCreatedShipmentDraft(ShipmentDraftDto savedDraftDto, ShipmentDraftDto originDraftDto) {
+    Multimap<String, ShipmentLineItemDto> uniqueKeyMap = ArrayListMultimap.create();
+    originDraftDto.lineItems().forEach(shipmentLineItemDto -> {
+      String uniqueKey = buildUniqueKey(shipmentLineItemDto);
+      uniqueKeyMap.put(uniqueKey, shipmentLineItemDto);
+    });
+    savedDraftDto.lineItems().forEach(
+        lineItem -> {
+          String uniqueKey = buildUniqueKey(lineItem);
+          Optional<ShipmentLineItemDto> first = uniqueKeyMap.get(uniqueKey).stream().findFirst();
+          if (first.isPresent()) {
+            lineItem.setLocation(first.get().getLocation());
+            uniqueKeyMap.remove(uniqueKey, first.get());
+          }
+        }
+    );
   }
 }
