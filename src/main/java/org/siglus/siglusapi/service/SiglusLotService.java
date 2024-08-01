@@ -31,6 +31,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -54,10 +55,12 @@ import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.SiglusLotRepository;
 import org.siglus.siglusapi.repository.dto.LotStockDto;
+import org.siglus.siglusapi.repository.dto.StockCardReservedDto;
 import org.siglus.siglusapi.repository.dto.StockCardStockDto;
 import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
 import org.siglus.siglusapi.util.FacilityConfigHelper;
+import org.siglus.siglusapi.util.FormatHelper;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.util.SiglusDateHelper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -99,6 +102,8 @@ public class SiglusLotService {
 
   @Autowired
   private SiglusStockCardService siglusStockCardService;
+  @Autowired
+  private SiglusShipmentDraftService siglusShipmentDraftService;
 
   /**
    * reason for create a new transaction: Running this method in the super transaction will cause
@@ -197,6 +202,20 @@ public class SiglusLotService {
     } else {
       lotStockDtos = siglusLotRepository.queryLotStockDtoByStockCardIds(stockCardIds);
     }
+    Map<String, StockCardReservedDto> reservedMap = siglusShipmentDraftService.queryReservedCount(facilityId, null)
+        .stream().collect(Collectors.toMap(reservedDto ->
+            FormatHelper.buildStockCardUniqueKey(reservedDto.getOrderableId(),
+                reservedDto.getLotId(), reservedDto.getLocationCode()), Function.identity()));
+    lotStockDtos.forEach(
+        lotStockDto -> {
+          String key = FormatHelper.buildStockCardUniqueKey(lotStockDto.getOrderableId(),
+              lotStockDto.getLotId(), lotStockDto.getLocationCode());
+          StockCardReservedDto reservedDto = reservedMap.get(key);
+          if (reservedDto != null) {
+            lotStockDto.setReserved(reservedDto.getReserved());
+          }
+        }
+    );
     return lotStockDtos;
   }
 

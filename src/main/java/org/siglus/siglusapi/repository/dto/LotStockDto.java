@@ -86,7 +86,7 @@ import lombok.Data;
         name = "StockCard.queryLotStockDtoByStockCardIds",
         query = "select sc.id as stockCardId, sc.programid,p.\"name\", p.code, sc.orderableid, "
             + "  o.fullproductname as productName, o.code as productCode, sc.lotid, l.lotcode, "
-            + "  soh.stockonhand, l.expirationdate, null as area, null as locationcode "
+            + "  soh.stockonhand, l.expirationdate, null as area, null as locationcode, 0 as reserved "
             + "from stockmanagement.stock_cards sc "
             + "left join referencedata.programs p on sc.programid = p.id "
             + "left join ( "
@@ -109,7 +109,7 @@ import lombok.Data;
         name = "StockCard.queryLotStockDtoByStockCardIdsWithLocation",
         query = "select sc.id as stockCardId, sc.programid,p.\"name\", p.code, sc.orderableid, "
             + " o.fullproductname as productName, o.code as productCode, sc.lotid, l.lotcode, "
-            + " soh.stockonhand, l.expirationdate, soh.area, soh.locationcode "
+            + " soh.stockonhand, l.expirationdate, soh.area, soh.locationcode, 0 as reserved "
             + "from stockmanagement.stock_cards sc "
             + "left join referencedata.programs p on sc.programid = p.id "
             + "left join ( "
@@ -148,6 +148,7 @@ import lombok.Data;
                     @ColumnResult(name = "expirationdate", type = LocalDate.class),
                     @ColumnResult(name = "area", type = String.class),
                     @ColumnResult(name = "locationcode", type = String.class),
+                    @ColumnResult(name = "reserved", type = Integer.class),
                 }
         )
 )
@@ -169,4 +170,5 @@ public class LotStockDto {
   private LocalDate expirationDate;
   private String area;
   private String locationCode;
+  private Integer reserved;
 }

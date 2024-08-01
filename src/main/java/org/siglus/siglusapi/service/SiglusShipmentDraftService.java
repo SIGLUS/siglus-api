@@ -296,7 +296,7 @@ public class SiglusShipmentDraftService {
     }
   }
 
-  private List<StockCardReservedDto> queryReservedCount(UUID facilityId, UUID shipmentDraftId) {
+  public List<StockCardReservedDto> queryReservedCount(UUID facilityId, UUID shipmentDraftId) {
     List<StockCardReservedDto> reservedDtos;
     if (shipmentDraftId == null) {
       reservedDtos = shipmentDraftLineItemsRepository.reservedCount(facilityId);

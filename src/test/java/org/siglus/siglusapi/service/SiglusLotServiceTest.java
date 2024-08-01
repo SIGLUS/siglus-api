@@ -31,6 +31,7 @@ import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_LOT_ID_AND_CODE_SHOULD
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -108,6 +109,8 @@ public class SiglusLotServiceTest {
   private SiglusArchiveProductService siglusArchiveProductService;
   @Mock
   private SiglusStockCardService siglusStockCardService;
+  @Mock
+  private SiglusShipmentDraftService siglusShipmentDraftService;
 
   @Rule
   public ExpectedException exception = ExpectedException.none();
@@ -435,6 +438,7 @@ public class SiglusLotServiceTest {
     when(siglusStockCardService.findStockCardIdByFacilityAndOrderables(facilityId, orderableIds))
         .thenReturn(stockCardIds);
     when(facilityConfigHelper.isLocationManagementEnabled(facilityId)).thenReturn(false);
+    when(siglusShipmentDraftService.queryReservedCount(any(), any())).thenReturn(Collections.emptyList());
 
     siglusLotService.getLotStocksByOrderables(facilityId, orderableIds);
 
@@ -449,6 +453,7 @@ public class SiglusLotServiceTest {
     when(siglusStockCardService.findStockCardIdByFacilityAndOrderables(facilityId, orderableIds))
         .thenReturn(stockCardIds);
     when(facilityConfigHelper.isLocationManagementEnabled(facilityId)).thenReturn(true);
+    when(siglusShipmentDraftService.queryReservedCount(any(), any())).thenReturn(Collections.emptyList());
 
     siglusLotService.getLotStocksByOrderables(facilityId, orderableIds);
 
