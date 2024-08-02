@@ -90,6 +90,7 @@ import org.siglus.siglusapi.repository.dto.StockCardStockDto;
 import org.siglus.siglusapi.service.client.SiglusShipmentDraftFulfillmentService;
 import org.siglus.siglusapi.util.FacilityConfigHelper;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -787,6 +788,33 @@ public class SiglusShipmentDraftServiceTest {
 
     UUID result = siglusShipmentDraftService.getDraftIdByOrderId(orderId);
     assertNotNull(result);
+  }
+
+  @Test
+  public void shouldDeleteShipmentDraftByOrderIdSuccessWhenNoDraftsExist() {
+    UUID orderId = UUID.randomUUID();
+    Page<ShipmentDraftDto> emptyPage = new PageImpl<>(new ArrayList<>());
+    when(siglusShipmentDraftFulfillmentService.getShipmentDraftByOrderId(orderId)).thenReturn(emptyPage);
+
+    siglusShipmentDraftService.deleteShipmentDraftLineItemsExtensionByOrderId(orderId);
+
+    verify(shipmentDraftLineItemsByLocationRepository, times(0))
+        .deleteByShipmentDraftLineItemIdIn(any());
+  }
+
+  @Test
+  public void shouldDeleteShipmentDraftByOrderIdSuccessWhenDraftsExist() {
+    ShipmentDraftDto draftDto = buildShipmentDraftDto();
+    ShipmentLineItemDto lineItemDto = buildShipmentLineItemDto(lotId, orderableId);
+    draftDto.lineItems().add(lineItemDto);
+    UUID orderId = UUID.randomUUID();
+    Page<ShipmentDraftDto> emptyPage = new PageImpl<>(Collections.singletonList(draftDto));
+    when(siglusShipmentDraftFulfillmentService.getShipmentDraftByOrderId(orderId)).thenReturn(emptyPage);
+
+    siglusShipmentDraftService.deleteShipmentDraftLineItemsExtensionByOrderId(orderId);
+
+    verify(shipmentDraftLineItemsByLocationRepository, times(1))
+        .deleteByShipmentDraftLineItemIdIn(any());
   }
 
   private ShipmentDraftDto buildShipmentDraftDto() {
