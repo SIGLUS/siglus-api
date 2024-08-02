@@ -608,11 +608,13 @@ public class SiglusOrderableServiceTest {
 
   @Test
   public void shouldSuccessWhenFindByOrderableIdsGivenIdsIsNotEmpty() {
-    ProgramOrderablesExtension extension = new ProgramOrderablesExtension();
-    extension.setOrderableId(orderableId);
-    extension.setUnit("unit");
+    ProgramOrderablesExtension extension1 = new ProgramOrderablesExtension();
+    extension1.setOrderableId(orderableId);
+    extension1.setUnit("unit");
+    ProgramOrderablesExtension extension2 = new ProgramOrderablesExtension();
+    extension2.setOrderableId(UUID.randomUUID());
     when(programOrderablesExtensionRepository.findAllByOrderableIdIn(any()))
-        .thenReturn(Collections.singletonList(extension));
+        .thenReturn(newArrayList(extension1, extension2));
     OrderableVersionDto dto1 = new OrderableVersionDto();
     dto1.setId(orderableId);
     OrderableVersionDto dto2 = new OrderableVersionDto();

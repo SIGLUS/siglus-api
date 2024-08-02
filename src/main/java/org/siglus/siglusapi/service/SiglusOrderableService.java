@@ -36,6 +36,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -413,6 +414,7 @@ public class SiglusOrderableService {
     }
     Set<UUID> orderableSet = new HashSet<>(orderableIds);
     Map<UUID, String> unitMap = programOrderablesExtensionRepository.findAllByOrderableIdIn(orderableSet).stream()
+        .filter(extension -> Objects.nonNull(extension.getUnit()))
         .collect(Collectors.toMap(ProgramOrderablesExtension::getOrderableId, ProgramOrderablesExtension::getUnit));
     return findLatestVersionByIds(orderableSet).stream().map(
         orderable -> {
