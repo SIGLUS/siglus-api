@@ -61,6 +61,7 @@ import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.SiglusLotRepository;
 import org.siglus.siglusapi.repository.dto.LotStockDto;
+import org.siglus.siglusapi.repository.dto.StockCardReservedDto;
 import org.siglus.siglusapi.repository.dto.StockCardStockDto;
 import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
@@ -433,16 +434,27 @@ public class SiglusLotServiceTest {
   @Test
   public void shouldGetLotsGivenFacilityWithoutLocation() {
     UUID facilityId = UUID.randomUUID();
-    List<UUID> orderableIds = newArrayList(UUID.randomUUID(), UUID.randomUUID());
+    List<UUID> orderableIds = newArrayList(orderableId1, UUID.randomUUID());
     List<UUID> stockCardIds = newArrayList(UUID.randomUUID(), UUID.randomUUID());
     when(siglusStockCardService.findStockCardIdByFacilityAndOrderables(facilityId, orderableIds))
         .thenReturn(stockCardIds);
+    LotStockDto lotStockDto1 = LotStockDto.builder().lotId(lotId).orderableId(orderableId1).build();
+    LotStockDto lotStockDto2 = LotStockDto.builder().lotId(lotId).orderableId(orderableId1).build();
+    when(siglusLotRepository.queryLotStockDtoByStockCardIds(stockCardIds))
+        .thenReturn(newArrayList(lotStockDto1, lotStockDto2));
     when(facilityConfigHelper.isLocationManagementEnabled(facilityId)).thenReturn(false);
-    when(siglusShipmentDraftService.queryReservedCount(any(), any())).thenReturn(Collections.emptyList());
+    StockCardReservedDto reservedDto = StockCardReservedDto.builder()
+        .lotId(lotId)
+        .orderableId(orderableId1)
+        .reserved(10)
+        .build();
+    when(siglusShipmentDraftService.queryReservedCount(any(), any()))
+        .thenReturn(Collections.singletonList(reservedDto));
 
-    siglusLotService.getLotStocksByOrderables(facilityId, orderableIds);
+    List<LotStockDto> result = siglusLotService.getLotStocksByOrderables(facilityId, orderableIds);
 
     verify(siglusLotRepository, Mockito.times(1)).queryLotStockDtoByStockCardIds(stockCardIds);
+    assertEquals(2, result.size());
   }
 
   @Test

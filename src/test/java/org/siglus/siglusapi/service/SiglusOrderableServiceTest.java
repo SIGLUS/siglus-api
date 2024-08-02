@@ -58,15 +58,19 @@ import org.openlmis.stockmanagement.repository.CalculatedStockOnHandRepository;
 import org.openlmis.stockmanagement.repository.StockCardRepository;
 import org.openlmis.stockmanagement.service.referencedata.ApprovedProductReferenceDataService;
 import org.openlmis.stockmanagement.web.Pagination;
+import org.siglus.common.constant.KitConstants;
 import org.siglus.common.domain.ProgramAdditionalOrderable;
+import org.siglus.common.domain.ProgramOrderablesExtension;
 import org.siglus.common.repository.ArchivedProductRepository;
 import org.siglus.common.repository.ProgramAdditionalOrderableRepository;
 import org.siglus.common.repository.ProgramOrderableRepository;
+import org.siglus.common.repository.ProgramOrderablesExtensionRepository;
 import org.siglus.siglusapi.domain.DispensableAttributes;
 import org.siglus.siglusapi.domain.StockManagementDraft;
 import org.siglus.siglusapi.domain.StockManagementDraftLineItem;
 import org.siglus.siglusapi.dto.AvailableOrderablesDto;
 import org.siglus.siglusapi.dto.QueryOrderableSearchParams;
+import org.siglus.siglusapi.dto.SiglusOrderableDto;
 import org.siglus.siglusapi.dto.SimplifyOrderablesDto;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.repository.DispensableAttributesRepository;
@@ -137,6 +141,9 @@ public class SiglusOrderableServiceTest {
 
   @Mock
   private SupportedProgramsHelper supportedProgramsHelper;
+
+  @Mock
+  private ProgramOrderablesExtensionRepository programOrderablesExtensionRepository;
 
   private Pageable pageable = new PageRequest(0, Integer.MAX_VALUE);
 
@@ -583,6 +590,41 @@ public class SiglusOrderableServiceTest {
     siglusOrderableService.findProgramOrderablesMaxVersionByOrderableIds(ids);
 
     verify(siglusProgramOrderableRepository).findMaxVersionProgramOrderableDtosByOrderableIds(ids);
+  }
+
+  @Test
+  public void shouldSuccessWhenFindAllKitOrderableIds() {
+    siglusOrderableService.findAllKitOrderableIds();
+
+    verify(siglusOrderableRepository).findByProductCodeCodeIn(KitConstants.ALL_KITS);
+  }
+
+  @Test
+  public void shouldGetEmptyListWhenFindByOrderableIdsGivenIdsIsEmpty() {
+    List<SiglusOrderableDto> result = siglusOrderableService.findByOrderableIds(new ArrayList<>());
+
+    assertEquals(0, result.size());
+  }
+
+  @Test
+  public void shouldSuccessWhenFindByOrderableIdsGivenIdsIsNotEmpty() {
+    ProgramOrderablesExtension extension = new ProgramOrderablesExtension();
+    extension.setOrderableId(orderableId);
+    extension.setUnit("unit");
+    when(programOrderablesExtensionRepository.findAllByOrderableIdIn(any()))
+        .thenReturn(Collections.singletonList(extension));
+    OrderableVersionDto dto1 = new OrderableVersionDto();
+    dto1.setId(orderableId);
+    OrderableVersionDto dto2 = new OrderableVersionDto();
+    dto2.setId(UUID.randomUUID());
+    when(siglusOrderableRepository.findLatestOrderablesByIds(any()))
+        .thenReturn(newArrayList(dto1, dto2));
+
+    Set<UUID> ids = Collections.singleton(orderableId);
+
+    List<SiglusOrderableDto> orderableDtos = siglusOrderableService.findByOrderableIds(ids);
+
+    assertEquals(2, orderableDtos.size());
   }
 
   private List<OrderableDto> buildMockOrderableDtos() {
