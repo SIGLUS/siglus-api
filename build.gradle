@@ -55,7 +55,7 @@ dependencies {
     compile 'org.springframework.retry:spring-retry'
     compile 'org.springframework.integration:spring-integration-file'
     compile 'org.hibernate:hibernate-java8'
-    compile 'org.ehcache:ehcache:3.10.8'
+    compile 'net.sf.ehcache:ehcache:2.10.9.2'
     compile 'org.hibernate:hibernate-ehcache:5.0.12.Final'
     compile 'org.flywaydb:flyway-core:4.1.2'
     compile 'org.springframework.boot:spring-boot-starter-data-redis:1.5.21.RELEASE'
