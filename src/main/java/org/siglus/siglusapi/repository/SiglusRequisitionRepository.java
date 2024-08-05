@@ -36,7 +36,7 @@ public interface SiglusRequisitionRepository extends JpaRepository<Requisition, 
       + "r.status in ('IN_APPROVAL', 'APPROVED', 'RELEASED', 'RELEASED_WITHOUT_ORDER')"
       + "and r.modifieddate >= :date "
       + "and r.modifieddate <= now() "
-      + "order by ?#{#pageable}", nativeQuery = true)
+      + "order by r.modifieddate, ?#{#pageable}", nativeQuery = true)
   Page<Requisition> searchAllForFc(@Param("date") LocalDate date, Pageable pageable);
 
   @Query(value = "select * from requisition.requisitions r where "
@@ -44,7 +44,7 @@ public interface SiglusRequisitionRepository extends JpaRepository<Requisition, 
       + "and r.modifieddate >= :date "
       + "and r.modifieddate <= now() "
       + "and r.supervisorynodeid in :fcSupervisoryNodeIds "
-      + "order by ?#{#pageable}", nativeQuery = true)
+      + "order by r.modifieddate, ?#{#pageable}", nativeQuery = true)
   Page<Requisition> searchNeedApprovalForFc(@Param("date") LocalDate date,
       Pageable pageable, @Param("fcSupervisoryNodeIds") Set<UUID> fcSupervisoryNodeIds);
 
