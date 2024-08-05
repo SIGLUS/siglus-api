@@ -53,7 +53,7 @@ public interface SiglusProofOfDeliveryRepository extends JpaRepository<ProofOfDe
       + "     join fulfillment.orders o "
       + "     on s.orderid = o.id "
       + "     where o.requestingfacilityid in :requestingFacilityIds) "
-      + "order by ?#{#pageable}",
+      + "order by p.receiveddate, ?#{#pageable}",
       nativeQuery = true)
   Page<ProofOfDelivery> search(@Param("date") LocalDate date,
       @Param("requestingFacilityIds") Set<UUID> requestingFacilityIds,
