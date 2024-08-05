@@ -712,6 +712,7 @@ public class SiglusFcIntegrationServiceTest {
     lot.setId(lotId);
     lot.setLotCode(lotCode);
     when(siglusLotReferenceDataService.findAll()).thenReturn(newArrayList(lot));
+    when(siglusLotReferenceDataService.findByIds(any())).thenReturn(newArrayList(lot));
   }
 
   private void mockReasonMap() {

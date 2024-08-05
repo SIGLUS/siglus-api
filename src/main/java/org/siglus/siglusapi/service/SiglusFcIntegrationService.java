@@ -319,7 +319,14 @@ public class SiglusFcIntegrationService {
         .findByIds(orderableIds)
         .stream()
         .collect(toMap(OrderableDto::getId, Function.identity()));
-    Map<UUID, LotDto> lotIdToLotMap = siglusLotReferenceDataService.findAll()
+
+    Set<UUID> lotIds = page.getContent()
+        .stream()
+        .flatMap(pod -> pod.getLineItems()
+            .stream().map(ProofOfDeliveryLineItem::getLotId))
+        .collect(toSet());
+    log.info("lotIds size: {}", lotIds.size());
+    Map<UUID, LotDto> lotIdToLotMap = siglusLotReferenceDataService.findByIds(lotIds)
         .stream().collect(toMap(LotDto::getId, Function.identity()));
     Map<UUID, String> reasonIdToReasonMap = stockCardLineItemReasonRepository
         .findByReasonTypeIn(newArrayList(ReasonType.DEBIT))
