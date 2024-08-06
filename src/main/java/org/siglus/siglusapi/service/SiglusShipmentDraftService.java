@@ -475,6 +475,7 @@ public class SiglusShipmentDraftService {
     dto.setId(shipmentDraftDto.getId());
     dto.setNotes(shipmentDraftDto.getNotes());
     if (ObjectUtils.isEmpty(shipmentDraftDto.getLineItems())) {
+      shipmentDraftDto.setLineItems(new ArrayList<>());
       return dto;
     }
     Order order = orderRepository.findOne(shipmentDraftDto.getOrder().getId());
