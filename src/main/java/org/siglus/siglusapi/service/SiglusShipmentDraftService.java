@@ -277,7 +277,7 @@ public class SiglusShipmentDraftService {
     UUID facilityId = draftDto.getOrder().getSupplyingFacility().getId();
     Set<String> orderableLotIdPairs = draftDto.lineItems().stream()
         .filter(item -> (item.getOrderable() != null) && (item.getLot() != null) && (item.getQuantityShipped() != null))
-        .map(item -> item.getOrderable().getId().toString() + item.getLot().getId().toString())
+        .map(this::getOrderableLotIdPair)
         .collect(Collectors.toSet());
     if (orderableLotIdPairs.isEmpty()) {
       return;
@@ -294,6 +294,11 @@ public class SiglusShipmentDraftService {
     if (canNotFulfillShipmentQuantity(sohDtos, reservedDtos, draftDto)) {
       throw new ValidationMessageException(new Message(SHIPMENT_LINE_ITEMS_INVALID));
     }
+  }
+
+  private String getOrderableLotIdPair(ShipmentLineItemDto itemDto) {
+    return itemDto.getOrderable().getId().toString()
+        + Optional.ofNullable(itemDto.getLotId()).map(UUID::toString).orElse("");
   }
 
   public List<StockCardReservedDto> queryReservedCount(UUID facilityId, UUID shipmentDraftId) {
@@ -475,7 +480,7 @@ public class SiglusShipmentDraftService {
     dto.setId(shipmentDraftDto.getId());
     dto.setNotes(shipmentDraftDto.getNotes());
     if (ObjectUtils.isEmpty(shipmentDraftDto.getLineItems())) {
-      shipmentDraftDto.setLineItems(new ArrayList<>());
+      dto.setLineItems(new ArrayList<>());
       return dto;
     }
     Order order = orderRepository.findOne(shipmentDraftDto.getOrder().getId());

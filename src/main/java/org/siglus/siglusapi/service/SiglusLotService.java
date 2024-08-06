@@ -211,9 +211,8 @@ public class SiglusLotService {
           String key = FormatHelper.buildStockCardUniqueKey(lotStockDto.getOrderableId(),
               lotStockDto.getLotId(), lotStockDto.getLocationCode());
           StockCardReservedDto reservedDto = reservedMap.get(key);
-          if (reservedDto != null) {
-            lotStockDto.setReserved(reservedDto.getReserved());
-          }
+          lotStockDto.setReserved(reservedDto != null && reservedDto.getReserved() != null
+              ? reservedDto.getReserved() : 0);
         }
     );
     return lotStockDtos;

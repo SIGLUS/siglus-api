@@ -34,7 +34,7 @@ import lombok.Data;
         name = "StockCard.queryExpiredLotStockDtoByFacility",
         query = "select sc.id as stockCardId, sc.programid,p.\"name\", p.code, sc.orderableid, "
             + "  o.fullproductname as productName, o.code as productCode, sc.lotid, l.lotcode, "
-            + "  soh.stockonhand, l.expirationdate, null as area, null as locationcode, 0 as reserved "
+            + "  soh.stockonhand, l.expirationdate, null as area, null as locationcode, null as reserved "
             + "from stockmanagement.stock_cards sc "
             + "left join referencedata.programs p on sc.programid = p.id "
             + "left join ( "
@@ -60,7 +60,7 @@ import lombok.Data;
         name = "StockCard.queryExpiredLotStockDtoByFacilityWithLocation",
         query = "select sc.id as stockCardId, sc.programid,p.\"name\", p.code, sc.orderableid, "
             + " o.fullproductname as productName, o.code as productCode, sc.lotid, l.lotcode, "
-            + " soh.stockonhand, l.expirationdate, soh.area, soh.locationcode, 0 as reserved "
+            + " soh.stockonhand, l.expirationdate, soh.area, soh.locationcode, null as reserved "
             + "from stockmanagement.stock_cards sc "
             + "left join referencedata.programs p on sc.programid = p.id "
             + "left join ( "
@@ -86,7 +86,7 @@ import lombok.Data;
         name = "StockCard.queryLotStockDtoByStockCardIds",
         query = "select sc.id as stockCardId, sc.programid,p.\"name\", p.code, sc.orderableid, "
             + "  o.fullproductname as productName, o.code as productCode, sc.lotid, l.lotcode, "
-            + "  soh.stockonhand, l.expirationdate, null as area, null as locationcode, 0 as reserved "
+            + "  soh.stockonhand, l.expirationdate, null as area, null as locationcode, null as reserved "
             + "from stockmanagement.stock_cards sc "
             + "left join referencedata.programs p on sc.programid = p.id "
             + "left join ( "
@@ -109,7 +109,7 @@ import lombok.Data;
         name = "StockCard.queryLotStockDtoByStockCardIdsWithLocation",
         query = "select sc.id as stockCardId, sc.programid,p.\"name\", p.code, sc.orderableid, "
             + " o.fullproductname as productName, o.code as productCode, sc.lotid, l.lotcode, "
-            + " soh.stockonhand, l.expirationdate, soh.area, soh.locationcode, 0 as reserved "
+            + " soh.stockonhand, l.expirationdate, soh.area, soh.locationcode, null as reserved "
             + "from stockmanagement.stock_cards sc "
             + "left join referencedata.programs p on sc.programid = p.id "
             + "left join ( "
