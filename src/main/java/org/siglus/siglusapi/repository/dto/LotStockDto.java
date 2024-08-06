@@ -34,7 +34,7 @@ import lombok.Data;
         name = "StockCard.queryExpiredLotStockDtoByFacility",
         query = "select sc.id as stockCardId, sc.programid,p.\"name\", p.code, sc.orderableid, "
             + "  o.fullproductname as productName, o.code as productCode, sc.lotid, l.lotcode, "
-            + "  soh.stockonhand, l.expirationdate, null as area, null as locationcode "
+            + "  soh.stockonhand, l.expirationdate, null as area, null as locationcode, 0 as reserved "
             + "from stockmanagement.stock_cards sc "
             + "left join referencedata.programs p on sc.programid = p.id "
             + "left join ( "
@@ -60,7 +60,7 @@ import lombok.Data;
         name = "StockCard.queryExpiredLotStockDtoByFacilityWithLocation",
         query = "select sc.id as stockCardId, sc.programid,p.\"name\", p.code, sc.orderableid, "
             + " o.fullproductname as productName, o.code as productCode, sc.lotid, l.lotcode, "
-            + " soh.stockonhand, l.expirationdate, soh.area, soh.locationcode "
+            + " soh.stockonhand, l.expirationdate, soh.area, soh.locationcode, 0 as reserved "
             + "from stockmanagement.stock_cards sc "
             + "left join referencedata.programs p on sc.programid = p.id "
             + "left join ( "
@@ -101,7 +101,7 @@ import lombok.Data;
             + "          where stockcardid in :stockcardIds "
             + "           ) tsoh order by tsoh.stockcardid, tsoh.occurreddate desc "
             + "       ) soh on sc.id = soh.stockcardid "
-            + "where sc.lotid is not null and sc.id in :stockcardIds "
+            + "where sc.id in :stockcardIds "
             + ";",
         resultSetMapping = "StockCard.LotStockDto"),
 
@@ -124,7 +124,7 @@ import lombok.Data;
             + "                 where stockcardid in :stockcardIds "
             + "           ) tsoh order by tsoh.stockcardid, tsoh.locationcode, tsoh.occurreddate desc "
             + "        ) soh on sc.id = soh.stockcardid "
-            + "where sc.lotid is not null and sc.id in :stockcardIds "
+            + "where sc.id in :stockcardIds "
             + ";",
         resultSetMapping = "StockCard.LotStockDto"),
 })
