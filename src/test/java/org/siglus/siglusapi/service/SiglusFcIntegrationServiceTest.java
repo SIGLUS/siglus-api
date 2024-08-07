@@ -192,6 +192,9 @@ public class SiglusFcIntegrationServiceTest {
   @Mock
   private SiglusLotRepository siglusLotRepository;
 
+  @Mock
+  private SiglusLotRepository siglusLotRepository;
+
   private final UUID dpmFacilityTypeId = UUID.randomUUID();
 
   private final UUID dpmSupervisoryNodeId = UUID.randomUUID();
