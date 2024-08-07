@@ -664,7 +664,7 @@ public class SiglusShipmentServiceTest {
     assertFalse(siglusShipmentService.calcIsFefo(shipmentDto));
   }
 
-  @Test(expected = BusinessDataException.class)
+  @Test
   public void shouldThrowExceptionWhenShippedQuantityIsZero() {
     // given
     VersionObjectReferenceDto orderReferenceDto = new VersionObjectReferenceDto(orderableId,
@@ -689,8 +689,9 @@ public class SiglusShipmentServiceTest {
     lot2.setExpirationDate(LocalDate.now().plusDays(1));
     when(siglusLotRepository.findAllByIdIn(newHashSet(lotId, lotId2))).thenReturn(newArrayList(lot1, lot2));
     // when
-    siglusShipmentService.calcIsFefo(shipmentDto);
+    boolean result = siglusShipmentService.calcIsFefo(shipmentDto);
     // then
+    assertTrue(result);
   }
 
   private ShipmentExtensionRequest createShipmentExtensionRequest() {

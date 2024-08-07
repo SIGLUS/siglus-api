@@ -19,7 +19,6 @@ import static java.util.stream.Collectors.toSet;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_ORDER_EXPIRED;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_PERIOD_NOT_FOUND;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_SUB_ORDER_LINE_ITEM;
-import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_USER_CAN_NOT_CONFIRM_SHIPMENT;
 import static org.siglus.siglusapi.i18n.MessageKeys.SHIPMENT_LINE_ITEMS_INVALID;
 import static org.siglus.siglusapi.i18n.MessageKeys.SHIPMENT_ORDER_STATUS_INVALID;
 import static org.siglus.siglusapi.util.LocationUtil.getIfNonNull;
@@ -230,7 +229,7 @@ public class SiglusShipmentService {
         .mapToLong(SiglusFefoDto::getQuantityActualFefo)
         .sum();
     if (totalQuantityShipped == 0L) {
-      throw new BusinessDataException(new Message(ERROR_USER_CAN_NOT_CONFIRM_SHIPMENT));
+      return true;
     }
     return (double) totalQuantityActualFefo / totalQuantityShipped > fefoIndex;
   }
@@ -264,6 +263,7 @@ public class SiglusShipmentService {
         .collect(Collectors.toList());
     Set<UUID> lotIds = lineItemDtos.stream()
         .map(lineItemDto -> lineItemDto.getLot().getId())
+        .filter(Objects::nonNull)
         .collect(toSet());
     Map<UUID, LocalDate> lotIdToExpiredDateMap = siglusLotRepository.findAllByIdIn(lotIds).stream()
         .collect(Collectors.toMap(Lot::getId, Lot::getExpirationDate));
