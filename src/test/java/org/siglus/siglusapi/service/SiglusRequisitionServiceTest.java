@@ -2209,15 +2209,14 @@ public class SiglusRequisitionServiceTest {
     SiglusRequisitionDto siglusRequisitionDto1 = new SiglusRequisitionDto();
     BeanUtils.copyProperties(requisitionV2Dto1, siglusRequisitionDto1);
     siglusRequisitionDto1.setExtraData(new HashMap<>());
-    HttpServletRequest httpServletRequest = new MockHttpServletRequest();
-    HttpServletResponse httpServletResponse = new MockHttpServletResponse();
     when(requisitionV2Controller.initiate(siglusRequisitionDto1.getProgramId(), siglusRequisitionDto1.getFacilityId(),
-        siglusRequisitionDto1.getProcessingPeriodId(), false, null, httpServletRequest,
-        httpServletResponse)).thenReturn(requisitionV2Dto1);
+        siglusRequisitionDto1.getProcessingPeriodId(), false, null, request,
+        response)).thenReturn(requisitionV2Dto1);
     when(siglusUsageReportService.initiateUsageReport(any())).thenReturn(siglusRequisitionDto1);
     when(requisitionRepository.findOne(any(UUID.class))).thenReturn(requisition);
     when(siglusRequisitionExtensionService.formatRequisitionNumber(requisitionId)).thenReturn(REQUISITION_NUMBER);
     when(programRepository.findOne(programId)).thenReturn(mockProgram2(programId));
+    when(siglusOrderableService.findAllKitOrderableIds()).thenReturn(Collections.emptySet());
 
     siglusRequisitionService.buildDraftForRegular(siglusRequisitionDto1.getFacilityId(),
         siglusRequisitionDto1.getProcessingPeriodId(), siglusRequisitionDto1.getProgramId(), request, response);

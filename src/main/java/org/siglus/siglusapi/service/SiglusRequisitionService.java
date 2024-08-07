@@ -453,6 +453,7 @@ public class SiglusRequisitionService {
       String physicalInventoryDateStr, HttpServletRequest request, HttpServletResponse response) {
     RequisitionV2Dto v2Dto = requisitionV2Controller.initiate(programId, facilityId, suggestedPeriod, emergency,
         physicalInventoryDateStr, request, response);
+    removeKitFromRequisitionAvailableProducts(v2Dto);
     processStockMovementAfterTheDateSubmitted(v2Dto);
     SiglusRequisitionDto siglusRequisitionDto = siglusUsageReportService.initiateUsageReport(v2Dto);
 
@@ -477,8 +478,7 @@ public class SiglusRequisitionService {
     return siglusRequisitionDto;
   }
 
-  @Transactional
-  public SiglusRequisitionDto initiateForClient(
+  private SiglusRequisitionDto initiateForClient(
       UUID programId,
       UUID facilityId,
       UUID suggestedPeriod,
@@ -488,6 +488,7 @@ public class SiglusRequisitionService {
       HttpServletResponse response) {
     RequisitionV2Dto v2Dto = requisitionV2Controller.initiate(programId, facilityId, suggestedPeriod, emergency,
         physicalInventoryDateStr, request, response);
+    removeKitFromRequisitionAvailableProducts(v2Dto);
     processStockMovementAfterTheDateSubmitted(v2Dto);
     SiglusRequisitionDto siglusRequisitionDto = siglusUsageReportService.initiateUsageReportForClient(v2Dto);
 
@@ -513,6 +514,7 @@ public class SiglusRequisitionService {
       HttpServletRequest request, HttpServletResponse response) {
     RequisitionV2Dto v2Dto = requisitionV2Controller.initiate(programId, facilityId, periodId, false,
         null, request, response);
+    removeKitFromRequisitionAvailableProducts(v2Dto);
     SiglusRequisitionDto siglusRequisitionDto = siglusUsageReportService.initiateUsageReport(v2Dto);
 
     RequisitionTemplate template = requisitionRepository.findOne(siglusRequisitionDto.getId()).getTemplate();
@@ -2506,5 +2508,10 @@ public class SiglusRequisitionService {
   private boolean createdForClient(UUID requisitionId) {
     RequisitionExtension requisitionExtension = requisitionExtensionRepository.findByRequisitionId(requisitionId);
     return requisitionExtension.createdBySupplier();
+  }
+
+  private void removeKitFromRequisitionAvailableProducts(RequisitionV2Dto v2Dto) {
+    Set<UUID> allKitOrderableIds = siglusOrderableService.findAllKitOrderableIds();
+    v2Dto.getAvailableProducts().removeIf(product -> allKitOrderableIds.contains(product.getId()));
   }
 }
