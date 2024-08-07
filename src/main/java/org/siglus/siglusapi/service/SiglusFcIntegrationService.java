@@ -53,6 +53,7 @@ import org.openlmis.fulfillment.domain.ProofOfDelivery;
 import org.openlmis.fulfillment.domain.ProofOfDeliveryLineItem;
 import org.openlmis.fulfillment.domain.Shipment;
 import org.openlmis.referencedata.domain.Facility;
+import org.openlmis.referencedata.domain.Lot;
 import org.openlmis.referencedata.domain.SupervisoryNode;
 import org.openlmis.referencedata.dto.OrderableDto;
 import org.openlmis.requisition.domain.requisition.Requisition;
@@ -88,7 +89,6 @@ import org.siglus.siglusapi.dto.FcProofOfDeliveryDto;
 import org.siglus.siglusapi.dto.FcProofOfDeliveryLineItem;
 import org.siglus.siglusapi.dto.FcRequisitionDto;
 import org.siglus.siglusapi.dto.FcRequisitionLineItemDto;
-import org.siglus.siglusapi.dto.LotDto;
 import org.siglus.siglusapi.dto.ProofOfDeliverParameter;
 import org.siglus.siglusapi.dto.RealProgramDto;
 import org.siglus.siglusapi.dto.RegimenDto;
@@ -115,6 +115,8 @@ import org.siglus.siglusapi.repository.ProgramOrderablesRepository;
 import org.siglus.siglusapi.repository.ProgramRealProgramRepository;
 import org.siglus.siglusapi.repository.RequisitionLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.ShipmentsExtensionRepository;
+import org.siglus.siglusapi.repository.SiglusLotRepository;
+import org.siglus.siglusapi.repository.SiglusProgramOrderableRepository;
 import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.repository.StockManagementRepository;
@@ -125,12 +127,10 @@ import org.siglus.siglusapi.repository.dto.ProgramOrderableDto;
 import org.siglus.siglusapi.service.android.mapper.ProductMovementMapper;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusFacilityTypeReferenceDataService;
-import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusProcessingPeriodReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
 import org.siglus.siglusapi.service.mapper.LotOnHandMapper;
-import org.siglus.siglusapi.util.SiglusDateHelper;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
@@ -160,10 +160,9 @@ public class SiglusFcIntegrationService {
   private final SiglusUsageReportService siglusUsageReportService;
   private final SiglusRequisitionRequisitionService siglusRequisitionRequisitionService;
   private final SiglusProofOfDeliveryRepository siglusProofOfDeliveryRepository;
-  private final SiglusLotReferenceDataService siglusLotReferenceDataService;
+  private final SiglusLotRepository siglusLotRepository;
   private final StockCardLineItemReasonRepository stockCardLineItemReasonRepository;
   private final OrderExternalRepository orderExternalRepository;
-  private final SiglusDateHelper dateHelper;
   private final ShipmentsExtensionRepository shipmentsExtensionRepository;
   private final FacilityNativeRepository facilityNativeRepository;
   private final SiglusFacilityTypeReferenceDataService facilityTypeDataService;
@@ -314,8 +313,15 @@ public class SiglusFcIntegrationService {
         .findByIds(orderableIds)
         .stream()
         .collect(toMap(OrderableDto::getId, Function.identity()));
-    Map<UUID, LotDto> lotIdToLotMap = siglusLotReferenceDataService.findAll()
-        .stream().collect(toMap(LotDto::getId, Function.identity()));
+
+    Set<UUID> lotIds = page.getContent()
+        .stream()
+        .flatMap(pod -> pod.getLineItems()
+            .stream().map(ProofOfDeliveryLineItem::getLotId))
+        .collect(toSet());
+    log.info("lotIds size: {}", lotIds.size());
+    Map<UUID, Lot> lotIdToLotMap = siglusLotRepository.findAllByIdIn(lotIds)
+        .stream().collect(toMap(Lot::getId, Function.identity()));
     Map<UUID, String> reasonIdToReasonMap = stockCardLineItemReasonRepository
         .findByReasonTypeIn(newArrayList(ReasonType.DEBIT))
         .stream().collect(toMap(StockCardLineItemReason::getId, StockCardLineItemReason::getName));
@@ -398,7 +404,7 @@ public class SiglusFcIntegrationService {
 
   private FcProofOfDeliveryLineItem buildProductDto(ProofOfDeliveryLineItem lineItem,
       Map<UUID, OrderableDto> orderableMap,
-      Map<UUID, LotDto> lotMap,
+      Map<UUID, Lot> lotMap,
       Map<UUID, String> reasonMap,
       Map<UUID, Long> productIdToOrderedQuantityMap,
       Map<UUID, Long> productIdToPartialFulfilledMap,

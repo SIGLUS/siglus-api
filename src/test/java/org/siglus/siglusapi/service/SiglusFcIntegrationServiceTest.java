@@ -46,6 +46,7 @@ import org.openlmis.fulfillment.domain.ProofOfDeliveryLineItem;
 import org.openlmis.fulfillment.domain.ProofOfDeliveryStatus;
 import org.openlmis.fulfillment.domain.Shipment;
 import org.openlmis.referencedata.domain.Facility;
+import org.openlmis.referencedata.domain.Lot;
 import org.openlmis.referencedata.domain.SupervisoryNode;
 import org.openlmis.referencedata.dto.OrderableDto;
 import org.openlmis.requisition.domain.RequisitionTemplate;
@@ -79,7 +80,6 @@ import org.siglus.siglusapi.dto.FacilityTypeDto;
 import org.siglus.siglusapi.dto.FcProofOfDeliveryDto;
 import org.siglus.siglusapi.dto.FcProofOfDeliveryLineItem;
 import org.siglus.siglusapi.dto.FcRequisitionDto;
-import org.siglus.siglusapi.dto.LotDto;
 import org.siglus.siglusapi.dto.RegimenDto;
 import org.siglus.siglusapi.dto.RegimenLineDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
@@ -92,6 +92,8 @@ import org.siglus.siglusapi.repository.ProgramOrderablesRepository;
 import org.siglus.siglusapi.repository.ProgramRealProgramRepository;
 import org.siglus.siglusapi.repository.RequisitionLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.ShipmentsExtensionRepository;
+import org.siglus.siglusapi.repository.SiglusLotRepository;
+import org.siglus.siglusapi.repository.SiglusProgramOrderableRepository;
 import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.repository.SupervisoryNodeRepository;
@@ -99,7 +101,6 @@ import org.siglus.siglusapi.repository.TestConsumptionLineItemRepository;
 import org.siglus.siglusapi.repository.UsageInformationLineItemRepository;
 import org.siglus.siglusapi.repository.dto.ProgramOrderableDto;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
-import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusProcessingPeriodReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
@@ -162,9 +163,6 @@ public class SiglusFcIntegrationServiceTest {
   private SiglusProofOfDeliveryRepository siglusProofOfDeliveryRepository;
 
   @Mock
-  private SiglusLotReferenceDataService siglusLotReferenceDataService;
-
-  @Mock
   private StockCardLineItemReasonRepository stockCardLineItemReasonRepository;
 
   @Mock
@@ -190,6 +188,9 @@ public class SiglusFcIntegrationServiceTest {
 
   @Mock
   private ProgramOrderablesRepository programOrderableRepository;
+
+  @Mock
+  private SiglusLotRepository siglusLotRepository;
 
   private final UUID dpmFacilityTypeId = UUID.randomUUID();
 
@@ -708,10 +709,10 @@ public class SiglusFcIntegrationServiceTest {
   }
 
   private void mockLotMap() {
-    LotDto lot = new LotDto();
+    Lot lot = new Lot();
     lot.setId(lotId);
     lot.setLotCode(lotCode);
-    when(siglusLotReferenceDataService.findAll()).thenReturn(newArrayList(lot));
+    when(siglusLotRepository.findAllByIdIn(newHashSet(lotId))).thenReturn(newArrayList(lot));
   }
 
   private void mockReasonMap() {
