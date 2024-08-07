@@ -21,7 +21,6 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -48,15 +47,9 @@ public interface SiglusProofOfDeliveryRepository extends JpaRepository<ProofOfDe
       + "where p.status = 'CONFIRMED' "
       + "and p.receiveddate >= :date "
       + "and p.receiveddate <= now() "
-      + "and p.shipmentid in ("
-      + "     select s.id from fulfillment.shipments s "
-      + "     join fulfillment.orders o "
-      + "     on s.orderid = o.id "
-      + "     where o.requestingfacilityid in :requestingFacilityIds) "
       + "order by p.receiveddate, ?#{#pageable}",
       nativeQuery = true)
   Page<ProofOfDelivery> search(@Param("date") LocalDate date,
-      @Param("requestingFacilityIds") Set<UUID> requestingFacilityIds,
       Pageable pageable);
 
   default List<ProofOfDelivery> findAllByFacilitySince(UUID facilityId, @Nonnull LocalDate since,

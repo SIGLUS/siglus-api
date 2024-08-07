@@ -646,7 +646,7 @@ public class SiglusFcIntegrationServiceTest {
     Pageable pageable = new PageRequest(0, 10);
     Page<ProofOfDelivery> page = Pagination.getPage(newArrayList(proofOfDelivery), pageable, 1);
     when(siglusProofOfDeliveryRepository
-        .search(any(), any(), any())).thenReturn(page);
+        .search(any(), any())).thenReturn(page);
   }
 
   private Shipment mockShipment() {

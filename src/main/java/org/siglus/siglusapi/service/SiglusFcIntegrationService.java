@@ -29,7 +29,6 @@ import static org.openlmis.requisition.domain.requisition.Requisition.ODF;
 import static org.siglus.common.constant.ProgramConstants.MTB_PROGRAM_CODE;
 import static org.siglus.common.constant.ProgramConstants.RAPIDTEST_PROGRAM_CODE;
 import static org.siglus.common.constant.ProgramConstants.TARV_PROGRAM_CODE;
-import static org.siglus.siglusapi.constant.FacilityTypeConstants.getTopLevelTypes;
 import static org.siglus.siglusapi.constant.FieldConstants.VALUE;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.TestConsumptionLineItems.TOTAL;
 
@@ -262,16 +261,12 @@ public class SiglusFcIntegrationService {
 
   public Page<FcProofOfDeliveryDto> searchProofOfDelivery(LocalDate date, Pageable pageable) {
     List<FacilityDto> facilityDtos = siglusFacilityReferenceDataService.findAll();
-    Set<UUID> dpmRequestingFacilityIds = facilityDtos.stream()
-        .filter(facilityDto -> getTopLevelTypes().contains(facilityDto.getType().getCode()))
-        .map(FacilityDto::getId)
-        .collect(toSet());
     Map<UUID, String> facilityIdToFacilityCodeMap = facilityDtos
         .stream()
         .collect(toMap(FacilityDto::getId, FacilityDto::getCode));
 
     Page<ProofOfDelivery> page = siglusProofOfDeliveryRepository
-        .search(date, dpmRequestingFacilityIds, pageable);
+        .search(date, pageable);
 
     Set<UUID> shipmentIds = page.getContent().stream()
         .map(ProofOfDelivery::getShipment).map(Shipment::getId).collect(toSet());
