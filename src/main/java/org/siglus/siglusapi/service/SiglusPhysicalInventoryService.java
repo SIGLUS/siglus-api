@@ -74,7 +74,8 @@ import org.openlmis.stockmanagement.repository.PhysicalInventoriesRepository;
 import org.openlmis.stockmanagement.repository.StockCardRepository;
 import org.openlmis.stockmanagement.web.PhysicalInventoryController;
 import org.siglus.common.domain.BaseEntity;
-import org.siglus.common.domain.ProgramOrderablesExtension;
+import org.siglus.common.domain.ProgramAdditionalOrderable;
+import org.siglus.common.repository.ProgramAdditionalOrderableRepository;
 import org.siglus.siglusapi.domain.FacilityLocations;
 import org.siglus.siglusapi.domain.PhysicalInventoryEmptyLocationLineItem;
 import org.siglus.siglusapi.domain.PhysicalInventoryExtension;
@@ -102,7 +103,6 @@ import org.siglus.siglusapi.repository.PhysicalInventoryLineItemsExtensionReposi
 import org.siglus.siglusapi.repository.PhysicalInventorySubDraftRepository;
 import org.siglus.siglusapi.repository.SiglusPhysicalInventoryRepository;
 import org.siglus.siglusapi.repository.SiglusProgramOrderableRepository;
-import org.siglus.siglusapi.repository.SiglusProgramOrderablesExtensionRepository;
 import org.siglus.siglusapi.repository.SiglusStockCardRepository;
 import org.siglus.siglusapi.repository.dto.SiglusPhysicalInventoryBriefDto;
 import org.siglus.siglusapi.repository.dto.StockCardStockDto;
@@ -172,7 +172,7 @@ public class SiglusPhysicalInventoryService {
   @Autowired
   private SiglusProgramOrderableRepository siglusProgramOrderableRepository;
   @Autowired
-  private SiglusProgramOrderablesExtensionRepository siglusProgramOrderablesExtensionRepository;
+  private ProgramAdditionalOrderableRepository programAdditionalOrderableRepository;
 
   @Transactional
   public PhysicalInventoryDto createAndSplitNewDraftForAllPrograms(PhysicalInventoryDto physicalInventoryDto,
@@ -1005,8 +1005,8 @@ public class SiglusPhysicalInventoryService {
     if (isMmc) {
       UUID viaProgramId = getViaProgramId(programDtoMap);
       stockCards = siglusStockCardRepository.findByFacilityIdAndProgramId(facilityId, viaProgramId);
-      Set<UUID> mmcOrderableIdSet = siglusProgramOrderablesExtensionRepository.findByRealProgramCode(MMC_PROGRAM_CODE)
-          .stream().map(ProgramOrderablesExtension::getOrderableId).collect(Collectors.toSet());
+      Set<UUID> mmcOrderableIdSet = programAdditionalOrderableRepository.findAllByProgramId(programId)
+          .stream().map(ProgramAdditionalOrderable::getAdditionalOrderableId).collect(Collectors.toSet());
       stockCards.removeIf(stockCard -> !mmcOrderableIdSet.contains(stockCard.getOrderableId()));
     } else {
       stockCards = siglusStockCardRepository.findByFacilityIdAndProgramId(facilityId, programId);
