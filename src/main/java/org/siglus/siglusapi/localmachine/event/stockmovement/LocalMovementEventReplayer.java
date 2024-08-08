@@ -19,12 +19,14 @@ import lombok.RequiredArgsConstructor;
 import org.siglus.siglusapi.localmachine.cdc.JdbcSinker;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 @Component
 @RequiredArgsConstructor
 public class LocalMovementEventReplayer {
   private final JdbcSinker jdbcSinker;
 
+  @Transactional
   @EventListener(classes = {LocalMovementEvent.class})
   public void replay(LocalMovementEvent localMovementEvent) {
     jdbcSinker.sink(localMovementEvent.getTableChangeEvents());

@@ -28,6 +28,7 @@ import org.siglus.siglusapi.service.android.RequisitionCreateService;
 import org.siglus.siglusapi.util.SiglusSimulateUserAuthHelper;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Slf4j
@@ -41,6 +42,7 @@ public class AndroidRequisitionSyncedReplayer {
   private final SiglusRequisitionRepository requisitionRepository;
   private final SiglusProgramService siglusProgramService;
 
+  @Transactional
   @EventListener(value = {AndroidRequisitionSyncedEvent.class})
   public void replay(AndroidRequisitionSyncedEvent event) {
     currentEvent.set(event);

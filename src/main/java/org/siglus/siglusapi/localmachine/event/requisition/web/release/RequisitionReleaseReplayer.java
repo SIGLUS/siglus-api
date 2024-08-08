@@ -25,6 +25,7 @@ import org.siglus.siglusapi.domain.RequisitionExtension;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Slf4j
@@ -34,6 +35,7 @@ public class RequisitionReleaseReplayer {
   private final RequisitionRepository requisitionRepository;
   private final RequisitionExtensionRepository requisitionExtensionRepository;
 
+  @Transactional
   @EventListener(classes = {RequisitionReleaseEvent.class})
   public void replay(RequisitionReleaseEvent requisitionReleaseEvent) {
     try {

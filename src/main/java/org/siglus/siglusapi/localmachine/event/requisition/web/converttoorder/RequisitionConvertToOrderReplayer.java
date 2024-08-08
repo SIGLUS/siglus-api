@@ -44,6 +44,7 @@ import org.siglus.siglusapi.repository.SiglusOrdersRepository;
 import org.springframework.beans.BeanUtils;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Slf4j
@@ -55,6 +56,7 @@ public class RequisitionConvertToOrderReplayer {
   private final EventCommonService eventCommonService;
   private final NotificationService notificationService;
 
+  @Transactional
   @EventListener(value = {RequisitionConvertToOrderEvent.class})
   public void replay(RequisitionConvertToOrderEvent event) {
     try {

@@ -19,12 +19,14 @@ import lombok.RequiredArgsConstructor;
 import org.siglus.siglusapi.localmachine.cdc.JdbcSinker;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 @Component
 @RequiredArgsConstructor
 public class BackupDatabaseEventReplayer {
   private final JdbcSinker jdbcSinker;
 
+  @Transactional
   @EventListener(classes = {BackupDatabaseEvent.class})
   public void replay(BackupDatabaseEvent backupDatabaseEvent) {
     jdbcSinker.sink(backupDatabaseEvent.getTableChangeEvents());

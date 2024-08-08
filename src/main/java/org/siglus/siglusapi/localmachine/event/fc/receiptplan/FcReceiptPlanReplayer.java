@@ -24,6 +24,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Component
@@ -35,6 +36,7 @@ public class FcReceiptPlanReplayer {
 
   private final SiglusSimulateUserAuthHelper siglusSimulateUserAuthHelper;
 
+  @Transactional
   @EventListener(classes = {FcReceiptPlanEvent.class})
   public void replay(FcReceiptPlanEvent event) {
     try {

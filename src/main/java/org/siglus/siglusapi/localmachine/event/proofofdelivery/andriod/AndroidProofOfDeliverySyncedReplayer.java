@@ -21,6 +21,7 @@ import org.siglus.siglusapi.service.android.MeService;
 import org.siglus.siglusapi.util.SiglusSimulateUserAuthHelper;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Slf4j
@@ -30,6 +31,7 @@ public class AndroidProofOfDeliverySyncedReplayer {
   private final SiglusSimulateUserAuthHelper simulateUserAuthHelper;
   private final MeService meService;
 
+  @Transactional
   @EventListener(value = {AndroidProofOfDeliverySyncedEvent.class})
   public void replay(AndroidProofOfDeliverySyncedEvent event) {
     try {

@@ -33,6 +33,7 @@ import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
 import org.siglus.siglusapi.repository.SiglusShipmentRepository;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
@@ -47,6 +48,7 @@ public class ProofOfDeliveryReplayer {
   private final NotificationService notificationService;
   private final SiglusShipmentRepository siglusShipmentRepository;
 
+  @Transactional
   @EventListener(classes = {ProofOfDeliveryEvent.class})
   public void replay(ProofOfDeliveryEvent event) {
     try {

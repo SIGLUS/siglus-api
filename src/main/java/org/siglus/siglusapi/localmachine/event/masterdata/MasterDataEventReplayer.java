@@ -32,6 +32,7 @@ import org.siglus.siglusapi.service.SiglusCacheService;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 @Component
 @RequiredArgsConstructor
@@ -47,6 +48,7 @@ public class MasterDataEventReplayer {
   private static final String FIELD_FACILITY_ID = "facilityid";
   private static final String FIELD_ENABLE_LOCATION_MANAGEMENT = "enablelocationmanagement";
 
+  @Transactional
   @EventListener(classes = {MasterDataTableChangeEvent.class})
   public void replay(MasterDataTableChangeEvent masterDataTableChangeEvent) {
     List<TableChangeEvent> tableChangeEvents = masterDataTableChangeEvent.getTableChangeEvents();

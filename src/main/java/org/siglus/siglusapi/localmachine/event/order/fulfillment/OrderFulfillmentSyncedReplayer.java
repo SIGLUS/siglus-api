@@ -90,6 +90,7 @@ import org.siglus.siglusapi.web.request.ShipmentExtensionRequest;
 import org.springframework.beans.BeanUtils;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Slf4j
@@ -117,6 +118,7 @@ public class OrderFulfillmentSyncedReplayer {
   private final ShipmentService shipmentService;
   private final LotRepository lotRepository;
 
+  @Transactional
   @EventListener(value = {OrderFulfillmentSyncedEvent.class})
   public void replay(OrderFulfillmentSyncedEvent event) {
     try {

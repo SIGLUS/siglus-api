@@ -33,6 +33,7 @@ import org.siglus.siglusapi.service.SiglusRequisitionService;
 import org.siglus.siglusapi.service.android.RequisitionCreateService;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
@@ -47,6 +48,7 @@ public class RequisitionRejectReplayer {
   private final SiglusRequisitionService siglusRequisitionService;
   private final RequisitionCreateService requisitionCreateService;
 
+  @Transactional
   @EventListener(classes = {RequisitionRejectEvent.class})
   public void replay(RequisitionRejectEvent event) {
     try {

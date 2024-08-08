@@ -71,6 +71,7 @@ import org.siglus.siglusapi.service.android.RequisitionCreateService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
@@ -96,6 +97,7 @@ public class RequisitionCreateForClientReplayer {
   private final ProcessingPeriodRepository processingPeriodRepository;
   private final EventCommonService eventCommonService;
 
+  @Transactional
   @EventListener(classes = {RequisitionCreateForClientEvent.class})
   public void replay(RequisitionCreateForClientEvent event) {
     try {

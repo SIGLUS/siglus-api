@@ -64,6 +64,7 @@ import org.siglus.siglusapi.service.android.RequisitionCreateService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
@@ -85,6 +86,7 @@ public class RequisitionInternalApproveReplayer {
   private final RequisitionCreateService requisitionCreateService;
   private final NotificationService notificationService;
 
+  @Transactional
   @EventListener(classes = {RequisitionInternalApprovedEvent.class})
   public void replay(RequisitionInternalApprovedEvent event) {
     try {
