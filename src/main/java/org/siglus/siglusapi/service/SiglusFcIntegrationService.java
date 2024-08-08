@@ -40,6 +40,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -317,6 +318,7 @@ public class SiglusFcIntegrationService {
         .stream()
         .flatMap(pod -> pod.getLineItems()
             .stream().map(ProofOfDeliveryLineItem::getLotId))
+        .filter(Objects::nonNull)
         .collect(toSet());
     log.info("lotIds size: {}", lotIds.size());
     Map<UUID, Lot> lotIdToLotMap = siglusLotRepository.findAllByIdIn(lotIds)
@@ -414,8 +416,8 @@ public class SiglusFcIntegrationService {
         .productCode(orderableDto.getProductCode())
         .productName(orderableDto.getFullProductName())
         .productDescription(orderableDto.getDescription())
-        .lotCode(lotMap.get(lineItem.getLotId()).getLotCode())
-        .expiringDate(lotMap.get(lineItem.getLotId()).getExpirationDate())
+        .lotCode(lineItem.getLotId() == null ? null : lotMap.get(lineItem.getLotId()).getLotCode())
+        .expiringDate(lineItem.getLotId() == null ? null : lotMap.get(lineItem.getLotId()).getExpirationDate())
         .orderedQuantity(productIdToOrderedQuantityMap.get(orderableDto.getId()))
         .partialFulfilled(productIdToPartialFulfilledMap.get(orderableDto.getId()))
         .suppliedQuantity(lineItem.getQuantityAccepted() + lineItem.getQuantityRejected())
