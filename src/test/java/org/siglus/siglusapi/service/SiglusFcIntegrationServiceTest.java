@@ -93,7 +93,6 @@ import org.siglus.siglusapi.repository.ProgramRealProgramRepository;
 import org.siglus.siglusapi.repository.RequisitionLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.ShipmentsExtensionRepository;
 import org.siglus.siglusapi.repository.SiglusLotRepository;
-import org.siglus.siglusapi.repository.SiglusProgramOrderableRepository;
 import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.repository.SupervisoryNodeRepository;
@@ -188,9 +187,6 @@ public class SiglusFcIntegrationServiceTest {
 
   @Mock
   private ProgramOrderablesRepository programOrderableRepository;
-
-  @Mock
-  private SiglusLotRepository siglusLotRepository;
 
   @Mock
   private SiglusLotRepository siglusLotRepository;
