@@ -23,6 +23,7 @@ import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_REQUISITION_SUPPLIER_F
 
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.util.Optional;
 import java.util.UUID;
 import javax.persistence.EntityNotFoundException;
 import javax.validation.ConstraintValidator;
@@ -34,6 +35,7 @@ import org.openlmis.referencedata.domain.ProcessingPeriod;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.dto.BaseDto;
+import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
 import org.siglus.common.domain.ProcessingPeriodExtension;
 import org.siglus.common.repository.ProcessingPeriodExtensionRepository;
@@ -74,6 +76,7 @@ public class RequisitionValidStartDateValidator implements
   private static final String IS_PREVIOUS_REQUISITION_FAILED = "isPreviousRequisitionFailed";
   private static final String IS_CONFIGURE_PERIOD_INVALID = "isConfigurePeriodInvalid";
   private static final String IS_PERIOD_CANNOT_SUBMIT_YET = "isPeriodCannotSubmittedYet";
+  private static final String PROGRAM_CODE_ERROR = "programCodeError";
 
   @Override
   public void initialize(RequisitionValidStartDate constraintAnnotation) {
@@ -111,10 +114,14 @@ public class RequisitionValidStartDateValidator implements
     if (!ObjectUtils.isEmpty(existRequisition) && existRequisition.getStatus() == RequisitionStatus.REJECTED) {
       return true;
     }
+    Optional<ProgramDto> programByCode = siglusProgramService.getProgramByCode(programCode);
+    if (!programByCode.isPresent()) {
+      actualContext.addExpressionVariable(PROGRAM_CODE_ERROR, true);
+      return false;
+    }
     Requisition lastRequisition = requisitionRepository
-        .findLatestRequisitionsByFacilityId(homeFacilityId)
+        .findLatestRequisitionsByFacilityIdAndProgramId(homeFacilityId, programByCode.get().getId())
         .stream()
-        .filter(req -> programCode.equals(programDataService.findOne(req.getProgramId()).getCode()))
         .findFirst()
         .orElse(null);
 

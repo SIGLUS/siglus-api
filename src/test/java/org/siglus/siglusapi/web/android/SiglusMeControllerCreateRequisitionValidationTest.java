@@ -280,6 +280,8 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
     programDto.setId(UUID.randomUUID());
     programDto.setCode("code");
     Object param = parseParam("actualStartDateBeforeLastActualEnd.json");
+    when(requisitionRepo.findLatestRequisitionsByFacilityIdAndProgramId(any(), any()))
+        .thenReturn(singletonList(req1));
 
     // when
     when(siglusProgramService.getProgramByCode(anyString())).thenReturn(Optional.of(programDto));
@@ -306,6 +308,8 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
     programDto.setId(UUID.randomUUID());
     programDto.setCode("code");
     Object param = parseParam("actualStartDateAfterLastActualEnd.json");
+    when(requisitionRepo.findLatestRequisitionsByFacilityIdAndProgramId(any(), any()))
+        .thenReturn(singletonList(req1));
 
     // when
     when(siglusProgramService.getProgramByCode(anyString())).thenReturn(Optional.of(programDto));
@@ -353,6 +357,7 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
     programDto.setId(UUID.randomUUID());
     programDto.setCode("code");
     Object param = parseParam("actualStartDateBeforeLastEnd.json");
+    mockLatestRequisition();
 
     // when
     when(siglusProgramService.getProgramByCode(anyString())).thenReturn(Optional.of(programDto));
@@ -443,6 +448,8 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
     programDto.setId(UUID.randomUUID());
     programDto.setCode("code");
     Object param = parseParam("periodApr.json");
+    when(requisitionRepo.findLatestRequisitionsByFacilityIdAndProgramId(any(), any()))
+        .thenReturn(singletonList(req1));
 
     // when
     when(siglusProgramService.getProgramByCode(anyString())).thenReturn(Optional.of(programDto));
@@ -466,6 +473,8 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
     programDto.setId(UUID.randomUUID());
     programDto.setCode("code");
     Object param = parseParam("periodMay.json");
+    when(requisitionRepo.findLatestRequisitionsByFacilityIdAndProgramId(any(), any()))
+        .thenReturn(singletonList(req1));
 
     // when
     when(siglusProgramService.getProgramByCode(anyString())).thenReturn(Optional.of(programDto));
@@ -492,6 +501,8 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
     programDto.setId(UUID.randomUUID());
     programDto.setCode("code");
     Object param = parseParam("periodJul.json");
+    when(requisitionRepo.findLatestRequisitionsByFacilityIdAndProgramId(any(), any()))
+        .thenReturn(singletonList(req1));
 
     // when
     when(siglusProgramService.getProgramByCode(anyString())).thenReturn(Optional.of(programDto));
@@ -675,5 +686,18 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
     programDto.setId(UUID.randomUUID());
     programDto.setCode("code");
     when(siglusProgramService.getProgramByCode(anyString())).thenReturn(Optional.of(programDto));
+  }
+
+  private void mockLatestRequisition() {
+    Requisition req3 = mock(Requisition.class);
+    when(req3.getProgramId()).thenReturn(program1Id);
+    when(req3.getActualEndDate()).thenReturn(LocalDate.of(2020, 8, 20));
+    when(requisitionRepo.findLatestRequisitionsByFacilityIdAndProgramId(any(), any()))
+        .thenReturn(singletonList(req3));
+  }
+
+  private void mockEmptyLatestRequisition() {
+    when(requisitionRepo.findLatestRequisitionsByFacilityIdAndProgramId(any(), any()))
+        .thenReturn(emptyList());
   }
 }
