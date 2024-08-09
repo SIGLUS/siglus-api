@@ -84,8 +84,8 @@ public interface SiglusRequisitionRepository extends JpaRepository<Requisition, 
       + "and t.programid = :programId "
       + "and t.emergency = false "
       + "order by pp.startdate desc ", nativeQuery = true)
-  List<Requisition> findLatestRequisitionsByFacilityIdAndProgramId(@Param("facilityId") UUID facilityId,
-                                                                   @Param("programId") UUID programId);
+  List<Requisition> findRequisitionsByFacilityIdAndProgramIdOrderByPeriod(@Param("facilityId") UUID facilityId,
+                                                                          @Param("programId") UUID programId);
 
   @Query(value = "select CAST(id AS varchar) from requisition.requisitions r "
       + "where r.facilityid = :facilityId "
@@ -138,8 +138,6 @@ public interface SiglusRequisitionRepository extends JpaRepository<Requisition, 
   Set<Requisition> findAllByStatusIn(Set<RequisitionStatus> statusSet);
 
   void deleteById(UUID id);
-
-  List<Requisition> findByFacilityIdAndProgramIdAndEmergency(UUID facilityId, UUID programId, boolean emergency);
 
   List<Requisition> findByFacilityIdAndProgramIdAndEmergencyAndStatusIn(
       UUID facilityId, UUID programId, Boolean emergency, Collection<RequisitionStatus> status);

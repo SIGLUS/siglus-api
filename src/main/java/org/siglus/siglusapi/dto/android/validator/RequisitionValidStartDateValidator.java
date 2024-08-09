@@ -120,7 +120,7 @@ public class RequisitionValidStartDateValidator implements
       return false;
     }
     Requisition lastRequisition = requisitionRepository
-        .findLatestRequisitionsByFacilityIdAndProgramId(homeFacilityId, programByCode.get().getId())
+        .findRequisitionsByFacilityIdAndProgramIdOrderByPeriod(homeFacilityId, programByCode.get().getId())
         .stream()
         .findFirst()
         .orElse(null);

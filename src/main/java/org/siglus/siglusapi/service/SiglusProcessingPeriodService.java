@@ -287,18 +287,22 @@ public class SiglusProcessingPeriodService {
     List<ProcessingPeriodDto> sortedPeriods = periods.stream()
         .sorted(Comparator.comparing(ProcessingPeriodDto::getStartDate)).collect(Collectors.toList());
 
-    List<RequisitionPeriodDto> requisitionPeriods = new ArrayList<>();
-    Map<UUID, Requisition> existedRequisitions =
-        siglusRequisitionRepository.findByFacilityIdAndProgramIdAndEmergency(facility, program.getId(), false)
-            .stream()
-            .collect(Collectors.toMap(Requisition::getProcessingPeriodId, Function.identity()));
+    List<Requisition> requisitions =
+        siglusRequisitionRepository.findRequisitionsByFacilityIdAndProgramIdOrderByPeriod(facility, program.getId());
+    Optional<ProcessingPeriodDto> firstPeriod = requisitions.stream().findFirst()
+        .map(first -> periodService.getPeriod(first.getProcessingPeriodId()));
+    Map<UUID, Requisition> existedRequisitions = requisitions.stream()
+        .collect(Collectors.toMap(Requisition::getProcessingPeriodId, Function.identity()));
 
+    List<RequisitionPeriodDto> requisitionPeriods = new ArrayList<>();
     boolean canInit = permissionService.canInitRequisition(program.getId(), facility).isSuccess();
     boolean canAuthorize = canAuthorizeRequisition(program.getId(), facility);
     for (ProcessingPeriodDto period : sortedPeriods) {
       Requisition requisition = existedRequisitions.get(period.getId());
       if (requisition == null) {
-        requisitionPeriods.add(RequisitionPeriodDto.newInstance(period));
+        if (!firstPeriod.isPresent() || period.getStartDate().isAfter(firstPeriod.get().getStartDate())) {
+          requisitionPeriods.add(RequisitionPeriodDto.newInstance(period));
+        }
       } else if (showRegularRequisition(requisition, canInit, canAuthorize)) {
         RequisitionPeriodDto requisitionPeriodDto = RequisitionPeriodDto.newInstance(period);
         requisitionPeriodDto.setRequisitionId(requisition.getId());

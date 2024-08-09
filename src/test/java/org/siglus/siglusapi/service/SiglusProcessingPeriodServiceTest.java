@@ -268,7 +268,7 @@ public class SiglusProcessingPeriodServiceTest {
 
     List<Requisition> requisitions = new ArrayList<>();
     requisitions.add(createRequisition(requisitionId, RequisitionStatus.INITIATED, false));
-    when(siglusRequisitionRepository.findByFacilityIdAndProgramIdAndEmergency(facilityId, programId, false))
+    when(siglusRequisitionRepository.findRequisitionsByFacilityIdAndProgramIdOrderByPeriod(facilityId, programId))
         .thenReturn(requisitions);
 
     when(permissionService.canInitRequisition(programId, facilityId))
@@ -478,7 +478,7 @@ public class SiglusProcessingPeriodServiceTest {
 
     List<Requisition> requisitions = new ArrayList<>();
     requisitions.add(createRequisition(requisitionId, RequisitionStatus.INITIATED, false));
-    when(siglusRequisitionRepository.findByFacilityIdAndProgramIdAndEmergency(facilityId, programId, false))
+    when(siglusRequisitionRepository.findRequisitionsByFacilityIdAndProgramIdOrderByPeriod(facilityId, programId))
         .thenReturn(requisitions);
 
     when(permissionService.canInitRequisition(programId, facilityId))
