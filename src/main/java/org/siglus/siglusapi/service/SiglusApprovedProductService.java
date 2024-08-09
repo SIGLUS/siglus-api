@@ -16,6 +16,8 @@
 package org.siglus.siglusapi.service;
 
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
+import static org.siglus.siglusapi.constant.ProgramConstants.MALARIA_PROGRAM_CODE;
+import static org.siglus.siglusapi.constant.ProgramConstants.MMC_PROGRAM_CODE;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -33,7 +35,9 @@ import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.requisition.dto.DispensableDto;
 import org.openlmis.requisition.service.RequisitionService;
 import org.siglus.common.constant.KitConstants;
+import org.siglus.common.domain.ProgramAdditionalOrderable;
 import org.siglus.common.domain.ProgramOrderablesExtension;
+import org.siglus.common.repository.ProgramAdditionalOrderableRepository;
 import org.siglus.common.repository.ProgramOrderablesExtensionRepository;
 import org.siglus.siglusapi.dto.ProgramProductDto;
 import org.siglus.siglusapi.dto.SupportedProgramDto;
@@ -60,6 +64,9 @@ public class SiglusApprovedProductService {
 
   @Autowired
   private SiglusArchiveProductService archiveProductService;
+
+  @Autowired
+  private ProgramAdditionalOrderableRepository programAdditionalOrderableRepository;
 
   @Deprecated
   public List<ApprovedProductDto> getApprovedProducts(UUID facilityId, UUID programId) {
@@ -95,13 +102,19 @@ public class SiglusApprovedProductService {
     Set<UUID> archivedProductSet = archiveProductService.searchArchivedProductsByFacilityId(facilityId)
         .stream().map(UUID::fromString).collect(Collectors.toSet());
     List<UUID> programIds = programDtos.stream().map(SupportedProgramDto::getId).collect(Collectors.toList());
-    List<ProgramOrderable> programOrderables =
-        siglusProgramOrderableRepository.findMaxVersionOrderableByProgramIds(programIds)
-            .stream()
-            .filter(programOrderable -> !archivedProductSet.contains(programOrderable.getProduct().getId()))
-            .filter(programOrderable ->
-                !(excludeKit && KitConstants.isKit(programOrderable.getProduct().getProductCode().toString())))
-            .collect(Collectors.toList());
+    List<ProgramOrderable> programOrderables;
+    if (isAdditionalPrograms(programDtos, programId)) {
+      List<UUID> additionalOrderableIds = programAdditionalOrderableRepository.findAllByProgramId(programId).stream()
+          .map(ProgramAdditionalOrderable::getAdditionalOrderableId).collect(Collectors.toList());
+      programOrderables = siglusProgramOrderableRepository.findByOrderableIdIn(additionalOrderableIds);
+    } else {
+      programOrderables = siglusProgramOrderableRepository.findMaxVersionOrderableByProgramIds(programIds);
+    }
+    programOrderables = programOrderables.stream()
+        .filter(programOrderable -> !archivedProductSet.contains(programOrderable.getProduct().getId()))
+        .filter(programOrderable ->
+            !(excludeKit && KitConstants.isKit(programOrderable.getProduct().getProductCode().toString())))
+        .collect(Collectors.toList());
     Set<UUID> orderableIds = programOrderables.stream()
         .map(product -> product.getProduct().getId()).collect(Collectors.toSet());
     Map<UUID, ProgramOrderablesExtension> extensionMap =
@@ -127,5 +140,13 @@ public class SiglusApprovedProductService {
       }
     }
     return supportedPrograms;
+  }
+
+  private boolean isAdditionalPrograms(List<SupportedProgramDto> programDtos, UUID programId) {
+    if (ALL_PRODUCTS_PROGRAM_ID.equals(programId)) {
+      return false;
+    }
+    return programDtos.stream().anyMatch(programDto -> Objects.equals(programDto.getCode(), MMC_PROGRAM_CODE)
+        || Objects.equals(programDto.getCode(), MALARIA_PROGRAM_CODE));
   }
 }

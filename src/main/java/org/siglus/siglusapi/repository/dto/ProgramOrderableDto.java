@@ -31,23 +31,15 @@ import lombok.Data;
 @NamedNativeQueries({
     @NamedNativeQuery(
         name = "ProgramOrderable.findProgramOrderableDto",
-        query = "select * \n"
-            + "from referencedata.program_orderables\n"
-            + "where (orderableid, orderableversionnumber) in\n"
-            + "   (select orderableid, MAX(orderableversionnumber)\n"
-            + "   from referencedata.program_orderables\n"
-            + "   group by orderableid)",
+        query = "select distinct on (po.orderableid) po.* from referencedata.program_orderables po "
+            + "order by po.orderableid, po.orderableversionnumber desc ",
         resultSetMapping = "ProgramOrderable.ProgramOrderableDto"),
 
     @NamedNativeQuery(
         name = "ProgramOrderable.findMaxVersionByOrderableIds",
-        query = "select * "
-            + "from referencedata.program_orderables "
-            + "where (orderableid, orderableversionnumber) in "
-            + "   (select orderableid, MAX(orderableversionnumber) "
-            + "   from referencedata.program_orderables "
-            + "   where orderableid in :orderableIds "
-            + "   group by orderableid)",
+        query = "select distinct on (po.orderableid) po.* from referencedata.program_orderables po "
+            + "where po.programid in :programIds "
+            + "order by po.orderableid, po.orderableversionnumber desc ",
         resultSetMapping = "ProgramOrderable.ProgramOrderableDto")
 })
 

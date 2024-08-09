@@ -31,15 +31,13 @@ public interface SiglusProgramOrderableRepository extends JpaRepository<ProgramO
 
   List<ProgramOrderable> findByProgramIdIn(Collection<UUID> programIds);
 
-  @Query(value = "select * from referencedata.program_orderables where (orderableid, orderableversionnumber) in "
-      + "   (select orderableid, MAX(orderableversionnumber) from referencedata.program_orderables "
-      + "    where orderableid in :orderableIds group by orderableid)",
+  @Query(value = "select distinct on (po.orderableid) po.* from referencedata.program_orderables po "
+      + "    where orderableid in :orderableIds order by po.orderableid, po.orderableversionnumber desc ",
       nativeQuery = true)
   List<ProgramOrderable> findByOrderableIdIn(@Param("orderableIds")Collection<UUID> orderIds);
 
-  @Query(value = "select * from referencedata.program_orderables where (orderableid, orderableversionnumber) in "
-      + "   (select orderableid, MAX(orderableversionnumber) from referencedata.program_orderables "
-      + "    where programid in :programIds group by orderableid)",
+  @Query(value = "select distinct on (po.orderableid) po.* from referencedata.program_orderables po "
+      + "    where po.programid in :programIds order by po.orderableid, po.orderableversionnumber desc ",
       nativeQuery = true)
   List<ProgramOrderable> findMaxVersionOrderableByProgramIds(@Param("programIds")Collection<UUID> programIds);
 
