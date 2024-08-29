@@ -17,6 +17,7 @@ package org.siglus.siglusapi.dto.fc;
 
 import static java.util.Comparator.comparing;
 
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
 import javax.persistence.EntityNotFoundException;
@@ -61,6 +62,36 @@ public class FcIntegrationResultDto {
           .max(comparing(ResponseBaseDto::getLastUpdatedAt))
           .orElseThrow(EntityNotFoundException::new)
           .getLastUpdatedAt();
+    }
+    FcIntegrationResultDto resultDto = FcIntegrationResultDto.builder()
+        .api(fcIntegrationBuildWrapper.getApi())
+        .startDate(fcIntegrationBuildWrapper.getStartDate())
+        .lastUpdatedAt(lastUpdatedAt)
+        .totalObjects(fcIntegrationBuildWrapper.getResult().size())
+        .createdObjects(fcIntegrationBuildWrapper.getCreateCounter())
+        .updatedObjects(fcIntegrationBuildWrapper.getUpdateCounter())
+        .finalSuccess(fcIntegrationBuildWrapper.isFinalSuccess())
+        .fcIntegrationChanges(fcIntegrationBuildWrapper.getFcIntegrationChanges())
+        .build();
+    if (fcIntegrationBuildWrapper.getErrorMessage() != null) {
+      resultDto.setErrorMessage(fcIntegrationBuildWrapper.getErrorMessage());
+    }
+    return resultDto;
+  }
+
+
+  public static FcIntegrationResultDto buildResultForNewFc(
+      FcIntegrationResultBuildDto fcIntegrationBuildWrapper) {
+    ZonedDateTime lastUpdatedAt;
+    if (fcIntegrationBuildWrapper.getResult().isEmpty()
+        || !fcIntegrationBuildWrapper.isFinalSuccess()) {
+      lastUpdatedAt = fcIntegrationBuildWrapper.getPreviousLastUpdatedAt();
+    } else {
+      lastUpdatedAt = fcIntegrationBuildWrapper.getResult().stream()
+          .max(comparing(ResponseBaseDto::getUpdateDate))
+          .orElseThrow(EntityNotFoundException::new)
+          .getUpdateDate()
+          .atStartOfDay(ZoneId.systemDefault());
     }
     FcIntegrationResultDto resultDto = FcIntegrationResultDto.builder()
         .api(fcIntegrationBuildWrapper.getApi())

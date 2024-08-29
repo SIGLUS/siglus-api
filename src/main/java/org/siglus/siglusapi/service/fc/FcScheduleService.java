@@ -19,6 +19,7 @@ import static com.google.common.collect.Lists.newArrayList;
 import static org.siglus.siglusapi.constant.FcConstants.CMM_API;
 import static org.siglus.siglusapi.constant.FcConstants.CP_API;
 import static org.siglus.siglusapi.constant.FcConstants.DATE_FORMAT;
+import static org.siglus.siglusapi.constant.FcConstants.DISTRICT_API;
 import static org.siglus.siglusapi.constant.FcConstants.FACILITY_API;
 import static org.siglus.siglusapi.constant.FcConstants.FACILITY_TYPE_API;
 import static org.siglus.siglusapi.constant.FcConstants.GEOGRAPHIC_ZONE_API;
@@ -26,9 +27,12 @@ import static org.siglus.siglusapi.constant.FcConstants.ISSUE_VOUCHER_API;
 import static org.siglus.siglusapi.constant.FcConstants.MONTH_FORMAT;
 import static org.siglus.siglusapi.constant.FcConstants.PRODUCT_API;
 import static org.siglus.siglusapi.constant.FcConstants.PROGRAM_API;
+import static org.siglus.siglusapi.constant.FcConstants.PROVINCE_API;
 import static org.siglus.siglusapi.constant.FcConstants.RECEIPT_PLAN_API;
 import static org.siglus.siglusapi.constant.FcConstants.REGIMEN_API;
+import static org.siglus.siglusapi.constant.FcConstants.REGION_API;
 import static org.siglus.siglusapi.constant.FcConstants.getCmmAndCpApis;
+import static org.siglus.siglusapi.constant.FcConstants.getFcNewApis;
 
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
@@ -68,6 +72,9 @@ public class FcScheduleService {
   @Value("${fc.domain}")
   private String fcDomain;
 
+  @Value("${fc.domain.new}")
+  private String fcNewDomain;
+
   @Value("${fc.key}")
   private String fcKey;
 
@@ -87,6 +94,9 @@ public class FcScheduleService {
   private final FcFacilityService fcFacilityService;
   private final StringRedisTemplate redisTemplate;
   private final FcIntegrationChangesRepository fcIntegrationChangesRepository;
+  private final FcRegionService fcRegionService;
+  private final FcProvinceService fcProvinceService;
+  private final FcDistrictService fcDistrictService;
 
   @Scheduled(cron = "${fc.receiptplan.cron}", zone = TIME_ZONE_ID)
   @Transactional
@@ -141,8 +151,10 @@ public class FcScheduleService {
 
   @Transactional
   public void syncGeographicZones(String date) {
-    log.info("[FC facility] start sync");
-    process(GEOGRAPHIC_ZONE_API, date);
+    log.info("[FC geographic] start sync");
+    process(REGION_API, date);
+    process(PROVINCE_API, date);
+    process(DISTRICT_API, date);
   }
 
   @Transactional
@@ -196,7 +208,11 @@ public class FcScheduleService {
       LocalDate localDate = LocalDate.parse(date, DateTimeFormatter.ofPattern(DATE_FORMAT));
       date = localDate.format(getFormatter(api));
     }
-    fetchData(api, date);
+    if (getFcNewApis().contains(api)) {
+      fetchDataForNewFc(api, date);
+    } else {
+      fetchData(api, date);
+    }
     processAndRecordResult(api, date, lastUpdatedAt);
   }
 
@@ -238,6 +254,15 @@ public class FcScheduleService {
     } else if (ISSUE_VOUCHER_API.equals(api)) {
       result = callFcService.getIssueVouchers();
       processDataService = fcIssueVoucherService;
+    } else if (REGION_API.equals(api)) {
+      result = callFcService.getRegions();
+      processDataService = fcRegionService;
+    } else if (PROVINCE_API.equals(api)) {
+      result = callFcService.getProvinces();
+      processDataService = fcProvinceService;
+    } else if (DISTRICT_API.equals(api)) {
+      result = callFcService.getDistrict();
+      processDataService = fcDistrictService;
     }
     if (result.isEmpty() || processDataService == null) {
       log.info("no new data for {}", api);
@@ -254,6 +279,19 @@ public class FcScheduleService {
       initData(api);
       for (int page = 1; page <= callFcService.getPageInfoDto().getTotalPages(); page++) {
         callFcService.fetchData(getUrl(api, page, date), api);
+      }
+      log.info("[FC] fetch {} finish, total size: {}", api, getTotalSize(api));
+    } catch (Exception e) {
+      log.error("[FC] fetch api {} failed", api);
+      throw e;
+    }
+  }
+
+  public void fetchDataForNewFc(String api, String date) {
+    try {
+      initData(api);
+      for (int page = 0; page <= callFcService.getPageInfoDto().getTotalPages(); page++) {
+        callFcService.fetchDataForNewFc(getNewUrl(api, page, date), api, callFcService.getClassByApi(api));
       }
       log.info("[FC] fetch {} finish, total size: {}", api, getTotalSize(api));
     } catch (Exception e) {
@@ -283,6 +321,16 @@ public class FcScheduleService {
     return url;
   }
 
+  private String getNewUrl(String path, int page, String date) {
+    String url = fcNewDomain + path + "?key=" + fcKey + "&psize=20&page=" + page + "&";
+    if (date.contains("-")) {
+      url += "period=" + date;
+    } else {
+      url += "date=" + date;
+    }
+    return url;
+  }
+
   private int getTotalSize(String api) {
     if (ISSUE_VOUCHER_API.equals(api)) {
       return callFcService.getIssueVouchers().size();
@@ -304,6 +352,12 @@ public class FcScheduleService {
       return callFcService.getCmms().size();
     } else if (CP_API.equals(api)) {
       return callFcService.getCps().size();
+    } else if (REGION_API.equals(api)) {
+      return callFcService.getRegions().size();
+    } else if (PROVINCE_API.equals(api)) {
+      return callFcService.getProvinces().size();
+    } else if (DISTRICT_API.equals(api)) {
+      return callFcService.getDistrict().size();
     } else {
       return -1;
     }
@@ -330,6 +384,12 @@ public class FcScheduleService {
       callFcService.setPrograms(newArrayList());
     } else if (PRODUCT_API.equals(api)) {
       callFcService.setProducts(newArrayList());
+    } else if (REGION_API.equals(api)) {
+      callFcService.setRegions(newArrayList());
+    } else if (PROVINCE_API.equals(api)) {
+      callFcService.setProvinces(newArrayList());
+    } else if (DISTRICT_API.equals(api)) {
+      callFcService.setDistrict(newArrayList());
     }
     callFcService.setPageInfoDto(new PageInfoDto());
   }

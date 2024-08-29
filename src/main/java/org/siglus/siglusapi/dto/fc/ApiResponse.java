@@ -15,19 +15,17 @@
 
 package org.siglus.siglusapi.dto.fc;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-
-import java.time.LocalDate;
-import java.time.ZonedDateTime;
-
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
-public class ResponseBaseDto {
-
-  private ZonedDateTime lastUpdatedAt;
-
-  @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
-  private LocalDate updateDate;
-
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+public class ApiResponse<T> {
+  private ResultDto<T> result;
+  private String message;
+  private Long duration;
 }
