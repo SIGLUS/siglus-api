@@ -15,19 +15,26 @@
 
 package org.siglus.siglusapi.dto.fc;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
+import java.util.List;
 
-import java.time.LocalDate;
-import java.time.ZonedDateTime;
-
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
-public class ResponseBaseDto {
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+public class ResultDto<T> {
+  private List<T> content;
 
-  private ZonedDateTime lastUpdatedAt;
+  private Integer totalElements;
 
-  @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
-  private LocalDate updateDate;
+  private Integer totalPages;
+
+  private Integer number;
+
+  private Integer size;
 
 }

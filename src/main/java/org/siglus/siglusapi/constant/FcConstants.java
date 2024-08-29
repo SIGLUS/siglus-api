@@ -15,8 +15,12 @@
 
 package org.siglus.siglusapi.constant;
 
+import com.google.common.collect.Sets;
+
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
+
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
@@ -40,8 +44,15 @@ public class FcConstants {
   public static final String DATE_FORMAT = "yyyyMMdd";
   public static final String MONTH_FORMAT = "MM-yyyy";
 
+  public static final String REGION_API = "/regions";
+  public static final String PROVINCE_API = "/provinces";
+  public static final String DISTRICT_API = "/districts";
+
   public static List<String> getCmmAndCpApis() {
     return Arrays.asList(CMM_API, CP_API);
   }
 
+  public static Set<String> getFcNewApis() {
+    return Sets.newHashSet(REGION_API, PROVINCE_API, DISTRICT_API);
+  }
 }
