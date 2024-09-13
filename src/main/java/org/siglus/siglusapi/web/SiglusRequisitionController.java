@@ -39,7 +39,6 @@ import org.openlmis.requisition.web.RequisitionController;
 import org.siglus.siglusapi.domain.RequisitionExtension;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionLineItemDto;
-import org.siglus.siglusapi.exception.RequisitionBuildDraftException;
 import org.siglus.siglusapi.localmachine.event.requisition.web.approve.RequisitionInternalApproveEmitter;
 import org.siglus.siglusapi.localmachine.event.requisition.web.createforclient.RequisitionCreateForClientEmitter;
 import org.siglus.siglusapi.localmachine.event.requisition.web.finalapprove.RequisitionFinalApproveEmitter;
@@ -126,14 +125,8 @@ public class SiglusRequisitionController {
   public SiglusRequisitionDto buildDraftForRegular(
       @RequestBody BuildRequisitionDraftRequest buildRequisitionDraftRequest,
       HttpServletRequest request, HttpServletResponse response) {
-    SiglusRequisitionDto draft = null;
-    try {
-      siglusRequisitionService.buildDraftForRegular(buildRequisitionDraftRequest.getFacilityId(),
-          buildRequisitionDraftRequest.getPeriodId(), buildRequisitionDraftRequest.getProgramId(), request, response);
-    } catch (RequisitionBuildDraftException exception) {
-      draft = exception.getDraft();
-    }
-    return draft;
+    return siglusRequisitionService.buildDraftForRegular(buildRequisitionDraftRequest.getFacilityId(),
+        buildRequisitionDraftRequest.getPeriodId(), buildRequisitionDraftRequest.getProgramId(), request, response);
   }
 
   @GetMapping("/{id}")

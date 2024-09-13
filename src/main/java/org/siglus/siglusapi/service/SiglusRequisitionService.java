@@ -31,7 +31,6 @@ import static org.openlmis.requisition.web.QueryRequisitionSearchParams.REQUISIT
 import static org.siglus.common.constant.KitConstants.APE_KITS;
 import static org.siglus.common.constant.KitConstants.US_KITS;
 import static org.siglus.siglusapi.constant.FacilityTypeConstants.getTopLevelTypes;
-import static org.siglus.siglusapi.constant.FieldConstants.REQUISITION_DRAFT_UUID;
 import static org.siglus.siglusapi.constant.ProgramConstants.MTB_PROGRAM_CODE;
 import static org.siglus.siglusapi.constant.ProgramConstants.RAPIDTEST_PROGRAM_CODE;
 import static org.siglus.siglusapi.constant.ProgramConstants.TARV_PROGRAM_CODE;
@@ -172,7 +171,6 @@ import org.siglus.siglusapi.dto.TestConsumptionProjectDto;
 import org.siglus.siglusapi.dto.TestConsumptionServiceDto;
 import org.siglus.siglusapi.dto.android.db.StockStatusCmm;
 import org.siglus.siglusapi.exception.NotFoundException;
-import org.siglus.siglusapi.exception.RequisitionBuildDraftException;
 import org.siglus.siglusapi.localmachine.event.requisition.web.finalapprove.RequisitionFinalApproveEmitter;
 import org.siglus.siglusapi.localmachine.event.requisition.web.release.RequisitionReleaseEmitter;
 import org.siglus.siglusapi.repository.AgeGroupLineItemRepository;
@@ -510,7 +508,7 @@ public class SiglusRequisitionService {
   }
 
   @Transactional
-  public void buildDraftForRegular(UUID facilityId, UUID periodId, UUID programId,
+  public SiglusRequisitionDto buildDraftForRegular(UUID facilityId, UUID periodId, UUID programId,
       HttpServletRequest request, HttpServletResponse response) {
     RequisitionV2Dto v2Dto = requisitionV2Controller.initiate(programId, facilityId, periodId, false,
         null, request, response);
@@ -524,10 +522,9 @@ public class SiglusRequisitionService {
     }
     initiateRequisitionNumber(siglusRequisitionDto);
     // set default datas
-    siglusRequisitionDto.setId(REQUISITION_DRAFT_UUID);
     siglusRequisitionDto.setRequisitionLineItems(newArrayList());
     siglusRequisitionDto.getExtraData().put("signaure", "");
-    throw new RequisitionBuildDraftException(siglusRequisitionDto);
+    return siglusRequisitionDto;
   }
 
   public void processStockMovementAfterTheDateSubmitted(RequisitionV2Dto v2Dto) {

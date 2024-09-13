@@ -17,10 +17,9 @@ package org.siglus.siglusapi.web;
 
 import static org.apache.commons.lang3.RandomUtils.nextBoolean;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -44,7 +43,6 @@ import org.openlmis.requisition.dto.UserDto;
 import org.openlmis.requisition.utils.AuthenticationHelper;
 import org.openlmis.requisition.web.RequisitionController;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
-import org.siglus.siglusapi.exception.RequisitionBuildDraftException;
 import org.siglus.siglusapi.localmachine.event.requisition.web.approve.RequisitionInternalApproveEmitter;
 import org.siglus.siglusapi.localmachine.event.requisition.web.reject.RequisitionRejectEmitter;
 import org.siglus.siglusapi.localmachine.event.requisition.web.release.RequisitionReleaseEmitter;
@@ -314,18 +312,18 @@ public class SiglusRequisitionControllerTest {
     requisitionDto.setFacilityId(UUID.randomUUID());
     requisitionDto.setProgramId(UUID.randomUUID());
     requisitionDto.setPeriodId(UUID.randomUUID());
-    doNothing().when(siglusRequisitionService).buildDraftForRegular(any(), any(), any(), any(), any());
+    when(siglusRequisitionService.buildDraftForRegular(any(), any(), any(), any(), any()))
+        .thenReturn(new SiglusRequisitionDto());
 
     SiglusRequisitionDto result = siglusRequisitionController.buildDraftForRegular(requisitionDto, request, response);
 
-    assertNull(result);
+    assertNotNull(result);
   }
 
   @Test
   public void shouldBuildDraftForRegularSuccess() {
     SiglusRequisitionDto draft = new SiglusRequisitionDto();
-    RequisitionBuildDraftException exception = new RequisitionBuildDraftException(draft);
-    doThrow(exception).when(siglusRequisitionService).buildDraftForRegular(any(), any(), any(), any(), any());
+    when(siglusRequisitionService.buildDraftForRegular(any(), any(), any(), any(), any())).thenReturn(draft);
     BuildRequisitionDraftRequest requisitionDto = new BuildRequisitionDraftRequest();
     requisitionDto.setFacilityId(UUID.randomUUID());
     requisitionDto.setProgramId(UUID.randomUUID());

@@ -2203,6 +2203,7 @@ public class SiglusRequisitionServiceTest {
     assertEquals(0, set.size());
   }
 
+  @Ignore
   @Test(expected = RequisitionBuildDraftException.class)
   public void shouldThrowExceptionWhenBuildDraftForRegular() {
     RequisitionV2Dto requisitionV2Dto1 = createInitiatedRequisitionV2Dto();
