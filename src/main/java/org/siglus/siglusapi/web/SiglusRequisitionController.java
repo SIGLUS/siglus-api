@@ -242,6 +242,12 @@ public class SiglusRequisitionController {
     return siglusRequisitionService.createRequisitionLineItem(requisitionId, orderableIds);
   }
 
+  @DeleteMapping("/deleteLineItem/{id}")
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  public void deleteRequisitionLineItem(@PathVariable("id") UUID requisitionLineItemId) {
+    siglusRequisitionService.deleteRequisitionLineItem(requisitionLineItemId);
+  }
+
   @GetMapping("/periodsForInitiate")
   public List<RequisitionPeriodExtensionResponse> searchProcessingPeriodIds(
       @RequestParam(value = "programId") @NotNull @Valid UUID programId,

@@ -2011,6 +2011,11 @@ public class SiglusRequisitionService {
     notificationService.postDelete(requisitionId);
   }
 
+  @Transactional
+  public void deleteRequisitionLineItem(UUID requisitionLineItemId) {
+    requisitionLineItemRepository.delete(requisitionLineItemId);
+  }
+
   public void deleteRequisitionWithoutNotification(Requisition requisition) {
     UUID requisitionId = requisition.getId();
     deleteExtensionForRequisition(requisition);

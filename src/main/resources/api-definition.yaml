@@ -2913,6 +2913,27 @@ traits:
               application/json:
                 schema: localizedMessage
 
+    /requisitions/deleteLineItem/{id}:
+      delete:
+        is: [ secured ]
+        description: Delete chosen requisition line item.
+        responses:
+          "201":
+            body:
+              application/json:
+          "400":
+            body:
+              application/json:
+                schema: localizedMessage
+          "403":
+            body:
+              application/json:
+                schema: localizedMessage
+          "409":
+            body:
+              application/json:
+                schema: localizedMessage
+
     /requisitions/requisitionsForApproval:
       get:
         is: [ secured, paginated, sorted ]
