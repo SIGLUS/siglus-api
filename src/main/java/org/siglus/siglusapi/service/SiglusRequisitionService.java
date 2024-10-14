@@ -526,6 +526,8 @@ public class SiglusRequisitionService {
         .getId();
     if (viaProgramId.equals(siglusRequisitionDto.getProgramId())) {
       siglusRequisitionDto.setRequisitionLineItems(newArrayList());
+      requisitionLineItemExtensionRepository.deleteByRequisitionId(siglusRequisitionDto.getId());
+      requisitionLineItemRepository.deleteByRequisitionId(siglusRequisitionDto.getId());
     }
     siglusRequisitionDto.getExtraData().put("signaure", "");
     return siglusRequisitionDto;
