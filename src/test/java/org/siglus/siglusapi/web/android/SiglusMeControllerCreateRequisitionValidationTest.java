@@ -178,12 +178,12 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
     when(req1.getActualEndDate()).thenReturn(LocalDate.of(2021, 6, 20));
     // interfering item
     Requisition req2 = mock(Requisition.class);
-    when(requisitionRepo.findLatestRequisitionsByFacilityId(facilityId)).thenReturn(asList(req1, req2));
-    when(requisitionRepo.findLatestRequisitionsByFacilityId(newFacilityId)).thenReturn(emptyList());
+    when(requisitionRepo.findRequisitionsWithLatestPeriodDateByFacilityId(facilityId)).thenReturn(asList(req1, req2));
+    when(requisitionRepo.findRequisitionsWithLatestPeriodDateByFacilityId(newFacilityId)).thenReturn(emptyList());
     Requisition req3 = mock(Requisition.class);
     when(req3.getProgramId()).thenReturn(program1Id);
     when(req3.getActualEndDate()).thenReturn(LocalDate.of(2020, 8, 20));
-    when(requisitionRepo.findLatestRequisitionsByFacilityId(restartedFacilityId)).thenReturn(singletonList(req3));
+    when(requisitionRepo.findRequisitionsWithLatestPeriodDateByFacilityId(restartedFacilityId)).thenReturn(singletonList(req3));
     when(syncUpHashRepository.findOne(anyString())).thenReturn(null);
     when(requisitionRequestBackupRepository.findOneByHash(anyString())).thenReturn(null);
     when(periodExtensionRepo.findByProcessingPeriodId(any())).thenReturn(mockPeriodExtension());

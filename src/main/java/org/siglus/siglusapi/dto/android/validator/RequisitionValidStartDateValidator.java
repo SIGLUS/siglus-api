@@ -22,6 +22,7 @@ import static org.siglus.siglusapi.constant.android.AndroidConstants.SCHEDULE_CO
 
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.util.List;
 import java.util.UUID;
 import javax.persistence.EntityNotFoundException;
 import javax.validation.ConstraintValidator;
@@ -96,8 +97,9 @@ public class RequisitionValidStartDateValidator implements
       actualContext.addExpressionVariable(IS_CONFIGURE_PERIOD_INVALID, true);
       return false;
     }
+
     Requisition lastRequisition = requisitionRepository
-        .findLatestRequisitionsByFacilityId(homeFacilityId)
+        .findRequisitionsWithLatestPeriodDateByFacilityId(homeFacilityId)
         .stream()
         .filter(req -> programCode.equals(programDataService.findOne(req.getProgramId()).getCode()))
         .findFirst()
