@@ -38,5 +38,5 @@ public interface RequisitionLineItemRepository extends JpaRepository<Requisition
   @Modifying
   @Query(value = "delete from requisition.requisition_line_items "
       + "where requisitionid = :requisitionId ", nativeQuery = true)
-  void deleteByRequisitionId(UUID requisitionId);
+  void deleteByRequisitionId(@Param("requisitionId") UUID requisitionId);
 }
