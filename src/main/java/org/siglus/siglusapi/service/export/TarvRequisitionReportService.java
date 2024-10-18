@@ -92,6 +92,7 @@ import org.siglus.siglusapi.repository.SiglusGeographicInfoRepository;
 import org.siglus.siglusapi.service.SiglusProcessingPeriodService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ObjectUtils;
 
 @Slf4j
 @Service
@@ -455,7 +456,7 @@ public class TarvRequisitionReportService implements IRequisitionReportService {
     Map<UUID, String> orderableIdToUnitMap = programOrderablesExtensionRepository
         .findAllByProgramCode(ProgramConstants.TARV_PROGRAM_CODE).stream()
         .collect(Collectors.toMap(ProgramOrderablesExtension::getOrderableId,
-            extension -> extension.getUnit() == null ? "" : extension.getUnit()));
+            extension -> extension.getUnit() == null ? "" : extension.getUnit(), (a, b) -> a));
 
     List<TarvProduct> tarvProducts = lineItems.stream()
         .map(lineItem ->
@@ -528,6 +529,8 @@ public class TarvRequisitionReportService implements IRequisitionReportService {
     private Integer inventory;
     private String expiredDate;
     private String category;
+    private Integer requestedQuantity;
+    private Integer authorizedQuantity;
 
     public TarvProduct() {
     }
@@ -555,7 +558,13 @@ public class TarvRequisitionReportService implements IRequisitionReportService {
       product.setExpiredDate(
           expirationDate == null ? "" : expirationDate.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
       product.setCategory(orderableIdToCategoryMap.get(orderable.getId()));
+      product.setRequestedQuantity(getQuantity(lineItem.getRequestedQuantity()));
+      product.setAuthorizedQuantity(getQuantity(lineItem.getAuthorizedQuantity()));
       return product;
+    }
+
+    private static int getQuantity(Integer value) {
+      return ObjectUtils.isEmpty(value) ? 0 : value;
     }
   }
 

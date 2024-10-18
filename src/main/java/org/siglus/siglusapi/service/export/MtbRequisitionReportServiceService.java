@@ -57,6 +57,7 @@ import org.siglus.siglusapi.repository.SiglusGeographicInfoRepository;
 import org.siglus.siglusapi.service.SiglusProcessingPeriodService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ObjectUtils;
 
 @Slf4j
 @Service
@@ -136,6 +137,8 @@ public class MtbRequisitionReportServiceService implements IRequisitionReportSer
       productContent.put("productInventory", lineItem.getStockOnHand());
       LocalDate expirationDate = lineItem.getExpirationDate();
       productContent.put("productExpireDate", expirationDate == null ? "" : expirationDate.toString());
+      productContent.put("requestedQuantity", getQuantity(lineItem.getRequestedQuantity()));
+      productContent.put("authorizedQuantity", getQuantity(lineItem.getAuthorizedQuantity()));
       productContents.add(productContent);
     });
     excelWriter.fill(new FillWrapper("productLineItem", productContents), fillConfig, writeSheet);
@@ -182,4 +185,9 @@ public class MtbRequisitionReportServiceService implements IRequisitionReportSer
     });
     excelWriter.fill(ageContent, writeSheet);
   }
+
+  private static int getQuantity(Integer value) {
+    return ObjectUtils.isEmpty(value) ? 0 : value;
+  }
+
 }

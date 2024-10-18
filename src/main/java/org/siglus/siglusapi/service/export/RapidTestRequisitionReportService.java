@@ -76,6 +76,7 @@ import org.siglus.siglusapi.repository.SiglusGeographicInfoRepository;
 import org.siglus.siglusapi.service.SiglusProcessingPeriodService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ObjectUtils;
 
 @Slf4j
 @Service
@@ -255,6 +256,8 @@ public class RapidTestRequisitionReportService implements IRequisitionReportServ
     private Integer adjust;
     private Integer inventory;
     private String expiredDate;
+    private Integer requestedQuantity;
+    private Integer authorizedQuantity;
 
     public static TestesProduct from(Map<UUID, Orderable> orderableIdToOrderableMap,
         BaseRequisitionLineItemDto lineItem) {
@@ -267,10 +270,16 @@ public class RapidTestRequisitionReportService implements IRequisitionReportServ
       product.setReceive(lineItem.getTotalReceivedQuantity());
       product.setAdjust(lineItem.getTotalLossesAndAdjustments());
       product.setInventory(lineItem.getStockOnHand());
+      product.setRequestedQuantity(getQuantity(lineItem.getRequestedQuantity()));
+      product.setAuthorizedQuantity(getQuantity(lineItem.getAuthorizedQuantity()));
       LocalDate expirationDate = lineItem.getExpirationDate();
       product.setExpiredDate(
           expirationDate == null ? "" : expirationDate.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
       return product;
+    }
+
+    private static int getQuantity(Integer value) {
+      return ObjectUtils.isEmpty(value) ? 0 : value;
     }
   }
 
