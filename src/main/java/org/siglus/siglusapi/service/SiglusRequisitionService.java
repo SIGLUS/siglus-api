@@ -2440,6 +2440,7 @@ public class SiglusRequisitionService {
       SiglusRequisitionDto requisitionDto,
       HttpServletRequest request,
       HttpServletResponse response) {
+    requisitionController.submitRequisition(requisitionDto.getId(), request, response);
     SiglusRequisitionDto siglusRequisitionDto = updateRequisition(requisitionDto.getId(), requisitionDto, request,
         response);
     RequisitionExtension requisitionExtension = requisitionExtensionRepository.findByRequisitionId(
