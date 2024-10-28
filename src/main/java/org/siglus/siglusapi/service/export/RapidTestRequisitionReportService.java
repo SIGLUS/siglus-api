@@ -270,7 +270,7 @@ public class RapidTestRequisitionReportService implements IRequisitionReportServ
       product.setReceive(lineItem.getTotalReceivedQuantity());
       product.setAdjust(lineItem.getTotalLossesAndAdjustments());
       product.setInventory(lineItem.getStockOnHand());
-      product.setRequestedQuantity(getQuantity(lineItem.getRequestedQuantity()));
+      product.setRequestedQuantity(getQuantity(lineItem.getSuggestedQuantity()));
       product.setAuthorizedQuantity(getQuantity(lineItem.getAuthorizedQuantity()));
       LocalDate expirationDate = lineItem.getExpirationDate();
       product.setExpiredDate(
