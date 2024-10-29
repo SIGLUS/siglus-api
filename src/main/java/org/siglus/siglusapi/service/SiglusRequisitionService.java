@@ -521,14 +521,6 @@ public class SiglusRequisitionService {
       calcRequestedQuantity(siglusRequisitionDto);
     }
     initiateRequisitionNumber(siglusRequisitionDto);
-    UUID viaProgramId = siglusProgramService.getProgramByCode(VIA_PROGRAM_CODE)
-        .orElseThrow(() -> new NotFoundException("VIA program not found"))
-        .getId();
-    if (viaProgramId.equals(siglusRequisitionDto.getProgramId())) {
-      siglusRequisitionDto.setRequisitionLineItems(newArrayList());
-      requisitionLineItemExtensionRepository.deleteByRequisitionId(siglusRequisitionDto.getId());
-      requisitionLineItemRepository.deleteByRequisitionId(siglusRequisitionDto.getId());
-    }
     siglusRequisitionDto.getExtraData().put("signaure", "");
     return siglusRequisitionDto;
   }
