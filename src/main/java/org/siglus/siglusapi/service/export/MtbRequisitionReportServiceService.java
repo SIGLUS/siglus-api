@@ -139,6 +139,7 @@ public class MtbRequisitionReportServiceService implements IRequisitionReportSer
       productContent.put("productExpireDate", expirationDate == null ? "" : expirationDate.toString());
       productContent.put("requestedQuantity", getQuantity(lineItem.getRequestedQuantity()));
       productContent.put("authorizedQuantity", getQuantity(lineItem.getAuthorizedQuantity()));
+      productContent.put("approvedQuantity", getQuantity(lineItem.getApprovedQuantity()));
       productContents.add(productContent);
     });
     excelWriter.fill(new FillWrapper("productLineItem", productContents), fillConfig, writeSheet);

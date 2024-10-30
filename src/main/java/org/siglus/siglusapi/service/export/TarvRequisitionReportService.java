@@ -531,6 +531,7 @@ public class TarvRequisitionReportService implements IRequisitionReportService {
     private String category;
     private Integer requestedQuantity;
     private Integer authorizedQuantity;
+    private Integer approvedQuantity;
 
     public TarvProduct() {
     }
@@ -560,6 +561,7 @@ public class TarvRequisitionReportService implements IRequisitionReportService {
       product.setCategory(orderableIdToCategoryMap.get(orderable.getId()));
       product.setRequestedQuantity(getQuantity(lineItem.getRequestedQuantity()));
       product.setAuthorizedQuantity(getQuantity(lineItem.getAuthorizedQuantity()));
+      product.setApprovedQuantity(getQuantity(lineItem.getApprovedQuantity()));
       return product;
     }
 
