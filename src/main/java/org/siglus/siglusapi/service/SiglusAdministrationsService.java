@@ -427,8 +427,10 @@ public class SiglusAdministrationsService {
   public void eraseDeviceInfo(FacilityDeviceTypeEnum deviceType, UUID facilityId) {
     FacilityDto facilityDto = siglusFacilityReferenceDataService.findOne(facilityId);
     appInfoRepository.deleteByFacilityCode(facilityDto.getCode());
+    log.info("delete app info of facility: {}, by userId: {}", facilityDto.getCode(),
+        authenticationHelper.getCurrentUser().getId());
     if (deviceType == FacilityDeviceTypeEnum.LOCAL_MACHINE) {
-      log.info("delete agent info of facility: {}", facilityDto.getCode());
+      log.info("delete LM agent info of facility: {}", facilityDto.getCode());
       agentInfoRepository.deleteByFacilityId(facilityId);
       createAndSaveActivationCode(facilityDto.getCode());
     }

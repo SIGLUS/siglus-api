@@ -701,6 +701,7 @@ public class SiglusAdministrationsServiceTest {
     //given
     FacilityDto facilityDto = mockFacilityDto();
     when(siglusFacilityReferenceDataService.findOne(facilityId)).thenReturn(facilityDto);
+    when(authenticationHelper.getCurrentUser()).thenReturn(new UserDto());
     //when
     siglusAdministrationsService.eraseDeviceInfo(FacilityDeviceTypeEnum.ANDROID, facilityId);
     //then
