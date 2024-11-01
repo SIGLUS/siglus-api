@@ -259,6 +259,7 @@ public class RapidTestRequisitionReportService implements IRequisitionReportServ
     private Integer requestedQuantity;
     private Integer authorizedQuantity;
     private Integer approvedQuantity;
+    private Integer suggestedQuantity;
 
     public static TestesProduct from(Map<UUID, Orderable> orderableIdToOrderableMap,
         BaseRequisitionLineItemDto lineItem) {
@@ -271,9 +272,10 @@ public class RapidTestRequisitionReportService implements IRequisitionReportServ
       product.setReceive(lineItem.getTotalReceivedQuantity());
       product.setAdjust(lineItem.getTotalLossesAndAdjustments());
       product.setInventory(lineItem.getStockOnHand());
-      product.setRequestedQuantity(getQuantity(lineItem.getSuggestedQuantity()));
+      product.setRequestedQuantity(getQuantity(lineItem.getRequestedQuantity()));
       product.setAuthorizedQuantity(getQuantity(lineItem.getAuthorizedQuantity()));
       product.setApprovedQuantity(getQuantity(lineItem.getApprovedQuantity()));
+      product.setSuggestedQuantity(getQuantity(lineItem.getSuggestedQuantity()));
       LocalDate expirationDate = lineItem.getExpirationDate();
       product.setExpiredDate(
           expirationDate == null ? "" : expirationDate.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));

@@ -216,6 +216,7 @@ public class ViaRequisitionReportService implements IRequisitionReportService {
     private Integer quantityRequested;
     private Integer quantityApproved;
     private Integer quantityAuthorized;
+    private Integer quantitySuggested;
 
     public static ViaProduct from(BaseRequisitionLineItemDto lineItem, OrderableVersionDto orderable) {
       ViaProduct product = new ViaProduct();
@@ -238,6 +239,7 @@ public class ViaRequisitionReportService implements IRequisitionReportService {
       product.setQuantityRequested(getQuantity(lineItem.getRequestedQuantity()));
       product.setQuantityApproved(getQuantity(lineItem.getApprovedQuantity()));
       product.setQuantityAuthorized(getQuantity(lineItem.getAuthorizedQuantity()));
+      product.setQuantitySuggested(getQuantity(lineItem.getSuggestedQuantity()));
       return product;
     }
 

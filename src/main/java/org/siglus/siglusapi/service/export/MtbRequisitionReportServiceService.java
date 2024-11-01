@@ -140,6 +140,7 @@ public class MtbRequisitionReportServiceService implements IRequisitionReportSer
       productContent.put("requestedQuantity", getQuantity(lineItem.getRequestedQuantity()));
       productContent.put("authorizedQuantity", getQuantity(lineItem.getAuthorizedQuantity()));
       productContent.put("approvedQuantity", getQuantity(lineItem.getApprovedQuantity()));
+      productContent.put("suggestedQuantity", getQuantity(lineItem.getSuggestedQuantity()));
       productContents.add(productContent);
     });
     excelWriter.fill(new FillWrapper("productLineItem", productContents), fillConfig, writeSheet);
