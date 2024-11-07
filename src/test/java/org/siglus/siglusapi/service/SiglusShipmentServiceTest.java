@@ -384,6 +384,7 @@ public class SiglusShipmentServiceTest {
     shipmentExtensionRequest.setPreparedBy(preparedBy);
     Order order = new Order();
     OrderLineItem lineItem = new OrderLineItem();
+    lineItem.setOrderable(new VersionEntityReference(orderableId, 1L));
     lineItem.setId(lineItemId);
     order.setOrderLineItems(newArrayList(lineItem));
     when(orderRepository.findOne(shipmentDto.getOrder().getId())).thenReturn(order);
@@ -470,6 +471,7 @@ public class SiglusShipmentServiceTest {
     shipmentExtensionRequest.setPreparedBy(preparedBy);
     Order order = new Order();
     OrderLineItem lineItem = new OrderLineItem();
+    lineItem.setOrderable(new VersionEntityReference(orderableId, 1L));
     lineItem.setId(lineItemId);
     order.setOrderLineItems(newArrayList(lineItem));
     when(orderRepository.findOne(shipmentDto.getOrder().getId())).thenReturn(order);
@@ -510,6 +512,7 @@ public class SiglusShipmentServiceTest {
     shipmentDto.setLineItems(Lists.newArrayList(shipmentLineItem));
     Order order = new Order();
     OrderLineItem lineItem = new OrderLineItem();
+    lineItem.setOrderable(new VersionEntityReference(orderableId, 1L));
     lineItem.setId(lineItemId);
     order.setOrderLineItems(newArrayList(lineItem));
     ShipmentExtensionRequest shipmentExtensionRequest = new ShipmentExtensionRequest();
