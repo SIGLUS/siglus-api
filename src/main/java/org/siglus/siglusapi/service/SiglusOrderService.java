@@ -576,6 +576,8 @@ public class SiglusOrderService {
   public Set<UUID> updateOrderLineItems(ShipmentDraftDto draftDto) {
     Order order = orderRepository.findOne(draftDto.getOrder().getId());
     List<OrderLineItem> orderLineItems = order.getOrderLineItems();
+    Set<UUID> originalOrderableIds = orderLineItems.stream()
+        .map(orderLineItem -> orderLineItem.getOrderable().getId()).collect(toSet());
     List<OrderLineItemDto> draftOrderLineItems = draftDto.getOrder().getOrderLineItems();
     Collection<UUID> draftOrderableIds = draftOrderLineItems.stream()
         .map(draftOrderLineItem -> draftOrderLineItem.getOrderable().getId())
@@ -584,6 +586,7 @@ public class SiglusOrderService {
     orderLineItems.removeIf(orderLineItem -> !draftOrderableIds.contains(orderLineItem.getOrderable().getId()));
     draftOrderLineItems.stream()
         .filter(orderLineItemDto -> orderLineItemDto.getId() == null)
+        .filter(orderLineItemDto -> !originalOrderableIds.contains(orderLineItemDto.getOrderable().getId()))
         .map(OrderLineItem::newInstance)
         .forEach(orderLineItem -> {
           orderLineItem.setOrder(order);

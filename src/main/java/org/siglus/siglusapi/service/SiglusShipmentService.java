@@ -424,9 +424,12 @@ public class SiglusShipmentService {
     List<OrderLineItemDto> orderLineItemDtos = orderDto.getOrderLineItems();
 
     List<OrderLineItem> original = order.getOrderLineItems();
+    Set<UUID> originalOrderableIds = original.stream()
+        .map(orderLineItem -> orderLineItem.getOrderable().getId()).collect(toSet());
 
     orderLineItemDtos.stream()
         .filter(orderLineItemDto -> orderLineItemDto.getId() == null)
+        .filter(orderLineItemDto -> !originalOrderableIds.contains(orderLineItemDto.getOrderable().getId()))
         .filter(orderLineItemDto -> !orderLineItemDto.isSkipped())
         .map(OrderLineItem::newInstance)
         .forEach(orderLineItem -> {
