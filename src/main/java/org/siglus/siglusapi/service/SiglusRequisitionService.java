@@ -323,6 +323,12 @@ public class SiglusRequisitionService {
   public static final String MMIA_COLUMN_TOTAL = "total";
   public static final String ESTIMATED_QUANTITY = "estimatedQuantity";
   public static final String REQUESTED_QUANTITY = "requestedQuantity";
+  public static final String TOTAL_STOCKOUT_DAYS = "totalStockoutDays";
+  public static final String TOTAL_LOSSES_AND_ADJUSTMENTS = "totalLossesAndAdjustments";
+  public static final String STOCK_ON_HAND = "stockOnHand";
+  public static final String BEGINNING_BALANCE = "beginningBalance";
+  public static final String TOTAL_RECEIVED_QUANTITY = "totalReceivedQuantity";
+  public static final String TOTAL_CONSUMED_QUANTITY = "totalConsumedQuantity";
   public static final String MMIT_TEMPLATE_HC = "MMIT Template - HC";
   public static final String MMIT_TEMPLATE_CS_PS_HOSPITAL = "MMIT Template - CS/PS/Hospital";
   @Autowired
@@ -516,6 +522,32 @@ public class SiglusRequisitionService {
     SiglusRequisitionDto siglusRequisitionDto = siglusUsageReportService.initiateUsageReport(v2Dto);
 
     RequisitionTemplate template = requisitionRepository.findOne(siglusRequisitionDto.getId()).getTemplate();
+    siglusRequisitionDto.getLineItems().forEach(line -> {
+      if (template.isColumnDisplayed(STOCK_ON_HAND)) {
+        line.setStockOnHand(0);
+      }
+      if (template.isColumnDisplayed(BEGINNING_BALANCE)) {
+        line.setBeginningBalance(0);
+      }
+      if (template.isColumnDisplayed(TOTAL_RECEIVED_QUANTITY)) {
+        line.setTotalReceivedQuantity(0);
+      }
+      if (template.isColumnDisplayed(TOTAL_CONSUMED_QUANTITY)) {
+        line.setTotalConsumedQuantity(0);
+      }
+      if (template.isColumnDisplayed(TOTAL_LOSSES_AND_ADJUSTMENTS)) {
+        line.setTotalLossesAndAdjustments(0);
+      }
+      if (template.isColumnDisplayed(REQUESTED_QUANTITY)) {
+        line.setRequestedQuantity(0);
+      }
+      if (template.isColumnDisplayed(TOTAL_STOCKOUT_DAYS)) {
+        line.setTotalStockoutDays(0);
+      }
+      if (template.isColumnDisplayed(TOTAL_COLUMN)) {
+        line.setTotal(0);
+      }
+    });
     if (template.isColumnDisplayed(REQUESTED_QUANTITY) && template.isColumnStockBased(REQUESTED_QUANTITY)
         && siglusRequisitionDto.getStatus().isSubmittable()) {
       calcRequestedQuantity(siglusRequisitionDto);

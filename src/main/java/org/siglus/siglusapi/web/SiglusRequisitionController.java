@@ -125,8 +125,12 @@ public class SiglusRequisitionController {
   public SiglusRequisitionDto buildDraftForRegular(
       @RequestBody BuildRequisitionDraftRequest buildRequisitionDraftRequest,
       HttpServletRequest request, HttpServletResponse response) {
-    return siglusRequisitionService.buildDraftForRegular(buildRequisitionDraftRequest.getFacilityId(),
-        buildRequisitionDraftRequest.getPeriodId(), buildRequisitionDraftRequest.getProgramId(), request, response);
+    SiglusRequisitionDto dto = siglusRequisitionService.buildDraftForRegular(
+        buildRequisitionDraftRequest.getFacilityId(),
+        buildRequisitionDraftRequest.getPeriodId(),
+        buildRequisitionDraftRequest.getProgramId(), request, response);
+    siglusRequisitionService.updateRequisition(dto.getId(), dto, request, response);
+    return dto;
   }
 
   @GetMapping("/{id}")
