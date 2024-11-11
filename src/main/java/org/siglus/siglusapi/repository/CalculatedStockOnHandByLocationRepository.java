@@ -48,12 +48,27 @@ public interface CalculatedStockOnHandByLocationRepository extends JpaRepository
   @Query(name = "LotLocationSoh.findLocationSohByStockCard", nativeQuery = true)
   List<LotLocationSohDto> getLocationSohByStockCard(@Param("stockCardId") UUID stockCardId);
 
-  @Query(value = "select * from siglusintegration.calculated_stocks_on_hand_by_location "
-      + "where (stockcardid, locationcode, occurreddate) in ("
-      + "select stockcardid, locationcode, max(occurreddate) "
-      + "from siglusintegration.calculated_stocks_on_hand_by_location c "
-      + "where c.stockcardid in (:stockCardIds) "
-      + "group by c.stockcardid, c.locationcode)", nativeQuery = true)
+
+  @Query(value = "SELECT * FROM siglusintegration.calculated_stocks_on_hand_by_location c "
+      + "JOIN ("
+      + "    SELECT c2.stockcardid, c2.locationcode, max_occurred_date, MAX(c2.processeddate) AS max_processed_date "
+      + "    FROM ("
+      + "        SELECT stockcardid, locationcode, MAX(occurreddate) AS max_occurred_date "
+      + "        FROM siglusintegration.calculated_stocks_on_hand_by_location "
+      + "        WHERE stockcardid IN (:stockCardIds) "
+      + "        GROUP BY stockcardid, locationcode"
+      + "    ) AS max_occurred_dates "
+      + "    JOIN siglusintegration.calculated_stocks_on_hand_by_location c2 "
+      + "    ON c2.stockcardid = max_occurred_dates.stockcardid "
+      + "    AND c2.locationcode = max_occurred_dates.locationcode "
+      + "    AND c2.occurreddate = max_occurred_dates.max_occurred_date "
+      + "    GROUP BY c2.stockcardid, c2.locationcode, max_occurred_date"
+      + ") AS latest_records "
+      + "ON c.stockcardid = latest_records.stockcardid "
+      + "AND c.locationcode = latest_records.locationcode "
+      + "AND c.occurreddate = latest_records.max_occurred_date "
+      + "AND c.processeddate = latest_records.max_processed_date",
+      nativeQuery = true)
   List<CalculatedStockOnHandByLocation> findByStockCardIdIn(
       @Param("stockCardIds") Collection<UUID> stockCardIds);
 
@@ -71,7 +86,8 @@ public interface CalculatedStockOnHandByLocationRepository extends JpaRepository
       + "                                               locationcode,\n"
       + "                                               area,\n"
       + "                                               first_value(stockonhand)\n"
-      + "                 over (partition by (stockcardid, locationcode) order by occurreddate DESC ) as stockonhand\n"
+      + "                 over (partition by (stockcardid, locationcode)\n"
+      + " order by occurreddate DESC, processeddate DESC ) as stockonhand\n"
       + "from siglusintegration.calculated_stocks_on_hand_by_location\n"
       + "where stockcardid in (:stockCardIds) ", nativeQuery = true)
   List<CalculatedStockOnHandByLocation> findRecentlyLocationSohByStockCardIds(
