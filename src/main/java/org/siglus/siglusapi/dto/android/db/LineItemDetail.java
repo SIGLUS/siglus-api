@@ -31,6 +31,8 @@ import org.siglus.siglusapi.dto.android.request.StockCardAdjustment;
 @RequiredArgsConstructor(staticName = "of")
 public class LineItemDetail {
 
+  private static final String UNPACK_FROM_KIT = "UNPACK_FROM_KIT";
+
   private final StockEvent stockEvent;
   private final StockCard stockCard;
   private final EventTime eventTime;
@@ -52,7 +54,7 @@ public class LineItemDetail {
     UUID programId = stockCard.getProgramId();
     String reason = request.getReasonName();
     UUID sourceId = type.getSourceId(programId, reason);
-    if (type == MovementType.RECEIVE && newSourceId != null) {
+    if (type == MovementType.RECEIVE && !UNPACK_FROM_KIT.equals(reason) && newSourceId != null) {
       sourceId = newSourceId;
     }
     UUID destinationId = type.getDestinationId(programId, reason);
