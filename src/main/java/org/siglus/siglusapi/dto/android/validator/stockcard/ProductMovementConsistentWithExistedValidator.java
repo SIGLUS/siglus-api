@@ -272,12 +272,12 @@ public class ProductMovementConsistentWithExistedValidator implements
       actualContext.addExpressionVariable(VALUE_FROM_EXISTED, movementDetailFromExisted.getType());
       return true;
     }
-    if (!istSameReason(movementDetailFromRequest, movementDetailFromExisted)) {
-      actualContext.addExpressionVariable(FIELD_NAME, "reasonName");
-      actualContext.addExpressionVariable(VALUE_FROM_REQUEST, movementDetailFromRequest.getReason());
-      actualContext.addExpressionVariable(VALUE_FROM_EXISTED, movementDetailFromExisted.getReason());
-      return true;
-    }
+    //if (!istSameReason(movementDetailFromRequest, movementDetailFromExisted)) {
+    //  actualContext.addExpressionVariable(FIELD_NAME, "reasonName");
+    //  actualContext.addExpressionVariable(VALUE_FROM_REQUEST, movementDetailFromRequest.getReason());
+    //  actualContext.addExpressionVariable(VALUE_FROM_EXISTED, movementDetailFromExisted.getReason());
+    //  return true;
+    //}
     if (!Objects.equals(movementDetailFromRequest.getAdjustment(), movementDetailFromExisted.getAdjustment())) {
       actualContext.addExpressionVariable(FIELD_NAME, "quantity");
       actualContext.addExpressionVariable(VALUE_FROM_REQUEST, movementDetailFromRequest.getAdjustment());
