@@ -33,7 +33,6 @@ public interface ProductMapper {
 
   @Mapping(target = "programCode", source = ".", qualifiedByName = "getProgramCode")
   @Mapping(target = "additionalProgramCode", source = "id", qualifiedByName = "getAdditionalProgramCode")
-  @Mapping(target = "active", expression = "java(parseKey(domain, \"active\", true))")
   @Mapping(target = "isBasic", expression = "java(parseKey(domain, \"isBasic\", false))")
   @Mapping(target = "isNos", expression = "java(parseKey(domain, \"isNos\", false))")
   @Mapping(target = "isHiv", expression = "java(parseKey(domain, \"isHiv\", false))")

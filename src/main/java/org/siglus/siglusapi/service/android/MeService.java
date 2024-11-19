@@ -290,6 +290,7 @@ public class MeService {
         .map(programOrderableDto -> {
           OrderableDto dto = allProducts.get(programOrderableDto.getOrderableId());
           Program program = programMap.get(programOrderableDto.getProgramId());
+          dto.setActive(programOrderableDto.isActive());
           dto.getExtraData().put(KEY_PROGRAM_CODE, program.getCode().toString());
           dto.getExtraData().put(KEY_PRODUCT_ACTIVE, programOrderableDto.isActive());
           return dto;
