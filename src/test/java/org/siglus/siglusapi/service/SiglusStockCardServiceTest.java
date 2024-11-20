@@ -421,7 +421,8 @@ public class SiglusStockCardServiceTest {
     DispensableDto dispensableDto = new DispensableDto();
     dispensableDto.setToString("111");
     org.openlmis.referencedata.dto.OrderableDto orderableDto = new org.openlmis.referencedata.dto.OrderableDto("00a11",
-        dispensableDto, "product1", null, null, null, null, null, null, null, null, null, null, null, null, null, null);
+        dispensableDto, "product1", null, null, null, null, null, null, null, null, null, null,
+        null, null, null, true, null);
     orderableDto.setPrograms(programOrderableDtos);
 
     StockMovementResDto stockMovementResDto = new StockMovementResDto();
