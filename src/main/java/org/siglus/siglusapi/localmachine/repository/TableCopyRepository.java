@@ -15,6 +15,8 @@
 
 package org.siglus.siglusapi.localmachine.repository;
 
+import static org.siglus.siglusapi.localmachine.repository.MovementSql.PHYSICAL_INVENTORIES_HISTORIES;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -94,6 +96,10 @@ public class TableCopyRepository {
         selectSql = selectSql.replace("@@", homeFacilityId.toString());
       }
       copyToFile(file, selectSql, connection);
+      if (file.length() == 0 && PHYSICAL_INVENTORIES_HISTORIES.equals(tableName)) {
+        log.info("facilityId {} ignore PHYSICAL_INVENTORIES_HISTORIES since empty query result", homeFacilityId);
+        return;
+      }
       tableFiles.add(file);
     });
     return tableFiles;
