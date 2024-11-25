@@ -4,25 +4,13 @@
 DROP TABLE IF EXISTS siglusintegration.physical_inventories_histories;
 CREATE TABLE siglusintegration.physical_inventories_histories
 (
-    id                              uuid PRIMARY KEY,
-    facilityid                      uuid NOT NULL,
-    physicalinventoryextensionid    uuid NOT NULL,
-    groupid                         uuid NOT NULL
+    id            uuid PRIMARY KEY,
+    facilityid    uuid                     NOT NULL,
+    historydata   jsonb,
+    programid     uuid                     NOT NULL,
+    completeddate date                     NOT NULL,
+    processdate   timestamp with time zone NOT NULL
 );
 
-
-CREATE INDEX idx_facilityid
-    ON siglusintegration.physical_inventories_histories
-    (facilityid uuid_ops);
-
-CREATE INDEX idx_groupid
-    ON siglusintegration.physical_inventories_histories
-    (groupid uuid_ops);
-
-CREATE UNIQUE INDEX unq_physicalinventoryextensionid
-    ON siglusintegration.physical_inventories_histories
-    (physicalinventoryextensionid uuid_ops);
-
-CREATE UNIQUE INDEX unq_facilityid_physicalinventoryextensionid_groupid
-    ON siglusintegration.physical_inventories_histories
-    (facilityid uuid_ops, physicalinventoryextensionid uuid_ops, groupid uuid_ops);
+CREATE UNIQUE INDEX physical_inventories_histories_pkey ON siglusintegration.physical_inventories_histories (id uuid_ops);
+CREATE INDEX idx_facilityid ON siglusintegration.physical_inventories_histories (facilityid uuid_ops);
