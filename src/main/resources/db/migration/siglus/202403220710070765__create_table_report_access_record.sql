@@ -9,5 +9,5 @@ CREATE TABLE IF NOT EXISTS siglusintegration.report_access_record
     accessdate             date NOT NULL
 );
 
-CREATE UNIQUE INDEX unq_userid_reportname_accessdate
+CREATE UNIQUE INDEX IF NOT EXISTS unq_userid_reportname_accessdate
     ON siglusintegration.report_access_record (userid uuid_ops, reportname text_ops, accessdate date_ops);

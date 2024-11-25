@@ -11,5 +11,5 @@ CREATE TABLE IF NOT EXISTS siglusintegration.physical_inventories_histories
     processdate   timestamp with time zone NOT NULL
 );
 
-CREATE UNIQUE INDEX physical_inventories_histories_pkey ON siglusintegration.physical_inventories_histories (id uuid_ops);
-CREATE INDEX idx_facilityid ON siglusintegration.physical_inventories_histories (facilityid uuid_ops);
+CREATE UNIQUE INDEX IF NOT EXISTS  physical_inventories_histories_pkey ON siglusintegration.physical_inventories_histories (id uuid_ops);
+CREATE INDEX IF NOT EXISTS  idx_facilityid ON siglusintegration.physical_inventories_histories (facilityid uuid_ops);

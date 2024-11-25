@@ -9,5 +9,5 @@ CREATE TABLE IF NOT EXISTS siglusintegration.user_report_view
     districtid             uuid
 );
 
-CREATE UNIQUE INDEX unq_userid_provinceid_districtid
+CREATE UNIQUE INDEX IF NOT EXISTS unq_userid_provinceid_districtid
     ON siglusintegration.user_report_view (userid uuid_ops, provinceid uuid_ops, districtid uuid_ops);
