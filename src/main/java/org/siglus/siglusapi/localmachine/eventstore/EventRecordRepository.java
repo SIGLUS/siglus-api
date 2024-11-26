@@ -31,7 +31,8 @@ public interface EventRecordRepository extends JpaRepository<EventRecord, UUID>,
 
   Stream<EventRecord> streamByLocalReplayedOrderBySyncedTime(Boolean localReplayed);
 
-  List<EventRecord> findTop100ByOnlineWebSyncedAndArchivedOrderByOccurredTimeAsc(boolean onlineWebSynced, boolean archived);
+  List<EventRecord> findTop100ByOnlineWebSyncedAndArchivedOrderByOccurredTimeAsc(
+      boolean onlineWebSynced, boolean archived);
 
   List<EventRecord> findEventRecordByGroupId(String groupId);
 
