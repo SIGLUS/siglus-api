@@ -17,7 +17,10 @@ package org.siglus.siglusapi.localmachine.agent;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.siglus.siglusapi.localmachine.constant.SyncStatus;
 import org.siglus.siglusapi.localmachine.domain.LastSyncReplayRecord;
+import org.siglus.siglusapi.localmachine.eventstore.EventRecord;
+import org.siglus.siglusapi.localmachine.eventstore.EventRecordRepository;
 import org.siglus.siglusapi.localmachine.repository.ErrorRecordRepository;
 import org.siglus.siglusapi.localmachine.repository.LastSyncRecordRepository;
 import org.siglus.siglusapi.localmachine.webapi.LocalSyncResultsResponse;
@@ -31,18 +34,20 @@ import org.springframework.stereotype.Service;
 public class LocalSyncResultsService {
 
   private final LastSyncRecordRepository lastSyncRecordRepository;
-
   private final ErrorRecordRepository errorRecordsRepository;
-
+  private final EventRecordRepository eventRecordRepository;
   private final Synchronizer synchronizer;
 
   public LocalSyncResultsResponse doSync() {
     synchronizer.sync();
     LastSyncReplayRecord lastSyncTime = lastSyncRecordRepository.findFirstByOrderByLastSyncedTimeDesc();
+    EventRecord unSyncedEvent = eventRecordRepository.findTopByOnlineWebSynced(false);
+    SyncStatus syncStatus = unSyncedEvent == null ? SyncStatus.FULLY_SYNCED : SyncStatus.PARTIAL_SYNCED;
 
     return LocalSyncResultsResponse.builder()
         .latestSyncedTime(lastSyncTime.getLastSyncedTime())
         .error(errorRecordsRepository.findLastErrorRecord())
+        .syncStatus(syncStatus)
         .build();
   }
 }

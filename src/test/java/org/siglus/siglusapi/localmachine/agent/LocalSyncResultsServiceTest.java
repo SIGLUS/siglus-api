@@ -19,6 +19,7 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 
 import java.time.ZonedDateTime;
+import java.util.UUID;
 import junit.framework.TestCase;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -27,8 +28,11 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.siglus.siglusapi.constant.FieldConstants;
 import org.siglus.siglusapi.localmachine.constant.ErrorType;
+import org.siglus.siglusapi.localmachine.constant.SyncStatus;
 import org.siglus.siglusapi.localmachine.domain.ErrorRecord;
 import org.siglus.siglusapi.localmachine.domain.LastSyncReplayRecord;
+import org.siglus.siglusapi.localmachine.eventstore.EventRecord;
+import org.siglus.siglusapi.localmachine.eventstore.EventRecordRepository;
 import org.siglus.siglusapi.localmachine.repository.ErrorRecordRepository;
 import org.siglus.siglusapi.localmachine.repository.LastSyncRecordRepository;
 import org.siglus.siglusapi.localmachine.webapi.LocalSyncResultsResponse;
@@ -46,6 +50,9 @@ public class LocalSyncResultsServiceTest extends TestCase {
   private ErrorRecordRepository errorRecordRepository;
 
   @Mock
+  private EventRecordRepository eventRecordRepository;
+
+  @Mock
   private Synchronizer synchronizer;
 
   private final ZonedDateTime lastSyncTime = ZonedDateTime.now();
@@ -57,18 +64,39 @@ public class LocalSyncResultsServiceTest extends TestCase {
       .build();
 
   @Test
-  public void shouldGetSyncResult() {
+  public void shouldGetPartialSyncResult() {
     //given
     ErrorRecord errorRecord = ErrorRecord.builder().type(ErrorType.SYNC_UP).build();
+    EventRecord eventRecord = EventRecord.builder().id(UUID.randomUUID()).onlineWebSynced(false).build();
 
     //when
     when(lastSyncRecordRepository.findFirstByOrderByLastSyncedTimeDesc()).thenReturn(syncRecord);
     when(errorRecordRepository.findLastErrorRecord()).thenReturn(errorRecord);
+    when(eventRecordRepository.findTopByOnlineWebSynced(false)).thenReturn(eventRecord);
     doNothing().when(synchronizer).sync();
     LocalSyncResultsResponse syncResults = localSyncResultsService.doSync();
 
     //then
     assertEquals(lastSyncTime, syncResults.getLatestSyncedTime());
     assertNotNull(syncResults.getError());
+    assertEquals(SyncStatus.PARTIAL_SYNCED, syncResults.getSyncStatus());
+  }
+
+  @Test
+  public void shouldGetFullySyncResult() {
+    //given
+    ErrorRecord errorRecord = ErrorRecord.builder().type(ErrorType.SYNC_UP).build();
+
+    //when
+    when(lastSyncRecordRepository.findFirstByOrderByLastSyncedTimeDesc()).thenReturn(syncRecord);
+    when(errorRecordRepository.findLastErrorRecord()).thenReturn(errorRecord);
+    when(eventRecordRepository.findTopByOnlineWebSynced(false)).thenReturn(null);
+    doNothing().when(synchronizer).sync();
+    LocalSyncResultsResponse syncResults = localSyncResultsService.doSync();
+
+    //then
+    assertEquals(lastSyncTime, syncResults.getLatestSyncedTime());
+    assertNotNull(syncResults.getError());
+    assertEquals(SyncStatus.FULLY_SYNCED, syncResults.getSyncStatus());
   }
 }

@@ -13,26 +13,9 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.localmachine.webapi;
+package org.siglus.siglusapi.localmachine.constant;
 
-import java.time.ZonedDateTime;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.siglus.siglusapi.localmachine.constant.SyncStatus;
-import org.siglus.siglusapi.localmachine.domain.ErrorRecord;
-
-@Builder
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-public class LocalSyncResultsResponse {
-
-  private ZonedDateTime latestSyncedTime;
-
-  private ErrorRecord error;
-
-  private SyncStatus syncStatus;
-
+public enum SyncStatus {
+  FULLY_SYNCED,
+  PARTIAL_SYNCED,
 }
