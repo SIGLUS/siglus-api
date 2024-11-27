@@ -92,6 +92,6 @@ public class LocalAgentController {
 
   @PostMapping("/sync")
   public LocalSyncResultsResponse doSyncAndGetResults() {
-    return syncErrorService.doSync();
+    return syncErrorService.getSyncStatus();
   }
 }

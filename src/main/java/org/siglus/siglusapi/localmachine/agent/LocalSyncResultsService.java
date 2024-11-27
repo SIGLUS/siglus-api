@@ -36,10 +36,8 @@ public class LocalSyncResultsService {
   private final LastSyncRecordRepository lastSyncRecordRepository;
   private final ErrorRecordRepository errorRecordsRepository;
   private final EventRecordRepository eventRecordRepository;
-  private final Synchronizer synchronizer;
 
-  public LocalSyncResultsResponse doSync() {
-    synchronizer.sync();
+  public LocalSyncResultsResponse getSyncStatus() {
     LastSyncReplayRecord lastSyncTime = lastSyncRecordRepository.findFirstByOrderByLastSyncedTimeDesc();
     EventRecord unSyncedEvent = eventRecordRepository.findTopByOnlineWebSynced(false);
     SyncStatus syncStatus = unSyncedEvent == null ? SyncStatus.FULLY_SYNCED : SyncStatus.PARTIAL_SYNCED;

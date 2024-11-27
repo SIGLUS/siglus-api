@@ -52,9 +52,6 @@ public class LocalSyncResultsServiceTest extends TestCase {
   @Mock
   private EventRecordRepository eventRecordRepository;
 
-  @Mock
-  private Synchronizer synchronizer;
-
   private final ZonedDateTime lastSyncTime = ZonedDateTime.now();
   private final ZonedDateTime lastReplayTime = ZonedDateTime.now();
   private final LastSyncReplayRecord syncRecord = LastSyncReplayRecord.builder()
@@ -73,8 +70,7 @@ public class LocalSyncResultsServiceTest extends TestCase {
     when(lastSyncRecordRepository.findFirstByOrderByLastSyncedTimeDesc()).thenReturn(syncRecord);
     when(errorRecordRepository.findLastErrorRecord()).thenReturn(errorRecord);
     when(eventRecordRepository.findTopByOnlineWebSynced(false)).thenReturn(eventRecord);
-    doNothing().when(synchronizer).sync();
-    LocalSyncResultsResponse syncResults = localSyncResultsService.doSync();
+    LocalSyncResultsResponse syncResults = localSyncResultsService.getSyncStatus();
 
     //then
     assertEquals(lastSyncTime, syncResults.getLatestSyncedTime());
@@ -91,8 +87,7 @@ public class LocalSyncResultsServiceTest extends TestCase {
     when(lastSyncRecordRepository.findFirstByOrderByLastSyncedTimeDesc()).thenReturn(syncRecord);
     when(errorRecordRepository.findLastErrorRecord()).thenReturn(errorRecord);
     when(eventRecordRepository.findTopByOnlineWebSynced(false)).thenReturn(null);
-    doNothing().when(synchronizer).sync();
-    LocalSyncResultsResponse syncResults = localSyncResultsService.doSync();
+    LocalSyncResultsResponse syncResults = localSyncResultsService.getSyncStatus();
 
     //then
     assertEquals(lastSyncTime, syncResults.getLatestSyncedTime());
