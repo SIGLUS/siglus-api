@@ -17,15 +17,18 @@ package org.siglus.siglusapi.localmachine;
 
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.siglus.siglusapi.localmachine.eventstore.PayloadSerializer;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class ExternalEventDtoMapper {
   private final PayloadSerializer payloadSerializer;
 
   public ExternalEventDto map(Event event) {
+    log.info("Event to ExternalEventDto ID: {}", event.getId());
     return ExternalEventDto.builder()
         .event(event)
         .payloadClassName(payloadSerializer.getPayloadName(event.getPayload()))
@@ -34,6 +37,7 @@ public class ExternalEventDtoMapper {
 
   @SneakyThrows
   public Event map(ExternalEventDto externalEventDto) {
+    log.info("ExternalEventDto to Event ID: {}", externalEventDto.getEvent().getId());
     Event event = externalEventDto.getEvent();
     Object payload = event.getPayload();
     Class<?> payloadClass = payloadSerializer.getPayloadClass(externalEventDto.getPayloadClassName());
