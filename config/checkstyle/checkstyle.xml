@@ -251,8 +251,4 @@
     </module>
     <module name="CommentsIndentation"/>
   </module>
-  <module name="Header">
-    <property name="headerFile" value="LICENSE-HEADER"/>
-    <property name="fileExtensions" value="java"/>
-  </module>
 </module>
