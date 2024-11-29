@@ -57,7 +57,8 @@ public class EventStore {
     EventRecord eventRecord = EventRecord.from(event, payloadSerializer.dump(event.getPayload()));
     log.info("insert event emitted event:{}", event.getId());
     repository.insertAndAllocateLocalSequenceNumber(eventRecord);
-    eventPayloadRepository.save(new EventPayload(eventRecord.getId(), eventRecord.getPayload()));
+    log.info("insert PAYLOAD:{}", new String(eventRecord.getPayload()));
+    eventPayloadRepository.saveAndFlush(new EventPayload(eventRecord.getId(), eventRecord.getPayload()));
   }
 
   @SneakyThrows

@@ -51,7 +51,7 @@ public class AndroidProofOfDeliverySyncedEmitter {
         .build();
 
     eventPublisher.emitGroupEvent(getGroupId(externalId), supplyingFacilityId, event, ANDROID_POD_CONFIRMED);
-    log.info("android pod event : {}", event.getRequest().getOriginNumber());
+    log.info("android pod event : {}", event.getRequest().getOrderCode());
     return event;
   }
 
