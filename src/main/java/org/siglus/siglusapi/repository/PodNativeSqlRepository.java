@@ -63,6 +63,7 @@ public class PodNativeSqlRepository {
         UUID reasonId = null;
         if (isNotBlank(lotLineRequest.getRejectedReason())) {
           RejectionReason rejectionReason = RejectionReason.valueOf(lotLineRequest.getRejectedReason());
+          log.info("rejectionReason Name : {}", rejectionReason.getName());
           reasonId = rejectReasonToId.get(rejectionReason.getName());
           if (reasonId == null) {
             throw new InvalidReasonException(lotLineRequest.getRejectedReason());
