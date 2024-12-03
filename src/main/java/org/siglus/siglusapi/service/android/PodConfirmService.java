@@ -87,6 +87,7 @@ import org.springframework.validation.annotation.Validated;
 @Slf4j
 @SuppressWarnings({"PMD.TooManyMethods"})
 public class PodConfirmService {
+  private static final String REJECT_REASON_INSUFFICIENT_2_0_18 = "Recebido a menos";
 
   private final SyncUpHashRepository syncUpHashRepository;
   private final SiglusProofOfDeliveryRepository podRepository;
@@ -148,6 +149,7 @@ public class PodConfirmService {
     Map<String, UUID> reasonNameToId = validReasonAssignmentService.getAllReasons(homeFacility.getType().getId())
         .stream()
         .map(ValidReasonAssignmentDto::getReason)
+        .filter(reason -> !REJECT_REASON_INSUFFICIENT_2_0_18.equals(reason.getName()))
         .distinct()
         .collect(toMap(StockCardLineItemReason::getName, StockCardLineItemReason::getId));
     podNativeSqlRepository.insertPodAndShipmentLineItems(toUpdatePod.getId(), toUpdatePod.getShipment().getId(),
