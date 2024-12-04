@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import javax.persistence.EntityManager;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -192,6 +193,9 @@ public class PodConfirmServiceTest {
   @Mock
   private SiglusNotificationService siglusNotificationService;
 
+  @Mock
+  private EntityManager entityManager;
+
   private final String programCode = "anyCode";
 
   @Before
@@ -216,6 +220,7 @@ public class PodConfirmServiceTest {
     when(program.getId()).thenReturn(programId);
     when(siglusProgramService.getProgramByCode(programCode)).thenReturn(Optional.of(program));
     doNothing().when(siglusNotificationService).postConfirmPod(any(), any());
+    doNothing().when(entityManager).flush();
   }
 
   @After

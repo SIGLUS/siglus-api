@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import javax.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.openlmis.fulfillment.domain.Order;
@@ -102,6 +103,7 @@ public class PodConfirmService {
   private final RequisitionService requisitionService;
   private final PodConfirmBackupRepository podConfirmBackupRepository;
   private final SiglusNotificationService siglusNotificationService;
+  private final EntityManager entityManager;
 
   @Transactional
   @SuppressWarnings("PMD.PreserveStackTrace")
@@ -244,13 +246,15 @@ public class PodConfirmService {
     Order order = toUpdatePod.getShipment().getOrder();
     order.updateStatus(OrderStatus.RECEIVED, new UpdateDetails(user.getId(),
         dateHelper.getCurrentDateTimeWithSystemZone()));
-    log.info("update order status, orderCode: {}", order.getOrderCode());
+    log.info("update order status, orderCode: {}, orderId: {}", order.getOrderCode(), order.getId());
     List<OrderLineItem> orderLineItems = buildToUpdateOrderLineItems(order, podRequest, requestOrderables);
     if (!CollectionUtils.isEmpty(orderLineItems)) {
       log.info("update order lineItems, orderCode: {}", order.getOrderCode());
       orderLineItemRepository.save(orderLineItems);
     }
-    return orderRepository.save(order);
+    Order saved = orderRepository.save(order);
+    entityManager.flush();
+    return saved;
   }
 
   private void deletePodLineItems(List<ProofOfDeliveryLineItem> podLineItems) {
