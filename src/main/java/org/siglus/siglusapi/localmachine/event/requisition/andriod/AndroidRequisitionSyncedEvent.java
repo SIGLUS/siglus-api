@@ -19,10 +19,12 @@ import java.util.UUID;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
 import org.siglus.siglusapi.localmachine.EventPayload;
 
 @Getter
+@Setter
 @Builder
 @EventPayload
 @NoArgsConstructor

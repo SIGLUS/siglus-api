@@ -15,6 +15,8 @@
 
 package org.siglus.siglusapi.localmachine.server;
 
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.TABLE_DISPENSED_DB_KEY;
+import static org.siglus.siglusapi.dto.enums.EventCategoryEnum.ANDROID_REQUISITION_INTERNAL_APPROVED;
 import static org.siglus.siglusapi.dto.enums.EventCategoryEnum.REQUISITION_FINAL_APPROVED;
 
 import java.io.File;
@@ -46,11 +48,14 @@ import org.openlmis.referencedata.domain.Facility;
 import org.openlmis.referencedata.repository.FacilityRepository;
 import org.siglus.siglusapi.domain.AppInfo;
 import org.siglus.siglusapi.dto.Message;
+import org.siglus.siglusapi.dto.android.request.PatientLineItemsRequest;
+import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
 import org.siglus.siglusapi.exception.FileOperationException;
 import org.siglus.siglusapi.exception.UnableGetLockException;
 import org.siglus.siglusapi.localmachine.Event;
 import org.siglus.siglusapi.localmachine.ShedLockFactory;
 import org.siglus.siglusapi.localmachine.ShedLockFactory.AutoClosableLock;
+import org.siglus.siglusapi.localmachine.event.requisition.andriod.AndroidRequisitionSyncedEvent;
 import org.siglus.siglusapi.localmachine.eventstore.MasterDataEventRecord;
 import org.siglus.siglusapi.localmachine.eventstore.MasterDataEventRecordRepository;
 import org.siglus.siglusapi.localmachine.eventstore.MasterDataOffset;
@@ -76,6 +81,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class OnlineWebService {
 
   static final String FINAL_APPROVE_VERSION = "2.0.11";
+  static final String MMIA_NEW_TEMPLATE_VERSION = "2.1.0";
   private static final long ZERO = 0L;
   @Autowired
   private TableCopyRepository tableCopyRepository;
@@ -204,6 +210,26 @@ public class OnlineWebService {
         return events
             .stream()
             .filter(event -> !REQUISITION_FINAL_APPROVED.name().equals(event.getCategory()))
+            .collect(Collectors.toList());
+      }
+
+      ComparableVersion mmiaNewTemplateVersion = new ComparableVersion(MMIA_NEW_TEMPLATE_VERSION);
+      // process for mmia requisition when LM version < 2.1.0
+      if (version.compareTo(mmiaNewTemplateVersion) < 0) {
+        return events
+            .stream()
+            .map(event -> {
+              if (ANDROID_REQUISITION_INTERNAL_APPROVED.name().equals(event.getCategory())) {
+                AndroidRequisitionSyncedEvent payload = (AndroidRequisitionSyncedEvent) event.getPayload();
+                RequisitionCreateRequest request = payload.getRequest();
+                List<PatientLineItemsRequest> filtered = request.getPatientLineItems().stream()
+                    .filter(patientLineItem -> !TABLE_DISPENSED_DB_KEY.equals(patientLineItem.getName()))
+                    .collect(Collectors.toList());
+                request.setPatientLineItems(filtered);
+                event.setPayload(payload);
+              }
+              return event;
+            })
             .collect(Collectors.toList());
       }
     }
