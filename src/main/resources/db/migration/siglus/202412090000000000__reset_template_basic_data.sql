@@ -1,3 +1,30 @@
+-- avoid insert template data error
+-- facility_types
+INSERT INTO "referencedata"."facility_types"("id","active","code","description","displayorder","name")
+VALUES
+    (E'b6069ca2-cfad-11e9-9398-0242ac130008',TRUE,E'DDM',NULL,1,E'DDM - Depósito Distrital de Medicamentos'),
+    (E'b6069fa4-cfad-11e9-9398-0242ac130008',TRUE,E'DPM',NULL,2,E'DPM - Depósito Provincial de Medicamentos'),
+    (E'b606a51c-cfad-11e9-9398-0242ac130008',TRUE,E'HC',NULL,3,E'HC - Hospital Central'),
+    (E'b606a7ba-cfad-11e9-9398-0242ac130008',TRUE,E'HD',NULL,4,E'HD - Hospital Distrital'),
+    (E'b606aa44-cfad-11e9-9398-0242ac130008',TRUE,E'HG',NULL,5,E'HG - Hospital Geral'),
+    (E'b606acc4-cfad-11e9-9398-0242ac130008',TRUE,E'HP',NULL,6,E'HP - Hospital Provincial'),
+    (E'b606af8a-cfad-11e9-9398-0242ac130008',TRUE,E'HPSIQ',NULL,7,E'HPSIQ - Hospital Psiquiatrico'),
+    (E'b606b214-cfad-11e9-9398-0242ac130008',TRUE,E'HR',NULL,8,E'HR - Hospital Rural'),
+    (E'b606b49e-cfad-11e9-9398-0242ac130008',TRUE,E'PS',NULL,9,E'PS - Posto de Saúde'),
+    (E'b606b71e-cfad-11e9-9398-0242ac130008',TRUE,E'PSAPE',NULL,10,E'PSAPE - Posto de Saúde APE'),
+    (E'b606b9a8-cfad-11e9-9398-0242ac130008',TRUE,E'AC',NULL,11,E'AC - Armazém Central'),
+    (E'b606bc5a-cfad-11e9-9398-0242ac130008',TRUE,E'SI',NULL,12,E'SI - Serviço Interno do Hospital'),
+    (E'b606bed0-cfad-11e9-9398-0242ac130008',TRUE,E'HM',NULL,13,E'HM - Hospital Militar'),
+    (E'b606c15a-cfad-11e9-9398-0242ac130008',TRUE,E'ONG',NULL,14,E'ONG - Organização não Governamental'),
+    (E'b606c3d0-cfad-11e9-9398-0242ac130008',TRUE,E'OUTROS',NULL,15,E'OUTROS'),
+    (E'b606c65a-cfad-11e9-9398-0242ac130008',TRUE,E'AI',NULL,16,E'AI - Armazém Intermediário'),
+    (E'26834258-faa0-420b-a83b-a9af60c605c8',TRUE,E'CS',NULL,17,E'CS - Centro de Saúde'),
+    (E'b606a26a-cfad-11e9-9398-0242ac130008',TRUE,E'Central',NULL,18,E'Moçambique'),
+    (E'e0a234d5-f116-4754-9539-34142be81a79',TRUE,E'CICOV I',NULL,19,E'CICOV Internamento'),
+    (E'abcd9689-6a43-4f28-ba75-1bdf9428c323',TRUE,E'CICOV T',NULL,20,E'CICOV Trânsito'),
+    (E'e3e98123-ffca-4282-a8d8-4167df3dcb6f',TRUE,E'ODF',NULL,21,E'Outro Depósito Fornecedor')
+ON CONFLICT DO NOTHING;
+
 -- requisition.available_requisition_columns
 INSERT INTO "requisition"."available_requisition_columns"("id","canbechangedbyuser","canchangeorder","columntype","definition","indicator","isdisplayrequired","label","mandatory","name","supportstag")
 VALUES
