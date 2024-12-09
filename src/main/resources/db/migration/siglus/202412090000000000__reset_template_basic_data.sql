@@ -1,9 +1,3 @@
-DELETE FROM requisition.available_requisition_column_sources;
-DELETE FROM requisition.available_requisition_column_options;
-DELETE FROM requisition.available_requisition_columns;
-DELETE FROM siglusintegration.available_usage_columns;
-DELETE FROM siglusintegration.available_usage_column_sections;
-
 -- requisition.available_requisition_columns
 INSERT INTO "requisition"."available_requisition_columns"("id","canbechangedbyuser","canchangeorder","columntype","definition","indicator","isdisplayrequired","label","mandatory","name","supportstag")
 VALUES
@@ -39,7 +33,8 @@ VALUES
     (E'df524868-9d0a-18e6-80f5-76304ded7ab9',FALSE,TRUE,E'CURRENCY',E'Price per pack. Will be blank if price is not defined.',E'T',FALSE,E'Price per pack',FALSE,E'pricePerPack',FALSE),
     (E'e3a0c1fc-c2d5-11e6-af2d-3417eb83144e',FALSE,TRUE,E'CURRENCY',E'Total cost of the product based on quantity requested. Will be blank if price is not defined.',E'Q',FALSE,E'Total cost',FALSE,E'totalCost',FALSE),
     (E'e53e80de-fc63-4ecb-b6b2-ef376b34c926',FALSE,FALSE,E'TEXT',E'Primary name of the product.',E'R',TRUE,E'Nome do Produto',FALSE,E'orderable.fullProductName',FALSE),
-    (E'ef524868-9d0a-11e6-80f5-76304dec7eb7',FALSE,TRUE,E'NUMERIC',E'Total of beginning balance and quantity received.',E'Y',FALSE,E'Total',FALSE,E'total',FALSE);
+    (E'ef524868-9d0a-11e6-80f5-76304dec7eb7',FALSE,TRUE,E'NUMERIC',E'Total of beginning balance and quantity received.',E'Y',FALSE,E'Total',FALSE,E'total',FALSE)
+ON CONFLICT DO NOTHING;
 
 --requisition.available_requisition_column_options
 INSERT INTO "requisition"."available_requisition_column_options"("id","optionlabel","optionname","columnid")
@@ -52,7 +47,8 @@ VALUES
     (E'822fc359-6d78-4ba0-99fd-d7c776041c5e',E'requisitionConstants.cmm',E'cmm',E'd06a04f9-1a81-45df-9921-60adccd0a31e'),
     (E'd1ff8f6f-5bbb-4b0e-8dd2-3835bfc03629',E'requisitionConstants.showPackToShipInApprovalPage',E'showPackToShipInApprovalPage',E'dc9dde56-593d-4929-81be-d1faec7025a8'),
     (E'dcf41f06-3000-4af6-acf5-5de4fffc966f',E'requisitionConstants.showPackToShipInAllPages',E'showPackToShipInAllPages',E'dc9dde56-593d-4929-81be-d1faec7025a8'),
-    (E'ff2b350c-37f2-4801-b21e-27ca12c12b3c',E'requisitionConstants.default',E'default',E'913e1a4f-f3b0-40c6-a422-2f73608c6f3d');
+    (E'ff2b350c-37f2-4801-b21e-27ca12c12b3c',E'requisitionConstants.default',E'default',E'913e1a4f-f3b0-40c6-a422-2f73608c6f3d')
+ON CONFLICT DO NOTHING;
 
 --requisition.available_requisition_column_sources
 INSERT INTO "requisition"."available_requisition_column_sources"("columnid","value")
@@ -99,7 +95,8 @@ VALUES
     (E'96bd0839-4a83-4588-8d78-5566ef80dc89',E'CALCULATED'),
     (E'd06a04f9-1a81-45df-9921-60adccd0a31e',E'CALCULATED'),
     (E'd36a84f9-1a81-45df-1921-60adccd0a31e',E'CALCULATED'),
-    (E'878d9a4a-5be8-11ed-acc8-acde48001122',E'CALCULATED');
+    (E'878d9a4a-5be8-11ed-acc8-acde48001122',E'CALCULATED')
+ON CONFLICT DO NOTHING;
 
 -- siglusintegration.available_usage_column_sections
 INSERT INTO "siglusintegration"."available_usage_column_sections"("id","name","label","displayorder","category")
@@ -116,7 +113,8 @@ VALUES
     (E'bce979a4-1876-4259-9102-b04f86c4c72c',E'information',E'Product Usage Information',0,E'USAGEINFORMATION'),
     (E'bce979a4-1957-4259-a5bb-b04f86c4c72a',E'service',E'Services',1,E'KITUSAGE'),
     (E'bce979a4-1957-4259-a5bb-b04f86c4c72c',E'collection',E'KIT data collection',0,E'KITUSAGE'),
-    (E'e2cd8d9e-22e9-4ea4-a61c-e3bd603d02cb',E'summary',E'Summary',1,E'REGIMEN');
+    (E'e2cd8d9e-22e9-4ea4-a61c-e3bd603d02cb',E'summary',E'Summary',1,E'REGIMEN')
+ON CONFLICT DO NOTHING;
 
 -- siglusintegration.available_usage_columns
 INSERT INTO "siglusintegration"."available_usage_columns"("id","canbechangedbyuser","canchangeorder","columntype","definition","indicator","isdisplayrequired","label","mandatory","name","supportstag","sectionid","sources","displayorder")
@@ -150,4 +148,5 @@ VALUES
     (E'cbee99e4-1827-0291-ab4f-783d61ac80a6',FALSE,FALSE,E'NUMERIC',E'record the product usage information for my facility',E'SV',TRUE,E'HF',FALSE,E'HF',FALSE,E'bce979a4-1829-9287-1827-b04f86c4c72a',E'USER_INPUT',0),
     (E'cbee99e4-f100-4f9e-ab4f-783d61ac80a6',FALSE,FALSE,E'NUMERIC',E'record the quantity of KIT data in my facility',E'SV',TRUE,E'HF',FALSE,E'HF',FALSE,E'bce979a4-1957-4259-a5bb-b04f86c4c72a',E'',0),
     (E'f51371a4-ba6f-4119-9a0e-1a588fa5df21',FALSE,TRUE,E'NUMERIC',E'record the total number of this group',E'PD',FALSE,E'Total',FALSE,E'total',FALSE,E'bbf232b4-4b07-4a8e-a22c-1607995b01cd',E'USER_INPUT|CALCULATED',1),
-    (E'fe6e0f40-f47b-41e2-be57-8064876d75f6',FALSE,FALSE,E'NUMERIC',E'record the unjustified test outcome quantity for each test project',E'TO',FALSE,E'Unjustified',FALSE,E'unjustified',FALSE,E'0d3b5adc-e767-49a1-8ed7-7b2a92f82d7f',E'USER_INPUT',2);
+    (E'fe6e0f40-f47b-41e2-be57-8064876d75f6',FALSE,FALSE,E'NUMERIC',E'record the unjustified test outcome quantity for each test project',E'TO',FALSE,E'Unjustified',FALSE,E'unjustified',FALSE,E'0d3b5adc-e767-49a1-8ed7-7b2a92f82d7f',E'USER_INPUT',2)
+ON CONFLICT DO NOTHING;
