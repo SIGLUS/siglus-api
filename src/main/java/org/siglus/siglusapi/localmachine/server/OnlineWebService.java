@@ -222,11 +222,13 @@ public class OnlineWebService {
               if (ANDROID_REQUISITION_INTERNAL_APPROVED.name().equals(event.getCategory())) {
                 AndroidRequisitionSyncedEvent payload = (AndroidRequisitionSyncedEvent) event.getPayload();
                 RequisitionCreateRequest request = payload.getRequest();
-                List<PatientLineItemsRequest> filtered = request.getPatientLineItems().stream()
-                    .filter(patientLineItem -> !TABLE_DISPENSED_DB_KEY.equals(patientLineItem.getName()))
-                    .collect(Collectors.toList());
-                request.setPatientLineItems(filtered);
-                event.setPayload(payload);
+                if (request != null && CollectionUtils.isNotEmpty(request.getPatientLineItems())) {
+                  List<PatientLineItemsRequest> filtered = request.getPatientLineItems().stream()
+                      .filter(patientLineItem -> !TABLE_DISPENSED_DB_KEY.equals(patientLineItem.getName()))
+                      .collect(Collectors.toList());
+                  request.setPatientLineItems(filtered);
+                  event.setPayload(payload);
+                }
               }
               return event;
             })
