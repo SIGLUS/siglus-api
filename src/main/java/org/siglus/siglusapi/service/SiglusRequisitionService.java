@@ -85,6 +85,7 @@ import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.RequisitionLineItem;
 import org.openlmis.requisition.domain.requisition.RequisitionLineItem.Importer;
 import org.openlmis.requisition.domain.requisition.RequisitionStatus;
+import org.openlmis.requisition.domain.requisition.StatusChange;
 import org.openlmis.requisition.domain.requisition.VersionEntityReference;
 import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.requisition.dto.BaseDto;
@@ -163,6 +164,7 @@ import org.siglus.siglusapi.dto.PatientColumnDto;
 import org.siglus.siglusapi.dto.PatientGroupDto;
 import org.siglus.siglusapi.dto.RegimenColumnDto;
 import org.siglus.siglusapi.dto.RegimenLineDto;
+import org.siglus.siglusapi.dto.SiglusRequisitionDateDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionLineItemDto;
 import org.siglus.siglusapi.dto.SimpleRequisitionDto;
@@ -193,6 +195,7 @@ import org.siglus.siglusapi.repository.RequisitionNativeSqlRepository;
 import org.siglus.siglusapi.repository.SiglusOrdersRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.repository.SiglusShipmentRepository;
+import org.siglus.siglusapi.repository.SiglusStatusChangeRepository;
 import org.siglus.siglusapi.repository.SyncUpHashRepository;
 import org.siglus.siglusapi.repository.TestConsumptionLineItemRepository;
 import org.siglus.siglusapi.repository.UsageInformationLineItemRepository;
@@ -361,6 +364,8 @@ public class SiglusRequisitionService {
   private SiglusOrdersRepository siglusOrdersRepository;
   @Autowired
   private SiglusShipmentRepository siglusShipmentRepository;
+  @Autowired
+  private SiglusStatusChangeRepository siglusStatusChangeRepository;
   private final Map<String, BiConsumer<SiglusRequisitionDto, Set<RequisitionLineItem>>> programToRequestedQuantity =
       ImmutableMap.<String, BiConsumer<SiglusRequisitionDto, Set<RequisitionLineItem>>>builder()
           .put(MTB_PROGRAM_CODE, this::calcRequestedQuantityForMmtb)
@@ -847,6 +852,15 @@ public class SiglusRequisitionService {
     initiateExpirationDate(lineItems, facilityId);
     initiateSuggestedQuantity(lineItems, facilityId, requisition.getProcessingPeriodId(), programId, template);
     return siglusLineItems;
+  }
+
+  public List<SiglusRequisitionDateDto> getRequisitionStatusDates(List<UUID> requisitionIds) {
+    List<StatusChange> statusChanges = siglusStatusChangeRepository.findByRequisitionIds(requisitionIds);
+    return statusChanges
+        .stream()
+        .filter(s -> RequisitionStatus.INITIATED.equals(s.getStatus()))
+        .map(s -> new SiglusRequisitionDateDto(s.getRequisition().getId(), s.getCreatedDate().toLocalDate()))
+        .collect(toList());
   }
 
   @Transactional

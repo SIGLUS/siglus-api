@@ -34,5 +34,9 @@ public interface SiglusStatusChangeRepository
       + "where requisitionid = :requisitionId", nativeQuery = true)
   List<StatusChange> findByRequisitionId(@Param("requisitionId") UUID requisitionId);
 
+  @Query(value = "select * from requisition.status_changes "
+      + "where requisitionid in (:requisitionIds)", nativeQuery = true)
+  List<StatusChange> findByRequisitionIds(@Param("requisitionIds") List<UUID> requisitionIds);
+
   void deleteByRequisitionId(UUID requisitionId);
 }

@@ -2880,6 +2880,32 @@ traits:
             body:
               application/json:
                 schema: localizedMessage
+    /requisitions/statusDate:
+      get:
+        is: [ secured, idempotent ]
+        description: get statusDate by requisition ids.
+        queryParameters:
+          requisitionIds:
+            displayName: requisitionId
+            type: string
+            required: true
+            repeat: false
+        responses:
+          "201":
+            body:
+              application/json:
+          "400":
+            body:
+              application/json:
+                schema: localizedMessage
+          "403":
+            body:
+              application/json:
+                schema: localizedMessage
+          "409":
+            body:
+              application/json:
+                schema: localizedMessage
 
     /requisitions/createLineItem:
       post:

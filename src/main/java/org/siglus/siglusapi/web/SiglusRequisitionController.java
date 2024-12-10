@@ -37,6 +37,7 @@ import org.openlmis.requisition.service.RequisitionService;
 import org.openlmis.requisition.utils.AuthenticationHelper;
 import org.openlmis.requisition.web.RequisitionController;
 import org.siglus.siglusapi.domain.RequisitionExtension;
+import org.siglus.siglusapi.dto.SiglusRequisitionDateDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionLineItemDto;
 import org.siglus.siglusapi.localmachine.event.requisition.web.approve.RequisitionInternalApproveEmitter;
@@ -237,6 +238,12 @@ public class SiglusRequisitionController {
 
   private boolean internalFacilityUser(BasicRequisitionDto basicRequisitionDto) {
     return authenticationHelper.getCurrentUser().getHomeFacilityId().equals(basicRequisitionDto.getFacility().getId());
+  }
+
+  @GetMapping("/statusDate")
+  public List<SiglusRequisitionDateDto> getRequisitionStatusDates(
+      @RequestParam List<UUID> requisitionIds) {
+    return siglusRequisitionService.getRequisitionStatusDates(requisitionIds);
   }
 
   @PostMapping("/createLineItem")
