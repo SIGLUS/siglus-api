@@ -153,7 +153,7 @@ public class SiglusStockCardSummariesService {
         .filter(lotId -> !ObjectUtils.isEmpty(lotId))
         .collect(Collectors.toList());
     return siglusLotService.getLotList(lotIds)
-        .stream().filter(LotDto::isActive)
+        .stream()
         .map(lot -> {
           org.openlmis.referencedata.dto.LotDto dto =
               new org.openlmis.referencedata.dto.LotDto(lot.getLotCode(), true,

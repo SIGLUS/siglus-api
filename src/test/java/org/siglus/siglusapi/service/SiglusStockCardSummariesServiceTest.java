@@ -198,7 +198,7 @@ public class SiglusStockCardSummariesServiceTest {
     List<org.openlmis.referencedata.dto.LotDto> lots = service.getLotsDataByOrderableIds(orderableIds);
 
     // then
-    assertEquals(1, lots.size());
+    assertEquals(2, lots.size());
     assertEquals("lot1", lots.get(0).getLotCode());
   }
 
