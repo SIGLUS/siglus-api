@@ -26,6 +26,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.TABLE_DISPENSED_DB_KEY;
+import static org.siglus.siglusapi.dto.enums.EventCategoryEnum.ANDROID_REQUISITION_INTERNAL_APPROVED;
 import static org.siglus.siglusapi.dto.enums.EventCategoryEnum.REQUISITION_FINAL_APPROVED;
 
 import java.io.BufferedWriter;
@@ -40,6 +42,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletResponse;
 import net.javacrumbs.shedlock.core.SimpleLock;
 import org.junit.Test;
@@ -52,9 +55,12 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.referencedata.domain.Facility;
 import org.openlmis.referencedata.repository.FacilityRepository;
 import org.siglus.siglusapi.domain.AppInfo;
+import org.siglus.siglusapi.dto.android.request.PatientLineItemsRequest;
+import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
 import org.siglus.siglusapi.localmachine.Event;
 import org.siglus.siglusapi.localmachine.ShedLockFactory;
 import org.siglus.siglusapi.localmachine.ShedLockFactory.AutoClosableLock;
+import org.siglus.siglusapi.localmachine.event.requisition.andriod.AndroidRequisitionSyncedEvent;
 import org.siglus.siglusapi.localmachine.eventstore.MasterDataEventRecord;
 import org.siglus.siglusapi.localmachine.eventstore.MasterDataEventRecordRepository;
 import org.siglus.siglusapi.localmachine.eventstore.MasterDataOffset;
@@ -261,6 +267,74 @@ public class OnlineWebServiceTest {
     assertEquals(results.size(), 0);
   }
 
+  @Test
+  public void shouldReturnOriginalListForBetaVersion() {
+    // given
+    when(facilityRepository.findOne(facilityId)).thenReturn(mockFacility());
+    when(appInfoRepository.findByFacilityCode(facilityCode)).thenReturn(mockAppInfo("2.1.0-beta-03"));
+    // when
+    List<Event> results = onlineWebService.filterFinalApproveEventForOldVersion(Arrays.asList(mock210MiaRequisition()));
+
+    // then
+    assertEquals(results.size(), 1);
+    AndroidRequisitionSyncedEvent payload = (AndroidRequisitionSyncedEvent) results.get(0).getPayload();
+    List<PatientLineItemsRequest> dbLineItems = payload.getRequest().getPatientLineItems().stream()
+        .filter(patientLineItem -> TABLE_DISPENSED_DB_KEY.equals(patientLineItem.getName()))
+        .collect(Collectors.toList());
+    assertEquals(dbLineItems.size(), 1);
+  }
+
+  @Test
+  public void shouldIgnoreDbWhenVersionIs2019() {
+    // given
+    when(facilityRepository.findOne(facilityId)).thenReturn(mockFacility());
+    when(appInfoRepository.findByFacilityCode(facilityCode)).thenReturn(mockAppInfo("2.0.19"));
+    // when
+    List<Event> results = onlineWebService.filterFinalApproveEventForOldVersion(Arrays.asList(mock210MiaRequisition()));
+
+    // then
+    assertEquals(results.size(), 1);
+    AndroidRequisitionSyncedEvent payload = (AndroidRequisitionSyncedEvent) results.get(0).getPayload();
+    List<PatientLineItemsRequest> dbLineItems = payload.getRequest().getPatientLineItems().stream()
+        .filter(patientLineItem -> TABLE_DISPENSED_DB_KEY.equals(patientLineItem.getName()))
+        .collect(Collectors.toList());
+    assertEquals(dbLineItems.size(), 0);
+  }
+
+  @Test
+  public void shouldKeepDbWhenVersionIs210() {
+    // given
+    when(facilityRepository.findOne(facilityId)).thenReturn(mockFacility());
+    when(appInfoRepository.findByFacilityCode(facilityCode)).thenReturn(mockAppInfo("2.1.0"));
+    // when
+    List<Event> results = onlineWebService.filterFinalApproveEventForOldVersion(Arrays.asList(mock210MiaRequisition()));
+
+    // then
+    assertEquals(results.size(), 1);
+    AndroidRequisitionSyncedEvent payload = (AndroidRequisitionSyncedEvent) results.get(0).getPayload();
+    List<PatientLineItemsRequest> dbLineItems = payload.getRequest().getPatientLineItems().stream()
+        .filter(patientLineItem -> TABLE_DISPENSED_DB_KEY.equals(patientLineItem.getName()))
+        .collect(Collectors.toList());
+    assertEquals(dbLineItems.size(), 1);
+  }
+
+  @Test
+  public void shouldKeepDbWhenVersionIs211() {
+    // given
+    when(facilityRepository.findOne(facilityId)).thenReturn(mockFacility());
+    when(appInfoRepository.findByFacilityCode(facilityCode)).thenReturn(mockAppInfo("2.1.1"));
+    // when
+    List<Event> results = onlineWebService.filterFinalApproveEventForOldVersion(Arrays.asList(mock210MiaRequisition()));
+
+    // then
+    assertEquals(results.size(), 1);
+    AndroidRequisitionSyncedEvent payload = (AndroidRequisitionSyncedEvent) results.get(0).getPayload();
+    List<PatientLineItemsRequest> dbLineItems = payload.getRequest().getPatientLineItems().stream()
+        .filter(patientLineItem -> TABLE_DISPENSED_DB_KEY.equals(patientLineItem.getName()))
+        .collect(Collectors.toList());
+    assertEquals(dbLineItems.size(), 1);
+  }
+
   private Facility mockFacility() {
     Facility facility = new Facility();
     facility.setCode(facilityCode);
@@ -285,4 +359,17 @@ public class OnlineWebServiceTest {
     given(lockFactory.waitLock(anyString(), anyLong())).willReturn(lock);
   }
 
+  private Event mock210MiaRequisition() {
+    PatientLineItemsRequest lineItemsRequest = PatientLineItemsRequest
+        .builder()
+        .name(TABLE_DISPENSED_DB_KEY)
+        .build();
+    List<PatientLineItemsRequest> patientLineItemsRequests = Arrays.asList(lineItemsRequest);
+    RequisitionCreateRequest createRequest = RequisitionCreateRequest.builder()
+        .patientLineItems(patientLineItemsRequests).build();
+    AndroidRequisitionSyncedEvent payload = AndroidRequisitionSyncedEvent.builder()
+        .request(createRequest).build();
+    return Event.builder()
+        .category(ANDROID_REQUISITION_INTERNAL_APPROVED.name()).receiverId(facilityId).payload(payload).build();
+  }
 }
