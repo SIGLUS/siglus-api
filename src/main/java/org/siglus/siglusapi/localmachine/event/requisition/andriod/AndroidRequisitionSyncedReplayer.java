@@ -48,10 +48,14 @@ public class AndroidRequisitionSyncedReplayer {
     currentEvent.set(event);
     try {
       simulateUserAuthHelper.simulateNewUserAuth(event.getUserId());
-      Requisition existRequisition = findExistRequisition(event);
-      if (existRequisition == null) {
-        requisitionCreateService.createRequisition(event.getRequest());
+      if (Boolean.FALSE.equals(event.getRequest().getEmergency())) {
+        Requisition existRequisition = findExistRequisition(event);
+        if (existRequisition != null) {
+          log.info("The Regular Requisition already exist, ignore replay: {}", event.getRequisitionNumberPrefix());
+          return;
+        }
       }
+      requisitionCreateService.createRequisition(event.getRequest());
     } catch (Exception e) {
       log.error(e.getMessage(), e);
       throw e;
