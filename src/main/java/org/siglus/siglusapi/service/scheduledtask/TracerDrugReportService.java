@@ -234,7 +234,7 @@ public class TracerDrugReportService {
   }
 
   public void getTracerDrugExcel(HttpServletResponse response,
-      String productCode,
+      List<String> productCodes,
       List<String> districtCodeList,
       String startDate,
       String endDate) throws IOException {
@@ -247,7 +247,7 @@ public class TracerDrugReportService {
     if (!ObjectUtils.isEmpty(requisitionFacilityCodes)) {
       tracerDrugExcelInfo = tracerDrugRepository.getTracerDrugExcelInfo(startDate,
           endDate,
-          productCode, requisitionFacilityCodes);
+          productCodes, requisitionFacilityCodes);
     }
 
     Map<String, List<TracerDrugExcelDto>> tracerDrugMap = tracerDrugExcelInfo.stream()

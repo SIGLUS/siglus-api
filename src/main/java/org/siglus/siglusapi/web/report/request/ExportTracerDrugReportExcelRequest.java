@@ -23,7 +23,7 @@ import org.hibernate.validator.constraints.NotEmpty;
 @Data
 public class ExportTracerDrugReportExcelRequest {
   @NotNull
-  String productCode;
+  List<String> productCodes;
   @NotEmpty
   List<String> districtList;
   @NotNull

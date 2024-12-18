@@ -69,7 +69,7 @@ import lombok.NoArgsConstructor;
         + "        left join siglusintegration.program_report_name_mapping prnm on prnm.programid = po.programid\n"
         + "                                                   where o.extradata @> '{\n"
         + "                     \"isTracer\": true\n"
-        + "                   }' and o.code = ?3 \n"
+        + "                   }' and o.code in (?3) \n"
         + "           ) as tracero\n"
         + "\n"
         + "CROSS JOIN\n"

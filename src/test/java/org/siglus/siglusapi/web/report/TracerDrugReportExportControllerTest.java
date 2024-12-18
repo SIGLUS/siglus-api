@@ -20,6 +20,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collections;
 import javax.servlet.http.HttpServletResponse;
 import junit.framework.TestCase;
@@ -50,7 +51,7 @@ public class TracerDrugReportExportControllerTest extends TestCase {
     ReflectionTestUtils.setField(
         tracerDrugReportController, "dateUrlFormat", "yyyy_MM_dd_HH_mm_ss.SSS");
     ExportTracerDrugReportExcelRequest request = new ExportTracerDrugReportExcelRequest();
-    request.setProductCode("22A05");
+    request.setProductCodes(Arrays.asList("22A05"));
     String districtCode = "0102";
     request.setDistrictList(Collections.singletonList(districtCode));
     request.setEndDate(endDate);
@@ -58,12 +59,12 @@ public class TracerDrugReportExportControllerTest extends TestCase {
     HttpServletResponse response = mock(HttpServletResponse.class);
     doNothing()
         .when(tracerDrugReportService)
-        .getTracerDrugExcel(response, request.getProductCode(), request.getDistrictList(), startDate, endDate);
+        .getTracerDrugExcel(response, request.getProductCodes(), request.getDistrictList(), startDate, endDate);
     // when
     tracerDrugReportController.getTracerDrugExcel(response, request);
     // then
     verify(tracerDrugReportService)
-        .getTracerDrugExcel(response, request.getProductCode(), request.getDistrictList(), startDate, endDate);
+        .getTracerDrugExcel(response, request.getProductCodes(), request.getDistrictList(), startDate, endDate);
   }
 
 }

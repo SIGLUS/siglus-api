@@ -39,7 +39,7 @@ public interface TracerDrugRepository
 
   @Query(name = "TracerDrug.findExcelDetail", nativeQuery = true)
   List<TracerDrugExcelDto> getTracerDrugExcelInfo(
-      String startDate, String endDate, String productCode, List<String> facilityCodes);
+      String startDate, String endDate, List<String> productCodes, List<String> facilityCodes);
 
   @Query(name = "TracerDrug.getTracerDrugCmm", nativeQuery = true)
   List<ProductCmm> getTracerDrugCmm(
