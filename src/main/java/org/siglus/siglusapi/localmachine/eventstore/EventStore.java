@@ -42,7 +42,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 public class EventStore {
 
-  static final int MASTER_DATA_EVENT_BATCH_LIMIT = 1024;
+  static final int MASTER_DATA_EVENT_BATCH_LIMIT = 100;
   static final int PEERING_EVENT_BATCH_LIMIT = 8;
   private final EventRecordRepository repository;
   private final EventPayloadRepository eventPayloadRepository;
