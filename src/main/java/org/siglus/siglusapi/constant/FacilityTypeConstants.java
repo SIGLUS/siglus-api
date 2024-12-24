@@ -81,6 +81,6 @@ public class FacilityTypeConstants {
   }
 
   public static Set<String> getThirdLevelTypes() {
-    return Stream.of(DPM, AI, HC).collect(Collectors.toSet());
+    return Stream.of(DPM, AI, HC, ODF).collect(Collectors.toSet());
   }
 }
