@@ -51,6 +51,7 @@ import org.siglus.siglusapi.i18n.OrderableMessageKeys;
 import org.siglus.siglusapi.repository.OrderableRepository;
 import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
+import org.siglus.siglusapi.util.SiglusDateHelper;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -76,6 +77,9 @@ public class SiglusUnpackService {
 
   @Autowired
   private CalculatedStockOnHandService calculatedStockOnHandService;
+
+  @Autowired
+  private SiglusDateHelper dateHelper;
 
   public SiglusOrdeableKitDto getKitByFacilityIdAndOrderableId(UUID facilityId, UUID orderableId) {
     List<SiglusOrdeableKitDto> siglusOrdeableKitDtos = getKitsByFacilityId(facilityId);
@@ -177,7 +181,9 @@ public class SiglusUnpackService {
     LotSearchParams lotSearchParams = new LotSearchParams();
     lotSearchParams.setTradeItemId(uuids);
     List<LotDto> lots = lotReferenceDataService.getLots(lotSearchParams);
-    return lots.stream().collect(Collectors.groupingBy(LotDto::getTradeItemId));
+    return lots.stream()
+        .filter(lot -> !lot.getExpirationDate().isBefore(dateHelper.getCurrentDate()))
+        .collect(Collectors.groupingBy(LotDto::getTradeItemId));
   }
 
   private UUID getTradeItemId(OrderableChild child) {

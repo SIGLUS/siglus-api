@@ -29,6 +29,8 @@ import static org.openlmis.stockmanagement.service.PermissionService.STOCK_CARDS
 import static org.openlmis.stockmanagement.service.PermissionService.STOCK_INVENTORIES_EDIT;
 
 import com.google.common.collect.ImmutableMap;
+
+import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -64,6 +66,7 @@ import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.OrderableRepository;
 import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
+import org.siglus.siglusapi.util.SiglusDateHelper;
 import org.springframework.data.domain.Page;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -90,6 +93,9 @@ public class SiglusUnpackServiceTest {
 
   @Mock
   private Handler permissionStringsHandler;
+
+  @Mock
+  private SiglusDateHelper dateHelper;
 
   @InjectMocks
   private SiglusUnpackService siglusUnpackService;
@@ -127,6 +133,7 @@ public class SiglusUnpackServiceTest {
     user.setId(UUID.randomUUID());
     when(authenticationHelper.getCurrentUser()).thenReturn(user);
     when(permissionService.getPermissionStrings(user.getId())).thenReturn(permissionStringsHandler);
+    when(dateHelper.getCurrentDate()).thenReturn(LocalDate.of(2024, 1, 1));
   }
 
   @Test
@@ -268,6 +275,7 @@ public class SiglusUnpackServiceTest {
         .thenReturn(orderablePage);
     LotDto lotDto = new LotDto();
     lotDto.setLotCode(RandomStringUtils.random(5));
+    lotDto.setExpirationDate(LocalDate.of(2024, 12, 26));
     lotDto.setTradeItemId(kitChildTradeItemId);
     List<LotDto> lots = Collections.singletonList(lotDto);
     when(lotReferenceDataService.getLots(any())).thenReturn(lots);
@@ -290,6 +298,7 @@ public class SiglusUnpackServiceTest {
         .thenReturn(orderablePage);
     LotDto lotDto = new LotDto();
     lotDto.setLotCode(RandomStringUtils.random(5));
+    lotDto.setExpirationDate(LocalDate.of(2024, 12, 26));
     lotDto.setTradeItemId(kitChildTradeItemId);
     when(lotReferenceDataService.getLots(any())).thenReturn(Collections.emptyList());
 
