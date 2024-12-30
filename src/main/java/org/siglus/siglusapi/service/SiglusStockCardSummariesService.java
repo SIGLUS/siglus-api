@@ -143,16 +143,7 @@ public class SiglusStockCardSummariesService {
   private SiglusLotService siglusLotService;
 
   public List<org.openlmis.referencedata.dto.LotDto> getLotsDataByOrderableIds(List<UUID> orderableIds) {
-    if (CollectionUtils.isEmpty(orderableIds)) {
-      return Collections.emptyList();
-    }
-    UserDto currentUser = authenticationHelper.getCurrentUser();
-    UUID facilityId = currentUser.getHomeFacilityId();
-    List<UUID> lotIds = stockCardRepository.findByOrderableIdInAndFacilityId(orderableIds, facilityId)
-        .stream().map(StockCard::getLotId)
-        .filter(lotId -> !ObjectUtils.isEmpty(lotId))
-        .collect(Collectors.toList());
-    return siglusLotService.getLotList(lotIds)
+    return getLotsByOrderableIds(orderableIds)
         .stream()
         .map(lot -> {
           org.openlmis.referencedata.dto.LotDto dto =
@@ -162,6 +153,19 @@ public class SiglusStockCardSummariesService {
           return dto;
         })
         .collect(Collectors.toList());
+  }
+
+  public List<LotDto> getLotsByOrderableIds(List<UUID> orderableIds) {
+    if (CollectionUtils.isEmpty(orderableIds)) {
+      return Collections.emptyList();
+    }
+    UserDto currentUser = authenticationHelper.getCurrentUser();
+    UUID facilityId = currentUser.getHomeFacilityId();
+    List<UUID> lotIds = stockCardRepository.findByOrderableIdInAndFacilityId(orderableIds, facilityId)
+        .stream().map(StockCard::getLotId)
+        .filter(lotId -> !ObjectUtils.isEmpty(lotId))
+        .collect(Collectors.toList());
+    return siglusLotService.getLotList(lotIds);
   }
 
   public Page<StockCardSummaryV2Dto> findSiglusStockCard(

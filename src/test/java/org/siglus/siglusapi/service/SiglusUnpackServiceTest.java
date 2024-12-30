@@ -64,7 +64,6 @@ import org.siglus.siglusapi.dto.SiglusOrdeableKitDto;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.OrderableRepository;
-import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.util.SiglusDateHelper;
 import org.springframework.data.domain.Page;
@@ -75,9 +74,6 @@ public class SiglusUnpackServiceTest {
 
   @Mock
   private OrderableKitRepository orderableKitRepository;
-
-  @Mock
-  private SiglusLotReferenceDataService lotReferenceDataService;
 
   @Mock
   private OrderableRepository orderableRepository;
@@ -96,6 +92,9 @@ public class SiglusUnpackServiceTest {
 
   @Mock
   private SiglusDateHelper dateHelper;
+
+  @Mock
+  private SiglusStockCardSummariesService siglusStockCardSummariesService;
 
   @InjectMocks
   private SiglusUnpackService siglusUnpackService;
@@ -278,7 +277,7 @@ public class SiglusUnpackServiceTest {
     lotDto.setExpirationDate(LocalDate.of(2024, 12, 26));
     lotDto.setTradeItemId(kitChildTradeItemId);
     List<LotDto> lots = Collections.singletonList(lotDto);
-    when(lotReferenceDataService.getLots(any())).thenReturn(lots);
+    when(siglusStockCardSummariesService.getLotsByOrderableIds(any())).thenReturn(lots);
 
     // when
     List<OrderableInKitDto> result = siglusUnpackService.searchOrderablesInKit(kit1Id);
@@ -300,7 +299,7 @@ public class SiglusUnpackServiceTest {
     lotDto.setLotCode(RandomStringUtils.random(5));
     lotDto.setExpirationDate(LocalDate.of(2024, 12, 26));
     lotDto.setTradeItemId(kitChildTradeItemId);
-    when(lotReferenceDataService.getLots(any())).thenReturn(Collections.emptyList());
+    when(siglusStockCardSummariesService.getLotsByOrderableIds(any())).thenReturn(Collections.emptyList());
 
     // when
     List<OrderableInKitDto> result = siglusUnpackService.searchOrderablesInKit(kit1Id);

@@ -49,7 +49,6 @@ import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.i18n.OrderableMessageKeys;
 import org.siglus.siglusapi.repository.OrderableRepository;
-import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.util.SiglusDateHelper;
 import org.springframework.beans.BeanUtils;
@@ -62,9 +61,6 @@ public class SiglusUnpackService {
 
   @Autowired
   private OrderableKitRepository orderableKitRepository;
-
-  @Autowired
-  private SiglusLotReferenceDataService lotReferenceDataService;
 
   @Autowired
   private OrderableRepository orderableRepository;
@@ -80,6 +76,9 @@ public class SiglusUnpackService {
 
   @Autowired
   private SiglusDateHelper dateHelper;
+
+  @Autowired
+  private SiglusStockCardSummariesService siglusStockCardSummariesService;
 
   public SiglusOrdeableKitDto getKitByFacilityIdAndOrderableId(UUID facilityId, UUID orderableId) {
     List<SiglusOrdeableKitDto> siglusOrdeableKitDtos = getKitsByFacilityId(facilityId);
@@ -174,13 +173,13 @@ public class SiglusUnpackService {
   private Map<UUID, List<LotDto>> getLots(List<OrderableChild> children) {
     List<UUID> uuids = children
         .stream()
-        .map(this::getTradeItemId)
+        .map(orderableChild -> orderableChild.getOrderable().getId())
         .filter(Objects::nonNull)
         .collect(Collectors.toList());
 
     LotSearchParams lotSearchParams = new LotSearchParams();
     lotSearchParams.setTradeItemId(uuids);
-    List<LotDto> lots = lotReferenceDataService.getLots(lotSearchParams);
+    List<LotDto> lots = siglusStockCardSummariesService.getLotsByOrderableIds(uuids);
     return lots.stream()
         .filter(lot -> !lot.getExpirationDate().isBefore(dateHelper.getCurrentDate()))
         .collect(Collectors.groupingBy(LotDto::getTradeItemId));
