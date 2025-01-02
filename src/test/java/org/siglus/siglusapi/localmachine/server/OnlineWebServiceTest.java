@@ -55,6 +55,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.referencedata.domain.Facility;
 import org.openlmis.referencedata.repository.FacilityRepository;
 import org.siglus.siglusapi.domain.AppInfo;
+import org.siglus.siglusapi.domain.ResyncInfo;
 import org.siglus.siglusapi.dto.android.request.PatientLineItemsRequest;
 import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
 import org.siglus.siglusapi.localmachine.Event;
@@ -71,6 +72,7 @@ import org.siglus.siglusapi.localmachine.repository.RequisitionOrderSql;
 import org.siglus.siglusapi.localmachine.repository.TableCopyRepository;
 import org.siglus.siglusapi.localmachine.webapi.ResyncMasterDataResponse;
 import org.siglus.siglusapi.repository.AppInfoRepository;
+import org.siglus.siglusapi.repository.ResyncInfoRepository;
 import org.siglus.siglusapi.service.SiglusAdministrationsService;
 import org.siglus.siglusapi.util.S3FileHandler;
 import org.springframework.mock.web.MockHttpServletResponse;
@@ -102,6 +104,9 @@ public class OnlineWebServiceTest {
 
   @Mock
   private FacilityRepository facilityRepository;
+
+  @Mock
+  private ResyncInfoRepository resyncInfoRepository;
 
   @InjectMocks
   private OnlineWebService onlineWebService;
@@ -187,6 +192,7 @@ public class OnlineWebServiceTest {
     verify(tableCopyRepository, times(1))
         .copyDateToFile(any(), eq(RequisitionOrderSql.getRequisitionOrderSql()), eq(facilityId));
     verify(administrationsService, times(1)).deleteDrafts(facilityId);
+    verify(resyncInfoRepository).save(any(ResyncInfo.class));
   }
 
   @Test
