@@ -213,8 +213,8 @@ public class OnlineWebService {
       UUID receiverId = events.get(0).getReceiverId();
       Facility facility = facilityRepository.findOne(receiverId);
       AppInfo appInfo = appInfoRepository.findByFacilityCode(facility.getCode());
-      // ignore beta vesion
-      if (appInfo.getVersionCode().matches(".*-beta.*")) {
+      // ignore beta version || first time install
+      if (appInfo == null || appInfo.getVersionCode().matches(".*-beta.*")) {
         return events;
       }
       ComparableVersion version = new ComparableVersion(appInfo.getVersionCode());
