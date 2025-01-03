@@ -100,7 +100,11 @@ public class TableCopyRepository {
         log.info("facilityId {} ignore PHYSICAL_INVENTORIES_HISTORIES since empty query result", homeFacilityId);
         return;
       }
-      log.info("tableName {}, file.length {}", tableName, file.length());
+      try {
+        log.info("tableName {}, file.length {}, path {}", tableName, file.length(), file.getCanonicalPath());
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
       tableFiles.add(file);
     });
     return tableFiles;
