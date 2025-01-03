@@ -33,6 +33,7 @@ import org.postgresql.copy.CopyManager;
 import org.postgresql.core.BaseConnection;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.exception.DbOperationException;
+import org.siglus.siglusapi.exception.FileOperationException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
@@ -103,7 +104,7 @@ public class TableCopyRepository {
       try {
         log.info("tableName {}, file.length {}, path {}", tableName, file.length(), file.getCanonicalPath());
       } catch (IOException e) {
-        throw new RuntimeException(e);
+        throw new FileOperationException(e, new Message(""));
       }
       tableFiles.add(file);
     });
