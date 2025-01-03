@@ -493,6 +493,13 @@ public class RequisitionOrderSql {
           + WHERE_FACILITY_ID
           + ") ";
 
+  private static final String EVENT_WHERE_FACILITY_ID =
+      "where e.receiverid = '@@' and e.groupid is not null and e.localreplayed = true "
+          + "and e.syncedtime >= now() - interval '6 months'";
+  public static final String EVENTS = "localmachine.events";
+  public static final String EVENTS_QUERY =
+      "select * from localmachine.events e "
+          + EVENT_WHERE_FACILITY_ID;
 
   public static Map<String, String> getRequisitionOrderSql() {
     Map<String, String> requisitionOrderSql = new HashMap<>();
@@ -550,6 +557,7 @@ public class RequisitionOrderSql {
     requisitionOrderSql.put(USAGE_INFORMATION_LINE_ITEMS, USAGE_INFORMATION_LINE_ITEMS_QUERY);
     requisitionOrderSql.put(USAGE_INFORMATION_LINE_ITEMS_DRAFT, USAGE_INFORMATION_LINE_ITEMS_DRAFT_QUERY);
     requisitionOrderSql.put(AGE_GROUP_LINE_ITEMS, AGE_GROUP_LINE_ITEMS_QUERY);
+    requisitionOrderSql.put(EVENTS, EVENTS_QUERY);
 
     return requisitionOrderSql;
   }

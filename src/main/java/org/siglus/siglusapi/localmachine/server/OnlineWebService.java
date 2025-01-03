@@ -61,7 +61,6 @@ import org.siglus.siglusapi.localmachine.eventstore.MasterDataEventRecord;
 import org.siglus.siglusapi.localmachine.eventstore.MasterDataEventRecordRepository;
 import org.siglus.siglusapi.localmachine.eventstore.MasterDataOffset;
 import org.siglus.siglusapi.localmachine.eventstore.MasterDataOffsetRepository;
-import org.siglus.siglusapi.localmachine.repository.EventHistorySql;
 import org.siglus.siglusapi.localmachine.repository.MasterDataSql;
 import org.siglus.siglusapi.localmachine.repository.MovementSql;
 import org.siglus.siglusapi.localmachine.repository.RequisitionOrderSql;
@@ -105,7 +104,6 @@ public class OnlineWebService {
   private final Map<String, String> tableNameToMasterSql = MasterDataSql.getMasterDataSqlMap();
   private final Map<String, String> tableNameToMovementSql = MovementSql.getMovementSql();
   private final Map<String, String> tableNameToRequisitionOrderSql = RequisitionOrderSql.getRequisitionOrderSql();
-  private final Map<String, String> tableNameToEventSql = EventHistorySql.getEventSql();
   private static final String ZIP_SUFFIX = ".zip";
   private static final String CONTENT_TYPE = "application/zip";
   private static final String DISPOSITION_BASE = "attachment; filename=";
@@ -332,8 +330,7 @@ public class OnlineWebService {
     } else {
       tableFiles = Stream
           .of(tableCopyRepository.copyDateToFile(zipDirectory, tableNameToMovementSql, homeFacilityId),
-              tableCopyRepository.copyDateToFile(zipDirectory, tableNameToRequisitionOrderSql, homeFacilityId),
-              tableCopyRepository.copyDateToFile(zipDirectory, tableNameToEventSql, homeFacilityId))
+              tableCopyRepository.copyDateToFile(zipDirectory, tableNameToRequisitionOrderSql, homeFacilityId))
           .flatMap(Collection::stream)
           .collect(Collectors.toList());
     }
