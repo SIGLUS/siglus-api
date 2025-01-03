@@ -183,6 +183,8 @@ public class OnlineWebService {
   public void generateBusinessDataToResponse(UUID homeFacilityId, HttpServletResponse response, String type) {
     ResyncInfo resyncInfo = ResyncInfo.builder()
         .facilityId(homeFacilityId)
+        .facilityName("")
+        .userId(homeFacilityId)
         .build();
     resyncInfoRepository.save(resyncInfo);
     String facilityDir = homeFacilityId + "_" + format.format(new Date());
