@@ -47,6 +47,7 @@ import org.apache.maven.artifact.versioning.ComparableVersion;
 import org.openlmis.referencedata.domain.Facility;
 import org.openlmis.referencedata.repository.FacilityRepository;
 import org.siglus.siglusapi.domain.AppInfo;
+import org.siglus.siglusapi.domain.ResyncInfo;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.dto.android.request.PatientLineItemsRequest;
 import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
@@ -66,6 +67,7 @@ import org.siglus.siglusapi.localmachine.repository.RequisitionOrderSql;
 import org.siglus.siglusapi.localmachine.repository.TableCopyRepository;
 import org.siglus.siglusapi.localmachine.webapi.ResyncMasterDataResponse;
 import org.siglus.siglusapi.repository.AppInfoRepository;
+import org.siglus.siglusapi.repository.ResyncInfoRepository;
 import org.siglus.siglusapi.service.SiglusAdministrationsService;
 import org.siglus.siglusapi.util.FileUtil;
 import org.siglus.siglusapi.util.S3FileHandler;
@@ -97,6 +99,8 @@ public class OnlineWebService {
   private S3FileHandler s3FileHandler;
   @Autowired
   private ShedLockFactory lockFactory;
+  @Autowired
+  private ResyncInfoRepository resyncInfoRepository;
   private final Map<String, String> tableNameToMasterSql = MasterDataSql.getMasterDataSqlMap();
   private final Map<String, String> tableNameToMovementSql = MovementSql.getMovementSql();
   private final Map<String, String> tableNameToRequisitionOrderSql = RequisitionOrderSql.getRequisitionOrderSql();
@@ -175,6 +179,19 @@ public class OnlineWebService {
   }
 
   public void generateBusinessDataToResponse(UUID homeFacilityId, HttpServletResponse response, String type) {
+    Facility facility = facilityRepository.findOne(homeFacilityId);
+    AppInfo appInfo = appInfoRepository.findByFacilityCode(facility.getCode());
+    if (appInfo != null) {
+      ResyncInfo resyncInfo = ResyncInfo.builder()
+          .facilityId(homeFacilityId)
+          .facilityName(facility.getName())
+          .uniqueId(appInfo.getUniqueId())
+          .deviceInfo(appInfo.getDeviceInfo())
+          .versionCode(appInfo.getVersionCode())
+          .userId(homeFacilityId)
+          .build();
+      resyncInfoRepository.save(resyncInfo);
+    }
     String facilityDir = homeFacilityId + "_" + format.format(new Date());
     String zipDirectory = zipExportPath + facilityDir + "/";
     String zipName = facilityDir + ZIP_SUFFIX;
@@ -203,8 +220,8 @@ public class OnlineWebService {
       UUID receiverId = events.get(0).getReceiverId();
       Facility facility = facilityRepository.findOne(receiverId);
       AppInfo appInfo = appInfoRepository.findByFacilityCode(facility.getCode());
-      // ignore beta vesion
-      if (appInfo.getVersionCode().matches(".*-beta.*")) {
+      // ignore beta version || first time install
+      if (appInfo == null || appInfo.getVersionCode().matches(".*-beta.*")) {
         return events;
       }
       ComparableVersion version = new ComparableVersion(appInfo.getVersionCode());

@@ -169,6 +169,7 @@ public class OnlineWebServiceTest {
     tableFiles.add(new File("/tmp/movement.txt"));
     tableFiles.add(new File("/tmp/requisitionOrder.txt"));
 
+    when(facilityRepository.findOne(facilityId)).thenReturn(mockFacility());
     when(tableCopyRepository.copyDateToFile(any(), eq(MovementSql.getMovementSql()), eq(facilityId)))
         .thenReturn(Collections.singletonList(tableFiles.get(0)));
     when(tableCopyRepository.copyDateToFile(any(), eq(RequisitionOrderSql.getRequisitionOrderSql()), eq(facilityId)))
