@@ -18,6 +18,7 @@ package org.siglus.siglusapi.service;
 import static com.google.common.collect.Lists.newArrayList;
 import static java.util.stream.Collectors.toMap;
 import static org.siglus.siglusapi.i18n.MessageKeys.SHIPMENT_LINE_ITEMS_INVALID;
+import static org.siglus.siglusapi.i18n.MessageKeys.SHIPMENT_ORDER_STATUS_INVALID;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
@@ -39,6 +40,7 @@ import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.openlmis.fulfillment.domain.Order;
 import org.openlmis.fulfillment.domain.OrderLineItem;
+import org.openlmis.fulfillment.domain.OrderStatus;
 import org.openlmis.fulfillment.domain.ShipmentDraft;
 import org.openlmis.fulfillment.domain.ShipmentLineItem.Importer;
 import org.openlmis.fulfillment.repository.OrderRepository;
@@ -146,6 +148,11 @@ public class SiglusShipmentDraftService {
 
   @Transactional
   public ShipmentDraftDto updateShipmentDraft(UUID id, ShipmentDraftDto draftDto) {
+    UUID orderId = draftDto.getOrder().getId();
+    Order order = orderRepository.findOne(orderId);
+    if (order != null && !OrderStatus.FULFILLING.equals(order.getStatus())) {
+      throw new ValidationMessageException(SHIPMENT_ORDER_STATUS_INVALID);
+    }
     checkStockOnHandQuantity(id, draftDto);
     updateOrderLineItemsWithExtension(draftDto);
     boolean hasLocation =
