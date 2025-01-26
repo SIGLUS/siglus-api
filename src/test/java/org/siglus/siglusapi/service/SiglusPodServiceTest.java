@@ -730,7 +730,7 @@ public class SiglusPodServiceTest {
     request.getPodDto().setId(podId);
     ProofOfDeliveryDto dto = request.getPodDto().to();
     when(fulfillmentService.searchProofOfDelivery(any(), any())).thenReturn(dto);
-    when(podController.updateProofOfDelivery(podId, dto, null, false)).thenReturn(dto);
+    when(podController.updateProofOfDelivery(podId, dto, null, false, "")).thenReturn(dto);
     when(proofOfDeliveryEmitter.emit(podId)).thenReturn(new ProofOfDeliveryEvent());
     when(proofOfDeliveryRepository.findOne(podId)).thenReturn(buildMockProofOfDelivery());
     ProofOfDelivery proofOfDelivery = buildMockProofOfDelivery();
@@ -742,7 +742,7 @@ public class SiglusPodServiceTest {
     service.submitSubDrafts(podId, request, null, false);
 
     // then
-    verify(podController).updateProofOfDelivery(any(), any(), any(), any());
+    verify(podController).updateProofOfDelivery(any(), any(), any(), any(), any());
     verify(podSubDraftRepository).deleteAllByIds(any(List.class));
     verify(podLineItemsExtensionRepository).deleteAllBySubDraftIds(any(List.class));
     verify(notificationService).postConfirmPod(podId, proofOfDelivery.getShipment().getOrder());
@@ -764,7 +764,7 @@ public class SiglusPodServiceTest {
     request.getPodDto().setId(podId);
     ProofOfDeliveryDto dto = request.getPodDto().to();
     when(fulfillmentService.searchProofOfDelivery(any(), any())).thenReturn(dto);
-    when(podController.updateProofOfDelivery(any(), any(), any(), any())).thenReturn(dto);
+    when(podController.updateProofOfDelivery(any(), any(), any(), any(), any())).thenReturn(dto);
     when(proofOfDeliveryEmitter.emit(podId)).thenReturn(new ProofOfDeliveryEvent());
     when(proofOfDeliveryRepository.findOne(podId)).thenReturn(buildMockProofOfDelivery());
     VersionEntityReference orderable = new VersionEntityReference();
@@ -812,7 +812,7 @@ public class SiglusPodServiceTest {
     request.getPodDto().setId(podId);
     ProofOfDeliveryDto dto = request.getPodDto().to();
     when(fulfillmentService.searchProofOfDelivery(any(), any())).thenReturn(dto);
-    when(podController.updateProofOfDelivery(podId, dto, null, false)).thenReturn(dto);
+    when(podController.updateProofOfDelivery(podId, dto, null, false, "")).thenReturn(dto);
     when(proofOfDeliveryEmitter.emit(podId)).thenReturn(new ProofOfDeliveryEvent());
     when(proofOfDeliveryRepository.findOne(podId)).thenReturn(buildMockProofOfDelivery());
     ProofOfDelivery proofOfDelivery = buildMockProofOfDelivery();
@@ -836,7 +836,7 @@ public class SiglusPodServiceTest {
     request.getPodDto().setId(podId);
     ProofOfDeliveryDto dto = request.getPodDto().to();
     when(fulfillmentService.searchProofOfDelivery(any(), any())).thenReturn(dto);
-    when(podController.updateProofOfDelivery(podId, dto, null, false)).thenReturn(dto);
+    when(podController.updateProofOfDelivery(podId, dto, null, false, "")).thenReturn(dto);
     when(proofOfDeliveryRepository.findOne(podId)).thenReturn(buildMockProofOfDelivery());
     ProofOfDelivery proofOfDelivery = buildMockProofOfDelivery();
     when(proofOfDeliveryRepository.save(any(ProofOfDelivery.class))).thenReturn(proofOfDelivery);
@@ -849,7 +849,7 @@ public class SiglusPodServiceTest {
     service.submitSubDrafts(podId, request, null, false);
 
     // then
-    verify(podController).updateProofOfDelivery(any(), any(), any(), any());
+    verify(podController).updateProofOfDelivery(any(), any(), any(), any(), any());
     verify(podSubDraftRepository).deleteAllByIds(any(List.class));
     verify(podLineItemsExtensionRepository).deleteAllBySubDraftIds(any(List.class));
     verify(notificationService).postConfirmPod(podId, proofOfDelivery.getShipment().getOrder());
@@ -866,7 +866,7 @@ public class SiglusPodServiceTest {
     ProofOfDeliveryDto dto = request.getPodDto().to();
     dto.setStatus(ProofOfDeliveryStatus.INITIATED);
     when(fulfillmentService.searchProofOfDelivery(any(), any())).thenReturn(dto);
-    when(podController.updateProofOfDelivery(any(), any(), any(), any())).thenReturn(dto);
+    when(podController.updateProofOfDelivery(any(), any(), any(), any(), any())).thenReturn(dto);
     when(proofOfDeliveryRepository.findOne(podId)).thenReturn(buildMockProofOfDelivery());
     ProofOfDelivery proofOfDelivery = buildMockProofOfDelivery();
     when(proofOfDeliveryRepository.save(any(ProofOfDelivery.class))).thenReturn(proofOfDelivery);
@@ -878,7 +878,7 @@ public class SiglusPodServiceTest {
     service.submitSubDrafts(podId, request, null, false);
 
     // then
-    verify(podController).updateProofOfDelivery(any(), any(), any(), any());
+    verify(podController).updateProofOfDelivery(any(), any(), any(), any(), any());
     verify(podSubDraftRepository).deleteAllByIds(any(List.class));
     verify(podLineItemsExtensionRepository).deleteAllBySubDraftIds(any(List.class));
     verify(notificationService, times(0)).postConfirmPod(any());
@@ -1142,7 +1142,7 @@ public class SiglusPodServiceTest {
     when(proofOfDeliveryRepository.save(any(ProofOfDelivery.class))).thenReturn(proofOfDelivery);
     StockEventDto stockEventDto = buildMockStockEventDto();
     when(stockEventBuilder.fromProofOfDelivery(any())).thenReturn(stockEventDto);
-    when(podController.updateProofOfDelivery(any(), any(), any(), any())).thenReturn(dto);
+    when(podController.updateProofOfDelivery(any(), any(), any(), any(), any())).thenReturn(dto);
     when(siglusStockCardRepository.findByFacilityIdAndOrderableLotIdPairs(any(), any()))
         .thenReturn(Lists.newArrayList(buildStockCard()));
     when(stockCardLineItemRepository.findLatestByStockCardIds(any()))
@@ -1638,8 +1638,13 @@ public class SiglusPodServiceTest {
   }
 
   private ProofOfDeliverySubDraftDto buildPodDraftDto(Integer quantityAccpeted) {
-    ProofOfDeliverySubDraftDto podDto = new ProofOfDeliverySubDraftDto();
     OrderObjectReferenceDto order = new OrderObjectReferenceDto();
+    order.setOrderCode("");
+    org.openlmis.fulfillment.service.referencedata.FacilityDto receivingFacility =
+        new org.openlmis.fulfillment.service.referencedata.FacilityDto();
+    receivingFacility.setId(UUID.randomUUID());
+    order.setRequestingFacility(receivingFacility);
+    ProofOfDeliverySubDraftDto podDto = new ProofOfDeliverySubDraftDto();
     UserObjectReferenceDto shippedBy = UserObjectReferenceDto.create(userId, serviceUrl);
     ShipmentObjectReferenceDto shipment = new ShipmentObjectReferenceDto(order, shippedBy, ZonedDateTime.now(),
         notes, Lists.newArrayList(buildShipmentLineItemDto()), null);

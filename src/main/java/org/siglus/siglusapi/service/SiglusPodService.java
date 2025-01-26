@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.service;
 
+import static org.siglus.siglusapi.constant.FacilityTypeConstants.getTopLevelTypes;
 import static org.siglus.siglusapi.constant.FieldConstants.DOT;
 import static org.siglus.siglusapi.constant.FieldConstants.UNDERSCORE;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_CANNOT_OPERATE_WHEN_SUB_DRAFT_SUBMITTED;
@@ -48,6 +49,7 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.javers.common.collections.Sets;
 import org.openlmis.fulfillment.domain.ProofOfDelivery;
 import org.openlmis.fulfillment.domain.ProofOfDeliveryLineItem;
@@ -75,6 +77,7 @@ import org.siglus.siglusapi.domain.PodSubDraft;
 import org.siglus.siglusapi.domain.PodSubDraftLineItem;
 import org.siglus.siglusapi.domain.PodSubDraftLineItemLocation;
 import org.siglus.siglusapi.domain.PodSubDraftLineItemsByLocation;
+import org.siglus.siglusapi.domain.ShipmentsExtension;
 import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.GeographicZoneDto;
 import org.siglus.siglusapi.dto.LotDto;
@@ -98,6 +101,7 @@ import org.siglus.siglusapi.repository.PodLineItemsRepository;
 import org.siglus.siglusapi.repository.PodSubDraftLineItemRepository;
 import org.siglus.siglusapi.repository.PodSubDraftLineItemsByLocationRepository;
 import org.siglus.siglusapi.repository.PodSubDraftRepository;
+import org.siglus.siglusapi.repository.ShipmentsExtensionRepository;
 import org.siglus.siglusapi.repository.SiglusOrdersRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.repository.dto.OrderDto;
@@ -157,6 +161,7 @@ public class SiglusPodService {
   private final PodSubDraftLineItemRepository podSubDraftLineItemRepository;
   private final SiglusOrderableReferenceDataService orderableReferenceDataService;
   private final SiglusLotService siglusLotService;
+  private final ShipmentsExtensionRepository shipmentsExtensionRepository;
 
   private static final String FILE_NAME_PREFIX = "OF.";
   private static final String FILE_NAME_PREFIX_EMERGENCY = FILE_NAME_PREFIX + "REM.";
@@ -342,7 +347,7 @@ public class SiglusPodService {
     savePodExtension(request);
 
     ProofOfDeliveryDto podDto = podController.updateProofOfDelivery(podId, request.getPodDto().to(),
-        authentication, withLocation);
+        authentication, withLocation, getUpdatedDocumentNumber(request));
     if (withLocation) {
       savePodSubDraftLocations(request);
       StockEventDto stockEventDto = createStockEventDto(pod, request);
@@ -353,6 +358,26 @@ public class SiglusPodService {
       proofOfDeliveryEmitter.emit(request.getPodDto().getId());
     }
     return request.getPodDto();
+  }
+
+  private String getUpdatedDocumentNumber(SubmitPodSubDraftsRequest request) {
+    String orderCode = request.getPodDto().getShipment().getOrder().getOrderCode();
+    UUID requestId = request.getPodDto().getShipment().getOrder().getRequestingFacility().getId();
+    FacilityDto facilityDto = siglusFacilityReferenceDataService.findOneWithoutCache(requestId);
+
+    if (facilityDto != null && getTopLevelTypes().contains(facilityDto.getType().getCode())) {
+      List<ShipmentsExtension> shipmentsExtensions = shipmentsExtensionRepository.findByShipmentIdIn(
+              Collections.singleton(request.getPodDto().getShipment().getId()));
+      if (CollectionUtils.isNotEmpty(shipmentsExtensions)) {
+        String issueVoucherNumber = shipmentsExtensions.get(0).getIssueVoucherNumber();
+        if (!StringUtils.isEmpty(issueVoucherNumber)) {
+          return orderCode.replaceFirst("^OF\\.", "") + "<br>" + "GR." + issueVoucherNumber;
+        }
+      }
+
+      return orderCode.replaceFirst("^OF\\.", "");
+    }
+    return orderCode.replaceFirst("^OF\\.", "GR.");
   }
 
   private Set<UUID> deletePodSubDrafts(List<PodSubDraft> subDrafts) {
