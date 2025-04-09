@@ -236,7 +236,7 @@ public class SiglusStockCardLocationMovementService {
     FacilityDto facility = facilityReferenceDataService.findOne(stockCard.getFacilityId());
     OrderableDto orderable = orderableReferenceDataService.findOne(stockCard.getOrderableId());
     ProgramDto program = programReferenceDataService.findOne(stockCard.getProgramId());
-    LotDto lot = lotReferenceDataService.findOne(stockCard.getLotId());
+    LotDto lot = stockCard.getLotId() == null ? null : lotReferenceDataService.findOne(stockCard.getLotId());
     return LocationMovementDto.builder()
         .facilityName(facility.getName())
         .productName(orderable.getFullProductName())
