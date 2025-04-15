@@ -144,20 +144,20 @@ public class SiglusLotLocationService {
 
   private LocationLotsDto getNoMovementLotLocationDto(List<UUID> orderableIds, List<UUID> hasMovementLotIds) {
     List<LotDto> lotDtos = siglusStockCardSummariesService.getLotsDataByOrderableIds(orderableIds);
-    List<String> tradeLineItemIds = lotDtos
+    Set<String> tradeLineItemIds = lotDtos
         .stream()
         .map(e -> e.getTradeItemId().toString())
-        .collect(Collectors.toList());
+        .collect(Collectors.toSet());
     Map<String, List<OrderableIdentifiers>> tradeItemIdToOrderableIdentifiersMap = orderableIdentifiersRepository
         .findByKeyAndValueIn(FieldConstants.TRADE_ITEM, tradeLineItemIds)
         .stream()
         .collect(Collectors.groupingBy(OrderableIdentifiers::getValue));
 
-    List<UUID> lotIds = lotDtos
+    List<UUID> tradeItemIds = tradeLineItemIds
         .stream()
-        .map(LotDto::getId)
+        .map(UUID::fromString)
         .collect(Collectors.toList());
-    LotSearchParams requestParams = new LotSearchParams(null, null, null, lotIds);
+    LotSearchParams requestParams = new LotSearchParams(null, tradeItemIds, null, null);
     Map<String, List<LotDto>> lotCodeToLotDtoMap = lotController.getLots(requestParams, null).getContent()
         .stream()
         .collect(Collectors.groupingBy(LotDto::getLotCode));

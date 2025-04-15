@@ -399,7 +399,7 @@ public class SiglusLotLocationServiceTest extends TestCase {
     when(siglusStockCardSummariesService.getLotsDataByOrderableIds(any())).thenReturn(
         Collections.singletonList(lotDto2));
     when(orderableIdentifiersRepository
-        .findByKeyAndValueIn(FieldConstants.TRADE_ITEM, Collections.singletonList(tradeLineItemId.toString())))
+        .findByKeyAndValueIn(FieldConstants.TRADE_ITEM, Collections.singleton(tradeLineItemId.toString())))
         .thenReturn(Collections.singletonList(OrderableIdentifiers
             .builder()
             .orderableId(orderableId)

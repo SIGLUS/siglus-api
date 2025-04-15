@@ -16,11 +16,12 @@
 package org.siglus.siglusapi.repository;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import org.siglus.siglusapi.domain.OrderableIdentifiers;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface OrderableIdentifiersRepository extends JpaRepository<OrderableIdentifiers, UUID> {
 
-  List<OrderableIdentifiers> findByKeyAndValueIn(String key, List<String> valueIds);
+  List<OrderableIdentifiers> findByKeyAndValueIn(String key, Set<String> valueIds);
 }
