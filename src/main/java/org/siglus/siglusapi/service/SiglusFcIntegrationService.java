@@ -34,6 +34,7 @@ import static org.siglus.siglusapi.constant.android.UsageSectionConstants.TestCo
 
 import com.google.common.collect.ImmutableMap;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.Collection;
@@ -437,7 +438,15 @@ public class SiglusFcIntegrationService {
   }
 
   private Double calculateValue(ProofOfDeliveryLineItem lineItem, Double price) {
-    return price == null ? null : (lineItem.getQuantityAccepted() + lineItem.getQuantityRejected()) * price;
+    if (price == null) {
+      return null;
+    }
+
+    double totalQuantity = lineItem.getQuantityAccepted() + lineItem.getQuantityRejected();
+    BigDecimal value = BigDecimal.valueOf(totalQuantity * price)
+        .setScale(2, RoundingMode.HALF_UP);
+
+    return value.doubleValue();
   }
 
   private FcRequisitionDto buildDto(Requisition requisition, Set<UUID> fcSupervisoryNodeIds,
