@@ -210,7 +210,7 @@ public class CalculatedStocksOnHandByLocationService {
     List<CalculatedStockOnHandByLocation> updatedAllSohByLocations = new ArrayList<>(toSaveList);
     if (!isPhysicalInventory) {
       List<CalculatedStockOnHandByLocation> allSohByLocations = calculatedStockOnHandByLocationRepository
-          .findPreviousLocationStockOnHandsTillNow(stockCardIds, date);
+          .findRecentlyLocationSohByStockCardIds(stockCardIds);
 
       Set<String> keysForToSaveList = toSaveList.stream().map(this::getUniqueKey).collect(Collectors.toSet());
 
@@ -468,15 +468,16 @@ public class CalculatedStocksOnHandByLocationService {
   private Map<String, Integer> getPreviousStockOnHandMap(Set<UUID> stockCardIds,
       LocalDate occurredDate) {
     return calculatedStockOnHandByLocationRepository
-        .findPreviousLocationStockOnHandsTillNow(stockCardIds, occurredDate).stream()
+        .findRecentlyLocationSohByStockCardIds(stockCardIds).stream()
         .collect(toMap(calculatedStockOnHand ->
                 calculatedStockOnHand.getStockCardId().toString() + calculatedStockOnHand.getLocationCode(),
+            // TODO should pick the latest processing date one if multiple records found
             CalculatedStockOnHandByLocation::getStockOnHand, (stockOnHand1, stockOnHand2) -> stockOnHand1));
   }
 
   private Map<String, Integer> getPreviousStockOnHandMapTillNow(Set<UUID> stockCardIds, LocalDate occurredDate) {
     return calculatedStockOnHandByLocationRepository
-        .findPreviousLocationStockOnHandsTillNow(stockCardIds, occurredDate).stream()
+        .findRecentlyLocationSohByStockCardIds(stockCardIds).stream()
         .collect(toMap(calculatedStockOnHand -> calculatedStockOnHand.getStockCardId().toString()
                 + SEPARATOR + calculatedStockOnHand.getLocationCode(),
             CalculatedStockOnHandByLocation::getStockOnHand, (stockOnHand1, stockOnHand2) -> stockOnHand1));

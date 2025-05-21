@@ -242,7 +242,7 @@ public class SiglusStockCardLocationMovementDraftServiceTest {
     CalculatedStockOnHandByLocation calculatedStockOnHand2 = new CalculatedStockOnHandByLocation();
     calculatedStockOnHand1.setStockOnHand(quantity);
     calculatedStockOnHand2.setStockOnHand(0);
-    when(calculatedStockOnHandByLocationRepository.findPreviousLocationStockOnHandsTillNow(any(), any())).thenReturn(
+    when(calculatedStockOnHandByLocationRepository.findRecentlyLocationSohByStockCardIds(any())).thenReturn(
         Arrays.asList(calculatedStockOnHand1, calculatedStockOnHand2)
     );
 
