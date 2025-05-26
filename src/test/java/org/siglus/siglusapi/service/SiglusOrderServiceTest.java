@@ -138,6 +138,10 @@ public class SiglusOrderServiceTest {
 
   private final String receivingFacilityName = "receiving facility name";
   private final String supplyingFacilityName = "supplying facility name";
+
+  @Mock
+  private SiglusProgramService programService;
+
   @Mock
   private OrderController orderController;
 
@@ -356,6 +360,7 @@ public class SiglusOrderServiceTest {
         .thenReturn(Sets.newHashSet(orderableId2));
     List<UUID> orderableIds = newArrayList(orderableId1);
     when(orderableRepository.findLatestByIds(orderableIds)).thenReturn(Collections.emptyList());
+    when(programService.getProgram(programId)).thenReturn(null);
 
     // when
     SiglusOrderDto response = siglusOrderService.searchOrderById(orderId);

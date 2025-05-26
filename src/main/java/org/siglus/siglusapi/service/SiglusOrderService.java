@@ -28,6 +28,9 @@ import static org.siglus.siglusapi.constant.FieldConstants.RIGHT_NAME;
 import static org.siglus.siglusapi.constant.PaginationConstants.DEFAULT_PAGE_NUMBER;
 import static org.siglus.siglusapi.constant.PaginationConstants.NO_PAGINATION;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
+import static org.siglus.siglusapi.constant.ProgramConstants.MTB_PROGRAM_CODE;
+import static org.siglus.siglusapi.constant.ProgramConstants.RAPIDTEST_PROGRAM_CODE;
+import static org.siglus.siglusapi.constant.ProgramConstants.TARV_PROGRAM_CODE;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_NO_PERIOD_MATCH;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_ORDER_NOT_EXIST;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_PERIOD_NOT_FOUND;
@@ -1179,6 +1182,7 @@ public class SiglusOrderService {
     lineItemExtensionRepository.save(extensions);
   }
 
+  @SuppressWarnings("PMD.CyclomaticComplexity")
   private Set<VersionObjectReferenceDto> getAllUserAvailableProductAggregator(OrderDto orderDto, boolean isFcRequest) {
     Requisition requisition = getRequisitionByOrder(orderDto);
 
@@ -1215,6 +1219,33 @@ public class SiglusOrderService {
     Map<UUID, StockCardSummaryV2Dto> orderableSohMap = getOrderableIdSohMap(userHomeFacilityId);
 
     Set<UUID> emergencyFilteredProducts = getEmergencyFilteredProducts(requisition);
+
+    ProgramDto program = programService.getProgram(programId);
+    Set<String> showInReportCodes = new HashSet<>(Arrays.asList(
+        RAPIDTEST_PROGRAM_CODE, MTB_PROGRAM_CODE, TARV_PROGRAM_CODE));
+    if (program != null && showInReportCodes.contains(program.getCode())) {
+      List<ApprovedProductDto> originalProgramProducts =
+          requisitionService.getAllApprovedProducts(requisition.getFacilityId(), programId);
+      return originalProgramProducts
+          .stream()
+          .map(ApprovedProductDto::getOrderable)
+          .filter(orderable -> {
+            UUID orderableId = orderable.getId();
+            if (!archivedOrderableIds.contains(orderableId)
+                && approverOrderableIds.contains(orderableId)
+                && userOrderableIds.contains(orderableId)
+                && orderableSohMap.get(orderableId) != null) {
+              Integer soh = orderableSohMap.get(orderableId).getStockOnHand();
+              return soh != null && soh > 0;
+            }
+            return false;
+          })
+          .filter(orderable -> !emergencyFilteredProducts.contains(orderable.getId()))
+          .map(orderable -> new VersionObjectReferenceDto(
+              orderable.getId(), serviceUrl, ORDERABLES, orderable.getVersionNumber())
+          ).collect(Collectors.toSet());
+    }
+
 
     return Optional
         .ofNullable(requisition.getAvailableProducts())
