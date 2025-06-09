@@ -66,6 +66,8 @@ import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.dto.enums.PhysicalInventorySubDraftEnum;
 import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
+import org.siglus.siglusapi.repository.CalculatedStockOnHandRepository;
+import org.siglus.siglusapi.repository.SiglusStockCardRepository;
 import org.siglus.siglusapi.repository.StockManagementDraftRepository;
 import org.siglus.siglusapi.repository.StockManagementInitialDraftsRepository;
 import org.siglus.siglusapi.util.ConflictOrderableInSubDraftsService;
@@ -118,6 +120,12 @@ public class SiglusStockManagementDraftServiceTest {
 
   @Mock
   private OperatePermissionService operatePermissionService;
+
+  @Mock
+  private SiglusStockCardRepository siglusStockCardRepository;
+
+  @Mock
+  private CalculatedStockOnHandRepository calculatedStockOnHandRepository;
 
   private final UUID id = UUID.randomUUID();
 

@@ -27,11 +27,17 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
-import org.openlmis.stockmanagement.dto.StockCardDto;
+import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.dto.StockEventDto;
 import org.openlmis.stockmanagement.dto.ValidSourceDestinationDto;
 import org.siglus.siglusapi.constant.FieldConstants;
@@ -50,8 +56,11 @@ import org.siglus.siglusapi.dto.enums.PhysicalInventorySubDraftEnum;
 import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
+import org.siglus.siglusapi.repository.CalculatedStockOnHandRepository;
+import org.siglus.siglusapi.repository.SiglusStockCardRepository;
 import org.siglus.siglusapi.repository.StockManagementDraftRepository;
 import org.siglus.siglusapi.repository.StockManagementInitialDraftsRepository;
+import org.siglus.siglusapi.repository.dto.StockCardStockDto;
 import org.siglus.siglusapi.util.ConflictOrderableInSubDraftsService;
 import org.siglus.siglusapi.util.OperatePermissionService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
@@ -88,6 +97,10 @@ public class SiglusStockManagementDraftService {
   private ConflictOrderableInSubDraftsService conflictOrderableInSubDraftsService;
   @Autowired
   private SiglusLotLocationService lotLocationService;
+  @Autowired
+  private SiglusStockCardRepository siglusStockCardRepository;
+  @Autowired
+  private CalculatedStockOnHandRepository calculatedStockOnHandRepository;
 
   private static final Integer DRAFTS_LIMITATION = 10;
   private static final Integer DRAFTS_INCREMENT = 1;
@@ -506,7 +519,7 @@ public class SiglusStockManagementDraftService {
         .allMatch(subDraft -> subDraft.getStatus().equals(PhysicalInventorySubDraftEnum.SUBMITTED));
     if (isAllSubmitted) {
       List<MergedLineItemDto> mergedLineItemDtos = fillingMergedLineItemsFields(subDrafts);
-      mergedLineItemDtos.forEach(this::fillingStockOnHandField);
+      fillingStockOnHandField(mergedLineItemDtos);
       return mergedLineItemDtos;
     }
     throw new BusinessDataException(new Message(ERROR_STOCK_MANAGEMENT_SUB_DRAFT_NOT_ALL_SUBMITTED),
@@ -537,10 +550,54 @@ public class SiglusStockManagementDraftService {
     return subDraft;
   }
 
-  private void fillingStockOnHandField(MergedLineItemDto mergedLineItemDto) {
-    StockCardDto stockCardByOrderable = stockCardService
-        .findStockCardByOrderable(mergedLineItemDto.getOrderableId());
-    mergedLineItemDto.setStockOnHand(stockCardByOrderable == null ? null : stockCardByOrderable.getStockOnHand());
+  private String getOrderableLotIdPair(MergedLineItemDto mergedLineItemDto) {
+    return mergedLineItemDto.getOrderableId().toString()
+        + Optional.ofNullable(mergedLineItemDto.getLotId()).map(UUID::toString).orElse("");
+  }
+
+  private String getOrderableLotIdPair(StockCard stockCard) {
+    return stockCard.getOrderableId().toString()
+        + Optional.ofNullable(stockCard.getLotId()).map(UUID::toString).orElse("");
+  }
+
+  private void fillingStockOnHandField(List<MergedLineItemDto> mergedLineItemDtos) {
+    if (CollectionUtils.isEmpty(mergedLineItemDtos)) {
+      return;
+    }
+
+    Map<String, MergedLineItemDto> orderableLotMap = mergedLineItemDtos.stream()
+        .collect(Collectors.toMap(this::getOrderableLotIdPair, Function.identity(), (a, b) -> a));
+
+    Set<String> orderableLotIdPairs = orderableLotMap.keySet();
+
+    UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
+    List<StockCard> stockCards = siglusStockCardRepository
+        .findByFacilityIdAndOrderableLotIdPairs(facilityId, orderableLotIdPairs);
+
+    if (CollectionUtils.isEmpty(stockCards)) {
+      mergedLineItemDtos.forEach(item -> item.setStockOnHand(0));
+      return;
+    }
+
+    Set<UUID> stockCardIds = stockCards.stream()
+        .map(StockCard::getId)
+        .collect(Collectors.toSet());
+
+    List<StockCardStockDto> sohs = calculatedStockOnHandRepository.findRecentlySohByStockCardIds(stockCardIds);
+
+    Map<String, UUID> orderableLotToStockCardId = stockCards.stream()
+        .collect(Collectors.toMap(this::getOrderableLotIdPair, StockCard::getId, (a, b) -> a));
+
+    Map<UUID, Integer> stockOnHandMap = sohs.stream()
+        .collect(Collectors.toMap(StockCardStockDto::getStockCardId, StockCardStockDto::getStockOnHand, (a, b) -> a));
+
+    orderableLotMap.forEach((key, item) -> {
+      UUID stockCardId = orderableLotToStockCardId.get(key);
+      if (stockCardId != null) {
+        int stockOnHand = stockOnHandMap.getOrDefault(stockCardId, 0);
+        item.setStockOnHand(stockOnHand);
+      }
+    });
   }
 
   private List<MergedLineItemDto> fillingMergedLineItemsFields(
