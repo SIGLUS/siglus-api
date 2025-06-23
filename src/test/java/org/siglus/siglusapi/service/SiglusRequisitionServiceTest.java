@@ -725,7 +725,7 @@ public class SiglusRequisitionServiceTest {
     when(proofOfDeliveryService.get(any())).thenReturn(new ProofOfDeliveryDto());
     when(idealStockAmountReferenceDataService.search(facilityId, processingPeriodId))
         .thenReturn(createIdealStockAmountDtoList());
-    when(requisitionService.getApprovedProducts(any(), any())).thenReturn(getApprovedProductList());
+    when(requisitionService.getAllApprovedProducts(any(), any())).thenReturn(getApprovedProductList());
     when(requisitionService.validateCanApproveRequisition(any(), any())).thenReturn(new ValidationResult());
     when(siglusOrderableService.getOrderableExpirationDate(any(), any()))
         .thenReturn(Lists.newArrayList(new OrderableExpirationDateDto(orderableId2, LocalDate.of(2022, 1, 1))));
