@@ -1984,7 +1984,7 @@ public class SiglusRequisitionService {
       FacilityDto facility, List<UUID> orderableIds, FacilityDto userFacility) {
     List<StockCardRangeSummaryDto> stockCardRangeSummaries = Collections.emptyList();
     List<ApprovedProductDto> approvedProducts =
-        requisitionService.getApprovedProducts(userFacility.getId(), program.getId())
+        requisitionService.getAllApprovedProducts(userFacility.getId(), program.getId())
             .stream()
             .filter(approvedProduct -> orderableIds.contains(approvedProduct.getOrderable().getId()))
             .collect(Collectors.toList());
