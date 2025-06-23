@@ -33,6 +33,8 @@ public class StockMovementResDto {
 
   private String reason;
 
+  private String reasonFreeText;
+
   private String type;
 
   private Integer movementQuantity;

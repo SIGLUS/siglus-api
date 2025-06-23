@@ -79,6 +79,7 @@ public class StockMovementService {
           .type(productMovement.getMovementDetail().getType().toString())
           .productCode(productMovement.getProductCode())
           .reason(movementTypeHandlerResultDto.getReason())
+          .reasonFreeText(movementTypeHandlerResultDto.getReasonFreeText())
           .documentNumber(productMovement.getDocumentNumber())
           .sourceName(movementTypeHandlerResultDto.getSourceName())
           .destinationName(movementTypeHandlerResultDto.getDestinationName())
@@ -108,6 +109,7 @@ public class StockMovementService {
     String sourceName = "";
     String sourceFreeText = "";
     String reason = "";
+    String reasonFreeText = "";
     int soh = 0;
     int count = 0;
     switch (productMovement.getMovementDetail().getType()) {
@@ -139,6 +141,7 @@ public class StockMovementService {
         count += productMovement.getMovementDetail().getAdjustment();
         soh += productMovement.getStockQuantity();
         reason = ADJUSTMENT_KEY;
+        reasonFreeText = productMovement.getMovementDetail().getReason();
         break;
       default:
     }
@@ -150,6 +153,7 @@ public class StockMovementService {
         .destinationName(destinationName)
         .destinationFreeText(destinationFreeText)
         .reason(reason)
+        .reasonFreeText(reasonFreeText)
         .build();
   }
 

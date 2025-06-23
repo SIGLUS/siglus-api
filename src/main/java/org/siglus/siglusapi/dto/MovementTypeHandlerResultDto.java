@@ -31,4 +31,5 @@ public class MovementTypeHandlerResultDto {
   private String sourceName;
   private String sourceFreeText;
   private String reason;
+  private String reasonFreeText;
 }
