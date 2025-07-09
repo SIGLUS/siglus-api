@@ -140,7 +140,7 @@ public class OrderableDtoDataBuilder implements DtoDataBuilder<OrderableDto> {
   public org.openlmis.stockmanagement.dto.referencedata.OrderableDto build() {
     return new org.openlmis.stockmanagement.dto.referencedata.OrderableDto(
         id, productCode, fullProductName, netContent, dispensable2, children, identifiers, extraData,
-        metaDataDto, false, false
+        metaDataDto, false, false, false
     );
   }
 
