@@ -15,6 +15,8 @@
 
 package org.siglus.siglusapi.dto;
 
+import static org.siglus.common.constant.KitConstants.ALL_KITS;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -45,6 +47,7 @@ public class ProgramProductDto {
     private String productCode;
     private String fullProductName;
     private DispensableDto dispensable;
+    private Boolean isKit;
     private Map<String, String> extraData = new HashMap<>();
 
     public ApprovedOrderableDto(ProgramOrderable programOrderable, ProgramOrderablesExtension extension) {
@@ -52,6 +55,7 @@ public class ProgramProductDto {
       id = product.getId();
       versionNumber = product.getVersionNumber();
       productCode = product.getProductCode().toString();
+      isKit = ALL_KITS.contains(product.getProductCode().toString());
       fullProductName = product.getFullProductName();
       if (extension != null) {
         dispensable = new DispensableDto(extension.getUnit(), "", "", extension.getUnit());

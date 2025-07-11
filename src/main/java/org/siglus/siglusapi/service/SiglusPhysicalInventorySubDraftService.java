@@ -400,7 +400,12 @@ public class SiglusPhysicalInventorySubDraftService {
           if (lineItemDto.getLot() != null) {
             if (lineItemDto.getLot().getId() == null) {
               lineItemDto.getExtraData().put(LOT_CODE_KEY, lineItemDto.getLot().getLotCode());
-              lineItemDto.getExtraData().put(EXPIRATION_DATE_KEY, lineItemDto.getLot().getExpirationDate().toString());
+              if (lineItemDto.getLot().getExpirationDate() != null) {
+                lineItemDto.getExtraData().put(EXPIRATION_DATE_KEY,
+                    lineItemDto.getLot().getExpirationDate().toString());
+              } else {
+                lineItemDto.getExtraData().put(EXPIRATION_DATE_KEY, null);
+              }
             } else {
               lineItemDto.setLotId(lineItemDto.getLot().getId());
             }

@@ -19,6 +19,7 @@ import static com.google.common.collect.Lists.newArrayList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.openlmis.stockmanagement.i18n.MessageKeys.ERROR_PROGRAM_NOT_SUPPORTED;
+import static org.siglus.common.constant.KitConstants.ALL_KITS;
 import static org.siglus.siglusapi.constant.FacilityTypeConstants.AC;
 import static org.siglus.siglusapi.constant.FacilityTypeConstants.CENTRAL;
 import static org.siglus.siglusapi.constant.FieldConstants.ALL_PROGRAM;
@@ -359,6 +360,7 @@ public class SiglusPhysicalInventoryService {
           }
           orderableDto.getExtraData().put(ORDERABLE_CATEGORY_DISPLAY_NAME,
               programOrderable.getOrderableDisplayCategory().getOrderedDisplayValue().getDisplayName());
+          orderableDto.setIsKit(ALL_KITS.contains(orderableDto.getProductCode()));
           lineItemDto.setOrderable(orderableDto);
         }
       });
