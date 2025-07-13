@@ -16,6 +16,7 @@
 package org.siglus.siglusapi.service;
 
 import static java.util.Comparator.comparing;
+import static org.siglus.common.constant.KitConstants.ALL_KITS;
 import static org.siglus.siglusapi.constant.CacheConstants.CACHE_KEY_GENERATOR;
 import static org.siglus.siglusapi.constant.CacheConstants.SIGLUS_KIT_ORDERABLE_IDS;
 import static org.siglus.siglusapi.constant.CacheConstants.SIGLUS_PROGRAM_ORDERABLES;
@@ -429,6 +430,7 @@ public class SiglusOrderableService {
           dto.setProductCode(orderable.getProductCode());
           dto.setVersionNumber(orderable.getVersionNumber());
           dto.setDispensable(dispensableDto);
+          dto.setIsKit(ALL_KITS.contains(orderable.getProductCode()));
           return dto;
         })
         .collect(Collectors.toList());

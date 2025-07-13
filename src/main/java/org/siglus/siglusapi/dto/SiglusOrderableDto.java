@@ -30,4 +30,6 @@ public class SiglusOrderableDto {
   private String productCode;
 
   private DispensableDto dispensable;
+
+  private Boolean isKit;
 }
