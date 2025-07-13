@@ -341,7 +341,8 @@ public class SiglusShipmentDraftService {
               item.getLocation() == null ? null : item.getLocation().getLocationCode());
           int soh = sohMap.getOrDefault(key, 0);
           int reserved = reservedMap.getOrDefault(key, 0);
-          return soh - reserved < item.getQuantityShipped().intValue();
+          return (item.getQuantityShipped() > 0) &&
+              (soh - reserved < item.getQuantityShipped().intValue());
         });
   }
 
