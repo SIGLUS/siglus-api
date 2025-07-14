@@ -275,6 +275,7 @@ public class SiglusShipmentService {
     Map<UUID, List<SiglusFefoDto>> orderableIdToFefoDtoSortedMap = new HashMap<>();
     orderableIdToFefoDtoMap.forEach((orderableId, dtos) -> {
       List<SiglusFefoDto> sortedDtos = dtos.stream()
+          .filter(dto -> dto.getExpirationDate() != null)
           .sorted(Comparator.comparing(SiglusFefoDto::getExpirationDate))
           .collect(Collectors.toList());
       orderableIdToFefoDtoSortedMap.put(orderableId, sortedDtos);
