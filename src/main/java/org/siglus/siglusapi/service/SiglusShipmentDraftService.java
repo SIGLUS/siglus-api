@@ -218,7 +218,8 @@ public class SiglusShipmentDraftService {
   }
 
   private String buildUniqueKey(ShipmentLineItemDto shipmentLineItemDto) {
-    if (null == shipmentLineItemDto.getLot()) {
+    // TODO shipment lot always has Id, otherwise is KIT
+    if (null == shipmentLineItemDto.getLot() || null == shipmentLineItemDto.getLot().getId()) {
       return shipmentLineItemDto.getOrderable().getId().toString();
     }
     return shipmentLineItemDto.getLot().getId() + "&" + shipmentLineItemDto.getOrderable().getId();
