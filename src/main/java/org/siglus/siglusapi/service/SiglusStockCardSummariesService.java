@@ -663,11 +663,12 @@ public class SiglusStockCardSummariesService {
           UUID facilityId, UUID shipmentDraftId) {
     List<StockCardReservedDto> stockCardReservedDtos =
             siglusShipmentDraftService.reservedCount(facilityId, shipmentDraftId, null);
+    // TODO duplicate buildStockCardUniqueKey if from multiple drafts?
     return stockCardReservedDtos
         .stream()
         .collect(Collectors.toMap(dto -> FormatHelper.buildStockCardUniqueKey(
                 dto.getOrderableId(), dto.getLotId(), dto.getLocationCode()),
-            StockCardReservedDto::getReserved));
+            StockCardReservedDto::getReserved, (v1, v2) -> v1));
   }
 
   public List<StockCardStockDto> getLatestStockOnHand(List<StockCard> stockCards, boolean hasLocation) {
