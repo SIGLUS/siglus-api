@@ -615,7 +615,6 @@ public class SiglusShipmentDraftServiceTest {
     UUID lotId = UUID.randomUUID();
     StockCardReservedDto reservedDto = StockCardReservedDto.builder()
         .orderableId(orderableId)
-        .orderableVersionNumber(1)
         .lotId(lotId)
         .reserved(3)
         .locationCode(locationCode)

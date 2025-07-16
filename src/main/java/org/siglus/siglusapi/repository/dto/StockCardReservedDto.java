@@ -30,10 +30,10 @@ import lombok.Data;
 @NamedNativeQueries({
     @NamedNativeQuery(
         name = "StockCard.queryStockCardReservedDto",
-        query = "SELECT reservedTable.orderableId, reservedTable.orderableVersionNumber, reservedTable.lotId, "
+        query = "SELECT reservedTable.orderableId, reservedTable.lotId, "
                 + " reservedTable.locationCode, "
                 + " SUM(reservedTable.quantityshipped) AS reserved FROM ( "
-                + "SELECT sdli.orderableid AS orderableId, sdli.orderableversionnumber AS orderableVersionNumber, "
+                + "SELECT sdli.orderableid AS orderableId, "
                 + "  sdli.lotid AS lotId, COALESCE(sdlie.quantityshipped, sdli.quantityshipped) AS quantityshipped, "
                 + "  sdlie.locationcode AS locationCode "
                 + "FROM fulfillment.shipment_draft_line_items sdli "
@@ -46,16 +46,16 @@ import lombok.Data;
                 + "       WHERE o.supplyingfacilityid = :facilityId AND o.status != 'CLOSED') "
                 + ") reservedTable "
                 + "WHERE reservedTable.quantityshipped > 0 "
-                + "GROUP BY reservedTable.orderableId, reservedTable.orderableVersionNumber, reservedTable.lotId, "
+                + "GROUP BY reservedTable.orderableId, reservedTable.lotId, "
                 + "         reservedTable.locationCode;",
         resultSetMapping = "StockCard.StockCardReservedDto"),
 
     @NamedNativeQuery(
         name = "StockCard.queryStockCardReservedExcludeDto",
-        query = "SELECT reservedTable.orderableId, reservedTable.orderableVersionNumber, reservedTable.lotId, "
+        query = "SELECT reservedTable.orderableId, reservedTable.lotId, "
                 + " reservedTable.locationCode, "
                 + " SUM(reservedTable.quantityshipped) AS reserved FROM ( "
-                + "SELECT sdli.orderableid AS orderableId, sdli.orderableversionnumber AS orderableVersionNumber, "
+                + "SELECT sdli.orderableid AS orderableId,"
                 + "  sdli.lotid AS lotId, COALESCE(sdlie.quantityshipped, sdli.quantityshipped) AS quantityshipped, "
                 + "  sdlie.locationcode AS locationCode "
                 + "FROM fulfillment.shipment_draft_line_items sdli "
@@ -69,7 +69,7 @@ import lombok.Data;
                 + "             AND o.status != 'CLOSED') "
                 + ") reservedTable "
                 + "WHERE reservedTable.quantityshipped > 0 "
-                + "GROUP BY reservedTable.orderableId, reservedTable.orderableVersionNumber, reservedTable.lotId, "
+                + "GROUP BY reservedTable.orderableId, reservedTable.lotId, "
                 + "         reservedTable.locationCode;",
         resultSetMapping = "StockCard.StockCardReservedDto")
 })
@@ -81,7 +81,6 @@ import lombok.Data;
                 targetClass = StockCardReservedDto.class,
                 columns = {
                         @ColumnResult(name = "orderableId", type = UUID.class),
-                        @ColumnResult(name = "orderableVersionNumber", type = Integer.class),
                         @ColumnResult(name = "lotId", type = UUID.class),
                         @ColumnResult(name = "reserved", type = Integer.class),
                         @ColumnResult(name = "locationCode", type = String.class),
@@ -94,7 +93,6 @@ import lombok.Data;
 @AllArgsConstructor
 public class StockCardReservedDto {
   private UUID orderableId;
-  private Integer orderableVersionNumber;
   private UUID lotId;
   private Integer reserved;
   private String locationCode;

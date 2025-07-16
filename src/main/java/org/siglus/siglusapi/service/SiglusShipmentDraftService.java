@@ -235,21 +235,20 @@ public class SiglusShipmentDraftService {
   }
 
   private String buildStockCardReservedDtoUniqueKey(StockCardReservedDto dto) {
-    return buildUniqueKeyForReserved(dto.getOrderableId(), dto.getOrderableVersionNumber(),
+    return buildUniqueKeyForReserved(dto.getOrderableId(),
         dto.getLotId(), dto.getLocationCode());
   }
 
   private String buildShipmentLineItemDtoUniqueKey(ShipmentLineItemDto dto) {
     String locationCode = dto.getLocation() == null ? null : dto.getLocation().getLocationCode();
-    return buildUniqueKeyForReserved(dto.getOrderable().getId(), dto.getOrderable().getVersionNumber().intValue(),
+    return buildUniqueKeyForReserved(dto.getOrderable().getId(),
         dto.getLotId(), locationCode);
   }
 
-  private static String buildUniqueKeyForReserved(UUID orderableId, Integer orderableVersionNumber,
+  private static String buildUniqueKeyForReserved(UUID orderableId,
                                        UUID lotId, String locationCode) {
     List<String> items = new ArrayList<>();
     items.add(orderableId.toString());
-    items.add(orderableVersionNumber == null ? "" : String.valueOf(orderableVersionNumber));
     items.add(lotId == null ? "" : lotId.toString());
     items.add(locationCode == null ? "" : locationCode);
     return String.join("_", items);
@@ -268,7 +267,6 @@ public class SiglusShipmentDraftService {
       String key = buildShipmentLineItemDtoUniqueKey(item);
       return StockCardReservedDto.builder()
               .orderableId(item.getOrderable().getId())
-              .orderableVersionNumber(item.getOrderable().getVersionNumber().intValue())
               .lotId(item.getLotId())
               .reserved(reservedMap.getOrDefault(key, 0))
               .locationCode(item.getLocation() == null ? null : item.getLocation().getLocationCode())
