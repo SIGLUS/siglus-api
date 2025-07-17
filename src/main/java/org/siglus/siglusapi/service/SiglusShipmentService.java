@@ -126,7 +126,7 @@ public class SiglusShipmentService {
   @Value("${shipment.fefo.index}")
   private double fefoIndex;
 
-  @Transactional
+  // @Transactional
   public ShipmentDto createOrderAndShipment(boolean isSubOrder, ShipmentExtensionRequest shipmentExtensionRequest) {
     ShipmentDto shipmentDto = createOrderAndConfirmShipment(isSubOrder,
         shipmentExtensionRequest.getShipment(), false);
@@ -184,7 +184,8 @@ public class SiglusShipmentService {
     shipmentDraftService.checkStockOnHandQuantity(shipmentDraftId, dto);
   }
 
-  @Transactional
+  //  @Transactional
+  // TODO notificationService.postConfirmShipment(shipmentByLocation); this failed will commit all changes!
   public ShipmentDto createOrderAndShipmentByLocation(boolean isSubOrder,
       ShipmentExtensionRequest shipmentExtensionRequest) {
     shipmentDraftService.deleteShipmentDraftLineItemsExtensionByOrderId(
