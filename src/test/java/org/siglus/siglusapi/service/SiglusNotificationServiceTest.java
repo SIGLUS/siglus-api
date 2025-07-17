@@ -73,9 +73,9 @@ import org.openlmis.requisition.dto.BasicProcessingPeriodDto;
 import org.openlmis.requisition.dto.BasicProgramDto;
 import org.openlmis.requisition.dto.BasicRequisitionDto;
 import org.openlmis.requisition.dto.MinimalFacilityDto;
-import org.openlmis.requisition.dto.ObjectReferenceDto;
 import org.openlmis.requisition.dto.ProofOfDeliveryDto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
+import org.openlmis.requisition.repository.RequisitionRepository;
 import org.openlmis.requisition.service.PermissionService;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
 import org.openlmis.requisition.service.referencedata.UserReferenceDataService;
@@ -151,6 +151,9 @@ public class SiglusNotificationServiceTest {
 
   @Mock
   private SiglusShipmentRepository siglusShipmentRepository;
+
+  @Mock
+  private RequisitionRepository requisitionRepository;
 
   private UUID notificationId;
 
@@ -519,16 +522,12 @@ public class SiglusNotificationServiceTest {
     ProofOfDeliveryDto pod = new ProofOfDeliveryDto();
     pod.setId(randomUUID());
 
-    RequisitionV2Dto requisition = new RequisitionV2Dto();
+    Requisition requisition = new Requisition();
     requisition.setId(randomUUID());
     requisition.setEmergency(nextBoolean());
-    ObjectReferenceDto facility = new ObjectReferenceDto();
-    facility.setId(randomUUID());
-    requisition.setFacility(facility);
-    ObjectReferenceDto program = new ObjectReferenceDto();
-    program.setId(randomUUID());
-    requisition.setProgram(program);
-    when(requisitionService.searchRequisition(order.getExternalId())).thenReturn(requisition);
+    requisition.setFacilityId(randomUUID());
+    requisition.setProgramId(randomUUID());
+    when(requisitionRepository.findOne(order.getExternalId())).thenReturn(requisition);
 
     // when
     service.postConfirmShipment(shipment);
@@ -539,13 +538,13 @@ public class SiglusNotificationServiceTest {
     List<Notification> notification = verifySavedNotification(2);
     Notification notification1 = notification.get(0);
     assertEquals(proofOfDelivery.getId(), notification1.getRefId());
-    assertEquals(requisition.getFacility().getId(), notification1.getFacilityId());
+    assertEquals(requisition.getFacilityId(), notification1.getFacilityId());
     assertEquals(requisition.getEmergency(), notification1.getEmergency());
     assertEquals(NotificationStatus.SHIPPED, notification1.getStatus());
     assertEquals(order.getProcessingPeriod().getId(), notification1.getProcessingPeriodId());
     assertNull(notification1.getNotifySupervisoryNodeId());
     assertEquals(NotificationType.TODO, notification1.getType());
-    assertEquals(requisition.getProgram().getId(), notification1.getProgramId());
+    assertEquals(requisition.getProgramId(), notification1.getProgramId());
     Notification notification2 = notification.get(1);
     assertEquals(NotificationType.UPDATE, notification2.getType());
   }

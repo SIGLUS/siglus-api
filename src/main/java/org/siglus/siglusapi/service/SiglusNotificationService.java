@@ -52,6 +52,7 @@ import org.openlmis.fulfillment.web.util.BasicOrderDto;
 import org.openlmis.fulfillment.web.util.OrderDto;
 import org.openlmis.fulfillment.web.util.OrderObjectReferenceDto;
 import org.openlmis.requisition.domain.StatusLogEntry;
+import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.dto.ApproveRequisitionDto;
 import org.openlmis.requisition.dto.BasicRequisitionDto;
@@ -61,6 +62,7 @@ import org.openlmis.requisition.dto.RequisitionGroupDto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.dto.RightDto;
 import org.openlmis.requisition.dto.RoleAssignmentDto;
+import org.openlmis.requisition.repository.RequisitionRepository;
 import org.openlmis.requisition.service.PermissionService;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
 import org.openlmis.requisition.service.referencedata.RoleReferenceDataService;
@@ -154,6 +156,8 @@ public class SiglusNotificationService {
   private final ProgramReferenceDataService programRefDataService;
 
   private final UserReferenceDataService userReferenceDataService;
+
+  private final RequisitionRepository requisitionRepository;
 
   public Page<NotificationDto> searchNotifications(Pageable pageable, NotificationType type) {
     return repo
@@ -287,7 +291,9 @@ public class SiglusNotificationService {
     repo.updateLastNotificationProcessed(order.getId(), NotificationStatus.ORDERED);
     OrderExternal external = orderExternalRepository.findOne(order.getExternalId());
     UUID requisitionId = external == null ? order.getExternalId() : external.getRequisitionId();
-    RequisitionV2Dto requisition = requisitionService.searchRequisition(requisitionId);
+    // TODO this throw error when product from other program!
+    // RequisitionV2Dto requisition = requisitionService.searchRequisition(requisitionId);
+    Requisition requisition = requisitionRepository.findOne(requisitionId);
     Shipment orderedShipment = siglusShipmentRepository.findShipmentByOrderId(order.getId());
     ProofOfDelivery proofOfDelivery = siglusProofOfDeliveryRepository.findByShipmentId(orderedShipment.getId());
 
