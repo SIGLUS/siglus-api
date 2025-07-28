@@ -270,6 +270,11 @@ public class ProductMovementConsistentWithExistedValidator implements
       actualContext.addExpressionVariable(FIELD_NAME, "type");
       log.info("notSame VALUE_FROM_REQUEST: {}; VALUE_FROM_EXISTED: {}",
           movementDetailFromRequest.getType(), movementDetailFromExisted.getType());
+      if (MovementType.UNPACK_KIT.equals(movementDetailFromRequest.getType())
+          && MovementType.ISSUE.equals(movementDetailFromExisted.getType())) {
+        log.info("handle UNPACK_KIT type");
+        return false;
+      }
       actualContext.addExpressionVariable(VALUE_FROM_REQUEST, movementDetailFromRequest.getType());
       actualContext.addExpressionVariable(VALUE_FROM_EXISTED, movementDetailFromExisted.getType());
       return true;
