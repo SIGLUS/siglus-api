@@ -268,6 +268,8 @@ public class ProductMovementConsistentWithExistedValidator implements
       HibernateConstraintValidatorContext actualContext) {
     if (movementDetailFromRequest.getType() != movementDetailFromExisted.getType()) {
       actualContext.addExpressionVariable(FIELD_NAME, "type");
+      log.info("notSame VALUE_FROM_REQUEST: {}; VALUE_FROM_EXISTED: {}",
+          movementDetailFromRequest.getType(), movementDetailFromExisted.getType());
       actualContext.addExpressionVariable(VALUE_FROM_REQUEST, movementDetailFromRequest.getType());
       actualContext.addExpressionVariable(VALUE_FROM_EXISTED, movementDetailFromExisted.getType());
       return true;
