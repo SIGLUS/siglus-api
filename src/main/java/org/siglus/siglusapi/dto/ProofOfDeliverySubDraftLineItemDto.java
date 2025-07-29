@@ -116,7 +116,8 @@ public class ProofOfDeliverySubDraftLineItemDto {
 
   public ProofOfDeliveryLineItemDto to() {
     ProofOfDeliveryLineItemDto dto = new ProofOfDeliveryLineItemDto(null, orderable,
-        lot.toObjectReferenceDto(), quantityAccepted, useVvm, vvmStatus, quantityRejected, rejectionReasonId, notes);
+        lot == null ? null : lot.toObjectReferenceDto(),
+        quantityAccepted, useVvm, vvmStatus, quantityRejected, rejectionReasonId, notes);
     dto.setId(id);
     return dto;
   }
