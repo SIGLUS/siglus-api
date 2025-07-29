@@ -471,7 +471,7 @@ public class SiglusPodService {
         draftLineItem -> {
           String key = buildUniqueKey(draftLineItem.getOrderable().getId(),
               draftLineItem.getOrderable().getVersionNumber(),
-              draftLineItem.getLot().getId());
+              draftLineItem.getLot() == null ? null : draftLineItem.getLot().getId());
           ProofOfDeliveryLineItem podLineItem = lineItemMap.get(key);
           draftLineItem.setId(podLineItem.getId());
         }
