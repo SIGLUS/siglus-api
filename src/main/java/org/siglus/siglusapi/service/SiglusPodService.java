@@ -479,7 +479,7 @@ public class SiglusPodService {
   }
 
   private String buildUniqueKey(UUID orderableId, Long version, UUID lotId) {
-    return orderableId.toString() + "_" + version + "_" + lotId.toString();
+    return orderableId.toString() + "_" + version + "_" + (lotId == null ? "" : lotId.toString());
   }
 
   private void savePodSubDraftLocations(SubmitPodSubDraftsRequest request) {
