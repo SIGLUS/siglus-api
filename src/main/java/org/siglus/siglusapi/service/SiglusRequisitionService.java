@@ -37,7 +37,7 @@ import static org.siglus.siglusapi.constant.ProgramConstants.TARV_PROGRAM_CODE;
 import static org.siglus.siglusapi.constant.ProgramConstants.VIA_PROGRAM_CODE;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_COLUMN;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_COLUMN_1;
-import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_COLUMN_3;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_COLUMN_4;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_SECTION_2;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_SECTION_3;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_SECTION_4;
@@ -1890,7 +1890,7 @@ public class SiglusRequisitionService {
     }
     int totalPatients = dsTotal + dtTotal + dbTotal + dmTotal;
 
-    Integer dsColumn3 = dsGroup.getColumns().get(NEW_COLUMN_3).getValue();
+    Integer dsColumn4 = dsGroup.getColumns().get(NEW_COLUMN_4).getValue();
     Integer dtColumn1 = dtGroup.getColumns().get(NEW_COLUMN_1).getValue();
     Integer dbThisMonth = 0;
     if (dbGroup.isPresent()) {
@@ -1900,10 +1900,10 @@ public class SiglusRequisitionService {
       }
     }
     Integer dmColumn = dmGroup.getColumns().get(NEW_COLUMN).getValue();
-    if (dsColumn3 == null || dtColumn1 == null || dmColumn == null) {
+    if (dsColumn4 == null || dtColumn1 == null || dmColumn == null) {
       return 1;
     }
-    int totalPatientsInThisMonth = dsColumn3 + dtColumn1 + dbThisMonth + dmColumn;
+    int totalPatientsInThisMonth = dsColumn4 + dtColumn1 + dbThisMonth + dmColumn;
 
     if (totalPatients == 0 || totalPatientsInThisMonth == 0) {
       return 1;
