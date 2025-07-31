@@ -54,7 +54,7 @@ import static org.siglus.siglusapi.constant.ProgramConstants.VIA_PROGRAM_CODE;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_COLUMN;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_COLUMN_0;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_COLUMN_1;
-import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_COLUMN_3;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_COLUMN_4;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_SECTION_2;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_SECTION_3;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.MmiaPatientLineItems.NEW_SECTION_4;
@@ -2228,8 +2228,8 @@ public class SiglusRequisitionServiceTest {
     Map<String, PatientColumnDto> dsColumns = new HashMap<>();
     PatientColumnDto dsTotalColumn = new PatientColumnDto(null, TOTAL_COLUMN, 0);
     dsColumns.put(TOTAL_COLUMN, dsTotalColumn);
-    PatientColumnDto ds4Column = new PatientColumnDto(null, NEW_COLUMN_3, 0);
-    dsColumns.put(NEW_COLUMN_3, ds4Column);
+    PatientColumnDto ds4Column = new PatientColumnDto(null, NEW_COLUMN_4, 0);
+    dsColumns.put(NEW_COLUMN_4, ds4Column);
     PatientGroupDto dsGroup = new PatientGroupDto(NEW_SECTION_2, dsColumns);
     groupDtoList.add(dsGroup);
 
