@@ -57,6 +57,11 @@ public class ProductConsistentWithOwnLotsValidator implements
         .filter(r -> r.getQuantity() != null)
         .mapToInt(StockCardLotEventRequest::getQuantity)
         .sum();
+    log.info("ProductConsistentWithOwnLots {}, soh {}, quantity {}, sohSum {}, quantitySum {}",
+        value.getProductCode(),
+        value.getStockOnHand(),
+        value.getQuantity(),
+        sohSum, sohSum);
     return value.getStockOnHand() >= sohSum && value.getQuantity() == quantitySum;
   }
 
