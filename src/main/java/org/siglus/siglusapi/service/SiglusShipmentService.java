@@ -172,6 +172,15 @@ public class SiglusShipmentService {
         .anyMatch(item -> item.getQuantityShipped() == null || item.getQuantityShipped() < 0)) {
       throw new ValidationException(SHIPMENT_LINE_ITEMS_INVALID);
     }
+    // Check: at least one line item has quantityShipped > 0
+    boolean hasShippedQty = shipmentExtensionRequest.getShipment()
+        .getLineItems()
+        .stream()
+        .anyMatch(item -> item.getQuantityShipped() != null && item.getQuantityShipped() > 0);
+
+    if (!hasShippedQty) {
+      throw new IllegalStateException("At least one line item must have shipped quantity > 0");
+    }
     ShipmentDraftDto dto = new ShipmentDraftDto();
     dto.setLineItems(shipmentExtensionRequest.getShipment().lineItems());
     dto.setOrder(shipmentExtensionRequest.getShipment().getOrder());
