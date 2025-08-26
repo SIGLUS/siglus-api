@@ -147,6 +147,10 @@ public class RequisitionSearchService {
     requisitionDtos.forEach(dto -> {
       Collection<ProcessingPeriodDto> processingPeriods = periodMapByProgram.get(dto.getProgramCode());
       UUID periodId = getPeriodId(processingPeriods, dto.getRequisitionStartDate());
+
+      log.info("programCode {}, programMap.get(dto.getProgramCode()).getId() {}, periodId {}, startdate {}",
+          dto.getProgramCode(), programMap.get(dto.getProgramCode()).getId(), periodId, dto.getRequisitionStartDate()
+      );
       Requisition requisition = siglusRequisitionRepository.findOneByFacilityIdAndProgramIdAndProcessingPeriodId(
           facilityId, programMap.get(dto.getProgramCode()).getId(), periodId);
       if (!ObjectUtils.isEmpty(requisition) && !skippedStatus(requisition.getStatus())) {
