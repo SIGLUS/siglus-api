@@ -674,43 +674,52 @@ public class RequisitionCreateService {
 
   private void calculatePatientDispensedTotal(Map<String, PatientGroupDto> patientNameToPatientGroupDto) {
     PatientGroupDto patientGroupDtoSection5 = patientNameToPatientGroupDto.get(NEW_SECTION_5);
-    PatientColumnDto section5TotalDto = patientGroupDtoSection5.getColumns().get(TOTAL_COLUMN);
-    if (section5TotalDto.getValue() == null) {
-      section5TotalDto.setValue(0);
+    if (null != patientGroupDtoSection5) {
+      PatientColumnDto section5TotalDto = patientGroupDtoSection5.getColumns().get(TOTAL_COLUMN);
+      if (section5TotalDto.getValue() == null) {
+        section5TotalDto.setValue(0);
+      }
+      calculatePatientDispensedTotalBySection(patientNameToPatientGroupDto.get(NEW_SECTION_2), patientGroupDtoSection5,
+          NEW_SECTION_2);
+      calculatePatientDispensedTotalBySection(patientNameToPatientGroupDto.get(NEW_SECTION_3), patientGroupDtoSection5,
+          NEW_SECTION_3);
+      calculatePatientDispensedTotalBySection(patientNameToPatientGroupDto.get(NEW_SECTION_4), patientGroupDtoSection5,
+          NEW_SECTION_4);
+      calculatePatientDispensedTotalBySection(patientNameToPatientGroupDto.get(NEW_SECTION_9), patientGroupDtoSection5,
+          NEW_SECTION_9);
     }
-    calculatePatientDispensedTotalBySection(patientNameToPatientGroupDto.get(NEW_SECTION_2), patientGroupDtoSection5,
-        NEW_SECTION_2);
-    calculatePatientDispensedTotalBySection(patientNameToPatientGroupDto.get(NEW_SECTION_3), patientGroupDtoSection5,
-        NEW_SECTION_3);
-    calculatePatientDispensedTotalBySection(patientNameToPatientGroupDto.get(NEW_SECTION_4), patientGroupDtoSection5,
-        NEW_SECTION_4);
-    calculatePatientDispensedTotalBySection(patientNameToPatientGroupDto.get(NEW_SECTION_9), patientGroupDtoSection5,
-        NEW_SECTION_9);
 
     PatientGroupDto patientGroupDtoSection6 = patientNameToPatientGroupDto.get(NEW_SECTION_6);
-    Integer section2TotalValue = patientNameToPatientGroupDto.get(NEW_SECTION_2).getColumns().get(TOTAL_COLUMN)
-        .getValue();
-    Integer section3TotalValue = patientNameToPatientGroupDto.get(NEW_SECTION_3).getColumns().get(TOTAL_COLUMN)
-        .getValue();
-    Integer section4TotalValue = patientNameToPatientGroupDto.get(NEW_SECTION_4).getColumns().get(TOTAL_COLUMN)
-        .getValue();
-    Integer sectionDbTotalValue = patientNameToPatientGroupDto.get(NEW_SECTION_9).getColumns().get(TOTAL_COLUMN)
-        .getValue();
+    if (null != patientGroupDtoSection6) {
+      Integer section2TotalValue = patientNameToPatientGroupDto.get(NEW_SECTION_2).getColumns().get(TOTAL_COLUMN)
+          .getValue();
+      Integer section3TotalValue = patientNameToPatientGroupDto.get(NEW_SECTION_3).getColumns().get(TOTAL_COLUMN)
+          .getValue();
+      Integer section4TotalValue = patientNameToPatientGroupDto.get(NEW_SECTION_4).getColumns().get(TOTAL_COLUMN)
+          .getValue();
+      Integer sectionDbTotalValue = patientNameToPatientGroupDto.get(NEW_SECTION_9).getColumns().get(TOTAL_COLUMN)
+          .getValue();
 
-    patientGroupDtoSection6.getColumns().get(NEW_COLUMN).setValue(section2TotalValue);
-    patientGroupDtoSection6.getColumns().get(NEW_COLUMN_0).setValue(section3TotalValue);
-    patientGroupDtoSection6.getColumns().get(NEW_COLUMN_1).setValue(section4TotalValue);
-    patientGroupDtoSection6.getColumns().get(NEW_COLUMN_2).setValue(sectionDbTotalValue);
-    patientGroupDtoSection6.getColumns().get(TOTAL_COLUMN)
-        .setValue(section2TotalValue + section3TotalValue + section4TotalValue + sectionDbTotalValue);
+      patientGroupDtoSection6.getColumns().get(NEW_COLUMN).setValue(section2TotalValue);
+      patientGroupDtoSection6.getColumns().get(NEW_COLUMN_0).setValue(section3TotalValue);
+      patientGroupDtoSection6.getColumns().get(NEW_COLUMN_1).setValue(section4TotalValue);
+      patientGroupDtoSection6.getColumns().get(NEW_COLUMN_2).setValue(sectionDbTotalValue);
+      patientGroupDtoSection6.getColumns().get(TOTAL_COLUMN)
+          .setValue(section2TotalValue + section3TotalValue + section4TotalValue + sectionDbTotalValue);
+
+    }
 
     PatientGroupDto patientGroupDtoSection7 = patientNameToPatientGroupDto.get(NEW_SECTION_7);
-    if (patientGroupDtoSection5.getColumns().get(TOTAL_COLUMN).getValue() == 0) {
-      patientGroupDtoSection7.getColumns().get(NEW_COLUMN).setValue(0);
-    } else {
-      patientGroupDtoSection7.getColumns().get(NEW_COLUMN)
-          .setValue(Math.round(Float.valueOf(patientGroupDtoSection6.getColumns().get(TOTAL_COLUMN).getValue())
-              / Float.valueOf(patientGroupDtoSection5.getColumns().get(TOTAL_COLUMN).getValue())));
+    if (null != patientGroupDtoSection5
+        && null != patientGroupDtoSection6
+        && null != patientGroupDtoSection7) {
+      if (patientGroupDtoSection5.getColumns().get(TOTAL_COLUMN).getValue() == 0) {
+        patientGroupDtoSection7.getColumns().get(NEW_COLUMN).setValue(0);
+      } else {
+        patientGroupDtoSection7.getColumns().get(NEW_COLUMN)
+            .setValue(Math.round(Float.valueOf(patientGroupDtoSection6.getColumns().get(TOTAL_COLUMN).getValue())
+                / Float.valueOf(patientGroupDtoSection5.getColumns().get(TOTAL_COLUMN).getValue())));
+      }
     }
   }
 
