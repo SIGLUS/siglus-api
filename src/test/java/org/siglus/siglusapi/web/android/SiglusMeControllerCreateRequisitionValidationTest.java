@@ -280,6 +280,11 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
     programDto.setId(UUID.randomUUID());
     programDto.setCode("code");
     Object param = parseParam("actualStartDateBeforeLastActualEnd.json");
+    ProcessingPeriod periodMay = mock(ProcessingPeriod.class);
+    when(periodMay.getName()).thenReturn("May 21-2021");
+    when(periodMay.getStartDate()).thenReturn(LocalDate.of(2021, 5, 21));
+    when(periodMay.getEndDate()).thenReturn(LocalDate.of(2021, 6, 20));
+    when(periodRepo.findPeriodByCodeAndMonth(any(), eq(YearMonth.of(2021, 5)))).thenReturn(Optional.of(periodMay));
     when(requisitionRepo.findRequisitionsByFacilityIdAndProgramIdOrderByPeriod(any(), any()))
         .thenReturn(singletonList(req1));
 

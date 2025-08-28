@@ -169,12 +169,18 @@ public class RequisitionValidStartDateValidator implements
 
   private boolean isNotConsecutive(LocalDate lastEndDate, LocalDate submitActualStartDate,
       ProcessingPeriod lastPeriod, ProcessingPeriod submitPeriod) {
-    return !isConsecutiveActualDate(lastEndDate, submitActualStartDate)
+    return !isSameMonth(lastEndDate, submitActualStartDate)
         || !isConsecutivePeriod(lastPeriod, submitPeriod);
   }
 
   private boolean isConsecutivePeriod(ProcessingPeriod lastPeriod, ProcessingPeriod submitPeriod) {
     return lastPeriod.getEndDate().equals(submitPeriod.getStartDate().minusDays(1));
+  }
+
+  private boolean isSameMonth(LocalDate lastEndDate, LocalDate submitActualStartDate) {
+    YearMonth endYearMonth = YearMonth.from(lastEndDate);
+    YearMonth startYearMonth = YearMonth.from(submitActualStartDate);
+    return endYearMonth.equals(startYearMonth);
   }
 
   private boolean isConsecutiveActualDate(LocalDate lastEndDate, LocalDate submitActualStartDate) {
