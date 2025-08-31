@@ -672,9 +672,34 @@ public class RequisitionCreateService {
     });
   }
 
+  // TODO 2.0.19 HAVE TO REYSNC, BUT how to fix mock a patientGroupDtoSection5 for NEW_SECTION_2,3,4,9???
   private void calculatePatientDispensedTotal(Map<String, PatientGroupDto> patientNameToPatientGroupDto) {
     PatientGroupDto patientGroupDtoSection5 = patientNameToPatientGroupDto.get(NEW_SECTION_5);
-    if (null != patientGroupDtoSection5) {
+    // TODO in replay ANDROID_REQUISITION_INTERNAL_APPROVED error, no section5,6,7
+    if (null == patientGroupDtoSection5) {
+      Map<String, PatientColumnDto> newSection5 = new HashMap<>();
+      newSection5.put(NEW_COLUMN, new PatientColumnDto());
+      newSection5.put(NEW_COLUMN_0, new PatientColumnDto());
+      newSection5.put(NEW_COLUMN_1, new PatientColumnDto());
+      newSection5.put(NEW_COLUMN_2, new PatientColumnDto());
+      newSection5.put(TOTAL_COLUMN, new PatientColumnDto());
+      PatientGroupDto emptyNewSection5 = new PatientGroupDto();
+      emptyNewSection5.setName("newSection5");
+      emptyNewSection5.setColumns(newSection5);
+
+      PatientColumnDto section5TotalDto = emptyNewSection5.getColumns().get(TOTAL_COLUMN);
+      if (section5TotalDto.getValue() == null) {
+        section5TotalDto.setValue(0);
+      }
+      calculatePatientDispensedTotalBySection(patientNameToPatientGroupDto.get(NEW_SECTION_2), emptyNewSection5,
+          NEW_SECTION_2);
+      calculatePatientDispensedTotalBySection(patientNameToPatientGroupDto.get(NEW_SECTION_3), emptyNewSection5,
+          NEW_SECTION_3);
+      calculatePatientDispensedTotalBySection(patientNameToPatientGroupDto.get(NEW_SECTION_4), emptyNewSection5,
+          NEW_SECTION_4);
+      calculatePatientDispensedTotalBySection(patientNameToPatientGroupDto.get(NEW_SECTION_9), emptyNewSection5,
+          NEW_SECTION_9);
+    } else {
       PatientColumnDto section5TotalDto = patientGroupDtoSection5.getColumns().get(TOTAL_COLUMN);
       if (section5TotalDto.getValue() == null) {
         section5TotalDto.setValue(0);
@@ -719,6 +744,11 @@ public class RequisitionCreateService {
         patientGroupDtoSection7.getColumns().get(NEW_COLUMN)
             .setValue(Math.round(Float.valueOf(patientGroupDtoSection6.getColumns().get(TOTAL_COLUMN).getValue())
                 / Float.valueOf(patientGroupDtoSection5.getColumns().get(TOTAL_COLUMN).getValue())));
+      }
+    } else {
+      if (patientGroupDtoSection7 != null) {
+        // TODO set adjustment 0 if no values
+        patientGroupDtoSection7.getColumns().get(NEW_COLUMN).setValue(0);
       }
     }
   }
