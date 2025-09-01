@@ -201,7 +201,10 @@ public class OnlineWebService {
       log.warn("facility {} resync zip dir make fail", homeFacilityId);
     }
     administrationsService.deleteDrafts(homeFacilityId);
+    log.info("facilityId {} generateBusinessDataToResponse start", homeFacilityId);
     File zipFile = generateZipFile(zipDirectory, zipName, homeFacilityId, type);
+    log.info("facilityId {} generateBusinessDataToResponse end size {} bytes", homeFacilityId,
+        zipFile.length());
     response.setContentType(CONTENT_TYPE);
     response.setCharacterEncoding(StandardCharsets.UTF_8.name());
     response.setHeader(HttpHeaders.CONTENT_DISPOSITION, DISPOSITION_BASE + zipName);
