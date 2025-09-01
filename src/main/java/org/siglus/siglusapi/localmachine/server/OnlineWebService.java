@@ -192,6 +192,7 @@ public class OnlineWebService {
           .build();
       resyncInfoRepository.save(resyncInfo);
     }
+    log.info("facilityId {} generateBusinessDataToResponse start", homeFacilityId);
     String facilityDir = homeFacilityId + "_" + format.format(new Date());
     String zipDirectory = zipExportPath + facilityDir + "/";
     String zipName = facilityDir + ZIP_SUFFIX;
@@ -201,7 +202,6 @@ public class OnlineWebService {
       log.warn("facility {} resync zip dir make fail", homeFacilityId);
     }
     administrationsService.deleteDrafts(homeFacilityId);
-    log.info("facilityId {} generateBusinessDataToResponse start", homeFacilityId);
     File zipFile = generateZipFile(zipDirectory, zipName, homeFacilityId, type);
     log.info("facilityId {} generateBusinessDataToResponse end size {} bytes", homeFacilityId,
         zipFile.length());
