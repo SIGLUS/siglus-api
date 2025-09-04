@@ -15,7 +15,6 @@
 
 package org.siglus.siglusapi.localmachine.event.requisition.web.createforclient;
 
-import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toMap;
 
 import java.util.ArrayList;
@@ -170,7 +169,17 @@ public class RequisitionCreateForClientReplayer {
       Map<UUID, RequisitionLineItemExtension> orderableIdToLineItemExtension =
           internalApprovedEvent.getLineItemExtensions()
               .stream()
-              .collect(toMap(item -> lineItemIdToOrderableId.get(item.getRequisitionLineItemId()), identity()));
+              .collect(Collectors.toMap(
+                  item -> lineItemIdToOrderableId.get(item.getRequisitionLineItemId()),
+                  Function.identity(),
+                  (first, second) -> {
+                    log.warn("Duplicate orderableId {}: keeping {}, discarding {}",
+                        lineItemIdToOrderableId.get(first.getRequisitionLineItemId()),
+                        first.getRequisitionLineItemId(),
+                        second.getRequisitionLineItemId());
+                    return first;
+                  }
+              ));
       buildRequisitionLineItemsExtension(requisition, orderableIdToLineItemExtension);
     }
 
