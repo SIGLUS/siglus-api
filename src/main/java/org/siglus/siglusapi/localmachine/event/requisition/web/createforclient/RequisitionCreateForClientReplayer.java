@@ -25,6 +25,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
+import java.util.stream.Collectors;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -467,8 +469,17 @@ public class RequisitionCreateForClientReplayer {
       return;
     }
     Map<VersionEntityReference, RequisitionLineItem> requisitionLineItemMap =
-        requisition.getRequisitionLineItems().stream().collect(toMap(RequisitionLineItem::getOrderable,
-            Function.identity()));
+        requisition.getRequisitionLineItems().stream()
+            .collect(Collectors.toMap(
+                RequisitionLineItem::getOrderable,
+                Function.identity(),
+                (first, second) -> {
+                  log.warn("Duplicate orderable detected: {}. Keeping {} and discarding {}",
+                      first.getOrderable().getId(), first.getId(), second.getId());
+                  return first; // or `second` if you prefer the later one
+                }
+            ));
+
     List<RequisitionLineItem> newLineItems = new ArrayList<>();
     event.getRequisitionLineItems().forEach(item -> {
       RequisitionLineItem requisitionLineItem = requisitionLineItemMap.get(item.getOrderable());
