@@ -144,9 +144,6 @@ public class SiglusStockEventsService {
     setUserId(eventDto);
     siglusLotService.createAndFillLotId(eventDto);
     List<StockEventDto> stockEventDtoByPrograms;
-    viaProgramId = siglusProgramService.getProgramByCode(VIA_PROGRAM_CODE)
-        .orElseThrow(() -> new NotFoundException("VIA program not found"))
-        .getId();
     if (eventDto.isPhysicalInventory()) {
       Set<UUID> programIds = getProgramIdsForPhysicalInventory(eventDto);
       stockEventDtoByPrograms = getStockEventsWhenDoPhysicalInventory(eventDto, programIds);
