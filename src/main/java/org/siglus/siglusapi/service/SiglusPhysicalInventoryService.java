@@ -95,7 +95,6 @@ import org.siglus.siglusapi.dto.SupportedProgramDto;
 import org.siglus.siglusapi.dto.enums.LocationManagementOption;
 import org.siglus.siglusapi.dto.enums.PhysicalInventorySubDraftEnum;
 import org.siglus.siglusapi.exception.BusinessDataException;
-import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.FacilityLocationsRepository;
 import org.siglus.siglusapi.repository.PhysicalInventoryEmptyLocationLineItemRepository;
@@ -158,8 +157,6 @@ public class SiglusPhysicalInventoryService {
   private SiglusOrderableService siglusOrderableService;
   @Autowired
   private SiglusLotService siglusLotService;
-  @Autowired
-  private SiglusProgramService siglusProgramService;
   @Autowired
   private SiglusArchiveProductService archiveProductService;
   @Autowired
