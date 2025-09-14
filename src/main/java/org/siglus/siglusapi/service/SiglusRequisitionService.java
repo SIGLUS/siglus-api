@@ -965,7 +965,7 @@ public class SiglusRequisitionService {
     setAvailableProductsForApprovePage(siglusRequisitionDto);
     setApprovedByInternal(requisitionId, siglusRequisitionDto);
     siglusRequisitionDto.setRequisitionNumber(siglusRequisitionExtensionService.formatRequisitionNumber(requisitionId));
-    calcEstimatedQuantityToRequest(requisitionDto);
+    // calcEstimatedQuantityToRequest(requisitionDto);
     setIsCreateForClient(requisitionId, siglusRequisitionDto);
     return setIsFinalApproval(siglusRequisitionDto);
   }
