@@ -970,11 +970,19 @@ public class SiglusOrderService {
   private List<UUID> getPreviousThreePeriodIds(List<ProcessingPeriod> periods) {
     List<UUID> previousThreePeriodIds = Lists.newArrayList();
     ProcessingPeriod currentPeriod = getCurrentPeriodByFulfillDate(periods, LocalDate.now());
+
     for (int i = 1; i < 4; i++) {
-      previousThreePeriodIds.add(getPeriodIdDateIn(periods, currentPeriod.getStartDate().minusMonths(i)));
+      try {
+        UUID periodId = getPeriodIdDateIn(periods, currentPeriod.getStartDate().minusMonths(i));
+        previousThreePeriodIds.add(periodId);
+      } catch (Exception e) {
+        // skip if not found, optionally log for debugging
+        log.warn("No period found for {}", currentPeriod.getStartDate().minusMonths(i), e);
+      }
     }
     return previousThreePeriodIds;
   }
+
 
   private List<UUID> getAllClientFacilityIds(UUID facilityId, UUID programId) {
     return siglusFacilityRepository.findAllClientFacilityIds(facilityId, programId).stream()
