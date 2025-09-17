@@ -527,13 +527,39 @@ public class SiglusShipmentDraftService {
   }
 
   private Map<String, Integer> getReservedMap(UUID supplyFacility, ShipmentDraftDto shipmentDraftDto) {
-    return reservedCount(
-        supplyFacility, shipmentDraftDto.getId(), shipmentDraftDto.lineItems())
-        .stream()
-        .collect(toMap(reservedDto -> FormatHelper.buildStockCardUniqueKey(
-                reservedDto.getOrderableId(), reservedDto.getLotId(), reservedDto.getLocationCode()),
-            StockCardReservedDto::getReserved));
+    List<StockCardReservedDto> list =
+        reservedCount(supplyFacility, shipmentDraftDto.getId(), shipmentDraftDto.lineItems());
+
+    // group by the unique stock card key
+    Map<String, List<StockCardReservedDto>> grouped = list.stream()
+        .collect(Collectors.groupingBy(dto ->
+            FormatHelper.buildStockCardUniqueKey(
+                dto.getOrderableId(),
+                dto.getLotId(),
+                dto.getLocationCode()
+            )
+        ));
+
+    // log duplicates
+    grouped.entrySet().stream()
+        .filter(e -> e.getValue().size() > 1)
+        .forEach(e -> {
+          log.warn("Duplicate key {} with {} StockCardReservedDto:",
+              e.getKey(), e.getValue().size());
+          e.getValue().forEach(dup ->
+              log.warn("  -> orderableId={}, lotId={}, locationCode={}, reserved={}",
+                  dup.getOrderableId(), dup.getLotId(), dup.getLocationCode(), dup.getReserved())
+          );
+        });
+
+    // choose one reserved value per key (first one here)
+    return grouped.entrySet().stream()
+        .collect(Collectors.toMap(
+            Map.Entry::getKey,
+            e -> e.getValue().get(0).getReserved()
+        ));
   }
+
 
   private Map<UUID, LotDto> getLotsMap(List<ShipmentLineItemDto> lineItemDtos) {
     List<UUID> lotIds = lineItemDtos.stream().map(ShipmentLineItemDto::getLotId)
