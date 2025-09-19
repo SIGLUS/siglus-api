@@ -95,7 +95,7 @@ public class SiglusRequisitionExtensionService {
         prefix = RequisitionPrefixEnum.MMC.toString();
         break;
       default:
-        prefix = "";
+        prefix = programCode;
     }
     String yearMonth = endDate.format(DateTimeFormatter.ofPattern("yyMM"));
     return RequisitionExtension.builder()
