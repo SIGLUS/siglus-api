@@ -117,7 +117,7 @@ public class FcProductService implements ProcessDataService {
   private final CacheManager cacheManager;
   private final OrderableController orderableController;
 
-  private static final String SYSTEM_DEFAULT_MANUFACTURER = "Mozambique";
+  private static final String SYSTEM_DEFAULT_MANUFACTURER = "Angola";
 
   private Map<String, ProgramRealProgram> realProgramCodeToEntityMap;
 
