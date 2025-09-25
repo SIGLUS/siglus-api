@@ -239,6 +239,20 @@ public class SiglusLotService {
             StockCardStockDto::getStockOnHand));
     if (lots.stream().anyMatch(lot -> lot.getQuantity() > stockCardIdLocationCodeToSohMap.getOrDefault(
         lot.getStockCardId().toString() + lot.getLocationCode(), 0))) {
+
+      List<RemovedLotDto> violatingLots = lots.stream()
+          .filter(lot -> lot.getQuantity() > stockCardIdLocationCodeToSohMap.getOrDefault(
+              lot.getStockCardId().toString() + lot.getLocationCode(), 0))
+          .collect(Collectors.toList());
+
+      if (!violatingLots.isEmpty()) {
+        throw new BusinessDataException(
+            Message.createFromMessageKeyStr("not have enough soh for lots: "
+                + violatingLots.stream()
+                .map(l -> l.getStockCardId() + "@" + l.getLocationCode())
+                .collect(Collectors.joining(", ")))
+        );
+      }
       throw new BusinessDataException(Message.createFromMessageKeyStr("not have enough soh"));
     }
 
