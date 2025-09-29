@@ -75,8 +75,8 @@ import lombok.Data;
             + "                 where stockcardid in ( select distinct sc.id from stockmanagement.stock_cards sc  "
             + "                                   left join referencedata.lots l on sc.lotid = l.id "
             + "                               where sc.facilityid = :facilityId and l.expirationdate < current_date ) "
-            + "           ) tsoh order by tsoh.stockcardid, tsoh.locationcode, tsoh.occurreddate desc "
-            + "        ) soh on sc.id = soh.stockcardid "
+            + "           ) tsoh order by tsoh.stockcardid, tsoh.locationcode, tsoh.occurreddate desc, "
+            + "        tsoh.processeddate desc ) soh on sc.id = soh.stockcardid "
             + "where sc.lotid is not null and sc.facilityid = :facilityId and l.expirationdate < current_date "
             + "      and soh.stockonhand > 0 "
             + ";",
@@ -122,8 +122,8 @@ import lombok.Data;
             + "             tsoh.stockonhand, tsoh.occurreddate, tsoh.area, tsoh.locationcode "
             + "           from (select * from siglusintegration.calculated_stocks_on_hand_by_location "
             + "                 where stockcardid in :stockcardIds "
-            + "           ) tsoh order by tsoh.stockcardid, tsoh.locationcode, tsoh.occurreddate desc "
-            + "        ) soh on sc.id = soh.stockcardid "
+            + "           ) tsoh order by tsoh.stockcardid, tsoh.locationcode, tsoh.occurreddate desc, "
+            + "        tsoh.processeddate desc) soh on sc.id = soh.stockcardid "
             + "where sc.id in :stockcardIds "
             + ";",
         resultSetMapping = "StockCard.LotStockDto"),
