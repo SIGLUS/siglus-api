@@ -21,6 +21,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.openlmis.requisition.domain.requisition.Requisition;
+import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.siglus.siglusapi.exception.InvalidProgramCodeException;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.service.SiglusProgramService;
@@ -50,8 +51,8 @@ public class AndroidRequisitionSyncedReplayer {
       simulateUserAuthHelper.simulateNewUserAuth(event.getUserId());
       if (Boolean.FALSE.equals(event.getRequest().getEmergency())) {
         Requisition existRequisition = findExistRequisition(event);
-        if (existRequisition != null) {
-          log.info("The Regular Requisition already exist, ignore replay: {}", event.getRequisitionNumberPrefix());
+        if (existRequisition != null && !RequisitionStatus.REJECTED.equals(existRequisition.getStatus())) {
+          log.info("The NO-REJECT Requisition already exist, ignore replay: {}", event.getRequisitionNumberPrefix());
           return;
         }
       }
