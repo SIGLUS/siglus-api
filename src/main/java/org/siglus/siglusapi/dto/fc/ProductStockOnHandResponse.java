@@ -34,4 +34,6 @@ public class ProductStockOnHandResponse {
   private LocalDate dateOfStock;
   private List<LotStockOnHandResponse> lots;
 
+  private Double cmm;
+  private Double mos;
 }

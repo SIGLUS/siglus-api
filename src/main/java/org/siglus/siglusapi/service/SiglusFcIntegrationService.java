@@ -100,6 +100,7 @@ import org.siglus.siglusapi.dto.UsageTemplateColumnDto;
 import org.siglus.siglusapi.dto.UsageTemplateSectionDto;
 import org.siglus.siglusapi.dto.android.PeriodOfProductMovements;
 import org.siglus.siglusapi.dto.android.StocksOnHand;
+import org.siglus.siglusapi.dto.android.db.StockStatusCmm;
 import org.siglus.siglusapi.dto.android.enumeration.MmiaPatientTableColumnKeyValue;
 import org.siglus.siglusapi.dto.android.enumeration.MmiaPatientTableKeyValue;
 import org.siglus.siglusapi.dto.android.enumeration.MmtbPatientTableColumnKeyValue;
@@ -110,6 +111,7 @@ import org.siglus.siglusapi.dto.fc.FacilityStockMovementResponse;
 import org.siglus.siglusapi.dto.fc.FacilityStockOnHandResponse;
 import org.siglus.siglusapi.dto.fc.ProductStockOnHandResponse;
 import org.siglus.siglusapi.repository.AgeGroupLineItemRepository;
+import org.siglus.siglusapi.repository.FacilityCmmsRepository;
 import org.siglus.siglusapi.repository.FacilityNativeRepository;
 import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.PatientLineItemRepository;
@@ -179,6 +181,8 @@ public class SiglusFcIntegrationService {
   private final SiglusOrderableService siglusOrderableService;
 
   private final AgeGroupLineItemRepository ageGroupLineItemRepository;
+
+  private final FacilityCmmsRepository facilityCmmsRepository;
 
   @Value("${dpm.facilityTypeId}")
   private UUID dpmFacilityTypeId;
@@ -253,8 +257,26 @@ public class SiglusFcIntegrationService {
     response.setName(facility.getName());
     log.info("toStockOnHandResponse facility id: {}", facility.getId());
     StocksOnHand stocksOnHand = stockManagementRepository.getStockOnHand(facility.getId(), at);
+    List<StockStatusCmm> stockStatusCmms = facilityCmmsRepository.findStockStatusCmmByFacilityCode(facility.getCode());
+    Map<String, Double> cmmMap = stockStatusCmms.stream()
+        .collect(toMap(StockStatusCmm::getProductCode, StockStatusCmm::getCmm));
     List<ProductStockOnHandResponse> products = lotOnHandMapper.toResponses(stocksOnHand).stream()
         .filter(resp -> !resp.getLots().isEmpty() || KitConstants.isKit(resp.getProductCode()))
+        .map(product -> {
+
+          Double cmm = cmmMap.getOrDefault(product.getProductCode(), 0.0);
+          Double mos;
+
+          if (cmm == null || cmm <= 0) {
+            mos = 0.0;
+          } else {
+            double roundedCmm = Math.round(cmm * 100.0) / 100.0;
+            mos = Math.round((product.getStockOnHand() / roundedCmm) * 10.0) / 10.0;
+          }
+          product.setCmm(cmm);
+          product.setMos(mos);
+          return product;
+        })
         .collect(toList());
     response.setProducts(products);
     return response;

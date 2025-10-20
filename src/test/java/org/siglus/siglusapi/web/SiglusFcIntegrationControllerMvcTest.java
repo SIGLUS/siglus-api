@@ -55,6 +55,7 @@ import org.siglus.siglusapi.dto.android.ProductMovement;
 import org.siglus.siglusapi.dto.android.StocksOnHand;
 import org.siglus.siglusapi.dto.android.db.Facility;
 import org.siglus.siglusapi.dto.android.enumeration.MovementType;
+import org.siglus.siglusapi.repository.FacilityCmmsRepository;
 import org.siglus.siglusapi.repository.FacilityNativeRepository;
 import org.siglus.siglusapi.repository.StockManagementRepository;
 import org.siglus.siglusapi.service.SiglusFcIntegrationService;
@@ -77,7 +78,7 @@ import org.springframework.test.web.servlet.RequestBuilder;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-@SuppressWarnings({"PMD.TooManyMethods", "PMD.AvoidDuplicateLiterals"})
+@SuppressWarnings({"PMD.TooManyMethods", "PMD.AvoidDuplicateLiterals", "PMD.UnusedPrivateField"})
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {MappingJackson2HttpMessageConverter.class, PageableHandlerMethodArgumentResolver.class,
     ObjectMapper.class, ProductMovementMapperImpl.class, LotOnHandMapperImpl.class})
@@ -105,6 +106,9 @@ public class SiglusFcIntegrationControllerMvcTest extends FileBasedTest {
   private FacilityNativeRepository facilityRepo;
   @Mock
   private StockManagementRepository stockManagementRepository;
+
+  @Mock
+  private FacilityCmmsRepository facilityCmmsRepository;
 
   private final UUID facility1Id = UUID.randomUUID();
   private final UUID facility2Id = UUID.randomUUID();
