@@ -17,7 +17,6 @@ package org.siglus.siglusapi.service.android;
 
 import static java.util.Collections.singletonList;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyListOf;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -44,7 +43,6 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.fulfillment.domain.CreationDetails;
 import org.openlmis.fulfillment.domain.Order;
-import org.openlmis.fulfillment.domain.OrderLineItem;
 import org.openlmis.fulfillment.domain.ProofOfDelivery;
 import org.openlmis.fulfillment.domain.ProofOfDeliveryLineItem;
 import org.openlmis.fulfillment.domain.ProofOfDeliveryStatus;
@@ -52,9 +50,7 @@ import org.openlmis.fulfillment.domain.Shipment;
 import org.openlmis.fulfillment.domain.ShipmentLineItem;
 import org.openlmis.fulfillment.domain.VersionEntityReference;
 import org.openlmis.fulfillment.domain.naming.VvmStatus;
-import org.openlmis.fulfillment.repository.OrderRepository;
 import org.openlmis.fulfillment.service.PermissionService;
-import org.openlmis.fulfillment.util.DateHelper;
 import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.requisition.dto.OrderableDto;
 import org.openlmis.requisition.dto.ProgramDto;
@@ -80,7 +76,6 @@ import org.siglus.siglusapi.dto.android.response.PodProductLineResponse;
 import org.siglus.siglusapi.dto.android.response.PodResponse;
 import org.siglus.siglusapi.exception.UnsupportedProductsException;
 import org.siglus.siglusapi.repository.LotNativeRepository;
-import org.siglus.siglusapi.repository.OrderLineItemRepository;
 import org.siglus.siglusapi.repository.PodConfirmBackupRepository;
 import org.siglus.siglusapi.repository.PodNativeSqlRepository;
 import org.siglus.siglusapi.repository.SiglusProofOfDeliveryLineItemRepository;
@@ -90,6 +85,7 @@ import org.siglus.siglusapi.repository.SiglusStockCardLineItemRepository;
 import org.siglus.siglusapi.repository.SyncUpHashRepository;
 import org.siglus.siglusapi.service.LotConflictService;
 import org.siglus.siglusapi.service.SiglusNotificationService;
+import org.siglus.siglusapi.service.SiglusOrderService;
 import org.siglus.siglusapi.service.SiglusOrderableService;
 import org.siglus.siglusapi.service.SiglusProgramService;
 import org.siglus.siglusapi.service.SiglusValidReasonAssignmentService;
@@ -165,15 +161,6 @@ public class PodConfirmServiceTest {
   private SiglusStockCardLineItemRepository stockCardLineItemRepository;
 
   @Mock
-  private DateHelper dateHelper;
-
-  @Mock
-  private OrderLineItemRepository orderLineItemRepository;
-
-  @Mock
-  private OrderRepository orderRepository;
-
-  @Mock
   private SiglusFacilityReferenceDataService facilityReferenceDataService;
 
   @Mock
@@ -191,6 +178,9 @@ public class PodConfirmServiceTest {
 
   @Mock
   private SiglusNotificationService siglusNotificationService;
+
+  @Mock
+  private SiglusOrderService siglusOrderService;
 
   private final String programCode = "anyCode";
 
@@ -302,9 +292,7 @@ public class PodConfirmServiceTest {
     verify(shipmentLineItemRepository).deleteShipmentLineItemByIdsIn(
         Collections.singleton(null));
     verify(stockCardLineItemRepository).save(stockCardLineItems);
-    verify(dateHelper).getCurrentDateTimeWithSystemZone();
-    verify(orderLineItemRepository).save(anyListOf(OrderLineItem.class));
-    verify(orderRepository).save(any(Order.class));
+    verify(siglusOrderService).updateOrder(any(), any(), any(), any());
   }
 
   private PodRequest mockPodRequest() {

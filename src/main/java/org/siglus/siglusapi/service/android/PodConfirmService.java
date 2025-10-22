@@ -21,7 +21,6 @@ import static java.util.stream.Collectors.toSet;
 import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -30,17 +29,11 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.openlmis.fulfillment.domain.Order;
-import org.openlmis.fulfillment.domain.OrderLineItem;
-import org.openlmis.fulfillment.domain.OrderStatus;
 import org.openlmis.fulfillment.domain.ProofOfDelivery;
 import org.openlmis.fulfillment.domain.ProofOfDeliveryLineItem;
 import org.openlmis.fulfillment.domain.ProofOfDeliveryStatus;
 import org.openlmis.fulfillment.domain.ShipmentLineItem;
-import org.openlmis.fulfillment.domain.UpdateDetails;
-import org.openlmis.fulfillment.domain.VersionEntityReference;
-import org.openlmis.fulfillment.repository.OrderRepository;
 import org.openlmis.fulfillment.service.PermissionService;
-import org.openlmis.fulfillment.util.DateHelper;
 import org.openlmis.fulfillment.web.MissingPermissionException;
 import org.openlmis.referencedata.dto.OrderableDto;
 import org.openlmis.requisition.service.RequisitionService;
@@ -61,7 +54,6 @@ import org.siglus.siglusapi.dto.android.response.PodProductLineResponse;
 import org.siglus.siglusapi.dto.android.response.PodResponse;
 import org.siglus.siglusapi.exception.NoPermissionException;
 import org.siglus.siglusapi.exception.UnsupportedProductsException;
-import org.siglus.siglusapi.repository.OrderLineItemRepository;
 import org.siglus.siglusapi.repository.PodConfirmBackupRepository;
 import org.siglus.siglusapi.repository.PodNativeSqlRepository;
 import org.siglus.siglusapi.repository.SiglusProofOfDeliveryLineItemRepository;
@@ -70,6 +62,7 @@ import org.siglus.siglusapi.repository.SiglusShipmentLineItemRepository;
 import org.siglus.siglusapi.repository.SiglusStockCardLineItemRepository;
 import org.siglus.siglusapi.repository.SyncUpHashRepository;
 import org.siglus.siglusapi.service.SiglusNotificationService;
+import org.siglus.siglusapi.service.SiglusOrderService;
 import org.siglus.siglusapi.service.SiglusValidReasonAssignmentService;
 import org.siglus.siglusapi.service.android.context.ContextHolder;
 import org.siglus.siglusapi.service.android.context.CurrentUserContext;
@@ -94,15 +87,13 @@ public class PodConfirmService {
   private final PermissionService fulfillmentPermissionService;
   private final SiglusProofOfDeliveryLineItemRepository podLineItemRepository;
   private final SiglusValidReasonAssignmentService validReasonAssignmentService;
-  private final DateHelper dateHelper;
-  private final OrderRepository orderRepository;
   private final PodNativeSqlRepository podNativeSqlRepository;
   private final SiglusShipmentLineItemRepository shipmentLineItemRepository;
-  private final OrderLineItemRepository orderLineItemRepository;
   private final SiglusStockCardLineItemRepository stockCardLineItemRepository;
   private final RequisitionService requisitionService;
   private final PodConfirmBackupRepository podConfirmBackupRepository;
   private final SiglusNotificationService siglusNotificationService;
+  private final SiglusOrderService siglusOrderService;
 
   @Transactional
   @SuppressWarnings("PMD.PreserveStackTrace")
@@ -163,7 +154,7 @@ public class PodConfirmService {
     syncUpHashRepository.save(syncUpHashDomain);
     List<OrderableDto> requestOrderables = podRequest.getProducts()
         .stream().map(o -> productContext.getProduct(o.getCode())).collect(toList());
-    return updateOrder(toUpdatePod, user, podRequest, requestOrderables);
+    return siglusOrderService.updateOrder(toUpdatePod, user, podRequest, requestOrderables);
   }
 
   private Lot convertLotFromRequest(PodLotLineRequest lotLine) {
@@ -190,31 +181,6 @@ public class PodConfirmService {
     stockCardLineItemRepository.save(stockCardLineItems);
   }
 
-  private List<OrderLineItem> buildToUpdateOrderLineItems(Order order, PodRequest podRequest,
-      List<OrderableDto> requestOrderables) {
-    Set<UUID> existedOrderableIds = order.getOrderLineItems().stream()
-        .map(o -> o.getOrderable().getId())
-        .collect(toSet());
-    List<OrderableDto> toUpdateOrderables = requestOrderables.stream()
-        .filter(r -> !existedOrderableIds.contains(r.getId())).collect(toList());
-    if (CollectionUtils.isEmpty(toUpdateOrderables)) {
-      return Collections.emptyList();
-    }
-    return toUpdateOrderables.stream().map(t -> buildOrderLineItem(order, podRequest, t)).collect(toList());
-  }
-
-  private OrderLineItem buildOrderLineItem(Order order, PodRequest podRequest, OrderableDto orderableDto) {
-    PodProductLineRequest podProductLineRequest = podRequest.getProducts().stream()
-        .filter(p -> orderableDto.getProductCode().equals(p.getCode()))
-        .findFirst()
-        .orElse(null);
-    Long orderQuantity = podProductLineRequest == null ? 0 : podProductLineRequest.getOrderedQuantity().longValue();
-    OrderLineItem orderLineItem = new OrderLineItem(order, new VersionEntityReference(orderableDto.getId(),
-        orderableDto.getVersionNumber()), orderQuantity);
-    orderLineItem.setId(UUID.randomUUID());
-    return orderLineItem;
-  }
-
   private void checkSupportedProducts(UUID homeFacilityId, PodRequest podRequest) {
     CurrentUserContext currentUserContext = ContextHolder.getContext(CurrentUserContext.class);
     for (SupportedProgramDto supportedProgram : currentUserContext.getHomeFacilitySupportedPrograms()) {
@@ -239,20 +205,6 @@ public class PodConfirmService {
     if (isNotEmpty(unsupportedProductCodes)) {
       throw UnsupportedProductsException.asNormalException(unsupportedProductCodes.toArray(new String[0]));
     }
-  }
-
-  private Order updateOrder(ProofOfDelivery toUpdatePod, UserDto user, PodRequest podRequest,
-      List<OrderableDto> requestOrderables) {
-    Order order = toUpdatePod.getShipment().getOrder();
-    order.updateStatus(OrderStatus.RECEIVED, new UpdateDetails(user.getId(),
-        dateHelper.getCurrentDateTimeWithSystemZone()));
-    log.info("update order status, orderCode: {}", order.getOrderCode());
-    List<OrderLineItem> orderLineItems = buildToUpdateOrderLineItems(order, podRequest, requestOrderables);
-    if (!CollectionUtils.isEmpty(orderLineItems)) {
-      log.info("update order lineItems, orderCode: {}", order.getOrderCode());
-      orderLineItemRepository.save(orderLineItems);
-    }
-    return orderRepository.save(order);
   }
 
   private void deletePodLineItems(List<ProofOfDeliveryLineItem> podLineItems) {

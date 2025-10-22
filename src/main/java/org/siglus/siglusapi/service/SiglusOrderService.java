@@ -68,8 +68,10 @@ import org.apache.commons.collections.CollectionUtils;
 import org.openlmis.fulfillment.domain.Order;
 import org.openlmis.fulfillment.domain.OrderLineItem;
 import org.openlmis.fulfillment.domain.OrderStatus;
+import org.openlmis.fulfillment.domain.ProofOfDelivery;
 import org.openlmis.fulfillment.domain.Shipment;
 import org.openlmis.fulfillment.domain.ShipmentLineItem;
+import org.openlmis.fulfillment.domain.UpdateDetails;
 import org.openlmis.fulfillment.repository.OrderRepository;
 import org.openlmis.fulfillment.service.OrderSearchParams;
 import org.openlmis.fulfillment.service.OrderService;
@@ -77,6 +79,7 @@ import org.openlmis.fulfillment.service.referencedata.FacilityDto;
 import org.openlmis.fulfillment.service.referencedata.OrderableDto;
 import org.openlmis.fulfillment.service.referencedata.ProcessingPeriodDto;
 import org.openlmis.fulfillment.util.AuthenticationHelper;
+import org.openlmis.fulfillment.util.DateHelper;
 import org.openlmis.fulfillment.web.OrderController;
 import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftDto;
 import org.openlmis.fulfillment.web.util.BasicOrderDto;
@@ -115,9 +118,13 @@ import org.siglus.siglusapi.dto.OrderStatusDto;
 import org.siglus.siglusapi.dto.SiglusOrderDto;
 import org.siglus.siglusapi.dto.SiglusOrderWithOrderableDto;
 import org.siglus.siglusapi.dto.SiglusOrderableDto;
+import org.siglus.siglusapi.dto.UserDto;
+import org.siglus.siglusapi.dto.android.request.PodProductLineRequest;
+import org.siglus.siglusapi.dto.android.request.PodRequest;
 import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
+import org.siglus.siglusapi.repository.OrderLineItemRepository;
 import org.siglus.siglusapi.repository.OrderableRepository;
 import org.siglus.siglusapi.repository.PodSubDraftRepository;
 import org.siglus.siglusapi.repository.ShipmentsExtensionRepository;
@@ -151,6 +158,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
@@ -273,6 +281,12 @@ public class SiglusOrderService {
   @Autowired
   private SiglusOrderableService siglusOrderableService;
 
+  @Autowired
+  private DateHelper dateHelper;
+
+  @Autowired
+  private OrderLineItemRepository orderLineItemRepository;
+
   private static final String SLASH = "/";
 
   private static final List<String> REQUISITION_STATUS_AFTER_FINAL_APPROVED = Lists.newArrayList(
@@ -289,6 +303,50 @@ public class SiglusOrderService {
       OrderStatus.SHIPPED,
       OrderStatus.RECEIVED
   );
+
+  @Transactional
+  public Order updateOrder(ProofOfDelivery toUpdatePod, UserDto user, PodRequest podRequest,
+                            List<org.openlmis.referencedata.dto.OrderableDto> requestOrderables) {
+    Order order = toUpdatePod.getShipment().getOrder();
+    order.updateStatus(OrderStatus.RECEIVED, new UpdateDetails(user.getId(),
+        dateHelper.getCurrentDateTimeWithSystemZone()));
+    log.info("update order status, orderCode: {}", order.getOrderCode());
+    List<OrderLineItem> orderLineItems = buildToUpdateOrderLineItems(order, podRequest, requestOrderables);
+    if (!org.springframework.util.CollectionUtils.isEmpty(orderLineItems)) {
+      log.info("update order lineItems, orderCode: {}", order.getOrderCode());
+      orderLineItemRepository.save(orderLineItems);
+    }
+    return orderRepository.save(order);
+  }
+
+  private List<OrderLineItem> buildToUpdateOrderLineItems(Order order, PodRequest podRequest,
+                                                          List<org.openlmis.referencedata.dto.OrderableDto>
+                                                              requestOrderables) {
+    Set<UUID> existedOrderableIds = order.getOrderLineItems().stream()
+        .map(o -> o.getOrderable().getId())
+        .collect(toSet());
+    List<org.openlmis.referencedata.dto.OrderableDto> toUpdateOrderables = requestOrderables.stream()
+        .filter(r -> !existedOrderableIds.contains(r.getId())).collect(toList());
+    if (org.springframework.util.CollectionUtils.isEmpty(toUpdateOrderables)) {
+      return Collections.emptyList();
+    }
+    return toUpdateOrderables.stream().map(t -> buildOrderLineItem(order, podRequest, t)).collect(toList());
+  }
+
+  private OrderLineItem buildOrderLineItem(Order order, PodRequest podRequest,
+                                           org.openlmis.referencedata.dto.OrderableDto orderableDto) {
+    PodProductLineRequest podProductLineRequest = podRequest.getProducts().stream()
+        .filter(p -> orderableDto.getProductCode().equals(p.getCode()))
+        .findFirst()
+        .orElse(null);
+    Long orderQuantity = podProductLineRequest == null ? 0 : podProductLineRequest.getOrderedQuantity().longValue();
+    OrderLineItem orderLineItem = new OrderLineItem(order,
+        new org.openlmis.fulfillment.domain.VersionEntityReference(orderableDto.getId(),
+        orderableDto.getVersionNumber()), orderQuantity);
+    orderLineItem.setId(UUID.randomUUID());
+    return orderLineItem;
+  }
+
 
   public Page<BasicOrderDto> searchOrders(OrderSearchParams params, Pageable pageable) {
     return orderController.searchOrders(params, pageable);
