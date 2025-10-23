@@ -307,7 +307,7 @@ public class SiglusOrderService {
   @Transactional
   public Order updateOrder(ProofOfDelivery toUpdatePod, UserDto user, PodRequest podRequest,
                             List<org.openlmis.referencedata.dto.OrderableDto> requestOrderables) {
-    Order order = toUpdatePod.getShipment().getOrder();
+    Order order = orderRepository.findOne(toUpdatePod.getShipment().getOrder().getId());
     order.updateStatus(OrderStatus.RECEIVED, new UpdateDetails(user.getId(),
         dateHelper.getCurrentDateTimeWithSystemZone()));
     log.info("update order status, orderCode: {}", order.getOrderCode());
