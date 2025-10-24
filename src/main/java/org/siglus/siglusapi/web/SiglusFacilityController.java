@@ -73,7 +73,7 @@ public class SiglusFacilityController {
     throw new ValidationException("missing parameters to query lots");
   }
 
-  @@PostMapping("/{id}/facilityLots")
+  @PostMapping("/{id}/facilityLots")
   public List<LotDto> searchLot(@PathVariable("id") UUID id,
                                 @RequestBody List<UUID> orderableIds) {
     if (!ObjectUtils.isEmpty(orderableIds)) {

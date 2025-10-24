@@ -52,7 +52,7 @@ public class SiglusFacilityControllerTest {
   public void shouldGetExpiredLotsGivenParamExpiredIsTrue() {
     UUID facilityId = UUID.randomUUID();
 
-    siglusFacilityController.searchLots(facilityId, true, null);
+    siglusFacilityController.searchLotStock(facilityId, true, null);
 
     verify(siglusLotService, Mockito.times(1)).getExpiredLots(facilityId);
   }
@@ -63,7 +63,7 @@ public class SiglusFacilityControllerTest {
     Set<UUID> orderableIds = new HashSet<>();
     orderableIds.add(UUID.randomUUID());
 
-    siglusFacilityController.searchLots(facilityId, null, orderableIds);
+    siglusFacilityController.searchLotStock(facilityId, null, orderableIds);
 
     verify(siglusLotService, Mockito.times(1)).getLotStocksByOrderables(facilityId, orderableIds);
   }
@@ -72,7 +72,7 @@ public class SiglusFacilityControllerTest {
   public void shouldThrowExceptionGivenNoParameter() {
     UUID facilityId = UUID.randomUUID();
 
-    siglusFacilityController.searchLots(facilityId, null, null);
+    siglusFacilityController.searchLotStock(facilityId, null, null);
   }
 
   @Test
