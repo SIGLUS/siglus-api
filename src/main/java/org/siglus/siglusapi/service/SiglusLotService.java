@@ -223,6 +223,11 @@ public class SiglusLotService {
     return getLotList(lotIds);
   }
 
+  public List<LotDto> getLotsByOrderables(UUID facilityId, Collection<UUID> orderableIds) {
+    List<UUID> lotIds = siglusStockCardService.findLotIdsByFacilityAndOrderables(facilityId, orderableIds);
+    return getLotList(lotIds);
+  }
+
   public void removeExpiredLots(List<RemovedLotDto> lots, boolean hasLocation) {
     // check whether the lots expired
     List<UUID> lotIds = lots.stream().map(RemovedLotDto::getLotId).collect(Collectors.toList());

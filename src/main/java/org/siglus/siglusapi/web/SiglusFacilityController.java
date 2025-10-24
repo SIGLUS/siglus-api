@@ -25,6 +25,7 @@ import javax.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.openlmis.referencedata.domain.Facility;
 import org.siglus.siglusapi.dto.LocationStatusDto;
+import org.siglus.siglusapi.dto.LotDto;
 import org.siglus.siglusapi.dto.RequisitionGroupMembersDto;
 import org.siglus.siglusapi.exception.InvalidReasonException;
 import org.siglus.siglusapi.repository.dto.LotStockDto;
@@ -60,14 +61,23 @@ public class SiglusFacilityController {
   }
 
   @GetMapping("/{id}/lots")
-  public List<LotStockDto> searchLots(@PathVariable("id") UUID id,
-                                      @RequestParam(required = false) Boolean expired,
-                                      @RequestParam(required = false) Set<UUID> orderableIds) {
+  public List<LotStockDto> searchLotStock(@PathVariable("id") UUID id,
+                                          @RequestParam(required = false) Boolean expired,
+                                          @RequestParam(required = false) Set<UUID> orderableIds) {
     if (!ObjectUtils.isEmpty(expired) && expired) {
       return siglusLotService.getExpiredLots(id);
     }
     if (!ObjectUtils.isEmpty(orderableIds)) {
       return siglusLotService.getLotStocksByOrderables(id, orderableIds);
+    }
+    throw new ValidationException("missing parameters to query lots");
+  }
+
+  @GetMapping("/{id}/facilityLots")
+  public List<LotDto> searchLot(@PathVariable("id") UUID id,
+                                @RequestParam(required = false) Set<UUID> orderableIds) {
+    if (!ObjectUtils.isEmpty(orderableIds)) {
+      return siglusLotService.getLotsByOrderables(id, orderableIds);
     }
     throw new ValidationException("missing parameters to query lots");
   }
