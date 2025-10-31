@@ -265,6 +265,8 @@ public class SiglusFcIntegrationService {
         .map(product -> {
 
           Double cmm = cmmMap.getOrDefault(product.getProductCode(), 0.0);
+          cmm = Math.round(cmm * 100.0) / 100.0;  // rounds to 2 decimal places
+
           Double mos;
 
           if (cmm == null || cmm <= 0) {
