@@ -155,9 +155,10 @@ public class FcIssueVoucherService implements ProcessDataService {
           .collect(Collectors.toList());
       for (ResponseBaseDto item : issueVoucherList) {
         IssueVoucherDto issueVoucherDto = (IssueVoucherDto) item;
-        ShipmentsExtension shipmentsExtension = shipmentsExtensionRepository.findByClientCodeAndIssueVoucherNumber(
+        List<ShipmentsExtension> shipmentsExtensions = shipmentsExtensionRepository
+            .findByClientCodeAndIssueVoucherNumber(
             issueVoucherDto.getClientCode(), issueVoucherDto.getIssueVoucherNumber());
-        if (shipmentsExtension == null) {
+        if (CollectionUtils.isEmpty(shipmentsExtensions)) {
           log.info("[FC issueVoucher] create: {}", issueVoucherDto);
           fcCreateIssueVoucherService.createIssueVoucher(issueVoucherDto, issueVoucherErrors);
           createCounter++;

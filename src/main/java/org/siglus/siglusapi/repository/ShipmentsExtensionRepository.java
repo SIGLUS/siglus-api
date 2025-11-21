@@ -23,7 +23,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface ShipmentsExtensionRepository extends JpaRepository<ShipmentsExtension, UUID> {
 
-  ShipmentsExtension findByClientCodeAndIssueVoucherNumber(String clientCode, String issueVoucherNumber);
+  List<ShipmentsExtension> findByClientCodeAndIssueVoucherNumber(String clientCode, String issueVoucherNumber);
 
   List<ShipmentsExtension> findByShipmentIdIn(Set<UUID> ids);
 

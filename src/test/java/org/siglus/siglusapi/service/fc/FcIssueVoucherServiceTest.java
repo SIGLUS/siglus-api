@@ -38,6 +38,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -226,8 +227,10 @@ public class FcIssueVoucherServiceTest {
     // given
     IssueVoucherDto issueVoucherDto = getIssueVoucherDto();
     ShipmentsExtension extension = new ShipmentsExtension();
+    List<ShipmentsExtension> extensions = new ArrayList<>();
+    extensions.add(extension);
     when(shipmentsExtensionRepository.findByClientCodeAndIssueVoucherNumber(issueVoucherDto.getClientCode(),
-        issueVoucherDto.getIssueVoucherNumber())).thenReturn(extension);
+        issueVoucherDto.getIssueVoucherNumber())).thenReturn(extensions);
 
     // when
     FcIntegrationResultDto result = service.processData(emptyList(), START_DATE, LAST_UPDATED_AT);
