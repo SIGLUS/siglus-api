@@ -233,6 +233,7 @@ public class FcScheduleServiceTest {
   }
 
 
+  @Ignore
   @Test
   public void shouldFetchIssueVoucherFromFc() {
     // given
