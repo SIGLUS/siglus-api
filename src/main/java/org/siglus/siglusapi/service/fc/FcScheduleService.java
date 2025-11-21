@@ -287,7 +287,7 @@ public class FcScheduleService {
       if (fetchedPages.isEmpty()) {
         initData(api);
       }
-      int totalPages = callFcService.getPageInfoDto().getTotalPages();
+      // int totalPages = callFcService.getPageInfoDto().getTotalPages();
 
       String cacheKey = api + ":" + date;
 
@@ -296,7 +296,7 @@ public class FcScheduleService {
         fetchedPages.computeIfAbsent(cacheKey, k -> ConcurrentHashMap.newKeySet());
       }
 
-      for (int page = 1; page <= totalPages; page++) {
+      for (int page = 1; page <= 24; page++) {
 
         // Skip ONLY for ISSUE_VOUCHER_API
         if (ISSUE_VOUCHER_API.equals(api)) {
