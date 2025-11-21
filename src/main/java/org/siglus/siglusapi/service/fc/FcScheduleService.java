@@ -39,6 +39,9 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -276,13 +279,47 @@ public class FcScheduleService {
     recordFcIntegrationChanges(fcIntegrationResult, resultDto.getFcIntegrationChanges());
   }
 
+  // Global cache: api/date -> pages already fetched
+  private final Map<String, Set<Integer>> fetchedPages = new ConcurrentHashMap<>();
+
   public void fetchData(String api, String date) {
     try {
-      initData(api);
-      for (int page = 1; page <= callFcService.getPageInfoDto().getTotalPages(); page++) {
-        callFcService.fetchData(getUrl(api, page, date), api);
+      if (fetchedPages.isEmpty()) {
+        initData(api);
       }
+      int totalPages = callFcService.getPageInfoDto().getTotalPages();
+
+      String cacheKey = api + ":" + date;
+
+      // Create page-set only for ISSUE_VOUCHER_API
+      if (ISSUE_VOUCHER_API.equals(api)) {
+        fetchedPages.computeIfAbsent(cacheKey, k -> ConcurrentHashMap.newKeySet());
+      }
+
+      for (int page = 1; page <= totalPages; page++) {
+
+        // Skip ONLY for ISSUE_VOUCHER_API
+        if (ISSUE_VOUCHER_API.equals(api)) {
+          Set<Integer> fetched = fetchedPages.get(cacheKey);
+
+          if (fetched.contains(page)) {
+            log.info("[FC] skip {} page {}, already fetched", api, page);
+            continue;
+          }
+
+          // Fetch & record
+          callFcService.fetchData(getUrl(api, page, date), api);
+          fetched.add(page);
+        } else {
+          // Normal behavior for other APIs
+          callFcService.fetchData(getUrl(api, page, date), api);
+        }
+      }
+
       log.info("[FC] fetch {} finish, total size: {}", api, getTotalSize(api));
+
+      fetchedPages.clear();
+      log.info("[FC] cleared cached fetchedPages");
     } catch (Exception e) {
       log.error("[FC] fetch api {} failed", api);
       throw e;
