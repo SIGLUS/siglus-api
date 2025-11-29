@@ -608,7 +608,7 @@ traits:
         responses:
           201:
             description: submit success
-    /{id}/proxy:
+    /proxy:
       post:
         is: [ secured ]
         responses:
