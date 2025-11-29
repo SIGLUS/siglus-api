@@ -608,7 +608,12 @@ traits:
         responses:
           201:
             description: submit success
-
+    /{id}/proxy:
+      post:
+        is: [ secured ]
+        responses:
+          200:
+            description: GET specific facility's lots with param
     /facility:
       /{id}/requisitionGroup:
         get:
