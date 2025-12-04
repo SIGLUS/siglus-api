@@ -39,7 +39,7 @@ public class HistoricalDataPersistentService {
   @Async
   public void refreshHistoricalDataReport() {
     log.info("historical data persistentData refresh. start at {} ", LocalDateTime.now());
-    historicalDataRepository.deleteAll();
+    historicalDataRepository.truncateHistoricalData();
     updateHistoricalData(null);
     long count = historicalDataRepository.count();
     log.info("historical data persistentData refresh. end at {}, data quanrity is {}", LocalDateTime.now(), count);
