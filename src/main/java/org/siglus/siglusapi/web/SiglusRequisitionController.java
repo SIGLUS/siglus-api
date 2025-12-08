@@ -21,6 +21,7 @@ import static org.siglus.siglusapi.constant.PaginationConstants.NO_PAGINATION;
 import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.locks.ReentrantLock;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
@@ -51,6 +52,7 @@ import org.siglus.siglusapi.service.SiglusProcessingPeriodService;
 import org.siglus.siglusapi.service.SiglusRequisitionExportService;
 import org.siglus.siglusapi.service.SiglusRequisitionService;
 import org.siglus.siglusapi.service.scheduledtask.SiglusRequisitionAutoCloseService;
+import org.siglus.siglusapi.util.RequisitionLockManager;
 import org.siglus.siglusapi.web.request.BuildRequisitionDraftRequest;
 import org.siglus.siglusapi.web.response.RequisitionPeriodExtensionResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,6 +60,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.MultiValueMap;
 import org.springframework.validation.annotation.Validated;
@@ -108,6 +111,8 @@ public class SiglusRequisitionController {
   private RequisitionCreateForClientEmitter requisitionCreateForClientEmitter;
   @Autowired
   private SiglusRequisitionExportService siglusRequisitionExportService;
+  @Autowired
+  private RequisitionLockManager requisitionLockManager;
 
   @PostMapping("/initiate")
   @ResponseStatus(HttpStatus.CREATED)
@@ -124,15 +129,44 @@ public class SiglusRequisitionController {
 
   @PostMapping("/draft")
   public SiglusRequisitionDto buildDraftForRegular(
-      @RequestBody BuildRequisitionDraftRequest buildRequisitionDraftRequest,
+      @RequestBody BuildRequisitionDraftRequest req,
       HttpServletRequest request, HttpServletResponse response) {
-    SiglusRequisitionDto dto = siglusRequisitionService.buildDraftForRegular(
-        buildRequisitionDraftRequest.getFacilityId(),
-        buildRequisitionDraftRequest.getPeriodId(),
-        buildRequisitionDraftRequest.getProgramId(), request, response);
-    siglusRequisitionService.updateRequisition(dto.getId(), dto, request, response);
-    return dto;
+
+    String key = req.getFacilityId() + "_" +
+        req.getPeriodId()   + "_" +
+        req.getProgramId();
+
+    ReentrantLock lock = requisitionLockManager.getLock(key);
+
+    // Reject immediately — no blocking
+    if (lock != null && !lock.tryLock()) {
+      throw new IllegalStateException(
+          "A draft is already being processed for this facility/period/program."
+      );
+    }
+
+    try {
+      SiglusRequisitionDto dto = siglusRequisitionService.buildDraftForRegular(
+          req.getFacilityId(),
+          req.getPeriodId(),
+          req.getProgramId(),
+          request,
+          response
+      );
+
+      siglusRequisitionService.updateRequisition(dto.getId(), dto, request, response);
+
+      return dto;
+
+    } finally {
+      if (lock != null) {
+        lock.unlock();
+        requisitionLockManager.cleanupLock(key, lock);
+      }
+    }
   }
+
+
 
   @GetMapping("/{id}")
   public SiglusRequisitionDto searchRequisition(@PathVariable("id") UUID requisitionId) {

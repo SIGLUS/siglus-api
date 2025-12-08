@@ -50,6 +50,7 @@ import org.siglus.siglusapi.service.SiglusNotificationService;
 import org.siglus.siglusapi.service.SiglusProcessingPeriodService;
 import org.siglus.siglusapi.service.SiglusRequisitionExportService;
 import org.siglus.siglusapi.service.SiglusRequisitionService;
+import org.siglus.siglusapi.util.RequisitionLockManager;
 import org.siglus.siglusapi.web.request.BuildRequisitionDraftRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.mock.web.MockHttpServletResponse;
@@ -95,6 +96,9 @@ public class SiglusRequisitionControllerTest {
 
   @Mock
   private SiglusRequisitionExportService siglusRequisitionExportService;
+
+  @Mock
+  private RequisitionLockManager requisitionLockManager;
 
   private UUID uuid;
 

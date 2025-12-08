@@ -521,6 +521,15 @@ public class SiglusRequisitionService {
   @Transactional
   public SiglusRequisitionDto buildDraftForRegular(UUID facilityId, UUID periodId, UUID programId,
       HttpServletRequest request, HttpServletResponse response) {
+    Requisition existed = siglusRequisitionRepository.findOneByFacilityIdAndProgramIdAndProcessingPeriodId(
+        facilityId,
+        programId,
+        periodId);
+    if (existed != null) {
+      throw new IllegalStateException(
+          "Requisition already exist, please refresh the page"
+      );
+    }
     RequisitionV2Dto v2Dto = requisitionV2Controller.initiate(programId, facilityId, periodId, false,
         null, request, response);
     removeKitFromRequisitionAvailableProducts(v2Dto);
