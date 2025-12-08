@@ -69,6 +69,7 @@ import org.openlmis.fulfillment.domain.Order;
 import org.openlmis.fulfillment.domain.OrderLineItem;
 import org.openlmis.fulfillment.domain.OrderStatus;
 import org.openlmis.fulfillment.domain.ProofOfDelivery;
+import org.openlmis.fulfillment.domain.ProofOfDeliveryStatus;
 import org.openlmis.fulfillment.domain.Shipment;
 import org.openlmis.fulfillment.domain.ShipmentLineItem;
 import org.openlmis.fulfillment.domain.UpdateDetails;
@@ -131,6 +132,7 @@ import org.siglus.siglusapi.repository.ShipmentsExtensionRepository;
 import org.siglus.siglusapi.repository.SiglusFacilityRepository;
 import org.siglus.siglusapi.repository.SiglusLocalIssueVoucherRepository;
 import org.siglus.siglusapi.repository.SiglusOrdersRepository;
+import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.repository.SiglusShipmentRepository;
 import org.siglus.siglusapi.repository.StockManagementRepository;
@@ -287,6 +289,9 @@ public class SiglusOrderService {
   @Autowired
   private OrderLineItemRepository orderLineItemRepository;
 
+  @Autowired
+  private SiglusProofOfDeliveryRepository siglusProofOfDeliveryRepository;
+
   private static final String SLASH = "/";
 
   private static final List<String> REQUISITION_STATUS_AFTER_FINAL_APPROVED = Lists.newArrayList(
@@ -398,6 +403,10 @@ public class SiglusOrderService {
     Set<UUID> orderIds = orderExtensionResponses.stream().map(BasicOrderExtensionResponse::getId).collect(toSet());
     List<Shipment> shipments = siglusShipmentRepository.findAllByOrderIdIn(orderIds);
     Set<UUID> shipmentIds = shipments.stream().map(Shipment::getId).collect(toSet());
+    Map<UUID, ProofOfDeliveryStatus> shipmenIdToPodStatusMap =
+        siglusProofOfDeliveryRepository.findByShipmentIdIn(shipmentIds).stream()
+            .filter(proofOfDelivery -> proofOfDelivery.getShipment() != null)
+            .collect(toMap(pod -> pod.getShipment().getId(), ProofOfDelivery::getStatus));
     Map<UUID, String> shipmenIdToIssueVoucherNumberMap =
             shipmentsExtensionRepository.findByShipmentIdIn(shipmentIds).stream()
                 .filter(shipmentsExtension -> shipmentsExtension.getIssueVoucherNumber() != null)
@@ -408,8 +417,9 @@ public class SiglusOrderService {
               .filter(shipment -> response.getId().equals(shipment.getOrder().getId())).findFirst();
       if (optional.isPresent()) {
         UUID shipmentId = optional.get().getId();
-        response.setIssueVoucherNumber(shipmenIdToIssueVoucherNumberMap.get(shipmentId));
+        response.setIssueVoucherNumber(shipmenIdToIssueVoucherNumberMap.getOrDefault(shipmentId, null));
         response.setShipDate(optional.get().getShippedDate());
+        response.setProofOfDeliveryStatus(shipmenIdToPodStatusMap.getOrDefault(shipmentId, null));
       }
     }
 

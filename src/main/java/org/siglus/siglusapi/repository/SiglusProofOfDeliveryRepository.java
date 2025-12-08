@@ -21,6 +21,7 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -94,4 +95,6 @@ public interface SiglusProofOfDeliveryRepository extends JpaRepository<ProofOfDe
       @Param("id") UUID proofOfDeliveryId);
 
   ProofOfDelivery findByShipmentId(UUID shipmentId);
+
+  List<ProofOfDelivery> findByShipmentIdIn(Set<UUID> shipmentIds);
 }
