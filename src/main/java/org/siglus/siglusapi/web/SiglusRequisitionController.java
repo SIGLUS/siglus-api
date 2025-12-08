@@ -60,7 +60,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.MultiValueMap;
 import org.springframework.validation.annotation.Validated;
@@ -132,9 +131,9 @@ public class SiglusRequisitionController {
       @RequestBody BuildRequisitionDraftRequest req,
       HttpServletRequest request, HttpServletResponse response) {
 
-    String key = req.getFacilityId() + "_" +
-        req.getPeriodId()   + "_" +
-        req.getProgramId();
+    String key = req.getFacilityId() + "_"
+        + req.getPeriodId()   + "_"
+        + req.getProgramId();
 
     ReentrantLock lock = requisitionLockManager.getLock(key);
 
