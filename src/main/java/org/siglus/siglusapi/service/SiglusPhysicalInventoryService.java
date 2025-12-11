@@ -1351,13 +1351,13 @@ public class SiglusPhysicalInventoryService {
     return getString(lineItemDto.getOrderableId()) + SEPARATOR + getLotString(lineItemDto);
   }
 
-  private String getUniqueKeyWithLocation(PhysicalInventoryLineItemDto lineItemDto) {
-    return getString(lineItemDto.getOrderableId()) + SEPARATOR + getLotString(lineItemDto)
+  private String getUniqueKeyWithLocationForCompareWithExtension(PhysicalInventoryLineItemDto lineItemDto) {
+    return getString(lineItemDto.getOrderableId()) + SEPARATOR + getString(lineItemDto.getLotId())
         + SEPARATOR + getString(lineItemDto.getLocationCode());
   }
 
-  private String getUniqueKeyWithLocationForCompareWithExtension(PhysicalInventoryLineItemDto lineItemDto) {
-    return getString(lineItemDto.getOrderableId()) + SEPARATOR + getString(lineItemDto.getLotId())
+  private String getUniqueKeyWithLocation(PhysicalInventoryLineItemDto lineItemDto) {
+    return getString(lineItemDto.getOrderableId()) + SEPARATOR + getLotString(lineItemDto)
         + SEPARATOR + getString(lineItemDto.getLocationCode());
   }
 
