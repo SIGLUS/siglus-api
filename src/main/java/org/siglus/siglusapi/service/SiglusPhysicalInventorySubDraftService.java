@@ -294,6 +294,7 @@ public class SiglusPhysicalInventorySubDraftService {
 
       List<PhysicalInventoryLineItemDto> oldLineItems = physicalInventoryDto.getLineItems();
 
+      // TODO new added items?
       List<PhysicalInventoryLineItemDto> notChangedLineItems = oldLineItems.stream()
           .filter(item -> !oldLineItemIds.contains(item.getId()))
           .collect(Collectors.toList());

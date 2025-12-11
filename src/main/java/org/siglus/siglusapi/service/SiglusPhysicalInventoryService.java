@@ -1122,7 +1122,7 @@ public class SiglusPhysicalInventoryService {
               beforeSavedDto.getLineItemsExtensions()
                   .stream()
                   .filter(lineItemsExtensionDto -> lineItemsExtensionDto.getPhysicalInventoryLineItemId() == null)
-                  .filter(lineItemsExtensionDto -> getUniqueKeyWithLocation(lineItemDto)
+                  .filter(lineItemsExtensionDto -> getUniqueKeyWithLocationForCompareWithExtension(lineItemDto)
                       .equals(getUniqueKeyWithLocation(lineItemsExtensionDto)))
                   .findFirst();
           lineItemsExtension.ifPresent(dto -> dto.setPhysicalInventoryLineItemId(id));
@@ -1353,6 +1353,11 @@ public class SiglusPhysicalInventoryService {
 
   private String getUniqueKeyWithLocation(PhysicalInventoryLineItemDto lineItemDto) {
     return getString(lineItemDto.getOrderableId()) + SEPARATOR + getLotString(lineItemDto)
+        + SEPARATOR + getString(lineItemDto.getLocationCode());
+  }
+
+  private String getUniqueKeyWithLocationForCompareWithExtension(PhysicalInventoryLineItemDto lineItemDto) {
+    return getString(lineItemDto.getOrderableId()) + SEPARATOR + getString(lineItemDto.getLotId())
         + SEPARATOR + getString(lineItemDto.getLocationCode());
   }
 
