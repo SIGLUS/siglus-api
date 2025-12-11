@@ -37,6 +37,7 @@ import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_INVENTORY_CONFLICT_DRA
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_NOT_ACCEPTABLE;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_PERMISSION_NOT_SUPPORTED;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_SPLIT_NUM_TOO_LARGE;
+import static org.siglus.siglusapi.service.SiglusPhysicalInventorySubDraftService.LOT_CODE_KEY;
 import static org.siglus.siglusapi.util.ComparorUtil.distinctByKey;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -1339,12 +1340,19 @@ public class SiglusPhysicalInventoryService {
     return o == null ? "" : o.toString();
   }
 
+  private String getLotString(PhysicalInventoryLineItemDto lineItemDto) {
+    if (lineItemDto.getLotId() == null && lineItemDto.getExtraData() != null) {
+      return lineItemDto.getExtraData().getOrDefault(LOT_CODE_KEY, "");
+    }
+    return getString(lineItemDto.getLotId());
+  }
+
   private String getUniqueKey(PhysicalInventoryLineItemDto lineItemDto) {
-    return getString(lineItemDto.getOrderableId()) + SEPARATOR + getString(lineItemDto.getLotId());
+    return getString(lineItemDto.getOrderableId()) + SEPARATOR + getLotString(lineItemDto);
   }
 
   private String getUniqueKeyWithLocation(PhysicalInventoryLineItemDto lineItemDto) {
-    return getString(lineItemDto.getOrderableId()) + SEPARATOR + getString(lineItemDto.getLotId())
+    return getString(lineItemDto.getOrderableId()) + SEPARATOR + getLotString(lineItemDto)
         + SEPARATOR + getString(lineItemDto.getLocationCode());
   }
 

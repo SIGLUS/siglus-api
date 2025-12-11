@@ -80,7 +80,7 @@ public class SiglusPhysicalInventorySubDraftService {
   private PhysicalInventoryEmptyLocationLineItemRepository physicalInventoryEmptyLocationLineItemRepository;
 
   public static final String DRAFT = "Draft ";
-  private static final String LOT_CODE_KEY = "lotCode";
+  public static final String LOT_CODE_KEY = "lotCode";
   private static final String EXPIRATION_DATE_KEY = "expirationDate";
 
   @Transactional
