@@ -140,7 +140,7 @@ public class SiglusRequisitionController {
     // Reject immediately — no blocking
     if (lock != null && !lock.tryLock()) {
       throw new IllegalStateException(
-          "A draft is already being processed for this facility/period/program."
+          "Requisition already exist, please refresh the page"
       );
     }
 
