@@ -200,7 +200,8 @@ public class SiglusStockCardLocationMovementService {
       locationMovementLineItemDto.setSoh(soh);
     }
     Collections.reverse(locationMovementLineItemDtos);
-    resetFirstMovementQuantity(locationMovementLineItemDtos);
+    // TODO resetFirstMovementQuantity will change the first MovementQuantity
+    // resetFirstMovementQuantity(locationMovementLineItemDtos);
     Integer latestSoh = calculatedStockOnHandByLocationRepository.findRecentlySohByStockCardIdAndLocationCode(
         stockCardId, locationCode).orElse(0);
     return createLocationMovmentDto(locationMovementLineItemDtos, stockCardId, latestSoh, locationCode);

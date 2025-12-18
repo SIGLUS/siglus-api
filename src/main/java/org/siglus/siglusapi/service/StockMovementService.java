@@ -90,7 +90,8 @@ public class StockMovementService {
       stockMovementResDtos.add(stockMovementResDto);
     }
     Collections.reverse(stockMovementResDtos);
-    resetFirstMovementQuantity(stockMovementResDtos);
+    // TODO resetFirstMovementQuantity will change the first MovementQuantity
+    //  resetFirstMovementQuantity(stockMovementResDtos);
     StockMovementResDto first = stockMovementResDtos.get(stockMovementResDtos.size() - 1);
     StockMovementResDto initial = StockMovementResDto.builder().reason(INITIAL_INVENTORY_KEY)
         .dateOfMovement(first.getDateOfMovement()).productSoh(0).build();
