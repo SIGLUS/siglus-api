@@ -529,20 +529,55 @@ public class SiglusOrderService {
     });
   }
 
-  private void setWarningPopupFlag(List<Order> orders, List<FulfillOrderDto> filteredFulfillOrderDtos) {
-    Set<UUID> processingPeriodIds = orders.stream().map(Order::getProcessingPeriodId).collect(Collectors.toSet());
-    List<org.openlmis.requisition.dto.ProcessingPeriodDto> processingPeriodDtos = periodService
-        .findByIds(processingPeriodIds);
-    processingPeriodDtos.sort((o1, o2) -> o2.getEndDate().compareTo(o1.getEndDate()));
-    LocalDate latestOrderPeriodEndDate = processingPeriodDtos.get(0).getEndDate();
+  private void setWarningPopupFlag(List<Order> orders,
+                                   List<FulfillOrderDto> filteredFulfillOrderDtos) {
+
+    // Fetch processing periods
+    Set<UUID> processingPeriodIds = orders.stream()
+        .map(Order::getProcessingPeriodId)
+        .collect(Collectors.toSet());
+
+    Map<UUID, org.openlmis.requisition.dto.ProcessingPeriodDto> periodMap =
+        periodService.findByIds(processingPeriodIds).stream()
+            .collect(Collectors.toMap(
+                org.openlmis.requisition.dto.ProcessingPeriodDto::getId,
+                Function.identity()
+            ));
+
+    // facilityId -> latest processing period end date
+    Map<UUID, LocalDate> latestEndDateByFacility = orders.stream()
+        .filter(o -> periodMap.containsKey(o.getProcessingPeriodId()))
+        .collect(Collectors.groupingBy(
+            Order::getFacilityId,
+            Collectors.collectingAndThen(
+                Collectors.maxBy(Comparator.comparing(
+                    o -> periodMap.get(o.getProcessingPeriodId()).getEndDate()
+                )),
+                opt -> periodMap.get(opt.get().getProcessingPeriodId()).getEndDate()
+            )
+        ));
+
+    // Step 2: Apply logic per DTO
     filteredFulfillOrderDtos.forEach(dto -> {
-      YearMonth yearMonth = YearMonth.of(dto.getBasicOrder().getProcessingPeriod().getEndDate().getYear(),
-              dto.getBasicOrder().getProcessingPeriod().getEndDate().getMonth());
-      YearMonth latestOrderYearMonth = YearMonth.of(latestOrderPeriodEndDate.getYear(),
-              latestOrderPeriodEndDate.getMonth());
-      if (yearMonth.isAfter(latestOrderYearMonth) || yearMonth.equals(latestOrderYearMonth)) {
+
+      UUID facilityId = dto.getBasicOrder().getFacility().getId();
+      LocalDate latestOrderPeriodEndDate = latestEndDateByFacility.get(facilityId);
+
+      if (latestOrderPeriodEndDate == null) {
+        return; // no comparison possible
+      }
+
+      LocalDate requisitionPeriodEndDate =
+          dto.getBasicOrder().getProcessingPeriod().getEndDate();
+
+      YearMonth dtoYearMonth = YearMonth.from(requisitionPeriodEndDate);
+      YearMonth latestOrderYearMonth = YearMonth.from(latestOrderPeriodEndDate);
+
+      if (dtoYearMonth.isAfter(latestOrderYearMonth)
+          || dtoYearMonth.equals(latestOrderYearMonth)) {
+
         dto.setExpired(false);
-        LocalDate requisitionPeriodEndDate = dto.getBasicOrder().getProcessingPeriod().getEndDate();
+
         if (requisitionPeriodEndDate.isAfter(latestOrderPeriodEndDate)) {
           dto.setShowWarningPopup(true);
         }
@@ -1256,7 +1291,7 @@ public class SiglusOrderService {
   @SuppressWarnings("PMD.CyclomaticComplexity")
   private Set<VersionObjectReferenceDto> getAllUserAvailableProductAggregator(OrderDto orderDto, boolean isFcRequest) {
     Requisition requisition = getRequisitionByOrder(orderDto);
-
+    // TODO NO orderDto.getCreatedBy()?
     UUID approverFacilityId = orderDto.getCreatedBy().getHomeFacilityId();
     UUID userHomeFacilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
     UUID programId = requisition.getProgramId();
