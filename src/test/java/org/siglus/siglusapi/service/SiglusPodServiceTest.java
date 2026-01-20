@@ -262,9 +262,12 @@ public class SiglusPodServiceTest {
   @Test
   public void shouldGetPartialQualityWhenGetProofOfDelivery() {
     // given
-    OrderObjectReferenceDto orderDto = new OrderObjectReferenceDto(UUID.randomUUID());
+    OrderableDto orderableDto = new OrderableDto();
+    orderableDto.setId(UUID.randomUUID());
     OrderLineItemDto lineItemDto = new OrderLineItemDto();
+    lineItemDto.setOrderable(orderableDto);
     lineItemDto.setId(UUID.randomUUID());
+    OrderObjectReferenceDto orderDto = new OrderObjectReferenceDto(UUID.randomUUID());
     orderDto.setOrderLineItems(Arrays.asList(lineItemDto));
     ShipmentObjectReferenceDto shipmentDto = new ShipmentObjectReferenceDto(UUID.randomUUID());
     shipmentDto.setOrder(orderDto);
@@ -294,6 +297,7 @@ public class SiglusPodServiceTest {
     // given
     OrderObjectReferenceDto orderDto = new OrderObjectReferenceDto(UUID.randomUUID());
     orderDto.setExternalId(externalId);
+    orderDto.setOrderLineItems(newArrayList());
     ShipmentObjectReferenceDto shipmentDto = new ShipmentObjectReferenceDto(UUID.randomUUID());
     shipmentDto.setOrder(orderDto);
     ProofOfDeliveryDto dto = new ProofOfDeliveryDto();
@@ -1493,7 +1497,6 @@ public class SiglusPodServiceTest {
     lineItemDtos.add(lineItemDto);
 
     podDto.setLineItems(lineItemDtos);
-
     return podDto;
   }
 
@@ -1552,6 +1555,7 @@ public class SiglusPodServiceTest {
   private ShipmentObjectReferenceDto buildMockShipmentDto() {
     OrderObjectReferenceDto orderDto = new OrderObjectReferenceDto(orderDtoId);
     orderDto.setExternalId(externalId);
+    orderDto.setOrderLineItems(newArrayList());
     ShipmentObjectReferenceDto shipmentDto = new ShipmentObjectReferenceDto(shipmentDtoId);
     shipmentDto.setOrder(orderDto);
     ShipmentLineItemDto shipmentLineItemDto = new ShipmentLineItemDto();
