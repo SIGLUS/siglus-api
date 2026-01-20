@@ -57,6 +57,7 @@ import org.openlmis.fulfillment.domain.ProofOfDeliveryLineItem.Importer;
 import org.openlmis.fulfillment.domain.ProofOfDeliveryStatus;
 import org.openlmis.fulfillment.repository.ProofOfDeliveryRepository;
 import org.openlmis.fulfillment.web.ProofOfDeliveryController;
+import org.openlmis.fulfillment.web.util.OrderLineItemDto;
 import org.openlmis.fulfillment.web.util.OrderObjectReferenceDto;
 import org.openlmis.fulfillment.web.util.ProofOfDeliveryDto;
 import org.openlmis.fulfillment.web.util.ProofOfDeliveryLineItemDto;
@@ -203,6 +204,37 @@ public class SiglusPodService {
       throw new NotFoundException(ERROR_NO_POD_OR_POD_LINE_ITEM_FOUND);
     }
     OrderObjectReferenceDto order = podDto.getShipment().getOrder();
+
+    Map<UUID, List<OrderLineItemDto>> grouped =
+        order.getOrderLineItems().stream()
+            .collect(Collectors.groupingBy(
+                o -> o.getOrderable().getId()
+            ));
+
+    // Log duplicates
+    grouped.entrySet().stream()
+        .filter(e -> e.getValue().size() > 1)
+        .forEach(e -> {
+          log.info("Duplicate Orderable ID: {}", e.getKey());
+          e.getValue().forEach(item ->
+              log.info("Duplicate OrderLineItemDto: {}", item)
+          );
+        });
+
+    // Filter
+    List<OrderLineItemDto> result =
+        grouped.values().stream()
+            .flatMap(list -> {
+              if (list.size() > 1) {
+                // duplicate → keep only orderedQuantity != 0
+                return list.stream()
+                    .filter(o -> o.getOrderedQuantity() != 0);
+              }
+              return list.stream();
+            })
+            .collect(Collectors.toList());
+
+    order.setOrderLineItems(result);
     OrderExternal external = orderExternalRepository.findOne(order.getExternalId());
     UUID requisitionId = external == null ? order.getExternalId() : external.getRequisitionId();
     order.setRequisitionNumber(siglusRequisitionExtensionService.formatRequisitionNumber(requisitionId));
