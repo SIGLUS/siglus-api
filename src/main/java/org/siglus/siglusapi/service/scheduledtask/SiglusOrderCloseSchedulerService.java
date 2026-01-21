@@ -48,7 +48,6 @@ import org.siglus.siglusapi.service.client.SiglusProcessingPeriodReferenceDataSe
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 
@@ -84,7 +83,7 @@ public class SiglusOrderCloseSchedulerService {
     }
   }
 
-  @Scheduled(cron = "${fulfillment.close.cron}", zone = "${time.zoneId}")
+  //  @Scheduled(cron = "${fulfillment.close.cron}", zone = "${time.zoneId}")
   public void batchCloseExpiredOrder() {
     List<Order> orders = getCanFulfillOrder();
     batchProcessExpiredOrders(orders);
