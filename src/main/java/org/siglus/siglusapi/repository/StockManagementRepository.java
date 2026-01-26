@@ -514,34 +514,46 @@ public class StockManagementRepository extends BaseNativeRepository {
     return where.toString();
   }
 
-  private String generateMovementQuery(@Nonnull UUID facilityId, @Nonnull MapSqlParameterSource parameters,
-      @Nullable LocalDate since, @Nullable LocalDate at, @Nonnull Set<UUID> orderableIds, Instant syncSince,
-      Instant syncTill) {
-    String select = "SELECT root.id AS id,"
-        + "o.code AS productcode, "
-        + "l.lotcode, "
-        + "root.occurreddate, "
-        + "root.extradata :: json ->> 'originEventTime' as recordedat, "
-        + "COALESCE(root.extradata :: json ->> 'isInitInventory', 'false') as isinitinventory, "
-        + "root.quantity, "
-        + "srcorg.name AS srcname, "
-        + "destorg.name AS destname, "
-        + "reason.name AS adjustreason, "
-        + "reason.reasontype AS adjustreasontype, "
-        + "adjstreason.name AS inventoryreason, "
-        + "adjstreason.reasontype AS inventoryreasontype,"
-        + "pilia.quantity inventoryadjustment,"
-        + "requested.requestedquantity, "
-        + "root.signature, "
-        + "root.documentnumber, "
-        + "root.processeddate, "
-        + "l.expirationdate, "
-        + "srcfac.name AS srcfacname, "
-        + "srcfac.code AS srcfaccode, "
-        + "destfac.name AS destfacname, "
-        + "destfac.code AS destfaccode, "
-        + "root.sourcefreetext ,"
-        + "root.destinationfreetext ";
+  private String generateMovementQuery(
+      @Nonnull UUID facilityId,
+      @Nonnull MapSqlParameterSource parameters,
+      @Nullable LocalDate since,
+      @Nullable LocalDate at,
+      @Nonnull Set<UUID> orderableIds,
+      Instant syncSince,
+      Instant syncTill
+  ) {
+
+    String select =
+        "SELECT root.id AS id, "
+            + "o.code AS productcode, "
+            + "l.lotcode, "
+            + "root.occurreddate, "
+            + "root.extradata::json ->> 'originEventTime' AS recordedat, "
+            + "COALESCE(root.extradata::json ->> 'isInitInventory', 'false') AS isinitinventory, "
+            + "root.quantity, "
+            + "srcorg.name AS srcname, "
+            + "destorg.name AS destname, "
+            + "reason.name AS adjustreason, "
+            + "reason.reasontype AS adjustreasontype, "
+            + "adjstreason.name AS inventoryreason, "
+            + "adjstreason.reasontype AS inventoryreasontype, "
+            + "COALESCE( "
+            + "  pilia.quantity, "
+            + "  (root.extradata::json ->> 'adjustmentQuantity')::integer "
+            + ") AS inventoryadjustment, "
+            + "requested.requestedquantity, "
+            + "root.signature, "
+            + "root.documentnumber, "
+            + "root.processeddate, "
+            + "l.expirationdate, "
+            + "srcfac.name AS srcfacname, "
+            + "srcfac.code AS srcfaccode, "
+            + "destfac.name AS destfacname, "
+            + "destfac.code AS destfaccode, "
+            + "root.sourcefreetext, "
+            + "root.destinationfreetext ";
+
     String root = "stockmanagement.stock_card_line_items root";
     String eventRoot = "stockmanagement.stock_events se";
     String srcNodeRoot = "stockmanagement.nodes srcnode";
@@ -554,9 +566,19 @@ public class StockManagementRepository extends BaseNativeRepository {
     String lineAdjRoot = "stockmanagement.physical_inventory_line_item_adjustments pilia";
     String adjustmentReasonRoot = "stockmanagement.stock_card_line_item_reasons adjstreason";
     String requestedRoot = "siglusintegration.stock_event_product_requested requested";
-    String where = generateWhere(facilityId, parameters, since, at, orderableIds, syncSince, syncTill);
+
+    String where = generateWhere(
+        facilityId,
+        parameters,
+        since,
+        at,
+        orderableIds,
+        syncSince,
+        syncTill
+    );
+
     return select
-        + "FROM " + root + ' '
+        + "FROM " + root + " "
         + LEFT_JOIN + STOCK_CARD_ROOT + " ON root.stockcardid = sc.id "
         + LEFT_JOIN + eventRoot + " ON sc.origineventid = se.id "
         + LEFT_JOIN + ORDERABLE_ROOT + " ON sc.orderableid = o.id "
@@ -569,9 +591,14 @@ public class StockManagementRepository extends BaseNativeRepository {
         + LEFT_JOIN + destFacilityRoot + " ON destnode.referenceid = destfac.id "
         + LEFT_JOIN + reasonRoot + " ON root.reasonid = reason.id "
         + LEFT_JOIN + lineAdjRoot + " ON pilia.stockcardlineitemid = root.id "
-        + LEFT_JOIN + adjustmentReasonRoot + " ON pilia.reasonid = adjstreason.id "
+        + LEFT_JOIN + adjustmentReasonRoot
+        + " ON adjstreason.id = COALESCE( "
+        + "      pilia.reasonid, "
+        + "      (root.extradata::json ->> 'adjustmentReasonId')::uuid "
+        + "   ) "
         + LEFT_JOIN + requestedRoot
-        + " on requested.stockeventid = root.origineventid and requested.orderableid = o.id "
+        + " ON requested.stockeventid = root.origineventid "
+        + " AND requested.orderableid = o.id "
         + where;
   }
 
