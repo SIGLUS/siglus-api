@@ -17,6 +17,8 @@ package org.siglus.siglusapi.dto.android.enumeration;
 
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.TestConsumptionLineItems.NEW_COLUMN_0;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.TestConsumptionLineItems.NEW_COLUMN_1;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.TestConsumptionLineItems.NEW_COLUMN_10;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.TestConsumptionLineItems.NEW_COLUMN_11;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.TestConsumptionLineItems.NEW_COLUMN_2;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.TestConsumptionLineItems.NEW_COLUMN_3;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.TestConsumptionLineItems.NEW_COLUMN_4;
@@ -25,8 +27,6 @@ import static org.siglus.siglusapi.constant.android.UsageSectionConstants.TestCo
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.TestConsumptionLineItems.NEW_COLUMN_7;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.TestConsumptionLineItems.NEW_COLUMN_8;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.TestConsumptionLineItems.NEW_COLUMN_9;
-import static org.siglus.siglusapi.constant.android.UsageSectionConstants.TestConsumptionLineItems.NEW_COLUMN_10;
-import static org.siglus.siglusapi.constant.android.UsageSectionConstants.TestConsumptionLineItems.NEW_COLUMN_11;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.TestConsumptionLineItems.SERVICE_APES;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.TestConsumptionLineItems.SERVICE_HF;
 
