@@ -23,6 +23,10 @@ import static org.siglus.siglusapi.constant.android.UsageSectionConstants.TestCo
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.TestConsumptionLineItems.NEW_COLUMN_5;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.TestConsumptionLineItems.NEW_COLUMN_6;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.TestConsumptionLineItems.NEW_COLUMN_7;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.TestConsumptionLineItems.NEW_COLUMN_8;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.TestConsumptionLineItems.NEW_COLUMN_9;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.TestConsumptionLineItems.NEW_COLUMN_10;
+import static org.siglus.siglusapi.constant.android.UsageSectionConstants.TestConsumptionLineItems.NEW_COLUMN_11;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.TestConsumptionLineItems.SERVICE_APES;
 import static org.siglus.siglusapi.constant.android.UsageSectionConstants.TestConsumptionLineItems.SERVICE_HF;
 
@@ -42,6 +46,10 @@ public enum TestService {
   PNCTL(NEW_COLUMN_6),
   PAV(NEW_COLUMN_2),
   DENTAL_WARD(NEW_COLUMN_7),
+  CONSULTAS(NEW_COLUMN_8),
+  SAAJ(NEW_COLUMN_9),
+  CPN(NEW_COLUMN_10),
+  OUTROS(NEW_COLUMN_11),
   APES(SERVICE_APES);
 
   private final String value;

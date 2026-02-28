@@ -389,6 +389,10 @@ public class UsageSectionConstants {
     public static final String NEW_COLUMN_5 = "newColumn5";
     public static final String NEW_COLUMN_6 = "newColumn6";
     public static final String NEW_COLUMN_7 = "newColumn7";
+    public static final String NEW_COLUMN_8 = "newColumn8";
+    public static final String NEW_COLUMN_9 = "newColumn9";
+    public static final String NEW_COLUMN_10 = "newColumn10";
+    public static final String NEW_COLUMN_11 = "newColumn11";
     public static final String PROJECT_HIVDETERMINE = "hivDetermine";
     public static final String PROJECT_CONSUMO = "consumo";
     public static final String PROJECT_POSITIVE = "positive";
