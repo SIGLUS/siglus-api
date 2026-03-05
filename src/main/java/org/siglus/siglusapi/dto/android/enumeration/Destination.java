@@ -34,7 +34,31 @@ public enum Destination {
   PUB_PHARMACY("Farmácia"),
   UATS("UATS"),
   APE("APE"),
-  UNPACK_KIT("Desembalar Kit");
+  UNPACK_KIT("Desembalar Kit"),
+
+  CIRURGIA("Cirurgia"),
+  PEDIATRIA("Pediatria"),
+  NEONATOLOGIA("Neonatologia"),
+  ENFERMAGEM("Departamento de Enfermagem"),
+  CONSULTAS_EXTERNAS("Consultas Externas"),
+  NUTRICAO("Nutricao"),
+  ONCOLOGIA("Oncologia"),
+  EPIDEMIOLOGICA("Vigilancia Epidemiologica"),
+  BLOCO_OPERATORIO("Bloco operatorio"),
+  ISOLAMENTO_COVID_19("Isolamento Covid-19"),
+  RADIOLOGIA("Radiologia"),
+  HGJM("Deposito de Medicamentos HGJM"),
+  CCR("CCR (Conslta Crianca de Risco)"),
+  CPN("CPN (Consulta Pre-Natal)"),
+  SAAJ("SAAJ"),
+  DSALA_DE_TRATAMENTO("DSala de tratamento"),
+  OFTALMOLOGIA("Oftalmologia"),
+  CRAM("CRAM"),
+  APSS_1("APSS 1"),
+  APSS_2("APSS 2"),
+  PF("PF (Planeamento Familiar)"),
+  PU_TARV("Sector de novos Incritos e seguimento (PU-TARV)"),
+  OUTROS("Outros");
 
   private final String name;
 
