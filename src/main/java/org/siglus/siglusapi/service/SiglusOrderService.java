@@ -113,6 +113,7 @@ import org.siglus.common.repository.ProcessingPeriodExtensionRepository;
 import org.siglus.siglusapi.domain.LocalIssueVoucher;
 import org.siglus.siglusapi.domain.OrderLineItemExtension;
 import org.siglus.siglusapi.domain.ShipmentsExtension;
+import org.siglus.siglusapi.dto.FacilitySupplyingProjection;
 import org.siglus.siglusapi.dto.FulfillOrderDto;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.dto.OrderStatusDto;
@@ -308,6 +309,14 @@ public class SiglusOrderService {
       OrderStatus.SHIPPED,
       OrderStatus.RECEIVED
   );
+
+  public List<FacilitySupplyingProjection> getSupplyingFacilities(
+      UUID requestingFacilityId,
+      UUID programId) {
+
+    return siglusOrdersRepository.findSupplyingFacilities(requestingFacilityId,
+        (programId != null) ? programId.toString() : null);
+  }
 
   @Transactional
   public Order updateOrder(ProofOfDelivery toUpdatePod, UserDto user, PodRequest podRequest,

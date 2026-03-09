@@ -3104,6 +3104,36 @@ traits:
               application/json:
                 schema: localizedMessage
 
+    /orders/supplying:
+      get:
+        queryParameters:
+          requestingFacilityId:
+            displayName: requestingFacility
+            description: requestingFacility ID
+            type: string
+            required: false
+            repeat: false
+          programId:
+            displayName: program
+            description: program ID
+            type: string
+            required: false
+            repeat: false
+        responses:
+          200:
+            body:
+              application/json:
+                schema: basicOrderDtoPage
+          403:
+            body:
+              application/json:
+                schema: localizedMessage
+          404:
+            body:
+              application/json:
+                schema: localizedMessage
+
+
     /orders/batch:
       post:
         is: [ secured, idempotent ]

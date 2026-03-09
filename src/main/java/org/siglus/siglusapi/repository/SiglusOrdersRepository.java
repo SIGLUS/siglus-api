@@ -20,6 +20,7 @@ import java.util.Set;
 import java.util.UUID;
 import org.openlmis.fulfillment.domain.Order;
 import org.openlmis.fulfillment.domain.OrderStatus;
+import org.siglus.siglusapi.dto.FacilitySupplyingProjection;
 import org.siglus.siglusapi.repository.dto.OrderDto;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -39,4 +40,15 @@ public interface SiglusOrdersRepository extends JpaRepository<Order, UUID> {
 
   List<Order> findBySupplyingFacilityIdAndProgramIdAndStatusIn(UUID supplyingFacilityId, UUID programId,
       List<OrderStatus> statuses);
+
+  @Query(value = "SELECT DISTINCT CAST(o.supplyingfacilityid AS varchar) AS id, f.name AS name "
+      + "FROM fulfillment.orders o "
+      + "LEFT JOIN referencedata.facilities f  "
+      + "       ON o.supplyingfacilityid = f.id "
+      + "WHERE o.requestingfacilityid = :requestingFacilityId "
+      + "AND (CAST(:programId AS text) IS NULL OR CAST(o.programid AS text) = CAST(:programId AS text)) ",
+      nativeQuery = true)
+  List<FacilitySupplyingProjection> findSupplyingFacilities(
+      @Param("requestingFacilityId") UUID requestingFacilityId,
+      @Param("programId") String programId);
 }
