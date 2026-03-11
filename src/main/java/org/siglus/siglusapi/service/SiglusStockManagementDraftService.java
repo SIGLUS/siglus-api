@@ -388,7 +388,7 @@ public class SiglusStockManagementDraftService {
   public List<StockManagementInitialDraftDto> findStockManagementInitialDraft(
       UUID programId, String draftType) {
     UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
-    operatePermissionService.checkPermission(facilityId);
+    // operatePermissionService.checkPermission(facilityId);
     draftValidator.validateProgramId(programId);
     draftValidator.validateFacilityId(facilityId);
     draftValidator.validateDraftType(draftType);
