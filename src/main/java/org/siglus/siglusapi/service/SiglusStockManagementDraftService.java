@@ -340,7 +340,7 @@ public class SiglusStockManagementDraftService {
 
   @Transactional
   public StockManagementInitialDraftDto createInitialDraft(StockManagementInitialDraftDto initialDraftDto) {
-    operatePermissionService.checkPermission(initialDraftDto.getFacilityId());
+    // operatePermissionService.checkPermission(initialDraftDto.getFacilityId());
     stockManagementDraftValidator.validateInitialDraft(initialDraftDto);
 
     StockManagementInitialDraft initialDraft = StockManagementInitialDraft
