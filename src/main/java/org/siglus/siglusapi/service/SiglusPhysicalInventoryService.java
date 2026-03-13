@@ -1066,7 +1066,7 @@ public class SiglusPhysicalInventoryService {
     } else {
       physicalInventoryLineItems = buildPhysicalInventoryLineItems(physicalInventoryDto, withLocation);
     }
-    removeAllKitsOrderables(physicalInventoryLineItems);
+    // removeAllKitsOrderables(physicalInventoryLineItems);
 
     PhysicalInventoryDto toBeSavedPhysicalInventoryDto = PhysicalInventoryDto
         .builder()
