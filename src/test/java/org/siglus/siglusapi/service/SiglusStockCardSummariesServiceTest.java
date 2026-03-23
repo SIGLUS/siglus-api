@@ -27,6 +27,7 @@ import static org.siglus.siglusapi.constant.FieldConstants.FACILITY_ID;
 import static org.siglus.siglusapi.constant.FieldConstants.ORDERABLE_ID;
 import static org.siglus.siglusapi.constant.FieldConstants.RIGHT_NAME;
 import static org.siglus.siglusapi.constant.PaginationConstants.DEFAULT_PAGE_NUMBER;
+import static org.siglus.siglusapi.constant.ProgramConstants.MMC_PROGRAM_CODE;
 import static org.siglus.siglusapi.constant.ProgramConstants.TARV_PROGRAM_CODE;
 
 import com.google.common.collect.Lists;
@@ -36,8 +37,10 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -153,6 +156,9 @@ public class SiglusStockCardSummariesServiceTest {
   private final UUID userId = UUID.randomUUID();
   private final UUID facilityId = UUID.randomUUID();
   private final UUID programId = UUID.randomUUID();
+
+  private final UUID mmcId = UUID.randomUUID();
+
   private final UUID subDraftId = UUID.randomUUID();
   private final UUID orderableId = UUID.randomUUID();
   private final UUID orderableId2 = UUID.randomUUID();
@@ -178,6 +184,9 @@ public class SiglusStockCardSummariesServiceTest {
     when(permissionStringsHandler.get()).thenReturn(dtos);
     when(permissionService.getPermissionStrings(userId)).thenReturn(permissionStringsHandler);
     when(archiveProductService.searchArchivedProductsByFacilityId(facilityId)).thenReturn(new HashSet<>());
+    ProgramDto mmcDto = new ProgramDto();
+    mmcDto.setId(mmcId);
+    when(programService.getProgramByCode(MMC_PROGRAM_CODE)).thenReturn(Optional.of(mmcDto));
   }
 
   @Test
@@ -210,7 +219,7 @@ public class SiglusStockCardSummariesServiceTest {
 
     // when
     Page<StockCardSummaryV2Dto> resultSummaries =
-        service.findSiglusStockCard(getProgramsParms(), null, pageable, false);
+        service.findSiglusStockCard(getProgramsParms(), null, pageable, false, null);
 
     // then
     assertEquals(true, resultSummaries.getContent().isEmpty());
@@ -230,7 +239,7 @@ public class SiglusStockCardSummariesServiceTest {
 
     // when
     Page<StockCardSummaryV2Dto> resultSummaries =
-        service.findSiglusStockCard(getProgramsParms(), Collections.emptyList(), pageable, false);
+        service.findSiglusStockCard(getProgramsParms(), Collections.emptyList(), pageable, false, null);
 
     // then
     assertEquals(2, resultSummaries.getContent().size());
@@ -259,7 +268,7 @@ public class SiglusStockCardSummariesServiceTest {
 
     // when
     Page<StockCardSummaryV2Dto> resultSummaries = service.findSiglusStockCard(
-        params, null, pageable, false);
+        params, null, pageable, false, null);
 
     // then
     assertEquals(2, resultSummaries.getContent().size());
@@ -291,7 +300,7 @@ public class SiglusStockCardSummariesServiceTest {
     // then
     Pageable pageable = new PageRequest(DEFAULT_PAGE_NUMBER, Integer.MAX_VALUE);
     Page<StockCardSummaryV2Dto> resultSummaries = service.findSiglusStockCard(
-        params, null, pageable, false);
+        params, null, pageable, false, null);
     assertEquals(1, resultSummaries.getContent().size());
   }
 
@@ -314,7 +323,7 @@ public class SiglusStockCardSummariesServiceTest {
 
     // when
     Page<StockCardSummaryV2Dto> resultSummaries = service.findSiglusStockCard(
-        params, null, pageable, false);
+        params, null, pageable, false, null);
 
     // then
     assertEquals(1, resultSummaries.getContent().size());
@@ -341,7 +350,7 @@ public class SiglusStockCardSummariesServiceTest {
 
     // when
     Page<StockCardSummaryV2Dto> resultSummaries = service.findSiglusStockCard(params,
-        Lists.newArrayList(subDraftId), pageable, false);
+        Lists.newArrayList(subDraftId), pageable, false, null);
 
     // then
     assertEquals(1, resultSummaries.getContent().size());
@@ -368,7 +377,7 @@ public class SiglusStockCardSummariesServiceTest {
 
     // when
     Page<StockCardSummaryV2Dto> resultSummaries = service.findSiglusStockCard(params,
-        Lists.newArrayList(subDraftId), pageable, false);
+        Lists.newArrayList(subDraftId), pageable, false, null);
 
     // then
     assertEquals(1, resultSummaries.getContent().size());

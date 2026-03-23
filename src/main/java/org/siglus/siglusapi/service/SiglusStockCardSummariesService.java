@@ -169,7 +169,8 @@ public class SiglusStockCardSummariesService {
   }
 
   public Page<StockCardSummaryV2Dto> findSiglusStockCard(
-      MultiValueMap<String, String> parameters, List<UUID> subDraftIds, Pageable pageable, boolean withLocation) {
+      MultiValueMap<String, String> parameters, List<UUID> subDraftIds, Pageable pageable,
+      boolean withLocation, UUID draftId) {
     log.info("findSiglusStockCard subDraftIds=" + Optional.ofNullable(subDraftIds));
     UserDto currentUser = authenticationHelper.getCurrentUser();
     UUID facilityId = currentUser.getHomeFacilityId();
@@ -185,6 +186,16 @@ public class SiglusStockCardSummariesService {
     UUID inputProgramId = getId(PROGRAM_ID, parameters);
     Set<UUID> programIds = getProgramIds(inputProgramId, userId, parameters.getFirst(RIGHT_NAME),
         facilityId.toString());
+    if (programIds.size() == 1) {
+      UUID mmcProgramId = siglusProgramService.getProgramByCode(MMC_PROGRAM_CODE)
+          .orElseThrow(() -> new NotFoundException("MMC program not found"))
+          .getId();
+      if (programIds.contains(mmcProgramId)) {
+        List<StockCardSummaryV2Dto> summaryV2Dtos
+            = getMmcStockSummaryV2Dtos(parameters, subDraftIds, draftId, pageable);
+        return Pagination.getPage(summaryV2Dtos, pageable);
+      }
+    }
     List<StockCardSummaryV2Dto> summaryV2Dtos = new ArrayList<>();
     for (UUID programId : programIds) {
       v2SearchParams.setProgramId(programId);
@@ -287,7 +298,7 @@ public class SiglusStockCardSummariesService {
     valueMap.set(NON_EMPTY_ONLY, Boolean.TRUE.toString());
     valueMap.set(FACILITY_ID, authenticationHelper.getCurrentUser().getHomeFacilityId().toString());
     Pageable pageable = new PageRequest(0, Integer.MAX_VALUE);
-    return findSiglusStockCard(valueMap, null, pageable, false).getContent();
+    return findSiglusStockCard(valueMap, null, pageable, false, null).getContent();
   }
 
   private void getSummaries(MultiValueMap<String, String> parameters, Set<String> archivedProducts,
@@ -353,7 +364,8 @@ public class SiglusStockCardSummariesService {
       boolean withLocation) {
     try {
       if (draftId != null) {
-        Page<StockCardSummaryV2Dto> stockCards = findSiglusStockCard(parameters, subDraftIds, pageable, withLocation);
+        Page<StockCardSummaryV2Dto> stockCards = findSiglusStockCard(parameters, subDraftIds, pageable, withLocation,
+            draftId);
         StockManagementDraft foundDraft = stockManagementDraftRepository.findOne(draftId);
         if (foundDraft == null) {
           throw new ResourceNotFoundException(
@@ -375,7 +387,7 @@ public class SiglusStockCardSummariesService {
             .collect(Collectors.toList()), pageable);
       }
       // reason: support all program && archive
-      return findSiglusStockCard(parameters, subDraftIds, pageable, withLocation);
+      return findSiglusStockCard(parameters, subDraftIds, pageable, withLocation, draftId);
 
     } catch (PermissionMessageException e) {
       if (parameters.getFirst(RIGHT_NAME).equals(STOCK_INVENTORIES_EDIT)) {
@@ -578,6 +590,9 @@ public class SiglusStockCardSummariesService {
       stockCardSummaryDto.setStockOnHand(stockCardSummaryV2Dto.getStockOnHand());
       List<StockCardDetailsWithLocationDto> stockCardDetailsDtos = new ArrayList<>();
       stockCardSummaryV2Dto.getCanFulfillForMe().forEach(canFulfillForMeEntryDto -> {
+        if (canFulfillForMeEntryDto == null || canFulfillForMeEntryDto.getStockOnHand() == null) {
+          log.info("canFulfillForMeEntryDto == null");
+        }
         if (canFulfillForMeEntryDto.getStockOnHand() != 0) {
           StockCardDetailsWithLocationDto fulfill = StockCardDetailsWithLocationDto.builder()
               .lotLocationSohDtoList(lotLocationMaps.isEmpty() || canFulfillForMeEntryDto.getLot() == null ? null
