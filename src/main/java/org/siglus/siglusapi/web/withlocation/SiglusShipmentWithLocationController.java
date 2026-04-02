@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.web.withlocation;
 
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.openlmis.fulfillment.web.shipment.ShipmentDto;
@@ -32,6 +33,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/siglusapi/shipmentsWithLocation")
@@ -47,6 +49,16 @@ public class SiglusShipmentWithLocationController {
   @Transactional
   public void confirmShipmentByLocation(@RequestParam(name = "isSubOrder", required = false, defaultValue = "false")
       boolean isSubOrder, @RequestBody ShipmentExtensionRequest shipmentExtensionRequest) {
+    ShipmentDto shipment = shipmentExtensionRequest.getShipment();
+
+    if (shipment != null && shipment.lineItems() != null) {
+      shipment.setLineItems(
+          shipment.lineItems()
+              .stream()
+              .filter(item -> item.getQuantityShipped() > 0)
+              .collect(Collectors.toList())
+      );
+    }
     siglusShipmentService.checkFulfillOrderExpired(shipmentExtensionRequest);
     siglusShipmentService.validShipmentLineItemsDuplicated(shipmentExtensionRequest);
     siglusShipmentService.checkStockOnHandQuantity(shipmentExtensionRequest);
