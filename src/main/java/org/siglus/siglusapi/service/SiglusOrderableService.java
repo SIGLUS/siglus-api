@@ -23,6 +23,7 @@ import static org.siglus.siglusapi.constant.CacheConstants.SIGLUS_PROGRAM_ORDERA
 import static org.siglus.siglusapi.constant.FieldConstants.CODE;
 import static org.siglus.siglusapi.constant.FieldConstants.FULL_PRODUCT_NAME;
 import static org.siglus.siglusapi.constant.FieldConstants.PRODUCT_CODE;
+import static org.siglus.siglusapi.constant.ProgramConstants.MMC_PROGRAM_CODE;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_ID_NOT_FOUND;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_NOT_FOUND;
 
@@ -296,7 +297,9 @@ public class SiglusOrderableService {
     return siglusProgramOrderableRepository.findAllMaxVersionProgramOrderableDtos();
   }
 
-  public List<AvailableOrderablesDto> getAvailableOrderablesByFacility(Boolean isRequestAll, UUID draftId) {
+  public List<AvailableOrderablesDto> getAvailableOrderablesByFacility(Boolean isRequestAll, UUID draftId,
+      UUID programId) {
+    // TODO handle MMC ID
     UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
     List<StockCard> stockCards = stockCardRepository.findByFacilityIdIn(facilityId);
     List<UUID> allStockCardIds = stockCards.stream().map(StockCard::getId).collect(Collectors.toList());
@@ -343,6 +346,18 @@ public class SiglusOrderableService {
         .put(orderableId, dispensableAttributes.stream()
             .filter(dispensable -> dispensable.getDispensableId().equals(dispensableId))
             .findFirst().orElse(null)));
+
+    if (programId != null) {
+      UUID mmcProgramId = programService.getProgramByCode(MMC_PROGRAM_CODE)
+          .orElseThrow(() -> new NotFoundException("MMC program not found"))
+          .getId();
+
+      if (mmcProgramId.equals(programId)) {
+        Set<UUID> mmcOrderableIdSet = programAdditionalOrderableRepository.findAllByProgramId(programId)
+            .stream().map(ProgramAdditionalOrderable::getAdditionalOrderableId).collect(Collectors.toSet());
+        orderables.removeIf(orderable -> !mmcOrderableIdSet.contains(orderable.getId()));
+      }
+    }
 
     List<AvailableOrderablesDto> availableOrderablesDtos = new ArrayList<>();
     orderables.forEach(orderable -> {

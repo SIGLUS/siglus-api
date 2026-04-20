@@ -392,7 +392,7 @@ public class SiglusOrderableServiceTest {
 
     // when
     List<AvailableOrderablesDto> availableOrderables = siglusOrderableService.getAvailableOrderablesByFacility(
-        true, null);
+        true, null, null);
 
     // then
     assertEquals(Lists.newArrayList(), availableOrderables);

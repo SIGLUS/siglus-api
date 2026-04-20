@@ -75,8 +75,8 @@ public class SiglusOrderableController {
 
   @GetMapping("/available")
   public List<AvailableOrderablesDto> getAvailableOrderablesByFacility(@RequestParam Boolean isRequestAll,
-      @RequestParam(required = false) UUID draftId) {
-    return orderableService.getAvailableOrderablesByFacility(isRequestAll, draftId);
+      @RequestParam(required = false) UUID draftId, @RequestParam(required = false) UUID programId) {
+    return orderableService.getAvailableOrderablesByFacility(isRequestAll, draftId, programId);
   }
 
   @GetMapping("/dropDownList")
