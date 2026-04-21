@@ -120,6 +120,7 @@ import org.openlmis.requisition.exception.ValidationMessageException;
 import org.openlmis.requisition.i18n.MessageKeys;
 import org.openlmis.requisition.repository.RequisitionRepository;
 import org.openlmis.requisition.repository.custom.RequisitionSearchParams;
+import org.openlmis.requisition.service.PeriodService;
 import org.openlmis.requisition.service.PermissionService;
 import org.openlmis.requisition.service.RequisitionService;
 import org.openlmis.requisition.service.referencedata.ApproveProductsAggregator;
@@ -171,6 +172,7 @@ import org.siglus.siglusapi.dto.SimpleRequisitionDto;
 import org.siglus.siglusapi.dto.TestConsumptionOutcomeDto;
 import org.siglus.siglusapi.dto.TestConsumptionProjectDto;
 import org.siglus.siglusapi.dto.TestConsumptionServiceDto;
+import org.siglus.siglusapi.dto.android.ProductLotStock;
 import org.siglus.siglusapi.dto.android.db.StockStatusCmm;
 import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.localmachine.event.requisition.web.finalapprove.RequisitionFinalApproveEmitter;
@@ -313,12 +315,15 @@ public class SiglusRequisitionService {
   private RegimenSummaryLineItemRepository regimenSummaryLineItemRepository;
   @Autowired
   private KitUsageLineItemRepository kitUsageRepository;
+  @Autowired
+  private PeriodService periodService;
   public static final double DEFAULT_CORRECTION_FACTOR = 1.0;
   public static final int ESTIMATED_QUANTITY_FACTOR = 3;
   public static final int REQUESTED_QUANTITY_FACTOR = 1;
   public static final String MMIA_COLUMN_NAME = "patients";
   @Value("${service.url}")
   private String serviceUrl;
+
   public static final String SUGGESTED_QUANTITY_COLUMN = "suggestedQuantity";
   protected static final List<String> MMIA_SECTIONS = Lists.newArrayList(NEW_SECTION_2, NEW_SECTION_3, NEW_SECTION_4);
   protected static final List<String> CALC_PROGRAM_CODE = Lists.newArrayList(MTB_PROGRAM_CODE, RAPIDTEST_PROGRAM_CODE,
@@ -588,6 +593,20 @@ public class SiglusRequisitionService {
 
     if (previousRegularRequisition == null) {
       return;
+    }
+
+
+    ProgramDto programDto = siglusProgramService.getProgram(v2Dto.getProgramId());
+    if (CALC_PROGRAM_CODE.contains(programDto.getCode())) {
+      Map<UUID, Integer> orderableIdToStock = previousRegularRequisition.getRequisitionLineItems()
+          .stream().collect(toMap(lineItem -> lineItem.getOrderable().getId(), RequisitionLineItem::getStockOnHand));
+      List<RequisitionLineItem> currentLineItems = requisitionLineItemRepository.findAllByRequisitionId(v2Dto.getId());
+      currentLineItems.forEach(lineItem -> {
+        if (orderableIdToStock.containsKey(lineItem.getOrderable().getId())) {
+          lineItem.setBeginningBalance(orderableIdToStock.getOrDefault(lineItem.getOrderable().getId(), 0));
+        }
+      });
+      requisitionLineItemRepository.save(currentLineItems);
     }
 
     // TODO when problem happens, the inventory date & requisition create date must be the same date

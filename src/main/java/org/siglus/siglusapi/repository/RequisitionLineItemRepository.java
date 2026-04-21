@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.repository;
 
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import org.openlmis.requisition.domain.requisition.RequisitionLineItem;
@@ -25,6 +26,10 @@ import org.springframework.data.repository.query.Param;
 
 
 public interface RequisitionLineItemRepository extends JpaRepository<RequisitionLineItem, UUID> {
+
+  @Query(value = "select * from requisition.requisition_line_items "
+      + "where requisitionid = :id ", nativeQuery = true)
+  List<RequisitionLineItem> findAllByRequisitionId(@Param("id") UUID id);
 
   @Query(value = "select * from requisition.requisition_line_items "
       + "where id in :ids ", nativeQuery = true)
