@@ -51,6 +51,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
 import org.hibernate.jpa.TypedParameterValue;
 import org.hibernate.type.StandardBasicTypes;
 import org.openlmis.requisition.dto.OrderableDto;
@@ -92,6 +93,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 @RequiredArgsConstructor
+@Slf4j
 @SuppressWarnings({"PMD.AvoidDuplicateLiterals", "PMD.TooManyMethods"})
 public class StockManagementRepository extends BaseNativeRepository {
 
@@ -444,6 +446,7 @@ public class StockManagementRepository extends BaseNativeRepository {
     java.sql.Date occurredDate = readAsDate(rs, "occurreddate");
     String recordedAtStr = readAsString(rs, "recordedat");
     Timestamp processedAtTs = rs.getTimestamp("processeddate");
+    log.info("readEventTime l.lotcode: {}", readAsString(rs, "lotcode"));
     return EventTime.fromDatabase(occurredDate, recordedAtStr, processedAtTs);
   }
 
