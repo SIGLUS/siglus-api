@@ -80,9 +80,9 @@ public class SiglusOrderableController {
   }
 
   @GetMapping("/dropDownList")
-  public List<SimplifyOrderablesDto> getOrderablesDropDownList(@RequestParam(required = false) UUID draftId) {
-
-    return orderableService.searchOrderablesDropDownList(draftId);
+  public List<SimplifyOrderablesDto> getOrderablesDropDownList(@RequestParam(required = false) UUID draftId,
+      @RequestParam(required = false) UUID programId) {
+    return orderableService.searchOrderablesDropDownList(draftId, programId);
   }
 
 

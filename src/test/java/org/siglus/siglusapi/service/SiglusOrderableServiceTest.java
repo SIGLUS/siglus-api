@@ -447,7 +447,8 @@ public class SiglusOrderableServiceTest {
             .build());
 
     // when
-    List<SimplifyOrderablesDto> simplifyOrderablesDtos = siglusOrderableService.searchOrderablesDropDownList(null);
+    List<SimplifyOrderablesDto> simplifyOrderablesDtos = siglusOrderableService
+        .searchOrderablesDropDownList(null, null);
 
     // then
     assertEquals(expectedSimplifyOrderablesDtos, simplifyOrderablesDtos);
@@ -485,7 +486,8 @@ public class SiglusOrderableServiceTest {
     );
 
     // when
-    List<SimplifyOrderablesDto> simplifyOrderablesDtos = siglusOrderableService.searchOrderablesDropDownList(null);
+    List<SimplifyOrderablesDto> simplifyOrderablesDtos = siglusOrderableService
+        .searchOrderablesDropDownList(null, null);
 
     // then
     assertEquals(expectedSimplifyOrderablesDtos, simplifyOrderablesDtos);
@@ -541,7 +543,8 @@ public class SiglusOrderableServiceTest {
     );
 
     // when
-    List<SimplifyOrderablesDto> simplifyOrderablesDtos = siglusOrderableService.searchOrderablesDropDownList(draftId);
+    List<SimplifyOrderablesDto> simplifyOrderablesDtos = siglusOrderableService
+        .searchOrderablesDropDownList(draftId, null);
 
     // then
     assertEquals(expectedSimplifyOrderablesDtos, simplifyOrderablesDtos);

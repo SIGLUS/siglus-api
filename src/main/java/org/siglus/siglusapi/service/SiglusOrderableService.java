@@ -168,7 +168,7 @@ public class SiglusOrderableService {
     return siglusOrderableRepository.findExpirationDate(orderableIds, facilityId);
   }
 
-  public List<SimplifyOrderablesDto> searchOrderablesDropDownList(UUID draftId) {
+  public List<SimplifyOrderablesDto> searchOrderablesDropDownList(UUID draftId, UUID programId) {
     List<OrderableDto> allProducts = getAllProducts();
     UserDto currentUser = authenticationHelper.getCurrentUser();
     UUID facilityId = currentUser.getHomeFacilityId();
@@ -192,6 +192,18 @@ public class SiglusOrderableService {
       allProducts = allProducts.stream()
           .filter(e -> !existOrderableIds.contains(e.getId()))
           .collect(Collectors.toList());
+    }
+
+    if (programId != null) {
+      UUID mmcProgramId = programService.getProgramByCode(MMC_PROGRAM_CODE)
+          .orElseThrow(() -> new NotFoundException("MMC program not found"))
+          .getId();
+
+      if (mmcProgramId.equals(programId)) {
+        Set<UUID> mmcOrderableIdSet = programAdditionalOrderableRepository.findAllByProgramId(programId)
+            .stream().map(ProgramAdditionalOrderable::getAdditionalOrderableId).collect(Collectors.toSet());
+        allProducts.removeIf(orderable -> !mmcOrderableIdSet.contains(orderable.getId()));
+      }
     }
     return allProducts.stream()
         .map(SimplifyOrderablesDto::from)
