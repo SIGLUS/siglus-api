@@ -278,7 +278,7 @@ public class SiglusStockManagementDraftService {
     StockManagementDraft subDraft = getAndValidateStockManagementDraft(id);
     draftValidator.validateSubDraftStatus(subDraft);
     UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
-    operatePermissionService.checkPermission(facilityId);
+    // operatePermissionService.checkPermission(facilityId);
     log.info("delete stockmanagement draft: {}", id);
     stockManagementDraftRepository.delete(subDraft);
     if (!FieldConstants.ADJUSTMENT.equals(subDraft.getDraftType())) {
