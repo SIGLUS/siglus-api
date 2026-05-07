@@ -986,7 +986,10 @@ public class SiglusRequisitionService {
     setLineItemExtension(requisitionDto);
     RequisitionTemplateExtension extension = setTemplateExtension(requisitionDto);
     // filterKits(requisitionDto);
-    filterProductsIfEmergency(requisitionDto);
+    // FIX FC Emergency R&R NPE
+    if (response != null) {
+      filterProductsIfEmergency(requisitionDto);
+    }
     SiglusRequisitionDto siglusRequisitionDto = getSiglusRequisitionDto(requisitionId, extension, requisitionDto);
     // set available products in approve page
     setAvailableProductsForApprovePage(siglusRequisitionDto);
