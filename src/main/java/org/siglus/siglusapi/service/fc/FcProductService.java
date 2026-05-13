@@ -307,7 +307,9 @@ public class FcProductService implements ProcessDataService {
   private OrderableDto createOrderable(ProductInfoDto product) {
     OrderableDto newOrderable = new OrderableDto();
     newOrderable.setProductCode(product.getFnm());
-    log.info("description length {}", product.getDescription().length());
+    if (product.getDescription() != null) {
+      log.info("description length {}", StringUtils.length(product.getDescription()));
+    }
     newOrderable.setDescription(
         StringUtils.substring(StringUtils.trimToNull(product.getDescription()), 0, 255)
     );
