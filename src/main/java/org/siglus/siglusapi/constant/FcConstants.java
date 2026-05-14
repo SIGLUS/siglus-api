@@ -48,6 +48,15 @@ public class FcConstants {
   public static final String PROVINCE_API = "/provinces";
   public static final String DISTRICT_API = "/districts";
 
+  public static final Set<String> NEW_FC_PRODUCT_CODES = Sets.newHashSet(
+      "01G01XX", "01H02Y", "03A01Y", "03B02X", "03B02XX", "03B02Z",
+      "03D01Z", "07B02AN", "07J11X", "08F05Z", "08K07AN", "08O15XX",
+      "08O15XY", "09A06ii", "09B05X", "09E05Z", "09E09X", "09H01II",
+      "10A0ZX", "12B04X", "15A03X", "15D06Z", "16A01Z", "17A0II",
+      "17C03Z", "18A05Z", "18C05X", "20A15Z", "23C10Z", "23E01XX",
+      "26B03XX", "26B03Z"
+  );
+
   public static List<String> getCmmAndCpApis() {
     return Arrays.asList(CMM_API, CP_API);
   }

@@ -22,6 +22,7 @@ import static java.util.stream.Collectors.toSet;
 import static org.siglus.siglusapi.constant.CacheConstants.SIGLUS_APPROVED_PRODUCTS;
 import static org.siglus.siglusapi.constant.CacheConstants.SIGLUS_APPROVED_PRODUCTS_BY_ORDERABLES;
 import static org.siglus.siglusapi.constant.CacheConstants.SIGLUS_ORDERABLES;
+import static org.siglus.siglusapi.constant.FcConstants.NEW_FC_PRODUCT_CODES;
 import static org.siglus.siglusapi.constant.FcConstants.PRODUCT_API;
 import static org.siglus.siglusapi.constant.FcConstants.STATUS_ACTIVE;
 import static org.siglus.siglusapi.constant.FieldConstants.ACTIVE;
@@ -183,17 +184,19 @@ public class FcProductService implements ProcessDataService {
           errorCodes.add(current.getFnm());
           errorCounter.getAndIncrement();
         } else {
-          log.info("[FC product] create: {}", current);
-          OrderableDto orderableDto = createOrderable(current);
-          createFtap(orderableDto);
-          orderableIdToProgramId.put(orderableDto.getId(),
-              orderableDto.getPrograms().stream().findFirst().orElse(new ProgramOrderableDto()).getProgramId());
-          createProgramOrderablesExtension(current, orderableDto.getId());
-          createCounter.getAndIncrement();
-          FcIntegrationChanges createChanges = FcUtil
-              .buildCreateFcIntegrationChanges(PRODUCT_API, orderableDto.getProductCode(),
-                  orderableDto.toString());
-          fcIntegrationChangesList.add(createChanges);
+          if (NEW_FC_PRODUCT_CODES.contains(current.getFnm())) {
+            log.info("[FC product] create: {}", current);
+            OrderableDto orderableDto = createOrderable(current);
+            createFtap(orderableDto);
+            orderableIdToProgramId.put(orderableDto.getId(),
+                orderableDto.getPrograms().stream().findFirst().orElse(new ProgramOrderableDto()).getProgramId());
+            createProgramOrderablesExtension(current, orderableDto.getId());
+            createCounter.getAndIncrement();
+            FcIntegrationChanges createChanges = FcUtil
+                .buildCreateFcIntegrationChanges(PRODUCT_API, orderableDto.getProductCode(),
+                    orderableDto.toString());
+            fcIntegrationChangesList.add(createChanges);
+          }
         }
       });
       log.info("[FC product] process data error code: {}", errorCodes);
