@@ -18,6 +18,9 @@ package org.siglus.siglusapi.web;
 import static org.siglus.siglusapi.constant.FcConstants.DATE_FORMAT;
 
 import java.time.LocalDate;
+import java.util.List;
+import javax.annotation.Nullable;
+
 import lombok.RequiredArgsConstructor;
 import org.siglus.siglusapi.constant.PaginationConstants;
 import org.siglus.siglusapi.dto.FcProofOfDeliveryDto;
@@ -34,6 +37,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
 
 @RestController
 @Validated
@@ -65,11 +69,21 @@ public class SiglusFcIntegrationController {
 
   @GetMapping("/stockMovements")
   public Page<FacilityStockMovementResponse> searchStockMovements(
-      @DateTimeFormat(pattern = DATE_FORMAT) @RequestParam LocalDate date, Pageable pageable) {
+      @DateTimeFormat(pattern = DATE_FORMAT) @RequestParam
+      LocalDate date,
+      @RequestParam(value = "end_date", required = false)
+      @DateTimeFormat(pattern = DATE_FORMAT)
+      @Nullable LocalDate endDate,
+      @RequestParam(value = "client_code", required = false)
+      @Nullable String clientCode,
+      @RequestParam(value = "client_types", required = false)
+      List<String> clientTypes,
+      Pageable pageable) {
     if (PaginationConstants.NO_PAGINATION == pageable.getPageSize()) {
       pageable = new PageRequest(PaginationConstants.DEFAULT_PAGE_NUMBER, 20);
     }
-    return siglusFcIntegrationService.searchStockMovements(date, pageable);
+    return siglusFcIntegrationService.searchStockMovements(
+        date, endDate, clientCode, clientTypes, pageable);
   }
 
   @GetMapping("/stockOnHand")

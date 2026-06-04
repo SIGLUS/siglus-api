@@ -131,16 +131,16 @@ public class SiglusFcIntegrationControllerMvcTest extends FileBasedTest {
     when(facilityTypeDataService.getPage(any())).thenReturn(new PageImpl<>(emptyList()));
     Facility facility1 = new Facility(facility1Id, "F1", "Facility 1", null, true);
     Facility facility2 = new Facility(facility2Id, "F2", "Facility 2", null, true);
-    when(facilityRepo.findAllForStockMovements(any(), any(), any()))
+    when(facilityRepo.findAllForStockMovements(any(), any(), any(), any(), any()))
         .thenReturn(new PageImpl<>(asList(facility1, facility2)));
     when(facilityRepo.findAllForStockOnHand(any(), any(), any()))
         .thenReturn(new PageImpl<>(asList(facility1, facility2)));
     when(stockManagementRepository.getStockOnHand(eq(facility1Id), any())).thenReturn(mockStocksOnHand1());
     when(stockManagementRepository.getStockOnHand(eq(facility2Id), any())).thenReturn(mockStocksOnHand2());
     PeriodOfProductMovements period1 = new PeriodOfProductMovements(mockProductMovements1(), mockStocksOnHand1());
-    when(stockManagementRepository.getAllProductMovementsForSync(eq(facility1Id), any())).thenReturn(period1);
+    when(stockManagementRepository.getAllProductMovementsForSync(eq(facility1Id), any(), any())).thenReturn(period1);
     PeriodOfProductMovements period2 = new PeriodOfProductMovements(emptyList(), mockStocksOnHand2());
-    when(stockManagementRepository.getAllProductMovementsForSync(eq(facility2Id), any())).thenReturn(period2);
+    when(stockManagementRepository.getAllProductMovementsForSync(eq(facility2Id), any(), any())).thenReturn(period2);
   }
 
   @Test

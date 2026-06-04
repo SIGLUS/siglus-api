@@ -57,13 +57,41 @@ public interface ProductMovementMapper {
     return FacilityProductMovementsResponse.builder().productMovements(responses).build();
   }
 
+  default String convertLotCodeToLote(String lotCode) {
+    if (lotCode == null) {
+      return null;
+    }
+    int lastHyphenIndex = lotCode.lastIndexOf('-');
+
+    if (lastHyphenIndex != -1) {
+      return lotCode.substring(0, lastHyphenIndex);
+    }
+    return lotCode;
+  }
+
   default List<ProductMovementResponse> toResponses(PeriodOfProductMovements period) {
     Map<String, List<ProductMovement>> movementsByProductCode = period.getProductMovements().stream()
         .collect(groupingBy(ProductMovement::getProductCode));
+
     StocksOnHand stocksOnHand = period.getStocksOnHand();
+
     return stocksOnHand.getAllProductCodes().stream()
         .map(c -> toResponse(c, movementsByProductCode.getOrDefault(c, emptyList()), stocksOnHand,
             MovementDetail::getReason))
+        .peek(response -> {
+          response.getStockMovementItems().forEach(stockItem ->
+              stockItem.getLotMovementItems().forEach(lotItem ->
+                  lotItem.setLotCode(convertLotCodeToLote(lotItem.getLotCode()))
+              )
+          );
+
+          response.getLotsOnHand().forEach(lotOnHand -> {
+            LotBasicResponse lot = lotOnHand.getLot();
+            if (lot != null) {
+              lot.setCode(convertLotCodeToLote(lot.getCode()));
+            }
+          });
+        })
         .collect(toList());
   }
 

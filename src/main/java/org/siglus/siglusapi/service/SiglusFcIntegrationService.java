@@ -225,11 +225,29 @@ public class SiglusFcIntegrationService {
     return Pagination.getPage(fcRequisitionDtos, pageable, requisitions.getTotalElements());
   }
 
-  public Page<FacilityStockMovementResponse> searchStockMovements(LocalDate since, Pageable pageable) {
-    List<UUID> excludedTypeIds = findFacilityTypes(FacilityTypeConstants.getVirtualFacilityTypes()).stream()
-        .map(FacilityTypeDto::getId).collect(toList());
-    return facilityNativeRepository.findAllForStockMovements(excludedTypeIds, since, pageable)
-        .map(f -> toMovementResponse(f, since));
+  public Page<FacilityStockMovementResponse> searchStockMovements(
+      LocalDate since,
+      LocalDate endDate,
+      String clientCode,
+      List<String> clientTypes,
+      Pageable pageable) {
+    List<UUID> excludedTypeIds;
+    if (CollectionUtils.isNotEmpty(clientTypes)) {
+      excludedTypeIds = findFacilityTypes(
+          clientTypes,
+          FacilityTypeConstants.getVirtualFacilityTypes())
+          .stream().map(FacilityTypeDto::getId).collect(toList());
+    } else {
+      excludedTypeIds = findFacilityTypes(FacilityTypeConstants.getVirtualFacilityTypes()).stream()
+          .map(FacilityTypeDto::getId).collect(toList());
+    }
+    if (endDate == null) {
+      endDate = LocalDate.now().minusDays(1);
+    }
+    LocalDate finalEndDate = endDate;
+    return facilityNativeRepository.findAllForStockMovements(excludedTypeIds, since,
+            finalEndDate, clientCode, pageable)
+        .map(f -> toMovementResponse(f, since, finalEndDate));
   }
 
   public Page<FacilityStockOnHandResponse> searchStockOnHand(LocalDate at, Pageable pageable) {
@@ -240,12 +258,13 @@ public class SiglusFcIntegrationService {
   }
 
   private FacilityStockMovementResponse toMovementResponse(org.siglus.siglusapi.dto.android.db.Facility facility,
-      LocalDate since) {
+      LocalDate since, LocalDate endDate) {
     FacilityStockMovementResponse response = new FacilityStockMovementResponse();
     response.setCode(facility.getCode());
     response.setName(facility.getName());
     log.info("toMovementResponse facility id: {}", facility.getId());
-    PeriodOfProductMovements period = stockManagementRepository.getAllProductMovementsForSync(facility.getId(), since);
+    PeriodOfProductMovements period = stockManagementRepository
+        .getAllProductMovementsForSync(facility.getId(), since, endDate);
     response.setProductMovements(productMovementMapper.toResponses(period));
     return response;
   }
@@ -712,6 +731,13 @@ public class SiglusFcIntegrationService {
           ? 0 : fcLineItem.getRequestedQuantity());
     }
     return fcLineItem;
+  }
+
+  private List<FacilityTypeDto> findFacilityTypes(Collection<String> includeTypeNames,
+                                                  Collection<String> excludeTypeNames) {
+    return facilityTypeDataService.getPage(RequestParameters.init()).getContent().stream()
+        .filter(t -> !includeTypeNames.contains(t.getCode()))
+        .collect(toList());
   }
 
   private List<FacilityTypeDto> findFacilityTypes(Collection<String> typeNames) {

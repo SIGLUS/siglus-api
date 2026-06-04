@@ -109,6 +109,15 @@ public class StockManagementRepository extends BaseNativeRepository {
   private static final String LOT_ROOT = "referencedata.lots l";
   private static final String STOCK_ON_HAND = "stockonhand";
 
+  public PeriodOfProductMovements getAllProductMovementsForSync(@Nonnull UUID facilityId,
+                                                                @Nonnull LocalDate since,
+                                                                LocalDate endDate) {
+    requireNonNull(facilityId);
+    ZoneId zoneId = ZoneId.systemDefault();
+    return getAllProductMovements(facilityId, null, endDate, emptySet(), since.atStartOfDay(zoneId).toInstant(),
+        LocalDate.now().atStartOfDay(zoneId).toInstant());
+  }
+
   public PeriodOfProductMovements getAllProductMovementsForSync(@Nonnull UUID facilityId, @Nonnull LocalDate since) {
     requireNonNull(facilityId);
     ZoneId zoneId = ZoneId.systemDefault();
