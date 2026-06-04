@@ -65,10 +65,10 @@ public class FacilityNativeRepository extends BaseNativeRepository {
   }
 
   public Page<Facility> findAllForStockOnHand(Collection<UUID> facilityTypeIds, LocalDate at,
-      Pageable pageable) {
+      String clientCode, Pageable pageable) {
     String query =
         "SELECT DISTINCT f.id, f.code, f.name, f.description, f.active  "
-            + generateFrom(pageable, null, false, false);
+            + generateFrom(pageable, clientCode, false, false);
     MapSqlParameterSource params = new MapSqlParameterSource();
     params.addValue("typeIds", facilityTypeIds);
     params.addValue("at", at);

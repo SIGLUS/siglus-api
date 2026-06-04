@@ -88,11 +88,17 @@ public class SiglusFcIntegrationController {
 
   @GetMapping("/stockOnHand")
   public Page<FacilityStockOnHandResponse> searchStockOnHand(
-      @DateTimeFormat(pattern = DATE_FORMAT) @RequestParam LocalDate date, Pageable pageable) {
+      @DateTimeFormat(pattern = DATE_FORMAT) @RequestParam LocalDate date,
+      @RequestParam(value = "client_code", required = false)
+      @Nullable String clientCode,
+      @RequestParam(value = "client_types", required = false)
+      List<String> clientTypes,
+      Pageable pageable) {
     if (PaginationConstants.NO_PAGINATION == pageable.getPageSize()) {
       pageable = new PageRequest(PaginationConstants.DEFAULT_PAGE_NUMBER, 20);
     }
-    return siglusFcIntegrationService.searchStockOnHand(date, pageable);
+    return siglusFcIntegrationService.searchStockOnHand(
+        date, clientCode, clientTypes, pageable);
   }
 
   @GetMapping("/pods")

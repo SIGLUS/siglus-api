@@ -250,10 +250,22 @@ public class SiglusFcIntegrationService {
         .map(f -> toMovementResponse(f, since, finalEndDate));
   }
 
-  public Page<FacilityStockOnHandResponse> searchStockOnHand(LocalDate at, Pageable pageable) {
-    List<UUID> excludedTypeIds = findFacilityTypes(FacilityTypeConstants.getVirtualFacilityTypes()).stream()
-        .map(FacilityTypeDto::getId).collect(toList());
-    return facilityNativeRepository.findAllForStockOnHand(excludedTypeIds, at, pageable)
+  public Page<FacilityStockOnHandResponse> searchStockOnHand(
+      LocalDate at,
+      String clientCode,
+      List<String> clientTypes,
+      Pageable pageable) {
+    List<UUID> excludedTypeIds;
+    if (CollectionUtils.isNotEmpty(clientTypes)) {
+      excludedTypeIds = findFacilityTypes(
+          clientTypes,
+          FacilityTypeConstants.getVirtualFacilityTypes())
+          .stream().map(FacilityTypeDto::getId).collect(toList());
+    } else {
+      excludedTypeIds = findFacilityTypes(FacilityTypeConstants.getVirtualFacilityTypes()).stream()
+          .map(FacilityTypeDto::getId).collect(toList());
+    }
+    return facilityNativeRepository.findAllForStockOnHand(excludedTypeIds, at, clientCode, pageable)
         .map(f -> toStockOnHandResponse(f, at));
   }
 
@@ -267,6 +279,18 @@ public class SiglusFcIntegrationService {
         .getAllProductMovementsForSync(facility.getId(), since, endDate);
     response.setProductMovements(productMovementMapper.toResponses(period));
     return response;
+  }
+
+  private String convertLotCodeToLote(String lotCode) {
+    if (lotCode == null) {
+      return null;
+    }
+    int lastHyphenIndex = lotCode.lastIndexOf('-');
+
+    if (lastHyphenIndex != -1) {
+      return lotCode.substring(0, lastHyphenIndex);
+    }
+    return lotCode;
   }
 
   private FacilityStockOnHandResponse toStockOnHandResponse(org.siglus.siglusapi.dto.android.db.Facility facility,
@@ -296,6 +320,9 @@ public class SiglusFcIntegrationService {
           }
           product.setCmm(cmm);
           product.setMos(mos);
+
+          product.getLots().forEach(p -> p.setLotCode(convertLotCodeToLote(p.getLotCode())));
+
           return product;
         })
         .collect(toList());

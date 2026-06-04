@@ -133,7 +133,7 @@ public class SiglusFcIntegrationControllerMvcTest extends FileBasedTest {
     Facility facility2 = new Facility(facility2Id, "F2", "Facility 2", null, true);
     when(facilityRepo.findAllForStockMovements(any(), any(), any(), any(), any()))
         .thenReturn(new PageImpl<>(asList(facility1, facility2)));
-    when(facilityRepo.findAllForStockOnHand(any(), any(), any()))
+    when(facilityRepo.findAllForStockOnHand(any(), any(), any(), any()))
         .thenReturn(new PageImpl<>(asList(facility1, facility2)));
     when(stockManagementRepository.getStockOnHand(eq(facility1Id), any())).thenReturn(mockStocksOnHand1());
     when(stockManagementRepository.getStockOnHand(eq(facility2Id), any())).thenReturn(mockStocksOnHand2());
