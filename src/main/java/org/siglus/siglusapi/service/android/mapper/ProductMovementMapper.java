@@ -58,14 +58,6 @@ public interface ProductMovementMapper {
   }
 
   default String convertLotCodeToLote(String lotCode) {
-    if (lotCode == null) {
-      return null;
-    }
-    int lastHyphenIndex = lotCode.lastIndexOf('-');
-
-    if (lastHyphenIndex != -1) {
-      return lotCode.substring(0, lastHyphenIndex);
-    }
     return lotCode;
   }
 
