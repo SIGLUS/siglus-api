@@ -1333,7 +1333,12 @@ public class SiglusOrderService {
 
     Map<UUID, StockCardSummaryV2Dto> orderableSohMap = getOrderableIdSohMap(userHomeFacilityId);
 
-    Set<UUID> emergencyFilteredProducts = getEmergencyFilteredProducts(requisition);
+    Set<UUID> emergencyFilteredProducts;
+    if (isFcRequest) {
+      emergencyFilteredProducts = new HashSet<>();
+    } else {
+      emergencyFilteredProducts = getEmergencyFilteredProducts(requisition);
+    }
 
     ProgramDto program = programService.getProgram(programId);
     Set<String> showInReportCodes = new HashSet<>(Arrays.asList(
