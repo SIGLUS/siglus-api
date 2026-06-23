@@ -16,6 +16,7 @@
 package org.siglus.siglusapi.service.fc;
 
 import static org.siglus.siglusapi.constant.FcConstants.ISSUE_VOUCHER_API;
+import static org.siglus.siglusapi.constant.FieldConstants.SEPARATOR;
 import static org.siglus.siglusapi.constant.FieldConstants.TRADE_ITEM;
 import static org.siglus.siglusapi.dto.fc.FcIntegrationResultDto.buildResult;
 import static org.siglus.siglusapi.util.SiglusDateHelper.DATE_MONTH_YEAR;
@@ -441,6 +442,7 @@ public class FcIssueVoucherService implements ProcessDataService {
       List<ApprovedProductDto> approvedProductDtos,
       Map<String, ApprovedProductDto> approvedProductDtoMaps,
       IssueVoucherDto issueVoucherDto) {
+    mergeFcIssueVoucherProducts(issueVoucherDto);
     SiglusOrderDto orderDto = siglusOrderService.searchOrderByIdForMultiWareHouseSupply(orderId);
     ShipmentDto shipmentDto = new ShipmentDto();
     OrderObjectReferenceDto orderReferenceDto = new OrderObjectReferenceDto(orderId);
@@ -454,6 +456,28 @@ public class FcIssueVoucherService implements ProcessDataService {
     shipmentDto.setShippedDate(issueVoucherDto.getShippingDate());
     shipmentDto.setLineItems(getShipmentLineItems(draftDto.lineItems(), issueVoucherDto, approvedProductIdMaps));
     return siglusShipmentService.createSubOrderAndShipmentForFc(shipmentDto);
+  }
+
+  private void mergeFcIssueVoucherProducts(IssueVoucherDto issueVoucherDto) {
+    if (issueVoucherDto.getProducts() == null) {
+      return;
+    }
+
+    List<ProductDto> mergedProducts = new ArrayList<>(issueVoucherDto.getProducts().stream()
+        .collect(Collectors.toMap(
+            // 1. Generate the composite key
+            p -> p.getFnmCode() + SEPARATOR + p.getBatch() + SEPARATOR + p.getExpiryDate(),
+            // 2. The value is the product object itself
+            Function.identity(),
+            // 3. The merge function for when keys collide
+            (p1, p2) -> {
+              p1.setShippedQuantity(p1.getShippedQuantity() + p2.getShippedQuantity());
+              return p1;
+            }
+        ))
+        .values()); // Extract the merged values directly
+
+    issueVoucherDto.setProducts(mergedProducts);
   }
 
   private ShipmentDraftDto createShipmentDraft(SiglusOrderDto orderDto,
