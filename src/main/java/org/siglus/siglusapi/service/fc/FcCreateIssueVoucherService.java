@@ -480,6 +480,10 @@ public class FcCreateIssueVoucherService {
       ApprovedProductDto approvedProductDto = approvedProductIdMaps.get(orderableId);
       LotDto lotDto = lotDtos.get(lineItem.getLot().getId()).get(0);
       ProductDto product = getProductDto(approvedProductDto, lotDto, issueVoucherDto.getProducts());
+      if (product != null) {
+        log.info("[FC] IV product {}, lot {}, quantity {}",
+            product.getFnmCode(), product.getBatch(), product.getShippedQuantity());
+      }
       lineItem.setQuantityShipped(product == null ? 0 :
           approvedProductDto.getOrderable().packsToOrder(product.getShippedQuantity()));
     });
