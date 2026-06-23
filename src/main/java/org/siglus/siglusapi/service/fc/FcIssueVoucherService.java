@@ -218,6 +218,8 @@ public class FcIssueVoucherService implements ProcessDataService {
       List<ApprovedProductDto> approvedProductDtos = requisitionService
           .getAllApprovedProducts(userDto.getHomeFacilityId(), requisitionV2Dto.getProgramId());
       Map<String, ApprovedProductDto> approvedProductsMap = getApprovedProductsMap(approvedProductDtos);
+
+      mergeFcIssueVoucherProducts(issueVoucherDto);
       List<ProductDto> existProducts = getExistProducts(issueVoucherDto, approvedProductsMap);
       if (!CollectionUtils.isEmpty(existProducts)) {
         simulateUser.simulateUserAuth(userDto.getId());
@@ -442,7 +444,6 @@ public class FcIssueVoucherService implements ProcessDataService {
       List<ApprovedProductDto> approvedProductDtos,
       Map<String, ApprovedProductDto> approvedProductDtoMaps,
       IssueVoucherDto issueVoucherDto) {
-    mergeFcIssueVoucherProducts(issueVoucherDto);
     SiglusOrderDto orderDto = siglusOrderService.searchOrderByIdForMultiWareHouseSupply(orderId);
     ShipmentDto shipmentDto = new ShipmentDto();
     OrderObjectReferenceDto orderReferenceDto = new OrderObjectReferenceDto(orderId);

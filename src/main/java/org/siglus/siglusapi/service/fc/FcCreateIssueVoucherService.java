@@ -173,6 +173,8 @@ public class FcCreateIssueVoucherService {
         }
       }
       Map<String, ApprovedProductDto> approvedProductsMap = getApprovedProductsMap(approvedProductDtos);
+
+      mergeFcIssueVoucherProducts(issueVoucherDto);
       List<ProductDto> existProducts = getExistProducts(issueVoucherDto, approvedProductsMap);
       if (!CollectionUtils.isEmpty(existProducts)) {
         simulateUser.simulateUserAuth(userDto.getId());
@@ -400,7 +402,6 @@ public class FcCreateIssueVoucherService {
       List<ApprovedProductDto> approvedProductDtos,
       Map<String, ApprovedProductDto> approvedProductDtoMaps,
       IssueVoucherDto issueVoucherDto) {
-    mergeFcIssueVoucherProducts(issueVoucherDto);
     SiglusOrderDto orderDto = siglusOrderService.searchOrderByIdForMultiWareHouseSupply(orderId);
     ShipmentDto shipmentDto = new ShipmentDto();
     OrderObjectReferenceDto orderReferenceDto = new OrderObjectReferenceDto(orderId);
