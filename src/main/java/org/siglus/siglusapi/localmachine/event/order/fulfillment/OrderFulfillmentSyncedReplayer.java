@@ -444,6 +444,7 @@ public class OrderFulfillmentSyncedReplayer {
     Shipment saved = this.siglusShipmentRepository.saveAndFlush(shipment);
     ProofOfDelivery proofOfDelivery = ProofOfDelivery.newInstance(saved);
     this.proofOfDeliveryRepository.saveAndFlush(proofOfDelivery);
+    this.siglusShipmentService.saveShipmentExtension(shipmentDto, saved.getId());
     return saved;
   }
 

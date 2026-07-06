@@ -215,7 +215,7 @@ public class SiglusShipmentService {
     return confirmedShipmentDto;
   }
 
-  private void saveShipmentExtension(ShipmentDto shipmentDto, UUID shipmentId) {
+  public void saveShipmentExtension(ShipmentDto shipmentDto, UUID shipmentId) {
     ShipmentsExtension shipmentsExtension = ShipmentsExtension.builder()
         .shipmentId(shipmentId)
         .isFefo(calcIsFefo(shipmentDto))
