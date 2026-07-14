@@ -40,7 +40,9 @@ public enum AdjustmentReason {
   RECEIVE("Receive"),
   ISSUE("Issue"),
   EXPIRED_DISCARD("Fora do prazo de validade"),
-  EXPIRED_RETURN_TO_SUPPLIER_AND_DISCARD("Transferência de produtos expirados");
+  EXPIRED_RETURN_TO_SUPPLIER_AND_DISCARD("Transferência de produtos expirados"),
+  EXPIRED_CORRECTION_NEGATIVE("Correção de prazo de validade / lote "),
+  EXPIRED_CORRECTION_POSITIVE("Correção de prazo de validade / lote");
 
   private final String name;
 
