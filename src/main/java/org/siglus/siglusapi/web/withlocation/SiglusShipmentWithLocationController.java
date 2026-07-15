@@ -51,9 +51,10 @@ public class SiglusShipmentWithLocationController {
       boolean isSubOrder, @RequestBody ShipmentExtensionRequest shipmentExtensionRequest) {
     ShipmentDto shipment = shipmentExtensionRequest.getShipment();
 
-    // Calculate isFefo before filtering out zero-quantity items so that lots with stockOnHand
-    // but quantityShipped == 0 (skipped earlier-expiry lots) are included in the FEFO evaluation.
+    // Capture the original request (with zero-quantity items) before any mutation,
+    // so both isFefo calculation and the emitter see the unfiltered line items.
     final boolean isFefo = siglusShipmentService.calcIsFefo(shipment);
+    final byte[] reqBytes = PayloadSerializer.LOCALMACHINE_EVENT_OBJECT_MAPPER.writeValueAsBytes(shipmentExtensionRequest);
 
     if (shipment != null && shipment.lineItems() != null) {
       shipment.setLineItems(
@@ -66,7 +67,6 @@ public class SiglusShipmentWithLocationController {
     siglusShipmentService.checkFulfillOrderExpired(shipmentExtensionRequest);
     siglusShipmentService.validShipmentLineItemsDuplicated(shipmentExtensionRequest);
     siglusShipmentService.checkStockOnHandQuantity(shipmentExtensionRequest);
-    byte[] reqBytes = PayloadSerializer.LOCALMACHINE_EVENT_OBJECT_MAPPER.writeValueAsBytes(shipmentExtensionRequest);
     ShipmentDto shipmentByLocation = siglusShipmentService.createOrderAndShipmentByLocation(isSubOrder,
         shipmentExtensionRequest, isFefo);
     notificationService.postConfirmShipment(shipmentByLocation);
