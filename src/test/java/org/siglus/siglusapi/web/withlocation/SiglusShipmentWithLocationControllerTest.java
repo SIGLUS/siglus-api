@@ -16,6 +16,8 @@
 package org.siglus.siglusapi.web.withlocation;
 
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyBoolean;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.verify;
 
 import org.junit.Test;
@@ -53,7 +55,7 @@ public class SiglusShipmentWithLocationControllerTest {
     siglusShipmentWithLocationController.confirmShipmentByLocation(false, shipmentExtensionRequest);
 
     // then
-    verify(siglusShipmentService).createOrderAndShipmentByLocation(false, shipmentExtensionRequest);
+    verify(siglusShipmentService).createOrderAndShipmentByLocation(eq(false), eq(shipmentExtensionRequest), anyBoolean());
     verify(notificationService).postConfirmShipment(any());
     verify(siglusShipmentService).checkFulfillOrderExpired(shipmentExtensionRequest);
   }

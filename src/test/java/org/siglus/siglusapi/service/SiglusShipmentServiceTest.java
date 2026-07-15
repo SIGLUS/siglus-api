@@ -531,7 +531,7 @@ public class SiglusShipmentServiceTest {
         .thenReturn(Lists.newArrayList(buildStockCard()));
 
     // when
-    siglusShipmentService.createOrderAndShipmentByLocation(false, shipmentExtensionRequest);
+    siglusShipmentService.createOrderAndShipmentByLocation(false, shipmentExtensionRequest, false);
 
     // then
     verify(shipmentLineItemsExtensionRepository, times(0)).save(Lists.newArrayList());
