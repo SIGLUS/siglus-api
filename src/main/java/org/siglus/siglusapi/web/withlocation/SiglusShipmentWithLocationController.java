@@ -53,7 +53,7 @@ public class SiglusShipmentWithLocationController {
 
     // Calculate isFefo before filtering out zero-quantity items so that lots with stockOnHand
     // but quantityShipped == 0 (skipped earlier-expiry lots) are included in the FEFO evaluation.
-    boolean isFefo = siglusShipmentService.calcIsFefo(shipment);
+    final boolean isFefo = siglusShipmentService.calcIsFefo(shipment);
 
     if (shipment != null && shipment.lineItems() != null) {
       shipment.setLineItems(
