@@ -54,7 +54,8 @@ public class SiglusShipmentWithLocationController {
     // Capture the original request (with zero-quantity items) before any mutation,
     // so both isFefo calculation and the emitter see the unfiltered line items.
     final boolean isFefo = siglusShipmentService.calcIsFefo(shipment);
-    final byte[] reqBytes = PayloadSerializer.LOCALMACHINE_EVENT_OBJECT_MAPPER.writeValueAsBytes(shipmentExtensionRequest);
+    final byte[] reqBytes = PayloadSerializer.LOCALMACHINE_EVENT_OBJECT_MAPPER
+        .writeValueAsBytes(shipmentExtensionRequest);
 
     if (shipment != null && shipment.lineItems() != null) {
       shipment.setLineItems(
