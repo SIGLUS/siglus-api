@@ -196,7 +196,7 @@ public class SiglusShipmentService {
   //  @Transactional
   // TODO notificationService.postConfirmShipment(shipmentByLocation); this failed will commit all changes!
   public ShipmentDto createOrderAndShipmentByLocation(boolean isSubOrder,
-      ShipmentExtensionRequest shipmentExtensionRequest) {
+      ShipmentExtensionRequest shipmentExtensionRequest, boolean isFefo) {
     shipmentDraftService.deleteShipmentDraftLineItemsExtensionByOrderId(
         shipmentExtensionRequest.getShipment().getOrder().getId());
     List<ShipmentLineItemDto> shipmentLineItemDtos = shipmentExtensionRequest.getShipment().lineItems();
@@ -209,7 +209,7 @@ public class SiglusShipmentService {
         shipmentExtensionRequest.getShipment(), true);
     fulfillLocationInfo(uniqueKeyMap, confirmedShipmentDto);
     List<ShipmentLineItemDto> shipmentLineItems = new ArrayList<>(uniqueKeyMap.values());
-    saveShipmentExtension(shipmentExtensionRequest.getShipment(), confirmedShipmentDto.getId());
+    saveShipmentExtension(confirmedShipmentDto.getId(), isFefo);
     saveToShipmentLineItemExtension(shipmentLineItems);
     savePodExtension(confirmedShipmentDto.getId(), shipmentExtensionRequest);
     return confirmedShipmentDto;
@@ -219,6 +219,14 @@ public class SiglusShipmentService {
     ShipmentsExtension shipmentsExtension = ShipmentsExtension.builder()
         .shipmentId(shipmentId)
         .isFefo(calcIsFefo(shipmentDto))
+        .build();
+    shipmentsExtensionRepository.save(shipmentsExtension);
+  }
+
+  public void saveShipmentExtension(UUID shipmentId, boolean isFefo) {
+    ShipmentsExtension shipmentsExtension = ShipmentsExtension.builder()
+        .shipmentId(shipmentId)
+        .isFefo(isFefo)
         .build();
     shipmentsExtensionRepository.save(shipmentsExtension);
   }
