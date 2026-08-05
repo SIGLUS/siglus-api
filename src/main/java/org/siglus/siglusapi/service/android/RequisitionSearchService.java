@@ -151,6 +151,22 @@ public class RequisitionSearchService {
       log.info("programCode {}, programMap.get(dto.getProgramCode()).getId() {}, periodId {}, startdate {}",
           dto.getProgramCode(), programMap.get(dto.getProgramCode()).getId(), periodId, dto.getRequisitionStartDate()
       );
+
+      // --- ADDED LOGGING AND NULL CHECK ---
+      if (periodId == null) {
+        String availablePeriods = processingPeriods != null ? processingPeriods.stream()
+            .map(p -> p.getStartDate() != null ? p.getStartDate().toString() : "null_date")
+            .collect(Collectors.joining(", ")) : "null_collection";
+
+        log.error("Missing Period Data: Could not find matching periodId for Facility: {}, ProgramCode: {}, "
+                + "Target StartDate: {}. Available periods in system for this program: [{}]",
+            facilityId, dto.getProgramCode(), dto.getRequisitionStartDate(), availablePeriods);
+
+        // Return early to avoid passing null to the UUID parameter, which causes the 'uuid = bytea' DB error
+        return;
+      }
+      // ------------------------------------
+
       Requisition requisition = siglusRequisitionRepository.findOneByFacilityIdAndProgramIdAndProcessingPeriodId(
           facilityId, programMap.get(dto.getProgramCode()).getId(), periodId);
       if (!ObjectUtils.isEmpty(requisition) && !skippedStatus(requisition.getStatus())) {
