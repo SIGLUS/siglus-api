@@ -151,18 +151,27 @@ public class SiglusShipmentService {
     }
   }
 
+
   public void validShipmentLineItemsDuplicated(ShipmentExtensionRequest shipmentExtensionRequest) {
     List<ShipmentLineItemDto> shipmentLineItems = shipmentExtensionRequest.getShipment().lineItems();
-    Set<String> orderableLotIds = new HashSet<>();
-    boolean isOrderableLotIdDuplicated = !shipmentLineItems.stream()
-        .map(item -> {
-          if (item.getLocation() != null && item.getLocation().getLocationCode() != null) {
-            return item.getOrderable().getId() + "-" + item.getLotId() + "-" + item.getLocation().getLocationCode();
-          }
-          return item.getOrderable().getId() + "-" + item.getLotId();
-        })
-        .allMatch(orderableLotIds::add);
-    if (isOrderableLotIdDuplicated) {
+
+    Set<String> seenKeys = new HashSet<>();
+    Set<String> duplicateKeys = new HashSet<>();
+
+    for (ShipmentLineItemDto item : shipmentLineItems) {
+      String key = item.getOrderable().getId() + "-" + item.getLotId();
+      if (item.getLocation() != null && item.getLocation().getLocationCode() != null) {
+        key += "-" + item.getLocation().getLocationCode();
+      }
+
+      // Set.add() returns false if the item was already in the set
+      if (!seenKeys.add(key)) {
+        duplicateKeys.add(key);
+      }
+    }
+
+    if (!duplicateKeys.isEmpty()) {
+      log.error("Validation failed: Duplicate shipment line items found for keys: {}", duplicateKeys);
       throw new ValidationMessageException(new Message(SHIPMENT_LINE_ITEMS_INVALID));
     }
   }
