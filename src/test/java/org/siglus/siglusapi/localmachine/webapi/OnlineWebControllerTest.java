@@ -181,6 +181,7 @@ public class OnlineWebControllerTest {
     verify(onlineWebService).resyncMasterData(facilityId);
     assertEquals("http://10.0.0.90:8083/masterData.zip", result.getDownloadUrl());
   }
+  
 
   private MachineToken buildMachineToken() {
     MachineToken machineToken = new MachineToken();
