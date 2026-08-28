@@ -324,6 +324,16 @@ public class CalculateCmmService {
         .lastUpdated(ZonedDateTime.now())
         .build();
     hfCmm.setId(UUID.randomUUID());
+
+    log.info(
+        "HfCmm: cmm={}, productCode={}, facilityCode={}, periodBegin={}, periodEnd={}",
+        hfCmm.getCmm(),
+        hfCmm.getProductCode(),
+        hfCmm.getFacilityCode(),
+        hfCmm.getPeriodBegin(),
+        hfCmm.getPeriodEnd()
+    );
+
     return hfCmm;
   }
 
