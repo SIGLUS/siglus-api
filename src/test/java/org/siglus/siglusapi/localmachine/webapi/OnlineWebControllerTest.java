@@ -168,10 +168,18 @@ public class OnlineWebControllerTest {
 
   @Test
   public void reSyncMasterDataFromOnlineWeb() {
+    // given
+    ResyncMasterDataResponse response = ResyncMasterDataResponse.builder().build();
+
+    when(onlineWebService.resyncMasterData(facilityId)).thenReturn(response);
+
     // when
-    onlineWebController.resyncMasterData(buildMachineToken());
+    ResyncMasterDataResponse result =
+        onlineWebController.resyncMasterData(buildMachineToken());
+
     // then
     verify(onlineWebService).resyncMasterData(facilityId);
+    assertEquals("http://10.0.0.90:8083/masterData.zip", result.getDownloadUrl());
   }
 
   private MachineToken buildMachineToken() {
