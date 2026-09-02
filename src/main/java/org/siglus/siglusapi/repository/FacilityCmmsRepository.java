@@ -28,6 +28,13 @@ import org.springframework.data.repository.query.Param;
 
 public interface FacilityCmmsRepository extends JpaRepository<HfCmm, UUID> {
 
+  // New method to fetch the most recent CMM for a specific facility
+  HfCmm findFirstByFacilityCodeOrderByPeriodBeginDesc(String facilityCode);
+
+  // New method to fetch all CMMs for a specific facility and period
+  List<HfCmm> findByFacilityCodeAndPeriodBegin(String facilityCode, LocalDate periodBegin);
+
+
   HfCmm findByFacilityCodeAndProductCodeAndPeriodBeginAndPeriodEnd(String facilityCode,
       String productCode, LocalDate periodBegin, LocalDate periodEnd);
 

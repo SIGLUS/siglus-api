@@ -86,6 +86,81 @@ public class CalculateCmmService {
   }
 
   @Transactional
+  public void calculateOneFacilityCmm(UUID facilityId) {
+    Facility facility = siglusFacilityRepository.findOne(facilityId);
+    String facilityCode = facility.getCode();
+
+    // 1. Find the last CMM in the database for this facility
+    HfCmm lastCmm = facilityCmmsRepository.findFirstByFacilityCodeOrderByPeriodBeginDesc(facilityCode);
+    if (lastCmm == null) {
+      log.warn("No historical cmm facilityId: {}", facilityId);
+      return;
+    }
+    LocalDate targetDate = lastCmm.getPeriodBegin();
+
+    Map<UUID, String> orderableIdToCode = siglusOrderableService.getAllProductIdToCode();
+    List<ProcessingPeriod> allPeriods = periodService.getUpToNowMonthlyPeriods();
+
+    ProcessingPeriod targetPeriod = allPeriods.stream()
+        .filter(p -> p.getStartDate().equals(targetDate) || PeriodUtil.isDateInPeriod(p, targetDate))
+        .findFirst().orElse(null);
+
+    if (targetPeriod == null) {
+      log.warn("No period match for target date: {}", targetDate);
+      return;
+    }
+
+    // 2. Recalculate this last CMM period
+    List<ProcessingPeriod> periods = getOneYearPeriods(allPeriods, targetPeriod.getEndDate());
+    LocalDate startDate = periods.get(0).getStartDate();
+    LocalDate endDate = targetPeriod.getEndDate();
+
+    Map<UUID, List<StockOnHandDto>> orderableIdToSohDtos = getOrderableIdToSohDtos(startDate, endDate, facilityId);
+    Map<UUID, List<StockCardLineItemDto>> orderableIdToStockCardLineItemDtos =
+        getOrderableIdToStockCardLineItemDtos(startDate, endDate, facilityId);
+
+    // Fetch existing CMMs for the target period to update them
+    List<HfCmm> existingCmms = facilityCmmsRepository
+        .findByFacilityCodeAndPeriodBegin(facilityCode, targetPeriod.getStartDate());
+    Map<String, HfCmm> existingCmmMap = CollectionUtils.isEmpty(existingCmms) ? Maps.newHashMap() :
+        existingCmms.stream().collect(Collectors.toMap(HfCmm::getProductCode, c -> c));
+
+    List<HfCmm> cmmsToSave = Lists.newArrayList();
+
+    orderableIdToSohDtos.forEach((orderableId, sohDtos) -> {
+      LocalDate firstMovementPeriodStart = getFirstMovementPeriodStart(sohDtos, periods);
+      if (Objects.isNull(firstMovementPeriodStart) || targetPeriod.getStartDate().isBefore(firstMovementPeriodStart)) {
+        return;
+      }
+
+      Set<LocalDate> hasStockOutPeriodStarDate = getHasStockOutPeriodStartDates(periods, sohDtos);
+      Map<LocalDate, Long> periodStartDateToIssueQuantity = getPeriodStartDateToIssueQuantity(periods,
+          orderableIdToStockCardLineItemDtos.get(orderableId));
+
+      double calculatedCmmValue = calculateCmm(firstMovementPeriodStart, periodStartDateToIssueQuantity,
+          hasStockOutPeriodStarDate, targetPeriod);
+
+      String productCode = orderableIdToCode.get(orderableId);
+
+      // 3. Update the CMM value if it exists, create CMM if it does not exist
+      HfCmm hfCmm = existingCmmMap.get(productCode);
+      if (hfCmm != null) {
+        hfCmm.setCmm(calculatedCmmValue);
+        hfCmm.setLastUpdated(ZonedDateTime.now());
+      } else {
+        hfCmm = buildHfCmm(calculatedCmmValue, productCode, facilityCode, targetPeriod);
+      }
+      cmmsToSave.add(hfCmm);
+    });
+
+    if (CollectionUtils.isNotEmpty(cmmsToSave)) {
+      log.info("Update/Save HfCmms for last period, facilityId:{}, size:{}", facilityId, cmmsToSave.size());
+      facilityCmmsRepository.save(cmmsToSave);
+    }
+  }
+
+
+  @Transactional
   public void calculateOneFacilityCmm(LocalDate requestDate, UUID facilityId) {
     Facility facility = siglusFacilityRepository.findOne(facilityId);
     Map<UUID, String> orderableIdToCode = siglusOrderableService.getAllProductIdToCode();
