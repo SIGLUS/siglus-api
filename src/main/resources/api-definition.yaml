@@ -4823,6 +4823,24 @@ traits:
             body:
               application/json:
                 schema: localizedMessage
+    /cmms/recalculate:
+      displayName: calculate cmms
+      post:
+        is: [ secured ]
+        description: >
+          calculate cmms
+        responses:
+          200:
+            body:
+          400:
+            body:
+              application/json:
+                schema: badRequestResponse
+          404:
+          403:
+            body:
+              application/json:
+                schema: localizedMessage
     /machineType:
       get:
         is: [ secured ]
