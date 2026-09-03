@@ -26,6 +26,8 @@ import org.springframework.data.repository.query.Param;
 
 public interface SiglusFacilityRepository extends JpaRepository<Facility, UUID>, JpaSpecificationExecutor<Facility> {
 
+  List<Facility> findByCodeIn(Collection<String> codes);
+
   Facility findFirstByTypeId(UUID typeId);
 
   @Query(value = "select f.* \n"

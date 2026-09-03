@@ -46,7 +46,7 @@ public class SiglusCalculateCmmController {
 
   @PostMapping("/recalculate")
   @Guarded
-  public void recalculateCurrentPeriod(@Valid @RequestBody CalculateCmmRequest request) {
-    calculateCmmService.calculateOneFacilityCmm(request.getFacilityId());
+  public void recalculateCurrentPeriod() {
+    calculateCmmService.recalculateLastCmmForAllExistingFacilities();
   }
 }

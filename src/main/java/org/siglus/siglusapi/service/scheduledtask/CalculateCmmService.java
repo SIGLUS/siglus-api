@@ -63,6 +63,7 @@ public class CalculateCmmService {
   private static final Long STOCK_OUT_QUANTITY = 0L;
   private static final double INIT_CMM = -1d;
   private static final int MAX_PERIOD_ISSUE_COUNT = 3;
+  private static final int BATCH_SIZE = 500;
 
   @Transactional
   public void calculateAllWebCmm(LocalDate requestDate) {
@@ -83,6 +84,46 @@ public class CalculateCmmService {
       calculateAndSavaCmms(requestDate, Pair.of(facilityId, facilityIdToCode.get(facilityId)), orderableIdToCode,
           periods, facilityCodeToHfCmmCountDtos.get(facilityIdToCode.get(facilityId)));
     });
+  }
+
+
+  public void recalculateLastCmmForAllExistingFacilities() {
+    // 1. Fetch all distinct facility codes that have at least one record in the database
+    List<String> facilityCodes = facilityCmmsRepository.findDistinctFacilityCodes();
+
+    if (CollectionUtils.isEmpty(facilityCodes)) {
+      log.info("No CMM records found in the database to recalculate.");
+      return;
+    }
+
+    // 2. Partition the large list into manageable chunks (e.g., 500 at a time)
+    // This prevents SQL 'IN' clause limits and reduces RAM pressure
+    List<List<String>> partitionedCodes = Lists.partition(facilityCodes, BATCH_SIZE);
+
+    log.info("Found {} distinct facility codes with CMMs. Processing in {} batches...",
+        facilityCodes.size(), partitionedCodes.size());
+
+    // 3. Process batch by batch
+    for (int i = 0; i < partitionedCodes.size(); i++) {
+      List<String> batchCodes = partitionedCodes.get(i);
+      log.info("Processing batch {}/{}...", (i + 1), partitionedCodes.size());
+
+      // Fetch only the facilities for this specific batch
+      List<Facility> facilitiesBatch = siglusFacilityRepository.findByCodeIn(batchCodes);
+
+      // Loop through and calculate for each facility in the current batch
+      facilitiesBatch.forEach(facility -> {
+        try {
+          // Note: If your method requires the requestDate, use calculateOneFacilityCmm(null, facility.getId());
+          calculateOneFacilityCmm(facility.getId());
+        } catch (Exception e) {
+          log.error("Error recalculating last CMM for facilityCode: {}, facilityId: {}",
+              facility.getCode(), facility.getId(), e);
+        }
+      });
+    }
+
+    log.info("Finished recalculating last CMM for all existing facilities.");
   }
 
   @Transactional

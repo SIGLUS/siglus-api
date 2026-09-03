@@ -34,6 +34,8 @@ public interface FacilityCmmsRepository extends JpaRepository<HfCmm, UUID> {
   // New method to fetch all CMMs for a specific facility and period
   List<HfCmm> findByFacilityCodeAndPeriodBegin(String facilityCode, LocalDate periodBegin);
 
+  @Query("SELECT DISTINCT h.facilityCode FROM HfCmm h")
+  List<String> findDistinctFacilityCodes();
 
   HfCmm findByFacilityCodeAndProductCodeAndPeriodBeginAndPeriodEnd(String facilityCode,
       String productCode, LocalDate periodBegin, LocalDate periodEnd);
