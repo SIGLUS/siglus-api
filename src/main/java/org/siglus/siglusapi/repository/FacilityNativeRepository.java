@@ -59,7 +59,8 @@ public class FacilityNativeRepository extends BaseNativeRepository {
     if (list.size() < pageable.getPageSize()) {
       return new PageImpl<>(list, pageable, (long) pageable.getOffset() + list.size());
     }
-    String countQuery = "SELECT COUNT(DISTINCT f.code) " + generateFrom(pageable, null, true, true);
+    // FIX: Pass clientCode instead of null
+    String countQuery = "SELECT COUNT(DISTINCT f.code) " + generateFrom(pageable, clientCode, true, true);
     Long total = namedJdbc.query(countQuery, params, (rs -> rs.next() ? rs.getLong(1) : null));
     return new PageImpl<>(list, pageable, total);
   }
@@ -76,7 +77,8 @@ public class FacilityNativeRepository extends BaseNativeRepository {
     if (list.size() < pageable.getPageSize()) {
       return new PageImpl<>(list, pageable, (long) pageable.getOffset() + list.size());
     }
-    String countQuery = "SELECT COUNT(DISTINCT f.code) " + generateFrom(pageable, null, false, true);
+    // FIX: Pass clientCode instead of null
+    String countQuery = "SELECT COUNT(DISTINCT f.code) " + generateFrom(pageable, clientCode, false, true);
     Long total = namedJdbc.query(countQuery, params, (rs -> rs.next() ? rs.getLong(1) : null));
     return new PageImpl<>(list, pageable, total);
   }
