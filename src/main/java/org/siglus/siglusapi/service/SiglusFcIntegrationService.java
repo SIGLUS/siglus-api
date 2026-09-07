@@ -107,6 +107,8 @@ import org.siglus.siglusapi.dto.android.enumeration.MmtbPatientTableColumnKeyVal
 import org.siglus.siglusapi.dto.android.enumeration.MmtbPatientTableKeyValue;
 import org.siglus.siglusapi.dto.android.enumeration.TestProject;
 import org.siglus.siglusapi.dto.android.enumeration.TestService;
+import org.siglus.siglusapi.dto.android.response.LotBasicResponse;
+import org.siglus.siglusapi.dto.android.response.ProductMovementResponse;
 import org.siglus.siglusapi.dto.fc.FacilityStockMovementResponse;
 import org.siglus.siglusapi.dto.fc.FacilityStockOnHandResponse;
 import org.siglus.siglusapi.dto.fc.ProductStockOnHandResponse;
@@ -277,7 +279,19 @@ public class SiglusFcIntegrationService {
     log.info("toMovementResponse facility id: {}", facility.getId());
     PeriodOfProductMovements period = stockManagementRepository
         .getAllProductMovementsForSync(facility.getId(), since, endDate);
-    response.setProductMovements(productMovementMapper.toResponses(period));
+    List<ProductMovementResponse> productMovements = productMovementMapper.toResponses(period);
+    productMovements.forEach(pm -> {
+      pm.getStockMovementItems().forEach(stockItem ->
+          stockItem.getLotMovementItems().forEach(lotItem ->
+              lotItem.setLotCode(convertLotCodeToLote(lotItem.getLotCode()))));
+      pm.getLotsOnHand().forEach(lotOnHand -> {
+        LotBasicResponse lot = lotOnHand.getLot();
+        if (lot != null) {
+          lot.setCode(convertLotCodeToLote(lot.getCode()));
+        }
+      });
+    });
+    response.setProductMovements(productMovements);
     return response;
   }
 
