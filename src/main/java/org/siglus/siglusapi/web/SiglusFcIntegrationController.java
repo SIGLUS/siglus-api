@@ -50,11 +50,21 @@ public class SiglusFcIntegrationController {
   @GetMapping("/requisitions")
   public Page<FcRequisitionDto> searchRequisitions(
       @DateTimeFormat(pattern = DATE_FORMAT) @RequestParam LocalDate date,
+      @RequestParam(value = "end_date", required = false)
+      @DateTimeFormat(pattern = DATE_FORMAT)
+      @Nullable LocalDate endDate,
+      @RequestParam(value = "client_code", required = false)
+      @Nullable String clientCode,
+      @RequestParam(value = "client_types", required = false)
+      List<String> clientTypes,
+      @RequestParam(value = "requisition_number", required = false)
+      @Nullable String requisitionNumber,
       Pageable pageable) {
     if (PaginationConstants.NO_PAGINATION == pageable.getPageSize()) {
       pageable = new PageRequest(PaginationConstants.DEFAULT_PAGE_NUMBER, 20);
     }
-    return siglusFcIntegrationService.searchRequisitions(date, pageable);
+    return siglusFcIntegrationService.searchRequisitions(
+            date, endDate, clientCode, clientTypes, requisitionNumber, pageable);
   }
 
   @GetMapping("/requisitions/needApproval")

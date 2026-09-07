@@ -38,6 +38,7 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -196,9 +197,29 @@ public class SiglusFcIntegrationService {
 
   private Map<UUID, Map<String, String>> orderableIdToInfoMap;
 
-  public Page<FcRequisitionDto> searchRequisitions(LocalDate date, Pageable pageable) {
-    Page<Requisition> requisitions;
-    requisitions = siglusRequisitionRepository.searchAllForFc(date, pageable);
+  public Page<FcRequisitionDto> searchRequisitions(LocalDate date,
+                                                   LocalDate endDate,
+                                                   String clientCode,
+                                                   List<String> clientTypes,
+                                                   String requisitionNumber,
+                                                   Pageable pageable) {
+
+    // JPA Native Queries crash if an IN clause receives a null or empty list.
+    // We determine if we have types, and if not, pass a dummy list containing an empty string.
+    // It won't affect the query because of the :hasClientTypes boolean flag.
+    boolean hasClientTypes = clientTypes != null && !clientTypes.isEmpty();
+    List<String> safeClientTypes = hasClientTypes ? clientTypes : Collections.singletonList("");
+
+    Page<Requisition> requisitions = siglusRequisitionRepository.searchAllForFc(
+            date,
+            endDate,
+            requisitionNumber,
+            clientCode,
+            hasClientTypes,
+            safeClientTypes,
+            pageable
+    );
+
     List<FcRequisitionDto> fcRequisitionDtos = newArrayList();
     Map<UUID, ProgramRealProgram> realProgramIdToEntityMap = programRealProgramRepository.findAll()
         .stream().collect(Collectors.toMap(ProgramRealProgram::getId, Function.identity()));

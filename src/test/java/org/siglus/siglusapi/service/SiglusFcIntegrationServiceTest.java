@@ -21,6 +21,9 @@ import static com.google.common.collect.Sets.newHashSet;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.anyBoolean;
+import static org.mockito.Mockito.anyList;
+import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -321,8 +324,10 @@ public class SiglusFcIntegrationServiceTest {
     mockProgramInfo("VC");
 
     // when
+    // Pass null for the optional parameters: endDate, clientCode, clientTypes, requisitionNumber
     Page<FcRequisitionDto> fcRequisitionDtos = siglusFcIntegrationService
-        .searchRequisitions(date, pageable);
+            .searchRequisitions(date, null, null, null, null, pageable);
+
     // then
     assertEquals(1, fcRequisitionDtos.getContent().size());
     FcRequisitionDto fcRequisitionDto = fcRequisitionDtos.getContent().get(0);
@@ -337,8 +342,9 @@ public class SiglusFcIntegrationServiceTest {
     mockProgramInfo("VC");
 
     // when
+    // Pass null for the optional parameters: endDate, clientCode, clientTypes, requisitionNumber
     Page<FcRequisitionDto> fcRequisitionDtos = siglusFcIntegrationService
-        .searchRequisitions(date, pageable);
+            .searchRequisitions(date, null, null, null, null, pageable);
 
     // then
     assertEquals(1, fcRequisitionDtos.getContent().size());
@@ -354,8 +360,9 @@ public class SiglusFcIntegrationServiceTest {
     mockRequisitionInfo(fcSupervisoryNodeId);
 
     // when
+    // Pass null for the optional parameters: endDate, clientCode, clientTypes, requisitionNumber
     Page<FcRequisitionDto> fcRequisitionDtos = siglusFcIntegrationService
-        .searchRequisitions(date, pageable);
+            .searchRequisitions(date, null, null, null, null, pageable);
 
     // then
     assertEquals(1, fcRequisitionDtos.getContent().size());
@@ -386,7 +393,9 @@ public class SiglusFcIntegrationServiceTest {
     mockProgramInfo("T");
 
     // when
-    Page<FcRequisitionDto> fcRequisitionDtos = siglusFcIntegrationService.searchRequisitions(date, pageable);
+    // Pass null for the optional parameters: endDate, clientCode, clientTypes, requisitionNumber
+    Page<FcRequisitionDto> fcRequisitionDtos = siglusFcIntegrationService
+            .searchRequisitions(date, null, null, null, null, pageable);
 
     // then
     assertEquals(1, fcRequisitionDtos.getContent().size());
@@ -402,7 +411,9 @@ public class SiglusFcIntegrationServiceTest {
     mockProgramInfo("ML");
 
     // when
-    Page<FcRequisitionDto> fcRequisitionDtos = siglusFcIntegrationService.searchRequisitions(date, pageable);
+    // Pass null for the optional parameters: endDate, clientCode, clientTypes, requisitionNumber
+    Page<FcRequisitionDto> fcRequisitionDtos = siglusFcIntegrationService
+            .searchRequisitions(date, null, null, null, null, pageable);
 
     // then
     assertEquals(1, fcRequisitionDtos.getContent().size());
@@ -418,7 +429,9 @@ public class SiglusFcIntegrationServiceTest {
     mockProgramInfo("TR");
 
     // when
-    Page<FcRequisitionDto> fcRequisitionDtos = siglusFcIntegrationService.searchRequisitions(date, pageable);
+    // Pass null for the optional parameters: endDate, clientCode, clientTypes, requisitionNumber
+    Page<FcRequisitionDto> fcRequisitionDtos = siglusFcIntegrationService
+            .searchRequisitions(date, null, null, null, null, pageable);
 
     // then
     assertEquals(1, fcRequisitionDtos.getContent().size());
@@ -493,10 +506,20 @@ public class SiglusFcIntegrationServiceTest {
     template.setId(templateId);
     requisition.setTemplate(template);
     List<Requisition> requisitions = newArrayList(requisition);
-    when(siglusRequisitionRepository.searchAllForFc(date, pageable))
-        .thenReturn(Pagination.getPage(requisitions, pageable));
+
+    // FIX: Updated to match the new 7-parameter signature for searchAllForFc
+    when(siglusRequisitionRepository.searchAllForFc(
+            eq(date),
+            any(),          // endDate
+            any(),          // requisitionNumber
+            any(),          // clientCode
+            anyBoolean(),   // hasClientTypes
+            anyList(),      // clientTypes
+            eq(pageable)
+    )).thenReturn(Pagination.getPage(requisitions, pageable));
+
     when(siglusRequisitionRepository.searchNeedApprovalForFc(date, pageable,
-        newHashSet(fcSupervisoryNodeId))).thenReturn(Pagination.getPage(requisitions, pageable));
+            newHashSet(fcSupervisoryNodeId))).thenReturn(Pagination.getPage(requisitions, pageable));
   }
 
   private void mockFacilityInfo() {

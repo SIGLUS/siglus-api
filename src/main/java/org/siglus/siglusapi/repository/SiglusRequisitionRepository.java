@@ -33,12 +33,41 @@ import org.springframework.data.repository.query.Param;
 @SuppressWarnings("PMD.AvoidDuplicateLiterals")
 public interface SiglusRequisitionRepository extends JpaRepository<Requisition, UUID> {
 
-  @Query(value = "select * from requisition.requisitions r where "
-      + "r.status in ('IN_APPROVAL', 'APPROVED', 'RELEASED', 'RELEASED_WITHOUT_ORDER')"
+  @Query(value = "select r.* from requisition.requisitions r where "
+      + "r.status in ('IN_APPROVAL', 'APPROVED', 'RELEASED', 'RELEASED_WITHOUT_ORDER') "
       + "and r.modifieddate >= :date "
-      + "and r.modifieddate <= now() "
+      + "and r.modifieddate <= COALESCE(CAST(:endDate AS timestamp), now()) "
+
+          // Optimized Requisition Number check
+      + "and (CAST(:requisitionNumber AS text) IS NULL OR EXISTS ("
+      + "    select 1 from siglusintegration.requisition_extension ext "
+      + "    where ext.requisitionid = r.id "
+      + "    and concat(ext.requisitionnumberprefix, to_char(ext.requisitionnumber, 'fm00')) = CAST(:requisitionNumber AS text)"
+      + ")) "
+
+          // Optimized Client Code check
+      + "and (CAST(:clientCode AS text) IS NULL OR EXISTS ("
+      + "    select 1 from referencedata.facilities f1 "
+      + "    where f1.id = r.facilityid and f1.code = CAST(:clientCode AS text)"
+      + ")) "
+
+          // Optimized Client Types check (Handles 2000+ facilities efficiently)
+      + "and (:hasClientTypes = FALSE OR EXISTS ("
+      + "    select 1 from referencedata.facilities f2 "
+      + "    inner join referencedata.facility_types ft on f2.typeid = ft.id "
+      + "    where f2.id = r.facilityid and ft.code IN :clientTypes"
+      + ")) "
+
       + "order by r.modifieddate, ?#{#pageable}", nativeQuery = true)
-  Page<Requisition> searchAllForFc(@Param("date") LocalDate date, Pageable pageable);
+  Page<Requisition> searchAllForFc(
+          @Param("date") LocalDate date,
+          @Param("endDate") LocalDate endDate,
+          @Param("requisitionNumber") String requisitionNumber,
+          @Param("clientCode") String clientCode,
+          @Param("hasClientTypes") boolean hasClientTypes,
+          @Param("clientTypes") List<String> clientTypes,
+          Pageable pageable
+  );
 
   @Query(value = "select * from requisition.requisitions r where "
       + "r.status = 'IN_APPROVAL' "
