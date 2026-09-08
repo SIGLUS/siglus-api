@@ -38,20 +38,21 @@ public interface SiglusRequisitionRepository extends JpaRepository<Requisition, 
       + "and r.modifieddate >= :date "
       + "and r.modifieddate <= COALESCE(CAST(:endDate AS timestamp), now()) "
 
-          // Optimized Requisition Number check
+      // Optimized Requisition Number check
       + "and (CAST(:requisitionNumber AS text) IS NULL OR EXISTS ("
       + "    select 1 from siglusintegration.requisition_extension ext "
       + "    where ext.requisitionid = r.id "
-      + "    and concat(ext.requisitionnumberprefix, to_char(ext.requisitionnumber, 'fm00')) = CAST(:requisitionNumber AS text)"
+      + "    and concat(ext.requisitionnumberprefix, to_char(ext.requisitionnumber, 'fm00')) "
+      + "= CAST(:requisitionNumber AS text)"
       + ")) "
 
-          // Optimized Client Code check
+      // Optimized Client Code check
       + "and (CAST(:clientCode AS text) IS NULL OR EXISTS ("
       + "    select 1 from referencedata.facilities f1 "
       + "    where f1.id = r.facilityid and f1.code = CAST(:clientCode AS text)"
       + ")) "
 
-          // Optimized Client Types check (Handles 2000+ facilities efficiently)
+      // Optimized Client Types check (Handles 2000+ facilities efficiently)
       + "and (:hasClientTypes = FALSE OR EXISTS ("
       + "    select 1 from referencedata.facilities f2 "
       + "    inner join referencedata.facility_types ft on f2.typeid = ft.id "
@@ -60,13 +61,13 @@ public interface SiglusRequisitionRepository extends JpaRepository<Requisition, 
 
       + "order by r.modifieddate, ?#{#pageable}", nativeQuery = true)
   Page<Requisition> searchAllForFc(
-          @Param("date") LocalDate date,
-          @Param("endDate") LocalDate endDate,
-          @Param("requisitionNumber") String requisitionNumber,
-          @Param("clientCode") String clientCode,
-          @Param("hasClientTypes") boolean hasClientTypes,
-          @Param("clientTypes") List<String> clientTypes,
-          Pageable pageable
+      @Param("date") LocalDate date,
+      @Param("endDate") LocalDate endDate,
+      @Param("requisitionNumber") String requisitionNumber,
+      @Param("clientCode") String clientCode,
+      @Param("hasClientTypes") boolean hasClientTypes,
+      @Param("clientTypes") List<String> clientTypes,
+      Pageable pageable
   );
 
   @Query(value = "select * from requisition.requisitions r where "
