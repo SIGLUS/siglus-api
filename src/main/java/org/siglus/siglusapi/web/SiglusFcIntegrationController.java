@@ -38,7 +38,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-
+@SuppressWarnings("PMD.AvoidDuplicateLiterals")
 @RestController
 @Validated
 @RequestMapping("/api/siglusapi/integration")
@@ -114,11 +114,21 @@ public class SiglusFcIntegrationController {
   @GetMapping("/pods")
   public Page<FcProofOfDeliveryDto> searchProofOfDelivery(
       @DateTimeFormat(pattern = DATE_FORMAT) @RequestParam LocalDate date,
+      @RequestParam(value = "end_date", required = false)
+      @DateTimeFormat(pattern = DATE_FORMAT)
+      @Nullable LocalDate endDate,
+      @RequestParam(value = "client_code", required = false)
+      @Nullable String clientCode,
+      @RequestParam(value = "client_types", required = false)
+      List<String> clientTypes,
+      @RequestParam(value = "IV_number", required = false)
+      @Nullable String ivNumber,
       Pageable pageable) {
     if (PaginationConstants.NO_PAGINATION == pageable.getPageSize()) {
       pageable = new PageRequest(PaginationConstants.DEFAULT_PAGE_NUMBER, 20);
     }
-    return siglusFcIntegrationService.searchProofOfDelivery(date, pageable);
+    return siglusFcIntegrationService.searchProofOfDelivery(
+        date, endDate, clientCode, clientTypes, ivNumber, pageable);
   }
 
 }

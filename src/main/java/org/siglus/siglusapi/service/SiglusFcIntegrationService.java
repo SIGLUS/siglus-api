@@ -365,14 +365,41 @@ public class SiglusFcIntegrationService {
     return response;
   }
 
-  public Page<FcProofOfDeliveryDto> searchProofOfDelivery(LocalDate date, Pageable pageable) {
+  public Page<FcProofOfDeliveryDto> searchProofOfDelivery(LocalDate date,
+                                                          LocalDate endDate,
+                                                          String clientCode,
+                                                          List<String> clientTypes,
+                                                          String ivNumber,
+                                                          Pageable pageable) {
+
+    // 1. Pre-process parameters to avoid Hibernate bytea null-mapping errors and empty list crashes
+    boolean hasEndDate = endDate != null;
+    LocalDate safeEndDate = hasEndDate ? endDate : LocalDate.now();
+
+    boolean hasClientCode = clientCode != null && !clientCode.trim().isEmpty();
+    String safeClientCode = hasClientCode ? clientCode : "";
+
+    boolean hasClientTypes = clientTypes != null && !clientTypes.isEmpty();
+    List<String> safeClientTypes = hasClientTypes ? clientTypes : Collections.singletonList("");
+
+    boolean hasIvNumber = ivNumber != null && !ivNumber.trim().isEmpty();
+    String safeIvNumber = hasIvNumber ? ivNumber : "";
+
     List<FacilityDto> facilityDtos = siglusFacilityReferenceDataService.findAll();
     Map<UUID, String> facilityIdToFacilityCodeMap = facilityDtos
         .stream()
         .collect(toMap(FacilityDto::getId, FacilityDto::getCode));
 
-    Page<ProofOfDelivery> page = siglusProofOfDeliveryRepository
-        .search(date, pageable);
+    // 2. Pass flags and safe defaults into the repository
+    Page<ProofOfDelivery> page = siglusProofOfDeliveryRepository.search(
+        date,
+        hasEndDate, safeEndDate,
+        hasClientCode, safeClientCode,
+        hasClientTypes, safeClientTypes,
+        hasIvNumber, safeIvNumber,
+        pageable
+    );
+
 
     Set<UUID> shipmentIds = page.getContent().stream()
         .map(ProofOfDelivery::getShipment).map(Shipment::getId).collect(toSet());

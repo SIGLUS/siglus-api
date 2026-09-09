@@ -42,16 +42,51 @@ import org.springframework.data.repository.query.Param;
 public interface SiglusProofOfDeliveryRepository extends JpaRepository<ProofOfDelivery, UUID>,
     JpaSpecificationExecutor<ProofOfDelivery> {
 
-  @Query(value = "select * from fulfillment.proofs_of_delivery p "
+  @Query(value = "select p.* from fulfillment.proofs_of_delivery p "
       + "join fulfillment.shipments s2 on p.shipmentid = s2.id "
       + "join fulfillment.orders o2 on s2.orderid = o2.id "
       + "where p.status = 'CONFIRMED' "
       + "and p.receiveddate >= :date "
-      + "and p.receiveddate <= now() "
+
+      // Safely handles endDate with a fallback to now()
+      + "and ( "
+      + "  (:hasEndDate = TRUE AND p.receiveddate <= cast(:endDate as timestamp)) OR "
+      + "  (:hasEndDate = FALSE AND p.receiveddate <= now()) "
+      + ") "
+
+      // Optimized Client Code check
+      + "and (:hasClientCode = FALSE OR EXISTS ("
+      + "    select 1 from referencedata.facilities f1 "
+      + "    where f1.id = o2.facilityid and f1.code = :clientCode "
+      + ")) "
+
+      // Optimized Client Types check
+      + "and (:hasClientTypes = FALSE OR EXISTS ("
+      + "    select 1 from referencedata.facilities f2 "
+      + "    inner join referencedata.facility_types ft on f2.typeid = ft.id "
+      + "    where f2.id = o2.facilityid and ft.code IN :clientTypes "
+      + ")) "
+
+      // Optimized IV Number check
+      + "and (:hasIvNumber = FALSE OR EXISTS ("
+      + "    select 1 from siglusintegration.shipments_extension se "
+      + "    where se.shipmentid = s2.id and se.issuevouchernumber = :ivNumber "
+      + ")) "
+
       + "order by p.receiveddate, ?#{#pageable}",
       nativeQuery = true)
-  Page<ProofOfDelivery> search(@Param("date") LocalDate date,
-      Pageable pageable);
+  Page<ProofOfDelivery> search(
+      @Param("date") LocalDate date,
+      @Param("hasEndDate") boolean hasEndDate,
+      @Param("endDate") LocalDate endDate,
+      @Param("hasClientCode") boolean hasClientCode,
+      @Param("clientCode") String clientCode,
+      @Param("hasClientTypes") boolean hasClientTypes,
+      @Param("clientTypes") List<String> clientTypes,
+      @Param("hasIvNumber") boolean hasIvNumber,
+      @Param("ivNumber") String ivNumber,
+      Pageable pageable
+  );
 
   default List<ProofOfDelivery> findAllByFacilitySince(UUID facilityId, @Nonnull LocalDate since,
       @Nullable String orderCode, OrderStatus... statuses) {

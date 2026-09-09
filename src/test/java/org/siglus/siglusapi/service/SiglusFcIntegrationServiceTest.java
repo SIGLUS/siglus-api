@@ -23,6 +23,7 @@ import static org.junit.Assert.assertNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.anyBoolean;
 import static org.mockito.Mockito.anyList;
+import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -447,8 +448,9 @@ public class SiglusFcIntegrationServiceTest {
     when(shipmentsExtensionRepository.findByShipmentIdIn(any())).thenReturn(newArrayList());
 
     // when
+    // Pass null for the optional parameters: endDate, clientCode, clientTypes, ivNumber
     Page<FcProofOfDeliveryDto> fcProofOfDeliveryDtos = siglusFcIntegrationService
-        .searchProofOfDelivery(date, pageable);
+        .searchProofOfDelivery(date, null, null, null, null, pageable);
 
     // then
     List<FcProofOfDeliveryDto> list = fcProofOfDeliveryDtos.getContent();
@@ -668,8 +670,20 @@ public class SiglusFcIntegrationServiceTest {
 
     Pageable pageable = new PageRequest(0, 10);
     Page<ProofOfDelivery> page = Pagination.getPage(newArrayList(proofOfDelivery), pageable, 1);
-    when(siglusProofOfDeliveryRepository
-        .search(any(), any())).thenReturn(page);
+
+    // FIX: Updated to match the new 10-parameter signature for search
+    when(siglusProofOfDeliveryRepository.search(
+        any(),          // date
+        anyBoolean(),   // hasEndDate
+        any(),          // endDate
+        anyBoolean(),   // hasClientCode
+        anyString(),    // clientCode
+        anyBoolean(),   // hasClientTypes
+        anyList(),      // clientTypes
+        anyBoolean(),   // hasIvNumber
+        anyString(),    // ivNumber
+        any()           // pageable
+    )).thenReturn(page);
   }
 
   private Shipment mockShipment() {
