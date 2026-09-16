@@ -608,16 +608,20 @@ public class MeService {
   }
 
   private void saveAndUpdateCmm(HfCmm toBeUpdatedHfCmm) {
-    if (!toBeUpdatedHfCmm.getPeriodBegin().isBefore(LocalDate.now())) {
-      log.warn("period begin is future date, do not save or update cmm, toBeUpdatedHfCmm:{}", toBeUpdatedHfCmm);
-      return;
-    }
+    log.info("Processing CMM payload | facilityCode: {} | productCode: {} | periodBegin: {}",
+        toBeUpdatedHfCmm.getFacilityCode(),
+        toBeUpdatedHfCmm.getProductCode(),
+        toBeUpdatedHfCmm.getPeriodBegin());
+
     HfCmm hfCmm = facilityCmmsRepository.findByFacilityCodeAndProductCodeAndPeriodBeginAndPeriodEnd(
-        toBeUpdatedHfCmm.getFacilityCode(), toBeUpdatedHfCmm.getProductCode(),
-        toBeUpdatedHfCmm.getPeriodBegin(), toBeUpdatedHfCmm.getPeriodEnd());
-    UUID cmmId = hfCmm == null ? UUID.randomUUID() : hfCmm.getId();
+        toBeUpdatedHfCmm.getFacilityCode(),
+        toBeUpdatedHfCmm.getProductCode(),
+        toBeUpdatedHfCmm.getPeriodBegin(),
+        toBeUpdatedHfCmm.getPeriodEnd());
+
+    UUID cmmId = (hfCmm == null) ? UUID.randomUUID() : hfCmm.getId();
     toBeUpdatedHfCmm.setId(cmmId);
-    log.info("save hf_cmm info , id: {}", cmmId);
+
     facilityCmmsRepository.save(toBeUpdatedHfCmm);
   }
 
