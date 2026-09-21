@@ -187,7 +187,7 @@ public class MetabaseDashboardService {
 
     paramMap.put(DISTRICT_LOWER_CASE, districtNames);
     if (CollectionUtils.isNotEmpty(districtNames)
-        && !EXCLUDED_USERS_FOR_FACILITIES.contains(userId)) {
+        && EXCLUDED_USERS_FOR_FACILITIES.contains(userId)) {
       Set<String> facilityCodes = siglusFacilityRepository.findFacilityNamesByZoneAndParentZoneIds(
           districtIds
       );
