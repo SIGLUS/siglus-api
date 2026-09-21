@@ -78,4 +78,9 @@ public interface SiglusFacilityRepository extends JpaRepository<Facility, UUID>,
       nativeQuery = true)
   Set<String> findFacilityNamesByZoneAndParentZoneIds(
       @Param("zoneIds") Collection<UUID> zoneIds);
+
+  @Query(value = "select distinct code from referencedata.facilities f "
+      + "where f.typeid = 'b606c65a-cfad-11e9-9398-0242ac130008';",
+      nativeQuery = true)
+  List<String> findAllAiFacilityCodes();
 }

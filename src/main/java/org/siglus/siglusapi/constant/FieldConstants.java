@@ -15,6 +15,9 @@
 
 package org.siglus.siglusapi.constant;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 public class FieldConstants {
@@ -118,4 +121,11 @@ public class FieldConstants {
   public static final String VALUE = "value";
   public static final UUID ALL_GEOGRAPHIC_UUID = UUID.fromString("00000000-0000-0000-0000-000000000000");
   public static final UUID REQUISITION_DRAFT_UUID = UUID.fromString("00000000-0000-0000-0000-000000000000");
+
+  public static final Set<UUID> EXCLUDED_USERS_FOR_FACILITIES = new HashSet<>(Arrays.asList(
+          UUID.fromString("08f82917-716c-4dab-b5f2-b2a85f757cd8"),
+          UUID.fromString("43cf56a1-4e5a-4140-8de3-1cce02feb357"),
+          UUID.fromString("fbd9ecd0-e3bd-4dfd-824e-bda430960579"),
+          UUID.fromString("38e73214-81b9-4479-9011-8956ba8babc3")
+  ));
 }

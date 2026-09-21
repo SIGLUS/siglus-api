@@ -17,6 +17,7 @@ package org.siglus.siglusapi.service;
 
 import static org.siglus.siglusapi.constant.FieldConstants.ALL_GEOGRAPHIC_UUID;
 import static org.siglus.siglusapi.constant.FieldConstants.DISTRICT_LOWER_CASE;
+import static org.siglus.siglusapi.constant.FieldConstants.EXCLUDED_USERS_FOR_FACILITIES;
 import static org.siglus.siglusapi.constant.FieldConstants.FACILITY_CODE_LOWER_CASE;
 import static org.siglus.siglusapi.constant.FieldConstants.JWT_TOKEN_HEADER_PARAM_NAME;
 import static org.siglus.siglusapi.constant.FieldConstants.JWT_TOKEN_HEADER_PARAM_VALUE;
@@ -87,13 +88,6 @@ public class MetabaseDashboardService {
   private String masterSiteUrl;
   @Value("${metabase.token.expired.time}")
   private Integer metabaseTokenExpiredTime;
-
-  private static final Set<UUID> EXCLUDED_USERS_FOR_FACILITIES = new HashSet<>(Arrays.asList(
-      UUID.fromString("08f82917-716c-4dab-b5f2-b2a85f757cd8"),
-      UUID.fromString("43cf56a1-4e5a-4140-8de3-1cce02feb357"),
-      UUID.fromString("fbd9ecd0-e3bd-4dfd-824e-bda430960579"),
-      UUID.fromString("38e73214-81b9-4479-9011-8956ba8babc3")
-  ));
 
   public MetabaseUrlDto getMetabaseDashboardAddressByDashboardName(String dashboardName) {
 
