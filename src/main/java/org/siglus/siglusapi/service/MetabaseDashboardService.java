@@ -17,6 +17,7 @@ package org.siglus.siglusapi.service;
 
 import static org.siglus.siglusapi.constant.FieldConstants.ALL_GEOGRAPHIC_UUID;
 import static org.siglus.siglusapi.constant.FieldConstants.DISTRICT_LOWER_CASE;
+import static org.siglus.siglusapi.constant.FieldConstants.FACILITY_CODE_LOWER_CASE;
 import static org.siglus.siglusapi.constant.FieldConstants.JWT_TOKEN_HEADER_PARAM_NAME;
 import static org.siglus.siglusapi.constant.FieldConstants.JWT_TOKEN_HEADER_PARAM_VALUE;
 import static org.siglus.siglusapi.constant.FieldConstants.METABASE_EXTENSION_URL;
@@ -35,6 +36,7 @@ import java.io.IOException;
 import java.sql.Date;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -52,6 +54,7 @@ import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.dto.MetabaseUrlDto;
 import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.repository.MetabaseDashboardRepository;
+import org.siglus.siglusapi.repository.SiglusFacilityRepository;
 import org.siglus.siglusapi.repository.SiglusGeographicInfoRepository;
 import org.siglus.siglusapi.repository.SiglusUserReportViewRepository;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
@@ -75,6 +78,8 @@ public class MetabaseDashboardService {
   private SiglusUserReportViewRepository siglusUserReportViewRepository;
   @Autowired
   private SiglusGeographicInfoRepository siglusGeographicInfoRepository;
+  @Autowired
+  private SiglusFacilityRepository siglusFacilityRepository;
 
   @Value("${metabase.secret.key}")
   private String metabaseSecretKey;
@@ -82,6 +87,13 @@ public class MetabaseDashboardService {
   private String masterSiteUrl;
   @Value("${metabase.token.expired.time}")
   private Integer metabaseTokenExpiredTime;
+
+  private static final Set<UUID> EXCLUDED_USERS_FOR_FACILITIES = new HashSet<>(Arrays.asList(
+      UUID.fromString("08f82917-716c-4dab-b5f2-b2a85f757cd8"),
+      UUID.fromString("43cf56a1-4e5a-4140-8de3-1cce02feb357"),
+      UUID.fromString("fbd9ecd0-e3bd-4dfd-824e-bda430960579"),
+      UUID.fromString("38e73214-81b9-4479-9011-8956ba8babc3")
+  ));
 
   public MetabaseUrlDto getMetabaseDashboardAddressByDashboardName(String dashboardName) {
 
@@ -172,7 +184,16 @@ public class MetabaseDashboardService {
     Set<String> districtNames = new HashSet<>();
     districtNames.addAll(districtNamesUnderProvince);
     districtNames.addAll(districtNamesAlone);
+
     paramMap.put(DISTRICT_LOWER_CASE, districtNames);
+    if (CollectionUtils.isNotEmpty(districtNames)
+        && !EXCLUDED_USERS_FOR_FACILITIES.contains(userId)) {
+      Set<String> facilityCodes = siglusFacilityRepository.findFacilityNamesByZoneAndParentZoneIds(
+          districtIds
+      );
+      paramMap.put(FACILITY_CODE_LOWER_CASE, facilityCodes);
+    }
+
     return paramMap;
   }
 

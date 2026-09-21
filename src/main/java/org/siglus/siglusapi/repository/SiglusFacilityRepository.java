@@ -17,6 +17,7 @@ package org.siglus.siglusapi.repository;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import org.openlmis.referencedata.domain.Facility;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -66,4 +67,15 @@ public interface SiglusFacilityRepository extends JpaRepository<Facility, UUID>,
           "select distinct code from referencedata.facilities where active=true and enabled=true",
       nativeQuery = true)
   List<String> findAllFacilityCodes();
+
+
+  @Query(value = "select distinct f.code \n"
+      + "from referencedata.facilities f \n"
+      + "left join referencedata.geographic_zones gz on (gz.id = f.geographiczoneid) \n"
+      + "left join referencedata.geographic_zones parent on (gz.parentid = parent.id) \n"
+      + "where (gz.id in (:zoneIds) or parent.id in (:zoneIds)) \n"
+      + "and f.typeid != 'b606c65a-cfad-11e9-9398-0242ac130008';",
+      nativeQuery = true)
+  Set<String> findFacilityNamesByZoneAndParentZoneIds(
+      @Param("zoneIds") Collection<UUID> zoneIds);
 }
