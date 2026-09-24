@@ -39,7 +39,8 @@ public interface SiglusRequisitionRepository extends JpaRepository<Requisition, 
 
       // Safely handles endDate with a fallback to now(), inclusive of the entire day (up to 23:59:59)
       + "and ( "
-      + "  (CAST(:endDate AS text) IS NOT NULL AND r.modifieddate < (CAST(CAST(:endDate AS text) AS timestamp) + interval '1 day')) OR "
+      + "  (CAST(:endDate AS text) IS NOT NULL "
+      + "AND r.modifieddate < (CAST(CAST(:endDate AS text) AS timestamp) + interval '1 day')) OR "
       + "  (CAST(:endDate AS text) IS NULL AND r.modifieddate <= now()) "
       + ") "
 
