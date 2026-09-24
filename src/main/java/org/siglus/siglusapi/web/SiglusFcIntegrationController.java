@@ -121,7 +121,7 @@ public class SiglusFcIntegrationController {
       @Nullable String clientCode,
       @RequestParam(value = "client_types", required = false)
       List<String> clientTypes,
-      @RequestParam(value = "IV_number", required = false)
+      @RequestParam(value = "iv_number", required = false)
       @Nullable String ivNumber,
       Pageable pageable) {
     if (PaginationConstants.NO_PAGINATION == pageable.getPageSize()) {
