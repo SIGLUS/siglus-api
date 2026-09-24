@@ -36,8 +36,12 @@ public interface SiglusRequisitionRepository extends JpaRepository<Requisition, 
   @Query(value = "select r.* from requisition.requisitions r where "
       + "r.status in ('IN_APPROVAL', 'APPROVED', 'RELEASED', 'RELEASED_WITHOUT_ORDER') "
       + "and r.modifieddate >= :date "
-      // FIX: Double-cast :endDate to bypass the bytea null-mapping issue
-      + "and r.modifieddate <= COALESCE(CAST(CAST(:endDate AS text) AS timestamp), now()) "
+
+      // Safely handles endDate with a fallback to now(), inclusive of the entire day (up to 23:59:59)
+      + "and ( "
+      + "  (CAST(:endDate AS text) IS NOT NULL AND r.modifieddate < (CAST(CAST(:endDate AS text) AS timestamp) + interval '1 day')) OR "
+      + "  (CAST(:endDate AS text) IS NULL AND r.modifieddate <= now()) "
+      + ") "
 
       + "and (CAST(:requisitionNumber AS text) IS NULL OR EXISTS ("
       + "    select 1 from siglusintegration.requisition_extension ext "

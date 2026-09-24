@@ -48,9 +48,8 @@ public interface SiglusProofOfDeliveryRepository extends JpaRepository<ProofOfDe
       + "where p.status = 'CONFIRMED' "
       + "and p.receiveddate >= :date "
 
-      // Safely handles endDate with a fallback to now()
       + "and ( "
-      + "  (:hasEndDate = TRUE AND p.receiveddate <= cast(:endDate as timestamp)) OR "
+      + "  (:hasEndDate = TRUE AND p.receiveddate < (cast(:endDate as timestamp) + interval '1 day')) OR "
       + "  (:hasEndDate = FALSE AND p.receiveddate <= now()) "
       + ") "
 
