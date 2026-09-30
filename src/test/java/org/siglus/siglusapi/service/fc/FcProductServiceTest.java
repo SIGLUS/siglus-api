@@ -173,7 +173,7 @@ public class FcProductServiceTest {
 
   private final UUID facilityTypeId = UUID.randomUUID();
 
-  private final String fnm = "12B04X";
+  private final String fnm = "fnm";
 
   private final String kitFnm = "kitFnm";
 
@@ -266,7 +266,7 @@ public class FcProductServiceTest {
     when(orderableReferenceDataService.create(any())).thenReturn(orderableDto);
 
     ProductInfoDto product = buildProductInfoDto();
-    product.setFnm("12B04X");
+    product.setFnm(" fnm");
 
     // when
     fcProductService.processData(newArrayList(product), START_DATE, LAST_UPDATED_AT);
