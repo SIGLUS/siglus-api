@@ -61,6 +61,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.locks.ReentrantLock;
 import javax.validation.ConstraintViolationException;
 import org.junit.Before;
 import org.junit.Test;
@@ -168,6 +169,7 @@ import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
 import org.siglus.siglusapi.testutils.CanFulfillForMeEntryDtoDataBuilder;
 import org.siglus.siglusapi.util.AndroidHelper;
+import org.siglus.siglusapi.util.RequisitionLockManager;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.util.SupportedProgramsHelper;
 import org.siglus.siglusapi.validator.android.StockCardCreateRequestValidator;
@@ -305,6 +307,9 @@ public class MeServiceTest {
   @Mock
   private ProgramRepository programRepository;
 
+  @Mock
+  private RequisitionLockManager requisitionLockManager;
+
   @Autowired
   private ProductMapper mapper;
 
@@ -421,6 +426,7 @@ public class MeServiceTest {
     when(archivedProductRepo.findArchivedProductsByFacilityId(facilityId)).thenReturn(singleton(productId1.toString()));
     when(androidHelper.isAndroid()).thenReturn(true);
     when(requisitionRequestBackupRepository.findOneByHash(anyString())).thenReturn(null);
+    when(requisitionLockManager.getLock(anyString())).thenReturn(new ReentrantLock());
   }
 
 
@@ -819,6 +825,14 @@ public class MeServiceTest {
 
     //then
     verify(stockCardRequestBackupRepository, times(1)).save(any(StockCardRequestBackup.class));
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void shouldRejectCreateStockCardsWhenFacilityRequestIsInProgress() {
+    ReentrantLock lock = mock(ReentrantLock.class);
+    when(lock.tryLock()).thenReturn(false);
+    when(requisitionLockManager.getLock(anyString())).thenReturn(lock);
+    service.createStockCards(buildStockCardCreateRequests());
   }
 
   @Test(expected = OrderNotFoundException.class)

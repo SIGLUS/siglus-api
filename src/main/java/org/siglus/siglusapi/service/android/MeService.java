@@ -37,6 +37,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNullableByDefault;
@@ -137,6 +138,7 @@ import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
 import org.siglus.siglusapi.util.AndroidHelper;
 import org.siglus.siglusapi.util.HashEncoder;
+import org.siglus.siglusapi.util.RequisitionLockManager;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.util.SiglusDateHelper;
 import org.siglus.siglusapi.util.SupportedProgramsHelper;
@@ -159,6 +161,7 @@ public class MeService {
 
   static final String KEY_PROGRAM_CODE = "programCode";
   static final String KEY_PRODUCT_ACTIVE = "productActive";
+  static final String STOCK_CARDS_LOCK_KEY_PREFIX = "android_stock_cards_";
 
   private final SiglusFacilityReferenceDataService facilityReferenceDataService;
   private final SiglusArchiveProductService siglusArchiveProductService;
@@ -202,6 +205,7 @@ public class MeService {
   private final ProgramOrderablesExtensionRepository programOrderablesExtensionRepository;
   private final ProgramRepository programRepository;
   private final SiglusGeographicInfoRepository siglusGeographicInfoRepository;
+  private final RequisitionLockManager requisitionLockManager;
 
   public FacilityResponse getCurrentFacility() {
     FacilityDto facilityDto = getCurrentFacilityInfo();
@@ -333,41 +337,51 @@ public class MeService {
     Profiler profiler = new Profiler("create stock cards");
     profiler.setLogger(log);
     profiler.start("prepare data");
+    String lockKey = STOCK_CARDS_LOCK_KEY_PREFIX + authHelper.getCurrentUser().getHomeFacilityId();
+    ReentrantLock lock = requisitionLockManager.getLock(lockKey);
+    if (!lock.tryLock()) {
+      throw new IllegalArgumentException("stock cards are already being processed for this facility");
+    }
     ValidatedStockCards validatedStockCards = ValidatedStockCards.builder()
         .validStockCardRequests(requests)
         .invalidProducts(Collections.emptyList())
         .build();
-    CreateStockCardResponse createStockCardResponse;
-    FacilityDto facilityDto = getCurrentFacilityInfo();
-    LocalDate earliest = requests.stream().map(StockCardCreateRequest::getEventTime).map(EventTime::getOccurredDate)
-        .min(Comparator.naturalOrder()).orElseThrow(IllegalStateException::new);
-    profiler.start("init context");
-    stockCardCreateContextHolder.initContext(facilityDto, earliest);
-    profiler.start("validate data");
     try {
-      validatedStockCards = stockCardCreateRequestValidator.validateStockCardCreateRequest(requests);
-      profiler.start("backup request");
-      createStockCardResponse = CreateStockCardResponse.from(validatedStockCards);
-      if (!CollectionUtils.isEmpty(validatedStockCards.getInvalidProducts())) {
-        backupStockCardRequest(requests, createStockCardResponse.getDetails());
-      }
-      Profiler createCardsProfiler = profiler.startNested("create cards");
-      createCardsProfiler.start("invoking createStockCards");
-      if (!CollectionUtils.isEmpty(validatedStockCards.getValidStockCardRequests())) {
-        stockCardCreateService.createStockCards(validatedStockCards.getValidStockCardRequests(), createCardsProfiler);
-      }
-      profiler.start("clear context");
-      return createStockCardResponse;
-    } catch (Exception e) {
+      CreateStockCardResponse createStockCardResponse;
+      FacilityDto facilityDto = getCurrentFacilityInfo();
+      LocalDate earliest = requests.stream().map(StockCardCreateRequest::getEventTime).map(EventTime::getOccurredDate)
+          .min(Comparator.naturalOrder()).orElseThrow(IllegalStateException::new);
+      profiler.start("init context");
+      stockCardCreateContextHolder.initContext(facilityDto, earliest);
+      profiler.start("validate data");
       try {
-        backupStockCardRequest(validatedStockCards.getValidStockCardRequests(), e.getMessage());
-      } catch (NullPointerException backupError) {
-        log.warn("backup stock card request error", backupError);
+        validatedStockCards = stockCardCreateRequestValidator.validateStockCardCreateRequest(requests);
+        profiler.start("backup request");
+        createStockCardResponse = CreateStockCardResponse.from(validatedStockCards);
+        if (!CollectionUtils.isEmpty(validatedStockCards.getInvalidProducts())) {
+          backupStockCardRequest(requests, createStockCardResponse.getDetails());
+        }
+        Profiler createCardsProfiler = profiler.startNested("create cards");
+        createCardsProfiler.start("invoking createStockCards");
+        if (!CollectionUtils.isEmpty(validatedStockCards.getValidStockCardRequests())) {
+          stockCardCreateService.createStockCards(validatedStockCards.getValidStockCardRequests(), createCardsProfiler);
+        }
+        profiler.start("clear context");
+        return createStockCardResponse;
+      } catch (Exception e) {
+        try {
+          backupStockCardRequest(validatedStockCards.getValidStockCardRequests(), e.getMessage());
+        } catch (NullPointerException backupError) {
+          log.warn("backup stock card request error", backupError);
+        }
+        throw e;
+      } finally {
+        StockCardCreateContextHolder.clearContext();
+        profiler.stop().log();
       }
-      throw e;
     } finally {
-      StockCardCreateContextHolder.clearContext();
-      profiler.stop().log();
+      lock.unlock();
+      requisitionLockManager.cleanupLock(lockKey, lock);
     }
   }
 

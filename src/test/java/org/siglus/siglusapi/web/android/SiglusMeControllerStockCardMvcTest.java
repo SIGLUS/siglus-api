@@ -52,6 +52,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Stream;
 import org.junit.Before;
 import org.junit.Test;
@@ -109,6 +110,7 @@ import org.siglus.siglusapi.service.android.mapper.ProductMovementMapperImpl;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
 import org.siglus.siglusapi.util.AndroidHelper;
+import org.siglus.siglusapi.util.RequisitionLockManager;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.util.SupportedProgramsHelper;
 import org.siglus.siglusapi.validator.android.StockCardCreateRequestValidator;
@@ -172,6 +174,8 @@ public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
   private StockEventProductRequestedRepository requestQuantityRepository;
   @Mock
   private SiglusLotReferenceDataService siglusLotReferenceDataService;
+  @Mock
+  private RequisitionLockManager requisitionLockManager;
 
   @InjectMocks
   private StockCardCreateContextHolder holder;
@@ -217,6 +221,7 @@ public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
         .constructCollectionType(List.class, StockCardCreateRequest.class);
     when(androidHelper.isAndroid()).thenReturn(false);
     when(siglusLotReferenceDataService.saveLot(any())).thenReturn(LotDto.builder().build());
+    when(requisitionLockManager.getLock(any())).thenReturn(new ReentrantLock());
   }
 
   @Test
