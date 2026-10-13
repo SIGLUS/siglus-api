@@ -28,12 +28,21 @@ import org.springframework.data.jpa.repository.Query;
 
 public interface ProcessingScheduleRepository extends JpaRepository<ProcessingSchedule, UUID> {
 
+  // Projection interface to handle native query mapping safely
+  interface FacilityProgramCodeProjection {
+    String getFacilityid();
+
+    String getProgramid();
+    
+    String getCode();
+  }
+
   @Query(value = "SELECT "
       + "       f2.code  AS facilitycode, "
       + "       f2.name  AS facilityname, "
-      + "       CAST(f2.id AS varchar) AS facilityid, " // Cast UUID to String
+      + "       CAST(f2.id AS varchar) AS facilityid, "
       + "       p.name   AS programname, "
-      + "       CAST(p.id AS varchar) AS programid, "   // Cast UUID to String
+      + "       CAST(p.id AS varchar) AS programid, "
       + "       ps.name  AS scheduler, "
       + "       ps.code  AS code "
       + "FROM referencedata.requisition_group_members rgm "
@@ -49,7 +58,7 @@ public interface ProcessingScheduleRepository extends JpaRepository<ProcessingSc
       + "         JOIN referencedata.geographic_zones gz ON gz.id = f2.geographiczoneid "
       + "         JOIN referencedata.geographic_levels gl ON gz.levelid = gl.id "
       + "ORDER BY gz.code, f2.code, p.code DESC", nativeQuery = true)
-  List<Map<String, Object>> getRawFacilityProgramCodes();
+  List<FacilityProgramCodeProjection> getRawFacilityProgramCodes();
 
   /**
    * Default method to transform the raw query results into a Map.
@@ -60,10 +69,9 @@ public interface ProcessingScheduleRepository extends JpaRepository<ProcessingSc
     return getRawFacilityProgramCodes().stream()
         .collect(Collectors.toMap(
             // Concatenate facilityid and programid for the key
-            row -> row.get("facilityid")
-                + SEPARATOR + row.get("programid"),
+            row -> row.getFacilityid() + SEPARATOR + row.getProgramid(),
             // Use code as the value
-            row -> String.valueOf(row.get("code")),
+            row -> row.getCode(),
             // Merge function in case of duplicate keys (keeps the first one found)
             (existing, replacement) -> existing
         ));
