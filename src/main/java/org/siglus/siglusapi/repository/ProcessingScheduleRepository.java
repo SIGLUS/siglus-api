@@ -33,17 +33,13 @@ public interface ProcessingScheduleRepository extends JpaRepository<ProcessingSc
     String getFacilityid();
 
     String getProgramid();
-    
+
     String getCode();
   }
 
   @Query(value = "SELECT "
-      + "       f2.code  AS facilitycode, "
-      + "       f2.name  AS facilityname, "
       + "       CAST(f2.id AS varchar) AS facilityid, "
-      + "       p.name   AS programname, "
       + "       CAST(p.id AS varchar) AS programid, "
-      + "       ps.name  AS scheduler, "
       + "       ps.code  AS code "
       + "FROM referencedata.requisition_group_members rgm "
       + "         JOIN referencedata.requisition_groups rg ON rgm.requisitiongroupid = rg.id "
