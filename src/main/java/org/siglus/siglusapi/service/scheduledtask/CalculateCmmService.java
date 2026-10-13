@@ -345,6 +345,9 @@ public class CalculateCmmService {
     Map<UUID, List<StockCardLineItemDto>> orderableIdToStockCardLineItemDtos = getOrderableIdToStockCardLineItemDtos(
         startDate, endDate, facilityId, validOrderableIds);
 
+    log.info("calculateAndSavaCmms startDate: {}, endDate: {}, sohDtos size: {}, lineItemDtos size: {}",
+        facilityId, startDate, endDate, orderableIdToSohDtos.size(), orderableIdToStockCardLineItemDtos.size());
+
     Map<LocalDate, Integer> periodStartDateToCount = getPeriodStartDateToCount(hfCmmCountDtos);
 
     List<HfCmm> hfCmms = buildHfCmms(requestDate, facilityIdToCode, orderableIdToCode, periods, orderableIdToSohDtos,
