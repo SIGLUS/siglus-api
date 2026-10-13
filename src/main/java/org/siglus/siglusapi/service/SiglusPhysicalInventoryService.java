@@ -685,7 +685,7 @@ public class SiglusPhysicalInventoryService {
   }
 
   public InitialInventoryFieldDto canInitialInventory(UUID facility) {
-    return new InitialInventoryFieldDto(!isVirtualFacility(facility) && isStockCardCountEmpty(facility));
+    return new InitialInventoryFieldDto(false);
   }
 
   private List<PhysicalInventoryLineItemDto> findEmptyLocationsBySubDraftIds(List<UUID> subDraftIds) {

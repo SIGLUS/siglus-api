@@ -207,6 +207,10 @@ public class SiglusProcessingPeriodService {
     return processingPeriodRepository.getUpToNowMonthlyPeriods(LocalDate.now());
   }
 
+  public List<ProcessingPeriod> getUpToNowMonthlyPeriods(String scheduleCode) {
+    return processingPeriodRepository.getUpToNowMonthlyPeriods(LocalDate.now(), scheduleCode);
+  }
+
   public ProcessingPeriodDto getProcessingPeriodByOpenLmisPeriod(ProcessingPeriodDto dto) {
     ProcessingPeriodExtension extension = processingPeriodExtensionRepository
         .findByProcessingPeriodId(dto.getId());

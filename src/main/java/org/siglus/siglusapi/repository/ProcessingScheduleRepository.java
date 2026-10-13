@@ -15,10 +15,57 @@
 
 package org.siglus.siglusapi.repository;
 
+import static org.siglus.siglusapi.constant.FieldConstants.SEPARATOR;
+
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
+
 import org.openlmis.referencedata.domain.ProcessingSchedule;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
 public interface ProcessingScheduleRepository extends JpaRepository<ProcessingSchedule, UUID> {
 
+  @Query(value = "SELECT "
+      + "       f2.code  AS facilitycode, "
+      + "       f2.name  AS facilityname, "
+      + "       f2.id AS facilityid, "
+      + "       p.name   AS programname, "
+      + "       p.id   AS programid, "
+      + "       ps.name  AS scheduler, "
+      + "       ps.code  AS code "
+      + "FROM referencedata.requisition_group_members rgm "
+      + "         JOIN referencedata.requisition_groups rg ON rgm.requisitiongroupid = rg.id "
+      + "         JOIN referencedata.supervisory_nodes sn ON rg.supervisorynodeid = sn.id "
+      + "         JOIN referencedata.facilities f ON sn.facilityid = f.id "
+      + "         JOIN referencedata.facility_types ft ON ft.id = f.typeid "
+      + "         JOIN referencedata.facilities f2 ON rgm.facilityid = f2.id "
+      + "         JOIN referencedata.facility_types ft2 ON ft2.id = f2.typeid "
+      + "         JOIN referencedata.requisition_group_program_schedules rgps ON rgps.requisitiongroupid = rg.id "
+      + "         JOIN referencedata.processing_schedules ps ON ps.id = rgps.processingscheduleid "
+      + "         JOIN referencedata.programs p ON p.id = rgps.programid "
+      + "         JOIN referencedata.geographic_zones gz ON gz.id = f2.geographiczoneid "
+      + "         JOIN referencedata.geographic_levels gl ON gz.levelid = gl.id "
+      + "ORDER BY gz.code, f2.code, p.code DESC", nativeQuery = true)
+  List<Map<String, Object>> getRawFacilityProgramCodes();
+
+  /**
+   * Default method to transform the raw query results into a Map.
+   * Key: facilityid + programid
+   * Value: code
+   */
+  default Map<String, String> getFacilityProgramCodeMap() {
+    return getRawFacilityProgramCodes().stream()
+        .collect(Collectors.toMap(
+            // Concatenate facilityid and programid for the key
+            row -> row.get("facilityid")
+                + SEPARATOR + row.get("programid"),
+            // Use code as the value
+            row -> String.valueOf(row.get("code")),
+            // Merge function in case of duplicate keys (keeps the first one found)
+            (existing, replacement) -> existing
+        ));
+  }
 }

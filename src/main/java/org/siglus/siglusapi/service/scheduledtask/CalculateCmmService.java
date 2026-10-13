@@ -15,6 +15,9 @@
 
 package org.siglus.siglusapi.service.scheduledtask;
 
+import static org.siglus.siglusapi.constant.FieldConstants.SEPARATOR;
+import static org.siglus.siglusapi.constant.ProgramConstants.MMC_PROGRAM_CODE;
+
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -32,16 +35,21 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.openlmis.referencedata.domain.Facility;
 import org.openlmis.referencedata.domain.ProcessingPeriod;
+import org.openlmis.requisition.service.RequisitionService;
 import org.siglus.siglusapi.domain.HfCmm;
 import org.siglus.siglusapi.dto.HfCmmCountDto;
+import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.repository.FacilityCmmsRepository;
+import org.siglus.siglusapi.repository.ProcessingScheduleRepository;
 import org.siglus.siglusapi.repository.SiglusFacilityRepository;
 import org.siglus.siglusapi.repository.SiglusStockCardLineItemRepository;
 import org.siglus.siglusapi.repository.SiglusStockCardRepository;
+import org.siglus.siglusapi.repository.dto.ProgramOrderableDto;
 import org.siglus.siglusapi.repository.dto.StockCardLineItemDto;
 import org.siglus.siglusapi.repository.dto.StockOnHandDto;
 import org.siglus.siglusapi.service.SiglusOrderableService;
 import org.siglus.siglusapi.service.SiglusProcessingPeriodService;
+import org.siglus.siglusapi.service.SiglusProgramService;
 import org.siglus.siglusapi.util.PeriodUtil;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
@@ -58,6 +66,9 @@ public class CalculateCmmService {
   private final SiglusStockCardLineItemRepository siglusStockCardLineItemRepository;
   private final SiglusOrderableService siglusOrderableService;
   private final SiglusProcessingPeriodService periodService;
+  private final ProcessingScheduleRepository processingScheduleRepository;
+  private final RequisitionService requisitionService;
+  private final SiglusProgramService siglusProgramService;
 
   private static final Long SKIP_ISSUE_QUANTITY = -1L;
   private static final Long STOCK_OUT_QUANTITY = 0L;
@@ -205,12 +216,103 @@ public class CalculateCmmService {
   public void calculateOneFacilityCmm(LocalDate requestDate, UUID facilityId) {
     Facility facility = siglusFacilityRepository.findOne(facilityId);
     Map<UUID, String> orderableIdToCode = siglusOrderableService.getAllProductIdToCode();
-    List<ProcessingPeriod> periods = getOneYearPeriods(periodService.getUpToNowMonthlyPeriods(), requestDate);
-    List<HfCmmCountDto> hfCmmCountDtos = facilityCmmsRepository.findOneFacilityCmmCountDtos(
-        periods.stream().map(ProcessingPeriod::getStartDate).collect(Collectors.toList()), facility.getCode());
+    List<ProgramOrderableDto> programOrderableDtos = siglusOrderableService.getAllProgramOrderableDtos();
 
-    calculateAndSavaCmms(requestDate, Pair.of(facilityId, facility.getCode()), orderableIdToCode, periods,
-        hfCmmCountDtos);
+    Map<UUID, UUID> programIdToOrderableId = programOrderableDtos.stream()
+        .collect(Collectors.toMap(ProgramOrderableDto::getOrderableId,
+            ProgramOrderableDto::getProgramId, (a, b) -> a));
+
+    Map<String, String> scheduleMap = processingScheduleRepository.getFacilityProgramCodeMap();
+
+    Map<UUID, List<ProcessingPeriod>> programIdToPeriods = programIdToOrderableId.values().stream()
+        .distinct()
+        .collect(Collectors.toMap(
+            programId -> programId,
+            programId -> {
+              String scheduleCode = scheduleMap.get(facilityId + SEPARATOR + programId);
+              return getOneYearPeriods(
+                  periodService.getUpToNowMonthlyPeriods(scheduleCode),
+                  requestDate
+              );
+            }
+        ));
+
+    UUID mmcProgramId = siglusProgramService.getProgramByCode(MMC_PROGRAM_CODE)
+        .orElseThrow(() -> new NotFoundException("MMC program not found"))
+        .getId();
+
+    Set<UUID> approvedMmcProductIds = requisitionService.getAllApprovedProducts(facilityId, mmcProgramId).stream()
+        .map(approvedProductDto -> approvedProductDto.getOrderable().getId())
+        .collect(Collectors.toSet());
+
+    // 1. Process isolated MMC approved products first
+    List<ProcessingPeriod> mmcPeriods = programIdToPeriods.get(mmcProgramId);
+    if (mmcPeriods != null && !mmcPeriods.isEmpty() && !approvedMmcProductIds.isEmpty()) {
+
+      // Create the Map specifically for approved MMC products
+      Map<UUID, String> mmcOrderableIdToCode = approvedMmcProductIds.stream()
+          .filter(orderableIdToCode::containsKey)
+          .collect(Collectors.toMap(
+              id -> id,
+              orderableIdToCode::get
+          ));
+
+      List<HfCmmCountDto> mmcHfCmmCountDtos = facilityCmmsRepository.findOneFacilityCmmCountDtos(
+          mmcPeriods.stream()
+              .map(ProcessingPeriod::getStartDate)
+              .distinct()
+              .collect(Collectors.toList()),
+          facility.getCode()
+      );
+
+      calculateAndSavaCmms(
+          requestDate,
+          Pair.of(facilityId, facility.getCode()),
+          mmcOrderableIdToCode,
+          mmcPeriods,
+          mmcHfCmmCountDtos
+      );
+    }
+
+    // 2. Process standard programs grouped by programId
+    Map<UUID, List<ProgramOrderableDto>> orderablesByProgramId = programOrderableDtos.stream()
+        .collect(Collectors.groupingBy(ProgramOrderableDto::getProgramId));
+
+    orderablesByProgramId.forEach((programId, programOrderables) -> {
+      List<ProcessingPeriod> programPeriods = programIdToPeriods.get(programId);
+
+      if (programPeriods != null && !programPeriods.isEmpty()) {
+
+        // Filter global map, EXCLUDING approved MMC products
+        Map<UUID, String> programOrderableIdToCode = programOrderables.stream()
+            .filter(dto -> !approvedMmcProductIds.contains(dto.getOrderableId())) // Exclude MMC
+            .filter(dto -> orderableIdToCode.containsKey(dto.getOrderableId()))
+            .collect(Collectors.toMap(
+                ProgramOrderableDto::getOrderableId,
+                dto -> orderableIdToCode.get(dto.getOrderableId()),
+                (a, b) -> a
+            ));
+
+        // Proceed only if there are orderables left after filtering
+        if (!programOrderableIdToCode.isEmpty()) {
+          List<HfCmmCountDto> hfCmmCountDtos = facilityCmmsRepository.findOneFacilityCmmCountDtos(
+              programPeriods.stream()
+                  .map(ProcessingPeriod::getStartDate)
+                  .distinct()
+                  .collect(Collectors.toList()),
+              facility.getCode()
+          );
+
+          calculateAndSavaCmms(
+              requestDate,
+              Pair.of(facilityId, facility.getCode()),
+              programOrderableIdToCode,
+              programPeriods,
+              hfCmmCountDtos
+          );
+        }
+      }
+    });
   }
 
   private List<ProcessingPeriod> getOneYearPeriods(List<ProcessingPeriod> upToNowAllPeriods,
