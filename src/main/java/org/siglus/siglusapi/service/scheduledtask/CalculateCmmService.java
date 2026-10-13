@@ -265,6 +265,8 @@ public class CalculateCmmService {
           facility.getCode()
       );
 
+
+
       calculateAndSavaCmms(
           requestDate,
           Pair.of(facilityId, facility.getCode()),
@@ -326,16 +328,23 @@ public class CalculateCmmService {
         .collect(Collectors.toList());
   }
 
+
   private void calculateAndSavaCmms(LocalDate requestDate, Pair<UUID, String> facilityIdToCode,
-      Map<UUID, String> orderableIdToCode, List<ProcessingPeriod> periods, List<HfCmmCountDto> hfCmmCountDtos) {
+                                    Map<UUID, String> orderableIdToCode, List<ProcessingPeriod> periods,
+                                    List<HfCmmCountDto> hfCmmCountDtos) {
 
     UUID facilityId = facilityIdToCode.getFirst();
     LocalDate startDate = periods.get(0).getStartDate();
     LocalDate endDate = periods.get(periods.size() - 1).getEndDate();
 
-    Map<UUID, List<StockOnHandDto>> orderableIdToSohDtos = getOrderableIdToSohDtos(startDate, endDate, facilityId);
+    // Extract the valid orderable IDs from the map keys
+    Set<UUID> validOrderableIds = orderableIdToCode.keySet();
+
+    Map<UUID, List<StockOnHandDto>> orderableIdToSohDtos = getOrderableIdToSohDtos(
+        startDate, endDate, facilityId, validOrderableIds);
     Map<UUID, List<StockCardLineItemDto>> orderableIdToStockCardLineItemDtos = getOrderableIdToStockCardLineItemDtos(
-        startDate, endDate, facilityId);
+        startDate, endDate, facilityId, validOrderableIds);
+
     Map<LocalDate, Integer> periodStartDateToCount = getPeriodStartDateToCount(hfCmmCountDtos);
 
     List<HfCmm> hfCmms = buildHfCmms(requestDate, facilityIdToCode, orderableIdToCode, periods, orderableIdToSohDtos,
@@ -412,11 +421,33 @@ public class CalculateCmmService {
     return stockCardLineItemDtos.stream().collect(Collectors.groupingBy(StockCardLineItemDto::getOrderableId));
   }
 
+  private Map<UUID, List<StockCardLineItemDto>> getOrderableIdToStockCardLineItemDtos(LocalDate startDate,
+                                                                                      LocalDate endDate,
+                                                                                      UUID facilityId,
+                                                                                      Set<UUID> validOrderableIds) {
+    List<StockCardLineItemDto> stockCardLineItemDtos = siglusStockCardLineItemRepository.findStockCardLineItemDtos(
+        facilityId, startDate, endDate);
+    return stockCardLineItemDtos.stream()
+        .filter(dto -> validOrderableIds.contains(dto.getOrderableId())) // Keep only valid orderableIds
+        .collect(Collectors.groupingBy(StockCardLineItemDto::getOrderableId));
+  }
+
   private Map<UUID, List<StockOnHandDto>> getOrderableIdToSohDtos(LocalDate startDate,
       LocalDate endDate, UUID facilityId) {
     List<StockOnHandDto> facilitySohDtos = siglusStockCardRepository.findStockCardDtos(facilityId, startDate,
         endDate);
     return facilitySohDtos.stream().collect(Collectors.groupingBy(StockOnHandDto::getOrderableId));
+  }
+
+  private Map<UUID, List<StockOnHandDto>> getOrderableIdToSohDtos(LocalDate startDate,
+                                                                  LocalDate endDate,
+                                                                  UUID facilityId,
+                                                                  Set<UUID> validOrderableIds) {
+    List<StockOnHandDto> facilitySohDtos = siglusStockCardRepository.findStockCardDtos(facilityId, startDate,
+        endDate);
+    return facilitySohDtos.stream()
+        .filter(dto -> validOrderableIds.contains(dto.getOrderableId())) // Keep only valid orderableIds
+        .collect(Collectors.groupingBy(StockOnHandDto::getOrderableId));
   }
 
   private Set<LocalDate> getHasStockOutPeriodStartDates(List<ProcessingPeriod> periods, List<StockOnHandDto> sohDtos) {
