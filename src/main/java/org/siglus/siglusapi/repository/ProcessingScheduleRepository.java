@@ -31,9 +31,9 @@ public interface ProcessingScheduleRepository extends JpaRepository<ProcessingSc
   @Query(value = "SELECT "
       + "       f2.code  AS facilitycode, "
       + "       f2.name  AS facilityname, "
-      + "       f2.id AS facilityid, "
+      + "       CAST(f2.id AS varchar) AS facilityid, " // Cast UUID to String
       + "       p.name   AS programname, "
-      + "       p.id   AS programid, "
+      + "       CAST(p.id AS varchar) AS programid, "   // Cast UUID to String
       + "       ps.name  AS scheduler, "
       + "       ps.code  AS code "
       + "FROM referencedata.requisition_group_members rgm "
