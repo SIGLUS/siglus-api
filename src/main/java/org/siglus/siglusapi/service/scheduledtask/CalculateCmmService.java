@@ -241,9 +241,30 @@ public class CalculateCmmService {
         .orElseThrow(() -> new NotFoundException("MMC program not found"))
         .getId();
 
+    if (!programIdToPeriods.containsKey(mmcProgramId)) {
+      String mmcScheduleCode = scheduleMap.get(facilityId + SEPARATOR + mmcProgramId);
+      programIdToPeriods.put(mmcProgramId, getOneYearPeriods(
+          periodService.getUpToNowMonthlyPeriods(mmcScheduleCode),
+          requestDate
+      ));
+    }
+
     Set<UUID> approvedMmcProductIds = requisitionService.getAllApprovedProducts(facilityId, mmcProgramId).stream()
         .map(approvedProductDto -> approvedProductDto.getOrderable().getId())
         .collect(Collectors.toSet());
+
+    // 1. Gather all unique start dates across all programs (including MMC)
+    List<LocalDate> allStartDates = programIdToPeriods.values().stream()
+        .flatMap(List::stream)
+        .map(ProcessingPeriod::getStartDate)
+        .distinct()
+        .collect(Collectors.toList());
+
+    // 2. Fetch the state ONCE before any calculations or saves occur
+    List<HfCmmCountDto> masterHfCmmCountDtos = facilityCmmsRepository.findOneFacilityCmmCountDtos(
+        allStartDates,
+        facility.getCode()
+    );
 
     // 1. Process isolated MMC approved products first
     List<ProcessingPeriod> mmcPeriods = programIdToPeriods.get(mmcProgramId);
@@ -257,13 +278,6 @@ public class CalculateCmmService {
               orderableIdToCode::get
           ));
 
-      List<HfCmmCountDto> mmcHfCmmCountDtos = facilityCmmsRepository.findOneFacilityCmmCountDtos(
-          mmcPeriods.stream()
-              .map(ProcessingPeriod::getStartDate)
-              .distinct()
-              .collect(Collectors.toList()),
-          facility.getCode()
-      );
 
 
 
@@ -272,7 +286,7 @@ public class CalculateCmmService {
           Pair.of(facilityId, facility.getCode()),
           mmcOrderableIdToCode,
           mmcPeriods,
-          mmcHfCmmCountDtos
+          masterHfCmmCountDtos
       );
     }
 
@@ -297,20 +311,13 @@ public class CalculateCmmService {
 
         // Proceed only if there are orderables left after filtering
         if (!programOrderableIdToCode.isEmpty()) {
-          List<HfCmmCountDto> hfCmmCountDtos = facilityCmmsRepository.findOneFacilityCmmCountDtos(
-              programPeriods.stream()
-                  .map(ProcessingPeriod::getStartDate)
-                  .distinct()
-                  .collect(Collectors.toList()),
-              facility.getCode()
-          );
 
           calculateAndSavaCmms(
               requestDate,
               Pair.of(facilityId, facility.getCode()),
               programOrderableIdToCode,
               programPeriods,
-              hfCmmCountDtos
+              masterHfCmmCountDtos
           );
         }
       }
