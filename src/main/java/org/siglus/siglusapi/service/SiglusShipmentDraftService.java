@@ -23,6 +23,7 @@ import static org.siglus.siglusapi.i18n.MessageKeys.SHIPMENT_ORDER_STATUS_INVALI
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -54,6 +55,7 @@ import org.openlmis.fulfillment.web.util.OrderDto;
 import org.openlmis.fulfillment.web.util.OrderLineItemDto;
 import org.openlmis.fulfillment.web.util.OrderObjectReferenceDto;
 import org.openlmis.fulfillment.web.util.VersionObjectReferenceDto;
+import org.openlmis.referencedata.dto.BaseDto;
 import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.siglus.siglusapi.domain.OrderLineItemExtension;
 import org.siglus.siglusapi.domain.ShipmentDraftLineItemsExtension;
@@ -622,8 +624,13 @@ public class SiglusShipmentDraftService {
     Map<String, StockCardStockDto> latestSohMap = getLatestSohMap(supplyFacility, orderableIdSet, withLocation);
     Map<UUID, List<StockCardStockDto>> orderableGroup = latestSohMap.values().stream()
         .collect(Collectors.groupingBy(StockCardStockDto::getOrderableId));
+
+    Map<UUID, LotDto> idToLotMap = siglusLotService.getLotsByOrderables(supplyFacility, orderableIdSet).stream()
+        .collect(toMap(BaseDto::getId, Function.identity()));
+
     List<ShipmentLineItemDto> draftLineItems = order.orderLineItems().stream().map(
-        orderLineItemDto -> createShipmentDraftLineItemDtos(orderLineItemDto, orderableGroup)
+        orderLineItemDto ->
+            createShipmentDraftLineItemDtos(orderLineItemDto, orderableGroup, idToLotMap)
         )
         .flatMap(Collection::stream).collect(Collectors.toList());
     OrderObjectReferenceDto orderObjectReferenceDto = new OrderObjectReferenceDto(order.getId());
@@ -632,12 +639,19 @@ public class SiglusShipmentDraftService {
   }
 
   private List<ShipmentLineItemDto> createShipmentDraftLineItemDtos(OrderLineItemDto orderLineItem,
-      Map<UUID, List<StockCardStockDto>> orderableGroup) {
+      Map<UUID, List<StockCardStockDto>> orderableGroup,
+      Map<UUID, LotDto> idToLotMap) {
     List<StockCardStockDto> stockCardStockDtos = orderableGroup.get(orderLineItem.getOrderable().getId());
     if (ObjectUtils.isEmpty(stockCardStockDtos)) {
       return Collections.emptyList();
     }
-    return stockCardStockDtos.stream().filter(dto -> dto.getStockOnHand() != null && dto.getStockOnHand() > 0)
+
+    return stockCardStockDtos.stream().filter(dto -> {
+      LotDto lot = idToLotMap.getOrDefault(dto.getLotId(), null);
+      return dto.getStockOnHand() != null
+          && dto.getStockOnHand() > 0
+          && (lot == null || !lot.getExpirationDate().isBefore(LocalDate.now()));
+    })
         .map(dto -> {
           VersionObjectReferenceDto orderDto =
               new VersionObjectReferenceDto(orderLineItem.getOrderable().getId(), null, null,
