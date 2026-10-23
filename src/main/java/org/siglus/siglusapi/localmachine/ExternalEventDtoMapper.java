@@ -30,7 +30,7 @@ public class ExternalEventDtoMapper {
   public ExternalEventDto map(Event event) {
     log.info("Event to ExternalEventDto ID: {}", event.getId());
     return ExternalEventDto.builder()
-        .event(event)
+        .event(withSerializablePayload(event))
         .payloadClassName(payloadSerializer.getPayloadName(event.getPayload()))
         .build();
   }
@@ -44,5 +44,32 @@ public class ExternalEventDtoMapper {
     Object originPayload = PayloadSerializer.LOCALMACHINE_EVENT_OBJECT_MAPPER.convertValue(payload, payloadClass);
     event.setPayload(originPayload);
     return event;
+  }
+
+  // the web api object mapper can not serialize some payload types (e.g. Money with large amount), and a failure
+  // in the middle of the response corrupts the already flushed json, so convert it using the event object mapper.
+  private Event withSerializablePayload(Event event) {
+    if (event.getPayload() == null) {
+      return event;
+    }
+    Object payload =
+        PayloadSerializer.LOCALMACHINE_EVENT_OBJECT_MAPPER.convertValue(event.getPayload(), Object.class);
+    return Event.builder()
+        .id(event.getId())
+        .protocolVersion(event.getProtocolVersion())
+        .localSequenceNumber(event.getLocalSequenceNumber())
+        .occurredTime(event.getOccurredTime())
+        .senderId(event.getSenderId())
+        .receiverId(event.getReceiverId())
+        .groupId(event.getGroupId())
+        .parentId(event.getParentId())
+        .payload(payload)
+        .onlineWebSynced(event.isOnlineWebSynced())
+        .receiverSynced(event.isReceiverSynced())
+        .localReplayed(event.isLocalReplayed())
+        .syncedTime(event.getSyncedTime())
+        .category(event.getCategory())
+        .ack(event.getAck())
+        .build();
   }
 }

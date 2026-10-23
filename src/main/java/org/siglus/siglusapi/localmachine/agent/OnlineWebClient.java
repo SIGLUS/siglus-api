@@ -17,10 +17,15 @@ package org.siglus.siglusapi.localmachine.agent;
 
 import static java.util.Collections.singletonList;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.IOException;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 import org.siglus.siglusapi.localmachine.Ack;
 import org.siglus.siglusapi.localmachine.Event;
 import org.siglus.siglusapi.localmachine.ExternalEventDtoMapper;
@@ -35,17 +40,23 @@ import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
+@Slf4j
 @Component
 public class OnlineWebClient {
 
+  private static final int ERROR_CONTEXT_CHARS = 500;
   private static final String PATH_ACTIVATE_AGENT = "/server/agents";
   private final RestTemplate restTemplate;
   private final ExternalEventDtoMapper externalEventDtoMapper;
+  private final ObjectMapper objectMapper;
 
   @Value("${machine.web.url}")
   private String webBaseUrl;
@@ -56,6 +67,10 @@ public class OnlineWebClient {
     this.restTemplate = new RestTemplateBuilder().setConnectTimeout(5 * 1000).build();
     configureLocalTokenInterceptor(localTokenInterceptor);
     restTemplate.setInterceptors(singletonList(localTokenInterceptor));
+    this.objectMapper = restTemplate.getMessageConverters().stream()
+        .filter(MappingJackson2HttpMessageConverter.class::isInstance)
+        .map(c -> ((MappingJackson2HttpMessageConverter) c).getObjectMapper())
+        .findFirst().orElseGet(ObjectMapper::new);
   }
 
   public void sync(ByteArrayResource resource) {
@@ -70,16 +85,43 @@ public class OnlineWebClient {
 
   public List<Event> exportPeeringEvents() {
     URI url = URI.create(webBaseUrl + "/server/peeringEvents");
-    return restTemplate.getForObject(url, EventsResponse.class).getEvents().stream()
-        .map(externalEventDtoMapper::map)
-        .collect(Collectors.toList());
+    return getEvents(url);
   }
 
   public List<Event> exportMasterDataEvents(long offsetId) {
     URI url = URI.create(webBaseUrl + "/server/masterDataEvents/" + offsetId);
-    return restTemplate.getForObject(url, EventsResponse.class).getEvents().stream()
-        .map(externalEventDtoMapper::map)
-        .collect(Collectors.toList());
+    return getEvents(url);
+  }
+
+  private List<Event> getEvents(URI url) {
+    ResponseEntity<byte[]> response = restTemplate.getForEntity(url, byte[].class);
+    byte[] body = response.getBody() == null ? new byte[0] : response.getBody();
+    try {
+      return objectMapper.readValue(body, EventsResponse.class).getEvents().stream()
+          .map(externalEventDtoMapper::map)
+          .collect(Collectors.toList());
+    } catch (IOException e) {
+      logBadResponse(url, response, body, e);
+      throw new HttpMessageNotReadableException("fail to parse response of " + url, e);
+    }
+  }
+
+  private void logBadResponse(URI url, ResponseEntity<byte[]> response, byte[] body, IOException e) {
+    String text = new String(body, StandardCharsets.UTF_8);
+    long offset = e instanceof JsonProcessingException && ((JsonProcessingException) e).getLocation() != null
+        ? ((JsonProcessingException) e).getLocation().getCharOffset() : -1;
+    int pos = (int) Math.max(0, Math.min(offset, text.length()));
+    String around = text.substring(Math.max(0, pos - ERROR_CONTEXT_CHARS),
+        Math.min(text.length(), pos + ERROR_CONTEXT_CHARS));
+    HttpHeaders headers = response.getHeaders();
+    log.error("fail to parse events response, url:{}, status:{}, contentType:{}, contentLength header:{}, "
+            + "contentEncoding:{}, actual bytes:{}, chars:{}, error char offset:{}, endsWithBrace:{}, "
+            + "headers:{}, error:{}, text around error:[{}]",
+        url, response.getStatusCode(), headers.getContentType(), headers.getContentLength(),
+        headers.getFirst(HttpHeaders.CONTENT_ENCODING), body.length, text.length(), offset,
+        text.trim().endsWith("}"), headers, e.getMessage(), around);
+    log.error("tail of events response:[{}]",
+        text.substring(Math.max(0, text.length() - ERROR_CONTEXT_CHARS)));
   }
 
   public ActivationResponse activate(RemoteActivationRequest remoteActivationRequest) {
