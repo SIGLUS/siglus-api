@@ -138,14 +138,9 @@ public class OnlineWebController {
 
   @GetMapping("/resyncMasterData")
   public ResyncMasterDataResponse resyncMasterData(MachineToken machineToken) {
-    ResyncMasterDataResponse response =
-        onlineWebService.resyncMasterData(machineToken.getFacilityId());
-
-    response.setDownloadUrl("http://10.0.0.90:8083/masterData.zip");
-
-    return response;
+    return onlineWebService.resyncMasterData(machineToken.getFacilityId());
   }
-  
+
   static String getRuntimeMxBean() {
     RuntimeMXBean runtime = ManagementFactory.getRuntimeMXBean();
     String name = runtime.getName();
