@@ -16,9 +16,12 @@
 package org.siglus.siglusapi.localmachine.agent;
 
 import java.sql.SQLException;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -44,7 +47,19 @@ public final class RightAssignmentErrorParser {
   public static boolean isTargetTableConflict(String errorMessage) {
     return errorMessage != null
             && errorMessage.contains(TARGET_CONSTRAINT)
-            && TARGET_TABLE_PATTERN.matcher(errorMessage).find();
+            && (TARGET_TABLE_PATTERN.matcher(errorMessage).find() || hasRightAssignmentKeyDetail(errorMessage));
+  }
+
+  private static boolean hasRightAssignmentKeyDetail(String errorMessage) {
+    Matcher matcher = PG_KEY_DETAIL_PATTERN.matcher(errorMessage);
+    while (matcher.find()) {
+      String columns = matcher.group(1).toLowerCase();
+      if (columns.contains("rightname") && columns.contains("facilityid")
+          && columns.contains("programid") && columns.contains("userid")) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public static Optional<RightAssignmentConflictKey> extractConflictKey(Throwable throwable) {
@@ -96,7 +111,8 @@ public final class RightAssignmentErrorParser {
     StringBuilder sb = new StringBuilder();
     Throwable current = t;
 
-    while (current != null) {
+    Set<Throwable> visited = Collections.newSetFromMap(new IdentityHashMap<>());
+    while (current != null && visited.add(current)) {
       if (current.getMessage() != null) {
         sb.append(current.getMessage()).append('\n');
       }
@@ -108,6 +124,9 @@ public final class RightAssignmentErrorParser {
           }
           next = next.getNextException();
         }
+      }
+      for (Throwable suppressed : current.getSuppressed()) {
+        sb.append(collectFullErrorMessage(suppressed));
       }
       current = current.getCause();
     }

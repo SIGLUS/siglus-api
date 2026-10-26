@@ -83,8 +83,7 @@ public class ErrorHandler {
   private ErrorRecord buildSyncDownError(UUID eventId, Throwable t, ErrorType errorType) {
     String detailMessage = RightAssignmentErrorParser.collectFullErrorMessage(t);
 
-    RightAssignmentErrorParser.extractConflictKey(detailMessage)
-            .ifPresent(this::resolveRightAssignmentConflict);
+    tryResolveRightAssignmentConflict(detailMessage);
 
     if (t instanceof BusinessDataException) {
       return ErrorRecord.builder()
@@ -103,8 +102,7 @@ public class ErrorHandler {
   private ErrorRecord buildSyncDownError(Throwable t, ErrorType errorType) {
     String detailMessage = RightAssignmentErrorParser.collectFullErrorMessage(t);
 
-    RightAssignmentErrorParser.extractConflictKey(detailMessage)
-            .ifPresent(this::resolveRightAssignmentConflict);
+    tryResolveRightAssignmentConflict(detailMessage);
 
     if (t instanceof BusinessDataException) {
       return ErrorRecord.builder()
@@ -120,6 +118,19 @@ public class ErrorHandler {
         .build();
   }
 
+  private void tryResolveRightAssignmentConflict(String detailMessage) {
+    try {
+      if (detailMessage.contains("right_assignment_unq")
+          && !RightAssignmentErrorParser.extractConflictKey(detailMessage).isPresent()) {
+        log.warn("right_assignment_unq violation detected but conflict key can not be parsed: {}", detailMessage);
+      }
+      RightAssignmentErrorParser.extractConflictKey(detailMessage)
+          .ifPresent(this::resolveRightAssignmentConflict);
+    } catch (Exception e) {
+      log.error("fail to resolve right assignment conflict", e);
+    }
+  }
+
   private void resolveRightAssignmentConflict(RightAssignmentConflictKey key) {
     UUID userId = key.getUserId();
     List<UUID> relatedFacilityIds = rightAssignmentRepository.findDistinctFacilityIdsByUserId(userId);
@@ -128,6 +139,9 @@ public class ErrorHandler {
     Set<String> registeredSet = (registeredFacilityIds == null)
             ? Collections.emptySet()
             : new HashSet<>(registeredFacilityIds);
+
+    log.info("Resolving right assignment conflict for user {}: userFacilityIds={}, registeredFacilityIds={}",
+        userId, relatedFacilityIds, registeredSet);
 
     boolean hasCommonFacility = relatedFacilityIds != null && relatedFacilityIds.stream()
             .filter(Objects::nonNull)
