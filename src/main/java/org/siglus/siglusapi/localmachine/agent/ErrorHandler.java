@@ -18,7 +18,10 @@ package org.siglus.siglusapi.localmachine.agent;
 import static org.siglus.siglusapi.localmachine.utils.ErrorFormatter.getRootStackTrace;
 
 import java.time.ZonedDateTime;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -28,7 +31,10 @@ import org.siglus.siglusapi.exception.DeferredException;
 import org.siglus.siglusapi.localmachine.constant.ErrorType;
 import org.siglus.siglusapi.localmachine.domain.ErrorPayload;
 import org.siglus.siglusapi.localmachine.domain.ErrorRecord;
+import org.siglus.siglusapi.localmachine.repository.AgentInfoRepository;
 import org.siglus.siglusapi.localmachine.repository.ErrorRecordRepository;
+import org.siglus.siglusapi.repository.RightAssignmentRepository;
+import org.siglus.siglusapi.service.client.SiglusUserReferenceDataService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,6 +47,9 @@ public class ErrorHandler {
 
   private final ErrorRecordRepository errorRecordRepository;
   private final SyncRecordService syncRecordService;
+  private final SiglusUserReferenceDataService userService;
+  private final AgentInfoRepository agentInfoRepository;
+  private final RightAssignmentRepository rightAssignmentRepository;
 
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   public void storeErrorRecord(Throwable t, ErrorType errorType) {
@@ -70,6 +79,12 @@ public class ErrorHandler {
   }
 
   private ErrorRecord buildSyncDownError(UUID eventId, Throwable t, ErrorType errorType) {
+    String detailMessage = RightAssignmentErrorParser.collectFullErrorMessage(t);
+
+    // Safe extraction without NPE
+    RightAssignmentErrorParser.extractUserId(detailMessage)
+        .ifPresent(this::deleteUserRightsIfNoMatchingFacility);
+
     if (t instanceof BusinessDataException) {
       return ErrorRecord.builder()
           .occurredTime(ZonedDateTime.now())
@@ -85,6 +100,12 @@ public class ErrorHandler {
   }
 
   private ErrorRecord buildSyncDownError(Throwable t, ErrorType errorType) {
+    String detailMessage = RightAssignmentErrorParser.collectFullErrorMessage(t);
+
+    // Safe extraction without NPE
+    RightAssignmentErrorParser.extractUserId(detailMessage)
+        .ifPresent(this::deleteUserRightsIfNoMatchingFacility);
+
     if (t instanceof BusinessDataException) {
       return ErrorRecord.builder()
           .occurredTime(ZonedDateTime.now())
@@ -97,6 +118,34 @@ public class ErrorHandler {
         .type(errorType)
         .errorPayload(buildGeneralErrorPayload(t))
         .build();
+  }
+
+  /**
+   * Checks if the user's facilities intersect with registered facilities.
+   * Deletes user rights if no common facility exists.
+   */
+  private void deleteUserRightsIfNoMatchingFacility(UUID userId) {
+    List<UUID> relatedFacilityIds = rightAssignmentRepository.findDistinctFacilityIdsByUserId(userId);
+    List<String> registeredFacilityIds = agentInfoRepository.findRegisteredFacilityIds();
+
+    if (registeredFacilityIds == null || registeredFacilityIds.isEmpty()
+        || relatedFacilityIds == null || relatedFacilityIds.isEmpty()) {
+      rightAssignmentRepository.deleteByUserId(userId);
+      return;
+    }
+
+    // Use a Set for O(1) lookups and normalize types to String
+    Set<String> registeredSet = new HashSet<>(registeredFacilityIds);
+
+    boolean hasCommonFacility = relatedFacilityIds.stream()
+        .filter(Objects::nonNull)
+        .map(UUID::toString)
+        .anyMatch(registeredSet::contains);
+
+    if (!hasCommonFacility) {
+      log.info("No common facility found for userId: {}. Purging right assignments.", userId);
+      rightAssignmentRepository.deleteByUserId(userId);
+    }
   }
 
   private ErrorPayload buildBusinessErrorPayload(UUID eventId, Throwable t) {
