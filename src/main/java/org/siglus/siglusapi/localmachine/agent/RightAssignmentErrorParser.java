@@ -15,8 +15,6 @@
 
 package org.siglus.siglusapi.localmachine.agent;
 
-import org.siglus.siglusapi.dto.RightAssignmentConflictKey;
-
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
@@ -24,6 +22,8 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import org.siglus.siglusapi.dto.RightAssignmentConflictKey;
 
 public final class RightAssignmentErrorParser {
 

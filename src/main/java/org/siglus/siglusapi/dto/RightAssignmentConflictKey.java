@@ -27,8 +27,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class RightAssignmentConflictKey {
-    private String rightName;
-    private UUID facilityId;
-    private UUID programId;
-    private UUID userId;
+  private String rightName;
+  private UUID facilityId;
+  private UUID programId;
+  private UUID userId;
 }

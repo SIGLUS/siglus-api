@@ -108,16 +108,16 @@ public class ErrorHandler {
 
     if (t instanceof BusinessDataException) {
       return ErrorRecord.builder()
-              .occurredTime(ZonedDateTime.now())
-              .type(errorType)
-              .errorPayload(buildBusinessErrorPayload(t))
-              .build();
+          .occurredTime(ZonedDateTime.now())
+          .type(errorType)
+          .errorPayload(buildBusinessErrorPayload(t))
+          .build();
     }
     return ErrorRecord.builder()
-            .occurredTime(ZonedDateTime.now())
-            .type(errorType)
-            .errorPayload(buildGeneralErrorPayload(t))
-            .build();
+        .occurredTime(ZonedDateTime.now())
+        .type(errorType)
+        .errorPayload(buildGeneralErrorPayload(t))
+        .build();
   }
 
   private void resolveRightAssignmentConflict(RightAssignmentConflictKey key) {
