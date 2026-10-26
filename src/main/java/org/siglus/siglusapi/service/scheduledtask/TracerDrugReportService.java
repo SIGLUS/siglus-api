@@ -24,7 +24,6 @@ import static org.siglus.siglusapi.constant.FieldConstants.DISTRICT_PORTUGUESE;
 import static org.siglus.siglusapi.constant.FieldConstants.DRUG_CODE_PORTUGUESE;
 import static org.siglus.siglusapi.constant.FieldConstants.DRUG_NAME_PORTUGUESE;
 import static org.siglus.siglusapi.constant.FieldConstants.EMPTY_VALUE;
-import static org.siglus.siglusapi.constant.FieldConstants.EXCLUDED_USERS_FOR_FACILITIES;
 import static org.siglus.siglusapi.constant.FieldConstants.FACILITY_PORTUGUESE;
 import static org.siglus.siglusapi.constant.FieldConstants.LOW_STOCK_PORTUGUESE;
 import static org.siglus.siglusapi.constant.FieldConstants.OVER_STOCK_PORTUGUESE;
@@ -35,7 +34,6 @@ import static org.siglus.siglusapi.constant.FieldConstants.REGULAR_STOCK_PORTUGU
 import static org.siglus.siglusapi.constant.FieldConstants.REPORT_GENERATED_FOR_PORTUGUESE;
 import static org.siglus.siglusapi.constant.FieldConstants.STOCK_OUT_PORTUGUESE;
 import static org.siglus.siglusapi.constant.FieldConstants.SUBTITLE;
-import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_USER_NOT_FOUND;
 
 import com.alibaba.excel.EasyExcelFactory;
 import com.alibaba.excel.ExcelWriter;
@@ -60,7 +58,6 @@ import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -72,12 +69,10 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.ListUtils;
 import org.siglus.siglusapi.domain.TracerDrugPersistentData;
 import org.siglus.siglusapi.dto.AssociatedGeographicZoneDto;
-import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.dto.RequisitionGeographicZonesDto;
 import org.siglus.siglusapi.dto.TracerDrugDto;
 import org.siglus.siglusapi.dto.TracerDrugExcelDto;
 import org.siglus.siglusapi.dto.TracerDrugExportDto;
-import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.repository.SiglusFacilityRepository;
 import org.siglus.siglusapi.repository.TracerDrugRepository;
 import org.siglus.siglusapi.repository.dto.ProductCmm;
@@ -247,15 +242,6 @@ public class TracerDrugReportService {
     ExcelWriter excelWriter = EasyExcelFactory.write(response.getOutputStream()).build();
 
     List<String> requisitionFacilityCodes = getRequisitionFacilityCode(districtCodeList);
-
-    UUID userId = authenticationHelper.getCurrentUserId()
-            .orElseThrow(() -> new BusinessDataException(new Message(ERROR_USER_NOT_FOUND)));
-    if (EXCLUDED_USERS_FOR_FACILITIES.contains(userId)) {
-      List<String> aiCodes = facilityRepository.findAllAiFacilityCodes();
-      requisitionFacilityCodes = requisitionFacilityCodes.stream()
-              .filter(code -> !aiCodes.contains(code))
-              .collect(Collectors.toList());
-    }
 
     List<TracerDrugExcelDto> tracerDrugExcelInfo = new ArrayList<>();
     if (!ObjectUtils.isEmpty(requisitionFacilityCodes)) {

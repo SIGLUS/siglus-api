@@ -27,7 +27,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -201,7 +200,6 @@ public class MetabaseDashboardServiceTest {
   }
 
   @Test
-  @Ignore
   public void shouldReturnParamMapWhenHasPartialReportItem() {
     // given
     when(authenticationHelper.getCurrentUser()).thenReturn(uesrDto);

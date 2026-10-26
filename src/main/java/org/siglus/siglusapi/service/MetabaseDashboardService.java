@@ -17,8 +17,6 @@ package org.siglus.siglusapi.service;
 
 import static org.siglus.siglusapi.constant.FieldConstants.ALL_GEOGRAPHIC_UUID;
 import static org.siglus.siglusapi.constant.FieldConstants.DISTRICT_LOWER_CASE;
-import static org.siglus.siglusapi.constant.FieldConstants.EXCLUDED_USERS_FOR_FACILITIES;
-import static org.siglus.siglusapi.constant.FieldConstants.FACILITY_CODE_LOWER_CASE;
 import static org.siglus.siglusapi.constant.FieldConstants.JWT_TOKEN_HEADER_PARAM_NAME;
 import static org.siglus.siglusapi.constant.FieldConstants.JWT_TOKEN_HEADER_PARAM_VALUE;
 import static org.siglus.siglusapi.constant.FieldConstants.METABASE_EXTENSION_URL;
@@ -54,7 +52,6 @@ import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.dto.MetabaseUrlDto;
 import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.repository.MetabaseDashboardRepository;
-import org.siglus.siglusapi.repository.SiglusFacilityRepository;
 import org.siglus.siglusapi.repository.SiglusGeographicInfoRepository;
 import org.siglus.siglusapi.repository.SiglusUserReportViewRepository;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
@@ -78,8 +75,6 @@ public class MetabaseDashboardService {
   private SiglusUserReportViewRepository siglusUserReportViewRepository;
   @Autowired
   private SiglusGeographicInfoRepository siglusGeographicInfoRepository;
-  @Autowired
-  private SiglusFacilityRepository siglusFacilityRepository;
 
   @Value("${metabase.secret.key}")
   private String metabaseSecretKey;
@@ -177,16 +172,7 @@ public class MetabaseDashboardService {
     Set<String> districtNames = new HashSet<>();
     districtNames.addAll(districtNamesUnderProvince);
     districtNames.addAll(districtNamesAlone);
-
     paramMap.put(DISTRICT_LOWER_CASE, districtNames);
-    if (CollectionUtils.isNotEmpty(districtNames)
-        && EXCLUDED_USERS_FOR_FACILITIES.contains(userId)) {
-      Set<String> facilityCodes = siglusFacilityRepository.findFacilityNamesByZoneAndParentZoneIds(
-          districtIds
-      );
-      paramMap.put(FACILITY_CODE_LOWER_CASE, facilityCodes);
-    }
-
     return paramMap;
   }
 
