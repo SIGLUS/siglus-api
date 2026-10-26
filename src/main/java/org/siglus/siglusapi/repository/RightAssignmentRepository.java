@@ -15,15 +15,15 @@
 
 package org.siglus.siglusapi.repository;
 
+import java.util.List;
+import java.util.UUID;
+
 import org.siglus.siglusapi.domain.RightAssignment;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-
-import java.util.List;
-import java.util.UUID;
 
 @Repository
 public interface RightAssignmentRepository extends JpaRepository<RightAssignment, UUID> {
