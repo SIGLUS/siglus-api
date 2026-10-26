@@ -135,7 +135,8 @@ public class ErrorHandler {
             .anyMatch(registeredSet::contains);
 
     if (hasCommonFacility) {
-      log.info("Facility match found for user {}. Deleting conflicting assignment: [rightName={}, facilityId={}, programId={}, userId={}]",
+      log.info("Facility match found for user {}. Deleting conflicting assignment: "
+              + "[rightName={}, facilityId={}, programId={}, userId={}]",
               userId, key.getRightName(), key.getFacilityId(), key.getProgramId(), key.getUserId());
 
       rightAssignmentRepository.deleteByConflictKey(
