@@ -28,7 +28,7 @@ import lombok.NoArgsConstructor;
 
 import org.siglus.common.domain.BaseEntity;
 
-@Entity
+@Entity(name = "SiglusRightAssignment")
 @Data
 @Builder
 @AllArgsConstructor

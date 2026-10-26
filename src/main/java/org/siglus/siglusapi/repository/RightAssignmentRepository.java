@@ -28,15 +28,15 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface RightAssignmentRepository extends JpaRepository<RightAssignment, UUID> {
 
-  @Query("SELECT DISTINCT r.facilityId FROM RightAssignment r WHERE r.userId = :userId")
+  @Query("SELECT DISTINCT r.facilityId FROM SiglusRightAssignment r WHERE r.userId = :userId")
   List<UUID> findDistinctFacilityIdsByUserId(@Param("userId") UUID userId);
 
   @Modifying(clearAutomatically = true)
-  @Query("DELETE FROM RightAssignment r WHERE r.userId = :userId")
+  @Query("DELETE FROM SiglusRightAssignment r WHERE r.userId = :userId")
   int deleteByUserId(@Param("userId") UUID userId);
 
   @Modifying(clearAutomatically = true)
-  @Query("DELETE FROM RightAssignment r WHERE r.rightName = :rightName "
+  @Query("DELETE FROM SiglusRightAssignment r WHERE r.rightName = :rightName "
           + "AND r.facilityId = :facilityId "
           + "AND r.programId = :programId "
           + "AND r.userId = :userId")
