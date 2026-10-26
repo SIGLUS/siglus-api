@@ -45,19 +45,11 @@ public class SiglusFcIntegrationControllerTest {
   @Test
   public void shouldSearchRequisitionsWithDefaultPageable() {
     // when
-    // Pass null for the optional parameters: endDate, clientCode, clientTypes, requisitionNumber
-    siglusFcIntegrationController.searchRequisitions(date, null, null, null, null, pageable);
+    siglusFcIntegrationController.searchRequisitions(date, pageable);
 
     // then
-    // Verify the service was called with the exact same null values, plus the defaulted PageRequest
-    verify(siglusFcIntegrationService).searchRequisitions(
-            date,
-            null,
-            null,
-            null,
-            null,
-            new PageRequest(PaginationConstants.DEFAULT_PAGE_NUMBER, 20)
-    );
+    verify(siglusFcIntegrationService).searchRequisitions(date,
+        new PageRequest(PaginationConstants.DEFAULT_PAGE_NUMBER, 20));
   }
 
   @Test
@@ -66,12 +58,10 @@ public class SiglusFcIntegrationControllerTest {
     pageable = new PageRequest(1, 10);
 
     // when
-    // Pass null for the optional parameters: endDate, clientCode, clientTypes, requisitionNumber
-    siglusFcIntegrationController.searchRequisitions(date, null, null, null, null, pageable);
+    siglusFcIntegrationController.searchRequisitions(date, pageable);
 
     // then
-    // Verify the service was called with the exact same null values and the input pageable
-    verify(siglusFcIntegrationService).searchRequisitions(date, null, null, null, null, pageable);
+    verify(siglusFcIntegrationService).searchRequisitions(date, pageable);
   }
 
   @Test

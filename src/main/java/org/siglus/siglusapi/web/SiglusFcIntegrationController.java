@@ -18,9 +18,6 @@ package org.siglus.siglusapi.web;
 import static org.siglus.siglusapi.constant.FcConstants.DATE_FORMAT;
 
 import java.time.LocalDate;
-import java.util.List;
-import javax.annotation.Nullable;
-
 import lombok.RequiredArgsConstructor;
 import org.siglus.siglusapi.constant.PaginationConstants;
 import org.siglus.siglusapi.dto.FcProofOfDeliveryDto;
@@ -38,7 +35,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-@SuppressWarnings("PMD.AvoidDuplicateLiterals")
 @RestController
 @Validated
 @RequestMapping("/api/siglusapi/integration")
@@ -50,21 +46,11 @@ public class SiglusFcIntegrationController {
   @GetMapping("/requisitions")
   public Page<FcRequisitionDto> searchRequisitions(
       @DateTimeFormat(pattern = DATE_FORMAT) @RequestParam LocalDate date,
-      @RequestParam(value = "end_date", required = false)
-      @DateTimeFormat(pattern = DATE_FORMAT)
-      @Nullable LocalDate endDate,
-      @RequestParam(value = "client_code", required = false)
-      @Nullable String clientCode,
-      @RequestParam(value = "client_types", required = false)
-      List<String> clientTypes,
-      @RequestParam(value = "requisition_number", required = false)
-      @Nullable String requisitionNumber,
       Pageable pageable) {
     if (PaginationConstants.NO_PAGINATION == pageable.getPageSize()) {
       pageable = new PageRequest(PaginationConstants.DEFAULT_PAGE_NUMBER, 20);
     }
-    return siglusFcIntegrationService.searchRequisitions(
-            date, endDate, clientCode, clientTypes, requisitionNumber, pageable);
+    return siglusFcIntegrationService.searchRequisitions(date, pageable);
   }
 
   @GetMapping("/requisitions/needApproval")
@@ -79,56 +65,30 @@ public class SiglusFcIntegrationController {
 
   @GetMapping("/stockMovements")
   public Page<FacilityStockMovementResponse> searchStockMovements(
-      @DateTimeFormat(pattern = DATE_FORMAT) @RequestParam
-      LocalDate date,
-      @RequestParam(value = "end_date", required = false)
-      @DateTimeFormat(pattern = DATE_FORMAT)
-      @Nullable LocalDate endDate,
-      @RequestParam(value = "client_code", required = false)
-      @Nullable String clientCode,
-      @RequestParam(value = "client_types", required = false)
-      List<String> clientTypes,
-      Pageable pageable) {
+      @DateTimeFormat(pattern = DATE_FORMAT) @RequestParam LocalDate date, Pageable pageable) {
     if (PaginationConstants.NO_PAGINATION == pageable.getPageSize()) {
       pageable = new PageRequest(PaginationConstants.DEFAULT_PAGE_NUMBER, 20);
     }
-    return siglusFcIntegrationService.searchStockMovements(
-        date, endDate, clientCode, clientTypes, pageable);
+    return siglusFcIntegrationService.searchStockMovements(date, pageable);
   }
 
   @GetMapping("/stockOnHand")
   public Page<FacilityStockOnHandResponse> searchStockOnHand(
-      @DateTimeFormat(pattern = DATE_FORMAT) @RequestParam LocalDate date,
-      @RequestParam(value = "client_code", required = false)
-      @Nullable String clientCode,
-      @RequestParam(value = "client_types", required = false)
-      List<String> clientTypes,
-      Pageable pageable) {
+      @DateTimeFormat(pattern = DATE_FORMAT) @RequestParam LocalDate date, Pageable pageable) {
     if (PaginationConstants.NO_PAGINATION == pageable.getPageSize()) {
       pageable = new PageRequest(PaginationConstants.DEFAULT_PAGE_NUMBER, 20);
     }
-    return siglusFcIntegrationService.searchStockOnHand(
-        date, clientCode, clientTypes, pageable);
+    return siglusFcIntegrationService.searchStockOnHand(date, pageable);
   }
 
   @GetMapping("/pods")
   public Page<FcProofOfDeliveryDto> searchProofOfDelivery(
       @DateTimeFormat(pattern = DATE_FORMAT) @RequestParam LocalDate date,
-      @RequestParam(value = "end_date", required = false)
-      @DateTimeFormat(pattern = DATE_FORMAT)
-      @Nullable LocalDate endDate,
-      @RequestParam(value = "client_code", required = false)
-      @Nullable String clientCode,
-      @RequestParam(value = "client_types", required = false)
-      List<String> clientTypes,
-      @RequestParam(value = "iv_number", required = false)
-      @Nullable String ivNumber,
       Pageable pageable) {
     if (PaginationConstants.NO_PAGINATION == pageable.getPageSize()) {
       pageable = new PageRequest(PaginationConstants.DEFAULT_PAGE_NUMBER, 20);
     }
-    return siglusFcIntegrationService.searchProofOfDelivery(
-        date, endDate, clientCode, clientTypes, ivNumber, pageable);
+    return siglusFcIntegrationService.searchProofOfDelivery(date, pageable);
   }
 
 }

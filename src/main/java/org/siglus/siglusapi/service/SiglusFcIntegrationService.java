@@ -38,7 +38,6 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -108,8 +107,6 @@ import org.siglus.siglusapi.dto.android.enumeration.MmtbPatientTableColumnKeyVal
 import org.siglus.siglusapi.dto.android.enumeration.MmtbPatientTableKeyValue;
 import org.siglus.siglusapi.dto.android.enumeration.TestProject;
 import org.siglus.siglusapi.dto.android.enumeration.TestService;
-import org.siglus.siglusapi.dto.android.response.LotBasicResponse;
-import org.siglus.siglusapi.dto.android.response.ProductMovementResponse;
 import org.siglus.siglusapi.dto.fc.FacilityStockMovementResponse;
 import org.siglus.siglusapi.dto.fc.FacilityStockOnHandResponse;
 import org.siglus.siglusapi.dto.fc.ProductStockOnHandResponse;
@@ -197,29 +194,9 @@ public class SiglusFcIntegrationService {
 
   private Map<UUID, Map<String, String>> orderableIdToInfoMap;
 
-  public Page<FcRequisitionDto> searchRequisitions(LocalDate date,
-                                                   LocalDate endDate,
-                                                   String clientCode,
-                                                   List<String> clientTypes,
-                                                   String requisitionNumber,
-                                                   Pageable pageable) {
-
-    // JPA Native Queries crash if an IN clause receives a null or empty list.
-    // We determine if we have types, and if not, pass a dummy list containing an empty string.
-    // It won't affect the query because of the :hasClientTypes boolean flag.
-    boolean hasClientTypes = clientTypes != null && !clientTypes.isEmpty();
-    List<String> safeClientTypes = hasClientTypes ? clientTypes : Collections.singletonList("");
-
-    Page<Requisition> requisitions = siglusRequisitionRepository.searchAllForFc(
-            date,
-            endDate,
-            requisitionNumber,
-            clientCode,
-            hasClientTypes,
-            safeClientTypes,
-            pageable
-    );
-
+  public Page<FcRequisitionDto> searchRequisitions(LocalDate date, Pageable pageable) {
+    Page<Requisition> requisitions;
+    requisitions = siglusRequisitionRepository.searchAllForFc(date, pageable);
     List<FcRequisitionDto> fcRequisitionDtos = newArrayList();
     Map<UUID, ProgramRealProgram> realProgramIdToEntityMap = programRealProgramRepository.findAll()
         .stream().collect(Collectors.toMap(ProgramRealProgram::getId, Function.identity()));
@@ -248,84 +225,29 @@ public class SiglusFcIntegrationService {
     return Pagination.getPage(fcRequisitionDtos, pageable, requisitions.getTotalElements());
   }
 
-  public Page<FacilityStockMovementResponse> searchStockMovements(
-      LocalDate since,
-      LocalDate endDate,
-      String clientCode,
-      List<String> clientTypes,
-      Pageable pageable) {
-    List<UUID> excludedTypeIds;
-    if (CollectionUtils.isNotEmpty(clientTypes)) {
-      excludedTypeIds = findFacilityTypes(
-          clientTypes,
-          FacilityTypeConstants.getVirtualFacilityTypes())
-          .stream().map(FacilityTypeDto::getId).collect(toList());
-    } else {
-      excludedTypeIds = findFacilityTypes(FacilityTypeConstants.getVirtualFacilityTypes()).stream()
-          .map(FacilityTypeDto::getId).collect(toList());
-    }
-    if (endDate == null) {
-      endDate = LocalDate.now().minusDays(1);
-    }
-    LocalDate finalEndDate = endDate;
-    return facilityNativeRepository.findAllForStockMovements(excludedTypeIds, since,
-            finalEndDate, clientCode, pageable)
-        .map(f -> toMovementResponse(f, since, finalEndDate));
+  public Page<FacilityStockMovementResponse> searchStockMovements(LocalDate since, Pageable pageable) {
+    List<UUID> excludedTypeIds = findFacilityTypes(FacilityTypeConstants.getVirtualFacilityTypes()).stream()
+        .map(FacilityTypeDto::getId).collect(toList());
+    return facilityNativeRepository.findAllForStockMovements(excludedTypeIds, since, pageable)
+        .map(f -> toMovementResponse(f, since));
   }
 
-  public Page<FacilityStockOnHandResponse> searchStockOnHand(
-      LocalDate at,
-      String clientCode,
-      List<String> clientTypes,
-      Pageable pageable) {
-    List<UUID> excludedTypeIds;
-    if (CollectionUtils.isNotEmpty(clientTypes)) {
-      excludedTypeIds = findFacilityTypes(
-          clientTypes,
-          FacilityTypeConstants.getVirtualFacilityTypes())
-          .stream().map(FacilityTypeDto::getId).collect(toList());
-    } else {
-      excludedTypeIds = findFacilityTypes(FacilityTypeConstants.getVirtualFacilityTypes()).stream()
-          .map(FacilityTypeDto::getId).collect(toList());
-    }
-    return facilityNativeRepository.findAllForStockOnHand(excludedTypeIds, at, clientCode, pageable)
+  public Page<FacilityStockOnHandResponse> searchStockOnHand(LocalDate at, Pageable pageable) {
+    List<UUID> excludedTypeIds = findFacilityTypes(FacilityTypeConstants.getVirtualFacilityTypes()).stream()
+        .map(FacilityTypeDto::getId).collect(toList());
+    return facilityNativeRepository.findAllForStockOnHand(excludedTypeIds, at, pageable)
         .map(f -> toStockOnHandResponse(f, at));
   }
 
   private FacilityStockMovementResponse toMovementResponse(org.siglus.siglusapi.dto.android.db.Facility facility,
-      LocalDate since, LocalDate endDate) {
+      LocalDate since) {
     FacilityStockMovementResponse response = new FacilityStockMovementResponse();
     response.setCode(facility.getCode());
     response.setName(facility.getName());
     log.info("toMovementResponse facility id: {}", facility.getId());
-    PeriodOfProductMovements period = stockManagementRepository
-        .getAllProductMovementsForSync(facility.getId(), since, endDate);
-    List<ProductMovementResponse> productMovements = productMovementMapper.toResponses(period);
-    productMovements.forEach(pm -> {
-      pm.getStockMovementItems().forEach(stockItem ->
-          stockItem.getLotMovementItems().forEach(lotItem ->
-              lotItem.setLotCode(convertLotCodeToLote(lotItem.getLotCode()))));
-      pm.getLotsOnHand().forEach(lotOnHand -> {
-        LotBasicResponse lot = lotOnHand.getLot();
-        if (lot != null) {
-          lot.setCode(convertLotCodeToLote(lot.getCode()));
-        }
-      });
-    });
-    response.setProductMovements(productMovements);
+    PeriodOfProductMovements period = stockManagementRepository.getAllProductMovementsForSync(facility.getId(), since);
+    response.setProductMovements(productMovementMapper.toResponses(period));
     return response;
-  }
-
-  private String convertLotCodeToLote(String lotCode) {
-    if (lotCode == null) {
-      return null;
-    }
-    int lastHyphenIndex = lotCode.lastIndexOf('-');
-
-    if (lastHyphenIndex != -1) {
-      return lotCode.substring(0, lastHyphenIndex);
-    }
-    return lotCode;
   }
 
   private FacilityStockOnHandResponse toStockOnHandResponse(org.siglus.siglusapi.dto.android.db.Facility facility,
@@ -355,9 +277,6 @@ public class SiglusFcIntegrationService {
           }
           product.setCmm(cmm);
           product.setMos(mos);
-
-          product.getLots().forEach(p -> p.setLotCode(convertLotCodeToLote(p.getLotCode())));
-
           return product;
         })
         .collect(toList());
@@ -365,41 +284,14 @@ public class SiglusFcIntegrationService {
     return response;
   }
 
-  public Page<FcProofOfDeliveryDto> searchProofOfDelivery(LocalDate date,
-                                                          LocalDate endDate,
-                                                          String clientCode,
-                                                          List<String> clientTypes,
-                                                          String ivNumber,
-                                                          Pageable pageable) {
-
-    // 1. Pre-process parameters to avoid Hibernate bytea null-mapping errors and empty list crashes
-    boolean hasEndDate = endDate != null;
-    LocalDate safeEndDate = hasEndDate ? endDate : LocalDate.now();
-
-    boolean hasClientCode = clientCode != null && !clientCode.trim().isEmpty();
-    String safeClientCode = hasClientCode ? clientCode : "";
-
-    boolean hasClientTypes = clientTypes != null && !clientTypes.isEmpty();
-    List<String> safeClientTypes = hasClientTypes ? clientTypes : Collections.singletonList("");
-
-    boolean hasIvNumber = ivNumber != null && !ivNumber.trim().isEmpty();
-    String safeIvNumber = hasIvNumber ? ivNumber : "";
-
+  public Page<FcProofOfDeliveryDto> searchProofOfDelivery(LocalDate date, Pageable pageable) {
     List<FacilityDto> facilityDtos = siglusFacilityReferenceDataService.findAll();
     Map<UUID, String> facilityIdToFacilityCodeMap = facilityDtos
         .stream()
         .collect(toMap(FacilityDto::getId, FacilityDto::getCode));
 
-    // 2. Pass flags and safe defaults into the repository
-    Page<ProofOfDelivery> page = siglusProofOfDeliveryRepository.search(
-        date,
-        hasEndDate, safeEndDate,
-        hasClientCode, safeClientCode,
-        hasClientTypes, safeClientTypes,
-        hasIvNumber, safeIvNumber,
-        pageable
-    );
-
+    Page<ProofOfDelivery> page = siglusProofOfDeliveryRepository
+        .search(date, pageable);
 
     Set<UUID> shipmentIds = page.getContent().stream()
         .map(ProofOfDelivery::getShipment).map(Shipment::getId).collect(toSet());
@@ -820,13 +712,6 @@ public class SiglusFcIntegrationService {
           ? 0 : fcLineItem.getRequestedQuantity());
     }
     return fcLineItem;
-  }
-
-  private List<FacilityTypeDto> findFacilityTypes(Collection<String> includeTypeNames,
-                                                  Collection<String> excludeTypeNames) {
-    return facilityTypeDataService.getPage(RequestParameters.init()).getContent().stream()
-        .filter(t -> !includeTypeNames.contains(t.getCode()))
-        .collect(toList());
   }
 
   private List<FacilityTypeDto> findFacilityTypes(Collection<String> typeNames) {

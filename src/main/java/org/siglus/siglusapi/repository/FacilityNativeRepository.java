@@ -44,32 +44,27 @@ public class FacilityNativeRepository extends BaseNativeRepository {
 
   private final NamedParameterJdbcTemplate namedJdbc;
 
-  public Page<Facility> findAllForStockMovements(Collection<UUID> facilityTypeIds,
-      LocalDate since,
-      LocalDate endDate,
-      String clientCode,
+  public Page<Facility> findAllForStockMovements(Collection<UUID> facilityTypeIds, LocalDate since,
       Pageable pageable) {
-    String query = "SELECT DISTINCT f.id, f.code, f.name, f.description, f.active  "
-        + generateFrom(pageable, clientCode, true, false);
+    String query =
+        "SELECT DISTINCT f.id, f.code, f.name, f.description, f.active  " + generateFrom(pageable, true, false);
     MapSqlParameterSource params = new MapSqlParameterSource();
     params.addValue("typeIds", facilityTypeIds);
     params.addValue("since", since);
-    params.addValue("till", endDate);
+    params.addValue("till", LocalDate.now().minusDays(1));
     List<Facility> list = namedJdbc.query(query, params, facilityExtractor());
     if (list.size() < pageable.getPageSize()) {
       return new PageImpl<>(list, pageable, (long) pageable.getOffset() + list.size());
     }
-    // FIX: Pass clientCode instead of null
-    String countQuery = "SELECT COUNT(DISTINCT f.code) " + generateFrom(pageable, clientCode, true, true);
+    String countQuery = "SELECT COUNT(DISTINCT f.code) " + generateFrom(pageable, true, true);
     Long total = namedJdbc.query(countQuery, params, (rs -> rs.next() ? rs.getLong(1) : null));
     return new PageImpl<>(list, pageable, total);
   }
 
   public Page<Facility> findAllForStockOnHand(Collection<UUID> facilityTypeIds, LocalDate at,
-      String clientCode, Pageable pageable) {
+      Pageable pageable) {
     String query =
-        "SELECT DISTINCT f.id, f.code, f.name, f.description, f.active  "
-            + generateFrom(pageable, clientCode, false, false);
+        "SELECT DISTINCT f.id, f.code, f.name, f.description, f.active  " + generateFrom(pageable, false, false);
     MapSqlParameterSource params = new MapSqlParameterSource();
     params.addValue("typeIds", facilityTypeIds);
     params.addValue("at", at);
@@ -77,13 +72,12 @@ public class FacilityNativeRepository extends BaseNativeRepository {
     if (list.size() < pageable.getPageSize()) {
       return new PageImpl<>(list, pageable, (long) pageable.getOffset() + list.size());
     }
-    // FIX: Pass clientCode instead of null
-    String countQuery = "SELECT COUNT(DISTINCT f.code) " + generateFrom(pageable, clientCode, false, true);
+    String countQuery = "SELECT COUNT(DISTINCT f.code) " + generateFrom(pageable, false, true);
     Long total = namedJdbc.query(countQuery, params, (rs -> rs.next() ? rs.getLong(1) : null));
     return new PageImpl<>(list, pageable, total);
   }
 
-  private String generateFrom(Pageable pageable, String clientCode, boolean forMovements, boolean countQuery) {
+  private String generateFrom(Pageable pageable, boolean forMovements, boolean countQuery) {
     String from = "FROM "
         + "referencedata.facilities f, stockmanagement.stock_cards sc, stockmanagement.calculated_stocks_on_hand cal "
         + "WHERE f.id = sc.facilityid "
@@ -94,11 +88,6 @@ public class FacilityNativeRepository extends BaseNativeRepository {
     } else {
       from += "AND cal.occurreddate <= :at ";
     }
-
-    if (clientCode != null) {
-      from += "AND f.code = '" + clientCode + "' ";
-    }
-
     if (!countQuery) {
       from += "ORDER BY f.code LIMIT " + pageable.getPageSize() + " OFFSET " + pageable.getOffset();
     }

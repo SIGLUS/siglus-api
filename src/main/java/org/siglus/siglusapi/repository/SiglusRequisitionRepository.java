@@ -33,44 +33,12 @@ import org.springframework.data.repository.query.Param;
 @SuppressWarnings("PMD.AvoidDuplicateLiterals")
 public interface SiglusRequisitionRepository extends JpaRepository<Requisition, UUID> {
 
-  @Query(value = "select r.* from requisition.requisitions r where "
-      + "r.status in ('IN_APPROVAL', 'APPROVED', 'RELEASED', 'RELEASED_WITHOUT_ORDER') "
+  @Query(value = "select * from requisition.requisitions r where "
+      + "r.status in ('IN_APPROVAL', 'APPROVED', 'RELEASED', 'RELEASED_WITHOUT_ORDER')"
       + "and r.modifieddate >= :date "
-
-      // Safely handles endDate with a fallback to now(), inclusive of the entire day (up to 23:59:59)
-      + "and ( "
-      + "  (CAST(:endDate AS text) IS NOT NULL "
-      + "AND r.modifieddate < (CAST(CAST(:endDate AS text) AS timestamp) + interval '1 day')) OR "
-      + "  (CAST(:endDate AS text) IS NULL AND r.modifieddate <= now()) "
-      + ") "
-
-      + "and (CAST(:requisitionNumber AS text) IS NULL OR EXISTS ("
-      + "    select 1 from siglusintegration.requisition_extension ext "
-      + "    where ext.requisitionid = r.id "
-      + "    and concat(ext.requisitionnumberprefix, to_char(ext.requisitionnumber, 'fm00'))"
-      + " = CAST(:requisitionNumber AS text)"
-      + ")) "
-
-      + "and (CAST(:clientCode AS text) IS NULL OR EXISTS ("
-      + "    select 1 from referencedata.facilities f1 "
-      + "    where f1.id = r.facilityid and f1.code = CAST(:clientCode AS text)"
-      + ")) "
-
-      + "and (:hasClientTypes = FALSE OR EXISTS ("
-      + "    select 1 from referencedata.facilities f2 "
-      + "    inner join referencedata.facility_types ft on f2.typeid = ft.id "
-      + "    where f2.id = r.facilityid and ft.code IN :clientTypes"
-      + ")) "
+      + "and r.modifieddate <= now() "
       + "order by r.modifieddate, ?#{#pageable}", nativeQuery = true)
-  Page<Requisition> searchAllForFc(
-      @Param("date") LocalDate date,
-      @Param("endDate") LocalDate endDate,
-      @Param("requisitionNumber") String requisitionNumber,
-      @Param("clientCode") String clientCode,
-      @Param("hasClientTypes") boolean hasClientTypes,
-      @Param("clientTypes") List<String> clientTypes,
-      Pageable pageable
-  );
+  Page<Requisition> searchAllForFc(@Param("date") LocalDate date, Pageable pageable);
 
   @Query(value = "select * from requisition.requisitions r where "
       + "r.status = 'IN_APPROVAL' "

@@ -60,9 +60,7 @@ public interface ProductMovementMapper {
   default List<ProductMovementResponse> toResponses(PeriodOfProductMovements period) {
     Map<String, List<ProductMovement>> movementsByProductCode = period.getProductMovements().stream()
         .collect(groupingBy(ProductMovement::getProductCode));
-
     StocksOnHand stocksOnHand = period.getStocksOnHand();
-
     return stocksOnHand.getAllProductCodes().stream()
         .map(c -> toResponse(c, movementsByProductCode.getOrDefault(c, emptyList()), stocksOnHand,
             MovementDetail::getReason))

@@ -21,10 +21,6 @@ import static com.google.common.collect.Sets.newHashSet;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.anyBoolean;
-import static org.mockito.Mockito.anyList;
-import static org.mockito.Mockito.anyString;
-import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -325,10 +321,8 @@ public class SiglusFcIntegrationServiceTest {
     mockProgramInfo("VC");
 
     // when
-    // Pass null for the optional parameters: endDate, clientCode, clientTypes, requisitionNumber
     Page<FcRequisitionDto> fcRequisitionDtos = siglusFcIntegrationService
-            .searchRequisitions(date, null, null, null, null, pageable);
-
+        .searchRequisitions(date, pageable);
     // then
     assertEquals(1, fcRequisitionDtos.getContent().size());
     FcRequisitionDto fcRequisitionDto = fcRequisitionDtos.getContent().get(0);
@@ -343,9 +337,8 @@ public class SiglusFcIntegrationServiceTest {
     mockProgramInfo("VC");
 
     // when
-    // Pass null for the optional parameters: endDate, clientCode, clientTypes, requisitionNumber
     Page<FcRequisitionDto> fcRequisitionDtos = siglusFcIntegrationService
-            .searchRequisitions(date, null, null, null, null, pageable);
+        .searchRequisitions(date, pageable);
 
     // then
     assertEquals(1, fcRequisitionDtos.getContent().size());
@@ -361,9 +354,8 @@ public class SiglusFcIntegrationServiceTest {
     mockRequisitionInfo(fcSupervisoryNodeId);
 
     // when
-    // Pass null for the optional parameters: endDate, clientCode, clientTypes, requisitionNumber
     Page<FcRequisitionDto> fcRequisitionDtos = siglusFcIntegrationService
-            .searchRequisitions(date, null, null, null, null, pageable);
+        .searchRequisitions(date, pageable);
 
     // then
     assertEquals(1, fcRequisitionDtos.getContent().size());
@@ -394,9 +386,7 @@ public class SiglusFcIntegrationServiceTest {
     mockProgramInfo("T");
 
     // when
-    // Pass null for the optional parameters: endDate, clientCode, clientTypes, requisitionNumber
-    Page<FcRequisitionDto> fcRequisitionDtos = siglusFcIntegrationService
-            .searchRequisitions(date, null, null, null, null, pageable);
+    Page<FcRequisitionDto> fcRequisitionDtos = siglusFcIntegrationService.searchRequisitions(date, pageable);
 
     // then
     assertEquals(1, fcRequisitionDtos.getContent().size());
@@ -412,9 +402,7 @@ public class SiglusFcIntegrationServiceTest {
     mockProgramInfo("ML");
 
     // when
-    // Pass null for the optional parameters: endDate, clientCode, clientTypes, requisitionNumber
-    Page<FcRequisitionDto> fcRequisitionDtos = siglusFcIntegrationService
-            .searchRequisitions(date, null, null, null, null, pageable);
+    Page<FcRequisitionDto> fcRequisitionDtos = siglusFcIntegrationService.searchRequisitions(date, pageable);
 
     // then
     assertEquals(1, fcRequisitionDtos.getContent().size());
@@ -430,9 +418,7 @@ public class SiglusFcIntegrationServiceTest {
     mockProgramInfo("TR");
 
     // when
-    // Pass null for the optional parameters: endDate, clientCode, clientTypes, requisitionNumber
-    Page<FcRequisitionDto> fcRequisitionDtos = siglusFcIntegrationService
-            .searchRequisitions(date, null, null, null, null, pageable);
+    Page<FcRequisitionDto> fcRequisitionDtos = siglusFcIntegrationService.searchRequisitions(date, pageable);
 
     // then
     assertEquals(1, fcRequisitionDtos.getContent().size());
@@ -448,9 +434,8 @@ public class SiglusFcIntegrationServiceTest {
     when(shipmentsExtensionRepository.findByShipmentIdIn(any())).thenReturn(newArrayList());
 
     // when
-    // Pass null for the optional parameters: endDate, clientCode, clientTypes, ivNumber
     Page<FcProofOfDeliveryDto> fcProofOfDeliveryDtos = siglusFcIntegrationService
-        .searchProofOfDelivery(date, null, null, null, null, pageable);
+        .searchProofOfDelivery(date, pageable);
 
     // then
     List<FcProofOfDeliveryDto> list = fcProofOfDeliveryDtos.getContent();
@@ -508,20 +493,10 @@ public class SiglusFcIntegrationServiceTest {
     template.setId(templateId);
     requisition.setTemplate(template);
     List<Requisition> requisitions = newArrayList(requisition);
-
-    // FIX: Updated to match the new 7-parameter signature for searchAllForFc
-    when(siglusRequisitionRepository.searchAllForFc(
-            eq(date),
-            any(),          // endDate
-            any(),          // requisitionNumber
-            any(),          // clientCode
-            anyBoolean(),   // hasClientTypes
-            anyList(),      // clientTypes
-            eq(pageable)
-    )).thenReturn(Pagination.getPage(requisitions, pageable));
-
+    when(siglusRequisitionRepository.searchAllForFc(date, pageable))
+        .thenReturn(Pagination.getPage(requisitions, pageable));
     when(siglusRequisitionRepository.searchNeedApprovalForFc(date, pageable,
-            newHashSet(fcSupervisoryNodeId))).thenReturn(Pagination.getPage(requisitions, pageable));
+        newHashSet(fcSupervisoryNodeId))).thenReturn(Pagination.getPage(requisitions, pageable));
   }
 
   private void mockFacilityInfo() {
@@ -670,20 +645,8 @@ public class SiglusFcIntegrationServiceTest {
 
     Pageable pageable = new PageRequest(0, 10);
     Page<ProofOfDelivery> page = Pagination.getPage(newArrayList(proofOfDelivery), pageable, 1);
-
-    // FIX: Updated to match the new 10-parameter signature for search
-    when(siglusProofOfDeliveryRepository.search(
-        any(),          // date
-        anyBoolean(),   // hasEndDate
-        any(),          // endDate
-        anyBoolean(),   // hasClientCode
-        anyString(),    // clientCode
-        anyBoolean(),   // hasClientTypes
-        anyList(),      // clientTypes
-        anyBoolean(),   // hasIvNumber
-        anyString(),    // ivNumber
-        any()           // pageable
-    )).thenReturn(page);
+    when(siglusProofOfDeliveryRepository
+        .search(any(), any())).thenReturn(page);
   }
 
   private Shipment mockShipment() {
