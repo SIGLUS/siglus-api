@@ -28,17 +28,22 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface RightAssignmentRepository extends JpaRepository<RightAssignment, UUID> {
 
-  /**
-   * Retrieves all distinct facility IDs assigned to a specific user.
-   */
   @Query("SELECT DISTINCT r.facilityId FROM RightAssignment r WHERE r.userId = :userId")
   List<UUID> findDistinctFacilityIdsByUserId(@Param("userId") UUID userId);
 
-  /**
-   * Bulk deletes all right assignments for a given user in a single SQL DELETE query.
-   * Note: Requires an active @Transactional context in the calling service.
-   */
   @Modifying(clearAutomatically = true)
   @Query("DELETE FROM RightAssignment r WHERE r.userId = :userId")
   int deleteByUserId(@Param("userId") UUID userId);
+
+  @Modifying(clearAutomatically = true)
+  @Query("DELETE FROM RightAssignment r WHERE r.rightName = :rightName "
+          + "AND r.facilityId = :facilityId "
+          + "AND r.programId = :programId "
+          + "AND r.userId = :userId")
+  int deleteByConflictKey(
+          @Param("rightName") String rightName,
+          @Param("facilityId") UUID facilityId,
+          @Param("programId") UUID programId,
+          @Param("userId") UUID userId
+  );
 }

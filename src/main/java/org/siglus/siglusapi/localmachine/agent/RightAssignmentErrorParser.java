@@ -15,7 +15,11 @@
 
 package org.siglus.siglusapi.localmachine.agent;
 
+import org.siglus.siglusapi.dto.RightAssignmentConflictKey;
+
 import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.regex.Matcher;
@@ -25,49 +29,32 @@ public final class RightAssignmentErrorParser {
 
   private static final String TARGET_CONSTRAINT = "right_assignment_unq";
 
-  // Matches referencedata.right_assignments with or without quotes and case-insensitively
-  // e.g. "referencedata"."right_assignments" or referencedata.right_assignments
   private static final Pattern TARGET_TABLE_PATTERN = Pattern.compile(
-      "\"?referencedata\"?\\s*\\.\\s*\"?right_assignments\"?",
-      Pattern.CASE_INSENSITIVE
+          "\"?referencedata\"?\\s*\\.\\s*\"?right_assignments\"?",
+          Pattern.CASE_INSENSITIVE
   );
 
-  // Captures: Detail: Key (col1, col2, ...)=(val1, val2, ...)
   private static final Pattern PG_KEY_DETAIL_PATTERN = Pattern.compile(
-      "Detail:\\s*Key\\s*\\(([^)]+)\\)\\s*=\\s*\\(([^)]+)\\)",
-      Pattern.CASE_INSENSITIVE
+          "Detail:\\s*Key\\s*\\(([^)]+)\\)\\s*=\\s*\\(([^)]+)\\)",
+          Pattern.CASE_INSENSITIVE
   );
 
   private RightAssignmentErrorParser() {}
 
-  /**
-   * Checks if the error message is specifically from "referencedata"."right_assignments"
-   * violating "right_assignment_unq".
-   */
   public static boolean isTargetTableConflict(String errorMessage) {
-    if (errorMessage == null) {
-      return false;
-    }
-    return errorMessage.contains(TARGET_CONSTRAINT)
-        && TARGET_TABLE_PATTERN.matcher(errorMessage).find();
+    return errorMessage != null
+            && errorMessage.contains(TARGET_CONSTRAINT)
+            && TARGET_TABLE_PATTERN.matcher(errorMessage).find();
   }
 
-  /**
-   * Extracts the userId UUID from a Throwable if it originates from
-   * "referencedata"."right_assignments".
-   */
-  public static Optional<UUID> extractUserId(Throwable throwable) {
+  public static Optional<RightAssignmentConflictKey> extractConflictKey(Throwable throwable) {
     if (throwable == null) {
       return Optional.empty();
     }
-    return extractUserId(collectFullErrorMessage(throwable));
+    return extractConflictKey(collectFullErrorMessage(throwable));
   }
 
-  /**
-   * Extracts the userId UUID from an error string if it originates from
-   * "referencedata"."right_assignments".
-   */
-  public static Optional<UUID> extractUserId(String errorMessage) {
+  public static Optional<RightAssignmentConflictKey> extractConflictKey(String errorMessage) {
     if (!isTargetTableConflict(errorMessage)) {
       return Optional.empty();
     }
@@ -77,36 +64,47 @@ public final class RightAssignmentErrorParser {
       String[] keys = matcher.group(1).split(",");
       String[] values = matcher.group(2).split(",");
 
+      if (keys.length != values.length) {
+        continue;
+      }
+
+      Map<String, String> keyValMap = new HashMap<>();
       for (int i = 0; i < keys.length; i++) {
-        if ("userid".equalsIgnoreCase(keys[i].trim()) && i < values.length) {
-          String rawUserId = values[i].trim().replaceAll("^['\"]|['\"]$", "");
-          try {
-            return Optional.of(UUID.fromString(rawUserId));
-          } catch (IllegalArgumentException e) {
-            return Optional.empty();
-          }
+        keyValMap.put(keys[i].trim().toLowerCase(), values[i].trim().replaceAll("^['\"]|['\"]$", ""));
+      }
+
+      if (keyValMap.containsKey("rightname")
+              && keyValMap.containsKey("facilityid")
+              && keyValMap.containsKey("programid")
+              && keyValMap.containsKey("userid")) {
+        try {
+          return Optional.of(RightAssignmentConflictKey.builder()
+                  .rightName(keyValMap.get("rightname"))
+                  .facilityId(UUID.fromString(keyValMap.get("facilityid")))
+                  .programId(UUID.fromString(keyValMap.get("programid")))
+                  .userId(UUID.fromString(keyValMap.get("userid")))
+                  .build());
+        } catch (IllegalArgumentException e) {
+          return Optional.empty();
         }
       }
     }
     return Optional.empty();
   }
 
-  /**
-   * Traverses standard cause chains and JDBC SQLException nextException chains.
-   */
   public static String collectFullErrorMessage(Throwable t) {
     StringBuilder sb = new StringBuilder();
     Throwable current = t;
 
     while (current != null) {
       if (current.getMessage() != null) {
-        sb.append(current.getMessage()).append('\n'); // Line 103: use '\n' instead of "\n"
+        sb.append(current.getMessage()).append('\n');
       }
       if (current instanceof SQLException) {
         SQLException next = ((SQLException) current).getNextException();
         while (next != null) {
           if (next.getMessage() != null) {
-            sb.append(next.getMessage()).append('\n'); // Line 109: use '\n' instead of "\n"
+            sb.append(next.getMessage()).append('\n');
           }
           next = next.getNextException();
         }

@@ -18,6 +18,7 @@ package org.siglus.siglusapi.localmachine.agent;
 import static org.siglus.siglusapi.localmachine.utils.ErrorFormatter.getRootStackTrace;
 
 import java.time.ZonedDateTime;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -26,6 +27,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.siglus.siglusapi.dto.RightAssignmentConflictKey;
 import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.DeferredException;
 import org.siglus.siglusapi.localmachine.constant.ErrorType;
@@ -81,9 +83,8 @@ public class ErrorHandler {
   private ErrorRecord buildSyncDownError(UUID eventId, Throwable t, ErrorType errorType) {
     String detailMessage = RightAssignmentErrorParser.collectFullErrorMessage(t);
 
-    // Safe extraction without NPE
-    RightAssignmentErrorParser.extractUserId(detailMessage)
-        .ifPresent(this::deleteUserRightsIfNoMatchingFacility);
+    RightAssignmentErrorParser.extractConflictKey(detailMessage)
+            .ifPresent(this::resolveRightAssignmentConflict);
 
     if (t instanceof BusinessDataException) {
       return ErrorRecord.builder()
@@ -102,48 +103,49 @@ public class ErrorHandler {
   private ErrorRecord buildSyncDownError(Throwable t, ErrorType errorType) {
     String detailMessage = RightAssignmentErrorParser.collectFullErrorMessage(t);
 
-    // Safe extraction without NPE
-    RightAssignmentErrorParser.extractUserId(detailMessage)
-        .ifPresent(this::deleteUserRightsIfNoMatchingFacility);
+    RightAssignmentErrorParser.extractConflictKey(detailMessage)
+            .ifPresent(this::resolveRightAssignmentConflict);
 
     if (t instanceof BusinessDataException) {
       return ErrorRecord.builder()
-          .occurredTime(ZonedDateTime.now())
-          .type(errorType)
-          .errorPayload(buildBusinessErrorPayload(t))
-          .build();
+              .occurredTime(ZonedDateTime.now())
+              .type(errorType)
+              .errorPayload(buildBusinessErrorPayload(t))
+              .build();
     }
     return ErrorRecord.builder()
-        .occurredTime(ZonedDateTime.now())
-        .type(errorType)
-        .errorPayload(buildGeneralErrorPayload(t))
-        .build();
+            .occurredTime(ZonedDateTime.now())
+            .type(errorType)
+            .errorPayload(buildGeneralErrorPayload(t))
+            .build();
   }
 
-  /**
-   * Checks if the user's facilities intersect with registered facilities.
-   * Deletes user rights if no common facility exists.
-   */
-  private void deleteUserRightsIfNoMatchingFacility(UUID userId) {
+  private void resolveRightAssignmentConflict(RightAssignmentConflictKey key) {
+    UUID userId = key.getUserId();
     List<UUID> relatedFacilityIds = rightAssignmentRepository.findDistinctFacilityIdsByUserId(userId);
     List<String> registeredFacilityIds = agentInfoRepository.findRegisteredFacilityIds();
 
-    if (registeredFacilityIds == null || registeredFacilityIds.isEmpty()
-        || relatedFacilityIds == null || relatedFacilityIds.isEmpty()) {
-      rightAssignmentRepository.deleteByUserId(userId);
-      return;
-    }
+    Set<String> registeredSet = (registeredFacilityIds == null)
+            ? Collections.emptySet()
+            : new HashSet<>(registeredFacilityIds);
 
-    // Use a Set for O(1) lookups and normalize types to String
-    Set<String> registeredSet = new HashSet<>(registeredFacilityIds);
+    boolean hasCommonFacility = relatedFacilityIds != null && relatedFacilityIds.stream()
+            .filter(Objects::nonNull)
+            .map(UUID::toString)
+            .anyMatch(registeredSet::contains);
 
-    boolean hasCommonFacility = relatedFacilityIds.stream()
-        .filter(Objects::nonNull)
-        .map(UUID::toString)
-        .anyMatch(registeredSet::contains);
+    if (hasCommonFacility) {
+      log.info("Facility match found for user {}. Deleting conflicting assignment: [rightName={}, facilityId={}, programId={}, userId={}]",
+              userId, key.getRightName(), key.getFacilityId(), key.getProgramId(), key.getUserId());
 
-    if (!hasCommonFacility) {
-      log.info("No common facility found for userId: {}. Purging right assignments.", userId);
+      rightAssignmentRepository.deleteByConflictKey(
+              key.getRightName(),
+              key.getFacilityId(),
+              key.getProgramId(),
+              key.getUserId()
+      );
+    } else {
+      log.info("No facility match found for user {}. Purging all assignments.", userId);
       rightAssignmentRepository.deleteByUserId(userId);
     }
   }
